@@ -1,6 +1,6 @@
 packages:
   - "apps/*"
   - "apps/backend/*"
-  - "apps/web/*"
+  - "apps/frontend/*"
   - "packages/*"
 

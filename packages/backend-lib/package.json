@@ -1,0 +1,29 @@
+{
+  "name": "@repo/backend-lib",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "dev": "tsc --watch",
+    "build": "tsc"
+  },
+  "exports": {
+    ".": "./dist/index.js",
+    "./config": "./dist/config/index.js",
+    "./utils": "./dist/utils/index.js"
+  },
+  "peerDependencies": {
+    "@nestjs/common": ">=11.0.0",
+    "@nestjs/core": ">=11.0.0",
+    "@nestjs/platform-express": ">=11.0.0",
+    "@nestjs/config": ">=4.0.2"
+  },
+  "dependencies": {
+  
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@repo/jest-config": "workspace:*",
+    "typescript": "^5.8.2"
+  }
+}
