@@ -1,13 +1,11 @@
 {
   "name": "@repo/jest-config",
   "version": "0.0.0",
-  "private": true,
-  "license": "MIT",
-  "publishConfig": {
-    "access": "public"
+  "scripts": {
+    "dev": "tsc --watch",
+    "build": "tsc",
+    "test": "jest --passWithNoTests --config ./jest.config.ts --coverage --coverageDirectory ./coverage"
   },
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "import": "./dist/index.js",
@@ -15,28 +13,28 @@
       "types": "./dist/index.d.ts"
     },
     "./base": {
-      "import": "./dist/base.js",
-      "require": "./dist/base.js",
-      "types": "./dist/base.d.ts"
+      "import": "./dist/base/index.js",
+      "require": "./dist/base/index.js",
+      "types": "./dist/base/index.d.ts"
     },
     "./nest": {
-      "import": "./dist/nest.js",
-      "require": "./dist/nest.js",
-      "types": "./dist/nest.d.ts"
+      "import": "./dist/nest/index.js",
+      "require": "./dist/nest/index.js",
+      "types": "./dist/nest/index.d.ts"
     },
-    "./next": {
-      "import": "./dist/next.js",
-      "require": "./dist/next.js",
-      "types": "./dist/next.d.ts"
+    "./globals": {
+      "import": "./dist/globals/index.js",
+      "require": "./dist/globals/index.js",
+      "types": "./dist/globals/index.d.ts"
     }
   },
   "devDependencies": {
-    "@jest/types": "^29.6.3",
+    "@jest/globals": "^30.0.5",
+    "@nestjs/testing": "^11.1.6",
+    "@repo/typescript-config": "workspace:*",
+    "@types/jest": "^30.0.0",
     "jest": "^29.7.0",
-    "next": "^15.4.2",
+    "ts-jest": "^29.4.1",
     "typescript": "^5.8.2"
-  },
-  "scripts": {
-    "build": "tsc"
   }
 }
