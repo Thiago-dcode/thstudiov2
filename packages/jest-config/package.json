@@ -4,7 +4,7 @@
   "scripts": {
     "dev": "tsc --watch",
     "build": "tsc",
-    "test": "jest --passWithNoTests --config ./jest.config.ts --coverage --coverageDirectory ./coverage"
+    "test": "jest  --passWithNoTests --config ./jest.config.ts"
   },
   "exports": {
     ".": {

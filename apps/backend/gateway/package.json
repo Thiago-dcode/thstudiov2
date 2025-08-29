@@ -4,12 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "nest start --watch ",
+    "dev:backend": "nest start --watch",
     "build": "nest build",
     "start": "nest start",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
-    "test": "jest --passWithNoTests --config ./jest.config.ts --coverage --coverageDirectory ./coverage",
-    "test:watch": "jest --watch",
+    "test": "jest  --passWithNoTests --config ./jest.config.ts",
+    "test:watch": "jest  --passWithNoTests --config ./jest.config.ts  --watch",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\""
@@ -18,6 +19,7 @@
     "@nestjs/common": "^11.0.0",
     "@nestjs/core": "^11.0.0",
     "@nestjs/config": "^4.0.2",
+    "@nestjs/mapped-types": "*",
     "@nestjs/platform-express": "^11.0.0",
     "@repo/backend-lib": "workspace:*",
     "reflect-metadata": "^0.2.0",

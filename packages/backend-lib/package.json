@@ -5,9 +5,10 @@
   "license": "MIT",
   "scripts": {
     "dev": "tsc --watch",
+    "dev:backend": "tsc --watch",
     "build": "tsc",
-   "test": "jest --passWithNoTests --config ./jest.config.ts --coverage --coverageDirectory ./coverage",
-    "test:watch": "jest --watch",
+   "test": "jest  --passWithNoTests --config ./jest.config.ts",
+    "test:watch": "jest  --passWithNoTests --config ./jest.config.ts  --watch",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./jest.config.ts"
   },

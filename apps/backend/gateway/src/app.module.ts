@@ -1,19 +1,24 @@
 import { Module } from '@nestjs/common';
 import { RouterModule } from '@nestjs/core';
 import { AppService } from './app.service';
-import { AppController } from './app.controller';
 import { routes } from './v1/v1.routes';
-import { ImagesModule } from './v1/modules/Images/images.module';
-import config , { envFilePath } from '@repo/backend-lib/config';
+import config, { envFilePath } from '@repo/backend-lib/config';
 import { ConfigModule } from '@nestjs/config';
+import { ProjectsModule } from './v1/modules/projects/projects.module';
+import { MediaModule } from './v1/modules/media/media.module';
 
 @Module({
-  imports: [ImagesModule, RouterModule.register(routes), ConfigModule.forRoot({
-    isGlobal: true,
-    load: [config],
-     envFilePath,
-  })],
-  controllers: [AppController],
+  imports: [
+    MediaModule,
+    ProjectsModule,
+    RouterModule.register(routes),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [config],
+      envFilePath,
+    }),
+  ],
+  controllers: [],
   providers: [AppService],
 })
 export class AppModule {}
