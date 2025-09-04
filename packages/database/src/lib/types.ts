@@ -1,16 +1,23 @@
+import { EnumType } from 'typescript';
+
+export type DatabaseClient = 'postgres' | 'mysql' | 'sqlite' | 'mongodb';
+export type DatabaseSettings = {
+  allowUpdateWithoutWhere: boolean;
+  allowDeleteWithoutWhere: boolean;
+};
 export type DatabaseConfig = {
+  client: DatabaseClient;
   host: string;
   port: number;
   username: string;
   password: string;
   database: string;
+  settings?: Partial<DatabaseSettings>;
 };
-export type DatabaseClient = 'postgres' | 'mysql' | 'sqlite' | 'mongodb';
-
 export type FullDatabaseConfig = DatabaseConfig & {
-  client: DatabaseClient;
+  settings: Required<DatabaseSettings>;
 };
-
+export type SqlValue = string | number | null | EnumType | Date | boolean;
 export type WhereOperator =
   | '='
   | '>'
@@ -24,3 +31,45 @@ export type WhereOperator =
   | 'NOT IN'
   | 'IS'
   | 'IS NOT';
+export type SqlOperation =
+  | 'where'
+  | 'join'
+  | 'select'
+  | 'limit'
+  | 'orderBy'
+  | 'groupBy'
+  | 'having'
+  | 'offset'
+  | 'distinct';
+export type WhereOperatorWithoutIn = Exclude<WhereOperator, 'IN' | 'NOT IN'>;
+export type WhereType = 'where' | 'orWhere';
+
+// Base interface
+export type BaseWhere = {
+  column: string;
+  position: number;
+};
+
+// Regular WHERE condition
+export type WhereCondition = BaseWhere & {
+  type: WhereType;
+  operator: WhereOperatorWithoutIn;
+};
+
+// WHERE IN condition
+export type WhereInCondition = BaseWhere & {
+  type: WhereType;
+  operator: 'IN'|'NOT IN';
+  values: SqlValue[];
+};
+
+// Union type
+export type Where = WhereCondition | WhereInCondition;
+
+export type JoinType = 'INNER' | 'LEFT' | 'RIGHT' | 'FULL';
+export type Join = {
+  type: JoinType;
+  localColumn: string;
+  foreignTable: string;
+  foreignColumn: string;
+};

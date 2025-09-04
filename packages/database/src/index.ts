@@ -1,5 +1,5 @@
-import { initClient } from './lib/clients';
-import { FullDatabaseConfig } from './lib/types';
-export const init = (config: FullDatabaseConfig) => {
+import { initClient } from './lib/client';
+import { DatabaseConfig } from './lib/types';
+export const init = (config: DatabaseConfig) => {
   return initClient(config);
 };

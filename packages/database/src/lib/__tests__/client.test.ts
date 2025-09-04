@@ -1,5 +1,5 @@
-import { InvalidDatabaseClientException } from '../exceptions';
-import { FullDatabaseConfig } from '../types';
+import { InvalidDatabaseClientException } from '../client/exceptions';
+import { DatabaseConfig } from '../types';
 
 // Mock the database drivers before importing the clients
 jest.mock('mysql2/promise', () => ({
@@ -11,7 +11,7 @@ jest.mock('mysql2/promise', () => ({
 }));
 
 jest.mock('pg', () => ({
-  Client: jest.fn().mockImplementation(() => ({
+  Pool: jest.fn().mockImplementation(() => ({
     connect: jest.fn().mockResolvedValue({}),
     end: jest.fn().mockResolvedValue({}),
     query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
@@ -19,10 +19,10 @@ jest.mock('pg', () => ({
 }));
 
 // Now import after mocking
-const { MysqlClient, PostgresClient, initClient, Client, killClient } = require('../clients');
+const { MysqlClient, PostgresClient, initClient, Client, killClient } = require('../client');
 
 describe('Client Initialization', () => {
-  const mysqlConfig: FullDatabaseConfig = {
+  const mysqlConfig: DatabaseConfig = {
     client: 'mysql',
     host: 'localhost',
     port: 3306,
@@ -31,7 +31,7 @@ describe('Client Initialization', () => {
     database: 'test',
   };
 
-  const postgresConfig: FullDatabaseConfig = {
+  const postgresConfig: DatabaseConfig = {
     client: 'postgres',
     host: 'localhost',
     port: 5432,
@@ -59,7 +59,7 @@ describe('Client Initialization', () => {
     });
 
     it('should throw an error for invalid client type', () => {
-      const invalidConfig: FullDatabaseConfig = {
+      const invalidConfig: DatabaseConfig = {
         ...mysqlConfig,
         client: 'invalid' as any,
       };
@@ -123,6 +123,123 @@ describe('Client Initialization', () => {
       expect(typeof client.connect).toBe('function');
       expect(typeof client.disconnect).toBe('function');
       expect(typeof client.query).toBe('function');
+    });
+  });
+
+  describe('Settings Configuration Edge Cases', () => {
+    const baseMysqlConfig: DatabaseConfig = {
+      client: 'mysql',
+      host: 'localhost',
+      port: 3306,
+      username: 'root',
+      password: 'password',
+      database: 'test',
+    };
+
+    beforeEach(() => {
+      jest.resetModules();
+      killClient();
+    });
+
+    it('should use default settings when no settings are provided', () => {
+      const client = initClient(baseMysqlConfig);
+      expect(client.config.settings).toEqual({
+        allowUpdateWithoutWhere: false,
+        allowDeleteWithoutWhere: false,
+      });
+    });
+
+    it('should merge partial settings with default settings', () => {
+      const configWithPartialSettings: DatabaseConfig = {
+        ...baseMysqlConfig,
+        settings: {
+          allowUpdateWithoutWhere: true,
+        },
+      };
+      
+      const client = initClient(configWithPartialSettings);
+      expect(client.config.settings).toEqual({
+        allowUpdateWithoutWhere: true,
+        allowDeleteWithoutWhere: false, // Should use default value
+      });
+    });
+
+    it('should use provided settings when all settings are provided', () => {
+      const configWithFullSettings: DatabaseConfig = {
+        ...baseMysqlConfig,
+        settings: {
+          allowUpdateWithoutWhere: true,
+          allowDeleteWithoutWhere: true,
+        },
+      };
+      
+      const client = initClient(configWithFullSettings);
+      expect(client.config.settings).toEqual({
+        allowUpdateWithoutWhere: true,
+        allowDeleteWithoutWhere: true,
+      });
+    });
+
+    it('should handle empty settings object', () => {
+      const configWithEmptySettings: DatabaseConfig = {
+        ...baseMysqlConfig,
+        settings: {},
+      };
+      
+      const client = initClient(configWithEmptySettings);
+      expect(client.config.settings).toEqual({
+        allowUpdateWithoutWhere: false,
+        allowDeleteWithoutWhere: false,
+      });
+    });
+
+    it('should maintain settings consistency across multiple client initializations with same config', () => {
+      const configWithSettings: DatabaseConfig = {
+        ...baseMysqlConfig,
+        settings: {
+          allowUpdateWithoutWhere: true,
+        },
+      };
+      
+      const client1 = initClient(configWithSettings);
+      const client2 = initClient(configWithSettings);
+      
+      expect(client1.config.settings).toEqual(client2.config.settings);
+      expect(client1).toBe(client2); // Should be same instance due to singleton
+    });
+
+    it('should handle settings correctly when switching between different client types', () => {
+      const mysqlConfigWithSettings: DatabaseConfig = {
+        ...baseMysqlConfig,
+        settings: {
+          allowUpdateWithoutWhere: true,
+        },
+      };
+
+      const postgresConfigWithSettings: DatabaseConfig = {
+        client: 'postgres',
+        host: 'localhost',
+        port: 5432,
+        username: 'postgres',
+        password: 'password',
+        database: 'test',
+        settings: {
+          allowDeleteWithoutWhere: true,
+        },
+      };
+      
+      const mysqlClient = initClient(mysqlConfigWithSettings);
+      const postgresClient = initClient(postgresConfigWithSettings);
+      
+      expect(mysqlClient.config.settings).toEqual({
+        allowUpdateWithoutWhere: true,
+        allowDeleteWithoutWhere: false,
+      });
+      
+      expect(postgresClient.config.settings).toEqual({
+        allowUpdateWithoutWhere: false,
+        allowDeleteWithoutWhere: true,
+      });
     });
   });
 

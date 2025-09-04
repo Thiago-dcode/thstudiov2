@@ -5,16 +5,19 @@ const config: Config = {
   ...baseConfig,
   rootDir: '.',
   moduleNameMapper: {
-    '^@/(.*)$': '<rootDir>/src/$1',
+    "^@/(.*)$": "<rootDir>/src/$1",
+    "^@lib/(.*)$": "<rootDir>/src/lib/$1",
+    "^lib/(.*)$": "<rootDir>/src/lib/$1",
+    "database": "<rootDir>/src/lib/database"
   },
-  collectCoverageFrom: [
-    'src/**/*.(t|j)s',
-    '!src/**/*.d.ts',
-    '!src/**/*.spec.ts',
-    '!src/**/*.test.ts',
-    '!src/**/index.ts',
-  ],
-  coverageDirectory: '<rootDir>/coverage',
+  testEnvironment: "node",
+  testRegex: "(/tests/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
+  transform: {
+    "^.+\\.(ts|tsx)$": "ts-jest"
+  },
+  transformIgnorePatterns: [
+    "<rootDir>/node_modules/(?!@foo)"
+  ]
 };
 
 export default config;
