@@ -3,7 +3,7 @@ import {
   DatabaseConfig,
   FullDatabaseConfig,
   WhereCondition,
-  WhereOperatorWithoutIn,
+  SqlClauseWithoutIn,
 } from '../types';
 import { DEFAULT_DATABASE_SETTINGS } from '../constants';
 import { initClient } from '../client';
@@ -537,7 +537,7 @@ describe('QueryBuilder', () => {
     });
 
     it('should handle all operators correctly for both databases', () => {
-      const operators: Array<WhereOperatorWithoutIn> = [
+      const operators: Array<SqlClauseWithoutIn> = [
         '=',
         '>',
         '<',
@@ -679,6 +679,80 @@ describe('QueryBuilder', () => {
         .where('orders.id', '=', 4)
         .orWhere('orders.id', '=', 5)
         .orWhereIn('orders.id', [6, 7]);
+
+      queryBuilder['buildSelectQuery']();
+
+      // Assert
+      expect(queryBuilder['valuesPosition']).toBe(8);
+      expect(queryBuilder['values']).toEqual(['%1%', null, 2, 3, 4, 5, 6, 7]);
+      expect(queryBuilder['query']).toBe(targetQuery);
+    });
+
+    it('should build SELECT query with LIMIT clause', () => {
+      // Arrange
+      queryBuilder.limit(10);
+      queryBuilder['buildSelectQuery']();
+
+      // Assert
+      expect(queryBuilder['query']).toBe(`SELECT * FROM ${TABLE_NAME} \nLIMIT 10`);
+    });
+
+    it('should build SELECT query with OFFSET clause', () => {
+      // Arrange
+      queryBuilder.offset(5);
+      queryBuilder['buildSelectQuery']();
+
+      // Assert
+      expect(queryBuilder['query']).toBe(`SELECT * FROM ${TABLE_NAME} \nOFFSET 5`);
+    });
+
+    it('should build SELECT query with ORDER BY clause', () => {
+      // Arrange
+      queryBuilder.orderBy('name', 'ASC');
+      queryBuilder['buildSelectQuery']();
+
+      // Assert
+      expect(queryBuilder['query']).toBe(`SELECT * FROM ${TABLE_NAME} \nORDER BY name ASC`);
+    });
+
+    it('should build SELECT query with ORDER BY DESC clause', () => {
+      // Arrange
+      queryBuilder.orderBy('created_at', 'DESC');
+      queryBuilder['buildSelectQuery']();
+
+      // Assert
+      expect(queryBuilder['query']).toBe(`SELECT * FROM ${TABLE_NAME} \nORDER BY created_at DESC`);
+    });
+
+    it('should build SELECT query with LIMIT, OFFSET, and ORDER BY clauses', () => {
+      // Arrange
+      queryBuilder
+        .orderBy('name', 'ASC')
+        .limit(10)
+        .offset(5);
+      queryBuilder['buildSelectQuery']();
+
+      // Assert
+      expect(queryBuilder['query']).toBe(`SELECT * FROM ${TABLE_NAME} \nORDER BY name ASC \nLIMIT 10 \nOFFSET 5`);
+    });
+
+    it('should build complete SELECT query with all clauses', () => {
+      // Arrange
+      const targetQuery = `SELECT ${TABLE_NAME}.id,${TABLE_NAME}.name,${TABLE_NAME}.email,users.id,orders.id FROM ${TABLE_NAME} \nINNER JOIN users ON users.id = ${TABLE_NAME}.user_id \nLEFT JOIN orders ON orders.id = ${TABLE_NAME}.user_id \nWHERE users.id LIKE $1 \nOR users.id IS NOT $2 \nAND orders.id IN ($3,$4) \nAND orders.id = $5 \nOR orders.id = $6 \nOR orders.id IN ($7,$8) \nORDER BY name ASC \nLIMIT 10 \nOFFSET 5`;
+
+      queryBuilder
+        .select('id,name,email,users.id,orders.id')
+        .join('user_id', 'users', 'id')
+        .join('user_id', 'orders', 'id', 'LEFT')
+        .where('users.id', 'LIKE', '%1%')
+        .orWhere('users.id', 'IS NOT', null)
+        .whereIn('orders.id', [2, 3])
+        .where('orders.id', '=', 4)
+        .orWhere('orders.id', '=', 5)
+        .orWhereIn('orders.id', [6, 7])
+        .orderBy('name', 'ASC')
+        .limit(10)
+        .offset(5);
 
       queryBuilder['buildSelectQuery']();
 

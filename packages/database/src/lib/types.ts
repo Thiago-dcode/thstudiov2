@@ -18,7 +18,7 @@ export type FullDatabaseConfig = DatabaseConfig & {
   settings: Required<DatabaseSettings>;
 };
 export type SqlValue = string | number | null | EnumType | Date | boolean;
-export type WhereOperator =
+export type SqlClause =
   | '='
   | '>'
   | '<'
@@ -41,7 +41,7 @@ export type SqlOperation =
   | 'having'
   | 'offset'
   | 'distinct';
-export type WhereOperatorWithoutIn = Exclude<WhereOperator, 'IN' | 'NOT IN'>;
+export type SqlClauseWithoutIn = Exclude<SqlClause, 'IN' | 'NOT IN'>;
 export type WhereType = 'where' | 'orWhere';
 
 // Base interface
@@ -53,7 +53,7 @@ export type BaseWhere = {
 // Regular WHERE condition
 export type WhereCondition = BaseWhere & {
   type: WhereType;
-  operator: WhereOperatorWithoutIn;
+  operator: SqlClauseWithoutIn;
 };
 
 // WHERE IN condition

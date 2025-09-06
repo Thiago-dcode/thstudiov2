@@ -2,8 +2,8 @@ import client, { Client } from '../client';
 import { ClientNotInitializedException } from '../client/exceptions';
 import {
   Where,
-  WhereOperator,
-  WhereOperatorWithoutIn,
+  SqlClause,
+  SqlClauseWithoutIn,
   Join,
   JoinType,
   WhereCondition,
@@ -89,6 +89,15 @@ export class QueryBuilder {
   
   /** Array of JOIN conditions */
   protected joins: Join[] = [];
+  
+  /** Limit for the query */
+  protected _limit: number = 0;
+
+  /** Offset for the query */
+  protected _offset: number = 0;
+  
+  /** Order by for the query */
+  protected _orderBy: string = '';
 
   // ============================================================================
   // CONSTRUCTOR
@@ -251,7 +260,7 @@ export class QueryBuilder {
    */
   public where(
     column: string,
-    operator: WhereOperatorWithoutIn,
+    operator: SqlClauseWithoutIn,
     value: SqlValue,
   ) {
     this.operationsChain.push('where');
@@ -278,7 +287,7 @@ export class QueryBuilder {
    *   .orWhere('role', '=', 'admin');
    * ```
    */
-  public orWhere(column: string, operator: WhereOperator, value: SqlValue) {
+  public orWhere(column: string, operator: SqlClauseWithoutIn, value: SqlValue) {
     this.operationsChain.push('where');
     this.values.push(value);
     if (this.wheres.length === 0) {
@@ -398,6 +407,26 @@ export class QueryBuilder {
    * Build the SELECT query string
    * @protected
    */
+
+  public  limit(limit: number) {
+    this.operationsChain.push('limit');
+    this._limit = limit;
+    return this;
+  }
+
+  public offset(offset: number) {
+    this.operationsChain.push('offset');
+    this._offset = offset;
+    return this;
+  }
+
+  public orderBy(column: string, order: 'ASC' | 'DESC' = 'ASC') {
+    this.operationsChain.push('orderBy');
+    this._orderBy = `${column} ${order}`;
+    return this;
+  }
+
+
   protected buildSelectQuery() {
     this.query = `SELECT ${this._select} FROM ${this.tableName}`;
     if (this.joins.length > 0) {
@@ -410,6 +439,16 @@ export class QueryBuilder {
 
     // Build WHERE clause
     this.query += this.buildWheresQuery(this.wheres);
+    if (this._orderBy) {
+      this.query += ` \nORDER BY ${this._orderBy}`;
+    }
+    if (this._limit) {
+      this.query += ` \nLIMIT ${this._limit}`;
+    }
+    if (this._offset) {
+      this.query += ` \nOFFSET ${this._offset}`;
+    }
+   
   }
 
   /**
