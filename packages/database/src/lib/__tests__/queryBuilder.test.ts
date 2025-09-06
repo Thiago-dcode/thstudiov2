@@ -1,4 +1,4 @@
-import { QueryBuilder } from '../queryBuilder';
+import { QueryBuilder } from '../builder/queryBuilder';
 import {
   DatabaseConfig,
   FullDatabaseConfig,
@@ -7,7 +7,7 @@ import {
 } from '../types';
 import { DEFAULT_DATABASE_SETTINGS } from '../constants';
 import { initClient } from '../client';
-import { QueryBuilderOperationNotAllowedException } from 'lib/queryBuilder/exceptions';
+import { QueryBuilderOperationNotAllowedException } from 'lib/builder/queryBuilder/exceptions';
 // Mock the client module
 jest.mock('../client', () => {
   let mockClient: any = null;
@@ -64,6 +64,7 @@ jest.mock('../client', () => {
     }),
   };
 });
+
 
 describe('QueryBuilder', () => {
   let mockClient: any;

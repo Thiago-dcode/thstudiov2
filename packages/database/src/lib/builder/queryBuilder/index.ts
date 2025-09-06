@@ -1,5 +1,6 @@
-import client, { Client } from '../client';
-import { ClientNotInitializedException } from '../client/exceptions';
+import BaseBuilder from '..';
+import client, { Client } from '../../client';
+import { ClientNotInitializedException } from '../../client/exceptions';
 import {
   Where,
   SqlClause,
@@ -10,7 +11,7 @@ import {
   WhereInCondition,
   SqlOperation,
   SqlValue,
-} from '../types';
+} from '../../types';
 import {
   QueryBuilderMethodChainedException,
   QueryBuilderOperationNotAllowedException,
@@ -61,13 +62,10 @@ import {
  *   .delete();
  * ```
  */
-export class QueryBuilder {
+export class QueryBuilder  extends BaseBuilder{
   // ============================================================================
   // PROTECTED PROPERTIES
   // ============================================================================
-  
-  /** Database client instance */
-  protected db: Client<any> | null = null;
   
   /** Chain of operations performed on this query builder */
   protected operationsChain: SqlOperation[] = [];
@@ -103,17 +101,9 @@ export class QueryBuilder {
   // CONSTRUCTOR
   // ============================================================================
   
-  /**
-   * Create a new QueryBuilder instance for the specified table
-   * @param tableName - The name of the table to query
-   * @throws {ClientNotInitializedException} When database client is not initialized
-   */
+ 
   constructor(protected readonly tableName: string) {
-    this.db = client;
-    if (!this.db) {
-      throw new ClientNotInitializedException();
-    }
-    this.db.connect();
+    super(tableName);
   }
 
   // ============================================================================
@@ -136,6 +126,9 @@ export class QueryBuilder {
     const result = await this.db?.query(this.query, this.values);
     this.reset();
     return result;
+  }
+  public static table(tableName: string) {
+    return new QueryBuilder(tableName);
   }
 
   /**
@@ -631,6 +624,9 @@ export class QueryBuilder {
     this.operationsChain = [];
     this.wheres = [];
     this.joins = [];
+    this._limit = 0;
+    this._offset = 0;
+    this._orderBy = '';
   }
 
   // ============================================================================

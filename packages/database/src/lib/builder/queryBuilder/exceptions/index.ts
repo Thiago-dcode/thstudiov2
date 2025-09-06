@@ -1,4 +1,4 @@
-import { DbException } from "../../exceptions";
+import { DbException } from "../../../exceptions";
 
 export class QueryBuilderException extends DbException {
   constructor(message: string) {
