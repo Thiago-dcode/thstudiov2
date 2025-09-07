@@ -7,20 +7,30 @@ import {
   InvalidDatabaseClientException,
 } from './exceptions';
 import { DEFAULT_DATABASE_SETTINGS } from '../constants';
+import { setMigrationConfig } from '../migration/config';
 export abstract class Client<T> {
   protected client: T | null = null;
+  private initialized: boolean = false;
+
   constructor(protected _config: FullDatabaseConfig) {
-    this.setup();
-    this.throwIfNotInitialized();
+    // Don't call setup() in constructor - it's async
+    // Setup will be called by initClient after construction
   }
+
   protected abstract setup(): Promise<void>;
   public abstract connect(): Promise<void>;
   public abstract disconnect(): Promise<void>;
   public abstract query(query: string, values?: any[]): Promise<any>;
+
   protected throwIfNotInitialized() {
-    if (!this.client) {
+    if (!this.initialized || !this.client) {
       throw new ClientNotInitializedException();
     }
+  }
+
+  public async initialize(): Promise<void> {
+    await this.setup();
+    this.initialized = true;
   }
   public set config(config: FullDatabaseConfig) {
     this._config = config;
@@ -88,7 +98,7 @@ export class PostgresClient extends Client<PgPool> {
 
 let client: Client<any> | null = null;
 let clientChoosen: DatabaseClient | null = null;
-export const initClient = (config: DatabaseConfig) => {
+export const initClient = async (config: DatabaseConfig) => {
   // Create a new config object with default settings merged
   const fullConfig: FullDatabaseConfig = {
     ...config,
@@ -97,10 +107,12 @@ export const initClient = (config: DatabaseConfig) => {
       ...config?.settings,
     },
   };
+  setMigrationConfig(fullConfig.settings);
   if (client && clientChoosen === fullConfig.client) {
     client.config = fullConfig;
     return client;
   }
+
   clientChoosen = fullConfig.client;
 
   switch (fullConfig.client) {
@@ -113,6 +125,8 @@ export const initClient = (config: DatabaseConfig) => {
     default:
       throw new InvalidDatabaseClientException();
   }
+  // Initialize the client after construction
+  await client.initialize();
   return client;
 };
 
@@ -124,4 +138,5 @@ export const killClient = async () => {
   clientChoosen = null;
 };
 
-export default client;
+// Export a getter function instead of the static client
+export const getClient = () => client;

@@ -29,7 +29,7 @@ jest.mock('../client', () => {
     get default() {
       return mockClient;
     },
-    initClient: jest.fn((config: DatabaseConfig) => {
+    initClient: jest.fn(async (config: DatabaseConfig) => {
       config.settings = {
         ...DEFAULT_DATABASE_SETTINGS,
         ...config?.settings,
@@ -55,9 +55,12 @@ jest.mock('../client', () => {
       }
       return mockClient;
     }),
+    getClient: jest.fn(() => {
+      return mockClient;
+    }),
     connect: jest.fn().mockResolvedValue(undefined),
     query: jest.fn().mockResolvedValue([]),
-    killClient: jest.fn(() => {
+    killClient: jest.fn(async () => {
       mockClient = null;
     }),
   };
@@ -68,7 +71,7 @@ describe('SchemaBuilder', () => {
   let testConfig: DatabaseConfig;
   const TABLE_NAME = 'test_table';
 
-  beforeEach(() => {
+  beforeEach(async () => {
     // Reset mocks
     jest.clearAllMocks();
 
@@ -84,14 +87,14 @@ describe('SchemaBuilder', () => {
 
     // Get the mocked client
     const { initClient } = require('../client');
-    initClient(testConfig);
+    await initClient(testConfig);
     mockClient = require('../client').default;
   });
 
   afterEach(async () => {
     // Clean up after each test
     const { killClient } = require('../client');
-    killClient();
+    await killClient();
   });
 
   describe('Static Methods', () => {
@@ -160,9 +163,9 @@ describe('SchemaBuilder', () => {
   describe('Create Method', () => {
     let schemaBuilder: SchemaBuilder;
 
-    beforeEach(() => {
+    beforeEach(async () => {
       const { initClient } = require('../client');
-      initClient(testConfig);
+      await initClient(testConfig);
       schemaBuilder = new SchemaBuilder(TABLE_NAME);
     });
 
@@ -389,9 +392,9 @@ describe('SchemaBuilder', () => {
   describe('buildCreateQuery Method', () => {
     let schemaBuilder: SchemaBuilder;
 
-    beforeEach(() => {
+    beforeEach(async () => {
       const { initClient } = require('../client');
-      initClient(testConfig);
+      await initClient(testConfig);
       schemaBuilder = new SchemaBuilder(TABLE_NAME);
     });
 
@@ -513,9 +516,9 @@ describe('SchemaBuilder', () => {
   describe('Reset Method', () => {
     let schemaBuilder: SchemaBuilder;
 
-    beforeEach(() => {
+    beforeEach(async () => {
       const { initClient } = require('../client');
-      initClient(testConfig);
+      await initClient(testConfig);
       schemaBuilder = new SchemaBuilder(TABLE_NAME);
     });
 
@@ -573,9 +576,9 @@ describe('SchemaBuilder', () => {
   describe('Integration Tests', () => {
     let schemaBuilder: SchemaBuilder;
 
-    beforeEach(() => {
+    beforeEach(async () => {
       const { initClient } = require('../client');
-      initClient(testConfig);
+      await initClient(testConfig);
       schemaBuilder = new SchemaBuilder(TABLE_NAME);
     });
 
@@ -644,14 +647,14 @@ describe('SchemaBuilder', () => {
       expect(schemaBuilder['columns']).toEqual(columns2);
     });
 
-    it('should work with different database clients', () => {
+    it('should work with different database clients', async () => {
       // Test PostgreSQL
       const postgresConfig = {
         ...testConfig,
         client: 'postgres' as const,
       };
       const { initClient } = require('../client');
-      initClient(postgresConfig);
+      await initClient(postgresConfig);
       const postgresBuilder = new SchemaBuilder(TABLE_NAME);
       const columns = ['id SERIAL PRIMARY KEY', 'name VARCHAR(255)'];
       postgresBuilder.create(columns);
@@ -665,7 +668,7 @@ describe('SchemaBuilder', () => {
         client: 'mysql' as const,
         port: 3306,
       };
-      initClient(mysqlConfig);
+      await initClient(mysqlConfig);
       const mysqlBuilder = new SchemaBuilder(TABLE_NAME);
       mysqlBuilder.create(columns);
       expect(mysqlBuilder['query']).toBe(
@@ -677,9 +680,9 @@ describe('SchemaBuilder', () => {
   describe('Edge Cases and Error Handling', () => {
     let schemaBuilder: SchemaBuilder;
 
-    beforeEach(() => {
+    beforeEach(async () => {
       const { initClient } = require('../client');
-      initClient(testConfig);
+      await initClient(testConfig);
       schemaBuilder = new SchemaBuilder(TABLE_NAME);
     });
 
@@ -779,9 +782,9 @@ describe('SchemaBuilder', () => {
   describe('Method Chaining and State Management', () => {
     let schemaBuilder: SchemaBuilder;
 
-    beforeEach(() => {
+    beforeEach(async () => {
       const { initClient } = require('../client');
-      initClient(testConfig);
+      await initClient(testConfig);
       schemaBuilder = new SchemaBuilder(TABLE_NAME);
     });
 

@@ -31,7 +31,7 @@ jest.mock('../client', () => {
     get default() {
       return mockClient;
     },
-    initClient: jest.fn((config: DatabaseConfig) => {
+    initClient: jest.fn(async (config: DatabaseConfig) => {
       config.settings = {
         ...DEFAULT_DATABASE_SETTINGS,
         ...config?.settings,
@@ -57,9 +57,12 @@ jest.mock('../client', () => {
       }
       return mockClient;
     }),
+    getClient: jest.fn(() => {
+      return mockClient;
+    }),
     connect: jest.fn().mockResolvedValue(undefined),
     query: jest.fn().mockResolvedValue([]),
-    killClient: jest.fn(() => {
+    killClient: jest.fn(async () => {
       mockClient = null;
     }),
   };
@@ -71,7 +74,7 @@ describe('QueryBuilder', () => {
   let testConfig: DatabaseConfig;
   const TABLE_NAME = 'test_table';
 
-  beforeEach(() => {
+  beforeEach(async () => {
     // Reset mocks
     jest.clearAllMocks();
 
@@ -87,14 +90,14 @@ describe('QueryBuilder', () => {
 
     // Get the mocked client
     const { initClient } = require('../client');
-    initClient(testConfig);
+    await initClient(testConfig);
     mockClient = require('../client').default;
   });
 
   afterEach(async () => {
     // Clean up after each test
     const { killClient } = require('../client');
-    killClient();
+    await killClient();
   });
 
   describe('Client Initialization', () => {
@@ -108,9 +111,9 @@ describe('QueryBuilder', () => {
   describe('Select', () => {
     let queryBuilder: QueryBuilder;
 
-    beforeEach(() => {
+    beforeEach(async () => {
       const { initClient } = require('../client');
-      initClient(testConfig);
+      await initClient(testConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
     });
 
@@ -276,9 +279,9 @@ describe('QueryBuilder', () => {
   describe('Where', () => {
     let queryBuilder: QueryBuilder;
 
-    beforeEach(() => {
+    beforeEach(async () => {
       const { initClient } = require('../client');
-      initClient(testConfig);
+      await initClient(testConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
     });
 
@@ -452,7 +455,7 @@ describe('QueryBuilder', () => {
     let postgresConfig: DatabaseConfig;
     let mysqlConfig: DatabaseConfig;
 
-    beforeEach(() => {
+    beforeEach(async () => {
       postgresConfig = {
         host: 'localhost',
         port: 5432,
@@ -470,12 +473,12 @@ describe('QueryBuilder', () => {
         database: 'testdb',
         client: 'mysql',
       };
-      initClient(postgresConfig);
+      await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
     });
 
-    it('should build WHERE query for PostgreSQL with correct parameter placeholder', () => {
-      initClient(postgresConfig);
+    it('should build WHERE query for PostgreSQL with correct parameter placeholder', async () => {
+      await initClient(postgresConfig);
       // Arrange
       const where: WhereCondition = {
         column: 'id',
@@ -491,8 +494,8 @@ describe('QueryBuilder', () => {
       expect(result).toBe(`${TABLE_NAME}.id = $1`);
     });
 
-    it('should build WHERE query for MySQL with correct parameter placeholder', () => {
-      initClient(mysqlConfig);
+    it('should build WHERE query for MySQL with correct parameter placeholder', async () => {
+      await initClient(mysqlConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
       // Arrange
       const where: WhereCondition = {
@@ -509,9 +512,9 @@ describe('QueryBuilder', () => {
       expect(result).toBe(`${TABLE_NAME}.name > ?`);
     });
 
-    it('should build WHERE query with table-qualified column names for both databases', () => {
+    it('should build WHERE query with table-qualified column names for both databases', async () => {
       // Test PostgreSQL
-      initClient(postgresConfig);
+      await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
       const wherePostgres: WhereCondition = {
         column: 'users.id',
@@ -524,7 +527,7 @@ describe('QueryBuilder', () => {
       );
 
       // Test MySQL
-      initClient(mysqlConfig);
+      await initClient(mysqlConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
       const whereMysql: WhereCondition = {
         column: 'orders.status',
@@ -537,7 +540,7 @@ describe('QueryBuilder', () => {
       );
     });
 
-    it('should handle all operators correctly for both databases', () => {
+    it('should handle all operators correctly for both databases', async () => {
       const operators: Array<SqlClauseWithoutIn> = [
         '=',
         '>',
@@ -551,7 +554,7 @@ describe('QueryBuilder', () => {
       ];
 
       // Test PostgreSQL
-      initClient(postgresConfig);
+      await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
       operators.forEach((operator, index) => {
         const where: WhereCondition = {
@@ -565,7 +568,7 @@ describe('QueryBuilder', () => {
       });
 
       // Test MySQL
-      initClient(mysqlConfig);
+      await initClient(mysqlConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
       operators.forEach((operator) => {
         const where: WhereCondition = {
@@ -608,7 +611,7 @@ describe('QueryBuilder', () => {
     let queryBuilder: QueryBuilder;
     let postgresConfig: DatabaseConfig;
 
-    beforeEach(() => {
+    beforeEach(async () => {
       postgresConfig = {
         host: 'localhost',
         port: 5432,
@@ -617,7 +620,7 @@ describe('QueryBuilder', () => {
         database: 'testdb',
         client: 'postgres',
       };
-      initClient(postgresConfig);
+      await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
     });
 
@@ -665,8 +668,8 @@ describe('QueryBuilder', () => {
       expect(queryBuilder['query']).toBe(targetQuery);
     });
 
-    it('should build complex SELECT query with joins, columns, and WHERE conditions', () => {
-      initClient(postgresConfig);
+    it('should build complex SELECT query with joins, columns, and WHERE conditions', async () => {
+      await initClient(postgresConfig);
       const targetQuery = `SELECT ${TABLE_NAME}.id,${TABLE_NAME}.name,${TABLE_NAME}.email,users.id,orders.id FROM ${TABLE_NAME} \nINNER JOIN users ON users.id = ${TABLE_NAME}.user_id \nLEFT JOIN orders ON orders.id = ${TABLE_NAME}.user_id \nWHERE users.id LIKE $1 \nOR users.id IS NOT $2 \nAND orders.id IN ($3,$4) \nAND orders.id = $5 \nOR orders.id = $6 \nOR orders.id IN ($7,$8)`;
 
       // Arrange
@@ -789,8 +792,8 @@ describe('QueryBuilder', () => {
       };
     });
 
-    it('should set INSERT query for PostgreSQL with correct parameter placeholders', () => {
-      initClient(postgresConfig);
+    it('should set INSERT query for PostgreSQL with correct parameter placeholders', async () => {
+      await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       const columns = ['name', 'email', 'age'];
@@ -803,8 +806,8 @@ describe('QueryBuilder', () => {
       );
     });
 
-    it('should set INSERT query for MySQL with correct parameter placeholders', () => {
-      initClient(mysqlConfig);
+    it('should set INSERT query for MySQL with correct parameter placeholders', async () => {
+      await initClient(mysqlConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       const columns = ['name', 'email', 'age'];
@@ -817,8 +820,8 @@ describe('QueryBuilder', () => {
       );
     });
 
-    it('should handle single column and value', () => {
-      initClient(postgresConfig);
+    it('should handle single column and value', async () => {
+      await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       const columns = ['name'];
@@ -831,8 +834,8 @@ describe('QueryBuilder', () => {
       );
     });
 
-    it('should handle various data types in values', () => {
-      initClient(postgresConfig);
+    it('should handle various data types in values', async () => {
+      await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       const columns = ['name', 'age', 'active', 'created_at', 'score'];
@@ -845,8 +848,8 @@ describe('QueryBuilder', () => {
       );
     });
 
-    it('should handle null values', () => {
-      initClient(mysqlConfig);
+    it('should handle null values', async () => {
+      await initClient(mysqlConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       const columns = ['name', 'email', 'phone'];
@@ -859,8 +862,8 @@ describe('QueryBuilder', () => {
       );
     });
 
-    it('should handle empty strings and special characters', () => {
-      initClient(postgresConfig);
+    it('should handle empty strings and special characters', async () => {
+      await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       const columns = ['name', 'description', 'code'];
@@ -873,8 +876,8 @@ describe('QueryBuilder', () => {
       );
     });
 
-    it('should handle table-qualified column names', () => {
-      initClient(postgresConfig);
+    it('should handle table-qualified column names', async () => {
+      await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       const columns = ['users.name', 'users.email', 'orders.status'];
@@ -887,8 +890,8 @@ describe('QueryBuilder', () => {
       );
     });
 
-    it('should throw error when columns and values length mismatch', () => {
-      initClient(postgresConfig);
+    it('should throw error when columns and values length mismatch', async () => {
+      await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       const columns = ['name', 'email'];
@@ -899,8 +902,8 @@ describe('QueryBuilder', () => {
       );
     });
 
-    it('should throw error when values length exceeds columns length', () => {
-      initClient(mysqlConfig);
+    it('should throw error when values length exceeds columns length', async () => {
+      await initClient(mysqlConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       const columns = ['name'];
@@ -911,8 +914,8 @@ describe('QueryBuilder', () => {
       );
     });
 
-    it('should throw error when incompatible operations exist before insert', () => {
-      initClient(postgresConfig);
+    it('should throw error when incompatible operations exist before insert', async () => {
+      await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       // Add incompatible operations
@@ -928,8 +931,8 @@ describe('QueryBuilder', () => {
       );
     });
 
-    it('should allow insert when no operations exist', () => {
-      initClient(postgresConfig);
+    it('should allow insert when no operations exist', async () => {
+      await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       const columns = ['name'];
@@ -943,8 +946,8 @@ describe('QueryBuilder', () => {
       );
     });
 
-    it('should handle large number of columns and values', () => {
-      initClient(postgresConfig);
+    it('should handle large number of columns and values', async () => {
+      await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       const columns = Array.from({ length: 10 }, (_, i) => `col${i + 1}`);
@@ -958,8 +961,8 @@ describe('QueryBuilder', () => {
       expect(queryBuilder['query']).toContain('$1,$2,$3,$4,$5,$6,$7,$8,$9,$10');
     });
 
-    it('should handle empty columns and values arrays', () => {
-      initClient(mysqlConfig);
+    it('should handle empty columns and values arrays', async () => {
+      await initClient(mysqlConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       const columns: string[] = [];
@@ -998,8 +1001,8 @@ describe('QueryBuilder', () => {
       };
     });
 
-    it('should set UPDATE query for PostgreSQL with correct parameter placeholders', () => {
-      initClient(postgresConfig);
+    it('should set UPDATE query for PostgreSQL with correct parameter placeholders', async () => {
+      await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       const columns = ['name', 'email', 'age'];
@@ -1013,8 +1016,8 @@ describe('QueryBuilder', () => {
       );
     });
 
-    it('should set UPDATE query for MySQL with correct parameter placeholders', () => {
-      initClient(mysqlConfig);
+    it('should set UPDATE query for MySQL with correct parameter placeholders', async () => {
+      await initClient(mysqlConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       const columns = ['name', 'email', 'age'];
@@ -1028,8 +1031,8 @@ describe('QueryBuilder', () => {
       );
     });
 
-    it('should handle single column and value update', () => {
-      initClient(postgresConfig);
+    it('should handle single column and value update', async () => {
+      await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       const columns = ['name'];
@@ -1043,8 +1046,8 @@ describe('QueryBuilder', () => {
       );
     });
 
-    it('should handle various data types in values', () => {
-      initClient(postgresConfig);
+    it('should handle various data types in values', async () => {
+      await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       const columns = ['name', 'age', 'active', 'created_at', 'score'];
@@ -1058,8 +1061,8 @@ describe('QueryBuilder', () => {
       );
     });
 
-    it('should handle null values', () => {
-      initClient(mysqlConfig);
+    it('should handle null values', async () => {
+      await initClient(mysqlConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       const columns = ['name', 'email', 'phone'];
@@ -1073,8 +1076,8 @@ describe('QueryBuilder', () => {
       );
     });
 
-    it('should handle empty strings and special characters', () => {
-      initClient(postgresConfig);
+    it('should handle empty strings and special characters', async () => {
+      await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       const columns = ['name', 'description', 'code'];
@@ -1088,8 +1091,8 @@ describe('QueryBuilder', () => {
       );
     });
 
-    it('should handle table-qualified column names', () => {
-      initClient(postgresConfig);
+    it('should handle table-qualified column names', async () => {
+      await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       const columns = ['users.name', 'users.email', 'orders.status'];
@@ -1103,8 +1106,8 @@ describe('QueryBuilder', () => {
       );
     });
 
-    it('should handle multiple WHERE conditions', () => {
-      initClient(postgresConfig);
+    it('should handle multiple WHERE conditions', async () => {
+      await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       const columns = ['name', 'email'];
@@ -1120,8 +1123,8 @@ describe('QueryBuilder', () => {
       );
     });
 
-    it('should throw error when columns and values length mismatch', () => {
-      initClient(postgresConfig);
+    it('should throw error when columns and values length mismatch', async () => {
+      await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       const columns = ['name', 'email'];
@@ -1134,8 +1137,8 @@ describe('QueryBuilder', () => {
       );
     });
 
-    it('should throw error when values length exceeds columns length', () => {
-      initClient(mysqlConfig);
+    it('should throw error when values length exceeds columns length', async () => {
+      await initClient(mysqlConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       const columns = ['name'];
@@ -1148,8 +1151,8 @@ describe('QueryBuilder', () => {
       );
     });
 
-    it('should throw error when incompatible operations exist before update', () => {
-      initClient(postgresConfig);
+    it('should throw error when incompatible operations exist before update', async () => {
+      await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       // Add incompatible operations
@@ -1164,8 +1167,8 @@ describe('QueryBuilder', () => {
       );
     });
 
-    it('should allow update when only where operations exist', () => {
-      initClient(postgresConfig);
+    it('should allow update when only where operations exist', async () => {
+      await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       const columns = ['name'];
@@ -1182,8 +1185,8 @@ describe('QueryBuilder', () => {
       );
     });
 
-    it('should throw error when no WHERE clause exists and allowUpdateWithoutWhere is false', () => {
-      initClient(postgresConfig);
+    it('should throw error when no WHERE clause exists and allowUpdateWithoutWhere is false', async () => {
+      await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       const columns = ['name'];
@@ -1194,13 +1197,13 @@ describe('QueryBuilder', () => {
       );
     });
 
-    it('should allow update without WHERE when allowUpdateWithoutWhere is true', () => {
+    it('should allow update without WHERE when allowUpdateWithoutWhere is true', async () => {
       const configWithAllowUpdate = {
         ...postgresConfig,
         settings: { allowUpdateWithoutWhere: true },
       };
 
-      initClient(configWithAllowUpdate);
+      await initClient(configWithAllowUpdate);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       const columns = ['name'];
@@ -1212,8 +1215,8 @@ describe('QueryBuilder', () => {
       expect(queryBuilder['query']).toBe(`UPDATE ${TABLE_NAME} SET name = $1`);
     });
 
-    it('should handle large number of columns and values', () => {
-      initClient(postgresConfig);
+    it('should handle large number of columns and values', async () => {
+      await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       const columns = Array.from({ length: 5 }, (_, i) => `col${i + 1}`);
@@ -1228,8 +1231,8 @@ describe('QueryBuilder', () => {
       expect(queryBuilder['query']).toContain('WHERE');
     });
 
-    it('should handle empty columns and values arrays', () => {
-      initClient(mysqlConfig);
+    it('should handle empty columns and values arrays', async () => {
+      await initClient(mysqlConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       const columns: string[] = [];
@@ -1269,8 +1272,8 @@ describe('QueryBuilder', () => {
       };
     });
 
-    it('should build DELETE query for PostgreSQL with WHERE clause', () => {
-      initClient(postgresConfig);
+    it('should build DELETE query for PostgreSQL with WHERE clause', async () => {
+      await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       queryBuilder.where('id', '=', 1);
@@ -1281,8 +1284,8 @@ describe('QueryBuilder', () => {
       );
     });
 
-    it('should build DELETE query for MySQL with WHERE clause', () => {
-      initClient(mysqlConfig);
+    it('should build DELETE query for MySQL with WHERE clause', async () => {
+      await initClient(mysqlConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       queryBuilder.where('id', '=', 1);
@@ -1293,8 +1296,8 @@ describe('QueryBuilder', () => {
       );
     });
 
-    it('should build DELETE query with multiple WHERE conditions', () => {
-      initClient(postgresConfig);
+    it('should build DELETE query with multiple WHERE conditions', async () => {
+      await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       queryBuilder.where('id', '=', 1);
@@ -1307,8 +1310,8 @@ describe('QueryBuilder', () => {
       );
     });
 
-    it('should build DELETE query with complex WHERE conditions', () => {
-      initClient(postgresConfig);
+    it('should build DELETE query with complex WHERE conditions', async () => {
+      await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       queryBuilder.where('age', '>', 18);
@@ -1324,8 +1327,8 @@ describe('QueryBuilder', () => {
       );
     });
 
-    it('should build DELETE query with table-qualified column names', () => {
-      initClient(postgresConfig);
+    it('should build DELETE query with table-qualified column names', async () => {
+      await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       queryBuilder.where('users.id', '=', 123);
@@ -1338,8 +1341,8 @@ describe('QueryBuilder', () => {
       );
     });
 
-    it('should build DELETE query with various operators', () => {
-      initClient(mysqlConfig);
+    it('should build DELETE query with various operators', async () => {
+      await initClient(mysqlConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       queryBuilder.where('id', '>', 0);
@@ -1354,8 +1357,8 @@ describe('QueryBuilder', () => {
       );
     });
 
-    it('should build DELETE query with null and special values', () => {
-      initClient(postgresConfig);
+    it('should build DELETE query with null and special values', async () => {
+      await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       queryBuilder.where('deleted_at', 'IS', null);
@@ -1369,8 +1372,8 @@ describe('QueryBuilder', () => {
       );
     });
 
-    it('should throw error when incompatible operations exist before delete', () => {
-      initClient(postgresConfig);
+    it('should throw error when incompatible operations exist before delete', async () => {
+      await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       // Add incompatible operations
@@ -1382,8 +1385,8 @@ describe('QueryBuilder', () => {
       );
     });
 
-    it('should allow delete when only where operations exist', () => {
-      initClient(postgresConfig);
+    it('should allow delete when only where operations exist', async () => {
+      await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       queryBuilder.where('id', '=', 1);
@@ -1395,8 +1398,8 @@ describe('QueryBuilder', () => {
       );
     });
 
-    it('should throw error when no WHERE clause exists and allowDeleteWithoutWhere is false', () => {
-      initClient(postgresConfig);
+    it('should throw error when no WHERE clause exists and allowDeleteWithoutWhere is false', async () => {
+      await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       expect(() => queryBuilder['buildDeleteQuery']()).toThrow(
@@ -1404,26 +1407,26 @@ describe('QueryBuilder', () => {
       );
     });
 
-    it('should allow delete without WHERE when allowDeleteWithoutWhere is true', () => {
+    it('should allow delete without WHERE when allowDeleteWithoutWhere is true', async () => {
       const configWithAllowDelete = {
         ...postgresConfig,
         settings: { allowDeleteWithoutWhere: true },
       };
 
-      initClient(configWithAllowDelete);
+      await initClient(configWithAllowDelete);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       expect(() => queryBuilder['buildDeleteQuery']()).not.toThrow();
       expect(queryBuilder['query']).toBe(`DELETE FROM ${TABLE_NAME}`);
     });
 
-    it('should handle empty WHERE conditions when allowDeleteWithoutWhere is true', () => {
+    it('should handle empty WHERE conditions when allowDeleteWithoutWhere is true', async () => {
       const configWithAllowDelete = {
         ...mysqlConfig,
         settings: { allowDeleteWithoutWhere: true },
       };
 
-      initClient(configWithAllowDelete);
+      await initClient(configWithAllowDelete);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       queryBuilder['buildDeleteQuery']();
@@ -1431,8 +1434,8 @@ describe('QueryBuilder', () => {
       expect(queryBuilder['query']).toBe(`DELETE FROM ${TABLE_NAME}`);
     });
 
-    it('should handle complex WHERE conditions with mixed data types', () => {
-      initClient(postgresConfig);
+    it('should handle complex WHERE conditions with mixed data types', async () => {
+      await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       queryBuilder.where('id', '=', 1);
@@ -1449,8 +1452,8 @@ describe('QueryBuilder', () => {
       );
     });
 
-    it('should handle WHERE IN and OR WHERE IN conditions', () => {
-      initClient(mysqlConfig);
+    it('should handle WHERE IN and OR WHERE IN conditions', async () => {
+      await initClient(mysqlConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
       queryBuilder.whereIn('status', ['active', 'pending', 'review']);
       queryBuilder.where('id', '=', 1);
@@ -1462,8 +1465,8 @@ describe('QueryBuilder', () => {
       );
     });
 
-    it('should handle single WHERE condition', () => {
-      initClient(postgresConfig);
+    it('should handle single WHERE condition', async () => {
+      await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       queryBuilder.where('status', '=', 'deleted');
@@ -1474,8 +1477,8 @@ describe('QueryBuilder', () => {
       );
     });
 
-    it('should handle single OR WHERE condition (converted to WHERE)', () => {
-      initClient(postgresConfig);
+    it('should handle single OR WHERE condition (converted to WHERE)', async () => {
+      await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       queryBuilder.orWhere('status', '=', 'deleted');
@@ -1486,8 +1489,8 @@ describe('QueryBuilder', () => {
       );
     });
 
-    it('should handle large number of WHERE conditions', () => {
-      initClient(postgresConfig);
+    it('should handle large number of WHERE conditions', async () => {
+      await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       // Add multiple WHERE conditions
@@ -1503,8 +1506,8 @@ describe('QueryBuilder', () => {
       expect(queryBuilder['query']).toContain('$5');
     });
 
-    it('should handle WHERE conditions with special characters in values', () => {
-      initClient(mysqlConfig);
+    it('should handle WHERE conditions with special characters in values', async () => {
+      await initClient(mysqlConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       queryBuilder.where('name', 'LIKE', '%Special chars: !@#$%^&*()%');

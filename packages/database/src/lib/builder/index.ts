@@ -1,5 +1,5 @@
-import { ClientNotInitializedException } from 'lib/client/exceptions';
-import client, { Client } from 'lib/client';
+import { ClientNotInitializedException } from '../client/exceptions';
+import { getClient, Client } from '../client';
 
 abstract class BaseBuilder {
   /** The built SQL query string */
@@ -17,7 +17,8 @@ abstract class BaseBuilder {
    * @throws {ClientNotInitializedException} When database client is not initialized
    */
   constructor(protected readonly tableName: string) {
-    this.db = client;
+    this.db = getClient(); // Use the getter function
+    console.log("this.db", this.db);
     if (!this.db) {
       throw new ClientNotInitializedException();
     }

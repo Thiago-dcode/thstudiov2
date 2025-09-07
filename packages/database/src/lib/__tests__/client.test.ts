@@ -19,7 +19,7 @@ jest.mock('pg', () => ({
 }));
 
 // Now import after mocking
-const { MysqlClient, PostgresClient, initClient, Client, killClient } = require('../client');
+import { MysqlClient, PostgresClient, initClient, Client, killClient } from '../client';
 
 describe('Client Initialization', () => {
   const mysqlConfig: DatabaseConfig = {
@@ -40,45 +40,45 @@ describe('Client Initialization', () => {
     database: 'test',
   };
 
-  beforeEach(() => {
+  beforeEach(async () => {
     // Clear any existing client instance
     jest.resetModules();
     // Reset the module to clear the singleton
-    killClient();
+    await killClient();
   });
 
   describe('initClient function', () => {
-    it('should create a MySQL client when mysql is specified', () => {
-      const client = initClient(mysqlConfig);
+    it('should create a MySQL client when mysql is specified', async () => {
+      const client = await initClient(mysqlConfig);
       expect(client).toBeInstanceOf(MysqlClient);
     });
 
-    it('should create a PostgreSQL client when postgres is specified', () => {
-      const client = initClient(postgresConfig);
+    it('should create a PostgreSQL client when postgres is specified', async () => {
+      const client = await initClient(postgresConfig);
       expect(client).toBeInstanceOf(PostgresClient);
     });
 
-    it('should throw an error for invalid client type', () => {
+    it('should throw an error for invalid client type', async () => {
       const invalidConfig: DatabaseConfig = {
         ...mysqlConfig,
         client: 'invalid' as any,
       };
       
-      expect(() => {
-        return initClient(invalidConfig)
-      }).toThrow(InvalidDatabaseClientException);
+      await expect(async () => {
+        return await initClient(invalidConfig)
+      }).rejects.toThrow(InvalidDatabaseClientException);
     });
 
-    it('should return the same client instance on subsequent calls (singleton pattern)', () => {
-      const client1 = initClient(mysqlConfig);
-      const client2 = initClient(mysqlConfig);
+    it('should return the same client instance on subsequent calls (singleton pattern)', async () => {
+      const client1 = await initClient(mysqlConfig);
+      const client2 = await initClient(mysqlConfig);
       
       expect(client1).toBe(client2);
     });
 
-    it('should return a new client instance when is called with different config', () => {
-      const client1 = initClient(mysqlConfig);
-      const client2 = initClient(postgresConfig);
+    it('should return a new client instance when is called with different config', async () => {
+      const client1 = await initClient(mysqlConfig);
+      const client2 = await initClient(postgresConfig);
       
       expect(client1).not.toBe(client2);
       expect(client1).toBeInstanceOf(MysqlClient); 
@@ -87,19 +87,28 @@ describe('Client Initialization', () => {
   });
 
   describe('MysqlClient', () => {
+    const fullMysqlConfig = {
+      ...mysqlConfig,
+      settings: {
+        allowUpdateWithoutWhere: false,
+        allowDeleteWithoutWhere: false,
+        migrationsDirectory: 'migrations',
+      },
+    };
+
     it('should be defined and instantiable', () => {
-      const client = new MysqlClient(mysqlConfig);
+      const client = new MysqlClient(fullMysqlConfig);
       expect(client).toBeDefined();
       expect(client).toBeInstanceOf(MysqlClient);
     });
 
     it('should have correct configuration', () => {
-      const client = new MysqlClient(mysqlConfig);
+      const client = new MysqlClient(fullMysqlConfig);
       expect(client).toBeInstanceOf(Client);
     });
 
     it('should implement required abstract methods', () => {
-      const client = new MysqlClient(mysqlConfig);
+      const client = new MysqlClient(fullMysqlConfig);
       expect(typeof client.connect).toBe('function');
       expect(typeof client.disconnect).toBe('function');
       expect(typeof client.query).toBe('function');
@@ -107,19 +116,28 @@ describe('Client Initialization', () => {
   });
 
   describe('PostgresClient', () => {
+    const fullPostgresConfig = {
+      ...postgresConfig,
+      settings: {
+        allowUpdateWithoutWhere: false,
+        allowDeleteWithoutWhere: false,
+        migrationsDirectory: 'migrations',
+      },
+    };
+
     it('should be defined and instantiable', () => {
-      const client = new PostgresClient(postgresConfig);
+      const client = new PostgresClient(fullPostgresConfig);
       expect(client).toBeDefined();
       expect(client).toBeInstanceOf(PostgresClient);
     });
 
     it('should have correct configuration', () => {
-      const client = new PostgresClient(postgresConfig);
+      const client = new PostgresClient(fullPostgresConfig);
       expect(client).toBeInstanceOf(Client);
     });
 
     it('should implement required abstract methods', () => {
-      const client = new PostgresClient(postgresConfig);
+      const client = new PostgresClient(fullPostgresConfig);
       expect(typeof client.connect).toBe('function');
       expect(typeof client.disconnect).toBe('function');
       expect(typeof client.query).toBe('function');
@@ -136,20 +154,21 @@ describe('Client Initialization', () => {
       database: 'test',
     };
 
-    beforeEach(() => {
+    beforeEach(async () => {
       jest.resetModules();
-      killClient();
+      await killClient();
     });
 
-    it('should use default settings when no settings are provided', () => {
-      const client = initClient(baseMysqlConfig);
+    it('should use default settings when no settings are provided', async () => {
+      const client = await initClient(baseMysqlConfig);
       expect(client.config.settings).toEqual({
         allowUpdateWithoutWhere: false,
         allowDeleteWithoutWhere: false,
+        migrationsDirectory: expect.any(String),
       });
     });
 
-    it('should merge partial settings with default settings', () => {
+    it('should merge partial settings with default settings', async () => {
       const configWithPartialSettings: DatabaseConfig = {
         ...baseMysqlConfig,
         settings: {
@@ -157,43 +176,47 @@ describe('Client Initialization', () => {
         },
       };
       
-      const client = initClient(configWithPartialSettings);
+      const client = await initClient(configWithPartialSettings);
       expect(client.config.settings).toEqual({
         allowUpdateWithoutWhere: true,
         allowDeleteWithoutWhere: false, // Should use default value
+        migrationsDirectory: expect.any(String),
       });
     });
 
-    it('should use provided settings when all settings are provided', () => {
+    it('should use provided settings when all settings are provided', async () => {
       const configWithFullSettings: DatabaseConfig = {
         ...baseMysqlConfig,
         settings: {
           allowUpdateWithoutWhere: true,
           allowDeleteWithoutWhere: true,
+          migrationsDirectory: 'custom-migrations',
         },
       };
       
-      const client = initClient(configWithFullSettings);
+      const client = await initClient(configWithFullSettings);
       expect(client.config.settings).toEqual({
         allowUpdateWithoutWhere: true,
         allowDeleteWithoutWhere: true,
+        migrationsDirectory: 'custom-migrations',
       });
     });
 
-    it('should handle empty settings object', () => {
+    it('should handle empty settings object', async () => {
       const configWithEmptySettings: DatabaseConfig = {
         ...baseMysqlConfig,
         settings: {},
       };
       
-      const client = initClient(configWithEmptySettings);
+      const client = await initClient(configWithEmptySettings);
       expect(client.config.settings).toEqual({
         allowUpdateWithoutWhere: false,
         allowDeleteWithoutWhere: false,
+        migrationsDirectory: expect.any(String),
       });
     });
 
-    it('should maintain settings consistency across multiple client initializations with same config', () => {
+    it('should maintain settings consistency across multiple client initializations with same config', async () => {
       const configWithSettings: DatabaseConfig = {
         ...baseMysqlConfig,
         settings: {
@@ -201,14 +224,14 @@ describe('Client Initialization', () => {
         },
       };
       
-      const client1 = initClient(configWithSettings);
-      const client2 = initClient(configWithSettings);
+      const client1 = await initClient(configWithSettings);
+      const client2 = await initClient(configWithSettings);
       
       expect(client1.config.settings).toEqual(client2.config.settings);
       expect(client1).toBe(client2); // Should be same instance due to singleton
     });
 
-    it('should handle settings correctly when switching between different client types', () => {
+    it('should handle settings correctly when switching between different client types', async () => {
       const mysqlConfigWithSettings: DatabaseConfig = {
         ...baseMysqlConfig,
         settings: {
@@ -228,17 +251,19 @@ describe('Client Initialization', () => {
         },
       };
       
-      const mysqlClient = initClient(mysqlConfigWithSettings);
-      const postgresClient = initClient(postgresConfigWithSettings);
+      const mysqlClient = await initClient(mysqlConfigWithSettings);
+      const postgresClient = await initClient(postgresConfigWithSettings);
       
       expect(mysqlClient.config.settings).toEqual({
         allowUpdateWithoutWhere: true,
         allowDeleteWithoutWhere: false,
+        migrationsDirectory: expect.any(String),
       });
       
       expect(postgresClient.config.settings).toEqual({
         allowUpdateWithoutWhere: false,
         allowDeleteWithoutWhere: true,
+        migrationsDirectory: expect.any(String),
       });
     });
   });

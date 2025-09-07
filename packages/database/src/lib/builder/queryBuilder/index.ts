@@ -1,5 +1,5 @@
 import BaseBuilder from '..';
-import client, { Client } from '../../client';
+import getClient, { Client } from '../../client';
 import { ClientNotInitializedException } from '../../client/exceptions';
 import {
   Where,
@@ -70,8 +70,6 @@ export class QueryBuilder  extends BaseBuilder{
   /** Chain of operations performed on this query builder */
   protected operationsChain: SqlOperation[] = [];
   
-  /** The built SQL query string */
-  protected query: string = '';
   
   /** Current position in the values array for parameter binding */
   protected valuesPosition: number = 0;
@@ -127,6 +125,7 @@ export class QueryBuilder  extends BaseBuilder{
     this.reset();
     return result;
   }
+ 
   public static table(tableName: string) {
     return new QueryBuilder(tableName);
   }

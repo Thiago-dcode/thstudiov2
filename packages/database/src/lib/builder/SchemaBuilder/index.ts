@@ -1,4 +1,3 @@
-import { Client } from 'lib/client';
 import BaseBuilder from '..';
 
 class SchemaBuilder extends BaseBuilder {
@@ -8,10 +7,19 @@ class SchemaBuilder extends BaseBuilder {
     return new SchemaBuilder(tableName);
   }
 
-  public create(columns?: string[]) {
+  public async create(columns?: string[]) {
     this.columns = columns || [];
     this.buildCreateQuery();
     return this.db?.query(this.query);
+  }
+  public async drop() {
+    this.query = `DROP TABLE ${this.tableName}`;
+    return this.db?.query(this.query);
+  }
+  public async exists():Promise<boolean> {
+    this.query = `SELECT EXISTS (SELECT 1 FROM ${this.tableName})`;
+    const result = await this.db?.query(this.query).then((res) => res.rows[0].exists);
+    return result;
   }
 
   protected buildCreateQuery() {

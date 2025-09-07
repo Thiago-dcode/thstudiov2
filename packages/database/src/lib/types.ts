@@ -4,6 +4,7 @@ export type DatabaseClient = 'postgres' | 'mysql' | 'sqlite' | 'mongodb';
 export type DatabaseSettings = {
   allowUpdateWithoutWhere: boolean;
   allowDeleteWithoutWhere: boolean;
+  migrationsDirectory: string;
 };
 export type DatabaseConfig = {
   client: DatabaseClient;
