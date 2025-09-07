@@ -1,5 +1,4 @@
 import BaseBuilder from '..';
-
 class SchemaBuilder extends BaseBuilder {
   protected columns: string[] = [];
 
@@ -12,20 +11,23 @@ class SchemaBuilder extends BaseBuilder {
     this.buildCreateQuery();
     return this.db?.query(this.query);
   }
+  
   public async drop() {
     this.query = `DROP TABLE ${this.tableName}`;
     return this.db?.query(this.query);
   }
-  public async exists():Promise<boolean> {
-    this.query = `SELECT EXISTS (SELECT 1 FROM ${this.tableName})`;
-    const result = await this.db?.query(this.query).then((res) => res.rows[0].exists);
-    return result;
+  public async exists(): Promise<boolean> {
+    try {
+      this.query = `SELECT 1 FROM ${this.tableName} LIMIT 1`;
+      const result = await this.db?.query(this.query);
+      return !!result;
+    } catch (error) {
+      return false;
+    }
   }
 
   protected buildCreateQuery() {
-    this.query = `CREATE TABLE ${this.tableName} (${this.columns.join(',')}`;
-
-    this.query += `);`;
+    this.query = `CREATE TABLE ${this.tableName} (${this.columns.length > 0 ? '\n' + this.columns.join(',\n') : ''}\n);`;
   }
 
   protected reset() {

@@ -1,6 +1,6 @@
 const TABLE_NAME = 'table_name';
-const up = () => {};
+const up =async () => {};
 
-const down = () => {};
+const down =async () => {};
 
 export { up, down };

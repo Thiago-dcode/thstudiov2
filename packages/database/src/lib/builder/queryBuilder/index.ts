@@ -1,6 +1,4 @@
 import BaseBuilder from '..';
-import getClient, { Client } from '../../client';
-import { ClientNotInitializedException } from '../../client/exceptions';
 import {
   Where,
   SqlClause,
@@ -22,84 +20,81 @@ import {
 
 /**
  * QueryBuilder class for building and executing SQL queries
- * 
+ *
  * This class provides a fluent interface for building SQL queries with support for:
  * - SELECT operations with joins and WHERE clauses
  * - INSERT operations
  * - UPDATE operations with WHERE clauses
  * - DELETE operations with WHERE clauses
  * - Raw SQL execution
- * 
+ *
  * The QueryBuilder automatically handles parameter binding and database-specific syntax
  * for PostgreSQL and MySQL databases.
- * 
+ *
  * @example
  * ```ts
  * // Initialize the database client first
  * init({ host: 'localhost', port: 5432, username: 'user', password: 'pass', database: 'db', client: 'postgres' });
- * 
+ *
  * // Create a query builder instance
  * const queryBuilder = new QueryBuilder('users');
- * 
+ *
  * // Build and execute a SELECT query(order matters)
  * const users = await queryBuilder
  *   .select(['id', 'name', 'email'])
  *   .where('status', '=', 'active')
  *   .join('department_id', 'departments', 'id')
  *   .get();
- * 
+ *
  * // Execute an INSERT query
  * queryBuilder.insert(['name', 'email'], ['John Doe', 'john@example.com']);
- * 
+ *
  * // Execute an UPDATE query
  * queryBuilder
  *   .where('id', '=', 1)
  *   .update(['name'], ['Jane Doe']);
- * 
+ *
  * // Execute a DELETE query
  * queryBuilder
  *   .where('status', '=', 'inactive')
  *   .delete();
  * ```
  */
-export class QueryBuilder  extends BaseBuilder{
+export class QueryBuilder extends BaseBuilder {
   // ============================================================================
   // PROTECTED PROPERTIES
   // ============================================================================
-  
-  /** Chain of operations performed on this query builder */
-  protected operationsChain: SqlOperation[] = [];
-  
-  
+
+
+
   /** Current position in the values array for parameter binding */
   protected valuesPosition: number = 0;
-  
+
   /** Array of values to bind to the query parameters */
   protected values: SqlValue[] = [];
-  
+
   /** SELECT clause columns (defaults to '*') */
   protected _select: string = '*';
-  
+
   /** Array of WHERE conditions */
   protected wheres: Where[] = [];
-  
+
   /** Array of JOIN conditions */
   protected joins: Join[] = [];
-  
+
   /** Limit for the query */
   protected _limit: number = 0;
 
   /** Offset for the query */
   protected _offset: number = 0;
-  
+
   /** Order by for the query */
   protected _orderBy: string = '';
 
   // ============================================================================
   // CONSTRUCTOR
   // ============================================================================
-  
- 
+
   constructor(protected readonly tableName: string) {
     super(tableName);
   }
@@ -107,7 +102,7 @@ export class QueryBuilder  extends BaseBuilder{
   // ============================================================================
   // PUBLIC QUERY EXECUTION METHODS
   // ============================================================================
-  
+
   /**
    * Execute the built SELECT query and return the results
    * @returns Promise that resolves to the query results
@@ -125,30 +120,18 @@ export class QueryBuilder  extends BaseBuilder{
     this.reset();
     return result;
   }
- 
+  public async exists(): Promise<boolean> {
+    this.buildSelectQuery();
+    const result = await this.db?.query(this.query, this.values);
+    this.reset();
+    return result.rowCount > 0;
+  }
+
   public static table(tableName: string) {
     return new QueryBuilder(tableName);
   }
 
-  /**
-   * Execute a raw SQL query
-   * @param query - The raw SQL query string
-   * @param values - Optional array of values to bind to the query
-   * @returns Promise that resolves to the query results
-   * @throws {QueryBuilderMethodChainedException} When called after other operations
-   * @example
-   * ```ts
-   * const result = await queryBuilder.raw('SELECT COUNT(*) FROM users WHERE age > ?', [18]);
-   * ```
-   */
-  public async raw(query: string, values?: (string | number | null)[]) {
-    if (this.operationsChain.length > 0) {
-      throw new QueryBuilderMethodChainedException(
-        'Method chaining not allowed after raw',
-      );
-    }
-    return await this.db?.query(query, values);
-  }
+
 
   /**
    * Execute an INSERT query
@@ -161,10 +144,11 @@ export class QueryBuilder  extends BaseBuilder{
    * queryBuilder.insert(['name', 'email', 'age'], ['John Doe', 'john@example.com', 25]);
    * ```
    */
-  public insert(columns: string[], values: SqlValue[]) {
+  public async insert(columns: string[], values: SqlValue[]) {
     this.buildInsertQuery(columns, values);
-    this.db?.query(this.query, values);
+    const result = await this.db?.query(this.query, values);
     this.reset();
+    return result;
   }
 
   /**
@@ -207,7 +191,7 @@ export class QueryBuilder  extends BaseBuilder{
   // ============================================================================
   // PUBLIC QUERY BUILDING METHODS
   // ============================================================================
-  
+
   /**
    * Set the columns to select from the table
    * @param columns - Array of column names or comma-separated string of column names
@@ -250,11 +234,7 @@ export class QueryBuilder  extends BaseBuilder{
    * queryBuilder.where('deleted_at', 'IS', null);
    * ```
    */
-  public where(
-    column: string,
-    operator: SqlClauseWithoutIn,
-    value: SqlValue,
-  ) {
+  public where(column: string, operator: SqlClauseWithoutIn, value: SqlValue) {
     this.operationsChain.push('where');
     this.values.push(value);
     this.wheres.push({
@@ -279,7 +259,11 @@ export class QueryBuilder  extends BaseBuilder{
    *   .orWhere('role', '=', 'admin');
    * ```
    */
-  public orWhere(column: string, operator: SqlClauseWithoutIn, value: SqlValue) {
+  public orWhere(
+    column: string,
+    operator: SqlClauseWithoutIn,
+    value: SqlValue,
+  ) {
     this.operationsChain.push('where');
     this.values.push(value);
     if (this.wheres.length === 0) {
@@ -394,13 +378,13 @@ export class QueryBuilder  extends BaseBuilder{
   // ============================================================================
   // PROTECTED QUERY BUILDING METHODS
   // ============================================================================
-  
+
   /**
    * Build the SELECT query string
    * @protected
    */
 
-  public  limit(limit: number) {
+  public limit(limit: number) {
     this.operationsChain.push('limit');
     this._limit = limit;
     return this;
@@ -417,7 +401,6 @@ export class QueryBuilder  extends BaseBuilder{
     this._orderBy = `${column} ${order}`;
     return this;
   }
-
 
   protected buildSelectQuery() {
     this.query = `SELECT ${this._select} FROM ${this.tableName}`;
@@ -440,7 +423,6 @@ export class QueryBuilder  extends BaseBuilder{
     if (this._offset) {
       this.query += ` \nOFFSET ${this._offset}`;
     }
-   
   }
 
   /**
@@ -475,7 +457,11 @@ export class QueryBuilder  extends BaseBuilder{
   protected buildUpdateQuery(columns: string[], values: SqlValue[]) {
     this.throwIfColumnsAndValuesLengthMismatch(columns, values);
     this.throwIfNotCompatibleOperations(['where'], 'update');
-    this.throwIfOperationNotAllowed( !this.operationsChain.includes('where') && !this.db?.config.settings.allowUpdateWithoutWhere, 'update');
+    this.throwIfOperationNotAllowed(
+      !this.operationsChain.includes('where') &&
+        !this.db?.config.settings.allowUpdateWithoutWhere,
+      'update',
+    );
     switch (this.db?.config.client) {
       case 'postgres':
         this.query = `UPDATE ${this.tableName} SET ${columns.map((column, index) => `${column} = $${index + 1}`).join(',')}`;
@@ -493,7 +479,11 @@ export class QueryBuilder  extends BaseBuilder{
    */
   protected buildDeleteQuery() {
     this.throwIfNotCompatibleOperations(['where'], 'delete');
-    this.throwIfOperationNotAllowed( !this.operationsChain.includes('where') && !this.db?.config.settings.allowDeleteWithoutWhere, 'delete');
+    this.throwIfOperationNotAllowed(
+      !this.operationsChain.includes('where') &&
+        !this.db?.config.settings.allowDeleteWithoutWhere,
+      'delete',
+    );
     this.query = `DELETE FROM ${this.tableName}`;
     this.query += this.buildWheresQuery(this.wheres);
   }
@@ -514,7 +504,10 @@ export class QueryBuilder  extends BaseBuilder{
           let whereQuery = '';
           if (where.operator !== 'IN' && where.operator !== 'NOT IN') {
             whereQuery = this.buildWhereQuery(where as WhereCondition, offset);
-          } else if ((where.operator === 'IN' || where.operator === 'NOT IN') && 'values' in where) {
+          } else if (
+            (where.operator === 'IN' || where.operator === 'NOT IN') &&
+            'values' in where
+          ) {
             whereQuery = this.buildWhereInQuery(where, offset);
           }
 
@@ -586,7 +579,7 @@ export class QueryBuilder  extends BaseBuilder{
   // ============================================================================
   // PROTECTED UTILITY METHODS
   // ============================================================================
-  
+
   /**
    * Build and sanitize a column name with table prefix
    * @param column - The column name to sanitize
@@ -631,7 +624,7 @@ export class QueryBuilder  extends BaseBuilder{
   // ============================================================================
   // PROTECTED VALIDATION METHODS
   // ============================================================================
-  
+
   /**
    * Throw an exception if columns and values arrays have different lengths
    * @param columns - Array of column names
@@ -657,10 +650,19 @@ export class QueryBuilder  extends BaseBuilder{
    * @throws {QueryBuilderOperationNotAllowedException} When condition is true
    * @protected
    */
-  protected throwIfOperationNotAllowed(boolean: boolean | undefined, operation: string) {
+  protected throwIfOperationNotAllowed(
+    boolean: boolean | undefined,
+    operation: string,
+  ) {
     if (boolean) {
       throw new QueryBuilderOperationNotAllowedException(
-        'Can not ' + operation + ' without where clause, if you want to ' + operation + ' without where clause, you must set allow' + operation + 'WithoutWhere to true in the database config',
+        'Can not ' +
+          operation +
+          ' without where clause, if you want to ' +
+          operation +
+          ' without where clause, you must set allow' +
+          operation +
+          'WithoutWhere to true in the database config',
       );
     }
   }
@@ -677,7 +679,7 @@ export class QueryBuilder  extends BaseBuilder{
     methodName: string,
   ) {
     const incompatibleOperations = this.operationsChain.filter(
-      operation => !compatibleOperations.includes(operation)
+      (operation) => !compatibleOperations.includes(operation),
     );
     if (incompatibleOperations.length > 0) {
       throw new QueryBuilderMethodChainedException(

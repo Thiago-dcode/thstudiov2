@@ -1,8 +1,5 @@
-import SchemaBuilder from '../builder/SchemaBuilder';
-import {
-  DatabaseConfig,
-  FullDatabaseConfig,
-} from '../types';
+import SchemaBuilder from '../builder/schemaBuilder';
+import { DatabaseConfig, FullDatabaseConfig } from '../types';
 import { DEFAULT_DATABASE_SETTINGS } from '../constants';
 import { initClient } from '../client';
 
@@ -171,7 +168,11 @@ describe('SchemaBuilder', () => {
 
     it('should create table with basic columns', () => {
       // Arrange
-      const columns = ['id SERIAL PRIMARY KEY', 'name VARCHAR(255)', 'email VARCHAR(255)'];
+      const columns = [
+        'id SERIAL PRIMARY KEY',
+        'name VARCHAR(255)',
+        'email VARCHAR(255)',
+      ];
 
       // Act
       const result = schemaBuilder.create(columns);
@@ -179,7 +180,7 @@ describe('SchemaBuilder', () => {
       // Assert
       expect(schemaBuilder['columns']).toEqual(columns);
       expect(schemaBuilder['query']).toBe(
-        `CREATE TABLE ${TABLE_NAME} (${columns.join(',')});`
+        `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
       expect(mockClient.query).toHaveBeenCalledWith(schemaBuilder['query']);
       expect(result).toBeDefined();
@@ -195,7 +196,7 @@ describe('SchemaBuilder', () => {
       // Assert
       expect(schemaBuilder['columns']).toEqual(columns);
       expect(schemaBuilder['query']).toBe(
-        `CREATE TABLE ${TABLE_NAME} (${columns.join(',')});`
+        `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
     });
 
@@ -207,7 +208,7 @@ describe('SchemaBuilder', () => {
         'email VARCHAR(255) UNIQUE',
         'age INTEGER CHECK (age > 0)',
         'created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP',
-        'updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'
+        'updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP',
       ];
 
       // Act
@@ -216,7 +217,7 @@ describe('SchemaBuilder', () => {
       // Assert
       expect(schemaBuilder['columns']).toEqual(columns);
       expect(schemaBuilder['query']).toBe(
-        `CREATE TABLE ${TABLE_NAME} (${columns.join(',')});`
+        `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
     });
 
@@ -229,9 +230,7 @@ describe('SchemaBuilder', () => {
 
       // Assert
       expect(schemaBuilder['columns']).toEqual(columns);
-      expect(schemaBuilder['query']).toBe(
-        `CREATE TABLE ${TABLE_NAME} ();`
-      );
+      expect(schemaBuilder['query']).toBe(`CREATE TABLE ${TABLE_NAME} (\n);`);
     });
 
     it('should handle columns with special characters and spaces', () => {
@@ -241,7 +240,7 @@ describe('SchemaBuilder', () => {
         'first_name VARCHAR(100)',
         'last_name VARCHAR(100)',
         'phone_number VARCHAR(20)',
-        'is_active BOOLEAN DEFAULT true'
+        'is_active BOOLEAN DEFAULT true',
       ];
 
       // Act
@@ -250,7 +249,7 @@ describe('SchemaBuilder', () => {
       // Assert
       expect(schemaBuilder['columns']).toEqual(columns);
       expect(schemaBuilder['query']).toBe(
-        `CREATE TABLE ${TABLE_NAME} (${columns.join(',')});`
+        `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
     });
 
@@ -262,7 +261,7 @@ describe('SchemaBuilder', () => {
         'email VARCHAR(255) UNIQUE NOT NULL',
         'created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()',
         'updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()',
-        'CONSTRAINT check_email CHECK (email ~* \'^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$\')'
+        "CONSTRAINT check_email CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$')",
       ];
 
       // Act
@@ -271,7 +270,7 @@ describe('SchemaBuilder', () => {
       // Assert
       expect(schemaBuilder['columns']).toEqual(columns);
       expect(schemaBuilder['query']).toBe(
-        `CREATE TABLE ${TABLE_NAME} (${columns.join(',')});`
+        `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
     });
 
@@ -282,7 +281,7 @@ describe('SchemaBuilder', () => {
         'user_id INTEGER NOT NULL',
         'order_id INTEGER NOT NULL',
         'FOREIGN KEY (user_id) REFERENCES users(id)',
-        'FOREIGN KEY (order_id) REFERENCES orders(id)'
+        'FOREIGN KEY (order_id) REFERENCES orders(id)',
       ];
 
       // Act
@@ -291,7 +290,7 @@ describe('SchemaBuilder', () => {
       // Assert
       expect(schemaBuilder['columns']).toEqual(columns);
       expect(schemaBuilder['query']).toBe(
-        `CREATE TABLE ${TABLE_NAME} (${columns.join(',')});`
+        `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
     });
 
@@ -303,7 +302,7 @@ describe('SchemaBuilder', () => {
         'email VARCHAR(255) UNIQUE',
         'status VARCHAR(20)',
         'INDEX idx_status (status)',
-        'INDEX idx_username_email (username, email)'
+        'INDEX idx_username_email (username, email)',
       ];
 
       // Act
@@ -312,7 +311,7 @@ describe('SchemaBuilder', () => {
       // Assert
       expect(schemaBuilder['columns']).toEqual(columns);
       expect(schemaBuilder['query']).toBe(
-        `CREATE TABLE ${TABLE_NAME} (${columns.join(',')});`
+        `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
     });
 
@@ -327,7 +326,7 @@ describe('SchemaBuilder', () => {
         'is_active BOOLEAN',
         'created_at DATETIME',
         'metadata JSON',
-        'binary_data BLOB'
+        'binary_data BLOB',
       ];
 
       // Act
@@ -336,7 +335,7 @@ describe('SchemaBuilder', () => {
       // Assert
       expect(schemaBuilder['columns']).toEqual(columns);
       expect(schemaBuilder['query']).toBe(
-        `CREATE TABLE ${TABLE_NAME} (${columns.join(',')});`
+        `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
     });
 
@@ -349,14 +348,13 @@ describe('SchemaBuilder', () => {
 
       // Assert
       expect(schemaBuilder['columns']).toEqual(columns);
-      expect(schemaBuilder['query']).toBe(
-        `CREATE TABLE ${TABLE_NAME} ();`
-      );
+      expect(schemaBuilder['query']).toBe(`CREATE TABLE ${TABLE_NAME} (\n);`);
     });
 
     it('should handle very long column definitions', () => {
       // Arrange
-      const longColumn = 'very_long_column_name_that_exceeds_normal_length VARCHAR(1000) NOT NULL DEFAULT \'default_value\' CHECK (very_long_column_name_that_exceeds_normal_length != \'\')';
+      const longColumn =
+        "very_long_column_name_that_exceeds_normal_length VARCHAR(1000) NOT NULL DEFAULT 'default_value' CHECK (very_long_column_name_that_exceeds_normal_length != '')";
       const columns = [longColumn];
 
       // Act
@@ -365,7 +363,7 @@ describe('SchemaBuilder', () => {
       // Assert
       expect(schemaBuilder['columns']).toEqual(columns);
       expect(schemaBuilder['query']).toBe(
-        `CREATE TABLE ${TABLE_NAME} (${columns.join(',')});`
+        `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
     });
 
@@ -373,9 +371,9 @@ describe('SchemaBuilder', () => {
       // Arrange
       const columns = [
         'id SERIAL PRIMARY KEY',
-        'name VARCHAR(255) DEFAULT \'Unknown\'',
-        'description TEXT DEFAULT \'No description provided\'',
-        'CONSTRAINT check_name CHECK (name != \'\' AND name IS NOT NULL)'
+        "name VARCHAR(255) DEFAULT 'Unknown'",
+        "description TEXT DEFAULT 'No description provided'",
+        "CONSTRAINT check_name CHECK (name != '' AND name IS NOT NULL)",
       ];
 
       // Act
@@ -384,7 +382,7 @@ describe('SchemaBuilder', () => {
       // Assert
       expect(schemaBuilder['columns']).toEqual(columns);
       expect(schemaBuilder['query']).toBe(
-        `CREATE TABLE ${TABLE_NAME} (${columns.join(',')});`
+        `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
     });
   });
@@ -408,7 +406,7 @@ describe('SchemaBuilder', () => {
 
       // Assert
       expect(schemaBuilder['query']).toBe(
-        `CREATE TABLE ${TABLE_NAME} (${columns.join(',')});`
+        `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
     });
 
@@ -422,7 +420,7 @@ describe('SchemaBuilder', () => {
 
       // Assert
       expect(schemaBuilder['query']).toBe(
-        `CREATE TABLE ${TABLE_NAME} (${columns.join(',')});`
+        `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
     });
 
@@ -435,9 +433,7 @@ describe('SchemaBuilder', () => {
       schemaBuilder['buildCreateQuery']();
 
       // Assert
-      expect(schemaBuilder['query']).toBe(
-        `CREATE TABLE ${TABLE_NAME} ();`
-      );
+      expect(schemaBuilder['query']).toBe(`CREATE TABLE ${TABLE_NAME} (\n);`);
     });
 
     it('should build query with complex column definitions', () => {
@@ -447,7 +443,7 @@ describe('SchemaBuilder', () => {
         'name VARCHAR(255) NOT NULL',
         'email VARCHAR(255) UNIQUE',
         'age INTEGER CHECK (age > 0)',
-        'created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP'
+        'created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP',
       ];
       schemaBuilder['columns'] = columns;
 
@@ -456,7 +452,7 @@ describe('SchemaBuilder', () => {
 
       // Assert
       expect(schemaBuilder['query']).toBe(
-        `CREATE TABLE ${TABLE_NAME} (${columns.join(',')});`
+        `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
     });
 
@@ -465,7 +461,7 @@ describe('SchemaBuilder', () => {
       const columns = [
         'id SERIAL PRIMARY KEY',
         'name VARCHAR(255) NOT NULL, UNIQUE',
-        'email VARCHAR(255) UNIQUE, NOT NULL'
+        'email VARCHAR(255) UNIQUE, NOT NULL',
       ];
       schemaBuilder['columns'] = columns;
 
@@ -474,13 +470,16 @@ describe('SchemaBuilder', () => {
 
       // Assert
       expect(schemaBuilder['query']).toBe(
-        `CREATE TABLE ${TABLE_NAME} (${columns.join(',')});`
+        `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
     });
 
     it('should handle very long column list', () => {
       // Arrange
-      const columns = Array.from({ length: 10 }, (_, i) => `col${i + 1} VARCHAR(255)`);
+      const columns = Array.from(
+        { length: 10 },
+        (_, i) => `col${i + 1} VARCHAR(255)`,
+      );
       schemaBuilder['columns'] = columns;
 
       // Act
@@ -488,7 +487,7 @@ describe('SchemaBuilder', () => {
 
       // Assert
       expect(schemaBuilder['query']).toBe(
-        `CREATE TABLE ${TABLE_NAME} (${columns.join(',')});`
+        `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
     });
 
@@ -499,7 +498,7 @@ describe('SchemaBuilder', () => {
         'user_name VARCHAR(255)',
         'email_address VARCHAR(255)',
         'phone_number VARCHAR(20)',
-        'is_active BOOLEAN'
+        'is_active BOOLEAN',
       ];
       schemaBuilder['columns'] = columns;
 
@@ -508,7 +507,7 @@ describe('SchemaBuilder', () => {
 
       // Assert
       expect(schemaBuilder['query']).toBe(
-        `CREATE TABLE ${TABLE_NAME} (${columns.join(',')});`
+        `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
     });
   });
@@ -525,7 +524,8 @@ describe('SchemaBuilder', () => {
     it('should reset columns to empty array', () => {
       // Arrange
       schemaBuilder['columns'] = ['id SERIAL PRIMARY KEY', 'name VARCHAR(255)'];
-      schemaBuilder['query'] = 'CREATE TABLE test (id SERIAL PRIMARY KEY,name VARCHAR(255))';
+      schemaBuilder['query'] =
+        'CREATE TABLE test (id SERIAL PRIMARY KEY,name VARCHAR(255))';
 
       // Act
       schemaBuilder['reset']();
@@ -548,8 +548,13 @@ describe('SchemaBuilder', () => {
 
     it('should reset both columns and query', () => {
       // Arrange
-      schemaBuilder['columns'] = ['id SERIAL PRIMARY KEY', 'name VARCHAR(255)', 'email VARCHAR(255)'];
-      schemaBuilder['query'] = 'CREATE TABLE test (id SERIAL PRIMARY KEY,name VARCHAR(255),email VARCHAR(255))';
+      schemaBuilder['columns'] = [
+        'id SERIAL PRIMARY KEY',
+        'name VARCHAR(255)',
+        'email VARCHAR(255)',
+      ];
+      schemaBuilder['query'] =
+        'CREATE TABLE test (id SERIAL PRIMARY KEY,name VARCHAR(255),email VARCHAR(255))';
 
       // Act
       schemaBuilder['reset']();
@@ -592,7 +597,7 @@ describe('SchemaBuilder', () => {
 
       // Assert
       expect(schemaBuilder['query']).toBe(
-        `CREATE TABLE ${TABLE_NAME} (${columns.join(',')});`
+        `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
       expect(mockClient.query).toHaveBeenCalledWith(schemaBuilder['query']);
       expect(result).toEqual([{ result: 'success' }]);
@@ -605,7 +610,9 @@ describe('SchemaBuilder', () => {
       mockClient.query.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(schemaBuilder.create(columns)).rejects.toThrow('Table already exists');
+      await expect(schemaBuilder.create(columns)).rejects.toThrow(
+        'Table already exists',
+      );
     });
 
     it('should work with different table names', () => {
@@ -613,7 +620,7 @@ describe('SchemaBuilder', () => {
       const tableNames = ['users', 'orders', 'products', 'categories'];
       const columns = ['id SERIAL PRIMARY KEY', 'name VARCHAR(255)'];
 
-      tableNames.forEach(tableName => {
+      tableNames.forEach((tableName) => {
         // Act
         const builder = SchemaBuilder.table(tableName);
         builder.create(columns);
@@ -621,7 +628,7 @@ describe('SchemaBuilder', () => {
         // Assert
         expect(builder['tableName']).toBe(tableName);
         expect(builder['query']).toBe(
-          `CREATE TABLE ${tableName} (${columns.join(',')});`
+          `CREATE TABLE ${tableName} (\n${columns.join(',\n')}\n);`,
         );
       });
     });
@@ -629,7 +636,11 @@ describe('SchemaBuilder', () => {
     it('should handle multiple create operations on same instance', () => {
       // Arrange
       const columns1 = ['id SERIAL PRIMARY KEY', 'name VARCHAR(255)'];
-      const columns2 = ['id SERIAL PRIMARY KEY', 'email VARCHAR(255)', 'age INTEGER'];
+      const columns2 = [
+        'id SERIAL PRIMARY KEY',
+        'email VARCHAR(255)',
+        'age INTEGER',
+      ];
 
       // Act
       schemaBuilder.create(columns1);
@@ -639,10 +650,10 @@ describe('SchemaBuilder', () => {
 
       // Assert
       expect(firstQuery).toBe(
-        `CREATE TABLE ${TABLE_NAME} (${columns1.join(',')});`
+        `CREATE TABLE ${TABLE_NAME} (\n${columns1.join(',\n')}\n);`,
       );
       expect(secondQuery).toBe(
-        `CREATE TABLE ${TABLE_NAME} (${columns2.join(',')});`
+        `CREATE TABLE ${TABLE_NAME} (\n${columns2.join(',\n')}\n);`,
       );
       expect(schemaBuilder['columns']).toEqual(columns2);
     });
@@ -659,7 +670,7 @@ describe('SchemaBuilder', () => {
       const columns = ['id SERIAL PRIMARY KEY', 'name VARCHAR(255)'];
       postgresBuilder.create(columns);
       expect(postgresBuilder['query']).toBe(
-        `CREATE TABLE ${TABLE_NAME} (${columns.join(',')});`
+        `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
 
       // Test MySQL
@@ -672,7 +683,7 @@ describe('SchemaBuilder', () => {
       const mysqlBuilder = new SchemaBuilder(TABLE_NAME);
       mysqlBuilder.create(columns);
       expect(mysqlBuilder['query']).toBe(
-        `CREATE TABLE ${TABLE_NAME} (${columns.join(',')});`
+        `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
     });
   });
@@ -688,7 +699,12 @@ describe('SchemaBuilder', () => {
 
     it('should handle null and undefined values in columns array', () => {
       // Arrange
-      const columns = ['id SERIAL PRIMARY KEY', null as any, 'name VARCHAR(255)', undefined as any];
+      const columns = [
+        'id SERIAL PRIMARY KEY',
+        null as any,
+        'name VARCHAR(255)',
+        undefined as any,
+      ];
 
       // Act
       schemaBuilder.create(columns);
@@ -696,7 +712,7 @@ describe('SchemaBuilder', () => {
       // Assert
       expect(schemaBuilder['columns']).toEqual(columns);
       expect(schemaBuilder['query']).toBe(
-        `CREATE TABLE ${TABLE_NAME} (${columns.join(',')});`
+        `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
     });
 
@@ -710,13 +726,19 @@ describe('SchemaBuilder', () => {
       // Assert
       expect(schemaBuilder['columns']).toEqual(columns);
       expect(schemaBuilder['query']).toBe(
-        `CREATE TABLE ${TABLE_NAME} (${columns.join(',')});`
+        `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
     });
 
     it('should handle columns with only whitespace', () => {
       // Arrange
-      const columns = ['id SERIAL PRIMARY KEY', '   ', '\t', '\n', 'name VARCHAR(255)'];
+      const columns = [
+        'id SERIAL PRIMARY KEY',
+        '   ',
+        '\t',
+        '\n',
+        'name VARCHAR(255)',
+      ];
 
       // Act
       schemaBuilder.create(columns);
@@ -724,13 +746,16 @@ describe('SchemaBuilder', () => {
       // Assert
       expect(schemaBuilder['columns']).toEqual(columns);
       expect(schemaBuilder['query']).toBe(
-        `CREATE TABLE ${TABLE_NAME} (${columns.join(',')});`
+        `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
     });
 
     it('should handle very large number of columns', () => {
       // Arrange
-      const columns = Array.from({ length: 100 }, (_, i) => `col${i + 1} VARCHAR(255)`);
+      const columns = Array.from(
+        { length: 100 },
+        (_, i) => `col${i + 1} VARCHAR(255)`,
+      );
 
       // Act
       schemaBuilder.create(columns);
@@ -738,7 +763,7 @@ describe('SchemaBuilder', () => {
       // Assert
       expect(schemaBuilder['columns']).toEqual(columns);
       expect(schemaBuilder['query']).toBe(
-        `CREATE TABLE ${TABLE_NAME} (${columns.join(',')});`
+        `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
     });
 
@@ -750,7 +775,7 @@ describe('SchemaBuilder', () => {
         'from VARCHAR(255)',
         'where VARCHAR(255)',
         'order VARCHAR(255)',
-        'group VARCHAR(255)'
+        'group VARCHAR(255)',
       ];
 
       // Act
@@ -759,13 +784,14 @@ describe('SchemaBuilder', () => {
       // Assert
       expect(schemaBuilder['columns']).toEqual(columns);
       expect(schemaBuilder['query']).toBe(
-        `CREATE TABLE ${TABLE_NAME} (${columns.join(',')});`
+        `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
     });
 
     it('should handle columns with very long definitions', () => {
       // Arrange
-      const longDefinition = 'very_long_column_name_that_exceeds_normal_length_and_contains_many_characters VARCHAR(1000) NOT NULL DEFAULT \'default_value_that_is_also_very_long\' CHECK (very_long_column_name_that_exceeds_normal_length_and_contains_many_characters != \'\' AND very_long_column_name_that_exceeds_normal_length_and_contains_many_characters IS NOT NULL)';
+      const longDefinition =
+        "very_long_column_name_that_exceeds_normal_length_and_contains_many_characters VARCHAR(1000) NOT NULL DEFAULT 'default_value_that_is_also_very_long' CHECK (very_long_column_name_that_exceeds_normal_length_and_contains_many_characters != '' AND very_long_column_name_that_exceeds_normal_length_and_contains_many_characters IS NOT NULL)";
       const columns = [longDefinition];
 
       // Act
@@ -774,7 +800,7 @@ describe('SchemaBuilder', () => {
       // Assert
       expect(schemaBuilder['columns']).toEqual(columns);
       expect(schemaBuilder['query']).toBe(
-        `CREATE TABLE ${TABLE_NAME} (${columns.join(',')});`
+        `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
     });
   });
@@ -791,29 +817,33 @@ describe('SchemaBuilder', () => {
     it('should maintain state between multiple create calls', () => {
       // Arrange
       const columns1 = ['id SERIAL PRIMARY KEY', 'name VARCHAR(255)'];
-      const columns2 = ['id SERIAL PRIMARY KEY', 'email VARCHAR(255)', 'age INTEGER'];
+      const columns2 = [
+        'id SERIAL PRIMARY KEY',
+        'email VARCHAR(255)',
+        'age INTEGER',
+      ];
 
       // Act
       schemaBuilder.create(columns1);
       const stateAfterFirst = {
         columns: [...schemaBuilder['columns']],
-        query: schemaBuilder['query']
+        query: schemaBuilder['query'],
       };
-      
+
       schemaBuilder.create(columns2);
       const stateAfterSecond = {
         columns: [...schemaBuilder['columns']],
-        query: schemaBuilder['query']
+        query: schemaBuilder['query'],
       };
 
       // Assert
       expect(stateAfterFirst.columns).toEqual(columns1);
       expect(stateAfterFirst.query).toBe(
-        `CREATE TABLE ${TABLE_NAME} (${columns1.join(',')});`
+        `CREATE TABLE ${TABLE_NAME} (\n${columns1.join(',\n')}\n);`,
       );
       expect(stateAfterSecond.columns).toEqual(columns2);
       expect(stateAfterSecond.query).toBe(
-        `CREATE TABLE ${TABLE_NAME} (${columns2.join(',')});`
+        `CREATE TABLE ${TABLE_NAME} (\n${columns2.join(',\n')}\n);`,
       );
     });
 
@@ -830,13 +860,17 @@ describe('SchemaBuilder', () => {
       // Assert
       expect(schemaBuilder['columns']).toEqual(columns2);
       expect(schemaBuilder['query']).toBe(
-        `CREATE TABLE ${TABLE_NAME} (${columns2.join(',')});`
+        `CREATE TABLE ${TABLE_NAME} (\n${columns2.join(',\n')}\n);`,
       );
     });
 
     it('should work with static factory method and instance methods', () => {
       // Arrange
-      const columns = ['id SERIAL PRIMARY KEY', 'name VARCHAR(255)', 'email VARCHAR(255)'];
+      const columns = [
+        'id SERIAL PRIMARY KEY',
+        'name VARCHAR(255)',
+        'email VARCHAR(255)',
+      ];
 
       // Act
       const builder = SchemaBuilder.table(TABLE_NAME);
@@ -846,8 +880,625 @@ describe('SchemaBuilder', () => {
       expect(builder['tableName']).toBe(TABLE_NAME);
       expect(builder['columns']).toEqual(columns);
       expect(builder['query']).toBe(
-        `CREATE TABLE ${TABLE_NAME} (${columns.join(',')});`
+        `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
+    });
+  });
+
+  describe('SchemaBuilder with ColumnBuilder Integration', () => {
+    let schemaBuilder: SchemaBuilder;
+    const { ColumnBuilder } = require('../builder/columnBuilder');
+
+    beforeEach(async () => {
+      const { initClient } = require('../client');
+      await initClient(testConfig);
+      schemaBuilder = new SchemaBuilder('users');
+    });
+
+    it('should create a complete user table using ColumnBuilder methods', async () => {
+      // Arrange
+      const columns = [
+        ColumnBuilder.id(),
+        ColumnBuilder.string('name', 255, {
+          nullable: true,
+        }),
+        ColumnBuilder.string('username', 255, {
+          nullable: true,
+          unique: true,
+        }),
+        ColumnBuilder.email(),
+        ColumnBuilder.password(),
+        ColumnBuilder.foreignKey('role_id', 'roles', 'id', {
+          onDelete: 'SET NULL',
+          onUpdate: 'CASCADE',
+        }),
+        ColumnBuilder.timestamps(),
+        ColumnBuilder.softDelete(),
+      ];
+
+      // Act
+      const result = await schemaBuilder.create(columns);
+
+      // Assert
+      expect(schemaBuilder['columns']).toEqual(columns);
+      expect(schemaBuilder['query']).toBe(
+        `CREATE TABLE users (\n${columns.join(',\n')}\n);`,
+      );
+      expect(mockClient.query).toHaveBeenCalledWith(schemaBuilder['query']);
+      expect(result).toBeDefined();
+    });
+
+    it('should create a products table with various column types', async () => {
+      // Arrange
+      const columns = [
+        ColumnBuilder.id('product_id'),
+        ColumnBuilder.string('name', 255, {
+          nullable: false,
+        }),
+        ColumnBuilder.string('description', 1000, {
+          nullable: true,
+        }),
+        ColumnBuilder.integer('price', {
+          nullable: false,
+        }),
+        ColumnBuilder.integer('stock_quantity', {
+          nullable: false,
+          default: 0,
+        }),
+        ColumnBuilder.boolean('is_active', {
+          default: true,
+        }),
+        ColumnBuilder.bigint('category_id', {
+          nullable: true,
+        }),
+        ColumnBuilder.foreignKey('supplier_id', 'suppliers', 'id', {
+          nullable: true,
+          onDelete: 'SET NULL',
+        }),
+        ColumnBuilder.timestamp('created_at', {
+          nullable: false,
+          default: 'NOW()',
+        }),
+        ColumnBuilder.timestamp('updated_at', {
+          nullable: true,
+        }),
+      ];
+
+      // Act
+      const result = await schemaBuilder.create(columns);
+
+      // Assert
+      expect(schemaBuilder['columns']).toEqual(columns);
+      expect(schemaBuilder['query']).toBe(
+        `CREATE TABLE users (\n${columns.join(',\n')}\n);`,
+      );
+      expect(mockClient.query).toHaveBeenCalledWith(schemaBuilder['query']);
+      expect(result).toBeDefined();
+    });
+
+    it('should create an orders table with complex relationships', async () => {
+      // Arrange
+      const columns = [
+        ColumnBuilder.id('order_id'),
+        ColumnBuilder.string('order_number', 50, {
+          nullable: false,
+          unique: true,
+        }),
+        ColumnBuilder.integer('total_amount', {
+          nullable: false,
+        }),
+        ColumnBuilder.string('status', 20, {
+          nullable: false,
+          default: 'pending',
+        }),
+        ColumnBuilder.foreignKey('customer_id', 'customers', 'id', {
+          nullable: false,
+          onDelete: 'CASCADE',
+        }),
+        ColumnBuilder.foreignKey('shipping_address_id', 'addresses', 'id', {
+          nullable: true,
+          onDelete: 'SET NULL',
+        }),
+        ColumnBuilder.boolean('is_paid', {
+          default: false,
+        }),
+        ColumnBuilder.timestamp('order_date', {
+          nullable: false,
+          default: 'NOW()',
+        }),
+        ColumnBuilder.timestamp('shipped_date', {
+          nullable: true,
+        }),
+        ColumnBuilder.timestamp('delivered_date', {
+          nullable: true,
+        }),
+        ColumnBuilder.softDelete('cancelled_at'),
+      ];
+
+      // Act
+      const result = await schemaBuilder.create(columns);
+
+      // Assert
+      expect(schemaBuilder['columns']).toEqual(columns);
+      expect(schemaBuilder['query']).toBe(
+        `CREATE TABLE users (\n${columns.join(',\n')}\n);`,
+      );
+      expect(mockClient.query).toHaveBeenCalledWith(schemaBuilder['query']);
+      expect(result).toBeDefined();
+    });
+
+    it('should create a blog posts table with content management features', async () => {
+      // Arrange
+      const columns = [
+        ColumnBuilder.id(),
+        ColumnBuilder.string('title', 255, {
+          nullable: false,
+        }),
+        ColumnBuilder.string('slug', 255, {
+          nullable: false,
+          unique: true,
+        }),
+        ColumnBuilder.string('excerpt', 500, {
+          nullable: true,
+        }),
+        ColumnBuilder.string('content', 10000, {
+          nullable: false,
+        }),
+        ColumnBuilder.string('featured_image', 500, {
+          nullable: true,
+        }),
+        ColumnBuilder.boolean('is_published', {
+          default: false,
+        }),
+        ColumnBuilder.boolean('is_featured', {
+          default: false,
+        }),
+        ColumnBuilder.integer('view_count', {
+          default: 0,
+        }),
+        ColumnBuilder.foreignKey('author_id', 'users', 'id', {
+          nullable: false,
+          onDelete: 'CASCADE',
+        }),
+        ColumnBuilder.foreignKey('category_id', 'categories', 'id', {
+          nullable: true,
+          onDelete: 'SET NULL',
+        }),
+        ColumnBuilder.timestamps({
+          nullable: false,
+          default: 'NOW()',
+        }),
+        ColumnBuilder.softDelete(),
+      ];
+
+      // Act
+      const result = await schemaBuilder.create(columns);
+
+      // Assert
+      expect(schemaBuilder['columns']).toEqual(columns);
+      expect(schemaBuilder['query']).toBe(
+        `CREATE TABLE users (\n${columns.join(',\n')}\n);`,
+      );
+      expect(mockClient.query).toHaveBeenCalledWith(schemaBuilder['query']);
+      expect(result).toBeDefined();
+    });
+
+    it('should create a simple settings table with minimal columns', async () => {
+      // Arrange
+      const columns = [
+        ColumnBuilder.id(),
+        ColumnBuilder.string('key', 100, {
+          nullable: false,
+          unique: true,
+        }),
+        ColumnBuilder.string('value', 1000, {
+          nullable: true,
+        }),
+        ColumnBuilder.string('description', 500, {
+          nullable: true,
+        }),
+        ColumnBuilder.boolean('is_active', {
+          default: true,
+        }),
+        ColumnBuilder.timestamps(),
+      ];
+
+      // Act
+      const result = await schemaBuilder.create(columns);
+
+      // Assert
+      expect(schemaBuilder['columns']).toEqual(columns);
+      expect(schemaBuilder['query']).toBe(
+        `CREATE TABLE users (\n${columns.join(',\n')}\n);`,
+      );
+      expect(mockClient.query).toHaveBeenCalledWith(schemaBuilder['query']);
+      expect(result).toBeDefined();
+    });
+
+    it('should handle table creation with all ColumnBuilder method types', async () => {
+      // Arrange
+      const columns = [
+        // ID column
+        ColumnBuilder.id('custom_id'),
+
+        // Numeric columns
+        ColumnBuilder.integer('age', {
+          nullable: true,
+        }),
+        ColumnBuilder.bigint('large_number', {
+          nullable: false,
+        }),
+
+        // String columns
+        ColumnBuilder.string('name', 100, {
+          nullable: false,
+        }),
+        ColumnBuilder.string('description', 500, {
+          nullable: true,
+        }),
+
+        // Boolean column
+        ColumnBuilder.boolean('is_active', {
+          default: true,
+        }),
+
+        // Email column
+        ColumnBuilder.email('contact_email', {
+          nullable: true,
+        }),
+
+        // Password column
+        ColumnBuilder.password('secret_key'),
+
+        // Foreign key
+        ColumnBuilder.foreignKey('parent_id', 'parent_table', 'id', {
+          nullable: true,
+          onDelete: 'CASCADE',
+          onUpdate: 'RESTRICT',
+        }),
+
+        // Timestamp columns
+        ColumnBuilder.timestamp('created_at', {
+          nullable: false,
+          default: 'NOW()',
+        }),
+        ColumnBuilder.timestamp('updated_at', {
+          nullable: true,
+        }),
+
+        // Timestamps (multiple)
+        ColumnBuilder.timestamps({
+          nullable: false,
+        }),
+
+        // Soft delete
+        ColumnBuilder.softDelete('archived_at'),
+      ];
+
+      // Act
+      const result = await schemaBuilder.create(columns);
+
+      // Assert
+      expect(schemaBuilder['columns']).toEqual(columns);
+      expect(schemaBuilder['query']).toBe(
+        `CREATE TABLE users (\n${columns.join(',\n')}\n);`,
+      );
+      expect(mockClient.query).toHaveBeenCalledWith(schemaBuilder['query']);
+      expect(result).toBeDefined();
+    });
+
+    it('should handle database errors during table creation', async () => {
+      // Arrange
+      const columns = [ColumnBuilder.id(), ColumnBuilder.string('name', 255)];
+      const error = new Error('Table already exists');
+      mockClient.query.mockRejectedValue(error);
+
+      // Act & Assert
+      await expect(schemaBuilder.create(columns)).rejects.toThrow(
+        'Table already exists',
+      );
+    });
+
+    it('should work with static table method and ColumnBuilder', async () => {
+      // Arrange
+      const columns = [
+        ColumnBuilder.id(),
+        ColumnBuilder.string('name', 255),
+        ColumnBuilder.email(),
+        ColumnBuilder.timestamps(),
+      ];
+
+      // Act
+      const builder = SchemaBuilder.table('profiles');
+      const result = await builder.create(columns);
+
+      // Assert
+      expect(builder['tableName']).toBe('profiles');
+      expect(builder['columns']).toEqual(columns);
+      expect(builder['query']).toBe(
+        `CREATE TABLE profiles (\n${columns.join(',\n')}\n);`,
+      );
+      expect(mockClient.query).toHaveBeenCalledWith(builder['query']);
+      expect(result).toBeDefined();
+    });
+
+    it('should handle multiple table creations with different schemas', async () => {
+      // Arrange
+      const userColumns = [
+        ColumnBuilder.id(),
+        ColumnBuilder.string('username', 50, { unique: true }),
+        ColumnBuilder.email(),
+        ColumnBuilder.password(),
+        ColumnBuilder.timestamps(),
+      ];
+
+      const postColumns = [
+        ColumnBuilder.id(),
+        ColumnBuilder.string('title', 255),
+        ColumnBuilder.string('content', 5000),
+        ColumnBuilder.foreignKey('author_id', 'users', 'id'),
+        ColumnBuilder.timestamps(),
+        ColumnBuilder.softDelete(),
+      ];
+
+      // Act
+      const userBuilder = SchemaBuilder.table('users');
+      const postBuilder = SchemaBuilder.table('posts');
+
+      await userBuilder.create(userColumns);
+      await postBuilder.create(postColumns);
+
+      // Assert
+      expect(userBuilder['tableName']).toBe('users');
+      expect(userBuilder['query']).toBe(
+        `CREATE TABLE users (\n${userColumns.join(',\n')}\n);`,
+      );
+
+      expect(postBuilder['tableName']).toBe('posts');
+      expect(postBuilder['query']).toBe(
+        `CREATE TABLE posts (\n${postColumns.join(',\n')}\n);`,
+      );
+
+      expect(mockClient.query).toHaveBeenCalledTimes(2);
+    });
+
+    it('should validate that all ColumnBuilder methods return proper SQL strings', () => {
+      // Arrange
+      const columns = [
+        ColumnBuilder.id(),
+        ColumnBuilder.integer('count'),
+        ColumnBuilder.bigint('large_id'),
+        ColumnBuilder.boolean('flag'),
+        ColumnBuilder.string('text', 255),
+        ColumnBuilder.email(),
+        ColumnBuilder.password(),
+        ColumnBuilder.foreignKey('ref_id', 'table', 'id'),
+        ColumnBuilder.timestamp('time'),
+        ColumnBuilder.timestamps(),
+        ColumnBuilder.softDelete(),
+      ];
+
+      // Act
+      schemaBuilder.create(columns);
+
+      // Assert
+      columns.forEach((column) => {
+        expect(typeof column).toBe('string');
+        expect(column.length).toBeGreaterThan(0);
+      });
+
+      expect(schemaBuilder['query']).toBe(
+        `CREATE TABLE users (\n${columns.join(',\n')}\n);`,
+      );
+    });
+
+    it('should generate exact SQL query matching hardcoded expected result', async () => {
+      // Arrange
+      const columns = [
+        ColumnBuilder.id(),
+        ColumnBuilder.string('name', 255, {
+          nullable: true,
+        }),
+        ColumnBuilder.string('username', 255, {
+          nullable: true,
+          unique: true,
+        }),
+        ColumnBuilder.email(),
+        ColumnBuilder.password(),
+        ColumnBuilder.foreignKey('role_id', 'roles', 'id', {
+          onDelete: 'SET NULL',
+          onUpdate: 'CASCADE',
+        }),
+        ColumnBuilder.timestamps(),
+        ColumnBuilder.softDelete(),
+      ];
+
+      // Expected hardcoded SQL query
+      const expectedSQL = `CREATE TABLE users (
+id SERIAL PRIMARY KEY AUTOINCREMENT NOT NULL,
+name VARCHAR(255) NULL,
+username VARCHAR(255) NULL UNIQUE,
+email VARCHAR(255) NOT NULL UNIQUE,
+password VARCHAR(255) NOT NULL,
+role_id INT FOREIGN KEY REFERENCES roles (id) NOT NULL ON DELETE SET NULL ON UPDATE CASCADE,
+created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+deleted_at TIMESTAMP NULL
+);`;
+
+      // Act
+      await schemaBuilder.create(columns);
+
+      // Assert
+      expect(schemaBuilder['query']).toBe(expectedSQL);
+      expect(mockClient.query).toHaveBeenCalledWith(expectedSQL);
+    });
+
+    it('should generate exact SQL for complex table with all column types', async () => {
+      // Arrange
+      const columns = [
+        ColumnBuilder.id('product_id'),
+        ColumnBuilder.string('name', 255, {
+          nullable: false,
+        }),
+        ColumnBuilder.string('description', 1000, {
+          nullable: true,
+        }),
+        ColumnBuilder.integer('price', {
+          nullable: false,
+        }),
+        ColumnBuilder.integer('stock_quantity', {
+          nullable: false,
+          default: 0,
+        }),
+        ColumnBuilder.boolean('is_active', {
+          default: true,
+        }),
+        ColumnBuilder.bigint('category_id', {
+          nullable: true,
+        }),
+        ColumnBuilder.foreignKey('supplier_id', 'suppliers', 'id', {
+          nullable: true,
+          onDelete: 'SET NULL',
+        }),
+        ColumnBuilder.timestamp('created_at', {
+          nullable: false,
+          default: 'NOW()',
+        }),
+        ColumnBuilder.timestamp('updated_at', {
+          nullable: true,
+        }),
+      ];
+
+      // Expected hardcoded SQL query
+      const expectedSQL = `CREATE TABLE users (
+product_id SERIAL PRIMARY KEY AUTOINCREMENT NOT NULL,
+name VARCHAR(255) NOT NULL,
+description VARCHAR(1000) NULL,
+price INTEGER NOT NULL,
+stock_quantity INTEGER NOT NULL DEFAULT 0,
+is_active BOOLEAN NOT NULL DEFAULT true,
+category_id BIGINT NULL,
+supplier_id INT FOREIGN KEY REFERENCES suppliers (id) NULL ON DELETE SET NULL,
+created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+updated_at TIMESTAMP NULL DEFAULT NOW()
+);`;
+
+      // Act
+      await schemaBuilder.create(columns);
+
+      // Assert
+      expect(schemaBuilder['query']).toBe(expectedSQL);
+      expect(mockClient.query).toHaveBeenCalledWith(expectedSQL);
+    });
+
+    it('should generate exact SQL for blog posts table with content management', async () => {
+      // Arrange
+      const columns = [
+        ColumnBuilder.id(),
+        ColumnBuilder.string('title', 255, {
+          nullable: false,
+        }),
+        ColumnBuilder.string('slug', 255, {
+          nullable: false,
+          unique: true,
+        }),
+        ColumnBuilder.string('excerpt', 500, {
+          nullable: true,
+        }),
+        ColumnBuilder.string('content', 10000, {
+          nullable: false,
+        }),
+        ColumnBuilder.string('featured_image', 500, {
+          nullable: true,
+        }),
+        ColumnBuilder.boolean('is_published', {
+          default: false,
+        }),
+        ColumnBuilder.boolean('is_featured', {
+          default: false,
+        }),
+        ColumnBuilder.integer('view_count', {
+          default: 0,
+        }),
+        ColumnBuilder.foreignKey('author_id', 'users', 'id', {
+          nullable: false,
+          onDelete: 'CASCADE',
+        }),
+        ColumnBuilder.foreignKey('category_id', 'categories', 'id', {
+          nullable: true,
+          onDelete: 'SET NULL',
+        }),
+        ColumnBuilder.timestamps({
+          nullable: false,
+          default: 'NOW()',
+        }),
+        ColumnBuilder.softDelete(),
+      ];
+
+      // Expected hardcoded SQL query
+      const expectedSQL = `CREATE TABLE users (
+id SERIAL PRIMARY KEY AUTOINCREMENT NOT NULL,
+title VARCHAR(255) NOT NULL,
+slug VARCHAR(255) NOT NULL UNIQUE,
+excerpt VARCHAR(500) NULL,
+content VARCHAR(10000) NOT NULL,
+featured_image VARCHAR(500) NULL,
+is_published BOOLEAN NOT NULL DEFAULT false,
+is_featured BOOLEAN NOT NULL DEFAULT false,
+view_count INTEGER NOT NULL DEFAULT 0,
+author_id INT FOREIGN KEY REFERENCES users (id) NOT NULL ON DELETE CASCADE,
+category_id INT FOREIGN KEY REFERENCES categories (id) NULL ON DELETE SET NULL,
+created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+deleted_at TIMESTAMP NULL
+);`;
+
+      // Act
+      await schemaBuilder.create(columns);
+
+      // Assert
+      expect(schemaBuilder['query']).toBe(expectedSQL);
+      expect(mockClient.query).toHaveBeenCalledWith(expectedSQL);
+    });
+
+    it('should generate exact SQL for simple settings table', async () => {
+      // Arrange
+      const columns = [
+        ColumnBuilder.id(),
+        ColumnBuilder.string('key', 100, {
+          nullable: false,
+          unique: true,
+        }),
+        ColumnBuilder.string('value', 1000, {
+          nullable: true,
+        }),
+        ColumnBuilder.string('description', 500, {
+          nullable: true,
+        }),
+        ColumnBuilder.boolean('is_active', {
+          default: true,
+        }),
+        ColumnBuilder.timestamps(),
+      ];
+
+      // Expected hardcoded SQL query
+      const expectedSQL = `CREATE TABLE users (
+id SERIAL PRIMARY KEY AUTOINCREMENT NOT NULL,
+key VARCHAR(100) NOT NULL UNIQUE,
+value VARCHAR(1000) NULL,
+description VARCHAR(500) NULL,
+is_active BOOLEAN NOT NULL DEFAULT true,
+created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);`;
+
+      // Act
+      await schemaBuilder.create(columns);
+
+      // Assert
+      expect(schemaBuilder['query']).toBe(expectedSQL);
+      expect(mockClient.query).toHaveBeenCalledWith(expectedSQL);
     });
   });
 });

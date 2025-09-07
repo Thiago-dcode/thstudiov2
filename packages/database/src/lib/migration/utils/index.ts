@@ -3,7 +3,7 @@ import { migrationConfig } from '../config';
 import path from 'node:path';
 import fs from 'node:fs';
 
-const handleMigration = (callback: (migration: any) => void) => {
+const handleMigration = async (callback: (migration: any,migrationName: string) => Promise<void>) => {
   const migrationDirectory = migrationConfig.migrationsDirectory;
   if (!fs.existsSync(migrationDirectory)) {
     Logger.error('No migrations found');
@@ -25,7 +25,7 @@ const handleMigration = (callback: (migration: any) => void) => {
       );
       process.exit(1);
     }
-    callback(migrationFile);
+    await callback(migrationFile,migration);
   }
 };
 

@@ -1,4 +1,4 @@
-import { Pool } from 'mysql2/promise';
+import { Pool, QueryResult } from 'mysql2/promise';
 import { DatabaseClient, DatabaseConfig, FullDatabaseConfig } from '../types';
 import { Pool as PgPool } from 'pg';
 import mysql from 'mysql2/promise';
@@ -63,7 +63,7 @@ export class MysqlClient extends Client<Pool> {
     await this.client?.end();
   }
 
-  public async query(query: string, values?: any[]): Promise<any> {
+  public async query(query: string, values?: any[]) {
     return await this.client?.query(query, values);
   }
 }
