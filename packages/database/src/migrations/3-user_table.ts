@@ -31,7 +31,6 @@ const up = async () => {
 const down = async () => {
   // Drop the table
   await SchemaBuilder.table(TABLE_NAME).drop();
-  await SchemaBuilder.table(TABLE_NAME).dropEnum('BILLING_TYPES');
 };
 
 export { up, down };

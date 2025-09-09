@@ -66,8 +66,6 @@ export class QueryBuilder extends BaseBuilder {
   // PROTECTED PROPERTIES
   // ============================================================================
 
-
-
   /** Current position in the values array for parameter binding */
   protected valuesPosition: number = 0;
 
@@ -119,7 +117,7 @@ export class QueryBuilder extends BaseBuilder {
     this.buildSelectQuery();
     const result = await this.db?.query(this.query, this.values);
     this.reset();
-    return result;
+    return result.rows;
   }
   public async exists(): Promise<boolean> {
     this.buildSelectQuery();
@@ -131,8 +129,6 @@ export class QueryBuilder extends BaseBuilder {
   public static table(tableName: (typeof TABLES)[number]) {
     return new QueryBuilder(tableName);
   }
-
-
 
   /**
    * Execute an INSERT query
@@ -166,10 +162,11 @@ export class QueryBuilder extends BaseBuilder {
    *   .update(['name', 'email'], ['Jane Doe', 'jane@example.com']);
    * ```
    */
-  public update(columns: string[], values: SqlValue[]) {
+  public async update(columns: string[], values: SqlValue[]) {
     this.buildUpdateQuery(columns, values);
-    this.db?.query(this.query, values);
+    const result = await this.db?.query(this.query, values);
     this.reset();
+    return result;
   }
 
   /**
@@ -183,10 +180,11 @@ export class QueryBuilder extends BaseBuilder {
    *   .delete();
    * ```
    */
-  public delete() {
+  public async delete() {
     this.buildDeleteQuery();
-    this.db?.query(this.query);
+    const result = await this.db?.query(this.query, this.values);
     this.reset();
+    return result.rowCount > 0;
   }
 
   // ============================================================================

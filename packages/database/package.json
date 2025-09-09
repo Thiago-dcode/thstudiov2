@@ -9,7 +9,8 @@
     "test": "jest  --passWithNoTests --config ./jest.config.ts ",
     "test:watch": "jest  --passWithNoTests --config ./jest.config.ts  --watch",
     "create:migration": "ts-node src/lib/migration/console/create-migration.ts",
-    "migrate": "ts-node src/lib/migration/console/migrate.ts"
+    "migrate": "ts-node src/lib/migration/console/migrate.ts",
+    "rollback": "ts-node src/lib/migration/console/rollback.ts"
   },
   "exports": {
     ".": "./dist/index.js"

@@ -2,19 +2,20 @@ import Logger from '@repo/backend-lib/utils/console';
 import { migrationConfig } from '../config';
 import path from 'node:path';
 import fs from 'node:fs';
-import { Schema } from '../../utils/facades';
+import { Query, Schema } from '../../utils/facades';
 import { TRIGGER_UPDATE_UPDATED_AT_FUNCTION_NAME } from '../../utils/constants';
 import { TableName } from '../../utils/types';
 
 const handleMigration = async (
   callback: (migration: any, migrationName: string) => Promise<void>,
+  rollback: boolean = false,
 ) => {
   const migrationDirectory = migrationConfig.migrationsDirectory;
-  console.log(migrationDirectory);
   if (!fs.existsSync(migrationDirectory)) {
     fs.mkdirSync(migrationDirectory, { recursive: true });
   }
-  const migrations = fs.readdirSync(migrationDirectory);
+  // If rollback is true, we need to get the migrations from the database order by the last created at
+  const migrations =!rollback ? fs.readdirSync(migrationDirectory) : (await Query.table('migrations').select('name').orderBy('created_at', 'DESC').get()).map((migration: any) => migration.name);
   if (migrations.length === 0) {
     Logger.info('No migrations found');
     process.exit(0);
