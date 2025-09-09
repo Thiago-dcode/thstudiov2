@@ -1,12 +1,12 @@
 import { Pool, QueryResult } from 'mysql2/promise';
-import { DatabaseClient, DatabaseConfig, FullDatabaseConfig } from '../types';
+import { DatabaseClient, DatabaseConfig, FullDatabaseConfig } from '../utils/types';
 import { Pool as PgPool } from 'pg';
 import mysql from 'mysql2/promise';
 import {
   ClientNotInitializedException,
   InvalidDatabaseClientException,
 } from './exceptions';
-import { DEFAULT_DATABASE_SETTINGS } from '../constants';
+import { DEFAULT_DATABASE_SETTINGS } from '../utils/constants';
 import { setMigrationConfig } from '../migration/config';
 export abstract class Client<T> {
   protected client: T | null = null;
@@ -140,3 +140,5 @@ export const killClient = async () => {
 
 // Export a getter function instead of the static client
 export const getClient = () => client;
+
+export const getClientConfig = () => clientChoosen;

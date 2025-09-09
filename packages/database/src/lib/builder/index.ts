@@ -1,7 +1,8 @@
 import { ClientNotInitializedException } from '../client/exceptions';
 import { getClient, Client } from '../client';
 import { QueryBuilderMethodChainedException } from './queryBuilder/exceptions';
-import { SqlOperation } from 'lib/types';
+import { SqlOperation } from 'lib/utils/types';
+import { TABLES } from 'lib/utils/constants';
 
 abstract class BaseBuilder {
   /** The built SQL query string */
@@ -19,7 +20,7 @@ abstract class BaseBuilder {
    * @param tableName - The name of the table to query
    * @throws {ClientNotInitializedException} When database client is not initialized
    */
-  constructor(protected readonly tableName: string) {
+  constructor(protected readonly tableName: (typeof TABLES)[number]) {
     this.db = getClient(); // Use the getter function
     if (!this.db) {
       throw new ClientNotInitializedException();
@@ -43,7 +44,11 @@ abstract class BaseBuilder {
         'Method chaining not allowed after raw',
       );
     }
+ 
     return await this.db?.query(query, values);
+  }
+  protected getQuery() {
+    return this.query;
   }
   protected abstract reset(): void;
 }

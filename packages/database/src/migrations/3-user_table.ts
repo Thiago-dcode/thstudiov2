@@ -1,6 +1,5 @@
-import { ColumnBuilder } from 'lib/builder/columnBuilder';
+import { ColumnBuilder } from '../lib/builder/columnBuilder';
 import SchemaBuilder from '../lib/builder/schemaBuilder';
-import { QueryBuilder } from '../lib/builder/queryBuilder';
 const TABLE_NAME = 'users';
 
 const up = async () => {
@@ -16,9 +15,13 @@ const up = async () => {
     }),
     ColumnBuilder.email(),
     ColumnBuilder.password(),
-    ColumnBuilder.foreignKey('role_id', 'roles', 'id', {
+    ColumnBuilder.text('biography', {
+      nullable: true,
+    }),
+    ColumnBuilder.foreignKey('extra_data_id', 'user_extra_data', 'id', {
       onDelete: 'SET NULL',
       onUpdate: 'CASCADE',
+      nullable: false,
     }),
     ColumnBuilder.timestamps(),
     ColumnBuilder.softDelete(),
@@ -28,6 +31,7 @@ const up = async () => {
 const down = async () => {
   // Drop the table
   await SchemaBuilder.table(TABLE_NAME).drop();
+  await SchemaBuilder.table(TABLE_NAME).dropEnum('BILLING_TYPES');
 };
 
 export { up, down };

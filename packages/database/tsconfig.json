@@ -7,12 +7,7 @@
     "incremental": false,
     "outDir": "dist"
   },
-  "paths": {
-    "@": ["src/*"],
-    "@/*": ["src/*"],
-    "@lib/*": ["src/lib/*"],
-    "lib/*": ["src/lib/*"]
-  },
+ 
   "include": [
     "./src/**/*"
   ],

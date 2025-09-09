@@ -9,7 +9,7 @@ import {
   WhereInCondition,
   SqlOperation,
   SqlValue,
-} from '../../types';
+} from '../../utils/types';
 import {
   QueryBuilderMethodChainedException,
   QueryBuilderOperationNotAllowedException,
@@ -17,6 +17,7 @@ import {
   QueryBuilderWrongColumnsException,
   QueryBuilderWrongDatabaseClientException,
 } from './exceptions';
+import { TABLES } from '../../utils/constants';
 
 /**
  * QueryBuilder class for building and executing SQL queries
@@ -95,7 +96,7 @@ export class QueryBuilder extends BaseBuilder {
   // CONSTRUCTOR
   // ============================================================================
 
-  constructor(protected readonly tableName: string) {
+  constructor(protected readonly tableName: (typeof TABLES)[number]) {
     super(tableName);
   }
 
@@ -127,7 +128,7 @@ export class QueryBuilder extends BaseBuilder {
     return result.rowCount > 0;
   }
 
-  public static table(tableName: string) {
+  public static table(tableName: (typeof TABLES)[number]) {
     return new QueryBuilder(tableName);
   }
 

@@ -4,14 +4,13 @@ import {
   FullDatabaseConfig,
   WhereCondition,
   SqlClauseWithoutIn,
-} from '../types';
-import { DEFAULT_DATABASE_SETTINGS } from '../constants';
+  DatabaseClient,
+} from '../utils/types';
+import { DEFAULT_DATABASE_SETTINGS } from '../utils/constants';
 import { initClient } from '../client';
 import { QueryBuilderOperationNotAllowedException } from 'lib/builder/queryBuilder/exceptions';
-// Mock the client module
-jest.mock('../client', () => {
-  let mockClient: any = null;
 
+jest.mock('../client', ()=> {
   const Client = (config: FullDatabaseConfig) => {
     return {
       _config: config,
@@ -25,12 +24,11 @@ jest.mock('../client', () => {
       },
     };
   };
+  let mockClient: any = null;
+  let currentClientType: DatabaseClient | null = null;
 
   return {
     __esModule: true,
-    get default() {
-      return mockClient;
-    },
     initClient: jest.fn(async (config: DatabaseConfig) => {
       config.settings = {
         ...DEFAULT_DATABASE_SETTINGS,
@@ -50,9 +48,11 @@ jest.mock('../client', () => {
       switch (config.client) {
         case 'postgres':
           mockClient = Client(fullConfig);
+          currentClientType = 'postgres';
           break;
         case 'mysql':
           mockClient = Client(fullConfig);
+          currentClientType = 'mysql';
           break;
       }
       return mockClient;
@@ -60,14 +60,17 @@ jest.mock('../client', () => {
     getClient: jest.fn(() => {
       return mockClient;
     }),
+    getClientConfig: jest.fn(() => {
+      return currentClientType;
+    }),
     connect: jest.fn().mockResolvedValue(undefined),
     query: jest.fn().mockResolvedValue([]),
     killClient: jest.fn(async () => {
       mockClient = null;
+      currentClientType = null;
     }),
   };
 });
-
 
 describe('QueryBuilder', () => {
   let mockClient: any;
@@ -89,9 +92,9 @@ describe('QueryBuilder', () => {
     };
 
     // Get the mocked client
-    const { initClient } = require('../client');
+    const { initClient,getClient } = require('../client');
     await initClient(testConfig);
-    mockClient = require('../client').default;
+    mockClient = getClient();
   });
 
   afterEach(async () => {

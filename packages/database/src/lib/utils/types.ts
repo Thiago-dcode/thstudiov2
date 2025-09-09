@@ -1,4 +1,5 @@
 import { EnumType } from 'typescript';
+import { ENUMS, TABLES } from './constants';
 
 export type DatabaseClient = 'postgres' | 'mysql' | 'sqlite' | 'mongodb';
 export type DatabaseSettings = {
@@ -60,7 +61,7 @@ export type WhereCondition = BaseWhere & {
 // WHERE IN condition
 export type WhereInCondition = BaseWhere & {
   type: WhereType;
-  operator: 'IN'|'NOT IN';
+  operator: 'IN' | 'NOT IN';
   values: SqlValue[];
 };
 
@@ -74,3 +75,7 @@ export type Join = {
   foreignTable: string;
   foreignColumn: string;
 };
+
+export type TableName = (typeof TABLES)[number];
+
+export type AvailableEnums = typeof ENUMS;

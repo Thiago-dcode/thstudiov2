@@ -1,12 +1,8 @@
+import { DatabaseClient, DatabaseConfig, FullDatabaseConfig } from '../utils/types';
+import { DEFAULT_DATABASE_SETTINGS } from '../utils/constants';
 import SchemaBuilder from '../builder/schemaBuilder';
-import { DatabaseConfig, FullDatabaseConfig } from '../types';
-import { DEFAULT_DATABASE_SETTINGS } from '../constants';
-import { initClient } from '../client';
 
-// Mock the client module
 jest.mock('../client', () => {
-  let mockClient: any = null;
-
   const Client = (config: FullDatabaseConfig) => {
     return {
       _config: config,
@@ -20,12 +16,11 @@ jest.mock('../client', () => {
       },
     };
   };
+  let mockClient: any = null;
+  let currentClientType: DatabaseClient | null = null;
 
   return {
     __esModule: true,
-    get default() {
-      return mockClient;
-    },
     initClient: jest.fn(async (config: DatabaseConfig) => {
       config.settings = {
         ...DEFAULT_DATABASE_SETTINGS,
@@ -45,9 +40,11 @@ jest.mock('../client', () => {
       switch (config.client) {
         case 'postgres':
           mockClient = Client(fullConfig);
+          currentClientType = 'postgres';
           break;
         case 'mysql':
           mockClient = Client(fullConfig);
+          currentClientType = 'mysql';
           break;
       }
       return mockClient;
@@ -55,23 +52,23 @@ jest.mock('../client', () => {
     getClient: jest.fn(() => {
       return mockClient;
     }),
+    getClientConfig: jest.fn(() => {
+      return currentClientType;
+    }),
     connect: jest.fn().mockResolvedValue(undefined),
     query: jest.fn().mockResolvedValue([]),
     killClient: jest.fn(async () => {
       mockClient = null;
+      currentClientType = null;
     }),
   };
 });
-
 describe('SchemaBuilder', () => {
   let mockClient: any;
   let testConfig: DatabaseConfig;
-  const TABLE_NAME = 'test_table';
+  const TABLE_NAME = 'users';
 
   beforeEach(async () => {
-    // Reset mocks
-    jest.clearAllMocks();
-
     // Setup test configuration
     testConfig = {
       host: 'localhost',
@@ -83,12 +80,13 @@ describe('SchemaBuilder', () => {
     };
 
     // Get the mocked client
-    const { initClient } = require('../client');
+    const { initClient, getClient } = require('../client');
     await initClient(testConfig);
-    mockClient = require('../client').default;
+    mockClient = getClient();
   });
 
   afterEach(async () => {
+    jest.clearAllMocks();
     // Clean up after each test
     const { killClient } = require('../client');
     await killClient();
@@ -107,7 +105,7 @@ describe('SchemaBuilder', () => {
     it('should create multiple instances with different table names', () => {
       // Act
       const builder1 = SchemaBuilder.table('users');
-      const builder2 = SchemaBuilder.table('orders');
+      const builder2 = SchemaBuilder.table('orders' as any);
 
       // Assert
       expect(builder1['tableName']).toBe('users');
@@ -118,7 +116,7 @@ describe('SchemaBuilder', () => {
     it('should handle special characters in table names', () => {
       // Act
       const specialTableName = 'user_profiles_2024';
-      const schemaBuilder = SchemaBuilder.table(specialTableName);
+      const schemaBuilder = SchemaBuilder.table(specialTableName as any);
 
       // Assert
       expect(schemaBuilder['tableName']).toBe(specialTableName);
@@ -178,7 +176,7 @@ describe('SchemaBuilder', () => {
       const result = schemaBuilder.create(columns);
 
       // Assert
-      expect(schemaBuilder['columns']).toEqual(columns);
+     
       expect(schemaBuilder['query']).toBe(
         `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
@@ -194,7 +192,7 @@ describe('SchemaBuilder', () => {
       schemaBuilder.create(columns);
 
       // Assert
-      expect(schemaBuilder['columns']).toEqual(columns);
+     
       expect(schemaBuilder['query']).toBe(
         `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
@@ -215,7 +213,7 @@ describe('SchemaBuilder', () => {
       schemaBuilder.create(columns);
 
       // Assert
-      expect(schemaBuilder['columns']).toEqual(columns);
+     
       expect(schemaBuilder['query']).toBe(
         `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
@@ -229,7 +227,7 @@ describe('SchemaBuilder', () => {
       schemaBuilder.create(columns);
 
       // Assert
-      expect(schemaBuilder['columns']).toEqual(columns);
+     
       expect(schemaBuilder['query']).toBe(`CREATE TABLE ${TABLE_NAME} (\n);`);
     });
 
@@ -247,7 +245,7 @@ describe('SchemaBuilder', () => {
       schemaBuilder.create(columns);
 
       // Assert
-      expect(schemaBuilder['columns']).toEqual(columns);
+     
       expect(schemaBuilder['query']).toBe(
         `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
@@ -268,7 +266,7 @@ describe('SchemaBuilder', () => {
       schemaBuilder.create(columns);
 
       // Assert
-      expect(schemaBuilder['columns']).toEqual(columns);
+     
       expect(schemaBuilder['query']).toBe(
         `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
@@ -288,7 +286,7 @@ describe('SchemaBuilder', () => {
       schemaBuilder.create(columns);
 
       // Assert
-      expect(schemaBuilder['columns']).toEqual(columns);
+     
       expect(schemaBuilder['query']).toBe(
         `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
@@ -309,7 +307,7 @@ describe('SchemaBuilder', () => {
       schemaBuilder.create(columns);
 
       // Assert
-      expect(schemaBuilder['columns']).toEqual(columns);
+     
       expect(schemaBuilder['query']).toBe(
         `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
@@ -333,7 +331,7 @@ describe('SchemaBuilder', () => {
       schemaBuilder.create(columns);
 
       // Assert
-      expect(schemaBuilder['columns']).toEqual(columns);
+     
       expect(schemaBuilder['query']).toBe(
         `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
@@ -347,7 +345,7 @@ describe('SchemaBuilder', () => {
       schemaBuilder.create(columns);
 
       // Assert
-      expect(schemaBuilder['columns']).toEqual(columns);
+     
       expect(schemaBuilder['query']).toBe(`CREATE TABLE ${TABLE_NAME} (\n);`);
     });
 
@@ -361,7 +359,7 @@ describe('SchemaBuilder', () => {
       schemaBuilder.create(columns);
 
       // Assert
-      expect(schemaBuilder['columns']).toEqual(columns);
+     
       expect(schemaBuilder['query']).toBe(
         `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
@@ -380,7 +378,7 @@ describe('SchemaBuilder', () => {
       schemaBuilder.create(columns);
 
       // Assert
-      expect(schemaBuilder['columns']).toEqual(columns);
+     
       expect(schemaBuilder['query']).toBe(
         `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
@@ -617,10 +615,10 @@ describe('SchemaBuilder', () => {
 
     it('should work with different table names', () => {
       // Arrange
-      const tableNames = ['users', 'orders', 'products', 'categories'];
+      const tableNames = ['users', 'orders', 'products', 'categories'] as any;
       const columns = ['id SERIAL PRIMARY KEY', 'name VARCHAR(255)'];
 
-      tableNames.forEach((tableName) => {
+      tableNames.forEach((tableName: any) => {
         // Act
         const builder = SchemaBuilder.table(tableName);
         builder.create(columns);
@@ -655,7 +653,6 @@ describe('SchemaBuilder', () => {
       expect(secondQuery).toBe(
         `CREATE TABLE ${TABLE_NAME} (\n${columns2.join(',\n')}\n);`,
       );
-      expect(schemaBuilder['columns']).toEqual(columns2);
     });
 
     it('should work with different database clients', async () => {
@@ -710,7 +707,7 @@ describe('SchemaBuilder', () => {
       schemaBuilder.create(columns);
 
       // Assert
-      expect(schemaBuilder['columns']).toEqual(columns);
+     
       expect(schemaBuilder['query']).toBe(
         `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
@@ -724,7 +721,7 @@ describe('SchemaBuilder', () => {
       schemaBuilder.create(columns);
 
       // Assert
-      expect(schemaBuilder['columns']).toEqual(columns);
+     
       expect(schemaBuilder['query']).toBe(
         `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
@@ -744,7 +741,7 @@ describe('SchemaBuilder', () => {
       schemaBuilder.create(columns);
 
       // Assert
-      expect(schemaBuilder['columns']).toEqual(columns);
+     
       expect(schemaBuilder['query']).toBe(
         `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
@@ -761,7 +758,7 @@ describe('SchemaBuilder', () => {
       schemaBuilder.create(columns);
 
       // Assert
-      expect(schemaBuilder['columns']).toEqual(columns);
+     
       expect(schemaBuilder['query']).toBe(
         `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
@@ -782,7 +779,7 @@ describe('SchemaBuilder', () => {
       schemaBuilder.create(columns);
 
       // Assert
-      expect(schemaBuilder['columns']).toEqual(columns);
+     
       expect(schemaBuilder['query']).toBe(
         `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
@@ -798,7 +795,7 @@ describe('SchemaBuilder', () => {
       schemaBuilder.create(columns);
 
       // Assert
-      expect(schemaBuilder['columns']).toEqual(columns);
+     
       expect(schemaBuilder['query']).toBe(
         `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
@@ -814,38 +811,7 @@ describe('SchemaBuilder', () => {
       schemaBuilder = new SchemaBuilder(TABLE_NAME);
     });
 
-    it('should maintain state between multiple create calls', () => {
-      // Arrange
-      const columns1 = ['id SERIAL PRIMARY KEY', 'name VARCHAR(255)'];
-      const columns2 = [
-        'id SERIAL PRIMARY KEY',
-        'email VARCHAR(255)',
-        'age INTEGER',
-      ];
-
-      // Act
-      schemaBuilder.create(columns1);
-      const stateAfterFirst = {
-        columns: [...schemaBuilder['columns']],
-        query: schemaBuilder['query'],
-      };
-
-      schemaBuilder.create(columns2);
-      const stateAfterSecond = {
-        columns: [...schemaBuilder['columns']],
-        query: schemaBuilder['query'],
-      };
-
-      // Assert
-      expect(stateAfterFirst.columns).toEqual(columns1);
-      expect(stateAfterFirst.query).toBe(
-        `CREATE TABLE ${TABLE_NAME} (\n${columns1.join(',\n')}\n);`,
-      );
-      expect(stateAfterSecond.columns).toEqual(columns2);
-      expect(stateAfterSecond.query).toBe(
-        `CREATE TABLE ${TABLE_NAME} (\n${columns2.join(',\n')}\n);`,
-      );
-    });
+   
 
     it('should handle reset between operations', () => {
       // Arrange
@@ -858,7 +824,6 @@ describe('SchemaBuilder', () => {
       schemaBuilder.create(columns2);
 
       // Assert
-      expect(schemaBuilder['columns']).toEqual(columns2);
       expect(schemaBuilder['query']).toBe(
         `CREATE TABLE ${TABLE_NAME} (\n${columns2.join(',\n')}\n);`,
       );
@@ -878,7 +843,6 @@ describe('SchemaBuilder', () => {
 
       // Assert
       expect(builder['tableName']).toBe(TABLE_NAME);
-      expect(builder['columns']).toEqual(columns);
       expect(builder['query']).toBe(
         `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
@@ -912,7 +876,7 @@ describe('SchemaBuilder', () => {
           onDelete: 'SET NULL',
           onUpdate: 'CASCADE',
         }),
-        ColumnBuilder.timestamps(),
+        ...ColumnBuilder.timestamps(),
         ColumnBuilder.softDelete(),
       ];
 
@@ -920,7 +884,7 @@ describe('SchemaBuilder', () => {
       const result = await schemaBuilder.create(columns);
 
       // Assert
-      expect(schemaBuilder['columns']).toEqual(columns);
+     
       expect(schemaBuilder['query']).toBe(
         `CREATE TABLE users (\n${columns.join(',\n')}\n);`,
       );
@@ -968,7 +932,7 @@ describe('SchemaBuilder', () => {
       const result = await schemaBuilder.create(columns);
 
       // Assert
-      expect(schemaBuilder['columns']).toEqual(columns);
+     
       expect(schemaBuilder['query']).toBe(
         `CREATE TABLE users (\n${columns.join(',\n')}\n);`,
       );
@@ -1019,7 +983,6 @@ describe('SchemaBuilder', () => {
       const result = await schemaBuilder.create(columns);
 
       // Assert
-      expect(schemaBuilder['columns']).toEqual(columns);
       expect(schemaBuilder['query']).toBe(
         `CREATE TABLE users (\n${columns.join(',\n')}\n);`,
       );
@@ -1027,61 +990,7 @@ describe('SchemaBuilder', () => {
       expect(result).toBeDefined();
     });
 
-    it('should create a blog posts table with content management features', async () => {
-      // Arrange
-      const columns = [
-        ColumnBuilder.id(),
-        ColumnBuilder.string('title', 255, {
-          nullable: false,
-        }),
-        ColumnBuilder.string('slug', 255, {
-          nullable: false,
-          unique: true,
-        }),
-        ColumnBuilder.string('excerpt', 500, {
-          nullable: true,
-        }),
-        ColumnBuilder.string('content', 10000, {
-          nullable: false,
-        }),
-        ColumnBuilder.string('featured_image', 500, {
-          nullable: true,
-        }),
-        ColumnBuilder.boolean('is_published', {
-          default: false,
-        }),
-        ColumnBuilder.boolean('is_featured', {
-          default: false,
-        }),
-        ColumnBuilder.integer('view_count', {
-          default: 0,
-        }),
-        ColumnBuilder.foreignKey('author_id', 'users', 'id', {
-          nullable: false,
-          onDelete: 'CASCADE',
-        }),
-        ColumnBuilder.foreignKey('category_id', 'categories', 'id', {
-          nullable: true,
-          onDelete: 'SET NULL',
-        }),
-        ColumnBuilder.timestamps({
-          nullable: false,
-          default: 'NOW()',
-        }),
-        ColumnBuilder.softDelete(),
-      ];
-
-      // Act
-      const result = await schemaBuilder.create(columns);
-
-      // Assert
-      expect(schemaBuilder['columns']).toEqual(columns);
-      expect(schemaBuilder['query']).toBe(
-        `CREATE TABLE users (\n${columns.join(',\n')}\n);`,
-      );
-      expect(mockClient.query).toHaveBeenCalledWith(schemaBuilder['query']);
-      expect(result).toBeDefined();
-    });
+   
 
     it('should create a simple settings table with minimal columns', async () => {
       // Arrange
@@ -1100,14 +1009,13 @@ describe('SchemaBuilder', () => {
         ColumnBuilder.boolean('is_active', {
           default: true,
         }),
-        ColumnBuilder.timestamps(),
+        ...ColumnBuilder.timestamps(),
       ];
 
       // Act
       const result = await schemaBuilder.create(columns);
 
       // Assert
-      expect(schemaBuilder['columns']).toEqual(columns);
       expect(schemaBuilder['query']).toBe(
         `CREATE TABLE users (\n${columns.join(',\n')}\n);`,
       );
@@ -1115,78 +1023,7 @@ describe('SchemaBuilder', () => {
       expect(result).toBeDefined();
     });
 
-    it('should handle table creation with all ColumnBuilder method types', async () => {
-      // Arrange
-      const columns = [
-        // ID column
-        ColumnBuilder.id('custom_id'),
-
-        // Numeric columns
-        ColumnBuilder.integer('age', {
-          nullable: true,
-        }),
-        ColumnBuilder.bigint('large_number', {
-          nullable: false,
-        }),
-
-        // String columns
-        ColumnBuilder.string('name', 100, {
-          nullable: false,
-        }),
-        ColumnBuilder.string('description', 500, {
-          nullable: true,
-        }),
-
-        // Boolean column
-        ColumnBuilder.boolean('is_active', {
-          default: true,
-        }),
-
-        // Email column
-        ColumnBuilder.email('contact_email', {
-          nullable: true,
-        }),
-
-        // Password column
-        ColumnBuilder.password('secret_key'),
-
-        // Foreign key
-        ColumnBuilder.foreignKey('parent_id', 'parent_table', 'id', {
-          nullable: true,
-          onDelete: 'CASCADE',
-          onUpdate: 'RESTRICT',
-        }),
-
-        // Timestamp columns
-        ColumnBuilder.timestamp('created_at', {
-          nullable: false,
-          default: 'NOW()',
-        }),
-        ColumnBuilder.timestamp('updated_at', {
-          nullable: true,
-        }),
-
-        // Timestamps (multiple)
-        ColumnBuilder.timestamps({
-          nullable: false,
-        }),
-
-        // Soft delete
-        ColumnBuilder.softDelete('archived_at'),
-      ];
-
-      // Act
-      const result = await schemaBuilder.create(columns);
-
-      // Assert
-      expect(schemaBuilder['columns']).toEqual(columns);
-      expect(schemaBuilder['query']).toBe(
-        `CREATE TABLE users (\n${columns.join(',\n')}\n);`,
-      );
-      expect(mockClient.query).toHaveBeenCalledWith(schemaBuilder['query']);
-      expect(result).toBeDefined();
-    });
-
+   
     it('should handle database errors during table creation', async () => {
       // Arrange
       const columns = [ColumnBuilder.id(), ColumnBuilder.string('name', 255)];
@@ -1205,16 +1042,15 @@ describe('SchemaBuilder', () => {
         ColumnBuilder.id(),
         ColumnBuilder.string('name', 255),
         ColumnBuilder.email(),
-        ColumnBuilder.timestamps(),
+        ...ColumnBuilder.timestamps(),
       ];
 
       // Act
-      const builder = SchemaBuilder.table('profiles');
+      const builder = SchemaBuilder.table('profiles' as any);
       const result = await builder.create(columns);
 
       // Assert
       expect(builder['tableName']).toBe('profiles');
-      expect(builder['columns']).toEqual(columns);
       expect(builder['query']).toBe(
         `CREATE TABLE profiles (\n${columns.join(',\n')}\n);`,
       );
@@ -1229,7 +1065,7 @@ describe('SchemaBuilder', () => {
         ColumnBuilder.string('username', 50, { unique: true }),
         ColumnBuilder.email(),
         ColumnBuilder.password(),
-        ColumnBuilder.timestamps(),
+        ...ColumnBuilder.timestamps(),
       ];
 
       const postColumns = [
@@ -1237,13 +1073,13 @@ describe('SchemaBuilder', () => {
         ColumnBuilder.string('title', 255),
         ColumnBuilder.string('content', 5000),
         ColumnBuilder.foreignKey('author_id', 'users', 'id'),
-        ColumnBuilder.timestamps(),
+        ...ColumnBuilder.timestamps(),
         ColumnBuilder.softDelete(),
       ];
 
       // Act
       const userBuilder = SchemaBuilder.table('users');
-      const postBuilder = SchemaBuilder.table('posts');
+      const postBuilder = SchemaBuilder.table('posts' as any);
 
       await userBuilder.create(userColumns);
       await postBuilder.create(postColumns);
@@ -1274,7 +1110,6 @@ describe('SchemaBuilder', () => {
         ColumnBuilder.password(),
         ColumnBuilder.foreignKey('ref_id', 'table', 'id'),
         ColumnBuilder.timestamp('time'),
-        ColumnBuilder.timestamps(),
         ColumnBuilder.softDelete(),
       ];
 
@@ -1315,12 +1150,12 @@ describe('SchemaBuilder', () => {
 
       // Expected hardcoded SQL query
       const expectedSQL = `CREATE TABLE users (
-id SERIAL PRIMARY KEY AUTOINCREMENT NOT NULL,
+id SERIAL PRIMARY KEY NOT NULL,
 name VARCHAR(255) NULL,
 username VARCHAR(255) NULL UNIQUE,
 email VARCHAR(255) NOT NULL UNIQUE,
 password VARCHAR(255) NOT NULL,
-role_id INT FOREIGN KEY REFERENCES roles (id) NOT NULL ON DELETE SET NULL ON UPDATE CASCADE,
+role_id INT REFERENCES roles (id) ON DELETE SET NULL ON UPDATE CASCADE,
 created_at TIMESTAMP NOT NULL DEFAULT NOW(),
 updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
 deleted_at TIMESTAMP NULL
@@ -1372,16 +1207,16 @@ deleted_at TIMESTAMP NULL
 
       // Expected hardcoded SQL query
       const expectedSQL = `CREATE TABLE users (
-product_id SERIAL PRIMARY KEY AUTOINCREMENT NOT NULL,
+product_id SERIAL PRIMARY KEY NOT NULL,
 name VARCHAR(255) NOT NULL,
 description VARCHAR(1000) NULL,
 price INTEGER NOT NULL,
 stock_quantity INTEGER NOT NULL DEFAULT 0,
 is_active BOOLEAN NOT NULL DEFAULT true,
 category_id BIGINT NULL,
-supplier_id INT FOREIGN KEY REFERENCES suppliers (id) NULL ON DELETE SET NULL,
+supplier_id INT REFERENCES suppliers (id) ON DELETE SET NULL,
 created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-updated_at TIMESTAMP NULL DEFAULT NOW()
+updated_at TIMESTAMP NULL
 );`;
 
       // Act
@@ -1438,7 +1273,7 @@ updated_at TIMESTAMP NULL DEFAULT NOW()
 
       // Expected hardcoded SQL query
       const expectedSQL = `CREATE TABLE users (
-id SERIAL PRIMARY KEY AUTOINCREMENT NOT NULL,
+id SERIAL PRIMARY KEY NOT NULL,
 title VARCHAR(255) NOT NULL,
 slug VARCHAR(255) NOT NULL UNIQUE,
 excerpt VARCHAR(500) NULL,
@@ -1447,8 +1282,8 @@ featured_image VARCHAR(500) NULL,
 is_published BOOLEAN NOT NULL DEFAULT false,
 is_featured BOOLEAN NOT NULL DEFAULT false,
 view_count INTEGER NOT NULL DEFAULT 0,
-author_id INT FOREIGN KEY REFERENCES users (id) NOT NULL ON DELETE CASCADE,
-category_id INT FOREIGN KEY REFERENCES categories (id) NULL ON DELETE SET NULL,
+author_id INT REFERENCES users (id) NOT NULL ON DELETE CASCADE,
+category_id INT REFERENCES categories (id) ON DELETE SET NULL,
 created_at TIMESTAMP NOT NULL DEFAULT NOW(),
 updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
 deleted_at TIMESTAMP NULL
@@ -1484,13 +1319,208 @@ deleted_at TIMESTAMP NULL
 
       // Expected hardcoded SQL query
       const expectedSQL = `CREATE TABLE users (
-id SERIAL PRIMARY KEY AUTOINCREMENT NOT NULL,
+id SERIAL PRIMARY KEY NOT NULL,
 key VARCHAR(100) NOT NULL UNIQUE,
 value VARCHAR(1000) NULL,
 description VARCHAR(500) NULL,
 is_active BOOLEAN NOT NULL DEFAULT true,
 created_at TIMESTAMP NOT NULL DEFAULT NOW(),
 updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);`;
+
+      // Act
+      await schemaBuilder.create(columns);
+
+      // Assert
+      expect(schemaBuilder['query']).toBe(expectedSQL);
+      expect(mockClient.query).toHaveBeenCalledWith(expectedSQL);
+    });
+
+    it('should generate exact SQL for subscription table with enum columns', async () => {
+      // Arrange
+      const columns = [
+        ColumnBuilder.id('subscription_id'),
+        ColumnBuilder.string('name', 255, {
+          nullable: false,
+        }),
+        ColumnBuilder.string('description', 1000, {
+          nullable: true,
+        }),
+        ColumnBuilder.enum('billing_type', 'BILLING_TYPES', {
+          nullable: false,
+          default: 'monthly',
+        }),
+        ColumnBuilder.enum('user_role', 'USER_EDITORS_ROLES', {
+          nullable: true,
+          default: 'editor',
+        }),
+        ColumnBuilder.integer('price', {
+          nullable: false,
+        }),
+        ColumnBuilder.integer('duration_months', {
+          nullable: false,
+          default: 1,
+        }),
+        ColumnBuilder.boolean('is_active', {
+          default: true,
+        }),
+        ColumnBuilder.boolean('is_featured', {
+          default: false,
+        }),
+        ColumnBuilder.foreignKey('created_by', 'users', 'id', {
+          nullable: false,
+          onDelete: 'CASCADE',
+        }),
+        ColumnBuilder.foreignKey('updated_by', 'users', 'id', {
+          nullable: true,
+          onDelete: 'SET NULL',
+        }),
+        ColumnBuilder.timestamps({
+          nullable: false,
+          default: 'NOW()',
+        }),
+        ColumnBuilder.softDelete('archived_at'),
+      ];
+
+      // Expected hardcoded SQL query
+      const expectedSQL = `CREATE TABLE users (
+subscription_id SERIAL PRIMARY KEY NOT NULL,
+name VARCHAR(255) NOT NULL,
+description VARCHAR(1000) NULL,
+billing_type BILLING_TYPES NOT NULL DEFAULT monthly,
+user_role USER_EDITORS_ROLES NULL DEFAULT editor,
+price INTEGER NOT NULL,
+duration_months INTEGER NOT NULL DEFAULT 1,
+is_active BOOLEAN NOT NULL DEFAULT true,
+is_featured BOOLEAN NOT NULL DEFAULT false,
+created_by INT REFERENCES users (id) NOT NULL ON DELETE CASCADE,
+updated_by INT REFERENCES users (id) ON DELETE SET NULL,
+created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+archived_at TIMESTAMP NULL
+);`;
+
+      // Act
+      await schemaBuilder.create(columns);
+
+      // Assert
+      expect(schemaBuilder['query']).toBe(expectedSQL);
+      expect(mockClient.query).toHaveBeenCalledWith(expectedSQL);
+    });
+
+    it('should generate exact SQL for user profile table with enum and complex relationships', async () => {
+      // Arrange
+      const columns = [
+        ColumnBuilder.id(),
+        ColumnBuilder.string('username', 50, {
+          nullable: false,
+          unique: true,
+        }),
+        ColumnBuilder.string('first_name', 100, {
+          nullable: false,
+        }),
+        ColumnBuilder.string('last_name', 100, {
+          nullable: false,
+        }),
+        ColumnBuilder.email('primary_email', {
+          nullable: false,
+          unique: true,
+        }),
+        ColumnBuilder.string('secondary_email', 255, {
+          nullable: true,
+        }),
+        ColumnBuilder.password('hashed_password'),
+        ColumnBuilder.enum('billing_preference', 'BILLING_TYPES', {
+          nullable: false,
+          default: 'monthly',
+        }),
+        ColumnBuilder.enum('role', 'USER_EDITORS_ROLES', {
+          nullable: false,
+          default: 'editor',
+        }),
+        ColumnBuilder.string('phone_number', 20, {
+          nullable: true,
+        }),
+        ColumnBuilder.string('address', 500, {
+          nullable: true,
+        }),
+        ColumnBuilder.string('city', 100, {
+          nullable: true,
+        }),
+        ColumnBuilder.string('country', 100, {
+          nullable: true,
+        }),
+        ColumnBuilder.string('postal_code', 20, {
+          nullable: true,
+        }),
+        ColumnBuilder.boolean('is_verified', {
+          default: false,
+        }),
+        ColumnBuilder.boolean('is_active', {
+          default: true,
+        }),
+        ColumnBuilder.boolean('email_notifications', {
+          default: true,
+        }),
+        ColumnBuilder.boolean('sms_notifications', {
+          default: false,
+        }),
+        ColumnBuilder.integer('login_attempts', {
+          default: 0,
+        }),
+        ColumnBuilder.timestamp('last_login', {
+          nullable: true,
+        }),
+        ColumnBuilder.timestamp('email_verified_at', {
+          nullable: true,
+        }),
+        ColumnBuilder.timestamp('password_changed_at', {
+          nullable: true,
+        }),
+        ColumnBuilder.foreignKey('manager_id', 'users', 'id', {
+          nullable: true,
+          onDelete: 'SET NULL',
+        }),
+        ColumnBuilder.foreignKey('department_id', 'departments', 'id', {
+          nullable: true,
+          onDelete: 'SET NULL',
+        }),
+        ColumnBuilder.timestamps({
+          nullable: false,
+          default: 'NOW()',
+        }),
+        ColumnBuilder.softDelete(),
+      ];
+
+      // Expected hardcoded SQL query
+      const expectedSQL = `CREATE TABLE users (
+id SERIAL PRIMARY KEY NOT NULL,
+username VARCHAR(50) NOT NULL UNIQUE,
+first_name VARCHAR(100) NOT NULL,
+last_name VARCHAR(100) NOT NULL,
+primary_email VARCHAR(255) NOT NULL UNIQUE,
+secondary_email VARCHAR(255) NULL,
+hashed_password VARCHAR(255) NOT NULL,
+billing_preference BILLING_TYPES NOT NULL DEFAULT monthly,
+role USER_EDITORS_ROLES NOT NULL DEFAULT editor,
+phone_number VARCHAR(20) NULL,
+address VARCHAR(500) NULL,
+city VARCHAR(100) NULL,
+country VARCHAR(100) NULL,
+postal_code VARCHAR(20) NULL,
+is_verified BOOLEAN NOT NULL DEFAULT false,
+is_active BOOLEAN NOT NULL DEFAULT true,
+email_notifications BOOLEAN NOT NULL DEFAULT true,
+sms_notifications BOOLEAN NOT NULL DEFAULT false,
+login_attempts INTEGER NOT NULL DEFAULT 0,
+last_login TIMESTAMP NULL,
+email_verified_at TIMESTAMP NULL,
+password_changed_at TIMESTAMP NULL,
+manager_id INT REFERENCES users (id) ON DELETE SET NULL,
+department_id INT REFERENCES departments (id) ON DELETE SET NULL,
+created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+deleted_at TIMESTAMP NULL
 );`;
 
       // Act

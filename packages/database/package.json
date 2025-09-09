@@ -8,8 +8,8 @@
     "build": "tsc",
     "test": "jest  --passWithNoTests --config ./jest.config.ts ",
     "test:watch": "jest  --passWithNoTests --config ./jest.config.ts  --watch",
-    "db:create:migration": "ts-node src/lib/migration/console/create-migration.ts",
-    "db:migrate": "ts-node src/lib/migration/console/migrate.ts"
+    "create:migration": "ts-node src/lib/migration/console/create-migration.ts",
+    "migrate": "ts-node src/lib/migration/console/migrate.ts"
   },
   "exports": {
     ".": "./dist/index.js"
