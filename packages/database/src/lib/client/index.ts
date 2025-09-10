@@ -1,5 +1,9 @@
 import { Pool, QueryResult } from 'mysql2/promise';
-import { DatabaseClient, DatabaseConfig, FullDatabaseConfig } from '../utils/types';
+import {
+  DatabaseClient,
+  DatabaseConfig,
+  FullDatabaseConfig,
+} from '../utils/types';
 import { Pool as PgPool } from 'pg';
 import mysql from 'mysql2/promise';
 import {
@@ -139,6 +143,11 @@ export const killClient = async () => {
 };
 
 // Export a getter function instead of the static client
-export const getClient = () => client;
+export const getClient = () => {
+  if (!client) {
+    throw new ClientNotInitializedException();
+  }
+  return client;
+};
 
 export const getClientConfig = () => clientChoosen;

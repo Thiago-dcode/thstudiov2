@@ -1,5 +1,5 @@
 import { EnumType } from 'typescript';
-import { ENUMS, TABLES } from './constants';
+import { ENUMS, SQL_FUNCTIONS, TABLES } from './constants';
 
 export type DatabaseClient = 'postgres' | 'mysql' | 'sqlite' | 'mongodb';
 export type DatabaseSettings = {
@@ -79,3 +79,5 @@ export type Join = {
 export type TableName = (typeof TABLES)[number];
 
 export type AvailableEnums = typeof ENUMS;
+export type SqlFunction = (typeof SQL_FUNCTIONS)[number];
+export type SqlFunctionTimestamp = Extract<SqlFunction, 'NOW()' | 'CURRENT_TIMESTAMP' | 'CURRENT_DATE' | 'CURRENT_TIME'>;

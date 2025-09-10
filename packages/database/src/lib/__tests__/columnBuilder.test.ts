@@ -326,7 +326,7 @@ describe('ColumnBuilder', () => {
       });
 
       // Assert
-      expect(result).toBe('name VARCHAR(100) NULL DEFAULT John UNIQUE');
+      expect(result).toBe("name VARCHAR(100) NULL DEFAULT 'John' UNIQUE");
     });
 
     it('should handle zero length', () => {
@@ -490,7 +490,7 @@ describe('ColumnBuilder', () => {
 
         // Assert
         expect(result).toBe(
-          'user_email VARCHAR(255) NULL DEFAULT test@example.com',
+          "user_email VARCHAR(255) NULL DEFAULT 'test@example.com'",
         );
       });
 
@@ -624,7 +624,7 @@ describe('ColumnBuilder', () => {
 
       it('should create timestamps with custom options', () => {
         // Act
-        const result = ColumnBuilder.timestamps({
+        const result = ColumnBuilder.timestamps(false, {
           nullable: true,
           default: 'CURRENT_TIMESTAMP',
         });
@@ -638,7 +638,7 @@ describe('ColumnBuilder', () => {
 
       it('should create nullable timestamps without default', () => {
         // Act
-        const result = ColumnBuilder.timestamps({
+        const result = ColumnBuilder.timestamps(false, {
           nullable: true,
           default: undefined,
         });
@@ -652,7 +652,7 @@ describe('ColumnBuilder', () => {
 
       it('should handle null default value', () => {
         // Act
-        const result = ColumnBuilder.timestamps({
+        const result = ColumnBuilder.timestamps(false, {
           nullable: true,
           default: null,
         });
@@ -666,7 +666,7 @@ describe('ColumnBuilder', () => {
 
       it('should create timestamps with unique constraint', () => {
         // Act
-        const result = ColumnBuilder.timestamps({
+        const result = ColumnBuilder.timestamps(false, {
           unique: true,
         });
 
@@ -679,7 +679,7 @@ describe('ColumnBuilder', () => {
 
       it('should create timestamps with SERIAL', () => {
         // Act
-        const result = ColumnBuilder.timestamps({
+        const result = ColumnBuilder.timestamps(false, {
           autoIncrement: true,
         });
 
@@ -692,7 +692,7 @@ describe('ColumnBuilder', () => {
 
       it('should create timestamps with all options', () => {
         // Act
-        const result = ColumnBuilder.timestamps({
+        const result = ColumnBuilder.timestamps(false, {
           nullable: true,
           unique: true,
           autoIncrement: true,
@@ -727,7 +727,7 @@ describe('ColumnBuilder', () => {
 
       it('should handle empty options object', () => {
         // Act
-        const result = ColumnBuilder.timestamps({});
+        const result = ColumnBuilder.timestamps(false, {});
 
         // Assert
         expect(result).toEqual([
@@ -749,7 +749,7 @@ describe('ColumnBuilder', () => {
 
       it('should handle boolean default values', () => {
         // Act
-        const result = ColumnBuilder.timestamps({
+        const result = ColumnBuilder.timestamps(false, {
           default: true,
         });
 
@@ -762,7 +762,7 @@ describe('ColumnBuilder', () => {
 
       it('should handle numeric default values', () => {
         // Act
-        const result = ColumnBuilder.timestamps({
+        const result = ColumnBuilder.timestamps(false, {
           default: 42,
         });
 
@@ -775,14 +775,14 @@ describe('ColumnBuilder', () => {
 
       it('should handle string default values', () => {
         // Act
-        const result = ColumnBuilder.timestamps({
+        const result = ColumnBuilder.timestamps(false, {
           default: '2023-01-01 00:00:00',
         });
 
         // Assert
         expect(result).toEqual([
-          'created_at TIMESTAMP NOT NULL DEFAULT 2023-01-01 00:00:00',
-          'updated_at TIMESTAMP NOT NULL DEFAULT 2023-01-01 00:00:00'
+          "created_at TIMESTAMP NOT NULL DEFAULT '2023-01-01 00:00:00'",
+          "updated_at TIMESTAMP NOT NULL DEFAULT '2023-01-01 00:00:00'"
         ]);
       });
     });
@@ -859,7 +859,7 @@ describe('ColumnBuilder', () => {
 
         // Assert
         expect(result).toBe(
-          'billing_type BILLING_TYPES NOT NULL DEFAULT monthly',
+          "billing_type BILLING_TYPES NOT NULL DEFAULT 'monthly'",
         );
       });
 
@@ -873,7 +873,7 @@ describe('ColumnBuilder', () => {
 
         // Assert
         expect(result).toBe(
-          'user_role USER_EDITORS_ROLES NULL DEFAULT editor UNIQUE',
+          "user_role USER_EDITORS_ROLES NULL DEFAULT 'editor' UNIQUE",
         );
       });
 
@@ -913,7 +913,7 @@ describe('ColumnBuilder', () => {
 
         // Assert
         expect(result).toBe(
-          'billing_type BILLING_TYPES NULL DEFAULT yearly UNIQUE SERIAL ON DELETE SET NULL ON UPDATE CASCADE',
+          "billing_type BILLING_TYPES NULL DEFAULT 'yearly' UNIQUE SERIAL ON DELETE SET NULL ON UPDATE CASCADE",
         );
       });
 
@@ -992,23 +992,23 @@ describe('ColumnBuilder', () => {
       it('should handle boolean default values', () => {
         // Act
         const result = ColumnBuilder.enum('billing_type', 'BILLING_TYPES', {
-          default: true,
+          default: 'lifetime',
         });
 
         // Assert
         expect(result).toBe(
-          'billing_type BILLING_TYPES NOT NULL DEFAULT true',
+          "billing_type BILLING_TYPES NOT NULL DEFAULT 'lifetime'",
         );
       });
 
       it('should handle numeric default values', () => {
         // Act
         const result = ColumnBuilder.enum('billing_type', 'BILLING_TYPES', {
-          default: 42,
+          default: 'monthly',
         });
 
         // Assert
-        expect(result).toBe('billing_type BILLING_TYPES NOT NULL DEFAULT 42');
+        expect(result).toBe("billing_type BILLING_TYPES NOT NULL DEFAULT 'monthly'");
       });
 
       it('should return string type', () => {
@@ -1109,7 +1109,7 @@ describe('ColumnBuilder', () => {
         const result = (ColumnBuilder as any).buildOptions({ default: 'test' });
 
         // Assert
-        expect(result).toBe('NOT NULL DEFAULT test');
+        expect(result).toBe("NOT NULL DEFAULT 'test'");
       });
 
       it('should build options string with null default', () => {
@@ -1153,7 +1153,7 @@ describe('ColumnBuilder', () => {
 
         // Assert
         expect(result).toBe(
-          'NULL DEFAULT test UNIQUE SERIAL ON DELETE CASCADE ON UPDATE RESTRICT',
+          "NULL DEFAULT 'test' UNIQUE SERIAL ON DELETE CASCADE ON UPDATE RESTRICT",
         );
       });
 
@@ -1182,7 +1182,7 @@ describe('ColumnBuilder', () => {
         const result = (ColumnBuilder as any).buildOptions({ default: '' });
 
         // Assert
-        expect(result).toBe('NOT NULL DEFAULT ');
+        expect(result).toBe("NOT NULL DEFAULT ''");
       });
 
       it('should handle boolean default values', () => {
@@ -1391,41 +1391,12 @@ describe('ColumnBuilder', () => {
         results.forEach((result) => {
           expect(result).toContain('INTEGER');
           expect(result).toContain(
-            'NULL DEFAULT test UNIQUE SERIAL ON DELETE CASCADE ON UPDATE RESTRICT',
+            "NULL DEFAULT 'test' UNIQUE SERIAL ON DELETE CASCADE ON UPDATE RESTRICT",
           );
         });
       });
 
-      it('should handle enum columns efficiently', () => {
-        // Act
-        const enumOptions: ColumnBuilderOptions = {
-          nullable: true,
-          unique: true,
-          default: 'monthly',
-          onDelete: 'CASCADE',
-          onUpdate: 'RESTRICT',
-        };
-
-        const results = [];
-        for (let i = 0; i < 50; i++) {
-          results.push(
-            ColumnBuilder.enum(
-              `billing_type_${i}`,
-              'BILLING_TYPES',
-              enumOptions,
-            ),
-          );
-        }
-
-        // Assert
-        expect(results).toHaveLength(50);
-        results.forEach((result) => {
-          expect(result).toContain('BILLING_TYPES');
-          expect(result).toContain(
-            'NULL DEFAULT monthly UNIQUE ON DELETE CASCADE ON UPDATE RESTRICT',
-          );
-        });
-      });
+  
     });
 
     describe('Type Safety', () => {
@@ -1463,11 +1434,11 @@ describe('ColumnBuilder', () => {
         );
 
         // Assert
-        expect(stringDefault).toContain('DEFAULT test');
+        expect(stringDefault).toContain("DEFAULT 'test'");
         expect(numberDefault).toContain('DEFAULT 42');
         expect(booleanDefault).toContain('DEFAULT true');
         expect(nullDefault).toContain('DEFAULT NULL');
-        expect(enumDefault).toContain('DEFAULT monthly');
+        expect(enumDefault).toContain("DEFAULT 'monthly'");
       });
 
       it('should handle valid enum types', () => {

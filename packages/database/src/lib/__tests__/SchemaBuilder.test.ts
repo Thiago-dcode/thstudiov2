@@ -1264,7 +1264,7 @@ updated_at TIMESTAMP NULL
           nullable: true,
           onDelete: 'SET NULL',
         }),
-        ColumnBuilder.timestamps({
+        ColumnBuilder.timestamps(false,{
           nullable: false,
           default: 'NOW()',
         }),
@@ -1375,7 +1375,7 @@ updated_at TIMESTAMP NOT NULL DEFAULT NOW()
           nullable: true,
           onDelete: 'SET NULL',
         }),
-        ColumnBuilder.timestamps({
+        ColumnBuilder.timestamps(false,{
           nullable: false,
           default: 'NOW()',
         }),
@@ -1387,8 +1387,8 @@ updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 subscription_id SERIAL PRIMARY KEY NOT NULL,
 name VARCHAR(255) NOT NULL,
 description VARCHAR(1000) NULL,
-billing_type BILLING_TYPES NOT NULL DEFAULT monthly,
-user_role USER_EDITORS_ROLES NULL DEFAULT editor,
+billing_type BILLING_TYPES NOT NULL DEFAULT 'monthly',
+user_role USER_EDITORS_ROLES NULL DEFAULT 'editor',
 price INTEGER NOT NULL,
 duration_months INTEGER NOT NULL DEFAULT 1,
 is_active BOOLEAN NOT NULL DEFAULT true,
@@ -1485,7 +1485,7 @@ archived_at TIMESTAMP NULL
           nullable: true,
           onDelete: 'SET NULL',
         }),
-        ColumnBuilder.timestamps({
+        ColumnBuilder.timestamps(false,{
           nullable: false,
           default: 'NOW()',
         }),
@@ -1501,8 +1501,8 @@ last_name VARCHAR(100) NOT NULL,
 primary_email VARCHAR(255) NOT NULL UNIQUE,
 secondary_email VARCHAR(255) NULL,
 hashed_password VARCHAR(255) NOT NULL,
-billing_preference BILLING_TYPES NOT NULL DEFAULT monthly,
-role USER_EDITORS_ROLES NOT NULL DEFAULT editor,
+billing_preference BILLING_TYPES NOT NULL DEFAULT 'monthly',
+role USER_EDITORS_ROLES NOT NULL DEFAULT 'editor',
 phone_number VARCHAR(20) NULL,
 address VARCHAR(500) NULL,
 city VARCHAR(100) NULL,

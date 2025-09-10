@@ -1,10 +1,11 @@
+import { createUpdatedAtTrigger } from '../lib/migration/utils';
 import { ColumnBuilder } from '../lib/builder/columnBuilder';
 import SchemaBuilder from '../lib/builder/schemaBuilder';
 const TABLE_NAME = 'users';
 
 const up = async () => {
   // Create the users table with all fields from Prisma schema
-  await SchemaBuilder.table(TABLE_NAME).create([
+  await SchemaBuilder.table(TABLE_NAME).createIfNotExists([
     ColumnBuilder.id(),
     ColumnBuilder.string('name', 255, {
       nullable: true,
@@ -23,14 +24,18 @@ const up = async () => {
       onUpdate: 'CASCADE',
       nullable: false,
     }),
-    ColumnBuilder.timestamps(),
-    ColumnBuilder.softDelete(),
+    ColumnBuilder.timestamps(true),
   ]);
+  await createUpdatedAtTrigger('users');
 };
 
 const down = async () => {
   // Drop the table
+ 
+ 
+  await SchemaBuilder.table(TABLE_NAME).dropTrigger('update_users_updated_at');
   await SchemaBuilder.table(TABLE_NAME).drop();
+ 
 };
 
 export { up, down };

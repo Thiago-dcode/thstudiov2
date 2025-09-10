@@ -3,7 +3,7 @@ import { TRIGGER_UPDATE_UPDATED_AT_FUNCTION_NAME } from '../lib/utils/constants'
 
 const up = async () => {
   // Create trigger to automatically update updated_at timestamp on row updates
-  await Schema.table('plans').raw(`
+  await Schema.raw(`
     CREATE OR REPLACE FUNCTION ${TRIGGER_UPDATE_UPDATED_AT_FUNCTION_NAME}()
     RETURNS TRIGGER AS $$
     BEGIN
@@ -15,7 +15,7 @@ const up = async () => {
 };
 const down = async () => {
   // Drop the function
-  await Schema.table('plans').raw(
+  await Schema.raw(
     `DROP FUNCTION IF EXISTS ${TRIGGER_UPDATE_UPDATED_AT_FUNCTION_NAME}();`,
   );
 };

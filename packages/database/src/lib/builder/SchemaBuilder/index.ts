@@ -1,6 +1,7 @@
 import { ENUMS, TABLES } from '../../utils/constants';
 import BaseBuilder from '..';
 import { AvailableEnums } from '../../utils/types';
+import { getClient } from '../../client';
 class SchemaBuilder extends BaseBuilder {
   protected columns: string[] = [];
 
@@ -12,6 +13,7 @@ class SchemaBuilder extends BaseBuilder {
     // Flatten any arrays (like from timestamps() method)
     this.buildColumns(columns);
     this.buildCreateQuery();
+    console.log(this.query);
     return this.db?.query(this.query);
   }
 
@@ -29,19 +31,19 @@ class SchemaBuilder extends BaseBuilder {
       }
     }
   }
-  public async createEnum(enumName: keyof AvailableEnums) {
+  public static async createEnum(enumName: keyof AvailableEnums) {
     const enumValues = ENUMS[enumName].map((value) => `'${value}'`).join(',');
-    this.query = `CREATE TYPE ${enumName} AS ENUM (${enumValues});`;
-    return this.db?.query(this.query);
+    return await getClient().query(
+      `CREATE TYPE ${enumName} AS ENUM (${enumValues});`,
+    );
   }
-  public async createEnumIfNotExists(enumName: keyof AvailableEnums) {
+  public static async createEnumIfNotExists(enumName: keyof AvailableEnums) {
     const enumValues = ENUMS[enumName].map((value) => `'${value}'`).join(',');
-    this.query = `DO $$ BEGIN
+    return await getClient().query(`DO $$ BEGIN
       CREATE TYPE ${enumName} AS ENUM (${enumValues});
 EXCEPTION
     WHEN duplicate_object THEN null;
-END $$;`;
-    return this.db?.query(this.query);
+END $$;`);
   }
   public async drop() {
     this.query = `DROP TABLE ${this.tableName}`;
@@ -52,12 +54,19 @@ END $$;`;
     return this.db?.query(this.query);
   }
 
-  public async dropEnum(enumName: keyof AvailableEnums) {
-    this.query = `DROP TYPE ${enumName}`;
+  public static async dropEnum(enumName: keyof AvailableEnums) {
+    return await getClient().query(`DROP TYPE ${enumName}`);
+  }
+  public static async dropEnumIfExists(enumName: keyof AvailableEnums) {
+    return await getClient().query(`DROP TYPE IF EXISTS ${enumName}`);
+  }
+
+  public async dropTrigger(triggerName: string) {
+    this.query = `DROP TRIGGER IF EXISTS ${triggerName} ON ${this.tableName}`;
     return this.db?.query(this.query);
   }
-  public async dropEnumIfExists(enumName: keyof AvailableEnums) {
-    this.query = `DROP TYPE IF EXISTS ${enumName}`;
+  public async dropTriggerIfExists(triggerName: string) {
+    this.query = `DROP TRIGGER IF EXISTS ${triggerName} ON ${this.tableName}`;
     return this.db?.query(this.query);
   }
   public async exists(): Promise<boolean> {

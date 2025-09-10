@@ -1,15 +1,23 @@
 import { ClientNotInitializedException } from '../../client/exceptions';
 import { getClientConfig } from '../../client';
-import { AvailableEnums, DatabaseClient, TableName } from '../../utils/types';
-import { ENUMS } from 'lib/utils/constants';
+import {
+  AvailableEnums,
+  DatabaseClient,
+  SqlFunction,
+  SqlFunctionTimestamp,
+  TableName,
+} from '../../utils/types';
+import { ENUMS, SQL_FUNCTIONS } from '../../utils/constants';
 
 export type OnAction = 'SET NULL' | 'CASCADE' | 'RESTRICT' | 'NO ACTION';
 
-export type ColumnBuilderOptions = {
+export type ColumnBuilderOptions<
+  T = string | number | boolean | null | SqlFunction,
+> = { 
   nullable?: boolean;
   unique?: boolean;
   autoIncrement?: boolean;
-  default?: string | number | boolean | null;
+  default?: T | null;
   onDelete?: OnAction;
   onUpdate?: OnAction;
 };
@@ -94,6 +102,7 @@ export class ColumnBuilder {
     };
     return `${this.validateStringAndReturn(columnName)} INT REFERENCES ${this.validateStringAndReturn(foreignTableName)} (${this.validateStringAndReturn(foreignTableColumnName)}) ${this.buildForeignKeyOptions(_options)}`;
   }
+
   protected static buildOptions(options: ColumnBuilderOptions) {
     const clientChoosen = getClientConfig();
     if (!clientChoosen) {
@@ -119,9 +128,15 @@ export class ColumnBuilder {
 
     // 2. DEFAULT
     if (_options.default !== undefined) {
-      concatenateOptions(
-        `DEFAULT ${_options.default === null ? 'NULL' : _options.default}`,
-      );
+      const defaultValue =
+        _options.default === null
+          ? 'NULL'
+          : typeof _options.default === 'string'
+            ? SQL_FUNCTIONS.includes(_options.default as SqlFunction)
+              ? _options.default
+              : `'${_options.default}'`
+            : _options.default;
+      concatenateOptions(`DEFAULT ${defaultValue}`);
     }
 
     // 3. UNIQUE
@@ -158,20 +173,22 @@ export class ColumnBuilder {
     };
 
     // For foreign keys, build options in proper SQL order
-    // 1. NOT NULL (only if explicitly set to false)
-    if (_options.nullable === false) {
-      concatenateOptions('NOT NULL');
-    }
-    // Note: We don't add 'NULL' explicitly as it's the default for nullable columns
-
-    // 2. ON DELETE (for foreign keys)
+    // 1. ON DELETE (for foreign keys)
     if (_options.onDelete) {
       concatenateOptions(`ON DELETE ${_options.onDelete}`);
     }
 
-    // 3. ON UPDATE (for foreign keys)
+    // 2. ON UPDATE (for foreign keys)
     if (_options.onUpdate) {
       concatenateOptions(`ON UPDATE ${_options.onUpdate}`);
+    }
+
+    // 3. NOT NULL/NULL (must come after ON DELETE/UPDATE)
+    if (_options.nullable !== undefined) {
+      concatenateOptions(_options.nullable ? 'NULL' : 'NOT NULL');
+    } else {
+      // Default behavior when nullable is undefined
+      concatenateOptions('NOT NULL');
     }
 
     return optionsString;
@@ -197,39 +214,65 @@ export class ColumnBuilder {
 
   public static timestamp(
     columnName: string,
-    options: ColumnBuilderOptions = {
+    options: ColumnBuilderOptions<SqlFunctionTimestamp> = {
       nullable: false,
     },
   ) {
-    const _options: ColumnBuilderOptions = {
+    const _options: ColumnBuilderOptions<SqlFunctionTimestamp> = {
       nullable: false,
       ...options,
     };
 
     return `${this.validateStringAndReturn(columnName)} TIMESTAMP ${this.buildOptions(_options)}`;
   }
+  // Function overloads for better type inference
   public static enum(
     columnName: string,
-    enumName: keyof AvailableEnums,
-    options?: ColumnBuilderOptions,
-  ) {
+    enumName: 'BILLING_TYPES',
+    options?: ColumnBuilderOptions<(typeof ENUMS.BILLING_TYPES)[number]>,
+  ): string;
+  public static enum(
+    columnName: string,
+    enumName: 'USER_EDITORS_ROLES',
+    options?: ColumnBuilderOptions<(typeof ENUMS.USER_EDITORS_ROLES)[number]>,
+  ): string;
+  public static enum(
+    columnName: string,
+    enumName: 'LANGUAGE_CODE',
+    options?: ColumnBuilderOptions<(typeof ENUMS.LANGUAGE_CODE)[number]>,
+  ): string;
+  public static enum(
+    columnName: string,
+    enumName: 'MEDIA_SHAPE',
+    options?: ColumnBuilderOptions<(typeof ENUMS.MEDIA_SHAPE)[number]>,
+  ): string;
+  public static enum<T extends keyof AvailableEnums>(
+    columnName: string,
+    enumName: T,
+    options?: ColumnBuilderOptions<(typeof ENUMS)[T][number]>,
+  ): string {
     return `${this.validateStringAndReturn(columnName)} ${enumName}${options ? ' ' + this.buildOptions(options) : ''}`;
   }
   public static timestamps(
-    options: ColumnBuilderOptions = {
+    withDeletedAt: boolean = false,
+    options: ColumnBuilderOptions<SqlFunctionTimestamp> = {
       nullable: false,
       default: 'NOW()',
     },
   ) {
-    const _options: ColumnBuilderOptions = {
+    const _options: ColumnBuilderOptions<SqlFunctionTimestamp> = {
       nullable: false,
       default: 'NOW()',
       ...options,
     };
-    return [
+    const columns = [
       this.timestamp('created_at', _options),
       this.timestamp('updated_at', _options),
     ];
+    if (withDeletedAt) {
+      columns.push(this.softDelete());
+    }
+    return columns;
   }
   public static softDelete(columnName: string = 'deleted_at') {
     return `${this.validateStringAndReturn(columnName || 'deleted_at')} TIMESTAMP NULL`;

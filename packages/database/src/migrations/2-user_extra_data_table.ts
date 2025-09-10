@@ -1,47 +1,48 @@
-import { ColumnBuilder } from '../lib/builder/columnBuilder';
-import SchemaBuilder from '../lib/builder/schemaBuilder';
+import { createUpdatedAtTrigger } from '../lib/migration/utils';
+import { Column, Schema } from '../lib/utils/facades';
 
 const TABLE_NAME = 'user_extra_data';
 
 const up = async () => {
-  await SchemaBuilder.table(TABLE_NAME).createEnumIfNotExists('BILLING_TYPES');
-  await SchemaBuilder.table(TABLE_NAME).create([
-    ColumnBuilder.id(),
-    ColumnBuilder.bigint('media_size', {
+  await Schema.createEnumIfNotExists('BILLING_TYPES');
+  await Schema.table(TABLE_NAME).create([
+    Column.id(),
+    Column.bigint('media_size', {
       default: 0,
     }),
-    ColumnBuilder.integer('media_count', {
+    Column.integer('media_count', {
       default: 0,
     }),
-    ColumnBuilder.integer('projects_count', {
+    Column.integer('projects_count', {
       default: 0,
     }),
-    ColumnBuilder.integer('clients_count', {
+    Column.integer('clients_count', {
       default: 0,
     }),
-    ColumnBuilder.integer('services_count', {
+    Column.integer('services_count', {
       default: 0,
     }),
-    ColumnBuilder.timestamp('plan_start_date', {
+    Column.timestamp('plan_start_date', {
       default: 'NOW()',
     }),
-    ColumnBuilder.enum('billing_type', 'BILLING_TYPES'),
-    ColumnBuilder.boolean('plan_autorenewal', {
+    Column.enum('billing_type', 'BILLING_TYPES'),
+    Column.boolean('plan_autorenewal', {
       default: false,
     }),
-    ColumnBuilder.foreignKey('plan_id', 'plans', 'id', {
+    Column.foreignKey('plan_id', 'plans', 'id', {
       onDelete: 'CASCADE',
       nullable: true,
     }),
-    ColumnBuilder.timestamps(),
-    ColumnBuilder.softDelete(),
+    Column.timestamps(true),
   ]);
+  await createUpdatedAtTrigger('user_extra_data');
 };
 
 const down = async () => {
   //Your migration rollback code here
-  await SchemaBuilder.table(TABLE_NAME).drop();
-  await SchemaBuilder.table(TABLE_NAME).dropEnum('BILLING_TYPES');
+  await Schema.table(TABLE_NAME).dropTriggerIfExists('update_user_extra_data_updated_at');
+  await Schema.table(TABLE_NAME).drop();
+  await Schema.dropEnum('BILLING_TYPES');
 };
 
 export { up, down };

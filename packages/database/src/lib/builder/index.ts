@@ -38,14 +38,8 @@ abstract class BaseBuilder {
    * const result = await queryBuilder.raw('SELECT COUNT(*) FROM users WHERE age > ?', [18]);
    * ```
    */
-  public async raw(query: string, values?: (string | number | null)[]) {
-    if (this.operationsChain.length > 0) {
-      throw new QueryBuilderMethodChainedException(
-        'Method chaining not allowed after raw',
-      );
-    }
- 
-    return await this.db?.query(query, values);
+  public static async raw(query: string, values?: (string | number | null)[]) {
+    return await getClient().query(query, values);
   }
   protected getQuery() {
     return this.query;
