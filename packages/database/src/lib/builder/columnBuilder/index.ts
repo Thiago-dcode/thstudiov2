@@ -13,11 +13,13 @@ export type OnAction = 'SET NULL' | 'CASCADE' | 'RESTRICT' | 'NO ACTION';
 
 export type ColumnBuilderOptions<
   T = string | number | boolean | null | SqlFunction,
-> = { 
+> = {
   nullable?: boolean;
   unique?: boolean;
   autoIncrement?: boolean;
   default?: T | null;
+};
+export type ColumnBuilderOptionsWithForeignKey = ColumnBuilderOptions & {
   onDelete?: OnAction;
   onUpdate?: OnAction;
 };
@@ -82,7 +84,7 @@ export class ColumnBuilder {
     ) {
       throw new Error('Length must be a positive number');
     }
-    return `${this.validateStringAndReturn(columnName)} VARCHAR(${length})${options ? ' ' + this.buildOptions(options) : ''}`;
+    return `${this.validateStringAndReturn(columnName)} VARCHAR(${length}) ${this.buildOptions(options || {})}`;
   }
   public static text(columnName: string, options?: ColumnBuilderOptions) {
     return `${this.validateStringAndReturn(columnName)} TEXT${options ? ' ' + this.buildOptions(options) : ''}`;
@@ -91,16 +93,19 @@ export class ColumnBuilder {
     columnName: string,
     foreignTableName: TableName,
     foreignTableColumnName: string = 'id',
-    options?: ColumnBuilderOptions,
+    options?: ColumnBuilderOptionsWithForeignKey,
   ) {
     // If onDelete is SET NULL, the column must be nullable
     const _options = {
       ...options,
-      // Force nullable to true if onDelete is SET NULL, regardless of what's passed
+      unique: false,
       nullable:
-        options?.onDelete === 'SET NULL' ? true : (options?.nullable ?? false),
+        options?.onDelete || options?.onUpdate ? undefined : options?.nullable,
     };
-    return `${this.validateStringAndReturn(columnName)} INT REFERENCES ${this.validateStringAndReturn(foreignTableName)} (${this.validateStringAndReturn(foreignTableColumnName)}) ${this.buildForeignKeyOptions(_options)}`;
+    return `${this.validateStringAndReturn(columnName)} INT REFERENCES ${this.validateStringAndReturn(foreignTableName)} (${this.validateStringAndReturn(foreignTableColumnName)})${!_options.onDelete && !_options.onUpdate ? ' ' + this.buildOptions(_options) : ''}${_options.onDelete || _options.onUpdate ? ' ' + this.buildForeignKeyOptions({
+      onDelete: _options.onDelete,
+      onUpdate: _options.onUpdate,
+    }) : ''}`;
   }
 
   protected static buildOptions(options: ColumnBuilderOptions) {
@@ -149,21 +154,12 @@ export class ColumnBuilder {
       concatenateOptions(this.getAutoIncrement(clientChoosen));
     }
 
-    // 5. ON DELETE (for foreign keys)
-    if (_options.onDelete) {
-      concatenateOptions(`ON DELETE ${_options.onDelete}`);
-    }
-
-    // 6. ON UPDATE (for foreign keys)
-    if (_options.onUpdate) {
-      concatenateOptions(`ON UPDATE ${_options.onUpdate}`);
-    }
-
     return optionsString;
   }
 
-  protected static buildForeignKeyOptions(options: ColumnBuilderOptions) {
-    const _options = { ...DEFAULT_COLUMN_OPTIONS, ...options };
+  protected static buildForeignKeyOptions(
+    options: Pick<ColumnBuilderOptionsWithForeignKey, 'onDelete' | 'onUpdate'>,
+  ) {
     let optionsString = '';
     const concatenateOptions = (options: string) => {
       if (optionsString.length > 0 && options.length > 0) {
@@ -174,22 +170,17 @@ export class ColumnBuilder {
 
     // For foreign keys, build options in proper SQL order
     // 1. ON DELETE (for foreign keys)
-    if (_options.onDelete) {
-      concatenateOptions(`ON DELETE ${_options.onDelete}`);
+    if (options.onDelete) {
+      concatenateOptions(`ON DELETE ${options.onDelete}`);
     }
 
     // 2. ON UPDATE (for foreign keys)
-    if (_options.onUpdate) {
-      concatenateOptions(`ON UPDATE ${_options.onUpdate}`);
+    if (options.onUpdate) {
+      concatenateOptions(`ON UPDATE ${options.onUpdate}`);
     }
 
-    // 3. NOT NULL/NULL (must come after ON DELETE/UPDATE)
-    if (_options.nullable !== undefined) {
-      concatenateOptions(_options.nullable ? 'NULL' : 'NOT NULL');
-    } else {
-      // Default behavior when nullable is undefined
-      concatenateOptions('NOT NULL');
-    }
+    // Don't add NOT NULL/NULL when foreign key constraints are present
+    // The constraint type already implies the nullability behavior
 
     return optionsString;
   }
@@ -218,7 +209,7 @@ export class ColumnBuilder {
       nullable: false,
     },
   ) {
-    const _options: ColumnBuilderOptions<SqlFunctionTimestamp> = {
+    const _options: ColumnBuilderOptions<SqlFunctionTimestamp > = {
       nullable: false,
       ...options,
     };
@@ -255,12 +246,12 @@ export class ColumnBuilder {
   }
   public static timestamps(
     withDeletedAt: boolean = false,
-    options: ColumnBuilderOptions<SqlFunctionTimestamp> = {
+    options: ColumnBuilderOptions<SqlFunctionTimestamp > = {
       nullable: false,
       default: 'NOW()',
     },
   ) {
-    const _options: ColumnBuilderOptions<SqlFunctionTimestamp> = {
+    const _options: ColumnBuilderOptions<SqlFunctionTimestamp > = {
       nullable: false,
       default: 'NOW()',
       ...options,

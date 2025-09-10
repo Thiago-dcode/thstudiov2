@@ -40,7 +40,6 @@ const up = async () => {
 
 const down = async () => {
   //Your migration rollback code here
-  await Schema.table(TABLE_NAME).dropTriggerIfExists('update_user_extra_data_updated_at');
   await Schema.table(TABLE_NAME).drop();
   await Schema.dropEnum('BILLING_TYPES');
 };

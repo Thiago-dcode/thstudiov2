@@ -33,14 +33,6 @@ const up = async () => {
 
 const down = async () => {
   //Your migration rollback code here
-  await Schema.table('languages').dropTrigger(
-    'update_languages_updated_at',
-  );
- 
- 
-  await Schema.table('language_translations').dropTrigger(
-    'update_language_translations_updated_at',
-  );
   await Schema.table('language_translations').drop();
   await Schema.table('languages').drop();
   await Schema.dropEnum('LANGUAGE_CODE');

@@ -13,7 +13,6 @@ class SchemaBuilder extends BaseBuilder {
     // Flatten any arrays (like from timestamps() method)
     this.buildColumns(columns);
     this.buildCreateQuery();
-    console.log(this.query);
     return this.db?.query(this.query);
   }
 
@@ -61,14 +60,7 @@ END $$;`);
     return await getClient().query(`DROP TYPE IF EXISTS ${enumName}`);
   }
 
-  public async dropTrigger(triggerName: string) {
-    this.query = `DROP TRIGGER IF EXISTS ${triggerName} ON ${this.tableName}`;
-    return this.db?.query(this.query);
-  }
-  public async dropTriggerIfExists(triggerName: string) {
-    this.query = `DROP TRIGGER IF EXISTS ${triggerName} ON ${this.tableName}`;
-    return this.db?.query(this.query);
-  }
+ 
   public async exists(): Promise<boolean> {
     try {
       this.query = `SELECT 1 FROM ${this.tableName} LIMIT 1`;

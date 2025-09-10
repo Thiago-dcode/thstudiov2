@@ -80,4 +80,4 @@ export type TableName = (typeof TABLES)[number];
 
 export type AvailableEnums = typeof ENUMS;
 export type SqlFunction = (typeof SQL_FUNCTIONS)[number];
-export type SqlFunctionTimestamp = Extract<SqlFunction, 'NOW()' | 'CURRENT_TIMESTAMP' | 'CURRENT_DATE' | 'CURRENT_TIME'>;
+export type SqlFunctionTimestamp = Extract<SqlFunction, 'NOW()' | 'CURRENT_TIMESTAMP' | 'CURRENT_DATE' | 'CURRENT_TIME'> | (string & {});

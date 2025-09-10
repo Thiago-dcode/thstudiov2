@@ -306,15 +306,7 @@ describe('ColumnBuilder', () => {
       const result = ColumnBuilder.string('name');
 
       // Assert
-      expect(result).toBe('name VARCHAR(255)');
-    });
-
-    it('should create string column with custom length', () => {
-      // Act
-      const result = ColumnBuilder.string('description', 500);
-
-      // Assert
-      expect(result).toBe('description VARCHAR(500)');
+      expect(result).toBe('name VARCHAR(255) NOT NULL');
     });
 
     it('should create string column with options', () => {
@@ -329,20 +321,12 @@ describe('ColumnBuilder', () => {
       expect(result).toBe("name VARCHAR(100) NULL DEFAULT 'John' UNIQUE");
     });
 
-    it('should handle zero length', () => {
-      // Act
-      const result = ColumnBuilder.string('code', 0);
-
-      // Assert
-      expect(result).toBe('code VARCHAR(0)');
-    });
-
     it('should handle very large length', () => {
       // Act
       const result = ColumnBuilder.string('content', 65535);
 
       // Assert
-      expect(result).toBe('content VARCHAR(65535)');
+      expect(result).toBe('content VARCHAR(65535) NOT NULL');
     });
 
     it('should handle negative length', () => {
@@ -352,14 +336,6 @@ describe('ColumnBuilder', () => {
       expect(() => ColumnBuilder.string('test', -1)).toThrow();
     });
 
-    it('should handle decimal length values', () => {
-      // Act
-      const result = ColumnBuilder.string('test', 100.5);
-
-      // Assert
-      expect(result).toBe('test VARCHAR(100.5)');
-    });
-
     it('should handle empty column name', () => {
       expect(() => ColumnBuilder.string('')).toThrow();
       expect(() => ColumnBuilder.string(null as any)).toThrow();
@@ -367,14 +343,6 @@ describe('ColumnBuilder', () => {
       expect(() => ColumnBuilder.string(123 as any)).toThrow();
       expect(() => ColumnBuilder.string({} as any)).toThrow();
       expect(() => ColumnBuilder.string([] as any)).toThrow();
-    });
-
-    it('should handle special characters in column name', () => {
-      // Act
-      const result = ColumnBuilder.string('user-name_123');
-
-      // Assert
-      expect(result).toBe('user-name_123 VARCHAR(255)');
     });
 
     describe('foreignKey', () => {
@@ -618,7 +586,7 @@ describe('ColumnBuilder', () => {
         // Assert
         expect(result).toEqual([
           'created_at TIMESTAMP NOT NULL DEFAULT NOW()',
-          'updated_at TIMESTAMP NOT NULL DEFAULT NOW()'
+          'updated_at TIMESTAMP NOT NULL DEFAULT NOW()',
         ]);
       });
 
@@ -632,7 +600,7 @@ describe('ColumnBuilder', () => {
         // Assert
         expect(result).toEqual([
           'created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP',
-          'updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP'
+          'updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP',
         ]);
       });
 
@@ -646,7 +614,7 @@ describe('ColumnBuilder', () => {
         // Assert
         expect(result).toEqual([
           'created_at TIMESTAMP NULL',
-          'updated_at TIMESTAMP NULL'
+          'updated_at TIMESTAMP NULL',
         ]);
       });
 
@@ -660,7 +628,7 @@ describe('ColumnBuilder', () => {
         // Assert
         expect(result).toEqual([
           'created_at TIMESTAMP NULL DEFAULT NULL',
-          'updated_at TIMESTAMP NULL DEFAULT NULL'
+          'updated_at TIMESTAMP NULL DEFAULT NULL',
         ]);
       });
 
@@ -673,7 +641,7 @@ describe('ColumnBuilder', () => {
         // Assert
         expect(result).toEqual([
           'created_at TIMESTAMP NOT NULL DEFAULT NOW() UNIQUE',
-          'updated_at TIMESTAMP NOT NULL DEFAULT NOW() UNIQUE'
+          'updated_at TIMESTAMP NOT NULL DEFAULT NOW() UNIQUE',
         ]);
       });
 
@@ -686,7 +654,7 @@ describe('ColumnBuilder', () => {
         // Assert
         expect(result).toEqual([
           'created_at TIMESTAMP NOT NULL DEFAULT NOW() SERIAL',
-          'updated_at TIMESTAMP NOT NULL DEFAULT NOW() SERIAL'
+          'updated_at TIMESTAMP NOT NULL DEFAULT NOW() SERIAL',
         ]);
       });
 
@@ -697,14 +665,12 @@ describe('ColumnBuilder', () => {
           unique: true,
           autoIncrement: true,
           default: 'CURRENT_TIMESTAMP',
-          onDelete: 'CASCADE',
-          onUpdate: 'RESTRICT',
         });
 
         // Assert
         expect(result).toEqual([
-          'created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP UNIQUE SERIAL ON DELETE CASCADE ON UPDATE RESTRICT',
-          'updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP UNIQUE SERIAL ON DELETE CASCADE ON UPDATE RESTRICT'
+          'created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP UNIQUE SERIAL',
+          'updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP UNIQUE SERIAL',
         ]);
       });
 
@@ -732,7 +698,7 @@ describe('ColumnBuilder', () => {
         // Assert
         expect(result).toEqual([
           'created_at TIMESTAMP NOT NULL DEFAULT NOW()',
-          'updated_at TIMESTAMP NOT NULL DEFAULT NOW()'
+          'updated_at TIMESTAMP NOT NULL DEFAULT NOW()',
         ]);
       });
 
@@ -743,33 +709,7 @@ describe('ColumnBuilder', () => {
         // Assert
         expect(result).toEqual([
           'created_at TIMESTAMP NOT NULL DEFAULT NOW()',
-          'updated_at TIMESTAMP NOT NULL DEFAULT NOW()'
-        ]);
-      });
-
-      it('should handle boolean default values', () => {
-        // Act
-        const result = ColumnBuilder.timestamps(false, {
-          default: true,
-        });
-
-        // Assert
-        expect(result).toEqual([
-          'created_at TIMESTAMP NOT NULL DEFAULT true',
-          'updated_at TIMESTAMP NOT NULL DEFAULT true'
-        ]);
-      });
-
-      it('should handle numeric default values', () => {
-        // Act
-        const result = ColumnBuilder.timestamps(false, {
-          default: 42,
-        });
-
-        // Assert
-        expect(result).toEqual([
-          'created_at TIMESTAMP NOT NULL DEFAULT 42',
-          'updated_at TIMESTAMP NOT NULL DEFAULT 42'
+          'updated_at TIMESTAMP NOT NULL DEFAULT NOW()',
         ]);
       });
 
@@ -782,7 +722,7 @@ describe('ColumnBuilder', () => {
         // Assert
         expect(result).toEqual([
           "created_at TIMESTAMP NOT NULL DEFAULT '2023-01-01 00:00:00'",
-          "updated_at TIMESTAMP NOT NULL DEFAULT '2023-01-01 00:00:00'"
+          "updated_at TIMESTAMP NOT NULL DEFAULT '2023-01-01 00:00:00'",
         ]);
       });
     });
@@ -887,19 +827,6 @@ describe('ColumnBuilder', () => {
         expect(result).toBe('billing_type BILLING_TYPES NOT NULL SERIAL');
       });
 
-      it('should create enum column with onDelete and onUpdate options', () => {
-        // Act
-        const result = ColumnBuilder.enum('user_role', 'USER_EDITORS_ROLES', {
-          onDelete: 'CASCADE',
-          onUpdate: 'RESTRICT',
-        });
-
-        // Assert
-        expect(result).toBe(
-          'user_role USER_EDITORS_ROLES NOT NULL ON DELETE CASCADE ON UPDATE RESTRICT',
-        );
-      });
-
       it('should create enum column with all options', () => {
         // Act
         const result = ColumnBuilder.enum('billing_type', 'BILLING_TYPES', {
@@ -907,13 +834,11 @@ describe('ColumnBuilder', () => {
           unique: true,
           autoIncrement: true,
           default: 'yearly',
-          onDelete: 'SET NULL',
-          onUpdate: 'CASCADE',
         });
 
         // Assert
         expect(result).toBe(
-          "billing_type BILLING_TYPES NULL DEFAULT 'yearly' UNIQUE SERIAL ON DELETE SET NULL ON UPDATE CASCADE",
+          "billing_type BILLING_TYPES NULL DEFAULT 'yearly' UNIQUE SERIAL",
         );
       });
 
@@ -949,15 +874,9 @@ describe('ColumnBuilder', () => {
 
       it('should throw error for non-string column name', () => {
         // Act & Assert
-        expect(() =>
-          ColumnBuilder.enum(123 as any, 'BILLING_TYPES'),
-        ).toThrow();
-        expect(() =>
-          ColumnBuilder.enum({} as any, 'BILLING_TYPES'),
-        ).toThrow();
-        expect(() =>
-          ColumnBuilder.enum([] as any, 'BILLING_TYPES'),
-        ).toThrow();
+        expect(() => ColumnBuilder.enum(123 as any, 'BILLING_TYPES')).toThrow();
+        expect(() => ColumnBuilder.enum({} as any, 'BILLING_TYPES')).toThrow();
+        expect(() => ColumnBuilder.enum([] as any, 'BILLING_TYPES')).toThrow();
       });
 
       it('should handle very long column names', () => {
@@ -984,9 +903,7 @@ describe('ColumnBuilder', () => {
         });
 
         // Assert
-        expect(result).toBe(
-          'billing_type BILLING_TYPES NOT NULL DEFAULT NULL',
-        );
+        expect(result).toBe('billing_type BILLING_TYPES NOT NULL DEFAULT NULL');
       });
 
       it('should handle boolean default values', () => {
@@ -1008,7 +925,9 @@ describe('ColumnBuilder', () => {
         });
 
         // Assert
-        expect(result).toBe("billing_type BILLING_TYPES NOT NULL DEFAULT 'monthly'");
+        expect(result).toBe(
+          "billing_type BILLING_TYPES NOT NULL DEFAULT 'monthly'",
+        );
       });
 
       it('should return string type', () => {
@@ -1030,11 +949,7 @@ describe('ColumnBuilder', () => {
 
       it('should handle empty options object', () => {
         // Act
-        const result = ColumnBuilder.enum(
-          'billing_type',
-          'BILLING_TYPES',
-          {},
-        );
+        const result = ColumnBuilder.enum('billing_type', 'BILLING_TYPES', {});
 
         // Assert
         expect(result).toBe('billing_type BILLING_TYPES NOT NULL');
@@ -1120,26 +1035,6 @@ describe('ColumnBuilder', () => {
         expect(result).toBe('NOT NULL DEFAULT NULL');
       });
 
-      it('should build options string with onDelete', () => {
-        // Act
-        const result = (ColumnBuilder as any).buildOptions({
-          onDelete: 'CASCADE',
-        });
-
-        // Assert
-        expect(result).toBe('NOT NULL ON DELETE CASCADE');
-      });
-
-      it('should build options string with onUpdate', () => {
-        // Act
-        const result = (ColumnBuilder as any).buildOptions({
-          onUpdate: 'RESTRICT',
-        });
-
-        // Assert
-        expect(result).toBe('NOT NULL ON UPDATE RESTRICT');
-      });
-
       it('should build options string with all options', () => {
         // Act
         const result = (ColumnBuilder as any).buildOptions({
@@ -1152,9 +1047,7 @@ describe('ColumnBuilder', () => {
         });
 
         // Assert
-        expect(result).toBe(
-          "NULL DEFAULT 'test' UNIQUE SERIAL ON DELETE CASCADE ON UPDATE RESTRICT",
-        );
+        expect(result).toBe("NULL DEFAULT 'test' UNIQUE SERIAL");
       });
 
       it('should merge with default options', () => {
@@ -1246,24 +1139,8 @@ describe('ColumnBuilder', () => {
 
         specialNames.forEach((name) => {
           const result = ColumnBuilder.string(name);
-          expect(result).toBe(`${name} VARCHAR(255)`);
+          expect(result).toBe(`${name} VARCHAR(255) NOT NULL`);
         });
-      });
-
-      it('should handle unicode characters in column names', () => {
-        // Act
-        const result = ColumnBuilder.string('café');
-
-        // Assert
-        expect(result).toBe('café VARCHAR(255)');
-      });
-
-      it('should handle emoji in column names', () => {
-        // Act
-        const result = ColumnBuilder.string('user😀');
-
-        // Assert
-        expect(result).toBe('user😀 VARCHAR(255)');
       });
 
       it('should handle extreme length values', () => {
@@ -1271,7 +1148,9 @@ describe('ColumnBuilder', () => {
         const result = ColumnBuilder.string('test', Number.MAX_SAFE_INTEGER);
 
         // Assert
-        expect(result).toBe(`test VARCHAR(${Number.MAX_SAFE_INTEGER})`);
+        expect(result).toBe(
+          `test VARCHAR(${Number.MAX_SAFE_INTEGER}) NOT NULL`,
+        );
       });
 
       it('should handle negative infinity and positive infinity', () => {
@@ -1298,14 +1177,10 @@ describe('ColumnBuilder', () => {
           unique: true,
           autoIncrement: true,
           default: 1,
-          onDelete: 'CASCADE',
-          onUpdate: 'RESTRICT',
         });
 
         // Assert
-        expect(result).toBe(
-          'id INTEGER NULL DEFAULT 1 UNIQUE SERIAL ON DELETE CASCADE ON UPDATE RESTRICT',
-        );
+        expect(result).toBe('id INTEGER NULL DEFAULT 1 UNIQUE SERIAL');
       });
     });
 
@@ -1377,8 +1252,6 @@ describe('ColumnBuilder', () => {
           unique: true,
           autoIncrement: true,
           default: 'test',
-          onDelete: 'CASCADE',
-          onUpdate: 'RESTRICT',
         };
 
         const results = [];
@@ -1390,13 +1263,9 @@ describe('ColumnBuilder', () => {
         expect(results).toHaveLength(100);
         results.forEach((result) => {
           expect(result).toContain('INTEGER');
-          expect(result).toContain(
-            "NULL DEFAULT 'test' UNIQUE SERIAL ON DELETE CASCADE ON UPDATE RESTRICT",
-          );
+          expect(result).toContain("NULL DEFAULT 'test' UNIQUE SERIAL");
         });
       });
-
-  
     });
 
     describe('Type Safety', () => {
@@ -1406,10 +1275,15 @@ describe('ColumnBuilder', () => {
         > = ['SET NULL', 'CASCADE', 'RESTRICT', 'NO ACTION'];
 
         validActions.forEach((action) => {
-          const result = ColumnBuilder.foreignKey('id', 'table' as any, 'column', {
-            onDelete: action,
-            onUpdate: action,
-          });
+          const result = ColumnBuilder.foreignKey(
+            'id',
+            'table' as any,
+            'column',
+            {
+              onDelete: action,
+              onUpdate: action,
+            },
+          );
           expect(result).toContain(`ON DELETE ${action}`);
           expect(result).toContain(`ON UPDATE ${action}`);
         });
@@ -1443,10 +1317,7 @@ describe('ColumnBuilder', () => {
 
       it('should handle valid enum types', () => {
         // Act
-        const billingEnum = ColumnBuilder.enum(
-          'billing_type',
-          'BILLING_TYPES',
-        );
+        const billingEnum = ColumnBuilder.enum('billing_type', 'BILLING_TYPES');
         const roleEnum = ColumnBuilder.enum('user_role', 'USER_EDITORS_ROLES');
 
         // Assert

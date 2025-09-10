@@ -9,7 +9,7 @@ const MIGRATION_TABLE_NAME = 'migrations';
 (async () => {
   try {
     const start = Date.now();
-    Logger.info('Initializing rollback process');
+    Logger.info('🔄 Initializing rollback process');
     const dbConfig = config().database;
     await initClient({
       client: 'postgres',
@@ -21,7 +21,7 @@ const MIGRATION_TABLE_NAME = 'migrations';
     });
     const exists = await SchemaBuilder.table(MIGRATION_TABLE_NAME).exists();
     if (!exists) {
-      Logger.error('Migration table does not exist');
+      Logger.error('❌ Migration table does not exist');
       process.exit(1);
     }
     const queryBuilder = QueryBuilder.table(MIGRATION_TABLE_NAME);
@@ -37,18 +37,18 @@ const MIGRATION_TABLE_NAME = 'migrations';
         await queryBuilder.where('name', '=', migrationName).delete();
         rollbackCount++;
         Logger.success(
-          `Rolled back ${migrationName} successfully, took: ${((Date.now() - start) / 1000).toFixed(2)}s`,
+          `↩️ Rolled back ${migrationName} successfully in ${((Date.now() - start) / 1000).toFixed(2)}s`,
         );
       }
     }, true);
-    Logger.success(
-      rollbackCount > 0
-        ? `Rollback completed, took: ${((Date.now() - start) / 1000).toFixed(2)}s`
-        : 'Nothing to rollback',
-    );
+    if (rollbackCount > 0)
+      Logger.success(
+        `↩️ Rollback completed in ${((Date.now() - start) / 1000).toFixed(2)}s`,
+      );
+    else Logger.info('Nothing to rollback');
     process.exit(0);
   } catch (error) {
-    Logger.error('Migration failed:', error);
+    Logger.error('❌ Rollback failed:', error);
     process.exit(1);
   }
 })();

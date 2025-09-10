@@ -36,11 +36,7 @@ const up = async () => {
 };
 
 const down = async () => {
-  // Drop the trigger first
-  await Schema.table('plans').dropTrigger('update_plans_updated_at');
-  await Schema.table('plan_translations').dropTrigger(
-    'update_plan_translations_updated_at',
-  );
+
   // Drop the table
   await Schema.table('plan_translations').drop();
   await SchemaBuilder.table('plans').drop();

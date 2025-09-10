@@ -9,7 +9,7 @@ const MIGRATION_TABLE_NAME = 'migrations';
 (async () => {
   try {
     const start = Date.now();
-    Logger.info('Initializing migration process');
+    Logger.info('🔄 Initializing migration process');
     const dbConfig = config().database;
     await initClient({
       client: 'postgres',
@@ -42,18 +42,19 @@ const MIGRATION_TABLE_NAME = 'migrations';
         );
         migrationCount++;
         Logger.success(
-          `migrated ${migrationName} successfully, took: ${((Date.now() - start) / 1000).toFixed(2)}s`,
+          `✅ migrated ${migrationName} successfully in ${((Date.now() - start) / 1000).toFixed(2)}s`,
         );
       }
     });
-    Logger.success(
-      migrationCount > 0
-        ? `Migration completed, took: ${((Date.now() - start) / 1000).toFixed(2)}s`
-        : 'Nothing to migrate',
-    );
+    if (migrationCount > 0)
+      Logger.success(
+        `✅ Migration completed in ${((Date.now() - start) / 1000).toFixed(2)}s`,
+      );
+    else Logger.info('Nothing to migrate');
+
     process.exit(0);
   } catch (error) {
-    Logger.error('Migration failed:', error);
+    Logger.error('❌ Migration failed:', error);
     process.exit(1);
   }
 })();

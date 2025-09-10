@@ -33,7 +33,6 @@ const down = async () => {
   // Drop the table
  
  
-  await SchemaBuilder.table(TABLE_NAME).dropTrigger('update_users_updated_at');
   await SchemaBuilder.table(TABLE_NAME).drop();
  
 };
