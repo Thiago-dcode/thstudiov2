@@ -6,6 +6,7 @@ export type DatabaseSettings = {
   allowUpdateWithoutWhere: boolean;
   allowDeleteWithoutWhere: boolean;
   migrationsDirectory: string;
+  seedDirectory: string;
 };
 export type DatabaseConfig = {
   client: DatabaseClient;

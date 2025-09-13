@@ -5,7 +5,6 @@ import { migrationConfig } from './utils/config';
 
 export const createMigration = async (
   migrationName: string,
-  tryNumber: number = 1,
 ) => {
   try {
     if (!migrationName) {

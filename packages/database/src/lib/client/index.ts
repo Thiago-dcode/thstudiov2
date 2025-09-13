@@ -11,7 +11,7 @@ import {
   InvalidDatabaseClientException,
 } from './exceptions';
 import { DEFAULT_DATABASE_SETTINGS } from '../constants/constants';
-import { setMigrationConfig } from '../migration/utils/config';
+import { setMigrationConfig } from '../scripts/utils/config';
 export abstract class Client<T> {
   protected client: T | null = null;
   protected _initialized: boolean = false;

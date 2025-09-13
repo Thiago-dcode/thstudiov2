@@ -1,9 +1,10 @@
 #!/usr/bin/env ts-node
 
 import { Command } from 'commander';
-import { migrate } from '../lib/migration/migrate';
-import { createMigration } from '../lib/migration/create-migration';
-import { rollback } from '../lib/migration/rollback';
+import { migrate } from '../lib/scripts/migrate';
+import { createMigration } from '../lib/scripts/create-migration';
+import { rollback } from '../lib/scripts/rollback';
+import { seed } from '../lib/scripts/seed';
 
 const program = new Command();
 
@@ -33,4 +34,10 @@ program
     rollback(options.steps);
   });
 
+program
+  .command('db:seed')
+  .option('-c, --class <string>', 'Class to seed')
+  .action((options) => {
+    seed(options.class);
+  });
 program.parse(process.argv);

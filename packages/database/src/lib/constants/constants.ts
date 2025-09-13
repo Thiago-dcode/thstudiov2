@@ -5,8 +5,8 @@ import { DatabaseSettings } from '../constants/types';
 export const DEFAULT_DATABASE_SETTINGS: DatabaseSettings = {
   allowUpdateWithoutWhere: false,
   allowDeleteWithoutWhere: false,
-  //From dist
   migrationsDirectory: path.join(process.cwd(), 'src', 'migrations'),
+  seedDirectory: path.join(process.cwd(), 'src', 'seeds'),
 } as const;
 export const SQL_FUNCTIONS = [
   'NOW()',
