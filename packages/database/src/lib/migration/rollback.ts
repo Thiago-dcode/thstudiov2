@@ -1,24 +1,15 @@
-import SchemaBuilder from '../../builder/schemaBuilder';
-import { handleMigration } from '../utils';
+import SchemaBuilder from '../builder/schemaBuilder';
+import { connectDb, handleMigration } from './utils';
 import Logger from '@repo/backend-lib/utils/console';
-import { initClient } from '../../client';
-import config from '@repo/backend-lib/config';
-import { QueryBuilder } from '../../builder/queryBuilder';
+import { killClient } from '../client';
+import { QueryBuilder } from '../builder/queryBuilder';
 const MIGRATION_TABLE_NAME = 'migrations';
 
-(async () => {
+export const rollback = async (steps?: string | number) => {
   try {
     const start = Date.now();
     Logger.info('🔄 Initializing rollback process');
-    const dbConfig = config().database;
-    await initClient({
-      client: 'postgres',
-      host: dbConfig.host,
-      port: dbConfig.port,
-      username: dbConfig.username,
-      password: dbConfig.password,
-      database: dbConfig.database,
-    });
+    await connectDb();
     const exists = await SchemaBuilder.table(MIGRATION_TABLE_NAME).exists();
     if (!exists) {
       Logger.error('❌ Migration table does not exist');
@@ -26,19 +17,24 @@ const MIGRATION_TABLE_NAME = 'migrations';
     }
     const queryBuilder = QueryBuilder.table(MIGRATION_TABLE_NAME);
     // Now we can safely use SchemaBuilder
-    const steps = process.argv[2] ? parseInt(process.argv[2]) : null;
+    const stepCount = steps ? parseInt(steps.toString()) : null;
     let rollbackCount = 0;
     await handleMigration(async (migration, migrationName) => {
       const migrationExists = await queryBuilder
         .where('name', '=', migrationName)
         .exists();
-      if (migrationExists && (steps === null || rollbackCount < steps)) {
+
+      if (
+        migrationExists &&
+        (stepCount === null || rollbackCount < stepCount)
+      ) {
         await migration.down();
         await queryBuilder.where('name', '=', migrationName).delete();
         rollbackCount++;
         Logger.success(
           `↩️ Rolled back ${migrationName} successfully in ${((Date.now() - start) / 1000).toFixed(2)}s`,
         );
+    
       }
     }, true);
     if (rollbackCount > 0)
@@ -46,9 +42,12 @@ const MIGRATION_TABLE_NAME = 'migrations';
         `↩️ Rollback completed in ${((Date.now() - start) / 1000).toFixed(2)}s`,
       );
     else Logger.info('Nothing to rollback');
+
     process.exit(0);
   } catch (error) {
     Logger.error('❌ Rollback failed:', error);
     process.exit(1);
+  } finally {
+    await killClient();
   }
-})();
+};

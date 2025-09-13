@@ -1,11 +1,11 @@
 import { createUpdatedAtTrigger } from '../lib/migration/utils';
-import { Column, Schema } from '../lib/utils/facades';
+import { Column, Schema } from '../lib/facades';
 
 const TABLE_NAME = 'user_extra_data';
 
 const up = async () => {
-  await Schema.createEnumIfNotExists('BILLING_TYPES');
-  await Schema.table(TABLE_NAME).create([
+
+  await Schema.table(TABLE_NAME).createIfNotExists([
     Column.id(),
     Column.bigint('media_size', {
       default: 0,
@@ -40,7 +40,7 @@ const up = async () => {
 
 const down = async () => {
   //Your migration rollback code here
-  await Schema.table(TABLE_NAME).drop();
+  await Schema.table(TABLE_NAME).dropIfExists();
   await Schema.dropEnum('BILLING_TYPES');
 };
 

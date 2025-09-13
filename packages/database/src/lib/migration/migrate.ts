@@ -1,32 +1,29 @@
-import SchemaBuilder from '../../builder/schemaBuilder';
-import { handleMigration } from '../utils';
+import SchemaBuilder from '../builder/schemaBuilder';
+import { connectDb, handleMigration } from './utils';
 import Logger from '@repo/backend-lib/utils/console';
-import { initClient } from '../../client';
-import config from '@repo/backend-lib/config';
-import { QueryBuilder } from '../../builder/queryBuilder';
+import { killClient } from '../client';
+import { QueryBuilder } from '../builder/queryBuilder';
 const MIGRATION_TABLE_NAME = 'migrations';
-
-(async () => {
+export const migrate = async (tries: number = 3) => {
+  setTimeout(
+    () => {
+      Logger.error('❌ Migration timeout');
+      process.exit(1);
+    },
+    1 * 60 * 1000,
+  );
+  // 1 minute
   try {
     const start = Date.now();
     Logger.info('🔄 Initializing migration process');
-    const dbConfig = config().database;
-    await initClient({
-      client: 'postgres',
-      host: dbConfig.host,
-      port: dbConfig.port,
-      username: dbConfig.username,
-      password: dbConfig.password,
-      database: dbConfig.database,
-    });
-    const exists = await SchemaBuilder.table(MIGRATION_TABLE_NAME).exists();
-    if (!exists) {
-      await SchemaBuilder.table(MIGRATION_TABLE_NAME).create([
-        'id SERIAL PRIMARY KEY',
-        'name VARCHAR(255) NOT NULL UNIQUE',
-        'created_at TIMESTAMP NOT NULL',
-      ]);
-    }
+    await connectDb();
+    await SchemaBuilder.table(MIGRATION_TABLE_NAME).createIfNotExists([
+      'id SERIAL PRIMARY KEY',
+      'name VARCHAR(255) NOT NULL UNIQUE',
+      'created_at TIMESTAMP NOT NULL',
+    ]);
+
+    Logger.info('✅ Database connected successfully');
     const queryBuilder = QueryBuilder.table(MIGRATION_TABLE_NAME);
     // Now we can safely use SchemaBuilder
     let migrationCount = 0;
@@ -35,6 +32,19 @@ const MIGRATION_TABLE_NAME = 'migrations';
         .where('name', '=', migrationName)
         .exists();
       if (!migrationExists) {
+        Logger.info(`🔄 Running migration: ${migrationName}`);
+
+        // Test database connection before running migration
+        try {
+          await SchemaBuilder.raw('SELECT 1');
+        } catch (error) {
+          Logger.error(
+            `❌ Database connection lost before migration ${migrationName}:`,
+            error,
+          );
+          throw error;
+        }
+
         await migration.up();
         await queryBuilder.insert(
           ['name', 'created_at'],
@@ -56,5 +66,7 @@ const MIGRATION_TABLE_NAME = 'migrations';
   } catch (error) {
     Logger.error('❌ Migration failed:', error);
     process.exit(1);
+  } finally {
+    await killClient();
   }
-})();
+};

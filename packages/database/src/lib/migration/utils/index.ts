@@ -1,10 +1,13 @@
-import Logger from '@repo/backend-lib/utils/console';
-import { migrationConfig } from '../config';
+import { migrationConfig } from './config';
 import path from 'node:path';
 import fs from 'node:fs';
-import { Query, Schema } from '../../utils/facades';
-import { TRIGGER_UPDATE_UPDATED_AT_FUNCTION_NAME } from '../../utils/constants';
-import { TableName } from '../../utils/types';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { Query, Schema } from '../../facades';
+import { TRIGGER_UPDATE_UPDATED_AT_FUNCTION_NAME } from '../../constants/constants';
+import { DatabaseClient, TableName } from '../../constants/types';
+import Logger from '@repo/backend-lib/utils/console';
+import { initClient } from 'lib/client';
+import config from '@repo/backend-lib/config';
 
 const handleMigration = async (
   callback: (migration: any, migrationName: string) => Promise<void>,
@@ -25,7 +28,9 @@ const handleMigration = async (
             .get()
         ).map((migration: any) => migration.name);
     if (migrations.length === 0) {
-      Logger.info(`No ${!rollback ? 'migrations' : 'migrations to rollback'} found`);
+      Logger.info(
+        `No ${!rollback ? 'migrations' : 'migrations to rollback'} found`,
+      );
       process.exit(0);
     }
     for (const migration of migrations) {
@@ -34,7 +39,7 @@ const handleMigration = async (
         Logger.error('❌ Migration file not found', migrationPath);
         process.exit(1);
       }
-      const migrationFile = require(migrationPath);
+      const migrationFile = await import(pathToFileURL(migrationPath).href);
       if (!migrationFile.up || !migrationFile.down) {
         Logger.error(
           '❌ Migration file is not valid, missing up or down function',
@@ -63,4 +68,15 @@ const createUpdatedAtTrigger = async (tableName: TableName) => {
   }
 };
 
-export { handleMigration, createUpdatedAtTrigger };
+const connectDb = async () => {
+  const dbConfig = config().database;
+  await initClient({
+    client: dbConfig.client as DatabaseClient,
+    host: dbConfig.host,
+    port: dbConfig.port,
+    username: dbConfig.username,
+    password: dbConfig.password,
+    database: dbConfig.database,
+  });
+};
+export { handleMigration, createUpdatedAtTrigger, connectDb };

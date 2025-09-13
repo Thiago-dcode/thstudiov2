@@ -1,6 +1,6 @@
-import { ENUMS, TABLES } from '../../utils/constants';
+import { ENUMS, TABLES } from '../../constants/constants';
 import BaseBuilder from '..';
-import { AvailableEnums } from '../../utils/types';
+import { AvailableEnums } from '../../constants/types';
 import { getClient } from '../../client';
 class SchemaBuilder extends BaseBuilder {
   protected columns: string[] = [];
@@ -13,13 +13,13 @@ class SchemaBuilder extends BaseBuilder {
     // Flatten any arrays (like from timestamps() method)
     this.buildColumns(columns);
     this.buildCreateQuery();
-    return this.db?.query(this.query);
+    return await this.db?.query(this.query);
   }
 
   public async createIfNotExists(columns?: (string | string[])[]) {
     this.buildColumns(columns);
     this.buildCreateQuery(true);
-    return this.db?.query(this.query);
+    return await this.db?.query(this.query);
   }
   protected buildColumns(columns?: (string | string[])[]) {
     for (const column of columns || []) {
@@ -46,11 +46,11 @@ END $$;`);
   }
   public async drop() {
     this.query = `DROP TABLE ${this.tableName}`;
-    return this.db?.query(this.query);
+    return await this.db?.query(this.query);
   }
   public async dropIfExists() {
     this.query = `DROP TABLE IF EXISTS ${this.tableName}`;
-    return this.db?.query(this.query);
+    return await this.db?.query(this.query);
   }
 
   public static async dropEnum(enumName: keyof AvailableEnums) {
@@ -60,7 +60,6 @@ END $$;`);
     return await getClient().query(`DROP TYPE IF EXISTS ${enumName}`);
   }
 
- 
   public async exists(): Promise<boolean> {
     try {
       this.query = `SELECT 1 FROM ${this.tableName} LIMIT 1`;

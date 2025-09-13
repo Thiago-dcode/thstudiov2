@@ -5,10 +5,10 @@ import {
   WhereCondition,
   SqlClauseWithoutIn,
   DatabaseClient,
-} from '../utils/types';
-import { DEFAULT_DATABASE_SETTINGS } from '../utils/constants';
+} from '../constants/types';
+import { DEFAULT_DATABASE_SETTINGS } from '../constants/constants';
 import { initClient } from '../client';
-import { QueryBuilderOperationNotAllowedException } from 'lib/builder/queryBuilder/exceptions';
+import { QueryBuilderOperationNotAllowedException } from '../builder/queryBuilder/exceptions';
 
 jest.mock('../client', ()=> {
   const Client = (config: FullDatabaseConfig) => {
@@ -75,7 +75,7 @@ jest.mock('../client', ()=> {
 describe('QueryBuilder', () => {
   let mockClient: any;
   let testConfig: DatabaseConfig;
-  const TABLE_NAME = 'test_table';
+  const TABLE_NAME = 'test_table' as any;
 
   beforeEach(async () => {
     // Reset mocks

@@ -1,5 +1,9 @@
-import { DatabaseClient, DatabaseConfig, FullDatabaseConfig } from '../utils/types';
-import { DEFAULT_DATABASE_SETTINGS } from '../utils/constants';
+import {
+  DatabaseClient,
+  DatabaseConfig,
+  FullDatabaseConfig,
+} from '../constants/types';
+import { DEFAULT_DATABASE_SETTINGS } from '../constants/constants';
 import SchemaBuilder from '../builder/schemaBuilder';
 
 jest.mock('../client', () => {
@@ -176,7 +180,7 @@ describe('SchemaBuilder', () => {
       const result = schemaBuilder.create(columns);
 
       // Assert
-     
+
       expect(schemaBuilder['query']).toBe(
         `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
@@ -192,7 +196,7 @@ describe('SchemaBuilder', () => {
       schemaBuilder.create(columns);
 
       // Assert
-     
+
       expect(schemaBuilder['query']).toBe(
         `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
@@ -213,7 +217,7 @@ describe('SchemaBuilder', () => {
       schemaBuilder.create(columns);
 
       // Assert
-     
+
       expect(schemaBuilder['query']).toBe(
         `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
@@ -227,7 +231,7 @@ describe('SchemaBuilder', () => {
       schemaBuilder.create(columns);
 
       // Assert
-     
+
       expect(schemaBuilder['query']).toBe(`CREATE TABLE ${TABLE_NAME} (\n);`);
     });
 
@@ -245,7 +249,7 @@ describe('SchemaBuilder', () => {
       schemaBuilder.create(columns);
 
       // Assert
-     
+
       expect(schemaBuilder['query']).toBe(
         `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
@@ -266,7 +270,7 @@ describe('SchemaBuilder', () => {
       schemaBuilder.create(columns);
 
       // Assert
-     
+
       expect(schemaBuilder['query']).toBe(
         `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
@@ -286,7 +290,7 @@ describe('SchemaBuilder', () => {
       schemaBuilder.create(columns);
 
       // Assert
-     
+
       expect(schemaBuilder['query']).toBe(
         `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
@@ -307,7 +311,7 @@ describe('SchemaBuilder', () => {
       schemaBuilder.create(columns);
 
       // Assert
-     
+
       expect(schemaBuilder['query']).toBe(
         `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
@@ -331,7 +335,7 @@ describe('SchemaBuilder', () => {
       schemaBuilder.create(columns);
 
       // Assert
-     
+
       expect(schemaBuilder['query']).toBe(
         `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
@@ -345,7 +349,7 @@ describe('SchemaBuilder', () => {
       schemaBuilder.create(columns);
 
       // Assert
-     
+
       expect(schemaBuilder['query']).toBe(`CREATE TABLE ${TABLE_NAME} (\n);`);
     });
 
@@ -359,7 +363,7 @@ describe('SchemaBuilder', () => {
       schemaBuilder.create(columns);
 
       // Assert
-     
+
       expect(schemaBuilder['query']).toBe(
         `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
@@ -378,7 +382,7 @@ describe('SchemaBuilder', () => {
       schemaBuilder.create(columns);
 
       // Assert
-     
+
       expect(schemaBuilder['query']).toBe(
         `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
@@ -707,7 +711,7 @@ describe('SchemaBuilder', () => {
       schemaBuilder.create(columns);
 
       // Assert
-     
+
       expect(schemaBuilder['query']).toBe(
         `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
@@ -721,7 +725,7 @@ describe('SchemaBuilder', () => {
       schemaBuilder.create(columns);
 
       // Assert
-     
+
       expect(schemaBuilder['query']).toBe(
         `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
@@ -741,7 +745,7 @@ describe('SchemaBuilder', () => {
       schemaBuilder.create(columns);
 
       // Assert
-     
+
       expect(schemaBuilder['query']).toBe(
         `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
@@ -758,7 +762,7 @@ describe('SchemaBuilder', () => {
       schemaBuilder.create(columns);
 
       // Assert
-     
+
       expect(schemaBuilder['query']).toBe(
         `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
@@ -779,7 +783,7 @@ describe('SchemaBuilder', () => {
       schemaBuilder.create(columns);
 
       // Assert
-     
+
       expect(schemaBuilder['query']).toBe(
         `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
@@ -795,7 +799,7 @@ describe('SchemaBuilder', () => {
       schemaBuilder.create(columns);
 
       // Assert
-     
+
       expect(schemaBuilder['query']).toBe(
         `CREATE TABLE ${TABLE_NAME} (\n${columns.join(',\n')}\n);`,
       );
@@ -810,8 +814,6 @@ describe('SchemaBuilder', () => {
       await initClient(testConfig);
       schemaBuilder = new SchemaBuilder(TABLE_NAME);
     });
-
-   
 
     it('should handle reset between operations', () => {
       // Arrange
@@ -884,7 +886,7 @@ describe('SchemaBuilder', () => {
       const result = await schemaBuilder.create(columns);
 
       // Assert
-     
+
       expect(schemaBuilder['query']).toBe(
         `CREATE TABLE users (\n${columns.join(',\n')}\n);`,
       );
@@ -932,7 +934,7 @@ describe('SchemaBuilder', () => {
       const result = await schemaBuilder.create(columns);
 
       // Assert
-     
+
       expect(schemaBuilder['query']).toBe(
         `CREATE TABLE users (\n${columns.join(',\n')}\n);`,
       );
@@ -990,8 +992,6 @@ describe('SchemaBuilder', () => {
       expect(result).toBeDefined();
     });
 
-   
-
     it('should create a simple settings table with minimal columns', async () => {
       // Arrange
       const columns = [
@@ -1023,7 +1023,6 @@ describe('SchemaBuilder', () => {
       expect(result).toBeDefined();
     });
 
-   
     it('should handle database errors during table creation', async () => {
       // Arrange
       const columns = [ColumnBuilder.id(), ColumnBuilder.string('name', 255)];
@@ -1150,7 +1149,7 @@ describe('SchemaBuilder', () => {
 
       // Expected hardcoded SQL query
       const expectedSQL = `CREATE TABLE users (
-id SERIAL PRIMARY KEY NOT NULL,
+id SERIAL PRIMARY KEY,
 name VARCHAR(255) NULL,
 username VARCHAR(255) NULL UNIQUE,
 email VARCHAR(255) NOT NULL UNIQUE,
@@ -1207,7 +1206,7 @@ deleted_at TIMESTAMP NULL
 
       // Expected hardcoded SQL query
       const expectedSQL = `CREATE TABLE users (
-product_id SERIAL PRIMARY KEY NOT NULL,
+product_id SERIAL PRIMARY KEY,
 name VARCHAR(255) NOT NULL,
 description VARCHAR(1000) NULL,
 price INTEGER NOT NULL,
@@ -1264,7 +1263,7 @@ updated_at TIMESTAMP NULL
           nullable: true,
           onDelete: 'SET NULL',
         }),
-        ColumnBuilder.timestamps(false,{
+        ColumnBuilder.timestamps(false, {
           nullable: false,
           default: 'NOW()',
         }),
@@ -1273,7 +1272,7 @@ updated_at TIMESTAMP NULL
 
       // Expected hardcoded SQL query
       const expectedSQL = `CREATE TABLE users (
-id SERIAL PRIMARY KEY NOT NULL,
+id SERIAL PRIMARY KEY,
 title VARCHAR(255) NOT NULL,
 slug VARCHAR(255) NOT NULL UNIQUE,
 excerpt VARCHAR(500) NULL,
@@ -1319,7 +1318,7 @@ deleted_at TIMESTAMP NULL
 
       // Expected hardcoded SQL query
       const expectedSQL = `CREATE TABLE users (
-id SERIAL PRIMARY KEY NOT NULL,
+id SERIAL PRIMARY KEY,
 key VARCHAR(100) NOT NULL UNIQUE,
 value VARCHAR(1000) NULL,
 description VARCHAR(500) NULL,
@@ -1375,7 +1374,7 @@ updated_at TIMESTAMP NOT NULL DEFAULT NOW()
           nullable: true,
           onDelete: 'SET NULL',
         }),
-        ColumnBuilder.timestamps(false,{
+        ColumnBuilder.timestamps(false, {
           nullable: false,
           default: 'NOW()',
         }),
@@ -1384,7 +1383,7 @@ updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 
       // Expected hardcoded SQL query
       const expectedSQL = `CREATE TABLE users (
-subscription_id SERIAL PRIMARY KEY NOT NULL,
+subscription_id SERIAL PRIMARY KEY,
 name VARCHAR(255) NOT NULL,
 description VARCHAR(1000) NULL,
 billing_type BILLING_TYPES NOT NULL DEFAULT 'monthly',
@@ -1485,7 +1484,7 @@ archived_at TIMESTAMP NULL
           nullable: true,
           onDelete: 'SET NULL',
         }),
-        ColumnBuilder.timestamps(false,{
+        ColumnBuilder.timestamps(false, {
           nullable: false,
           default: 'NOW()',
         }),
@@ -1494,7 +1493,7 @@ archived_at TIMESTAMP NULL
 
       // Expected hardcoded SQL query
       const expectedSQL = `CREATE TABLE users (
-id SERIAL PRIMARY KEY NOT NULL,
+id SERIAL PRIMARY KEY,
 username VARCHAR(50) NOT NULL UNIQUE,
 first_name VARCHAR(100) NOT NULL,
 last_name VARCHAR(100) NOT NULL,

@@ -1,4 +1,4 @@
-import { Schema, Column } from '../lib/utils/facades';
+import { Schema, Column } from '../lib/facades';
 import SchemaBuilder from '../lib/builder/schemaBuilder';
 import { createUpdatedAtTrigger } from '../lib/migration/utils';
 const up = async () => {
@@ -11,9 +11,8 @@ const up = async () => {
     Column.text('logo', {
       nullable: true,
     }),
-    Column.integer('price'),
+    Column.float('price'),
     Column.integer('max_media_size'),
-    Column.integer('max_media_count'),
     Column.integer('max_projects_count'),
     Column.integer('max_clients_count'),
     Column.integer('max_services_count'),
@@ -26,20 +25,21 @@ const up = async () => {
     Column.id(),
     Column.string('name'),
     Column.string('description'),
-    Column.timestamps(true),
     Column.foreignKey('plan_id', 'plans', 'id', {
       onDelete: 'CASCADE',
-      nullable: false,
+      onUpdate: 'CASCADE',
+    }),
+    Column.foreignKey('language_code', 'languages', 'code', {
+      onDelete: 'CASCADE',
+      type: 'LANGUAGE_CODE',
     }),
   ]);
-  await createUpdatedAtTrigger('plan_translations');
 };
 
 const down = async () => {
-
   // Drop the table
-  await Schema.table('plan_translations').drop();
-  await SchemaBuilder.table('plans').drop();
+  await Schema.table('plan_translations').dropIfExists();
+  await SchemaBuilder.table('plans').dropIfExists();
 };
 
 export { up, down };

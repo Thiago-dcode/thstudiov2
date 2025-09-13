@@ -1,8 +1,7 @@
 import { ClientNotInitializedException } from '../client/exceptions';
 import { getClient, Client } from '../client';
-import { QueryBuilderMethodChainedException } from './queryBuilder/exceptions';
-import { SqlOperation } from 'lib/utils/types';
-import { TABLES } from 'lib/utils/constants';
+import { SqlOperation } from 'lib/constants/types';
+import { TABLES } from 'lib/constants/constants';
 
 abstract class BaseBuilder {
   /** The built SQL query string */
@@ -25,7 +24,7 @@ abstract class BaseBuilder {
     if (!this.db) {
       throw new ClientNotInitializedException();
     }
-    this.db.connect();
+    // Don't connect here - the client should already be connected
   }
   /**
    * Execute a raw SQL query

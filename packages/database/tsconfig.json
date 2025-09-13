@@ -3,13 +3,23 @@
   "compilerOptions": {
     "allowJs": true,
     "baseUrl": "src",
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
     "esModuleInterop": true,
     "incremental": false,
     "outDir": "dist"
   },
- 
+  "paths": {
+    "@": [
+      "./src"
+    ]
+  },
   "include": [
     "./src/**/*"
   ],
-  "exclude": ["node_modules", "dist"]
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }

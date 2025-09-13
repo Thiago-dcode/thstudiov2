@@ -10,8 +10,10 @@ const up = async () => {
     ColumnBuilder.string('name', 255, {
       nullable: true,
     }),
-    ColumnBuilder.string('username', 255, {
+    ColumnBuilder.string('surname', 255, {
       nullable: true,
+    }),
+    ColumnBuilder.string('username', 255, {
       unique: true,
     }),
     ColumnBuilder.email(),
@@ -22,7 +24,6 @@ const up = async () => {
     ColumnBuilder.foreignKey('extra_data_id', 'user_extra_data', 'id', {
       onDelete: 'SET NULL',
       onUpdate: 'CASCADE',
-      nullable: false,
     }),
     ColumnBuilder.timestamps(true),
   ]);
@@ -31,10 +32,8 @@ const up = async () => {
 
 const down = async () => {
   // Drop the table
- 
- 
-  await SchemaBuilder.table(TABLE_NAME).drop();
- 
+
+  await SchemaBuilder.table(TABLE_NAME).dropIfExists();
 };
 
 export { up, down };

@@ -9,7 +9,7 @@ import {
   WhereInCondition,
   SqlOperation,
   SqlValue,
-} from '../../utils/types';
+} from '../../constants/types';
 import {
   QueryBuilderMethodChainedException,
   QueryBuilderOperationNotAllowedException,
@@ -17,7 +17,7 @@ import {
   QueryBuilderWrongColumnsException,
   QueryBuilderWrongDatabaseClientException,
 } from './exceptions';
-import { TABLES } from '../../utils/constants';
+import { TABLES } from '../../constants/constants';
 
 /**
  * QueryBuilder class for building and executing SQL queries

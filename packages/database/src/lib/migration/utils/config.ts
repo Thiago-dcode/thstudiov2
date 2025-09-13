@@ -1,5 +1,5 @@
-import { DEFAULT_DATABASE_SETTINGS } from '../utils/constants';
-import { DatabaseSettings } from '../utils/types';
+import { DEFAULT_DATABASE_SETTINGS } from '../../constants/constants';
+import { DatabaseSettings } from '../../constants/types';
 
 let migrationConfig: DatabaseSettings = DEFAULT_DATABASE_SETTINGS;
 

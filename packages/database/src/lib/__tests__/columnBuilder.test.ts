@@ -2,13 +2,13 @@ import {
   DatabaseClient,
   DatabaseConfig,
   FullDatabaseConfig,
-} from '../utils/types';
+} from '../constants/types';
 import {
   ColumnBuilder,
-  ColumnBuilderOptions,
+  ColumnAttributes,
   DEFAULT_COLUMN_OPTIONS,
 } from '../builder/columnBuilder';
-import { DEFAULT_DATABASE_SETTINGS } from '../utils/constants';
+import { DEFAULT_DATABASE_SETTINGS } from '../constants/constants';
 jest.mock('../client', () => {
   const Client = (config: FullDatabaseConfig) => {
     return {
@@ -96,7 +96,7 @@ describe('ColumnBuilder', () => {
       expect(DEFAULT_COLUMN_OPTIONS).toEqual({
         nullable: false,
         unique: false,
-        autoIncrement: false,
+        primaryKey: false,
       });
     });
   });
@@ -107,7 +107,7 @@ describe('ColumnBuilder', () => {
       const result = ColumnBuilder.id();
 
       // Assert
-      expect(result).toBe('id SERIAL PRIMARY KEY NOT NULL');
+      expect(result).toBe('id SERIAL PRIMARY KEY');
     });
 
     it('should create id column with custom name', () => {
@@ -115,7 +115,7 @@ describe('ColumnBuilder', () => {
       const result = ColumnBuilder.id('user_id');
 
       // Assert
-      expect(result).toBe('user_id SERIAL PRIMARY KEY NOT NULL');
+      expect(result).toBe('user_id SERIAL PRIMARY KEY');
     });
 
     it('should handle empty string as column name', () => {
@@ -123,7 +123,7 @@ describe('ColumnBuilder', () => {
       const result = ColumnBuilder.id('');
 
       // Assert
-      expect(result).toBe('id SERIAL PRIMARY KEY NOT NULL');
+      expect(result).toBe('id SERIAL PRIMARY KEY');
     });
 
     it('should handle special characters in column name', () => {
@@ -131,7 +131,7 @@ describe('ColumnBuilder', () => {
       const result = ColumnBuilder.id('user-id_123');
 
       // Assert
-      expect(result).toBe('user-id_123 SERIAL PRIMARY KEY NOT NULL');
+      expect(result).toBe('user-id_123 SERIAL PRIMARY KEY');
     });
 
     it('should handle column names with spaces', () => {
@@ -139,7 +139,7 @@ describe('ColumnBuilder', () => {
       const result = ColumnBuilder.id('user id');
 
       // Assert
-      expect(result).toBe('user id SERIAL PRIMARY KEY NOT NULL');
+      expect(result).toBe('user id SERIAL PRIMARY KEY');
     });
 
     it('should handle very long column names', () => {
@@ -148,7 +148,7 @@ describe('ColumnBuilder', () => {
       const result = ColumnBuilder.id(longName);
 
       // Assert
-      expect(result).toBe(`${longName} SERIAL PRIMARY KEY NOT NULL`);
+      expect(result).toBe(`${longName} SERIAL PRIMARY KEY`);
     });
 
     it('should throw error for null and undefined column names', () => {
@@ -181,12 +181,12 @@ describe('ColumnBuilder', () => {
       expect(result).toBe('age INTEGER NOT NULL UNIQUE');
     });
 
-    it('should create integer column with SERIAL option', () => {
+    it('should create integer column with autoIncrement option', () => {
       // Act
-      const result = ColumnBuilder.integer('id', { autoIncrement: true });
+      const result = ColumnBuilder.autoIncrement('id');
 
       // Assert
-      expect(result).toBe('id INTEGER NOT NULL SERIAL');
+      expect(result).toBe('id SERIAL');
     });
 
     it('should create integer column with default value', () => {
@@ -250,11 +250,10 @@ describe('ColumnBuilder', () => {
       const result = ColumnBuilder.bigint('id', {
         nullable: true,
         unique: true,
-        autoIncrement: true,
       });
 
       // Assert
-      expect(result).toBe('id BIGINT NULL UNIQUE SERIAL');
+      expect(result).toBe('id BIGINT NULL UNIQUE');
     });
 
     it('should handle special characters in column name', () => {
@@ -648,13 +647,12 @@ describe('ColumnBuilder', () => {
       it('should create timestamps with SERIAL', () => {
         // Act
         const result = ColumnBuilder.timestamps(false, {
-          autoIncrement: true,
         });
 
         // Assert
         expect(result).toEqual([
-          'created_at TIMESTAMP NOT NULL DEFAULT NOW() SERIAL',
-          'updated_at TIMESTAMP NOT NULL DEFAULT NOW() SERIAL',
+          'created_at TIMESTAMP NOT NULL DEFAULT NOW()',
+          'updated_at TIMESTAMP NOT NULL DEFAULT NOW()',
         ]);
       });
 
@@ -663,14 +661,13 @@ describe('ColumnBuilder', () => {
         const result = ColumnBuilder.timestamps(false, {
           nullable: true,
           unique: true,
-          autoIncrement: true,
           default: 'CURRENT_TIMESTAMP',
         });
 
         // Assert
         expect(result).toEqual([
-          'created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP UNIQUE SERIAL',
-          'updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP UNIQUE SERIAL',
+          'created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP UNIQUE',
+          'updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP UNIQUE',
         ]);
       });
 
@@ -820,11 +817,10 @@ describe('ColumnBuilder', () => {
       it('should create enum column with autoIncrement option', () => {
         // Act
         const result = ColumnBuilder.enum('billing_type', 'BILLING_TYPES', {
-          autoIncrement: true,
         });
 
         // Assert
-        expect(result).toBe('billing_type BILLING_TYPES NOT NULL SERIAL');
+        expect(result).toBe('billing_type BILLING_TYPES NOT NULL');
       });
 
       it('should create enum column with all options', () => {
@@ -832,13 +828,12 @@ describe('ColumnBuilder', () => {
         const result = ColumnBuilder.enum('billing_type', 'BILLING_TYPES', {
           nullable: true,
           unique: true,
-          autoIncrement: true,
           default: 'yearly',
         });
 
         // Assert
         expect(result).toBe(
-          "billing_type BILLING_TYPES NULL DEFAULT 'yearly' UNIQUE SERIAL",
+          "billing_type BILLING_TYPES NULL DEFAULT 'yearly' UNIQUE",
         );
       });
 
@@ -1016,7 +1011,7 @@ describe('ColumnBuilder', () => {
         });
 
         // Assert
-        expect(result).toBe('NOT NULL SERIAL');
+        expect(result).toBe('NOT NULL');
       });
 
       it('should build options string with default value', () => {
@@ -1040,14 +1035,13 @@ describe('ColumnBuilder', () => {
         const result = (ColumnBuilder as any).buildOptions({
           nullable: true,
           unique: true,
-          autoIncrement: true,
           default: 'test',
           onDelete: 'CASCADE',
           onUpdate: 'RESTRICT',
         });
 
         // Assert
-        expect(result).toBe("NULL DEFAULT 'test' UNIQUE SERIAL");
+        expect(result).toBe("NULL DEFAULT 'test' UNIQUE");
       });
 
       it('should merge with default options', () => {
@@ -1175,12 +1169,11 @@ describe('ColumnBuilder', () => {
         const result = ColumnBuilder.integer('id', {
           nullable: true,
           unique: true,
-          autoIncrement: true,
           default: 1,
         });
 
         // Assert
-        expect(result).toBe('id INTEGER NULL DEFAULT 1 UNIQUE SERIAL');
+        expect(result).toBe('id INTEGER NULL DEFAULT 1 UNIQUE');
       });
     });
 
@@ -1247,10 +1240,9 @@ describe('ColumnBuilder', () => {
 
       it('should handle complex options efficiently', () => {
         // Act
-        const complexOptions: ColumnBuilderOptions = {
+        const complexOptions: ColumnAttributes = {
           nullable: true,
           unique: true,
-          autoIncrement: true,
           default: 'test',
         };
 
@@ -1263,7 +1255,7 @@ describe('ColumnBuilder', () => {
         expect(results).toHaveLength(100);
         results.forEach((result) => {
           expect(result).toContain('INTEGER');
-          expect(result).toContain("NULL DEFAULT 'test' UNIQUE SERIAL");
+          expect(result).toContain("NULL DEFAULT 'test' UNIQUE");
         });
       });
     });

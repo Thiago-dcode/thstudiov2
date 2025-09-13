@@ -1,9 +1,8 @@
-import { Client } from 'lib/client';
-import { QueryBuilder } from 'lib/builder/queryBuilder';
-import { SqlClause } from 'lib/utils/types';
+import { QueryBuilder } from '../builder/queryBuilder';
+import { SqlClause, TableName } from '../constants/types';
 
 export class BaseRepository extends QueryBuilder {
-  constructor(protected readonly tableName: string) {
+  constructor(protected readonly tableName: TableName) {
     super(tableName);
   }
 }

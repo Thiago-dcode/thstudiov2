@@ -1,5 +1,5 @@
 import { InvalidDatabaseClientException } from '../client/exceptions';
-import { DatabaseConfig } from '../utils/types';
+import { DatabaseConfig } from '../constants/types';
 
 // Mock the database drivers before importing the clients
 jest.mock('mysql2/promise', () => ({

@@ -4,22 +4,26 @@
   "private": true,
   "license": "MIT",
   "scripts": {
-    "dev": "tsc --watch",
-    "build": "tsc",
     "test": "jest  --passWithNoTests --config ./jest.config.ts ",
     "test:watch": "jest  --passWithNoTests --config ./jest.config.ts  --watch",
-    "create:migration": "ts-node src/lib/migration/console/create-migration.ts",
-    "migrate": "ts-node src/lib/migration/console/migrate.ts",
-    "rollback": "ts-node src/lib/migration/console/rollback.ts"
+    "create:migration": "tsx --tsconfig tsconfig.json src/lib/migration/create-migration.ts",
+    "migrate": "tsx --tsconfig tsconfig.json src/lib/migration/migrate.ts",
+    "rollback": "tsx --tsconfig tsconfig.json src/lib/migration/rollback.ts",
+    "wipe": "tsx --tsconfig tsconfig.json src/lib/migration/wipe-db.ts",
+    "dbcli": "tsx --tsconfig tsconfig.json src/bin/cli.ts"
   },
   "exports": {
-    ".": "./dist/index.js"
+    ".": "./src/index.ts"
+  },
+  "bin": {
+    "dbcli": "./src/bin/cli.ts"
   },
   "dependencies": {
     "@repo/backend-lib": "workspace:*",
     "@repo/jest-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/jest": "^30.0.0",
+    "commander": "^14.0.0",
     "dotenv": "^16.4.5",
     "jest": "^29.7.0",
     "mysql2": "^3.14.3",
@@ -30,10 +34,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
-    "@types/pg": "^8.15.5"
-  },
-  "_moduleAliases": {
-    "@lib": "dist/lib",
-    "@": "dist"
+    "@types/pg": "^8.15.5",
+    "tsx": "^4.7.0"
   }
 }

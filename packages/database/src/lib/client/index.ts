@@ -3,18 +3,18 @@ import {
   DatabaseClient,
   DatabaseConfig,
   FullDatabaseConfig,
-} from '../utils/types';
-import { Pool as PgPool } from 'pg';
+} from '../constants/types';
+import { Pool as PgPool , Client as PgClient} from 'pg';
 import mysql from 'mysql2/promise';
 import {
   ClientNotInitializedException,
   InvalidDatabaseClientException,
 } from './exceptions';
-import { DEFAULT_DATABASE_SETTINGS } from '../utils/constants';
-import { setMigrationConfig } from '../migration/config';
+import { DEFAULT_DATABASE_SETTINGS } from '../constants/constants';
+import { setMigrationConfig } from '../migration/utils/config';
 export abstract class Client<T> {
   protected client: T | null = null;
-  private initialized: boolean = false;
+  protected _initialized: boolean = false;
 
   constructor(protected _config: FullDatabaseConfig) {
     // Don't call setup() in constructor - it's async
@@ -27,14 +27,14 @@ export abstract class Client<T> {
   public abstract query(query: string, values?: any[]): Promise<any>;
 
   protected throwIfNotInitialized() {
-    if (!this.initialized || !this.client) {
+    if (!this._initialized || !this.client) {
       throw new ClientNotInitializedException();
     }
   }
 
   public async initialize(): Promise<void> {
     await this.setup();
-    this.initialized = true;
+    this._initialized = true;
   }
   public set config(config: FullDatabaseConfig) {
     this._config = config;
@@ -42,6 +42,9 @@ export abstract class Client<T> {
   public get config() {
     return this._config;
   }
+  public get initialized() {
+    return this.client && this._initialized;
+  } 
 }
 
 export class MysqlClient extends Client<Pool> {
@@ -84,11 +87,15 @@ export class PostgresClient extends Client<PgPool> {
       user: this.config.username,
       password: this.config.password,
       database: this.config.database,
+      max: 20, // Maximum number of clients in the pool
+      idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
+      connectionTimeoutMillis: 2000, // Return an error after 2 seconds if connection could not be established
     });
   }
 
   public async connect(): Promise<void> {
-    await this.client?.connect();
+    // For pools, we don't need to explicitly connect
+    // The pool manages connections automatically
   }
 
   public async disconnect(): Promise<void> {
@@ -130,7 +137,7 @@ export const initClient = async (config: DatabaseConfig) => {
       throw new InvalidDatabaseClientException();
   }
   // Initialize the client after construction
-  await client.initialize();
+  if(!client.initialized) await client.initialize();
   return client;
 };
 

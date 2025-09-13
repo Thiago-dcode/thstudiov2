@@ -1,5 +1,5 @@
-import { DEFAULT_DATABASE_SETTINGS } from "../utils/constants";
-import { DatabaseConfig, FullDatabaseConfig, DatabaseClient } from "../utils/types";
+import { DEFAULT_DATABASE_SETTINGS } from "../constants/constants";
+import { DatabaseConfig, FullDatabaseConfig, DatabaseClient } from "../constants/types";
 
 const Client = (config: FullDatabaseConfig) => {
   return {
