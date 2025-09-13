@@ -7,7 +7,7 @@ const TABLE_NAME = 'users';
 
 const up = async () => {
   //Your migration code here
-  Schema.table('clients').createIfNotExists([
+  await Schema.table('clients').createIfNotExists([
     Column.id(),
     Column.string('name'),
     Column.text('description', {

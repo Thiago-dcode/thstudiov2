@@ -22,38 +22,20 @@ export const migrate = async (tries: number = 3) => {
       'name VARCHAR(255) NOT NULL UNIQUE',
       'created_at TIMESTAMP NOT NULL',
     ]);
-
-    Logger.info('✅ Database connected successfully');
     const queryBuilder = QueryBuilder.table(MIGRATION_TABLE_NAME);
-    // Now we can safely use SchemaBuilder
     let migrationCount = 0;
     await handleMigration(async (migration, migrationName) => {
       const migrationExists = await queryBuilder
         .where('name', '=', migrationName)
         .exists();
       if (!migrationExists) {
-        Logger.info(`🔄 Running migration: ${migrationName}`);
-
-        // Test database connection before running migration
-        try {
-          await SchemaBuilder.raw('SELECT 1');
-        } catch (error) {
-          Logger.error(
-            `❌ Database connection lost before migration ${migrationName}:`,
-            error,
-          );
-          throw error;
-        }
-
         await migration.up();
         await queryBuilder.insert(
           ['name', 'created_at'],
           [migrationName, new Date()],
         );
         migrationCount++;
-        Logger.success(
-          `✅ migrated ${migrationName} successfully in ${((Date.now() - start) / 1000).toFixed(2)}s`,
-        );
+        Logger.success(`✅ migrated ${migrationName}`);
       }
     });
     if (migrationCount > 0)

@@ -7,6 +7,7 @@ const MIGRATION_TABLE_NAME = 'migrations';
 
 export const rollback = async (steps?: string | number) => {
   try {
+    console.log(steps);
     const start = Date.now();
     Logger.info('🔄 Initializing rollback process');
     await connectDb();
@@ -16,7 +17,6 @@ export const rollback = async (steps?: string | number) => {
       process.exit(1);
     }
     const queryBuilder = QueryBuilder.table(MIGRATION_TABLE_NAME);
-    // Now we can safely use SchemaBuilder
     const stepCount = steps ? parseInt(steps.toString()) : null;
     let rollbackCount = 0;
     await handleMigration(async (migration, migrationName) => {
@@ -31,10 +31,7 @@ export const rollback = async (steps?: string | number) => {
         await migration.down();
         await queryBuilder.where('name', '=', migrationName).delete();
         rollbackCount++;
-        Logger.success(
-          `↩️ Rolled back ${migrationName} successfully in ${((Date.now() - start) / 1000).toFixed(2)}s`,
-        );
-    
+        Logger.success(`↩️ Rolled back ${migrationName}`);
       }
     }, true);
     if (rollbackCount > 0)

@@ -21,7 +21,7 @@ const up = async () => {
     Column.timestamps(true),
   ]);
   await createUpdatedAtTrigger('services');
-  Schema.table('service_media').createIfNotExists([
+  await Schema.table('service_media').createIfNotExists([
     Column.id(),
     Column.foreignKey('service_id', 'services', 'id', {
       onDelete: 'CASCADE',

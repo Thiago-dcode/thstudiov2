@@ -5,7 +5,7 @@ const TABLE_NAME = 'users';
 
 const up = async () => {
   //Your migration code here
-  Schema.table('projects').createIfNotExists([
+  await Schema.table('projects').createIfNotExists([
     Column.id(),
     Column.string('title', 255),
     Column.text('description'),
@@ -39,8 +39,11 @@ const up = async () => {
     Column.boolean('show_service', {
       default: true,
     }),
-    Column.boolean('visible',{
+    Column.boolean('visible', {
       default: true,
+    }),
+    Column.foreignKey('user_id', 'users', 'id', {
+      onDelete: 'CASCADE',
     }),
     Column.foreignKey('client_id', 'clients', 'id', {
       onDelete: 'CASCADE',
@@ -51,6 +54,19 @@ const up = async () => {
     Column.timestamps(true),
   ]);
   await createUpdatedAtTrigger('projects');
+
+  await Schema.table('project_translations').createIfNotExists([
+    Column.id(),
+    Column.string('title'),
+    Column.text('description'),
+    Column.foreignKey('project_id', 'projects', 'id', {
+      onDelete: 'CASCADE',
+    }),
+    Column.foreignKey('language_code', 'languages', 'code', {
+      onDelete: 'CASCADE',
+      type: 'LANGUAGE_CODE',
+    }),
+  ]);
   await Schema.table('project_media').createIfNotExists([
     Column.id(),
     Column.foreignKey('project_id', 'projects', 'id', {
@@ -59,11 +75,15 @@ const up = async () => {
     Column.foreignKey('media_id', 'media', 'id', {
       onDelete: 'CASCADE',
     }),
+    Column.integer('sort_order'),
   ]);
 };
 
 const down = async () => {
   //Your migration rollback code here
+  await Schema.table('project_translations').dropIfExists();
+  await Schema.table('project_media').dropIfExists();
+  await Schema.table('projects').dropIfExists();
 };
 
 export { up, down };
