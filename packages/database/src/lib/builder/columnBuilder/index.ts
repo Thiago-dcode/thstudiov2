@@ -33,6 +33,7 @@ export type ColumnAttributesWithForeignKey = Exclude<
   ColumnAttributesWithType,
   'primaryKey'
 > & {
+  constraintName?: string;
   onDelete?: OnAction;
   onUpdate?: OnAction;
 };
@@ -125,7 +126,7 @@ export class ColumnBuilder {
       nullable:
         options?.onDelete || options?.onUpdate ? undefined : options?.nullable,
     };
-    return `${this.validateStringAndReturn(columnName)} ${_options.type} REFERENCES ${this.validateStringAndReturn(foreignTableName)} (${this.validateStringAndReturn(foreignTableColumnName)})${!_options.onDelete && !_options.onUpdate ? ' ' + this.buildOptions(_options) : ''}${
+    return `${this.validateStringAndReturn(columnName)} ${_options.type} ${_options.constraintName ? `CONSTRAINT ${_options.constraintName} ` : ''}REFERENCES ${this.validateStringAndReturn(foreignTableName)} (${this.validateStringAndReturn(foreignTableColumnName)})${!_options.onDelete && !_options.onUpdate ? ' ' + this.buildOptions(_options) : ''}${
       _options.onDelete || _options.onUpdate
         ? ' ' +
           this.buildForeignKeyOptions({

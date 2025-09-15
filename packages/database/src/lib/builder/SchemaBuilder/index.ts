@@ -4,7 +4,7 @@ import { AvailableEnums } from '../../constants/types/database';
 import { getClient } from '../../client';
 import { SchemaBuilderOperationNotAllowedException } from './exceptions';
 class SchemaBuilder extends BaseBuilder {
-  protected columns: string[] = [];
+  protected createColumns: string[] = [];
 
   public static table(tableName: (typeof TABLES)[number]) {
     return new SchemaBuilder(tableName);
@@ -25,9 +25,9 @@ class SchemaBuilder extends BaseBuilder {
   protected buildColumns(columns?: (string | string[])[]) {
     for (const column of columns || []) {
       if (Array.isArray(column)) {
-        this.columns.push(...column);
+        this.createColumns.push(...column);
       } else {
-        this.columns.push(column);
+        this.createColumns.push(column);
       }
     }
   }
@@ -102,12 +102,13 @@ END $$;`);
   }
 
   protected buildCreateQuery(ifNotExists: boolean = false) {
-    this.query = `CREATE TABLE${ifNotExists ? ' IF NOT EXISTS' : ''} ${this.tableName} (${this.columns.length > 0 ? '\n' + this.columns.join(',\n') : ''}\n);`;
-    this.columns = [];
+    this.query = `CREATE TABLE${ifNotExists ? ' IF NOT EXISTS' : ''} ${this.tableName} (${this.createColumns.length > 0 ? '\n' + this.createColumns.join(',\n') : ''}\n);`;
+    this.createColumns = [];
   }
 
+  
   protected reset() {
-    this.columns = [];
+    this.createColumns = [];
     this.query = '';
   }
 }

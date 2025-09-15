@@ -139,7 +139,7 @@ describe('SchemaBuilder', () => {
       const schemaBuilder = new SchemaBuilder(TABLE_NAME);
 
       // Assert
-      expect(schemaBuilder['columns']).toEqual([]);
+      expect(schemaBuilder['createColumns']).toEqual([]);
     });
 
     it('should initialize with empty query string', () => {
@@ -401,7 +401,7 @@ describe('SchemaBuilder', () => {
     it('should build basic CREATE TABLE query', () => {
       // Arrange
       const columns = ['id SERIAL PRIMARY KEY', 'name VARCHAR(255)'];
-      schemaBuilder['columns'] = columns;
+      schemaBuilder['createColumns'] = columns;
 
       // Act
       schemaBuilder['buildCreateQuery']();
@@ -415,7 +415,7 @@ describe('SchemaBuilder', () => {
     it('should build query with single column', () => {
       // Arrange
       const columns = ['id SERIAL PRIMARY KEY'];
-      schemaBuilder['columns'] = columns;
+      schemaBuilder['createColumns'] = columns;
 
       // Act
       schemaBuilder['buildCreateQuery']();
@@ -429,7 +429,7 @@ describe('SchemaBuilder', () => {
     it('should build query with empty columns', () => {
       // Arrange
       const columns: string[] = [];
-      schemaBuilder['columns'] = columns;
+      schemaBuilder['createColumns'] = columns;
 
       // Act
       schemaBuilder['buildCreateQuery']();
@@ -447,7 +447,7 @@ describe('SchemaBuilder', () => {
         'age INTEGER CHECK (age > 0)',
         'created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP',
       ];
-      schemaBuilder['columns'] = columns;
+      schemaBuilder['createColumns'] = columns;
 
       // Act
       schemaBuilder['buildCreateQuery']();
@@ -465,7 +465,7 @@ describe('SchemaBuilder', () => {
         'name VARCHAR(255) NOT NULL, UNIQUE',
         'email VARCHAR(255) UNIQUE, NOT NULL',
       ];
-      schemaBuilder['columns'] = columns;
+      schemaBuilder['createColumns'] = columns;
 
       // Act
       schemaBuilder['buildCreateQuery']();
@@ -482,7 +482,7 @@ describe('SchemaBuilder', () => {
         { length: 10 },
         (_, i) => `col${i + 1} VARCHAR(255)`,
       );
-      schemaBuilder['columns'] = columns;
+      schemaBuilder['createColumns'] = columns;
 
       // Act
       schemaBuilder['buildCreateQuery']();
@@ -502,7 +502,7 @@ describe('SchemaBuilder', () => {
         'phone_number VARCHAR(20)',
         'is_active BOOLEAN',
       ];
-      schemaBuilder['columns'] = columns;
+      schemaBuilder['createColumns'] = columns;
 
       // Act
       schemaBuilder['buildCreateQuery']();
@@ -525,7 +525,10 @@ describe('SchemaBuilder', () => {
 
     it('should reset columns to empty array', () => {
       // Arrange
-      schemaBuilder['columns'] = ['id SERIAL PRIMARY KEY', 'name VARCHAR(255)'];
+      schemaBuilder['createColumns'] = [
+        'id SERIAL PRIMARY KEY',
+        'name VARCHAR(255)',
+      ];
       schemaBuilder['query'] =
         'CREATE TABLE test (id SERIAL PRIMARY KEY,name VARCHAR(255))';
 
@@ -533,12 +536,12 @@ describe('SchemaBuilder', () => {
       schemaBuilder['reset']();
 
       // Assert
-      expect(schemaBuilder['columns']).toEqual([]);
+      expect(schemaBuilder['createColumns']).toEqual([]);
     });
 
     it('should reset query to empty string', () => {
       // Arrange
-      schemaBuilder['columns'] = ['id SERIAL PRIMARY KEY'];
+      schemaBuilder['createColumns'] = ['id SERIAL PRIMARY KEY'];
       schemaBuilder['query'] = 'CREATE TABLE test (id SERIAL PRIMARY KEY)';
 
       // Act
@@ -550,7 +553,7 @@ describe('SchemaBuilder', () => {
 
     it('should reset both columns and query', () => {
       // Arrange
-      schemaBuilder['columns'] = [
+      schemaBuilder['createColumns'] = [
         'id SERIAL PRIMARY KEY',
         'name VARCHAR(255)',
         'email VARCHAR(255)',
@@ -562,20 +565,20 @@ describe('SchemaBuilder', () => {
       schemaBuilder['reset']();
 
       // Assert
-      expect(schemaBuilder['columns']).toEqual([]);
+      expect(schemaBuilder['createColumns']).toEqual([]);
       expect(schemaBuilder['query']).toBe('');
     });
 
     it('should handle reset when already empty', () => {
       // Arrange
-      schemaBuilder['columns'] = [];
+      schemaBuilder['createColumns'] = [];
       schemaBuilder['query'] = '';
 
       // Act
       schemaBuilder['reset']();
 
       // Assert
-      expect(schemaBuilder['columns']).toEqual([]);
+      expect(schemaBuilder['createColumns']).toEqual([]);
       expect(schemaBuilder['query']).toBe('');
     });
   });

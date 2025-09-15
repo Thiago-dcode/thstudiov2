@@ -5,6 +5,7 @@ import { migrate } from '../lib/scripts/migrate';
 import { createMigration } from '../lib/scripts/create-migration';
 import { rollback } from '../lib/scripts/rollback';
 import { seed } from '../lib/scripts/seed';
+import Logger from '@repo/backend-lib/utils/console';
 
 const program = new Command();
 
@@ -31,7 +32,12 @@ program
   .description('Rollback database migrations')
   .option('-s, --steps <number>', 'Number of migrations to rollback')
   .action((options) => {
-    rollback(options.steps);
+    const _steps = options.steps ? parseInt(options.steps) : null;
+    if (_steps !== null && isNaN(_steps)) {
+      Logger.error('❌ Steps must be a number: --steps=<number>');
+      process.exit(1);
+    }
+    rollback(_steps);
   });
 
 program
