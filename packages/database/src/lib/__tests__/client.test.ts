@@ -1,5 +1,5 @@
 import { InvalidDatabaseClientException } from '../client/exceptions';
-import { DatabaseConfig } from '../constants/types';
+import { DatabaseConfig } from '../constants/types/database';
 
 // Mock the database drivers before importing the clients
 jest.mock('mysql2/promise', () => ({
@@ -92,7 +92,10 @@ describe('Client Initialization', () => {
       settings: {
         allowUpdateWithoutWhere: false,
         allowDeleteWithoutWhere: false,
+        allowTruncate: false,
+        allowDrop: false,
         migrationsDirectory: 'migrations',
+        seedDirectory: 'seeds',
       },
     };
 
@@ -121,7 +124,10 @@ describe('Client Initialization', () => {
       settings: {
         allowUpdateWithoutWhere: false,
         allowDeleteWithoutWhere: false,
+        allowTruncate: false,
+        allowDrop: false,
         migrationsDirectory: 'migrations',
+        seedDirectory: 'seeds',
       },
     };
 
@@ -164,7 +170,10 @@ describe('Client Initialization', () => {
       expect(client.config.settings).toEqual({
         allowUpdateWithoutWhere: false,
         allowDeleteWithoutWhere: false,
+        allowTruncate: false,
+        allowDrop: false,
         migrationsDirectory: expect.any(String),
+        seedDirectory: expect.any(String),
       });
     });
 
@@ -180,7 +189,10 @@ describe('Client Initialization', () => {
       expect(client.config.settings).toEqual({
         allowUpdateWithoutWhere: true,
         allowDeleteWithoutWhere: false, // Should use default value
+        allowTruncate: false,
+        allowDrop: false,
         migrationsDirectory: expect.any(String),
+        seedDirectory: expect.any(String),
       });
     });
 
@@ -190,6 +202,8 @@ describe('Client Initialization', () => {
         settings: {
           allowUpdateWithoutWhere: true,
           allowDeleteWithoutWhere: true,
+          allowTruncate: true,
+          allowDrop: true,
           migrationsDirectory: 'custom-migrations',
         },
       };
@@ -198,7 +212,10 @@ describe('Client Initialization', () => {
       expect(client.config.settings).toEqual({
         allowUpdateWithoutWhere: true,
         allowDeleteWithoutWhere: true,
+        allowTruncate: true,
+        allowDrop: true,
         migrationsDirectory: 'custom-migrations',
+        seedDirectory: expect.any(String),
       });
     });
 
@@ -212,7 +229,10 @@ describe('Client Initialization', () => {
       expect(client.config.settings).toEqual({
         allowUpdateWithoutWhere: false,
         allowDeleteWithoutWhere: false,
+        allowTruncate: false,
+        allowDrop: false,
         migrationsDirectory: expect.any(String),
+        seedDirectory: expect.any(String),
       });
     });
 
@@ -257,13 +277,19 @@ describe('Client Initialization', () => {
       expect(mysqlClient.config.settings).toEqual({
         allowUpdateWithoutWhere: true,
         allowDeleteWithoutWhere: false,
+        allowTruncate: false,
+        allowDrop: false,
         migrationsDirectory: expect.any(String),
+        seedDirectory: expect.any(String),
       });
       
       expect(postgresClient.config.settings).toEqual({
         allowUpdateWithoutWhere: false,
         allowDeleteWithoutWhere: true,
+        allowTruncate: false,
+        allowDrop: false,
         migrationsDirectory: expect.any(String),
+        seedDirectory: expect.any(String),
       });
     });
   });

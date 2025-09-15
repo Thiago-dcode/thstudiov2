@@ -1,5 +1,5 @@
 import { Column, Schema } from 'lib/facades';
-import { createUpdatedAtTrigger } from 'lib/migration/utils';
+import { createTimeStampsTrigger, createUpdatedAtTrigger } from '../lib/scripts/utils';
 
 const up = async () => {
   //Your migration code here
@@ -20,7 +20,7 @@ const up = async () => {
     }),
     Column.timestamps(true),
   ]);
-  await createUpdatedAtTrigger('services');
+  await createTimeStampsTrigger('services');
   await Schema.table('service_media').createIfNotExists([
     Column.id(),
     Column.foreignKey('service_id', 'services', 'id', {
@@ -36,10 +36,7 @@ const up = async () => {
     Column.id(),
     Column.string('name'),
     Column.text('description'),
-    Column.foreignKey('language_code', 'languages', 'code', {
-      onDelete: 'CASCADE',
-      type: 'LANGUAGE_CODE',
-    }),
+    Column.enum('language_code', 'LANGUAGE_CODE'),
     Column.foreignKey('service_id', 'services', 'id', {
       onDelete: 'CASCADE',
     }),

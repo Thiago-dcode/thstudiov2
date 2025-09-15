@@ -1,4 +1,4 @@
-import { createUpdatedAtTrigger } from '../lib/migration/utils';
+import { createTimeStampsTrigger } from '../lib/scripts/utils';
 import { Schema, Column } from '../lib/facades';
 
 const TABLE_NAME = 'users';
@@ -34,15 +34,12 @@ const up = async () => {
     Column.id(),
     Column.string('name'),
     Column.text('description'),
-    Column.foreignKey('language_code', 'languages', 'code', {
-      onDelete: 'CASCADE',
-      type: 'LANGUAGE_CODE',
-    }),
+    Column.enum('language_code', 'LANGUAGE_CODE'),
     Column.foreignKey('portfolio_id', 'portfolios', 'id', {
       onDelete: 'CASCADE',
     }),
   ]);
-  await createUpdatedAtTrigger('portfolios');
+  await createTimeStampsTrigger('portfolios');
 };
 
 const down = async () => {

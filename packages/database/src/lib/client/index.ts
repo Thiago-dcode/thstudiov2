@@ -3,15 +3,15 @@ import {
   DatabaseClient,
   DatabaseConfig,
   FullDatabaseConfig,
-} from '../constants/types';
-import { Pool as PgPool , Client as PgClient} from 'pg';
+} from '../constants/types/database';
+import { Pool as PgPool, Client as PgClient } from 'pg';
 import mysql from 'mysql2/promise';
 import {
   ClientNotInitializedException,
   InvalidDatabaseClientException,
 } from './exceptions';
 import { DEFAULT_DATABASE_SETTINGS } from '../constants/constants';
-import { setMigrationConfig } from '../scripts/utils/config';
+import { setDatabaseCliConfig } from '../scripts/utils/config';
 export abstract class Client<T> {
   protected client: T | null = null;
   protected _initialized: boolean = false;
@@ -44,7 +44,7 @@ export abstract class Client<T> {
   }
   public get initialized() {
     return this.client && this._initialized;
-  } 
+  }
 }
 
 export class MysqlClient extends Client<Pool> {
@@ -118,7 +118,7 @@ export const initClient = async (config: DatabaseConfig) => {
       ...config?.settings,
     },
   };
-  setMigrationConfig(fullConfig.settings);
+  setDatabaseCliConfig(fullConfig.settings);
   if (client && clientChoosen === fullConfig.client) {
     client.config = fullConfig;
     return client;
@@ -137,7 +137,7 @@ export const initClient = async (config: DatabaseConfig) => {
       throw new InvalidDatabaseClientException();
   }
   // Initialize the client after construction
-  if(!client.initialized) await client.initialize();
+  if (!client.initialized) await client.initialize();
   return client;
 };
 

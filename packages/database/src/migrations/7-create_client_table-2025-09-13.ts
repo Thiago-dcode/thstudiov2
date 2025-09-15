@@ -1,7 +1,7 @@
 import { Column } from 'lib/facades';
 
 import { Schema } from 'lib/facades';
-import { createUpdatedAtTrigger } from 'lib/migration/utils';
+import { createTimeStampsTrigger } from '../lib/scripts/utils';
 
 const TABLE_NAME = 'users';
 
@@ -28,12 +28,15 @@ const up = async () => {
     Column.string('website', 255, {
       nullable: true,
     }),
+    Column.foreignKey('address_id', 'addresses', 'id', {
+      onDelete: 'CASCADE',
+    }),
     Column.foreignKey('user_id', 'users', 'id', {
       onDelete: 'CASCADE',
     }),
     Column.timestamps(true),
   ]);
-  await createUpdatedAtTrigger('clients');
+  await createTimeStampsTrigger('clients');
 };
 
 const down = async () => {

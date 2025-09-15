@@ -2,7 +2,7 @@ import {
   DatabaseClient,
   DatabaseConfig,
   FullDatabaseConfig,
-} from '../constants/types';
+} from '../constants/types/database';
 import {
   ColumnBuilder,
   ColumnAttributes,

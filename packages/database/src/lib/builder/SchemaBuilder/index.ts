@@ -1,7 +1,8 @@
 import { ENUMS, TABLES } from '../../constants/constants';
 import BaseBuilder from '..';
-import { AvailableEnums } from '../../constants/types';
+import { AvailableEnums } from '../../constants/types/database';
 import { getClient } from '../../client';
+import { SchemaBuilderOperationNotAllowedException } from './exceptions';
 class SchemaBuilder extends BaseBuilder {
   protected columns: string[] = [];
 
@@ -45,18 +46,48 @@ EXCEPTION
 END $$;`);
   }
   public async drop() {
+    if (!this.db?.config.settings.allowDrop) {
+      throw new SchemaBuilderOperationNotAllowedException(
+        'Drop is not allowed, set allowDrop to true in the database config',
+      );
+    }
     this.query = `DROP TABLE ${this.tableName}`;
     return await this.db?.query(this.query);
   }
   public async dropIfExists() {
+    if (!this.db?.config.settings.allowDrop) {
+      throw new SchemaBuilderOperationNotAllowedException(
+        'Drop is not allowed, set allowDrop to true in the database config',
+      );
+    }
     this.query = `DROP TABLE IF EXISTS ${this.tableName}`;
     return await this.db?.query(this.query);
   }
 
+  public async truncate() {
+    if (!this.db?.config.settings.allowTruncate) {
+      throw new SchemaBuilderOperationNotAllowedException(
+        'Truncate is not allowed, set allowTruncate to true in the database config',
+      );
+    }
+    this.query = `TRUNCATE TABLE ${this.tableName}`;
+    return await this.db?.query(this.query);
+  }
+
   public static async dropEnum(enumName: keyof AvailableEnums) {
+    if (!getClient().config.settings.allowDrop) {
+      throw new SchemaBuilderOperationNotAllowedException(
+        'Drop is not allowed, set allowDrop to true in the database config',
+      );
+    }
     return await getClient().query(`DROP TYPE ${enumName}`);
   }
   public static async dropEnumIfExists(enumName: keyof AvailableEnums) {
+    if (!getClient().config.settings.allowDrop) {
+      throw new SchemaBuilderOperationNotAllowedException(
+        'Drop is not allowed, set allowDrop to true in the database config',
+      );
+    }
     return await getClient().query(`DROP TYPE IF EXISTS ${enumName}`);
   }
 

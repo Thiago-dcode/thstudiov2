@@ -1,10 +1,11 @@
 import { Column, Schema } from '../lib/facades';
 import {
   ENUMS,
+  TRIGGER_UPDATE_CREATED_AT_FUNCTION_NAME,
   TRIGGER_UPDATE_UPDATED_AT_FUNCTION_NAME,
 } from '../lib/constants/constants';
-import { AvailableEnums } from '../lib/constants/types';
-import { createUpdatedAtTrigger } from '../lib/migration/utils';
+import { AvailableEnums } from '../lib/constants/types/database';
+import { createTimeStampsTrigger } from 'lib/scripts/utils';
 
 const up = async () => {
   // Create trigger to automatically update updated_at timestamp on row updates
@@ -12,7 +13,23 @@ const up = async () => {
     CREATE OR REPLACE FUNCTION ${TRIGGER_UPDATE_UPDATED_AT_FUNCTION_NAME}()
     RETURNS TRIGGER AS $$
     BEGIN
-        NEW.updated_at = CURRENT_TIMESTAMP;
+        IF NEW.updated_at IS NULL THEN
+            NEW.updated_at = CURRENT_TIMESTAMP;
+        END IF;
+        RETURN NEW;
+    END;
+    $$ language 'plpgsql';
+  `);
+  await Schema.raw(`
+    CREATE OR REPLACE FUNCTION ${TRIGGER_UPDATE_CREATED_AT_FUNCTION_NAME}()
+    RETURNS TRIGGER AS $$
+    BEGIN
+        IF NEW.created_at IS NULL THEN
+            NEW.created_at = CURRENT_TIMESTAMP;
+        END IF;
+        IF NEW.updated_at IS NULL THEN
+            NEW.updated_at = CURRENT_TIMESTAMP;
+        END IF;
         RETURN NEW;
     END;
     $$ language 'plpgsql';
@@ -23,38 +40,41 @@ const up = async () => {
     await Schema.createEnumIfNotExists(enumName as keyof AvailableEnums);
   }
 
-  //Languages
-  await Schema.table('languages').createIfNotExists([
+  //Address
+  await Schema.table('addresses').createIfNotExists([
     Column.id(),
-    Column.string('name'),
-    Column.enum('code', 'LANGUAGE_CODE', {
-      unique: true,
+    Column.string('street', 255, {
+      nullable: true,
     }),
-    Column.boolean('is_default', {
-      default: false,
+    Column.string('city', 255, {
+      nullable: true,
+    }),
+    Column.string('state', 255, {
+      nullable: true,
+    }),
+    Column.string('zip', 255, {
+      nullable: true,
+    }),
+    Column.string('country', 255, {
+      nullable: true,
+    }),
+    Column.string('latitude', 255, {
+      nullable: true,
+    }),
+    Column.string('longitude', 255, {
+      nullable: true,
     }),
     Column.timestamps(true),
   ]);
-  await createUpdatedAtTrigger('languages');
-  await Schema.table('language_translations').createIfNotExists([
-    Column.id(),
-    Column.string('name'),
-    Column.string('description'),
-    Column.timestamps(true),
-    Column.foreignKey('language_code', 'languages', 'id', {
-      onDelete: 'CASCADE',
-      nullable: false,
-    }),
-  ]);
-  await createUpdatedAtTrigger('language_translations');
-
-
+  await createTimeStampsTrigger('addresses');
 };
 
 const down = async () => {
   // Drop the function
-  await Schema.table('language_translations').dropIfExists();
-  await Schema.table('languages').dropIfExists();
+  await Schema.table('addresses').dropIfExists();
+  for (const enumName of Object.keys(ENUMS)) {
+    await Schema.dropEnumIfExists(enumName as keyof AvailableEnums);
+  }
 };
 
 export { up, down };

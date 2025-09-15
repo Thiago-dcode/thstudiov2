@@ -5,7 +5,7 @@ import {
   WhereCondition,
   SqlClauseWithoutIn,
   DatabaseClient,
-} from '../constants/types';
+} from '../constants/types/database';
 import { DEFAULT_DATABASE_SETTINGS } from '../constants/constants';
 import { initClient } from '../client';
 import { QueryBuilderOperationNotAllowedException } from '../builder/queryBuilder/exceptions';
@@ -103,14 +103,7 @@ describe('QueryBuilder', () => {
     await killClient();
   });
 
-  describe('Client Initialization', () => {
-    it('should initialize with a valid client and call connect', () => {
-      // Arrange & Act & Assert
-      expect(() => new QueryBuilder(TABLE_NAME)).not.toThrow();
-      expect(mockClient.connect).toHaveBeenCalledTimes(1);
-    });
-  });
-
+ 
   describe('Select', () => {
     let queryBuilder: QueryBuilder;
 

@@ -1,4 +1,4 @@
-import { createUpdatedAtTrigger } from '../lib/migration/utils';
+import { createTimeStampsTrigger } from '../lib/scripts/utils';
 import { Column, Schema } from '../lib/facades';
 import Logger from '@repo/backend-lib/utils/console';
 
@@ -41,11 +41,7 @@ const up = async () => {
     Column.id(),
     Column.string('name'),
     Column.string('description'),
-    Column.foreignKey('language_code', 'languages', 'code', {
-      onDelete: 'CASCADE',
-      nullable: false,
-      type: 'LANGUAGE_CODE',
-    }),
+    Column.enum('language_code', 'LANGUAGE_CODE'),
     Column.foreignKey('media_id', 'media', 'id', {
       onDelete: 'CASCADE',
       onUpdate: 'CASCADE',
@@ -53,7 +49,7 @@ const up = async () => {
     }),
   ]);
 
-  await createUpdatedAtTrigger('media');
+  await createTimeStampsTrigger('media');
 };
 
 const down = async () => {

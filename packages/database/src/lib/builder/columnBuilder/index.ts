@@ -6,7 +6,7 @@ import {
   SqlFunctionTimestamp,
   SqlTypes,
   TableName,
-} from '../../constants/types';
+} from '../../constants/types/database';
 import { ENUMS, SQL_FUNCTIONS } from '../../constants/constants';
 
 export type OnAction = 'SET NULL' | 'CASCADE' | 'RESTRICT' | 'NO ACTION';

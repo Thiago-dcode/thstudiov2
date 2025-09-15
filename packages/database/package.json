@@ -6,10 +6,6 @@
   "scripts": {
     "test": "jest  --passWithNoTests --config ./jest.config.ts ",
     "test:watch": "jest  --passWithNoTests --config ./jest.config.ts  --watch",
-    "create:migration": "tsx --tsconfig tsconfig.json src/lib/migration/create-migration.ts",
-    "migrate": "tsx --tsconfig tsconfig.json src/lib/migration/migrate.ts",
-    "rollback": "tsx --tsconfig tsconfig.json src/lib/migration/rollback.ts",
-    "wipe": "tsx --tsconfig tsconfig.json src/lib/migration/wipe-db.ts",
     "dbcli": "tsx --tsconfig tsconfig.json src/bin/cli.ts"
   },
   "exports": {

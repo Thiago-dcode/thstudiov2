@@ -1,12 +1,15 @@
-import { migrationConfig } from './config';
+import { databaseCliConfig } from './config';
 import path from 'node:path';
 import fs from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { Query, Schema } from '../../facades';
-import { TRIGGER_UPDATE_UPDATED_AT_FUNCTION_NAME } from '../../constants/constants';
-import { DatabaseClient, TableName } from '../../constants/types';
+import {
+  TRIGGER_UPDATE_CREATED_AT_FUNCTION_NAME,
+  TRIGGER_UPDATE_UPDATED_AT_FUNCTION_NAME,
+} from '../../constants/constants';
+import { DatabaseClient, TableName } from '../../constants/types/database';
 import Logger from '@repo/backend-lib/utils/console';
-import { initClient } from 'lib/client';
+import { getClient, initClient } from 'lib/client';
 import config from '@repo/backend-lib/config';
 
 const handleMigration = async (
@@ -14,12 +17,12 @@ const handleMigration = async (
   rollback: boolean = false,
 ) => {
   try {
-    const migrationDirectory = migrationConfig.migrationsDirectory;
+    const migrationDirectory = databaseCliConfig.migrationsDirectory;
     if (!fs.existsSync(migrationDirectory)) {
       fs.mkdirSync(migrationDirectory, { recursive: true });
     }
     // If rollback is true, we need to get the migrations from the database order by the last created at
-    const migrations = !rollback
+    let migrations = !rollback
       ? fs.readdirSync(migrationDirectory)
       : (
           await Query.table('migrations')
@@ -27,12 +30,32 @@ const handleMigration = async (
             .orderBy('created_at', 'DESC')
             .get()
         ).map((migration: any) => migration.name);
+
     if (migrations.length === 0) {
       Logger.info(
         `No ${!rollback ? 'migrations' : 'migrations to rollback'} found`,
       );
       process.exit(0);
     }
+
+    // Sort migrations by the number after the dash
+    if (!rollback) {
+      migrations = migrations.sort((a: string, b: string) => {
+        const getMigrationNumber = (filename: string): number => {
+          const match = filename.match(/^(\d+)-/);
+          if (!match) {
+            throw new Error(
+              `❌ Malformed migration name: "${filename}". Migration names must start with a number followed by a dash (e.g., "1-create_table.ts")`,
+            );
+          }
+          return parseInt(match[1] as string, 10);
+        };
+        const numA = getMigrationNumber(a);
+        const numB = getMigrationNumber(b);
+        return numA - numB;
+      });
+    }
+
     for (const migration of migrations) {
       const migrationPath = path.join(migrationDirectory, migration);
       if (!fs.existsSync(migrationPath)) {
@@ -67,7 +90,22 @@ const createUpdatedAtTrigger = async (tableName: TableName) => {
     Logger.error('❌ Trigger creation failed:', error);
   }
 };
-
+const createCreaAtTrigger = async (tableName: TableName) => {
+  try {
+    await Schema.raw(`
+    CREATE TRIGGER update_${tableName}_created_at 
+    BEFORE INSERT ON ${tableName}
+    FOR EACH ROW 
+    EXECUTE FUNCTION ${TRIGGER_UPDATE_CREATED_AT_FUNCTION_NAME}();
+  `);
+  } catch (error) {
+    Logger.error('❌ Trigger creation failed:', error);
+  }
+};
+const createTimeStampsTrigger = async (tableName: TableName) => {
+  await createUpdatedAtTrigger(tableName);
+  await createCreaAtTrigger(tableName);
+};
 const connectDb = async () => {
   const dbConfig = config().database;
   await initClient({
@@ -77,6 +115,13 @@ const connectDb = async () => {
     username: dbConfig.username,
     password: dbConfig.password,
     database: dbConfig.database,
+    settings: databaseCliConfig,
   });
 };
-export { handleMigration, createUpdatedAtTrigger, connectDb };
+export {
+  handleMigration,
+  createUpdatedAtTrigger,
+  connectDb,
+  createCreaAtTrigger,
+  createTimeStampsTrigger,
+};

@@ -1,4 +1,4 @@
-import { createUpdatedAtTrigger } from '../lib/migration/utils';
+import { createTimeStampsTrigger } from '../lib/scripts/utils';
 import { ColumnBuilder } from '../lib/builder/columnBuilder';
 import SchemaBuilder from '../lib/builder/schemaBuilder';
 const TABLE_NAME = 'users';
@@ -21,13 +21,16 @@ const up = async () => {
     ColumnBuilder.text('biography', {
       nullable: true,
     }),
+    ColumnBuilder.foreignKey('address_id', 'addresses', 'id', {
+      onDelete: 'CASCADE',
+    }),
     ColumnBuilder.foreignKey('extra_data_id', 'user_extra_data', 'id', {
       onDelete: 'SET NULL',
       onUpdate: 'CASCADE',
     }),
     ColumnBuilder.timestamps(true),
   ]);
-  await createUpdatedAtTrigger('users');
+  await createTimeStampsTrigger('users');
 };
 
 const down = async () => {

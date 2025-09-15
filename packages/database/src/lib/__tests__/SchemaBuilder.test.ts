@@ -2,7 +2,7 @@ import {
   DatabaseClient,
   DatabaseConfig,
   FullDatabaseConfig,
-} from '../constants/types';
+} from '../constants/types/database';
 import { DEFAULT_DATABASE_SETTINGS } from '../constants/constants';
 import SchemaBuilder from '../builder/schemaBuilder';
 
@@ -131,7 +131,7 @@ describe('SchemaBuilder', () => {
     it('should initialize with a valid client and call connect', () => {
       // Act & Assert
       expect(() => new SchemaBuilder(TABLE_NAME)).not.toThrow();
-      expect(mockClient.connect).toHaveBeenCalledTimes(1);
+      expect(mockClient.connect).toHaveBeenCalledTimes(0);
     });
 
     it('should initialize with empty columns array', () => {
@@ -1528,6 +1528,190 @@ deleted_at TIMESTAMP NULL
       // Assert
       expect(schemaBuilder['query']).toBe(expectedSQL);
       expect(mockClient.query).toHaveBeenCalledWith(expectedSQL);
+    });
+  });
+
+  describe('Drop and Truncate Methods', () => {
+    let schemaBuilder: SchemaBuilder;
+
+    beforeEach(async () => {
+      const { initClient } = require('../client');
+      await initClient(testConfig);
+      schemaBuilder = new SchemaBuilder(TABLE_NAME);
+    });
+
+    describe('drop() method', () => {
+      it('should throw error when allowDrop is false', async () => {
+        // Arrange - allowDrop is false by default in DEFAULT_DATABASE_SETTINGS
+        const {
+          SchemaBuilderOperationNotAllowedException,
+        } = require('../builder/schemaBuilder/exceptions');
+
+        // Act & Assert
+        await expect(schemaBuilder.drop()).rejects.toThrow(
+          SchemaBuilderOperationNotAllowedException,
+        );
+        await expect(schemaBuilder.drop()).rejects.toThrow(
+          'Drop is not allowed, set allowDrop to true in the database config',
+        );
+      });
+
+      it('should execute drop query when allowDrop is true', async () => {
+        // Arrange
+        const configWithDrop = {
+          ...testConfig,
+          settings: {
+            ...DEFAULT_DATABASE_SETTINGS,
+            allowDrop: true,
+          },
+        };
+        const { initClient } = require('../client');
+        await initClient(configWithDrop);
+        const builderWithDrop = new SchemaBuilder(TABLE_NAME);
+        mockClient.query.mockResolvedValue([{ result: 'success' }]);
+
+        // Act
+        const result = await builderWithDrop.drop();
+
+        // Assert
+        expect(builderWithDrop['query']).toBe(`DROP TABLE ${TABLE_NAME}`);
+        expect(mockClient.query).toHaveBeenCalledWith(
+          `DROP TABLE ${TABLE_NAME}`,
+        );
+        expect(result).toEqual([{ result: 'success' }]);
+      });
+    });
+
+    describe('dropIfExists() method', () => {
+      it('should throw error when allowDrop is false', async () => {
+        // Arrange - allowDrop is false by default
+        const {
+          SchemaBuilderOperationNotAllowedException,
+        } = require('../builder/schemaBuilder/exceptions');
+
+        // Act & Assert
+        await expect(schemaBuilder.dropIfExists()).rejects.toThrow(
+          SchemaBuilderOperationNotAllowedException,
+        );
+        await expect(schemaBuilder.dropIfExists()).rejects.toThrow(
+          'Drop is not allowed, set allowDrop to true in the database config',
+        );
+      });
+
+      it('should execute drop if exists query when allowDrop is true', async () => {
+        // Arrange
+        const configWithDrop = {
+          ...testConfig,
+          settings: {
+            ...DEFAULT_DATABASE_SETTINGS,
+            allowDrop: true,
+          },
+        };
+        const { initClient } = require('../client');
+        await initClient(configWithDrop);
+        const builderWithDrop = new SchemaBuilder(TABLE_NAME);
+        mockClient.query.mockResolvedValue([{ result: 'success' }]);
+
+        // Act
+        const result = await builderWithDrop.dropIfExists();
+
+        // Assert
+        expect(builderWithDrop['query']).toBe(
+          `DROP TABLE IF EXISTS ${TABLE_NAME}`,
+        );
+        expect(mockClient.query).toHaveBeenCalledWith(
+          `DROP TABLE IF EXISTS ${TABLE_NAME}`,
+        );
+        expect(result).toEqual([{ result: 'success' }]);
+      });
+    });
+
+    describe('truncate() method', () => {
+      it('should throw error when allowTruncate is false', async () => {
+        // Arrange - allowTruncate is false by default
+        const {
+          SchemaBuilderOperationNotAllowedException,
+        } = require('../builder/schemaBuilder/exceptions');
+
+        // Act & Assert
+        await expect(schemaBuilder.truncate()).rejects.toThrow(
+          SchemaBuilderOperationNotAllowedException,
+        );
+        await expect(schemaBuilder.truncate()).rejects.toThrow(
+          'Truncate is not allowed, set allowTruncate to true in the database config',
+        );
+      });
+
+      it('should execute truncate query when allowTruncate is true', async () => {
+        // Arrange
+        const configWithTruncate = {
+          ...testConfig,
+          settings: {
+            ...DEFAULT_DATABASE_SETTINGS,
+            allowTruncate: true,
+          },
+        };
+        const { initClient } = require('../client');
+        await initClient(configWithTruncate);
+        const builderWithTruncate = new SchemaBuilder(TABLE_NAME);
+        mockClient.query.mockResolvedValue([{ result: 'success' }]);
+
+        // Act
+        const result = await builderWithTruncate.truncate();
+
+        // Assert
+        expect(builderWithTruncate['query']).toBe(
+          `TRUNCATE TABLE ${TABLE_NAME}`,
+        );
+        expect(mockClient.query).toHaveBeenCalledWith(
+          `TRUNCATE TABLE ${TABLE_NAME}`,
+        );
+        expect(result).toEqual([{ result: 'success' }]);
+      });
+    });
+
+    describe('Error handling', () => {
+      it('should handle database errors during drop operation', async () => {
+        // Arrange
+        const configWithDrop = {
+          ...testConfig,
+          settings: {
+            ...DEFAULT_DATABASE_SETTINGS,
+            allowDrop: true,
+          },
+        };
+        const { initClient } = require('../client');
+        await initClient(configWithDrop);
+        const builderWithDrop = new SchemaBuilder(TABLE_NAME);
+        const error = new Error('Table does not exist');
+        mockClient.query.mockRejectedValue(error);
+
+        // Act & Assert
+        await expect(builderWithDrop.drop()).rejects.toThrow(
+          'Table does not exist',
+        );
+      });
+
+      it('should handle database errors during truncate operation', async () => {
+        // Arrange
+        const configWithTruncate = {
+          ...testConfig,
+          settings: {
+            ...DEFAULT_DATABASE_SETTINGS,
+            allowTruncate: true,
+          },
+        };
+        const { initClient } = require('../client');
+        await initClient(configWithTruncate);
+        const builderWithTruncate = new SchemaBuilder(TABLE_NAME);
+        const error = new Error('Table is locked');
+        mockClient.query.mockRejectedValue(error);
+
+        // Act & Assert
+        await expect(builderWithTruncate.truncate()).rejects.toThrow(
+          'Table is locked',
+        );
+      });
     });
   });
 });

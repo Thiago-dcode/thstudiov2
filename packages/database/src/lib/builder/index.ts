@@ -1,6 +1,6 @@
 import { ClientNotInitializedException } from '../client/exceptions';
 import { getClient, Client } from '../client';
-import { SqlOperation } from 'lib/constants/types';
+import { SqlOperation } from 'lib/constants/types/database';
 import { TABLES } from 'lib/constants/constants';
 
 abstract class BaseBuilder {

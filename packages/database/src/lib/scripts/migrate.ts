@@ -29,6 +29,7 @@ export const migrate = async (tries: number = 3) => {
         .where('name', '=', migrationName)
         .exists();
       if (!migrationExists) {
+        Logger.info(`🔄 Migrating ${migrationName}`);
         await migration.up();
         await queryBuilder.insert(
           ['name', 'created_at'],

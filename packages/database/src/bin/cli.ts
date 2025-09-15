@@ -36,8 +36,8 @@ program
 
 program
   .command('db:seed')
-  .option('-c, --class <string>', 'Class to seed')
+  .option('-n, --name <string>', 'Name to seed')
   .action((options) => {
-    seed(options.class);
+    seed(options.name);
   });
 program.parse(process.argv);

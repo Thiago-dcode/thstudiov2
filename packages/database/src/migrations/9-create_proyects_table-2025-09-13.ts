@@ -1,5 +1,8 @@
 import { Column, Schema } from 'lib/facades';
-import { createUpdatedAtTrigger } from 'lib/migration/utils';
+import {
+  createTimeStampsTrigger,
+  createUpdatedAtTrigger,
+} from '../lib/scripts/utils';
 
 const TABLE_NAME = 'users';
 
@@ -53,7 +56,7 @@ const up = async () => {
     }),
     Column.timestamps(true),
   ]);
-  await createUpdatedAtTrigger('projects');
+  await createTimeStampsTrigger('projects');
 
   await Schema.table('project_translations').createIfNotExists([
     Column.id(),
@@ -62,10 +65,7 @@ const up = async () => {
     Column.foreignKey('project_id', 'projects', 'id', {
       onDelete: 'CASCADE',
     }),
-    Column.foreignKey('language_code', 'languages', 'code', {
-      onDelete: 'CASCADE',
-      type: 'LANGUAGE_CODE',
-    }),
+    Column.enum('language_code', 'LANGUAGE_CODE'),
   ]);
   await Schema.table('project_media').createIfNotExists([
     Column.id(),

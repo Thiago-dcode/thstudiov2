@@ -1,7 +1,7 @@
 import path from 'node:path';
 import fs from 'node:fs';
 import Logger from '@repo/backend-lib/utils/console';
-import { migrationConfig } from './utils/config';
+import { databaseCliConfig } from './utils/config';
 
 export const createMigration = async (
   migrationName: string,
@@ -16,7 +16,7 @@ export const createMigration = async (
       process.cwd(),
       'src',
       'lib',
-      'migration',
+      'scripts',
       'utils',
       'migration_template.ts',
     );
@@ -38,7 +38,7 @@ export const createMigration = async (
   }
 };
 const getMigrationFilePathRec = (migrationName: string, tries = 1) => {
-  const migrationDirectory = migrationConfig.migrationsDirectory;
+  const migrationDirectory = databaseCliConfig.migrationsDirectory;
   if (!fs.existsSync(migrationDirectory)) {
     fs.mkdirSync(migrationDirectory, { recursive: true });
   }

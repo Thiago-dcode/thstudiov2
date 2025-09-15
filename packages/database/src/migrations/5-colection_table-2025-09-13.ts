@@ -1,4 +1,4 @@
-import { createUpdatedAtTrigger } from '../lib/migration/utils';
+import { createTimeStampsTrigger, createUpdatedAtTrigger } from '../lib/scripts/utils';
 import { Column, Schema } from '../lib/facades';
 import Logger from '@repo/backend-lib/utils/console';
 
@@ -27,18 +27,16 @@ const up = async () => {
     Column.id(),
     Column.string('name'),
     Column.text('description'),
-    Column.foreignKey('language_code', 'languages', 'code', {
-      onDelete: 'CASCADE',
-      type: 'LANGUAGE_CODE',
-    }),
+    Column.enum('language_code', 'LANGUAGE_CODE'),
     Column.foreignKey('collection_id', 'collections', 'id', {
       onDelete: 'CASCADE',
+      nullable: false,
     }),
     Column.integer('sort_order'),
   ]);
 
-  await createUpdatedAtTrigger('collections');
-};
+  await createTimeStampsTrigger('collections');
+};  
 
 const down = async () => {
   await Schema.table('collection_translations').dropIfExists();

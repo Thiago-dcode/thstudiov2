@@ -9,7 +9,7 @@ import {
   WhereInCondition,
   SqlOperation,
   SqlValue,
-} from '../../constants/types';
+} from '../../constants/types/database';
 import {
   QueryBuilderMethodChainedException,
   QueryBuilderOperationNotAllowedException,
@@ -119,6 +119,12 @@ export class QueryBuilder extends BaseBuilder {
     this.reset();
     return result.rows;
   }
+  public async first(): Promise<any> {
+    this.buildSelectQuery();
+    const result = await this.db?.query(this.query, this.values);
+    this.reset();
+    return result.rows[0];
+  }
   public async exists(): Promise<boolean> {
     this.buildSelectQuery();
     const result = await this.db?.query(this.query, this.values);
@@ -145,6 +151,21 @@ export class QueryBuilder extends BaseBuilder {
     this.buildInsertQuery(columns, values);
     const result = await this.db?.query(this.query, values);
     this.reset();
+    return result;
+  }
+  public async insertAndGet(
+    columns: string[],
+    values: SqlValue[],
+    select: string[] | string = '*',
+  ) {
+    this.buildInsertQuery(columns, values);
+    await this.db?.query(this.query, values);
+    this.reset();
+    columns.forEach((column, index) => {
+      this.where(column, '=', values[index]);
+    });
+    this.select(select);
+    const result = await this.first();
     return result;
   }
 

@@ -1,10 +1,11 @@
-import { EnumType } from 'typescript';
-import { ENUMS, SQL_FUNCTIONS, TABLES } from '../constants/constants';
+import { ENUMS, SQL_FUNCTIONS, TABLES } from '../constants';
 
 export type DatabaseClient = 'postgres' | 'mysql' | 'sqlite' | 'mongodb';
 export type DatabaseSettings = {
   allowUpdateWithoutWhere: boolean;
   allowDeleteWithoutWhere: boolean;
+  allowTruncate: boolean;
+  allowDrop: boolean;
   migrationsDirectory: string;
   seedDirectory: string;
 };
@@ -20,7 +21,15 @@ export type DatabaseConfig = {
 export type FullDatabaseConfig = DatabaseConfig & {
   settings: Required<DatabaseSettings>;
 };
-export type SqlValue = string | number | null | EnumType | Date | boolean;
+export type EnumType<T extends keyof typeof ENUMS> = (typeof ENUMS)[T][number];
+export type SqlValue =
+  | string
+  | number
+  | null
+  | Date
+  | boolean
+  | undefined
+  | EnumType<keyof typeof ENUMS>;
 export type SqlClause =
   | '='
   | '>'
@@ -92,7 +101,6 @@ export type SqlTypes =
   | 'TIME'
   | `${keyof AvailableEnums}`;
 export type TableName = (typeof TABLES)[number];
-
 
 export type SqlFunction = (typeof SQL_FUNCTIONS)[number];
 export type SqlFunctionTimestamp =
