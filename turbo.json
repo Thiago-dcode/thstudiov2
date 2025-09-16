@@ -5,7 +5,6 @@
     "dev": {
       "cache": false,
       "persistent": true
-     
     },
     "build": {
       "dependsOn": ["^build"],
@@ -13,11 +12,9 @@
     },
     "lint": {},
     "test": {
-      "dependsOn": ["^build"],
       "outputs": ["coverage/**"]
     },
     "test:watch": {
-      "dependsOn": ["^build"],
       "cache": false,
       "persistent": true,
       "env": ["NODE_ENV=test"]
@@ -27,6 +24,7 @@
       "outputs": ["coverage/**"],
       "env": ["NODE_ENV=test"]
     },
-    "test:e2e": {}
+    "test:e2e": {},
+    "dbcli": {}
   }
 }

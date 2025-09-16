@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:14-alpine
+    image: postgres:15-alpine
     container_name: thstudio-postgres
     ports:
       - "${DB_PORT:-5432}:5432"
@@ -10,12 +10,28 @@ services:
       - POSTGRES_USER=${DB_USERNAME:-admin}
       - POSTGRES_PASSWORD=${DB_PASSWORD:-1234}
       - POSTGRES_DB=${DB_NAME:-thstudiodb}
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
     restart: unless-stopped
+    command: >
+      postgres
+      -c max_connections=200
+      -c shared_buffers=256MB
+      -c effective_cache_size=1GB
+      -c maintenance_work_mem=64MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c work_mem=4MB
+      -c min_wal_size=1GB
+      -c max_wal_size=4GB
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-admin}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-admin} -d ${DB_NAME:-thstudiodb}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   pgadmin:
     image: dpage/pgadmin4

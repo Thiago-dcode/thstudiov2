@@ -1,6 +1,5 @@
 import pc from 'picocolors';
 
-type color = 'red' | 'green' | 'yellow' | 'blue' | 'gray';
 export default class Logger {
 
   public static error(...input: any[]) {

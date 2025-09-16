@@ -1,5 +1,5 @@
 {
-  "name": "my-turborepo",
+  "name": "base-repo",
   "version": "0.0.0",
   "private": true,
   "description": "",
@@ -9,11 +9,13 @@
     "dev": "turbo run dev",
     "build": "turbo run build",
     "test": "turbo run test",
+    "test:watch": "turbo run test:watch",
     "test:e2e": "turbo run test:e2e",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "backend:gateway": "cd apps/backend/gateway",
-    "frontend:client": "cd apps/frontend/client"
+    "frontend:client": "cd apps/frontend/client",
+    "dbcli": "turbo run dbcli"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
