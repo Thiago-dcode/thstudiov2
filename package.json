@@ -13,17 +13,14 @@
     "test:e2e": "turbo run test:e2e",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "backend:gateway": "cd apps/backend/gateway",
-    "frontend:client": "cd apps/frontend/client",
     "dbcli": "turbo run dbcli"
   },
   "devDependencies": {
-    "@repo/eslint-config": "workspace:*",
-    "@repo/typescript-config": "workspace:*",
-    "@types/node": "^24.3.0",
+    "@types/node": "^24.5.2",
     "i": "^0.3.7",
-    "prettier": "^3.2.5",
-    "turbo": "^2.5.6"
+    "prettier": "^3.6.2",
+    "turbo": "^2.5.6",
+    "typescript": "^5.9.2"
   },
   "packageManager": "pnpm@10.15.0",
   "engines": {

@@ -1,4 +1,4 @@
-import pc from 'picocolors';
+import * as pc from 'picocolors'
 
 export default class Logger {
 

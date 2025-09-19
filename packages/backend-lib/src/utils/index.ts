@@ -1,4 +1,4 @@
-import net from 'node:net';
+import * as net from 'node:net';
 
 
 const checkPortOrGetNext =async (port: number = 3000): Promise<number> => {
