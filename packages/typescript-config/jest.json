@@ -5,6 +5,7 @@
     "types": ["jest","node"],
    "allowJs": true,
    "esModuleInterop": true,
+   "transpilation": true,
    "allowSyntheticDefaultImports": true
   },
   "compileOnSave": true

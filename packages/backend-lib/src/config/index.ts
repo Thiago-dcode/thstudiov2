@@ -1,6 +1,6 @@
-import * as dotenv from 'dotenv'
+import  dotenv from 'dotenv'
 dotenv.config()
-import * as path from 'path';
+import  path from 'path';
 
 // Load .env from project root (3 levels up from this file)
 const defaultEnvPath = path.resolve(__dirname, '../../../../.env');
