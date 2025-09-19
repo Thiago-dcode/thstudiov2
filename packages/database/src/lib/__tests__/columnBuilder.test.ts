@@ -791,12 +791,12 @@ describe('ColumnBuilder', () => {
       it('should create enum column with default value', () => {
         // Act
         const result = ColumnBuilder.enum('billing_type', 'BILLING_TYPES', {
-          default: 'monthly',
+          default: 'MONTHLY',
         });
 
         // Assert
         expect(result).toBe(
-          "billing_type BILLING_TYPES NOT NULL DEFAULT 'monthly'",
+          "billing_type BILLING_TYPES NOT NULL DEFAULT 'MONTHLY'",
         );
       });
 
@@ -805,12 +805,12 @@ describe('ColumnBuilder', () => {
         const result = ColumnBuilder.enum('user_role', 'USER_EDITORS_ROLES', {
           nullable: true,
           unique: true,
-          default: 'editor',
+          default: 'EDITOR',
         });
 
         // Assert
         expect(result).toBe(
-          "user_role USER_EDITORS_ROLES NULL DEFAULT 'editor' UNIQUE",
+          "user_role USER_EDITORS_ROLES NULL DEFAULT 'EDITOR' UNIQUE",
         );
       });
 
@@ -828,12 +828,12 @@ describe('ColumnBuilder', () => {
         const result = ColumnBuilder.enum('billing_type', 'BILLING_TYPES', {
           nullable: true,
           unique: true,
-          default: 'yearly',
+          default: 'YEARLY',
         });
 
         // Assert
         expect(result).toBe(
-          "billing_type BILLING_TYPES NULL DEFAULT 'yearly' UNIQUE",
+          "billing_type BILLING_TYPES NULL DEFAULT 'YEARLY' UNIQUE",
         );
       });
 
@@ -904,24 +904,24 @@ describe('ColumnBuilder', () => {
       it('should handle boolean default values', () => {
         // Act
         const result = ColumnBuilder.enum('billing_type', 'BILLING_TYPES', {
-          default: 'lifetime',
+          default: 'LIFETIME',
         });
 
         // Assert
         expect(result).toBe(
-          "billing_type BILLING_TYPES NOT NULL DEFAULT 'lifetime'",
+          "billing_type BILLING_TYPES NOT NULL DEFAULT 'LIFETIME'",
         );
       });
 
       it('should handle numeric default values', () => {
         // Act
         const result = ColumnBuilder.enum('billing_type', 'BILLING_TYPES', {
-          default: 'monthly',
+          default: 'MONTHLY',
         });
 
         // Assert
         expect(result).toBe(
-          "billing_type BILLING_TYPES NOT NULL DEFAULT 'monthly'",
+          "billing_type BILLING_TYPES NOT NULL DEFAULT 'MONTHLY'",
         );
       });
 
@@ -1296,7 +1296,7 @@ describe('ColumnBuilder', () => {
         const enumDefault = ColumnBuilder.enum(
           'billing_type',
           'BILLING_TYPES',
-          { default: 'monthly' },
+          { default: 'MONTHLY' },
         );
 
         // Assert
@@ -1304,7 +1304,7 @@ describe('ColumnBuilder', () => {
         expect(numberDefault).toContain('DEFAULT 42');
         expect(booleanDefault).toContain('DEFAULT true');
         expect(nullDefault).toContain('DEFAULT NULL');
-        expect(enumDefault).toContain("DEFAULT 'monthly'");
+        expect(enumDefault).toContain("DEFAULT 'MONTHLY'");
       });
 
       it('should handle valid enum types', () => {

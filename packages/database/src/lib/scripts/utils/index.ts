@@ -1,7 +1,7 @@
 import { databaseCliConfig } from './config';
 import path from 'node:path';
 import fs from 'node:fs';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { pathToFileURL } from 'node:url';
 import { Query, Schema } from '../../facades';
 import {
   TRIGGER_UPDATE_CREATED_AT_FUNCTION_NAME,
@@ -9,8 +9,8 @@ import {
 } from '../../constants/constants';
 import { DatabaseClient, TableName } from '../../constants/types/database';
 import Logger from '@repo/backend-lib/utils/console';
-import { getClient, initClient } from 'lib/client';
-import config from '@repo/backend-lib/config';
+import { initClient } from '../../client';
+import {config} from '@repo/backend-lib/config';
 
 const handleMigration = async (
   callback: (migration: any, migrationName: string) => Promise<void>,

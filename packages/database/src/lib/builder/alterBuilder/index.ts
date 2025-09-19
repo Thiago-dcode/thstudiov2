@@ -23,7 +23,7 @@ class AlterBuilder extends BaseBuilder {
     options?: ColumnAttributesWithForeignKey,
   ) {
     this.query = `ALTER TABLE ${this.tableName}
-ADD ${ColumnBuilder.foreignKey(column, foreignTableName, foreignColumnName, options)}`;
+ADD ${ColumnBuilder.foreignKey(column, foreignTableName, foreignColumnName, options)};`;
     return await this.db?.query(this.query);
   }
 
@@ -31,43 +31,43 @@ ADD ${ColumnBuilder.foreignKey(column, foreignTableName, foreignColumnName, opti
     const clientType = getClientConfig();
 
     if (clientType === 'mysql') {
-      this.query = `ALTER TABLE ${this.tableName} DROP FOREIGN KEY ${constraintName}`;
+      this.query = `ALTER TABLE ${this.tableName} DROP FOREIGN KEY ${constraintName};`;
     } else {
       // PostgreSQL, SQL Server, etc.
 
-      this.query = `ALTER TABLE ${this.tableName} DROP CONSTRAINT ${constraintName}; `;
+      this.query = `ALTER TABLE ${this.tableName} DROP CONSTRAINT ${constraintName};`;
     }
 
     return await this.db?.query(this.query);
   }
 
   public async dropConstraint(constraintName: string) {
-    this.query = `ALTER TABLE ${this.tableName} DROP CONSTRAINT ${constraintName}`;
+    this.query = `ALTER TABLE ${this.tableName} DROP CONSTRAINT ${constraintName};`;
     return await this.db?.query(this.query);
   }
   public async dropConstraintIfExists(constraintName: string) {
-    this.query = `ALTER TABLE ${this.tableName} DROP CONSTRAINT IF EXISTS ${constraintName}`;
+    this.query = `ALTER TABLE ${this.tableName} DROP CONSTRAINT IF EXISTS ${constraintName};`;
     return await this.db?.query(this.query);
   }
 
   public async addColumn(columnName: string, columnDefinition: string) {
-    this.query = `ALTER TABLE ${this.tableName} ADD COLUMN ${columnName} ${columnDefinition}`;
+    this.query = `ALTER TABLE ${this.tableName} ADD COLUMN ${columnName} ${columnDefinition};`;
     return await this.db?.query(this.query);
   }
   public async addColumnIfNotExists(
     columnName: string,
     columnDefinition: string,
   ) {
-    this.query = `ALTER TABLE ${this.tableName} ADD COLUMN IF NOT EXISTS ${columnName} ${columnDefinition}`;
+    this.query = `ALTER TABLE ${this.tableName} ADD COLUMN IF NOT EXISTS ${columnName} ${columnDefinition};`;
     return await this.db?.query(this.query);
   }
 
   public async dropColumn(columnName: string) {
-    this.query = `ALTER TABLE ${this.tableName} DROP COLUMN ${columnName}`;
+    this.query = `ALTER TABLE ${this.tableName} DROP COLUMN ${columnName};`;
     return await this.db?.query(this.query);
   }
   public async dropColumnIfExists(columnName: string) {
-    this.query = `ALTER TABLE ${this.tableName} DROP COLUMN IF EXISTS ${columnName}`;
+    this.query = `ALTER TABLE ${this.tableName} DROP COLUMN IF EXISTS ${columnName};`;
     return await this.db?.query(this.query);
   }
 

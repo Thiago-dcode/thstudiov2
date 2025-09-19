@@ -1,5 +1,5 @@
-import { Column, Schema } from 'lib/facades';
-import { createTimeStampsTrigger, createUpdatedAtTrigger } from '../lib/scripts/utils';
+import { Column, Schema } from '../lib/facades';
+import { createTimeStampsTrigger } from '../lib/scripts/utils';
 
 const up = async () => {
   //Your migration code here

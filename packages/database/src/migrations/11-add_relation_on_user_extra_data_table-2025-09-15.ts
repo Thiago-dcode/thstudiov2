@@ -1,4 +1,4 @@
-import { Alter } from 'lib/facades';
+import { Alter } from '../lib/facades';
 
 const up = async () => {
   await Alter.table('user_extra_data').dropColumnIfExists(

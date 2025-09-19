@@ -1,5 +1,5 @@
-import { CreatePlanWithDetailsInput } from 'lib/constants/types/plans';
-import { Query } from 'lib/facades';
+import { CreatePlanWithDetailsInput } from '../lib/constants/types/plans';
+import { Query } from '../lib/facades';
 
 export const main = async () => {
   const plans: CreatePlanWithDetailsInput[] = [

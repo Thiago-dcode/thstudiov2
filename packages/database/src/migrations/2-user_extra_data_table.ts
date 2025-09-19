@@ -1,4 +1,4 @@
-import { createTimeStampsTrigger } from 'lib/scripts/utils';
+import { createTimeStampsTrigger } from '../lib/scripts/utils';
 import { Column, Schema } from '../lib/facades';
 
 const TABLE_NAME = 'user_extra_data';

@@ -1,7 +1,7 @@
 import BaseBuilder from '..';
 import {
   Where,
-  SqlClause,
+
   SqlClauseWithoutIn,
   Join,
   JoinType,
@@ -456,10 +456,10 @@ export class QueryBuilder extends BaseBuilder {
     this.throwIfNotCompatibleOperations([], 'insert');
     switch (this.db?.config.client) {
       case 'postgres':
-        this.query = `INSERT INTO ${this.tableName} (${columns.join(',')}) VALUES (${values.map((value, index) => `$${index + 1}`).join(',')})`;
+        this.query = `INSERT INTO ${this.tableName} (${columns.join(',')}) VALUES (${values.map((_, index) => `$${index + 1}`).join(',')})`;
         break;
       case 'mysql':
-        this.query = `INSERT INTO ${this.tableName} (${columns.join(',')}) VALUES (${values.map((value) => `?`).join(',')})`;
+        this.query = `INSERT INTO ${this.tableName} (${columns.join(',')}) VALUES (${values.map(() => `?`).join(',')})`;
         break;
       default:
         throw new QueryBuilderWrongDatabaseClientException(
@@ -576,9 +576,9 @@ export class QueryBuilder extends BaseBuilder {
   protected buildWhereInQuery(where: WhereInCondition, offset: number = 0) {
     switch (this.db?.config.client) {
       case 'postgres':
-        return `${this.buildColumn(where.column)} IN (${where.values.map((value, index) => `$${where.position + offset + index + 1}`).join(',')})`;
+        return `${this.buildColumn(where.column)} IN (${where.values.map((_, index) => `$${where.position + offset + index + 1}`).join(',')})`;
       case 'mysql':
-        return `${this.buildColumn(where.column)} IN (${where.values.map((value, index) => `?`).join(',')})`;
+        return `${this.buildColumn(where.column)} IN (${where.values.map(() => `?`).join(',')})`;
       default:
         throw new QueryBuilderWrongDatabaseClientException(
           this.db?.config.client,

@@ -1,10 +1,10 @@
-import { Pool, QueryResult } from 'mysql2/promise';
+import { Pool } from 'mysql2/promise';
 import {
   DatabaseClient,
   DatabaseConfig,
   FullDatabaseConfig,
 } from '../constants/types/database';
-import { Pool as PgPool, Client as PgClient } from 'pg';
+import { Pool as PgPool } from 'pg';
 import mysql from 'mysql2/promise';
 import {
   ClientNotInitializedException,

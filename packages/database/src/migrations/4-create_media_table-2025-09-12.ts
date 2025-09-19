@@ -1,6 +1,5 @@
 import { createTimeStampsTrigger } from '../lib/scripts/utils';
 import { Column, Schema } from '../lib/facades';
-import Logger from '@repo/backend-lib/utils/console';
 
 const up = async () => {
   await Schema.table('media').createIfNotExists([

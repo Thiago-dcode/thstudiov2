@@ -1,7 +1,6 @@
-import { Column, Schema } from 'lib/facades';
-import { createTimeStampsTrigger } from 'lib/scripts/utils';
+import { Column, Schema } from '../lib/facades';
+import { createTimeStampsTrigger } from '../lib/scripts/utils';
 
-const TABLE_NAME = 'users';
 
 const up = async () => {
   //Your migration code here

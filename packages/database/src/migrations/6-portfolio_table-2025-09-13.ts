@@ -1,7 +1,6 @@
 import { createTimeStampsTrigger } from '../lib/scripts/utils';
 import { Schema, Column } from '../lib/facades';
 
-const TABLE_NAME = 'users';
 const up = async () => {
   await Schema.table('portfolios').createIfNotExists([
     Column.id(),

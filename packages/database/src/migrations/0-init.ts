@@ -5,7 +5,7 @@ import {
   TRIGGER_UPDATE_UPDATED_AT_FUNCTION_NAME,
 } from '../lib/constants/constants';
 import { AvailableEnums } from '../lib/constants/types/database';
-import { createTimeStampsTrigger } from 'lib/scripts/utils';
+import { createTimeStampsTrigger } from '../lib/scripts/utils';
 
 const up = async () => {
   // Create trigger to automatically update updated_at timestamp on row updates

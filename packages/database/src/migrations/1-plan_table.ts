@@ -1,6 +1,6 @@
 import { Schema, Column } from '../lib/facades';
 import SchemaBuilder from '../lib/builder/schemaBuilder';
-import { createTimeStampsTrigger } from 'lib/scripts/utils';
+import { createTimeStampsTrigger } from '../lib/scripts/utils';
 const up = async () => {
   await Schema.table('plans').createIfNotExists([
     Column.id(),

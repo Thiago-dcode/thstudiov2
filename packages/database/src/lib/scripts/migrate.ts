@@ -4,7 +4,7 @@ import Logger from '@repo/backend-lib/utils/console';
 import { killClient } from '../client';
 import { QueryBuilder } from '../builder/queryBuilder';
 const MIGRATION_TABLE_NAME = 'migrations';
-export const migrate = async (tries: number = 3) => {
+export const migrate = async () => {
   setTimeout(
     () => {
       Logger.error('❌ Migration timeout');

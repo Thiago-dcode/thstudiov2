@@ -1,8 +1,6 @@
-import { createTimeStampsTrigger, createUpdatedAtTrigger } from '../lib/scripts/utils';
+import { createTimeStampsTrigger } from '../lib/scripts/utils';
 import { Column, Schema } from '../lib/facades';
-import Logger from '@repo/backend-lib/utils/console';
 
-const TABLE_NAME = 'users';
 
 const up = async () => {
   await Schema.table('collections').createIfNotExists([

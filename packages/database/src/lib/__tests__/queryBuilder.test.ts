@@ -73,7 +73,6 @@ jest.mock('../client', ()=> {
 });
 
 describe('QueryBuilder', () => {
-  let mockClient: any;
   let testConfig: DatabaseConfig;
   const TABLE_NAME = 'test_table' as any;
 
@@ -92,9 +91,8 @@ describe('QueryBuilder', () => {
     };
 
     // Get the mocked client
-    const { initClient,getClient } = require('../client');
+    const { initClient } = require('../client');
     await initClient(testConfig);
-    mockClient = getClient();
   });
 
   afterEach(async () => {
