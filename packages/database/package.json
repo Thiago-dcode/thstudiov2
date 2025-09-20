@@ -13,13 +13,15 @@
   "exports": {
     ".": "./dist/src/index.js",
     "./types/database": "./dist/src/lib/constants/types/database.js",
+    "./types/plans":"./dist/src/lib/constants/types/plans.js",
     "./types/constants": "./dist/src/lib/constants/constants.js",
     "./queryBuilder": "./dist/src/lib/builder/queryBuilder/index.js",
     "./schemaBuilder": "./dist/src/lib/builder/schemaBuilder/index.js",
     "./alterBuilder": "./dist/src/lib/builder/alterBuilder/index.js",
     "./columnBuilder": "./dist/src/lib/builder/columnBuilder/index.js",
     "./facades": "./dist/src/lib/facades/index.js",
-    "./exceptions": "./dist/src/lib/exceptions/index.js"
+    "./exceptions": "./dist/src/lib/exceptions/index.js",
+    "./repositories": "./dist/src/lib/repositories/index.js"
   },
   "bin": {
     "dbcli": "./dist/src/bin/cli.js"

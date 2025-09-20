@@ -1,7 +1,7 @@
 import { Alter } from "../facades";
 import { connectDb } from "./utils";
 
-const testDb = async (className = 'main') => {
+const testDb = async () => {
   
   try {
     await connectDb();

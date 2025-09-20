@@ -1,4 +1,5 @@
 import BaseBuilder from '..';
+import { getClient } from '../../client';
 import {
   Where,
 
@@ -19,6 +20,7 @@ import {
   QueryBuilderWrongDatabaseClientException,
 } from './exceptions';
 import { TABLES } from '../../constants/constants';
+import Logger from '@repo/backend-lib/utils/console';
 
 /**
  * QueryBuilder class for building and executing SQL queries
@@ -114,27 +116,27 @@ export class QueryBuilder extends BaseBuilder {
    *   .get();
    * ```
    */
-  public async get(): Promise<any> {
+  public async get<T = any>(): Promise<T> {
     this.buildSelectQuery();
-    const result = await this.db?.query(this.query, this.values);
+    const result = await getClient().query(this.query, this.values);
     this.reset();
     return result.rows;
   }
   public async count(): Promise<number> {
     this.buildSelectQuery();
-    const result = await this.db?.query(this.query, this.values);
+    const result = await getClient().query(this.query, this.values);
     this.reset();
     return result.rowCount;
   }
   public async first(): Promise<any> {
     this.buildSelectQuery();
-    const result = await this.db?.query(this.query, this.values);
+    const result = await getClient().query(this.query, this.values);
     this.reset();
     return result.rows[0];
   }
   public async exists(): Promise<boolean> {
     this.buildSelectQuery();
-    const result = await this.db?.query(this.query, this.values);
+    const result = await getClient().query(this.query, this.values);
     this.reset();
     return result.rowCount > 0;
   }
@@ -157,17 +159,17 @@ export class QueryBuilder extends BaseBuilder {
    */
   public async insert(columns: string[], values: SqlValue[]) {
     this.buildInsertQuery(columns, values);
-    const result = await this.db?.query(this.query, values);
+    const result = await getClient().query(this.query, values);
     this.reset();
     return result;
   }
-  public async insertAndGet(
+  public async insertAndGet<T = any>(
     columns: string[],
     values: SqlValue[],
     select: string[] | string = '*',
-  ) {
+  ): Promise<T> {
     this.buildInsertQuery(columns, values);
-   await this.db?.query(this.query, values);
+   await getClient().query(this.query, values);
     this.reset();
     columns.forEach((column, index) => {
       const value = values[index];
@@ -196,7 +198,7 @@ export class QueryBuilder extends BaseBuilder {
    */
   public async update(columns: string[], values: SqlValue[]) {
     this.buildUpdateQuery(columns, values);
-    const result = await this.db?.query(this.query, values);
+    const result = await getClient().query(this.query, values);
     this.reset();
     return result;
   }
@@ -214,7 +216,7 @@ export class QueryBuilder extends BaseBuilder {
    */
   public async delete() {
     this.buildDeleteQuery();
-    const result = await this.db?.query(this.query, this.values);
+    const result = await getClient().query(this.query, this.values);
     this.reset();
     return result.rowCount > 0;
   }
@@ -437,7 +439,7 @@ export class QueryBuilder extends BaseBuilder {
   protected buildInsertQuery(columns: string[], values: SqlValue[]) {
     this.throwIfColumnsAndValuesLengthMismatch(columns, values);
     this.throwIfNotCompatibleOperations([], 'insert');
-    switch (this.db?.config.client) {
+    switch (getClient().config.client) {
       case 'postgres':
         this.query = `INSERT INTO ${this.tableName} (${columns.join(',')}) VALUES (${values.map((_, index) => `$${index + 1}`).join(',')})`;
         break;
@@ -446,7 +448,7 @@ export class QueryBuilder extends BaseBuilder {
         break;
       default:
         throw new QueryBuilderWrongDatabaseClientException(
-          this.db?.config.client,
+          getClient().config.client,
         );
     }
   }
@@ -462,10 +464,10 @@ export class QueryBuilder extends BaseBuilder {
     this.throwIfNotCompatibleOperations(['where'], 'update');
     this.throwIfOperationNotAllowed(
       !this.operationsChain.includes('where') &&
-        !this.db?.config.settings.allowUpdateWithoutWhere,
+        !getClient().config.settings.allowUpdateWithoutWhere,
       'update',
     );
-    switch (this.db?.config.client) {
+    switch (getClient().config.client) {
       case 'postgres':
         this.query = `UPDATE ${this.tableName} SET ${columns.map((column, index) => `${column} = $${index + 1}`).join(',')}`;
         break;
@@ -484,7 +486,7 @@ export class QueryBuilder extends BaseBuilder {
     this.throwIfNotCompatibleOperations(['where'], 'delete');
     this.throwIfOperationNotAllowed(
       !this.operationsChain.includes('where') &&
-        !this.db?.config.settings.allowDeleteWithoutWhere,
+        !getClient().config.settings.allowDeleteWithoutWhere,
       'delete',
     );
     this.query = `DELETE FROM ${this.tableName}`;
@@ -537,7 +539,7 @@ export class QueryBuilder extends BaseBuilder {
    * @protected
    */
   protected buildWhereQuery(where: WhereCondition, offset: number = 0) {
-    switch (this.db?.config.client) {
+    switch (getClient().config.client) {
       case 'postgres':
         let append = `$${where.position + offset + 1}`;
         if (where.value === null) {
@@ -548,7 +550,7 @@ export class QueryBuilder extends BaseBuilder {
         return `${this.buildColumn(where.column)} ${where.operator} ?`;
       default:
         throw new QueryBuilderWrongDatabaseClientException(
-          this.db?.config.client,
+          getClient().config.client,
         );
     }
   }
@@ -561,14 +563,14 @@ export class QueryBuilder extends BaseBuilder {
    * @protected
    */
   protected buildWhereInQuery(where: WhereInCondition, offset: number = 0) {
-    switch (this.db?.config.client) {
+    switch (getClient().config.client) {
       case 'postgres':
         return `${this.buildColumn(where.column)} IN (${where.values.map((_, index) => `$${where.position + offset + index + 1}`).join(',')})`;
       case 'mysql':
         return `${this.buildColumn(where.column)} IN (${where.values.map(() => `?`).join(',')})`;
       default:
         throw new QueryBuilderWrongDatabaseClientException(
-          this.db?.config.client,
+          getClient().config.client,
         );
     }
   }

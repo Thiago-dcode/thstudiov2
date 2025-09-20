@@ -7,9 +7,18 @@ import { APP_PIPE, RouterModule } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { config, envFilePath } from '@repo/backend-lib/config';
 import { AuthModule } from './v1/modules/auth/auth.module';
-import { UserModule } from './v1/modules/user/user.module';
+import { UserModule } from './v1/modules/users/users.module';
 import { ValidatorProviders } from './common/validators/validator.providers';
-const modules = [AuthModule, UserModule];
+import { EventEmitterModule } from '@nestjs/event-emitter';
+import { ScheduleModule } from '@nestjs/schedule';
+import { PlansModule } from './v1/modules/plans/plans.module';
+import { UserPlanTransactionsModule } from './v1/modules/user-plan-transactions/user-plan-transactions.module';
+const modules = [
+  AuthModule,
+  UserModule,
+  PlansModule,
+  UserPlanTransactionsModule,
+];
 @Module({
   imports: [
     ...modules,
@@ -24,6 +33,8 @@ const modules = [AuthModule, UserModule];
       load: [config],
       envFilePath,
     }),
+    EventEmitterModule.forRoot(),
+    ScheduleModule.forRoot(),
   ],
   controllers: [],
   providers: [

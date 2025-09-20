@@ -8,7 +8,7 @@ class AlterBuilder extends BaseBuilder {
     return new AlterBuilder(tableName);
   }
   public  async columnExist(columnName: string) {
-    const result = await this.db?.query(`SELECT EXISTS(SELECT 1 FROM information_schema.columns WHERE table_name = '${this.tableName}' AND column_name = '${columnName}')`);
+    const result = await this.getDb().query(`SELECT EXISTS(SELECT 1 FROM information_schema.columns WHERE table_name = '${this.tableName}' AND column_name = '${columnName}')`);
     return result?.rows[0]?.exists;
   }
   /**
@@ -26,7 +26,7 @@ class AlterBuilder extends BaseBuilder {
   ) {
     this.query = `ALTER TABLE ${this.tableName}
 ADD ${ColumnBuilder.foreignKey(column, foreignTableName, foreignColumnName, options)};`;
-    return await this.db?.query(this.query);
+    return await this.getDb().query(this.query);
   }
 
   public async dropForeignKey(constraintName: string) {
@@ -40,22 +40,22 @@ ADD ${ColumnBuilder.foreignKey(column, foreignTableName, foreignColumnName, opti
       this.query = `ALTER TABLE ${this.tableName} DROP CONSTRAINT ${constraintName};`;
     }
 
-    return await this.db?.query(this.query);
+    return await this.getDb().query(this.query);
   }
 
   public async dropConstraint(constraintName: string) {
     this.query = `ALTER TABLE ${this.tableName} DROP CONSTRAINT ${constraintName};`;
-    return await this.db?.query(this.query);
+    return await this.getDb().query(this.query);
   }
   public async dropConstraintIfExists(constraintName: string) {
     this.query = `ALTER TABLE ${this.tableName} DROP CONSTRAINT IF EXISTS ${constraintName};`;
-    return await this.db?.query(this.query);
+    return await this.getDb().query(this.query);
   }
 
   public async addColumn(columnName: string, columnDefinition: string,options?: ColumnAttributesWithAfter) {
     this.query = `ALTER TABLE ${this.tableName} ADD COLUMN ${columnName} ${columnDefinition}${options ? ' ' + ColumnBuilder.buildOptions(options) : ''};`;
     console.log(this.query);
-    return await this.db?.query(this.query);
+    return await this.getDb().query(this.query);
   }
   public async addColumnIfNotExists(
     columnName: string,
@@ -63,16 +63,16 @@ ADD ${ColumnBuilder.foreignKey(column, foreignTableName, foreignColumnName, opti
     options?: ColumnAttributesWithAfter,
   ) {
     this.query = `ALTER TABLE ${this.tableName} ADD COLUMN IF NOT EXISTS ${columnName} ${columnDefinition}${options ? ' ' + ColumnBuilder.buildOptions(options) : ''};`;
-    return await this.db?.query(this.query);
+    return await this.getDb().query(this.query);
   }
 
   public async dropColumn(columnName: string) {
     this.query = `ALTER TABLE ${this.tableName} DROP COLUMN ${columnName};`;
-    return await this.db?.query(this.query);
+    return await this.getDb().query(this.query);
   }
   public async dropColumnIfExists(columnName: string) {
     this.query = `ALTER TABLE ${this.tableName} DROP COLUMN IF EXISTS ${columnName};`;
-    return await this.db?.query(this.query);
+    return await this.getDb().query(this.query);
   }
 
   protected reset() {

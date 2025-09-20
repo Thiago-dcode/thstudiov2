@@ -1,4 +1,3 @@
-import { ClientNotInitializedException } from '../client/exceptions';
 import { getClient, Client } from '../client';
 import { SqlOperation } from '../constants/types/database';
 import { TABLES } from '../constants/constants';
@@ -21,11 +20,7 @@ abstract class BaseBuilder {
    * @throws {ClientNotInitializedException} When database client is not initialized
    */
   constructor(protected readonly tableName: (typeof TABLES)[number]) {
-    this.db = getClient(); // Use the getter function
-    if (!this.db) {
-      throw new ClientNotInitializedException();
-    }
-    // Don't connect here - the client should already be connected
+    // Do not access the DB client here; it may not be initialized yet
   }
   /**
    * Execute a raw SQL query
@@ -50,6 +45,11 @@ abstract class BaseBuilder {
     if(!TABLES.includes(tableName)) {
       throw new DbWrongTableException(tableName);
     }
+  }
+
+  /** Lazily obtain the DB client when needed */
+  protected getDb(): Client<any> {
+    return getClient();
   }
 }
 
