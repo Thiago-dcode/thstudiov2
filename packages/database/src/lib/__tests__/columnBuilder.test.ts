@@ -5,9 +5,9 @@ import {
 } from '../constants/types/database';
 import {
   ColumnBuilder,
-  ColumnAttributes,
   DEFAULT_COLUMN_OPTIONS,
 } from '../builder/columnBuilder';
+import { ColumnAttributes } from '../constants/types/database';
 import { DEFAULT_DATABASE_SETTINGS } from '../constants/constants';
 jest.mock('../client', () => {
   const Client = (config: FullDatabaseConfig) => {

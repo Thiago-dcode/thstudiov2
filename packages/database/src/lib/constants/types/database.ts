@@ -66,6 +66,7 @@ export type BaseWhere = {
 export type WhereCondition = BaseWhere & {
   type: WhereType;
   operator: SqlClauseWithoutIn;
+  value: SqlValue;
 };
 
 // WHERE IN condition
@@ -109,3 +110,38 @@ export type SqlFunctionTimestamp =
       'NOW()' | 'CURRENT_TIMESTAMP' | 'CURRENT_DATE' | 'CURRENT_TIME'
     >
   | (string & {});
+
+
+  export type OnAction = 'SET NULL' | 'CASCADE' | 'RESTRICT' | 'NO ACTION';
+
+export type ColumnAttributes<
+  T = string | number | boolean | null | SqlFunction,
+> = {
+  nullable?: boolean;
+  unique?: boolean;
+  primaryKey?: boolean;
+  default?: T | null;
+};
+export type ColumnAttributesOrAutoIncrement =
+  | ColumnAttributes
+  | {
+      autoIncrement?: boolean;
+      primaryKey?: boolean;
+    };
+
+export type ColumnAttributesWithType = ColumnAttributes & {
+  type?: SqlTypes;
+};
+export type ColumnAttributesWithForeignKey = Exclude<
+  ColumnAttributesWithType,
+  'primaryKey'
+> & {
+  constraintName?: string;
+  onDelete?: OnAction;
+  onUpdate?: OnAction;
+};
+
+
+export type ColumnAttributesWithAfter = Exclude<ColumnAttributesWithType, 'primaryKey'> & {
+  after?: string;
+};

@@ -1,4 +1,4 @@
-import { Column, Schema } from '../lib/facades';
+import { Column, Schema, Alter } from '../lib/facades';
 import { createTimeStampsTrigger } from '../lib/scripts/utils';
 
 
@@ -31,6 +31,10 @@ const up = async () => {
 
 const down = async () => {
   //Your migration rollback code here
+  // Drop dependent FKs first to avoid dependency errors
+  await Alter.table('user_extra_data').dropConstraintIfExists(
+    'fk_user_extra_data_last_transaction_id',
+  );
   await Schema.table('user_plan_transactions').dropIfExists();
 };
 

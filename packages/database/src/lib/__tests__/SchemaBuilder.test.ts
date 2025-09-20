@@ -106,24 +106,29 @@ describe('SchemaBuilder', () => {
       expect(schemaBuilder['tableName']).toBe(TABLE_NAME);
     });
 
-    it('should create multiple instances with different table names', () => {
+
+  
+    it('tableIfExists should return instance when table exists', async () => {
+      // Arrange
+      mockClient.query.mockResolvedValueOnce({ rows: [{ exists: true }] });
+
       // Act
-      const builder1 = SchemaBuilder.table('users');
-      const builder2 = SchemaBuilder.table('orders' as any);
+      const builder = await SchemaBuilder.tableIfExists(TABLE_NAME);
 
       // Assert
-      expect(builder1['tableName']).toBe('users');
-      expect(builder2['tableName']).toBe('orders');
-      expect(builder1).not.toBe(builder2);
+      expect(builder).toBeInstanceOf(SchemaBuilder);
+      expect(builder && builder['tableName']).toBe(TABLE_NAME);
     });
 
-    it('should handle special characters in table names', () => {
+    it('tableIfExists should return null when table does not exist', async () => {
+      // Arrange
+      mockClient.query.mockResolvedValueOnce({ rows: [{ exists: false }] });
+
       // Act
-      const specialTableName = 'user_profiles_2024';
-      const schemaBuilder = SchemaBuilder.table(specialTableName as any);
+      const builder = await SchemaBuilder.tableIfExists('non_existing' as any);
 
       // Assert
-      expect(schemaBuilder['tableName']).toBe(specialTableName);
+      expect(builder).toBeNull();
     });
   });
 
@@ -620,23 +625,7 @@ describe('SchemaBuilder', () => {
       );
     });
 
-    it('should work with different table names', () => {
-      // Arrange
-      const tableNames = ['users', 'orders', 'products', 'categories'] as any;
-      const columns = ['id SERIAL PRIMARY KEY', 'name VARCHAR(255)'];
-
-      tableNames.forEach((tableName: any) => {
-        // Act
-        const builder = SchemaBuilder.table(tableName);
-        builder.create(columns);
-
-        // Assert
-        expect(builder['tableName']).toBe(tableName);
-        expect(builder['query']).toBe(
-          `CREATE TABLE ${tableName} (\n${columns.join(',\n')}\n);`,
-        );
-      });
-    });
+   
 
     it('should handle multiple create operations on same instance', () => {
       // Arrange
@@ -1048,13 +1037,13 @@ describe('SchemaBuilder', () => {
       ];
 
       // Act
-      const builder = SchemaBuilder.table('profiles' as any);
+      const builder = SchemaBuilder.table('admin_users');
       const result = await builder.create(columns);
 
       // Assert
-      expect(builder['tableName']).toBe('profiles');
+      expect(builder['tableName']).toBe('admin_users');
       expect(builder['query']).toBe(
-        `CREATE TABLE profiles (\n${columns.join(',\n')}\n);`,
+        `CREATE TABLE admin_users (\n${columns.join(',\n')}\n);`,
       );
       expect(mockClient.query).toHaveBeenCalledWith(builder['query']);
       expect(result).toBeDefined();
@@ -1081,7 +1070,7 @@ describe('SchemaBuilder', () => {
 
       // Act
       const userBuilder = SchemaBuilder.table('users');
-      const postBuilder = SchemaBuilder.table('posts' as any);
+      const postBuilder = SchemaBuilder.table('media');
 
       await userBuilder.create(userColumns);
       await postBuilder.create(postColumns);
@@ -1092,9 +1081,9 @@ describe('SchemaBuilder', () => {
         `CREATE TABLE users (\n${userColumns.join(',\n')}\n);`,
       );
 
-      expect(postBuilder['tableName']).toBe('posts');
+      expect(postBuilder['tableName']).toBe('media');
       expect(postBuilder['query']).toBe(
-        `CREATE TABLE posts (\n${postColumns.join(',\n')}\n);`,
+        `CREATE TABLE media (\n${postColumns.join(',\n')}\n);`,
       );
 
       expect(mockClient.query).toHaveBeenCalledTimes(2);

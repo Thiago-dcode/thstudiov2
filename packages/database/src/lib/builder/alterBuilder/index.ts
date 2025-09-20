@@ -1,13 +1,15 @@
 import BaseBuilder from '..';
-import { TableName } from '../../constants/types/database';
+import { ColumnAttributesWithAfter, TableName ,ColumnAttributesWithForeignKey} from '../../constants/types/database';
 import { getClientConfig } from '../../client';
-import {
-  ColumnAttributesWithForeignKey,
-  ColumnBuilder,
-} from '../columnBuilder';
+import { ColumnBuilder } from '../columnBuilder';
 class AlterBuilder extends BaseBuilder {
   public static table(tableName: TableName) {
+    this.throwIfTableNotExists(tableName);
     return new AlterBuilder(tableName);
+  }
+  public  async columnExist(columnName: string) {
+    const result = await this.db?.query(`SELECT EXISTS(SELECT 1 FROM information_schema.columns WHERE table_name = '${this.tableName}' AND column_name = '${columnName}')`);
+    return result?.rows[0]?.exists;
   }
   /**
    * Add a column with a foreign key to the table
@@ -50,15 +52,17 @@ ADD ${ColumnBuilder.foreignKey(column, foreignTableName, foreignColumnName, opti
     return await this.db?.query(this.query);
   }
 
-  public async addColumn(columnName: string, columnDefinition: string) {
-    this.query = `ALTER TABLE ${this.tableName} ADD COLUMN ${columnName} ${columnDefinition};`;
+  public async addColumn(columnName: string, columnDefinition: string,options?: ColumnAttributesWithAfter) {
+    this.query = `ALTER TABLE ${this.tableName} ADD COLUMN ${columnName} ${columnDefinition}${options ? ' ' + ColumnBuilder.buildOptions(options) : ''};`;
+    console.log(this.query);
     return await this.db?.query(this.query);
   }
   public async addColumnIfNotExists(
     columnName: string,
     columnDefinition: string,
+    options?: ColumnAttributesWithAfter,
   ) {
-    this.query = `ALTER TABLE ${this.tableName} ADD COLUMN IF NOT EXISTS ${columnName} ${columnDefinition};`;
+    this.query = `ALTER TABLE ${this.tableName} ADD COLUMN IF NOT EXISTS ${columnName} ${columnDefinition}${options ? ' ' + ColumnBuilder.buildOptions(options) : ''};`;
     return await this.db?.query(this.query);
   }
 

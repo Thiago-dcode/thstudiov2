@@ -77,7 +77,9 @@ const handleMigration = async (
     process.exit(1);
   }
 };
-
+const utilsPath = (fileName: string) => {
+  return path.join(process.cwd(), 'src', 'lib', 'scripts', 'utils', fileName);
+};
 const createUpdatedAtTrigger = async (tableName: TableName) => {
   try {
     await Schema.raw(`
@@ -124,4 +126,5 @@ export {
   connectDb,
   createCreaAtTrigger,
   createTimeStampsTrigger,
+  utilsPath,
 };

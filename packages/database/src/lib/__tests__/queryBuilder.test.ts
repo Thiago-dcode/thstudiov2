@@ -290,6 +290,7 @@ describe('QueryBuilder', () => {
         operator: '=',
         position: 0,
         type: 'where',
+        value: '1',
       });
       expect(queryBuilder['values']).toEqual(['1']);
     });
@@ -393,7 +394,6 @@ describe('QueryBuilder', () => {
       // Assert
       expect(queryBuilder['wheres']).toHaveLength(5);
       expect(queryBuilder['values']).toEqual([
-        null,
         18,
         85.5,
         '%@example.com',
@@ -401,7 +401,7 @@ describe('QueryBuilder', () => {
         'pending',
         'review',
       ]);
-      expect(queryBuilder['valuesPosition']).toBe(7);
+      expect(queryBuilder['valuesPosition']).toBe(6);
     });
 
     it('should handle complex table and column references', () => {
@@ -479,6 +479,7 @@ describe('QueryBuilder', () => {
         operator: '=',
         position: 0,
         type: 'where',
+        value: 'test@example.com',
       };
 
       // Act
@@ -497,6 +498,7 @@ describe('QueryBuilder', () => {
         operator: '>',
         position: 1,
         type: 'where',
+        value: 'test@example.com',
       };
 
       // Act
@@ -515,6 +517,7 @@ describe('QueryBuilder', () => {
         operator: '=',
         position: 2,
         type: 'where',
+        value: 'test@example.com',
       };
       expect(queryBuilder['buildWhereQuery'](wherePostgres)).toBe(
         `users.id = $3`,
@@ -528,6 +531,7 @@ describe('QueryBuilder', () => {
         operator: 'LIKE',
         position: 3,
         type: 'where',
+        value: 'test@example.com',
       };
       expect(queryBuilder['buildWhereQuery'](whereMysql)).toBe(
         `orders.status LIKE ?`,
@@ -556,6 +560,7 @@ describe('QueryBuilder', () => {
           operator,
           position: index,
           type: 'where',
+          value: 'test@example.com',
         };
         const result = queryBuilder['buildWhereQuery'](where);
         expect(result).toBe(`${TABLE_NAME}.age ${operator} $${index + 1}`);
@@ -570,6 +575,7 @@ describe('QueryBuilder', () => {
           operator,
           position: 0,
           type: 'where',
+          value: 'test@example.com',
         };
         const result = queryBuilder['buildWhereQuery'](where);
         expect(result).toBe(`${TABLE_NAME}.status ${operator} ?`);
@@ -583,6 +589,7 @@ describe('QueryBuilder', () => {
         operator: 'LIKE',
         position: 4,
         type: 'where',
+        value: 'test@example.com',
       };
       expect(queryBuilder['buildWhereQuery'](where)).toBe(
         `user_profile.first_name LIKE $5`,
@@ -594,6 +601,7 @@ describe('QueryBuilder', () => {
         operator: 'LIKE',
         position: 999,
         type: 'where',
+        value: 'test@example.com',
       };
       expect(queryBuilder['buildWhereQuery'](whereLarge)).toBe(
         `${TABLE_NAME}.email LIKE $1000`,
@@ -664,7 +672,7 @@ describe('QueryBuilder', () => {
 
     it('should build complex SELECT query with joins, columns, and WHERE conditions', async () => {
       await initClient(postgresConfig);
-      const targetQuery = `SELECT ${TABLE_NAME}.id,${TABLE_NAME}.name,${TABLE_NAME}.email,users.id,orders.id FROM ${TABLE_NAME} \nINNER JOIN users ON users.id = ${TABLE_NAME}.user_id \nLEFT JOIN orders ON orders.id = ${TABLE_NAME}.user_id \nWHERE users.id LIKE $1 \nOR users.id IS NOT $2 \nAND orders.id IN ($3,$4) \nAND orders.id = $5 \nOR orders.id = $6 \nOR orders.id IN ($7,$8)`;
+      const targetQuery = `SELECT ${TABLE_NAME}.id,${TABLE_NAME}.name,${TABLE_NAME}.email,users.id,orders.id FROM ${TABLE_NAME} \nINNER JOIN users ON users.id = ${TABLE_NAME}.user_id \nLEFT JOIN orders ON orders.id = ${TABLE_NAME}.user_id \nWHERE users.id LIKE $1 \nOR users.id IS NOT NULL \nAND orders.id IN ($2,$3) \nAND orders.id = $4 \nOR orders.id = $5 \nOR orders.id IN ($6,$7)`;
 
       // Arrange
       queryBuilder
@@ -681,8 +689,8 @@ describe('QueryBuilder', () => {
       queryBuilder['buildSelectQuery']();
 
       // Assert
-      expect(queryBuilder['valuesPosition']).toBe(8);
-      expect(queryBuilder['values']).toEqual(['%1%', null, 2, 3, 4, 5, 6, 7]);
+      expect(queryBuilder['valuesPosition']).toBe(7);
+      expect(queryBuilder['values']).toEqual(['%1%', 2, 3, 4, 5, 6, 7]);
       expect(queryBuilder['query']).toBe(targetQuery);
     });
 
@@ -736,7 +744,7 @@ describe('QueryBuilder', () => {
 
     it('should build complete SELECT query with all clauses', () => {
       // Arrange
-      const targetQuery = `SELECT ${TABLE_NAME}.id,${TABLE_NAME}.name,${TABLE_NAME}.email,users.id,orders.id FROM ${TABLE_NAME} \nINNER JOIN users ON users.id = ${TABLE_NAME}.user_id \nLEFT JOIN orders ON orders.id = ${TABLE_NAME}.user_id \nWHERE users.id LIKE $1 \nOR users.id IS NOT $2 \nAND orders.id IN ($3,$4) \nAND orders.id = $5 \nOR orders.id = $6 \nOR orders.id IN ($7,$8) \nORDER BY name ASC \nLIMIT 10 \nOFFSET 5`;
+      const targetQuery = `SELECT ${TABLE_NAME}.id,${TABLE_NAME}.name,${TABLE_NAME}.email,users.id,orders.id FROM ${TABLE_NAME} \nINNER JOIN users ON users.id = ${TABLE_NAME}.user_id \nLEFT JOIN orders ON orders.id = ${TABLE_NAME}.user_id \nWHERE users.id LIKE $1 \nOR users.id IS NOT NULL \nAND orders.id IN ($2,$3) \nAND orders.id = $4 \nOR orders.id = $5 \nOR orders.id IN ($6,$7) \nORDER BY name ASC \nLIMIT 10 \nOFFSET 5`;
 
       queryBuilder
         .select('id,name,email,users.id,orders.id')
@@ -755,8 +763,8 @@ describe('QueryBuilder', () => {
       queryBuilder['buildSelectQuery']();
 
       // Assert
-      expect(queryBuilder['valuesPosition']).toBe(8);
-      expect(queryBuilder['values']).toEqual(['%1%', null, 2, 3, 4, 5, 6, 7]);
+      expect(queryBuilder['valuesPosition']).toBe(7);
+      expect(queryBuilder['values']).toEqual(['%1%', 2, 3, 4, 5, 6, 7]);
       expect(queryBuilder['query']).toBe(targetQuery);
     });
   });
@@ -1362,7 +1370,7 @@ describe('QueryBuilder', () => {
       queryBuilder['buildDeleteQuery']();
 
       expect(queryBuilder['query']).toBe(
-        `DELETE FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.deleted_at IS $1 \nAND ${TABLE_NAME}.age >= $2 \nAND ${TABLE_NAME}.score > $3 \nOR ${TABLE_NAME}.email LIKE $4`,
+        `DELETE FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.deleted_at IS NULL \nAND ${TABLE_NAME}.age >= $1 \nAND ${TABLE_NAME}.score > $2 \nOR ${TABLE_NAME}.email LIKE $3`,
       );
     });
 
@@ -1442,7 +1450,7 @@ describe('QueryBuilder', () => {
       queryBuilder['buildDeleteQuery']();
 
       expect(queryBuilder['query']).toBe(
-        `DELETE FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.id = $1 \nAND ${TABLE_NAME}.name LIKE $2 \nAND ${TABLE_NAME}.age >= $3 \nAND ${TABLE_NAME}.active = $4 \nAND ${TABLE_NAME}.created_at >= $5 \nOR ${TABLE_NAME}.score > $6 \nOR ${TABLE_NAME}.deleted_at IS $7`,
+        `DELETE FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.id = $1 \nAND ${TABLE_NAME}.name LIKE $2 \nAND ${TABLE_NAME}.age >= $3 \nAND ${TABLE_NAME}.active = $4 \nAND ${TABLE_NAME}.created_at >= $5 \nOR ${TABLE_NAME}.score > $6 \nOR ${TABLE_NAME}.deleted_at IS NULL`,
       );
     });
 

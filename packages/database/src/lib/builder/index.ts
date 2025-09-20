@@ -2,6 +2,7 @@ import { ClientNotInitializedException } from '../client/exceptions';
 import { getClient, Client } from '../client';
 import { SqlOperation } from '../constants/types/database';
 import { TABLES } from '../constants/constants';
+import { DbWrongTableException } from '../exceptions';
 
 abstract class BaseBuilder {
   /** The built SQL query string */
@@ -44,6 +45,12 @@ abstract class BaseBuilder {
     return this.query;
   }
   protected abstract reset(): void;
+
+  protected static throwIfTableNotExists(tableName: (typeof TABLES)[number]) {
+    if(!TABLES.includes(tableName)) {
+      throw new DbWrongTableException(tableName);
+    }
+  }
 }
 
 export default BaseBuilder;

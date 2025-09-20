@@ -37,6 +37,7 @@ const up = async () => {
       onDelete: 'CASCADE',
     }),
     Column.enum('billing_type', 'BILLING_TYPES'),
+    Column.timestamps(true),
   ]);
   await createTimeStampsTrigger('plan_prices');
 

@@ -9,6 +9,7 @@ import {
   WhereInCondition,
   SqlOperation,
   SqlValue,
+  WhereType,
 } from '../../constants/types/database';
 import {
   QueryBuilderMethodChainedException,
@@ -119,6 +120,12 @@ export class QueryBuilder extends BaseBuilder {
     this.reset();
     return result.rows;
   }
+  public async count(): Promise<number> {
+    this.buildSelectQuery();
+    const result = await this.db?.query(this.query, this.values);
+    this.reset();
+    return result.rowCount;
+  }
   public async first(): Promise<any> {
     this.buildSelectQuery();
     const result = await this.db?.query(this.query, this.values);
@@ -133,6 +140,7 @@ export class QueryBuilder extends BaseBuilder {
   }
 
   public static table(tableName: (typeof TABLES)[number]) {
+    this.throwIfTableNotExists(tableName);
     return new QueryBuilder(tableName);
   }
 
@@ -159,10 +167,13 @@ export class QueryBuilder extends BaseBuilder {
     select: string[] | string = '*',
   ) {
     this.buildInsertQuery(columns, values);
-    await this.db?.query(this.query, values);
+   await this.db?.query(this.query, values);
     this.reset();
     columns.forEach((column, index) => {
-      this.where(column, '=', values[index]);
+      const value = values[index];
+      const operator = value === null ? 'IS' : '=';
+      
+      this.where(column, operator, value);
     });
     this.select(select);
     const result = await this.first();
@@ -254,15 +265,20 @@ export class QueryBuilder extends BaseBuilder {
    * queryBuilder.where('deleted_at', 'IS', null);
    * ```
    */
-  public where(column: string, operator: SqlClauseWithoutIn, value: SqlValue) {
+  private handlePushWhere(column: string, operator: SqlClauseWithoutIn, value: SqlValue, type:WhereType) {
     this.operationsChain.push('where');
-    this.values.push(value);
-    this.wheres.push({
-      column,
-      operator,
-      position: this.valuesPosition++,
-      type: 'where',
-    } as WhereCondition);
+    if(value !== null) this.values.push(value);
+     this.wheres.push({
+       column,
+       operator,
+       position: value !== null ? this.valuesPosition++ : -1,
+       type,
+       value,
+     } as WhereCondition);
+    
+  }
+  public where(column: string, operator: SqlClauseWithoutIn, value: SqlValue) {
+    this.handlePushWhere(column, operator, value, 'where');
     return this;
   }
 
@@ -284,26 +300,23 @@ export class QueryBuilder extends BaseBuilder {
     operator: SqlClauseWithoutIn,
     value: SqlValue,
   ) {
-    this.operationsChain.push('where');
-    this.values.push(value);
-    if (this.wheres.length === 0) {
-      this.wheres.push({
-        column,
-        operator,
-        position: this.valuesPosition++,
-        type: 'where',
-      } as WhereCondition);
-    } else {
-      this.wheres.push({
-        column,
-        operator,
-        position: this.valuesPosition++,
-        type: 'orWhere',
-      } as WhereCondition);
-    }
+    this.handlePushWhere(column, operator, value,this.wheres.length === 0? 'where' : 'orWhere');
     return this;
   }
 
+  private handlePushWhereIn(column: string, values: SqlValue[], type:WhereType) {
+    this.operationsChain.push('where');
+    this.values.push(...values);
+    const startPosition = this.valuesPosition;
+    this.valuesPosition += values.length;
+    this.wheres.push({
+      column,
+      position: startPosition,
+      values,
+      type,
+      operator: 'IN',
+    });
+  }
   /**
    * Add a WHERE IN clause to the query
    * @param column - The column name to filter on
@@ -315,17 +328,7 @@ export class QueryBuilder extends BaseBuilder {
    * ```
    */
   public whereIn(column: string, values: SqlValue[]) {
-    this.operationsChain.push('where');
-    this.values.push(...values);
-    const startPosition = this.valuesPosition;
-    this.valuesPosition += values.length;
-    this.wheres.push({
-      column,
-      position: startPosition,
-      values,
-      type: 'where',
-      operator: 'IN',
-    });
+    this.handlePushWhereIn(column, values, 'where');
     return this;
   }
 
@@ -342,27 +345,7 @@ export class QueryBuilder extends BaseBuilder {
    * ```
    */
   public orWhereIn(column: string, values: SqlValue[]) {
-    this.operationsChain.push('where');
-    this.values.push(...values);
-    const startPosition = this.valuesPosition;
-    this.valuesPosition += values.length;
-    if (this.wheres.length === 0) {
-      this.wheres.push({
-        column,
-        position: startPosition,
-        values,
-        type: 'where',
-        operator: 'IN',
-      });
-    } else {
-      this.wheres.push({
-        column,
-        position: startPosition,
-        values,
-        type: 'orWhere',
-        operator: 'IN',
-      });
-    }
+    this.handlePushWhereIn(column, values, this.wheres.length === 0? 'where' : 'orWhere');
     return this;
   }
 
@@ -556,7 +539,11 @@ export class QueryBuilder extends BaseBuilder {
   protected buildWhereQuery(where: WhereCondition, offset: number = 0) {
     switch (this.db?.config.client) {
       case 'postgres':
-        return `${this.buildColumn(where.column)} ${where.operator} $${where.position + offset + 1}`;
+        let append = `$${where.position + offset + 1}`;
+        if (where.value === null) {
+          append = 'NULL';
+        }
+        return `${this.buildColumn(where.column)} ${where.operator} ${append}`;
       case 'mysql':
         return `${this.buildColumn(where.column)} ${where.operator} ?`;
       default:

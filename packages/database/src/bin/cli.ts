@@ -6,10 +6,18 @@ import { createMigration } from '../lib/scripts/create-migration';
 import { rollback } from '../lib/scripts/rollback';
 import { seed } from '../lib/scripts/seed';
 import Logger from '@repo/backend-lib/utils/console';
-
+import { testDb } from 'src/lib/scripts/testDb';
+import { createSeeder } from '../lib/scripts/create-seed';
 const program = new Command();
 
-program.name('mydb').description('Database management CLI').version('1.0.0');
+program.name('dbcli').description('Database management CLI').version('1.0.0');
+program
+  .command('test')
+  .description('Test the database')
+  .action(() => {
+    // Use positional argument or option, with positional taking precedence
+    testDb();
+  });
 
 program
   .command('create:migration')
@@ -40,6 +48,13 @@ program
     rollback(_steps);
   });
 
+program
+  .command('create:seeder')
+  .argument('<seedName>', 'Seed name')
+  .description('Create a new seeder')
+  .action((seedName) => {
+    createSeeder(seedName);
+  });
 program
   .command('db:seed')
   .option('-n, --name <string>', 'Name to seed')

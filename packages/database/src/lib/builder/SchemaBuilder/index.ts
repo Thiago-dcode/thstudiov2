@@ -5,11 +5,17 @@ import { getClient } from '../../client';
 import { SchemaBuilderOperationNotAllowedException } from './exceptions';
 class SchemaBuilder extends BaseBuilder {
   protected createColumns: string[] = [];
-
   public static table(tableName: (typeof TABLES)[number]) {
+    this.throwIfTableNotExists(tableName);
     return new SchemaBuilder(tableName);
   }
-
+  public static async tableIfExists(tableName: (typeof TABLES)[number]) {
+    const result = await getClient().query(`SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_name = '${tableName}')`);
+   if(!result?.rows[0]?.exists) {
+  return null;
+   }
+   return new SchemaBuilder(tableName);
+  }
   public async create(columns?: (string | string[])[]) {
     // Flatten any arrays (like from timestamps() method)
     this.buildColumns(columns);

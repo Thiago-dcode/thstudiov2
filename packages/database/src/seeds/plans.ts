@@ -13,7 +13,7 @@ export const main = async () => {
       is_free: true,
       max_media_size: 1000, // 1GB storage (~$0.023/month)
       max_projects_count: 10,
-      max_clients_count: 10,
+      max_clients_count: 5,
       max_services_count: 4,
       powered_by_ai: false,
       limit_storage_requests_per_day: 500, // 500 write operations per day
@@ -69,7 +69,7 @@ export const main = async () => {
       is_free: false,
       max_media_size: 10000, // 10GB storage (~$0.23/month)
       max_projects_count: 25,
-      max_clients_count: 25,
+      max_clients_count: 20,
       max_services_count: 15,
       powered_by_ai: false,
       limit_storage_requests_per_day: 1000, // 1,000 write operations per day

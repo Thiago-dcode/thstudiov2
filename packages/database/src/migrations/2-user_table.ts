@@ -16,18 +16,22 @@ const up = async () => {
     ColumnBuilder.string('username', 255, {
       unique: true,
     }),
-    ColumnBuilder.email(),
     ColumnBuilder.password(),
     ColumnBuilder.text('biography', {
       nullable: true,
     }),
+    ColumnBuilder.email(),
+    ColumnBuilder.boolean('email_validated', {
+      default: false,
+    }),
+    ColumnBuilder.integer('number_email_validations_sent', {
+      default: 0,
+    }),
     ColumnBuilder.foreignKey('address_id', 'addresses', 'id', {
-      onDelete: 'CASCADE',
-    }),
-    ColumnBuilder.foreignKey('extra_data_id', 'user_extra_data', 'id', {
       onDelete: 'SET NULL',
-      onUpdate: 'CASCADE',
+      nullable: true,
     }),
+
     ColumnBuilder.timestamps(true),
   ]);
   await createTimeStampsTrigger('users');

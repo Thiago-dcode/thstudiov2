@@ -1,20 +1,18 @@
 import  dotenv from 'dotenv'
 dotenv.config()
 import  path from 'path';
+import  fs from 'fs';
+let envFilePath = path.resolve(process.cwd(),'..', '..', '.env');
 
-// Load .env from project root (3 levels up from this file)
-const defaultEnvPath = path.resolve(__dirname, '../../../../.env');
-
-export const config = (envPath?: string | undefined) => {
-  dotenv.config({ path: envPath || defaultEnvPath });
+ const config = (envPath?: string | undefined) => {
+  envFilePath = envPath || envFilePath;
+  if(!fs.existsSync(envFilePath)){
+    throw new Error('Environment file not found');
+  }
+  dotenv.config({ path: envPath || envFilePath });
   return {
-    apiGateway: {
-      name: process.env.API_GATEWAY_NAME,
-      port: process.env.API_GATEWAY_PORT,
-    },
-    mediaService: {
-      name: process.env.MEDIA_SERVICE_NAME,
-      port: process.env.MEDIA_SERVICE_PORT,
+    api: {
+      port: process.env.API_PORT || 3000,
     },
     database: {
       client: process.env.DB_CLIENT || 'postgres',
@@ -27,4 +25,4 @@ export const config = (envPath?: string | undefined) => {
   };
 };
 
-export const envFilePath = defaultEnvPath;
+export { envFilePath ,config};

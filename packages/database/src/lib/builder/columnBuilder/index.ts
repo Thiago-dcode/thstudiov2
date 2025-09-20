@@ -2,6 +2,9 @@ import { ClientNotInitializedException } from '../../client/exceptions';
 import { getClientConfig } from '../../client';
 import {
   AvailableEnums,
+  ColumnAttributes,
+  ColumnAttributesWithAfter,
+  ColumnAttributesWithForeignKey,
   SqlFunction,
   SqlFunctionTimestamp,
   SqlTypes,
@@ -9,34 +12,7 @@ import {
 } from '../../constants/types/database';
 import { ENUMS, SQL_FUNCTIONS } from '../../constants/constants';
 
-export type OnAction = 'SET NULL' | 'CASCADE' | 'RESTRICT' | 'NO ACTION';
 
-export type ColumnAttributes<
-  T = string | number | boolean | null | SqlFunction,
-> = {
-  nullable?: boolean;
-  unique?: boolean;
-  primaryKey?: boolean;
-  default?: T | null;
-};
-export type ColumnAttributesOrAutoIncrement =
-  | ColumnAttributes
-  | {
-      autoIncrement?: boolean;
-      primaryKey?: boolean;
-    };
-
-export type ColumnAttributesWithType = ColumnAttributes & {
-  type?: SqlTypes;
-};
-export type ColumnAttributesWithForeignKey = Exclude<
-  ColumnAttributesWithType,
-  'primaryKey'
-> & {
-  constraintName?: string;
-  onDelete?: OnAction;
-  onUpdate?: OnAction;
-};
 export const DEFAULT_COLUMN_OPTIONS: ColumnAttributes = {
   nullable: false,
   unique: false,
@@ -137,7 +113,7 @@ export class ColumnBuilder {
     }`;
   }
 
-  protected static buildOptions(options: ColumnAttributes) {
+  public static buildOptions(options: ColumnAttributes | ColumnAttributesWithAfter) {
     const clientChoosen = getClientConfig();
     if (!clientChoosen) {
       throw new ClientNotInitializedException('Client not initialized');
@@ -176,6 +152,10 @@ export class ColumnBuilder {
     // 3. UNIQUE
     if (_options.unique) {
       concatenateOptions('UNIQUE');
+  }
+    // 4. AFTER (MySQL only)
+    if (clientChoosen === 'mysql' && 'after' in _options && _options.after) {
+      concatenateOptions(`AFTER ${_options.after}`);
     }
 
     return optionsString;

@@ -36,7 +36,9 @@ const up = async () => {
     Column.boolean('plan_autorenewal', {
       default: true,
     }),
-    //If plan is free, will auto renew, and is not necessary a last transaction
+    Column.foreignKey('user_id', 'users', 'id', {
+      onDelete: 'CASCADE',
+    }),
     Column.foreignKey('plan_id', 'plans', 'id', {
       onDelete: 'CASCADE',
       nullable: true,
