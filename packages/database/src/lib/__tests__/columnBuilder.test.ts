@@ -2,12 +2,12 @@ import {
   DatabaseClient,
   DatabaseConfig,
   FullDatabaseConfig,
-} from '../constants/types/database';
+} from '../constants/schemas/database';
 import {
   ColumnBuilder,
   DEFAULT_COLUMN_OPTIONS,
 } from '../builder/columnBuilder';
-import { ColumnAttributes } from '../constants/types/database';
+import { ColumnAttributes } from '../constants/schemas/database';
 import { DEFAULT_DATABASE_SETTINGS } from '../constants/constants';
 jest.mock('../client', () => {
   const Client = (config: FullDatabaseConfig) => {

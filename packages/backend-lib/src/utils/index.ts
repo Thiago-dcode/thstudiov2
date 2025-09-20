@@ -28,4 +28,9 @@ const checkPortOrGetNext =async (port: number = 3000): Promise<number> => {
     });
 }
 
-export { checkPortOrGetNext };
+const generateUUID = async () => {
+    const uuidv4 = await import('uuid').then(module => module.v4);
+    return uuidv4();
+}
+
+export { checkPortOrGetNext, generateUUID };

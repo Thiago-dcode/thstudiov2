@@ -1,13 +1,13 @@
-import { CreatePlanTransactionInput } from "src/lib/constants/types/plan_transaction";
 import { Query } from "../lib/facades";
 import bcrypt from 'bcrypt';
+import { generateUUID } from "@repo/backend-lib/utils";
+import { CreatePlanTransactionInput } from "src/lib/constants/schemas/user-plan-transaction";
 
 
 export const main = async () => {
 if(process.env.NODE_ENV !== 'development'){
     return;
 }
-const uuidv4 = await import('uuid').then(module => module.v4);
 await Query.table('users').where('email', '=', 'test@example.com').delete();
 const user = {
     name: 'Test',
@@ -21,7 +21,7 @@ const {id: userId} = await Query.table('users').insertAndGet(Object.keys(user), 
 const {plan_id, plan_price_id, price} = await Query.table('plans').select(['plans.id as plan_id', 'plan_prices.id as plan_price_id', 'plan_prices.price', 'plan_prices.billing_type']).where('is_free', '=', true).where('is_active', '=', true).where('plan_prices.billing_type', '=', 'LIFETIME').join('id', 'plan_prices', 'plan_id').first();
 const planTransaction:CreatePlanTransactionInput = {
     user_id: userId as number,
-    transaction_id: uuidv4(),
+    transaction_id: await generateUUID(),
     plan_offer_id: null,
     plan_price_id: plan_price_id as number,
     amount: price as number,

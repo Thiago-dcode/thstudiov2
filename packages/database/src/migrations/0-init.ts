@@ -4,7 +4,7 @@ import {
   TRIGGER_UPDATE_CREATED_AT_FUNCTION_NAME,
   TRIGGER_UPDATE_UPDATED_AT_FUNCTION_NAME,
 } from '../lib/constants/constants';
-import { AvailableEnums } from '../lib/constants/types/database';
+import { AvailableEnums } from '../lib/constants/schemas/database';
 import { createTimeStampsTrigger } from '../lib/scripts/utils';
 
 const up = async () => {

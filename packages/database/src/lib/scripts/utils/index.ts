@@ -7,7 +7,7 @@ import {
   TRIGGER_UPDATE_CREATED_AT_FUNCTION_NAME,
   TRIGGER_UPDATE_UPDATED_AT_FUNCTION_NAME,
 } from '../../constants/constants';
-import { DatabaseClient, TableName } from '../../constants/types/database';
+import { DatabaseClient, TableName } from '../../constants/schemas/database';
 import Logger from '@repo/backend-lib/utils/console';
 import { initClient } from '../../client';
 import {config} from '@repo/backend-lib/config';

@@ -1,5 +1,5 @@
 import { getClient, Client } from '../client';
-import { SqlOperation } from '../constants/types/database';
+import { SqlOperation } from '../constants/schemas/database';
 import { TABLES } from '../constants/constants';
 import { DbWrongTableException } from '../exceptions';
 

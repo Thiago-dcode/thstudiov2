@@ -3,7 +3,11 @@ import { QueryBuilder } from '@repo/database/queryBuilder';
 import { IndexPlanRequest } from './requests/index-plan.request';
 import { BaseRepository } from '@repo/database/repositories';
 import { BasePlanWithPrices } from './plans.types';
-import { Plan, PlanPrice } from '@repo/database/types/plans';
+import {
+  PlanSchema,
+  PlanPriceSchema,
+  CreatePlanInput,
+} from '@repo/database/schemas/plans';
 
 @Injectable()
 export class PlansRepository extends BaseRepository {
@@ -48,8 +52,10 @@ export class PlansRepository extends BaseRepository {
       .where('is_free', '=', true)
       .where('is_active', '=', true)
       .join('id', 'plan_prices', 'plan_id')
-      .get<(Plan & Exclude<PlanPrice, 'id'> & { plan_price_id: number })[]>();
-    //TODO: create a response dto
+      .get<
+        (PlanSchema &
+          Exclude<PlanPriceSchema, 'id'> & { plan_price_id: number })[]
+      >();
     const basePlanWithPrices: BasePlanWithPrices = {
       id: result[0].id,
       name: result[0].name,
@@ -67,8 +73,10 @@ export class PlansRepository extends BaseRepository {
 
     return basePlanWithPrices;
   }
-  async create(plan: any) {
-    console.log(plan);
+  async create(plan: CreatePlanInput) {
+    const columns = Object.keys(plan);
+    const values = Object.values(plan);
+    return await this.queryBuilder.insertAndGet<PlanSchema>(columns, values);
     //TODO: create a response dto
   }
 

@@ -1,5 +1,5 @@
 import { DEFAULT_DATABASE_SETTINGS } from '../../constants/constants';
-import { DatabaseSettings } from '../../constants/types/database';
+import { DatabaseSettings } from '../../constants/schemas/database';
 
 // Database client config, allow migrations and seeds have more control over the database
 let databaseCliConfig: DatabaseSettings = {

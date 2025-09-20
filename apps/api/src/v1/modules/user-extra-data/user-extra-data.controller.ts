@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { UserExtraDataService } from './user-extra-data.service';
-import { CreateUserExtraDatumDto } from './dto/create-user-extra-datum.dto';
-import { UpdateUserExtraDatumDto } from './dto/update-user-extra-datum.dto';
+import { CreateUserExtraDatumDto } from './requests/create-user-extra-datum.dto';
+import { UpdateUserExtraDatumDto } from './requests/update-user-extra-datum.dto';
 
 @Controller('user-extra-data')
 export class UserExtraDataController {

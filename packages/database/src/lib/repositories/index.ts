@@ -1,5 +1,5 @@
 import { QueryBuilder } from '../builder/queryBuilder';
-import { TableName } from '../constants/types/database';
+import { TableName } from '../constants/schemas/database';
 
 export abstract class BaseRepository {
   protected queryBuilder: QueryBuilder;
@@ -13,8 +13,8 @@ export abstract class BaseRepository {
   }
   abstract applyFilters(filters: any): void;
  
-  async findOne(id: number) {
-    return await this.queryBuilder.where('id', '=', id).first();
+  async findOne<T = any>(id: number) {
+    return await this.queryBuilder.where('id', '=', id).first<T>();
   }
 
   async findOneBy(column: string, value: any) {

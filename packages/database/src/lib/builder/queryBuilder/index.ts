@@ -11,7 +11,7 @@ import {
   SqlOperation,
   SqlValue,
   WhereType,
-} from '../../constants/types/database';
+} from '../../constants/schemas/database';
 import {
   QueryBuilderMethodChainedException,
   QueryBuilderOperationNotAllowedException,
@@ -20,7 +20,6 @@ import {
   QueryBuilderWrongDatabaseClientException,
 } from './exceptions';
 import { TABLES } from '../../constants/constants';
-import Logger from '@repo/backend-lib/utils/console';
 
 /**
  * QueryBuilder class for building and executing SQL queries
@@ -128,7 +127,7 @@ export class QueryBuilder extends BaseBuilder {
     this.reset();
     return result.rowCount;
   }
-  public async first(): Promise<any> {
+  public async first<T = any>(): Promise<T> {
     this.buildSelectQuery();
     const result = await getClient().query(this.query, this.values);
     this.reset();

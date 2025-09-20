@@ -3,7 +3,7 @@ import {
   ValidatorConstraint,
   ValidatorConstraintInterface,
 } from 'class-validator';
-import { TableName } from '@repo/database/types/database';
+import { TableName } from '@repo/database/schemas/database';
 import { Injectable } from '@nestjs/common';
 import { QueryBuilder } from '@repo/database/queryBuilder';
 import AlterBuilder from '@repo/database/alterBuilder';

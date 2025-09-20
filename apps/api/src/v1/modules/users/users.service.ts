@@ -6,18 +6,23 @@ import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { CreateUserRequest } from './requests/create-user.request';
 import { UserRepository } from './users.repository';
 import { PlansRepository } from '../plans/plans.repository';
+import { UserPlanTransactionsRepository } from '../user-plan-transactions/user-plan-transactions.repository';
+import { generateUUID } from '@repo/backend-lib/utils';
+import { UserExtraDataRepository } from '../user-extra-data/user-extra-data.repository';
 
 @Injectable()
 export class UserService {
   constructor(
     private readonly userRepository: UserRepository,
     private readonly plansRepository: PlansRepository,
+    private readonly userPlanTransactionsRepository: UserPlanTransactionsRepository,
+    private readonly userExtraDataRepository: UserExtraDataRepository,
     private readonly eventEmitter: EventEmitter2,
   ) {}
   async create(createUserRequest: CreateUserRequest) {
     const user = await this.userRepository.create(createUserRequest);
-    //Handled by the UserService
     this.eventEmitter.emit(NEW_USER_EVENT, new NewUserEvent(user));
+    console.log(user);
     return user;
   }
 
@@ -37,14 +42,37 @@ export class UserService {
     return `This action removes a #${id} user`;
   }
 
+  //Every time a user is created, a free plan is assigned to him.
+  //A UserPlanTransaction is created for the free plan.
+  //So a user must have an extra data record 1:1 with a last plan transaction, even if the plan is free.
   @OnEvent(NEW_USER_EVENT)
   async handleNewUserEvent(event: NewUserEvent) {
-    console.log(event);
-    //TODO: Get the free plan
+    //Plans with plan prices must always exist. If not, BIG PROBLEM.
     const freePlan = await this.plansRepository.findFreePlan();
-    console.log(freePlan);
-    //TODO: Create a new plan_transactions
-    //TODO: Create a new extra_data for the user
+    const lifetimePrice = freePlan.prices.find(
+      (price) => price.billing_type === 'LIFETIME',
+    );
+    if (!lifetimePrice) {
+      throw new Error('Lifetime price not found');
+    }
+    const transaction = await this.userPlanTransactionsRepository.create({
+      amount: lifetimePrice.price,
+      user_id: event.user.id,
+      plan_price_id: lifetimePrice.id,
+      status: 'SUCCESS',
+      payment_status: 'SUCCESS',
+      transaction_id: await generateUUID(),
+      payment_method: null,
+      plan_offer_id: null,
+    });
+    await this.userExtraDataRepository.create({
+      user_id: event.user.id,
+      plan_id: freePlan.id,
+      last_plan_transaction_id: transaction.id,
+      plan_start_date: new Date(),
+      plan_end_date: null,
+      plan_autorenewal: true,
+    });
     //TODO: send email to the user
   }
 }

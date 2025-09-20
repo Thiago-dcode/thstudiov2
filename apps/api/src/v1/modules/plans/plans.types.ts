@@ -1,4 +1,4 @@
-import { EnumType } from '@repo/database/types/database';
+import { EnumType } from '@repo/database/schemas/database';
 
 export type BasePlan = {
   id: number;

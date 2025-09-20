@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { BaseRepository } from '@repo/database/repositories';
-import { CreateUserRequest } from './requests/create-user.request';
 import { BaseUser } from './users.types';
+import { CreateUserInput } from '@repo/database/schemas/users';
 
 @Injectable()
 export class UserRepository extends BaseRepository {
@@ -11,7 +11,7 @@ export class UserRepository extends BaseRepository {
   async applyFilters(filters: any) {
     console.log(filters);
   }
-  async create(user: CreateUserRequest) {
+  async create(user: CreateUserInput) {
     const columns = Object.keys(user);
     const values = Object.values(user);
     return await this.queryBuilder.insertAndGet<BaseUser>(columns, values, [

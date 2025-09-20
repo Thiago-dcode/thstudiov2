@@ -1,7 +1,7 @@
 import { EnumType } from './database';
 
 // Base Plan type based on the plans table structure
-export type Plan = {
+export type PlanSchema = {
   id: number;
   name: string;
   description: string;
@@ -20,7 +20,7 @@ export type Plan = {
 };
 
 // Plan price type based on the plan_prices table structure
-export type PlanPrice = {
+export type PlanPriceSchema = {
   id: number;
   plan_id: number;
   price: number;
@@ -30,7 +30,7 @@ export type PlanPrice = {
 };
 
 // Plan offer type based on the plan_offers table structure
-export type PlanOffer = {
+export type PlanOfferSchema = {
   id: number;
   name: string;
   description: string;
@@ -46,7 +46,7 @@ export type PlanOffer = {
 };
 
 // Plan translation type based on the plan_translations table structure
-export type PlanTranslation = {
+export type PlanTranslationSchema = {
   id: number;
   name: string;
   description: string;
@@ -54,45 +54,32 @@ export type PlanTranslation = {
   language_code: EnumType<'LANGUAGE_CODE'>;
 };
 
-// Plan with all related data (for complex queries)
-export type PlanWithDetails = Plan & {
-  prices: PlanPrice[];
-  offers: PlanOffer[];
-  translations: PlanTranslation[];
-};
 
-// Plan with translations (for queries that join both tables)
-export type PlanWithTranslations = Plan & {
-  translations: PlanTranslation[];
-};
+
 
 // Plan with prices (for pricing queries)
-export type PlanWithPrices = Plan & {
-  prices: PlanPrice[];
-};
+export type PlanWithPrices = PlanSchema & PlanPriceSchema;
 
 // Plan with offers (for offers queries)
-export type PlanWithOffers = Plan & {
-  offers: PlanOffer[];
-};
+export type PlanWithOffers = PlanSchema & PlanOfferSchema;
 
 // Input types for creating/updating plans
-export type CreatePlanInput = Omit<Plan, 'id' | 'created_at' | 'updated_at'>;
+export type CreatePlanInput = Omit<PlanSchema, 'id' | 'created_at' | 'updated_at'>;
 export type UpdatePlanInput = Partial<CreatePlanInput>;
 
 export type CreatePlanPriceInput = Omit<
-  PlanPrice,
+  PlanPriceSchema,
   'id' | 'created_at' | 'updated_at'
 >;
 export type UpdatePlanPriceInput = Partial<CreatePlanPriceInput>;
 
 export type CreatePlanOfferInput = Omit<
-  PlanOffer,
+  PlanOfferSchema,
   'id' | 'created_at' | 'updated_at'
 >;
 export type UpdatePlanOfferInput = Partial<CreatePlanOfferInput>;
 
-export type CreatePlanTranslationInput = Omit<PlanTranslation, 'id'>;
+export type CreatePlanTranslationInput = Omit<PlanTranslationSchema, 'id'>;
 export type UpdatePlanTranslationInput = Partial<CreatePlanTranslationInput>;
 
 export type CreatePlanWithDetailsInput = CreatePlanInput & {

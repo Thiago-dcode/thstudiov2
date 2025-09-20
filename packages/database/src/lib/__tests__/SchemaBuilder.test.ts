@@ -2,7 +2,7 @@ import {
   DatabaseClient,
   DatabaseConfig,
   FullDatabaseConfig,
-} from '../constants/types/database';
+} from '../constants/schemas/database';
 import { DEFAULT_DATABASE_SETTINGS } from '../constants/constants';
 import SchemaBuilder from '../builder/schemaBuilder';
 

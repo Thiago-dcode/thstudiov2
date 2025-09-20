@@ -1,5 +1,5 @@
 import { initClient } from './lib/client';
-import { DatabaseConfig } from './lib/constants/types/database';
+import { DatabaseConfig } from './lib/constants/schemas/database';
 export const init = async (config: DatabaseConfig) => {
   console.log('Initializing database...');
   return await initClient(config);

@@ -12,9 +12,11 @@
   },
   "exports": {
     ".": "./dist/src/index.js",
-    "./types/database": "./dist/src/lib/constants/types/database.js",
-    "./types/plans":"./dist/src/lib/constants/types/plans.js",
-    "./types/constants": "./dist/src/lib/constants/constants.js",
+    "./schemas/database": "./dist/src/lib/constants/schemas/database.js",
+    "./schemas/plans":"./dist/src/lib/constants/schemas/plans.js",
+    "./schemas/plan_transaction":"./dist/src/lib/constants/schemas/plan_transaction.js",
+    "./schemas/users":"./dist/src/lib/constants/schemas/users.js",
+    "./constants": "./dist/src/lib/constants/constants.js",
     "./queryBuilder": "./dist/src/lib/builder/queryBuilder/index.js",
     "./schemaBuilder": "./dist/src/lib/builder/schemaBuilder/index.js",
     "./alterBuilder": "./dist/src/lib/builder/alterBuilder/index.js",
@@ -39,8 +41,7 @@
     "pg": "^8.16.3",
     "ts-jest": "^29.4.3",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.2",
-    "uuid": "^13.0.0"
+    "typescript": "^5.9.2"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",

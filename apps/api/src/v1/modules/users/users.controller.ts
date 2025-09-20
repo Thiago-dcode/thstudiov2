@@ -3,7 +3,7 @@ import { UserService } from './users.service';
 import { CreateUserRequest } from './requests/create-user.request';
 import { UpdateUserRequest } from './requests/update-user.request';
 
-@Controller('user')
+@Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 

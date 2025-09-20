@@ -9,7 +9,7 @@ import {
   SqlFunctionTimestamp,
   SqlTypes,
   TableName,
-} from '../../constants/types/database';
+} from '../../constants/schemas/database';
 import { ENUMS, SQL_FUNCTIONS } from '../../constants/constants';
 
 

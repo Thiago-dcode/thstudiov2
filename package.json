@@ -16,6 +16,7 @@
     "dbcli": "turbo run dbcli"
   },
   "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
     "@types/node": "^24.5.2",
     "i": "^0.3.7",
     "prettier": "^3.6.2",

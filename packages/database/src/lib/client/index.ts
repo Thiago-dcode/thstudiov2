@@ -3,7 +3,7 @@ import {
   DatabaseClient,
   DatabaseConfig,
   FullDatabaseConfig,
-} from '../constants/types/database';
+} from '../constants/schemas/database';
 import { Pool as PgPool } from 'pg';
 import mysql from 'mysql2/promise';
 import {

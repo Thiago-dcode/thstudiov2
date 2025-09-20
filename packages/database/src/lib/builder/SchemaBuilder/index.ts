@@ -1,6 +1,6 @@
 import { ENUMS, TABLES } from '../../constants/constants';
 import BaseBuilder from '..';
-import { AvailableEnums } from '../../constants/types/database';
+import { AvailableEnums } from '../../constants/schemas/database';
 import { getClient } from '../../client';
 import { SchemaBuilderOperationNotAllowedException } from './exceptions';
 class SchemaBuilder extends BaseBuilder {
