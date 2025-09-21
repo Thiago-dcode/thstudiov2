@@ -16,7 +16,13 @@
     ".": "./dist/index.js",
     "./config": "./dist/src/config/index.js",
     "./utils": "./dist/src/utils/index.js",
-    "./utils/console": "./dist/src/utils/console.js"
+    "./utils/console": "./dist/src/utils/console.js",
+    "./services/logginService": "./dist/src/services/logginService/index.js",
+    "./services/logginService/types": "./dist/src/services/logginService/types.js",
+    "./services/logginService/base": "./dist/src/services/logginService/loggin.service.js",
+    "./services/logginService/factory": "./dist/src/services/logginService/factory-loggin.service.js",
+    "./services/logginService/console": "./dist/src/services/logginService/console-loggin.service.js",
+    "./services/logginService/file": "./dist/src/services/logginService/file-loggin.service.js"
   },
   "peerDependencies": {
     "@nestjs/common": ">=11.0.0",
@@ -25,6 +31,7 @@
     "@nestjs/platform-express": ">=11.0.0"
   },
   "dependencies": {
+    "date-fns": "^4.1.0",
     "dotenv": "^16.6.1",
     "picocolors": "^1.1.1",
     "uuid": "^13.0.0"

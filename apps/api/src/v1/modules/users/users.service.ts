@@ -9,6 +9,7 @@ import { PlansRepository } from '../plans/plans.repository';
 import { UserPlanTransactionsRepository } from '../user-plan-transactions/user-plan-transactions.repository';
 import { generateUUID } from '@repo/backend-lib/utils';
 import { UserExtraDataRepository } from '../user-extra-data/user-extra-data.repository';
+import { LogginService } from '@repo/backend-lib/services/logginService';
 
 @Injectable()
 export class UserService {
@@ -18,6 +19,7 @@ export class UserService {
     private readonly userPlanTransactionsRepository: UserPlanTransactionsRepository,
     private readonly userExtraDataRepository: UserExtraDataRepository,
     private readonly eventEmitter: EventEmitter2,
+    private readonly logginService: LogginService,
   ) {}
   async create(createUserRequest: CreateUserRequest) {
     const user = await this.userRepository.create(createUserRequest);
@@ -27,6 +29,12 @@ export class UserService {
   }
 
   findAll() {
+    this.logginService.name('findAll');
+    this.logginService.info('Finding all users', { user: 'all' });
+    this.logginService.error('Error finding all users', { user: 'all' });
+    this.logginService.warn('Warning finding all users', { user: 'all' });
+    this.logginService.debug('Debug finding all users', { user: 'all' });
+    this.logginService.success('Success finding all users', { user: 'all' });
     return `This action returns all user`;
   }
 
