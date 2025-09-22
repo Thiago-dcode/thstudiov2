@@ -22,6 +22,12 @@ let envFilePath = path.resolve(process.cwd(),'..', '..', '.env');
       password: process.env.DB_PASSWORD || 'postgres',
       database: process.env.DB_NAME || 'thstudio',
     },
+    mailing: {
+      host: process.env.SMTP_HOST,
+      port: process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT) : 587,
+      username: process.env.SMTP_USERNAME,
+      password: process.env.SMTP_PASSWORD,
+    },
   };
 };
 

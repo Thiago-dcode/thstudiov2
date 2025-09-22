@@ -6,9 +6,14 @@ import { PlansRepository } from '../plans/plans.repository';
 import { UserExtraDataModule } from '../user-extra-data/user-extra-data.module';
 import { UserPlanTransactionsRepository } from '../user-plan-transactions/user-plan-transactions.repository';
 import { UserExtraDataRepository } from '../user-extra-data/user-extra-data.repository';
-import { FactoryLogginService } from '@repo/backend-lib/services/logginService/factory';
-import { LogginService } from '@repo/backend-lib/services/logginService/base';
-import { logginConfig } from 'src/config/loggin';
+import { logConfig } from 'src/config/logging';
+import {
+  FactoryLogService,
+  LogService,
+} from '@repo/backend-lib/services/log-service';
+import { MailService } from '@repo/backend-lib/services/mail-service';
+import { mailingConfig, mailingDriver } from 'src/config/mailling';
+import { FactoryMailService } from '@repo/backend-lib/services/mail-service/factory';
 @Module({
   controllers: [UserController],
   providers: [
@@ -18,11 +23,17 @@ import { logginConfig } from 'src/config/loggin';
     UserPlanTransactionsRepository,
     UserExtraDataRepository,
     {
-      provide: LogginService,
+      provide: LogService,
       useFactory: () => {
-        return FactoryLogginService.createLogginService(
-          'file',
-          logginConfig.users.config,
+        return FactoryLogService.createLogService('file', logConfig.users);
+      },
+    },
+    {
+      provide: MailService,
+      useFactory: () => {
+        return FactoryMailService.createMailService(
+          mailingDriver,
+          mailingConfig,
         );
       },
     },

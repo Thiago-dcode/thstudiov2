@@ -9,7 +9,9 @@ import { PlansRepository } from '../plans/plans.repository';
 import { UserPlanTransactionsRepository } from '../user-plan-transactions/user-plan-transactions.repository';
 import { generateUUID } from '@repo/backend-lib/utils';
 import { UserExtraDataRepository } from '../user-extra-data/user-extra-data.repository';
-import { LogginService } from '@repo/backend-lib/services/logginService';
+import { LogService } from '@repo/backend-lib/services/log-service';
+import { MailService } from '@repo/backend-lib/services/mail-service';
+import { NotifyNewUserMail } from './mails/notify-new-user.mail';
 
 @Injectable()
 export class UserService {
@@ -19,22 +21,22 @@ export class UserService {
     private readonly userPlanTransactionsRepository: UserPlanTransactionsRepository,
     private readonly userExtraDataRepository: UserExtraDataRepository,
     private readonly eventEmitter: EventEmitter2,
-    private readonly logginService: LogginService,
+    private readonly logService: LogService,
+    private readonly mailService: MailService,
   ) {}
   async create(createUserRequest: CreateUserRequest) {
     const user = await this.userRepository.create(createUserRequest);
     this.eventEmitter.emit(NEW_USER_EVENT, new NewUserEvent(user));
-    console.log(user);
     return user;
   }
 
   findAll() {
-    this.logginService.name('findAll');
-    this.logginService.info('Finding all users', { user: 'all' });
-    this.logginService.error('Error finding all users', { user: 'all' });
-    this.logginService.warn('Warning finding all users', { user: 'all' });
-    this.logginService.debug('Debug finding all users', { user: 'all' });
-    this.logginService.success('Success finding all users', { user: 'all' });
+    this.logService.name('findAll');
+    this.logService.info('Finding all users', { user: 'all' });
+    this.logService.error('Error finding all users', { user: 'all' });
+    this.logService.warn('Warning finding all users', { user: 'all' });
+    this.logService.debug('Debug finding all users', { user: 'all' });
+    this.logService.success('Success finding all users', { user: 'all' });
     return `This action returns all user`;
   }
 
@@ -81,6 +83,6 @@ export class UserService {
       plan_end_date: null,
       plan_autorenewal: true,
     });
-    //TODO: send email to the user
+    await this.mailService.send(new NotifyNewUserMail(event.user));
   }
 }

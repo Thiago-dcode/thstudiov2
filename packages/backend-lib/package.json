@@ -17,12 +17,17 @@
     "./config": "./dist/src/config/index.js",
     "./utils": "./dist/src/utils/index.js",
     "./utils/console": "./dist/src/utils/console.js",
-    "./services/logginService": "./dist/src/services/logginService/index.js",
-    "./services/logginService/types": "./dist/src/services/logginService/types.js",
-    "./services/logginService/base": "./dist/src/services/logginService/loggin.service.js",
-    "./services/logginService/factory": "./dist/src/services/logginService/factory-loggin.service.js",
-    "./services/logginService/console": "./dist/src/services/logginService/console-loggin.service.js",
-    "./services/logginService/file": "./dist/src/services/logginService/file-loggin.service.js"
+    "./services/log-service": "./dist/src/services/log-service/index.js",
+    "./services/log-service/types": "./dist/src/services/log-service/types.js",
+    "./services/log-service/base": "./dist/src/services/log-service/log.service.js",
+    "./services/log-service/factory": "./dist/src/services/log-service/factory-log.service.js",
+    "./services/log-service/console": "./dist/src/services/log-service/console-log.service.js",
+    "./services/log-service/file": "./dist/src/services/log-service/file-log.service.js",
+    "./services/mail-service": "./dist/src/services/mail-service/index.js",
+    "./services/mail-service/types": "./dist/src/services/mail-service/types.js",
+    "./services/mail-service/base": "./dist/src/services/mail-service/mail.service.js",
+    "./services/mail-service/nodemailer": "./dist/src/services/mail-service/nodemailer-mail.service.js",
+    "./services/mail-service/factory": "./dist/src/services/mail-service/factory-mail.service.js"
   },
   "peerDependencies": {
     "@nestjs/common": ">=11.0.0",
@@ -31,8 +36,10 @@
     "@nestjs/platform-express": ">=11.0.0"
   },
   "dependencies": {
+    "@types/nodemailer": "^7.0.1",
     "date-fns": "^4.1.0",
     "dotenv": "^16.6.1",
+    "nodemailer": "^7.0.6",
     "picocolors": "^1.1.1",
     "uuid": "^13.0.0"
   },
