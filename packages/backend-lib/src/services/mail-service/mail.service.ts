@@ -11,5 +11,5 @@ public abstract send(mailable: Mailable): Promise<any>;
 
 export abstract class Mailable {
         public abstract  envelope():Envelop;
-    public abstract content():Content;
+    public abstract content():Promise<Content>;
 }

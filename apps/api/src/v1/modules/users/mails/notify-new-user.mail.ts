@@ -1,9 +1,13 @@
 import { Mailable } from '@repo/backend-lib/services/mail-service/base';
 import { BaseUser } from '../users.types';
 import { mailingFrom } from 'src/config/mailling';
+import { ViewService } from '@repo/backend-lib/services/view-service/base';
 
 export class NotifyNewUserMail extends Mailable {
-  constructor(private readonly user: BaseUser) {
+  constructor(
+    private readonly user: BaseUser,
+    private readonly viewService: ViewService,
+  ) {
     super();
   }
   envelope() {
@@ -13,10 +17,11 @@ export class NotifyNewUserMail extends Mailable {
       subject: 'Welcome to Visualsofdsa',
     };
   }
-  content() {
+  async content() {
     return {
-      text: 'Welcome to Visualsofdsa TEXT ' + this.user.username,
-      html: '<h1>Welcome to Visualsofdsa HTML ' + this.user.username + '</h1>',
+      html: await this.viewService.render('notify-new-user', {
+        user: this.user,
+      }),
     };
   }
 }

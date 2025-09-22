@@ -6,7 +6,6 @@ export  class NodeMailerMailService extends MailService {
 private transporter: nodemailer.Transporter;
 constructor(protected readonly config: MailConfig) {
     super(config);
-console.log(this.config);
     this.transporter = nodemailer.createTransport({
         host: this.config.host,
         port: this.config.port,
@@ -19,7 +18,7 @@ console.log(this.config);
 }
 public async send(mailable: Mailable) {
     const {from,to,subject} = mailable.envelope();
-    const {text,html} = mailable.content();
+    const {text,html} = await mailable.content();
 
  return await this.transporter.sendMail({
         from,

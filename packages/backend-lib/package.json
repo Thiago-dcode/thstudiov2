@@ -27,7 +27,12 @@
     "./services/mail-service/types": "./dist/src/services/mail-service/types.js",
     "./services/mail-service/base": "./dist/src/services/mail-service/mail.service.js",
     "./services/mail-service/nodemailer": "./dist/src/services/mail-service/nodemailer-mail.service.js",
-    "./services/mail-service/factory": "./dist/src/services/mail-service/factory-mail.service.js"
+    "./services/mail-service/factory": "./dist/src/services/mail-service/factory-mail.service.js",
+    "./services/view-service": "./dist/src/services/view-service/index.js",
+    "./services/view-service/types": "./dist/src/services/view-service/types.js",
+    "./services/view-service/base": "./dist/src/services/view-service/view.service.js",
+    "./services/view-service/pug": "./dist/src/services/view-service/pug-view.service.js",
+    "./services/view-service/factory": "./dist/src/services/view-service/factory-view.service.js"
   },
   "peerDependencies": {
     "@nestjs/common": ">=11.0.0",
@@ -37,10 +42,13 @@
   },
   "dependencies": {
     "@types/nodemailer": "^7.0.1",
+    "@types/pug": "^2.0.10",
     "date-fns": "^4.1.0",
     "dotenv": "^16.6.1",
+    "install": "^0.13.0",
     "nodemailer": "^7.0.6",
     "picocolors": "^1.1.1",
+    "pug": "^3.0.3",
     "uuid": "^13.0.0"
   },
   "devDependencies": {
