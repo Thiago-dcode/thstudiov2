@@ -11,9 +11,7 @@ import {
   FactoryLogService,
   LogService,
 } from '@repo/backend-lib/services/log-service';
-import { MailService } from '@repo/backend-lib/services/mail-service';
-import { mailingConfig, mailingDriver } from 'src/config/mailling';
-import { FactoryMailService } from '@repo/backend-lib/services/mail-service/factory';
+import { NotifyNewUserMail } from './mails/notify-new-user.mail';
 @Module({
   controllers: [UserController],
   providers: [
@@ -22,21 +20,14 @@ import { FactoryMailService } from '@repo/backend-lib/services/mail-service/fact
     PlansRepository,
     UserPlanTransactionsRepository,
     UserExtraDataRepository,
+    NotifyNewUserMail,
     {
       provide: LogService,
       useFactory: () => {
         return FactoryLogService.createLogService('file', logConfig.users);
       },
     },
-    {
-      provide: MailService,
-      useFactory: () => {
-        return FactoryMailService.createMailService(
-          mailingDriver,
-          mailingConfig,
-        );
-      },
-    },
+   
   ],
   imports: [UserExtraDataModule],
 })

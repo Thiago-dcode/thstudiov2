@@ -11,6 +11,9 @@ let envFilePath = path.resolve(process.cwd(),'..', '..', '.env');
   }
   dotenv.config({ path: envPath || envFilePath });
   return {
+    app: {
+      name: 'a11studio',
+    },
     api: {
       port: process.env.API_PORT || 3000,
     },

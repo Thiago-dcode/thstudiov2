@@ -1,15 +1,21 @@
-import { Content, Envelop, MailConfig } from "./types";
+import { EmailDriver } from "./email-drivers/email-driver";
+import { Content, Envelop } from "./types";
 
 
-export abstract class MailService {   
+export  class MailService {   
 
-constructor(protected readonly config: MailConfig) {
+constructor( protected readonly emailDriver: EmailDriver) {
 }
 
-public abstract send(mailable: Mailable): Promise<any>;
+public async send(mailable: Mailable): Promise<any> {
+    const {from,to,subject} = await mailable.envelope();
+    const {text,html} = await mailable.content();
+   
+    return await this.emailDriver.sendEmail({from,to,subject,text,html});
+}
 }
 
 export abstract class Mailable {
-        public abstract  envelope():Envelop;
+        public abstract  envelope():Promise<Envelop>;
     public abstract content():Promise<Content>;
 }

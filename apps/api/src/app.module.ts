@@ -13,9 +13,8 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ScheduleModule } from '@nestjs/schedule';
 import { PlansModule } from './v1/modules/plans/plans.module';
 import { UserPlanTransactionsModule } from './v1/modules/user-plan-transactions/user-plan-transactions.module';
-import { ViewService } from '@repo/backend-lib/services/view-service/base';
-import { FactoryViewService } from '@repo/backend-lib/services/view-service/factory';
-import { viewPath } from './common/utils';
+import { ViewModule } from './common/modules/view.module';
+import { EmailModule } from './common/modules/email.module';
 const modules = [
   AuthModule,
   UserModule,
@@ -25,6 +24,8 @@ const modules = [
 @Module({
   imports: [
     ...modules,
+    ViewModule,
+    EmailModule,
     RouterModule.register(
       modules.map((module) => ({
         path: '/v1',
@@ -57,14 +58,6 @@ const modules = [
             }));
             return new UnprocessableEntityException(result);
           },
-        });
-      },
-    },
-    {
-      provide: ViewService,
-      useFactory: () => {
-        return FactoryViewService.createViewService('pug', {
-          basePath: viewPath(''),
         });
       },
     },

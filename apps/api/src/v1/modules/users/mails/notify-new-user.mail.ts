@@ -2,15 +2,19 @@ import { Mailable } from '@repo/backend-lib/services/mail-service/base';
 import { BaseUser } from '../users.types';
 import { mailingFrom } from 'src/config/mailling';
 import { ViewService } from '@repo/backend-lib/services/view-service/base';
+import { Injectable } from '@nestjs/common';
 
+@Injectable()
 export class NotifyNewUserMail extends Mailable {
-  constructor(
-    private readonly user: BaseUser,
-    private readonly viewService: ViewService,
-  ) {
+  private user: BaseUser;
+  constructor(private readonly viewService: ViewService) {
     super();
   }
-  envelope() {
+  setUser(user: BaseUser) {
+    this.user = user;
+    return this;
+  }
+  async envelope() {
     return {
       from: mailingFrom,
       to: this.user.email,
@@ -18,10 +22,11 @@ export class NotifyNewUserMail extends Mailable {
     };
   }
   async content() {
+    const html = await this.viewService.render('emails/users/notify-new-user', {
+      user: this.user,
+    });
     return {
-      html: await this.viewService.render('notify-new-user', {
-        user: this.user,
-      }),
+      html,
     };
   }
 }

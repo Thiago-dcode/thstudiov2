@@ -23,6 +23,7 @@ export class UserService {
     private readonly eventEmitter: EventEmitter2,
     private readonly logService: LogService,
     private readonly mailService: MailService,
+    private readonly notifyNewUserMail: NotifyNewUserMail,
   ) {}
   async create(createUserRequest: CreateUserRequest) {
     const user = await this.userRepository.create(createUserRequest);
@@ -83,6 +84,6 @@ export class UserService {
       plan_end_date: null,
       plan_autorenewal: true,
     });
-    await this.mailService.send(new NotifyNewUserMail(event.user));
+    await this.mailService.send(this.notifyNewUserMail.setUser(event.user));
   }
 }

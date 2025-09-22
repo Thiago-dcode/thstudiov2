@@ -16,3 +16,10 @@ export type Content={
     text?: string, 
     html?: string, 
 }
+export type EmailDriverOptions={
+    from: string ,
+    to: string | string[],
+    subject: string,
+    text?: string,
+    html?: string,
+}
