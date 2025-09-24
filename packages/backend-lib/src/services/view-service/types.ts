@@ -6,4 +6,4 @@ export type ViewConfig = {
     globals?: ViewData;
 }
 
-export type ViewServiceEngine = 'pug';
+export type ViewServiceEngine = 'pug' | 'edge' | 'ejs';

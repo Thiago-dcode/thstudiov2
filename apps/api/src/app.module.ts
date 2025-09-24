@@ -15,6 +15,7 @@ import { PlansModule } from './v1/modules/plans/plans.module';
 import { UserPlanTransactionsModule } from './v1/modules/user-plan-transactions/user-plan-transactions.module';
 import { ViewModule } from './common/modules/view.module';
 import { EmailModule } from './common/modules/email.module';
+import { ViewsTestModule } from './views-test/views-test.module';
 const modules = [
   AuthModule,
   UserModule,
@@ -39,6 +40,7 @@ const modules = [
     }),
     EventEmitterModule.forRoot(),
     ScheduleModule.forRoot(),
+    ViewsTestModule,
   ],
   controllers: [],
   providers: [

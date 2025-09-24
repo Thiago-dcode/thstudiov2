@@ -1,15 +1,30 @@
+import { EdgeTemplateEngine } from "./template-engines/edge-template.engine";
+import { EjsTemplateEngine } from "./template-engines/ejs-template.engine";
 import { PugTemplateEngine } from "./template-engines/pug-template.engine";
+import { TemplateEngine } from "./template-engines/template.engine";
 import { ViewConfig,ViewServiceEngine } from "./types";
 import { ViewService } from "./view.service";
 
 
 export class FactoryViewService {
     public static createViewService(type: ViewServiceEngine, config: ViewConfig): ViewService {
-        switch(type){
-            case 'pug':
-                return new ViewService(config, new PugTemplateEngine());
-            default:
-                return new ViewService(config, new PugTemplateEngine());
-        }
+       let templateEngine:TemplateEngine|null = null;
+       switch(type){
+        case 'pug':
+            templateEngine = new PugTemplateEngine();
+            break;
+        case 'edge':
+            templateEngine = new EdgeTemplateEngine();
+            break;
+        case 'ejs':
+            templateEngine = new EjsTemplateEngine();
+            break;
+       }
+       if(!templateEngine){
+        throw new Error('Template engine not found');
+       }    
+     return  new ViewService(config, templateEngine);
+            
+        
     }
 }

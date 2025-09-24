@@ -10,10 +10,12 @@ import { viewPath } from 'src/common/utils';
     {
       provide: ViewService,
       useFactory: (configService: ConfigService) => {
-        return FactoryViewService.createViewService('pug', {
+        return FactoryViewService.createViewService('ejs', {
           basePath: viewPath(''),
           globals: {
             appName: configService.get('app.name'),
+            beautyUrl: 'www.a11studio.com',
+            appUrl: configService.get('app.url'),
           },
         });
       },

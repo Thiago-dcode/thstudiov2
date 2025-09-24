@@ -13,6 +13,8 @@ let envFilePath = path.resolve(process.cwd(),'..', '..', '.env');
   return {
     app: {
       name: 'a11studio',
+      url: process.env.APP_URL,
+      env: process.env.NODE_ENV || 'development',
     },
     api: {
       port: process.env.API_PORT || 3000,
