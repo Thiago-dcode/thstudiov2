@@ -13,6 +13,7 @@ import { viewPath } from 'src/common/utils';
         return FactoryViewService.createViewService('ejs', {
           basePath: viewPath(''),
           globals: {
+            emailsPath: viewPath('emails'),
             appName: configService.get('app.name'),
             beautyUrl: 'www.a11studio.com',
             appUrl: configService.get('app.url'),

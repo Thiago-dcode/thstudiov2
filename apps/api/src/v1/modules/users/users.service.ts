@@ -32,7 +32,6 @@ export class UserService {
   }
 
   findAll() {
-   
     return `This action returns all user`;
   }
 
@@ -53,17 +52,22 @@ export class UserService {
   //So a user must have an extra data record 1:1 with a last plan transaction, even if the plan is free.
   @OnEvent(NEW_USER_EVENT)
   async handleNewUserEvent(event: NewUserEvent) {
-    this.logService.info('Setting up new user for: '+ event.user.id);
+    this.logService.info(`${NEW_USER_EVENT} user [${event.user.id}]`);
     //Plans with plan prices must always exist. If not, BIG PROBLEM.
     const freePlan = await this.plansRepository.findFreePlan();
     const lifetimePrice = freePlan.prices.find(
       (price) => price.billing_type === 'LIFETIME',
     );
     if (!lifetimePrice) {
-      this.logService.error('Lifetime FREE price not found for user: '+ event.user.id);
+      this.logService.error(
+        'Lifetime FREE price not found for user: ' + event.user.id,
+      );
       throw new Error('Lifetime price not found');
     }
-    this.logService.info('Creating user plan transaction', lifetimePrice);
+    this.logService.info(
+      `${NEW_USER_EVENT} user [${event.user.id}] lifetime price`,
+      lifetimePrice,
+    );
     const transaction = await this.userPlanTransactionsRepository.create({
       amount: lifetimePrice.price,
       user_id: event.user.id,
@@ -74,8 +78,13 @@ export class UserService {
       payment_method: null,
       plan_offer_id: null,
     });
-    this.logService.info('Creating user extra data for: '+ event.user.id, {transaction});
-    await this.userExtraDataRepository.create({
+    this.logService.info(
+      `${NEW_USER_EVENT} user [${event.user.id}] plan transaction`,
+      {
+        transaction,
+      },
+    );
+    const extraData = await this.userExtraDataRepository.create({
       user_id: event.user.id,
       plan_id: freePlan.id,
       last_plan_transaction_id: transaction.id,
@@ -83,6 +92,12 @@ export class UserService {
       plan_end_date: null,
       plan_autorenewal: true,
     });
+    this.logService.info(
+      `${NEW_USER_EVENT} user [${event.user.id}] extra data`,
+      {
+        extraData,
+      },
+    );
     await this.mailService.send(this.notifyNewUserMail.setUser(event.user));
   }
 }

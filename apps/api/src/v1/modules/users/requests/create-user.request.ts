@@ -6,6 +6,8 @@ import {
   MaxLength,
   MinLength,
   Matches,
+  IsBoolean,
+  IsOptional,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 
@@ -33,4 +35,12 @@ export class CreateUserRequest {
   @Matches(/\d/, { message: 'password must contain at least one number' })
   @Matches(/^\S+$/, { message: 'password cannot contain spaces' })
   password: string;
+
+  @IsBoolean()
+  @IsOptional()
+  @Transform(
+    ({ value }) =>
+      value === true || value === 'true' || value === '1' || value === 1,
+  )
+  email_validated: boolean = false;
 }

@@ -22,8 +22,17 @@ export class NotifyNewUserMail extends Mailable {
     };
   }
   async content() {
+    const features = [
+      'Manage and organize all your artwork',
+      'Create outstanding portfolio(s) to reach more clients',
+      'Add info about your clients',
+      'Show your available services',
+      'Connect with other artists',
+      'And much more!',
+    ];
     const html = await this.viewService.render('emails/users/notify-new-user', {
       user: this.user,
+      features,
     });
     return {
       html,
