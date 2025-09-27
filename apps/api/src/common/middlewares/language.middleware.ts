@@ -3,7 +3,10 @@ import { NextFunction, Request, Response } from 'express';
 import { RequestService } from 'src/common/services/request.service';
 import { ENUMS, DEFAULT_LANGUAGE } from '@repo/database/constants';
 import { EnumType } from '@repo/database/schemas/database';
-import { LANGUAGE_HEADER, REQUEST_START_TIME } from 'src/common/utils/constants';
+import {
+  LANGUAGE_HEADER,
+  REQUEST_START_TIME,
+} from 'src/common/utils/constants';
 const AVAILABLE_LANGUAGES = ENUMS.LANGUAGE_CODE;
 @Injectable({ scope: Scope.REQUEST })
 export class LanguageMiddleware implements NestMiddleware {
