@@ -2,8 +2,7 @@
 
 
 <body style=" width:600px; margin:0 auto;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-    style="width:100%; ">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%; ">
     <%- include(globals.emailsPath + '/shared/header') %>
     <tr>
       <td align="center" style="padding:20px 0;">
@@ -13,11 +12,12 @@
           <!-- Introduction -->
           <tr>
             <td align="center">
-              <p style="font-size:18px; margin-bottom:5px;">Hi <span
+              <p style="font-size:18px; margin-bottom:5px;"><%= globals.t(globals.translatePath + '.HI') %> <span
                   style="font-weight:bold;"><%= user.username %></span>
               </p>
-              <h1 style="font-size:42px; margin-bottom:5px;">WELCOME</h1>
-              <p style="font-size:16px; margin-bottom:32px; color:#555555;">We are excited to have you on board.
+              <h1 style="font-size:42px; margin-bottom:5px;"><%= globals.t(globals.translatePath + '.WELCOME') %></h1>
+              <p style="font-size:16px; margin-bottom:32px; color:#555555;">
+                <%= globals.t(globals.translatePath + '.WELCOME_MESSAGE') %>
               </p>
             </td>
           </tr>
@@ -25,8 +25,11 @@
           <!-- Features -->
           <tr>
             <td>
-              <p style=" font-size:18px; margin-bottom:10px; font-weight:400; text-align:center;">With
-                <span style="font-weight:bold;"><%= globals.appName %></span> you will be able to:</p>
+              <p style=" font-size:18px; margin-bottom:10px; font-weight:400; text-align:center;">
+                <%= globals.t(globals.translatePath + '.FEATURES_INTRO_PREFIX') %>
+                <span style="font-weight:bold;"><%= globals.appName %></span>
+                <%= globals.t(globals.translatePath + '.FEATURES_INTRO_SUFFIX') %>
+              </p>
             </td>
           </tr>
           <tr>
@@ -39,11 +42,13 @@
                   <!-- Feature Item -->
                   <% if(index > 0) { %>
                   <td style="font-size:16px; border-top:1px solid #e5e5e5;">
-                    <p style="color:black; padding:12px 0px; text-align:center; margin:auto; height:100%;"> <%= feature %></p>
+                    <p style="color:black; padding:12px 0px; text-align:center; margin:auto; height:100%;">
+                      <%= feature %></p>
                   </td>
                   <% } else { %>
                   <td style="font-size:16px;">
-                    <p style="color:black; padding:12px 0px; text-align:center; margin:auto; height:100%;"> <%= feature %></p>
+                    <p style="color:black; padding:12px 0px; text-align:center; margin:auto; height:100%;">
+                      <%= feature %></p>
                   </td>
                   <% } %>
                   <% }) %>
@@ -54,25 +59,24 @@
           <tr>
             <td align="center" style="padding:32px 0px;">
               <% if (user.email_validated) { %>
-              <p style="margin:0 0 8px 0; font-size:16px;">Start creating your portfolio</p>
+              <p style="margin:0 0 8px 0; font-size:16px;"><%= globals.t(globals.translatePath + '.CTA_START_TEXT') %>
+              </p>
               <table role="presentation" cellpadding="0" cellspacing="0" border="0">
                 <tr>
                   <td align="center" style="border-radius:4px; background-color: #343231;">
                     <a href="<%= globals.appUrl %>"
-                      style="display:inline-block; padding:12px 20px; font-size:16px; text-decoration:none; color:#fafafa;">Start
-                      now</a>
+                      style="display:inline-block; padding:12px 20px; font-size:16px; text-decoration:none; color:#fafafa;"><%= globals.t(globals.translatePath + '.CTA_START_BUTTON') %></a>
                   </td>
                 </tr>
               </table>
               <% } else { %>
-              <p style="margin:0 0 8px 0; font-size:16px;">Verify your account to start creating your
-                portfolio</p>
+              <p style="margin:0 0 8px 0; font-size:16px;"><%= globals.t(globals.translatePath + '.CTA_VERIFY_TEXT') %>
+              </p>
               <table role="presentation" cellpadding="0" cellspacing="0" border="0">
                 <tr>
                   <td align="center" style="border-radius:4px; background-color: #343231; color:#fafafa;">
                     <a href="<%= globals.appUrl %>"
-                      style="display:inline-block; padding:12px 20px; font-size:16px; text-decoration:none;">Verify
-                      your account</a>
+                      style="display:inline-block; padding:12px 20px; font-size:16px; text-decoration:none;"><%= globals.t(globals.translatePath + '.CTA_VERIFY_BUTTON') %></a>
                   </td>
                 </tr>
               </table>

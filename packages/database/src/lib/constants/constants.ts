@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { DatabaseSettings } from './schemas/database';
+import { DatabaseSettings, EnumType } from './schemas/database';
 
 // DATABASE SETTINGS
 export const DEFAULT_DATABASE_SETTINGS: DatabaseSettings = {
@@ -89,3 +89,5 @@ export const ENUMS = {
   PAYMENT_METHOD: ['CARD', 'PAYPAL', 'BANK_TRANSFER'] as const,
   PLAN_OFFERS_TYPES: ['FREE', 'DISCOUNT'] as const,
 };
+
+export const DEFAULT_LANGUAGE: EnumType<'LANGUAGE_CODE'> = 'EN';

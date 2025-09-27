@@ -1,4 +1,3 @@
-import { EdgeTemplateEngine } from "./template-engines/edge-template.engine";
 import { EjsTemplateEngine } from "./template-engines/ejs-template.engine";
 import { PugTemplateEngine } from "./template-engines/pug-template.engine";
 import { TemplateEngine } from "./template-engines/template.engine";
@@ -12,9 +11,6 @@ export class FactoryViewService {
        switch(type){
         case 'pug':
             templateEngine = new PugTemplateEngine();
-            break;
-        case 'edge':
-            templateEngine = new EdgeTemplateEngine();
             break;
         case 'ejs':
             templateEngine = new EjsTemplateEngine();

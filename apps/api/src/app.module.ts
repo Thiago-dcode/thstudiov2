@@ -1,4 +1,5 @@
 import {
+  MiddlewareConsumer,
   Module,
   UnprocessableEntityException,
   ValidationPipe,
@@ -13,9 +14,14 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ScheduleModule } from '@nestjs/schedule';
 import { PlansModule } from './v1/modules/plans/plans.module';
 import { UserPlanTransactionsModule } from './v1/modules/user-plan-transactions/user-plan-transactions.module';
-import { ViewModule } from './common/modules/view.module';
-import { EmailModule } from './common/modules/email.module';
-import { ViewsTestModule } from './views-test/views-test.module';
+import { TestModule } from './route-test/test.module';
+import { I18nModule } from 'nestjs-i18n';
+import { join } from 'path';
+import { ServicesModule } from './common/services/services.module';
+import { DEFAULT_LANGUAGE } from '@repo/database/constants';
+import { VIEW_ENGINE } from './common/utils/constants';
+import { LanguageMiddleware } from './common/middlewares/language.middleware';
+import { LanguageResolver } from './i18n/resolvers/language.resolver';
 const modules = [
   AuthModule,
   UserModule,
@@ -24,15 +30,26 @@ const modules = [
 ];
 @Module({
   imports: [
-    ...modules,
-    ViewModule,
-    EmailModule,
     RouterModule.register(
       modules.map((module) => ({
         path: '/v1',
         module,
       })),
     ),
+    I18nModule.forRootAsync({
+      useFactory: () => ({
+        fallbackLanguage: DEFAULT_LANGUAGE,
+        loaderOptions: {
+          path: join(__dirname, 'i18n'),
+          watch: true,
+        },
+        viewEngine: VIEW_ENGINE,
+        disableMiddleware: true,
+       
+      }),
+      resolvers: [LanguageResolver],
+      inject: [],
+    }),
     ConfigModule.forRoot({
       isGlobal: true,
       load: [config],
@@ -40,7 +57,9 @@ const modules = [
     }),
     EventEmitterModule.forRoot(),
     ScheduleModule.forRoot(),
-    ViewsTestModule,
+    ...modules,
+    ServicesModule,
+    TestModule,
   ],
   controllers: [],
   providers: [
@@ -65,4 +84,8 @@ const modules = [
     },
   ],
 })
-export class AppModule {}
+export class AppModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(LanguageMiddleware).forRoutes('*');
+  }
+}
