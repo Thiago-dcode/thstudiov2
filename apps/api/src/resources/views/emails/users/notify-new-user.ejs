@@ -1,136 +1,93 @@
 <%- include(globals.emailsPath + '/shared/head') %>
 
-  main {
-    width: 100%;
-  }
 
-  .container-welcome {
-    width: 100%;
-    padding: 0 30px;
-  }
+<body style=" width:600px; margin:0 auto;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+    style="width:100%; ">
+    <%- include(globals.emailsPath + '/shared/header') %>
+    <tr>
+      <td align="center" style="padding:20px 0;">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0"
+          style="width:100%; max-width:600px; border-radius:8px; overflow:hidden;">
 
-  #welcome {
-    text-align: center;
-    margin-bottom: 10px;
-  }
+          <!-- Introduction -->
+          <tr>
+            <td align="center">
+              <p style="font-size:18px; margin-bottom:5px;">Hi <span
+                  style="font-weight:bold;"><%= user.username %></span>
+              </p>
+              <h1 style="font-size:42px; margin-bottom:5px;">WELCOME</h1>
+              <p style="font-size:16px; margin-bottom:32px; color:#555555;">We are excited to have you on board.
+              </p>
+            </td>
+          </tr>
+          <% if (typeof features !== 'undefined' && Array.isArray(features) && features.length > 0) { %>
+          <!-- Features -->
+          <tr>
+            <td>
+              <p style=" font-size:18px; margin-bottom:10px; font-weight:400; text-align:center;">With
+                <span style="font-weight:bold;"><%= globals.appName %></span> you will be able to:</p>
+            </td>
+          </tr>
+          <tr>
+            <!-- Features List -->
+            <td>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                style="width:100%; overflow:hidden; border-spacing:0; border:1px solid #e5e5e5; border-radius:8px; background-color:white; box-shadow:0 0 10px 0 rgba(0, 0, 0, 0.1);">
+                <% features.forEach(function(feature,index) { %>
+                <tr>
+                  <!-- Feature Item -->
+                  <% if(index > 0) { %>
+                  <td style="font-size:16px; border-top:1px solid #e5e5e5;">
+                    <p style="color:black; padding:12px 0px; text-align:center; margin:auto; height:100%;"> <%= feature %></p>
+                  </td>
+                  <% } else { %>
+                  <td style="font-size:16px;">
+                    <p style="color:black; padding:12px 0px; text-align:center; margin:auto; height:100%;"> <%= feature %></p>
+                  </td>
+                  <% } %>
+                  <% }) %>
+              </table>
+            </td>
+          </tr>
+          <% } %>
+          <tr>
+            <td align="center" style="padding:32px 0px;">
+              <% if (user.email_validated) { %>
+              <p style="margin:0 0 8px 0; font-size:16px;">Start creating your portfolio</p>
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td align="center" style="border-radius:4px; background-color: #343231;">
+                    <a href="<%= globals.appUrl %>"
+                      style="display:inline-block; padding:12px 20px; font-size:16px; text-decoration:none; color:#fafafa;">Start
+                      now</a>
+                  </td>
+                </tr>
+              </table>
+              <% } else { %>
+              <p style="margin:0 0 8px 0; font-size:16px;">Verify your account to start creating your
+                portfolio</p>
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td align="center" style="border-radius:4px; background-color: #343231; color:#fafafa;">
+                    <a href="<%= globals.appUrl %>"
+                      style="display:inline-block; padding:12px 20px; font-size:16px; text-decoration:none;">Verify
+                      your account</a>
+                  </td>
+                </tr>
+              </table>
+              <% } %>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <%- include(globals.emailsPath + '/shared/footer') %>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
 
-  #welcome h1 {
-    font-size: 42px;
-    font-weight: bold;
-  }
-
-  .main-content {
-    width: 100%;
-    padding: 20px;
-    text-align: center;
-    margin-bottom: 10px;
-  }
-
-
-
-  .main-content .features {
-    list-style: disc;
-    list-style-position: inside;
-    padding: 12px 16px;
-    margin: 0 auto;
-    background-color: #fff;
-    width: 100%;
-    list-style-type: none;
-
-  }
-
-  .main-content .features-title {
-    font-size: 22px;
-    font-weight: bold;
-    margin-bottom: 10px;
-  }
-
-  .main-content .features li {
-    text-align: center;
-    padding: 8px 0;
-    border-bottom: 1px solid #333;
-    font-size: 15px;
-    line-height: 1.5;
-  }
-
-  .main-content .features li:first-child {
-    border-top: none;
-  }
-
-  .description {
-    text-align: center;
-    max-width: 500px;
-  }
-
-  .highlight {
-    font-weight: bold;
-  }
-
-  .link-container {
-    text-align: center;
-  }
-
-  .link-container .verify-account-title {
-    font-size: 18px;
-    font-weight: 500;
-  }
-
-  .link-container a {
-    font-size: 16px;
-    font-weight: bold;
-    color: #fff;
-    background-color: #333;
-    padding: 10px 20px;
-    border-radius: 5px;
-    text-decoration: none;
-    display: inline-block;
-    margin-top: 6px;
-  }
-
-  @media (max-width: 600px) {
-    .main-content {
-      width: 100%;
-      max-width: 100vw;
-    }
-
-    .main-content .features {
-      width: 100%;
-      max-width: 100vw;
-    }
-  }
-</style>
-</head>
-<%- include(globals.emailsPath + '/shared/body-header') %>
-<section class="container-welcome container-flex-col-center">
-  <div id="welcome">
-    <p>Hi <span class="highlight"><%= user.username %></span></p>
-    <h1>WELCOME</h1>
-    <p>We are excited to have you on board.</p>
-
-  </div>
-  <div class="main-content ">
-    <p class="features-title">With <span class="highlight"><%= globals.appName %></span> you will be able to:</p>
-    <ul class="features">
-      <% if (typeof features !== 'undefined' && Array.isArray(features) && features.length > 0) { %>
-      <% features.forEach(function(feature) { %>
-      <li><%= feature %></li>
-      <% }) %>
-      <% } %>
-    </ul>
-  </div>
-  <div class="link-container">
-    <%if(user.email_validated){%>
-    <h4 class="verify-account-title">Start creating your
-      portfolio</h4>
-    <a href="<%= globals.appUrl %>">Start
-      now</a>
-    <% } else{ %>
-    <h4 class="verify-account-title">Verify your account to
-      start creating your portfolio</h4>
-    <a href="<%= globals.appUrl %>">Verify
-      your account</a>
-    <% } %>
-  </div>
-
-</section>
-<%- include(globals.emailsPath + '/shared/footer') %>
+</html>

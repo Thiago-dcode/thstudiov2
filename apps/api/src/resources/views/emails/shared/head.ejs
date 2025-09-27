@@ -2,69 +2,65 @@
 <html>
 
 <head>
-  <meta charset="utf-8">
-  <title><%= globals.appName %></title>
-  <link rel="stylesheet" href="<%= globals.emailsPath %>/shared/layout.css">
-  <style>
-  * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="x-apple-disable-message-reformatting" content="yes">
+    <title><%= globals.appName %></title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-.container-flex-col-center {
-    width: 100%;
-    text-align: center;
-}
-
-body {
-    font-family: Verdana, Geneva, Tahoma, sans-serif;
-    margin: 0 auto;
-    width: 700px;
-    background-color: white;
-    color: #333;
-}
-
-header,
-main,
-footer {
-    margin: 15px 0;
-}
-
-header {
-    background-color: #333;
-    color: #fff;
-    width: 100%;
-    text-align: center;
-}
-
-header h1 {
-    margin: 0;
-    padding: 0;
-}
-
-@media (max-width: 600px) {
-    body {
-        width: 100vw;
-    }
-}
-
-#footer {
-    width: 100%;
-    text-align: center;
-    font-size: 12px;
-}
-
-#footer a {
-    color: #333;
-    text-decoration: none;
-    font-weight: 700;
-
-}
-
-#footer p {
-    margin: 0;
-    padding: 0;
-}
+        /* Email client resets */
 
 
+        table {
+            border-collapse: separate;
+        }
+
+        img {
+            border: 0;
+            height: auto;
+            line-height: 100%;
+            outline: none;
+            text-decoration: none;
+            -ms-interpolation-mode: bicubic;
+        }
+
+        a[x-apple-data-detectors] {
+            color: inherit !important;
+            text-decoration: none !important;
+        }
+
+        .ExternalClass {
+            width: 100%;
+        }
+
+        .ExternalClass,
+        .ExternalClass p,
+        .ExternalClass span,
+        .ExternalClass font,
+        .ExternalClass td,
+        .ExternalClass div {
+            line-height: 100%;
+        }
+
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            margin: 0;
+            background-color: #FAFAFA;
+            color: #343231;
+            width: 600px;
+        }
+    </style>
+    <!--[if mso]>
+  <style type="text/css">
+    body, table, td, a { font-family: Arial, sans-serif !important; }
+    table { border-collapse: collapse !important; }
+    table, td { mso-table-lspace:0pt; mso-table-rspace:0pt; }
+  </style>
+  <![endif]-->
+</head>

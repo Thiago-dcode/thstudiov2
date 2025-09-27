@@ -1,12 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { BaseRepository } from '@repo/database/repositories';
 import { BaseUser } from './users.types';
-import { CreateUserInput } from '@repo/database/schemas/users';
+import { CreateUserInput, UserSchema } from '@repo/database/schemas/users';
 
 @Injectable()
 export class UserRepository extends BaseRepository {
   constructor() {
     super('users');
+  }
+  async findById(id: number) {
+    return await this.queryBuilder.where('id', '=', id).first<UserSchema>();
   }
   async applyFilters(filters: any) {
     console.log(filters);
@@ -16,7 +19,9 @@ export class UserRepository extends BaseRepository {
     const values = Object.values(user);
     return await this.queryBuilder.insertAndGet<BaseUser>(columns, values, [
       'id',
-      ...columns,
+      'email',
+      'username',
+      'email_validated',
     ]);
   }
 

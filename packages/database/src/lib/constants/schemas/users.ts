@@ -1,4 +1,4 @@
-export type User = {
+export type UserSchema = {
   id: number;
   name?: string | null;
   surname?: string | null;
@@ -13,7 +13,7 @@ export type User = {
   updated_at: Date;
 };
 
-export type CreateUserInput = Omit<User, 'id' | 'created_at' | 'updated_at' | 'address_id' | 'email_validated' | 'number_email_validations_sent'>;
+export type CreateUserInput = Omit<UserSchema, 'id' | 'created_at' | 'updated_at' | 'address_id' | 'email_validated' | 'number_email_validations_sent'>;
 export type UpdateUserInput = Partial<CreateUserInput>;
 
 export type UserExtraDataSchema = {
