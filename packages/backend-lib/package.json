@@ -44,7 +44,6 @@
     "@types/pug": "^2.0.10",
     "date-fns": "^4.1.0",
     "dotenv": "^16.6.1",
-    "edge.js": "^6.3.0",
     "ejs": "^3.1.10",
     "install": "^0.13.0",
     "nodemailer": "^7.0.6",

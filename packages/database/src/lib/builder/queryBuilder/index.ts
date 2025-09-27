@@ -11,6 +11,7 @@ import {
   SqlOperation,
   SqlValue,
   WhereType,
+  TableName,
 } from '../../constants/schemas/database';
 import {
   QueryBuilderMethodChainedException,
@@ -365,7 +366,7 @@ export class QueryBuilder extends BaseBuilder {
    */
   public join(
     localColumn: string,
-    foreignTable: string,
+    foreignTable: TableName,
     foreignColumn: string,
     joinType: JoinType = 'INNER',
   ) {

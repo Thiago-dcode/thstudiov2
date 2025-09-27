@@ -1,3 +1,5 @@
+import { AddressSchema } from "./addresses";
+
 export type UserSchema = {
   id: number;
   name?: string | null;
@@ -12,7 +14,7 @@ export type UserSchema = {
   created_at: Date;
   updated_at: Date;
 };
-
+export type UserSchemaWithAddress = UserSchema & Exclude<AddressSchema,'id'> & {address_id: number};
 export type CreateUserInput = Omit<UserSchema, 'id' | 'created_at' | 'updated_at' | 'address_id' | 'email_validated' | 'number_email_validations_sent'>;
 export type UpdateUserInput = Partial<CreateUserInput>;
 

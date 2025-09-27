@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { UpdateUserRequest } from './requests/update-user.request';
 import { NewUserEvent } from './events/new-user.event';
 import { NEW_USER_EVENT } from './users.constants';
@@ -31,19 +31,20 @@ export class UserService {
     return user;
   }
 
-  findAll() {
+  async findAll() {
     return `This action returns all user`;
   }
-
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
+ 
+  async findOne( id: number) {
+    console.log(id);
+    return await this.userRepository.findById(id);
   }
 
   update(id: number, updateUserDto: UpdateUserRequest) {
     console.log(id, updateUserDto);
   }
 
-  remove(id: number) {
+  async remove(id: number) {
     return `This action removes a #${id} user`;
   }
 
@@ -59,12 +60,12 @@ export class UserService {
       (price) => price.billing_type === 'LIFETIME',
     );
     if (!lifetimePrice) {
-      this.logService.error(
+      this.logService.name('new-user').error(
         'Lifetime FREE price not found for user: ' + event.user.id,
       );
-      throw new Error('Lifetime price not found');
+      throw new HttpException('Lifetime price not found', HttpStatus.BAD_REQUEST);
     }
-    this.logService.info(
+    this.logService.name('new-user').info(
       `${NEW_USER_EVENT} user [${event.user.id}] lifetime price`,
       lifetimePrice,
     );
@@ -78,7 +79,7 @@ export class UserService {
       payment_method: null,
       plan_offer_id: null,
     });
-    this.logService.info(
+    this.logService.name('new-user').info(
       `${NEW_USER_EVENT} user [${event.user.id}] plan transaction`,
       {
         transaction,
@@ -92,7 +93,7 @@ export class UserService {
       plan_end_date: null,
       plan_autorenewal: true,
     });
-    this.logService.info(
+    this.logService.name('new-user').info(
       `${NEW_USER_EVENT} user [${event.user.id}] extra data`,
       {
         extraData,

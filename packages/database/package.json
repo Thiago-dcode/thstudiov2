@@ -16,6 +16,7 @@
     "./schemas/plans":"./dist/src/lib/constants/schemas/plans.js",
     "./schemas/plan_transaction":"./dist/src/lib/constants/schemas/plan_transaction.js",
     "./schemas/users":"./dist/src/lib/constants/schemas/users.js",
+    "./schemas/addresses":"./dist/src/lib/constants/schemas/addresses.js",
     "./constants": "./dist/src/lib/constants/constants.js",
     "./queryBuilder": "./dist/src/lib/builder/queryBuilder/index.js",
     "./schemaBuilder": "./dist/src/lib/builder/schemaBuilder/index.js",

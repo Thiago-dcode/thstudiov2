@@ -22,7 +22,9 @@ import { DEFAULT_LANGUAGE } from '@repo/database/constants';
 import { VIEW_ENGINE } from './common/utils/constants';
 import { LanguageMiddleware } from './common/middlewares/language.middleware';
 import { LanguageResolver } from './i18n/resolvers/language.resolver';
-const modules = [
+import { InterceptorProviders } from './common/intecerceptors/interceptor.providers';
+import { filterProviders } from './common/filters/filter.providers';
+const APP_MODULES = [
   AuthModule,
   UserModule,
   PlansModule,
@@ -31,7 +33,7 @@ const modules = [
 @Module({
   imports: [
     RouterModule.register(
-      modules.map((module) => ({
+      APP_MODULES.map((module) => ({
         path: '/v1',
         module,
       })),
@@ -45,7 +47,6 @@ const modules = [
         },
         viewEngine: VIEW_ENGINE,
         disableMiddleware: true,
-       
       }),
       resolvers: [LanguageResolver],
       inject: [],
@@ -57,13 +58,15 @@ const modules = [
     }),
     EventEmitterModule.forRoot(),
     ScheduleModule.forRoot(),
-    ...modules,
+    ...APP_MODULES,
     ServicesModule,
     TestModule,
   ],
   controllers: [],
   providers: [
     ...ValidatorProviders,
+    ...InterceptorProviders,
+    ...filterProviders,
     {
       provide: APP_PIPE,
       useFactory: () => {
@@ -72,7 +75,6 @@ const modules = [
           transform: true,
           validateCustomDecorators: true,
           exceptionFactory: (errors) => {
-            console.log(errors);
             const result = errors.map((error) => ({
               property: error.property,
               message: error.constraints[Object.keys(error.constraints)[0]],

@@ -9,9 +9,14 @@ import { FactoryViewService } from '@repo/backend-lib/services/view-service/fact
 import { viewPath } from 'src/common/utils';
 import { VIEW_ENGINE } from 'src/common/utils/constants';
 import { I18nService } from 'nestjs-i18n';
+import {
+  FactoryLogService,
+  LogService,
+} from '@repo/backend-lib/services/log-service';
+import { logConfig } from 'src/config/logging';
 @Global()
 @Module({
-  exports: [RequestService, ViewService, MailService],
+  exports: [RequestService, ViewService, MailService, LogService],
   providers: [
     RequestService,
     {
@@ -38,6 +43,12 @@ import { I18nService } from 'nestjs-i18n';
           mailingDriver,
           mailingConfig,
         );
+      },
+    },
+    {
+      provide: LogService,
+      useFactory: () => {
+        return FactoryLogService.createLogService('file', logConfig.api);
       },
     },
   ],
