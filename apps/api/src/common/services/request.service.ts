@@ -1,12 +1,12 @@
-import { Injectable, Scope } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { EnumType } from '@repo/database/schemas/database';
 import { BaseUser } from 'src/v1/modules/users/users.types';
 
 type RequestLanguage = EnumType<'LANGUAGE_CODE'>;
-@Injectable({ scope: Scope.REQUEST })
+@Injectable()
 export class RequestService {
-  private _user: BaseUser;
-  private _language: RequestLanguage;
+  private _user: BaseUser | null;
+  private _language: RequestLanguage | null;
   constructor() {}
   get user(): BaseUser {
     return this._user;

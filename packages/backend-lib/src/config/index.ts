@@ -19,6 +19,10 @@ let envFilePath = path.resolve(process.cwd(),'..', '..', '.env');
     api: {
       port: process.env.API_PORT || 3000,
     },
+    jwt: {
+      secret: process.env.JWT_SECRET || 'secret',
+      expiresIn: process.env.JWT_EXPIRES_IN || '24h',
+    },
     database: {
       client: process.env.DB_CLIENT || 'postgres',
       host: process.env.DB_HOST || 'localhost',

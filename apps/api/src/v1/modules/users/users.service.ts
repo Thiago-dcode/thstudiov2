@@ -12,6 +12,7 @@ import { UserExtraDataRepository } from '../user-extra-data/user-extra-data.repo
 import { LogService } from '@repo/backend-lib/services/log-service';
 import { MailService } from '@repo/backend-lib/services/mail-service';
 import { NotifyNewUserMail } from './mails/notify-new-user.mail';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UserService {
@@ -26,7 +27,10 @@ export class UserService {
     private readonly notifyNewUserMail: NotifyNewUserMail,
   ) {}
   async create(createUserRequest: CreateUserRequest) {
-    const user = await this.userRepository.create(createUserRequest);
+    const user = await this.userRepository.create({
+      ...createUserRequest,
+      password: await bcrypt.hash(createUserRequest.password, 10),
+    });
     this.eventEmitter.emit(NEW_USER_EVENT, new NewUserEvent(user));
     return user;
   }
@@ -34,9 +38,8 @@ export class UserService {
   async findAll() {
     return `This action returns all user`;
   }
- 
-  async findOne( id: number) {
-    console.log(id);
+
+  async findOne(id: number) {
     return await this.userRepository.findById(id);
   }
 
@@ -60,15 +63,20 @@ export class UserService {
       (price) => price.billing_type === 'LIFETIME',
     );
     if (!lifetimePrice) {
-      this.logService.name('new-user').error(
-        'Lifetime FREE price not found for user: ' + event.user.id,
+      this.logService
+        .name('new-user')
+        .error('Lifetime FREE price not found for user: ' + event.user.id);
+      throw new HttpException(
+        'Lifetime price not found',
+        HttpStatus.BAD_REQUEST,
       );
-      throw new HttpException('Lifetime price not found', HttpStatus.BAD_REQUEST);
     }
-    this.logService.name('new-user').info(
-      `${NEW_USER_EVENT} user [${event.user.id}] lifetime price`,
-      lifetimePrice,
-    );
+    this.logService
+      .name('new-user')
+      .info(
+        `${NEW_USER_EVENT} user [${event.user.id}] lifetime price`,
+        lifetimePrice,
+      );
     const transaction = await this.userPlanTransactionsRepository.create({
       amount: lifetimePrice.price,
       user_id: event.user.id,
@@ -79,12 +87,11 @@ export class UserService {
       payment_method: null,
       plan_offer_id: null,
     });
-    this.logService.name('new-user').info(
-      `${NEW_USER_EVENT} user [${event.user.id}] plan transaction`,
-      {
+    this.logService
+      .name('new-user')
+      .info(`${NEW_USER_EVENT} user [${event.user.id}] plan transaction`, {
         transaction,
-      },
-    );
+      });
     const extraData = await this.userExtraDataRepository.create({
       user_id: event.user.id,
       plan_id: freePlan.id,
@@ -93,12 +100,11 @@ export class UserService {
       plan_end_date: null,
       plan_autorenewal: true,
     });
-    this.logService.name('new-user').info(
-      `${NEW_USER_EVENT} user [${event.user.id}] extra data`,
-      {
+    this.logService
+      .name('new-user')
+      .info(`${NEW_USER_EVENT} user [${event.user.id}] extra data`, {
         extraData,
-      },
-    );
+      });
     await this.mailService.send(this.notifyNewUserMail.setUser(event.user));
   }
 }

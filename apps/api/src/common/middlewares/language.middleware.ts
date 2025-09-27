@@ -10,6 +10,7 @@ export class LanguageMiddleware implements NestMiddleware {
   constructor(private readonly requestService: RequestService) {}
 
   async use(req: Request, res: Response, next: NextFunction) {
+    this.requestService.language = null;
     req.headers[REQUEST_START_TIME] = Date.now().toString();
     //Priority 1: Query Param
     const { lan }: { lan?: string } = req.query;

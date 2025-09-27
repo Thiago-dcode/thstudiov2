@@ -15,15 +15,21 @@ export class ResponseExceptionFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse();
     const request = ctx.getRequest();
-
     //This approach of try catch ensures the API returns a JSON response, even if the proper exception filter throws an error
     try {
       const status =
         exception?.code || exception?.statusCode || exception?.status || 500;
-      const message = exception?.message || 'Internal Server Error';
+      const message =
+        exception?.message ||
+        exception?.response?.error ||
+        'Internal Server Error';
+      const errors = Array.isArray(exception?.response?.message)
+        ? exception?.response.message
+        : [{ message }];
       const error = {
         status_code: status,
         message,
+        errors,
         timestamp: format(new Date(), 'dd-MM-yyyy HH:mm:ss'),
         path: request.path,
       };
@@ -31,8 +37,14 @@ export class ResponseExceptionFilter implements ExceptionFilter {
         // Log the error if LogService is available
         const logService = FactoryLogService.createLogService(
           'file',
-          logConfig.api);
-        logService.channel('api/errors/' + status).error(message, error);
+          logConfig.api,
+        );
+        logService.channel('api/errors/' + status).error(message, {
+          ...error,
+          requestBody: request?.body,
+          requestParams: request?.params,
+          requestQuery: request?.query,
+        });
       } catch (error) {
         console.error('Exception occurred:', error);
       }

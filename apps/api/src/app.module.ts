@@ -4,8 +4,8 @@ import {
   UnprocessableEntityException,
   ValidationPipe,
 } from '@nestjs/common';
-import { APP_PIPE, RouterModule } from '@nestjs/core';
-import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD, APP_PIPE, RouterModule } from '@nestjs/core';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { config, envFilePath } from '@repo/backend-lib/config';
 import { AuthModule } from './v1/modules/auth/auth.module';
 import { UserModule } from './v1/modules/users/users.module';
@@ -24,6 +24,8 @@ import { LanguageMiddleware } from './common/middlewares/language.middleware';
 import { LanguageResolver } from './i18n/resolvers/language.resolver';
 import { InterceptorProviders } from './common/intecerceptors/interceptor.providers';
 import { filterProviders } from './common/filters/filter.providers';
+import { JwtModule } from '@nestjs/jwt';
+import { AuthGuard } from './common/guards/prod-guard/auth.guard';
 const APP_MODULES = [
   AuthModule,
   UserModule,
@@ -32,6 +34,19 @@ const APP_MODULES = [
 ];
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [config],
+      envFilePath,
+    }),
+    JwtModule.registerAsync({
+      useFactory: (configService: ConfigService) => ({
+        global: true,
+        secret: configService.get('jwt.secret'),
+        signOptions: { expiresIn: configService.get('jwt.expiresIn') },
+      }),
+      inject: [ConfigService],
+    }),
     RouterModule.register(
       APP_MODULES.map((module) => ({
         path: '/v1',
@@ -51,11 +66,6 @@ const APP_MODULES = [
       resolvers: [LanguageResolver],
       inject: [],
     }),
-    ConfigModule.forRoot({
-      isGlobal: true,
-      load: [config],
-      envFilePath,
-    }),
     EventEmitterModule.forRoot(),
     ScheduleModule.forRoot(),
     ...APP_MODULES,
@@ -67,6 +77,10 @@ const APP_MODULES = [
     ...ValidatorProviders,
     ...InterceptorProviders,
     ...filterProviders,
+    {
+      provide: APP_GUARD,
+      useClass: AuthGuard,
+    },
     {
       provide: APP_PIPE,
       useFactory: () => {

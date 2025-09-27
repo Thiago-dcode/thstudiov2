@@ -6,6 +6,9 @@ export type BaseUser = {
   username: string;
   email_validated: boolean;
 };
+export type BaseUserWithPassword = BaseUser & {
+  password: string;
+};
 export type User = BaseUser & {
   name?: string | null;
   surname?: string | null;

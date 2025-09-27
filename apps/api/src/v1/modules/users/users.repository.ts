@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { BaseRepository } from '@repo/database/repositories';
-import { BaseUser, User } from './users.types';
+import { BaseUser, BaseUserWithPassword, User } from './users.types';
 import {
   CreateUserInput,
   UserSchemaWithAddress,
@@ -8,12 +8,17 @@ import {
 
 @Injectable()
 export class UserRepository extends BaseRepository {
+  private readonly fullColumns: string[] = [
+    'users.*',
+    'addresses.id as address_id',
+    'addresses.*',
+  ];
   constructor() {
     super('users');
   }
   async findById(id: number): Promise<User> {
     const result = await this.queryBuilder
-      .select(['users.*', 'addresses.id as address_id', 'addresses.*'])
+      .select(this.fullColumns)
       .where('id', '=', id)
       .join('address_id', 'addresses', 'id', 'LEFT')
       .first<UserSchemaWithAddress>();
@@ -23,6 +28,74 @@ export class UserRepository extends BaseRepository {
         HttpStatus.NOT_FOUND,
       );
     }
+    return this.formatFullUser(result);
+  }
+  async findOneBy(
+    column: string,
+    value: any,
+    full: boolean = false,
+  ): Promise<BaseUser | User> {
+    let query = this.queryBuilder.where(column, '=', value);
+    if (full) {
+      query = query
+        .join('address_id', 'addresses', 'id', 'LEFT')
+        .select(this.fullColumns);
+    } else {
+      query = query.select(['id', 'email', 'username', 'email_validated']);
+    }
+    const result = await query.first<UserSchemaWithAddress>();
+    if (!result) {
+      throw new HttpException(
+        'User not found with ' + column + ' ' + value,
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    return full ? this.formatFullUser(result) : this.formatUser(result);
+  }
+  async findOneByWithPassword(
+    column: string,
+    value: any,
+  ): Promise<BaseUserWithPassword> {
+    const result = await this.queryBuilder
+      .where(column, '=', value)
+      .select(['id', 'email', 'username', 'email_validated', 'password'])
+      .first<UserSchemaWithAddress>();
+    if (!result) {
+      throw new HttpException(
+        'User not found with ' + column + ' ' + value,
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    return {
+      id: result?.id,
+      email: result?.email,
+      username: result?.username,
+      email_validated: result?.email_validated,
+      password: result?.password,
+    };
+  }
+  async applyFilters(filters: any) {
+    console.log(filters);
+  }
+  async create(user: CreateUserInput) {
+    const columns = Object.keys(user);
+    const values = Object.values(user);
+    return await this.queryBuilder.insertAndGet<BaseUser>(columns, values, [
+      'id',
+      'email',
+      'username',
+      'email_validated',
+    ]);
+  }
+  private formatUser(result: UserSchemaWithAddress): BaseUser {
+    return {
+      id: result?.id,
+      email: result?.email,
+      username: result?.username,
+      email_validated: result?.email_validated,
+    };
+  }
+  private formatFullUser(result: UserSchemaWithAddress): User {
     return {
       id: result?.id,
       email: result?.email,
@@ -47,20 +120,6 @@ export class UserRepository extends BaseRepository {
         : null,
     };
   }
-  async applyFilters(filters: any) {
-    console.log(filters);
-  }
-  async create(user: CreateUserInput) {
-    const columns = Object.keys(user);
-    const values = Object.values(user);
-    return await this.queryBuilder.insertAndGet<BaseUser>(columns, values, [
-      'id',
-      'email',
-      'username',
-      'email_validated',
-    ]);
-  }
-
   // update(id: number, updatePlanDto: UpdatePlanDto) {
   //   return `This action updates a #${id} plan`;
   // }
