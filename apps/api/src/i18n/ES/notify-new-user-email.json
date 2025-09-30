@@ -1,7 +1,9 @@
 {
-    "HELLO": "Hola desde ES",
+    
+    "WELCOME_SUBJECT": "Bienvenido a {appName}",
     "HI": "Hola",
     "WELCOME": "BIENVENIDO",
+
     "WELCOME_MESSAGE": "Estamos emocionados de tenerte a bordo.",
     "FEATURES_INTRO_PREFIX": "Con",
     "FEATURES_INTRO_SUFFIX": "podrás:",
@@ -16,8 +18,6 @@
     "CTA_START_TEXT": "Comienza a crear tu portafolio",
     "CTA_START_BUTTON": "Comenzar ahora",
     "CTA_VERIFY_TEXT": "Verifica tu cuenta para comenzar a crear tu portafolio",
-    "CTA_VERIFY_BUTTON": "Verificar cuenta",
-    "FOOTER": {
-        "ALL_RIGHTS_RESERVED": "Todos los derechos reservados."
-    }
+    "CTA_VERIFY_BUTTON": "Verificar cuenta"
+    
 }

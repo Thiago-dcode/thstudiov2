@@ -15,9 +15,13 @@ let envFilePath = path.resolve(process.cwd(),'..', '..', '.env');
       name: 'a11studio',
       url: process.env.APP_URL,
       env: process.env.NODE_ENV || 'development',
+      sendErrorEmails: process.env.SEND_ERROR_EMAILS == '1',
+      
     },
     api: {
-      port: process.env.API_PORT || 3000,
+      url: process.env.API_URL,
+      name: 'api',
+      port: process.env.API_PORT || 8080,
     },
     jwt: {
       secret: process.env.JWT_SECRET || 'secret',
@@ -36,6 +40,7 @@ let envFilePath = path.resolve(process.cwd(),'..', '..', '.env');
       port: process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT) : 587,
       username: process.env.SMTP_USERNAME,
       password: process.env.SMTP_PASSWORD,
+      admins: process.env.SMTP_ADMINS ? process.env.SMTP_ADMINS.split(',') : [],
     },
   };
 };

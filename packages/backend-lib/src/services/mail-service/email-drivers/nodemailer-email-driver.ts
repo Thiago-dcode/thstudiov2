@@ -1,3 +1,4 @@
+import Logger from "../../../utils/console";
 import { EmailDriverOptions, MailConfig } from "../types";
 import { EmailDriver } from "./email-driver";
 import nodemailer from "nodemailer";
@@ -19,7 +20,7 @@ import nodemailer from "nodemailer";
         public async sendEmail({from,to,subject,text,html}: EmailDriverOptions) {
 
           try {
-            console.log(from,to,subject);
+            Logger.info(from,to,subject);
             return await this.transporter.sendMail({
                 from,
                 to,
@@ -28,7 +29,7 @@ import nodemailer from "nodemailer";
                 html, 
               });
           } catch (error) {
-            console.log(error);
+            Logger.error(error);
             throw error;
           }
         

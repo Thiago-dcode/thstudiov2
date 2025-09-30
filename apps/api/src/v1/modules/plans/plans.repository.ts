@@ -35,7 +35,6 @@ export class PlansRepository extends BaseRepository {
     return result;
   }
   async findFreePlan(): Promise<BasePlanWithPrices> {
-    console.log('findFreePlan');
     const result = await QueryBuilder.table('plans')
       .select([
         'id',

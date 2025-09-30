@@ -1,7 +1,7 @@
-import { EnumType } from './database';
+import { TABLES_ENUM } from '../constants';
+import { EnumType, TableColumn } from './database';
 
-// Plan transaction type based on the user_plan_transactions table structure
-export type PlanTransaction = {
+export type PlanTransactionSchema = {
   id: number;
   transaction_id: string;
   status: EnumType<'TRANSACTION_STATUS'>;
@@ -15,9 +15,13 @@ export type PlanTransaction = {
   updated_at: Date;
 };
 
-// Input types for creating/updating plan transactions
+export type PlanTransactionWithoutTimestampsSchema = Omit<PlanTransactionSchema, 'created_at' | 'updated_at'>;
+
+const tablesPlanTransaction = [TABLES_ENUM.USER_PLAN_TRANSACTIONS] as const;
+export type PlanTransactionColumns = TableColumn<typeof tablesPlanTransaction, PlanTransactionWithoutTimestampsSchema>;
+
 export type CreatePlanTransactionInput = Omit<
-  PlanTransaction,
+  PlanTransactionSchema,
   'id' | 'created_at' | 'updated_at'
 >;
 export type UpdatePlanTransactionInput = Partial<CreatePlanTransactionInput>;

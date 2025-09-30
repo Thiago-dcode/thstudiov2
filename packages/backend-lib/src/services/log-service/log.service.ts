@@ -41,6 +41,11 @@ export abstract class LogService {
         logMessage += `\n`;
         return logMessage;
     }
+    protected async callCallback(level: LogLevel, message: string, options?:LogOptions) {
+        if(this.config.callback && this.config.callback.channel === this.config.channel){
+            await this.config.callback.callback(level, message, options);
+        } 
+    }
     
     
     

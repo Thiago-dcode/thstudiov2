@@ -1,5 +1,5 @@
 import BaseBuilder from '..';
-import { ColumnAttributesWithAfter, TableName ,ColumnAttributesWithForeignKey} from '../../constants/schemas/database';
+import { ColumnAttributesWithAfter, TableName ,ColumnAttributesWithForeignKey, ColumnDefinition} from '../../constants/schemas/database';
 import { getClientConfig } from '../../client';
 import { ColumnBuilder } from '../columnBuilder';
 class AlterBuilder extends BaseBuilder {
@@ -52,14 +52,13 @@ ADD ${ColumnBuilder.foreignKey(column, foreignTableName, foreignColumnName, opti
     return await this.getDb().query(this.query);
   }
 
-  public async addColumn(columnName: string, columnDefinition: string,options?: ColumnAttributesWithAfter) {
+  public async addColumn(columnName: string, columnDefinition: ColumnDefinition,options?: ColumnAttributesWithAfter) {
     this.query = `ALTER TABLE ${this.tableName} ADD COLUMN ${columnName} ${columnDefinition}${options ? ' ' + ColumnBuilder.buildOptions(options) : ''};`;
-    console.log(this.query);
     return await this.getDb().query(this.query);
   }
   public async addColumnIfNotExists(
     columnName: string,
-    columnDefinition: string,
+    columnDefinition: ColumnDefinition,
     options?: ColumnAttributesWithAfter,
   ) {
     this.query = `ALTER TABLE ${this.tableName} ADD COLUMN IF NOT EXISTS ${columnName} ${columnDefinition}${options ? ' ' + ColumnBuilder.buildOptions(options) : ''};`;

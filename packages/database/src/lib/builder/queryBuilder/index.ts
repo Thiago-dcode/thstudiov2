@@ -20,7 +20,6 @@ import {
   QueryBuilderWrongColumnsException,
   QueryBuilderWrongDatabaseClientException,
 } from './exceptions';
-import { TABLES } from '../../constants/constants';
 
 /**
  * QueryBuilder class for building and executing SQL queries
@@ -97,7 +96,7 @@ export class QueryBuilder extends BaseBuilder {
   // CONSTRUCTOR
   // ============================================================================
 
-  constructor(protected readonly tableName: (typeof TABLES)[number]) {
+  constructor(protected readonly tableName: TableName) {
     super(tableName);
   }
 
@@ -132,7 +131,7 @@ export class QueryBuilder extends BaseBuilder {
     this.buildSelectQuery();
     const result = await getClient().query(this.query, this.values);
     this.reset();
-    return result.rows[0];
+    return result.rows[0] ?? null;
   }
   public async exists(): Promise<boolean> {
     this.buildSelectQuery();
@@ -141,7 +140,7 @@ export class QueryBuilder extends BaseBuilder {
     return result.rowCount > 0;
   }
 
-  public static table(tableName: (typeof TABLES)[number]) {
+  public static table(tableName: TableName) {
     this.throwIfTableNotExists(tableName);
     return new QueryBuilder(tableName);
   }
@@ -159,7 +158,7 @@ export class QueryBuilder extends BaseBuilder {
    */
   public async insert(columns: string[], values: SqlValue[]) {
     this.buildInsertQuery(columns, values);
-    const result = await getClient().query(this.query, values);
+    const result = await getClient().query(this.query, values.filter((value) => value !== null));
     this.reset();
     return result;
   }
@@ -167,21 +166,23 @@ export class QueryBuilder extends BaseBuilder {
     columns: string[],
     values: SqlValue[],
     select: string[] | string = '*',
+    join: Join[] = [],
   ): Promise<T> {
     this.buildInsertQuery(columns, values);
-   await getClient().query(this.query, values);
-    this.reset();
-    columns.forEach((column, index) => {
-      const value = values[index];
-      const operator = value === null ? 'IS' : '=';
-      
-      this.where(column, operator, value);
-    });
-    this.select(select);
+   await getClient().query(this.query, values.filter((value) => value !== null));
+    this.handleBuildGet(columns, values, select, join);
     const result = await this.first();
     return result;
   }
-
+private  handleBuildGet(columns: string[], values: SqlValue[], select: string[] | string = '*', join: Join[] = []){
+  this.reset();
+    columns.forEach((column, index) => {
+      
+      this.where(column, '=', values[index]);
+    });
+    this.select(select);
+    this.joins.push(...join);
+}
   /**
    * Execute an UPDATE query
    * @param columns - Array of column names to update
@@ -198,10 +199,11 @@ export class QueryBuilder extends BaseBuilder {
    */
   public async update(columns: string[], values: SqlValue[]) {
     this.buildUpdateQuery(columns, values);
-    const result = await getClient().query(this.query, values);
+    const result = await getClient().query(this.query, this.values);
     this.reset();
     return result;
   }
+
 
   /**
    * Execute a DELETE query
@@ -269,11 +271,12 @@ export class QueryBuilder extends BaseBuilder {
    */
   private handlePushWhere(column: string, operator: SqlClauseWithoutIn, value: SqlValue, type:WhereType) {
     this.operationsChain.push('where');
-    if(value !== null) this.values.push(value);
+    const isNull = value === null;
+    if(!isNull) this.values.push(value);
      this.wheres.push({
        column,
-       operator,
-       position: value !== null ? this.valuesPosition++ : -1,
+       operator: isNull ? operator=== '=' ? 'IS' : operator=== '!=' ? 'IS NOT' : operator : operator,
+       position: isNull ? -1 : this.valuesPosition++,
        type,
        value,
      } as WhereCondition);
@@ -439,18 +442,22 @@ export class QueryBuilder extends BaseBuilder {
   protected buildInsertQuery(columns: string[], values: SqlValue[]) {
     this.throwIfColumnsAndValuesLengthMismatch(columns, values);
     this.throwIfNotCompatibleOperations([], 'insert');
-    switch (getClient().config.client) {
-      case 'postgres':
-        this.query = `INSERT INTO ${this.tableName} (${columns.join(',')}) VALUES (${values.map((_, index) => `$${index + 1}`).join(',')})`;
-        break;
-      case 'mysql':
-        this.query = `INSERT INTO ${this.tableName} (${columns.join(',')}) VALUES (${values.map(() => `?`).join(',')})`;
-        break;
-      default:
-        throw new QueryBuilderWrongDatabaseClientException(
-          getClient().config.client,
-        );
-    }
+ let offset = 0;
+        this.query = `INSERT INTO ${this.tableName} (${columns.join(',')}) VALUES (${values.map((_, index) => {
+const isNull = values[index] === null;
+offset = isNull ? offset : offset + 1;
+          switch (getClient().config.client) {
+            case 'postgres':
+              return `${isNull ? 'NULL' : `$${offset}`}`;
+            case 'mysql':
+              return `${isNull ? 'NULL' : `?`}`;
+            default:
+              throw new QueryBuilderWrongDatabaseClientException(
+                getClient().config.client,
+              );
+          }
+        }).join(',')})`;    
+     
   }
 
   /**
@@ -467,15 +474,25 @@ export class QueryBuilder extends BaseBuilder {
         !getClient().config.settings.allowUpdateWithoutWhere,
       'update',
     );
-    switch (getClient().config.client) {
-      case 'postgres':
-        this.query = `UPDATE ${this.tableName} SET ${columns.map((column, index) => `${column} = $${index + 1}`).join(',')}`;
-        break;
-      case 'mysql':
-        this.query = `UPDATE ${this.tableName} SET ${columns.map((column) => `${column} = ?`).join(',')}`;
-        break;
-    }
-    this.query += this.buildWheresQuery(this.wheres, columns.length);
+    this.values.unshift(...values.filter((value) => value !== null));
+    let offset = 0;
+        this.query = `UPDATE ${this.tableName} SET ${columns.map((column, index) =>{
+          const isNull = values[index] === null;
+          offset = isNull ? offset : offset + 1;
+          switch (getClient().config.client) {
+            case 'postgres':
+              return `${column} = ${ isNull ? 'NULL' : `$${offset}`}`;
+            case 'mysql':
+              return `${column} = ${ isNull ? 'NULL' : `?`}`;
+            default:
+              throw new QueryBuilderWrongDatabaseClientException(
+                getClient().config.client,
+              );
+          }
+        }).join(',')}`;
+    
+    this.query += this.buildWheresQuery(this.wheres, offset);
+ 
   }
 
   /**

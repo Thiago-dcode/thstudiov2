@@ -38,10 +38,15 @@ export class FileLogService extends LogService {
     }
 
     private async writeLog(logFile: string, level: LogLevel, message: string, options?:LogOptions) {
-       if(!(await checkFileExistsAsync(logFile))){
-       await fs.writeFile(logFile, '');
-       }
-       await fs.appendFile(logFile, this.beautifyLogMessage(level, message, options));
+      try {
+        if(!(await checkFileExistsAsync(logFile))){
+            await fs.writeFile(logFile, '');
+            }
+            await fs.appendFile(logFile, this.beautifyLogMessage(level, message, options));
+            await this.callCallback(level, message, options);
+      } catch (error) {
+        console.error(error);
+        }
     }
 
     

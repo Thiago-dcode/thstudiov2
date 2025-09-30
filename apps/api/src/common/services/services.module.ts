@@ -27,9 +27,9 @@ import { logConfig } from 'src/config/logging';
           globals: {
             emailsPath: viewPath('emails'),
             appName: configService.get('app.name'),
-            translatePath: 'notify-new-user-email',
             beautyUrl: 'www.a11studio.com',
             appUrl: configService.get('app.url'),
+            env: configService.get('app.env'),
             t: i18nService.translate.bind(i18nService),
           },
         });

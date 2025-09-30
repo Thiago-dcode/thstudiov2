@@ -3,9 +3,10 @@ import {
   LANGUAGE_HEADER,
   REQUEST_START_TIME,
   USER_ID_HEADER,
+  VALIDATION_ERROR_STATUS,
 } from '../utils/constants';
 import { FactoryLogService } from '@repo/backend-lib/services/log-service';
-import { logConfig } from 'src/config/logging';
+import { API_ERRORS_CHANNEL, logConfig } from 'src/config/logging';
 import { format } from 'date-fns/format';
 
 @Catch()
@@ -17,8 +18,10 @@ export class ResponseExceptionFilter implements ExceptionFilter {
     const request = ctx.getRequest();
     //This approach of try catch ensures the API returns a JSON response, even if the proper exception filter throws an error
     try {
-      const status =
+      let status =
         exception?.code || exception?.statusCode || exception?.status || 500;
+      status = !isNaN(status) ? status : 500;
+      status = VALIDATION_ERROR_STATUS.includes(status) ? status : 500;
       const message =
         exception?.message ||
         exception?.response?.error ||
@@ -39,7 +42,7 @@ export class ResponseExceptionFilter implements ExceptionFilter {
           'file',
           logConfig.api,
         );
-        logService.channel('api/errors/' + status).error(message, {
+        logService.channel(API_ERRORS_CHANNEL + '/' + status).error(message, {
           ...error,
           requestBody: request?.body,
           requestParams: request?.params,
@@ -75,7 +78,9 @@ export class ResponseExceptionFilter implements ExceptionFilter {
           'file',
           logConfig.api,
         );
-        logService.channel('api/errors/' + 500).error(message, error);
+        logService
+          .channel(API_ERRORS_CHANNEL + '/' + '500')
+          .error(message, error);
       } catch (error) {
         console.error('Exception occurred:', error);
       }

@@ -12,12 +12,12 @@
           <!-- Introduction -->
           <tr>
             <td align="center">
-              <p style="font-size:18px; margin-bottom:5px;"><%= globals.t(globals.translatePath + '.HI') %> <span
+              <p style="font-size:18px; margin-bottom:5px;"><%= globals.t(translatePath + '.HI') %> <span
                   style="font-weight:bold;"><%= user.username %></span>
               </p>
-              <h1 style="font-size:42px; margin-bottom:5px;"><%= globals.t(globals.translatePath + '.WELCOME') %></h1>
+              <h1 style="font-size:42px; margin-bottom:5px;"><%= globals.t(translatePath + '.WELCOME') %></h1>
               <p style="font-size:16px; margin-bottom:32px; color:#555555;">
-                <%= globals.t(globals.translatePath + '.WELCOME_MESSAGE') %>
+                <%= globals.t(translatePath + '.WELCOME_MESSAGE') %>
               </p>
             </td>
           </tr>
@@ -26,9 +26,9 @@
           <tr>
             <td>
               <p style=" font-size:18px; margin-bottom:10px; font-weight:400; text-align:center;">
-                <%= globals.t(globals.translatePath + '.FEATURES_INTRO_PREFIX') %>
+                <%= globals.t(translatePath + '.FEATURES_INTRO_PREFIX') %>
                 <span style="font-weight:bold;"><%= globals.appName %></span>
-                <%= globals.t(globals.translatePath + '.FEATURES_INTRO_SUFFIX') %>
+                <%= globals.t(translatePath + '.FEATURES_INTRO_SUFFIX') %>
               </p>
             </td>
           </tr>
@@ -59,24 +59,24 @@
           <tr>
             <td align="center" style="padding:32px 0px;">
               <% if (user.email_validated) { %>
-              <p style="margin:0 0 8px 0; font-size:16px;"><%= globals.t(globals.translatePath + '.CTA_START_TEXT') %>
+              <p style="margin:0 0 8px 0; font-size:16px;"><%= globals.t(translatePath + '.CTA_START_TEXT') %>
               </p>
               <table role="presentation" cellpadding="0" cellspacing="0" border="0">
                 <tr>
                   <td align="center" style="border-radius:4px; background-color: #343231;">
                     <a href="<%= globals.appUrl %>"
-                      style="display:inline-block; padding:12px 20px; font-size:16px; text-decoration:none; color:#fafafa;"><%= globals.t(globals.translatePath + '.CTA_START_BUTTON') %></a>
+                      style="display:inline-block; padding:12px 20px; font-size:16px; text-decoration:none; color:#fafafa;"><%= globals.t(translatePath + '.CTA_START_BUTTON') %></a>
                   </td>
                 </tr>
               </table>
               <% } else { %>
-              <p style="margin:0 0 8px 0; font-size:16px;"><%= globals.t(globals.translatePath + '.CTA_VERIFY_TEXT') %>
+              <p style="margin:0 0 8px 0; font-size:16px;"><%= globals.t(translatePath + '.CTA_VERIFY_TEXT') %>
               </p>
               <table role="presentation" cellpadding="0" cellspacing="0" border="0">
                 <tr>
                   <td align="center" style="border-radius:4px; background-color: #343231; color:#fafafa;">
                     <a href="<%= globals.appUrl %>"
-                      style="display:inline-block; padding:12px 20px; font-size:16px; text-decoration:none;"><%= globals.t(globals.translatePath + '.CTA_VERIFY_BUTTON') %></a>
+                      style="display:inline-block; padding:12px 20px; font-size:16px; text-decoration:none;"><%= globals.t(translatePath + '.CTA_VERIFY_BUTTON') %></a>
                   </td>
                 </tr>
               </table>

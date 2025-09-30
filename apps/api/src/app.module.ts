@@ -26,6 +26,7 @@ import { InterceptorProviders } from './common/intecerceptors/interceptor.provid
 import { filterProviders } from './common/filters/filter.providers';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthGuard } from './common/guards/prod-guard/auth.guard';
+import { UserAuthDeviceMiddleware } from './common/middlewares/user-auth-device.middleware';
 const APP_MODULES = [
   AuthModule,
   UserModule,
@@ -103,5 +104,6 @@ const APP_MODULES = [
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(LanguageMiddleware).forRoutes('*');
+    consumer.apply(UserAuthDeviceMiddleware).forRoutes('*');
   }
 }

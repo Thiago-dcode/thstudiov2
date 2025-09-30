@@ -12,6 +12,7 @@ type BaseResponse = {
   audit: Audit;
 };
 
+
 export type SuccessResponse = BaseResponse & {
   data: any;
 };

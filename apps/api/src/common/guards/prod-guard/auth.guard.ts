@@ -11,6 +11,7 @@ import { Request } from 'express';
 import { IS_PUBLIC_KEY } from 'src/common/decorators/public.decorator';
 import { RequestService } from 'src/common/services/request.service';
 import { USER_ID_HEADER } from 'src/common/utils/constants';
+import { BaseUser } from 'src/v1/modules/users/users.types';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -37,14 +38,18 @@ export class AuthGuard implements CanActivate {
       throw new UnauthorizedException();
     }
     try {
-      const payload = await this.jwtService.verifyAsync(token, {
+      const payload = (await this.jwtService.verifyAsync(token, {
         secret: this.configService.get('jwt.secret'),
-      });
-      if (!payload || !payload?.id) {
+      })) as BaseUser;
+
+      if (!payload || !payload?.id || !payload?.email) {
         throw new UnauthorizedException();
       }
       request[USER_ID_HEADER] = payload?.id;
-      this.requestService.user = payload;
+      this.requestService.user = {
+        ...payload,
+        token,
+      };
     } catch {
       throw new UnauthorizedException();
     }

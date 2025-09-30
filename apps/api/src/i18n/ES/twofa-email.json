@@ -1,0 +1,9 @@
+{
+    "SUBJECT": "Verifica tu dispositivo",
+    "HI": "Hola",
+    "TITLE": "Verificación de Dispositivo",
+    "DESCRIPTION": "Detectamos un intento de inicio de sesión desde un nuevo dispositivo o ubicación. Por favor, usa el código de verificación a continuación para completar tu inicio de sesión.",
+    "CODE_LABEL": "Tu código de verificación:",
+    "SECURITY_WARNING": "Si no intentaste iniciar sesión, por favor ignora este correo y asegúrate de que tu cuenta esté segura.",
+    "EXPIRATION_INFO": "Este código expirará en 10 minutos."
+}

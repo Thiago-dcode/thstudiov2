@@ -658,12 +658,12 @@ describe('QueryBuilder', () => {
     });
 
     it('should build SELECT query with multiple joins and columns', () => {
-      const targetQuery = `SELECT ${TABLE_NAME}.id,${TABLE_NAME}.name,${TABLE_NAME}.email,users.id,orders.id FROM ${TABLE_NAME} \nINNER JOIN users ON users.id = ${TABLE_NAME}.user_id \nLEFT JOIN orders ON orders.id = ${TABLE_NAME}.user_id`;
+      const targetQuery = `SELECT ${TABLE_NAME}.id,${TABLE_NAME}.name,${TABLE_NAME}.email,users.id,user_extra_data.id FROM ${TABLE_NAME} \nINNER JOIN users ON users.id = ${TABLE_NAME}.user_id \nLEFT JOIN user_extra_data ON user_extra_data.id = ${TABLE_NAME}.user_id`;
       // Arrange
       queryBuilder
-        .select('id,name,email,users.id,orders.id')
+        .select('id,name,email,users.id,user_extra_data.id')
         .join('user_id', 'users', 'id')
-        .join('user_id', 'orders', 'id', 'LEFT');
+        .join('user_id', 'user_extra_data', 'id', 'LEFT');
 
       queryBuilder['buildSelectQuery']();
       // Assert
@@ -672,19 +672,19 @@ describe('QueryBuilder', () => {
 
     it('should build complex SELECT query with joins, columns, and WHERE conditions', async () => {
       await initClient(postgresConfig);
-      const targetQuery = `SELECT ${TABLE_NAME}.id,${TABLE_NAME}.name,${TABLE_NAME}.email,users.id,orders.id FROM ${TABLE_NAME} \nINNER JOIN users ON users.id = ${TABLE_NAME}.user_id \nLEFT JOIN orders ON orders.id = ${TABLE_NAME}.user_id \nWHERE users.id LIKE $1 \nOR users.id IS NOT NULL \nAND orders.id IN ($2,$3) \nAND orders.id = $4 \nOR orders.id = $5 \nOR orders.id IN ($6,$7)`;
+      const targetQuery = `SELECT ${TABLE_NAME}.id,${TABLE_NAME}.name,${TABLE_NAME}.email,users.id,user_extra_data.id FROM ${TABLE_NAME} \nINNER JOIN users ON users.id = ${TABLE_NAME}.user_id \nLEFT JOIN user_extra_data ON user_extra_data.id = ${TABLE_NAME}.user_id \nWHERE users.id LIKE $1 \nOR users.id IS NOT NULL \nAND user_extra_data.id IN ($2,$3) \nAND user_extra_data.id = $4 \nOR user_extra_data.id = $5 \nOR user_extra_data.id IN ($6,$7)`;
 
       // Arrange
       queryBuilder
-        .select('id,name,email,users.id,orders.id')
+        .select('id,name,email,users.id,user_extra_data.id')
         .join('user_id', 'users', 'id')
-        .join('user_id', 'orders', 'id', 'LEFT')
+        .join('user_id', 'user_extra_data', 'id', 'LEFT')
         .where('users.id', 'LIKE', '%1%')
         .orWhere('users.id', 'IS NOT', null)
-        .whereIn('orders.id', [2, 3])
-        .where('orders.id', '=', 4)
-        .orWhere('orders.id', '=', 5)
-        .orWhereIn('orders.id', [6, 7]);
+        .whereIn('user_extra_data.id', [2, 3])
+        .where('user_extra_data.id', '=', 4)
+        .orWhere('user_extra_data.id', '=', 5)
+        .orWhereIn('user_extra_data.id', [6, 7]);
 
       queryBuilder['buildSelectQuery']();
 
@@ -744,12 +744,12 @@ describe('QueryBuilder', () => {
 
     it('should build complete SELECT query with all clauses', () => {
       // Arrange
-      const targetQuery = `SELECT ${TABLE_NAME}.id,${TABLE_NAME}.name,${TABLE_NAME}.email,users.id,orders.id FROM ${TABLE_NAME} \nINNER JOIN users ON users.id = ${TABLE_NAME}.user_id \nLEFT JOIN orders ON orders.id = ${TABLE_NAME}.user_id \nWHERE users.id LIKE $1 \nOR users.id IS NOT NULL \nAND orders.id IN ($2,$3) \nAND orders.id = $4 \nOR orders.id = $5 \nOR orders.id IN ($6,$7) \nORDER BY name ASC \nLIMIT 10 \nOFFSET 5`;
+      const targetQuery = `SELECT ${TABLE_NAME}.id,${TABLE_NAME}.name,${TABLE_NAME}.email,users.id,user_extra_data.id FROM ${TABLE_NAME} \nINNER JOIN users ON users.id = ${TABLE_NAME}.user_id \nLEFT JOIN user_extra_data ON user_extra_data.id = ${TABLE_NAME}.user_id \nWHERE users.id LIKE $1 \nOR users.id IS NOT NULL \nAND orders.id IN ($2,$3) \nAND orders.id = $4 \nOR orders.id = $5 \nOR orders.id IN ($6,$7) \nORDER BY name ASC \nLIMIT 10 \nOFFSET 5`;
 
       queryBuilder
-        .select('id,name,email,users.id,orders.id')
+        .select('id,name,email,users.id,user_extra_data.id')
         .join('user_id', 'users', 'id')
-        .join('user_id', 'orders', 'id', 'LEFT')
+        .join('user_id', 'user_extra_data', 'id', 'LEFT')
         .where('users.id', 'LIKE', '%1%')
         .orWhere('users.id', 'IS NOT', null)
         .whereIn('orders.id', [2, 3])
@@ -860,7 +860,28 @@ describe('QueryBuilder', () => {
       queryBuilder['buildInsertQuery'](columns, values);
 
       expect(queryBuilder['query']).toBe(
-        `INSERT INTO ${TABLE_NAME} (name,email,phone) VALUES (?,?,?)`,
+        `INSERT INTO ${TABLE_NAME} (name,email,phone) VALUES (?,NULL,?)`,
+      );
+    });
+    it('should handle null values in postgres', async () => {
+      await initClient(postgresConfig);
+      queryBuilder = new QueryBuilder(TABLE_NAME);
+      queryBuilder['buildInsertQuery'](['name', 'email', 'phone'], ['John', null, '123-456-7890']);
+      expect(queryBuilder['query']).toBe(
+        `INSERT INTO ${TABLE_NAME} (name,email,phone) VALUES ($1,NULL,$2)`,
+      );
+
+      queryBuilder['buildInsertQuery'](['name', 'email', 'phone'], [null, null, '123-456-7890']);
+      expect(queryBuilder['query']).toBe(
+        `INSERT INTO ${TABLE_NAME} (name,email,phone) VALUES (NULL,NULL,$1)`,
+      );
+      queryBuilder['buildInsertQuery'](['name', 'email', 'phone'], [null, null, null]);
+      expect(queryBuilder['query']).toBe(
+        `INSERT INTO ${TABLE_NAME} (name,email,phone) VALUES (NULL,NULL,NULL)`,
+      );
+      queryBuilder['buildInsertQuery'](['name', 'email', 'phone', 'address'], [null, 'john@example.com',null, '123 Main St']);
+      expect(queryBuilder['query']).toBe(
+        `INSERT INTO ${TABLE_NAME} (name,email,phone,address) VALUES (NULL,$1,NULL,$2)`,
       );
     });
 
@@ -1064,7 +1085,7 @@ describe('QueryBuilder', () => {
     });
 
     it('should handle null values', async () => {
-      await initClient(mysqlConfig);
+      await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       const columns = ['name', 'email', 'phone'];
@@ -1074,7 +1095,84 @@ describe('QueryBuilder', () => {
       queryBuilder['buildUpdateQuery'](columns, values);
 
       expect(queryBuilder['query']).toBe(
-        `UPDATE ${TABLE_NAME} SET name = ?,email = ?,phone = ? \nWHERE ${TABLE_NAME}.id = ?`,
+        `UPDATE ${TABLE_NAME} SET name = $1,email = NULL,phone = $2 \nWHERE ${TABLE_NAME}.id = $3`,
+      );
+    });
+
+    it('should handle multiple null values in update', async () => {
+      await initClient(postgresConfig);
+      queryBuilder = new QueryBuilder(TABLE_NAME);
+
+      const columns = ['name', 'email', 'phone', 'address', 'notes'];
+      const values = [null, null, '123-456-7890', null, 'Some notes'];
+
+      queryBuilder.where('id', '=', 1);
+      queryBuilder['buildUpdateQuery'](columns, values);
+
+      expect(queryBuilder['query']).toBe(
+        `UPDATE ${TABLE_NAME} SET name = NULL,email = NULL,phone = $1,address = NULL,notes = $2 \nWHERE ${TABLE_NAME}.id = $3`,
+      );
+    });
+
+    it('should handle all null values in update', async () => {
+      await initClient(postgresConfig);
+      queryBuilder = new QueryBuilder(TABLE_NAME);
+
+      const columns = ['name', 'email', 'phone'];
+      const values = [null, null, null];
+
+      queryBuilder.where('id', '=', 1);
+      queryBuilder['buildUpdateQuery'](columns, values);
+
+      expect(queryBuilder['query']).toBe(
+        `UPDATE ${TABLE_NAME} SET name = NULL,email = NULL,phone = NULL \nWHERE ${TABLE_NAME}.id = $1`,
+      );
+    });
+
+    it('should handle null values with mixed data types', async () => {
+      await initClient(postgresConfig);
+      queryBuilder = new QueryBuilder(TABLE_NAME);
+
+      const columns = ['name', 'age', 'active', 'score', 'created_at'];
+      const values = [null, 25, null, 95.5, null];
+
+      queryBuilder.where('id', '=', 1);
+      queryBuilder['buildUpdateQuery'](columns, values);
+
+      expect(queryBuilder['query']).toBe(
+        `UPDATE ${TABLE_NAME} SET name = NULL,age = $1,active = NULL,score = $2,created_at = NULL \nWHERE ${TABLE_NAME}.id = $3`,
+      );
+    });
+
+    it('should handle null values in WHERE conditions', async () => {
+      await initClient(postgresConfig);
+      queryBuilder = new QueryBuilder(TABLE_NAME);
+
+      const columns = ['name', 'email'];
+      const values = ['John', 'john@example.com'];
+
+      queryBuilder.where('deleted_at', 'IS', null);
+      queryBuilder.where('updated_at', 'IS', null);
+      queryBuilder['buildUpdateQuery'](columns, values);
+
+      expect(queryBuilder['query']).toBe(
+        `UPDATE ${TABLE_NAME} SET name = $1,email = $2 \nWHERE ${TABLE_NAME}.deleted_at IS NULL \nAND ${TABLE_NAME}.updated_at IS NULL`,
+      );
+    });
+
+    it('should handle null values with OR conditions', async () => {
+      await initClient(postgresConfig);
+      queryBuilder = new QueryBuilder(TABLE_NAME);
+
+      const columns = ['status'];
+      const values = ['inactive'];
+
+      queryBuilder.where('deleted_at', 'IS', null);
+      queryBuilder.orWhere('archived_at', 'IS', null);
+      queryBuilder['buildUpdateQuery'](columns, values);
+
+      expect(queryBuilder['query']).toBe(
+        `UPDATE ${TABLE_NAME} SET status = $1 \nWHERE ${TABLE_NAME}.deleted_at IS NULL \nOR ${TABLE_NAME}.archived_at IS NULL`,
       );
     });
 
@@ -1246,6 +1344,206 @@ describe('QueryBuilder', () => {
       expect(queryBuilder['query']).toBe(
         `UPDATE ${TABLE_NAME} SET  \nWHERE ${TABLE_NAME}.id = ?`,
       );
+    });
+  });
+
+  describe('update (execution with WHERE)', () => {
+    let queryBuilder: QueryBuilder;
+    let postgresConfig: DatabaseConfig;
+    let mysqlConfig: DatabaseConfig;
+
+    beforeEach(() => {
+      postgresConfig = {
+        host: 'localhost',
+        port: 5432,
+        username: 'testuser',
+        password: 'testpass',
+        database: 'testdb',
+        client: 'postgres',
+      };
+
+      mysqlConfig = {
+        host: 'localhost',
+        port: 3306,
+        username: 'testuser',
+        password: 'testpass',
+        database: 'testdb',
+        client: 'mysql',
+      };
+    });
+
+    it('should execute UPDATE with WHERE on Postgres binding SET then WHERE params', async () => {
+      const { initClient, getClient } = require('../client');
+      await initClient(postgresConfig);
+      queryBuilder = new QueryBuilder(TABLE_NAME);
+
+      queryBuilder.where('id', '=', 1);
+      await queryBuilder.update(['name', 'email'], ['John', 'john@example.com']);
+
+      expect(getClient().query).toHaveBeenCalledTimes(1);
+      const [sql, params] = getClient().query.mock.calls[0];
+      expect(sql).toBe(
+        `UPDATE ${TABLE_NAME} SET name = $1,email = $2 \nWHERE ${TABLE_NAME}.id = $3`,
+      );
+      expect(params).toEqual(['John', 'john@example.com', 1]);
+
+      // reset state after execution
+      expect(queryBuilder['query']).toBe('');
+      expect(queryBuilder['wheres']).toHaveLength(0);
+      expect(queryBuilder['values']).toEqual([]);
+      expect(queryBuilder['valuesPosition']).toBe(0);
+    });
+
+    it('should execute UPDATE with WHERE on MySQL binding SET then WHERE params', async () => {
+      const { initClient, getClient } = require('../client');
+      await initClient(mysqlConfig);
+      queryBuilder = new QueryBuilder(TABLE_NAME);
+
+      queryBuilder.where('id', '=', 42);
+      await queryBuilder.update(['name', 'age'], ['Alice', 30]);
+
+      expect(getClient().query).toHaveBeenCalledTimes(1);
+      const [sql, params] = getClient().query.mock.calls[0];
+      expect(sql).toBe(
+        `UPDATE ${TABLE_NAME} SET name = ?,age = ? \nWHERE ${TABLE_NAME}.id = ?`,
+      );
+      expect(params).toEqual(['Alice', 30, 42]);
+    });
+
+    it('should handle NULLs in SET and NULL in WHERE (Postgres)', async () => {
+      const { initClient, getClient } = require('../client');
+      await initClient(postgresConfig);
+      queryBuilder = new QueryBuilder(TABLE_NAME);
+
+      queryBuilder.where('deleted_at', 'IS', null);
+      queryBuilder.where('id', '=', 5);
+      await queryBuilder.update(
+        ['name', 'email', 'age'],
+        [null, 'a@b.com', 30],
+      );
+
+      const [sql, params] = getClient().query.mock.calls[0];
+      expect(sql).toBe(
+        `UPDATE ${TABLE_NAME} SET name = NULL,email = $1,age = $2 \nWHERE ${TABLE_NAME}.deleted_at IS NULL \nAND ${TABLE_NAME}.id = $3`,
+      );
+      expect(params).toEqual(['a@b.com', 30, 5]);
+    });
+
+    it('should handle WHERE IN and additional WHERE (Postgres)', async () => {
+      const { initClient, getClient } = require('../client');
+      await initClient(postgresConfig);
+      queryBuilder = new QueryBuilder(TABLE_NAME);
+
+      queryBuilder.whereIn('status', ['active', 'pending']);
+      queryBuilder.where('id', '=', 1);
+      await queryBuilder.update(['name'], ['J']);
+
+      const [sql, params] = getClient().query.mock.calls[0];
+      expect(sql).toBe(
+        `UPDATE ${TABLE_NAME} SET name = $1 \nWHERE ${TABLE_NAME}.status IN ($2,$3) \nAND ${TABLE_NAME}.id = $4`,
+      );
+      expect(params).toEqual(['J', 'active', 'pending', 1]);
+    });
+
+    it('should support OR in WHERE with correct param order (Postgres)', async () => {
+      const { initClient, getClient } = require('../client');
+      await initClient(postgresConfig);
+      queryBuilder = new QueryBuilder(TABLE_NAME);
+
+      queryBuilder.where('id', '=', 7);
+      queryBuilder.orWhere('role', '=', 'admin');
+      await queryBuilder.update(['active'], [true]);
+
+      const [sql, params] = getClient().query.mock.calls[0];
+      expect(sql).toBe(
+        `UPDATE ${TABLE_NAME} SET active = $1 \nWHERE ${TABLE_NAME}.id = $2 \nOR ${TABLE_NAME}.role = $3`,
+      );
+      expect(params).toEqual([true, 7, 'admin']);
+    });
+  });
+
+  describe('handleBuildGet', () => {
+    let queryBuilder: QueryBuilder;
+    let postgresConfig: DatabaseConfig;
+
+    beforeEach(async () => {
+      postgresConfig = {
+        host: 'localhost',
+        port: 5432,
+        username: 'testuser',
+        password: 'testpass',
+        database: 'testdb',
+        client: 'postgres',
+      };
+      await initClient(postgresConfig);
+      queryBuilder = new QueryBuilder(TABLE_NAME);
+    });
+
+    it('should build SELECT query with WHERE conditions from columns and values', () => {
+      // Arrange
+      const columns = ['id', 'name', 'email'];
+      const values = [1, 'John', 'john@example.com'];
+      const select = ['id', 'name', 'email'];
+
+      // Act
+      queryBuilder['handleBuildGet'](columns, values, select);
+      queryBuilder['buildSelectQuery']();
+
+      // Assert
+      expect(queryBuilder['query']).toBe(
+        `SELECT ${TABLE_NAME}.id,${TABLE_NAME}.name,${TABLE_NAME}.email FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.id = $1 \nAND ${TABLE_NAME}.name = $2 \nAND ${TABLE_NAME}.email = $3`,
+      );
+      expect(queryBuilder['values']).toEqual([1, 'John', 'john@example.com']);
+    });
+
+    it('should use default select (*) when no select provided', () => {
+      // Arrange
+      const columns = ['status'];
+      const values = ['active'];
+
+      // Act
+      queryBuilder['handleBuildGet'](columns, values);
+      queryBuilder['buildSelectQuery']();
+
+      // Assert
+      expect(queryBuilder['query']).toBe(
+        `SELECT ${TABLE_NAME}.* FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.status = $1`,
+      );
+      expect(queryBuilder['values']).toEqual(['active']);
+    });
+
+    it('should handle single column and value', () => {
+      // Arrange
+      const columns = ['id'];
+      const values = [123];
+      const select = ['id'];
+
+      // Act
+      queryBuilder['handleBuildGet'](columns, values, select);
+      queryBuilder['buildSelectQuery']();
+
+      // Assert
+      expect(queryBuilder['query']).toBe(
+        `SELECT ${TABLE_NAME}.id FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.id = $1`,
+      );
+      expect(queryBuilder['values']).toEqual([123]);
+    });
+
+    it('should handle complex scenario with multiple columns and various data types', () => {
+      // Arrange
+      const columns = ['id', 'name', 'email', 'age', 'active', 'deleted_at', 'score', 'created_at'];
+      const values = [1, 'John Doe', 'john@example.com', 25, true, null, 85.5, new Date('2023-01-01')];
+      const select = ['id', 'name', 'email', 'age', 'active', 'score'];
+
+      // Act
+      queryBuilder['handleBuildGet'](columns, values, select);
+      queryBuilder['buildSelectQuery']();
+
+      // Assert
+      expect(queryBuilder['query']).toBe(
+        `SELECT ${TABLE_NAME}.id,${TABLE_NAME}.name,${TABLE_NAME}.email,${TABLE_NAME}.age,${TABLE_NAME}.active,${TABLE_NAME}.score FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.id = $1 \nAND ${TABLE_NAME}.name = $2 \nAND ${TABLE_NAME}.email = $3 \nAND ${TABLE_NAME}.age = $4 \nAND ${TABLE_NAME}.active = $5 \nAND ${TABLE_NAME}.deleted_at IS NULL \nAND ${TABLE_NAME}.score = $6 \nAND ${TABLE_NAME}.created_at = $7`,
+      );
+      expect(queryBuilder['values']).toEqual([1, 'John Doe', 'john@example.com', 25, true, 85.5, new Date('2023-01-01')]);
     });
   });
 

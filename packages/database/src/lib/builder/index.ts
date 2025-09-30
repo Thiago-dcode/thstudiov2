@@ -1,6 +1,6 @@
 import { getClient, Client } from '../client';
-import { SqlOperation } from '../constants/schemas/database';
-import { TABLES } from '../constants/constants';
+import { SqlOperation, TableName } from '../constants/schemas/database';
+import { TABLES_ENUM } from '../constants/constants';
 import { DbWrongTableException } from '../exceptions';
 
 abstract class BaseBuilder {
@@ -8,8 +8,6 @@ abstract class BaseBuilder {
   protected query: string = '';
   /** Chain of operations performed on this query builder */
   protected operationsChain: SqlOperation[] = [];
-  /** The database client instance */
-  protected db: Client<any> | null = null;
   // ============================================================================
   // CONSTRUCTOR
   // ============================================================================
@@ -19,7 +17,7 @@ abstract class BaseBuilder {
    * @param tableName - The name of the table to query
    * @throws {ClientNotInitializedException} When database client is not initialized
    */
-  constructor(protected readonly tableName: (typeof TABLES)[number]) {
+  constructor(protected readonly tableName: TableName) {
     // Do not access the DB client here; it may not be initialized yet
   }
   /**
@@ -41,8 +39,8 @@ abstract class BaseBuilder {
   }
   protected abstract reset(): void;
 
-  protected static throwIfTableNotExists(tableName: (typeof TABLES)[number]) {
-    if(!TABLES.includes(tableName)) {
+  protected static throwIfTableNotExists(tableName: TableName) {
+    if(!Object.values(TABLES_ENUM).includes(tableName)) {
       throw new DbWrongTableException(tableName);
     }
   }

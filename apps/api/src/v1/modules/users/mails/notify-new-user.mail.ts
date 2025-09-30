@@ -3,11 +3,17 @@ import { BaseUser } from '../users.types';
 import { mailingFrom } from 'src/config/mailling';
 import { ViewService } from '@repo/backend-lib/services/view-service/base';
 import { Injectable } from '@nestjs/common';
+import { I18nService } from 'nestjs-i18n';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class NotifyNewUserMail extends Mailable {
   private user: BaseUser;
-  constructor(private readonly viewService: ViewService) {
+  constructor(
+    private readonly viewService: ViewService,
+    private readonly i18nService: I18nService,
+    private readonly configService: ConfigService,
+  ) {
     super();
   }
   setUser(user: BaseUser) {
@@ -18,21 +24,26 @@ export class NotifyNewUserMail extends Mailable {
     return {
       from: mailingFrom,
       to: this.user.email,
-      subject: 'Welcome to Visualsofdsa',
+      subject: this.i18nService.translate(
+        'notify-new-user-email.WELCOME_SUBJECT',
+        { args: { appName: this.configService.get('app.name') } },
+      ),
     };
   }
   async content() {
+    const t = this.i18nService.translate.bind(this.i18nService);
     const features = [
-      'Manage and organize all your artwork',
-      'Create outstanding portfolio(s) to reach more clients',
-      'Add info about your clients',
-      'Show your available services',
-      'Connect with other artists',
-      'And much more!',
+      t('notify-new-user-email.FEATURES.0'),
+      t('notify-new-user-email.FEATURES.1'),
+      t('notify-new-user-email.FEATURES.2'),
+      t('notify-new-user-email.FEATURES.3'),
+      t('notify-new-user-email.FEATURES.4'),
+      t('notify-new-user-email.FEATURES.5'),
     ];
     const html = await this.viewService.render('emails/users/notify-new-user', {
       user: this.user,
       features,
+      translatePath: 'notify-new-user-email',
     });
     return {
       html,

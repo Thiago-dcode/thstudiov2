@@ -3,8 +3,18 @@ import { LoginRequest } from './requests/login.request';
 import { UserRepository } from '../users/users.repository';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
-import { UserAuth } from './types';
+import { TwoFactorAuth, UserAuth } from './auth.types';
 import { ConfigService } from '@nestjs/config';
+import { BaseUser } from '../users/users.types';
+import { UserAuthDevicesService } from '../user-auth-devices/user-auth-devices.service';
+import { RequestService } from 'src/common/services/request.service';
+import { randomStr } from '@repo/backend-lib/utils';
+import { addMinutes } from 'date-fns/addMinutes';
+import { UserAuthDevice } from '../user-auth-devices/user-auth-devices.types';
+import { UserSessionsService } from '../user-sessions/user-sessions.service';
+import { addDays } from 'date-fns';
+import { MailService } from '@repo/backend-lib/services/mail-service';
+import { TwoFAMail } from './mails/twofa-mail';
 
 @Injectable()
 export class AuthService {
@@ -12,8 +22,13 @@ export class AuthService {
     private readonly userRepository: UserRepository,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly userAuthDevicesService: UserAuthDevicesService,
+    private readonly requestService: RequestService,
+    private readonly userSessionsService: UserSessionsService,
+    private readonly mailService: MailService,
+    private readonly twoFAMail: TwoFAMail,
   ) {}
-  async login(authLoginRequest: LoginRequest): Promise<UserAuth> {
+  async login(authLoginRequest: LoginRequest): Promise<UserAuth | BaseUser> {
     const user = await this.userRepository.findOneByWithPassword(
       'email',
       authLoginRequest.email,
@@ -29,11 +44,52 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
     delete user.password;
-    const payload = user;
+    //handle 2fa
+    const result = await this.handle2fa(user);
+    return result.need_2fa
+      ? result.user
+      : this.handleLogin(user, result.user_auth_device);
+  }
+  private async handleLogin(user: BaseUser, userAuthDevice: UserAuthDevice) {
+    const payload = user as BaseUser;
     const token = await this.jwtService.signAsync(payload, {
       expiresIn: this.configService.get('jwt.expiresIn'),
       secret: this.configService.get('jwt.secret'),
     });
+     await this.userSessionsService.handleSessionProcess({
+      user_id: user.id,
+      user_auth_device_id: userAuthDevice.id,
+      token,
+      expires_at: addDays(new Date(), 1),
+    });
     return { ...user, token };
+  }
+  private async handle2fa(user: BaseUser): Promise<TwoFactorAuth> {
+    const userDevice = await this.userAuthDevicesService.getOneOrCreate({
+      user_id: user.id,
+      user_agent: this.requestService?.user_agent || '-',
+      ip_address: this.requestService?.ip_address || '-',
+      disabled: true,
+      blocked: false,
+    });
+
+    if (!user.twofa_enabled || !userDevice.disabled) {
+      return { user_auth_device: userDevice, user, need_2fa: false };
+    }
+
+    //Start 2fa process
+
+    const code = randomStr(6);
+    const expiresAt = addMinutes(new Date(), 10);
+    const updatedUser = await this.userRepository.update(user.id, {
+      twofa_code: code,
+      twofa_expires_at: expiresAt,
+    });
+    this.mailService.send(this.twoFAMail.setUser(updatedUser));
+    return {
+      user_auth_device: userDevice,
+      user:updatedUser,
+      need_2fa: true,
+    };
   }
 }

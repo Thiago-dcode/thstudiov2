@@ -1,4 +1,4 @@
-import { ENUMS, SQL_FUNCTIONS, TABLES } from '../constants';
+import { ENUMS, SQL_FUNCTIONS, TABLES_ENUM } from '../constants';
 
 export type DatabaseClient = 'postgres' | 'mysql' | 'sqlite' | 'mongodb';
 export type DatabaseSettings = {
@@ -101,7 +101,7 @@ export type SqlTypes =
   | 'DATE'
   | 'TIME'
   | `${keyof AvailableEnums}`;
-export type TableName = (typeof TABLES)[number];
+export type TableName = (typeof TABLES_ENUM)[keyof typeof TABLES_ENUM];
 
 export type SqlFunction = (typeof SQL_FUNCTIONS)[number];
 export type SqlFunctionTimestamp =
@@ -145,3 +145,29 @@ export type ColumnAttributesWithForeignKey = Exclude<
 export type ColumnAttributesWithAfter = Exclude<ColumnAttributesWithType, 'primaryKey'> & {
   after?: string;
 };
+
+// Column Definition Types
+export type ColumnDefinition = 
+  // Basic SQL Types
+  | 'INTEGER'
+  | 'REAL'
+  | 'DOUBLE PRECISION'
+  | 'DECIMAL'
+  | 'BIGINT'
+  | 'BOOLEAN'
+  | 'TEXT'
+  | 'TIMESTAMP'
+  | 'DATE'
+  | 'TIME'
+  // VARCHAR with length
+  | `VARCHAR(${number})`
+  // DECIMAL with precision
+  | `DECIMAL(${number},${number})`
+  // Auto-increment types
+  | 'SERIAL'
+  // Enum types
+  | `${keyof AvailableEnums}`
+  | (string & {});
+
+
+  export type  TableColumn<K extends readonly TableName[] ,T extends {[key:string]: any}> = `${K[number]}.${keyof T & string}` | `${K[number]}.${keyof T & string} as ${keyof T & string}`;

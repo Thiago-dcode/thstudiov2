@@ -6,7 +6,7 @@ export class LoginRequest {
   @IsNotEmpty()
   @ModelExist('users', 'email')
   email: string;
-  
+
   @IsString()
   @IsNotEmpty()
   password: string;

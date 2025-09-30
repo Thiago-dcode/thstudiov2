@@ -12,6 +12,7 @@ import {
   LogService,
 } from '@repo/backend-lib/services/log-service';
 import { NotifyNewUserMail } from './mails/notify-new-user.mail';
+import { UserAuthDevicesModule } from '../user-auth-devices/user-auth-devices.module';
 @Module({
   controllers: [UserController],
   providers: [
@@ -29,6 +30,6 @@ import { NotifyNewUserMail } from './mails/notify-new-user.mail';
     },
    
   ],
-  imports: [UserExtraDataModule],
+  imports: [UserExtraDataModule, UserAuthDevicesModule],
 })
 export class UserModule {}

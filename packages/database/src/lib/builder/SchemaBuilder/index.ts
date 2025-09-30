@@ -1,15 +1,15 @@
-import { ENUMS, TABLES } from '../../constants/constants';
+import { ENUMS, } from '../../constants/constants';
 import BaseBuilder from '..';
-import { AvailableEnums } from '../../constants/schemas/database';
+import { AvailableEnums, TableName } from '../../constants/schemas/database';
 import { getClient } from '../../client';
 import { SchemaBuilderOperationNotAllowedException } from './exceptions';
 class SchemaBuilder extends BaseBuilder {
   protected createColumns: string[] = [];
-  public static table(tableName: (typeof TABLES)[number]) {
+  public static table(tableName: TableName) {
     this.throwIfTableNotExists(tableName);
     return new SchemaBuilder(tableName);
   }
-  public static async tableIfExists(tableName: (typeof TABLES)[number]) {
+  public static async tableIfExists(tableName: TableName) {
     const result = await getClient().query(`SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_name = '${tableName}')`);
    if(!result?.rows[0]?.exists) {
   return null;
@@ -20,13 +20,13 @@ class SchemaBuilder extends BaseBuilder {
     // Flatten any arrays (like from timestamps() method)
     this.buildColumns(columns);
     this.buildCreateQuery();
-    return await this.db?.query(this.query);
+    return await this.getDb()?.query(this.query);
   }
 
   public async createIfNotExists(columns?: (string | string[])[]) {
     this.buildColumns(columns);
     this.buildCreateQuery(true);
-    return await this.db?.query(this.query);
+    return await this.getDb()?.query(this.query);
   }
   protected buildColumns(columns?: (string | string[])[]) {
     for (const column of columns || []) {
@@ -52,32 +52,32 @@ EXCEPTION
 END $$;`);
   }
   public async drop() {
-    if (!this.db?.config.settings.allowDrop) {
+    if (!this.getDb()?.config.settings.allowDrop) {
       throw new SchemaBuilderOperationNotAllowedException(
         'Drop is not allowed, set allowDrop to true in the database config',
       );
     }
     this.query = `DROP TABLE ${this.tableName}`;
-    return await this.db?.query(this.query);
+    return await this.getDb()?.query(this.query);
   }
   public async dropIfExists() {
-    if (!this.db?.config.settings.allowDrop) {
+    if (!this.getDb()?.config.settings.allowDrop) {
       throw new SchemaBuilderOperationNotAllowedException(
         'Drop is not allowed, set allowDrop to true in the database config',
       );
     }
     this.query = `DROP TABLE IF EXISTS ${this.tableName}`;
-    return await this.db?.query(this.query);
+    return await this.getDb()?.query(this.query);
   }
 
   public async truncate() {
-    if (!this.db?.config.settings.allowTruncate) {
+    if (!this.getDb()?.config.settings.allowTruncate) {
       throw new SchemaBuilderOperationNotAllowedException(
         'Truncate is not allowed, set allowTruncate to true in the database config',
       );
     }
     this.query = `TRUNCATE TABLE ${this.tableName}`;
-    return await this.db?.query(this.query);
+    return await this.getDb()?.query(this.query);
   }
 
   public static async dropEnum(enumName: keyof AvailableEnums) {
@@ -100,9 +100,10 @@ END $$;`);
   public async exists(): Promise<boolean> {
     try {
       this.query = `SELECT 1 FROM ${this.tableName} LIMIT 1`;
-      const result = await this.db?.query(this.query);
+      const result = await this.getDb()?.query(this.query);
       return !!result;
     } catch (error) {
+      console.log('error', error);
       return false;
     }
   }

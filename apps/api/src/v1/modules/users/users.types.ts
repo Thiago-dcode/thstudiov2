@@ -5,6 +5,9 @@ export type BaseUser = {
   email: string;
   username: string;
   email_validated: boolean;
+  twofa_enabled: boolean;
+  twofa_code: string;
+  twofa_expires_at: Date;
 };
 export type BaseUserWithPassword = BaseUser & {
   password: string;
@@ -14,5 +17,5 @@ export type User = BaseUser & {
   surname?: string | null;
   biography?: string | null;
   number_email_validations_sent: number;
-  address?: Exclude<AddressSchema, 'created_at' | 'updated_at'>;
+  address?: Omit<AddressSchema, 'created_at' | 'updated_at'>;
 };
