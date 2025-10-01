@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { LoginRequest } from './requests/login.request';
 import { UserRepository } from '../users/users.repository';
 import * as bcrypt from 'bcrypt';
@@ -15,6 +19,8 @@ import { UserSessionsService } from '../user-sessions/user-sessions.service';
 import { addDays } from 'date-fns';
 import { MailService } from '@repo/backend-lib/services/mail-service';
 import { TwoFAMail } from './mails/twofa-mail';
+import { Verify2faRequest } from './requests/verify-2fa.request';
+import { compareAsc } from 'date-fns/compareAsc';
 
 @Injectable()
 export class AuthService {
@@ -29,6 +35,60 @@ export class AuthService {
     private readonly twoFAMail: TwoFAMail,
   ) {}
   async login(authLoginRequest: LoginRequest): Promise<UserAuth | BaseUser> {
+    const user = await this.verifyUser(authLoginRequest);
+    const result = await this.handle2fa(user);
+    return result.need_2fa
+      ? result.user
+      : await this.handleLogin(user, result.user_auth_device);
+  }
+  async verify2fa(verify2faRequest: Verify2faRequest) {
+    const user = await this.verifyUser(verify2faRequest);
+    if (
+      user.twofa_code !== verify2faRequest.code ||
+      compareAsc(user.twofa_expires_at, new Date()) === -1
+    ) {
+      throw new UnauthorizedException('Invalid verification code or expired');
+    }
+    //It should be created from the login process
+    const userAuthDevice = await this.userAuthDevicesService.getOneOrCreate({
+      user_id: user.id,
+      user_agent: this.requestService?.user_agent || '-',
+      ip_address: this.requestService?.ip_address || '-',
+      disabled: false,
+      blocked: false,
+    });
+    if (userAuthDevice.blocked) {
+      throw new ForbiddenException('Device is blocked');
+    }
+
+    const [_, updatedUser] = await Promise.all([
+      this.userAuthDevicesService.update(userAuthDevice.id, {
+        disabled: false,
+      }),
+      this.userRepository.update(user.id, {
+        twofa_code: null,
+        twofa_expires_at: null,
+        email_validated: true,
+      }),
+    ]);
+
+    return await this.handleLogin(updatedUser, userAuthDevice);
+  }
+  private async handleLogin(user: BaseUser, userAuthDevice: UserAuthDevice) {
+    const payload = user as BaseUser;
+    const token = await this.jwtService.signAsync(payload, {
+      expiresIn: this.configService.get('jwt.expiresIn'),
+      secret: this.configService.get('jwt.secret'),
+    });
+    await this.userSessionsService.handleSessionProcess({
+      user_id: user.id,
+      user_auth_device_id: userAuthDevice.id,
+      token,
+      expires_at: addDays(new Date(), 1),
+    });
+    return { ...user, token };
+  }
+  private async verifyUser(authLoginRequest: LoginRequest): Promise<BaseUser> {
     const user = await this.userRepository.findOneByWithPassword(
       'email',
       authLoginRequest.email,
@@ -44,25 +104,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
     delete user.password;
-    //handle 2fa
-    const result = await this.handle2fa(user);
-    return result.need_2fa
-      ? result.user
-      : this.handleLogin(user, result.user_auth_device);
-  }
-  private async handleLogin(user: BaseUser, userAuthDevice: UserAuthDevice) {
-    const payload = user as BaseUser;
-    const token = await this.jwtService.signAsync(payload, {
-      expiresIn: this.configService.get('jwt.expiresIn'),
-      secret: this.configService.get('jwt.secret'),
-    });
-     await this.userSessionsService.handleSessionProcess({
-      user_id: user.id,
-      user_auth_device_id: userAuthDevice.id,
-      token,
-      expires_at: addDays(new Date(), 1),
-    });
-    return { ...user, token };
+    return user;
   }
   private async handle2fa(user: BaseUser): Promise<TwoFactorAuth> {
     const userDevice = await this.userAuthDevicesService.getOneOrCreate({
@@ -72,7 +114,10 @@ export class AuthService {
       disabled: true,
       blocked: false,
     });
-
+    if (userDevice.blocked) {
+      throw new ForbiddenException('Device is blocked');
+    }
+    console.log('userDevice', userDevice);
     if (!user.twofa_enabled || !userDevice.disabled) {
       return { user_auth_device: userDevice, user, need_2fa: false };
     }
@@ -88,7 +133,7 @@ export class AuthService {
     this.mailService.send(this.twoFAMail.setUser(updatedUser));
     return {
       user_auth_device: userDevice,
-      user:updatedUser,
+      user: updatedUser,
       need_2fa: true,
     };
   }

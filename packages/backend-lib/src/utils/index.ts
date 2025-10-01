@@ -35,16 +35,14 @@ const generateUUID = async () => {
 const randomStr = (length: number) => {
     const characters ='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     const generateString = (length: number) => {
-        let result = ' ';
+        let result = '';
         const charactersLength = characters.length;
         for ( let i = 0; i < length; i++ ) {
             result += characters.charAt(Math.floor(Math.random() * charactersLength));
         }
-    
-        return result;
+        return result.trim();
     }
     return generateString(length);
-    
 }
 const checkFileExistsAsync = async (file: string) => {
     return await fs.promises.access(file, fs.constants.F_OK)

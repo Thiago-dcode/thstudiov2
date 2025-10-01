@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { UserAuthDevicesRepository } from './user-auth-devices.repository';
-import { CreateUserAuthDeviceInput } from '@repo/database/schemas/user-sessions';
+import { CreateUserAuthDeviceInput, UpdateUserAuthDeviceInput } from '@repo/database/schemas/user-sessions';
 
 @Injectable()
 export class UserAuthDevicesService {
@@ -8,33 +8,21 @@ export class UserAuthDevicesService {
     private readonly userAuthDevicesRepository: UserAuthDevicesRepository,
   ) {}
 
-  async getOneOrCreate({
-    user_agent,
-    ip_address,
-    user_id,
-    disabled,
-    blocked,
-  }: CreateUserAuthDeviceInput) {
+  async getOneOrCreate(authDevice: CreateUserAuthDeviceInput) {
     let userDevice = await this.userAuthDevicesRepository.findOneByAuthDevice({
-      user_id,
-      user_agent,
-      ip_address,
+      user_id: authDevice.user_id,
+      user_agent: authDevice.user_agent,
+      ip_address: authDevice.ip_address,
     });
     if (!userDevice) {
-      userDevice = await this.userAuthDevicesRepository.create({
-        user_id,
-        user_agent,
-        ip_address,
-        disabled: disabled,
-        blocked: blocked,
-      });
+      userDevice = await this.userAuthDevicesRepository.create(authDevice);
     }
     return userDevice;
   }
 
-  // update(id: number, updatePlanDto: UpdatePlanDto) {
-  //   return `This action updates a #${id} plan`;
-  // }
+  update(id: number, updateUserAuthDeviceInput: UpdateUserAuthDeviceInput) {
+    return this.userAuthDevicesRepository.update(id, updateUserAuthDeviceInput);
+  }
 
   // remove(id: number) {
   //   return `This action removes a #${id} plan`;
