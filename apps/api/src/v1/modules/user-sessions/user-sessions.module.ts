@@ -5,11 +5,7 @@ import { RequestService } from 'src/common/services/request.service';
 
 @Module({
   controllers: [],
-  providers: [
-    UserSessionsRepository,
-    UserSessionsService,
-    RequestService,
-  ],
+  providers: [UserSessionsRepository, UserSessionsService, RequestService],
   exports: [UserSessionsService],
 })
 export class UserSessionsModule {}

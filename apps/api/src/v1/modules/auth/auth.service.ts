@@ -7,7 +7,7 @@ import { LoginRequest } from './requests/login.request';
 import { UserRepository } from '../users/users.repository';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
-import { TwoFactorAuth, UserAuth } from './auth.types';
+import { TwoFactorAuth, UserAuth, UserPayload } from './auth.types';
 import { ConfigService } from '@nestjs/config';
 import { BaseUser } from '../users/users.types';
 import { UserAuthDevicesService } from '../user-auth-devices/user-auth-devices.service';
@@ -36,7 +36,10 @@ export class AuthService {
   ) {}
   async login(authLoginRequest: LoginRequest): Promise<UserAuth | BaseUser> {
     const user = await this.verifyUser(authLoginRequest);
-    const result = await this.handle2fa(user);
+    const result = await this.handle2fa(user, {
+      user_agent: authLoginRequest.user_agent,
+      ip_address: authLoginRequest.ip_address,
+    });
     return result.need_2fa
       ? result.user
       : await this.handleLogin(user, result.user_auth_device);
@@ -52,8 +55,8 @@ export class AuthService {
     //It should be created from the login process
     const userAuthDevice = await this.userAuthDevicesService.getOneOrCreate({
       user_id: user.id,
-      user_agent: this.requestService?.user_agent || '-',
-      ip_address: this.requestService?.ip_address || '-',
+      user_agent: verify2faRequest.user_agent || this.requestService?.user_agent || '-',
+      ip_address: verify2faRequest.ip_address || this.requestService?.ip_address || '-',
       disabled: false,
       blocked: false,
     });
@@ -75,7 +78,12 @@ export class AuthService {
     return await this.handleLogin(updatedUser, userAuthDevice);
   }
   private async handleLogin(user: BaseUser, userAuthDevice: UserAuthDevice) {
-    const payload = user as BaseUser;
+    const payload: UserPayload = {
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      user_auth_device_id: userAuthDevice.id,
+    };
     const token = await this.jwtService.signAsync(payload, {
       expiresIn: this.configService.get('jwt.expiresIn'),
       secret: this.configService.get('jwt.secret'),
@@ -106,18 +114,26 @@ export class AuthService {
     delete user.password;
     return user;
   }
-  private async handle2fa(user: BaseUser): Promise<TwoFactorAuth> {
+  private async handle2fa(
+    user: BaseUser,
+    {
+      user_agent,
+      ip_address,
+    }: {
+      user_agent?: string;
+      ip_address?: string;
+    },
+  ): Promise<TwoFactorAuth> {
     const userDevice = await this.userAuthDevicesService.getOneOrCreate({
       user_id: user.id,
-      user_agent: this.requestService?.user_agent || '-',
-      ip_address: this.requestService?.ip_address || '-',
+      user_agent: user_agent || this.requestService?.user_agent || '-',
+      ip_address: ip_address || this.requestService?.ip_address || '-',
       disabled: true,
       blocked: false,
     });
     if (userDevice.blocked) {
       throw new ForbiddenException('Device is blocked');
     }
-    console.log('userDevice', userDevice);
     if (!user.twofa_enabled || !userDevice.disabled) {
       return { user_auth_device: userDevice, user, need_2fa: false };
     }

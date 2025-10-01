@@ -7,11 +7,13 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
+import { compareAsc } from 'date-fns';
 import { Request } from 'express';
 import { IS_PUBLIC_KEY } from 'src/common/decorators/public.decorator';
 import { RequestService } from 'src/common/services/request.service';
 import { USER_ID_HEADER } from 'src/common/utils/constants';
-import { BaseUser } from 'src/v1/modules/users/users.types';
+import { UserPayload } from 'src/v1/modules/auth/auth.types';
+import { UserSessionsService } from 'src/v1/modules/user-sessions/user-sessions.service';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -20,6 +22,7 @@ export class AuthGuard implements CanActivate {
     private configService: ConfigService,
     private requestService: RequestService,
     private reflector: Reflector,
+    private userSessionsService: UserSessionsService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -29,7 +32,6 @@ export class AuthGuard implements CanActivate {
       context.getClass(),
     ]);
     if (isPublic) {
-      // 💡 See this condition
       return true;
     }
     const request = context.switchToHttp().getRequest();
@@ -40,17 +42,35 @@ export class AuthGuard implements CanActivate {
     try {
       const payload = (await this.jwtService.verifyAsync(token, {
         secret: this.configService.get('jwt.secret'),
-      })) as BaseUser;
-
-      if (!payload || !payload?.id || !payload?.email) {
+      })) as UserPayload;
+      if (
+        !payload ||
+        !payload?.id ||
+        !payload?.email ||
+        !payload?.user_auth_device_id
+      ) {
         throw new UnauthorizedException();
       }
-      request[USER_ID_HEADER] = payload?.id;
+      //TODO: Verify user current session
+      const session = await this.userSessionsService.findOneBySession({
+        user_id: payload.id,
+        user_auth_device_id: payload.user_auth_device_id,
+        token,
+      });
+      if (
+        !session ||
+        !session?.expires_at ||
+        compareAsc(session?.expires_at, new Date()) === -1
+      ) {
+        throw new UnauthorizedException('Invalid session');
+      }
+      request[USER_ID_HEADER] = payload.id;
       this.requestService.user = {
         ...payload,
         token,
       };
-    } catch {
+    } catch (error) {
+      console.log(error);
       throw new UnauthorizedException();
     }
     return true;

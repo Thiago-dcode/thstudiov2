@@ -27,11 +27,13 @@ import { filterProviders } from './common/filters/filter.providers';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthGuard } from './common/guards/prod-guard/auth.guard';
 import { UserAuthDeviceMiddleware } from './common/middlewares/user-auth-device.middleware';
+import { UserSessionsModule } from './v1/modules/user-sessions/user-sessions.module';
 const APP_MODULES = [
   AuthModule,
   UserModule,
   PlansModule,
   UserPlanTransactionsModule,
+  UserSessionsModule,
 ];
 @Module({
   imports: [
