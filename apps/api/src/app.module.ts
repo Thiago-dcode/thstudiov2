@@ -28,6 +28,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { AuthGuard } from './common/guards/prod-guard/auth.guard';
 import { UserAuthDeviceMiddleware } from './common/middlewares/user-auth-device.middleware';
 import { UserSessionsModule } from './v1/modules/user-sessions/user-sessions.module';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 const APP_MODULES = [
   AuthModule,
   UserModule,
@@ -42,6 +43,23 @@ const APP_MODULES = [
       load: [config],
       envFilePath,
     }),
+    ThrottlerModule.forRoot([
+      {
+        name: 'short',
+        ttl: 1000,
+        limit: 3,
+      },
+      {
+        name: 'medium',
+        ttl: 10000,
+        limit: 20,
+      },
+      {
+        name: 'long',
+        ttl: 60000,
+        limit: 100,
+      },
+    ]),
     JwtModule.registerAsync({
       useFactory: (configService: ConfigService) => ({
         global: true,
@@ -83,6 +101,10 @@ const APP_MODULES = [
     {
       provide: APP_GUARD,
       useClass: AuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
     },
     {
       provide: APP_PIPE,

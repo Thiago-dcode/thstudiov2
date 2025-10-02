@@ -21,7 +21,7 @@ async function bootstrap() {
   });
   //CORS
   app.enableCors({
-    origin: '*',
+    origin: configService.get('app.allowedOrigins'),
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });

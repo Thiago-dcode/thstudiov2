@@ -16,7 +16,8 @@ let envFilePath = path.resolve(process.cwd(),'..', '..', '.env');
       url: process.env.APP_URL,
       env: process.env.NODE_ENV || 'development',
       sendErrorEmails: process.env.SEND_ERROR_EMAILS == '1',
-      
+      frontendUrls: process.env.APP_FRONTEND_URLS ? process.env.APP_FRONTEND_URLS.split(',') : [],
+      allowedOrigins: process.env.APP_ALLOWED_ORIGINS ? process.env.APP_ALLOWED_ORIGINS.split(',').map((origin) => origin.trim()) : [],
     },
     api: {
       url: process.env.API_URL,

@@ -55,8 +55,10 @@ export class AuthService {
     //It should be created from the login process
     const userAuthDevice = await this.userAuthDevicesService.getOneOrCreate({
       user_id: user.id,
-      user_agent: verify2faRequest.user_agent || this.requestService?.user_agent || '-',
-      ip_address: verify2faRequest.ip_address || this.requestService?.ip_address || '-',
+      user_agent:
+        verify2faRequest.user_agent || this.requestService?.user_agent || '-',
+      ip_address:
+        verify2faRequest.ip_address || this.requestService?.ip_address || '-',
       disabled: false,
       blocked: false,
     });
@@ -84,15 +86,16 @@ export class AuthService {
       username: user.username,
       user_auth_device_id: userAuthDevice.id,
     };
+    const expiresAt = addDays(new Date(), 1);
     const token = await this.jwtService.signAsync(payload, {
-      expiresIn: this.configService.get('jwt.expiresIn'),
+      expiresIn: '24h',
       secret: this.configService.get('jwt.secret'),
     });
     await this.userSessionsService.handleSessionProcess({
       user_id: user.id,
       user_auth_device_id: userAuthDevice.id,
       token,
-      expires_at: addDays(new Date(), 1),
+      expires_at: expiresAt,
     });
     return { ...user, token };
   }
