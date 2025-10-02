@@ -14,11 +14,20 @@ import {
   LogService,
 } from '@repo/backend-lib/services/log-service';
 import { logConfig } from 'src/config/logging';
+import { StorageService } from '@repo/backend-lib/services/storage-service/base';
+import { FactoryStorageService } from '@repo/backend-lib/services/storage-service/factory';
+import { s3StorageConfig } from 'src/config/storage';
 @Global()
 @Module({
   exports: [RequestService, ViewService, MailService, LogService],
   providers: [
     RequestService,
+    {
+      provide: StorageService,
+      useFactory: () => {
+        return FactoryStorageService.create(s3StorageConfig);
+      },
+    },
     {
       provide: ViewService,
       useFactory: (configService: ConfigService, i18nService: I18nService) => {
