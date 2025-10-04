@@ -3,6 +3,9 @@ import {
   LANGUAGE_HEADER,
   REQUEST_START_TIME,
   USER_ID_HEADER,
+  // LANGUAGE_HEADER,
+  // REQUEST_START_TIME,
+  // USER_ID_HEADER,
   VALIDATION_ERROR_STATUS,
 } from '../utils/constants';
 import { FactoryLogService } from '@repo/backend-lib/services/log-service';
@@ -51,14 +54,18 @@ export class ResponseExceptionFilter implements ExceptionFilter {
       } catch (error) {
         console.error('Exception occurred:', error);
       }
+
+      const requestStartTime = parseInt(
+        request?.headers[REQUEST_START_TIME] || '0',
+      );
       return response.status(status).json({
         error,
         audit: {
           ip: request?.ip,
           user_agent: request?.get('user-agent'),
-          request_time:
-            (Date.now() - parseInt(request?.headers[REQUEST_START_TIME])) /
-            1000,
+          request_time: !isNaN(requestStartTime)
+            ? (Date.now() - requestStartTime) / 1000
+            : 0,
           language: request?.headers[LANGUAGE_HEADER],
           user: request?.headers[USER_ID_HEADER] || null,
         },

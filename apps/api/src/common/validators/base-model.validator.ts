@@ -18,13 +18,11 @@ export class BaseModelValidator implements ValidatorConstraintInterface {
   protected schemaBuilder: SchemaBuilder;
   protected tableName: TableName;
   protected column: string;
-  protected value: any;
   constructor() {}
 
   async validate(value: any, args: ValidationArguments) {
     //If the value is optional or required, should handle by another validator
     if (value == undefined) return true;
-    this.value = value;
     const [tableName, column = 'id'] = args.constraints as [TableName, string];
     this.tableName = tableName;
     this.column = column;
@@ -37,11 +35,12 @@ export class BaseModelValidator implements ValidatorConstraintInterface {
     this.alterBuilder = AlterBuilder.table(this.tableName);
     const columnExist = await this.alterBuilder.columnExist(this.column);
     if (!columnExist) {
-      this.message = `Column ${this.column} does not exist in ${this.tableName} or is not of type ${typeof this.value}`;
+      this.message = `Column ${this.column} does not exist in ${this.tableName} or is not of type ${typeof value}`;
       return false;
     }
     this.schemaBuilder = SchemaBuilder.table(this.tableName);
     this.queryBuilder = QueryBuilder.table(this.tableName);
+    return true;
   }
 
   defaultMessage() {

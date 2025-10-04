@@ -17,24 +17,23 @@ export class ModelExistValidator extends BaseModelValidator {
   }
 
   async validate(value: any, args: ValidationArguments) {
-    await super.validate(value, args);
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-      const record = await this.queryBuilder
-        .where(this.column, '=', this.value)
-        .exists();
-      if (!record) {
-        this.message = `${this.value} does not exist`;
-      }
-      return record;
-    } catch (error) {
-      if (error instanceof DbException) {
-        this.message = `Validation error: ${error.message}`;
-      } else {
-        this.message = `Validation error: something went wrong`;
-      }
+    if (!(await super.validate(value, args))) {
       return false;
     }
+    let result = false;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+      result = await this.queryBuilder.where(this.column, '=', value).exists();
+      if (!result) {
+        this.message = `${this.tableName} with ${this.column} ${value} does not exist`;
+      }
+    } catch (error) {
+      this.message =
+        error instanceof DbException
+          ? `Validation error: ${error.message}`
+          : `Validation error: something went wrong`;
+    }
+    return result;
   }
 
   defaultMessage() {

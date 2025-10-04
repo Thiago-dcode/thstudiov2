@@ -21,10 +21,10 @@ export class ModelNotExistValidator extends BaseModelValidator {
     try {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       const record = await this.queryBuilder
-        .where(this.column, '=', this.value)
+        .where(this.column, '=', value)
         .exists();
       if (record) {
-        this.message = `${this.value} already exists`;
+        this.message = `${value} already exists`;
         return false;
       }
       return true;

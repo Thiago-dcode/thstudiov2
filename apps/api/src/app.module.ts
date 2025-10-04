@@ -1,7 +1,6 @@
 import {
   MiddlewareConsumer,
   Module,
-  UnprocessableEntityException,
   ValidationPipe,
 } from '@nestjs/common';
 import { APP_GUARD, APP_PIPE, RouterModule } from '@nestjs/core';
@@ -29,12 +28,14 @@ import { AuthGuard } from './common/guards/prod-guard/auth.guard';
 import { UserAuthDeviceMiddleware } from './common/middlewares/user-auth-device.middleware';
 import { UserSessionsModule } from './v1/modules/user-sessions/user-sessions.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { MediaModule } from './v1/modules/media/media.module';
 const APP_MODULES = [
   AuthModule,
   UserModule,
   PlansModule,
   UserPlanTransactionsModule,
   UserSessionsModule,
+  MediaModule,
 ];
 @Module({
   imports: [
@@ -108,20 +109,7 @@ const APP_MODULES = [
     },
     {
       provide: APP_PIPE,
-      useFactory: () => {
-        return new ValidationPipe({
-          whitelist: true,
-          transform: true,
-          validateCustomDecorators: true,
-          exceptionFactory: (errors) => {
-            const result = errors.map((error) => ({
-              property: error.property,
-              message: error.constraints[Object.keys(error.constraints)[0]],
-            }));
-            return new UnprocessableEntityException(result);
-          },
-        });
-      },
+      useClass: ValidationPipe,
     },
   ],
 })
