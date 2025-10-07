@@ -1,4 +1,4 @@
-import { userSession } from "@/modules/auth/server-actions/get-user-auth.action";
+import { userSession } from "@/modules/auth/server-actions/get-session.action";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 

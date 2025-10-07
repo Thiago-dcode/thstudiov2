@@ -17,6 +17,11 @@ export class AuthService extends BaseService {
         });
        
     }
+    async logout(): Promise<ApiResponse<void>> {
+        return await this.fetchApi.post({
+            resource: 'logout',
+        });
+    }
     async verify2fa(verify2faRequest: Verify2faRequest): Promise<ApiResponse<UserAuth>> {
         return await this.fetchApi.post({
             resource: 'verify-2fa',

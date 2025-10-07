@@ -32,10 +32,10 @@ class FetchApi extends HttpClient{
                 baseUrl: this._baseUrl,
             }, data);
             if (!response.ok) {
+                console.log("error", data);
                 //TODO: Handle error
             }
             //TODO: Format response
-            console.log(data);
             return data;
         } catch (error) {
             console.error("error", error);

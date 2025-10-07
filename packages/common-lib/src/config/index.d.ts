@@ -1,0 +1,49 @@
+declare let envFilePath: string;
+declare const config: (envPath?: string | undefined) => {
+    app: {
+        name: string;
+        url: string | undefined;
+        env: string;
+        sendErrorEmails: boolean;
+        frontendUrls: string[];
+        allowedOrigins: string[];
+    };
+    api: {
+        url: string;
+        name: string;
+        port: string | number;
+        v1Url: string;
+    };
+    jwt: {
+        secret: string;
+        expiresIn: string;
+    };
+    database: {
+        client: string;
+        host: string;
+        port: number;
+        username: string;
+        password: string;
+        database: string;
+    };
+    mailing: {
+        host: string | undefined;
+        port: number;
+        username: string | undefined;
+        password: string | undefined;
+        admins: string[];
+    };
+    storage: {
+        bucket: string | undefined;
+        region: string | undefined;
+        accessKeyId: string | undefined;
+        secretAccessKey: string | undefined;
+        signedUrlExpiration: number;
+        folder: string | undefined;
+    };
+    encryption: {
+        secret: string;
+    };
+};
+export { envFilePath, config };
+//# sourceMappingURL=index.d.ts.map

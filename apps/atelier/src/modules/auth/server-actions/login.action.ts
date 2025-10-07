@@ -1,14 +1,17 @@
 'use server';
 
-import { cookies, headers } from "next/headers";
+import { headers } from "next/headers";
 import authService from "../auth.service";
 import { loginRequestSchema } from "../schemas/auth.shema";
 import { queryParamBuilder } from "@repo/common-lib/utils/query-builder";
 import { redirect } from "next/navigation";
-import { TWO_FA_COOKIE_NAME, TOKEN_COOKIE_NAME } from "@repo/common-lib/constants";
+import { setUserSession } from "./get-session.action";
+import { set2faCookie, delete2faCookie } from "./twofa.action";
 
 export const loginServerAction = async (formData: FormData) => {
-
+    // Clean up any existing 2FA cookie from previous login attempts
+    await delete2faCookie();
+   
     const credentials = {
         email: formData.get('email') ? formData.get('email') as string : undefined,
         password: formData.get('password') ? formData.get('password') as string : undefined,
@@ -36,24 +39,12 @@ export const loginServerAction = async (formData: FormData) => {
             }
         redirect('/auth/login?errors[]=Something went wrong&email=' + credentials.email);
         }
-        const cookieStore = await cookies();
         //Success
         if(result.data.token === null || result.data.twofa_code){
-        
-            cookieStore.set(TWO_FA_COOKIE_NAME,credentials.email as string, {
-                httpOnly:true,
-                sameSite:true,
-                secure:true,
-                maxAge:60 * 10 //10 minutes
-            });
+           await set2faCookie(credentials.email as string);
             redirect('/auth/2fa');
         }
-        cookieStore.set(TOKEN_COOKIE_NAME, JSON.stringify(result.data), {
-            httpOnly:true,
-            sameSite:true,
-            secure:true,
-            maxAge:60 * 60 * 24 //1 day
-        });
+        await setUserSession(result.data);
         redirect('/');
         }
         

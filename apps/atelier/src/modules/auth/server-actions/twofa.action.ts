@@ -5,7 +5,10 @@ import authService from "../auth.service";
 import { verify2faRequestSchema } from "../schemas/auth.shema";
 import { queryParamBuilder } from "@repo/common-lib/utils/query-builder";
 import { redirect } from "next/navigation";
-import { TWO_FA_COOKIE_NAME, TOKEN_COOKIE_NAME } from "@repo/common-lib/constants";
+import { TWO_FA_COOKIE_NAME } from "@repo/common-lib/constants";
+import { getConfigValue } from "@repo/common-lib/config/utils";
+import { decrypt, encrypt } from "@repo/common-lib/utils/encrypt";
+import { setUserSession } from "./get-session.action";
 
 export const verify2faServerAction = async (formData: FormData) => {
 
@@ -31,19 +34,35 @@ export const verify2faServerAction = async (formData: FormData) => {
         ip_address,
     });
     if (result.error || result.data === null) {
-        if (result.error && result.error.status_code === 400) {
-            redirect('/auth/2fa?errors[]=Invalid twofa code');
-        }
-        redirect('/auth/2fa?errors[]=Something went wrong');
+        const errorMessage = result.error && result.error.status_code === 400?'Invalid twofa code':'Something went wrong';
+        redirect('/auth/2fa?errors[]=' + errorMessage);
     }
-    const cookieStore = await cookies();
     //Success
-    cookieStore.delete(TWO_FA_COOKIE_NAME);
-    cookieStore.set(TOKEN_COOKIE_NAME, JSON.stringify(result.data), {
-        httpOnly: true,
-        sameSite: true,
-        secure: true,
-        maxAge: 60 * 60 * 24 //1 day
-    });
+    await Promise.all([
+        delete2faCookie(),
+        setUserSession(result.data)
+    ]);
     redirect('/');
+}
+export const get2faCookieData = async () => {
+    const cookieStore = await cookies();
+    const cookieValue = cookieStore.get(TWO_FA_COOKIE_NAME)?.value;
+    if (!cookieValue) {
+        return null;
+    }
+    return decrypt(cookieValue, getConfigValue('encryption').secret);
+}
+
+export const delete2faCookie = async () => {
+    const cookieStore = await cookies();
+    cookieStore.delete(TWO_FA_COOKIE_NAME);
+}
+
+export const set2faCookie = async (value: string) => {
+    const cookieStore = await cookies();
+    cookieStore.set(TWO_FA_COOKIE_NAME, encrypt(value, getConfigValue('encryption').secret), {
+        httpOnly: true,
+        secure: true,
+        maxAge: 60 * 10 //10 minutes
+    });
 }

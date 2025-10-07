@@ -14,7 +14,7 @@ export class UserSessionsService {
 
   async findOneBySession(session: {
     user_id: number;
-    user_auth_device_id: number;
+    user_auth_device_id?: number;
     token?: string;
   }): Promise<UserSession | null> {
     return await this.userSessionsRepository.findOneBySession(session);
@@ -29,7 +29,7 @@ export class UserSessionsService {
       user_id,
       user_auth_device_id,
     });
- 
+
     if (!session) {
       session = await this.create({
         user_id,

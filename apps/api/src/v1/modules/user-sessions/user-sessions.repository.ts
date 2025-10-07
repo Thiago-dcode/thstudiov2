@@ -4,12 +4,14 @@ import {
   CreateUserSessionInput,
   UpdateUserSessionInput,
   UserSessionSchemaWithUserAuthDevice,
+  UserSessionSchemaWithUserAuthDeviceColumns,
+  UserSessionSchemaColumns,
 } from '@repo/database/schemas/user-sessions';
 import { UserSession } from './user-sessions.types';
 
 @Injectable()
 export class UserSessionsRepository extends BaseRepository {
-  private readonly COLUMNS: string[] = [
+  private readonly BASE_COLUMNS: UserSessionSchemaColumns[] = [
     'user_sessions.id',
     'user_sessions.token',
     'user_sessions.user_id',
@@ -17,15 +19,19 @@ export class UserSessionsRepository extends BaseRepository {
     'user_sessions.expires_at',
     'user_sessions.created_at',
     'user_sessions.updated_at',
-    'user_auth_devices.id as uad_id',                   
-    'user_auth_devices.user_id as uad_user_id',         
-    'user_auth_devices.created_at as uad_created_at',   
-    'user_auth_devices.updated_at as uad_updated_at',   
-    'user_auth_devices.user_agent',
-    'user_auth_devices.ip_address',
-    'user_auth_devices.disabled',
-    'user_auth_devices.blocked',
-  ];
+  ] as const;
+  private readonly FULL_COLUMNS: UserSessionSchemaWithUserAuthDeviceColumns[] =
+    [
+      ...this.BASE_COLUMNS,
+      'user_auth_devices.id as uad_id',
+      'user_auth_devices.user_id as uad_user_id',
+      'user_auth_devices.created_at as uad_created_at',
+      'user_auth_devices.updated_at as uad_updated_at',
+      'user_auth_devices.user_agent',
+      'user_auth_devices.ip_address',
+      'user_auth_devices.disabled',
+      'user_auth_devices.blocked',
+    ] as const;
   constructor() {
     super('user_sessions');
   }
@@ -39,7 +45,7 @@ export class UserSessionsRepository extends BaseRepository {
       await this.queryBuilder.insertAndGet<UserSessionSchemaWithUserAuthDevice>(
         columns,
         values,
-        this.COLUMNS,
+        this.FULL_COLUMNS,
         [
           {
             type: 'LEFT',
@@ -56,7 +62,7 @@ export class UserSessionsRepository extends BaseRepository {
     const values = Object.values(updateUserSessionInput);
     await this.queryBuilder.where('id', '=', id).update(columns, values);
     const result = await this.queryBuilder
-      .select(this.COLUMNS)
+      .select(this.FULL_COLUMNS)
       .where('id', '=', id)
       .join('user_auth_device_id', 'user_auth_devices', 'id', 'LEFT')
       .first<UserSessionSchemaWithUserAuthDevice>();
@@ -64,14 +70,20 @@ export class UserSessionsRepository extends BaseRepository {
   }
   async findOneBySession(session: {
     user_id: number;
-    user_auth_device_id: number;
+    user_auth_device_id?: number;
     token?: string;
   }): Promise<UserSession | null> {
     let query = this.queryBuilder
-      .select(this.COLUMNS)
+      .select(this.FULL_COLUMNS)
       .where('user_id', '=', session.user_id)
-      .join('user_auth_device_id', 'user_auth_devices', 'id', 'LEFT')
-      .where('user_auth_device_id', '=', session.user_auth_device_id);
+      .join('user_auth_device_id', 'user_auth_devices', 'id', 'LEFT');
+    if (session.user_auth_device_id) {
+      query = query.where(
+        'user_auth_device_id',
+        '=',
+        session.user_auth_device_id,
+      );
+    }
     if (session.token) {
       query = query.where('token', '=', session.token);
     }

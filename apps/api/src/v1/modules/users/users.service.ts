@@ -12,9 +12,9 @@ import { UserExtraDataRepository } from '../user-extra-data/user-extra-data.repo
 import { LogService } from '@repo/backend-lib/services/log-service';
 import { MailService } from '@repo/backend-lib/services/mail-service';
 import { NotifyNewUserMail } from './mails/notify-new-user.mail';
-import * as bcrypt from 'bcrypt';
 import { UserAuthDevicesService } from '../user-auth-devices/user-auth-devices.service';
 import { RequestService } from 'src/common/services/request.service';
+import { hash } from '@repo/common-lib/utils/hash';
 
 @Injectable()
 export class UserService {
@@ -33,7 +33,7 @@ export class UserService {
   async create(createUserRequest: CreateUserRequest) {
     const user = await this.userRepository.create({
       ...createUserRequest,
-      password: await bcrypt.hash(createUserRequest.password, 10),
+      password: await hash(createUserRequest.password),
     });
     if (
       this.requestService &&

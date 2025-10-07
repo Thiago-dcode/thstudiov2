@@ -52,6 +52,9 @@ let envFilePath = path.resolve(process.cwd(),'..', '..', '.env');
       signedUrlExpiration: process.env.STORAGE_SIGNED_URL_EXPIRATION ? parseInt(process.env.STORAGE_SIGNED_URL_EXPIRATION) : 3600,
       folder: process.env.STORAGE_FOLDER,
     },
+    encryption: {
+      secret: process.env.ENCRYPTION_SECRET || 'secret',
+    },
   };
 };
 export { envFilePath ,config};

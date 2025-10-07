@@ -18,4 +18,8 @@ export class AuthController {
   async verify2fa(@Body() verify2faDto: Verify2faRequest) {
     return await this.authService.verify2fa(verify2faDto);
   }
+  @Post('logout')
+  async logout() {
+    return await this.authService.logout();
+  }
 }

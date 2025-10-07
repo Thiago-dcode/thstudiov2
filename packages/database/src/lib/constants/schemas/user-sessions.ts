@@ -27,6 +27,8 @@ export type UserSessionSchema = {
   created_at: Date;
   updated_at: Date;
 };
+const tablesUserSession = [TABLES_ENUM.USER_SESSIONS] as const;
+export type UserSessionSchemaColumns = TableColumn<typeof tablesUserSession, UserSessionSchema>;
 // Only prefix columns that collide between tables
 export type UserSessionSchemaWithUserAuthDevice = {
   id: number;

@@ -5,7 +5,6 @@ import {
 } from '@nestjs/common';
 import { LoginRequest } from './requests/login.request';
 import { UserRepository } from '../users/users.repository';
-import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { TwoFactorAuth, UserAuth, UserPayload } from './auth.types';
 import { ConfigService } from '@nestjs/config';
@@ -21,6 +20,7 @@ import { MailService } from '@repo/backend-lib/services/mail-service';
 import { TwoFAMail } from './mails/twofa-mail';
 import { Verify2faRequest } from './requests/verify-2fa.request';
 import { compareAsc } from 'date-fns/compareAsc';
+import { compare } from '@repo/common-lib/utils/hash';
 
 @Injectable()
 export class AuthService {
@@ -42,7 +42,7 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
-    const isPasswordValid = await bcrypt.compare(
+    const isPasswordValid = await compare(
       authLoginRequest.password,
       user.password,
     );
@@ -146,7 +146,7 @@ export class AuthService {
 
     //Start 2fa process
 
-    const code = randomStr(6);
+    const code = randomStr(6).toLowerCase();
     const expiresAt = addMinutes(new Date(), 10);
     const updatedUser = await this.userRepository.update(user.id, {
       twofa_code: code,
@@ -158,5 +158,19 @@ export class AuthService {
       user: updatedUser,
       need_2fa: true,
     };
+  }
+  async logout() {
+    const user = this.requestService.user;
+    const session = await this.userSessionsService.findOneBySession({
+      user_id: user.id,
+      token: user.token,
+    });
+    if (!session) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+    await this.userSessionsService.update(session.id, {
+      expires_at: new Date(),
+    });
+    return true;
   }
 }
