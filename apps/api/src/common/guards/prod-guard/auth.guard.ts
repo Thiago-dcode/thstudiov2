@@ -11,7 +11,7 @@ import { compareAsc } from 'date-fns';
 import { Request } from 'express';
 import { IS_PUBLIC_KEY } from 'src/common/decorators/public.decorator';
 import { RequestService } from 'src/common/services/request.service';
-import { USER_ID_HEADER } from 'src/common/utils/constants';
+import { USER_ID_HEADER } from '@repo/common-lib/constants';
 import { UserPayload } from 'src/v1/modules/auth/auth.types';
 import { UserSessionsService } from 'src/v1/modules/user-sessions/user-sessions.service';
 

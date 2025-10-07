@@ -31,9 +31,9 @@
     "dbcli": "./dist/src/bin/cli.js"
   },
   "dependencies": {
-    "@repo/backend-lib": "workspace:*",
     "@repo/jest-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@repo/common-lib": "workspace:*",
     "@types/jest": "^30.0.0",
     "bcrypt": "^6.0.0",
     "commander": "^14.0.1",

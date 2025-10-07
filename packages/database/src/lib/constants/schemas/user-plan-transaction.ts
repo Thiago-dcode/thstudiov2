@@ -1,6 +1,6 @@
 import { TABLES_ENUM } from '../constants';
-import { EnumType, TableColumn } from './database';
-
+import { TableColumn } from './database';
+import { EnumType } from '@repo/common-lib/constants/enums';
 export type PlanTransactionSchema = {
   id: number;
   transaction_id: string;

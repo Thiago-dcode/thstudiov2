@@ -1,4 +1,5 @@
-import { ENUMS, SQL_FUNCTIONS, TABLES_ENUM } from '../constants';
+import { SQL_FUNCTIONS, TABLES_ENUM } from '../constants';
+import { EnumType, AvailableEnums } from '@repo/common-lib/constants/enums';
 
 export type DatabaseClient = 'postgres' | 'mysql' | 'sqlite' | 'mongodb';
 export type DatabaseSettings = {
@@ -21,7 +22,6 @@ export type DatabaseConfig = {
 export type FullDatabaseConfig = DatabaseConfig & {
   settings: Required<DatabaseSettings>;
 };
-export type EnumType<T extends keyof typeof ENUMS> = (typeof ENUMS)[T][number];
 export type SqlValue =
   | string
   | number
@@ -29,7 +29,7 @@ export type SqlValue =
   | Date
   | boolean
   | undefined
-  | EnumType<keyof typeof ENUMS>;
+  | EnumType<AvailableEnums>;
 export type SqlClause =
   | '='
   | '>'
@@ -86,7 +86,7 @@ export type Join = {
   foreignTable: string;
   foreignColumn: string;
 };
-export type AvailableEnums = typeof ENUMS;
+
 export type SqlTypes =
   | 'INTEGER'
   | 'REAL'
@@ -100,7 +100,7 @@ export type SqlTypes =
   | 'TIMESTAMP'
   | 'DATE'
   | 'TIME'
-  | `${keyof AvailableEnums}`;
+  | `${AvailableEnums}`;
 export type TableName = (typeof TABLES_ENUM)[keyof typeof TABLES_ENUM];
 
 export type SqlFunction = (typeof SQL_FUNCTIONS)[number];
@@ -166,7 +166,7 @@ export type ColumnDefinition =
   // Auto-increment types
   | 'SERIAL'
   // Enum types
-  | `${keyof AvailableEnums}`
+  | `${AvailableEnums}`
   | (string & {});
 
 

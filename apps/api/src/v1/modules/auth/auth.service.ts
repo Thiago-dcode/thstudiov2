@@ -12,7 +12,7 @@ import { ConfigService } from '@nestjs/config';
 import { BaseUser } from '../users/users.types';
 import { UserAuthDevicesService } from '../user-auth-devices/user-auth-devices.service';
 import { RequestService } from 'src/common/services/request.service';
-import { randomStr } from '@repo/backend-lib/utils';
+import { randomStr } from '@repo/common-lib/utils/random-string';
 import { addMinutes } from 'date-fns/addMinutes';
 import { UserAuthDevice } from '../user-auth-devices/user-auth-devices.types';
 import { UserSessionsService } from '../user-sessions/user-sessions.service';
@@ -35,7 +35,21 @@ export class AuthService {
     private readonly twoFAMail: TwoFAMail,
   ) {}
   async login(authLoginRequest: LoginRequest): Promise<UserAuth | BaseUser> {
-    const user = await this.verifyUser(authLoginRequest);
+    const user = await this.userRepository.findOneByWithPassword(
+      'email',
+      authLoginRequest.email,
+    );
+    if (!user) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+    const isPasswordValid = await bcrypt.compare(
+      authLoginRequest.password,
+      user.password,
+    );
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+    delete user.password;
     const result = await this.handle2fa(user, {
       user_agent: authLoginRequest.user_agent,
       ip_address: authLoginRequest.ip_address,
@@ -45,9 +59,15 @@ export class AuthService {
       : await this.handleLogin(user, result.user_auth_device);
   }
   async verify2fa(verify2faRequest: Verify2faRequest) {
-    const user = await this.verifyUser(verify2faRequest);
+    const user = await this.userRepository.findOneByWithPassword(
+      'email',
+      verify2faRequest.email,
+    );
+    if (!user) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
     if (
-      user.twofa_code !== verify2faRequest.code ||
+      user.twofa_code !== verify2faRequest.twofa_code ||
       compareAsc(user.twofa_expires_at, new Date()) === -1
     ) {
       throw new UnauthorizedException('Invalid verification code or expired');
@@ -99,24 +119,7 @@ export class AuthService {
     });
     return { ...user, token };
   }
-  private async verifyUser(authLoginRequest: LoginRequest): Promise<BaseUser> {
-    const user = await this.userRepository.findOneByWithPassword(
-      'email',
-      authLoginRequest.email,
-    );
-    if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-    const isPasswordValid = await bcrypt.compare(
-      authLoginRequest.password,
-      user.password,
-    );
-    if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-    delete user.password;
-    return user;
-  }
+
   private async handle2fa(
     user: BaseUser,
     {

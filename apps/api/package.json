@@ -16,6 +16,7 @@
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\""
   },
   "dependencies": {
+
     "@nestjs/common": "^11.1.6",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.1.6",
@@ -27,6 +28,7 @@
     "@nestjs/throttler": "^6.4.0",
     "@repo/backend-lib": "workspace:*",
     "@repo/database": "workspace:*",
+    "@repo/common-lib": "workspace:*",
     "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",

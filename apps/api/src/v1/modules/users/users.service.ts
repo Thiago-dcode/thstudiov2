@@ -7,7 +7,7 @@ import { CreateUserRequest } from './requests/create-user.request';
 import { UserRepository } from './users.repository';
 import { PlansRepository } from '../plans/plans.repository';
 import { UserPlanTransactionsRepository } from '../user-plan-transactions/user-plan-transactions.repository';
-import { generateUUID } from '@repo/backend-lib/utils';
+import { generateUUID } from '@repo/common-lib/utils/generate-uuid';
 import { UserExtraDataRepository } from '../user-extra-data/user-extra-data.repository';
 import { LogService } from '@repo/backend-lib/services/log-service';
 import { MailService } from '@repo/backend-lib/services/mail-service';

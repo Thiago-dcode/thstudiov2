@@ -3,14 +3,12 @@ import {
   LANGUAGE_HEADER,
   REQUEST_START_TIME,
   USER_ID_HEADER,
-  // LANGUAGE_HEADER,
-  // REQUEST_START_TIME,
-  // USER_ID_HEADER,
-  VALIDATION_ERROR_STATUS,
-} from '../utils/constants';
+} from '@repo/common-lib/constants';
 import { FactoryLogService } from '@repo/backend-lib/services/log-service';
 import { API_ERRORS_CHANNEL, logConfig } from 'src/config/logging';
 import { format } from 'date-fns/format';
+import { VALIDATION_ERROR_STATUS } from '../utils/constants';
+import { ErrorResponse } from '@repo/common-lib/types/response';
 
 @Catch()
 export class ResponseExceptionFilter implements ExceptionFilter {
@@ -25,18 +23,19 @@ export class ResponseExceptionFilter implements ExceptionFilter {
         exception?.code || exception?.statusCode || exception?.status || 500;
       status = !isNaN(status) ? status : 500;
       status = VALIDATION_ERROR_STATUS.includes(status) ? status : 500;
-      const message =
-        exception?.message ||
-        exception?.response?.error ||
-        'Internal Server Error';
-      const errors = Array.isArray(exception?.response?.message)
+      const message: string =
+        typeof exception?.message === 'string'
+          ? exception?.message
+          : typeof exception?.response?.error === 'string'
+            ? exception?.response?.error
+            : 'Internal Server Error';
+      const errors: string[] = Array.isArray(exception?.response?.message)
         ? exception?.response.message
-        : [{ message }];
+        : [message];
       const error = {
         status_code: status,
         message,
         errors,
-        timestamp: format(new Date(), 'dd-MM-yyyy HH:mm:ss'),
         path: request.path,
       };
       try {
@@ -58,7 +57,8 @@ export class ResponseExceptionFilter implements ExceptionFilter {
       const requestStartTime = parseInt(
         request?.headers[REQUEST_START_TIME] || '0',
       );
-      return response.status(status).json({
+      const responseError: ErrorResponse = {
+        data: null,
         error,
         audit: {
           ip: request?.ip,
@@ -69,7 +69,8 @@ export class ResponseExceptionFilter implements ExceptionFilter {
           language: request?.headers[LANGUAGE_HEADER],
           user: request?.headers[USER_ID_HEADER] || null,
         },
-      });
+      };
+      return response.status(status).json(responseError);
     } catch (err) {
       const message =
         err instanceof Error ? err?.message : 'Internal Server Error';

@@ -14,7 +14,6 @@
   },
   "exports": {
     ".": "./dist/index.js",
-    "./config": "./dist/src/config/index.js",
     "./utils": "./dist/src/utils/index.js",
     "./utils/console": "./dist/src/utils/console.js",
     "./services/log-service": "./dist/src/services/log-service/index.js",
@@ -35,12 +34,7 @@
     "./services/storage-service/base": "./dist/src/services/storage-service/storage.service.js",
     "./services/storage-service/factory": "./dist/src/services/storage-service/factory-storage.service.js"
   },
-  "peerDependencies": {
-    "@nestjs/common": ">=11.0.0",
-    "@nestjs/config": ">=4.0.2",
-    "@nestjs/core": ">=11.0.0",
-    "@nestjs/platform-express": ">=11.0.0"
-  },
+
   "dependencies": {
     "@aws-sdk/client-s3": "^3.901.0",
     "@aws-sdk/s3-request-presigner": "^3.901.0",
@@ -55,7 +49,8 @@
     "nodemailer": "^7.0.6",
     "picocolors": "^1.1.1",
     "pug": "^3.0.3",
-    "uuid": "^13.0.0"
+    "uuid": "^13.0.0",
+    "@repo/common-lib": "workspace:*"
   },
   "devDependencies": {
     "@repo/jest-config": "workspace:*",

@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { APP_GUARD, APP_PIPE, RouterModule } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { config, envFilePath } from '@repo/backend-lib/config';
+import { config, envFilePath } from '@repo/common-lib/config';
 import { AuthModule } from './v1/modules/auth/auth.module';
 import { UserModule } from './v1/modules/users/users.module';
 import { ValidatorProviders } from './common/validators/validator.providers';
@@ -17,7 +17,6 @@ import { TestModule } from './route-test/test.module';
 import { I18nModule } from 'nestjs-i18n';
 import { join } from 'path';
 import { ServicesModule } from './common/services/services.module';
-import { DEFAULT_LANGUAGE } from '@repo/database/constants';
 import { VIEW_ENGINE } from './common/utils/constants';
 import { LanguageMiddleware } from './common/middlewares/language.middleware';
 import { LanguageResolver } from './i18n/resolvers/language.resolver';
@@ -29,6 +28,7 @@ import { UserAuthDeviceMiddleware } from './common/middlewares/user-auth-device.
 import { UserSessionsModule } from './v1/modules/user-sessions/user-sessions.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { MediaModule } from './v1/modules/media/media.module';
+import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants';
 const APP_MODULES = [
   AuthModule,
   UserModule,

@@ -20,9 +20,10 @@ let envFilePath = path.resolve(process.cwd(),'..', '..', '.env');
       allowedOrigins: process.env.APP_ALLOWED_ORIGINS ? process.env.APP_ALLOWED_ORIGINS.split(',').map((origin) => origin.trim()) : [],
     },
     api: {
-      url: process.env.API_URL,
+      url: process.env.API_URL + '/api',
       name: 'api',
       port: process.env.API_PORT || 8080,
+      v1Url: process.env.API_URL + '/api' + '/v1',
     },
     jwt: {
       secret: process.env.JWT_SECRET || 'secret',
@@ -53,5 +54,4 @@ let envFilePath = path.resolve(process.cwd(),'..', '..', '.env');
     },
   };
 };
-
 export { envFilePath ,config};

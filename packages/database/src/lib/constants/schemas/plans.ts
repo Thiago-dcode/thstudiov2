@@ -1,6 +1,6 @@
 import { TABLES_ENUM } from '../constants';
-import { EnumType, TableColumn } from './database';
-
+import { TableColumn } from './database';
+import { EnumType } from '@repo/common-lib/constants/enums';
 // Base Plan type based on the plans table structure
 export type PlanSchema = {
   id: number;

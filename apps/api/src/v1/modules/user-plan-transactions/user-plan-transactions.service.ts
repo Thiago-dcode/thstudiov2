@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { CreateUserPlanTransactionRequest } from './requests/create-user-plan-transaction.requests';
 import { UpdateUserPlanTransactionRequest } from './requests/update-user-plan-transaction.requests';
 import { UserPlanTransactionsRepository } from './user-plan-transactions.repository';
-import { generateUUID } from '@repo/backend-lib/utils';
-import { EnumType } from '@repo/database/schemas/database';
+import { generateUUID } from '@repo/common-lib/utils/generate-uuid';
+import { EnumType } from '@repo/common-lib/constants/enums';
 
 @Injectable()
 export class UserPlanTransactionsService {

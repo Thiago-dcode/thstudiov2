@@ -5,18 +5,15 @@ import {
   ValidatorConstraint,
   ValidatorConstraintInterface,
 } from 'class-validator';
-import {
-  AvailableEnums,
-} from '@repo/database/schemas/database';
 import { Injectable } from '@nestjs/common';
-import { ENUMS } from '@repo/database/constants';
+import { ENUMS, AvailableEnums } from '@repo/common-lib/constants/enums';
 
 @Injectable()
 @ValidatorConstraint({ name: 'isAvailableEnum', async: true })
 export class IsEnumValidator implements ValidatorConstraintInterface {
   protected message: string;
   async validate(value: any, args: ValidationArguments) {
-    const [enumType] = args.constraints as [keyof AvailableEnums];
+    const [enumType] = args.constraints as [AvailableEnums];
     if (!Object.values(ENUMS[enumType]).includes(value)) {
       this.message = `${value} is not a valid value for ${enumType}: ${Object.values(ENUMS[enumType]).join(', ')}`;
       return false;
@@ -29,7 +26,7 @@ export class IsEnumValidator implements ValidatorConstraintInterface {
   }
 }
 export function IsAvailableEnum(
-  enumType: keyof AvailableEnums,
+  enumType: AvailableEnums,
   validationOptions?: ValidationOptions,
 ) {
   return function (object: object, propertyName: string) {

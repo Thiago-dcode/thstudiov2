@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { EnumType } from '@repo/database/schemas/database';
+import { EnumType } from '@repo/common-lib/constants/enums';
 import { UserAuth } from 'src/v1/modules/auth/auth.types';
 
 type RequestLanguage = EnumType<'LANGUAGE_CODE'>;

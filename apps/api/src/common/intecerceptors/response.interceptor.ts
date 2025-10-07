@@ -4,7 +4,7 @@ import {
   Injectable,
   NestInterceptor,
 } from '@nestjs/common';
-import { Audit } from '../utils/types';
+import { Audit, SuccessResponse } from '@repo/common-lib/types/response';
 import { map } from 'rxjs';
 import { RequestService } from '../services/request.service';
 
@@ -25,10 +25,12 @@ export class ResponseInterceptor implements NestInterceptor {
           language: this.requestService?.language,
           user: this.requestService?.user?.id,
         };
-        return {
+        const response: SuccessResponse<typeof res> = {
+          error: null,
           data: res,
           audit,
         };
+        return response;
       }),
     );
   }
