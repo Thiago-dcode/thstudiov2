@@ -13,6 +13,7 @@ declare const config: (envPath?: string | undefined) => {
         name: string;
         port: string | number;
         v1Url: string;
+        maxTwofaAttempts: number;
     };
     jwt: {
         secret: string;

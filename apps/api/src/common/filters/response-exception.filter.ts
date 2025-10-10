@@ -9,10 +9,11 @@ import { API_ERRORS_CHANNEL, logConfig } from 'src/config/logging';
 import { format } from 'date-fns/format';
 import { VALIDATION_ERROR_STATUS } from '../utils/constants';
 import { ErrorResponse } from '@repo/common-lib/types/response';
+import { RequestService } from '../services/request.service';
 
 @Catch()
 export class ResponseExceptionFilter implements ExceptionFilter {
-  constructor() {}
+  constructor(private readonly requestService: RequestService) {}
   catch(exception: any, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse();
@@ -61,8 +62,8 @@ export class ResponseExceptionFilter implements ExceptionFilter {
         data: null,
         error,
         audit: {
-          ip: request?.ip,
-          user_agent: request?.get('user-agent'),
+          ip: this.requestService?.ip_address,
+          user_agent: this.requestService?.user_agent,
           request_time: !isNaN(requestStartTime)
             ? (Date.now() - requestStartTime) / 1000
             : 0,

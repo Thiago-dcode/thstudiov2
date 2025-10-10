@@ -5,6 +5,7 @@ export const loginRequestSchema = z.object({
   password: z.string('Invalid password').min(3, 'Invalid password'),
   user_agent: z.string().optional(),
   ip_address: z.string().optional(),
+  remember_me: z.boolean().optional(),
 });
 export const verify2faRequestSchema = z.object({ 
   email: z.email('Invalid email'),

@@ -14,6 +14,8 @@
     "@repo/frontend-lib": "workspace:*",
     "@repo/ui": "workspace:*",
     "better-auth": "^1.3.26",
+    "date-fns": "^4.1.0",
+    "dotenv": "^16.6.1",
     "next": "15.5.4",
     "react": "19.1.0",
     "react-dom": "19.1.0",

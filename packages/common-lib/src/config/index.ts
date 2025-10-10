@@ -2,6 +2,9 @@ import  dotenv from 'dotenv'
 dotenv.config()
 import  path from 'path';
 import  fs from 'fs';
+
+//IMPORTANT: This file is not available for next.js middleware,
+//So dont call this file from next.js middleware
 let envFilePath = path.resolve(process.cwd(),'..', '..', '.env');
 
  const config = (envPath?: string | undefined) => {
@@ -24,6 +27,7 @@ let envFilePath = path.resolve(process.cwd(),'..', '..', '.env');
       name: 'api',
       port: process.env.API_PORT || 8080,
       v1Url: process.env.API_URL + '/api' + '/v1',
+      maxTwofaAttempts: process.env.MAX_TWOFA_ATTEMPTS ? parseInt(process.env.MAX_TWOFA_ATTEMPTS) : 3,
     },
     jwt: {
       secret: process.env.JWT_SECRET || 'secret',

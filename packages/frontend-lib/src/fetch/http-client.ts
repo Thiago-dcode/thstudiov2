@@ -12,14 +12,14 @@ type FullRequestParams = Omit<RequestParams, 'body'> & {
     body : BodyParsed;
     baseUrl: string;
 }
-type BeforeRequestCallback = (RequestParams: FullRequestParams) => Promise<any>;
-type AfterRequestCallback = (RequestParams: FullRequestParams,response: any) => Promise<any>;
+type RequestCallback = (RequestParams: FullRequestParams) => Promise<any>;
+type ResponseCallback<T> = (RequestParams: FullRequestParams,response: T) => Promise<any>;
 type RequestParamsWithoutMethod = Omit<RequestParams, 'method'>;
 
 export abstract class  HttpClient {
 
-protected _beforeRequestCallback: BeforeRequestCallback = () => Promise.resolve({});
-protected _afterRequestCallback: AfterRequestCallback = () => Promise.resolve({});
+protected _requestCallback: RequestCallback = () => Promise.resolve({});
+protected _responseCallback: ResponseCallback<any> = () => Promise.resolve({});
 protected _headers: HeadersInit = {};
 protected _body:  BodyParsed = undefined;
 protected _method: Method = 'GET';
@@ -75,11 +75,11 @@ protected _baseUrl: string = '';
         this.setupRequest(requestParams);
         return await this.fetcher();
     }
-    public async setBeforeRequestCallback(callback: (RequestParams: FullRequestParams) => Promise<any>) {
-        this._beforeRequestCallback = callback;
+    public async setRequestCallback(callback: RequestCallback) {
+        this._requestCallback = callback;
     }
-    public async setAfterRequestCallback(callback: (RequestParams: FullRequestParams,response: any) => Promise<any>) {
-        this._afterRequestCallback = callback;
+    public async setResponseCallback<T>(callback: ResponseCallback<T>) {
+        this._responseCallback = callback;
     }
     public async get<T>(requestParams:RequestParamsWithoutMethod): Promise<T> {
         return await this.callFetcher   ({...requestParams, method: 'GET'});

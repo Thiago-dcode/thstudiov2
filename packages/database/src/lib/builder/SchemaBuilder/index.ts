@@ -1,7 +1,6 @@
-import { ENUMS, } from '../../constants/constants';
 import BaseBuilder from '..';
 import { TableName } from '../../constants/schemas/database';
-import { AvailableEnums } from '@repo/common-lib/constants/enums';
+import { AvailableEnums, ENUMS } from '@repo/common-lib/constants/enums';
 import { getClient } from '../../client';
 import { SchemaBuilderOperationNotAllowedException } from './exceptions';
 class SchemaBuilder extends BaseBuilder {
@@ -38,13 +37,13 @@ class SchemaBuilder extends BaseBuilder {
       }
     }
   }
-  public static async createEnum(enumName: keyof AvailableEnums) {
+  public static async createEnum(enumName:  AvailableEnums) {
     const enumValues = ENUMS[enumName].map((value) => `'${value}'`).join(',');
     return await getClient().query(
       `CREATE TYPE ${enumName} AS ENUM (${enumValues});`,
     );
   }
-  public static async createEnumIfNotExists(enumName: keyof AvailableEnums) {
+  public static async createEnumIfNotExists(enumName:  AvailableEnums) {
     const enumValues = ENUMS[enumName].map((value) => `'${value}'`).join(',');
     return await getClient().query(`DO $$ BEGIN
       CREATE TYPE ${enumName} AS ENUM (${enumValues});
@@ -81,7 +80,7 @@ END $$;`);
     return await this.getDb()?.query(this.query);
   }
 
-  public static async dropEnum(enumName: keyof AvailableEnums) {
+  public static async dropEnum(enumName:  AvailableEnums) {
     if (!getClient().config.settings.allowDrop) {
       throw new SchemaBuilderOperationNotAllowedException(
         'Drop is not allowed, set allowDrop to true in the database config',
@@ -89,7 +88,7 @@ END $$;`);
     }
     return await getClient().query(`DROP TYPE ${enumName}`);
   }
-  public static async dropEnumIfExists(enumName: keyof AvailableEnums) {
+  public static async dropEnumIfExists(enumName:  AvailableEnums) {
     if (!getClient().config.settings.allowDrop) {
       throw new SchemaBuilderOperationNotAllowedException(
         'Drop is not allowed, set allowDrop to true in the database config',

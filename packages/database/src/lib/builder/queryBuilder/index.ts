@@ -636,6 +636,7 @@ offset = isNull ? offset : offset + 1;
    * @protected
    */
   protected reset() {
+    this._select = '*';
     this.query = '';
     this.values = [];
     this.valuesPosition = 0;

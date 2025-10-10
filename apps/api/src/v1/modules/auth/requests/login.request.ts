@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
 import { ModelExist } from 'src/common/validators/model-exist.validtor';
 
 export class LoginRequest {
@@ -11,11 +11,4 @@ export class LoginRequest {
   @IsNotEmpty()
   password: string;
 
-  @IsString()
-  @IsOptional()
-  user_agent: string;
-
-  @IsString()
-  @IsOptional()
-  ip_address: string;
 }

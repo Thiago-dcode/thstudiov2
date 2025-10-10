@@ -1,10 +1,11 @@
 import { loginServerAction } from "@/modules/auth/server-actions/login.action";
+import { getRememberMe } from "@/modules/auth/server-actions/user-session.action";
 import Link from "next/link";
 
 export default async function Login({ searchParams }: { searchParams: Promise<{ "errors[]"?: string[] | string, email?: string }> }) {
   const { "errors[]": _errors, email } = await searchParams;
   const errors: string[] = typeof _errors === 'string' ? [_errors] : _errors || [];
-
+  const rememberMe = await getRememberMe();
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 px-4 py-12">
       <div className="w-full max-w-md">
@@ -64,7 +65,7 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
                   Password
                 </label>
                 <Link
-                  href="/auth/forgot-password"
+                  href="/auth/password-recovery"
                   className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
                 >
                   Forgot?
@@ -85,8 +86,9 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
             <div className="flex items-center">
               <input
                 id="remember-me"
-                name="remember-me"
+                name="remember_me"
                 type="checkbox"
+                defaultChecked={rememberMe}
                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300 rounded cursor-pointer"
               />
               <label

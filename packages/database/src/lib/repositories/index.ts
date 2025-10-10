@@ -23,6 +23,16 @@ export abstract class BaseRepository {
 
   abstract create(data: any): Promise<any>;
 
+
+  async exists(data: {[column: string]: any}) {
+    let query = this.queryBuilder;
+    for (const [column, value] of Object.entries(data)) {
+      if (value !== undefined) {
+        query = query.where(column, '=', value);
+      }
+    }
+    return await query.exists();
+  }
  
 
     

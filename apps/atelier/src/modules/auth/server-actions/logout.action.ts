@@ -2,10 +2,10 @@
 
 import { redirect } from "next/navigation";
 import authService from "../auth.service";
-import { deleteUserSession } from "./get-session.action";
+import { deleteUserSession } from "./user-session.action";
 
 export const logoutServerAction = async () => {
-   await Promise.all([
+   await Promise.allSettled([
     authService.logout(),
     deleteUserSession(),
    ]);

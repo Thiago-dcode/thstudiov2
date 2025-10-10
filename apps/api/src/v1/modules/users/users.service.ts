@@ -81,6 +81,12 @@ export class UserService {
 
       //Plans with plan and plan prices must always exist. If not, BIG PROBLEM.
       const freePlan = await this.plansRepository.findFreePlan();
+      if (!freePlan) {
+        this.logService
+          .name('new-user')
+          .error('Free plan not found for user: ' + event.user.id);
+        throw new HttpException('Free plan not found', 500);
+      }
       const lifetimePrice = freePlan.prices.find(
         (price) => price.billing_type === 'LIFETIME',
       );

@@ -22,6 +22,8 @@ export class UserRepository extends BaseRepository {
     'users.biography',
     'users.email',
     'users.email_validated',
+    'users.is_active',
+    'users.twofa_attempts',
     'users.number_email_validations_sent',
     'users.address_id',
     'users.twofa_enabled',
@@ -49,6 +51,8 @@ export class UserRepository extends BaseRepository {
     'users.twofa_enabled',
     'users.twofa_code',
     'users.twofa_expires_at',
+    'users.is_active',
+    'users.twofa_attempts',
   ] as const;
   constructor() {
     super('users');
@@ -89,7 +93,7 @@ export class UserRepository extends BaseRepository {
     }
     return full ? this.formatFullUser(result) : this.formatUser(result);
   }
-  async findOneByWithPassword(
+  async findOneByColumnWithPassword(
     column: string,
     value: any,
   ): Promise<BaseUserWithPassword> {
@@ -141,23 +145,15 @@ export class UserRepository extends BaseRepository {
       twofa_code: result?.twofa_code,
       twofa_expires_at: result?.twofa_expires_at,
       password: withPassword ? result?.password : undefined,
+      is_active: result?.is_active,
+      twofa_attempts: result?.twofa_attempts,
     };
 
     return baseUser;
   }
   private formatFullUser(result: UserSchemaWithAddress): User {
     return {
-      id: result?.id,
-      email: result?.email,
-      username: result?.username,
-      email_validated: result?.email_validated,
-      number_email_validations_sent: result?.number_email_validations_sent,
-      biography: result?.biography,
-      name: result?.name,
-      surname: result?.surname,
-      twofa_enabled: result?.twofa_enabled,
-      twofa_code: result?.twofa_code,
-      twofa_expires_at: result?.twofa_expires_at,
+     ...this.formatUser(result),
       address: result?.addr_id
         ? {
             id: result?.addr_id,

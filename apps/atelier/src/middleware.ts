@@ -1,14 +1,40 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse  } from "next/server";
 import { ENUMS } from "@repo/common-lib/constants/enums";
 import { EnumType } from "@repo/common-lib/constants/enums";
 import { LANGUAGE_HEADER, DEFAULT_LANGUAGE, LANGUAGE_COOKIE_NAME } from "@repo/common-lib/constants";
 import { getAcceptLanguage } from "@repo/common-lib/utils/get-accept-language";
+import { deleteUserSessionByCookie, getRememberMeByCookie, getUserSessionExpirationDateByCookie, setUserSessionByCookie, userSessionByCookie } from "./modules/auth/server-actions/user-session.action";
+import { subMinutes,   } from "date-fns";
+import authService from "./modules/auth/auth.service";
+import { RequestCookies, ResponseCookies } from "next/dist/compiled/@edge-runtime/cookies";
 
 const AVAILABLE_LANGUAGES = ENUMS.LANGUAGE_CODE;
+//Only refresh token if the user is authenticated
+const handleRefreshToken = async (cookies: RequestCookies,responseCookies: ResponseCookies)=>{
+ const expirationDate = await getUserSessionExpirationDateByCookie(cookies);
+ const tenMinutes = 10 * 60 * 1000;
+ const now = new Date().getTime();
+ const expirationDate10MinutesAgo = expirationDate ? subMinutes(expirationDate,10).getTime() : null;
+ //Only refresh if the token is going ttho expire in less than 10 minutes
+ if(!expirationDate10MinutesAgo || expirationDate10MinutesAgo - now > tenMinutes){
+  return;
+ }
+ const userAuth = await userSessionByCookie(cookies);
+  if(!userAuth)return;
+  console.log("Refreshing token");
+ const result = await authService.refreshToken();
+ if(!result?.data || result.error){
+  console.log("Token refresh failed");
+   deleteUserSessionByCookie(responseCookies);
+}else{
+  console.log("Token refreshed successfully");
+  await setUserSessionByCookie(result.data,responseCookies);
+}
 
-const middleware = (req: NextRequest, res: NextResponse) => {
-
+}
+const middleware = async (req: NextRequest) => {
   const requestCookies = req.cookies;
+  //handle refresh token
   //Priority 1: Cookie
   let language : EnumType<'LANGUAGE_CODE'> | undefined | null = requestCookies.get(LANGUAGE_COOKIE_NAME)?.value as EnumType<'LANGUAGE_CODE'>;
   if(!language || !AVAILABLE_LANGUAGES.includes(language)) {
@@ -26,6 +52,13 @@ const middleware = (req: NextRequest, res: NextResponse) => {
   const response = NextResponse.next();
   response.cookies.set(LANGUAGE_COOKIE_NAME, language);
   response.headers.set(LANGUAGE_HEADER, language);
+  const rememberMe = await getRememberMeByCookie(requestCookies);
+  if(rememberMe){
+    console.log("Remember me is true");
+    await handleRefreshToken(requestCookies,response.cookies);
+  }
+  
+
   return response;
 };
 

@@ -1,4 +1,4 @@
-import { userSession } from "@/modules/auth/server-actions/get-session.action";
+import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
@@ -15,7 +15,7 @@ export default async function PublicLayout({
 }>) {
   const userAuth = await userSession();
   if (userAuth) {
-    redirect('/');
+    redirect('/atelier');
   }
 
   return (

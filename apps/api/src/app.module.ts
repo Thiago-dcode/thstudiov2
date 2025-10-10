@@ -53,12 +53,12 @@ const APP_MODULES = [
       {
         name: 'medium',
         ttl: 10000,
-        limit: 20,
+        limit: 10,
       },
       {
         name: 'long',
         ttl: 60000,
-        limit: 100,
+        limit: 50,
       },
     ]),
     JwtModule.registerAsync({
@@ -96,6 +96,10 @@ const APP_MODULES = [
   ],
   controllers: [],
   providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
     ...ValidatorProviders,
     ...InterceptorProviders,
     ...filterProviders,
@@ -103,10 +107,7 @@ const APP_MODULES = [
       provide: APP_GUARD,
       useClass: AuthGuard,
     },
-    {
-      provide: APP_GUARD,
-      useClass: ThrottlerGuard,
-    },
+  
     {
       provide: APP_PIPE,
       useClass: ValidationPipe,

@@ -1,11 +1,10 @@
 'use server';
 
-import { headers } from "next/headers";
 import authService from "../auth.service";
 import { loginRequestSchema } from "../schemas/auth.shema";
 import { queryParamBuilder } from "@repo/common-lib/utils/query-builder";
 import { redirect } from "next/navigation";
-import { setUserSession } from "./get-session.action";
+import { setRememberMe, setUserSession } from "./user-session.action";
 import { set2faCookie, delete2faCookie } from "./twofa.action";
 
 export const loginServerAction = async (formData: FormData) => {
@@ -15,6 +14,7 @@ export const loginServerAction = async (formData: FormData) => {
     const credentials = {
         email: formData.get('email') ? formData.get('email') as string : undefined,
         password: formData.get('password') ? formData.get('password') as string : undefined,
+        remember_me:!!formData.get('remember_me'),
     }
     const validatedData = loginRequestSchema.safeParse(credentials);
     if (!validatedData.success) {
@@ -24,20 +24,19 @@ export const loginServerAction = async (formData: FormData) => {
         const url = queryParamBuilder('/auth/login', { errors, email: credentials.email });
         redirect(url);
     }
-        const nextHeaders = await headers();
-        const user_agent = nextHeaders.get('user-agent') ?? undefined;
-        const ip_address = nextHeaders.get('x-forwarded-for') ?? undefined;
         const result = await authService.login({
             email: validatedData.data.email,
             password: validatedData.data.password,
-            user_agent,
-            ip_address,
         });
-        if (result.error || !result.data) {
-            if (result.error && result.error.status_code === 400) {
+        if (result.error || result.data === null) {
+            if (result.error && (result.error.status_code === 400 || result.error.status_code === 401)) {
               redirect('/auth/login?errors[]=Invalid credentials&email=' + credentials.email);
             }
+            console.log('result from loginServerAction', result);
         redirect('/auth/login?errors[]=Something went wrong&email=' + credentials.email);
+        }
+        if(validatedData.data.remember_me){
+            await setRememberMe();
         }
         //Success
         if(result.data.token === null || result.data.twofa_code){

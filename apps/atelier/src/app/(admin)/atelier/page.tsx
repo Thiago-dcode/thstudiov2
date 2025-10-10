@@ -1,9 +1,15 @@
-import { userSession } from "@/modules/auth/server-actions/get-session.action";
+import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import { logoutServerAction } from "@/modules/auth/server-actions/logout.action";
+import mediaService from "@/modules/media/media.service";
+import { redirect } from "next/navigation";
 
 export default async function Atelier() {
     const userAuth = await userSession();
-    
+    if (!userAuth) {
+        redirect('/');
+    }
+    const media = await mediaService.findAll();
+    console.log("media result", media);
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 px-4">
             <div className="w-full max-w-md">
@@ -18,7 +24,7 @@ export default async function Atelier() {
                     </div>
 
                     <form action={logoutServerAction}>
-                        <button 
+                        <button
                             type="submit"
                             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                         >

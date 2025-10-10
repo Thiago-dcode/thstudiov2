@@ -1,11 +1,11 @@
-import { BaseService } from "@/lib/common/services/base.service";
+import { BaseService } from "@/lib/services/base.service";
 import { ApiResponse } from "@repo/common-lib/types/response";
-import { FetchApi } from "@repo/frontend-lib/fetch/fetch-api";
 import { LoginRequest, LoginReturn, UserAuth, Verify2faRequest } from "./auth.types";
+import { fetchApi } from "@/lib/facade/fetchApi";
 
 export class AuthService extends BaseService {
     constructor() {
-        super(new FetchApi(), 'auth');
+        super(fetchApi, 'auth');
 
     }
 
@@ -26,6 +26,12 @@ export class AuthService extends BaseService {
         return await this.fetchApi.post({
             resource: 'verify-2fa',
             body: verify2faRequest,
+        });
+    }
+    async refreshToken(): Promise<ApiResponse<UserAuth>> {
+        return await this.fetchApi.post({
+            resource: 'refresh-token',
+            body: {},
         });
     }
 }

@@ -35,7 +35,7 @@ export class AuthService {
     private readonly twoFAMail: TwoFAMail,
   ) {}
   async login(authLoginRequest: LoginRequest): Promise<UserAuth | BaseUser> {
-    const user = await this.userRepository.findOneByWithPassword(
+    const user = await this.userRepository.findOneByColumnWithPassword(
       'email',
       authLoginRequest.email,
     );
@@ -51,15 +51,15 @@ export class AuthService {
     }
     delete user.password;
     const result = await this.handle2fa(user, {
-      user_agent: authLoginRequest.user_agent,
-      ip_address: authLoginRequest.ip_address,
+      user_agent: this.requestService?.user_agent || '-',
+      ip_address: this.requestService?.ip_address || '-',
     });
     return result.need_2fa
       ? result.user
       : await this.handleLogin(user, result.user_auth_device);
   }
   async verify2fa(verify2faRequest: Verify2faRequest) {
-    const user = await this.userRepository.findOneByWithPassword(
+    const user = await this.userRepository.findOneByColumnWithPassword(
       'email',
       verify2faRequest.email,
     );
@@ -75,10 +75,8 @@ export class AuthService {
     //It should be created from the login process
     const userAuthDevice = await this.userAuthDevicesService.getOneOrCreate({
       user_id: user.id,
-      user_agent:
-        verify2faRequest.user_agent || this.requestService?.user_agent || '-',
-      ip_address:
-        verify2faRequest.ip_address || this.requestService?.ip_address || '-',
+      user_agent: this.requestService?.user_agent || '-',
+      ip_address: this.requestService?.ip_address || '-',
       disabled: false,
       blocked: false,
     });
@@ -101,9 +99,7 @@ export class AuthService {
   }
   private async handleLogin(user: BaseUser, userAuthDevice: UserAuthDevice) {
     const payload: UserPayload = {
-      id: user.id,
-      email: user.email,
-      username: user.username,
+      ...user,
       user_auth_device_id: userAuthDevice.id,
     };
     const expiresAt = addDays(new Date(), 1);
@@ -172,5 +168,28 @@ export class AuthService {
       expires_at: new Date(),
     });
     return true;
+  }
+  async refreshToken() {
+    const user = this.requestService.user;
+    if (!user) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+    const authDevice = await this.userAuthDevicesService.getOneByAuthDevice({
+      user_id: user.id,
+      user_agent: this.requestService.user_agent || '-',
+      ip_address: this.requestService.ip_address || '-',
+    });
+    if (!authDevice || authDevice.disabled || authDevice.blocked) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+    const exists = await this.userSessionsService.sessionExists({
+      user_id: user.id,
+      user_auth_device_id: authDevice.id,
+      token: user.token,
+    });
+    if (!exists) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+    return await this.handleLogin(user, authDevice);
   }
 }

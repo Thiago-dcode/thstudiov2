@@ -33,7 +33,7 @@ const up = async () => {
   ]);
   await createTimeStampsTrigger('user_sessions');
   await Alter.table('users').addColumn('twofa_enabled', 'BOOLEAN', {
-    default: false,
+    default: true,
   });
   await Alter.table('users').addColumn('twofa_code', 'VARCHAR(255)', {
     nullable: true,
@@ -41,12 +41,18 @@ const up = async () => {
   await Alter.table('users').addColumn('twofa_expires_at', 'TIMESTAMP', {
     nullable: true,
   });
+  await Alter.table('users').addColumn('twofa_attempts', 'INTEGER', {
+    default: 0,
+  });
+
+
 };
 
 const down = async () => {
   await Alter.table('users').dropColumn('twofa_enabled');
   await Alter.table('users').dropColumn('twofa_code');
   await Alter.table('users').dropColumn('twofa_expires_at');
+  await Alter.table('users').dropColumn('twofa_attempts');
   //Your migration rollback code here
   await Schema.table('user_sessions').dropIfExists();
   await Schema.table('user_auth_devices').dropIfExists();

@@ -36,7 +36,6 @@ export class LanguageMiddleware implements NestMiddleware {
         }
       }
     }
-    console.log('language', language);
     res.setHeader(LANGUAGE_HEADER, language);
     req.headers[LANGUAGE_HEADER] = language;
     this.requestService.language = language;

@@ -1,7 +1,6 @@
 import { ClientNotInitializedException } from '../../client/exceptions';
 import { getClientConfig } from '../../client';
 import {
-  AvailableEnums,
   ColumnAttributes,
   ColumnAttributesWithAfter,
   ColumnAttributesWithForeignKey,
@@ -10,7 +9,8 @@ import {
   SqlTypes,
   TableName,
 } from '../../constants/schemas/database';
-import { ENUMS, SQL_FUNCTIONS } from '../../constants/constants';
+import { SQL_FUNCTIONS } from '../../constants/constants';
+import { AvailableEnums, ENUMS } from '@repo/common-lib/constants/enums';
 
 
 export const DEFAULT_COLUMN_OPTIONS: ColumnAttributes = {
@@ -226,7 +226,7 @@ export class ColumnBuilder {
   }
   public static enum(
     columnName: string,
-    enumName: keyof AvailableEnums,
+    enumName:  AvailableEnums,
     options?: ColumnAttributes<(typeof ENUMS)[typeof enumName][number]>,
   ): string {
     return `${this.validateStringAndReturn(columnName)} ${enumName}${options ? ' ' + this.buildOptions(options) : ''}`;

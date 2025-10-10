@@ -6,18 +6,24 @@ import {
 } from '@repo/database/schemas/user-sessions';
 import { BaseUserSession, UserSession } from './user-sessions.types';
 
+type SessionExistsInput = {
+  user_id: number;
+  user_auth_device_id?: number;
+  token?: string;
+};
 @Injectable()
 export class UserSessionsService {
   constructor(
     private readonly userSessionsRepository: UserSessionsRepository,
   ) {}
 
-  async findOneBySession(session: {
-    user_id: number;
-    user_auth_device_id?: number;
-    token?: string;
-  }): Promise<UserSession | null> {
+  async findOneBySession(
+    session: SessionExistsInput,
+  ): Promise<UserSession | null> {
     return await this.userSessionsRepository.findOneBySession(session);
+  }
+  async sessionExists(session: SessionExistsInput): Promise<boolean> {
+    return await this.userSessionsRepository.exists(session);
   }
   async handleSessionProcess({
     user_id,
@@ -30,16 +36,15 @@ export class UserSessionsService {
       user_auth_device_id,
     });
 
-    if (!session) {
-      session = await this.create({
-        user_id,
-        user_auth_device_id,
-        expires_at,
-        token,
-      });
-    } else {
-      session = await this.update(session.id, { expires_at, token });
-    }
+    session = !session
+      ? await this.create({
+          user_id,
+          user_auth_device_id,
+          expires_at,
+          token,
+        })
+      : await this.update(session.id, { expires_at, token });
+
     return session;
   }
   async create(sessionInput: CreateUserSessionInput) {

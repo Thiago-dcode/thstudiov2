@@ -1,16 +1,14 @@
 import { ApiResponse } from "@repo/common-lib/types/response";
 import { HttpClient } from "./http-client";
-import { getConfigValue } from "@repo/common-lib/config/utils";
-
 
 class FetchApi extends HttpClient{
-    constructor(globalHeaders: HeadersInit = {}) {
-        super(getConfigValue('api').v1Url, globalHeaders);
+    constructor(baseUrl: string, globalHeaders: HeadersInit = {}) {
+        super(baseUrl, globalHeaders);
     }
     protected async fetcher<T>(): Promise<ApiResponse<T>> {
         const url = `${this._baseUrl}/${this._resource}`;
         try {
-            await this._beforeRequestCallback({
+            await this._requestCallback({
                 resource: this._resource,
                 headers: this._headers,
                 body: this._body,
@@ -24,7 +22,7 @@ class FetchApi extends HttpClient{
                 body: this._body,   
             });
             const data = await response.json();
-            await this._afterRequestCallback({
+            await this._responseCallback({
                 resource: this._resource,
                 headers: this._headers,
                 body: this._body,
@@ -32,13 +30,10 @@ class FetchApi extends HttpClient{
                 baseUrl: this._baseUrl,
             }, data);
             if (!response.ok) {
-                console.log("error", data);
                 //TODO: Handle error
             }
-            //TODO: Format response
             return data;
         } catch (error) {
-            console.error("error", error);
             //TODO: Handle error
             throw error;
         }

@@ -24,6 +24,9 @@ const up = async () => {
     ColumnBuilder.boolean('email_validated', {
       default: false,
     }),
+    ColumnBuilder.boolean('is_active', {
+      default: true,
+    }),
     ColumnBuilder.integer('number_email_validations_sent', {
       default: 0,
     }),

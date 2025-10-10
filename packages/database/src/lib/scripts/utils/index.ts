@@ -10,7 +10,7 @@ import {
 import { DatabaseClient, TableName } from '../../constants/schemas/database';
 import Logger from '@repo/backend-lib/utils/console';
 import { initClient } from '../../client';
-import {config} from '@repo/backend-lib/config';
+import {config} from '@repo/common-lib/config';
 
 const handleMigration = async (
   callback: (migration: any, migrationName: string) => Promise<void>,

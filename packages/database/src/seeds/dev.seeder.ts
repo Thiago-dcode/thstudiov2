@@ -1,6 +1,6 @@
 import { Query } from "../lib/facades";
 import bcrypt from 'bcrypt';
-import { generateUUID } from "@repo/backend-lib/utils";
+import { generateUUID } from "@repo/common-lib/utils/generate-uuid";
 import { CreatePlanTransactionInput } from "src/lib/constants/schemas/user-plan-transaction";
 
 

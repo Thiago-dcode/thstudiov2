@@ -8,6 +8,8 @@ const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
+//IMPORTANT: This file is not available for next.js middleware,
+//So dont call this file from next.js middleware
 let envFilePath = path_1.default.resolve(process.cwd(), '..', '..', '.env');
 exports.envFilePath = envFilePath;
 const config = (envPath) => {
@@ -30,6 +32,7 @@ const config = (envPath) => {
             name: 'api',
             port: process.env.API_PORT || 8080,
             v1Url: process.env.API_URL + '/api' + '/v1',
+            maxTwofaAttempts: process.env.MAX_TWOFA_ATTEMPTS ? parseInt(process.env.MAX_TWOFA_ATTEMPTS) : 3,
         },
         jwt: {
             secret: process.env.JWT_SECRET || 'secret',

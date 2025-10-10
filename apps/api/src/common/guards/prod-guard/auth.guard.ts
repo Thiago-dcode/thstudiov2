@@ -51,12 +51,14 @@ export class AuthGuard implements CanActivate {
       ) {
         throw new UnauthorizedException();
       }
+      console.log("====payload", payload);
       //TODO: Verify user current session
       const session = await this.userSessionsService.findOneBySession({
         user_id: payload.id,
         user_auth_device_id: payload.user_auth_device_id,
         token,
       });
+      console.log("====session", session);
       if (
         !session ||
         !session?.expires_at ||
@@ -66,7 +68,15 @@ export class AuthGuard implements CanActivate {
       }
       request[USER_ID_HEADER] = payload.id;
       this.requestService.user = {
-        ...payload,
+        email: payload.email,
+        username: payload.username,
+        email_validated: payload.email_validated,
+        twofa_enabled: payload.twofa_enabled,
+        twofa_code: payload.twofa_code,
+        twofa_expires_at: payload.twofa_expires_at,
+        id: payload.id,
+        is_active: payload.is_active,
+        twofa_attempts: payload.twofa_attempts,
         token,
       };
     } catch (error) {

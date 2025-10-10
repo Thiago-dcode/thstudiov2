@@ -4,7 +4,6 @@ import {
   IsString,
   MaxLength,
   MinLength,
-  IsOptional,
 } from 'class-validator';
 import { ModelExist } from 'src/common/validators/model-exist.validtor';
 export class Verify2faRequest {
@@ -19,11 +18,5 @@ export class Verify2faRequest {
   @MaxLength(6)
   twofa_code: string; 
 
-  @IsString()
-  @IsOptional()
-  user_agent: string;
 
-  @IsString()
-  @IsOptional()
-  ip_address: string;
 }
