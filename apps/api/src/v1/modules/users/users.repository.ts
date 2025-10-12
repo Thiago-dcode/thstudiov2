@@ -113,16 +113,12 @@ export class UserRepository extends BaseRepository {
     console.log(filters);
   }
   async create(user: CreateUserInput): Promise<BaseUser> {
-    const columns = Object.keys(user);
-    const values = Object.values(user);
-    const result = await this.queryBuilder.insertAndGet<BaseUserSchema>(
-      columns,
-      values,
-      ['id', 'email', 'username', 'email_validated'],
-    );
+    const result = await super._create<BaseUserSchema>(user, {
+      select: ['id', 'email', 'username', 'email_validated'],
+    });
     return this.formatUser(result, false) as BaseUser;
   }
-  async update(id: number, user: UpdateUserInput): Promise<BaseUser> {
+  async updateById(id: number, user: UpdateUserInput): Promise<BaseUser> {
     const columns = Object.keys(user);
     const values = Object.values(user);
     await this.queryBuilder.where('id', '=', id).update(columns, values);
@@ -153,7 +149,7 @@ export class UserRepository extends BaseRepository {
   }
   private formatFullUser(result: UserSchemaWithAddress): User {
     return {
-     ...this.formatUser(result),
+      ...this.formatUser(result),
       address: result?.addr_id
         ? {
             id: result?.addr_id,

@@ -1,5 +1,6 @@
 import { BaseUser } from '../users/users.types';
 import { UserAuthDevice } from '../user-auth-devices/user-auth-devices.types';
+import { PasswordRecoveryAttemptSchema } from '@repo/database/schemas/password-recovery-attempts';
 
 export type UserAuth =  BaseUser & {
   token: string;
@@ -13,3 +14,4 @@ export type TwoFactorAuth = {
   user: BaseUser;
   need_2fa: boolean;
 };
+export type PasswordRecoveryAttempt = PasswordRecoveryAttemptSchema;

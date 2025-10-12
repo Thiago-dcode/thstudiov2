@@ -52,6 +52,6 @@ export class UserSessionsService {
   }
 
   async update(id: number, updateUserSessionInput: UpdateUserSessionInput) {
-    return await this.userSessionsRepository.update(id, updateUserSessionInput);
+    return await this.userSessionsRepository.updateOne(id, updateUserSessionInput);
   }
 }

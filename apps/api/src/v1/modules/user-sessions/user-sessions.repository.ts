@@ -57,10 +57,8 @@ export class UserSessionsRepository extends BaseRepository {
       );
     return this.formatUserSession(result);
   }
-  async update(id: number, updateUserSessionInput: UpdateUserSessionInput) {
-    const columns = Object.keys(updateUserSessionInput);
-    const values = Object.values(updateUserSessionInput);
-    await this.queryBuilder.where('id', '=', id).update(columns, values);
+  async updateOne(id: number, updateUserSessionInput: UpdateUserSessionInput) {
+    await  super.updateOne(id, updateUserSessionInput);
     const result = await this.queryBuilder
       .select(this.FULL_COLUMNS)
       .where('id', '=', id)

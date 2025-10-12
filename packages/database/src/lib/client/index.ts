@@ -90,6 +90,13 @@ export class PostgresClient extends Client<PgPool> {
       max: 20, // Maximum number of clients in the pool
       idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
       connectionTimeoutMillis: 2000, // Return an error after 2 seconds if connection could not be established
+    
+    });
+
+    // Set timezone to UTC for all connections to ensure consistent timestamp handling
+    // All timestamps are stored in UTC and should be converted to local time only for display
+    this.client.on('connect', (client) => {
+      client.query('SET timezone = "UTC"');
     });
   }
 

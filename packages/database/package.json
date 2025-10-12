@@ -18,6 +18,7 @@
     "./schemas/addresses":"./dist/src/lib/constants/schemas/addresses.js",
     "./schemas/user-sessions":"./dist/src/lib/constants/schemas/user-sessions.js",
     "./schemas/user-plan-transaction":"./dist/src/lib/constants/schemas/user-plan-transaction.js",
+    "./schemas/password-recovery-attempts":"./dist/src/lib/constants/schemas/password-recovery-attempts.js",
     "./constants": "./dist/src/lib/constants/constants.js",
     "./queryBuilder": "./dist/src/lib/builder/queryBuilder/index.js",
     "./schemaBuilder": "./dist/src/lib/builder/schemaBuilder/index.js",

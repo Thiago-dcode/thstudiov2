@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   UnauthorizedException,
@@ -20,7 +21,13 @@ import { MailService } from '@repo/backend-lib/services/mail-service';
 import { TwoFAMail } from './mails/twofa-mail';
 import { Verify2faRequest } from './requests/verify-2fa.request';
 import { compareAsc } from 'date-fns/compareAsc';
-import { compare } from '@repo/common-lib/utils/hash';
+import { compare, hash } from '@repo/common-lib/utils/hash';
+import { PasswordRecoveryRequest } from './requests/password-recovery.request';
+import { PasswordRecoveryAttemptsService } from './password-recovery-attempts/password-recovery-attempts.service';
+import { PasswordRecoveryMail } from './mails/password-recovery-mail';
+import { generateUUID } from '@repo/common-lib/utils/generate-uuid';
+import { CheckPasswordRecoveryAttemptRequest } from './requests/check-password-recovery.request';
+import { UpdatePasswordRequest } from './requests/update-password.request';
 
 @Injectable()
 export class AuthService {
@@ -33,6 +40,8 @@ export class AuthService {
     private readonly userSessionsService: UserSessionsService,
     private readonly mailService: MailService,
     private readonly twoFAMail: TwoFAMail,
+    private readonly passwordRecoveryMail: PasswordRecoveryMail,
+    private readonly passwordRecoveryAttemptsService: PasswordRecoveryAttemptsService,
   ) {}
   async login(authLoginRequest: LoginRequest): Promise<UserAuth | BaseUser> {
     const user = await this.userRepository.findOneByColumnWithPassword(
@@ -88,7 +97,7 @@ export class AuthService {
       this.userAuthDevicesService.update(userAuthDevice.id, {
         disabled: false,
       }),
-      this.userRepository.update(user.id, {
+      this.userRepository.updateById(user.id, {
         twofa_code: null,
         twofa_expires_at: null,
         email_validated: true,
@@ -96,6 +105,146 @@ export class AuthService {
     ]);
 
     return await this.handleLogin(updatedUser, userAuthDevice);
+  }
+  async refreshToken() {
+    const user = this.requestService.user;
+    if (!user) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+    const authDevice = await this.userAuthDevicesService.getOneByAuthDevice({
+      user_id: user.id,
+      user_agent: this.requestService.user_agent || '-',
+      ip_address: this.requestService.ip_address || '-',
+    });
+    if (!authDevice || authDevice.disabled || authDevice.blocked) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+    const exists = await this.userSessionsService.sessionExists({
+      user_id: user.id,
+      user_auth_device_id: authDevice.id,
+      token: user.token,
+    });
+    if (!exists) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+    return await this.handleLogin(user, authDevice);
+  }
+  async passwordRecovery({ email, fallback_url }: PasswordRecoveryRequest) {
+    const user = await this.userRepository.findOneBy('email', email, false);
+    if (!user) {
+      throw new UnauthorizedException('Unauthorized');
+    }
+    let passwordRecoveryAttempt =
+      await this.passwordRecoveryAttemptsService.findOneNotExpiredByUserId(
+        user.id,
+      );
+
+    if (passwordRecoveryAttempt) {
+      //1 min 30 seconds
+      const minTime = 1000 * 60 * 1.5;
+      const timeDifference =
+        new Date().getTime() - passwordRecoveryAttempt.updated_at.getTime();
+      if (timeDifference < minTime) {
+        throw new BadRequestException(
+          'You can only request a password recovery once every 1 minute and 30 seconds',
+        );
+      }
+
+      return {
+        passwordRecoveryAttempt,
+      };
+    }
+    //Invalidate all previous attempts
+    const [_, userAuthDevice, code] = await Promise.all([
+      this.passwordRecoveryAttemptsService.expireAllUserAttempts(user.id),
+      this.userAuthDevicesService.getOneByAuthDevice({
+        user_id: user.id,
+        user_agent: this.requestService?.user_agent || '-',
+        ip_address: this.requestService?.ip_address || '-',
+      }),
+      generateUUID(),
+    ]);
+    if (!userAuthDevice) {
+      throw new UnauthorizedException('Unauthorized');
+    }
+
+    passwordRecoveryAttempt = await this.passwordRecoveryAttemptsService.create(
+      {
+        user_id: user.id,
+        user_auth_device_id: userAuthDevice.id || 0,
+        code,
+        fallback_url,
+        code_validated: false,
+        expires_at: addMinutes(new Date(), 10),
+      },
+    );
+
+    this.mailService.send(
+      this.passwordRecoveryMail.setData(user, passwordRecoveryAttempt),
+    );
+    return {
+      passwordRecoveryAttempt,
+    };
+  }
+  async checkPasswordRecoveryAttempt(
+    checkPasswordRecoveryAttemptRequest: CheckPasswordRecoveryAttemptRequest,
+  ) {
+    const passwordRecoveryAttempt =
+      await this.passwordRecoveryAttemptsService.findOneByCode(
+        checkPasswordRecoveryAttemptRequest.code,
+      );
+    if (!passwordRecoveryAttempt) {
+      throw new BadRequestException('Invalid code');
+    }
+    if (
+      passwordRecoveryAttempt.email !==
+      checkPasswordRecoveryAttemptRequest.email
+    ) {
+      throw new UnauthorizedException('Not authorized');
+    }
+    if (passwordRecoveryAttempt.code_validated) {
+      throw new BadRequestException('Code already used');
+    }
+    if (passwordRecoveryAttempt.expires_at.getTime() < new Date().getTime()) {
+      throw new BadRequestException('Code expired');
+    }
+    await this.passwordRecoveryAttemptsService.update(
+      passwordRecoveryAttempt.id,
+      {
+        code_validated: true,
+      },
+    );
+    return {
+      passwordRecoveryAttempt,
+    };
+  }
+  async updatePassword(updatePasswordRequest: UpdatePasswordRequest) {
+    const passwordRecoveryAttempt =
+      await this.passwordRecoveryAttemptsService.findOneById(
+        updatePasswordRequest.password_recovery_attempt_id,
+      );
+    if (!passwordRecoveryAttempt) {
+      throw new BadRequestException('Invalid password recovery attempt');
+    }
+    if (!passwordRecoveryAttempt.code_validated) {
+      throw new BadRequestException('Code not validated');
+    }
+    if (compareAsc(passwordRecoveryAttempt.expires_at, new Date()) === -1) {
+      throw new BadRequestException('Code expired');
+    }
+
+    const [updatedUser] = await Promise.all([
+      this.userRepository.updateById(passwordRecoveryAttempt.user_id, {
+        password: await hash(updatePasswordRequest.password),
+      }),
+      this.passwordRecoveryAttemptsService.update(passwordRecoveryAttempt.id, {
+        expires_at: new Date(),
+      }),
+    ]);
+
+    return {
+      user: updatedUser,
+    };
   }
   private async handleLogin(user: BaseUser, userAuthDevice: UserAuthDevice) {
     const payload: UserPayload = {
@@ -144,7 +293,7 @@ export class AuthService {
 
     const code = randomStr(6).toLowerCase();
     const expiresAt = addMinutes(new Date(), 10);
-    const updatedUser = await this.userRepository.update(user.id, {
+    const updatedUser = await this.userRepository.updateById(user.id, {
       twofa_code: code,
       twofa_expires_at: expiresAt,
     });
@@ -168,28 +317,5 @@ export class AuthService {
       expires_at: new Date(),
     });
     return true;
-  }
-  async refreshToken() {
-    const user = this.requestService.user;
-    if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-    const authDevice = await this.userAuthDevicesService.getOneByAuthDevice({
-      user_id: user.id,
-      user_agent: this.requestService.user_agent || '-',
-      ip_address: this.requestService.ip_address || '-',
-    });
-    if (!authDevice || authDevice.disabled || authDevice.blocked) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-    const exists = await this.userSessionsService.sessionExists({
-      user_id: user.id,
-      user_auth_device_id: authDevice.id,
-      token: user.token,
-    });
-    if (!exists) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-    return await this.handleLogin(user, authDevice);
   }
 }

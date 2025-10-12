@@ -134,6 +134,7 @@ export class QueryBuilder extends BaseBuilder {
     return result.rows[0] ?? null;
   }
   public async exists(): Promise<boolean> {
+    this.rawSelect('1');
     this.buildSelectQuery();
     const result = await getClient().query(this.query, this.values);
     this.reset();
@@ -238,6 +239,7 @@ private  handleBuildGet(columns: string[], values: SqlValue[], select: string[] 
    * ```
    */
   public select(columns: string[] | string = []) {
+    this.throwIfInIncompatibleOperations(['select'], 'select');
     this.operationsChain.push('select');
     const columnsToArray = Array.isArray(columns)
       ? columns
@@ -253,6 +255,12 @@ private  handleBuildGet(columns: string[], values: SqlValue[], select: string[] 
       return acc;
     }, [] as string[]);
     this._select = cleanedColumns.length ? cleanedColumns.join(',') : '*';
+    return this;
+  }
+  public rawSelect(select: string) {
+    this.throwIfInIncompatibleOperations(['select'], 'rawSelect');
+    this.operationsChain.push('select');
+    this._select = select;
     return this;
   }
 
@@ -441,7 +449,7 @@ private  handleBuildGet(columns: string[], values: SqlValue[], select: string[] 
    */
   protected buildInsertQuery(columns: string[], values: SqlValue[]) {
     this.throwIfColumnsAndValuesLengthMismatch(columns, values);
-    this.throwIfNotCompatibleOperations([], 'insert');
+   this.throwIfNotInCompatibleOperations([], 'insert'); 
  let offset = 0;
         this.query = `INSERT INTO ${this.tableName} (${columns.join(',')}) VALUES (${values.map((_, index) => {
 const isNull = values[index] === null;
@@ -468,7 +476,7 @@ offset = isNull ? offset : offset + 1;
    */
   protected buildUpdateQuery(columns: string[], values: SqlValue[]) {
     this.throwIfColumnsAndValuesLengthMismatch(columns, values);
-    this.throwIfNotCompatibleOperations(['where'], 'update');
+    this.throwIfNotInCompatibleOperations(['where'], 'update');
     this.throwIfOperationNotAllowed(
       !this.operationsChain.includes('where') &&
         !getClient().config.settings.allowUpdateWithoutWhere,
@@ -500,7 +508,7 @@ offset = isNull ? offset : offset + 1;
    * @protected
    */
   protected buildDeleteQuery() {
-    this.throwIfNotCompatibleOperations(['where'], 'delete');
+    this.throwIfNotInCompatibleOperations(['where'], 'delete');
     this.throwIfOperationNotAllowed(
       !this.operationsChain.includes('where') &&
         !getClient().config.settings.allowDeleteWithoutWhere,
@@ -701,7 +709,7 @@ offset = isNull ? offset : offset + 1;
    * @throws {QueryBuilderMethodChainedException} When incompatible operations exist
    * @protected
    */
-  protected throwIfNotCompatibleOperations(
+  protected throwIfNotInCompatibleOperations(
     compatibleOperations: SqlOperation[],
     methodName: string,
   ) {
@@ -716,5 +724,18 @@ offset = isNull ? offset : offset + 1;
           compatibleOperations.join(', '),
       );
     }
+  }
+  protected throwIfInIncompatibleOperations(
+    incompatibleOperations: SqlOperation[],
+    methodName: string,
+  ) {
+    for (const operation of incompatibleOperations) {
+      if (this.operationsChain.includes(operation)) {
+        throw new QueryBuilderMethodChainedException(
+          'Incompatible operation: ' + operation + ' with ' + methodName,
+        );
+      }
+    }
+    
   }
 }

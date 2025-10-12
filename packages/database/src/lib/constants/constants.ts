@@ -67,5 +67,6 @@ export const TABLES_ENUM = {
   ADDRESSES:'addresses',
   USER_AUTH_DEVICES:'user_auth_devices',
   USER_SESSIONS:'user_sessions',
+  PASSWORD_RECOVERY_ATTEMPTS:'password_recovery_attempts',
 } as const;
 

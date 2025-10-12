@@ -26,7 +26,7 @@ export class UserAuthDevicesService {
   }
 
   update(id: number, updateUserAuthDeviceInput: UpdateUserAuthDeviceInput) {
-    return this.userAuthDevicesRepository.update(id, updateUserAuthDeviceInput);
+    return this.userAuthDevicesRepository.updateById(id, updateUserAuthDeviceInput);
   }
 
   // remove(id: number) {

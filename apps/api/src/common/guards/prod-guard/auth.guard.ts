@@ -51,14 +51,12 @@ export class AuthGuard implements CanActivate {
       ) {
         throw new UnauthorizedException();
       }
-      console.log("====payload", payload);
       //TODO: Verify user current session
       const session = await this.userSessionsService.findOneBySession({
         user_id: payload.id,
         user_auth_device_id: payload.user_auth_device_id,
         token,
       });
-      console.log("====session", session);
       if (
         !session ||
         !session?.expires_at ||

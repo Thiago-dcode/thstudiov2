@@ -8,6 +8,7 @@ import { TableName } from '@repo/database/schemas/database';
 import { DbException } from '@repo/database/exceptions';
 import { Injectable } from '@nestjs/common';
 import { BaseModelValidator } from './base-model.validator';
+import { QueryBuilder } from '@repo/database/queryBuilder';
 
 @Injectable()
 @ValidatorConstraint({ name: 'modelNotExist', async: true })
@@ -17,12 +18,14 @@ export class ModelNotExistValidator extends BaseModelValidator {
   }
 
   async validate(value: any, args: ValidationArguments) {
-    await super.validate(value, args);
+    if (!(await super.validate(value, args))) {
+      return false;
+    }
+    const [tableName, column] = args.constraints as [TableName, string];
+    const queryBuilder = QueryBuilder.table(tableName);
     try {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-      const record = await this.queryBuilder
-        .where(this.column, '=', value)
-        .exists();
+      const record = await queryBuilder.where(column, '=', value).exists();
       if (record) {
         this.message = `${value} already exists`;
         return false;

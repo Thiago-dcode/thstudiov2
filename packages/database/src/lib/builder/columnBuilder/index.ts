@@ -218,7 +218,9 @@ export class ColumnBuilder {
       ...options,
     };
 
-    return `${this.validateStringAndReturn(columnName)} TIMESTAMP ${this.buildOptions(_options)}`;
+    const clientConfig = getClientConfig();
+    const timestampType = clientConfig === 'postgres' ? 'TIMESTAMPTZ' : 'TIMESTAMP';
+    return `${this.validateStringAndReturn(columnName)} ${timestampType} ${this.buildOptions(_options)}`;
   }
   // Function overloads for better type inference
   public static primaryKey(columnName: string, type: SqlTypes) {
@@ -253,6 +255,8 @@ export class ColumnBuilder {
     return columns;
   }
   public static softDelete(columnName: string = 'deleted_at') {
-    return `${this.validateStringAndReturn(columnName || 'deleted_at')} TIMESTAMP NULL`;
+    const clientConfig = getClientConfig();
+    const timestampType = clientConfig === 'postgres' ? 'TIMESTAMPTZ' : 'TIMESTAMP';
+    return `${this.validateStringAndReturn(columnName || 'deleted_at')} ${timestampType} NULL`;
   }
 }

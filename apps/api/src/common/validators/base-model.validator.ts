@@ -5,7 +5,6 @@ import {
 } from 'class-validator';
 import { TableName } from '@repo/database/schemas/database';
 import { Injectable } from '@nestjs/common';
-import { QueryBuilder } from '@repo/database/queryBuilder';
 import AlterBuilder from '@repo/database/alterBuilder';
 import SchemaBuilder from '@repo/database/schemaBuilder';
 
@@ -13,33 +12,23 @@ import SchemaBuilder from '@repo/database/schemaBuilder';
 @ValidatorConstraint({ name: 'modelExist', async: true })
 export class BaseModelValidator implements ValidatorConstraintInterface {
   protected message: string;
-  protected queryBuilder: QueryBuilder;
-  protected alterBuilder: AlterBuilder;
-  protected schemaBuilder: SchemaBuilder;
-  protected tableName: TableName;
-  protected column: string;
   constructor() {}
 
   async validate(value: any, args: ValidationArguments) {
     //If the value is optional or required, should handle by another validator
     if (value == undefined) return true;
     const [tableName, column = 'id'] = args.constraints as [TableName, string];
-    this.tableName = tableName;
-    this.column = column;
-    const schemaBuilder = await SchemaBuilder.tableIfExists(this.tableName);
+    const schemaBuilder = await SchemaBuilder.tableIfExists(tableName);
     if (!schemaBuilder) {
-      this.message = `Table ${this.tableName} does not exist`;
+      this.message = `Table ${tableName} does not exist`;
       return false;
     }
-    this.schemaBuilder = schemaBuilder;
-    this.alterBuilder = AlterBuilder.table(this.tableName);
-    const columnExist = await this.alterBuilder.columnExist(this.column);
+    const alterBuilder = AlterBuilder.table(tableName);
+    const columnExist = await alterBuilder.columnExist(column);
     if (!columnExist) {
-      this.message = `Column ${this.column} does not exist in ${this.tableName} or is not of type ${typeof value}`;
+      this.message = `Column ${column} does not exist in ${tableName} or is not of type ${typeof value}`;
       return false;
     }
-    this.schemaBuilder = SchemaBuilder.table(this.tableName);
-    this.queryBuilder = QueryBuilder.table(this.tableName);
     return true;
   }
 

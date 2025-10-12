@@ -33,9 +33,9 @@ export class UserAuthDevicesRepository extends BaseRepository {
     );
   }
   async findOneByAuthDevice(authDevice: {
-    user_id: number;
-    user_agent: string;
-    ip_address: string;
+    user_id?: number;
+    user_agent?: string;
+    ip_address?: string;
   }): Promise<UserAuthDevice> {
     return await this.queryBuilder
       .select(this.COLUMNS)
@@ -45,7 +45,7 @@ export class UserAuthDevicesRepository extends BaseRepository {
       .first<UserAuthDevice>();
   }
 
-  async update(
+  async updateById(
     id: number,
     updateUserAuthDeviceInput: UpdateUserAuthDeviceInput,
   ): Promise<UserAuthDevice> {

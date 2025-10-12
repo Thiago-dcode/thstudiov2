@@ -83,7 +83,7 @@ export type JoinType = 'INNER' | 'LEFT' | 'RIGHT' | 'FULL';
 export type Join = {
   type: JoinType;
   localColumn: string;
-  foreignTable: string;
+  foreignTable: TableName;
   foreignColumn: string;
 };
 

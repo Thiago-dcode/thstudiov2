@@ -44,7 +44,7 @@ export class UserService {
         user_id: user.id,
         user_agent: this.requestService?.user_agent || '-',
         ip_address: this.requestService?.ip_address || '-',
-        disabled: false,
+        disabled: true,
         blocked: false,
       });
       this.logService.info(`${NEW_USER_EVENT} user [${user.id}] user device`, {
