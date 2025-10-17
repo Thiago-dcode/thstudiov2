@@ -5,7 +5,6 @@ import { TableColumn } from './database';
 export type PasswordRecoveryAttemptSchema = {
   id: number;
   user_id: number;
-  user_auth_device_id: number;
   code: string;
   fallback_url: string;
   code_validated: boolean;
@@ -23,8 +22,6 @@ const tablesPasswordRecoveryAttempt = [TABLES_ENUM.PASSWORD_RECOVERY_ATTEMPTS] a
 export type PasswordRecoveryAttemptColumns = TableColumn<typeof tablesPasswordRecoveryAttempt, PasswordRecoveryAttemptSchema>;
 const tablesPasswordRecoveryAttemptWithUser = [TABLES_ENUM.PASSWORD_RECOVERY_ATTEMPTS, TABLES_ENUM.USERS] as const;
 export type PasswordRecoveryAttemptColumnsWithUser = TableColumn<typeof tablesPasswordRecoveryAttemptWithUser, PasswordRecoveryAttemptSchemaWithUser>;
-const tablesPasswordRecoveryAttemptWithDevice = [TABLES_ENUM.PASSWORD_RECOVERY_ATTEMPTS, TABLES_ENUM.USER_AUTH_DEVICES] as const;
-export type PasswordRecoveryAttemptColumnsWithDevice = TableColumn<typeof tablesPasswordRecoveryAttemptWithDevice, PasswordRecoveryAttemptSchema>;
 // Input types for creating/updating password recovery attempts
 export type CreatePasswordRecoveryAttemptInput = Omit<
   PasswordRecoveryAttemptSchema,

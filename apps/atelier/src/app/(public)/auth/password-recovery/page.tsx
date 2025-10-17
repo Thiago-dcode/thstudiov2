@@ -1,9 +1,9 @@
+import PasswordRecoveryAction from "@/modules/auth/server-actions/password-recovery.action";
 import Link from "next/link";
 
 export default async function PasswordRecovery({ searchParams }: { searchParams: Promise<{ "errors[]"?: string[] | string, email?: string, success?: string }> }) {
     const { "errors[]": _errors, email, success } = await searchParams;
     const errors: string[] = typeof _errors === 'string' ? [_errors] : _errors || [];
-
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 px-4 py-12">
             <div className="w-full max-w-md">
@@ -41,7 +41,7 @@ export default async function PasswordRecovery({ searchParams }: { searchParams:
                     )}
 
                     {/* Form */}
-                    <form className="space-y-5">
+                    <form className="space-y-5" action={PasswordRecoveryAction}>
                         {/* Email Field */}
                         <div className="space-y-2">
                             <label

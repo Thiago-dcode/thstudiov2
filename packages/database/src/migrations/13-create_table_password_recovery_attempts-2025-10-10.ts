@@ -8,15 +8,12 @@ const up = async () => {
     Column.foreignKey('user_id', 'users', 'id', {
       onDelete: 'CASCADE',
     }),
-    Column.foreignKey('user_auth_device_id', 'user_auth_devices', 'id', {
-      onDelete: 'CASCADE',
-    }),
     Column.string('fallback_url'),
     Column.string('code',255,{
       unique: true,
     }),
-    Column.boolean('code_validated', {
-      default: false,
+    Column.enum('status',"PASSWORD_RECOVERY_ATTEMPT_STATUS",{
+      default:''
     }),
     Column.timestamp('expires_at'),
     Column.timestamps(true),

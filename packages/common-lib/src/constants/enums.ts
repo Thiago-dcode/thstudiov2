@@ -18,6 +18,7 @@ export const ENUMS = {
     PAYMENT_STATUS: ['PENDING', 'SUCCESS', 'FAILED'] as const,
     PAYMENT_METHOD: ['CARD', 'PAYPAL', 'BANK_TRANSFER'] as const,
     PLAN_OFFERS_TYPES: ['FREE', 'DISCOUNT'] as const,
+    PASSWORD_RECOVERY_ATTEMPT_STATUS: ['CODE_NOT_VALIDATED','CODE_VALIDATED','PASSWORD_CHANGED']
   };
 
   export type AvailableEnums = keyof typeof ENUMS;

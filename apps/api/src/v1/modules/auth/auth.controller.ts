@@ -4,9 +4,9 @@ import { LoginRequest } from './requests/login.request';
 import { Public } from 'src/common/decorators/public.decorator';
 import { Verify2faRequest } from './requests/verify-2fa.request';
 import { PasswordRecoveryRequest } from './requests/password-recovery.request';
-import { CheckPasswordRecoveryAttemptRequest } from './requests/check-password-recovery.request';
 import { UpdatePasswordRequest } from './requests/update-password.request';
 import { Throttle } from '@nestjs/throttler';
+import { CheckPasswordRecoveryAttemptRequest } from './requests/check-password-recovery.request';
 
 @Throttle({ medium: { limit: 5, ttl: 10000 } })
 @Controller('auth')
@@ -38,7 +38,7 @@ export class AuthController {
   }
 
   @Public()
-  @Post('check-password-recovery-attempt')
+  @Post('validate-password-recovery-attempt')
   async checkPasswordRecoveryAttempt(@Body() checkPasswordRecoveryAttemptDto: CheckPasswordRecoveryAttemptRequest) {
     return await this.authService.checkPasswordRecoveryAttempt(checkPasswordRecoveryAttemptDto);
   }

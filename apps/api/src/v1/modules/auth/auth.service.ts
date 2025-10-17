@@ -79,7 +79,7 @@ export class AuthService {
       user.twofa_code !== verify2faRequest.twofa_code ||
       compareAsc(user.twofa_expires_at, new Date()) === -1
     ) {
-      throw new UnauthorizedException('Invalid verification code or expired');
+      throw new BadRequestException('Invalid verification code or expired');
     }
     //It should be created from the login process
     const userAuthDevice = await this.userAuthDevicesService.getOneOrCreate({
@@ -141,37 +141,24 @@ export class AuthService {
 
     if (passwordRecoveryAttempt) {
       //1 min 30 seconds
-      const minTime = 1000 * 60 * 1.5;
-      const timeDifference =
-        new Date().getTime() - passwordRecoveryAttempt.updated_at.getTime();
-      if (timeDifference < minTime) {
-        throw new BadRequestException(
-          'You can only request a password recovery once every 1 minute and 30 seconds',
-        );
-      }
-
-      return {
-        passwordRecoveryAttempt,
-      };
+      // const minTime = 1000 * 60 * 1.5;
+      // const timeDifference =
+      //   new Date().getTime() - passwordRecoveryAttempt.updated_at.getTime();
+      // if (timeDifference < minTime) {
+      //   throw new BadRequestException(
+      //     'You can only request a password recovery once every 1 minute and 30 seconds',
+      //   );
+      // }
     }
     //Invalidate all previous attempts
-    const [_, userAuthDevice, code] = await Promise.all([
+    const [_, code] = await Promise.all([
       this.passwordRecoveryAttemptsService.expireAllUserAttempts(user.id),
-      this.userAuthDevicesService.getOneByAuthDevice({
-        user_id: user.id,
-        user_agent: this.requestService?.user_agent || '-',
-        ip_address: this.requestService?.ip_address || '-',
-      }),
       generateUUID(),
     ]);
-    if (!userAuthDevice) {
-      throw new UnauthorizedException('Unauthorized');
-    }
 
     passwordRecoveryAttempt = await this.passwordRecoveryAttemptsService.create(
       {
         user_id: user.id,
-        user_auth_device_id: userAuthDevice.id || 0,
         code,
         fallback_url,
         code_validated: false,
@@ -182,9 +169,7 @@ export class AuthService {
     this.mailService.send(
       this.passwordRecoveryMail.setData(user, passwordRecoveryAttempt),
     );
-    return {
-      passwordRecoveryAttempt,
-    };
+    return passwordRecoveryAttempt;
   }
   async checkPasswordRecoveryAttempt(
     checkPasswordRecoveryAttemptRequest: CheckPasswordRecoveryAttemptRequest,
@@ -195,12 +180,6 @@ export class AuthService {
       );
     if (!passwordRecoveryAttempt) {
       throw new BadRequestException('Invalid code');
-    }
-    if (
-      passwordRecoveryAttempt.email !==
-      checkPasswordRecoveryAttemptRequest.email
-    ) {
-      throw new UnauthorizedException('Not authorized');
     }
     if (passwordRecoveryAttempt.code_validated) {
       throw new BadRequestException('Code already used');
@@ -214,14 +193,12 @@ export class AuthService {
         code_validated: true,
       },
     );
-    return {
-      passwordRecoveryAttempt,
-    };
+    return passwordRecoveryAttempt;
   }
   async updatePassword(updatePasswordRequest: UpdatePasswordRequest) {
     const passwordRecoveryAttempt =
-      await this.passwordRecoveryAttemptsService.findOneById(
-        updatePasswordRequest.password_recovery_attempt_id,
+      await this.passwordRecoveryAttemptsService.findOneByCode(
+        updatePasswordRequest.code,
       );
     if (!passwordRecoveryAttempt) {
       throw new BadRequestException('Invalid password recovery attempt');
@@ -234,7 +211,7 @@ export class AuthService {
     }
 
     const [updatedUser] = await Promise.all([
-      this.userRepository.updateById(passwordRecoveryAttempt.user_id, {
+      this.userRepository.updateById(passwordRecoveryAttempt.user.id, {
         password: await hash(updatePasswordRequest.password),
       }),
       this.passwordRecoveryAttemptsService.update(passwordRecoveryAttempt.id, {
@@ -242,15 +219,16 @@ export class AuthService {
       }),
     ]);
 
-    return {
-      user: updatedUser,
-    };
+    return updatedUser;
   }
   private async handleLogin(user: BaseUser, userAuthDevice: UserAuthDevice) {
     const payload: UserPayload = {
       ...user,
       user_auth_device_id: userAuthDevice.id,
     };
+    if (!user.email_validated) {
+      throw new UnauthorizedException('Email not validated');
+    }
     const expiresAt = addDays(new Date(), 1);
     const token = await this.jwtService.signAsync(payload, {
       expiresIn: '24h',
@@ -292,7 +270,7 @@ export class AuthService {
     //Start 2fa process
 
     const code = randomStr(6).toLowerCase();
-    const expiresAt = addMinutes(new Date(), 10);
+    const expiresAt = addMinutes(new Date(), 30);
     const updatedUser = await this.userRepository.updateById(user.id, {
       twofa_code: code,
       twofa_expires_at: expiresAt,

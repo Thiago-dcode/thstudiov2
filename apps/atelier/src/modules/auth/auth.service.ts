@@ -1,7 +1,8 @@
 import { BaseService } from "@/lib/services/base.service";
 import { ApiResponse } from "@repo/common-lib/types/response";
-import { LoginRequest, LoginReturn, UserAuth, Verify2faRequest } from "./auth.types";
+import { CheckPasswordRecoveryRequest, LoginRequest, LoginReturn, PasswordRecoveryAttempt, PasswordRecoveryRequest, UpdatePasswordRequest, UserAuth, ValidatePasswordRecoveryAttemptRequest, Verify2faRequest } from "./auth.types";
 import { fetchApi } from "@/lib/facade/fetchApi";
+import { BaseUser } from "../users/schemas/users.types";
 
 export class AuthService extends BaseService {
     constructor() {
@@ -32,6 +33,30 @@ export class AuthService extends BaseService {
         return await this.fetchApi.post({
             resource: 'refresh-token',
             body: {},
+        });
+    }
+    async passwordRecovery(passwordRecoveryRequest: PasswordRecoveryRequest): Promise<ApiResponse<PasswordRecoveryAttempt>> {
+        return await this.fetchApi.post({
+            resource: 'password-recovery',
+            body: passwordRecoveryRequest,
+        });
+    }
+    async checkPasswordRecovery(checkPasswordRecoveryRequest: CheckPasswordRecoveryRequest): Promise<ApiResponse<PasswordRecoveryAttempt>> {
+        return await this.fetchApi.post({
+            resource: 'check-password-recovery-attempt',
+            body: checkPasswordRecoveryRequest,
+        });
+    }
+    async updatePassword(updatePasswordRequest: UpdatePasswordRequest): Promise<ApiResponse<BaseUser>> {
+        return await this.fetchApi.post({
+            resource: 'update-password',
+            body: updatePasswordRequest,
+        });
+    }
+    async validatePasswordRecoveryAttempt(validatePasswordRecoveryAttemptRequest: ValidatePasswordRecoveryAttemptRequest): Promise<ApiResponse<PasswordRecoveryAttempt>> {
+        return await this.fetchApi.post({
+            resource: 'validate-password-recovery-attempt',
+            body: validatePasswordRecoveryAttemptRequest,
         });
     }
 }

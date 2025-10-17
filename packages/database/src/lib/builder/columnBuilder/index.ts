@@ -10,7 +10,7 @@ import {
   TableName,
 } from '../../constants/schemas/database';
 import { SQL_FUNCTIONS } from '../../constants/constants';
-import { AvailableEnums, ENUMS } from '@repo/common-lib/constants/enums';
+import { AvailableEnums, ENUMS, EnumType } from '@repo/common-lib/constants/enums';
 
 
 export const DEFAULT_COLUMN_OPTIONS: ColumnAttributes = {
@@ -229,7 +229,7 @@ export class ColumnBuilder {
   public static enum(
     columnName: string,
     enumName:  AvailableEnums,
-    options?: ColumnAttributes<(typeof ENUMS)[typeof enumName][number]>,
+    options?: ColumnAttributes<EnumType<typeof arguments[1]>>,
   ): string {
     return `${this.validateStringAndReturn(columnName)} ${enumName}${options ? ' ' + this.buildOptions(options) : ''}`;
   }

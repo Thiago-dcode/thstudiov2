@@ -1,7 +1,7 @@
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
-import { logoutServerAction } from "@/modules/auth/server-actions/logout.action";
 import mediaService from "@/modules/media/media.service";
 import { redirect } from "next/navigation";
+import { Logout } from "../__components/logout";
 
 export default async function Atelier() {
     const userAuth = await userSession();
@@ -22,15 +22,7 @@ export default async function Atelier() {
                             Welcome, {userAuth?.email || 'User'}
                         </p>
                     </div>
-
-                    <form action={logoutServerAction}>
-                        <button
-                            type="submit"
-                            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                        >
-                            Logout
-                        </button>
-                    </form>
+                    <Logout />
                 </div>
             </div>
         </div>

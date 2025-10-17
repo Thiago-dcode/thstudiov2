@@ -4,8 +4,8 @@ import { ModelExist } from 'src/common/validators/model-exist.validtor';
 export class UpdatePasswordRequest {
   @IsNumber()
   @IsNotEmpty()
-  @ModelExist('password_recovery_attempts', 'id')
-  password_recovery_attempt_id: number;
+  @ModelExist('password_recovery_attempts', 'code')
+  code: string;
   @IsString()
   @IsNotEmpty()
   @MinLength(8)

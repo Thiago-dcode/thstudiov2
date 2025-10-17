@@ -115,7 +115,7 @@ export type SqlFunctionTimestamp =
   export type OnAction = 'SET NULL' | 'CASCADE' | 'RESTRICT' | 'NO ACTION';
 
 export type ColumnAttributes<
-  T = string | number | boolean | null | SqlFunction,
+  T =  number | boolean | SqlFunction | EnumType<any>,
 > = {
   nullable?: boolean;
   unique?: boolean;

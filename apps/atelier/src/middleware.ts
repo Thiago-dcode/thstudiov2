@@ -54,7 +54,6 @@ const middleware = async (req: NextRequest) => {
   response.headers.set(LANGUAGE_HEADER, language);
   const rememberMe = await getRememberMeByCookie(requestCookies);
   if(rememberMe){
-    console.log("Remember me is true");
     await handleRefreshToken(requestCookies,response.cookies);
   }
   

@@ -4,7 +4,7 @@ import { USER_AUTH_COOKIE_EXPIRATION_DATE, USER_AUTH_COOKIE_NAME ,REMEMBER_ME_CO
 import { UserAuth } from "../auth.types";
 import { decrypt, encrypt } from "@repo/common-lib/utils/encrypt";
 import { cookies } from "next/headers";
-import { addDays, addMinutes, addMonths } from "date-fns";
+import { addDays, addMonths } from "date-fns";
 import { RequestCookies, ResponseCookies } from "next/dist/compiled/@edge-runtime/cookies";
 
 const SECRET = process.env.ENCRYPTION_SECRET ?? 'secret';

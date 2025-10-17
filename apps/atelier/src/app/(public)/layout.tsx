@@ -19,8 +19,12 @@ export default async function PublicLayout({
   }
 
   return (
-    <div>
+    <main className="min-h-screen flex flex-col">
+      <header>
+
+        <nav>atelier</nav>
+      </header>
       {children}
-    </div>
+    </main>
   );
 }

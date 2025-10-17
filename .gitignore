@@ -62,4 +62,4 @@ pnpm-debug.log*
 *.pem
 
 # Typescript
-tsconfig.tsbuildinfo
+*.tsconfig.tsbuildinfo
