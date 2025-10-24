@@ -62,6 +62,6 @@ export type LoginActionReturnSuccess<T> = {
     data:T,
     errors:null,
 }
-export type LoginActionReturn< K,T =LoginReturn> = (LoginActionReturnError | LoginActionReturnSuccess<T>) & {
+export type AuthActionReturn< K,T =LoginReturn> = (LoginActionReturnError | LoginActionReturnSuccess<T>) & {
     inputs: K| undefined
 };

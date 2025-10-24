@@ -19,12 +19,14 @@ export default async function PublicLayout({
   }
 
   return (
-    <main className="min-h-screen flex flex-col">
-      <header>
-
+    <>
+      <header className=" border-white border w-full py-6">
         <nav>atelier</nav>
       </header>
-      {children}
-    </main>
+      <main className="h-full w-full">
+        {children}
+      </main>
+
+    </>
   );
 }

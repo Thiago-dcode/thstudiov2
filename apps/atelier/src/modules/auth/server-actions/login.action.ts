@@ -4,9 +4,9 @@ import authService from "../auth.service";
 import { loginRequestSchema } from "../schemas/auth.shema";
 import { setRememberMe, setUserSession } from "./user-session.action";
 import { set2faCookie, delete2faCookie } from "./twofa.action";
-import { LoginActionReturn } from "../auth.types";
+import { AuthActionReturn } from "../auth.types";
 
-export const loginServerAction = async (formData: FormData):Promise<LoginActionReturn<{
+export const loginServerAction = async (formData: FormData):Promise<AuthActionReturn<{
         email?:string,
         rememberMe:boolean
     }>> => {
@@ -53,7 +53,7 @@ export const loginServerAction = async (formData: FormData):Promise<LoginActionR
         }
         //Success
         if(!result.data.token){
-            await set2faCookie(result.data.email);
+            await set2faCookie(result.data);
         }else{
             await setUserSession(result.data);
         }

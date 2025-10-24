@@ -1,127 +1,120 @@
 'use client'
 
 import { loginServerAction } from "@/modules/auth/server-actions/login.action";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react"
 import { Errors } from "@repo/ui/components/custom/errors";
 import { Input } from "@repo/ui/components/shadcn/input";
 import { useSession } from "@/modules/auth/contexts/session.provider";
-
+import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
+import { Button } from "@repo/ui/components/shadcn/button";
+import { Label } from '@repo/ui/components/shadcn/label'
+import { Checkbox } from '@repo/ui/components/shadcn/checkbox'
+import { Spinner } from "@repo/ui/components/shadcn/spinner";
+import { Eye, EyeClosed } from "lucide-react";
+import { useState } from "react";
 export const LoginForm = ({ rememberMe }: {
     rememberMe: boolean
 }) => {
-    const [errors, setErrors] = useState<string[]>([]);
-    const [email, setEmail] = useState<string | undefined>(undefined)
-    const [_rememberMe, setRememberMe] = useState<boolean>(rememberMe)
     const router = useRouter();
-    const { setSession } = useSession()
-
-    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        const formData = new FormData(e.currentTarget)
-        const result = await loginServerAction(formData)
-        //Handle errors
-        if (result.errors !== null) {
-            setErrors(result.errors)
-            setEmail(result.inputs?.email)
-            setRememberMe(result.inputs?.rememberMe ?? false)
-            return;
+    const { setSession } = useSession();
+    const [hidden, setHidden] = useState(true);
+    const { result, handleSubmit, errors, cleanErrors, isPending } = useHandleAction({
+        action: loginServerAction,
+        afterAction: async (result) => {
+            if (result.data) {
+                setSession(result.data.token ? result.data : undefined);
+                router.push(result.data.token ? '/atelier' : '/auth/2fa')
+            }
         }
-        if (result.data) {
-            setSession(result.data.token ? result.data : undefined);
-            router.push(result.data.token ? '/atelier' : '/auth/2fa')
-        }
-    }
+    })
 
-    return (<div>
+
+    return (<div className="w-full flex items-center flex-col gap-4">
         {/* Error Messages */}
-        {errors && errors.length > 0 && (
-            <Errors title="Login failed" errors={errors} />
-        )}
+
 
         {/* Form */}
-        <form onSubmit={async (e) => {
-            await handleSubmit(e)
-        }} className="space-y-5">
+        <form onSubmit={handleSubmit} className="w-full h-full flex flex-col gap-4">
             {/* Email Field */}
-            <div className="space-y-2">
-                <label
+            <div className="space-y-1">
+                <Label
                     htmlFor="email"
-                    className="block text-sm font-medium text-slate-700"
+                    className="block  "
                 >
                     Email Address
-                </label>
+                </Label>
                 <Input
                     onChange={() => {
-                        setErrors([])
+                        cleanErrors()
                     }}
                     type="email"
                     id="email"
                     name="email"
-                    defaultValue={email}
+                    defaultValue={result?.inputs?.email}
                     placeholder="you@example.com"
                     autoComplete="email"
                     required
                     autoFocus
-                    className="w-full px-4 py-3"
                 />
             </div>
 
             {/* Password Field */}
-            <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                    <label
-                        htmlFor="password"
-                        className="block text-sm font-medium text-slate-700"
-                    >
-                        Password
-                    </label>
-                    <Link
-                        href="/auth/password-recovery"
-                        className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
-                    >
-                        Forgot?
-                    </Link>
+            <div className="space-y-1">
+                <Label
+                    htmlFor="password"
+                    className="block   "
+                >
+                    Password
+                </Label>
+                <div className="relative">
+                    <Input
+                        onChange={() => {
+                            cleanErrors()
+                            setHidden(true)
+                        }}
+                        type={hidden?"password":'text'}
+                        id="password"
+                        name="password"
+                        placeholder="Enter your password"
+                        autoComplete="current-password"
+                        required
+                    />
+                    <button type="button" onClick={(e)=>{
+                        e.preventDefault()
+                        setHidden(!hidden);
+                    }} className="absolute top-2 right-2 cursor-pointer flex items-center justify-center text-text-muted">
+                        {hidden ? <Eye className="size-5" /> : <EyeClosed className="size-5" />}
+                    </button>
                 </div>
-                <Input
-                    onChange={() => {
-                        setErrors([])
-                    }}
-                    type="password"
-                    id="password"
-                    name="password"
-                    placeholder="Enter your password"
-                    autoComplete="current-password"
-                    required
-                    className="w-full px-4 py-3"
-                />
             </div>
 
             {/* Remember Me */}
             <div className="flex items-center">
-                <input
+                <Checkbox
                     id="remember-me"
                     name="remember_me"
-                    type="checkbox"
-                    defaultChecked={_rememberMe}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-slate-300 rounded cursor-pointer"
+                    defaultChecked={result?.inputs?.rememberMe || rememberMe}
+                    className="h-4 w-4 rounded cursor-pointer"
                 />
-                <label
+                <Label
                     htmlFor="remember-me"
-                    className="ml-2 block text-sm text-slate-700 cursor-pointer"
+                    className="ml-2 block cursor-pointer "
                 >
                     Remember me for 30 days
-                </label>
+                </Label>
             </div>
 
             {/* Submit Button */}
-            <button
+            <Button
+                variant={'default'}
                 type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                className="w-full mt-6 py-6 "
             >
-                Sign In
-            </button>
+                {!isPending ? ' Sign In' : <Spinner className="size-6" />}
+            </Button>
         </form>
+        {errors && errors.length > 0 && (
+            <Errors title="Login failed" errors={errors} />
+        )}
     </div>)
 }

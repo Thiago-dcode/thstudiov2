@@ -7,9 +7,10 @@ import { TWO_FA_COOKIE_NAME } from "@repo/common-lib/constants";
 import { getConfigValue } from "@repo/common-lib/config/utils";
 import { decrypt, encrypt } from "@repo/common-lib/utils/encrypt";
 import { setUserSession } from "./user-session.action";
-import { LoginActionReturn, UserAuth } from "../auth.types";
+import { AuthActionReturn, UserAuth } from "../auth.types";
+import { BaseUser } from "@/modules/users/schemas/users.types";
 
-export const verify2faServerAction = async (formData: FormData):Promise<LoginActionReturn<{
+export const verify2faServerAction = async (formData: FormData):Promise<AuthActionReturn<{
     email?:string,
     twofa_code?:string,
 },UserAuth>> => {
@@ -60,13 +61,20 @@ export const verify2faServerAction = async (formData: FormData):Promise<LoginAct
         }
     }
 }
-export const get2faCookieData = async () => {
+export const get2faCookieData = async ():Promise<BaseUser|null> => {
     const cookieStore = await cookies();
     const cookieValue = cookieStore.get(TWO_FA_COOKIE_NAME)?.value;
     if (!cookieValue) {
         return null;
     }
-    return decrypt(cookieValue, getConfigValue('encryption').secret);
+ try {
+    const decrypted= decrypt(cookieValue, getConfigValue('encryption').secret);
+    if(!decrypted) return null;
+    return JSON.parse(decrypted) as BaseUser;
+ } catch (error) {
+    console.log(error);
+    return null;
+ }
 }
 
 export const delete2faCookie = async () => {
@@ -77,12 +85,10 @@ export const delete2faCookie = async () => {
     });
 }
 
-export const set2faCookie = async (value: string) => {
-    console.log('value from set2faCookie', value);
+export const set2faCookie = async (user: BaseUser) => {
     const cookieStore = await cookies();
-    console.log('value from set2faCookie', value);
-    cookieStore.set(TWO_FA_COOKIE_NAME, encrypt(value, getConfigValue('encryption').secret), {
+    cookieStore.set(TWO_FA_COOKIE_NAME, encrypt(JSON.stringify(user), getConfigValue('encryption').secret), {
         httpOnly: true,
-        maxAge: 60 * 30 //10 minutes
+        maxAge: 60 * 10 //10 minutes
     });
 }

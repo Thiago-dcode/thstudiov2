@@ -1,57 +1,64 @@
 import { get2faCookieData } from "@/modules/auth/server-actions/twofa.action";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import zod from "zod";
 import { TwoFaForm } from "../__components/twoFaForm";
+import AuthComponent from "../__components/authComponent";
+import { ExpiresIn } from "../__components/expiresIn";
+import { MailOpen } from "lucide-react";
 
 export default async function TwoFactorAuth() {
-  const email = await get2faCookieData();
-  const validatedEmail = zod.email().safeParse(email);
-  if (!email || !validatedEmail.success) {
-    redirect('/auth/login');
+  const baseUser = await get2faCookieData();
+  if (!baseUser || !baseUser?.email) {
+    redirect('/auth/login')
   }
 
   // Mask email for privacy (show first 2 chars and domain)
-  const maskedEmail = validatedEmail.data.replace(/(.{2})(.*)(@.*)/, (_, start, middle, domain) =>
+  const maskedEmail = baseUser.email.replace(/(.{2})(.*)(@.*)/, (_, start, middle, domain) =>
     start + '*'.repeat(Math.min(middle.length, 8)) + domain
   );
+  const expiresIn = () => {
+    const expiresAt = baseUser.twofa_expires_at ? new Date(baseUser.twofa_expires_at) : null;
+    if (!expiresAt) return 0;
+    return expiresAt.getTime() - new Date().getTime();
+
+  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 px-4 py-12">
-      <div className="w-full max-w-md">
-        <div className="bg-white rounded-lg shadow-lg p-8 space-y-6">
-          {/* Header */}
-          <div className="text-center space-y-2">
-            <h1 className="text-2xl font-bold text-slate-900">
-              Two-Factor Authentication
-            </h1>
-            <p className="text-sm text-slate-600">
+    <AuthComponent.Container>
+      {/* Header */}
+
+      <AuthComponent.Content>
+        <AuthComponent.Header>
+        {/* <MailOpen className="size-10" /> */}
+          <AuthComponent.Title title="Auth code validation" />
+          <AuthComponent.SubTitle >
+            <p className="text-sm">
               We've sent a verification code to{' '}
-              <span className="font-medium text-slate-900">{maskedEmail}</span>
+              <span className="font-medium">{maskedEmail}</span>
             </p>
-          </div>
+          </AuthComponent.SubTitle >
+        </AuthComponent.Header>
+        <TwoFaForm baseUser={baseUser} />
 
-          <TwoFaForm email={email} />
-
-          {/* Footer Links */}
-          <div className="pt-4 border-t border-slate-200">
-            <p className="text-sm text-slate-600 text-center">
-              Having trouble?{' '}
-              <Link 
-                href="/auth/login" 
-                className="text-blue-600 hover:text-blue-700 font-medium transition-colors"
-              >
-                Back to login
-              </Link>
-            </p>
-          </div>
+        {/* Footer Links */}
+        <div className="pt-4 ">
+          <p className="text-sm  text-text-muted">
+            Having trouble?{' '}
+            <Link
+              href="/auth/login"
+              className=" transition-colors text-text"
+            >
+              Back to login
+            </Link>
+          </p>
         </div>
+      </AuthComponent.Content>
 
-        {/* Footer */}
-        <p className="mt-6 text-center text-xs text-slate-500">
-          This code expires after a short period. If it doesn't work, please try logging in again.
-        </p>
-      </div>
-    </div>
+      <AuthComponent.Footer>
+        <ExpiresIn redirect='/auth/login' expiresIn={expiresIn()} />
+      </AuthComponent.Footer>
+    </AuthComponent.Container>
+
+
   );
 }

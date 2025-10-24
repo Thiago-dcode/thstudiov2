@@ -1,19 +1,15 @@
-import { getPasswordRecoveryAttemptCookie } from "@/modules/auth/server-actions/password-recovery.action";
+import { getPasswordUpdatedCookie } from "@/modules/auth/server-actions/password-update.action";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { deleteCookie } from "@/lib/utils";
-import { PASSWORD_RECOVERY_ATTEMPT_COOKIE_NAME } from "@repo/common-lib/constants";
 
 export default async function PasswordUpdateSuccess() {
 
-    const passwordRecoveryAttempt = await getPasswordRecoveryAttemptCookie();
-    if (!passwordRecoveryAttempt) {
+    const passwordUpdatedCookie = await getPasswordUpdatedCookie();
+    console.log(passwordUpdatedCookie)
+    if (!passwordUpdatedCookie) {
         redirect('/auth/password-recovery');
     }
-    if (!passwordRecoveryAttempt.code_validated) {
-        redirect('/auth/password-recovery');
-    }
-    await deleteCookie(PASSWORD_RECOVERY_ATTEMPT_COOKIE_NAME);
+
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 px-4 py-12">
             <div className="w-full max-w-md">

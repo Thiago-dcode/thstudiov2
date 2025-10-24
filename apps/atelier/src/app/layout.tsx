@@ -1,18 +1,14 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "@repo/ui/globals.css";
 import { Toaster } from "@repo/ui/components/shadcn/sonner"
 import { SessionProvider } from "@/modules/auth/contexts/session.provider";
 import { ReactElement } from "react";
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import { Roboto } from 'next/font/google'
+import { cn } from "@repo/ui/lib/utils";
+ 
+const roboto = Roboto({
+  subsets: ['latin'],
+})
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -25,10 +21,8 @@ export default function RootLayout({
   children: ReactElement;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+    <html className={cn("dark",roboto.className)} lang="en">
+      <body className=" w-screen h-screen">
         <SessionProvider>
           {children}
         </SessionProvider>
