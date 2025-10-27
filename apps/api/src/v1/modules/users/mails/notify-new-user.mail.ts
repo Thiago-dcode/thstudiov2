@@ -1,5 +1,5 @@
 import { Mailable } from '@repo/backend-lib/services/mail-service/base';
-import { BaseUser } from '../users.types';
+import { BaseUser } from '@repo/common-lib/types/user';
 import { mailingFrom } from 'src/config/mailling';
 import { ViewService } from '@repo/backend-lib/services/view-service/base';
 import { Injectable } from '@nestjs/common';

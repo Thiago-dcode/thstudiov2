@@ -10,3 +10,4 @@ export const USER_AGENT_HEADER = 'x-app-user-agent';
 export const IP_ADDRESS_HEADER = 'x-app-ip-address';
 export const REMEMBER_ME_COOKIE_NAME = 'x-app-remember-me';
 export const PASSWORD_RECOVERY_ATTEMPT_COOKIE_NAME = 'x-app-password-recovery-attempt';
+export const PASSWORD_UPDATED_COOKIE_NAME = 'x-app-password-updated';

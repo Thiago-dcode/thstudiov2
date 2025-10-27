@@ -1,32 +1,21 @@
 'use server';
 
 import authService from "../auth.service";
-import {  AuthActionReturn, PasswordRecoveryAttempt } from "../auth.types";
+import {  AuthActionReturn } from "../auth.types";
 import { cookies } from "next/headers";
 import { config } from "@/lib/config";
 import { decrypt, encrypt } from "@repo/common-lib/utils/encrypt";
 import { PASSWORD_UPDATED_COOKIE_NAME } from "@repo/common-lib/constants";
 import zod from "zod";
-import { BaseUser } from "@/modules/users/schemas/users.types";
+import { BaseUser } from "@repo/common-lib/types/user";
 import { deletePasswordAttemptCookie } from "./password-recovery.action";
 
 export const PasswordUpdateAction = async (formData:FormData):Promise<AuthActionReturn<{
     attempt?:string
 },BaseUser>> =>{
-    const {password,confirm_password,code} = {
+    const {password,code} = {
         password: formData.get('password') as string,
-        confirm_password: formData.get('confirm_password') as string,
         code:formData.get('attempt') as string
-    }
-    if(password !== confirm_password){
-       return {
-        errors: ["Passwords must be identical"],
-        data:null,
-        inputs:{
-            attempt:code
-        }
-       }
-
     }
 
     const validatedPassword = zod.string('Invalid password').min(8, 'Invalid password').safeParse(password);

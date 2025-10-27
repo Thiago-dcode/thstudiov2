@@ -1,4 +1,4 @@
-import { BaseUser } from '../users/users.types';
+import { BaseUser } from '@repo/common-lib/types/user';
 import { UserAuthDevice } from '../user-auth-devices/user-auth-devices.types';
 import { PasswordRecoveryAttemptSchema } from '@repo/database/schemas/password-recovery-attempts';
 

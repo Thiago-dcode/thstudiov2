@@ -1,9 +1,16 @@
-import { BaseUser } from "../users/schemas/users.types";
+import { BaseUser } from "@repo/common-lib/types/user";
 
+export type TwoFaUser = BaseUser & {
+    is_new?:boolean
+}
 export type LoginRequest = {    
     email: string;
     password: string;
 }
+export type UserRegisterRequest = LoginRequest & {
+    username:string
+
+  }
 export type Verify2faRequest = {
     email: string;
     twofa_code: string;

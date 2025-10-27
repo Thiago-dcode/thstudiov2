@@ -1,115 +1,88 @@
 'use client'
 import { PasswordRecoveryAttempt } from "@/modules/auth/auth.types"
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction"
-import { deletePasswordAttemptCookie, setPasswordRecoveryAttemptCookie } from "@/modules/auth/server-actions/password-recovery.action"
 import { PasswordUpdateAction, setPasswordUpdatedCookie } from "@/modules/auth/server-actions/password-update.action"
 import { Errors } from "@repo/ui/components/custom/errors"
-import { Timer } from "@repo/ui/components/custom/Timer"
 import { useRouter } from "next/navigation"
-import { useEffect, useMemo } from "react"
-import { ExpiresIn } from "./expiresIn"
+import { useState } from "react"
+import { Input } from "@repo/ui/components/shadcn/input"
+import { Button } from "@repo/ui/components/shadcn/button"
+import { Label } from '@repo/ui/components/shadcn/label'
+import { Spinner } from "@repo/ui/components/shadcn/spinner"
+import { Eye, EyeClosed } from "lucide-react"
 
 export const PasswordUpdateForm = ({ passwordAttempt }: {
     passwordAttempt: PasswordRecoveryAttempt
 }) => {
     const route = useRouter();
+    const [hiddenPassword, setHiddenPassword] = useState(true);
+    const [hiddenConfirmPassword, setHiddenConfirmPassword] = useState(true);
     const { result, errors, cleanErrors, handleSubmit, isPending } = useHandleAction({
         action: PasswordUpdateAction,
         afterAction: async () => {
-
             await setPasswordUpdatedCookie();
             route.push('/auth/password-recovery/recover/success')
         }
     })
-    useEffect(() => {
-
-        (async () => {
-
-            await setPasswordRecoveryAttemptCookie(passwordAttempt)
-        })()
-    }, [passwordAttempt])
-    const expiresIn = useMemo(() => {
-        const expiresAt = new Date(passwordAttempt.expires_at);
-        return expiresAt.getTime() - new Date().getTime();
-    }, [passwordAttempt])
 
     return (
-        <>
-            {/* Error Messages */}
-            {errors && (
-                <Errors title="Errors during password update" errors={errors} />
-            )}
-
-            {/* Timer Warning */}
-            <ExpiresIn  expiresIn={expiresIn} redirect='/auth/password-recovery' />
+        <div className="w-full flex items-center flex-col gap-4">
 
             {/* Form */}
-            <form className="space-y-5" onSubmit={handleSubmit} >
+            <form onSubmit={handleSubmit} className="w-full h-full flex flex-col gap-4">
                 {/* Hidden attempt field */}
                 <input type="hidden" name="attempt" value={passwordAttempt.code || result?.inputs?.attempt} />
+
                 {/* New Password Field */}
-                <div className="space-y-2">
-                    <label
+                <div className="space-y-1">
+                    <Label
                         htmlFor="password"
-                        className="block text-sm font-medium text-slate-700"
+                        className="block"
                     >
                         New Password
-                    </label>
-                    <input
-                        onChange={() => {
-                            cleanErrors()
-                        }}
-                        type="password"
-                        id="password"
-                        name="password"
-                        placeholder="Enter your new password"
-                        autoComplete="new-password"
-                        required
-                        autoFocus
-                        minLength={8}
-                        className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder:text-slate-400"
-                    />
+                    </Label>
+                    <div className="relative">
+                        <Input
+                            onChange={() => {
+                                cleanErrors()
+                                setHiddenPassword(true)
+                            }}
+                            type={hiddenPassword ? "password" : 'text'}
+                            id="password"
+                            name="password"
+                            placeholder="Enter your new password"
+                            autoComplete="new-password"
+                            required
+                            autoFocus
+                            minLength={8}
+                        />
+                        <button
+                            type="button"
+                            onClick={(e) => {
+                                e.preventDefault()
+                                setHiddenPassword(!hiddenPassword);
+                            }}
+                            className="absolute top-2 right-2 cursor-pointer flex items-center justify-center text-text-muted"
+                        >
+                            {hiddenPassword ? <Eye className="size-5" /> : <EyeClosed className="size-5" />}
+                        </button>
+                    </div>
                 </div>
-
-                {/* Confirm Password Field */}
-                <div className="space-y-2">
-                    <label
-                        htmlFor="confirm_password"
-                        className="block text-sm font-medium text-slate-700"
-                    >
-                        Confirm Password
-                    </label>
-                    <input
-                        onChange={() => {
-                            cleanErrors()
-                        }}
-                        type="password"
-                        id="confirm_password"
-                        name="confirm_password"
-                        placeholder="Confirm your new password"
-                        autoComplete="new-password"
-                        required
-                        minLength={8}
-                        className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder:text-slate-400"
-                    />
-                </div>
-
-                {/* Password Requirements */}
-                {/* <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
-                    <p className="text-xs font-medium text-slate-700 mb-2">Password requirements:</p>
-                    <ul className="text-xs text-slate-600 space-y-1">
-                        <li>• At least 8 characters long</li>
-                    </ul>
-                </div> */}
 
                 {/* Submit Button */}
-                <button
-                    disabled={isPending}
+                <Button
+                    variant={'default'}
                     type="submit"
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    className="w-full mt-6 py-6"
                 >
-                    {isPending ? 'Updating password...' : ' Reset Password'}
-                </button>
-            </form></>
+                    {!isPending ? 'Reset Password' : <Spinner className="size-6" />}
+                </Button>
+            </form>
+
+            {/* Error Messages */}
+            {errors && errors.length > 0 && (
+                <Errors title="Errors during password update" errors={errors} />
+            )}
+        </div>
     )
 }

@@ -6,7 +6,10 @@ class FetchApi extends HttpClient{
         super(baseUrl, globalHeaders);
     }
     protected async fetcher<T>(): Promise<ApiResponse<T>> {
-        const url = `${this._baseUrl}/${this._resource}`;
+        let url = `${this._baseUrl}`;
+        if(this._resource){
+            url+= `/${this._resource}`;
+        }
         try {
             await this._requestCallback({
                 resource: this._resource,

@@ -10,7 +10,7 @@ import {
   TableName,
 } from '../../constants/schemas/database';
 import { SQL_FUNCTIONS } from '../../constants/constants';
-import { AvailableEnums, ENUMS, EnumType } from '@repo/common-lib/constants/enums';
+import { AvailableEnums, EnumType } from '@repo/common-lib/constants/enums';
 
 
 export const DEFAULT_COLUMN_OPTIONS: ColumnAttributes = {

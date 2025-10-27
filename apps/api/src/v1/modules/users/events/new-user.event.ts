@@ -1,4 +1,4 @@
-import { BaseUser } from "../users.types";
+import { BaseUser } from '@repo/common-lib/types/user';
 
 export class NewUserEvent {
 

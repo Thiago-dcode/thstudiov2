@@ -9,7 +9,7 @@ import { UserRepository } from '../users/users.repository';
 import { JwtService } from '@nestjs/jwt';
 import { TwoFactorAuth, UserAuth, UserPayload } from './auth.types';
 import { ConfigService } from '@nestjs/config';
-import { BaseUser } from '../users/users.types';
+import { BaseUser } from '@repo/common-lib/types/user';
 import { UserAuthDevicesService } from '../user-auth-devices/user-auth-devices.service';
 import { RequestService } from 'src/common/services/request.service';
 import { randomStr } from '@repo/common-lib/utils/random-string';
@@ -28,6 +28,10 @@ import { PasswordRecoveryMail } from './mails/password-recovery-mail';
 import { generateUUID } from '@repo/common-lib/utils/generate-uuid';
 import { CheckPasswordRecoveryAttemptRequest } from './requests/check-password-recovery.request';
 import { UpdatePasswordRequest } from './requests/update-password.request';
+import { RegisterRequest } from './requests/register.request';
+import { NEW_USER_EVENT } from '../users/users.constants';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { NewUserEvent } from '../users/events/new-user.event';
 
 @Injectable()
 export class AuthService {
@@ -42,7 +46,20 @@ export class AuthService {
     private readonly twoFAMail: TwoFAMail,
     private readonly passwordRecoveryMail: PasswordRecoveryMail,
     private readonly passwordRecoveryAttemptsService: PasswordRecoveryAttemptsService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
+  async register(registerRequest: RegisterRequest) {
+    const user = await this.userRepository.create({
+      ...registerRequest,
+      password: await hash(registerRequest.password),
+    });
+    const result = await this.handle2fa(user, {
+      ip_address: this.requestService.ip_address,
+      user_agent: this.requestService.user_agent,
+    });
+    this.eventEmitter.emit(NEW_USER_EVENT, new NewUserEvent(user));
+    return result.user;
+  }
   async login(authLoginRequest: LoginRequest): Promise<UserAuth | BaseUser> {
     const user = await this.userRepository.findOneByColumnWithPassword(
       'email',
@@ -181,9 +198,6 @@ export class AuthService {
     if (!passwordRecoveryAttempt) {
       throw new BadRequestException('Invalid code');
     }
-    if (passwordRecoveryAttempt.code_validated) {
-      throw new BadRequestException('Code already used');
-    }
     if (passwordRecoveryAttempt.expires_at.getTime() < new Date().getTime()) {
       throw new BadRequestException('Code expired');
     }
@@ -270,7 +284,7 @@ export class AuthService {
     //Start 2fa process
 
     const code = randomStr(6).toLowerCase();
-    const expiresAt = addMinutes(new Date(), 30);
+    const expiresAt = addMinutes(new Date(), 10);
     const updatedUser = await this.userRepository.updateById(user.id, {
       twofa_code: code,
       twofa_expires_at: expiresAt,

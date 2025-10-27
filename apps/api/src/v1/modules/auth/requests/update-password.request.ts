@@ -1,8 +1,8 @@
-import { IsNotEmpty, IsNumber, IsString, MinLength } from 'class-validator';
+import { IsNotEmpty, IsString, MinLength } from 'class-validator';
 import { ModelExist } from 'src/common/validators/model-exist.validtor';
 
 export class UpdatePasswordRequest {
-  @IsNumber()
+  @IsString()
   @IsNotEmpty()
   @ModelExist('password_recovery_attempts', 'code')
   code: string;

@@ -13,6 +13,7 @@ export type UserSchema = {
   is_active?: boolean;
   remember_me?: boolean;
   twofa_attempts?: number;
+  funnel_step?:number,
   number_email_validations_sent?: number;
   address_id?: number | null;
   twofa_enabled?: boolean;

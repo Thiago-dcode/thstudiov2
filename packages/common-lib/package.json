@@ -22,6 +22,7 @@
     "./utils/query-builder": "./dist/utils/query-builder.js",
     "./utils/index": "./dist/utils/index.js",
     "./types/response": "./dist/types/response.js",
+    "./types/user": "./dist/types/user.js",
     "./config": "./dist/config/index.js",
     "./config/utils": "./dist/config/utils.js",
     "./utils/encrypt": "./dist/utils/encrypt.js",

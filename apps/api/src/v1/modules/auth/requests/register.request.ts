@@ -11,7 +11,7 @@ import {
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 
-export class CreateUserRequest {
+export class RegisterRequest {
   @IsEmail()
   @IsNotEmpty()
   @Transform(({ value }) => value.toLowerCase())

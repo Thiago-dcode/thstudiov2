@@ -67,7 +67,7 @@ protected _baseUrl: string = '';
     protected async setupRequest({resource, headers, body, method}: RequestParams): Promise<void> {
         this.headers = headers || {};
         this.method = method;
-        this.resource = resource;
+        this.resource = resource.trim();
         this.body = body;
         
     }

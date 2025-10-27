@@ -41,10 +41,10 @@ const Title = ({title}:{title:string}) =>{
 }
 const SubTitle = ({subTitle,children}:{subTitle?:string, children?:ReactNode})=>{
 
-    return  <p className="text-sm text-text-muted">
-        {subTitle||children}
+    return  <div className="text-sm text-text-muted">
+        {subTitle? <p>{subTitle}</p>:children}
   
-</p>
+</div>
 }
 const Footer = ({ children }: { children: ReactNode }) => {
 

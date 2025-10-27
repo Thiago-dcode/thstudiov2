@@ -2,13 +2,13 @@
 import { useSession } from "@/modules/auth/contexts/session.provider";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { verify2faServerAction } from "@/modules/auth/server-actions/twofa.action";
-import { BaseUser } from "@/modules/users/schemas/users.types";
 import { Errors } from "@repo/ui/components/custom/errors";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { Input } from "@repo/ui/components/shadcn/input";
+import { TwoFaUser } from "@/modules/auth/auth.types";
 
-export const TwoFaForm = ({ baseUser }: { baseUser: BaseUser }) => {
+export const TwoFaForm = ({ user }: { user: TwoFaUser }) => {
   const route = useRouter();
   const { setSession } = useSession();
   const formRef = useRef<HTMLFormElement | null>(null);
@@ -17,7 +17,7 @@ export const TwoFaForm = ({ baseUser }: { baseUser: BaseUser }) => {
     afterAction: async (result) => {
       if (result.data) {
         setSession(result.data);
-        route.push('/atelier')
+        route.push(user.is_new ? '/get-started' : '/atelier');
       }
     }
   })
@@ -30,7 +30,7 @@ export const TwoFaForm = ({ baseUser }: { baseUser: BaseUser }) => {
 
       <form ref={formRef} onSubmit={handleSubmit} className="w-full flex flex-col gap-8">
 
-        <input type="hidden" name="email" value={baseUser.email} />
+        <input type="hidden" name="email" value={user.email} />
 
         <div className=" w-full flex flex-col gap-2">
           <Input
@@ -38,7 +38,7 @@ export const TwoFaForm = ({ baseUser }: { baseUser: BaseUser }) => {
               if (isPending) return;
               const value = e.target.value.trim();
               setTwofaCode(value);
-              if (value.length === 6 && formRef.current) {
+              if (value.length === 6 && formRef?.current) {
                 formRef.current.requestSubmit()
               }
             }}
@@ -47,7 +47,7 @@ export const TwoFaForm = ({ baseUser }: { baseUser: BaseUser }) => {
             id="twofa_code"
             name="twofa_code"
             maxLength={6}
-            value={twafaCode}
+            value={twafaCode || undefined}
             autoComplete="one-time-code"
             inputMode="numeric"
             placeholder="Enter 6-digit code"

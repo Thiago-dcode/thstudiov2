@@ -1,15 +1,23 @@
 import { BaseService } from "@/lib/services/base.service";
 import { ApiResponse } from "@repo/common-lib/types/response";
-import { CheckPasswordRecoveryRequest, LoginRequest, LoginReturn, PasswordRecoveryAttempt, PasswordRecoveryRequest, UpdatePasswordRequest, UserAuth, ValidatePasswordRecoveryAttemptRequest, Verify2faRequest } from "./auth.types";
+import { CheckPasswordRecoveryRequest, LoginRequest, LoginReturn, PasswordRecoveryAttempt, PasswordRecoveryRequest, UpdatePasswordRequest, UserAuth, UserRegisterRequest, ValidatePasswordRecoveryAttemptRequest, Verify2faRequest } from "./auth.types";
 import { fetchApi } from "@/lib/facade/fetchApi";
-import { BaseUser } from "../users/schemas/users.types";
+import { BaseUser } from "@repo/common-lib/types/user";
 
 export class AuthService extends BaseService {
     constructor() {
         super(fetchApi, 'auth');
 
     }
+    async register(registerRequest: UserRegisterRequest): Promise<ApiResponse<BaseUser>> {
 
+        return await this.fetchApi.post({
+            resource: 'register',
+            body: registerRequest,
+        });
+       
+    }
+ 
     async login(authLoginRequest: LoginRequest): Promise<ApiResponse<LoginReturn>> {
 
         return await this.fetchApi.post({

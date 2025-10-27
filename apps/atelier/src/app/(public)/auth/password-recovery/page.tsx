@@ -25,12 +25,8 @@ export default async function PasswordRecovery() {
 
                 {/* Divider */}
 
-                <div className="relative flex justify-center text-sm">
-                    <p className="px-2 text-text-muted">
-                        Remember your password?
-                    </p>
-                    <Link href={'/auth/login'}>Back to Login</Link>
-                </div>
+               
+                    <Link  className="text-sm  transition-colors text-text-muted hover:text-text " href={'/auth/login'}>Remember your password?</Link>
 
             </authComponent.Content>
             <authComponent.Footer>

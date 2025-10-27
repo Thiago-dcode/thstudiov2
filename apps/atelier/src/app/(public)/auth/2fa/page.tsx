@@ -4,33 +4,33 @@ import Link from "next/link";
 import { TwoFaForm } from "../__components/twoFaForm";
 import AuthComponent from "../__components/authComponent";
 import { ExpiresIn } from "../__components/expiresIn";
-import { MailOpen } from "lucide-react";
 
 export default async function TwoFactorAuth() {
-  const baseUser = await get2faCookieData();
-  if (!baseUser || !baseUser?.email) {
+  const user = await get2faCookieData();
+  if (!user || !user?.email) {
     redirect('/auth/login')
   }
 
   // Mask email for privacy (show first 2 chars and domain)
-  const maskedEmail = baseUser.email.replace(/(.{2})(.*)(@.*)/, (_, start, middle, domain) =>
+  const maskedEmail = user.email.replace(/(.{2})(.*)(@.*)/, (_, start, middle, domain) =>
     start + '*'.repeat(Math.min(middle.length, 8)) + domain
   );
   const expiresIn = () => {
-    const expiresAt = baseUser.twofa_expires_at ? new Date(baseUser.twofa_expires_at) : null;
+    const expiresAt = user.twofa_expires_at ? new Date(user.twofa_expires_at) : null;
     if (!expiresAt) return 0;
     return expiresAt.getTime() - new Date().getTime();
 
   }
 
+  //TODO: handle is new register
   return (
     <AuthComponent.Container>
       {/* Header */}
 
       <AuthComponent.Content>
         <AuthComponent.Header>
-        {/* <MailOpen className="size-10" /> */}
-          <AuthComponent.Title title="Auth code validation" />
+          {/* <MailOpen className="size-10" /> */}
+          <AuthComponent.Title title={user.is_new ? 'Validate your email' : 'Device verification'} />
           <AuthComponent.SubTitle >
             <p className="text-sm">
               We've sent a verification code to{' '}
@@ -38,7 +38,7 @@ export default async function TwoFactorAuth() {
             </p>
           </AuthComponent.SubTitle >
         </AuthComponent.Header>
-        <TwoFaForm baseUser={baseUser} />
+        <TwoFaForm user={user} />
 
         {/* Footer Links */}
         <div className="pt-4 ">

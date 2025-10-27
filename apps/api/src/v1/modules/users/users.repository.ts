@@ -1,6 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { BaseRepository } from '@repo/database/repositories';
-import { BaseUser, BaseUserWithPassword, User } from './users.types';
+import {  User } from './users.types';
+import { BaseUser, BaseUserWithPassword } from '@repo/common-lib/types/user';
 import {
   BaseUserSchema,
   BaseUserSchemaColumns,
@@ -53,6 +54,7 @@ export class UserRepository extends BaseRepository {
     'users.twofa_expires_at',
     'users.is_active',
     'users.twofa_attempts',
+    'users.funnel_step',
   ] as const;
   constructor() {
     super('users');
@@ -114,7 +116,7 @@ export class UserRepository extends BaseRepository {
   }
   async create(user: CreateUserInput): Promise<BaseUser> {
     const result = await super._create<BaseUserSchema>(user, {
-      select: ['id', 'email', 'username', 'email_validated'],
+      select: this.BASE_COLUMNS,
     });
     return this.formatUser(result, false) as BaseUser;
   }
@@ -141,6 +143,7 @@ export class UserRepository extends BaseRepository {
       twofa_code: result?.twofa_code,
       twofa_expires_at: result?.twofa_expires_at,
       password: withPassword ? result?.password : undefined,
+      funnel_step: result.funnel_step,
       is_active: result?.is_active,
       twofa_attempts: result?.twofa_attempts,
     };

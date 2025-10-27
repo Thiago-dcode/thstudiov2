@@ -1,5 +1,4 @@
 'use server';
-
 import { cookies } from "next/headers";
 import authService from "../auth.service";
 import { verify2faRequestSchema } from "../schemas/auth.shema";
@@ -7,8 +6,9 @@ import { TWO_FA_COOKIE_NAME } from "@repo/common-lib/constants";
 import { getConfigValue } from "@repo/common-lib/config/utils";
 import { decrypt, encrypt } from "@repo/common-lib/utils/encrypt";
 import { setUserSession } from "./user-session.action";
-import { AuthActionReturn, UserAuth } from "../auth.types";
-import { BaseUser } from "@/modules/users/schemas/users.types";
+import { AuthActionReturn, TwoFaUser, UserAuth } from "../auth.types";
+import { BaseUser } from "@repo/common-lib/types/user";
+
 
 export const verify2faServerAction = async (formData: FormData):Promise<AuthActionReturn<{
     email?:string,
@@ -61,7 +61,7 @@ export const verify2faServerAction = async (formData: FormData):Promise<AuthActi
         }
     }
 }
-export const get2faCookieData = async ():Promise<BaseUser|null> => {
+export const get2faCookieData = async ():Promise<TwoFaUser|null> => {
     const cookieStore = await cookies();
     const cookieValue = cookieStore.get(TWO_FA_COOKIE_NAME)?.value;
     if (!cookieValue) {
@@ -70,7 +70,7 @@ export const get2faCookieData = async ():Promise<BaseUser|null> => {
  try {
     const decrypted= decrypt(cookieValue, getConfigValue('encryption').secret);
     if(!decrypted) return null;
-    return JSON.parse(decrypted) as BaseUser;
+    return JSON.parse(decrypted) as TwoFaUser;
  } catch (error) {
     console.log(error);
     return null;
@@ -85,7 +85,7 @@ export const delete2faCookie = async () => {
     });
 }
 
-export const set2faCookie = async (user: BaseUser) => {
+export const set2faCookie = async (user:TwoFaUser) => {
     const cookieStore = await cookies();
     cookieStore.set(TWO_FA_COOKIE_NAME, encrypt(JSON.stringify(user), getConfigValue('encryption').secret), {
         httpOnly: true,

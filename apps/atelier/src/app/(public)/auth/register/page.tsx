@@ -1,10 +1,8 @@
-import { getRememberMe } from "@/modules/auth/server-actions/user-session.action";
 import Link from "next/link";
-import { LoginForm } from "../__components/loginForm";
 import authComponent from "../__components/authComponent";
+import { RegisterForm } from "../__components/registerForm";
 
 export default async function Login() {
-  const rememberMe = await getRememberMe();
   return (
 
     <authComponent.Container>
@@ -12,22 +10,22 @@ export default async function Login() {
       <authComponent.Content>
        
         <authComponent.Header >
-          <authComponent.Title title="Hello again"/>
-          <authComponent.SubTitle  subTitle="Sign in to have access to your account"/>
+          <authComponent.Title title="Create your account"/>
+          <authComponent.SubTitle  subTitle="And start build your dream portfolio"/>
         </authComponent.Header>
-        <LoginForm rememberMe={rememberMe} />
+        <RegisterForm />
 
         <Link
-          href="/auth/password-recovery"
+          href="/auth/login"
           className="text-sm  transition-colors text-text-muted hover:text-text "
         >
-          Problem with login?
+          Already have an account?
         </Link>
       </authComponent.Content>
 
 
       <authComponent.Footer>
-        <div> By signing in, you agree to our{' '}
+        {/* <p> By signing in, you agree to our{' '}
           <div>
           <Link href="/terms" className="text-blue-600 hover:text-blue-500 underline">
             Terms of Service
@@ -37,7 +35,8 @@ export default async function Login() {
             Privacy Policy
           </Link>
           </div>
-        </div>
+        </p> */}
+        <></>
       </authComponent.Footer>
 
     </authComponent.Container>

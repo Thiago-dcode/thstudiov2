@@ -12,9 +12,6 @@ const up = async () => {
     Column.string('code',255,{
       unique: true,
     }),
-    Column.enum('status',"PASSWORD_RECOVERY_ATTEMPT_STATUS",{
-      default:''
-    }),
     Column.timestamp('expires_at'),
     Column.timestamps(true),
   ]);

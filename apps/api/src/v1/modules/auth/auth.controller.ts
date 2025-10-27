@@ -7,11 +7,18 @@ import { PasswordRecoveryRequest } from './requests/password-recovery.request';
 import { UpdatePasswordRequest } from './requests/update-password.request';
 import { Throttle } from '@nestjs/throttler';
 import { CheckPasswordRecoveryAttemptRequest } from './requests/check-password-recovery.request';
+import { RegisterRequest } from './requests/register.request';
 
 @Throttle({ medium: { limit: 5, ttl: 10000 } })
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
+  @Public()
+  @Post('register')
+  async register(@Body() registerRequest: RegisterRequest) {
+    return await this.authService.register(registerRequest);
+  }
   @Public()
   @Post('login')
   async login(@Body() authLoginDto: LoginRequest) {
@@ -39,12 +46,17 @@ export class AuthController {
 
   @Public()
   @Post('validate-password-recovery-attempt')
-  async checkPasswordRecoveryAttempt(@Body() checkPasswordRecoveryAttemptDto: CheckPasswordRecoveryAttemptRequest) {
-    return await this.authService.checkPasswordRecoveryAttempt(checkPasswordRecoveryAttemptDto);
+  async checkPasswordRecoveryAttempt(
+    @Body()
+    checkPasswordRecoveryAttemptDto: CheckPasswordRecoveryAttemptRequest,
+  ) {
+    return await this.authService.checkPasswordRecoveryAttempt(
+      checkPasswordRecoveryAttemptDto,
+    );
   }
   @Public()
   @Post('update-password')
   async updatePassword(@Body() updatePasswordDto: UpdatePasswordRequest) {
     return await this.authService.updatePassword(updatePasswordDto);
-  } 
+  }
 }

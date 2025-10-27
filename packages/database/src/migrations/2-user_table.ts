@@ -27,6 +27,9 @@ const up = async () => {
     ColumnBuilder.boolean('is_active', {
       default: true,
     }),
+    ColumnBuilder.integer('funnel_step',{
+      default: 1,
+    }),
     ColumnBuilder.integer('number_email_validations_sent', {
       default: 0,
     }),

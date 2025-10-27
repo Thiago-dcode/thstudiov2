@@ -58,7 +58,6 @@
           <% } %>
           <tr>
             <td align="center" style="padding:32px 0px;">
-              <% if (user.email_validated) { %>
               <p style="margin:0 0 8px 0; font-size:16px;"><%= globals.t(translatePath + '.CTA_START_TEXT') %>
               </p>
               <table role="presentation" cellpadding="0" cellspacing="0" border="0">
@@ -69,18 +68,6 @@
                   </td>
                 </tr>
               </table>
-              <% } else { %>
-              <p style="margin:0 0 8px 0; font-size:16px;"><%= globals.t(translatePath + '.CTA_VERIFY_TEXT') %>
-              </p>
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
-                <tr>
-                  <td align="center" style="border-radius:4px; background-color: #343231; color:#fafafa;">
-                    <a href="<%= globals.appUrl %>"
-                      style="display:inline-block; padding:12px 20px; font-size:16px; text-decoration:none;"><%= globals.t(translatePath + '.CTA_VERIFY_BUTTON') %></a>
-                  </td>
-                </tr>
-              </table>
-              <% } %>
             </td>
           </tr>
           <tr>

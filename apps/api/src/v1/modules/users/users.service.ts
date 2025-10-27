@@ -2,8 +2,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { UpdateUserRequest } from './requests/update-user.request';
 import { NewUserEvent } from './events/new-user.event';
 import { NEW_USER_EVENT } from './users.constants';
-import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
-import { CreateUserRequest } from './requests/create-user.request';
+import {  OnEvent } from '@nestjs/event-emitter';
 import { UserRepository } from './users.repository';
 import { PlansRepository } from '../plans/plans.repository';
 import { UserPlanTransactionsRepository } from '../user-plan-transactions/user-plan-transactions.repository';
@@ -12,9 +11,6 @@ import { UserExtraDataRepository } from '../user-extra-data/user-extra-data.repo
 import { LogService } from '@repo/backend-lib/services/log-service';
 import { MailService } from '@repo/backend-lib/services/mail-service';
 import { NotifyNewUserMail } from './mails/notify-new-user.mail';
-import { UserAuthDevicesService } from '../user-auth-devices/user-auth-devices.service';
-import { RequestService } from 'src/common/services/request.service';
-import { hash } from '@repo/common-lib/utils/hash';
 
 @Injectable()
 export class UserService {
@@ -23,37 +19,11 @@ export class UserService {
     private readonly plansRepository: PlansRepository,
     private readonly userPlanTransactionsRepository: UserPlanTransactionsRepository,
     private readonly userExtraDataRepository: UserExtraDataRepository,
-    private readonly eventEmitter: EventEmitter2,
     private readonly logService: LogService,
     private readonly mailService: MailService,
     private readonly notifyNewUserMail: NotifyNewUserMail,
-    private readonly userAuthDevicesService: UserAuthDevicesService,
-    private readonly requestService: RequestService,
   ) {}
-  async create(createUserRequest: CreateUserRequest) {
-    const user = await this.userRepository.create({
-      ...createUserRequest,
-      password: await hash(createUserRequest.password),
-    });
-    if (
-      this.requestService &&
-      this.requestService.user_agent &&
-      this.requestService.ip_address
-    ) {
-      const userDevice = await this.userAuthDevicesService.getOneOrCreate({
-        user_id: user.id,
-        user_agent: this.requestService?.user_agent || '-',
-        ip_address: this.requestService?.ip_address || '-',
-        disabled: true,
-        blocked: false,
-      });
-      this.logService.info(`${NEW_USER_EVENT} user [${user.id}] user device`, {
-        userDevice,
-      });
-    }
-    this.eventEmitter.emit(NEW_USER_EVENT, new NewUserEvent(user));
-    return user;
-  }
+  
 
   async findAll() {
     return `This action returns all user`;

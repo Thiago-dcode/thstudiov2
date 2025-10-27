@@ -31,6 +31,12 @@ export class BaseService {
         });
 
         this.fetchApi.setResponseCallback<ApiResponse<any>>(async (_, response) => {
+
+
+            if(response.error){
+
+                console.log('FETCH API ERROR', response.error)
+            }
         });
     }
 }   

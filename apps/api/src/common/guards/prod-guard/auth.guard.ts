@@ -72,6 +72,7 @@ export class AuthGuard implements CanActivate {
         twofa_enabled: payload.twofa_enabled,
         twofa_code: payload.twofa_code,
         twofa_expires_at: payload.twofa_expires_at,
+        funnel_step:payload.funnel_step,
         id: payload.id,
         is_active: payload.is_active,
         twofa_attempts: payload.twofa_attempts,
