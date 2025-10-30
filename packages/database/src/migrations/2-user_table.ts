@@ -20,6 +20,12 @@ const up = async () => {
     ColumnBuilder.text('biography', {
       nullable: true,
     }),
+    ColumnBuilder.text('short_biography', {
+      nullable: true,
+    }),
+    ColumnBuilder.string('avatar',255,{
+      nullable:true
+    }),
     ColumnBuilder.email(),
     ColumnBuilder.boolean('email_validated', {
       default: false,

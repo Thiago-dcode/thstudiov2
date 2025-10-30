@@ -9,11 +9,12 @@ export type UserSchema = {
   password: string;
   biography?: string | null;
   email: string;
+  avatar?:string;
   email_validated?: boolean;
   is_active?: boolean;
-  remember_me?: boolean;
   twofa_attempts?: number;
   funnel_step?:number,
+  short_biography?:string,
   number_email_validations_sent?: number;
   address_id?: number | null;
   twofa_enabled?: boolean;
@@ -27,26 +28,7 @@ export type BaseUserSchema = Omit<UserSchema, 'created_at' | 'updated_at'  | 'na
 const tablesUser = [TABLES_ENUM.USERS] as const;
 export type UserSchemaColumns = TableColumn<typeof tablesUser, UserSchemaWithoutTimestamps>;
 export type BaseUserSchemaColumns = TableColumn<typeof tablesUser, BaseUserSchema>;
-export type UserSchemaWithAddress = {
-  // From users (main table)
-  id: number;
-  name?: string | null;
-  surname?: string | null;
-  username: string;
-  password: string;
-  biography?: string | null;
-  email: string;
-  email_validated?: boolean;
-  is_active?: boolean;
-  twofa_attempts?: number;
-  number_email_validations_sent?: number;
-  address_id?: number | null;
-  twofa_enabled?: boolean;
-  twofa_code?: string;
-  twofa_expires_at?: Date;
-  created_at: Date;
-  updated_at: Date;
-  
+export type UserSchemaWithAddress = UserSchema & {
   // From addresses (only colliding columns prefixed)
   addr_id: number;
   addr_created_at: Date;
