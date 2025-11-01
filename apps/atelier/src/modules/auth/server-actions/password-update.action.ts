@@ -5,7 +5,7 @@ import {  AuthActionReturn } from "../auth.types";
 import { cookies } from "next/headers";
 import { config } from "@/lib/config";
 import { decrypt, encrypt } from "@repo/common-lib/utils/encrypt";
-import { PASSWORD_UPDATED_COOKIE_NAME } from "@repo/common-lib/constants";
+import { PASSWORD_UPDATED_COOKIE_NAME } from "@repo/common-lib/constants/constants";
 import zod from "zod";
 import { BaseUser } from "@repo/common-lib/types/user";
 import { deletePasswordAttemptCookie } from "./password-recovery.action";

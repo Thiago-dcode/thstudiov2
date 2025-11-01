@@ -1,13 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { BaseRepository } from '@repo/database/repositories';
 import {
-  CreateUserSessionInput,
-  UpdateUserSessionInput,
   UserSessionSchemaWithUserAuthDevice,
   UserSessionSchemaWithUserAuthDeviceColumns,
   UserSessionSchemaColumns,
-} from '@repo/database/schemas/user-sessions';
+} from '@repo/common-lib/schemas/user-session';
 import { UserSession } from './user-sessions.types';
+import { CreateUserSessionInput, UpdateUserSessionInput } from '@repo/common-lib/types/user-session';
 
 @Injectable()
 export class UserSessionsRepository extends BaseRepository {

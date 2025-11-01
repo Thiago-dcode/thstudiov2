@@ -7,7 +7,7 @@ import {
   PlanSchema,
   PlanPriceSchema,
   CreatePlanInput,
-} from '@repo/database/schemas/plans';
+} from '@repo/common-lib/schemas/plans';
 
 @Injectable()
 export class PlansRepository extends BaseRepository {

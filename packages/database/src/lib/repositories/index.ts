@@ -1,5 +1,5 @@
 import { QueryBuilder } from '../builder/queryBuilder';
-import { Join, SqlClause, SqlValue, TableName, WhereType } from '../constants/schemas/database';
+import { Join, SqlClause, SqlValue, TableName, WhereType } from '@repo/common-lib/types/database';
 type WhereOptions = {column: string, operator: SqlClause, value: SqlValue | SqlValue[], type: WhereType};
 type BaseRepositoryOptions = {
   primaryKey?: string;

@@ -1,6 +1,6 @@
 import { BaseUser } from '@repo/common-lib/types/user';
 import { UserAuthDevice } from '../user-auth-devices/user-auth-devices.types';
-import { PasswordRecoveryAttemptSchema } from '@repo/database/schemas/password-recovery-attempts';
+import { PasswordRecoveryAttemptSchema } from '@repo/common-lib/schemas/password-recovery-attempt';
 
 export type UserAuth =  BaseUser & {
   token: string;

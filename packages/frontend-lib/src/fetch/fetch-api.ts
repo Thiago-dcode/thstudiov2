@@ -10,6 +10,7 @@ class FetchApi extends HttpClient{
         if(this._resource){
             url+= `/${this._resource}`;
         }
+        console.log('URL:',url);
         try {
             await this._requestCallback({
                 resource: this._resource,

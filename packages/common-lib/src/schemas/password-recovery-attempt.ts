@@ -1,5 +1,5 @@
-import { TABLES_ENUM } from '../constants';
-import { TableColumn } from './database';
+import { TABLES_ENUM } from '../constants/database';
+import { TableColumn } from '../types/database';
 
 // Password Recovery Attempt type based on the password_recovery_attempts table structure
 export type PasswordRecoveryAttemptSchema = {

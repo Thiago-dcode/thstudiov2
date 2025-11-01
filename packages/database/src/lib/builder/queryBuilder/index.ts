@@ -12,7 +12,7 @@ import {
   SqlValue,
   WhereType,
   TableName,
-} from '../../constants/schemas/database';
+} from '@repo/common-lib/types/database';
 import {
   QueryBuilderMethodChainedException,
   QueryBuilderOperationNotAllowedException,

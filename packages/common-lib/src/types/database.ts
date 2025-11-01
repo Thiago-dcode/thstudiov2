@@ -1,5 +1,5 @@
-import { SQL_FUNCTIONS, TABLES_ENUM } from '../constants';
-import { EnumType, AvailableEnums } from '@repo/common-lib/constants/enums';
+import { SQL_FUNCTIONS, TABLES_ENUM } from '../constants/database';
+import { AvailableEnums, EnumType } from '../constants/enums';
 
 export type DatabaseClient = 'postgres' | 'mysql' | 'sqlite' | 'mongodb';
 export type DatabaseSettings = {
@@ -86,7 +86,6 @@ export type Join = {
   foreignTable: TableName;
   foreignColumn: string;
 };
-
 export type SqlTypes =
   | 'INTEGER'
   | 'REAL'

@@ -1,3 +1,3 @@
-import { UserAuthDeviceSchema } from "@repo/database/schemas/user-sessions";
+import { UserAuthDeviceSchema } from "@repo/common-lib/schemas/user-session";
 
 export type UserAuthDevice = Omit<UserAuthDeviceSchema, 'created_at' | 'updated_at'>;

@@ -3,7 +3,7 @@ import { PasswordRecoveryAttemptsRepository } from './password-recovery-attempts
 import {
   CreatePasswordRecoveryAttemptInput,
   UpdatePasswordRecoveryAttemptInput,
-} from '@repo/database/schemas/password-recovery-attempts';
+} from '@repo/common-lib/schemas/password-recovery-attempt';
 
 @Injectable()
 export class PasswordRecoveryAttemptsService {

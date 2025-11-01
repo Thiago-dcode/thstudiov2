@@ -1,7 +1,7 @@
 import { getRememberMe } from "@/modules/auth/server-actions/user-session.action";
 import Link from "next/link";
-import { LoginForm } from "../__components/loginForm";
-import authComponent from "../__components/authComponent";
+import { LoginForm } from "../__components/login-form";
+import authComponent from "../../../../components/auth-component";
 
 export default async function Login() {
   const rememberMe = await getRememberMe();

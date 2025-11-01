@@ -4,7 +4,7 @@ import {
   ValidationOptions,
   ValidatorConstraint,
 } from 'class-validator';
-import { TableName } from '@repo/database/schemas/database';
+import { TableName } from '@repo/common-lib/types/database';
 import { DbException } from '@repo/database/exceptions';
 import { Injectable } from '@nestjs/common';
 import { BaseModelValidator } from './base-model.validator';

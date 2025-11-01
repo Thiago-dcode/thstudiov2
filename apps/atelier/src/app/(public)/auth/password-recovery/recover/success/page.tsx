@@ -1,7 +1,7 @@
 import { getPasswordUpdatedCookie } from "@/modules/auth/server-actions/password-update.action";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import AuthComponent from "../../../__components/authComponent";
+import AuthComponent from "../../../../../../components/auth-component";
 import { Button } from "@repo/ui/components/shadcn/button";
 import { CheckCircle2 } from "lucide-react";
 

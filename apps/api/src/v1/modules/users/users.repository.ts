@@ -1,37 +1,43 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { BaseRepository } from '@repo/database/repositories';
-import {  User } from './users.types';
+import {
+  CreateUserInput,
+  UpdateUserInput,
+  User,
+} from '@repo/common-lib/types/user';
 import { BaseUser, BaseUserWithPassword } from '@repo/common-lib/types/user';
 import {
   BaseUserSchema,
   BaseUserSchemaColumns,
-  CreateUserInput,
-  UpdateUserInput,
+  UserSchema,
   UserSchemaWithAddress,
   UserSchemaWithAddressColumns,
-} from '@repo/database/schemas/users';
+} from '@repo/common-lib/schemas/user';
 
 @Injectable()
 export class UserRepository extends BaseRepository {
-  private readonly FULL_COLUMNS: UserSchemaWithAddressColumns[] = [
-    // From users (main table)
+  private readonly BASE_COLUMNS: BaseUserSchemaColumns[] = [
     'users.id',
-    'users.name',
-    'users.surname',
-    'users.username',
-    'users.password',
-    'users.biography',
     'users.email',
+    'users.username',
+    'users.avatar',
     'users.email_validated',
-    'users.is_active',
-    'users.twofa_attempts',
-    'users.number_email_validations_sent',
-    'users.address_id',
     'users.twofa_enabled',
     'users.twofa_code',
     'users.twofa_expires_at',
+    'users.is_active',
+    'users.twofa_attempts',
+    'users.funnel_step',
+  ] as const;
+  private readonly FULL_COLUMNS: UserSchemaWithAddressColumns[] = [
+    // From users (main table)
+    ...this.BASE_COLUMNS,
     'users.created_at',
     'users.updated_at',
+    'users.name',
+    'users.surname',
+    'users.short_biography',
+    'users.biography',
     // From addresses (only colliding columns aliased)
     'addresses.id as addr_id',
     'addresses.created_at as addr_created_at',
@@ -44,18 +50,7 @@ export class UserRepository extends BaseRepository {
     'addresses.latitude',
     'addresses.longitude',
   ];
-  private readonly BASE_COLUMNS: BaseUserSchemaColumns[] = [
-    'users.id',
-    'users.email',
-    'users.username',
-    'users.email_validated',
-    'users.twofa_enabled',
-    'users.twofa_code',
-    'users.twofa_expires_at',
-    'users.is_active',
-    'users.twofa_attempts',
-    'users.funnel_step',
-  ] as const;
+
   constructor() {
     super('users');
   }
@@ -74,7 +69,7 @@ export class UserRepository extends BaseRepository {
     return this.formatFullUser(result);
   }
   async findOneBy(
-    column: string,
+    column: keyof UserSchema,
     value: any,
     full: boolean = false,
   ): Promise<BaseUser | User> {
@@ -139,6 +134,7 @@ export class UserRepository extends BaseRepository {
       email: result?.email,
       username: result?.username,
       email_validated: result?.email_validated,
+      avatar: result.avatar,
       twofa_enabled: result?.twofa_enabled,
       twofa_code: result?.twofa_code,
       twofa_expires_at: result?.twofa_expires_at,
@@ -153,6 +149,10 @@ export class UserRepository extends BaseRepository {
   private formatFullUser(result: UserSchemaWithAddress): User {
     return {
       ...this.formatUser(result),
+      name: result?.name,
+      surname: result?.surname,
+      short_biography: result?.short_biography,
+      biography: result?.biography,
       address: result?.addr_id
         ? {
             id: result?.addr_id,
@@ -161,6 +161,7 @@ export class UserRepository extends BaseRepository {
             state: result?.state,
             zip: result?.zip,
             country: result?.country,
+
             latitude: result?.latitude,
             longitude: result?.longitude,
           }

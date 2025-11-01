@@ -3,7 +3,7 @@ import {
   LANGUAGE_HEADER,
   REQUEST_START_TIME,
   USER_ID_HEADER,
-} from '@repo/common-lib/constants';
+} from '@repo/common-lib/constants/constants';
 import { FactoryLogService } from '@repo/backend-lib/services/log-service';
 import { API_ERRORS_CHANNEL, logConfig } from 'src/config/logging';
 import { format } from 'date-fns/format';

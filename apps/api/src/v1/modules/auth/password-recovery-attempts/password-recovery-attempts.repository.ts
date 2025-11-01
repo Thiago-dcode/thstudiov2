@@ -6,7 +6,7 @@ import {
   PasswordRecoveryAttemptColumnsWithUser,
   PasswordRecoveryAttemptSchema,
   PasswordRecoveryAttemptSchemaWithUser,
-} from '@repo/database/schemas/password-recovery-attempts';
+} from '@repo/common-lib/schemas/password-recovery-attempt';
 
 @Injectable()
 export class PasswordRecoveryAttemptsRepository extends BaseRepository {

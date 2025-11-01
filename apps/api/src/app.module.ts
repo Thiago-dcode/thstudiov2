@@ -28,7 +28,7 @@ import { UserAuthDeviceMiddleware } from './common/middlewares/user-auth-device.
 import { UserSessionsModule } from './v1/modules/user-sessions/user-sessions.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { MediaModule } from './v1/modules/media/media.module';
-import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants';
+import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/constants';
 const APP_MODULES = [
   AuthModule,
   UserModule,
@@ -110,8 +110,15 @@ const APP_MODULES = [
   
     {
       provide: APP_PIPE,
-      useClass: ValidationPipe,
-    },
+      useValue: new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: false, 
+        transform: true, 
+        transformOptions: {
+          enableImplicitConversion: true, 
+        },
+      }),
+    }
   ],
 })
 export class AppModule {

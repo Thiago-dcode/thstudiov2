@@ -1,7 +1,7 @@
 import { getPasswordRecoveryAttemptCookie } from "@/modules/auth/server-actions/password-recovery.action";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import authComponent from "../../__components/authComponent";
+import authComponent from "../../../../../components/auth-component";
 import { ExpiresIn } from "../../__components/expiresIn";
 import { TryAgainButton } from "../__components/tryAgainButton";
 import { getTimeTillNextRecovery } from "../__utils/utils";

@@ -2,8 +2,8 @@ import {
   DatabaseClient,
   DatabaseConfig,
   FullDatabaseConfig,
-} from '../constants/schemas/database';
-import { DEFAULT_DATABASE_SETTINGS } from '../constants/constants';
+} from '@repo/common-lib/types/database';
+import { DEFAULT_DATABASE_SETTINGS } from '@repo/common-lib/constants/database';
 import SchemaBuilder from '../builder/schemaBuilder';
 
 jest.mock('../client', () => {

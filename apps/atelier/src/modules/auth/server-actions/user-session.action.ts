@@ -1,6 +1,6 @@
 'use server';
 
-import { USER_AUTH_COOKIE_EXPIRATION_DATE, USER_AUTH_COOKIE_NAME ,REMEMBER_ME_COOKIE_NAME} from "@repo/common-lib/constants";
+import { USER_AUTH_COOKIE_EXPIRATION_DATE, USER_AUTH_COOKIE_NAME ,REMEMBER_ME_COOKIE_NAME} from "@repo/common-lib/constants/constants";
 import { UserAuth } from "../auth.types";
 import { decrypt, encrypt } from "@repo/common-lib/utils/encrypt";
 import { cookies } from "next/headers";

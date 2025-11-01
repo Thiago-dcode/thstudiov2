@@ -1,6 +1,6 @@
 import Link from "next/link";
-import authComponent from "../__components/authComponent";
-import { RegisterForm } from "../__components/registerForm";
+import authComponent from "../../../../components/auth-component";
+import { RegisterForm } from "../__components/register-form";
 
 export default async function Login() {
   return (

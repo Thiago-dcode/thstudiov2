@@ -1,3 +1,3 @@
-import { UserAuthDeviceSchemaWithoutTimestamps } from "@repo/database/schemas/user-sessions";
+import { UserAuthDeviceSchemaWithoutTimestamps } from "@repo/common-lib/schemas/user-session";
 
 export type UserAuthDevice = UserAuthDeviceSchemaWithoutTimestamps;

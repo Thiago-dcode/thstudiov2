@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { Input } from "@repo/ui/components/shadcn/input";
 import { TwoFaUser } from "@/modules/auth/auth.types";
+import FormComponent from "@/components/form-component";
 
 export const TwoFaForm = ({ user }: { user: TwoFaUser }) => {
   const route = useRouter();
@@ -25,14 +26,14 @@ export const TwoFaForm = ({ user }: { user: TwoFaUser }) => {
 
 
   return (
-    <div className="w-full flex items-center flex-col gap-4">
+    <FormComponent.Container>
 
 
-      <form ref={formRef} onSubmit={handleSubmit} className="w-full flex flex-col gap-8">
+      <form ref={formRef} onSubmit={handleSubmit} className="w-full h-full flex flex-col gap-4">
 
         <input type="hidden" name="email" value={user.email} />
 
-        <div className=" w-full flex flex-col gap-2">
+        <FormComponent.Field>
           <Input
             onChange={(e) => {
               if (isPending) return;
@@ -56,13 +57,13 @@ export const TwoFaForm = ({ user }: { user: TwoFaUser }) => {
             className="w-full px-4 py-6 text-center text-lg font-semibold tracking-widest  rounded-lg focus:outline-none transition-all placeholder:font-normal placeholder:tracking-normal"
           />
 
-        </div>
+        </FormComponent.Field>
 
       </form>
       {errors && errors.length > 0 && (
         <Errors title="Verification failed" errors={errors} />
       )}
 
-    </div>
+    </FormComponent.Container>
   )
 }

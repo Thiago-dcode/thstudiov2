@@ -1,5 +1,5 @@
 import BaseBuilder from '..';
-import { ColumnAttributesWithAfter, TableName ,ColumnAttributesWithForeignKey, ColumnDefinition} from '../../constants/schemas/database';
+import { ColumnAttributesWithAfter, TableName ,ColumnAttributesWithForeignKey, ColumnDefinition} from '@repo/common-lib/types/database';
 import { getClientConfig } from '../../client';
 import { ColumnBuilder } from '../columnBuilder';
 class AlterBuilder extends BaseBuilder {

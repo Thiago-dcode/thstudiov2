@@ -3,7 +3,7 @@ import { UserSessionsRepository } from './user-sessions.repository';
 import {
   CreateUserSessionInput,
   UpdateUserSessionInput,
-} from '@repo/database/schemas/user-sessions';
+} from '@repo/common-lib/types/user-session';
 import { BaseUserSession, UserSession } from './user-sessions.types';
 
 type SessionExistsInput = {

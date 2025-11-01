@@ -14,19 +14,12 @@
   },
   "exports": {
     ".": "./dist/index.js",
-    "./constants/enums": "./dist/constants/enums.js",
-    "./constants": "./dist/constants/constants.js",
-    "./utils/random-string": "./dist/utils/random-string.js",
-    "./utils/generate-uuid": "./dist/utils/generate-uuid.js",
-    "./utils/get-accept-language": "./dist/utils/get-accept-language.js",
-    "./utils/query-builder": "./dist/utils/query-builder.js",
-    "./utils/index": "./dist/utils/index.js",
-    "./types/response": "./dist/types/response.js",
-    "./types/user": "./dist/types/user.js",
+    "./constants/*": "./dist/constants/*.js",
+    "./utils/*": "./dist/utils/*.js",
+    "./types/*": "./dist/types/*.js",
+    "./schemas/*": "./dist/schemas/*.js",
     "./config": "./dist/config/index.js",
-    "./config/utils": "./dist/config/utils.js",
-    "./utils/encrypt": "./dist/utils/encrypt.js",
-    "./utils/hash": "./dist/utils/hash.js"
+    "./config/utils": "./dist/config/utils.js"
   },
   "dependencies": {
     "@types/crypto-js": "^4.2.2",

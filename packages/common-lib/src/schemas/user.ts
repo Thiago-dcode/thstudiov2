@@ -1,6 +1,6 @@
-import { TABLES_ENUM } from "../constants";
-import { TableColumn } from "./database";
 
+import { TABLES_ENUM } from "../constants/database";
+import { TableColumn } from "../types/database";
 export type UserSchema = {
   id: number;
   name?: string | null;
@@ -13,7 +13,7 @@ export type UserSchema = {
   email_validated?: boolean;
   is_active?: boolean;
   twofa_attempts?: number;
-  funnel_step?:number,
+  funnel_step:number,
   short_biography?:string,
   number_email_validations_sent?: number;
   address_id?: number | null;
@@ -24,7 +24,7 @@ export type UserSchema = {
   updated_at: Date;
 };
 export type UserSchemaWithoutTimestamps = Omit<UserSchema, 'created_at' | 'updated_at'>;
-export type BaseUserSchema = Omit<UserSchema, 'created_at' | 'updated_at'  | 'name'| 'surname'| 'biography'| 'address_id'>;
+export type BaseUserSchema = Omit<UserSchema, 'created_at' | 'updated_at'  | 'name'| 'surname'| 'biography'|'short_biography' | 'address_id'>;
 const tablesUser = [TABLES_ENUM.USERS] as const;
 export type UserSchemaColumns = TableColumn<typeof tablesUser, UserSchemaWithoutTimestamps>;
 export type BaseUserSchemaColumns = TableColumn<typeof tablesUser, BaseUserSchema>;
@@ -43,8 +43,6 @@ export type UserSchemaWithAddress = UserSchema & {
 };
 const tablesUserWithAddress = [TABLES_ENUM.USERS, TABLES_ENUM.ADDRESSES] as const;
 export type UserSchemaWithAddressColumns = TableColumn<typeof tablesUserWithAddress, UserSchemaWithAddress>;
-export type CreateUserInput = Omit<UserSchema, 'id' | 'created_at' | 'updated_at' >;
-export type UpdateUserInput = Partial<CreateUserInput> ;
 
 export type UserExtraDataSchema = {
   id: number;
@@ -64,9 +62,3 @@ export type UserExtraDataSchema = {
   created_at: Date;
   updated_at: Date;
 };
-
-export type CreateUserExtraDataInput = Omit<
-  UserExtraDataSchema,
-  'id' | 'created_at' | 'updated_at' | 'media_size' | 'media_count' | 'projects_count' | 'clients_count' | 'services_count' | 'storage_requests_count' | 'last_storage_request_date'
->;
-export type UpdateUserExtraDataInput = Partial<CreateUserExtraDataInput>;

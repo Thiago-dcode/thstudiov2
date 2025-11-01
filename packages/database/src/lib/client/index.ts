@@ -3,14 +3,14 @@ import {
   DatabaseClient,
   DatabaseConfig,
   FullDatabaseConfig,
-} from '../constants/schemas/database';
+} from '@repo/common-lib/types/database';
 import { Pool as PgPool } from 'pg';
 import mysql from 'mysql2/promise';
 import {
   ClientNotInitializedException,
   InvalidDatabaseClientException,
 } from './exceptions';
-import { DEFAULT_DATABASE_SETTINGS } from '../constants/constants';
+import { DEFAULT_DATABASE_SETTINGS } from '@repo/common-lib/constants/database';
 import { setDatabaseCliConfig } from '../scripts/utils/config';
 export abstract class Client<T> {
   protected client: T | null = null;

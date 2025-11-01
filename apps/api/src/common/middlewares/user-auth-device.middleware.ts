@@ -2,7 +2,7 @@ import { Injectable, NestMiddleware, Scope } from '@nestjs/common';
 import {
   IP_ADDRESS_HEADER,
   USER_AGENT_HEADER,
-} from '@repo/common-lib/constants';
+} from '@repo/common-lib/constants/constants';
 import { NextFunction, Request, Response } from 'express';
 import { RequestService } from 'src/common/services/request.service';
 

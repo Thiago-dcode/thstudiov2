@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { BaseRepository } from '@repo/database/repositories';
 import {
-  CreatePlanTransactionInput,
   PlanTransactionSchema,
   PlanTransactionColumns,
-} from '@repo/database/schemas/user-plan-transaction';
+  CreatePlanTransactionInput,
+} from '@repo/common-lib/schemas/user-plan-transaction';
 import { UserPlanTransaction } from './user-plan-transactions.type';
 
 @Injectable()

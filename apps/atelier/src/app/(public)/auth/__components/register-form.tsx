@@ -4,12 +4,11 @@ import { useRouter } from "next/navigation";
 import { Errors } from "@repo/ui/components/custom/errors";
 import { Input } from "@repo/ui/components/shadcn/input";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
-import { Button } from "@repo/ui/components/shadcn/button";
 import { Label } from '@repo/ui/components/shadcn/label'
-import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { Eye, EyeClosed } from "lucide-react";
 import { useState } from "react";
 import { registerServerAction } from "@/modules/auth/server-actions/register.action";
+import FormComponent from "@/components/form-component";
 export const RegisterForm = () => {
     const router = useRouter();
     const [hidden, setHidden] = useState(true);
@@ -24,56 +23,38 @@ export const RegisterForm = () => {
         }
     })
 
-    return (<div className="w-full flex items-center flex-col gap-4">
+    return (<FormComponent.Container>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="w-full h-full flex flex-col gap-4">
+        <FormComponent.Form onSubmit={handleSubmit} >
             {/* Email Field */}
-            <div className="space-y-1">
-                <Label
-                    htmlFor="email"
-                    className="block  "
-                >
-                    Email Address
-                </Label>
-                <Input
-                    onChange={() => {
-                        cleanErrors()
-                    }}
-                    type="email"
-                    id="email"
-                    name="email"
-                    defaultValue={result?.inputs?.email}
-                    placeholder="you@example.com"
-                    autoComplete="email"
-                    required
-                    autoFocus
-                />
-            </div>
+            <FormComponent.LabelInput
+                label="Email Address"
+                type="email"
+                id="email"
+                name="email"
+                defaultValue={result?.inputs?.email}
+                placeholder="you@example.com"
+                autoComplete="email"
+                required
+                autoFocus
+                onChange={() => cleanErrors()}
+            />
+
             {/* Username Field */}
-            <div className="space-y-1">
-                <Label
-                    htmlFor="email"
-                    className="block  "
-                >
-                    Username
-                </Label>
-                <Input
-                    onChange={() => {
-                        cleanErrors()
-                    }}
-                    type="text"
-                    id="username"
-                    name="username"
-                    defaultValue={result?.inputs?.email}
-                    placeholder="username"
-                    autoComplete="email"
-                    required
-                    autoFocus
-                />
-            </div>
+            <FormComponent.LabelInput
+                label="Username"
+                type="text"
+                id="username"
+                name="username"
+                defaultValue={result?.inputs?.username}
+                placeholder="username"
+                autoComplete="username"
+                required
+                onChange={() => cleanErrors()}
+            />
             {/* Password Field */}
-            <div className="space-y-1">
+            <FormComponent.Field>
                 <Label
                     htmlFor="password"
                     className="block   "
@@ -100,19 +81,15 @@ export const RegisterForm = () => {
                         {hidden ? <Eye className="size-5" /> : <EyeClosed className="size-5" />}
                     </button>
                 </div>
-            </div>
+            </FormComponent.Field>
 
             {/* Submit Button */}
-            <Button
-                variant={'default'}
-                type="submit"
-                className="w-full mt-6 py-6 "
-            >
-                {!isPending ? 'Sign up' : <Spinner className="size-6" />}
-            </Button>
-        </form>
+            <FormComponent.SubmitButton isPending={isPending}>
+                Sign up
+            </FormComponent.SubmitButton>
+        </FormComponent.Form>
         {errors && errors.length > 0 && (
             <Errors title="Login failed" errors={errors} />
         )}
-    </div>)
+    </FormComponent.Container>)
 }

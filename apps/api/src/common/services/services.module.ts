@@ -19,7 +19,7 @@ import { FactoryStorageService } from '@repo/backend-lib/services/storage-servic
 import { s3StorageConfig } from 'src/config/storage';
 @Global()
 @Module({
-  exports: [RequestService, ViewService, MailService, LogService],
+  exports: [RequestService, ViewService, MailService, LogService, StorageService],
   providers: [
     RequestService,
     {

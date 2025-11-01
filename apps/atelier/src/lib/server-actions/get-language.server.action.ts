@@ -2,7 +2,7 @@
 
 import { cookies } from "next/headers";
 import { ENUMS, EnumType } from "@repo/common-lib/constants/enums";
-import { DEFAULT_LANGUAGE, LANGUAGE_COOKIE_NAME } from "@repo/common-lib/constants";
+import { DEFAULT_LANGUAGE, LANGUAGE_COOKIE_NAME } from "@repo/common-lib/constants/constants";
 
 export const getLanguage  = async () => {
     const cookieStore = await cookies();

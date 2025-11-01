@@ -4,7 +4,7 @@ import { AuthActionReturn } from "../auth.types"
 
 
 export const useHandleAction = <K,T>({action,beforeAction,afterAction}:{
-    action: (formData:FormData)=>Promise<AuthActionReturn<K,T>>
+    action: (formData:FormData)=>Promise<AuthActionReturn<K,T>>,
     beforeAction?: (e:FormEvent<HTMLFormElement>,prevResult:AuthActionReturn<K,T>|null)=>Promise<void>
     afterAction?:(result:AuthActionReturn<K,T>)=>Promise<void>
 }) =>{
@@ -12,7 +12,6 @@ export const useHandleAction = <K,T>({action,beforeAction,afterAction}:{
     const [errors,setErrors] = useState<string[]|null>(null)
     const [isPending,setPending] = useState(false);
     const handleSubmit =async (e:FormEvent<HTMLFormElement>) => {
-        console.log(e)
         if(isPending) return;
         setPending(true);
         e.preventDefault();
@@ -29,6 +28,9 @@ export const useHandleAction = <K,T>({action,beforeAction,afterAction}:{
     const cleanErrors = () =>{
         setErrors(null)
     }
+    const cleanResult = () =>{
+        setResult(null);
+    }
   
     useEffect(()=>{
         if(!result)return
@@ -40,7 +42,9 @@ export const useHandleAction = <K,T>({action,beforeAction,afterAction}:{
         isPending,
         handleSubmit,
         errors,
-        cleanErrors
+        cleanErrors,
+        cleanResult,
+        success: !!result?.data
     }
 
 }

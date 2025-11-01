@@ -8,7 +8,7 @@ import {
   LANGUAGE_HEADER,
   REQUEST_START_TIME,
   DEFAULT_LANGUAGE,
-} from '@repo/common-lib/constants';
+} from '@repo/common-lib/constants/constants';
 const AVAILABLE_LANGUAGES = ENUMS.LANGUAGE_CODE;
 @Injectable({ scope: Scope.REQUEST })
 export class LanguageMiddleware implements NestMiddleware {

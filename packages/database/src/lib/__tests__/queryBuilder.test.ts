@@ -5,8 +5,8 @@ import {
   WhereCondition,
   SqlClauseWithoutIn,
   DatabaseClient,
-} from '../constants/schemas/database';
-import { DEFAULT_DATABASE_SETTINGS } from '../constants/constants';
+} from '@repo/common-lib/types/database';
+import { DEFAULT_DATABASE_SETTINGS } from '@repo/common-lib/constants/database';
 import { initClient } from '../client';
 import { QueryBuilderOperationNotAllowedException } from '../builder/queryBuilder/exceptions';
 

@@ -6,7 +6,10 @@ import {
   Param,
   Delete,
   UsePipes,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { UserService } from './users.service';
 import { UpdateUserRequest } from './requests/update-user.request';
 import { ModelExistPipe } from 'src/pipes/model-exist.pipe';
@@ -29,11 +32,16 @@ export class UserController {
   }
 
   @Patch(':id')
+  @UseInterceptors(FileInterceptor('avatar'))
   async update(
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserRequest,
+    @UploadedFile() avatar?: Express.Multer.File,
   ) {
-    return this.userService.update(+id, updateUserDto);
+    if (avatar) {
+      updateUserDto.avatar = avatar;
+    }
+    return await this.userService.update(+id, updateUserDto);
   }
 
   @Delete(':id')

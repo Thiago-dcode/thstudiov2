@@ -1,6 +1,6 @@
 import { getClient, Client } from '../client';
-import { SqlOperation, TableName } from '../constants/schemas/database';
-import { TABLES_ENUM } from '../constants/constants';
+import { SqlOperation, TableName } from '@repo/common-lib/types/database';
+import { TABLES_ENUM } from '@repo/common-lib/constants/database';
 import { DbWrongTableException } from '../exceptions';
 
 abstract class BaseBuilder {

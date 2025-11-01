@@ -1,7 +1,7 @@
 import { PipeTransform, Injectable, UnprocessableEntityException } from '@nestjs/common';
 import AlterBuilder from '@repo/database/alterBuilder';
 import { Query, Schema } from '@repo/database/facades';
-import type { TableName } from '@repo/database/schemas/database';
+import type { TableName } from '@repo/common-lib/types/database';
 
 @Injectable()
 export class ModelExistPipe implements PipeTransform {

@@ -1,5 +1,5 @@
-import { TableColumn } from "./database";
-import { TABLES_ENUM } from "../constants";
+import { TableColumn } from "../types/database";
+import { TABLES_ENUM } from '../constants/database';
 export type UserAuthDeviceSchema = {
   id: number;
   user_agent: string;
@@ -13,11 +13,6 @@ export type UserAuthDeviceSchema = {
 export type UserAuthDeviceSchemaWithoutTimestamps = Omit<UserAuthDeviceSchema, 'created_at' | 'updated_at'>;
 const tablesUserAuthDevice = [TABLES_ENUM.USER_AUTH_DEVICES] as const;
 export type UserAuthDeviceSchemaColumns = TableColumn<typeof tablesUserAuthDevice, UserAuthDeviceSchemaWithoutTimestamps>;
-export type CreateUserAuthDeviceInput = Omit<
-  UserAuthDeviceSchemaWithoutTimestamps,
-  'id'
->;
-export type UpdateUserAuthDeviceInput = Partial<CreateUserAuthDeviceInput>;
 export type UserSessionSchema = {
   id: number;
   token: string;
@@ -51,9 +46,3 @@ export type UserSessionSchemaWithUserAuthDevice = {
 
 const tables = [TABLES_ENUM.USER_SESSIONS, TABLES_ENUM.USER_AUTH_DEVICES] as const;
 export type UserSessionSchemaWithUserAuthDeviceColumns = TableColumn<typeof tables, UserSessionSchemaWithUserAuthDevice>;
-export type CreateUserSessionInput = Omit<
-  UserSessionSchema,
-  'id' | 'created_at' | 'updated_at'
->;
-
-export type UpdateUserSessionInput = Partial<CreateUserSessionInput>;

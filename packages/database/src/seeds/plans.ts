@@ -1,4 +1,4 @@
-import { CreatePlanWithDetailsInput } from '../lib/constants/schemas/plans';
+import { CreatePlanWithDetailsInput } from '@repo/common-lib/schemas/plans';
 import { Query } from '../lib/facades';
 
 export const main = async () => {

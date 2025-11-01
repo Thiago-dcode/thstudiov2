@@ -3,11 +3,11 @@ import {
   DatabaseConfig,
   FullDatabaseConfig,
   TableName,
-} from '../constants/schemas/database';
-import { DEFAULT_DATABASE_SETTINGS } from '../constants/constants';
+} from '@repo/common-lib/types/database';
+import { DEFAULT_DATABASE_SETTINGS } from '@repo/common-lib/constants/database';
 import AlterBuilder from '../builder/alterBuilder';
 import { ColumnBuilder } from '../builder/columnBuilder';
-import { ColumnAttributesWithForeignKey } from '../constants/schemas/database';
+import { ColumnAttributesWithForeignKey } from '@repo/common-lib/types/database';
 
 jest.mock('../client', () => {
   const Client = (config: FullDatabaseConfig) => {

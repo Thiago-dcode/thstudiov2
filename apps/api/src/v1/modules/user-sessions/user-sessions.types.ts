@@ -1,4 +1,4 @@
-import { UserSessionSchema } from '@repo/database/schemas/user-sessions';
+import { UserSessionSchema } from '@repo/common-lib/schemas/user-session';
 import { UserAuthDevice } from '../user-auth-devices/user-auth-devices.types';
 
 export type BaseUserSession = Omit<

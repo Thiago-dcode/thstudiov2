@@ -51,7 +51,7 @@ let envFilePath = path.resolve(process.cwd(),'..', '..', '.env');
     storage: {
       bucket: process.env.STORAGE_BUCKET,
       region: process.env.STORAGE_REGION,
-      accessKeyId: process.env.STORAGE_ACCESS_KEY_ID,
+      accessKeyId: process.env.STORAGE_ACCESS_KEY,
       secretAccessKey: process.env.STORAGE_SECRET_ACCESS_KEY,
       signedUrlExpiration: process.env.STORAGE_SIGNED_URL_EXPIRATION ? parseInt(process.env.STORAGE_SIGNED_URL_EXPIRATION) : 3600,
       folder: process.env.STORAGE_FOLDER,

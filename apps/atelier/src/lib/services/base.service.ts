@@ -1,6 +1,6 @@
 import { FetchApi } from "@repo/frontend-lib/fetch/fetch-api";
 import { getLanguage } from "../server-actions/get-language.server.action";
-import { IP_ADDRESS_HEADER, LANGUAGE_HEADER, USER_AGENT_HEADER } from "@repo/common-lib/constants";
+import { IP_ADDRESS_HEADER, LANGUAGE_HEADER, USER_AGENT_HEADER } from "@repo/common-lib/constants/constants";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import { headers } from "next/headers";
 import { ApiResponse } from "@repo/common-lib/types/response";

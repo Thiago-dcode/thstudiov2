@@ -2,7 +2,7 @@
 import { cookies } from "next/headers";
 import authService from "../auth.service";
 import { verify2faRequestSchema } from "../schemas/auth.shema";
-import { TWO_FA_COOKIE_NAME } from "@repo/common-lib/constants";
+import { TWO_FA_COOKIE_NAME } from "@repo/common-lib/constants/constants";
 import { getConfigValue } from "@repo/common-lib/config/utils";
 import { decrypt, encrypt } from "@repo/common-lib/utils/encrypt";
 import { setUserSession } from "./user-session.action";

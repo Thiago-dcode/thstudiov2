@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { PasswordRecoveryForm } from "../__components/PasswordRecoveryForm";
+import { PasswordRecoveryForm } from "../__components/PasswordRecovery-form";
 import { getPasswordRecoveryAttemptCookie } from "@/modules/auth/server-actions/password-recovery.action";
 import { redirect } from "next/navigation";
 import { getTimeTillNextRecovery } from "./__utils/utils";
-import authComponent from "../__components/authComponent";
-import AuthComponent from "../__components/authComponent";
+import authComponent from "../../../../components/auth-component";
+import AuthComponent from "../../../../components/auth-component";
 export default async function PasswordRecovery() {
     const timeTillNextRecovery = getTimeTillNextRecovery(await getPasswordRecoveryAttemptCookie());
     if (timeTillNextRecovery > 0) {

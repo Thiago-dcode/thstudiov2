@@ -2,7 +2,7 @@ import { Column, Schema } from '../lib/facades';
 import {
   TRIGGER_UPDATE_CREATED_AT_FUNCTION_NAME,
   TRIGGER_UPDATE_UPDATED_AT_FUNCTION_NAME,
-} from '../lib/constants/constants';
+} from '@repo/common-lib/constants/database';
 import { AvailableEnums, ENUMS } from '@repo/common-lib/constants/enums';
 import { createTimeStampsTrigger } from '../lib/scripts/utils';
 

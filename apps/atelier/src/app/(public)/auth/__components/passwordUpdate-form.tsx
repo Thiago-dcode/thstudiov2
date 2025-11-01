@@ -10,13 +10,13 @@ import { Button } from "@repo/ui/components/shadcn/button"
 import { Label } from '@repo/ui/components/shadcn/label'
 import { Spinner } from "@repo/ui/components/shadcn/spinner"
 import { Eye, EyeClosed } from "lucide-react"
+import FormComponent from "@/components/form-component"
 
 export const PasswordUpdateForm = ({ passwordAttempt }: {
     passwordAttempt: PasswordRecoveryAttempt
 }) => {
     const route = useRouter();
     const [hiddenPassword, setHiddenPassword] = useState(true);
-    const [hiddenConfirmPassword, setHiddenConfirmPassword] = useState(true);
     const { result, errors, cleanErrors, handleSubmit, isPending } = useHandleAction({
         action: PasswordUpdateAction,
         afterAction: async () => {
@@ -26,15 +26,15 @@ export const PasswordUpdateForm = ({ passwordAttempt }: {
     })
 
     return (
-        <div className="w-full flex items-center flex-col gap-4">
+        <FormComponent.Container>
 
             {/* Form */}
-            <form onSubmit={handleSubmit} className="w-full h-full flex flex-col gap-4">
+            <FormComponent.Form onSubmit={handleSubmit} >
                 {/* Hidden attempt field */}
                 <input type="hidden" name="attempt" value={passwordAttempt.code || result?.inputs?.attempt} />
 
                 {/* New Password Field */}
-                <div className="space-y-1">
+                <FormComponent.Field>
                     <Label
                         htmlFor="password"
                         className="block"
@@ -67,22 +67,20 @@ export const PasswordUpdateForm = ({ passwordAttempt }: {
                             {hiddenPassword ? <Eye className="size-5" /> : <EyeClosed className="size-5" />}
                         </button>
                     </div>
-                </div>
+                </FormComponent.Field>
 
                 {/* Submit Button */}
-                <Button
-                    variant={'default'}
-                    type="submit"
-                    className="w-full mt-6 py-6"
-                >
-                    {!isPending ? 'Reset Password' : <Spinner className="size-6" />}
-                </Button>
-            </form>
+             
+            {/* Submit Button */}
+            <FormComponent.SubmitButton isPending={isPending}>
+                Reset password
+            </FormComponent.SubmitButton>
+            </FormComponent.Form>
 
             {/* Error Messages */}
             {errors && errors.length > 0 && (
                 <Errors title="Errors during password update" errors={errors} />
             )}
-        </div>
+        </FormComponent.Container>
     )
 }

@@ -1,6 +1,6 @@
 import { ExecutionContext } from "@nestjs/common";
 import { I18nResolver } from "nestjs-i18n";
-import { LANGUAGE_HEADER } from "@repo/common-lib/constants";
+import { LANGUAGE_HEADER } from "@repo/common-lib/constants/constants";
 
 export  class LanguageResolver implements I18nResolver {
     constructor(){}

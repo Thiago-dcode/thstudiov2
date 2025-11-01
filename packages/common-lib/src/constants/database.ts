@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { DatabaseSettings } from './schemas/database';
+import { DatabaseSettings } from '../types/database';
 
 // DATABASE SETTINGS
 export const DEFAULT_DATABASE_SETTINGS: DatabaseSettings = {

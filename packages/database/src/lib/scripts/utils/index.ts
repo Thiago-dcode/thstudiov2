@@ -6,8 +6,8 @@ import { Query, Schema } from '../../facades';
 import {
   TRIGGER_UPDATE_CREATED_AT_FUNCTION_NAME,
   TRIGGER_UPDATE_UPDATED_AT_FUNCTION_NAME,
-} from '../../constants/constants';
-import { DatabaseClient, TableName } from '../../constants/schemas/database';
+} from '@repo/common-lib/constants/database';
+import { DatabaseClient, TableName } from '@repo/common-lib/types/database';
 import Logger from '@repo/backend-lib/utils/console';
 import { initClient } from '../../client';
 import {config} from '@repo/common-lib/config';

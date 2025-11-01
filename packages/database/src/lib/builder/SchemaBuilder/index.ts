@@ -1,5 +1,5 @@
 import BaseBuilder from '..';
-import { TableName } from '../../constants/schemas/database';
+import { TableName } from '@repo/common-lib/types/database';
 import { AvailableEnums, ENUMS } from '@repo/common-lib/constants/enums';
 import { getClient } from '../../client';
 import { SchemaBuilderOperationNotAllowedException } from './exceptions';

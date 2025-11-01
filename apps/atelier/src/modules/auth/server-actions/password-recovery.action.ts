@@ -6,7 +6,7 @@ import {  AuthActionReturn, PasswordRecoveryAttempt } from "../auth.types";
 import { cookies } from "next/headers";
 import { config } from "@/lib/config";
 import { decrypt, encrypt } from "@repo/common-lib/utils/encrypt";
-import { PASSWORD_RECOVERY_ATTEMPT_COOKIE_NAME } from "@repo/common-lib/constants";
+import { PASSWORD_RECOVERY_ATTEMPT_COOKIE_NAME } from "@repo/common-lib/constants/constants";
 import { deleteCookie } from "@/lib/utils";
 
 export const passwordRecoveryAction = async (formData: FormData):Promise<AuthActionReturn<{

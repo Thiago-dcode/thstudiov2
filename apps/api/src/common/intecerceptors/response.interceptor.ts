@@ -7,7 +7,7 @@ import {
 import { Audit, SuccessResponse } from '@repo/common-lib/types/response';
 import { map } from 'rxjs';
 import { RequestService } from '../services/request.service';
-import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants';
+import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/constants';
 
 @Injectable()
 export class ResponseInterceptor implements NestInterceptor {

@@ -8,8 +8,8 @@ import {
   SqlFunctionTimestamp,
   SqlTypes,
   TableName,
-} from '../../constants/schemas/database';
-import { SQL_FUNCTIONS } from '../../constants/constants';
+} from '@repo/common-lib/types/database';
+import { SQL_FUNCTIONS } from '@repo/common-lib/constants/database';
 import { AvailableEnums, EnumType } from '@repo/common-lib/constants/enums';
 
 

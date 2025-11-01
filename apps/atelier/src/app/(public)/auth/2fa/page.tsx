@@ -1,8 +1,8 @@
 import { get2faCookieData } from "@/modules/auth/server-actions/twofa.action";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { TwoFaForm } from "../__components/twoFaForm";
-import AuthComponent from "../__components/authComponent";
+import { TwoFaForm } from "../__components/twoFa-form";
+import AuthComponent from "../../../../components/auth-component";
 import { ExpiresIn } from "../__components/expiresIn";
 
 export default async function TwoFactorAuth() {

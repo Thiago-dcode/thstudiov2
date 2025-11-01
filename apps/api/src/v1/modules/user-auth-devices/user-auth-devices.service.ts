@@ -1,9 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { UserAuthDevicesRepository } from './user-auth-devices.repository';
-import {
-  CreateUserAuthDeviceInput,
-  UpdateUserAuthDeviceInput,
-} from '@repo/database/schemas/user-sessions';
+import { CreateUserAuthDeviceInput, UpdateUserAuthDeviceInput } from '@repo/common-lib/types/user-session';
+
 
 @Injectable()
 export class UserAuthDevicesService {

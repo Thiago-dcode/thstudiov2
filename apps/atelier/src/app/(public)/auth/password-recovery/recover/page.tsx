@@ -2,8 +2,8 @@ import { getPasswordRecoveryAttemptCookie } from "@/modules/auth/server-actions/
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import authService from "@/modules/auth/auth.service";
-import { PasswordUpdateForm } from "../../__components/passwordUpdateForm";
-import AuthComponent from "../../__components/authComponent";
+import { PasswordUpdateForm } from "../../__components/passwordUpdate-form";
+import AuthComponent from "../../../../../components/auth-component";
 import { ExpiresIn } from "../../__components/expiresIn";
 import { Lock } from "lucide-react";
 

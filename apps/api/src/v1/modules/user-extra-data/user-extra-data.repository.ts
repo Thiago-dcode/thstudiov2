@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
+import { UserExtraDataSchema } from '@repo/common-lib/schemas/user';
+import { CreateUserExtraDataInput } from '@repo/common-lib/types/user';
 import { BaseRepository } from '@repo/database/repositories';
-import {
-  CreateUserExtraDataInput,
-  UserExtraDataSchema,
-} from '@repo/database/schemas/users';
+
 
 @Injectable()
 export class UserExtraDataRepository extends BaseRepository {

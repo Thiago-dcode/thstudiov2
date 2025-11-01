@@ -2,15 +2,17 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { UpdateUserRequest } from './requests/update-user.request';
 import { NewUserEvent } from './events/new-user.event';
 import { NEW_USER_EVENT } from './users.constants';
-import {  OnEvent } from '@nestjs/event-emitter';
+import { OnEvent } from '@nestjs/event-emitter';
 import { UserRepository } from './users.repository';
 import { PlansRepository } from '../plans/plans.repository';
 import { UserPlanTransactionsRepository } from '../user-plan-transactions/user-plan-transactions.repository';
+import { cleanObj } from '@repo/common-lib/utils/cleanObj';
 import { generateUUID } from '@repo/common-lib/utils/generate-uuid';
 import { UserExtraDataRepository } from '../user-extra-data/user-extra-data.repository';
 import { LogService } from '@repo/backend-lib/services/log-service';
 import { MailService } from '@repo/backend-lib/services/mail-service';
 import { NotifyNewUserMail } from './mails/notify-new-user.mail';
+import { StorageService } from '@repo/backend-lib/services/storage-service/base';
 
 @Injectable()
 export class UserService {
@@ -21,9 +23,9 @@ export class UserService {
     private readonly userExtraDataRepository: UserExtraDataRepository,
     private readonly logService: LogService,
     private readonly mailService: MailService,
+    private readonly storageService: StorageService,
     private readonly notifyNewUserMail: NotifyNewUserMail,
   ) {}
-  
 
   async findAll() {
     return `This action returns all user`;
@@ -33,8 +35,41 @@ export class UserService {
     return await this.userRepository.findById(id);
   }
 
-  update(id: number, updateUserDto: UpdateUserRequest) {
-    console.log(id, updateUserDto);
+  async update(id: number, { avatar, ...rest }: UpdateUserRequest) {
+    const user = await this.findOne(id);
+    if (!user) {
+      throw new HttpException('User not found', 422);
+    }
+    const userUpdateData: Omit<UpdateUserRequest, 'avatar'> & {
+      avatar?: string;
+    } = rest;
+
+    // Remove undefined values
+    cleanObj(userUpdateData);
+
+    if (avatar) {
+      const path = `users/${user.id}/avatar`;
+      const result = await this.storageService.write(avatar, path);
+      if (!result) {
+        throw new HttpException(
+          `An error ocurred during storing user <<${user.id}>> avatar`,
+          500,
+        );
+      }
+      userUpdateData.avatar = path;
+    }
+    if (userUpdateData.email) {
+      //TODO:check email availability
+      const userExist = await this.userRepository.findOneBy(
+        'email',
+        userUpdateData.email,
+      );
+      if (userExist.id !== user.id) {
+        throw new HttpException(`Email not available`, 422);
+      }
+    }
+    console.log(userUpdateData);
+    return await this.userRepository.updateById(user.id, userUpdateData);
   }
 
   async remove(id: number) {

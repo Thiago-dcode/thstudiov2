@@ -51,6 +51,7 @@ export class AuthService {
   async register(registerRequest: RegisterRequest) {
     const user = await this.userRepository.create({
       ...registerRequest,
+      funnel_step:1,
       password: await hash(registerRequest.password),
     });
     const result = await this.handle2fa(user, {
