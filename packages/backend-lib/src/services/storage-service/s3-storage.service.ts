@@ -34,6 +34,12 @@ export class S3StorageService extends StorageService {
             return !!result;
          
     }
+    public async writeAnGet(file: Express.Multer.File, path: string){
+       const result = await this.write(file,path);
+       if(!result) return null;
+
+       return await this.getUrl(path);
+    }
     public async getUrl(path: string): Promise<string> {
         const command = new GetObjectCommand({
             Bucket: this.config.bucket,

@@ -15,6 +15,9 @@ export type User = Omit<UserSchema, 'created_at' | 'updated_at' | 'password' | '
 };
   export type CreateUserInput = Omit<UserSchema, 'id' | 'created_at' | 'updated_at' >;
 export type UpdateUserInput = Partial<CreateUserInput> ;
+export type UpdateUserInputAvatarFile = Omit<UpdateUserInput,'avatar'> & {
+  avatar?:File
+}
 
 export type CreateUserExtraDataInput = Omit<
   UserExtraDataSchema,

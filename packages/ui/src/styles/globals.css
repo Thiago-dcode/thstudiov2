@@ -66,3 +66,7 @@
   animation: shake 0.3s ease-in-out;
   display: inline-block;
 }
+
+.input-required .label-file-input{
+  border-color: var(--color-red-500);
+}

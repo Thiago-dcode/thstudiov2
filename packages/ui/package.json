@@ -12,6 +12,7 @@
     "./components/custom/*": "./src/components/custom/*.tsx",
     "./components/shadcn/*": "./src/components/shadcn/*.tsx",
     "./hooks/*": "./src/hooks/*.ts",
+    "./contexts/*": "./src/contexts/*.tsx",
     "./globals.css": "./src/styles/globals.css",
     "./sonner": "./node_modules/sonner"
   },
@@ -32,6 +33,7 @@
     "typescript": "5.8.2"
   },
   "dependencies": {
+    "@repo/common-lib": "workspace:*",
     "@radix-ui/react-checkbox": "^1.3.3",
     "@radix-ui/react-label": "^2.1.7",
     "@radix-ui/react-popover": "^1.1.15",

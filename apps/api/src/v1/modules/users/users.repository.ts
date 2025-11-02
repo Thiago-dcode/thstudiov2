@@ -20,7 +20,6 @@ export class UserRepository extends BaseRepository {
     'users.id',
     'users.email',
     'users.username',
-    'users.avatar',
     'users.email_validated',
     'users.twofa_enabled',
     'users.twofa_code',
@@ -32,6 +31,7 @@ export class UserRepository extends BaseRepository {
   private readonly FULL_COLUMNS: UserSchemaWithAddressColumns[] = [
     // From users (main table)
     ...this.BASE_COLUMNS,
+    'users.avatar',
     'users.created_at',
     'users.updated_at',
     'users.name',
@@ -134,7 +134,6 @@ export class UserRepository extends BaseRepository {
       email: result?.email,
       username: result?.username,
       email_validated: result?.email_validated,
-      avatar: result.avatar,
       twofa_enabled: result?.twofa_enabled,
       twofa_code: result?.twofa_code,
       twofa_expires_at: result?.twofa_expires_at,
@@ -149,6 +148,7 @@ export class UserRepository extends BaseRepository {
   private formatFullUser(result: UserSchemaWithAddress): User {
     return {
       ...this.formatUser(result),
+      avatar:result?.avatar,
       name: result?.name,
       surname: result?.surname,
       short_biography: result?.short_biography,

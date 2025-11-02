@@ -34,7 +34,9 @@ export const useHandleAction = <K,T>({action,beforeAction,afterAction}:{
   
     useEffect(()=>{
         if(!result)return
-        setPending(false);
+        setTimeout(()=>{
+            setPending(false);
+        },300)
     },[result])
 
     return {
@@ -44,6 +46,7 @@ export const useHandleAction = <K,T>({action,beforeAction,afterAction}:{
         errors,
         cleanErrors,
         cleanResult,
+        setErrors,
         success: !!result?.data
     }
 

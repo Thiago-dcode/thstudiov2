@@ -1,18 +1,19 @@
 'use server'
 
 import { AuthActionReturn } from "@/modules/auth/auth.types";
-import { updateUserSchema, UpdateUserSchemaType } from "../schemas/user-shemas";
-import { BaseUser } from "@repo/common-lib/types/user";
+import { updateUserSchema } from "../schemas/user-shemas";
+import { BaseUser, UpdateUserInputAvatarFile } from "@repo/common-lib/types/user";
 import usersService from "../users.service";
 import { trimValues } from "@repo/common-lib/utils/cleanObj";
+import { MimeTypes } from "@repo/common-lib/types/general";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const ALLOWED_FILE_TYPES:MimeTypes[] = ['image/jpeg', 'image/png', 'image/webp'];
 
-export const updateUserAction = async (id:number,formData: FormData): Promise<AuthActionReturn<UpdateUserSchemaType,BaseUser>> => {
+export const updateUserAction = async (id:number,formData: FormData): Promise<AuthActionReturn<UpdateUserInputAvatarFile,BaseUser>> => {
 
       // Extract text fields from FormData
-      let rawData = {
+      let rawData:UpdateUserInputAvatarFile = {
         name: formData.get('name') as string || undefined ,
         surname: formData.get('surname') as string || undefined ,
         username: formData.get('username') as string || undefined ,
@@ -35,9 +36,9 @@ export const updateUserAction = async (id:number,formData: FormData): Promise<Au
                 inputs:rawData
             };
         }
-        if (!ALLOWED_FILE_TYPES.includes(avatarFile.type)) {
+        if (!ALLOWED_FILE_TYPES.includes(avatarFile.type as MimeTypes)) {
             return {
-                errors: ['Avatar must be an image (JPEG, PNG, WebP, or GIF)'],
+                errors: ['Avatar must be an image (JPEG, PNG or WebP)'],
                 data:null ,
                 inputs:rawData
             };
@@ -60,9 +61,10 @@ export const updateUserAction = async (id:number,formData: FormData): Promise<Au
             inputs:validated.data
         };
     }
+    if(avatarFile && avatarFile.size>0) cleanData.avatar = avatarFile;
 
     //TODO: fetch user update
-    const result = await usersService.update(id,validated.data);
+    const result = await usersService.update(id,cleanData);
     if(result.error){
         const {status_code,errors} = result.error;
         return {

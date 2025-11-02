@@ -1,8 +1,9 @@
 import { getConfigValue } from '@repo/common-lib/config/utils';
-import { StorageConfig } from '@repo/backend-lib/services/storage-service/types';
+import { S3StorageConfig, StorageConfig } from '@repo/backend-lib/services/storage-service/types';
+import { CompressConfig } from '@repo/backend-lib/services/compress-service/types';
 
 const STORAGE_CONFIG = getConfigValue('storage');
-export const s3StorageConfig: StorageConfig = {
+export const s3StorageConfig: S3StorageConfig = {
   driver: 's3',
   bucket: STORAGE_CONFIG.bucket,
   region: STORAGE_CONFIG.region,
@@ -15,3 +16,7 @@ export const fileStorageConfig: StorageConfig = {
   driver: 'file',
   folder: STORAGE_CONFIG.folder || 'uploads',
 };
+
+export const compressConfig: CompressConfig  ={
+  driver:'sharp'
+}

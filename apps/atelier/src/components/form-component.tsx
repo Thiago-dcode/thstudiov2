@@ -123,7 +123,7 @@ const LabelInput = forwardRef<HTMLInputElement, {
     const inputId = htmlFor || id;
 
     return (
-        <Field className={cn(containerClassName, inputProps.required && "input-required")}>
+        <Field className={cn(containerClassName)}>
             <Label
                 htmlFor={inputId}
                 className={cn("block", labelClassName)}

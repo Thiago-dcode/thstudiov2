@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { UpdateUserRequest } from './requests/update-user.request';
 import { NewUserEvent } from './events/new-user.event';
 import { NEW_USER_EVENT } from './users.constants';
@@ -13,6 +13,9 @@ import { LogService } from '@repo/backend-lib/services/log-service';
 import { MailService } from '@repo/backend-lib/services/mail-service';
 import { NotifyNewUserMail } from './mails/notify-new-user.mail';
 import { StorageService } from '@repo/backend-lib/services/storage-service/base';
+import { CompressService } from '@repo/backend-lib/services/compress-service/base';
+import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
+import { s3StorageConfig } from 'src/config/storage';
 
 @Injectable()
 export class UserService {
@@ -24,6 +27,8 @@ export class UserService {
     private readonly logService: LogService,
     private readonly mailService: MailService,
     private readonly storageService: StorageService,
+    private readonly compressService: CompressService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private readonly notifyNewUserMail: NotifyNewUserMail,
   ) {}
 
@@ -32,11 +37,24 @@ export class UserService {
   }
 
   async findOne(id: number) {
-    return await this.userRepository.findById(id);
+    const result = await this.userRepository.findById(id);
+    if (result?.avatar) {
+      let avatar = (await this.cacheManager.get(result.avatar)) as string;
+      if (!avatar) {
+        avatar = await this.storageService.getUrl(result.avatar);
+        await this.cacheManager.set(
+          result.avatar,
+          avatar,
+          s3StorageConfig.signedUrlExpiration * 900,//Substract 10% to avoid possible s3 404
+        );
+      }
+      result.avatar = avatar;
+    }
+    return result;
   }
 
   async update(id: number, { avatar, ...rest }: UpdateUserRequest) {
-    const user = await this.findOne(id);
+    const user = await this.userRepository.findById(id);
     if (!user) {
       throw new HttpException('User not found', 422);
     }
@@ -47,15 +65,26 @@ export class UserService {
     // Remove undefined values
     cleanObj(userUpdateData);
 
-    if (avatar) {
+    if (avatar && avatar.size > 0) {
       const path = `users/${user.id}/avatar`;
-      const result = await this.storageService.write(avatar, path);
+      //Compress
+      const targetSize = 1024;
+      avatar.buffer = await this.compressService.optimizeImageToWebp(
+        avatar,
+        90,
+        avatar.size > targetSize ? targetSize : avatar.size,
+      );
+      const [result] = await Promise.all([
+        this.storageService.write(avatar, path),
+        this.cacheManager.del(path),
+      ]);
       if (!result) {
         throw new HttpException(
           `An error ocurred during storing user <<${user.id}>> avatar`,
           500,
         );
       }
+
       userUpdateData.avatar = path;
     }
     if (userUpdateData.email) {
@@ -68,7 +97,6 @@ export class UserService {
         throw new HttpException(`Email not available`, 422);
       }
     }
-    console.log(userUpdateData);
     return await this.userRepository.updateById(user.id, userUpdateData);
   }
 

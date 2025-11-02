@@ -41,6 +41,9 @@ let envFilePath = path.resolve(process.cwd(),'..', '..', '.env');
       password: process.env.DB_PASSWORD || 'postgres',
       database: process.env.DB_NAME || 'thstudio',
     },
+    redis:{
+      url:process.env.REDIS_URL,
+    },
     mailing: {
       host: process.env.SMTP_HOST,
       port: process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT) : 587,

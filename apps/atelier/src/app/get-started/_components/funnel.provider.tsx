@@ -4,28 +4,30 @@ import FormComponent from "@/components/form-component";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { Errors } from "@repo/ui/components/custom/errors";
 import { funnelAction } from "@/modules/users/server-actions/funnel.action";
-import { createContext, ReactElement, RefObject, useCallback, useContext, useEffect, useRef, useState } from "react";
-import { User } from "@repo/common-lib/types/user";
-import { UpdateUserSchemaType } from "@/modules/users/schemas/user-shemas";
+import { createContext, ReactElement, useCallback, useContext, useEffect, useRef, useState } from "react";
+import {  UpdateUserInputAvatarFile, User } from "@repo/common-lib/types/user";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Button } from "@repo/ui/components/shadcn/button";
 import { cn } from "@repo/ui/lib/utils";
 
-type RefInput = RefObject<HTMLInputElement | HTMLTextAreaElement | null>;
+
+type InputsType = HTMLInputElement | HTMLTextAreaElement | null | undefined
 
 type FunnelContextType = {
     user?: User,
     lastStep: number,
-    inputs?: UpdateUserSchemaType
+    inputs?: UpdateUserInputAvatarFile,
     cleanErrors: () => void,
     handleOnChange: () => void,
-    setRefs: (...refs: RefInput[]) => void,
+    setErrors: (errors:string[])=>void,
+    setInputs: (...inputs: InputsType[]) => void,
 }
 const FunnelContext = createContext<FunnelContextType>({
     lastStep: 0,
+    setErrors: () => { },
     cleanErrors: () => { },
-    setRefs: () => { },
+    setInputs: () => { },
     handleOnChange: () => { }
 
 })
@@ -39,41 +41,41 @@ export const FunnelProvider = ({ children, user, lastStep }: {
 }) => {
     const router = useRouter();
     const actionRef = useRef<HTMLInputElement>(null)
-    const [refs, _setRefs] = useState<RefInput[]>()
+    const [inputs, _setInputs] = useState<(HTMLInputElement | HTMLTextAreaElement)[]>()
     const [canContinue, setCanContinue] = useState(false);
-    const { result, handleSubmit, errors, cleanErrors, cleanResult, isPending } = useHandleAction({
-        action: async (formData)=>funnelAction(user.funnel_step,formData),
+    const { result, handleSubmit, errors, cleanErrors, cleanResult,setErrors, isPending } = useHandleAction({
+        action: async (formData) => funnelAction(user.funnel_step, formData),
         afterAction: async (result) => {
             if (result?.data) {
                 cleanResult();
-                router.refresh()
+                router.refresh();
 
             }
         }
+
     });
-    const setRefs = useCallback((...refs: RefInput[]) => {
-        _setRefs(refs);
+    const setInputs = useCallback((...inputs: InputsType[]) => {
+        _setInputs(inputs.filter(input => !!input));
     }, []);
 
     const handleOnChange = useCallback(() => {
         cleanErrors();
-        if (refs) {
-            setCanContinue(refs.every(ref => {
+        if (inputs) {
+            setCanContinue(inputs.every(input => {
 
-                ref.current?.parentElement?.classList.remove('input-required');
-                return !ref.current?.required || ref.current?.required && !!ref.current?.value
+                input?.parentElement?.classList.remove('input-required');
+                return !input?.required || input?.required && !!input?.value
             }))
         }
 
-
-
-    }, [refs])
+    }, [inputs])
 
 
     useEffect(() => {
-        if (!refs) return;
+        if (!inputs) return;
         handleOnChange();
-    }, [refs])
+    }, [inputs]);
+
 
     //TODO:handle funnel logic
 
@@ -83,27 +85,28 @@ export const FunnelProvider = ({ children, user, lastStep }: {
             lastStep,
             inputs: result?.inputs,
             cleanErrors,
-            setRefs,
-            handleOnChange
+            setInputs,
+            setErrors,
+            handleOnChange,
         }}>
             <FormComponent.Container>
                 <FormComponent.Form onSubmit={(e) => {
                     e.preventDefault();
-                    if (!canContinue && actionRef.current?.value === 'continue') return;
+                    if (isPending || (!canContinue && actionRef.current?.value === 'continue')) return;
+
                     handleSubmit(e)
                 }}>
-                    <input ref={actionRef} type="text" name="action" hidden />
+                    <input ref={actionRef} type="text" name="action" hidden required />
                     {children}
                     <div className="flex flex-col items-center gap-4">
-                        {/* Submit Button */}
 
                         {/* Submit Button */}
                         <FormComponent.SubmitButton onClick={() => {
-                            if (refs && !canContinue) {
-                                for (let i = 0; i < refs.length; i++) {
-                                    const ref = refs[i];
-                                    if (!ref.current?.required) continue;
-                                    ref.current.parentElement?.classList.add('input-required');
+                            if (inputs && !canContinue) {
+                                for (let i = 0; i < inputs.length; i++) {
+                                    const input = inputs[i];
+                                    if (!input?.required) continue;
+                                    input.parentElement?.classList.add('input-required');
                                 }
                             }
                             if (actionRef?.current) actionRef.current.value = 'continue';
@@ -113,7 +116,11 @@ export const FunnelProvider = ({ children, user, lastStep }: {
                         })} isPending={isPending}>
                             Continue <ArrowRight />
                         </FormComponent.SubmitButton>
+
                         {user.funnel_step > 1 && <Button onClick={() => {
+                            inputs?.forEach((input) => {
+                                if (input) input.required = false;
+                            })
                             if (actionRef?.current) actionRef.current.value = 'back';
                         }} type="submit" className={cn("bg-transparent text-sm transition-colors text-text-muted hover:text-text", {
                             "!text-text-muted !cursor-not-allowed": isPending

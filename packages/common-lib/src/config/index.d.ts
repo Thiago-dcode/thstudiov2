@@ -27,6 +27,9 @@ declare const config: (envPath?: string | undefined) => {
         password: string;
         database: string;
     };
+    redis: {
+        url: string | undefined;
+    };
     mailing: {
         host: string | undefined;
         port: number;

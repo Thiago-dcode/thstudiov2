@@ -1,17 +1,17 @@
 'use client'
 import FormComponent from "@/components/form-component";
-import { useFunnel } from "./funnelProvider";
+import { useFunnel } from "./funnel.provider";
 import { useEffect, useRef } from "react";
 
 export default function Step1() {
 
-    const {user,  inputs, setRefs ,handleOnChange} = useFunnel();
+    const {user,  inputs, setInputs ,handleOnChange} = useFunnel();
     const nameRef = useRef<HTMLInputElement>(null);
     const surnameRef = useRef<HTMLInputElement>(null);
     const shortBioRef = useRef<HTMLTextAreaElement>(null);
 
     useEffect(()=>{
-        setRefs(nameRef, surnameRef, shortBioRef);
+        setInputs(nameRef?.current, surnameRef?.current, shortBioRef?.current);
     },[])
     return <>
         <FormComponent.LabelInput

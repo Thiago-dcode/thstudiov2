@@ -6,7 +6,7 @@ export type S3StorageConfig = {
     region: string;
     accessKeyId: string;
     secretAccessKey: string;
-    signedUrlExpiration?: number;
+    signedUrlExpiration: number;
 }
 
 export type FileStorageConfig = {

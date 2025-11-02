@@ -32,12 +32,15 @@
     "./services/view-service/factory": "./dist/src/services/view-service/factory-view.service.js",
     "./services/storage-service/types": "./dist/src/services/storage-service/types.js",
     "./services/storage-service/base": "./dist/src/services/storage-service/storage.service.js",
-    "./services/storage-service/factory": "./dist/src/services/storage-service/factory-storage.service.js"
+    "./services/storage-service/factory": "./dist/src/services/storage-service/factory-storage.service.js",
+    "./services/compress-service/types": "./dist/src/services/compress-service/types.js",
+    "./services/compress-service/base": "./dist/src/services/compress-service/compress.service.js",
+    "./services/compress-service/factory": "./dist/src/services/compress-service/factory-compress.service.js"
   },
-
   "dependencies": {
     "@aws-sdk/client-s3": "^3.901.0",
     "@aws-sdk/s3-request-presigner": "^3.901.0",
+    "@repo/common-lib": "workspace:*",
     "@types/ejs": "^3.1.5",
     "@types/multer": "^2.0.0",
     "@types/nodemailer": "^7.0.2",
@@ -45,12 +48,14 @@
     "date-fns": "^4.1.0",
     "dotenv": "^16.6.1",
     "ejs": "^3.1.10",
+    "image-size": "^2.0.2",
     "install": "^0.13.0",
     "nodemailer": "^7.0.6",
     "picocolors": "^1.1.1",
     "pug": "^3.0.3",
-    "uuid": "^13.0.0",
-    "@repo/common-lib": "workspace:*"
+    "redis": "^5.9.0",
+    "sharp": "^0.34.4",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "@repo/jest-config": "workspace:*",

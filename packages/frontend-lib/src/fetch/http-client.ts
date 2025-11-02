@@ -54,13 +54,35 @@ protected _baseUrl: string = '';
         return this._resource;
     }
     protected set body(body: BodyParam) {
-        if(body === null || body === undefined) this._body = undefined;
+        if(body === null || body === undefined) {
+            this._body = undefined;
+        }
         else if(body instanceof FormData) {
             this._body = body;
-           }
-       else {
-        this._body = JSON.stringify(body);
-       }
+        }
+        else if(this.containsFile(body)) {
+            // Convert to FormData if body contains File objects
+            this._body = this.objectToFormData(body);
+        }
+        else {
+            this._body = JSON.stringify(body);
+        }
+    }
+
+    private containsFile(obj: Record<string, any>): boolean {
+        return Object.values(obj).some(value => value instanceof File);
+    }
+
+    private objectToFormData(obj: Record<string, any>): FormData {
+        const formData = new FormData();
+        for (const [key, value] of Object.entries(obj)) {
+            if (value instanceof File) {
+                formData.append(key, value);
+            } else if (value !== undefined && value !== null) {
+                formData.append(key, value.toString());
+            }
+        }
+        return formData;
     }
     protected abstract fetcher(): Promise<any>;
 

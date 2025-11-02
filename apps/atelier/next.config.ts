@@ -10,7 +10,11 @@ Object.keys(process.env).forEach((key) => {
 env[key] = process.env[key]
 })
 const nextConfig: NextConfig = {
-  /* config options here */
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '500mb',
+    },
+  },
   env,
 };
 

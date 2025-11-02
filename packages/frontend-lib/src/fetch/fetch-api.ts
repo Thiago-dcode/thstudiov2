@@ -10,7 +10,6 @@ class FetchApi extends HttpClient{
         if(this._resource){
             url+= `/${this._resource}`;
         }
-        console.log('URL:',url);
         try {
             await this._requestCallback({
                 resource: this._resource,
@@ -20,9 +19,15 @@ class FetchApi extends HttpClient{
                 baseUrl: this._baseUrl,
             });
          
+            // If body is FormData, remove Content-Type header to let browser set it with boundary
+            const headers = this._body instanceof FormData 
+                ? Object.fromEntries(
+                    Object.entries(this._headers).filter(([key]) => key.toLowerCase() !== 'content-type')
+                  )
+                : this._headers;
             const response = await fetch(url, {
                 method: this._method,
-                headers: this._headers,
+                headers: headers,
                 body: this._body,   
             });
             const data = await response.json();

@@ -9,6 +9,7 @@ import { FactoryViewService } from '@repo/backend-lib/services/view-service/fact
 import { viewPath } from 'src/common/utils';
 import { VIEW_ENGINE } from 'src/common/utils/constants';
 import { I18nService } from 'nestjs-i18n';
+import { CacheModule } from '@nestjs/cache-manager';
 import {
   FactoryLogService,
   LogService,
@@ -16,16 +17,32 @@ import {
 import { logConfig } from 'src/config/logging';
 import { StorageService } from '@repo/backend-lib/services/storage-service/base';
 import { FactoryStorageService } from '@repo/backend-lib/services/storage-service/factory';
-import { s3StorageConfig } from 'src/config/storage';
+import { compressConfig, s3StorageConfig } from 'src/config/storage';
+import { CompressService } from '@repo/backend-lib/services/compress-service/base';
+import { FactoryCompressService } from '@repo/backend-lib/services/compress-service/factory';
+import KeyvRedis from '@keyv/redis';
 @Global()
 @Module({
-  exports: [RequestService, ViewService, MailService, LogService, StorageService],
+  exports: [
+    RequestService,
+    ViewService,
+    MailService,
+    LogService,
+    StorageService,
+    CompressService,
+  ],
   providers: [
     RequestService,
     {
       provide: StorageService,
       useFactory: () => {
         return FactoryStorageService.create(s3StorageConfig);
+      },
+    },
+    {
+      provide: CompressService,
+      useFactory: () => {
+        return FactoryCompressService.create(compressConfig);
       },
     },
     {
@@ -60,6 +77,17 @@ import { s3StorageConfig } from 'src/config/storage';
         return FactoryLogService.createLogService('file', logConfig.api);
       },
     },
+  ],
+  imports: [
+    CacheModule.registerAsync({
+      isGlobal:true,
+      inject: [ConfigService],
+      useFactory: async (config: ConfigService) => {
+        return {
+          stores: [new KeyvRedis(config.get('redis.url'))],
+        };
+      },
+    }),
   ],
 })
 export class ServicesModule {}

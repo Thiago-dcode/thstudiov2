@@ -1,6 +1,6 @@
 'use server'
 
-import { setUserSession, userSession } from "@/modules/auth/server-actions/user-session.action";
+import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import { updateUserAction } from "./update-user.action"
 import { redirect } from "next/navigation";
 
@@ -13,7 +13,6 @@ export const funnelAction = async (currentStep:number,formData:FormData) =>{
     }
     
     const action = formData.get('action') as 'back'| 'continue';
-    console.log(action)
     if(action !=='back' && action !=='continue') return{
         data:null,
         errors:['something went wrong'],
@@ -24,7 +23,6 @@ export const funnelAction = async (currentStep:number,formData:FormData) =>{
     const newFormData = action === 'back' ? new FormData(): formData;
     const nextStep = action === 'back'? currentStep -1 : currentStep +1;
         newFormData.set('funnel_step', String(nextStep));
-      
     const result = await updateUserAction(user.id,newFormData);
     return result;
 }

@@ -8,12 +8,9 @@ import { ApiResponse } from "@repo/common-lib/types/response";
 export class BaseService {
     constructor(protected readonly fetchApi: FetchApi, protected readonly module: string) {
         this.fetchApi.headers = {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
         };
         this.fetchApi.baseUrl = fetchApi.baseUrl + '/' + this.module;
         this.fetchApi.setRequestCallback(async () => {
-            console.log('request callback');
             const [session, language, headersList] = await Promise.all([
                 userSession(),
                 getLanguage(),
