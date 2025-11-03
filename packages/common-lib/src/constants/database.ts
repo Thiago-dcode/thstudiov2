@@ -34,39 +34,4 @@ export const TRIGGER_UPDATE_UPDATED_AT_FUNCTION_NAME =
 export const TRIGGER_UPDATE_CREATED_AT_FUNCTION_NAME =
   'update_created_at_column';
 
-// TABLES
-export const TABLES_ENUM = {
-  PLANS:'plans',
-  PLAN_PRICES:'plan_prices',
-  PLAN_TRANSLATIONS:'plan_translations',
-  PLAN_OFFERS:'plan_offers',
-  USER_EXTRA_DATA:'user_extra_data',
-  ADMIN_USERS:'admin_users',
-  ADMIN_USERS_ROLES:'admin_users_roles',
-  USERS:'users',
-  USER_PLAN_TRANSACTIONS:'user_plan_transactions',
-  MIGRATIONS:'migrations',
-  MEDIA:'media',
-  MEDIA_TRANSLATIONS:'media_translations',
-  COLLECTIONS:'collections',
-  COLLECTION_MEDIA:'collection_media',
-  COLLECTION_TRANSLATIONS:'collection_translations',
-  PORTFOLIOS:'portfolios',
-  PORTFOLIO_MEDIA:'portfolio_media',
-  PORTFOLIO_COLLECTION:'portfolio_collection',
-  PORTFOLIO_TRANSLATIONS:'portfolio_translations',
-  PROJECTS:'projects',
-  PROJECT_MEDIA:'project_media',
-  PROJECT_TRANSLATIONS:'project_translations',
-  CLIENTS:'clients',
-  CLIENT_MEDIA:'client_media',
-  CLIENT_TRANSLATIONS:'client_translations',
-  SERVICES:'services',
-  SERVICE_MEDIA:'service_media',
-  SERVICE_TRANSLATIONS:'service_translations',
-  ADDRESSES:'addresses',
-  USER_AUTH_DEVICES:'user_auth_devices',
-  USER_SESSIONS:'user_sessions',
-  PASSWORD_RECOVERY_ATTEMPTS:'password_recovery_attempts',
-} as const;
 

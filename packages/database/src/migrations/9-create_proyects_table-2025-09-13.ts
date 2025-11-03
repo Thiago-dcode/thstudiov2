@@ -61,6 +61,7 @@ const up = async () => {
       onDelete: 'CASCADE',
     }),
     Column.enum('language_code', 'LANGUAGE_CODE'),
+    Column.uniques('UC_project_translation',['language_code','project_id'])
   ]);
   await Schema.table('project_media').createIfNotExists([
     Column.id(),
@@ -71,6 +72,7 @@ const up = async () => {
       onDelete: 'CASCADE',
     }),
     Column.integer('sort_order'),
+    Column.uniques('UC_project_media',['project_id','media_id'])
   ]);
 };
 

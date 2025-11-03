@@ -5,6 +5,7 @@ const up = async () => {
   await Schema.table('portfolios').createIfNotExists([
     Column.id(),
     Column.string('title', 255, {}),
+    Column.string('thumbnail',255),
     Column.text('description'),
     Column.timestamps(true),
   ]);
@@ -17,6 +18,7 @@ const up = async () => {
       onDelete: 'CASCADE',
     }),
     Column.integer('sort_order'),
+    Column.uniques('UC_portfolio_media',['portfolio_id','media_id'])
   ]);
 
   await Schema.table('portfolio_collection').createIfNotExists([
@@ -28,6 +30,7 @@ const up = async () => {
       onDelete: 'CASCADE',
     }),
     Column.integer('sort_order'),
+    Column.uniques('UC_portfolio_collection',['portfolio_id','collection_id'])
   ]);
   await Schema.table('portfolio_translations').createIfNotExists([
     Column.id(),
@@ -37,6 +40,7 @@ const up = async () => {
     Column.foreignKey('portfolio_id', 'portfolios', 'id', {
       onDelete: 'CASCADE',
     }),
+    Column.uniques('UC_portfolio_translation',['language_code','portfolio_id'])
   ]);
   await createTimeStampsTrigger('portfolios');
 };

@@ -20,6 +20,7 @@ const up = async () => {
       nullable: false,
     }),
     Column.integer('sort_order'),
+    Column.uniques('UC_collection_media',['collection_id','media_id'])
   ]);
   await Schema.table('collection_translations').createIfNotExists([
     Column.id(),
@@ -31,6 +32,7 @@ const up = async () => {
       nullable: false,
     }),
     Column.integer('sort_order'),
+    Column.uniques('UC_collection_translation',['language_code','collection_id'])
   ]);
 
   await createTimeStampsTrigger('collections');

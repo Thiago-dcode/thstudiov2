@@ -1,5 +1,5 @@
-import { SQL_FUNCTIONS, TABLES_ENUM } from '../constants/database';
-import { AvailableEnums, EnumType } from '../constants/enums';
+import { SQL_FUNCTIONS  } from '../constants/database';
+import { AvailableEnums, EnumType ,TABLES_ENUM} from '../constants/enums';
 
 export type DatabaseClient = 'postgres' | 'mysql' | 'sqlite' | 'mongodb';
 export type DatabaseSettings = {
@@ -139,7 +139,6 @@ export type ColumnAttributesWithForeignKey = Exclude<
   onDelete?: OnAction;
   onUpdate?: OnAction;
 };
-
 
 export type ColumnAttributesWithAfter = Exclude<ColumnAttributesWithType, 'primaryKey'> & {
   after?: string;

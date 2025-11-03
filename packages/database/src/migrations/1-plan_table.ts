@@ -50,6 +50,7 @@ const up = async () => {
       onUpdate: 'CASCADE',
     }),
     Column.enum('language_code', 'LANGUAGE_CODE'),
+    Column.uniques('UC_plan_translation',['language_code','plan_id'])
   ]);
   await Schema.table('plan_offers').createIfNotExists([
     Column.id(),

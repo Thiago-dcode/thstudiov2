@@ -17,6 +17,7 @@ export const migrate = async () => {
     const start = Date.now();
     Logger.info('🔄 Initializing migration process');
     await connectDb();
+     Logger.info('🔄 Db connected');
     await SchemaBuilder.table(MIGRATION_TABLE_NAME).createIfNotExists([
       'id SERIAL PRIMARY KEY',
       'name VARCHAR(255) NOT NULL UNIQUE',
