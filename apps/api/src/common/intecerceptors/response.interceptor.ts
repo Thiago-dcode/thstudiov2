@@ -27,6 +27,8 @@ export class ResponseInterceptor implements NestInterceptor {
         const response: SuccessResponse<typeof res> = {
           error: null,
           data: res,
+          pagination: this.requestService.pagination || undefined,
+          count: Array.isArray(res)? res.length:undefined,
           audit,
         };
         return response;

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { EnumType } from '@repo/common-lib/constants/enums';
+import { Pagination } from '@repo/common-lib/types/response';
 import { UserAuth } from 'src/v1/modules/auth/auth.types';
 
 type RequestLanguage = EnumType<'LANGUAGE_CODE'>;
@@ -9,6 +10,7 @@ export class RequestService {
   private _language: RequestLanguage | null;
   private _user_agent: string | null;
   private _ip_address: string | null;
+  private _pagination: Pagination | null = null;
   constructor() {}
   get user(): UserAuth {
     return this._user;
@@ -33,5 +35,11 @@ export class RequestService {
   }
   set ip_address(ip_address: string) {
     this._ip_address = ip_address;
+  }
+  set pagination(pagination: Pagination) {
+    this._pagination = pagination;
+  }
+  get pagination() {
+    return this._pagination;
   }
 }

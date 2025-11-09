@@ -6,11 +6,13 @@ type RequestParams = {
     resource: string;
     headers?: HeadersInit;
     body?: BodyParam;
+    signal?: AbortSignal;
 }
 type BodyParsed = string | FormData | undefined;
 type FullRequestParams = Omit<RequestParams, 'body'> & {
     body : BodyParsed;
     baseUrl: string;
+    signal?: AbortSignal;
 }
 type RequestCallback = (RequestParams: FullRequestParams) => Promise<any>;
 type ResponseCallback<T> = (RequestParams: FullRequestParams,response: T) => Promise<any>;
@@ -25,6 +27,7 @@ protected _body:  BodyParsed = undefined;
 protected _method: Method = 'GET';
 protected _resource: string = '';
 protected _baseUrl: string = '';
+protected _signal?: AbortSignal;
     constructor(baseUrl: string, globalHeaders: HeadersInit = {}) {
         this._headers = globalHeaders;
         this._baseUrl = baseUrl;
@@ -52,6 +55,12 @@ protected _baseUrl: string = '';
     }
     public get resource(): string {
         return this._resource;
+    }
+    public set signal(signal: AbortSignal | undefined) {
+        this._signal = signal;
+    }
+    public get signal(): AbortSignal | undefined {
+        return this._signal;
     }
     protected set body(body: BodyParam) {
         if(body === null || body === undefined) {
@@ -86,11 +95,12 @@ protected _baseUrl: string = '';
     }
     protected abstract fetcher(): Promise<any>;
 
-    protected async setupRequest({resource, headers, body, method}: RequestParams): Promise<void> {
+    protected async setupRequest({resource, headers, body, method, signal}: RequestParams): Promise<void> {
         this.headers = headers || {};
         this.method = method;
         this.resource = resource.trim();
         this.body = body;
+        this.signal = signal;
         
     }
     protected async callFetcher<T>(requestParams: RequestParams): Promise<T> {

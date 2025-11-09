@@ -12,6 +12,7 @@ import {
   SqlValue,
   WhereType,
   TableName,
+  SqlClause,
 } from '@repo/common-lib/types/database';
 import {
   QueryBuilderMethodChainedException,
@@ -121,11 +122,17 @@ export class QueryBuilder extends BaseBuilder {
     this.reset();
     return result.rows;
   }
-  public async count(): Promise<number> {
+  public async count(resetQuery = true): Promise<number> {
+    const selectTemp = this._select;
+    this._select = `count(${this.tableName}.*)`;
     this.buildSelectQuery();
     const result = await getClient().query(this.query, this.values);
-    this.reset();
-    return result.rowCount;
+   if(resetQuery) this.reset();
+   else{
+    this.query = '';
+    this._select= selectTemp;
+   }
+    return parseInt(result.rows[0].count);
   }
   public async first<T = any>(): Promise<T> {
     this.buildSelectQuery();
@@ -277,7 +284,7 @@ private  handleBuildGet(columns: string[], values: SqlValue[], select: string[] 
    * queryBuilder.where('deleted_at', 'IS', null);
    * ```
    */
-  private handlePushWhere(column: string, operator: SqlClauseWithoutIn, value: SqlValue, type:WhereType) {
+  private handlePushWhere(column: string, operator: SqlClauseWithoutIn, value: SqlValue, type:WhereType,startGroup?:boolean, endGroup?:boolean) {
     this.operationsChain.push('where');
     const isNull = value === null;
     if(!isNull) this.values.push(value);
@@ -287,8 +294,28 @@ private  handleBuildGet(columns: string[], values: SqlValue[], select: string[] 
        position: isNull ? -1 : this.valuesPosition++,
        type,
        value,
+       startWhereGroup:startGroup,
+       endWhereGroup:endGroup
      } as WhereCondition);
     
+  }
+  public whereGroup(wheres:[string,SqlClause,SqlValue | SqlValue[], WhereType][]){
+
+    for (let i = 0; i < wheres.length; i++) {
+      const [col,clause, value,type] = wheres[i];
+      const start = i ===0;
+      const end = wheres.length -1 === i;
+      if((clause==='IN' || clause == 'NOT IN')){
+        const _value = Array.isArray(value)?value:[value];
+        this.handlePushWhereIn(col,clause,_value,type,start,end);
+        continue;
+      }
+      this.handlePushWhere(col,clause,value as string,type,start, end);
+    }
+
+    return this;
+
+
   }
   public where(column: string, operator: SqlClauseWithoutIn, value: SqlValue) {
     this.handlePushWhere(column, operator, value, 'where');
@@ -317,7 +344,7 @@ private  handleBuildGet(columns: string[], values: SqlValue[], select: string[] 
     return this;
   }
 
-  private handlePushWhereIn(column: string, values: SqlValue[], type:WhereType) {
+  private handlePushWhereIn(column: string,operator:'IN'| 'NOT IN', values: SqlValue[], type:WhereType,startGroup?:boolean, endGroup?:boolean) {
     this.operationsChain.push('where');
     this.values.push(...values);
     const startPosition = this.valuesPosition;
@@ -327,7 +354,9 @@ private  handleBuildGet(columns: string[], values: SqlValue[], select: string[] 
       position: startPosition,
       values,
       type,
-      operator: 'IN',
+      operator,
+      startWhereGroup:startGroup,
+      endWhereGroup:endGroup
     });
   }
   /**
@@ -341,7 +370,7 @@ private  handleBuildGet(columns: string[], values: SqlValue[], select: string[] 
    * ```
    */
   public whereIn(column: string, values: SqlValue[]) {
-    this.handlePushWhereIn(column, values, 'where');
+    this.handlePushWhereIn(column,'IN', values, 'where');
     return this;
   }
 
@@ -358,7 +387,7 @@ private  handleBuildGet(columns: string[], values: SqlValue[], select: string[] 
    * ```
    */
   public orWhereIn(column: string, values: SqlValue[]) {
-    this.handlePushWhereIn(column, values, this.wheres.length === 0? 'where' : 'orWhere');
+    this.handlePushWhereIn(column,'NOT IN', values, this.wheres.length === 0? 'where' : 'orWhere');
     return this;
   }
 
@@ -414,7 +443,7 @@ private  handleBuildGet(columns: string[], values: SqlValue[], select: string[] 
 
   public orderBy(column: string, order: 'ASC' | 'DESC' = 'ASC') {
     this.operationsChain.push('orderBy');
-    this._orderBy = `${column} ${order}`;
+    this._orderBy = `${this.buildColumn(column)} ${order}`;
     return this;
   }
 
@@ -540,7 +569,13 @@ offset = isNull ? offset : offset + 1;
           ) {
             whereQuery = this.buildWhereInQuery(where, offset);
           }
-
+          
+          if(where.startWhereGroup){
+            whereQuery = `(${whereQuery}`;
+          }
+          if(where.endWhereGroup){
+            whereQuery = `${whereQuery})`;
+          }
           if (index === 0) {
             whereQuery = ` ${whereQuery}`;
           } else {

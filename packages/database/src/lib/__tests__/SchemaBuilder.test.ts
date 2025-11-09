@@ -1147,9 +1147,9 @@ username VARCHAR(255) NULL UNIQUE,
 email VARCHAR(255) NOT NULL UNIQUE,
 password VARCHAR(255) NOT NULL,
 role_id INT REFERENCES roles (id) ON DELETE SET NULL ON UPDATE CASCADE,
-created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-deleted_at TIMESTAMP NULL
+created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+deleted_at TIMESTAMPTZ NULL
 );`;
 
       // Act
@@ -1206,8 +1206,8 @@ stock_quantity INTEGER NOT NULL DEFAULT 0,
 is_active BOOLEAN NOT NULL DEFAULT true,
 category_id BIGINT NULL,
 supplier_id INT REFERENCES suppliers (id) ON DELETE SET NULL,
-created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-updated_at TIMESTAMP NULL
+created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+updated_at TIMESTAMPTZ NULL
 );`;
 
       // Act
@@ -1275,9 +1275,9 @@ is_featured BOOLEAN NOT NULL DEFAULT false,
 view_count INTEGER NOT NULL DEFAULT 0,
 author_id INT REFERENCES users (id) ON DELETE CASCADE,
 category_id INT REFERENCES categories (id) ON DELETE SET NULL,
-created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-deleted_at TIMESTAMP NULL
+created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+deleted_at TIMESTAMPTZ NULL
 );`;
 
       // Act
@@ -1315,8 +1315,8 @@ key VARCHAR(100) NOT NULL UNIQUE,
 value VARCHAR(1000) NULL,
 description VARCHAR(500) NULL,
 is_active BOOLEAN NOT NULL DEFAULT true,
-created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );`;
 
       // Act
@@ -1386,9 +1386,9 @@ is_active BOOLEAN NOT NULL DEFAULT true,
 is_featured BOOLEAN NOT NULL DEFAULT false,
 created_by INT REFERENCES users (id) ON DELETE CASCADE,
 updated_by INT REFERENCES users (id) ON DELETE SET NULL,
-created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-archived_at TIMESTAMP NULL
+created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+archived_at TIMESTAMPTZ NULL
 );`;
 
       // Act
@@ -1504,14 +1504,14 @@ is_active BOOLEAN NOT NULL DEFAULT true,
 email_notifications BOOLEAN NOT NULL DEFAULT true,
 sms_notifications BOOLEAN NOT NULL DEFAULT false,
 login_attempts INTEGER NOT NULL DEFAULT 0,
-last_login TIMESTAMP NULL,
-email_verified_at TIMESTAMP NULL,
-password_changed_at TIMESTAMP NULL,
+last_login TIMESTAMPTZ NULL,
+email_verified_at TIMESTAMPTZ NULL,
+password_changed_at TIMESTAMPTZ NULL,
 manager_id INT REFERENCES users (id) ON DELETE SET NULL,
 department_id INT REFERENCES departments (id) ON DELETE SET NULL,
-created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-deleted_at TIMESTAMP NULL
+created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+deleted_at TIMESTAMPTZ NULL
 );`;
 
       // Act

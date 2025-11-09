@@ -17,7 +17,6 @@ const up = async () => {
   ]);
   await Alter.table('categories').foreignKeyAdd('parent_id','categories','id',{
     nullable:true,
-    onDelete:'SET NULL'
   });
 
   await Schema.table('user_categories').create([
@@ -46,7 +45,7 @@ const up = async () => {
   ]);
   await Schema.table('category_translations').createIfNotExists([
     Column.id(),
-    Column.string('name'),
+    Column.string('name'),      
     Column.enum('language_code', 'LANGUAGE_CODE'),
     Column.foreignKey('category_id', 'categories', 'id', {
       onDelete: 'CASCADE',
@@ -60,6 +59,7 @@ const down = async () => {
 
   //Your migration rollback code here
   await Schema.table('category_translations').dropIfExists();
+  await Alter.table('categories').dropConstraint('categories_parent_id_fkey');
   await Schema.table('portfolio_categories').dropIfExists();
   await Schema.table('user_categories').dropIfExists();
   await Schema.table('categories').dropIfExists();

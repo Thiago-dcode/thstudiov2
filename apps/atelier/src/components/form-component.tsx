@@ -12,7 +12,7 @@ const Container = ({ children }: {
     children: ReactNode
 }) => {
 
-    return <div className="w-full flex items-center flex-col gap-4">{children}</div>
+    return <div className="w-full h-full flex items-center flex-col gap-4">{children}</div>
 }
 
 const Form = forwardRef<HTMLFormElement, React.FormHTMLAttributes<HTMLFormElement>>(({
@@ -41,7 +41,7 @@ const Field = ({
     className?: string;
 }) => {
     return (
-        <div className={cn("space-y-1", className)}>
+        <div className={cn("space-y-1 w-full", className)}>
             {children}
         </div>
     );

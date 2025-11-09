@@ -26,9 +26,8 @@ export class BaseService {
             };
 
         });
-
+     
         this.fetchApi.setResponseCallback<ApiResponse<any>>(async (_, response) => {
-
 
             if(response.error){
 
@@ -36,4 +35,10 @@ export class BaseService {
             }
         });
     }
+
+    set signal(signal:AbortSignal){
+
+        this.fetchApi.signal = signal;
+    }
+
 }   

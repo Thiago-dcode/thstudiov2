@@ -6,15 +6,13 @@ import { FunnelProvider } from "./_components/funnel.provider";
 import AuthComponent from "@/components/auth-component";
 import usersService from "@/modules/users/users.service";
 
-const LAST_STEP = 2;
+const LAST_STEP = 3;
 export default async function GetStarted() {
-    console.log("getstart")
     const userAuth = await userSession();
     if (!userAuth) {
         redirect('/');
     }
     const userResponse = await usersService.getOne(userAuth.id);
-    console.log(userResponse);
     if (!userResponse.data || userResponse.data.funnel_step <= 0 || userResponse.data.funnel_step > LAST_STEP) {
         redirect('/atelier')
     }
@@ -33,8 +31,8 @@ export default async function GetStarted() {
             subTitle: 'This will be your face for potential clients'
         },
         [3]: {
-            title: 'Complete Your Profile',
-            subTitle: 'Tell us a bit about yourself to get started'
+            title: 'Select up to 5 categories',
+            subTitle: 'These categories will help your profile being discovered'
         },
         [4]: {
             title: 'Complete Your Profile',

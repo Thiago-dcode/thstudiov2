@@ -6,7 +6,7 @@ import { BaseUser } from "@repo/common-lib/types/user";
 
 export class AuthService extends BaseService {
     constructor() {
-        super(fetchApi, 'auth');
+       super(fetchApi(), 'auth');
 
     }
     async register(registerRequest: UserRegisterRequest): Promise<ApiResponse<BaseUser>> {

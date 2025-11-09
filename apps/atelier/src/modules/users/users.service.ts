@@ -5,7 +5,7 @@ import { ApiResponse } from "@repo/common-lib/types/response";
 
 export class UserService extends BaseService {
     constructor() {
-        super(fetchApi, 'users');
+        super(fetchApi(), 'users');
 
     }
 

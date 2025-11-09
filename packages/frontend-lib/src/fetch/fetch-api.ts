@@ -8,7 +8,9 @@ class FetchApi extends HttpClient{
     protected async fetcher<T>(): Promise<ApiResponse<T>> {
         let url = `${this._baseUrl}`;
         if(this._resource){
-            url+= `/${this._resource}`;
+            const firstChar = this._resource.charAt(0);
+            const prepend = firstChar === '?' || firstChar === '/'?'':'/';
+            url+= `${prepend}${this._resource}`;
         }
         try {
             await this._requestCallback({
@@ -17,6 +19,7 @@ class FetchApi extends HttpClient{
                 body: this._body,
                 method: this._method,
                 baseUrl: this._baseUrl,
+                signal: this._signal,
             });
          
             // If body is FormData, remove Content-Type header to let browser set it with boundary
@@ -25,10 +28,11 @@ class FetchApi extends HttpClient{
                     Object.entries(this._headers).filter(([key]) => key.toLowerCase() !== 'content-type')
                   )
                 : this._headers;
-            const response = await fetch(url, {
+            const response = await fetch(url.trim(), {
                 method: this._method,
                 headers: headers,
-                body: this._body,   
+                body: this._body,
+                signal: this._signal,
             });
             const data = await response.json();
             await this._responseCallback({
@@ -37,6 +41,7 @@ class FetchApi extends HttpClient{
                 body: this._body,
                 method: this._method,
                 baseUrl: this._baseUrl,
+                signal: this._signal,
             }, data);
             if (!response.ok) {
                 //TODO: Handle error

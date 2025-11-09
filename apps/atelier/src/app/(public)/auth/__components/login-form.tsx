@@ -20,6 +20,7 @@ export const LoginForm = ({ rememberMe }: {
     const { result, handleSubmit, errors, cleanErrors, isPending, success } = useHandleAction({
         action: loginServerAction,
         afterAction: async (result) => {
+            console.log(result)
             if (result.data) {
                 setSession(result.data.token ? result.data : undefined);
                 router.push(result.data.token ? '/atelier' : '/auth/2fa')

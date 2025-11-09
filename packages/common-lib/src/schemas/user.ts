@@ -1,5 +1,4 @@
-
-import { TABLES_ENUM } from "../constants/database";
+import { TABLES_ENUM } from "../constants/enums";
 import { TableColumn } from "../types/database";
 export type UserSchema = {
   id: number;

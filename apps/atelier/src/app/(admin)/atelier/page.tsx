@@ -9,7 +9,6 @@ export default async function Atelier() {
         redirect('/');
     }
     const media = await mediaService.findAll();
-    console.log("media result", media);
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 px-4">
             <div className="w-full max-w-md">

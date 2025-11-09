@@ -1,8 +1,4 @@
-import {
-  MiddlewareConsumer,
-  Module,
-  ValidationPipe,
-} from '@nestjs/common';
+import { MiddlewareConsumer, Module, ValidationPipe } from '@nestjs/common';
 import { APP_GUARD, APP_PIPE, RouterModule } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { config, envFilePath } from '@repo/common-lib/config';
@@ -29,6 +25,7 @@ import { UserSessionsModule } from './v1/modules/user-sessions/user-sessions.mod
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { MediaModule } from './v1/modules/media/media.module';
 import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/constants';
+import { CategoriesModule } from './v1/modules/categories/categories.module';
 const APP_MODULES = [
   AuthModule,
   UserModule,
@@ -36,6 +33,7 @@ const APP_MODULES = [
   UserPlanTransactionsModule,
   UserSessionsModule,
   MediaModule,
+  CategoriesModule,
 ];
 @Module({
   imports: [
@@ -107,18 +105,18 @@ const APP_MODULES = [
       provide: APP_GUARD,
       useClass: AuthGuard,
     },
-  
+
     {
       provide: APP_PIPE,
       useValue: new ValidationPipe({
         whitelist: true,
-        forbidNonWhitelisted: false, 
-        transform: true, 
+        forbidNonWhitelisted: false,
+        transform: true,
         transformOptions: {
-          enableImplicitConversion: true, 
+          enableImplicitConversion: true,
         },
       }),
-    }
+    },
   ],
 })
 export class AppModule {

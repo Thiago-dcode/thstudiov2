@@ -34,6 +34,9 @@ abstract class BaseBuilder {
   public static async raw(query: string, values?: (string | number | null)[]) {
     return await getClient().query(query, values);
   }
+  public resetQuery(){
+    this.query = '';
+  }
   public getQuery() {
     return this.query;
   }

@@ -14,14 +14,23 @@ export type Audit = {
     errors: string[];
     path: string;
   };
+  export type Pagination = {
+    total_count:number,
+    per_page:number,
+    next_page?:number,
+    prev_page?:number,
+    current_page:number,
+    last_page:number
+  }
   type BaseResponse<T> = {
     audit: Audit;
     error: Error | null;
     data: T | null;
+    count?:number
   };
 
-  
   export type SuccessResponse<T> = BaseResponse<T> & {
+    pagination?:Pagination,
     error: null;
   };
 

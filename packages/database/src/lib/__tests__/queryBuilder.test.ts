@@ -259,11 +259,15 @@ describe('QueryBuilder', () => {
 
     it('should throw error for column names with more than 2 parts', () => {
       const invalidColumns = ['table.column.subcolumn', 'schema.table.column'];
-
+      
       // Act & Assert
       expect(() => queryBuilder.select(invalidColumns[0])).toThrow(
         'Wrong column name: table.column.subcolumn',
       );
+      
+      // Reset query builder for second test
+      queryBuilder['reset']();
+      
       expect(() => queryBuilder.select(invalidColumns[1])).toThrow(
         'Wrong column name: schema.table.column',
       );
@@ -441,6 +445,242 @@ describe('QueryBuilder', () => {
         'premium',
       ]);
       expect(queryBuilder['valuesPosition']).toBe(5);
+    });
+  });
+
+  describe('whereGroup', () => {
+    let queryBuilder: QueryBuilder;
+
+    beforeEach(async () => {
+      const { initClient } = require('../client');
+      await initClient(testConfig);
+      queryBuilder = new QueryBuilder(TABLE_NAME);
+    });
+
+    it('should group WHERE conditions with parentheses', () => {
+      // Act
+      queryBuilder.whereGroup([
+        ['name', 'LIKE', '%John%', 'where'],
+        ['email', 'LIKE', '%@example.com', 'orWhere'],
+      ]);
+
+      // Assert
+      expect(queryBuilder['wheres']).toHaveLength(2);
+      expect(queryBuilder['wheres'][0]).toMatchObject({
+        column: 'name',
+        operator: 'LIKE',
+        type: 'where',
+        startWhereGroup: true,
+      });
+      expect(queryBuilder['wheres'][1]).toMatchObject({
+        column: 'email',
+        operator: 'LIKE',
+        type: 'orWhere',
+        endWhereGroup: true,
+      });
+      expect(queryBuilder['values']).toEqual(['%John%', '%@example.com']);
+    });
+
+    it('should handle single condition in whereGroup', () => {
+      // Act
+      queryBuilder.whereGroup([['status', '=', 'active', 'where']]);
+
+      // Assert
+      expect(queryBuilder['wheres']).toHaveLength(1);
+      expect(queryBuilder['wheres'][0]).toMatchObject({
+        column: 'status',
+        operator: '=',
+        type: 'where',
+        startWhereGroup: true,
+        endWhereGroup: true,
+      });
+      expect(queryBuilder['values']).toEqual(['active']);
+    });
+
+    it('should handle whereGroup with IN operator', () => {
+      // Act
+      queryBuilder.whereGroup([
+        ['status', 'IN', ['active', 'pending'], 'where'],
+        ['role', '=', 'admin', 'orWhere'],
+      ]);
+
+      // Assert
+      expect(queryBuilder['wheres']).toHaveLength(2);
+      expect(queryBuilder['wheres'][0]).toMatchObject({
+        column: 'status',
+        operator: 'IN',
+        type: 'where',
+        startWhereGroup: true,
+      });
+      expect(queryBuilder['wheres'][1]).toMatchObject({
+        column: 'role',
+        operator: '=',
+        type: 'orWhere',
+        endWhereGroup: true,
+      });
+      expect(queryBuilder['values']).toEqual(['active', 'pending', 'admin']);
+    });
+
+    it('should handle whereGroup with NOT IN operator', () => {
+      // Act
+      queryBuilder.whereGroup([
+        ['status', 'NOT IN', ['deleted', 'archived'], 'where'],
+        ['name', 'LIKE', '%test%', 'orWhere'],
+      ]);
+
+      // Assert
+      expect(queryBuilder['wheres']).toHaveLength(2);
+      expect(queryBuilder['wheres'][0]).toMatchObject({
+        column: 'status',
+        operator: 'NOT IN',
+        type: 'where',
+        startWhereGroup: true,
+      });
+      expect(queryBuilder['wheres'][1]).toMatchObject({
+        column: 'name',
+        operator: 'LIKE',
+        type: 'orWhere',
+        endWhereGroup: true,
+      });
+      expect(queryBuilder['values']).toEqual(['deleted', 'archived', '%test%']);
+    });
+
+    it('should handle multiple whereGroup calls', () => {
+      // Act
+      queryBuilder.where('age', '>=', '18');
+      queryBuilder.whereGroup([
+        ['name', 'LIKE', '%John%', 'where'],
+        ['email', 'LIKE', '%@example.com', 'orWhere'],
+      ]);
+      queryBuilder.whereGroup([
+        ['city', '=', 'NYC', 'where'],
+        ['city', '=', 'LA', 'orWhere'],
+      ]);
+
+      // Assert
+      expect(queryBuilder['wheres']).toHaveLength(5);
+      // First regular where
+      expect(queryBuilder['wheres'][0]).toMatchObject({
+        column: 'age',
+        type: 'where',
+      });
+      // First group
+      expect(queryBuilder['wheres'][1]).toMatchObject({
+        startWhereGroup: true,
+      });
+      expect(queryBuilder['wheres'][2]).toMatchObject({
+        endWhereGroup: true,
+      });
+      // Second group
+      expect(queryBuilder['wheres'][3]).toMatchObject({
+        startWhereGroup: true,
+      });
+      expect(queryBuilder['wheres'][4]).toMatchObject({
+        endWhereGroup: true,
+      });
+    });
+
+    it('should handle whereGroup with various operators', () => {
+      // Act
+      queryBuilder.whereGroup([
+        ['id', '>', '0', 'where'],
+        ['age', '>=', '18', 'where'],
+        ['status', '!=', 'deleted', 'orWhere'],
+        ['name', 'LIKE', '%test%', 'orWhere'],
+      ]);
+
+      // Assert
+      expect(queryBuilder['wheres']).toHaveLength(4);
+      expect(queryBuilder['wheres'][0]).toMatchObject({
+        operator: '>',
+        startWhereGroup: true,
+      });
+      expect(queryBuilder['wheres'][3]).toMatchObject({
+        operator: 'LIKE',
+        endWhereGroup: true,
+      });
+      expect(queryBuilder['values']).toEqual(['0', '18', 'deleted', '%test%']);
+    });
+
+    it('should handle whereGroup with null values', () => {
+      // Act
+      queryBuilder.whereGroup([
+        ['deleted_at', 'IS', null, 'where'],
+        ['archived_at', 'IS NOT', null, 'orWhere'],
+      ]);
+
+      // Assert
+      expect(queryBuilder['wheres']).toHaveLength(2);
+      expect(queryBuilder['wheres'][0]).toMatchObject({
+        operator: 'IS',
+        value: null,
+        startWhereGroup: true,
+      });
+      expect(queryBuilder['wheres'][1]).toMatchObject({
+        operator: 'IS NOT',
+        value: null,
+        endWhereGroup: true,
+      });
+      // Null values should not be added to values array
+      expect(queryBuilder['values']).toEqual([]);
+    });
+
+    it('should handle whereGroup with table-qualified columns', () => {
+      // Act
+      queryBuilder.whereGroup([
+        ['users.id', '=', '123', 'where'],
+        ['orders.status', '=', 'pending', 'orWhere'],
+      ]);
+
+      // Assert
+      expect(queryBuilder['wheres']).toHaveLength(2);
+      expect(queryBuilder['wheres'][0]).toMatchObject({
+        column: 'users.id',
+        startWhereGroup: true,
+      });
+      expect(queryBuilder['wheres'][1]).toMatchObject({
+        column: 'orders.status',
+        endWhereGroup: true,
+      });
+    });
+
+    it('should handle empty whereGroup array', () => {
+      // Act
+      queryBuilder.whereGroup([]);
+
+      // Assert
+      expect(queryBuilder['wheres']).toHaveLength(0);
+      expect(queryBuilder['values']).toEqual([]);
+    });
+
+    it('should handle whereGroup with mixed IN and regular conditions', () => {
+      // Act
+      queryBuilder.whereGroup([
+        ['status', 'IN', ['active', 'pending', 'review'], 'where'],
+        ['priority', '>', '5', 'where'],
+        ['category', 'NOT IN', ['archived', 'deleted'], 'where'],
+        ['name', 'LIKE', '%urgent%', 'orWhere'],
+      ]);
+
+      // Assert
+      expect(queryBuilder['wheres']).toHaveLength(4);
+      expect(queryBuilder['wheres'][0]).toMatchObject({
+        operator: 'IN',
+        startWhereGroup: true,
+      });
+      expect(queryBuilder['wheres'][3]).toMatchObject({
+        operator: 'LIKE',
+        endWhereGroup: true,
+      });
+      expect(queryBuilder['values']).toEqual([
+        'active',
+        'pending',
+        'review',
+        '5',
+        'archived',
+        'deleted',
+        '%urgent%',
+      ]);
     });
   });
 
@@ -766,6 +1006,122 @@ describe('QueryBuilder', () => {
       expect(queryBuilder['valuesPosition']).toBe(7);
       expect(queryBuilder['values']).toEqual(['%1%', 2, 3, 4, 5, 6, 7]);
       expect(queryBuilder['query']).toBe(targetQuery);
+    });
+
+    it('should build SELECT query with whereGroup for proper parentheses', () => {
+      // Arrange
+      const targetQuery = `SELECT * FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.language_code = $1 \nAND (${TABLE_NAME}.name ILIKE $2 \nOR ${TABLE_NAME}.tags ILIKE $3 \nOR ${TABLE_NAME}.tr_name ILIKE $4)`;
+
+      queryBuilder
+        .where('language_code', '=', 'EN')
+        .whereGroup([
+          ['name', 'ILIKE', '%photo%', 'where'],
+          ['tags', 'ILIKE', '%photo%', 'orWhere'],
+          ['tr_name', 'ILIKE', '%photo%', 'orWhere'],
+        ]);
+
+      queryBuilder['buildSelectQuery']();
+
+      // Assert
+      expect(queryBuilder['query']).toBe(targetQuery);
+      expect(queryBuilder['values']).toEqual(['EN', '%photo%', '%photo%', '%photo%']);
+    });
+
+    it('should build SELECT query with multiple whereGroup calls', () => {
+      // Arrange  
+      const targetQuery = `SELECT * FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.status = $1 \nAND (${TABLE_NAME}.name LIKE $2 \nOR ${TABLE_NAME}.email LIKE $3) \nOR (${TABLE_NAME}.city = $4 \nOR ${TABLE_NAME}.country = $5)`;
+
+      queryBuilder.where('status', '=', 'active');
+      queryBuilder.whereGroup([
+        ['name', 'LIKE', '%John%', 'where'],
+        ['email', 'LIKE', '%@example.com', 'orWhere'],
+      ]);
+      queryBuilder.whereGroup([
+        ['city', '=', 'NYC', 'orWhere'],
+        ['country', '=', 'USA', 'orWhere'],
+      ]);
+
+      queryBuilder['buildSelectQuery']();
+
+      // Assert
+      expect(queryBuilder['query']).toBe(targetQuery);
+      expect(queryBuilder['values']).toEqual(['active', '%John%', '%@example.com', 'NYC', 'USA']);
+    });
+
+    it('should build SELECT query with whereGroup containing IN operator', () => {
+      // Arrange
+      const targetQuery = `SELECT * FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.user_id = $1 \nAND (${TABLE_NAME}.status IN ($2,$3,$4) \nOR ${TABLE_NAME}.priority > $5)`;
+
+      queryBuilder
+        .where('user_id', '=', 123)
+        .whereGroup([
+          ['status', 'IN', ['active', 'pending', 'review'], 'where'],
+          ['priority', '>', 5, 'orWhere'],
+        ]);
+
+      queryBuilder['buildSelectQuery']();
+
+      // Assert
+      expect(queryBuilder['query']).toBe(targetQuery);
+      expect(queryBuilder['values']).toEqual([123, 'active', 'pending', 'review', 5]);
+    });
+
+    it('should build SELECT query with whereGroup and joins', () => {
+      // Arrange
+      const targetQuery = `SELECT ${TABLE_NAME}.id,${TABLE_NAME}.name,users.email FROM ${TABLE_NAME} \nINNER JOIN users ON users.id = ${TABLE_NAME}.user_id \nWHERE ${TABLE_NAME}.active = $1 \nAND (${TABLE_NAME}.name LIKE $2 \nOR users.email LIKE $3)`;
+
+      queryBuilder
+        .select('id,name,users.email')
+        .join('user_id', 'users', 'id')
+        .where('active', '=', true)
+        .whereGroup([
+          ['name', 'LIKE', '%test%', 'where'],
+          ['users.email', 'LIKE', '%@test.com', 'orWhere'],
+        ]);
+
+      queryBuilder['buildSelectQuery']();
+
+      // Assert
+      expect(queryBuilder['query']).toBe(targetQuery);
+      expect(queryBuilder['values']).toEqual([true, '%test%', '%@test.com']);
+    });
+
+    it('should build SELECT query with whereGroup containing null values', () => {
+      // Arrange
+      const targetQuery = `SELECT * FROM ${TABLE_NAME} \nWHERE (${TABLE_NAME}.deleted_at IS NULL \nOR ${TABLE_NAME}.archived_at IS NULL) \nAND ${TABLE_NAME}.status = $1`;
+
+      queryBuilder.whereGroup([
+        ['deleted_at', 'IS', null, 'where'],
+        ['archived_at', 'IS', null, 'orWhere'],
+      ]);
+      queryBuilder.where('status', '=', 'active');
+
+      queryBuilder['buildSelectQuery']();
+
+      // Assert
+      expect(queryBuilder['query']).toBe(targetQuery);
+      expect(queryBuilder['values']).toEqual(['active']);
+    });
+
+    it('should build SELECT query with nested whereGroup logic', () => {
+      // Arrange - Simulates: WHERE age >= 18 AND (role = 'admin' OR role = 'moderator') AND (city = 'NYC' OR city = 'LA')
+      const targetQuery = `SELECT * FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.age >= $1 \nAND (${TABLE_NAME}.role = $2 \nOR ${TABLE_NAME}.role = $3) \nAND (${TABLE_NAME}.city = $4 \nOR ${TABLE_NAME}.city = $5)`;
+
+      queryBuilder.where('age', '>=', 18);
+      queryBuilder.whereGroup([
+        ['role', '=', 'admin', 'where'],
+        ['role', '=', 'moderator', 'orWhere'],
+      ]);
+      queryBuilder.whereGroup([
+        ['city', '=', 'NYC', 'where'],
+        ['city', '=', 'LA', 'orWhere'],
+      ]);
+
+      queryBuilder['buildSelectQuery']();
+
+      // Assert
+      expect(queryBuilder['query']).toBe(targetQuery);
+      expect(queryBuilder['values']).toEqual([18, 'admin', 'moderator', 'NYC', 'LA']);
     });
   });
 

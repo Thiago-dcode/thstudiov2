@@ -38,6 +38,8 @@ export type SqlClause =
   | '<='
   | '!='
   | 'LIKE'
+  | 'ILIKE'
+  | 'NOT ILIKE'
   | 'NOT LIKE'
   | 'IN'
   | 'NOT IN'
@@ -60,6 +62,8 @@ export type WhereType = 'where' | 'orWhere';
 export type BaseWhere = {
   column: string;
   position: number;
+  startWhereGroup?:boolean,
+  endWhereGroup?:boolean
 };
 
 // Regular WHERE condition
@@ -67,6 +71,7 @@ export type WhereCondition = BaseWhere & {
   type: WhereType;
   operator: SqlClauseWithoutIn;
   value: SqlValue;
+
 };
 
 // WHERE IN condition

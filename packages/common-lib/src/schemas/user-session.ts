@@ -1,5 +1,5 @@
 import { TableColumn } from "../types/database";
-import { TABLES_ENUM } from '../constants/database';
+import { TABLES_ENUM } from "../constants/enums";
 export type UserAuthDeviceSchema = {
   id: number;
   user_agent: string;

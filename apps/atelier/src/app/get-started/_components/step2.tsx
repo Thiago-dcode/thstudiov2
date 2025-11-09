@@ -2,7 +2,7 @@
 import { FileInput } from "@repo/ui/components/custom/file-input"
 import { FileInputProvider, useInputFile } from "@repo/ui/contexts/file.provider"
 import { useEffect, useRef, useState } from "react"
-import { useFunnel } from "./funnel.provider"
+import { ButtonStepBackFunnel, ButtonSubmitFunnel, ContainerFormFunnel, useFunnel } from "./funnel.provider"
 import Image from "next/image"
 
 export default function Container() {
@@ -42,28 +42,38 @@ const Step2 = () => {
     useEffect(() => {
         setInputs(inputRef?.current)
     }, []);
-    useEffect(()=>{
+    useEffect(() => {
         setPreviewUrl(user?.avatar)
-    },[user])
+    }, [user])
 
     return (
-        <div className="flex flex-col gap-4 w-full max-w-2xl mx-auto p-4">
+        <>
+            <ContainerFormFunnel>
+                <div className="flex flex-col gap-4 w-full max-w-2xl mx-auto p-4">
 
-            {previewUrl && (
-                <div className="mt-4 flex flex-col items-center gap-2">
-                    <h3 className="text-sm font-medium">Profile Preview:</h3>
-                    <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-fg-2">
-                        <img
-                            src={previewUrl}
-                            alt="Profile Preview"
-                            className="w-full h-full object-cover"
-                        />
-                    </div>
+                    {previewUrl && (
+                        <div className="mt-4 flex flex-col items-center gap-2">
+                            <h3 className="text-sm font-medium">Profile Preview:</h3>
+                            <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-fg-2">
+                                <img
+                                    src={previewUrl}
+                                    alt="Profile Preview"
+                                    className="w-full h-full object-cover"
+                                />
+                            </div>
+                        </div>
+                    )}
                 </div>
-            )}
-            <FileInput onChange={() => {
-                handleOnChange()
-            }} ref={inputRef} name="avatar" id="avatar-input" />
-        </div>
+                <FileInput onChange={() => {
+                    handleOnChange()
+                }} ref={inputRef} name="avatar" id="avatar-input" />
+
+                    <ButtonSubmitFunnel />
+                    
+                    <ButtonStepBackFunnel/>
+
+            </ContainerFormFunnel>
+        </>
+
     )
 }

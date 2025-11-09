@@ -4,7 +4,7 @@ import { fetchApi } from "@/lib/facade/fetchApi";
 
 class MediaService extends BaseService {
     constructor() {
-        super(fetchApi, 'media');
+       super(fetchApi(), 'media');
     }
     async findAll(): Promise<ApiResponse<any>> {
         return await this.fetchApi.get({

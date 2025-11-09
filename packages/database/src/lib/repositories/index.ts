@@ -17,12 +17,7 @@ export abstract class BaseRepository {
     this.queryBuilder = new QueryBuilder(this.tableName);
   }
 
-  async findAll(filters: any) {
-    this.applyFilters(filters);
-    return await this.queryBuilder.get();
-  }
-  abstract applyFilters(filters: any): void;
- 
+
   async findOne<T = any>(id: number, options?: {select?: string[] | string, join?: Join[]}) {
     let query = this.queryBuilder.where(this.options.primaryKey, '=', id);
     query = this.buildQuery(query, options);

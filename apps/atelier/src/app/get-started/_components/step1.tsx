@@ -1,26 +1,26 @@
 'use client'
 import FormComponent from "@/components/form-component";
-import { useFunnel } from "./funnel.provider";
+import { ButtonSubmitFunnel, ContainerFormFunnel, useFunnel } from "./funnel.provider";
 import { useEffect, useRef } from "react";
 
 export default function Step1() {
 
-    const {user,  inputs, setInputs ,handleOnChange} = useFunnel();
+    const { user, inputs, setInputs, handleOnChange } = useFunnel();
     const nameRef = useRef<HTMLInputElement>(null);
     const surnameRef = useRef<HTMLInputElement>(null);
     const shortBioRef = useRef<HTMLTextAreaElement>(null);
 
-    useEffect(()=>{
+    useEffect(() => {
         setInputs(nameRef?.current, surnameRef?.current, shortBioRef?.current);
-    },[])
-    return <>
+    }, [])
+    return <ContainerFormFunnel>
         <FormComponent.LabelInput
             ref={nameRef}
             label="First Name"
             type="text"
             id="name"
             name="name"
-            defaultValue={inputs?.name || user?.name|| undefined}
+            defaultValue={inputs?.name || user?.name || undefined}
             placeholder="Enter your first name"
             autoComplete="given-name"
             required
@@ -35,7 +35,7 @@ export default function Step1() {
             type="text"
             id="surname"
             name="surname"
-            defaultValue={inputs?.surname ||user?.surname|| undefined}
+            defaultValue={inputs?.surname || user?.surname || undefined}
             placeholder="Enter your last name"
             autoComplete="family-name"
             required
@@ -48,11 +48,15 @@ export default function Step1() {
             label="About You"
             id="short_biography"
             name="short_biography"
-            defaultValue={inputs?.short_biography || user?.short_biography|| undefined}
+            defaultValue={inputs?.short_biography || user?.short_biography || undefined}
             placeholder="Write a short description about yourself..."
             rows={4}
             onChange={handleOnChange}
-        /></>
+        />
+        <div>
+            <ButtonSubmitFunnel />
+        </div>
+    </ContainerFormFunnel>
 
 
 }

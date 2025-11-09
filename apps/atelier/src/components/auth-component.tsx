@@ -21,7 +21,7 @@ const Content = ({children}:{
     children:ReactNode
 }) =>{
 
-    return ( <div className="bg-fg flex flex-col w-full justify-between items-center gap-12 rounded-xl bg-foreground py-8 px-4 inset-shadow-xs inset-shadow-fg-2">
+    return ( <div className="bg-fg flex flex-col w-full justify-between items-center gap-4 rounded-xl bg-foreground py-8 px-4 inset-shadow-xs inset-shadow-fg-2">
         {children}
     </div>)
 }

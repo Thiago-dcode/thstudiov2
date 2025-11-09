@@ -16,7 +16,10 @@ export class PlansRepository extends BaseRepository {
   }
 
   async findAll(filters: IndexPlanRequest) {
-    return await super.findAll(filters);
+     this.applyFilters(filters);
+
+     const result =await  this.queryBuilder.get();
+     return result;
   }
   async applyFilters(filters: IndexPlanRequest) {
     if (filters.search) {

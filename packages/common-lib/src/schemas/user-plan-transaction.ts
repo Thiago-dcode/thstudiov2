@@ -1,6 +1,5 @@
-import { TABLES_ENUM } from '../constants/database';
 import { TableColumn } from '../types/database';
-import { EnumType } from '@repo/common-lib/constants/enums';
+import { EnumType, TABLES_ENUM } from '@repo/common-lib/constants/enums';
 export type PlanTransactionSchema = {
   id: number;
   transaction_id: string;
@@ -17,7 +16,7 @@ export type PlanTransactionSchema = {
 
 export type PlanTransactionWithoutTimestampsSchema = Omit<PlanTransactionSchema, 'created_at' | 'updated_at'>;
 
-const tablesPlanTransaction = [TABLES_ENUM.USER_PLAN_TRANSACTIONS] as const;
+const tablesPlanTransaction = [TABLES_ENUMp.USER_PLAN_TRANSACTIONS] as const;
 export type PlanTransactionColumns = TableColumn<typeof tablesPlanTransaction, PlanTransactionWithoutTimestampsSchema>;
 
 export type CreatePlanTransactionInput = Omit<
