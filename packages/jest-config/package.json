@@ -9,21 +9,19 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
- 
     "./base": "./dist/base/index.js",
     "./nest": "./dist/nest/index.js",
     "./next": "./dist/next/index.js "
-    
   },
   "devDependencies": {
     "@jest/globals": "29.1.1",
-    "@nestjs/testing": "^11.1.6",
+    "@nestjs/testing": "^11.1.9",
     "@repo/typescript-config": "workspace:*",
     "@types/jest": "29.5.14",
     "jest": "29.1.1",
-    "next": "^15.5.3",
+    "next": "^15.5.7",
     "ts-jest": "29.1.1",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.3"
   },
   "scripts": {
     "build": "tsc"

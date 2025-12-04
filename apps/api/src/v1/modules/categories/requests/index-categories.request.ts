@@ -1,13 +1,22 @@
-import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import {
+  IsBoolean,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 import { OffsetPaginationRequest } from 'src/common/requests/offset-pagination.request';
 import { ModelExist } from 'src/common/validators/model-exist.validtor';
 
 export class IndexCategoriesRequest extends OffsetPaginationRequest {
-  
   @IsOptional()
   @IsString()
   @IsNotEmpty()
   search: string;
+  
+  @IsOptional()
+  @IsBoolean()
+  random?: boolean;
 
   @IsOptional()
   @IsNumber()

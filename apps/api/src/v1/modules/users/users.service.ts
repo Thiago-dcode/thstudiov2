@@ -16,6 +16,7 @@ import { StorageService } from '@repo/backend-lib/services/storage-service/base'
 import { CompressService } from '@repo/backend-lib/services/compress-service/base';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { s3StorageConfig } from 'src/config/storage';
+import { PlanSubscriptionsRepository } from '../plan-subscriptions/plan-subscriptions.repository';
 
 @Injectable()
 export class UserService {
@@ -23,6 +24,7 @@ export class UserService {
     private readonly userRepository: UserRepository,
     private readonly plansRepository: PlansRepository,
     private readonly userPlanTransactionsRepository: UserPlanTransactionsRepository,
+    private readonly planSubscriptionRepository: PlanSubscriptionsRepository,
     private readonly userExtraDataRepository: UserExtraDataRepository,
     private readonly logService: LogService,
     private readonly mailService: MailService,
@@ -45,7 +47,7 @@ export class UserService {
         await this.cacheManager.set(
           result.avatar,
           avatar,
-          s3StorageConfig.signedUrlExpiration * 900,//Substract 10% to avoid possible s3 404
+          s3StorageConfig.signedUrlExpiration * 900, //Substract 10% to avoid possible s3 404
         );
       }
       result.avatar = avatar;
@@ -53,7 +55,7 @@ export class UserService {
     return result;
   }
 
-  async update(id: number, { avatar, ...rest }: UpdateUserRequest) {
+  async update(id: number, { avatar, categories, ...rest }: UpdateUserRequest) {
     const user = await this.userRepository.findById(id);
     if (!user) {
       throw new HttpException('User not found', 422);
@@ -88,16 +90,26 @@ export class UserService {
       userUpdateData.avatar = path;
     }
     if (userUpdateData.email) {
-      //TODO:check email availability
       const userExist = await this.userRepository.findOneBy(
         'email',
         userUpdateData.email,
       );
-      if (userExist.id !== user.id) {
+      if (userExist && userExist.id !== user.id) {
         throw new HttpException(`Email not available`, 422);
       }
     }
-    return await this.userRepository.updateById(user.id, userUpdateData);
+    const [userUpdated] = await Promise.all([
+      this.userRepository.updateById(user.id, userUpdateData),
+      categories
+        ? this.userRepository.attach('user_categories', {
+            modelCol: 'user_id',
+            modelValue: user.id,
+            attachCol: 'category_id',
+            valuesToAttach: categories,
+          })
+        : Promise.resolve(true),
+    ]);
+    return userUpdated;
   }
 
   async remove(id: number) {
@@ -153,13 +165,21 @@ export class UserService {
         .info(`${NEW_USER_EVENT} user [${event.user.id}] plan transaction`, {
           transaction,
         });
+      // Create plan subscription
+      const PlanSubscription = await this.planSubscriptionRepository.create({
+        is_active: true,
+        plan_id: freePlan.id,
+        plan_price_id: lifetimePrice.id,
+        plan_transaction_id: transaction.id,
+      });
+      this.logService
+        .name('new-user')
+        .info(`${NEW_USER_EVENT} user [${event.user.id}] plan subscription`, {
+          transaction,
+        });
       const extraData = await this.userExtraDataRepository.create({
         user_id: event.user.id,
-        plan_id: freePlan.id,
-        last_plan_transaction_id: transaction.id,
-        plan_start_date: new Date(),
-        plan_end_date: null,
-        plan_autorenewal: true,
+        plan_subscription_id: PlanSubscription.id,
       });
       this.logService
         .name('new-user')

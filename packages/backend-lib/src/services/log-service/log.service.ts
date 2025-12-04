@@ -4,7 +4,31 @@ import { LogConfig, LogLevel, LogOptions, LogServiceDriver } from "./types";
 export abstract class LogService {
     protected static date:Date;
     protected static type: LogServiceDriver;
+    private static pendingLogs: Promise<void>[] = [];
+
     constructor( protected readonly config: LogConfig) {
+    }
+
+    /**
+     * Tracks a log operation without blocking execution.
+     * Use flush() to wait for all pending logs before process exit.
+     */
+    protected static trackLog(promise: Promise<void>): void {
+        const tracked = promise.finally(() => {
+            const index = LogService.pendingLogs.indexOf(tracked);
+            if (index > -1) {
+                LogService.pendingLogs.splice(index, 1);
+            }
+        });
+        LogService.pendingLogs.push(tracked);
+    }
+
+    /**
+     * Waits for all pending log operations to complete.
+     * Call this before process exit to ensure all logs are written.
+     */
+    public static async flush(): Promise<void> {
+        await Promise.all(LogService.pendingLogs);
     }
     public  channel(channel: string) {
         this.config.channel = channel;
@@ -14,24 +38,29 @@ export abstract class LogService {
             this.config.name = name;
             return this;
         }
-    public async info(message: string, options?: LogOptions) {
+    public info(message: string, options?: LogOptions): this {
         console.log(this.beautifyLogMessage('info', message, options));
+        return this;
     }
 
-    public async error(message: string, options?: LogOptions) {
+    public error(message: string, options?: LogOptions): this {
         console.error(this.beautifyLogMessage('error', message, options));
+        return this;
     }
     
-    public async warn(message: string, options?: LogOptions) {
+    public warn(message: string, options?: LogOptions): this {
         console.warn(this.beautifyLogMessage('warn', message, options));
+        return this;
     }
 
-    public async debug(message: string, options?: LogOptions) {
+    public debug(message: string, options?: LogOptions): this {
         console.debug(this.beautifyLogMessage('debug', message, options));
+        return this;
     }
     
-    public async success(message: string, options?: LogOptions) {
+    public success(message: string, options?: LogOptions): this {
         console.log(this.beautifyLogMessage('success', message, options));
+        return this;
     }
     protected beautifyLogMessage(level: LogLevel, message: string, options?:LogOptions) {
         let logMessage =  `[${format(LogService.date, 'dd-MM-yyyy HH:mm:ss')}] - ${level.toUpperCase()} - ${message}`;

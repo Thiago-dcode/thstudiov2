@@ -6,24 +6,29 @@ export class ConsoleLogService extends LogService {
     constructor(config: LogConfig) {
         super(config);
     }
-    public  async info(message: string, options?: LogOptions) {
+    public info(message: string, options?: LogOptions): this {
         console.log(pc.blue(this.beautifyLogMessage('info', message, options)));
+        return this;
     }
 
-    public  async error(message: string, options?: LogOptions) {
+    public error(message: string, options?: LogOptions): this {
         console.error(pc.red(this.beautifyLogMessage('error', message, options)));
+        return this;
     }
     
-    public  async warn(message: string, options?: LogOptions) {
+    public warn(message: string, options?: LogOptions): this {
         console.warn(pc.yellow(this.beautifyLogMessage('warn', message, options)));
+        return this;
     }
 
-    public  async debug(message: string, options?: LogOptions) {
+    public debug(message: string, options?: LogOptions): this {
         console.debug(pc.gray(this.beautifyLogMessage('debug', message, options)));
+        return this;
     }
     
-    public  async success(message: string, options?: LogOptions) {
+    public success(message: string, options?: LogOptions): this {
         console.log(pc.green(this.beautifyLogMessage('success', message, options)));
+        return this;
     }
 
 

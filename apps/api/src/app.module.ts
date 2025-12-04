@@ -26,6 +26,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { MediaModule } from './v1/modules/media/media.module';
 import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/constants';
 import { CategoriesModule } from './v1/modules/categories/categories.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
 const APP_MODULES = [
   AuthModule,
   UserModule,
@@ -37,6 +38,10 @@ const APP_MODULES = [
 ];
 @Module({
   imports: [
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..','..', 'client'),
+      useGlobalPrefix:true,
+    }),
     ConfigModule.forRoot({
       isGlobal: true,
       load: [config],

@@ -46,7 +46,7 @@ export class ModelExistValidator extends BaseModelValidator {
 
 export function ModelExist(
   tableName: TableName,
-  column?: string,
+  column: string ='id',
   validationOptions?: ValidationOptions,
 ) {
   return function (object: object, propertyName: string) {

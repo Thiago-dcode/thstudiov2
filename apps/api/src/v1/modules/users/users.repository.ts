@@ -109,6 +109,7 @@ export class UserRepository extends BaseRepository {
   async applyFilters(filters: any) {
     console.log(filters);
   }
+
   async create(user: CreateUserInput): Promise<BaseUser> {
     const result = await super._create<BaseUserSchema>(user, {
       select: this.BASE_COLUMNS,

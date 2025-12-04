@@ -22,7 +22,7 @@ export class AuthController {
   @Public()
   @Post('login')
   async login(@Body() authLoginDto: LoginRequest) {
-    console.log(authLoginDto)
+    console.log("Login in",authLoginDto)
     return await this.authService.login(authLoginDto);
   }
 

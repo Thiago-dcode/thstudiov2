@@ -1,5 +1,4 @@
 'use client'
-'use client'
 import FormComponent from "@/components/form-component";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { Errors } from "@repo/ui/components/custom/errors";
@@ -20,12 +19,13 @@ type FunnelContextType = {
     isPending: boolean,
     actionElement?: HTMLInputElement
     inputs?: UpdateUserInputAvatarFile,
-    errors?:string[],
+    errors?: string[],
     refInputs?: (HTMLInputElement | HTMLTextAreaElement)[],
     canContinue: boolean,
-    handleSubmit:(e:FormEvent<HTMLFormElement>)=>Promise<void>,
+    setCanContinue: (value: boolean) => void,
+    handleSubmit: (e: FormEvent<HTMLFormElement>) => Promise<void>,
     cleanErrors: () => void,
-    setActionElement: (input:HTMLInputElement)=>void,
+    setActionElement: (input: HTMLInputElement) => void,
     handleOnChange: () => void,
     setErrors: (errors: string[]) => void,
     setInputs: (...inputs: InputsType[]) => void,
@@ -34,9 +34,10 @@ const FunnelContext = createContext<FunnelContextType>({
     lastStep: 0,
     canContinue: false,
     isPending: false,
-    handleSubmit: async ()=>{},
+    setCanContinue: () => { },
+    handleSubmit: async () => { },
     setErrors: () => { },
-    setActionElement:()=>{},
+    setActionElement: () => { },
     cleanErrors: () => { },
     setInputs: () => { },
     handleOnChange: () => { }
@@ -58,7 +59,7 @@ export const FunnelProvider = ({ children, user, lastStep }: {
         action: async (formData) => funnelAction(user.funnel_step, formData),
         afterAction: async (result) => {
             if (result?.data) {
-                cleanResult();
+                reset();
                 router.refresh();
 
             }
@@ -68,6 +69,14 @@ export const FunnelProvider = ({ children, user, lastStep }: {
     const setInputs = useCallback((...inputs: InputsType[]) => {
         _setInputs(inputs.filter(input => !!input));
     }, []);
+
+    const reset = () => {
+
+        console.log('reseting')
+        setCanContinue(false);
+        setInputs(undefined);
+        cleanResult();
+    }
 
     const handleOnChange = useCallback(() => {
         cleanErrors();
@@ -83,7 +92,7 @@ export const FunnelProvider = ({ children, user, lastStep }: {
 
 
     useEffect(() => {
-        if (!inputs) return;
+        if (!inputs || !inputs.length) return;
         handleOnChange();
     }, [inputs]);
 
@@ -99,46 +108,47 @@ export const FunnelProvider = ({ children, user, lastStep }: {
             setActionElement,
             inputs: result?.inputs,
             canContinue,
-            errors: errors|| undefined,
+            errors: errors || undefined,
             refInputs: inputs,
             handleSubmit,
+            setCanContinue,
             cleanErrors,
             setInputs,
             setErrors,
             handleOnChange,
         }}>
-         
-                    {children}
+
+            {children}
 
         </FunnelContext.Provider>
     )
 
 }
-export const ContainerFormFunnel = ({children}:{
-    children:ReactNode
-})=>{
+export const ContainerFormFunnel = ({ children }: {
+    children: ReactNode
+}) => {
     const actionRef = useRef<HTMLInputElement>(null)
-    const { canContinue, isPending,handleSubmit,errors,setActionElement } = useFunnel()
+    const { canContinue, isPending, handleSubmit, errors, setActionElement } = useFunnel()
     return <FormComponent.Container>
-                <FormComponent.Form onSubmit={(e) => {
-                    e.preventDefault();
-                    if (isPending || (!canContinue && actionRef.current?.value === 'continue')) return;
+        <FormComponent.Form onSubmit={(e) => {
+            e.preventDefault();
+            if (isPending || (!canContinue && actionRef.current?.value === 'continue')) return;
 
-                    handleSubmit(e)
-                }}>
-                    <input ref={(e)=>{
-                        actionRef.current =e
-                      if(e)  setActionElement(e)
-                    }} type="text" name="action" hidden required />
-                    {children}
+            handleSubmit(e)
+        }}>
+            <input ref={(e) => {
+                actionRef.current = e
+                if (e) setActionElement(e)
+            }} type="text" name="action" hidden required />
+            {children}
 
-                </FormComponent.Form>
-                {/* Error Messages */}
-                {errors && errors.length > 0 && (
-                    <Errors title="Update failed" errors={errors} />
-                )}
-            </FormComponent.Container>
-    
+        </FormComponent.Form>
+        {/* Error Messages */}
+        {errors && errors.length > 0 && (
+            <Errors title="Update failed" errors={errors} />
+        )}
+    </FormComponent.Container>
+
 }
 export const ButtonSubmitFunnel = () => {
     const { refInputs, canContinue, actionElement, isPending } = useFunnel()
@@ -173,7 +183,7 @@ export const ButtonStepBackFunnel = () => {
                 if (input) input.required = false;
             })
             if (actionElement) actionElement.value = 'back';
-        }} type="submit" className={cn("bg-transparent text-sm transition-colors text-text-muted hover:text-text", {
+        }} type="submit" className={cn({
             "!text-text-muted !cursor-not-allowed": isPending
         })} variant={'ghost'} >
             <ArrowLeft /> step back

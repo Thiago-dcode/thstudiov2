@@ -12,6 +12,7 @@ const ALLOWED_FILE_TYPES:MimeTypes[] = ['image/jpeg', 'image/png', 'image/webp']
 
 export const updateUserAction = async (id:number,formData: FormData): Promise<AuthActionReturn<UpdateUserInputAvatarFile,BaseUser>> => {
 
+    const categories = formData.get('categories') as string;
       // Extract text fields from FormData
       let rawData:UpdateUserInputAvatarFile = {
         name: formData.get('name') as string || undefined ,
@@ -21,6 +22,7 @@ export const updateUserAction = async (id:number,formData: FormData): Promise<Au
         funnel_step:formData.get('funnel_step')? parseInt(formData.get('funnel_step')as string) : undefined ,
         biography: formData.get('biography') as string || undefined ,
         email: formData.get('email') as string || undefined ,
+        categories: categories? categories.split(','): undefined 
     };
         trimValues(rawData,{
             deep:true
@@ -63,7 +65,6 @@ export const updateUserAction = async (id:number,formData: FormData): Promise<Au
     }
     if(avatarFile && avatarFile.size>0) cleanData.avatar = avatarFile;
 
-    //TODO: fetch user update
     const result = await usersService.update(id,cleanData);
     if(result.error){
         const {status_code,errors} = result.error;

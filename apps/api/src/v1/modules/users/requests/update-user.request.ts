@@ -5,8 +5,10 @@ import {
   IsEmail,
   IsInt,
   IsNumber,
+  IsArray,
 } from 'class-validator';
-import { ModelNotExist } from 'src/common/validators/model-not-exist.validtor';
+import { ModelArrayExist } from 'src/common/validators/model-array-exist.validtor';
+import { ModelExist } from 'src/common/validators/model-exist.validtor';
 
 export class UpdateUserRequest {
   @IsOptional()
@@ -43,8 +45,13 @@ export class UpdateUserRequest {
 
   @IsOptional()
   @IsInt()
-  @ModelNotExist('addresses')
+  @ModelExist('addresses')
   address_id?: number;
+
+  @IsOptional()
+  @IsArray()
+  @ModelArrayExist('categories')
+  categories?: number;
 
   @IsOptional()
   avatar?: Express.Multer.File;

@@ -52,12 +52,8 @@ export type UserExtraDataSchema = {
   services_count: number;
   storage_requests_count: number;
   last_storage_request_date: Date;
-  plan_start_date: Date;
-  plan_end_date: Date | null;
-  plan_autorenewal: boolean;
   user_id: number;
-  plan_id: number | null;
-  last_plan_transaction_id: number | null;
+  plan_subscription_id: number | null;
   created_at: Date;
   updated_at: Date;
 };

@@ -12,11 +12,13 @@
   --color-fg-2: oklch(90% 0 0);
   --color-text: oklch(5% 0 0);
   --color-text-muted: oklch(40% 0 0);
-  --color-accent:oklch(0.5383 0.168 40.23);
+  --color-accent: oklch(0.5126 0.293064 288.3364);
+  --color-secondary: oklch(0.85 0.26 100);
+  --color-secondary-fg: oklch(5% 0 0);
   --size-lg: 1.125rem;
   --size-base: 1rem;
-  --size-sm: 0.875;
-
+  --size-sm: 0.875rem;
+  --size-xs: 0.75rem;
 
   background-color: var(--color-bg);
   color: var(--color-text);
@@ -32,7 +34,7 @@
   --color-fg-2: oklch(25% 0 0);
   --color-text: oklch(95% 0 0);
   --color-text-muted: oklch(70% 0 0);
-  --color-shadow:oklch(70% 0 0);
+  --color-shadow: oklch(70% 0 0);
 }
 
 @theme {
@@ -42,12 +44,18 @@
   --color-fg-2: var(--fg-2);
   --color-text: var(--color-text);
   --color-text-muted: var(--color-text-muted);
+  --text-lg: var(--size-lg);
+  --text-sm: var(--size-sm);
   --text-base: var(--size-base);
+  --text-xs: var(--size-xs);
   --color-accent: var(--color-accent);
+  --color-secondary: var(--color-secondary);
+  --color-secondary-fg: var(--color-secondary-fg);
 }
 
 @keyframes shake {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateX(0);
   }
   25% {
@@ -58,15 +66,23 @@
   }
 }
 
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
-
-
-.input-required .span-label{
+.input-required .span-label {
   color: var(--color-red-500);
   animation: shake 0.3s ease-in-out;
   display: inline-block;
 }
 
-.input-required .label-file-input{
+.input-required .label-file-input {
   border-color: var(--color-red-500);
 }

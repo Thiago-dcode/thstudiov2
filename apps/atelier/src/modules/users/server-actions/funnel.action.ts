@@ -19,7 +19,6 @@ export const funnelAction = async (currentStep:number,formData:FormData) =>{
         inputs:undefined
     }
 
-    // Get current funnel_step from user session
     const newFormData = action === 'back' ? new FormData(): formData;
     const nextStep = action === 'back'? currentStep -1 : currentStep +1;
         newFormData.set('funnel_step', String(nextStep));

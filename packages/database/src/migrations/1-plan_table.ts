@@ -4,9 +4,16 @@ import { createTimeStampsTrigger } from '../lib/scripts/utils';
 const up = async () => {
   await Schema.table('plans').createIfNotExists([
     Column.id(),
+    Column.string('stripe_id', 255, {
+      unique: true,
+    }),
+    Column.string('paypal_id', 255, {
+      unique: true,
+    }),
     Column.string('name', 255, {
       unique: true,
     }),
+    Column.string('short_description', 255),
     Column.text('description'),
     Column.string('logo', 255, {
       unique: true,
@@ -15,23 +22,40 @@ const up = async () => {
     Column.boolean('is_active', {
       default: true,
     }),
+    Column.boolean('is_popular', {
+      default: true,
+    }),
     Column.boolean('is_free', {
       default: false,
     }),
     Column.integer('max_media_size'),
-    Column.integer('max_projects_count'),
-    Column.integer('max_clients_count'),
-    Column.integer('max_services_count'),
+    Column.integer('max_projects'),
+    Column.integer('max_portfolios'),
+    Column.integer('max_clients'),
+    Column.integer('max_services'),
+    Column.boolean('allow_media_compression',{
+      default:false
+    }),
     Column.boolean('powered_by_ai', {
       default: false,
     }),
-    Column.integer('limit_storage_requests_per_day'),
+    Column.integer('limit_write_storage_per_day'),
     Column.timestamps(true),
   ]);
 
   await createTimeStampsTrigger('plans');
+ 
+
   await Schema.table('plan_prices').createIfNotExists([
     Column.id(),
+    Column.string('stripe_id', 255, {
+      unique: true,
+      nullable:true
+    }),
+    Column.string('paypal_id', 255, {
+      unique: true,
+      nullable:true,
+    }),
     Column.float('price'),
     Column.foreignKey('plan_id', 'plans', 'id', {
       onDelete: 'CASCADE',
@@ -44,7 +68,8 @@ const up = async () => {
   await Schema.table('plan_translations').createIfNotExists([
     Column.id(),
     Column.string('name'),
-    Column.string('description'),
+    Column.string('short_description', 255),
+    Column.text('description'),
     Column.foreignKey('plan_id', 'plans', 'id', {
       onDelete: 'CASCADE',
       onUpdate: 'CASCADE',

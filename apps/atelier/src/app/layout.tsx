@@ -22,7 +22,7 @@ export default function RootLayout({
 }>) {
   return (
     <html className={cn("dark",roboto.className)} lang="en">
-      <body className=" w-screen h-screen">
+      <body className=" w-screen h-screen flex  flex-col items-center justify-start">
         <SessionProvider>
           {children}
         </SessionProvider>

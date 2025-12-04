@@ -26,7 +26,11 @@ const up = async () => {
     }),
     Column.timestamps(true),
   ]);
+
   await createTimeStampsTrigger('user_plan_transactions');
+
+
+
 };
 
 const down = async () => {

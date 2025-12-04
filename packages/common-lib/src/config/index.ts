@@ -59,6 +59,15 @@ let envFilePath = path.resolve(process.cwd(),'..', '..', '.env');
       signedUrlExpiration: process.env.STORAGE_SIGNED_URL_EXPIRATION ? parseInt(process.env.STORAGE_SIGNED_URL_EXPIRATION) : 3600,
       folder: process.env.STORAGE_FOLDER,
     },
+    stripe:{
+      secretKey: process.env.STRIPE_SECRET_KEY as string
+    },
+    paypal:{
+      url: process.env.PAYPAL_URL as string,
+      secretKey: process.env.PAYPAL_SECRET_KEY as string,
+      clientId: process.env.PAYPAL_CLIENT_ID as string
+    },
+
     encryption: {
       secret: process.env.ENCRYPTION_SECRET || 'secret',
     },

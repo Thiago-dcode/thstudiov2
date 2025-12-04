@@ -5,8 +5,9 @@ import { redirect } from "next/navigation";
 import { FunnelProvider } from "./_components/funnel.provider";
 import AuthComponent from "@/components/auth-component";
 import usersService from "@/modules/users/users.service";
+import { cn } from "@repo/ui/lib/utils";
 
-const LAST_STEP = 3;
+const LAST_STEP = 4;
 export default async function GetStarted() {
     const userAuth = await userSession();
     if (!userAuth) {
@@ -32,11 +33,11 @@ export default async function GetStarted() {
         },
         [3]: {
             title: 'Select up to 5 categories',
-            subTitle: 'These categories will help your profile being discovered'
+            subTitle: 'These categories will help your profile be discovered'
         },
         [4]: {
-            title: 'Complete Your Profile',
-            subTitle: 'Tell us a bit about yourself to get started'
+            title: 'Choose Your Plan',
+            subTitle: 'Select the perfect plan for your creative journey'
         },
         [5]: {
             title: 'Complete Your Profile',
@@ -44,7 +45,10 @@ export default async function GetStarted() {
         }
     }
     const currentStep = stepsContent[user.funnel_step as keyof typeof stepsContent];
-    return <AuthComponent.Container>
+    return <AuthComponent.Container className={cn("max-w-2xl",
+        {"max-w-lg":user.funnel_step ===1 || user.funnel_step ===2},
+        {" max-w-full":user.funnel_step === LAST_STEP}
+    )}>
 
         <AuthComponent.Content>
             <AuthComponent.Header>

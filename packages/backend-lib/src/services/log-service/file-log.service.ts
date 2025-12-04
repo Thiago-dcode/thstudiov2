@@ -7,22 +7,37 @@ import { differenceInDays ,format} from "date-fns";
 export class FileLogService extends LogService {
 
     constructor(config: LogConfig) {
+       
         super(config);
     }
-    public  async info(message: string, options?:LogOptions) {
-       await this.writeLog(await this.getLogFile(), 'info', message, options);
+
+    /**
+     * Fire-and-forget log methods - they queue the log and return immediately.
+     * Use LogService.flush() before process exit to ensure all logs are written.
+     */
+    public info(message: string, options?:LogOptions): this {
+       LogService.trackLog(this.writeLogAsync('info', message, options));
+       return this;
     }
-    public  async error(message: string, options?:LogOptions) {
-        await this.writeLog(await this.getLogFile(), 'error', message, options);
+    public error(message: string, options?:LogOptions): this {
+        LogService.trackLog(this.writeLogAsync('error', message, options));
+        return this;
     }
-    public  async warn(message: string, options?:LogOptions) {
-        await this.writeLog(await this.getLogFile(), 'warn', message, options);
+    public warn(message: string, options?:LogOptions): this {
+        LogService.trackLog(this.writeLogAsync('warn', message, options));
+        return this;
     }
-    public  async debug(message: string, options?:LogOptions) {
-        await this.writeLog(await this.getLogFile(), 'debug', message, options);
+    public debug(message: string, options?:LogOptions): this {
+        LogService.trackLog(this.writeLogAsync('debug', message, options));
+        return this;
     }
-    public  async success(message: string, options?:LogOptions) {
-        await this.writeLog(await this.getLogFile(), 'success', message, options);
+    public success(message: string, options?:LogOptions): this {
+        LogService.trackLog(this.writeLogAsync('success', message, options));
+        return this;
+    }
+
+    private async writeLogAsync(level: LogLevel, message: string, options?: LogOptions): Promise<void> {
+        await this.writeLog(await this.getLogFile(), level, message, options);
     }
 
     private async getLogFile() {
@@ -30,7 +45,10 @@ export class FileLogService extends LogService {
             LogService.date = new Date();
         }
         const today = format(LogService.date, 'dd-MM-yyyy');
-        const logFolder = path.join(this.config.logFolder, this.config.channel);
+        if(!this.config.logFolder){
+            this.config.logFolder =  path.resolve(process.cwd(), '..','..', 'packages','backend-lib', 'storage', 'logs');
+        }
+        const logFolder = path.join(this.config.logFolder as string, this.config.channel);
         if(! (await checkFileExistsAsync(logFolder))){
            await fs.mkdir(logFolder, { recursive: true });
         }
@@ -45,7 +63,7 @@ export class FileLogService extends LogService {
             await fs.appendFile(logFile, this.beautifyLogMessage(level, message, options));
             await this.callCallback(level, message, options);
       } catch (error) {
-        console.error(error);
+        console.error("ERROR LOGGIN",error);
         }
     }
 

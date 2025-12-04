@@ -1,5 +1,5 @@
 export const ENUMS = {
-    BILLING_TYPES: ['MONTHLY', 'TRIMESTAL', 'YEARLY', 'LIFETIME'] as const,
+    BILLING_TYPES: ['MONTHLY', 'QUARTERLY', 'YEARLY', 'LIFETIME'] as const,
     USER_EDITORS_ROLES: ['ADMIN', 'EDITOR'] as const,
     LANGUAGE_CODE: ['EN', 'ES', 'PT'] as const,
     MEDIA_TYPE: ['IMAGE', 'VIDEO'] as const,
@@ -16,7 +16,7 @@ export const ENUMS = {
     ] as const,
     TRANSACTION_STATUS: ['PENDING', 'SUCCESS', 'FAILED'] as const,
     PAYMENT_STATUS: ['PENDING', 'SUCCESS', 'FAILED'] as const,
-    PAYMENT_METHOD: ['CARD', 'PAYPAL', 'BANK_TRANSFER'] as const,
+    PAYMENT_METHOD: ['CARD', 'PAYPAL'] as const,
     PLAN_OFFERS_TYPES: ['FREE', 'DISCOUNT'] as const,
     PASSWORD_RECOVERY_ATTEMPT_STATUS: ['CODE_NOT_VALIDATED','CODE_VALIDATED','PASSWORD_CHANGED']
   };
@@ -33,6 +33,7 @@ export const TABLES_ENUM = {
   CATEGORIES:'categories',
   USER_CATEGORIES:'user_categories',
   CATEGORY_TRANSLATIONS:'category_translations',
+  PLAN_SUBSCRIPTIONS: 'plan_subscriptions',
   USER_PLAN_TRANSACTIONS:'user_plan_transactions',
   MIGRATIONS:'migrations',
   MEDIA:'media',

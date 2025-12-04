@@ -13,6 +13,7 @@ import {
 } from '@repo/backend-lib/services/log-service';
 import { NotifyNewUserMail } from './mails/notify-new-user.mail';
 import { UserAuthDevicesModule } from '../user-auth-devices/user-auth-devices.module';
+import { PlanSubscriptionsRepository } from '../plan-subscriptions/plan-subscriptions.repository';
 @Module({
   controllers: [UserController],
   providers: [
@@ -20,6 +21,7 @@ import { UserAuthDevicesModule } from '../user-auth-devices/user-auth-devices.mo
     UserRepository,
     PlansRepository,
     UserPlanTransactionsRepository,
+    PlanSubscriptionsRepository,
     UserExtraDataRepository,
     NotifyNewUserMail,
     {

@@ -113,5 +113,8 @@ export class CategoriesRepository extends BaseRepository {
         last_page,
       };
     }
+    if(filters.random){
+      this.queryBuilder.random()
+    }
   }
 }

@@ -16,7 +16,7 @@ export type PlanTransactionSchema = {
 
 export type PlanTransactionWithoutTimestampsSchema = Omit<PlanTransactionSchema, 'created_at' | 'updated_at'>;
 
-const tablesPlanTransaction = [TABLES_ENUMp.USER_PLAN_TRANSACTIONS] as const;
+const tablesPlanTransaction = [TABLES_ENUM.USER_PLAN_TRANSACTIONS] as const;
 export type PlanTransactionColumns = TableColumn<typeof tablesPlanTransaction, PlanTransactionWithoutTimestampsSchema>;
 
 export type CreatePlanTransactionInput = Omit<

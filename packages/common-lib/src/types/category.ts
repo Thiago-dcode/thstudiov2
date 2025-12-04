@@ -9,6 +9,7 @@ export type CategoryTranslation = {
 }
 export type CategoryIndexRequest = OffsetPaginationRequest & {
 
+    random?:boolean,
     search?:string,
     parent_id?:number,
 

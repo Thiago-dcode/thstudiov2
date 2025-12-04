@@ -52,4 +52,4 @@ export const useHandleAction = <K,T>({action,beforeAction,afterAction}:{
 
 }
 
-export type HandlerActionType = ReturnType<typeof useHandleAction>
+export type HandlerActionType <T,K>= ReturnType<typeof useHandleAction<T,K>>

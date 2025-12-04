@@ -1,5 +1,5 @@
 export type LogConfig = {
-    logFolder: string;
+    logFolder?: string;
     channel: string;
     name?: string;
     callback? :{

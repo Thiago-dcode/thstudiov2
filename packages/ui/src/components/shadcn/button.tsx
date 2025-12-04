@@ -5,26 +5,27 @@ import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "../../lib/utils"
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-3xl text-sm sm:text-base font-medium transition-all   disabled:bg-text-muted disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0  hover:pointer hover:cursor-pointer active:scale-[0.98]",
-  {
+  "px-2 py-1 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-2xl transition-all   disabled:bg-text-muted disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover:cursor-pointer active:scale-[0.98] text-xs",  {
     variants: {
       variant: {
         default:
           "bg-text text-bg hover:bg-text-muted",
+        primary:'bg-accent text-white/90',
+        base:"bg-fg-2 text-text hover:bg-fg-1",
         destructive:
           "bg-red-400 text-red-500 shadow-sm hover:bg-red-300",
         outline:
-          "border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground",
+          "border border-input bg-background  shadow-sm hover:bg-accent hover:text-accent-foreground",
         secondary:
-          "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
-        ghost: "",
+          "bg-secondary text-secondary-fg shadow-sm hover:bg-secondary/80",
+        ghost: "bg-transparent text-sm transition-colors text-text-muted hover:text-text",
         link: "text-primary underline-offset-4 hover:underline",
 
       },
       size: {
-        default: "h-9 px-4 py-2",
-        sm: "h-8 rounded-md px-3 text-xs",
-        lg: "h-10 rounded-md px-8",
+        default: "p-4 text-base",
+        sm: "p-2 text-xs",
+        lg: "p-4 md:p-6 text-base",
         icon: "h-9 w-9",
       },
     },

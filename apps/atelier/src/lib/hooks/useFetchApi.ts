@@ -2,10 +2,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiResponse, ErrorResponse, SuccessResponse } from "@repo/common-lib/types/response";
 
 export const useFetchApi = <T extends any, K extends any>(
-  handler: (request?: K, signal?: AbortSignal) => Promise<ApiResponse<T>>,  // ✅ Add signal parameter
+  handler: (request?: K, signal?: AbortSignal) => Promise<ApiResponse<T>>,  
   options?: {
     params?: K,
-    callInmediately?: boolean,
+    callImmediately?: boolean,
+    beforeFetchCallback?:(request?:K)=>Promise<boolean>,
+    afterFetchCallback?:(result:ApiResponse<T>)=>Promise<void>
   }
 ) => {
   const [data, setData] = useState<SuccessResponse<T> | null>(null);
@@ -15,7 +17,6 @@ export const useFetchApi = <T extends any, K extends any>(
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const handleFetch = useCallback(async (request?: K) => {
-  
     if (isLoadingRef.current) return;
 
     if (abortControllerRef.current) {
@@ -28,9 +29,11 @@ export const useFetchApi = <T extends any, K extends any>(
     setIsLoading(true);
 
     try {
-      console.log(request)
+      if(options?.beforeFetchCallback && await options.beforeFetchCallback(request)){
+          return;
+      }
       const result = await handler(request, signal); 
-    
+      if(options?.afterFetchCallback) await options.afterFetchCallback(result);
       if (result.data && !result.error) {
      
         setData(result);
@@ -38,22 +41,23 @@ export const useFetchApi = <T extends any, K extends any>(
         setError(result);
       }
     } catch (err: any) {
-      // ✅ Handle abort error
       if (err.name === 'AbortError') {
-        console.log('Request was aborted');
         return;
       }
       // Handle other errors
       console.error('Fetch error:', err);
     } finally {
-        console.log('hi')
         isLoadingRef.current = false;
         setIsLoading(false);
     }
   }, [handler]);
 
+  const reset= ()=>{
+    setData(null);
+    setError(null);
+  }
   useEffect(() => {
-    if (options?.callInmediately) {
+    if (options?.callImmediately) {
       handleFetch(options.params);
     }
 
@@ -63,12 +67,13 @@ export const useFetchApi = <T extends any, K extends any>(
         abortControllerRef.current.abort();
       }
     };
-  }, [options?.callInmediately, handleFetch, options?.params]);
+  }, [options?.callImmediately]);
 
   return {
     data,
     error,
     isLoading,
     handleFetch,
+    reset
   };
 };

@@ -958,7 +958,7 @@ describe('QueryBuilder', () => {
       queryBuilder['buildSelectQuery']();
 
       // Assert
-      expect(queryBuilder['query']).toBe(`SELECT * FROM ${TABLE_NAME} \nORDER BY name ASC`);
+      expect(queryBuilder['query']).toBe(`SELECT * FROM ${TABLE_NAME} \nORDER BY ${TABLE_NAME}.name ASC`);
     });
 
     it('should build SELECT query with ORDER BY DESC clause', () => {
@@ -967,7 +967,7 @@ describe('QueryBuilder', () => {
       queryBuilder['buildSelectQuery']();
 
       // Assert
-      expect(queryBuilder['query']).toBe(`SELECT * FROM ${TABLE_NAME} \nORDER BY created_at DESC`);
+      expect(queryBuilder['query']).toBe(`SELECT * FROM ${TABLE_NAME} \nORDER BY ${TABLE_NAME}.created_at DESC`);
     });
 
     it('should build SELECT query with LIMIT, OFFSET, and ORDER BY clauses', () => {
@@ -979,12 +979,12 @@ describe('QueryBuilder', () => {
       queryBuilder['buildSelectQuery']();
 
       // Assert
-      expect(queryBuilder['query']).toBe(`SELECT * FROM ${TABLE_NAME} \nORDER BY name ASC \nLIMIT 10 \nOFFSET 5`);
+      expect(queryBuilder['query']).toBe(`SELECT * FROM ${TABLE_NAME} \nORDER BY ${TABLE_NAME}.name ASC \nLIMIT 10 \nOFFSET 5`);
     });
 
     it('should build complete SELECT query with all clauses', () => {
       // Arrange
-      const targetQuery = `SELECT ${TABLE_NAME}.id,${TABLE_NAME}.name,${TABLE_NAME}.email,users.id,user_extra_data.id FROM ${TABLE_NAME} \nINNER JOIN users ON users.id = ${TABLE_NAME}.user_id \nLEFT JOIN user_extra_data ON user_extra_data.id = ${TABLE_NAME}.user_id \nWHERE users.id LIKE $1 \nOR users.id IS NOT NULL \nAND orders.id IN ($2,$3) \nAND orders.id = $4 \nOR orders.id = $5 \nOR orders.id IN ($6,$7) \nORDER BY name ASC \nLIMIT 10 \nOFFSET 5`;
+      const targetQuery = `SELECT ${TABLE_NAME}.id,${TABLE_NAME}.name,${TABLE_NAME}.email,users.id,user_extra_data.id FROM ${TABLE_NAME} \nINNER JOIN users ON users.id = ${TABLE_NAME}.user_id \nLEFT JOIN user_extra_data ON user_extra_data.id = ${TABLE_NAME}.user_id \nWHERE users.id LIKE $1 \nOR users.id IS NOT NULL \nAND orders.id IN ($2,$3) \nAND orders.id = $4 \nOR orders.id = $5 \nOR orders.id IN ($6,$7) \nORDER BY ${TABLE_NAME}.name ASC \nLIMIT 10 \nOFFSET 5`;
 
       queryBuilder
         .select('id,name,email,users.id,user_extra_data.id')
@@ -1122,6 +1122,130 @@ describe('QueryBuilder', () => {
       // Assert
       expect(queryBuilder['query']).toBe(targetQuery);
       expect(queryBuilder['values']).toEqual([18, 'admin', 'moderator', 'NYC', 'LA']);
+    });
+
+    it('should build SELECT query with whereNotIn (Postgres)', () => {
+      // Arrange
+      const targetQuery = `SELECT * FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.status NOT IN ($1,$2,$3)`;
+
+      queryBuilder.whereNotIn('status', ['deleted', 'archived', 'banned']);
+
+      queryBuilder['buildSelectQuery']();
+
+      // Assert
+      expect(queryBuilder['query']).toBe(targetQuery);
+      expect(queryBuilder['values']).toEqual(['deleted', 'archived', 'banned']);
+      expect(queryBuilder['valuesPosition']).toBe(3);
+    });
+
+    it('should build SELECT query with whereNotIn (MySQL)', async () => {
+      // Arrange
+      const mysqlConfig: DatabaseConfig = {
+        host: 'localhost',
+        port: 3306,
+        username: 'testuser',
+        password: 'testpass',
+        database: 'testdb',
+        client: 'mysql',
+      };
+      await initClient(mysqlConfig);
+      queryBuilder = new QueryBuilder(TABLE_NAME);
+
+      const targetQuery = `SELECT * FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.status NOT IN (?,?,?)`;
+
+      queryBuilder.whereNotIn('status', ['deleted', 'archived', 'banned']);
+
+      queryBuilder['buildSelectQuery']();
+
+      // Assert
+      expect(queryBuilder['query']).toBe(targetQuery);
+      expect(queryBuilder['values']).toEqual(['deleted', 'archived', 'banned']);
+      expect(queryBuilder['valuesPosition']).toBe(3);
+    });
+
+    it('should build SELECT query with whereNotIn and other WHERE conditions', () => {
+      // Arrange
+      const targetQuery = `SELECT * FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.status NOT IN ($1,$2) \nAND ${TABLE_NAME}.age >= $3 \nAND ${TABLE_NAME}.country = $4`;
+
+      queryBuilder
+        .whereNotIn('status', ['deleted', 'archived'])
+        .where('age', '>=', 18)
+        .where('country', '=', 'US');
+
+      queryBuilder['buildSelectQuery']();
+
+      // Assert
+      expect(queryBuilder['query']).toBe(targetQuery);
+      expect(queryBuilder['values']).toEqual(['deleted', 'archived', 18, 'US']);
+      expect(queryBuilder['valuesPosition']).toBe(4);
+    });
+
+    it('should build SELECT query with orWhereNotIn', () => {
+      // Arrange
+      const targetQuery = `SELECT * FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.category = $1 \nOR ${TABLE_NAME}.status NOT IN ($2,$3,$4)`;
+
+      queryBuilder
+        .where('category', '=', 'tech')
+        .orWhereNotIn('status', ['deleted', 'archived', 'banned']);
+
+      queryBuilder['buildSelectQuery']();
+
+      // Assert
+      expect(queryBuilder['query']).toBe(targetQuery);
+      expect(queryBuilder['values']).toEqual(['tech', 'deleted', 'archived', 'banned']);
+      expect(queryBuilder['valuesPosition']).toBe(4);
+    });
+
+    it('should build complex SELECT query with whereIn, whereNotIn, and orWhereNotIn', () => {
+      // Arrange
+      const targetQuery = `SELECT ${TABLE_NAME}.id,${TABLE_NAME}.name FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.category IN ($1,$2) \nAND ${TABLE_NAME}.status NOT IN ($3,$4) \nAND ${TABLE_NAME}.age >= $5 \nOR ${TABLE_NAME}.role NOT IN ($6,$7,$8)`;
+
+      queryBuilder
+        .select('id,name')
+        .whereIn('category', ['tech', 'science'])
+        .whereNotIn('status', ['deleted', 'archived'])
+        .where('age', '>=', 18)
+        .orWhereNotIn('role', ['banned', 'suspended', 'inactive']);
+
+      queryBuilder['buildSelectQuery']();
+
+      // Assert
+      expect(queryBuilder['query']).toBe(targetQuery);
+      expect(queryBuilder['values']).toEqual(['tech', 'science', 'deleted', 'archived', 18, 'banned', 'suspended', 'inactive']);
+      expect(queryBuilder['valuesPosition']).toBe(8);
+    });
+
+    it('should build SELECT query with whereGroup containing NOT IN operator', () => {
+      // Arrange
+      const targetQuery = `SELECT * FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.user_id = $1 \nAND (${TABLE_NAME}.status NOT IN ($2,$3,$4) \nOR ${TABLE_NAME}.priority > $5)`;
+
+      queryBuilder
+        .where('user_id', '=', 123)
+        .whereGroup([
+          ['status', 'NOT IN', ['deleted', 'archived', 'banned'], 'where'],
+          ['priority', '>', 5, 'orWhere'],
+        ]);
+
+      queryBuilder['buildSelectQuery']();
+
+      // Assert
+      expect(queryBuilder['query']).toBe(targetQuery);
+      expect(queryBuilder['values']).toEqual([123, 'deleted', 'archived', 'banned', 5]);
+    });
+
+    it('should build SELECT query with table-qualified columns in whereNotIn', () => {
+      // Arrange
+      const targetQuery = `SELECT * FROM ${TABLE_NAME} \nINNER JOIN users ON users.id = ${TABLE_NAME}.user_id \nWHERE users.status NOT IN ($1,$2)`;
+
+      queryBuilder
+        .join('user_id', 'users', 'id')
+        .whereNotIn('users.status', ['deleted', 'banned']);
+
+      queryBuilder['buildSelectQuery']();
+
+      // Assert
+      expect(queryBuilder['query']).toBe(targetQuery);
+      expect(queryBuilder['values']).toEqual(['deleted', 'banned']);
     });
   });
 
@@ -1801,6 +1925,37 @@ describe('QueryBuilder', () => {
       expect(params).toEqual(['J', 'active', 'pending', 1]);
     });
 
+    it('should handle WHERE NOT IN and additional WHERE (Postgres)', async () => {
+      const { initClient, getClient } = require('../client');
+      await initClient(postgresConfig);
+      queryBuilder = new QueryBuilder(TABLE_NAME);
+
+      queryBuilder.whereNotIn('status', ['deleted', 'archived']);
+      queryBuilder.where('id', '=', 1);
+      await queryBuilder.update(['name'], ['Updated']);
+
+      const [sql, params] = getClient().query.mock.calls[0];
+      expect(sql).toBe(
+        `UPDATE ${TABLE_NAME} SET name = $1 \nWHERE ${TABLE_NAME}.status NOT IN ($2,$3) \nAND ${TABLE_NAME}.id = $4`,
+      );
+      expect(params).toEqual(['Updated', 'deleted', 'archived', 1]);
+    });
+
+    it('should handle WHERE NOT IN with MySQL', async () => {
+      const { initClient, getClient } = require('../client');
+      await initClient(mysqlConfig);
+      queryBuilder = new QueryBuilder(TABLE_NAME);
+
+      queryBuilder.whereNotIn('status', ['deleted', 'archived', 'banned']);
+      await queryBuilder.update(['active'], [false]);
+
+      const [sql, params] = getClient().query.mock.calls[0];
+      expect(sql).toBe(
+        `UPDATE ${TABLE_NAME} SET active = ? \nWHERE ${TABLE_NAME}.status NOT IN (?,?,?)`,
+      );
+      expect(params).toEqual([false, 'deleted', 'archived', 'banned']);
+    });
+
     it('should support OR in WHERE with correct param order (Postgres)', async () => {
       const { initClient, getClient } = require('../client');
       await initClient(postgresConfig);
@@ -2119,6 +2274,48 @@ describe('QueryBuilder', () => {
       expect(queryBuilder['query']).toBe(
         `DELETE FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.status IN (?,?,?) \nAND ${TABLE_NAME}.id = ? \nOR ${TABLE_NAME}.category IN (?,?,?)`,
       );
+    });
+
+    it('should handle WHERE NOT IN conditions (Postgres)', async () => {
+      await initClient(postgresConfig);
+      queryBuilder = new QueryBuilder(TABLE_NAME);
+      queryBuilder.whereNotIn('status', ['deleted', 'archived', 'banned']);
+      queryBuilder.where('id', '>', 100);
+      queryBuilder['buildDeleteQuery']();
+
+      expect(queryBuilder['query']).toBe(
+        `DELETE FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.status NOT IN ($1,$2,$3) \nAND ${TABLE_NAME}.id > $4`,
+      );
+      expect(queryBuilder['values']).toEqual(['deleted', 'archived', 'banned', 100]);
+    });
+
+    it('should handle WHERE NOT IN and OR WHERE NOT IN conditions (MySQL)', async () => {
+      await initClient(mysqlConfig);
+      queryBuilder = new QueryBuilder(TABLE_NAME);
+      queryBuilder.whereNotIn('status', ['deleted', 'archived']);
+      queryBuilder.where('id', '=', 1);
+      queryBuilder.orWhereNotIn('category', ['spam', 'test', 'temporary']);
+      queryBuilder['buildDeleteQuery']();
+
+      expect(queryBuilder['query']).toBe(
+        `DELETE FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.status NOT IN (?,?) \nAND ${TABLE_NAME}.id = ? \nOR ${TABLE_NAME}.category NOT IN (?,?,?)`,
+      );
+      expect(queryBuilder['values']).toEqual(['deleted', 'archived', 1, 'spam', 'test', 'temporary']);
+    });
+
+    it('should handle complex DELETE with mixed IN and NOT IN conditions', async () => {
+      await initClient(postgresConfig);
+      queryBuilder = new QueryBuilder(TABLE_NAME);
+      queryBuilder.whereIn('category', ['tech', 'science']);
+      queryBuilder.whereNotIn('status', ['active', 'pending']);
+      queryBuilder.where('created_at', '<', '2020-01-01');
+      queryBuilder.orWhereNotIn('priority', ['high', 'critical']);
+      queryBuilder['buildDeleteQuery']();
+
+      expect(queryBuilder['query']).toBe(
+        `DELETE FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.category IN ($1,$2) \nAND ${TABLE_NAME}.status NOT IN ($3,$4) \nAND ${TABLE_NAME}.created_at < $5 \nOR ${TABLE_NAME}.priority NOT IN ($6,$7)`,
+      );
+      expect(queryBuilder['values']).toEqual(['tech', 'science', 'active', 'pending', '2020-01-01', 'high', 'critical']);
     });
 
     it('should handle single WHERE condition', async () => {

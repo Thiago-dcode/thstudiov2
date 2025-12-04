@@ -197,8 +197,9 @@ const SubmitButton = ({
     return (
         <Button
             variant={variant || 'default'}
+            size={'default'}
             type="submit"
-            className={cn("w-full mt-6 py-6", className)}
+            className={cn("w-full m-auto mt-4 ", className)}
             {...buttonProps}
         >
             {!isPending ? !success ? children : <Check className="size-6" /> : <Spinner className={cn("size-6", spinnerClassName)} />}

@@ -3,10 +3,12 @@ import { databaseCliConfig } from './utils/config';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import Logger from '@repo/backend-lib/utils/console';
+import { connectDb } from './utils';
 
 const seed = async (className = 'main') => {
   const start = Date.now();
   try {
+    await connectDb();
     const seedDirectory = databaseCliConfig.seedDirectory;
     if (!fs.existsSync(seedDirectory)) {
       fs.mkdirSync(seedDirectory, { recursive: true });

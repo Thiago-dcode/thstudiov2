@@ -375,6 +375,21 @@ private  handleBuildGet(columns: string[], values: SqlValue[], select: string[] 
   }
 
   /**
+   * Add a WHERE NOT IN clause to the query
+   * @param column - The column name to filter on
+   * @param values - Array of values to exclude
+   * @returns This QueryBuilder instance for method chaining
+   * @example
+   * ```ts
+   * queryBuilder.whereNotIn('status', ['deleted', 'archived']);
+   * ```
+   */
+  public whereNotIn(column: string, values: SqlValue[]) {
+    this.handlePushWhereIn(column,'NOT IN', values, 'where');
+    return this;
+  }
+
+  /**
    * Add an OR WHERE IN clause to the query
    * @param column - The column name to filter on
    * @param values - Array of values to match against
@@ -387,6 +402,23 @@ private  handleBuildGet(columns: string[], values: SqlValue[], select: string[] 
    * ```
    */
   public orWhereIn(column: string, values: SqlValue[]) {
+    this.handlePushWhereIn(column,'IN', values, this.wheres.length === 0? 'where' : 'orWhere');
+    return this;
+  }
+
+  /**
+   * Add an OR WHERE NOT IN clause to the query
+   * @param column - The column name to filter on
+   * @param values - Array of values to exclude
+   * @returns This QueryBuilder instance for method chaining
+   * @example
+   * ```ts
+   * queryBuilder
+   *   .where('category', '=', 'tech')
+   *   .orWhereNotIn('status', ['deleted', 'archived']);
+   * ```
+   */
+  public orWhereNotIn(column: string, values: SqlValue[]) {
     this.handlePushWhereIn(column,'NOT IN', values, this.wheres.length === 0? 'where' : 'orWhere');
     return this;
   }
@@ -440,7 +472,9 @@ private  handleBuildGet(columns: string[], values: SqlValue[], select: string[] 
     this._offset = offset;
     return this;
   }
-
+  public random(){
+    this._orderBy = 'RANDOM()';
+  }
   public orderBy(column: string, order: 'ASC' | 'DESC' = 'ASC') {
     this.operationsChain.push('orderBy');
     this._orderBy = `${this.buildColumn(column)} ${order}`;
@@ -623,11 +657,12 @@ offset = isNull ? offset : offset + 1;
    * @protected
    */
   protected buildWhereInQuery(where: WhereInCondition, offset: number = 0) {
+    const operator = where.operator; // 'IN' or 'NOT IN'
     switch (getClient().config.client) {
       case 'postgres':
-        return `${this.buildColumn(where.column)} IN (${where.values.map((_, index) => `$${where.position + offset + index + 1}`).join(',')})`;
+        return `${this.buildColumn(where.column)} ${operator} (${where.values.map((_, index) => `$${where.position + offset + index + 1}`).join(',')})`;
       case 'mysql':
-        return `${this.buildColumn(where.column)} IN (${where.values.map(() => `?`).join(',')})`;
+        return `${this.buildColumn(where.column)} ${operator} (${where.values.map(() => `?`).join(',')})`;
       default:
         throw new QueryBuilderWrongDatabaseClientException(
           getClient().config.client,

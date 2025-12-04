@@ -27,21 +27,8 @@ const up = async () => {
     Column.timestamp('last_storage_request_date', {
       default: 'NOW()',
     }),
-    Column.timestamp('plan_start_date', {
-      default: 'NOW()',
-    }),
-    Column.timestamp('plan_end_date', {
-      nullable: true,
-    }),
-    Column.boolean('plan_autorenewal', {
-      default: true,
-    }),
     Column.foreignKey('user_id', 'users', 'id', {
       onDelete: 'CASCADE',
-    }),
-    Column.foreignKey('plan_id', 'plans', 'id', {
-      onDelete: 'CASCADE',
-      nullable: true,
     }),
     Column.timestamps(true),
   ]);

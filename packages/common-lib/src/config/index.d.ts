@@ -45,6 +45,14 @@ declare const config: (envPath?: string | undefined) => {
         signedUrlExpiration: number;
         folder: string | undefined;
     };
+    stripe: {
+        secretKey: string;
+    };
+    paypal: {
+        url: string;
+        secretKey: string;
+        clientId: string;
+    };
     encryption: {
         secret: string;
     };

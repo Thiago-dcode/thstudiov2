@@ -64,6 +64,14 @@ const config = (envPath) => {
             signedUrlExpiration: process.env.STORAGE_SIGNED_URL_EXPIRATION ? parseInt(process.env.STORAGE_SIGNED_URL_EXPIRATION) : 3600,
             folder: process.env.STORAGE_FOLDER,
         },
+        stripe: {
+            secretKey: process.env.STRIPE_SECRET_KEY
+        },
+        paypal: {
+            url: process.env.PAYPAL_URL,
+            secretKey: process.env.PAYPAL_SECRET_KEY,
+            clientId: process.env.PAYPAL_CLIENT_ID
+        },
         encryption: {
             secret: process.env.ENCRYPTION_SECRET || 'secret',
         },

@@ -21,6 +21,7 @@ import { compressConfig, s3StorageConfig } from 'src/config/storage';
 import { CompressService } from '@repo/backend-lib/services/compress-service/base';
 import { FactoryCompressService } from '@repo/backend-lib/services/compress-service/factory';
 import KeyvRedis from '@keyv/redis';
+import Utils from './Utils.service';
 @Global()
 @Module({
   exports: [
@@ -30,9 +31,12 @@ import KeyvRedis from '@keyv/redis';
     LogService,
     StorageService,
     CompressService,
+    Utils,
   ],
   providers: [
     RequestService,
+    Utils,
+    
     {
       provide: StorageService,
       useFactory: () => {

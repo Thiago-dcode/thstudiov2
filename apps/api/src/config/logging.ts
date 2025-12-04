@@ -1,4 +1,3 @@
-import path from 'path';
 import {
   LogConfig,
   LogLevel,
@@ -12,7 +11,7 @@ import { VIEW_ENGINE } from 'src/common/utils/constants';
 import { viewPath } from 'src/common/utils';
 import { getConfigValue } from '@repo/common-lib/config/utils';
 
-export const LOGGIN_FOLDER = path.resolve(process.cwd(), 'storage', 'logs');
+
 export type LogginChannels = 'api' | 'users';
 export const API_ERRORS_CHANNEL = 'api/errors' as const;
 export type AppLogConfig = {
@@ -21,7 +20,6 @@ export type AppLogConfig = {
 
 export const logConfig: AppLogConfig = {
   api: {
-    logFolder: LOGGIN_FOLDER,
     channel: 'api',
     callback: {
       channel: API_ERRORS_CHANNEL + '/500',
@@ -47,7 +45,6 @@ export const logConfig: AppLogConfig = {
     },
   },
   users: {
-    logFolder: LOGGIN_FOLDER,
     channel: 'users',
   },
 };
