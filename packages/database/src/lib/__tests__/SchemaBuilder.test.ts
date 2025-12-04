@@ -1337,7 +1337,7 @@ updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         ColumnBuilder.string('description', 1000, {
           nullable: true,
         }),
-        ColumnBuilder.enum('billing_type', 'BILLING_TYPES', {
+        ColumnBuilder.enum('billing_type', 'BILLING_TYPE', {
           nullable: false,
           default: 'monthly',
         }),
@@ -1378,7 +1378,7 @@ updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 subscription_id SERIAL PRIMARY KEY,
 name VARCHAR(255) NOT NULL,
 description VARCHAR(1000) NULL,
-billing_type BILLING_TYPES NOT NULL DEFAULT 'monthly',
+billing_type BILLING_TYPE NOT NULL DEFAULT 'monthly',
 user_role USER_EDITORS_ROLES NULL DEFAULT 'editor',
 price INTEGER NOT NULL,
 duration_months INTEGER NOT NULL DEFAULT 1,
@@ -1421,7 +1421,7 @@ archived_at TIMESTAMPTZ NULL
           nullable: true,
         }),
         ColumnBuilder.password('hashed_password'),
-        ColumnBuilder.enum('billing_preference', 'BILLING_TYPES', {
+        ColumnBuilder.enum('billing_preference', 'BILLING_TYPE', {
           nullable: false,
           default: 'monthly',
         }),
@@ -1492,7 +1492,7 @@ last_name VARCHAR(100) NOT NULL,
 primary_email VARCHAR(255) NOT NULL UNIQUE,
 secondary_email VARCHAR(255) NULL,
 hashed_password VARCHAR(255) NOT NULL,
-billing_preference BILLING_TYPES NOT NULL DEFAULT 'monthly',
+billing_preference BILLING_TYPE NOT NULL DEFAULT 'monthly',
 role USER_EDITORS_ROLES NOT NULL DEFAULT 'editor',
 phone_number VARCHAR(20) NULL,
 address VARCHAR(500) NULL,

@@ -1,13 +1,9 @@
- import { CreatePlanWithDetailsInput } from '@repo/common-lib/schemas/plan';
 import { Query } from '../lib/facades';
 import { stripe } from '@repo/backend-lib/services/payment-service/stripe';
 import { paypal } from '@repo/backend-lib/services/payment-service/paypal';
 import { LogService } from '@repo/backend-lib/services/log-service';
+import { CreatePlanWithDetailsInput } from '@repo/common-lib/schemas/plan';
 export const main = async () => {
-
-
-
-
 
   const plans: CreatePlanWithDetailsInput[] = [
     {
@@ -95,7 +91,7 @@ export const main = async () => {
       is_active: true,
       is_free: false,
       is_popular:true,
-      max_media_size: 10240, // 10GB storage in MB (~$0.23/month)
+      max_media_size: 20240, // 10GB storage in MB (~$0.23/month)
       max_projects: 20,
       max_portfolios:5,
       max_clients: 10,

@@ -87,11 +87,6 @@ const result = await Promise.all(Object.entries(_valuesToAttach).map(async([key,
   }));
   return result;
 }
-  async findOne<T = any>(id: number, options?: {select?: string[] | string, join?: Join[]}) {
-    let query = this.queryBuilder.where(this.options.primaryKey, '=', id);
-    query = this.buildQuery(query, options);
-    return await query.first<T>();
-  }
 
   protected async _findOneBy<T = any>(column: string, value: any,options?: {select?: string[] | string, join?: Join[]}) {
     let query = this.queryBuilder.where(column, '=', value);

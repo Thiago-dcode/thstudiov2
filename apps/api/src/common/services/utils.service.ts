@@ -9,9 +9,9 @@ export default class Utils {
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
-  public async cacheRemember(
+  public async cacheRemember<T>(
     key: string,
-    toRemember: Promise<object>,
+    toRemember: Promise<T>,
     options: {
       append_language: boolean;
       ttl: number;
@@ -19,7 +19,7 @@ export default class Utils {
       append_language: false,
       ttl: 1000 * 60 * 60 * 24,
     },
-  ): Promise<object> {
+  ): Promise<T> {
     let _key = key;
     if (options.append_language) {
       _key += `-${this.requestService.language}`;

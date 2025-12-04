@@ -2,19 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { QueryBuilder } from '@repo/database/queryBuilder';
 import { IndexPlanRequest } from './requests/index-plan.request';
 import { BaseRepository } from '@repo/database/repositories';
+import { PlanSchema, CreatePlanInput, FullPlanColumns, FullPlanSchema, PlanWithPricesColumns, PlanWithPricesSchema } from '@repo/common-lib/schemas/plan';
 import {
-  PlanSchema,
-  CreatePlanInput,
-  FullPlanColumns,
-  FullPlanSchema,
-  PlanWithPricesSchema,
-} from '@repo/common-lib/schemas/plan';
+} from '@repo/common-lib/schemas/plan-price';
 import { RequestService } from 'src/common/services/request.service';
 import { FullPlan, PlanPrice } from '@repo/common-lib/types/plan';
 
 @Injectable()
 export class PlansRepository extends BaseRepository {
-  readonly BASE_COLUMNS: FullPlanColumns[] = [
+  readonly BASE_COLUMNS: PlanWithPricesColumns[] = [
     'plans.id',
     'plans.base_price',
     'plans.name',

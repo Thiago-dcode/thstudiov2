@@ -60,7 +60,7 @@ const up = async () => {
     Column.foreignKey('plan_id', 'plans', 'id', {
       onDelete: 'CASCADE',
     }),
-    Column.enum('billing_type', 'BILLING_TYPES'),
+    Column.enum('billing_type', 'BILLING_TYPE'),
     Column.timestamps(true),
   ]);
   await createTimeStampsTrigger('plan_prices');
@@ -87,7 +87,7 @@ const up = async () => {
     Column.boolean('is_active', {
       default: true,
     }),
-    Column.enum('type', 'PLAN_OFFERS_TYPES'),
+    Column.enum('type', 'PLAN_OFFERS_TYPE'),
     Column.timestamp('start_date'),
     Column.timestamp('end_date'),
     Column.foreignKey('plan_id', 'plans', 'id', {

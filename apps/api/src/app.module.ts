@@ -8,7 +8,7 @@ import { ValidatorProviders } from './common/validators/validator.providers';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ScheduleModule } from '@nestjs/schedule';
 import { PlansModule } from './v1/modules/plans/plans.module';
-import { UserPlanTransactionsModule } from './v1/modules/user-plan-transactions/user-plan-transactions.module';
+import { TransactionsModule } from './v1/modules/transactions/transactions.module';
 import { TestModule } from './route-test/test.module';
 import { I18nModule } from 'nestjs-i18n';
 import { join } from 'path';
@@ -31,7 +31,7 @@ const APP_MODULES = [
   AuthModule,
   UserModule,
   PlansModule,
-  UserPlanTransactionsModule,
+  TransactionsModule,
   UserSessionsModule,
   MediaModule,
   CategoriesModule,

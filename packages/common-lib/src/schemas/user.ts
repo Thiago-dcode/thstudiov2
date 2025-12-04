@@ -53,7 +53,6 @@ export type UserExtraDataSchema = {
   storage_requests_count: number;
   last_storage_request_date: Date;
   user_id: number;
-  plan_subscription_id: number | null;
   created_at: Date;
   updated_at: Date;
 };

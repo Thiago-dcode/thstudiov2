@@ -8,7 +8,7 @@ import {
 import { ModelExist } from 'src/common/validators/model-exist.validtor';
 import { IsAvailableEnum } from 'src/common/validators/is-enum.validator';
 
-export class CreateUserPlanTransactionRequest {
+export class CreateTransactionRequest {
   @IsAvailableEnum('TRANSACTION_STATUS')
   @IsNotEmpty()
   status: string;
@@ -17,9 +17,13 @@ export class CreateUserPlanTransactionRequest {
   @IsNotEmpty()
   payment_status: string;
 
-  @IsOptional()
   @IsAvailableEnum('PAYMENT_METHOD')
-  payment_method?: string;
+  @IsNotEmpty()
+  payment_method: string;
+
+  @IsAvailableEnum('PRODUCT_TYPE')
+  @IsNotEmpty()
+  product_type: string;
 
   @IsNumber()
   @IsNotEmpty()
@@ -32,15 +36,10 @@ export class CreateUserPlanTransactionRequest {
   @ModelExist('users')
   user_id: number;
 
-  @IsInt()
-  @IsNotEmpty()
-  @IsPositive()
-  @ModelExist('plan_prices')
-  plan_price_id: number;
-
   @IsOptional()
   @IsInt()
   @IsPositive()
-  @ModelExist('plan_offers')
-  plan_offer_id?: number;
+  @ModelExist('plan_prices')
+  plan_price_id?: number;
 }
+

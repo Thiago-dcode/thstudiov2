@@ -165,7 +165,7 @@ export type FullPlanSchema = PlanWithPricesSchema & {
   po_updated_at: Date;             // COLLISION: all tables have 'updated_at'
   // Non-colliding columns from plan_offers (no prefix needed)
   discount: number;
-  type: EnumType<'PLAN_OFFERS_TYPES'>;
+  type: EnumType<'PLAN_OFFERS_TYPE'>;
   start_date: Date;
   end_date: Date;
   plan_price_id: number | null;
