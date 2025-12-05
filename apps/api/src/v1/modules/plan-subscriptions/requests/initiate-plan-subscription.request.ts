@@ -1,3 +1,4 @@
+import type { EnumType } from '@repo/common-lib/constants/enums';
 import {
   IsInt,
   IsNotEmpty,
@@ -10,7 +11,6 @@ import { ModelExist } from 'src/common/validators/model-exist.validtor';
 
 export class InitiatePlanSubscriptionRequest {
   @IsInt()
-  @IsNotEmpty()
   @IsPositive()
   @ModelExist('plan_prices')
   plan_price_id: number;
@@ -18,11 +18,19 @@ export class InitiatePlanSubscriptionRequest {
   @IsNotEmpty()
   @IsString()
   @IsAvailableEnum('PAYMENT_METHOD')
-  payment_method: string;
+  payment_method: EnumType<'PAYMENT_METHOD'>;
 
   @IsOptional()
   @IsInt()
   @IsPositive()
   @ModelExist('plan_offers')
   plan_offer_id?: number;
+
+  @IsString()
+  success_url:string;
+
+  @IsString()
+  cancel_url:string;
+
+
 }

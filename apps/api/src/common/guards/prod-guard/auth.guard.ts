@@ -69,6 +69,7 @@ export class AuthGuard implements CanActivate {
         email: payload.email,
         username: payload.username,
         email_validated: payload.email_validated,
+        stripe_customer_id:payload.stripe_customer_id,
         twofa_enabled: payload.twofa_enabled,
         twofa_code: payload.twofa_code,
         twofa_expires_at: payload.twofa_expires_at,

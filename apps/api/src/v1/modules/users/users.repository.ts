@@ -20,6 +20,7 @@ export class UserRepository extends BaseRepository {
     'users.id',
     'users.email',
     'users.username',
+    'users.stripe_customer_id',
     'users.email_validated',
     'users.twofa_enabled',
     'users.twofa_code',
@@ -130,11 +131,12 @@ export class UserRepository extends BaseRepository {
     result: BaseUserSchema,
     withPassword: boolean = false,
   ): BaseUser | BaseUserWithPassword {
-    const baseUser = {
+   return {
       id: result?.id,
       email: result?.email,
       username: result?.username,
       email_validated: result?.email_validated,
+      stripe_customer_id: result.stripe_customer_id,
       twofa_enabled: result?.twofa_enabled,
       twofa_code: result?.twofa_code,
       twofa_expires_at: result?.twofa_expires_at,
@@ -144,7 +146,6 @@ export class UserRepository extends BaseRepository {
       twofa_attempts: result?.twofa_attempts,
     };
 
-    return baseUser;
   }
   private formatFullUser(result: UserSchemaWithAddress): User {
     return {

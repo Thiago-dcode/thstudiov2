@@ -43,6 +43,8 @@ export class PlanPricesRepository extends BaseRepository {
 
     return {
       id: result.id,
+      paypal_id:result.paypal_id,
+      stripe_id:result.stripe_id,
       billing_type: result.billing_type,
       plan_id: result.plan_id,
       price: result.price,

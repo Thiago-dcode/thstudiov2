@@ -2,7 +2,7 @@ import { PlanPriceSchema } from "../schemas/plan-price";
 
 export type PlanPrice = Omit<PlanPriceSchema, 'created_at' | 'updated_at'>;
 
-export type FullPlanPrice = Omit<PlanPrice, 'stripe_id' | 'paypal_id'> & {
+export type FullPlanPrice = PlanPrice & {
   plan: {
     id: number;
     name: string;

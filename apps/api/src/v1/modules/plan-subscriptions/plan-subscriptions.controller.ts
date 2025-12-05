@@ -1,8 +1,8 @@
-import { Controller, Get, Param, Delete, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Delete, Post } from '@nestjs/common';
 import { PlanSubscriptionsService } from './plan-subscriptions.service';
 import { InitiatePlanSubscriptionRequest } from './requests/initiate-plan-subscription.request';
 
-@Controller('plan-subscriptions')
+@Controller('subscriptions')
 export class PlanSubscriptionsController {
   constructor(
     private readonly planSubscriptionsService: PlanSubscriptionsService,
@@ -23,9 +23,9 @@ export class PlanSubscriptionsController {
     return this.planSubscriptionsService.remove(+id);
   }
 
-  @Post()
-  initiate(initiateRequest: InitiatePlanSubscriptionRequest) {
-
+  @Post('initiate')
+  initiate(@Body() initiateRequest: InitiatePlanSubscriptionRequest) {
+    console.log(initiateRequest)
     return this.planSubscriptionsService.initiate(initiateRequest)
   }
 }

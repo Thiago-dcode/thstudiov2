@@ -8,6 +8,7 @@ import { PlansService } from '../plans/plans.service';
 import { BaseUser } from '@repo/common-lib/types/user';
 import { CreatePlanSubscriptionInput } from '@repo/common-lib/schemas/plan-subscription';
 import Utils from 'src/common/services/Utils.service';
+import { stripe } from '@repo/backend-lib/services/payment-service/stripe';
 
 @Injectable()
 export class PlanSubscriptionsService {
@@ -19,14 +20,57 @@ export class PlanSubscriptionsService {
     private readonly utils: Utils,
   ) {}
 
-  async initiate({ plan_price_id }: InitiatePlanSubscriptionRequest) {
+  async initiate({ plan_price_id , success_url, cancel_url,payment_method}: InitiatePlanSubscriptionRequest) {
     //TODO: fetch plan price
+
     const planPrice = await this.planPriceService.findOne(plan_price_id);
     if (!planPrice) {
       throw new HttpException('Plan price does not exist', 422);
     }
     if (planPrice.plan.is_free) {
       return await this.setFreePlan(this.requestService.user);
+    }
+    const planSub = await this.create(
+      {
+        is_active:false,
+        status:'PENDING',
+        auto_renewal:true,
+        amount:planPrice.price,
+        paypal_id:null,
+        stripe_id:null,
+        start_billing_date: new Date(),
+        next_billing_date: this.utils.getNextBillingDate(planPrice.billing_type),
+        payment_status:'PENDING',
+        plan_id:planPrice.plan_id,
+        plan_offer_id:null,
+        user_id:this.requestService.user.id,
+        payment_method,
+        plan_price_id,
+      }
+    )
+
+    switch(payment_method){
+
+      case 'CARD':
+        //STRIPE
+      return await stripe.checkout.sessions.create({
+        customer: this.requestService.user.stripe_customer_id,
+        mode: 'subscription',
+        line_items: [
+          {
+            price: planPrice.stripe_id, 
+            quantity: 1
+          }
+        ],
+        metadata: {
+          planSubscriptionId: planSub.id,
+        },
+        success_url,
+        cancel_url
+
+      });
+   
+
     }
   }
 

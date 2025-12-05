@@ -26,10 +26,12 @@ import { MediaModule } from './v1/modules/media/media.module';
 import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/constants';
 import { CategoriesModule } from './v1/modules/categories/categories.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
+import { PlanSubscriptionsModule } from './v1/modules/plan-subscriptions/plan-subscriptions.module';
 const APP_MODULES = [
   AuthModule,
   UserModule,
   PlansModule,
+  PlanSubscriptionsModule,
   UserSessionsModule,
   MediaModule,
   CategoriesModule,
