@@ -6,6 +6,7 @@ export type UserSchema = {
   surname?: string | null;
   username: string;
   password: string;
+  stripe_customer_id?:string|null,
   biography?: string | null;
   email: string;
   avatar?:string;

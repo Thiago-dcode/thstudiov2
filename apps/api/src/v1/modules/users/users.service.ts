@@ -14,6 +14,7 @@ import { CompressService } from '@repo/backend-lib/services/compress-service/bas
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { s3StorageConfig } from 'src/config/storage';
 import { PlanSubscriptionsService } from '../plan-subscriptions/plan-subscriptions.service';
+import { stripe } from '@repo/backend-lib/services/payment-service/stripe';
 
 @Injectable()
 export class UserService {
@@ -114,13 +115,29 @@ export class UserService {
   @OnEvent(NEW_USER_EVENT)
   async handleNewUserEvent(event: NewUserEvent) {
     try {
-      this.logService.info(`${NEW_USER_EVENT} user [${event.user.id}]`);
+      //Create stripe customer
+      const stripeCustomer = await stripe.customers.create({
+        email: event.user.email,
+        business_name: event.user.username,
+      });
+      this.logService.name('new-user').info(
+        `${NEW_USER_EVENT} user [${event.user.id}] Stripe customer created`,
+        stripeCustomer,
+      );
+      //UPDATE USER
+      await this.userRepository.updateById(event.user.id, {
+        stripe_customer_id: stripeCustomer.id,
+      });
+
+      //Handle set free plan
       const result = await this.planSubscriptionService.setFreePlan(event.user);
       this.logService
-      .name('new-user')
-      .info(`${NEW_USER_EVENT} user [${event.user.id}] set free plan`, {
-        result,
-      });
+        .name('new-user')
+        .info(`${NEW_USER_EVENT} user [${event.user.id}] set free plan`, {
+          result,
+        });
+
+        //Create a user extra data
       const extraData = await this.userExtraDataRepository.create({
         user_id: event.user.id,
       });
@@ -129,6 +146,7 @@ export class UserService {
         .info(`${NEW_USER_EVENT} user [${event.user.id}] extra data`, {
           extraData,
         });
+      //Notify user
       await this.mailService.send(this.notifyNewUserMail.setUser(event.user));
     } catch (error) {
       this.logService

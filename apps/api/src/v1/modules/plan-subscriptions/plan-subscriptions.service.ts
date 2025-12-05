@@ -1,15 +1,13 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, Injectable } from '@nestjs/common';
 import { PlanSubscriptionsRepository } from './plan-subscriptions.repository';
 import { UpdatePlanSubscriptionRequest } from './requests/update-plan-subscription.request';
-import { CreatePlanSubscriptionRequest } from './requests/create-plan-subscription.request';
 import { InitiatePlanSubscriptionRequest } from './requests/initiate-plan-subscription.request';
-import { TransactionsService } from '../transactions/transactions.service';
 import { PlanPricesService } from '../plan-prices/plan-prices.service';
 import { RequestService } from 'src/common/services/request.service';
 import { PlansService } from '../plans/plans.service';
-import { addMonths, addYears } from 'date-fns';
 import { BaseUser } from '@repo/common-lib/types/user';
 import { CreatePlanSubscriptionInput } from '@repo/common-lib/schemas/plan-subscription';
+import Utils from 'src/common/services/Utils.service';
 
 @Injectable()
 export class PlanSubscriptionsService {
@@ -18,7 +16,7 @@ export class PlanSubscriptionsService {
     private readonly planPriceService: PlanPricesService,
     private readonly requestService: RequestService,
     private readonly planService: PlansService,
-    private readonly transactionService: TransactionsService,
+    private readonly utils: Utils,
   ) {}
 
   async initiate({ plan_price_id }: InitiatePlanSubscriptionRequest) {
@@ -44,20 +42,20 @@ export class PlanSubscriptionsService {
     if (!lifetimePrice) {
       throw new HttpException(
         'Lifetime price not found',
-        HttpStatus.BAD_REQUEST,
+        500,
       );
     }
-    const transaction = await this.transactionService.create({
-      amount: lifetimePrice.price,
-      product_type: 'PLAN',
-      user_id: user.id,
-      plan_price_id: lifetimePrice.id,
-      status: 'SUCCESS',
-      payment_status: 'SUCCESS',
-      payment_method: 'CARD',
-    });
-    return await this.createOrUpdate({
+   //A user can only have 1 subscription active
+   await this.desactivateAllUserSubscriptions(user.id);
+   
+    return await this.create({
       is_active: true,
+      amount:0,
+      payment_method:'CARD',
+      payment_status:'SUCCESS',
+      start_billing_date:new Date(),
+      next_billing_date: this.utils.getNextBillingDate(lifetimePrice.billing_type),
+      status:'SUCCESS',
       user_id: user.id,
       stripe_id: null,
       auto_renewal: true,
@@ -65,50 +63,33 @@ export class PlanSubscriptionsService {
       plan_id: freePlan.id,
       plan_offer_id: null,
       plan_price_id: lifetimePrice.id,
-      transaction_id: transaction.id,
     });
   }
 
-  async createOrUpdate(
-    createPlanSubscriptionDto: CreatePlanSubscriptionRequest,
+  async create(
+    planData: CreatePlanSubscriptionInput,
   ) {
-    const planPrice = await this.planPriceService.findOne(
-      createPlanSubscriptionDto.plan_price_id,
-    );
-    if (!planPrice) {
-      throw new HttpException('No plan price found', HttpStatus.BAD_REQUEST);
-    }
-    const next_billing_date =
-      planPrice.plan.is_free || planPrice.billing_type === 'YEARLY'
-        ? addYears(new Date(), 1)
-        : addMonths(new Date(), planPrice.billing_type === 'MONTHLY' ? 1 : 3);
-    const data: CreatePlanSubscriptionInput = {
-      start_billing_date: new Date(),
-      next_billing_date: next_billing_date,
-      stripe_id: createPlanSubscriptionDto.stripe_id ?? null,
-      paypal_id: createPlanSubscriptionDto.paypal_id ?? null,
-      auto_renewal: createPlanSubscriptionDto.auto_renewal ?? true,
-      user_id: createPlanSubscriptionDto.user_id,
-      plan_id: createPlanSubscriptionDto.plan_id,
-      plan_price_id: createPlanSubscriptionDto.plan_price_id,
-      plan_offer_id: createPlanSubscriptionDto.plan_offer_id ?? null,
-      transaction_id: createPlanSubscriptionDto.transaction_id ?? null,
-      is_active: createPlanSubscriptionDto.is_active ?? true,
-    };
-    //A user can only have 1 subscription. 1:1 relationship
-    let planSubScription = await this.planSubscriptionsRepository.findOneByUser(
-      data.user_id,
-    );
-    if (!planSubScription) {
-      planSubScription = await this.planSubscriptionsRepository.create(data);
-    } else {
-      planSubScription = await this.planSubscriptionsRepository.updateOne(
-        planSubScription.id,
-        data,
-      );
-    }
+   
+    const planSubScription = await this.planSubscriptionsRepository.create(planData);
+   
     return planSubScription;
   }
+
+  async desactivateAllUserSubscriptions(userId:string|number){
+    await this.planSubscriptionsRepository.update({
+      is_active:false
+    },{
+      wheres:[{
+        column:'user_id',
+        operator:'=',
+        type:'where',
+        value:userId
+      }]
+    })
+
+  }
+
+ 
 
   findAll() {
     return `This action returns all plan subscriptions`;

@@ -111,7 +111,7 @@ const result = await Promise.all(Object.entries(_valuesToAttach).map(async([key,
     query = this.buildQuery(query, options);
     return await query.exists();
   }
-  async update(data: Record<string, SqlValue>, options: {wheres: WhereOptions[],select?: string[] | string, join?: Join[]}) {
+  async update<T extends Record<string, SqlValue>>(data: T, options: {wheres: WhereOptions[],select?: string[] | string, join?: Join[]}) {
     let query = this.buildQuery(this.queryBuilder, options);
     const columns = Object.keys(data);
     const values = Object.values(data);

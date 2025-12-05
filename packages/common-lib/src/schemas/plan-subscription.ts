@@ -1,10 +1,14 @@
 import { TableColumn } from '../types/database';
-import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
+import { EnumType, TABLES_ENUM } from '@repo/common-lib/constants/enums';
 
 export type PlanSubscriptionSchema = {
   id: number;
   stripe_id: string | null;
   paypal_id: string | null;
+  status: EnumType<'TRANSACTION_STATUS'>;
+  payment_status: EnumType<'PAYMENT_STATUS'>;
+  payment_method: EnumType<'PAYMENT_METHOD'>;
+  amount: number;
   start_billing_date: Date;
   next_billing_date: Date;
   auto_renewal: boolean;
@@ -12,7 +16,6 @@ export type PlanSubscriptionSchema = {
   plan_id: number;
   plan_price_id: number;
   plan_offer_id: number | null;
-  transaction_id: number | null;
   is_active: boolean;
   created_at: Date;
   updated_at: Date;

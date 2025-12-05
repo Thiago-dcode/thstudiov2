@@ -2,11 +2,13 @@ import {
   IsBoolean,
   IsInt,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsPositive,
   IsString,
 } from 'class-validator';
 import { ModelExist } from 'src/common/validators/model-exist.validtor';
+import { IsAvailableEnum } from 'src/common/validators/is-enum.validator';
 
 export class CreatePlanSubscriptionRequest {
   @IsOptional()
@@ -17,6 +19,22 @@ export class CreatePlanSubscriptionRequest {
   @IsString()
   paypal_id?: string;
 
+  @IsAvailableEnum('TRANSACTION_STATUS')
+  @IsNotEmpty()
+  status: string;
+
+  @IsAvailableEnum('PAYMENT_STATUS')
+  @IsNotEmpty()
+  payment_status: string;
+
+  @IsAvailableEnum('PAYMENT_METHOD')
+  @IsNotEmpty()
+  payment_method: string;
+
+  @IsNumber()
+  @IsNotEmpty()
+  @IsPositive()
+  amount: number;
 
   @IsOptional()
   @IsBoolean()

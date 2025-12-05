@@ -20,6 +20,8 @@ export class PlanSubscriptionsRepository extends BaseRepository {
       values,
     );
   }
+
+
   async updateOne(id: string | number, plan: UpdatePlanSubscriptionInput) {
     await super.updateOne(id, plan);
     return this.queryBuilder

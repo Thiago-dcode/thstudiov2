@@ -12,6 +12,10 @@ const up = async () => {
       unique: true,
       nullable:true,
     }),
+    Column.enum('status', 'TRANSACTION_STATUS'),
+    Column.enum('payment_status', 'PAYMENT_STATUS'),
+    Column.enum('payment_method', 'PAYMENT_METHOD'),
+    Column.float('amount'),
     Column.timestamp('start_billing_date',{
       default:'NOW()'
     }),
@@ -30,10 +34,6 @@ const up = async () => {
       onDelete: 'SET NULL',
     }),
     Column.foreignKey('plan_offer_id', 'plan_offers', 'id', {
-      onDelete: 'SET NULL',
-      nullable: true,
-    }),
-    Column.foreignKey('transaction_id', 'transactions', 'id', {
       onDelete: 'SET NULL',
       nullable: true,
     }),

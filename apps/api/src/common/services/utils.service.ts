@@ -1,6 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { RequestService } from './request.service';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
+import { EnumType } from '@repo/common-lib/constants/enums';
+import { addMonths, addYears } from 'date-fns';
 
 @Injectable()
 export default class Utils {
@@ -31,5 +33,19 @@ export default class Utils {
     const result = await toRemember;
     this.cacheManager.set(key, JSON.stringify(result), options.ttl);
     return result;
+  }
+
+  public getNextBillingDate(billingType: EnumType<'BILLING_TYPE'>) {
+    const now = new Date();
+    switch (billingType) {
+      case 'LIFETIME':
+        return addYears(now, 10);
+      case 'YEARLY':
+        return addYears(now, 1);
+      case 'QUARTERLY':
+        return addMonths(now, 3);
+      case 'MONTHLY':
+        return addMonths(now, 1);
+    }
   }
 }

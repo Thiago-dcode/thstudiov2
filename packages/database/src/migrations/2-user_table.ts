@@ -16,6 +16,10 @@ const up = async () => {
     ColumnBuilder.string('username', 255, {
       unique: true,
     }),
+    ColumnBuilder.string('stripe_customer_id', 255, {
+      nullable: true,
+      unique:true,
+    }),
     ColumnBuilder.password(),
     ColumnBuilder.text('biography', {
       nullable: true,

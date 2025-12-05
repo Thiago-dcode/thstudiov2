@@ -8,3 +8,5 @@ export type FullPlanSubscription = PlanSubscription & {
   plan_price: PlanPrice;
   plan_translation?: PlanTranslation;
 };
+
+
