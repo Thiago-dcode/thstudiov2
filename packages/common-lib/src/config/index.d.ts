@@ -4,6 +4,7 @@ declare const config: (envPath?: string | undefined) => {
         name: string;
         url: string | undefined;
         env: string;
+        isProduction: boolean;
         sendErrorEmails: boolean;
         frontendUrls: string[];
         allowedOrigins: string[];
@@ -47,6 +48,7 @@ declare const config: (envPath?: string | undefined) => {
     };
     stripe: {
         secretKey: string;
+        webhookSecret: string;
     };
     paypal: {
         url: string;

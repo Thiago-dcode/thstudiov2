@@ -23,6 +23,7 @@ const config = (envPath) => {
             name: 'a11studio',
             url: process.env.APP_URL,
             env: process.env.NODE_ENV || 'development',
+            isProduction: process.env.NODE_ENV?.toLowerCase() == 'production',
             sendErrorEmails: process.env.SEND_ERROR_EMAILS == '1',
             frontendUrls: process.env.APP_FRONTEND_URLS ? process.env.APP_FRONTEND_URLS.split(',') : [],
             allowedOrigins: process.env.APP_ALLOWED_ORIGINS ? process.env.APP_ALLOWED_ORIGINS.split(',').map((origin) => origin.trim()) : [],
@@ -65,7 +66,8 @@ const config = (envPath) => {
             folder: process.env.STORAGE_FOLDER,
         },
         stripe: {
-            secretKey: process.env.STRIPE_SECRET_KEY
+            secretKey: process.env.STRIPE_SECRET_KEY,
+            webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
         },
         paypal: {
             url: process.env.PAYPAL_URL,

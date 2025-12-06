@@ -2,15 +2,16 @@ import Stripe from 'stripe';
 import { config } from '@repo/common-lib/config';
 import { StripePaymentConfig } from './types';
 
- class StripePaymentService {
+class StripePaymentService {
+    public readonly stripe: Stripe;
+    public readonly webhookSecret: string;
 
-    public readonly stripe:Stripe;
-
-constructor(private readonly config:StripePaymentConfig){
-
-    this.stripe = new Stripe(this.config.secretKey);
+    constructor(private readonly stripeConfig: StripePaymentConfig) {
+        this.stripe = new Stripe(this.stripeConfig.secretKey);
+        this.webhookSecret = this.stripeConfig.webhookSecret;
+    }
 }
 
-}
-
-export const stripe = new StripePaymentService(config().stripe).stripe;
+const stripeService = new StripePaymentService(config().stripe);
+export const stripe = stripeService.stripe;
+export const stripeWebhookSecret = stripeService.webhookSecret;

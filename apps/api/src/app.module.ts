@@ -27,6 +27,7 @@ import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/constants';
 import { CategoriesModule } from './v1/modules/categories/categories.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { PlanSubscriptionsModule } from './v1/modules/plan-subscriptions/plan-subscriptions.module';
+import { WebhooksModule } from './v1/modules/webhooks/webhooks.module';
 const APP_MODULES = [
   AuthModule,
   UserModule,
@@ -34,6 +35,7 @@ const APP_MODULES = [
   PlanSubscriptionsModule,
   UserSessionsModule,
   MediaModule,
+  WebhooksModule,
   CategoriesModule,
 ];
 @Module({

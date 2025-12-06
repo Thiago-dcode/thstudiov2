@@ -30,24 +30,7 @@ export class PlanSubscriptionsService {
     if (planPrice.plan.is_free) {
       return await this.setFreePlan(this.requestService.user);
     }
-    const planSub = await this.create(
-      {
-        is_active:false,
-        status:'PENDING',
-        auto_renewal:true,
-        amount:planPrice.price,
-        paypal_id:null,
-        stripe_id:null,
-        start_billing_date: new Date(),
-        next_billing_date: this.utils.getNextBillingDate(planPrice.billing_type),
-        payment_status:'PENDING',
-        plan_id:planPrice.plan_id,
-        plan_offer_id:null,
-        user_id:this.requestService.user.id,
-        payment_method,
-        plan_price_id,
-      }
-    )
+   
 
     switch(payment_method){
 
@@ -62,9 +45,6 @@ export class PlanSubscriptionsService {
             quantity: 1
           }
         ],
-        metadata: {
-          planSubscriptionId: planSub.id,
-        },
         success_url,
         cancel_url
 

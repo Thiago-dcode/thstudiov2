@@ -1,8 +1,7 @@
-
 export type StripePaymentConfig = {
-    secretKey:string,
-
-}
+    secretKey: string;
+    webhookSecret: string;
+};
 
 
 
