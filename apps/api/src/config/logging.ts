@@ -3,13 +3,8 @@ import {
   LogLevel,
   LogOptions,
 } from '@repo/backend-lib/services/log-service/types';
-import { FactoryMailService } from '@repo/backend-lib/services/mail-service/factory';
-import { mailingConfig, mailingDriver } from './mailling';
-import { Error500Mail } from 'src/common/mails/error-500.mail';
-import { FactoryViewService } from '@repo/backend-lib/services/view-service/factory';
-import { VIEW_ENGINE } from 'src/common/utils/constants';
-import { viewPath } from 'src/common/utils';
 import { getConfigValue } from '@repo/common-lib/config/utils';
+import Utils from 'src/common/services/Utils.service';
 
 
 export type LogginChannels = 'api' | 'users';
@@ -31,16 +26,7 @@ export const logConfig: AppLogConfig = {
         //Send a email to admin emails
 
         if (!getConfigValue('app').sendErrorEmails) return;
-        console.log('CALLBACK CALLED FOR ERROR 500', level, message);
-        const mailService = FactoryMailService.createMailService(
-          mailingDriver,
-          mailingConfig,
-        );
-        const viewService = FactoryViewService.createViewService(VIEW_ENGINE, {
-          basePath: viewPath(''),
-        });
-        //avoid to block the callback
-        mailService.send(new Error500Mail(viewService, message, options));
+       Utils.callback500ErrorMail(level,message,options)
       },
     },
   },

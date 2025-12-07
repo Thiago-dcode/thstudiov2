@@ -264,8 +264,9 @@ export const main = async () => {
           price.price = Math.round(_plan.base_price * 12 * 0.6);
           break;
       }
-      
-      // Create a Stripe price for this billing interval
+    
+      if ( !plan.is_free) {
+
       const stripePrice = await stripe.prices.create({
         product: stripeProduct.id,
         currency: 'eur', 
@@ -276,11 +277,8 @@ export const main = async () => {
                          price.billing_type === 'QUARTERLY' ? 3 : 12
         } : undefined,
       });
-      // Assign Stripe price ID to the price object
       price.stripe_id = stripePrice.id;
 
-      // Create Paypal plan (skip LIFETIME and free plans - PayPal requires price > 0)
-      if (price.billing_type !== 'LIFETIME' && paypalProduct && !plan.is_free) {
         const intervalUnit: 'YEAR' | 'MONTH' = price.billing_type === 'YEARLY' ? 'YEAR' : 'MONTH';
         const intervalCount = price.billing_type === 'MONTHLY' ? 1 : 
                               price.billing_type === 'QUARTERLY' ? 3 : 1;
@@ -313,7 +311,6 @@ export const main = async () => {
           }
         });
 
-        console.log(paypalPlanPrice)
         if (paypalPlanPrice) {
           price.paypal_id = paypalPlanPrice.id;
         }

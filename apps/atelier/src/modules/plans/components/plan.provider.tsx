@@ -1,6 +1,7 @@
 'use client'
 
-import { FullPlan, PlanPrice as PlanPriceType } from "@repo/common-lib/types/plan";
+import { FullPlan } from "@repo/common-lib/types/plan";
+import {PlanPrice as PlanPriceType}from "@repo/common-lib/types/plan-price";
 import { createContext, ReactElement, useContext, useState } from "react";
 import { calculatePrice } from "@repo/common-lib/utils/calculatePrice"
 import { ENUMS, EnumType } from "@repo/common-lib/constants/enums";

@@ -17,6 +17,8 @@ export class PlansRepository extends BaseRepository {
     'plans.short_description',
     'plans.description',
     'plans.is_free',
+    'plans.stripe_id',
+    'plans.paypal_id',
     'plans.is_popular',
     'plans.max_clients',
     'plans.max_projects',
@@ -28,6 +30,8 @@ export class PlansRepository extends BaseRepository {
     'plans.is_active',
     'plan_prices.price',
     'plan_prices.plan_id',
+    'plan_prices.paypal_id as pp_paypal_id',
+    'plan_prices.stripe_id as pp_stripe_id',
     'plan_prices.id as pp_id',
     'plan_prices.billing_type',
     'plans.allow_media_compression',
@@ -77,7 +81,7 @@ export class PlansRepository extends BaseRepository {
             )
           : undefined;
         const planPrices: {
-          [id: number]: Omit<PlanPrice, 'stripe_id' | 'paypal_id'>;
+          [id: number]: PlanPrice;
         } = {};
         for (let idx = 0; idx < fullPlanSchema.length; idx++) {
           const plan = fullPlanSchema[idx];
@@ -85,6 +89,8 @@ export class PlansRepository extends BaseRepository {
           planPrices[plan.pp_id] = {
             id: plan.pp_id,
             price: plan.price,
+            paypal_id:plan.pp_paypal_id,
+            stripe_id:plan.pp_stripe_id,
             plan_id: curr.id,
             billing_type: plan.billing_type,
           };
@@ -96,6 +102,8 @@ export class PlansRepository extends BaseRepository {
           description: curr.description,
           logo: null,
           base_price: curr.base_price,
+          paypal_id:curr.paypal_id,
+          stripe_id:curr.stripe_id,
           prices: Object.values(planPrices),
           is_active: curr.is_active,
           is_free: curr.is_free,

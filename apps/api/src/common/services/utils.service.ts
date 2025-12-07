@@ -3,6 +3,13 @@ import { RequestService } from './request.service';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { EnumType } from '@repo/common-lib/constants/enums';
 import { addMonths, addYears } from 'date-fns';
+import { LogLevel, LogOptions } from '@repo/backend-lib/services/log-service/types';
+import { FactoryMailService } from '@repo/backend-lib/services/mail-service/factory';
+import { mailingConfig, mailingDriver } from 'src/config/mailling';
+import { FactoryViewService } from '@repo/backend-lib/services/view-service/factory';
+import { viewPath } from '../utils';
+import { VIEW_ENGINE } from '../utils/constants';
+import { Error500Mail } from '../mails/error-500.mail';
 
 @Injectable()
 export default class Utils {
@@ -47,5 +54,23 @@ export default class Utils {
       case 'MONTHLY':
         return addMonths(now, 1);
     }
+  }
+
+  public static async callback500ErrorMail (
+    level: LogLevel,
+    message: string,
+    options?: LogOptions,
+  ) {
+    //Send a email to admin emails
+    console.log('CALLBACK CALLED FOR ERROR 500', level, message);
+    const mailService = FactoryMailService.createMailService(
+      mailingDriver,
+      mailingConfig,
+    );
+    const viewService = FactoryViewService.createViewService(VIEW_ENGINE, {
+      basePath: viewPath(''),
+    });
+    //avoid to block the callback
+    mailService.send(new Error500Mail(viewService, message, options));
   }
 }

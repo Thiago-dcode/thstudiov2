@@ -50,6 +50,9 @@ export class UserService {
     }
     return result;
   }
+  async findOneByStripeId(id: string) {
+    return await this.userRepository.findOneByColumn('stripe_customer_Id', id);
+  }
 
   async update(id: number, { avatar, categories, ...rest }: UpdateUserRequest) {
     const user = await this.userRepository.findById(id);
@@ -112,6 +115,19 @@ export class UserService {
     return `This action removes a #${id} user`;
   }
 
+  async getStripePaymentMethods(customerId: string){
+    if (!customerId) {
+      return [];
+    }
+
+    const paymentMethods = await stripe.paymentMethods.list({
+      customer: customerId,
+      type: 'card',
+    });
+
+    return paymentMethods.data;
+  }
+
   @OnEvent(NEW_USER_EVENT)
   async handleNewUserEvent(event: NewUserEvent) {
     try {
@@ -120,10 +136,12 @@ export class UserService {
         email: event.user.email,
         business_name: event.user.username,
       });
-      this.logService.name('new-user').info(
-        `${NEW_USER_EVENT} user [${event.user.id}] Stripe customer created`,
-        stripeCustomer,
-      );
+      this.logService
+        .name('new-user')
+        .info(
+          `${NEW_USER_EVENT} user [${event.user.id}] Stripe customer created`,
+          stripeCustomer,
+        );
       //UPDATE USER
       await this.userRepository.updateById(event.user.id, {
         stripe_customer_id: stripeCustomer.id,
@@ -137,7 +155,7 @@ export class UserService {
           result,
         });
 
-        //Create a user extra data
+      //Create a user extra data
       const extraData = await this.userExtraDataRepository.create({
         user_id: event.user.id,
       });

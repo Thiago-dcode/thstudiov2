@@ -91,6 +91,17 @@ export class UserRepository extends BaseRepository {
     }
     return full ? this.formatFullUser(result) : this.formatUser(result);
   }
+  async findOneByColumn(
+    column: string,
+    value: any,
+  ): Promise<BaseUserWithPassword> {
+    const result = await this.queryBuilder
+      .where(column, '=', value)
+      .select(this.BASE_COLUMNS)
+      .first<UserSchemaWithAddress>();
+    if (!result) return null;
+    return this.formatUser(result, true) as BaseUserWithPassword;
+  }
   async findOneByColumnWithPassword(
     column: string,
     value: any,
@@ -99,12 +110,7 @@ export class UserRepository extends BaseRepository {
       .where(column, '=', value)
       .select([...this.BASE_COLUMNS, 'password'])
       .first<UserSchemaWithAddress>();
-    if (!result) {
-      throw new HttpException(
-        'User not found with ' + column + ' ' + value,
-        HttpStatus.NOT_FOUND,
-      );
-    }
+    if (!result) null;
     return this.formatUser(result, true) as BaseUserWithPassword;
   }
   async applyFilters(filters: any) {
@@ -131,7 +137,7 @@ export class UserRepository extends BaseRepository {
     result: BaseUserSchema,
     withPassword: boolean = false,
   ): BaseUser | BaseUserWithPassword {
-   return {
+    return {
       id: result?.id,
       email: result?.email,
       username: result?.username,
@@ -145,12 +151,11 @@ export class UserRepository extends BaseRepository {
       is_active: result?.is_active,
       twofa_attempts: result?.twofa_attempts,
     };
-
   }
   private formatFullUser(result: UserSchemaWithAddress): User {
     return {
       ...this.formatUser(result),
-      avatar:result?.avatar,
+      avatar: result?.avatar,
       name: result?.name,
       surname: result?.surname,
       short_biography: result?.short_biography,

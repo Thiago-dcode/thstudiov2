@@ -9,5 +9,18 @@ export class PlanPricesService {
     const result = await this.planPriceRepository.findOne(id);
     return result;
   }
- 
+  async findOneByStripeId(id: string) {
+    const result = await this.planPriceRepository.findOneByColumn(
+      'stripe_id',
+      id,
+    );
+    return result;
+  }
+  async findOneByPaypalId(id: number) {
+    const result = await this.planPriceRepository.findOneByColumn(
+      'paypal_id',
+      id,
+    );
+    return result;
+  }
 }

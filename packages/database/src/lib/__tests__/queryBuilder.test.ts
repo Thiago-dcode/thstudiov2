@@ -910,6 +910,61 @@ describe('QueryBuilder', () => {
       expect(queryBuilder['query']).toBe(targetQuery);
     });
 
+    it('should build SELECT query with chained joins (join table referencing another joined table)', () => {
+      // This tests the scenario where tableC joins on tableB (which was joined from tableA)
+      // Example: SELECT FROM test_table 
+      //          INNER JOIN users ON users.id = test_table.user_id
+      //          LEFT JOIN addresses ON addresses.id = users.address_id
+      const targetQuery = `SELECT ${TABLE_NAME}.id,${TABLE_NAME}.name,users.id,users.address_id,addresses.city FROM ${TABLE_NAME} \nINNER JOIN users ON users.id = ${TABLE_NAME}.user_id \nLEFT JOIN addresses ON addresses.id = users.address_id`;
+      // Arrange
+      queryBuilder
+        .select('id,name,users.id,users.address_id,addresses.city')
+        .join('user_id', 'users', 'id')
+        .join('users.address_id', 'addresses', 'id', 'LEFT');
+
+      queryBuilder['buildSelectQuery']();
+      // Assert
+      expect(queryBuilder['query']).toBe(targetQuery);
+    });
+
+    it('should build SELECT query with multiple chained joins across different tables', () => {
+      // This tests a more complex scenario with 3 levels of chained joins:
+      // test_table -> projects -> clients -> addresses
+      const targetQuery = `SELECT ${TABLE_NAME}.id,projects.id,clients.name,addresses.city FROM ${TABLE_NAME} \nINNER JOIN projects ON projects.id = ${TABLE_NAME}.project_id \nINNER JOIN clients ON clients.id = projects.client_id \nLEFT JOIN addresses ON addresses.id = clients.address_id`;
+      // Arrange
+      queryBuilder
+        .select('id,projects.id,clients.name,addresses.city')
+        .join('project_id', 'projects', 'id')
+        .join('projects.client_id', 'clients', 'id')
+        .join('clients.address_id', 'addresses', 'id', 'LEFT');
+
+      queryBuilder['buildSelectQuery']();
+      // Assert
+      expect(queryBuilder['query']).toBe(targetQuery);
+    });
+
+    it('should build SELECT query with chained joins and WHERE conditions on joined tables', async () => {
+      await initClient(postgresConfig);
+      // This tests chained joins with WHERE conditions filtering on the chained joined tables
+      const targetQuery = `SELECT ${TABLE_NAME}.id,projects.id,clients.name,addresses.city FROM ${TABLE_NAME} \nINNER JOIN projects ON projects.id = ${TABLE_NAME}.project_id \nINNER JOIN clients ON clients.id = projects.client_id \nLEFT JOIN addresses ON addresses.id = clients.address_id \nWHERE projects.status = $1 \nAND clients.name LIKE $2 \nAND addresses.city IN ($3,$4)`;
+      // Arrange
+      queryBuilder
+        .select('id,projects.id,clients.name,addresses.city')
+        .join('project_id', 'projects', 'id')
+        .join('projects.client_id', 'clients', 'id')
+        .join('clients.address_id', 'addresses', 'id', 'LEFT')
+        .where('projects.status', '=', 'active')
+        .where('clients.name', 'LIKE', '%John%')
+        .whereIn('addresses.city', ['NYC', 'LA']);
+
+      queryBuilder['buildSelectQuery']();
+
+      // Assert
+      expect(queryBuilder['valuesPosition']).toBe(4);
+      expect(queryBuilder['values']).toEqual(['active', '%John%', 'NYC', 'LA']);
+      expect(queryBuilder['query']).toBe(targetQuery);
+    });
+
     it('should build complex SELECT query with joins, columns, and WHERE conditions', async () => {
       await initClient(postgresConfig);
       const targetQuery = `SELECT ${TABLE_NAME}.id,${TABLE_NAME}.name,${TABLE_NAME}.email,users.id,user_extra_data.id FROM ${TABLE_NAME} \nINNER JOIN users ON users.id = ${TABLE_NAME}.user_id \nLEFT JOIN user_extra_data ON user_extra_data.id = ${TABLE_NAME}.user_id \nWHERE users.id LIKE $1 \nOR users.id IS NOT NULL \nAND user_extra_data.id IN ($2,$3) \nAND user_extra_data.id = $4 \nOR user_extra_data.id = $5 \nOR user_extra_data.id IN ($6,$7)`;

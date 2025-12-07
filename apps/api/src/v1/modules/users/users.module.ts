@@ -26,5 +26,6 @@ import { PlanSubscriptionsModule } from '../plan-subscriptions/plan-subscription
     },
   ],
   imports: [UserExtraDataModule, UserAuthDevicesModule, PlanSubscriptionsModule],
+  exports: [UserService],
 })
 export class UserModule {}

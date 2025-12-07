@@ -9,11 +9,26 @@ import { stripe, stripeWebhookSecret } from '@repo/backend-lib/services/payment-
 import { StripeWebhooksService } from './stripe-webhooks.service';
 import { FactoryLogService } from '@repo/backend-lib/services/log-service';
 import { Public } from 'src/common/decorators/public.decorator';
+import Utils from 'src/common/services/Utils.service';
+import { LogLevel, LogOptions } from '@repo/backend-lib/services/log-service/types';
 
 @Controller('webhooks')
 export class WebhooksController {
     private  logger = FactoryLogService.createLogService('file',{
         channel:'webhook',
+        callback: {
+            channel: 'webhook' + '/500',
+            callback: async (
+              level: LogLevel,
+              message: string,
+              options?: LogOptions,
+            ) => {
+              //Send a email to admin emails
+      
+             Utils.callback500ErrorMail(level,message,options)
+            },
+          },
+
     });
 
     constructor(private readonly stripeWebhooksService: StripeWebhooksService) {}
@@ -40,13 +55,18 @@ export class WebhooksController {
                 stripeWebhookSecret,
             );
         } catch (err: unknown) {
+          
             const message = err instanceof Error ? err.message : 'Unknown error';
             this.logger.error(`Webhook signature verification failed: ${message}`);
             throw new BadRequestException('Webhook signature verification failed');
         }
-
-        await this.stripeWebhooksService.handleEvent(event);
-
+        try {
+            await this.stripeWebhooksService.handleEvent(event);
+ 
+        } catch (err) {
+            const isError = err instanceof Error;
+            this.logger.channel('webhook/error').error(`${event?.type} Webhook signature verification failed`,isError?err: undefined);
+        }
         return { received: true };
     }
 

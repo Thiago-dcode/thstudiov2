@@ -8,12 +8,14 @@ const up = async () => {
       unique: true,
       nullable:true,
     }),
+    Column.string('stripe_item_id', 255, {
+      unique: true,
+      nullable:true,
+    }),
     Column.string('paypal_id', 255, {
       unique: true,
       nullable:true,
     }),
-    Column.enum('status', 'TRANSACTION_STATUS'),
-    Column.enum('payment_status', 'PAYMENT_STATUS'),
     Column.enum('payment_method', 'PAYMENT_METHOD'),
     Column.float('amount'),
     Column.timestamp('start_billing_date',{
@@ -27,9 +29,6 @@ const up = async () => {
     Column.foreignKey('user_id', 'users', 'id', {
       onDelete: 'SET NULL',
     }),
-    Column.foreignKey('plan_id', 'plans', 'id', {
-      onDelete: 'SET NULL',
-    }),
     Column.foreignKey('plan_price_id', 'plan_prices', 'id', {
       onDelete: 'SET NULL',
     }),
@@ -39,6 +38,9 @@ const up = async () => {
     }),
     Column.boolean('is_active', {
       default: true,
+    }),
+    Column.boolean('is_trialing', {
+      default: false,
     }),
     Column.timestamps(true),
   ]);

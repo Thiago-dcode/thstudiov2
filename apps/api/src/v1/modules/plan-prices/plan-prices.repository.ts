@@ -6,6 +6,7 @@ import {
   PlanPriceWithPlanSchema,
 } from '@repo/common-lib/schemas/plan-price';
 import { FullPlanPrice } from '@repo/common-lib/types/plan-price';
+import { SqlValue } from '@repo/common-lib/types/database';
 
 @Injectable()
 export class PlanPricesRepository extends BaseRepository {
@@ -33,18 +34,11 @@ export class PlanPricesRepository extends BaseRepository {
     super('plan_prices');
   }
 
-  async findOne(id: number): Promise<FullPlanPrice | null> {
-    const result = await QueryBuilder.table('plan_prices')
-      .select(this.COLUMNS)
-      .join('plan_id', 'plans', 'id')
-      .where('plan_prices.id', '=', id)
-      .first<PlanPriceWithPlanSchema>();
-    if (!result) return null;
-
+  formatPlanPrice(result: PlanPriceWithPlanSchema) {
     return {
       id: result.id,
-      paypal_id:result.paypal_id,
-      stripe_id:result.stripe_id,
+      paypal_id: result.paypal_id,
+      stripe_id: result.stripe_id,
       billing_type: result.billing_type,
       plan_id: result.plan_id,
       price: result.price,
@@ -57,5 +51,25 @@ export class PlanPricesRepository extends BaseRepository {
         short_description: result.short_description,
       },
     };
+  }
+  async findOne(id: number): Promise<FullPlanPrice | null> {
+    const result = await QueryBuilder.table('plan_prices')
+      .select(this.COLUMNS)
+      .join('plan_id', 'plans', 'id')
+      .where('plan_prices.id', '=', id)
+      .first<PlanPriceWithPlanSchema>();
+    if (!result) return null;
+
+    return this.formatPlanPrice(result);
+  }
+
+  async findOneByColumn(column: string, value: SqlValue) {
+    const result = await QueryBuilder.table('plan_prices')
+      .select(this.COLUMNS)
+      .join('plan_id', 'plans', 'id')
+      .where(column, '=', value)
+      .first<PlanPriceWithPlanSchema>();
+    if (!result) return null;
+    return this.formatPlanPrice(result);
   }
 }

@@ -439,7 +439,7 @@ private  handleBuildGet(columns: string[], values: SqlValue[], select: string[] 
   public join(
     localColumn: string,
     foreignTable: TableName,
-    foreignColumn: string,
+    foreignColumn: string = 'id',
     joinType: JoinType = 'INNER',
   ) {
     this.operationsChain.push('join');
@@ -677,7 +677,7 @@ offset = isNull ? offset : offset + 1;
    * @protected
    */
   protected buildJoinQuery(join: Join) {
-    return `${join.type} JOIN ${join.foreignTable} ON ${join.foreignTable}.${join.foreignColumn} = ${this.tableName}.${join.localColumn}`;
+    return `${join.type} JOIN ${join.foreignTable} ON ${join.foreignTable}.${join.foreignColumn} = ${this.buildColumn(join.localColumn)}`;
   }
 
   // ============================================================================
