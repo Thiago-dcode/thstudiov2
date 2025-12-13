@@ -1,10 +1,12 @@
 import { QueryBuilder } from '../builder/queryBuilder';
-import { Join, SqlClause, SqlValue, TableName, WhereType } from '@repo/common-lib/types/database';
+import { Join, SqlClause, SqlValue, TableName } from '@repo/common-lib/types/database';
 import { Query } from '../facades';
-type WhereOptions = {column: string, operator: SqlClause, value: SqlValue | SqlValue[], type: WhereType};
+import { QueryBuilderException } from '../builder/queryBuilder/exceptions';
+type WhereOptions = {column: string, operator: SqlClause, value: SqlValue | SqlValue[]};
 type BaseRepositoryOptions = {
   primaryKey?: string;
   softDelete?: boolean;
+  softDeleteCol?:string
 };
 type valueToAttach = string|number;
 
@@ -18,13 +20,14 @@ type AttachValues = {
 const DEFAULT_OPTIONS: BaseRepositoryOptions = {
   primaryKey: 'id',
   softDelete: false,
+  softDeleteCol:"deleted_at"
 };
 export abstract class BaseRepository {
   protected queryBuilder: QueryBuilder;
   protected options: BaseRepositoryOptions;
   constructor(protected readonly tableName: TableName, options?:BaseRepositoryOptions) {
     this.options = { ...DEFAULT_OPTIONS, ...options };
-    this.queryBuilder = new QueryBuilder(this.tableName);
+    this.queryBuilder = new QueryBuilder(this.tableName,this.options.softDelete,this.options.softDeleteCol);
   }
 
  
@@ -111,7 +114,7 @@ const result = await Promise.all(Object.entries(_valuesToAttach).map(async([key,
     query = this.buildQuery(query, options);
     return await query.exists();
   }
-  async update<T extends Record<string, SqlValue>>(data: T, options: {wheres: WhereOptions[],select?: string[] | string, join?: Join[]}) {
+  async update<T extends Record<string, SqlValue>>(data: T, options: {wheres: WhereOptions[],orWheres?:WhereOptions[],select?: string[] | string, join?: Join[]}) {
     let query = this.buildQuery(this.queryBuilder, options);
     const columns = Object.keys(data);
     const values = Object.values(data);
@@ -125,13 +128,42 @@ const result = await Promise.all(Object.entries(_valuesToAttach).map(async([key,
    return result;
   }
 
-  private buildQuery(query: QueryBuilder, options?: {select?: string[] | string, join?: Join[], wheres?: WhereOptions[]}) {
+  private buildQuery(query: QueryBuilder, options?: {select?: string[] | string, join?: Join[], wheres?: WhereOptions[],orWheres?:WhereOptions[]}) {
     if (options?.wheres) {
-      for (const where of options.wheres) {
-       if(where.operator !== 'IN' && where.operator !== 'NOT IN' && typeof where.value === 'string') {
-        query = query.where(where.column, where.operator, where.value);
+      for (const {column,operator,value} of options.wheres) {
+        const isArray =  Array.isArray(value);
+      if(operator !== 'IN'&& operator != 'NOT IN' && isArray){
+        throw new QueryBuilderException( `Operator: ${operator} is not compatible with array values: ${value.join(',')}`);
+      }
+       if(operator !== 'IN' && operator !== 'NOT IN' && !isArray) {
+        query = query.where(column, operator, value);
        } else {
-        query = query.whereIn(where.column, Array.isArray(where.value) ? where.value : [where.value]);
+      
+        if(operator==='IN'){
+          query = query.whereIn(column, isArray ? value : [value]);
+        }
+        else if(operator ==='NOT IN'){
+          query = query.whereNotIn(column, isArray ? value : [value]);
+        }
+       }
+      } 
+    }
+    if(options?.orWheres){
+      for (const {column,operator,value} of options.orWheres) {
+        const isArray =  Array.isArray(value);
+        if(operator !== 'IN'&& operator != 'NOT IN' && isArray){
+          throw new QueryBuilderException( `Operator: ${operator} is not compatible with array values: ${value.join(',')}`);
+        }
+       if(operator !== 'IN' && operator !== 'NOT IN' && !isArray) {
+        query = query.orWhere(column, operator, value);
+       } else {
+      
+        if(operator==='IN'){
+          query = query.orWhereIn(column, isArray ? value : [value]);
+        }
+        else if(operator ==='NOT IN'){
+          query = query.orWhereNotIn(column, isArray ? value : [value]);
+        }
        }
       } 
     }

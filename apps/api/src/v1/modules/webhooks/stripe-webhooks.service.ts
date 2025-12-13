@@ -5,12 +5,20 @@ import { PlanSubscriptionsService } from '../plan-subscriptions/plan-subscriptio
 import { PlanPricesService } from '../plan-prices/plan-prices.service';
 import { UserService } from '../users/users.service';
 import { stripe } from '@repo/backend-lib/services/payment-service/stripe';
+import Utils from 'src/common/services/Utils.service';
+import { OnEvent } from '@nestjs/event-emitter';
+import { WEBHOOK_STRIPE_EVENT } from './webhook.constants';
+import { paypal } from '@repo/backend-lib/services/payment-service/paypal';
 
 @Injectable()
 export class StripeWebhooksService {
   private readonly logger = FactoryLogService.createLogService('file', {
     channel: 'webhook',
     name: 'stripe',
+    callback: {
+      channel: 'webhook/error',
+      callback: Utils.callback500ErrorMail,
+    },
   });
 
   constructor(
@@ -18,52 +26,62 @@ export class StripeWebhooksService {
     private readonly planPriceService: PlanPricesService,
     private readonly userService: UserService,
   ) {}
-
+  @OnEvent(WEBHOOK_STRIPE_EVENT)
   async handleEvent(event: Stripe.Event): Promise<void> {
     this.logger.debug(`${StripeWebhooksService.name} ${event.type}`);
-    switch (event.type) {
-      case 'checkout.session.completed':
-        await this.handleCheckoutSessionCompleted(
-          event.data.object as Stripe.Checkout.Session,
-        );
-        break;
-      case 'payment_intent.succeeded':
-        await this.handlePaymentIntentSucceeded(
-          event.data.object as Stripe.PaymentIntent,
-        );
-        break;
+    try {
+      switch (event.type) {
+        case 'checkout.session.completed':
+          await this.handleCheckoutSessionCompleted(
+            event.data.object as Stripe.Checkout.Session,
+          );
+          break;
+        case 'payment_intent.succeeded':
+          await this.handlePaymentIntentSucceeded(
+            event.data.object as Stripe.PaymentIntent,
+          );
+          break;
 
-      case 'payment_method.attached':
-        await this.handlePaymentMethodAttached(
-          event.data.object as Stripe.PaymentMethod,
+        case 'payment_method.attached':
+          await this.handlePaymentMethodAttached(
+            event.data.object as Stripe.PaymentMethod,
+          );
+          break;
+
+        case 'customer.subscription.created':
+        case 'customer.subscription.updated':
+          await this.handleSubscriptionUpdate(
+            event.data.object as Stripe.Subscription,
+          );
+          break;
+
+        case 'customer.subscription.deleted':
+          await this.handleSubscriptionDeleted(
+            event.data.object as Stripe.Subscription,
+          );
+          break;
+
+        case 'invoice.paid':
+          await this.handleInvoicePaid(event.data.object as Stripe.Invoice);
+          break;
+
+        case 'invoice.payment_failed':
+          await this.handleInvoicePaymentFailed(
+            event.data.object as Stripe.Invoice,
+          );
+          break;
+
+        default:
+          this.logger.debug(`Unhandled Stripe event type: ${event.type}`);
+      }
+    } catch (err) {
+      const isError = err instanceof Error;
+      this.logger
+        .channel('webhook/error')
+        .error(
+          `${event?.type} Webhook signature verification failed`,
+          isError ? err : undefined,
         );
-        break;
-
-      case 'customer.subscription.created':
-      case 'customer.subscription.updated':
-        await this.handleSubscriptionUpdate(
-          event.data.object as Stripe.Subscription,
-        );
-        break;
-
-      case 'customer.subscription.deleted':
-        await this.handleSubscriptionDeleted(
-          event.data.object as Stripe.Subscription,
-        );
-        break;
-
-      case 'invoice.paid':
-        await this.handleInvoicePaid(event.data.object as Stripe.Invoice);
-        break;
-
-      case 'invoice.payment_failed':
-        await this.handleInvoicePaymentFailed(
-          event.data.object as Stripe.Invoice,
-        );
-        break;
-
-      default:
-        this.logger.debug(`Unhandled Stripe event type: ${event.type}`);
     }
   }
 
@@ -93,34 +111,26 @@ export class StripeWebhooksService {
   private async handleSubscriptionUpdate(
     subscription: Stripe.Subscription,
   ): Promise<void> {
-
-    this.logger.debug("Subscription ",subscription);
-    const subId = subscription.id;
+    this.logger.debug('Subscription ', subscription);
+    const stripeSubscriptionId = subscription.id;
     const itemData = subscription.items.data[0];
     const stripeItemId = itemData.id;
-    const activeStatuses: Stripe.Subscription.Status[] = ['active', 'trialing'];
-    const is_active = activeStatuses.some(
-      (status) => status == subscription.status,
-    );
+    const is_active = subscription.status === 'active';
     const is_trialing = subscription.status === 'trialing';
     const start_billing_date = new Date(itemData.current_period_start * 1000);
     const next_billing_date = new Date(itemData.current_period_end * 1000);
     const user = await this.userService.findOneByStripeId(
       subscription.customer as string,
     );
-    const [planPrice, internalSub] = await Promise.all([
+    const [planPrice, internalSubscription] = await Promise.all([
       this.planPriceService.findOneByStripeId(itemData.price.id),
       this.planSubscriptionService.getActiveUserSubscription(user.id),
     ]);
-    // Deactivate all other subscriptions if this one is active
-    if (is_active) {
-      await this.planSubscriptionService.desactivateAllUserSubscriptions(
-        user.id,
-      );
-    }
-    if (internalSub) {
+    // Deactivate all internal subscriptions before creating new one
+
+    if (internalSubscription?.stripe_id === stripeSubscriptionId) {
       // Update existing subscription
-       await this.planSubscriptionService.update(internalSub.id, {
+      await this.planSubscriptionService.update(internalSubscription.id, {
         is_active,
         is_trialing,
         payment_method: 'CARD',
@@ -131,10 +141,7 @@ export class StripeWebhooksService {
         amount: planPrice.price,
       });
     } else {
-      if(is_active && internalSub?.stripe_id){
-        await stripe.subscriptions.cancel(internalSub.stripe_id);
-      }
-     await this.planSubscriptionService.create({
+      await this.planSubscriptionService.create({
         payment_method: 'CARD',
         plan_price_id: planPrice.id,
         amount: planPrice.price,
@@ -142,13 +149,36 @@ export class StripeWebhooksService {
         is_active,
         next_billing_date,
         start_billing_date,
-        stripe_id: subId,
+        stripe_id: stripeSubscriptionId,
         stripe_item_id: stripeItemId,
         is_trialing,
         user_id: user.id,
         paypal_id: null,
         plan_offer_id: null,
       });
+    }
+    if (is_active) {
+      const existingSubscriptions = await stripe.subscriptions.list({
+        customer: user.stripe_customer_id,
+        status: 'active',
+      });
+      await Promise.all([
+        Promise.all(
+          existingSubscriptions.data.map(async (sub) => {
+            if (sub.id !== stripeSubscriptionId) {
+              await stripe.subscriptions.cancel(sub.id);
+            }
+          }),
+        ),
+
+        this.planSubscriptionService.desactivateAllUserSubscriptions(user.id, [
+          internalSubscription.id,
+        ]),
+
+        internalSubscription.paypal_id
+          ? (await paypal).subscription.cancel(internalSubscription.paypal_id)
+          : Promise.resolve(),
+      ]);
     }
   }
 

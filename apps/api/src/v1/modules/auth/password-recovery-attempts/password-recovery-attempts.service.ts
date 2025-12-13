@@ -22,7 +22,7 @@ export class PasswordRecoveryAttemptsService {
         user_id: userId,
         expires_at: new Date(),
       },
-      {wheres: [{column: 'user_id', operator: '=', value: userId,type: 'where'}]},
+      {wheres: [{column: 'user_id', operator: '=', value: userId}]},
     );
   }
   async findOneNotExpiredByUserId(userId: number) {

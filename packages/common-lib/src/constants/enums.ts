@@ -17,7 +17,28 @@ export const ENUMS = {
     ] as const,
     PAYMENT_METHOD: ['CARD', 'PAYPAL'] as const,
     PLAN_OFFERS_TYPE: ['FREE', 'DISCOUNT'] as const,
-    PASSWORD_RECOVERY_ATTEMPT_STATUS: ['CODE_NOT_VALIDATED','CODE_VALIDATED','PASSWORD_CHANGED']
+    PASSWORD_RECOVERY_ATTEMPT_STATUS: ['CODE_NOT_VALIDATED','CODE_VALIDATED','PASSWORD_CHANGED'],
+    STRIPE_ERROR: [
+      'StripeCardError',
+      'StripeInvalidRequestError',
+      'StripeConnectionError',
+      'StripeAPIError',
+      'StripeAuthenticationError',
+      'StripeIdempotencyError',
+      'StripePermissionError',
+      'StripeRateLimitError',
+      'StripeSignatureVerificationError',
+    ] as const,
+    STRIPE_RAW_ERROR_TYPE: [
+      'card_error',
+      'invalid_request_error',
+      'api_error',
+      'idempotency_error',
+      'rate_limit_error',
+      'authentication_error',
+      'invalid_grant',
+      'temporary_session_expired',
+    ] as const,
   };
 // TABLES
 export const TABLES_ENUM = {

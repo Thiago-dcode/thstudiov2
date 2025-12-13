@@ -244,7 +244,7 @@ export class ColumnBuilder {
     return `${this.validateString(columnName)} ${enumName}${options ? ' ' + this.buildOptions(options) : ''}`;
   }
   public static timestamps(
-    withDeletedAt: boolean = false,
+    withSoftDeletes: boolean = false,
     options: ColumnAttributes<SqlFunctionTimestamp> = {
       nullable: false,
       default: 'NOW()',
@@ -259,7 +259,7 @@ export class ColumnBuilder {
       this.timestamp('created_at', _options),
       this.timestamp('updated_at', _options),
     ];
-    if (withDeletedAt) {
+    if (withSoftDeletes) {
       columns.push(this.softDelete());
     }
     return columns;

@@ -156,7 +156,6 @@ export const killClient = async () => {
   clientChoosen = null;
 };
 
-// Export a getter function instead of the static client
 export const getClient = () => {
   if (!client) {
     throw new ClientNotInitializedException();

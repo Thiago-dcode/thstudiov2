@@ -97,7 +97,7 @@ export class QueryBuilder extends BaseBuilder {
   // CONSTRUCTOR
   // ============================================================================
 
-  constructor(protected readonly tableName: TableName) {
+  constructor(protected readonly tableName: TableName, protected _softDeletes = false, protected _softDeleteCol = 'deleted_at') {
     super(tableName);
   }
 
@@ -147,7 +147,10 @@ export class QueryBuilder extends BaseBuilder {
     this.reset();
     return result.rowCount > 0;
   }
-
+  public get softDeletes(){
+    return this._softDeletes;
+  }
+ 
   public static table(tableName: TableName) {
     this.throwIfTableNotExists(tableName);
     return new QueryBuilder(tableName);
@@ -225,10 +228,14 @@ private  handleBuildGet(columns: string[], values: SqlValue[], select: string[] 
    * ```
    */
   public async delete() {
-    this.buildDeleteQuery();
-    const result = await getClient().query(this.query, this.values);
+   
+    if(!this._softDeletes){
+      this.buildDeleteQuery();
+      const result = await getClient().query(this.query, this.values);
     this.reset();
     return result.rowCount > 0;
+    }
+    this.update([this._softDeleteCol],[new Date()]);
   }
 
   // ============================================================================
@@ -481,6 +488,11 @@ private  handleBuildGet(columns: string[], values: SqlValue[], select: string[] 
     return this;
   }
 
+  protected setSoftDelete(){
+    if(this._softDeletes){
+      this.where(this._softDeleteCol,'=',null);
+    }
+  }
   protected buildSelectQuery() {
     this.query = `SELECT ${this._select} FROM ${this.tableName}`;
     if (this.joins.length > 0) {
@@ -491,7 +503,8 @@ private  handleBuildGet(columns: string[], values: SqlValue[], select: string[] 
         .join('')}`;
     }
 
-    // Build WHERE clause
+    this.setSoftDelete();
+ 
     this.query += this.buildWheresQuery(this.wheres);
     if (this._orderBy) {
       this.query += ` \nORDER BY ${this._orderBy}`;
@@ -562,6 +575,7 @@ offset = isNull ? offset : offset + 1;
           }
         }).join(',')}`;
     
+    this.setSoftDelete();
     this.query += this.buildWheresQuery(this.wheres, offset);
  
   }

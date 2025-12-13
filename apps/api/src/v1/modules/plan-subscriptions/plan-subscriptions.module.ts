@@ -4,10 +4,9 @@ import { PlanSubscriptionsController } from './plan-subscriptions.controller';
 import { PlanSubscriptionsRepository } from './plan-subscriptions.repository';
 import { PlanPricesModule } from '../plan-prices/plan-prices.module';
 import { PlansModule } from '../plans/plans.module';
-import { UserModule } from '../users/users.module';
 
 @Module({
-  imports: [PlanPricesModule, PlansModule,UserModule],
+  imports: [PlanPricesModule, PlansModule],
   controllers: [PlanSubscriptionsController],
   providers: [PlanSubscriptionsService, PlanSubscriptionsRepository],
   exports: [PlanSubscriptionsService],

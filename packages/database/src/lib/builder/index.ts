@@ -8,6 +8,8 @@ abstract class BaseBuilder {
   protected query: string = '';
   /** Chain of operations performed on this query builder */
   protected operationsChain: SqlOperation[] = [];
+
+
   // ============================================================================
   // CONSTRUCTOR
   // ============================================================================
@@ -34,6 +36,8 @@ abstract class BaseBuilder {
   public static async raw(query: string, values?: (string | number | null)[]) {
     return await getClient().query(query, values);
   }
+
+
   public resetQuery(){
     this.query = '';
   }

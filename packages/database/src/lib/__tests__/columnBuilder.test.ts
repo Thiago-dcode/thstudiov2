@@ -526,7 +526,7 @@ describe('ColumnBuilder', () => {
         const result = ColumnBuilder.timestamp('created_at');
 
         // Assert
-        expect(result).toBe('created_at TIMESTAMP NOT NULL');
+        expect(result).toBe('created_at TIMESTAMPTZ NOT NULL');
       });
 
       it('should create timestamp column with custom options', () => {
@@ -538,7 +538,7 @@ describe('ColumnBuilder', () => {
 
         // Assert
         expect(result).toBe(
-          'updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP',
+          'updated_at TIMESTAMPTZ NULL DEFAULT CURRENT_TIMESTAMP',
         );
       });
 
@@ -550,7 +550,7 @@ describe('ColumnBuilder', () => {
         });
 
         // Assert
-        expect(result).toBe('deleted_at TIMESTAMP NULL');
+        expect(result).toBe('deleted_at TIMESTAMPTZ NULL');
       });
 
       it('should handle null default value', () => {
@@ -561,7 +561,7 @@ describe('ColumnBuilder', () => {
         });
 
         // Assert
-        expect(result).toBe('expires_at TIMESTAMP NULL DEFAULT NULL');
+        expect(result).toBe('expires_at TIMESTAMPTZ NULL DEFAULT NULL');
       });
 
       it('should handle empty column name', () => {
@@ -584,8 +584,8 @@ describe('ColumnBuilder', () => {
 
         // Assert
         expect(result).toEqual([
-          'created_at TIMESTAMP NOT NULL DEFAULT NOW()',
-          'updated_at TIMESTAMP NOT NULL DEFAULT NOW()',
+          'created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()',
+          'updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()',
         ]);
       });
 
@@ -598,8 +598,8 @@ describe('ColumnBuilder', () => {
 
         // Assert
         expect(result).toEqual([
-          'created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP',
-          'updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP',
+          'created_at TIMESTAMPTZ NULL DEFAULT CURRENT_TIMESTAMP',
+          'updated_at TIMESTAMPTZ NULL DEFAULT CURRENT_TIMESTAMP',
         ]);
       });
 
@@ -612,8 +612,8 @@ describe('ColumnBuilder', () => {
 
         // Assert
         expect(result).toEqual([
-          'created_at TIMESTAMP NULL',
-          'updated_at TIMESTAMP NULL',
+          'created_at TIMESTAMPTZ NULL',
+          'updated_at TIMESTAMPTZ NULL',
         ]);
       });
 
@@ -626,8 +626,8 @@ describe('ColumnBuilder', () => {
 
         // Assert
         expect(result).toEqual([
-          'created_at TIMESTAMP NULL DEFAULT NULL',
-          'updated_at TIMESTAMP NULL DEFAULT NULL',
+          'created_at TIMESTAMPTZ NULL DEFAULT NULL',
+          'updated_at TIMESTAMPTZ NULL DEFAULT NULL',
         ]);
       });
 
@@ -639,8 +639,8 @@ describe('ColumnBuilder', () => {
 
         // Assert
         expect(result).toEqual([
-          'created_at TIMESTAMP NOT NULL DEFAULT NOW() UNIQUE',
-          'updated_at TIMESTAMP NOT NULL DEFAULT NOW() UNIQUE',
+          'created_at TIMESTAMPTZ NOT NULL DEFAULT NOW() UNIQUE',
+          'updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW() UNIQUE',
         ]);
       });
 
@@ -651,8 +651,8 @@ describe('ColumnBuilder', () => {
 
         // Assert
         expect(result).toEqual([
-          'created_at TIMESTAMP NOT NULL DEFAULT NOW()',
-          'updated_at TIMESTAMP NOT NULL DEFAULT NOW()',
+          'created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()',
+          'updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()',
         ]);
       });
 
@@ -666,8 +666,8 @@ describe('ColumnBuilder', () => {
 
         // Assert
         expect(result).toEqual([
-          'created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP UNIQUE',
-          'updated_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP UNIQUE',
+          'created_at TIMESTAMPTZ NULL DEFAULT CURRENT_TIMESTAMP UNIQUE',
+          'updated_at TIMESTAMPTZ NULL DEFAULT CURRENT_TIMESTAMP UNIQUE',
         ]);
       });
 
@@ -694,8 +694,8 @@ describe('ColumnBuilder', () => {
 
         // Assert
         expect(result).toEqual([
-          'created_at TIMESTAMP NOT NULL DEFAULT NOW()',
-          'updated_at TIMESTAMP NOT NULL DEFAULT NOW()',
+          'created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()',
+          'updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()',
         ]);
       });
 
@@ -705,8 +705,8 @@ describe('ColumnBuilder', () => {
 
         // Assert
         expect(result).toEqual([
-          'created_at TIMESTAMP NOT NULL DEFAULT NOW()',
-          'updated_at TIMESTAMP NOT NULL DEFAULT NOW()',
+          'created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()',
+          'updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()',
         ]);
       });
 
@@ -718,8 +718,8 @@ describe('ColumnBuilder', () => {
 
         // Assert
         expect(result).toEqual([
-          "created_at TIMESTAMP NOT NULL DEFAULT '2023-01-01 00:00:00'",
-          "updated_at TIMESTAMP NOT NULL DEFAULT '2023-01-01 00:00:00'",
+          "created_at TIMESTAMPTZ NOT NULL DEFAULT '2023-01-01 00:00:00'",
+          "updated_at TIMESTAMPTZ NOT NULL DEFAULT '2023-01-01 00:00:00'",
         ]);
       });
     });
@@ -730,7 +730,7 @@ describe('ColumnBuilder', () => {
         const result = ColumnBuilder.softDelete();
 
         // Assert
-        expect(result).toBe('deleted_at TIMESTAMP NULL');
+        expect(result).toBe('deleted_at TIMESTAMPTZ NULL');
       });
 
       it('should return string type', () => {

@@ -1,6 +1,6 @@
 import { generateUUID } from '@repo/common-lib/utils/generate-uuid';
 import { FactoryLogService } from '../../log-service';
-import { FullPaypaAuthResponse, PaypalAuthResponse, PaypalCreateProductInput, PaypalPaymentConfig, PaypalProductResponse, PaypalCreatePlanInput, PaypalPlanResponse } from './types';
+import { FullPaypaAuthResponse, PaypalAuthResponse, PaypalCreateProductInput, PaypalPaymentConfig, PaypalProductResponse, PaypalCreatePlanInput, PaypalPlanResponse, PaypalCreateSubscriptionInput, PaypalSubscriptionResponse } from './types';
 import { config } from '@repo/common-lib/config';
 
 
@@ -63,7 +63,7 @@ public async  connect(){
     }
 return this;
 }
-public async postRequest<T>( resource:string,body:Record<string,any>):Promise<T|null>{
+public async postRequest<T>( resource:string,body?:Record<string,any>):Promise<T|null>{
   try {
     await this.connect();
     if (!this.auth) {
@@ -79,7 +79,7 @@ public async postRequest<T>( resource:string,body:Record<string,any>):Promise<T|
         'PayPal-Request-Id': await generateUUID(),
         'Prefer': 'return=representation'
       },
-      body: JSON.stringify(body)
+      body:body? JSON.stringify(body): undefined
     });
     if (!response.ok) {
       const errorBody = await response.text();
@@ -112,6 +112,10 @@ get plan(){
   return new PaypalPlanService(this);
 }
 
+get subscription(){
+  return new PaypalSubscriptionService(this);
+}
+
 }
 
 
@@ -130,6 +134,16 @@ class PaypalPlanService {
     return await this.paypalService.postRequest<PaypalPlanResponse>('v1/billing/plans', body);
   }
 }
+class PaypalSubscriptionService {
+  constructor(private readonly paypalService: PaypalPaymentService) {}
 
+  public async create(body: PaypalCreateSubscriptionInput) {
+    return await this.paypalService.postRequest<PaypalSubscriptionResponse>('v1/billing/subscriptions', body); 
+  }
+  public async cancel(subscriptionId: string) {
+    return await this.paypalService.postRequest<PaypalSubscriptionResponse>(`v1/billing/subscriptions/${subscriptionId}/cancel`); 
+  }
+
+}
 
 export const paypal =  new PaypalPaymentService(config().paypal).connect();

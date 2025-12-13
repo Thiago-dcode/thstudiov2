@@ -9,29 +9,37 @@ import {
   CreatePlanSubscriptionInput,
   UpdatePlanSubscriptionInput,
 } from '@repo/common-lib/schemas/plan-subscription';
-import { FullPlanSubscription } from '@repo/common-lib/types/plan-subscription';
+import {
+  HandleSubscriptionProcessInput,
+  HandleSubscriptionProcessPaypalResponse,
+  HandleSubscriptionProcessStripeResponse,
+  HandleSubscriptionProcessResponse,
+} from '@repo/common-lib/types/plan-subscription';
 import Utils from 'src/common/services/Utils.service';
 import { stripe } from '@repo/backend-lib/services/payment-service/stripe';
-import { FullPlanPrice } from '@repo/common-lib/types/plan-price';
-import { UserService } from '../users/users.service';
+import { StripeService } from 'src/common/services/stripe.service';
+import { LogService } from '@repo/backend-lib/services/log-service';
+import { paypal } from '@repo/backend-lib/services/payment-service/paypal';
 
 @Injectable()
 export class PlanSubscriptionsService {
   constructor(
+    private readonly logger: LogService,
     private readonly planSubscriptionsRepository: PlanSubscriptionsRepository,
-    private readonly userService: UserService,
     private readonly planPriceService: PlanPricesService,
     private readonly requestService: RequestService,
     private readonly planService: PlansService,
     private readonly utils: Utils,
-  ) {}
+  ) {
+    this.logger.channel('subscriptions');
+  }
 
   async initiate({
     plan_price_id,
     success_url,
     cancel_url,
     payment_method,
-  }: InitiatePlanSubscriptionRequest) {
+  }: InitiatePlanSubscriptionRequest): Promise<HandleSubscriptionProcessResponse> {
     const planPrice = await this.planPriceService.findOne(plan_price_id);
     if (!planPrice) {
       throw new HttpException('Plan price does not exist', 422);
@@ -40,9 +48,10 @@ export class PlanSubscriptionsService {
       await this.planSubscriptionsRepository.getActiveUserSubscription(
         this.requestService.user.id,
       );
-  
     if (currentUserSubscription?.plan_price_id === planPrice.id) {
       return {
+        stripe_error: null,
+        paypal_error: null,
         ok: false,
         redirect_url: null,
         message: 'Already subscribed to this plan',
@@ -51,122 +60,190 @@ export class PlanSubscriptionsService {
     if (planPrice.plan.is_free) {
       await this.setFreePlan(this.requestService.user);
       return {
+        stripe_error: null,
+        paypal_error: null,
         ok: true,
         redirect_url: null,
         message: 'Free plan activated',
       };
     }
-  
+    const data: HandleSubscriptionProcessInput = {
+      currentUserSubscription,
+      newPlanPrice: planPrice,
+      successUrl: success_url,
+      cancelUrl: cancel_url,
+    };
     switch (payment_method) {
       case 'CARD':
         //STRIPE
-        return await this.handleStripeSubscription({
-          currentUserSubscription,
-          planPrice,
-          successUrl: success_url,
-          cancelUrl: cancel_url,
-        });
+        return await this.handleStripeSubscription(data);
       case 'PAYPAL':
-        //TODO
-        break;
+        return await this.handlePaypalSubscription(data);
     }
   }
 
-  async getActiveUserSubscription(userId:number){
-return await this.planSubscriptionsRepository.getActiveUserSubscription(userId)
+  async getActiveUserSubscription(userId: number) {
+    return await this.planSubscriptionsRepository.getActiveUserSubscription(
+      userId,
+    );
   }
   async handleStripeSubscription({
     currentUserSubscription,
-    planPrice,
+    newPlanPrice,
     successUrl,
     cancelUrl,
-  }: {
-    currentUserSubscription: FullPlanSubscription | null;
-    planPrice: FullPlanPrice;
-    successUrl: string;
-    cancelUrl: string;
-  }) {
+  }: HandleSubscriptionProcessInput): Promise<HandleSubscriptionProcessStripeResponse> {
     const customerId = this.requestService.user?.stripe_customer_id;
 
-  // Validate required Stripe IDs
-  if (!customerId) {
-    throw new HttpException(
-      'Your account is still being set up. Please try again in a moment.',
-      422,
-    );
-  }
-
-  if (!planPrice?.stripe_id) {
-    throw new HttpException('This plan is not available for purchase.', 422);
-  }
-
-    const paymentMethods =  await this.userService.getStripePaymentMethods(customerId);
-    const hasCompleteSubscription = currentUserSubscription &&
-    currentUserSubscription?.stripe_id && 
-    currentUserSubscription?.stripe_item_id &&
-    paymentMethods.length > 0;
-    if (!hasCompleteSubscription) {
-      // Cancel any orphaned Stripe subscription before creating new one
-      const session = await stripe.checkout.sessions.create({
-        customer: customerId,
-        mode: 'subscription',
-        line_items: [
-          {
-            price: planPrice?.stripe_id,
-            quantity: 1,
-          },
-        ],
-        success_url: successUrl,
-        cancel_url: cancelUrl,
-      });
-
-      return {
-        ok: true,
-        redirect_url: session.url,
-        message:"Need to checkout"
-      };
+    // Validate required Stripe IDs
+    if (!customerId) {
+      throw new HttpException(
+        'Your account is still being set up. Please try again in a moment.',
+        422,
+      );
     }
-    // User already has an active subscription - update the plan/price directly
-    // Note: With 'always_invoice', Stripe creates an invoice for the prorated amount.
-    // If payment fails, the subscription won't be updated on Stripe's side.
-    // The local DB update is handled by the webhook (customer.subscription.updated)
-    // which only fires after successful payment, ensuring data consistency.
+
+    if (!newPlanPrice?.stripe_id) {
+      throw new HttpException('This plan is not available for purchase.', 422);
+    }
     try {
-      const isUpgrade = 
-        currentUserSubscription.plan_price.price < planPrice.price;
-      await stripe.subscriptions.update(
-        currentUserSubscription.stripe_id,
-        {
-          items: [
+      const paymentMethods =
+        await StripeService.getUserPaymentMethod(customerId);
+      const hasCompleteSubscription =
+        currentUserSubscription &&
+        currentUserSubscription?.stripe_id &&
+        currentUserSubscription?.stripe_item_id &&
+        paymentMethods.length > 0;
+      if (!hasCompleteSubscription) {
+        // Cancel any orphaned Stripe subscription before creating new one
+
+        const session = await stripe.checkout.sessions.create({
+          customer: customerId,
+          mode: 'subscription',
+          customer_update: {
+            address: 'auto',
+          },
+          automatic_tax: {
+            enabled: true,
+          },
+          line_items: [
             {
-              id: currentUserSubscription.stripe_item_id,
-              price: planPrice.stripe_id,
+              price: newPlanPrice?.stripe_id,
+              quantity: 1,
             },
           ],
-          proration_behavior: isUpgrade ? 'create_prorations' : 'none',
-          payment_behavior:isUpgrade? 'error_if_incomplete':undefined,
-          billing_cycle_anchor: isUpgrade? undefined:'unchanged',
+          success_url: successUrl,
+          cancel_url: cancelUrl,
+        });
+
+        return {
+          ok: true,
+          redirect_url: session.url,
+          message: 'Need to checkout',
+          stripe_error: null,
+        };
+      }
+      const isUpgrade =
+        currentUserSubscription.plan_price.price < newPlanPrice.price;
+      await stripe.subscriptions.update(currentUserSubscription.stripe_id, {
+        items: [
+          {
+            id: currentUserSubscription.stripe_item_id,
+            price: newPlanPrice.stripe_id,
+          },
+        ],
+        automatic_tax: {
+          enabled: true,
         },
-      );
+        proration_behavior: isUpgrade ? 'always_invoice' : 'none',
+        payment_behavior: isUpgrade ? 'error_if_incomplete' : undefined,
+        billing_cycle_anchor:
+          isUpgrade || newPlanPrice.id !== currentUserSubscription.plan_price_id
+            ? 'now'
+            : 'unchanged',
+      });
       return {
         ok: true,
         redirect_url: null,
         message: 'Subscription updated',
+        stripe_error: null,
       };
     } catch (error) {
       console.log(error);
-      const stripeError = error as { type?: string };
-      if (stripeError.type === 'StripeCardError') {
-        throw new HttpException(
-          'Payment failed. Please update your payment method.',
-          402,
-        );
+      const stripeError = StripeService.parseError(error);
+      const errorMessage = stripeError
+        ? stripeError.message
+        : error instanceof Error
+          ? error.message
+          : 'HANDLE STRIPE SUBSCRIPTION ERROR';
+      this.logger.error('HANDLE STRIPE SUBSCRIPTION ERROR', {
+        currentUserSubscription,
+        error: stripeError || error,
+      });
+      if (!stripeError || stripeError.statusCode >= 500) {
+        Utils.callback500ErrorMail('error', errorMessage, stripeError || error);
       }
-      throw new HttpException(
-        'Failed to update subscription. Please try again.',
-        500,
-      );
+      if (stripeError) {
+        return {
+          ok: false,
+          redirect_url: null,
+          message:
+            stripeError?.message || 'Something went wrong, try again later',
+          stripe_error: stripeError,
+        };
+      }
     }
+  }
+
+  async handlePaypalSubscription({
+    currentUserSubscription,
+    newPlanPrice,
+    successUrl,
+    cancelUrl,
+  }: HandleSubscriptionProcessInput): Promise<HandleSubscriptionProcessPaypalResponse> {
+    const paypalClient = await paypal;
+    if (!newPlanPrice?.paypal_id) {
+      throw new HttpException('This plan is not available for purchase.', 422);
+    }
+    //Check if the subscription has a paypal_id
+    const isUpgrade =
+      currentUserSubscription.plan_price.price < newPlanPrice.price;
+
+    //If is an updgrade we will enforce a brand new paypal subscription
+    //Lately on the webhook, we will cancel the previous one.
+
+    if (!currentUserSubscription.paypal_id || isUpgrade) {
+      const subscription = await paypalClient.subscription.create({
+        plan_id: newPlanPrice.paypal_id,
+        quantity: '1',
+        subscriber: {
+          email_address: this.requestService.user.email,
+        },
+        application_context: {
+          cancel_url: cancelUrl,
+          return_url: successUrl,
+          brand_name: 'THSTUDIO',
+          shipping_preference: 'NO_SHIPPING',
+          user_action: 'SUBSCRIBE_NOW',
+        },
+      });
+      return {
+        ok: true,
+        message: 'Initialazing paypal subscription process',
+        redirect_url: subscription.links.find((link) => link.rel === 'approve')
+          .href,
+        paypal_error: null,
+      };
+    }
+
+    //downgrade
+
+    return {
+      message: '',
+      ok: true,
+      paypal_error: {},
+      redirect_url: null,
+    };
   }
 
   async setFreePlan(user: BaseUser) {
@@ -219,7 +296,10 @@ return await this.planSubscriptionsRepository.getActiveUserSubscription(userId)
     return planSubScription;
   }
 
-  async desactivateAllUserSubscriptions(userId: string | number) {
+  async desactivateAllUserSubscriptions(
+    userId: string | number,
+    skipSubscriptions: number[] = [],
+  ) {
     await this.planSubscriptionsRepository.update(
       {
         is_active: false,
@@ -229,24 +309,15 @@ return await this.planSubscriptionsRepository.getActiveUserSubscription(userId)
           {
             column: 'user_id',
             operator: '=',
-            type: 'where',
             value: userId,
+          },
+          {
+            column: 'id',
+            operator: 'NOT IN',
+            value: skipSubscriptions,
           },
         ],
       },
-    );
-  }
-
-  async findOneByStripeId(stripeId: string) {
-    return this.planSubscriptionsRepository.findOneByColumn(
-      'stripe_id',
-      stripeId,
-    );
-  }
-  async findOneByPaypalId(stripeId: string) {
-    return this.planSubscriptionsRepository.findOneByColumn(
-      'paypal_id',
-      stripeId,
     );
   }
 

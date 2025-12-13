@@ -113,3 +113,81 @@ export type PaypalPlanResponse = {
     create_time: string,
     update_time: string,
 }
+
+// Subscription Types
+export type PaypalShippingPreference = 'GET_FROM_FILE' | 'NO_SHIPPING' | 'SET_PROVIDED_ADDRESS';
+export type PaypalUserAction = 'CONTINUE' | 'SUBSCRIBE_NOW';
+export type PaypalPayerSelected = 'PAYPAL' | 'PAYPAL_CREDIT';
+export type PaypalPayeePreferred = 'UNRESTRICTED' | 'IMMEDIATE_PAYMENT_REQUIRED';
+export type PaypalSubscriptionStatus = 'APPROVAL_PENDING' | 'APPROVED' | 'ACTIVE' | 'SUSPENDED' | 'CANCELLED' | 'EXPIRED';
+
+export type PaypalSubscriberName = {
+    given_name?: string,
+    surname?: string,
+}
+
+export type PaypalFullName = {
+    full_name?: string,
+}
+
+export type PaypalAddress = {
+    address_line_1?: string,
+    address_line_2?: string,
+    admin_area_1?: string,
+    admin_area_2?: string,
+    postal_code?: string,
+    country_code: string,
+}
+
+export type PaypalShippingAddress = {
+    name?: PaypalFullName,
+    address?: PaypalAddress,
+}
+
+export type PaypalSubscriber = {
+    name?: PaypalSubscriberName,
+    email_address?: string,
+    shipping_address?: PaypalShippingAddress,
+}
+
+export type PaypalPaymentMethodPreference = {
+    payer_selected?: PaypalPayerSelected,
+    payee_preferred?: PaypalPayeePreferred,
+}
+
+export type PaypalApplicationContext = {
+    brand_name?: string,
+    locale?: string,
+    shipping_preference?: PaypalShippingPreference,
+    user_action?: PaypalUserAction,
+    payment_method?: PaypalPaymentMethodPreference,
+    return_url: string,
+    cancel_url: string,
+}
+
+export type PaypalCreateSubscriptionInput = {
+    plan_id: string,
+    start_time?: string,
+    quantity?: string,
+    shipping_amount?: PaypalMoney,
+    subscriber?: PaypalSubscriber,
+    application_context?: PaypalApplicationContext,
+}
+
+export type PaypalSubscriptionLink = {
+    href: string,
+    rel: string,
+    method?: string,
+}
+
+export type PaypalSubscriptionResponse = {
+    id: string,
+    plan_id: string,
+    status: PaypalSubscriptionStatus,
+    status_update_time?: string,
+    start_time?: string,
+    quantity?: string,
+    subscriber?: PaypalSubscriber,
+    create_time: string,
+    links: PaypalSubscriptionLink[],
+}

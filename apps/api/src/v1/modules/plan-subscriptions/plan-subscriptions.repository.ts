@@ -10,7 +10,6 @@ import {
 import { SqlValue } from '@repo/common-lib/types/database';
 import { FullPlanSubscription } from '@repo/common-lib/types/plan-subscription';
 import { BaseRepository } from '@repo/database/repositories';
-import { QueryBuilder } from '@repo/database/queryBuilder';
 
 @Injectable()
 export class PlanSubscriptionsRepository extends BaseRepository {
@@ -55,7 +54,9 @@ export class PlanSubscriptionsRepository extends BaseRepository {
   ];
 
   constructor() {
-    super('plan_subscriptions');
+    super('plan_subscriptions', {
+      softDelete: true,
+    });
   }
 
   formatFullPlanSubscription(
@@ -121,7 +122,7 @@ export class PlanSubscriptionsRepository extends BaseRepository {
   async getActiveUserSubscription(
     userId: number,
   ): Promise<FullPlanSubscription | null> {
-    const result = await QueryBuilder.table('plan_subscriptions')
+    const result = await this.queryBuilder
       .select(this.FULL_COLUMNS)
       .join('plan_price_id', 'plan_prices', 'id')
       .join('plan_prices.plan_id', 'plans', 'id')

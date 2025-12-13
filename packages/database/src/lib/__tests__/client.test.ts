@@ -15,6 +15,7 @@ jest.mock('pg', () => ({
     connect: jest.fn().mockResolvedValue({}),
     end: jest.fn().mockResolvedValue({}),
     query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
+    on: jest.fn(),
   })),
 }));
 

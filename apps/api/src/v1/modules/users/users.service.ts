@@ -115,18 +115,6 @@ export class UserService {
     return `This action removes a #${id} user`;
   }
 
-  async getStripePaymentMethods(customerId: string){
-    if (!customerId) {
-      return [];
-    }
-
-    const paymentMethods = await stripe.paymentMethods.list({
-      customer: customerId,
-      type: 'card',
-    });
-
-    return paymentMethods.data;
-  }
 
   @OnEvent(NEW_USER_EVENT)
   async handleNewUserEvent(event: NewUserEvent) {
