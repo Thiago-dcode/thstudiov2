@@ -4,7 +4,7 @@ import Logger from '@repo/backend-lib/utils/console';
 import { killClient } from '../client';
 import { QueryBuilder } from '../builder/queryBuilder';
 const MIGRATION_TABLE_NAME = 'migrations';
-export const migrate = async (tries: number = 3) => {
+export const migrate = async () => {
   setTimeout(
     () => {
       Logger.error('❌ Migration timeout');
@@ -17,6 +17,7 @@ export const migrate = async (tries: number = 3) => {
     const start = Date.now();
     Logger.info('🔄 Initializing migration process');
     await connectDb();
+     Logger.info('🔄 Db connected');
     await SchemaBuilder.table(MIGRATION_TABLE_NAME).createIfNotExists([
       'id SERIAL PRIMARY KEY',
       'name VARCHAR(255) NOT NULL UNIQUE',

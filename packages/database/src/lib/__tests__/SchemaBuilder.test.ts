@@ -2,8 +2,8 @@ import {
   DatabaseClient,
   DatabaseConfig,
   FullDatabaseConfig,
-} from '../constants/types/database';
-import { DEFAULT_DATABASE_SETTINGS } from '../constants/constants';
+} from '@repo/common-lib/types/database';
+import { DEFAULT_DATABASE_SETTINGS } from '@repo/common-lib/constants/database';
 import SchemaBuilder from '../builder/schemaBuilder';
 
 jest.mock('../client', () => {
@@ -106,24 +106,29 @@ describe('SchemaBuilder', () => {
       expect(schemaBuilder['tableName']).toBe(TABLE_NAME);
     });
 
-    it('should create multiple instances with different table names', () => {
+
+  
+    it('tableIfExists should return instance when table exists', async () => {
+      // Arrange
+      mockClient.query.mockResolvedValueOnce({ rows: [{ exists: true }] });
+
       // Act
-      const builder1 = SchemaBuilder.table('users');
-      const builder2 = SchemaBuilder.table('orders' as any);
+      const builder = await SchemaBuilder.tableIfExists(TABLE_NAME);
 
       // Assert
-      expect(builder1['tableName']).toBe('users');
-      expect(builder2['tableName']).toBe('orders');
-      expect(builder1).not.toBe(builder2);
+      expect(builder).toBeInstanceOf(SchemaBuilder);
+      expect(builder && builder['tableName']).toBe(TABLE_NAME);
     });
 
-    it('should handle special characters in table names', () => {
+    it('tableIfExists should return null when table does not exist', async () => {
+      // Arrange
+      mockClient.query.mockResolvedValueOnce({ rows: [{ exists: false }] });
+
       // Act
-      const specialTableName = 'user_profiles_2024';
-      const schemaBuilder = SchemaBuilder.table(specialTableName as any);
+      const builder = await SchemaBuilder.tableIfExists('non_existing' as any);
 
       // Assert
-      expect(schemaBuilder['tableName']).toBe(specialTableName);
+      expect(builder).toBeNull();
     });
   });
 
@@ -620,23 +625,7 @@ describe('SchemaBuilder', () => {
       );
     });
 
-    it('should work with different table names', () => {
-      // Arrange
-      const tableNames = ['users', 'orders', 'products', 'categories'] as any;
-      const columns = ['id SERIAL PRIMARY KEY', 'name VARCHAR(255)'];
-
-      tableNames.forEach((tableName: any) => {
-        // Act
-        const builder = SchemaBuilder.table(tableName);
-        builder.create(columns);
-
-        // Assert
-        expect(builder['tableName']).toBe(tableName);
-        expect(builder['query']).toBe(
-          `CREATE TABLE ${tableName} (\n${columns.join(',\n')}\n);`,
-        );
-      });
-    });
+   
 
     it('should handle multiple create operations on same instance', () => {
       // Arrange
@@ -1048,13 +1037,13 @@ describe('SchemaBuilder', () => {
       ];
 
       // Act
-      const builder = SchemaBuilder.table('profiles' as any);
+      const builder = SchemaBuilder.table('admin_users');
       const result = await builder.create(columns);
 
       // Assert
-      expect(builder['tableName']).toBe('profiles');
+      expect(builder['tableName']).toBe('admin_users');
       expect(builder['query']).toBe(
-        `CREATE TABLE profiles (\n${columns.join(',\n')}\n);`,
+        `CREATE TABLE admin_users (\n${columns.join(',\n')}\n);`,
       );
       expect(mockClient.query).toHaveBeenCalledWith(builder['query']);
       expect(result).toBeDefined();
@@ -1081,7 +1070,7 @@ describe('SchemaBuilder', () => {
 
       // Act
       const userBuilder = SchemaBuilder.table('users');
-      const postBuilder = SchemaBuilder.table('posts' as any);
+      const postBuilder = SchemaBuilder.table('media');
 
       await userBuilder.create(userColumns);
       await postBuilder.create(postColumns);
@@ -1092,9 +1081,9 @@ describe('SchemaBuilder', () => {
         `CREATE TABLE users (\n${userColumns.join(',\n')}\n);`,
       );
 
-      expect(postBuilder['tableName']).toBe('posts');
+      expect(postBuilder['tableName']).toBe('media');
       expect(postBuilder['query']).toBe(
-        `CREATE TABLE posts (\n${postColumns.join(',\n')}\n);`,
+        `CREATE TABLE media (\n${postColumns.join(',\n')}\n);`,
       );
 
       expect(mockClient.query).toHaveBeenCalledTimes(2);
@@ -1158,9 +1147,9 @@ username VARCHAR(255) NULL UNIQUE,
 email VARCHAR(255) NOT NULL UNIQUE,
 password VARCHAR(255) NOT NULL,
 role_id INT REFERENCES roles (id) ON DELETE SET NULL ON UPDATE CASCADE,
-created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-deleted_at TIMESTAMP NULL
+created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+deleted_at TIMESTAMPTZ NULL
 );`;
 
       // Act
@@ -1217,8 +1206,8 @@ stock_quantity INTEGER NOT NULL DEFAULT 0,
 is_active BOOLEAN NOT NULL DEFAULT true,
 category_id BIGINT NULL,
 supplier_id INT REFERENCES suppliers (id) ON DELETE SET NULL,
-created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-updated_at TIMESTAMP NULL
+created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+updated_at TIMESTAMPTZ NULL
 );`;
 
       // Act
@@ -1286,9 +1275,9 @@ is_featured BOOLEAN NOT NULL DEFAULT false,
 view_count INTEGER NOT NULL DEFAULT 0,
 author_id INT REFERENCES users (id) ON DELETE CASCADE,
 category_id INT REFERENCES categories (id) ON DELETE SET NULL,
-created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-deleted_at TIMESTAMP NULL
+created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+deleted_at TIMESTAMPTZ NULL
 );`;
 
       // Act
@@ -1326,8 +1315,8 @@ key VARCHAR(100) NOT NULL UNIQUE,
 value VARCHAR(1000) NULL,
 description VARCHAR(500) NULL,
 is_active BOOLEAN NOT NULL DEFAULT true,
-created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );`;
 
       // Act
@@ -1348,7 +1337,7 @@ updated_at TIMESTAMP NOT NULL DEFAULT NOW()
         ColumnBuilder.string('description', 1000, {
           nullable: true,
         }),
-        ColumnBuilder.enum('billing_type', 'BILLING_TYPES', {
+        ColumnBuilder.enum('billing_type', 'BILLING_TYPE', {
           nullable: false,
           default: 'monthly',
         }),
@@ -1389,7 +1378,7 @@ updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 subscription_id SERIAL PRIMARY KEY,
 name VARCHAR(255) NOT NULL,
 description VARCHAR(1000) NULL,
-billing_type BILLING_TYPES NOT NULL DEFAULT 'monthly',
+billing_type BILLING_TYPE NOT NULL DEFAULT 'monthly',
 user_role USER_EDITORS_ROLES NULL DEFAULT 'editor',
 price INTEGER NOT NULL,
 duration_months INTEGER NOT NULL DEFAULT 1,
@@ -1397,9 +1386,9 @@ is_active BOOLEAN NOT NULL DEFAULT true,
 is_featured BOOLEAN NOT NULL DEFAULT false,
 created_by INT REFERENCES users (id) ON DELETE CASCADE,
 updated_by INT REFERENCES users (id) ON DELETE SET NULL,
-created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-archived_at TIMESTAMP NULL
+created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+archived_at TIMESTAMPTZ NULL
 );`;
 
       // Act
@@ -1432,7 +1421,7 @@ archived_at TIMESTAMP NULL
           nullable: true,
         }),
         ColumnBuilder.password('hashed_password'),
-        ColumnBuilder.enum('billing_preference', 'BILLING_TYPES', {
+        ColumnBuilder.enum('billing_preference', 'BILLING_TYPE', {
           nullable: false,
           default: 'monthly',
         }),
@@ -1503,7 +1492,7 @@ last_name VARCHAR(100) NOT NULL,
 primary_email VARCHAR(255) NOT NULL UNIQUE,
 secondary_email VARCHAR(255) NULL,
 hashed_password VARCHAR(255) NOT NULL,
-billing_preference BILLING_TYPES NOT NULL DEFAULT 'monthly',
+billing_preference BILLING_TYPE NOT NULL DEFAULT 'monthly',
 role USER_EDITORS_ROLES NOT NULL DEFAULT 'editor',
 phone_number VARCHAR(20) NULL,
 address VARCHAR(500) NULL,
@@ -1515,14 +1504,14 @@ is_active BOOLEAN NOT NULL DEFAULT true,
 email_notifications BOOLEAN NOT NULL DEFAULT true,
 sms_notifications BOOLEAN NOT NULL DEFAULT false,
 login_attempts INTEGER NOT NULL DEFAULT 0,
-last_login TIMESTAMP NULL,
-email_verified_at TIMESTAMP NULL,
-password_changed_at TIMESTAMP NULL,
+last_login TIMESTAMPTZ NULL,
+email_verified_at TIMESTAMPTZ NULL,
+password_changed_at TIMESTAMPTZ NULL,
 manager_id INT REFERENCES users (id) ON DELETE SET NULL,
 department_id INT REFERENCES departments (id) ON DELETE SET NULL,
-created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-deleted_at TIMESTAMP NULL
+created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+deleted_at TIMESTAMPTZ NULL
 );`;
 
       // Act

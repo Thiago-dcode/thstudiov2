@@ -5,8 +5,8 @@ import {
   WhereCondition,
   SqlClauseWithoutIn,
   DatabaseClient,
-} from '../constants/types/database';
-import { DEFAULT_DATABASE_SETTINGS } from '../constants/constants';
+} from '@repo/common-lib/types/database';
+import { DEFAULT_DATABASE_SETTINGS } from '@repo/common-lib/constants/database';
 import { initClient } from '../client';
 import { QueryBuilderOperationNotAllowedException } from '../builder/queryBuilder/exceptions';
 
@@ -73,7 +73,6 @@ jest.mock('../client', ()=> {
 });
 
 describe('QueryBuilder', () => {
-  let mockClient: any;
   let testConfig: DatabaseConfig;
   const TABLE_NAME = 'test_table' as any;
 
@@ -92,9 +91,8 @@ describe('QueryBuilder', () => {
     };
 
     // Get the mocked client
-    const { initClient,getClient } = require('../client');
+    const { initClient } = require('../client');
     await initClient(testConfig);
-    mockClient = getClient();
   });
 
   afterEach(async () => {
@@ -261,11 +259,15 @@ describe('QueryBuilder', () => {
 
     it('should throw error for column names with more than 2 parts', () => {
       const invalidColumns = ['table.column.subcolumn', 'schema.table.column'];
-
+      
       // Act & Assert
       expect(() => queryBuilder.select(invalidColumns[0])).toThrow(
         'Wrong column name: table.column.subcolumn',
       );
+      
+      // Reset query builder for second test
+      queryBuilder['reset']();
+      
       expect(() => queryBuilder.select(invalidColumns[1])).toThrow(
         'Wrong column name: schema.table.column',
       );
@@ -292,6 +294,7 @@ describe('QueryBuilder', () => {
         operator: '=',
         position: 0,
         type: 'where',
+        value: '1',
       });
       expect(queryBuilder['values']).toEqual(['1']);
     });
@@ -395,7 +398,6 @@ describe('QueryBuilder', () => {
       // Assert
       expect(queryBuilder['wheres']).toHaveLength(5);
       expect(queryBuilder['values']).toEqual([
-        null,
         18,
         85.5,
         '%@example.com',
@@ -403,7 +405,7 @@ describe('QueryBuilder', () => {
         'pending',
         'review',
       ]);
-      expect(queryBuilder['valuesPosition']).toBe(7);
+      expect(queryBuilder['valuesPosition']).toBe(6);
     });
 
     it('should handle complex table and column references', () => {
@@ -446,10 +448,245 @@ describe('QueryBuilder', () => {
     });
   });
 
+  describe('whereGroup', () => {
+    let queryBuilder: QueryBuilder;
+
+    beforeEach(async () => {
+      const { initClient } = require('../client');
+      await initClient(testConfig);
+      queryBuilder = new QueryBuilder(TABLE_NAME);
+    });
+
+    it('should group WHERE conditions with parentheses', () => {
+      // Act
+      queryBuilder.whereGroup([
+        ['name', 'LIKE', '%John%', 'where'],
+        ['email', 'LIKE', '%@example.com', 'orWhere'],
+      ]);
+
+      // Assert
+      expect(queryBuilder['wheres']).toHaveLength(2);
+      expect(queryBuilder['wheres'][0]).toMatchObject({
+        column: 'name',
+        operator: 'LIKE',
+        type: 'where',
+        startWhereGroup: true,
+      });
+      expect(queryBuilder['wheres'][1]).toMatchObject({
+        column: 'email',
+        operator: 'LIKE',
+        type: 'orWhere',
+        endWhereGroup: true,
+      });
+      expect(queryBuilder['values']).toEqual(['%John%', '%@example.com']);
+    });
+
+    it('should handle single condition in whereGroup', () => {
+      // Act
+      queryBuilder.whereGroup([['status', '=', 'active', 'where']]);
+
+      // Assert
+      expect(queryBuilder['wheres']).toHaveLength(1);
+      expect(queryBuilder['wheres'][0]).toMatchObject({
+        column: 'status',
+        operator: '=',
+        type: 'where',
+        startWhereGroup: true,
+        endWhereGroup: true,
+      });
+      expect(queryBuilder['values']).toEqual(['active']);
+    });
+
+    it('should handle whereGroup with IN operator', () => {
+      // Act
+      queryBuilder.whereGroup([
+        ['status', 'IN', ['active', 'pending'], 'where'],
+        ['role', '=', 'admin', 'orWhere'],
+      ]);
+
+      // Assert
+      expect(queryBuilder['wheres']).toHaveLength(2);
+      expect(queryBuilder['wheres'][0]).toMatchObject({
+        column: 'status',
+        operator: 'IN',
+        type: 'where',
+        startWhereGroup: true,
+      });
+      expect(queryBuilder['wheres'][1]).toMatchObject({
+        column: 'role',
+        operator: '=',
+        type: 'orWhere',
+        endWhereGroup: true,
+      });
+      expect(queryBuilder['values']).toEqual(['active', 'pending', 'admin']);
+    });
+
+    it('should handle whereGroup with NOT IN operator', () => {
+      // Act
+      queryBuilder.whereGroup([
+        ['status', 'NOT IN', ['deleted', 'archived'], 'where'],
+        ['name', 'LIKE', '%test%', 'orWhere'],
+      ]);
+
+      // Assert
+      expect(queryBuilder['wheres']).toHaveLength(2);
+      expect(queryBuilder['wheres'][0]).toMatchObject({
+        column: 'status',
+        operator: 'NOT IN',
+        type: 'where',
+        startWhereGroup: true,
+      });
+      expect(queryBuilder['wheres'][1]).toMatchObject({
+        column: 'name',
+        operator: 'LIKE',
+        type: 'orWhere',
+        endWhereGroup: true,
+      });
+      expect(queryBuilder['values']).toEqual(['deleted', 'archived', '%test%']);
+    });
+
+    it('should handle multiple whereGroup calls', () => {
+      // Act
+      queryBuilder.where('age', '>=', '18');
+      queryBuilder.whereGroup([
+        ['name', 'LIKE', '%John%', 'where'],
+        ['email', 'LIKE', '%@example.com', 'orWhere'],
+      ]);
+      queryBuilder.whereGroup([
+        ['city', '=', 'NYC', 'where'],
+        ['city', '=', 'LA', 'orWhere'],
+      ]);
+
+      // Assert
+      expect(queryBuilder['wheres']).toHaveLength(5);
+      // First regular where
+      expect(queryBuilder['wheres'][0]).toMatchObject({
+        column: 'age',
+        type: 'where',
+      });
+      // First group
+      expect(queryBuilder['wheres'][1]).toMatchObject({
+        startWhereGroup: true,
+      });
+      expect(queryBuilder['wheres'][2]).toMatchObject({
+        endWhereGroup: true,
+      });
+      // Second group
+      expect(queryBuilder['wheres'][3]).toMatchObject({
+        startWhereGroup: true,
+      });
+      expect(queryBuilder['wheres'][4]).toMatchObject({
+        endWhereGroup: true,
+      });
+    });
+
+    it('should handle whereGroup with various operators', () => {
+      // Act
+      queryBuilder.whereGroup([
+        ['id', '>', '0', 'where'],
+        ['age', '>=', '18', 'where'],
+        ['status', '!=', 'deleted', 'orWhere'],
+        ['name', 'LIKE', '%test%', 'orWhere'],
+      ]);
+
+      // Assert
+      expect(queryBuilder['wheres']).toHaveLength(4);
+      expect(queryBuilder['wheres'][0]).toMatchObject({
+        operator: '>',
+        startWhereGroup: true,
+      });
+      expect(queryBuilder['wheres'][3]).toMatchObject({
+        operator: 'LIKE',
+        endWhereGroup: true,
+      });
+      expect(queryBuilder['values']).toEqual(['0', '18', 'deleted', '%test%']);
+    });
+
+    it('should handle whereGroup with null values', () => {
+      // Act
+      queryBuilder.whereGroup([
+        ['deleted_at', 'IS', null, 'where'],
+        ['archived_at', 'IS NOT', null, 'orWhere'],
+      ]);
+
+      // Assert
+      expect(queryBuilder['wheres']).toHaveLength(2);
+      expect(queryBuilder['wheres'][0]).toMatchObject({
+        operator: 'IS',
+        value: null,
+        startWhereGroup: true,
+      });
+      expect(queryBuilder['wheres'][1]).toMatchObject({
+        operator: 'IS NOT',
+        value: null,
+        endWhereGroup: true,
+      });
+      // Null values should not be added to values array
+      expect(queryBuilder['values']).toEqual([]);
+    });
+
+    it('should handle whereGroup with table-qualified columns', () => {
+      // Act
+      queryBuilder.whereGroup([
+        ['users.id', '=', '123', 'where'],
+        ['orders.status', '=', 'pending', 'orWhere'],
+      ]);
+
+      // Assert
+      expect(queryBuilder['wheres']).toHaveLength(2);
+      expect(queryBuilder['wheres'][0]).toMatchObject({
+        column: 'users.id',
+        startWhereGroup: true,
+      });
+      expect(queryBuilder['wheres'][1]).toMatchObject({
+        column: 'orders.status',
+        endWhereGroup: true,
+      });
+    });
+
+    it('should handle empty whereGroup array', () => {
+      // Act
+      queryBuilder.whereGroup([]);
+
+      // Assert
+      expect(queryBuilder['wheres']).toHaveLength(0);
+      expect(queryBuilder['values']).toEqual([]);
+    });
+
+    it('should handle whereGroup with mixed IN and regular conditions', () => {
+      // Act
+      queryBuilder.whereGroup([
+        ['status', 'IN', ['active', 'pending', 'review'], 'where'],
+        ['priority', '>', '5', 'where'],
+        ['category', 'NOT IN', ['archived', 'deleted'], 'where'],
+        ['name', 'LIKE', '%urgent%', 'orWhere'],
+      ]);
+
+      // Assert
+      expect(queryBuilder['wheres']).toHaveLength(4);
+      expect(queryBuilder['wheres'][0]).toMatchObject({
+        operator: 'IN',
+        startWhereGroup: true,
+      });
+      expect(queryBuilder['wheres'][3]).toMatchObject({
+        operator: 'LIKE',
+        endWhereGroup: true,
+      });
+      expect(queryBuilder['values']).toEqual([
+        'active',
+        'pending',
+        'review',
+        '5',
+        'archived',
+        'deleted',
+        '%urgent%',
+      ]);
+    });
+  });
+
   describe('buildWhereQuery', () => {
     let queryBuilder: QueryBuilder;
     let postgresConfig: DatabaseConfig;
-    let mysqlConfig: DatabaseConfig;
 
     beforeEach(async () => {
       postgresConfig = {
@@ -460,20 +697,11 @@ describe('QueryBuilder', () => {
         database: 'testdb',
         client: 'postgres',
       };
-
-      mysqlConfig = {
-        host: 'localhost',
-        port: 3306,
-        username: 'testuser',
-        password: 'testpass',
-        database: 'testdb',
-        client: 'mysql',
-      };
       await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
     });
 
-    it('should build WHERE query for PostgreSQL with correct parameter placeholder', async () => {
+    it('should build WHERE query with correct parameter placeholder', async () => {
       await initClient(postgresConfig);
       // Arrange
       const where: WhereCondition = {
@@ -481,6 +709,7 @@ describe('QueryBuilder', () => {
         operator: '=',
         position: 0,
         type: 'where',
+        value: 'test@example.com',
       };
 
       // Act
@@ -490,53 +719,22 @@ describe('QueryBuilder', () => {
       expect(result).toBe(`${TABLE_NAME}.id = $1`);
     });
 
-    it('should build WHERE query for MySQL with correct parameter placeholder', async () => {
-      await initClient(mysqlConfig);
-      queryBuilder = new QueryBuilder(TABLE_NAME);
-      // Arrange
-      const where: WhereCondition = {
-        column: 'name',
-        operator: '>',
-        position: 1,
-        type: 'where',
-      };
-
-      // Act
-      const result = queryBuilder['buildWhereQuery'](where);
-
-      // Assert
-      expect(result).toBe(`${TABLE_NAME}.name > ?`);
-    });
-
-    it('should build WHERE query with table-qualified column names for both databases', async () => {
-      // Test PostgreSQL
+    it('should build WHERE query with table-qualified column names', async () => {
       await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
-      const wherePostgres: WhereCondition = {
+      const where: WhereCondition = {
         column: 'users.id',
         operator: '=',
         position: 2,
         type: 'where',
+        value: 'test@example.com',
       };
-      expect(queryBuilder['buildWhereQuery'](wherePostgres)).toBe(
+      expect(queryBuilder['buildWhereQuery'](where)).toBe(
         `users.id = $3`,
-      );
-
-      // Test MySQL
-      await initClient(mysqlConfig);
-      queryBuilder = new QueryBuilder(TABLE_NAME);
-      const whereMysql: WhereCondition = {
-        column: 'orders.status',
-        operator: 'LIKE',
-        position: 3,
-        type: 'where',
-      };
-      expect(queryBuilder['buildWhereQuery'](whereMysql)).toBe(
-        `orders.status LIKE ?`,
       );
     });
 
-    it('should handle all operators correctly for both databases', async () => {
+    it('should handle all operators correctly', async () => {
       const operators: Array<SqlClauseWithoutIn> = [
         '=',
         '>',
@@ -549,7 +747,6 @@ describe('QueryBuilder', () => {
         'IS NOT',
       ];
 
-      // Test PostgreSQL
       await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
       operators.forEach((operator, index) => {
@@ -558,23 +755,10 @@ describe('QueryBuilder', () => {
           operator,
           position: index,
           type: 'where',
+          value: 'test@example.com',
         };
         const result = queryBuilder['buildWhereQuery'](where);
         expect(result).toBe(`${TABLE_NAME}.age ${operator} $${index + 1}`);
-      });
-
-      // Test MySQL
-      await initClient(mysqlConfig);
-      queryBuilder = new QueryBuilder(TABLE_NAME);
-      operators.forEach((operator) => {
-        const where: WhereCondition = {
-          column: 'status',
-          operator,
-          position: 0,
-          type: 'where',
-        };
-        const result = queryBuilder['buildWhereQuery'](where);
-        expect(result).toBe(`${TABLE_NAME}.status ${operator} ?`);
       });
     });
 
@@ -585,6 +769,7 @@ describe('QueryBuilder', () => {
         operator: 'LIKE',
         position: 4,
         type: 'where',
+        value: 'test@example.com',
       };
       expect(queryBuilder['buildWhereQuery'](where)).toBe(
         `user_profile.first_name LIKE $5`,
@@ -596,6 +781,7 @@ describe('QueryBuilder', () => {
         operator: 'LIKE',
         position: 999,
         type: 'where',
+        value: 'test@example.com',
       };
       expect(queryBuilder['buildWhereQuery'](whereLarge)).toBe(
         `${TABLE_NAME}.email LIKE $1000`,
@@ -652,39 +838,94 @@ describe('QueryBuilder', () => {
     });
 
     it('should build SELECT query with multiple joins and columns', () => {
-      const targetQuery = `SELECT ${TABLE_NAME}.id,${TABLE_NAME}.name,${TABLE_NAME}.email,users.id,orders.id FROM ${TABLE_NAME} \nINNER JOIN users ON users.id = ${TABLE_NAME}.user_id \nLEFT JOIN orders ON orders.id = ${TABLE_NAME}.user_id`;
+      const targetQuery = `SELECT ${TABLE_NAME}.id,${TABLE_NAME}.name,${TABLE_NAME}.email,users.id,user_extra_data.id FROM ${TABLE_NAME} \nINNER JOIN users ON users.id = ${TABLE_NAME}.user_id \nLEFT JOIN user_extra_data ON user_extra_data.id = ${TABLE_NAME}.user_id`;
       // Arrange
       queryBuilder
-        .select('id,name,email,users.id,orders.id')
+        .select('id,name,email,users.id,user_extra_data.id')
         .join('user_id', 'users', 'id')
-        .join('user_id', 'orders', 'id', 'LEFT');
+        .join('user_id', 'user_extra_data', 'id', 'LEFT');
 
       queryBuilder['buildSelectQuery']();
       // Assert
       expect(queryBuilder['query']).toBe(targetQuery);
     });
 
-    it('should build complex SELECT query with joins, columns, and WHERE conditions', async () => {
-      await initClient(postgresConfig);
-      const targetQuery = `SELECT ${TABLE_NAME}.id,${TABLE_NAME}.name,${TABLE_NAME}.email,users.id,orders.id FROM ${TABLE_NAME} \nINNER JOIN users ON users.id = ${TABLE_NAME}.user_id \nLEFT JOIN orders ON orders.id = ${TABLE_NAME}.user_id \nWHERE users.id LIKE $1 \nOR users.id IS NOT $2 \nAND orders.id IN ($3,$4) \nAND orders.id = $5 \nOR orders.id = $6 \nOR orders.id IN ($7,$8)`;
-
+    it('should build SELECT query with chained joins (join table referencing another joined table)', () => {
+      // This tests the scenario where tableC joins on tableB (which was joined from tableA)
+      // Example: SELECT FROM test_table 
+      //          INNER JOIN users ON users.id = test_table.user_id
+      //          LEFT JOIN addresses ON addresses.id = users.address_id
+      const targetQuery = `SELECT ${TABLE_NAME}.id,${TABLE_NAME}.name,users.id,users.address_id,addresses.city FROM ${TABLE_NAME} \nINNER JOIN users ON users.id = ${TABLE_NAME}.user_id \nLEFT JOIN addresses ON addresses.id = users.address_id`;
       // Arrange
       queryBuilder
-        .select('id,name,email,users.id,orders.id')
+        .select('id,name,users.id,users.address_id,addresses.city')
         .join('user_id', 'users', 'id')
-        .join('user_id', 'orders', 'id', 'LEFT')
-        .where('users.id', 'LIKE', '%1%')
-        .orWhere('users.id', 'IS NOT', null)
-        .whereIn('orders.id', [2, 3])
-        .where('orders.id', '=', 4)
-        .orWhere('orders.id', '=', 5)
-        .orWhereIn('orders.id', [6, 7]);
+        .join('users.address_id', 'addresses', 'id', 'LEFT');
+
+      queryBuilder['buildSelectQuery']();
+      // Assert
+      expect(queryBuilder['query']).toBe(targetQuery);
+    });
+
+    it('should build SELECT query with multiple chained joins across different tables', () => {
+      // This tests a more complex scenario with 3 levels of chained joins:
+      // test_table -> projects -> clients -> addresses
+      const targetQuery = `SELECT ${TABLE_NAME}.id,projects.id,clients.name,addresses.city FROM ${TABLE_NAME} \nINNER JOIN projects ON projects.id = ${TABLE_NAME}.project_id \nINNER JOIN clients ON clients.id = projects.client_id \nLEFT JOIN addresses ON addresses.id = clients.address_id`;
+      // Arrange
+      queryBuilder
+        .select('id,projects.id,clients.name,addresses.city')
+        .join('project_id', 'projects', 'id')
+        .join('projects.client_id', 'clients', 'id')
+        .join('clients.address_id', 'addresses', 'id', 'LEFT');
+
+      queryBuilder['buildSelectQuery']();
+      // Assert
+      expect(queryBuilder['query']).toBe(targetQuery);
+    });
+
+    it('should build SELECT query with chained joins and WHERE conditions on joined tables', async () => {
+      await initClient(postgresConfig);
+      // This tests chained joins with WHERE conditions filtering on the chained joined tables
+      const targetQuery = `SELECT ${TABLE_NAME}.id,projects.id,clients.name,addresses.city FROM ${TABLE_NAME} \nINNER JOIN projects ON projects.id = ${TABLE_NAME}.project_id \nINNER JOIN clients ON clients.id = projects.client_id \nLEFT JOIN addresses ON addresses.id = clients.address_id \nWHERE projects.status = $1 \nAND clients.name LIKE $2 \nAND addresses.city IN ($3,$4)`;
+      // Arrange
+      queryBuilder
+        .select('id,projects.id,clients.name,addresses.city')
+        .join('project_id', 'projects', 'id')
+        .join('projects.client_id', 'clients', 'id')
+        .join('clients.address_id', 'addresses', 'id', 'LEFT')
+        .where('projects.status', '=', 'active')
+        .where('clients.name', 'LIKE', '%John%')
+        .whereIn('addresses.city', ['NYC', 'LA']);
 
       queryBuilder['buildSelectQuery']();
 
       // Assert
-      expect(queryBuilder['valuesPosition']).toBe(8);
-      expect(queryBuilder['values']).toEqual(['%1%', null, 2, 3, 4, 5, 6, 7]);
+      expect(queryBuilder['valuesPosition']).toBe(4);
+      expect(queryBuilder['values']).toEqual(['active', '%John%', 'NYC', 'LA']);
+      expect(queryBuilder['query']).toBe(targetQuery);
+    });
+
+    it('should build complex SELECT query with joins, columns, and WHERE conditions', async () => {
+      await initClient(postgresConfig);
+      const targetQuery = `SELECT ${TABLE_NAME}.id,${TABLE_NAME}.name,${TABLE_NAME}.email,users.id,user_extra_data.id FROM ${TABLE_NAME} \nINNER JOIN users ON users.id = ${TABLE_NAME}.user_id \nLEFT JOIN user_extra_data ON user_extra_data.id = ${TABLE_NAME}.user_id \nWHERE users.id LIKE $1 \nOR users.id IS NOT NULL \nAND user_extra_data.id IN ($2,$3) \nAND user_extra_data.id = $4 \nOR user_extra_data.id = $5 \nOR user_extra_data.id IN ($6,$7)`;
+
+      // Arrange
+      queryBuilder
+        .select('id,name,email,users.id,user_extra_data.id')
+        .join('user_id', 'users', 'id')
+        .join('user_id', 'user_extra_data', 'id', 'LEFT')
+        .where('users.id', 'LIKE', '%1%')
+        .orWhere('users.id', 'IS NOT', null)
+        .whereIn('user_extra_data.id', [2, 3])
+        .where('user_extra_data.id', '=', 4)
+        .orWhere('user_extra_data.id', '=', 5)
+        .orWhereIn('user_extra_data.id', [6, 7]);
+
+      queryBuilder['buildSelectQuery']();
+
+      // Assert
+      expect(queryBuilder['valuesPosition']).toBe(7);
+      expect(queryBuilder['values']).toEqual(['%1%', 2, 3, 4, 5, 6, 7]);
       expect(queryBuilder['query']).toBe(targetQuery);
     });
 
@@ -712,7 +953,7 @@ describe('QueryBuilder', () => {
       queryBuilder['buildSelectQuery']();
 
       // Assert
-      expect(queryBuilder['query']).toBe(`SELECT * FROM ${TABLE_NAME} \nORDER BY name ASC`);
+      expect(queryBuilder['query']).toBe(`SELECT * FROM ${TABLE_NAME} \nORDER BY ${TABLE_NAME}.name ASC`);
     });
 
     it('should build SELECT query with ORDER BY DESC clause', () => {
@@ -721,7 +962,7 @@ describe('QueryBuilder', () => {
       queryBuilder['buildSelectQuery']();
 
       // Assert
-      expect(queryBuilder['query']).toBe(`SELECT * FROM ${TABLE_NAME} \nORDER BY created_at DESC`);
+      expect(queryBuilder['query']).toBe(`SELECT * FROM ${TABLE_NAME} \nORDER BY ${TABLE_NAME}.created_at DESC`);
     });
 
     it('should build SELECT query with LIMIT, OFFSET, and ORDER BY clauses', () => {
@@ -733,17 +974,17 @@ describe('QueryBuilder', () => {
       queryBuilder['buildSelectQuery']();
 
       // Assert
-      expect(queryBuilder['query']).toBe(`SELECT * FROM ${TABLE_NAME} \nORDER BY name ASC \nLIMIT 10 \nOFFSET 5`);
+      expect(queryBuilder['query']).toBe(`SELECT * FROM ${TABLE_NAME} \nORDER BY ${TABLE_NAME}.name ASC \nLIMIT 10 \nOFFSET 5`);
     });
 
     it('should build complete SELECT query with all clauses', () => {
       // Arrange
-      const targetQuery = `SELECT ${TABLE_NAME}.id,${TABLE_NAME}.name,${TABLE_NAME}.email,users.id,orders.id FROM ${TABLE_NAME} \nINNER JOIN users ON users.id = ${TABLE_NAME}.user_id \nLEFT JOIN orders ON orders.id = ${TABLE_NAME}.user_id \nWHERE users.id LIKE $1 \nOR users.id IS NOT $2 \nAND orders.id IN ($3,$4) \nAND orders.id = $5 \nOR orders.id = $6 \nOR orders.id IN ($7,$8) \nORDER BY name ASC \nLIMIT 10 \nOFFSET 5`;
+      const targetQuery = `SELECT ${TABLE_NAME}.id,${TABLE_NAME}.name,${TABLE_NAME}.email,users.id,user_extra_data.id FROM ${TABLE_NAME} \nINNER JOIN users ON users.id = ${TABLE_NAME}.user_id \nLEFT JOIN user_extra_data ON user_extra_data.id = ${TABLE_NAME}.user_id \nWHERE users.id LIKE $1 \nOR users.id IS NOT NULL \nAND orders.id IN ($2,$3) \nAND orders.id = $4 \nOR orders.id = $5 \nOR orders.id IN ($6,$7) \nORDER BY ${TABLE_NAME}.name ASC \nLIMIT 10 \nOFFSET 5`;
 
       queryBuilder
-        .select('id,name,email,users.id,orders.id')
+        .select('id,name,email,users.id,user_extra_data.id')
         .join('user_id', 'users', 'id')
-        .join('user_id', 'orders', 'id', 'LEFT')
+        .join('user_id', 'user_extra_data', 'id', 'LEFT')
         .where('users.id', 'LIKE', '%1%')
         .orWhere('users.id', 'IS NOT', null)
         .whereIn('orders.id', [2, 3])
@@ -757,17 +998,230 @@ describe('QueryBuilder', () => {
       queryBuilder['buildSelectQuery']();
 
       // Assert
-      expect(queryBuilder['valuesPosition']).toBe(8);
-      expect(queryBuilder['values']).toEqual(['%1%', null, 2, 3, 4, 5, 6, 7]);
+      expect(queryBuilder['valuesPosition']).toBe(7);
+      expect(queryBuilder['values']).toEqual(['%1%', 2, 3, 4, 5, 6, 7]);
       expect(queryBuilder['query']).toBe(targetQuery);
+    });
+
+    it('should build SELECT query with whereGroup for proper parentheses', () => {
+      // Arrange
+      const targetQuery = `SELECT * FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.language_code = $1 \nAND (${TABLE_NAME}.name ILIKE $2 \nOR ${TABLE_NAME}.tags ILIKE $3 \nOR ${TABLE_NAME}.tr_name ILIKE $4)`;
+
+      queryBuilder
+        .where('language_code', '=', 'EN')
+        .whereGroup([
+          ['name', 'ILIKE', '%photo%', 'where'],
+          ['tags', 'ILIKE', '%photo%', 'orWhere'],
+          ['tr_name', 'ILIKE', '%photo%', 'orWhere'],
+        ]);
+
+      queryBuilder['buildSelectQuery']();
+
+      // Assert
+      expect(queryBuilder['query']).toBe(targetQuery);
+      expect(queryBuilder['values']).toEqual(['EN', '%photo%', '%photo%', '%photo%']);
+    });
+
+    it('should build SELECT query with multiple whereGroup calls', () => {
+      // Arrange  
+      const targetQuery = `SELECT * FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.status = $1 \nAND (${TABLE_NAME}.name LIKE $2 \nOR ${TABLE_NAME}.email LIKE $3) \nOR (${TABLE_NAME}.city = $4 \nOR ${TABLE_NAME}.country = $5)`;
+
+      queryBuilder.where('status', '=', 'active');
+      queryBuilder.whereGroup([
+        ['name', 'LIKE', '%John%', 'where'],
+        ['email', 'LIKE', '%@example.com', 'orWhere'],
+      ]);
+      queryBuilder.whereGroup([
+        ['city', '=', 'NYC', 'orWhere'],
+        ['country', '=', 'USA', 'orWhere'],
+      ]);
+
+      queryBuilder['buildSelectQuery']();
+
+      // Assert
+      expect(queryBuilder['query']).toBe(targetQuery);
+      expect(queryBuilder['values']).toEqual(['active', '%John%', '%@example.com', 'NYC', 'USA']);
+    });
+
+    it('should build SELECT query with whereGroup containing IN operator', () => {
+      // Arrange
+      const targetQuery = `SELECT * FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.user_id = $1 \nAND (${TABLE_NAME}.status IN ($2,$3,$4) \nOR ${TABLE_NAME}.priority > $5)`;
+
+      queryBuilder
+        .where('user_id', '=', 123)
+        .whereGroup([
+          ['status', 'IN', ['active', 'pending', 'review'], 'where'],
+          ['priority', '>', 5, 'orWhere'],
+        ]);
+
+      queryBuilder['buildSelectQuery']();
+
+      // Assert
+      expect(queryBuilder['query']).toBe(targetQuery);
+      expect(queryBuilder['values']).toEqual([123, 'active', 'pending', 'review', 5]);
+    });
+
+    it('should build SELECT query with whereGroup and joins', () => {
+      // Arrange
+      const targetQuery = `SELECT ${TABLE_NAME}.id,${TABLE_NAME}.name,users.email FROM ${TABLE_NAME} \nINNER JOIN users ON users.id = ${TABLE_NAME}.user_id \nWHERE ${TABLE_NAME}.active = $1 \nAND (${TABLE_NAME}.name LIKE $2 \nOR users.email LIKE $3)`;
+
+      queryBuilder
+        .select('id,name,users.email')
+        .join('user_id', 'users', 'id')
+        .where('active', '=', true)
+        .whereGroup([
+          ['name', 'LIKE', '%test%', 'where'],
+          ['users.email', 'LIKE', '%@test.com', 'orWhere'],
+        ]);
+
+      queryBuilder['buildSelectQuery']();
+
+      // Assert
+      expect(queryBuilder['query']).toBe(targetQuery);
+      expect(queryBuilder['values']).toEqual([true, '%test%', '%@test.com']);
+    });
+
+    it('should build SELECT query with whereGroup containing null values', () => {
+      // Arrange
+      const targetQuery = `SELECT * FROM ${TABLE_NAME} \nWHERE (${TABLE_NAME}.deleted_at IS NULL \nOR ${TABLE_NAME}.archived_at IS NULL) \nAND ${TABLE_NAME}.status = $1`;
+
+      queryBuilder.whereGroup([
+        ['deleted_at', 'IS', null, 'where'],
+        ['archived_at', 'IS', null, 'orWhere'],
+      ]);
+      queryBuilder.where('status', '=', 'active');
+
+      queryBuilder['buildSelectQuery']();
+
+      // Assert
+      expect(queryBuilder['query']).toBe(targetQuery);
+      expect(queryBuilder['values']).toEqual(['active']);
+    });
+
+    it('should build SELECT query with nested whereGroup logic', () => {
+      // Arrange - Simulates: WHERE age >= 18 AND (role = 'admin' OR role = 'moderator') AND (city = 'NYC' OR city = 'LA')
+      const targetQuery = `SELECT * FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.age >= $1 \nAND (${TABLE_NAME}.role = $2 \nOR ${TABLE_NAME}.role = $3) \nAND (${TABLE_NAME}.city = $4 \nOR ${TABLE_NAME}.city = $5)`;
+
+      queryBuilder.where('age', '>=', 18);
+      queryBuilder.whereGroup([
+        ['role', '=', 'admin', 'where'],
+        ['role', '=', 'moderator', 'orWhere'],
+      ]);
+      queryBuilder.whereGroup([
+        ['city', '=', 'NYC', 'where'],
+        ['city', '=', 'LA', 'orWhere'],
+      ]);
+
+      queryBuilder['buildSelectQuery']();
+
+      // Assert
+      expect(queryBuilder['query']).toBe(targetQuery);
+      expect(queryBuilder['values']).toEqual([18, 'admin', 'moderator', 'NYC', 'LA']);
+    });
+
+    it('should build SELECT query with whereNotIn', () => {
+      // Arrange
+      const targetQuery = `SELECT * FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.status NOT IN ($1,$2,$3)`;
+
+      queryBuilder.whereNotIn('status', ['deleted', 'archived', 'banned']);
+
+      queryBuilder['buildSelectQuery']();
+
+      // Assert
+      expect(queryBuilder['query']).toBe(targetQuery);
+      expect(queryBuilder['values']).toEqual(['deleted', 'archived', 'banned']);
+      expect(queryBuilder['valuesPosition']).toBe(3);
+    });
+
+    it('should build SELECT query with whereNotIn and other WHERE conditions', () => {
+      // Arrange
+      const targetQuery = `SELECT * FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.status NOT IN ($1,$2) \nAND ${TABLE_NAME}.age >= $3 \nAND ${TABLE_NAME}.country = $4`;
+
+      queryBuilder
+        .whereNotIn('status', ['deleted', 'archived'])
+        .where('age', '>=', 18)
+        .where('country', '=', 'US');
+
+      queryBuilder['buildSelectQuery']();
+
+      // Assert
+      expect(queryBuilder['query']).toBe(targetQuery);
+      expect(queryBuilder['values']).toEqual(['deleted', 'archived', 18, 'US']);
+      expect(queryBuilder['valuesPosition']).toBe(4);
+    });
+
+    it('should build SELECT query with orWhereNotIn', () => {
+      // Arrange
+      const targetQuery = `SELECT * FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.category = $1 \nOR ${TABLE_NAME}.status NOT IN ($2,$3,$4)`;
+
+      queryBuilder
+        .where('category', '=', 'tech')
+        .orWhereNotIn('status', ['deleted', 'archived', 'banned']);
+
+      queryBuilder['buildSelectQuery']();
+
+      // Assert
+      expect(queryBuilder['query']).toBe(targetQuery);
+      expect(queryBuilder['values']).toEqual(['tech', 'deleted', 'archived', 'banned']);
+      expect(queryBuilder['valuesPosition']).toBe(4);
+    });
+
+    it('should build complex SELECT query with whereIn, whereNotIn, and orWhereNotIn', () => {
+      // Arrange
+      const targetQuery = `SELECT ${TABLE_NAME}.id,${TABLE_NAME}.name FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.category IN ($1,$2) \nAND ${TABLE_NAME}.status NOT IN ($3,$4) \nAND ${TABLE_NAME}.age >= $5 \nOR ${TABLE_NAME}.role NOT IN ($6,$7,$8)`;
+
+      queryBuilder
+        .select('id,name')
+        .whereIn('category', ['tech', 'science'])
+        .whereNotIn('status', ['deleted', 'archived'])
+        .where('age', '>=', 18)
+        .orWhereNotIn('role', ['banned', 'suspended', 'inactive']);
+
+      queryBuilder['buildSelectQuery']();
+
+      // Assert
+      expect(queryBuilder['query']).toBe(targetQuery);
+      expect(queryBuilder['values']).toEqual(['tech', 'science', 'deleted', 'archived', 18, 'banned', 'suspended', 'inactive']);
+      expect(queryBuilder['valuesPosition']).toBe(8);
+    });
+
+    it('should build SELECT query with whereGroup containing NOT IN operator', () => {
+      // Arrange
+      const targetQuery = `SELECT * FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.user_id = $1 \nAND (${TABLE_NAME}.status NOT IN ($2,$3,$4) \nOR ${TABLE_NAME}.priority > $5)`;
+
+      queryBuilder
+        .where('user_id', '=', 123)
+        .whereGroup([
+          ['status', 'NOT IN', ['deleted', 'archived', 'banned'], 'where'],
+          ['priority', '>', 5, 'orWhere'],
+        ]);
+
+      queryBuilder['buildSelectQuery']();
+
+      // Assert
+      expect(queryBuilder['query']).toBe(targetQuery);
+      expect(queryBuilder['values']).toEqual([123, 'deleted', 'archived', 'banned', 5]);
+    });
+
+    it('should build SELECT query with table-qualified columns in whereNotIn', () => {
+      // Arrange
+      const targetQuery = `SELECT * FROM ${TABLE_NAME} \nINNER JOIN users ON users.id = ${TABLE_NAME}.user_id \nWHERE users.status NOT IN ($1,$2)`;
+
+      queryBuilder
+        .join('user_id', 'users', 'id')
+        .whereNotIn('users.status', ['deleted', 'banned']);
+
+      queryBuilder['buildSelectQuery']();
+
+      // Assert
+      expect(queryBuilder['query']).toBe(targetQuery);
+      expect(queryBuilder['values']).toEqual(['deleted', 'banned']);
     });
   });
 
   describe('buildInsertQuery', () => {
     let queryBuilder: QueryBuilder;
     let postgresConfig: DatabaseConfig;
-    let mysqlConfig: DatabaseConfig;
-
     beforeEach(() => {
       postgresConfig = {
         host: 'localhost',
@@ -777,18 +1231,9 @@ describe('QueryBuilder', () => {
         database: 'testdb',
         client: 'postgres',
       };
-
-      mysqlConfig = {
-        host: 'localhost',
-        port: 3306,
-        username: 'testuser',
-        password: 'testpass',
-        database: 'testdb',
-        client: 'mysql',
-      };
     });
 
-    it('should set INSERT query for PostgreSQL with correct parameter placeholders', async () => {
+    it('should set INSERT query with correct parameter placeholders', async () => {
       await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
@@ -799,20 +1244,6 @@ describe('QueryBuilder', () => {
 
       expect(queryBuilder['query']).toBe(
         `INSERT INTO ${TABLE_NAME} (name,email,age) VALUES ($1,$2,$3)`,
-      );
-    });
-
-    it('should set INSERT query for MySQL with correct parameter placeholders', async () => {
-      await initClient(mysqlConfig);
-      queryBuilder = new QueryBuilder(TABLE_NAME);
-
-      const columns = ['name', 'email', 'age'];
-      const values = ['John', 'john@example.com', 25];
-
-      queryBuilder['buildInsertQuery'](columns, values);
-
-      expect(queryBuilder['query']).toBe(
-        `INSERT INTO ${TABLE_NAME} (name,email,age) VALUES (?,?,?)`,
       );
     });
 
@@ -845,16 +1276,24 @@ describe('QueryBuilder', () => {
     });
 
     it('should handle null values', async () => {
-      await initClient(mysqlConfig);
+      await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
-
-      const columns = ['name', 'email', 'phone'];
-      const values = ['John', null, '123-456-7890'];
-
-      queryBuilder['buildInsertQuery'](columns, values);
-
+      queryBuilder['buildInsertQuery'](['name', 'email', 'phone'], ['John', null, '123-456-7890']);
       expect(queryBuilder['query']).toBe(
-        `INSERT INTO ${TABLE_NAME} (name,email,phone) VALUES (?,?,?)`,
+        `INSERT INTO ${TABLE_NAME} (name,email,phone) VALUES ($1,NULL,$2)`,
+      );
+
+      queryBuilder['buildInsertQuery'](['name', 'email', 'phone'], [null, null, '123-456-7890']);
+      expect(queryBuilder['query']).toBe(
+        `INSERT INTO ${TABLE_NAME} (name,email,phone) VALUES (NULL,NULL,$1)`,
+      );
+      queryBuilder['buildInsertQuery'](['name', 'email', 'phone'], [null, null, null]);
+      expect(queryBuilder['query']).toBe(
+        `INSERT INTO ${TABLE_NAME} (name,email,phone) VALUES (NULL,NULL,NULL)`,
+      );
+      queryBuilder['buildInsertQuery'](['name', 'email', 'phone', 'address'], [null, 'john@example.com',null, '123 Main St']);
+      expect(queryBuilder['query']).toBe(
+        `INSERT INTO ${TABLE_NAME} (name,email,phone,address) VALUES (NULL,$1,NULL,$2)`,
       );
     });
 
@@ -899,7 +1338,7 @@ describe('QueryBuilder', () => {
     });
 
     it('should throw error when values length exceeds columns length', async () => {
-      await initClient(mysqlConfig);
+      await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       const columns = ['name'];
@@ -958,7 +1397,7 @@ describe('QueryBuilder', () => {
     });
 
     it('should handle empty columns and values arrays', async () => {
-      await initClient(mysqlConfig);
+      await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       const columns: string[] = [];
@@ -975,7 +1414,6 @@ describe('QueryBuilder', () => {
   describe('buildUpdateQuery', () => {
     let queryBuilder: QueryBuilder;
     let postgresConfig: DatabaseConfig;
-    let mysqlConfig: DatabaseConfig;
 
     beforeEach(() => {
       postgresConfig = {
@@ -986,18 +1424,9 @@ describe('QueryBuilder', () => {
         database: 'testdb',
         client: 'postgres',
       };
-
-      mysqlConfig = {
-        host: 'localhost',
-        port: 3306,
-        username: 'testuser',
-        password: 'testpass',
-        database: 'testdb',
-        client: 'mysql',
-      };
     });
 
-    it('should set UPDATE query for PostgreSQL with correct parameter placeholders', async () => {
+    it('should set UPDATE query with correct parameter placeholders', async () => {
       await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
@@ -1009,21 +1438,6 @@ describe('QueryBuilder', () => {
 
       expect(queryBuilder['query']).toBe(
         `UPDATE ${TABLE_NAME} SET name = $1,email = $2,age = $3 \nWHERE ${TABLE_NAME}.id = $4`,
-      );
-    });
-
-    it('should set UPDATE query for MySQL with correct parameter placeholders', async () => {
-      await initClient(mysqlConfig);
-      queryBuilder = new QueryBuilder(TABLE_NAME);
-
-      const columns = ['name', 'email', 'age'];
-      const values = ['John', 'john@example.com', 25];
-
-      queryBuilder.where('id', '=', 1);
-      queryBuilder['buildUpdateQuery'](columns, values);
-
-      expect(queryBuilder['query']).toBe(
-        `UPDATE ${TABLE_NAME} SET name = ?,email = ?,age = ? \nWHERE ${TABLE_NAME}.id = ?`,
       );
     });
 
@@ -1058,7 +1472,7 @@ describe('QueryBuilder', () => {
     });
 
     it('should handle null values', async () => {
-      await initClient(mysqlConfig);
+      await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       const columns = ['name', 'email', 'phone'];
@@ -1068,7 +1482,84 @@ describe('QueryBuilder', () => {
       queryBuilder['buildUpdateQuery'](columns, values);
 
       expect(queryBuilder['query']).toBe(
-        `UPDATE ${TABLE_NAME} SET name = ?,email = ?,phone = ? \nWHERE ${TABLE_NAME}.id = ?`,
+        `UPDATE ${TABLE_NAME} SET name = $1,email = NULL,phone = $2 \nWHERE ${TABLE_NAME}.id = $3`,
+      );
+    });
+
+    it('should handle multiple null values in update', async () => {
+      await initClient(postgresConfig);
+      queryBuilder = new QueryBuilder(TABLE_NAME);
+
+      const columns = ['name', 'email', 'phone', 'address', 'notes'];
+      const values = [null, null, '123-456-7890', null, 'Some notes'];
+
+      queryBuilder.where('id', '=', 1);
+      queryBuilder['buildUpdateQuery'](columns, values);
+
+      expect(queryBuilder['query']).toBe(
+        `UPDATE ${TABLE_NAME} SET name = NULL,email = NULL,phone = $1,address = NULL,notes = $2 \nWHERE ${TABLE_NAME}.id = $3`,
+      );
+    });
+
+    it('should handle all null values in update', async () => {
+      await initClient(postgresConfig);
+      queryBuilder = new QueryBuilder(TABLE_NAME);
+
+      const columns = ['name', 'email', 'phone'];
+      const values = [null, null, null];
+
+      queryBuilder.where('id', '=', 1);
+      queryBuilder['buildUpdateQuery'](columns, values);
+
+      expect(queryBuilder['query']).toBe(
+        `UPDATE ${TABLE_NAME} SET name = NULL,email = NULL,phone = NULL \nWHERE ${TABLE_NAME}.id = $1`,
+      );
+    });
+
+    it('should handle null values with mixed data types', async () => {
+      await initClient(postgresConfig);
+      queryBuilder = new QueryBuilder(TABLE_NAME);
+
+      const columns = ['name', 'age', 'active', 'score', 'created_at'];
+      const values = [null, 25, null, 95.5, null];
+
+      queryBuilder.where('id', '=', 1);
+      queryBuilder['buildUpdateQuery'](columns, values);
+
+      expect(queryBuilder['query']).toBe(
+        `UPDATE ${TABLE_NAME} SET name = NULL,age = $1,active = NULL,score = $2,created_at = NULL \nWHERE ${TABLE_NAME}.id = $3`,
+      );
+    });
+
+    it('should handle null values in WHERE conditions', async () => {
+      await initClient(postgresConfig);
+      queryBuilder = new QueryBuilder(TABLE_NAME);
+
+      const columns = ['name', 'email'];
+      const values = ['John', 'john@example.com'];
+
+      queryBuilder.where('deleted_at', 'IS', null);
+      queryBuilder.where('updated_at', 'IS', null);
+      queryBuilder['buildUpdateQuery'](columns, values);
+
+      expect(queryBuilder['query']).toBe(
+        `UPDATE ${TABLE_NAME} SET name = $1,email = $2 \nWHERE ${TABLE_NAME}.deleted_at IS NULL \nAND ${TABLE_NAME}.updated_at IS NULL`,
+      );
+    });
+
+    it('should handle null values with OR conditions', async () => {
+      await initClient(postgresConfig);
+      queryBuilder = new QueryBuilder(TABLE_NAME);
+
+      const columns = ['status'];
+      const values = ['inactive'];
+
+      queryBuilder.where('deleted_at', 'IS', null);
+      queryBuilder.orWhere('archived_at', 'IS', null);
+      queryBuilder['buildUpdateQuery'](columns, values);
+
+      expect(queryBuilder['query']).toBe(
+        `UPDATE ${TABLE_NAME} SET status = $1 \nWHERE ${TABLE_NAME}.deleted_at IS NULL \nOR ${TABLE_NAME}.archived_at IS NULL`,
       );
     });
 
@@ -1134,7 +1625,7 @@ describe('QueryBuilder', () => {
     });
 
     it('should throw error when values length exceeds columns length', async () => {
-      await initClient(mysqlConfig);
+      await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       const columns = ['name'];
@@ -1228,7 +1719,7 @@ describe('QueryBuilder', () => {
     });
 
     it('should handle empty columns and values arrays', async () => {
-      await initClient(mysqlConfig);
+      await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       const columns: string[] = [];
@@ -1238,8 +1729,199 @@ describe('QueryBuilder', () => {
       queryBuilder['buildUpdateQuery'](columns, values);
 
       expect(queryBuilder['query']).toBe(
-        `UPDATE ${TABLE_NAME} SET  \nWHERE ${TABLE_NAME}.id = ?`,
+        `UPDATE ${TABLE_NAME} SET  \nWHERE ${TABLE_NAME}.id = $1`,
       );
+    });
+  });
+
+  describe('update (execution with WHERE)', () => {
+    let queryBuilder: QueryBuilder;
+    let postgresConfig: DatabaseConfig;
+
+    beforeEach(() => {
+      postgresConfig = {
+        host: 'localhost',
+        port: 5432,
+        username: 'testuser',
+        password: 'testpass',
+        database: 'testdb',
+        client: 'postgres',
+      };
+    });
+
+    it('should execute UPDATE with WHERE binding SET then WHERE params', async () => {
+      const { initClient, getClient } = require('../client');
+      await initClient(postgresConfig);
+      queryBuilder = new QueryBuilder(TABLE_NAME);
+
+      queryBuilder.where('id', '=', 1);
+      await queryBuilder.update(['name', 'email'], ['John', 'john@example.com']);
+
+      expect(getClient().query).toHaveBeenCalledTimes(1);
+      const [sql, params] = getClient().query.mock.calls[0];
+      expect(sql).toBe(
+        `UPDATE ${TABLE_NAME} SET name = $1,email = $2 \nWHERE ${TABLE_NAME}.id = $3`,
+      );
+      expect(params).toEqual(['John', 'john@example.com', 1]);
+
+      // reset state after execution
+      expect(queryBuilder['query']).toBe('');
+      expect(queryBuilder['wheres']).toHaveLength(0);
+      expect(queryBuilder['values']).toEqual([]);
+      expect(queryBuilder['valuesPosition']).toBe(0);
+    });
+
+    it('should handle NULLs in SET and NULL in WHERE', async () => {
+      const { initClient, getClient } = require('../client');
+      await initClient(postgresConfig);
+      queryBuilder = new QueryBuilder(TABLE_NAME);
+
+      queryBuilder.where('deleted_at', 'IS', null);
+      queryBuilder.where('id', '=', 5);
+      await queryBuilder.update(
+        ['name', 'email', 'age'],
+        [null, 'a@b.com', 30],
+      );
+
+      const [sql, params] = getClient().query.mock.calls[0];
+      expect(sql).toBe(
+        `UPDATE ${TABLE_NAME} SET name = NULL,email = $1,age = $2 \nWHERE ${TABLE_NAME}.deleted_at IS NULL \nAND ${TABLE_NAME}.id = $3`,
+      );
+      expect(params).toEqual(['a@b.com', 30, 5]);
+    });
+
+    it('should handle WHERE IN and additional WHERE (Postgres)', async () => {
+      const { initClient, getClient } = require('../client');
+      await initClient(postgresConfig);
+      queryBuilder = new QueryBuilder(TABLE_NAME);
+
+      queryBuilder.whereIn('status', ['active', 'pending']);
+      queryBuilder.where('id', '=', 1);
+      await queryBuilder.update(['name'], ['J']);
+
+      const [sql, params] = getClient().query.mock.calls[0];
+      expect(sql).toBe(
+        `UPDATE ${TABLE_NAME} SET name = $1 \nWHERE ${TABLE_NAME}.status IN ($2,$3) \nAND ${TABLE_NAME}.id = $4`,
+      );
+      expect(params).toEqual(['J', 'active', 'pending', 1]);
+    });
+
+    it('should handle WHERE NOT IN and additional WHERE (Postgres)', async () => {
+      const { initClient, getClient } = require('../client');
+      await initClient(postgresConfig);
+      queryBuilder = new QueryBuilder(TABLE_NAME);
+
+      queryBuilder.whereNotIn('status', ['deleted', 'archived']);
+      queryBuilder.where('id', '=', 1);
+      await queryBuilder.update(['name'], ['Updated']);
+
+      const [sql, params] = getClient().query.mock.calls[0];
+      expect(sql).toBe(
+        `UPDATE ${TABLE_NAME} SET name = $1 \nWHERE ${TABLE_NAME}.status NOT IN ($2,$3) \nAND ${TABLE_NAME}.id = $4`,
+      );
+      expect(params).toEqual(['Updated', 'deleted', 'archived', 1]);
+    });
+
+   
+    it('should support OR in WHERE with correct param order (Postgres)', async () => {
+      const { initClient, getClient } = require('../client');
+      await initClient(postgresConfig);
+      queryBuilder = new QueryBuilder(TABLE_NAME);
+
+      queryBuilder.where('id', '=', 7);
+      queryBuilder.orWhere('role', '=', 'admin');
+      await queryBuilder.update(['active'], [true]);
+
+      const [sql, params] = getClient().query.mock.calls[0];
+      expect(sql).toBe(
+        `UPDATE ${TABLE_NAME} SET active = $1 \nWHERE ${TABLE_NAME}.id = $2 \nOR ${TABLE_NAME}.role = $3`,
+      );
+      expect(params).toEqual([true, 7, 'admin']);
+    });
+  });
+
+  describe('handleBuildGet', () => {
+    let queryBuilder: QueryBuilder;
+    let postgresConfig: DatabaseConfig;
+
+    beforeEach(async () => {
+      postgresConfig = {
+        host: 'localhost',
+        port: 5432,
+        username: 'testuser',
+        password: 'testpass',
+        database: 'testdb',
+        client: 'postgres',
+      };
+      await initClient(postgresConfig);
+      queryBuilder = new QueryBuilder(TABLE_NAME);
+    });
+
+    it('should build SELECT query with WHERE conditions from columns and values', () => {
+      // Arrange
+      const columns = ['id', 'name', 'email'];
+      const values = [1, 'John', 'john@example.com'];
+      const select = ['id', 'name', 'email'];
+
+      // Act
+      queryBuilder['handleBuildGet'](columns, values, select);
+      queryBuilder['buildSelectQuery']();
+
+      // Assert
+      expect(queryBuilder['query']).toBe(
+        `SELECT ${TABLE_NAME}.id,${TABLE_NAME}.name,${TABLE_NAME}.email FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.id = $1 \nAND ${TABLE_NAME}.name = $2 \nAND ${TABLE_NAME}.email = $3`,
+      );
+      expect(queryBuilder['values']).toEqual([1, 'John', 'john@example.com']);
+    });
+
+    it('should use default select (*) when no select provided', () => {
+      // Arrange
+      const columns = ['status'];
+      const values = ['active'];
+
+      // Act
+      queryBuilder['handleBuildGet'](columns, values);
+      queryBuilder['buildSelectQuery']();
+
+      // Assert
+      expect(queryBuilder['query']).toBe(
+        `SELECT ${TABLE_NAME}.* FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.status = $1`,
+      );
+      expect(queryBuilder['values']).toEqual(['active']);
+    });
+
+    it('should handle single column and value', () => {
+      // Arrange
+      const columns = ['id'];
+      const values = [123];
+      const select = ['id'];
+
+      // Act
+      queryBuilder['handleBuildGet'](columns, values, select);
+      queryBuilder['buildSelectQuery']();
+
+      // Assert
+      expect(queryBuilder['query']).toBe(
+        `SELECT ${TABLE_NAME}.id FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.id = $1`,
+      );
+      expect(queryBuilder['values']).toEqual([123]);
+    });
+
+    it('should handle complex scenario with multiple columns and various data types', () => {
+      // Arrange
+      const columns = ['id', 'name', 'email', 'age', 'active', 'deleted_at', 'score', 'created_at'];
+      const values = [1, 'John Doe', 'john@example.com', 25, true, null, 85.5, new Date('2023-01-01')];
+      const select = ['id', 'name', 'email', 'age', 'active', 'score'];
+
+      // Act
+      queryBuilder['handleBuildGet'](columns, values, select);
+      queryBuilder['buildSelectQuery']();
+
+      // Assert
+      expect(queryBuilder['query']).toBe(
+        `SELECT ${TABLE_NAME}.id,${TABLE_NAME}.name,${TABLE_NAME}.email,${TABLE_NAME}.age,${TABLE_NAME}.active,${TABLE_NAME}.score FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.id = $1 \nAND ${TABLE_NAME}.name = $2 \nAND ${TABLE_NAME}.email = $3 \nAND ${TABLE_NAME}.age = $4 \nAND ${TABLE_NAME}.active = $5 \nAND ${TABLE_NAME}.deleted_at IS NULL \nAND ${TABLE_NAME}.score = $6 \nAND ${TABLE_NAME}.created_at = $7`,
+      );
+      expect(queryBuilder['values']).toEqual([1, 'John Doe', 'john@example.com', 25, true, 85.5, new Date('2023-01-01')]);
     });
   });
 
@@ -1364,7 +2046,7 @@ describe('QueryBuilder', () => {
       queryBuilder['buildDeleteQuery']();
 
       expect(queryBuilder['query']).toBe(
-        `DELETE FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.deleted_at IS $1 \nAND ${TABLE_NAME}.age >= $2 \nAND ${TABLE_NAME}.score > $3 \nOR ${TABLE_NAME}.email LIKE $4`,
+        `DELETE FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.deleted_at IS NULL \nAND ${TABLE_NAME}.age >= $1 \nAND ${TABLE_NAME}.score > $2 \nOR ${TABLE_NAME}.email LIKE $3`,
       );
     });
 
@@ -1444,7 +2126,7 @@ describe('QueryBuilder', () => {
       queryBuilder['buildDeleteQuery']();
 
       expect(queryBuilder['query']).toBe(
-        `DELETE FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.id = $1 \nAND ${TABLE_NAME}.name LIKE $2 \nAND ${TABLE_NAME}.age >= $3 \nAND ${TABLE_NAME}.active = $4 \nAND ${TABLE_NAME}.created_at >= $5 \nOR ${TABLE_NAME}.score > $6 \nOR ${TABLE_NAME}.deleted_at IS $7`,
+        `DELETE FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.id = $1 \nAND ${TABLE_NAME}.name LIKE $2 \nAND ${TABLE_NAME}.age >= $3 \nAND ${TABLE_NAME}.active = $4 \nAND ${TABLE_NAME}.created_at >= $5 \nOR ${TABLE_NAME}.score > $6 \nOR ${TABLE_NAME}.deleted_at IS NULL`,
       );
     });
 
@@ -1459,6 +2141,48 @@ describe('QueryBuilder', () => {
       expect(queryBuilder['query']).toBe(
         `DELETE FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.status IN (?,?,?) \nAND ${TABLE_NAME}.id = ? \nOR ${TABLE_NAME}.category IN (?,?,?)`,
       );
+    });
+
+    it('should handle WHERE NOT IN conditions (Postgres)', async () => {
+      await initClient(postgresConfig);
+      queryBuilder = new QueryBuilder(TABLE_NAME);
+      queryBuilder.whereNotIn('status', ['deleted', 'archived', 'banned']);
+      queryBuilder.where('id', '>', 100);
+      queryBuilder['buildDeleteQuery']();
+
+      expect(queryBuilder['query']).toBe(
+        `DELETE FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.status NOT IN ($1,$2,$3) \nAND ${TABLE_NAME}.id > $4`,
+      );
+      expect(queryBuilder['values']).toEqual(['deleted', 'archived', 'banned', 100]);
+    });
+
+    it('should handle WHERE NOT IN and OR WHERE NOT IN conditions (MySQL)', async () => {
+      await initClient(mysqlConfig);
+      queryBuilder = new QueryBuilder(TABLE_NAME);
+      queryBuilder.whereNotIn('status', ['deleted', 'archived']);
+      queryBuilder.where('id', '=', 1);
+      queryBuilder.orWhereNotIn('category', ['spam', 'test', 'temporary']);
+      queryBuilder['buildDeleteQuery']();
+
+      expect(queryBuilder['query']).toBe(
+        `DELETE FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.status NOT IN (?,?) \nAND ${TABLE_NAME}.id = ? \nOR ${TABLE_NAME}.category NOT IN (?,?,?)`,
+      );
+      expect(queryBuilder['values']).toEqual(['deleted', 'archived', 1, 'spam', 'test', 'temporary']);
+    });
+
+    it('should handle complex DELETE with mixed IN and NOT IN conditions', async () => {
+      await initClient(postgresConfig);
+      queryBuilder = new QueryBuilder(TABLE_NAME);
+      queryBuilder.whereIn('category', ['tech', 'science']);
+      queryBuilder.whereNotIn('status', ['active', 'pending']);
+      queryBuilder.where('created_at', '<', '2020-01-01');
+      queryBuilder.orWhereNotIn('priority', ['high', 'critical']);
+      queryBuilder['buildDeleteQuery']();
+
+      expect(queryBuilder['query']).toBe(
+        `DELETE FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.category IN ($1,$2) \nAND ${TABLE_NAME}.status NOT IN ($3,$4) \nAND ${TABLE_NAME}.created_at < $5 \nOR ${TABLE_NAME}.priority NOT IN ($6,$7)`,
+      );
+      expect(queryBuilder['values']).toEqual(['tech', 'science', 'active', 'pending', '2020-01-01', 'high', 'critical']);
     });
 
     it('should handle single WHERE condition', async () => {
@@ -1513,6 +2237,202 @@ describe('QueryBuilder', () => {
       expect(queryBuilder['query']).toBe(
         `DELETE FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.name LIKE ? \nAND ${TABLE_NAME}.code = ?`,
       );
+    });
+  });
+
+  describe('Soft Delete', () => {
+    let queryBuilder: QueryBuilder;
+    let postgresConfig: DatabaseConfig;
+
+    beforeEach(() => {
+      postgresConfig = {
+        host: 'localhost',
+        port: 5432,
+        username: 'testuser',
+        password: 'testpass',
+        database: 'testdb',
+        client: 'postgres',
+      };
+
+    });
+
+    describe('Constructor', () => {
+      it('should set softDeletes to false by default', async () => {
+        await initClient(postgresConfig);
+        queryBuilder = new QueryBuilder(TABLE_NAME);
+
+        expect(queryBuilder.softDeletes).toBe(false);
+      });
+
+      it('should set softDeletes to true when enabled', async () => {
+        await initClient(postgresConfig);
+        queryBuilder = new QueryBuilder(TABLE_NAME, true);
+
+        expect(queryBuilder.softDeletes).toBe(true);
+      });
+
+      it('should use default soft delete column (deleted_at)', async () => {
+        await initClient(postgresConfig);
+        queryBuilder = new QueryBuilder(TABLE_NAME, true);
+
+        expect(queryBuilder['_softDeleteCol']).toBe('deleted_at');
+      });
+
+      it('should use custom soft delete column when provided', async () => {
+        await initClient(postgresConfig);
+        queryBuilder = new QueryBuilder(TABLE_NAME, true, 'removed_at');
+
+        expect(queryBuilder['_softDeleteCol']).toBe('removed_at');
+      });
+    });
+
+    describe('SELECT with soft deletes', () => {
+      it('should add soft delete WHERE clause to SELECT query (Postgres)', async () => {
+        await initClient(postgresConfig);
+        queryBuilder = new QueryBuilder(TABLE_NAME, true);
+
+        queryBuilder['buildSelectQuery']();
+
+        // Soft delete filters for records where deleted_at IS NULL (not deleted)
+        expect(queryBuilder['query']).toBe(
+          `SELECT * FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.deleted_at IS NULL`,
+        );
+      });
+
+   
+
+      it('should add soft delete WHERE clause with custom column', async () => {
+        await initClient(postgresConfig);
+        queryBuilder = new QueryBuilder(TABLE_NAME, true, 'removed_at');
+
+        queryBuilder['buildSelectQuery']();
+
+        expect(queryBuilder['query']).toBe(
+          `SELECT * FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.removed_at IS NULL`,
+        );
+      });
+
+      it('should combine soft delete with existing WHERE conditions', async () => {
+        await initClient(postgresConfig);
+        queryBuilder = new QueryBuilder(TABLE_NAME, true);
+
+        queryBuilder.where('status', '=', 'active');
+        queryBuilder['buildSelectQuery']();
+
+        expect(queryBuilder['query']).toBe(
+          `SELECT * FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.status = $1 \nAND ${TABLE_NAME}.deleted_at IS NULL`,
+        );
+      });
+
+      it('should not add soft delete clause when disabled', async () => {
+        await initClient(postgresConfig);
+        queryBuilder = new QueryBuilder(TABLE_NAME, false);
+
+        queryBuilder.where('status', '=', 'active');
+        queryBuilder['buildSelectQuery']();
+
+        expect(queryBuilder['query']).toBe(
+          `SELECT * FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.status = $1`,
+        );
+      });
+    });
+
+    describe('UPDATE with soft deletes', () => {
+      it('should add soft delete WHERE clause to UPDATE query (Postgres)', async () => {
+        await initClient(postgresConfig);
+        queryBuilder = new QueryBuilder(TABLE_NAME, true);
+
+        queryBuilder.where('id', '=', 1);
+        queryBuilder['buildUpdateQuery'](['name'], ['John']);
+
+        // Soft delete filters for records where deleted_at IS NULL (not deleted)
+        expect(queryBuilder['query']).toBe(
+          `UPDATE ${TABLE_NAME} SET name = $1 \nWHERE ${TABLE_NAME}.id = $2 \nAND ${TABLE_NAME}.deleted_at IS NULL`,
+        );
+      });
+
+      it('should add soft delete WHERE clause with custom column in UPDATE', async () => {
+        await initClient(postgresConfig);
+        queryBuilder = new QueryBuilder(TABLE_NAME, true, 'archived_at');
+
+        queryBuilder.where('id', '=', 1);
+        queryBuilder['buildUpdateQuery'](['name'], ['John']);
+
+        expect(queryBuilder['query']).toBe(
+          `UPDATE ${TABLE_NAME} SET name = $1 \nWHERE ${TABLE_NAME}.id = $2 \nAND ${TABLE_NAME}.archived_at IS NULL`,
+        );
+      });
+
+      it('should not add soft delete clause to UPDATE when disabled', async () => {
+        await initClient(postgresConfig);
+        queryBuilder = new QueryBuilder(TABLE_NAME, false);
+
+        queryBuilder.where('id', '=', 1);
+        queryBuilder['buildUpdateQuery'](['name'], ['John']);
+
+        expect(queryBuilder['query']).toBe(
+          `UPDATE ${TABLE_NAME} SET name = $1 \nWHERE ${TABLE_NAME}.id = $2`,
+        );
+      });
+    });
+
+    describe('DELETE with soft deletes', () => {
+      it('should convert DELETE to UPDATE when soft deletes enabled', async () => {
+        const { initClient, getClient } = require('../client');
+        await initClient(postgresConfig);
+        queryBuilder = new QueryBuilder(TABLE_NAME, true);
+
+        queryBuilder.where('id', '=', 1);
+        await queryBuilder.delete();
+
+        expect(getClient().query).toHaveBeenCalledTimes(1);
+        const [sql] = getClient().query.mock.calls[0];
+        expect(sql).toContain('UPDATE');
+        expect(sql).toContain('SET deleted_at =');
+      });
+
+      it('should use custom soft delete column in DELETE conversion', async () => {
+        const { initClient, getClient } = require('../client');
+        await initClient(postgresConfig);
+        queryBuilder = new QueryBuilder(TABLE_NAME, true, 'removed_at');
+
+        queryBuilder.where('id', '=', 1);
+        await queryBuilder.delete();
+
+        expect(getClient().query).toHaveBeenCalledTimes(1);
+        const [sql] = getClient().query.mock.calls[0];
+        expect(sql).toContain('UPDATE');
+        expect(sql).toContain('SET removed_at =');
+      });
+
+      it('should perform hard DELETE when soft deletes disabled', async () => {
+        const { initClient, getClient } = require('../client');
+        await initClient(postgresConfig);
+        queryBuilder = new QueryBuilder(TABLE_NAME, false);
+
+        queryBuilder.where('id', '=', 1);
+        await queryBuilder.delete();
+
+        expect(getClient().query).toHaveBeenCalledTimes(1);
+        const [sql] = getClient().query.mock.calls[0];
+        expect(sql).toContain('DELETE FROM');
+        expect(sql).not.toContain('UPDATE');
+      });
+
+      it('should preserve WHERE conditions when soft deleting', async () => {
+        const { initClient, getClient } = require('../client');
+        await initClient(postgresConfig);
+        queryBuilder = new QueryBuilder(TABLE_NAME, true);
+
+        queryBuilder.where('id', '=', 1);
+        queryBuilder.where('status', '=', 'active');
+        await queryBuilder.delete();
+
+        expect(getClient().query).toHaveBeenCalledTimes(1);
+        const [sql] = getClient().query.mock.calls[0];
+        expect(sql).toContain('UPDATE');
+        expect(sql).toContain('WHERE');
+      });
     });
   });
 });

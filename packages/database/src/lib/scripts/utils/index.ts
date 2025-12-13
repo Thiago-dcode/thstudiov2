@@ -1,16 +1,16 @@
 import { databaseCliConfig } from './config';
 import path from 'node:path';
 import fs from 'node:fs';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { pathToFileURL } from 'node:url';
 import { Query, Schema } from '../../facades';
 import {
   TRIGGER_UPDATE_CREATED_AT_FUNCTION_NAME,
   TRIGGER_UPDATE_UPDATED_AT_FUNCTION_NAME,
-} from '../../constants/constants';
-import { DatabaseClient, TableName } from '../../constants/types/database';
+} from '@repo/common-lib/constants/database';
+import { DatabaseClient, TableName } from '@repo/common-lib/types/database';
 import Logger from '@repo/backend-lib/utils/console';
-import { getClient, initClient } from 'lib/client';
-import config from '@repo/backend-lib/config';
+import { initClient } from '../../client';
+import {config} from '@repo/common-lib/config';
 
 const handleMigration = async (
   callback: (migration: any, migrationName: string) => Promise<void>,
@@ -77,7 +77,9 @@ const handleMigration = async (
     process.exit(1);
   }
 };
-
+const utilsPath = (fileName: string) => {
+  return path.join(process.cwd(), 'src', 'lib', 'scripts', 'utils', fileName);
+};
 const createUpdatedAtTrigger = async (tableName: TableName) => {
   try {
     await Schema.raw(`
@@ -124,4 +126,5 @@ export {
   connectDb,
   createCreaAtTrigger,
   createTimeStampsTrigger,
+  utilsPath,
 };

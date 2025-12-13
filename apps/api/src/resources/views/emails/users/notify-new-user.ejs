@@ -1,0 +1,84 @@
+<%- include(globals.emailsPath + '/shared/head') %>
+
+
+<body style=" width:600px; margin:0 auto;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%; ">
+    <%- include(globals.emailsPath + '/shared/header') %>
+    <tr>
+      <td align="center" style="padding:20px 0;">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0"
+          style="width:100%; max-width:600px; border-radius:8px; overflow:hidden;">
+
+          <!-- Introduction -->
+          <tr>
+            <td align="center">
+              <p style="font-size:18px; margin-bottom:5px;"><%= globals.t(translatePath + '.HI') %> <span
+                  style="font-weight:bold;"><%= user.username %></span>
+              </p>
+              <h1 style="font-size:42px; margin-bottom:5px;"><%= globals.t(translatePath + '.WELCOME') %></h1>
+              <p style="font-size:16px; margin-bottom:32px; color:#555555;">
+                <%= globals.t(translatePath + '.WELCOME_MESSAGE') %>
+              </p>
+            </td>
+          </tr>
+          <% if (typeof features !== 'undefined' && Array.isArray(features) && features.length > 0) { %>
+          <!-- Features -->
+          <tr>
+            <td>
+              <p style=" font-size:18px; margin-bottom:10px; font-weight:400; text-align:center;">
+                <%= globals.t(translatePath + '.FEATURES_INTRO_PREFIX') %>
+                <span style="font-weight:bold;"><%= globals.appName %></span>
+                <%= globals.t(translatePath + '.FEATURES_INTRO_SUFFIX') %>
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <!-- Features List -->
+            <td>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+                style="width:100%; overflow:hidden; border-spacing:0; border:1px solid #e5e5e5; border-radius:8px; background-color:white; box-shadow:0 0 10px 0 rgba(0, 0, 0, 0.1);">
+                <% features.forEach(function(feature,index) { %>
+                <tr>
+                  <!-- Feature Item -->
+                  <% if(index > 0) { %>
+                  <td style="font-size:16px; border-top:1px solid #e5e5e5;">
+                    <p style="color:black; padding:12px 0px; text-align:center; margin:auto; height:100%;">
+                      <%= feature %></p>
+                  </td>
+                  <% } else { %>
+                  <td style="font-size:16px;">
+                    <p style="color:black; padding:12px 0px; text-align:center; margin:auto; height:100%;">
+                      <%= feature %></p>
+                  </td>
+                  <% } %>
+                  <% }) %>
+              </table>
+            </td>
+          </tr>
+          <% } %>
+          <tr>
+            <td align="center" style="padding:32px 0px;">
+              <p style="margin:0 0 8px 0; font-size:16px;"><%= globals.t(translatePath + '.CTA_START_TEXT') %>
+              </p>
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td align="center" style="border-radius:4px; background-color: #343231;">
+                    <a href="<%= globals.appUrl %>"
+                      style="display:inline-block; padding:12px 20px; font-size:16px; text-decoration:none; color:#fafafa;"><%= globals.t(translatePath + '.CTA_START_BUTTON') %></a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <%- include(globals.emailsPath + '/shared/footer') %>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+
+</html>

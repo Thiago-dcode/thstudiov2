@@ -1,0 +1,179 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Server Error 500</title>
+    <!--[if mso]>
+    <noscript>
+        <xml>
+            <o:OfficeDocumentSettings>
+                <o:PixelsPerInch>96</o:PixelsPerInch>
+            </o:OfficeDocumentSettings>
+        </xml>
+    </noscript>
+    <![endif]-->
+    <style type="text/css">
+        /* Reset styles for email clients */
+        body, table, td, p, a, li, blockquote {
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+        }
+        table, td {
+            mso-table-lspace: 0pt;
+            mso-table-rspace: 0pt;
+        }
+        img {
+            -ms-interpolation-mode: bicubic;
+            border: 0;
+            height: auto;
+            line-height: 100%;
+            outline: none;
+            text-decoration: none;
+        }
+        
+        /* Basic styles */
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            background-color: #f4f4f4;
+            font-family: Arial, sans-serif;
+        }
+        
+        .header-text {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ffffff;
+            margin: 0;
+        }
+        
+        .error-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #721c24;
+            margin: 0 0 10px 0;
+        }
+        
+        .error-message-text {
+            font-size: 14px;
+            color: #721c24;
+            margin: 0;
+            line-height: 1.4;
+        }
+        
+        .details-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #495057;
+            margin: 0 0 15px 0;
+        }
+        
+        .details-text {
+            font-size: 13px;
+            color: #6c757d;
+            margin: 0;
+            line-height: 1.4;
+        }
+        
+        .footer-text {
+            font-size: 12px;
+            color: #ffffff;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Main container table -->
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f4f4f4;">
+        <tr>
+            <td align="center" style="padding: 20px 0;">
+                <!-- Email content table -->
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="max-width: 600px; background-color: #ffffff;">
+                    
+                    <!-- Header -->
+                    <tr>
+                        <td bgcolor="#dc3545" style="padding: 20px; text-align: center;">
+                            <h1 class="header-text">🚨 Server Error Alert</h1>
+                        </td>
+                    </tr>
+                    
+                    <!-- Content -->
+                    <tr>
+                        <td style="padding: 30px 20px;">
+                            
+                            <!-- Error message table -->
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8d7da; border: 1px solid #f5c6cb;">
+                                <tr>
+                                    <td style="padding: 15px;">
+                                        <h2 class="error-title">HTTP 500 - Internal Server Error</h2>
+                                        <p class="error-message-text"><%= message %></p>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Spacer -->
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                <tr>
+                                    <td style="height: 20px; font-size: 1px; line-height: 1px;">&nbsp;</td>
+                                </tr>
+                            </table>
+                            
+                            <!-- Details table -->
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8f9fa; border: 1px solid #dee2e6;">
+                                <tr>
+                                    <td style="padding: 15px;">
+                                        <h3 class="details-title">Error Details:</h3>
+                                        
+                                        <% if (options && options !== 'No additional details available') { %>
+                                            <% if (Array.isArray(options)) { %>
+                                                <% options.forEach(function(option, index) { %>
+                                                    <!-- Detail item -->
+                                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                        <tr>
+                                                            <td style="padding: 5px 0; border-bottom: 1px solid #e9ecef;">
+                                                                <p class="details-text"><%= option %></p>
+                                                            </td>
+                                                        </tr>
+                                                    </table>
+                                                <% }); %>
+                                            <% } else { %>
+                                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                    <tr>
+                                                        <td style="padding: 5px 0;">
+                                                            <p class="details-text"><%= options %></p>
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            <% } %>
+                                        <% } else { %>
+                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                                <tr>
+                                                    <td style="padding: 5px 0;">
+                                                        <p class="details-text">No additional details available</p>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        <% } %>
+                                        
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td bgcolor="#6c757d" style="padding: 20px; text-align: center;">
+                            <p class="footer-text">This is an automated error notification from the application server.</p>
+                            <p class="footer-text">Please investigate and resolve this issue as soon as possible.</p>
+                        </td>
+                    </tr>
+                    
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

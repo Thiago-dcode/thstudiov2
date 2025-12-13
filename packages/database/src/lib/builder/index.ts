@@ -1,15 +1,15 @@
-import { ClientNotInitializedException } from '../client/exceptions';
 import { getClient, Client } from '../client';
-import { SqlOperation } from 'lib/constants/types/database';
-import { TABLES } from 'lib/constants/constants';
+import { SqlOperation, TableName } from '@repo/common-lib/types/database';
+import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
+import { DbWrongTableException } from '../exceptions';
 
 abstract class BaseBuilder {
   /** The built SQL query string */
   protected query: string = '';
   /** Chain of operations performed on this query builder */
   protected operationsChain: SqlOperation[] = [];
-  /** The database client instance */
-  protected db: Client<any> | null = null;
+
+
   // ============================================================================
   // CONSTRUCTOR
   // ============================================================================
@@ -19,12 +19,8 @@ abstract class BaseBuilder {
    * @param tableName - The name of the table to query
    * @throws {ClientNotInitializedException} When database client is not initialized
    */
-  constructor(protected readonly tableName: (typeof TABLES)[number]) {
-    this.db = getClient(); // Use the getter function
-    if (!this.db) {
-      throw new ClientNotInitializedException();
-    }
-    // Don't connect here - the client should already be connected
+  constructor(protected readonly tableName: TableName) {
+    // Do not access the DB client here; it may not be initialized yet
   }
   /**
    * Execute a raw SQL query
@@ -40,10 +36,26 @@ abstract class BaseBuilder {
   public static async raw(query: string, values?: (string | number | null)[]) {
     return await getClient().query(query, values);
   }
-  protected getQuery() {
+
+
+  public resetQuery(){
+    this.query = '';
+  }
+  public getQuery() {
     return this.query;
   }
   protected abstract reset(): void;
+
+  protected static throwIfTableNotExists(tableName: TableName) {
+    if(!Object.values(TABLES_ENUM).includes(tableName)) {
+      throw new DbWrongTableException(tableName);
+    }
+  }
+
+  /** Lazily obtain the DB client when needed */
+  protected getDb(): Client<any> {
+    return getClient();
+  }
 }
 
 export default BaseBuilder;

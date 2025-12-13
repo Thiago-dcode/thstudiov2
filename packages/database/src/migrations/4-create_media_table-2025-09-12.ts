@@ -1,6 +1,5 @@
 import { createTimeStampsTrigger } from '../lib/scripts/utils';
 import { Column, Schema } from '../lib/facades';
-import Logger from '@repo/backend-lib/utils/console';
 
 const up = async () => {
   await Schema.table('media').createIfNotExists([
@@ -16,8 +15,13 @@ const up = async () => {
     Column.string('url', 255, {
       unique: true,
     }),
+    //Generated automatically
     Column.string('thumbnail', 255, {
       nullable: true,
+    }),
+    //Block media if user exceed account max size
+    Column.boolean('blocked',{
+      default:false
     }),
     Column.enum('shape', 'MEDIA_SHAPE', {
       nullable: true,
@@ -27,6 +31,7 @@ const up = async () => {
     Column.boolean('is_active', {
       default: true,
     }),
+    //For SEO
     Column.text('tags', {
       nullable: true,
     }),
@@ -47,6 +52,7 @@ const up = async () => {
       onUpdate: 'CASCADE',
       nullable: false,
     }),
+    Column.uniques('UC_media_translation',['language_code','media_id'])
   ]);
 
   await createTimeStampsTrigger('media');

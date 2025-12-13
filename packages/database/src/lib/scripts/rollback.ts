@@ -12,7 +12,7 @@ export const rollback = async (steps: number | null = null) => {
     await connectDb();
     const exists = await SchemaBuilder.table(MIGRATION_TABLE_NAME).exists();
     if (!exists) {
-      Logger.error('❌ Migration table does not exist, you must run the migrations first');
+      Logger.error('❌ Migration table does not exist, you must run the migration command first');
       process.exit(1);
     }
     const queryBuilder = QueryBuilder.table(MIGRATION_TABLE_NAME);

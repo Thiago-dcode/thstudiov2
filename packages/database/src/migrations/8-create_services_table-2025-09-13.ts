@@ -1,5 +1,5 @@
-import { Column, Schema } from 'lib/facades';
-import { createTimeStampsTrigger, createUpdatedAtTrigger } from '../lib/scripts/utils';
+import { Column, Schema } from '../lib/facades';
+import { createTimeStampsTrigger } from '../lib/scripts/utils';
 
 const up = async () => {
   //Your migration code here
@@ -30,6 +30,7 @@ const up = async () => {
       onDelete: 'CASCADE',
     }),
     Column.integer('sort_order'),
+    Column.uniques('UC_service_media',['service_id','media_id'])
   ]);
 
   await Schema.table('service_translations').createIfNotExists([
@@ -40,6 +41,7 @@ const up = async () => {
     Column.foreignKey('service_id', 'services', 'id', {
       onDelete: 'CASCADE',
     }),
+    Column.uniques('UC_service_translation',['language_code','service_id'])
   ]);
 };
 

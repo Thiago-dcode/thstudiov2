@@ -1,11 +1,10 @@
 import { Column, Schema } from '../lib/facades';
 import {
-  ENUMS,
   TRIGGER_UPDATE_CREATED_AT_FUNCTION_NAME,
   TRIGGER_UPDATE_UPDATED_AT_FUNCTION_NAME,
-} from '../lib/constants/constants';
-import { AvailableEnums } from '../lib/constants/types/database';
-import { createTimeStampsTrigger } from 'lib/scripts/utils';
+} from '@repo/common-lib/constants/database';
+import { AvailableEnums, ENUMS } from '@repo/common-lib/constants/enums';
+import { createTimeStampsTrigger } from '../lib/scripts/utils';
 
 const up = async () => {
   // Create trigger to automatically update updated_at timestamp on row updates
@@ -37,7 +36,7 @@ const up = async () => {
 
   //Enums
   for (const enumName of Object.keys(ENUMS)) {
-    await Schema.createEnumIfNotExists(enumName as keyof AvailableEnums);
+    await Schema.createEnumIfNotExists(enumName as  AvailableEnums);
   }
 
   //Address
@@ -73,7 +72,7 @@ const down = async () => {
   // Drop the function
   await Schema.table('addresses').dropIfExists();
   for (const enumName of Object.keys(ENUMS)) {
-    await Schema.dropEnumIfExists(enumName as keyof AvailableEnums);
+    await Schema.dropEnumIfExists(enumName as AvailableEnums);
   }
 };
 

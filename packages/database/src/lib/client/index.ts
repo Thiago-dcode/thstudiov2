@@ -1,16 +1,16 @@
-import { Pool, QueryResult } from 'mysql2/promise';
+import { Pool } from 'mysql2/promise';
 import {
   DatabaseClient,
   DatabaseConfig,
   FullDatabaseConfig,
-} from '../constants/types/database';
-import { Pool as PgPool, Client as PgClient } from 'pg';
+} from '@repo/common-lib/types/database';
+import { Pool as PgPool } from 'pg';
 import mysql from 'mysql2/promise';
 import {
   ClientNotInitializedException,
   InvalidDatabaseClientException,
 } from './exceptions';
-import { DEFAULT_DATABASE_SETTINGS } from '../constants/constants';
+import { DEFAULT_DATABASE_SETTINGS } from '@repo/common-lib/constants/database';
 import { setDatabaseCliConfig } from '../scripts/utils/config';
 export abstract class Client<T> {
   protected client: T | null = null;
@@ -90,6 +90,13 @@ export class PostgresClient extends Client<PgPool> {
       max: 20, // Maximum number of clients in the pool
       idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
       connectionTimeoutMillis: 2000, // Return an error after 2 seconds if connection could not be established
+    
+    });
+
+    // Set timezone to UTC for all connections to ensure consistent timestamp handling
+    // All timestamps are stored in UTC and should be converted to local time only for display
+    this.client.on('connect', (client) => {
+      client.query('SET timezone = "UTC"');
     });
   }
 
@@ -149,7 +156,6 @@ export const killClient = async () => {
   clientChoosen = null;
 };
 
-// Export a getter function instead of the static client
 export const getClient = () => {
   if (!client) {
     throw new ClientNotInitializedException();

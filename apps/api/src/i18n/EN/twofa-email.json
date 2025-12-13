@@ -1,0 +1,9 @@
+{
+    "SUBJECT": "Verify your device",
+    "HI": "Hi",
+    "TITLE": "Device Verification",
+    "DESCRIPTION": "We detected a login attempt or a register from a new device or location. Please use the verification code below to complete your login or register.",
+    "CODE_LABEL": "Your verification code:",
+    "SECURITY_WARNING": "If you didn't attempt to log in or you didn't create a new account, please ignore this email and ensure your account is secure.",
+    "EXPIRATION_INFO": "This code will expire in 10 minutes."
+}

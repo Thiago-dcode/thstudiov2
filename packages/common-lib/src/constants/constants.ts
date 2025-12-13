@@ -1,0 +1,13 @@
+export const DEFAULT_LANGUAGE = 'EN';
+export const LANGUAGE_HEADER = 'x-app-lan';
+export const REQUEST_START_TIME = 'x-app-req-start-time';
+export const USER_ID_HEADER = 'x-app-user-id';
+export const LANGUAGE_COOKIE_NAME = 'x-app-language';
+export const TWO_FA_COOKIE_NAME ='x-app-2fa'
+export const USER_AUTH_COOKIE_NAME ='x-app-token'
+export const USER_AUTH_COOKIE_EXPIRATION_DATE='x-app-refresh-token-date'
+export const USER_AGENT_HEADER = 'x-app-user-agent';
+export const IP_ADDRESS_HEADER = 'x-app-ip-address';
+export const REMEMBER_ME_COOKIE_NAME = 'x-app-remember-me';
+export const PASSWORD_RECOVERY_ATTEMPT_COOKIE_NAME = 'x-app-password-recovery-attempt';
+export const PASSWORD_UPDATED_COOKIE_NAME = 'x-app-password-updated';

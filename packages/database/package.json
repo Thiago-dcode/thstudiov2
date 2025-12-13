@@ -4,33 +4,45 @@
   "private": true,
   "license": "MIT",
   "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
     "test": "jest  --passWithNoTests --config ./jest.config.ts ",
     "test:watch": "jest  --passWithNoTests --config ./jest.config.ts  --watch",
     "dbcli": "tsx --tsconfig tsconfig.json src/bin/cli.ts"
   },
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./dist/src/index.js",
+    "./queryBuilder": "./dist/src/lib/builder/queryBuilder/index.js",
+    "./schemaBuilder": "./dist/src/lib/builder/schemaBuilder/index.js",
+    "./alterBuilder": "./dist/src/lib/builder/alterBuilder/index.js",
+    "./columnBuilder": "./dist/src/lib/builder/columnBuilder/index.js",
+    "./facades": "./dist/src/lib/facades/index.js",
+    "./exceptions": "./dist/src/lib/exceptions/index.js",
+    "./repositories": "./dist/src/lib/repositories/index.js"
   },
   "bin": {
-    "dbcli": "./src/bin/cli.ts"
+    "dbcli": "./dist/src/bin/cli.js"
   },
   "dependencies": {
     "@repo/backend-lib": "workspace:*",
+    "@repo/common-lib": "workspace:*",
     "@repo/jest-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/jest": "^30.0.0",
-    "commander": "^14.0.0",
-    "dotenv": "^16.4.5",
+    "bcrypt": "^6.0.0",
+    "commander": "^14.0.2",
+    "dotenv": "^16.6.1",
     "jest": "^29.7.0",
-    "mysql2": "^3.14.3",
+    "mysql2": "^3.15.3",
     "pg": "^8.16.3",
-    "ts-jest": "^29.4.1",
+    "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
-    "typescript": "^5.8.2"
+    "typescript": "^5.9.3"
   },
   "devDependencies": {
-    "@types/node": "^22.0.0",
-    "@types/pg": "^8.15.5",
-    "tsx": "^4.7.0"
+    "@types/bcrypt": "^6.0.0",
+    "@types/node": "^22.19.1",
+    "@types/pg": "^8.15.6",
+    "tsx": "^4.21.0"
   }
 }
