@@ -11,7 +11,6 @@ async function bootstrap() {
   });
   const configService = app.get(ConfigService);
   const port = await checkPortOrGetNext(configService.get('api.port') || 8080);
-  app.setGlobalPrefix('api');
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
   await init({
@@ -28,6 +27,13 @@ async function bootstrap() {
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
+
+  // Express-style route
+const expressApp = app.getHttpAdapter().getInstance();
+expressApp.get('/', (_, res) => {
+  res.json({ status: 'ok' });
+});
+
   await app.listen(port, () => {
     console.log(`🚀 API is running on port http://localhost:${port}`);
     

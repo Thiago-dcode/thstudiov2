@@ -1,4 +1,4 @@
-import { HttpException, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { PlanSubscriptionsRepository } from './plan-subscriptions.repository';
 import { InitiatePlanSubscriptionRequest } from './requests/initiate-plan-subscription.request';
 import { PlanPricesService } from '../plan-prices/plan-prices.service';
@@ -49,23 +49,13 @@ export class PlanSubscriptionsService {
         this.requestService.user.id,
       );
     if (currentUserSubscription?.plan_price_id === planPrice.id) {
-      return {
-        stripe_error: null,
-        paypal_error: null,
-        ok: false,
-        redirect_url: null,
-        message: 'Already subscribed to this plan',
-      };
+      //This endpoint is only for downgrades or upgrades from a paid plan
+      throw new HttpException("User already has this plan",HttpStatus.BAD_REQUEST);
     }
     if (planPrice.plan.is_free) {
-      await this.setFreePlan(this.requestService.user);
-      return {
-        stripe_error: null,
-        paypal_error: null,
-        ok: true,
-        redirect_url: null,
-        message: 'Free plan activated',
-      };
+      //This should be handle by a cancel method
+      //Frontend should avoid request when is the free plan
+      throw new HttpException("Cannot activate a free plan. To set the free plan, you must use the cancel endpoint",HttpStatus.BAD_REQUEST);
     }
     const data: HandleSubscriptionProcessInput = {
       currentUserSubscription,
@@ -107,16 +97,18 @@ export class PlanSubscriptionsService {
       throw new HttpException('This plan is not available for purchase.', 422);
     }
     try {
+      const stripeSubscription = currentUserSubscription.stripe_id? await stripe.subscriptions.retrieve(currentUserSubscription.stripe_id):null;
+
       const paymentMethods =
         await StripeService.getUserPaymentMethod(customerId);
       const hasCompleteSubscription =
         currentUserSubscription &&
         currentUserSubscription?.stripe_id &&
         currentUserSubscription?.stripe_item_id &&
+        stripeSubscription &&
+       ( stripeSubscription.status === 'active' || stripeSubscription.status ==='trialing')
         paymentMethods.length > 0;
       if (!hasCompleteSubscription) {
-        // Cancel any orphaned Stripe subscription before creating new one
-
         const session = await stripe.checkout.sessions.create({
           customer: customerId,
           mode: 'subscription',
@@ -145,6 +137,7 @@ export class PlanSubscriptionsService {
       }
       const isUpgrade =
         currentUserSubscription.plan_price.price < newPlanPrice.price;
+
       await stripe.subscriptions.update(currentUserSubscription.stripe_id, {
         items: [
           {
@@ -258,17 +251,7 @@ export class PlanSubscriptionsService {
     if (!lifetimePrice) {
       throw new HttpException('Lifetime price not found', 500);
     }
-    const currentUserSubscription =
-      await this.planSubscriptionsRepository.getActiveUserSubscription(
-        this.requestService.user.id,
-      );
-    if (currentUserSubscription?.stripe_id) {
-      await stripe.subscriptions.cancel(currentUserSubscription.stripe_id);
-    }
-    if (currentUserSubscription?.paypal_id) {
-      //TODO
-    }
-    //A user can only have 1 subscription active
+
     await this.desactivateAllUserSubscriptions(user.id);
 
     return await this.create({
@@ -311,11 +294,9 @@ export class PlanSubscriptionsService {
             operator: '=',
             value: userId,
           },
-          {
-            column: 'id',
-            operator: 'NOT IN',
-            value: skipSubscriptions,
-          },
+          ...(skipSubscriptions.length > 0
+            ? [{ column: 'id', operator: 'NOT IN' as const, value: skipSubscriptions }]
+            : []),
         ],
       },
     );
@@ -328,6 +309,7 @@ export class PlanSubscriptionsService {
   findOne(id: number) {
     return `This action returns a #${id} plan subscription`;
   }
+
 
   async update(
     id: number,

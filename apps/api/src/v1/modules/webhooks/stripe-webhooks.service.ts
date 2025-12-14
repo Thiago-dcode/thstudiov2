@@ -9,6 +9,7 @@ import Utils from 'src/common/services/Utils.service';
 import { OnEvent } from '@nestjs/event-emitter';
 import { WEBHOOK_STRIPE_EVENT } from './webhook.constants';
 import { paypal } from '@repo/backend-lib/services/payment-service/paypal';
+import { PlanSubscription } from '@repo/common-lib/types/plan-subscription';
 
 @Injectable()
 export class StripeWebhooksService {
@@ -79,7 +80,7 @@ export class StripeWebhooksService {
       this.logger
         .channel('webhook/error')
         .error(
-          `${event?.type} Webhook signature verification failed`,
+          `${event?.type} Webhook stripe handler failed`,
           isError ? err : undefined,
         );
     }
@@ -122,15 +123,16 @@ export class StripeWebhooksService {
     const user = await this.userService.findOneByStripeId(
       subscription.customer as string,
     );
-    const [planPrice, internalSubscription] = await Promise.all([
+    const [planPrice, _internalSubscription] = await Promise.all([
       this.planPriceService.findOneByStripeId(itemData.price.id),
       this.planSubscriptionService.getActiveUserSubscription(user.id),
     ]);
-    // Deactivate all internal subscriptions before creating new one
-
+let internalSubscription:PlanSubscription = _internalSubscription;
     if (internalSubscription?.stripe_id === stripeSubscriptionId) {
-      // Update existing subscription
-      await this.planSubscriptionService.update(internalSubscription.id, {
+      this.logger.debug(`Updating subscription`,{
+        stripeId: internalSubscription.stripe_id,
+      });
+    internalSubscription=  await this.planSubscriptionService.update(internalSubscription.id, {
         is_active,
         is_trialing,
         payment_method: 'CARD',
@@ -140,8 +142,10 @@ export class StripeWebhooksService {
         plan_price_id: planPrice.id,
         amount: planPrice.price,
       });
+      this.logger.debug(`Updated subscription`,internalSubscription);
     } else {
-      await this.planSubscriptionService.create({
+
+      internalSubscription = await this.planSubscriptionService.create({
         payment_method: 'CARD',
         plan_price_id: planPrice.id,
         amount: planPrice.price,
@@ -156,16 +160,21 @@ export class StripeWebhooksService {
         paypal_id: null,
         plan_offer_id: null,
       });
+      this.logger.debug(`created subscription`,internalSubscription);
+
     }
     if (is_active) {
       const existingSubscriptions = await stripe.subscriptions.list({
         customer: user.stripe_customer_id,
         status: 'active',
       });
+      this.logger.debug(`Found ${existingSubscriptions.data.length} stripe active subscriptions`);
+
       await Promise.all([
         Promise.all(
           existingSubscriptions.data.map(async (sub) => {
-            if (sub.id !== stripeSubscriptionId) {
+            if (sub.id !== internalSubscription.stripe_id) {
+              this.logger.debug(`Canceling stripe subscription with ID: ${sub.id}`);
               await stripe.subscriptions.cancel(sub.id);
             }
           }),
@@ -185,7 +194,18 @@ export class StripeWebhooksService {
   private async handleSubscriptionDeleted(
     subscription: Stripe.Subscription,
   ): Promise<void> {
-    this.logger.debug(`Subscription deleted: ${subscription.id}`);
+    
+    const user = await this.userService.findOneByStripeId(subscription.customer as string);
+    const internalSubscription = await this.planSubscriptionService.getActiveUserSubscription(user.id);
+
+    if(internalSubscription?.stripe_id === subscription.id){
+    
+    const freeSubscription =   await this.planSubscriptionService.setFreePlan(user);
+    this.logger.debug(`Setting free plan to user`,{
+      freeSubscription
+        
+    });
+    }
     // TODO: Handle subscription cancellation
   }
 

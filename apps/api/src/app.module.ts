@@ -76,7 +76,7 @@ const APP_MODULES = [
     }),
     RouterModule.register(
       APP_MODULES.map((module) => ({
-        path: '/v1',
+        path: 'api/v1',
         module,
       })),
     ),
