@@ -66,10 +66,24 @@ const up = async () => {
     Column.timestamps(true),
   ]);
   await createTimeStampsTrigger('addresses');
+
+  
+  await Schema.table('payment_methods').createIfNotExists([
+    Column.id(),
+    Column.enum('payment_method','PAYMENT_METHOD',{
+      unique:true
+    }),
+    Column.boolean('enabled',{
+      default:true
+    }),
+    Column.timestamps(true)
+  ]);
+  await createTimeStampsTrigger('payment_methods');
 };
 
 const down = async () => {
   // Drop the function
+  await Schema.table('payment_methods').dropIfExists();
   await Schema.table('addresses').dropIfExists();
   for (const enumName of Object.keys(ENUMS)) {
     await Schema.dropEnumIfExists(enumName as AvailableEnums);

@@ -79,6 +79,7 @@ export const TABLES_ENUM = {
   USER_AUTH_DEVICES:'user_auth_devices',
   USER_SESSIONS:'user_sessions',
   PASSWORD_RECOVERY_ATTEMPTS:'password_recovery_attempts',
+  PAYMENT_METHODS: 'payment_methods'
 } as const;
 
   export type AvailableEnums = keyof typeof ENUMS;

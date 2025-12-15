@@ -29,7 +29,6 @@ export const registerServerAction = async (formData: FormData):Promise<AuthActio
             inputs:credentials
         }
     }
-         //TODO: call user service
         const result = await authService.register(validatedData.data);
         if (result.error || result.data === null) {
             let errors =result.error && (result.error.status_code === 400 || result.error.status_code === 401)?  result.error.errors : ['Something went wrong'];

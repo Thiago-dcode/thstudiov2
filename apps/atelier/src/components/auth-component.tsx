@@ -7,7 +7,7 @@ const Container = ({ children, className }: {
 }) => {
 
     return (
-        <div className="flex size-full  items-center justify-center p-1 lg:p-8  m-auto">
+        <div className="flex size-full  items-center justify-center py-8 px-1  m-auto">
             <div className={cn("w-full h-full  max-w-sm", className)}>
 
                 {children}

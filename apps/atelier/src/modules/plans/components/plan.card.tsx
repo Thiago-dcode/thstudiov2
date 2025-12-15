@@ -30,7 +30,7 @@ const {setPlanSelected,planSelected} = usePlan();
       setPlanSelected(plan)
     }}
       className={cn(
-        "relative flex flex-col items-start justify-between gap-8 rounded-2xl  p-8 transition-all duration-300 border hover:border-accent hover:scale-105 shadow-lg max-w-md  w-full bg-fg-1 hover:cursor-pointer",
+        "relative flex flex-col items-start justify-between gap-8 rounded-2xl  p-8 transition-all duration-300 border hover:border-accent hover:scale-105 shadow-lg max-w-sm  w-full  bg-fg-1 hover:cursor-pointer",
         plan.is_popular && "border-accent/50 ",
         className
       )}

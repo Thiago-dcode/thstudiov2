@@ -28,6 +28,7 @@ import { CategoriesModule } from './v1/modules/categories/categories.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { PlanSubscriptionsModule } from './v1/modules/plan-subscriptions/plan-subscriptions.module';
 import { WebhooksModule } from './v1/modules/webhooks/webhooks.module';
+import { UtilsModule } from './v1/modules/utils/app-utils.module';
 const APP_MODULES = [
   AuthModule,
   UserModule,
@@ -37,6 +38,7 @@ const APP_MODULES = [
   MediaModule,
   WebhooksModule,
   CategoriesModule,
+  UtilsModule,
 ];
 @Module({
   imports: [
@@ -95,8 +97,8 @@ const APP_MODULES = [
     }),
     EventEmitterModule.forRoot(),
     ScheduleModule.forRoot(),
-    ...APP_MODULES,
     ServicesModule,
+    ...APP_MODULES,
     TestModule,
   ],
   controllers: [],
