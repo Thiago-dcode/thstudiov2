@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { UserAuth } from "@/modules/auth/auth.types";
-import { setUserSession, setUserSessionByCookie, userSession } from "@/modules/auth/server-actions/user-session.action";
-import { API_KEY_HEADER } from "@repo/common-lib/constants/constants";
-
-const API_KEY = process.env.API_KEY;
+import { deleteUserSession, setUserSession } from "@/modules/auth/server-actions/user-session.action";
+import { APP_API_KEY_HEADER } from "@repo/common-lib/constants/constants";
+import { getConfigValue } from "@repo/common-lib/config/utils";
 
 export async function POST(request: NextRequest) {
     try {
-        const apiKey = request.headers.get(API_KEY_HEADER);
+        const apiKey = request.headers.get(APP_API_KEY_HEADER);
         
-        if (!apiKey || apiKey !== API_KEY) {
+        if (!apiKey || apiKey !== getConfigValue('app').api_key) {
             return NextResponse.json(
                 { error: "Unauthorized" },
                 { status: 401 }
@@ -25,11 +24,11 @@ export async function POST(request: NextRequest) {
             );
         }
 
- 
-        const response = NextResponse.json({ success: true }, { status: 200 });
+        // Delete old session and set new one using cookies() from next/headers
+        await deleteUserSession();
+        await setUserSession(body);
 
-        await setUserSessionByCookie(body,response.cookies);
-        return response;
+        return NextResponse.json({ success: true }, { status: 200 });
     } catch (error) {
         return NextResponse.json(
             { error: "Failed to set user session" },

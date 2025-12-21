@@ -13,4 +13,4 @@ export const REMEMBER_ME_COOKIE_NAME = 'x-app-remember-me';
 export const PASSWORD_RECOVERY_ATTEMPT_COOKIE_NAME = 'x-app-password-recovery-attempt';
 export const PASSWORD_UPDATED_COOKIE_NAME = 'x-app-password-updated';
 export const FUNNEL_LAST_STEP = 4;
-export const API_KEY_HEADER = 'x-app-api-key';
+export const APP_API_KEY_HEADER = 'x-app-api-key';

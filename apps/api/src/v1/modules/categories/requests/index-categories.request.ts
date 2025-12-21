@@ -13,6 +13,7 @@ export class IndexCategoriesRequest extends OffsetPaginationRequest {
   @IsString()
   @IsNotEmpty()
   search: string;
+
   
   @IsOptional()
   @IsBoolean()

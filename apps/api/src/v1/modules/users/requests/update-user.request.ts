@@ -51,7 +51,7 @@ export class UpdateUserRequest {
   @IsOptional()
   @IsArray()
   @ModelArrayExist('categories')
-  categories?: number;
+  categories?: number[];
 
   @IsOptional()
   avatar?: Express.Multer.File;

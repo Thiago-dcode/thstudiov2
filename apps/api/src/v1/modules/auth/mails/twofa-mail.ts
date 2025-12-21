@@ -7,14 +7,14 @@ import { I18nService } from 'nestjs-i18n';
 
 @Injectable()
 export class TwoFAMail extends Mailable {
-  private user: BaseUser;
+  private user: BaseUser & { twofa_code: string };
   constructor(
     private readonly viewService: ViewService,
     private readonly i18nService: I18nService,
   ) {
     super();
   }
-  setUser(user: BaseUser) {
+  setUser(user: BaseUser & { twofa_code: string }) {
     this.user = user;
     return this;
   }

@@ -15,6 +15,7 @@ let envFilePath = path.resolve(process.cwd(),'..', '..', '.env');
   dotenv.config({ path: envPath || envFilePath });
   return {
     app: {
+      api_key: process.env.APP_API_KEY || '',
       name: 'a11studio',
       url: process.env.APP_URL,
       env: process.env.NODE_ENV || 'development',

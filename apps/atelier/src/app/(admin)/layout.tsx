@@ -7,6 +7,7 @@ const AdminLayout = async ({ children }: { children: ReactNode }) => {
   if (!userAuth) {
     redirect('/');
   }
+  console.log('AUTH LAYOUT',userAuth)
   return <>
   <FinishSetupDialog user={userAuth} />
   {children}</>;

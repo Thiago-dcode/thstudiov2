@@ -13,7 +13,7 @@ export const TwoFaForm = ({ user }: { user: TwoFaUser }) => {
   const route = useRouter();
   const { setSession } = useSession();
   const formRef = useRef<HTMLFormElement | null>(null);
-  const { handleSubmit, errors, isPending } = useHandleAction({
+  const { handleSubmit, errors, cleanErrors, isPending } = useHandleAction({
     action: verify2faServerAction,
     afterAction: async (result) => {
       if (result.data) {
@@ -22,7 +22,7 @@ export const TwoFaForm = ({ user }: { user: TwoFaUser }) => {
       }
     }
   })
-  const [twafaCode, setTwofaCode] = useState<string>()
+  const [twafaCode, setTwofaCode] = useState('')
 
 
   return (
@@ -37,8 +37,12 @@ export const TwoFaForm = ({ user }: { user: TwoFaUser }) => {
           <Input
             onChange={(e) => {
               if (isPending) return;
-              const value = e.target.value.trim();
+              const value = e.target.value.trim().toLowerCase();
+              e.target.value = value;
               setTwofaCode(value);
+              if (errors) {
+                cleanErrors()
+              }
               if (value.length === 6 && formRef?.current) {
                 formRef.current.requestSubmit()
               }
@@ -48,7 +52,7 @@ export const TwoFaForm = ({ user }: { user: TwoFaUser }) => {
             id="twofa_code"
             name="twofa_code"
             maxLength={6}
-            value={twafaCode || undefined}
+            value={twafaCode}
             autoComplete="one-time-code"
             inputMode="numeric"
             placeholder="Enter 6-digit code"

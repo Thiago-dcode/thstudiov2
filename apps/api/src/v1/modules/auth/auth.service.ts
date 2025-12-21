@@ -51,7 +51,7 @@ export class AuthService {
   async register(registerRequest: RegisterRequest) {
     const user = await this.userRepository.create({
       ...registerRequest,
-      funnel_step:1,
+      funnel_step: 1,
       password: await hash(registerRequest.password),
     });
     const result = await this.handle2fa(user, {
@@ -78,7 +78,6 @@ export class AuthService {
     }
     delete user.password;
     delete user.twofa_code;
-  
     const result = await this.handle2fa(user, {
       user_agent: this.requestService?.user_agent || '-',
       ip_address: this.requestService?.ip_address || '-',
@@ -101,6 +100,7 @@ export class AuthService {
     ) {
       throw new BadRequestException('Invalid verification code or expired');
     }
+    delete user.twofa_code;
     //It should be created from the login process
     const userAuthDevice = await this.userAuthDevicesService.getOneOrCreate({
       user_id: user.id,
@@ -292,7 +292,9 @@ export class AuthService {
       twofa_code: code,
       twofa_expires_at: expiresAt,
     });
-    this.mailService.send(this.twoFAMail.setUser(updatedUser));
+    this.mailService.send(
+      this.twoFAMail.setUser({ ...updatedUser, twofa_code: code }),
+    );
     return {
       user_auth_device: userDevice,
       user: updatedUser,

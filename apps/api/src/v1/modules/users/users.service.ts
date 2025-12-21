@@ -15,6 +15,7 @@ import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { s3StorageConfig } from 'src/config/storage';
 import { PlanSubscriptionsService } from '../plan-subscriptions/plan-subscriptions.service';
 import { stripe } from '@repo/backend-lib/services/payment-service/stripe';
+import { RequestService } from 'src/common/services/request.service';
 
 @Injectable()
 export class UserService {
@@ -24,6 +25,7 @@ export class UserService {
     private readonly userExtraDataRepository: UserExtraDataRepository,
     private readonly logService: LogService,
     private readonly mailService: MailService,
+    private readonly requestService: RequestService,
     private readonly storageService: StorageService,
     private readonly compressService: CompressService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
@@ -58,6 +60,10 @@ export class UserService {
     const user = await this.userRepository.findById(id);
     if (!user) {
       throw new HttpException('User not found', 422);
+    }
+    console.log(this.requestService.user);
+    if (user.id !== this.requestService.user.id) {
+      throw new HttpException('Unauthorized', 403);
     }
     const userUpdateData: Omit<UpdateUserRequest, 'avatar'> & {
       avatar?: string;
@@ -99,12 +105,13 @@ export class UserService {
     }
     const [userUpdated] = await Promise.all([
       this.userRepository.updateById(user.id, userUpdateData),
-      categories
+      categories && categories.length
         ? this.userRepository.attach('user_categories', {
             modelCol: 'user_id',
             modelValue: user.id,
             attachCol: 'category_id',
             valuesToAttach: categories,
+            removePrevious: true,
           })
         : Promise.resolve(true),
     ]);
@@ -114,7 +121,6 @@ export class UserService {
   async remove(id: number) {
     return `This action removes a #${id} user`;
   }
-
 
   @OnEvent(NEW_USER_EVENT)
   async handleNewUserEvent(event: NewUserEvent) {
@@ -136,7 +142,9 @@ export class UserService {
       });
 
       //Handle set free plan
-      const result = await this.planSubscriptionService.setFreeSubscription(event.user);
+      const result = await this.planSubscriptionService.setFreeSubscription(
+        event.user,
+      );
       this.logService
         .name('new-user')
         .info(`${NEW_USER_EVENT} user [${event.user.id}] set free plan`, {

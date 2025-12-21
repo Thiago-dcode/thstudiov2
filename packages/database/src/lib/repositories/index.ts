@@ -46,8 +46,11 @@ export abstract class BaseRepository {
       columns?: {
         [col: string]: valueToAttach,
       }
-    }[]
-  }
+    }[],
+    removePrevious?:boolean
+    
+  },
+ 
 ) {
   const { modelCol, modelValue, attachCol, valuesToAttach } = options;
   
@@ -64,7 +67,10 @@ export abstract class BaseRepository {
   },{} as AttachValues)
   const _values = Object.keys(_valuesToAttach);
   type AttachRecord = Record<TModelCol, valueToAttach> & Record<TAttachCol, valueToAttach>;
-  const models: AttachRecord[] = 
+  if(options.removePrevious){
+    await Query.table(table).where(modelCol,'=',modelValue).delete();
+  }else{
+    const models: AttachRecord[] = 
     await Query.table(table)
       .select([modelCol, attachCol])
       .where(modelCol, '=', modelValue)
@@ -76,6 +82,11 @@ export abstract class BaseRepository {
       delete _valuesToAttach[model[attachCol]];
     } 
   }
+  }
+
+  console.log("values to attach",_valuesToAttach);
+  
+ 
 const result = await Promise.all(Object.entries(_valuesToAttach).map(async([key,value])=>{
   const columns:string[] = [modelCol,attachCol];
   const values: SqlValue[] = [modelValue,key];

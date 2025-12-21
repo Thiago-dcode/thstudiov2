@@ -20,6 +20,7 @@ export class UserRepository extends BaseRepository {
     'users.id',
     'users.email',
     'users.username',
+    'users.twofa_code',
     'users.stripe_customer_id',
     'users.email_validated',
     'users.twofa_enabled',
@@ -105,9 +106,10 @@ export class UserRepository extends BaseRepository {
     column: string,
     value: any,
   ): Promise<BaseUserWithPassword> {
+    const cols = [...this.BASE_COLUMNS, 'password','twofa_code'];
     const result = await this.queryBuilder
       .where(column, '=', value)
-      .select([...this.BASE_COLUMNS, 'password','twofa_code'])
+      .select(cols)
       .first<UserSchemaWithAddress>();
     if (!result) null;
     return this.formatUser(result, true) as BaseUserWithPassword;

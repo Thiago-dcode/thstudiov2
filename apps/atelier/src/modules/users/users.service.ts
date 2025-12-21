@@ -2,6 +2,7 @@ import { BaseService } from "@/lib/services/base.service";
 import { fetchApi } from "@/lib/facade/fetchApi";
 import { BaseUser, UpdateUserInputAvatarFile, User } from "@repo/common-lib/types/user";
 import { ApiResponse } from "@repo/common-lib/types/response";
+import { CategoryBase } from "@repo/common-lib/types/category";
 
 export class UserService extends BaseService {
     constructor() {
@@ -23,6 +24,12 @@ export class UserService extends BaseService {
             body:data
         });
 
+    }
+    async getAllCategories(id:number): Promise<ApiResponse<CategoryBase[]>>{
+
+        return await this.fetchApi.get({
+            resource:`${id}/categories`,
+        });
     }
 
 }

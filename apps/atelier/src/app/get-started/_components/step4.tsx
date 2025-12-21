@@ -12,37 +12,37 @@ import { redirect } from "next/navigation";
 export default async function Step4() {
 
     const user = await userSession();
-    if(!user) redirect('/');
-    const [plans, paymentMethods,activeSubscription] = await Promise.all([
+    if (!user) redirect('/');
+    const [plans, paymentMethods, activeSubscription] = await Promise.all([
         plansService.getAll({
             is_active: true,
         }),
         utilsService.getPaymentMethods({
-            enabled:true
+            enabled: true
         }),
         planSubscriptionsService.getActive(user.id)
     ]);
     //Skip if user already has a paid subscription
-    if (plans.error || !plans ||!plans.data || !activeSubscription.data?.plan_price.plan.is_free) {
-        await usersService.update(user.id,{
-            funnel_step:FUNNEL_LAST_STEP +1
+    if (plans.error || !plans || !plans.data || !activeSubscription.data?.plan_price.plan.is_free) {
+        await usersService.update(user.id, {
+            funnel_step: FUNNEL_LAST_STEP + 1
         });
-        redirect('/atelier');
+        redirect('/get-started');
     }
 
     return (
         <PlanSubscriptionProvider >
-           <>
-           <ChangeSubscriptionDialog  availablePaymentMethods={paymentMethods.data!}/>
-           <div className="size-full flex flex-wrap items-center justify-center gap-8">
-                {plans.data.map((plan) => (
-                    <PlanCard
-                        key={plan.id}
-                        plan={plan}
-                    />
-                ))}
-            </div>
-           </>
+            <>
+                <ChangeSubscriptionDialog availablePaymentMethods={paymentMethods.data!} />
+                <div className="size-full flex flex-wrap items-center justify-center gap-8">
+                    {plans.data.map((plan) => (
+                        <PlanCard
+                            key={plan.id}
+                            plan={plan}
+                        />
+                    ))}
+                </div>
+            </>
         </PlanSubscriptionProvider>
     );
 }

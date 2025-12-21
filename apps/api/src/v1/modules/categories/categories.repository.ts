@@ -1,12 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { IndexCategoriesRequest } from './requests/index-categories.request';
 import { BaseRepository } from '@repo/database/repositories';
 import { RequestService } from 'src/common/services/request.service';
 import {
   CategoryWithTranslationSchemaColumns,
   CategoryWithTranslationsSchema,
 } from '@repo/common-lib/schemas/category';
-import { CategoryBase } from '@repo/common-lib/types/category';
+import {
+  CategoryBase,
+  CategoryIndexRequest,
+} from '@repo/common-lib/types/category';
 
 @Injectable()
 export class CategoriesRepository extends BaseRepository {
@@ -22,7 +24,7 @@ export class CategoriesRepository extends BaseRepository {
     'category_translations.name as tr_name',
     'category_translations.language_code',
   ];
-  async findAll(filters: IndexCategoriesRequest) {
+  async findAll(filters: CategoryIndexRequest) {
     this.queryBuilder.select(this.BASE_COLUMNS);
 
     await this.applyFilters(filters);
@@ -65,7 +67,7 @@ export class CategoriesRepository extends BaseRepository {
 
     return Object.values(categories);
   }
-  async applyFilters(filters: IndexCategoriesRequest) {
+  async applyFilters(filters: CategoryIndexRequest) {
     this.queryBuilder.join(
       'id',
       'category_translations',
@@ -79,6 +81,12 @@ export class CategoriesRepository extends BaseRepository {
       '=',
       this.requestService.language,
     );
+
+    if (filters.user_id) {
+      this.queryBuilder
+        .join('id', 'user_categories', 'category_id', 'LEFT')
+        .where('user_categories.user_id', '=', filters.user_id);
+    }
 
     if (filters.search) {
       const search = filters.search.toLowerCase();
@@ -113,8 +121,8 @@ export class CategoriesRepository extends BaseRepository {
         last_page,
       };
     }
-    if(filters.random){
-      this.queryBuilder.random()
+    if (filters.random) {
+      this.queryBuilder.random();
     }
   }
 }

@@ -33,6 +33,7 @@ class FetchApi extends HttpClient{
                 headers: headers,
                 body: this._body,
                 signal: this._signal,
+                credentials: 'include',
             });
             const data = await response.json();
             await this._responseCallback({

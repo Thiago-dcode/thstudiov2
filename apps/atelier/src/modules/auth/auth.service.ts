@@ -2,7 +2,7 @@ import { BaseService } from "@/lib/services/base.service";
 import { ApiResponse } from "@repo/common-lib/types/response";
 import { CheckPasswordRecoveryRequest, LoginRequest, LoginReturn, PasswordRecoveryAttempt, PasswordRecoveryRequest, UpdatePasswordRequest, UserAuth, UserRegisterRequest, ValidatePasswordRecoveryAttemptRequest, Verify2faRequest } from "./auth.types";
 import { fetchApi } from "@/lib/facade/fetchApi";
-import { BaseUser } from "@repo/common-lib/types/user";
+import { BaseUser, UserResponse } from "@repo/common-lib/types/user";
 
 export class AuthService extends BaseService {
     constructor() {
@@ -55,7 +55,7 @@ export class AuthService extends BaseService {
             body: checkPasswordRecoveryRequest,
         });
     }
-    async updatePassword(updatePasswordRequest: UpdatePasswordRequest): Promise<ApiResponse<BaseUser>> {
+    async updatePassword(updatePasswordRequest: UpdatePasswordRequest): Promise<ApiResponse<UserResponse>> {
         return await this.fetchApi.post({
             resource: 'update-password',
             body: updatePasswordRequest,
