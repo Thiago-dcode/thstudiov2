@@ -136,7 +136,7 @@ export class UserService {
       });
 
       //Handle set free plan
-      const result = await this.planSubscriptionService.setFreePlan(event.user);
+      const result = await this.planSubscriptionService.setFreeSubscription(event.user);
       this.logService
         .name('new-user')
         .info(`${NEW_USER_EVENT} user [${event.user.id}] set free plan`, {

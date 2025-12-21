@@ -27,11 +27,31 @@ describe('QueryBuilder', () => {
     });
 
     
-    it('should build query when the resource starts with slash', () => {
+    it('should build query when the resource ends with slash', () => {
         let query = queryParamBuilder('users/', {name: 'John', age: 20, active: true, tags: ['tag1', 'tag2']});
         expect(query).toBe('users?name=John&age=20&active=1&tags[]=tag1&tags[]=tag2');
+    });
 
-        
+    it('should sanitize trailing ? from resource', () => {
+        let query = queryParamBuilder('users?', {name: 'John'});
+        expect(query).toBe('users?name=John');
+
+        query = queryParamBuilder('users/?', {name: 'John'});
+        expect(query).toBe('users?name=John');
+    });
+
+    it('should append to existing query params with &', () => {
+        let query = queryParamBuilder('users?status=active', {name: 'John'});
+        expect(query).toBe('users?status=active&name=John');
+
+        query = queryParamBuilder('users?status=active&role=admin', {name: 'John', age: 20});
+        expect(query).toBe('users?status=active&role=admin&name=John&age=20');
+    });
+
+    it('should return resource as-is when no query params provided', () => {
+        expect(queryParamBuilder('users?status=active')).toBe('users?status=active');
+        expect(queryParamBuilder('users?')).toBe('users');
+        expect(queryParamBuilder('users/')).toBe('users');
     });
 
    //TODO: Add test for nested objects when is needed

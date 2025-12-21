@@ -119,7 +119,7 @@ export class PlanSubscriptionsRepository extends BaseRepository {
       .first<PlanSubscriptionSchema | null>();
   }
 
-  async getActiveUserSubscription(
+  async findActiveSubscription(
     userId: number,
   ): Promise<FullPlanSubscription | null> {
     const result = await this.queryBuilder

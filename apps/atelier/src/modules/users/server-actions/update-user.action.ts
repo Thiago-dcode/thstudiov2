@@ -1,6 +1,6 @@
 'use server'
 
-import { AuthActionReturn } from "@/modules/auth/auth.types";
+import { ActionReturn } from "@/modules/auth/auth.types";
 import { updateUserSchema } from "../schemas/user-shemas";
 import { BaseUser, UpdateUserInputAvatarFile } from "@repo/common-lib/types/user";
 import usersService from "../users.service";
@@ -10,7 +10,7 @@ import { MimeTypes } from "@repo/common-lib/types/general";
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_FILE_TYPES:MimeTypes[] = ['image/jpeg', 'image/png', 'image/webp'];
 
-export const updateUserAction = async (id:number,formData: FormData): Promise<AuthActionReturn<UpdateUserInputAvatarFile,BaseUser>> => {
+export const updateUserAction = async (id:number,formData: FormData): Promise<ActionReturn<UpdateUserInputAvatarFile,BaseUser>> => {
 
     const categories = formData.get('categories') as string;
       // Extract text fields from FormData

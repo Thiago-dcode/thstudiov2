@@ -12,7 +12,7 @@ import { VIEW_ENGINE } from '../utils/constants';
 import { Error500Mail } from '../mails/error-500.mail';
 
 @Injectable()
-export default class Utils {
+export  class Helpers {
   constructor(
     private readonly requestService: RequestService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,

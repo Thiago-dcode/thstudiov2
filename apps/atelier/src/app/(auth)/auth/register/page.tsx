@@ -1,5 +1,5 @@
 import Link from "next/link";
-import authComponent from "../../../../components/auth-component";
+import authComponent from "../../../../components/page-component";
 import { RegisterForm } from "../__components/register-form";
 
 export default async function Login() {

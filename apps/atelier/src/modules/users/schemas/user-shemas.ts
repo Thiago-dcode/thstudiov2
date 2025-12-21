@@ -21,7 +21,6 @@ export const createUserSchema = z.object({
   number_email_validations_sent: z.number().int().min(0).optional().default(0),
   address_id: z.number().int().positive().nullable().optional(),
   twofa_enabled: z.boolean().optional().default(false),
-  twofa_code: z.string().nullable().optional(),
   twofa_expires_at: z.date().nullable().optional(),
 });
 

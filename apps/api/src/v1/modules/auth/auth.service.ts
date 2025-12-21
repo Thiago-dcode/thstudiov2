@@ -77,6 +77,8 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
     delete user.password;
+    delete user.twofa_code;
+  
     const result = await this.handle2fa(user, {
       user_agent: this.requestService?.user_agent || '-',
       ip_address: this.requestService?.ip_address || '-',
@@ -158,15 +160,15 @@ export class AuthService {
       );
 
     if (passwordRecoveryAttempt) {
-      //1 min 30 seconds
-      // const minTime = 1000 * 60 * 1.5;
-      // const timeDifference =
-      //   new Date().getTime() - passwordRecoveryAttempt.updated_at.getTime();
-      // if (timeDifference < minTime) {
-      //   throw new BadRequestException(
-      //     'You can only request a password recovery once every 1 minute and 30 seconds',
-      //   );
-      // }
+      // 1 min 30 seconds
+      const minTime = 1000 * 60 * 1.5;
+      const timeDifference =
+        new Date().getTime() - passwordRecoveryAttempt.updated_at.getTime();
+      if (timeDifference < minTime) {
+        throw new BadRequestException(
+          'You can only request a password recovery once every 1 minute and 30 seconds',
+        );
+      }
     }
     //Invalidate all previous attempts
     const [_, code] = await Promise.all([

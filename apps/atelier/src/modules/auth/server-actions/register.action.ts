@@ -2,11 +2,11 @@
 
 import { registerRequestSchema } from "../schemas/auth.shema";
 import { set2faCookie, delete2faCookie } from "./twofa.action";
-import { AuthActionReturn } from "../auth.types";
+import { ActionReturn } from "../auth.types";
 import authService from "../../auth/auth.service";
 import { BaseUser } from "@repo/common-lib/types/user";
 
-export const registerServerAction = async (formData: FormData):Promise<AuthActionReturn<{
+export const registerServerAction = async (formData: FormData):Promise<ActionReturn<{
         email?:string,
         username?:string
     }, BaseUser>> => {

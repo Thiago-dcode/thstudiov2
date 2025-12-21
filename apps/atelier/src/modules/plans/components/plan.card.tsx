@@ -2,10 +2,11 @@
 
 
 import type { FullPlan } from "@repo/common-lib/types/plan";
-import {  PlanHeader, usePlan } from "./plan.provider";
 import { PlanFeatures } from "./plan.features";
 import { PlanPrice } from "./plan.price";
 import { cn } from "@repo/ui/lib/utils";
+import {  UsePlanSubscription } from "@/modules/plan-subscriptions/providers/plan-subscription.provider";
+import { PlanHeader } from "./plan.header";
 
 export type PlanCardProps = {
   plan: FullPlan;
@@ -20,7 +21,7 @@ export function PlanCard({
   // Extract data from plan
   const name = plan.translation?.name || plan.name;
   const short_description = plan.translation?.short_description || plan.short_description;
-const {setPlanSelected,planSelected} = usePlan();
+const {setPlanSelected,} = UsePlanSubscription();
 
   return ( 
    <>
@@ -51,7 +52,7 @@ const {setPlanSelected,planSelected} = usePlan();
         <p
           className="w-full p-3 bg-text rounded-2xl text-bg text-center font-bold"
         >
-          Get Started
+         {plan.is_free? "Get started" :`Go ${plan.name}`}
         </p>
       </div>
 <PlanFeatures plan={plan}/>

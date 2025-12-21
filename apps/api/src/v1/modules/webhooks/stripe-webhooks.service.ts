@@ -5,7 +5,7 @@ import { PlanSubscriptionsService } from '../plan-subscriptions/plan-subscriptio
 import { PlanPricesService } from '../plan-prices/plan-prices.service';
 import { UserService } from '../users/users.service';
 import { stripe } from '@repo/backend-lib/services/payment-service/stripe';
-import Utils from 'src/common/services/Utils.service';
+import {Helpers} from 'src/common/services/helpers.service';
 import { OnEvent } from '@nestjs/event-emitter';
 import { WEBHOOK_STRIPE_EVENT } from './webhook.constants';
 import { paypal } from '@repo/backend-lib/services/payment-service/paypal';
@@ -18,7 +18,7 @@ export class StripeWebhooksService {
     name: 'stripe',
     callback: {
       channel: 'webhook/error',
-      callback: Utils.callback500ErrorMail,
+      callback: Helpers.callback500ErrorMail,
     },
   });
 
@@ -125,7 +125,7 @@ export class StripeWebhooksService {
     );
     const [planPrice, _internalSubscription] = await Promise.all([
       this.planPriceService.findOneByStripeId(itemData.price.id),
-      this.planSubscriptionService.getActiveUserSubscription(user.id),
+      this.planSubscriptionService.findActiveSubscription(user.id),
     ]);
 let internalSubscription:PlanSubscription = _internalSubscription;
     if (internalSubscription?.stripe_id === stripeSubscriptionId) {
@@ -196,11 +196,11 @@ let internalSubscription:PlanSubscription = _internalSubscription;
   ): Promise<void> {
     
     const user = await this.userService.findOneByStripeId(subscription.customer as string);
-    const internalSubscription = await this.planSubscriptionService.getActiveUserSubscription(user.id);
+    const internalSubscription = await this.planSubscriptionService.findActiveSubscription(user.id);
 
     if(internalSubscription?.stripe_id === subscription.id){
     
-    const freeSubscription =   await this.planSubscriptionService.setFreePlan(user);
+    const freeSubscription =   await this.planSubscriptionService.setFreeSubscription(user);
     this.logger.debug(`Setting free plan to user`,{
       freeSubscription
         

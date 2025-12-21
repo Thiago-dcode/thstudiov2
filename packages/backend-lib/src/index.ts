@@ -1,2 +1,2 @@
 export * from './utils';
-export * from '../../common-lib/src/config';
+export * from '@repo/common-lib/config';

@@ -2,14 +2,12 @@
 
 import authService from "../auth.service";
 import { passwordRecoveryRequestSchema } from "../schemas/auth.shema";
-import {  AuthActionReturn, PasswordRecoveryAttempt } from "../auth.types";
+import {  ActionReturn, PasswordRecoveryAttempt } from "../auth.types";
 import { cookies } from "next/headers";
-import { config } from "@/lib/config";
-import { decrypt, encrypt } from "@repo/common-lib/utils/encrypt";
 import { PASSWORD_RECOVERY_ATTEMPT_COOKIE_NAME } from "@repo/common-lib/constants/constants";
-import { deleteCookie } from "@/lib/utils";
+import { deleteCookie, getEncryptedJsonCookie, encryptObj } from "@/lib/utils";
 
-export const passwordRecoveryAction = async (formData: FormData):Promise<AuthActionReturn<{
+export const passwordRecoveryAction = async (formData: FormData):Promise<ActionReturn<{
     email?:string
 },PasswordRecoveryAttempt>> => {
     const credentials = {
@@ -73,20 +71,14 @@ export const passwordRecoveryAction = async (formData: FormData):Promise<AuthAct
 export const setPasswordRecoveryAttemptCookie = async (passwordRecoveryAttempt: PasswordRecoveryAttempt) => {
     'use server';
     const cookieStore = await cookies();
-    const data = encrypt(JSON.stringify(passwordRecoveryAttempt), config.encryption_secret);
-    cookieStore.set(PASSWORD_RECOVERY_ATTEMPT_COOKIE_NAME, data, {
+    cookieStore.set(PASSWORD_RECOVERY_ATTEMPT_COOKIE_NAME, await encryptObj(passwordRecoveryAttempt), {
         httpOnly: true,
         maxAge:60 * 10 //10 minutes
     });
 }
 export const getPasswordRecoveryAttemptCookie = async () => {
     'use server';
-    const cookieStore = await cookies();
-    const data = cookieStore.get(PASSWORD_RECOVERY_ATTEMPT_COOKIE_NAME)?.value;
-    if (!data) {
-        return null;
-    }
-    const result = JSON.parse(decrypt(data, config.encryption_secret) as string) as PasswordRecoveryAttempt;
+    const result = await getEncryptedJsonCookie<PasswordRecoveryAttempt>(PASSWORD_RECOVERY_ATTEMPT_COOKIE_NAME);
     if(!result?.id || !result?.code){
         return null;
     }

@@ -11,15 +11,14 @@ import {
 } from '@repo/common-lib/schemas/plan-subscription';
 import {
   HandleSubscriptionProcessInput,
-  HandleSubscriptionProcessPaypalResponse,
-  HandleSubscriptionProcessStripeResponse,
   HandleSubscriptionProcessResponse,
 } from '@repo/common-lib/types/plan-subscription';
-import Utils from 'src/common/services/Utils.service';
+import {Helpers} from 'src/common/services/helpers.service';
 import { stripe } from '@repo/backend-lib/services/payment-service/stripe';
 import { StripeService } from 'src/common/services/stripe.service';
 import { LogService } from '@repo/backend-lib/services/log-service';
 import { paypal } from '@repo/backend-lib/services/payment-service/paypal';
+import { PaymentMethodsService } from '../utils/payment-methods.service';
 
 @Injectable()
 export class PlanSubscriptionsService {
@@ -29,7 +28,8 @@ export class PlanSubscriptionsService {
     private readonly planPriceService: PlanPricesService,
     private readonly requestService: RequestService,
     private readonly planService: PlansService,
-    private readonly utils: Utils,
+    private readonly paymentMethodsService: PaymentMethodsService,
+    private readonly helpers: Helpers,
   ) {
     this.logger.channel('subscriptions');
   }
@@ -40,12 +40,17 @@ export class PlanSubscriptionsService {
     cancel_url,
     payment_method,
   }: InitiatePlanSubscriptionRequest): Promise<HandleSubscriptionProcessResponse> {
+    const paymentMethod = await this.paymentMethodsService.getOne(payment_method);
+    if(!paymentMethod || !paymentMethod.enabled){
+      throw new HttpException('Payment method not available', 422); 
+    }
+    // return paymentMethod;
     const planPrice = await this.planPriceService.findOne(plan_price_id);
     if (!planPrice) {
       throw new HttpException('Plan price does not exist', 422);
     }
     const currentUserSubscription =
-      await this.planSubscriptionsRepository.getActiveUserSubscription(
+      await this.planSubscriptionsRepository.findActiveSubscription(
         this.requestService.user.id,
       );
     if (currentUserSubscription?.plan_price_id === planPrice.id) {
@@ -55,7 +60,7 @@ export class PlanSubscriptionsService {
     if (planPrice.plan.is_free) {
       //This should be handle by a cancel method
       //Frontend should avoid request when is the free plan
-      throw new HttpException("Cannot activate a free plan. To set the free plan, you must use the cancel endpoint",HttpStatus.BAD_REQUEST);
+      throw new HttpException("Cannot activate a free plan.",HttpStatus.BAD_REQUEST);
     }
     const data: HandleSubscriptionProcessInput = {
       currentUserSubscription,
@@ -72,8 +77,8 @@ export class PlanSubscriptionsService {
     }
   }
 
-  async getActiveUserSubscription(userId: number) {
-    return await this.planSubscriptionsRepository.getActiveUserSubscription(
+  async findActiveSubscription(userId: number) {
+    return await this.planSubscriptionsRepository.findActiveSubscription(
       userId,
     );
   }
@@ -82,7 +87,7 @@ export class PlanSubscriptionsService {
     newPlanPrice,
     successUrl,
     cancelUrl,
-  }: HandleSubscriptionProcessInput): Promise<HandleSubscriptionProcessStripeResponse> {
+  }: HandleSubscriptionProcessInput) {
     const customerId = this.requestService.user?.stripe_customer_id;
 
     // Validate required Stripe IDs
@@ -174,7 +179,7 @@ export class PlanSubscriptionsService {
         error: stripeError || error,
       });
       if (!stripeError || stripeError.statusCode >= 500) {
-        Utils.callback500ErrorMail('error', errorMessage, stripeError || error);
+        Helpers.callback500ErrorMail('error', errorMessage, stripeError || error);
       }
       if (stripeError) {
         return {
@@ -193,7 +198,7 @@ export class PlanSubscriptionsService {
     newPlanPrice,
     successUrl,
     cancelUrl,
-  }: HandleSubscriptionProcessInput): Promise<HandleSubscriptionProcessPaypalResponse> {
+  }: HandleSubscriptionProcessInput) {
     const paypalClient = await paypal;
     if (!newPlanPrice?.paypal_id) {
       throw new HttpException('This plan is not available for purchase.', 422);
@@ -239,7 +244,7 @@ export class PlanSubscriptionsService {
     };
   }
 
-  async setFreePlan(user: BaseUser) {
+  async setFreeSubscription(user: BaseUser) {
     //Plans with plan and plan prices must always exist. If not, BIG PROBLEM.
     const freePlan = await this.planService.findFreePlan();
     if (!freePlan) {
@@ -260,7 +265,7 @@ export class PlanSubscriptionsService {
       amount: 0,
       payment_method: 'CARD',
       start_billing_date: new Date(),
-      next_billing_date: this.utils.getNextBillingDate(
+      next_billing_date: this.helpers.getNextBillingDate(
         lifetimePrice.billing_type,
       ),
       user_id: user.id,
@@ -302,11 +307,11 @@ export class PlanSubscriptionsService {
     );
   }
 
-  findAll() {
+ async  findAll() {
     return `This action returns all plan subscriptions`;
   }
 
-  findOne(id: number) {
+  async findOne(id: number) {
     return `This action returns a #${id} plan subscription`;
   }
 

@@ -12,6 +12,9 @@ const up = async () => {
     Column.string('code',255,{
       unique: true,
     }),
+    Column.boolean('code_validated',{
+      default:false
+    }),
     Column.timestamp('expires_at'),
     Column.timestamps(true),
   ]);

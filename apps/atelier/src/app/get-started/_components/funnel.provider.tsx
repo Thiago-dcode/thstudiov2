@@ -2,22 +2,25 @@
 import FormComponent from "@/components/form-component";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { Errors } from "@repo/ui/components/custom/errors";
-import { funnelAction } from "@/modules/users/server-actions/funnel.action";
 import { createContext, FormEvent, ReactElement, ReactNode, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { UpdateUserInputAvatarFile, User } from "@repo/common-lib/types/user";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Button } from "@repo/ui/components/shadcn/button";
 import { cn } from "@repo/ui/lib/utils";
+import { updateUserAction } from "@/modules/users/server-actions/update-user.action";
+import { setUserSession } from "@/modules/auth/server-actions/user-session.action";
+import { UserAuth } from "@/modules/auth/auth.types";
 
 
 type InputsType = HTMLInputElement | HTMLTextAreaElement | null | undefined
+type FunnelActions = 'continue' | 'finish' |'back'
 
 type FunnelContextType = {
     user?: User,
     lastStep: number,
     isPending: boolean,
-    actionElement?: HTMLInputElement
+    actionElement?: HTMLInputElement,
     inputs?: UpdateUserInputAvatarFile,
     errors?: string[],
     refInputs?: (HTMLInputElement | HTMLTextAreaElement)[],
@@ -46,22 +49,39 @@ const FunnelContext = createContext<FunnelContextType>({
 
 export const useFunnel = () => useContext(FunnelContext);
 
-export const FunnelProvider = ({ children, user, lastStep }: {
+export const FunnelProvider = ({ children, user, lastStep, defaultCanContinue=false }: {
     children: ReactElement,
-    user: User,
-    lastStep: number
+    user: UserAuth,
+    lastStep: number,
+    defaultCanContinue?:boolean
 }) => {
     const router = useRouter();
     const [actionElement, setActionElement] = useState<HTMLInputElement>()
     const [inputs, _setInputs] = useState<(HTMLInputElement | HTMLTextAreaElement)[]>()
-    const [canContinue, setCanContinue] = useState(false);
+    const [canContinue, setCanContinue] = useState(defaultCanContinue);
     const { result, handleSubmit, errors, cleanErrors, cleanResult, setErrors, isPending } = useHandleAction({
-        action: async (formData) => funnelAction(user.funnel_step, formData),
+        action: async (formData) =>{
+            const validActions:FunnelActions[] = ['continue','finish','back'];
+            const action = formData.get('action') as FunnelActions;
+            if (!validActions.some(va=>va===action)) return {
+                data: null,
+                errors: ['something went wrong'],
+                inputs: undefined
+            }
+            const currentStep = user.funnel_step;
+            const newFormData = action === 'continue' ? formData : new FormData();
+            const nextStep = action === 'finish' ? lastStep + 1 : action === 'back' ? currentStep - 1 : currentStep + 1;
+            console.log("nextstep",nextStep);
+            newFormData.set('funnel_step', String(nextStep));
+            return await updateUserAction(user.id, newFormData);
+        },
         afterAction: async (result) => {
             if (result?.data) {
-                reset();
-                router.refresh();
-
+               await setUserSession({...result.data,
+                token:user.token
+               });
+               if(result.data.funnel_step <= lastStep) router.refresh();
+               else router.push('/atelier')
             }
         }
 
@@ -104,7 +124,7 @@ export const FunnelProvider = ({ children, user, lastStep }: {
             user,
             lastStep,
             isPending,
-            actionElement: actionElement,
+            actionElement,
             setActionElement,
             inputs: result?.inputs,
             canContinue,
@@ -150,7 +170,9 @@ export const ContainerFormFunnel = ({ children }: {
     </FormComponent.Container>
 
 }
-export const ButtonSubmitFunnel = () => {
+export const ButtonSubmitFunnel = ({text = 'Continue'}:{
+    text?:string
+}) => {
     const { refInputs, canContinue, actionElement, isPending } = useFunnel()
     return (
         <>
@@ -168,13 +190,30 @@ export const ButtonSubmitFunnel = () => {
             }} className={cn({
                 'bg-text-muted cursor-not-allowed': !canContinue
             })} isPending={isPending}>
-                Continue <ArrowRight />
+                {text} <ArrowRight />
             </FormComponent.SubmitButton>
 
         </>
     )
 }
 
+export const ButtonFinishFunnel = ({ text = 'Finish' }: {
+    text?: string
+}) => {
+    const { actionElement, isPending } = useFunnel()
+    return (
+        <FormComponent.SubmitButton 
+            onClick={() => {
+                if (actionElement) actionElement.value = 'finish';
+            }} 
+            isPending={isPending}
+            variant="ghost"
+            className="text-text-muted"
+        >
+            {text}
+        </FormComponent.SubmitButton>
+    )
+}
 export const ButtonStepBackFunnel = () => {
     const { refInputs, user, actionElement, isPending } = useFunnel()
     return <>
@@ -184,7 +223,7 @@ export const ButtonStepBackFunnel = () => {
             })
             if (actionElement) actionElement.value = 'back';
         }} type="submit" className={cn({
-            "!text-text-muted !cursor-not-allowed": isPending
+            "text-text-muted cursor-not-allowed": isPending
         })} variant={'ghost'} >
             <ArrowLeft /> step back
         </Button>}</>

@@ -1,3 +1,4 @@
+import { EnumType } from "../constants/enums";
 import { PlanSubscriptionSchema } from "../schemas/plan-subscription";
 import { FullPlanPrice, PlanPrice } from "./plan-price";
 import { StripeError } from "./stripe";
@@ -19,6 +20,12 @@ export type FullPlanSubscription = PlanSubscription & {
   };
 };
 
+export type InitiateSubscriptionRequest ={
+  plan_price_id:number;
+  payment_method:EnumType<'PAYMENT_METHOD'>
+  success_url:string;
+  cancel_url:string;
+}
 
 export type HandleSubscriptionProcessInput = {
   currentUserSubscription: FullPlanSubscription | null;
@@ -28,16 +35,10 @@ export type HandleSubscriptionProcessInput = {
 }
 
 
-export type BaseHandleSubscriptionProcessResponse = {
+export type HandleSubscriptionProcessResponse = {
   ok: boolean;
   message: string;
   redirect_url: string | null;
+  paypal_error?: {} | null;
+  stripe_error?: StripeError | null;
 }
-export type HandleSubscriptionProcessStripeResponse = BaseHandleSubscriptionProcessResponse & {
-  stripe_error: StripeError | null;
-}
-export type HandleSubscriptionProcessPaypalResponse = BaseHandleSubscriptionProcessResponse & {
-  paypal_error: {} | null;
-}
-
-export type HandleSubscriptionProcessResponse = HandleSubscriptionProcessStripeResponse | HandleSubscriptionProcessPaypalResponse

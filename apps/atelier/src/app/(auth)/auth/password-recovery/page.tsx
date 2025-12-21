@@ -3,8 +3,8 @@ import { PasswordRecoveryForm } from "../__components/PasswordRecovery-form";
 import { getPasswordRecoveryAttemptCookie } from "@/modules/auth/server-actions/password-recovery.action";
 import { redirect } from "next/navigation";
 import { getTimeTillNextRecovery } from "./__utils/utils";
-import authComponent from "../../../../components/auth-component";
-import AuthComponent from "../../../../components/auth-component";
+import authComponent from "../../../../components/page-component";
+import PageComponent from "../../../../components/page-component";
 export default async function PasswordRecovery() {
     const timeTillNextRecovery = getTimeTillNextRecovery(await getPasswordRecoveryAttemptCookie());
     if (timeTillNextRecovery > 0) {
@@ -16,8 +16,8 @@ export default async function PasswordRecovery() {
             <authComponent.Content>
 
                 <authComponent.Header> {/* Header */}
-                    <AuthComponent.Title title="Password Recovery" />
-                    <AuthComponent.SubTitle subTitle="Enter your email and we'll send you a recovery link" />
+                    <PageComponent.Title title="Password Recovery" />
+                    <PageComponent.SubTitle subTitle="Enter your email and we'll send you a recovery link" />
 
                 </authComponent.Header>
                 <PasswordRecoveryForm />

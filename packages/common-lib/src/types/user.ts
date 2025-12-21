@@ -3,7 +3,7 @@ import { UserExtraDataSchema, UserSchema, BaseUserSchema } from "../schemas/user
 
 // BaseUser derived from BaseUserSchema (without password, timestamps, and extended profile fields)
 // Making certain fields required that were optional in the schema
-export type BaseUser = Omit<BaseUserSchema, 'password'>;
+export type BaseUser = Omit<BaseUserSchema, 'password'|'twofa_code'>;
 
 // BaseUserWithPassword includes the password field
 export type BaseUserWithPassword =BaseUserSchema;

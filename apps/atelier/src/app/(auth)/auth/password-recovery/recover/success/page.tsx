@@ -1,7 +1,7 @@
 import { getPasswordUpdatedCookie } from "@/modules/auth/server-actions/password-update.action";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import AuthComponent from "../../../../../../components/auth-component";
+import PageComponent from "../../../../../../components/page-component";
 import { Button } from "@repo/ui/components/shadcn/button";
 import { CheckCircle2 } from "lucide-react";
 
@@ -14,8 +14,8 @@ export default async function PasswordUpdateSuccess() {
     }
 
     return (
-        <AuthComponent.Container>
-            <AuthComponent.Content>
+        <PageComponent.Container>
+            <PageComponent.Content>
                 {/* Success Icon */}
                 <div className="flex justify-center">
                     <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
@@ -23,10 +23,10 @@ export default async function PasswordUpdateSuccess() {
                     </div>
                 </div>
 
-                <AuthComponent.Header>
-                    <AuthComponent.Title title="Password Updated Successfully" />
-                    <AuthComponent.SubTitle subTitle="Your password has been changed. You can now sign in with your new password." />
-                </AuthComponent.Header>
+                <PageComponent.Header>
+                    <PageComponent.Title title="Password Updated Successfully" />
+                    <PageComponent.SubTitle subTitle="Your password has been changed. You can now sign in with your new password." />
+                </PageComponent.Header>
 
                 {/* Action Button */}
                 <div className="w-full">
@@ -40,16 +40,16 @@ export default async function PasswordUpdateSuccess() {
                         </Link>
                     </Button>
                 </div>
-            </AuthComponent.Content>
+            </PageComponent.Content>
 
-            <AuthComponent.Footer>
+            <PageComponent.Footer>
                 <p>
                     Need help?{' '}
                     <Link href="/support" className="text-blue-500 hover:text-blue-600 underline">
                         Contact Support
                     </Link>
                 </p>
-            </AuthComponent.Footer>
-        </AuthComponent.Container>
+            </PageComponent.Footer>
+        </PageComponent.Container>
     )
 }

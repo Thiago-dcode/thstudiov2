@@ -1,22 +1,21 @@
-import { userSession } from "@/modules/auth/server-actions/user-session.action"
+import {  userSession } from "@/modules/auth/server-actions/user-session.action"
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import dynamic from "next/dynamic"
 import { redirect } from "next/navigation";
 import { FunnelProvider } from "./_components/funnel.provider";
-import AuthComponent from "@/components/auth-component";
+import PageComponent from "@/components/page-component";
 import usersService from "@/modules/users/users.service";
 import { cn } from "@repo/ui/lib/utils";
-import Image from "next/image";
+import { FUNNEL_LAST_STEP } from "@repo/common-lib/constants/constants";
 
-const LAST_STEP = 4;
-export default async function GetStarted() {
+export default async function GetStartedLayout() {
     const userAuth = await userSession();
     if (!userAuth) {
         redirect('/');
     }
     const userResponse = await usersService.getOne(userAuth.id);
-    if (!userResponse.data || userResponse.data.funnel_step <= 0 || userResponse.data.funnel_step > LAST_STEP) {
-        redirect('/atelier')
+    if (!userResponse.data || userResponse.data.funnel_step <= 0 || userResponse.data.funnel_step > FUNNEL_LAST_STEP) {
+       redirect('/');
     }
     const user = userResponse.data;
     const Step = dynamic(() => import('./_components/step' + user.funnel_step), {
@@ -43,27 +42,30 @@ export default async function GetStarted() {
       
     }
     const currentStep = stepsContent[user.funnel_step as keyof typeof stepsContent];
-    return <AuthComponent.Container className={cn("max-w-2xl",
+    return <PageComponent.Container className={cn("max-w-2xl",
         {"max-w-lg":user.funnel_step ===1 || user.funnel_step ===2},
-        {" max-w-full":user.funnel_step === LAST_STEP}
+        {" max-w-full":user.funnel_step === FUNNEL_LAST_STEP}
     )}>
 
-        <AuthComponent.Content>
-            <AuthComponent.Header>
-                <AuthComponent.Title title={currentStep.title} />
-                <AuthComponent.SubTitle subTitle={currentStep.subTitle} />
-            </AuthComponent.Header>
-            <FunnelProvider lastStep={LAST_STEP} user={user}>
+        <PageComponent.Content>
+            <PageComponent.Header>
+                <PageComponent.Title title={currentStep.title} />
+                <PageComponent.SubTitle subTitle={currentStep.subTitle} />
+            </PageComponent.Header>
+            <FunnelProvider lastStep={FUNNEL_LAST_STEP} user={{
+                ...userAuth,
+                ...user
+            }}>
                 <Step />
             </FunnelProvider>
-        </AuthComponent.Content>
+        </PageComponent.Content>
 
-        <AuthComponent.Footer>
+        <PageComponent.Footer>
             <p className="text-text-muted">
-                Step {user.funnel_step} of {LAST_STEP}
+                Step {user.funnel_step} of {FUNNEL_LAST_STEP}
             </p>
-        </AuthComponent.Footer>
+        </PageComponent.Footer>
 
-    </AuthComponent.Container>
+    </PageComponent.Container>
 
 }

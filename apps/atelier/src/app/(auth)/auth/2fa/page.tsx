@@ -2,7 +2,7 @@ import { get2faCookieData } from "@/modules/auth/server-actions/twofa.action";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { TwoFaForm } from "../__components/twoFa-form";
-import AuthComponent from "../../../../components/auth-component";
+import PageComponent from "@/components/page-component";
 import { ExpiresIn } from "../__components/expiresIn";
 
 export default async function TwoFactorAuth() {
@@ -24,20 +24,20 @@ export default async function TwoFactorAuth() {
 
   //TODO: handle is new register
   return (
-    <AuthComponent.Container>
+    <PageComponent.Container>
       {/* Header */}
 
-      <AuthComponent.Content>
-        <AuthComponent.Header>
+      <PageComponent.Content>
+        <PageComponent.Header>
           {/* <MailOpen className="size-10" /> */}
-          <AuthComponent.Title title={user.is_new ? 'Validate your email' : 'Device verification'} />
-          <AuthComponent.SubTitle >
+          <PageComponent.Title title={user.is_new ? 'Validate your email' : 'Device verification'} />
+          <PageComponent.SubTitle >
             <p className="text-sm">
               We've sent a verification code to{' '}
               <span className="font-medium">{maskedEmail}</span>
             </p>
-          </AuthComponent.SubTitle >
-        </AuthComponent.Header>
+          </PageComponent.SubTitle >
+        </PageComponent.Header>
         <TwoFaForm user={user} />
 
         {/* Footer Links */}
@@ -52,12 +52,12 @@ export default async function TwoFactorAuth() {
             </Link>
           </p>
         </div>
-      </AuthComponent.Content>
+      </PageComponent.Content>
 
-      <AuthComponent.Footer>
+      <PageComponent.Footer>
         <ExpiresIn redirect='/auth/login' expiresIn={expiresIn()} />
-      </AuthComponent.Footer>
-    </AuthComponent.Container>
+      </PageComponent.Footer>
+    </PageComponent.Container>
 
 
   );

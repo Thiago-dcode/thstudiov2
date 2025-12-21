@@ -9,13 +9,17 @@ export class PlanSubscriptionsController {
   ) {}
 
   @Get()
-  findAll() {
-    return this.planSubscriptionsService.findAll();
+  async findAll() {
+    return await this.planSubscriptionsService.findAll();
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.planSubscriptionsService.findOne(+id);
+ async findOne(@Param('id') id: string) {
+    return await this.planSubscriptionsService.findOne(+id);
+  }
+  @Get(':userId/active')
+  async findActive(@Param('userId') userId: string) {
+    return await this.planSubscriptionsService.findActiveSubscription(+userId);
   }
 
   @Delete(':id')
@@ -24,8 +28,8 @@ export class PlanSubscriptionsController {
   }
 
   @Post('initiate')
-  initiate(@Body() initiateRequest: InitiatePlanSubscriptionRequest) {
+  async initiate(@Body() initiateRequest: InitiatePlanSubscriptionRequest) {
     console.log(initiateRequest)
-    return this.planSubscriptionsService.initiate(initiateRequest)
+    return await this.planSubscriptionsService.initiate(initiateRequest)
   }
 }

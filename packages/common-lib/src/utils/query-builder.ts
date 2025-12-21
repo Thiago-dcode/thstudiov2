@@ -4,8 +4,7 @@ export type QueryBuilder = {
 }
 
 export const queryParamBuilder = (resource: string, query?: QueryBuilder) => {
-    let sanitizedResource = resource.trim();
-     sanitizedResource = resource.charAt(resource.length - 1) === '/' ? resource.slice(0, -1) : resource;
+    let sanitizedResource = resource.trim().replace(/[/?]+$/, '');
     const entries = Object.entries(query ?? {});
     if (!entries.length) return sanitizedResource;
 
@@ -32,5 +31,6 @@ export const queryParamBuilder = (resource: string, query?: QueryBuilder) => {
         return buildKeyValue(key, value);
 
     });
-    return `${sanitizedResource}?${queryParams.filter(Boolean).join('&')}`;
+    const separator = sanitizedResource.includes('?') ? '&' : '?';
+    return `${sanitizedResource}${separator}${queryParams.filter(Boolean).join('&')}`;
 }

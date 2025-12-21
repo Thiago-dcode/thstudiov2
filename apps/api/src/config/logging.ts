@@ -4,7 +4,7 @@ import {
   LogOptions,
 } from '@repo/backend-lib/services/log-service/types';
 import { getConfigValue } from '@repo/common-lib/config/utils';
-import Utils from 'src/common/services/Utils.service';
+import {Helpers} from 'src/common/services/helpers.service';
 
 
 export type LogginChannels = 'api' | 'users';
@@ -26,7 +26,7 @@ export const logConfig: AppLogConfig = {
         //Send a email to admin emails
 
         if (!getConfigValue('app').sendErrorEmails) return;
-       Utils.callback500ErrorMail(level,message,options)
+       Helpers.callback500ErrorMail(level,message,options)
       },
     },
   },
