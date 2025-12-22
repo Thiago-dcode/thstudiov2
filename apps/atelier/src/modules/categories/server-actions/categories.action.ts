@@ -5,10 +5,7 @@ import categoriesService from "../categories.service"
 
 
 
-export const getAllCategoriesAction = async (params?:CategoryIndexRequest,signal?:AbortSignal|null) =>{
-
-    console.log('PARAMS',params, 'SIGNAL',signal);
-    if(signal) categoriesService.signal= signal;
+export const getAllCategoriesAction = async (params?:CategoryIndexRequest) =>{
     return await categoriesService.getAll({
         page:1,
         paginated:true,

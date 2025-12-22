@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiResponse, ErrorResponse, SuccessResponse } from "@repo/common-lib/types/response";
 
 export const useFetchApi = <T extends any, K extends any>(
-  handler: (request?: K, signal?: AbortSignal) => Promise<ApiResponse<T>>,  
+  handler: (request?: K) => Promise<ApiResponse<T>>,  
   options?: {
     params?: K,
     callImmediately?: boolean,
@@ -24,7 +24,6 @@ export const useFetchApi = <T extends any, K extends any>(
     }
 
     abortControllerRef.current = new AbortController();
-    const signal = abortControllerRef.current.signal;
     isLoadingRef.current = true;
     setIsLoading(true);
 
@@ -32,7 +31,7 @@ export const useFetchApi = <T extends any, K extends any>(
       if(options?.beforeFetchCallback && await options.beforeFetchCallback(request)){
           return;
       }
-      const result = await handler(request, signal); 
+      const result = await handler(request); 
       if(options?.afterFetchCallback) await options.afterFetchCallback(result);
       if (result.data && !result.error) {
      

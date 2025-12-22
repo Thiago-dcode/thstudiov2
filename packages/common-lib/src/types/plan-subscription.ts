@@ -41,4 +41,5 @@ export type HandleSubscriptionProcessResponse = {
   redirect_url: string | null;
   paypal_error?: {} | null;
   stripe_error?: StripeError | null;
+  retryable:boolean
 }

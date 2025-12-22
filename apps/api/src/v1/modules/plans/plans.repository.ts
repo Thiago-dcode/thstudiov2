@@ -161,7 +161,7 @@ export class PlansRepository extends BaseRepository {
   async create(plan: CreatePlanInput) {
     const columns = Object.keys(plan);
     const values = Object.values(plan);
-    return await this.queryBuilder.insertAndGet<PlanSchema>(columns, values);
+    return await this.newQuery().insertAndGet<PlanSchema>(columns, values);
     //TODO: create a response dto
   }
 

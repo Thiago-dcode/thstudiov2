@@ -9,6 +9,7 @@ import {
   CategoryBase,
   CategoryIndexRequest,
 } from '@repo/common-lib/types/category';
+import { QueryBuilder } from '@repo/database/queryBuilder';
 
 @Injectable()
 export class CategoriesRepository extends BaseRepository {
@@ -25,13 +26,13 @@ export class CategoriesRepository extends BaseRepository {
     'category_translations.language_code',
   ];
   async findAll(filters: CategoryIndexRequest) {
-    this.queryBuilder.select(this.BASE_COLUMNS);
-
-    await this.applyFilters(filters);
-
-    const result =
-      await this.queryBuilder.get<CategoryWithTranslationsSchema[]>();
-    return this.formatCategories(result);
+    const query = await this.applyFilters(
+      filters,
+      this.newQuery().select(this.BASE_COLUMNS),
+    );
+    return this.formatCategories(
+      await query.get<CategoryWithTranslationsSchema[]>(),
+    );
   }
   private formatCategories(
     result: CategoryWithTranslationsSchema[],
@@ -67,23 +68,21 @@ export class CategoriesRepository extends BaseRepository {
 
     return Object.values(categories);
   }
-  async applyFilters(filters: CategoryIndexRequest) {
-    this.queryBuilder.join(
-      'id',
-      'category_translations',
-      'category_id',
-      'LEFT',
-    );
+  async applyFilters(
+    filters: CategoryIndexRequest,
+    query: QueryBuilder,
+  ): Promise<QueryBuilder> {
+    query.join('id', 'category_translations', 'category_id', 'LEFT');
 
     // Always filter by language first
-    this.queryBuilder.where(
+    query.where(
       'category_translations.language_code',
       '=',
       this.requestService.language,
     );
 
     if (filters.user_id) {
-      this.queryBuilder
+      query
         .join('id', 'user_categories', 'category_id', 'LEFT')
         .where('user_categories.user_id', '=', filters.user_id);
     }
@@ -92,24 +91,24 @@ export class CategoriesRepository extends BaseRepository {
       const search = filters.search.toLowerCase();
       // Use whereGroup to properly group OR conditions with parentheses
       // This generates: WHERE lang = X AND (name LIKE Y OR tags LIKE Y OR tr_name LIKE Y)
-      this.queryBuilder.whereGroup([
+      query.whereGroup([
         ['categories.name', 'ILIKE', `%${search}%`, 'where'],
         ['categories.tags', 'ILIKE', `%${search}%`, 'orWhere'],
         ['category_translations.name', 'ILIKE', `%${search}%`, 'orWhere'],
       ]);
     }
     if (filters.parent_id) {
-      this.queryBuilder.where('parent_id', '=', filters.parent_id);
+      query.where('parent_id', '=', filters.parent_id);
     }
     if (filters.paginated) {
-      const count = await this.queryBuilder.count(false);
-      this.queryBuilder.orderBy('id', 'DESC');
+      const count = await query.count(false);
+      query.orderBy('id', 'DESC');
       const perPage = filters.per_page || 15;
-      this.queryBuilder.limit(perPage);
+      query.limit(perPage);
       const page = !filters?.page || filters.page <= 0 ? 1 : filters.page;
       if (filters.page && filters.page > 1) {
         const offset = (filters.page - 1) * perPage;
-        this.queryBuilder.offset(offset);
+        query.offset(offset);
       }
       const last_page = Math.ceil(count / perPage);
       this.requestService.pagination = {
@@ -122,7 +121,8 @@ export class CategoriesRepository extends BaseRepository {
       };
     }
     if (filters.random) {
-      this.queryBuilder.random();
+      query.random();
     }
+    return query;
   }
 }

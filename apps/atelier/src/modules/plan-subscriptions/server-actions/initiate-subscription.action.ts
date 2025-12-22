@@ -40,12 +40,10 @@ try{
     const result = await planSubscriptionsService.initiate(validated.data);
    if(result.data && !result.error){
 
-    if(result.data.redirect_url){
         await setInitiateSubscriptionCookie({
             ...result.data,
             token:uuid
         });
-    }
     //Success
     return {
         data:result.data,
@@ -85,6 +83,7 @@ export const getInitiateSubscriptionCookie = async () => {
 }
 
 export const deleteInitiateSubscriptionCookie = async () => {
+    console.log("CALLING DELETE INITIATI COOKIE")
     const cookieStore = await cookies();
     cookieStore.set(INITIATE_SUBCRIPTION_COOKIE, '', {
         httpOnly: true,

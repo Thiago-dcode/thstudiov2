@@ -22,19 +22,18 @@ export type Audit = {
     current_page:number,
     last_page:number
   }
-  type BaseResponse<T> = {
+  type BaseResponse = {
     audit: Audit;
-    error: Error | null;
-    data: T | null;
     count?:number
   };
 
-  export type SuccessResponse<T> = BaseResponse<T> & {
+  export type SuccessResponse<T> = BaseResponse & {
     pagination?:Pagination,
+    data: T
     error: null;
   };
 
-  export type ErrorResponse = BaseResponse<null> & {
+  export type ErrorResponse = BaseResponse & {
     error: Error;
     data: null;
   };

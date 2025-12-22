@@ -230,12 +230,15 @@ private  handleBuildGet(columns: string[], values: SqlValue[], select: string[] 
   public async delete() {
    
     if(!this._softDeletes){
-      this.buildDeleteQuery();
-      const result = await getClient().query(this.query, this.values);
-    this.reset();
-    return result.rowCount > 0;
+     return this.__forceDelete();
     }
     this.update([this._softDeleteCol],[new Date()]);
+  }
+  public async __forceDelete(){
+    this.buildDeleteQuery();
+    const result = await getClient().query(this.query, this.values);
+  this.reset();
+  return result.rowCount > 0;
   }
 
   // ============================================================================
@@ -727,7 +730,7 @@ offset = isNull ? offset : offset + 1;
    * Reset the query builder state
    * @protected
    */
-  protected reset() {
+  public reset() {
     this._select = '*';
     this.query = '';
     this.values = [];

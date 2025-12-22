@@ -1,19 +1,21 @@
 import PageComponent from "@/components/page-component";
-import { getInitiateSubscriptionCookie } from "@/modules/plan-subscriptions/server-actions/initiate-subscription.action";
+import { deleteInitiateSubscriptionCookie, getInitiateSubscriptionCookie } from "@/modules/plan-subscriptions/server-actions/initiate-subscription.action";
 import { CheckCircle2, XCircle } from "lucide-react";
 import { redirect } from "next/navigation";
 import { ButtonSubmitFunnel, ContainerFormFunnel, FunnelProvider } from "../_components/funnel.provider";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import { FUNNEL_LAST_STEP } from "@repo/common-lib/constants/constants";
 import Link from "next/link";
+import { Button } from "@repo/ui/components/shadcn/button";
+import usersService from "@/modules/users/users.service";
 
 export default async function CallbackPage({
     params,
     searchParams,
-  }: {
+}: {
     params: Promise<{ callback: string }>;
-    searchParams: Promise<{token?:string }>;
-  }) {
+    searchParams: Promise<{ token?: string }>;
+}) {
     const userAuth = await userSession();
     if (!userAuth) {
         redirect('/');
@@ -25,11 +27,23 @@ export default async function CallbackPage({
         searchParams,
         getInitiateSubscriptionCookie(),
     ]);
-    // if (!validCallbacks.some(vc => vc === callback) || token !==cookie?.token) {
-    //     redirect('get-started');
-    // }
-    
+    if (!validCallbacks.some(vc => vc === callback) || token !== cookie?.token) {
+        redirect('/get-started');
+    }
+
     const isSuccess = callback === 'success';
+    const retryable = cookie?.retryable;
+    const message = cookie?.message;
+    const successTitle = "Payment Successful!";
+    const successSubtitle = message || "Your subscription has been activated. Welcome aboard!";
+    const failedTitle = "Payment Failed";
+    const failedSubtitle = message || "Something went wrong with your payment. Please try again.";
+    console.log("COOKIE CALLBACK",cookie)
+    if (!retryable) {
+        await usersService.update(userAuth.id, {
+            funnel_step: FUNNEL_LAST_STEP + 1
+        })
+    }
 
     return (
         <PageComponent.Container className="h-screen flex items-center justify-center m-auto">
@@ -40,26 +54,25 @@ export default async function CallbackPage({
                     ) : (
                         <XCircle className="size-16 text-red-500" />
                     )}
-                    <PageComponent.Title 
-                        title={isSuccess ? "Payment Successful!" : "Payment Failed"} 
+                    <PageComponent.Title
+                        title={isSuccess ? successTitle : failedTitle}
                     />
-                    <PageComponent.SubTitle 
-                        subTitle={isSuccess 
-                            ? "Your subscription has been activated. Welcome aboard!" 
-                            : "Something went wrong with your payment. Please try again."
-                        } 
+                    <PageComponent.SubTitle
+                        subTitle={isSuccess ? successSubtitle : failedSubtitle}
                     />
                 </PageComponent.Header>
-               <div className="flex flex-col items-center justify-center gap-2 w-full">
-                {!isSuccess ? (
-                    <Link className="text-blue-500 font-bold" href={'/get-started'}>Try again</Link>
-                ) : null}
-               <FunnelProvider lastStep={FUNNEL_LAST_STEP} user={userAuth} defaultCanContinue={true} >
-                        <ContainerFormFunnel>
-                        <ButtonSubmitFunnel text={!isSuccess? 'Continue with the free plan':"Continue"}/>
+                <div className="flex flex-col items-center justify-center gap-2 w-full">
+                    {!isSuccess && cookie?.retryable ? (
+                        <Button className="w-full" asChild>
+                            <Link className="font-semibold" href={'/get-started'}>Try again</Link>
+                        </Button>
+                    ) : null}
+                    <FunnelProvider lastStep={FUNNEL_LAST_STEP} user={userAuth} defaultCanContinue={true} >
+                        <ContainerFormFunnel onSubmitCallback={deleteInitiateSubscriptionCookie}>
+                            <ButtonSubmitFunnel simple={!isSuccess ? true : false} text={!isSuccess ? 'Skip for now' : "Continue"} />
                         </ContainerFormFunnel>
-                </FunnelProvider>
-               </div>
+                    </FunnelProvider>
+                </div>
             </PageComponent.Content>
         </PageComponent.Container>
     );

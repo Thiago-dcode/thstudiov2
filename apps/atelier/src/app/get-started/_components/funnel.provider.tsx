@@ -14,7 +14,7 @@ import { UserAuth } from "@/modules/auth/auth.types";
 
 
 type InputsType = HTMLInputElement | HTMLTextAreaElement | null | undefined
-type FunnelActions = 'continue' | 'finish' |'back'
+type FunnelActions = 'continue' | 'finish' | 'back'
 
 type FunnelContextType = {
     user?: User,
@@ -49,21 +49,21 @@ const FunnelContext = createContext<FunnelContextType>({
 
 export const useFunnel = () => useContext(FunnelContext);
 
-export const FunnelProvider = ({ children, user, lastStep, defaultCanContinue=false }: {
+export const FunnelProvider = ({ children, user, lastStep, defaultCanContinue = false }: {
     children: ReactElement,
     user: UserAuth,
     lastStep: number,
-    defaultCanContinue?:boolean
+    defaultCanContinue?: boolean
 }) => {
     const router = useRouter();
     const [actionElement, setActionElement] = useState<HTMLInputElement>()
     const [inputs, _setInputs] = useState<(HTMLInputElement | HTMLTextAreaElement)[]>()
     const [canContinue, setCanContinue] = useState(defaultCanContinue);
-    const { result, handleSubmit, errors, cleanErrors, cleanResult, setErrors, isPending } = useHandleAction({
-        action: async (formData) =>{
-            const validActions:FunnelActions[] = ['continue','finish','back'];
+    const { result, handleSubmit, errors, cleanErrors, setErrors, isPending } = useHandleAction({
+        action: async (formData) => {
+            const validActions: FunnelActions[] = ['continue', 'finish', 'back'];
             const action = formData.get('action') as FunnelActions;
-            if (!validActions.some(va=>va===action)) return {
+            if (!validActions.some(va => va === action)) return {
                 data: null,
                 errors: ['something went wrong'],
                 inputs: undefined
@@ -71,17 +71,18 @@ export const FunnelProvider = ({ children, user, lastStep, defaultCanContinue=fa
             const currentStep = user.funnel_step;
             const newFormData = action === 'continue' ? formData : new FormData();
             const nextStep = action === 'finish' ? lastStep + 1 : action === 'back' ? currentStep - 1 : currentStep + 1;
-            console.log("nextstep",nextStep);
+            console.log("nextstep", nextStep);
             newFormData.set('funnel_step', String(nextStep));
             return await updateUserAction(user.id, newFormData);
         },
         afterAction: async (result) => {
             if (result?.data) {
-               await setUserSession({...result.data,
-                token:user.token
-               });
-               if(result.data.funnel_step <= lastStep) router.refresh();
-               else router.push('/atelier')
+                await setUserSession({
+                    ...result.data,
+                    token: user.token
+                });
+                if (result.data.funnel_step <= lastStep) router.refresh();
+                else router.push('/atelier')
             }
         }
 
@@ -90,13 +91,6 @@ export const FunnelProvider = ({ children, user, lastStep, defaultCanContinue=fa
         _setInputs(inputs.filter(input => !!input));
     }, []);
 
-    const reset = () => {
-
-        console.log('reseting')
-        setCanContinue(false);
-        setInputs(undefined);
-        cleanResult();
-    }
 
     const handleOnChange = useCallback(() => {
         cleanErrors();
@@ -144,17 +138,20 @@ export const FunnelProvider = ({ children, user, lastStep, defaultCanContinue=fa
     )
 
 }
-export const ContainerFormFunnel = ({ children }: {
-    children: ReactNode
+export const ContainerFormFunnel = ({ children, onSubmitCallback }: {
+    children: ReactNode,
+    onSubmitCallback?: (e: FormEvent) => Promise<void>
 }) => {
     const actionRef = useRef<HTMLInputElement>(null)
     const { canContinue, isPending, handleSubmit, errors, setActionElement } = useFunnel()
     return <FormComponent.Container>
-        <FormComponent.Form onSubmit={(e) => {
+        <FormComponent.Form onSubmit={async (e) => {
             e.preventDefault();
             if (isPending || (!canContinue && actionRef.current?.value === 'continue')) return;
 
-            handleSubmit(e)
+           
+            handleSubmit(e);
+            if (onSubmitCallback) await onSubmitCallback(e);
         }}>
             <input ref={(e) => {
                 actionRef.current = e
@@ -170,14 +167,15 @@ export const ContainerFormFunnel = ({ children }: {
     </FormComponent.Container>
 
 }
-export const ButtonSubmitFunnel = ({text = 'Continue'}:{
-    text?:string
+export const ButtonSubmitFunnel = ({ text = 'Continue', simple = false }: {
+    text?: string,
+    simple?: boolean
 }) => {
     const { refInputs, canContinue, actionElement, isPending } = useFunnel()
     return (
         <>
             {/* Submit Button */}
-            <FormComponent.SubmitButton onClick={() => {
+            <FormComponent.SubmitButton variant={simple ? 'ghost' : 'default'} onClick={() => {
                 if (refInputs && !canContinue) {
                     for (let i = 0; i < refInputs.length; i++) {
                         const input = refInputs[i];
@@ -188,9 +186,11 @@ export const ButtonSubmitFunnel = ({text = 'Continue'}:{
                 if (actionElement) actionElement.value = 'continue';
 
             }} className={cn({
-                'bg-text-muted cursor-not-allowed': !canContinue
+                'bg-text-muted cursor-not-allowed': !canContinue,
+                '': simple
+
             })} isPending={isPending}>
-                {text} <ArrowRight />
+                {text} {!simple ? <ArrowRight /> : null}
             </FormComponent.SubmitButton>
 
         </>
@@ -202,10 +202,10 @@ export const ButtonFinishFunnel = ({ text = 'Finish' }: {
 }) => {
     const { actionElement, isPending } = useFunnel()
     return (
-        <FormComponent.SubmitButton 
+        <FormComponent.SubmitButton
             onClick={() => {
                 if (actionElement) actionElement.value = 'finish';
-            }} 
+            }}
             isPending={isPending}
             variant="ghost"
             className="text-text-muted"

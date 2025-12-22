@@ -58,7 +58,7 @@ export class UserSessionsRepository extends BaseRepository {
   }
   async updateOne(id: number, updateUserSessionInput: UpdateUserSessionInput) {
     await  super.updateOne(id, updateUserSessionInput);
-    const result = await this.queryBuilder
+    const result = await this.newQuery()
       .select(this.FULL_COLUMNS)
       .where('id', '=', id)
       .join('user_auth_device_id', 'user_auth_devices', 'id', 'LEFT')
@@ -70,7 +70,7 @@ export class UserSessionsRepository extends BaseRepository {
     user_auth_device_id?: number;
     token?: string;
   }): Promise<UserSession | null> {
-    let query = this.queryBuilder
+    let query = this.newQuery()
       .select(this.FULL_COLUMNS)
       .where('user_id', '=', session.user_id)
       .join('user_auth_device_id', 'user_auth_devices', 'id', 'LEFT');

@@ -13,7 +13,7 @@ import {
   HandleSubscriptionProcessInput,
   HandleSubscriptionProcessResponse,
 } from '@repo/common-lib/types/plan-subscription';
-import {Helpers} from 'src/common/services/helpers.service';
+import { Helpers } from 'src/common/services/helpers.service';
 import { stripe } from '@repo/backend-lib/services/payment-service/stripe';
 import { StripeService } from 'src/common/services/stripe.service';
 import { LogService } from '@repo/backend-lib/services/log-service';
@@ -40,40 +40,66 @@ export class PlanSubscriptionsService {
     cancel_url,
     payment_method,
   }: InitiatePlanSubscriptionRequest): Promise<HandleSubscriptionProcessResponse> {
-    const paymentMethod = await this.paymentMethodsService.getOne(payment_method);
-    if(!paymentMethod || !paymentMethod.enabled){
-      throw new HttpException('Payment method not available', 422); 
-    }
-    // return paymentMethod;
-    const planPrice = await this.planPriceService.findOne(plan_price_id);
-    if (!planPrice) {
-      throw new HttpException('Plan price does not exist', 422);
-    }
-    const currentUserSubscription =
-      await this.planSubscriptionsRepository.findActiveSubscription(
-        this.requestService.user.id,
-      );
-    if (currentUserSubscription?.plan_price_id === planPrice.id) {
-      //This endpoint is only for downgrades or upgrades from a paid plan
-      throw new HttpException("User already has this plan",HttpStatus.BAD_REQUEST);
-    }
-    if (planPrice.plan.is_free) {
-      //This should be handle by a cancel method
-      //Frontend should avoid request when is the free plan
-      throw new HttpException("Cannot activate a free plan.",HttpStatus.BAD_REQUEST);
-    }
-    const data: HandleSubscriptionProcessInput = {
-      currentUserSubscription,
-      newPlanPrice: planPrice,
-      successUrl: success_url,
-      cancelUrl: cancel_url,
-    };
-    switch (payment_method) {
-      case 'CARD':
-        //STRIPE
-        return await this.handleStripeSubscription(data);
-      case 'PAYPAL':
-        return await this.handlePaypalSubscription(data);
+    try {
+      throw new HttpException('Testing error', 500);
+      const paymentMethod =
+        await this.paymentMethodsService.getOne(payment_method);
+      if (!paymentMethod || !paymentMethod.enabled) {
+        throw new HttpException('Payment method not available', 422);
+      }
+      // return paymentMethod;
+      const planPrice = await this.planPriceService.findOne(plan_price_id);
+      if (!planPrice) {
+        throw new HttpException('Plan price does not exist', 422);
+      }
+      const currentUserSubscription =
+        await this.planSubscriptionsRepository.findActiveSubscription(
+          this.requestService.user.id,
+        );
+      if (currentUserSubscription?.plan_price_id === planPrice.id) {
+        //This endpoint is only for downgrades or upgrades from a paid plan
+        throw new HttpException(
+          'User already has this plan',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      if (planPrice.plan.is_free) {
+        //This should be handle by a cancel method
+        //Frontend should avoid request when is the free plan
+        throw new HttpException(
+          'Cannot activate a free plan.',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      const data: HandleSubscriptionProcessInput = {
+        currentUserSubscription,
+        newPlanPrice: planPrice,
+        successUrl: success_url,
+        cancelUrl: cancel_url,
+      };
+      switch (payment_method) {
+        case 'CARD':
+          //STRIPE
+          return await this.handleStripeSubscription(data);
+        case 'PAYPAL':
+          return await this.handlePaypalSubscription(data);
+      }
+    } catch (error) {
+      const responseError: HandleSubscriptionProcessResponse = {
+        message: 'Something went wrong',
+        redirect_url: null,
+        ok: false,
+        paypal_error: null,
+        stripe_error: null,
+        retryable: false,
+      };
+      if (error instanceof HttpException) {
+        const status = error.getStatus();
+        responseError.message = error.message;
+        responseError.retryable = status === 422 || status === 400;
+      }
+      throw new HttpException('Testing error', 500);
+      return responseError;
     }
   }
 
@@ -87,22 +113,24 @@ export class PlanSubscriptionsService {
     newPlanPrice,
     successUrl,
     cancelUrl,
-  }: HandleSubscriptionProcessInput) {
+  }: HandleSubscriptionProcessInput): Promise<HandleSubscriptionProcessResponse> {
     const customerId = this.requestService.user?.stripe_customer_id;
 
     // Validate required Stripe IDs
     if (!customerId) {
       throw new HttpException(
         'Your account is still being set up. Please try again in a moment.',
-        422,
+        500,
       );
     }
 
     if (!newPlanPrice?.stripe_id) {
-      throw new HttpException('This plan is not available for purchase.', 422);
+      throw new HttpException('This plan is not available for purchase.', 500);
     }
     try {
-      const stripeSubscription = currentUserSubscription.stripe_id? await stripe.subscriptions.retrieve(currentUserSubscription.stripe_id):null;
+      const stripeSubscription = currentUserSubscription.stripe_id
+        ? await stripe.subscriptions.retrieve(currentUserSubscription.stripe_id)
+        : null;
 
       const paymentMethods =
         await StripeService.getUserPaymentMethod(customerId);
@@ -111,8 +139,9 @@ export class PlanSubscriptionsService {
         currentUserSubscription?.stripe_id &&
         currentUserSubscription?.stripe_item_id &&
         stripeSubscription &&
-       ( stripeSubscription.status === 'active' || stripeSubscription.status ==='trialing')
-        paymentMethods.length > 0;
+        (stripeSubscription.status === 'active' ||
+          stripeSubscription.status === 'trialing');
+      paymentMethods.length > 0;
       if (!hasCompleteSubscription) {
         const session = await stripe.checkout.sessions.create({
           customer: customerId,
@@ -138,6 +167,7 @@ export class PlanSubscriptionsService {
           redirect_url: session.url,
           message: 'Need to checkout',
           stripe_error: null,
+          retryable: false,
         };
       }
       const isUpgrade =
@@ -165,6 +195,7 @@ export class PlanSubscriptionsService {
         redirect_url: null,
         message: 'Subscription updated',
         stripe_error: null,
+        retryable: false,
       };
     } catch (error) {
       console.log(error);
@@ -179,7 +210,11 @@ export class PlanSubscriptionsService {
         error: stripeError || error,
       });
       if (!stripeError || stripeError.statusCode >= 500) {
-        Helpers.callback500ErrorMail('error', errorMessage, stripeError || error);
+        Helpers.callback500ErrorMail(
+          'error',
+          errorMessage,
+          stripeError || error,
+        );
       }
       if (stripeError) {
         return {
@@ -188,6 +223,7 @@ export class PlanSubscriptionsService {
           message:
             stripeError?.message || 'Something went wrong, try again later',
           stripe_error: stripeError,
+          retryable: stripeError.isRetryable,
         };
       }
     }
@@ -198,7 +234,8 @@ export class PlanSubscriptionsService {
     newPlanPrice,
     successUrl,
     cancelUrl,
-  }: HandleSubscriptionProcessInput) {
+  }: HandleSubscriptionProcessInput): Promise<HandleSubscriptionProcessResponse> {
+    throw new HttpException('Paypal payment method is not available', 422);
     const paypalClient = await paypal;
     if (!newPlanPrice?.paypal_id) {
       throw new HttpException('This plan is not available for purchase.', 422);
@@ -231,6 +268,7 @@ export class PlanSubscriptionsService {
         redirect_url: subscription.links.find((link) => link.rel === 'approve')
           .href,
         paypal_error: null,
+        retryable: false,
       };
     }
 
@@ -241,6 +279,7 @@ export class PlanSubscriptionsService {
       ok: true,
       paypal_error: {},
       redirect_url: null,
+      retryable: false,
     };
   }
 
@@ -300,21 +339,26 @@ export class PlanSubscriptionsService {
             value: userId,
           },
           ...(skipSubscriptions.length > 0
-            ? [{ column: 'id', operator: 'NOT IN' as const, value: skipSubscriptions }]
+            ? [
+                {
+                  column: 'id',
+                  operator: 'NOT IN' as const,
+                  value: skipSubscriptions,
+                },
+              ]
             : []),
         ],
       },
     );
   }
 
- async  findAll() {
+  async findAll() {
     return `This action returns all plan subscriptions`;
   }
 
   async findOne(id: number) {
     return `This action returns a #${id} plan subscription`;
   }
-
 
   async update(
     id: number,

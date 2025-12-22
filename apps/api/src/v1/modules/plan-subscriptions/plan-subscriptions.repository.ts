@@ -122,6 +122,7 @@ export class PlanSubscriptionsRepository extends BaseRepository {
   async findActiveSubscription(
     userId: number,
   ): Promise<FullPlanSubscription | null> {
+    this.queryBuilder.reset();
     const result = await this.queryBuilder
       .select(this.FULL_COLUMNS)
       .join('plan_price_id', 'plan_prices', 'id')

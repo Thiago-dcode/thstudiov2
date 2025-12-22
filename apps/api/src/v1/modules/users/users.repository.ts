@@ -74,7 +74,7 @@ export class UserRepository extends BaseRepository {
     value: any,
     full: boolean = false,
   ): Promise<BaseUser | User> {
-    let query = this.queryBuilder.where(column, '=', value);
+    let query = this.newQuery().where(column, '=', value);
     if (full) {
       query = query
         .join('address_id', 'addresses', 'id', 'LEFT')

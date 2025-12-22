@@ -30,6 +30,14 @@ export abstract class BaseRepository {
     this.queryBuilder = new QueryBuilder(this.tableName,this.options.softDelete,this.options.softDeleteCol);
   }
 
+  /**
+   * Creates a fresh QueryBuilder instance.
+   * Use this for isolated queries that shouldn't share state with `this.queryBuilder`.
+   */
+  protected newQuery(): QueryBuilder {
+    return new QueryBuilder(this.tableName, this.options.softDelete, this.options.softDeleteCol);
+  }
+
  
 
   async attach<
@@ -84,7 +92,6 @@ export abstract class BaseRepository {
   }
   }
 
-  console.log("values to attach",_valuesToAttach);
   
  
 const result = await Promise.all(Object.entries(_valuesToAttach).map(async([key,value])=>{
@@ -103,7 +110,7 @@ const result = await Promise.all(Object.entries(_valuesToAttach).map(async([key,
 }
 
   protected async _findOneBy<T = any>(column: string, value: any,options?: {select?: string[] | string, join?: Join[]}) {
-    let query = this.queryBuilder.where(column, '=', value);
+    let query = this.newQuery().where(column, '=', value);
     query = this.buildQuery(query, options);
     return await query.first<T>();
   }
@@ -111,12 +118,12 @@ const result = await Promise.all(Object.entries(_valuesToAttach).map(async([key,
   protected async _create<T = any>(data: Record<string, SqlValue>,options?: {select?: string[] | string, join?: Join[]}): Promise<T> {
     const columns = Object.keys(data);
     const values = Object.values(data);
-    return await this.queryBuilder.insertAndGet<T>(columns, values,options?.select,options?.join);
+    return await this.newQuery().insertAndGet<T>(columns, values,options?.select,options?.join);
    }
 
 
   async exists(data: {[column: string]: any}, options?: { join?: Join[]}) {
-    let query = this.queryBuilder;
+    let query = this.newQuery();
     for (const [column, value] of Object.entries(data)) {
       if (value !== undefined) {
         query = query.where(column, '=', value);
@@ -126,7 +133,7 @@ const result = await Promise.all(Object.entries(_valuesToAttach).map(async([key,
     return await query.exists();
   }
   async update<T extends Record<string, SqlValue>>(data: T, options: {wheres: WhereOptions[],orWheres?:WhereOptions[],select?: string[] | string, join?: Join[]}) {
-    let query = this.buildQuery(this.queryBuilder, options);
+    let query = this.buildQuery(this.newQuery(), options);
     const columns = Object.keys(data);
     const values = Object.values(data);
     return await query.update(columns, values);
@@ -135,7 +142,7 @@ const result = await Promise.all(Object.entries(_valuesToAttach).map(async([key,
   async updateOne(id: number|string, data: Record<string, SqlValue>) {
     const columns = Object.keys(data);
     const values = Object.values(data);
-   const result = await this.queryBuilder.where(this.options.primaryKey, '=', id).update(columns, values);
+   const result = await this.newQuery().where(this.options.primaryKey, '=', id).update(columns, values);
    return result;
   }
 

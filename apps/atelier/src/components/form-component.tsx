@@ -3,7 +3,7 @@ import { ReactNode, forwardRef } from "react";
 import { Label } from "@repo/ui/components/shadcn/label";
 import { Input } from "@repo/ui/components/shadcn/input";
 import { Textarea } from "@repo/ui/components/shadcn/textarea";
-import { Button } from "@repo/ui/components/shadcn/button";
+import { Button, ButtonProps } from "@repo/ui/components/shadcn/button";
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { Check } from "lucide-react";
 
@@ -190,19 +190,19 @@ const SubmitButton = ({
 }: {
     isPending?: boolean;
     success?: boolean;
-    children: ReactNode;
+    children: React.ReactNode;
     spinnerClassName?: string;
-    variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
-} & Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'type'>) => {
+} & Omit<ButtonProps, 'type' | 'children'>) => {
     return (
         <Button
+        disabled={isPending}
             variant={variant || 'default'}
             size={'default'}
             type="submit"
             className={cn("w-full m-auto mt-4 ", className)}
             {...buttonProps}
         >
-            {!isPending ? !success ? children : <Check className="size-6" /> : <Spinner className={cn("size-6", spinnerClassName)} />}
+            {isPending?<Spinner className={cn("size-6", spinnerClassName)} /> :success? <Check className="size-6" /> :children}
         </Button>
     );
 };
