@@ -10,7 +10,7 @@ import { Button } from "@repo/ui/components/shadcn/button"
 import { Label } from '@repo/ui/components/shadcn/label'
 import { Spinner } from "@repo/ui/components/shadcn/spinner"
 import { Eye, EyeClosed } from "lucide-react"
-import FormComponent from "@/components/form-component"
+import FormComponent from "@/lib/components/form-component"
 
 export const PasswordUpdateForm = ({ passwordAttempt }: {
     passwordAttempt: PasswordRecoveryAttempt

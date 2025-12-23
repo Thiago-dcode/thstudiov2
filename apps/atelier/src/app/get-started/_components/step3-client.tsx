@@ -4,7 +4,7 @@ import { useFetchApi } from "@/lib/hooks/useFetchApi";
 import { getAllCategoriesAction } from "@/modules/categories/server-actions/categories.action";
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { Button } from "@repo/ui/components/shadcn/button";
-import FormComponent from "@/components/form-component";
+import FormComponent from "@/lib/components/form-component";
 import { ArrowDown } from "lucide-react";
 import { ButtonStepBackFunnel, ButtonSubmitFunnel, ContainerFormFunnel, useFunnel } from "./funnel.provider";
 import { CategoryBase, CategoryIndexRequest } from "@repo/common-lib/types/category";

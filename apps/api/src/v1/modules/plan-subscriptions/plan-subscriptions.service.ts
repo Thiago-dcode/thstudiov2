@@ -41,13 +41,11 @@ export class PlanSubscriptionsService {
     payment_method,
   }: InitiatePlanSubscriptionRequest): Promise<HandleSubscriptionProcessResponse> {
     try {
-      throw new HttpException('Testing error', 500);
       const paymentMethod =
         await this.paymentMethodsService.getOne(payment_method);
       if (!paymentMethod || !paymentMethod.enabled) {
         throw new HttpException('Payment method not available', 422);
       }
-      // return paymentMethod;
       const planPrice = await this.planPriceService.findOne(plan_price_id);
       if (!planPrice) {
         throw new HttpException('Plan price does not exist', 422);
@@ -98,7 +96,6 @@ export class PlanSubscriptionsService {
         responseError.message = error.message;
         responseError.retryable = status === 422 || status === 400;
       }
-      throw new HttpException('Testing error', 500);
       return responseError;
     }
   }

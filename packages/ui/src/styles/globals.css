@@ -5,6 +5,9 @@
 
 @custom-variant dark (&:is(.dark *));
 
+* {
+  box-sizing: border-box;
+}
 :root {
   --color-bg: oklch(95% 0 0);
   --color-fg: oklch(90% 0 0);

@@ -1,4 +1,4 @@
-import PageComponent from "@/components/page-component";
+import PageComponent from "@/lib/components/page-component";
 import { deleteInitiateSubscriptionCookie, getInitiateSubscriptionCookie } from "@/modules/plan-subscriptions/server-actions/initiate-subscription.action";
 import { CheckCircle2, XCircle } from "lucide-react";
 import { redirect } from "next/navigation";

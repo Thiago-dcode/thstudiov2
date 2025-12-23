@@ -2,7 +2,7 @@ import { get2faCookieData } from "@/modules/auth/server-actions/twofa.action";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { TwoFaForm } from "../__components/twoFa-form";
-import PageComponent from "@/components/page-component";
+import PageComponent from "@/lib/components/page-component";
 import { ExpiresIn } from "../__components/expiresIn";
 
 export default async function TwoFactorAuth() {

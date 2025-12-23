@@ -10,7 +10,7 @@ import { Button } from "@repo/ui/components/shadcn/button";
 import { CircleSelect } from "@repo/ui/components/custom/CircleSelect";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@repo/ui/components/shadcn/accordion";
 import { UsePlanSubscription } from "../providers/plan-subscription.provider";
-import { AssetComponent } from "@/components/asset-component";
+import { AssetComponent } from "@/lib/components/asset-component";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { initiateSubscriptionAction } from "../server-actions/initiate-subscription.action";
 import { PaymentMethod } from "@repo/common-lib/types/payment-method";
@@ -28,7 +28,7 @@ export const ChangeSubscriptionDialog = ({ availablePaymentMethods, successUrl, 
   const { planSelected, setPlanSelected, setPriceSelected, priceSelected } = UsePlanSubscription()
   const [paymentMethod, setPaymentMethod] = useState<EnumType<'PAYMENT_METHOD'> | undefined>(availablePaymentMethods.find(pm => pm.enabled)?.payment_method);
   const router = useRouter();
-  const { errors, isPending, cleanErrors, cleanResult, handleSubmit } = useHandleAction({
+  const { errors, isPending,  handleSubmit } = useHandleAction({
     action: initiateSubscriptionAction,
     beforeAction: async () => {
       //do something

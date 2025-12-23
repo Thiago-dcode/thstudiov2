@@ -8,7 +8,7 @@ import { Label } from '@repo/ui/components/shadcn/label'
 import { Eye, EyeClosed } from "lucide-react";
 import { useState } from "react";
 import { registerServerAction } from "@/modules/auth/server-actions/register.action";
-import FormComponent from "@/components/form-component";
+import FormComponent from "@/lib/components/form-component";
 export const RegisterForm = () => {
     const router = useRouter();
     const [hidden, setHidden] = useState(true);

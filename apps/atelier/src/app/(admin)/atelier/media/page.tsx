@@ -8,7 +8,7 @@ export default async function Atelier() {
     }
     return (
         <div className="size-full flex items-center justify-center">
-            WELCOME TO PORTFOLIO
+            WELCOME TO MEDIA PAGE
         </div>
     )
 }

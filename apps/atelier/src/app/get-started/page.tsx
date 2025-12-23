@@ -3,7 +3,7 @@ import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import dynamic from "next/dynamic"
 import { redirect } from "next/navigation";
 import { FunnelProvider } from "./_components/funnel.provider";
-import PageComponent from "@/components/page-component";
+import PageComponent from "@/lib/components/page-component";
 import usersService from "@/modules/users/users.service";
 import { cn } from "@repo/ui/lib/utils";
 import { FUNNEL_LAST_STEP } from "@repo/common-lib/constants/constants";

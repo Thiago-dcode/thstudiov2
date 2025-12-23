@@ -5,7 +5,7 @@ import { cva, type VariantProps } from "class-variance-authority"
 
 import { cn } from "../../lib/utils"
 const buttonVariants = cva(
-  "px-2 py-1 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-2xl transition-all   disabled:bg-text-muted disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover:cursor-pointer active:scale-[0.98] text-xs",  {
+  "px-2 py-1 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg transition-all   disabled:bg-text-muted disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover:cursor-pointer active:scale-[0.98] text-xs",  {
     variants: {
       variant: {
         default:
@@ -23,7 +23,7 @@ const buttonVariants = cva(
 
       },
       size: {
-        default: "p-4 text-base",
+        default: "p-3 text-base",
         sm: "p-2 text-xs",
         lg: "p-4 md:p-6 text-base",
         icon: "h-9 w-9",

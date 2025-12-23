@@ -10,7 +10,7 @@ import { Label } from '@repo/ui/components/shadcn/label'
 import { Checkbox } from '@repo/ui/components/shadcn/checkbox'
 import { Eye, EyeClosed } from "lucide-react";
 import { useState } from "react";
-import FormComponent from "@/components/form-component";
+import FormComponent from "@/lib/components/form-component";
 export const LoginForm = ({ rememberMe }: {
     rememberMe: boolean
 }) => {

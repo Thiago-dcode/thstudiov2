@@ -1,5 +1,5 @@
 'use client'
-import FormComponent from "@/components/form-component";
+import FormComponent from "@/lib/components/form-component";
 import { ButtonSubmitFunnel, ContainerFormFunnel, useFunnel } from "./funnel.provider";
 import { useEffect, useRef } from "react";
 

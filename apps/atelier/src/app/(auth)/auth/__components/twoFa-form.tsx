@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { Input } from "@repo/ui/components/shadcn/input";
 import { TwoFaUser } from "@/modules/auth/auth.types";
-import FormComponent from "@/components/form-component";
+import FormComponent from "@/lib/components/form-component";
 
 export const TwoFaForm = ({ user }: { user: TwoFaUser }) => {
   const route = useRouter();

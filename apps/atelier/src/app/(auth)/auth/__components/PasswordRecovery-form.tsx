@@ -1,6 +1,6 @@
 'use client';
 
-import FormComponent from "@/components/form-component";
+import FormComponent from "@/lib/components/form-component";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { passwordRecoveryAction } from "@/modules/auth/server-actions/password-recovery.action";
 import { Errors } from "@repo/ui/components/custom/errors";

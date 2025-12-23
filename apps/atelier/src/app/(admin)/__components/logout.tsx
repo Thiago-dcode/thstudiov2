@@ -4,16 +4,25 @@ import { logoutServerAction } from "@/modules/auth/server-actions/logout.action"
 import { Button } from "@repo/ui/components/shadcn/button"
 import { FormEvent, useState } from "react"
 import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@repo/ui/components/shadcn/popover"
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@repo/ui/components/shadcn/dialog"
 import { useRouter } from "next/navigation"
+import { Spinner } from "@repo/ui/components/shadcn/spinner"
+import { LogOut } from "lucide-react"
+import { useMainNav } from "@/lib/providers/main-nav.provider"
+
 export const Logout = () => {
     const router = useRouter()
     const { setSession } = useSession();
+    const { shrinked } = useMainNav();
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false)
+
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         if (loading) return;
         setLoading(true);
@@ -26,42 +35,53 @@ export const Logout = () => {
         }
         setSession(undefined);
         router.push('/auth/login');
-
-
-
     }
 
     return (
-        <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
                 <button
-                    type="submit"
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors text-red-400 hover:bg-red-500/10 w-full
+                        ${shrinked ? 'justify-center' : ''}
+                    `}
                 >
-                    Logout
+                    <LogOut size={20} />
+                    {!shrinked && <span>Logout</span>}
                 </button>
-            </PopoverTrigger>
-            <PopoverContent className="w-80 flex flex-col items-center justify-between gap-8">
-
-                {!loading ? <>
-                    <h3 className="text-lg">Are you sure you want to logout?</h3>
-                    <div className="flex items-center justify-between gap-8">
-                        <Button onClick={() => {
-                            setOpen(false)
-                        }} variant={'destructive'}>Cancel</Button>
-                        <form onSubmit={handleSubmit}>
-                            <Button
-                                disabled={loading}
-                                type="submit"
-                                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            </DialogTrigger>
+            <DialogContent className="max-w-sm">
+                {!loading ? (
+                    <>
+                        <DialogHeader>
+                            <DialogTitle>Logout</DialogTitle>
+                            <DialogDescription>
+                                Are you sure you want to logout? You'll need to sign in again to access your account.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="flex items-center justify-end gap-3 mt-4">
+                            <Button 
+                                variant="outline" 
+                                onClick={() => setOpen(false)}
                             >
-                                Yes, im sure
+                                Cancel
                             </Button>
-                        </form>
+                            <form onSubmit={handleSubmit}>
+                                <Button
+                                
+                                    disabled={loading}
+                                    type="submit"
+                                >
+                                    Logout
+                                </Button>
+                            </form>
+                        </div>
+                    </>
+                ) : (
+                    <div className="flex items-center justify-center py-8">
+                        <Spinner className="size-10" />
                     </div>
-                </> : <div>Logging out...</div>}
-            </PopoverContent>
-        </Popover>
-
+                )}
+            </DialogContent>
+        </Dialog>
     )
 }

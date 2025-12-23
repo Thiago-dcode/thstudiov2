@@ -1,5 +1,5 @@
 'use client'
-import FormComponent from "@/components/form-component";
+import FormComponent from "@/lib/components/form-component";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { Errors } from "@repo/ui/components/custom/errors";
 import { createContext, FormEvent, ReactElement, ReactNode, useCallback, useContext, useEffect, useRef, useState } from "react";
