@@ -29,17 +29,17 @@ const up = async () => {
       default: false,
     }),
     Column.integer('max_media_size'),
-    Column.integer('max_projects'),
-    Column.integer('max_portfolios'),
-    Column.integer('max_clients'),
-    Column.integer('max_services'),
+    Column.smallInteger('max_projects'),
+    Column.smallInteger('max_portfolios'),
+    Column.smallInteger('max_clients'),
+    Column.smallInteger('max_services'),
     Column.boolean('allow_media_compression',{
       default:false
     }),
     Column.boolean('powered_by_ai', {
       default: false,
     }),
-    Column.integer('limit_write_storage_per_day'),
+    Column.smallInteger('limit_write_storage_per_day'),
     Column.timestamps(true),
   ]);
 

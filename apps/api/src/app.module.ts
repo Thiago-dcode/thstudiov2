@@ -40,13 +40,13 @@ const APP_MODULES = [
   WebhooksModule,
   CategoriesModule,
   UtilsModule,
-  UserCategoriesModule
+  UserCategoriesModule,
 ];
 @Module({
   imports: [
     ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..','..', 'client'),
-      useGlobalPrefix:true,
+      rootPath: join(__dirname, '..', '..', 'client'),
+      useGlobalPrefix: true,
     }),
     ConfigModule.forRoot({
       isGlobal: true,

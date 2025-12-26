@@ -36,7 +36,7 @@ export class RequestService {
   set ip_address(ip_address: string) {
     this._ip_address = ip_address;
   }
-  set pagination(pagination: Pagination) {
+  set pagination(pagination: Pagination | null) {
     this._pagination = pagination;
   }
   get pagination() {

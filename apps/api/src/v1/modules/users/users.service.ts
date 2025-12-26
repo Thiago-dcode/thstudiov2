@@ -1,7 +1,6 @@
 import { HttpException, Inject, Injectable } from '@nestjs/common';
 import { UpdateUserRequest } from './requests/update-user.request';
 import { NewUserEvent } from './events/new-user.event';
-import { NEW_USER_EVENT } from './users.constants';
 import { OnEvent } from '@nestjs/event-emitter';
 import { UserRepository } from './users.repository';
 import { cleanObj } from '@repo/common-lib/utils/cleanObj';
@@ -16,6 +15,7 @@ import { s3StorageConfig } from 'src/config/storage';
 import { PlanSubscriptionsService } from '../plan-subscriptions/plan-subscriptions.service';
 import { stripe } from '@repo/backend-lib/services/payment-service/stripe';
 import { RequestService } from 'src/common/services/request.service';
+import { NEW_USER_EVENT } from '@repo/common-lib/constants/constants';
 
 @Injectable()
 export class UserService {
@@ -154,6 +154,7 @@ export class UserService {
       //Create a user extra data
       const extraData = await this.userExtraDataRepository.create({
         user_id: event.user.id,
+        
       });
       this.logService
         .name('new-user')

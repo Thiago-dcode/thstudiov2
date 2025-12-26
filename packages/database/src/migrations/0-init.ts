@@ -51,16 +51,16 @@ const up = async () => {
     Column.string('state', 255, {
       nullable: true,
     }),
-    Column.string('zip', 255, {
+    Column.string('zip', 10, {
       nullable: true,
     }),
     Column.string('country', 255, {
       nullable: true,
     }),
-    Column.string('latitude', 255, {
+    Column.double('latitude', {
       nullable: true,
     }),
-    Column.string('longitude', 255, {
+    Column.double('longitude', {
       nullable: true,
     }),
     Column.timestamps(true),

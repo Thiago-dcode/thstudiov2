@@ -13,7 +13,7 @@ const up = async () => {
     Column.string('email', 255, {
       nullable: true,
     }),
-    Column.string('phone', 255, {
+    Column.string('phone', 20, {
       nullable: true,
     }),
     Column.string('address', 255, {

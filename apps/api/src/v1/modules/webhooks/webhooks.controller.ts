@@ -12,7 +12,7 @@ import {
 import { FactoryLogService } from '@repo/backend-lib/services/log-service';
 import { Public } from 'src/common/decorators/public.decorator';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { WEBHOOK_STRIPE_EVENT } from './webhook.constants';
+import { WEBHOOK_STRIPE_EVENT } from '@repo/common-lib/constants/constants';
 
 @Controller('webhooks')
 export class WebhooksController {

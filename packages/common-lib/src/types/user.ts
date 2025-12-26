@@ -1,9 +1,11 @@
 import { AddressSchema } from "../schemas/address";
-import { UserExtraDataSchema, UserSchema, BaseUserSchema } from "../schemas/user";
+import { UserSchema, BaseUserSchema } from "../schemas/user";
+import { BasePlan, FullPlan, PlanWithPrices } from "./plan";
+import { UserExtraData } from "./user-extra-data";
 
 // BaseUser derived from BaseUserSchema (without password, timestamps, and extended profile fields)
 // Making certain fields required that were optional in the schema
-export type BaseUser = Omit<BaseUserSchema, 'password'|'twofa_code'>;
+export type BaseUser = Omit<BaseUserSchema, 'password'|'twofa_code' | 'biography'  | 'short_biography' | 'avatar'>;
 
 // BaseUserWithPassword includes the password field
 export type BaseUserWithPassword =BaseUserSchema;
@@ -20,8 +22,8 @@ export type UpdateUserInputAvatarFile = Omit<UpdateUserInput,'avatar'> & {
   avatar?:File
 }
 
-export type CreateUserExtraDataInput = Omit<
-  UserExtraDataSchema,
-  'id' | 'created_at' | 'updated_at' | 'media_size' | 'media_count' | 'projects_count' | 'clients_count' | 'services_count' | 'storage_requests_count' | 'last_storage_request_date'
->;
-export type UpdateUserExtraDataInput = Partial<CreateUserExtraDataInput>;
+
+export  type UserMetrics = {
+  extra_data: UserExtraData,
+  active_plan:FullPlan
+}

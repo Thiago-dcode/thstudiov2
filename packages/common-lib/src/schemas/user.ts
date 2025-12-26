@@ -7,6 +7,7 @@ export type UserSchema = {
   username: string;
   password: string;
   stripe_customer_id?:string|null,
+  profession?:string | null;
   biography?: string | null;
   email: string;
   avatar?:string;
@@ -44,16 +45,3 @@ export type UserSchemaWithAddress = UserSchema & {
 const tablesUserWithAddress = [TABLES_ENUM.USERS, TABLES_ENUM.ADDRESSES] as const;
 export type UserSchemaWithAddressColumns = TableColumn<typeof tablesUserWithAddress, UserSchemaWithAddress>;
 
-export type UserExtraDataSchema = {
-  id: number;
-  media_size: number;
-  media_count: number;
-  projects_count: number;
-  clients_count: number;
-  services_count: number;
-  storage_requests_count: number;
-  last_storage_request_date: Date;
-  user_id: number;
-  created_at: Date;
-  updated_at: Date;
-};

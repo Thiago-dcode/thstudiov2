@@ -7,9 +7,9 @@ import { UserService } from '../users/users.service';
 import { stripe } from '@repo/backend-lib/services/payment-service/stripe';
 import {Helpers} from 'src/common/services/helpers.service';
 import { OnEvent } from '@nestjs/event-emitter';
-import { WEBHOOK_STRIPE_EVENT } from './webhook.constants';
 import { paypal } from '@repo/backend-lib/services/payment-service/paypal';
 import { PlanSubscription } from '@repo/common-lib/types/plan-subscription';
+import { WEBHOOK_STRIPE_EVENT } from '@repo/common-lib/constants/constants';
 
 @Injectable()
 export class StripeWebhooksService {

@@ -8,8 +8,10 @@ export type PlanTranslation = Omit<PlanTranslationSchema, 'language_code'> & {
   code: EnumType<'LANGUAGE_CODE'>;
 };
 
-export type FullPlan = BasePlan & {
-  prices:PlanPrice[];
+export type PlanWithPrices = BasePlan & {
+  prices:PlanPrice[]
+}
+export type FullPlan = PlanWithPrices & {
   translation?: PlanTranslation;
 };
 

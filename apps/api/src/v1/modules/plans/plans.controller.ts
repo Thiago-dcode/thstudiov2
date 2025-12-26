@@ -14,6 +14,7 @@ export class PlansController {
   }
 
 
+  @Public()
   @Get('free')
   async findFreePlan() {
     return await this.plansService.findFreePlan();

@@ -4,7 +4,7 @@ import {
   DatabaseConfig,
   FullDatabaseConfig,
 } from '@repo/common-lib/types/database';
-import { Pool as PgPool } from 'pg';
+import { Pool as PgPool, types } from 'pg';
 import mysql from 'mysql2/promise';
 import {
   ClientNotInitializedException,

@@ -24,7 +24,7 @@ const up = async () => {
     ColumnBuilder.text('biography', {
       nullable: true,
     }),
-    ColumnBuilder.text('profile_title', {
+    ColumnBuilder.string('profession',100, {
       nullable: true,
     }),
     ColumnBuilder.text('short_biography', {

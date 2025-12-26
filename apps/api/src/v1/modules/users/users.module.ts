@@ -11,6 +11,7 @@ import {
 import { NotifyNewUserMail } from './mails/notify-new-user.mail';
 import { UserAuthDevicesModule } from '../user-auth-devices/user-auth-devices.module';
 import { PlanSubscriptionsModule } from '../plan-subscriptions/plan-subscriptions.module';
+import { PlansModule } from '../plans/plans.module';
 
 @Module({
   controllers: [UserController],
@@ -25,7 +26,7 @@ import { PlanSubscriptionsModule } from '../plan-subscriptions/plan-subscription
       },
     },
   ],
-  imports: [UserExtraDataModule, UserAuthDevicesModule, PlanSubscriptionsModule],
+  imports: [UserExtraDataModule, UserAuthDevicesModule, PlanSubscriptionsModule, PlansModule],
   exports: [UserService],
 })
 export class UserModule {}

@@ -2,6 +2,7 @@ import { QueryBuilder } from '../builder/queryBuilder';
 import { Join, SqlClause, SqlValue, TableName } from '@repo/common-lib/types/database';
 import { Query } from '../facades';
 import { QueryBuilderException } from '../builder/queryBuilder/exceptions';
+import { OffsetPaginationRequest } from '@repo/common-lib/types/request';
 type WhereOptions = {column: string, operator: SqlClause, value: SqlValue | SqlValue[]};
 type BaseRepositoryOptions = {
   primaryKey?: string;
@@ -107,6 +108,28 @@ const result = await Promise.all(Object.entries(_valuesToAttach).map(async([key,
   
   }));
   return result;
+}
+
+protected static async handleOffsetPagination(query:QueryBuilder,pagination:OffsetPaginationRequest){
+  if(!pagination.paginated)return null;
+  const count = await query.count(false);
+  query.orderBy('id', 'DESC');
+  const perPage = pagination.per_page || 15;
+  query.limit(perPage);
+  const page = !pagination?.page || pagination.page <= 0 ? 1 : pagination.page;
+  if (pagination.page && pagination.page > 1) {
+    const offset = (pagination.page - 1) * perPage;
+    query.offset(offset);
+  }
+  const last_page = Math.ceil(count / perPage);
+  return {
+    total_count: count,
+    per_page: perPage,
+    current_page: page,
+    prev_page: page > 1 ? page - 1 : undefined,
+    next_page: page < last_page ? page + 1 : undefined,
+    last_page,
+  };
 }
 
   protected async _findOneBy<T = any>(column: string, value: any,options?: {select?: string[] | string, join?: Join[]}) {

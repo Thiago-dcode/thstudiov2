@@ -3,7 +3,10 @@ import { RequestService } from './request.service';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { EnumType } from '@repo/common-lib/constants/enums';
 import { addMonths, addYears } from 'date-fns';
-import { LogLevel, LogOptions } from '@repo/backend-lib/services/log-service/types';
+import {
+  LogLevel,
+  LogOptions,
+} from '@repo/backend-lib/services/log-service/types';
 import { FactoryMailService } from '@repo/backend-lib/services/mail-service/factory';
 import { mailingConfig, mailingDriver } from 'src/config/mailling';
 import { FactoryViewService } from '@repo/backend-lib/services/view-service/factory';
@@ -12,7 +15,7 @@ import { VIEW_ENGINE } from '../utils/constants';
 import { Error500Mail } from '../mails/error-500.mail';
 
 @Injectable()
-export  class Helpers {
+export class Helpers {
   constructor(
     private readonly requestService: RequestService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
@@ -33,12 +36,14 @@ export  class Helpers {
     if (options.append_language) {
       _key += `-${this.requestService.language}`;
     }
-    const cached = (await this.cacheManager.get(_key)) as string;
+    const cached = await this.cacheManager.get(_key);
     if (cached) {
-      return JSON.parse(cached);
+      console.log('CACHE HIT', _key);
+      return JSON.parse(cached as string);
     }
     const result = await toRemember;
-    this.cacheManager.set(key, JSON.stringify(result), options.ttl);
+    console.log('CACHE MISS', _key);
+    await this.cacheManager.set(_key, JSON.stringify(result), options.ttl);
     return result;
   }
 
@@ -56,7 +61,7 @@ export  class Helpers {
     }
   }
 
-  public static async callback500ErrorMail (
+  public static async callback500ErrorMail(
     level: LogLevel,
     message: string,
     options?: LogOptions,

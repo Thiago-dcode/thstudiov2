@@ -24,6 +24,11 @@ export class UpdateUserRequest {
   @IsOptional()
   @IsString()
   @MaxLength(255)
+  profession?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
   username?: string;
 
   @IsOptional()

@@ -8,7 +8,6 @@ export type CategoryTranslation = {
     code:string
 }
 export type CategoryIndexRequest = OffsetPaginationRequest & {
-
     user_id?:number,
     random?:boolean,
     search?:string,

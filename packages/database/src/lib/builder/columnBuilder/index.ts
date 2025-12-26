@@ -66,10 +66,13 @@ export class ColumnBuilder {
   public static integer(columnName: string, options?: ColumnAttributes) {
     return `${this.validateString(columnName)} INTEGER${options ? ' ' + this.buildOptions(options) : ''}`;
   }
+  public static smallInteger(columnName: string, options?: ColumnAttributes) {
+    return `${this.validateString(columnName)} SMALLINT${options ? ' ' + this.buildOptions(options) : ''}`;
+  }
   public static float(columnName: string, options?: ColumnAttributes) {
     return `${this.validateString(columnName)} REAL${options ? ' ' + this.buildOptions(options) : ''}`;
   }
-  public static doubleFloat(columnName: string, options?: ColumnAttributes) {
+  public static double(columnName: string, options?: ColumnAttributes) {
     return `${this.validateString(columnName)} DOUBLE PRECISION${options ? ' ' + this.buildOptions(options) : ''}`;
   }
   public static decimal(columnName: string, options?: ColumnAttributes) {
@@ -100,7 +103,7 @@ export class ColumnBuilder {
   ) {
     // If onDelete is SET NULL, the column must be nullable
     const _options = {
-      type: 'INT',
+      type: 'INTEGER',
       ...options,
       unique: false,
       nullable:

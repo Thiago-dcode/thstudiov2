@@ -2,9 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { QueryBuilder } from '@repo/database/queryBuilder';
 import { IndexPlanRequest } from './requests/index-plan.request';
 import { BaseRepository } from '@repo/database/repositories';
-import { PlanSchema, CreatePlanInput, FullPlanColumns, FullPlanSchema, PlanWithPricesColumns, PlanWithPricesSchema } from '@repo/common-lib/schemas/plan';
 import {
-} from '@repo/common-lib/schemas/plan-price';
+  PlanSchema,
+  CreatePlanInput,
+  FullPlanColumns,
+  FullPlanSchema,
+  PlanWithPricesColumns,
+  PlanWithPricesSchema,
+} from '@repo/common-lib/schemas/plan';
+import {} from '@repo/common-lib/schemas/plan-price';
 import { RequestService } from 'src/common/services/request.service';
 import { FullPlan, PlanPrice } from '@repo/common-lib/types/plan';
 
@@ -47,7 +53,9 @@ export class PlansRepository extends BaseRepository {
   ];
 
   constructor(private readonly requestService: RequestService) {
-    super('plans');
+    super('plans', {
+      softDelete: true,
+    });
   }
   private init() {
     this.queryBuilder.select(this.COLUMNS);
@@ -80,21 +88,7 @@ export class PlansRepository extends BaseRepository {
                 this.requestService.language === p.language_code,
             )
           : undefined;
-        const planPrices: {
-          [id: number]: PlanPrice;
-        } = {};
-        for (let idx = 0; idx < fullPlanSchema.length; idx++) {
-          const plan = fullPlanSchema[idx];
-          if (curr.id !== plan.plan_id || planPrices[plan.pp_id]) continue;
-          planPrices[plan.pp_id] = {
-            id: plan.pp_id,
-            price: plan.price,
-            paypal_id:plan.pp_paypal_id,
-            stripe_id:plan.pp_stripe_id,
-            plan_id: curr.id,
-            billing_type: plan.billing_type,
-          };
-        }
+
         acc[curr.id] = {
           id: curr.id,
           name: curr.name,
@@ -102,10 +96,28 @@ export class PlansRepository extends BaseRepository {
           description: curr.description,
           logo: null,
           base_price: curr.base_price,
-          paypal_id:curr.paypal_id,
-          stripe_id:curr.stripe_id,
-          prices: Object.values(planPrices),
+          paypal_id: curr.paypal_id,
+          stripe_id: curr.stripe_id,
           is_active: curr.is_active,
+          prices: Object.values(
+            fullPlanSchema.reduce(
+              (p, c) => {
+                if (c.plan_id != curr.id || p[c.pp_id]) return p;
+                p[c.pp_id] = {
+                  billing_type: c.billing_type,
+                  id: c.pp_id,
+                  paypal_id: c.pp_paypal_id,
+                  plan_id: c.plan_id,
+                  price: c.price,
+                  stripe_id: c.pp_stripe_id,
+                };
+                return p;
+              },
+              {} as {
+                [id: number]: PlanPrice;
+              },
+            ),
+          ),
           is_free: curr.is_free,
           is_popular: curr.is_popular,
           powered_by_ai: curr.powered_by_ai,
@@ -156,6 +168,18 @@ export class PlansRepository extends BaseRepository {
       .where('is_active', '=', true)
       .join('id', 'plan_prices', 'plan_id')
       .get<PlanWithPricesSchema[]>();
+    return this.formatPlans(result)[0];
+  }
+
+  async findUserActivePlan(userId: number) {
+    const result = await this.newQuery()
+      .select(this.BASE_COLUMNS)
+      .join('id', 'plan_prices', 'plan_id')
+      .join('id','plan_translations','plan_id')
+      .join('plan_prices.id', 'plan_subscriptions', 'plan_price_id')
+      .where('plan_subscriptions.user_id', '=', userId)
+      .where('plan_subscriptions.is_active', '=', true)
+      .get();
     return this.formatPlans(result)[0];
   }
   async create(plan: CreatePlanInput) {

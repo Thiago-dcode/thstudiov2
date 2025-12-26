@@ -29,7 +29,7 @@ const up = async () => {
     Column.foreignKey('media_id', 'media', 'id', {
       onDelete: 'CASCADE',
     }),
-    Column.integer('sort_order'),
+    Column.smallInteger('position'),
     Column.uniques('UC_service_media',['service_id','media_id'])
   ]);
 

@@ -147,8 +147,11 @@ export class QueryBuilder extends BaseBuilder {
     this.reset();
     return result.rowCount > 0;
   }
-  public get softDeletes(){
-    return this._softDeletes;
+  
+  public softDeletes(softDelete:boolean, softDeleteCol = "deleted_at"){
+    this._softDeletes =softDelete;
+    this._softDeleteCol = softDeleteCol;
+    return this;
   }
  
   public static table(tableName: TableName) {

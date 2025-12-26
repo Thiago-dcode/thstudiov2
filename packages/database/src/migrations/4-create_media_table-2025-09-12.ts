@@ -11,8 +11,8 @@ const up = async () => {
       nullable: true,
     }),
 
-    Column.integer('size'),
-    Column.string('url', 255, {
+    Column.integer('bytes'),
+    Column.string('url',255, {
       unique: true,
     }),
     //Generated automatically
@@ -27,7 +27,6 @@ const up = async () => {
       nullable: true,
     }),
     Column.enum('extension', 'MEDIA_EXTENSION'),
-    Column.enum('type', 'MEDIA_TYPE'),
     Column.boolean('is_active', {
       default: true,
     }),
@@ -39,7 +38,7 @@ const up = async () => {
       onDelete: 'CASCADE',
       onUpdate: 'CASCADE',
     }),
-    Column.timestamps(true),
+    Column.timestamps(),
   ]);
 
   await Schema.table('media_translations').createIfNotExists([

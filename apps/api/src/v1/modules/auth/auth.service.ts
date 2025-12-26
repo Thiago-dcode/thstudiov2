@@ -29,9 +29,9 @@ import { generateUUID } from '@repo/common-lib/utils/generate-uuid';
 import { CheckPasswordRecoveryAttemptRequest } from './requests/check-password-recovery.request';
 import { UpdatePasswordRequest } from './requests/update-password.request';
 import { RegisterRequest } from './requests/register.request';
-import { NEW_USER_EVENT } from '../users/users.constants';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { NewUserEvent } from '../users/events/new-user.event';
+import { NEW_USER_EVENT } from '@repo/common-lib/constants/constants';
 
 @Injectable()
 export class AuthService {

@@ -7,6 +7,10 @@ const up = async () => {
     Column.string('title', 255, {}),
     Column.string('thumbnail',255),
     Column.text('description'),
+    Column.foreignKey('user_id', 'users', 'id', {
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE',
+    }),
     Column.timestamps(true),
   ]);
   await Schema.table('portfolio_media').createIfNotExists([
@@ -17,7 +21,7 @@ const up = async () => {
     Column.foreignKey('media_id', 'media', 'id', {
       onDelete: 'CASCADE',
     }),
-    Column.integer('sort_order'),
+    Column.smallInteger('position'),
     Column.uniques('UC_portfolio_media',['portfolio_id','media_id'])
   ]);
 
@@ -29,7 +33,7 @@ const up = async () => {
     Column.foreignKey('collection_id', 'collections', 'id', {
       onDelete: 'CASCADE',
     }),
-    Column.integer('sort_order'),
+    Column.smallInteger('position'),
     Column.uniques('UC_portfolio_collection',['portfolio_id','collection_id'])
   ]);
   await Schema.table('portfolio_translations').createIfNotExists([

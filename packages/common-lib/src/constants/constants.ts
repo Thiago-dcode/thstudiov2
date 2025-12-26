@@ -1,16 +1,32 @@
-export const DEFAULT_LANGUAGE = 'EN';
-export const LANGUAGE_HEADER = 'x-app-lan';
-export const REQUEST_START_TIME = 'x-app-req-start-time';
-export const USER_ID_HEADER = 'x-app-user-id';
-export const LANGUAGE_COOKIE_NAME = 'x-app-language';
-export const TWO_FA_COOKIE_NAME ='x-app-2fa'
-export const INITIATE_SUBCRIPTION_COOKIE ='x-app-initiate_subscription'
-export const USER_AUTH_COOKIE_NAME ='x-app-token'
-export const USER_AUTH_COOKIE_EXPIRATION_DATE='x-app-refresh-token-date'
-export const USER_AGENT_HEADER = 'x-app-user-agent';
-export const IP_ADDRESS_HEADER = 'x-app-ip-address';
-export const REMEMBER_ME_COOKIE_NAME = 'x-app-remember-me';
-export const PASSWORD_RECOVERY_ATTEMPT_COOKIE_NAME = 'x-app-password-recovery-attempt';
-export const PASSWORD_UPDATED_COOKIE_NAME = 'x-app-password-updated';
+// ==================== LANGUAGE / LOCALIZATION ====================
+export const DEFAULT_LANGUAGE = 'EN' as const;
+export const LANGUAGE_HEADER = 'x-app-lan' as const;
+export const LANGUAGE_COOKIE_NAME = 'x-app-language' as const;
+
+// ==================== REQUEST HEADERS ====================
+export const REQUEST_START_TIME = 'x-app-req-start-time' as const;
+export const USER_ID_HEADER = 'x-app-user-id' as const;
+export const USER_AGENT_HEADER = 'x-app-user-agent' as const;
+export const IP_ADDRESS_HEADER = 'x-app-ip-address' as const;
+export const APP_API_KEY_HEADER = 'x-app-api-key' as const;
+
+// ==================== AUTH COOKIES ====================
+export const USER_AUTH_COOKIE_NAME = 'x-app-token' as const;
+export const USER_AUTH_COOKIE_EXPIRATION_DATE = 'x-app-refresh-token-date' as const;
+export const TWO_FA_COOKIE_NAME = 'x-app-2fa' as const;
+export const REMEMBER_ME_COOKIE_NAME = 'x-app-remember-me' as const;
+
+// ==================== PASSWORD RECOVERY COOKIES ====================
+export const PASSWORD_RECOVERY_ATTEMPT_COOKIE_NAME = 'x-app-password-recovery-attempt' as const;
+export const PASSWORD_UPDATED_COOKIE_NAME = 'x-app-password-updated' as const;
+
+// ==================== SUBSCRIPTION COOKIES ====================
+export const INITIATE_SUBCRIPTION_COOKIE = 'x-app-initiate_subscription' as const;
+
+// ==================== APP CONFIGURATION ====================
 export const FUNNEL_LAST_STEP = 4;
-export const APP_API_KEY_HEADER = 'x-app-api-key';
+
+// ==================== EVENTS ====================
+export const NEW_USER_EVENT = 'new.user' as const;
+export const WEBHOOK_STRIPE_EVENT = 'webhook.stripe.event' as const;
+export const UPDATE_USER_EXTRA_DATA_METRICS = 'update-user-extra-data-metrics.event' as const;

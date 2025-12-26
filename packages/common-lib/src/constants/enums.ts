@@ -1,4 +1,5 @@
 export const ENUMS = {
+    LIST_TYPE : [ 'COMPACT', 'FULL'] as const,
     PRODUCT_TYPE: ['PLAN'] as const,
     BILLING_TYPE: ['MONTHLY', 'QUARTERLY', 'YEARLY', 'LIFETIME'] as const,
     USER_EDITORS_ROLES: ['ADMIN', 'EDITOR'] as const,

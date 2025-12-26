@@ -7,6 +7,10 @@ const up = async () => {
     Column.id(),
     Column.string('title', 255, {}),
     Column.text('description'),
+    Column.foreignKey('user_id', 'users', 'id', {
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE',
+    }),
     Column.timestamps(true),
   ]);
   await Schema.table('collection_media').create([
@@ -19,7 +23,7 @@ const up = async () => {
       onDelete: 'CASCADE',
       nullable: false,
     }),
-    Column.integer('sort_order'),
+    Column.smallInteger('position'),
     Column.uniques('UC_collection_media',['collection_id','media_id'])
   ]);
   await Schema.table('collection_translations').createIfNotExists([
@@ -31,7 +35,6 @@ const up = async () => {
       onDelete: 'CASCADE',
       nullable: false,
     }),
-    Column.integer('sort_order'),
     Column.uniques('UC_collection_translation',['language_code','collection_id'])
   ]);
 

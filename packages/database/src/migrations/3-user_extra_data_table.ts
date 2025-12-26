@@ -6,22 +6,26 @@ const TABLE_NAME = 'user_extra_data';
 const up = async () => {
   await Schema.table(TABLE_NAME).createIfNotExists([
     Column.id(),
-    Column.bigint('media_size', {
+    //MB
+    Column.integer('media_size', {
       default: 0,
     }),
-    Column.integer('media_count', {
+    Column.smallInteger('media_count', {
       default: 0,
     }),
-    Column.integer('projects_count', {
+    Column.smallInteger('projects_count', {
       default: 0,
     }),
-    Column.integer('clients_count', {
+    Column.smallInteger('clients_count', {
       default: 0,
     }),
-    Column.integer('services_count', {
+    Column.smallInteger('services_count', {
       default: 0,
     }),
-    Column.integer('storage_requests_count', {
+    Column.smallInteger('portfolios_count', {
+      default: 0,
+    }),
+    Column.smallInteger('storage_requests_count', {
       default: 0,
     }),
     Column.timestamp('last_storage_request_date', {

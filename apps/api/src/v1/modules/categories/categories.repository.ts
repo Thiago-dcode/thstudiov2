@@ -100,26 +100,9 @@ export class CategoriesRepository extends BaseRepository {
     if (filters.parent_id) {
       query.where('parent_id', '=', filters.parent_id);
     }
-    if (filters.paginated) {
-      const count = await query.count(false);
-      query.orderBy('id', 'DESC');
-      const perPage = filters.per_page || 15;
-      query.limit(perPage);
-      const page = !filters?.page || filters.page <= 0 ? 1 : filters.page;
-      if (filters.page && filters.page > 1) {
-        const offset = (filters.page - 1) * perPage;
-        query.offset(offset);
-      }
-      const last_page = Math.ceil(count / perPage);
-      this.requestService.pagination = {
-        total_count: count,
-        per_page: perPage,
-        current_page: page,
-        prev_page: page > 1 ? page - 1 : undefined,
-        next_page: page < last_page ? page + 1 : undefined,
-        last_page,
-      };
-    }
+    this.requestService.pagination =
+      await BaseRepository.handleOffsetPagination(query, filters);
+
     if (filters.random) {
       query.random();
     }
