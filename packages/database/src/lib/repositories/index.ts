@@ -24,19 +24,23 @@ const DEFAULT_OPTIONS: BaseRepositoryOptions = {
   softDeleteCol:"deleted_at"
 };
 export abstract class BaseRepository {
-  protected queryBuilder: QueryBuilder;
+
   protected options: BaseRepositoryOptions;
   constructor(protected readonly tableName: TableName, options?:BaseRepositoryOptions) {
     this.options = { ...DEFAULT_OPTIONS, ...options };
-    this.queryBuilder = new QueryBuilder(this.tableName,this.options.softDelete,this.options.softDeleteCol);
   }
 
   /**
    * Creates a fresh QueryBuilder instance.
-   * Use this for isolated queries that shouldn't share state with `this.queryBuilder`.
+   * Use this for isolated queries that shouldn't share state with `this.query`.
    */
-  protected newQuery(): QueryBuilder {
+  protected query(): QueryBuilder {
     return new QueryBuilder(this.tableName, this.options.softDelete, this.options.softDeleteCol);
+  }
+
+  protected async applyFilters(filters: any, query: QueryBuilder): Promise<QueryBuilder> {
+    console.log(filters);
+    return query;
   }
 
  
@@ -133,7 +137,7 @@ protected static async handleOffsetPagination(query:QueryBuilder,pagination:Offs
 }
 
   protected async _findOneBy<T = any>(column: string, value: any,options?: {select?: string[] | string, join?: Join[]}) {
-    let query = this.newQuery().where(column, '=', value);
+    let query = this.query().where(column, '=', value);
     query = this.buildQuery(query, options);
     return await query.first<T>();
   }
@@ -141,12 +145,12 @@ protected static async handleOffsetPagination(query:QueryBuilder,pagination:Offs
   protected async _create<T = any>(data: Record<string, SqlValue>,options?: {select?: string[] | string, join?: Join[]}): Promise<T> {
     const columns = Object.keys(data);
     const values = Object.values(data);
-    return await this.newQuery().insertAndGet<T>(columns, values,options?.select,options?.join);
+    return await this.query().insertAndGet<T>(columns, values,options?.select,options?.join);
    }
 
 
   async exists(data: {[column: string]: any}, options?: { join?: Join[]}) {
-    let query = this.newQuery();
+    let query = this.query();
     for (const [column, value] of Object.entries(data)) {
       if (value !== undefined) {
         query = query.where(column, '=', value);
@@ -156,7 +160,7 @@ protected static async handleOffsetPagination(query:QueryBuilder,pagination:Offs
     return await query.exists();
   }
   async update<T extends Record<string, SqlValue>>(data: T, options: {wheres: WhereOptions[],orWheres?:WhereOptions[],select?: string[] | string, join?: Join[]}) {
-    let query = this.buildQuery(this.newQuery(), options);
+    let query = this.buildQuery(this.query(), options);
     const columns = Object.keys(data);
     const values = Object.values(data);
     return await query.update(columns, values);
@@ -165,7 +169,7 @@ protected static async handleOffsetPagination(query:QueryBuilder,pagination:Offs
   async updateOne(id: number|string, data: Record<string, SqlValue>) {
     const columns = Object.keys(data);
     const values = Object.values(data);
-   const result = await this.newQuery().where(this.options.primaryKey, '=', id).update(columns, values);
+   const result = await this.query().where(this.options.primaryKey, '=', id).update(columns, values);
    return result;
   }
 

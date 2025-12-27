@@ -57,26 +57,9 @@ class TestRepository extends BaseRepository {
     super(tableName, options);
   }
 
-  // Expose buildQuery for testing
-  public testBuildQuery(
-    options?: {
-      select?: string[] | string;
-      join?: Join[];
-      wheres?: { column: string; operator: any; value: any }[];
-      orWheres?: { column: string; operator: any; value: any }[];
-    }
-  ) {
-    return this['buildQuery'](this.queryBuilder, options);
-  }
-
   // Expose queryBuilder for inspection
   public getQueryBuilder() {
-    return this.queryBuilder;
-  }
-
-  // Reset the query builder state for clean tests
-  public resetQueryBuilder() {
-    this.queryBuilder['reset']();
+    return this.query();
   }
 
   // Build and return the SQL query string for testing
@@ -88,8 +71,8 @@ class TestRepository extends BaseRepository {
       orWheres?: { column: string; operator: any; value: any }[];
     }
   ) {
-    this.resetQueryBuilder();
-    const query = this.testBuildQuery(options);
+    const query = this.query();
+    this['buildQuery'](query, options);
     query['buildSelectQuery']();
     return {
       sql: query['query'],

@@ -33,6 +33,9 @@ const up = async () => {
     ColumnBuilder.string('avatar',255,{
       nullable:true
     }),
+    ColumnBuilder.string('banner',255,{
+      nullable:true
+    }),
     ColumnBuilder.email(),
     ColumnBuilder.boolean('email_validated', {
       default: false,
