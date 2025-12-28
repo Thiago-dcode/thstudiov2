@@ -5,7 +5,7 @@ import {
   UpdateUserInput,
   User,
 } from '@repo/common-lib/types/user';
-import { BaseUser, BaseUserWithPassword } from '@repo/common-lib/types/user';
+import { BaseUser, BaseUserWithSecrets } from '@repo/common-lib/types/user';
 import {
   BaseUserSchema,
   BaseUserSchemaColumns,
@@ -13,6 +13,7 @@ import {
   UserSchemaWithAddress,
   UserSchemaWithAddressColumns,
 } from '@repo/common-lib/schemas/user';
+import { EnumType } from '@repo/common-lib/constants/enums';
 
 @Injectable()
 export class UserRepository extends BaseRepository {
@@ -21,7 +22,6 @@ export class UserRepository extends BaseRepository {
     'users.email',
     'users.username',
     'users.profession',
-    'users.twofa_code',
     'users.stripe_customer_id',
     'users.email_validated',
     'users.twofa_enabled',
@@ -34,16 +34,13 @@ export class UserRepository extends BaseRepository {
     // From users (main table)
     ...this.BASE_COLUMNS,
     'users.avatar',
-    'users.created_at',
-    'users.updated_at',
+    'users.banner',
     'users.name',
     'users.surname',
     'users.short_biography',
     'users.biography',
     // From addresses (only colliding columns aliased)
     'addresses.id as addr_id',
-    'addresses.created_at as addr_created_at',
-    'addresses.updated_at as addr_updated_at',
     'addresses.street',
     'addresses.city',
     'addresses.state',
@@ -57,7 +54,7 @@ export class UserRepository extends BaseRepository {
     super('users');
   }
   async findById(id: number): Promise<User> {
-    const result = await this.queryBuilder
+    const result = await this.query()
       .select(this.FULL_COLUMNS)
       .where('id', '=', id)
       .join('address_id', 'addresses', 'id', 'LEFT')
@@ -73,10 +70,10 @@ export class UserRepository extends BaseRepository {
   async findOneBy(
     column: keyof UserSchema,
     value: any,
-    full: boolean = false,
+    format: EnumType<'FORMAT_TYPE'> = 'COMPACT',
   ): Promise<BaseUser | User> {
-    let query = this.newQuery().where(column, '=', value);
-    if (full) {
+    let query = this.query().where(column, '=', value);
+    if (format === 'FULL') {
       query = query
         .join('address_id', 'addresses', 'id', 'LEFT')
         .select(this.FULL_COLUMNS);
@@ -84,39 +81,29 @@ export class UserRepository extends BaseRepository {
       query = query.select(this.BASE_COLUMNS);
     }
     const result = await query.first<UserSchemaWithAddress>();
+    console.log('USER RESULT',result);
     if (!result) {
       throw new HttpException(
         'User not found with ' + column + ' ' + value,
         HttpStatus.NOT_FOUND,
       );
     }
-    return full ? this.formatFullUser(result) : this.formatUser(result);
+    return format === 'FULL'
+      ? this.formatFullUser(result)
+      : this.formatUser(result);
   }
-  async findOneByColumn(
-    column: string,
-    value: any,
-  ): Promise<BaseUserWithPassword> {
-    const result = await this.queryBuilder
-      .where(column, '=', value)
-      .select(this.BASE_COLUMNS)
-      .first<UserSchemaWithAddress>();
-    if (!result) return null;
-    return this.formatUser(result, true) as BaseUserWithPassword;
-  }
+
   async findOneByColumnWithPassword(
     column: string,
     value: any,
-  ): Promise<BaseUserWithPassword> {
+  ): Promise<BaseUserWithSecrets> {
     const cols = [...this.BASE_COLUMNS, 'password', 'twofa_code'];
-    const result = await this.queryBuilder
+    const result = await this.query()
       .where(column, '=', value)
       .select(cols)
       .first<UserSchemaWithAddress>();
     if (!result) null;
-    return this.formatUser(result, true) as BaseUserWithPassword;
-  }
-  async applyFilters(filters: any) {
-    console.log(filters);
+    return this.formatUser(result, true) as BaseUserWithSecrets;
   }
 
   async create(user: CreateUserInput): Promise<BaseUser> {
@@ -128,8 +115,8 @@ export class UserRepository extends BaseRepository {
   async updateById(id: number, user: UpdateUserInput): Promise<BaseUser> {
     const columns = Object.keys(user);
     const values = Object.values(user);
-    await this.queryBuilder.where('id', '=', id).update(columns, values);
-    const result = await this.queryBuilder
+    await this.query().where('id', '=', id).update(columns, values);
+    const result = await this.query()
       .select(this.BASE_COLUMNS)
       .where('id', '=', id)
       .first<BaseUserSchema>();
@@ -138,11 +125,12 @@ export class UserRepository extends BaseRepository {
   private formatUser(
     result: BaseUserSchema,
     withPassword: boolean = false,
-  ): BaseUser | BaseUserWithPassword {
+  ): BaseUser | BaseUserWithSecrets {
     return {
       id: result?.id,
       email: result?.email,
       username: result?.username,
+      profession:result?.profession,
       email_validated: result?.email_validated,
       stripe_customer_id: result.stripe_customer_id,
       twofa_enabled: result?.twofa_enabled,
@@ -158,6 +146,7 @@ export class UserRepository extends BaseRepository {
     return {
       ...this.formatUser(result),
       avatar: result?.avatar,
+      banner:result?.banner,
       name: result?.name,
       surname: result?.surname,
       short_biography: result?.short_biography,

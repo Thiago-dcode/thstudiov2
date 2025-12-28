@@ -59,7 +59,7 @@ export default function Step1() {
         {/* Description Field */}
         <FormComponent.LabelTextarea
             ref={shortBioRef}
-            label="About You"
+            label="Short bio about you"
             id="short_biography"
             name="short_biography"
             defaultValue={inputs?.short_biography || user?.short_biography || undefined}

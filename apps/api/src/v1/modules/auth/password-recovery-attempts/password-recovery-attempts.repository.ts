@@ -33,11 +33,9 @@ export class PasswordRecoveryAttemptsRepository extends BaseRepository {
   constructor() {
     super('password_recovery_attempts');
   }
-  async applyFilters(filters: any) {
-    console.log(filters);
-  }
+
   async findOneById(id: number) {
-    return await this.queryBuilder
+    return await this.query()
       .where('id', '=', id)
       .select(this.COLUMNS_WITH_USER)
       .join('user_id', 'users', 'id', 'LEFT')
@@ -47,14 +45,14 @@ export class PasswordRecoveryAttemptsRepository extends BaseRepository {
     return await super._create<PasswordRecoveryAttemptSchema>(data);
   }
   async findNotExpiredByUserId(userId: number) {
-    return await this.queryBuilder
+    return await this.query()
       .where('user_id', '=', userId)
       .where('expires_at', '>', new Date())
       .select(this.BASE_COLUMNS)
       .first<PasswordRecoveryAttemptSchema>();
   }
   async findOneByCode(code: string) {
-    const result = await this.queryBuilder
+    const result = await this.query()
       .where('code', '=', code)
       .select(this.COLUMNS_WITH_USER)
       .join('user_id', 'users', 'id', 'LEFT')

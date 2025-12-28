@@ -3,18 +3,21 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMainNav } from "../providers/main-nav.provider"
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { Box, Grid, Home, Settings } from "lucide-react";
 import { Logout } from "@/app/(admin)/__components/logout";
+import { Spinner } from "@repo/ui/components/shadcn/spinner";
 
 const routes: {
     name: string,
     url: string,
+    matches?:string[],
     icon: ReactNode
 }[] = [
         {
             name: 'Dashboard',
-            url: '',
+            url: 'profile',
+            matches:['profile','about'],
             icon: <Home size={20} />
         },
         {
@@ -35,16 +38,20 @@ const routes: {
     ]
 
 export const MainNav = () => {
+    const [isClient, setIsClient] = useState(false)
     const pathname = usePathname();
-    console.log(pathname);
     const { shrinked } = useMainNav();
 
+
+
+    useEffect(()=>{setIsClient(true)},[])
+if(!isClient) return <Spinner/>
     return (
        <div className="flex flex-col items-start w-full justify-between h-full">
          <nav className="flex flex-col gap-4  w-full px-2">
             {routes.map((route) => {
                 const url = `/atelier${!route.url ? "" : '/'}${route.url}`
-                const isActive = pathname === url;
+                const isActive = pathname === url || route.matches?.some(match=> pathname == `/atelier/${match}`);
                 return (
                     <Link
                         key={route.url}

@@ -17,10 +17,6 @@ export class PlanSubscriptionsController {
  async findOne(@Param('id') id: string) {
     return await this.planSubscriptionsService.findOne(+id);
   }
-  @Get(':userId/active')
-  async findActive(@Param('userId') userId: string) {
-    return await this.planSubscriptionsService.findActiveSubscription(+userId);
-  }
 
   @Delete(':id')
   remove(@Param('id') id: string) {

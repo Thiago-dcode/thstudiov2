@@ -3,7 +3,6 @@ import { FileInput } from "@repo/ui/components/custom/file-input"
 import { FileInputProvider, useInputFile } from "@repo/ui/contexts/file.provider"
 import { useEffect, useRef, useState } from "react"
 import { ButtonStepBackFunnel, ButtonSubmitFunnel, ContainerFormFunnel, useFunnel } from "./funnel.provider"
-import Image from "next/image"
 
 export default function Container() {
     return <>
@@ -68,9 +67,9 @@ const Step2 = () => {
                     handleOnChange()
                 }} ref={inputRef} name="avatar" id="avatar-input" />
 
-                    <ButtonSubmitFunnel />
-                    
-                    <ButtonStepBackFunnel/>
+                <ButtonSubmitFunnel />
+
+                <ButtonStepBackFunnel />
 
             </ContainerFormFunnel>
         </>

@@ -57,20 +57,22 @@ export class PlansRepository extends BaseRepository {
       softDelete: true,
     });
   }
-  private init() {
-    this.queryBuilder.select(this.COLUMNS);
-    this.queryBuilder.join('id', 'plan_prices', 'plan_id', 'INNER');
-    this.queryBuilder.join('id', 'plan_translations', 'plan_id', 'INNER');
-    this.queryBuilder.where(
+  private initQuery() {
+    const query = this.query().select(this.COLUMNS);
+    query.join('id', 'plan_prices', 'plan_id', 'INNER');
+    query.join('id', 'plan_translations', 'plan_id', 'INNER');
+    query.where(
       'plan_translations.language_code',
       '=',
       this.requestService.language,
     );
+
+    return query;
   }
   async findAll(filters: IndexPlanRequest) {
-    this.init();
-    this.applyFilters(filters);
-    const result = await this.queryBuilder.get<FullPlanSchema[]>();
+    const query = this.initQuery();
+    await this.applyFilters(filters, query);
+    const result = await query.get<FullPlanSchema[]>();
     return this.formatPlans(result);
   }
   private formatPlans(
@@ -148,10 +150,11 @@ export class PlansRepository extends BaseRepository {
 
     return Object.values(_plans);
   }
-  async applyFilters(filters: IndexPlanRequest) {
+  protected async applyFilters(filters: IndexPlanRequest, query: QueryBuilder) {
     if (filters.is_active !== undefined) {
-      this.queryBuilder.where('is_active', '=', filters.is_active);
+      query.where('is_active', '=', filters.is_active);
     }
+    return query;
   }
 
   async findOne(id: number) {
@@ -172,10 +175,10 @@ export class PlansRepository extends BaseRepository {
   }
 
   async findUserActivePlan(userId: number) {
-    const result = await this.newQuery()
+    const result = await this.query()
       .select(this.BASE_COLUMNS)
       .join('id', 'plan_prices', 'plan_id')
-      .join('id','plan_translations','plan_id')
+      .join('id', 'plan_translations', 'plan_id')
       .join('plan_prices.id', 'plan_subscriptions', 'plan_price_id')
       .where('plan_subscriptions.user_id', '=', userId)
       .where('plan_subscriptions.is_active', '=', true)
@@ -185,7 +188,7 @@ export class PlansRepository extends BaseRepository {
   async create(plan: CreatePlanInput) {
     const columns = Object.keys(plan);
     const values = Object.values(plan);
-    return await this.newQuery().insertAndGet<PlanSchema>(columns, values);
+    return await this.query().insertAndGet<PlanSchema>(columns, values);
     //TODO: create a response dto
   }
 

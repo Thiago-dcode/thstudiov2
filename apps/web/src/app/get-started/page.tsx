@@ -24,6 +24,7 @@ export default async function GetStartedLayout() {
     const user = userResponse.data;
     const Step = dynamic(() => import('./_components/step' + user.funnel_step), {
         loading: () => <Spinner className="size-12" />,
+        ssr:true
 
     });
     const stepsContent = {

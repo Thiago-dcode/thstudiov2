@@ -6,6 +6,7 @@ import { BaseUser, UpdateUserInputAvatarFile } from "@repo/common-lib/types/user
 import usersService from "../users.service";
 import { trimValues } from "@repo/common-lib/utils/cleanObj";
 import { MimeTypes } from "@repo/common-lib/types/general";
+import { revalidateTag } from "next/cache";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_FILE_TYPES:MimeTypes[] = ['image/jpeg', 'image/png', 'image/webp'];
@@ -67,6 +68,7 @@ export const updateUserAction = async (id:number,formData: FormData): Promise<Ac
     if(avatarFile && avatarFile.size>0) cleanData.avatar = avatarFile;
 
     const result = await usersService.update(id,cleanData);
+    revalidateTag(`user-${id}`,'max');
     if(result.error){
         const {status_code,errors} = result.error;
         return {

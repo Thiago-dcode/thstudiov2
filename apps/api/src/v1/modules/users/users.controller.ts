@@ -5,7 +5,7 @@ import {
   Patch,
   Param,
   Delete,
-  UsePipes,
+  Query,
   UseInterceptors,
   UploadedFile,
   ParseIntPipe,
@@ -14,11 +14,12 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { UserService } from './users.service';
 import { UpdateUserRequest } from './requests/update-user.request';
 import { ModelExistPipe } from 'src/pipes/model-exist.pipe';
-import { IsNumberPipe } from 'src/pipes/is-number.pipe';
 import { Public } from 'src/common/decorators/public.decorator';
 import { UserExtraDataService } from '../user-extra-data/user-extra-data.service';
 import { IsUserAuthPipe } from 'src/pipes/is-user-auth.pipe';
 import { PlansService } from '../plans/plans.service';
+import { PlanSubscriptionsService } from '../plan-subscriptions/plan-subscriptions.service';
+import { FindUserRequest } from './requests/find-user.request';
 
 @Controller('users')
 export class UserController {
@@ -26,6 +27,7 @@ export class UserController {
     private readonly userService: UserService,
     private readonly userExtraDataService: UserExtraDataService,
     private readonly planService: PlansService,
+    private readonly planSubscriptionsService: PlanSubscriptionsService,
   ) {}
   @Public()
   @Get()
@@ -34,9 +36,12 @@ export class UserController {
   }
   @Public()
   @Get(':id')
-  @UsePipes(new IsNumberPipe(true), new ModelExistPipe('users'))
-  async findOne(@Param('id') id: number) {
-    return await this.userService.findOne(+id);
+  async findOne(
+    @Param('id', ParseIntPipe, new ModelExistPipe('users')) id: number,
+    @Query() queryParams: FindUserRequest,
+  ) {
+    console.log(queryParams)
+    return await this.userService.findOne(id, queryParams);
   }
   @Get(':id/extra-data')
   async findExtraData(
@@ -53,6 +58,14 @@ export class UserController {
   ) {
     return await this.planService.findUserActivePlan(+id);
   }
+  @Get(':id/subscription')
+  async findActive(
+    @Param('id', ParseIntPipe, new ModelExistPipe('users'), IsUserAuthPipe)
+    id: number,
+  ) {
+    return await this.planSubscriptionsService.findActiveSubscription(id);
+  }
+
 
   @Get(':id/metrics')
   async getMetrics(

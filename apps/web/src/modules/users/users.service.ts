@@ -5,6 +5,8 @@ import { ApiResponse } from "@repo/common-lib/types/response";
 import { CategoryBase } from "@repo/common-lib/types/category";
 import { UserExtraData } from "@repo/common-lib/types/user-extra-data";
 import { FullPlan } from "@repo/common-lib/types/plan";
+import { FullPlanSubscription } from "@repo/common-lib/types/plan-subscription";
+import { queryParamBuilder } from "@repo/common-lib/utils/query-builder";
 
 export class UserService extends BaseService {
     constructor() {
@@ -15,12 +17,12 @@ export class UserService extends BaseService {
     async getOne(id:number): Promise<ApiResponse<User>>{
 
         return await this.fetchApi.get({
-            resource:id +'',
+            resource:queryParamBuilder(id+''),
         });
 
     }
      async update(id:number,data:UpdateUserInputAvatarFile): Promise<ApiResponse<BaseUser>>{
-
+       
         return await this.fetchApi.patch({
             resource:id +'',
             body:data
@@ -31,6 +33,13 @@ export class UserService extends BaseService {
 
         return await this.fetchApi.get({
             resource:`${id}/categories`,
+            cacheOptions:{
+                cache:'force-cache',
+                next:{
+                    revalidate:60*60*3,
+                    tags:[`user-${id}`]
+                }
+            }
         });
     }
     async getExtraData(id:number):Promise<ApiResponse<UserExtraData>>{
@@ -45,10 +54,31 @@ export class UserService extends BaseService {
             resource:`${id}/plan`
         })
     }
+    async getActiveSubscription(userId:number):Promise<ApiResponse<FullPlanSubscription>>{
+
+        return await this.fetchApi.get({
+            resource:`${userId}/subscription`,
+            cacheOptions:{
+                cache:'force-cache',
+                next:{
+                    revalidate:60*60*3,
+                    tags:[`subscription-${userId}`]
+                }
+            }
+
+        })
+    }
     async metrics(id:number):Promise<ApiResponse<UserMetrics>> {
 
         return await this.fetchApi.get({
-            resource:`${id}/metrics`
+            resource:`${id}/metrics`,
+            cacheOptions:{
+                cache:'force-cache',
+                next:{
+                    revalidate:3600,
+                    tags:[`subscription-${id}`,`user-${id}`]
+                }
+            }
         })
     }
 

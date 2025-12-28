@@ -1,7 +1,6 @@
 export const Errors = ({
     errors,
-    title
-}: {title:string, errors: string[] }) => {
+}: { errors: string[] }) => {
 
     return (<div className="">
      

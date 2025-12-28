@@ -18,8 +18,7 @@ const AdminLayout = async ({ children }: { children: ReactNode }) => {
         <main className="size-full flex flex-col items-start justify-start  ">
           <TopNav />
 
-          <>
-            {children}</>
+         <div className="max-w-[1920px] flex w-full items-center self-center">   {children}</div>
 
         </main>
 

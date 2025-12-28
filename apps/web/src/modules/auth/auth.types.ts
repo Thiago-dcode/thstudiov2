@@ -70,5 +70,5 @@ export type LoginActionReturnSuccess<T> = {
     errors:null,
 }
 export type ActionReturn< K,T =LoginReturn> = (LoginActionReturnError | LoginActionReturnSuccess<T>) & {
-    inputs: K| undefined
+    inputs?: K
 };

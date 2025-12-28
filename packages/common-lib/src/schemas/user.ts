@@ -11,6 +11,7 @@ export type UserSchema = {
   biography?: string | null;
   email: string;
   avatar?:string;
+  banner?:string;
   email_validated?: boolean;
   is_active?: boolean;
   twofa_attempts?: number;
@@ -25,7 +26,7 @@ export type UserSchema = {
   updated_at: Date;
 };
 export type UserSchemaWithoutTimestamps = Omit<UserSchema, 'created_at' | 'updated_at'>;
-export type BaseUserSchema = Omit<UserSchema, 'created_at' | 'updated_at'  | 'name'| 'surname'| 'biography'|'short_biography' | 'address_id'|'avatar'>;
+export type BaseUserSchema = Omit<UserSchema, 'created_at' | 'updated_at'  | 'name'| 'surname'| 'biography' | 'address_id'|'avatar' |'banner'>;
 const tablesUser = [TABLES_ENUM.USERS] as const;
 export type UserSchemaColumns = TableColumn<typeof tablesUser, UserSchemaWithoutTimestamps>;
 export type BaseUserSchemaColumns = TableColumn<typeof tablesUser, BaseUserSchema>;

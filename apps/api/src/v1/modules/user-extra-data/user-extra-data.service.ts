@@ -1,15 +1,19 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { UserExtraDataRepository } from './user-extra-data.repository';
 import { OnEvent } from '@nestjs/event-emitter';
 import { UPDATE_USER_EXTRA_DATA_METRICS } from '@repo/common-lib/constants/constants';
 import { UpdateUserExtraDataMetricsEvent } from './events/update-user-extra-data-metrics.event';
 import { Query } from '@repo/database/facades';
 import { Media } from '@repo/common-lib/types/media';
+import { Helpers } from 'src/common/services/helpers.service';
+import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 
 @Injectable()
 export class UserExtraDataService {
   constructor(
     private readonly userExtraDataRepository: UserExtraDataRepository,
+    private readonly helpers: Helpers,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
   create() {
     return 'This action adds a new userExtraDatum';
@@ -20,18 +24,26 @@ export class UserExtraDataService {
   }
 
   async findOneByUserId(userId: number) {
-    return await this.userExtraDataRepository.findByUserId(userId);
+    return await this.helpers.cacheRemember(
+      `user-extra-data-${userId}`,
+      this.userExtraDataRepository.findByUserId(userId),
+      {
+        append_language: false,
+        ttl: 1000 * 60 * 60 * 24,
+      },
+    );
   }
 
   @OnEvent(UPDATE_USER_EXTRA_DATA_METRICS)
   async handleUpdateUserExtraData(data: UpdateUserExtraDataMetricsEvent) {
-    const media = await Query.table('media')
-      .select(['id', 'bytes'])
-      .where('blocked', '=', false)
-      .where('user_id', '=', data.userId)
-      .get<Pick<Media, 'id' | 'bytes'>[]>();
-
-      
+    const [media] = await Promise.all([
+      Query.table('media')
+        .select(['id', 'bytes'])
+        .where('blocked', '=', false)
+        .where('user_id', '=', data.userId)
+        .get<Pick<Media, 'id' | 'bytes'>[]>(),
+      this.cacheManager.del(`user-extra-data-${data.userId}`),
+    ]);
     const totalBytes = media.reduce((prev, curr) => prev + curr.bytes, 0);
     const media_size =
       totalBytes > 0 ? Math.round(totalBytes / (1024 * 1024)) : 0;

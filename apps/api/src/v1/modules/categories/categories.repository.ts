@@ -28,7 +28,7 @@ export class CategoriesRepository extends BaseRepository {
   async findAll(filters: CategoryIndexRequest) {
     const query = await this.applyFilters(
       filters,
-      this.newQuery().select(this.BASE_COLUMNS),
+      this.query().select(this.BASE_COLUMNS),
     );
     return this.formatCategories(
       await query.get<CategoryWithTranslationsSchema[]>(),

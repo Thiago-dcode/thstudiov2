@@ -1,22 +1,40 @@
 
 type Method = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 type BodyParam = Record<string, any> | FormData | null | undefined;
+
+/**
+ * Cache options for fetch requests
+ * - `cache`: Standard RequestCache option ('default', 'no-store', 'force-cache', etc.)
+ * - `next`: Next.js extended options for revalidation and tags
+ */
+type CacheOptions = {
+    cache?: RequestCache;
+    next?: {
+        revalidate?: number | false;
+        tags?: string[];
+    };
+};
+
 type RequestParams = {
     method: Method;
     resource: string;
     headers?: HeadersInit;
     body?: BodyParam;
     signal?: AbortSignal;
+    cacheOptions?: CacheOptions;
 }
 type BodyParsed = string | FormData | undefined;
-type FullRequestParams = Omit<RequestParams, 'body'> & {
+type FullRequestParams = Omit<RequestParams, 'body' | 'cacheOptions'> & {
     body : BodyParsed;
     baseUrl: string;
     signal?: AbortSignal;
+    cacheOptions?: CacheOptions;
 }
 type RequestCallback = (RequestParams: FullRequestParams) => Promise<any>;
 type ResponseCallback<T> = (RequestParams: FullRequestParams,response: T) => Promise<any>;
 type RequestParamsWithoutMethod = Omit<RequestParams, 'method'>;
+
+export type { CacheOptions, RequestParamsWithoutMethod };
 
 export abstract class  HttpClient {
 
@@ -28,9 +46,12 @@ protected _method: Method = 'GET';
 protected _resource: string = '';
 protected _baseUrl: string = '';
 protected _signal?: AbortSignal;
-    constructor(baseUrl: string, globalHeaders: HeadersInit = {}) {
+protected _cacheOptions?: CacheOptions;
+protected _defaultCacheOptions?: CacheOptions;
+    constructor(baseUrl: string, globalHeaders: HeadersInit = {}, defaultCacheOptions?: CacheOptions) {
         this._headers = globalHeaders;
         this._baseUrl = baseUrl;
+        this._defaultCacheOptions = defaultCacheOptions;
     }
     public set headers(headers: HeadersInit) {
         this._headers = {
@@ -61,6 +82,18 @@ protected _signal?: AbortSignal;
     }
     public get signal(): AbortSignal | undefined {
         return this._signal;
+    }
+    public set cacheOptions(cacheOptions: CacheOptions | undefined) {
+        this._cacheOptions = cacheOptions;
+    }
+    public get cacheOptions(): CacheOptions | undefined {
+        return this._cacheOptions ?? this._defaultCacheOptions;
+    }
+    public set defaultCacheOptions(cacheOptions: CacheOptions | undefined) {
+        this._defaultCacheOptions = cacheOptions;
+    }
+    public get defaultCacheOptions(): CacheOptions | undefined {
+        return this._defaultCacheOptions;
     }
     protected set body(body: BodyParam) {
         if(body === null || body === undefined) {
@@ -95,13 +128,13 @@ protected _signal?: AbortSignal;
     }
     protected abstract fetcher(): Promise<any>;
 
-    protected async setupRequest({resource, headers, body, method, signal}: RequestParams): Promise<void> {
+    protected async setupRequest({resource, headers, body, method, signal, cacheOptions}: RequestParams): Promise<void> {
         this.headers = headers || {};
         this.method = method;
         this.resource = resource.trim();
         this.body = body;
         this.signal = signal;
-        
+        this.cacheOptions = cacheOptions;
     }
     protected async callFetcher<T>(requestParams: RequestParams): Promise<T> {
         this.setupRequest(requestParams);

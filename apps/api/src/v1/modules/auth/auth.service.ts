@@ -150,7 +150,7 @@ export class AuthService {
     return await this.handleLogin(user, authDevice);
   }
   async passwordRecovery({ email, fallback_url }: PasswordRecoveryRequest) {
-    const user = await this.userRepository.findOneBy('email', email, false);
+    const user = await this.userRepository.findOneBy('email', email, 'COMPACT');
     if (!user) {
       throw new UnauthorizedException('Unauthorized');
     }

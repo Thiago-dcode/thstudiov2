@@ -31,6 +31,10 @@ export const useHandleAction = <K,T>({action,beforeAction,afterAction}:{
     const cleanResult = () =>{
         setResult(null);
     }
+    const reset = () =>{
+        cleanErrors()
+        cleanResult()
+    }
   
     useEffect(()=>{
         if(!result)return
@@ -47,6 +51,7 @@ export const useHandleAction = <K,T>({action,beforeAction,afterAction}:{
         cleanErrors,
         cleanResult,
         setErrors,
+        reset,
         success: !!result?.data
     }
 

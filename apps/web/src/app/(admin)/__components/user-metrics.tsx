@@ -1,9 +1,28 @@
 import usersService from "@/modules/users/users.service"
 import { cn } from "@repo/ui/lib/utils";
-import {Badge} from "@repo/ui/components/shadcn/badge"
+import { Badge } from "@repo/ui/components/shadcn/badge"
 import { Popover, PopoverContent, PopoverTrigger } from "@repo/ui/components/shadcn/popover"
 import { PlanFeatures } from "@/modules/plans/components/plan.features"
 import { Eye } from "lucide-react";
+import { Skeleton } from "@repo/ui/components/shadcn/skeleton";
+
+export const UserMetricsSkeleton = () => {
+    return (
+        <section className="w-full flex flex-col gap-2 items-start justify-start">
+            <Skeleton className="h-6 w-24 rounded-full" />
+            <div className="flex items-center justify-start gap-3 w-full flex-wrap">
+                {Array.from({ length: 6 }).map((_, i) => (
+                    <div
+                        key={`skeleton-${i}`}
+                        className="flex flex-col items-center justify-center h-full gap-2 min-w-28 max-h-22 shadow-md shadow-fg-1 rounded-md p-1 bg-fg-1"
+                    >
+                        <Skeleton className="h-14 w-16" />
+                    </div>
+                ))}
+            </div>
+        </section>
+    );
+};
 
 export const UserMetrics = async ({ userId }: {
     userId: number
@@ -14,7 +33,7 @@ export const UserMetrics = async ({ userId }: {
 
     const { extra_data, active_plan } = metricsResult.data;
     const { clients_count, media_count, media_size, portfolios_count, projects_count, services_count } = extra_data;
-    const { max_clients, max_media_size, max_portfolios, max_projects, max_services, translation ,name} = active_plan;
+    const { max_clients, max_media_size, max_portfolios, max_projects, max_services, translation, name } = active_plan;
 
     const METRICS: {
         title: string,
@@ -22,6 +41,11 @@ export const UserMetrics = async ({ userId }: {
         limit: number,
         format?: (used: number, limit: number) => string
     }[] = [
+            {
+                title: 'Media',
+                used: media_count,
+                limit: -1,
+            },
             {
                 title: 'Storage',
                 used: media_size,
@@ -33,11 +57,7 @@ export const UserMetrics = async ({ userId }: {
                 used: clients_count,
                 limit: max_clients,
             },
-            {
-                title: 'Media',
-                used: media_count,
-                limit: -1,
-            },
+
             {
                 title: 'Portfolios',
                 used: portfolios_count,
@@ -64,7 +84,7 @@ export const UserMetrics = async ({ userId }: {
         <Popover>
             <PopoverTrigger asChild>
                 <Badge className="w-fit flex gap-2 cursor-pointer hover:opacity-80 transition-opacity">
-                    <span>{translation?.name || name} Plan</span> <Eye size={14}/>
+                    <span>{translation?.name || name} Plan</span> <Eye size={14} />
                 </Badge>
             </PopoverTrigger>
             <PopoverContent className="w-80 bg-fg-1/90">
@@ -82,7 +102,7 @@ export const UserMetrics = async ({ userId }: {
                         : `${used} / ${limit}`;
 
                 return (
-                    <div key={`${title}-${i}`} className={cn("flex flex-col items-center justify-center h-full gap-2 min-w-28 bg-accent-muted/80 shadow-md shadow-fg-1 rounded-md p-3", {
+                    <div key={`${title}-${i}`} className={cn("flex flex-col items-center justify-center h-full gap-2 min-w-28 max-h-22  shadow-md shadow-fg-1 rounded-md p-1", {
                         "bg-emerald-700": percentage < 50,
                         "bg-amber-700": percentage >= 50 && percentage < 75,
                         "bg-red-700": percentage >= 75,

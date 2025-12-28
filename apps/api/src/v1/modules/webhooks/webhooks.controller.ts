@@ -13,7 +13,13 @@ import { FactoryLogService } from '@repo/backend-lib/services/log-service';
 import { Public } from 'src/common/decorators/public.decorator';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { WEBHOOK_STRIPE_EVENT } from '@repo/common-lib/constants/constants';
+import { Throttle } from '@nestjs/throttler';
 
+@Throttle({
+  short: { ttl: 1000, limit: 50 },
+  medium: { ttl: 10000, limit: 200 }, 
+  long: { ttl: 60000, limit: 500 }, 
+})
 @Controller('webhooks')
 export class WebhooksController {
   private logger = FactoryLogService.createLogService('file', {

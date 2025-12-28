@@ -100,7 +100,7 @@ export class PlanSubscriptionsRepository extends BaseRepository {
   async create(plan: CreatePlanSubscriptionInput) {
     const columns = Object.keys(plan);
     const values = Object.values(plan);
-    return await this.queryBuilder.insertAndGet<PlanSubscriptionSchema>(
+    return await this.query().insertAndGet<PlanSubscriptionSchema>(
       columns,
       values,
     );
@@ -108,13 +108,13 @@ export class PlanSubscriptionsRepository extends BaseRepository {
 
   async updateOne(id: string | number, plan: UpdatePlanSubscriptionInput) {
     await super.updateOne(id, plan);
-    return this.queryBuilder
+    return this.query()
       .where('id', '=', id)
       .first<PlanSubscriptionSchema | null>();
   }
 
   async findOneByColumn(colName: string, value: SqlValue) {
-    return this.queryBuilder
+    return this.query()
       .where(colName, '=', value)
       .first<PlanSubscriptionSchema | null>();
   }
@@ -122,8 +122,8 @@ export class PlanSubscriptionsRepository extends BaseRepository {
   async findActiveSubscription(
     userId: number,
   ): Promise<FullPlanSubscription | null> {
-    this.queryBuilder.reset();
-    const result = await this.queryBuilder
+    this.query().reset();
+    const result = await this.query()
       .select(this.FULL_COLUMNS)
       .join('plan_price_id', 'plan_prices', 'id')
       .join('plan_prices.plan_id', 'plans', 'id')

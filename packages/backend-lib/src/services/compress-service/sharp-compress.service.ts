@@ -8,7 +8,7 @@ export class SharpCompressService extends CompressService {
         quality: number = 90,
         targetSize: number = 2 * 1024 * 1024,
       ): Promise<Buffer> {
-        //avoid min of 100kb
+        //avoid min of 100KB
         const _targetSize = targetSize < 100 * 1024 ? 100 * 1024 : targetSize;
         if (!file.mimetype.startsWith('image/') || file.size < _targetSize)
           return file.buffer;
@@ -36,8 +36,9 @@ export class SharpCompressService extends CompressService {
             .webp({ quality: _quality })
             .toBuffer();
     
-          if (optimizedBuffer.length < targetSize || loops > 5)
+          if (optimizedBuffer.length < targetSize || loops > 3)
             return optimizedBuffer;
+          
           return await optimizeRecursively(
             optimizedBuffer,
             _quality - 5,

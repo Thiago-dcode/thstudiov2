@@ -50,7 +50,7 @@ export class MediaRepository extends BaseRepository {
   }
 
   async findAll(filters: MediaIndexRequest): Promise<Media[] | FullMedia[]> {
-    const query = await this.applyFilters(filters, this.newQuery());
+    const query = await this.applyFilters(filters, this.query());
     const results = await query.get<
       MediaSchemaWithoutTimestamps[] | MediaWithTranslationsSchema[]
     >();
@@ -62,7 +62,7 @@ export class MediaRepository extends BaseRepository {
   }
 
   async findById(id: number): Promise<Media> {
-    const result = await this.queryBuilder
+    const result = await this.query()
       .select(this.COLUMNS)
       .where('id', '=', id)
       .first<MediaSchemaWithoutTimestamps>();
@@ -76,7 +76,7 @@ export class MediaRepository extends BaseRepository {
   }
 
   async findByUserId(userId: number): Promise<Media[]> {
-    const results = await this.queryBuilder
+    const results = await this.query()
       .select(this.COLUMNS)
       .where('user_id', '=', userId)
       .get<MediaSchemaWithoutTimestamps[]>();
@@ -87,7 +87,7 @@ export class MediaRepository extends BaseRepository {
     column: keyof MediaSchema,
     value: any,
   ): Promise<Media | null> {
-    const result = await this.queryBuilder
+    const result = await this.query()
       .select(this.COLUMNS)
       .where(column, '=', value)
       .first<MediaSchemaWithoutTimestamps>();
@@ -105,8 +105,8 @@ export class MediaRepository extends BaseRepository {
   async updateById(id: number, data: UpdateMediaInput): Promise<Media> {
     const columns = Object.keys(data);
     const values = Object.values(data);
-    await this.queryBuilder.where('id', '=', id).update(columns, values);
-    const result = await this.queryBuilder
+    await this.query().where('id', '=', id).update(columns, values);
+    const result = await this.query()
       .select(this.COLUMNS)
       .where('id', '=', id)
       .first<MediaSchemaWithoutTimestamps>();
@@ -114,7 +114,7 @@ export class MediaRepository extends BaseRepository {
   }
 
   async deleteById(id: number): Promise<void> {
-    await this.queryBuilder.where('id', '=', id).delete();
+    await this.query().where('id', '=', id).delete();
   }
 
   async applyFilters(

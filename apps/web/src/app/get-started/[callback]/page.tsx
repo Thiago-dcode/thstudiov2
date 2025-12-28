@@ -31,6 +31,7 @@ export default async function CallbackPage({
         redirect('/get-started');
     }
 
+
     const isSuccess = callback === 'success';
     const retryable = cookie?.retryable;
     const message = cookie?.message;

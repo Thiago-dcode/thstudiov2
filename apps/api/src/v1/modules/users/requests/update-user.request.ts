@@ -60,4 +60,7 @@ export class UpdateUserRequest {
 
   @IsOptional()
   avatar?: Express.Multer.File;
+
+  @IsOptional()
+  banner?: Express.Multer.File;
 }

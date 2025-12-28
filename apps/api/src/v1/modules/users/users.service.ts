@@ -16,6 +16,7 @@ import { PlanSubscriptionsService } from '../plan-subscriptions/plan-subscriptio
 import { stripe } from '@repo/backend-lib/services/payment-service/stripe';
 import { RequestService } from 'src/common/services/request.service';
 import { NEW_USER_EVENT } from '@repo/common-lib/constants/constants';
+import { FindUserRequest } from './requests/find-user.request';
 
 @Injectable()
 export class UserService {
@@ -36,64 +37,109 @@ export class UserService {
     return `This action returns all user`;
   }
 
-  async findOne(id: number) {
+  protected async getAsset(path: string) {
+    let asset = (await this.cacheManager.get(path)) as string;
+    if (!asset) {
+      asset = await this.storageService.getUrl(path);
+      await this.cacheManager.set(
+        path,
+        asset,
+        s3StorageConfig.signedUrlExpiration * 900, //Substract 10% to avoid possible s3 404
+      );
+    }
+    return asset;
+  }
+  async findOne(id: number, findUserRequest?: FindUserRequest) {
+    if (findUserRequest.format === 'COMPACT') {
+      return await this.userRepository.findOneBy('id', id, 'COMPACT');
+    }
     const result = await this.userRepository.findById(id);
     if (result?.avatar) {
-      let avatar = (await this.cacheManager.get(result.avatar)) as string;
-      if (!avatar) {
-        avatar = await this.storageService.getUrl(result.avatar);
-        await this.cacheManager.set(
-          result.avatar,
-          avatar,
-          s3StorageConfig.signedUrlExpiration * 900, //Substract 10% to avoid possible s3 404
-        );
-      }
-      result.avatar = avatar;
+      result.avatar = await this.getAsset(result.avatar);
+    }
+    if (result?.banner) {
+      result.banner = await this.getAsset(result.banner);
     }
     return result;
   }
+
   async findOneByStripeId(id: string) {
-    return await this.userRepository.findOneByColumn('stripe_customer_Id', id);
+    return await this.userRepository.findOneBy(
+      'stripe_customer_id',
+      id,
+      'COMPACT',
+    );
+  }
+  async handleStoreAsset({
+    asset,
+    targetSizeMb,
+    path,
+    targetQuality,
+  }: {
+    asset: Express.Multer.File;
+    path: string;
+    targetSizeMb: number;
+    targetQuality?: number;
+  }) {
+    //Compress
+    const targetSize = (targetSizeMb > 0 ? targetSizeMb : 1) * 1024;
+    asset.buffer = await this.compressService.optimizeImageToWebp(
+      asset,
+      targetQuality ?? 90,
+      asset.size > targetSize ? targetSize : asset.size,
+    );
+    const [result] = await Promise.all([
+      this.storageService.write(asset, path),
+      this.cacheManager.del(path),
+    ]);
+    if (!result) {
+      throw new HttpException(
+        `An error ocurred during storing asset: <<${path}>>`,
+        500,
+      );
+    }
+    return path;
   }
 
-  async update(id: number, { avatar, categories, ...rest }: UpdateUserRequest) {
+  async update(
+    id: number,
+    { avatar, banner, categories, ...rest }: UpdateUserRequest,
+  ) {
     const user = await this.userRepository.findById(id);
     if (!user) {
       throw new HttpException('User not found', 422);
     }
-    console.log(this.requestService.user);
     if (user.id !== this.requestService.user.id) {
       throw new HttpException('Unauthorized', 403);
     }
-    const userUpdateData: Omit<UpdateUserRequest, 'avatar'> & {
+    const userUpdateData: Omit<
+      UpdateUserRequest,
+      'avatar' | 'banner' | 'categories'
+    > & {
       avatar?: string;
+      banner?: string;
     } = rest;
-
+    const [avatarPath, bannerPath] = await Promise.all([
+      avatar && avatar.size > 0
+        ? this.handleStoreAsset({
+            asset: avatar,
+            path: `users/${user.id}/avatar`,
+            targetSizeMb: 1,
+          })
+        : Promise.resolve(undefined),
+      banner && banner.size > 0
+        ? this.handleStoreAsset({
+            asset: banner,
+            path: `users/${user.id}/banner`,
+            targetSizeMb: 1,
+          })
+        : Promise.resolve(undefined),
+    ]);
+    userUpdateData.avatar = avatarPath;
+    userUpdateData.banner = bannerPath;
     // Remove undefined values
     cleanObj(userUpdateData);
 
-    if (avatar && avatar.size > 0) {
-      const path = `users/${user.id}/avatar`;
-      //Compress
-      const targetSize = 1024;
-      avatar.buffer = await this.compressService.optimizeImageToWebp(
-        avatar,
-        90,
-        avatar.size > targetSize ? targetSize : avatar.size,
-      );
-      const [result] = await Promise.all([
-        this.storageService.write(avatar, path),
-        this.cacheManager.del(path),
-      ]);
-      if (!result) {
-        throw new HttpException(
-          `An error ocurred during storing user <<${user.id}>> avatar`,
-          500,
-        );
-      }
-
-      userUpdateData.avatar = path;
-    }
     if (userUpdateData.email) {
       const userExist = await this.userRepository.findOneBy(
         'email',
@@ -154,7 +200,6 @@ export class UserService {
       //Create a user extra data
       const extraData = await this.userExtraDataRepository.create({
         user_id: event.user.id,
-        
       });
       this.logService
         .name('new-user')

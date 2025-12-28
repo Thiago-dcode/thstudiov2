@@ -22,7 +22,7 @@ export type MediaIndexRequest = OffsetPaginationRequest & {
     type?: EnumType<'MEDIA_TYPE'>;
     is_active?: boolean;
     blocked?: boolean;
-    list_type: EnumType<'LIST_TYPE'>;
+    list_type: EnumType<'FORMAT_TYPE'>;
 }
 
 // CreateMediaInput - required fields for creating media

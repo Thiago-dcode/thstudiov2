@@ -9,6 +9,8 @@ import { INITIATE_SUBCRIPTION_COOKIE } from "@repo/common-lib/constants/constant
 import { encryptObj, getEncryptedJsonCookie } from "@/lib/utils";
 import { generateUUID } from "@repo/common-lib/utils/generate-uuid";
 import { queryParamBuilder } from "@repo/common-lib/utils/query-builder";
+import { revalidateTag } from "next/cache";
+import { userSession } from "@/modules/auth/server-actions/user-session.action";
 
 
 export const initiateSubscriptionAction = async (formData:FormData):Promise<ActionReturn<InitiateSubscriptionRequest, HandleSubscriptionProcessResponse>> =>{
@@ -38,12 +40,14 @@ try{
         token:uuid
     });
     const result = await planSubscriptionsService.initiate(validated.data);
+   
    if(result.data && !result.error){
-
-        await setInitiateSubscriptionCookie({
+    
+      const[user] =  await Promise.all([userSession(),setInitiateSubscriptionCookie({
             ...result.data,
             token:uuid
-        });
+        })]);
+        revalidateTag(`subscription-${user?.id}`,'max');
     //Success
     return {
         data:result.data,
@@ -71,7 +75,7 @@ export const setInitiateSubscriptionCookie = async (data:HandleSubscriptionProce
     const cookieStore = await cookies();
     cookieStore.set(INITIATE_SUBCRIPTION_COOKIE, await encryptObj(data), {
         httpOnly: true,
-        maxAge: 60 * 60 // 1 hour
+        maxAge: 60 * 20 // 20 min
     });
 }
 
@@ -83,7 +87,6 @@ export const getInitiateSubscriptionCookie = async () => {
 }
 
 export const deleteInitiateSubscriptionCookie = async () => {
-    console.log("CALLING DELETE INITIATI COOKIE")
     const cookieStore = await cookies();
     cookieStore.set(INITIATE_SUBCRIPTION_COOKIE, '', {
         httpOnly: true,

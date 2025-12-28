@@ -6,7 +6,10 @@ import {
   UserSessionSchemaColumns,
 } from '@repo/common-lib/schemas/user-session';
 import { UserSession } from './user-sessions.types';
-import { CreateUserSessionInput, UpdateUserSessionInput } from '@repo/common-lib/types/user-session';
+import {
+  CreateUserSessionInput,
+  UpdateUserSessionInput,
+} from '@repo/common-lib/types/user-session';
 
 @Injectable()
 export class UserSessionsRepository extends BaseRepository {
@@ -34,14 +37,12 @@ export class UserSessionsRepository extends BaseRepository {
   constructor() {
     super('user_sessions');
   }
-  async applyFilters(filters: any) {
-    console.log(filters);
-  }
+
   async create(session: CreateUserSessionInput) {
     const columns = Object.keys(session);
     const values = Object.values(session);
     const result =
-      await this.queryBuilder.insertAndGet<UserSessionSchemaWithUserAuthDevice>(
+      await this.query().insertAndGet<UserSessionSchemaWithUserAuthDevice>(
         columns,
         values,
         this.FULL_COLUMNS,
@@ -57,8 +58,8 @@ export class UserSessionsRepository extends BaseRepository {
     return this.formatUserSession(result);
   }
   async updateOne(id: number, updateUserSessionInput: UpdateUserSessionInput) {
-    await  super.updateOne(id, updateUserSessionInput);
-    const result = await this.newQuery()
+    await super.updateOne(id, updateUserSessionInput);
+    const result = await this.query()
       .select(this.FULL_COLUMNS)
       .where('id', '=', id)
       .join('user_auth_device_id', 'user_auth_devices', 'id', 'LEFT')
@@ -70,7 +71,7 @@ export class UserSessionsRepository extends BaseRepository {
     user_auth_device_id?: number;
     token?: string;
   }): Promise<UserSession | null> {
-    let query = this.newQuery()
+    let query = this.query()
       .select(this.FULL_COLUMNS)
       .where('user_id', '=', session.user_id)
       .join('user_auth_device_id', 'user_auth_devices', 'id', 'LEFT');

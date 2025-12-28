@@ -30,7 +30,7 @@ export class UserExtraDataRepository extends BaseRepository {
   }
 
   async findByUserId(userId: number): Promise<UserExtraData> {
-    const result = await this.queryBuilder
+    const result = await this.query()
       .select(this.COLUMNS)
       .where('user_id', '=', userId)
       .first<UserExtraDataSchemaWithoutTimestamps>();
@@ -44,7 +44,7 @@ export class UserExtraDataRepository extends BaseRepository {
   }
 
   async findById(id: number): Promise<UserExtraData> {
-    const result = await this.queryBuilder
+    const result = await this.query()
       .select(this.COLUMNS)
       .where('id', '=', id)
       .first<UserExtraDataSchemaWithoutTimestamps>();
@@ -61,16 +61,12 @@ export class UserExtraDataRepository extends BaseRepository {
     column: keyof UserExtraDataSchema,
     value: any,
   ): Promise<UserExtraData | null> {
-    const result = await this.queryBuilder
+    const result = await this.query()
       .select(this.COLUMNS)
       .where(column, '=', value)
       .first<UserExtraDataSchemaWithoutTimestamps>();
     if (!result) return null;
     return this.formatUserExtraData(result);
-  }
-
-  async applyFilters(filters: any) {
-    console.log(filters);
   }
 
   async create(extraData: UpdateOrCreateUserExtraDataInput): Promise<UserExtraData> {
@@ -87,8 +83,8 @@ export class UserExtraDataRepository extends BaseRepository {
   ): Promise<UserExtraData> {
     const columns = Object.keys(data);
     const values = Object.values(data);
-    await this.queryBuilder.where('id', '=', id).update(columns, values);
-    const result = await this.queryBuilder
+    await this.query().where('id', '=', id).update(columns, values);
+    const result = await this.query()
       .select(this.COLUMNS)
       .where('id', '=', id)
       .first<UserExtraDataSchemaWithoutTimestamps>();
@@ -101,8 +97,8 @@ export class UserExtraDataRepository extends BaseRepository {
   ): Promise<UserExtraData> {
     const columns = Object.keys(data);
     const values = Object.values(data);
-    await this.newQuery().where('user_id', '=', userId).update(columns, values);
-    const result = await this.queryBuilder
+    await this.query().where('user_id', '=', userId).update(columns, values);
+    const result = await this.query()
       .select(this.COLUMNS)
       .where('user_id', '=', userId)
       .first<UserExtraDataSchemaWithoutTimestamps>();
