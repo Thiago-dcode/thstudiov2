@@ -54,6 +54,7 @@ export class UserRepository extends BaseRepository {
     super('users');
   }
   async findById(id: number): Promise<User> {
+    console.log(this.FULL_COLUMNS);
     const result = await this.query()
       .select(this.FULL_COLUMNS)
       .where('id', '=', id)
@@ -65,6 +66,7 @@ export class UserRepository extends BaseRepository {
         HttpStatus.NOT_FOUND,
       );
     }
+    console.log(result);
     return this.formatFullUser(result);
   }
   async findOneBy(

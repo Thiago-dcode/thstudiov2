@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMainNav } from "../providers/main-nav.provider"
 import { ReactNode, useEffect, useState } from "react";
-import { Box, Grid, Home, Settings } from "lucide-react";
+import { Box, Grid, Home, LayoutDashboard, Settings } from "lucide-react";
 import { Logout } from "@/app/(admin)/__components/logout";
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
 
@@ -16,8 +16,12 @@ const routes: {
 }[] = [
         {
             name: 'Dashboard',
-            url: 'profile',
-            matches:['profile','about'],
+            url: '',
+            icon: <LayoutDashboard size={20} />
+        },
+        {
+            name: 'Home',
+            url: 'home',
             icon: <Home size={20} />
         },
         {
@@ -48,7 +52,7 @@ export const MainNav = () => {
 if(!isClient) return <Spinner/>
     return (
        <div className="flex flex-col items-start w-full justify-between h-full">
-         <nav className="flex flex-col gap-4  w-full px-2">
+         <nav className="flex flex-col gap-4  w-full px-4">
             {routes.map((route) => {
                 const url = `/atelier${!route.url ? "" : '/'}${route.url}`
                 const isActive = pathname === url || route.matches?.some(match=> pathname == `/atelier/${match}`);
@@ -56,9 +60,9 @@ if(!isClient) return <Spinner/>
                     <Link
                         key={route.url}
                         href={url}
-                        className={`flex items-center gap-3 px-3 py-1 rounded-md transition-colors
+                        className={`text-sm flex items-center gap-3 px-2 py-1 rounded-sm transition-colors
                             ${isActive
-                                ? 'bg-accent text-primary-foreground'
+                                ? 'bg-accent/80 text-primary-foreground'
                                 : 'hover:bg-fg-2'
                             }
                             ${shrinked ? 'justify-center' : ''}

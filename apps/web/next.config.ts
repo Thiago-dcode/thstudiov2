@@ -15,6 +15,14 @@ const nextConfig: NextConfig = {
       bodySizeLimit: '500mb',
     },
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'a11studio.s3.eu-north-1.amazonaws.com',
+      },
+    ],
+  },
   env,
 };
 

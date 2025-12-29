@@ -38,6 +38,7 @@ export class UserService {
   }
 
   protected async getAsset(path: string) {
+    console.log('path', path)
     let asset = (await this.cacheManager.get(path)) as string;
     if (!asset) {
       asset = await this.storageService.getUrl(path);
@@ -124,7 +125,7 @@ export class UserService {
         ? this.handleStoreAsset({
             asset: avatar,
             path: `users/${user.id}/avatar`,
-            targetSizeMb: 1,
+            targetSizeMb: 0.3,
           })
         : Promise.resolve(undefined),
       banner && banner.size > 0

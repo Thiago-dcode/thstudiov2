@@ -11,7 +11,7 @@ import { useContext, createContext, ReactNode, useState, FormEvent } from "react
 
 
 // Context type
-type TabContextType = {
+type EditUserContextType = {
     user: User,
     userCategories:CategoryBase[]
     handleSubmit: (e: FormEvent<HTMLFormElement> | FormData) => Promise<void>,
@@ -22,19 +22,19 @@ type TabContextType = {
     success: boolean
 }
 
-const TabContext = createContext<TabContextType | null>(null)
+const EditUserContext = createContext<EditUserContextType | null>(null)
 
-// Hook to use tab context
-export const useTab = () => {
-    const context = useContext(TabContext)
+// Hook to use edit user context
+export const useEditUser = () => {
+    const context = useContext(EditUserContext)
     if (!context) {
-        throw new Error('useTab must be used within a TabProvider')
+        throw new Error('useEditUser must be used within a EditUserProvider')
     }
     return context
 }
 
 // Provider component
-export const TabProvider = ({
+export const EditUserProvider = ({
     children,
     defaultUser,
     defaultUserCategories
@@ -50,7 +50,6 @@ export const TabProvider = ({
             return await updateUserAction(user.id, formData)
         },
         afterAction: async (result) => {
-            console.log("RESULT TAB",result)
             if (result.data) {
                 const userResponse = await getOneUserAction(result.data.id);
                 if(result.inputs?.categories){
@@ -72,10 +71,10 @@ export const TabProvider = ({
     })
 
     return (
-        <TabContext.Provider value={{ user,userCategories, isPending, errors, handleSubmit, cleanErrors, success, reset }}>
+        <EditUserContext.Provider value={{ user,userCategories, isPending, errors, handleSubmit, cleanErrors, success, reset }}>
             {children}
-        </TabContext.Provider>
+        </EditUserContext.Provider>
     )
 }
 
-export default TabProvider
+export default EditUserProvider

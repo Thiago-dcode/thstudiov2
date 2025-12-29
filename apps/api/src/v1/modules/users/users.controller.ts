@@ -7,10 +7,10 @@ import {
   Delete,
   Query,
   UseInterceptors,
-  UploadedFile,
+  UploadedFiles,
   ParseIntPipe,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { UserService } from './users.service';
 import { UpdateUserRequest } from './requests/update-user.request';
 import { ModelExistPipe } from 'src/pipes/model-exist.pipe';
@@ -40,7 +40,6 @@ export class UserController {
     @Param('id', ParseIntPipe, new ModelExistPipe('users')) id: number,
     @Query() queryParams: FindUserRequest,
   ) {
-    console.log(queryParams)
     return await this.userService.findOne(id, queryParams);
   }
   @Get(':id/extra-data')
@@ -83,14 +82,20 @@ export class UserController {
   }
 
   @Patch(':id')
-  @UseInterceptors(FileInterceptor('avatar'))
+  @UseInterceptors(FileFieldsInterceptor([
+    { name: 'avatar', maxCount: 1 },
+    { name: 'banner', maxCount: 1 },
+  ]))
   async update(
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserRequest,
-    @UploadedFile() avatar?: Express.Multer.File,
+    @UploadedFiles() files: { avatar?: Express.Multer.File[], banner?: Express.Multer.File[] },
   ) {
-    if (avatar) {
-      updateUserDto.avatar = avatar;
+    if (files?.avatar?.[0]) {
+      updateUserDto.avatar = files.avatar[0];
+    }
+    if (files?.banner?.[0]) {
+      updateUserDto.banner = files.banner[0];
     }
     return await this.userService.update(+id, updateUserDto);
   }
