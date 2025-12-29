@@ -8,7 +8,7 @@ import { Spinner } from "@repo/ui/components/shadcn/spinner"
 import { ArrowDown } from "lucide-react"
 
 export const UserCategoriesComponent = () => {
-const {searchRef,categories,categoriesResponse,categoriesSelected,handleFetch,handleOnChange,isLoading,setCategoriesSelected,currentRequest} = useUpdateCategories()
+const {searchRef,categories,categoriesResponse,categoriesSelected,handleFetch,handleOnChange,isLoading,handleSelectCategory,isSelected,currentRequest} = useUpdateCategories()
 
 
 
@@ -34,16 +34,13 @@ const {searchRef,categories,categoriesResponse,categoriesSelected,handleFetch,ha
                   
                 }}>{isLoading ? <Spinner className="size-6" /> : <Search className="size-6" />}</Button> */}
             </div>
-            <div className="flex flex-col items-start justify-start w-full">
+            <div className="pt-2 flex flex-col items-start justify-start w-full">
 
-                <FadeInDiv>
+                <FadeInDiv dependencies={[categoriesSelected.length]}>
                     {categoriesSelected.map((category) => {
                         return <Button
                             onClick={() => {
-                                setCategoriesSelected((prev) => {
-                                    const { [category.id]: _, ...rest } = prev;
-                                    return rest;
-                                })
+                                handleSelectCategory(category)
                             }}
                             variant={'primary'}
                             size={'sm'}
@@ -54,33 +51,24 @@ const {searchRef,categories,categoriesResponse,categoriesSelected,handleFetch,ha
                     })}
                 </FadeInDiv>
             </div>
-            <div className="flex flex-col items-start justify-start gap-1  py-1 px-2 w-full">
+            <div className="flex flex-col items-start justify-start gap-1  pt-4 py-1 px-2 w-full">
                 {categories.length > 0 && <p className="mb-1 text-sm text-text-muted">Click on the categories you want</p>}
-                <div className="overflow-scroll max-h-[350p w-full">
+                <div className="overflow-y-scroll max-h-[250px] w-full">
                     {categories.length > 0 ? <>
 
                         <FadeInDiv dependencies={[categoriesSelected.length]} >
                             {
                                 categories.map((category) => {
-                                    const isSelected = categoriesSelected[category.id];
+                                
                                     return <Button
                                         type="button"
                                         onClick={() => {
-                                            setCategoriesSelected((prev) => {
-
-                                                if (prev[category.id]) {
-                                                    const { [category.id]: _, ...rest } = prev;
-                                                    return rest;
-                                                } else {
-                                                    if (categoriesSelected.length >= 5) return prev;
-                                                    return { ...prev, [category.id]: category };
-                                                }
-                                            })
+                                            handleSelectCategory(category)
                                         }}
                                         size={'sm'}
                                         variant={'base'}
                                         className={cn(
-                                            isSelected && 'scale-90 opacity-60'
+                                            isSelected(category) && 'scale-90 opacity-60'
                                         )}
                                         key={category.id + 'category' + category.name}
                                     >

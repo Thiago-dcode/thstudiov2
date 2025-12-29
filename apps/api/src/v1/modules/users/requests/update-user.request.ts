@@ -7,6 +7,7 @@ import {
   IsNumber,
   IsArray,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { ModelArrayExist } from 'src/common/validators/model-array-exist.validtor';
 import { ModelExist } from 'src/common/validators/model-exist.validtor';
 
@@ -55,6 +56,7 @@ export class UpdateUserRequest {
 
   @IsOptional()
   @IsArray()
+  @Transform(({ value }) => value?.map((v: string) => parseInt(v, 10)))
   @ModelArrayExist('categories')
   categories?: number[];
 

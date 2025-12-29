@@ -12,8 +12,11 @@ type BaseRepositoryOptions = {
 type valueToAttach = string|number;
 
 type AttachValues = {
-  [key:valueToAttach]: null |  {
-    [col:string]:SqlValue,
+  [key:valueToAttach]: {
+    value: SqlValue,
+    relationCols: null | {
+      [col:string]:SqlValue,
+    }
   
   }
 }
@@ -68,12 +71,21 @@ export abstract class BaseRepository {
   const { modelCol, modelValue, attachCol, valuesToAttach } = options;
   
   const _valuesToAttach: AttachValues = !Array.isArray(valuesToAttach) ? {
-    [valuesToAttach]:null,
+    [valuesToAttach]:{
+      value: valuesToAttach,
+      relationCols:null
+    },
   } : valuesToAttach.reduce((acc:AttachValues,curr)=>{
     if(typeof curr ==='object'){
-      acc[curr.value] =curr.columns;
+      acc[curr.value] ={
+        value:curr.value,
+        relationCols:curr.columns
+      }
     }else{
-      acc[curr] =null
+      acc[curr] ={
+        value: curr,
+        relationCols:null
+      }
     }
     return acc;
   
@@ -81,7 +93,8 @@ export abstract class BaseRepository {
   const _values = Object.keys(_valuesToAttach);
   type AttachRecord = Record<TModelCol, valueToAttach> & Record<TAttachCol, valueToAttach>;
   if(options.removePrevious){
-    await Query.table(table).where(modelCol,'=',modelValue).delete();
+
+    await Query.table(table).where(modelCol,'=',modelValue).__forceDelete();
   }else{
     const models: AttachRecord[] = 
     await Query.table(table)
@@ -96,14 +109,12 @@ export abstract class BaseRepository {
     } 
   }
   }
-
-  
  
-const result = await Promise.all(Object.entries(_valuesToAttach).map(async([key,value])=>{
+const result = await Promise.all(Object.values(_valuesToAttach).map(async(valueToAttach)=>{
   const columns:string[] = [modelCol,attachCol];
-  const values: SqlValue[] = [modelValue,key];
-  if(value !== null){
-    Object.entries(value).forEach(([col,_value])=>{
+  const values: SqlValue[] = [modelValue,valueToAttach.value];
+  if(valueToAttach.relationCols !== null){
+    Object.entries(valueToAttach.relationCols).forEach(([col,_value])=>{
       columns.push(col);
       values.push(_value);
     })

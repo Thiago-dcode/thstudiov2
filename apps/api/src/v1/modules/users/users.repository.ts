@@ -115,7 +115,7 @@ export class UserRepository extends BaseRepository {
   async updateById(id: number, user: UpdateUserInput): Promise<BaseUser> {
     const columns = Object.keys(user);
     const values = Object.values(user);
-    await this.query().where('id', '=', id).update(columns, values);
+   if(columns.length && values.length) await this.query().where('id', '=', id).update(columns, values);
     const result = await this.query()
       .select(this.BASE_COLUMNS)
       .where('id', '=', id)

@@ -157,7 +157,7 @@ export class UserService {
             modelValue: user.id,
             attachCol: 'category_id',
             valuesToAttach: categories,
-            removePrevious: true,
+            removePrevious: true
           })
         : Promise.resolve(true),
     ]);

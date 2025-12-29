@@ -51,15 +51,15 @@ export default async function AtelierTabPage({
     if (!TABS[tab]) {
         notFound()
     }
-    const userResponse = await usersService.getOne(userAuth.id);
+    const [userResponse,categoriesResponse] = await Promise.all([usersService.getOne(userAuth.id),usersService.getAllCategories(userAuth.id)]);
     if (!userResponse.data) {
         notFound()
     }
     const tabsKey = Object.keys(TABS);
     return (
 
-        <TabProvider defaultUser={userResponse.data}>
-            <section className="flex flex-col items-start justify-start gap-4 w-full">
+        <TabProvider defaultUser={userResponse.data} defaultUserCategories={categoriesResponse.data || []}>
+            <section className="flex flex-col items-start justify-start gap-4 size-full pb-4">
                 <div className="flex items-center justify-start ">
                     {tabsKey.map((key, i) => {
                         const { title } = TABS[key as TabKey];

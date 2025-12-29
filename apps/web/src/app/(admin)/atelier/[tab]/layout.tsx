@@ -13,7 +13,7 @@ export default async function AtelierTabLayout({
         redirect('/');
     }
     return (
-        <div className="size-full flex flex-col items-start justify-start gap-10 p-10">
+        <div className="size-full flex flex-col items-start justify-start gap-10 p-4">
             <div className="border-b border-b-fg-2 pb-10 w-full">
                 <Suspense fallback={<UserMetricsSkeleton />}>
                     <UserMetrics userId={userAuth.id} />

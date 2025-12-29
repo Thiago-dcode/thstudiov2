@@ -10,7 +10,8 @@ type UpdateCategoriesContextType = {
     categoriesResponse: SuccessResponse<CategoryBase[]> | null;
     categories: CategoryBase[];
     categoriesSelected: CategoryBase[];
-    setCategoriesSelected: React.Dispatch<React.SetStateAction<{ [id: number]: CategoryBase }>>;
+    handleSelectCategory: (category:CategoryBase)=>void;
+    isSelected: (category:CategoryBase)=>boolean;
     handleOnChange: () => Promise<void>;
     handleFetch: (params: CategoryIndexRequest) => Promise<void>;
     searchRef: React.RefObject<HTMLInputElement | null>;
@@ -59,7 +60,23 @@ export const UpdateCategoriesProvider = ({ children, userCategories }: UpdateCat
             }
         }
     });
+const handleSelectCategory  = (category:CategoryBase)=>{
+    setCategoriesSelected((prev) => {
 
+        if (prev[category.id]) {
+            const { [category.id]: _, ...rest } = prev;
+            return rest;
+        } else {
+            if (categoriesSelectedValue.length >= 5) return prev;
+            return { ...prev, [category.id]: category };
+        }
+    })
+
+}
+const isSelected = (category:CategoryBase) =>{
+
+    return !!categoriesSelected[category.id]
+}
     const handleOnChange = async () => {
         if (isLoading) return;
         if (idTimeOut.current) clearTimeout(idTimeOut.current);
@@ -79,7 +96,8 @@ export const UpdateCategoriesProvider = ({ children, userCategories }: UpdateCat
         categoriesResponse: data,
         categories: categoriesValue,
         categoriesSelected: categoriesSelectedValue,
-        setCategoriesSelected,
+        handleSelectCategory,
+        isSelected,
         handleOnChange,
         handleFetch,
         searchRef,

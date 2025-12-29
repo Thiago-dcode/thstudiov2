@@ -2,7 +2,9 @@
 
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction"
 import { getOneUserAction } from "@/modules/users/server-actions/get-one-user.action"
+import {getUserCategoriesAction } from "@/modules/users/server-actions/get-user-categories.action"
 import { updateUserAction } from "@/modules/users/server-actions/update-user.action"
+import { CategoryBase } from "@repo/common-lib/types/category"
 import { User } from "@repo/common-lib/types/user"
 import { useContext, createContext, ReactNode, useState, FormEvent } from "react"
 
@@ -11,6 +13,7 @@ import { useContext, createContext, ReactNode, useState, FormEvent } from "react
 // Context type
 type TabContextType = {
     user: User,
+    userCategories:CategoryBase[]
     handleSubmit: (e: FormEvent<HTMLFormElement> | FormData) => Promise<void>,
     isPending: boolean,
     errors?: string[] | null,
@@ -33,13 +36,15 @@ export const useTab = () => {
 // Provider component
 export const TabProvider = ({
     children,
-    defaultUser
+    defaultUser,
+    defaultUserCategories
 }: {
     children: ReactNode,
-    defaultUser: User
+    defaultUser: User,
+    defaultUserCategories: CategoryBase[]
 }) => {
     const [user, setUser] = useState(defaultUser);
-
+    const [userCategories, setUserCategories] = useState(defaultUserCategories);
     const { handleSubmit, isPending, errors, cleanErrors, success, cleanResult, reset } = useHandleAction({
         action: async (formData) => {
             return await updateUserAction(user.id, formData)
@@ -48,7 +53,12 @@ export const TabProvider = ({
             console.log("RESULT TAB",result)
             if (result.data) {
                 const userResponse = await getOneUserAction(result.data.id);
-                console.log("USER RESPONSE",userResponse)
+                if(result.inputs?.categories){
+                    const categoriesResponse = await getUserCategoriesAction(result.data.id)
+                    if(categoriesResponse.data){
+                        setUserCategories(categoriesResponse.data)
+                    }
+                }
                 if (userResponse.data) {
                     setUser(userResponse.data)
                 }
@@ -62,7 +72,7 @@ export const TabProvider = ({
     })
 
     return (
-        <TabContext.Provider value={{ user, isPending, errors, handleSubmit, cleanErrors, success, reset }}>
+        <TabContext.Provider value={{ user,userCategories, isPending, errors, handleSubmit, cleanErrors, success, reset }}>
             {children}
         </TabContext.Provider>
     )

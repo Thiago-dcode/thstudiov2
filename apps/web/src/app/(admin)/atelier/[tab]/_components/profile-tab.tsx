@@ -10,12 +10,16 @@ import { FileInputProvider, useInputFile } from "@repo/ui/contexts/file.provider
 import { usePreviewUrl } from "@repo/ui/hooks/usePreviewUrl";
 import { FileInput } from "@repo/ui/components/custom/file-input";
 import { Errors } from "@repo/ui/components/custom/errors";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Badge } from "@repo/ui/components/shadcn/badge";
+import { UpdateCategoriesProvider, useUpdateCategories } from "@/modules/categories/providers/update-user-categories.provider";
+import { UserCategoriesComponent } from "@/modules/categories/components/user-categories.component";
 
 export default function ProfileTab() {
-    const { user, handleSubmit, reset } = useTab();
+    const { user, userCategories, handleSubmit, reset } = useTab();
     const [open, setOpen] = useState(false);
     const [openProfile, setOpenProfile] = useState(false);
+    const [openCategories, setOpenCategories] = useState(false);
 
     const closeModal = () => {
         setOpen(false)
@@ -25,8 +29,12 @@ export default function ProfileTab() {
         setOpenProfile(false)
         reset()
     }
+    const closeCategoriesModal = () => {
+        setOpenCategories(false)
+        reset()
+    }
     return (
-        <section className="w-full max-w-4xl   shadow-lg shadow-fg ">
+        <section className="w-full max-w-4xl shadow-lg shadow-fg pb-4 ">
             {/* Banner */}
             <div className="relative group h-48 aspect-video w-full">
                 <Image
@@ -49,7 +57,7 @@ export default function ProfileTab() {
                         <DialogContent className="max-w-2xl">
                             <DialogTitle>Edit Avatar</DialogTitle>
                             <FormComponent.Container >
-                                <FormComponent.Form onSubmit={handleSubmit} className=" max-w-xl">
+                                <FormComponent.Form onSubmit={handleSubmit} className=" max-w-xl pt-4">
                                     <FileInputProvider allowedMimeTypes={['image/jpeg', 'image/jpg', 'image/png', 'image/webp']}>
                                         <EditAvatar closeModal={() => {
                                             closeModal()
@@ -78,7 +86,7 @@ export default function ProfileTab() {
 
             </div>
             {/* Profile section */}
-            <div className="relative px-6 py-4">
+            <div className="relative py-4 px-2">
                 <Dialog open={openProfile} onOpenChange={setOpenProfile}>
                     <DialogTrigger className="absolute top-3 right-3 p-2 bg-fg-1 hover:bg-fg-2 rounded-full transition-opacity cursor-pointer">
                         <Pen className="size-3" />
@@ -86,7 +94,7 @@ export default function ProfileTab() {
                     <DialogContent className="max-w-2xl">
                         <DialogTitle>Edit Profile</DialogTitle>
                         <FormComponent.Container>
-                            <FormComponent.Form onSubmit={handleSubmit} className="max-w-xl">
+                            <FormComponent.Form onSubmit={handleSubmit} className="max-w-xl pt-4">
                                 <EditProfile user={user} closeModal={closeProfileModal} />
                             </FormComponent.Form>
                         </FormComponent.Container>
@@ -94,7 +102,7 @@ export default function ProfileTab() {
                 </Dialog>
 
                 {/* User info */}
-                <div className="pt-14 flex flex-col items-start justify-start gap-4">
+                <div className="pt-14 flex flex-col items-start justify-start gap-2">
                     <div className="flex flex-col items-start justify-start"> <h1 className="text-2xl font-bold">{user.name} {user.surname}</h1>
                         <p className="text-text-muted">{user.profession || 'Profession title'}</p></div>
                     <p>{user.short_biography}</p>
@@ -102,6 +110,34 @@ export default function ProfileTab() {
 
 
             </div>
+
+            {/*Categories section */}
+            <section className="flex flex-col items-start justify-start gap-2 px-2">
+               <div className="flex items-center justify-start gap-2">
+               <h3>Categories</h3>
+               <Dialog open={openCategories} onOpenChange={setOpenCategories}>
+                    <DialogTrigger className="p-2 bg-fg-1 hover:bg-fg-2 rounded-full transition-opacity cursor-pointer">
+                        <Pen className="size-3" />
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                        <DialogTitle>Edit Categories</DialogTitle>
+                        <UpdateCategoriesProvider userCategories={userCategories}>
+                            <FormComponent.Container>
+                                <FormComponent.Form onSubmit={handleSubmit} className="max-w-xl pt-4">
+                                    <EditCategories closeModal={closeCategoriesModal} />
+                                </FormComponent.Form>
+                            </FormComponent.Container>
+                        </UpdateCategoriesProvider>
+                    </DialogContent>
+                </Dialog>
+               </div>
+            <div className="flex w-full flex-wrap gap-1">
+                {userCategories.map(category=>{
+
+                    return <Badge key={`user-category-${category.id}`}>{category.translation?.name || category.name}</Badge>
+                })}
+            </div>
+            </section>
         </section>
     );
 }
@@ -209,6 +245,45 @@ export const EditProfile = ({ user, closeModal }: {
             />
 
             <FormComponent.SubmitButton isPending={isPending} disabled={isPending}>
+                Update
+            </FormComponent.SubmitButton>
+
+            {errors && errors.length > 0 ? (
+                <Errors errors={errors} />
+            ) : null}
+        </div>
+    );
+}
+
+export const EditCategories = ({ closeModal }: {
+    closeModal: () => void;
+}) => {
+    const { errors, isPending, success} = useTab();
+    const { categoriesSelected } = useUpdateCategories();
+    const inputCategoryIds = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        if (success) closeModal();
+    }, [success, closeModal]);
+
+    useEffect(() => {
+        if (inputCategoryIds.current) {
+            inputCategoryIds.current.value = '';
+            if (categoriesSelected.length > 0) {
+                inputCategoryIds.current.value = categoriesSelected.reduce((acc, curr, idx) => {
+                    let str = acc + `${curr.id}`;
+                    if (idx !== categoriesSelected.length - 1) str += ',';
+                    return str;
+                }, '');
+            }
+        }
+    }, [categoriesSelected]);
+
+    return (
+        <div className="w-full flex flex-col gap-4">
+            <UserCategoriesComponent />
+            <input ref={inputCategoryIds} type="text" name="categories" hidden />
+            <FormComponent.SubmitButton className="sticky bottom-0" isPending={isPending} disabled={categoriesSelected.length === 0 || categoriesSelected.length >10|| isPending}>
                 Update
             </FormComponent.SubmitButton>
 

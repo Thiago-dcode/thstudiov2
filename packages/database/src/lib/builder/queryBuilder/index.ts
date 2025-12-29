@@ -118,6 +118,7 @@ export class QueryBuilder extends BaseBuilder {
    */
   public async get<T = any>(): Promise<T> {
     this.buildSelectQuery();
+    console.log("QUERY", this.query)
     const result = await getClient().query(this.query, this.values);
     this.reset();
     return result.rows;
@@ -761,9 +762,9 @@ offset = isNull ? offset : offset + 1;
     columns: string[],
     values: SqlValue[],
   ) {
-    if (columns.length !== values.length) {
+    if (!columns.length || !values.length || columns.length !== values.length) {
       throw new QueryBuilderWrongColumnsException(
-        'Columns and values must have the same length',
+        'Columns and values must have the same length and greater than 1',
       );
     }
   }
