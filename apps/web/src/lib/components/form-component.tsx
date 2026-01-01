@@ -112,12 +112,14 @@ const LabelInput = forwardRef<HTMLInputElement, {
     labelClassName?: string;
     inputClassName?: string;
     containerClassName?: string;
+    error?: string;
 } & React.InputHTMLAttributes<HTMLInputElement>>(({
     label,
     htmlFor,
     labelClassName,
     inputClassName,
     containerClassName,
+    error,
     id,
     ...inputProps
 }, ref) => {
@@ -129,14 +131,15 @@ const LabelInput = forwardRef<HTMLInputElement, {
                 htmlFor={inputId}
                 className={cn("block", labelClassName)}
             >
-                {label} {inputProps.required ? <span className="span-label">*</span> : ''}
+                {label} {inputProps.required ? <span className="span-label text-red-500">*</span> : ''}
             </Label>
             <Input
                 ref={ref}
                 id={inputId}
-                className={inputClassName}
+                className={cn(inputClassName, error && "border-red-500")}
                 {...inputProps}
             />
+            {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
         </Field>
     );
 });
@@ -149,12 +152,14 @@ const LabelTextarea = forwardRef<HTMLTextAreaElement, {
     labelClassName?: string;
     textareaClassName?: string;
     containerClassName?: string;
+    error?: string;
 } & React.TextareaHTMLAttributes<HTMLTextAreaElement>>(({
     label,
     htmlFor,
     labelClassName,
     textareaClassName,
     containerClassName,
+    error,
     id,
     ...textareaProps
 }, ref) => {
@@ -171,9 +176,10 @@ const LabelTextarea = forwardRef<HTMLTextAreaElement, {
             <Textarea
                 ref={ref}
                 id={textareaId}
-                className={textareaClassName}
+                className={cn(textareaClassName, error && "border-red-500")}
                 {...textareaProps}
             />
+            {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
         </Field>
     );
 });

@@ -7,9 +7,9 @@ import usersService from "../users.service";
 import { trimValues } from "@repo/common-lib/utils/cleanObj";
 import { MimeTypes } from "@repo/common-lib/types/general";
 import { revalidateTag } from "next/cache";
+import { ALLOWED_IMAGE_FILE_TYPES } from "@repo/common-lib/constants/constants";
 
 const MAX_FILE_SIZE = 8 * 1024 * 1024; // 8MB
-const ALLOWED_FILE_TYPES:MimeTypes[] = ['image/jpeg', 'image/png', 'image/webp'];
 
 export const updateUserAction = async (id:number,formData: FormData): Promise<ActionReturn<UpdateUserInputWithAssets,BaseUser>> => {
 
@@ -57,7 +57,7 @@ export const updateUserAction = async (id:number,formData: FormData): Promise<Ac
                 inputs:rawData
             };
         }
-        if (!ALLOWED_FILE_TYPES.includes(avatarFile.type as MimeTypes)) {
+        if (!ALLOWED_IMAGE_FILE_TYPES.includes(avatarFile.type as MimeTypes)) {
             return {
                 errors: ['Avatar must be an image (JPEG, PNG or WebP)'],
                 data:null ,
@@ -76,7 +76,7 @@ export const updateUserAction = async (id:number,formData: FormData): Promise<Ac
                 inputs:rawData
             };
         }
-        if (!ALLOWED_FILE_TYPES.includes(bannerFile.type as MimeTypes)) {
+        if (!ALLOWED_IMAGE_FILE_TYPES.includes(bannerFile.type as MimeTypes)) {
             return {
                 errors: ['banner must be an image (JPEG, PNG or WebP)'],
                 data:null ,

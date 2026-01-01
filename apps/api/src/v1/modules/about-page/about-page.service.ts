@@ -19,7 +19,6 @@ export class AboutPageService {
   public async findOneByUser(id: number) {
     console.log("ID", id)
     const result = await this.aboutPageRepository.getFirstByUser(id);
-    console.log(result);
     if (result && result.photo) {
       result.photo = await this.helpers.getAsset(result.photo);
     }
@@ -51,7 +50,7 @@ export class AboutPageService {
       const id = await generateUUID();
       data.photo = await this.helpers.setAsset({
         asset: photo,
-        path:`users/${data.user_id}/about_page/${id}`,
+        path:`users/${aboutPage.user_id}/about_page/${id}`,
         targetSizeMb: 0.5,
         targetQuality: 90,
       });

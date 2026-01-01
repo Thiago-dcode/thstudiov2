@@ -9,7 +9,8 @@ export const useHandleAction = <K,T>({action,beforeAction,afterAction}:{
     afterAction?:(result:ActionReturn<K,T>)=>Promise<void>
 }) =>{
     const [result,setResult] = useState<ActionReturn<K,T>|null>(null);
-    const [errors,setErrors] = useState<string[]|null>(null)
+    const [errors,setErrors] = useState<string[]|null>(null);
+    const [inputErrors, setInputErrors] = useState<Record<string,string>>()
     const [isPending,setPending] = useState(false);
     const handleSubmit =async (e:FormEvent<HTMLFormElement>| FormData) => {
         if(isPending) return;
@@ -21,12 +22,23 @@ export const useHandleAction = <K,T>({action,beforeAction,afterAction}:{
         if(beforeAction) await beforeAction(formData,result);
         const actionResult = await action(formData);
         if(afterAction) await afterAction(actionResult);
-        setErrors(actionResult.errors)
+        setErrors(actionResult.errors);
+        setInputErrors(actionResult.inputErrors)
         setResult(actionResult);
     }
 
     const cleanErrors = () =>{
         setErrors(null)
+        setInputErrors(undefined)
+    }
+    const deleteInputErrorProperty = (key: string) => {
+        //avoid rerenders
+        if(!inputErrors || !inputErrors[key]) return;
+        setInputErrors(prev => {
+            if (!prev || !prev[key]) return prev;
+            const { [key]: _, ...rest } = prev;
+            return Object.keys(rest).length > 0 ? rest : undefined;
+        });
     }
     const cleanResult = () =>{
         setResult(null);
@@ -48,8 +60,10 @@ export const useHandleAction = <K,T>({action,beforeAction,afterAction}:{
         isPending,
         handleSubmit,
         errors,
+        inputErrors,
         cleanErrors,
         cleanResult,
+        deleteInputErrorProperty,
         setErrors,
         reset,
         success: !!result?.data

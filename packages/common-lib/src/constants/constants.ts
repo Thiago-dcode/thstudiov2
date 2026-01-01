@@ -1,3 +1,5 @@
+import { MimeTypes } from "../types/general";
+
 // ==================== LANGUAGE / LOCALIZATION ====================
 export const DEFAULT_LANGUAGE = 'EN' as const;
 export const LANGUAGE_HEADER = 'x-app-lan' as const;
@@ -25,6 +27,7 @@ export const INITIATE_SUBCRIPTION_COOKIE = 'x-app-initiate_subscription' as cons
 
 // ==================== APP CONFIGURATION ====================
 export const FUNNEL_LAST_STEP = 4;
+export  const ALLOWED_IMAGE_FILE_TYPES:MimeTypes[] = ['image/jpeg', 'image/png', 'image/webp'];
 
 // ==================== EVENTS ====================
 export const NEW_USER_EVENT = 'new.user' as const;

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMainNav } from "../providers/main-nav.provider"
 import { ReactNode, useEffect, useState } from "react";
-import { Box, Grid, Home, LayoutDashboard, Settings } from "lucide-react";
+import { Box, Grid, Home, Info, LayoutDashboard, Settings } from "lucide-react";
 import { Logout } from "@/app/(admin)/__components/logout";
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
 
@@ -28,6 +28,11 @@ const routes: {
             name: 'Media',
             url: 'media',
             icon: <Box size={20} />
+        },
+        {
+            name: 'About',
+            url: 'about',
+            icon: <Info size={20} />
         },
         {
             name: 'Portfolios',
