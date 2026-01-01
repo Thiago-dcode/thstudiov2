@@ -1,4 +1,4 @@
-import { HttpException, Inject, Injectable } from '@nestjs/common';
+import { HttpException, Injectable } from '@nestjs/common';
 import { UpdateUserRequest } from './requests/update-user.request';
 import { NewUserEvent } from './events/new-user.event';
 import { OnEvent } from '@nestjs/event-emitter';
@@ -8,15 +8,12 @@ import { UserExtraDataRepository } from '../user-extra-data/user-extra-data.repo
 import { LogService } from '@repo/backend-lib/services/log-service';
 import { MailService } from '@repo/backend-lib/services/mail-service';
 import { NotifyNewUserMail } from './mails/notify-new-user.mail';
-import { StorageService } from '@repo/backend-lib/services/storage-service/base';
-import { CompressService } from '@repo/backend-lib/services/compress-service/base';
-import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
-import { s3StorageConfig } from 'src/config/storage';
 import { PlanSubscriptionsService } from '../plan-subscriptions/plan-subscriptions.service';
 import { stripe } from '@repo/backend-lib/services/payment-service/stripe';
 import { RequestService } from 'src/common/services/request.service';
-import { NEW_USER_EVENT } from '@repo/common-lib/constants/constants';
+import { CACHE_KEY_USER_CATEGORIES, NEW_USER_EVENT } from '@repo/common-lib/constants/constants';
 import { FindUserRequest } from './requests/find-user.request';
+import { Helpers } from 'src/common/services/helpers.service';
 
 @Injectable()
 export class UserService {
@@ -26,10 +23,8 @@ export class UserService {
     private readonly userExtraDataRepository: UserExtraDataRepository,
     private readonly logService: LogService,
     private readonly mailService: MailService,
+    private readonly helpers: Helpers,
     private readonly requestService: RequestService,
-    private readonly storageService: StorageService,
-    private readonly compressService: CompressService,
-    @Inject(CACHE_MANAGER) private cacheManager: Cache,
     private readonly notifyNewUserMail: NotifyNewUserMail,
   ) {}
 
@@ -37,29 +32,17 @@ export class UserService {
     return `This action returns all user`;
   }
 
-  protected async getAsset(path: string) {
-    console.log('path', path)
-    let asset = (await this.cacheManager.get(path)) as string;
-    if (!asset) {
-      asset = await this.storageService.getUrl(path);
-      await this.cacheManager.set(
-        path,
-        asset,
-        s3StorageConfig.signedUrlExpiration * 900, //Substract 10% to avoid possible s3 404
-      );
-    }
-    return asset;
-  }
+
   async findOne(id: number, findUserRequest?: FindUserRequest) {
     if (findUserRequest.format === 'COMPACT') {
       return await this.userRepository.findOneBy('id', id, 'COMPACT');
     }
     const result = await this.userRepository.findById(id);
     if (result?.avatar) {
-      result.avatar = await this.getAsset(result.avatar);
+      result.avatar = await this.helpers.getAsset(result.avatar);
     }
     if (result?.banner) {
-      result.banner = await this.getAsset(result.banner);
+      result.banner = await this.helpers.getAsset(result.banner);
     }
     return result;
   }
@@ -70,36 +53,6 @@ export class UserService {
       id,
       'COMPACT',
     );
-  }
-  async handleStoreAsset({
-    asset,
-    targetSizeMb,
-    path,
-    targetQuality,
-  }: {
-    asset: Express.Multer.File;
-    path: string;
-    targetSizeMb: number;
-    targetQuality?: number;
-  }) {
-    //Compress
-    const targetSize = (targetSizeMb > 0 ? targetSizeMb : 1) * 1024;
-    asset.buffer = await this.compressService.optimizeImageToWebp(
-      asset,
-      targetQuality ?? 90,
-      asset.size > targetSize ? targetSize : asset.size,
-    );
-    const [result] = await Promise.all([
-      this.storageService.write(asset, path),
-      this.cacheManager.del(path),
-    ]);
-    if (!result) {
-      throw new HttpException(
-        `An error ocurred during storing asset: <<${path}>>`,
-        500,
-      );
-    }
-    return path;
   }
 
   async update(
@@ -122,14 +75,14 @@ export class UserService {
     } = rest;
     const [avatarPath, bannerPath] = await Promise.all([
       avatar && avatar.size > 0
-        ? this.handleStoreAsset({
+        ? this.helpers.setAsset({
             asset: avatar,
             path: `users/${user.id}/avatar`,
             targetSizeMb: 0.3,
           })
         : Promise.resolve(undefined),
       banner && banner.size > 0
-        ? this.handleStoreAsset({
+        ? this.helpers.setAsset({
             asset: banner,
             path: `users/${user.id}/banner`,
             targetSizeMb: 1,
@@ -150,9 +103,15 @@ export class UserService {
         throw new HttpException(`Email not available`, 422);
       }
     }
+    const editCategories = categories && categories.length;
+    if(editCategories){
+      await this.helpers.deleteCached(CACHE_KEY_USER_CATEGORIES(user.id),{
+        appended_language:true
+      });
+    }
     const [userUpdated] = await Promise.all([
       this.userRepository.updateById(user.id, userUpdateData),
-      categories && categories.length
+      editCategories
         ? this.userRepository.attach('user_categories', {
             modelCol: 'user_id',
             modelValue: user.id,

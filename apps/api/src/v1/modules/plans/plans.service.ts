@@ -3,6 +3,7 @@ import { QueryBuilder } from '@repo/database/queryBuilder';
 import { PlansRepository } from './plans.repository';
 import { IndexPlanRequest } from './requests/index-plan.request';
 import { Helpers } from 'src/common/services/helpers.service';
+import { CACHE_KEY_PLANS, CACHE_KEY_FREE_PLAN, CACHE_KEY_ACTIVE_PLAN } from '@repo/common-lib/constants/constants';
 
 @Injectable()
 export class PlansService {
@@ -15,7 +16,7 @@ export class PlansService {
   // }
   async findAll(indexPlanRequest: IndexPlanRequest) {
     return await this.helpers.cacheRemember(
-      'plans',
+      CACHE_KEY_PLANS,
       this.plansRepository.findAll(indexPlanRequest),
       {
         append_language: true,
@@ -33,7 +34,7 @@ export class PlansService {
   }
   async findUserActivePlan(userId: number) {
     return await this.helpers.cacheRemember(
-      'user-active-plan_'+userId,
+      CACHE_KEY_ACTIVE_PLAN(userId),
       this.plansRepository.findUserActivePlan(userId),
       {
         append_language: false,
@@ -43,7 +44,7 @@ export class PlansService {
   }
   async findFreePlan() {
     return await this.helpers.cacheRemember(
-      'free-plan',
+      CACHE_KEY_FREE_PLAN,
       this.plansRepository.findFreePlan(),
       {
         append_language: true,

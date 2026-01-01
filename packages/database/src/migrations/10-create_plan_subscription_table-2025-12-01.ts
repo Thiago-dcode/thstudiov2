@@ -2,7 +2,7 @@ import {  Column, Schema } from "src/lib/facades";
 
 const up = async () => {
 
-  await Schema.table('plan_subscriptions').createIfNotExists([
+  await Schema.table('plan_subscriptions').withTimestamps(true).createIfNotExists([
     Column.id(),
     Column.string('stripe_id', 255, {
       unique: true,
@@ -42,7 +42,6 @@ const up = async () => {
     Column.boolean('is_trialing', {
       default: false,
     }),
-    Column.timestamps(true),
   ]);
 };
 

@@ -135,6 +135,7 @@ export class QueryBuilder extends BaseBuilder {
    }
     return parseInt(result.rows[0].count);
   }
+  
   public async first<T = any>(): Promise<T> {
     this.buildSelectQuery();
     const result = await getClient().query(this.query, this.values);

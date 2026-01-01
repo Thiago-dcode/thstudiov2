@@ -1,1 +1,4 @@
-export class CreatePlanRequest {}
+export class CreatePlanRequest {
+
+    
+}

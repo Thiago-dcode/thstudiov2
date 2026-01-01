@@ -1,16 +1,12 @@
-import { createTimeStampsTrigger } from '../lib/scripts/utils';
 import { Column, Schema } from '../lib/facades';
 
 const up = async () => {
-  await Schema.table('media').createIfNotExists([
+  await Schema.table('media').withTimestamps().createIfNotExists([
     Column.id(),
-    Column.string('title', 255, {
-      nullable: true,
-    }),
+    Column.string('title', 255),
     Column.text('description', {
       nullable: true,
     }),
-
     Column.integer('bytes'),
     Column.string('url',255, {
       unique: true,
@@ -30,15 +26,13 @@ const up = async () => {
     Column.boolean('is_active', {
       default: true,
     }),
-    //For SEO
-    Column.text('tags', {
+    Column.string('alt',255, {
       nullable: true,
     }),
     Column.foreignKey('user_id', 'users', 'id', {
       onDelete: 'CASCADE',
       onUpdate: 'CASCADE',
     }),
-    Column.timestamps(),
   ]);
 
   await Schema.table('media_translations').createIfNotExists([
@@ -53,8 +47,6 @@ const up = async () => {
     }),
     Column.uniques('UC_media_translation',['language_code','media_id'])
   ]);
-
-  await createTimeStampsTrigger('media');
 };
 
 const down = async () => {

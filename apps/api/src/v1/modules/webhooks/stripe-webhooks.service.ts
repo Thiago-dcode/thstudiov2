@@ -141,7 +141,7 @@ let internalSubscription:PlanSubscription = _internalSubscription;
         stripe_item_id: stripeItemId,
         plan_price_id: planPrice.id,
         amount: planPrice.price,
-      });
+      },user.id);
       this.logger.debug(`Updated subscription`,internalSubscription);
     } else {
 

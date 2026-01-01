@@ -47,6 +47,7 @@ try{
             ...result.data,
             token:uuid
         })]);
+        
         revalidateTag(`subscription-${user?.id}`,'max');
     //Success
     return {

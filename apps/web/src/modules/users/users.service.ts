@@ -1,12 +1,13 @@
 import { BaseService } from "@/lib/services/base.service";
 import { fetchApi } from "@/lib/facade/fetchApi";
-import { BaseUser, UpdateUserInputAvatarFile, User, UserMetrics } from "@repo/common-lib/types/user";
+import { BaseUser, User, UserMetrics } from "@repo/common-lib/types/user";
 import { ApiResponse } from "@repo/common-lib/types/response";
 import { CategoryBase } from "@repo/common-lib/types/category";
 import { UserExtraData } from "@repo/common-lib/types/user-extra-data";
 import { FullPlan } from "@repo/common-lib/types/plan";
 import { FullPlanSubscription } from "@repo/common-lib/types/plan-subscription";
 import { queryParamBuilder } from "@repo/common-lib/utils/query-builder";
+import { UpdateUserInputAvatarFile } from "@repo/common-lib/types/user copy";
 
 export class UserService extends BaseService {
     constructor() {
@@ -36,7 +37,6 @@ export class UserService extends BaseService {
             cacheOptions:{
                 cache:'force-cache',
                 next:{
-                    revalidate:60*60*3,
                     tags:[`user-${id}`]
                 }
             }
@@ -61,7 +61,6 @@ export class UserService extends BaseService {
             cacheOptions:{
                 cache:'force-cache',
                 next:{
-                    revalidate:60*60*3,
                     tags:[`subscription-${userId}`]
                 }
             }
@@ -73,9 +72,8 @@ export class UserService extends BaseService {
         return await this.fetchApi.get({
             resource:`${id}/metrics`,
             cacheOptions:{
-                cache:'force-cache',
+                cache:'default',
                 next:{
-                    revalidate:3600,
                     tags:[`subscription-${id}`,`user-${id}`]
                 }
             }

@@ -30,3 +30,15 @@ export const FUNNEL_LAST_STEP = 4;
 export const NEW_USER_EVENT = 'new.user' as const;
 export const WEBHOOK_STRIPE_EVENT = 'webhook.stripe.event' as const;
 export const UPDATE_USER_EXTRA_DATA_METRICS = 'update-user-extra-data-metrics.event' as const;
+
+// ==================== CACHE KEYS ====================
+// Plans
+export const CACHE_KEY_PLANS = 'plans' as const;
+export const CACHE_KEY_FREE_PLAN = 'free-plan' as const;
+export const CACHE_KEY_ACTIVE_PLAN = (userId: number | string) => `active_plan_${userId}` as const;
+
+// Subscriptions
+export const CACHE_KEY_ACTIVE_SUBSCRIPTION = (userId: number | string) => `active_subscription_${userId}` as const;
+
+// Categories
+export const CACHE_KEY_USER_CATEGORIES = (userId: number | string) => `user_categories_${userId}` as const;

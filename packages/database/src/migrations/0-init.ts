@@ -4,7 +4,6 @@ import {
   TRIGGER_UPDATE_UPDATED_AT_FUNCTION_NAME,
 } from '@repo/common-lib/constants/database';
 import { AvailableEnums, ENUMS } from '@repo/common-lib/constants/enums';
-import { createTimeStampsTrigger } from '../lib/scripts/utils';
 
 const up = async () => {
   // Create trigger to automatically update updated_at timestamp on row updates
@@ -40,7 +39,7 @@ const up = async () => {
   }
 
   //Address
-  await Schema.table('addresses').createIfNotExists([
+  await Schema.table('addresses').withTimestamps(true).createIfNotExists([
     Column.id(),
     Column.string('street', 255, {
       nullable: true,
@@ -63,12 +62,10 @@ const up = async () => {
     Column.double('longitude', {
       nullable: true,
     }),
-    Column.timestamps(true),
   ]);
-  await createTimeStampsTrigger('addresses');
 
   
-  await Schema.table('payment_methods').createIfNotExists([
+  await Schema.table('payment_methods').withTimestamps(true).createIfNotExists([
     Column.id(),
     Column.enum('payment_method','PAYMENT_METHOD',{
       unique:true
@@ -76,9 +73,7 @@ const up = async () => {
     Column.boolean('enabled',{
       default:true
     }),
-    Column.timestamps(true)
   ]);
-  await createTimeStampsTrigger('payment_methods');
 };
 
 const down = async () => {

@@ -1,9 +1,8 @@
 import { Column, Schema } from '../lib/facades';
-import { createTimeStampsTrigger } from '../lib/scripts/utils';
 
 const up = async () => {
   //Your migration code here
-  await Schema.table('projects').createIfNotExists([
+  await Schema.table('projects').withTimestamps(true).createIfNotExists([
     Column.id(),
     Column.string('title', 255),
     Column.text('description'),
@@ -49,9 +48,7 @@ const up = async () => {
     Column.foreignKey('service_id', 'services', 'id', {
       onDelete: 'CASCADE',
     }),
-    Column.timestamps(true),
   ]);
-  await createTimeStampsTrigger('projects');
 
   await Schema.table('project_translations').createIfNotExists([
     Column.id(),

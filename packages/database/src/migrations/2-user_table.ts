@@ -1,11 +1,10 @@
-import { createTimeStampsTrigger } from '../lib/scripts/utils';
 import { ColumnBuilder } from '../lib/builder/columnBuilder';
 import SchemaBuilder from '../lib/builder/schemaBuilder';
 const TABLE_NAME = 'users';
 
 const up = async () => {
   // Create the users table with all fields from Prisma schema
-  await SchemaBuilder.table(TABLE_NAME).createIfNotExists([
+  await SchemaBuilder.table(TABLE_NAME).withTimestamps(true).createIfNotExists([
     ColumnBuilder.id(),
     ColumnBuilder.string('name', 255, {
       nullable: true,
@@ -53,10 +52,7 @@ const up = async () => {
       onDelete: 'SET NULL',
       nullable: true,
     }),
-
-    ColumnBuilder.timestamps(true),
   ]);
-  await createTimeStampsTrigger('users');
 };
 
 const down = async () => {

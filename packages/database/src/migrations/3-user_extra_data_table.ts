@@ -1,10 +1,9 @@
-import { createTimeStampsTrigger } from '../lib/scripts/utils';
 import { Column, Schema } from '../lib/facades';
 
 const TABLE_NAME = 'user_extra_data';
 
 const up = async () => {
-  await Schema.table(TABLE_NAME).createIfNotExists([
+  await Schema.table(TABLE_NAME).withTimestamps(true).createIfNotExists([
     Column.id(),
     //MB
     Column.integer('media_size', {
@@ -34,9 +33,7 @@ const up = async () => {
     Column.foreignKey('user_id', 'users', 'id', {
       onDelete: 'CASCADE',
     }),
-    Column.timestamps(true),
   ]);
-  await createTimeStampsTrigger('user_extra_data');
 };
 
 const down = async () => {

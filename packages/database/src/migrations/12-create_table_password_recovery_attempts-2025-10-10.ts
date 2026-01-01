@@ -1,9 +1,8 @@
 import { Column, Schema } from "src/lib/facades";
-import { createTimeStampsTrigger } from "src/lib/scripts/utils";
 
 const up = async () => {
 
-  await Schema.table('password_recovery_attempts').createIfNotExists([  
+  await Schema.table('password_recovery_attempts').withTimestamps(true).createIfNotExists([  
     Column.id(),
     Column.foreignKey('user_id', 'users', 'id', {
       onDelete: 'CASCADE',
@@ -16,9 +15,7 @@ const up = async () => {
       default:false
     }),
     Column.timestamp('expires_at'),
-    Column.timestamps(true),
   ]);
-  await createTimeStampsTrigger('password_recovery_attempts');
 };
 
 const down = async () => {

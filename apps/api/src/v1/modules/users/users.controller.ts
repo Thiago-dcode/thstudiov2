@@ -20,6 +20,8 @@ import { IsUserAuthPipe } from 'src/pipes/is-user-auth.pipe';
 import { PlansService } from '../plans/plans.service';
 import { PlanSubscriptionsService } from '../plan-subscriptions/plan-subscriptions.service';
 import { FindUserRequest } from './requests/find-user.request';
+import { AboutPageService } from '../about-page/about-page.service';
+import { CategoriesService } from '../categories/categories.service';
 
 @Controller('users')
 export class UserController {
@@ -28,6 +30,8 @@ export class UserController {
     private readonly userExtraDataService: UserExtraDataService,
     private readonly planService: PlansService,
     private readonly planSubscriptionsService: PlanSubscriptionsService,
+    private readonly categoriesService: CategoriesService,
+    private readonly aboutPageService: AboutPageService
   ) {}
   @Public()
   @Get()
@@ -63,6 +67,21 @@ export class UserController {
     id: number,
   ) {
     return await this.planSubscriptionsService.findActiveSubscription(id);
+  }
+  
+  @Public()
+  @Get(':id/about-page')
+  async findAboutPage(
+    @Param('id', ParseIntPipe, new ModelExistPipe('users'))
+    id: number,
+  ){
+    return await this.aboutPageService.findOneByUser(id);
+
+  }
+  @Public()
+  @Get(':id/categories')
+  findAllCategories(@Param('id', ParseIntPipe, new ModelExistPipe('users')) id: number) {
+    return this.categoriesService.findAllUserCategories(id);
   }
 
 

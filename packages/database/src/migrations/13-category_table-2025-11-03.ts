@@ -4,7 +4,7 @@ const up = async () => {
 
   //Your migration code here
 
-  await Schema.table('categories').createIfNotExists([
+  await Schema.table('categories').withTimestamps(true).createIfNotExists([
     Column.id(),
     Column.text('tags'),
     Column.string('thumbnail',255,{
@@ -13,7 +13,6 @@ const up = async () => {
     Column.string('name',255,{
       unique:true
     }),
-    Column.timestamps(true)
   ]);
   await Alter.table('categories').foreignKeyAdd('parent_id','categories','id',{
     nullable:true,

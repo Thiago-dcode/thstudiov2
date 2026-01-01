@@ -3,8 +3,12 @@ import { TableName } from '@repo/common-lib/types/database';
 import { AvailableEnums, ENUMS } from '@repo/common-lib/constants/enums';
 import { getClient } from '../../client';
 import { SchemaBuilderOperationNotAllowedException } from './exceptions';
+import { createTimeStampsTrigger } from '../../scripts/utils/triggers';
+import { ColumnBuilder } from '../columnBuilder';
 class SchemaBuilder extends BaseBuilder {
   protected createColumns: string[] = [];
+  private timestamps:boolean = false;
+  private softDeletes:boolean = false;
   public static table(tableName: TableName) {
     this.throwIfTableNotExists(tableName);
     return new SchemaBuilder(tableName);
@@ -20,21 +24,39 @@ class SchemaBuilder extends BaseBuilder {
     // Flatten any arrays (like from timestamps() method)
     this.buildColumns(columns);
     this.buildCreateQuery();
-    return await this.getDb()?.query(this.query);
+
+    const result =  await this.getDb()?.query(this.query);
+    if(this.timestamps){
+      await createTimeStampsTrigger(this.tableName);
+    }
+    return result;
   }
 
+  public withTimestamps(softDeletes = false){
+    this.softDeletes = softDeletes;
+    this.timestamps = true;
+    return this;
+  }
   public async createIfNotExists(columns?: (string | string[])[]) {
     this.buildColumns(columns);
     this.buildCreateQuery(true);
-    return await this.getDb()?.query(this.query);
+  
+    const result = await this.getDb()?.query(this.query);
+    if(this.timestamps){
+      await createTimeStampsTrigger(this.tableName);
+    }
+    return result;
   }
-  protected buildColumns(columns?: (string | string[])[]) {
+  protected  buildColumns(columns?: (string | string[])[]) {
     for (const column of columns || []) {
       if (Array.isArray(column)) {
         this.createColumns.push(...column);
       } else {
         this.createColumns.push(column);
       }
+    }
+    if(this.timestamps){
+      this.createColumns.push(...ColumnBuilder.timestamps(this.softDeletes))
     }
   }
   public static async createEnum(enumName:  AvailableEnums) {

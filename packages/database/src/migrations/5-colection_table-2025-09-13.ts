@@ -1,9 +1,8 @@
-import { createTimeStampsTrigger } from '../lib/scripts/utils';
 import { Column, Schema } from '../lib/facades';
 
 
 const up = async () => {
-  await Schema.table('collections').createIfNotExists([
+  await Schema.table('collections').withTimestamps(true).createIfNotExists([
     Column.id(),
     Column.string('title', 255, {}),
     Column.text('description'),
@@ -11,7 +10,6 @@ const up = async () => {
       onDelete: 'CASCADE',
       onUpdate: 'CASCADE',
     }),
-    Column.timestamps(true),
   ]);
   await Schema.table('collection_media').create([
     Column.id(),
@@ -37,8 +35,6 @@ const up = async () => {
     }),
     Column.uniques('UC_collection_translation',['language_code','collection_id'])
   ]);
-
-  await createTimeStampsTrigger('collections');
 };  
 
 const down = async () => {

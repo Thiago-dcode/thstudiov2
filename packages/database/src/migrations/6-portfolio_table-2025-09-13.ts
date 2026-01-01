@@ -1,8 +1,7 @@
-import { createTimeStampsTrigger } from '../lib/scripts/utils';
 import { Schema, Column } from '../lib/facades';
 
 const up = async () => {
-  await Schema.table('portfolios').createIfNotExists([
+  await Schema.table('portfolios').withTimestamps(true).createIfNotExists([
     Column.id(),
     Column.string('title', 255, {}),
     Column.string('thumbnail',255),
@@ -11,7 +10,6 @@ const up = async () => {
       onDelete: 'CASCADE',
       onUpdate: 'CASCADE',
     }),
-    Column.timestamps(true),
   ]);
   await Schema.table('portfolio_media').createIfNotExists([
     Column.id(),
@@ -46,7 +44,6 @@ const up = async () => {
     }),
     Column.uniques('UC_portfolio_translation',['language_code','portfolio_id'])
   ]);
-  await createTimeStampsTrigger('portfolios');
 };
 
 const down = async () => {

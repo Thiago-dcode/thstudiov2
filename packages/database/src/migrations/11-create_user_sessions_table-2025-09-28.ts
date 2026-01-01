@@ -1,8 +1,7 @@
 import { Schema, Column, Alter } from "src/lib/facades";
-import { createTimeStampsTrigger } from "src/lib/scripts/utils";
 const up = async () => {
 
-  await Schema.table('user_auth_devices').createIfNotExists([
+  await Schema.table('user_auth_devices').withTimestamps(true).createIfNotExists([
     Column.id(),
     Column.string('user_agent', 255),
     Column.text('ip_address'),
@@ -15,11 +14,9 @@ const up = async () => {
     Column.foreignKey('user_id', 'users', 'id', {
       onDelete: 'CASCADE',
     }),
-    Column.timestamps(true),
   ]);
-  await createTimeStampsTrigger('user_auth_devices');
 
-  await Schema.table('user_sessions').createIfNotExists([
+  await Schema.table('user_sessions').withTimestamps(true).createIfNotExists([
     Column.id(),
    Column.text('token'),
     Column.foreignKey('user_id', 'users', 'id', {
@@ -29,9 +26,7 @@ const up = async () => {
       onDelete: 'CASCADE',
     }),
     Column.timestamp('expires_at'),
-    Column.timestamps(true),
   ]);
-  await createTimeStampsTrigger('user_sessions');
   await Alter.table('users').addColumn('twofa_enabled', 'BOOLEAN', {
     default: true,
   });

@@ -1,8 +1,7 @@
 import { Schema, Column } from '../lib/facades';
 import SchemaBuilder from '../lib/builder/schemaBuilder';
-import { createTimeStampsTrigger } from '../lib/scripts/utils';
 const up = async () => {
-  await Schema.table('plans').createIfNotExists([
+  await Schema.table('plans').withTimestamps(true).createIfNotExists([
     Column.id(),
     Column.string('stripe_id', 255, {
       unique: true,
@@ -40,13 +39,10 @@ const up = async () => {
       default: false,
     }),
     Column.smallInteger('limit_write_storage_per_day'),
-    Column.timestamps(true),
   ]);
-
-  await createTimeStampsTrigger('plans');
  
 
-  await Schema.table('plan_prices').createIfNotExists([
+  await Schema.table('plan_prices').withTimestamps(true).createIfNotExists([
     Column.id(),
     Column.string('stripe_id', 255, {
       unique: true,
@@ -61,9 +57,7 @@ const up = async () => {
       onDelete: 'CASCADE',
     }),
     Column.enum('billing_type', 'BILLING_TYPE'),
-    Column.timestamps(true),
   ]);
-  await createTimeStampsTrigger('plan_prices');
 
   await Schema.table('plan_translations').createIfNotExists([
     Column.id(),
@@ -77,7 +71,7 @@ const up = async () => {
     Column.enum('language_code', 'LANGUAGE_CODE'),
     Column.uniques('UC_plan_translation',['language_code','plan_id'])
   ]);
-  await Schema.table('plan_offers').createIfNotExists([
+  await Schema.table('plan_offers').withTimestamps(true).createIfNotExists([
     Column.id(),
 
     Column.string('name'),
@@ -97,9 +91,7 @@ const up = async () => {
       onDelete: 'CASCADE',
       nullable: true,
     }),
-    Column.timestamps(true),
   ]);
-  await createTimeStampsTrigger('plan_offers');
 };
 
 const down = async () => {

@@ -19,6 +19,7 @@ import { StripeService } from 'src/common/services/stripe.service';
 import { LogService } from '@repo/backend-lib/services/log-service';
 import { paypal } from '@repo/backend-lib/services/payment-service/paypal';
 import { PaymentMethodsService } from '../utils/payment-methods.service';
+import { CACHE_KEY_ACTIVE_SUBSCRIPTION, CACHE_KEY_ACTIVE_PLAN } from '@repo/common-lib/constants/constants';
 
 @Injectable()
 export class PlanSubscriptionsService {
@@ -101,9 +102,12 @@ export class PlanSubscriptionsService {
   }
 
   async findActiveSubscription(userId: number) {
-    return await this.planSubscriptionsRepository.findActiveSubscription(
+    return await this.helpers.cacheRemember(CACHE_KEY_ACTIVE_SUBSCRIPTION(userId),this.planSubscriptionsRepository.findActiveSubscription(
       userId,
-    );
+    ),{
+      append_language:false,
+      ttl: 1000 * 60 * 60 * 24,
+    }) ;
   }
   async handleStripeSubscription({
     currentUserSubscription,
@@ -314,8 +318,12 @@ export class PlanSubscriptionsService {
     });
   }
   async create(planData: CreatePlanSubscriptionInput) {
-    const planSubScription =
-      await this.planSubscriptionsRepository.create(planData);
+
+    const [planSubScription] =await Promise.all([
+      this.planSubscriptionsRepository.create(planData),
+      this.helpers.deleteManyCached([CACHE_KEY_ACTIVE_SUBSCRIPTION(planData.user_id), CACHE_KEY_ACTIVE_PLAN(planData.user_id)]),
+
+    ])
 
     return planSubScription;
   }
@@ -324,29 +332,37 @@ export class PlanSubscriptionsService {
     userId: string | number,
     skipSubscriptions: number[] = [],
   ) {
-    await this.planSubscriptionsRepository.update(
-      {
-        is_active: false,
-      },
-      {
-        wheres: [
-          {
-            column: 'user_id',
-            operator: '=',
-            value: userId,
-          },
-          ...(skipSubscriptions.length > 0
-            ? [
-                {
-                  column: 'id',
-                  operator: 'NOT IN' as const,
-                  value: skipSubscriptions,
-                },
-              ]
-            : []),
-        ],
-      },
-    );
+
+    await Promise.all([
+      this.helpers.deleteManyCached([
+        CACHE_KEY_ACTIVE_SUBSCRIPTION(userId),
+        CACHE_KEY_ACTIVE_PLAN(userId),
+      ]),
+      this.planSubscriptionsRepository.update(
+        {
+          is_active: false,
+        },
+        {
+          wheres: [
+            {
+              column: 'user_id',
+              operator: '=',
+              value: userId,
+            },
+            ...(skipSubscriptions.length > 0
+              ? [
+                  {
+                    column: 'id',
+                    operator: 'NOT IN' as const,
+                    value: skipSubscriptions,
+                  },
+                ]
+              : []),
+          ],
+        },
+      )
+    ])
+
   }
 
   async findAll() {
@@ -360,8 +376,15 @@ export class PlanSubscriptionsService {
   async update(
     id: number,
     updatePlanSubscriptionDto: UpdatePlanSubscriptionInput,
+    userId?: number,
   ) {
-    return this.planSubscriptionsRepository.updateOne(
+    if (userId) {
+      await this.helpers.deleteManyCached([
+        CACHE_KEY_ACTIVE_SUBSCRIPTION(userId),
+        CACHE_KEY_ACTIVE_PLAN(userId),
+      ]);
+    }
+    return await this.planSubscriptionsRepository.updateOne(
       id,
       updatePlanSubscriptionDto,
     );
