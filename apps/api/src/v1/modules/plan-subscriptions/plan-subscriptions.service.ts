@@ -7,8 +7,10 @@ import { PlansService } from '../plans/plans.service';
 import { BaseUser } from '@repo/common-lib/types/user';
 import {
   CreatePlanSubscriptionInput,
+  PlanSubscriptionSchema,
   UpdatePlanSubscriptionInput,
 } from '@repo/common-lib/schemas/plan-subscription';
+import { FullPlan } from '@repo/common-lib/types/plan';
 import {
   HandleSubscriptionProcessInput,
   HandleSubscriptionProcessResponse,
@@ -284,7 +286,10 @@ export class PlanSubscriptionsService {
     };
   }
 
-  async setFreeSubscription(user: BaseUser) {
+  async setFreeSubscription(user: BaseUser): Promise<{
+    plan: Omit<FullPlan, 'translation'>;
+    subscription: PlanSubscriptionSchema;
+  }> {
     //Plans with plan and plan prices must always exist. If not, BIG PROBLEM.
     const freePlan = await this.planService.findFreePlan();
     if (!freePlan) {
@@ -299,7 +304,7 @@ export class PlanSubscriptionsService {
 
     await this.desactivateAllUserSubscriptions(user.id);
 
-    return await this.create({
+    const subscription =  await this.create({
       is_active: true,
       is_trialing: false,
       amount: 0,
@@ -316,6 +321,10 @@ export class PlanSubscriptionsService {
       plan_offer_id: null,
       plan_price_id: lifetimePrice.id,
     });
+    return {
+      plan:freePlan,
+      subscription
+    }
   }
   async create(planData: CreatePlanSubscriptionInput) {
 

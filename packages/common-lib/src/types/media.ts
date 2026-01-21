@@ -19,19 +19,21 @@ export type FullMedia = Media & {
 export type MediaIndexRequest = OffsetPaginationRequest & {
     user_id?: number;
     shape?: EnumType<'MEDIA_SHAPE'>;
-    type?: EnumType<'MEDIA_TYPE'>;
     is_active?: boolean;
     blocked?: boolean;
-    list_type: EnumType<'FORMAT_TYPE'>;
 }
 
-// CreateMediaInput - required fields for creating media
-export type CreateMediaInput = Omit<
-  MediaSchema,
-  'id' | 'created_at' | 'updated_at' | 'title' | 'description' | 'thumbnail' | 'blocked' | 'shape' | 'is_active' | 'tags'
->;
+// Fields generated internally by the system (user cannot set these)
+type InternalMediaFields = 'id' | 'public_id' | 'bytes' | 'url' | 'thumbnail' | 'extension' | 'blocked' | 'is_active' | 'created_at' | 'updated_at';
 
-export type UpdateMediaInput = Partial<Omit<MediaSchema, 'id' | 'created_at' | 'updated_at' | 'user_id'>>;
+// What users can provide when creating media (public API input)
+export type PublicCreateMediaInput = Omit<MediaSchema, InternalMediaFields>;
+
+// What the internal service uses to create media (includes system-generated fields)
+export type CreateMediaInput = Omit<MediaSchema, 'id' | 'created_at' | 'updated_at'>;
+
+// What users can update
+export type UpdateMediaInput = Partial<Omit<MediaSchema, InternalMediaFields>>;
 
 // ==================== MEDIA TRANSLATION TYPES ====================
 

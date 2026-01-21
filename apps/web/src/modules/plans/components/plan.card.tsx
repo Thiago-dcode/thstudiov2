@@ -11,12 +11,14 @@ import { PlanHeader } from "./plan.header";
 export type PlanCardProps = {
   plan: FullPlan;
   className?: string;
+  isMostExpensive?: boolean;
 };
 
 
 export function PlanCard({
   plan,
   className,
+  isMostExpensive = false,
 }: PlanCardProps) {
   // Extract data from plan
   const name = plan.translation?.name || plan.name;
@@ -41,6 +43,14 @@ const {setPlanSelected,} = UsePlanSubscription();
         <div className="absolute -top-3 left-1/2 -translate-x-1/2">
           <span className="rounded-full bg-accent px-4 py-1 text-xs font-medium text-white">
             Popular
+          </span>
+        </div>
+      )}
+      {/* Best Value Badge */}
+      {isMostExpensive && !plan.is_popular && (
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+          <span className="rounded-full bg-secondary px-4 py-1 text-xs font-medium text-secondary-fg">
+            Best Value
           </span>
         </div>
       )}

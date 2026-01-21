@@ -24,7 +24,7 @@ export const main = async () => {
       max_clients: 4,
       max_services: 2,
       allow_media_compression:false,
-      powered_by_ai: false,
+      ai_credits: 10,
       limit_write_storage_per_day: 50, // 50 write operations per day
       prices: [
         {
@@ -97,7 +97,7 @@ export const main = async () => {
       max_clients: 10,
       max_services: 5,
       allow_media_compression:true,
-      powered_by_ai: false,
+      ai_credits: 75,
       limit_write_storage_per_day: 150,
       prices: [
         {
@@ -162,8 +162,8 @@ export const main = async () => {
       max_portfolios:-1,
       max_clients: -1,
       max_services: -1,
-      powered_by_ai: true,
       allow_media_compression:true,
+      ai_credits: 200,
       limit_write_storage_per_day: 300,
       prices: [
         {

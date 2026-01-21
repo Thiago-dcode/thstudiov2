@@ -48,6 +48,9 @@ export class ColumnBuilder {
   public static id(columnName: string = 'id') {
     return `${this.validateString(columnName || 'id')} ${this.getAutoIncrement(true)}`;
   }
+  public static uuid(columnName: string) {
+    return `${this.validateString(columnName)} varchar(36) UNIQUE NOT NULL`;
+  }
   public static autoIncrement(columnName: string) {
     return `${this.validateString(columnName)} ${this.getAutoIncrement()}`;
   }

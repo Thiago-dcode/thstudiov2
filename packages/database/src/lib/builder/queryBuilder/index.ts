@@ -118,7 +118,6 @@ export class QueryBuilder extends BaseBuilder {
    */
   public async get<T = any>(): Promise<T> {
     this.buildSelectQuery();
-    console.log("QUERY", this.query)
     const result = await getClient().query(this.query, this.values);
     this.reset();
     return result.rows;

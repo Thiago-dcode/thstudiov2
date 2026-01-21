@@ -7,7 +7,7 @@ import {
 import { LoginRequest } from './requests/login.request';
 import { UserRepository } from '../users/users.repository';
 import { JwtService } from '@nestjs/jwt';
-import { TwoFactorAuth, UserAuth, UserPayload } from './auth.types';
+import { TwoFactorAuth, UserAuth, UserPayload, UserTwofa } from './auth.types';
 import { ConfigService } from '@nestjs/config';
 import { BaseUser } from '@repo/common-lib/types/user';
 import { UserAuthDevicesService } from '../user-auth-devices/user-auth-devices.service';
@@ -51,6 +51,7 @@ export class AuthService {
   async register(registerRequest: RegisterRequest) {
     const user = await this.userRepository.create({
       ...registerRequest,
+      public_id: await generateUUID(),
       funnel_step: 1,
       password: await hash(registerRequest.password),
     });
@@ -58,11 +59,12 @@ export class AuthService {
       ip_address: this.requestService.ip_address,
       user_agent: this.requestService.user_agent,
     });
+
     this.eventEmitter.emit(NEW_USER_EVENT, new NewUserEvent(user));
-    return result.user;
+    return {...result.user, need_twofa:true};
   }
-  async login(authLoginRequest: LoginRequest): Promise<UserAuth | BaseUser> {
-    const user = await this.userRepository.findOneByColumnWithPassword(
+  async login(authLoginRequest: LoginRequest): Promise<UserAuth | UserTwofa> {
+    const user = await this.userRepository.findOneByColumnWithSecrets(
       'email',
       authLoginRequest.email,
     );
@@ -83,11 +85,11 @@ export class AuthService {
       ip_address: this.requestService?.ip_address || '-',
     });
     return result.need_2fa
-      ? result.user
+      ?  {...result.user,token:null, need_twofa:true}
       : await this.handleLogin(user, result.user_auth_device);
   }
   async verify2fa(verify2faRequest: Verify2faRequest) {
-    const user = await this.userRepository.findOneByColumnWithPassword(
+    const user = await this.userRepository.findOneByColumnWithSecrets(
       'email',
       verify2faRequest.email,
     );
@@ -100,7 +102,6 @@ export class AuthService {
     ) {
       throw new BadRequestException('Invalid verification code or expired');
     }
-    delete user.twofa_code;
     //It should be created from the login process
     const userAuthDevice = await this.userAuthDevicesService.getOneOrCreate({
       user_id: user.id,

@@ -8,7 +8,6 @@ import { CheckCircle2 } from "lucide-react";
 export default async function PasswordUpdateSuccess() {
 
     const passwordUpdatedCookie = await getPasswordUpdatedCookie();
-    console.log(passwordUpdatedCookie)
     if (!passwordUpdatedCookie) {
         redirect('/auth/password-recovery');
     }

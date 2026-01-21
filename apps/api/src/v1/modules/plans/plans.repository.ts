@@ -32,7 +32,7 @@ export class PlansRepository extends BaseRepository {
     'plans.max_services',
     'plans.max_media_size',
     'plans.limit_write_storage_per_day',
-    'plans.powered_by_ai',
+    'plans.ai_credits',
     'plans.is_active',
     'plan_prices.price',
     'plan_prices.plan_id',
@@ -122,7 +122,6 @@ export class PlansRepository extends BaseRepository {
           ),
           is_free: curr.is_free,
           is_popular: curr.is_popular,
-          powered_by_ai: curr.powered_by_ai,
           allow_media_compression: curr.allow_media_compression,
           max_clients: curr.max_clients,
           max_portfolios: curr.max_portfolios,
@@ -130,6 +129,7 @@ export class PlansRepository extends BaseRepository {
           max_services: curr.max_services,
           max_media_size: curr.max_media_size,
           limit_write_storage_per_day: curr.limit_write_storage_per_day,
+          ai_credits: curr.ai_credits,
           translation: translation
             ? {
                 id: translation.pt_id,

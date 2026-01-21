@@ -13,7 +13,6 @@ export const SetSessionClient = ({ userAuth, redirect }: {
     useEffect(() => {
         deleteUserSession().then(() => {
             setUserSession(userAuth).then(() => {
-                console.log('setting client session')
                 router.push(redirect);
             })
         }).catch(() => {

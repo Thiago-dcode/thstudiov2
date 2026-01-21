@@ -20,8 +20,9 @@ export class UserExtraDataRepository extends BaseRepository {
     'user_extra_data.clients_count',
     'user_extra_data.services_count',
     'user_extra_data.portfolios_count',
-    'user_extra_data.storage_requests_count',
-    'user_extra_data.last_storage_request_date',
+    'user_extra_data.ai_credits',
+    'user_extra_data.ai_credits_consumed',
+    'user_extra_data.next_ai_credits_reset',
     'user_extra_data.user_id',
   ] as const;
 
@@ -116,8 +117,9 @@ export class UserExtraDataRepository extends BaseRepository {
       clients_count: result.clients_count,
       services_count: result.services_count,
       portfolios_count: result.portfolios_count,
-      storage_requests_count: result.storage_requests_count,
-      last_storage_request_date: result.last_storage_request_date,
+      ai_credits: result.ai_credits,
+      ai_credits_consumed: result.ai_credits_consumed,
+      next_ai_credits_reset: result.next_ai_credits_reset,
       user_id: result.user_id,
     };
   }

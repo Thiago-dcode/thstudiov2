@@ -8,8 +8,9 @@ import { FactoryLogService } from '@repo/backend-lib/services/log-service';
 import { API_ERRORS_CHANNEL, logConfig } from 'src/config/logging';
 import { format } from 'date-fns/format';
 import { VALIDATION_ERROR_STATUS } from '../utils/constants';
-import { ErrorResponse } from '@repo/common-lib/types/response';
+import {Error as ApiError, ErrorResponse } from '@repo/common-lib/types/response';
 import { RequestService } from '../services/request.service';
+import { ApiException } from '../exceptions/api-exception';
 
 @Catch()
 export class ResponseExceptionFilter implements ExceptionFilter {
@@ -24,6 +25,7 @@ export class ResponseExceptionFilter implements ExceptionFilter {
         exception?.code || exception?.statusCode || exception?.status || 500;
       status = !isNaN(status) ? status : 500;
       status = VALIDATION_ERROR_STATUS.includes(status) ? status : 500;
+      const api_error_code= exception instanceof ApiException? exception.API_ERROR_CODE:undefined;
       const message: string =
         typeof exception?.message === 'string'
           ? exception?.message
@@ -33,7 +35,8 @@ export class ResponseExceptionFilter implements ExceptionFilter {
       const errors: string[] = Array.isArray(exception?.response?.message)
         ? exception?.response.message
         : [message];
-      const error = {
+      const error:ApiError = {
+        api_error_code,
         status_code: status,
         message,
         errors,

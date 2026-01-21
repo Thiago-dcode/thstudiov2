@@ -30,6 +30,9 @@ import { PlanSubscriptionsModule } from './v1/modules/plan-subscriptions/plan-su
 import { WebhooksModule } from './v1/modules/webhooks/webhooks.module';
 import { UtilsModule } from './v1/modules/utils/app-utils.module';
 import { AboutPageModule } from './v1/modules/about-page/about-page.module';
+import { UserStorageRequestModule } from './v1/modules/user-storage-requests/user-storage-request.module';
+import { UserAboutPageModule } from './v1/modules/user-about-page/user-about-page.module';
+import { UserMediaModule } from './v1/modules/user-media/user-media.module';
 const APP_MODULES = [
   AuthModule,
   UserModule,
@@ -40,7 +43,10 @@ const APP_MODULES = [
   WebhooksModule,
   CategoriesModule,
   UtilsModule,
-  AboutPageModule
+  AboutPageModule,
+  UserStorageRequestModule,
+  UserAboutPageModule,
+  UserMediaModule
 ];
 @Module({
   imports: [

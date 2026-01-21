@@ -3,11 +3,17 @@ import { Column, Schema } from '../lib/facades';
 const up = async () => {
   await Schema.table('media').withTimestamps().createIfNotExists([
     Column.id(),
-    Column.string('title', 255),
+    Column.uuid('public_id'),
+    Column.string('title', 255, {
+      nullable:true,
+    }),
     Column.text('description', {
       nullable: true,
     }),
     Column.integer('bytes'),
+    Column.integer('thumbnail_bytes',{
+      default:0
+    }),
     Column.string('url',255, {
       unique: true,
     }),
@@ -22,13 +28,23 @@ const up = async () => {
     Column.enum('shape', 'MEDIA_SHAPE', {
       nullable: true,
     }),
-    Column.enum('extension', 'MEDIA_EXTENSION'),
+    Column.enum('compression_level', 'COMPRESSION_LEVEL', {
+      nullable: true,
+    }),
+    Column.string('extension', 5),
     Column.boolean('is_active', {
       default: true,
     }),
-    Column.string('alt',255, {
+    Column.string('seo_alt',255, {
       nullable: true,
     }),
+    Column.string('seo_title',255, {
+      nullable: true,
+    }),
+    Column.string('seo_description',255, {
+      nullable: true,
+    }),
+    Column.string('seo_filename',255),
     Column.foreignKey('user_id', 'users', 'id', {
       onDelete: 'CASCADE',
       onUpdate: 'CASCADE',

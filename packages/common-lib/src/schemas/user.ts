@@ -2,26 +2,27 @@ import { TABLES_ENUM } from "../constants/enums";
 import { TableColumn } from "../types/database";
 export type UserSchema = {
   id: number;
+  public_id: string;
   name?: string | null;
   surname?: string | null;
   username: string;
   password: string;
-  stripe_customer_id?:string|null,
-  profession?:string | null;
+  stripe_customer_id?: string | null;
+  profession?: string | null;
   biography?: string | null;
   email: string;
-  avatar?:string;
-  banner?:string;
+  avatar?: string;
+  banner?: string;
   email_validated?: boolean;
   is_active?: boolean;
-  twofa_attempts?: number;
-  funnel_step:number,
-  short_biography?:string,
+  funnel_step: number;
+  short_biography?: string;
   number_email_validations_sent?: number;
   address_id?: number | null;
   twofa_enabled?: boolean;
   twofa_code?: string;
   twofa_expires_at?: Date;
+  twofa_attempts?: number;
   created_at: Date;
   updated_at: Date;
 };

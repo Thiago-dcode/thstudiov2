@@ -11,7 +11,11 @@ import { NotifyNewUserMail } from './mails/notify-new-user.mail';
 import { PlanSubscriptionsService } from '../plan-subscriptions/plan-subscriptions.service';
 import { stripe } from '@repo/backend-lib/services/payment-service/stripe';
 import { RequestService } from 'src/common/services/request.service';
-import { CACHE_KEY_USER_CATEGORIES, NEW_USER_EVENT } from '@repo/common-lib/constants/constants';
+import {
+  CACHE_KEY_USER_CATEGORIES,
+  CACHE_KEY_USER_PUBLIC_ID,
+  NEW_USER_EVENT,
+} from '@repo/common-lib/constants/constants';
 import { FindUserRequest } from './requests/find-user.request';
 import { Helpers } from 'src/common/services/helpers.service';
 
@@ -32,9 +36,18 @@ export class UserService {
     return `This action returns all user`;
   }
 
-
+  async getPublicId(userId: number) {
+    return await this.helpers.cacheRemember(
+      CACHE_KEY_USER_PUBLIC_ID(userId),
+      this.userRepository.getPublicId(userId),
+      {
+        append_language: false,
+        ttl: 1000 * 60 * 60 * 48,
+      },
+    );
+  }
   async findOne(id: number, findUserRequest?: FindUserRequest) {
-    if (findUserRequest.format === 'COMPACT') {
+    if (findUserRequest?.format === 'COMPACT') {
       return await this.userRepository.findOneBy('id', id, 'COMPACT');
     }
     const result = await this.userRepository.findById(id);
@@ -77,14 +90,14 @@ export class UserService {
       avatar && avatar.size > 0
         ? this.helpers.setAsset({
             asset: avatar,
-            path: `users/${user.id}/avatar`,
+            path: `users/${user.public_id}/avatar`,
             targetSizeMb: 0.3,
           })
         : Promise.resolve(undefined),
       banner && banner.size > 0
         ? this.helpers.setAsset({
             asset: banner,
-            path: `users/${user.id}/banner`,
+            path: `users/${user.public_id}/banner`,
             targetSizeMb: 1,
           })
         : Promise.resolve(undefined),
@@ -104,9 +117,9 @@ export class UserService {
       }
     }
     const editCategories = categories && categories.length;
-    if(editCategories){
-      await this.helpers.deleteCached(CACHE_KEY_USER_CATEGORIES(user.id),{
-        appended_language:true
+    if (editCategories) {
+      await this.helpers.deleteCached(CACHE_KEY_USER_CATEGORIES(user.id), {
+        appended_language: true,
       });
     }
     const [userUpdated] = await Promise.all([
@@ -117,7 +130,7 @@ export class UserService {
             modelValue: user.id,
             attachCol: 'category_id',
             valuesToAttach: categories,
-            removePrevious: true
+            removePrevious: true,
           })
         : Promise.resolve(true),
     ]);

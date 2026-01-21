@@ -1,3 +1,4 @@
+import { ApiErrorKey } from "../constants/api-errors";
 import { EnumType } from "../constants/enums";
 
 export type Audit = {
@@ -10,6 +11,7 @@ export type Audit = {
   
   export type Error = {
     status_code: number;
+    api_error_code?: ApiErrorKey;
     message: string;
     errors: string[];
     path: string;

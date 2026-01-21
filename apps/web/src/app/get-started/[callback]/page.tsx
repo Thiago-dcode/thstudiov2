@@ -21,12 +21,19 @@ export default async function CallbackPage({
         redirect('/');
     }
 
-    const validCallbacks = ['success', 'failed'];
+    const validCallbacks = ['success', 'failed','skip'];
+
     const [{ callback }, { token }, cookie] = await Promise.all([
         params,
         searchParams,
         getInitiateSubscriptionCookie(),
     ]);
+    if(callback ==='skip'){
+        await usersService.update(userAuth.id,{
+            funnel_step:FUNNEL_LAST_STEP +1
+        })
+        redirect('/atelier')
+    }
     if (!validCallbacks.some(vc => vc === callback) || token !== cookie?.token) {
         redirect('/get-started');
     }
@@ -39,7 +46,6 @@ export default async function CallbackPage({
     const successSubtitle = message || "Your subscription has been activated. Welcome aboard!";
     const failedTitle = "Payment Failed";
     const failedSubtitle = message || "Something went wrong with your payment. Please try again.";
-    console.log("COOKIE CALLBACK",cookie)
     if (!retryable) {
         await usersService.update(userAuth.id, {
             funnel_step: FUNNEL_LAST_STEP + 1

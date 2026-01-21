@@ -6,7 +6,7 @@ const up = async () => {
   await Schema.table(TABLE_NAME).withTimestamps(true).createIfNotExists([
     Column.id(),
     //MB
-    Column.integer('media_size', {
+    Column.float('media_size', {
       default: 0,
     }),
     Column.smallInteger('media_count', {
@@ -24,11 +24,14 @@ const up = async () => {
     Column.smallInteger('portfolios_count', {
       default: 0,
     }),
-    Column.smallInteger('storage_requests_count', {
+    Column.smallInteger('ai_credits', {
       default: 0,
     }),
-    Column.timestamp('last_storage_request_date', {
-      default: 'NOW()',
+    Column.smallInteger('ai_credits_consumed', {
+      default: 0,
+    }),
+    Column.timestamp('next_ai_credits_reset',{
+      default: 'NOW()'
     }),
     Column.foreignKey('user_id', 'users', 'id', {
       onDelete: 'CASCADE',

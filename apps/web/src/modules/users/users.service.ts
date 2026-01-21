@@ -9,6 +9,7 @@ import { FullPlanSubscription } from "@repo/common-lib/types/plan-subscription";
 import { queryParamBuilder } from "@repo/common-lib/utils/query-builder";
 import { UpdateUserInputAvatarFile } from "@repo/common-lib/types/user copy";
 import { AboutPage } from "@repo/common-lib/types/about-page";
+import { Media } from "@repo/common-lib/types/media";
 
 export class UserService extends BaseService {
     constructor() {
@@ -44,6 +45,12 @@ export class UserService extends BaseService {
         });
     }
 
+    async getAllMedia(id:number):Promise<ApiResponse<Media[]>>{
+
+        return await this.fetchApi.get({
+            resource:`${id}/media`
+        });
+    }
     async getAboutPage(id:number):Promise<ApiResponse<AboutPage>>{
 
         return await this.fetchApi.get({

@@ -52,22 +52,24 @@ export class Helpers {
     return result;
   }
 
-  public async deleteCached(key:string,options?:{
-    appended_language?:boolean
-  }){
-
-    if(!options.appended_language){
-      await this.cacheManager.del(key)
-    }else{
-
-      await Promise.all(ENUMS.LANGUAGE_CODE.map(lan => this.cacheManager.del(`${key}-${lan}`)))
+  public async deleteCached(
+    key: string,
+    options?: {
+      appended_language?: boolean;
+    },
+  ) {
+    if (!options.appended_language) {
+      await this.cacheManager.del(key);
+    } else {
+      await Promise.all(
+        ENUMS.LANGUAGE_CODE.map((lan) =>
+          this.cacheManager.del(`${key}-${lan}`),
+        ),
+      );
     }
-
-
   }
-  public async deleteManyCached(keys:string[]){
-
-    await Promise.all(keys.map(key=>this.cacheManager.del(key)))
+  public async deleteManyCached(keys: string[]) {
+    await Promise.all(keys.map((key) => this.cacheManager.del(key)));
   }
 
   public getNextBillingDate(billingType: EnumType<'BILLING_TYPE'>) {
@@ -102,9 +104,7 @@ export class Helpers {
     mailService.send(new Error500Mail(viewService, message, options));
   }
 
-
-  public async deleteAsset(path:string){
-
+  public async deleteAsset(path: string) {
     return await this.storageService.delete(path);
   }
   public async getAsset(path: string) {
@@ -132,11 +132,12 @@ export class Helpers {
   }) {
     //Compress
     const targetSize = (targetSizeMb > 0 ? targetSizeMb : 1) * 1024;
-    asset.buffer = await this.compressService.optimizeImageToWebp(
+    const resultCompress = await this.compressService.optimizeImageToWebp(
       asset,
       targetQuality ?? 90,
       asset.size > targetSize ? targetSize : asset.size,
     );
+    asset.buffer = resultCompress.buffer;
 
     const [result] = await Promise.all([
       this.storageService.write(asset, path),

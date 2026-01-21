@@ -6,12 +6,12 @@ import { UserExtraData } from "./user-extra-data";
 
 // BaseUser derived from BaseUserSchema (without password, timestamps, and extended profile fields)
 // Making certain fields required that were optional in the schema
-export type BaseUser = Omit<BaseUserSchema, 'password'|'twofa_code' | 'biography'  | 'short_biography' | 'avatar' | 'banner'>;
+export type BaseUser = Omit<BaseUserSchema, 'password' | 'twofa_code' | 'biography' | 'short_biography' | 'avatar' | 'banner'>;
 
 // BaseUserWithSecrets includes the password field
-export type BaseUserWithSecrets =BaseUser & {
-  password:string,
-  twofa_code?:string
+export type BaseUserWithSecrets = BaseUser & {
+  password: string;
+  twofa_code?: string;
 };
 
 // User extends the schema with all fields except timestamps, password, and address_id

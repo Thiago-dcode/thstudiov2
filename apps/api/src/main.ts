@@ -5,6 +5,27 @@ import { checkPortOrGetNext } from '@repo/backend-lib/utils';
 import { init } from '@repo/database';
 import { useContainer } from 'class-validator';
 import { spawn } from 'child_process';
+import { FactoryLogService } from '@repo/backend-lib/services/log-service';
+import { Helpers } from './common/services/helpers.service';
+
+const logger = FactoryLogService.createLogService('file',{
+  channel:'api/500',
+  callback:{
+    channel:'api/500',
+    callback: Helpers.callback500ErrorMail,
+  }
+
+})
+
+process.on('uncaughtException', (error: Error) => {
+  logger.error('💥 Uncaught Exception:', error);
+  console.error('💥 Uncaught Exception:', error);
+});
+
+process.on('unhandledRejection', (reason: unknown) => {
+  logger.error('💥 Uncaught Exception:', reason);
+  console.error('💥 Unhandled Rejection:', reason);
+});
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     rawBody: true,
@@ -25,7 +46,6 @@ async function bootstrap() {
   app.enableCors({
     origin: configService.get('app.allowedOrigins'),
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
   // Express-style route
@@ -47,9 +67,6 @@ if (!configService.get('app.isProduction')) {
     console.log(`[Stripe] ${data}`);
   });
 
-  stripeProcess.stderr.on('data', (data) => {
-    console.log(`[Stripe] ${data}`);
-  });
 
   stripeProcess.on('error', (err) => {
     console.error('Failed to start Stripe listener:', err);

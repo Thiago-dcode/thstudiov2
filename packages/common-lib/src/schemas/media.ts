@@ -4,16 +4,22 @@ import { TableColumn } from "../types/database";
 // ==================== MEDIA SCHEMA ====================
 export type MediaSchema = {
   id: number;
+  public_id: string;
   title?: string | null;
   description?: string | null;
   bytes: number;
+  thumbnail_bytes:number;
   url: string;
   thumbnail?: string | null;
   blocked: boolean;
   shape?: EnumType<'MEDIA_SHAPE'> | null;
-  extension: EnumType<'MEDIA_EXTENSION'>;
+  compression_level?: EnumType<'COMPRESSION_LEVEL'> | null;
+  extension: string;
   is_active: boolean;
-  tags?: string | null;
+  seo_alt?: string | null;
+  seo_title?: string | null;
+  seo_description?: string | null;
+  seo_filename: string;
   user_id: number;
   created_at: Date;
   updated_at: Date;

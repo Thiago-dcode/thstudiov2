@@ -45,3 +45,4 @@ export const CACHE_KEY_ACTIVE_SUBSCRIPTION = (userId: number | string) => `activ
 
 // Categories
 export const CACHE_KEY_USER_CATEGORIES = (userId: number | string) => `user_categories_${userId}` as const;
+export const CACHE_KEY_USER_PUBLIC_ID = (userId: number | string) => `user_public_id_${userId}` as const;

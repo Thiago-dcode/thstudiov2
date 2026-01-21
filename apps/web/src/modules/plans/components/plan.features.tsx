@@ -30,10 +30,10 @@ export  const PlanFeatures = ({ plan }: {
       { content: <p><span className="font-bold">{formatFeatureValue(plan.max_services)}</span> Services</p>, },
       { content: <p><span className="font-bold">{formatFeatureValue(plan.max_clients)}</span> Clients</p>, },
       { content: <p className={cn(plan.allow_media_compression && "bg-secondary rounded-2xl text-secondary-fg px-2 ")}>{plan.allow_media_compression?'⚡': ''}Media compression</p>, not_available: !plan.allow_media_compression, extraInfo: "Choose your preferred compression level when uploading photos. Balance between image quality and file size to optimize your storage and loading times." },
-      { content: <p className={cn(plan.powered_by_ai && "bg-accent rounded-2xl text-accent-fg px-2 ")}>{plan.powered_by_ai?'🧠': ''}AI Powered</p>, not_available: !plan.powered_by_ai, extraInfo: 'Leverage AI to automate repetitive tasks. Automatically generate titles, descriptions, and tags for your media based on content analysis, saving you time and effort.' },
+      { content: <p className={cn(plan.ai_credits > 0 && "bg-accent rounded-2xl text-accent-fg px-2 ")}>🧠<span className="font-bold">{formatFeatureValue(plan.ai_credits)}</span> AI Credits</p>, not_available: plan.ai_credits === 0, extraInfo: 'Leverage AI to automate repetitive tasks. Automatically generate titles, descriptions, and tags for your media based on content analysis, saving you time and effort.' },
     ]
       , [plan])
-    return (
+    return ( 
       <ul className="flex flex-col gap-3 w-full ">
         {features.map((feature, index) => {
          

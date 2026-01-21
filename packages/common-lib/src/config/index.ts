@@ -12,7 +12,7 @@ let envFilePath = path.resolve(process.cwd(),'..', '..', '.env');
   if(!fs.existsSync(envFilePath)){
     throw new Error('Environment file not found');
   }
-  dotenv.config({ path: envPath || envFilePath });
+  dotenv.config({ path: envPath || envFilePath ,quiet:true});
   return {
     app: {
       api_key: process.env.APP_API_KEY || '',

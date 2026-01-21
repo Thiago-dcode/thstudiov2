@@ -21,8 +21,8 @@ export type PlanSchema = {
   max_portfolios: number;
   max_services: number;
   max_clients: number;
-  powered_by_ai: boolean;
   allow_media_compression: boolean;
+  ai_credits: number;
   limit_write_storage_per_day: number;
   created_at: Date;
   updated_at: Date;

@@ -43,6 +43,7 @@ export class AuthGuard implements CanActivate {
       const payload = (await this.jwtService.verifyAsync(token, {
         secret: this.configService.get('jwt.secret'),
       })) as UserPayload;
+
       if (
         !payload ||
         !payload?.id ||
@@ -67,6 +68,7 @@ export class AuthGuard implements CanActivate {
       request[USER_ID_HEADER] = payload.id;
       this.requestService.user = {
         email: payload.email,
+        public_id:payload.public_id,
         username: payload.username,
         email_validated: payload.email_validated,
         stripe_customer_id:payload.stripe_customer_id,

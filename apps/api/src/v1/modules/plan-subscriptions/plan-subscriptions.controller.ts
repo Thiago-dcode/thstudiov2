@@ -25,7 +25,6 @@ export class PlanSubscriptionsController {
 
   @Post('initiate')
   async initiate(@Body() initiateRequest: InitiatePlanSubscriptionRequest) {
-    console.log(initiateRequest)
     return await this.planSubscriptionsService.initiate(initiateRequest)
   }
 }

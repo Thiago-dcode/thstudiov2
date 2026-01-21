@@ -6,6 +6,7 @@ const up = async () => {
   // Create the users table with all fields from Prisma schema
   await SchemaBuilder.table(TABLE_NAME).withTimestamps(true).createIfNotExists([
     ColumnBuilder.id(),
+    ColumnBuilder.uuid('public_id'),
     ColumnBuilder.string('name', 255, {
       nullable: true,
     }),
@@ -51,6 +52,18 @@ const up = async () => {
     ColumnBuilder.foreignKey('address_id', 'addresses', 'id', {
       onDelete: 'SET NULL',
       nullable: true,
+    }),
+    ColumnBuilder.boolean('twofa_enabled', {
+      default: true,
+    }),
+    ColumnBuilder.string('twofa_code', 10, {
+      nullable: true,
+    }),
+    ColumnBuilder.timestamp('twofa_expires_at', {
+      nullable: true,
+    }),
+    ColumnBuilder.smallInteger('twofa_attempts', {
+      default: 0,
     }),
   ]);
 };

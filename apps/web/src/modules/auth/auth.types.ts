@@ -54,9 +54,11 @@ export type PasswordRecoveryAttemptWithUser = PasswordRecoveryAttempt & {
 
 
 export type  UserAuth = BaseUser & {
+    need_twofa?:false,
     token:string
 };
 export type LoginReturn2fa = BaseUser & {
+    need_twofa:true,
     token: null;
 }
 export type LoginReturn = UserAuth | LoginReturn2fa;

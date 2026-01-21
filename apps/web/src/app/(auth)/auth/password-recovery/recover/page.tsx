@@ -35,7 +35,6 @@ export default async function PasswordRecoveryRecover({ searchParams }: { search
         _passwordRecoveryAttemptCookie = result.data
 
     }
-    console.log('RENDERING')
 
     return (
         <PageComponent.Container>

@@ -21,10 +21,11 @@ type ChangeSubscriptionDialogProps = {
   availablePaymentMethods: PaymentMethod[];
   successUrl: string,
   cancelUrl: string,
-  onErrorComponent: ReactNode
+  onErrorComponent: ReactNode,
+  onFreeComponent: ReactNode
 }
 
-export const ChangeSubscriptionDialog = ({ availablePaymentMethods, successUrl, cancelUrl, onErrorComponent }: ChangeSubscriptionDialogProps) => {
+export const ChangeSubscriptionDialog = ({ availablePaymentMethods, successUrl, cancelUrl, onErrorComponent,onFreeComponent }: ChangeSubscriptionDialogProps) => {
   const { planSelected, setPlanSelected, setPriceSelected, priceSelected } = UsePlanSubscription()
   const [paymentMethod, setPaymentMethod] = useState<EnumType<'PAYMENT_METHOD'> | undefined>(availablePaymentMethods.find(pm => pm.enabled)?.payment_method);
   const router = useRouter();
@@ -130,7 +131,7 @@ return (<Dialog onOpenChange={(value) => {
             </AccordionContent>
           </AccordionItem>
         </Accordion>
-        {planSelected.is_free && <Button className="self-center">Continue without benefits</Button>}
+        {planSelected.is_free ?<>{onFreeComponent}</>:null}
 
       </div>
 

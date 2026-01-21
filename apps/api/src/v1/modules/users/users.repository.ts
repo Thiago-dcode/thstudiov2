@@ -19,6 +19,7 @@ import { EnumType } from '@repo/common-lib/constants/enums';
 export class UserRepository extends BaseRepository {
   private readonly BASE_COLUMNS: BaseUserSchemaColumns[] = [
     'users.id',
+    'users.public_id',
     'users.email',
     'users.username',
     'users.profession',
@@ -27,7 +28,6 @@ export class UserRepository extends BaseRepository {
     'users.twofa_enabled',
     'users.twofa_expires_at',
     'users.is_active',
-    'users.twofa_attempts',
     'users.funnel_step',
   ] as const;
   private readonly FULL_COLUMNS: UserSchemaWithAddressColumns[] = [
@@ -54,7 +54,6 @@ export class UserRepository extends BaseRepository {
     super('users');
   }
   async findById(id: number): Promise<User> {
-    console.log(this.FULL_COLUMNS);
     const result = await this.query()
       .select(this.FULL_COLUMNS)
       .where('id', '=', id)
@@ -66,8 +65,13 @@ export class UserRepository extends BaseRepository {
         HttpStatus.NOT_FOUND,
       );
     }
-    console.log(result);
     return this.formatFullUser(result);
+  }
+  async getPublicId(id:number){
+
+    return await this.query().select(['public_id']).where('id','=',id).first<{
+      public_id:number,
+    } |null>();
   }
   async findOneBy(
     column: keyof UserSchema,
@@ -83,7 +87,6 @@ export class UserRepository extends BaseRepository {
       query = query.select(this.BASE_COLUMNS);
     }
     const result = await query.first<UserSchemaWithAddress>();
-    console.log('USER RESULT',result);
     if (!result) {
       throw new HttpException(
         'User not found with ' + column + ' ' + value,
@@ -95,7 +98,7 @@ export class UserRepository extends BaseRepository {
       : this.formatUser(result);
   }
 
-  async findOneByColumnWithPassword(
+  async findOneByColumnWithSecrets(
     column: string,
     value: any,
   ): Promise<BaseUserWithSecrets> {
@@ -126,22 +129,22 @@ export class UserRepository extends BaseRepository {
   }
   private formatUser(
     result: BaseUserSchema,
-    withPassword: boolean = false,
+    withSecrets: boolean = false,
   ): BaseUser | BaseUserWithSecrets {
     return {
       id: result?.id,
+      public_id:result.public_id,
       email: result?.email,
       username: result?.username,
       profession:result?.profession,
       email_validated: result?.email_validated,
       stripe_customer_id: result.stripe_customer_id,
-      twofa_enabled: result?.twofa_enabled,
-      twofa_code: result?.twofa_code,
-      twofa_expires_at: result?.twofa_expires_at,
-      password: withPassword ? result?.password : undefined,
+      password: withSecrets ? result?.password : undefined,
+      twofa_code: withSecrets? result.twofa_code: undefined,
+      twofa_enabled:result.twofa_enabled,
+      twofa_expires_at:result.twofa_expires_at,
       funnel_step: result.funnel_step,
       is_active: result?.is_active,
-      twofa_attempts: result?.twofa_attempts,
     };
   }
   private formatFullUser(result: UserSchemaWithAddress): User {

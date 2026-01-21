@@ -8,28 +8,31 @@ import {
 } from '@repo/common-lib/types/about-page';
 import { generateUUID } from '@repo/common-lib/utils/generate-uuid';
 import { UpdateAboutPageRequest } from './requests/update-about-page.request';
+import { UserService } from '../users/users.service';
 
 @Injectable()
 export class AboutPageService {
   constructor(
     private readonly aboutPageRepository: AboutPageRepositoy,
+    private readonly userService: UserService,
     private readonly helpers: Helpers,
   ) {}
 
   public async findOneByUser(id: number) {
-    console.log("ID", id)
     const result = await this.aboutPageRepository.getFirstByUser(id);
     if (result && result.photo) {
       result.photo = await this.helpers.getAsset(result.photo);
     }
     return result;
   }
-
   public async create({ photo, ...rest }: CreateAboutPageRequest) {
     const data: CreateAboutPageInput = rest;
     if (photo) {
-      const id = await generateUUID();
-      data.photo = `users/${data.user_id}/about_page/${id}`;
+      const [user_public_id, id] = await Promise.all([
+        this.userService.getPublicId(data.user_id),
+        generateUUID(),
+      ]);
+      data.photo = `users/${user_public_id}/about_page/${id}`;
       await this.helpers.setAsset({
         asset: photo,
         path: data.photo!,
@@ -50,7 +53,7 @@ export class AboutPageService {
       const id = await generateUUID();
       data.photo = await this.helpers.setAsset({
         asset: photo,
-        path:`users/${aboutPage.user_id}/about_page/${id}`,
+        path: `users/${aboutPage.user_id}/about_page/${id}`,
         targetSizeMb: 0.5,
         targetQuality: 90,
       });

@@ -35,9 +35,8 @@ const up = async () => {
     Column.boolean('allow_media_compression',{
       default:false
     }),
-    Column.boolean('powered_by_ai', {
-      default: false,
-    }),
+    //Monthly
+    Column.smallInteger('ai_credits'),
     Column.smallInteger('limit_write_storage_per_day'),
   ]);
  

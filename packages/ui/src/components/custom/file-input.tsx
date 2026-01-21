@@ -14,7 +14,6 @@ const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
 
         const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
             const files = e.target.files
-            console.log(files)
             // Update context if available
             if (context && files) {
                 context.setFiles(files)

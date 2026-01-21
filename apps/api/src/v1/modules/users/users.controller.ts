@@ -20,7 +20,6 @@ import { IsUserAuthPipe } from 'src/pipes/is-user-auth.pipe';
 import { PlansService } from '../plans/plans.service';
 import { PlanSubscriptionsService } from '../plan-subscriptions/plan-subscriptions.service';
 import { FindUserRequest } from './requests/find-user.request';
-import { AboutPageService } from '../about-page/about-page.service';
 import { CategoriesService } from '../categories/categories.service';
 
 @Controller('users')
@@ -31,7 +30,6 @@ export class UserController {
     private readonly planService: PlansService,
     private readonly planSubscriptionsService: PlanSubscriptionsService,
     private readonly categoriesService: CategoriesService,
-    private readonly aboutPageService: AboutPageService
   ) {}
   @Public()
   @Get()
@@ -68,22 +66,14 @@ export class UserController {
   ) {
     return await this.planSubscriptionsService.findActiveSubscription(id);
   }
-  
-  @Public()
-  @Get(':id/about-page')
-  async findAboutPage(
-    @Param('id', ParseIntPipe, new ModelExistPipe('users'))
-    id: number,
-  ){
-    return await this.aboutPageService.findOneByUser(id);
 
-  }
   @Public()
   @Get(':id/categories')
-  findAllCategories(@Param('id', ParseIntPipe, new ModelExistPipe('users')) id: number) {
+  findAllCategories(
+    @Param('id', ParseIntPipe, new ModelExistPipe('users')) id: number,
+  ) {
     return this.categoriesService.findAllUserCategories(id);
   }
-
 
   @Get(':id/metrics')
   async getMetrics(
@@ -101,14 +91,17 @@ export class UserController {
   }
 
   @Patch(':id')
-  @UseInterceptors(FileFieldsInterceptor([
-    { name: 'avatar', maxCount: 1 },
-    { name: 'banner', maxCount: 1 },
-  ]))
+  @UseInterceptors(
+    FileFieldsInterceptor([
+      { name: 'avatar', maxCount: 1 },
+      { name: 'banner', maxCount: 1 },
+    ]),
+  )
   async update(
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserRequest,
-    @UploadedFiles() files: { avatar?: Express.Multer.File[], banner?: Express.Multer.File[] },
+    @UploadedFiles()
+    files: { avatar?: Express.Multer.File[]; banner?: Express.Multer.File[] },
   ) {
     if (files?.avatar?.[0]) {
       updateUserDto.avatar = files.avatar[0];

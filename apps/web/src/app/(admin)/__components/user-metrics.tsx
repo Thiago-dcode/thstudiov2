@@ -32,8 +32,8 @@ export const UserMetrics = async ({ userId }: {
     if (!metricsResult.data) return <div>No data available</div>;
 
     const { extra_data, active_plan } = metricsResult.data;
-    const { clients_count, media_count, media_size, portfolios_count, projects_count, services_count } = extra_data;
-    const { max_clients, max_media_size, max_portfolios, max_projects, max_services, translation, name } = active_plan;
+    const { clients_count, media_count, media_size, portfolios_count, projects_count, services_count,ai_credits,ai_credits_consumed } = extra_data;
+    const { max_clients, max_media_size, max_portfolios, max_projects, max_services, translation, name,ai_credits: plan_ai_credits } = active_plan;
 
     const METRICS: {
         title: string,
@@ -73,6 +73,11 @@ export const UserMetrics = async ({ userId }: {
                 used: services_count,
                 limit: max_services,
             },
+            {
+                title: 'Ai Credits',
+                used: ai_credits_consumed,
+                limit: ai_credits + plan_ai_credits,
+            },
         ]
 
     const getPercentage = (used: number, limit: number) => {
@@ -82,7 +87,7 @@ export const UserMetrics = async ({ userId }: {
 
     return <section className="w-full flex flex-col gap-2 items-start justify-start">
         <Popover>
-            <PopoverTrigger asChild>
+            <PopoverTrigger>
                 <Badge className="w-fit flex gap-2 cursor-pointer hover:opacity-80 transition-opacity">
                     <span>{translation?.name || name} Plan</span> <Eye size={14} />
                 </Badge>
@@ -94,7 +99,8 @@ export const UserMetrics = async ({ userId }: {
         <div className="flex items-center justify-start gap-3 w-full  flex-wrap">
 
             {METRICS.map(({ title, used, limit, format }, i) => {
-                const percentage = getPercentage(used, limit);
+                const percentage = used ===limit ?100: getPercentage(used , limit);
+               
                 const displayValue = format
                     ? format(used, limit)
                     : limit === -1

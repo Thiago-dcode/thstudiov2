@@ -37,3 +37,22 @@ export const getLowestMontlyPrice = (prices:PlanPrice[]) =>{
   }
   return monthlyPrice;
 }
+
+export const getHighestMontlyPrice = (prices:PlanPrice[]) =>{
+  if (prices.length === 0) return 0;
+  const monthlyPrices = prices.map(price => {
+    switch (price.billing_type) {
+      case 'QUARTERLY':
+        return price.price / 3;
+      case 'YEARLY':
+        return price.price / 12;
+      case 'MONTHLY':
+        return price.price;
+      case 'LIFETIME':
+        return price.price / 36;
+      default:
+        return price.price;
+    }
+  });
+  return Math.max(...monthlyPrices);
+}
