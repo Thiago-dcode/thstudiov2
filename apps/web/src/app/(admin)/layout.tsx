@@ -5,6 +5,8 @@ import { FinishSetupDialog } from "./__components/finish-setup-dialog";
 import { MainNavProvider } from "@/lib/providers/main-nav.provider";
 import { TopNav } from "@/lib/components/top-nav.component";
 import { AdminHeader } from "@/lib/components/admin-header";
+import MediaProvider from "@/modules/media/providers/media.provider";
+import { UploadMediaModal } from "@/modules/media/components/upload-media-modal";
 const AdminLayout = async ({ children }: { children: ReactNode }) => {
   const userAuth = await userSession();
   if (!userAuth) {
@@ -13,6 +15,8 @@ const AdminLayout = async ({ children }: { children: ReactNode }) => {
   return <>
     <FinishSetupDialog user={userAuth} />
     <MainNavProvider>
+      <MediaProvider>
+      <UploadMediaModal/>
       <div className="flex size-full items-center justify-between ">
         <AdminHeader />
         <main className="size-full flex flex-col items-start justify-start  ">
@@ -23,6 +27,7 @@ const AdminLayout = async ({ children }: { children: ReactNode }) => {
         </main>
 
       </div>
+      </MediaProvider>
     </MainNavProvider>
 
   </>;

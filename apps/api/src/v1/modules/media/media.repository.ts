@@ -141,7 +141,7 @@ export class MediaRepository extends BaseRepository {
     }
     this.requestService.pagination =
       await BaseRepository.handleOffsetPagination(query, filters);
-
+    query.orderBy('created_at','DESC')
     return query;
   }
 

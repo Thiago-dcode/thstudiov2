@@ -1,5 +1,4 @@
 'use client';
-import { useSession } from "@/modules/auth/contexts/session.provider";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { verify2faServerAction } from "@/modules/auth/server-actions/twofa.action";
 import { Errors } from "@repo/ui/components/custom/errors";
@@ -11,13 +10,11 @@ import FormComponent from "@/lib/components/form-component";
 
 export const TwoFaForm = ({ user }: { user: TwoFaUser }) => {
   const route = useRouter();
-  const { setSession } = useSession();
   const formRef = useRef<HTMLFormElement | null>(null);
   const { handleSubmit, errors, cleanErrors, isPending } = useHandleAction({
     action: verify2faServerAction,
     afterAction: async (result) => {
       if (result.data) {
-        setSession(result.data);
         route.push(user.is_new ? '/get-started' : '/atelier');
       }
     }
@@ -65,7 +62,7 @@ export const TwoFaForm = ({ user }: { user: TwoFaUser }) => {
 
       </form>
       {errors && errors.length > 0 && (
-        <Errors title="Verification failed" errors={errors} />
+        <Errors  errors={errors} />
       )}
 
     </FormComponent.Container>

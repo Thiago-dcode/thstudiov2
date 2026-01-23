@@ -4,7 +4,6 @@ import { loginServerAction } from "@/modules/auth/server-actions/login.action";
 import { useRouter } from "next/navigation";
 import { Errors } from "@repo/ui/components/custom/errors";
 import { Input } from "@repo/ui/components/shadcn/input";
-import { useSession } from "@/modules/auth/contexts/session.provider";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { Label } from '@repo/ui/components/shadcn/label'
 import { Checkbox } from '@repo/ui/components/shadcn/checkbox'
@@ -15,7 +14,6 @@ export const LoginForm = ({ rememberMe }: {
     rememberMe: boolean
 }) => {
     const router = useRouter();
-    const { setSession } = useSession();
     const [hidden, setHidden] = useState(true);
     const { result, handleSubmit, errors, cleanErrors, isPending, success } = useHandleAction({
         action: loginServerAction,

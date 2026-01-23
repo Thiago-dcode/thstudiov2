@@ -43,11 +43,9 @@ export class Helpers {
     }
     const cached = await this.cacheManager.get(_key);
     if (cached) {
-      console.log('CACHE HIT', _key);
       return JSON.parse(cached as string);
     }
     const result = await toRemember;
-    console.log('CACHE MISS', _key);
     await this.cacheManager.set(_key, JSON.stringify(result), options.ttl);
     return result;
   }

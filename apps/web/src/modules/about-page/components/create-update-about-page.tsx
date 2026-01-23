@@ -5,7 +5,7 @@ import { createAboutPageAction, updateAboutPageAction } from "../server-actions/
 import { useRouter } from "next/navigation"
 import FormComponent from "@/lib/components/form-component"
 import { FileInputProvider, useInputFile } from "@repo/ui/contexts/file.provider"
-import { usePreviewUrl } from "@repo/ui/hooks/usePreviewUrl"
+import { usePreviewUrls } from "@repo/ui/hooks/usePreviewUrls"
 import { AboutPage } from "@repo/common-lib/types/about-page"
 import { FileInput } from "@repo/ui/components/custom/file-input"
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@repo/ui/components/shadcn/dialog"
@@ -98,21 +98,21 @@ const PhotoInput  = ({defaultUrl}:{
     defaultUrl?:string
 }) =>{
     const {files} = useInputFile();
-    const {previewUrl} = usePreviewUrl({
+    const {previewUrls} = usePreviewUrls({
         defaultUrl,
         files
     });
 
        return <div className={cn("w-full mx-auto p-4 flex items-center gap-4",{
-        'flex-col':!previewUrl
+        'flex-col':!previewUrls?.length
        })}>
         <div>
-            {previewUrl ? (
+            {previewUrls?.length ? (
                 <div className="mt-4 flex flex-col items-center gap-2">
                     <h3 className="text-sm font-medium">Photo Preview:</h3>
                     <div className="relative aspect-3/4 max-h-[500px] max-w-[300px] overflow-hidden rounded-md border-4 border-fg-2">
                         <img
-                            src={previewUrl}
+                            src={previewUrls[0]}
                             alt="Photo Preview"
                             className="w-full h-full object-cover"
                         />

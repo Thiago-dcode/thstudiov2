@@ -7,7 +7,7 @@ import { useEditUser } from "../providers/edit-user.provider";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@repo/ui/components/shadcn/dialog";
 import FormComponent from "@/lib/components/form-component";
 import { FileInputProvider, useInputFile } from "@repo/ui/contexts/file.provider";
-import { usePreviewUrl } from "@repo/ui/hooks/usePreviewUrl";
+import { usePreviewUrls } from "@repo/ui/hooks/usePreviewUrls";
 import { FileInput } from "@repo/ui/components/custom/file-input";
 import { Errors } from "@repo/ui/components/custom/errors";
 import { useEffect, useRef, useState } from "react";
@@ -168,18 +168,18 @@ export const EditAvatar = ({ defaultAvatar }: {
 }) => {
     const { errors, cleanErrors, isPending } = useEditUser();
     const { files } = useInputFile();
-    const { previewUrl } = usePreviewUrl({ defaultUrl: defaultAvatar, files })
+    const { previewUrls } = usePreviewUrls({ defaultUrl: defaultAvatar, files })
 
     return (
         <div className="w-full flex flex-col items-center gap-2">
             <div className="flexw-full max-w-2xl mx-auto p-4">
 
-                {previewUrl && (
+                {previewUrls?.length && (
                     <div className="mt-4 flex flex-col items-center gap-2">
                         <h3 className="text-sm font-medium">Profile Preview:</h3>
                         <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-fg-2">
                             <img
-                                src={previewUrl}
+                                src={previewUrls[0]}
                                 alt="Profile Preview"
                                 className="w-full h-full object-cover"
                             />
@@ -208,17 +208,17 @@ export const EditBanner = ({ defaultBanner }: {
 }) => {
     const { errors, cleanErrors, isPending } = useEditUser();
     const { files } = useInputFile();
-    const { previewUrl } = usePreviewUrl({ defaultUrl: defaultBanner, files })
+    const { previewUrls } = usePreviewUrls({ defaultUrl: defaultBanner, files })
 
     return (
         <div className="w-full flex flex-col items-center gap-2">
             <div className="w-full max-w-2xl mx-auto p-4">
-                {previewUrl && (
+                {previewUrls?.length && (
                     <div className="mt-4 flex flex-col items-center gap-2">
                         <h3 className="text-sm font-medium">Banner Preview:</h3>
                         <div className="relative w-full aspect-video overflow-hidden rounded-md border-4 border-fg-2">
                             <img
-                                src={previewUrl}
+                                src={previewUrls[0]}
                                 alt="Banner Preview"
                                 className="w-full h-full object-cover"
                             />

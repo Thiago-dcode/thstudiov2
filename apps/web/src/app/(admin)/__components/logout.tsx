@@ -1,5 +1,4 @@
 'use client'
-import { useSession } from "@/modules/auth/contexts/session.provider"
 import { logoutServerAction } from "@/modules/auth/server-actions/logout.action"
 import { Button } from "@repo/ui/components/shadcn/button"
 import { FormEvent, useState } from "react"
@@ -18,7 +17,6 @@ import { useMainNav } from "@/lib/providers/main-nav.provider"
 
 export const Logout = () => {
     const router = useRouter()
-    const { setSession } = useSession();
     const { shrinked } = useMainNav();
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false)
@@ -33,7 +31,6 @@ export const Logout = () => {
             setLoading(false)
             return;
         }
-        setSession(undefined);
         router.push('/auth/login');
     }
 

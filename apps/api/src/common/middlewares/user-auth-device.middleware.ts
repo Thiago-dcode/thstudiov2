@@ -15,10 +15,6 @@ export class UserAuthDeviceMiddleware implements NestMiddleware {
       req.get(USER_AGENT_HEADER) || req.get('user-agent') || '-';
     this.requestService.ip_address =
       req.get(IP_ADDRESS_HEADER) || req.ip || req.get('x-forwarded-for') || '-';
-    console.log("--User Auth Device Middleware--", {
-      user_agent: this.requestService.user_agent,
-      ip_address: this.requestService.ip_address,
-    });
     next();
   }
 }

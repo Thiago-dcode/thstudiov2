@@ -1,4 +1,6 @@
-import { useState, useContext, createContext, ReactElement } from "react"
+'use client'
+
+import { useState, useContext, createContext, ReactElement, useMemo, useCallback } from "react"
 import { MimeTypes } from '@repo/common-lib/types/general'
 type FileContextProvider = {
     files?: FileList,
@@ -23,7 +25,7 @@ export const FileInputProvider = ({ children, allowedMimeTypes }: {
 }) => {
     const [errors, setErrors] = useState<string[]>()
     const [files, _setFiles] = useState<FileList>()
-    const setFiles = (files: FileList) => {
+    const setFiles = useCallback((files: FileList) => {
         const errors: string[] = []
         for (let index = 0; index < files.length; index++) {
             const file = files[index];
@@ -34,11 +36,19 @@ export const FileInputProvider = ({ children, allowedMimeTypes }: {
         }
         setErrors(errors)
         if (!errors.length) _setFiles(files)
-    }
+    }, [allowedMimeTypes])
+
+    // Memoize the context value to prevent unnecessary re-renders
+    const value = useMemo(() => ({
+        files,
+        allowedMimeTypes,
+        errors,
+        setFiles
+    }), [files, allowedMimeTypes, errors, setFiles])
 
 
     return (
-        <FileContext.Provider value={{ files, allowedMimeTypes, errors, setFiles }}>
+        <FileContext.Provider value={value}>
             {children}
         </FileContext.Provider>
     )

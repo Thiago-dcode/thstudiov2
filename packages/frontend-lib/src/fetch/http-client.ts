@@ -17,7 +17,7 @@ type CacheOptions = {
 
 type RequestParams = {
     method: Method;
-    resource: string;
+    resource?: string;
     headers?: HeadersInit;
     body?: BodyParam;
     signal?: AbortSignal;
@@ -128,7 +128,7 @@ protected _defaultCacheOptions?: CacheOptions;
     }
     protected abstract fetcher(): Promise<any>;
 
-    protected async setupRequest({resource, headers, body, method, signal, cacheOptions}: RequestParams): Promise<void> {
+    protected async setupRequest({resource='', headers, body, method, signal, cacheOptions}: RequestParams): Promise<void> {
         this.headers = headers || {};
         this.method = method;
         this.resource = resource.trim();
