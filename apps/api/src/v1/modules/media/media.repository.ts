@@ -4,7 +4,6 @@ import { QueryBuilder } from '@repo/database/queryBuilder';
 import {
   MediaSchema,
   MediaSchemaColumns,
-  MediaSchemaWithoutTimestamps,
 } from '@repo/common-lib/schemas/media';
 import {
   CreateMediaInput,
@@ -33,6 +32,8 @@ export class MediaRepository extends BaseRepository {
     'media.seo_description',
     'media.seo_filename',
     'media.user_id',
+    'media.created_at',
+    'media.updated_at',
   ] as const;
 
   // private readonly FULL_COLUMNS: string[] = [
@@ -55,7 +56,7 @@ export class MediaRepository extends BaseRepository {
 
   async getAll(filters: MediaIndexRequest): Promise<Media[]> {
     const query = await this.applyFilters(filters, this.query());
-    const results = await query.get<MediaSchemaWithoutTimestamps[]>();
+    const results = await query.get<MediaSchema[]>();
     return results.map((result) => this.formatMedia(result));
   }
 
@@ -63,7 +64,7 @@ export class MediaRepository extends BaseRepository {
     const result = await this.query()
       .select(this.COLUMNS)
       .where('id', '=', id)
-      .first<MediaSchemaWithoutTimestamps>();
+      .first<MediaSchema>();
     if (!result) {
       throw new HttpException(
         'Media not found with id ' + id,
@@ -77,7 +78,7 @@ export class MediaRepository extends BaseRepository {
     const results = await this.query()
       .select(this.COLUMNS)
       .where('user_id', '=', userId)
-      .get<MediaSchemaWithoutTimestamps[]>();
+      .get<MediaSchema[]>();
     return results.map((result) => this.formatMedia(result));
   }
 
@@ -88,13 +89,13 @@ export class MediaRepository extends BaseRepository {
     const result = await this.query()
       .select(this.COLUMNS)
       .where(column, '=', value)
-      .first<MediaSchemaWithoutTimestamps>();
+      .first<MediaSchema>();
     if (!result) return null;
     return this.formatMedia(result);
   }
 
   async create(data: CreateMediaInput): Promise<Media> {
-    const result = await super._create<MediaSchemaWithoutTimestamps>(data, {
+    const result = await super._create<MediaSchema>(data, {
       select: this.COLUMNS,
     });
     return this.formatMedia(result);
@@ -107,7 +108,7 @@ export class MediaRepository extends BaseRepository {
     const result = await this.query()
       .select(this.COLUMNS)
       .where('id', '=', id)
-      .first<MediaSchemaWithoutTimestamps>();
+      .first<MediaSchema>();
     return this.formatMedia(result);
   }
 
@@ -145,7 +146,7 @@ export class MediaRepository extends BaseRepository {
     return query;
   }
 
-  private formatMedia(result: MediaSchemaWithoutTimestamps): Media {
+  private formatMedia(result: MediaSchema): Media {
     return {
       id: result.id,
       public_id: result.public_id,
@@ -165,6 +166,8 @@ export class MediaRepository extends BaseRepository {
       seo_description: result.seo_description,
       seo_filename: result.seo_filename,
       user_id: result.user_id,
+      created_at: result.created_at,
+      updated_at: result.updated_at,
     };
   }
 }

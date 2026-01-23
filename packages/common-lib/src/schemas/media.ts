@@ -28,7 +28,7 @@ export type MediaSchema = {
 export type MediaSchemaWithoutTimestamps = Omit<MediaSchema, 'created_at' | 'updated_at'>;
 
 const tablesMedia = [TABLES_ENUM.MEDIA] as const;
-export type MediaSchemaColumns = TableColumn<typeof tablesMedia, MediaSchemaWithoutTimestamps>;
+export type MediaSchemaColumns = TableColumn<typeof tablesMedia, MediaSchema>;
 
 // ==================== MEDIA WITH TRANSLATIONS SCHEMA ====================
 export type MediaWithTranslationsSchema = MediaSchema & {

@@ -8,8 +8,8 @@ import { EnumType } from "../constants/enums";
 
 // ==================== MEDIA TYPES ====================
 
-// Media without timestamps
-export type Media = MediaSchemaWithoutTimestamps;
+// Media with timestamps
+export type Media = MediaSchema;
 // Media translation without id
 export type MediaTranslation = MediaTranslationSchema;
 
