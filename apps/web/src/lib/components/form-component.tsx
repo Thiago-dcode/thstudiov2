@@ -5,7 +5,8 @@ import { Input } from "@repo/ui/components/shadcn/input";
 import { Textarea } from "@repo/ui/components/shadcn/textarea";
 import { Button, ButtonProps } from "@repo/ui/components/shadcn/button";
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
-import { Check } from "lucide-react";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@repo/ui/components/shadcn/hover-card";
+import { Check, Info } from "lucide-react";
 
 
 const Container = ({ children, className }: {
@@ -111,6 +112,7 @@ const LabelInput = forwardRef<HTMLInputElement, {
     htmlFor?: string;
     labelClassName?: string;
     inputClassName?: string;
+    extraInfo?:string;
     containerClassName?: string;
     error?: string;
 } & React.InputHTMLAttributes<HTMLInputElement>>(({
@@ -120,6 +122,7 @@ const LabelInput = forwardRef<HTMLInputElement, {
     inputClassName,
     containerClassName,
     error,
+    extraInfo,
     id,
     ...inputProps
 }, ref) => {
@@ -127,12 +130,24 @@ const LabelInput = forwardRef<HTMLInputElement, {
 
     return (
         <Field className={cn(containerClassName)}>
-            <Label
-                htmlFor={inputId}
-                className={cn("block", labelClassName)}
-            >
-                {label} {inputProps.required ? <span className="span-label text-red-500">*</span> : ''}
-            </Label>
+            <div className="flex items-center gap-1.5">
+                <Label
+                    htmlFor={inputId}
+                    className={cn("block", labelClassName)}
+                >
+                    {label} {inputProps.required ? <span className="span-label text-red-500">*</span> : ''}
+                </Label>
+                {extraInfo && (
+                    <HoverCard openDelay={200}>
+                        <HoverCardTrigger>
+                            <Info className="w-4 h-4 text-muted-foreground" />
+                        </HoverCardTrigger>
+                        <HoverCardContent>
+                            {extraInfo}
+                        </HoverCardContent>
+                    </HoverCard>
+                )}
+            </div>
             <Input
                 ref={ref}
                 id={inputId}
@@ -146,6 +161,7 @@ const LabelInput = forwardRef<HTMLInputElement, {
 
 LabelInput.displayName = "LabelInput";
 
+
 const LabelTextarea = forwardRef<HTMLTextAreaElement, {
     label: string;
     htmlFor?: string;
@@ -153,6 +169,7 @@ const LabelTextarea = forwardRef<HTMLTextAreaElement, {
     textareaClassName?: string;
     containerClassName?: string;
     error?: string;
+    extraInfo?: string;
 } & React.TextareaHTMLAttributes<HTMLTextAreaElement>>(({
     label,
     htmlFor,
@@ -160,6 +177,7 @@ const LabelTextarea = forwardRef<HTMLTextAreaElement, {
     textareaClassName,
     containerClassName,
     error,
+    extraInfo,
     id,
     ...textareaProps
 }, ref) => {
@@ -167,12 +185,24 @@ const LabelTextarea = forwardRef<HTMLTextAreaElement, {
 
     return (
         <Field className={cn(containerClassName, textareaProps.required && "input-required")}>
-            <Label
-                htmlFor={textareaId}
-                className={cn("block", labelClassName)}
-            >
-                {label} {textareaProps.required ? <span className="span-label">*</span> : ''}
-            </Label>
+            <div className="flex items-center gap-1.5">
+                <Label
+                    htmlFor={textareaId}
+                    className={cn("block", labelClassName)}
+                >
+                    {label} {textareaProps.required ? <span className="span-label">*</span> : ''}
+                </Label>
+                {extraInfo && (
+                    <HoverCard openDelay={200}>
+                        <HoverCardTrigger>
+                            <Info className="w-4 h-4 text-muted-foreground" />
+                        </HoverCardTrigger>
+                        <HoverCardContent>
+                            {extraInfo}
+                        </HoverCardContent>
+                    </HoverCard>
+                )}
+            </div>
             <Textarea
                 ref={ref}
                 id={textareaId}

@@ -1,4 +1,4 @@
-import { BadRequestException, HttpException, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { MediaRepository } from './media.repository';
 import { CreateMediaRequest } from './requests/create-media.request';
@@ -18,6 +18,8 @@ import { IndexMediaRequest } from '../user-media/requests/index-media.request';
 import { Helpers } from 'src/common/services/helpers.service';
 import { UPDATE_USER_EXTRA_DATA_METRICS } from '@repo/common-lib/constants/constants';
 import { UpdateUserExtraDataMetricsEvent } from '../user-extra-data/events/update-user-extra-data-metrics.event';
+import { UpdateMediaRequest } from './requests/update-media.request';
+import { RequestService } from 'src/common/services/request.service';
 
 @Injectable()
 export class MediaService {
@@ -27,6 +29,7 @@ export class MediaService {
   constructor(
     private readonly mediaRepository: MediaRepository,
     private readonly userService: UserService,
+    private readonly requestService: RequestService,
     private readonly userExtraDataService: UserExtraDataService,
     private readonly compressService: CompressService,
     private readonly storageService: StorageService,
@@ -153,6 +156,7 @@ export class MediaService {
         is_active: true,
         seo_title: data.seo_title || data.title || defaultSeoText,
         seo_alt: data.seo_alt || data.title || defaultSeoText,
+        compression_level:compressionLevel,
         seo_description: data.seo_description || data.description,
       };
       cleanObj(mediaData);
@@ -169,5 +173,38 @@ export class MediaService {
       );
       throw error;
     }
+  }
+
+  public async update(id:number,data:UpdateMediaRequest){
+    console.log("DATA TO UPDATE",data)
+    cleanObj(data);
+
+    const media = await this.mediaRepository.findById(id);
+    if(media.user_id !== this.requestService.user.id){
+      throw new UnauthorizedException();
+    }
+    
+    // Process assets once and store them
+    const processedThumbnail = media.thumbnail 
+      ? await this.helpers.getAsset(media.thumbnail) 
+      : media.thumbnail;
+    const processedUrl = media.url 
+      ? await this.helpers.getAsset(media.url) 
+      : media.url;
+    
+    if(!Object.values(data).length) {
+      // Return media with processed assets
+      media.thumbnail = processedThumbnail;
+      media.url = processedUrl;
+      return media;
+    }
+
+    const result = await this.mediaRepository.updateById(id,data);
+    
+    // Reuse the processed assets
+    result.thumbnail = processedThumbnail;
+    result.url = processedUrl;
+    
+    return result;
   }
 }

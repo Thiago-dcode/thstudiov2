@@ -19,6 +19,7 @@ export class MediaRepository extends BaseRepository {
     'media.id',
     'media.public_id',
     'media.title',
+    'media.description',
     'media.bytes',
     'media.thumbnail_bytes',
     'media.thumbnail',

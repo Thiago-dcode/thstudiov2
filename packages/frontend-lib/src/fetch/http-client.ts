@@ -146,7 +146,7 @@ protected _defaultCacheOptions?: CacheOptions;
     public async setResponseCallback<T>(callback: ResponseCallback<T>) {
         this._responseCallback = callback;
     }
-    public async get<T>(requestParams:RequestParamsWithoutMethod): Promise<T> {
+    public async get<T>(requestParams:RequestParamsWithoutMethod = {}): Promise<T> {
         return await this.callFetcher   ({...requestParams, method: 'GET'});
     }
     public async post<T>(requestParams: RequestParamsWithoutMethod): Promise<T> {

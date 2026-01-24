@@ -1,7 +1,7 @@
 import { BaseService } from "@/lib/services/base.service";
 import { ApiResponse } from "@repo/common-lib/types/response";
 import { fetchApi } from "@/lib/facade/fetchApi";
-import { Media, CreateMediaInputWithFile } from "@repo/common-lib/types/media";
+import { Media, CreateMediaInputWithFile, UpdateMediaInput } from "@repo/common-lib/types/media";
 
 
 class MediaService extends BaseService {
@@ -9,13 +9,14 @@ class MediaService extends BaseService {
        super(fetchApi(), 'media');
     }
     async findAll(): Promise<ApiResponse<Media[]>> {
-        return await this.fetchApi.get({
-            resource: '',
-        });
+        return await this.fetchApi.get();
     }
     async create(body: CreateMediaInputWithFile): Promise<ApiResponse<Media>> {
-        return await this.fetchApi.post({
-            resource: '',
+        return await this.fetchApi.post({body});
+    }
+    async update(id: number, body: UpdateMediaInput): Promise<ApiResponse<Media>> {
+        return await this.fetchApi.patch({
+            resource: `/${id}`,
             body
         });
     }

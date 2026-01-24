@@ -57,7 +57,7 @@ export class SharpCompressService extends CompressService {
             .webp({ quality: _quality })
             .toBuffer();
     
-          if (optimizedBuffer.length < targetSize || loops > 3)
+          if (optimizedBuffer.length <= targetSize || loops >= 5)
             return optimizedBuffer;
           
           return await optimizeRecursively(

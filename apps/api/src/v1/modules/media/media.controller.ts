@@ -3,12 +3,16 @@ import {
   Body,
   Controller,
   Get,
+  Param,
+  ParseIntPipe,
+  Patch,
   Post,
   UploadedFile,
   UploadedFiles,
   UseInterceptors,
 } from '@nestjs/common';
 import { CreateMediaRequest } from './requests/create-media.request';
+import { UpdateMediaRequest } from './requests/update-media.request';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { ParseJsonArrayPipe } from 'src/common/pipes/parse-json-array.pipe';
 import { MediaService } from './media.service';
@@ -52,5 +56,14 @@ export class MediaController {
     
     createMediaRequest.media = file;
     return await this.mediaService.create(createMediaRequest);
+  }
+  @Patch(':id')
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateMediaRequest: UpdateMediaRequest,
+  ) {
+    console.log('Raw body received:', updateMediaRequest);
+    console.log('Type of updateMediaRequest:', updateMediaRequest.constructor.name);
+    return await this.mediaService.update(id, updateMediaRequest);
   }
 }

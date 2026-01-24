@@ -12,4 +12,14 @@ export const createMediaSchema = z.object({
   user_id: z.number().int().positive(),
 });
 
+export const updateMediaSchema = z.object({
+  title: z.string().max(255).nullable().optional(),
+  description: z.string().nullable().optional(),
+  seo_alt: z.string().max(255).nullable().optional(),
+  seo_title: z.string().max(255).nullable().optional(),
+  seo_description: z.string().max(255).nullable().optional(),
+  seo_filename: z.string().max(255).nullable().optional(),
+}).partial();
+
 export type CreateMediaSchemaType = z.infer<typeof createMediaSchema>;
+export type UpdateMediaSchemaType = z.infer<typeof updateMediaSchema>;
