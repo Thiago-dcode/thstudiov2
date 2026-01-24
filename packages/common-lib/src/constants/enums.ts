@@ -87,3 +87,4 @@ export const TABLES_ENUM = {
 
   export type AvailableEnums = keyof typeof ENUMS;
   export type EnumType<T extends AvailableEnums> = (typeof ENUMS)[T][number];
+  export const DEFAULT_COMPRESSION_LVL:EnumType<'COMPRESSION_LEVEL'> = 'HIGH';

@@ -18,7 +18,8 @@ export type UploadMedia = {
 // Context type
 type MediaContextType = {
   mediaUploads: UploadMedia[];
-  setMediaUploads: (mediaInput: (CreateMediaInputWithFile & {previewUrl?:string})[]) => void;
+  addMediaUploads: (mediaInput: (CreateMediaInputWithFile & {previewUrl?:string})[]) => void;
+  setMediaUploads: (mediaUploads: UploadMedia[]) => void;
   handleCancel: () => void;
   handleUpload:  ()=>Promise<void>;
   handleRemove: (index: number) => void;
@@ -73,7 +74,7 @@ export const MediaProvider = ({
     });
   };
 
-  const handleSetMediaUploads = useCallback((mediaInput: (CreateMediaInputWithFile & {previewUrl?:string})[]) => {
+  const addMediaUploads = useCallback((mediaInput: (CreateMediaInputWithFile & {previewUrl?:string})[]) => {
     const MAX_FILES = 10;
     setMediaUploads((prev) => {
       // Limit input to MAX_FILES
@@ -98,6 +99,10 @@ export const MediaProvider = ({
       
       return newUploads;
     });
+  }, []);
+
+  const setMediaUploadsDirect = useCallback((mediaUploads: UploadMedia[]) => {
+    setMediaUploads(mediaUploads);
   }, []);
   const isLoading = useMemo(() => mediaUploads.some(m => m.pending), [mediaUploads]);
   const isCompleted = useMemo(() => !mediaUploads.some(m => !m.data && !m.error), [mediaUploads]);
@@ -196,7 +201,8 @@ export const MediaProvider = ({
 
   const value: MediaContextType = {
     mediaUploads,
-    setMediaUploads: handleSetMediaUploads,
+    addMediaUploads,
+    setMediaUploads: setMediaUploadsDirect,
     handleCancel,
     handleRemove,
     updateMediaUpload,

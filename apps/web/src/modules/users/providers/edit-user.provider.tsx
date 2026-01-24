@@ -47,7 +47,7 @@ export const EditUserProvider = ({
     const [userCategories, setUserCategories] = useState(defaultUserCategories);
     const { handleSubmit, isPending, errors, cleanErrors, success, cleanResult, reset } = useHandleAction({
         action: async (formData) => {
-            return await updateUserAction(user.id, formData)
+            return await updateUserAction(user.id, formData!)
         },
         afterAction: async (result) => {
             if (result.data) {

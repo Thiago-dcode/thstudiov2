@@ -24,7 +24,8 @@ const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
             }
         }
 
-        const fileName = context?.files?.[0]?.name || ""
+        const fileCount = context?.files?.length || 0
+        const fileName = fileCount === 1 ? context?.files?.[0]?.name || "" : ""
 
         return (
             <div className="relative w-full">
@@ -40,7 +41,7 @@ const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
                 <label
                     htmlFor={inputId}
                     className={cn(
-                        "flex h-auto min-h-36 w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed border-fg-2 bg-bg px-4 py-6 transition-colors hover:border-text/60 hover:bg-bg/80 focus-within:outline-none focus-within:border-text/80 label-file-input",
+                        "flex h-auto min-h-12 w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed border-fg-2 bg-bg px-4 py-6 transition-colors hover:border-text/60 hover:bg-bg/80 focus-within:outline-none focus-within:border-text/80 label-file-input",
                         className
                     )}
                 >

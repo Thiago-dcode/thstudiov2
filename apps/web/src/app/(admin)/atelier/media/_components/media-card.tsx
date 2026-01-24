@@ -6,11 +6,13 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@repo/ui/components/sh
 import { Label } from "@repo/ui/components/shadcn/label";
 import { Button } from "@repo/ui/components/shadcn/button";
 import FormComponent from "@/lib/components/form-component";
+import { bytesToMB } from '@repo/common-lib/utils/bytes';
 import { X } from "lucide-react";
 import { Media } from "@repo/common-lib/types/media";
 import { format } from "date-fns";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { updateMediaAction } from "@/modules/media/server-actions/update-media.action";
+
 
 type MediaCardProps = {
   media: Media;
@@ -286,19 +288,26 @@ export function MediaCard({ media, username }: MediaCardProps) {
               </div>
             </div>
             <DrawerFooter className="border-t px-6 py-4 bg-fg-1/60">
-              <div className="flex gap-3 w-full">
-                <Button
-                  onClick={() => setIsEditing(true)}
-                  variant="default"
-                  className="flex-1"
-                >
-                  Edit
-                </Button>
-                <DrawerClose asChild>
-                  <Button variant="outline" className="flex-1 hover:bg-fg-2 hover:text-foreground">
-                    Close
+              <div className="flex flex-col gap-3 w-full">
+                {currentMedia.bytes && (
+                  <p className="text-xs text-muted-foreground text-center">
+                    {bytesToMB(currentMedia.bytes).toFixed(2)} MB
+                  </p>
+                )}
+                <div className="flex gap-3 w-full">
+                  <Button
+                    onClick={() => setIsEditing(true)}
+                    variant="default"
+                    className="flex-1"
+                  >
+                    Edit
                   </Button>
-                </DrawerClose>
+                  <DrawerClose asChild>
+                    <Button variant="outline" className="flex-1 hover:bg-fg-2 hover:text-foreground">
+                      Close
+                    </Button>
+                  </DrawerClose>
+                </div>
               </div>
             </DrawerFooter>
           </>

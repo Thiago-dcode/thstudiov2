@@ -4,27 +4,55 @@ import { ActionReturn } from "../auth.types"
 
 
 export const useHandleAction = <K,T>({action,beforeAction,afterAction}:{
-    action: (formData:FormData)=>Promise<ActionReturn<K,T>>,
-    beforeAction?: (formData:FormData,prevResult:ActionReturn<K,T>|null)=>Promise<void>
+    action: ((formData:FormData)=>Promise<ActionReturn<K,T>>) | (()=>Promise<ActionReturn<K,T>>),
+    beforeAction?: ((formData:FormData,prevResult?:ActionReturn<K,T>|null)=>Promise<void>) | ((prevResult?:ActionReturn<K,T>|null)=>Promise<void>) | (()=>Promise<void>)
     afterAction?:(result:ActionReturn<K,T>)=>Promise<void>
 }) =>{
     const [result,setResult] = useState<ActionReturn<K,T>|null>(null);
     const [errors,setErrors] = useState<string[]|null>(null);
     const [inputErrors, setInputErrors] = useState<Record<string,string>>()
     const [isPending,setPending] = useState(false);
-    const handleSubmit =async (e:FormEvent<HTMLFormElement>| FormData) => {
+
+    const executeAction = async (formData?: FormData) => {
         if(isPending) return;
         setPending(true);
+        
+        try {
+            if(beforeAction) {
+                // Check if beforeAction accepts formData parameter
+                if(beforeAction.length >= 1 && formData !== undefined) {
+                    await (beforeAction as (formData:FormData,prevResult?:ActionReturn<K,T>|null)=>Promise<void>)(formData, result);
+                } else if(beforeAction.length >= 1) {
+                    await (beforeAction as (prevResult?:ActionReturn<K,T>|null)=>Promise<void>)(result);
+                } else {
+                    await (beforeAction as ()=>Promise<void>)();
+                }
+            }
+            
+            // Call action - check if it accepts formData
+            const actionResult = action.length > 0 && formData !== undefined
+                ? await (action as (formData:FormData)=>Promise<ActionReturn<K,T>>)(formData)
+                : await (action as ()=>Promise<ActionReturn<K,T>>)();
+            
+            if(afterAction) await afterAction(actionResult);
+            setErrors(actionResult.errors);
+            setInputErrors(actionResult.inputErrors)
+            setResult(actionResult);
+        } finally {
+            // isPending will be set to false in useEffect after result is set
+        }
+    }
+
+    const handleSubmit = async (e:FormEvent<HTMLFormElement>| FormData) => {
         if(!(e instanceof FormData)){
             e.preventDefault();
         }
         const formData = e instanceof FormData? e: new FormData(e.currentTarget)
-        if(beforeAction) await beforeAction(formData,result);
-        const actionResult = await action(formData);
-        if(afterAction) await afterAction(actionResult);
-        setErrors(actionResult.errors);
-        setInputErrors(actionResult.inputErrors)
-        setResult(actionResult);
+        await executeAction(formData);
+    }
+
+    const handleAction = async () => {
+        await executeAction();
     }
 
     const cleanErrors = () =>{
@@ -59,6 +87,7 @@ export const useHandleAction = <K,T>({action,beforeAction,afterAction}:{
         result,
         isPending,
         handleSubmit,
+        handleAction,
         errors,
         inputErrors,
         cleanErrors,

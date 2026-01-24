@@ -79,7 +79,6 @@ export const UserMetrics = async ({ userId }: {
                 limit: ai_credits + plan_ai_credits,
             },
         ]
-
     const getPercentage = (used: number, limit: number) => {
         if (limit === Infinity || limit === 0) return 0;
         return Math.min((used / limit) * 100, 100);

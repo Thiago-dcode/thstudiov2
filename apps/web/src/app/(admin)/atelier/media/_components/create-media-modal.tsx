@@ -19,11 +19,18 @@ import { ALLOWED_IMAGE_FILE_TYPES } from "@repo/common-lib/constants/constants"
 import { useMedia } from "@/modules/media/providers/media.provider"
 import { CreateMediaInputWithFile } from "@repo/common-lib/types/media"
 import { useSession } from "@/lib/hooks/useSession"
+import { Slider } from "@repo/ui/components/shadcn/slider"
+import { DEFAULT_COMPRESSION_LVL, ENUMS, EnumType } from "@repo/common-lib/constants/enums"
+import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip"
+import { useUserMetrics } from "@/modules/users/providers/user-metrics.provider"
 
 function MediaUploadContent() {
+    const COMPRESSION_LVLS = ENUMS.COMPRESSION_LEVEL;
     const MAX_FILES = 10;
     const [error, setError] = useState<string>();
-    const { mediaUploads } = useMedia()
+    const { mediaUploads, updateMediaUpload, setMediaUploads } = useMedia();
+    const {metrics} = useUserMetrics();
+    const allow_media_compression = metrics?.active_plan.allow_media_compression;
     const currentCount = mediaUploads?.length || 0;
     const isMaxReached = currentCount >= MAX_FILES;
 
@@ -43,44 +50,155 @@ function MediaUploadContent() {
 
         setError(undefined)
     }
-    
+    const getCompressionLvlIndex = (compressionLvl: EnumType<'COMPRESSION_LEVEL'>) => {
+
+        for (let i = 0; i < COMPRESSION_LVLS.length; i++) {
+            if (compressionLvl === COMPRESSION_LVLS[i]) {
+                return i;
+            }
+        }
+        return COMPRESSION_LVLS.length - 2;
+
+    }
+
     return (
-        <div className="h-full flex flex-col p-4">
+        <div className="h-full flex flex-col p-2">
             {mediaUploads && mediaUploads.length > 0 ? (
                 <>
-                    <div className="mb-4 flex items-center justify-between">
-                        <span className="text-sm text-text-muted">
-                            {currentCount}/{MAX_FILES} files
-                        </span>
-                        {isMaxReached && (
-                            <span className="text-xs text-amber-600">Maximum reached</span>
-                        )}
+                    <div className="mb-4 space-y-3 p-1 rounded-md border border-border bg-fg-1/50">
+                        <div className="flex items-center justify-between gap-3">
+                            <div className="flex-1">
+                                <div className="flex items-center justify-between mb-1.5">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-sm font-medium text-text">Global Compression</span>
+                                        <InfoTooltip 
+                                            content={
+                                                <div className="space-y-2">
+                                                    <p className="font-medium">Compression Level</p>
+                                                    <p className="text-sm">
+                                                        Controls the balance between image quality and file size. Lower compression (VERY_LOW, LOW) preserves more detail but creates larger files. Higher compression (HIGH, VERY_HIGH) reduces file size but may slightly reduce image quality.
+                                                    </p>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        This setting applies to all uploaded files. You can adjust individual files using the sliders below.
+                                                    </p>
+                                                </div>
+                                            } 
+                                        />
+                                        <span className="text-xs text-text-muted bg-fg-2 px-2 py-0.5 rounded-md">
+                                            All files
+                                        </span>
+                                    </div>
+                                    <span className="text-xs font-semibold text-text bg-accent/20 px-2 py-1 rounded-md">
+                                        {mediaUploads[0]?.input.compression_level || DEFAULT_COMPRESSION_LVL}
+                                    </span>
+                                </div>
+                                {!allow_media_compression && (
+                                    <div className="mb-2 p-2 rounded-md bg-amber-500/10 border border-amber-500/20">
+                                        <p className="text-xs text-amber-600">
+                                            <span className="font-medium">Upgrade required:</span> Compression control is not available in your current plan. Upgrade to access this feature.
+                                        </p>
+                                    </div>
+                                )}
+                                <Slider
+                                    defaultValue={[getCompressionLvlIndex(mediaUploads[0]?.input.compression_level || DEFAULT_COMPRESSION_LVL)]}
+                                    max={COMPRESSION_LVLS.length - 1}
+                                    min={0}
+                                    step={1}
+                                    disabled={!allow_media_compression}
+                                    onValueChange={(e) => {
+                                        if (!allow_media_compression) return;
+                                        const compressionLvlSelected = COMPRESSION_LVLS[e[0]]
+                                        if (!compressionLvlSelected) return;
+
+                                        setMediaUploads(mediaUploads.map(mu=>{
+                                            return {
+                                                ...mu,
+                                                input:{
+                                                    ...mu.input,
+                                                    compression_level:compressionLvlSelected
+                                                }
+                                            }
+                                        }))
+
+                                    }}
+                                />
+                            </div>
+                        </div>
+                        <div className="flex items-center justify-between pt-2 border-t border-border/50">
+                            <span className="text-sm text-text-muted">
+                                {currentCount}/{MAX_FILES} files
+                            </span>
+                            {isMaxReached && (
+                                <span className="text-xs text-amber-600">Maximum reached</span>
+                            )}
+                        </div>
                     </div>
                     <div className="mb-4 overflow-y-auto flex-1 min-h-0">
-                        <div className="grid grid-cols-3 gap-3">
-                            {mediaUploads.map((media, index) => (
-                                <div
-                                    key={index}
-                                    className="aspect-square flex items-center justify-center overflow-hidden rounded-md border border-border bg-fg-2"
-                                >
-                                    <img
-                                        src={media.previewUrl}
-                                        alt={`Preview ${index + 1}`}
-                                        className="max-h-full max-w-full object-contain"
-                                    />
-                                </div>
-                            ))}
+                        <div className="grid grid-cols-2 gap-4">
+                            {mediaUploads.map((media, index) => {
+
+                                const currentCompressionLvl = media.input.compression_level || DEFAULT_COMPRESSION_LVL;
+
+
+                                return (
+                                    <div key={`media-upload-${media.input.file?.name}-${index}`} className="flex flex-col gap-3">
+                                        <div
+                                            className="aspect-square flex flex-col items-center justify-center overflow-hidden rounded-lg border border-border bg-fg-2 shadow-md min-h-[200px]"
+                                        >
+                                            <img
+                                                src={media.previewUrl}
+                                                alt={`Preview ${index + 1}`}
+                                                className="max-h-full max-w-full object-contain"
+                                            />
+                                        </div>
+                                        <div className="flex flex-col gap-2 px-1">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-xs text-text-muted font-medium">Compression</span>
+                                                <span className="text-xs font-semibold text-text bg-fg-1 px-2 py-0.5 rounded-md">{currentCompressionLvl}</span>
+                                            </div>
+                                            {!allow_media_compression && (
+                                                <p className="text-xs text-amber-600">
+                                                    Upgrade plan to adjust
+                                                </p>
+                                            )}
+                                            <Slider
+                                                value={[getCompressionLvlIndex(currentCompressionLvl)]}
+                                                max={COMPRESSION_LVLS.length - 1}
+                                                min={0}
+                                                step={1}
+                                                disabled={!allow_media_compression}
+                                                onValueChange={(e) => {
+                                                    if (!allow_media_compression) return;
+                                                    const compressionLvlSelected = COMPRESSION_LVLS[e[0]]
+                                                    if (!compressionLvlSelected) return;
+
+                                                    updateMediaUpload(index, {
+                                                        ...media,
+                                                        input: {
+                                                            ...media.input,
+                                                            compression_level: compressionLvlSelected
+                                                        }
+                                                    })
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                )
+                            })}
                         </div>
                     </div>
                     {error && (
                         <p className="text-sm text-red-500 mb-2">{error}</p>
                     )}
-                    <FileInput
-                        multiple
-                        onChange={handleFileChange}
-                        accept={ALLOWED_IMAGE_FILE_TYPES.join(',')}
-                        disabled={isMaxReached}
-                    />
+                    <div className="mt-auto">
+                        <FileInput
+                            multiple
+                            onChange={handleFileChange}
+                            accept={ALLOWED_IMAGE_FILE_TYPES.join(',')}
+                            disabled={isMaxReached}
+
+                        />
+                    </div>
                 </>
             ) : (
                 <div className="h-full flex flex-col">
@@ -109,16 +227,16 @@ function MediaUploadContent() {
 
 export function CreateMediaDialog() {
     const [open, setOpen] = useState(false)
-    const { handleUpload, isLoading, handleCancel, setMediaUploads } = useMedia()
+    const { handleUpload, isLoading, handleCancel, addMediaUploads } = useMedia()
     const { files } = useInputFile()
     const { previewUrls, cleanup } = usePreviewUrls({ files });
     const { session } = useSession();
-    
+
     useEffect(() => {
         if (!previewUrls || !previewUrls.length || !files || !files.length || !session || files.length !== previewUrls.length) return;
 
         const newMediaUploads: (CreateMediaInputWithFile & { previewUrl?: string })[] = []
-        
+
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
             const previewUrl = previewUrls[i]
@@ -129,16 +247,16 @@ export function CreateMediaDialog() {
                 user_id: session.id
             })
         }
-        
-        setMediaUploads(newMediaUploads)
 
-    }, [previewUrls, files, session, setMediaUploads])
+        addMediaUploads(newMediaUploads)
 
-    useEffect(()=>{
-        if(!isLoading)return
+    }, [previewUrls, files, session, addMediaUploads])
+
+    useEffect(() => {
+        if (!isLoading) return
 
         setOpen(false)
-    },[isLoading])
+    }, [isLoading])
     if (!session) return null;
 
     return (
@@ -149,7 +267,7 @@ export function CreateMediaDialog() {
                     Create New Media
                 </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl h-[90vh] flex flex-col [&>button]:hidden p-0">
+            <DialogContent className="max-w-2xl h-[95vh] flex flex-col justify-between [&>button]:hidden p-0">
                 <DialogHeader className="border-b pb-4 px-6 pt-6">
                     <DialogTitle>Create New Media</DialogTitle>
                     <DialogDescription>
@@ -159,12 +277,12 @@ export function CreateMediaDialog() {
                 <div className="flex-1 min-h-0">
                     <MediaUploadContent />
                 </div>
-                <DialogFooter className="border-t pt-4 px-6 pb-6 w-full">
+                <DialogFooter className="border-t p-2 full">
                     <DialogClose asChild>
                         <Button onClick={() => {
-                         handleCancel()
-                         cleanup()
-                         setOpen(false)
+                            handleCancel()
+                            cleanup()
+                            setOpen(false)
                         }} variant="outline" className="w-full">
                             Close
                         </Button>

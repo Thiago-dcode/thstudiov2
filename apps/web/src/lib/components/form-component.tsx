@@ -5,8 +5,8 @@ import { Input } from "@repo/ui/components/shadcn/input";
 import { Textarea } from "@repo/ui/components/shadcn/textarea";
 import { Button, ButtonProps } from "@repo/ui/components/shadcn/button";
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@repo/ui/components/shadcn/hover-card";
-import { Check, Info } from "lucide-react";
+import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
+import { Check } from "lucide-react";
 
 
 const Container = ({ children, className }: {
@@ -138,14 +138,7 @@ const LabelInput = forwardRef<HTMLInputElement, {
                     {label} {inputProps.required ? <span className="span-label text-red-500">*</span> : ''}
                 </Label>
                 {extraInfo && (
-                    <HoverCard openDelay={200}>
-                        <HoverCardTrigger>
-                            <Info className="w-4 h-4 text-muted-foreground" />
-                        </HoverCardTrigger>
-                        <HoverCardContent>
-                            {extraInfo}
-                        </HoverCardContent>
-                    </HoverCard>
+                    <InfoTooltip content={extraInfo} />
                 )}
             </div>
             <Input
@@ -193,14 +186,7 @@ const LabelTextarea = forwardRef<HTMLTextAreaElement, {
                     {label} {textareaProps.required ? <span className="span-label">*</span> : ''}
                 </Label>
                 {extraInfo && (
-                    <HoverCard openDelay={200}>
-                        <HoverCardTrigger>
-                            <Info className="w-4 h-4 text-muted-foreground" />
-                        </HoverCardTrigger>
-                        <HoverCardContent>
-                            {extraInfo}
-                        </HoverCardContent>
-                    </HoverCard>
+                    <InfoTooltip content={extraInfo} />
                 )}
             </div>
             <Textarea

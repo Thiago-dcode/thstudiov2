@@ -7,7 +7,7 @@ import { CompressService } from '@repo/backend-lib/services/compress-service/bas
 import { StorageService } from '@repo/backend-lib/services/storage-service/base';
 import { UserService } from '../users/users.service';
 import { generateUUID } from '@repo/common-lib/utils/generate-uuid';
-import { bytesToMB, mbToBytes } from 'src/common/utils';
+import { bytesToMB, mbToBytes } from '@repo/common-lib/utils/bytes';
 import { FactoryLogService } from '@repo/backend-lib/services/log-service';
 import path from 'path';
 import { CreateMediaInput } from '@repo/common-lib/types/media';
@@ -20,6 +20,7 @@ import { UPDATE_USER_EXTRA_DATA_METRICS } from '@repo/common-lib/constants/const
 import { UpdateUserExtraDataMetricsEvent } from '../user-extra-data/events/update-user-extra-data-metrics.event';
 import { UpdateMediaRequest } from './requests/update-media.request';
 import { RequestService } from 'src/common/services/request.service';
+import { DEFAULT_COMPRESSION_LVL } from '@repo/common-lib/constants/enums';
 
 @Injectable()
 export class MediaService {
@@ -84,7 +85,7 @@ export class MediaService {
 
   public async create({ media, ...data }: CreateMediaRequest) {
     try {
-      const compressionLevel = data.compression_level || 'HIGH';
+      const compressionLevel = data.compression_level || DEFAULT_COMPRESSION_LVL;
       const targetSize = Math.round(
         Math.min(
           this.compressService.getSizeCompressed(
