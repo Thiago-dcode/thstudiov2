@@ -7,6 +7,7 @@ export const ENUMS = {
     MEDIA_TYPE: ['IMAGE', 'VIDEO'] as const,
     MEDIA_SHAPE: ['SQUARE', 'LANDSCAPE', 'PORTRAIT'] as const,
     COMPRESSION_LEVEL:['VERY_LOW','LOW','NORMAL','HIGH','VERY_HIGH'] as const,
+    LLM_USAGE_TYPE:['GENERATE_MEDIA_SEO', 'GENERATE_MEDIA_TEXT'] as const,
     PROJECT_STATUS: [
       'NOT_STARTED',
       'PENDING',
@@ -82,7 +83,8 @@ export const TABLES_ENUM = {
   PASSWORD_RECOVERY_ATTEMPTS:'password_recovery_attempts',
   PAYMENT_METHODS: 'payment_methods',
   ABOUT_PAGE:'about_page',
-  USER_STORAGE_REQUESTS:'user_storage_requests'
+  USER_STORAGE_REQUESTS:'user_storage_requests',
+  LLM_TOKENS_USAGE:'llm_tokens_usage'
 } as const;
 
   export type AvailableEnums = keyof typeof ENUMS;

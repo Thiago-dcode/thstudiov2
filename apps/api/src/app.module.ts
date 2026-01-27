@@ -18,7 +18,7 @@ import { LanguageResolver } from './i18n/resolvers/language.resolver';
 import { InterceptorProviders } from './common/intecerceptors/interceptor.providers';
 import { filterProviders } from './common/filters/filter.providers';
 import { JwtModule } from '@nestjs/jwt';
-import { AuthGuard } from './common/guards/prod-guard/auth.guard';
+import { AuthGuard } from './common/guards/auth.guard';
 import { UserAuthDeviceMiddleware } from './common/middlewares/user-auth-device.middleware';
 import { UserSessionsModule } from './v1/modules/user-sessions/user-sessions.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
@@ -33,6 +33,7 @@ import { AboutPageModule } from './v1/modules/about-page/about-page.module';
 import { UserStorageRequestModule } from './v1/modules/user-storage-requests/user-storage-request.module';
 import { UserAboutPageModule } from './v1/modules/user-about-page/user-about-page.module';
 import { UserMediaModule } from './v1/modules/user-media/user-media.module';
+import { AiModule } from './v1/modules/ai/ai.module';
 const APP_MODULES = [
   AuthModule,
   UserModule,
@@ -46,13 +47,15 @@ const APP_MODULES = [
   AboutPageModule,
   UserStorageRequestModule,
   UserAboutPageModule,
-  UserMediaModule
+  UserMediaModule,
+  AiModule
 ];
 @Module({
   imports: [
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', '..', 'client'),
-      useGlobalPrefix: true,
+      serveRoot: '/',
+      exclude: ['/api*'],
     }),
     ConfigModule.forRoot({
       isGlobal: true,

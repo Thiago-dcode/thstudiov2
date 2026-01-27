@@ -63,9 +63,11 @@ export type LoginReturn2fa = BaseUser & {
 }
 export type LoginReturn = UserAuth | LoginReturn2fa;
 
-export type LoginActionReturnError = {
+export type ReturnError = {
     errors:string[],
     inputErrors?:Record<string,string>,
+}
+export type LoginActionReturnError = ReturnError & {
     data:null,
 }
 export type LoginActionReturnSuccess<T> = {

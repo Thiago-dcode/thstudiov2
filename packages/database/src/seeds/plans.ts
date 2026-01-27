@@ -3,6 +3,63 @@ import { stripe } from '@repo/backend-lib/services/payment-service/stripe';
 import { paypal } from '@repo/backend-lib/services/payment-service/paypal';
 import { LogService } from '@repo/backend-lib/services/log-service';
 import { CreatePlanWithDetailsInput } from '@repo/common-lib/schemas/plan';
+
+/**
+ * ============================================================================
+ * LLM PROVIDER COST DOCUMENTATION
+ * ============================================================================
+ * 
+ * This seed file defines AI credits (requests) for each plan tier.
+ * 
+ * CREDIT SYSTEM:
+ * - AI credits represent monthly request allowances (1 credit = 1 successful request)
+ * - Credits RESET MONTHLY for all users (per plan tier)
+ * - Users get their plan's credit amount EVERY MONTH (recurring)
+ * - Each successful AI request consumes exactly 1 credit (regardless of token count)
+ * - Only successful responses (matches_expected_response = true) consume credits
+ * - Consumption is calculated by counting requests since `last_ai_credits_reset`
+ * 
+ * MONTHLY ALLOWANCES (resets every month):
+ * - Beginner (Free): 20 requests/month
+ * - Freelancer ($9/month): 200 requests/month
+ * - Studio ($14/month): 400 requests/month
+ * 
+ * GPT-5-NANO PRICING:
+ * - Input tokens: $0.05 per 1M tokens
+ * - Cached tokens: $0.005 per 1M tokens
+ * - Output tokens: $0.40 per 1M tokens
+ * - Average tokens per request: 3200-3700 tokens (varies by image size/complexity)
+ * - Cost per request: ~$0.00016-0.00029 (mostly input tokens with small JSON output)
+ * 
+ * MONTHLY COST ESTIMATES (assuming 100% usage of monthly allowance):
+ * - Beginner (20 requests/month): ~$0.003-0.006/month
+ * - Freelancer (200 requests/month): ~$0.03-0.06/month
+ * - Studio (400 requests/month): ~$0.06-0.12/month
+ * 
+ * RESET MECHANISM:
+ * - `next_ai_credits_reset`: Date when credits should be reset (set to 1 month from user creation)
+ * - `last_ai_credits_reset`: Date of the last reset (used to calculate consumption since last reset)
+ * - A scheduled job/cron should check `next_ai_credits_reset` and reset credits monthly:
+ *   1. Set `ai_credits_consumed = 0`
+ *   2. Update `last_ai_credits_reset = NOW()`
+ *   3. Update `next_ai_credits_reset = NOW() + 1 month`
+ *   4. Optionally: Add plan's `ai_credits` to user's `ai_credits` if carrying over unused credits
+ * 
+ * NOTE: Actual costs depend on:
+ * - Which OpenAI model is configured (check OPENAI_MODEL in .env)
+ * - Actual token usage per request (varies by image size and prompt complexity)
+ * - User adoption rate (not all users will use 100% of their monthly credits)
+ * - Failed requests don't consume credits (only matches_expected_response = true)
+ * 
+ * COST MITIGATION:
+ * - Free tier is limited to prevent abuse
+ * - Monthly reset prevents unlimited accumulation
+ * - Only successful responses count toward consumption
+ * - Request-based system simplifies tracking (no need to sum tokens)
+ * - Monitor actual usage in llm_tokens_usage table to adjust if needed
+ * 
+ * ============================================================================
+ */
 export const main = async () => {
 
   const plans: CreatePlanWithDetailsInput[] = [
@@ -24,7 +81,11 @@ export const main = async () => {
       max_clients: 4,
       max_services: 2,
       allow_media_compression:false,
-      ai_credits: 10,
+      // AI Credits: 20 requests/month (1 credit = 1 successful request)
+      // Usage: 20 successful AI requests per month
+      // Monthly Cost (if 100% used): ~$0.003-0.006 (GPT-5-nano, 3200-3700 tokens/request)
+      // Strategy: Limited to prevent abuse on free tier while allowing basic testing
+      ai_credits: 20,
       limit_write_storage_per_day: 50, // 50 write operations per day
       prices: [
         {
@@ -97,7 +158,12 @@ export const main = async () => {
       max_clients: 10,
       max_services: 5,
       allow_media_compression:true,
-      ai_credits: 75,
+      // AI Credits: 200 requests/month (1 credit = 1 successful request)
+      // Usage: 200 successful AI requests per month
+      // Monthly Cost (if 100% used): ~$0.03-0.06 (GPT-5-nano, 3200-3700 tokens/request)
+      // Strategy: Good value for $9/month plan - allows regular professional usage
+      // Cost ratio: ~0.03-0.07% of plan price (very sustainable)
+      ai_credits: 200,
       limit_write_storage_per_day: 150,
       prices: [
         {
@@ -163,7 +229,12 @@ export const main = async () => {
       max_clients: -1,
       max_services: -1,
       allow_media_compression:true,
-      ai_credits: 200,
+      // AI Credits: 400 requests/month (1 credit = 1 successful request)
+      // Usage: 400 successful AI requests per month
+      // Monthly Cost (if 100% used): ~$0.06-0.12 (GPT-5-nano, 3200-3700 tokens/request)
+      // Strategy: Premium value for $14/month plan - allows heavy professional/agency usage
+      // Cost ratio: ~0.04-0.09% of plan price (very sustainable)
+      ai_credits: 400,
       limit_write_storage_per_day: 300,
       prices: [
         {

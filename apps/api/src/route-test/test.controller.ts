@@ -2,7 +2,7 @@ import { Controller, Get, Param, UseGuards } from '@nestjs/common';
 import { MailService } from '@repo/backend-lib/services/mail-service';
 import { ViewService } from '@repo/backend-lib/services/view-service/base';
 import { I18nService } from 'nestjs-i18n';
-import { ProdGuard } from 'src/common/guards/prod-guard/prod.guard';
+import { ProdGuard } from 'src/common/guards/prod.guard';
 import { NotifyNewUserMail } from 'src/v1/modules/users/mails/notify-new-user.mail';
 import { UserRepository } from 'src/v1/modules/users/users.repository';
 @Controller('test')

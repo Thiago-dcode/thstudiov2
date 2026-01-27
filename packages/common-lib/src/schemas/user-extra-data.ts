@@ -12,6 +12,7 @@ export type UserExtraDataSchema = {
   ai_credits: number;
   ai_credits_consumed: number;
   next_ai_credits_reset: Date;
+  last_ai_credits_reset: Date;
   user_id: number;
   created_at: Date;
   updated_at: Date;

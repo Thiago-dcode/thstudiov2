@@ -51,6 +51,12 @@ export class MediaService {
       }),
     );
   }
+  public async getAsset(id:number){
+
+    const media =await this.mediaRepository.findById(id);
+    if(!media)return null;
+    return await this.helpers.getAsset(media.thumbnail)
+  }
   public async bulkCreate(data: CreateMediaRequest[]) {
     throw new HttpException('method not implemented yet',403);
 

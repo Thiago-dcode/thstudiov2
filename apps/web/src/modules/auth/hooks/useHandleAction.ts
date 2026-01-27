@@ -30,7 +30,9 @@ export const useHandleAction = <K,T>({action,beforeAction,afterAction}:{
             }
             
             // Call action - check if it accepts formData
-            const actionResult = action.length > 0 && formData !== undefined
+            // For Next.js server actions, always pass formData if it's provided
+            // The action signature will determine if it's used
+            const actionResult = formData !== undefined
                 ? await (action as (formData:FormData)=>Promise<ActionReturn<K,T>>)(formData)
                 : await (action as ()=>Promise<ActionReturn<K,T>>)();
             

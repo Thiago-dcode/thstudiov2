@@ -62,8 +62,7 @@ export class MediaController {
     @Param('id', ParseIntPipe) id: number,
     @Body() updateMediaRequest: UpdateMediaRequest,
   ) {
-    console.log('Raw body received:', updateMediaRequest);
-    console.log('Type of updateMediaRequest:', updateMediaRequest.constructor.name);
     return await this.mediaService.update(id, updateMediaRequest);
   }
+
 }

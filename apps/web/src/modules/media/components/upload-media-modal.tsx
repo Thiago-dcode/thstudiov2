@@ -15,8 +15,9 @@ export const UploadMediaModal = ()=>{
     const pendingLength = useMemo(()=> mediaUploads.filter(m=>m.pending).length,[mediaUploads]);
     const successCount = useMemo(()=> mediaUploads.filter(m=>m.data).length,[mediaUploads]);
     const failedCount = useMemo(()=> mediaUploads.filter(m=>m.error).length,[mediaUploads]);
+    const mediaUploadsToDisplay = useMemo(()=>mediaUploads.filter(m=>m.pending|| m.data || m.error),[mediaUploads])
 
-    if(!mediaUploads.length) return null;
+    if(!mediaUploadsToDisplay.length) return null;
 
     return (
         <div className="fixed bottom-4 right-4 z-50 w-80 max-h-[400px] flex flex-col overflow-hidden rounded-lg border border-border bg-fg shadow-lg">
@@ -66,8 +67,8 @@ export const UploadMediaModal = ()=>{
             >
                 <div className="max-h-[400px] overflow-y-auto overscroll-contain">
                     <div className=" h-f flex flex-col items-start justify-start gap-3 px-4 pt-4 pb-40 ">
-                        {mediaUploads.map((mediaUpload,i) => (
-                            <CreateSingleMedia 
+                        {mediaUploadsToDisplay.filter(m=>m.pending|| m.data || m.error).map((mediaUpload,i) => (
+                            <SingleMediaUpload 
                                 key={`media-uploading-${mediaUpload.input.file?.name}-${i}`}
                                 mediaUpload={mediaUpload} 
                              
@@ -92,13 +93,11 @@ export const UploadMediaModal = ()=>{
     );
 }
 
-const CreateSingleMedia = ({mediaUpload}:{
+const SingleMediaUpload = ({mediaUpload}:{
     
     mediaUpload:UploadMedia,
 
 })=>{
-
-
   const statusIcon = mediaUpload.pending ? (
     <Spinner className="size-5 text-blue-500" />
   ) : mediaUpload.data ? (
@@ -115,7 +114,9 @@ const CreateSingleMedia = ({mediaUpload}:{
     ? "Upload failed" 
     : "Ready to upload";
 
-  const errorMessage = mediaUpload.error?.message;
+  const errorMessages = mediaUpload.error?.errors || [];
+  const inputErrors = mediaUpload.error?.inputErrors || {};
+  const hasErrors = errorMessages.length > 0 || Object.keys(inputErrors).length > 0;
 
     if(!mediaUpload.previewUrl) return (
         <div className="flex items-center gap-3 p-2">
@@ -165,8 +166,27 @@ const CreateSingleMedia = ({mediaUpload}:{
             {statusIcon}
             <p className="text-sm font-medium">{statusText}</p>
           </div>
-          {errorMessage && (
-            <p className="text-xs text-red-500">{errorMessage}</p>
+          {hasErrors && (
+            <div className="space-y-1.5">
+              {errorMessages.length > 0 && (
+                <div className="space-y-1">
+                  {errorMessages.map((error, index) => (
+                    <p key={index} className="text-xs text-red-500">
+                      {error}
+                    </p>
+                  ))}
+                </div>
+              )}
+              {Object.keys(inputErrors).length > 0 && (
+                <div className="space-y-1">
+                  {Object.entries(inputErrors).map(([field, error]) => (
+                    <p key={field} className="text-xs text-red-500">
+                      <span className="font-medium">{field}:</span> {error}
+                    </p>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
           {mediaUpload.input.file && (
             <p className="text-xs text-text-muted">

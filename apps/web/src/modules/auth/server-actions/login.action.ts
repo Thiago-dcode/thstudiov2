@@ -12,6 +12,18 @@ export const loginServerAction = async (formData: FormData):Promise<ActionReturn
     }>> => {
     // Clean up any existing 2FA cookie from previous login attempts
     await delete2faCookie();
+    
+    if (!formData) {
+        return {
+            data: null,
+            errors: ['Form data is required'],
+            inputs: {
+                email: undefined,
+                rememberMe: false
+            }
+        };
+    }
+    
     const credentials = {
         email: formData.get('email') ? formData.get('email') as string : undefined,
         password: formData.get('password') ? formData.get('password') as string : undefined,
@@ -60,6 +72,7 @@ export const loginServerAction = async (formData: FormData):Promise<ActionReturn
         return {
             data:result.data,
             errors:null,
+            inputErrors:undefined,
             inputs:{
                 email:credentials.email,
                 rememberMe: credentials.remember_me

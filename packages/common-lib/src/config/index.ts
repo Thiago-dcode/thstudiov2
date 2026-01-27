@@ -74,6 +74,11 @@ let envFilePath = path.resolve(process.cwd(),'..', '..', '.env');
     encryption: {
       secret: process.env.ENCRYPTION_SECRET || 'secret',
     },
+    llm: {
+      apiKey: process.env.OPENAI_API_KEY || '',
+      model: process.env.OPENAI_MODEL,
+      organization: process.env.OPENAI_ORGANIZATION,
+    },
   };
 };
 export { envFilePath ,config};

@@ -1,6 +1,5 @@
 import {
   MediaSchema,
-  MediaSchemaWithoutTimestamps,
   MediaTranslationSchema,
 } from "../schemas/media";
 import { OffsetPaginationRequest } from "./request";
@@ -45,4 +44,6 @@ export type UpdateMediaInput = Partial<Omit<MediaSchema, InternalMediaFields>>;
 export type CreateMediaTranslationInput = Omit<MediaTranslationSchema, 'id'>;
 
 export type UpdateMediaTranslationInput = Partial<Omit<MediaTranslationSchema, 'id' | 'media_id'>>;
+
+export type  MediaSeoFields = Pick<Media, 'seo_title' | 'seo_description' | 'seo_alt' | 'seo_filename'>
 

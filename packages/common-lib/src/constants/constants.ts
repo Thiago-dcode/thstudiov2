@@ -33,6 +33,7 @@ export  const ALLOWED_IMAGE_FILE_TYPES:MimeTypes[] = ['image/jpeg', 'image/png',
 export const NEW_USER_EVENT = 'new.user' as const;
 export const WEBHOOK_STRIPE_EVENT = 'webhook.stripe.event' as const;
 export const UPDATE_USER_EXTRA_DATA_METRICS = 'update-user-extra-data-metrics.event' as const;
+export const LLM_TOKENS_USAGE_EVENT = 'llm.tokens.usage' as const;
 
 // ==================== CACHE KEYS ====================
 // Plans

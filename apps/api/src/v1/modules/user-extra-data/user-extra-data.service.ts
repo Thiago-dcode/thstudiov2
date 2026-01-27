@@ -58,6 +58,7 @@ export class UserExtraDataService {
       storageRequests?: number;
       enforceCompressionLevel?: boolean;
       projects_count?: number;
+      enforceAiCredists?:boolean;
     },
   ) {
     const [userExtraData, currentPlan] = await Promise.all([
@@ -65,7 +66,7 @@ export class UserExtraDataService {
       this.planService.findUserActivePlan(userId),
     ]);
 
-    const { size, projects_count, enforceCompressionLevel, storageRequests } =
+    const { size, projects_count, enforceCompressionLevel, storageRequests,enforceAiCredists } =
       toEnforce;
 
     if (size) {
@@ -83,6 +84,13 @@ export class UserExtraDataService {
           `Media compression not allowed with plan: ${currentPlan.name}`,
         );
       }
+    }
+    if(enforceAiCredists){
+      const userAiCredits = userExtraData.ai_credits + currentPlan.ai_credits;
+      if(userExtraData.ai_credits_consumed >= userAiCredits){
+        throw ApiException.aiCredits(`User consumed all ai credits, consumed:${userExtraData.ai_credits_consumed} of ${userAiCredits}`)
+      }
+
     }
     if (storageRequests) {
       const currentRequests =
@@ -109,7 +117,7 @@ export class UserExtraDataService {
     const log = this.logger.name('metrics');
     try {
       log.info(`Starting metrics update for user ${data.userId}`);
-
+     const extraData = await  this.findOneByUserId(data.userId);
       const [media] = await Promise.all([
         Query.table('media')
           .select(['id', 'bytes','thumbnail_bytes'])
@@ -141,6 +149,13 @@ export class UserExtraDataService {
         .where('user_id', '=', data.userId)
         .count();
 
+      // Count successful AI requests (1 credit = 1 successful request)
+      const ai_credits_consumed = await Query.table('llm_tokens_usage')
+        .where('user_id', '=', data.userId)
+        .where('created_at', '>', extraData.last_ai_credits_reset)
+        .where('matches_expected_response', '=', true)
+        .count();
+
       const metrics = {
         media_size,
         media_count,
@@ -148,6 +163,7 @@ export class UserExtraDataService {
         projects_count,
         services_count,
         clients_count,
+        ai_credits_consumed
       };
 
       await this.userExtraDataRepository.updateByUserId(data.userId, metrics);

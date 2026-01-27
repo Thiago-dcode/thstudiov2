@@ -1,18 +1,21 @@
 "use client";
 
-import { CreateMediaInputWithFile, Media } from "@repo/common-lib/types/media";
+import { CreateMediaInputWithFile, Media, UpdateMediaInput } from "@repo/common-lib/types/media";
 import { createContext, useContext, ReactNode, useState, useMemo, useCallback } from "react";
 import { createMediaAction } from "../server-actions/create-media.action";
+import { updateMediaAction } from "../server-actions/update-media.action";
+import { ReturnError } from "@/modules/auth/auth.types";
 
 
 export type UploadMedia = {
   input:CreateMediaInputWithFile,
+  //If has id is an update
+  id?:number,
   previewUrl?:string,
   pending:boolean,
   data?:Media,
-  error?:{
-    message:string
-  },
+  onSuccess?:(media:Media)=>Promise<void>
+  error?:ReturnError
   
 }
 // Context type
@@ -22,10 +25,16 @@ type MediaContextType = {
   setMediaUploads: (mediaUploads: UploadMedia[]) => void;
   handleCancel: () => void;
   handleUpload:  ()=>Promise<void>;
+  handleUploadUpdates:  ()=>Promise<void>;
   handleRemove: (index: number) => void;
   updateMediaUpload: (index: number, mediaUpload: UploadMedia) => void;
+  uploadSingleMedia: (media: UploadMedia, index: number) => Promise<void>;
+  getMediaUploadByMediaId: (mediaId: number) => UploadMedia | undefined;
+  setMediUploadByMediaId: (mediaId: number, mediaUpload: UploadMedia) => void;
+  deleteMediaUploadByMediaId: (mediaId: number) => void;
   isLoading: boolean;
-  isCompleted:boolean
+  isCompleted:boolean;
+  mediaPendingToUpdate: UploadMedia[];
 
 };
 
@@ -62,7 +71,52 @@ export const MediaProvider = ({
       return [];
     });
   };
+  const setMediUploadByMediaId = useCallback((mediaId: number, mediaUpload: UploadMedia) => {
+    setMediaUploads((prev) => {
+      // Find index of existing media with the same ID
+      const existingIndex = prev.findIndex(m => m.id === mediaId || m.data?.id === mediaId);
+      
+      if (existingIndex !== -1) {
+        // Revoke old preview URL if it exists and is different
+        const existingUpload = prev[existingIndex];
+        if (existingUpload.previewUrl && 
+            existingUpload.previewUrl.startsWith('blob:') && 
+            existingUpload.previewUrl !== mediaUpload.previewUrl) {
+          URL.revokeObjectURL(existingUpload.previewUrl);
+        }
+        
+        // Replace the existing media upload
+        return prev.map((upload, index) => 
+          index === existingIndex ? mediaUpload : upload
+        );
+      } else {
+        // Add new media upload if it doesn't exist
+        return [...prev, mediaUpload];
+      }
+    });
+  }, []);
 
+  const deleteMediaUploadByMediaId = useCallback((mediaId: number) => {
+    setMediaUploads((prev) => {
+      // Find index of existing media with the same ID
+      const existingIndex = prev.findIndex(m => m.id === mediaId || m.data?.id === mediaId);
+      
+      if (existingIndex !== -1) {
+        const uploadToRemove = prev[existingIndex];
+        // Revoke blob URL if it exists
+        if (uploadToRemove?.previewUrl && uploadToRemove.previewUrl.startsWith('blob:')) {
+          URL.revokeObjectURL(uploadToRemove.previewUrl);
+        }
+        // Remove the media upload
+        return prev.filter((_, i) => i !== existingIndex);
+      }
+      return prev;
+    });
+  }, []);
+
+  const getMediaUploadByMediaId = useCallback((mediaId: number): UploadMedia | undefined => {
+    return mediaUploads.find(m => m.id === mediaId || m.data?.id === mediaId);
+  }, [mediaUploads]);
   const handleRemove = (index: number) => {
     setMediaUploads((prev) => {
       const uploadToRemove = prev[index];
@@ -106,6 +160,7 @@ export const MediaProvider = ({
   }, []);
   const isLoading = useMemo(() => mediaUploads.some(m => m.pending), [mediaUploads]);
   const isCompleted = useMemo(() => !mediaUploads.some(m => !m.data && !m.error), [mediaUploads]);
+  const mediaPendingToUpdate = useMemo(()=>mediaUploads.filter(m=>!!m.id && !m.pending),[mediaUploads])
 
   const updateMediaUpload = (index:number, mediaUpload:UploadMedia)=>{
     setMediaUploads((prev) => {
@@ -128,21 +183,14 @@ export const MediaProvider = ({
     });
   };
 
-  // Helper to extract error message from result
-  const extractErrorMessage = (result: Awaited<ReturnType<typeof createMediaAction>>): string => {
-    const errorMessages: string[] = [];
-    
-    if (result.errors && result.errors.length > 0) {
-      errorMessages.push(...result.errors);
-    }
-    
-    if (result.inputErrors) {
-      errorMessages.push(...Object.values(result.inputErrors));
-    }
-
-    return errorMessages.length > 0 
-      ? errorMessages.join(', ')
-      : 'Upload failed';
+  // Helper to extract ReturnError from result
+  const extractReturnError = (
+    result: Awaited<ReturnType<typeof createMediaAction>> | Awaited<ReturnType<typeof updateMediaAction>>
+  ): ReturnError => {
+    return {
+      errors: result.errors && result.errors.length > 0 ? result.errors : ['Upload failed'],
+      inputErrors: result.inputErrors
+    };
   };
 
   const uploadSingleMedia = async (media:UploadMedia,index:number)=>{
@@ -161,10 +209,21 @@ export const MediaProvider = ({
     });
 
     try {
-      const result = await createMediaAction(media.input);
+      let result: Awaited<ReturnType<typeof createMediaAction>> | Awaited<ReturnType<typeof updateMediaAction>>;
+      
+      if (media.id) {
+        // Extract only updateable fields (exclude file)
+        const { file, ...updateInput } = media.input;
+        result = await updateMediaAction(media.id, updateInput as UpdateMediaInput);
+      } else {
+        result = await createMediaAction(media.input);
+      }
 
       if (result.data) {
         // Success - store the media data
+        if(media.onSuccess){
+          await media.onSuccess(result.data)
+        }
         updateUploadByIndex(index, {
           pending: false,
           data: result.data,
@@ -172,11 +231,11 @@ export const MediaProvider = ({
         });
       } else {
         // Failed with errors
-        const errorMessage = extractErrorMessage(result);
+        const returnError = extractReturnError(result);
         updateUploadByIndex(index, {
           pending: false,
           data: undefined,
-          error: { message: errorMessage }
+          error: returnError
         });
       }
     } catch (error) {
@@ -188,15 +247,27 @@ export const MediaProvider = ({
       updateUploadByIndex(index, {
         pending: false,
         data: undefined,
-        error: { message: errorMessage }
+        error: {
+          errors: [errorMessage],
+          inputErrors: undefined
+        }
       });
     }
   }
+
+
 
   const handleUpload = async () => {
     if (!mediaUploads.length || isLoading) return Promise.resolve();
   
     await Promise.all(mediaUploads.map(uploadSingleMedia));
+  }
+  const handleUploadUpdates = async ()=>{
+
+    if (!mediaUploads.length || isLoading) return Promise.resolve();
+  
+    await Promise.all(mediaUploads.filter(m=>!!m.id).map(uploadSingleMedia));
+    
   }
 
   const value: MediaContextType = {
@@ -206,9 +277,15 @@ export const MediaProvider = ({
     handleCancel,
     handleRemove,
     updateMediaUpload,
+    uploadSingleMedia,
+    getMediaUploadByMediaId,
+    setMediUploadByMediaId,
+    deleteMediaUploadByMediaId,
     isLoading,
     isCompleted,
-    handleUpload
+    mediaPendingToUpdate,
+    handleUpload,
+    handleUploadUpdates
   };
 
   return (

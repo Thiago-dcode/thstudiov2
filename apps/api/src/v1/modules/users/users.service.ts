@@ -171,8 +171,11 @@ export class UserService {
         });
 
       //Create a user extra data
+      const nextMonth = new Date();
+      nextMonth.setMonth(nextMonth.getMonth() + 1);
       const extraData = await this.userExtraDataRepository.create({
         user_id: event.user.id,
+        next_ai_credits_reset: nextMonth,
       });
       this.logService
         .name('new-user')

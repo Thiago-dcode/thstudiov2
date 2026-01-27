@@ -23,6 +23,7 @@ export class UserExtraDataRepository extends BaseRepository {
     'user_extra_data.ai_credits',
     'user_extra_data.ai_credits_consumed',
     'user_extra_data.next_ai_credits_reset',
+    'user_extra_data.last_ai_credits_reset',
     'user_extra_data.user_id',
   ] as const;
 
@@ -120,6 +121,7 @@ export class UserExtraDataRepository extends BaseRepository {
       ai_credits: result.ai_credits,
       ai_credits_consumed: result.ai_credits_consumed,
       next_ai_credits_reset: result.next_ai_credits_reset,
+      last_ai_credits_reset: result.last_ai_credits_reset,
       user_id: result.user_id,
     };
   }

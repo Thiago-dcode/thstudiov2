@@ -1,3 +1,3 @@
-import { ProdGuard } from './prod-guard/prod.guard';
+import { ProdGuard } from './prod.guard';
 
 export const Guards = [ProdGuard];

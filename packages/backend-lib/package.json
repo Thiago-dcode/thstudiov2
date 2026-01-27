@@ -36,6 +36,9 @@
     "./services/compress-service/types": "./dist/src/services/compress-service/types.js",
     "./services/compress-service/base": "./dist/src/services/compress-service/compress.service.js",
     "./services/compress-service/factory": "./dist/src/services/compress-service/factory-compress.service.js",
+    "./services/llm-service/types": "./dist/src/services/llm-service/types.js",
+    "./services/llm-service/base": "./dist/src/services/llm-service/llm.service.js",
+    "./services/llm-service/factory": "./dist/src/services/llm-service/factory-llm.service.js",
     "./services/payment-service/stripe": "./dist/src/services/payment-service/stripe/stripe.payment.service.js",
     "./services/payment-service/paypal": "./dist/src/services/payment-service/paypal/paypal.payment.service.js"
   },
@@ -54,6 +57,7 @@
     "image-size": "^2.0.2",
     "install": "^0.13.0",
     "nodemailer": "^7.0.11",
+    "openai": "^6.16.0",
     "picocolors": "^1.1.1",
     "pug": "^3.0.3",
     "redis": "^5.10.0",

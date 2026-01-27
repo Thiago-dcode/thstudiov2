@@ -33,6 +33,9 @@ const up = async () => {
     Column.timestamp('next_ai_credits_reset',{
       default: 'NOW()'
     }),
+    Column.timestamp('last_ai_credits_reset',{
+      default: 'NOW()'
+    }),
     Column.foreignKey('user_id', 'users', 'id', {
       onDelete: 'CASCADE',
     }),

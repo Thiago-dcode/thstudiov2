@@ -9,32 +9,22 @@ import { getFriendlyApiErrors, getObjErrorFromZod } from "@/modules/auth/helpers
 
 export const updateMediaAction = async (
     id: number,
-    formData: FormData
+    input: UpdateMediaInput
 ): Promise<ActionReturn<UpdateMediaInput, Media>> => {
-    // Extract values from FormData
-    const rawData: UpdateMediaInput = {
-        title: formData.get('title') as string | undefined,
-        description: formData.get('description') as string | undefined,
-        seo_alt: formData.get('seo_alt') as string | undefined,
-        seo_title: formData.get('seo_title') as string | undefined,
-        seo_description: formData.get('seo_description') as string | undefined,
-        seo_filename: formData.get('seo_filename') as string | undefined,
-    };
-
     // Trim string values
-    trimValues(rawData, {
+    trimValues(input, {
         deep: true
     });
 
     // Validate using schema
-    const validated = updateMediaSchema.safeParse(rawData);
+    const validated = updateMediaSchema.safeParse(input);
 
     if (!validated.success) {
         return {
             errors: [],
             inputErrors: getObjErrorFromZod(validated.error),
             data: null,
-            inputs: rawData
+            inputs: input
         };
     }
 
@@ -53,7 +43,7 @@ export const updateMediaAction = async (
             errors: [],
             inputErrors: { _form: 'No fields to update' },
             data: null,
-            inputs: rawData
+            inputs: input
         };
     }
 
