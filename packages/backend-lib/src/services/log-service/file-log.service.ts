@@ -44,7 +44,7 @@ export class FileLogService extends LogService {
         if(!LogService.date || differenceInDays(new Date(), LogService.date) > 0){
             LogService.date = new Date();
         }
-        const today = format(LogService.date, 'dd-MM-yyyy');
+        const today = format(LogService.date, 'yyyy-MM-dd');
         if(!this.config.logFolder){
             this.config.logFolder =  path.resolve(process.cwd(), '..','..', 'packages','backend-lib', 'storage', 'logs');
         }

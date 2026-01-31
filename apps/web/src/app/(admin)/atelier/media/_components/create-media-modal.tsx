@@ -28,10 +28,11 @@ function MediaUploadContent() {
     const COMPRESSION_LVLS = ENUMS.COMPRESSION_LEVEL;
     const MAX_FILES = 10;
     const [error, setError] = useState<string>();
-    const { mediaUploads, updateMediaUpload, setMediaUploads } = useMedia();
+    const [globalCompressionLevel, setGlobalCompressionLevel] = useState<EnumType<'COMPRESSION_LEVEL'>>(DEFAULT_COMPRESSION_LVL);
+    const { mediaPendingToCreate, updateMediaUpload, setMediaUploads } = useMedia();
     const {metrics} = useUserMetrics();
     const allow_media_compression = metrics?.active_plan.allow_media_compression;
-    const currentCount = mediaUploads?.length || 0;
+    const currentCount = mediaPendingToCreate?.length || 0;
     const isMaxReached = currentCount >= MAX_FILES;
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -63,7 +64,7 @@ function MediaUploadContent() {
 
     return (
         <div className="h-full flex flex-col p-2">
-            {mediaUploads && mediaUploads.length > 0 ? (
+            {mediaPendingToCreate && mediaPendingToCreate.length > 0 ? (
                 <>
                     <div className="mb-4 space-y-3 p-1 rounded-md border border-border bg-fg-1/50">
                         <div className="flex items-center justify-between gap-3">
@@ -89,7 +90,7 @@ function MediaUploadContent() {
                                         </span>
                                     </div>
                                     <span className="text-xs font-semibold text-text bg-accent/20 px-2 py-1 rounded-md">
-                                        {mediaUploads[0]?.input.compression_level || DEFAULT_COMPRESSION_LVL}
+                                        {globalCompressionLevel}
                                     </span>
                                 </div>
                                 {!allow_media_compression && (
@@ -100,7 +101,8 @@ function MediaUploadContent() {
                                     </div>
                                 )}
                                 <Slider
-                                    defaultValue={[getCompressionLvlIndex(mediaUploads[0]?.input.compression_level || DEFAULT_COMPRESSION_LVL)]}
+
+                                    defaultValue={[getCompressionLvlIndex(DEFAULT_COMPRESSION_LVL)]}
                                     max={COMPRESSION_LVLS.length - 1}
                                     min={0}
                                     step={1}
@@ -109,8 +111,8 @@ function MediaUploadContent() {
                                         if (!allow_media_compression) return;
                                         const compressionLvlSelected = COMPRESSION_LVLS[e[0]]
                                         if (!compressionLvlSelected) return;
-
-                                        setMediaUploads(mediaUploads.map(mu=>{
+                                        setGlobalCompressionLevel(compressionLvlSelected)
+                                        setMediaUploads(mediaPendingToCreate.map(mu=>{
                                             return {
                                                 ...mu,
                                                 input:{
@@ -135,7 +137,7 @@ function MediaUploadContent() {
                     </div>
                     <div className="mb-4 overflow-y-auto flex-1 min-h-0">
                         <div className="grid grid-cols-2 gap-4">
-                            {mediaUploads.map((media, index) => {
+                            {mediaPendingToCreate.map((media, index) => {
 
                                 const currentCompressionLvl = media.input.compression_level || DEFAULT_COMPRESSION_LVL;
 
@@ -227,7 +229,7 @@ function MediaUploadContent() {
 
 export function CreateMediaDialog() {
     const [open, setOpen] = useState(false)
-    const { handleUpload, isLoading, handleCancel, addMediaUploads } = useMedia()
+    const { handleUpload, isLoading, handleRemoveCompleted, addMediaUploads } = useMedia()
     const { files } = useInputFile()
     const { previewUrls, cleanup } = usePreviewUrls({ files });
     const { session } = useSession();
@@ -267,7 +269,7 @@ export function CreateMediaDialog() {
                     Create New Media
                 </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl h-[95vh] flex flex-col justify-between [&>button]:hidden p-0">
+            <DialogContent className="max-w-2xl h-[95vh] flex flex-col justify-between [&>button]:hidden p-0 z-100">
                 <DialogHeader className="border-b pb-4 px-6 pt-6">
                     <DialogTitle>Create New Media</DialogTitle>
                     <DialogDescription>
@@ -280,7 +282,7 @@ export function CreateMediaDialog() {
                 <DialogFooter className="border-t p-2 full">
                     <DialogClose asChild>
                         <Button onClick={() => {
-                            handleCancel()
+                            handleRemoveCompleted()
                             cleanup()
                             setOpen(false)
                         }} variant="outline" className="w-full">

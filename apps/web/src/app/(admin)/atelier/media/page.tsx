@@ -5,6 +5,7 @@ import { CreateMediaDialog } from "./_components/create-media-modal";
 import { FileInputProvider } from "@repo/ui/contexts/file.provider";
 import { ALLOWED_IMAGE_FILE_TYPES } from "@repo/common-lib/constants/constants";
 import { MediaGrid } from "./_components/media-grid";
+import SelectMediaProvider from "@/modules/media/providers/select-media.provider";
 
 export default async function Atelier() {
     const userAuth = await userSession();
@@ -23,7 +24,9 @@ export default async function Atelier() {
                 </FileInputProvider>
             </div>
             {mediaResponse.data && mediaResponse.data.length > 0 ? (
+                <SelectMediaProvider>
                 <MediaGrid media={mediaResponse.data} username={userAuth.username} />
+                </SelectMediaProvider>
             ) : (
                 <div className="flex items-center justify-center h-64 text-muted-foreground">
                     No media found

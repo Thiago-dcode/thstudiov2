@@ -11,9 +11,9 @@ import { useMemo, useState } from "react";
 export const UploadMediaModal = ()=>{
 
     const [compact, setCompact] = useState(false);
-    const {mediaUploads,isCompleted, handleCancel} = useMedia();
+    const {mediaUploads,isCompleted, handleRemoveCompleted} = useMedia();
     const pendingLength = useMemo(()=> mediaUploads.filter(m=>m.pending).length,[mediaUploads]);
-    const successCount = useMemo(()=> mediaUploads.filter(m=>m.data).length,[mediaUploads]);
+    const successCount = useMemo(()=> mediaUploads.filter(m=>m.data || m.seoData).length,[mediaUploads]);
     const failedCount = useMemo(()=> mediaUploads.filter(m=>m.error).length,[mediaUploads]);
     const mediaUploadsToDisplay = useMemo(()=>mediaUploads.filter(m=>m.pending|| m.data || m.error),[mediaUploads])
 
@@ -67,7 +67,7 @@ export const UploadMediaModal = ()=>{
             >
                 <div className="max-h-[400px] overflow-y-auto overscroll-contain">
                     <div className=" h-f flex flex-col items-start justify-start gap-3 px-4 pt-4 pb-40 ">
-                        {mediaUploadsToDisplay.filter(m=>m.pending|| m.data || m.error).map((mediaUpload,i) => (
+                        {mediaUploadsToDisplay.filter(m=>m.pending|| m.data || m.error || m.seoData).map((mediaUpload,i) => (
                             <SingleMediaUpload 
                                 key={`media-uploading-${mediaUpload.input.file?.name}-${i}`}
                                 mediaUpload={mediaUpload} 
@@ -83,7 +83,7 @@ export const UploadMediaModal = ()=>{
                         variant="default"
                         size="sm"
                         className="w-full"
-                        onClick={handleCancel}
+                        onClick={handleRemoveCompleted}
                     >
                         Close
                     </Button>
@@ -100,7 +100,7 @@ const SingleMediaUpload = ({mediaUpload}:{
 })=>{
   const statusIcon = mediaUpload.pending ? (
     <Spinner className="size-5 text-blue-500" />
-  ) : mediaUpload.data ? (
+  ) : mediaUpload.data || mediaUpload.seoData ? (
     <CircleCheckIcon className="size-5 text-green-500" />
   ) : mediaUpload.error ? (
     <OctagonXIcon className="size-5 text-red-500" />
@@ -108,7 +108,7 @@ const SingleMediaUpload = ({mediaUpload}:{
 
   const statusText = mediaUpload.pending 
     ? "Uploading..." 
-    : mediaUpload.data 
+    : mediaUpload.data || mediaUpload.seoData
     ? "Upload successful" 
     : mediaUpload.error 
     ? "Upload failed" 
@@ -117,7 +117,6 @@ const SingleMediaUpload = ({mediaUpload}:{
   const errorMessages = mediaUpload.error?.errors || [];
   const inputErrors = mediaUpload.error?.inputErrors || {};
   const hasErrors = errorMessages.length > 0 || Object.keys(inputErrors).length > 0;
-
     if(!mediaUpload.previewUrl) return (
         <div className="flex items-center gap-3 p-2">
             <Spinner className="size-8" />
@@ -154,7 +153,7 @@ const SingleMediaUpload = ({mediaUpload}:{
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">
-              {mediaUpload.input.file?.name || "Unknown file"}
+              {mediaUpload.input.file?.name || mediaUpload.input.seo_title || "Unknown file"}
             </p>
             <p className="text-xs text-text-muted">{statusText}</p>
           </div>

@@ -11,12 +11,18 @@ import {
   UploadedFiles,
   UseInterceptors,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { CreateMediaRequest } from './requests/create-media.request';
 import { UpdateMediaRequest } from './requests/update-media.request';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { ParseJsonArrayPipe } from 'src/common/pipes/parse-json-array.pipe';
 import { MediaService } from './media.service';
 
+@Throttle({ 
+  short: { limit: 50, ttl: 1000 },
+  medium: { limit: 100, ttl: 10000 },
+  long: { limit: 300, ttl: 60000 }
+})
 @Controller('media')
 export class MediaController {
   constructor(private readonly mediaService: MediaService) {}

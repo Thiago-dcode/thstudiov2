@@ -94,17 +94,17 @@ const APP_MODULES = [
       })),
     ),
     I18nModule.forRootAsync({
-      useFactory: () => ({
+      useFactory: (configService: ConfigService) => ({
         fallbackLanguage: DEFAULT_LANGUAGE,
         loaderOptions: {
           path: join(__dirname, 'i18n'),
-          watch: true,
+          watch: configService.get('app.isProduction') ?? false,
         },
         viewEngine: VIEW_ENGINE,
         disableMiddleware: true,
       }),
       resolvers: [LanguageResolver],
-      inject: [],
+      inject: [ConfigService],
     }),
     EventEmitterModule.forRoot(),
     ScheduleModule.forRoot(),

@@ -3,7 +3,7 @@
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction"
 import { getUserMetricsAction } from "@/modules/users/server-actions/get-user-metrics.action"
 import { UserMetrics } from "@repo/common-lib/types/user"
-import { useContext, createContext, ReactNode, useState, useEffect, useRef } from "react"
+import { useContext, createContext, ReactNode, useState, useEffect, useRef, useMemo } from "react"
 
 // Context type
 type UserMetricsContextType = {
@@ -13,7 +13,8 @@ type UserMetricsContextType = {
     errors?: string[] | null,
     cleanErrors: () => void,
     refresh: () => Promise<void>,
-    success: boolean
+    success: boolean,
+    aiCreditsInfo: { consumed: number; total: number } | null
 }
 
 const UserMetricsContext = createContext<UserMetricsContextType | null>(null)
@@ -76,6 +77,14 @@ export const UserMetricsProvider = ({
 
     const isLoading = !metrics && isPending
 
+    // Calculate AI credits
+    const aiCreditsInfo = useMemo(() => {
+        if (!metrics?.extra_data || !metrics?.active_plan) return null;
+        const consumed = metrics.extra_data.ai_credits_consumed || 0;
+        const total = (metrics.extra_data.ai_credits || 0) + (metrics.active_plan.ai_credits || 0);
+        return { consumed, total };
+    }, [metrics]);
+
     return (
         <UserMetricsContext.Provider value={{ 
             metrics, 
@@ -84,7 +93,8 @@ export const UserMetricsProvider = ({
             errors, 
             cleanErrors, 
             refresh, 
-            success 
+            success,
+            aiCreditsInfo
         }}>
             {children}
         </UserMetricsContext.Provider>
