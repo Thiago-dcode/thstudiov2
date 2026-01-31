@@ -38,31 +38,6 @@ const up = async () => {
     await Schema.createEnumIfNotExists(enumName as  AvailableEnums);
   }
 
-  //Address
-  await Schema.table('addresses').withTimestamps(true).createIfNotExists([
-    Column.id(),
-    Column.string('street', 255, {
-      nullable: true,
-    }),
-    Column.string('city', 255, {
-      nullable: true,
-    }),
-    Column.string('state', 255, {
-      nullable: true,
-    }),
-    Column.string('zip', 10, {
-      nullable: true,
-    }),
-    Column.string('country', 255, {
-      nullable: true,
-    }),
-    Column.double('latitude', {
-      nullable: true,
-    }),
-    Column.double('longitude', {
-      nullable: true,
-    }),
-  ]);
 
   
   await Schema.table('payment_methods').withTimestamps(true).createIfNotExists([
@@ -79,7 +54,6 @@ const up = async () => {
 const down = async () => {
   // Drop the function
   await Schema.table('payment_methods').dropIfExists();
-  await Schema.table('addresses').dropIfExists();
   for (const enumName of Object.keys(ENUMS)) {
     await Schema.dropEnumIfExists(enumName as AvailableEnums);
   }

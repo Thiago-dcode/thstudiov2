@@ -49,10 +49,7 @@ const up = async () => {
     ColumnBuilder.integer('number_email_validations_sent', {
       default: 0,
     }),
-    ColumnBuilder.foreignKey('address_id', 'addresses', 'id', {
-      onDelete: 'SET NULL',
-      nullable: true,
-    }),
+
     ColumnBuilder.boolean('twofa_enabled', {
       default: true,
     }),
