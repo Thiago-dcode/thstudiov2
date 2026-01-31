@@ -41,6 +41,10 @@ export default async function GetStartedLayout() {
             subTitle: 'These categories will help your profile be discovered'
         },
         [4]: {
+            title: 'Add Your Location',
+            subTitle: 'Help clients discover your profile by location'
+        },
+        [5]: {
             title: 'Choose Your Plan',
             subTitle: 'Select the perfect plan for your creative journey'
         },

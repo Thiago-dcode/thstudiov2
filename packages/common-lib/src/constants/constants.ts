@@ -26,7 +26,7 @@ export const PASSWORD_UPDATED_COOKIE_NAME = 'x-app-password-updated' as const;
 export const INITIATE_SUBCRIPTION_COOKIE = 'x-app-initiate_subscription' as const;
 
 // ==================== APP CONFIGURATION ====================
-export const FUNNEL_LAST_STEP = 4;
+export const FUNNEL_LAST_STEP = 5;
 export  const ALLOWED_IMAGE_FILE_TYPES:MimeTypes[] = ['image/jpeg', 'image/png', 'image/webp'];
 
 // ==================== EVENTS ====================
