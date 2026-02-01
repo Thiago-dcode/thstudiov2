@@ -21,6 +21,7 @@ import { PlansService } from '../plans/plans.service';
 import { PlanSubscriptionsService } from '../plan-subscriptions/plan-subscriptions.service';
 import { FindUserRequest } from './requests/find-user.request';
 import { CategoriesService } from '../categories/categories.service';
+import { AddressService } from '../addresses/address.service';
 
 @Controller('users')
 export class UserController {
@@ -30,7 +31,8 @@ export class UserController {
     private readonly planService: PlansService,
     private readonly planSubscriptionsService: PlanSubscriptionsService,
     private readonly categoriesService: CategoriesService,
-  ) {}
+    private readonly addressService: AddressService,
+  ) { }
   @Public()
   @Get()
   async findAll() {
@@ -73,6 +75,15 @@ export class UserController {
     @Param('id', ParseIntPipe, new ModelExistPipe('users')) id: number,
   ) {
     return this.categoriesService.findAllUserCategories(id);
+  }
+
+  @Public()
+  @Get(':id/address')
+  async findAddress(
+    @Param('id', ParseIntPipe, new ModelExistPipe('users'))
+    id: number,
+  ) {
+    return await this.addressService.findOneByUser(id);
   }
 
   @Get(':id/metrics')

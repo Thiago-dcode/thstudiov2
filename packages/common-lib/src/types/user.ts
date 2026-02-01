@@ -1,5 +1,4 @@
 import { EnumType } from "../constants/enums";
-import { AddressSchema } from "../schemas/address";
 import { UserSchema, BaseUserSchema } from "../schemas/user";
 import { FullPlan } from "./plan";
 import { UserExtraData } from "./user-extra-data";
@@ -15,10 +14,7 @@ export type BaseUserWithSecrets = BaseUser & {
 };
 
 // User extends the schema with all fields except timestamps, password, and address_id
-// Adds the address object instead of address_id
-export type User = Omit<UserSchema, 'created_at' | 'updated_at' | 'password'> & {
-  address?: Omit<AddressSchema, 'created_at' | 'updated_at'>;
-};
+export type User = Omit<UserSchema, 'created_at' | 'updated_at' | 'password' | 'address_id'>;
 export type FindUserRequest = {
   format?: EnumType<'FORMAT_TYPE'>
 }

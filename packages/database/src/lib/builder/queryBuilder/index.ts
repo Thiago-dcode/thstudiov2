@@ -192,7 +192,11 @@ export class QueryBuilder extends BaseBuilder {
 private  handleBuildGet(columns: string[], values: SqlValue[], select: string[] | string = '*', join: Join[] = []){
   this.reset();
     columns.forEach((column, index) => {
-      
+      let value = values[index];
+      if(value === undefined){
+        value = null;
+      }
+
       this.where(column, '=', values[index]);
     });
     this.select(select);

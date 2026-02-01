@@ -18,23 +18,23 @@ const up = async () => {
     }),
     ColumnBuilder.string('stripe_customer_id', 255, {
       nullable: true,
-      unique:true,
+      unique: true,
     }),
     ColumnBuilder.password(),
     ColumnBuilder.text('biography', {
       nullable: true,
     }),
-    ColumnBuilder.string('profession',100, {
+    ColumnBuilder.string('profession', 100, {
       nullable: true,
     }),
     ColumnBuilder.text('short_biography', {
       nullable: true,
     }),
-    ColumnBuilder.string('avatar',255,{
-      nullable:true
+    ColumnBuilder.string('avatar', 255, {
+      nullable: true
     }),
-    ColumnBuilder.string('banner',255,{
-      nullable:true
+    ColumnBuilder.string('banner', 255, {
+      nullable: true
     }),
     ColumnBuilder.email(),
     ColumnBuilder.boolean('email_validated', {
@@ -43,7 +43,7 @@ const up = async () => {
     ColumnBuilder.boolean('is_active', {
       default: true,
     }),
-    ColumnBuilder.integer('funnel_step',{
+    ColumnBuilder.integer('funnel_step', {
       default: 1,
     }),
     ColumnBuilder.integer('number_email_validations_sent', {

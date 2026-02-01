@@ -10,8 +10,7 @@ import {
   BaseUserSchema,
   BaseUserSchemaColumns,
   UserSchema,
-  UserSchemaWithAddress,
-  UserSchemaWithAddressColumns,
+  UserSchemaColumns,
 } from '@repo/common-lib/schemas/user';
 import { EnumType } from '@repo/common-lib/constants/enums';
 
@@ -30,8 +29,7 @@ export class UserRepository extends BaseRepository {
     'users.is_active',
     'users.funnel_step',
   ] as const;
-  private readonly FULL_COLUMNS: UserSchemaWithAddressColumns[] = [
-    // From users (main table)
+  private readonly FULL_COLUMNS: UserSchemaColumns[] = [
     ...this.BASE_COLUMNS,
     'users.avatar',
     'users.banner',
@@ -39,15 +37,6 @@ export class UserRepository extends BaseRepository {
     'users.surname',
     'users.short_biography',
     'users.biography',
-    // From addresses (only colliding columns aliased)
-    'addresses.id as addr_id',
-    'addresses.street',
-    'addresses.city',
-    'addresses.state',
-    'addresses.zip',
-    'addresses.country',
-    'addresses.latitude',
-    'addresses.longitude',
   ];
 
   constructor() {
@@ -57,8 +46,7 @@ export class UserRepository extends BaseRepository {
     const result = await this.query()
       .select(this.FULL_COLUMNS)
       .where('id', '=', id)
-      .join('address_id', 'addresses', 'id', 'LEFT')
-      .first<UserSchemaWithAddress>();
+      .first<UserSchema>();
     if (!result) {
       throw new HttpException(
         'User not found with id ' + id,
@@ -80,13 +68,11 @@ export class UserRepository extends BaseRepository {
   ): Promise<BaseUser | User> {
     let query = this.query().where(column, '=', value);
     if (format === 'FULL') {
-      query = query
-        .join('address_id', 'addresses', 'id', 'LEFT')
-        .select(this.FULL_COLUMNS);
+      query = query.select(this.FULL_COLUMNS);
     } else {
       query = query.select(this.BASE_COLUMNS);
     }
-    const result = await query.first<UserSchemaWithAddress>();
+    const result = await query.first<UserSchema>();
     if (!result) {
       throw new HttpException(
         'User not found with ' + column + ' ' + value,
@@ -106,7 +92,7 @@ export class UserRepository extends BaseRepository {
     const result = await this.query()
       .where(column, '=', value)
       .select(cols)
-      .first<UserSchemaWithAddress>();
+      .first<BaseUserSchema>();
     if (!result) null;
     return this.formatUser(result, true) as BaseUserWithSecrets;
   }
@@ -147,28 +133,15 @@ export class UserRepository extends BaseRepository {
       is_active: result?.is_active,
     };
   }
-  private formatFullUser(result: UserSchemaWithAddress): User {
+  private formatFullUser(result: UserSchema): User {
     return {
       ...this.formatUser(result),
       avatar: result?.avatar,
-      banner:result?.banner,
+      banner: result?.banner,
       name: result?.name,
       surname: result?.surname,
       short_biography: result?.short_biography,
       biography: result?.biography,
-      address: result?.addr_id
-        ? {
-            id: result?.addr_id,
-            street: result?.street,
-            city: result?.city,
-            state: result?.state,
-            zip: result?.zip,
-            country: result?.country,
-
-            latitude: result?.latitude,
-            longitude: result?.longitude,
-          }
-        : null,
     };
   }
   // update(id: number, updatePlanDto: UpdatePlanDto) {

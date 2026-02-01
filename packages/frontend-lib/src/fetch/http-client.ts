@@ -48,10 +48,12 @@ protected _baseUrl: string = '';
 protected _signal?: AbortSignal;
 protected _cacheOptions?: CacheOptions;
 protected _defaultCacheOptions?: CacheOptions;
-    constructor(baseUrl: string, globalHeaders: HeadersInit = {}, defaultCacheOptions?: CacheOptions) {
+protected _credentials?: RequestCredentials;
+    constructor(baseUrl: string, globalHeaders: HeadersInit = {}, defaultCacheOptions?: CacheOptions, credentials?: RequestCredentials) {
         this._headers = globalHeaders;
         this._baseUrl = baseUrl;
         this._defaultCacheOptions = defaultCacheOptions;
+        this._credentials = credentials;
     }
     public set headers(headers: HeadersInit) {
         this._headers = {
@@ -94,6 +96,12 @@ protected _defaultCacheOptions?: CacheOptions;
     }
     public get defaultCacheOptions(): CacheOptions | undefined {
         return this._defaultCacheOptions;
+    }
+    public set credentials(credentials: RequestCredentials | undefined) {
+        this._credentials = credentials;
+    }
+    public get credentials(): RequestCredentials | undefined {
+        return this._credentials;
     }
     protected set body(body: BodyParam) {
         if(body === null || body === undefined) {

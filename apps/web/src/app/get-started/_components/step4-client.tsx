@@ -1,10 +1,17 @@
+'use client'
+import { AddressSchema } from "@repo/common-lib/schemas/address";
 import { ButtonStepBackFunnel, ButtonSubmitFunnel, ContainerFormFunnel } from "./funnel.provider";
+import { useLocationAutocomplete } from "@/lib/hooks/useGetLocation";
+import { useEffect } from "react";
 
-export function Step4Client() {
+export function Step4Client({defaultAddress}:{
+    defaultAddress: AddressSchema
+}) {
 
-    //TODO: get user address
 
     //Create custom hook to handle api geo autocomplete
+
+    const {search} = useLocationAutocomplete();
 
     //Create a dropdown component to show the result
 
@@ -14,6 +21,10 @@ export function Step4Client() {
 
     //Handle funnel logic
 
+    useEffect(()=>{
+         search('hamburg');
+
+    },[])
 
 
     return <ContainerFormFunnel className="sticky bottom-0 bg-bg p-2">

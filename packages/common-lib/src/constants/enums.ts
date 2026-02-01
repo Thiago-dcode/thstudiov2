@@ -87,6 +87,50 @@ export const TABLES_ENUM = {
   LLM_TOKENS_USAGE:'llm_tokens_usage'
 } as const;
 
+export const COUNTRY_TO_LANGUAGES: Record<string, string> = {
+  // Spanish-speaking
+  es: "Spanish",
+  mx: "Spanish",
+  ar: "Spanish",
+  co: "Spanish",
+  cl: "Spanish",
+  pe: "Spanish",
+  ve: "Spanish",
+  uy: "Spanish",
+  py: "Spanish",
+  bo: "Spanish",
+  ec: "Spanish",
+
+  // Portuguese-speaking
+  pt: "Portuguese",
+  br: "Portuguese",
+
+  // English-speaking
+  us: "English",
+  gb: "English",
+  ie: "English",
+  ca: "English",
+  au: "English",
+  nz: "English",
+
+  // French-speaking
+  fr: "French",
+  be: "French", // default (multilingual, but safe)
+  ch: "French", // default fallback
+  lu: "French",
+
+  // German-speaking
+  de: "German",
+  at: "German",
+
+  // Italian
+  it: "Italian",
+
+  // Dutch
+  nl: "Dutch",
+};
+
+
   export type AvailableEnums = keyof typeof ENUMS;
   export type EnumType<T extends AvailableEnums> = (typeof ENUMS)[T][number];
   export const DEFAULT_COMPRESSION_LVL:EnumType<'COMPRESSION_LEVEL'> = 'HIGH';

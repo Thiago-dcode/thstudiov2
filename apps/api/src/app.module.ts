@@ -34,6 +34,7 @@ import { UserStorageRequestModule } from './v1/modules/user-storage-requests/use
 import { UserAboutPageModule } from './v1/modules/user-about-page/user-about-page.module';
 import { UserMediaModule } from './v1/modules/user-media/user-media.module';
 import { AiModule } from './v1/modules/ai/ai.module';
+import { AddressModule } from './v1/modules/addresses/address.module';
 const APP_MODULES = [
   AuthModule,
   UserModule,
@@ -48,7 +49,8 @@ const APP_MODULES = [
   UserStorageRequestModule,
   UserAboutPageModule,
   UserMediaModule,
-  AiModule
+  AiModule,
+  AddressModule 
 ];
 @Module({
   imports: [

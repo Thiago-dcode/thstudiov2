@@ -23,6 +23,9 @@ const up = async () => {
     Column.string('country', 255, {
       nullable: true,
     }),
+    Column.string('country_code', 5, {
+      nullable: true,
+    }),
     Column.double('latitude', {
       nullable: true,
     }),
@@ -30,7 +33,13 @@ const up = async () => {
       nullable: true,
     }),
     Column.foreignKey('user_id', 'users', 'id', {
-      onDelete: 'CASCADE',
+      onDelete: 'SET NULL',
+      unique:true,
+      nullable: true,
+    }),
+    Column.foreignKey('client_id', 'clients', 'id', {
+      onDelete: 'SET NULL',
+      unique:true,
       nullable: true,
     }),
   ]);
@@ -39,6 +48,9 @@ const up = async () => {
 
 const down = async () => {
 
+
+  
+  // Then drop the addresses table
   await Schema.table('addresses').dropIfExists();
 
 };

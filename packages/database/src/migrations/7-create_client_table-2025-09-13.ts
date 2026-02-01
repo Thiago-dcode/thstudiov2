@@ -14,17 +14,11 @@ const up = async () => {
     Column.string('phone', 20, {
       nullable: true,
     }),
-    Column.string('address', 255, {
-      nullable: true,
-    }),
     Column.string('logo', 255, {
       nullable: true,
     }),
     Column.string('website', 255, {
       nullable: true,
-    }),
-    Column.foreignKey('address_id', 'addresses', 'id', {
-      onDelete: 'CASCADE',
     }),
     Column.foreignKey('user_id', 'users', 'id', {
       onDelete: 'CASCADE',

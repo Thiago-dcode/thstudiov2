@@ -39,6 +39,8 @@ const up = async () => {
   }
 
 
+
+
   
   await Schema.table('payment_methods').withTimestamps(true).createIfNotExists([
     Column.id(),
@@ -57,6 +59,7 @@ const down = async () => {
   for (const enumName of Object.keys(ENUMS)) {
     await Schema.dropEnumIfExists(enumName as AvailableEnums);
   }
+
 };
 
 export { up, down };

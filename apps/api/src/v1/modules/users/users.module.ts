@@ -13,6 +13,7 @@ import { UserAuthDevicesModule } from '../user-auth-devices/user-auth-devices.mo
 import { PlanSubscriptionsModule } from '../plan-subscriptions/plan-subscriptions.module';
 import { PlansModule } from '../plans/plans.module';
 import { CategoriesModule } from '../categories/categories.module';
+import { AddressModule } from '../addresses/address.module';
 
 @Module({
   controllers: [UserController],
@@ -27,7 +28,7 @@ import { CategoriesModule } from '../categories/categories.module';
       },
     },
   ],
-  imports: [UserExtraDataModule, UserAuthDevicesModule, PlanSubscriptionsModule, PlansModule,CategoriesModule],
+  imports: [UserExtraDataModule, UserAuthDevicesModule, PlanSubscriptionsModule, PlansModule, CategoriesModule, AddressModule],
   exports: [UserService],
 })
 export class UserModule {}
