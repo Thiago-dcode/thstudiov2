@@ -128,6 +128,56 @@ export const COUNTRY_TO_LANGUAGES: Record<string, string> = {
 
   // Dutch
   nl: "Dutch",
+
+  // Polish
+  pl: "Polish",
+
+  // Russian
+  ru: "Russian",
+
+  // Japanese
+  jp: "Japanese",
+
+  // Chinese
+  cn: "Chinese",
+
+  // Korean
+  kr: "Korean",
+
+  // Turkish
+  tr: "Turkish",
+
+  // Greek
+  gr: "Greek",
+
+  // Czech
+  cz: "Czech",
+
+  // Swedish
+  se: "Swedish",
+
+  // Norwegian
+  no: "Norwegian",
+
+  // Danish
+  dk: "Danish",
+
+  // Finnish
+  fi: "Finnish",
+
+  // Romanian
+  ro: "Romanian",
+
+  // Hungarian
+  hu: "Hungarian",
+
+  // Arabic
+  sa: "Arabic",
+  ae: "Arabic",
+  eg: "Arabic",
+
+  // Hebrew
+  il: "Hebrew",
 };
 
 

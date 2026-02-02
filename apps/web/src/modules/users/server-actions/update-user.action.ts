@@ -99,6 +99,7 @@ export const updateUserAction = async (id:number,formData: FormData): Promise<Ac
 
         data:result.data!,
         errors:null,
+        inputErrors:undefined,
         inputs:rawData
     }
 

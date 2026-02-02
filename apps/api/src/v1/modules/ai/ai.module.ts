@@ -7,10 +7,11 @@ import { openAiLLMConfig } from 'src/config/llm';
 import { UserExtraDataModule } from '../user-extra-data/user-extra-data.module';
 import { LlmTokensUsageRepository } from './llm-tokens-usage.repository';
 import { MediaModule } from '../media/media.module';
+import { AddressModule } from '../addresses/address.module';
 
 @Module({
   controllers: [AiController],
-  imports: [UserExtraDataModule, MediaModule],
+  imports: [UserExtraDataModule, MediaModule,AddressModule],
   providers: [
     AiService,
     LlmTokensUsageRepository,

@@ -12,6 +12,8 @@ import { UpdateUserExtraDataMetricsEvent } from '../user-extra-data/events/updat
 import { MediaService } from '../media/media.service';
 import { MediaSeoFields } from '@repo/common-lib/types/media';
 import { Helpers } from 'src/common/services/helpers.service';
+import { AddressService } from '../addresses/address.service';
+import { COUNTRY_TO_LANGUAGES } from '@repo/common-lib/constants/enums';
 
 @Injectable()
 export class AiService {
@@ -29,6 +31,7 @@ export class AiService {
     private readonly llmTokensUsageRepository: LlmTokensUsageRepository,
     private readonly eventEmitter: EventEmitter2,
     private readonly mediaService: MediaService,
+    private readonly addressService: AddressService
   ) {
     // Helpers available for future use (caching, etc.)
   }
@@ -36,8 +39,17 @@ export class AiService {
   /** Generate SEO JSON for a media image */
   public async getMediaSeo(request: GetMediaSeoRequest) {
     try {
-      await this.llmService.setup();
-      const imageUrl = await this.mediaService.getAsset(request.media_id);
+      const [imageUrl,userAddress] = await Promise.all([
+        this.mediaService.getAsset(request.media_id),
+        this.addressService.findOneByUser(request.user_id),
+        this.llmService.setup()
+      ]);
+
+      let language = 'English';
+
+      if(userAddress && userAddress.country_code){
+       language = COUNTRY_TO_LANGUAGES[userAddress.country_code.toLowerCase()] || 'English';
+      }
 
       // Expected JSON structure with validation rules:
       // - seo_title: ≤60 chars, concise and descriptive
@@ -64,7 +76,9 @@ export class AiService {
         - seo_description: ≤160 chars, accurate image summary
         - seo_alt: ≤125 chars, accessibility-focused
         - seo_filename: ≤150 chars, lowercase, use hyphens instead of spaces, only letters, numbers, "-" and "_"
+        - All text content (seo_title, seo_description, seo_alt, seo_filename) must be written in ${language}
         Base all fields on the visual content only. Ignore filename and URL.`
+        
               },
               {
                 type: 'image_url' as const,
@@ -172,7 +186,6 @@ export class AiService {
   @OnEvent(LLM_TOKENS_USAGE_EVENT)
   async handleLlmTokensUsageEvent(event: LlmTokensUsageEvent) {
     try {
-      console.log(LLM_TOKENS_USAGE_EVENT, event);
 
       if (!event?.usage) {
         this.logger

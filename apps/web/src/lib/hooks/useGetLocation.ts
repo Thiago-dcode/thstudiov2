@@ -24,8 +24,7 @@ export const useLocationAutocomplete = () => {
             });
 
             if(response.data){
-                
-                console.log(response.data.features)
+                setResult(response.data.features);
             }
             
           

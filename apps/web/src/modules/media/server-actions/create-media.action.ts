@@ -15,7 +15,6 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 export const createMediaAction = async (input: CreateMediaInputWithFile): Promise<ActionReturn<CreateMediaInputWithFile, Media>> => {
     // Validate file
 
-    console.log("CALLING MEDIA ACTION", input.file?.name)
     if (!input.file || input.file.size === 0) {
         return {
             errors: [],
@@ -45,7 +44,7 @@ export const createMediaAction = async (input: CreateMediaInputWithFile): Promis
 
     // Prepare data for validation (exclude file from schema validation)
     const { file, ...dataToValidate } = input;
-    
+
     // Trim string values
     trimValues(dataToValidate, {
         deep: true

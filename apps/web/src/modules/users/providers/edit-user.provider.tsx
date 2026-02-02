@@ -4,6 +4,7 @@ import { useHandleAction } from "@/modules/auth/hooks/useHandleAction"
 import { getOneUserAction } from "@/modules/users/server-actions/get-one-user.action"
 import {getUserCategoriesAction } from "@/modules/users/server-actions/get-user-categories.action"
 import { updateUserAction } from "@/modules/users/server-actions/update-user.action"
+import { Address } from "@repo/common-lib/types/address"
 import { CategoryBase } from "@repo/common-lib/types/category"
 import { User } from "@repo/common-lib/types/user"
 import { useContext, createContext, ReactNode, useState, FormEvent } from "react"
@@ -13,6 +14,8 @@ import { useContext, createContext, ReactNode, useState, FormEvent } from "react
 // Context type
 type EditUserContextType = {
     user: User,
+    address?: Address,
+    setAddress: (address: Address | undefined) => void,
     userCategories:CategoryBase[]
     handleSubmit: (e: FormEvent<HTMLFormElement> | FormData) => Promise<void>,
     isPending: boolean,
@@ -37,13 +40,16 @@ export const useEditUser = () => {
 export const EditUserProvider = ({
     children,
     defaultUser,
+    defaultAddress,
     defaultUserCategories
 }: {
     children: ReactNode,
     defaultUser: User,
+    defaultAddress?:Address,
     defaultUserCategories: CategoryBase[]
 }) => {
     const [user, setUser] = useState(defaultUser);
+    const [address,setAddress] = useState(defaultAddress)
     const [userCategories, setUserCategories] = useState(defaultUserCategories);
     const { handleSubmit, isPending, errors, cleanErrors, success, cleanResult, reset } = useHandleAction({
         action: async (formData) => {
@@ -68,10 +74,9 @@ export const EditUserProvider = ({
             cleanResult()
         }
 
-    })
-
+    });
     return (
-        <EditUserContext.Provider value={{ user,userCategories, isPending, errors, handleSubmit, cleanErrors, success, reset }}>
+        <EditUserContext.Provider value={{ user, address, setAddress, userCategories, isPending, errors, handleSubmit, cleanErrors, success, reset }}>
             {children}
         </EditUserContext.Provider>
     )

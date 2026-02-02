@@ -11,14 +11,13 @@ export default async function AtelierHomePage () {
         redirect('/');
     }
   
-    const [userResponse,categoriesResponse] = await Promise.all([usersService.getOne(userAuth.id),usersService.getAllCategories(userAuth.id)]);
+    const [userResponse,addressResponse,categoriesResponse] = await Promise.all([usersService.getOne(userAuth.id),usersService.address(userAuth.id),usersService.getAllCategories(userAuth.id)]);
     if (!userResponse.data) {
         notFound()
     }
 
 
-
-    return <EditUserProvider defaultUser={userResponse.data} defaultUserCategories={categoriesResponse.data || []}>
+    return <EditUserProvider defaultAddress={addressResponse.data || undefined} defaultUser={userResponse.data} defaultUserCategories={categoriesResponse.data || []}>
 
                      <div className="size-full">
 

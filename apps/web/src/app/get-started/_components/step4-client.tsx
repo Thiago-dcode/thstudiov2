@@ -1,37 +1,35 @@
 'use client'
-import { AddressSchema } from "@repo/common-lib/schemas/address";
-import { ButtonStepBackFunnel, ButtonSubmitFunnel, ContainerFormFunnel } from "./funnel.provider";
-import { useLocationAutocomplete } from "@/lib/hooks/useGetLocation";
-import { useEffect } from "react";
+import { ButtonStepBackFunnel, ButtonSubmitFunnel, ContainerFormFunnel, useFunnel } from "./funnel.provider";
+import { useEffect, useState } from "react";
+import { Address } from "@repo/common-lib/types/address";
+import { UserAuth } from "@/modules/auth/auth.types";
+import { CreateOrUpdateAddress } from "@/modules/addresses/components/create-or-update-address";
 
-export function Step4Client({defaultAddress}:{
-    defaultAddress: AddressSchema
+export function Step4Client({ defaultAddress, userAuth }: {
+    defaultAddress?: Address,
+    userAuth: UserAuth
 }) {
+    const [currentAddress, setCurrentAddress] = useState(defaultAddress);
+    const { setCanContinue } = useFunnel();
 
+    useEffect(() => {
+        setCanContinue(!!currentAddress);
+    }, [currentAddress, setCanContinue]);
 
-    //Create custom hook to handle api geo autocomplete
+    return (
+        <>
+            <CreateOrUpdateAddress
+                userId={userAuth.id}
+                defaultAddress={defaultAddress}
+                onSuccess={(address) => {
+                    setCurrentAddress(address);
+                }}
+            />
 
-    const {search} = useLocationAutocomplete();
-
-    //Create a dropdown component to show the result
-
-    //Display the selected result to the user
-
-    //Update user address with the address selected
-
-    //Handle funnel logic
-
-    useEffect(()=>{
-         search('hamburg');
-
-    },[])
-
-
-    return <ContainerFormFunnel className="sticky bottom-0 bg-bg p-2">
-        <ButtonSubmitFunnel />
-        <ButtonStepBackFunnel />
-    </ContainerFormFunnel>
-
-
-
+            <ContainerFormFunnel className="sticky bottom-0 bg-bg p-2">
+                <ButtonSubmitFunnel />
+                <ButtonStepBackFunnel />
+            </ContainerFormFunnel>
+        </>
+    )
 }

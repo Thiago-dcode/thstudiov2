@@ -31,12 +31,11 @@ export class AddressService {
       throw new BadRequestException('User id or client id must be sent');
     }
     cleanObj(data);
-    const result =  await this.addressRepository.create(data);
+    const result = await this.addressRepository.create(data);
     return result;
   }
 
   public async update(id: number, data: UpdateAddressInput) {
-    cleanObj(data);
 
     const address = await this.addressRepository.getOneById(id);
 

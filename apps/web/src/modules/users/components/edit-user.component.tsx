@@ -4,7 +4,7 @@ import Image from "next/image";
 import fallbackBanner from '@/assets/images/fallback-banner.jpg'
 import { Pen } from "lucide-react";
 import { useEditUser } from "../providers/edit-user.provider";
-import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@repo/ui/components/shadcn/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from "@repo/ui/components/shadcn/dialog";
 import FormComponent from "@/lib/components/form-component";
 import { FileInputProvider, useInputFile } from "@repo/ui/contexts/file.provider";
 import { usePreviewUrls } from "@repo/ui/hooks/usePreviewUrls";
@@ -14,15 +14,17 @@ import { useEffect, useRef, useState } from "react";
 import { Badge } from "@repo/ui/components/shadcn/badge";
 import { UpdateCategoriesProvider, useUpdateCategories } from "@/modules/categories/providers/update-user-categories.provider";
 import { UserCategoriesComponent } from "@/modules/categories/components/user-categories.component";
+import { CreateOrUpdateAddress } from "@/modules/addresses/components/create-or-update-address";
 
 export default function EditUserComponent() {
-    const { user, userCategories, handleSubmit, reset, success, isPending } = useEditUser();
+    const { user, address, setAddress, userCategories, handleSubmit, reset, success, isPending } = useEditUser();
     const [openAvatar, setOpenAvatar] = useState(false);
     const [openBanner, setOpenBanner] = useState(false);
     const [openProfile, setOpenProfile] = useState(false);
     const [openCategories, setOpenCategories] = useState(false);
+    const [openAddress, setOpenAddress] = useState(false);
 
-    const handleSetOpen = (value: boolean, dialog: 'profile' | 'avatar' | 'banner' | 'categories') => {
+    const handleSetOpen = (value: boolean, dialog: 'profile' | 'avatar' | 'banner' | 'categories' | 'address') => {
         if (!value && isPending) return;
 
         switch (dialog) {
@@ -38,6 +40,9 @@ export default function EditUserComponent() {
             case 'categories':
                 setOpenCategories(value);
                 break;
+            case 'address':
+                setOpenAddress(value);
+                break;
         }
     }
     const closeAllModals = () => {
@@ -45,6 +50,7 @@ export default function EditUserComponent() {
         setOpenBanner(false)
         setOpenProfile(false)
         setOpenCategories(false)
+        setOpenAddress(false)
         reset()
     }
 
@@ -111,26 +117,50 @@ export default function EditUserComponent() {
             </div>
             {/* Profile section */}
             <div className="relative pt-16 px-4">
-            <Dialog open={openProfile} onOpenChange={(value) => handleSetOpen(value, 'profile')}>
-                        <DialogTrigger className="absolute top-3 right-3 p-2 bg-fg-1 hover:bg-fg-2 rounded-full transition-opacity cursor-pointer">
-                            <Pen className="size-3" />
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl">
-                            <DialogTitle>Edit Profile</DialogTitle>
-                            <FormComponent.Container>
-                                <FormComponent.Form onSubmit={handleSubmit} className="max-w-xl pt-4">
-                                    <EditProfile user={user} />
-                                </FormComponent.Form>
-                            </FormComponent.Container>
-                        </DialogContent>
-                    </Dialog>
+                <Dialog open={openProfile} onOpenChange={(value) => handleSetOpen(value, 'profile')}>
+                    <DialogTrigger className="absolute top-3 right-3 p-2 bg-fg-1 hover:bg-fg-2 rounded-full transition-opacity cursor-pointer">
+                        <Pen className="size-3" />
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl">
+                        <DialogTitle>Edit Profile</DialogTitle>
+                        <FormComponent.Container>
+                            <FormComponent.Form onSubmit={handleSubmit} className="max-w-xl pt-4">
+                                <EditProfile user={user} />
+                            </FormComponent.Form>
+                        </FormComponent.Container>
+                    </DialogContent>
+                </Dialog>
                 {/* User info */}
                 <section className="py-2 flex  items-start justify-between">
                     <div className="flex flex-col items-start justify-start"> <h1 className="text-lg font-bold">{user.name} {user.surname}</h1>
                         <p className=" text-text-muted">{user.profession || 'Profession title'}</p>
                         <p className="pt-2">{user.short_biography}</p>
-                        </div>
-               
+                    </div>
+
+                </section>
+                <section className="flex items-center justify-start gap-2">
+                    <p>{address?.formated_address || 'No address set'}</p>
+                    <Dialog open={openAddress} onOpenChange={(value) => handleSetOpen(value, 'address')}>
+                        <DialogTrigger className="p-2 bg-fg-1 hover:bg-fg-2 rounded-full transition-opacity cursor-pointer">
+                            <Pen className="size-2" />
+                        </DialogTrigger>
+                        <DialogContent className="w-fit">
+                            <DialogTitle>Edit Address</DialogTitle>
+                            <DialogDescription>
+                                {address
+                                    ? "Warning: Updating your address could affect your discovery and visibility in search results. Only update it if you really need it"
+                                    : "Update your address information below."
+                                }
+                            </DialogDescription>
+                            <CreateOrUpdateAddress
+                                userId={user.id}
+                                defaultAddress={address}
+                                onSuccess={(address) => {
+                                    setAddress(address);
+                                }}
+                            />
+                        </DialogContent>
+                    </Dialog>
                 </section>
                 {/*Categories section */}
                 <section className="flex flex-col items-start justify-start gap-1 pt-8">
