@@ -23,7 +23,7 @@ export class UserExtraDataService {
     private readonly planService: PlansService,
     private readonly helpers: Helpers,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
-  ) {}
+  ) { }
   create() {
     return 'This action adds a new userExtraDatum';
   }
@@ -58,7 +58,8 @@ export class UserExtraDataService {
       storageRequests?: number;
       enforceCompressionLevel?: boolean;
       projects_count?: number;
-      enforceAiCredists?:boolean;
+      portfolios_count?: number;
+      enforceAiCredists?: boolean;
     },
   ) {
     const [userExtraData, currentPlan] = await Promise.all([
@@ -66,7 +67,7 @@ export class UserExtraDataService {
       this.planService.findUserActivePlan(userId),
     ]);
 
-    const { size, projects_count, enforceCompressionLevel, storageRequests,enforceAiCredists } =
+    const { size, portfolios_count, projects_count, enforceCompressionLevel, storageRequests, enforceAiCredists } =
       toEnforce;
 
     if (size) {
@@ -85,9 +86,9 @@ export class UserExtraDataService {
         );
       }
     }
-    if(enforceAiCredists){
+    if (enforceAiCredists) {
       const userAiCredits = userExtraData.ai_credits + currentPlan.ai_credits;
-      if(userExtraData.ai_credits_consumed >= userAiCredits){
+      if (userExtraData.ai_credits_consumed >= userAiCredits) {
         throw ApiException.aiCredits(`User consumed all ai credits, consumed:${userExtraData.ai_credits_consumed} of ${userAiCredits}`)
       }
 
@@ -100,6 +101,14 @@ export class UserExtraDataService {
       if (newStorageRequests > currentPlan.limit_write_storage_per_day) {
         throw ApiException.dailyStorageRequests(
           `Daily storage requests limit exceeded. Current: ${currentRequests}, Adding: ${storageRequests}, Max allowed: ${currentPlan.limit_write_storage_per_day}`,
+        );
+      }
+    }
+    if (portfolios_count) {
+      const newProjectsCount = userExtraData.portfolios_count + portfolios_count;
+      if (newProjectsCount > currentPlan.max_portfolios) {
+        throw ApiException.maxProjects(
+          `Projects limit exceeded. Current: ${userExtraData.portfolios_count}, Adding: ${portfolios_count}, Max allowed: ${currentPlan.max_projects}`,
         );
       }
     }
@@ -117,10 +126,10 @@ export class UserExtraDataService {
     const log = this.logger.name('metrics');
     try {
       log.info(`Starting metrics update for user ${data.userId}`);
-     const extraData = await  this.findOneByUserId(data.userId);
+      const extraData = await this.findOneByUserId(data.userId);
       const [media] = await Promise.all([
         Query.table('media')
-          .select(['id', 'bytes','thumbnail_bytes'])
+          .select(['id', 'bytes', 'thumbnail_bytes'])
           .where('blocked', '=', false)
           .where('user_id', '=', data.userId)
           .get<Pick<Media, 'id' | 'bytes' | 'thumbnail_bytes'>[]>(),

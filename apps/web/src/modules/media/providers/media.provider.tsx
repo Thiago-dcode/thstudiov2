@@ -33,6 +33,7 @@ type MediaContextType = {
   handleRemoveCompleted: () => void;
   handleUpload: () => Promise<void>;
   handleUploadUpdates: () => Promise<void>;
+  handleUploadInserts: () => Promise<void>;
   handleRemove: (index: number) => void;
   updateMediaUpload: (index: number, mediaUpload: UploadMedia) => void;
   uploadSingleMedia: (index: number) => Promise<void>;
@@ -439,6 +440,7 @@ export const MediaProvider = ({
 
     const indicesToUpdate = mediaUploads
       .map((m, index) => ({ m, index }))
+            //If media has ID update
       .filter(({ m }) => !!m.id && !m.pending && !m.data && !m.error)
       .map(({ index }) => index);
 
@@ -450,7 +452,23 @@ export const MediaProvider = ({
     );
 
   }
+  const handleUploadInserts = async () => {
+    if (!mediaUploads.length || isLoading) return Promise.resolve();
 
+    const indicesToUpdate = mediaUploads
+      .map((m, index) => ({ m, index }))
+      //If media does not have ID is a insert
+      .filter(({ m }) => !m.id && !m.pending && !m.data && !m.error)
+      .map(({ index }) => index);
+
+
+    await Promise.all(
+      indicesToUpdate.map(index =>
+        uploadSingleMedia(index)
+      )
+    );
+
+  }
   // ============================================================================
   // Context Value
   // ============================================================================
@@ -476,7 +494,8 @@ export const MediaProvider = ({
     mediaPendingToCreate,
     isMediaCompleted,
     handleUpload,
-    handleUploadUpdates
+    handleUploadUpdates,
+    handleUploadInserts
   };
 
   return (

@@ -9,6 +9,7 @@ import { MimeTypes } from "@repo/common-lib/types/general";
 import mediaService from "../media.service";
 import { getFriendlyApiErrors, getObjErrorFromZod } from "@/modules/auth/helpers";
 import { EnumType } from "@repo/common-lib/constants/enums";
+import { revalidateTag } from "next/cache";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
@@ -76,6 +77,9 @@ export const createMediaAction = async (input: CreateMediaInputWithFile): Promis
     const media = await mediaService.create(mediaData);
 
     if (media.data) {
+
+        // Revalidate any cached user-scoped data (matches `usersService` tag pattern)
+        revalidateTag(`user-${mediaData.user_id}`, 'max');
         return {
             data: media.data,
             errors: null,

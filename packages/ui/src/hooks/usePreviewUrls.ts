@@ -1,18 +1,36 @@
 import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 
-const hasFiles = (fileList?: FileList): boolean => {
-  return !!(fileList && fileList.length > 0);
+const hasFiles = (files?: FileList | File): boolean => {
+  if (!files) return false;
+  if (files instanceof File) return true;
+  return files.length > 0;
 };
 
-const filesAreEqual = (prev: FileList, current: FileList): boolean => {
-  if (prev.length !== current.length) return false;
-  return !Array.from(prev).some((file, i) => {
-    const currentFile = current[i];
-    return !currentFile || file.name !== currentFile.name || file.size !== currentFile.size;
-  });
+const filesAreEqual = (prev: FileList | File | undefined, current: FileList | File | undefined): boolean => {
+  if (!prev || !current) return false;
+  
+  // Handle single File case
+  if (prev instanceof File && current instanceof File) {
+    return prev.name === current.name && prev.size === current.size;
+  }
+  
+  // Handle FileList case
+  if (prev instanceof FileList && current instanceof FileList) {
+    if (prev.length !== current.length) return false;
+    return !Array.from(prev).some((file, i) => {
+      const currentFile = current[i];
+      return !currentFile || file.name !== currentFile.name || file.size !== currentFile.size;
+    });
+  }
+  
+  // Mixed types are not equal
+  return false;
 };
 
-const createPreviewUrls = (files: FileList): string[] => {
+const createPreviewUrls = (files: FileList | File): string[] => {
+  if (files instanceof File) {
+    return [URL.createObjectURL(files)];
+  }
   return Array.from(files).map(file => URL.createObjectURL(file));
 };
 
@@ -33,16 +51,27 @@ export const usePreviewUrls = ({
   files,
 }: {
   defaultUrl?: string | string[];
-  files?: FileList;
+  files?: FileList |File;
 }) => {
   const defaultUrls = useMemo(
-    () => (Array.isArray(defaultUrl) ? defaultUrl : [defaultUrl]),
+    () => {
+      const urls = Array.isArray(defaultUrl) ? defaultUrl : (defaultUrl ? [defaultUrl] : []);
+      return urls.filter(Boolean); // Remove any falsy values
+    },
     [defaultUrl]
   );
   
-  const [previewUrls, setPreviewUrls] = useState<string[]>(defaultUrls);
-  const prevUrlsRef = useRef<string[]>(defaultUrls);
-  const prevFilesRef = useRef<FileList | undefined>(undefined);
+  // Initialize with preview URLs if files are provided on mount
+  const getInitialUrls = () => {
+    if (hasFiles(files)) {
+      return createPreviewUrls(files!);
+    }
+    return defaultUrls;
+  };
+
+  const [previewUrls, setPreviewUrls] = useState<string[]>(getInitialUrls);
+  const prevUrlsRef = useRef<string[]>(getInitialUrls());
+  const prevFilesRef = useRef<FileList | File | undefined>(files);
 
   // Cleanup function to revoke all blob URLs (doesn't set state to avoid infinite loops)
   const cleanup = useCallback(() => {
@@ -55,14 +84,15 @@ export const usePreviewUrls = ({
     const currentHasFiles = hasFiles(files);
     const prevHadFiles = hasFiles(prevFiles);
 
-    // Check if files changed
+    // Check if files changed (by reference or content)
     const filesChanged = !prevFiles || 
       !currentHasFiles || 
       !prevHadFiles || 
       (files && prevFiles ? !filesAreEqual(prevFiles, files) : true);
 
     // Handle file changes
-    if (currentHasFiles && files && filesChanged) {
+    // If prevFiles is undefined (mount/remount) and we have files, always create URLs
+    if (currentHasFiles && files && (filesChanged || !prevFiles)) {
       const urls = createPreviewUrls(files);
       setPreviewUrls(urls);
       prevUrlsRef.current = urls;
@@ -75,14 +105,22 @@ export const usePreviewUrls = ({
       }
       prevFilesRef.current = undefined;
     } else if (!currentHasFiles) {
+      // No files - set to default if not already
+      if (!isDefaultUrls(prevUrlsRef.current, defaultUrls)) {
+        setPreviewUrls(defaultUrls);
+        prevUrlsRef.current = defaultUrls;
+      }
       prevFilesRef.current = undefined;
     }
 
-    // Cleanup: revoke blob URLs from previous render
+    // Cleanup: revoke blob URLs from previous render (but not current ones)
     return () => {
-      revokeBlobUrls(currentUrls);
+      // Only revoke URLs that are not the current ones
+      const urlsToRevoke = currentUrls.filter(url => !prevUrlsRef.current.includes(url));
+      revokeBlobUrls(urlsToRevoke);
     };
-  }, [files, defaultUrls]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [files]); // Only depend on files - defaultUrls is stable via useMemo
 
   // Cleanup on unmount - only revoke URLs, don't set state
   useEffect(() => {

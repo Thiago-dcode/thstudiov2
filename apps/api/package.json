@@ -46,6 +46,8 @@
     "@repo/eslint-config": "workspace:*",
     "@repo/jest-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@swc/cli": "^0.7.10",
+    "@swc/core": "^1.15.11",
     "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.6",
     "@types/jest": "^30.0.0",

@@ -23,6 +23,7 @@ import { Slider } from "@repo/ui/components/shadcn/slider"
 import { DEFAULT_COMPRESSION_LVL, ENUMS, EnumType } from "@repo/common-lib/constants/enums"
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip"
 import { useUserMetrics } from "@/modules/users/providers/user-metrics.provider"
+import { Plus } from "lucide-react"
 
 function MediaUploadContent() {
     const COMPRESSION_LVLS = ENUMS.COMPRESSION_LEVEL;
@@ -229,7 +230,7 @@ function MediaUploadContent() {
 
 export function CreateMediaDialog() {
     const [open, setOpen] = useState(false)
-    const { handleUpload, isLoading, handleRemoveCompleted, addMediaUploads } = useMedia()
+    const { handleUploadInserts, isLoading, handleRemoveCompleted, addMediaUploads } = useMedia()
     const { files } = useInputFile()
     const { previewUrls, cleanup } = usePreviewUrls({ files });
     const { session } = useSession();
@@ -265,8 +266,9 @@ export function CreateMediaDialog() {
 
         <Dialog open={open} onOpenChange={setOpen} >
             <DialogTrigger asChild>
-                <Button variant="default" size="default">
-                    Create New Media
+                <Button className="p-2 text-sm " variant="secondary" size="default">
+                    <Plus className="h-4 w-4" />
+                    Create media
                 </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl h-[95vh] flex flex-col justify-between [&>button]:hidden p-0 z-100">
@@ -291,7 +293,7 @@ export function CreateMediaDialog() {
                     </DialogClose>
                     {files?.length ? <Button onClick={async () => {
                         setOpen(false)
-                        await handleUpload()
+                        await handleUploadInserts()
                     }} variant={'secondary'} className="w-full">Upload!</Button> : null}
                 </DialogFooter>
             </DialogContent>

@@ -20,7 +20,7 @@ export default function RootLayout({
   children: ReactElement;
 }>) {
   return (
-    <html className={cn("dark",roboto.className)} lang="en">
+    <html className={cn("",roboto.className)} lang="en">
       <body className=" w-screen h-screen flex  flex-col items-center justify-start">
           {children}
         <Toaster />

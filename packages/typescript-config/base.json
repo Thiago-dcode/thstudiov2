@@ -23,6 +23,8 @@
   "declaration": true,   
   "declarationMap": true,
   
-  "skipLibCheck": true
+    "skipLibCheck": true,
+
+    "incremental": true
 }
 }

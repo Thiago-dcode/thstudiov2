@@ -13,13 +13,16 @@
     "test:e2e": "turbo run test:e2e",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "dbcli": "turbo run dbcli"
+    "dbcli": "turbo run dbcli",
+    "clean": "rimraf --glob \"apps/*/dist\" \"apps/*/.next\" \"packages/*/dist\"",
+    "fresh": "pnpm clean && pnpm build"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
     "@types/node": "^25.0.3",
     "i": "^0.3.7",
     "prettier": "^3.7.4",
+    "rimraf": "^6.1.2",
     "turbo": "^2.7.1",
     "typescript": "^5.9.3"
   },

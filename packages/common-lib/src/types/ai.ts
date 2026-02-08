@@ -1,4 +1,4 @@
-import { Media, MediaSeoFields } from "./media"
+import { MediaSeoFields } from "./media"
 
 export type GetMediaSeoInput = {
     user_id: number;

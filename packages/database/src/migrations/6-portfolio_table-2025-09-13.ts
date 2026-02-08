@@ -3,8 +3,9 @@ import { Schema, Column } from '../lib/facades';
 const up = async () => {
   await Schema.table('portfolios').withTimestamps(true).createIfNotExists([
     Column.id(),
-    Column.string('title', 255, {}),
-    Column.string('thumbnail',255),
+    Column.string('title', 255),
+    Column.string('slug', 255),
+    Column.string('thumbnail', 255),
     Column.text('description'),
     Column.foreignKey('user_id', 'users', 'id', {
       onDelete: 'CASCADE',
@@ -20,7 +21,7 @@ const up = async () => {
       onDelete: 'CASCADE',
     }),
     Column.smallInteger('position'),
-    Column.uniques('UC_portfolio_media',['portfolio_id','media_id'])
+    Column.uniques('UC_portfolio_media', ['portfolio_id', 'media_id'])
   ]);
 
   await Schema.table('portfolio_collection').createIfNotExists([
@@ -32,7 +33,7 @@ const up = async () => {
       onDelete: 'CASCADE',
     }),
     Column.smallInteger('position'),
-    Column.uniques('UC_portfolio_collection',['portfolio_id','collection_id'])
+    Column.uniques('UC_portfolio_collection', ['portfolio_id', 'collection_id'])
   ]);
   await Schema.table('portfolio_translations').createIfNotExists([
     Column.id(),
@@ -42,7 +43,7 @@ const up = async () => {
     Column.foreignKey('portfolio_id', 'portfolios', 'id', {
       onDelete: 'CASCADE',
     }),
-    Column.uniques('UC_portfolio_translation',['language_code','portfolio_id'])
+    Column.uniques('UC_portfolio_translation', ['language_code', 'portfolio_id'])
   ]);
 };
 

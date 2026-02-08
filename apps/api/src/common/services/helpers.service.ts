@@ -129,7 +129,7 @@ export class Helpers {
     targetQuality?: number;
   }) {
     //Compress
-    const targetSize = (targetSizeMb > 0 ? targetSizeMb : 1) * 1024;
+    const targetSize = (targetSizeMb > 0 ? targetSizeMb : 1) * 1024 * 1024;
     const resultCompress = await this.compressService.optimizeImageToWebp(
       asset,
       targetQuality ?? 90,

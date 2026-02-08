@@ -20,7 +20,7 @@ export const UploadMediaModal = ()=>{
     if(!mediaUploadsToDisplay.length) return null;
 
     return (
-        <div className="fixed bottom-4 right-4 z-50 w-80 max-h-[400px] flex flex-col overflow-hidden rounded-lg border border-border bg-fg shadow-lg">
+        <div className="fixed bottom-4 right-4 z-200 pointer-events-auto w-80 max-h-[400px] flex flex-col overflow-hidden rounded-lg border border-border bg-fg shadow-lg">
             <div className="flex items-center justify-between border-b border-border px-4 py-3 shrink-0">
                 <div className="flex flex-col gap-0.5">
                     <h3 className="text-sm font-semibold">
@@ -49,7 +49,8 @@ export const UploadMediaModal = ()=>{
                     variant="ghost"
                     size="icon"
                     className="h-6 w-6"
-                    onClick={() => setCompact(!compact)}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={(e) => { e.stopPropagation(); setCompact(!compact); }}
                 >
                     {compact ? (
                         <EyeOff className="h-4 w-4" />
@@ -83,7 +84,8 @@ export const UploadMediaModal = ()=>{
                         variant="default"
                         size="sm"
                         className="w-full"
-                        onClick={handleRemoveCompleted}
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onClick={(e) => { e.stopPropagation(); handleRemoveCompleted(); }}
                     >
                         Close
                     </Button>

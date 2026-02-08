@@ -1,13 +1,12 @@
 import { BaseService } from "@/lib/services/base.service";
 import { fetchApi } from "@/lib/facade/fetchApi";
-import { BaseUser, User, UserMetrics } from "@repo/common-lib/types/user";
+import { BaseUser, UpdateUserInputWithAssets, User, UserMetrics } from "@repo/common-lib/types/user";
 import { ApiResponse } from "@repo/common-lib/types/response";
 import { CategoryBase } from "@repo/common-lib/types/category";
 import { UserExtraData } from "@repo/common-lib/types/user-extra-data";
 import { FullPlan } from "@repo/common-lib/types/plan";
 import { FullPlanSubscription } from "@repo/common-lib/types/plan-subscription";
 import { queryParamBuilder } from "@repo/common-lib/utils/query-builder";
-import { UpdateUserInputAvatarFile } from "@repo/common-lib/types/user copy";
 import { AboutPage } from "@repo/common-lib/types/about-page";
 import { Media } from "@repo/common-lib/types/media";
 import { Address } from "@repo/common-lib/types/address";
@@ -25,7 +24,7 @@ export class UserService extends BaseService {
         });
 
     }
-    async update(id: number, data: UpdateUserInputAvatarFile): Promise<ApiResponse<BaseUser>> {
+    async update(id: number, data: UpdateUserInputWithAssets): Promise<ApiResponse<BaseUser>> {
 
         return await this.fetchApi.patch({
             resource: id + '',
@@ -49,7 +48,13 @@ export class UserService extends BaseService {
     async getAllMedia(id: number): Promise<ApiResponse<Media[]>> {
 
         return await this.fetchApi.get({
-            resource: `${id}/media`
+            resource: `${id}/media`,
+            cacheOptions: {
+                cache: 'force-cache',
+                next: {
+                    tags: [`user-${id}`]
+                }
+            }
         });
     }
     async getAboutPage(id: number): Promise<ApiResponse<AboutPage>> {

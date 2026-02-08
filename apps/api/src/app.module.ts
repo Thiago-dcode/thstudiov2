@@ -35,6 +35,7 @@ import { UserAboutPageModule } from './v1/modules/user-about-page/user-about-pag
 import { UserMediaModule } from './v1/modules/user-media/user-media.module';
 import { AiModule } from './v1/modules/ai/ai.module';
 import { AddressModule } from './v1/modules/addresses/address.module';
+import { PortfolioModule } from './v1/modules/portfolios/portfolio.module';
 const APP_MODULES = [
   AuthModule,
   UserModule,
@@ -50,7 +51,8 @@ const APP_MODULES = [
   UserAboutPageModule,
   UserMediaModule,
   AiModule,
-  AddressModule 
+  AddressModule,
+  PortfolioModule
 ];
 @Module({
   imports: [
