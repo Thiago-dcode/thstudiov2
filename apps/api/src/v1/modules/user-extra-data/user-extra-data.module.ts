@@ -1,12 +1,20 @@
 import { Module } from '@nestjs/common';
+import { BullModule } from '@nestjs/bullmq';
 import { UserExtraDataService } from './user-extra-data.service';
 import { UserExtraDataRepository } from './user-extra-data.repository';
+import { UserExtraDataProcessor } from './user-extra-data.processor';
+import { UserAiCreditsEndedMail } from './mails/user-ai-credits-ended';
 import { PlansModule } from '../plans/plans.module';
 import { UserStorageRequestModule } from '../user-storage-requests/user-storage-request.module';
+import { USER_METRICS_QUEUE } from '@repo/common-lib/constants/constants';
 
 @Module({
-  providers: [UserExtraDataService, UserExtraDataRepository],
+  imports: [
+    BullModule.registerQueue({ name: USER_METRICS_QUEUE }),
+    PlansModule,
+    UserStorageRequestModule,
+  ],
+  providers: [UserExtraDataService, UserExtraDataRepository, UserExtraDataProcessor, UserAiCreditsEndedMail],
   exports: [UserExtraDataRepository, UserExtraDataService],
-  imports: [PlansModule,UserStorageRequestModule]
 })
 export class UserExtraDataModule {}

@@ -36,6 +36,7 @@ import { UserMediaModule } from './v1/modules/user-media/user-media.module';
 import { AiModule } from './v1/modules/ai/ai.module';
 import { AddressModule } from './v1/modules/addresses/address.module';
 import { PortfolioModule } from './v1/modules/portfolios/portfolio.module';
+import { BullModule } from '@nestjs/bullmq';
 const APP_MODULES = [
   AuthModule,
   UserModule,
@@ -83,6 +84,25 @@ const APP_MODULES = [
         limit: 75,
       },
     ]),
+    BullModule.forRootAsync({
+      // This allows the use of process.env or ConfigService
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        connection: {
+          url:configService.get('redis.url') 
+        },
+        // Global job settings (optional but recommended)
+        defaultJobOptions: {
+          removeOnComplete: 1000, // Keep last 1000 jobs in history
+          removeOnFail: 5000,     // Keep failed jobs longer for debugging
+          attempts: 3,
+          backoff: {
+            type: 'exponential',
+            delay: 1000,
+          },
+        },
+      }),
+    }),
     JwtModule.registerAsync({
       useFactory: (configService: ConfigService) => ({
         global: true,

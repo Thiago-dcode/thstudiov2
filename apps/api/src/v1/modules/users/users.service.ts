@@ -30,7 +30,7 @@ export class UserService {
     private readonly helpers: Helpers,
     private readonly requestService: RequestService,
     private readonly notifyNewUserMail: NotifyNewUserMail,
-  ) {}
+  ) { }
 
   async findAll() {
     return `This action returns all user`;
@@ -89,17 +89,17 @@ export class UserService {
     const [avatarPath, bannerPath] = await Promise.all([
       avatar && avatar.size > 0
         ? this.helpers.setAsset({
-            asset: avatar,
-            path: `users/${user.public_id}/avatar`,
-            targetSizeMb: 0.3,
-          })
+          asset: avatar,
+          path: `users/${user.public_id}/avatar`,
+          targetSizeMb: 0.3,
+        })
         : Promise.resolve(undefined),
       banner && banner.size > 0
         ? this.helpers.setAsset({
-            asset: banner,
-            path: `users/${user.public_id}/banner`,
-            targetSizeMb: 1,
-          })
+          asset: banner,
+          path: `users/${user.public_id}/banner`,
+          targetSizeMb: 1,
+        })
         : Promise.resolve(undefined),
     ]);
     userUpdateData.avatar = avatarPath;
@@ -126,12 +126,12 @@ export class UserService {
       this.userRepository.updateById(user.id, userUpdateData),
       editCategories
         ? this.userRepository.attach('user_categories', {
-            modelCol: 'user_id',
-            modelValue: user.id,
-            attachCol: 'category_id',
-            valuesToAttach: categories,
-            removePrevious: true,
-          })
+          modelCol: 'user_id',
+          modelValue: user.id,
+          attachCol: 'category_id',
+          valuesToAttach: categories,
+          removePrevious: true,
+        })
         : Promise.resolve(true),
     ]);
     return userUpdated;

@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@keyv/redis": "^5.1.5",
+    "@nestjs/bullmq": "^11.0.4",
     "@nestjs/cache-manager": "^3.0.1",
     "@nestjs/common": "^11.1.9",
     "@nestjs/config": "^4.0.2",
@@ -31,6 +32,7 @@
     "@repo/backend-lib": "workspace:*",
     "@repo/common-lib": "workspace:*",
     "@repo/database": "workspace:*",
+    "bullmq": "^5.67.3",
     "cache-manager": "^7.2.7",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.3",

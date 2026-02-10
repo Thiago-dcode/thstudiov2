@@ -1,0 +1,9 @@
+{
+    "SUBJECT": "Your AI credits have been used up",
+    "HI": "Hi",
+    "TITLE": "AI Credits Exhausted",
+    "DESCRIPTION": "You have used all the AI credits available in your current plan. You won't be able to use AI features until your credits are renewed.",
+    "INFO": "Your AI credits will be automatically renewed on your next billing cycle. If you need more credits right away, consider upgrading your plan.",
+    "CTA_TEXT": "Want to keep using AI features?",
+    "CTA_BUTTON": "Upgrade your plan"
+}

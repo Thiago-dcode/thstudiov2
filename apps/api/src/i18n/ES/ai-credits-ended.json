@@ -1,0 +1,9 @@
+{
+    "SUBJECT": "Tus créditos de IA se han agotado",
+    "HI": "Hola",
+    "TITLE": "Créditos de IA agotados",
+    "DESCRIPTION": "Has utilizado todos los créditos de IA disponibles en tu plan actual. No podrás usar las funciones de IA hasta que se renueven tus créditos.",
+    "INFO": "Tus créditos de IA se renovarán automáticamente en tu próximo ciclo de facturación. Si necesitas más créditos de inmediato, considera mejorar tu plan.",
+    "CTA_TEXT": "¿Quieres seguir usando las funciones de IA?",
+    "CTA_BUTTON": "Mejorar tu plan"
+}
