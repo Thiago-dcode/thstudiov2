@@ -14,7 +14,7 @@
     "./hooks/*": "./src/hooks/*.ts",
     "./contexts/*": "./src/contexts/*.tsx",
     "./globals.css": "./src/styles/globals.css",
-    "./sonner": "./node_modules/sonner"
+    "./sonner": "./src/sonner.ts"
   },
   "peerDependencies": {
     "next": ">=15",

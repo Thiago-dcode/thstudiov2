@@ -1,11 +1,11 @@
 'use server'
 
-import { ActionReturn } from "@/modules/auth/auth.types";
+import { ActionReturn } from "@repo/common-lib/types/response";
 import portfolioService from "../portfolio.service"
 
 
 
-export const slugExistsAction = async (userId: number, slug: string): Promise<ActionReturn<undefined, boolean>> => {
+export const slugExistsAction = async (userId: number, slug: string): Promise<ActionReturn<boolean, undefined>> => {
 
     if (!slug.trim()) {
 

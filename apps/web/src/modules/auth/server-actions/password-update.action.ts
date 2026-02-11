@@ -1,7 +1,7 @@
 'use server';
 
 import authService from "../auth.service";
-import {  ActionReturn } from "../auth.types";
+import { ActionReturn } from "@repo/common-lib/types/response";
 import { cookies } from "next/headers";
 import { config } from "@/lib/config";
 import { decrypt, encrypt } from "@repo/common-lib/utils/encrypt";
@@ -10,9 +10,9 @@ import zod from "zod";
 import { BaseUser } from "@repo/common-lib/types/user";
 import { deletePasswordAttemptCookie } from "./password-recovery.action";
 
-export const PasswordUpdateAction = async (formData:FormData):Promise<ActionReturn<{
+export const PasswordUpdateAction = async (formData:FormData):Promise<ActionReturn<BaseUser, {
     attempt?:string
-},BaseUser>> =>{
+}>> =>{
     const {password,code} = {
         password: formData.get('password') as string,
         code:formData.get('attempt') as string

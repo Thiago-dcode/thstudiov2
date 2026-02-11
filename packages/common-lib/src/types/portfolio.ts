@@ -2,6 +2,7 @@ import { PortfolioSchema } from "../schemas/portfolio";
 import { CollectionSchema } from "../schemas/collection";
 import { MediaSchema } from "../schemas/media";
 import { OffsetPaginationRequest } from "./request";
+import { MediaPortfolio } from "./media";
 
 // ==================== PORTFOLIO TYPES ====================
 
@@ -9,8 +10,9 @@ import { OffsetPaginationRequest } from "./request";
 export type Portfolio = PortfolioSchema;
 
 // Portfolio with nested media and collections (formatted output from joins)
+
 export type FullPortfolio = Portfolio & {
-  media: MediaSchema[];
+  media: MediaPortfolio[];
   collections: CollectionSchema[];
 };
 

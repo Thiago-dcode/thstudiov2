@@ -2,14 +2,15 @@
 
 import authService from "../auth.service";
 import { passwordRecoveryRequestSchema } from "../schemas/auth.shema";
-import {  ActionReturn, PasswordRecoveryAttempt } from "../auth.types";
+import { ActionReturn } from "@repo/common-lib/types/response";
+import { PasswordRecoveryAttempt } from "../auth.types";
 import { cookies } from "next/headers";
 import { PASSWORD_RECOVERY_ATTEMPT_COOKIE_NAME } from "@repo/common-lib/constants/constants";
 import { deleteCookie, getEncryptedJsonCookie, encryptObj } from "@/lib/utils";
 
-export const passwordRecoveryAction = async (formData: FormData):Promise<ActionReturn<{
+export const passwordRecoveryAction = async (formData: FormData):Promise<ActionReturn<PasswordRecoveryAttempt, {
     email?:string
-},PasswordRecoveryAttempt>> => {
+}>> => {
     const credentials = {
         email: formData.get('email') as string,
         fallback_url: process.env.APP_URL + '/auth/password-recovery/recover',

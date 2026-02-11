@@ -10,6 +10,10 @@ import { EnumType } from "../constants/enums";
 // Media with timestamps
 export type Media = MediaSchema;
 // Media translation without id
+
+export type MediaPortfolio =  Pick<Media, 'id' | 'thumbnail' | 'seo_alt' | 'seo_description' | 'seo_filename' | 'seo_title' | 'shape'> & {
+  position: number
+};
 export type MediaTranslation = MediaTranslationSchema;
 
 export type FullMedia = Media & {

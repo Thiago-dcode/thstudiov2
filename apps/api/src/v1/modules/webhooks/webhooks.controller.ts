@@ -11,14 +11,18 @@ import {
 } from '@repo/backend-lib/services/payment-service/stripe';
 import { FactoryLogService } from '@repo/backend-lib/services/log-service';
 import { Public } from 'src/common/decorators/public.decorator';
-import { EventEmitter2 } from '@nestjs/event-emitter';
-import { WEBHOOK_STRIPE_EVENT } from '@repo/common-lib/constants/constants';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
+import {
+  STRIPE_WEBHOOKS_QUEUE,
+  JOB_STRIPE_WEBHOOK,
+} from '@repo/common-lib/constants/constants';
 import { Throttle } from '@nestjs/throttler';
 
 @Throttle({
   short: { ttl: 1000, limit: 50 },
-  medium: { ttl: 10000, limit: 200 }, 
-  long: { ttl: 60000, limit: 500 }, 
+  medium: { ttl: 10000, limit: 200 },
+  long: { ttl: 60000, limit: 500 },
 })
 @Controller('webhooks')
 export class WebhooksController {
@@ -26,7 +30,10 @@ export class WebhooksController {
     channel: 'webhook',
   });
 
-  constructor(private readonly eventEmitter: EventEmitter2) {}
+  constructor(
+    @InjectQueue(STRIPE_WEBHOOKS_QUEUE) private stripeQueue: Queue,
+  ) { }
+
   @Public()
   @Post('stripe')
   async stripe(
@@ -54,7 +61,18 @@ export class WebhooksController {
       this.logger.error(`Webhook signature verification failed: ${message}`);
       throw new BadRequestException('Webhook signature verification failed');
     }
-    this.eventEmitter.emit(WEBHOOK_STRIPE_EVENT, event);
+
+    await this.stripeQueue.add(
+      JOB_STRIPE_WEBHOOK,
+      event,
+      {
+        jobId: `stripe-${event.id}`,
+        priority: 1,
+        removeOnComplete: true,
+        attempts: 5,
+        backoff: { type: 'exponential', delay: 1000 },
+      },
+    );
 
     return { received: true };
   }

@@ -1,6 +1,6 @@
 'use server'
 
-import { ActionReturn } from "@/modules/auth/auth.types"
+import { ActionReturn } from "@repo/common-lib/types/response"
 import { User } from "@repo/common-lib/types/user"
 import usersService from "../users.service"
 import { getFriendlyApiErrors } from "@/modules/auth/helpers"
@@ -8,7 +8,7 @@ import { CategoryBase } from "@repo/common-lib/types/category"
 
 
 
-export const getUserCategoriesAction =  async (id:number): Promise<ActionReturn<undefined,CategoryBase[]>> =>{
+export const getUserCategoriesAction =  async (id:number): Promise<ActionReturn<CategoryBase[], undefined>> =>{
 
 
     const categoriesResponse = await usersService.getAllCategories(id);
@@ -18,6 +18,7 @@ export const getUserCategoriesAction =  async (id:number): Promise<ActionReturn<
         return {
             data:categoriesResponse.data,
             errors:null,
+            inputErrors:undefined,
         }
     }
     return  {

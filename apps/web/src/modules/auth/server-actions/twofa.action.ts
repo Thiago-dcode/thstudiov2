@@ -4,14 +4,15 @@ import authService from "../auth.service";
 import { verify2faRequestSchema } from "../schemas/auth.shema";
 import { TWO_FA_COOKIE_NAME } from "@repo/common-lib/constants/constants";
 import { setUserSession } from "./user-session.action";
-import { ActionReturn, TwoFaUser, UserAuth } from "../auth.types";
+import { ActionReturn } from "@repo/common-lib/types/response";
+import { TwoFaUser, UserAuth } from "../auth.types";
 import { getEncryptedJsonCookie, encryptObj } from "@/lib/utils";
 
 
-export const verify2faServerAction = async (formData: FormData):Promise<ActionReturn<{
+export const verify2faServerAction = async (formData: FormData):Promise<ActionReturn<UserAuth, {
     email?:string,
     twofa_code?:string,
-},UserAuth>> => {
+}>> => {
     const credentials = {
         email: formData.get('email') ? formData.get('email') as string : undefined,
         twofa_code: formData.get('twofa_code') ? formData.get('twofa_code') as string : undefined,

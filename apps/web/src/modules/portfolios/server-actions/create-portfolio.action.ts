@@ -1,6 +1,6 @@
 'use server'
 
-import { ActionReturn } from "@/modules/auth/auth.types";
+import { ActionReturn } from "@repo/common-lib/types/response";
 import { Portfolio, CreatePortfolioInputWithFile } from "@repo/common-lib/types/portfolio";
 import { ALLOWED_IMAGE_FILE_TYPES } from "@repo/common-lib/constants/constants";
 import { cleanObj, trimValues } from "@repo/common-lib/utils/cleanObj";
@@ -11,14 +11,12 @@ import { createPortfolioSchema } from "../schemas/portfolio-schemas";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
-export const createPortfolioAction = async (formData: FormData): Promise<ActionReturn<{
-    title?: string,
-    slug?: string,
-    description?: string,
-    thumbnail?: File
-}, Portfolio>> => {
-    const thumbnailFile = formData.get('thumbnail') as File | null;
-    
+export const createPortfolioAction = async (
+    input: CreatePortfolioInputWithFile
+): Promise<ActionReturn<Portfolio, Partial<CreatePortfolioInputWithFile>>> => {
+    console.log("INPUT",input)
+    const thumbnailFile = input?.thumbnail as File | undefined;
+
     if (!thumbnailFile || thumbnailFile.size === 0) {
         return {
             errors: [],
@@ -43,12 +41,11 @@ export const createPortfolioAction = async (formData: FormData): Promise<ActionR
         };
     }
 
+    // Copy to avoid mutating the caller object (trim/clean mutate in-place).
     const rawData: CreatePortfolioInputWithFile = {
-        title: formData.get('title') as string,
-        slug: formData.get('slug') as string,
-        description: formData.get('description') as string || undefined,
-        user_id: parseInt(formData.get('user_id') as string),
+        ...input,
         thumbnail: thumbnailFile,
+        description: input.description || undefined,
     };
 
     trimValues(rawData, { deep: true });
@@ -64,6 +61,25 @@ export const createPortfolioAction = async (formData: FormData): Promise<ActionR
     }
 
     cleanObj(rawData);
+
+    if (rawData.slug) {
+        const slugExistsResponse = await portfolioService.slugExists(rawData.user_id, rawData.slug);
+
+        if (slugExistsResponse.error) {
+            return {
+                data: null,
+                errors: getFriendlyApiErrors(slugExistsResponse),
+            };
+        }
+
+        if (slugExistsResponse.data?.exists) {
+            return {
+                data: null,
+                errors: [],
+                inputErrors: { slug: 'Slug already exists' },
+            };
+        }
+    }
 
     const portfolio = await portfolioService.create(rawData);
 

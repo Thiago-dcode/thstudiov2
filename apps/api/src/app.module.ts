@@ -89,7 +89,7 @@ const APP_MODULES = [
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         connection: {
-          url:configService.get('redis.url') 
+          url: configService.get('redis.url')
         },
         // Global job settings (optional but recommended)
         defaultJobOptions: {

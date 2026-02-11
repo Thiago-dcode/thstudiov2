@@ -1,13 +1,13 @@
 'use server'
 
-import { ActionReturn } from "@/modules/auth/auth.types"
+import { ActionReturn } from "@repo/common-lib/types/response"
 import { User } from "@repo/common-lib/types/user"
 import usersService from "../users.service"
 import { getFriendlyApiErrors } from "@/modules/auth/helpers"
 
 
 
-export const getOneUserAction =  async (id:number): Promise<ActionReturn<undefined,User>> =>{
+export const getOneUserAction =  async (id:number): Promise<ActionReturn<User, undefined>> =>{
 
 
     const user = await usersService.getOne(id);

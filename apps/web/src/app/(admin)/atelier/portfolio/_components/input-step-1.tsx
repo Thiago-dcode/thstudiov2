@@ -10,7 +10,7 @@ import { generateValidSlug, isAValidSlugFormat } from "@repo/common-lib/utils/ge
 const ThumbnailInput = () => {
     const { files } = useInputFile();
 
-    const { formData, handleSetFormData, deleteInputErrorProperty, inputErrors, isPending } = usePortfolio();
+    const { formData, handleSetFormData, deleteInputErrorProperty, inputErrors, isPending,currentPortfolio } = usePortfolio();
     // Prioritize formData.thumbnail (persists across remounts) over files from context (resets on remount)
     const { previewUrls } = usePreviewUrls({ files: formData?.thumbnail || files || undefined });
 
@@ -19,17 +19,17 @@ const ThumbnailInput = () => {
         if (file) {
             deleteInputErrorProperty('thumbnail');
             handleSetFormData('thumbnail', file);
-        }
+        } 
     };
 
 
     return (
         <div className="space-y-4">
-            {previewUrls?.length ? (
+            {previewUrls?.length || currentPortfolio?.thumbnail ? (
                 <div className="flex flex-col gap-2">
                     <div className="relative aspect-video w-full overflow-hidden rounded-lg border-2 border-border">
                         <img
-                            src={previewUrls[0]}
+                            src={previewUrls[0] || currentPortfolio?.thumbnail}
                             alt="Thumbnail Preview"
                             className="w-full h-full object-cover opacity-80"
                         />

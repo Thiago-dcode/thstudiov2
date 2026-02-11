@@ -22,15 +22,17 @@ export default async function Atelier() {
     return (
         <AdminPageContainer>
             <AdminPageTitle title="Portfolio">
-                <Link href={'portfolio/create'}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create Portfolio
-                </Link>
+                <Button asChild variant="primary" size="sm">
+                    <Link href={'portfolio/create'}>
+                        <Plus className="size-4" />
+                        Create Portfolio
+                    </Link>
+                </Button>
             </AdminPageTitle>
             {portfoliosResponse.data.length > 0 ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                     {portfoliosResponse.data.map((portfolio) => (
-                        <Link key={portfolio.id} href={`/atelier/portfolio/${portfolio.slug}`}>
+                        <Link key={portfolio.id} href={`/atelier/portfolio/edit/${portfolio.slug}`}>
                             <article 
                                 className="group cursor-pointer aspect-square rounded-lg border border-border overflow-hidden relative"
                             >

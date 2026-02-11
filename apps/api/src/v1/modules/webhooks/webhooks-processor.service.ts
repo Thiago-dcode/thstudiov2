@@ -1,18 +1,21 @@
-import { Injectable } from '@nestjs/common';
-import { FactoryLogService } from '@repo/backend-lib/services/log-service';
+import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { Job } from 'bullmq';
 import Stripe from 'stripe';
+import { FactoryLogService } from '@repo/backend-lib/services/log-service';
 import { PlanSubscriptionsService } from '../plan-subscriptions/plan-subscriptions.service';
 import { PlanPricesService } from '../plan-prices/plan-prices.service';
 import { UserService } from '../users/users.service';
 import { stripe } from '@repo/backend-lib/services/payment-service/stripe';
-import {Helpers} from 'src/common/services/helpers.service';
-import { OnEvent } from '@nestjs/event-emitter';
+import { Helpers } from 'src/common/services/helpers.service';
 import { paypal } from '@repo/backend-lib/services/payment-service/paypal';
 import { PlanSubscription } from '@repo/common-lib/types/plan-subscription';
-import { WEBHOOK_STRIPE_EVENT } from '@repo/common-lib/constants/constants';
+import {
+  STRIPE_WEBHOOKS_QUEUE,
+  JOB_STRIPE_WEBHOOK,
+} from '@repo/common-lib/constants/constants';
 
-@Injectable()
-export class StripeWebhooksService {
+@Processor(STRIPE_WEBHOOKS_QUEUE)
+export class WebhookProcessor extends WorkerHost {
   private readonly logger = FactoryLogService.createLogService('file', {
     channel: 'webhook',
     name: 'stripe',
@@ -26,10 +29,24 @@ export class StripeWebhooksService {
     private readonly planSubscriptionService: PlanSubscriptionsService,
     private readonly planPriceService: PlanPricesService,
     private readonly userService: UserService,
-  ) {}
-  @OnEvent(WEBHOOK_STRIPE_EVENT)
-  async handleEvent(event: Stripe.Event): Promise<void> {
-    this.logger.debug(`${StripeWebhooksService.name} ${event.type}`);
+  ) {
+    super();
+  }
+
+  async process(job: Job<Stripe.Event>): Promise<void> {
+    const event = job.data;
+
+    switch (job.name) {
+      case JOB_STRIPE_WEBHOOK:
+        return await this.handleStripeEvent(event);
+
+      default:
+        throw new Error(`Job name "${job.name}" not recognized`);
+    }
+  }
+
+  private async handleStripeEvent(event: Stripe.Event): Promise<void> {
+    this.logger.debug(`StripeProcessor ${event.type}`);
     try {
       switch (event.type) {
         case 'checkout.session.completed':
@@ -83,6 +100,7 @@ export class StripeWebhooksService {
           `${event?.type} Webhook stripe handler failed`,
           isError ? err : undefined,
         );
+      throw err; // Re-throw so BullMQ can retry
     }
   }
 
@@ -127,24 +145,27 @@ export class StripeWebhooksService {
       this.planPriceService.findOneByStripeId(itemData.price.id),
       this.planSubscriptionService.findActiveSubscription(user.id),
     ]);
-let internalSubscription:PlanSubscription = _internalSubscription;
+    let internalSubscription: PlanSubscription = _internalSubscription;
     if (internalSubscription?.stripe_id === stripeSubscriptionId) {
-      this.logger.debug(`Updating subscription`,{
+      this.logger.debug(`Updating subscription`, {
         stripeId: internalSubscription.stripe_id,
       });
-    internalSubscription=  await this.planSubscriptionService.update(internalSubscription.id, {
-        is_active,
-        is_trialing,
-        payment_method: 'CARD',
-        start_billing_date,
-        next_billing_date,
-        stripe_item_id: stripeItemId,
-        plan_price_id: planPrice.id,
-        amount: planPrice.price,
-      },user.id);
-      this.logger.debug(`Updated subscription`,internalSubscription);
+      internalSubscription = await this.planSubscriptionService.update(
+        internalSubscription.id,
+        {
+          is_active,
+          is_trialing,
+          payment_method: 'CARD',
+          start_billing_date,
+          next_billing_date,
+          stripe_item_id: stripeItemId,
+          plan_price_id: planPrice.id,
+          amount: planPrice.price,
+        },
+        user.id,
+      );
+      this.logger.debug(`Updated subscription`, internalSubscription);
     } else {
-
       internalSubscription = await this.planSubscriptionService.create({
         payment_method: 'CARD',
         plan_price_id: planPrice.id,
@@ -160,21 +181,24 @@ let internalSubscription:PlanSubscription = _internalSubscription;
         paypal_id: null,
         plan_offer_id: null,
       });
-      this.logger.debug(`created subscription`,internalSubscription);
-
+      this.logger.debug(`created subscription`, internalSubscription);
     }
     if (is_active) {
       const existingSubscriptions = await stripe.subscriptions.list({
         customer: user.stripe_customer_id,
         status: 'active',
       });
-      this.logger.debug(`Found ${existingSubscriptions.data.length} stripe active subscriptions`);
+      this.logger.debug(
+        `Found ${existingSubscriptions.data.length} stripe active subscriptions`,
+      );
 
       await Promise.all([
         Promise.all(
           existingSubscriptions.data.map(async (sub) => {
             if (sub.id !== internalSubscription.stripe_id) {
-              this.logger.debug(`Canceling stripe subscription with ID: ${sub.id}`);
+              this.logger.debug(
+                `Canceling stripe subscription with ID: ${sub.id}`,
+              );
               await stripe.subscriptions.cancel(sub.id);
             }
           }),
@@ -194,17 +218,18 @@ let internalSubscription:PlanSubscription = _internalSubscription;
   private async handleSubscriptionDeleted(
     subscription: Stripe.Subscription,
   ): Promise<void> {
-    
-    const user = await this.userService.findOneByStripeId(subscription.customer as string);
-    const internalSubscription = await this.planSubscriptionService.findActiveSubscription(user.id);
+    const user = await this.userService.findOneByStripeId(
+      subscription.customer as string,
+    );
+    const internalSubscription =
+      await this.planSubscriptionService.findActiveSubscription(user.id);
 
-    if(internalSubscription?.stripe_id === subscription.id){
-    
-    const freeSubscription =   await this.planSubscriptionService.setFreeSubscription(user);
-    this.logger.debug(`Setting free plan to user`,{
-      freeSubscription
-        
-    });
+    if (internalSubscription?.stripe_id === subscription.id) {
+      const freeSubscription =
+        await this.planSubscriptionService.setFreeSubscription(user);
+      this.logger.debug(`Setting free plan to user`, {
+        freeSubscription,
+      });
     }
     // TODO: Handle subscription cancellation
   }

@@ -1,7 +1,7 @@
 import { BaseService } from "@/lib/services/base.service";
 import { ApiResponse } from "@repo/common-lib/types/response";
 import { fetchApi } from "@/lib/facade/fetchApi";
-import { Portfolio, CreatePortfolioInputWithFile, PortfolioIndexRequest } from "@repo/common-lib/types/portfolio";
+import { Portfolio, CreatePortfolioInputWithFile, PortfolioIndexRequest, FullPortfolio } from "@repo/common-lib/types/portfolio";
 import { queryParamBuilder } from "@repo/common-lib/utils/query-builder";
 
 class PortfolioService extends BaseService {
@@ -13,7 +13,7 @@ class PortfolioService extends BaseService {
             resource: request ? queryParamBuilder('', request) : ''
         });
     }
-    async getBySlug(userId: number, slug: string): Promise<ApiResponse<Portfolio | null>> {
+    async getBySlug(userId: number, slug: string): Promise<ApiResponse<FullPortfolio | null>> {
         return await this.fetchApi.get({
             resource: `/${userId}/${slug}`
         });

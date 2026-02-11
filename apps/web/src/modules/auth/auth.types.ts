@@ -63,18 +63,3 @@ export type LoginReturn2fa = BaseUser & {
 }
 export type LoginReturn = UserAuth | LoginReturn2fa;
 
-export type ReturnError = {
-    errors:string[],
-    inputErrors?:Record<string,string>,
-}
-export type LoginActionReturnError = ReturnError & {
-    data:null,
-}
-export type LoginActionReturnSuccess<T> = {
-    data:T,
-    errors:null,
-    inputErrors:undefined,
-}
-export type ActionReturn< K,T =LoginReturn> = (LoginActionReturnError | LoginActionReturnSuccess<T>)& {
-    inputs?: K
-};

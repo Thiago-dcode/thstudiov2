@@ -3,11 +3,12 @@ import { Inject } from '@nestjs/common';
 import { Job } from 'bullmq';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { UserExtraDataRepository } from './user-extra-data.repository';
+import { PlansService } from '../plans/plans.service';
 import { Query } from '@repo/database/facades';
 import { Media } from '@repo/common-lib/types/media';
 import { FactoryLogService } from '@repo/backend-lib/services/log-service';
 import { MailService } from '@repo/backend-lib/services/mail-service';
-import { UserAiCreditsEndedMail } from './mails/user-ai-credits-ended';
+import { UserAiCreditsEndedMail } from './mails/user-metrics-ended';
 import {
   USER_METRICS_QUEUE,
   JOB_COMPUTE_USER_METRICS,
@@ -21,6 +22,7 @@ export class UserExtraDataProcessor extends WorkerHost {
 
   constructor(
     private readonly userExtraDataRepository: UserExtraDataRepository,
+    private readonly planService: PlansService,
     private readonly mailService: MailService,
     private readonly userAiCreditsEndedMail: UserAiCreditsEndedMail,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
@@ -103,8 +105,11 @@ export class UserExtraDataProcessor extends WorkerHost {
 
       await this.userExtraDataRepository.updateByUserId(userId, metrics);
 
+      const currentPlan = await this.planService.findUserActivePlan(userId);
+      const totalAiCredits = extraData.ai_credits + currentPlan.ai_credits;
+
       // Send user email when AI credits are exhausted
-      if (extraData.ai_credits <= ai_credits_consumed) {
+      if (ai_credits_consumed >= totalAiCredits) {
         const user = await Query.table('users')
           .select(['email', 'username'])
           .where('id', '=', userId)
@@ -117,7 +122,7 @@ export class UserExtraDataProcessor extends WorkerHost {
           log.info(`AI credits ended email sent to user ${userId}`);
         }
       }
-      
+
 
       log.info(`Metrics updated for user ${userId}`, metrics);
       return metrics;

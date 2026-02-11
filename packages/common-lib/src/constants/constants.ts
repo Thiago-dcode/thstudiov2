@@ -35,6 +35,14 @@ export const WEBHOOK_STRIPE_EVENT = 'webhook.stripe.event' as const;
 export const UPDATE_USER_EXTRA_DATA_METRICS = 'update-user-extra-data-metrics.event' as const;
 export const LLM_TOKENS_USAGE_EVENT = 'llm.tokens.usage' as const;
 
+// ==================== QUEUES (BullMQ) ====================
+export const USER_METRICS_QUEUE = 'user-metrics' as const;
+export const STRIPE_WEBHOOKS_QUEUE = 'stripe-webhooks' as const;
+
+// ==================== JOBS (BullMQ) ====================
+export const JOB_COMPUTE_USER_METRICS = 'compute-user-metrics' as const;
+export const JOB_STRIPE_WEBHOOK = 'stripe-webhook' as const;
+
 // ==================== CACHE KEYS ====================
 // Plans
 export const CACHE_KEY_PLANS = 'plans' as const;

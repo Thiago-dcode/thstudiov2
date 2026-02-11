@@ -6,6 +6,7 @@ import { IndexPortfolioRequest } from "./requests/index-portfolio.request";
 import { UserExtraDataService } from "../user-extra-data/user-extra-data.service";
 import { RequestService } from "src/common/services/request.service";
 import { PortfolioRepository } from "./portfolio.repository";
+import { FullPortfolio } from "@repo/common-lib/types/portfolio";
 
 @Injectable()
 export class PortfolioService {
@@ -34,14 +35,22 @@ export class PortfolioService {
     );
   }
 
-  async getBySlug(slug: string, userId: number) {
+  async getBySlug(slug: string, userId: number): Promise<FullPortfolio> {
     const portfolio = await this.portfolioRepository.getBySlug(slug, userId);
     if (!portfolio) return null;
 
     if (portfolio.thumbnail) {
       portfolio.thumbnail = await this.helpers.getAsset(portfolio.thumbnail);
     }
-    return portfolio;
+    return {
+      ...portfolio,
+      media: portfolio.media.length
+        ? await Promise.all(portfolio.media.map(async (media) => ({
+          ...media,
+          thumbnail: media.thumbnail ? await this.helpers.getAsset(media.thumbnail) : undefined,
+        })))
+        : portfolio.media,
+    };
   }
 
   async slugExists(slug: string, userId: number) {
@@ -56,7 +65,7 @@ export class PortfolioService {
       throw new BadRequestException('Portfolios must have at least 1 media or 1 collection');
     }
 
-    if (await this.slugExists(request.slug, request.user_id)) {
+    if ((await this.slugExists(request.slug, request.user_id)).exists) {
 
       throw new BadRequestException(`Slug ${request.slug} already exists`);
     }

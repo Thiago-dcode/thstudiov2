@@ -1,13 +1,20 @@
 import { Module } from '@nestjs/common';
+import { BullModule } from '@nestjs/bullmq';
 import { WebhooksController } from './webhooks.controller';
-import { StripeWebhooksService } from './stripe-webhooks.service';
+import { WebhookProcessor } from './webhooks-processor.service';
 import { PlanSubscriptionsModule } from '../plan-subscriptions/plan-subscriptions.module';
 import { UserModule } from '../users/users.module';
 import { PlanPricesModule } from '../plan-prices/plan-prices.module';
+import { STRIPE_WEBHOOKS_QUEUE } from '@repo/common-lib/constants/constants';
 
 @Module({
-    controllers: [WebhooksController],
-    providers: [StripeWebhooksService],
-    imports:[PlanSubscriptionsModule,UserModule,PlanPricesModule]
+  imports: [
+    BullModule.registerQueue({ name: STRIPE_WEBHOOKS_QUEUE }),
+    PlanSubscriptionsModule,
+    UserModule,
+    PlanPricesModule,
+  ],
+  controllers: [WebhooksController],
+  providers: [WebhookProcessor],
 })
 export class WebhooksModule {}

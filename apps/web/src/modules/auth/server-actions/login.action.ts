@@ -4,9 +4,10 @@ import authService from "../auth.service";
 import { loginRequestSchema } from "../schemas/auth.shema";
 import { setRememberMe, setUserSession } from "./user-session.action";
 import { set2faCookie, delete2faCookie } from "./twofa.action";
-import { ActionReturn } from "../auth.types";
+import { ActionReturn } from "@repo/common-lib/types/response";
+import { LoginReturn } from "../auth.types";
 
-export const loginServerAction = async (formData: FormData):Promise<ActionReturn<{
+export const loginServerAction = async (formData: FormData):Promise<ActionReturn<LoginReturn, {
         email?:string,
         rememberMe:boolean
     }>> => {

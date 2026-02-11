@@ -4,7 +4,7 @@ import { CreateMediaInputWithFile, Media, UpdateMediaInput } from "@repo/common-
 import { createContext, useContext, ReactNode, useState, useMemo, useCallback } from "react";
 import { createMediaAction } from "../server-actions/create-media.action";
 import { updateMediaAction } from "../server-actions/update-media.action";
-import { ReturnError } from "@/modules/auth/auth.types";
+import { ReturnError } from "@repo/common-lib/types/response";
 import { getMediaSeoAction } from "@/modules/ai/actions/get-media-seo.action";
 import { GetMediaSeoResponse } from "@repo/common-lib/types/ai";
 
@@ -22,7 +22,7 @@ export type UploadMedia = {
   data?: Media,
   seoData?: GetMediaSeoResponse,
   onSuccess?: (media: Media) => Promise<void>,
-  error?: ReturnError
+  error?: ReturnError<Record<string, string>>
 }
 
 type MediaContextType = {
@@ -99,7 +99,7 @@ export const MediaProvider = ({
       | Awaited<ReturnType<typeof createMediaAction>>
       | Awaited<ReturnType<typeof updateMediaAction>>
       | Awaited<ReturnType<typeof getMediaSeoAction>>
-  ): ReturnError => {
+  ): ReturnError<Record<string, string>> => {
     return {
       errors: result.errors && result.errors.length > 0 ? result.errors : ['Request failed'],
       inputErrors: result.inputErrors

@@ -2,11 +2,12 @@
 
 import { createContext, useContext, ReactNode, useState, useMemo, useCallback, useRef } from "react";
 import { CreatePortfolioInputWithFile, FullPortfolio } from "@repo/common-lib/types/portfolio";
-import { Media } from "@repo/common-lib/types/media";
+import { Media, MediaPortfolio } from "@repo/common-lib/types/media";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { createPortfolioAction } from "../server-actions/create-portfolio.action";
 import { slugExistsAction } from "../server-actions/slug-exists.action";
-import { ActionReturn } from "@/modules/auth/auth.types";
+import { ActionReturn } from "@repo/common-lib/types/response";
+import { toast } from "@repo/ui/sonner"
 
 // ============================================================================
 // Types
@@ -14,7 +15,7 @@ import { ActionReturn } from "@/modules/auth/auth.types";
 
 type PortfolioFormData = Partial<
   Omit<CreatePortfolioInputWithFile, 'media'> & {
-    media?: Media[];
+    media?: Omit<MediaPortfolio, 'position'>[];
   }
 >;
 
@@ -27,7 +28,7 @@ type PortfolioContextType = {
   currentStep: number;
   MAX_STEPS: number;
   formData: PortfolioFormData;
-  mediaSelected: Media[];
+  mediaSelected: Omit<MediaPortfolio, 'position'>[];
   handlePushMediaSelected: (media: Media) => void;
   handleRemoveMediaSelected: (mediaId: number) => void;
   inputErrors: Record<string, string> | undefined;
@@ -40,6 +41,9 @@ type PortfolioContextType = {
   checkSlugAvailability: () => Promise<void>;
   deleteInputErrorProperty: (key: string) => void;
   reset: () => void;
+  clear: () => void;
+  currentPortfolio: FullPortfolio | undefined;
+  setPortfolio: (portfolio: FullPortfolio) => void;
 };
 
 // ============================================================================
@@ -74,22 +78,52 @@ export const PortfolioProvider = ({
   defaultPortfolio,
 }: PortfolioProviderProps) => {
 
+  const [currentPortfolio, setCurrentPorfolio] = useState(defaultPortfolio);
+
   const [formData, setFormData] = useState<PortfolioFormData>({
     user_id: userId,
   });
-  const [currentStep, setCurrentStep] = useState(2);
+
+  const setPortfolio = useCallback((portfolio: FullPortfolio) => {
+    setCurrentPorfolio(portfolio);
+    setFormData({
+      user_id: portfolio.user_id,
+      title: portfolio.title,
+      slug: portfolio.slug,
+      description: portfolio.description ?? undefined,
+      media: portfolio.media,
+    });
+  }, []);
+  const [currentStep, setCurrentStep] = useState(1);
 
   const idTimeOut = useRef<NodeJS.Timeout>(null);
 
 
-  const { handleSubmit, isPending, success, deleteInputErrorProperty, inputErrors, reset } = useHandleAction({
-    action: async (formData) => {
-      formData.set('user_id', userId + '');
-      return await createPortfolioAction(formData);
+  const { handleAction, isPending, success, deleteInputErrorProperty, inputErrors, reset } = useHandleAction({
+    action: async () => {
+      const media = (formData.media ?? []).map((m, idx) => ({
+        id: m.id,
+        position: idx + 1,
+      }));
+
+      const payload: CreatePortfolioInputWithFile = {
+        title: (formData.title ?? "") as string,
+        slug: (formData.slug ?? "") as string,
+        description: (formData.description ?? undefined) as string | undefined,
+        user_id: (formData.user_id ?? userId) as number,
+        thumbnail: formData.thumbnail as File,
+        media: media.length ? media : undefined,
+      };
+
+      return await createPortfolioAction(payload);
     },
     afterAction: async (result) => {
-      if (result.data) {
-        //todo
+
+
+      if (result.errors) {
+        result.errors.forEach((error) => toast.error(error))
+      } else if (result.data) {
+        toast.success("Portfolio created successfully")
       }
     },
     beforeAction: async () => {
@@ -97,7 +131,12 @@ export const PortfolioProvider = ({
     }
   });
 
-  const slugChecksMemo = useRef<Record<string, ActionReturn<undefined, boolean>>>({})
+  const handleSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    await handleAction();
+  }, [handleAction]);
+
+  const slugChecksMemo = useRef<Record<string, ActionReturn<boolean, undefined>>>({})
   const { handleAction: handleActionSlug, result: resultSlugExist, isPending: isPendingSlugExists, cleanResult, cleanErrors } = useHandleAction({
     action: async () => {
       // Normalize slug before checking to match how it's stored in DB (without trailing hyphens)
@@ -158,6 +197,14 @@ export const PortfolioProvider = ({
     handleSetFormData('media', current.filter((media) => media.id !== mediaId));
   }, [formData.media, handleSetFormData]);
 
+  const firstStepIsCompleted = !firstStepRequiredFields.some(field => {
+    if (!formData) return true;
+    const hasField = formData[field];
+    if (hasField) return false;
+
+    if (field === 'thumbnail' && currentPortfolio?.thumbnail) return false;
+    return true;
+  })
   const mediaSelected = useMemo(() => {
     return formData.media ?? [];
   }, [formData.media]);
@@ -166,14 +213,14 @@ export const PortfolioProvider = ({
     const nextStep = currentStep + 1;
     if (nextStep > MAX_STEPS) return false;
     if (nextStep === 2) {
-      return !firstStepRequiredFields.some(field => !formData || !formData[field])
+      return firstStepIsCompleted
     }
 
     return false;
-  }, [currentStep, formData]);
+  }, [currentStep, formData, currentPortfolio]);
 
   const canSubmit = useMemo(() => {
-    return (currentStep === MAX_STEPS && !firstStepRequiredFields.some(field => !formData || !formData[field]) && (formData?.media?.length || formData?.collections?.length)) ? true : false
+    return (currentStep === MAX_STEPS && firstStepIsCompleted  && (formData.media?.length || formData.collections?.length))? true : false
   }, [currentStep, formData])
 
 
@@ -186,6 +233,24 @@ export const PortfolioProvider = ({
       setCurrentStep(prev => prev + 1);
     }
   }
+
+  const clear = useCallback(() => {
+    // Reset local state
+    setFormData({ user_id: userId });
+    setCurrentStep(1);
+
+    // Reset action state (errors/result)
+    reset();
+    cleanErrors();
+    cleanResult();
+
+    // Clear slug memo + pending timeout
+    slugChecksMemo.current = {};
+    if (idTimeOut.current) {
+      clearTimeout(idTimeOut.current);
+      idTimeOut.current = null;
+    }
+  }, [userId, reset, cleanErrors, cleanResult]);
 
   const contextValue: PortfolioContextType = {
     userId,
@@ -208,6 +273,9 @@ export const PortfolioProvider = ({
     checkSlugAvailability,
     deleteInputErrorProperty,
     reset,
+    clear,
+    currentPortfolio,
+    setPortfolio,
   };
 
   return (

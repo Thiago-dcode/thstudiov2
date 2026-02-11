@@ -2,16 +2,21 @@ import { Injectable } from '@nestjs/common';
 import { BaseRepository } from '@repo/database/repositories';
 import { QueryBuilder } from '@repo/database/queryBuilder';
 import {
+  PortfolioFullSchema,
+  PortfolioFullSchemaColumns,
   PortfolioSchema,
   PortfolioSchemaColumns,
 } from '@repo/common-lib/schemas/portfolio';
 import {
   CreatePortfolioInput,
+  FullPortfolio,
   Portfolio,
   PortfolioIndexRequest,
 } from '@repo/common-lib/types/portfolio';
 import { DbException } from '@repo/database/exceptions';
 import { RequestService } from 'src/common/services/request.service';
+import { MediaSchema } from '@repo/common-lib/schemas/media';
+import { MediaPortfolio } from '@repo/common-lib/types/media';
 
 @Injectable()
 export class PortfolioRepository extends BaseRepository {
@@ -26,6 +31,19 @@ export class PortfolioRepository extends BaseRepository {
     'portfolios.updated_at',
   ] as const;
 
+  private readonly FULL_COLUMNS: PortfolioFullSchemaColumns[] = [
+    ...this.COLUMNS,
+    'portfolio_media.media_id',
+    'portfolio_media.position',
+    'media.id as m_id',
+    'media.thumbnail',
+    'media.title as m_title',
+    'media.seo_alt',
+    'media.seo_filename',
+    'media.seo_description',
+    'media.seo_title'
+  ];
+
   constructor(private readonly requestService: RequestService) {
     super('portfolios');
   }
@@ -36,15 +54,19 @@ export class PortfolioRepository extends BaseRepository {
     return results.map((result) => this.formatPortfolio(result));
   }
 
-  async getBySlug(slug: string, userId: number): Promise<Portfolio | null> {
+  async getBySlug(slug: string, userId: number): Promise<FullPortfolio> {
     const result = await this.query()
-      .select(this.COLUMNS)
+      .select(this.FULL_COLUMNS)
       .where('slug', '=', slug)
       .where('user_id', '=', userId)
-      .first<PortfolioSchema>();
-    
+      .join('id', 'portfolio_media', 'portfolio_id','LEFT')
+      .join('portfolio_media.media_id', 'media', 'id','LEFT')
+      .join('id', 'portfolio_collection', 'portfolio_id','LEFT')
+      .join('portfolio_collection.collection_id', 'collections', 'id','LEFT')
+      .get<PortfolioFullSchema[]>();
+
     if (!result) return null;
-    return this.formatPortfolio(result);
+    return this.formatFullPortfolio(Array.isArray(result)?result:[result]);
   }
 
   async slugExists(slug: string, userId: number): Promise<boolean> {
@@ -52,7 +74,7 @@ export class PortfolioRepository extends BaseRepository {
       .where('slug', '=', slug)
       .where('user_id', '=', userId)
       .exists();
-    
+
     return !!result;
   }
 
@@ -60,10 +82,9 @@ export class PortfolioRepository extends BaseRepository {
     const cols = Object.keys(portfolioData);
     const values = Object.values(portfolioData);
 
-    console.log(cols,values);
     // First create the portfolio base data
     const portfolioResult = await this.query().insertAndGet<PortfolioSchema>(cols, values);
-    console.log("PORTFOLIO",portfolioResult)
+    console.log("PORTFOLIO", portfolioResult)
     if (!portfolioResult) {
       throw new DbException('Could not create portfolio');
     }
@@ -135,6 +156,39 @@ export class PortfolioRepository extends BaseRepository {
       user_id: result.user_id,
       created_at: result.created_at,
       updated_at: result.updated_at,
+    };
+  }
+  private formatFullPortfolio(result: PortfolioFullSchema[]): FullPortfolio {
+    const mediaMap = new Map<number, MediaPortfolio>();
+
+    for (const row of result) {
+      if (!row.m_id || mediaMap.has(row.m_id)) continue;
+
+      mediaMap.set(row.m_id, {
+        id: row.m_id,
+        position: row.position,
+        thumbnail: row.thumbnail,
+        seo_filename: row.seo_filename,
+        seo_alt: row.seo_alt,
+        seo_description: row.seo_description,
+        seo_title: row.seo_title,
+        shape: row.shape,
+      });
+    }
+
+    const first = result[0];
+
+    return {
+      id: first.id,
+      slug: first.slug,
+      title: first.title,
+      thumbnail: first.thumbnail,
+      description: first.description,
+      user_id: first.user_id,
+      created_at: first.created_at,
+      updated_at: first.updated_at,
+      media: Array.from(mediaMap.values()),
+      collections: [], // TODO: implement collection relationship
     };
   }
 }

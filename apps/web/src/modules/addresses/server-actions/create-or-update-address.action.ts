@@ -1,6 +1,6 @@
 'use server'
 
-import { ActionReturn } from "@/modules/auth/auth.types";
+import { ActionReturn } from "@repo/common-lib/types/response";
 import { createAddressSchema } from "../schemas/address.schema";
 import { Address, PublicCreateAddressInput } from "@repo/common-lib/types/address";
 import addressService from "../address.service";
@@ -8,7 +8,7 @@ import { cleanObj, trimValues } from "@repo/common-lib/utils/cleanObj";
 import { getFriendlyApiErrors, getObjErrorFromZod } from "@/modules/auth/helpers";
 import { revalidateTag } from "next/cache";
 
-export const createOrUpdateAddressAction = async (formData: FormData, addressId?: number): Promise<ActionReturn<PublicCreateAddressInput, Address>> => {
+export const createOrUpdateAddressAction = async (formData: FormData, addressId?: number): Promise<ActionReturn<Address, PublicCreateAddressInput>> => {
     // Extract fields from FormData
     let rawData: PublicCreateAddressInput = {
         formated_address: formData.get('formated_address') as string || undefined,

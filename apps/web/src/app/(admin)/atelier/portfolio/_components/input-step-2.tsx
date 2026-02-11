@@ -55,28 +55,52 @@ export default function InputStep2() {
     const { userId, mediaSelected, handlePushMediaSelected, handleRemoveMediaSelected, handleSetFormData } = usePortfolio();
     const [open, setOpen] = useState(false);
     const { isCompleted } = useMedia();
-    const [media, setMedia] = useState<Media[]>([]);
+    const [mediaObj, setMediaObj] = useState<Record<number, Media>>({});
+    const media = useMemo(
+        () => Object.values(mediaObj).sort((a, b) => b.id - a.id),
+        [mediaObj]
+    );
+    const mediaItems = useMemo(() => mediaSelected.map(m => `media-${m.id}`), [mediaSelected]);
     const prevMedia = useRef<Media[]>([]);
+    const prevIsCompleted = useRef(false);
     const { handleAction, isPending } = useHandleAction({
         action: async () => {
 
-            return getAllUserMediaAction(userId)
+            const hasCache = prevMedia.current.length > 0;
+            const cacheIsSynced = hasCache && !prevMedia.current.some((m) => !mediaObj[m.id]);
+            const completedJustNow = isCompleted && !prevIsCompleted.current;
+            const canRefetch = !cacheIsSynced || completedJustNow;
+            prevIsCompleted.current = isCompleted
+
+            if (canRefetch) {
+                console.log("REFETCHING")
+                return getAllUserMediaAction(userId);
+            }
+
+            return {
+                data: prevMedia.current,
+                errors: null,
+                inputErrors: undefined,
+            };
+
         },
         afterAction: async (result) => {
 
             if (result.data) {
-                prevMedia.current = media;
-
-                setMedia(result.data)
+                prevMedia.current = result.data;
+                setMediaObj(
+                    result.data.reduce((prev, m) => {
+                        prev[m.id] = m;
+                        return prev;
+                    }, {} as Record<number, Media>)
+                );
             }
         }
     });
 
-
-    const mediaItems = useMemo(() => mediaSelected.map(m => `media-${m.id}`), [mediaSelected]);
     useEffect(() => {
 
-        if ((open && !media.length) || isCompleted) {
+        if (open || isCompleted) {
             handleAction();
         }
     }, [open, isCompleted])
@@ -115,6 +139,11 @@ export default function InputStep2() {
                 {mediaSelected.length > 0 && (
                     <span className="text-xs text-muted-foreground tabular-nums">
                         {mediaSelected.length} selected
+                    </span>
+                )}
+                {mediaSelected.length > 1 && (
+                    <span className="text-xs text-muted-foreground/70">
+                        · Drag to reorder
                     </span>
                 )}
             </div>
@@ -261,12 +290,23 @@ export default function InputStep2() {
                     strategy={rectSortingStrategy}
                 >
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                        {mediaSelected.map((m) => (
+                        {mediaSelected.map((m, index) => (
                             <div
                                 key={m.id}
-                                className="shadow-lg bg-fg-1/70 shadow-fg-1  rounded-xl border-fg-2 p-4"
+                                className=" bg-fg/60 rounded-xl p-4"
                             >
                                 <SortableItem id={`media-${m.id}`} containerClassname="group relative">
+                                    <div
+                                        className={cn(
+                                            "absolute top-2 left-2 z-10 inline-flex items-center justify-center",
+                                            "h-5 px-1.5 rounded-md bg-black/35",
+                                            "text-[10px] font-medium tabular-nums text-white/85",
+                                            "pointer-events-none select-none"
+                                        )}
+                                        aria-hidden
+                                    >
+                                        {index + 1}
+                                    </div>
                                     <button
                                         type="button"
                                         aria-label={`Remove ${m.title || 'media'}`}
@@ -286,10 +326,10 @@ export default function InputStep2() {
                                     >
                                         <X className="size-3.5 cursor-pointer" />
                                     </button>
-                                    <div className="aspect-square w-full rounded-lg bg-fg-2/15 flex items-center justify-center">
+                                    <div className="aspect-square w-full rounded-lg flex items-center justify-center">
                                         <div
                                             className={cn(
-                                                "relative overflow-hidden rounded-sm shadow-sm",
+                                                "relative overflow-hidden rounded-sm",
                                                 getShapeClass(m.shape)
                                             )}
                                         >

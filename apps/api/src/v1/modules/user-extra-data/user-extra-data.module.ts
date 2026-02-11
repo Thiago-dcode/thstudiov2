@@ -3,7 +3,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { UserExtraDataService } from './user-extra-data.service';
 import { UserExtraDataRepository } from './user-extra-data.repository';
 import { UserExtraDataProcessor } from './user-extra-data.processor';
-import { UserAiCreditsEndedMail } from './mails/user-ai-credits-ended';
+import { UserAiCreditsEndedMail } from './mails/user-metrics-ended';
 import { PlansModule } from '../plans/plans.module';
 import { UserStorageRequestModule } from '../user-storage-requests/user-storage-request.module';
 import { USER_METRICS_QUEUE } from '@repo/common-lib/constants/constants';

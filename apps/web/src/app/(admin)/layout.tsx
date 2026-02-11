@@ -8,6 +8,7 @@ import { AdminHeader } from "@/lib/components/admin-header";
 import MediaProvider from "@/modules/media/providers/media.provider";
 import { UploadMediaModal } from "@/modules/media/components/upload-media-modal";
 import { UserMetricsProvider } from "@/modules/users/providers/user-metrics.provider";
+import { PortfolioProvider } from "@/modules/portfolios/providers/create-update-portfolio.provider";
 const AdminLayout = async ({ children }: { children: ReactNode }) => {
   const userAuth = await userSession();
   if (!userAuth) {
@@ -18,6 +19,7 @@ const AdminLayout = async ({ children }: { children: ReactNode }) => {
     <MainNavProvider>
       <UserMetricsProvider userId={userAuth.id}>
         <MediaProvider>
+        <PortfolioProvider userId={userAuth.id}>
           <UploadMediaModal/>
           <div className="flex size-full items-center justify-between ">
             <AdminHeader />
@@ -29,7 +31,8 @@ const AdminLayout = async ({ children }: { children: ReactNode }) => {
             </main>
 
           </div>
-        </MediaProvider>
+          </PortfolioProvider>
+          </MediaProvider>
       </UserMetricsProvider>
     </MainNavProvider>
 

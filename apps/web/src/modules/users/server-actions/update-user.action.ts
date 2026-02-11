@@ -1,6 +1,6 @@
 'use server'
 
-import { ActionReturn } from "@/modules/auth/auth.types";
+import { ActionReturn } from "@repo/common-lib/types/response";
 import { updateUserSchema } from "../schemas/user-shemas";
 import { BaseUser, UpdateUserInputWithAssets } from "@repo/common-lib/types/user";
 import usersService from "../users.service";
@@ -11,7 +11,7 @@ import { ALLOWED_IMAGE_FILE_TYPES } from "@repo/common-lib/constants/constants";
 
 const MAX_FILE_SIZE = 8 * 1024 * 1024; // 8MB
 
-export const updateUserAction = async (id:number,formData: FormData): Promise<ActionReturn<UpdateUserInputWithAssets,BaseUser>> => {
+export const updateUserAction = async (id:number,formData: FormData): Promise<ActionReturn<BaseUser, UpdateUserInputWithAssets>> => {
 
     const categories = formData.get('categories') as string;
       // Extract text fields from FormData

@@ -1,6 +1,6 @@
 'use server'
 
-import { ActionReturn } from "@/modules/auth/auth.types";
+import { ActionReturn } from "@repo/common-lib/types/response";
 import { CreateMediaInputWithFile, Media } from "@repo/common-lib/types/media";
 import { createMediaSchema } from "../schemas/media-shemas";
 import { ALLOWED_IMAGE_FILE_TYPES } from "@repo/common-lib/constants/constants";
@@ -13,7 +13,7 @@ import { revalidateTag } from "next/cache";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
-export const createMediaAction = async (input: CreateMediaInputWithFile): Promise<ActionReturn<CreateMediaInputWithFile, Media>> => {
+export const createMediaAction = async (input: CreateMediaInputWithFile): Promise<ActionReturn<Media, CreateMediaInputWithFile>> => {
     // Validate file
 
     if (!input.file || input.file.size === 0) {

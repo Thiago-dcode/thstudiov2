@@ -2,14 +2,14 @@
 
 import { registerRequestSchema } from "../schemas/auth.shema";
 import { set2faCookie, delete2faCookie } from "./twofa.action";
-import { ActionReturn } from "../auth.types";
+import { ActionReturn } from "@repo/common-lib/types/response";
 import authService from "../auth.service";
 import { BaseUser } from "@repo/common-lib/types/user";
 
-export const registerServerAction = async (formData: FormData):Promise<ActionReturn<{
+export const registerServerAction = async (formData: FormData):Promise<ActionReturn<BaseUser, {
         email?:string,
         username?:string
-    }, BaseUser>> => {
+    }>> => {
     // Clean up any existing 2FA cookie from previous login attempts
     await delete2faCookie();
     const credentials = {

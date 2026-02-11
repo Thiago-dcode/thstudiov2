@@ -1,6 +1,6 @@
 'use server'
 
-import { ActionReturn } from "@/modules/auth/auth.types";
+import { ActionReturn } from "@repo/common-lib/types/response";
 import { Media, UpdateMediaInput } from "@repo/common-lib/types/media";
 import { updateMediaSchema } from "../schemas/media-shemas";
 import { cleanObj, trimValues } from "@repo/common-lib/utils/cleanObj";
@@ -10,7 +10,7 @@ import { getFriendlyApiErrors, getObjErrorFromZod } from "@/modules/auth/helpers
 export const updateMediaAction = async (
     id: number,
     input: UpdateMediaInput
-): Promise<ActionReturn<UpdateMediaInput, Media>> => {
+): Promise<ActionReturn<Media, UpdateMediaInput>> => {
     // Trim string values
     trimValues(input, {
         deep: true

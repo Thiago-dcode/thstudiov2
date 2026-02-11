@@ -1,6 +1,6 @@
 'use server'
 
-import { ActionReturn } from "@/modules/auth/auth.types";
+import { ActionReturn } from "@repo/common-lib/types/response";
 import { initiateSubscriptionSchema } from "../schemas/plan-subscriptions.shema"
 import { HandleSubscriptionProcessResponse, InitiateSubscriptionRequest } from "@repo/common-lib/types/plan-subscription";
 import planSubscriptionsService from "../plan-subscriptions.service";
@@ -13,7 +13,7 @@ import { revalidateTag } from "next/cache";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 
 
-export const initiateSubscriptionAction = async (formData:FormData):Promise<ActionReturn<InitiateSubscriptionRequest, HandleSubscriptionProcessResponse>> =>{
+export const initiateSubscriptionAction = async (formData:FormData):Promise<ActionReturn<HandleSubscriptionProcessResponse, InitiateSubscriptionRequest>> =>{
 
     const validated = initiateSubscriptionSchema.safeParse({
             plan_price_id: parseInt(formData.get('plan_price_id') as string),

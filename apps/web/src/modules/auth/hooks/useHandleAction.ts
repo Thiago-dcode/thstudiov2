@@ -1,14 +1,14 @@
 'use client'
 import { FormEvent, useEffect, useState } from "react"
-import { ActionReturn } from "../auth.types"
+import { ActionReturn } from "@repo/common-lib/types/response"
 
 
 export const useHandleAction = <K,T>({action,beforeAction,afterAction}:{
-    action: ((formData:FormData)=>Promise<ActionReturn<K,T>>) | (()=>Promise<ActionReturn<K,T>>),
-    beforeAction?: ((formData:FormData,prevResult?:ActionReturn<K,T>|null)=>Promise<void>) | ((prevResult?:ActionReturn<K,T>|null)=>Promise<void>) | (()=>Promise<void>)
-    afterAction?:(result:ActionReturn<K,T>)=>Promise<void>
+    action: ((formData:FormData)=>Promise<ActionReturn<T,K>>) | (()=>Promise<ActionReturn<T,K>>),
+    beforeAction?: ((formData:FormData,prevResult?:ActionReturn<T,K>|null)=>Promise<void>) | ((prevResult?:ActionReturn<T,K>|null)=>Promise<void>) | (()=>Promise<void>)
+    afterAction?:(result:ActionReturn<T,K>)=>Promise<void>
 }) =>{
-    const [result,setResult] = useState<ActionReturn<K,T>|null>(null);
+    const [result,setResult] = useState<ActionReturn<T,K>|null>(null);
     const [errors,setErrors] = useState<string[]|null>(null);
     const [inputErrors, setInputErrors] = useState<Record<string,string>>()
     const [isPending,setPending] = useState(false);
@@ -21,9 +21,9 @@ export const useHandleAction = <K,T>({action,beforeAction,afterAction}:{
             if(beforeAction) {
                 // Check if beforeAction accepts formData parameter
                 if(beforeAction.length >= 1 && formData !== undefined) {
-                    await (beforeAction as (formData:FormData,prevResult?:ActionReturn<K,T>|null)=>Promise<void>)(formData, result);
+                    await (beforeAction as (formData:FormData,prevResult?:ActionReturn<T,K>|null)=>Promise<void>)(formData, result);
                 } else if(beforeAction.length >= 1) {
-                    await (beforeAction as (prevResult?:ActionReturn<K,T>|null)=>Promise<void>)(result);
+                    await (beforeAction as (prevResult?:ActionReturn<T,K>|null)=>Promise<void>)(result);
                 } else {
                     await (beforeAction as ()=>Promise<void>)();
                 }
@@ -33,9 +33,8 @@ export const useHandleAction = <K,T>({action,beforeAction,afterAction}:{
             // For Next.js server actions, always pass formData if it's provided
             // The action signature will determine if it's used
             const actionResult = formData !== undefined
-                ? await (action as (formData:FormData)=>Promise<ActionReturn<K,T>>)(formData)
-                : await (action as ()=>Promise<ActionReturn<K,T>>)();
-            
+                ? await (action as (formData:FormData)=>Promise<ActionReturn<T,K>>)(formData)
+                : await (action as ()=>Promise<ActionReturn<T,K>>)();
             if(afterAction) await afterAction(actionResult);
             setErrors(actionResult.errors);
             setInputErrors(actionResult.inputErrors)

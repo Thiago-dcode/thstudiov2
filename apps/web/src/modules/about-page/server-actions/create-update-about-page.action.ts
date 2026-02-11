@@ -1,6 +1,6 @@
 'use server'
 
-import { ActionReturn } from "@/modules/auth/auth.types";
+import { ActionReturn } from "@repo/common-lib/types/response";
 import { AboutPage, CreateAboutPageInputWithFile, UpdateAboutPageInputWithFile } from "@repo/common-lib/types/about-page"
 import { createAboutPageSchema, updateAboutPageSchema } from "../schemas/about-page.shemas";
 import { ALLOWED_IMAGE_FILE_TYPES } from "@repo/common-lib/constants/constants";
@@ -10,11 +10,11 @@ import aboutPageService from "../about-page.service";
 import { getFriendlyApiErrors, getObjErrorFromZod } from "@/modules/auth/helpers";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-export const createAboutPageAction = async (formData: FormData): Promise<ActionReturn<{
+export const createAboutPageAction = async (formData: FormData): Promise<ActionReturn<AboutPage, {
     title?:string,
     description?:string,
     photo?: File
-},AboutPage>>=>{
+}>>=>{
     const rawData:CreateAboutPageInputWithFile = {
         description:formData.get('description') as string,
         title: formData.get('title') as string,
@@ -73,11 +73,11 @@ export const createAboutPageAction = async (formData: FormData): Promise<ActionR
     }
 
 }
-export const updateAboutPageAction = async (id:number,formData: FormData): Promise<ActionReturn<{
+export const updateAboutPageAction = async (id:number,formData: FormData): Promise<ActionReturn<AboutPage, {
     title?:string,
     description?:string,
     photo?: File
-},AboutPage>>=>{
+}>>=>{
   
     const rawData:UpdateAboutPageInputWithFile = {
         description:formData.get('description') as string,

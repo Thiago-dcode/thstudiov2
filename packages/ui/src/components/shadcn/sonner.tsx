@@ -26,22 +26,22 @@ const Toaster = ({ ...props }: ToasterProps) => {
       }}
       style={
         {
-          "--normal-bg": "var(--popover)",
-          "--normal-text": "var(--popover-foreground)",
-          "--normal-border": "var(--border)",
-          "--success-bg": "var(--success)",
-          "--success-text": "var(--success-foreground)",
-          "--success-border": "var(--success)",
-          "--error-bg": "var(--error)",
-          "--error-text": "var(--error-foreground)",
-          "--error-border": "var(--error)",
-          "--warning-bg": "var(--warning)",
-          "--warning-text": "var(--warning-foreground)",
-          "--warning-border": "var(--warning)",
-          "--info-bg": "var(--info)",
-          "--info-text": "var(--info-foreground)",
-          "--info-border": "var(--info)",
-          "--border-radius": "var(--radius)",
+          "--normal-bg": "var(--color-fg)",
+          "--normal-text": "var(--color-text)",
+          "--normal-border": "var(--color-border)",
+          "--success-bg": "var(--color-success)",
+          "--success-text": "var(--color-success-fg)",
+          "--success-border": "var(--color-success)",
+          "--error-bg": "var(--color-error)",
+          "--error-text": "var(--color-error-fg)",
+          "--error-border": "var(--color-error)",
+          "--warning-bg": "var(--color-warning)",
+          "--warning-text": "var(--color-warning-fg)",
+          "--warning-border": "var(--color-warning)",
+          "--info-bg": "var(--color-info)",
+          "--info-text": "var(--color-info-fg)",
+          "--info-border": "var(--color-info)",
+          "--border-radius": "0.5rem",
         } as React.CSSProperties
       }
       {...props}

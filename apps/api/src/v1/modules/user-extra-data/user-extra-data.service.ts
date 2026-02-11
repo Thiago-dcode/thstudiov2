@@ -111,7 +111,8 @@ export class UserExtraDataService {
         );
       }
     }
-    if (projects_count) {
+    // -1 means no limits
+    if (projects_count && currentPlan.max_clients !== -1) {
       const newProjectsCount = userExtraData.projects_count + projects_count;
       if (newProjectsCount > currentPlan.max_projects) {
         throw ApiException.maxProjects(
@@ -128,6 +129,7 @@ export class UserExtraDataService {
       { userId: data.userId },
       {
         jobId: `metrics-${data.userId}`,
+        priority: 10,
         removeOnComplete: true,
         attempts: 3,
         backoff: { type: 'exponential', delay: 1000 },
