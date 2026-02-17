@@ -43,6 +43,12 @@ const up = async () => {
     ColumnBuilder.boolean('is_active', {
       default: true,
     }),
+    ColumnBuilder.boolean('blocked', {
+      default: false,
+    }),
+    ColumnBuilder.string('blocked_reason', 255, {
+      nullable: true
+    }),
     ColumnBuilder.integer('funnel_step', {
       default: 1,
     }),

@@ -7,12 +7,14 @@ import { Label } from "@repo/ui/components/shadcn/label";
 import { Button } from "@repo/ui/components/shadcn/button";
 import FormComponent from "@/lib/components/form-component";
 import { bytesToMB } from '@repo/common-lib/utils/bytes';
-import { X, Sparkles, Upload } from "lucide-react";
+import { Sparkles, Trash2, Upload } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@repo/ui/components/shadcn/popover";
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { Media, UpdateMediaInput } from "@repo/common-lib/types/media";
 import { format } from "date-fns";
 import { cn } from "@repo/ui/lib/utils";
+import { useRouter } from "next/navigation";
 import { useUserMetrics } from "@/modules/users/providers/user-metrics.provider";
 import { useMedia, UploadMedia } from "@/modules/media/providers/media.provider";
 import { MediaTab, MediaDrawerFooter, MediaTabs } from "./media-tab";
@@ -21,10 +23,11 @@ import { MediaTab, MediaDrawerFooter, MediaTabs } from "./media-tab";
 type MediaCardProps = {
   media: Media;
   username: string;
+  onDeleted?: (mediaId: number) => void;
 };
 type Tabs = MediaTabs;
 
-export function EditMediaCard({ media, username }: MediaCardProps) {
+export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
   const [currentMedia, setCurrentMedia] = useState(media);
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState<MediaTabs>('overall');
@@ -34,12 +37,14 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
   const seoDescriptionRef = useRef<HTMLTextAreaElement>(null);
   const seoAltRef = useRef<HTMLInputElement>(null);
   const seoFilenameRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
   const { refresh, aiCreditsInfo } = useUserMetrics();
-  const { setMediUploadByMediaId, mediaUploads, getMediaUploadByMediaId, uploadSingleMedia, deleteMediaUploadByMediaId, generateSeoSingleMedia } = useMedia()
+  const { setMediUploadByMediaId, mediaUploads, getMediaUploadByMediaId, uploadSingleMedia, deleteMediaUploadByMediaId, generateSeoSingleMedia, deleteSingleMedia } = useMedia()
+  const [deletePopoverOpen, setDeletePopoverOpen] = useState(false);
 
   //cached 
   const currentMediaUpload = useMemo(() => getMediaUploadByMediaId(currentMedia.id), [mediaUploads, currentMedia.id]);
-  
+
   // Helper variables for cleaner access
   const inputErrors = currentMediaUpload?.error?.inputErrors;
 
@@ -140,6 +145,7 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
 
     const updatedUpload: UploadMedia = {
       ...existingUpload,
+      action: 'edit',
       data: undefined,
       error: undefined,
       pending: false,
@@ -182,6 +188,16 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
 
     setMediUploadByMediaId(currentMedia.id, updatedUpload);
   };
+  const handleDelete = async () => {
+    setDeletePopoverOpen(false);
+    setIsDrawerOpen(false);
+    const result = await deleteSingleMedia(currentMedia);
+    if (result.data) {
+      onDeleted?.(currentMedia.id);
+    }
+    refresh();
+  };
+
   const handleTabChange = (value: string) => {
     if (isPending) return;
     setActiveTab(value as Tabs);
@@ -342,22 +358,20 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
   };
 
 
-  useEffect(()=>{
-    if(!currentMediaUpload) return;
-    setIsEditing(true);
-      setCurrentMedia({
-        ...currentMedia,
-        ...currentMediaUpload.input,
-        ...currentMediaUpload.data,
-        ...currentMediaUpload.seoData,
-      
-      });
-  },[currentMediaUpload])
+  useEffect(() => {
+    if (!currentMediaUpload) return;
+    setCurrentMedia({
+      ...currentMedia,
+      ...currentMediaUpload.input,
+      ...currentMediaUpload.data,
+
+    });
+  }, [currentMediaUpload])
 
   return (
     <Drawer direction="right" open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
       <div className="relative">
-        {currentMediaUpload && !isPending && !currentMediaUpload.data && !currentMediaUpload.error ? (
+        {currentMediaUpload && !currentMediaUpload.deleted && !isPending && !currentMediaUpload.data && !currentMediaUpload.error ? (
           <Button
             onClick={(e) => {
               e.stopPropagation();
@@ -438,7 +452,7 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
               )}
             </div>
             <div className="flex items-center gap-2">
-              {isEditing && (
+              {isEditing ? (
                 <div className="flex items-center gap-1">
                   <Button
                     type="button"
@@ -478,14 +492,40 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
                     )}
                   </div>
                 </div>
-              )}
-              {(
-                <DrawerClose asChild>
-                  <Button variant="ghost" size="icon">
-                    <X className="h-4 w-4" />
-                  </Button>
-                </DrawerClose>
-              )}
+              ) :
+
+                <Popover open={deletePopoverOpen} onOpenChange={setDeletePopoverOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 px-2.5">
+                      <Trash2 className="h-3.5 w-3.5 mr-1" />
+                      <span className="text-xs font-medium">Delete</span>
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-56 p-3 z-100" align="end">
+                    <p className="text-sm text-muted-foreground mb-3">Are you sure you want to delete this media?</p>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => setDeletePopoverOpen(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="flex-1"
+                        disabled={isPending}
+                        onClick={handleDelete}
+                      >
+                        {isPending ? <Spinner /> : 'Delete'}
+                      </Button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              }
+
             </div>
           </div>
         </DrawerHeader>
@@ -549,7 +589,7 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
         )}
       </DrawerContent>
       <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
-        <DialogContent className="max-w-md max-h-[300px]">
+        <DialogContent className="max-w-md max-h-[300px] z-100">
           <DialogHeader>
             <DialogTitle>Discard Changes?</DialogTitle>
             <DialogDescription>
@@ -564,7 +604,7 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
               Keep Editing
             </Button>
             <Button
-              variant="destructive"
+              variant="default"
               onClick={confirmCancel}
             >
               Discard Changes

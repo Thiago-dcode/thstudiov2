@@ -60,6 +60,10 @@ export class UserService {
     return result;
   }
 
+  async findOneCompacted(id: number) {
+    return await this.userRepository.findByIdCompact(id);
+  }
+
   async findOneByStripeId(id: string) {
     return await this.userRepository.findOneBy(
       'stripe_customer_id',
@@ -176,6 +180,7 @@ export class UserService {
       const extraData = await this.userExtraDataRepository.create({
         user_id: event.user.id,
         next_ai_credits_reset: nextMonth,
+        next_strike_reset: nextMonth,
       });
       this.logService
         .name('new-user')

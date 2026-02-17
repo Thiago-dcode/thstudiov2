@@ -1,13 +1,14 @@
 'use server'
 
 import { ActionReturn } from "@repo/common-lib/types/response";
-import { GetMediaSeoInput, GetMediaSeoResponse } from "@repo/common-lib/types/ai";
+import { GetMediaSeoInput } from "@repo/common-lib/types/ai";
 import aiService from "../ai.service";
 import { getFriendlyApiErrors } from "@/modules/auth/helpers";
+import { Media } from "@repo/common-lib/types/media";
 
 export const getMediaSeoAction = async (
     input: GetMediaSeoInput
-): Promise<ActionReturn<GetMediaSeoResponse, GetMediaSeoInput>> => {
+): Promise<ActionReturn<Media, GetMediaSeoInput>> => {
     // Validate required fields
     if (!input.user_id || !input.media_id) {
         const inputErrors: Record<string, string> = {};

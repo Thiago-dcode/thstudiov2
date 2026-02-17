@@ -26,6 +26,9 @@ class PortfolioService extends BaseService {
     async create(body: CreatePortfolioInputWithFile): Promise<ApiResponse<Portfolio>> {
         return await this.fetchApi.post({body});
     }
+    async delete(id: number): Promise<ApiResponse<void>> {
+        return await this.fetchApi.delete({ resource: `/${id}` });
+    }
 }
 
 export default new PortfolioService();

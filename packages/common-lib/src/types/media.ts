@@ -11,23 +11,23 @@ import { EnumType } from "../constants/enums";
 export type Media = MediaSchema;
 // Media translation without id
 
-export type MediaPortfolio =  Pick<Media, 'id' | 'thumbnail' | 'seo_alt' | 'seo_description' | 'seo_filename' | 'seo_title' | 'shape'> & {
+export type MediaPortfolio = Pick<Media, 'id' | 'title' | 'thumbnail' | 'seo_alt' | 'seo_description' | 'seo_filename' | 'seo_title' | 'shape'> & {
   position: number
 };
 export type MediaTranslation = MediaTranslationSchema;
 
 export type FullMedia = Media & {
-    translations:MediaTranslation[]
+  translations: MediaTranslation[]
 }
 export type MediaIndexRequest = OffsetPaginationRequest & {
-    user_id?: number;
-    shape?: EnumType<'MEDIA_SHAPE'>;
-    is_active?: boolean;
-    blocked?: boolean;
+  user_id?: number;
+  shape?: EnumType<'MEDIA_SHAPE'>;
+  is_active?: boolean;
+  blocked?: boolean;
 }
 
 // Fields generated internally by the system (user cannot set these)
-type InternalMediaFields = 'id' | 'public_id' | 'bytes' | 'url' | 'thumbnail' | 'thumbnail_bytes'|'shape'| 'extension' | 'blocked' | 'is_active' | 'created_at' | 'updated_at';
+type InternalMediaFields = 'id' | 'public_id' | 'bytes' | 'url' | 'thumbnail' | 'thumbnail_bytes' | 'shape' | 'extension' | 'blocked' | 'is_active' | 'created_at' | 'updated_at';
 
 // What users can provide when creating media (public API input)
 export type PublicCreateMediaInput = Omit<MediaSchema, InternalMediaFields>;
@@ -49,5 +49,5 @@ export type CreateMediaTranslationInput = Omit<MediaTranslationSchema, 'id'>;
 
 export type UpdateMediaTranslationInput = Partial<Omit<MediaTranslationSchema, 'id' | 'media_id'>>;
 
-export type  MediaSeoFields = Pick<Media, 'seo_title' | 'seo_description' | 'seo_alt' | 'seo_filename'>
+export type MediaSeoFields = Pick<Media, 'seo_title' | 'seo_description' | 'seo_alt' | 'seo_filename'>
 

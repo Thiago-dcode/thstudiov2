@@ -1,6 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { BaseRepository } from '@repo/database/repositories';
 import {
+  CompactUser,
   CreateUserInput,
   UpdateUserInput,
   User,
@@ -29,6 +30,11 @@ export class UserRepository extends BaseRepository {
     'users.is_active',
     'users.funnel_step',
   ] as const;
+  private readonly COMPACT_COLUMNS: string[] = [
+    'users.id',
+    'users.email',
+    'users.username',
+  ] as const;
   private readonly FULL_COLUMNS: UserSchemaColumns[] = [
     ...this.BASE_COLUMNS,
     'users.avatar',
@@ -42,6 +48,20 @@ export class UserRepository extends BaseRepository {
   constructor() {
     super('users');
   }
+  async findByIdCompact(id: number): Promise<CompactUser> {
+    const result = await this.query()
+      .select(this.COMPACT_COLUMNS)
+      .where('id', '=', id)
+      .first<CompactUser>();
+    if (!result) {
+      throw new HttpException(
+        'User not found with id ' + id,
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    return result;
+  }
+
   async findById(id: number): Promise<User> {
     const result = await this.query()
       .select(this.FULL_COLUMNS)
@@ -55,11 +75,11 @@ export class UserRepository extends BaseRepository {
     }
     return this.formatFullUser(result);
   }
-  async getPublicId(id:number){
+  async getPublicId(id: number) {
 
-    return await this.query().select(['public_id']).where('id','=',id).first<{
-      public_id:number,
-    } |null>();
+    return await this.query().select(['public_id']).where('id', '=', id).where('blocked', '=', true).first<{
+      public_id: number,
+    } | null>();
   }
   async findOneBy(
     column: keyof UserSchema,
@@ -106,7 +126,7 @@ export class UserRepository extends BaseRepository {
   async updateById(id: number, user: UpdateUserInput): Promise<BaseUser> {
     const columns = Object.keys(user);
     const values = Object.values(user);
-   if(columns.length && values.length) await this.query().where('id', '=', id).update(columns, values);
+    if (columns.length && values.length) await this.query().where('id', '=', id).update(columns, values);
     const result = await this.query()
       .select(this.BASE_COLUMNS)
       .where('id', '=', id)
@@ -119,16 +139,16 @@ export class UserRepository extends BaseRepository {
   ): BaseUser | BaseUserWithSecrets {
     return {
       id: result?.id,
-      public_id:result.public_id,
+      public_id: result.public_id,
       email: result?.email,
       username: result?.username,
-      profession:result?.profession,
+      profession: result?.profession,
       email_validated: result?.email_validated,
       stripe_customer_id: result.stripe_customer_id,
       password: withSecrets ? result?.password : undefined,
-      twofa_code: withSecrets? result.twofa_code: undefined,
-      twofa_enabled:result.twofa_enabled,
-      twofa_expires_at:result.twofa_expires_at,
+      twofa_code: withSecrets ? result.twofa_code : undefined,
+      twofa_enabled: result.twofa_enabled,
+      twofa_expires_at: result.twofa_expires_at,
       funnel_step: result.funnel_step,
       is_active: result?.is_active,
     };

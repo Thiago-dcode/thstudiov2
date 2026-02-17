@@ -20,6 +20,13 @@ export class UserExtraDataRepository extends BaseRepository {
     'user_extra_data.clients_count',
     'user_extra_data.services_count',
     'user_extra_data.portfolios_count',
+    'user_extra_data.ai_credits',
+    'user_extra_data.ai_credits_consumed',
+    'user_extra_data.next_ai_credits_reset',
+    'user_extra_data.last_ai_credits_reset',
+    'user_extra_data.account_strikes',
+    'user_extra_data.next_strike_reset',
+    'user_extra_data.last_strike_reset',
     'user_extra_data.user_id',
   ] as const;
 

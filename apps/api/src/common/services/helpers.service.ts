@@ -102,8 +102,9 @@ export class Helpers {
     mailService.send(new Error500Mail(viewService, message, options));
   }
 
-  public async deleteAsset(path: string) {
-    return await this.storageService.delete(path);
+  public async deleteAsset(path?: string) {
+    if(!path)return;
+    return await  Promise.all([this.storageService.delete(path),this.cacheManager.del(path)]);
   }
   public async getAsset(path: string) {
     let asset = (await this.cacheManager.get(path)) as string;

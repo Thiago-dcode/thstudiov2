@@ -97,7 +97,7 @@ export const LoginForm = ({ rememberMe }: {
             </FormComponent.SubmitButton>
         </FormComponent.Form>
         {errors && errors.length > 0 && (
-            <Errors  errors={errors} />
+            <Errors errors={errors} />
         )}
     </FormComponent.Container>)
 }

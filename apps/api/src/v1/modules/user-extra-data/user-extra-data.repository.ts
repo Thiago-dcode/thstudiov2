@@ -24,6 +24,9 @@ export class UserExtraDataRepository extends BaseRepository {
     'user_extra_data.ai_credits_consumed',
     'user_extra_data.next_ai_credits_reset',
     'user_extra_data.last_ai_credits_reset',
+    'user_extra_data.account_strikes',
+    'user_extra_data.next_strike_reset',
+    'user_extra_data.last_strike_reset',
     'user_extra_data.user_id',
   ] as const;
 
@@ -122,6 +125,9 @@ export class UserExtraDataRepository extends BaseRepository {
       ai_credits_consumed: result.ai_credits_consumed,
       next_ai_credits_reset: result.next_ai_credits_reset,
       last_ai_credits_reset: result.last_ai_credits_reset,
+      account_strikes: result.account_strikes,
+      next_strike_reset: result.next_strike_reset,
+      last_strike_reset: result.last_strike_reset,
       user_id: result.user_id,
     };
   }

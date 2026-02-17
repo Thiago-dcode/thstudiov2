@@ -19,6 +19,7 @@ import { InterceptorProviders } from './common/intecerceptors/interceptor.provid
 import { filterProviders } from './common/filters/filter.providers';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthGuard } from './common/guards/auth.guard';
+import { UserStrikesGuard } from './common/guards/user-strikes.guard';
 import { UserAuthDeviceMiddleware } from './common/middlewares/user-auth-device.middleware';
 import { UserSessionsModule } from './v1/modules/user-sessions/user-sessions.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
@@ -33,10 +34,11 @@ import { AboutPageModule } from './v1/modules/about-page/about-page.module';
 import { UserStorageRequestModule } from './v1/modules/user-storage-requests/user-storage-request.module';
 import { UserAboutPageModule } from './v1/modules/user-about-page/user-about-page.module';
 import { UserMediaModule } from './v1/modules/user-media/user-media.module';
-import { AiModule } from './v1/modules/ai/ai.module';
+import { AiMediaModule } from './v1/modules/ai-media/ai-media.module';
 import { AddressModule } from './v1/modules/addresses/address.module';
 import { PortfolioModule } from './v1/modules/portfolios/portfolio.module';
 import { BullModule } from '@nestjs/bullmq';
+import { UserExtraDataModule } from './v1/modules/user-extra-data/user-extra-data.module';
 const APP_MODULES = [
   AuthModule,
   UserModule,
@@ -51,7 +53,7 @@ const APP_MODULES = [
   UserStorageRequestModule,
   UserAboutPageModule,
   UserMediaModule,
-  AiModule,
+  AiMediaModule,
   AddressModule,
   PortfolioModule
 ];
@@ -133,6 +135,7 @@ const APP_MODULES = [
     EventEmitterModule.forRoot(),
     ScheduleModule.forRoot(),
     ServicesModule,
+    UserExtraDataModule,
     ...APP_MODULES,
     TestModule,
   ],
@@ -148,6 +151,10 @@ const APP_MODULES = [
     {
       provide: APP_GUARD,
       useClass: AuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: UserStrikesGuard,
     },
 
     {

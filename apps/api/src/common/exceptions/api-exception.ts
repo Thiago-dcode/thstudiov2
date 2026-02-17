@@ -51,4 +51,8 @@ export class ApiException extends HttpException {
   static aiCredits(message: string) {
     return new ApiException(API_ERRORS.USER_LIMITS_AI_CREDITS_EXCEEDED, message);
   }
+
+  static accountStrikesExceeded(message: string) {
+    return new ApiException(API_ERRORS.ACCOUNT_STRIKES_EXCEEDED, message, HttpStatus.FORBIDDEN);
+  }
 }

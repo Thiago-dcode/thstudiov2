@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable, UnauthorizedException } from "@nestjs/common";
 import { FactoryLogService } from "@repo/backend-lib/services/log-service";
 import { Helpers } from "src/common/services/helpers.service";
 import { CreatePortfolioRequest } from "./requests/create-portfolio.request";
@@ -7,6 +7,9 @@ import { UserExtraDataService } from "../user-extra-data/user-extra-data.service
 import { RequestService } from "src/common/services/request.service";
 import { PortfolioRepository } from "./portfolio.repository";
 import { FullPortfolio } from "@repo/common-lib/types/portfolio";
+import { EventEmitter2 } from "@nestjs/event-emitter";
+import { UPDATE_USER_EXTRA_DATA_METRICS } from "@repo/common-lib/constants/constants";
+import { UpdateUserExtraDataMetricsEvent } from "../user-extra-data/events/update-user-extra-data-metrics.event";
 
 @Injectable()
 export class PortfolioService {
@@ -20,6 +23,7 @@ export class PortfolioService {
     private readonly userExtraDataService: UserExtraDataService,
     // private readonly compressService: CompressService,
     // private readonly storageService: StorageService,
+    private readonly eventEmitter: EventEmitter2,
     private readonly helpers: Helpers,
   ) { }
 
@@ -70,26 +74,47 @@ export class PortfolioService {
       throw new BadRequestException(`Slug ${request.slug} already exists`);
     }
     await this.userExtraDataService.enforceUserLimits(request.user_id, {
-      projects_count: 1,
+      portfolios_count: 1,
     });
-
-    const thumbnailPath = `users/${this.requestService.user.public_id}/portfolio/${request.slug}/thumbnail.webp`;
-    this.logger.info('Uploading thumbnail', { path: thumbnailPath });
-    await this.helpers.setAsset({
-      asset: request.thumbnail,
-      path: thumbnailPath,
-      targetSizeMb: 0.5,
-      targetQuality: 85
-    });
+    let thumbnailPath = undefined;
+    if (request.thumbnail) {
+      thumbnailPath = `users/${this.requestService.user.public_id}/portfolio/${request.slug}/thumbnail.webp`;
+      this.logger.info('Uploading thumbnail', { path: thumbnailPath });
+      await this.helpers.setAsset({
+        asset: request.thumbnail,
+        path: thumbnailPath,
+        targetSizeMb: 0.5,
+        targetQuality: 85
+      });
+    }
 
     const portfolio = await this.portfolioRepository.create({
       ...request,
       thumbnail: thumbnailPath
     });
-
-    this.logger.info('Portfolio created', { slug: request.slug });
+    this.eventEmitter.emit(UPDATE_USER_EXTRA_DATA_METRICS, new UpdateUserExtraDataMetricsEvent(request.user_id));
     return portfolio;
 
+  }
+
+  async delete(id: number) {
+
+    const portfolio = await this.portfolioRepository.getOneCompact(id);
+
+    if (!portfolio) {
+      throw new BadRequestException();
+    }
+
+    if (portfolio.user_id !== this.requestService.user.id) {
+
+      throw new UnauthorizedException();
+    }
+
+    await Promise.all([
+      portfolio.thumbnail ? this.helpers.deleteAsset(portfolio.thumbnail) : undefined,
+      this.portfolioRepository.delete(id),
+    ]);
+    this.eventEmitter.emit(UPDATE_USER_EXTRA_DATA_METRICS, new UpdateUserExtraDataMetricsEvent(portfolio.user_id));
   }
 
 }

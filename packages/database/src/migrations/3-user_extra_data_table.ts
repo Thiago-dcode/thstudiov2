@@ -30,10 +30,20 @@ const up = async () => {
     Column.smallInteger('ai_credits_consumed', {
       default: 0,
     }),
-    Column.timestamp('next_ai_credits_reset',{
+    Column.timestamp('next_ai_credits_reset', {
+      default: "NOW()"
+    }),
+    Column.timestamp('last_ai_credits_reset', {
       default: 'NOW()'
     }),
-    Column.timestamp('last_ai_credits_reset',{
+
+    Column.smallInteger('account_strikes', {
+      default: 0,
+    }),
+    Column.timestamp('next_strike_reset', {
+      default: "NOW()"
+    }),
+    Column.timestamp('last_strike_reset', {
       default: 'NOW()'
     }),
     Column.foreignKey('user_id', 'users', 'id', {

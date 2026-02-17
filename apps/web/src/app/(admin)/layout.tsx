@@ -9,6 +9,7 @@ import MediaProvider from "@/modules/media/providers/media.provider";
 import { UploadMediaModal } from "@/modules/media/components/upload-media-modal";
 import { UserMetricsProvider } from "@/modules/users/providers/user-metrics.provider";
 import { PortfolioProvider } from "@/modules/portfolios/providers/create-update-portfolio.provider";
+import { UserAccountBannedModal } from "@/modules/users/components/user-account-banned-modal";
 const AdminLayout = async ({ children }: { children: ReactNode }) => {
   const userAuth = await userSession();
   if (!userAuth) {
@@ -19,20 +20,21 @@ const AdminLayout = async ({ children }: { children: ReactNode }) => {
     <MainNavProvider>
       <UserMetricsProvider userId={userAuth.id}>
         <MediaProvider>
-        <PortfolioProvider userId={userAuth.id}>
-          <UploadMediaModal/>
-          <div className="flex size-full items-center justify-between ">
-            <AdminHeader />
-            <main className="size-full flex flex-col items-start justify-start  ">
-              <TopNav />
+          <PortfolioProvider userId={userAuth.id}>
+            <UserAccountBannedModal />
+            <UploadMediaModal />
+            <div className="flex size-full items-center justify-between ">
+              <AdminHeader />
+              <main className="size-full flex flex-col items-start justify-start  ">
+                <TopNav />
 
-              <div className="max-w-[1920px] flex w-full justify-start h-full overflow-y-scroll">   {children}</div>
+                <div className="max-w-[1920px] flex w-full justify-start h-full overflow-y-scroll">   {children}</div>
 
-            </main>
+              </main>
 
-          </div>
+            </div>
           </PortfolioProvider>
-          </MediaProvider>
+        </MediaProvider>
       </UserMetricsProvider>
     </MainNavProvider>
 

@@ -15,7 +15,7 @@ import { Spinner } from "@repo/ui/components/shadcn/spinner"
 import { LogOut } from "lucide-react"
 import { useMainNav } from "@/lib/providers/main-nav.provider"
 
-export const Logout = () => {
+export const LogoutDialog = () => {
     const router = useRouter()
     const { shrinked } = useMainNav();
     const [open, setOpen] = useState(false);

@@ -20,6 +20,11 @@ class MediaService extends BaseService {
             body
         });
     }
+    async delete(id: number): Promise<ApiResponse<void>> {
+        return await this.fetchApi.delete({
+            resource: `/${id}`,
+        });
+    }
 }
 
 export default new MediaService();

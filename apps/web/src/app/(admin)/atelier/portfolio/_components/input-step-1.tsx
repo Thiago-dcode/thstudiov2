@@ -11,8 +11,9 @@ const ThumbnailInput = () => {
     const { files } = useInputFile();
 
     const { formData, handleSetFormData, deleteInputErrorProperty, inputErrors, isPending,currentPortfolio } = usePortfolio();
+    console.log("CURRENT PORTFOLIO",currentPortfolio);
     // Prioritize formData.thumbnail (persists across remounts) over files from context (resets on remount)
-    const { previewUrls } = usePreviewUrls({ files: formData?.thumbnail || files || undefined });
+    const { previewUrls } = usePreviewUrls({ files: files || undefined });
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -72,6 +73,7 @@ const ThumbnailInput = () => {
         checkSlugAvailability,
         isCheckingSlugAvailability,
         isSlugAvailable,
+        currentPortfolio,
         isPending
     } = usePortfolio();
 
@@ -142,7 +144,7 @@ const ThumbnailInput = () => {
         if (isCheckingSlugAvailability) {
             return <p className="text-sm text-muted-foreground">Checking availability...</p>;
         }
-        if (typeof isSlugAvailable === 'boolean') {
+        if (typeof isSlugAvailable === 'boolean' && currentPortfolio?.slug !== formData.slug ) {
             if (isSlugAvailable) {
                 return <p className="text-sm text-green-600">✓ This slug is available</p>;
             } else {

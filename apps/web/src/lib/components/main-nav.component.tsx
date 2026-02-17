@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useMainNav } from "../providers/main-nav.provider"
 import { ReactNode, useEffect, useState } from "react";
 import { Box, Grid, Home, Info, LayoutDashboard, Settings } from "lucide-react";
-import { Logout } from "@/app/(admin)/__components/logout";
+import { LogoutDialog } from "@/app/(admin)/__components/logout-dialog";
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
 
 const routes: {
@@ -81,7 +81,7 @@ if(!isClient) return <Spinner/>
 
         
         </nav>
-        <div className="border-t w-full flex items-center justify-center ">  <Logout/></div>
+        <div className="border-t w-full flex items-center justify-center ">  <LogoutDialog/></div>
        </div>
     );
 }

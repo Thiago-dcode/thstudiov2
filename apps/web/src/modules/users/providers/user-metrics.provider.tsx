@@ -3,6 +3,7 @@
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction"
 import { getUserMetricsAction } from "@/modules/users/server-actions/get-user-metrics.action"
 import { UserMetrics } from "@repo/common-lib/types/user"
+import { MAX_ACCOUNT_MONTHLY_STRIKES } from "@repo/common-lib/constants/constants"
 import { useContext, createContext, ReactNode, useState, useEffect, useRef, useMemo } from "react"
 
 // Context type
@@ -15,6 +16,7 @@ type UserMetricsContextType = {
     refresh: () => Promise<void>,
     success: boolean,
     aiCreditsInfo: { consumed: number; total: number } | null
+    isUserAccountBanned: boolean
 }
 
 const UserMetricsContext = createContext<UserMetricsContextType | null>(null)
@@ -85,6 +87,11 @@ export const UserMetricsProvider = ({
         return { consumed, total };
     }, [metrics]);
 
+    const isUserAccountBanned = useMemo(() => {
+        if (!metrics?.extra_data) return false;
+        return metrics.extra_data.account_strikes >= MAX_ACCOUNT_MONTHLY_STRIKES;
+    }, [metrics])
+
     return (
         <UserMetricsContext.Provider value={{ 
             metrics, 
@@ -94,7 +101,8 @@ export const UserMetricsProvider = ({
             cleanErrors, 
             refresh, 
             success,
-            aiCreditsInfo
+            aiCreditsInfo,
+            isUserAccountBanned
         }}>
             {children}
         </UserMetricsContext.Provider>

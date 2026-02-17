@@ -1,19 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { OnEvent } from '@nestjs/event-emitter';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { LLMService } from '@repo/backend-lib/services/llm-service/base';
-import { LlmTokensUsageRepository } from './llm-tokens-usage.repository';
-import { LlmTokensUsageEvent } from './events/llm-tokens-usage.event';
-import { LLM_TOKENS_USAGE_EVENT, UPDATE_USER_EXTRA_DATA_METRICS } from '@repo/common-lib/constants/constants';
+import { LLM_TOKENS_USAGE_EVENT, MEDIA_MODERATION_EVENT } from '@repo/common-lib/constants/constants';
 import { openAiLLMConfig } from 'src/config/llm';
 import { FactoryLogService } from '@repo/backend-lib/services/log-service';
-import { GetMediaSeoRequest } from './requests/get-media-seo.request';
-import { UpdateUserExtraDataMetricsEvent } from '../user-extra-data/events/update-user-extra-data-metrics.event';
-import { MediaService } from '../media/media.service';
 import { MediaSeoFields } from '@repo/common-lib/types/media';
+import { ContentModerationFields } from '@repo/common-lib/types/ai';
+import { MODERATION_SEVERITY, MODERATION_ACTION, getActionFromSeverity } from '@repo/common-lib/constants/enums';
+import { LlmTokensUsageEvent } from './events/llm-tokens-usage.event';
+import { MediaModerationEvent } from './events/media-moderation.event';
 import { Helpers } from 'src/common/services/helpers.service';
-import { AddressService } from '../addresses/address.service';
-import { COUNTRY_TO_LANGUAGES } from '@repo/common-lib/constants/enums';
 
 @Injectable()
 export class AiService {
@@ -28,34 +24,19 @@ export class AiService {
 
   constructor(
     private readonly llmService: LLMService,
-    private readonly llmTokensUsageRepository: LlmTokensUsageRepository,
     private readonly eventEmitter: EventEmitter2,
-    private readonly mediaService: MediaService,
-    private readonly addressService: AddressService
-  ) {
-    // Helpers available for future use (caching, etc.)
-  }
+  ) { }
 
   /** Generate SEO JSON for a media image */
-  public async getMediaSeo(request: GetMediaSeoRequest) {
+  public async getMediaSeo(mediaUrl: string, language: string, meta: { media_id: number; user_id: number }) {
     try {
-      const [imageUrl,userAddress] = await Promise.all([
-        this.mediaService.getAsset(request.media_id),
-        this.addressService.findOneByUser(request.user_id),
-        this.llmService.setup()
-      ]);
-
-      let language = 'English';
-
-      if(userAddress && userAddress.country_code){
-       language = COUNTRY_TO_LANGUAGES[userAddress.country_code.toLowerCase()] || 'English';
-      }
+      await this.llmService.setup();
 
       // Expected JSON structure with validation rules:
       // - seo_title: ≤60 chars, concise and descriptive
       // - seo_description: ≤160 chars, accurate image summary
       // - seo_alt: ≤125 chars, accessibility-focused
-      // - seo_filename: ≤150 chars, lowercase, use hyphens instead of spaces, only letters, numbers, "-" and "_"
+      // - seo_filename: ≤100 chars, lowercase, use hyphens instead of spaces, only letters, numbers, "-" and "_"
       const EXPECTED_JSON: MediaSeoFields = { "seo_title": "", "seo_description": "", "seo_alt": "", "seo_filename": "" }
       const result = await this.llmService.complete({
         messages: [
@@ -75,14 +56,14 @@ export class AiService {
         - seo_title: ≤60 chars, concise and descriptive
         - seo_description: ≤160 chars, accurate image summary
         - seo_alt: ≤125 chars, accessibility-focused
-        - seo_filename: ≤150 chars, lowercase, use hyphens instead of spaces, only letters, numbers, "-" and "_"
+        - seo_filename: ≤100 chars, lowercase, use hyphens instead of spaces, only letters, numbers, "-" and "_"
         - All text content (seo_title, seo_description, seo_alt, seo_filename) must be written in ${language}
         Base all fields on the visual content only. Ignore filename and URL.`
         
               },
               {
                 type: 'image_url' as const,
-                image_url: { url: imageUrl }
+                image_url: { url: mediaUrl }
               }
             ]
           }
@@ -125,8 +106,8 @@ export class AiService {
         this.logger
           .name('get-media-seo')
           .warn('AI returned invalid JSON', {
-            media_id: request.media_id,
-            user_id: request.user_id,
+            media_id: meta.media_id,
+            user_id: meta.user_id,
             response_text: result.text,
             error: err instanceof Error ? err.message : 'Unknown error'
           });
@@ -140,7 +121,7 @@ export class AiService {
           new LlmTokensUsageEvent({
             tokens: result.usage.totalTokens,
             model: openAiLLMConfig.model,
-            user_id: request.user_id,
+            user_id: meta.user_id,
             usage_type: 'GENERATE_MEDIA_SEO',
             matches_expected_response: matchesExpectedResponse,
           }),
@@ -150,8 +131,8 @@ export class AiService {
       this.logger
         .name('get-media-seo')
         .info('Successfully generated media SEO', {
-          media_id: request.media_id,
-          user_id: request.user_id,
+          media_id: meta.media_id,
+          user_id: meta.user_id,
           matches_expected_response: matchesExpectedResponse,
           tokens_used: result.usage?.totalTokens,
           seo_fields_generated: {
@@ -176,44 +157,258 @@ export class AiService {
         .channel('ai/error')
         .name('get-media-seo')
         .error(
-          `Failed to generate media SEO for media_id [${request.media_id}] and user [${request.user_id}] - ${error instanceof Error ? error.message : 'Unknown error'}`,
+          `Failed to generate media SEO for media_id [${meta.media_id}] and user [${meta.user_id}] - ${error instanceof Error ? error.message : 'Unknown error'}`,
           error,
         );
       throw error;
     }
   }
 
-  @OnEvent(LLM_TOKENS_USAGE_EVENT)
-  async handleLlmTokensUsageEvent(event: LlmTokensUsageEvent) {
+  /** Moderate media content to determine if it is allowed */
+  public async moderateContent(mediaUrl: string, meta: { media_id: number | null; user_id: number }) {
     try {
+      await this.llmService.setup();
 
-      if (!event?.usage) {
+      const EXPECTED_JSON: ContentModerationFields = {
+        is_allowed: true,
+        severity: MODERATION_SEVERITY.SAFE,
+        content_type: 'unknown',
+        categories: {
+          sexual_content: false,
+          nudity: false,
+          minor: false,
+          csam: false,
+          violence: false,
+          graphic_violence: false,
+          hate_symbols: false,
+          self_harm: false,
+          illegal_activity: false,
+        },
+        action: MODERATION_ACTION.ALLOW,
+        reason: '',
+      };
+
+      const result = await this.llmService.complete({
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a professional content moderation and child-safety system. Your top priority is detecting CSAM (Child Sexual Abuse Material) and any exploitation of minors. Output valid JSON only. No extra text.'
+          },
+          {
+            role: 'user',
+            content: [
+              {
+                type: 'text' as const,
+                text: `Analyze the image and return valid JSON with exactly these fields:
+        ${JSON.stringify(EXPECTED_JSON)}
+
+        ═══════════════════════════════════════════
+        SEVERITY SCALE (0–10)
+        ═══════════════════════════════════════════
+        0      – Safe. No issues.
+        1 – 2  – Minimal. Mild suggestive content, artistic nudity (paintings, sculptures).
+        3 – 4  – Low. Partial nudity (boudoir), mild violence in art/historical context.
+        5 – 6  – Moderate. Explicit but legal adult content, graphic artistic violence.
+        7 – 8  – High. Extreme explicit content, glorified realistic violence, hate promotion.
+        9      – Severe. Exploitation, abuse depiction, extreme illegal content.
+        10     – Critical. CSAM detected — child sexual abuse material.
+
+        ═══════════════════════════════════════════
+        ACTION (based on severity)
+        ═══════════════════════════════════════════
+        "allow"          – severity 0–3. Safe to publish.
+        "age_restrict"   – severity 4–6. Requires age-gate / sensitive content screen.
+        "remove"         – severity 7–8. Auto-remove, warn user.
+        "ban_and_report" – severity 9–10. Suspend account, report to authorities (NCMEC).
+
+        ═══════════════════════════════════════════
+        content_type (one of)
+        ═══════════════════════════════════════════
+        "photograph" | "painting" | "illustration" | "digital_art" | "mixed_media" | "unknown"
+
+        ═══════════════════════════════════════════
+        CATEGORY GUIDELINES
+        ═══════════════════════════════════════════
+
+        CSAM / MINORS (absolute zero-tolerance rule):
+        - If ANY person appears to be under 18 AND nudity, sexualization, or exploitation is present → csam = true, minor = true, is_allowed = false, severity = 10, action = "ban_and_report"
+        - If age is uncertain but nudity/sexualization is present → assume minor = true, severity ≥ 9
+        - AI-generated / cartoon / anime depictions of minors in sexual context → same as real CSAM
+        - Any ambiguity involving a minor + sexual context must be escalated (severity ≥ 9)
+
+        SEXUAL CONTENT:
+        - Explicit sexual acts (adults) → severity 7–8, action = "remove"
+        - Suggestive poses, boudoir photography, partial nudity → severity 4–5, action = "age_restrict"
+        - Artistic nudity (paintings, sculptures, fine art) → severity 1–2, action = "allow"
+
+        VIOLENCE:
+        - Non-graphic violence in artistic or historical context → severity 1–3
+        - Realistic or glorified violence with visible suffering → severity 7–8
+        - Visible gore, exposed organs, excessive blood → severity 8
+
+        HATE SYMBOLS:
+        - Historical or educational depiction → severity 1–2
+        - Promotional or glorifying depiction → severity 7–8
+
+        SELF HARM:
+        - Artistic metaphor → severity 2–3
+        - Instructional or explicit depiction → severity 7–8
+
+        ILLEGAL ACTIVITY:
+        - Artistic depiction → severity 2–3
+        - Instructional or promotional → severity 7–8
+        - Exploitation of any kind → severity 9+
+
+        ═══════════════════════════════════════════
+        DECISION RULES
+        ═══════════════════════════════════════════
+        - is_allowed = true ONLY when severity ≤ 6
+        - is_allowed = false when severity ≥ 7
+        - When in doubt about minors, ALWAYS escalate (higher severity)
+        - When in doubt about other content, allow but use a higher severity
+        - reason: ≤120 chars, neutral explanation in English
+        - severity and action MUST be consistent with each other
+
+        Base the decision ONLY on visible image content.
+        Ignore filename, metadata, and URL.
+        Return valid JSON only.`
+              },
+              {
+                type: 'image_url' as const,
+                image_url: { url: mediaUrl }
+              }
+            ]
+          }
+        ],
+        temperature: 0.1
+      });
+
+      // Parse JSON response, handling markdown code blocks if present
+      let moderationData: Partial<ContentModerationFields> = {};
+      let matchesExpectedResponse = false;
+
+      try {
+        // Extract JSON from markdown code blocks if present
+        let jsonText = result.text.trim();
+
+        // Remove markdown code block syntax if present
+        if (jsonText.startsWith('```')) {
+          jsonText = jsonText.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
+        }
+
+        // Parse the JSON
+        const parsed = JSON.parse(jsonText);
+
+        // Clamp severity to integer 0–10
+        const rawSeverity = typeof parsed.severity === 'number'
+          ? Math.min(MODERATION_SEVERITY.CRITICAL, Math.max(MODERATION_SEVERITY.SAFE, Math.round(parsed.severity)))
+          : MODERATION_SEVERITY.SAFE;
+
+        const csam = !!parsed.categories?.csam;
+
+        // Force CRITICAL + ban_and_report when CSAM is flagged
+        const finalSeverity = csam ? MODERATION_SEVERITY.CRITICAL : rawSeverity;
+        const finalAction = csam
+          ? MODERATION_ACTION.BAN_AND_REPORT
+          : (parsed.action || getActionFromSeverity(rawSeverity));
+        const finalIsAllowed = csam
+          ? false
+          : (typeof parsed.is_allowed === 'boolean' ? parsed.is_allowed : finalSeverity <= 6);
+
+        // Map and validate the fields
+        moderationData = {
+          is_allowed: finalIsAllowed,
+          severity: finalSeverity as ContentModerationFields['severity'],
+          content_type: parsed.content_type || 'unknown',
+          categories: {
+            sexual_content: !!parsed.categories?.sexual_content,
+            nudity: !!parsed.categories?.nudity,
+            minor: !!parsed.categories?.minor,
+            csam: csam,
+            violence: !!parsed.categories?.violence,
+            graphic_violence: !!parsed.categories?.graphic_violence,
+            hate_symbols: !!parsed.categories?.hate_symbols,
+            self_harm: !!parsed.categories?.self_harm,
+            illegal_activity: !!parsed.categories?.illegal_activity,
+          },
+          action: finalAction,
+          reason: parsed.reason || '',
+        };
+
+        // Check if response matches expected format
+        matchesExpectedResponse = typeof parsed.is_allowed === 'boolean'
+          && typeof parsed.severity === 'number'
+          && !!parsed.categories;
+      } catch (err) {
         this.logger
-          .name('llm-tokens-usage')
-          .warn(`${LLM_TOKENS_USAGE_EVENT} - Event received without usage data`, event);
-        return;
+          .name('moderate-content')
+          .warn('AI returned invalid JSON', {
+            media_id: meta.media_id,
+            user_id: meta.user_id,
+            response_text: result.text,
+            error: err instanceof Error ? err.message : 'Unknown error'
+          });
+        // Default to allowed if parsing fails
+        moderationData = { ...EXPECTED_JSON };
       }
 
-      const usage = await this.llmTokensUsageRepository.create(event.usage);
-      this.logger
-        .name('llm-tokens-usage')
-        .info(
-          `${LLM_TOKENS_USAGE_EVENT} - Usage recorded for user [${event.usage.user_id}]`,
-          usage,
+      // Emit event to track LLM tokens usage
+      if (result.usage?.totalTokens) {
+        this.eventEmitter.emit(
+          LLM_TOKENS_USAGE_EVENT,
+          new LlmTokensUsageEvent({
+            tokens: result.usage.totalTokens,
+            model: openAiLLMConfig.model,
+            user_id: meta.user_id,
+            usage_type: 'MODERATE_MEDIA_CONTENT',
+            matches_expected_response: matchesExpectedResponse,
+          }),
         );
+      }
 
+      this.logger
+        .name('moderate-content')
+        .info('Successfully moderated content', {
+          media_id: meta.media_id,
+          user_id: meta.user_id,
+          is_allowed: moderationData.is_allowed,
+          severity: moderationData.severity,
+          action: moderationData.action,
+          content_type: moderationData.content_type,
+          csam_detected: moderationData.categories?.csam,
+          matches_expected_response: matchesExpectedResponse,
+          tokens_used: result.usage?.totalTokens,
+          flagged_categories: Object.entries(moderationData.categories || {})
+            .filter(([, flagged]) => flagged)
+            .map(([category]) => category),
+        });
+
+      // Emit event to record moderation result
       this.eventEmitter.emit(
-        UPDATE_USER_EXTRA_DATA_METRICS,
-        new UpdateUserExtraDataMetricsEvent(event.usage.user_id)
+        MEDIA_MODERATION_EVENT,
+        new MediaModerationEvent({
+          is_allowed: moderationData.is_allowed ?? true,
+          severity: moderationData.severity ?? MODERATION_SEVERITY.SAFE,
+          content_type: moderationData.content_type ?? 'unknown',
+          reason: moderationData.reason ?? null,
+          user_id: meta.user_id,
+        }),
       );
+
+      return {
+        moderation: moderationData as ContentModerationFields,
+        usage: result.usage,
+      };
     } catch (error) {
       this.logger
-        .name('llm-tokens-usage')
+        .channel('ai/error')
+        .name('moderate-content')
         .error(
-          `${LLM_TOKENS_USAGE_EVENT} - Failed to record usage for user [${event?.usage?.user_id || 'unknown'}] - ${error instanceof Error ? error.message : 'Unknown error'}`,
+          `Failed to moderate content for media_id [${meta.media_id}] and user [${meta.user_id}] - ${error instanceof Error ? error.message : 'Unknown error'}`,
           error,
         );
       throw error;
     }
   }
+
 }

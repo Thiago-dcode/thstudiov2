@@ -3,12 +3,9 @@ import { Inject } from '@nestjs/common';
 import { Job } from 'bullmq';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { UserExtraDataRepository } from './user-extra-data.repository';
-import { PlansService } from '../plans/plans.service';
 import { Query } from '@repo/database/facades';
 import { Media } from '@repo/common-lib/types/media';
 import { FactoryLogService } from '@repo/backend-lib/services/log-service';
-import { MailService } from '@repo/backend-lib/services/mail-service';
-import { UserAiCreditsEndedMail } from './mails/user-metrics-ended';
 import {
   USER_METRICS_QUEUE,
   JOB_COMPUTE_USER_METRICS,
@@ -22,9 +19,6 @@ export class UserExtraDataProcessor extends WorkerHost {
 
   constructor(
     private readonly userExtraDataRepository: UserExtraDataRepository,
-    private readonly planService: PlansService,
-    private readonly mailService: MailService,
-    private readonly userAiCreditsEndedMail: UserAiCreditsEndedMail,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {
     super();
@@ -67,7 +61,7 @@ export class UserExtraDataProcessor extends WorkerHost {
           : 0;
       const media_count = media.length;
 
-      const [projects_count, portfolios_count, services_count, clients_count, ai_credits_consumed] =
+      const [projects_count, portfolios_count, services_count, clients_count, ai_credits_consumed, account_strikes] =
         await Promise.all([
           Query.table('projects')
             .softDeletes(true)
@@ -86,10 +80,18 @@ export class UserExtraDataProcessor extends WorkerHost {
             .where('user_id', '=', userId)
             .count(),
           // Count successful AI requests (1 credit = 1 successful request)
+          // Skip internal usage types (e.g. MODERATE_MEDIA_CONTENT)
           Query.table('llm_tokens_usage')
             .where('user_id', '=', userId)
             .where('created_at', '>', extraData.last_ai_credits_reset)
             .where('matches_expected_response', '=', true)
+            .where('usage_type', '!=', 'MODERATE_MEDIA_CONTENT')
+            .count(),
+          // Count moderation violations since last strike reset
+          Query.table('media_moderations')
+            .where('user_id', '=', userId)
+            .where('is_allowed', '=', false)
+            .where('created_at', '>', extraData.last_strike_reset)
             .count(),
         ]);
 
@@ -101,29 +103,13 @@ export class UserExtraDataProcessor extends WorkerHost {
         services_count,
         clients_count,
         ai_credits_consumed,
+        account_strikes,
       };
 
+
+
+
       await this.userExtraDataRepository.updateByUserId(userId, metrics);
-
-      const currentPlan = await this.planService.findUserActivePlan(userId);
-      const totalAiCredits = extraData.ai_credits + currentPlan.ai_credits;
-
-      // Send user email when AI credits are exhausted
-      if (ai_credits_consumed >= totalAiCredits) {
-        const user = await Query.table('users')
-          .select(['email', 'username'])
-          .where('id', '=', userId)
-          .first<{ email: string; username: string }>();
-
-        if (user) {
-          await this.mailService.send(
-            this.userAiCreditsEndedMail.setUser(user),
-          );
-          log.info(`AI credits ended email sent to user ${userId}`);
-        }
-      }
-
-
       log.info(`Metrics updated for user ${userId}`, metrics);
       return metrics;
     } catch (error) {

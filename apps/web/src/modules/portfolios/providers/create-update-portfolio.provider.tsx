@@ -15,7 +15,7 @@ import { toast } from "@repo/ui/sonner"
 
 type PortfolioFormData = Partial<
   Omit<CreatePortfolioInputWithFile, 'media'> & {
-    media?: Omit<MediaPortfolio, 'position'>[];
+    media?: MediaPortfolio[];
   }
 >;
 
@@ -23,12 +23,12 @@ type PortfolioContextType = {
   userId: number;
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => Promise<void>;
   // `media` is overridden in this provider to be `Media[]` for UI purposes.
-  handleSetFormData: (key: keyof CreatePortfolioInputWithFile, value: string | File | number | Media[]) => void;
+  handleSetFormData: (key: keyof CreatePortfolioInputWithFile, value: string | File | number | MediaPortfolio[]) => void;
   handleStep: (direction: 'prev' | 'next') => void;
   currentStep: number;
   MAX_STEPS: number;
   formData: PortfolioFormData;
-  mediaSelected: Omit<MediaPortfolio, 'position'>[];
+  mediaSelected: MediaPortfolio[];
   handlePushMediaSelected: (media: Media) => void;
   handleRemoveMediaSelected: (mediaId: number) => void;
   inputErrors: Record<string, string> | undefined;
@@ -86,14 +86,16 @@ export const PortfolioProvider = ({
 
   const setPortfolio = useCallback((portfolio: FullPortfolio) => {
     setCurrentPorfolio(portfolio);
+    setCurrentStep(1);
     setFormData({
       user_id: portfolio.user_id,
       title: portfolio.title,
       slug: portfolio.slug,
       description: portfolio.description ?? undefined,
-      media: portfolio.media,
+      media: portfolio.media.sort((a,b)=>a.position - b.position),
     });
   }, []);
+
   const [currentStep, setCurrentStep] = useState(1);
 
   const idTimeOut = useRef<NodeJS.Timeout>(null);
@@ -156,7 +158,7 @@ export const PortfolioProvider = ({
   });
 
   const checkSlugAvailability = useCallback(async () => {
-    if (!formData || !formData.slug || isPendingSlugExists) return;
+    if (!formData || !formData.slug || isPendingSlugExists || formData.slug === currentPortfolio?.slug) return;
     if (idTimeOut.current) clearTimeout(idTimeOut.current);
     idTimeOut.current = setTimeout(() => {
       cleanResult();
@@ -189,7 +191,8 @@ export const PortfolioProvider = ({
   const handlePushMediaSelected = useCallback((m: Media) => {
     const current = formData.media ?? [];
     if (current.some((x) => x.id === m.id)) return;
-    handleSetFormData('media', [...current, m]);
+    const media: MediaPortfolio = { ...m, position: current.length + 1 };
+    handleSetFormData('media', [...current, media]);
   }, [formData.media, handleSetFormData]);
 
   const handleRemoveMediaSelected = useCallback((mediaId: number) => {
@@ -220,7 +223,7 @@ export const PortfolioProvider = ({
   }, [currentStep, formData, currentPortfolio]);
 
   const canSubmit = useMemo(() => {
-    return (currentStep === MAX_STEPS && firstStepIsCompleted  && (formData.media?.length || formData.collections?.length))? true : false
+    return (currentStep === MAX_STEPS && firstStepIsCompleted && (formData.media?.length || formData.collections?.length)) ? true : false
   }, [currentStep, formData])
 
 
@@ -238,7 +241,7 @@ export const PortfolioProvider = ({
     // Reset local state
     setFormData({ user_id: userId });
     setCurrentStep(1);
-
+    setCurrentPorfolio(undefined);
     // Reset action state (errors/result)
     reset();
     cleanErrors();

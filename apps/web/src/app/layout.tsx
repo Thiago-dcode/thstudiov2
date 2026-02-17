@@ -4,7 +4,7 @@ import { Toaster } from "@repo/ui/components/shadcn/sonner"
 import { ReactElement } from "react";
 import { Roboto } from 'next/font/google'
 import { cn } from "@repo/ui/lib/utils";
- 
+
 const roboto = Roboto({
   subsets: ['latin'],
 })
@@ -20,9 +20,9 @@ export default function RootLayout({
   children: ReactElement;
 }>) {
   return (
-    <html className={cn("dark",roboto.className)} lang="en">
+    <html className={cn("dark", roboto.className)} lang="en">
       <body className=" w-screen h-screen flex  flex-col items-center justify-start">
-          {children}
+        {children}
         <Toaster />
       </body>
     </html>

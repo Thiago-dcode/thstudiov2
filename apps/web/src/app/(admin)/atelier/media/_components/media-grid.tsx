@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Media } from "@repo/common-lib/types/media";
 import { EditMediaCard } from "./edit-media-card";
 import { useMedia } from "@/modules/media/providers/media.provider";
@@ -26,9 +26,10 @@ type MediaGridProps = {
 };
 
 export function MediaGrid({ media, username }: MediaGridProps) {
-  const { mediaPendingToUpdate, handleUploadUpdates, isLoading, generateManySeoMedia } = useMedia();
+  const [currentMedia, setCurrentMedia] = useState(media);
+  const { mediaPendingToUpdate, handleUploadUpdates, isLoading, generateManySeoMedia, completed } = useMedia();
   const { canSelect, selectedMedia, selectionCount, setCanSelect, clearSelection } = useSelectMedia()
-  const { aiCreditsInfo,refresh } = useUserMetrics();
+  const { aiCreditsInfo, refresh } = useUserMetrics();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isGenerateSeoDialogOpen, setIsGenerateSeoDialogOpen] = useState(false);
 
@@ -51,6 +52,13 @@ export function MediaGrid({ media, username }: MediaGridProps) {
     await generateManySeoMedia(Object.values(selectedMedia));
     refresh()
   }
+
+  const handleRemoveCurrentMedia = (mediaId:number)=>{
+
+    setCurrentMedia(prev=>prev.filter(m=>m.id!==mediaId))
+
+  }
+
 
   const pendingCount = mediaPendingToUpdate.length;
 
@@ -143,11 +151,11 @@ export function MediaGrid({ media, username }: MediaGridProps) {
           </Button>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {media.map((item) => {
+          {currentMedia.map((item) => {
 
-            if (!canSelect) return <EditMediaCard key={`media-card-${item.id}`} media={item} username={username} />
+            if (!canSelect) return <EditMediaCard key={`media-card-${item.id}`} media={item} username={username} onDeleted={handleRemoveCurrentMedia} />
 
-            return <SelectableMedia key={`media-selectable-${item.id}`} media={item}><EditMediaCard key={item.id} media={item} username={username} /> </SelectableMedia>
+            return <SelectableMedia key={`media-selectable-${item.id}`} media={item}><EditMediaCard key={item.id} media={item} username={username} onDeleted={handleRemoveCurrentMedia} /> </SelectableMedia>
           })}
         </div>
       </div>

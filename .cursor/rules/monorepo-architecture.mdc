@@ -1,0 +1,345 @@
+---
+alwaysApply: true
+description: Monorepo architecture boundaries, shared types/schemas contract, DB collision prevention, queues, and moderation/strikes rules.
+---
+
+# 🧠 Monorepo Architecture Rules
+
+This repository follows a strict modular architecture.  
+All code must respect boundaries between apps and packages.
+
+Project structure:
+
+- apps/api → NestJS backend
+- apps/web → Next.js frontend
+- packages/ui → Reusable UI components (design system)
+- packages/database → Custom ORM & database entry point
+- packages/common-lib → Shared cross-platform utilities
+- packages/backend-lib → Backend-only shared logic
+- packages/frontend-lib → Frontend-only shared logic
+
+---
+
+# 🔒 1. Architecture Boundaries (STRICT)
+
+## apps/api
+- Must NOT import from:
+  - apps/web
+  - packages/frontend-lib
+  - packages/ui
+- Can import:
+  - packages/database
+  - packages/common-lib
+  - packages/backend-lib
+
+## apps/web
+- Must NOT import from:
+  - apps/api
+  - packages/backend-lib
+- Can import:
+  - packages/ui
+  - packages/common-lib
+  - packages/frontend-lib
+
+## packages/ui
+- Pure UI components only
+- No business logic
+- No API calls
+- No database logic
+- No environment access
+- Must be reusable
+- Must follow global design system
+
+Before creating a new component:
+→ ALWAYS check if it already exists in packages/ui
+
+## packages/database
+- Single source of truth for database access
+- All DB logic must go here
+- apps/api must not bypass this layer
+
+## packages/common-lib
+- Cross-platform pure utilities
+- No framework-specific code
+- No side effects
+- **Single source of truth for shared types** between `apps/web` and `apps/api`
+  - All shared **types/interfaces** must live in `packages/common-lib/src/types/`
+  - All shared **schemas** must live in `packages/common-lib/src/schemas/`
+  - Avoid creating duplicated “web-only” vs “api-only” versions of the same domain type
+  - If a smaller shape is needed, prefer `Pick/Omit` from the shared type (e.g. `CompactUser`)
+
+## packages/backend-lib
+- Backend business logic
+- Services, domain logic
+- No direct DB access (must use database package)
+
+## packages/frontend-lib
+- Frontend domain logic
+- Hooks, formatters, state helpers
+- No API route definitions
+
+---
+
+# 🎨 2. UI / UX Consistency Rules (VERY IMPORTANT)
+
+UI consistency is mandatory.
+
+Global styles are defined in:
+
+packages/ui/src/styles/globals.css
+
+Before:
+- Adding new colors
+- Adding spacing values
+- Adding typography styles
+- Creating new button variants
+- Creating new layout patterns
+
+→ ALWAYS check globals.css first.
+
+Do not introduce:
+- Random Tailwind values
+- Inline hardcoded colors
+- Arbitrary spacing
+- New font sizes outside system
+
+Follow existing:
+- Color palette
+- Radius scale
+- Shadow system
+- Spacing rhythm
+- Typography hierarchy
+
+If a new design token is required:
+- It must be added to globals.css
+- It must follow the existing naming convention
+
+---
+
+# 🧩 3. Component Design Standards
+
+All UI components must:
+
+- Be composable
+- Be accessible (ARIA when necessary)
+- Support dark mode if applicable
+- Avoid inline styles
+- Avoid magic numbers
+- Use design tokens
+- Be responsive by default
+
+Never duplicate components.
+
+If extending behavior:
+- Prefer composition over modification
+- Avoid breaking existing API
+
+---
+
+# 🧠 4. Clean Code Principles
+
+- No duplicated logic
+- No circular dependencies
+- No cross-layer leaks
+- Keep files small and focused
+- Prefer pure functions
+- Explicit return types
+- Avoid `any`
+- Strict TypeScript always
+- **No hardcoded important values** (thresholds, statuses, tokens, enums, app-wide rules)
+  - Prefer constants/enums from shared sources:
+    - `packages/common-lib/src/constants/constants.ts`
+    - `packages/common-lib/src/constants/enums.ts`
+  - API-only constants live in:
+    - `apps/api/src/common/utils/constants.ts`
+  - When adding a new “important” constant, put it in the right constants file (don’t inline magic numbers/strings)
+
+Folder structure must reflect domain boundaries.
+
+---
+
+# 🧪 5. Backend Rules (NestJS)
+
+- Use dependency injection properly
+- No business logic inside controllers
+- Controllers → thin
+- Services → contain logic
+- DTOs must validate input
+- Never trust frontend input
+
+---
+
+# ⚡ 6. Frontend Rules (Next.js)
+
+- Use server components when possible
+- Client components only when necessary
+- No direct fetch logic inside UI components
+- Keep pages thin
+- Separate layout from business logic
+
+## Server Actions & `useHandleAction` Hook (PRIORITY)
+
+When calling **server actions** from client components, **always prefer** the `useHandleAction` hook:
+
+→ `apps/web/src/modules/auth/hooks/useHandleAction.ts`
+
+This hook provides out-of-the-box:
+- `isPending` state management
+- `errors` / `inputErrors` extraction from `ActionReturn`
+- `success` boolean
+- `handleSubmit` (for forms with `FormData`) and `handleAction` (for programmatic calls)
+- `beforeAction` / `afterAction` lifecycle callbacks
+- `reset`, `cleanErrors`, `deleteInputErrorProperty` helpers
+
+### Usage patterns
+
+**Form-based action (with `FormData`):**
+```ts
+const { handleSubmit, isPending, errors } = useHandleAction({
+  action: loginServerAction,
+  afterAction: async (result) => {
+    if (result.data) router.push('/dashboard');
+  },
+});
+```
+
+**Programmatic action (no form):**
+```ts
+const { handleAction, isPending, success, reset } = useHandleAction({
+  action: async () => {
+    return await createPortfolioAction(payload);
+  },
+  afterAction: async (result) => {
+    if (result.errors) result.errors.forEach((e) => toast.error(e));
+    else if (result.data) toast.success("Created!");
+  },
+  beforeAction: async () => { reset(); },
+});
+```
+
+### Rules
+- Do **NOT** manually manage `isPending` / error state when a server action is involved — use this hook.
+- The hook is generic: `useHandleAction<InputType, ResponseType>`.
+- For simple delete/void actions, use `handleAction` (no `FormData` needed).
+- Combine with `ActionReturn<T, K>` from `@repo/common-lib/types/response`.
+
+---
+
+# 🛡 7. Security & Moderation
+
+- All uploads validated on backend
+- Never trust MIME type only
+- Strip EXIF metadata
+- Moderation must happen before public exposure
+- Logs must be preserved for moderation decisions
+
+---
+
+# 🧭 8. Naming Conventions
+
+- Clear domain-based naming
+- No generic names like utils.ts
+- No index files hiding architecture intent
+- Prefer explicit exports
+
+---
+
+# 🚫 9. Forbidden Patterns
+
+- Business logic inside UI components
+- Direct DB calls from controllers
+- Hardcoded design values
+- Cross-app imports
+- Side effects inside shared libs
+- Massive components (>300 lines without reason)
+
+---
+
+# 🏗 10. When Creating New Code
+
+Before adding new code:
+
+1. Check if similar logic exists
+2. Check correct package location
+3. Check architectural boundaries
+4. Check UI style consistency
+5. Ensure no duplication
+6. Keep design system consistent
+
+---
+
+# 🗄️ 11. Database + Schema + Types Contract (MANDATORY)
+
+This repo treats **DB migrations**, **schemas**, and **types** as a single contract.
+
+## Source of truth
+- **Migrations** live in: `packages/database/src/migrations/`
+- **DB table schemas** live in: `packages/common-lib/src/schemas/`
+- **Domain/types for API usage** live in: `packages/common-lib/src/types/`
+
+## Rules
+- Every new table/column added in a migration MUST be reflected in:
+  - a corresponding schema file in `packages/common-lib/src/schemas/`
+  - a corresponding type file in `packages/common-lib/src/types/`
+- Naming must match across all 3 layers (table name, column names, property names).
+- Avoid “mystery” fields in types that don’t exist in DB.
+- Avoid using `any`. Prefer explicit types and `Pick/Omit` for compact shapes.
+
+## Repository pattern
+- Access to DB tables should be centralized in **repositories** under `apps/api/src/v1/modules/**`.
+- Controllers must NOT query DB directly.
+- Services should prefer repositories over raw queries.
+- **Processors/metrics aggregations** may use `Query.table(...)` for counts/sums when it’s purely read/aggregate logic, but should still keep it contained and well-typed.
+- For multi-table joins, follow the repo’s collision strategy (explicit joined schemas + minimal aliasing): `docs/COLLISION-PREVENTION-GUIDE.md`
+
+---
+
+# 🧠 12. AI / Events / Queues Pattern (BullMQ)
+
+We prefer **event → queue → processor** for AI and other side-effect workloads.
+
+## Rules
+- Services emit events (via `EventEmitter2`), they don’t do heavy work inline.
+- Processors (`@Processor(...)`) are responsible for:
+  - persisting usage/moderation records
+  - retries/backoff configuration
+  - triggering follow-up events (e.g. metrics update)
+- Avoid circular DI by extracting orchestration into dedicated modules when needed.
+- Use unique `jobId`s when dedupe would cause missed updates.
+
+## Canonical patterns implemented
+- LLM usage tracking: event → `AI_QUEUE` → `AiProcessor` persists usage → emits metrics update
+- Media moderation tracking: event → `AI_QUEUE` → `AiProcessor` persists moderation → emits metrics update
+
+---
+
+# 🛡 13. Moderation + Strikes (Security-Critical)
+
+## Moderation
+- Moderation is a **pre-publication** requirement for uploads.
+- We store moderation decisions in a dedicated table (e.g. `media_moderations`) and compute strikes from it.
+- Severity is an integer scale **0–10** where **10 indicates CSAM** (critical).
+- Actions must derive from severity and CSAM detection must force the strictest outcome.
+
+## Strikes enforcement
+- Strike enforcement is applied via a global guard.
+- Prefer blocking **mutating** requests while still allowing safe GET reads when desired.
+- Thresholds live in `packages/common-lib/src/constants/constants.ts` (e.g. `MAX_ACCOUNT_MONTHLY_STRIKES`).
+
+---
+
+# 🎯 Main Principle
+
+This is a clean architecture monorepo.
+
+Every layer has a responsibility.
+Every package has a boundary.
+UI must be consistent.
+No shortcuts.
+
+If unsure where something belongs:
+→ Prefer domain separation over convenience.
+
+Clean architecture > speed.
+Long-term maintainability > short-term hacks.
+

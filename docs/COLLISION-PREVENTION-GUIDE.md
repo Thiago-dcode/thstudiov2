@@ -134,6 +134,111 @@ private formatUserSession(
    - Use intersection only when tables have NO overlapping column names
    - Otherwise, define the complete type explicitly
 
+## 🧩 Real Example from This Repo: Portfolios + Media Join
+
+This codebase uses the same collision-prevention pattern for multi-joins like:
+
+- `portfolios` (main table)
+- `portfolio_media` (join table)
+- `media` (joined table)
+
+### Collisions we must handle
+
+When selecting from `portfolios` + `media`, these columns **collide**:
+
+- `id`
+- `title`
+- `thumbnail`
+- `user_id`
+
+So we only alias those colliding columns from `media` using a short prefix (`m_`).
+
+### 1) Define explicit “full join” schema (in `packages/common-lib/src/schemas`)
+
+```typescript
+// ✅ GOOD: main table keeps original keys; only colliding joined columns are prefixed
+export type PortfolioFullSchema = PortfolioSchema & {
+  // From portfolio_media (no collisions with portfolios here)
+  media_id: number;
+  position: number;
+
+  // From media (only collisions prefixed with m_)
+  m_id: number;           // COLLISION: id
+  m_title?: string | null; // COLLISION: title
+  m_thumbnail?: string | null; // COLLISION: thumbnail
+  m_user_id: number;      // COLLISION: user_id
+
+  // Non-colliding media columns (no prefix needed)
+  shape?: EnumType<'MEDIA_SHAPE'> | null;
+  seo_alt?: string | null;
+  seo_title?: string | null;
+  seo_description?: string | null;
+  seo_filename: string;
+};
+```
+
+### 2) Select columns with minimal aliasing (in `apps/api/src/v1/modules/**/repository.ts`)
+
+```typescript
+private readonly FULL_COLUMNS = [
+  // portfolios columns (no aliases)
+  ...this.COLUMNS,
+
+  // join table (no collisions)
+  'portfolio_media.media_id',
+  'portfolio_media.position',
+
+  // media (only colliding columns aliased)
+  'media.id as m_id',                 // COLLISION: id
+  'media.thumbnail as m_thumbnail',   // COLLISION: thumbnail
+  'media.title as m_title',           // COLLISION: title
+  'media.user_id as m_user_id',       // COLLISION: user_id
+
+  // media non-colliding columns (no alias needed)
+  'media.shape',
+  'media.seo_alt',
+  'media.seo_filename',
+  'media.seo_description',
+  'media.seo_title',
+] as const;
+```
+
+### 3) Format into the public API type (in the repository formatter)
+
+```typescript
+private formatFullPortfolio(rows: PortfolioFullSchema[]): FullPortfolio {
+  // ... build media map ...
+  return {
+    id: first.id,
+    slug: first.slug,
+    title: first.title,
+    thumbnail: first.thumbnail,
+    user_id: first.user_id,
+    media: [
+      {
+        id: row.m_id,
+        title: row.m_title,
+        thumbnail: row.m_thumbnail,
+        seo_alt: row.seo_alt,
+        seo_filename: row.seo_filename,
+        seo_description: row.seo_description,
+        seo_title: row.seo_title,
+        shape: row.shape,
+        // position comes from the join table
+        position: row.position,
+      },
+    ],
+    collections: [],
+  };
+}
+```
+
+### Why this is the “clean” approach
+
+- You keep **schemas/types in `packages/common-lib`** so both `apps/api` and `apps/web` share the exact contract.
+- You alias **only** what collides, so queries stay readable.
+- The formatter becomes self-documenting: `m_id` clearly means “media.id”.
+
 ## 🔍 How to Verify No Collisions
 
 Run this check on your schema type:

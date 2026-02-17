@@ -19,8 +19,11 @@ export const CreateOrUpdatePortfolio = ({ defaultPortfolio }: {
     const { handleSubmit, isPending, success, currentStep, canGoNextStep, canSubmit, MAX_STEPS, inputErrors, clear, handleStep, setPortfolio, currentPortfolio } = usePortfolio();
 
     useEffect(() => {
-        if (defaultPortfolio && !currentPortfolio) {
+        if (defaultPortfolio && currentPortfolio?.id !== defaultPortfolio.id) {
             setPortfolio(defaultPortfolio);
+        }
+        if (!defaultPortfolio && currentPortfolio) {
+            clear();
         }
     }, [defaultPortfolio, setPortfolio, currentPortfolio]);
 

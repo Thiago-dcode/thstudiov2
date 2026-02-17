@@ -1,7 +1,5 @@
 export const VIEW_ENGINE = 'ejs';
 
-export const CREATE_USER_STORAGE_REQUEST = 'create.user-storage-request';
-
 export const VALIDATION_ERROR_STATUS = [
   // 1xx Informational
   100, 101, 102, 103,

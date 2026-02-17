@@ -125,7 +125,13 @@ export default function InputStep2() {
         const newIndex = mediaItems.indexOf(String(over.id));
         if (oldIndex === -1 || newIndex === -1) return;
         // Reorder selected media and persist it in the provider (single source of truth).
-        handleSetFormData('media', arrayMove(mediaSelected, oldIndex, newIndex));
+        handleSetFormData('media', arrayMove(mediaSelected, oldIndex, newIndex).map((m, i) => {
+
+            return {
+                ...m,
+                position: i + 1
+            }
+        }));
     }
 
 
@@ -334,7 +340,7 @@ export default function InputStep2() {
                                             )}
                                         >
                                             <img
-                                                src={m.thumbnail || m.url}
+                                                src={m.thumbnail || undefined}
                                                 alt={m.title || ""}
                                                 className="w-full h-full object-cover"
                                             />

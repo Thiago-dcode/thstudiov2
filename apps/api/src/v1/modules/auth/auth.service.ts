@@ -47,7 +47,7 @@ export class AuthService {
     private readonly passwordRecoveryMail: PasswordRecoveryMail,
     private readonly passwordRecoveryAttemptsService: PasswordRecoveryAttemptsService,
     private readonly eventEmitter: EventEmitter2,
-  ) {}
+  ) { }
   async register(registerRequest: RegisterRequest) {
     const user = await this.userRepository.create({
       ...registerRequest,
@@ -61,7 +61,7 @@ export class AuthService {
     });
 
     this.eventEmitter.emit(NEW_USER_EVENT, new NewUserEvent(user));
-    return {...result.user, need_twofa:true};
+    return { ...result.user, need_twofa: true };
   }
   async login(authLoginRequest: LoginRequest): Promise<UserAuth | UserTwofa> {
     const user = await this.userRepository.findOneByColumnWithSecrets(
@@ -71,6 +71,7 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
+
     const isPasswordValid = await compare(
       authLoginRequest.password,
       user.password,
@@ -85,7 +86,7 @@ export class AuthService {
       ip_address: this.requestService?.ip_address || '-',
     });
     return result.need_2fa
-      ?  {...result.user,token:null, need_twofa:true}
+      ? { ...result.user, token: null, need_twofa: true }
       : await this.handleLogin(user, result.user_auth_device);
   }
   async verify2fa(verify2faRequest: Verify2faRequest) {

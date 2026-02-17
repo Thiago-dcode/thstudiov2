@@ -31,7 +31,7 @@ function MediaUploadContent() {
     const [error, setError] = useState<string>();
     const [globalCompressionLevel, setGlobalCompressionLevel] = useState<EnumType<'COMPRESSION_LEVEL'>>(DEFAULT_COMPRESSION_LVL);
     const { mediaPendingToCreate, updateMediaUpload, setMediaUploads } = useMedia();
-    const {metrics} = useUserMetrics();
+    const { metrics } = useUserMetrics();
     const allow_media_compression = metrics?.active_plan.allow_media_compression;
     const currentCount = mediaPendingToCreate?.length || 0;
     const isMaxReached = currentCount >= MAX_FILES;
@@ -73,7 +73,7 @@ function MediaUploadContent() {
                                 <div className="flex items-center justify-between mb-1.5">
                                     <div className="flex items-center gap-2">
                                         <span className="text-sm font-medium text-text">Global Compression</span>
-                                        <InfoTooltip 
+                                        <InfoTooltip
                                             content={
                                                 <div className="space-y-2">
                                                     <p className="font-medium">Compression Level</p>
@@ -84,7 +84,7 @@ function MediaUploadContent() {
                                                         This setting applies to all uploaded files. You can adjust individual files using the sliders below.
                                                     </p>
                                                 </div>
-                                            } 
+                                            }
                                         />
                                         <span className="text-xs text-text-muted bg-fg-2 px-2 py-0.5 rounded-md">
                                             All files
@@ -113,12 +113,12 @@ function MediaUploadContent() {
                                         const compressionLvlSelected = COMPRESSION_LVLS[e[0]]
                                         if (!compressionLvlSelected) return;
                                         setGlobalCompressionLevel(compressionLvlSelected)
-                                        setMediaUploads(mediaPendingToCreate.map(mu=>{
+                                        setMediaUploads(mediaPendingToCreate.map(mu => {
                                             return {
                                                 ...mu,
-                                                input:{
+                                                input: {
                                                     ...mu.input,
-                                                    compression_level:compressionLvlSelected
+                                                    compression_level: compressionLvlSelected
                                                 }
                                             }
                                         }))

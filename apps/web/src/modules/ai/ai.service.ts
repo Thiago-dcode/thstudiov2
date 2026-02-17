@@ -1,6 +1,7 @@
 import { fetchApi } from "@/lib/facade/fetchApi";
 import { BaseService } from "@/lib/services/base.service";
 import { GetMediaSeoInput, GetMediaSeoResponse } from "@repo/common-lib/types/ai";
+import { Media } from "@repo/common-lib/types/media";
 import { ApiResponse } from "@repo/common-lib/types/response";
 
 class AiService extends BaseService {
@@ -8,7 +9,7 @@ class AiService extends BaseService {
         super(fetchApi(), 'ai');
     }
 
-    async getMediaSeo(body?: GetMediaSeoInput): Promise<ApiResponse<GetMediaSeoResponse>> {
+    async getMediaSeo(body?: GetMediaSeoInput): Promise<ApiResponse<Media>> {
         return await this.fetchApi.post({
             resource: 'media/seo',
             body

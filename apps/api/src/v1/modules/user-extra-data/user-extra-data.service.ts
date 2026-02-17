@@ -6,6 +6,7 @@ import {
   UPDATE_USER_EXTRA_DATA_METRICS,
   USER_METRICS_QUEUE,
   JOB_COMPUTE_USER_METRICS,
+  MAX_ACCOUNT_MONTHLY_STRIKES,
 } from '@repo/common-lib/constants/constants';
 import { UpdateUserExtraDataMetricsEvent } from './events/update-user-extra-data-metrics.event';
 import { Helpers } from 'src/common/services/helpers.service';
@@ -43,6 +44,18 @@ export class UserExtraDataService {
   }
 
   /**
+   * Throws if the user has reached the monthly strikes limit.
+   */
+  async enforceUserStrikes(userId: number) {
+    const extraData = await this.findOneByUserId(userId);
+    if (extraData.account_strikes >= MAX_ACCOUNT_MONTHLY_STRIKES) {
+      throw ApiException.accountStrikesExceeded(
+        `Account suspended due to repeated policy violations. Strikes: ${extraData.account_strikes}/${MAX_ACCOUNT_MONTHLY_STRIKES}`,
+      );
+    }
+  }
+
+  /**
    * Checks if user constraints are within their plan limits.
    * @param userId - The user ID to check constraints for
    * @param toCheck - Constraints to validate
@@ -58,7 +71,8 @@ export class UserExtraDataService {
       enforceCompressionLevel?: boolean;
       projects_count?: number;
       portfolios_count?: number;
-      enforceAiCredists?: boolean;
+      enforceAiCredits?: boolean;
+      enforceUserStrikes?:boolean;
     },
   ) {
     const [userExtraData, currentPlan] = await Promise.all([
@@ -66,10 +80,14 @@ export class UserExtraDataService {
       this.planService.findUserActivePlan(userId),
     ]);
 
-    const { size, portfolios_count, projects_count, enforceCompressionLevel, storageRequests, enforceAiCredists } =
+    const { size, portfolios_count, projects_count, enforceCompressionLevel, storageRequests, enforceAiCredits, enforceUserStrikes } =
       toEnforce;
-
-    if (size) {
+    if (enforceUserStrikes && userExtraData.account_strikes >= MAX_ACCOUNT_MONTHLY_STRIKES) {
+      throw ApiException.accountStrikesExceeded(
+        `Account suspended due to repeated policy violations. Strikes: ${userExtraData.account_strikes}/${MAX_ACCOUNT_MONTHLY_STRIKES}`,
+      );
+    }
+    if (size && currentPlan.max_media_size !== -1) {
       const newSize = userExtraData.media_size + size;
       if (newSize > currentPlan.max_media_size) {
         throw ApiException.mediaSize(
@@ -85,14 +103,14 @@ export class UserExtraDataService {
         );
       }
     }
-    if (enforceAiCredists) {
+    if (enforceAiCredits) {
       const userAiCredits = userExtraData.ai_credits + currentPlan.ai_credits;
       if (userExtraData.ai_credits_consumed >= userAiCredits) {
         throw ApiException.aiCredits(`User consumed all ai credits, consumed:${userExtraData.ai_credits_consumed} of ${userAiCredits}`)
       }
 
     }
-    if (storageRequests) {
+    if (storageRequests && currentPlan.limit_write_storage_per_day !== -1) {
       const currentRequests =
         await this.userRequestService.getTodaysRequestCount(userId);
       const newStorageRequests = currentRequests + storageRequests;
@@ -103,8 +121,10 @@ export class UserExtraDataService {
         );
       }
     }
-    if (portfolios_count) {
+    if (portfolios_count && currentPlan.max_portfolios !== -1) {
+     
       const newProjectsCount = userExtraData.portfolios_count + portfolios_count;
+      console.log("ENFORCING PORTFOLIO_COUNT",newProjectsCount,currentPlan.max_portfolios)
       if (newProjectsCount > currentPlan.max_portfolios) {
         throw ApiException.maxProjects(
           `Projects limit exceeded. Current: ${userExtraData.portfolios_count}, Adding: ${portfolios_count}, Max allowed: ${currentPlan.max_projects}`,
@@ -112,7 +132,7 @@ export class UserExtraDataService {
       }
     }
     // -1 means no limits
-    if (projects_count && currentPlan.max_clients !== -1) {
+    if (projects_count && currentPlan.max_projects !== -1) {
       const newProjectsCount = userExtraData.projects_count + projects_count;
       if (newProjectsCount > currentPlan.max_projects) {
         throw ApiException.maxProjects(
@@ -128,7 +148,7 @@ export class UserExtraDataService {
       JOB_COMPUTE_USER_METRICS,
       { userId: data.userId },
       {
-        jobId: `metrics-${data.userId}`,
+        jobId: `metrics-${data.userId}-${Date.now()}`,
         priority: 10,
         removeOnComplete: true,
         attempts: 3,

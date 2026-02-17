@@ -27,21 +27,30 @@ export const INITIATE_SUBCRIPTION_COOKIE = 'x-app-initiate_subscription' as cons
 
 // ==================== APP CONFIGURATION ====================
 export const FUNNEL_LAST_STEP = 5;
-export  const ALLOWED_IMAGE_FILE_TYPES:MimeTypes[] = ['image/jpeg', 'image/png', 'image/webp'];
+export const ALLOWED_IMAGE_FILE_TYPES:MimeTypes[] = ['image/jpeg', 'image/png', 'image/webp'];
+export const MAX_ACCOUNT_MONTHLY_STRIKES = 3;
+
 
 // ==================== EVENTS ====================
 export const NEW_USER_EVENT = 'new.user' as const;
 export const WEBHOOK_STRIPE_EVENT = 'webhook.stripe.event' as const;
 export const UPDATE_USER_EXTRA_DATA_METRICS = 'update-user-extra-data-metrics.event' as const;
 export const LLM_TOKENS_USAGE_EVENT = 'llm.tokens.usage' as const;
+export const MEDIA_MODERATION_EVENT = 'media.moderation' as const;
+export const CREATE_USER_STORAGE_REQUEST = 'create.user-storage-request' as const;
 
 // ==================== QUEUES (BullMQ) ====================
 export const USER_METRICS_QUEUE = 'user-metrics' as const;
 export const STRIPE_WEBHOOKS_QUEUE = 'stripe-webhooks' as const;
+export const AI_QUEUE = 'ai' as const;
+export const STORAGE_REQUESTS_QUEUE = 'storage-requests' as const;
 
 // ==================== JOBS (BullMQ) ====================
 export const JOB_COMPUTE_USER_METRICS = 'compute-user-metrics' as const;
 export const JOB_STRIPE_WEBHOOK = 'stripe-webhook' as const;
+export const JOB_RECORD_LLM_USAGE = 'record-llm-usage' as const;
+export const JOB_RECORD_MEDIA_MODERATION = 'record-media-moderation' as const;
+export const JOB_CREATE_STORAGE_REQUEST = 'create-storage-request' as const;
 
 // ==================== CACHE KEYS ====================
 // Plans

@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseIntPipe,
@@ -71,4 +72,9 @@ export class MediaController {
     return await this.mediaService.update(id, updateMediaRequest);
   }
 
+  @Delete(':id')
+  async delete(@Param('id', ParseIntPipe) id: number) {
+    await this.mediaService.delete(id);
+    return { message: 'Media deleted successfully' };
+  }
 }

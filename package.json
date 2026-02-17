@@ -15,6 +15,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "dbcli": "turbo run dbcli",
     "clean": "rimraf --glob \"apps/*/dist\" \"apps/*/.next\" \"packages/*/dist\"",
+    "redis:flush": "docker exec thstudio-redis redis-cli FLUSHALL",
     "fresh": "pnpm clean && pnpm build"
   },
   "devDependencies": {

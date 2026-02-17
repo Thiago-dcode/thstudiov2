@@ -13,6 +13,9 @@ export type BaseUserWithSecrets = BaseUser & {
   twofa_code?: string;
 };
 
+// CompactUser: minimal user info (id, email, username)
+export type CompactUser = Pick<UserSchema, 'id' | 'email' | 'username'>;
+
 // User extends the schema with all fields except timestamps, password, and address_id
 export type User = Omit<UserSchema, 'created_at' | 'updated_at' | 'password' | 'address_id'>;
 export type FindUserRequest = {

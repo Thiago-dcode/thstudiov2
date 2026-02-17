@@ -15,7 +15,6 @@ import {
 } from '@repo/common-lib/types/portfolio';
 import { DbException } from '@repo/database/exceptions';
 import { RequestService } from 'src/common/services/request.service';
-import { MediaSchema } from '@repo/common-lib/schemas/media';
 import { MediaPortfolio } from '@repo/common-lib/types/media';
 
 @Injectable()
@@ -36,7 +35,8 @@ export class PortfolioRepository extends BaseRepository {
     'portfolio_media.media_id',
     'portfolio_media.position',
     'media.id as m_id',
-    'media.thumbnail',
+    'media.thumbnail as m_thumbnail',
+    'media.shape',
     'media.title as m_title',
     'media.seo_alt',
     'media.seo_filename',
@@ -59,14 +59,21 @@ export class PortfolioRepository extends BaseRepository {
       .select(this.FULL_COLUMNS)
       .where('slug', '=', slug)
       .where('user_id', '=', userId)
-      .join('id', 'portfolio_media', 'portfolio_id','LEFT')
-      .join('portfolio_media.media_id', 'media', 'id','LEFT')
-      .join('id', 'portfolio_collection', 'portfolio_id','LEFT')
-      .join('portfolio_collection.collection_id', 'collections', 'id','LEFT')
+      .join('id', 'portfolio_media', 'portfolio_id', 'LEFT')
+      .join('portfolio_media.media_id', 'media', 'id', 'LEFT')
+      .join('id', 'portfolio_collection', 'portfolio_id', 'LEFT')
+      .join('portfolio_collection.collection_id', 'collections', 'id', 'LEFT')
       .get<PortfolioFullSchema[]>();
 
     if (!result) return null;
-    return this.formatFullPortfolio(Array.isArray(result)?result:[result]);
+    return this.formatFullPortfolio(Array.isArray(result) ? result : [result]);
+  }
+
+  async getOneCompact(id:number){
+
+    const result = await this.query().select(this.COLUMNS).where('id','=',id).first();
+
+    return result?this.formatPortfolio(result):null;
   }
 
   async slugExists(slug: string, userId: number): Promise<boolean> {
@@ -78,13 +85,15 @@ export class PortfolioRepository extends BaseRepository {
     return !!result;
   }
 
+
+
+
   async create({ media, collections, ...portfolioData }: CreatePortfolioInput): Promise<Portfolio> {
     const cols = Object.keys(portfolioData);
     const values = Object.values(portfolioData);
 
     // First create the portfolio base data
     const portfolioResult = await this.query().insertAndGet<PortfolioSchema>(cols, values);
-    console.log("PORTFOLIO", portfolioResult)
     if (!portfolioResult) {
       throw new DbException('Could not create portfolio');
     }
@@ -129,6 +138,12 @@ export class PortfolioRepository extends BaseRepository {
     return portfolioResult;
   }
 
+  async delete(id: number) {
+
+    return await this.query().where('id', '=', id).delete()
+
+  }
+
   protected async applyFilters(
     filters: PortfolioIndexRequest,
     query: QueryBuilder,
@@ -166,8 +181,9 @@ export class PortfolioRepository extends BaseRepository {
 
       mediaMap.set(row.m_id, {
         id: row.m_id,
+        title: row.m_title,
         position: row.position,
-        thumbnail: row.thumbnail,
+        thumbnail: row.m_thumbnail,
         seo_filename: row.seo_filename,
         seo_alt: row.seo_alt,
         seo_description: row.seo_description,

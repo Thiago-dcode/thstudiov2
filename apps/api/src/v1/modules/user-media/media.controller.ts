@@ -5,7 +5,7 @@ import { IsUserAuthPipe } from 'src/pipes/is-user-auth.pipe';
 
 @Controller('users')
 export class UserMediaController {
-  constructor(private readonly mediaService: MediaService) {}
+  constructor(private readonly mediaService: MediaService) { }
 
   @Get(':id/media')
   async findAll(

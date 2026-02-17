@@ -1,7 +1,7 @@
 import {
-  BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseIntPipe,
@@ -18,7 +18,7 @@ import { Public } from 'src/common/decorators/public.decorator';
 
 @Controller('portfolios')
 export class PortfolioController {
-  constructor(private readonly portfolioService: PortfolioService) {}
+  constructor(private readonly portfolioService: PortfolioService) { }
 
   @Public()
   @Get()
@@ -49,10 +49,15 @@ export class PortfolioController {
     @Body() createPortfolioRequest: CreatePortfolioRequest,
     @UploadedFile() thumbnail: Express.Multer.File,
   ) {
-    if(!thumbnail){
-      throw new BadRequestException('Thumbnail is required');
-    }
+    // if(!thumbnail){
+    //   throw new BadRequestException('Thumbnail is required');
+    // }
     createPortfolioRequest.thumbnail = thumbnail;
     return await this.portfolioService.create(createPortfolioRequest);
+  }
+
+  @Delete(':id')
+  async delete(@Param('id', ParseIntPipe) id: number) {
+    return await this.portfolioService.delete(id);
   }
 }
