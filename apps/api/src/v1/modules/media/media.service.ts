@@ -116,7 +116,6 @@ export class MediaService {
       // 4. Moderate content using the stored thumbnail
       const thumbnailUrl = await this.helpers.getAsset(thumbnailPath);
       const { moderation } = await this.aiService.moderateContent(thumbnailUrl, {
-        media_id: null, // media record not yet created
         user_id: data.user_id,
       });
 
@@ -193,6 +192,7 @@ export class MediaService {
 
       const result = await this.mediaRepository.create(mediaData);
       this.eventEmitter.emit(UPDATE_USER_EXTRA_DATA_METRICS, new UpdateUserExtraDataMetricsEvent(user.id));
+      result.thumbnail = thumbnailUrl;
       return result;
     } catch (error) {
       this.logger.error(

@@ -28,6 +28,8 @@ export class UserRepository extends BaseRepository {
     'users.twofa_enabled',
     'users.twofa_expires_at',
     'users.is_active',
+    'users.banned',
+    'users.banned_reason',
     'users.funnel_step',
   ] as const;
   private readonly COMPACT_COLUMNS: string[] = [
@@ -77,8 +79,8 @@ export class UserRepository extends BaseRepository {
   }
   async getPublicId(id: number) {
 
-    return await this.query().select(['public_id']).where('id', '=', id).where('blocked', '=', true).first<{
-      public_id: number,
+    return await this.query().select(['public_id']).where('id', '=', id).where('banned', '=', false).first<{
+      public_id: string,
     } | null>();
   }
   async findOneBy(
@@ -151,6 +153,8 @@ export class UserRepository extends BaseRepository {
       twofa_expires_at: result.twofa_expires_at,
       funnel_step: result.funnel_step,
       is_active: result?.is_active,
+      banned: result?.banned,
+      banned_reason: result?.banned_reason,
     };
   }
   private formatFullUser(result: UserSchema): User {

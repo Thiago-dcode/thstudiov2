@@ -12,7 +12,7 @@ export const deleteMediaAction = async (
 ): Promise<ActionReturn<boolean>> => {
 
     const userAuth = await userSession();
-    if(!userAuth || userAuth.id !== userId){
+    if (!userAuth || userAuth.id !== userId) {
         return {
             data: null,
             errors: ['Unauthorized'],

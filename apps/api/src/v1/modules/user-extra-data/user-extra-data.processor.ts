@@ -91,7 +91,7 @@ export class UserExtraDataProcessor extends WorkerHost {
           Query.table('media_moderations')
             .where('user_id', '=', userId)
             .where('is_allowed', '=', false)
-            .where('created_at', '>', extraData.last_strike_reset)
+            .where('created_at', '>', extraData.ban_start)
             .count(),
         ]);
 

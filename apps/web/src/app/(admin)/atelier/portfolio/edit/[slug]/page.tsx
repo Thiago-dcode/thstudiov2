@@ -3,6 +3,7 @@ import portfolioService from "@/modules/portfolios/portfolio.service";
 import { redirect, notFound } from "next/navigation";
 
 import { CreateOrUpdatePortfolio } from "../../_components/create-update-porfolio";
+import { DeletePortfolioDialog } from "../../_components/delete-portfolio-dialog";
 import { AdminPageContainer, AdminPageTitle } from "@/app/(admin)/__components/admin-page.component";
 
 type Props = {
@@ -30,7 +31,9 @@ export default async function PortfolioDetail({ params }: Props) {
 
     return (
         <AdminPageContainer>
-            <AdminPageTitle title={"Edit: " + portfolio.title} />
+            <AdminPageTitle title={"Edit: " + portfolio.title}>
+                <DeletePortfolioDialog portfolioId={portfolio.id} portfolioTitle={portfolio.title} />
+            </AdminPageTitle>
             <CreateOrUpdatePortfolio defaultPortfolio={portfolio}/>
         </AdminPageContainer>
     );

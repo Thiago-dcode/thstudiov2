@@ -165,7 +165,7 @@ export class AiService {
   }
 
   /** Moderate media content to determine if it is allowed */
-  public async moderateContent(mediaUrl: string, meta: { media_id: number | null; user_id: number }) {
+  public async moderateContent(mediaUrl: string, meta: { user_id: number }) {
     try {
       await this.llmService.setup();
 
@@ -192,7 +192,7 @@ export class AiService {
         messages: [
           {
             role: 'system',
-            content: 'You are a professional content moderation and child-safety system. Your top priority is detecting CSAM (Child Sexual Abuse Material) and any exploitation of minors. Output valid JSON only. No extra text.'
+            content: 'You are a strict, zero-tolerance content moderation and child-safety system. Your priorities: (1) detect CSAM and any exploitation of minors, (2) detect and severely penalize explicit sexual and pornographic content. You always err on the side of caution — if content is borderline, assign a HIGHER severity. Output valid JSON only. No extra text.'
           },
           {
             role: 'user',
@@ -236,10 +236,12 @@ export class AiService {
         - AI-generated / cartoon / anime depictions of minors in sexual context → same as real CSAM
         - Any ambiguity involving a minor + sexual context must be escalated (severity ≥ 9)
 
-        SEXUAL CONTENT:
-        - Explicit sexual acts (adults) → severity 7–8, action = "remove"
-        - Suggestive poses, boudoir photography, partial nudity → severity 4–5, action = "age_restrict"
-        - Artistic nudity (paintings, sculptures, fine art) → severity 1–2, action = "allow"
+        SEXUAL CONTENT (be STRICT — this is a portfolio platform, NOT an adult site):
+        - Any pornographic content, explicit sexual acts, visible genitalia in sexual context, penetration → severity 8, action = "remove"
+        - Fully nude photos (non-artistic), erotic poses, lingerie/underwear in sexual context → severity 7, action = "remove"
+        - Suggestive poses, boudoir photography, partial nudity, implied nudity → severity 5–6, action = "age_restrict"
+        - Artistic nudity ONLY in classical fine art (paintings, sculptures, museum-grade art) → severity 2–3, action = "allow"
+        - When in doubt whether content is "artistic" or "sexual", treat it as sexual and assign HIGHER severity
 
         VIOLENCE:
         - Non-graphic violence in artistic or historical context → severity 1–3
@@ -265,7 +267,8 @@ export class AiService {
         - is_allowed = true ONLY when severity ≤ 6
         - is_allowed = false when severity ≥ 7
         - When in doubt about minors, ALWAYS escalate (higher severity)
-        - When in doubt about other content, allow but use a higher severity
+        - When in doubt about sexual/pornographic content, ALWAYS assign severity ≥ 7
+        - When in doubt about other content, assign a higher severity
         - reason: ≤120 chars, neutral explanation in English
         - severity and action MUST be consistent with each other
 
@@ -343,7 +346,6 @@ export class AiService {
         this.logger
           .name('moderate-content')
           .warn('AI returned invalid JSON', {
-            media_id: meta.media_id,
             user_id: meta.user_id,
             response_text: result.text,
             error: err instanceof Error ? err.message : 'Unknown error'
@@ -369,7 +371,6 @@ export class AiService {
       this.logger
         .name('moderate-content')
         .info('Successfully moderated content', {
-          media_id: meta.media_id,
           user_id: meta.user_id,
           is_allowed: moderationData.is_allowed,
           severity: moderationData.severity,
@@ -404,7 +405,7 @@ export class AiService {
         .channel('ai/error')
         .name('moderate-content')
         .error(
-          `Failed to moderate content for media_id [${meta.media_id}] and user [${meta.user_id}] - ${error instanceof Error ? error.message : 'Unknown error'}`,
+          `Failed to moderate content for user [${meta.user_id}] - ${error instanceof Error ? error.message : 'Unknown error'}`,
           error,
         );
       throw error;

@@ -40,10 +40,13 @@ const up = async () => {
     Column.smallInteger('account_strikes', {
       default: 0,
     }),
-    Column.timestamp('next_strike_reset', {
+    Column.smallInteger('ban_times',{
+      default:0
+    }),
+    Column.timestamp('ban_lift', {
       default: "NOW()"
     }),
-    Column.timestamp('last_strike_reset', {
+    Column.timestamp('ban_start', {
       default: 'NOW()'
     }),
     Column.foreignKey('user_id', 'users', 'id', {

@@ -17,7 +17,7 @@ import { useInputFile } from "@repo/ui/contexts/file.provider"
 import { usePreviewUrls } from "@repo/ui/hooks/usePreviewUrls"
 import { ALLOWED_IMAGE_FILE_TYPES } from "@repo/common-lib/constants/constants"
 import { useMedia } from "@/modules/media/providers/media.provider"
-import { CreateMediaInputWithFile } from "@repo/common-lib/types/media"
+import { CreateMediaInputWithFile, Media } from "@repo/common-lib/types/media"
 import { useSession } from "@/lib/hooks/useSession"
 import { Slider } from "@repo/ui/components/shadcn/slider"
 import { DEFAULT_COMPRESSION_LVL, ENUMS, EnumType } from "@repo/common-lib/constants/enums"
@@ -228,7 +228,9 @@ function MediaUploadContent() {
     )
 }
 
-export function CreateMediaDialog() {
+export function CreateMediaDialog({onSuccess}:{
+    onSuccess?: (media:Media)=>void
+}) {
     const [open, setOpen] = useState(false)
     const { handleUploadInserts, isLoading, handleRemoveCompleted, addMediaUploads } = useMedia()
     const { files } = useInputFile()
@@ -293,7 +295,7 @@ export function CreateMediaDialog() {
                     </DialogClose>
                     {files?.length ? <Button onClick={async () => {
                         setOpen(false)
-                        await handleUploadInserts()
+                        await handleUploadInserts(onSuccess)
                     }} variant={'secondary'} className="w-full">Upload!</Button> : null}
                 </DialogFooter>
             </DialogContent>

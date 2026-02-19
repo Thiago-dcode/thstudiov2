@@ -9,7 +9,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ScheduleModule } from '@nestjs/schedule';
 import { PlansModule } from './v1/modules/plans/plans.module';
 import { TestModule } from './route-test/test.module';
-import { I18nModule } from 'nestjs-i18n';
+import { I18nModule, I18nJsonLoader } from 'nestjs-i18n';
 import { join } from 'path';
 import { ServicesModule } from './common/services/services.module';
 import { VIEW_ENGINE } from './common/utils/constants';
@@ -120,17 +120,16 @@ const APP_MODULES = [
       })),
     ),
     I18nModule.forRootAsync({
-      useFactory: (configService: ConfigService) => ({
+      loader: I18nJsonLoader,
+      useFactory: () => ({
         fallbackLanguage: DEFAULT_LANGUAGE,
         loaderOptions: {
           path: join(__dirname, 'i18n'),
-          watch: configService.get('app.isProduction') ?? false,
         },
         viewEngine: VIEW_ENGINE,
         disableMiddleware: true,
       }),
       resolvers: [LanguageResolver],
-      inject: [ConfigService],
     }),
     EventEmitterModule.forRoot(),
     ScheduleModule.forRoot(),

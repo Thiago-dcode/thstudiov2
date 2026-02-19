@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
   Query,
   UploadedFile,
@@ -13,6 +14,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { PortfolioService } from './portfolio.service';
 import { CreatePortfolioRequest } from './requests/create-portfolio.request';
+import { UpdatePortfolioRequest } from './requests/update-portfolio.request';
 import { IndexPortfolioRequest } from './requests/index-portfolio.request';
 import { Public } from 'src/common/decorators/public.decorator';
 
@@ -54,6 +56,17 @@ export class PortfolioController {
     // }
     createPortfolioRequest.thumbnail = thumbnail;
     return await this.portfolioService.create(createPortfolioRequest);
+  }
+
+  @Patch(':id')
+  @UseInterceptors(FileInterceptor('thumbnail'))
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updatePortfolioRequest: UpdatePortfolioRequest,
+    @UploadedFile() thumbnail: Express.Multer.File,
+  ) {
+    updatePortfolioRequest.thumbnail = thumbnail;
+    return await this.portfolioService.update(id, updatePortfolioRequest);
   }
 
   @Delete(':id')

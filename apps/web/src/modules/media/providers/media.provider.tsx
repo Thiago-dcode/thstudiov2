@@ -35,10 +35,10 @@ type MediaContextType = {
   handleRemoveCompleted: () => void;
   handleUpload: () => Promise<void>;
   handleUploadUpdates: () => Promise<void>;
-  handleUploadInserts: () => Promise<void>;
+  handleUploadInserts: (onSuccess?: (media: Media) => void) => Promise<void>;
   handleRemove: (index: number) => void;
   updateMediaUpload: (index: number, mediaUpload: UploadMedia) => void;
-  uploadSingleMedia: (index: number) => Promise<void>;
+  uploadSingleMedia: (index: number, onSuccess?: (media: Media) => void) => Promise<void>;
   generateSeoSingleMedia: (media: Media) => ReturnType<typeof getMediaSeoAction>;
   generateManySeoMedia: (media: Media[]) => Promise<void>;
   deleteSingleMedia: (media: Media, onSuccess?: (media: Media) => Promise<void>) => Promise<Awaited<ReturnType<typeof deleteMediaAction>>>;
@@ -234,7 +234,7 @@ export const MediaProvider = ({
   // ============================================================================
 
   const isLoading = useMemo(() => mediaUploads.some(m => m.pending), [mediaUploads]);
-  const completed: UploadMedia[] = useMemo(() => mediaUploads.filter(m => isMediaCompleted(m)), [mediaUploads]);
+  const completed: UploadMedia[] = useMemo(() => mediaUploads.filter(m => isMediaCompleted(m)), [mediaUploads]);isMediaCompleted
   const isCompleted = useMemo(() => !mediaUploads.some(m => !isMediaCompleted(m)), [mediaUploads]);
   const mediaPendingToUpdate = useMemo(() => mediaUploads.filter(m => !!m.id && !isMediaCompleted(m)), [mediaUploads]);
   const mediaPendingToCreate = useMemo(() => mediaUploads.filter(m => !m.id && !isMediaCompleted(m)), [mediaUploads]);
@@ -243,7 +243,7 @@ export const MediaProvider = ({
   // Action Handlers
   // ============================================================================
 
-  const uploadSingleMedia = async (index: number) => {
+  const uploadSingleMedia = async (index: number, onSuccess?: (media: Media) => void) => {
     const media = mediaUploads[index]
     if (!media) return;
     // Check current state before proceeding
@@ -275,6 +275,9 @@ export const MediaProvider = ({
         // Success - store the media data
         if (media.onSuccess) {
           await media.onSuccess(result.data)
+        }
+        if (onSuccess) {
+          onSuccess(result.data);
         }
         updateUploadByIndex(index, {
           pending: false,
@@ -358,7 +361,6 @@ export const MediaProvider = ({
 
         return result;
       }
-
 
       const updatedUpload: UploadMedia = {
         ...baseUpload,
@@ -533,7 +535,7 @@ export const MediaProvider = ({
     );
 
   }
-  const handleUploadInserts = async () => {
+  const handleUploadInserts = async (onSuccess?: (media: Media) => void) => {
     if (!mediaUploads.length || isLoading) return Promise.resolve();
 
     const indicesToUpdate = mediaUploads
@@ -545,7 +547,7 @@ export const MediaProvider = ({
 
     await Promise.all(
       indicesToUpdate.map(index =>
-        uploadSingleMedia(index)
+        uploadSingleMedia(index, onSuccess)
       )
     );
 

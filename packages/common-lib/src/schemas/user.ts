@@ -15,6 +15,8 @@ export type UserSchema = {
   banner?: string;
   email_validated?: boolean;
   is_active?: boolean;
+  banned?: boolean;
+  banned_reason?: string | null;
   funnel_step: number;
   short_biography?: string;
   number_email_validations_sent?: number;

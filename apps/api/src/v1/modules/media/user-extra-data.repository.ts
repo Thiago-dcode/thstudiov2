@@ -25,8 +25,9 @@ export class UserExtraDataRepository extends BaseRepository {
     'user_extra_data.next_ai_credits_reset',
     'user_extra_data.last_ai_credits_reset',
     'user_extra_data.account_strikes',
-    'user_extra_data.next_strike_reset',
-    'user_extra_data.last_strike_reset',
+    'user_extra_data.ban_count',
+    'user_extra_data.ban_lift',
+    'user_extra_data.ban_start',
     'user_extra_data.user_id',
   ] as const;
 

@@ -1,7 +1,7 @@
 import { BaseService } from "@/lib/services/base.service";
 import { ApiResponse } from "@repo/common-lib/types/response";
 import { fetchApi } from "@/lib/facade/fetchApi";
-import { Portfolio, CreatePortfolioInputWithFile, PortfolioIndexRequest, FullPortfolio } from "@repo/common-lib/types/portfolio";
+import { Portfolio, CreatePortfolioInputWithFile, UpdatePortfolioInputWithFile, PortfolioIndexRequest, FullPortfolio } from "@repo/common-lib/types/portfolio";
 import { queryParamBuilder } from "@repo/common-lib/utils/query-builder";
 
 class PortfolioService extends BaseService {
@@ -25,6 +25,12 @@ class PortfolioService extends BaseService {
     }
     async create(body: CreatePortfolioInputWithFile): Promise<ApiResponse<Portfolio>> {
         return await this.fetchApi.post({body});
+    }
+    async update(id: number, body: UpdatePortfolioInputWithFile): Promise<ApiResponse<Portfolio>> {
+        return await this.fetchApi.patch({
+            resource: `/${id}`,
+            body
+        });
     }
     async delete(id: number): Promise<ApiResponse<void>> {
         return await this.fetchApi.delete({ resource: `/${id}` });

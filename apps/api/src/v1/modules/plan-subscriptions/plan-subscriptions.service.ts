@@ -22,6 +22,7 @@ import { LogService } from '@repo/backend-lib/services/log-service';
 import { paypal } from '@repo/backend-lib/services/payment-service/paypal';
 import { PaymentMethodsService } from '../utils/payment-methods.service';
 import { CACHE_KEY_ACTIVE_SUBSCRIPTION, CACHE_KEY_ACTIVE_PLAN } from '@repo/common-lib/constants/constants';
+import { cleanObj } from '@repo/common-lib/utils/cleanObj';
 
 @Injectable()
 export class PlanSubscriptionsService {
@@ -103,6 +104,26 @@ export class PlanSubscriptionsService {
     }
   }
 
+  async cancel(userId: number) {
+    const activeSubscription = await this.findActiveSubscription(userId);
+
+    if (activeSubscription.plan_price.plan.is_free) {
+      return activeSubscription;
+    }
+
+    if (activeSubscription.stripe_id) {
+      // Cancel at end of billing cycle, not immediately
+      await stripe.subscriptions.update(activeSubscription.stripe_id, {
+        cancel_at_period_end: true,
+      });
+    }
+    // Invalidate cache so the UI reflects the pending cancellation
+    await this.update(activeSubscription.id,{
+      auto_renewal:true,
+    })
+
+    return activeSubscription;
+  }
   async findActiveSubscription(userId: number) {
     return await this.helpers.cacheRemember(CACHE_KEY_ACTIVE_SUBSCRIPTION(userId),this.planSubscriptionsRepository.findActiveSubscription(
       userId,
@@ -286,7 +307,7 @@ export class PlanSubscriptionsService {
     };
   }
 
-  async setFreeSubscription(user: BaseUser): Promise<{
+  async setFreeSubscription(userId: number): Promise<{
     plan: Omit<FullPlan, 'translation'>;
     subscription: PlanSubscriptionSchema;
   }> {
@@ -302,7 +323,7 @@ export class PlanSubscriptionsService {
       throw new HttpException('Lifetime price not found', 500);
     }
 
-    await this.desactivateAllUserSubscriptions(user.id);
+    await this.desactivateAllUserSubscriptions(userId);
 
     const subscription =  await this.create({
       is_active: true,
@@ -313,7 +334,7 @@ export class PlanSubscriptionsService {
       next_billing_date: this.helpers.getNextBillingDate(
         lifetimePrice.billing_type,
       ),
-      user_id: user.id,
+      user_id: userId,
       stripe_id: null,
       stripe_item_id: null,
       auto_renewal: true,
@@ -393,6 +414,7 @@ export class PlanSubscriptionsService {
         CACHE_KEY_ACTIVE_PLAN(userId),
       ]);
     }
+    cleanObj(updatePlanSubscriptionDto)
     return await this.planSubscriptionsRepository.updateOne(
       id,
       updatePlanSubscriptionDto,

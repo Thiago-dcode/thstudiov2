@@ -226,7 +226,7 @@ export class WebhookProcessor extends WorkerHost {
 
     if (internalSubscription?.stripe_id === subscription.id) {
       const freeSubscription =
-        await this.planSubscriptionService.setFreeSubscription(user);
+        await this.planSubscriptionService.setFreeSubscription(user.id);
       this.logger.debug(`Setting free plan to user`, {
         freeSubscription,
       });

@@ -14,8 +14,9 @@ export type UserExtraDataSchema = {
   next_ai_credits_reset: Date;
   last_ai_credits_reset: Date;
   account_strikes: number;
-  next_strike_reset: Date;
-  last_strike_reset: Date;
+  ban_count: number;
+  ban_lift: Date;
+  ban_start: Date;
   user_id: number;
   created_at: Date;
   updated_at: Date;

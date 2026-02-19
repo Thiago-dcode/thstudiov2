@@ -4,7 +4,7 @@ import { createContext, useContext, ReactNode, useState, useMemo, useCallback, u
 import { CreatePortfolioInputWithFile, FullPortfolio } from "@repo/common-lib/types/portfolio";
 import { Media, MediaPortfolio } from "@repo/common-lib/types/media";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
-import { createPortfolioAction } from "../server-actions/create-portfolio.action";
+import { createOrUpdatePortfolioAction } from "../server-actions/create-update-portfolio.action";
 import { slugExistsAction } from "../server-actions/slug-exists.action";
 import { ActionReturn } from "@repo/common-lib/types/response";
 import { toast } from "@repo/ui/sonner"
@@ -108,26 +108,26 @@ export const PortfolioProvider = ({
         position: idx + 1,
       }));
 
-      const payload: CreatePortfolioInputWithFile = {
+      const payload: Partial<CreatePortfolioInputWithFile> = {
         title: (formData.title ?? "") as string,
         slug: (formData.slug ?? "") as string,
         description: (formData.description ?? undefined) as string | undefined,
         user_id: (formData.user_id ?? userId) as number,
-        thumbnail: formData.thumbnail as File,
+        thumbnail: formData.thumbnail ? formData.thumbnail as File : undefined,
         media: media.length ? media : undefined,
       };
 
-      return await createPortfolioAction(payload);
+      return await createOrUpdatePortfolioAction(payload, currentPortfolio);
     },
     afterAction: async (result) => {
-
 
       if (result.errors) {
         result.errors.forEach((error) => toast.error(error))
       } else if (result.data) {
-        toast.success("Portfolio created successfully")
+        clear()
+        toast.success(currentPortfolio ? "Portfolio updated successfully" : "Portfolio created successfully")
       }
-    },
+    }, 
     beforeAction: async () => {
       reset();
     }
@@ -209,7 +209,7 @@ export const PortfolioProvider = ({
     return true;
   })
   const mediaSelected = useMemo(() => {
-    return formData.media ?? [];
+    return formData.media ? formData.media.sort((a, b) => a.position - b.position):[];
   }, [formData.media]);
 
   const canGoNextStep = useMemo(() => {

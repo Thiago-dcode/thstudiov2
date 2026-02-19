@@ -6,7 +6,6 @@ import {
   UPDATE_USER_EXTRA_DATA_METRICS,
   USER_METRICS_QUEUE,
   JOB_COMPUTE_USER_METRICS,
-  MAX_ACCOUNT_MONTHLY_STRIKES,
 } from '@repo/common-lib/constants/constants';
 import { UpdateUserExtraDataMetricsEvent } from './events/update-user-extra-data-metrics.event';
 import { Helpers } from 'src/common/services/helpers.service';
@@ -44,13 +43,13 @@ export class UserExtraDataService {
   }
 
   /**
-   * Throws if the user has reached the monthly strikes limit.
+   * Throws if the user is currently banned (ban_lift in the future).
    */
   async enforceUserStrikes(userId: number) {
     const extraData = await this.findOneByUserId(userId);
-    if (extraData.account_strikes >= MAX_ACCOUNT_MONTHLY_STRIKES) {
+    if (extraData.ban_lift && new Date(extraData.ban_lift) > new Date()) {
       throw ApiException.accountStrikesExceeded(
-        `Account suspended due to repeated policy violations. Strikes: ${extraData.account_strikes}/${MAX_ACCOUNT_MONTHLY_STRIKES}`,
+        `Account banned until ${new Date(extraData.ban_lift).toISOString()}. Strikes: ${extraData.account_strikes}`,
       );
     }
   }
@@ -82,9 +81,9 @@ export class UserExtraDataService {
 
     const { size, portfolios_count, projects_count, enforceCompressionLevel, storageRequests, enforceAiCredits, enforceUserStrikes } =
       toEnforce;
-    if (enforceUserStrikes && userExtraData.account_strikes >= MAX_ACCOUNT_MONTHLY_STRIKES) {
+    if (enforceUserStrikes && userExtraData.ban_lift && new Date(userExtraData.ban_lift) > new Date()) {
       throw ApiException.accountStrikesExceeded(
-        `Account suspended due to repeated policy violations. Strikes: ${userExtraData.account_strikes}/${MAX_ACCOUNT_MONTHLY_STRIKES}`,
+        `Account banned until ${new Date(userExtraData.ban_lift).toISOString()}. Strikes: ${userExtraData.account_strikes}`,
       );
     }
     if (size && currentPlan.max_media_size !== -1) {

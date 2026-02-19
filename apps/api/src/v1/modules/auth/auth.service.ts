@@ -71,6 +71,9 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
+    if (user.banned) {
+      throw new UnauthorizedException(user.banned_reason || 'Account permanentely banned')
+    }
 
     const isPasswordValid = await compare(
       authLoginRequest.password,
@@ -96,6 +99,9 @@ export class AuthService {
     );
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
+    }
+    if (user.banned) {
+      throw new UnauthorizedException(user.banned_reason || 'Account permanently banned');
     }
     if (
       user.twofa_code !== verify2faRequest.twofa_code ||

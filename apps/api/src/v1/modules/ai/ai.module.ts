@@ -9,9 +9,11 @@ import { UserExtraDataModule } from '../user-extra-data/user-extra-data.module';
 import { LlmTokensUsageRepository } from './llm-tokens-usage.repository';
 import { MediaModerationRepository } from './media-moderation.repository';
 import { UserAiCreditsEndedMail } from '../user-extra-data/mails/user-metrics-ended';
+import { UserAccountBannedMail } from '../users/mails/user-account-banned.mail';
 import { AddressModule } from '../addresses/address.module';
 import { PlansModule } from '../plans/plans.module';
 import { UserModule } from '../users/users.module';
+import { PlanSubscriptionsModule } from '../plan-subscriptions/plan-subscriptions.module';
 import { AI_QUEUE } from '@repo/common-lib/constants/constants';
 
 @Module({
@@ -20,6 +22,7 @@ import { AI_QUEUE } from '@repo/common-lib/constants/constants';
     UserExtraDataModule,
     PlansModule,
     UserModule,
+    PlanSubscriptionsModule,
     AddressModule,
   ],
   providers: [
@@ -28,6 +31,7 @@ import { AI_QUEUE } from '@repo/common-lib/constants/constants';
     LlmTokensUsageRepository,
     MediaModerationRepository,
     UserAiCreditsEndedMail,
+    UserAccountBannedMail,
     {
       provide: LLMService,
       useFactory: () => {

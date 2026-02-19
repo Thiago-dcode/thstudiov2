@@ -143,7 +143,7 @@ export class MediaRepository extends BaseRepository {
     }
     this.requestService.pagination =
       await BaseRepository.handleOffsetPagination(query, filters);
-    query.orderBy('created_at','DESC')
+    query.orderBy('created_at', 'DESC')
     return query;
   }
 
@@ -154,7 +154,7 @@ export class MediaRepository extends BaseRepository {
       title: result.title,
       description: result.description,
       bytes: result.bytes,
-      thumbnail_bytes:result.thumbnail_bytes,
+      thumbnail_bytes: result.thumbnail_bytes,
       url: result.url,
       thumbnail: result.thumbnail,
       blocked: result.blocked,

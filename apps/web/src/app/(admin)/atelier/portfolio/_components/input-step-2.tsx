@@ -7,8 +7,7 @@ import { CreateMediaDialog } from "../../media/_components/create-media-modal"
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction"
 import { getAllUserMediaAction } from "@/modules/media/server-actions/get-all-user-media.action"
 import { usePortfolio } from "@/modules/portfolios/providers/create-update-portfolio.provider"
-import { ReactNode, useEffect, useMemo, useRef, useState } from "react"
-import { useMedia } from "@/modules/media/providers/media.provider"
+import { ReactNode, useEffect, useMemo, useState } from "react"
 import { Media } from "@repo/common-lib/types/media"
 import { Spinner } from "@repo/ui/components/shadcn/spinner"
 import { Check, X } from "lucide-react"
@@ -54,56 +53,34 @@ export default function InputStep2() {
 
     const { userId, mediaSelected, handlePushMediaSelected, handleRemoveMediaSelected, handleSetFormData } = usePortfolio();
     const [open, setOpen] = useState(false);
-    const { isCompleted } = useMedia();
-    const [mediaObj, setMediaObj] = useState<Record<number, Media>>({});
-    const media = useMemo(
-        () => Object.values(mediaObj).sort((a, b) => b.id - a.id),
-        [mediaObj]
-    );
+    const [media, setMedia] = useState<Media[]>([]);
+
     const mediaItems = useMemo(() => mediaSelected.map(m => `media-${m.id}`), [mediaSelected]);
-    const prevMedia = useRef<Media[]>([]);
-    const prevIsCompleted = useRef(false);
     const { handleAction, isPending } = useHandleAction({
         action: async () => {
 
-            const hasCache = prevMedia.current.length > 0;
-            const cacheIsSynced = hasCache && !prevMedia.current.some((m) => !mediaObj[m.id]);
-            const completedJustNow = isCompleted && !prevIsCompleted.current;
-            const canRefetch = !cacheIsSynced || completedJustNow;
-            prevIsCompleted.current = isCompleted
-
-            if (canRefetch) {
-                console.log("REFETCHING")
-                return getAllUserMediaAction(userId);
-            }
+            if (!media.length) return getAllUserMediaAction(userId);
 
             return {
-                data: prevMedia.current,
-                errors: null,
-                inputErrors: undefined,
-            };
+                data: media,
+                errors: null
+            }
 
         },
         afterAction: async (result) => {
 
             if (result.data) {
-                prevMedia.current = result.data;
-                setMediaObj(
-                    result.data.reduce((prev, m) => {
-                        prev[m.id] = m;
-                        return prev;
-                    }, {} as Record<number, Media>)
-                );
+                setMedia(result.data);
             }
         }
     });
 
     useEffect(() => {
 
-        if (open || isCompleted) {
+        if (open) {
             handleAction();
         }
-    }, [open, isCompleted])
+    }, [open])
 
     const getShapeClass = (shape?: string | null) => {
         switch (shape) {
@@ -177,7 +154,10 @@ export default function InputStep2() {
                                 )}
                             </div>
                             <FileInputProvider allowedMimeTypes={ALLOWED_IMAGE_FILE_TYPES}>
-                                <CreateMediaDialog />
+                                <CreateMediaDialog onSuccess={(media) => {
+
+                                    setMedia(prev => [media, ...prev])
+                                }} />
                             </FileInputProvider>
                         </div>
                     </DrawerHeader>

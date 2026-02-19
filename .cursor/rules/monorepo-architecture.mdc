@@ -324,7 +324,7 @@ We prefer **event → queue → processor** for AI and other side-effect workloa
 ## Strikes enforcement
 - Strike enforcement is applied via a global guard.
 - Prefer blocking **mutating** requests while still allowing safe GET reads when desired.
-- Thresholds live in `packages/common-lib/src/constants/constants.ts` (e.g. `MAX_ACCOUNT_MONTHLY_STRIKES`).
+- Thresholds live in `packages/common-lib/src/constants/constants.ts` (e.g. `STRIKES_TO_BAN`).
 
 ---
 

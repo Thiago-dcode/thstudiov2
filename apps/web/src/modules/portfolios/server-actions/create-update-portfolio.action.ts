@@ -1,0 +1,111 @@
+'use server'
+
+import { ActionReturn } from "@repo/common-lib/types/response";
+import { Portfolio, CreatePortfolioInputWithFile, UpdatePortfolioInputWithFile } from "@repo/common-lib/types/portfolio";
+import { ALLOWED_IMAGE_FILE_TYPES } from "@repo/common-lib/constants/constants";
+import { cleanObj, trimValues } from "@repo/common-lib/utils/cleanObj";
+import { MimeTypes } from "@repo/common-lib/types/general";
+import portfolioService from "../portfolio.service";
+import { getFriendlyApiErrors, getObjErrorFromZod } from "@/modules/auth/helpers";
+import { createPortfolioSchema, updatePortfolioSchema } from "../schemas/portfolio-schemas";
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
+type PortfolioActionInput = Partial<CreatePortfolioInputWithFile> & Partial<UpdatePortfolioInputWithFile>;
+
+export const createOrUpdatePortfolioAction = async (
+    input: PortfolioActionInput,
+    currentPortfolio?: Portfolio
+): Promise<ActionReturn<Portfolio, PortfolioActionInput>> => {
+    const thumbnailFile = input?.thumbnail as File | undefined;
+    const isUpdate = !!currentPortfolio;
+console.log("INPUT",input);
+    // Thumbnail is required only on create
+    if (!isUpdate && (!thumbnailFile || thumbnailFile.size === 0)) {
+        return {
+            errors: [],
+            inputErrors: { thumbnail: 'Thumbnail is required' },
+            data: null,
+        };
+    }
+
+    // Validate thumbnail if provided (both create & update)
+    if (thumbnailFile && thumbnailFile.size > 0) {
+        if (thumbnailFile.size > MAX_FILE_SIZE) {
+            return {
+                errors: [],
+                inputErrors: { thumbnail: 'Thumbnail file size must be less than 10MB' },
+                data: null,
+            };
+        }
+
+        if (!ALLOWED_IMAGE_FILE_TYPES.includes(thumbnailFile.type as MimeTypes)) {
+            return {
+                errors: [],
+                inputErrors: { thumbnail: 'Thumbnail must be an image (JPEG, PNG or WebP)' },
+                data: null,
+            };
+        }
+    }
+
+    // Prepare data
+    const rawData = {
+        ...input,
+        thumbnail: thumbnailFile,
+        description: input.description || undefined,
+    };
+
+    trimValues(rawData, { deep: true });
+
+    // Validate with appropriate schema
+    const schema = isUpdate ? updatePortfolioSchema : createPortfolioSchema;
+    const validated = schema.safeParse(rawData);
+
+    if (!validated.success) {
+        return {
+            errors: [],
+            inputErrors: getObjErrorFromZod(validated.error),
+            data: null,
+        };
+    }
+
+    cleanObj(rawData);
+
+    // Check slug availability (skip if slug unchanged on update)
+    if (rawData.slug && rawData.user_id && currentPortfolio?.slug !==rawData.slug) {
+        const slugExistsResponse = await portfolioService.slugExists(rawData.user_id, rawData.slug);
+
+        if (slugExistsResponse.error) {
+            return {
+                data: null,
+                errors: getFriendlyApiErrors(slugExistsResponse),
+            };
+        }
+
+        if (slugExistsResponse.data?.exists) {
+            return {
+                data: null,
+                errors: [],
+                inputErrors: { slug: 'Slug already exists' },
+            };
+        }
+    }
+
+    // Call create or update
+    const portfolio = isUpdate
+        ? await portfolioService.update(currentPortfolio.id, rawData as UpdatePortfolioInputWithFile)
+        : await portfolioService.create(rawData as CreatePortfolioInputWithFile);
+
+    if (portfolio.data) {
+        return {
+            data: portfolio.data,
+            errors: null,
+            inputErrors: undefined,
+        };
+    }
+
+    return {
+        data: null,
+        errors: getFriendlyApiErrors(portfolio),
+    };
+};

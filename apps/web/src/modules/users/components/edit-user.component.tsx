@@ -243,7 +243,7 @@ export const EditBanner = ({ defaultBanner }: {
     return (
         <div className="w-full flex flex-col items-center gap-2">
             <div className="w-full max-w-2xl mx-auto p-4">
-                {previewUrls?.length && (
+                {previewUrls?.length ? (
                     <div className="mt-4 flex flex-col items-center gap-2">
                         <h3 className="text-sm font-medium">Banner Preview:</h3>
                         <div className="relative w-full aspect-video overflow-hidden rounded-md border-4 border-fg-2">
@@ -254,7 +254,7 @@ export const EditBanner = ({ defaultBanner }: {
                             />
                         </div>
                     </div>
-                )}
+                ):null}
             </div>
             <FileInput onChange={() => {
                 cleanErrors()

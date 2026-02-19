@@ -141,6 +141,13 @@ export class UserService {
     return userUpdated;
   }
 
+  async banUser(userId: number, reason: string) {
+    return await this.userRepository.updateById(userId, {
+      banned: true,
+      banned_reason: reason,
+    });
+  }
+
   async remove(id: number) {
     return `This action removes a #${id} user`;
   }
@@ -166,7 +173,7 @@ export class UserService {
 
       //Handle set free plan
       const result = await this.planSubscriptionService.setFreeSubscription(
-        event.user,
+        event.user.id,
       );
       this.logService
         .name('new-user')
@@ -180,7 +187,6 @@ export class UserService {
       const extraData = await this.userExtraDataRepository.create({
         user_id: event.user.id,
         next_ai_credits_reset: nextMonth,
-        next_strike_reset: nextMonth,
       });
       this.logService
         .name('new-user')

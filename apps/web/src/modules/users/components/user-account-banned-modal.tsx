@@ -45,10 +45,10 @@ export const UserAccountBannedModal = () => {
                     <DialogTitle>Account Suspended</DialogTitle>
                     <DialogDescription className="text-xs">
                         Your account has been suspended due to policy violations.
-                        {metrics?.extra_data?.next_strike_reset && (
+                        {metrics?.extra_data?.ban_lift && (
                             <> Restrictions will be lifted on{" "}
                                 <span className="font-medium text-foreground">
-                                    {new Date(metrics.extra_data.next_strike_reset).toLocaleDateString(undefined, { dateStyle: "medium" })}
+                                    {new Date(metrics.extra_data.ban_lift).toLocaleDateString(undefined, { dateStyle: "medium" })}
                                 </span>.
                             </>
                         )}

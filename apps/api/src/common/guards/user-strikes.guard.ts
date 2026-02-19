@@ -2,7 +2,6 @@ import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { ApiException } from 'src/common/exceptions/api-exception';
 import { RequestService } from 'src/common/services/request.service';
 import { UserExtraDataService } from 'src/v1/modules/user-extra-data/user-extra-data.service';
-import { MAX_ACCOUNT_MONTHLY_STRIKES } from '@repo/common-lib/constants/constants';
 
 @Injectable()
 export class UserStrikesGuard implements CanActivate {
@@ -19,9 +18,9 @@ export class UserStrikesGuard implements CanActivate {
     if (!user) return true;
 
     const extraData = await this.userExtraDataService.findOneByUserId(user.id);
-    if (extraData.account_strikes >= MAX_ACCOUNT_MONTHLY_STRIKES) {
+    if (extraData.ban_lift && new Date(extraData.ban_lift) > new Date()) {
       throw ApiException.accountStrikesExceeded(
-        `Account suspended due to repeated policy violations. Strikes: ${extraData.account_strikes}/${MAX_ACCOUNT_MONTHLY_STRIKES}`,
+        `Account banned until ${new Date(extraData.ban_lift).toISOString()}. Strikes: ${extraData.account_strikes}`,
       );
     }
 

@@ -43,10 +43,10 @@ const up = async () => {
     ColumnBuilder.boolean('is_active', {
       default: true,
     }),
-    ColumnBuilder.boolean('blocked', {
+    ColumnBuilder.boolean('banned', {
       default: false,
     }),
-    ColumnBuilder.string('blocked_reason', 255, {
+    ColumnBuilder.string('banned_reason', 255, {
       nullable: true
     }),
     ColumnBuilder.integer('funnel_step', {
@@ -55,7 +55,6 @@ const up = async () => {
     ColumnBuilder.integer('number_email_validations_sent', {
       default: 0,
     }),
-
     ColumnBuilder.boolean('twofa_enabled', {
       default: true,
     }),

@@ -42,16 +42,19 @@ export type CreatePortfolioInputWithFile = Omit<CreatePortfolioInput, 'thumbnail
   thumbnail: File;
 };
 
-//Comming soon:
+// What users can update
+export type UpdatePortfolioInput = Partial<Omit<PortfolioSchema, InternalPortfolioFields>> & {
+  media: {
+    id: number;
+    position: number;
+  }[];
+  collections: {
+    id: number;
+    position: number;
+  }[];
+};
 
-// // What users can update
-// export type UpdatePortfolioInput = Partial<Omit<PortfolioSchema, InternalPortfolioFields>> & {
-//   media?: {
-//     id: number,
-//     position: number
-//   }[],
-//   collection?: {
-//     id: number,
-//     position: number
-//   }[],
-// };
+// For client-side update with file upload
+export type UpdatePortfolioInputWithFile = Omit<UpdatePortfolioInput, 'thumbnail'> & {
+  thumbnail?: File;
+};

@@ -13,7 +13,9 @@ import { UpdateUserExtraDataMetricsEvent } from '../user-extra-data/events/updat
 import { UserExtraDataRepository } from '../user-extra-data/user-extra-data.repository';
 import { PlansService } from '../plans/plans.service';
 import { UserAiCreditsEndedMail } from '../user-extra-data/mails/user-metrics-ended';
+import { UserAccountBannedMail } from '../users/mails/user-account-banned.mail';
 import { UserService } from '../users/users.service';
+import { PlanSubscriptionsService } from '../plan-subscriptions/plan-subscriptions.service';
 
 import { CreateLlmTokensUsageInput } from '@repo/common-lib/types/llm-tokens-usage';
 import { CreateMediaModerationInput } from '@repo/common-lib/types/media-moderation';
@@ -22,6 +24,9 @@ import {
   JOB_RECORD_LLM_USAGE,
   JOB_RECORD_MEDIA_MODERATION,
   LLM_TOKENS_USAGE_EVENT,
+  STRIKES_TO_BAN,
+  BAN_DURATION_DAYS,
+  PERMANENT_BAN_THRESHOLD,
   MEDIA_MODERATION_EVENT,
   UPDATE_USER_EXTRA_DATA_METRICS,
 } from '@repo/common-lib/constants/constants';
@@ -39,7 +44,9 @@ export class AiProcessor extends WorkerHost {
     private readonly planService: PlansService,
     private readonly mailService: MailService,
     private readonly userAiCreditsEndedMail: UserAiCreditsEndedMail,
+    private readonly userAccountBannedMail: UserAccountBannedMail,
     private readonly userService: UserService,
+    private readonly planSubscriptionsService: PlanSubscriptionsService,
     private readonly eventEmitter: EventEmitter2,
     @InjectQueue(AI_QUEUE) private readonly aiQueue: Queue,
   ) {
@@ -87,7 +94,7 @@ export class AiProcessor extends WorkerHost {
       case JOB_RECORD_LLM_USAGE:
         return await this.recordLlmUsage(job.data);
       case JOB_RECORD_MEDIA_MODERATION:
-        return await this.recordMediaModeration(job.data);
+        return await this.handleMediaModeration(job.data);
 
       default:
         throw new Error(`Job name "${job.name}" not recognized`);
@@ -151,7 +158,7 @@ export class AiProcessor extends WorkerHost {
     }
   }
 
-  private async recordMediaModeration(moderationData: CreateMediaModerationInput) {
+  private async handleMediaModeration(moderationData: CreateMediaModerationInput) {
     const log = this.logger.name('media-moderation');
     try {
       const moderation = await this.mediaModerationRepository.create(moderationData);
@@ -163,11 +170,56 @@ export class AiProcessor extends WorkerHost {
       if (moderation.severity > 7) {
         //send a email to support 
       }
+      if (!moderation.is_allowed) {
+        const extraData = await this.userExtraDataRepository.findByUserId(moderationData.user_id);
 
-      this.eventEmitter.emit(
-        UPDATE_USER_EXTRA_DATA_METRICS,
-        new UpdateUserExtraDataMetricsEvent(moderationData.user_id),
-      );
+        const totalStrikes = extraData.account_strikes + 1;
+
+        if (totalStrikes >= STRIKES_TO_BAN) {
+          const newBanCount = extraData.ban_count + 1;
+          const banStart = new Date();
+          let banLift: Date;
+
+          if (newBanCount >= PERMANENT_BAN_THRESHOLD) {
+            // Permanent ban
+            banLift = new Date('9999-12-31');
+            // Cancel the user's paid subscription
+            await this.planSubscriptionsService.cancel(moderationData.user_id);
+          } else {
+            const durationDays = BAN_DURATION_DAYS[newBanCount] ?? 3;
+            banLift = new Date(banStart);
+            banLift.setDate(banLift.getDate() + durationDays);
+          }
+
+          const bannedReason = newBanCount >= PERMANENT_BAN_THRESHOLD
+            ? 'Account permanently banned due to repeated policy violations'
+            : `Account banned for ${BAN_DURATION_DAYS[newBanCount] ?? 3} days due to repeated policy violations`;
+
+          await Promise.all([
+            this.userExtraDataRepository.updateById(extraData.id, {
+              ban_start: banStart,
+              ban_lift: banLift,
+              ban_count: newBanCount,
+            }),
+            this.userService.banUser(moderationData.user_id, bannedReason),
+          ]);
+
+          const user = await this.userService.findOneCompacted(moderationData.user_id);
+          if (user) {
+            await this.mailService.send(
+              this.userAccountBannedMail.setUser(user),
+            );
+            log.info(`Account banned email sent to user ${moderationData.user_id} (ban_count: ${newBanCount}, ban_lift: ${banLift.toISOString()})`);
+          }
+        }
+
+        this.eventEmitter.emit(
+          UPDATE_USER_EXTRA_DATA_METRICS,
+          new UpdateUserExtraDataMetricsEvent(moderationData.user_id),
+        );
+      }
+
+
 
       return moderation;
     } catch (error) {

@@ -9,6 +9,7 @@ import {
 } from '@repo/common-lib/schemas/portfolio';
 import {
   CreatePortfolioInput,
+  UpdatePortfolioInput,
   FullPortfolio,
   Portfolio,
   PortfolioIndexRequest,
@@ -65,15 +66,15 @@ export class PortfolioRepository extends BaseRepository {
       .join('portfolio_collection.collection_id', 'collections', 'id', 'LEFT')
       .get<PortfolioFullSchema[]>();
 
-    if (!result) return null;
+    if (!result || (Array.isArray(result) && result.length === 0)) return null;
     return this.formatFullPortfolio(Array.isArray(result) ? result : [result]);
   }
 
-  async getOneCompact(id:number){
+  async getOneCompact(id: number) {
 
-    const result = await this.query().select(this.COLUMNS).where('id','=',id).first();
+    const result = await this.query().select(this.COLUMNS).where('id', '=', id).first();
 
-    return result?this.formatPortfolio(result):null;
+    return result ? this.formatPortfolio(result) : null;
   }
 
   async slugExists(slug: string, userId: number): Promise<boolean> {
@@ -98,6 +99,50 @@ export class PortfolioRepository extends BaseRepository {
       throw new DbException('Could not create portfolio');
     }
 
+
+    await this.attachRelations(portfolioResult.id, {
+      media, collections
+    })
+
+    return portfolioResult;
+  }
+
+  async updateById(id: number, { media, collections, ...portfolioData }: UpdatePortfolioInput): Promise<Portfolio> {
+    const cols = Object.keys(portfolioData);
+    const values = Object.values(portfolioData) as string[];
+
+    // Update portfolio base data if any scalar fields changed
+    if (cols.length && values.length) {
+      await this.query().where('id', '=', id).update(cols, values);
+    }
+
+    // Re-attach media and collection relations in parallel
+    await this.attachRelations(id, {
+      media, collections
+    });
+
+    // Return the updated portfolio
+    const result = await this.query()
+      .select(this.COLUMNS)
+      .where('id', '=', id)
+      .first<PortfolioSchema>();
+
+    if (!result) {
+      throw new DbException('Could not update portfolio');
+    }
+
+    return this.formatPortfolio(result);
+  }
+
+  private async attachRelations(portfolioId: number, { media, collections }: {
+    media: {
+      id: number;
+      position: number;
+    }[], collections: {
+      id: number;
+      position: number;
+    }[]
+  }) {
     // Attach media and collection relations in parallel
     const attachPromises: Promise<unknown>[] = [];
 
@@ -105,14 +150,15 @@ export class PortfolioRepository extends BaseRepository {
       attachPromises.push(
         this.attach('portfolio_media', {
           modelCol: 'portfolio_id',
-          modelValue: portfolioResult.id,
+          modelValue: portfolioId,
           attachCol: 'media_id',
           valuesToAttach: media.map(m => ({
             value: m.id,
             columns: {
               'position': m.position,
             },
-          }))
+          })),
+          removePrevious: true,
         })
       );
     }
@@ -121,23 +167,21 @@ export class PortfolioRepository extends BaseRepository {
       attachPromises.push(
         this.attach('portfolio_collection', {
           modelCol: 'portfolio_id',
-          modelValue: portfolioResult.id,
+          modelValue: portfolioId,
           attachCol: 'collection_id',
           valuesToAttach: collections.map(c => ({
             value: c.id,
             columns: {
               'position': c.position,
             },
-          }))
+          })),
+          removePrevious: true,
         })
       );
     }
 
     await Promise.all(attachPromises);
-
-    return portfolioResult;
   }
-
   async delete(id: number) {
 
     return await this.query().where('id', '=', id).delete()
