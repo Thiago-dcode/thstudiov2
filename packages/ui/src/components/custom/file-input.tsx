@@ -3,11 +3,13 @@ import { useId, forwardRef } from "react"
 import { cn } from "../../lib/utils"
 import { useInputFile } from "../../contexts/file.provider"
 
-type FileInputProps = Omit<React.ComponentProps<"input">, "type">
+type FileInputProps = Omit<React.ComponentProps<"input">, "type"> & {
+    error?: string;
+}
 
 
 const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
-    ({ className, onChange, ...props }, ref) => {
+    ({ className, onChange, error, ...props }, ref) => {
         const context = useInputFile();
         const fileInputId = useId()
         const inputId = props.id || fileInputId
@@ -28,7 +30,7 @@ const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
         const fileName = fileCount === 1 ? context?.files?.[0]?.name || "" : ""
 
         return (
-            <div className="relative w-full">
+            <div className="relative w-full flex flex-col gap-1">
                 <input
                      accept={context && context.allowedMimeTypes? context.allowedMimeTypes.join(','):undefined}
                     type="file"
@@ -42,6 +44,7 @@ const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
                     htmlFor={inputId}
                     className={cn(
                         "flex h-auto min-h-12 w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed border-fg-2 bg-bg px-4 py-6 transition-colors hover:border-text/60 hover:bg-bg/80 focus-within:outline-none focus-within:border-text/80 label-file-input",
+                        error && "border-red-500",
                         className
                     )}
                 >
@@ -76,6 +79,9 @@ const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
                         )}
                     </div>
                 </label>
+                {error && (
+                    <p className="text-xs text-red-500">{error}</p>
+                )}
             </div>
         )
     }
@@ -84,4 +90,3 @@ const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
 FileInput.displayName = "FileInput"
 
 export { FileInput }
-

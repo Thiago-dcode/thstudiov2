@@ -115,7 +115,7 @@ export class UserRepository extends BaseRepository {
       .where(column, '=', value)
       .select(cols)
       .first<BaseUserSchema>();
-    if (!result) null;
+    if (!result) return null;
     return this.formatUser(result, true) as BaseUserWithSecrets;
   }
 

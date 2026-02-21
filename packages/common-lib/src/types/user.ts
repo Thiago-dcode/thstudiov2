@@ -31,6 +31,11 @@ export type UpdateUserInputWithAssets= Omit<UpdateUserInput,'avatar' | 'banner'>
 }
 
 
+export type UpdateUserPasswordInput = {
+  old_password: string;
+  new_password: string;
+};
+
 export  type UserMetrics = {
   extra_data: UserExtraData,
   active_plan:FullPlan

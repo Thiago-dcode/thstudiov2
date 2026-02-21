@@ -14,6 +14,7 @@ import { PlanSubscriptionsModule } from '../plan-subscriptions/plan-subscription
 import { PlansModule } from '../plans/plans.module';
 import { CategoriesModule } from '../categories/categories.module';
 import { AddressModule } from '../addresses/address.module';
+import { AiModule } from '../ai/ai.module';
 
 @Module({
   controllers: [UserController],
@@ -28,7 +29,7 @@ import { AddressModule } from '../addresses/address.module';
       },
     },
   ],
-  imports: [UserExtraDataModule, UserAuthDevicesModule, PlanSubscriptionsModule, PlansModule, CategoriesModule, AddressModule],
+  imports: [UserExtraDataModule, UserAuthDevicesModule, PlanSubscriptionsModule, PlansModule, CategoriesModule, AddressModule, AiModule],
   exports: [UserService],
 })
 export class UserModule {}

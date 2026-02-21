@@ -1,4 +1,4 @@
-import { HttpException, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { UpdateUserRequest } from './requests/update-user.request';
 import { NewUserEvent } from './events/new-user.event';
 import { OnEvent } from '@nestjs/event-emitter';
@@ -18,6 +18,10 @@ import {
 } from '@repo/common-lib/constants/constants';
 import { FindUserRequest } from './requests/find-user.request';
 import { Helpers } from 'src/common/services/helpers.service';
+import { UpdateUserPasswordRequest } from './requests/update-user-password.request';
+import { compare, hash } from '@repo/common-lib/utils/hash';
+import { AiService } from '../ai/ai.service';
+import { MediaModerationException } from 'src/common/exceptions/media-moderation-exception';
 
 @Injectable()
 export class UserService {
@@ -30,6 +34,7 @@ export class UserService {
     private readonly helpers: Helpers,
     private readonly requestService: RequestService,
     private readonly notifyNewUserMail: NotifyNewUserMail,
+    private readonly aiService: AiService,
   ) { }
 
   async findAll() {
@@ -90,22 +95,42 @@ export class UserService {
       avatar?: string;
       banner?: string;
     } = rest;
-    const [avatarPath, bannerPath] = await Promise.all([
-      avatar && avatar.size > 0
-        ? this.helpers.setAsset({
-          asset: avatar,
-          path: `users/${user.public_id}/avatar`,
-          targetSizeMb: 0.3,
-        })
-        : Promise.resolve(undefined),
-      banner && banner.size > 0
-        ? this.helpers.setAsset({
-          asset: banner,
-          path: `users/${user.public_id}/banner`,
-          targetSizeMb: 1,
-        })
-        : Promise.resolve(undefined),
-    ]);
+    // Handle avatar upload with content moderation
+    let avatarPath: string | undefined;
+    if (avatar && avatar.size > 0) {
+      avatarPath = await this.helpers.setAsset({
+        asset: avatar,
+        path: `users/${user.public_id}/avatar`,
+        targetSizeMb: 0.3,
+      });
+      const avatarUrl = await this.helpers.getAsset(avatarPath);
+      const { moderation } = await this.aiService.moderateContent(avatarUrl, {
+        user_id: id,
+      });
+      if (!moderation.is_allowed) {
+        await this.helpers.deleteAsset(avatarPath);
+        throw new MediaModerationException(moderation.reason);
+      }
+    }
+
+    // Handle banner upload with content moderation
+    let bannerPath: string | undefined;
+    if (banner && banner.size > 0) {
+      bannerPath = await this.helpers.setAsset({
+        asset: banner,
+        path: `users/${user.public_id}/banner`,
+        targetSizeMb: 1,
+      });
+      const bannerUrl = await this.helpers.getAsset(bannerPath);
+      const { moderation: bannerModeration } = await this.aiService.moderateContent(bannerUrl, {
+        user_id: id,
+      });
+      if (!bannerModeration.is_allowed) {
+        await this.helpers.deleteAsset(bannerPath);
+        throw new MediaModerationException(bannerModeration.reason);
+      }
+    }
+
     userUpdateData.avatar = avatarPath;
     userUpdateData.banner = bannerPath;
     // Remove undefined values
@@ -141,6 +166,26 @@ export class UserService {
     return userUpdated;
   }
 
+  async updatePassword(userId: number, request: UpdateUserPasswordRequest) {
+
+    const user = await this.userRepository.findOneByColumnWithSecrets('id', userId);
+
+    if (!user || user.id !== this.requestService.user.id) {
+      throw new UnauthorizedException()
+    }
+
+    const passwordMatch = await compare(request.old_password, user.password);
+    if (!passwordMatch) {
+
+      throw new BadRequestException('Wrong password');
+    }
+
+    return await this.userRepository.updateById(user.id, {
+      password: await hash(request.new_password)
+    })
+
+
+  }
   async banUser(userId: number, reason: string) {
     return await this.userRepository.updateById(userId, {
       banned: true,

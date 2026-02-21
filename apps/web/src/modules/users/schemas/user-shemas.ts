@@ -42,6 +42,17 @@ export const updateUserSchema = z.object({
 }).partial();
 
 
+export const updateUserPasswordSchema = z.object({
+  old_password: z.string().min(1, 'Current password is required'),
+  new_password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .max(20, 'Password must be at most 20 characters')
+    .regex(/\d/, 'Password must contain at least one number')
+    .regex(/^\S+$/, 'Password cannot contain spaces'),
+});
+
 export type LoginRequestSchemaType = z.infer<typeof loginRequestSchema>;
 export type CreateUserSchemaType = z.infer<typeof createUserSchema>;
 export type UpdateUserSchemaType = z.infer<typeof updateUserSchema>;
+export type UpdateUserPasswordSchemaType = z.infer<typeof updateUserPasswordSchema>;

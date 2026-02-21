@@ -2,7 +2,7 @@
 
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction"
 import { getOneUserAction } from "@/modules/users/server-actions/get-one-user.action"
-import {getUserCategoriesAction } from "@/modules/users/server-actions/get-user-categories.action"
+import { getUserCategoriesAction } from "@/modules/users/server-actions/get-user-categories.action"
 import { updateUserAction } from "@/modules/users/server-actions/update-user.action"
 import { Address } from "@repo/common-lib/types/address"
 import { CategoryBase } from "@repo/common-lib/types/category"
@@ -16,11 +16,13 @@ type EditUserContextType = {
     user: User,
     address?: Address,
     setAddress: (address: Address | undefined) => void,
-    userCategories:CategoryBase[]
+    userCategories: CategoryBase[]
     handleSubmit: (e: FormEvent<HTMLFormElement> | FormData) => Promise<void>,
     isPending: boolean,
     errors?: string[] | null,
+    inputErrors?: Record<string, string>,
     cleanErrors: () => void,
+    deleteInputErrorProperty: (key: string) => void,
     reset: () => void,
     success: boolean
 }
@@ -45,22 +47,22 @@ export const EditUserProvider = ({
 }: {
     children: ReactNode,
     defaultUser: User,
-    defaultAddress?:Address,
+    defaultAddress?: Address,
     defaultUserCategories: CategoryBase[]
 }) => {
     const [user, setUser] = useState(defaultUser);
-    const [address,setAddress] = useState(defaultAddress)
+    const [address, setAddress] = useState(defaultAddress)
     const [userCategories, setUserCategories] = useState(defaultUserCategories);
-    const { handleSubmit, isPending, errors, cleanErrors, success, cleanResult, reset } = useHandleAction({
+    const { handleSubmit, isPending, errors, inputErrors, cleanErrors, deleteInputErrorProperty, success, cleanResult, reset } = useHandleAction({
         action: async (formData) => {
             return await updateUserAction(user.id, formData!)
         },
         afterAction: async (result) => {
             if (result.data) {
                 const userResponse = await getOneUserAction(result.data.id);
-                if(result.inputs?.categories){
+                if (result.inputs?.categories) {
                     const categoriesResponse = await getUserCategoriesAction(result.data.id)
-                    if(categoriesResponse.data){
+                    if (categoriesResponse.data) {
                         setUserCategories(categoriesResponse.data)
                     }
                 }
@@ -76,7 +78,7 @@ export const EditUserProvider = ({
 
     });
     return (
-        <EditUserContext.Provider value={{ user, address, setAddress, userCategories, isPending, errors, handleSubmit, cleanErrors, success, reset }}>
+        <EditUserContext.Provider value={{ user, address, setAddress, userCategories, isPending, errors, inputErrors, handleSubmit, cleanErrors, deleteInputErrorProperty, success, reset }}>
             {children}
         </EditUserContext.Provider>
     )

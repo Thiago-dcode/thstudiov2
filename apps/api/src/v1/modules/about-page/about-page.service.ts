@@ -9,6 +9,8 @@ import {
 import { generateUUID } from '@repo/common-lib/utils/generate-uuid';
 import { UpdateAboutPageRequest } from './requests/update-about-page.request';
 import { UserService } from '../users/users.service';
+import { AiService } from '../ai/ai.service';
+import { MediaModerationException } from 'src/common/exceptions/media-moderation-exception';
 
 @Injectable()
 export class AboutPageService {
@@ -16,6 +18,7 @@ export class AboutPageService {
     private readonly aboutPageRepository: AboutPageRepositoy,
     private readonly userService: UserService,
     private readonly helpers: Helpers,
+    private readonly aiService: AiService,
   ) {}
 
   public async findOneByUser(id: number) {
@@ -25,6 +28,7 @@ export class AboutPageService {
     }
     return result;
   }
+
   public async create({ photo, ...rest }: CreateAboutPageRequest) {
     const data: CreateAboutPageInput = rest;
     if (photo) {
@@ -32,31 +36,50 @@ export class AboutPageService {
         this.userService.getPublicId(data.user_id),
         generateUUID(),
       ]);
-      data.photo = `users/${user_public_id}/about_page/${id}`;
+      const photoPath = `users/${user_public_id}/about_page/${id}`;
       await this.helpers.setAsset({
         asset: photo,
-        path: data.photo!,
+        path: photoPath,
         targetSizeMb: 0.5,
         targetQuality: 90,
       });
+      const photoUrl = await this.helpers.getAsset(photoPath);
+      const { moderation } = await this.aiService.moderateContent(photoUrl, {
+        user_id: data.user_id,
+      });
+      if (!moderation.is_allowed) {
+        await this.helpers.deleteAsset(photoPath);
+        throw new MediaModerationException(moderation.reason);
+      }
+      data.photo = photoPath;
     }
     return await this.aboutPageRepository.create(data);
   }
+
   public async update(id: number, { photo, ...rest }: UpdateAboutPageRequest) {
     const data: UpdateAboutPageInput = rest;
     const aboutPage = await this.aboutPageRepository.getOneById(id);
     if (photo) {
-      //delete previous
-      if (aboutPage.photo) {
-        await this.helpers.deleteAsset(aboutPage.photo);
-      }
-      const id = await generateUUID();
-      data.photo = await this.helpers.setAsset({
+      const newId = await generateUUID();
+      const newPhotoPath = await this.helpers.setAsset({
         asset: photo,
-        path: `users/${aboutPage.user_id}/about_page/${id}`,
+        path: `users/${aboutPage.user_id}/about_page/${newId}`,
         targetSizeMb: 0.5,
         targetQuality: 90,
       });
+      const photoUrl = await this.helpers.getAsset(newPhotoPath);
+      const { moderation } = await this.aiService.moderateContent(photoUrl, {
+        user_id: aboutPage.user_id,
+      });
+      if (!moderation.is_allowed) {
+        await this.helpers.deleteAsset(newPhotoPath);
+        throw new MediaModerationException(moderation.reason);
+      }
+      // Only delete the old photo after the new one passes moderation
+      if (aboutPage.photo) {
+        await this.helpers.deleteAsset(aboutPage.photo);
+      }
+      data.photo = newPhotoPath;
     }
     return await this.aboutPageRepository.updateAndGet(id, data);
   }

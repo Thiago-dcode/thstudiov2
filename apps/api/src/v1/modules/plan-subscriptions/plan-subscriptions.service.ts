@@ -4,7 +4,6 @@ import { InitiatePlanSubscriptionRequest } from './requests/initiate-plan-subscr
 import { PlanPricesService } from '../plan-prices/plan-prices.service';
 import { RequestService } from 'src/common/services/request.service';
 import { PlansService } from '../plans/plans.service';
-import { BaseUser } from '@repo/common-lib/types/user';
 import {
   CreatePlanSubscriptionInput,
   PlanSubscriptionSchema,
@@ -120,7 +119,9 @@ export class PlanSubscriptionsService {
     // Invalidate cache so the UI reflects the pending cancellation
     await this.update(activeSubscription.id,{
       auto_renewal:true,
-    })
+    });
+
+    //TODO: Send email to user
 
     return activeSubscription;
   }

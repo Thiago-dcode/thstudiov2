@@ -40,7 +40,7 @@ const up = async () => {
     Column.smallInteger('account_strikes', {
       default: 0,
     }),
-    Column.smallInteger('ban_times',{
+    Column.smallInteger('ban_count',{
       default:0
     }),
     Column.timestamp('ban_lift', {

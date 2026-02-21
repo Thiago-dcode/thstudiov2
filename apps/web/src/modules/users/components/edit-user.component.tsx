@@ -196,7 +196,7 @@ export default function EditUserComponent() {
 export const EditAvatar = ({ defaultAvatar }: {
     defaultAvatar?: string
 }) => {
-    const { errors, cleanErrors, isPending } = useEditUser();
+    const { errors, inputErrors, deleteInputErrorProperty, isPending } = useEditUser();
     const { files } = useInputFile();
     const { previewUrls } = usePreviewUrls({ defaultUrl: defaultAvatar, files })
 
@@ -217,17 +217,18 @@ export const EditAvatar = ({ defaultAvatar }: {
                     </div>
                 )}
             </div>
-            <FileInput onChange={() => {
-                cleanErrors()
-            }} name="avatar" id="avatar-input" />
+            <FileInput
+                onChange={() => deleteInputErrorProperty('avatar')}
+                name="avatar"
+                id="avatar-input"
+                error={inputErrors?.avatar}
+            />
 
             <FormComponent.SubmitButton isPending={isPending} disabled={!files || !files.length || isPending}>Update</FormComponent.SubmitButton>
 
             {errors && errors.length > 0 ? (
                 <Errors errors={errors} />
             ) : null}
-
-
         </div>
 
     )
@@ -236,7 +237,7 @@ export const EditAvatar = ({ defaultAvatar }: {
 export const EditBanner = ({ defaultBanner }: {
     defaultBanner?: string
 }) => {
-    const { errors, cleanErrors, isPending } = useEditUser();
+    const { errors, inputErrors, deleteInputErrorProperty, isPending } = useEditUser();
     const { files } = useInputFile();
     const { previewUrls } = usePreviewUrls({ defaultUrl: defaultBanner, files })
 
@@ -254,11 +255,14 @@ export const EditBanner = ({ defaultBanner }: {
                             />
                         </div>
                     </div>
-                ):null}
+                ) : null}
             </div>
-            <FileInput onChange={() => {
-                cleanErrors()
-            }} name="banner" id="banner-input" />
+            <FileInput
+                onChange={() => deleteInputErrorProperty('banner')}
+                name="banner"
+                id="banner-input"
+                error={inputErrors?.banner}
+            />
 
             <FormComponent.SubmitButton isPending={isPending} disabled={!files || !files.length || isPending}>Update</FormComponent.SubmitButton>
 
@@ -272,7 +276,7 @@ export const EditBanner = ({ defaultBanner }: {
 export const EditProfile = ({ user }: {
     user: { name?: string | null; surname?: string | null; profession?: string | null; short_biography?: string | null };
 }) => {
-    const { errors, cleanErrors, isPending } = useEditUser();
+    const { errors, inputErrors, deleteInputErrorProperty, isPending } = useEditUser();
 
     return (
         <div className="w-full flex flex-col gap-4">
@@ -286,7 +290,8 @@ export const EditProfile = ({ user }: {
                 autoComplete="given-name"
                 required
                 autoFocus
-                onChange={cleanErrors}
+                error={inputErrors?.name}
+                onChange={() => deleteInputErrorProperty('name')}
             />
 
             <FormComponent.LabelInput
@@ -298,7 +303,8 @@ export const EditProfile = ({ user }: {
                 placeholder="Piero da Vinci"
                 autoComplete="family-name"
                 required
-                onChange={cleanErrors}
+                error={inputErrors?.surname}
+                onChange={() => deleteInputErrorProperty('surname')}
             />
 
             <FormComponent.LabelInput
@@ -309,7 +315,8 @@ export const EditProfile = ({ user }: {
                 defaultValue={user?.profession || undefined}
                 placeholder="Renaissance polymath & professional dreamer"
                 autoComplete="organization-title"
-                onChange={cleanErrors}
+                error={inputErrors?.profession}
+                onChange={() => deleteInputErrorProperty('profession')}
             />
 
             <FormComponent.LabelTextarea
@@ -319,7 +326,8 @@ export const EditProfile = ({ user }: {
                 defaultValue={user?.short_biography || undefined}
                 placeholder="I sketch flying machines at breakfast and dissect curiosity for a living..."
                 rows={4}
-                onChange={cleanErrors}
+                error={inputErrors?.short_biography}
+                onChange={() => deleteInputErrorProperty('short_biography')}
             />
 
             <FormComponent.SubmitButton isPending={isPending} disabled={isPending}>

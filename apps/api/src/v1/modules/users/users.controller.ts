@@ -9,6 +9,7 @@ import {
   UseInterceptors,
   UploadedFiles,
   ParseIntPipe,
+  Post,
 } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { UserService } from './users.service';
@@ -22,6 +23,7 @@ import { PlanSubscriptionsService } from '../plan-subscriptions/plan-subscriptio
 import { FindUserRequest } from './requests/find-user.request';
 import { CategoriesService } from '../categories/categories.service';
 import { AddressService } from '../addresses/address.service';
+import { UpdateUserPasswordRequest } from './requests/update-user-password.request';
 
 @Controller('users')
 export class UserController {
@@ -121,6 +123,14 @@ export class UserController {
       updateUserDto.banner = files.banner[0];
     }
     return await this.userService.update(+id, updateUserDto);
+  }
+
+  @Post(':id/password')
+  async updatePassword(
+    @Param('id', ParseIntPipe, new ModelExistPipe('users'), IsUserAuthPipe) id: number,
+    @Body() body: UpdateUserPasswordRequest,
+  ) {
+    return await this.userService.updatePassword(id, body);
   }
 
   @Delete(':id')

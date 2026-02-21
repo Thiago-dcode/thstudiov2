@@ -179,8 +179,8 @@ export class AiProcessor extends WorkerHost {
           const newBanCount = extraData.ban_count + 1;
           const banStart = new Date();
           let banLift: Date;
-
-          if (newBanCount >= PERMANENT_BAN_THRESHOLD) {
+          const isPermanentBan = newBanCount >= PERMANENT_BAN_THRESHOLD;
+          if (isPermanentBan) {
             // Permanent ban
             banLift = new Date('9999-12-31');
             // Cancel the user's paid subscription
@@ -191,9 +191,8 @@ export class AiProcessor extends WorkerHost {
             banLift.setDate(banLift.getDate() + durationDays);
           }
 
-          const bannedReason = newBanCount >= PERMANENT_BAN_THRESHOLD
-            ? 'Account permanently banned due to repeated policy violations'
-            : `Account banned for ${BAN_DURATION_DAYS[newBanCount] ?? 3} days due to repeated policy violations`;
+        
+          
 
           await Promise.all([
             this.userExtraDataRepository.updateById(extraData.id, {
@@ -201,7 +200,9 @@ export class AiProcessor extends WorkerHost {
               ban_lift: banLift,
               ban_count: newBanCount,
             }),
-            this.userService.banUser(moderationData.user_id, bannedReason),
+            ...(isPermanentBan
+              ? [this.userService.banUser(moderationData.user_id,  'Account permanently banned due to repeated policy violations')]
+              : []),
           ]);
 
           const user = await this.userService.findOneCompacted(moderationData.user_id);

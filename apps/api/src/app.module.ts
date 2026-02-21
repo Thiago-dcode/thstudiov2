@@ -39,6 +39,7 @@ import { AddressModule } from './v1/modules/addresses/address.module';
 import { PortfolioModule } from './v1/modules/portfolios/portfolio.module';
 import { BullModule } from '@nestjs/bullmq';
 import { UserExtraDataModule } from './v1/modules/user-extra-data/user-extra-data.module';
+import { AiProcessorModule } from './v1/modules/ai/ai-processor.module';
 const APP_MODULES = [
   AuthModule,
   UserModule,
@@ -135,6 +136,7 @@ const APP_MODULES = [
     ScheduleModule.forRoot(),
     ServicesModule,
     UserExtraDataModule,
+    AiProcessorModule,
     ...APP_MODULES,
     TestModule,
   ],
