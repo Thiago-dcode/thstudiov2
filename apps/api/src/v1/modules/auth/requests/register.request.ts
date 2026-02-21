@@ -25,6 +25,14 @@ export class RegisterRequest {
   @Matches(/^[a-zA-Z0-9]+$/, {
     message: 'username must be alphanumeric with no spaces',
   })
+  
+  @IsOptional()
+  @IsString()
+  @MinLength(3)
+  @MaxLength(20)
+  @Matches(/^[a-zA-Z0-9]+$/, {
+    message: 'username must be alphanumeric with no spaces',
+  })
   @ModelNotExist('users', 'username')
   username: string;
 

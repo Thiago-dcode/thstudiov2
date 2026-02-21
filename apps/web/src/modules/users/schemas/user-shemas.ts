@@ -29,7 +29,7 @@ export const updateUserSchema = z.object({
   name: z.string().min(1).max(255).optional(),
   surname: z.string().min(1).max(255).optional(),
   profession: z.string().max(100).optional(),
-  username: z.string().min(3).max(50).optional(),
+  username: z.string().min(3, 'Username must be at least 3 characters').max(20, 'Username must be at most 20 characters').regex(/^[a-zA-Z0-9]+$/, 'Username must be alphanumeric with no spaces').optional(),
   password: z.string().min(8).max(255).optional(),
   short_biography: z.string().max(120).optional(),
   biography: z.string().max(5000).optional(),

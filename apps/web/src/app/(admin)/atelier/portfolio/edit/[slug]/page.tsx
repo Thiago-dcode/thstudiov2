@@ -34,8 +34,7 @@ export default async function PortfolioDetail({ params }: Props) {
             <AdminPageTitle title={"Edit: " + portfolio.title}>
                 <DeletePortfolioDialog portfolioId={portfolio.id} portfolioTitle={portfolio.title} />
             </AdminPageTitle>
-            <CreateOrUpdatePortfolio defaultPortfolio={portfolio}/>
+            <CreateOrUpdatePortfolio defaultPortfolio={portfolio} />
         </AdminPageContainer>
     );
 }
-

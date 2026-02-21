@@ -14,17 +14,20 @@ import { Errors } from "@repo/ui/components/custom/errors";
 import FormComponent from "@/lib/components/form-component";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { updateUserPasswordAction } from "@/modules/users/server-actions/update-user-password.action";
-import { useSession } from "@/lib/hooks/useSession";
+import { UserAuth } from "@/modules/auth/auth.types";
 import { KeyRound } from "lucide-react";
 import { toast } from "@repo/ui/sonner";
 
-export const EditUserPasswordDialog = () => {
+type Props = {
+    user: Pick<UserAuth, 'id'>;
+};
+
+export const EditUserPasswordDialog = ({ user }: Props) => {
     const [open, setOpen] = useState(false);
-    const { session } = useSession();
 
     const { handleSubmit, isPending, errors, success, reset } = useHandleAction({
         action: async (formData: FormData) => {
-            return await updateUserPasswordAction(session!.id, formData);
+            return await updateUserPasswordAction(user.id, formData);
         },
     });
 
@@ -82,7 +85,7 @@ export const EditUserPasswordDialog = () => {
                             onChange={() => { if (errors) reset(); }}
                         />
 
-                        <FormComponent.SubmitButton isPending={isPending} disabled={isPending || !session}>
+                        <FormComponent.SubmitButton isPending={isPending} disabled={isPending}>
                             Update Password
                         </FormComponent.SubmitButton>
 

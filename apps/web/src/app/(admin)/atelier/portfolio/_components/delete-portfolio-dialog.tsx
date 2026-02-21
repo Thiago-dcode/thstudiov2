@@ -28,7 +28,7 @@ export const DeletePortfolioDialog = ({
     portfolioTitle,
 }: DeletePortfolioDialogProps) => {
     const router = useRouter();
-    const { isPending: isPortfolioPending } = usePortfolio()
+    const { isPending: isPortfolioPending } = usePortfolio();
     const [open, setOpen] = useState(false);
 
     const { handleAction, isPending } = useHandleAction({
@@ -39,7 +39,7 @@ export const DeletePortfolioDialog = ({
             if (result.errors) {
                 result.errors.forEach((error) => toast.error(error));
             } else if (result.data) {
-                toast.success("Portfolio deleted successfully");
+                toast.success("Portfolio deleted");
                 setOpen(false);
                 router.push('/atelier/portfolio');
                 router.refresh();
@@ -47,48 +47,44 @@ export const DeletePortfolioDialog = ({
         },
     });
 
-    const isLoading = isPortfolioPending && isPending;
-
     return (
-        <Dialog open={open} onOpenChange={(v) => !isLoading && setOpen(v)}>
+        <Dialog open={open} onOpenChange={(v) => !isPending && !isPortfolioPending && setOpen(v)}>
             <DialogTrigger asChild>
-                <Button variant="destructive" size="sm">
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                    disabled={isPortfolioPending}
+                    aria-label="Delete portfolio"
+                >
                     <Trash2 className="size-4" />
-                    Delete
                 </Button>
             </DialogTrigger>
             <DialogContent className="max-w-sm">
-                {!isLoading ? (
-                    <>
-                        <DialogHeader>
-                            <DialogTitle>Delete Portfolio</DialogTitle>
-                            <DialogDescription>
-                                Are you sure you want to delete <strong>{portfolioTitle}</strong>? This action cannot be undone.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <div className="flex items-center justify-end gap-3 mt-4">
-                            <Button
-                                disabled={isLoading}
-                                variant="outline"
-                                onClick={() => setOpen(false)}
-                            >
-                                Cancel
-                            </Button>
-                            <Button
-                            
-                                disabled={isLoading}
-                                variant="destructive"
-                                onClick={handleAction}
-                            >
-                                Delete
-                            </Button>
-                        </div>
-                    </>
-                ) : (
-                    <div className="flex items-center justify-center py-8">
-                        <Spinner className="size-10" />
-                    </div>
-                )}
+                <DialogHeader>
+                    <DialogTitle className="text-base">Delete portfolio</DialogTitle>
+                    <DialogDescription className="text-sm">
+                        <strong className="text-foreground font-medium">{portfolioTitle}</strong> will be permanently deleted. This cannot be undone.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="flex items-center justify-end gap-2 mt-2">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={isPending || isPortfolioPending}
+                        onClick={() => setOpen(false)}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        variant="destructive"
+                        size="sm"
+                        disabled={isPending || isPortfolioPending}
+                        onClick={handleAction}
+                    >
+                        {isPending ? <Spinner className="size-3.5" /> : 'Delete'}
+                    </Button>
+                </div>
             </DialogContent>
         </Dialog>
     )

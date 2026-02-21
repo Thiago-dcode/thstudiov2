@@ -13,7 +13,6 @@ export default async function PortfolioCreate() {
         <AdminPageContainer>
             <AdminPageTitle title="Create a portfolio" />
             <CreateOrUpdatePortfolio />
-
         </AdminPageContainer>
     );
 }

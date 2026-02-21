@@ -19,6 +19,7 @@ export const LoginForm = ({ rememberMe }: {
         action: loginServerAction,
         afterAction: async (result) => {
             if (result.data) {
+            
                 router.push(result.data.token ? '/atelier' : '/auth/2fa')
             }
         }

@@ -18,7 +18,7 @@ type AdminPageTitleProps = {
 
 export const AdminPageTitle = ({ title, children }: AdminPageTitleProps) => {
     return (
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between">
             <h1 className="text-2xl font-semibold">{title}</h1>
             {children}
         </div>

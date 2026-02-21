@@ -10,13 +10,14 @@ import { Button } from "@repo/ui/components/shadcn/button";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FullPortfolio } from "@repo/common-lib/types/portfolio";
+import { SubmitPortfolioButton } from "@/app/(admin)/__components/submit-portfolio-button";
 
 
 export const CreateOrUpdatePortfolio = ({ defaultPortfolio }: {
     defaultPortfolio?: FullPortfolio
 }) => {
     const router = useRouter();
-    const { handleSubmit, isPending, success, currentStep, canGoNextStep, canSubmit, MAX_STEPS, inputErrors, clear, handleStep, setPortfolio, currentPortfolio } = usePortfolio();
+    const { handleSubmit, isPending, success, currentStep, canGoNextStep, MAX_STEPS, inputErrors, clear, handleStep, setPortfolio, currentPortfolio } = usePortfolio();
 
     useEffect(() => {
         if (defaultPortfolio && currentPortfolio?.id !== defaultPortfolio.id) {
@@ -58,6 +59,9 @@ export const CreateOrUpdatePortfolio = ({ defaultPortfolio }: {
                         <Spinner className="size-10 text-accent" />
                     </div>
                 )}
+                <div className="flex justify-start mt-4">
+                    <SubmitPortfolioButton />
+                </div>
                 <StepComponent />
 
                 {inputErrors && Object.keys(inputErrors).length > 0 && (
@@ -88,7 +92,7 @@ export const CreateOrUpdatePortfolio = ({ defaultPortfolio }: {
                     </div>
 
                     {/* Navigation */}
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between pb-4">
                         <Button
                             type="button"
                             onClick={() => handleStep('prev')}
@@ -119,16 +123,7 @@ export const CreateOrUpdatePortfolio = ({ defaultPortfolio }: {
                                 Next
                                 <ArrowRight className="size-4" />
                             </Button>
-                        ) : (
-                            <FormComponent.SubmitButton
-                                disabled={!canSubmit || isPending}
-                                isPending={isPending}
-                                success={success}
-                                className="w-auto m-0"
-                            >
-                                {defaultPortfolio ? 'Update portfolio' : 'Create Portfolio'}
-                            </FormComponent.SubmitButton>
-                        )}
+                        ) : null}
                     </div>
                 </div>
             </FormComponent.Form>

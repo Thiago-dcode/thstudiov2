@@ -2,6 +2,8 @@ import {
   IsOptional,
   IsString,
   MaxLength,
+  MinLength,
+  Matches,
   IsEmail,
   IsInt,
   IsNumber,
@@ -29,7 +31,11 @@ export class UpdateUserRequest {
 
   @IsOptional()
   @IsString()
-  @MaxLength(255)
+  @MinLength(3)
+  @MaxLength(20)
+  @Matches(/^[a-zA-Z0-9]+$/, {
+    message: 'username must be alphanumeric with no spaces',
+  })
   username?: string;
 
   @IsOptional()

@@ -7,10 +7,10 @@ import { CreateMediaDialog } from "../../media/_components/create-media-modal"
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction"
 import { getAllUserMediaAction } from "@/modules/media/server-actions/get-all-user-media.action"
 import { usePortfolio } from "@/modules/portfolios/providers/create-update-portfolio.provider"
-import { ReactNode, useEffect, useMemo, useState } from "react"
+import { ReactNode, useEffect, useMemo, useRef, useState } from "react"
 import { Media } from "@repo/common-lib/types/media"
 import { Spinner } from "@repo/ui/components/shadcn/spinner"
-import { Check, X } from "lucide-react"
+import { Check, RefreshCw, X } from "lucide-react"
 import { cn } from "@repo/ui/lib/utils"
 import { arrayMove, rectSortingStrategy, SortableContext, useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
@@ -54,18 +54,14 @@ export default function InputStep2() {
     const { userId, mediaSelected, handlePushMediaSelected, handleRemoveMediaSelected, handleSetFormData } = usePortfolio();
     const [open, setOpen] = useState(false);
     const [media, setMedia] = useState<Media[]>([]);
+    const firstFetchDone = useRef(false);
 
     const mediaItems = useMemo(() => mediaSelected.map(m => `media-${m.id}`), [mediaSelected]);
     const { handleAction, isPending } = useHandleAction({
         action: async () => {
 
-            if (!media.length) return getAllUserMediaAction(userId);
-
-            return {
-                data: media,
-                errors: null
-            }
-
+                if (!firstFetchDone.current) firstFetchDone.current = true;
+                return getAllUserMediaAction(userId)
         },
         afterAction: async (result) => {
 
@@ -75,9 +71,14 @@ export default function InputStep2() {
         }
     });
 
+    const handleRefresh = () => {
+        setMedia([]);
+        handleAction();
+    };
+
     useEffect(() => {
 
-        if (open) {
+        if (open && !firstFetchDone.current) {
             handleAction();
         }
     }, [open])
@@ -152,6 +153,17 @@ export default function InputStep2() {
                                         {mediaSelected.length}
                                     </span>
                                 )}
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="size-7"
+                                    disabled={isPending}
+                                    onClick={handleRefresh}
+                                    aria-label="Refresh media"
+                                >
+                                    <RefreshCw className={cn("size-3.5", isPending && "animate-spin")} />
+                                </Button>
                             </div>
                             <FileInputProvider allowedMimeTypes={ALLOWED_IMAGE_FILE_TYPES}>
                                 <CreateMediaDialog onSuccess={(media) => {

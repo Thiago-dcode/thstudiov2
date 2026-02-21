@@ -2,6 +2,7 @@
 
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction"
 import { getUserMetricsAction } from "@/modules/users/server-actions/get-user-metrics.action"
+import { STRIKES_TO_BAN } from "@repo/common-lib/constants/constants"
 import { UserMetrics } from "@repo/common-lib/types/user"
 import { useContext, createContext, ReactNode, useState, useEffect, useRef, useMemo } from "react"
 
@@ -88,7 +89,7 @@ export const UserMetricsProvider = ({
 
     const isUserAccountBanned = useMemo(() => {
         if (!metrics?.extra_data?.ban_lift) return false;
-        return new Date(metrics.extra_data.ban_lift) > new Date();
+        return metrics.extra_data.account_strikes >= STRIKES_TO_BAN && new Date(metrics.extra_data.ban_lift) > new Date();
     }, [metrics])
 
     return (

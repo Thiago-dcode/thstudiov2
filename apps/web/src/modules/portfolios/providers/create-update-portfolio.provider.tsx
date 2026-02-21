@@ -223,7 +223,7 @@ export const PortfolioProvider = ({
   }, [currentStep, formData, currentPortfolio]);
 
   const canSubmit = useMemo(() => {
-    return (currentStep === MAX_STEPS && firstStepIsCompleted && (formData.media?.length || formData.collections?.length)) ? true : false
+    return ((currentStep === MAX_STEPS || currentPortfolio) && firstStepIsCompleted && (formData.media?.length || formData.collections?.length)) ? true : false
   }, [currentStep, formData])
 
 
