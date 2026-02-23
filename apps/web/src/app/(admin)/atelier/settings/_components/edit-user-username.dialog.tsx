@@ -14,12 +14,13 @@ import { Errors } from "@repo/ui/components/custom/errors";
 import FormComponent from "@/lib/components/form-component";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { updateUserAction } from "@/modules/users/server-actions/update-user.action";
-import { UserAuth } from "@/modules/auth/auth.types";
 import { Pencil } from "lucide-react";
 import { toast } from "@repo/ui/sonner";
+import { MAX_USERNAME_RESET } from "@repo/common-lib/constants/constants";
+import { User } from "@repo/common-lib/types/user";
 
 type Props = {
-    user: Pick<UserAuth, 'id' | 'username'>;
+    user: User;
 };
 
 export const EditUserUsernameDialog = ({ user }: Props) => {
@@ -57,7 +58,17 @@ export const EditUserUsernameDialog = ({ user }: Props) => {
         setOpen(next);
     };
 
+    const resetDate = user.next_username_reset ? new Date(user.next_username_reset as unknown as string) : null;
+    const periodExpired = resetDate && new Date() >= resetDate;
+    const effectiveCount = periodExpired ? 0 : (user.username_reset_count ?? 0);
+    const maxResetReached = effectiveCount >= MAX_USERNAME_RESET;
+    const remaining = MAX_USERNAME_RESET - effectiveCount;
+
     const isUnchanged = value.trim() === (user.username ?? '');
+
+    const resetDateFormatted = resetDate && !periodExpired
+        ? resetDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+        : null;
 
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -75,35 +86,54 @@ export const EditUserUsernameDialog = ({ user }: Props) => {
                 </DialogHeader>
 
                 <FormComponent.Container>
-                    <FormComponent.Form onSubmit={handleSubmit} className="pt-2">
-                        <FormComponent.LabelInput
-                            label="New Username"
-                            id="username"
-                            name="username"
-                            type="text"
-                            autoComplete="username"
-                            autoFocus
-                            required
-                            defaultValue={user.username ?? ''}
-                            extraInfo="3–20 characters, letters and numbers only"
-                            onChange={(e) => {
-                                setValue(e.target.value);
-                                deleteInputErrorProperty('username');
-                            }}
-                            error={inputErrors?.username}
-                        />
+                    {maxResetReached ? (
+                        <div className="rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm space-y-1">
+                            <p className="font-medium text-destructive">Monthly limit reached</p>
+                            <p className="text-muted-foreground">
+                                You've used all {MAX_USERNAME_RESET} username changes for this period.
+                                {resetDateFormatted && (
+                                    <> Available again on <span className="font-medium text-foreground">{resetDateFormatted}</span>.</>
+                                )}
+                            </p>
+                        </div>
+                    ) : (
+                        <FormComponent.Form onSubmit={handleSubmit} className="pt-2">
+                            <FormComponent.LabelInput
+                                label="New Username"
+                                id="username"
+                                name="username"
+                                type="text"
+                                autoComplete="username"
+                                autoFocus
+                                required
+                                defaultValue={user.username ?? ''}
+                                extraInfo="3–20 characters, letters and numbers only"
+                                onChange={(e) => {
+                                    setValue(e.target.value);
+                                    deleteInputErrorProperty('username');
+                                }}
+                                error={inputErrors?.username}
+                            />
 
-                        <FormComponent.SubmitButton
-                            isPending={isPending}
-                            disabled={isPending || isUnchanged}
-                        >
-                            Update Username
-                        </FormComponent.SubmitButton>
+                            {effectiveCount > 0 && (
+                                <p className="text-xs text-muted-foreground">
+                                    {remaining} of {MAX_USERNAME_RESET} change{remaining !== 1 ? 's' : ''} remaining this month
+                                    {resetDateFormatted && <> · resets on {resetDateFormatted}</>}
+                                </p>
+                            )}
 
-                        {errors && errors.length > 0 && (
-                            <Errors errors={errors} />
-                        )}
-                    </FormComponent.Form>
+                            <FormComponent.SubmitButton
+                                isPending={isPending}
+                                disabled={isPending || isUnchanged}
+                            >
+                                Update Username
+                            </FormComponent.SubmitButton>
+
+                            {errors && errors.length > 0 && (
+                                <Errors errors={errors} />
+                            )}
+                        </FormComponent.Form>
+                    )}
                 </FormComponent.Container>
             </DialogContent>
         </Dialog>

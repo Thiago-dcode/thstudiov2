@@ -67,6 +67,21 @@ const up = async () => {
     ColumnBuilder.smallInteger('twofa_attempts', {
       default: 0,
     }),
+
+    ColumnBuilder.smallInteger('username_reset_count', {
+      default: 0
+    }),
+    ColumnBuilder.smallInteger('password_reset_count', {
+      default: 0
+    }),
+    ColumnBuilder.timestamp('next_username_reset', {
+      nullable: true,
+    }),
+    ColumnBuilder.timestamp('next_password_reset', {
+      nullable: true,
+    }),
+
+
   ]);
 };
 

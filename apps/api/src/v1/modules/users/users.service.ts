@@ -14,6 +14,8 @@ import { RequestService } from 'src/common/services/request.service';
 import {
   CACHE_KEY_USER_CATEGORIES,
   CACHE_KEY_USER_PUBLIC_ID,
+  MAX_PASSWORD_RESET,
+  MAX_USERNAME_RESET,
   NEW_USER_EVENT,
 } from '@repo/common-lib/constants/constants';
 import { FindUserRequest } from './requests/find-user.request';
@@ -22,6 +24,8 @@ import { UpdateUserPasswordRequest } from './requests/update-user-password.reque
 import { compare, hash } from '@repo/common-lib/utils/hash';
 import { AiService } from '../ai/ai.service';
 import { MediaModerationException } from 'src/common/exceptions/media-moderation-exception';
+import { UpdateUserInput } from '@repo/common-lib/types/user';
+import { addMonths } from 'date-fns';
 
 @Injectable()
 export class UserService {
@@ -88,13 +92,7 @@ export class UserService {
     if (user.id !== this.requestService.user.id) {
       throw new HttpException('Unauthorized', 403);
     }
-    const userUpdateData: Omit<
-      UpdateUserRequest,
-      'avatar' | 'banner' | 'categories'
-    > & {
-      avatar?: string;
-      banner?: string;
-    } = rest;
+    const userUpdateData: UpdateUserInput = rest;
     // Handle avatar upload with content moderation
     let avatarPath: string | undefined;
     if (avatar && avatar.size > 0) {
@@ -135,16 +133,27 @@ export class UserService {
     userUpdateData.banner = bannerPath;
     // Remove undefined values
     cleanObj(userUpdateData);
+    if (userUpdateData.username && userUpdateData.username !== user.username) {
+      const periodExpired = user.next_username_reset && new Date() >= user.next_username_reset;
+      const effectiveCount = periodExpired ? 0 : user.username_reset_count;
 
-    if (userUpdateData.email) {
-      const userExist = await this.userRepository.findOneBy(
-        'email',
-        userUpdateData.email,
-      );
-      if (userExist && userExist.id !== user.id) {
-        throw new HttpException(`Email not available`, 422);
+      if (effectiveCount >= MAX_USERNAME_RESET) {
+        throw new BadRequestException(
+          `Username change limit reached (${MAX_USERNAME_RESET} per month). Available again on ${user.next_username_reset.toDateString()}.`,
+        );
+      }
+
+      const usernameTaken = await this.userRepository.usernameExists(userUpdateData.username);
+      if (usernameTaken) {
+        throw new BadRequestException('Username is already taken');
+      }
+
+      userUpdateData.username_reset_count = effectiveCount + 1;
+      if (!user.next_username_reset || periodExpired) {
+        userUpdateData.next_username_reset = addMonths(new Date(), 1);
       }
     }
+
     const editCategories = categories && categories.length;
     if (editCategories) {
       await this.helpers.deleteCached(CACHE_KEY_USER_CATEGORIES(user.id), {
@@ -171,18 +180,28 @@ export class UserService {
     const user = await this.userRepository.findOneByColumnWithSecrets('id', userId);
 
     if (!user || user.id !== this.requestService.user.id) {
-      throw new UnauthorizedException()
+      throw new UnauthorizedException();
+    }
+
+    const periodExpired = user.next_password_reset && new Date() >= user.next_password_reset;
+    const effectiveCount = periodExpired ? 0 : user.password_reset_count;
+
+    if (effectiveCount >= MAX_PASSWORD_RESET) {
+      throw new BadRequestException(
+        `Password change limit reached (${MAX_PASSWORD_RESET} per month). Available again on ${user.next_password_reset.toDateString()}.`,
+      );
     }
 
     const passwordMatch = await compare(request.old_password, user.password);
     if (!passwordMatch) {
-
       throw new BadRequestException('Wrong password');
     }
 
     return await this.userRepository.updateById(user.id, {
-      password: await hash(request.new_password)
-    })
+      password: await hash(request.new_password),
+      password_reset_count: effectiveCount + 1,
+      next_password_reset: (!user.next_password_reset || periodExpired) ? addMonths(new Date(), 1) : user.next_password_reset,
+    });
 
 
   }

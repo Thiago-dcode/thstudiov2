@@ -53,6 +53,8 @@ export class AuthService {
       ...registerRequest,
       public_id: await generateUUID(),
       funnel_step: 1,
+      username_reset_count:0,
+      password_reset_count:0,
       password: await hash(registerRequest.password),
     });
     const result = await this.handle2fa(user, {

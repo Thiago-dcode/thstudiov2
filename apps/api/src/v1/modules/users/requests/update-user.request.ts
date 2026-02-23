@@ -4,7 +4,6 @@ import {
   MaxLength,
   MinLength,
   Matches,
-  IsEmail,
   IsInt,
   IsNumber,
   IsArray,
@@ -41,10 +40,6 @@ export class UpdateUserRequest {
   @IsOptional()
   @IsString()
   biography?: string;
-
-  @IsOptional()
-  @IsEmail()
-  email?: string;
 
   @IsOptional()
   @IsNumber()

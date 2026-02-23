@@ -27,8 +27,10 @@ export const INITIATE_SUBCRIPTION_COOKIE = 'x-app-initiate_subscription' as cons
 
 // ==================== APP CONFIGURATION ====================
 export const FUNNEL_LAST_STEP = 5;
-export const ALLOWED_IMAGE_FILE_TYPES:MimeTypes[] = ['image/jpeg', 'image/png', 'image/webp'];
+export const ALLOWED_IMAGE_FILE_TYPES: MimeTypes[] = ['image/jpeg', 'image/png', 'image/webp'];
 export const STRIKES_TO_BAN = 3;
+export const MAX_USERNAME_RESET = 3;
+export const MAX_PASSWORD_RESET = 3;
 
 // Ban duration in days based on ban_count. null = permanent ban.
 export const BAN_DURATION_DAYS: Record<number, number | null> = {

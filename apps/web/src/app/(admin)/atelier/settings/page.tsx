@@ -3,9 +3,13 @@ import { redirect } from "next/navigation";
 import { AdminPageContainer, AdminPageTitle } from "../../__components/admin-page.component";
 import { EditUserPasswordDialog } from "./_components/edit-user-password.dialog";
 import { EditUserUsernameDialog } from "./_components/edit-user-username.dialog";
-import { KeyRound, Mail, User } from "lucide-react";
+import { KeyRound, Mail, User, CreditCard, ArrowRight, Calendar, RefreshCw } from "lucide-react";
 import usersService from "@/modules/users/users.service";
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
+import { Button } from "@repo/ui/components/shadcn/button";
+import Link from "next/link";
+import { config } from "@/lib/config";
+import { LoadCustomerSubscriptionPortal } from "@/modules/plans/components/load-customer-subscription-portal";
 
 export default async function SettingsPage() {
     const userAuth = await userSession();
@@ -13,12 +17,26 @@ export default async function SettingsPage() {
         redirect('/');
     }
 
-    const userResponse = await usersService.getOne(userAuth.id);
+    const [userResponse, activeSubscriptionResponse] = await Promise.all([
+        usersService.getOne(userAuth.id),
+        usersService.getActiveSubscription(userAuth.id),
+    ]);
+
     if (!userResponse.data) {
         redirect('/');
     }
 
     const user = userResponse.data;
+    const activeSubscription = activeSubscriptionResponse.data ?? null;
+    const isFree = activeSubscription?.plan_price.plan.is_free ?? true;
+    console.log("ACTIVE SUBSCRIPTION",activeSubscription)
+    const planName = activeSubscription?.plan_price.plan.name ?? 'Free';
+
+    const nextBillingDate = activeSubscription?.next_billing_date
+        ? new Date(activeSubscription.next_billing_date as unknown as string).toLocaleDateString('en-US', {
+            month: 'long', day: 'numeric', year: 'numeric',
+        })
+        : null;
 
     return (
         <AdminPageContainer>
@@ -72,6 +90,57 @@ export default async function SettingsPage() {
                             </div>
                         </div>
                         <EditUserPasswordDialog user={user} />
+                    </div>
+                </section>
+
+                {/* Subscription */}
+                <section className="border border-fg-2 rounded-md divide-y divide-fg-2">
+                    <div className="px-4 py-3">
+                        <h2 className="text-sm font-medium text-text-muted">Subscription</h2>
+                    </div>
+
+                    <div className="flex items-center justify-between px-4 py-3">
+                        <div className="flex items-center gap-3">
+                            <CreditCard className="size-4 text-text-muted" />
+                            <div className="flex flex-col gap-0.5">
+                                <div className="flex items-center gap-2">
+                                    <p className="text-sm font-medium">{planName}</p>
+                                    {!isFree && activeSubscription && (
+                                        <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-fg-1 text-text-muted border border-fg-2">
+                                            {activeSubscription.plan_price.billing_type}
+                                        </span>
+                                    )}
+                                </div>
+                                {!isFree && activeSubscription ? (
+                                    <div className="flex items-center gap-3 text-xs text-text-muted">
+                                        {nextBillingDate && (
+                                            <span className="flex items-center gap-1">
+                                                <Calendar className="size-3" />
+                                                Renews {nextBillingDate}
+                                            </span>
+                                        )}
+                                        {activeSubscription.auto_renewal && (
+                                            <span className="flex items-center gap-1">
+                                                <RefreshCw className="size-3" />
+                                                €{activeSubscription.amount.toFixed(2)}
+                                            </span>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <p className="text-xs text-text-muted">You are on the free plan</p>
+                                )}
+                            </div>
+                        </div>
+                        <div className="flex flex-col items-end gap-1">
+                            <Button variant="ghost" size="sm" asChild>
+                                <Link href="/atelier/settings/subscription" className="gap-1.5">
+                                    {'Upgrade'} <ArrowRight className="size-3.5" />
+                                </Link>
+                            </Button>
+                            {!isFree && (
+                                <LoadCustomerSubscriptionPortal returnUrl={`${config.app_url}/atelier/settings`} />
+                            )}
+                        </div>
                     </div>
                 </section>
 

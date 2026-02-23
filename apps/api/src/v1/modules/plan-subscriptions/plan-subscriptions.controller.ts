@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Param, Delete, Post } from '@nestjs/common';
 import { PlanSubscriptionsService } from './plan-subscriptions.service';
 import { InitiatePlanSubscriptionRequest } from './requests/initiate-plan-subscription.request';
+import { CustomerPortalRequest } from './requests/customer-portal.request';
 
 @Controller('subscriptions')
 export class PlanSubscriptionsController {
@@ -26,5 +27,10 @@ export class PlanSubscriptionsController {
   @Post('initiate')
   async initiate(@Body() initiateRequest: InitiatePlanSubscriptionRequest) {
     return await this.planSubscriptionsService.initiate(initiateRequest)
+  }
+
+  @Post('portal')
+  async portal(@Body() body: CustomerPortalRequest) {
+    return await this.planSubscriptionsService.getCustomerSubscriptionPortal(body);
   }
 }

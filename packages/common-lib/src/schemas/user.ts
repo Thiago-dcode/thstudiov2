@@ -24,11 +24,15 @@ export type UserSchema = {
   twofa_code?: string;
   twofa_expires_at?: Date;
   twofa_attempts?: number;
+  username_reset_count: number;
+  password_reset_count: number;
+  next_username_reset?: Date;
+  next_password_reset?: Date;
   created_at: Date;
   updated_at: Date;
 };
 export type UserSchemaWithoutTimestamps = Omit<UserSchema, 'created_at' | 'updated_at'>;
-export type BaseUserSchema = Omit<UserSchema, 'created_at' | 'updated_at'  | 'name'| 'surname'| 'biography' |'avatar' |'banner'>;
+export type BaseUserSchema = Omit<UserSchema, 'created_at' | 'updated_at' | 'name' | 'surname' | 'biography' | 'avatar' | 'banner'>;
 const tablesUser = [TABLES_ENUM.USERS] as const;
 export type UserSchemaColumns = TableColumn<typeof tablesUser, UserSchemaWithoutTimestamps>;
 export type BaseUserSchemaColumns = TableColumn<typeof tablesUser, BaseUserSchema>;

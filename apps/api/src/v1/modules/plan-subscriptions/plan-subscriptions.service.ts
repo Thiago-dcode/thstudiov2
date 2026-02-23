@@ -22,6 +22,7 @@ import { paypal } from '@repo/backend-lib/services/payment-service/paypal';
 import { PaymentMethodsService } from '../utils/payment-methods.service';
 import { CACHE_KEY_ACTIVE_SUBSCRIPTION, CACHE_KEY_ACTIVE_PLAN } from '@repo/common-lib/constants/constants';
 import { cleanObj } from '@repo/common-lib/utils/cleanObj';
+import { CustomerPortalRequest } from './requests/customer-portal.request';
 
 @Injectable()
 export class PlanSubscriptionsService {
@@ -78,13 +79,22 @@ export class PlanSubscriptionsService {
         successUrl: success_url,
         cancelUrl: cancel_url,
       };
+      let result: HandleSubscriptionProcessResponse;
       switch (payment_method) {
         case 'CARD':
-          //STRIPE
-          return await this.handleStripeSubscription(data);
+          result = await this.handleStripeSubscription(data);
+          break;
         case 'PAYPAL':
-          return await this.handlePaypalSubscription(data);
+          result = await this.handlePaypalSubscription(data);
+          break;
       }
+      if (result.ok) {
+        await this.helpers.deleteManyCached([
+          CACHE_KEY_ACTIVE_SUBSCRIPTION(this.requestService.user.id),
+          CACHE_KEY_ACTIVE_PLAN(this.requestService.user.id),
+        ]);
+      }
+      return result;
     } catch (error) {
       const responseError: HandleSubscriptionProcessResponse = {
         message: 'Something went wrong',
@@ -117,8 +127,8 @@ export class PlanSubscriptionsService {
       });
     }
     // Invalidate cache so the UI reflects the pending cancellation
-    await this.update(activeSubscription.id,{
-      auto_renewal:true,
+    await this.update(activeSubscription.id, {
+      auto_renewal: true,
     });
 
     //TODO: Send email to user
@@ -126,12 +136,12 @@ export class PlanSubscriptionsService {
     return activeSubscription;
   }
   async findActiveSubscription(userId: number) {
-    return await this.helpers.cacheRemember(CACHE_KEY_ACTIVE_SUBSCRIPTION(userId),this.planSubscriptionsRepository.findActiveSubscription(
+    return await this.helpers.cacheRemember(CACHE_KEY_ACTIVE_SUBSCRIPTION(userId), this.planSubscriptionsRepository.findActiveSubscription(
       userId,
-    ),{
-      append_language:false,
+    ), {
+      append_language: false,
       ttl: 1000 * 60 * 60 * 24,
-    }) ;
+    });
   }
   async handleStripeSubscription({
     currentUserSubscription,
@@ -308,6 +318,38 @@ export class PlanSubscriptionsService {
     };
   }
 
+  async getCustomerSubscriptionPortal(
+    request: CustomerPortalRequest,
+  ): Promise<{
+    url: string;
+  }> {
+    const customerId = this.requestService.user?.stripe_customer_id;
+    if (!customerId) {
+      throw new HttpException('Stripe customer not found', 422);
+    }
+    if (!request?.return_url || typeof request.return_url !== 'string') {
+      throw new HttpException('return_url is required', 422);
+    }
+    let parsed: URL;
+    try {
+      parsed = new URL(request.return_url);
+    } catch {
+      throw new HttpException('return_url must be a valid URL', 422);
+    }
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+      throw new HttpException('return_url must be http(s)', 422);
+    }
+
+    const session = await stripe.billingPortal.sessions.create({
+      customer: customerId,
+      return_url: request.return_url,
+    });
+    if (!session?.url) {
+      throw new HttpException('Could not create customer portal session', 500);
+    }
+    return { url: session.url };
+  }
+
   async setFreeSubscription(userId: number): Promise<{
     plan: Omit<FullPlan, 'translation'>;
     subscription: PlanSubscriptionSchema;
@@ -326,7 +368,7 @@ export class PlanSubscriptionsService {
 
     await this.desactivateAllUserSubscriptions(userId);
 
-    const subscription =  await this.create({
+    const subscription = await this.create({
       is_active: true,
       is_trialing: false,
       amount: 0,
@@ -344,13 +386,13 @@ export class PlanSubscriptionsService {
       plan_price_id: lifetimePrice.id,
     });
     return {
-      plan:freePlan,
+      plan: freePlan,
       subscription
     }
   }
   async create(planData: CreatePlanSubscriptionInput) {
 
-    const [planSubScription] =await Promise.all([
+    const [planSubScription] = await Promise.all([
       this.planSubscriptionsRepository.create(planData),
       this.helpers.deleteManyCached([CACHE_KEY_ACTIVE_SUBSCRIPTION(planData.user_id), CACHE_KEY_ACTIVE_PLAN(planData.user_id)]),
 
@@ -382,12 +424,12 @@ export class PlanSubscriptionsService {
             },
             ...(skipSubscriptions.length > 0
               ? [
-                  {
-                    column: 'id',
-                    operator: 'NOT IN' as const,
-                    value: skipSubscriptions,
-                  },
-                ]
+                {
+                  column: 'id',
+                  operator: 'NOT IN' as const,
+                  value: skipSubscriptions,
+                },
+              ]
               : []),
           ],
         },

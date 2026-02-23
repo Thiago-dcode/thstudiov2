@@ -23,7 +23,7 @@ export class AuthGuard implements CanActivate {
     private requestService: RequestService,
     private reflector: Reflector,
     private userSessionsService: UserSessionsService,
-  ) {}
+  ) { }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     this.requestService.user = null;
@@ -68,15 +68,19 @@ export class AuthGuard implements CanActivate {
       request[USER_ID_HEADER] = payload.id;
       this.requestService.user = {
         email: payload.email,
-        public_id:payload.public_id,
+        public_id: payload.public_id,
         username: payload.username,
         email_validated: payload.email_validated,
-        stripe_customer_id:payload.stripe_customer_id,
+        stripe_customer_id: payload.stripe_customer_id,
         twofa_enabled: payload.twofa_enabled,
         twofa_expires_at: payload.twofa_expires_at,
-        funnel_step:payload.funnel_step,
+        funnel_step: payload.funnel_step,
         id: payload.id,
         is_active: payload.is_active,
+        password_reset_count: payload.password_reset_count,
+        username_reset_count: payload.username_reset_count,
+        next_username_reset: payload.next_username_reset,
+        next_password_reset: payload.next_password_reset,
         twofa_attempts: payload.twofa_attempts,
         token,
       };

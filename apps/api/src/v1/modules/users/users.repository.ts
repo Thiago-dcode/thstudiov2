@@ -31,6 +31,10 @@ export class UserRepository extends BaseRepository {
     'users.banned',
     'users.banned_reason',
     'users.funnel_step',
+    'users.username_reset_count',
+    'users.password_reset_count',
+    'users.next_username_reset',
+    'users.next_password_reset',
   ] as const;
   private readonly COMPACT_COLUMNS: string[] = [
     'users.id',
@@ -62,6 +66,12 @@ export class UserRepository extends BaseRepository {
       );
     }
     return result;
+  }
+
+  async usernameExists(username: string): Promise<boolean> {
+
+    return await this.query().where('username', '=', username).exists();
+
   }
 
   async findById(id: number): Promise<User> {
@@ -151,6 +161,10 @@ export class UserRepository extends BaseRepository {
       twofa_code: withSecrets ? result.twofa_code : undefined,
       twofa_enabled: result.twofa_enabled,
       twofa_expires_at: result.twofa_expires_at,
+      username_reset_count: result.username_reset_count,
+      password_reset_count: result.password_reset_count,
+      next_username_reset: result.next_username_reset ?? undefined,
+      next_password_reset: result.next_password_reset ?? undefined,
       funnel_step: result.funnel_step,
       is_active: result?.is_active,
       banned: result?.banned,

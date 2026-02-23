@@ -14,12 +14,13 @@ import { Errors } from "@repo/ui/components/custom/errors";
 import FormComponent from "@/lib/components/form-component";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { updateUserPasswordAction } from "@/modules/users/server-actions/update-user-password.action";
-import { UserAuth } from "@/modules/auth/auth.types";
 import { KeyRound } from "lucide-react";
 import { toast } from "@repo/ui/sonner";
+import { MAX_PASSWORD_RESET } from "@repo/common-lib/constants/constants";
+import { User } from "@repo/common-lib/types/user";
 
 type Props = {
-    user: Pick<UserAuth, 'id'>;
+    user: User
 };
 
 export const EditUserPasswordDialog = ({ user }: Props) => {
@@ -45,6 +46,16 @@ export const EditUserPasswordDialog = ({ user }: Props) => {
         setOpen(value);
     };
 
+    const resetDate = user.next_password_reset ? new Date(user.next_password_reset as unknown as string) : null;
+    const periodExpired = resetDate && new Date() >= resetDate;
+    const effectiveCount = periodExpired ? 0 : (user.password_reset_count ?? 0);
+    const maxResetReached = effectiveCount >= MAX_PASSWORD_RESET;
+    const remaining = MAX_PASSWORD_RESET - effectiveCount;
+
+    const resetDateFormatted = resetDate && !periodExpired
+        ? resetDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+        : null;
+
     return (
         <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
@@ -62,37 +73,56 @@ export const EditUserPasswordDialog = ({ user }: Props) => {
                 </DialogHeader>
 
                 <FormComponent.Container>
-                    <FormComponent.Form onSubmit={handleSubmit} className="pt-2">
-                        <FormComponent.LabelInput
-                            label="Current Password"
-                            id="old_password"
-                            name="old_password"
-                            type="password"
-                            autoComplete="current-password"
-                            required
-                            autoFocus
-                            onChange={() => { if (errors) reset(); }}
-                        />
+                    {maxResetReached ? (
+                        <div className="rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm space-y-1">
+                            <p className="font-medium text-destructive">Monthly limit reached</p>
+                            <p className="text-muted-foreground">
+                                You've used all {MAX_PASSWORD_RESET} password changes for this period.
+                                {resetDateFormatted && (
+                                    <> Available again on <span className="font-medium text-foreground">{resetDateFormatted}</span>.</>
+                                )}
+                            </p>
+                        </div>
+                    ) : (
+                        <FormComponent.Form onSubmit={handleSubmit} className="pt-2">
+                            <FormComponent.LabelInput
+                                label="Current Password"
+                                id="old_password"
+                                name="old_password"
+                                type="password"
+                                autoComplete="current-password"
+                                required
+                                autoFocus
+                                onChange={() => { if (errors) reset(); }}
+                            />
 
-                        <FormComponent.LabelInput
-                            label="New Password"
-                            id="new_password"
-                            name="new_password"
-                            type="password"
-                            autoComplete="new-password"
-                            required
-                            extraInfo="8–20 characters, at least one number, no spaces"
-                            onChange={() => { if (errors) reset(); }}
-                        />
+                            <FormComponent.LabelInput
+                                label="New Password"
+                                id="new_password"
+                                name="new_password"
+                                type="password"
+                                autoComplete="new-password"
+                                required
+                                extraInfo="8–20 characters, at least one number, no spaces"
+                                onChange={() => { if (errors) reset(); }}
+                            />
 
-                        <FormComponent.SubmitButton isPending={isPending} disabled={isPending}>
-                            Update Password
-                        </FormComponent.SubmitButton>
+                            {effectiveCount > 0 && (
+                                <p className="text-xs text-muted-foreground">
+                                    {remaining} of {MAX_PASSWORD_RESET} change{remaining !== 1 ? 's' : ''} remaining this month
+                                    {resetDateFormatted && <> · resets on {resetDateFormatted}</>}
+                                </p>
+                            )}
 
-                        {errors && errors.length > 0 && (
-                            <Errors errors={errors} />
-                        )}
-                    </FormComponent.Form>
+                            <FormComponent.SubmitButton isPending={isPending} disabled={isPending}>
+                                Update Password
+                            </FormComponent.SubmitButton>
+
+                            {errors && errors.length > 0 && (
+                                <Errors errors={errors} />
+                            )}
+                        </FormComponent.Form>
+                    )}
                 </FormComponent.Container>
             </DialogContent>
         </Dialog>
