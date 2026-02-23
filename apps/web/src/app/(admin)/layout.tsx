@@ -26,7 +26,7 @@ const AdminLayout = async ({ children }: { children: ReactNode }) => {
             <div className="flex size-full items-center justify-between ">
               <AdminHeader />
               <main className="size-full flex flex-col items-start justify-start  ">
-                <TopNav />
+                <TopNav username={userAuth.username} />
 
                 <div className="max-w-[1920px] flex w-full justify-start h-full overflow-y-scroll">   {children}</div>
 

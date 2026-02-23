@@ -40,6 +40,13 @@ export class UserController {
   async findAll() {
     return this.userService.findAll();
   }
+
+  @Public()
+  @Get('profile/:username')
+  async getProfile(@Param('username') username: string) {
+    return await this.userService.getProfileByUsername(username);
+  }
+
   @Public()
   @Get(':id')
   async findOne(

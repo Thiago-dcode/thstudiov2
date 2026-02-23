@@ -5,6 +5,7 @@ import {
   CreateUserInput,
   UpdateUserInput,
   User,
+  UserProfile,
 } from '@repo/common-lib/types/user';
 import { BaseUser, BaseUserWithSecrets } from '@repo/common-lib/types/user';
 import {
@@ -12,12 +13,16 @@ import {
   BaseUserSchemaColumns,
   UserSchema,
   UserSchemaColumns,
+  UserProfileSchema,
+  UserProfileSchemaColumns,
 } from '@repo/common-lib/schemas/user';
 import { EnumType } from '@repo/common-lib/constants/enums';
+import { CategoryBase } from '@repo/common-lib/types/category';
+import { ProfileAddress } from '@repo/common-lib/types/user';
 
 @Injectable()
 export class UserRepository extends BaseRepository {
-  private readonly BASE_COLUMNS: BaseUserSchemaColumns[] = [
+  private readonly BASE_COLUMNS :BaseUserSchemaColumns[]= [
     'users.id',
     'users.public_id',
     'users.email',
@@ -35,13 +40,15 @@ export class UserRepository extends BaseRepository {
     'users.password_reset_count',
     'users.next_username_reset',
     'users.next_password_reset',
-  ] as const;
-  private readonly COMPACT_COLUMNS: string[] = [
+  ];
+
+  private readonly COMPACT_COLUMNS = [
     'users.id',
     'users.email',
     'users.username',
   ] as const;
-  private readonly FULL_COLUMNS: UserSchemaColumns[] = [
+
+  private readonly FULL_COLUMNS:UserSchemaColumns[] = [
     ...this.BASE_COLUMNS,
     'users.avatar',
     'users.banner',
@@ -56,7 +63,7 @@ export class UserRepository extends BaseRepository {
   }
   async findByIdCompact(id: number): Promise<CompactUser> {
     const result = await this.query()
-      .select(this.COMPACT_COLUMNS)
+      .select([...this.COMPACT_COLUMNS])
       .where('id', '=', id)
       .first<CompactUser>();
     if (!result) {
@@ -76,7 +83,7 @@ export class UserRepository extends BaseRepository {
 
   async findById(id: number): Promise<User> {
     const result = await this.query()
-      .select(this.FULL_COLUMNS)
+      .select([...this.FULL_COLUMNS])
       .where('id', '=', id)
       .first<UserSchema>();
     if (!result) {
@@ -116,6 +123,52 @@ export class UserRepository extends BaseRepository {
       : this.formatUser(result);
   }
 
+  private readonly PROFILE_COLUMNS:UserProfileSchemaColumns[] = [
+   'users.id',
+   'users.name',
+   'users.surname',
+   'users.username',
+   'users.email',
+   'users.avatar',
+   'users.banner',
+   'users.banned',
+   'users.banned_reason',
+   'users.is_active',
+   'users.short_biography',
+   'users.biography',
+
+    // Address — minimal
+    'addresses.id as a_id',
+    'addresses.formated_address',
+    'addresses.street',
+    'addresses.city',
+    'addresses.state',
+
+    // Pivot user_categories
+    'user_categories.id as uc_id',
+    'user_categories.user_id as uc_user_id',
+    'user_categories.category_id',
+
+    // Categories
+    'categories.id as c_id',
+    'categories.tags',
+    'categories.name as c_name',
+    'categories.parent_id',
+  ];
+
+  async getUserProfile(username: string): Promise<UserProfile | null> {
+    const result = await this.query()
+      .select(this.PROFILE_COLUMNS)
+      .where('users.username', '=', username)
+      .join('id', 'addresses', 'user_id', 'LEFT')
+      .join('id', 'user_categories', 'user_id', 'LEFT')
+      .join('user_categories.category_id', 'categories', 'id', 'LEFT')
+      .get<UserProfileSchema[]>();
+
+    if (!result || result.length === 0) return null;
+
+    return this.formatUserProfile(result);
+  }
   async findOneByColumnWithSecrets(
     column: string,
     value: any,
@@ -131,7 +184,7 @@ export class UserRepository extends BaseRepository {
 
   async create(user: CreateUserInput): Promise<BaseUser> {
     const result = await super._create<BaseUserSchema>(user, {
-      select: this.BASE_COLUMNS,
+      select:this.BASE_COLUMNS,
     });
     return this.formatUser(result, false) as BaseUser;
   }
@@ -180,6 +233,51 @@ export class UserRepository extends BaseRepository {
       surname: result?.surname,
       short_biography: result?.short_biography,
       biography: result?.biography,
+    };
+  }
+
+  private formatUserProfile(rows: UserProfileSchema[]): UserProfile {
+    const first = rows[0];
+
+    const address: ProfileAddress | null = first.a_id != null
+      ? {
+        formated_address: first.formated_address ?? null,
+        street: first.street ?? null,
+        city: first.city ?? null,
+        state: first.state ?? null,
+      }
+      : null;
+
+    const categoriesMap = new Map<number, CategoryBase>();
+
+    for (const row of rows) {
+      if (!row.c_id) continue;
+      if (categoriesMap.has(row.c_id)) continue;
+
+      categoriesMap.set(row.c_id, {
+        id: row.c_id,
+        name: row.c_name ?? '',
+        parent_id: row.parent_id ?? null,
+        thumbnail: null,
+        tags: row.tags ? row.tags.split(',') : [],
+      });
+    }
+
+    return {
+      id: first.id,
+      name: first.name,
+      surname: first.surname,
+      username: first.username,
+      email: first.email,
+      avatar: first.avatar,
+      banner: first.banner,
+      banned: first.banned,
+      banned_reason: first.banned_reason,
+      is_active: first.is_active,
+      short_biography: first.short_biography,
+      biography: first.biography,
+      address,
+      categories: Array.from(categoriesMap.values()),
     };
   }
   // update(id: number, updatePlanDto: UpdatePlanDto) {

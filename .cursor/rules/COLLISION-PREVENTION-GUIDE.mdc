@@ -1,3 +1,8 @@
+---
+alwaysApply: false
+description: SQL column collision prevention guide for multi-table joins. Use this when creating or modifying joined schemas, PROFILE_COLUMNS, FULL_COLUMNS, or formatters that aggregate rows from multiple tables.
+---
+
 # SQL Column Collision Prevention Guide
 
 ## ⚠️ The Problem
@@ -120,7 +125,7 @@ private formatUserSession(
 | plans + plan_prices | plans (no prefix) | `pp_` |
 | plans + plan_offers | plans (no prefix) | `po_` |
 | plans + plan_translations | plans (no prefix) | `pt_` |
-| users + addresses | users (no prefix) | `addr_` |
+| users + addresses + user_categories + categories | users (no prefix) | `a_` / `uc_` / `c_` |
 
 ## 🎯 Rules to Follow
 
@@ -133,6 +138,183 @@ private formatUserSession(
 5. **NEVER use schema intersection** (`&`) for joined tables with colliding columns
    - Use intersection only when tables have NO overlapping column names
    - Otherwise, define the complete type explicitly
+6. **Select only the columns you need** — don't select the entire table just because you can. Pick the minimal set needed for the output type.
+7. **The output type (`UserProfile`, `FullPortfolio`, etc.) must match the selected columns** — use `Pick<>` to narrow the base type rather than extending the full schema with extra fields you never query.
+
+## 🧩 Real Example from This Repo: Users + Addresses + Categories (4-table join)
+
+This is the canonical pattern in this codebase. It joins **users** (main), **addresses** (LEFT), **user_categories** (pivot, LEFT), and **categories** (LEFT).
+
+### Collisions we must handle
+
+| Column | Exists in |
+|--------|-----------|
+| `id` | users, addresses, user_categories, categories |
+| `name` | users, categories |
+| `user_id` | addresses, user_categories |
+
+All other columns are unique across the joined tables and need **no alias**.
+
+### 1) Define the join schema (`packages/common-lib/src/schemas/user.ts`)
+
+Only the columns you actually SELECT go in the schema. Colliding columns from joined tables get a short prefix (`a_`, `uc_`, `c_`). Non-colliding columns keep their original name.
+
+```typescript
+export type UserProfileSchema = {
+  // From users (main table — no prefix)
+  id: number;
+  name?: string | null;
+  surname?: string | null;
+  username: string;
+  email: string;
+  avatar?: string;
+  banner?: string;
+  banned?: boolean;
+  banned_reason?: string | null;
+  is_active?: boolean;
+  short_biography?: string | null;
+  biography?: string | null;
+
+  // From addresses — only id collides
+  a_id: number;                          // COLLISION: id
+  formated_address?: string | null;      // no collision
+  street?: string | null;               // no collision
+  city?: string | null;                 // no collision
+  state?: string | null;               // no collision
+
+  // From user_categories (pivot) — id and user_id collide
+  uc_id?: number | null;                 // COLLISION: id
+  uc_user_id?: number | null;            // COLLISION: user_id
+  category_id?: number | null;           // no collision
+
+  // From categories — id and name collide
+  c_id?: number | null;                  // COLLISION: id
+  c_name?: string | null;               // COLLISION: name
+  tags?: string | null;                 // no collision
+  parent_id?: number | null;            // no collision
+};
+```
+
+### 2) Select columns with minimal aliasing (`apps/api/.../users.repository.ts`)
+
+```typescript
+private readonly PROFILE_COLUMNS: UserProfileSchemaColumns[] = [
+  // Users (main table — no aliases)
+  'users.id',
+  'users.name',
+  'users.surname',
+  'users.username',
+  'users.email',
+  'users.avatar',
+  'users.banner',
+  'users.banned',
+  'users.banned_reason',
+  'users.is_active',
+  'users.short_biography',
+  'users.biography',
+
+  // Address — only alias the collision (id)
+  'addresses.id as a_id',              // COLLISION
+  'addresses.formated_address',        // no collision, no alias
+  'addresses.street',
+  'addresses.city',
+  'addresses.state',
+
+  // Pivot user_categories — alias collisions (id, user_id)
+  'user_categories.id as uc_id',       // COLLISION
+  'user_categories.user_id as uc_user_id', // COLLISION
+  'user_categories.category_id',       // no collision, no alias
+
+  // Categories — alias collisions (id, name)
+  'categories.id as c_id',            // COLLISION
+  'categories.name as c_name',        // COLLISION
+  'categories.tags',                   // no collision, no alias
+  'categories.parent_id',
+];
+```
+
+### 3) Define the output type (`packages/common-lib/src/types/user.ts`)
+
+The output type should **only include the fields you actually selected**, using `Pick<>` to narrow the base schema:
+
+```typescript
+export type ProfileAddress = {
+  formated_address?: string | null;
+  street?: string | null;
+  city?: string | null;
+  state?: string | null;
+};
+
+export type UserProfile = Pick<UserSchema,
+  | 'id' | 'name' | 'surname' | 'username' | 'email'
+  | 'avatar' | 'banner' | 'banned' | 'banned_reason'
+  | 'is_active' | 'short_biography' | 'biography'
+> & {
+  address: ProfileAddress | null;
+  categories: CategoryBase[];
+};
+```
+
+### 4) Format into the public API type (the formatter)
+
+The formatter reads raw column names (non-aliased) directly and uses prefixed names only for collisions:
+
+```typescript
+private formatUserProfile(rows: UserProfileSchema[]): UserProfile {
+  const first = rows[0];
+
+  // Address: check aliased a_id to know if a row exists
+  const address: ProfileAddress | null = first.a_id != null
+    ? {
+      formated_address: first.formated_address ?? null,   // non-aliased
+      street: first.street ?? null,                       // non-aliased
+      city: first.city ?? null,                           // non-aliased
+      state: first.state ?? null,                         // non-aliased
+    }
+    : null;
+
+  // Categories: dedupe by aliased c_id (one row per category from the join)
+  const categoriesMap = new Map<number, CategoryBase>();
+  for (const row of rows) {
+    if (!row.c_id) continue;
+    if (categoriesMap.has(row.c_id)) continue;
+    categoriesMap.set(row.c_id, {
+      id: row.c_id,                     // aliased (collision)
+      name: row.c_name ?? '',           // aliased (collision)
+      parent_id: row.parent_id ?? null, // non-aliased
+      thumbnail: null,                  // not selected
+      tags: row.tags ? row.tags.split(',') : [],  // non-aliased
+    });
+  }
+
+  return {
+    id: first.id,
+    name: first.name,
+    surname: first.surname,
+    username: first.username,
+    email: first.email,
+    avatar: first.avatar,
+    banner: first.banner,
+    banned: first.banned,
+    banned_reason: first.banned_reason,
+    is_active: first.is_active,
+    short_biography: first.short_biography,
+    biography: first.biography,
+    address,
+    categories: Array.from(categoriesMap.values()),
+  };
+}
+```
+
+### Why this pattern works
+
+- **Only collisions get prefixed** → `a_id`, `uc_id`, `uc_user_id`, `c_id`, `c_name`
+- **Everything else keeps its original name** → `street`, `city`, `tags`, `parent_id`, `category_id`
+- **Output type uses `Pick<>` on the base schema** → no phantom fields that were never queried
+- **Nested objects (`address`, `categories`) are built by the formatter** → clean API response
+- **`null` for optional relations** → `address: null` when no address, `categories: []` when no categories
+
+---
 
 ## 🧩 Real Example from This Repo: Portfolios + Media Join
 

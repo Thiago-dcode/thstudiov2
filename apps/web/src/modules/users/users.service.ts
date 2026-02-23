@@ -1,6 +1,6 @@
 import { BaseService } from "@/lib/services/base.service";
 import { fetchApi } from "@/lib/facade/fetchApi";
-import { BaseUser, UpdateUserInputWithAssets, UpdateUserPasswordInput, User, UserMetrics } from "@repo/common-lib/types/user";
+import { BaseUser, UpdateUserInputWithAssets, UpdateUserPasswordInput, User, UserMetrics, UserProfile } from "@repo/common-lib/types/user";
 import { ApiResponse } from "@repo/common-lib/types/response";
 import { CategoryBase } from "@repo/common-lib/types/category";
 import { UserExtraData } from "@repo/common-lib/types/user-extra-data";
@@ -104,6 +104,12 @@ export class UserService extends BaseService {
         return await this.fetchApi.post({
             resource: `${id}/password`,
             body: data,
+        });
+    }
+
+    async getProfile(username: string): Promise<ApiResponse<UserProfile>> {
+        return await this.fetchApi.get({
+            resource: `profile/${username}`,
         });
     }
 

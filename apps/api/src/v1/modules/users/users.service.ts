@@ -69,6 +69,18 @@ export class UserService {
     return result;
   }
 
+  async getProfileByUsername(username: string) {
+    const result = await this.userRepository.getUserProfile(username);
+    if (!result) return null;
+    if (result.avatar) {
+      result.avatar = await this.helpers.getAsset(result.avatar);
+    }
+    if (result.banner) {
+      result.banner = await this.helpers.getAsset(result.banner);
+    }
+    return result;
+  }
+
   async findOneCompacted(id: number) {
     return await this.userRepository.findByIdCompact(id);
   }

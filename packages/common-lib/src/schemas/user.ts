@@ -37,3 +37,54 @@ const tablesUser = [TABLES_ENUM.USERS] as const;
 export type UserSchemaColumns = TableColumn<typeof tablesUser, UserSchemaWithoutTimestamps>;
 export type BaseUserSchemaColumns = TableColumn<typeof tablesUser, BaseUserSchema>;
 
+// ==================== USER PROFILE JOIN SCHEMA ====================
+// Joins: users + addresses + user_categories + categories
+// Collisions are resolved by alias prefixes:
+// - Address: a_
+// - UserCategories pivot: uc_
+// - Category: c_
+export type UserProfileSchema = {
+  // From users (all UserSchemaWithoutTimestamps keys needed for TableColumn compat)
+  id: number;
+  public_id: string;
+  email: string;
+  username: string;
+  is_active?: boolean;
+  banned?: boolean;
+  banned_reason?: string | null;
+  short_biography?: string | null;
+  avatar?: string;
+  banner?: string;
+  name?: string | null;
+  surname?: string | null;
+  biography?: string | null;
+
+  // From address
+  a_id:number;
+  formated_address?: string | null;
+  street?: string | null;
+  city?: string | null;
+  state?: string | null;
+  user_id?: number | null;
+
+  // From user_categories (aliased: uc_)
+  uc_id?: number | null;
+  uc_user_id?: number | null;
+  category_id?: number | null;
+
+  // From categories (aliased: c_)
+  c_id?: number | null;
+  c_name?: string | null;
+  tags?:string | null;
+  parent_id?:number | null;
+};
+
+const tablesUserProfile = [
+  TABLES_ENUM.USERS,
+  TABLES_ENUM.ADDRESSES,
+  TABLES_ENUM.USER_CATEGORIES,
+  TABLES_ENUM.CATEGORIES,
+] as const;
+
+export type UserProfileSchemaColumns = TableColumn<typeof tablesUserProfile, UserProfileSchema>;
+
