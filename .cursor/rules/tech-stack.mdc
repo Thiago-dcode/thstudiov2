@@ -1,0 +1,20 @@
+---
+description: High-level tech stack, project structure, and core principles.
+globs: *
+---
+
+# 🏗 Tech Stack & Structure
+
+## Project Structure
+- `apps/api` → NestJS backend
+- `apps/web` → Next.js frontend
+- `packages/ui` → Reusable UI components (design system)
+- `packages/database` → Custom ORM & database entry point
+- `packages/common-lib` → Shared cross-platform utilities
+- `packages/backend-lib` → Backend-only shared logic
+- `packages/frontend-lib` → Frontend-only shared logic
+
+## Core Principles
+- **Clean Architecture Monorepo**: Every layer has a responsibility. Every package has a boundary.
+- **Consistency**: UI, Naming, and Code style must be consistent.
+- **No Shortcuts**: Prefer domain separation over convenience. Clean architecture > speed.

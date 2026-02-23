@@ -17,7 +17,7 @@ const AdminLayout = async ({ children }: { children: ReactNode }) => {
   }
   return <>
     <FinishSetupDialog user={userAuth} />
-    <MainNavProvider>
+    <MainNavProvider defaultShrinked>
       <UserMetricsProvider userId={userAuth.id}>
         <MediaProvider>
           <PortfolioProvider userId={userAuth.id}>

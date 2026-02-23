@@ -29,7 +29,7 @@ export default async function SettingsPage() {
     const user = userResponse.data;
     const activeSubscription = activeSubscriptionResponse.data ?? null;
     const isFree = activeSubscription?.plan_price.plan.is_free ?? true;
-    console.log("ACTIVE SUBSCRIPTION",activeSubscription)
+    console.log("ACTIVE SUBSCRIPTION", activeSubscription)
     const planName = activeSubscription?.plan_price.plan.name ?? 'Free';
 
     const nextBillingDate = activeSubscription?.next_billing_date
@@ -131,10 +131,10 @@ export default async function SettingsPage() {
                                 )}
                             </div>
                         </div>
-                        <div className="flex flex-col items-end gap-1">
-                            <Button variant="ghost" size="sm" asChild>
+                        <div className="flex flex-col items-end gap-3">
+                            <Button variant="secondary" size="sm" asChild>
                                 <Link href="/atelier/settings/subscription" className="gap-1.5">
-                                    {'Upgrade'} <ArrowRight className="size-3.5" />
+                                    {isFree ? 'Upgrade' : 'Change'} <ArrowRight className="size-3.5" />
                                 </Link>
                             </Button>
                             {!isFree && (
