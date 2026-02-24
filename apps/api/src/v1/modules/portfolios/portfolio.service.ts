@@ -7,7 +7,6 @@ import { IndexPortfolioRequest } from "./requests/index-portfolio.request";
 import { UserExtraDataService } from "../user-extra-data/user-extra-data.service";
 import { RequestService } from "src/common/services/request.service";
 import { PortfolioRepository } from "./portfolio.repository";
-import { FullPortfolio } from "@repo/common-lib/types/portfolio";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { UPDATE_USER_EXTRA_DATA_METRICS } from "@repo/common-lib/constants/constants";
 import { UpdateUserExtraDataMetricsEvent } from "../user-extra-data/events/update-user-extra-data-metrics.event";
@@ -43,25 +42,7 @@ export class PortfolioService {
     );
   }
 
-  async getBySlug(slug: string, userId: number): Promise<FullPortfolio> {
-    const portfolio = await this.portfolioRepository.getBySlug(slug, userId);
-    if (!portfolio) return null;
-
-    if (portfolio.thumbnail) {
-      portfolio.thumbnail = await this.helpers.getAsset(portfolio.thumbnail);
-    }
-    return {
-      ...portfolio,
-      media: portfolio.media.length
-        ? await Promise.all(portfolio.media.map(async (media) => ({
-          ...media,
-          thumbnail: media.thumbnail ? await this.helpers.getAsset(media.thumbnail) : undefined,
-        })))
-        : portfolio.media,
-    };
-  }
-
-  async slugExists(slug: string, userId: number) {
+  private async slugExists(slug: string, userId: number) {
     return {
       exists: await this.portfolioRepository.slugExists(slug, userId)
     }

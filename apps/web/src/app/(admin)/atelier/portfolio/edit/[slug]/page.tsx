@@ -1,5 +1,5 @@
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
-import portfolioService from "@/modules/portfolios/portfolio.service";
+import userPortfolioService from "@/modules/user-portfolios/user-portfolio.service";
 import { redirect, notFound } from "next/navigation";
 
 import { CreateOrUpdatePortfolio } from "../../_components/create-update-porfolio";
@@ -17,7 +17,7 @@ export default async function PortfolioDetail({ params }: Props) {
     }
 
     const { slug } = await params;
-    const portfolioResponse = await portfolioService.getBySlug(userAuth.id, slug);
+    const portfolioResponse = await userPortfolioService.getById(userAuth.id, slug);
 
     if (portfolioResponse.error) {
         return <div>{portfolioResponse?.error?.message || 'Something went wrong'}</div>;

@@ -1,7 +1,7 @@
 'use server'
 
 import { ActionReturn } from "@repo/common-lib/types/response";
-import portfolioService from "../portfolio.service"
+import userPortfolioService from "@/modules/user-portfolios/user-portfolio.service"
 
 
 
@@ -16,7 +16,7 @@ export const slugExistsAction = async (userId: number, slug: string): Promise<Ac
         }
     }
 
-    const response = await portfolioService.slugExists(userId, slug);
+    const response = await userPortfolioService.slugExists(userId, slug);
 
     return {
         data: !!response.data?.exists,

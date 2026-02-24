@@ -6,6 +6,7 @@ import { ALLOWED_IMAGE_FILE_TYPES } from "@repo/common-lib/constants/constants";
 import { cleanObj, trimValues } from "@repo/common-lib/utils/cleanObj";
 import { MimeTypes } from "@repo/common-lib/types/general";
 import portfolioService from "../portfolio.service";
+import userPortfolioService from "@/modules/user-portfolios/user-portfolio.service";
 import { getFriendlyApiErrors, getObjErrorFromZod } from "@/modules/auth/helpers";
 import { createPortfolioSchema, updatePortfolioSchema } from "../schemas/portfolio-schemas";
 
@@ -73,7 +74,7 @@ console.log("INPUT",input);
 
     // Check slug availability (skip if slug unchanged on update)
     if (rawData.slug && rawData.user_id && currentPortfolio?.slug !==rawData.slug) {
-        const slugExistsResponse = await portfolioService.slugExists(rawData.user_id, rawData.slug);
+        const slugExistsResponse = await userPortfolioService.slugExists(rawData.user_id, rawData.slug);
 
         if (slugExistsResponse.error) {
             return {

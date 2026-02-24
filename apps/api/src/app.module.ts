@@ -37,6 +37,7 @@ import { UserMediaModule } from './v1/modules/user-media/user-media.module';
 import { AiMediaModule } from './v1/modules/ai-media/ai-media.module';
 import { AddressModule } from './v1/modules/addresses/address.module';
 import { PortfolioModule } from './v1/modules/portfolios/portfolio.module';
+import { UserPortfolioModule } from './v1/modules/user-portfolios/user-portfolio.module';
 import { BullModule } from '@nestjs/bullmq';
 import { UserExtraDataModule } from './v1/modules/user-extra-data/user-extra-data.module';
 import { AiProcessorModule } from './v1/modules/ai/ai-processor.module';
@@ -56,7 +57,8 @@ const APP_MODULES = [
   UserMediaModule,
   AiMediaModule,
   AddressModule,
-  PortfolioModule
+  PortfolioModule,
+  UserPortfolioModule,
 ];
 @Module({
   imports: [

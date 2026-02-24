@@ -4,17 +4,20 @@ import UserService from "@/modules/users/users.service";
 import fallbackBanner from "@/assets/images/fallback-banner.jpg";
 import { Badge } from "@repo/ui/components/shadcn/badge";
 import { MapPin } from "lucide-react";
+import { Suspense } from "react";
+import { UserPortfoliosSection } from "@/modules/portfolios/components/user-portfolios-section";
+import { Spinner } from "@repo/ui/components/shadcn/spinner";
 
-const ArtistHomePage = async ({ params }: { params: Promise<{ artist: string }> }) => {
-    const { artist } = await params;
-    const { data: profile } = await UserService.getProfile(artist);
+const ArtistHomePage = async ({ params }: { params: Promise<{ username: string }> }) => {
+    const { username } = await params;
+    const { data: profile } = await UserService.getProfile(username);
 
     if (!profile) {
         return (
             <div className="flex flex-col items-center justify-center gap-4 min-h-screen px-4 text-center">
                 <h1 className="text-2xl font-semibold">Artist not found</h1>
                 <p className="text-text-muted">
-                    There is no artist with the name <span className="font-medium text-text">{artist}</span>.
+                    There is no artist with the username <span className="font-medium text-text">{username}</span>.
                 </p>
                 <Link
                     href="/"
@@ -29,7 +32,7 @@ const ArtistHomePage = async ({ params }: { params: Promise<{ artist: string }> 
     const fullName = [profile.name, profile.surname].filter(Boolean).join(" ");
 
     return (
-        <div className="min-h-screen w-full">
+        <div className="min-h-screen w-full flex flex-col items-center justify-start gap-12">
             <section className="w-full max-w-4xl mx-auto pb-8">
                 {/* Banner */}
                 <div className="relative max-h-74 aspect-video w-full">
@@ -87,6 +90,8 @@ const ArtistHomePage = async ({ params }: { params: Promise<{ artist: string }> 
                     )}
                 </div>
             </section>
+
+            <Suspense fallback={<Spinner />}><UserPortfoliosSection username={profile.username} userId={profile.id} /></Suspense>
         </div>
     );
 };

@@ -28,23 +28,6 @@ export class PortfolioController {
     return await this.portfolioService.findAll(indexPortfolioRequest);
   }
 
-  @Get('slug-exists/:user_id/:slug')
-  async slugExists(
-    @Param('user_id', ParseIntPipe) userId: number,
-    @Param('slug') slug: string,
-  ) {
-    return await this.portfolioService.slugExists(slug, userId);
-  }
-
-  @Public()
-  @Get(':user_id/:slug')
-  async getBySlug(
-    @Param('user_id', ParseIntPipe) userId: number,
-    @Param('slug') slug: string,
-  ) {
-    return await this.portfolioService.getBySlug(slug, userId);
-  }
-
   @Post()
   @UseInterceptors(FileInterceptor('thumbnail'))
   async create(
