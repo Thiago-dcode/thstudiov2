@@ -18,20 +18,29 @@ import { UpdateMediaRequest } from './requests/update-media.request';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { ParseJsonArrayPipe } from 'src/common/pipes/parse-json-array.pipe';
 import { MediaService } from './media.service';
+import { ModelExistPipe } from 'src/pipes/model-exist.pipe';
 
-@Throttle({ 
+@Throttle({
   short: { limit: 50, ttl: 1000 },
   medium: { limit: 100, ttl: 10000 },
   long: { limit: 300, ttl: 60000 }
 })
 @Controller('media')
 export class MediaController {
-  constructor(private readonly mediaService: MediaService) {}
+  constructor(private readonly mediaService: MediaService) { }
   @Get()
   async findAll() {
     return {
       message: 'Hello World',
     };
+  }
+
+  @Get(':public_id')
+  async getOneByPublicId(@Param('public_id', new ModelExistPipe('media', 'public_id')) public_id: string) {
+
+    return await this.mediaService.getOneByPublicId(public_id);
+
+
   }
 
   @Post('bulk')
@@ -41,11 +50,11 @@ export class MediaController {
     createMediaItemsRequest: CreateMediaRequest[],
     @UploadedFiles() files: Express.Multer.File[],
   ) {
-    
-    if(createMediaItemsRequest.length !== files.length){
-       throw new BadRequestException('Items and files does not match')
+
+    if (createMediaItemsRequest.length !== files.length) {
+      throw new BadRequestException('Items and files does not match')
     }
-    const data = createMediaItemsRequest.map((item,i)=>{
+    const data = createMediaItemsRequest.map((item, i) => {
       item.media = files[i];
       return item;
     });
@@ -60,7 +69,7 @@ export class MediaController {
     if (!file) {
       throw new BadRequestException('File is required');
     }
-    
+
     createMediaRequest.media = file;
     return await this.mediaService.create(createMediaRequest);
   }

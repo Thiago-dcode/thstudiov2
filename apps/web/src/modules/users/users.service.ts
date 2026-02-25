@@ -112,6 +112,11 @@ export class UserService extends BaseService {
             resource: `profile/${username}`,
         });
     }
+    async getCompact(username: string): Promise<ApiResponse<UserProfile>> {
+        return await this.fetchApi.get({
+            resource: `compact/${username}`,
+        });
+    }
 
     async address(id: number): Promise<ApiResponse<Address>> {
 

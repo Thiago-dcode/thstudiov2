@@ -54,6 +54,20 @@ export class MediaService {
       }),
     );
   }
+  public async getOneByPublicId(publicId: string) {
+
+
+    const media = await this.mediaRepository.findOneByColumn('public_id', publicId);
+
+    if (!media) return null;
+
+    const [thumbnail, url] = await Promise.all([this.helpers.getAsset(media.thumbnail), this.helpers.getAsset(media.url)]);
+
+    media.thumbnail = thumbnail;
+    media.url = url;
+
+    return media;
+  }
   public async getAsset(id: number) {
 
     const media = await this.mediaRepository.findById(id);

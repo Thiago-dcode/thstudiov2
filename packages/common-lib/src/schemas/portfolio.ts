@@ -28,6 +28,7 @@ export type PortfolioFullSchema = PortfolioSchema & {
 
   // From media (prefixed: m_)
   m_id: number;                           // COLLISION: id
+  public_id: string;
   m_title?: string | null;                // COLLISION: title
   m_thumbnail?: string | null;            // COLLISION: thumbnail
   blocked: boolean;

@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { FactoryLogService } from "@repo/backend-lib/services/log-service";
+// import { FactoryLogService } from "@repo/backend-lib/services/log-service";
 import { Helpers } from "src/common/services/helpers.service";
 
 import { FullPortfolio } from "@repo/common-lib/types/portfolio";
@@ -9,9 +9,9 @@ import { PortfolioRepository } from "../portfolios/portfolio.repository";
 
 @Injectable()
 export class UserPortfolioService {
-  private readonly logger = FactoryLogService.createLogService('file', {
-    channel: 'portfolio',
-  });
+  // private readonly logger = FactoryLogService.createLogService('file', {
+  //   channel: 'portfolio',
+  // });
   constructor(
     private readonly portfolioRepository: PortfolioRepository,
     private readonly userRepository: UserRepository,

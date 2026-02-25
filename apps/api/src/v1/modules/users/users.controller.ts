@@ -43,8 +43,14 @@ export class UserController {
 
   @Public()
   @Get('profile/:username')
-  async getProfile(@Param('username') username: string) {
+  async getProfile(@Param('username', new ModelExistPipe('users', 'username')) username: string) {
     return await this.userService.getProfileByUsername(username);
+  }
+
+  @Public()
+  @Get('compact/:username')
+  async getCompacted(@Param('username', new ModelExistPipe('users', 'username')) username: string) {
+    return await this.userService.getCompactedByUsername(username);
   }
 
   @Public()

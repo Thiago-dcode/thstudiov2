@@ -27,8 +27,18 @@ export type MediaSchema = {
 
 export type MediaSchemaWithoutTimestamps = Omit<MediaSchema, 'created_at' | 'updated_at'>;
 
+
 const tablesMedia = [TABLES_ENUM.MEDIA] as const;
 export type MediaSchemaColumns = TableColumn<typeof tablesMedia, MediaSchema>;
+
+export type MediaWithUserSchema = MediaSchema & {
+  u_id: number;              // COLLISION: id
+  username: string;
+  name?: string | null;
+}
+
+const tablesMediaWithUser = [TABLES_ENUM.MEDIA, TABLES_ENUM.USERS] as const;
+export type MediaWithUserSchemaColumns = TableColumn<typeof tablesMediaWithUser, MediaWithUserSchema>;
 
 // ==================== MEDIA WITH TRANSLATIONS SCHEMA ====================
 export type MediaWithTranslationsSchema = MediaSchema & {

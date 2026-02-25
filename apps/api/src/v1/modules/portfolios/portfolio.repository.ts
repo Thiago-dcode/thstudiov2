@@ -36,6 +36,7 @@ export class PortfolioRepository extends BaseRepository {
     'portfolio_media.media_id',
     'portfolio_media.position',
     'media.id as m_id',
+    'media.public_id',
     'media.thumbnail as m_thumbnail',
     'media.shape',
     'media.title as m_title',
@@ -225,6 +226,7 @@ export class PortfolioRepository extends BaseRepository {
 
       mediaMap.set(row.m_id, {
         id: row.m_id,
+        public_id: row.public_id,
         title: row.m_title,
         position: row.position,
         thumbnail: row.m_thumbnail,

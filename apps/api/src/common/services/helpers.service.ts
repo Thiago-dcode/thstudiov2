@@ -24,7 +24,7 @@ export class Helpers {
     private readonly storageService: StorageService,
     private readonly compressService: CompressService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
-  ) {}
+  ) { }
 
   public async cacheRemember<T>(
     key: string,
@@ -33,9 +33,9 @@ export class Helpers {
       append_language: boolean;
       ttl: number;
     } = {
-      append_language: false,
-      ttl: 1000 * 60 * 60 * 24,
-    },
+        append_language: false,
+        ttl: 1000 * 60 * 60 * 24,
+      },
   ): Promise<T> {
     let _key = key;
     if (options.append_language) {
@@ -103,10 +103,11 @@ export class Helpers {
   }
 
   public async deleteAsset(path?: string) {
-    if(!path)return;
-    return await  Promise.all([this.storageService.delete(path),this.cacheManager.del(path)]);
+    if (!path) return;
+    return await Promise.all([this.storageService.delete(path), this.cacheManager.del(path)]);
   }
-  public async getAsset(path: string) {
+  public async getAsset(path?: string) {
+    if (!path) return '';
     let asset = (await this.cacheManager.get(path)) as string;
     if (!asset) {
       asset = await this.storageService.getUrl(path);

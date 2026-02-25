@@ -4,11 +4,14 @@ import { QueryBuilder } from '@repo/database/queryBuilder';
 import {
   MediaSchema,
   MediaSchemaColumns,
+  MediaWithUserSchema,
+  MediaWithUserSchemaColumns,
 } from '@repo/common-lib/schemas/media';
 import {
   CreateMediaInput,
   UpdateMediaInput,
   Media,
+  MediaWithUser,
   MediaIndexRequest,
 } from '@repo/common-lib/types/media';
 import { RequestService } from 'src/common/services/request.service';
@@ -23,6 +26,7 @@ export class MediaRepository extends BaseRepository {
     'media.bytes',
     'media.thumbnail_bytes',
     'media.thumbnail',
+    'media.url',
     'media.blocked',
     'media.shape',
     'media.compression_level',
@@ -37,19 +41,12 @@ export class MediaRepository extends BaseRepository {
     'media.updated_at',
   ] as const;
 
-  // private readonly FULL_COLUMNS: string[] = [
-  //   // Media columns
-  //   ...this.COLUMNS,
-  //   'media.description',
-  //   'media.url',
-  //   'media.created_at',
-  //   'media.updated_at',
-  //   // Translation columns (aliased to avoid conflicts)
-  //   'media_translations.id as tr_id',
-  //   'media_translations.name as tr_name',
-  //   'media_translations.description as tr_description',
-  //   'media_translations.language_code',
-  // ];
+  private readonly COLUMNS_WITH_USER: MediaWithUserSchemaColumns[] = [
+    ...this.COLUMNS,
+    'users.id as u_id',
+    'users.username',
+    'users.name',
+  ];
 
   constructor(private readonly requestService: RequestService) {
     super('media');
@@ -61,18 +58,19 @@ export class MediaRepository extends BaseRepository {
     return results.map((result) => this.formatMedia(result));
   }
 
-  async findById(id: number): Promise<Media> {
+  async findById(id: number): Promise<MediaWithUser> {
     const result = await this.query()
-      .select(this.COLUMNS)
-      .where('id', '=', id)
-      .first<MediaSchema>();
+      .select(this.COLUMNS_WITH_USER)
+      .where('media.id', '=', id)
+      .join('user_id', 'users', 'id')
+      .first<MediaWithUserSchema>();
     if (!result) {
       throw new HttpException(
         'Media not found with id ' + id,
         HttpStatus.NOT_FOUND,
       );
     }
-    return this.formatMedia(result);
+    return this.formatMediaWithUser(result);
   }
 
   async findByUserId(userId: number): Promise<Media[]> {
@@ -86,13 +84,14 @@ export class MediaRepository extends BaseRepository {
   async findOneByColumn(
     column: keyof MediaSchema,
     value: any,
-  ): Promise<Media | null> {
+  ): Promise<MediaWithUser | null> {
     const result = await this.query()
-      .select(this.COLUMNS)
+      .select(this.COLUMNS_WITH_USER)
       .where(column, '=', value)
-      .first<MediaSchema>();
+      .join('user_id', 'users', 'id')
+      .first<MediaWithUserSchema>();
     if (!result) return null;
-    return this.formatMedia(result);
+    return this.formatMediaWithUser(result);
   }
 
   async create(data: CreateMediaInput): Promise<Media> {
@@ -145,6 +144,17 @@ export class MediaRepository extends BaseRepository {
       await BaseRepository.handleOffsetPagination(query, filters);
     query.orderBy('created_at', 'DESC')
     return query;
+  }
+
+  private formatMediaWithUser(result: MediaWithUserSchema): MediaWithUser {
+    return {
+      ...this.formatMedia(result),
+      user: {
+        id: result.u_id,
+        username: result.username,
+        name: result.name,
+      },
+    };
   }
 
   private formatMedia(result: MediaSchema): Media {

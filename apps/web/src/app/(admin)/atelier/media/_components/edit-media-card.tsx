@@ -7,7 +7,7 @@ import { Label } from "@repo/ui/components/shadcn/label";
 import { Button } from "@repo/ui/components/shadcn/button";
 import FormComponent from "@/lib/components/form-component";
 import { bytesToMB } from '@repo/common-lib/utils/bytes';
-import { Sparkles, Trash2, Upload } from "lucide-react";
+import { ExternalLink, Sparkles, Trash2, Upload } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@repo/ui/components/shadcn/popover";
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
@@ -442,8 +442,19 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
         <DrawerHeader className="border-b p-2">
           <div className="flex items-center justify-between">
             <div className="flex items-end justify-start gap-2">
-              <DrawerTitle className="font-semibold">
+              <DrawerTitle className="font-semibold flex items-center gap-1.5">
                 {isEditing ? 'Edit Media' : (currentMedia.title || currentMedia.seo_filename || 'Media Preview')}
+                {!isEditing && currentMedia.public_id && (
+                  <a
+                    href={`/media/${currentMedia.public_id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-muted-foreground hover:text-foreground transition-colors"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <ExternalLink className="size-3.5" />
+                  </a>
+                )}
               </DrawerTitle>
               {currentMedia.bytes && !isEditing && (
                 <p className="text-xs text-muted-foreground text-center">
