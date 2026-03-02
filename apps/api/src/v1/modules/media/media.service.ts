@@ -193,7 +193,7 @@ export class MediaService {
         extension: 'webp',
         url: mediaPath,
         thumbnail: thumbnailPath,
-        seo_filename: filename,
+        seo_filename: data.seo_filename || filename,
         blocked: false,
         shape: await this.compressService.getImageShape(mediaFile.buffer),
         is_active: true,

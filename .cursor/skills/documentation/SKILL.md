@@ -1,16 +1,18 @@
 ---
-alwaysApply: false
-description: Daily documentation rule. Use this when the user asks to document what was done today or update the daily log.
+name: documentation
+description: Daily documentation rule. Use when the user asks to document what was done today or update the daily log.
 ---
 
 # Daily Documentation Guide
 
-Daily logs live in [`docs/daily/`](mdc:docs/daily).
+Daily logs live in `docs/daily/`.
 
 ## File naming
+
 `docs/daily/YYYY-MM-DD.md`
 
 ## Format
+
 Keep it **short and scannable** — one bullet per task, one line each.
 Use this template:
 
@@ -24,6 +26,7 @@ Use this template:
 ```
 
 ## Rules
+
 - No long paragraphs. A reader must understand what was done in 10 seconds.
 - Group related sub-tasks under a single bullet when possible.
 - Mention the package/layer affected (`apps/api`, `apps/web`, `packages/ui`, etc.).

@@ -4,7 +4,7 @@ import { redirect, notFound } from "next/navigation";
 
 import { CreateOrUpdatePortfolio } from "../../_components/create-update-porfolio";
 import { DeletePortfolioDialog } from "../../_components/delete-portfolio-dialog";
-import { AdminPageContainer, AdminPageTitle } from "@/app/(admin)/__components/admin-page.component";
+import { AdminPageContainer, AdminPageTitle } from "@/app/(atelier)/__components/admin-page.component";
 
 type Props = {
     params: Promise<{ slug: string }>;

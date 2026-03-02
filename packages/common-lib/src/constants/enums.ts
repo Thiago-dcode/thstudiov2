@@ -1,91 +1,91 @@
 export const ENUMS = {
-    FORMAT_TYPE : [ 'COMPACT', 'FULL'] as const,
-    PRODUCT_TYPE: ['PLAN'] as const,
-    BILLING_TYPE: ['MONTHLY', 'QUARTERLY', 'YEARLY', 'LIFETIME'] as const,
-    USER_EDITORS_ROLES: ['ADMIN', 'EDITOR'] as const,
-    LANGUAGE_CODE: ['EN', 'ES', 'PT'] as const,
-    MEDIA_TYPE: ['IMAGE', 'VIDEO'] as const,
-    MEDIA_SHAPE: ['SQUARE', 'LANDSCAPE', 'PORTRAIT'] as const,
-    COMPRESSION_LEVEL:['VERY_LOW','LOW','NORMAL','HIGH','VERY_HIGH'] as const,
-    LLM_USAGE_TYPE:['GENERATE_MEDIA_SEO', 'GENERATE_MEDIA_TEXT', 'MODERATE_MEDIA_CONTENT'] as const,
-    PROJECT_STATUS: [
-      'NOT_STARTED',
-      'PENDING',
-      'IN_PROGRESS',
-      'COMPLETED',
-      'CANCELLED',
-      'PENDING_PAYMENT',
-      'PAUSED',
-    ] as const,
-    PAYMENT_METHOD: ['CARD', 'PAYPAL'] as const,
-    PLAN_OFFERS_TYPE: ['FREE', 'DISCOUNT'] as const,
-    PASSWORD_RECOVERY_ATTEMPT_STATUS: ['CODE_NOT_VALIDATED','CODE_VALIDATED','PASSWORD_CHANGED'],
-    STRIPE_ERROR: [
-      'StripeCardError',
-      'StripeInvalidRequestError',
-      'StripeConnectionError',
-      'StripeAPIError',
-      'StripeAuthenticationError',
-      'StripeIdempotencyError',
-      'StripePermissionError',
-      'StripeRateLimitError',
-      'StripeSignatureVerificationError',
-    ] as const,
-    STRIPE_RAW_ERROR_TYPE: [
-      'card_error',
-      'invalid_request_error',
-      'api_error',
-      'idempotency_error',
-      'rate_limit_error',
-      'authentication_error',
-      'invalid_grant',
-      'temporary_session_expired',
-    ] as const,
-  };
+  FORMAT_TYPE: ['COMPACT', 'FULL'] as const,
+  PRODUCT_TYPE: ['PLAN'] as const,
+  BILLING_TYPE: ['MONTHLY', 'QUARTERLY', 'YEARLY', 'LIFETIME'] as const,
+  USER_EDITORS_ROLES: ['ADMIN', 'EDITOR'] as const,
+  LANGUAGE_CODE: ['EN', 'ES', 'PT'] as const,
+  MEDIA_TYPE: ['IMAGE', 'VIDEO'] as const,
+  MEDIA_SHAPE: ['SQUARE', 'LANDSCAPE', 'PORTRAIT'] as const,
+  COMPRESSION_LEVEL: ['VERY_LOW', 'LOW', 'NORMAL', 'HIGH', 'VERY_HIGH'] as const,
+  LLM_USAGE_TYPE: ['GENERATE_MEDIA_SEO', 'GENERATE_MEDIA_TEXT', 'MODERATE_MEDIA_CONTENT'] as const,
+  PROJECT_STATUS: [
+    'NOT_STARTED',
+    'PENDING',
+    'IN_PROGRESS',
+    'COMPLETED',
+    'CANCELLED',
+    'PENDING_PAYMENT',
+    'PAUSED',
+  ] as const,
+  PAYMENT_METHOD: ['CARD', 'PAYPAL'] as const,
+  PLAN_OFFERS_TYPE: ['FREE', 'DISCOUNT'] as const,
+  PASSWORD_RECOVERY_ATTEMPT_STATUS: ['CODE_NOT_VALIDATED', 'CODE_VALIDATED', 'PASSWORD_CHANGED'],
+  STRIPE_ERROR: [
+    'StripeCardError',
+    'StripeInvalidRequestError',
+    'StripeConnectionError',
+    'StripeAPIError',
+    'StripeAuthenticationError',
+    'StripeIdempotencyError',
+    'StripePermissionError',
+    'StripeRateLimitError',
+    'StripeSignatureVerificationError',
+  ] as const,
+  STRIPE_RAW_ERROR_TYPE: [
+    'card_error',
+    'invalid_request_error',
+    'api_error',
+    'idempotency_error',
+    'rate_limit_error',
+    'authentication_error',
+    'invalid_grant',
+    'temporary_session_expired',
+  ] as const,
+};
 // TABLES
 export const TABLES_ENUM = {
-  PLANS:'plans',
-  PLAN_PRICES:'plan_prices',
-  PLAN_TRANSLATIONS:'plan_translations',
-  PLAN_OFFERS:'plan_offers',
-  USER_EXTRA_DATA:'user_extra_data',
-  ADMIN_USERS:'admin_users',
-  ADMIN_USERS_ROLES:'admin_users_roles',
-  USERS:'users',
-  CATEGORIES:'categories',
-  USER_CATEGORIES:'user_categories',
-  CATEGORY_TRANSLATIONS:'category_translations',
+  PLANS: 'plans',
+  PLAN_PRICES: 'plan_prices',
+  PLAN_TRANSLATIONS: 'plan_translations',
+  PLAN_OFFERS: 'plan_offers',
+  USER_EXTRA_DATA: 'user_extra_data',
+  ADMIN_USERS: 'admin_users',
+  ADMIN_USERS_ROLES: 'admin_users_roles',
+  USERS: 'users',
+  CATEGORIES: 'categories',
+  USER_CATEGORIES: 'user_categories',
+  CATEGORY_TRANSLATIONS: 'category_translations',
   PLAN_SUBSCRIPTIONS: 'plan_subscriptions',
-  TRANSACTIONS:'transactions',
-  MIGRATIONS:'migrations',
-  MEDIA:'media',
-  MEDIA_TRANSLATIONS:'media_translations',
-  COLLECTIONS:'collections',
-  COLLECTION_MEDIA:'collection_media',
-  COLLECTION_TRANSLATIONS:'collection_translations',
-  PORTFOLIOS:'portfolios',
-  PORTFOLIO_CATEGORIES:'portfolio_categories',
-  PORTFOLIO_MEDIA:'portfolio_media',
-  PORTFOLIO_COLLECTION:'portfolio_collection',
-  PORTFOLIO_TRANSLATIONS:'portfolio_translations',
-  PROJECTS:'projects',
-  PROJECT_MEDIA:'project_media',
-  PROJECT_TRANSLATIONS:'project_translations',
-  CLIENTS:'clients',
-  CLIENT_MEDIA:'client_media',
-  CLIENT_TRANSLATIONS:'client_translations',
-  SERVICES:'services',
-  SERVICE_MEDIA:'service_media',
-  SERVICE_TRANSLATIONS:'service_translations',
-  ADDRESSES:'addresses',
-  USER_AUTH_DEVICES:'user_auth_devices',
-  USER_SESSIONS:'user_sessions',
-  PASSWORD_RECOVERY_ATTEMPTS:'password_recovery_attempts',
+  TRANSACTIONS: 'transactions',
+  MIGRATIONS: 'migrations',
+  MEDIA: 'media',
+  MEDIA_TRANSLATIONS: 'media_translations',
+  COLLECTIONS: 'collections',
+  COLLECTION_MEDIA: 'collection_media',
+  COLLECTION_TRANSLATIONS: 'collection_translations',
+  PORTFOLIOS: 'portfolios',
+  PORTFOLIO_CATEGORIES: 'portfolio_categories',
+  PORTFOLIO_MEDIA: 'portfolio_media',
+  PORTFOLIO_COLLECTION: 'portfolio_collection',
+  PORTFOLIO_TRANSLATIONS: 'portfolio_translations',
+  PROJECTS: 'projects',
+  PROJECT_MEDIA: 'project_media',
+  PROJECT_TRANSLATIONS: 'project_translations',
+  CLIENTS: 'clients',
+  CLIENT_MEDIA: 'client_media',
+  CLIENT_TRANSLATIONS: 'client_translations',
+  SERVICES: 'services',
+  SERVICE_MEDIA: 'service_media',
+  SERVICE_TRANSLATIONS: 'service_translations',
+  ADDRESSES: 'addresses',
+  USER_AUTH_DEVICES: 'user_auth_devices',
+  USER_SESSIONS: 'user_sessions',
+  PASSWORD_RECOVERY_ATTEMPTS: 'password_recovery_attempts',
   PAYMENT_METHODS: 'payment_methods',
-  ABOUT_PAGE:'about_page',
-  USER_STORAGE_REQUESTS:'user_storage_requests',
-  LLM_TOKENS_USAGE:'llm_tokens_usage',
-  MEDIA_MODERATIONS:'media_moderations'
+  ABOUT_PAGE: 'about_page',
+  USER_STORAGE_REQUESTS: 'user_storage_requests',
+  LLM_TOKENS_USAGE: 'llm_tokens_usage',
+  MEDIA_MODERATIONS: 'media_moderations'
 } as const;
 
 export const COUNTRY_TO_LANGUAGES: Record<string, string> = {
@@ -195,25 +195,7 @@ export const MODERATION_SEVERITY = {
   CRITICAL: 10,
 } as const;
 
-/**
- * Platform enforcement actions mapped from severity ranges.
- */
-export const MODERATION_ACTION = {
-  ALLOW: 'allow',
-  AGE_RESTRICT: 'age_restrict',
-  REMOVE: 'remove',
-  BAN_AND_REPORT: 'ban_and_report',
-} as const;
 
-/**
- * Derive the recommended action from a numeric severity (0–10).
- */
-export function getActionFromSeverity(severity: number): (typeof MODERATION_ACTION)[keyof typeof MODERATION_ACTION] {
-  if (severity <= MODERATION_SEVERITY.LOW) return MODERATION_ACTION.ALLOW;
-  if (severity <= MODERATION_SEVERITY.MODERATE + 1) return MODERATION_ACTION.AGE_RESTRICT;
-  if (severity <= MODERATION_SEVERITY.HIGH + 1) return MODERATION_ACTION.REMOVE;
-  return MODERATION_ACTION.BAN_AND_REPORT;
-}
-  export type AvailableEnums = keyof typeof ENUMS;
-  export type EnumType<T extends AvailableEnums> = (typeof ENUMS)[T][number];
-  export const DEFAULT_COMPRESSION_LVL:EnumType<'COMPRESSION_LEVEL'> = 'HIGH';
+export type AvailableEnums = keyof typeof ENUMS;
+export type EnumType<T extends AvailableEnums> = (typeof ENUMS)[T][number];
+export const DEFAULT_COMPRESSION_LVL: EnumType<'COMPRESSION_LEVEL'> = 'HIGH';

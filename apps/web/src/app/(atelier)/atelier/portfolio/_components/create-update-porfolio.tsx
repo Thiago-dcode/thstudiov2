@@ -10,7 +10,7 @@ import { Button } from "@repo/ui/components/shadcn/button";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FullPortfolio } from "@repo/common-lib/types/portfolio";
-import { SubmitPortfolioButton } from "@/app/(admin)/__components/submit-portfolio-button";
+import { SubmitPortfolioButton } from "@/app/(atelier)/__components/submit-portfolio-button";
 
 
 export const CreateOrUpdatePortfolio = ({ defaultPortfolio }: {

@@ -6,7 +6,7 @@ import { openAiLLMConfig } from 'src/config/llm';
 import { FactoryLogService } from '@repo/backend-lib/services/log-service';
 import { MediaSeoFields } from '@repo/common-lib/types/media';
 import { ContentModerationFields } from '@repo/common-lib/types/ai';
-import { MODERATION_SEVERITY, MODERATION_ACTION, getActionFromSeverity } from '@repo/common-lib/constants/enums';
+import { MODERATION_SEVERITY } from '@repo/common-lib/constants/enums';
 import { LlmTokensUsageEvent } from './events/llm-tokens-usage.event';
 import { MediaModerationEvent } from './events/media-moderation.event';
 import { Helpers } from 'src/common/services/helpers.service';
@@ -130,18 +130,7 @@ export class AiService {
 
       this.logger
         .name('get-media-seo')
-        .info('Successfully generated media SEO', {
-          media_id: meta.media_id,
-          user_id: meta.user_id,
-          matches_expected_response: matchesExpectedResponse,
-          tokens_used: result.usage?.totalTokens,
-          seo_fields_generated: {
-            has_title: !!seoData.seo_title,
-            has_description: !!seoData.seo_description,
-            has_alt: !!seoData.seo_alt,
-            has_filename: !!seoData.seo_filename,
-          },
-        });
+        .info('Successfully generated media SEO for user ' + meta.user_id);
 
       return {
         seo: {
@@ -173,18 +162,6 @@ export class AiService {
         is_allowed: true,
         severity: MODERATION_SEVERITY.SAFE,
         content_type: 'unknown',
-        categories: {
-          sexual_content: false,
-          nudity: false,
-          minor: false,
-          csam: false,
-          violence: false,
-          graphic_violence: false,
-          hate_symbols: false,
-          self_harm: false,
-          illegal_activity: false,
-        },
-        action: MODERATION_ACTION.ALLOW,
         reason: '',
       };
 
@@ -201,10 +178,7 @@ export class AiService {
                 type: 'text' as const,
                 text: `Analyze the image and return valid JSON with exactly these fields:
         ${JSON.stringify(EXPECTED_JSON)}
-
-        ═══════════════════════════════════════════
         SEVERITY SCALE (0–10)
-        ═══════════════════════════════════════════
         0      – Safe. No issues.
         1 – 2  – Minimal. Mild suggestive content, artistic nudity (paintings, sculptures).
         3 – 4  – Low. Partial nudity (boudoir), mild violence in art/historical context.
@@ -212,55 +186,10 @@ export class AiService {
         7 – 8  – High. Extreme explicit content, glorified realistic violence, hate promotion.
         9      – Severe. Exploitation, abuse depiction, extreme illegal content.
         10     – Critical. CSAM detected — child sexual abuse material.
-
-        ═══════════════════════════════════════════
-        ACTION (based on severity)
-        ═══════════════════════════════════════════
-        "allow"          – severity 0–3. Safe to publish.
-        "age_restrict"   – severity 4–6. Requires age-gate / sensitive content screen.
-        "remove"         – severity 7–8. Auto-remove, warn user.
-        "ban_and_report" – severity 9–10. Suspend account, report to authorities (NCMEC).
-
         ═══════════════════════════════════════════
         content_type (one of)
         ═══════════════════════════════════════════
         "photograph" | "painting" | "illustration" | "digital_art" | "mixed_media" | "unknown"
-
-        ═══════════════════════════════════════════
-        CATEGORY GUIDELINES
-        ═══════════════════════════════════════════
-
-        CSAM / MINORS (absolute zero-tolerance rule):
-        - If ANY person appears to be under 18 AND nudity, sexualization, or exploitation is present → csam = true, minor = true, is_allowed = false, severity = 10, action = "ban_and_report"
-        - If age is uncertain but nudity/sexualization is present → assume minor = true, severity ≥ 9
-        - AI-generated / cartoon / anime depictions of minors in sexual context → same as real CSAM
-        - Any ambiguity involving a minor + sexual context must be escalated (severity ≥ 9)
-
-        SEXUAL CONTENT (be STRICT — this is a portfolio platform, NOT an adult site):
-        - Any pornographic content, explicit sexual acts, visible genitalia in sexual context, penetration → severity 8, action = "remove"
-        - Fully nude photos (non-artistic), erotic poses, lingerie/underwear in sexual context → severity 7, action = "remove"
-        - Suggestive poses, boudoir photography, partial nudity, implied nudity → severity 5–6, action = "age_restrict"
-        - Artistic nudity ONLY in classical fine art (paintings, sculptures, museum-grade art) → severity 2–3, action = "allow"
-        - When in doubt whether content is "artistic" or "sexual", treat it as sexual and assign HIGHER severity
-
-        VIOLENCE:
-        - Non-graphic violence in artistic or historical context → severity 1–3
-        - Realistic or glorified violence with visible suffering → severity 7–8
-        - Visible gore, exposed organs, excessive blood → severity 8
-
-        HATE SYMBOLS:
-        - Historical or educational depiction → severity 1–2
-        - Promotional or glorifying depiction → severity 7–8
-
-        SELF HARM:
-        - Artistic metaphor → severity 2–3
-        - Instructional or explicit depiction → severity 7–8
-
-        ILLEGAL ACTIVITY:
-        - Artistic depiction → severity 2–3
-        - Instructional or promotional → severity 7–8
-        - Exploitation of any kind → severity 9+
-
         ═══════════════════════════════════════════
         DECISION RULES
         ═══════════════════════════════════════════
@@ -268,9 +197,9 @@ export class AiService {
         - is_allowed = false when severity ≥ 7
         - When in doubt about minors, ALWAYS escalate (higher severity)
         - When in doubt about sexual/pornographic content, ALWAYS assign severity ≥ 7
+        - Explicit sexual activity with adults; nudity is visible always severity ≥ 7
         - When in doubt about other content, assign a higher severity
-        - reason: ≤120 chars, neutral explanation in English
-        - severity and action MUST be consistent with each other
+        - reason: ≤120 chars, neutral explanation in English user friendly
 
         Base the decision ONLY on visible image content.
         Ignore filename, metadata, and URL.
@@ -307,41 +236,17 @@ export class AiService {
           ? Math.min(MODERATION_SEVERITY.CRITICAL, Math.max(MODERATION_SEVERITY.SAFE, Math.round(parsed.severity)))
           : MODERATION_SEVERITY.SAFE;
 
-        const csam = !!parsed.categories?.csam;
-
-        // Force CRITICAL + ban_and_report when CSAM is flagged
-        const finalSeverity = csam ? MODERATION_SEVERITY.CRITICAL : rawSeverity;
-        const finalAction = csam
-          ? MODERATION_ACTION.BAN_AND_REPORT
-          : (parsed.action || getActionFromSeverity(rawSeverity));
-        const finalIsAllowed = csam
-          ? false
-          : (typeof parsed.is_allowed === 'boolean' ? parsed.is_allowed : finalSeverity <= 6);
-
         // Map and validate the fields
         moderationData = {
-          is_allowed: finalIsAllowed,
-          severity: finalSeverity as ContentModerationFields['severity'],
+          is_allowed: parsed?.is_allowed,
+          severity: rawSeverity as ContentModerationFields['severity'],
           content_type: parsed.content_type || 'unknown',
-          categories: {
-            sexual_content: !!parsed.categories?.sexual_content,
-            nudity: !!parsed.categories?.nudity,
-            minor: !!parsed.categories?.minor,
-            csam: csam,
-            violence: !!parsed.categories?.violence,
-            graphic_violence: !!parsed.categories?.graphic_violence,
-            hate_symbols: !!parsed.categories?.hate_symbols,
-            self_harm: !!parsed.categories?.self_harm,
-            illegal_activity: !!parsed.categories?.illegal_activity,
-          },
-          action: finalAction,
           reason: parsed.reason || '',
         };
 
         // Check if response matches expected format
         matchesExpectedResponse = typeof parsed.is_allowed === 'boolean'
           && typeof parsed.severity === 'number'
-          && !!parsed.categories;
       } catch (err) {
         this.logger
           .name('moderate-content')
@@ -374,14 +279,9 @@ export class AiService {
           user_id: meta.user_id,
           is_allowed: moderationData.is_allowed,
           severity: moderationData.severity,
-          action: moderationData.action,
           content_type: moderationData.content_type,
-          csam_detected: moderationData.categories?.csam,
           matches_expected_response: matchesExpectedResponse,
           tokens_used: result.usage?.totalTokens,
-          flagged_categories: Object.entries(moderationData.categories || {})
-            .filter(([, flagged]) => flagged)
-            .map(([category]) => category),
         });
 
       // Emit event to record moderation result

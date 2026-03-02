@@ -1,0 +1,32 @@
+/* Masonry grid – native CSS masonry when supported, column fallback otherwise */
+/* https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Grid_layout/Masonry_layout */
+
+.mansonry-grid {
+
+  columns:320px
+  
+}
+
+
+.mansonry-grid .portfolio-media-card {  
+  margin-bottom: var(--size-base);
+  display: block;
+  background-color: var(--color-text);
+  transition: opacity 0.15s;
+  border-radius:3px;
+}
+
+
+.portfolio-media-card:hover {
+  opacity: 0.8;
+}
+
+/* Image fills card, crops to fit */
+.portfolio-media-card img {
+  object-fit: cover;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+
