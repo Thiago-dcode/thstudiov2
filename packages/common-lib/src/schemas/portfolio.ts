@@ -31,6 +31,7 @@ export type PortfolioFullSchema = PortfolioSchema & {
   public_id: string;
   m_title?: string | null;                // COLLISION: title
   m_thumbnail?: string | null;            // COLLISION: thumbnail
+  url?: string | null; 
   blocked: boolean;
   shape?: EnumType<'MEDIA_SHAPE'> | null;
   is_active: boolean;

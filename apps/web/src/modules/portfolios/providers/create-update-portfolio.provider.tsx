@@ -8,6 +8,7 @@ import { createOrUpdatePortfolioAction } from "../server-actions/create-update-p
 import { slugExistsAction } from "../server-actions/slug-exists.action";
 import { ActionReturn } from "@repo/common-lib/types/response";
 import { toast } from "@repo/ui/sonner"
+import { User } from "@repo/common-lib/types/user";
 
 // ============================================================================
 // Types
@@ -20,7 +21,7 @@ type PortfolioFormData = Partial<
 >;
 
 type PortfolioContextType = {
-  userId: number;
+  user: User;
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => Promise<void>;
   // `media` is overridden in this provider to be `Media[]` for UI purposes.
   handleSetFormData: (key: keyof CreatePortfolioInputWithFile, value: string | File | number | MediaPortfolio[]) => void;
@@ -66,7 +67,7 @@ export const usePortfolio = () => {
 
 type PortfolioProviderProps = {
   children: ReactNode;
-  userId: number;
+  user: User;
   defaultPortfolio?: FullPortfolio;
 };
 
@@ -74,14 +75,14 @@ const MAX_STEPS = 2;
 const firstStepRequiredFields: (keyof CreatePortfolioInputWithFile)[] = ['user_id', 'slug', 'title', 'thumbnail'];
 export const PortfolioProvider = ({
   children,
-  userId,
+  user,
   defaultPortfolio,
 }: PortfolioProviderProps) => {
 
   const [currentPortfolio, setCurrentPorfolio] = useState(defaultPortfolio);
 
   const [formData, setFormData] = useState<PortfolioFormData>({
-    user_id: userId,
+    user_id: user.id,
   });
 
   const setPortfolio = useCallback((portfolio: FullPortfolio) => {
@@ -112,7 +113,7 @@ export const PortfolioProvider = ({
         title: (formData.title ?? "") as string,
         slug: (formData.slug ?? "") as string,
         description: (formData.description ?? undefined) as string | undefined,
-        user_id: (formData.user_id ?? userId) as number,
+        user_id: (formData.user_id ?? user.id) as number,
         thumbnail: formData.thumbnail ? formData.thumbnail as File : undefined,
         media: media.length ? media : undefined,
       };
@@ -148,7 +149,7 @@ export const PortfolioProvider = ({
       if (slugChecksMemo.current[slugToCheck]) {
         return slugChecksMemo.current[slugToCheck];
       }
-      return await slugExistsAction(userId, slugToCheck);
+      return await slugExistsAction(user.username, slugToCheck);
     },
     afterAction: async (data) => {
 
@@ -239,7 +240,7 @@ export const PortfolioProvider = ({
 
   const clear = useCallback(() => {
     // Reset local state
-    setFormData({ user_id: userId });
+    setFormData({ user_id: user.id });
     setCurrentStep(1);
     setCurrentPorfolio(undefined);
     // Reset action state (errors/result)
@@ -253,10 +254,10 @@ export const PortfolioProvider = ({
       clearTimeout(idTimeOut.current);
       idTimeOut.current = null;
     }
-  }, [userId, reset, cleanErrors, cleanResult]);
+  }, [user, reset, cleanErrors, cleanResult]);
 
   const contextValue: PortfolioContextType = {
-    userId,
+    user,
     handleSubmit,
     handleSetFormData,
     handleStep,

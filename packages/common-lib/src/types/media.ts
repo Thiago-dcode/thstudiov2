@@ -11,7 +11,7 @@ import { EnumType } from "../constants/enums";
 export type Media = MediaSchema;
 // Media translation without id
 
-export type MediaPortfolio = Pick<Media, 'id' | 'public_id' | 'title' | 'thumbnail' | 'seo_alt' | 'seo_description' | 'seo_filename' | 'seo_title' | 'shape'> & {
+export type MediaPortfolio = Pick<Media, 'id' | 'public_id' | 'title' | 'thumbnail' | 'url'| 'seo_alt' | 'seo_description' | 'seo_filename' | 'seo_title' | 'shape'> & {
   position: number
 };
 export type MediaTranslation = MediaTranslationSchema;

@@ -30,7 +30,7 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts"
-, "src/lib/hooks/useLoadAsset.ts"  ],
+, "src/lib/hooks/useLoadAsset.ts", "../../packages/ui/src/providers/gallery.provider.tsx"  ],
   "exclude": [
     "node_modules"
   ]

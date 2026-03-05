@@ -9,6 +9,7 @@ import portfolioService from "../portfolio.service";
 import userPortfolioService from "@/modules/user-portfolios/user-portfolio.service";
 import { getFriendlyApiErrors, getObjErrorFromZod } from "@/modules/auth/helpers";
 import { createPortfolioSchema, updatePortfolioSchema } from "../schemas/portfolio-schemas";
+import { userSession } from "@/modules/auth/server-actions/user-session.action";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
@@ -20,7 +21,6 @@ export const createOrUpdatePortfolioAction = async (
 ): Promise<ActionReturn<Portfolio, PortfolioActionInput>> => {
     const thumbnailFile = input?.thumbnail as File | undefined;
     const isUpdate = !!currentPortfolio;
-console.log("INPUT",input);
     // Thumbnail is required only on create
     if (!isUpdate && (!thumbnailFile || thumbnailFile.size === 0)) {
         return {
@@ -30,6 +30,14 @@ console.log("INPUT",input);
         };
     }
 
+    const userAuth = await userSession();
+    if(!userAuth){
+        return {
+            errors: ["Unauthorized"],
+            
+            data: null,
+        };
+    }
     // Validate thumbnail if provided (both create & update)
     if (thumbnailFile && thumbnailFile.size > 0) {
         if (thumbnailFile.size > MAX_FILE_SIZE) {
@@ -74,7 +82,7 @@ console.log("INPUT",input);
 
     // Check slug availability (skip if slug unchanged on update)
     if (rawData.slug && rawData.user_id && currentPortfolio?.slug !==rawData.slug) {
-        const slugExistsResponse = await userPortfolioService.slugExists(rawData.user_id, rawData.slug);
+        const slugExistsResponse = await userPortfolioService.slugExists(userAuth.username, rawData.slug);
 
         if (slugExistsResponse.error) {
             return {

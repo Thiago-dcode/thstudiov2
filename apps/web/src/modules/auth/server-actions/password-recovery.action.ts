@@ -7,13 +7,14 @@ import { PasswordRecoveryAttempt } from "../auth.types";
 import { cookies } from "next/headers";
 import { PASSWORD_RECOVERY_ATTEMPT_COOKIE_NAME } from "@repo/common-lib/constants/constants";
 import { deleteCookie, getEncryptedJsonCookie, encryptObj } from "@/lib/utils";
+import { serverEnv } from "@/env/server";
 
 export const passwordRecoveryAction = async (formData: FormData):Promise<ActionReturn<PasswordRecoveryAttempt, {
     email?:string
 }>> => {
     const credentials = {
         email: formData.get('email') as string,
-        fallback_url: process.env.APP_URL + '/auth/password-recovery/recover',
+        fallback_url: serverEnv.APP_URL + '/auth/password-recovery/recover',
     }
     const validatedData = passwordRecoveryRequestSchema.safeParse(credentials);
     if (!validatedData.success) {

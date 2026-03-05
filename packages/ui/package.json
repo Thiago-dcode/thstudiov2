@@ -12,6 +12,7 @@
     "./components/custom/*": "./src/components/custom/*.tsx",
     "./components/shadcn/*": "./src/components/shadcn/*.tsx",
     "./hooks/*": "./src/hooks/*.ts",
+    "./providers/*": "./src/providers/*.tsx",
     "./contexts/*": "./src/contexts/*.tsx",
     "./globals.css": "./src/styles/globals.css",
     "./sonner": "./src/sonner.ts"

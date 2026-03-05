@@ -15,6 +15,18 @@ description: High-level tech stack, project structure, and core principles. Use 
 - `packages/backend-lib` → Backend-only shared logic
 - `packages/frontend-lib` → Frontend-only shared logic
 
+## Package Manager
+
+- **pnpm**: used for monorepo management and package resolution.
+
+## Styling & UI
+
+- **Global Styles**: Always use CSS variables and theme tokens defined in `@packages/ui/src/styles/globals.css`.
+- **Screen Sizes**: Use standard breakpoints (e.g., `phone`, `tablet`, `laptop`, `desktop`) for responsive design.
+- **Colors**: Use semantic color variables like `--color-bg`, `--color-text`, `--color-accent`, etc., instead of hardcoded hex/rgb values.
+- **Spacing & Sizes**: Maintain consistency by using CSS variables for spacing (padding, margin) and component sizes.
+- **Layout Stability**: Avoid UI shifting (Cumulative Layout Shift) by using skeleton loaders, fixed-size containers for dynamic content, and proper `next/image` usage.
+
 ## Core Principles
 
 - **Clean Architecture Monorepo**: Every layer has a responsibility. Every package has a boundary.

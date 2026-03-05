@@ -4,10 +4,10 @@ import { fetchFrontApi } from "@/lib/facade/fetchApi";
 import { cookies } from "next/headers";
 import { ErrorResponse } from "@repo/common-lib/types/response";
 import type { ZodError } from "zod";
+import { serverEnv } from "@/env/server";
 
 export const setUserSessionApi = async (user: UserAuth): Promise<{ success: boolean }> => {
     try {
-        // Get cookies from the incoming request to forward them
         const cookieStore = await cookies();
         const cookieHeader = cookieStore.getAll()
             .map(c => `${c.name}=${c.value}`)
@@ -17,7 +17,7 @@ export const setUserSessionApi = async (user: UserAuth): Promise<{ success: bool
             headers: {
                 'Content-Type': 'application/json',
                 'Set-cookie': cookieHeader,
-                [APP_API_KEY_HEADER]: process.env.APP_API_KEY || ''
+                [APP_API_KEY_HEADER]: serverEnv.APP_API_KEY
             },
             body: user
         });

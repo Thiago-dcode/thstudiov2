@@ -8,28 +8,29 @@ import {
 import { Public } from 'src/common/decorators/public.decorator';
 import { UserPortfolioService } from './user-portfolio.service';
 
-@Controller('users/portfolios')
+@Controller('users')
 export class UserPortfolioController {
   constructor(private readonly userPortfolioService: UserPortfolioService) { }
 
-  @Get('slug-exists/:user_id/:slug')
+  @Get(':username/portfolio/slug-exist/:slug')
   async slugExists(
-    @Param('user_id', ParseIntPipe) userId: number,
+    @Param('username') username: string,
     @Param('slug') slug: string,
   ) {
-    return await this.userPortfolioService.slugExists(slug, userId);
+    return await this.userPortfolioService.slugExists(username,slug);
   }
 
   @Public()
-  @Get('get-by-id/:user_id/:slug')
+  @Get(':user_id/portfolio/:slug')
   async getById(
     @Param('user_id', ParseIntPipe) userId: number,
     @Param('slug') slug: string,
   ) {
     return await this.userPortfolioService.getById(userId, slug);
   }
+
   @Public()
-  @Get('get-by-username/:username/:slug')
+  @Get(':username/portfolios/:slug')
   async getByUsername(
     @Param('username') username: string,
     @Param('slug') slug: string,
@@ -37,6 +38,11 @@ export class UserPortfolioController {
     return await this.userPortfolioService.getByUsername(username, slug);
   }
 
-
-
+  @Public()
+  @Get(':username/portfolios')
+  async getAllByUsername(
+    @Param('username') username: string,
+  ) {
+    return await this.userPortfolioService.getAllByUsername(username);
+  }
 }

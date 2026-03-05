@@ -1,14 +1,9 @@
 import type { NextConfig } from "next";
 import path from "node:path";
 import dotenv from 'dotenv';
-dotenv.config({ path: path.resolve(process.cwd(),'..','..', '.env'),quiet:true });
 
-const env: Record<string, string | undefined> = {};
-const keysToExclude = ['NEXT_RUNTIME','NODE_ENV','NODE_OPTIONS','NODE_PATH'];
-Object.keys(process.env).forEach((key) => {
-  if(keysToExclude.includes(key) || key.startsWith('NEXT_PUBLIC_') || key.startsWith('NODE_') || key.startsWith('__') ) return;
-env[key] = process.env[key]
-})
+dotenv.config({ path: path.resolve(process.cwd(), '..', '..', '.env'), quiet: true });
+
 const nextConfig: NextConfig = {
   experimental: {
     serverActions: {
@@ -23,7 +18,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  env,
 };
 
 export default nextConfig;

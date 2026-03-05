@@ -57,10 +57,10 @@ export class UserService extends BaseService {
             }
         });
     }
-    async getAboutPage(id: number): Promise<ApiResponse<AboutPage>> {
+    async getAboutPage(username: string): Promise<ApiResponse<AboutPage>> {
 
         return await this.fetchApi.get({
-            resource: `${id}/about-page`
+            resource: `${username}/about-page`
         })
     }
     async getExtraData(id: number): Promise<ApiResponse<UserExtraData>> {

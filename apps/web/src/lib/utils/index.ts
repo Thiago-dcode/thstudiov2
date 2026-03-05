@@ -1,10 +1,9 @@
 import { cookies } from "next/headers";
-import { config } from "../config";
-import { getConfigValue } from "@repo/common-lib/config/utils";
+import { serverEnv } from "@/env/server";
 import { encrypt, decrypt } from "@repo/common-lib/utils/encrypt";
 
 const deleteCookie = async (cookieName: string) => {
-const response = await fetch(`${config.app_url}/api/cookies/${cookieName}`, {
+const response = await fetch(`${serverEnv.APP_URL}/api/cookies/${cookieName}`, {
     method: 'DELETE',
 });
 if(!response.ok){
@@ -20,7 +19,7 @@ export const getEncryptedJsonCookie = async <T>(key:string):Promise<T|null> => {
         return null;
     }
  try {
-    const decrypted= decrypt(cookieValue, getConfigValue('encryption').secret);
+    const decrypted= decrypt(cookieValue, serverEnv.ENCRYPTION_SECRET);
     if(!decrypted) return null;
     return JSON.parse(decrypted) as T;
  } catch (error) {
@@ -30,7 +29,7 @@ export const getEncryptedJsonCookie = async <T>(key:string):Promise<T|null> => {
 }
   
 export const encryptObj = async <T extends object>(obj:T) => {
-  return encrypt(JSON.stringify(obj), getConfigValue('encryption').secret);
+  return encrypt(JSON.stringify(obj), serverEnv.ENCRYPTION_SECRET);
 }
 
 

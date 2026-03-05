@@ -5,7 +5,7 @@ import userPortfolioService from "@/modules/user-portfolios/user-portfolio.servi
 
 
 
-export const slugExistsAction = async (userId: number, slug: string): Promise<ActionReturn<boolean, undefined>> => {
+export const slugExistsAction = async (username: string, slug: string): Promise<ActionReturn<boolean, undefined>> => {
 
     if (!slug.trim()) {
 
@@ -16,7 +16,7 @@ export const slugExistsAction = async (userId: number, slug: string): Promise<Ac
         }
     }
 
-    const response = await userPortfolioService.slugExists(userId, slug);
+    const response = await userPortfolioService.slugExists(username, slug);
 
     return {
         data: !!response.data?.exists,

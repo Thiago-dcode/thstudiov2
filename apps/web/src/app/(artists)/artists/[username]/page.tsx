@@ -7,26 +7,15 @@ import { MapPin } from "lucide-react";
 import { Suspense } from "react";
 import { UserPortfoliosSection } from "@/modules/portfolios/components/user-portfolios-section";
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
+import { notFound } from "next/navigation";
 
 const ArtistHomePage = async ({ params }: { params: Promise<{ username: string }> }) => {
     const { username } = await params;
     const { data: profile } = await UserService.getProfile(username);
 
     if (!profile) {
-        return (
-            <div className="flex flex-col items-center justify-center gap-4 min-h-screen px-4 text-center">
-                <h1 className="text-2xl font-semibold">Artist not found</h1>
-                <p className="text-text-muted">
-                    There is no artist with the username <span className="font-medium text-text">{username}</span>.
-                </p>
-                <Link
-                    href="/"
-                    className="mt-2 px-4 py-2 rounded-md bg-accent text-white text-sm transition-colors hover:bg-accent/80"
-                >
-                    Go home
-                </Link>
-            </div>
-        );
+
+        notFound();
     }
 
     const fullName = [profile.name, profile.surname].filter(Boolean).join(" ");

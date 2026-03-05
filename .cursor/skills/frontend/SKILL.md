@@ -18,8 +18,11 @@ Web UI style should follow [Co-Star Astrology](https://www.costarastrology.com/)
 
 ## Component & UI Standards
 
+- **Server vs Client**: Always prioritize server components over client components. Use `"use client"` only when necessary (interactivity, hooks, browser APIs).
+- **Responsiveness**: Responsive design is important. Ensure layouts, typography, and spacing work well across viewport sizes.
 - **Global Styles**: Check `packages/ui/src/styles/globals.css` before adding new tokens.
 - **No Hardcoded Values**: Use design tokens for colors, spacing, radius. No random Tailwind values.
+- **Layout Stability**: Minimize UI shifting (Cumulative Layout Shift) by using skeletons for loading states, providing explicit dimensions for images, and using `next/image` to prevent reflow.
 - **Component Design**: Composable, accessible (ARIA), dark-mode ready. Avoid inline styles.
 - **Logic Separation**: Keep pages thin. Separate layout from business logic. Business logic inside UI components is forbidden.
 - **Images**: Always use `next/image` `Image` component instead of `<img>`. Use `fill` with a `relative` parent for responsive layouts; add `sizes` when using `fill` for better performance.
@@ -34,7 +37,7 @@ Web UI style should follow [Co-Star Astrology](https://www.costarastrology.com/)
 
 ```ts
 const { handleSubmit, isPending, errors } = useHandleAction({
-  action: loginServerAction,
+  action: loginServerAction,                                                                                                                                                                                                                    
   afterAction: async (result) => { if (result.data) router.push('/dashboard'); },
 });
 ```

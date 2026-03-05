@@ -1,18 +1,14 @@
-import { Controller, Param, ParseIntPipe, Get } from '@nestjs/common';
-import { ModelExistPipe } from 'src/pipes/model-exist.pipe';
+import { Controller, Param, Get } from '@nestjs/common';
 import { Public } from 'src/common/decorators/public.decorator';
-import { AboutPageService } from '../about-page/about-page.service';
+import { UserAboutPageService } from './user-about-page.service';
 
 @Controller('users')
-export class AboutPageController {
-  constructor(private readonly aboutPageService: AboutPageService) {}
+export class UserAboutPageController {
+  constructor(private readonly userAboutPageService: UserAboutPageService) {}
 
   @Public()
-  @Get(':id/about-page')
-  async findAboutPage(
-    @Param('id', ParseIntPipe, new ModelExistPipe('users'))
-    id: number,
-  ) {
-    return await this.aboutPageService.findOneByUser(id);
+  @Get(':username/about-page')
+  async getByUsername(@Param('username') username: string) {
+    return await this.userAboutPageService.getByUsername(username);
   }
 }

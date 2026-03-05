@@ -69,6 +69,7 @@ export class UserService {
     return result;
   }
 
+
   async getProfileByUsername(username: string) {
     const result = await this.userRepository.getUserProfile(username);
     if (!result) return null;

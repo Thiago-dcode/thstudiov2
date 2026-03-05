@@ -20,7 +20,7 @@ const AdminLayout = async ({ children }: { children: ReactNode }) => {
     <MainNavProvider defaultShrinked>
       <UserMetricsProvider userId={userAuth.id}>
         <MediaProvider>
-          <PortfolioProvider userId={userAuth.id}>
+          <PortfolioProvider user={userAuth}>
             <UserAccountBannedModal />
             <UploadMediaModal />
             <div className="flex size-full items-center justify-between ">

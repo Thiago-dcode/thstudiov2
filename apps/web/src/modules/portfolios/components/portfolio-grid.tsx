@@ -11,9 +11,10 @@ export const PortfolioGrid = ({ portfolio }: {
 
     return (
         <div className={STYLE}>
-            {portfolio.media.map((m) => (
-                <PortfolioMediaCard key={m.id} media={m} />
-            ))}
+          
+                    {portfolio.media.map((m,i) => (
+                        <PortfolioMediaCard key={m.id} media={m} index={i} />
+                    ))}
         </div>
     )
 }

@@ -17,7 +17,7 @@ export default async function PortfolioDetail({ params }: Props) {
     }
 
     const { slug } = await params;
-    const portfolioResponse = await userPortfolioService.getById(userAuth.id, slug);
+    const portfolioResponse = await userPortfolioService.getByUsername(userAuth.username, slug);
 
     if (portfolioResponse.error) {
         return <div>{portfolioResponse?.error?.message || 'Something went wrong'}</div>;
@@ -28,10 +28,13 @@ export default async function PortfolioDetail({ params }: Props) {
     }
 
     const portfolio = portfolioResponse.data;
+    const publicHref = userAuth.username
+        ? `/artists/${userAuth.username}/portfolios/${portfolio.slug}`
+        : undefined;
 
     return (
         <AdminPageContainer>
-            <AdminPageTitle title={"Edit: " + portfolio.title}>
+            <AdminPageTitle title={"Edit: " + portfolio.title} publicHref={publicHref}>
                 <DeletePortfolioDialog portfolioId={portfolio.id} portfolioTitle={portfolio.title} />
             </AdminPageTitle>
             <CreateOrUpdatePortfolio defaultPortfolio={portfolio} />

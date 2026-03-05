@@ -1,10 +1,12 @@
 import { useRef, useState } from "react"
-import { fetchGeo } from "../facade/fetchApi";
-import { config } from "../config";
+import { FetchApi } from "@repo/frontend-lib/fetch/fetch-api";
+import { clientEnv } from "@/env/client";
 import { GeoapifyAutocompleteResponse } from "./types/geoapify";
-import { ApiResponse, SuccessResponse } from "@repo/common-lib/types/response";
+import { ApiResponse } from "@repo/common-lib/types/response";
 
-const fetcher = fetchGeo();
+const fetcher = new FetchApi(clientEnv.NEXT_PUBLIC_GEOAPIFY_URL);
+fetcher.credentials = 'omit';
+
 export const useLocationAutocomplete = () => {
 
     const [result, setResult] = useState<GeoapifyAutocompleteResponse['features']>();
@@ -19,7 +21,7 @@ export const useLocationAutocomplete = () => {
             const response = await fetcher.get<ApiResponse<GeoapifyAutocompleteResponse>>({
                 resource: `autocomplete?text=${encodeURIComponent(
                     input
-                )}&limit=5&apiKey=${config.geoapi_key}`,
+                )}&limit=5&apiKey=${clientEnv.NEXT_PUBLIC_GEOAPIFY_KEY}`,
                 signal: controller.current.signal
             });
 

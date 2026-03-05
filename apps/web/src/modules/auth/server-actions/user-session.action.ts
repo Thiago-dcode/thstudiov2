@@ -6,8 +6,9 @@ import { decrypt, encrypt } from "@repo/common-lib/utils/encrypt";
 import { cookies } from "next/headers";
 import { addDays, addMonths } from "date-fns";
 import { RequestCookies, ResponseCookies } from "next/dist/compiled/@edge-runtime/cookies";
+import { serverEnv } from "@/env/server";
 
-const SECRET = process.env.ENCRYPTION_SECRET ?? 'secret';
+const SECRET = serverEnv.ENCRYPTION_SECRET;
 
 export const userSession = async () => {
     const cookieStore = await cookies();
