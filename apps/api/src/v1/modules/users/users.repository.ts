@@ -46,6 +46,8 @@ export class UserRepository extends BaseRepository {
     'users.id',
     'users.email',
     'users.username',
+    'users.name',
+    'users.surname'
   ] as const;
 
   private readonly FULL_COLUMNS:UserSchemaColumns[] = [
@@ -69,6 +71,19 @@ export class UserRepository extends BaseRepository {
     if (!result) {
       throw new HttpException(
         'User not found with id ' + id,
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    return result;
+  }
+  async findByUsernameCompact(username: string): Promise<CompactUser> {
+    const result = await this.query()
+      .select([...this.COMPACT_COLUMNS])
+      .where('username', '=', username)
+      .first<CompactUser>();
+    if (!result) {
+      throw new HttpException(
+        'User not found with id ' + username,
         HttpStatus.NOT_FOUND,
       );
     }

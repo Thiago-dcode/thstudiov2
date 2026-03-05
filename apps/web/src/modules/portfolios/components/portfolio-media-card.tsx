@@ -20,7 +20,7 @@ export function PortfolioMediaCard({ media, index }: { media: MediaPortfolio; in
     return (
         <button
             onClick={() => setCurrentItem(index)}
-            className="portfolio-media-card group relative w-full overflow-hidden transition-all duration-500 ease-out hover:ring-1 hover:ring-text/20 rounded-xs"
+            className="cursor-pointer portfolio-media-card group relative w-full overflow-hidden transition-all duration-500 ease-out hover:ring-1 hover:ring-text/20 rounded-xs"
             data-shape={toDataShape(media.shape)}
         >
             {media.thumbnail ? (

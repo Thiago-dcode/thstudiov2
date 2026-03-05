@@ -12,9 +12,10 @@ import { ArtistBreadcrumb } from "@/app/(artists)/__components/artist-breadcrumb
 
 type Props = {
     params: Promise<{ username: string; slug: string }>;
+    searchParams: Promise<{ ci?: string }>;
 };
 
-export default async function Page({ params }: Props) {
+export default async function Page({ params, searchParams }: Props) {
     const { username, slug } = await params;
 
     const [response, userAuth] = await Promise.all([
@@ -29,6 +30,31 @@ export default async function Page({ params }: Props) {
     const portfolio = response.data;
     portfolio.media.sort((a, b) => a.position - b.position);
     const canEdit = userAuth?.id === portfolio.user_id;
+
+    const qp= await searchParams;
+
+    let defaultCurrentItem: number | undefined = undefined;
+
+    if (qp?.ci) {
+
+        const splitted = qp.ci.split('_');
+        if (splitted.length === 2) {
+            const validTypes = ['m'];
+            const itemType = splitted[0];
+
+            if (validTypes.find(vt => vt === itemType)) {
+
+                if (itemType === 'm') {
+                    const public_id = splitted[1];
+                    const index = portfolio.media.findIndex(m => m.public_id === public_id);
+                    if (index !== -1) {
+                        defaultCurrentItem = index;
+                    }
+                }
+            }
+
+        }
+    }
 
 
     return (
@@ -69,12 +95,14 @@ export default async function Page({ params }: Props) {
             <section className="relative">
                 {portfolio.media.length > 0 ? (
                     <GalleryProvider
+                        defaultCurrentItem={defaultCurrentItem}
                         items={portfolio.media.map((m) => ({
                             title: m.title,
                             description: m.seo_description ?? undefined,
                             url: m.url ?? m.thumbnail,
                             alt: m.seo_alt ?? m.title ?? undefined,
-                            shared: `${config.app_url}/artists/media/${m.public_id}`
+                            href:`${config.app_url}/artists/${username}/portfolios/${slug}/media/${m.public_id}?cb=1`,
+                            shared: `${config.app_url}/artists/${username}/portfolios/${slug}/media/${m.public_id}`
                         }))}
                     >
                         <PortfolioGrid portfolio={portfolio} />

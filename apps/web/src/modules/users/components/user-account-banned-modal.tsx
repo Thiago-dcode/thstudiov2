@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
     Dialog,
     DialogContent,
@@ -16,11 +16,16 @@ import { logoutServerAction } from "@/modules/auth/server-actions/logout.action"
 import { useUserMetrics } from "../providers/user-metrics.provider"
 
 export const UserAccountBannedModal = () => {
+    const [mounted, setMounted] = useState(false)
     const { isUserAccountBanned, metrics } = useUserMetrics()
     const [loggingOut, setLoggingOut] = useState(false)
     const router = useRouter()
 
-    if (!isUserAccountBanned) return null
+    useEffect(() => {
+        setMounted(true)
+    }, [])
+
+    if (!mounted || !isUserAccountBanned) return null
 
     const handleLogout = async () => {
         if (loggingOut) return

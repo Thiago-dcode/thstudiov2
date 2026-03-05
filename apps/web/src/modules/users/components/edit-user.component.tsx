@@ -24,6 +24,12 @@ export default function EditUserComponent() {
     const [openCategories, setOpenCategories] = useState(false);
     const [openAddress, setOpenAddress] = useState(false);
 
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
     const handleSetOpen = (value: boolean, dialog: 'profile' | 'avatar' | 'banner' | 'categories' | 'address') => {
         if (!value && isPending) return;
 
@@ -57,6 +63,13 @@ export default function EditUserComponent() {
     useEffect(() => {
         if (success) closeAllModals();
     }, [success]);
+
+    if (!isMounted) {
+        return (
+            <div className="w-full max-w-4xl h-96 animate-pulse bg-fg-1 rounded-md" />
+        );
+    }
+
     return (
         <section className="w-full  max-w-4xl shadow-lg shadow-fg pb-4 ">
             {/* Banner */}

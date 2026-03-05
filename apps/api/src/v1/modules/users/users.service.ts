@@ -83,7 +83,7 @@ export class UserService {
   }
 
   async getCompactedByUsername(username:string){
-    return await this.userRepository.findOneBy('username',username,'COMPACT');
+    return await this.userRepository.findByUsernameCompact(username);
   }
 
   async findOneCompacted(id: number) {

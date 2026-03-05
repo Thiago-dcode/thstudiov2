@@ -12,6 +12,7 @@ import {
     DrawerTitle,
     DrawerClose,
 } from "@repo/ui/components/shadcn/drawer"
+import { ArtistContactDialog } from "./artist-contact.dialog"
 
 export const ArtistsHeader = () => {
     const pathname = usePathname()
@@ -19,6 +20,7 @@ export const ArtistsHeader = () => {
     const username = params.username as string
     const [scrolled, setScrolled] = useState(false)
     const [drawerOpen, setDrawerOpen] = useState(false)
+    const [isMounted, setIsMounted] = useState(false)
 
     useEffect(() => {
         const handleScroll = () => {
@@ -32,11 +34,14 @@ export const ArtistsHeader = () => {
         setDrawerOpen(false)
     }, [pathname])
 
+    useEffect(() => {
+        setIsMounted(true)
+    }, [])
+
     const navItems = [
         { label: `@${username}`, href: `/artists/${username}` },
         { label: 'Portfolios', href: `/artists/${username}/portfolios` },
         { label: 'About', href: `/artists/${username}/about` },
-        { label: 'Contact', href: `/artists/${username}/contact` },
     ]
 
     const isActive = (href: string) =>
@@ -77,54 +82,79 @@ export const ArtistsHeader = () => {
                             {item.label}
                         </Link>
                     ))}
+                    {isMounted ? (
+                        <ArtistContactDialog>
+                            <button className="text-sm tracking-wider transition-colors hover:text-text font-medium text-text-muted">
+                                Contact
+                            </button>
+                        </ArtistContactDialog>
+                    ) : (
+                        <button className="text-sm tracking-wider transition-colors hover:text-text font-medium text-text-muted">
+                            Contact
+                        </button>
+                    )}
                 </nav>
 
                 {/* Mobile hamburger */}
-                <Drawer open={drawerOpen} onOpenChange={setDrawerOpen} direction="right">
-                    <DrawerTrigger asChild>
-                        <button
-                            className="tablet:hidden flex items-center justify-center size-10 text-text hover:opacity-80 transition-opacity"
-                            aria-label="Open navigation"
+                {isMounted ? (
+                    <Drawer open={drawerOpen} onOpenChange={setDrawerOpen} direction="right">
+                        <DrawerTrigger asChild>
+                            <button
+                                className="tablet:hidden flex items-center justify-center size-10 text-text hover:opacity-80 transition-opacity"
+                                aria-label="Open navigation"
+                            >
+                                <Menu className="size-5" />
+                            </button>
+                        </DrawerTrigger>
+
+                        <DrawerContent
+                            className="inset-y-0 left-auto right-0 w-72 h-full mt-0 rounded-none border-0 border-l border-fg-2 bg-bg [&>div:first-child]:hidden"
                         >
-                            <Menu className="size-5" />
-                        </button>
-                    </DrawerTrigger>
+                            <DrawerTitle className="sr-only">Navigation</DrawerTitle>
 
-                    <DrawerContent
-                        className="inset-y-0 left-auto right-0 w-72 h-full mt-0 rounded-none border-0 border-l border-fg-2 bg-bg [&>div:first-child]:hidden"
+                            <div className="flex items-center justify-between h-14 px-6 border-b border-fg-2">
+                                <span className="text-sm font-medium tracking-wider text-text-muted">
+                                    Menu
+                                </span>
+                                <DrawerClose asChild>
+                                    <button
+                                        className="flex items-center justify-center size-10 text-text hover:opacity-80 transition-opacity"
+                                        aria-label="Close navigation"
+                                    >
+                                        <X className="size-5" />
+                                    </button>
+                                </DrawerClose>
+                            </div>
+
+                            <nav className="flex flex-col px-6 py-6 gap-1">
+                                {navItems.map((item) => (
+                                    <Link
+                                        key={item.href}
+                                        href={item.href}
+                                        className={cn(
+                                            "text-sm tracking-wider font-medium py-3 transition-colors hover:text-text",
+                                            isActive(item.href) ? "text-text" : "text-text-muted"
+                                        )}
+                                    >
+                                        {item.label}
+                                    </Link>
+                                ))}
+                                <ArtistContactDialog>
+                                    <button className="cursor-pointer text-sm tracking-wider font-medium py-3 transition-colors hover:text-text text-text-muted text-left">
+                                        Contact
+                                    </button>
+                                </ArtistContactDialog>
+                            </nav>
+                        </DrawerContent>
+                    </Drawer>
+                ) : (
+                    <button
+                        className="tablet:hidden flex items-center justify-center size-10 text-text hover:opacity-80 transition-opacity"
+                        aria-label="Open navigation"
                     >
-                        <DrawerTitle className="sr-only">Navigation</DrawerTitle>
-
-                        <div className="flex items-center justify-between h-14 px-6 border-b border-fg-2">
-                            <span className="text-sm font-medium tracking-wider text-text-muted">
-                                Menu
-                            </span>
-                            <DrawerClose asChild>
-                                <button
-                                    className="flex items-center justify-center size-10 text-text hover:opacity-80 transition-opacity"
-                                    aria-label="Close navigation"
-                                >
-                                    <X className="size-5" />
-                                </button>
-                            </DrawerClose>
-                        </div>
-
-                        <nav className="flex flex-col px-6 py-6 gap-1">
-                            {navItems.map((item) => (
-                                <Link
-                                    key={item.href}
-                                    href={item.href}
-                                    className={cn(
-                                        "text-sm tracking-wider font-medium py-3 transition-colors hover:text-text",
-                                        isActive(item.href) ? "text-text" : "text-text-muted"
-                                    )}
-                                >
-                                    {item.label}
-                                </Link>
-                            ))}
-                        </nav>
-                    </DrawerContent>
-                </Drawer>
+                        <Menu className="size-5" />
+                    </button>
+                )}
             </div>
         </header>
     )

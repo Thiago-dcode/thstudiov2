@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Mail, Pencil } from "lucide-react";
 import Web from "@/lib/components/web-page.component";
 import { ArtistBreadcrumb } from "@/app/(artists)/__components/artist-breadcrumb";
+import { ArtistContactDialog } from "@/app/(artists)/__components/artist-contact.dialog";
 
 type Props = {
     params: Promise<{ username: string }>;
@@ -86,13 +87,15 @@ export default async function AboutPage({ params }: Props) {
                         )}
 
                         <div className="pt-4 border-t border-border/40">
-                            <Link
-                                href={`/artists/${username}/contact`}
+                         
+                         <ArtistContactDialog username={username}>
+                         <button
                                 className="inline-flex items-center gap-3 text-sm tracking-wider uppercase hover:text-text text-text-muted transition-colors duration-300 group"
                             >
                                 <Mail className="size-4 transition-transform duration-300 group-hover:-translate-y-px" />
                                 <span>Get in touch</span>
-                            </Link>
+                            </button>
+                         </ArtistContactDialog>
                         </div>
                     </div>
                 </div>

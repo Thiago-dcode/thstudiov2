@@ -6,9 +6,12 @@ import userPortfolioService from "@/modules/user-portfolios/user-portfolio.servi
 
 type Props = {
     params: Promise<{ username: string, slug: string, public_id: string }>;
+    searchParams: Promise<{
+        cb?:string
+    }>;
 };
 
-export default async function MediaPage({ params }: Props) {
+export default async function MediaPage({ params,searchParams }: Props) {
     const { username, slug, public_id } = await params;
 
     const [user, slugExist] = await Promise.all([usersService.getCompact(username), userPortfolioService.slugExists(username, slug)]);
@@ -23,6 +26,12 @@ export default async function MediaPage({ params }: Props) {
         notFound();
     }
 
+    const qp = await searchParams;
+
+    const acceptCallback = qp?.cb == '1';
+
+
+
     return (
         <MediaPageComponent
             user={media.user}
@@ -31,7 +40,7 @@ export default async function MediaPage({ params }: Props) {
                 [
                     {
                         title: `Portfolio ${slug}`,
-                        url: `/artists/${username}/portfolios/${slug}`,
+                        url: `/artists/${username}/portfolios/${slug}${acceptCallback?`?ci=m_${media.public_id}`:''}`,
                         isActive: false,
                     }
                 ]

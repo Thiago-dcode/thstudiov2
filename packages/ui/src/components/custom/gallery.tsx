@@ -1,7 +1,7 @@
 "use client"
 
 import * as DialogPrimitive from "@radix-ui/react-dialog"
-import { Check, ChevronLeft, ChevronRight, Link as LinkIcon, X } from "lucide-react"
+import { ArrowUpRight, Check, ChevronLeft, ChevronRight, Link as LinkIcon, X } from "lucide-react"
 import Image from "next/image"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { cn } from "../../lib/utils"
@@ -100,17 +100,30 @@ export const Gallery = () => {
                                         alt={currentItemData?.alt || currentItemData?.title || ""}
                                         className="block max-w-full max-h-[72vh] w-auto h-auto object-contain"
                                     />
-                                    {currentItemData?.shared && (
-                                        <button
-                                            onClick={handleCopyLink}
-                                            className="absolute bottom-2 right-2 p-1.5 rounded-sm bg-black/40 text-white/50 hover:text-white hover:bg-black/60 backdrop-blur-sm opacity-0 group-hover/img:opacity-100 transition-all duration-200 cursor-pointer focus:outline-none"
-                                            aria-label={copied ? "Link copied" : "Copy media link"}
-                                        >
-                                            {copied
-                                                ? <Check className="size-3.5" strokeWidth={2} />
-                                                : <LinkIcon className="size-3.5" strokeWidth={2} />
-                                            }
-                                        </button>
+                                    {(currentItemData?.href || currentItemData?.shared) && (
+                                        <div className="absolute bottom-2 right-2 flex flex-col gap-1 opacity-0 group-hover/img:opacity-100 transition-all duration-200">
+                                            {currentItemData.href && (
+                                                <a
+                                                    href={currentItemData.href}
+                                                    className="p-1.5 rounded-sm bg-black/40 text-white/50 hover:text-white hover:bg-black/60 backdrop-blur-sm transition-all duration-200 focus:outline-none"
+                                                    aria-label="Open media page"
+                                                >
+                                                    <ArrowUpRight className="size-3.5" strokeWidth={2} />
+                                                </a>
+                                            )}
+                                            {currentItemData.shared && (
+                                                <button
+                                                    onClick={handleCopyLink}
+                                                    className="p-1.5 rounded-sm bg-black/40 text-white/50 hover:text-white hover:bg-black/60 backdrop-blur-sm transition-all duration-200 cursor-pointer focus:outline-none"
+                                                    aria-label={copied ? "Link copied" : "Copy media link"}
+                                                >
+                                                    {copied
+                                                        ? <Check className="size-3.5" strokeWidth={2} />
+                                                        : <LinkIcon className="size-3.5" strokeWidth={2} />
+                                                    }
+                                                </button>
+                                            )}
+                                        </div>
                                     )}
                                 </div>
                             </div>

@@ -15,7 +15,7 @@ export type BaseUserWithSecrets = BaseUser & {
 };
 
 // CompactUser: minimal user info (id, email, username)
-export type CompactUser = Pick<UserSchema, 'id' | 'email' | 'username'>;
+export type CompactUser = Pick<UserSchema, 'id' | 'email' | 'username' | 'name' | 'surname'>;
 
 // User extends the schema with all fields except timestamps, password, and address_id
 export type User = Omit<UserSchema, 'created_at' | 'updated_at' | 'password' | 'address_id'>;

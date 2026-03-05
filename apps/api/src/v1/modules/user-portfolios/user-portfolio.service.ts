@@ -62,7 +62,7 @@ export class UserPortfolioService {
   }
 
   async getAllByUsername(username: string): Promise<Portfolio[]> {
-    const user = await this.userRepository.findOneBy('username', username, 'COMPACT');
+    const user = await this.userRepository.findByUsernameCompact(username);
     if (!user) return [];
 
     const portfolios = await this.portfolioRepository.getAll({ user_id: user.id });
@@ -75,7 +75,7 @@ export class UserPortfolioService {
 
 
   async slugExists(username: string, slug: string) {
-    const user = await this.userRepository.findOneBy('username', username, 'COMPACT');
+    const user = await this.userRepository.findByUsernameCompact(username);
     if (!user) return {
       exists: false,
     };

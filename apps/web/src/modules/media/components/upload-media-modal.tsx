@@ -5,19 +5,25 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "@repo/ui/componen
 import { CircleCheckIcon, OctagonXIcon, Eye, EyeOff } from "lucide-react";
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { Button } from "@repo/ui/components/shadcn/button";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 
 
 export const UploadMediaModal = () => {
 
+  const [mounted, setMounted] = useState(false);
   const [compact, setCompact] = useState(false);
   const { mediaUploads, isCompleted, handleRemoveCompleted } = useMedia();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const pendingLength = useMemo(() => mediaUploads.filter(m => m.pending).length, [mediaUploads]);
   const successCount = useMemo(() => mediaUploads.filter(m => m.data).length, [mediaUploads]);
   const failedCount = useMemo(() => mediaUploads.filter(m => m.error).length, [mediaUploads]);
   const mediaUploadsToDisplay = useMemo(() => mediaUploads.filter(m => m.pending || m.data || m.error || m.deleted), [mediaUploads]);
 
-  if (!mediaUploadsToDisplay.length) return null;
+  if (!mounted || !mediaUploadsToDisplay.length) return null;
 
   return (
     <div className="fixed bottom-4 right-4 z-200 pointer-events-auto w-80 max-h-[400px] flex flex-col overflow-hidden rounded-lg border border-border bg-fg shadow-lg">

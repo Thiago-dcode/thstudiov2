@@ -13,8 +13,7 @@ const Container = ({ children, className }: {
     children: ReactNode,
     className?: string
 }) => {
-
-    return <div className={cn("w-full h-full flex items-center flex-col gap-4", className)}>{children}</div>
+    return <div className={cn("w-full flex items-center flex-col gap-4", className)}>{children}</div>
 }
 
 const Form = forwardRef<HTMLFormElement, React.FormHTMLAttributes<HTMLFormElement>>(({
@@ -43,7 +42,7 @@ const Field = ({
     className?: string;
 }) => {
     return (
-        <div className={cn("space-y-1 w-full", className)}>
+        <div className={cn("space-y-1.5 w-full", className)}>
             {children}
         </div>
     );
@@ -71,7 +70,7 @@ const Actions = ({
     className?: string;
 }) => {
     return (
-        <div className={cn("w-full flex items-center flex-col gap-4 mt-6", className)}>
+        <div className={cn("w-full flex items-center flex-col gap-3 mt-4", className)}>
             {children}
         </div>
     );
@@ -218,14 +217,18 @@ const SubmitButton = ({
 } & Omit<ButtonProps, 'type' | 'children'>) => {
     return (
         <Button
-        disabled={isPending}
+            disabled={isPending}
             variant={variant || 'default'}
-            size={'default'}
+            size="default"
             type="submit"
-            className={cn("w-full m-auto mt-4 ", className)}
+            className={cn("w-full mt-2", className)}
             {...buttonProps}
         >
-            {isPending?<Spinner className={cn("size-6", spinnerClassName)} /> :success? <Check className="size-6" /> :children}
+            {isPending
+                ? <Spinner className={cn("size-5", spinnerClassName)} />
+                : success
+                    ? <Check className="size-5" />
+                    : children}
         </Button>
     );
 };

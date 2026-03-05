@@ -51,7 +51,7 @@ const SortableItem = ({
 
 export default function InputStep2() {
 
-    const { userId, mediaSelected, handlePushMediaSelected, handleRemoveMediaSelected, handleSetFormData } = usePortfolio();
+    const { user, mediaSelected, handlePushMediaSelected, handleRemoveMediaSelected, handleSetFormData } = usePortfolio();
     const [open, setOpen] = useState(false);
     const [media, setMedia] = useState<Media[]>([]);
     const firstFetchDone = useRef(false);
@@ -61,7 +61,7 @@ export default function InputStep2() {
         action: async () => {
 
                 if (!firstFetchDone.current) firstFetchDone.current = true;
-                return getAllUserMediaAction(userId)
+                return getAllUserMediaAction(user.id)
         },
         afterAction: async (result) => {
 

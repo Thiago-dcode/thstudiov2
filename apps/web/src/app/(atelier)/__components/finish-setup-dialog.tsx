@@ -1,3 +1,6 @@
+'use client'
+
+import { useState, useEffect } from "react";
 import { ButtonFinishFunnel, ContainerFormFunnel, FunnelProvider } from "@/app/get-started/_components/funnel.provider";
 import { UserAuth } from "@/modules/auth/auth.types";
 import { FUNNEL_LAST_STEP } from "@repo/common-lib/constants/constants";
@@ -9,7 +12,13 @@ import { ArrowRight } from "lucide-react";
 export const FinishSetupDialog = ({ user }: {
     user: UserAuth
 }) => {
-    if (user.funnel_step > FUNNEL_LAST_STEP) return null;
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    if (!mounted || user.funnel_step > FUNNEL_LAST_STEP) return null;
     return (
         <Dialog open={user.funnel_step <= FUNNEL_LAST_STEP}>
             <DialogContent className="max-w-md p-8">

@@ -7,6 +7,7 @@ export type GalleryItem = {
     description?: string
     url?: string
     alt?: string
+    href?:string,
     shared?: string
 }
 
