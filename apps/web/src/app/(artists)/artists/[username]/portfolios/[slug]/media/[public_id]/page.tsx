@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { MediaPageComponent } from "@/app/(artists)/__components/media-page.component";
 import usersService from "@/modules/users/users.service";
 import userPortfolioService from "@/modules/user-portfolios/user-portfolio.service";
+import { userSession } from "@/modules/auth/server-actions/user-session.action";
 
 type Props = {
     params: Promise<{ username: string, slug: string, public_id: string }>;
@@ -14,7 +15,11 @@ type Props = {
 export default async function MediaPage({ params,searchParams }: Props) {
     const { username, slug, public_id } = await params;
 
-    const [user, slugExist] = await Promise.all([usersService.getCompact(username), userPortfolioService.slugExists(username, slug)]);
+    const [user, slugExist, session] = await Promise.all([
+        usersService.getCompact(username), 
+        userPortfolioService.slugExists(username, slug),
+        userSession()
+    ]);
 
     if (!user.data || !slugExist.data?.exists) {
         notFound();
@@ -26,6 +31,8 @@ export default async function MediaPage({ params,searchParams }: Props) {
         notFound();
     }
 
+    const canEdit = session?.id === media.user_id;
+
     const qp = await searchParams;
 
     const acceptCallback = qp?.cb == '1';
@@ -36,6 +43,7 @@ export default async function MediaPage({ params,searchParams }: Props) {
         <MediaPageComponent
             user={media.user}
             media={media}
+            canEdit={canEdit}
             breadcrumbs={
                 [
                     {

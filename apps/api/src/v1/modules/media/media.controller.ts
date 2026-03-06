@@ -19,6 +19,7 @@ import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { ParseJsonArrayPipe } from 'src/common/pipes/parse-json-array.pipe';
 import { MediaService } from './media.service';
 import { ModelExistPipe } from 'src/pipes/model-exist.pipe';
+import { Public } from 'src/common/decorators/public.decorator';
 
 @Throttle({
   short: { limit: 50, ttl: 1000 },
@@ -35,6 +36,7 @@ export class MediaController {
     };
   }
 
+  @Public()
   @Get(':public_id')
   async getOneByPublicId(@Param('public_id', new ModelExistPipe('media', 'public_id')) public_id: string) {
 

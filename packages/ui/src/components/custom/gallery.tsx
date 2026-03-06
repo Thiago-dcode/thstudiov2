@@ -1,14 +1,16 @@
 "use client"
 
 import * as DialogPrimitive from "@radix-ui/react-dialog"
-import { ArrowUpRight, Check, ChevronLeft, ChevronRight, Link as LinkIcon, X } from "lucide-react"
+import { ArrowUpRight, Check, ChevronLeft, ChevronRight, Link as LinkIcon, Share2, X } from "lucide-react"
 import Image from "next/image"
 import { useCallback, useEffect, useRef, useState } from "react"
+import { useShare } from "../../hooks/useShare"
 import { cn } from "../../lib/utils"
 import { useGallery } from "../../providers/gallery.provider"
 
 export const Gallery = () => {
     const { items, next, prev, removeCurrentItem, setCurrentItem, currentItem } = useGallery()
+    const { share, shared: shareActive } = useShare()
     const thumbnailsRef = useRef<HTMLDivElement>(null)
     const [copiedIndex, setCopiedIndex] = useState<number>()
     const isOpen = typeof currentItem !== "undefined"
@@ -120,6 +122,18 @@ export const Gallery = () => {
                                                     {copied
                                                         ? <Check className="size-3.5" strokeWidth={2} />
                                                         : <LinkIcon className="size-3.5" strokeWidth={2} />
+                                                    }
+                                                </button>
+                                            )}
+                                            {currentItemData?.shared && (
+                                                <button
+                                                    onClick={() => share({ url: currentItemData.shared!, title: currentItemData.title })}
+                                                    className="p-1.5 rounded-sm bg-black/40 text-white/50 hover:text-white hover:bg-black/60 backdrop-blur-sm transition-all duration-200 cursor-pointer focus:outline-none"
+                                                    aria-label={shareActive ? "Shared" : "Share"}
+                                                >
+                                                    {shareActive
+                                                        ? <Check className="size-3.5" strokeWidth={2} />
+                                                        : <Share2 className="size-3.5" strokeWidth={2} />
                                                     }
                                                 </button>
                                             )}

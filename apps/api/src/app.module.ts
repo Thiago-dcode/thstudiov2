@@ -41,6 +41,7 @@ import { UserPortfolioModule } from './v1/modules/user-portfolios/user-portfolio
 import { BullModule } from '@nestjs/bullmq';
 import { UserExtraDataModule } from './v1/modules/user-extra-data/user-extra-data.module';
 import { AiProcessorModule } from './v1/modules/ai/ai-processor.module';
+import { UserContactsModule } from './v1/modules/user-contacts/user-contacts.module';
 const APP_MODULES = [
   AuthModule,
   UserModule,
@@ -59,6 +60,7 @@ const APP_MODULES = [
   AddressModule,
   PortfolioModule,
   UserPortfolioModule,
+  UserContactsModule,
 ];
 @Module({
   imports: [

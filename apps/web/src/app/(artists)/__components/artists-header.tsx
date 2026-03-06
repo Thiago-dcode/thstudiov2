@@ -61,7 +61,7 @@ export const ArtistsHeader = () => {
             <div className="max-w-(--screen-desktop) w-full h-14 flex items-center justify-between px-4 tablet:px-8">
                 <div className="flex items-center">
                     <Link
-                        href={`/artists/${username}`}
+                        href={`/`}
                         className="text-xl font-medium tracking-tight text-center whitespace-nowrap overflow-hidden text-text hover:opacity-80 transition-opacity"
                     >
                         A11STUDIO

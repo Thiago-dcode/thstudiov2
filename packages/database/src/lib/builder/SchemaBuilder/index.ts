@@ -32,6 +32,80 @@ class SchemaBuilder extends BaseBuilder {
     return result;
   }
 
+  public async createIndex(
+    columns: string | string[],
+    options: {
+      name?: string;
+      unique?: boolean;
+      type?: 'btree' | 'gin' | 'gist' | 'hash';
+      where?: string;
+    } = {}
+  ) {
+    const { name, unique = false, type, where } = options;
+    const columnList = Array.isArray(columns) ? columns.join(', ') : columns;
+    const columnArray = Array.isArray(columns) ? columns : [columns];
+
+    // Construct index name if not provided
+    const indexName = name || `idx_${this.tableName}_${columnArray.map(col => col.replace(/\s+(DESC|ASC)$/i, '')).join('_')}`;
+
+    let indexQuery = `CREATE ${unique ? 'UNIQUE ' : ''}INDEX ${indexName} ON ${this.tableName}`;
+
+    if (type) {
+      indexQuery += ` USING ${type.toUpperCase()}`;
+    }
+
+    indexQuery += ` (${columnList})`;
+
+    if (where) {
+      indexQuery += ` WHERE ${where}`;
+    }
+
+    this.query = indexQuery;
+    return await this.getDb()?.query(this.query);
+  }
+
+  public async createIndexIfNotExists(
+    columns: string | string[],
+    options: {
+      name?: string;
+      unique?: boolean;
+      type?: 'btree' | 'gin' | 'gist' | 'hash';
+      where?: string;
+    } = {}
+  ) {
+    const { name, unique = false, type, where } = options;
+    const columnList = Array.isArray(columns) ? columns.join(', ') : columns;
+    const columnArray = Array.isArray(columns) ? columns : [columns];
+
+    // Construct index name if not provided
+    const indexName = name || `idx_${this.tableName}_${columnArray.map(col => col.replace(/\s+(DESC|ASC)$/i, '')).join('_')}`;
+
+    let indexQuery = `CREATE ${unique ? 'UNIQUE ' : ''}INDEX IF NOT EXISTS ${indexName} ON ${this.tableName}`;
+
+    if (type) {
+      indexQuery += ` USING ${type.toUpperCase()}`;
+    }
+
+    indexQuery += ` (${columnList})`;
+
+    if (where) {
+      indexQuery += ` WHERE ${where}`;
+    }
+
+    this.query = indexQuery;
+    return await this.getDb()?.query(this.query);
+  }
+
+  public async dropIndex(indexName: string) {
+    this.query = `DROP INDEX ${indexName}`;
+    return await this.getDb()?.query(this.query);
+  }
+
+  public async dropIndexIfExists(indexName: string) {
+    this.query = `DROP INDEX IF EXISTS ${indexName}`;
+    return await this.getDb()?.query(this.query);
+  }
+
   public withTimestamps(softDeletes = false){
     this.softDeletes = softDeletes;
     this.timestamps = true;

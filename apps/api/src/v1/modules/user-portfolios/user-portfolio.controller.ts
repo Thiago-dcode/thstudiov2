@@ -12,6 +12,7 @@ import { UserPortfolioService } from './user-portfolio.service';
 export class UserPortfolioController {
   constructor(private readonly userPortfolioService: UserPortfolioService) { }
 
+  @Public()
   @Get(':username/portfolio/slug-exist/:slug')
   async slugExists(
     @Param('username') username: string,

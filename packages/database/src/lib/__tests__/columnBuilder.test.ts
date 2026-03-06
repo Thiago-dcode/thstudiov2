@@ -350,7 +350,7 @@ describe('ColumnBuilder', () => {
         const result = ColumnBuilder.foreignKey('user_id', 'users', 'id');
 
         // Assert
-        expect(result).toBe('user_id INT REFERENCES users (id) NOT NULL');
+        expect(result).toBe('user_id INTEGER REFERENCES users (id) NOT NULL');
       });
 
       it('should create foreign key column with custom options', () => {
@@ -363,7 +363,7 @@ describe('ColumnBuilder', () => {
 
         // Assert
         expect(result).toBe(
-          'user_id INT REFERENCES users (id) ON DELETE CASCADE ON UPDATE RESTRICT',
+          'user_id INTEGER REFERENCES users (id) ON DELETE CASCADE ON UPDATE RESTRICT',
         );
       });
 
@@ -404,7 +404,7 @@ describe('ColumnBuilder', () => {
 
         // Assert
         expect(result).toBe(
-          'order_user_id INT REFERENCES user_profiles (profile_id) ON DELETE CASCADE',
+          'order_user_id INTEGER REFERENCES user_profiles (profile_id) ON DELETE CASCADE',
         );
       });
 
@@ -976,6 +976,205 @@ describe('ColumnBuilder', () => {
 
         // Assert
         expect(result).toBe('user😀 USER_EDITORS_ROLES');
+      });
+    });
+
+    describe('json', () => {
+      it('should create json column without options', () => {
+        const result = ColumnBuilder.json('payload');
+
+        expect(result).toBe('payload JSON');
+      });
+
+      it('should create nullable json column', () => {
+        const result = ColumnBuilder.json('payload', { nullable: true });
+
+        expect(result).toBe('payload JSON NULL');
+      });
+
+      it('should create json column with null default', () => {
+        const result = ColumnBuilder.json('payload', { default: null });
+
+        expect(result).toBe('payload JSON NOT NULL DEFAULT NULL');
+      });
+    });
+
+    describe('jsonb', () => {
+      it('should create jsonb column without options', () => {
+        const result = ColumnBuilder.jsonb('payload');
+
+        expect(result).toBe('payload JSONB');
+      });
+
+      it('should create nullable jsonb column', () => {
+        const result = ColumnBuilder.jsonb('payload', { nullable: true });
+
+        expect(result).toBe('payload JSONB NULL');
+      });
+
+      it('should create jsonb column with null default', () => {
+        const result = ColumnBuilder.jsonb('payload', { default: null });
+
+        expect(result).toBe('payload JSONB NOT NULL DEFAULT NULL');
+      });
+
+      it('should create jsonb column with unique constraint', () => {
+        const result = ColumnBuilder.jsonb('settings', { unique: true });
+
+        expect(result).toBe('settings JSONB NOT NULL UNIQUE');
+      });
+
+      it('should create jsonb column with default empty object', () => {
+        const result = ColumnBuilder.jsonb('metadata', { default: '{}' });
+
+        expect(result).toBe("metadata JSONB NOT NULL DEFAULT '{}'");
+      });
+
+      it('should create jsonb column with default array', () => {
+        const result = ColumnBuilder.jsonb('tags', { default: '[]' });
+
+        expect(result).toBe("tags JSONB NOT NULL DEFAULT '[]'");
+      });
+
+      it('should create jsonb column with complex default object', () => {
+        const defaultValue = '{"type": "default", "version": 1}';
+        const result = ColumnBuilder.jsonb('config', { default: defaultValue });
+
+        expect(result).toBe(`config JSONB NOT NULL DEFAULT '${defaultValue}'`);
+      });
+
+      it('should create jsonb column with all options', () => {
+        const result = ColumnBuilder.jsonb('data', {
+          nullable: true,
+          unique: true,
+          default: '{"enabled": false}',
+        });
+
+        expect(result).toBe("data JSONB NULL DEFAULT '{\"enabled\": false}' UNIQUE");
+      });
+
+      it('should handle empty column name', () => {
+        expect(() => ColumnBuilder.jsonb('')).toThrow();
+      });
+
+      it('should handle special characters in column name', () => {
+        const result = ColumnBuilder.jsonb('user-settings_data');
+
+        expect(result).toBe('user-settings_data JSONB');
+      });
+
+      it('should handle very long column names', () => {
+        const longName = 'a'.repeat(100);
+        const result = ColumnBuilder.jsonb(longName);
+
+        expect(result).toBe(`${longName} JSONB`);
+      });
+
+      it('should handle column names with spaces', () => {
+        const result = ColumnBuilder.jsonb('user data');
+
+        expect(result).toBe('user data JSONB');
+      });
+
+      it('should handle unicode characters in column name', () => {
+        const result = ColumnBuilder.jsonb('configuración');
+
+        expect(result).toBe('configuración JSONB');
+      });
+
+      it('should handle emoji in column name', () => {
+        const result = ColumnBuilder.jsonb('data📊');
+
+        expect(result).toBe('data📊 JSONB');
+      });
+
+      it('should handle boolean default values', () => {
+        const result = ColumnBuilder.jsonb('flags', { default: true });
+
+        expect(result).toBe('flags JSONB NOT NULL DEFAULT true');
+      });
+
+      it('should handle numeric default values', () => {
+        const result = ColumnBuilder.jsonb('version', { default: 1 });
+
+        expect(result).toBe('version JSONB NOT NULL DEFAULT 1');
+      });
+
+      it('should handle string default values with quotes', () => {
+        const result = ColumnBuilder.jsonb('title', { default: 'Default Title' });
+
+        expect(result).toBe("title JSONB NOT NULL DEFAULT 'Default Title'");
+      });
+
+      it('should handle string default values with single quotes', () => {
+        const result = ColumnBuilder.jsonb('name', { default: "It's working" });
+
+        expect(result).toBe("name JSONB NOT NULL DEFAULT 'It's working'");
+      });
+
+      it('should handle SQL function default values', () => {
+        const result = ColumnBuilder.jsonb('created_meta', { default: 'NOW()' });
+
+        expect(result).toBe('created_meta JSONB NOT NULL DEFAULT NOW()');
+      });
+
+      it('should handle complex nested JSON default', () => {
+        const complexJson = {
+          user: { id: 123, name: 'John' },
+          preferences: { theme: 'dark', notifications: true },
+          metadata: { version: '1.0', created: '2024-01-01' },
+        };
+        const result = ColumnBuilder.jsonb('profile', { default: JSON.stringify(complexJson) });
+
+        expect(result).toBe(`profile JSONB NOT NULL DEFAULT '${JSON.stringify(complexJson)}'`);
+      });
+
+      it('should handle empty options object', () => {
+        const result = ColumnBuilder.jsonb('empty_opts', {});
+
+        expect(result).toBe('empty_opts JSONB NOT NULL');
+      });
+
+      it('should handle undefined options', () => {
+        const result = ColumnBuilder.jsonb('undefined_opts', undefined);
+
+        expect(result).toBe('undefined_opts JSONB');
+      });
+
+      it('should return string type', () => {
+        const result = ColumnBuilder.jsonb('test');
+
+        expect(typeof result).toBe('string');
+      });
+
+      it('should return consistent results for same inputs', () => {
+        const result1 = ColumnBuilder.jsonb('consistent', { nullable: true, default: '{}' });
+        const result2 = ColumnBuilder.jsonb('consistent', { nullable: true, default: '{}' });
+
+        expect(result1).toBe(result2);
+      });
+
+      it('should handle very large JSON default values', () => {
+        const largeJson = JSON.stringify({
+          data: Array.from({ length: 1000 }, (_, i) => ({ id: i, value: `item_${i}` })),
+        });
+        const result = ColumnBuilder.jsonb('large_data', { default: largeJson });
+
+        expect(result).toBe(`large_data JSONB NOT NULL DEFAULT '${largeJson}'`);
+      });
+
+      it('should handle JSON with special characters', () => {
+        const specialJson = '{"message": "Hello \\"world\\"!", "symbols": "@#$%^&*()"}';
+        const result = ColumnBuilder.jsonb('special', { default: specialJson });
+
+        expect(result).toBe(`special JSONB NOT NULL DEFAULT '${specialJson}'`);
+      });
+
+      it('should handle JSON with newlines and tabs', () => {
+        const multilineJson = '{\n  "key": "value",\n  "array": [\n    1,\n    2,\n    3\n  ]\n}';
+        const result = ColumnBuilder.jsonb('multiline', { default: multilineJson });
+
+        expect(result).toBe(`multiline JSONB NOT NULL DEFAULT '${multilineJson}'`);
       });
     });
 

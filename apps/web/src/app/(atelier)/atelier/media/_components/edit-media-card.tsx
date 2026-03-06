@@ -14,7 +14,7 @@ import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { Media, UpdateMediaInput } from "@repo/common-lib/types/media";
 import { format } from "date-fns";
 import { cn } from "@repo/ui/lib/utils";
-import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useUserMetrics } from "@/modules/users/providers/user-metrics.provider";
 import { useMedia, UploadMedia } from "@/modules/media/providers/media.provider";
 import { MediaTab, MediaDrawerFooter, MediaTabs } from "./media-tab";
@@ -37,10 +37,18 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
   const seoDescriptionRef = useRef<HTMLTextAreaElement>(null);
   const seoAltRef = useRef<HTMLInputElement>(null);
   const seoFilenameRef = useRef<HTMLInputElement>(null);
-  const router = useRouter();
   const { refresh, aiCreditsInfo } = useUserMetrics();
   const { setMediUploadByMediaId, mediaUploads, getMediaUploadByMediaId, uploadSingleMedia, deleteMediaUploadByMediaId, generateSeoSingleMedia, deleteSingleMedia } = useMedia()
   const [deletePopoverOpen, setDeletePopoverOpen] = useState(false);
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const mediaParam = searchParams.get('m');
+    if (mediaParam && mediaParam === media.public_id) {
+        setIsDrawerOpen(true);
+    }
+  }, [searchParams, media.public_id]);
+
 
   //cached 
   const currentMediaUpload = useMemo(() => getMediaUploadByMediaId(currentMedia.id), [mediaUploads, currentMedia.id]);

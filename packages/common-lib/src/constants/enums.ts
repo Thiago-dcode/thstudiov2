@@ -8,6 +8,7 @@ export const ENUMS = {
   MEDIA_SHAPE: ['SQUARE', 'LANDSCAPE', 'PORTRAIT'] as const,
   COMPRESSION_LEVEL: ['VERY_LOW', 'LOW', 'NORMAL', 'HIGH', 'VERY_HIGH'] as const,
   LLM_USAGE_TYPE: ['GENERATE_MEDIA_SEO', 'GENERATE_MEDIA_TEXT', 'MODERATE_MEDIA_CONTENT'] as const,
+  NOTIFICATION_TYPE: ['NEW_CONTACT','NEW_LIKE'],
   PROJECT_STATUS: [
     'NOT_STARTED',
     'PENDING',
@@ -49,6 +50,8 @@ export const TABLES_ENUM = {
   PLAN_TRANSLATIONS: 'plan_translations',
   PLAN_OFFERS: 'plan_offers',
   USER_EXTRA_DATA: 'user_extra_data',
+  USER_CONTACTS: 'user_contacts',
+  USER_NOTIFICATIONS:'user_notifications',
   ADMIN_USERS: 'admin_users',
   ADMIN_USERS_ROLES: 'admin_users_roles',
   USERS: 'users',

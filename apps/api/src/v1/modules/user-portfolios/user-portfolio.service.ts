@@ -6,7 +6,6 @@ import { FullPortfolio, Portfolio } from "@repo/common-lib/types/portfolio";
 
 import { UserRepository } from "../users/users.repository";
 import { PortfolioRepository } from "../portfolios/portfolio.repository";
-import { exists } from "nestjs-i18n/dist/utils";
 
 @Injectable()
 export class UserPortfolioService {

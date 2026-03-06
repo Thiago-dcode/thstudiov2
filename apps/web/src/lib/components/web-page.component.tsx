@@ -15,13 +15,16 @@ const Container = ({ children, className }: {
     );
 };
 
-const Header = ({ title, description }: { title: string; description?: string }) => {
+const Header = ({ title, description, children }: { title: string; description?: string, children?: ReactNode }) => {
     return (
-        <header className="mb-10 md:mb-16 flex flex-col items-start gap-6 border-b border-border/40 pb-6">
+        <header className="mb-8 desktop:mb-12 flex flex-col items-center gap-6 border-b border-border/40 pb-6">
             <div className="max-w-2xl space-y-2">
-                <h1 className="text-3xl font-serif italic tracking-tight tablet:text-5xl desktop:text-6xl">
-                    {title}
-                </h1>
+                <div className="flex items-baseline gap-4 justify-center">
+                    <h1 className="text-3xl font-serif italic tracking-tight tablet:text-5xl desktop:text-6xl">
+                        {title}
+                    </h1>
+                    {children}
+                </div>
                 {description && (
                     <p className="max-w-xl text-base leading-relaxed text-text-muted md:text-lg">
                         {description}

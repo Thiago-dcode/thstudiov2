@@ -34,7 +34,7 @@ export default async function AboutPage({ params }: Props) {
     }
 
     return (
-        <Web.Container className="flex flex-col min-h-[calc(100vh-3rem)] py-4 tablet:py-8">
+        <Web.Container className="">
             <ArtistBreadcrumb
                 className="mb-8 md:mb-12"
                 username={username}
@@ -42,8 +42,9 @@ export default async function AboutPage({ params }: Props) {
                     { url: `/artists/${username}/about`, title: "About", isActive: true },
                 ]}
             />
-            <Web.Header title={'About'} />
-            <div className="flex-1 flex items-center">
+            {/* <Web.Header title={'About'} /> */}
+           <div className="w-full items-start justify-center flex">
+           <div className="">
                 <div className="flex w-full flex-col lg:flex-row gap-12 lg:gap-20">
                     {aboutPage.photo && (
                         <div className="shrink-0 lg:sticky lg:top-24 lg:self-start">
@@ -88,7 +89,7 @@ export default async function AboutPage({ params }: Props) {
 
                         <div className="pt-4 border-t border-border/40">
                          
-                         <ArtistContactDialog username={username}>
+                         <ArtistContactDialog>
                          <button
                                 className="inline-flex items-center gap-3 text-sm tracking-wider uppercase hover:text-text text-text-muted transition-colors duration-300 group"
                             >
@@ -100,6 +101,7 @@ export default async function AboutPage({ params }: Props) {
                     </div>
                 </div>
             </div>
+           </div>
         </Web.Container>
     );
 }

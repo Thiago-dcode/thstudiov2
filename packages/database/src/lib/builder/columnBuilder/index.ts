@@ -98,6 +98,12 @@ export class ColumnBuilder {
   public static text(columnName: string, options?: ColumnAttributes) {
     return `${this.validateString(columnName)} TEXT${options ? ' ' + this.buildOptions(options) : ''}`;
   }
+  public static json(columnName: string, options?: ColumnAttributes) {
+    return `${this.validateString(columnName)} JSON${options ? ' ' + this.buildOptions(options) : ''}`;
+  }
+  public static jsonb(columnName: string, options?: ColumnAttributes) {
+    return `${this.validateString(columnName)} JSONB${options ? ' ' + this.buildOptions(options) : ''}`;
+  }
   public static foreignKey(
     columnName: string,
     foreignTableName: TableName,

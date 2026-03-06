@@ -67,30 +67,20 @@ export default async function Page({ params, searchParams }: Props) {
                 ]}
             />
 
-            <header className="mt-8 mb-6 md:mb-10 flex flex-col items-start gap-6 md:flex-row md:items-end md:justify-between border-b border-border/40 pb-6">
-                <div className="max-w-2xl space-y-2">
-                    <div className="flex items-baseline gap-4">
-                        <h1 className="text-3xl font-serif italic tracking-tight tablet:text-5xl desktop:text-6xl">
-                            {portfolio.title}
-                        </h1>
-                        {canEdit && (
-                            <Link
-                                href={`/atelier/portfolio/edit/${portfolio.slug}`}
-                                aria-label="Edit portfolio"
-                                className="text-text-muted hover:text-text transition-colors"
-                            >
-                                <Pencil className="size-4 md:size-5" />
-                            </Link>
-                        )}
-                    </div>
-
-                    {portfolio.description && (
-                        <p className="max-w-xl text-base leading-relaxed text-text-muted md:text-lg">
-                            {portfolio.description}
-                        </p>
-                    )}
-                </div>
-            </header>
+            <Web.Header
+                title={portfolio.title}
+                description={portfolio.description || undefined}
+            >
+                {canEdit && (
+                    <Link
+                        href={`/atelier/portfolio/edit/${portfolio.slug}`}
+                        aria-label="Edit portfolio"
+                        className="text-text-muted hover:text-text transition-colors self-start md:self-auto"
+                    >
+                        <Pencil className="size-4 md:size-5" />
+                    </Link>
+                )}
+            </Web.Header>
 
             <section className="relative">
                 {portfolio.media.length > 0 ? (
