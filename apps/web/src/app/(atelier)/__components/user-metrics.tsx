@@ -111,7 +111,7 @@ export const UserMetrics = async ({ userId }: {
                         "bg-emerald-700": percentage < 50,
                         "bg-amber-700": percentage >= 50 && percentage < 75,
                         "bg-red-700": percentage >= 75,
-                        "bg-accent-muted/80": limit === -1
+                        "bg-accent": limit === -1
                     })}>
                         <p className="text-center text-sm text-muted-foreground">{title}</p>
 

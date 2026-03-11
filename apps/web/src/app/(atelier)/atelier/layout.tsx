@@ -1,7 +1,7 @@
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import { redirect } from "next/navigation";
 import { ReactNode } from "react";
-import { FinishSetupDialog } from "./__components/finish-setup-dialog";
+import { FinishSetupDialog } from "../__components/finish-setup-dialog";
 import { MainNavProvider } from "@/lib/providers/main-nav.provider";
 import { TopNav } from "@/lib/components/top-nav.component";
 import { AdminHeader } from "@/lib/components/admin-header";

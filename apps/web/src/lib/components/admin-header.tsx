@@ -2,6 +2,7 @@
 
 import { useEffect } from "react"
 import { usePathname } from "next/navigation"
+import Link from "next/link"
 import { X } from "lucide-react"
 import { MainNav } from "./main-nav.component"
 import { useMainNav } from "../providers/main-nav.provider"
@@ -17,9 +18,9 @@ export const AdminHeader = () => {
             {/* Desktop sidebar */}
             <header className={`hidden md:flex h-full flex-col items-center justify-start gap-10 border-r border-r-fg-2 bg-fg shrink-0 overflow-hidden transition-[width] duration-300 ease-in-out ${shrinked ? 'w-16' : 'w-56'}`}>
                 <div className="border-b border-b-fg-2 w-full h-16 shrink-0 flex items-center justify-center px-2">
-                    <p className="text-xl text-center whitespace-nowrap overflow-hidden">
+                    <Link href="/" className="text-xl text-center whitespace-nowrap overflow-hidden hover:opacity-80 transition-opacity">
                         {shrinked ? 'A11' : 'A11STUDIO'}
-                    </p>
+                    </Link>
                 </div>
                 <MainNav />
             </header>
@@ -29,7 +30,7 @@ export const AdminHeader = () => {
                 <div className="absolute inset-0 bg-black/40" onClick={() => setMobileOpen(false)} />
                 <aside className={`absolute left-0 top-0 h-full w-64 bg-fg flex flex-col border-r border-r-fg-2 transition-transform duration-300 ease-in-out ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
                     <div className="border-b border-b-fg-2 w-full h-16 shrink-0 flex items-center justify-between px-4">
-                        <p className="text-xl">A11STUDIO</p>
+                        <Link href="/" className="text-xl hover:opacity-80 transition-opacity">A11STUDIO</Link>
                         <button
                             onClick={() => setMobileOpen(false)}
                             className="p-1.5 rounded-md text-text-muted hover:text-text hover:bg-fg-2 transition-colors"

@@ -13,7 +13,7 @@ const Container = ({ children, className }: {
     children: ReactNode,
     className?: string
 }) => {
-    return <div className={cn("w-full flex items-center flex-col gap-4", className)}>{children}</div>
+    return <div className={cn("w-full flex items-center flex-col gap-3", className)}>{children}</div>
 }
 
 const Form = forwardRef<HTMLFormElement, React.FormHTMLAttributes<HTMLFormElement>>(({
@@ -25,7 +25,7 @@ const Form = forwardRef<HTMLFormElement, React.FormHTMLAttributes<HTMLFormElemen
         <form
             ref={ref}
             {...props}
-            className={cn("w-full h-full flex flex-col gap-4", className)}
+            className={cn("w-full h-full flex flex-col gap-3", className)}
         >
             {children}
         </form>
@@ -42,7 +42,7 @@ const Field = ({
     className?: string;
 }) => {
     return (
-        <div className={cn("space-y-1.5 w-full", className)}>
+        <div className={cn("space-y-1 w-full", className)}>
             {children}
         </div>
     );
@@ -70,7 +70,7 @@ const Actions = ({
     className?: string;
 }) => {
     return (
-        <div className={cn("w-full flex items-center flex-col gap-3 mt-4", className)}>
+        <div className={cn("w-full flex items-center flex-col gap-2 mt-3", className)}>
             {children}
         </div>
     );
@@ -132,7 +132,7 @@ const LabelInput = forwardRef<HTMLInputElement, {
             <div className="flex items-center gap-1.5">
                 <Label
                     htmlFor={inputId}
-                    className={cn("block", labelClassName)}
+                    className={cn("block text-xs tracking-wide text-text-muted", labelClassName)}
                 >
                     {label} {inputProps.required ? <span className="span-label text-red-500">*</span> : ''}
                 </Label>
@@ -146,7 +146,7 @@ const LabelInput = forwardRef<HTMLInputElement, {
                 className={cn(inputClassName, error && "border-red-500")}
                 {...inputProps}
             />
-            {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
+            {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
         </Field>
     );
 });
@@ -180,7 +180,7 @@ const LabelTextarea = forwardRef<HTMLTextAreaElement, {
             <div className="flex items-center gap-1.5">
                 <Label
                     htmlFor={textareaId}
-                    className={cn("block", labelClassName)}
+                    className={cn("block text-xs tracking-wide text-text-muted", labelClassName)}
                 >
                     {label} {textareaProps.required ? <span className="span-label">*</span> : ''}
                 </Label>
@@ -194,7 +194,7 @@ const LabelTextarea = forwardRef<HTMLTextAreaElement, {
                 className={cn(textareaClassName, error && "border-red-500")}
                 {...textareaProps}
             />
-            {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
+            {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
         </Field>
     );
 });
@@ -221,7 +221,7 @@ const SubmitButton = ({
             variant={variant || 'default'}
             size="default"
             type="submit"
-            className={cn("w-full mt-2", className)}
+            className={cn("w-full mt-1.5 tracking-wide", className)}
             {...buttonProps}
         >
             {isPending

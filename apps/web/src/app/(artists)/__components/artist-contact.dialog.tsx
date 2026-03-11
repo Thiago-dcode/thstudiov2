@@ -14,19 +14,35 @@ import { Mail } from "lucide-react"
 import { Spinner } from "@repo/ui/components/shadcn/spinner"
 import FormComponent from "@/lib/components/form-component"
 import { useArtist } from "@/modules/users/providers/artist.provider"
+import { useSession } from "@/lib/hooks/useSession"
+import { useHandleAction } from "@/modules/auth/hooks/useHandleAction"
+import { createUserContactAction } from "@/modules/user-contacts/server-actions/create-user-contact.action"
+import { toast } from "@repo/ui/sonner"
 
 export const ArtistContactDialog = ({ children }: { children?: React.ReactNode }) => {
     const [open, setOpen] = useState(false)
     const { artist, isPending: loadingArtist } = useArtist()
+    const { session, isLoading: loadingSession } = useSession()
+    const isSelfContact = Boolean(session && artist && session.id === artist.id)
 
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault()
-        // TODO: wire up server action
-        setOpen(false)
-    }
+    const { handleSubmit, isPending, inputErrors, success, reset } = useHandleAction({
+        action: createUserContactAction,
+        afterAction: async (result) => {
+            if (result.data) {
+                toast.success("Message sent successfully!")
+                setOpen(false)
+                reset()
+            } else if (result.errors) {
+                result.errors.forEach(err => toast.error(err))
+            }
+        }
+    })
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={(v) => {
+            setOpen(v)
+            if (!v) reset()
+        }}>
             <DialogTrigger asChild className="cursor-pointer">
                 {children ?? (
                     <Button variant="default" size="sm">
@@ -46,53 +62,66 @@ export const ArtistContactDialog = ({ children }: { children?: React.ReactNode }
                     </DialogDescription>
                 </DialogHeader>
 
-                {loadingArtist && !artist && (
+                {(loadingArtist || loadingSession) && (
                     <div className="absolute inset-0 flex items-center justify-center bg-bg/80 backdrop-blur-sm z-50 rounded-lg">
                         <Spinner className="size-8" />
                     </div>
                 )}
 
-                <FormComponent.Container >
-                    <FormComponent.Form onSubmit={handleSubmit} >
-                        <FormComponent.LabelInput
-                            label="Name"
-                            id="contact-name"
-                            name="name"
-                            placeholder="Your name"
-                            required
-                        />
+                {!loadingSession && (
+                    isSelfContact ? (
+                        <div className="flex min-h-[260px] items-center justify-center rounded-lg border border-fg-2/40 bg-fg-1/10 px-6 text-center text-sm text-text-muted">
+                            You can't contact yourself.
+                        </div>
+                    ) : (
+                        <FormComponent.Container >
+                            <FormComponent.Form onSubmit={handleSubmit} >
+                                <input type="hidden" name="user_id" value={artist?.id ?? ''} />
+                                <FormComponent.LabelInput
+                                    label="Name"
+                                    id="contact-name"
+                                    name="name"
+                                    placeholder="Your name"
+                                    required
+                                    error={inputErrors?.name}
+                                />
 
-                        <FormComponent.LabelInput
-                            label="Email"
-                            id="contact-email"
-                            name="email"
-                            type="email"
-                            placeholder="your@email.com"
-                            required
-                        />
+                                <FormComponent.LabelInput
+                                    label="Email"
+                                    id="contact-email"
+                                    name="email"
+                                    type="email"
+                                    placeholder="your@email.com"
+                                    required
+                                    error={inputErrors?.email}
+                                />
 
-                        <FormComponent.LabelInput
-                            label="Subject"
-                            id="contact-subject"
-                            name="subject"
-                            placeholder="Commission inquiry"
-                            required
-                        />
+                                <FormComponent.LabelInput
+                                    label="Subject"
+                                    id="contact-subject"
+                                    name="subject"
+                                    placeholder="Commission inquiry"
+                                    required
+                                    error={inputErrors?.subject}
+                                />
 
-                        <FormComponent.LabelTextarea
-                            label="Message"
-                            id="contact-message"
-                            name="message"
-                            placeholder="Tell the artist about your project..."
-                            rows={4}
-                            required
-                        />
+                                <FormComponent.LabelTextarea
+                                    label="Message"
+                                    id="contact-message"
+                                    name="message"
+                                    placeholder="Tell the artist about your project..."
+                                    rows={4}
+                                    required
+                                    error={inputErrors?.message}
+                                />
 
-                        <FormComponent.SubmitButton isPending={loadingArtist}>
-                            Send Message
-                        </FormComponent.SubmitButton>
-                    </FormComponent.Form>
-                </FormComponent.Container>
+                                <FormComponent.SubmitButton isPending={isPending} success={success}>
+                                    Send Message
+                                </FormComponent.SubmitButton>
+                            </FormComponent.Form>
+                        </FormComponent.Container>
+                    )
+                )}
             </DialogContent>
         </Dialog>
     )

@@ -21,7 +21,7 @@ export const PasswordRecoveryForm = () => {
         <FormComponent.Container>
             {/* Error Messages */}
             {errors && errors.length > 0 && (
-                <Errors title="Password recovery errors" errors={errors} />
+                <Errors errors={errors} />
             )}
 
             {/* Form */}

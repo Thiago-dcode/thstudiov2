@@ -5,15 +5,24 @@ description: Frontend rules for Next.js, UI components, Server Actions, and styl
 
 # Frontend Rules (Next.js)
 
-## Design Reference: Co-Star Aesthetic
+## Design Reference: Co-Star & Editorial Journal Aesthetic
 
-Web UI style should follow [Co-Star Astrology](https://www.costarastrology.com/): hyper-personalized, minimalist, dark-first design.
+Web UI style should follow a blend of [Co-Star Astrology](https://www.costarastrology.com/) (minimalist, dark-first) and modern **Editorial/Journal** design (asymmetric, typography-focused, clean hierarchy).
 
-- **Color palette**: Black-and-white with grey tones. No saturated accents unless minimal. Prefer dark backgrounds (`oklch(5% 0 0)`–`oklch(15% 0 0)`), off-white text (`oklch(95% 0 0)`), muted greys for secondary content.
-- **Minimalist restraint**: Less is more. Generous whitespace. Avoid clutter, decorative flourishes, and visual noise.
-- **Typography**: Clean, editorial serif or monospace/typewriter-style fonts. Consistent hierarchy. Let copy breathe.
+- **Color Palette**: Black-and-white with grey tones. No saturated accents unless minimal. Prefer dark backgrounds (`oklch(5% 0 0)`–`oklch(15% 0 0)`), off-white text (`oklch(95% 0 0)`), muted greys for secondary content.
+- **Editorial Typography**: 
+    - **Serif for Body/Long-form**: Use clean, authoritative serifs (e.g., Playfair Display, Lora, or system equivalents) for long-form content to boost perceived credibility.
+    - **Sans/Mono for UI/Meta**: Use monospace or clean sans-serif for labels, metadata, and interactive elements.
+    - **Typography Scale**: Maintain a 1.25–1.5 ratio for clear hierarchy. Let copy breathe with 1.5–1.75 line height.
+- **Journal Layouts**: 
+    - **Bento Grids**: Use asymmetric, card-based "Bento" layouts for feature showcases and dashboards.
+    - **Asymmetry**: Avoid rigid center-alignment for everything. Use purposeful asymmetry to guide the eye.
+    - **Negative Space**: Ample whitespace is a functional requirement, not a decoration.
+- **Editorial Elements**:
+    - **Pull Quotes**: Use styled pull quotes for key insights.
+    - **Drop Caps**: Use sparingly for starting major sections.
+    - **Minimalist Restraint**: Less is more. Avoid decorative flourishes and visual noise.
 - **Tone**: Spare, stylish, serious, slightly mystical. Poetic simplicity over verbose UI copy.
-- **Layout**: Ample negative space, centered or asymmetric editorial layouts. Avoid dense grids and busy cards.
 - **Avoid**: Bright accent colors, gradients, playful illustrations, "tech startup" aesthetic, notification overload.
 
 ## Component & UI Standards

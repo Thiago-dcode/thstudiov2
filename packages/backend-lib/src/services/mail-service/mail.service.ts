@@ -8,9 +8,9 @@ constructor( protected readonly emailDriver: EmailDriver) {
 }
 
 public async send(mailable: Mailable): Promise<any> {
-    const {from,to,subject} = await mailable.envelope();
+    const {from,to,subject,cc,replyTo} = await mailable.envelope();
     const {text,html} = await mailable.content();
-    return await this.emailDriver.sendEmail({from,to,subject,text,html});
+    return await this.emailDriver.sendEmail({from,to,subject,text,html,cc,replyTo});
 }
 }
 

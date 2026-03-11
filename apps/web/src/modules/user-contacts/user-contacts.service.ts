@@ -5,35 +5,35 @@ import { ApiResponse } from "@repo/common-lib/types/response";
 
 export class UserContactsService extends BaseService {
     constructor() {
-        super(fetchApi(), 'user-contacts');
+        super(fetchApi(), 'users');
     }
 
     async create(data: CreateUserContactInput): Promise<ApiResponse<UserContact>> {
         return await this.fetchApi.post({
-            resource: '',
+            resource: `${data.user_id}/contacts`,
             body: data
         });
     }
 
-    async update(id: number, data: UpdateUserContactInput): Promise<ApiResponse<UserContact>> {
+    async update(id: number, user_id: number, data: UpdateUserContactInput): Promise<ApiResponse<UserContact>> {
         return await this.fetchApi.patch({
-            resource: id + '',
+            resource: `${user_id}/contacts/${id}`,
             body: data
         });
     }
 
-    async getAll(): Promise<ApiResponse<UserContact[]>> {
+    async getAll(user_id: number): Promise<ApiResponse<UserContact[]>> {
         return await this.fetchApi.get({
-            resource: '',
+            resource: `${user_id}/contacts`,
             cacheOptions: {
                 cache: 'no-store'
             }
         });
     }
 
-    async getOne(id: number): Promise<ApiResponse<UserContact>> {
+    async getOne(id: number, user_id: number): Promise<ApiResponse<UserContact>> {
         return await this.fetchApi.get({
-            resource: id + ''
+            resource: `${user_id}/contacts/${id}`
         });
     }
 }

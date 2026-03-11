@@ -36,7 +36,6 @@ export default async function AboutPage({ params }: Props) {
     return (
         <Web.Container className="">
             <ArtistBreadcrumb
-                className="mb-8 md:mb-12"
                 username={username}
                 items={[
                     { url: `/artists/${username}/about`, title: "About", isActive: true },

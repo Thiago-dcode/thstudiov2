@@ -39,10 +39,7 @@ const userAuth = await (cookies);
  if(userAuth)return;
 
 }
-const handleMiddlewareActions = async () =>{
 
-  
-}
 const middleware = async (req: NextRequest) => {
   const requestCookies = req.cookies;
   //Priority 1: Cookie

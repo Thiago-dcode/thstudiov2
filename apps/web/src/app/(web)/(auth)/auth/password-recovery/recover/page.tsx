@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import authService from "@/modules/auth/auth.service";
 import { PasswordUpdateForm } from "../../__components/passwordUpdate-form";
-import PageComponent from "../../../../../lib/components/page-component";
+import PageComponent from "@/lib/components/page-component";
 import { ExpiresIn } from "../../__components/expiresIn";
 import { Lock } from "lucide-react";
 

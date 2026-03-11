@@ -89,7 +89,7 @@ export const RegisterForm = () => {
             </FormComponent.SubmitButton>
         </FormComponent.Form>
         {errors && errors.length > 0 && (
-            <Errors title="Login failed" errors={errors} />
+            <Errors errors={errors} />
         )}
     </FormComponent.Container>)
 }

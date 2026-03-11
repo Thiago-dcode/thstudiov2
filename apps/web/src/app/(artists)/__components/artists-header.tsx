@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname, useParams } from "next/navigation"
-import { Menu, X } from "lucide-react"
+import { Check, Menu, Share2, X } from "lucide-react"
 import { cn } from "@repo/ui/lib/utils"
+import { useShare } from "@repo/ui/hooks/useShare"
 import {
     Drawer,
     DrawerTrigger,
@@ -21,6 +22,7 @@ export const ArtistsHeader = () => {
     const [scrolled, setScrolled] = useState(false)
     const [drawerOpen, setDrawerOpen] = useState(false)
     const [isMounted, setIsMounted] = useState(false)
+    const { share, active: shareActive } = useShare({ fallbackCopy: true })
 
     useEffect(() => {
         const handleScroll = () => {
@@ -58,7 +60,7 @@ export const ArtistsHeader = () => {
                     : "border-b-fg-2 opacity-100"
             )}
         >
-            <div className="max-w-(--screen-desktop) w-full h-14 flex items-center justify-between px-4 tablet:px-8">
+            <div className="max-w-(--screen-desktop) w-full h-16 flex items-center justify-between px-5 tablet:px-10">
                 <div className="flex items-center">
                     <Link
                         href={`/`}
@@ -93,6 +95,16 @@ export const ArtistsHeader = () => {
                             Contact
                         </button>
                     )}
+                    <button
+                        onClick={() => share({ url: window.location.href, title: `@${username}` })}
+                        className="text-text-muted hover:text-text transition-colors cursor-pointer"
+                        aria-label={shareActive ? "Shared" : "Share profile"}
+                    >
+                        {shareActive
+                            ? <Check className="size-4" strokeWidth={2} />
+                            : <Share2 className="size-4" strokeWidth={2} />
+                        }
+                    </button>
                 </nav>
 
                 {/* Mobile hamburger */}
@@ -112,7 +124,7 @@ export const ArtistsHeader = () => {
                         >
                             <DrawerTitle className="sr-only">Navigation</DrawerTitle>
 
-                            <div className="flex items-center justify-between h-14 px-6 border-b border-fg-2">
+                            <div className="flex items-center justify-between h-16 px-6 border-b border-fg-2">
                                 <span className="text-sm font-medium tracking-wider text-text-muted">
                                     Menu
                                 </span>
@@ -144,6 +156,16 @@ export const ArtistsHeader = () => {
                                         Contact
                                     </button>
                                 </ArtistContactDialog>
+                                <button
+                                    onClick={() => share({ url: window.location.href, title: `@${username}` })}
+                                    className="flex items-center gap-2 cursor-pointer text-sm tracking-wider font-medium py-3 transition-colors hover:text-text text-text-muted text-left"
+                                    aria-label={shareActive ? "Shared" : "Share profile"}
+                                >
+                                    {shareActive
+                                        ? <><Check className="size-4" strokeWidth={2} /> Shared</>
+                                        : <><Share2 className="size-4" strokeWidth={2} /> Share</>
+                                    }
+                                </button>
                             </nav>
                         </DrawerContent>
                     </Drawer>

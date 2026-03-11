@@ -30,7 +30,7 @@ export const ArtistBreadcrumb = ({ username, items = [], className }: ArtistBrea
     ]
 
     return (
-        <Breadcrumb className={cn(className)}>
+        <Breadcrumb className={cn("mb-8 md:mb-12", className)}>
             <BreadcrumbList className="flex-nowrap gap-2 text-[10px] uppercase tracking-[0.2em] text-text-muted">
                 {allItems.map((item, index) => (
                     <React.Fragment key={item.url}>

@@ -23,7 +23,6 @@ export default async function Page({ params }: Props) {
     return (
         <Web.Container>
             <ArtistBreadcrumb
-                className="mb-8 md:mb-10"
                 username={username}
                 items={[
                     { url: `/artists/${username}/portfolios`, title: "Portfolios", isActive: true },

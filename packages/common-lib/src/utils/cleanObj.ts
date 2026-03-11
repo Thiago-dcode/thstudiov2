@@ -17,7 +17,7 @@ export const trimValues = (obj:Record<string,any>,options?:{
     for (const key in obj) {
         const value = obj[key];
         if (typeof value ==='string') {
-            obj[key].trim();
+            obj[key] = value.trim();
         }
         if(options?.deep && typeof value ==='object' && !Array.isArray(value) ){
             trimValues(value,options);

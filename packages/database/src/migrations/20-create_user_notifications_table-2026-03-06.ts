@@ -1,9 +1,11 @@
 import { Column, Schema } from 'src/lib/facades';
 
 const up = async () => {
+
+  await Schema.createEnumIfNotExists('NOTIFICATION_TYPE');
   await Schema.table('user_notifications').withTimestamps(true).createIfNotExists([
     Column.id(),
-    Column.string('notification_type', 100),
+    Column.enum('notification_type', 'NOTIFICATION_TYPE'),
     Column.foreignKey('user_id', 'users', 'id', {
       onDelete: 'CASCADE',
       nullable: false,
@@ -35,6 +37,7 @@ const up = async () => {
 };
 
 const down = async () => {
+  await Schema.dropEnumIfExists('NOTIFICATION_TYPE');
   await Schema.table('user_notifications').dropIfExists();
 };
 

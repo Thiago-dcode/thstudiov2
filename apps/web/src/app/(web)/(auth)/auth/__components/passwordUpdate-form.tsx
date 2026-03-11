@@ -6,9 +6,7 @@ import { Errors } from "@repo/ui/components/custom/errors"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { Input } from "@repo/ui/components/shadcn/input"
-import { Button } from "@repo/ui/components/shadcn/button"
 import { Label } from '@repo/ui/components/shadcn/label'
-import { Spinner } from "@repo/ui/components/shadcn/spinner"
 import { Eye, EyeClosed } from "lucide-react"
 import FormComponent from "@/lib/components/form-component"
 
@@ -79,7 +77,7 @@ export const PasswordUpdateForm = ({ passwordAttempt }: {
 
             {/* Error Messages */}
             {errors && errors.length > 0 && (
-                <Errors title="Errors during password update" errors={errors} />
+                <Errors  errors={errors} />
             )}
         </FormComponent.Container>
     )

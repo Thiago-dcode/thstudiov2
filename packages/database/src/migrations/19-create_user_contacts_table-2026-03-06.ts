@@ -5,7 +5,9 @@ const up = async () => {
   await Schema.table('user_contacts').withTimestamps().createIfNotExists([
     Column.id(),
     Column.string('contact_name'),
-    Column.email('contact_email'),
+    Column.email('contact_email', {
+      unique: false
+    }),
     Column.foreignKey('user_id', 'users', 'id', {
       onDelete: 'CASCADE',
     }),

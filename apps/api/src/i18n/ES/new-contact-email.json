@@ -1,0 +1,11 @@
+{
+  "SUBJECT": "Nuevo mensaje de contacto desde tu portafolio",
+  "HI": "Hola",
+  "TITLE": "Nuevo Mensaje de Contacto",
+  "NEW_MESSAGE_FROM": "Has recibido un nuevo mensaje desde el formulario de contacto de tu portafolio.",
+  "CONTACT_NAME": "Nombre",
+  "CONTACT_EMAIL": "Correo",
+  "SUBJECT_LABEL": "Asunto",
+  "MESSAGE_LABEL": "Mensaje",
+  "FOOTER_NOTE": "Puedes responder directamente a este correo para contestar al remitente."
+}

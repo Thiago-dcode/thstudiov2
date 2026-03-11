@@ -8,28 +8,36 @@ type ShareData = {
     url: string
 }
 
-type ShareStatus = 'idle' | 'shared' | 'fallback-copied'
+type ShareStatus = 'idle' | 'shared' | 'copied'
 
-export const useShare = () => {
+export const useShare = (options?: { fallbackCopy?: boolean }) => {
     const [status, setStatus] = useState<ShareStatus>('idle')
+    const [supported] = useState(
+        () => typeof navigator !== 'undefined' && !!navigator.share && !!navigator.canShare,
+    )
 
-    const share = useCallback(async (data: ShareData) => {
-        if (navigator.share) {
-            try {
-                await navigator.share(data)
-                setStatus('shared')
-            } catch (err: unknown) {
-                if (err instanceof DOMException && err.name === 'AbortError') return
-                await navigator.clipboard.writeText(data.url)
-                setStatus('fallback-copied')
-            }
-        } else {
-            await navigator.clipboard.writeText(data.url)
-            setStatus('fallback-copied')
-        }
-
+    const resetAfterDelay = useCallback(() => {
         setTimeout(() => setStatus('idle'), 2000)
     }, [])
 
-    return { share, status, shared: status !== 'idle' } as const
+    const share = useCallback(async (data: ShareData) => {
+        if (navigator.share && navigator.canShare?.({ url: data.url })) {
+            try {
+                await navigator.share(data)
+                setStatus('shared')
+                resetAfterDelay()
+            } catch {
+                // User dismissed the dialog or share failed
+            }
+            return
+        }
+
+        if (options?.fallbackCopy) {
+            await navigator.clipboard.writeText(data.url)
+            setStatus('copied')
+            resetAfterDelay()
+        }
+    }, [options?.fallbackCopy, resetAfterDelay])
+
+    return { share, status, active: status !== 'idle', supported } as const
 }

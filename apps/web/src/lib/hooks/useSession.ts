@@ -17,7 +17,7 @@ export const useSession = () => {
         setIsLoading(true);
         setError(null);
         const userAuth = await userSession();
-        
+
         if (isMounted) {
           setSession(userAuth);
         }

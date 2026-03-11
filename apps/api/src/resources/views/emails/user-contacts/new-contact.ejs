@@ -1,0 +1,61 @@
+<%- include(globals.emailsPath + '/shared/head') %>
+
+<body style="width:600px; margin:0 auto;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;">
+    <%- include(globals.emailsPath + '/shared/header') %>
+    <tr>
+      <td align="center" style="padding:20px 0;">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0"
+          style="width:100%; max-width:600px; border-radius:8px; overflow:hidden;">
+
+          <!-- Introduction -->
+          <tr>
+            <td align="center">
+              <p style="font-size:18px; margin-bottom:5px;"><%= globals.t(translatePath + '.HI') %> <span
+                  style="font-weight:bold;"><%= artist.username %></span>
+              </p>
+              <h1 style="font-size:32px; margin-bottom:5px;"><%= globals.t(translatePath + '.TITLE') %></h1>
+              <p style="font-size:16px; margin-bottom:32px; color:#555555;">
+                <%= globals.t(translatePath + '.NEW_MESSAGE_FROM') %>
+              </p>
+            </td>
+          </tr>
+
+          <!-- Contact Details -->
+          <tr>
+            <td align="left" style="padding: 20px; background-color: #f9f9f9; border-radius: 8px;">
+                <p style="margin-bottom: 10px;">
+                    <strong><%= globals.t(translatePath + '.CONTACT_NAME') %>:</strong> <%= contact.contact_name %>
+                </p>
+                <p style="margin-bottom: 10px;">
+                    <strong><%= globals.t(translatePath + '.CONTACT_EMAIL') %>:</strong> <a href="mailto:<%= contact.contact_email %>"><%= contact.contact_email %></a>
+                </p>
+                <p style="margin-bottom: 10px;">
+                    <strong><%= globals.t(translatePath + '.SUBJECT_LABEL') %>:</strong> <%= contact.subject %>
+                </p>
+                <hr style="border: 0; border-top: 1px solid #eee; margin: 15px 0;">
+                <p style="margin-bottom: 5px;"><strong><%= globals.t(translatePath + '.MESSAGE_LABEL') %>:</strong></p>
+                <p style="white-space: pre-wrap; color: #333;"><%= contact.message %></p>
+            </td>
+          </tr>
+
+          <tr>
+            <td align="center" style="padding-top: 30px;">
+                <p style="font-size: 14px; color: #888;">
+                    <%= globals.t(translatePath + '.FOOTER_NOTE') %>
+                </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td>
+              <%- include(globals.emailsPath + '/shared/footer') %>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+
+</html>

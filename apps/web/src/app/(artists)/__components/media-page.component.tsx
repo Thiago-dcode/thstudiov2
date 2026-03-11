@@ -24,7 +24,6 @@ export const MediaPageComponent = ({ user, media, breadcrumbs = [], canEdit }: M
     return (
         <Web.Container>
             <ArtistBreadcrumb
-                className="mb-8 md:mb-10"
                 username={user.username}
                 items={allBreadcrumbs}
             />

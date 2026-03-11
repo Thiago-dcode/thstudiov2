@@ -7,7 +7,7 @@ export default async function Layout({ children }: { children: ReactNode }) {
         <ArtistProvider>
             <div className="size-full">
                 <ArtistsHeader />
-                <main className="size-full pt-12">{children}</main>
+                <main className="size-full pt-16">{children}</main>
             </div>
         </ArtistProvider>
     )

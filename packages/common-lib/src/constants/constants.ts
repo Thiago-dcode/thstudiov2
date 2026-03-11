@@ -49,12 +49,14 @@ export const UPDATE_USER_EXTRA_DATA_METRICS = 'update-user-extra-data-metrics.ev
 export const LLM_TOKENS_USAGE_EVENT = 'llm.tokens.usage' as const;
 export const MEDIA_MODERATION_EVENT = 'media.moderation' as const;
 export const CREATE_USER_STORAGE_REQUEST = 'create.user-storage-request' as const;
+export const CREATE_USER_CONTACT = 'create.user-contact' as const;
 
 // ==================== QUEUES (BullMQ) ====================
 export const USER_METRICS_QUEUE = 'user-metrics' as const;
 export const STRIPE_WEBHOOKS_QUEUE = 'stripe-webhooks' as const;
 export const AI_QUEUE = 'ai' as const;
 export const STORAGE_REQUESTS_QUEUE = 'storage-requests' as const;
+export const USER_CONTACTS_QUEUE = 'user-contacts' as const;
 
 // ==================== JOBS (BullMQ) ====================
 export const JOB_COMPUTE_USER_METRICS = 'compute-user-metrics' as const;
@@ -62,6 +64,7 @@ export const JOB_STRIPE_WEBHOOK = 'stripe-webhook' as const;
 export const JOB_RECORD_LLM_USAGE = 'record-llm-usage' as const;
 export const JOB_RECORD_MEDIA_MODERATION = 'record-media-moderation' as const;
 export const JOB_CREATE_STORAGE_REQUEST = 'create-storage-request' as const;
+export const JOB_CREATE_USER_CONTACT = 'create-user-contact' as const;
 
 // ==================== CACHE KEYS ====================
 // Plans

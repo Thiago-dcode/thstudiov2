@@ -10,7 +10,8 @@ export type Envelop= {
     from: string,
     to: string | string[],
     subject: string,
-  
+    cc?: string | string[],
+    replyTo?: string,
 }
 export type Content={
     text?: string, 
@@ -22,4 +23,6 @@ export type EmailDriverOptions={
     subject: string,
     text?: string,
     html?: string,
+    cc?: string | string[],
+    replyTo?: string,
 }
