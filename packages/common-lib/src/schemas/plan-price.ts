@@ -6,7 +6,7 @@ import { EnumType } from '@repo/common-lib/constants/enums';
 export type PlanPriceSchema = {
   id: number;
   stripe_id: string | null;
-  paypal_id: string | null;
+  paypal_id?: string | null;
   plan_id: number;
   price: number;
   billing_type: EnumType<'BILLING_TYPE'>;
@@ -32,7 +32,7 @@ export type PlanPriceWithPlanSchema = PlanPriceSchema & {
   // Colliding fields (prefixed)
   p_id: number;
   p_stripe_id: string | null;
-  p_paypal_id: string | null;
+  p_paypal_id?: string | null;
   // Non-colliding fields (no prefix)
   name: string;
   short_description: string;

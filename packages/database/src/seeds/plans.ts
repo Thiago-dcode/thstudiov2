@@ -1,6 +1,5 @@
 import { Query } from '../lib/facades';
 import { stripe } from '@repo/backend-lib/services/payment-service/stripe';
-import { paypal } from '@repo/backend-lib/services/payment-service/paypal';
 import { LogService } from '@repo/backend-lib/services/log-service';
 import { CreatePlanWithDetailsInput } from '@repo/common-lib/schemas/plan';
 
@@ -70,17 +69,16 @@ export const main = async () => {
         'Start your creative journey with our free plan. Perfect for artists taking their first steps into professional portfolio management with essential tools to showcase your work and connect with clients.',
       logo: '/plans/beginner',
       stripe_id: null,
-      paypal_id:null,
       base_price: 0,
       is_active: true,
-      is_popular:false,
+      is_popular: false,
       is_free: true,
       max_media_size: 1024, // 1GB storage in MB (~$0.023/month)
       max_projects: 8,
-      max_portfolios:2,
+      max_portfolios: 2,
       max_clients: 4,
       max_services: 2,
-      allow_media_compression:false,
+      allow_media_compression: false,
       // AI Credits: 20 requests/month (1 credit = 1 successful request)
       // Usage: 20 successful AI requests per month
       // Monthly Cost (if 100% used): ~$0.003-0.006 (GPT-5-nano, 3200-3700 tokens/request)
@@ -93,28 +91,24 @@ export const main = async () => {
           billing_type: 'MONTHLY',
           plan_id: 0,
           stripe_id: null,
-          paypal_id:null,
         },
         {
           price: 0,
           billing_type: 'QUARTERLY',
           plan_id: 0,
           stripe_id: null,
-          paypal_id:null,
         },
         {
           price: 0,
           billing_type: 'YEARLY',
           plan_id: 0,
           stripe_id: null,
-          paypal_id:null,
         },
         {
           price: 0,
           billing_type: 'LIFETIME',
           plan_id: 0,
           stripe_id: null,
-          paypal_id:null,
         },
       ],
       translations: [
@@ -147,17 +141,16 @@ export const main = async () => {
       description: 'Elevate your freelance business with professional-grade tools. Manage more clients, showcase extensive portfolios, and optimize your media with compression. Built for independent artists ready to scale their practice.',
       logo: '/plans/freelancer',
       stripe_id: null,
-      paypal_id:null,
       base_price: 9,
       is_active: true,
       is_free: false,
-      is_popular:true,
+      is_popular: true,
       max_media_size: 20240, // 10GB storage in MB (~$0.23/month)
       max_projects: 20,
-      max_portfolios:5,
+      max_portfolios: 5,
       max_clients: 10,
       max_services: 5,
-      allow_media_compression:true,
+      allow_media_compression: true,
       // AI Credits: 200 requests/month (1 credit = 1 successful request)
       // Usage: 200 successful AI requests per month
       // Monthly Cost (if 100% used): ~$0.03-0.06 (GPT-5-nano, 3200-3700 tokens/request)
@@ -171,21 +164,18 @@ export const main = async () => {
           billing_type: 'MONTHLY',
           plan_id: 0,
           stripe_id: null,
-          paypal_id:null,
         },
         {
           price: 22,
           billing_type: 'QUARTERLY',
           plan_id: 0,
           stripe_id: null,
-          paypal_id:null,
         },
         {
           price: 89,
           billing_type: 'YEARLY',
           plan_id: 0,
           stripe_id: null,
-          paypal_id:null,
         },
       ],
       translations: [
@@ -218,17 +208,16 @@ export const main = async () => {
       description: 'The ultimate solution for established artists and creative agencies. Unlock AI-powered features, massive storage, unlimited growth potential, and enterprise-grade tools to manage your creative empire at scale.',
       logo: '/plans/professional',
       stripe_id: null,
-      paypal_id:null,
       base_price: 14,
       is_active: true,
       is_free: false,
-      is_popular:false,
+      is_popular: false,
       max_media_size: 51200, // 50GB storage in MB (~$1.15/month)
       max_projects: -1,
-      max_portfolios:-1,
+      max_portfolios: -1,
       max_clients: -1,
       max_services: -1,
-      allow_media_compression:true,
+      allow_media_compression: true,
       // AI Credits: 400 requests/month (1 credit = 1 successful request)
       // Usage: 400 successful AI requests per month
       // Monthly Cost (if 100% used): ~$0.06-0.12 (GPT-5-nano, 3200-3700 tokens/request)
@@ -242,21 +231,18 @@ export const main = async () => {
           billing_type: 'MONTHLY',
           plan_id: 0,
           stripe_id: null,
-          paypal_id:null,
         },
         {
           price: 34,
           billing_type: 'QUARTERLY',
           plan_id: 0,
           stripe_id: null,
-          paypal_id:null,
         },
         {
           price: 119,
           billing_type: 'YEARLY',
           plan_id: 0,
           stripe_id: null,
-          paypal_id:null,
         },
       ],
 
@@ -287,28 +273,15 @@ export const main = async () => {
   ];
   await Query.table('plan_translations').delete();
   await Query.table('plans').delete();
-  const paypalClient =await paypal;
   for (const _plan of plans) {
     const { translations, prices, ...plan } = _plan;
-    
-       // Create products in parallel
-    const [stripeProduct, paypalProduct] = await Promise.all([
-      stripe.products.create({
-        active: true,
-        name: plan.name,
-        description: plan.description,
-      }),
-      paypalClient.product.create({
-        name: plan.name,
-        type: 'DIGITAL',
-        category: 'ONLINE_SERVICES',
-        description: plan.description
-      })
-    ]);
+
+    const stripeProduct = await stripe.products.create({
+      active: true,
+      name: plan.name,
+      description: plan.description,
+    });
     plan.stripe_id = stripeProduct.id;
-    if (paypalProduct) {
-      plan.paypal_id = paypalProduct.id;
-    }
 
     // Insert plan with all data
     const { id } = await Query.table('plans').insertAndGet(
@@ -319,9 +292,9 @@ export const main = async () => {
 
     for (const price of prices) {
       price.plan_id = id;
-      
+
       // Calculate price based on billing type
-      switch(price.billing_type){
+      switch (price.billing_type) {
         case 'MONTHLY':
           price.price = _plan.base_price;
           break;
@@ -335,58 +308,23 @@ export const main = async () => {
           price.price = Math.round(_plan.base_price * 12 * 0.6);
           break;
       }
-    
-      if ( !plan.is_free) {
 
-      const stripePrice = await stripe.prices.create({
-        product: stripeProduct.id,
-        currency: 'eur', 
-        unit_amount: price.price * 100,
-        recurring: price.billing_type !== 'LIFETIME' ? {
-          interval: 'month',
-          interval_count: price.billing_type === 'MONTHLY' ? 1 : 
-                         price.billing_type === 'QUARTERLY' ? 3 : 12
-        } : undefined,
-      });
-      price.stripe_id = stripePrice.id;
+      if (!plan.is_free) {
 
-        const intervalUnit: 'YEAR' | 'MONTH' = price.billing_type === 'YEARLY' ? 'YEAR' : 'MONTH';
-        const intervalCount = price.billing_type === 'MONTHLY' ? 1 : 
-                              price.billing_type === 'QUARTERLY' ? 3 : 1;
-        const planDescription = `${plan.short_description} - billed ${price.billing_type}`.slice(0, 127);
-        const paypalPlanPrice = await paypalClient.plan.create({
-          product_id: paypalProduct.id,
-          name: `${plan.name}_${price.billing_type}`,
-          description: planDescription,
-          status: 'ACTIVE',
-          billing_cycles: [
-            {
-              frequency: {
-                interval_unit: intervalUnit,
-                interval_count: intervalCount
-              },
-              tenure_type: 'REGULAR',
-              sequence: 1,
-              total_cycles: 0, // 0 = infinite cycles until cancelled
-              pricing_scheme: {
-                fixed_price: {
-                  value: price.price.toString(),
-                  currency_code: 'EUR'
-                }
-              }
-            }
-          ],
-          payment_preferences: {
-            auto_bill_outstanding: true,
-            payment_failure_threshold: 3
-          }
+        const stripePrice = await stripe.prices.create({
+          product: stripeProduct.id,
+          currency: 'eur',
+          unit_amount: price.price * 100,
+          recurring: price.billing_type !== 'LIFETIME' ? {
+            interval: 'month',
+            interval_count: price.billing_type === 'MONTHLY' ? 1 :
+              price.billing_type === 'QUARTERLY' ? 3 : 12
+          } : undefined,
         });
+        price.stripe_id = stripePrice.id;
 
-        if (paypalPlanPrice) {
-          price.paypal_id = paypalPlanPrice.id;
-        }
       }
-      
+
 
       // Insert plan price with all data
       await Query.table('plan_prices').insert(

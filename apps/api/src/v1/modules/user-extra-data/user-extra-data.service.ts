@@ -70,6 +70,7 @@ export class UserExtraDataService {
       enforceCompressionLevel?: boolean;
       projects_count?: number;
       portfolios_count?: number;
+      services_count?: number;
       enforceAiCredits?: boolean;
       enforceUserStrikes?:boolean;
     },
@@ -79,7 +80,7 @@ export class UserExtraDataService {
       this.planService.findUserActivePlan(userId),
     ]);
 
-    const { size, portfolios_count, projects_count, enforceCompressionLevel, storageRequests, enforceAiCredits, enforceUserStrikes } =
+    const { size, portfolios_count, services_count, projects_count, enforceCompressionLevel, storageRequests, enforceAiCredits, enforceUserStrikes } =
       toEnforce;
     if (enforceUserStrikes && userExtraData.ban_lift && new Date(userExtraData.ban_lift) > new Date()) {
       throw ApiException.accountStrikesExceeded(
@@ -127,6 +128,14 @@ export class UserExtraDataService {
       if (newProjectsCount > currentPlan.max_portfolios) {
         throw ApiException.maxProjects(
           `Projects limit exceeded. Current: ${userExtraData.portfolios_count}, Adding: ${portfolios_count}, Max allowed: ${currentPlan.max_projects}`,
+        );
+      }
+    }
+    if (services_count && currentPlan.max_services !== -1) {
+      const newServicesCount = userExtraData.services_count + services_count;
+      if (newServicesCount > currentPlan.max_services) {
+        throw ApiException.maxServices(
+          `Services limit exceeded. Current: ${userExtraData.services_count}, Adding: ${services_count}, Max allowed: ${currentPlan.max_services}`,
         );
       }
     }

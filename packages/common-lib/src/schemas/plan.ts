@@ -7,7 +7,7 @@ import {  CreatePlanPriceInput } from "./plan-price";
 export type PlanSchema = {
   id: number;
   stripe_id: string | null;
-  paypal_id: string | null;
+  paypal_id?: string | null;
   name: string;
   short_description: string;
   description: string;
@@ -59,7 +59,7 @@ export type PlanTranslationColumns = TableColumn<typeof tablesPlanTranslations, 
 export type PlanWithPricesSchema = PlanSchema & {
   pp_id: number;
   pp_stripe_id: string | null;
-  pp_paypal_id: string | null;
+  pp_paypal_id?: string | null;
   pp_created_at: Date;
   pp_updated_at: Date;
   plan_id: number;

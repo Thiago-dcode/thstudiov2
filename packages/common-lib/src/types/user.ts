@@ -30,7 +30,7 @@ export type ProfileAddress = {
 export type UserProfile = Pick<UserSchema,
   | 'id' | 'name' | 'surname' | 'username' | 'email'
   | 'avatar' | 'banner' | 'banned' | 'banned_reason'
-  | 'is_active' | 'short_biography' | 'biography'
+  | 'is_active' | 'short_biography' | 'biography' | 'profession'
 > & {
   address: ProfileAddress | null;
   categories: CategoryBase[];

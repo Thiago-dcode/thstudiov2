@@ -37,8 +37,8 @@ const up = async () => {
 };
 
 const down = async () => {
-  await Schema.dropEnumIfExists('NOTIFICATION_TYPE');
   await Schema.table('user_notifications').dropIfExists();
+  await Schema.dropEnumIfExists('NOTIFICATION_TYPE');
 };
 
 export { up, down };

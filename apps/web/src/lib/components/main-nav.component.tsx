@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMainNav } from "../providers/main-nav.provider"
 import { ReactNode, useEffect, useState } from "react";
-import { Box, Grid, Home, Info, LayoutDashboard, Settings } from "lucide-react";
+import { Box, Briefcase, Grid, Home, Info, LayoutDashboard, Settings } from "lucide-react";
 import { LogoutDialog } from "@/app/(atelier)/__components/logout-dialog";
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
 
@@ -33,6 +33,11 @@ const routes: {
             name: 'Portfolios',
             url: 'portfolio',
             icon: <Grid size={20} />
+        },
+        {
+            name: 'Services',
+            url: 'services',
+            icon: <Briefcase size={20} />
         },
         {
             name: 'About',

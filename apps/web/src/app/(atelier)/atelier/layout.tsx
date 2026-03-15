@@ -10,6 +10,7 @@ import { UploadMediaModal } from "@/modules/media/components/upload-media-modal"
 import { UserMetricsProvider } from "@/modules/users/providers/user-metrics.provider";
 import { PortfolioProvider } from "@/modules/portfolios/providers/create-update-portfolio.provider";
 import { UserAccountBannedModal } from "@/modules/users/components/user-account-banned-modal";
+import { AlertPortfolioButton } from "@/modules/portfolios/components/alert-portfolio.button";
 const AdminLayout = async ({ children }: { children: ReactNode }) => {
   const userAuth = await userSession();
   if (!userAuth) {
@@ -23,6 +24,7 @@ const AdminLayout = async ({ children }: { children: ReactNode }) => {
           <PortfolioProvider user={userAuth}>
             <UserAccountBannedModal />
             <UploadMediaModal />
+            <AlertPortfolioButton />
             <div className="flex size-full items-center justify-between ">
               <AdminHeader />
               <main className="size-full flex flex-col items-start justify-start  ">

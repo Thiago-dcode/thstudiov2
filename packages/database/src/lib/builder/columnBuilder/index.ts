@@ -98,6 +98,13 @@ export class ColumnBuilder {
   public static text(columnName: string, options?: ColumnAttributes) {
     return `${this.validateString(columnName)} TEXT${options ? ' ' + this.buildOptions(options) : ''}`;
   }
+  public static array(columnName: string, type: string, options?: ColumnAttributes) {
+    const clientConfig = getClientConfig();
+    if (clientConfig !== 'postgres') {
+      throw new Error('Arrays are only supported in Postgres');
+    }
+    return `${this.validateString(columnName)} ${type}[]${options ? ' ' + this.buildOptions(options) : ''}`;
+  }
   public static json(columnName: string, options?: ColumnAttributes) {
     return `${this.validateString(columnName)} JSON${options ? ' ' + this.buildOptions(options) : ''}`;
   }

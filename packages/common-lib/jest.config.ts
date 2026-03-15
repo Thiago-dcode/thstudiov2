@@ -5,10 +5,10 @@ const config: Config = {
   ...baseConfig,
   rootDir: '.',
   moduleNameMapper: {
+    ...baseConfig.moduleNameMapper,
     "^@/(.*)$": "<rootDir>/src/$1",
     "^@lib/(.*)$": "<rootDir>/src/lib/$1",
-    "^lib/(.*)$": "<rootDir>/src/lib/$1",
-    "common-lib": "<rootDir>/src/lib/common-lib"
+    "^lib/(.*)$": "<rootDir>/src/lib/$1"
   },
   testEnvironment: "node",
   testRegex: "(/tests/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",

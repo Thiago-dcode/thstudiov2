@@ -8,6 +8,7 @@ const up = async () => {
     }),
     Column.string('paypal_id', 255, {
       unique: true,
+      nullable:true,
     }),
     Column.string('name', 255, {
       unique: true,

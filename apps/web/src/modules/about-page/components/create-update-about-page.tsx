@@ -2,7 +2,6 @@
 
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction"
 import { createAboutPageAction, updateAboutPageAction } from "../server-actions/create-update-about-page.action"
-import { useRouter } from "next/navigation"
 import FormComponent from "@/lib/components/form-component"
 import { FileInputProvider, useInputFile } from "@repo/ui/contexts/file.provider"
 import { usePreviewUrls } from "@repo/ui/hooks/usePreviewUrls"
@@ -13,99 +12,99 @@ import { ALLOWED_IMAGE_FILE_TYPES } from "@repo/common-lib/constants/constants"
 import { cn } from "@repo/ui/lib/utils"
 import { useState } from "react"
 
-export const CreateOrUpdateAboutPage= ({currentAboutPage,userId}:{
+export const CreateOrUpdateAboutPage = ({ currentAboutPage, userId }: {
     currentAboutPage?: AboutPage,
-    userId:number
-}) =>{
-    const [open,setOpen] =useState(false);
-    const {handleSubmit,isPending,success,deleteInputErrorProperty, inputErrors,reset,cleanErrors} = useHandleAction({
-        action:async (formData) =>{
-    
-            if(!currentAboutPage){
-                formData.set('user_id',userId + '')
+    userId: number
+}) => {
+    const [open, setOpen] = useState(false);
+    const { handleSubmit, isPending, success, deleteInputErrorProperty, inputErrors, reset, cleanErrors } = useHandleAction({
+        action: async (formData) => {
+
+            if (!currentAboutPage) {
+                formData.set('user_id', userId + '')
                 return await createAboutPageAction(formData)
             }
-            return await updateAboutPageAction(currentAboutPage.id,formData)
+            return await updateAboutPageAction(currentAboutPage.id, formData)
         },
-        afterAction: async (result) =>{
-            if(result.data){
+        afterAction: async (result) => {
+            if (result.data) {
                 setOpen(false)
             }
 
         },
-        beforeAction: async ()=>{
+        beforeAction: async () => {
             reset()
         }
     });
-    return  <section className="">
+    return <section className="">
 
-    <Dialog open={open} onOpenChange={(e)=>{
-        if(isPending) return;
-        if(!e) cleanErrors();
-        setOpen(e)
-    }}>
-        <DialogTrigger className="cursor-pointer">
-       <p className="bg-text text-bg p-2 rounded-md"> {!currentAboutPage? 'Create your first about page':'Update your about page'}</p>
-        </DialogTrigger>
-        <DialogContent className="max-w-2xl max-h-5/6 overflow-auto">
-            <DialogTitle>{!currentAboutPage ? "Create About Page" : "Update About Page"}</DialogTitle>
-            <FormComponent.Container className="">
-            <FormComponent.Form  onSubmit={handleSubmit}>
-            <div className="space-y-1">
-                <FileInputProvider allowedMimeTypes={ALLOWED_IMAGE_FILE_TYPES}>
-                    <PhotoInput defaultUrl={currentAboutPage?.photo || undefined}/>
-                </FileInputProvider>
-            </div>
-        <FormComponent.LabelInput 
-            onChange={() => deleteInputErrorProperty('title')} 
-            error={inputErrors?.title} 
-            defaultValue={currentAboutPage?.title || undefined} 
-            label="Title" 
-            required={!currentAboutPage} 
-            name="title" 
-            id="title" 
-            type="text"
-            placeholder="The story behind the canvas"
-        />
-        <FormComponent.LabelTextarea 
-            onChange={() => deleteInputErrorProperty('description')}  
-            error={inputErrors?.description} 
-            rows={8} 
-            defaultValue={currentAboutPage?.description || undefined}  
-            label="Description" 
-            required={!currentAboutPage} 
-            name="description" 
-            id="description"
-            placeholder="Share your journey as an artist. What inspires you? What drives your creative vision? Let visitors connect with the person behind the art..."
-        />
+        <Dialog open={open} onOpenChange={(e) => {
+            if (isPending) return;
+            if (!e) cleanErrors();
+            setOpen(e)
+        }}>
+            <DialogTrigger className="cursor-pointer">
+                <p className="bg-text text-bg p-2 rounded-md"> {!currentAboutPage ? 'Create your first about page' : 'Update your about page'}</p>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-5/6 overflow-auto">
+                <DialogTitle>{!currentAboutPage ? "Create About Page" : "Update About Page"}</DialogTitle>
+                <FormComponent.Container className="">
+                    <FormComponent.Form onSubmit={handleSubmit}>
+                        <div className="space-y-1">
+                            <FileInputProvider allowedMimeTypes={ALLOWED_IMAGE_FILE_TYPES}>
+                                <PhotoInput defaultUrl={currentAboutPage?.photo || undefined} />
+                            </FileInputProvider>
+                        </div>
+                        <FormComponent.LabelInput
+                            onChange={() => deleteInputErrorProperty('title')}
+                            error={inputErrors?.title}
+                            defaultValue={currentAboutPage?.title || undefined}
+                            label="Title"
+                            required={!currentAboutPage}
+                            name="title"
+                            id="title"
+                            type="text"
+                            placeholder="The story behind the canvas"
+                        />
+                        <FormComponent.LabelTextarea
+                            onChange={() => deleteInputErrorProperty('description')}
+                            error={inputErrors?.description}
+                            rows={8}
+                            defaultValue={currentAboutPage?.description || undefined}
+                            label="Description"
+                            required={!currentAboutPage}
+                            name="description"
+                            id="description"
+                            placeholder="Share your journey as an artist. What inspires you? What drives your creative vision? Let visitors connect with the person behind the art..."
+                        />
 
-     <div className="sticky bottom-0 bg-fg p-2">
-     <FormComponent.SubmitButton  isPending={isPending} success={success}>{!currentAboutPage? "Create":"Update"}</FormComponent.SubmitButton>
-     </div>
-    </FormComponent.Form>
-    </FormComponent.Container>
+                        <div className="sticky bottom-0 bg-fg p-2">
+                            <FormComponent.SubmitButton isPending={isPending} success={success}>{!currentAboutPage ? "Create" : "Update"}</FormComponent.SubmitButton>
+                        </div>
+                    </FormComponent.Form>
+                </FormComponent.Container>
 
-    </DialogContent>
-    </Dialog>
+            </DialogContent>
+        </Dialog>
 
-{/*TODO: create about component */}
+        {/*TODO: create about component */}
 
-</section>
+    </section>
 
 }
 
-const PhotoInput  = ({defaultUrl}:{
-    defaultUrl?:string
-}) =>{
-    const {files} = useInputFile();
-    const {previewUrls} = usePreviewUrls({
+const PhotoInput = ({ defaultUrl }: {
+    defaultUrl?: string
+}) => {
+    const { files } = useInputFile();
+    const { previewUrls } = usePreviewUrls({
         defaultUrl,
         files
     });
 
-       return <div className={cn("w-full mx-auto p-4 flex items-center gap-4",{
-        'flex-col':!previewUrls?.length
-       })}>
+    return <div className={cn("w-full mx-auto p-4 flex items-center gap-4", {
+        'flex-col': !previewUrls?.length
+    })}>
         <div>
             {previewUrls?.length ? (
                 <div className="mt-4 flex flex-col items-center gap-2">
@@ -125,5 +124,5 @@ const PhotoInput  = ({defaultUrl}:{
         <FileInput name="photo" id="photo-input" />
     </div>
 
-    
+
 }

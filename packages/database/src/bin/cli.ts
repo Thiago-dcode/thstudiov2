@@ -10,6 +10,8 @@ import { createSeeder } from '../lib/scripts/create-seed';
 import * as readline from 'readline';
 import { getConfigValue } from '@repo/common-lib/config/utils';
 import { rollback } from 'src/lib/scripts/rollback';
+import { cleanStripe } from '../lib/scripts/clean-stripe';
+import { createStripeCustomers } from '../lib/scripts/create-stripe-customers';
 
 const program = new Command();
 
@@ -100,4 +102,24 @@ program
   .action((options) => {
     seed(options.name);
   });
+program
+  .command('clean:stripe')
+  .description('Delete all Stripe customers and subscriptions (local only)')
+  .action(async () => {
+    Logger.warn('⚠️  This will delete ALL Stripe customers and subscriptions!');
+    const confirmed = await confirmAction('Are you sure you want to continue?');
+    if (!confirmed) {
+      Logger.info('Stripe cleanup cancelled.');
+      process.exit(0);
+    }
+    cleanStripe();
+  });
+
+program
+  .command('create:stripe-customers')
+  .description('Create Stripe customers for active users who do not have one')
+  .action(async () => {
+    createStripeCustomers();
+  });
+
 program.parse(process.argv);

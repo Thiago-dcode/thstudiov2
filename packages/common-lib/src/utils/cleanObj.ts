@@ -16,11 +16,18 @@ export const trimValues = (obj:Record<string,any>,options?:{
 }) =>{
     for (const key in obj) {
         const value = obj[key];
-        if (typeof value ==='string') {
+        if (typeof value === 'string') {
             obj[key] = value.trim();
         }
-        if(options?.deep && typeof value ==='object' && !Array.isArray(value) ){
-            trimValues(value,options);
+        if (options?.deep && 
+            typeof value === 'object' && 
+            value !== null && 
+            !Array.isArray(value) && 
+            !(value instanceof Date) &&
+            !(typeof File !== 'undefined' && value instanceof File) &&
+            !(typeof Blob !== 'undefined' && value instanceof Blob)
+        ) {
+            trimValues(value, options);
         }
     }
 

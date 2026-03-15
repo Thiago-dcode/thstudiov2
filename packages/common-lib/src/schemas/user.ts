@@ -58,6 +58,7 @@ export type UserProfileSchema = {
   name?: string | null;
   surname?: string | null;
   biography?: string | null;
+  profession?: string | null;
 
   // From address
   a_id:number;

@@ -80,6 +80,8 @@ export const TABLES_ENUM = {
   SERVICES: 'services',
   SERVICE_MEDIA: 'service_media',
   SERVICE_TRANSLATIONS: 'service_translations',
+  SERVICE_FEATURES: 'service_features',
+  SERVICE_TERMS: 'service_terms',
   ADDRESSES: 'addresses',
   USER_AUTH_DEVICES: 'user_auth_devices',
   USER_SESSIONS: 'user_sessions',

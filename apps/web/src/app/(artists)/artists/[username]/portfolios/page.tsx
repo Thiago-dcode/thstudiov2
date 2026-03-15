@@ -32,14 +32,14 @@ export default async function Page({ params }: Props) {
             <Web.Header title="Portfolios" />
 
             {portfolios.length > 0 ? (
-                <section className="grid grid-cols-1 gap-6 sm:grid-cols-2 tablet:gap-8">
+                <section className="grid grid-cols-2 gap-4 sm:grid-cols-3 tablet:grid-cols-4 tablet:gap-5">
                     {portfolios.map((portfolio) => (
                         <Link
                             key={portfolio.id}
                             href={`/artists/${username}/portfolios/${portfolio.slug}`}
                             className="group relative flex flex-col overflow-hidden rounded-sm"
                         >
-                            <div className="relative aspect-4/3 w-full overflow-hidden bg-fg-1">
+                            <div className="relative aspect-square w-full overflow-hidden bg-fg-1">
                                 {portfolio.thumbnail ? (
                                     <>
                                         <Image
@@ -47,24 +47,24 @@ export default async function Page({ params }: Props) {
                                             alt={portfolio.title}
                                             fill
                                             className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                                            sizes="(max-width: 640px) 100vw, 50vw"
+                                            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                                         />
                                         <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/10 to-transparent transition-opacity duration-500" />
                                     </>
                                 ) : (
                                     <div className="absolute inset-0 flex items-center justify-center bg-fg-1">
-                                        <span className="font-serif text-5xl italic text-text-muted/30">
+                                        <span className="font-serif text-3xl italic text-text-muted/30">
                                             {portfolio.title.charAt(0)}
                                         </span>
                                     </div>
                                 )}
 
-                                <div className="absolute inset-x-0 bottom-0 p-5 md:p-6">
-                                    <h2 className="text-lg font-serif italic tracking-tight text-white drop-shadow-md md:text-xl desktop:text-2xl">
+                                <div className="absolute inset-x-0 bottom-0 p-3 md:p-4">
+                                    <h2 className="text-sm font-serif italic tracking-tight text-white drop-shadow-md md:text-base">
                                         {portfolio.title}
                                     </h2>
                                     {portfolio.description && (
-                                        <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-white/70">
+                                        <p className="mt-0.5 line-clamp-1 text-xs leading-relaxed text-white/70">
                                             {portfolio.description}
                                         </p>
                                     )}

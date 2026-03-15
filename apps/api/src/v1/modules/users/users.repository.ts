@@ -151,6 +151,7 @@ export class UserRepository extends BaseRepository {
    'users.is_active',
    'users.short_biography',
    'users.biography',
+   'users.profession',
 
     // Address — minimal
     'addresses.id as a_id',
@@ -291,6 +292,7 @@ export class UserRepository extends BaseRepository {
       is_active: first.is_active,
       short_biography: first.short_biography,
       biography: first.biography,
+      profession: first.profession ?? null,
       address,
       categories: Array.from(categoriesMap.values()),
     };
