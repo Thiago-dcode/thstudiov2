@@ -41,10 +41,14 @@ export class WebhooksController {
     @Req() req: { rawBody?: Buffer },
   ) {
     this.logger = this.logger.name('stripe');
+    this.logger.info('Received Stripe webhook');
+
     if (!signature) {
+      this.logger.error('Missing stripe-signature header');
       throw new BadRequestException('Missing stripe-signature header');
     }
     if (!req.rawBody) {
+      this.logger.error('Raw body not available');
       throw new BadRequestException('Raw body not available');
     }
 
@@ -56,6 +60,7 @@ export class WebhooksController {
         signature,
         stripeWebhookSecret,
       );
+      this.logger.info(`Webhook signature verified for event type: ${event.type}`);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Unknown error';
       this.logger.error(`Webhook signature verification failed: ${message}`);
@@ -73,6 +78,7 @@ export class WebhooksController {
         backoff: { type: 'exponential', delay: 1000 },
       },
     );
+    this.logger.info(`Added Stripe webhook event to queue: ${event.id}`);
 
     return { received: true };
   }

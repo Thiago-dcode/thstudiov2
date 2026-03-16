@@ -16,6 +16,7 @@ export type PlanSubscriptionSchema = {
   plan_offer_id: number | null;
   is_active: boolean;
   is_trialing: boolean;
+  cancel_at: Date | null;
   created_at: Date;
   updated_at: Date;
 };

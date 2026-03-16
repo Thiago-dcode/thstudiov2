@@ -8,6 +8,7 @@ import { FUNNEL_LAST_STEP } from "@repo/common-lib/constants/constants";
 import Link from "next/link";
 import { Button } from "@repo/ui/components/shadcn/button";
 import usersService from "@/modules/users/users.service";
+import { cn } from "@repo/ui/lib/utils";
 
 export default async function CallbackPage({
     params,
@@ -54,24 +55,38 @@ export default async function CallbackPage({
 
     return (
         <PageComponent.Container className="h-screen flex items-center justify-center m-auto">
-            <PageComponent.Content className="self-center">
+            <PageComponent.Content className={cn("self-center w-full max-w-md gap-10")}>
                 <PageComponent.Header>
-                    {isSuccess ? (
-                        <CheckCircle2 className="size-16 text-green-500" />
-                    ) : (
-                        <XCircle className="size-16 text-red-500" />
-                    )}
-                    <PageComponent.Title
-                        title={isSuccess ? successTitle : failedTitle}
-                    />
-                    <PageComponent.SubTitle
-                        subTitle={isSuccess ? successSubtitle : failedSubtitle}
-                    />
+                    <div className="flex flex-col items-center gap-6 text-center">
+                        <div
+                            className={cn(
+                                "flex size-20 shrink-0 items-center justify-center rounded-full",
+                                isSuccess
+                                    ? "bg-(--color-success)/15 text-(--color-success)"
+                                    : "bg-(--color-error)/15 text-(--color-error)"
+                            )}
+                            aria-hidden
+                        >
+                            {isSuccess ? (
+                                <CheckCircle2 className="size-10" strokeWidth={1.75} />
+                            ) : (
+                                <XCircle className="size-10" strokeWidth={1.75} />
+                            )}
+                        </div>
+                        <div className="space-y-2">
+                            <PageComponent.Title
+                                title={isSuccess ? successTitle : failedTitle}
+                            />
+                            <PageComponent.SubTitle
+                                subTitle={isSuccess ? successSubtitle : failedSubtitle}
+                            />
+                        </div>
+                    </div>
                 </PageComponent.Header>
-                <div className="flex flex-col items-center justify-center gap-2 w-full">
+                <div className="flex flex-col gap-3 w-full">
                     {!isSuccess && cookie?.retryable ? (
-                        <Button className="w-full" asChild>
-                            <Link className="font-semibold" href={'/get-started'}>Try again</Link>
+                        <Button className="w-full min-h-11 font-semibold" asChild>
+                            <Link href={'/get-started'}>Try again</Link>
                         </Button>
                     ) : null}
                     <FunnelProvider lastStep={FUNNEL_LAST_STEP} user={userAuth} defaultCanContinue={true} >

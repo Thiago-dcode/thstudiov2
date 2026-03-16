@@ -28,6 +28,7 @@ export class PlanSubscriptionsRepository extends BaseRepository {
     'plan_subscriptions.plan_offer_id',
     'plan_subscriptions.is_active',
     'plan_subscriptions.is_trialing',
+    'plan_subscriptions.cancel_at',
   ];
 
   private readonly FULL_COLUMNS: FullPlanSubscriptionColumns[] = [
@@ -77,6 +78,7 @@ export class PlanSubscriptionsRepository extends BaseRepository {
       plan_offer_id: result.plan_offer_id,
       is_active: result.is_active,
       is_trialing: result.is_trialing,
+      cancel_at: result.cancel_at,
       plan_price: {
         id: result.pp_id,
         stripe_id: result.pp_stripe_id,

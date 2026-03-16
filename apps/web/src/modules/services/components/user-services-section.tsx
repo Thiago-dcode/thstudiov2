@@ -20,12 +20,6 @@ export const UserServicesSection = async ({ username }: {
 
     return (
         <section className="w-full max-w-5xl mx-auto px-6 md:px-12">
-            <header className="mb-6 border-b border-border/40 pb-3">
-                <h2 className="text-xs uppercase tracking-[0.2em] text-text-muted">
-                    Services
-                </h2>
-            </header>
-
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 tablet:gap-6">
                 {services.map((service) => (
                     <Link

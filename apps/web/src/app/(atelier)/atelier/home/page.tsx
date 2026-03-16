@@ -3,6 +3,7 @@ import EditUserProvider from "../../../../modules/users/providers/edit-user.prov
 import { notFound, redirect } from "next/navigation";
 import usersService from "@/modules/users/users.service";
 import EditUserComponent from "@/modules/users/components/edit-user.component";
+import { AdminPageContainer } from "../../__components/admin-page.component";
 
 export default async function AtelierHomePage() {
 
@@ -18,12 +19,9 @@ export default async function AtelierHomePage() {
 
 
     return <EditUserProvider defaultAddress={addressResponse.data || undefined} defaultUser={userResponse.data} defaultUserCategories={categoriesResponse.data || []}>
-
-        <div className="size-full">
-
+        <AdminPageContainer>
             <EditUserComponent />
-        </div>
-
+        </AdminPageContainer>
     </EditUserProvider>
 
 } 

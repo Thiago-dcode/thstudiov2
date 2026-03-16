@@ -27,7 +27,7 @@ export default async function ServicesPage() {
                 </Button>
             </AdminPageTitle>
             {services.length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mt-6">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                     {services.map((service) => (
                         <Link key={service.id} href={`/atelier/services/edit/${service.slug}`}>
                             <article

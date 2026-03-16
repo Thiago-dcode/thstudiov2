@@ -17,12 +17,6 @@ export const UserPortfoliosSection = async ({ userId, username }: {
 
     return (
         <section className="w-full max-w-5xl mx-auto px-6 md:px-12">
-            <header className="mb-6 border-b border-border/40 pb-3">
-                <h2 className="text-xs uppercase tracking-[0.2em] text-text-muted">
-                    Portfolios
-                </h2>
-            </header>
-
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 tablet:grid-cols-4 tablet:gap-5">
                 {response.data.map((portfolio) => (
                     <Link

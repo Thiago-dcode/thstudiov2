@@ -7,7 +7,7 @@ type AdminPageContainerProps = {
 
 export const AdminPageContainer = ({ children }: AdminPageContainerProps) => {
     return (
-        <section className="size-full p-4 overflow-auto">
+        <section className="size-full p-6 flex flex-col gap-6 overflow-auto">
             {children}
         </section>
     );

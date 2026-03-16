@@ -122,14 +122,22 @@ export class PlanSubscriptionsService {
 
     if (activeSubscription.stripe_id) {
       // Cancel at end of billing cycle, not immediately
-      await stripe.subscriptions.update(activeSubscription.stripe_id, {
-        cancel_at_period_end: true,
+      const updatedStripeSub = await stripe.subscriptions.update(
+        activeSubscription.stripe_id,
+        { cancel_at_period_end: true },
+      );
+      await this.update(activeSubscription.id, {
+        auto_renewal: false,
+        cancel_at: updatedStripeSub.cancel_at
+          ? new Date(updatedStripeSub.cancel_at * 1000)
+          : null,
+      });
+    } else {
+      await this.update(activeSubscription.id, {
+        auto_renewal: false,
+        cancel_at: null,
       });
     }
-    // Invalidate cache so the UI reflects the pending cancellation
-    await this.update(activeSubscription.id, {
-      auto_renewal: true,
-    });
 
     //TODO: Send email to user
 
@@ -381,6 +389,7 @@ export class PlanSubscriptionsService {
       stripe_id: null,
       stripe_item_id: null,
       auto_renewal: true,
+      cancel_at: null,
       paypal_id: null,
       plan_offer_id: null,
       plan_price_id: lifetimePrice.id,

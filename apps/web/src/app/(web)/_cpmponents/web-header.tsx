@@ -13,6 +13,7 @@ import {
     DrawerClose,
 } from "@repo/ui/components/shadcn/drawer"
 import { Button } from "@repo/ui/components/shadcn/button"
+import { BrandLogo } from "@repo/ui/components/custom/brand-logo"
 import { UserAuth } from "@/modules/auth/auth.types"
 
 interface WebHeaderProps {
@@ -55,9 +56,9 @@ export const WebHeader = ({ session }: WebHeaderProps) => {
             <div className="max-w-(--screen-desktop) w-full h-16 flex items-center justify-between px-5 tablet:px-10">
                 <Link
                     href="/"
-                    className="text-xl font-medium tracking-tight text-text hover:opacity-80 transition-opacity"
+                    className="text-text hover:opacity-80 transition-opacity"
                 >
-                    A11STUDIO
+                    <BrandLogo />
                 </Link>
 
                 <nav className="hidden tablet:flex items-center gap-8">
@@ -71,7 +72,7 @@ export const WebHeader = ({ session }: WebHeaderProps) => {
                                     Access Profile
                                 </Link>
                             )}
-                            <Button asChild variant="default" size="sm">
+                            <Button asChild variant="primary" size="sm">
                                 <Link href="/atelier">
                                     Go to Atelier
                                     <ArrowRight className="size-3.5" />
@@ -89,7 +90,7 @@ export const WebHeader = ({ session }: WebHeaderProps) => {
                                 </Link>
                             )}
                             {!isRegisterPage && (
-                                <Button asChild variant="default" size="sm">
+                                <Button asChild variant="primary" size="sm">
                                     <Link href="/auth/register">
                                         Get Started
                                         <ArrowRight className="size-3.5" />
@@ -172,7 +173,7 @@ export const WebHeader = ({ session }: WebHeaderProps) => {
                             </nav>
 
                             <div className="mt-auto px-6 py-6 border-t border-fg-2">
-                                <p className="text-xs tracking-wider text-text-muted leading-relaxed">
+                                <p className="text-xs tracking-wider text-accent-muted leading-relaxed">
                                     The portfolio platform built for artists.
                                 </p>
                             </div>

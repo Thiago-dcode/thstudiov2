@@ -5,6 +5,7 @@ import Link from "next/link"
 import { usePathname, useParams } from "next/navigation"
 import { Check, Menu, Share2, X } from "lucide-react"
 import { cn } from "@repo/ui/lib/utils"
+import { BrandLogo } from "@repo/ui/components/custom/brand-logo"
 import { useShare } from "@repo/ui/hooks/useShare"
 import {
     Drawer,
@@ -64,10 +65,10 @@ export const ArtistsHeader = () => {
             <div className="max-w-(--screen-desktop) w-full h-16 flex items-center justify-between px-5 tablet:px-10">
                 <div className="flex items-center">
                     <Link
-                        href={`/`}
-                        className="text-xl font-medium tracking-tight text-center whitespace-nowrap overflow-hidden text-text hover:opacity-80 transition-opacity"
+                        href="/"
+                        className="text-text hover:opacity-80 transition-opacity"
                     >
-                        A11STUDIO
+                        <BrandLogo />
                     </Link>
                 </div>
 

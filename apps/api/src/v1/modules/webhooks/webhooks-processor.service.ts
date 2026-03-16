@@ -12,6 +12,8 @@ import { PlanSubscription } from '@repo/common-lib/types/plan-subscription';
 import {
   STRIPE_WEBHOOKS_QUEUE,
   JOB_STRIPE_WEBHOOK,
+  CACHE_KEY_ACTIVE_SUBSCRIPTION,
+  CACHE_KEY_ACTIVE_PLAN,
 } from '@repo/common-lib/constants/constants';
 
 @Processor(STRIPE_WEBHOOKS_QUEUE)
@@ -29,6 +31,7 @@ export class WebhookProcessor extends WorkerHost {
     private readonly planSubscriptionService: PlanSubscriptionsService,
     private readonly planPriceService: PlanPricesService,
     private readonly userService: UserService,
+    private readonly helpers: Helpers,
   ) {
     super();
   }
@@ -138,6 +141,11 @@ export class WebhookProcessor extends WorkerHost {
     const is_trialing = subscription.status === 'trialing';
     const start_billing_date = new Date(itemData.current_period_start * 1000);
     const next_billing_date = new Date(itemData.current_period_end * 1000);
+    const stripe_cancel_at = subscription.cancel_at
+      ? new Date(subscription.cancel_at * 1000)
+      : null;
+    const auto_renewal =
+      !subscription.cancel_at_period_end && !subscription.cancel_at;
     const user = await this.userService.findOneByStripeId(
       subscription.customer as string,
     );
@@ -158,6 +166,8 @@ export class WebhookProcessor extends WorkerHost {
           payment_method: 'CARD',
           start_billing_date,
           next_billing_date,
+          auto_renewal,
+          cancel_at: stripe_cancel_at,
           stripe_item_id: stripeItemId,
           plan_price_id: planPrice.id,
           amount: planPrice.price,
@@ -170,7 +180,8 @@ export class WebhookProcessor extends WorkerHost {
         payment_method: 'CARD',
         plan_price_id: planPrice.id,
         amount: planPrice.price,
-        auto_renewal: true,
+        auto_renewal,
+        cancel_at: stripe_cancel_at,
         is_active,
         next_billing_date,
         start_billing_date,
@@ -213,6 +224,10 @@ export class WebhookProcessor extends WorkerHost {
           : Promise.resolve(),
       ]);
     }
+    await this.helpers.deleteManyCached([
+      CACHE_KEY_ACTIVE_SUBSCRIPTION(user.id),
+      CACHE_KEY_ACTIVE_PLAN(user.id),
+    ]);
   }
 
   private async handleSubscriptionDeleted(
@@ -231,7 +246,10 @@ export class WebhookProcessor extends WorkerHost {
         freeSubscription,
       });
     }
-    // TODO: Handle subscription cancellation
+    await this.helpers.deleteManyCached([
+      CACHE_KEY_ACTIVE_SUBSCRIPTION(user.id),
+      CACHE_KEY_ACTIVE_PLAN(user.id),
+    ]);
   }
 
   private async handleInvoicePaid(invoice: Stripe.Invoice): Promise<void> {

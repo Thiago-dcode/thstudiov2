@@ -1,4 +1,4 @@
-import {  Column, Schema } from "src/lib/facades";
+import { Column, Schema } from "src/lib/facades";
 
 const up = async () => {
 
@@ -6,25 +6,25 @@ const up = async () => {
     Column.id(),
     Column.string('stripe_id', 255, {
       unique: true,
-      nullable:true,
+      nullable: true,
     }),
     Column.string('stripe_item_id', 255, {
       unique: true,
-      nullable:true,
+      nullable: true,
     }),
     Column.string('paypal_id', 255, {
       unique: true,
-      nullable:true,
+      nullable: true,
     }),
     Column.enum('payment_method', 'PAYMENT_METHOD'),
     Column.float('amount'),
-    Column.timestamp('start_billing_date',{
-      default:'NOW()'
+    Column.timestamp('start_billing_date', {
+      default: 'NOW()'
     }),
     Column.timestamp('next_billing_date'),
-    
-    Column.boolean('auto_renewal',{
-      default:true
+
+    Column.boolean('auto_renewal', {
+      default: true
     }),
     Column.foreignKey('user_id', 'users', 'id', {
       onDelete: 'SET NULL',
@@ -41,6 +41,9 @@ const up = async () => {
     }),
     Column.boolean('is_trialing', {
       default: false,
+    }),
+    Column.timestamp('cancel_at', {
+      nullable: true,
     }),
   ]);
 };

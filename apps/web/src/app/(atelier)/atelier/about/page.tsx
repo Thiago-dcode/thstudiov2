@@ -3,9 +3,7 @@ import { CreateOrUpdateAboutPage } from "@/modules/about-page/components/create-
 import { userSession } from "@/modules/auth/server-actions/user-session.action"
 import usersService from "@/modules/users/users.service";
 import { redirect } from "next/navigation";
-
-import Link from "next/link";
-import { ArrowRightIcon } from "lucide-react";
+import { AdminPageContainer, AdminPageTitle } from "../../__components/admin-page.component";
 
 export default async function AboutPage(){
 
@@ -16,20 +14,23 @@ const aboutPageResponse = await usersService.getAboutPage(user.username);
 
 const aboutPage = aboutPageResponse.data
 
-return <section className="size-full max-w-2xl p-10 flex flex-col gap-8">
-    <div className="flex items-center justify-between">
-    <CreateOrUpdateAboutPage userId={user.id} currentAboutPage={aboutPage || undefined}/>
-    {aboutPage && <Link href={`/artists/${user.username}/about`} className="text-sm text-text-muted hover:text-text flex items-center gap-2">View public page <ArrowRightIcon className="size-4"/></Link>}
-    </div>
-    
-    {aboutPage ? (
-        <div className="flex flex-col gap-4">
-            <h3 className="text-lg font-medium text-text-muted">Your current about page</h3>
-            <AboutPageDisplay aboutPage={aboutPage} />
+const publicHref = aboutPage ? `/artists/${user.username}/about` : undefined;
+
+return (
+    <AdminPageContainer>
+        <AdminPageTitle title="About Page" publicHref={publicHref}>
+            <CreateOrUpdateAboutPage userId={user.id} currentAboutPage={aboutPage || undefined}/>
+        </AdminPageTitle>
+        <div className="max-w-2xl flex flex-col gap-6">
+            {aboutPage ? (
+                <div className="flex flex-col gap-4">
+                    <h3 className="text-lg font-medium text-text-muted">Your current about page</h3>
+                    <AboutPageDisplay aboutPage={aboutPage} />
+                </div>
+            ) : (
+                <p className="text-text-muted italic">You haven't created an about page yet.</p>
+            )}
         </div>
-    ) : (
-        <p className="text-text-muted italic">You haven't created an about page yet.</p>
-    )}
-</section>
-   
+    </AdminPageContainer>
+);
 }

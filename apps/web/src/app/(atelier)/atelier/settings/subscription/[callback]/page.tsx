@@ -1,10 +1,11 @@
 import PageComponent from "@/lib/components/page-component";
-import { deleteInitiateSubscriptionCookie, getInitiateSubscriptionCookie } from "@/modules/plan-subscriptions/server-actions/initiate-subscription.action";
+import { getInitiateSubscriptionCookie } from "@/modules/plan-subscriptions/server-actions/initiate-subscription.action";
 import { CheckCircle2, XCircle } from "lucide-react";
 import { redirect } from "next/navigation";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import Link from "next/link";
 import { Button } from "@repo/ui/components/shadcn/button";
+import { cn } from "@repo/ui/lib/utils";
 
 const SETTINGS_URL = '/atelier/settings';
 const SUBSCRIPTION_URL = '/atelier/settings/subscription';
@@ -41,26 +42,43 @@ export default async function SubscriptionCallbackPage({
         ? (message || "Your subscription has been updated. You're all set!")
         : (message || "Something went wrong with your payment. Please try again.");
 
-
     return (
         <PageComponent.Container className="h-screen flex items-center justify-center m-auto">
-            <PageComponent.Content className="self-center">
+            <PageComponent.Content className={cn("self-center w-full max-w-md gap-10")}>
                 <PageComponent.Header>
-                    {isSuccess ? (
-                        <CheckCircle2 className="size-16 text-green-500" />
-                    ) : (
-                        <XCircle className="size-16 text-red-500" />
-                    )}
-                    <PageComponent.Title title={title} />
-                    <PageComponent.SubTitle subTitle={subtitle} />
+                    <div className="flex flex-col items-center gap-6 text-center">
+                        <div
+                            className={cn(
+                                "flex size-20 shrink-0 items-center justify-center rounded-full",
+                                isSuccess
+                                    ? "bg-(--color-success)/15 text-(--color-success)"
+                                    : "bg-(--color-error)/15 text-(--color-error)"
+                            )}
+                            aria-hidden
+                        >
+                            {isSuccess ? (
+                                <CheckCircle2 className="size-10" strokeWidth={1.75} />
+                            ) : (
+                                <XCircle className="size-10" strokeWidth={1.75} />
+                            )}
+                        </div>
+                        <div className="space-y-2">
+                            <PageComponent.Title title={title} />
+                            <PageComponent.SubTitle subTitle={subtitle} />
+                        </div>
+                    </div>
                 </PageComponent.Header>
-                <div className="flex flex-col items-center justify-center gap-2 w-full">
+                <div className="flex flex-col gap-3 w-full">
                     {!isSuccess && cookie?.retryable && (
-                        <Button className="w-full" asChild>
-                            <Link className="font-semibold" href={SUBSCRIPTION_URL}>Try again</Link>
+                        <Button className="w-full min-h-11 font-semibold" asChild>
+                            <Link href={SUBSCRIPTION_URL}>Try again</Link>
                         </Button>
                     )}
-                    <Button variant={isSuccess ? "default" : "ghost"} className="w-full" asChild>
+                    <Button
+                        variant={isSuccess ? "default" : "ghost"}
+                        className="w-full min-h-11"
+                        asChild
+                    >
                         <Link href={SETTINGS_URL}>
                             {isSuccess ? "Back to Settings" : "Cancel"}
                         </Link>

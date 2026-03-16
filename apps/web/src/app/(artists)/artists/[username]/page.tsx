@@ -10,6 +10,7 @@ import { UserServicesSection } from "@/modules/services/components/user-services
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { notFound } from "next/navigation";
 import { ArtistContactDialog } from "../../__components/artist-contact.dialog";
+import { ArtistProfileTabs } from "../../__components/artist-profile-tabs";
 
 const ArtistHomePage = async ({ params }: { params: Promise<{ username: string }> }) => {
     const { username } = await params;
@@ -23,33 +24,35 @@ const ArtistHomePage = async ({ params }: { params: Promise<{ username: string }
 
     return (
         <div className="min-h-screen w-full animate-in fade-in duration-1000">
-            {/* Hero: Banner + Centered Avatar */}
-            <section className="w-full max-w-5xl mx-auto">
-                <div className="relative aspect-video w-full max-h-80">
+            {/* Hero Banner — full-bleed up to desktop */}
+            <section className="relative w-full">
+                <div className="relative w-full h-[40vh] tablet:h-[50vh] laptop:h-[56vh] desktop:h-[60vh]">
                     <Image
                         alt={`${profile.username}'s banner`}
                         src={profile.banner || fallbackBanner}
                         fill
-                        className="object-cover rounded-b-md"
-                        sizes="(max-width: 1280px) 100vw, 1280px"
+                        className="object-cover"
+                        sizes="100vw"
                         priority
                     />
-                    <div className="absolute inset-0 bg-linear-to-t from-black/30 via-transparent to-transparent rounded-b-md" />
+                    <div className="absolute inset-0 bg-linear-to-t from-bg via-bg/20 to-transparent" />
+                    <div className="absolute inset-0 bg-linear-to-b from-black/20 via-transparent to-transparent" />
                 </div>
 
-                <div className="relative flex justify-center -mt-16">
-                    <div className="relative size-28 tablet:size-32 rounded-full ring-4 ring-bg bg-fg-1 overflow-hidden">
+                {/* Avatar — anchored at banner bottom */}
+                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 z-10">
+                    <div className="relative size-32 tablet:size-36 laptop:size-40 rounded-full ring-[5px] ring-bg bg-fg-1 overflow-hidden shadow-2xl">
                         {profile.avatar ? (
                             <Image
                                 src={profile.avatar}
                                 alt={profile.username}
                                 fill
                                 className="object-cover"
-                                sizes="128px"
+                                sizes="160px"
                             />
                         ) : (
                             <div className="size-full flex items-center justify-center">
-                                <span className="text-4xl font-serif italic text-text-muted/60">
+                                <span className="text-5xl font-serif italic text-text-muted/50">
                                     {profile.username?.charAt(0)?.toUpperCase() || "?"}
                                 </span>
                             </div>
@@ -58,79 +61,97 @@ const ArtistHomePage = async ({ params }: { params: Promise<{ username: string }
                 </div>
             </section>
 
-            {/* Profile Identity */}
-            <section className="w-full max-w-2xl mx-auto px-6 pt-8 pb-6 flex flex-col items-center text-center gap-5">
-                <div className="space-y-2">
+            {/* Profile Identity + CTAs */}
+            <section className="w-full max-w-2xl mx-auto px-6 pt-24 tablet:pt-28 pb-8 flex flex-col items-center text-center gap-6">
+                <div className="space-y-3">
                     {fullName && (
-                        <h1 className="text-3xl md:text-4xl font-serif italic tracking-tight">
+                        <h1 className="text-3xl tablet:text-4xl laptop:text-5xl font-serif italic tracking-tight leading-tight">
                             {fullName}
                         </h1>
                     )}
                     {profile.profession && (
-                        <p className="text-sm tracking-wide text-text-muted">
+                        <p className="text-sm tablet:text-base tracking-wide text-text-muted">
                             {profile.profession}
                         </p>
                     )}
-                    <p className="text-xs uppercase tracking-[0.2em] text-text-muted">
+                    <p className="text-xs uppercase tracking-[0.25em] text-text-muted/70">
                         @{profile.username}
                     </p>
                 </div>
 
                 {profile.address?.formated_address && (
-                    <div className="flex items-center gap-1.5 text-sm text-text-muted">
+                    <div className="flex items-center gap-1.5 text-sm text-text-muted/80">
                         <MapPin className="size-3.5 shrink-0" />
                         <span>{profile.address.formated_address}</span>
                     </div>
                 )}
 
                 {profile.categories.length > 0 && (
-                    <div className="flex flex-wrap justify-center gap-2 pt-1">
+                    <div className="flex flex-wrap justify-center gap-2">
                         {profile.categories.map((cat) => (
-                            <Badge key={cat.id}>{cat.translation?.name || cat.name}</Badge>
+                            <Badge key={cat.id} variant="outline">
+                                {cat.translation?.name || cat.name}
+                            </Badge>
                         ))}
                     </div>
                 )}
-            </section>
 
-            {/* Short Biography */}
-            {profile.short_biography && (
-                <section className="w-full max-w-3xl mx-auto px-6 pb-14">
-                    <div className="border-t border-border/40 pt-10">
-                        <p className="max-w-xl mx-auto text-center text-base leading-[1.8] text-text-muted font-serif italic">
-                            {profile.short_biography}
-                        </p>
-                    </div>
-                </section>
-            )}
-
-            {/* CTAs */}
-            <section className="w-full max-w-5xl mx-auto px-6 md:px-12 pb-14">
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-5">
+                {/* CTAs — directly under identity */}
+                <div className="flex flex-col phone-lg:flex-row items-center justify-center gap-3 pt-4">
                     <ArtistContactDialog>
-                        <button className="inline-flex items-center gap-2.5 px-6 py-3 text-sm tracking-wider uppercase bg-text text-bg rounded-sm hover:bg-text/90 transition-colors duration-300 cursor-pointer group">
-                            <Mail className="size-4 transition-transform duration-300 group-hover:-translate-y-px" />
+                        <button className="inline-flex items-center gap-2.5 px-7 py-3 text-xs tracking-[0.15em] uppercase bg-text text-bg rounded-sm hover:bg-text/90 transition-all duration-300 cursor-pointer group">
+                            <Mail className="size-3.5 transition-transform duration-300 group-hover:-translate-y-px" />
                             <span>Get in touch</span>
                         </button>
                     </ArtistContactDialog>
 
                     <Link
                         href={`/artists/${profile.username}/about`}
-                        className="inline-flex items-center gap-2.5 px-6 py-3 text-sm tracking-wider uppercase text-text-muted border border-border/60 rounded-sm hover:text-text hover:border-border transition-colors duration-300 group"
+                        className="inline-flex items-center gap-2.5 px-7 py-3 text-xs tracking-[0.15em] uppercase text-text-muted border border-border/50 rounded-sm hover:text-text hover:border-text/30 transition-all duration-300 group"
                     >
-                        <span>About {profile.name || profile.username}</span>
-                        <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5" />
+                        <span>About</span>
+                        <ArrowRight className="size-3.5 transition-transform duration-300 group-hover:translate-x-0.5" />
                     </Link>
                 </div>
             </section>
 
-            {/* Content Sections */}
-            <div className="w-full flex flex-col gap-20 pb-20">
-                <Suspense fallback={<div className="flex justify-center py-12"><Spinner /></div>}>
-                    <UserPortfoliosSection username={profile.username} userId={profile.id} />
-                </Suspense>
-                <Suspense fallback={<div className="flex justify-center py-12"><Spinner /></div>}>
-                    <UserServicesSection username={profile.username} />
-                </Suspense>
+            {/* Short Biography — editorial pull-quote */}
+            {profile.short_biography && (
+                <section className="w-full max-w-3xl mx-auto px-6 pt-4 pb-16">
+                    <div className="relative py-10">
+                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-12 h-px bg-border/60" />
+                        <blockquote className="max-w-xl mx-auto text-center text-base tablet:text-lg leading-[1.9] text-text-muted font-serif italic">
+                            &ldquo;{profile.short_biography}&rdquo;
+                        </blockquote>
+                        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-px bg-border/60" />
+                    </div>
+                </section>
+            )}
+
+            {/* Content Tabs */}
+            <div className="w-full pb-8">
+                <ArtistProfileTabs
+                    tabs={[
+                        {
+                            value: "portfolios",
+                            label: "Portfolios",
+                            content: (
+                                <Suspense fallback={<div className="flex justify-center py-12"><Spinner /></div>}>
+                                    <UserPortfoliosSection username={profile.username} userId={profile.id} />
+                                </Suspense>
+                            ),
+                        },
+                        {
+                            value: "services",
+                            label: "Services",
+                            content: (
+                                <Suspense fallback={<div className="flex justify-center py-12"><Spinner /></div>}>
+                                    <UserServicesSection username={profile.username} />
+                                </Suspense>
+                            ),
+                        },
+                    ]}
+                />
             </div>
         </div>
     );

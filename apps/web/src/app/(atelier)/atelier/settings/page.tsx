@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { AdminPageContainer, AdminPageTitle } from "../../__components/admin-page.component";
 import { EditUserPasswordDialog } from "./_components/edit-user-password.dialog";
 import { EditUserUsernameDialog } from "./_components/edit-user-username.dialog";
-import { KeyRound, Mail, User, CreditCard, ArrowRight, Calendar, RefreshCw } from "lucide-react";
+import { KeyRound, Mail, User, CreditCard, ArrowRight, Calendar, RefreshCw, XCircle } from "lucide-react";
 import usersService from "@/modules/users/users.service";
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
 import { Button } from "@repo/ui/components/shadcn/button";
@@ -34,6 +34,12 @@ export default async function SettingsPage() {
 
     const nextBillingDate = activeSubscription?.next_billing_date
         ? new Date(activeSubscription.next_billing_date as unknown as string).toLocaleDateString('en-US', {
+            month: 'long', day: 'numeric', year: 'numeric',
+        })
+        : null;
+
+    const cancelAtFormatted = activeSubscription?.cancel_at
+        ? new Date(activeSubscription.cancel_at as unknown as string).toLocaleDateString('en-US', {
             month: 'long', day: 'numeric', year: 'numeric',
         })
         : null;
@@ -113,18 +119,25 @@ export default async function SettingsPage() {
                                 </div>
                                 {!isFree && activeSubscription ? (
                                     <div className="flex items-center gap-3 text-xs text-text-muted">
-                                        {nextBillingDate && (
-                                            <span className="flex items-center gap-1">
-                                                <Calendar className="size-3" />
-                                                Renews {nextBillingDate}
+                                        {activeSubscription.auto_renewal ? (
+                                            <>
+                                                {nextBillingDate && (
+                                                    <span className="flex items-center gap-1">
+                                                        <Calendar className="size-3" />
+                                                        Renews {nextBillingDate}
+                                                    </span>
+                                                )}
+                                                <span className="flex items-center gap-1">
+                                                    <RefreshCw className="size-3" />
+                                                    €{activeSubscription.amount.toFixed(2)}
+                                                </span>
+                                            </>
+                                        ) : cancelAtFormatted ? (
+                                            <span className="flex items-center gap-1 text-amber-500">
+                                                <XCircle className="size-3" />
+                                                Cancels {cancelAtFormatted}
                                             </span>
-                                        )}
-                                        {activeSubscription.auto_renewal && (
-                                            <span className="flex items-center gap-1">
-                                                <RefreshCw className="size-3" />
-                                                €{activeSubscription.amount.toFixed(2)}
-                                            </span>
-                                        )}
+                                        ) : null}
                                     </div>
                                 ) : (
                                     <p className="text-xs text-text-muted">You are on the free plan</p>
