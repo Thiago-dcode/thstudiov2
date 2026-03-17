@@ -38,7 +38,7 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
   const seoAltRef = useRef<HTMLInputElement>(null);
   const seoFilenameRef = useRef<HTMLInputElement>(null);
   const { refresh, aiCreditsInfo } = useUserMetrics();
-  const { setMediUploadByMediaId, mediaUploads, getMediaUploadByMediaId, uploadSingleMedia, deleteMediaUploadByMediaId, generateSeoSingleMedia, deleteSingleMedia } = useMedia()
+  const { upsertMediaUpload, removeMediaUpload, mediaUploads, uploadSingleMedia, generateSeoSingleMedia, deleteSingleMedia, generateUniqueMediaId } = useMedia()
   const [deletePopoverOpen, setDeletePopoverOpen] = useState(false);
   const searchParams = useSearchParams();
 
@@ -50,8 +50,10 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
   }, [searchParams, media.public_id]);
 
 
-  //cached 
-  const currentMediaUpload = useMemo(() => getMediaUploadByMediaId(currentMedia.id), [mediaUploads, currentMedia.id]);
+  const currentMediaUpload = useMemo(
+    () => mediaUploads.find(m => m.id === currentMedia.id || m.data?.id === currentMedia.id),
+    [mediaUploads, currentMedia.id]
+  );
 
   // Helper variables for cleaner access
   const inputErrors = currentMediaUpload?.error?.inputErrors;
@@ -74,7 +76,7 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
       await refresh();
     };
 
-  }, [currentMedia, currentMediaUpload, setMediUploadByMediaId, generateSeoSingleMedia, refresh, hasEnoughCredits]);
+  }, [currentMedia, currentMediaUpload, generateSeoSingleMedia, refresh, hasEnoughCredits]);
 
   const isPending = currentMediaUpload?.pending;
   // Format date - use updated_at if available, otherwise fallback to created_at
@@ -93,33 +95,19 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
   };
 
   const confirmCancel = () => {
-    // Reset to original media state
     setCurrentMedia(media);
-    // Delete media upload if exists
-    if (currentMediaUpload?.id) {
-      deleteMediaUploadByMediaId(currentMediaUpload.id);
+    if (currentMediaUpload) {
+      removeMediaUpload(currentMediaUpload.unique_id);
     }
     setIsEditing(false);
     setShowCancelDialog(false);
   };
 
-  // Handle update - upload the media using the provider
   const handleUpdate = async () => {
     if (!currentMediaUpload || !currentMedia.id) {
       return;
     }
-
-    // Find the index of the current media upload
-    const index = mediaUploads.findIndex(m => m.id === currentMedia.id || m.data?.id === currentMedia.id);
-    if (index === -1) return;
-
-    await uploadSingleMedia(index);
-
-    // Update currentMedia with the result if successful
-    const updatedUpload = getMediaUploadByMediaId(currentMedia.id);
-    if (updatedUpload?.data) {
-      setIsEditing(false);
-    }
+    await uploadSingleMedia(currentMediaUpload.unique_id);
   };
 
   // Handle form submission - upload the media using the provider
@@ -146,6 +134,8 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
       },
       id: currentMedia.id,
       pending: false,
+      action: 'edit' as const,
+      unique_id: generateUniqueMediaId(),
     };
 
     // Update the input field with the new value
@@ -186,15 +176,14 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
       }
     }
 
-    // If nothing has changed, delete the upload and return
     if (!hasChanged) {
-      if (currentMediaUpload?.id) {
-        deleteMediaUploadByMediaId(currentMediaUpload.id);
+      if (currentMediaUpload) {
+        removeMediaUpload(currentMediaUpload.unique_id);
       }
       return;
     }
 
-    setMediUploadByMediaId(currentMedia.id, updatedUpload);
+    upsertMediaUpload(updatedUpload);
   };
   const handleDelete = async () => {
     setDeletePopoverOpen(false);

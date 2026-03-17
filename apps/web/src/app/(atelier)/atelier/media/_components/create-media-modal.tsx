@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import {
     Dialog,
     DialogClose,
@@ -27,14 +27,15 @@ import { Plus } from "lucide-react"
 
 function MediaUploadContent() {
     const COMPRESSION_LVLS = ENUMS.COMPRESSION_LEVEL;
-    const MAX_FILES = 10;
+    const MAX_FILES = 15;
     const [error, setError] = useState<string>();
     const [globalCompressionLevel, setGlobalCompressionLevel] = useState<EnumType<'COMPRESSION_LEVEL'>>(DEFAULT_COMPRESSION_LVL);
-    const { mediaPendingToCreate, updateMediaUpload, setMediaUploads } = useMedia();
+    const { mediaPendingToCreate, upsertMediaUpload, setMediaUploads } = useMedia();
     const { metrics } = useUserMetrics();
     const allow_media_compression = metrics?.active_plan.allow_media_compression;
     const currentCount = mediaPendingToCreate?.length || 0;
     const isMaxReached = currentCount >= MAX_FILES;
+    const mediaToShow = useMemo(()=>mediaPendingToCreate.filter(m=>!m.pending && !m.data && !m.error),[mediaPendingToCreate]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFiles = e.target.files
@@ -65,7 +66,7 @@ function MediaUploadContent() {
 
     return (
         <div className="h-full flex flex-col p-2">
-            {mediaPendingToCreate && mediaPendingToCreate.length > 0 ? (
+            {mediaToShow && mediaToShow.length > 0 ? (
                 <>
                     <div className="mb-4 space-y-3 p-1 rounded-md border border-border bg-fg-1/50">
                         <div className="flex items-center justify-between gap-3">
@@ -175,7 +176,7 @@ function MediaUploadContent() {
                                                     const compressionLvlSelected = COMPRESSION_LVLS[e[0]]
                                                     if (!compressionLvlSelected) return;
 
-                                                    updateMediaUpload(index, {
+                                                    upsertMediaUpload({
                                                         ...media,
                                                         input: {
                                                             ...media.input,
@@ -199,6 +200,8 @@ function MediaUploadContent() {
                             onChange={handleFileChange}
                             accept={ALLOWED_IMAGE_FILE_TYPES.join(',')}
                             disabled={isMaxReached}
+                            currentFiles={currentCount}
+                            maxFiles={MAX_FILES}
 
                         />
                     </div>
@@ -220,6 +223,8 @@ function MediaUploadContent() {
                             accept={ALLOWED_IMAGE_FILE_TYPES.join(',')}
                             className="h-full [&>div]:h-full [&_label]:h-full [&_label]:min-h-0"
                             disabled={isMaxReached}
+                            currentFiles={currentCount}
+                            maxFiles={MAX_FILES}
                         />
                     </div>
                 </div>

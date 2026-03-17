@@ -73,9 +73,9 @@ export const UploadMediaModal = () => {
       >
         <div className="max-h-[400px] overflow-y-auto overscroll-contain">
           <div className=" h-f flex flex-col items-start justify-start gap-3 px-4 pt-4 pb-40 ">
-            {mediaUploadsToDisplay.map((mediaUpload, i) => (
+            {mediaUploadsToDisplay.map((mediaUpload) => (
               <SingleMediaUpload
-                key={`media-uploading-${mediaUpload.input.file?.name}-${i}`}
+                key={`media-uploading-${mediaUpload.unique_id}`}
                 mediaUpload={mediaUpload}
 
               />

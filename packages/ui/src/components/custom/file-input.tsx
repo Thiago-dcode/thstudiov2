@@ -5,17 +5,45 @@ import { useInputFile } from "../../contexts/file.provider"
 
 type FileInputProps = Omit<React.ComponentProps<"input">, "type"> & {
     error?: string;
+    currentFiles?: number;
+    maxFiles?: number;
 }
 
 
 const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
-    ({ className, onChange, error, ...props }, ref) => {
+    ({ className, onChange, error, currentFiles, maxFiles, disabled, ...props }, ref) => {
         const context = useInputFile();
         const fileInputId = useId()
         const inputId = props.id || fileInputId
+        const hasMaxFiles = typeof maxFiles === "number" && maxFiles >= 0
+        const existingFilesCount = typeof currentFiles === "number" ? currentFiles : 0
+        const isLimitReached = hasMaxFiles && existingFilesCount >= maxFiles
 
         const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-            const files = e.target.files
+            let files = e.target.files
+            if (hasMaxFiles && files) {
+                const remainingSlots = maxFiles - existingFilesCount
+                if (remainingSlots <= 0) {
+                    e.target.value = ""
+                    return
+                }
+
+                if (files.length > remainingSlots) {
+                    if (typeof DataTransfer === "undefined") {
+                        e.target.value = ""
+                        return
+                    }
+
+                    const dataTransfer = new DataTransfer()
+                    for (let index = 0; index < remainingSlots; index++) {
+                        const file = files.item(index)
+                        if (file) dataTransfer.items.add(file)
+                    }
+
+                    files = dataTransfer.files
+                    ;(e.target as HTMLInputElement).files = files
+                }
+            }
             // Update context if available
             if (context && files) {
                 context.setFiles(files)
@@ -38,12 +66,14 @@ const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
                     className="hidden"
                     ref={ref}
                     onChange={handleFileChange}
+                    disabled={disabled || isLimitReached}
                     {...props}
                 />
                 <label
                     htmlFor={inputId}
                     className={cn(
                         "flex h-auto min-h-12 w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed border-fg-2 bg-bg px-4 py-6 transition-colors hover:border-text/60 hover:bg-bg/80 focus-within:outline-none focus-within:border-text/80 label-file-input",
+                        (disabled || isLimitReached) && "cursor-not-allowed opacity-60 pointer-events-none",
                         error && "border-red-500",
                         className
                     )}
