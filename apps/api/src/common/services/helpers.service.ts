@@ -106,15 +106,20 @@ export class Helpers {
     if (!path) return;
     return await Promise.all([this.storageService.delete(path), this.cacheManager.del(path)]);
   }
-  public async getAsset(path?: string) {
+  /**
+   * @param config.expireIn - Custom signed-URL expiration in **seconds**. Falls back to `s3StorageConfig.signedUrlExpiration`.
+   */
+  public async getAsset(path?: string, config?: { expireIn?: number }) {
     if (!path) return '';
+    const expireIn = config?.expireIn ?? s3StorageConfig.signedUrlExpiration;
+
     let asset = (await this.cacheManager.get(path)) as string;
     if (!asset) {
-      asset = await this.storageService.getUrl(path);
+      asset = await this.storageService.getUrl(path, { expireIn });
       await this.cacheManager.set(
         path,
         asset,
-        s3StorageConfig.signedUrlExpiration * 900, //Substract 10% to avoid possible s3 404
+        expireIn * 950, //Substract 5% to avoid possible s3 404
       );
     }
     return asset;

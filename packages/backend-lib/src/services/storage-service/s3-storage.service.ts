@@ -40,16 +40,18 @@ export class S3StorageService extends StorageService {
 
        return await this.getUrl(path);
     }
-    public async getUrl(path: string): Promise<string> {
+    /**
+     * @param config.expireIn - Custom expiration in **seconds**. Falls back to `S3StorageConfig.signedUrlExpiration`.
+     */
+    public async getUrl(path: string, config?: { expireIn?: number }): Promise<string> {
         const command = new GetObjectCommand({
             Bucket: this.config.bucket,
             Key: path,
           });
             const url = await getSignedUrl(this.s3Client, command, {
-              expiresIn: this.config.signedUrlExpiration,
+              expiresIn: config?.expireIn ?? this.config.signedUrlExpiration,
             });
             return url;
-         
     }
     public async read(path: string): Promise<File> {
         

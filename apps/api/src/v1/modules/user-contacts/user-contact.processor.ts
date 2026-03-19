@@ -80,7 +80,7 @@ export class UserContactProcessor extends WorkerHost {
       const artist = await this.userService.findOne(data.user_id);
       if (artist) {
         // 4. Send email
-        await this.mailService.send(
+        await this.mailService.sendAsync(
           this.newContactMail.setData(artist, data)
         );
       } else {

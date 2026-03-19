@@ -3,49 +3,24 @@
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { ArrowUpRight, Check, ChevronLeft, ChevronRight, Link as LinkIcon, Share2, X } from "lucide-react"
 import Image from "next/image"
-import { useCallback, useEffect, useRef, useState } from "react"
-import { useShare } from "../../hooks/useShare"
+import { useEffect, useRef } from "react"
+import { useGalleryDialog } from "../../hooks/useGalleryDialog"
 import { cn } from "../../lib/utils"
-import { useGallery } from "../../providers/gallery.provider"
 
 export const Gallery = () => {
-    const { items, next, prev, removeCurrentItem, setCurrentItem, currentItem } = useGallery()
-    const { share, active: shareActive, supported: shareSupported } = useShare()
+    const {
+        items, next, prev, setCurrentItem, currentItem,
+        share, shareActive, shareSupported,
+        isOpen, currentItemData, currentUrl, copied,
+        handleCopyLink, handleOpenChange,
+    } = useGalleryDialog()
     const thumbnailsRef = useRef<HTMLDivElement>(null)
-    const [copiedIndex, setCopiedIndex] = useState<number>()
-    const isOpen = typeof currentItem !== "undefined"
-    const currentItemData = isOpen ? items[currentItem] : undefined
-    const currentUrl = currentItemData?.url
-    const copied = copiedIndex === currentItem
-
-    const handleCopyLink = useCallback(() => {
-        if (typeof currentItem === "undefined" || !items[currentItem]?.shared) return
-        navigator.clipboard.writeText(items[currentItem].shared).then(() => {
-            setCopiedIndex(currentItem)
-            setTimeout(() => setCopiedIndex(undefined), 2000)
-        })
-    }, [currentItem, items])
-
-    useEffect(() => {
-        if (!isOpen) return
-        const onKeyDown = (e: KeyboardEvent) => {
-            if (e.key === "ArrowLeft") { e.preventDefault(); prev() }
-            if (e.key === "ArrowRight") { e.preventDefault(); next() }
-        }
-        window.addEventListener("keydown", onKeyDown)
-        return () => window.removeEventListener("keydown", onKeyDown)
-    }, [isOpen, next, prev])
 
     useEffect(() => {
         if (!isOpen || !thumbnailsRef.current) return
         const active = thumbnailsRef.current.querySelector<HTMLElement>('[data-active="true"]')
         active?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" })
     }, [currentItem, isOpen])
-
-    const handleOpenChange = useCallback(
-        (open: boolean) => { if (!open) removeCurrentItem() },
-        [removeCurrentItem],
-    )
 
     return (
         <DialogPrimitive.Root open={isOpen} onOpenChange={handleOpenChange}>

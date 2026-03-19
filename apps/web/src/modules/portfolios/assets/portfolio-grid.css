@@ -2,7 +2,7 @@
 /* https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Grid_layout/Masonry_layout */
 
 .mansonry-grid {
-  columns: 2;
+  columns: 1;
   column-gap: var(--size-base);
   max-width: var(--screen-desktop);
   margin: 0 auto;

@@ -20,8 +20,13 @@ import { FactoryStorageService } from '@repo/backend-lib/services/storage-servic
 import { compressConfig, s3StorageConfig } from 'src/config/storage';
 import { CompressService } from '@repo/backend-lib/services/compress-service/base';
 import { FactoryCompressService } from '@repo/backend-lib/services/compress-service/factory';
+import { BullModule, getQueueToken } from '@nestjs/bullmq';
+import { MAIL_QUEUE, LOG_QUEUE } from '@repo/common-lib/constants/constants';
+import { Queue } from 'bullmq';
+import { MailProcessor } from './mail.processor';
+import { LogProcessor } from './log.processor';
 import KeyvRedis from '@keyv/redis';
-import {Helpers} from './helpers.service';
+import { Helpers } from './helpers.service';
 @Global()
 @Module({
   exports: [
@@ -36,7 +41,8 @@ import {Helpers} from './helpers.service';
   providers: [
     RequestService,
     Helpers,
-    
+    MailProcessor,
+    LogProcessor,
     {
       provide: StorageService,
       useFactory: () => {
@@ -68,23 +74,28 @@ import {Helpers} from './helpers.service';
     },
     {
       provide: MailService,
-      useFactory: () => {
+      useFactory: (mailQueue: Queue) => {
         return FactoryMailService.createMailService(
           mailingDriver,
           mailingConfig,
+          mailQueue,
         );
       },
+      inject: [getQueueToken(MAIL_QUEUE)],
     },
     {
       provide: LogService,
-      useFactory: () => {
-        return FactoryLogService.createLogService('file', logConfig.api);
+      useFactory: (logQueue: Queue) => {
+        return FactoryLogService.createLogService('file', logConfig.api, logQueue);
       },
+      inject: [getQueueToken(LOG_QUEUE)],
     },
   ],
   imports: [
+    BullModule.registerQueue({ name: MAIL_QUEUE }),
+    BullModule.registerQueue({ name: LOG_QUEUE }),
     CacheModule.registerAsync({
-      isGlobal:true,
+      isGlobal: true,
       inject: [ConfigService],
       useFactory: async (config: ConfigService) => {
         return {
@@ -94,4 +105,4 @@ import {Helpers} from './helpers.service';
     }),
   ],
 })
-export class ServicesModule {}
+export class ServicesModule { }

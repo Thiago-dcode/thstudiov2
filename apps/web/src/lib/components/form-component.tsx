@@ -1,5 +1,5 @@
 import { cn } from "@repo/ui/lib/utils";
-import { ReactNode, forwardRef } from "react";
+import { ReactNode, forwardRef, useId } from "react";
 import { Label } from "@repo/ui/components/shadcn/label";
 import { Input } from "@repo/ui/components/shadcn/input";
 import { Textarea } from "@repo/ui/components/shadcn/textarea";
@@ -7,7 +7,6 @@ import { Button, ButtonProps } from "@repo/ui/components/shadcn/button";
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
 import { Check } from "lucide-react";
-
 
 const Container = ({ children, className }: {
     children: ReactNode,
@@ -111,7 +110,7 @@ const LabelInput = forwardRef<HTMLInputElement, {
     htmlFor?: string;
     labelClassName?: string;
     inputClassName?: string;
-    extraInfo?:string;
+    extraInfo?: string;
     containerClassName?: string;
     error?: string;
 } & React.InputHTMLAttributes<HTMLInputElement>>(({
@@ -126,6 +125,7 @@ const LabelInput = forwardRef<HTMLInputElement, {
     ...inputProps
 }, ref) => {
     const inputId = htmlFor || id;
+    const errorId = useId();
 
     return (
         <Field className={cn(containerClassName)}>
@@ -143,16 +143,17 @@ const LabelInput = forwardRef<HTMLInputElement, {
             <Input
                 ref={ref}
                 id={inputId}
+                aria-invalid={!!error}
+                aria-describedby={error ? errorId : undefined}
                 className={cn(inputClassName, error && "border-red-500")}
                 {...inputProps}
             />
-            {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+            {error && <p id={errorId} className="text-xs text-red-500 mt-1">{error}</p>}
         </Field>
     );
 });
 
 LabelInput.displayName = "LabelInput";
-
 
 const LabelTextarea = forwardRef<HTMLTextAreaElement, {
     label: string;
@@ -174,6 +175,7 @@ const LabelTextarea = forwardRef<HTMLTextAreaElement, {
     ...textareaProps
 }, ref) => {
     const textareaId = htmlFor || id;
+    const errorId = useId();
 
     return (
         <Field className={cn(containerClassName, textareaProps.required && "input-required")}>
@@ -182,7 +184,7 @@ const LabelTextarea = forwardRef<HTMLTextAreaElement, {
                     htmlFor={textareaId}
                     className={cn("block text-xs tracking-wide text-text-muted", labelClassName)}
                 >
-                    {label} {textareaProps.required ? <span className="span-label">*</span> : ''}
+                    {label} {textareaProps.required ? <span className="span-label text-red-500">*</span> : ''}
                 </Label>
                 {extraInfo && (
                     <InfoTooltip content={extraInfo} />
@@ -191,10 +193,12 @@ const LabelTextarea = forwardRef<HTMLTextAreaElement, {
             <Textarea
                 ref={ref}
                 id={textareaId}
+                aria-invalid={!!error}
+                aria-describedby={error ? errorId : undefined}
                 className={cn(textareaClassName, error && "border-red-500")}
                 {...textareaProps}
             />
-            {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+            {error && <p id={errorId} className="text-xs text-red-500 mt-1">{error}</p>}
         </Field>
     );
 });
@@ -217,7 +221,7 @@ const SubmitButton = ({
 } & Omit<ButtonProps, 'type' | 'children'>) => {
     return (
         <Button
-            disabled={isPending}
+            disabled={isPending || success}
             variant={variant || 'default'}
             size="default"
             type="submit"

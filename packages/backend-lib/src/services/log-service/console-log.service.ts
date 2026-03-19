@@ -1,10 +1,11 @@
 import { LogConfig, LogOptions } from "./types";
 import { LogService } from "./log.service";
+import { Queue } from "bullmq";
 import pc from 'picocolors'
 export class ConsoleLogService extends LogService {
 
-    constructor(config: LogConfig) {
-        super(config);
+    constructor(config: LogConfig, queue?: Queue) {
+        super(config, queue);
     }
     public info(message: string, options?: LogOptions): this {
         console.log(pc.blue(this.beautifyLogMessage('info', message, options)));

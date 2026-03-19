@@ -65,6 +65,14 @@
     "stripe": "^20.4.1",
     "uuid": "^13.0.0"
   },
+  "peerDependencies": {
+    "bullmq": "^5.71.0"
+  },
+  "peerDependenciesMeta": {
+    "bullmq": {
+      "optional": true
+    }
+  },
   "devDependencies": {
     "@repo/common-lib": "workspace:*",
     "@repo/jest-config": "workspace:*",

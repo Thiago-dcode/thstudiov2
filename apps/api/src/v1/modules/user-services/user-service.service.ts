@@ -4,7 +4,10 @@ import { FullService, Service } from "@repo/common-lib/types/service";
 import { UserRepository } from "../users/users.repository";
 import { ServiceRepository } from "../services/service.repository";
 
+/** Nest cache-manager TTL (ms). */
 const CACHE_TTL = 1000 * 60 * 60 * 24;
+/** Same window as `CACHE_TTL` — `getAsset` / S3 presign uses seconds. */
+const CACHE_TTL_SECONDS = CACHE_TTL / 1050;
 
 export const serviceCacheKeys = {
   bySlug: (userId: number, slug: string) => `service-${userId}-${slug}`,
@@ -17,7 +20,7 @@ export class UserServiceService {
     private readonly serviceRepository: ServiceRepository,
     private readonly userRepository: UserRepository,
     private readonly helpers: Helpers,
-  ) {}
+  ) { }
 
   async getById(userId: number, slug: string): Promise<FullService> {
     return this.helpers.cacheRemember(
@@ -63,7 +66,7 @@ export class UserServiceService {
     if (!service) return null;
 
     if (service.thumbnail) {
-      service.thumbnail = await this.helpers.getAsset(service.thumbnail);
+      service.thumbnail = await this.helpers.getAsset(service.thumbnail, { expireIn: CACHE_TTL_SECONDS });
     }
 
     return service;
@@ -74,7 +77,7 @@ export class UserServiceService {
 
     return await Promise.all(services.map(async (service) => ({
       ...service,
-      thumbnail: service.thumbnail ? await this.helpers.getAsset(service.thumbnail) : undefined,
+      thumbnail: service.thumbnail ? await this.helpers.getAsset(service.thumbnail, { expireIn: CACHE_TTL_SECONDS }) : undefined,
     })));
   }
 }
