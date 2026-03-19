@@ -1,4 +1,5 @@
 import userPortfolioService from "@/modules/user-portfolios/user-portfolio.service";
+import usersService from "@/modules/users/users.service";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -12,13 +13,16 @@ type Props = {
 export default async function Page({ params }: Props) {
     const { username } = await params;
 
-    const response = await userPortfolioService.getAllByUsername(username);
+    const [userExist, response] = await Promise.all([
+        usersService.usernameExists(username),
+        userPortfolioService.getAllByUsername(username)
+    ]);
 
-    if (!response.data) {
+    if (!userExist.data) {
         notFound();
     }
 
-    const portfolios = response.data;
+    const portfolios = response.data || [];
 
     return (
         <Web.Container>

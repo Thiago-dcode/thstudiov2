@@ -1,4 +1,5 @@
 import userServiceService from "@/modules/user-services/user-service.service";
+import usersService from "@/modules/users/users.service";
 import { notFound } from "next/navigation";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import Link from "next/link";
@@ -6,6 +7,7 @@ import Image from "next/image";
 import { Pencil, Check, ArrowRight, Circle } from "lucide-react";
 import Web from "@/lib/components/web-page.component";
 import { ArtistBreadcrumb } from "@/app/(artists)/__components/artist-breadcrumb";
+import { ResourceNotFound } from "@/app/(artists)/__components/resource-not-found";
 
 type Props = {
     params: Promise<{ username: string; slug: string }>;
@@ -14,13 +16,25 @@ type Props = {
 export default async function Page({ params }: Props) {
     const { username, slug } = await params;
 
-    const [response, userAuth] = await Promise.all([
+    const [userExist, response, userAuth] = await Promise.all([
+        usersService.usernameExists(username),
         userServiceService.getByUsername(username, slug),
         userSession(),
     ]);
 
-    if (!response.data) {
+    if (!userExist.data) {
         notFound();
+    }
+
+    if (!response.data) {
+        return (
+            <Web.Container>
+                <ResourceNotFound 
+                    username={username} 
+                    message="The service you're looking for doesn't exist or may have been removed." 
+                />
+            </Web.Container>
+        );
     }
 
     const service = response.data;
@@ -143,24 +157,22 @@ export default async function Page({ params }: Props) {
                     )}
 
                     {service.portfolio && (
-                        <>
-                            <div className="h-px bg-border/40" />
-
-                            <Link
-                                href={`/artists/${username}/portfolios/${service.portfolio.slug}`}
-                                className="group mt-auto flex items-center justify-between gap-4 py-8 transition-colors"
-                            >
-                                <div className="space-y-1">
-                                    <span className="text-[10px] uppercase tracking-[0.2em] text-text-muted">
-                                        Related portfolio
-                                    </span>
-                                    <p className="font-serif text-lg italic text-text/90 transition-colors group-hover:text-text">
+                        <div className="mt-auto border-t border-border/40 pt-8 pb-8">
+                            <div className="space-y-3">
+                                <span className="block text-[10px] uppercase tracking-[0.2em] text-text-muted">
+                                    Related portfolio
+                                </span>
+                                <Link
+                                    href={`/artists/${username}/portfolios/${service.portfolio.slug}`}
+                                    className="group inline-flex items-center gap-4 rounded-full border border-border/30 px-6 py-2.5 transition-all hover:border-border hover:bg-text/5"
+                                >
+                                    <span className="font-serif text-lg italic text-text/90 group-hover:text-text">
                                         {service.portfolio.title}
-                                    </p>
-                                </div>
-                                <ArrowRight className="size-5 shrink-0 text-text-muted transition-all group-hover:translate-x-1 group-hover:text-text" />
-                            </Link>
-                        </>
+                                    </span>
+                                    <ArrowRight className="size-4 shrink-0 text-text-muted transition-transform group-hover:translate-x-1 group-hover:text-text" />
+                                </Link>
+                            </div>
+                        </div>
                     )}
                 </div>
             </div>

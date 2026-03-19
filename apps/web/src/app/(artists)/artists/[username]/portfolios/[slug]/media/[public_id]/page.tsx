@@ -1,34 +1,54 @@
-import mediaService from "@/modules/media/media.service";
 import { notFound } from "next/navigation";
+import mediaService from "@/modules/media/media.service";
+import { ResourceNotFound } from "@/app/(artists)/__components/resource-not-found";
 import { MediaPageComponent } from "@/app/(artists)/__components/media-page.component";
 import usersService from "@/modules/users/users.service";
 import userPortfolioService from "@/modules/user-portfolios/user-portfolio.service";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
+import Web from "@/lib/components/web-page.component";
 
 type Props = {
     params: Promise<{ username: string, slug: string, public_id: string }>;
     searchParams: Promise<{
-        cb?:string
+        cb?: string
     }>;
 };
 
-export default async function MediaPage({ params,searchParams }: Props) {
+export default async function MediaPage({ params, searchParams }: Props) {
     const { username, slug, public_id } = await params;
 
     const [user, slugExist, session] = await Promise.all([
-        usersService.getCompact(username), 
+        usersService.usernameExists(username),
         userPortfolioService.slugExists(username, slug),
         userSession()
     ]);
 
-    if (!user.data || !slugExist.data?.exists) {
+    if (!user.data) {
         notFound();
+    }
+
+    if (!slugExist.data) {
+        return (
+            <Web.Container>
+                <ResourceNotFound
+                    username={username}
+                    message="The portfolio you're looking for doesn't exist or may have been removed."
+                />
+            </Web.Container>
+        );
     }
 
     const { data: media } = await mediaService.getByPublicId(public_id);
 
     if (!media || media.blocked) {
-        notFound();
+        return (
+            <Web.Container>
+                <ResourceNotFound
+                    username={username}
+                    message="The media you're looking for doesn't exist or may have been removed."
+                />
+            </Web.Container>
+        );
     }
 
     const canEdit = session?.id === media.user_id;
@@ -48,7 +68,7 @@ export default async function MediaPage({ params,searchParams }: Props) {
                 [
                     {
                         title: `Portfolio ${slug}`,
-                        url: `/artists/${username}/portfolios/${slug}${acceptCallback?`?ci=m_${media.public_id}`:''}`,
+                        url: `/artists/${username}/portfolios/${slug}${acceptCallback ? `?ci=m_${media.public_id}` : ''}`,
                         isActive: false,
                     }
                 ]

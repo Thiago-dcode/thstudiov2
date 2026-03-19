@@ -8,6 +8,8 @@ import { Check, Save } from "lucide-react"
 export const SubmitPortfolioButton = () => {
     const { canSubmit, isPending, success, currentPortfolio } = usePortfolio()
 
+    console.log('can submit',canSubmit)
+
     return (
         <Button
             type="submit"

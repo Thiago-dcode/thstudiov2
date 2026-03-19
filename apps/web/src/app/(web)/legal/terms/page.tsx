@@ -111,10 +111,11 @@ export default function TermsOfServicePage() {
                 </ul>
                 <P>
                     All uploaded media is subject to{" "}
-                    <strong>automated content moderation</strong> using AI. Content that
-                    violates our policies may be blocked automatically. The moderation
-                    system evaluates content type, severity, and provides a reason for any
-                    decision.
+                    <strong>automated content moderation</strong>. Content that violates
+                    our policies may be blocked automatically. You are solely responsible
+                    for any content you upload to the Platform — A11STUDIO assumes no
+                    liability for harmful, illegal, or otherwise prohibited material
+                    uploaded by users.
                 </P>
             </Section>
 
@@ -140,7 +141,30 @@ export default function TermsOfServicePage() {
                 </ul>
             </Section>
 
-            <Section title="7. Service Limitations">
+            <Section title="7. Illegal Content & Law Enforcement">
+                <P>
+                    A11STUDIO has a <strong>zero-tolerance policy</strong> toward illegal
+                    content, including but not limited to child sexual abuse material
+                    (CSAM), content depicting the exploitation or abuse of minors, and
+                    any other material that constitutes a criminal offense under
+                    applicable law.
+                </P>
+                <P>
+                    If such content is detected — whether through automated moderation or
+                    manual review — we reserve the right to immediately and permanently
+                    terminate the offending account, preserve relevant evidence, and{" "}
+                    <strong>report the incident to the appropriate law enforcement
+                    authorities</strong>, including but not limited to local police,
+                    national agencies, and international organizations such as NCMEC or
+                    Interpol.
+                </P>
+                <P>
+                    The uploading user bears full legal responsibility for any illegal
+                    content they introduce to the Platform.
+                </P>
+            </Section>
+
+            <Section title="8. Service Limitations">
                 <P>
                     Each subscription plan has defined limits:
                 </P>
@@ -169,7 +193,7 @@ export default function TermsOfServicePage() {
                 </P>
             </Section>
 
-            <Section title="8. Intellectual Property">
+            <Section title="9. Intellectual Property">
                 <P>
                     The A11STUDIO platform — including its design, code, brand, and
                     features — is the intellectual property of A11STUDIO. You may not
@@ -182,7 +206,7 @@ export default function TermsOfServicePage() {
                 </P>
             </Section>
 
-            <Section title="9. Termination">
+            <Section title="10. Termination">
                 <P>
                     You may delete your account at any time from your account settings.
                     Upon deletion, your personal data, media, and content will be removed
@@ -200,7 +224,7 @@ export default function TermsOfServicePage() {
                 </P>
             </Section>
 
-            <Section title="10. Disclaimer of Warranties">
+            <Section title="11. Disclaimer of Warranties">
                 <P>
                     The Platform is provided &quot;as is&quot; and &quot;as
                     available&quot; without warranties of any kind, whether express or
@@ -210,7 +234,7 @@ export default function TermsOfServicePage() {
                 </P>
             </Section>
 
-            <Section title="11. Limitation of Liability">
+            <Section title="12. Limitation of Liability">
                 <P>
                     To the maximum extent permitted by law, A11STUDIO shall not be liable
                     for any indirect, incidental, special, consequential, or punitive
@@ -219,7 +243,7 @@ export default function TermsOfServicePage() {
                 </P>
             </Section>
 
-            <Section title="12. Governing Law">
+            <Section title="13. Governing Law">
                 <P>
                     These terms are governed by and construed in accordance with applicable
                     law. Any disputes arising from these terms or your use of the Platform
@@ -228,7 +252,7 @@ export default function TermsOfServicePage() {
                 </P>
             </Section>
 
-            <Section title="13. Contact">
+            <Section title="14. Contact">
                 <P>
                     For questions about these terms, contact us at{" "}
                     <a

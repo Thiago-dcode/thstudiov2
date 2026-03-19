@@ -9,7 +9,7 @@ export default async function WebLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col w-full">
       <WebHeader session={session} />
-      <main className="flex-1 size-full pt-16">{children}</main>
+      <main className="flex-1 w-full pt-16">{children}</main>
       <WebFooter />
     </div>
   );

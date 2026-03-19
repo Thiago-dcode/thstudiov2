@@ -118,6 +118,12 @@ export class UserService extends BaseService {
         });
     }
 
+    async usernameExists(username: string): Promise<ApiResponse<boolean>> {
+        return await this.fetchApi.get({
+            resource: `exists/${username}`,
+        });
+    }
+
     async address(id: number): Promise<ApiResponse<Address>> {
 
         return await this.fetchApi.get({

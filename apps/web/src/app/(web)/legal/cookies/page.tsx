@@ -38,33 +38,27 @@ export default function CookiePolicyPage() {
             <Section title="2. Essential Cookies">
                 <P>
                     These cookies are strictly necessary for the platform to function. They
-                    cannot be disabled without breaking core functionality.
+                    cannot be disabled without breaking core functionality. Essential cookies
+                    handle:
                 </P>
-
-                <CookieTable
-                    cookies={[
-                        {
-                            name: "Session",
-                            purpose: "Stores your encrypted authentication token to keep you signed in across pages.",
-                            duration: "1 day",
-                        },
-                        {
-                            name: "Session Expiration",
-                            purpose: "Tracks when your current session expires so the platform can refresh it seamlessly.",
-                            duration: "1 day",
-                        },
-                        {
-                            name: "Two-Factor Authentication",
-                            purpose: "Temporarily holds your 2FA verification state during the sign-in flow.",
-                            duration: "10 minutes",
-                        },
-                        {
-                            name: "Language",
-                            purpose: "Stores your preferred language so content is displayed in the correct locale.",
-                            duration: "Session",
-                        },
-                    ]}
-                />
+                <ul className="list-disc list-inside space-y-2 text-sm leading-relaxed text-text-muted">
+                    <li>
+                        <strong>Authentication</strong> — keeping you signed in and managing
+                        your session securely across pages
+                    </li>
+                    <li>
+                        <strong>Security</strong> — supporting account verification steps
+                        such as two-factor authentication
+                    </li>
+                    <li>
+                        <strong>Preferences</strong> — remembering your selected language so
+                        content displays in the correct locale
+                    </li>
+                </ul>
+                <P>
+                    These cookies are short-lived and expire automatically when no longer
+                    needed — typically within a single session or up to a few days.
+                </P>
             </Section>
 
             <Section title="3. Functional Cookies">
@@ -74,25 +68,24 @@ export default function CookiePolicyPage() {
                     platform.
                 </P>
 
-                <CookieTable
-                    cookies={[
-                        {
-                            name: "Remember Me",
-                            purpose: "Keeps your session active for an extended period so you don't have to sign in repeatedly.",
-                            duration: "30 days",
-                        },
-                        {
-                            name: "Subscription Flow",
-                            purpose: "Temporarily stores subscription state during the checkout process with Stripe or PayPal.",
-                            duration: "7 minutes",
-                        },
-                        {
-                            name: "Password Recovery",
-                            purpose: "Maintains state during the password reset flow to validate your recovery request.",
-                            duration: "Short-lived",
-                        },
-                    ]}
-                />
+                <ul className="list-disc list-inside space-y-2 text-sm leading-relaxed text-text-muted">
+                    <li>
+                        <strong>Extended sessions</strong> — keeping you signed in for longer
+                        periods so you don&apos;t have to log in repeatedly
+                    </li>
+                    <li>
+                        <strong>Checkout state</strong> — temporarily maintaining context
+                        during subscription or payment flows
+                    </li>
+                    <li>
+                        <strong>Account recovery</strong> — preserving state during the
+                        password reset process
+                    </li>
+                </ul>
+                <P>
+                    These cookies are temporary and expire shortly after the relevant action
+                    is completed.
+                </P>
             </Section>
 
             <Section title="4. Third-Party Cookies">
@@ -191,41 +184,3 @@ function P({ children }: { children: React.ReactNode }) {
     )
 }
 
-function CookieTable({ cookies }: {
-    cookies: { name: string; purpose: string; duration: string }[]
-}) {
-    return (
-        <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-                <thead>
-                    <tr className="border-b border-fg-2">
-                        <th className="text-left py-3 pr-4 text-[10px] font-medium uppercase tracking-[0.2em] text-text-muted">
-                            Cookie
-                        </th>
-                        <th className="text-left py-3 pr-4 text-[10px] font-medium uppercase tracking-[0.2em] text-text-muted">
-                            Purpose
-                        </th>
-                        <th className="text-left py-3 text-[10px] font-medium uppercase tracking-[0.2em] text-text-muted">
-                            Duration
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {cookies.map((cookie) => (
-                        <tr key={cookie.name} className="border-b border-fg-2/50">
-                            <td className="py-3 pr-4 text-text font-medium whitespace-nowrap">
-                                {cookie.name}
-                            </td>
-                            <td className="py-3 pr-4 text-text-muted leading-relaxed">
-                                {cookie.purpose}
-                            </td>
-                            <td className="py-3 text-text-muted whitespace-nowrap">
-                                {cookie.duration}
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
-    )
-}

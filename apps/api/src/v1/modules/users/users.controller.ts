@@ -54,6 +54,12 @@ export class UserController {
   }
 
   @Public()
+  @Get('exists/:username')
+  async usernameExists(@Param('username') username: string) {
+    return await this.userService.usernameExists(username);
+  }
+
+  @Public()
   @Get(':id')
   async findOne(
     @Param('id', ParseIntPipe, new ModelExistPipe('users')) id: number,

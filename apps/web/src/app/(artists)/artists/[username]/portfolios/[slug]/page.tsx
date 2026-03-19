@@ -1,6 +1,6 @@
+import { notFound } from "next/navigation";
 import { PortfolioGrid } from "@/modules/portfolios/components/portfolio-grid";
 import userPortfolioService from "@/modules/user-portfolios/user-portfolio.service";
-import { notFound } from "next/navigation";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import Link from "next/link";
 import { Pencil } from "lucide-react";
@@ -9,6 +9,8 @@ import { GalleryProvider } from "@repo/ui/providers/gallery.provider";
 import { config } from "@/lib/config";
 import Web from "@/lib/components/web-page.component";
 import { ArtistBreadcrumb } from "@/app/(artists)/__components/artist-breadcrumb";
+import { ResourceNotFound } from "@/app/(artists)/__components/resource-not-found";
+import usersService from "@/modules/users/users.service";
 
 type Props = {
     params: Promise<{ username: string; slug: string }>;
@@ -18,13 +20,24 @@ type Props = {
 export default async function Page({ params, searchParams }: Props) {
     const { username, slug } = await params;
 
-    const [response, userAuth] = await Promise.all([
+    const [userExist,response, userAuth] = await Promise.all([
+        usersService.usernameExists(username),
         userPortfolioService.getByUsername(username, slug),
         userSession(),
     ]);
+    if(!userExist.data){
+        notFound();
+    }
 
     if (!response.data) {
-        notFound();
+        return (
+            <Web.Container>
+                <ResourceNotFound 
+                    username={username} 
+                    message="The portfolio you're looking for doesn't exist or may have been removed." 
+                />
+            </Web.Container>
+        );
     }
 
     const portfolio = response.data;

@@ -8,9 +8,11 @@ import { usePreviewUrls } from "@repo/ui/hooks/usePreviewUrls"
 import { AboutPage } from "@repo/common-lib/types/about-page"
 import { FileInput } from "@repo/ui/components/custom/file-input"
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@repo/ui/components/shadcn/dialog"
+import { Button } from "@repo/ui/components/shadcn/button"
 import { ALLOWED_IMAGE_FILE_TYPES } from "@repo/common-lib/constants/constants"
 import { cn } from "@repo/ui/lib/utils"
 import { useState } from "react"
+import { Plus, Pencil } from "lucide-react"
 
 export const CreateOrUpdateAboutPage = ({ currentAboutPage, userId }: {
     currentAboutPage?: AboutPage,
@@ -36,15 +38,19 @@ export const CreateOrUpdateAboutPage = ({ currentAboutPage, userId }: {
             reset()
         }
     });
-    return <section className="">
-
-        <Dialog open={open} onOpenChange={(e) => {
+    return <Dialog open={open} onOpenChange={(e) => {
             if (isPending) return;
             if (!e) cleanErrors();
             setOpen(e)
         }}>
-            <DialogTrigger className="cursor-pointer">
-                <p className="bg-text text-bg p-2 rounded-md"> {!currentAboutPage ? 'Create your first about page' : 'Update your about page'}</p>
+            <DialogTrigger asChild>
+                <Button variant="primary" size="sm">
+                    {!currentAboutPage ? (
+                        <><Plus className="size-4" /> Create About Page</>
+                    ) : (
+                        <><Pencil className="size-4" /> Edit About Page</>
+                    )}
+                </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-5/6 overflow-auto">
                 <DialogTitle>{!currentAboutPage ? "Create About Page" : "Update About Page"}</DialogTitle>
@@ -86,11 +92,6 @@ export const CreateOrUpdateAboutPage = ({ currentAboutPage, userId }: {
 
             </DialogContent>
         </Dialog>
-
-        {/*TODO: create about component */}
-
-    </section>
-
 }
 
 const PhotoInput = ({ defaultUrl }: {

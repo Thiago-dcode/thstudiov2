@@ -23,14 +23,14 @@ import { Slider } from "@repo/ui/components/shadcn/slider"
 import { DEFAULT_COMPRESSION_LVL, ENUMS, EnumType } from "@repo/common-lib/constants/enums"
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip"
 import { useUserMetrics } from "@/modules/users/providers/user-metrics.provider"
-import { Plus } from "lucide-react"
+import { Plus, X } from "lucide-react"
 
 function MediaUploadContent() {
     const COMPRESSION_LVLS = ENUMS.COMPRESSION_LEVEL;
     const MAX_FILES = 15;
     const [error, setError] = useState<string>();
     const [globalCompressionLevel, setGlobalCompressionLevel] = useState<EnumType<'COMPRESSION_LEVEL'>>(DEFAULT_COMPRESSION_LVL);
-    const { mediaPendingToCreate, upsertMediaUpload, setMediaUploads } = useMedia();
+    const { mediaPendingToCreate, upsertMediaUpload, removeMediaUpload, setMediaUploads } = useMedia();
     const { metrics } = useUserMetrics();
     const allow_media_compression = metrics?.active_plan.allow_media_compression;
     const currentCount = mediaPendingToCreate?.length || 0;
@@ -147,8 +147,15 @@ function MediaUploadContent() {
                                 return (
                                     <div key={`media-upload-${media.input.file?.name}-${index}`} className="flex flex-col gap-3">
                                         <div
-                                            className="aspect-square flex flex-col items-center justify-center overflow-hidden rounded-lg border border-border bg-fg-2 shadow-md min-h-[200px]"
+                                            className="relative aspect-square flex flex-col items-center justify-center overflow-hidden rounded-lg border border-border bg-fg-2 shadow-md min-h-[200px]"
                                         >
+                                            <button
+                                                type="button"
+                                                onClick={() => removeMediaUpload(media.unique_id)}
+                                                className="absolute top-1.5 right-1.5 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors"
+                                            >
+                                                <X className="h-3.5 w-3.5" />
+                                            </button>
                                             <img
                                                 src={media.previewUrl}
                                                 alt={`Preview ${index + 1}`}

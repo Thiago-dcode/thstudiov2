@@ -213,6 +213,25 @@ export const PortfolioProvider = ({
     return formData.media ? formData.media.sort((a, b) => a.position - b.position):[];
   }, [formData.media]);
 
+  const hasFormChanged = useMemo(() => {
+    if (!currentPortfolio) return false;
+
+    if (formData.title !== currentPortfolio.title) return true;
+    if (formData.slug !== currentPortfolio.slug) return true;
+    if ((formData.description ?? undefined) !== (currentPortfolio.description ?? undefined)) return true;
+    if (formData.thumbnail) return true;
+
+    const currentMedia = formData.media ?? [];
+    const originalMedia = [...currentPortfolio.media].sort((a, b) => a.position - b.position);
+
+    if (currentMedia.length !== originalMedia.length) return true;
+    for (let i = 0; i < currentMedia.length; i++) {
+      if (currentMedia[i].id !== originalMedia[i].id || currentMedia[i].position !== originalMedia[i].position) return true;
+    }
+
+    return false;
+  }, [formData, currentPortfolio]);
+
   const canGoNextStep = useMemo(() => {
     const nextStep = currentStep + 1;
     if (nextStep > MAX_STEPS) return false;
@@ -224,8 +243,13 @@ export const PortfolioProvider = ({
   }, [currentStep, formData, currentPortfolio]);
 
   const canSubmit = useMemo(() => {
-    return ((currentStep === MAX_STEPS || currentPortfolio) && firstStepIsCompleted && (formData.media?.length || formData.collections?.length)) ? true : false
-  }, [currentStep, formData])
+    const hasContent = !!(formData.media?.length || formData.collections?.length);
+    if (!firstStepIsCompleted || !hasContent) return false;
+
+    if (currentPortfolio) return hasFormChanged;
+
+    return currentStep === MAX_STEPS;
+  }, [currentStep, formData, currentPortfolio, hasFormChanged, firstStepIsCompleted])
 
 
   const handleStep = (direction: 'prev' | 'next') => {

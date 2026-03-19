@@ -1,3 +1,4 @@
+'use client'
 import { FileInputProvider, useInputFile } from "@repo/ui/contexts/file.provider";
 import { usePreviewUrls } from "@repo/ui/hooks/usePreviewUrls";
 import { FileInput } from "@repo/ui/components/custom/file-input";
@@ -11,9 +12,8 @@ const ThumbnailInput = () => {
     const { files } = useInputFile();
 
     const { formData, handleSetFormData, deleteInputErrorProperty, inputErrors, isPending,currentPortfolio } = usePortfolio();
-    console.log("CURRENT PORTFOLIO",currentPortfolio);
-    // Prioritize formData.thumbnail (persists across remounts) over files from context (resets on remount)
-    const { previewUrls } = usePreviewUrls({ files: files || undefined });
+    const filesToPreview = files ?? (formData.thumbnail instanceof File ? formData.thumbnail : undefined);
+    const { previewUrls } = usePreviewUrls({ files: filesToPreview });
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -51,7 +51,7 @@ const ThumbnailInput = () => {
             <FileInput 
                 name="thumbnail" 
                 id="thumbnail-input" 
-                required 
+                required={!currentPortfolio?.thumbnail}
                 onChange={(e) => {
                     handleFileChange(e)
                 }}

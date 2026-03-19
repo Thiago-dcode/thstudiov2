@@ -14,6 +14,7 @@ import { RequestService } from 'src/common/services/request.service';
 import {
   CACHE_KEY_USER_CATEGORIES,
   CACHE_KEY_USER_PUBLIC_ID,
+  CACHE_KEY_USERNAME_EXISTS,
   MAX_PASSWORD_RESET,
   MAX_USERNAME_RESET,
   NEW_USER_EVENT,
@@ -84,6 +85,17 @@ export class UserService {
 
   async getCompactedByUsername(username:string){
     return await this.userRepository.findByUsernameCompact(username);
+  }
+
+  async usernameExists(username: string): Promise<boolean> {
+    return await this.helpers.cacheRemember(
+      CACHE_KEY_USERNAME_EXISTS(username),
+      this.userRepository.usernameExists(username),
+      {
+        append_language: false,
+        ttl: 1000 * 60 * 60 * 24 * 7,
+      },
+    );
   }
 
   async findOneCompacted(id: number) {
@@ -164,6 +176,11 @@ export class UserService {
       if (usernameTaken) {
         throw new BadRequestException('Username is already taken');
       }
+
+      await this.helpers.deleteManyCached([
+        CACHE_KEY_USERNAME_EXISTS(user.username),
+        CACHE_KEY_USERNAME_EXISTS(userUpdateData.username),
+      ]);
 
       userUpdateData.username_reset_count = effectiveCount + 1;
       if (!user.next_username_reset || periodExpired) {

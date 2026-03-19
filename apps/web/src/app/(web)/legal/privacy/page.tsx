@@ -34,105 +34,62 @@ export default function PrivacyPolicyPage() {
                 </P>
             </Section>
 
-            <Section title="2. Personal Data We Collect">
+            <Section title="2. Information We Collect">
                 <P>
-                    We collect the following categories of data depending on how you
-                    interact with the platform:
+                    We collect different categories of information depending on how you
+                    use the platform:
                 </P>
-
-                <SubSection title="Account Information">
-                    <P>
-                        When you register, we collect your <strong>name</strong>,{" "}
-                        <strong>surname</strong>, <strong>email address</strong>,{" "}
-                        <strong>username</strong>, and a hashed version of your{" "}
-                        <strong>password</strong>. You may optionally provide a{" "}
-                        <strong>profession</strong>, <strong>biography</strong>,{" "}
-                        <strong>short biography</strong>, <strong>avatar image</strong>, and{" "}
-                        <strong>banner image</strong>.
-                    </P>
-                </SubSection>
-
-                <SubSection title="Address Data">
-                    <P>
-                        If you choose to add an address to your profile, we store your{" "}
-                        <strong>street</strong>, <strong>city</strong>, <strong>state</strong>,{" "}
-                        <strong>postal code</strong>, <strong>country</strong>, and geographic{" "}
-                        <strong>coordinates</strong> (latitude and longitude) to display your
-                        location on your public profile.
-                    </P>
-                </SubSection>
-
-                <SubSection title="Media & Portfolio Content">
-                    <P>
-                        When you upload media, we store the <strong>file</strong>, its{" "}
-                        <strong>size</strong>, <strong>format</strong>,{" "}
-                        <strong>thumbnail</strong>, and optional <strong>SEO metadata</strong>{" "}
-                        (title, description, alt text, filename). Your portfolios, collections,
-                        services, and projects include titles, descriptions, thumbnails, and
-                        pricing information you provide.
-                    </P>
-                </SubSection>
-
-                <SubSection title="Business & Client Data">
-                    <P>
-                        If you manage clients through the platform, we store{" "}
-                        <strong>client names</strong>, <strong>email addresses</strong>,{" "}
-                        <strong>phone numbers</strong>, <strong>websites</strong>, and{" "}
-                        <strong>logos</strong> that you provide. Project data includes budgets,
-                        dates, and status information.
-                    </P>
-                </SubSection>
-
-                <SubSection title="Contact Form Submissions">
-                    <P>
-                        When visitors contact an artist through the platform, we collect the
-                        sender&apos;s <strong>name</strong>, <strong>email address</strong>,{" "}
-                        <strong>subject</strong>, and <strong>message content</strong>.
-                    </P>
-                </SubSection>
-
-                <SubSection title="Authentication & Security Data">
-                    <P>
-                        To secure your account, we collect your{" "}
-                        <strong>IP address</strong> and <strong>user agent</strong> (browser
-                        and device information) when you sign in. We also store session tokens
-                        and, if enabled, two-factor authentication codes with their expiration
-                        timestamps.
-                    </P>
-                </SubSection>
+                <ul className="list-disc list-inside space-y-2 text-sm leading-relaxed text-text-muted">
+                    <li>
+                        <strong>Account information</strong> — basic profile details you
+                        provide when registering and setting up your account, such as your
+                        name, email, and any optional profile content you choose to add
+                    </li>
+                    <li>
+                        <strong>Location data</strong> — if you choose to add an address to
+                        your profile, we store the information necessary to display your
+                        location publicly
+                    </li>
+                    <li>
+                        <strong>Content you create</strong> — media files, portfolios,
+                        services, projects, and any associated descriptions or metadata you
+                        provide through the platform
+                    </li>
+                    <li>
+                        <strong>Business data</strong> — if you use client and project
+                        management features, we store the relevant contact and project
+                        information you enter
+                    </li>
+                    <li>
+                        <strong>Messages</strong> — when visitors contact an artist through
+                        the platform, we collect the information included in the contact form
+                    </li>
+                    <li>
+                        <strong>Security data</strong> — technical information related to
+                        sign-in activity and device identification, used to protect your
+                        account
+                    </li>
+                </ul>
             </Section>
 
             <Section title="3. Payment Data">
                 <P>
-                    Subscription payments are processed by third-party providers —{" "}
-                    <strong>Stripe</strong> and <strong>PayPal</strong>. We store
-                    references to your customer and subscription identifiers on these
-                    platforms, along with billing amounts and dates. We do{" "}
-                    <strong>not</strong> store your credit card numbers, bank account
-                    details, or other raw payment credentials. These are handled entirely
-                    by the payment processor under their own privacy policies.
+                    Subscription payments are processed entirely by third-party
+                    providers. We store only the references necessary to manage your
+                    subscription and billing history. We do <strong>not</strong> store
+                    credit card numbers, bank account details, or other raw payment
+                    credentials — these are handled by the payment processor under their
+                    own privacy policies.
                 </P>
             </Section>
 
-            <Section title="4. AI Processing Data">
+            <Section title="4. AI Processing">
                 <P>
-                    A11STUDIO uses artificial intelligence for two purposes:
-                </P>
-                <ul className="list-disc list-inside space-y-2 text-sm leading-relaxed text-text-muted">
-                    <li>
-                        <strong>AI-assisted features</strong> — such as generating SEO
-                        metadata for your media. We track token usage per request (model
-                        used, token count) to manage your AI credit allocation.
-                    </li>
-                    <li>
-                        <strong>Content moderation</strong> — uploaded media is automatically
-                        reviewed for policy compliance. We store the moderation decision,
-                        severity level, content type, and reason.
-                    </li>
-                </ul>
-                <P>
-                    AI processing is performed by third-party LLM providers. Only the
-                    minimum data necessary is sent for processing.
+                    A11STUDIO uses artificial intelligence to power features such as
+                    content suggestions and automated content moderation. We track usage
+                    to manage your AI credit allocation. AI processing is performed by
+                    third-party providers, and only the minimum data necessary is sent
+                    for processing.
                 </P>
             </Section>
 
@@ -141,12 +98,11 @@ export default function PrivacyPolicyPage() {
                     <li>Providing and operating the portfolio platform</li>
                     <li>Authenticating your identity and securing your account</li>
                     <li>Processing subscription payments and managing billing</li>
-                    <li>Delivering AI-assisted features (SEO generation, content suggestions)</li>
+                    <li>Delivering AI-assisted features</li>
                     <li>Enforcing content policies through automated moderation</li>
-                    <li>Sending transactional emails (verification, password recovery, 2FA codes)</li>
-                    <li>Displaying your public artist profile, portfolios, and services</li>
-                    <li>Delivering contact form messages from visitors to artists</li>
-                    <li>Sending notifications about account activity</li>
+                    <li>Sending transactional emails and notifications</li>
+                    <li>Displaying your public artist profile and content</li>
+                    <li>Delivering contact form messages between visitors and artists</li>
                 </ul>
             </Section>
 
@@ -174,12 +130,11 @@ export default function PrivacyPolicyPage() {
             <Section title="7. Data Retention">
                 <P>
                     We retain your personal data for as long as your account is active.
-                    Authentication logs (IP addresses, device information) are retained for
-                    security purposes. Payment records are retained as required by
-                    applicable tax and financial regulations. When you delete your account,
-                    we remove your personal data, media files, and associated content
-                    within a reasonable timeframe, except where retention is required by
-                    law.
+                    Security logs are retained for account protection purposes, and
+                    payment records are retained as required by applicable regulations.
+                    When you delete your account, we remove your personal data and
+                    associated content within a reasonable timeframe, except where
+                    retention is required by law.
                 </P>
             </Section>
 
@@ -204,10 +159,10 @@ export default function PrivacyPolicyPage() {
 
             <Section title="9. Security">
                 <P>
-                    We implement industry-standard security measures including password
-                    hashing, encrypted session tokens, two-factor authentication, device
-                    tracking, and HTTPS encryption. While no system is completely immune to
-                    breaches, we take reasonable steps to protect your data.
+                    We implement industry-standard security measures to protect your
+                    data, including encryption, secure authentication, and access
+                    controls. While no system is completely immune to breaches, we take
+                    reasonable steps to safeguard your information.
                 </P>
             </Section>
 
@@ -246,16 +201,6 @@ function Section({ title, children }: { title: string; children: React.ReactNode
     )
 }
 
-function SubSection({ title, children }: { title: string; children: React.ReactNode }) {
-    return (
-        <div className="space-y-2">
-            <h3 className="text-[10px] font-medium uppercase tracking-[0.2em] text-text-muted">
-                {title}
-            </h3>
-            {children}
-        </div>
-    )
-}
 
 function P({ children }: { children: React.ReactNode }) {
     return (
