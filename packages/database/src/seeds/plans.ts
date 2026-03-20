@@ -145,7 +145,7 @@ export const main = async () => {
       is_active: true,
       is_free: false,
       is_popular: true,
-      max_media_size: 20240, // 10GB storage in MB (~$0.23/month)
+      max_media_size: 20 * 1024, // 20GB storage in MB (~$0.23/month)
       max_projects: 20,
       max_portfolios: 5,
       max_clients: 10,

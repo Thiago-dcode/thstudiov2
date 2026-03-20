@@ -137,7 +137,7 @@ const ArtistHomePage = async ({ params }: { params: Promise<{ username: string }
                             label: "Portfolios",
                             content: (
                                 <Suspense fallback={<div className="flex justify-center py-12"><Spinner /></div>}>
-                                    <UserPortfoliosSection username={profile.username} userId={profile.id} />
+                                    <UserPortfoliosSection username={profile.username} userId={profile.id} displayName={fullName || profile.username} />
                                 </Suspense>
                             ),
                         },
@@ -146,7 +146,7 @@ const ArtistHomePage = async ({ params }: { params: Promise<{ username: string }
                             label: "Services",
                             content: (
                                 <Suspense fallback={<div className="flex justify-center py-12"><Spinner /></div>}>
-                                    <UserServicesSection username={profile.username} />
+                                    <UserServicesSection username={profile.username} displayName={fullName || profile.username} />
                                 </Suspense>
                             ),
                         },

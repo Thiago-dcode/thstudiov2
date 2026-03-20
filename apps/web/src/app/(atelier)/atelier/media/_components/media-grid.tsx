@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Media } from "@repo/common-lib/types/media";
 import { EditMediaCard } from "./edit-media-card";
 import { useMedia } from "@/modules/media/providers/media.provider";
@@ -14,11 +14,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@repo/ui/components/shadcn/dialog";
-import { Sparkles, Upload } from "lucide-react";
+import { ImageOff, Sparkles, Upload } from "lucide-react";
 import { SelectableMedia, useSelectMedia } from "@/modules/media/providers/select-media.provider";
 import { cn } from "@repo/ui/lib/utils";
 import { useUserMetrics } from "@/modules/users/providers/user-metrics.provider";
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
+import { FileInputProvider } from "@repo/ui/contexts/file.provider";
+import { CreateMediaDialog } from "./create-media-modal";
+import { ALLOWED_IMAGE_FILE_TYPES } from "@repo/common-lib/constants/constants";
 
 type MediaGridProps = {
   media: Media[];
@@ -27,7 +30,7 @@ type MediaGridProps = {
 
 export function MediaGrid({ media, username }: MediaGridProps) {
   const [currentMedia, setCurrentMedia] = useState(media);
-  const { mediaPendingToUpdate, handleUploadUpdates, isLoading, generateManySeoMedia, completed } = useMedia();
+  const { mediaPendingToUpdate, handleUploadUpdates, isLoading, generateManySeoMedia } = useMedia();
   const { canSelect, selectedMedia, selectionCount, setCanSelect, clearSelection } = useSelectMedia()
   const { aiCreditsInfo, refresh } = useUserMetrics();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -53,9 +56,9 @@ export function MediaGrid({ media, username }: MediaGridProps) {
     refresh()
   }
 
-  const handleRemoveCurrentMedia = (mediaId:number)=>{
+  const handleRemoveCurrentMedia = (mediaId: number) => {
 
-    setCurrentMedia(prev=>prev.filter(m=>m.id!==mediaId))
+    setCurrentMedia(prev => prev.filter(m => m.id !== mediaId))
 
   }
 
@@ -64,18 +67,25 @@ export function MediaGrid({ media, username }: MediaGridProps) {
 
   return (
     <>
-      <div className="relative">
-        <div className="mb-4 flex items-center justify-between sticky top-0 z-90 bg-fg/70 p-4">
+      <div className="relative flex flex-col w-full h-full gap-2">
+        <div className="self-end">
+          <FileInputProvider allowedMimeTypes={ALLOWED_IMAGE_FILE_TYPES}>
+            <CreateMediaDialog onSuccess={(media) => {
+              setCurrentMedia((prev) => [media, ...prev])
+            }} />
+          </FileInputProvider>
+        </div>
+        <div className="flex items-center justify-between sticky top-0 z-90">
           {canSelect ? (
             <Dialog open={isGenerateSeoDialogOpen} onOpenChange={setIsGenerateSeoDialogOpen}>
               <DialogTrigger asChild >
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="default"
                   size="sm"
                   disabled={!selectionCount || isLoading}
                   className={cn(
-                    "bg-accent text-accent-fg border-accent hover:bg-accent/90 hover:text-accent-fg",
+                    "bg-accent border-accent hover:bg-accent/90",
                     "transition-colors duration-200 h-8 px-2.5"
                   )}
                 >
@@ -136,28 +146,37 @@ export function MediaGrid({ media, username }: MediaGridProps) {
               </DialogContent>
             </Dialog>
           ) : null}
-          <Button
-            variant={canSelect ? "outline" : "primary"}
-            size="sm"
-            disabled={isLoading}
-            onClick={() => {
-              setCanSelect(!canSelect)
-              if (canSelect) {
-                clearSelection()
-              }
-            }}
-          >
-            {canSelect ? "Cancel selection" : "Select media"}
-          </Button>
+          {currentMedia.length > 0 && (
+            <Button
+              variant={canSelect ? "outline" : "primary"}
+              size="sm"
+              disabled={isLoading}
+              onClick={() => {
+                setCanSelect(!canSelect)
+                if (canSelect) {
+                  clearSelection()
+                }
+              }}
+            >
+              {canSelect ? "Cancel selection" : "Select media"}
+            </Button>
+          )}
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {currentMedia.map((item) => {
 
-            if (!canSelect) return <EditMediaCard key={`media-card-${item.id}`} media={item} username={username} onDeleted={handleRemoveCurrentMedia} />
+        {currentMedia.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-24 text-muted-foreground gap-3">
+            <ImageOff className="h-10 w-10 stroke-[1.5]" />
+            <p className="text-sm">No media uploaded yet. Start by adding your first image.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 justify-items-start w-full">
+            {currentMedia.map((item) => {
+              if (!canSelect) return <EditMediaCard key={`media-card-${item.id}`} media={item} username={username} onDeleted={handleRemoveCurrentMedia} />
 
-            return <SelectableMedia key={`media-selectable-${item.id}`} media={item}><EditMediaCard key={item.id} media={item} username={username} onDeleted={handleRemoveCurrentMedia} /> </SelectableMedia>
-          })}
-        </div>
+              return <SelectableMedia key={`media-selectable-${item.id}`} media={item}><EditMediaCard key={item.id} media={item} username={username} onDeleted={handleRemoveCurrentMedia} /> </SelectableMedia>
+            })}
+          </div>
+        )}
       </div>
 
       {pendingCount > 0 && !isLoading && (

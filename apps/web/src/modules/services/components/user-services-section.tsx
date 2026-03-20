@@ -3,19 +3,22 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowUpRight } from "lucide-react";
 
-export const UserServicesSection = async ({ username }: {
+export const UserServicesSection = async ({ username, displayName }: {
     username: string;
+    displayName: string;
 }) => {
     const response = await userServiceService.getAllByUsername(username);
 
-    if (response.error || !response.data?.length) {
-        return null;
-    }
+    const services = (response.data ?? []).filter((s) => s.is_active);
 
-    const services = response.data.filter((s) => s.is_active);
-
-    if (services.length === 0) {
-        return null;
+    if (response.error || services.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+                <p className="text-sm tracking-wide text-text-muted/70">
+                    {displayName} has no services yet&hellip;
+                </p>
+            </div>
+        );
     }
 
     return (

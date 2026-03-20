@@ -14,6 +14,7 @@ export default async function ServicesPage() {
 
     const servicesResponse = await userServiceService.getAllByUsername(userAuth.username);
 
+    console.log(servicesResponse.data)
     const services = servicesResponse.data || [];
 
     return (

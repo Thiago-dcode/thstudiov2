@@ -367,7 +367,7 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
 
   return (
     <Drawer direction="right" open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-      <div className="relative">
+      <div className="relative border border-black/10">
         {currentMediaUpload && !currentMediaUpload.deleted && !isPending && !currentMediaUpload.data && !currentMediaUpload.error ? (
           <Button
             onClick={(e) => {

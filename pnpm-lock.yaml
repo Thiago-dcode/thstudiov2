@@ -245,6 +245,40 @@ importers:
         specifier: ^5.9.3
         version: 5.9.3
 
+  apps/worker:
+    dependencies:
+      '@repo/backend-lib':
+        specifier: workspace:*
+        version: link:../../packages/backend-lib
+      '@repo/common-lib':
+        specifier: workspace:*
+        version: link:../../packages/common-lib
+      '@repo/database':
+        specifier: workspace:*
+        version: link:../../packages/database
+      bullmq:
+        specifier: ^5.71.0
+        version: 5.71.0
+      express:
+        specifier: ^5.1.0
+        version: 5.2.1
+    devDependencies:
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../packages/typescript-config
+      '@types/express':
+        specifier: ^5.0.6
+        version: 5.0.6
+      '@types/node':
+        specifier: ^25.4.0
+        version: 25.4.0
+      tsx:
+        specifier: ^4.19.4
+        version: 4.21.0
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
+
   packages/backend-lib:
     dependencies:
       '@aws-sdk/client-s3':

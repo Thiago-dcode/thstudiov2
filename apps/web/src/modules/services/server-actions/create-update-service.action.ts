@@ -90,6 +90,7 @@ export const createOrUpdateServiceAction = async (
             };
         }
     }
+    console.log("RAWDATA",rawData);
 
     const service = isUpdate
         ? await serviceService.update(currentService.id, rawData as UpdateServiceInputWithFile)

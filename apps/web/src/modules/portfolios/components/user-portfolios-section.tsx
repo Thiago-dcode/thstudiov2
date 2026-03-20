@@ -2,9 +2,10 @@ import portfolioService from "../portfolio.service";
 import Link from "next/link";
 import Image from "next/image";
 
-export const UserPortfoliosSection = async ({ userId, username }: {
+export const UserPortfoliosSection = async ({ userId, username, displayName }: {
     userId: number;
     username: string;
+    displayName: string;
 }) => {
     const response = await portfolioService.findAll({
         user_id: userId,
@@ -12,7 +13,13 @@ export const UserPortfoliosSection = async ({ userId, username }: {
     });
 
     if (response.error || !response.data?.length) {
-        return null;
+        return (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+                <p className="text-sm tracking-wide text-text-muted/70">
+                    {displayName} has no portfolios yet&hellip;
+                </p>
+            </div>
+        );
     }
 
     return (

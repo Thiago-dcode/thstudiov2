@@ -17,8 +17,8 @@ export class BaseService {
                 headers(),
             ]);
             fetchApi.headers = {
-                'Content-Type': 'application/json',
                 'Accept': 'application/json',
+                'Content-Type': 'application/json',
                 [LANGUAGE_HEADER]: language,
                 'Authorization': `Bearer ${session?.token ?? ''}`,
                 [USER_AGENT_HEADER]: headersList.get('user-agent') ?? '',

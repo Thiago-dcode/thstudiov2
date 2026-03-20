@@ -69,6 +69,7 @@ export const CreateOrUpdateService = ({ defaultService, userAuth,portfolios }: {
                 features: features.filter(f => f.trim()).map(f => ({ title: f.trim() })),
                 terms: terms.filter(t => t.trim()).map(t => ({ title: t.trim() })),
             };
+            console.log("PAYLOAD",payload)
 
             return await createOrUpdateServiceAction(payload, defaultService);
         },
@@ -409,6 +410,7 @@ const PortfolioSelect = ({ portfolios, value, onChange }: {
             <Combobox
                 value={value ? String(value) : null}
                 onValueChange={(val) => {
+                    console.log("Changing",val)
                     onChange(val ? Number(val) : undefined);
                 }}
             >

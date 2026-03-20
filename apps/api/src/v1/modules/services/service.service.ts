@@ -136,7 +136,7 @@ export class ServiceService {
 
     cleanObj(request);
     const { thumbnail, ...rest } = request;
-
+    console.log("REST",rest);
     const updated = await this.serviceRepository.updateById(id, {
       ...rest,
       ...(thumbnailPath ? { thumbnail: thumbnailPath } : {}),

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import {
     Dialog,
     DialogClose,
@@ -23,7 +23,8 @@ import { Slider } from "@repo/ui/components/shadcn/slider"
 import { DEFAULT_COMPRESSION_LVL, ENUMS, EnumType } from "@repo/common-lib/constants/enums"
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip"
 import { useUserMetrics } from "@/modules/users/providers/user-metrics.provider"
-import { Plus, X } from "lucide-react"
+import { Checkbox } from "@repo/ui/components/shadcn/checkbox"
+import { Plus, Sparkles, X } from "lucide-react"
 
 function MediaUploadContent() {
     const COMPRESSION_LVLS = ENUMS.COMPRESSION_LEVEL;
@@ -31,11 +32,24 @@ function MediaUploadContent() {
     const [error, setError] = useState<string>();
     const [globalCompressionLevel, setGlobalCompressionLevel] = useState<EnumType<'COMPRESSION_LEVEL'>>(DEFAULT_COMPRESSION_LVL);
     const { mediaPendingToCreate, upsertMediaUpload, removeMediaUpload, setMediaUploads } = useMedia();
-    const { metrics } = useUserMetrics();
+    const { metrics, aiCreditsInfo } = useUserMetrics();
     const allow_media_compression = metrics?.active_plan.allow_media_compression;
     const currentCount = mediaPendingToCreate?.length || 0;
     const isMaxReached = currentCount >= MAX_FILES;
     const mediaToShow = useMemo(()=>mediaPendingToCreate.filter(m=>!m.pending && !m.data && !m.error),[mediaPendingToCreate]);
+
+    const [generateSeo, setGenerateSeo] = useState(false);
+    const remainingCredits = aiCreditsInfo ? aiCreditsInfo.total - aiCreditsInfo.consumed : 0;
+    const hasCredits = remainingCredits > 0;
+
+    useEffect(() => {
+        const needsUpdate = mediaToShow.some(m => m.generate_seo !== generateSeo);
+        if (!needsUpdate) return;
+        setMediaUploads(mediaPendingToCreate.map(mu => ({
+            ...mu,
+            generate_seo: generateSeo
+        })));
+    }, [mediaToShow.length, generateSeo]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFiles = e.target.files
@@ -128,6 +142,53 @@ function MediaUploadContent() {
                                 />
                             </div>
                         </div>
+                        <div className="pt-2 border-t border-border/50 space-y-2">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <Checkbox
+                                        id="generate-seo"
+                                        checked={generateSeo}
+                                        disabled={!hasCredits}
+                                        onCheckedChange={(checked) => {
+                                            const value = checked === true;
+                                            setGenerateSeo(value);
+                                            setMediaUploads(mediaPendingToCreate.map(mu => ({
+                                                ...mu,
+                                                generate_seo: value
+                                            })));
+                                        }}
+                                    />
+                                    <label htmlFor="generate-seo" className="flex items-center gap-1.5 text-sm font-medium text-text cursor-pointer select-none">
+                                        <Sparkles className="h-3.5 w-3.5" />
+                                        AI SEO Generation
+                                    </label>
+                                    <InfoTooltip
+                                        content={
+                                            <div className="space-y-2">
+                                                <p className="font-medium">AI SEO Generation</p>
+                                                <p className="text-sm">
+                                                    Automatically generates SEO title, description, alt text, and filename for each image using AI vision analysis.
+                                                </p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    Costs 1 AI credit per image. You have {remainingCredits} credit{remainingCredits !== 1 ? 's' : ''} remaining.
+                                                </p>
+                                            </div>
+                                        }
+                                    />
+                                </div>
+                                <span className="text-xs font-semibold text-text bg-accent/20 px-2 py-1 rounded-md">
+                                    {remainingCredits} credit{remainingCredits !== 1 ? 's' : ''}
+                                </span>
+                            </div>
+                            {!hasCredits && (
+                                <div className="p-2 rounded-md bg-amber-500/10 border border-amber-500/20">
+                                    <p className="text-xs text-amber-600">
+                                        <span className="font-medium">No AI credits:</span> You have used all your AI credits. Upgrade your plan or wait for the next reset.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+
                         <div className="flex items-center justify-between pt-2 border-t border-border/50">
                             <span className="text-sm text-text-muted">
                                 {currentCount}/{MAX_FILES} files
@@ -138,7 +199,7 @@ function MediaUploadContent() {
                         </div>
                     </div>
                     <div className="mb-4 overflow-y-auto flex-1 min-h-0">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             {mediaPendingToCreate.map((media, index) => {
 
                                 const currentCompressionLvl = media.input.compression_level || DEFAULT_COMPRESSION_LVL;
@@ -209,7 +270,7 @@ function MediaUploadContent() {
                             disabled={isMaxReached}
                             currentFiles={currentCount}
                             maxFiles={MAX_FILES}
-
+                            className="py-2 gap-1 min-h-0 [&_svg]:h-5 [&_svg]:w-5"
                         />
                     </div>
                 </>
@@ -249,6 +310,8 @@ export function CreateMediaDialog({onSuccess}:{
     const { previewUrls, cleanup } = usePreviewUrls({ files });
     const { session } = useSession();
 
+    const addedFilesRef = useRef(new Set<File>());
+
     useEffect(() => {
         if (!previewUrls || !previewUrls.length || !files || !files.length || !session || files.length !== previewUrls.length) return;
 
@@ -256,6 +319,8 @@ export function CreateMediaDialog({onSuccess}:{
 
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
+            if (addedFilesRef.current.has(file)) continue;
+            addedFilesRef.current.add(file);
             const previewUrl = previewUrls[i]
             newMediaUploads.push({
                 file,
@@ -265,7 +330,9 @@ export function CreateMediaDialog({onSuccess}:{
             })
         }
 
-        addMediaUploads(newMediaUploads)
+        if (newMediaUploads.length > 0) {
+            addMediaUploads(newMediaUploads)
+        }
 
     }, [previewUrls, files, session, addMediaUploads])
 
@@ -285,7 +352,7 @@ export function CreateMediaDialog({onSuccess}:{
                     Create media
                 </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl h-[95vh] flex flex-col justify-between [&>button]:hidden p-0 z-100">
+            <DialogContent className="max-w-[95vw] sm:max-w-2xl md:max-w-3xl lg:max-w-5xl h-[95vh] flex flex-col justify-between [&>button]:hidden p-0 z-100">
                 <DialogHeader className="border-b pb-4 px-6 pt-6">
                     <DialogTitle>Create New Media</DialogTitle>
                     <DialogDescription>

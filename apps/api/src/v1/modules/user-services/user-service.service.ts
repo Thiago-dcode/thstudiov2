@@ -7,7 +7,7 @@ import { ServiceRepository } from "../services/service.repository";
 /** Nest cache-manager TTL (ms). */
 const CACHE_TTL = 1000 * 60 * 60 * 24;
 /** Same window as `CACHE_TTL` — `getAsset` / S3 presign uses seconds. */
-const CACHE_TTL_SECONDS = CACHE_TTL / 1050;
+const CACHE_TTL_SECONDS = CACHE_TTL / 1000;
 
 export const serviceCacheKeys = {
   bySlug: (userId: number, slug: string) => `service-${userId}-${slug}`,

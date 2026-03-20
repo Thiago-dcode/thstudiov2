@@ -2,10 +2,8 @@
 
 import { CreateMediaInputWithFile, Media, UpdateMediaInput } from "@repo/common-lib/types/media";
 import { createContext, useContext, ReactNode, useState, useMemo, useCallback, useRef } from "react";
-import { createMediaAction } from "../server-actions/create-media.action";
-import { updateMediaAction } from "../server-actions/update-media.action";
-import { ReturnError } from "@repo/common-lib/types/response";
-import { getMediaSeoAction } from "@/modules/ai/actions/get-media-seo.action";
+import { createMediaApi, updateMediaApi, generateMediaSeoApi } from "../api/media-api.client";
+import { ActionReturn, ReturnError } from "@repo/common-lib/types/response";
 import { deleteMediaAction } from "../server-actions/delete-media.action";
 
 
@@ -26,6 +24,7 @@ export type UploadMedia = {
   unique_id: number,
   onSuccess?: (media: Media) => Promise<void>,
   error?: ReturnError<Record<string, string>>
+  generate_seo?: boolean,
 }
 
 type MediaContextType = {
@@ -40,7 +39,7 @@ type MediaContextType = {
   upsertMediaUpload: (mediaUpload: UploadMedia) => void;
   removeMediaUpload: (uniqueId: number) => void;
   uploadSingleMedia: (uniqueId: number, onSuccess?: (media: Media) => void) => Promise<void>;
-  generateSeoSingleMedia: (media: Media) => ReturnType<typeof getMediaSeoAction>;
+  generateSeoSingleMedia: (media: Media) => Promise<ActionReturn<Media>>;
   generateManySeoMedia: (media: Media[]) => Promise<void>;
   deleteSingleMedia: (media: Media, onSuccess?: (media: Media) => Promise<void>) => Promise<Awaited<ReturnType<typeof deleteMediaAction>>>;
   isLoading: boolean;
@@ -83,6 +82,8 @@ export const MediaProvider = ({
     return nextUniqueId.current;
   }, []);
 
+  const inFlightUploads = useRef(new Set<number>());
+
   // ============================================================================
   // Helper Functions
   // ============================================================================
@@ -102,10 +103,7 @@ export const MediaProvider = ({
   };
 
   const extractReturnError = (
-    result:
-      | Awaited<ReturnType<typeof createMediaAction>>
-      | Awaited<ReturnType<typeof updateMediaAction>>
-      | Awaited<ReturnType<typeof getMediaSeoAction>>
+    result: ActionReturn<unknown>
   ): ReturnError<Record<string, string>> => {
     return {
       errors: result.errors && result.errors.length > 0 ? result.errors : ['Request failed'],
@@ -208,8 +206,12 @@ export const MediaProvider = ({
   // ============================================================================
 
   const uploadSingleMedia = async (uniqueId: number, onSuccess?: (media: Media) => void) => {
+    if (inFlightUploads.current.has(uniqueId)) return;
+
     const media = mediaUploads.find(m => m.unique_id === uniqueId);
     if (!media) return;
+
+    inFlightUploads.current.add(uniqueId);
 
     setMediaUploads((prev) => {
       const currentMedia = prev.find(m => m.unique_id === uniqueId);
@@ -224,13 +226,13 @@ export const MediaProvider = ({
     });
 
     try {
-      let result: Awaited<ReturnType<typeof createMediaAction>> | Awaited<ReturnType<typeof updateMediaAction>>;
+      let result: ActionReturn<Media>;
 
       if (media.id) {
         const { file, ...updateInput } = media.input;
-        result = await updateMediaAction(media.id, updateInput as UpdateMediaInput);
+        result = await updateMediaApi(media.id, updateInput as UpdateMediaInput);
       } else {
-        result = await createMediaAction(media.input);
+        result = await createMediaApi(media.input);
       }
 
       if (result.data) {
@@ -245,6 +247,10 @@ export const MediaProvider = ({
           data: result.data,
           error: undefined
         });
+
+        if (media.generate_seo && result.data.id) {
+          generateSeoSingleMedia(result.data);
+        }
       } else {
         const returnError = extractReturnError(result);
         updateUploadByUniqueId(uniqueId, {
@@ -266,10 +272,12 @@ export const MediaProvider = ({
           inputErrors: undefined
         }
       });
+    } finally {
+      inFlightUploads.current.delete(uniqueId);
     }
   }
 
-  const generateSeoSingleMedia = async (media: Media, onSuccess?: (result: Awaited<ReturnType<typeof getMediaSeoAction>>, media: Media) => Promise<void>) => {
+  const generateSeoSingleMedia = async (media: Media, onSuccess?: (result: ActionReturn<Media>, media: Media) => Promise<void>) => {
     const currentMediaUpload = mediaUploads.find(m => m.id === media.id || m.data?.id === media.id);
 
     const baseUpload: UploadMedia = currentMediaUpload
@@ -300,7 +308,7 @@ export const MediaProvider = ({
     });
 
     try {
-      const result = await getMediaSeoAction({
+      const result = await generateMediaSeoApi({
         media_id: media.id,
         user_id: media.user_id
       });

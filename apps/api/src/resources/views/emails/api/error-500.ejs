@@ -1,8 +1,11 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+<!DOCTYPE html>
+<html>
+
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
     <title>Server Error 500</title>
     <!--[if mso]>
     <noscript>
@@ -12,168 +15,148 @@
             </o:OfficeDocumentSettings>
         </xml>
     </noscript>
+    <style type="text/css">
+        body, table, td, a { font-family: Arial, sans-serif !important; }
+        table { border-collapse: collapse !important; }
+        table, td { mso-table-lspace:0pt; mso-table-rspace:0pt; }
+    </style>
     <![endif]-->
     <style type="text/css">
-        /* Reset styles for email clients */
-        body, table, td, p, a, li, blockquote {
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            margin: 0; padding: 0; width: 100%;
+            background-color: #141312;
+            font-family: Georgia, 'Times New Roman', Times, serif;
             -webkit-text-size-adjust: 100%;
             -ms-text-size-adjust: 100%;
         }
-        table, td {
-            mso-table-lspace: 0pt;
-            mso-table-rspace: 0pt;
-        }
-        img {
-            -ms-interpolation-mode: bicubic;
-            border: 0;
-            height: auto;
-            line-height: 100%;
-            outline: none;
-            text-decoration: none;
-        }
-        
-        /* Basic styles */
-        body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            background-color: #f4f4f4;
-            font-family: Arial, sans-serif;
-        }
-        
-        .header-text {
-            font-size: 24px;
-            font-weight: bold;
-            color: #ffffff;
-            margin: 0;
-        }
-        
-        .error-title {
-            font-size: 18px;
-            font-weight: bold;
-            color: #721c24;
-            margin: 0 0 10px 0;
-        }
-        
-        .error-message-text {
-            font-size: 14px;
-            color: #721c24;
-            margin: 0;
-            line-height: 1.4;
-        }
-        
-        .details-title {
-            font-size: 16px;
-            font-weight: bold;
-            color: #495057;
-            margin: 0 0 15px 0;
-        }
-        
-        .details-text {
-            font-size: 13px;
-            color: #6c757d;
-            margin: 0;
-            line-height: 1.4;
-        }
-        
-        .footer-text {
-            font-size: 12px;
-            color: #ffffff;
-            margin: 0;
-        }
+        img { border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
     </style>
 </head>
-<body>
-    <!-- Main container table -->
-    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f4f4f4;">
+
+<body style="width:100%; margin:0; padding:0; background-color:#141312;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color:#141312;">
         <tr>
-            <td align="center" style="padding: 20px 0;">
-                <!-- Email content table -->
-                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="max-width: 600px; background-color: #ffffff;">
-                    
+            <td align="center" style="padding:20px 0;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600"
+                    style="max-width:600px; width:100%; background-color:#1c1b19;">
+
                     <!-- Header -->
                     <tr>
-                        <td bgcolor="#dc3545" style="padding: 20px; text-align: center;">
-                            <h1 class="header-text">🚨 Server Error Alert</h1>
+                        <td style="padding:32px 0; text-align:center; background-color:#0f0e0d;">
+                            <p style="margin:0; font-family:Arial, Helvetica, sans-serif; font-size:11px; letter-spacing:3px; text-transform:uppercase; color:#c45c5c;">
+                                ERROR ALERT
+                            </p>
+                            <table role="presentation" width="40" cellpadding="0" cellspacing="0" border="0" style="margin:14px auto 0 auto;">
+                                <tr>
+                                    <td style="height:1px; background-color:#5c3333; font-size:1px; line-height:1px;">&nbsp;</td>
+                                </tr>
+                            </table>
                         </td>
                     </tr>
-                    
-                    <!-- Content -->
+
+                    <!-- Title -->
                     <tr>
-                        <td style="padding: 30px 20px;">
-                            
-                            <!-- Error message table -->
-                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8d7da; border: 1px solid #f5c6cb;">
-                                <tr>
-                                    <td style="padding: 15px;">
-                                        <h2 class="error-title">HTTP 500 - Internal Server Error</h2>
-                                        <p class="error-message-text"><%= message %></p>
-                                    </td>
-                                </tr>
-                            </table>
-                            
-                            <!-- Spacer -->
-                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                                <tr>
-                                    <td style="height: 20px; font-size: 1px; line-height: 1px;">&nbsp;</td>
-                                </tr>
-                            </table>
-                            
-                            <!-- Details table -->
-                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f8f9fa; border: 1px solid #dee2e6;">
-                                <tr>
-                                    <td style="padding: 15px;">
-                                        <h3 class="details-title">Error Details:</h3>
-                                        
-                                        <% if (options && options !== 'No additional details available') { %>
-                                            <% if (Array.isArray(options)) { %>
-                                                <% options.forEach(function(option, index) { %>
-                                                    <!-- Detail item -->
-                                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                                                        <tr>
-                                                            <td style="padding: 5px 0; border-bottom: 1px solid #e9ecef;">
-                                                                <p class="details-text"><%= option %></p>
-                                                            </td>
-                                                        </tr>
-                                                    </table>
-                                                <% }); %>
-                                            <% } else { %>
-                                                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                                                    <tr>
-                                                        <td style="padding: 5px 0;">
-                                                            <p class="details-text"><%= options %></p>
-                                                        </td>
-                                                    </tr>
-                                                </table>
-                                            <% } %>
-                                        <% } else { %>
-                                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                                                <tr>
-                                                    <td style="padding: 5px 0;">
-                                                        <p class="details-text">No additional details available</p>
-                                                    </td>
-                                                </tr>
-                                            </table>
-                                        <% } %>
-                                        
-                                    </td>
-                                </tr>
-                            </table>
-                            
+                        <td style="padding:36px 40px 24px 40px; text-align:center;">
+                            <h1 style="font-family:Georgia, 'Times New Roman', Times, serif; font-size:28px; font-weight:normal; color:#e8e4df; margin:0 0 8px 0; letter-spacing:1px;">
+                                HTTP 500
+                            </h1>
+                            <p style="font-family:Georgia, 'Times New Roman', Times, serif; font-size:14px; color:#807a73; margin:0;">
+                                Internal Server Error
+                            </p>
                         </td>
                     </tr>
-                    
+
+                    <!-- Error Message -->
+                    <tr>
+                        <td style="padding:0 40px 24px 40px;">
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                                style="background-color:#2a1a1a; border:1px solid #4a2a2a;">
+                                <tr>
+                                    <td style="padding:20px 24px;">
+                                        <p style="font-family:Arial, Helvetica, sans-serif; font-size:11px; color:#c45c5c; letter-spacing:1px; text-transform:uppercase; margin:0 0 8px 0;">
+                                            MESSAGE
+                                        </p>
+                                        <p style="font-family:'Courier New', Courier, monospace; font-size:13px; color:#e8a0a0; margin:0; line-height:1.6;">
+                                            <%= message %>
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Details -->
+                    <tr>
+                        <td style="padding:0 40px 32px 40px;">
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                                style="background-color:#0f0e0d; border:1px solid #2a2826;">
+                                <tr>
+                                    <td style="padding:20px 24px 12px 24px;">
+                                        <p style="font-family:Arial, Helvetica, sans-serif; font-size:11px; color:#807a73; letter-spacing:1px; text-transform:uppercase; margin:0 0 12px 0;">
+                                            DETAILS
+                                        </p>
+                                    </td>
+                                </tr>
+
+                                <% if (options && options !== 'No additional details available') { %>
+                                    <% if (Array.isArray(options)) { %>
+                                        <% options.forEach(function(option, index) { %>
+                                        <tr>
+                                            <td style="padding:0 24px 12px 24px;<%= index > 0 ? ' border-top:1px solid #2a2826; padding-top:12px;' : '' %>">
+                                                <p style="font-family:'Courier New', Courier, monospace; font-size:12px; color:#b5afa8; margin:0; line-height:1.5;">
+                                                    <%= option %>
+                                                </p>
+                                            </td>
+                                        </tr>
+                                        <% }); %>
+                                    <% } else { %>
+                                        <tr>
+                                            <td style="padding:0 24px 20px 24px;">
+                                                <p style="font-family:'Courier New', Courier, monospace; font-size:12px; color:#b5afa8; margin:0; line-height:1.5;">
+                                                    <%= options %>
+                                                </p>
+                                            </td>
+                                        </tr>
+                                    <% } %>
+                                <% } else { %>
+                                    <tr>
+                                        <td style="padding:0 24px 20px 24px;">
+                                            <p style="font-family:'Courier New', Courier, monospace; font-size:12px; color:#807a73; margin:0; font-style:italic;">
+                                                No additional details available
+                                            </p>
+                                        </td>
+                                    </tr>
+                                <% } %>
+                            </table>
+                        </td>
+                    </tr>
+
                     <!-- Footer -->
                     <tr>
-                        <td bgcolor="#6c757d" style="padding: 20px; text-align: center;">
-                            <p class="footer-text">This is an automated error notification from the application server.</p>
-                            <p class="footer-text">Please investigate and resolve this issue as soon as possible.</p>
+                        <td style="padding:0 40px;">
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                                <tr>
+                                    <td style="height:1px; background-color:#2a2826; font-size:1px; line-height:1px;">&nbsp;</td>
+                                </tr>
+                            </table>
                         </td>
                     </tr>
-                    
+                    <tr>
+                        <td style="padding:20px 40px 28px 40px; text-align:center;">
+                            <p style="font-family:Arial, Helvetica, sans-serif; font-size:11px; color:#807a73; margin:0 0 4px 0;">
+                                Automated error notification from the application server.
+                            </p>
+                            <p style="font-family:Arial, Helvetica, sans-serif; font-size:11px; color:#807a73; margin:0;">
+                                Please investigate and resolve this issue promptly.
+                            </p>
+                        </td>
+                    </tr>
+
                 </table>
             </td>
         </tr>
     </table>
 </body>
+
 </html>
