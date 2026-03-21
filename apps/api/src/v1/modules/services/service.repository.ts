@@ -170,7 +170,7 @@ export class ServiceRepository extends BaseRepository {
     }
 
     this.requestService.pagination =
-      await BaseRepository.handleOffsetPagination(query, filters);
+      await this.handleOffsetPagination(query, filters);
     query.orderBy('created_at', 'DESC');
 
     return query;
@@ -197,11 +197,11 @@ export class ServiceRepository extends BaseRepository {
     const featuresMap = new Map<number, Pick<ServiceFeatureSchema, 'id' | 'title'>>();
     const termsMap = new Map<number, Pick<ServiceTermSchema, 'id' | 'title'>>();
 
-    let portfolio:{
-      id:number,
-      title:string,
-      slug:string
-    }|undefined = undefined;
+    let portfolio: {
+      id: number,
+      title: string,
+      slug: string
+    } | undefined = undefined;
 
     for (const row of result) {
       if (row.sf_id && !featuresMap.has(row.sf_id)) {
@@ -218,7 +218,7 @@ export class ServiceRepository extends BaseRepository {
         });
       }
 
-      if(!portfolio && row.p_id){
+      if (!portfolio && row.p_id) {
         portfolio = {
           id: row.p_id,
           slug: row.p_slug,

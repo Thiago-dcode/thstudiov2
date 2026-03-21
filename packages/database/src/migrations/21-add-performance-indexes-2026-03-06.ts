@@ -70,10 +70,17 @@ const up = async () => {
   await Schema.table('clients').createIndexIfNotExists(
     'user_id'
   );
+
+  // Addresses - geo queries (bounding-box pre-filter on lat/lng)
+  await Schema.table('addresses').createIndexIfNotExists('latitude');
+  await Schema.table('addresses').createIndexIfNotExists('longitude');
 };
 
 const down = async () => {
   // Drop indexes in reverse order
+
+  await Schema.table('addresses').dropIndexIfExists('idx_addresses_longitude');
+  await Schema.table('addresses').dropIndexIfExists('idx_addresses_latitude');
 
   await Schema.table('clients').dropIndexIfExists('idx_clients_user_id');
   await Schema.table('services').dropIndexIfExists('idx_services_user_id');

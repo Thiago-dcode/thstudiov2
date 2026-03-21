@@ -101,7 +101,7 @@ export class CategoriesRepository extends BaseRepository {
       query.where('parent_id', '=', filters.parent_id);
     }
     this.requestService.pagination =
-      await BaseRepository.handleOffsetPagination(query, filters);
+      await this.handleOffsetPagination(query, filters);
 
     if (filters.random) {
       query.random();

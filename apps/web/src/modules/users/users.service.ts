@@ -1,6 +1,6 @@
 import { BaseService } from "@/lib/services/base.service";
 import { fetchApi } from "@/lib/facade/fetchApi";
-import { BaseUser, CompactUser, UpdateUserInputWithAssets, UpdateUserPasswordInput, User, UserMetrics, UserProfile } from "@repo/common-lib/types/user";
+import { ArtistCard, ArtistIndexRequest, BaseUser, CompactUser, UpdateUserInputWithAssets, UpdateUserPasswordInput, User, UserMetrics, UserProfile } from "@repo/common-lib/types/user";
 import { ApiResponse } from "@repo/common-lib/types/response";
 import { CategoryBase } from "@repo/common-lib/types/category";
 import { UserExtraData } from "@repo/common-lib/types/user-extra-data";
@@ -135,6 +135,12 @@ export class UserService extends BaseService {
                 }
             }
         })
+    }
+
+    async findAll(params: ArtistIndexRequest): Promise<ApiResponse<ArtistCard[]>> {
+        return await this.fetchApi.get({
+            resource: queryParamBuilder('', params),
+        });
     }
 
 }

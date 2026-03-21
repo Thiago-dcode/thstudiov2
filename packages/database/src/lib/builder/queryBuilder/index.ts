@@ -93,6 +93,15 @@ export class QueryBuilder extends BaseBuilder {
   /** Order by for the query */
   protected _orderBy: string = '';
 
+  /** Geo filter for radius-based queries */
+  protected _geoFilter: {
+    latColumn: string;
+    lngColumn: string;
+    lat: number;
+    lng: number;
+    radiusKm: number;
+  } | null = null;
+
   // ============================================================================
   // CONSTRUCTOR
   // ============================================================================
@@ -124,13 +133,16 @@ export class QueryBuilder extends BaseBuilder {
   }
   public async count(resetQuery = true): Promise<number> {
     const selectTemp = this._select;
+    const orderByTemp = this._orderBy;
     this._select = `count(${this.tableName}.*)`;
+    this._orderBy = '';
     this.buildSelectQuery();
     const result = await getClient().query(this.query, this.values);
    if(resetQuery) this.reset();
    else{
     this.query = '';
-    this._select= selectTemp;
+    this._select = selectTemp;
+    this._orderBy = orderByTemp;
    }
     return parseInt(result.rows[0].count);
   }
@@ -500,6 +512,55 @@ private  handleBuildGet(columns: string[], values: SqlValue[], select: string[] 
     return this;
   }
 
+  /**
+   * Filter rows within a radius (km) from a lat/lng point.
+   * Uses a bounding-box pre-filter + Haversine for precision.
+   */
+  public withinRadius(
+    latColumn: string,
+    lngColumn: string,
+    lat: number,
+    lng: number,
+    radiusKm: number,
+  ) {
+    this._geoFilter = { latColumn, lngColumn, lat, lng, radiusKm };
+    return this;
+  }
+
+  /**
+   * Order results by Haversine distance from a lat/lng point.
+   */
+  public orderByDistance(
+    latColumn: string,
+    lngColumn: string,
+    lat: number,
+    lng: number,
+    order: 'ASC' | 'DESC' = 'ASC',
+  ) {
+    this.operationsChain.push('orderBy');
+    const latCol = this.buildColumn(latColumn);
+    const lngCol = this.buildColumn(lngColumn);
+    this._orderBy = `${this.geoHaversineExpr(latCol, lngCol, lat, lng)} ${order}`;
+    return this;
+  }
+
+  /**
+   * Add the Haversine distance (km) as a computed column in SELECT.
+   */
+  public selectDistance(
+    latColumn: string,
+    lngColumn: string,
+    lat: number,
+    lng: number,
+    alias = 'distance_km',
+  ) {
+    const latCol = this.buildColumn(latColumn);
+    const lngCol = this.buildColumn(lngColumn);
+    const expr = `${this.geoHaversineExpr(latCol, lngCol, lat, lng)} AS ${alias}`;
+    this._select = this._select === '*' ? `*, ${expr}` : `${this._select}, ${expr}`;
+    return this;
+  }
+
   protected setSoftDelete(){
     if(this._softDeletes){
       this.where(this._softDeleteCol,'=',null);
@@ -518,6 +579,7 @@ private  handleBuildGet(columns: string[], values: SqlValue[], select: string[] 
     this.setSoftDelete();
  
     this.query += this.buildWheresQuery(this.wheres);
+    this.query += this.buildGeoFilterQuery();
     if (this._orderBy) {
       this.query += ` \nORDER BY ${this._orderBy}`;
     }
@@ -527,6 +589,33 @@ private  handleBuildGet(columns: string[], values: SqlValue[], select: string[] 
     if (this._offset) {
       this.query += ` \nOFFSET ${this._offset}`;
     }
+  }
+
+  private geoHaversineExpr(latCol: string, lngCol: string, lat: number, lng: number): string {
+    return (
+      `(2 * 6371 * asin(sqrt(` +
+      `power(sin(radians(${lat} - ${latCol}) / 2), 2) + ` +
+      `cos(radians(${lat})) * cos(radians(${latCol})) * ` +
+      `power(sin(radians(${lng} - ${lngCol}) / 2), 2))))`
+    );
+  }
+
+  protected buildGeoFilterQuery(): string {
+    if (!this._geoFilter) return '';
+    const { latColumn, lngColumn, lat, lng, radiusKm } = this._geoFilter;
+    const latCol = this.buildColumn(latColumn);
+    const lngCol = this.buildColumn(lngColumn);
+
+    const latDelta = radiusKm / 111.0;
+    const lngDelta = radiusKm / (111.0 * Math.cos((lat * Math.PI) / 180));
+
+    const prefix = this.wheres.length > 0 ? ' \nAND' : ' \nWHERE';
+
+    return (
+      `${prefix} ${latCol} BETWEEN ${lat - latDelta} AND ${lat + latDelta}` +
+      ` \nAND ${lngCol} BETWEEN ${lng - lngDelta} AND ${lng + lngDelta}` +
+      ` \nAND ${this.geoHaversineExpr(latCol, lngCol, lat, lng)} <= ${radiusKm}`
+    );
   }
 
   /**
@@ -750,6 +839,7 @@ offset = isNull ? offset : offset + 1;
     this._limit = 0;
     this._offset = 0;
     this._orderBy = '';
+    this._geoFilter = null;
   }
 
   // ============================================================================

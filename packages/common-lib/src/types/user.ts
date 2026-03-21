@@ -2,6 +2,7 @@ import { EnumType } from "../constants/enums";
 import { UserSchema, BaseUserSchema } from "../schemas/user";
 import { CategoryBase } from "./category";
 import { FullPlan } from "./plan";
+import { OffsetPaginationRequest } from "./request";
 import { UserExtraData } from "./user-extra-data";
 
 // BaseUser derived from BaseUserSchema (without password, timestamps, and extended profile fields)
@@ -56,4 +57,35 @@ export type UpdateUserPasswordInput = {
 export type UserMetrics = {
   extra_data: UserExtraData,
   active_plan: FullPlan
+}
+
+/** Query for listing artists; the API always applies offset pagination (paginated is forced server-side). */
+export type ArtistIndexRequest = OffsetPaginationRequest & {
+  search?: string;
+  categories?: number[];
+  /** Matches `addresses.city` (case-insensitive substring on API). */
+  city?: string;
+  /** Matches `addresses.state` (case-insensitive substring on API). */
+  state?: string;
+  /** Matches `addresses.country` (case-insensitive substring on API). */
+  country?: string;
+  lat?: number;
+  lng?: number;
+  radius_km?: number;
+}
+
+export type ArtistCard = {
+  id: number;
+  username: string;
+  name?: string | null;
+  surname?: string | null;
+  avatar?: string;
+  profession?: string | null;
+  short_biography?: string | null;
+  address: {
+    city?: string | null;
+    state?: string | null;
+    country?: string | null;
+  } | null;
+  categories: Pick<CategoryBase, 'id' | 'name'>[];
 }

@@ -201,7 +201,7 @@ export class PortfolioRepository extends BaseRepository {
     }
 
     this.requestService.pagination =
-      await BaseRepository.handleOffsetPagination(query, filters);
+      await this.handleOffsetPagination(query, filters);
     query.orderBy('created_at', 'DESC');
 
     return query;

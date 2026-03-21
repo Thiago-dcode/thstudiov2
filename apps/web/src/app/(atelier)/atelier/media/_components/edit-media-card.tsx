@@ -464,10 +464,9 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
                 <div className="flex items-center gap-1">
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="primary"
                     size="sm"
                     className={cn(
-                      "bg-accent text-accent-fg border-accent hover:bg-accent/90 hover:text-accent-fg",
                       "transition-colors duration-200 h-8 px-2.5",
                       !hasEnoughCredits && "opacity-50 cursor-not-allowed"
                     )}

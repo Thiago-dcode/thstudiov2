@@ -6,6 +6,8 @@ import {
   UpdateUserInput,
   User,
   UserProfile,
+  ArtistIndexRequest,
+  ArtistCard,
 } from '@repo/common-lib/types/user';
 import { BaseUser, BaseUserWithSecrets } from '@repo/common-lib/types/user';
 import {
@@ -15,10 +17,14 @@ import {
   UserSchemaColumns,
   UserProfileSchema,
   UserProfileSchemaColumns,
+  ArtistSearchSchema,
+  ArtistSearchSchemaColumns,
 } from '@repo/common-lib/schemas/user';
 import { EnumType } from '@repo/common-lib/constants/enums';
 import { CategoryBase } from '@repo/common-lib/types/category';
 import { ProfileAddress } from '@repo/common-lib/types/user';
+import { RequestService } from 'src/common/services/request.service';
+import { QueryBuilder } from '@repo/database/queryBuilder';
 
 @Injectable()
 export class UserRepository extends BaseRepository {
@@ -60,7 +66,21 @@ export class UserRepository extends BaseRepository {
     'users.biography',
   ];
 
-  constructor() {
+  private readonly ARTIST_SEARCH_COLUMNS: ArtistSearchSchemaColumns[] = [
+    'users.id',
+    'users.username',
+    'users.name',
+    'users.surname',
+    'users.avatar',
+    'users.profession',
+    'users.short_biography',
+    'addresses.id as a_id',
+    'addresses.city',
+    'addresses.state',
+    'addresses.country',
+  ];
+
+  constructor(private readonly requestService: RequestService) {
     super('users');
   }
   async findByIdCompact(id: number): Promise<CompactUser> {
@@ -297,11 +317,121 @@ export class UserRepository extends BaseRepository {
       categories: Array.from(categoriesMap.values()),
     };
   }
-  // update(id: number, updatePlanDto: UpdatePlanDto) {
-  //   return `This action updates a #${id} plan`;
-  // }
+  async findAllArtists(filters: ArtistIndexRequest): Promise<ArtistCard[]> {
+    const query = this.query()
+      .select(this.ARTIST_SEARCH_COLUMNS)
+      .where('users.banned', '=', false)
+      .where('users.is_active', '=', true)
+      .join('id', 'addresses', 'user_id', 'LEFT');
 
-  // remove(id: number) {
-  //   return `This action removes a #${id} plan`;
-  // }
+    await this.applyArtistFilters(filters, query);
+
+    const rows = await query.get<ArtistSearchSchema[]>();
+    if (!rows.length) return [];
+
+    const userIds = rows.map((r) => r.id);
+    const categoriesMap = await this.fetchCategoriesForUsers(userIds);
+
+    return this.formatArtistCards(rows, categoriesMap);
+  }
+
+  private async applyArtistFilters(
+    filters: ArtistIndexRequest,
+    query: QueryBuilder,
+  ): Promise<void> {
+    if (filters.search) {
+      const search = filters.search.toLowerCase();
+      query.whereGroup([
+        ['users.username', 'ILIKE', `%${search}%`, 'where'],
+        ['users.name', 'ILIKE', `%${search}%`, 'orWhere'],
+        ['users.surname', 'ILIKE', `%${search}%`, 'orWhere'],
+      ]);
+    }
+
+    if (filters.categories?.length) {
+      const pivotRows = await this.query()
+        .rawSelect('DISTINCT user_categories.user_id')
+        .join('id', 'user_categories', 'user_id', 'INNER')
+        .whereIn('user_categories.category_id', filters.categories)
+        .get<{ user_id: number }[]>();
+
+      const userIds = pivotRows.map((r) => r.user_id);
+      if (userIds.length) {
+        query.whereIn('users.id', userIds);
+      } else {
+        query.where('users.id', '=', -1);
+      }
+    }
+
+    const cityFilter = filters.city?.trim();
+    if (cityFilter) {
+      query.where('addresses.city', 'ILIKE', `%${cityFilter}%`);
+    }
+
+    const stateFilter = filters.state?.trim();
+    if (stateFilter) {
+      query.where('addresses.state', 'ILIKE', `%${stateFilter}%`);
+    }
+
+    const countryFilter = filters.country?.trim();
+    if (countryFilter) {
+      query.where('addresses.country', 'ILIKE', `%${countryFilter}%`);
+    }
+
+    if (filters.lat != null && filters.lng != null) {
+      const radius = filters.radius_km ?? 50;
+      query
+        .withinRadius('addresses.latitude', 'addresses.longitude', filters.lat, filters.lng, radius)
+        .orderByDistance('addresses.latitude', 'addresses.longitude', filters.lat, filters.lng, 'ASC');
+    }
+
+    this.requestService.pagination = await this.handleOffsetPagination(query, {
+      ...filters,
+      paginated: true,
+    });
+  }
+
+  private async fetchCategoriesForUsers(
+    userIds: number[],
+  ): Promise<Map<number, Pick<CategoryBase, 'id' | 'name'>[]>> {
+    const rows = await this.query()
+      .rawSelect('user_categories.user_id, categories.id, categories.name')
+      .join('id', 'user_categories', 'user_id', 'INNER')
+      .join('user_categories.category_id', 'categories', 'id', 'INNER')
+      .whereIn('user_categories.user_id', userIds)
+      .get<{ user_id: number; id: number; name: string }[]>();
+
+    const map = new Map<number, Pick<CategoryBase, 'id' | 'name'>[]>();
+    for (const row of rows) {
+      if (!map.has(row.user_id)) map.set(row.user_id, []);
+      const cats = map.get(row.user_id)!;
+      if (!cats.some((c) => c.id === row.id)) {
+        cats.push({ id: row.id, name: row.name });
+      }
+    }
+    return map;
+  }
+
+  private formatArtistCards(
+    rows: ArtistSearchSchema[],
+    categoriesMap: Map<number, Pick<CategoryBase, 'id' | 'name'>[]>,
+  ): ArtistCard[] {
+    return rows.map((row) => ({
+      id: row.id,
+      username: row.username,
+      name: row.name ?? null,
+      surname: row.surname ?? null,
+      avatar: row.avatar,
+      profession: row.profession ?? null,
+      short_biography: row.short_biography ?? null,
+      address: row.a_id != null
+        ? {
+            city: row.city ?? null,
+            state: row.state ?? null,
+            country: row.country ?? null,
+          }
+        : null,
+      categories: categoriesMap.get(row.id) ?? [],
+    }));
+  }
 }

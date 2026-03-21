@@ -6,11 +6,19 @@
     "outDir": "dist",
     "tsBuildInfoFile": "dist/.tsbuildinfo"
   },
+  "module": "esnext",
+  "moduleResolution": "bundler",
   "paths": {
     "@": [
       "./src"
     ]
   },
-  "include": ["src", "jest.config.ts"],
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "src",
+    "jest.config.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }

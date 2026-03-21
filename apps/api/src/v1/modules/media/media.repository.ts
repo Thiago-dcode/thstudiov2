@@ -141,7 +141,7 @@ export class MediaRepository extends BaseRepository {
       query.where('blocked', '=', filters.blocked);
     }
     this.requestService.pagination =
-      await BaseRepository.handleOffsetPagination(query, filters);
+      await this.handleOffsetPagination(query, filters);
     query.orderBy('created_at', 'DESC')
     return query;
   }

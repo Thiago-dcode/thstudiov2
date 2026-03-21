@@ -89,3 +89,27 @@ const tablesUserProfile = [
 
 export type UserProfileSchemaColumns = TableColumn<typeof tablesUserProfile, UserProfileSchema>;
 
+// ==================== ARTIST SEARCH SCHEMA ====================
+// Joins: users + addresses (1:1, no row multiplication)
+// Collisions resolved by alias prefix: a_ for address id
+export type ArtistSearchSchema = {
+  id: number;
+  username: string;
+  name?: string | null;
+  surname?: string | null;
+  avatar?: string;
+  profession?: string | null;
+  short_biography?: string | null;
+  a_id?: number | null;
+  city?: string | null;
+  state?: string | null;
+  country?: string | null;
+};
+
+const tablesArtistSearch = [
+  TABLES_ENUM.USERS,
+  TABLES_ENUM.ADDRESSES,
+] as const;
+
+export type ArtistSearchSchemaColumns = TableColumn<typeof tablesArtistSearch, ArtistSearchSchema>;
+

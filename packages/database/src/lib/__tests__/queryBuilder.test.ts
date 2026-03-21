@@ -1396,17 +1396,15 @@ describe('QueryBuilder', () => {
       expect(queryBuilder['query']).toContain('$1,$2,$3,$4,$5,$6,$7,$8,$9,$10');
     });
 
-    it('should handle empty columns and values arrays', async () => {
+    it('should throw error for empty columns and values arrays', async () => {
       await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
       const columns: string[] = [];
       const values: any[] = [];
 
-      queryBuilder['buildInsertQuery'](columns, values);
-
-      expect(queryBuilder['query']).toBe(
-        `INSERT INTO ${TABLE_NAME} () VALUES ()`,
+      expect(() => queryBuilder['buildInsertQuery'](columns, values)).toThrow(
+        'Columns and values must have the same length and greater than 1',
       );
     });
   });
@@ -1718,7 +1716,7 @@ describe('QueryBuilder', () => {
       expect(queryBuilder['query']).toContain('WHERE');
     });
 
-    it('should handle empty columns and values arrays', async () => {
+    it('should throw error for empty columns and values arrays', async () => {
       await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
@@ -1726,10 +1724,9 @@ describe('QueryBuilder', () => {
       const values: any[] = [];
 
       queryBuilder.where('id', '=', 1);
-      queryBuilder['buildUpdateQuery'](columns, values);
 
-      expect(queryBuilder['query']).toBe(
-        `UPDATE ${TABLE_NAME} SET  \nWHERE ${TABLE_NAME}.id = $1`,
+      expect(() => queryBuilder['buildUpdateQuery'](columns, values)).toThrow(
+        'Columns and values must have the same length and greater than 1',
       );
     });
   });
@@ -2240,6 +2237,364 @@ describe('QueryBuilder', () => {
     });
   });
 
+  describe('Geo Filtering', () => {
+    let queryBuilder: QueryBuilder;
+    let postgresConfig: DatabaseConfig;
+
+    beforeEach(async () => {
+      postgresConfig = {
+        host: 'localhost',
+        port: 5432,
+        username: 'testuser',
+        password: 'testpass',
+        database: 'testdb',
+        client: 'postgres',
+      };
+      await initClient(postgresConfig);
+      queryBuilder = new QueryBuilder(TABLE_NAME);
+    });
+
+    afterEach(() => {
+      queryBuilder['reset']();
+    });
+
+    describe('withinRadius', () => {
+      it('should set geo filter properties correctly', () => {
+        // Act
+        queryBuilder.withinRadius('latitude', 'longitude', 40.7128, -74.006, 50);
+
+        // Assert
+        expect(queryBuilder['_geoFilter']).toEqual({
+          latColumn: 'latitude',
+          lngColumn: 'longitude',
+          lat: 40.7128,
+          lng: -74.006,
+          radiusKm: 50,
+        });
+      });
+
+      it('should support method chaining', () => {
+        // Act
+        const result = queryBuilder
+          .select(['id', 'name'])
+          .withinRadius('lat', 'lng', 40.7128, -74.006, 10);
+
+        // Assert
+        expect(result).toBe(queryBuilder);
+        expect(queryBuilder['_geoFilter']).toEqual({
+          latColumn: 'lat',
+          lngColumn: 'lng',
+          lat: 40.7128,
+          lng: -74.006,
+          radiusKm: 10,
+        });
+      });
+
+      it('should build geo filter query with WHERE clause', () => {
+        // Arrange - Barcelona coordinates with 25km radius
+        queryBuilder.withinRadius('latitude', 'longitude', 41.3851, 2.1734, 25);
+
+        // Act
+        const result = queryBuilder['buildGeoFilterQuery']();
+
+        // Assert - should have bounding box + Haversine filter
+        expect(result).toContain('latitude BETWEEN');
+        expect(result).toContain('longitude BETWEEN');
+        expect(result).toContain('6371'); // Earth radius in km
+        expect(result).toContain('asin(sqrt'); // Haversine formula
+        expect(result).toContain('<= 25'); // Radius limit
+      });
+
+      it('should build geo filter query without existing WHERE (uses WHERE prefix)', () => {
+        // Arrange
+        queryBuilder.withinRadius('lat', 'lng', 40.7128, -74.006, 50);
+
+        // Act
+        const result = queryBuilder['buildGeoFilterQuery']();
+
+        // Assert - should start with WHERE when no other wheres exist
+        expect(result).toMatch(/^ \nWHERE/);
+      });
+
+      it('should build geo filter query with existing WHERE (uses AND prefix)', () => {
+        // Arrange
+        queryBuilder.where('status', '=', 'active');
+        queryBuilder.withinRadius('lat', 'lng', 40.7128, -74.006, 50);
+
+        // Act
+        const result = queryBuilder['buildGeoFilterQuery']();
+
+        // Assert - should start with AND when other wheres exist
+        expect(result).toMatch(/^ \nAND/);
+      });
+
+      it('should return empty string when no geo filter set', () => {
+        // Act
+        const result = queryBuilder['buildGeoFilterQuery']();
+
+        // Assert
+        expect(result).toBe('');
+      });
+
+      it('should use table-prefixed column names', () => {
+        // Arrange
+        queryBuilder.withinRadius('latitude', 'longitude', 41.3851, 2.1734, 10);
+
+        // Act
+        const result = queryBuilder['buildGeoFilterQuery']();
+
+        // Assert
+        expect(result).toContain(`${TABLE_NAME}.latitude`);
+        expect(result).toContain(`${TABLE_NAME}.longitude`);
+      });
+    });
+
+    describe('orderByDistance', () => {
+      it('should set ORDER BY with Haversine formula ASC', () => {
+        // Act
+        queryBuilder.orderByDistance('latitude', 'longitude', 40.7128, -74.006);
+
+        // Assert
+        expect(queryBuilder['_orderBy']).toContain('6371');
+        expect(queryBuilder['_orderBy']).toContain('asin(sqrt');
+        expect(queryBuilder['_orderBy']).toContain('ASC');
+      });
+
+      it('should set ORDER BY with Haversine formula DESC', () => {
+        // Act
+        queryBuilder.orderByDistance('lat', 'lng', 40.7128, -74.006, 'DESC');
+
+        // Assert
+        expect(queryBuilder['_orderBy']).toContain('DESC');
+      });
+
+      it('should support method chaining', () => {
+        // Act
+        const result = queryBuilder
+          .select(['id', 'name'])
+          .orderByDistance('lat', 'lng', 40.7128, -74.006);
+
+        // Assert
+        expect(result).toBe(queryBuilder);
+        expect(queryBuilder['_orderBy']).toContain('ASC');
+      });
+
+      it('should use table-prefixed column names', () => {
+        // Act
+        queryBuilder.orderByDistance('latitude', 'longitude', 41.3851, 2.1734);
+
+        // Assert
+        expect(queryBuilder['_orderBy']).toContain(`${TABLE_NAME}.latitude`);
+        expect(queryBuilder['_orderBy']).toContain(`${TABLE_NAME}.longitude`);
+      });
+    });
+
+    describe('selectDistance', () => {
+      it('should add distance column to SELECT with default alias', () => {
+        // Act
+        queryBuilder.selectDistance('latitude', 'longitude', 40.7128, -74.006);
+
+        // Assert
+        expect(queryBuilder['_select']).toContain('AS distance_km');
+        expect(queryBuilder['_select']).toContain('6371');
+        expect(queryBuilder['_select']).toContain('asin(sqrt');
+      });
+
+      it('should add distance column with custom alias', () => {
+        // Act
+        queryBuilder.selectDistance('lat', 'lng', 40.7128, -74.006, 'dist');
+
+        // Assert
+        expect(queryBuilder['_select']).toContain('AS dist');
+      });
+
+      it('should append to existing SELECT columns', () => {
+        // Arrange
+        queryBuilder.select(['id', 'name']);
+        queryBuilder.selectDistance('lat', 'lng', 40.7128, -74.006);
+
+        // Assert
+        expect(queryBuilder['_select']).toContain(`${TABLE_NAME}.id`);
+        expect(queryBuilder['_select']).toContain(`${TABLE_NAME}.name`);
+        expect(queryBuilder['_select']).toContain('AS distance_km');
+      });
+
+      it('should work with default SELECT (*)', () => {
+        // Act
+        queryBuilder.selectDistance('lat', 'lng', 40.7128, -74.006);
+
+        // Assert
+        expect(queryBuilder['_select']).toBe('*, (2 * 6371 * asin(sqrt(power(sin(radians(40.7128 - test_table.lat) / 2), 2) + cos(radians(40.7128)) * cos(radians(test_table.lat)) * power(sin(radians(-74.006 - test_table.lng) / 2), 2)))) AS distance_km');
+      });
+
+      it('should support method chaining', () => {
+        // Act
+        const result = queryBuilder
+          .select(['id', 'name'])
+          .selectDistance('lat', 'lng', 40.7128, -74.006);
+
+        // Assert
+        expect(result).toBe(queryBuilder);
+      });
+
+      it('should use table-prefixed column names', () => {
+        // Act
+        queryBuilder.selectDistance('latitude', 'longitude', 41.3851, 2.1734);
+
+        // Assert
+        expect(queryBuilder['_select']).toContain(`${TABLE_NAME}.latitude`);
+        expect(queryBuilder['_select']).toContain(`${TABLE_NAME}.longitude`);
+      });
+    });
+
+    describe('geoHaversineExpr', () => {
+      it('should generate correct Haversine formula SQL', () => {
+        // Act
+        const result = queryBuilder['geoHaversineExpr'](
+          `${TABLE_NAME}.lat`,
+          `${TABLE_NAME}.lng`,
+          40.7128,
+          -74.006,
+        );
+
+        // Assert
+        expect(result).toContain('2 * 6371'); // 2 * Earth radius
+        expect(result).toContain('asin(sqrt');
+        expect(result).toContain('power(sin(radians');
+        expect(result).toContain('cos(radians');
+        expect(result).toContain('40.7128'); // Target lat
+        expect(result).toContain('-74.006'); // Target lng
+        expect(result).toContain(`${TABLE_NAME}.lat`);
+        expect(result).toContain(`${TABLE_NAME}.lng`);
+      });
+    });
+
+    describe('Complete geo queries', () => {
+      it('should build complete SELECT with withinRadius only', () => {
+        // Arrange
+        queryBuilder
+          .select(['id', 'name', 'latitude', 'longitude'])
+          .withinRadius('latitude', 'longitude', 41.3851, 2.1734, 25);
+
+        // Act
+        queryBuilder['buildSelectQuery']();
+
+        // Assert
+        expect(queryBuilder['query']).toContain('SELECT');
+        expect(queryBuilder['query']).toContain('FROM');
+        expect(queryBuilder['query']).toContain('latitude BETWEEN');
+        expect(queryBuilder['query']).toContain('longitude BETWEEN');
+        expect(queryBuilder['query']).toContain('6371');
+        expect(queryBuilder['query']).toContain('<= 25');
+      });
+
+      it('should build complete SELECT with withinRadius and orderByDistance', () => {
+        // Arrange
+        queryBuilder
+          .select(['id', 'name'])
+          .withinRadius('lat', 'lng', 40.7128, -74.006, 50)
+          .orderByDistance('lat', 'lng', 40.7128, -74.006, 'ASC');
+
+        // Act
+        queryBuilder['buildSelectQuery']();
+
+        // Assert
+        expect(queryBuilder['query']).toContain('WHERE');
+        expect(queryBuilder['query']).toContain('ORDER BY');
+        expect(queryBuilder['query']).toContain('ASC');
+      });
+
+      it('should build complete SELECT with all geo methods', () => {
+        // Arrange
+        queryBuilder
+          .select(['id', 'name'])
+          .selectDistance('lat', 'lng', 40.7128, -74.006, 'distance')
+          .withinRadius('lat', 'lng', 40.7128, -74.006, 50)
+          .orderByDistance('lat', 'lng', 40.7128, -74.006, 'ASC')
+          .limit(20);
+
+        // Act
+        queryBuilder['buildSelectQuery']();
+
+        // Assert
+        expect(queryBuilder['query']).toContain('AS distance');
+        expect(queryBuilder['query']).toContain('WHERE');
+        expect(queryBuilder['query']).toContain('ORDER BY');
+        expect(queryBuilder['query']).toContain('LIMIT 20');
+      });
+
+      it('should build geo query with additional WHERE conditions', () => {
+        // Arrange
+        queryBuilder
+          .select(['id', 'name'])
+          .where('status', '=', 'active')
+          .where('category', '=', 'artist')
+          .withinRadius('lat', 'lng', 41.3851, 2.1734, 25);
+
+        // Act
+        queryBuilder['buildSelectQuery']();
+
+        // Assert
+        expect(queryBuilder['query']).toContain('status = $1');
+        expect(queryBuilder['query']).toContain('category = $2');
+        expect(queryBuilder['query']).toContain('AND');
+        expect(queryBuilder['query']).toContain('lat BETWEEN');
+        expect(queryBuilder['values']).toEqual(['active', 'artist']);
+      });
+
+      it('should reset geo filter after query execution', () => {
+        // Arrange
+        queryBuilder.withinRadius('lat', 'lng', 40.7128, -74.006, 50);
+
+        // Act
+        queryBuilder['reset']();
+
+        // Assert
+        expect(queryBuilder['_geoFilter']).toBeNull();
+      });
+    });
+
+    describe('Edge cases', () => {
+      it('should handle coordinates near equator', () => {
+        // Act
+        queryBuilder.withinRadius('lat', 'lng', 0, 0, 100);
+        const result = queryBuilder['buildGeoFilterQuery']();
+
+        // Assert
+        expect(result).toContain('lat BETWEEN -0.9'); // ~100/111
+        expect(result).toContain('lng BETWEEN -0.9'); // At equator, cos(0) = 1
+      });
+
+      it('should handle coordinates at high latitude', () => {
+        // Act - Northern Norway at ~70°N
+        queryBuilder.withinRadius('lat', 'lng', 70, 25, 50);
+        const result = queryBuilder['buildGeoFilterQuery']();
+
+        // Assert - longitude delta should be larger due to cos(lat) factor
+        expect(result).toContain('lat BETWEEN');
+        expect(result).toContain('lng BETWEEN');
+      });
+
+      it('should handle very small radius', () => {
+        // Act
+        queryBuilder.withinRadius('lat', 'lng', 41.3851, 2.1734, 0.1);
+        const result = queryBuilder['buildGeoFilterQuery']();
+
+        // Assert
+        expect(result).toContain('<= 0.1');
+      });
+
+      it('should handle large radius', () => {
+        // Act
+        queryBuilder.withinRadius('lat', 'lng', 41.3851, 2.1734, 500);
+        const result = queryBuilder['buildGeoFilterQuery']();
+
+        // Assert
+        expect(result).toContain('<= 500');
+      });
+    });
+  });
+
   describe('Soft Delete', () => {
     let queryBuilder: QueryBuilder;
     let postgresConfig: DatabaseConfig;
@@ -2257,18 +2612,18 @@ describe('QueryBuilder', () => {
     });
 
     describe('Constructor', () => {
-      it('should set softDeletes to false by default', async () => {
+      it('should set _softDeletes to false by default', async () => {
         await initClient(postgresConfig);
         queryBuilder = new QueryBuilder(TABLE_NAME);
 
-        expect(queryBuilder.softDeletes).toBe(false);
+        expect(queryBuilder['_softDeletes']).toBe(false);
       });
 
-      it('should set softDeletes to true when enabled', async () => {
+      it('should set _softDeletes to true when enabled', async () => {
         await initClient(postgresConfig);
         queryBuilder = new QueryBuilder(TABLE_NAME, true);
 
-        expect(queryBuilder.softDeletes).toBe(true);
+        expect(queryBuilder['_softDeletes']).toBe(true);
       });
 
       it('should use default soft delete column (deleted_at)', async () => {

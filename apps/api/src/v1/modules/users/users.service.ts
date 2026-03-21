@@ -25,8 +25,9 @@ import { UpdateUserPasswordRequest } from './requests/update-user-password.reque
 import { compare, hash } from '@repo/common-lib/utils/hash';
 import { AiService } from '../ai/ai.service';
 import { MediaModerationException } from 'src/common/exceptions/media-moderation-exception';
-import { UpdateUserInput } from '@repo/common-lib/types/user';
+import { ArtistCard, UpdateUserInput } from '@repo/common-lib/types/user';
 import { addMonths } from 'date-fns';
+import { IndexArtistsRequest } from './requests/index-artists.request';
 
 @Injectable()
 export class UserService {
@@ -42,8 +43,16 @@ export class UserService {
     private readonly aiService: AiService,
   ) { }
 
-  async findAll() {
-    return `This action returns all user`;
+  async findAll(filters: IndexArtistsRequest): Promise<ArtistCard[]> {
+    const artists = await this.userRepository.findAllArtists(filters);
+    await Promise.all(
+      artists.map(async (artist) => {
+        if (artist.avatar) {
+          artist.avatar = await this.helpers.getAsset(artist.avatar);
+        }
+      }),
+    );
+    return artists;
   }
 
   async getPublicId(userId: number) {

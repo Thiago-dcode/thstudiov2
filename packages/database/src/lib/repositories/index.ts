@@ -125,10 +125,10 @@ const result = await Promise.all(Object.values(_valuesToAttach).map(async(valueT
   return result;
 }
 
-protected static async handleOffsetPagination(query:QueryBuilder,pagination:OffsetPaginationRequest){
+protected async handleOffsetPagination(query:QueryBuilder,pagination:OffsetPaginationRequest){
   if(!pagination.paginated)return null;
   const count = await query.count(false);
-  query.orderBy('id', 'DESC');
+  query.orderBy(this.options.primaryKey ||'id', 'DESC');
   const perPage = pagination.per_page || 15;
   query.limit(perPage);
   const page = !pagination?.page || pagination.page <= 0 ? 1 : pagination.page;

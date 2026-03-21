@@ -24,6 +24,7 @@ import { FindUserRequest } from './requests/find-user.request';
 import { CategoriesService } from '../categories/categories.service';
 import { AddressService } from '../addresses/address.service';
 import { UpdateUserPasswordRequest } from './requests/update-user-password.request';
+import { IndexArtistsRequest } from './requests/index-artists.request';
 
 @Controller('users')
 export class UserController {
@@ -37,8 +38,8 @@ export class UserController {
   ) { }
   @Public()
   @Get()
-  async findAll() {
-    return this.userService.findAll();
+  async findAll(@Query() query: IndexArtistsRequest) {
+    return this.userService.findAll(query);
   }
 
   @Public()
