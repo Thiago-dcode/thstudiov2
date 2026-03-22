@@ -1,7 +1,7 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import Stripe from 'stripe';
-import { FactoryLogService } from '@repo/backend-lib/services/log-service';
+import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
 import { PlanSubscriptionsService } from '../plan-subscriptions/plan-subscriptions.service';
 import { PlanPricesService } from '../plan-prices/plan-prices.service';
 import { UserService } from '../users/users.service';
@@ -32,6 +32,7 @@ export class WebhookProcessor extends WorkerHost {
     private readonly planPriceService: PlanPricesService,
     private readonly userService: UserService,
     private readonly helpers: Helpers,
+    private readonly appLogService: LogService,
   ) {
     super();
   }
@@ -39,12 +40,16 @@ export class WebhookProcessor extends WorkerHost {
   async process(job: Job<Stripe.Event>): Promise<void> {
     const event = job.data;
 
-    switch (job.name) {
-      case JOB_STRIPE_WEBHOOK:
-        return await this.handleStripeEvent(event);
+    try {
+      switch (job.name) {
+        case JOB_STRIPE_WEBHOOK:
+          return await this.handleStripeEvent(event);
 
-      default:
-        throw new Error(`Job name "${job.name}" not recognized`);
+        default:
+          throw new Error(`Job name "${job.name}" not recognized`);
+      }
+    } finally {
+      await this.appLogService.flushAsync();
     }
   }
 

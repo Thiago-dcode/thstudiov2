@@ -44,6 +44,7 @@ import { AiProcessorModule } from './v1/modules/ai/ai-processor.module';
 import { UserContactsModule } from './v1/modules/user-contacts/user-contacts.module';
 import { ServiceModule } from './v1/modules/services/service.module';
 import { UserServiceModule } from './v1/modules/user-services/user-service.module';
+import { LocationModule } from './v1/modules/locations/location.module';
 const APP_MODULES = [
   AuthModule,
   UserModule,
@@ -65,6 +66,7 @@ const APP_MODULES = [
   UserContactsModule,
   ServiceModule,
   UserServiceModule,
+  LocationModule,
 ];
 @Module({
   imports: [

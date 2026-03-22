@@ -1,5 +1,5 @@
 import FormComponent from "@/lib/components/form-component"
-import { useUpdateCategories } from "../providers/update-user-categories.provider"
+import { useUpdateCategories } from "../providers/categories.provider"
 import { FadeInDiv } from "@repo/ui/components/custom/fadeInGrid"
 import { Button } from "@repo/ui/components/shadcn/button"
 import { cn } from "@repo/ui/lib/utils"

@@ -5,7 +5,7 @@ import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { UserExtraDataRepository } from './user-extra-data.repository';
 import { Query } from '@repo/database/facades';
 import { Media } from '@repo/common-lib/types/media';
-import { FactoryLogService } from '@repo/backend-lib/services/log-service';
+import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
 import {
   USER_METRICS_QUEUE,
   JOB_COMPUTE_USER_METRICS,
@@ -20,17 +20,22 @@ export class UserExtraDataProcessor extends WorkerHost {
   constructor(
     private readonly userExtraDataRepository: UserExtraDataRepository,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    private readonly appLogService: LogService,
   ) {
     super();
   }
 
   async process(job: Job<{ userId: number }>): Promise<any> {
-    switch (job.name) {
-      case JOB_COMPUTE_USER_METRICS:
-        return await this.computeUserMetrics(job.data.userId);
+    try {
+      switch (job.name) {
+        case JOB_COMPUTE_USER_METRICS:
+          return await this.computeUserMetrics(job.data.userId);
 
-      default:
-        throw new Error(`Job name "${job.name}" not recognized`);
+        default:
+          throw new Error(`Job name "${job.name}" not recognized`);
+      }
+    } finally {
+      await this.appLogService.flushAsync();
     }
   }
 

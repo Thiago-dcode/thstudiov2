@@ -8,14 +8,18 @@ import {
 
 @Processor(LOG_QUEUE)
 export class LogProcessor extends WorkerHost {
-  async process(job: Job): Promise<any> {
-    console.log(`[LogProcessor] Received job: ${job.name} (id: ${job.id})`);
-    switch (job.name) {
-      case JOB_FLUSH_LOGS:
-        return await this.flushLogs();
 
-      default:
-        throw new Error(`Job name "${job.name}" not recognized`);
+  async process(job: Job): Promise<any> {
+    try {
+      console.log(`[LogProcessor] Received job: ${job.name} (id: ${job.id})`);
+      switch (job.name) {
+        case JOB_FLUSH_LOGS:
+          return await this.flushLogs();
+
+        default:
+          throw new Error(`Job name "${job.name}" not recognized`);
+      }
+    } finally {
     }
   }
 

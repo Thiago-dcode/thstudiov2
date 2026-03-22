@@ -48,9 +48,12 @@ async function bootstrap() {
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   });
 
-  // Express-style route
-const expressApp = app.getHttpAdapter().getInstance();
-expressApp.get('/', (_, res) => {
+  // Bracket array params (e.g. categories[]=1&categories[]=2 from queryParamBuilder) require
+  // the extended parser; the default "simple" parser leaves the key as literal "categories[]".
+  const expressApp = app.getHttpAdapter().getInstance();
+  expressApp.set('query parser', 'extended');
+
+  expressApp.get('/', (_, res) => {
   res.json({ status: 'ok' });
 });
 

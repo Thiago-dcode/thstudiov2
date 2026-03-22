@@ -4,7 +4,7 @@ import { Job, Queue } from 'bullmq';
 import { OnEvent } from '@nestjs/event-emitter';
 import { UserStorageRequestRepository } from './user-storage-request.repository';
 import { CreateUserStorageRequestEvent } from './events/create-user-storage-request.event';
-import { FactoryLogService } from '@repo/backend-lib/services/log-service';
+import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
 import { CreateUserStorageRequestInput } from '@repo/common-lib/types/user-storage-request';
 import {
   CREATE_USER_STORAGE_REQUEST,
@@ -21,6 +21,7 @@ export class StorageRequestProcessor extends WorkerHost {
   constructor(
     private readonly userStorageRequestRepository: UserStorageRequestRepository,
     @InjectQueue(STORAGE_REQUESTS_QUEUE) private readonly storageQueue: Queue,
+    private readonly appLogService: LogService,
   ) {
     super();
   }
@@ -46,12 +47,16 @@ export class StorageRequestProcessor extends WorkerHost {
   // ==================== JOB PROCESSOR ====================
 
   async process(job: Job): Promise<any> {
-    switch (job.name) {
-      case JOB_CREATE_STORAGE_REQUEST:
-        return await this.createStorageRequest(job.data);
+    try {
+      switch (job.name) {
+        case JOB_CREATE_STORAGE_REQUEST:
+          return await this.createStorageRequest(job.data);
 
-      default:
-        throw new Error(`Job name "${job.name}" not recognized`);
+        default:
+          throw new Error(`Job name "${job.name}" not recognized`);
+      }
+    } finally {
+      await this.appLogService.flushAsync();
     }
   }
 

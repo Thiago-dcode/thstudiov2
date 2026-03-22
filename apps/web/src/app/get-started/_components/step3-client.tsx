@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { ButtonStepBackFunnel, ButtonSubmitFunnel, ContainerFormFunnel, useFunnel } from "./funnel.provider";
 
 import { UserCategoriesComponent } from "@/modules/categories/components/user-categories.component";
-import { useUpdateCategories } from "@/modules/categories/providers/update-user-categories.provider";
+import { useUpdateCategories } from "@/modules/categories/providers/categories.provider";
 
 
 export function Step3Client() {

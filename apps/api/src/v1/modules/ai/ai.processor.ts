@@ -7,7 +7,7 @@ import { LlmTokensUsageRepository } from './llm-tokens-usage.repository';
 import { MediaModerationRepository } from './media-moderation.repository';
 import { LlmTokensUsageEvent } from './events/llm-tokens-usage.event';
 import { MediaModerationEvent } from './events/media-moderation.event';
-import { FactoryLogService } from '@repo/backend-lib/services/log-service';
+import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
 import { MailService } from '@repo/backend-lib/services/mail-service';
 import { UpdateUserExtraDataMetricsEvent } from '../user-extra-data/events/update-user-extra-data-metrics.event';
 import { UserExtraDataRepository } from '../user-extra-data/user-extra-data.repository';
@@ -49,6 +49,7 @@ export class AiProcessor extends WorkerHost {
     private readonly planSubscriptionsService: PlanSubscriptionsService,
     private readonly eventEmitter: EventEmitter2,
     @InjectQueue(AI_QUEUE) private readonly aiQueue: Queue,
+    private readonly appLogService: LogService,
   ) {
     super();
   }
@@ -90,14 +91,18 @@ export class AiProcessor extends WorkerHost {
   // ==================== JOB PROCESSOR ====================
 
   async process(job: Job): Promise<any> {
-    switch (job.name) {
-      case JOB_RECORD_LLM_USAGE:
-        return await this.recordLlmUsage(job.data);
-      case JOB_RECORD_MEDIA_MODERATION:
-        return await this.handleMediaModeration(job.data);
+    try {
+      switch (job.name) {
+        case JOB_RECORD_LLM_USAGE:
+          return await this.recordLlmUsage(job.data);
+        case JOB_RECORD_MEDIA_MODERATION:
+          return await this.handleMediaModeration(job.data);
 
-      default:
-        throw new Error(`Job name "${job.name}" not recognized`);
+        default:
+          throw new Error(`Job name "${job.name}" not recognized`);
+      }
+    } finally {
+      await this.appLogService.flushAsync();
     }
   }
 

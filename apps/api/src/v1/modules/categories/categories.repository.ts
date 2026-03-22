@@ -100,6 +100,11 @@ export class CategoriesRepository extends BaseRepository {
     if (filters.parent_id) {
       query.where('parent_id', '=', filters.parent_id);
     }
+
+    if (filters.categories?.length) {
+      query.whereIn('categories.id', filters.categories);
+    }
+
     this.requestService.pagination =
       await this.handleOffsetPagination(query, filters);
 

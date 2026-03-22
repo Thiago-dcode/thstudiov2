@@ -61,7 +61,6 @@ export const CreateOrUpdateAddress = ({userId,defaultAddress,onSuccess,onSuccess
     }, [search]);
     
     const handleValueChange = useCallback((feature: GeoapifyFeature | null) => {
-        console.log("VALUE CHANGING",feature)
         if (feature) {
             setSelectedLocation(feature);
             const {formatted, lat, lon, country_code, country, address_line1, city, state} = feature.properties;

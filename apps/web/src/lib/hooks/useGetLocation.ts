@@ -9,7 +9,8 @@ fetcher.credentials = 'omit';
 
 export const useLocationAutocomplete = () => {
 
-    const [result, setResult] = useState<GeoapifyAutocompleteResponse['features']>();
+    const cachedResult = useRef<Record<string, GeoapifyAutocompleteResponse['features']>>({});
+    const [result, setResult] = useState<GeoapifyAutocompleteResponse['features']>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<unknown>()
 
@@ -18,6 +19,10 @@ export const useLocationAutocomplete = () => {
         if (loading) return;
         try {
             setLoading(true);
+            if (cachedResult.current[input]) {
+                setResult(cachedResult.current[input])
+                return;
+            }
             const response = await fetcher.get<ApiResponse<GeoapifyAutocompleteResponse>>({
                 resource: `autocomplete?text=${encodeURIComponent(
                     input
@@ -25,11 +30,12 @@ export const useLocationAutocomplete = () => {
                 signal: controller.current.signal
             });
 
-            if(response.data){
+            if (response.data) {
+                cachedResult.current[input] = response.data.features;
                 setResult(response.data.features);
             }
-            
-          
+
+
         } catch (error) {
             setError(error);
             setResult([]);

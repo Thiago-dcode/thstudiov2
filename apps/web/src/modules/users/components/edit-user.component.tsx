@@ -12,7 +12,7 @@ import { FileInput } from "@repo/ui/components/custom/file-input";
 import { Errors } from "@repo/ui/components/custom/errors";
 import { useEffect, useRef, useState } from "react";
 import { Badge } from "@repo/ui/components/shadcn/badge";
-import { UpdateCategoriesProvider, useUpdateCategories } from "@/modules/categories/providers/update-user-categories.provider";
+import { UpdateCategoriesProvider, useUpdateCategories } from "@/modules/categories/providers/categories.provider";
 import { UserCategoriesComponent } from "@/modules/categories/components/user-categories.component";
 import { CreateOrUpdateAddress } from "@/modules/addresses/components/create-or-update-address";
 

@@ -4,7 +4,7 @@ import { Job, Queue } from 'bullmq';
 import { OnEvent } from '@nestjs/event-emitter';
 import { UserContactsRepository } from './user-contacts.repository';
 import { CreateUserContactEvent } from './events/create-user-contact.event';
-import { FactoryLogService } from '@repo/backend-lib/services/log-service';
+import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
 import { CreateUserContactInput } from '@repo/common-lib/types/user-contact';
 import {
   CREATE_USER_CONTACT,
@@ -27,6 +27,7 @@ export class UserContactProcessor extends WorkerHost {
     private readonly mailService: MailService,
     private readonly newContactMail: NewContactMail,
     @InjectQueue(USER_CONTACTS_QUEUE) private readonly contactQueue: Queue,
+    private readonly appLogService: LogService,
   ) {
     super();
   }
@@ -52,12 +53,16 @@ export class UserContactProcessor extends WorkerHost {
   // ==================== JOB PROCESSOR ====================
 
   async process(job: Job): Promise<any> {
-    switch (job.name) {
-      case JOB_CREATE_USER_CONTACT:
-        return await this.createUserContact(job.data);
+    try {
+      switch (job.name) {
+        case JOB_CREATE_USER_CONTACT:
+          return await this.createUserContact(job.data);
 
-      default:
-        throw new Error(`Job name "${job.name}" not recognized`);
+        default:
+          throw new Error(`Job name "${job.name}" not recognized`);
+      }
+    } finally {
+      await this.appLogService.flushAsync();
     }
   }
 
