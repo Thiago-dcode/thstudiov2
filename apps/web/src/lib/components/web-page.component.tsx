@@ -7,7 +7,7 @@ const Container = ({ children, className }: {
 }) => {
     return (
         <div className={cn(
-            "mx-auto w-full max-w-(--screen-desktop) px-6 py-4 md:px-12 tablet:py-8 animate-in fade-in duration-1000",
+        "mx-auto w-full max-w-(--screen-desktop) px-6 py-4 md:px-12 tablet:py-8 animate-in fade-in duration-1000",
             className
         )}>
             {children}

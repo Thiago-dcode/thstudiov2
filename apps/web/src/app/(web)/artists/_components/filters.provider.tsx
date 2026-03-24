@@ -1,12 +1,14 @@
 "use client"
 
-import { useHandleAction } from "@/modules/auth/hooks/useHandleAction"
-import { getAllCategoriesAction } from "@/modules/categories/server-actions/categories.action"
 import { CategoryBase } from "@repo/common-lib/types/category"
 import { ArtistIndexRequest } from "@repo/common-lib/types/user"
+import { QueryBuilder, queryParamBuilder } from "@repo/common-lib/utils/query-builder"
+import { usePathname, useSearchParams } from "next/navigation"
 import {
     createContext,
+    Dispatch,
     ReactNode,
+    SetStateAction,
     useCallback,
     useContext,
     useEffect,
@@ -17,8 +19,10 @@ import {
 type FiltersContextValue = {
     filters: ArtistIndexRequest
 
+    isPrimaryFilterActive: boolean
+    setIsPrimaryFilterActive: Dispatch<SetStateAction<boolean>>
 
-    categoriesSelected:CategoryBase[]
+    categoriesSelected: CategoryBase[]
     /** Append a category if not already selected; updates `filters.categories`. */
     pushCategory: (category: CategoryBase) => void
     /** Remove a category by id; clears `categories` when none remain. */
@@ -32,6 +36,25 @@ type FiltersContextValue = {
     delete: (key: keyof ArtistIndexRequest) => void
     /** Reset all filters. */
     clearAll: () => void
+}
+
+function artistFiltersToQueryBuilder(filters: ArtistIndexRequest): QueryBuilder {
+    const out: QueryBuilder = {}
+    if (filters.page != null) out.page = filters.page
+    if (filters.per_page != null) out.per_page = filters.per_page
+    const search = filters.search?.trim()
+    if (search) out.search = search
+    if (filters.categories?.length) out.categories = filters.categories
+    const country = filters.country?.trim()
+    if (country) out.country = country
+    const state = filters.state?.trim()
+    if (state) out.state = state
+    const city = filters.city?.trim()
+    if (city) out.city = city
+    if (filters.lat != null) out.lat = filters.lat
+    if (filters.lng != null) out.lng = filters.lng
+    if (filters.radius_km != null) out.radius_km = filters.radius_km
+    return out
 }
 
 const FiltersContext = createContext<FiltersContextValue | null>(null)
@@ -60,6 +83,8 @@ function sortedCategoryIdsKey(categories: number[] | undefined): string {
 export function FiltersProvider({ children, params: initialParams, defaultCategoriesSelected = [] }: FiltersProviderProps) {
     const [filters, setFilters] = useState<ArtistIndexRequest>(initialParams)
 
+    const [isPrimaryFilterActive, setIsPrimaryFilterActive] = useState(false)
+
     const [categoriesSelected, setCategoriesSelected] = useState<CategoryBase[]>(defaultCategoriesSelected)
     /** Keep client filter state aligned with URL/searchParams when the server passes new `params`. */
     const paramsKey = JSON.stringify(initialParams)
@@ -67,32 +92,6 @@ export function FiltersProvider({ children, params: initialParams, defaultCatego
         setFilters(initialParams)
     }, [paramsKey])
 
-    // const categoriesChanged = useMemo(() => {
-    //     return (
-    //         sortedCategoryIdsKey(filters.categories) !==
-    //         sortedCategoryIdsKey(categoriesSelected.map(c => c.id))
-    //     )
-    // }, [filters.categories, categoriesSelected])
-
-    const { handleAction } = useHandleAction({
-        action: async () => getAllCategoriesAction({
-            categories: filters.categories
-
-        }),
-        afterAction: async (result) => {
-
-            if (result.data) {
-                setCategoriesSelected(result.data)
-            }
-        }
-    })
-
-    // useEffect(() => {
-    //     if (filters.categories?.length && categoriesChanged) {
-
-    //         handleAction()
-    //     }
-    // }, [categoriesChanged, filters.categories])
 
     const add = useCallback(
         <K extends keyof ArtistIndexRequest>(key: K, value: ArtistIndexRequest[K]) => {
@@ -136,11 +135,15 @@ export function FiltersProvider({ children, params: initialParams, defaultCatego
             }
             return { ...prev, categories: next }
         })
-    }, [])
+    }, []);
+
+
 
     const value = useMemo<FiltersContextValue>(
         () => ({
             filters,
+            isPrimaryFilterActive,
+            setIsPrimaryFilterActive,
             categoriesSelected,
             pushCategory,
             removeCategory,
@@ -148,7 +151,16 @@ export function FiltersProvider({ children, params: initialParams, defaultCatego
             delete: deleteFilter,
             clearAll,
         }),
-        [filters, categoriesSelected, pushCategory, removeCategory, add, deleteFilter, clearAll],
+        [
+            filters,
+            isPrimaryFilterActive,
+            categoriesSelected,
+            pushCategory,
+            removeCategory,
+            add,
+            deleteFilter,
+            clearAll,
+        ],
     )
 
     return <FiltersContext.Provider value={value}>{children}</FiltersContext.Provider>

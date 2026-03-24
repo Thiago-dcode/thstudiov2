@@ -78,7 +78,7 @@ const CategoryFilter = () => {
                                 showClear={!busy}
                                 className={artistsFilterComboboxInputClassName}
                             />
-                            <ComboboxContent>
+                            <ComboboxContent className="min-w-(--anchor-width) w-(--anchor-width) max-w-(--anchor-width)">
                                 <ComboboxEmpty>
                                     {busy && sortedCategories.length === 0 ? (
                                         <Spinner className="mx-auto size-3" />

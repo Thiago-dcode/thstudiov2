@@ -10,9 +10,10 @@ import { Input } from '@repo/ui/components/shadcn/input'
 import { cn } from '@repo/ui/lib/utils'
 import { Search } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import FiltersLists from './filters-lists'
 import { useFilters } from './filters.provider'
+import { TogglePrimaryFilter } from './primary-filter-component'
 
 /** Same shape as `buildArtistIndexRequest` in `page.tsx` — only defined / non-empty values. */
 function artistFiltersToQueryBuilder(filters: ArtistIndexRequest): QueryBuilder {
@@ -34,10 +35,35 @@ function artistFiltersToQueryBuilder(filters: ArtistIndexRequest): QueryBuilder 
     return out
 }
 
-export default function FilterSearch() {
+const getFiltersWithoutSearch = (filters: ArtistIndexRequest) => {
+
+    const { search, ...rest } = filters;
+
+    return rest;
+
+}
+export default function FilterSearch({ initialFilters }: {
+    initialFilters: ArtistIndexRequest
+}) {
     const router = useRouter()
-    const { filters } = useFilters()
-    const [query, setQuery] = useState(() => filters.search ?? '')
+    const { filters } = useFilters();
+    const [query, setQuery] = useState(() => filters.search ?? '');
+
+    const initialUrl = useMemo(() => queryParamBuilder(
+        '/artists',
+        artistFiltersToQueryBuilder(getFiltersWithoutSearch(initialFilters)),
+        { arrayStyle: 'commas' },
+    ), [initialFilters]);
+
+    const newUrl = useMemo(() => queryParamBuilder(
+        '/artists',
+        artistFiltersToQueryBuilder(getFiltersWithoutSearch(filters)),
+        { arrayStyle: 'commas' },
+    ), [filters]);
+
+    const urlHasChanged = useMemo(() => initialUrl !== newUrl, [initialUrl, newUrl]);
+
+    console.log("initialurl", initialUrl, "newurl", newUrl)
 
     useEffect(() => {
         setQuery(filters.search ?? '')
@@ -59,6 +85,12 @@ export default function FilterSearch() {
         router.push(href)
     }
 
+    useEffect(()=>{
+        if(!urlHasChanged) return;
+
+        router.push(newUrl)
+    },[urlHasChanged])
+
     return (
         <form
             role="search"
@@ -70,6 +102,7 @@ export default function FilterSearch() {
             }}
         >
             <div className="flex w-full flex-col gap-3 tablet:flex-row tablet:items-stretch tablet:gap-0">
+                <TogglePrimaryFilter />
                 <div className="relative min-w-0 flex-1">
                     <Search
                         className="pointer-events-none absolute top-1/2 left-4 size-5 -translate-y-1/2 text-text-muted"
@@ -80,12 +113,12 @@ export default function FilterSearch() {
                         name="search"
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
-                        placeholder="Search artists by name, profession, bio…"
+                        placeholder="Search artists by username, name, profession, bio…"
                         className={cn(
-                            'h-14 min-h-14 w-full rounded-none border-fg-2/40 bg-bg-2/30 pr-4 pl-12',
+                            'h-14 min-h-14 w-full rounded-md border-fg bg-bg-2/30 pr-4 pl-12',
                             'text-base leading-snug placeholder:text-text-muted/70 tablet:text-lg',
-                            'tablet:rounded-l-md tablet:rounded-r-none tablet:border-r-0',
-                            'focus-visible:border-fg-2/60 focus-visible:ring-fg-2/25',
+                            'tablet:rounded-none tablet:border-x-0',
+                            'focus-visible:z-10 focus-visible:border-fg-2/60 focus-visible:ring-1 focus-visible:ring-fg-2/25',
                         )}
                         autoComplete="off"
                     />
