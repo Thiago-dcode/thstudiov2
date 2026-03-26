@@ -25,6 +25,7 @@ import { CategoryBase } from '@repo/common-lib/types/category';
 import { ProfileAddress } from '@repo/common-lib/types/user';
 import { RequestService } from 'src/common/services/request.service';
 import { QueryBuilder } from '@repo/database/queryBuilder';
+import { foldLatinDiacriticsForMatch } from '@repo/common-lib/utils/fold-latin-diacritics';
 
 @Injectable()
 export class UserRepository extends BaseRepository {
@@ -365,17 +366,29 @@ export class UserRepository extends BaseRepository {
 
     const cityFilter = filters.city?.trim();
     if (cityFilter) {
-      query.where('addresses.city', 'ILIKE', `%${cityFilter}%`);
+      query.where(
+        'unaccent(addresses.city)',
+        'ILIKE',
+        `%${foldLatinDiacriticsForMatch(cityFilter)}%`,
+      );
     }
 
     const stateFilter = filters.state?.trim();
     if (stateFilter) {
-      query.where('addresses.state', 'ILIKE', `%${stateFilter}%`);
+      query.where(
+        'unaccent(addresses.state)',
+        'ILIKE',
+        `%${foldLatinDiacriticsForMatch(stateFilter)}%`,
+      );
     }
 
     const countryFilter = filters.country?.trim();
     if (countryFilter) {
-      query.where('addresses.country', 'ILIKE', `%${countryFilter}%`);
+      query.where(
+        'unaccent(addresses.country)',
+        'ILIKE',
+        `%${foldLatinDiacriticsForMatch(countryFilter)}%`,
+      );
     }
 
     if (filters.lat != null && filters.lng != null) {

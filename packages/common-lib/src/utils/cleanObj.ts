@@ -9,6 +9,7 @@ export const cleanObj = (obj:Record<string,any>,options?:{
             delete obj[key]
         }
     }
+    return obj;
 }
 
 export const trimValues = (obj:Record<string,any>,options?:{

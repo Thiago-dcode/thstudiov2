@@ -1,9 +1,10 @@
 'use client'
 
 import { CategoryBase } from '@repo/common-lib/types/category'
-import { badgeVariants } from '@repo/ui/components/shadcn/badge'
+import { Button } from '@repo/ui/components/shadcn/button'
 import { cn } from '@repo/ui/lib/utils'
 import { X } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { useMemo } from 'react'
 import { useFilters } from './filters.provider'
 
@@ -19,7 +20,9 @@ type FilterBadgeItem = {
 }
 
 export default function FiltersLists() {
-    const { filters, categoriesSelected, delete: deleteFilter, removeCategory } = useFilters()
+    const router = useRouter()
+    const { filters, categoriesSelected, delete: deleteFilter, removeCategory, clearAll } =
+        useFilters()
 
     const items = useMemo((): FilterBadgeItem[] => {
         const out: FilterBadgeItem[] = []
@@ -29,10 +32,12 @@ export default function FiltersLists() {
             out.push({
                 key: `search-${search}`,
                 label: `Search: ${search}`,
-                onRemove: () => deleteFilter('search'),
+                onRemove: () => {
+                    deleteFilter('search')
+                  
+                },
             })
         }
-
         const country = filters.country?.trim()
         if (country) {
             out.push({
@@ -76,37 +81,67 @@ export default function FiltersLists() {
         }
 
         return out
-    }, [filters.search, filters.country, filters.state, filters.city, categoriesSelected, deleteFilter, removeCategory])
+    }, [
+        filters,
+        categoriesSelected,
+        deleteFilter,
+        removeCategory,
+    ])
 
-    if (items.length === 0) return null
+    const hasSearch = Boolean(filters.search?.trim())
+    const showClearAll = items.length > 0 || hasSearch
+
+    if (!showClearAll) return null
+
+    const onClearAll = () => {
+        clearAll()
+        router.push('/artists')
+    }
 
     return (
-        <div
-            role="list"
-            aria-label="Active filters"
-            className="flex flex-wrap gap-2"
-        >
-            {items.map((item) => (
-                <button
-                    key={item.key}
-                    type="button"
-                    role="listitem"
-                    aria-label={`Remove filter ${item.label}`}
-                    onClick={item.onRemove}
-                    className={cn(
-                        badgeVariants({ variant: 'outline' }),
-                        'inline-flex max-w-full cursor-pointer items-center gap-1.5 border-fg-2/40 bg-bg-2/50 py-1 pr-1 pl-2.5 text-[11px] font-normal leading-tight text-text-muted transition-colors hover:border-fg-2/60 hover:bg-bg-2',
-                    )}
+        <div className="flex w-full min-w-0 flex-row flex-wrap items-center gap-2">
+            {items.length > 0 ? (
+                <div
+                    role="list"
+                    aria-label="Active filters"
+                    className="flex min-w-0 flex-1 flex-wrap gap-2"
                 >
-                    <span className="min-w-0 flex-1 text-left line-clamp-2">{item.label}</span>
-                    <span
-                        className="pointer-events-none flex size-5 shrink-0 items-center justify-center rounded-sm text-fg-2/80"
-                        aria-hidden
-                    >
-                        <X className="size-3" />
-                    </span>
-                </button>
-            ))}
+                    {items.map((item) => (
+                        <Button
+                            key={item.key}
+                            type="button"
+                            variant="badge"
+                            role="listitem"
+                            aria-label={`Remove filter ${item.label}`}
+                            onClick={item.onRemove}
+                        >
+                            <span className="min-w-0 flex-1 text-left line-clamp-2">
+                                {item.label}
+                            </span>
+                            <span
+                                className="pointer-events-none flex size-5 shrink-0 items-center justify-center rounded-sm text-text-muted transition-colors group-hover:text-text/90"
+                                aria-hidden
+                            >
+                                <X className="size-3" />
+                            </span>
+                        </Button>
+                    ))}
+                </div>
+            ) : (
+                <div className="min-w-0 flex-1" aria-hidden />
+            )}
+            <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={onClearAll}
+                className={cn(
+                    'shrink-0 border-2 border-border bg-bg-2/40 text-[11px] font-medium uppercase tracking-widest text-text-muted shadow-none',
+                    'hover:border-text/35 hover:bg-bg-2 hover:text-text',
+                )}
+            >
+                Clear all
+            </Button>
         </div>
     )
 }

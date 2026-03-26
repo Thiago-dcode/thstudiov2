@@ -20,6 +20,8 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-fg shadow-sm hover:bg-secondary/80",
         ghost: "bg-transparent text-sm transition-colors text-text-muted hover:text-text",
         link: "text-primary underline-offset-4 hover:underline",
+        badge:
+          "group max-w-full rounded-md border-2 border-border bg-bg-2/50 text-foreground leading-tight text-text-muted transition-colors hover:border-text/35 hover:bg-bg-2 hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 [&_svg]:size-3",
 
       },
       size: {
@@ -29,6 +31,13 @@ const buttonVariants = cva(
         icon: "h-9 w-9",
       },
     },
+    compoundVariants: [
+      {
+        variant: "badge",
+        class:
+          "h-auto min-h-0 justify-start gap-1.5 whitespace-normal py-1 pr-1 pl-2.5 text-[11px] font-normal active:scale-100",
+      },
+    ],
     defaultVariants: {
       variant: "default",
       size: "default",
@@ -47,7 +56,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const Comp = asChild ? Slot : "button"
     return (
       <Comp
-        className={cn(buttonVariants({ variant, size, className }))}
+        className={cn(buttonVariants({ variant, size }), className)}
         ref={ref}
         {...props}
       />

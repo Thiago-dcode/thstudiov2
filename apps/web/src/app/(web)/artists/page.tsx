@@ -8,6 +8,9 @@ import { ArtistsGrid } from "./_components/artists-grid"
 import { FiltersProvider } from "./_components/filters.provider"
 import categoriesService from "@/modules/categories/categories.service"
 import Web from "@/lib/components/web-page.component"
+import { cn } from "@repo/ui/lib/utils"
+import { ApiResponse } from "@repo/common-lib/types/response"
+import { cleanObj } from "@repo/common-lib/utils/cleanObj"
 
 const PAGE_DESCRIPTION =
     "Browse artists on A11STUDIO. Discover portfolios, services, and creative professionals."
@@ -61,7 +64,7 @@ function buildArtistIndexRequest(
 ): ArtistIndexRequest {
     const q = (key: string) => firstString(raw[key])
 
-    return {
+    return cleanObj( {
         page: parseOptionalInt(q("page")),
         per_page: parseOptionalInt(q("per_page")),
         search: optionalTrim(q("search")),
@@ -72,7 +75,7 @@ function buildArtistIndexRequest(
         lat: parseOptionalFloat(q("lat")),
         lng: parseOptionalFloat(q("lng")),
         radius_km: parseOptionalFloat(q("radius_km")),
-    }
+    })
 }
 
 export default async function ArtistsPage({
@@ -82,9 +85,18 @@ export default async function ArtistsPage({
 }) {
     const params = await searchParams
     const artistRequest = buildArtistIndexRequest(params)
-    const artistsResult = await usersService.findAll(artistRequest)
-    const artists: ArtistCard[] =
+   
+    let artistsResult: ApiResponse<ArtistCard[]> | null = null
+    const hasFilters = Object.keys(artistRequest).length > 0
+    if (hasFilters) {
+        artistsResult = await usersService.findAll(artistRequest)
+    }
+    const artists: ArtistCard[] = !artistsResult ||
         artistsResult.error || !artistsResult.data ? [] : artistsResult.data
+    const totalCount =
+        artistsResult && !artistsResult.error && artistsResult.pagination != null
+            ? artistsResult.pagination.total_count
+            : artists.length
     let categories: CategoryBase[] = []
     if (artistRequest.categories?.length) {
         const categoriesResult = await categoriesService.getAll({
@@ -92,31 +104,63 @@ export default async function ArtistsPage({
         })
         categories = categoriesResult.data || []
     }
+    const searchQuery = artistRequest.search?.trim()
+    const resultsForSearchSuffix =
+        searchQuery !== undefined && searchQuery !== ""
+            ? ` for "${searchQuery}"`
+            : ""
     return (
-        <Web.Container className="flex justify-center py-16 tablet:py-24">
+        <Web.Container
+            className={cn(
+                "flex h-full w-full flex-col justify-center pt-16",
+            )}
+        >
+            <Web.Header
+                title="Search for artists"
+                titleClassName="text-2xl tablet:text-3xl desktop:text-4xl"
+            />
             <FiltersProvider params={artistRequest} defaultCategoriesSelected={categories}>
                 <UpdateCategoriesProvider
                     userCategories={categories}
                 >
-                    <div className="flex w-full  flex-col">
-                        <ArtistsBrowseLayout initialFilters={artistRequest}>
+                    <div
+                        className={cn(
+                            "flex w-full flex-col items-start justify-start",
+                        )}
+                    >
+                        <ArtistsBrowseLayout
+                            initialFilters={artistRequest}
+                            centerSearch={!artistsResult}
+                        >
+                            {artistsResult ? (
                             <section
                                 aria-labelledby="artists-results-heading"
-                                className="flex w-full min-w-0 flex-col gap-4 border-t border-fg-2/25"
+                                className="flex w-full min-w-0 flex-col gap-4 border-t border-border pt-4"
                             >
-                                {artistsResult.error ? (
+                                <h2
+                                    id="artists-results-heading"
+                                    className="text-sm font-medium tracking-wide text-text-muted"
+                                >
+                                    {artistsResult.error
+                                        ? "Results"
+                                        : totalCount === 0
+                                          ? `No artists found${resultsForSearchSuffix}`
+                                          : `${totalCount.toLocaleString()} artist${totalCount === 1 ? "" : "s"} found${resultsForSearchSuffix}`}
+                                </h2>
+                                { artistsResult.error ? (
                                     <p className="text-sm text-destructive" role="alert">
                                         {artistsResult.error.message ||
                                             "Could not load artists."}
                                     </p>
                                 ) : artists.length === 0 ? (
                                     <p className="text-sm text-text-muted">
-                                        No artists match these filters yet.
+                                        Try broadening your search or clearing some filters.
                                     </p>
                                 ) : (
                                     <ArtistsGrid artists={artists} />
                                 )}
                             </section>
+                            ) : null}
                         </ArtistsBrowseLayout>
                     </div>
                 </UpdateCategoriesProvider>

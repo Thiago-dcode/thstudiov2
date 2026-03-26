@@ -15,6 +15,7 @@ import {
 import { Button } from "@repo/ui/components/shadcn/button"
 import { BrandLogo } from "@repo/ui/components/custom/brand-logo"
 import { UserAuth } from "@/modules/auth/auth.types"
+import { WebHeaderArtistSearch } from "./web-header-artist-search"
 
 interface WebHeaderProps {
     session: UserAuth | null
@@ -53,15 +54,17 @@ export const WebHeader = ({ session }: WebHeaderProps) => {
                     : "border-b-fg-2 opacity-100"
             )}
         >
-            <div className="max-w-(--screen-desktop) w-full h-16 flex items-center justify-between px-5 tablet:px-10">
+            <div className="max-w-(--screen-desktop) w-full h-16 flex items-center justify-between gap-3 px-5 tablet:gap-4 tablet:px-10">
                 <Link
                     href="/"
-                    className="text-text hover:opacity-80 transition-opacity"
+                    className="shrink-0 text-text hover:opacity-80 transition-opacity"
                 >
                     <BrandLogo />
                 </Link>
 
-                <nav className="hidden tablet:flex items-center gap-8">
+                <WebHeaderArtistSearch className="hidden min-w-0 flex-1 max-w-lg tablet:block" />
+
+                <nav className="hidden shrink-0 tablet:flex items-center gap-8">
                     {isAuthenticated ? (
                         <>
                             {session?.username && (
@@ -129,6 +132,10 @@ export const WebHeader = ({ session }: WebHeaderProps) => {
                                         <X className="size-5" />
                                     </button>
                                 </DrawerClose>
+                            </div>
+
+                            <div className="px-6 pb-4 tablet:hidden">
+                                <WebHeaderArtistSearch />
                             </div>
 
                             <nav className="flex flex-col px-6 py-6 gap-1">

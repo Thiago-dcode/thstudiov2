@@ -93,7 +93,7 @@ const CategoryFilter = () => {
                                             value={String(cat.id)}
                                             className={cn(
                                                 'cursor-pointer py-1.5 pl-1.5 pr-8 text-[11px] leading-tight',
-                                                isSelected(cat) && 'bg-accent/40',
+                                                isSelected(cat) && 'bg-fg-2/60',
                                             )}
                                             onPointerDown={(e) => {
                                                 e.preventDefault()

@@ -17,10 +17,11 @@ import {
     ComboboxList,
 } from '@repo/ui/components/shadcn/combobox'
 import { artistsFilterComboboxInputClassName } from './artists-filter-combobox-input-class'
+import { foldLatinDiacriticsForMatch } from '@repo/common-lib/utils/fold-latin-diacritics'
 
 function locationNamesMatch(filterVal: string | undefined, entityName: string): boolean {
     if (filterVal === undefined || filterVal.trim() === '') return false
-    return filterVal.trim().toLowerCase() === entityName.trim().toLowerCase()
+    return foldLatinDiacriticsForMatch(filterVal) === foldLatinDiacriticsForMatch(entityName)
 }
 
 type LocationEntity = { id: number; name: string }

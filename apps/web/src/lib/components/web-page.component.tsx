@@ -15,12 +15,27 @@ const Container = ({ children, className }: {
     );
 };
 
-const Header = ({ title, description, children }: { title: string; description?: string, children?: ReactNode }) => {
+const Header = ({
+    title,
+    description,
+    children,
+    titleClassName,
+}: {
+    title: string
+    description?: string
+    children?: ReactNode
+    titleClassName?: string
+}) => {
     return (
         <header className="mb-8 desktop:mb-12 flex flex-col items-center gap-6 border-b border-border/40 pb-6">
             <div className="max-w-2xl space-y-2">
                 <div className="flex items-baseline gap-4 justify-center">
-                    <h1 className="text-3xl font-serif italic tracking-tight tablet:text-5xl desktop:text-6xl">
+                    <h1
+                        className={cn(
+                            "text-3xl font-serif italic tracking-tight tablet:text-5xl desktop:text-6xl",
+                            titleClassName,
+                        )}
+                    >
                         {title}
                     </h1>
                     {children}

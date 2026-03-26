@@ -10,10 +10,10 @@ import { Input } from '@repo/ui/components/shadcn/input'
 import { cn } from '@repo/ui/lib/utils'
 import { Search } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useEffect, useMemo, useState } from 'react'
+import { Suspense, useEffect, useMemo, useRef } from 'react'
 import FiltersLists from './filters-lists'
 import { useFilters } from './filters.provider'
-import { TogglePrimaryFilter } from './primary-filter-component'
+import { PrimaryFiltersDropdown } from './primary-filter-component'
 
 /** Same shape as `buildArtistIndexRequest` in `page.tsx` — only defined / non-empty values. */
 function artistFiltersToQueryBuilder(filters: ArtistIndexRequest): QueryBuilder {
@@ -35,107 +35,133 @@ function artistFiltersToQueryBuilder(filters: ArtistIndexRequest): QueryBuilder 
     return out
 }
 
-const getFiltersWithoutSearch = (filters: ArtistIndexRequest) => {
 
-    const { search, ...rest } = filters;
 
-    return rest;
-
-}
-export default function FilterSearch({ initialFilters }: {
+function FilterSearchInner({
+    initialFilters,
+    centered = false,
+}: {
     initialFilters: ArtistIndexRequest
+    /** Landing state: slightly narrower bar, pairs with layout vertical centering. */
+    centered?: boolean
 }) {
     const router = useRouter()
-    const { filters } = useFilters();
-    const [query, setQuery] = useState(() => filters.search ?? '');
+    const { filters,add } = useFilters()
+    const searchInput = useRef<HTMLInputElement | null>(null)
 
-    const initialUrl = useMemo(() => queryParamBuilder(
-        '/artists',
-        artistFiltersToQueryBuilder(getFiltersWithoutSearch(initialFilters)),
-        { arrayStyle: 'commas' },
-    ), [initialFilters]);
+    const initialUrl = useMemo(
+        () =>
+            queryParamBuilder(
+                '/artists',
+                artistFiltersToQueryBuilder(initialFilters),
+                { arrayStyle: 'commas' },
+            ),
+        [initialFilters],
+    )
 
-    const newUrl = useMemo(() => queryParamBuilder(
-        '/artists',
-        artistFiltersToQueryBuilder(getFiltersWithoutSearch(filters)),
-        { arrayStyle: 'commas' },
-    ), [filters]);
+    const newUrl = useMemo(
+        () =>
+            queryParamBuilder(
+                '/artists',
+                artistFiltersToQueryBuilder(filters),
+                { arrayStyle: 'commas' },
+            ),
+        [filters],
+    )
+    const urlHasChanged = useMemo(
+        () => initialUrl !== newUrl,
+        [initialUrl, newUrl],
+    )
 
-    const urlHasChanged = useMemo(() => initialUrl !== newUrl, [initialUrl, newUrl]);
+   
 
-    console.log("initialurl", initialUrl, "newurl", newUrl)
 
     useEffect(() => {
-        setQuery(filters.search ?? '')
-    }, [filters.search])
-
-    const apply = () => {
-        const trimmed = query.trim()
-        const next: ArtistIndexRequest = { ...filters }
-        if (trimmed) {
-            next.search = trimmed
-        } else {
-            delete next.search
-        }
-        const href = queryParamBuilder(
-            '/artists',
-            artistFiltersToQueryBuilder(next),
-            { arrayStyle: 'commas' },
-        )
-        router.push(href)
-    }
-
-    useEffect(()=>{
-        if(!urlHasChanged) return;
-
-        router.push(newUrl)
-    },[urlHasChanged])
+        if (!urlHasChanged) return
+        if(searchInput.current) searchInput.current.value =''
+        router.push(newUrl);
+    }, [urlHasChanged, newUrl, router])
 
     return (
         <form
             role="search"
             aria-label="Search artists"
-            className="flex w-full flex-col gap-3"
+            className={cn(
+                'mx-auto flex w-full flex-col gap-3',
+                centered ? 'max-w-2xl tablet:max-w-3xl' : 'max-w-4xl',
+            )}
             onSubmit={(e) => {
                 e.preventDefault()
-                apply()
+                
+                const value = searchInput.current?.value.trim();
+                if(value)  add('search',value);
+             
             }}
         >
-            <div className="flex w-full flex-col gap-3 tablet:flex-row tablet:items-stretch tablet:gap-0">
-                <TogglePrimaryFilter />
+            <div
+                className={cn(
+                    'flex w-full flex-col gap-3',
+                    'tablet:flex-row tablet:items-stretch tablet:gap-0 tablet:overflow-hidden tablet:rounded-md tablet:border-2 tablet:border-border tablet:shadow-sm tablet:ring-1 tablet:ring-border',
+                )}
+            >
+                <PrimaryFiltersDropdown />
                 <div className="relative min-w-0 flex-1">
                     <Search
-                        className="pointer-events-none absolute top-1/2 left-4 size-5 -translate-y-1/2 text-text-muted"
+                        className="pointer-events-none absolute top-1/2 left-4 z-1 size-5 -translate-y-1/2 text-text-muted"
                         aria-hidden
                     />
                     <Input
                         type="search"
                         name="search"
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
+                        ref={searchInput}
                         placeholder="Search artists by username, name, profession, bio…"
                         className={cn(
-                            'h-14 min-h-14 w-full rounded-md border-fg bg-bg-2/30 pr-4 pl-12',
+                            'h-14 min-h-14 w-full rounded-md border-2 border-border bg-bg-2/40 pr-4 pl-12',
                             'text-base leading-snug placeholder:text-text-muted/70 tablet:text-lg',
-                            'tablet:rounded-none tablet:border-x-0',
-                            'focus-visible:z-10 focus-visible:border-fg-2/60 focus-visible:ring-1 focus-visible:ring-fg-2/25',
+                            'tablet:rounded-none tablet:border-0 tablet:border-y-0 tablet:border-r-2 tablet:border-border tablet:border-l-0',
+                            'focus-visible:z-10 focus-visible:border-text/40 focus-visible:ring-2 focus-visible:ring-text/15',
                         )}
                         autoComplete="off"
                     />
                 </div>
                 <Button
-                    type="submit"
+                type='submit'
+                    variant="default"
                     className={cn(
-                        'h-14 shrink-0 rounded-md px-8 text-sm font-medium uppercase tracking-[0.08em]',
-                        'tablet:rounded-l-none tablet:rounded-r-md',
+                        'h-14 min-h-14 shrink-0 rounded-md px-8 text-sm font-semibold uppercase tracking-[0.08em] shadow-sm',
+                        'tablet:rounded-l-none tablet:rounded-r-[calc(0.375rem-2px)]',
                     )}
+                  
                 >
                     Search
                 </Button>
             </div>
-            <div className="flex w-full min-w-0 flex-row flex-wrap items-center gap-2">
-                <FiltersLists />
-            </div>
+            <FiltersLists />
         </form>
+    )
+}
+
+export default function FilterSearch(props: {
+    initialFilters: ArtistIndexRequest
+    centered?: boolean
+}) {
+    return (
+        <Suspense
+            fallback={
+                <div
+                    className={cn(
+                        'mx-auto flex w-full flex-col gap-3',
+                        props.centered
+                            ? 'max-w-2xl tablet:max-w-3xl'
+                            : 'max-w-4xl',
+                    )}
+                    aria-hidden
+                >
+                    <div className="h-14 min-h-14 w-full rounded-md border-2 border-border bg-bg-2/20 tablet:rounded-md" />
+                </div>
+            }
+        >
+            <FilterSearchInner {...props} />
+        </Suspense>
     )
 }

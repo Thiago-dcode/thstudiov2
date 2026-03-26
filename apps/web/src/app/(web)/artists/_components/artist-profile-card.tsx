@@ -69,7 +69,7 @@ export function ArtistProfileCard({
       className={cn(
         "group flex h-full min-h-0 flex-col overflow-hidden rounded-3xl bg-fg p-2 shadow-md ring-1 ring-border/40 transition-all duration-300",
         "hover:-translate-y-0.5 hover:shadow-lg hover:ring-border/60",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/25 focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
         className,
       )}
     >
