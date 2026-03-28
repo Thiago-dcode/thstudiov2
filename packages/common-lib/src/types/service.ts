@@ -13,7 +13,9 @@ export type FullService = Service & {
   portfolio?:{
     id:number,
     title:string,
-    slug:string
+    slug:string,
+    user_highlight?: boolean,
+    highlight?: boolean,
   }
 };
 
@@ -23,7 +25,7 @@ export type ServiceIndexRequest = OffsetPaginationRequest & {
 };
 
 // Fields generated internally by the system (user cannot set these)
-type InternalServiceFields = 'id' | 'created_at' | 'updated_at';
+type InternalServiceFields = 'id' | 'created_at' | 'updated_at' | 'highlight';
 
 // What users can provide when creating a service (public API input)
 export type CreateServiceInput = Omit<ServiceSchema, InternalServiceFields | 'thumbnail'> & {

@@ -1,9 +1,15 @@
-import { Timer } from "@repo/ui/components/custom/Timer";
+import { HeroSection } from "./_cpmponents/landing/hero-section";
+import { FeaturedArtistsSection } from "./_cpmponents/landing/featured-artists-section";
+import { ValuePillarsSection } from "./_cpmponents/landing/value-pillars-section";
+import { CtaSection } from "./_cpmponents/landing/cta-section";
 
-export default async function Home() {
+export default function Home() {
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <h1><Timer expiresIn={1000 * 10} /></h1>
-    </div>
+    <>
+      <HeroSection />
+      <FeaturedArtistsSection />
+      <ValuePillarsSection />
+      <CtaSection />
+    </>
   );
 }

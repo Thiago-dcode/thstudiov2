@@ -16,6 +16,7 @@ import { Error500Mail } from '../mails/error-500.mail';
 import { StorageService } from '@repo/backend-lib/services/storage-service/base';
 import { s3StorageConfig } from 'src/config/storage';
 import { CompressService } from '@repo/backend-lib/services/compress-service/base';
+import { config } from '@repo/common-lib/config';
 
 @Injectable()
 export class Helpers {
@@ -89,8 +90,10 @@ export class Helpers {
     message: string,
     options?: LogOptions,
   ) {
+
     //Send a email to admin emails
     console.log('CALLBACK CALLED FOR ERROR 500', level, message);
+    if (!config().app.sendErrorEmails) return;
     const mailService = FactoryMailService.createMailService(
       mailingDriver,
       mailingConfig,
@@ -98,8 +101,7 @@ export class Helpers {
     const viewService = FactoryViewService.createViewService(VIEW_ENGINE, {
       basePath: viewPath(''),
     });
-    //avoid to block the callback
-    mailService.send(new Error500Mail(viewService, message, options));
+    mailService.sendAsync(new Error500Mail(viewService, message, options));
   }
 
   public async deleteAsset(path?: string) {

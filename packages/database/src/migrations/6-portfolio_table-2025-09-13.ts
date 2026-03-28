@@ -7,6 +7,12 @@ const up = async () => {
     Column.string('slug', 255),
     Column.string('thumbnail', 255),
     Column.text('description'),
+    Column.boolean('user_highlight', {
+      default: false
+    }),
+    Column.boolean('highlight', {
+      default: false
+    }),
     Column.foreignKey('user_id', 'users', 'id', {
       onDelete: 'CASCADE',
       onUpdate: 'CASCADE',

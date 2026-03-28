@@ -24,7 +24,7 @@ function categoryLabel(c: CategoryBase) {
 }
 
 const CategoryFilter = () => {
-    const { categoriesSelected, pushCategory, removeCategory } = useFilters()
+    const { categoriesSelected, pushCategory, removeCategory,setCategoriesSelected } = useFilters()
     const { categories, handleOnChange, isLoading } = useUpdateCategories()
 
     const sortedCategories = useMemo(() => {
@@ -42,7 +42,7 @@ const CategoryFilter = () => {
             if (categoriesSelected.some((c) => c.id === cat.id)) {
                 removeCategory(cat.id)
             } else if (categoriesSelected.length < MAX_CATEGORY_SELECTION) {
-                pushCategory(cat)
+             setCategoriesSelected([cat])
             }
         },
         [categoriesSelected, pushCategory, removeCategory],

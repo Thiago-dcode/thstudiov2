@@ -75,6 +75,8 @@
 }
 
 @theme {
+  --font-serif: var(--font-serif, ui-serif, Georgia, Cambria, "Times New Roman", Times, serif);
+
   /* Responsive breakpoints – use as phone:flex, tablet:grid, etc. */
   --breakpoint-phone: 480px;
   --breakpoint-phone-lg: 640px;

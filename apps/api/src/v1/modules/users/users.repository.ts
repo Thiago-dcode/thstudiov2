@@ -29,7 +29,7 @@ import { foldLatinDiacriticsForMatch } from '@repo/common-lib/utils/fold-latin-d
 
 @Injectable()
 export class UserRepository extends BaseRepository {
-  private readonly BASE_COLUMNS :BaseUserSchemaColumns[]= [
+  private readonly BASE_COLUMNS: BaseUserSchemaColumns[] = [
     'users.id',
     'users.public_id',
     'users.email',
@@ -42,6 +42,7 @@ export class UserRepository extends BaseRepository {
     'users.is_active',
     'users.banned',
     'users.banned_reason',
+    'users.highlight',
     'users.funnel_step',
     'users.username_reset_count',
     'users.password_reset_count',
@@ -57,7 +58,7 @@ export class UserRepository extends BaseRepository {
     'users.surname'
   ] as const;
 
-  private readonly FULL_COLUMNS:UserSchemaColumns[] = [
+  private readonly FULL_COLUMNS: UserSchemaColumns[] = [
     ...this.BASE_COLUMNS,
     'users.avatar',
     'users.banner',
@@ -75,6 +76,7 @@ export class UserRepository extends BaseRepository {
     'users.avatar',
     'users.profession',
     'users.short_biography',
+    'users.highlight',
     'addresses.id as a_id',
     'addresses.city',
     'addresses.state',
@@ -159,20 +161,21 @@ export class UserRepository extends BaseRepository {
       : this.formatUser(result);
   }
 
-  private readonly PROFILE_COLUMNS:UserProfileSchemaColumns[] = [
-   'users.id',
-   'users.name',
-   'users.surname',
-   'users.username',
-   'users.email',
-   'users.avatar',
-   'users.banner',
-   'users.banned',
-   'users.banned_reason',
-   'users.is_active',
-   'users.short_biography',
-   'users.biography',
-   'users.profession',
+  private readonly PROFILE_COLUMNS: UserProfileSchemaColumns[] = [
+    'users.id',
+    'users.name',
+    'users.surname',
+    'users.username',
+    'users.email',
+    'users.avatar',
+    'users.banner',
+    'users.banned',
+    'users.banned_reason',
+    'users.is_active',
+    'users.short_biography',
+    'users.biography',
+    'users.profession',
+    'users.highlight',
 
     // Address — minimal
     'addresses.id as a_id',
@@ -221,7 +224,7 @@ export class UserRepository extends BaseRepository {
 
   async create(user: CreateUserInput): Promise<BaseUser> {
     const result = await super._create<BaseUserSchema>(user, {
-      select:this.BASE_COLUMNS,
+      select: this.BASE_COLUMNS,
     });
     return this.formatUser(result, false) as BaseUser;
   }
@@ -259,6 +262,7 @@ export class UserRepository extends BaseRepository {
       is_active: result?.is_active,
       banned: result?.banned,
       banned_reason: result?.banned_reason,
+      highlight: result.highlight,
     };
   }
   private formatFullUser(result: UserSchema): User {
@@ -314,6 +318,7 @@ export class UserRepository extends BaseRepository {
       short_biography: first.short_biography,
       biography: first.biography,
       profession: first.profession ?? null,
+      highlight: first.highlight,
       address,
       categories: Array.from(categoriesMap.values()),
     };
@@ -347,6 +352,9 @@ export class UserRepository extends BaseRepository {
         ['users.name', 'ILIKE', `%${search}%`, 'orWhere'],
         ['users.surname', 'ILIKE', `%${search}%`, 'orWhere'],
       ]);
+    }
+    if (filters.highlight) {
+      query.where('users.highlight', '=', true);
     }
 
     if (filters.categories?.length) {
@@ -439,12 +447,13 @@ export class UserRepository extends BaseRepository {
       short_biography: row.short_biography ?? null,
       address: row.a_id != null
         ? {
-            city: row.city ?? null,
-            state: row.state ?? null,
-            country: row.country ?? null,
-          }
+          city: row.city ?? null,
+          state: row.state ?? null,
+          country: row.country ?? null,
+        }
         : null,
       categories: categoriesMap.get(row.id) ?? [],
+      highlight: row.highlight,
     }));
   }
 }

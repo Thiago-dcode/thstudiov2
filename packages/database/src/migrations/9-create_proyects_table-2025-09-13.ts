@@ -12,6 +12,9 @@ const up = async () => {
     Column.float('budget', {
       nullable: true,
     }),
+    Column.boolean('highlight', {
+      default: false
+    }),
     Column.timestamp('start_date', {
       nullable: true,
     }),

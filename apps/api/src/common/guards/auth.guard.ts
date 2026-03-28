@@ -77,6 +77,7 @@ export class AuthGuard implements CanActivate {
         funnel_step: payload.funnel_step,
         id: payload.id,
         is_active: payload.is_active,
+        highlight: payload.highlight ?? false,
         password_reset_count: payload.password_reset_count,
         username_reset_count: payload.username_reset_count,
         next_username_reset: payload.next_username_reset,

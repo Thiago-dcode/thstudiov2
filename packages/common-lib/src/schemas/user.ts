@@ -13,6 +13,7 @@ export type UserSchema = {
   email: string;
   avatar?: string;
   banner?: string;
+  highlight: boolean;
   email_validated?: boolean;
   is_active?: boolean;
   banned?: boolean;
@@ -59,6 +60,7 @@ export type UserProfileSchema = {
   surname?: string | null;
   biography?: string | null;
   profession?: string | null;
+  highlight?: boolean;
 
   // From address
   a_id:number;
@@ -100,6 +102,7 @@ export type ArtistSearchSchema = {
   avatar?: string;
   profession?: string | null;
   short_biography?: string | null;
+  highlight?: boolean;
   a_id?: number | null;
   city?: string | null;
   state?: string | null;

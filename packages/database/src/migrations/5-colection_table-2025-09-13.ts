@@ -5,6 +5,9 @@ const up = async () => {
   await Schema.table('collections').withTimestamps(true).createIfNotExists([
     Column.id(),
     Column.string('title', 255, {}),
+    Column.boolean('highlight', {
+      default: false
+    }),
     Column.text('description'),
     Column.foreignKey('user_id', 'users', 'id', {
       onDelete: 'CASCADE',
@@ -22,7 +25,7 @@ const up = async () => {
       nullable: false,
     }),
     Column.smallInteger('position'),
-    Column.uniques('UC_collection_media',['collection_id','media_id'])
+    Column.uniques('UC_collection_media', ['collection_id', 'media_id'])
   ]);
   await Schema.table('collection_translations').createIfNotExists([
     Column.id(),
@@ -33,9 +36,9 @@ const up = async () => {
       onDelete: 'CASCADE',
       nullable: false,
     }),
-    Column.uniques('UC_collection_translation',['language_code','collection_id'])
+    Column.uniques('UC_collection_translation', ['language_code', 'collection_id'])
   ]);
-};  
+};
 
 const down = async () => {
   await Schema.table('collection_translations').dropIfExists();

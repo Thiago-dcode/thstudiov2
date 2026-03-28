@@ -1,4 +1,4 @@
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   IsArray,
   IsBoolean,
@@ -19,6 +19,10 @@ export class IndexArtistsRequest extends OffsetPaginationRequest {
   @IsNotEmpty()
   search?: string;
 
+  @IsOptional()
+  @IsBoolean()
+  @Type(() => Boolean)
+  highlight?: boolean;
   @IsOptional()
   @IsArray()
   @Type(() => Number)

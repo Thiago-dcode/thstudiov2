@@ -133,34 +133,54 @@ export default async function ArtistsPage({
                             centerSearch={!artistsResult}
                         >
                             {artistsResult ? (
-                            <section
-                                aria-labelledby="artists-results-heading"
-                                className="flex w-full min-w-0 flex-col gap-4 border-t border-border pt-4"
-                            >
-                                <h2
-                                    id="artists-results-heading"
-                                    className="text-sm font-medium tracking-wide text-text-muted"
+                                <section
+                                    aria-labelledby="artists-results-heading"
+                                    className="flex w-full min-w-0 flex-col gap-4 border-t border-border pt-4"
                                 >
-                                    {artistsResult.error
-                                        ? "Results"
-                                        : totalCount === 0
-                                          ? `No artists found${resultsForSearchSuffix}`
-                                          : `${totalCount.toLocaleString()} artist${totalCount === 1 ? "" : "s"} found${resultsForSearchSuffix}`}
-                                </h2>
-                                { artistsResult.error ? (
-                                    <p className="text-sm text-destructive" role="alert">
-                                        {artistsResult.error.message ||
-                                            "Could not load artists."}
+                                    <h2
+                                        id="artists-results-heading"
+                                        className="text-sm font-medium tracking-wide text-text-muted"
+                                    >
+                                        {artistsResult.error
+                                            ? "Results"
+                                            : totalCount === 0
+                                              ? `No artists found${resultsForSearchSuffix}`
+                                              : `${totalCount.toLocaleString()} artist${totalCount === 1 ? "" : "s"} found${resultsForSearchSuffix}`}
+                                    </h2>
+                                    {artistsResult.error ? (
+                                        <p className="text-sm text-destructive" role="alert">
+                                            {artistsResult.error.message ||
+                                                "Could not load artists."}
+                                        </p>
+                                    ) : artists.length === 0 ? (
+                                        <p className="text-sm text-text-muted">
+                                            Try broadening your search or clearing some filters.
+                                        </p>
+                                    ) : (
+                                        <ArtistsGrid artists={artists} />
+                                    )}
+                                </section>
+                            ) : (
+                                <section
+                                    aria-labelledby="artists-empty-hint-heading"
+                                    className="mx-auto flex w-full min-w-0 max-w-2xl flex-col items-center gap-2 border-t border-border pt-4 text-center tablet:max-w-3xl"
+                                >
+                                    <h2
+                                        id="artists-empty-hint-heading"
+                                        className="sr-only"
+                                    >
+                                        How to find artists
+                                    </h2>
+                                    <p
+                                        className="text-sm text-text-muted"
+                                        role="status"
+                                    >
+                                        Type something in the search box or use
+                                        the filters above—name, category, or location—to discover
+                                        artists.
                                     </p>
-                                ) : artists.length === 0 ? (
-                                    <p className="text-sm text-text-muted">
-                                        Try broadening your search or clearing some filters.
-                                    </p>
-                                ) : (
-                                    <ArtistsGrid artists={artists} />
-                                )}
-                            </section>
-                            ) : null}
+                                </section>
+                            )}
                         </ArtistsBrowseLayout>
                     </div>
                 </UpdateCategoriesProvider>

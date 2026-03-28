@@ -26,6 +26,8 @@ export class PortfolioRepository extends BaseRepository {
     'portfolios.title',
     'portfolios.thumbnail',
     'portfolios.description',
+    'portfolios.user_highlight',
+    'portfolios.highlight',
     'portfolios.user_id',
     'portfolios.created_at',
     'portfolios.updated_at',
@@ -44,7 +46,8 @@ export class PortfolioRepository extends BaseRepository {
     'media.seo_alt',
     'media.seo_filename',
     'media.seo_description',
-    'media.seo_title'
+    'media.seo_title',
+    'media.highlight as m_highlight',
   ];
 
   constructor(private readonly requestService: RequestService) {
@@ -214,6 +217,8 @@ export class PortfolioRepository extends BaseRepository {
       title: result.title,
       thumbnail: result.thumbnail,
       description: result.description,
+      user_highlight: result.user_highlight,
+      highlight: result.highlight,
       user_id: result.user_id,
       created_at: result.created_at,
       updated_at: result.updated_at,
@@ -237,6 +242,7 @@ export class PortfolioRepository extends BaseRepository {
         seo_description: row.seo_description,
         seo_title: row.seo_title,
         shape: row.shape,
+        highlight: row.m_highlight ?? false,
       });
     }
 
@@ -248,6 +254,8 @@ export class PortfolioRepository extends BaseRepository {
       title: first.title,
       thumbnail: first.thumbnail,
       description: first.description,
+      user_highlight: first.user_highlight,
+      highlight: first.highlight,
       user_id: first.user_id,
       created_at: first.created_at,
       updated_at: first.updated_at,

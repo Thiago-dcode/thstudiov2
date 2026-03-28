@@ -30,6 +30,7 @@ export class ServiceRepository extends BaseRepository {
     'services.thumbnail',
     'services.price',
     'services.is_active',
+    'services.highlight',
     'services.show_price',
     'services.user_id',
     'services.portfolio_id',
@@ -45,7 +46,9 @@ export class ServiceRepository extends BaseRepository {
     'service_terms.title as st_title',
     'portfolios.id as p_id',
     'portfolios.title as p_title',
-    'portfolios.slug as p_slug'
+    'portfolios.slug as p_slug',
+    'portfolios.user_highlight as p_user_highlight',
+    'portfolios.highlight as p_highlight',
   ];
 
   constructor(private readonly requestService: RequestService) {
@@ -185,6 +188,7 @@ export class ServiceRepository extends BaseRepository {
       thumbnail: result.thumbnail,
       price: result.price,
       is_active: result.is_active,
+      highlight: result.highlight,
       show_price: result.show_price,
       user_id: result.user_id,
       portfolio_id: result.portfolio_id,
@@ -197,11 +201,7 @@ export class ServiceRepository extends BaseRepository {
     const featuresMap = new Map<number, Pick<ServiceFeatureSchema, 'id' | 'title'>>();
     const termsMap = new Map<number, Pick<ServiceTermSchema, 'id' | 'title'>>();
 
-    let portfolio: {
-      id: number,
-      title: string,
-      slug: string
-    } | undefined = undefined;
+    let portfolio: FullService['portfolio'] = undefined;
 
     for (const row of result) {
       if (row.sf_id && !featuresMap.has(row.sf_id)) {
@@ -222,7 +222,9 @@ export class ServiceRepository extends BaseRepository {
         portfolio = {
           id: row.p_id,
           slug: row.p_slug,
-          title: row.p_title
+          title: row.p_title,
+          user_highlight: row.p_user_highlight,
+          highlight: row.p_highlight,
         }
       }
     }
@@ -237,6 +239,7 @@ export class ServiceRepository extends BaseRepository {
       thumbnail: first.thumbnail,
       price: first.price,
       is_active: first.is_active,
+      highlight: first.highlight,
       show_price: first.show_price,
       user_id: first.user_id,
       portfolio_id: first.portfolio_id,

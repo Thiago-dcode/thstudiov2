@@ -21,6 +21,9 @@ const up = async () => {
     Column.string('thumbnail', 255, {
       nullable: true,
     }),
+    Column.boolean('highlight', {
+      default: false
+    }),
     //Block media if user exceed account max size
     Column.boolean('blocked',{
       default:false

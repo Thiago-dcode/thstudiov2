@@ -1,6 +1,5 @@
 import { PortfolioSchema } from "../schemas/portfolio";
 import { CollectionSchema } from "../schemas/collection";
-import { MediaSchema } from "../schemas/media";
 import { OffsetPaginationRequest } from "./request";
 import { MediaPortfolio } from "./media";
 
@@ -22,7 +21,12 @@ export type PortfolioIndexRequest = OffsetPaginationRequest & {
 };
 
 // Fields generated internally by the system (user cannot set these)
-type InternalPortfolioFields = 'id' | 'created_at' | 'updated_at';
+type InternalPortfolioFields =
+  | 'id'
+  | 'created_at'
+  | 'updated_at'
+  | 'highlight'
+  | 'user_highlight';
 
 // What users can provide when creating a portfolio (public API input)
 export type CreatePortfolioInput = Omit<PortfolioSchema, InternalPortfolioFields | 'thumbnail'> & {
@@ -42,8 +46,10 @@ export type CreatePortfolioInputWithFile = Omit<CreatePortfolioInput, 'thumbnail
   thumbnail: File;
 };
 
-// What users can update
-export type UpdatePortfolioInput = Partial<Omit<PortfolioSchema, InternalPortfolioFields>> & {
+// What users can update (`user_highlight` / `highlight` use DB defaults on create; optional partial updates allowed except platform `highlight`, which stays internal-only via Omit)
+export type UpdatePortfolioInput = Partial<
+  Omit<PortfolioSchema, 'id' | 'created_at' | 'updated_at' | 'highlight'>
+> & {
   media: {
     id: number;
     position: number;

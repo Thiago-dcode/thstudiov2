@@ -31,7 +31,7 @@ export type ProfileAddress = {
 export type UserProfile = Pick<UserSchema,
   | 'id' | 'name' | 'surname' | 'username' | 'email'
   | 'avatar' | 'banner' | 'banned' | 'banned_reason'
-  | 'is_active' | 'short_biography' | 'biography' | 'profession'
+  | 'is_active' | 'short_biography' | 'biography' | 'profession' | 'highlight'
 > & {
   address: ProfileAddress | null;
   categories: CategoryBase[];
@@ -40,7 +40,7 @@ export type FindUserRequest = {
   format?: EnumType<'FORMAT_TYPE'>
 }
 
-export type CreateUserInput = Omit<UserSchema, 'id' | 'created_at' | 'updated_at'>;
+export type CreateUserInput = Omit<UserSchema, 'id' | 'created_at' | 'updated_at' | 'highlight'>;
 export type UpdateUserInput = Partial<CreateUserInput>;
 export type UpdateUserInputWithAssets = Omit<UpdateUserInput, 'avatar' | 'banner'> & {
   categories?: (string | number)[]
@@ -62,6 +62,7 @@ export type UserMetrics = {
 /** Query for listing artists; the API always applies offset pagination (paginated is forced server-side). */
 export type ArtistIndexRequest = OffsetPaginationRequest & {
   search?: string;
+  highlight?:boolean;
   categories?: number[];
   /** Matches `addresses.city` (case-insensitive substring on API). */
   city?: string;
@@ -88,4 +89,5 @@ export type ArtistCard = {
     country?: string | null;
   } | null;
   categories: Pick<CategoryBase, 'id' | 'name'>[];
+  highlight?: boolean;
 }

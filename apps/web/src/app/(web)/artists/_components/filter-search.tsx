@@ -46,7 +46,7 @@ function FilterSearchInner({
     centered?: boolean
 }) {
     const router = useRouter()
-    const { filters,add } = useFilters()
+    const { filters, add } = useFilters()
     const searchInput = useRef<HTMLInputElement | null>(null)
 
     const initialUrl = useMemo(
@@ -73,12 +73,12 @@ function FilterSearchInner({
         [initialUrl, newUrl],
     )
 
-   
+
 
 
     useEffect(() => {
         if (!urlHasChanged) return
-        if(searchInput.current) searchInput.current.value =''
+        if (searchInput.current) searchInput.current.value = ''
         router.push(newUrl);
     }, [urlHasChanged, newUrl, router])
 
@@ -92,10 +92,10 @@ function FilterSearchInner({
             )}
             onSubmit={(e) => {
                 e.preventDefault()
-                
+
                 const value = searchInput.current?.value.trim();
-                if(value)  add('search',value);
-             
+                if (value) add('search', value);
+
             }}
         >
             <div
@@ -125,13 +125,13 @@ function FilterSearchInner({
                     />
                 </div>
                 <Button
-                type='submit'
+                    type='submit'
                     variant="default"
                     className={cn(
                         'h-14 min-h-14 shrink-0 rounded-md px-8 text-sm font-semibold uppercase tracking-[0.08em] shadow-sm',
                         'tablet:rounded-l-none tablet:rounded-r-[calc(0.375rem-2px)]',
                     )}
-                  
+
                 >
                     Search
                 </Button>

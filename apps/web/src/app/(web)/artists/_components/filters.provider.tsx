@@ -16,6 +16,8 @@ type FiltersContextValue = {
     filters: ArtistIndexRequest
 
     categoriesSelected: CategoryBase[]
+    /** Replace the full category selection; updates `filters.categories`. */
+    setCategoriesSelected: (categories: CategoryBase[]) => void
     /** Append a category if not already selected; updates `filters.categories`. */
     pushCategory: (category: CategoryBase) => void
     /** Remove a category by id; clears `categories` when none remain. */
@@ -58,7 +60,8 @@ function sortedCategoryIdsKey(categories: number[] | undefined): string {
 export function FiltersProvider({ children, params: initialParams, defaultCategoriesSelected = [] }: FiltersProviderProps) {
     const [filters, setFilters] = useState<ArtistIndexRequest>(initialParams)
 
-    const [categoriesSelected, setCategoriesSelected] = useState<CategoryBase[]>(defaultCategoriesSelected)
+    const [categoriesSelected, setCategoriesSelectedState] =
+        useState<CategoryBase[]>(defaultCategoriesSelected)
     /** Keep client filter state aligned with URL/searchParams when the server passes new `params`. */
     const paramsKey = JSON.stringify(initialParams)
     useEffect(() => {
@@ -68,6 +71,7 @@ export function FiltersProvider({ children, params: initialParams, defaultCatego
 
     const add = useCallback(
         <K extends keyof ArtistIndexRequest>(key: K, value: ArtistIndexRequest[K]) => {
+           
             setFilters((prev) => ({ ...prev, [key]: value }))
         },
         [],
@@ -83,11 +87,23 @@ export function FiltersProvider({ children, params: initialParams, defaultCatego
 
     const clearAll = useCallback(() => {
         setFilters({})
-        setCategoriesSelected([])
+        setCategoriesSelectedState([])
+    }, [])
+
+    const setCategoriesSelected = useCallback((categories: CategoryBase[]) => {
+        setCategoriesSelectedState(categories)
+        setFilters((prev) => {
+            const ids = categories.map((c) => c.id)
+            if (ids.length === 0) {
+                const { categories: _c, ...rest } = prev
+                return rest
+            }
+            return { ...prev, categories: ids }
+        })
     }, [])
 
     const pushCategory = useCallback((category: CategoryBase) => {
-        setCategoriesSelected((prev) => {
+        setCategoriesSelectedState((prev) => {
             if (prev.some((c) => c.id === category.id)) return prev
             return [...prev, category]
         })
@@ -99,7 +115,7 @@ export function FiltersProvider({ children, params: initialParams, defaultCatego
     }, [])
 
     const removeCategory = useCallback((categoryId: number) => {
-        setCategoriesSelected((prev) => prev.filter((c) => c.id !== categoryId))
+        setCategoriesSelectedState((prev) => prev.filter((c) => c.id !== categoryId))
         setFilters((prev) => {
             const ids = prev.categories ?? []
             const next = ids.filter((id) => id !== categoryId)
@@ -117,6 +133,7 @@ export function FiltersProvider({ children, params: initialParams, defaultCatego
         () => ({
             filters,
             categoriesSelected,
+            setCategoriesSelected,
             pushCategory,
             removeCategory,
             add,
@@ -126,6 +143,7 @@ export function FiltersProvider({ children, params: initialParams, defaultCatego
         [
             filters,
             categoriesSelected,
+            setCategoriesSelected,
             pushCategory,
             removeCategory,
             add,

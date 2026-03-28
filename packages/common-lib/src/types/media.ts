@@ -11,7 +11,7 @@ import { EnumType } from "../constants/enums";
 export type Media = MediaSchema;
 // Media translation without id
 
-export type MediaPortfolio = Pick<Media, 'id' | 'public_id' | 'title' | 'thumbnail' | 'url'| 'seo_alt' | 'seo_description' | 'seo_filename' | 'seo_title' | 'shape'> & {
+export type MediaPortfolio = Pick<Media, 'id' | 'public_id' | 'title' | 'thumbnail' | 'url'| 'seo_alt' | 'seo_description' | 'seo_filename' | 'seo_title' | 'shape' | 'highlight'> & {
   position: number
 };
 export type MediaTranslation = MediaTranslationSchema;
@@ -37,7 +37,7 @@ export type MediaIndexRequest = OffsetPaginationRequest & {
 }
 
 // Fields generated internally by the system (user cannot set these)
-type InternalMediaFields = 'id' | 'public_id' | 'bytes' | 'url' | 'thumbnail' | 'thumbnail_bytes' | 'shape' | 'extension' | 'blocked' | 'is_active' | 'created_at' | 'updated_at';
+type InternalMediaFields = 'id' | 'public_id' | 'bytes' | 'url' | 'thumbnail' | 'thumbnail_bytes' | 'shape' | 'extension' | 'blocked' | 'is_active' | 'highlight' | 'created_at' | 'updated_at';
 
 // What users can provide when creating media (public API input)
 export type PublicCreateMediaInput = Omit<MediaSchema, InternalMediaFields>;

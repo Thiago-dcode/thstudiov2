@@ -5,6 +5,7 @@ import { TableColumn } from "../types/database";
 export type CollectionSchema = {
   id: number;
   title: string;
+  highlight: boolean;
   description?: string | null;
   user_id: number;
   created_at: Date;
@@ -35,6 +36,7 @@ export type CollectionFullSchema = CollectionSchema & {
   m_thumbnail_bytes: number;
   m_url: string;
   m_thumbnail?: string | null;
+  m_highlight?: boolean | null;
   m_blocked: boolean;
   m_shape?: EnumType<'MEDIA_SHAPE'> | null;
   m_compression_level?: EnumType<'COMPRESSION_LEVEL'> | null;

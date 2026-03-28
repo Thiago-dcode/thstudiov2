@@ -36,6 +36,9 @@ const up = async () => {
     ColumnBuilder.string('banner', 255, {
       nullable: true
     }),
+    ColumnBuilder.boolean('highlight', {
+      default: false
+    }),
     ColumnBuilder.email(),
     ColumnBuilder.boolean('email_validated', {
       default: false,

@@ -26,7 +26,7 @@ const ArtistHomePage = async ({ params }: { params: Promise<{ username: string }
         <div className="min-h-screen w-full animate-in fade-in duration-1000">
             {/* Hero Banner — full-bleed up to desktop */}
             <section className="relative w-full">
-                <div className="relative w-full h-[40vh] tablet:h-[50vh] laptop:h-[56vh] desktop:h-[60vh]">
+                <div className="relative w-full h-[30vh] tablet:h-[38vh] laptop:h-[42vh] desktop:h-[46vh]">
                     <Image
                         alt={`${profile.username}'s banner`}
                         src={profile.banner || fallbackBanner}
