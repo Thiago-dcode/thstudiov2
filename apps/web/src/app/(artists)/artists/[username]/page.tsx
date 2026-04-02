@@ -90,7 +90,7 @@ const ArtistHomePage = async ({ params }: { params: Promise<{ username: string }
                     <div className="flex flex-wrap justify-center gap-2">
                         {profile.categories.map((cat) => (
                             <Badge key={cat.id} variant="outline">
-                                {cat.translation?.name || cat.name}
+                                {cat.name}
                             </Badge>
                         ))}
                     </div>

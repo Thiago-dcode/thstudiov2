@@ -141,8 +141,8 @@ export class Helpers {
     const targetSize = (targetSizeMb > 0 ? targetSizeMb : 1) * 1024 * 1024;
     const resultCompress = await this.compressService.optimizeImageToWebp(
       asset,
-      targetQuality ?? 90,
       asset.size > targetSize ? targetSize : asset.size,
+      targetQuality ?? 90,
     );
     asset.buffer = resultCompress.buffer;
 

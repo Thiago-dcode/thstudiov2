@@ -48,7 +48,9 @@ export class AuthGuard implements CanActivate {
         !payload ||
         !payload?.id ||
         !payload?.email ||
-        !payload?.user_auth_device_id
+        !payload?.user_auth_device_id ||
+        !payload?.role ||
+        typeof payload.role.id !== 'number'
       ) {
         throw new UnauthorizedException();
       }
@@ -70,6 +72,7 @@ export class AuthGuard implements CanActivate {
         email: payload.email,
         public_id: payload.public_id,
         username: payload.username,
+        role: payload.role,
         email_validated: payload.email_validated,
         stripe_customer_id: payload.stripe_customer_id,
         twofa_enabled: payload.twofa_enabled,
@@ -77,7 +80,7 @@ export class AuthGuard implements CanActivate {
         funnel_step: payload.funnel_step,
         id: payload.id,
         is_active: payload.is_active,
-        highlight: payload.highlight ?? false,
+        is_featured: payload.is_featured ?? false,
         password_reset_count: payload.password_reset_count,
         username_reset_count: payload.username_reset_count,
         next_username_reset: payload.next_username_reset,

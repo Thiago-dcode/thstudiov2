@@ -22,12 +22,24 @@ export class IndexArtistsRequest extends OffsetPaginationRequest {
   @IsOptional()
   @IsBoolean()
   @Type(() => Boolean)
-  highlight?: boolean;
+  is_featured?: boolean;
   @IsOptional()
   @IsArray()
-  @Type(() => Number)
-  @IsNumber({}, { each: true })
-  categories?: number[];
+  @IsString({ each: true })
+  @Transform(({ value }) => {
+    if (value === undefined || value === null) return undefined;
+    if (Array.isArray(value)) {
+      return value.map(String).map((s) => s.trim()).filter((s) => s.length > 0);
+    }
+    if (typeof value === 'string') {
+      return value
+        .split(',')
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0);
+    }
+    return undefined;
+  })
+  categories?: string[];
 
   @IsOptional()
   @IsString()

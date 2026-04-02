@@ -27,7 +27,8 @@ export class MediaRepository extends BaseRepository {
     'media.thumbnail_bytes',
     'media.thumbnail',
     'media.url',
-    'media.highlight',
+    'media.is_featured',
+    'media.is_highlight',
     'media.blocked',
     'media.shape',
     'media.compression_level',
@@ -141,6 +142,14 @@ export class MediaRepository extends BaseRepository {
     if (typeof filters.blocked === 'boolean') {
       query.where('blocked', '=', filters.blocked);
     }
+
+    if (typeof filters.is_featured === 'boolean') {
+      query.where('is_featured', '=', filters.is_featured);
+    }
+
+    if (typeof filters.is_highlight === 'boolean') {
+      query.where('is_highlight', '=', filters.is_highlight);
+    }
     this.requestService.pagination =
       await this.handleOffsetPagination(query, filters);
     query.orderBy('created_at', 'DESC')
@@ -168,7 +177,8 @@ export class MediaRepository extends BaseRepository {
       thumbnail_bytes: result.thumbnail_bytes,
       url: result.url,
       thumbnail: result.thumbnail,
-      highlight: result.highlight,
+      is_featured: result.is_featured,
+      is_highlight: result.is_highlight,
       blocked: result.blocked,
       shape: result.shape,
       compression_level: result.compression_level,

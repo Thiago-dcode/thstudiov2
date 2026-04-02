@@ -20,8 +20,8 @@ type FiltersContextValue = {
     setCategoriesSelected: (categories: CategoryBase[]) => void
     /** Append a category if not already selected; updates `filters.categories`. */
     pushCategory: (category: CategoryBase) => void
-    /** Remove a category by id; clears `categories` when none remain. */
-    removeCategory: (categoryId: number) => void
+    /** Remove a category by slug; clears `categories` when none remain. */
+    removeCategory: (slug: string) => void
     /** Set a single filter key to the given value. */
     add: <K extends keyof ArtistIndexRequest>(
         key: K,
@@ -48,13 +48,6 @@ type FiltersProviderProps = {
     children: ReactNode
     params: ArtistIndexRequest,
     defaultCategoriesSelected?: CategoryBase[]
-}
-
-function sortedCategoryIdsKey(categories: number[] | undefined): string {
-    return (categories ?? [])
-        .slice()
-        .sort((a, b) => a - b)
-        .join(",")
 }
 
 export function FiltersProvider({ children, params: initialParams, defaultCategoriesSelected = [] }: FiltersProviderProps) {
@@ -93,12 +86,12 @@ export function FiltersProvider({ children, params: initialParams, defaultCatego
     const setCategoriesSelected = useCallback((categories: CategoryBase[]) => {
         setCategoriesSelectedState(categories)
         setFilters((prev) => {
-            const ids = categories.map((c) => c.id)
-            if (ids.length === 0) {
+            const slugs = categories.map((c) => c.slug)
+            if (slugs.length === 0) {
                 const { categories: _c, ...rest } = prev
                 return rest
             }
-            return { ...prev, categories: ids }
+            return { ...prev, categories: slugs }
         })
     }, [])
 
@@ -108,17 +101,17 @@ export function FiltersProvider({ children, params: initialParams, defaultCatego
             return [...prev, category]
         })
         setFilters((prev) => {
-            const ids = prev.categories ?? []
-            if (ids.includes(category.id)) return prev
-            return { ...prev, categories: [...ids, category.id] }
+            const slugs = prev.categories ?? []
+            if (slugs.includes(category.slug)) return prev
+            return { ...prev, categories: [...slugs, category.slug] }
         })
     }, [])
 
-    const removeCategory = useCallback((categoryId: number) => {
-        setCategoriesSelectedState((prev) => prev.filter((c) => c.id !== categoryId))
+    const removeCategory = useCallback((slug: string) => {
+        setCategoriesSelectedState((prev) => prev.filter((c) => c.slug !== slug))
         setFilters((prev) => {
-            const ids = prev.categories ?? []
-            const next = ids.filter((id) => id !== categoryId)
+            const slugs = prev.categories ?? []
+            const next = slugs.filter((s) => s !== slug)
             if (next.length === 0) {
                 const { categories: _c, ...rest } = prev
                 return rest

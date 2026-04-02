@@ -90,6 +90,8 @@ export type Join = {
   localColumn: string;
   foreignTable: TableName;
   foreignColumn: string;
+  /** Appended to the ON clause (e.g. `AND foreignTable.col = 'value'`). Caller must supply safe SQL. */
+  onSuffix?: string;
 };
 export type SqlTypes =
   | 'INTEGER'

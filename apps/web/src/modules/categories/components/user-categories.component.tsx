@@ -46,7 +46,7 @@ const {searchRef,categories,categoriesResponse,categoriesSelected,handleFetch,ha
                             size={'sm'}
                             key={category.id + 'category' + category.name}
                         >
-                            {category.translation?.name || category.name}
+                            {category.name}
                         </Button>
                     })}
                 </FadeInDiv>
@@ -72,7 +72,7 @@ const {searchRef,categories,categoriesResponse,categoriesSelected,handleFetch,ha
                                         )}
                                         key={category.id + 'category' + category.name}
                                     >
-                                        {category.translation?.name || category.name}
+                                        {category.name}
                                     </Button>
                                 })
                             }

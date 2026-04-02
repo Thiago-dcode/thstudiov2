@@ -11,7 +11,8 @@ export type MediaSchema = {
   thumbnail_bytes:number;
   url: string;
   thumbnail?: string;
-  highlight: boolean;
+  is_featured: boolean;
+  is_highlight: boolean;
   blocked: boolean;
   shape?: EnumType<'MEDIA_SHAPE'>;
   compression_level?: EnumType<'COMPRESSION_LEVEL'>;

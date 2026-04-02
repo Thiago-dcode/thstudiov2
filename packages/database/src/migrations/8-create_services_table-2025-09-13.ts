@@ -17,7 +17,10 @@ const up = async () => {
     Column.boolean('is_active', {
       default: true,
     }),
-    Column.boolean('highlight', {
+    Column.boolean('is_featured', {
+      default: false
+    }),
+    Column.boolean('is_highlight', {
       default: false
     }),
     Column.boolean('show_price', {

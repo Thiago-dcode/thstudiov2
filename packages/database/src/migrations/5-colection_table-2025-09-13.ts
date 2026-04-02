@@ -5,9 +5,13 @@ const up = async () => {
   await Schema.table('collections').withTimestamps(true).createIfNotExists([
     Column.id(),
     Column.string('title', 255, {}),
-    Column.boolean('highlight', {
+    Column.boolean('is_featured', {
       default: false
     }),
+    Column.boolean('is_highlight', {
+      default: false
+    }),
+ 
     Column.text('description'),
     Column.foreignKey('user_id', 'users', 'id', {
       onDelete: 'CASCADE',

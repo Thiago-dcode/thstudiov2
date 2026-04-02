@@ -228,7 +228,13 @@ protected async handleOffsetPagination(query:QueryBuilder,pagination:OffsetPagin
     }
     if (options?.join) {
       for (const join of options.join) {
-        query = query.join(join.localColumn, join.foreignTable, join.foreignColumn, join.type);
+        query = query.join(
+          join.localColumn,
+          join.foreignTable,
+          join.foreignColumn,
+          join.type,
+          join.onSuffix,
+        );
       }
     }
     return query;

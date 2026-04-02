@@ -10,7 +10,8 @@ export type ServiceSchema = {
   thumbnail?: string | null;
   price?: number | null;
   is_active: boolean;
-  highlight: boolean;
+  is_featured: boolean;
+  is_highlight: boolean;
   show_price: boolean;
   user_id: number;
   portfolio_id?: number | null;
@@ -44,9 +45,7 @@ export type ServiceTermSchema = {
 // ==================== SERVICE FULL SCHEMA (WITH FEATURES & TERMS) ====================
 // Joins: services + service_features + service_terms + portfolios
 // Collisions: id, title, created_at, updated_at
-// `user_highlight` exists only for TableColumn typing of `portfolios.user_highlight as p_user_highlight` (row uses `p_user_highlight`).
 export type ServiceFullSchema = ServiceSchema & {
-  user_highlight?: boolean | null;
   // From service_features (prefixed: sf_)
   sf_id: number;                // COLLISION: id
   sf_title: string;             // COLLISION: title
@@ -59,8 +58,8 @@ export type ServiceFullSchema = ServiceSchema & {
    p_id: number;                // COLLISION: id
    p_title: string;             // COLLISION: title
    p_slug:string;                // COLLISION: slug
-   p_user_highlight?: boolean;
-   p_highlight?: boolean;
+   p_is_featured?: boolean;
+   p_is_highlight?: boolean;
 };
 
 const tablesServiceFull = [

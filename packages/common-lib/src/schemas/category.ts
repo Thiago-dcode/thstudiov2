@@ -5,7 +5,9 @@ export type CategorySchema = {
   id: number;
   tags: string;
   thumbnail?: string | null;
+  is_featured: boolean;
   name: string;
+  slug: string;
   parent_id?: number | null;
   created_at: Date;
   updated_at: Date;

@@ -472,6 +472,7 @@ private  handleBuildGet(columns: string[], values: SqlValue[], select: string[] 
     foreignTable: TableName,
     foreignColumn: string = 'id',
     joinType: JoinType = 'INNER',
+    onSuffix?: string,
   ) {
     this.operationsChain.push('join');
     this.joins.push({
@@ -479,6 +480,7 @@ private  handleBuildGet(columns: string[], values: SqlValue[], select: string[] 
       localColumn,
       foreignTable,
       foreignColumn,
+      onSuffix,
     });
     return this;
   }
@@ -792,7 +794,9 @@ offset = isNull ? offset : offset + 1;
    * @protected
    */
   protected buildJoinQuery(join: Join) {
-    return `${join.type} JOIN ${join.foreignTable} ON ${join.foreignTable}.${join.foreignColumn} = ${this.buildColumn(join.localColumn)}`;
+    const on = `${join.foreignTable}.${join.foreignColumn} = ${this.buildColumn(join.localColumn)}`;
+    const suffix = join.onSuffix?.trim() ? ` ${join.onSuffix.trim()}` : '';
+    return `${join.type} JOIN ${join.foreignTable} ON ${on}${suffix}`;
   }
 
   // ============================================================================

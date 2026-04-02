@@ -30,7 +30,8 @@ export class ServiceRepository extends BaseRepository {
     'services.thumbnail',
     'services.price',
     'services.is_active',
-    'services.highlight',
+    'services.is_featured',
+    'services.is_highlight',
     'services.show_price',
     'services.user_id',
     'services.portfolio_id',
@@ -47,8 +48,8 @@ export class ServiceRepository extends BaseRepository {
     'portfolios.id as p_id',
     'portfolios.title as p_title',
     'portfolios.slug as p_slug',
-    'portfolios.user_highlight as p_user_highlight',
-    'portfolios.highlight as p_highlight',
+    'portfolios.is_featured as p_is_featured',
+    'portfolios.is_highlight as p_is_highlight',
   ];
 
   constructor(private readonly requestService: RequestService) {
@@ -172,6 +173,14 @@ export class ServiceRepository extends BaseRepository {
       query.where('user_id', '=', filters.user_id);
     }
 
+    if (typeof filters.is_featured === 'boolean') {
+      query.where('is_featured', '=', filters.is_featured);
+    }
+
+    if (typeof filters.is_highlight === 'boolean') {
+      query.where('is_highlight', '=', filters.is_highlight);
+    }
+
     this.requestService.pagination =
       await this.handleOffsetPagination(query, filters);
     query.orderBy('created_at', 'DESC');
@@ -188,7 +197,8 @@ export class ServiceRepository extends BaseRepository {
       thumbnail: result.thumbnail,
       price: result.price,
       is_active: result.is_active,
-      highlight: result.highlight,
+      is_featured: result.is_featured,
+      is_highlight: result.is_highlight,
       show_price: result.show_price,
       user_id: result.user_id,
       portfolio_id: result.portfolio_id,
@@ -223,8 +233,8 @@ export class ServiceRepository extends BaseRepository {
           id: row.p_id,
           slug: row.p_slug,
           title: row.p_title,
-          user_highlight: row.p_user_highlight,
-          highlight: row.p_highlight,
+          is_featured: row.p_is_featured,
+          is_highlight: row.p_is_highlight,
         }
       }
     }
@@ -239,7 +249,8 @@ export class ServiceRepository extends BaseRepository {
       thumbnail: first.thumbnail,
       price: first.price,
       is_active: first.is_active,
-      highlight: first.highlight,
+      is_featured: first.is_featured,
+      is_highlight: first.is_highlight,
       show_price: first.show_price,
       user_id: first.user_id,
       portfolio_id: first.portfolio_id,

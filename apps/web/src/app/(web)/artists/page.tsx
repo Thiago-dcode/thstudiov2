@@ -48,15 +48,16 @@ function parseOptionalFloat(s: string | undefined): number | undefined {
     return Number.isFinite(n) ? n : undefined
 }
 
-function extractCategories(categories: string | undefined): number[] | undefined {
+/** Comma-separated category slugs, aligned with `FilterSearch` / `queryParamBuilder` commas style. */
+function extractCategorySlugs(categories: string | undefined): string[] | undefined {
     if (categories === undefined) return undefined
     const trimmed = categories.trim()
     if (!trimmed) return undefined
-    const ids = trimmed
+    const slugs = trimmed
         .split(",")
-        .map((part) => parseInt(part.trim(), 10))
-        .filter((n) => !Number.isNaN(n))
-    return ids.length > 0 ? ids : undefined
+        .map((part) => part.trim())
+        .filter((s) => s.length > 0)
+    return slugs.length > 0 ? slugs : undefined
 }
 
 function buildArtistIndexRequest(
@@ -68,7 +69,7 @@ function buildArtistIndexRequest(
         page: parseOptionalInt(q("page")),
         per_page: parseOptionalInt(q("per_page")),
         search: optionalTrim(q("search")),
-        categories: extractCategories(q("categories")),
+        categories: extractCategorySlugs(q("categories")),
         city: optionalTrim(q("city")),
         state: optionalTrim(q("state")),
         country: optionalTrim(q("country")),
@@ -100,7 +101,7 @@ export default async function ArtistsPage({
     let categories: CategoryBase[] = []
     if (artistRequest.categories?.length) {
         const categoriesResult = await categoriesService.getAll({
-            categories: artistRequest.categories
+            slugs: artistRequest.categories,
         })
         categories = categoriesResult.data || []
     }

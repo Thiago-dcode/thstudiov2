@@ -7,10 +7,10 @@ const up = async () => {
     Column.string('slug', 255),
     Column.string('thumbnail', 255),
     Column.text('description'),
-    Column.boolean('user_highlight', {
+    Column.boolean('is_featured', {
       default: false
     }),
-    Column.boolean('highlight', {
+    Column.boolean('is_highlight', {
       default: false
     }),
     Column.foreignKey('user_id', 'users', 'id', {

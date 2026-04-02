@@ -26,6 +26,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { MediaModule } from './v1/modules/media/media.module';
 import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/constants';
 import { CategoriesModule } from './v1/modules/categories/categories.module';
+import { AdminModule } from './v1/modules/admin/admin.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { PlanSubscriptionsModule } from './v1/modules/plan-subscriptions/plan-subscriptions.module';
 import { WebhooksModule } from './v1/modules/webhooks/webhooks.module';
@@ -45,9 +46,12 @@ import { UserContactsModule } from './v1/modules/user-contacts/user-contacts.mod
 import { ServiceModule } from './v1/modules/services/service.module';
 import { UserServiceModule } from './v1/modules/user-services/user-service.module';
 import { LocationModule } from './v1/modules/locations/location.module';
-const APP_MODULES = [
+import { RolesModule } from './v1/modules/roles/roles.module';
+/** Feature modules mounted at `api/v1/*` (not under `admin/`). */
+const API_V1_MODULES = [
   AuthModule,
   UserModule,
+  RolesModule,
   PlansModule,
   PlanSubscriptionsModule,
   UserSessionsModule,
@@ -124,12 +128,13 @@ const APP_MODULES = [
       }),
       inject: [ConfigService],
     }),
-    RouterModule.register(
-      APP_MODULES.map((module) => ({
+    RouterModule.register([
+      ...API_V1_MODULES.map((module) => ({
         path: 'api/v1',
         module,
       })),
-    ),
+      { path: 'api/v1/admin', module: AdminModule },
+    ]),
     I18nModule.forRootAsync({
       loader: I18nJsonLoader,
       useFactory: () => ({
@@ -147,7 +152,8 @@ const APP_MODULES = [
     ServicesModule,
     UserExtraDataModule,
     AiProcessorModule,
-    ...APP_MODULES,
+    ...API_V1_MODULES,
+    AdminModule,
     TestModule,
   ],
   controllers: [],

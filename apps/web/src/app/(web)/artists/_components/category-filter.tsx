@@ -20,11 +20,11 @@ import { useFilters } from './filters.provider'
 const MAX_CATEGORY_SELECTION = 5
 
 function categoryLabel(c: CategoryBase) {
-    return c.translation?.name ?? c.name
+    return c.name
 }
 
 const CategoryFilter = () => {
-    const { categoriesSelected, pushCategory, removeCategory,setCategoriesSelected } = useFilters()
+    const { categoriesSelected, pushCategory, removeCategory, setCategoriesSelected } = useFilters()
     const { categories, handleOnChange, isLoading } = useUpdateCategories()
 
     const sortedCategories = useMemo(() => {
@@ -40,9 +40,9 @@ const CategoryFilter = () => {
     const handleSelectCategory = useCallback(
         (cat: CategoryBase) => {
             if (categoriesSelected.some((c) => c.id === cat.id)) {
-                removeCategory(cat.id)
+                removeCategory(cat.slug)
             } else if (categoriesSelected.length < MAX_CATEGORY_SELECTION) {
-             setCategoriesSelected([cat])
+                setCategoriesSelected([cat])
             }
         },
         [categoriesSelected, pushCategory, removeCategory],

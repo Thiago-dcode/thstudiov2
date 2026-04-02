@@ -9,7 +9,7 @@ import { useMemo } from 'react'
 import { useFilters } from './filters.provider'
 
 function categoryLabel(c: CategoryBase) {
-    const name = c.translation?.name ?? c.name
+    const name = c.name
     return name?.trim() ? name : `Category #${c.id}`
 }
 

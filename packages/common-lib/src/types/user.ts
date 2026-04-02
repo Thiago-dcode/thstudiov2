@@ -1,13 +1,25 @@
 import { EnumType } from "../constants/enums";
 import { UserSchema, BaseUserSchema } from "../schemas/user";
 import { CategoryBase } from "./category";
+import { Role } from "./role";
 import { FullPlan } from "./plan";
 import { OffsetPaginationRequest } from "./request";
 import { UserExtraData } from "./user-extra-data";
 
-// BaseUser derived from BaseUserSchema (without password, timestamps, and extended profile fields)
-// Making certain fields required that were optional in the schema
-export type BaseUser = Omit<BaseUserSchema, 'password' | 'twofa_code' | 'biography' | 'short_biography' | 'avatar' | 'banner'>;
+// BaseUser derived from BaseUserSchema (without password, timestamps, extended profile fields, and flat role_id)
+// Always includes nested `role` from users ↔ roles join (see BaseUserWithRoleRowSchema).
+export type BaseUser = Omit<
+  BaseUserSchema,
+  | 'password'
+  | 'twofa_code'
+  | 'biography'
+  | 'short_biography'
+  | 'avatar'
+  | 'banner'
+  | 'role_id'
+> & {
+  role: Pick<Role, 'id' | 'name'>;
+};
 
 // BaseUserWithSecrets includes the password field
 export type BaseUserWithSecrets = BaseUser & {
@@ -18,8 +30,13 @@ export type BaseUserWithSecrets = BaseUser & {
 // CompactUser: minimal user info (id, email, username)
 export type CompactUser = Pick<UserSchema, 'id' | 'email' | 'username' | 'name' | 'surname'>;
 
-// User extends the schema with all fields except timestamps, password, and address_id
-export type User = Omit<UserSchema, 'created_at' | 'updated_at' | 'password' | 'address_id'>;
+// User extends the schema with all fields except timestamps, password, address_id, and flat role_id
+export type User = Omit<
+  UserSchema,
+  'created_at' | 'updated_at' | 'password' | 'address_id' | 'role_id'
+> & {
+  role: Pick<Role, 'id' | 'name'>;
+};
 
 export type ProfileAddress = {
   formated_address?: string | null;
@@ -31,16 +48,16 @@ export type ProfileAddress = {
 export type UserProfile = Pick<UserSchema,
   | 'id' | 'name' | 'surname' | 'username' | 'email'
   | 'avatar' | 'banner' | 'banned' | 'banned_reason'
-  | 'is_active' | 'short_biography' | 'biography' | 'profession' | 'highlight'
+  | 'is_active' | 'short_biography' | 'biography' | 'profession' | 'is_featured'
 > & {
   address: ProfileAddress | null;
-  categories: CategoryBase[];
+  categories: Omit<CategoryBase,'is_featured'>[];
 };
 export type FindUserRequest = {
   format?: EnumType<'FORMAT_TYPE'>
 }
 
-export type CreateUserInput = Omit<UserSchema, 'id' | 'created_at' | 'updated_at' | 'highlight'>;
+export type CreateUserInput = Omit<UserSchema, 'id' | 'created_at' | 'updated_at' | 'is_featured'>;
 export type UpdateUserInput = Partial<CreateUserInput>;
 export type UpdateUserInputWithAssets = Omit<UpdateUserInput, 'avatar' | 'banner'> & {
   categories?: (string | number)[]
@@ -62,8 +79,9 @@ export type UserMetrics = {
 /** Query for listing artists; the API always applies offset pagination (paginated is forced server-side). */
 export type ArtistIndexRequest = OffsetPaginationRequest & {
   search?: string;
-  highlight?:boolean;
-  categories?: number[];
+  is_featured?:boolean;
+  //Array of category slugs
+  categories?: string[];
   /** Matches `addresses.city` (case-insensitive substring on API). */
   city?: string;
   /** Matches `addresses.state` (case-insensitive substring on API). */
@@ -88,6 +106,6 @@ export type ArtistCard = {
     state?: string | null;
     country?: string | null;
   } | null;
-  categories: Pick<CategoryBase, 'id' | 'name'>[];
-  highlight?: boolean;
+  categories: Pick<CategoryBase, 'id' | 'name' | 'slug'>[];
+  is_featured?: boolean;
 }

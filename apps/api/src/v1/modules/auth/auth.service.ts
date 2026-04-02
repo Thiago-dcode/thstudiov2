@@ -32,6 +32,7 @@ import { RegisterRequest } from './requests/register.request';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { NewUserEvent } from '../users/events/new-user.event';
 import { NEW_USER_EVENT } from '@repo/common-lib/constants/constants';
+import { RoleService } from '../roles/roles.service';
 
 @Injectable()
 export class AuthService {
@@ -47,15 +48,18 @@ export class AuthService {
     private readonly passwordRecoveryMail: PasswordRecoveryMail,
     private readonly passwordRecoveryAttemptsService: PasswordRecoveryAttemptsService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly roleService: RoleService,
   ) { }
   async register(registerRequest: RegisterRequest) {
+    const clientRole = await this.roleService.getByName('ARTIST');
     const user = await this.userRepository.create({
       ...registerRequest,
       public_id: await generateUUID(),
       funnel_step: 1,
-      username_reset_count:0,
-      password_reset_count:0,
+      username_reset_count: 0,
+      password_reset_count: 0,
       password: await hash(registerRequest.password),
+      role_id: clientRole.id,
     });
     const result = await this.handle2fa(user, {
       ip_address: this.requestService.ip_address,

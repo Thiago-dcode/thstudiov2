@@ -12,5 +12,4 @@ export class CategoriesController {
   findAll(@Query() indexCategoriesRequest: IndexCategoriesRequest) {
     return this.categoriesService.findAll(indexCategoriesRequest);
   }
-
 }

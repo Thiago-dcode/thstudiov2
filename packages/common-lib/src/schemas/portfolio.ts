@@ -8,8 +8,8 @@ export type PortfolioSchema = {
   title: string;
   thumbnail: string;
   description?: string | null;
-  user_highlight: boolean;
-  highlight: boolean;
+  is_featured: boolean;
+  is_highlight: boolean;
   user_id: number;
   created_at: Date;
   updated_at: Date;
@@ -42,7 +42,8 @@ export type PortfolioFullSchema = PortfolioSchema & {
   seo_description?: string | null;
   seo_filename: string;
   m_user_id: number;                      // COLLISION: user_id
-  m_highlight?: boolean | null;           // COLLISION: highlight (portfolios.highlight); absent when no media row
+  m_is_featured?: boolean | null;
+  m_is_highlight?: boolean | null;
 
   //TODO: implement collection relation ship;
   // // From portfolio_collection (prefixed: pc_)

@@ -14,18 +14,20 @@ export type FullService = Service & {
     id:number,
     title:string,
     slug:string,
-    user_highlight?: boolean,
-    highlight?: boolean,
+    is_featured?: boolean,
+    is_highlight?: boolean,
   }
 };
 
 // Request type for listing services
 export type ServiceIndexRequest = OffsetPaginationRequest & {
   user_id?: number;
+  is_featured?: boolean;
+  is_highlight?: boolean;
 };
 
 // Fields generated internally by the system (user cannot set these)
-type InternalServiceFields = 'id' | 'created_at' | 'updated_at' | 'highlight';
+type InternalServiceFields = 'id' | 'created_at' | 'updated_at' | 'is_featured' | 'is_highlight';
 
 // What users can provide when creating a service (public API input)
 export type CreateServiceInput = Omit<ServiceSchema, InternalServiceFields | 'thumbnail'> & {

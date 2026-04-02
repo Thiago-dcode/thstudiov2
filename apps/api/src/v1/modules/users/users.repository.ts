@@ -11,16 +11,18 @@ import {
 } from '@repo/common-lib/types/user';
 import { BaseUser, BaseUserWithSecrets } from '@repo/common-lib/types/user';
 import {
-  BaseUserSchema,
-  BaseUserSchemaColumns,
+  BaseUserWithRoleRowSchema,
+  BaseUserWithRoleSelectColumn,
   UserSchema,
-  UserSchemaColumns,
   UserProfileSchema,
   UserProfileSchemaColumns,
+  UserWithRoleRowSchema,
+  UserWithRoleSelectColumn,
   ArtistSearchSchema,
   ArtistSearchSchemaColumns,
 } from '@repo/common-lib/schemas/user';
-import { EnumType } from '@repo/common-lib/constants/enums';
+import { EnumType, TABLES_ENUM } from '@repo/common-lib/constants/enums';
+import { Join } from '@repo/common-lib/types/database';
 import { CategoryBase } from '@repo/common-lib/types/category';
 import { ProfileAddress } from '@repo/common-lib/types/user';
 import { RequestService } from 'src/common/services/request.service';
@@ -29,7 +31,16 @@ import { foldLatinDiacriticsForMatch } from '@repo/common-lib/utils/fold-latin-d
 
 @Injectable()
 export class UserRepository extends BaseRepository {
-  private readonly BASE_COLUMNS: BaseUserSchemaColumns[] = [
+  private static readonly USER_ROLE_JOIN: Join[] = [
+    {
+      type: 'INNER',
+      localColumn: 'role_id',
+      foreignTable: TABLES_ENUM.ROLES,
+      foreignColumn: 'id',
+    },
+  ];
+
+  private readonly BASE_COLUMNS: BaseUserWithRoleSelectColumn[] = [
     'users.id',
     'users.public_id',
     'users.email',
@@ -42,12 +53,15 @@ export class UserRepository extends BaseRepository {
     'users.is_active',
     'users.banned',
     'users.banned_reason',
-    'users.highlight',
+    'users.is_featured',
     'users.funnel_step',
     'users.username_reset_count',
     'users.password_reset_count',
     'users.next_username_reset',
     'users.next_password_reset',
+    'users.role_id',
+    'roles.id as r_id',
+    'roles.name as r_name',
   ];
 
   private readonly COMPACT_COLUMNS = [
@@ -58,7 +72,7 @@ export class UserRepository extends BaseRepository {
     'users.surname'
   ] as const;
 
-  private readonly FULL_COLUMNS: UserSchemaColumns[] = [
+  private readonly FULL_COLUMNS: UserWithRoleSelectColumn[] = [
     ...this.BASE_COLUMNS,
     'users.avatar',
     'users.banner',
@@ -76,7 +90,7 @@ export class UserRepository extends BaseRepository {
     'users.avatar',
     'users.profession',
     'users.short_biography',
-    'users.highlight',
+    'users.is_featured',
     'addresses.id as a_id',
     'addresses.city',
     'addresses.state',
@@ -85,6 +99,10 @@ export class UserRepository extends BaseRepository {
 
   constructor(private readonly requestService: RequestService) {
     super('users');
+  }
+
+  private joinUserRole(q: QueryBuilder): QueryBuilder {
+    return q.join('role_id', TABLES_ENUM.ROLES, 'id', 'INNER');
   }
   async findByIdCompact(id: number): Promise<CompactUser> {
     const result = await this.query()
@@ -120,10 +138,10 @@ export class UserRepository extends BaseRepository {
   }
 
   async findById(id: number): Promise<User> {
-    const result = await this.query()
+    const result = await this.joinUserRole(this.query())
       .select([...this.FULL_COLUMNS])
       .where('id', '=', id)
-      .first<UserSchema>();
+      .first<UserWithRoleRowSchema>();
     if (!result) {
       throw new HttpException(
         'User not found with id ' + id,
@@ -143,13 +161,15 @@ export class UserRepository extends BaseRepository {
     value: any,
     format: EnumType<'FORMAT_TYPE'> = 'COMPACT',
   ): Promise<BaseUser | User> {
-    let query = this.query().where(column, '=', value);
+    let query = this.joinUserRole(this.query()).where(column, '=', value);
     if (format === 'FULL') {
       query = query.select(this.FULL_COLUMNS);
     } else {
       query = query.select(this.BASE_COLUMNS);
     }
-    const result = await query.first<UserSchema>();
+    const result = await query.first<
+      BaseUserWithRoleRowSchema | UserWithRoleRowSchema
+    >();
     if (!result) {
       throw new HttpException(
         'User not found with ' + column + ' ' + value,
@@ -157,8 +177,8 @@ export class UserRepository extends BaseRepository {
       );
     }
     return format === 'FULL'
-      ? this.formatFullUser(result)
-      : this.formatUser(result);
+      ? this.formatFullUser(result as UserWithRoleRowSchema)
+      : this.formatBaseUser(result as BaseUserWithRoleRowSchema);
   }
 
   private readonly PROFILE_COLUMNS: UserProfileSchemaColumns[] = [
@@ -175,7 +195,7 @@ export class UserRepository extends BaseRepository {
     'users.short_biography',
     'users.biography',
     'users.profession',
-    'users.highlight',
+    'users.is_featured',
 
     // Address — minimal
     'addresses.id as a_id',
@@ -193,6 +213,8 @@ export class UserRepository extends BaseRepository {
     'categories.id as c_id',
     'categories.tags',
     'categories.name as c_name',
+    'category_translations.name as c_tr_name',
+    'categories.slug as c_slug' as UserProfileSchemaColumns,
     'categories.parent_id',
   ];
 
@@ -203,6 +225,13 @@ export class UserRepository extends BaseRepository {
       .join('id', 'addresses', 'user_id', 'LEFT')
       .join('id', 'user_categories', 'user_id', 'LEFT')
       .join('user_categories.category_id', 'categories', 'id', 'LEFT')
+      .join(
+        'categories.id',
+        TABLES_ENUM.CATEGORY_TRANSLATIONS,
+        'category_id',
+        'LEFT',
+        `AND category_translations.language_code = '${this.requestService.language}'`,
+      )
       .get<UserProfileSchema[]>();
 
     if (!result || result.length === 0) return null;
@@ -213,33 +242,40 @@ export class UserRepository extends BaseRepository {
     column: string,
     value: any,
   ): Promise<BaseUserWithSecrets> {
-    const cols = [...this.BASE_COLUMNS, 'password', 'twofa_code'];
-    const result = await this.query()
+    const cols = [...this.BASE_COLUMNS, 'users.password', 'users.twofa_code'];
+    const result = await this.joinUserRole(this.query())
       .where(column, '=', value)
       .select(cols)
-      .first<BaseUserSchema>();
+      .first<
+        BaseUserWithRoleRowSchema & {
+          password: string;
+          twofa_code?: string;
+        }
+      >();
     if (!result) return null;
-    return this.formatUser(result, true) as BaseUserWithSecrets;
+    return this.formatBaseUser(result, true) as BaseUserWithSecrets;
   }
 
   async create(user: CreateUserInput): Promise<BaseUser> {
-    const result = await super._create<BaseUserSchema>(user, {
+    const result = await super._create<BaseUserWithRoleRowSchema>(user, {
       select: this.BASE_COLUMNS,
+      join: UserRepository.USER_ROLE_JOIN,
     });
-    return this.formatUser(result, false) as BaseUser;
+    return this.formatBaseUser(result, false) as BaseUser;
   }
   async updateById(id: number, user: UpdateUserInput): Promise<BaseUser> {
     const columns = Object.keys(user);
     const values = Object.values(user);
     if (columns.length && values.length) await this.query().where('id', '=', id).update(columns, values);
-    const result = await this.query()
+    const result = await this.joinUserRole(this.query())
       .select(this.BASE_COLUMNS)
       .where('id', '=', id)
-      .first<BaseUserSchema>();
-    return this.formatUser(result, false) as BaseUser;
+      .first<BaseUserWithRoleRowSchema>();
+    return this.formatBaseUser(result, false) as BaseUser;
   }
-  private formatUser(
-    result: BaseUserSchema,
+  private formatBaseUser(
+    result: BaseUserWithRoleRowSchema &
+      Partial<Pick<UserSchema, 'password' | 'twofa_code'>>,
     withSecrets: boolean = false,
   ): BaseUser | BaseUserWithSecrets {
     return {
@@ -247,6 +283,7 @@ export class UserRepository extends BaseRepository {
       public_id: result.public_id,
       email: result?.email,
       username: result?.username,
+      role: { id: result.r_id, name: result.r_name },
       profession: result?.profession,
       email_validated: result?.email_validated,
       stripe_customer_id: result.stripe_customer_id,
@@ -262,12 +299,12 @@ export class UserRepository extends BaseRepository {
       is_active: result?.is_active,
       banned: result?.banned,
       banned_reason: result?.banned_reason,
-      highlight: result.highlight,
+      is_featured: result.is_featured,
     };
   }
-  private formatFullUser(result: UserSchema): User {
+  private formatFullUser(result: UserWithRoleRowSchema): User {
     return {
-      ...this.formatUser(result),
+      ...this.formatBaseUser(result),
       avatar: result?.avatar,
       banner: result?.banner,
       name: result?.name,
@@ -289,15 +326,14 @@ export class UserRepository extends BaseRepository {
       }
       : null;
 
-    const categoriesMap = new Map<number, CategoryBase>();
+    const categoriesMap = new Map<number, Omit<CategoryBase,'is_featured'>>();
 
     for (const row of rows) {
-      if (!row.c_id) continue;
-      if (categoriesMap.has(row.c_id)) continue;
-
+      if (!row.c_id || categoriesMap.has(row.c_id)) continue;
       categoriesMap.set(row.c_id, {
         id: row.c_id,
-        name: row.c_name ?? '',
+        name: (row.c_tr_name ?? row.c_name) ?? '',
+        slug: row.c_slug ?? '',
         parent_id: row.parent_id ?? null,
         thumbnail: null,
         tags: row.tags ? row.tags.split(',') : [],
@@ -318,7 +354,7 @@ export class UserRepository extends BaseRepository {
       short_biography: first.short_biography,
       biography: first.biography,
       profession: first.profession ?? null,
-      highlight: first.highlight,
+      is_featured: first.is_featured,
       address,
       categories: Array.from(categoriesMap.values()),
     };
@@ -353,15 +389,16 @@ export class UserRepository extends BaseRepository {
         ['users.surname', 'ILIKE', `%${search}%`, 'orWhere'],
       ]);
     }
-    if (filters.highlight) {
-      query.where('users.highlight', '=', true);
+    if (filters.is_featured) {
+      query.where('users.is_featured', '=', true);
     }
 
     if (filters.categories?.length) {
       const pivotRows = await this.query()
         .rawSelect('DISTINCT user_categories.user_id')
         .join('id', 'user_categories', 'user_id', 'INNER')
-        .whereIn('user_categories.category_id', filters.categories)
+        .join('user_categories.category_id','categories','id','INNER')
+        .whereIn('categories.slug', filters.categories)
         .get<{ user_id: number }[]>();
 
       const userIds = pivotRows.map((r) => r.user_id);
@@ -414,20 +451,30 @@ export class UserRepository extends BaseRepository {
 
   private async fetchCategoriesForUsers(
     userIds: number[],
-  ): Promise<Map<number, Pick<CategoryBase, 'id' | 'name'>[]>> {
+  ): Promise<Map<number, Pick<CategoryBase, 'id' | 'name' | 'slug'>[]>> {
+    const lang = this.requestService.language;
     const rows = await this.query()
-      .rawSelect('user_categories.user_id, categories.id, categories.name')
+      .rawSelect(
+        `user_categories.user_id, categories.id, COALESCE(category_translations.name, categories.name) AS name, categories.slug`,
+      )
       .join('id', 'user_categories', 'user_id', 'INNER')
       .join('user_categories.category_id', 'categories', 'id', 'INNER')
+      .join(
+        'categories.id',
+        TABLES_ENUM.CATEGORY_TRANSLATIONS,
+        'category_id',
+        'LEFT',
+        `AND category_translations.language_code = '${lang}'`,
+      )
       .whereIn('user_categories.user_id', userIds)
-      .get<{ user_id: number; id: number; name: string }[]>();
+      .get<{ user_id: number; id: number; name: string; slug: string }[]>();
 
-    const map = new Map<number, Pick<CategoryBase, 'id' | 'name'>[]>();
+    const map = new Map<number, Pick<CategoryBase, 'id' | 'name' | 'slug'>[]>();
     for (const row of rows) {
       if (!map.has(row.user_id)) map.set(row.user_id, []);
       const cats = map.get(row.user_id)!;
       if (!cats.some((c) => c.id === row.id)) {
-        cats.push({ id: row.id, name: row.name });
+        cats.push({ id: row.id, name: row.name, slug: row.slug });
       }
     }
     return map;
@@ -435,7 +482,7 @@ export class UserRepository extends BaseRepository {
 
   private formatArtistCards(
     rows: ArtistSearchSchema[],
-    categoriesMap: Map<number, Pick<CategoryBase, 'id' | 'name'>[]>,
+    categoriesMap: Map<number, Pick<CategoryBase, 'id' | 'name' | 'slug'>[]>,
   ): ArtistCard[] {
     return rows.map((row) => ({
       id: row.id,
@@ -453,7 +500,7 @@ export class UserRepository extends BaseRepository {
         }
         : null,
       categories: categoriesMap.get(row.id) ?? [],
-      highlight: row.highlight,
+      is_featured: row.is_featured,
     }));
   }
 }

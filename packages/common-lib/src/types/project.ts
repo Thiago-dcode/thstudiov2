@@ -11,7 +11,8 @@ type InternalProjectFields =
   | "id"
   | "created_at"
   | "updated_at"
-  | "highlight";
+  | "is_featured"
+  | "is_highlight";
 
 export type CreateProjectInput = Omit<ProjectSchema, InternalProjectFields>;
 

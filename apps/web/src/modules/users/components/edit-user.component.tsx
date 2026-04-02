@@ -198,7 +198,7 @@ export default function EditUserComponent() {
                     <div className="flex w-full flex-wrap gap-1">
                         {userCategories.map(category => {
 
-                            return <Badge key={`user-category-${category.id}`}>{category.translation?.name || category.name}</Badge>
+                            return <Badge key={`user-category-${category.id}`}>{category.name}</Badge>
                         })}
                     </div>
                 </section>

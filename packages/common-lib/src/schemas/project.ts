@@ -7,7 +7,8 @@ export type ProjectSchema = {
   description?: string | null;
   status: EnumType<"PROJECT_STATUS">;
   budget?: number | null;
-  highlight: boolean;
+  is_featured: boolean;
+  is_highlight: boolean;
   start_date?: Date | null;
   end_date?: Date | null;
   payment_date?: Date | null;

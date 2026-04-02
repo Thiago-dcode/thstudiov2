@@ -1,10 +1,17 @@
+import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
 import { ColumnBuilder } from '../lib/builder/columnBuilder';
 import SchemaBuilder from '../lib/builder/schemaBuilder';
-const TABLE_NAME = 'users';
+
+const USERS = TABLES_ENUM.USERS;
+const ROLES = TABLES_ENUM.ROLES;
 
 const up = async () => {
-  // Create the users table with all fields from Prisma schema
-  await SchemaBuilder.table(TABLE_NAME).withTimestamps(true).createIfNotExists([
+  await SchemaBuilder.table(ROLES).withTimestamps(true).createIfNotExists([
+    ColumnBuilder.id(),
+    ColumnBuilder.enum('name', 'USER_ROLE', { unique: true }),
+  ]);
+
+  await SchemaBuilder.table(USERS).withTimestamps(true).createIfNotExists([
     ColumnBuilder.id(),
     ColumnBuilder.uuid('public_id'),
     ColumnBuilder.string('name', 255, {
@@ -31,13 +38,13 @@ const up = async () => {
       nullable: true,
     }),
     ColumnBuilder.string('avatar', 255, {
-      nullable: true
+      nullable: true,
     }),
     ColumnBuilder.string('banner', 255, {
-      nullable: true
+      nullable: true,
     }),
-    ColumnBuilder.boolean('highlight', {
-      default: false
+    ColumnBuilder.boolean('is_featured', {
+      default: false,
     }),
     ColumnBuilder.email(),
     ColumnBuilder.boolean('email_validated', {
@@ -50,7 +57,7 @@ const up = async () => {
       default: false,
     }),
     ColumnBuilder.string('banned_reason', 255, {
-      nullable: true
+      nullable: true,
     }),
     ColumnBuilder.integer('funnel_step', {
       default: 1,
@@ -72,10 +79,10 @@ const up = async () => {
     }),
 
     ColumnBuilder.smallInteger('username_reset_count', {
-      default: 0
+      default: 0,
     }),
     ColumnBuilder.smallInteger('password_reset_count', {
-      default: 0
+      default: 0,
     }),
     ColumnBuilder.timestamp('next_username_reset', {
       nullable: true,
@@ -83,15 +90,15 @@ const up = async () => {
     ColumnBuilder.timestamp('next_password_reset', {
       nullable: true,
     }),
-
-
+    ColumnBuilder.foreignKey('role_id', 'roles', 'id', {
+      nullable: false
+    }),
   ]);
 };
 
 const down = async () => {
-  // Drop the table
-
-  await SchemaBuilder.table(TABLE_NAME).dropIfExists();
+  await SchemaBuilder.table(USERS).dropIfExists();
+  await SchemaBuilder.table(ROLES).dropIfExists();
 };
 
 export { up, down };

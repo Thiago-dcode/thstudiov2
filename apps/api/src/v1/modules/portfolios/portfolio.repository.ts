@@ -26,8 +26,8 @@ export class PortfolioRepository extends BaseRepository {
     'portfolios.title',
     'portfolios.thumbnail',
     'portfolios.description',
-    'portfolios.user_highlight',
-    'portfolios.highlight',
+    'portfolios.is_featured',
+    'portfolios.is_highlight',
     'portfolios.user_id',
     'portfolios.created_at',
     'portfolios.updated_at',
@@ -47,7 +47,8 @@ export class PortfolioRepository extends BaseRepository {
     'media.seo_filename',
     'media.seo_description',
     'media.seo_title',
-    'media.highlight as m_highlight',
+    'media.is_featured as m_is_featured',
+    'media.is_highlight as m_is_highlight',
   ];
 
   constructor(private readonly requestService: RequestService) {
@@ -203,6 +204,14 @@ export class PortfolioRepository extends BaseRepository {
       query.where('user_id', '=', filters.user_id);
     }
 
+    if (typeof filters.is_featured === 'boolean') {
+      query.where('is_featured', '=', filters.is_featured);
+    }
+
+    if (typeof filters.is_highlight === 'boolean') {
+      query.where('is_highlight', '=', filters.is_highlight);
+    }
+
     this.requestService.pagination =
       await this.handleOffsetPagination(query, filters);
     query.orderBy('created_at', 'DESC');
@@ -217,8 +226,8 @@ export class PortfolioRepository extends BaseRepository {
       title: result.title,
       thumbnail: result.thumbnail,
       description: result.description,
-      user_highlight: result.user_highlight,
-      highlight: result.highlight,
+      is_featured: result.is_featured,
+      is_highlight: result.is_highlight,
       user_id: result.user_id,
       created_at: result.created_at,
       updated_at: result.updated_at,
@@ -242,7 +251,7 @@ export class PortfolioRepository extends BaseRepository {
         seo_description: row.seo_description,
         seo_title: row.seo_title,
         shape: row.shape,
-        highlight: row.m_highlight ?? false,
+        is_highlight: row.m_is_highlight ?? false,
       });
     }
 
@@ -254,8 +263,8 @@ export class PortfolioRepository extends BaseRepository {
       title: first.title,
       thumbnail: first.thumbnail,
       description: first.description,
-      user_highlight: first.user_highlight,
-      highlight: first.highlight,
+      is_featured: first.is_featured,
+      is_highlight: first.is_highlight,
       user_id: first.user_id,
       created_at: first.created_at,
       updated_at: first.updated_at,

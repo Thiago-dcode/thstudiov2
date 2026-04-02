@@ -8,9 +8,15 @@ import { UserSessionsModule } from '../user-sessions/user-sessions.module';
 import { TwoFAMail } from './mails/twofa-mail';
 import { PasswordRecoveryAttemptsModule } from './password-recovery-attempts/password-recovery-attempts.module';
 import { PasswordRecoveryMail } from './mails/password-recovery-mail';
+import { RolesModule } from '../roles/roles.module';
 
 @Module({
-  imports: [UserAuthDevicesModule, UserSessionsModule, PasswordRecoveryAttemptsModule],
+  imports: [
+    UserAuthDevicesModule,
+    UserSessionsModule,
+    PasswordRecoveryAttemptsModule,
+    RolesModule,
+  ],
   controllers: [AuthController],
   providers: [AuthService, UserRepository, JwtService, TwoFAMail, PasswordRecoveryMail],
 })

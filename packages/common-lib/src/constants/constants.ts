@@ -84,5 +84,14 @@ export const CACHE_KEY_ACTIVE_SUBSCRIPTION = (userId: number | string) => `activ
 
 // Categories
 export const CACHE_KEY_USER_CATEGORIES = (userId: number | string) => `user_categories_${userId}` as const;
+export const CACHE_KEY_CATEGORY_TRANSLATION = (
+  categoryId: number | string,
+  languageCode: string,
+) => `category_translation_${categoryId}_${languageCode}` as const;
 export const CACHE_KEY_USER_PUBLIC_ID = (userId: number | string) => `user_public_id_${userId}` as const;
 export const CACHE_KEY_USERNAME_EXISTS = (username: string) => `username_exists_${username}` as const;
+
+// Roles
+export const CACHE_KEY_ROLES_ALL = 'roles_all' as const;
+export const CACHE_KEY_ROLE_BY_NAME = (name: string) =>
+  `role_name_${name}` as const;

@@ -1,4 +1,4 @@
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   IsArray,
   IsBoolean,
@@ -32,4 +32,32 @@ export class IndexCategoriesRequest extends OffsetPaginationRequest {
   @IsNumber({}, { each: true })
   @ModelArrayExist('categories')
   categories?: number[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  @Transform(({ value }) => {
+    if (value === undefined || value === null) return undefined;
+    if (Array.isArray(value)) {
+      return value.map(String).map((s) => s.trim()).filter((s) => s.length > 0);
+    }
+    if (typeof value === 'string') {
+      return value
+        .split(',')
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0);
+    }
+    return undefined;
+  })
+  slugs?: string[];
+
+  @IsOptional()
+  @IsBoolean()
+  @Type(() => Boolean)
+  is_featured?: boolean;
+  
+  @IsOptional()
+  @IsBoolean()
+  @Type(() => Boolean)
+  with_thumbnail?: boolean;
 }

@@ -18,6 +18,8 @@ export type FullPortfolio = Portfolio & {
 // Request type for listing portfolios
 export type PortfolioIndexRequest = OffsetPaginationRequest & {
   user_id?: number;
+  is_featured?: boolean;
+  is_highlight?: boolean;
 };
 
 // Fields generated internally by the system (user cannot set these)
@@ -25,8 +27,8 @@ type InternalPortfolioFields =
   | 'id'
   | 'created_at'
   | 'updated_at'
-  | 'highlight'
-  | 'user_highlight';
+  | 'is_featured'
+  | 'is_highlight';
 
 // What users can provide when creating a portfolio (public API input)
 export type CreatePortfolioInput = Omit<PortfolioSchema, InternalPortfolioFields | 'thumbnail'> & {
@@ -46,9 +48,8 @@ export type CreatePortfolioInputWithFile = Omit<CreatePortfolioInput, 'thumbnail
   thumbnail: File;
 };
 
-// What users can update (`user_highlight` / `highlight` use DB defaults on create; optional partial updates allowed except platform `highlight`, which stays internal-only via Omit)
 export type UpdatePortfolioInput = Partial<
-  Omit<PortfolioSchema, 'id' | 'created_at' | 'updated_at' | 'highlight'>
+  Omit<PortfolioSchema, 'id' | 'created_at' | 'updated_at' | 'is_featured'>
 > & {
   media: {
     id: number;

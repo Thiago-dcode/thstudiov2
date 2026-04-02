@@ -1,4 +1,4 @@
-import { TABLES_ENUM } from "../constants/enums";
+import { EnumType, TABLES_ENUM } from "../constants/enums";
 import { TableColumn } from "../types/database";
 export type UserSchema = {
   id: number;
@@ -13,7 +13,7 @@ export type UserSchema = {
   email: string;
   avatar?: string;
   banner?: string;
-  highlight: boolean;
+  is_featured: boolean;
   email_validated?: boolean;
   is_active?: boolean;
   banned?: boolean;
@@ -29,6 +29,7 @@ export type UserSchema = {
   password_reset_count: number;
   next_username_reset?: Date;
   next_password_reset?: Date;
+  role_id: number;
   created_at: Date;
   updated_at: Date;
 };
@@ -37,6 +38,39 @@ export type BaseUserSchema = Omit<UserSchema, 'created_at' | 'updated_at' | 'nam
 const tablesUser = [TABLES_ENUM.USERS] as const;
 export type UserSchemaColumns = TableColumn<typeof tablesUser, UserSchemaWithoutTimestamps>;
 export type BaseUserSchemaColumns = TableColumn<typeof tablesUser, BaseUserSchema>;
+
+/** users INNER JOIN roles — prefix colliding role columns (id, name). */
+export type BaseUserWithRoleRowSchema = BaseUserSchema & {
+  r_id: number;
+  r_name: EnumType<'USER_ROLE'>;
+};
+
+const tablesUserWithRole = [TABLES_ENUM.USERS, TABLES_ENUM.ROLES] as const;
+export type BaseUserWithRoleRowColumns = TableColumn<
+  typeof tablesUserWithRole,
+  BaseUserWithRoleRowSchema
+>;
+
+export type UserWithRoleRowSchema = UserSchema & {
+  r_id: number;
+  r_name: EnumType<'USER_ROLE'>;
+};
+
+export type UserWithRoleRowColumns = TableColumn<
+  typeof tablesUserWithRole,
+  UserWithRoleRowSchema
+>;
+
+/** Select list for users + roles join; r_* aliases avoid id/name collisions with users. */
+export type BaseUserWithRoleSelectColumn =
+  | BaseUserSchemaColumns
+  | 'roles.id as r_id'
+  | 'roles.name as r_name';
+
+export type UserWithRoleSelectColumn =
+  | UserSchemaColumns
+  | 'roles.id as r_id'
+  | 'roles.name as r_name';
 
 // ==================== USER PROFILE JOIN SCHEMA ====================
 // Joins: users + addresses + user_categories + categories
@@ -60,7 +94,7 @@ export type UserProfileSchema = {
   surname?: string | null;
   biography?: string | null;
   profession?: string | null;
-  highlight?: boolean;
+  is_featured?: boolean;
 
   // From address
   a_id:number;
@@ -78,6 +112,9 @@ export type UserProfileSchema = {
   // From categories (aliased: c_)
   c_id?: number | null;
   c_name?: string | null;
+  /** Translation name for request language when present */
+  c_tr_name?: string | null;
+  c_slug?: string | null;
   tags?:string | null;
   parent_id?:number | null;
 };
@@ -87,6 +124,7 @@ const tablesUserProfile = [
   TABLES_ENUM.ADDRESSES,
   TABLES_ENUM.USER_CATEGORIES,
   TABLES_ENUM.CATEGORIES,
+  TABLES_ENUM.CATEGORY_TRANSLATIONS,
 ] as const;
 
 export type UserProfileSchemaColumns = TableColumn<typeof tablesUserProfile, UserProfileSchema>;
@@ -102,7 +140,7 @@ export type ArtistSearchSchema = {
   avatar?: string;
   profession?: string | null;
   short_biography?: string | null;
-  highlight?: boolean;
+  is_featured?: boolean;
   a_id?: number | null;
   city?: string | null;
   state?: string | null;

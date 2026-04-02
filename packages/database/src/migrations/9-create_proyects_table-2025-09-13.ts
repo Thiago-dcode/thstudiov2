@@ -12,7 +12,10 @@ const up = async () => {
     Column.float('budget', {
       nullable: true,
     }),
-    Column.boolean('highlight', {
+    Column.boolean('is_featured', {
+      default: false
+    }),
+    Column.boolean('is_highlight', {
       default: false
     }),
     Column.timestamp('start_date', {

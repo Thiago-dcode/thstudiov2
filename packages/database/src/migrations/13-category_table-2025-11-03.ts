@@ -7,15 +7,21 @@ const up = async () => {
   await Schema.table('categories').withTimestamps(true).createIfNotExists([
     Column.id(),
     Column.text('tags'),
-    Column.string('thumbnail',255,{
-      nullable:true,
+    Column.string('thumbnail', 255, {
+      nullable: true,
     }),
-    Column.string('name',255,{
-      unique:true
+    Column.boolean('is_featured', {
+      default: false
+    }),
+    Column.string('name', 255, {
+      unique: true
+    }),
+    Column.string('slug', 255, {
+      unique: true
     }),
   ]);
-  await Alter.table('categories').foreignKeyAdd('parent_id','categories','id',{
-    nullable:true,
+  await Alter.table('categories').foreignKeyAdd('parent_id', 'categories', 'id', {
+    nullable: true,
   });
 
   await Schema.table('user_categories').create([
@@ -28,7 +34,7 @@ const up = async () => {
       onDelete: 'CASCADE',
       nullable: false,
     }),
-    Column.uniques('UC_user_Category',['user_id','category_id'])
+    Column.uniques('UC_user_Category', ['user_id', 'category_id'])
   ]);
   await Schema.table('portfolio_categories').create([
     Column.id(),
@@ -40,16 +46,16 @@ const up = async () => {
       onDelete: 'CASCADE',
       nullable: false,
     }),
-    Column.uniques('UC_portfolio_Category',['portfolio_id','category_id'])
+    Column.uniques('UC_portfolio_Category', ['portfolio_id', 'category_id'])
   ]);
   await Schema.table('category_translations').createIfNotExists([
     Column.id(),
-    Column.string('name'),      
+    Column.string('name'),
     Column.enum('language_code', 'LANGUAGE_CODE'),
     Column.foreignKey('category_id', 'categories', 'id', {
       onDelete: 'CASCADE',
     }),
-    Column.uniques('UC_Category_translation',['language_code','category_id'])
+    Column.uniques('UC_Category_translation', ['language_code', 'category_id'])
   ]);
 
 };

@@ -139,6 +139,8 @@ export type GeneratedTestUserSeed = {
         twofa_attempts: 0,
         username_reset_count: 0,
         password_reset_count: 0,
+        /** Matches migration seed: ARTIST = 3 */
+        role_id: 3,
       },
       address: faker.helpers.arrayElement([...SEED_LOCATIONS]),
     });
