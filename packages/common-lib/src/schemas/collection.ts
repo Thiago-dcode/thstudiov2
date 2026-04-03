@@ -5,6 +5,7 @@ import { TableColumn } from "../types/database";
 export type CollectionSchema = {
   id: number;
   title: string;
+  slug: string;
   is_featured: boolean;
   is_highlight: boolean;
   description?: string | null;
@@ -20,37 +21,25 @@ export type CollectionSchemaColumns = TableColumn<typeof tablesCollection, Colle
 
 // ==================== COLLECTION FULL SCHEMA (WITH MEDIA) ====================
 // Joins: collections + collection_media + media
-// Collisions: id, title, description, user_id, created_at, updated_at
+// Only collision fields are prefixed (same pattern as PortfolioFullSchema)
 export type CollectionFullSchema = CollectionSchema & {
-  // From collection_media (prefixed: cm_)
-  cm_id: number;                          // COLLISION: id
-  cm_collection_id: number;
-  cm_media_id: number;
-  cm_position: number;
-  
-  // From media (prefixed: m_)
+  // From collection_media
+  media_id: number;
+  position: number;
+
+  // From media (only collisions prefixed with m_)
   m_id: number;                           // COLLISION: id
-  m_public_id: string;
+  public_id: string;
   m_title?: string | null;                // COLLISION: title
-  m_description?: string | null;          // COLLISION: description
-  m_bytes: number;
-  m_thumbnail_bytes: number;
-  m_url: string;
-  m_thumbnail?: string | null;
-  m_is_featured?: boolean | null;
-  m_is_highlight?: boolean | null;
-  m_blocked: boolean;
-  m_shape?: EnumType<'MEDIA_SHAPE'> | null;
-  m_compression_level?: EnumType<'COMPRESSION_LEVEL'> | null;
-  m_extension: string;
-  m_is_active: boolean;
-  m_seo_alt?: string | null;
-  m_seo_title?: string | null;
-  m_seo_description?: string | null;
-  m_seo_filename: string;
-  m_user_id: number;                      // COLLISION: user_id
-  m_created_at: Date;                     // COLLISION: created_at
-  m_updated_at: Date;                     // COLLISION: updated_at
+  thumbnail?: string | null;
+  url?: string | null;
+  shape?: EnumType<'MEDIA_SHAPE'> | null;
+  seo_alt?: string | null;
+  seo_title?: string | null;
+  seo_description?: string | null;
+  seo_filename: string;
+  m_is_featured?: boolean | null;         // COLLISION: is_featured
+  m_is_highlight?: boolean | null;        // COLLISION: is_highlight
 };
 
 const tablesCollectionFull = [

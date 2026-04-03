@@ -66,7 +66,7 @@ export class UserExtraDataProcessor extends WorkerHost {
           : 0;
       const media_count = media.length;
 
-      const [projects_count, portfolios_count, services_count, clients_count, ai_credits_consumed, account_strikes] =
+      const [projects_count, portfolios_count, collections_count, services_count, clients_count, ai_credits_consumed, account_strikes] =
         await Promise.all([
           Query.table('projects')
             .softDeletes(true)
@@ -74,6 +74,9 @@ export class UserExtraDataProcessor extends WorkerHost {
             .count(),
           Query.table('portfolios')
             .softDeletes(true)
+            .where('user_id', '=', userId)
+            .count(),
+          Query.table('collections')
             .where('user_id', '=', userId)
             .count(),
           Query.table('services')
@@ -104,6 +107,7 @@ export class UserExtraDataProcessor extends WorkerHost {
         media_size,
         media_count,
         portfolios_count,
+        collections_count,
         projects_count,
         services_count,
         clients_count,

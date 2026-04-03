@@ -33,6 +33,7 @@ const up = async () => {
     Column.smallInteger('max_portfolios'),
     Column.smallInteger('max_clients'),
     Column.smallInteger('max_services'),
+    Column.smallInteger('max_collections'),
     Column.boolean('allow_media_compression',{
       default:false
     }),

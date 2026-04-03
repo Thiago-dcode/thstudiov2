@@ -24,6 +24,9 @@ const up = async () => {
     Column.smallInteger('portfolios_count', {
       default: 0,
     }),
+    Column.smallInteger('collections_count', {
+      default: 0,
+    }),
     Column.smallInteger('ai_credits', {
       default: 0,
     }),

@@ -19,7 +19,7 @@ export function HeroSection() {
         </p>
 
         <div className="flex items-center gap-4">
-          <Button asChild variant="primary" size="lg">
+          <Button asChild variant="primary" >
             <Link href="/auth/register">
               Get Started
               <ArrowRight className="size-4" />

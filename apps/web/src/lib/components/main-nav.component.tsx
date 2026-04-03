@@ -30,6 +30,11 @@ const routes: {
             icon: <Box size={20} />
         },
         {
+            name: 'Collections',
+            url: 'collection',
+            icon: <Grid size={20} />
+        },
+        {
             name: 'Portfolios',
             url: 'portfolio',
             icon: <Grid size={20} />

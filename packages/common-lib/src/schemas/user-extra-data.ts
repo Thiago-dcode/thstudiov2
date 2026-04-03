@@ -9,6 +9,7 @@ export type UserExtraDataSchema = {
   clients_count: number;
   services_count: number;
   portfolios_count: number;
+  collections_count: number;
   ai_credits: number;
   ai_credits_consumed: number;
   next_ai_credits_reset: Date;

@@ -20,6 +20,7 @@ export type PlanSchema = {
   max_projects: number;
   max_portfolios: number;
   max_services: number;
+  max_collections: number;
   max_clients: number;
   allow_media_compression: boolean;
   ai_credits: number;

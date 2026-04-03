@@ -39,11 +39,8 @@ function artistFiltersToQueryBuilder(filters: ArtistIndexRequest): QueryBuilder 
 
 function FilterSearchInner({
     initialFilters,
-    centered = false,
 }: {
     initialFilters: ArtistIndexRequest
-    /** Landing state: slightly narrower bar, pairs with layout vertical centering. */
-    centered?: boolean
 }) {
     const router = useRouter()
     const { filters, add } = useFilters()
@@ -87,8 +84,8 @@ function FilterSearchInner({
             role="search"
             aria-label="Search artists"
             className={cn(
-                'mx-auto flex w-full flex-col gap-3',
-                centered ? 'max-w-2xl tablet:max-w-3xl' : 'max-w-4xl',
+                'mx-auto flex w-full max-w-4xl flex-col gap-3',
+                // centered ? 'max-w-2xl tablet:max-w-3xl' : 'max-w-4xl',
             )}
             onSubmit={(e) => {
                 e.preventDefault()

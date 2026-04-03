@@ -76,7 +76,7 @@ export default function FiltersLists() {
             out.push({
                 key: `category-${cat.id}`,
                 label: categoryLabel(cat),
-                onRemove: () => removeCategory(cat.id),
+                onRemove: () => removeCategory(cat.slug),
             })
         }
 

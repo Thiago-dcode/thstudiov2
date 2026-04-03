@@ -48,6 +48,32 @@ const up = async () => {
     }),
     Column.uniques('UC_portfolio_Category', ['portfolio_id', 'category_id'])
   ]);
+  await Schema.table('media_categories').create([
+    Column.id(),
+    Column.foreignKey('media_id', 'media', 'id', {
+      onDelete: 'CASCADE',
+      nullable: false,
+    }),
+    
+    Column.foreignKey('category_id', 'categories', 'id', {
+      onDelete: 'CASCADE',
+      nullable: false,
+    }),
+    Column.uniques('UC_media_Category', ['media_id', 'category_id'])
+  ]);
+  await Schema.table('collection_categories').create([
+    Column.id(),
+    Column.foreignKey('collection_id', 'collections', 'id', {
+      onDelete: 'CASCADE',
+      nullable: false,
+    }),
+    
+    Column.foreignKey('category_id', 'categories', 'id', {
+      onDelete: 'CASCADE',
+      nullable: false,
+    }),
+    Column.uniques('UC_collection_Category', ['collection_id', 'category_id'])
+  ]);
   await Schema.table('category_translations').createIfNotExists([
     Column.id(),
     Column.string('name'),

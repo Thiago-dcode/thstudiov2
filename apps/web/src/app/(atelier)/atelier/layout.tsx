@@ -9,6 +9,7 @@ import MediaProvider from "@/modules/media/providers/media.provider";
 import { UploadMediaModal } from "@/modules/media/components/upload-media-modal";
 import { UserMetricsProvider } from "@/modules/users/providers/user-metrics.provider";
 import { PortfolioProvider } from "@/modules/portfolios/providers/create-update-portfolio.provider";
+import { CollectionProvider } from "@/modules/collections/providers/create-update-collection.provider";
 import { UserAccountBannedModal } from "@/modules/users/components/user-account-banned-modal";
 import { AlertPortfolioButton } from "@/modules/portfolios/components/alert-portfolio.button";
 const AdminLayout = async ({ children }: { children: ReactNode }) => {
@@ -22,6 +23,7 @@ const AdminLayout = async ({ children }: { children: ReactNode }) => {
       <UserMetricsProvider userId={userAuth.id}>
         <MediaProvider>
           <PortfolioProvider user={userAuth}>
+          <CollectionProvider user={userAuth}>
             <UserAccountBannedModal />
             <UploadMediaModal />
             <AlertPortfolioButton />
@@ -35,6 +37,7 @@ const AdminLayout = async ({ children }: { children: ReactNode }) => {
               </main>
 
             </div>
+          </CollectionProvider>
           </PortfolioProvider>
         </MediaProvider>
       </UserMetricsProvider>

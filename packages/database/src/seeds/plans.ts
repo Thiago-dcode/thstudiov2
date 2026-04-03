@@ -78,6 +78,7 @@ export const main = async () => {
       max_portfolios: 2,
       max_clients: 4,
       max_services: 2,
+      max_collections: 3,
       allow_media_compression: false,
       // AI Credits: 20 requests/month (1 credit = 1 successful request)
       // Usage: 20 successful AI requests per month
@@ -150,6 +151,7 @@ export const main = async () => {
       max_portfolios: 5,
       max_clients: 10,
       max_services: 5,
+      max_collections: 10,
       allow_media_compression: true,
       // AI Credits: 200 requests/month (1 credit = 1 successful request)
       // Usage: 200 successful AI requests per month
@@ -217,6 +219,7 @@ export const main = async () => {
       max_portfolios: -1,
       max_clients: -1,
       max_services: -1,
+      max_collections: -1,
       allow_media_compression: true,
       // AI Credits: 400 requests/month (1 credit = 1 successful request)
       // Usage: 400 successful AI requests per month
