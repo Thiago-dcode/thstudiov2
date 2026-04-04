@@ -5,6 +5,9 @@ import { FileInput } from "@repo/ui/components/custom/file-input";
 import { ALLOWED_IMAGE_FILE_TYPES } from "@repo/common-lib/constants/constants";
 import { usePortfolio } from "@/modules/portfolios/providers/create-update-portfolio.provider"
 import FormComponent from "@/lib/components/form-component";
+import { Checkbox } from "@repo/ui/components/shadcn/checkbox";
+import { Label } from "@repo/ui/components/shadcn/label";
+import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
 import { useEffect, useRef, useState } from "react";
 import { generateValidSlug, isAValidSlugFormat } from "@repo/common-lib/utils/generate-valid-slug";
 
@@ -214,6 +217,28 @@ const ThumbnailInput = () => {
                     placeholder="Describe your portfolio..."
                     disabled={isPending}
                 />
+
+                <div className="flex items-center gap-2">
+                    <Checkbox
+                        id="portfolio-is-highlight"
+                        checked={formData.is_highlight ?? false}
+                        onCheckedChange={(checked) => {
+                            deleteInputErrorProperty('is_highlight');
+                            handleSetFormData('is_highlight', checked === true);
+                        }}
+                        disabled={isPending}
+                    />
+                    <Label htmlFor="portfolio-is-highlight" className="text-sm font-normal cursor-pointer">
+                        Show on profile page
+                    </Label>
+                    <InfoTooltip
+                        content={
+                            <p className="text-sm">
+                                When enabled, this portfolio is highlighted on your public artist profile so visitors can find it more easily.
+                            </p>
+                        }
+                    />
+                </div>
             </div>
         </div>
     );

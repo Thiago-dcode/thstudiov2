@@ -18,6 +18,9 @@ import { getAllUserMediaAction } from "@/modules/media/server-actions/get-all-us
 import { Media } from "@repo/common-lib/types/media";
 import { Image, Check, RefreshCw, X } from "lucide-react";
 import { cn } from "@repo/ui/lib/utils";
+import { Checkbox } from "@repo/ui/components/shadcn/checkbox";
+import { Label } from "@repo/ui/components/shadcn/label";
+import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
 import { arrayMove, rectSortingStrategy, SortableContext, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { DndContext, DragEndEvent } from "@dnd-kit/core";
@@ -259,6 +262,28 @@ export const CreateOrUpdateCollection = ({ defaultCollection }: {
                         placeholder="Describe your collection..."
                         disabled={isPending}
                     />
+
+                    <div className="flex items-center gap-2">
+                        <Checkbox
+                            id="collection-is-highlight"
+                            checked={formData.is_highlight ?? false}
+                            onCheckedChange={(checked) => {
+                                deleteInputErrorProperty('is_highlight');
+                                handleSetFormData('is_highlight', checked === true);
+                            }}
+                            disabled={isPending}
+                        />
+                        <Label htmlFor="collection-is-highlight" className="text-sm font-normal cursor-pointer">
+                            Show on profile page
+                        </Label>
+                        <InfoTooltip
+                            content={
+                                <p className="text-sm">
+                                    When enabled, this collection is highlighted on your public artist profile so visitors can find it more easily.
+                                </p>
+                            }
+                        />
+                    </div>
                 </div>
 
                 {/* Media section */}

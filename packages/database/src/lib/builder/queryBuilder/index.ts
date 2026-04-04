@@ -510,7 +510,12 @@ private  handleBuildGet(columns: string[], values: SqlValue[], select: string[] 
   }
   public orderBy(column: string, order: 'ASC' | 'DESC' = 'ASC') {
     this.operationsChain.push('orderBy');
-    this._orderBy = `${this.buildColumn(column)} ${order}`;
+    const newOrder = `${this.buildColumn(column)} ${order}`;
+    if (this._orderBy) {
+      this._orderBy = `${this._orderBy}, ${newOrder}`;
+    } else {
+      this._orderBy = newOrder;
+    }
     return this;
   }
 

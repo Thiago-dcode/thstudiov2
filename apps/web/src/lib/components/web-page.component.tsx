@@ -50,7 +50,13 @@ const Header = ({
     );
 }
 
+const List = ({children}:{children:ReactNode})=>{
+
+    return     <section className="grid grid-cols-2 gap-4 sm:grid-cols-3 tablet:grid-cols-4 tablet:gap-5">{children}</section>
+}
+
 export default {
     Container,
-    Header
+    Header,
+    List
 };

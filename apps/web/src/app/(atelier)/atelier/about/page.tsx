@@ -17,7 +17,7 @@ export default async function AboutPage() {
 
     return (
         <AdminPageContainer>
-            <AdminPageTitle title="About Page" publicHref={publicHref}>
+            <AdminPageTitle title="About Page"  info="Share your background, artistic journey, and anything else you'd like your audience to know about you." publicHref={publicHref}>
                 <CreateOrUpdateAboutPage userId={userAuth.id} currentAboutPage={aboutPage || undefined} />
             </AdminPageTitle>
             {aboutPage ? (

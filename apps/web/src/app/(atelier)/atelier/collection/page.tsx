@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AdminPageContainer, AdminPageTitle } from "../../__components/admin-page.component";
 import { Button } from "@repo/ui/components/shadcn/button";
 import { Plus } from "lucide-react";
+import { CollectionCard } from "@/modules/collections/components/collection-card";
 
 export default async function CollectionListPage() {
     const userAuth = await userSession();
@@ -19,9 +20,13 @@ export default async function CollectionListPage() {
         return <div>{collectionsResponse?.error?.message || 'Something went wrong'}</div>;
     }
 
+
     return (
         <AdminPageContainer>
-            <AdminPageTitle title="Collections">
+            <AdminPageTitle
+                title="Collections"
+                info="Collections are simple sets of related media grouped by a specific event or theme, like 'The Wedding of John' or 'Morocco 2026'."
+            >
                 <Button asChild variant="primary" size="sm">
                     <Link href={'collection/create'}>
                         <Plus className="size-4" />
@@ -31,20 +36,18 @@ export default async function CollectionListPage() {
             </AdminPageTitle>
             {collectionsResponse.data.length > 0 ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                    {collectionsResponse.data.map((collection) => (
-                        <Link key={collection.id} href={`/atelier/collection/edit/${collection.slug}`}>
-                            <article
-                                className="group cursor-pointer aspect-square rounded-lg border border-border overflow-hidden relative"
-                            >
-                                <div className="absolute inset-0 bg-fg-2" />
-                                <div className="absolute inset-0 flex items-center justify-center p-4">
-                                    <h3 className="text-sm font-semibold text-center text-white drop-shadow-md">
-                                        {collection.title}
-                                    </h3>
-                                </div>
-                            </article>
-                        </Link>
-                    ))}
+                    {collectionsResponse.data.map((collection) => {
+                        const images = collection.media.map(m => m.thumbnail as string);
+
+                        return (
+                            <Link key={collection.id} href={`/atelier/collection/edit/${collection.slug}`}>
+                                <CollectionCard
+                                    images={images.slice(0, 4)}
+                                    title={collection.title}
+                                />
+                            </Link>
+                        );
+                    })}
                 </div>
             ) : (
                 <div className="flex items-center justify-center h-64 text-muted-foreground">

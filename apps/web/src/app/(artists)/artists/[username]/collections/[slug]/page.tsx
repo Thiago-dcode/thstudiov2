@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { GalleryGrid } from "@repo/ui/components/custom/gallery-grid";
-import userPortfolioService from "@/modules/user-portfolios/user-portfolio.service";
+import userCollectionService from "@/modules/user-collections/user-collection.service";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import Link from "next/link";
 import { Pencil } from "lucide-react";
@@ -20,12 +20,13 @@ type Props = {
 export default async function Page({ params, searchParams }: Props) {
     const { username, slug } = await params;
 
-    const [userExist,response, userAuth] = await Promise.all([
+    const [userExist, response, userAuth] = await Promise.all([
         usersService.usernameExists(username),
-        userPortfolioService.getByUsername(username, slug),
+        userCollectionService.getByUsername(username, slug),
         userSession(),
     ]);
-    if(!userExist.data){
+
+    if (!userExist.data) {
         notFound();
     }
 
@@ -34,59 +35,55 @@ export default async function Page({ params, searchParams }: Props) {
             <Web.Container>
                 <ResourceNotFound 
                     username={username} 
-                    message="The portfolio you're looking for doesn't exist or may have been removed." 
+                    message="The collection you're looking for doesn't exist or may have been removed." 
                 />
             </Web.Container>
         );
     }
 
-    const portfolio = response.data;
-    const canEdit = userAuth?.id === portfolio.user_id;
+    const collection = response.data;
+    const canEdit = userAuth?.id === collection.user_id;
 
-    const qp= await searchParams;
+    const qp = await searchParams;
 
     let defaultCurrentItem: number | undefined = undefined;
 
     if (qp?.ci) {
-
         const splitted = qp.ci.split('_');
         if (splitted.length === 2) {
             const validTypes = ['m'];
             const itemType = splitted[0];
 
             if (validTypes.find(vt => vt === itemType)) {
-
                 if (itemType === 'm') {
                     const public_id = splitted[1];
-                    const index = portfolio.media.findIndex(m => m.public_id === public_id);
-                    if (index !== -1) {
+                    const index = collection.media?.findIndex(m => m.public_id === public_id);
+                    if (index !== undefined && index !== -1) {
                         defaultCurrentItem = index;
                     }
                 }
             }
-
         }
     }
-
 
     return (
         <Web.Container>
             <ArtistBreadcrumb
                 username={username}
                 items={[
-                    { url: `/artists/${username}/portfolios`, title: "Portfolios", isActive: false },
-                    { url: `/artists/${username}/portfolios/${slug}`, title: portfolio.title, isActive: true },
+                    { url: `/artists/${username}/collections`, title: "Collections", isActive: false },
+                    { url: `/artists/${username}/collections/${slug}`, title: collection.title, isActive: true },
                 ]}
             />
 
             <Web.Header
-                title={portfolio.title}
-                description={portfolio.description || undefined}
+                title={collection.title}
+                description={collection.description || undefined}
             >
                 {canEdit && (
                     <Link
-                        href={`/atelier/portfolio/edit/${portfolio.slug}`}
-                        aria-label="Edit portfolio"
+                        href={`/atelier/collection/edit/${collection.slug}`}
+                        aria-label="Edit collection"
                         className="text-text-muted hover:text-text transition-colors self-start md:self-auto"
                     >
                         <Pencil className="size-4 md:size-5" />
@@ -95,19 +92,19 @@ export default async function Page({ params, searchParams }: Props) {
             </Web.Header>
 
             <section className="relative">
-                {portfolio.media.length > 0 ? (
+                {collection.media && collection.media.length > 0 ? (
                     <GalleryProvider
                         defaultCurrentItem={defaultCurrentItem}
-                        items={portfolio.media.map((m) => ({
+                        items={collection.media.map((m) => ({
                             title: m.title,
                             description: m.seo_description ?? undefined,
                             url: m.url ?? m.thumbnail,
                             alt: m.seo_alt ?? m.title ?? undefined,
-                            href:`${config.app_url}/artists/${username}/portfolios/${slug}/media/${m.public_id}?cb=1`,
-                            shared: `${config.app_url}/artists/${username}/portfolios/${slug}/media/${m.public_id}`
+                            href: `${config.app_url}/artists/${username}/collections/${slug}/media/${m.public_id}?cb=1`,
+                            shared: `${config.app_url}/artists/${username}/collections/${slug}/media/${m.public_id}`
                         }))}
                     >
-                        <GalleryGrid media={portfolio.media} />
+                        <GalleryGrid media={collection.media} style="uniform-grid" />
                         <div className="hidden tablet:block">
                             <Gallery />
                         </div>

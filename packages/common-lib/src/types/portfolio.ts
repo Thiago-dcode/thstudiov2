@@ -27,12 +27,12 @@ type InternalPortfolioFields =
   | 'id'
   | 'created_at'
   | 'updated_at'
-  | 'is_featured'
-  | 'is_highlight';
+  | 'is_featured';
 
 // What users can provide when creating a portfolio (public API input)
-export type CreatePortfolioInput = Omit<PortfolioSchema, InternalPortfolioFields | 'thumbnail'> & {
+export type CreatePortfolioInput = Omit<PortfolioSchema, InternalPortfolioFields | 'thumbnail' | 'is_highlight'> & {
   thumbnail: string;
+  is_highlight?: boolean;
   media?: {
     id: number,
     position: number

@@ -3,6 +3,7 @@ import {
   Get,
   Param,
   ParseIntPipe,
+  Query,
 } from '@nestjs/common';
 import { Public } from 'src/common/decorators/public.decorator';
 import { UserCollectionService } from './user-collection.service';
@@ -42,7 +43,12 @@ export class UserCollectionController {
   @Get(':username/collections')
   async getAllByUsername(
     @Param('username') username: string,
+    @Query('is_highlight') isHighlight?: string,
   ) {
-    return await this.userCollectionService.getAllByUsername(username);
+    return await this.userCollectionService.getAllByUsername(username, {
+      is_highlight: isHighlight === '1' || isHighlight === 'true' ? true
+        : isHighlight === '0' || isHighlight === 'false' ? false
+          : undefined,
+    });
   }
 }

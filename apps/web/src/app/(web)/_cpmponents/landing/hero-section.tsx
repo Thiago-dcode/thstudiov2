@@ -1,8 +1,12 @@
 import Link from "next/link";
 import { Button } from "@repo/ui/components/shadcn/button";
 import { ArrowRight, ChevronDown } from "lucide-react";
+import { userSession } from "@/modules/auth/server-actions/user-session.action";
 
-export function HeroSection() {
+export async function HeroSection() {
+  const session = await userSession();
+
+
   return (
     <section className="relative flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center overflow-hidden px-6">
       <div className="hero-glow pointer-events-none absolute inset-0" aria-hidden />
@@ -20,8 +24,8 @@ export function HeroSection() {
 
         <div className="flex items-center gap-4">
           <Button asChild variant="primary" >
-            <Link href="/auth/register">
-              Get Started
+            <Link href={session?'/atelier':"/auth/register"}>
+             {session?'Access atelier':' Get Started'}
               <ArrowRight className="size-4" />
             </Link>
           </Button>

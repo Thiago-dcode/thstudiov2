@@ -1,0 +1,112 @@
+/* Masonry grid – native CSS masonry when supported, column fallback otherwise */
+/* https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Grid_layout/Masonry_layout */
+
+.mansonry-grid {
+  columns: 1;
+  column-gap: var(--size-base);
+  max-width: var(--screen-desktop);
+  margin: 0 auto;
+}
+
+@media (min-width: 768px) {
+  .mansonry-grid {
+    columns: 3;
+    column-gap: var(--size-lg);
+  }
+}
+
+@media (min-width: 1200px) {
+  .mansonry-grid {
+    columns: 4;
+  }
+}
+
+/* New Grid Style: Uniform container size, media adapts inside */
+.uniform-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--size-base);
+  max-width: var(--screen-desktop);
+  margin: 0 auto;
+}
+
+@media (min-width: 768px) {
+  .uniform-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--size-lg);
+  }
+}
+
+@media (min-width: 1200px) {
+  .uniform-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+
+/* Media Gallery Card */
+.media-gallery-card {  
+  display: block;
+  background-color: var(--color-fg-1);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 2px;
+  overflow: hidden;
+  break-inside: avoid;
+}
+
+.mansonry-grid .media-gallery-card {
+  margin-bottom: var(--size-lg);
+}
+
+.uniform-grid .media-gallery-card {
+  background-color: transparent;
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: var(--size-lg, 1.5rem);
+  margin-bottom: 0;
+  min-height: 0;
+  min-width: 0;
+}
+
+@media (min-width: 768px) {
+  .uniform-grid .media-gallery-card {
+    padding: var(--size-xl, 2rem);
+  }
+}
+
+/* Media sits inside the padded cell; image uses object-contain via component classes */
+.uniform-grid .media-gallery-card__frame {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+}
+
+.uniform-grid .media-gallery-card__frame img {
+  object-fit: contain;
+}
+
+.media-gallery-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1);
+}
+
+.media-gallery-card img {
+  object-fit: cover;
+  width: 100%;
+  height: 100%;
+  display: block;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.media-gallery-card:hover img {
+  transform: scale(1.03);
+}

@@ -2,6 +2,7 @@ import { BaseService } from "@/lib/services/base.service";
 import { ApiResponse } from "@repo/common-lib/types/response";
 import { fetchApi } from "@/lib/facade/fetchApi";
 import { FullPortfolio, Portfolio } from "@repo/common-lib/types/portfolio";
+import { queryParamBuilder } from "@repo/common-lib/utils/query-builder";
 
 class UserPortfolioService extends BaseService {
     constructor() {
@@ -20,9 +21,12 @@ class UserPortfolioService extends BaseService {
         });
     }
 
-    async getAllByUsername(username: string): Promise<ApiResponse<Portfolio[]>> {
+    async getAllByUsername(
+        username: string,
+        filters?: { is_highlight?: boolean },
+    ): Promise<ApiResponse<Portfolio[]>> {
         return await this.fetchApi.get({
-            resource: `/${username}/portfolios`
+            resource: queryParamBuilder(`/${username}/portfolios`, filters),
         });
     }
 

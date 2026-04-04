@@ -3,7 +3,7 @@ import {
   Get,
   Param,
   ParseIntPipe,
-
+  Query,
 } from '@nestjs/common';
 import { Public } from 'src/common/decorators/public.decorator';
 import { UserPortfolioService } from './user-portfolio.service';
@@ -43,7 +43,12 @@ export class UserPortfolioController {
   @Get(':username/portfolios')
   async getAllByUsername(
     @Param('username') username: string,
+    @Query('is_highlight') isHighlight?: string,
   ) {
-    return await this.userPortfolioService.getAllByUsername(username);
+    return await this.userPortfolioService.getAllByUsername(username, {
+      is_highlight: isHighlight === '1' || isHighlight === 'true' ? true
+        : isHighlight === '0' || isHighlight === 'false' ? false
+          : undefined,
+    });
   }
 }

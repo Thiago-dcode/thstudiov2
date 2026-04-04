@@ -24,7 +24,7 @@ type PortfolioContextType = {
   user: User;
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => Promise<void>;
   // `media` is overridden in this provider to be `Media[]` for UI purposes.
-  handleSetFormData: (key: keyof CreatePortfolioInputWithFile, value: string | File | number | MediaPortfolio[]) => void;
+  handleSetFormData: (key: keyof CreatePortfolioInputWithFile, value: string | File | number | boolean | MediaPortfolio[]) => void;
   handleStep: (direction: 'prev' | 'next') => void;
   currentStep: number;
   MAX_STEPS: number;
@@ -93,6 +93,7 @@ export const PortfolioProvider = ({
       title: portfolio.title,
       slug: portfolio.slug,
       description: portfolio.description ?? undefined,
+      is_highlight: portfolio.is_highlight,
       media: portfolio.media.sort((a,b)=>a.position - b.position),
     });
   }, []);
@@ -114,6 +115,7 @@ export const PortfolioProvider = ({
         slug: (formData.slug ?? "") as string,
         description: (formData.description ?? undefined) as string | undefined,
         user_id: (formData.user_id ?? user.id) as number,
+        is_highlight: formData.is_highlight ?? false,
         thumbnail: formData.thumbnail ? formData.thumbnail as File : undefined,
         media: media.length ? media : undefined,
       };
@@ -219,6 +221,7 @@ export const PortfolioProvider = ({
     if (formData.title !== currentPortfolio.title) return true;
     if (formData.slug !== currentPortfolio.slug) return true;
     if ((formData.description ?? undefined) !== (currentPortfolio.description ?? undefined)) return true;
+    if ((formData.is_highlight ?? false) !== currentPortfolio.is_highlight) return true;
     if (formData.thumbnail) return true;
 
     const currentMedia = formData.media ?? [];

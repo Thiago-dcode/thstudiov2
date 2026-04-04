@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMainNav } from "../providers/main-nav.provider"
 import { ReactNode, useEffect, useState } from "react";
-import { Box, Briefcase, Grid, Home, Info, LayoutDashboard, Settings } from "lucide-react";
+import { BookUser, Box, Briefcase, Grid, Home, Info, LayoutDashboard, Settings, UserRoundPen } from "lucide-react";
 import { LogoutDialog } from "@/app/(atelier)/__components/logout-dialog";
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
 
@@ -17,12 +17,12 @@ const routes: {
         {
             name: 'Dashboard',
             url: '',
-            icon: <LayoutDashboard size={20} />
+            icon: <Home size={20} />
         },
         {
             name: 'Home',
             url: 'home',
-            icon: <Home size={20} />
+            icon: <UserRoundPen  size={20} />
         },
         {
             name: 'Media',
@@ -37,7 +37,7 @@ const routes: {
         {
             name: 'Portfolios',
             url: 'portfolio',
-            icon: <Grid size={20} />
+            icon: <LayoutDashboard size={20} />
         },
         {
             name: 'Services',
@@ -47,7 +47,7 @@ const routes: {
         {
             name: 'About',
             url: 'about',
-            icon: <Info size={20} />
+            icon: <BookUser size={20} />
         },
         {
             name: 'Settings',

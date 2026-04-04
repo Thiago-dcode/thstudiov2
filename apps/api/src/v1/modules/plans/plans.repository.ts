@@ -10,7 +10,7 @@ import {
   PlanWithPricesColumns,
   PlanWithPricesSchema,
 } from '@repo/common-lib/schemas/plan';
-import {} from '@repo/common-lib/schemas/plan-price';
+import { } from '@repo/common-lib/schemas/plan-price';
 import { RequestService } from 'src/common/services/request.service';
 import { FullPlan, PlanPrice } from '@repo/common-lib/types/plan';
 
@@ -29,6 +29,7 @@ export class PlansRepository extends BaseRepository {
     'plans.max_clients',
     'plans.max_projects',
     'plans.max_portfolios',
+    'plans.max_collections',
     'plans.max_services',
     'plans.max_media_size',
     'plans.limit_write_storage_per_day',
@@ -85,10 +86,10 @@ export class PlansRepository extends BaseRepository {
         if (acc[curr.id]) return acc;
         const translation = Object.hasOwn(curr, 'language_code')
           ? (fullPlanSchema as FullPlanSchema[]).find(
-              (p) =>
-                p.pt_plan_id == curr.id &&
-                this.requestService.language === p.language_code,
-            )
+            (p) =>
+              p.pt_plan_id == curr.id &&
+              this.requestService.language === p.language_code,
+          )
           : undefined;
 
         acc[curr.id] = {
@@ -127,18 +128,19 @@ export class PlansRepository extends BaseRepository {
           max_portfolios: curr.max_portfolios,
           max_projects: curr.max_projects,
           max_services: curr.max_services,
+          max_collections: curr.max_collections,
           max_media_size: curr.max_media_size,
           limit_write_storage_per_day: curr.limit_write_storage_per_day,
           ai_credits: curr.ai_credits,
           translation: translation
             ? {
-                id: translation.pt_id,
-                code: translation.language_code,
-                plan_id: curr.plan_id,
-                short_description: translation.pt_short_description,
-                description: translation.pt_description,
-                name: translation.pt_name,
-              }
+              id: translation.pt_id,
+              code: translation.language_code,
+              plan_id: curr.plan_id,
+              short_description: translation.pt_short_description,
+              description: translation.pt_description,
+              name: translation.pt_name,
+            }
             : undefined,
         };
         return acc;

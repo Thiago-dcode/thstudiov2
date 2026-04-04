@@ -87,7 +87,8 @@ export class PortfolioService {
 
     const portfolio = await this.portfolioRepository.create({
       ...request,
-      thumbnail: thumbnailPath
+      thumbnail: thumbnailPath,
+      is_highlight: request.is_highlight ?? false,
     });
     this.eventEmitter.emit(UPDATE_USER_EXTRA_DATA_METRICS, new UpdateUserExtraDataMetricsEvent(request.user_id));
     return portfolio;

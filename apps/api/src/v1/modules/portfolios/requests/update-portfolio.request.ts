@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumber, IsOptional, IsString, IsArray, ValidateNested, MinLength } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional, IsString, IsArray, IsBoolean, ValidateNested, MinLength } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ModelExist } from 'src/common/validators/model-exist.validtor';
 
@@ -38,6 +38,10 @@ export class UpdatePortfolioRequest {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  is_highlight?: boolean;
 
   @IsOptional()
   thumbnail?: Express.Multer.File;

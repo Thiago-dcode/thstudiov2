@@ -44,6 +44,7 @@ export const ArtistsHeader = () => {
     const navItems = [
         { label: `@${username}`, href: `/artists/${username}` },
         { label: 'Portfolios', href: `/artists/${username}/portfolios` },
+        { label: 'Collections', href: `/artists/${username}/collections` },
         { label: 'Services', href: `/artists/${username}/services` },
         { label: 'About', href: `/artists/${username}/about` },
     ]

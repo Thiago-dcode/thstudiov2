@@ -36,7 +36,7 @@ export default async function Page({ params }: Props) {
             <Web.Header title="Portfolios" />
 
             {portfolios.length > 0 ? (
-                <section className="grid grid-cols-2 gap-4 sm:grid-cols-3 tablet:grid-cols-4 tablet:gap-5">
+                <Web.List>
                     {portfolios.map((portfolio) => (
                         <Link
                             key={portfolio.id}
@@ -78,7 +78,7 @@ export default async function Page({ params }: Props) {
                             <div className="absolute inset-0 ring-1 ring-inset ring-white/10 rounded-sm transition-all duration-500 group-hover:ring-white/20" />
                         </Link>
                     ))}
-                </section>
+                </Web.List>
             ) : (
                 <div className="flex min-h-[40vh] items-center justify-center border border-dashed border-border/60 text-sm italic text-text-muted">
                     No portfolios yet.

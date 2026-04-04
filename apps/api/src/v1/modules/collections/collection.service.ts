@@ -8,6 +8,7 @@ import { CollectionRepository } from "./collection.repository";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { UPDATE_USER_EXTRA_DATA_METRICS } from "@repo/common-lib/constants/constants";
 import { UpdateUserExtraDataMetricsEvent } from "../user-extra-data/events/update-user-extra-data-metrics.event";
+import { Helpers } from "src/common/services/helpers.service";
 
 const MAX_COLLECTION_MEDIA = 50;
 
@@ -17,11 +18,26 @@ export class CollectionService {
     private readonly collectionRepository: CollectionRepository,
     private readonly requestService: RequestService,
     private readonly userExtraDataService: UserExtraDataService,
+    private readonly helper: Helpers,
     private readonly eventEmitter: EventEmitter2,
   ) { }
 
   async findAll(data: IndexCollectionRequest) {
-    return await this.collectionRepository.getAll(data);
+    const result = await this.collectionRepository.getAll(data);
+    return Promise.all(
+      result.map(async (co) => {
+        const media = await Promise.all(
+          co.media.map(async (cm) => {
+            if (!cm.thumbnail) return cm;
+            return {
+              ...cm,
+              thumbnail: await this.helper.getAsset(cm.thumbnail),
+            };
+          }),
+        );
+        return { ...co, media };
+      }),
+    );
   }
 
   private async slugExists(slug: string, userId: number) {
@@ -47,7 +63,14 @@ export class CollectionService {
       collections_count: 1,
     });
 
-    const collection = await this.collectionRepository.create(request);
+    const collection = await this.collectionRepository.create({
+      title: request.title,
+      slug: request.slug,
+      description: request.description,
+      user_id: request.user_id,
+      is_highlight: request.is_highlight ?? false,
+      media: request.media,
+    });
     this.eventEmitter.emit(UPDATE_USER_EXTRA_DATA_METRICS, new UpdateUserExtraDataMetricsEvent(request.user_id));
     return collection;
   }

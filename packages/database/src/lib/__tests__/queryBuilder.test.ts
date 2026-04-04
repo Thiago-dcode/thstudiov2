@@ -965,6 +965,16 @@ describe('QueryBuilder', () => {
       expect(queryBuilder['query']).toBe(`SELECT * FROM ${TABLE_NAME} \nORDER BY ${TABLE_NAME}.created_at DESC`);
     });
 
+    it('should build SELECT query with multiple ORDER BY clauses', () => {
+      // Arrange
+      queryBuilder.orderBy('created_at', 'DESC');
+      queryBuilder.orderBy('id', 'ASC');
+      queryBuilder['buildSelectQuery']();
+
+      // Assert
+      expect(queryBuilder['query']).toBe(`SELECT * FROM ${TABLE_NAME} \nORDER BY ${TABLE_NAME}.created_at DESC, ${TABLE_NAME}.id ASC`);
+    });
+
     it('should build SELECT query with LIMIT, OFFSET, and ORDER BY clauses', () => {
       // Arrange
       queryBuilder

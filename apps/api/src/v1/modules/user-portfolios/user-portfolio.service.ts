@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 // import { FactoryLogService } from "@repo/backend-lib/services/log-service";
 import { Helpers } from "src/common/services/helpers.service";
 
-import { FullPortfolio, Portfolio } from "@repo/common-lib/types/portfolio";
+import { FullPortfolio, Portfolio, PortfolioIndexRequest } from "@repo/common-lib/types/portfolio";
 
 import { UserRepository } from "../users/users.repository";
 import { PortfolioRepository } from "../portfolios/portfolio.repository";
@@ -60,11 +60,14 @@ export class UserPortfolioService {
     };
   }
 
-  async getAllByUsername(username: string): Promise<Portfolio[]> {
+  async getAllByUsername(
+    username: string,
+    filters?: Pick<PortfolioIndexRequest, 'is_highlight'>,
+  ): Promise<Portfolio[]> {
     const user = await this.userRepository.findByUsernameCompact(username);
     if (!user) return [];
 
-    const portfolios = await this.portfolioRepository.getAll({ user_id: user.id });
+    const portfolios = await this.portfolioRepository.getAll({ user_id: user.id, ...filters });
 
     return await Promise.all(portfolios.map(async (portfolio) => ({
       ...portfolio,

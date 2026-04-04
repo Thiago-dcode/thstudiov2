@@ -12,6 +12,7 @@ export type CollectionSchema = {
   user_id: number;
   created_at: Date;
   updated_at: Date;
+
 };
 
 export type CollectionSchemaWithoutTimestamps = Omit<CollectionSchema, 'created_at' | 'updated_at'>;
@@ -19,19 +20,24 @@ export type CollectionSchemaWithoutTimestamps = Omit<CollectionSchema, 'created_
 const tablesCollection = [TABLES_ENUM.COLLECTIONS] as const;
 export type CollectionSchemaColumns = TableColumn<typeof tablesCollection, CollectionSchema>;
 
-// ==================== COLLECTION FULL SCHEMA (WITH MEDIA) ====================
-// Joins: collections + collection_media + media
-// Only collision fields are prefixed (same pattern as PortfolioFullSchema)
-export type CollectionFullSchema = CollectionSchema & {
-  // From collection_media
-  media_id: number;
-  position: number;
 
+export type CollectionCompactSchema = CollectionSchema & {
+  // From collection_media
+  position: number;
   // From media (only collisions prefixed with m_)
   m_id: number;                           // COLLISION: id
   public_id: string;
   m_title?: string | null;                // COLLISION: title
   thumbnail?: string | null;
+}
+// ==================== COLLECTION FULL SCHEMA (WITH MEDIA) ====================
+// Joins: collections + collection_media + media
+// Only collision fields are prefixed (same pattern as PortfolioFullSchema)
+export type CollectionFullSchema = CollectionCompactSchema & {
+  // From collection_media
+  media_id: number;
+  position: number;
+
   url?: string | null;
   shape?: EnumType<'MEDIA_SHAPE'> | null;
   seo_alt?: string | null;

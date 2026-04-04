@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { Helpers } from "src/common/services/helpers.service";
-import { FullCollection, Collection } from "@repo/common-lib/types/collection";
+import { FullCollection, Collection, CollectionIndexRequest } from "@repo/common-lib/types/collection";
 import { UserRepository } from "../users/users.repository";
 import { CollectionRepository } from "../collections/collection.repository";
 
@@ -35,11 +35,28 @@ export class UserCollectionService {
     return await this.getById(user.id, slug);
   }
 
-  async getAllByUsername(username: string): Promise<Collection[]> {
+  async getAllByUsername(
+    username: string,
+    filters?: Pick<CollectionIndexRequest, 'is_highlight'>,
+  ): Promise<Collection[]> {
     const user = await this.userRepository.findByUsernameCompact(username);
     if (!user) return [];
 
-    return await this.collectionRepository.getAll({ user_id: user.id });
+    const result = await this.collectionRepository.getAll({ user_id: user.id, ...filters });
+    return Promise.all(
+      result.map(async (co) => {
+        const media = await Promise.all(
+          co.media.map(async (cm) => {
+            if (!cm.thumbnail) return cm;
+            return {
+              ...cm,
+              thumbnail: await this.helpers.getAsset(cm.thumbnail),
+            };
+          }),
+        );
+        return { ...co, media };
+      }),
+    );
   }
 
   async slugExists(username: string, slug: string) {

@@ -22,8 +22,7 @@ export const UserServicesSection = async ({ username, displayName }: {
     }
 
     return (
-        <section className="w-full max-w-5xl mx-auto px-6 md:px-12">
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 tablet:gap-6">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 tablet:gap-6">
                 {services.map((service) => (
                     <Link
                         key={service.id}
@@ -71,6 +70,5 @@ export const UserServicesSection = async ({ username, displayName }: {
                     </Link>
                 ))}
             </div>
-        </section>
     );
 };

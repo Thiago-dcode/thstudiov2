@@ -5,12 +5,10 @@ import fallbackBanner from "@/assets/images/fallback-banner.jpg";
 import { Badge } from "@repo/ui/components/shadcn/badge";
 import { MapPin, ArrowRight, Mail } from "lucide-react";
 import { Suspense } from "react";
-import { UserPortfoliosSection } from "@/modules/portfolios/components/user-portfolios-section";
-import { UserServicesSection } from "@/modules/services/components/user-services-section";
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { notFound } from "next/navigation";
 import { ArtistContactDialog } from "../../__components/artist-contact.dialog";
-import { ArtistProfileTabs } from "../../__components/artist-profile-tabs";
+import { ArtistSections } from "../../__components/artist-sections";
 
 const ArtistHomePage = async ({ params }: { params: Promise<{ username: string }> }) => {
     const { username } = await params;
@@ -62,7 +60,7 @@ const ArtistHomePage = async ({ params }: { params: Promise<{ username: string }
             </section>
 
             {/* Profile Identity + CTAs */}
-            <section className="w-full max-w-2xl mx-auto px-6 pt-24 tablet:pt-28 pb-8 flex flex-col items-center text-center gap-6">
+            <section className="w-full max-w-2xl mx-auto px-6 pt-24 tablet:pt-28 pb-12 flex flex-col items-center text-center gap-6">
                 <div className="space-y-3">
                     {fullName && (
                         <h1 className="text-3xl tablet:text-4xl laptop:text-5xl font-serif italic tracking-tight leading-tight">
@@ -117,7 +115,7 @@ const ArtistHomePage = async ({ params }: { params: Promise<{ username: string }
 
             {/* Short Biography — editorial pull-quote */}
             {profile.short_biography && (
-                <section className="w-full max-w-3xl mx-auto px-6 pt-4 pb-16">
+                <section className="w-full max-w-3xl mx-auto px-6 pt-2 pb-20">
                     <div className="relative py-10">
                         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-12 h-px bg-border/60" />
                         <blockquote className="max-w-xl mx-auto text-center text-base tablet:text-lg leading-[1.9] text-text-muted font-serif italic">
@@ -128,30 +126,14 @@ const ArtistHomePage = async ({ params }: { params: Promise<{ username: string }
                 </section>
             )}
 
-            {/* Content Tabs */}
-            <div className="w-full pb-8">
-                <ArtistProfileTabs
-                    tabs={[
-                        {
-                            value: "portfolios",
-                            label: "Portfolios",
-                            content: (
-                                <Suspense fallback={<div className="flex justify-center py-12"><Spinner /></div>}>
-                                    <UserPortfoliosSection username={profile.username} userId={profile.id} displayName={fullName || profile.username} />
-                                </Suspense>
-                            ),
-                        },
-                        {
-                            value: "services",
-                            label: "Services",
-                            content: (
-                                <Suspense fallback={<div className="flex justify-center py-12"><Spinner /></div>}>
-                                    <UserServicesSection username={profile.username} displayName={fullName || profile.username} />
-                                </Suspense>
-                            ),
-                        },
-                    ]}
-                />
+            {/* Highlighted Content Sections */}
+            <div className="w-full pt-8 pb-24">
+                <Suspense fallback={<div className="flex justify-center py-16"><Spinner /></div>}>
+                    <ArtistSections
+                        username={profile.username}
+                        userId={profile.id}
+                    />
+                </Suspense>
             </div>
         </div>
     );

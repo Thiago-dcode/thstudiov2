@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
+import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
 
 type AdminPageContainerProps = {
     children: React.ReactNode;
@@ -16,10 +17,11 @@ export const AdminPageContainer = ({ children }: AdminPageContainerProps) => {
 type AdminPageTitleProps = {
     title: string;
     publicHref?: string;
+    info?: string;
     children?: React.ReactNode;
 };
 
-export const AdminPageTitle = ({ title, publicHref, children }: AdminPageTitleProps) => {
+export const AdminPageTitle = ({ title, publicHref, info, children }: AdminPageTitleProps) => {
     return (
         <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -34,6 +36,7 @@ export const AdminPageTitle = ({ title, publicHref, children }: AdminPageTitlePr
                         <ExternalLink className="size-4" />
                     </Link>
                 )}
+                {info && <InfoTooltip content={info} />}
             </div>
             {children}
         </div>

@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { BaseRepository } from '@repo/database/repositories';
 import { QueryBuilder } from '@repo/database/queryBuilder';
 import {
+  CollectionCompactSchema,
   CollectionFullSchema,
   CollectionFullSchemaColumns,
   CollectionSchema,
@@ -13,6 +14,7 @@ import {
   FullCollection,
   Collection,
   CollectionIndexRequest,
+  CollectionMedia,
 } from '@repo/common-lib/types/collection';
 import { DbException } from '@repo/database/exceptions';
 import { RequestService } from 'src/common/services/request.service';
@@ -20,7 +22,7 @@ import { MediaPortfolio } from '@repo/common-lib/types/media';
 
 @Injectable()
 export class CollectionRepository extends BaseRepository {
-  private readonly COLUMNS: CollectionSchemaColumns[] = [
+  private readonly BASE_COLUMNS: CollectionSchemaColumns[] = [
     'collections.id',
     'collections.slug',
     'collections.title',
@@ -30,10 +32,20 @@ export class CollectionRepository extends BaseRepository {
     'collections.user_id',
     'collections.created_at',
     'collections.updated_at',
+  ];
+
+  private readonly COLUMNS: CollectionFullSchemaColumns[] = [
+    ...this.BASE_COLUMNS,
+    'collection_media.position',
+    'media.id as m_id',
+    'media.public_id',
+    'media.thumbnail',
+    'media.title as m_title',
   ] as const;
 
+
   private readonly FULL_COLUMNS: CollectionFullSchemaColumns[] = [
-    ...this.COLUMNS,
+    ...this.BASE_COLUMNS,
     'collection_media.media_id',
     'collection_media.position',
     'media.id as m_id',
@@ -56,8 +68,8 @@ export class CollectionRepository extends BaseRepository {
 
   async getAll(filters: CollectionIndexRequest): Promise<Collection[]> {
     const query = await this.applyFilters(filters, this.query());
-    const results = await query.get<CollectionSchema[]>();
-    return results.map((result) => this.formatCollection(result));
+    const results = await query.get<CollectionCompactSchema[]>();
+    return this.formatCompactCollections(results);
   }
 
   async getBySlug(slug: string, userId: number): Promise<FullCollection> {
@@ -67,6 +79,9 @@ export class CollectionRepository extends BaseRepository {
       .where('user_id', '=', userId)
       .join('id', 'collection_media', 'collection_id', 'LEFT')
       .join('collection_media.media_id', 'media', 'id', 'LEFT')
+      .where('media.thumbnail', 'IS NOT', null)
+      .where('media.blocked', '=', false)
+      .orderBy('collection_media.position', 'ASC')
       .get<CollectionFullSchema[]>();
 
     if (!result || (Array.isArray(result) && result.length === 0)) return null;
@@ -74,8 +89,8 @@ export class CollectionRepository extends BaseRepository {
   }
 
   async getOneCompact(id: number) {
-    const result = await this.query().select(this.COLUMNS).where('id', '=', id).first();
-    return result ? this.formatCollection(result) : null;
+    const result = await this.query().select(this.BASE_COLUMNS).where('id', '=', id).first<CollectionSchema>();
+    return result ? this.formatBaseCollection(result) : null;
   }
 
   async slugExists(slug: string, userId: number): Promise<boolean> {
@@ -100,7 +115,7 @@ export class CollectionRepository extends BaseRepository {
       await this.attachMedia(collectionResult.id, media);
     }
 
-    return collectionResult;
+    return { ...collectionResult, media: [] };
   }
 
   async updateById(id: number, { media, ...collectionData }: UpdateCollectionInput): Promise<Collection> {
@@ -114,7 +129,7 @@ export class CollectionRepository extends BaseRepository {
     await this.attachMedia(id, media);
 
     const result = await this.query()
-      .select(this.COLUMNS)
+      .select(this.BASE_COLUMNS)
       .where('id', '=', id)
       .first<CollectionSchema>();
 
@@ -122,7 +137,7 @@ export class CollectionRepository extends BaseRepository {
       throw new DbException('Could not update collection');
     }
 
-    return this.formatCollection(result);
+    return this.formatBaseCollection(result);
   }
 
   private async attachMedia(collectionId: number, media: { id: number; position: number }[]) {
@@ -148,7 +163,11 @@ export class CollectionRepository extends BaseRepository {
     filters: CollectionIndexRequest,
     query: QueryBuilder,
   ): Promise<QueryBuilder> {
-    query.select(this.COLUMNS);
+    query.select(this.COLUMNS)
+      .join('id', 'collection_media', 'collection_id', 'LEFT')
+      .join('collection_media.media_id', 'media', 'id', 'LEFT')
+      .where('media.thumbnail', 'IS NOT', null)
+      .where('media.blocked', '=', false)
 
     if (filters.user_id) {
       query.where('user_id', '=', filters.user_id);
@@ -165,11 +184,12 @@ export class CollectionRepository extends BaseRepository {
     this.requestService.pagination =
       await this.handleOffsetPagination(query, filters);
     query.orderBy('created_at', 'DESC');
+    query.orderBy('collection_media.position', 'ASC');
 
     return query;
   }
 
-  private formatCollection(result: CollectionSchema): Collection {
+  private formatBaseCollection(result: CollectionSchema): Collection {
     return {
       id: result.id,
       slug: result.slug,
@@ -180,7 +200,41 @@ export class CollectionRepository extends BaseRepository {
       user_id: result.user_id,
       created_at: result.created_at,
       updated_at: result.updated_at,
+      media: [],
     };
+  }
+
+  private formatCompactCollections(rows: CollectionCompactSchema[]): Collection[] {
+    const map = new Map<number, Collection>();
+
+    for (const row of rows) {
+      if (!map.has(row.id)) {
+        map.set(row.id, {
+          id: row.id,
+          slug: row.slug,
+          title: row.title,
+          is_featured: row.is_featured,
+          is_highlight: row.is_highlight,
+          description: row.description,
+          user_id: row.user_id,
+          created_at: row.created_at,
+          updated_at: row.updated_at,
+          media: [],
+        });
+      }
+
+      if (row.m_id) {
+        const media: CollectionMedia = {
+          id: row.m_id,
+          thumbnail: row.thumbnail,
+          title: row.m_title,
+          position: row.position,
+        };
+        map.get(row.id)!.media.push(media);
+      }
+    }
+
+    return Array.from(map.values());
   }
 
   private formatFullCollection(result: CollectionFullSchema[]): FullCollection {

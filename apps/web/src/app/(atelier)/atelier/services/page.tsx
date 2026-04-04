@@ -19,7 +19,7 @@ export default async function ServicesPage() {
 
     return (
         <AdminPageContainer>
-            <AdminPageTitle title="Services">
+            <AdminPageTitle title="Services" info="Services are the offerings you provide to your clients, such as 'Wedding Photography' or 'Web Design'.">
                 <Button asChild variant="primary" size="sm">
                     <Link href={'services/create'}>
                         <Plus className="size-4" />

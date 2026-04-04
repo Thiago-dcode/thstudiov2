@@ -21,7 +21,10 @@ export default async function Atelier() {
 
     return (
         <AdminPageContainer>
-            <AdminPageTitle title="Portfolio">
+            <AdminPageTitle
+                title="Portfolio"
+                info="Portfolios represent broad categories of your work, such as 'Travel Photography' or 'Wedding Photography'. They are designed to showcase your best pieces to clients and can include both individual media and collections."
+            >
                 <Button asChild variant="primary" size="sm">
                     <Link href={'portfolio/create'}>
                         <Plus className="size-4" />

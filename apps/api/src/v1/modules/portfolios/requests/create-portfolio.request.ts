@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumber, IsOptional, IsString, IsArray, ValidateNested, MinLength } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional, IsString, IsArray, IsBoolean, ValidateNested, MinLength } from 'class-validator';
 import { Type } from 'class-transformer';
 import { IsUserAuth } from 'src/common/validators/is-user-auth.validtor';
 import { ModelExist } from 'src/common/validators/model-exist.validtor';
@@ -44,6 +44,10 @@ export class CreatePortfolioRequest {
   @IsNotEmpty()
   @IsNumber()
   user_id: number;
+
+  @IsOptional()
+  @IsBoolean()
+  is_highlight?: boolean;
 
   @IsOptional()
   thumbnail?: Express.Multer.File;

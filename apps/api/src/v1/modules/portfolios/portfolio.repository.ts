@@ -70,6 +70,9 @@ export class PortfolioRepository extends BaseRepository {
       .join('portfolio_media.media_id', 'media', 'id', 'LEFT')
       .join('id', 'portfolio_collection', 'portfolio_id', 'LEFT')
       .join('portfolio_collection.collection_id', 'collections', 'id', 'LEFT')
+      .where('media.thumbnail', 'IS NOT', null)
+      .where('media.blocked', '=', false)
+      .orderBy('portfolio_media.position', 'ASC')
       .get<PortfolioFullSchema[]>();
 
     if (!result || (Array.isArray(result) && result.length === 0)) return null;
@@ -215,6 +218,7 @@ export class PortfolioRepository extends BaseRepository {
     this.requestService.pagination =
       await this.handleOffsetPagination(query, filters);
     query.orderBy('created_at', 'DESC');
+    query.orderBy('portfolios.id', 'DESC');
 
     return query;
   }
