@@ -1,5 +1,6 @@
 import { LayoutGrid, Sparkles, MessageCircle } from "lucide-react";
 import type { ReactNode } from "react";
+import { WebSection } from "./web-section";
 
 const STEPS: { step: number; icon: ReactNode; title: string; description: string }[] = [
   {
@@ -27,21 +28,16 @@ const STEPS: { step: number; icon: ReactNode; title: string; description: string
 
 export function HowItWorksSection() {
   return (
-    <section className="relative overflow-hidden">
+    <WebSection className="overflow-hidden">
       <div className="how-it-works-bg pointer-events-none absolute inset-0" aria-hidden />
 
-      <div className="relative mx-auto w-full max-w-(--screen-desktop) px-6 py-20 tablet:px-10 tablet:py-28">
-        <header className="mb-16 flex flex-col items-center gap-4 text-center">
-          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">
-            How it works
-          </span>
-          <h2 className="font-serif text-3xl font-medium italic tracking-tight tablet:text-4xl">
-            From upload to your first client
-          </h2>
-          <p className="max-w-md text-sm leading-relaxed text-text-muted tablet:text-base">
-            A portfolio that builds your career, not just displays your work.
-          </p>
-        </header>
+      <WebSection.Container>
+        <WebSection.Header
+          badge="How it works"
+          title="From upload to your first client"
+          description="A portfolio that builds your career, not just displays your work."
+          descriptionClassName="max-w-md"
+        />
 
         <div className="grid grid-cols-1 gap-8 tablet:grid-cols-3 tablet:gap-6">
           {STEPS.map((s) => (
@@ -64,7 +60,7 @@ export function HowItWorksSection() {
             </article>
           ))}
         </div>
-      </div>
+      </WebSection.Container>
 
       <style>{`
         .how-it-works-bg {
@@ -76,6 +72,6 @@ export function HowItWorksSection() {
             );
         }
       `}</style>
-    </section>
+    </WebSection>
   );
 }

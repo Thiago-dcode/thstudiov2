@@ -50,10 +50,8 @@ export class UserService extends BaseService {
         return await this.fetchApi.get({
             resource: queryParamBuilder(`${id}/media`, params),
             cacheOptions: {
-                cache: 'force-cache',
-                next: {
-                    tags: [`user-${id}`]
-                }
+                cache: 'no-cache',
+              
             }
         });
     }

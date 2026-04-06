@@ -11,12 +11,10 @@ export default function Home() {
     <>
       <HeroSection />
       <ValuePillarsSection />
-    
       <SocialProofSection />
       <FeatureCategoriesSection />
       <HowItWorksSection />
       <FeaturedArtistsSection />
-   
       <CtaSection />
     </>
   );

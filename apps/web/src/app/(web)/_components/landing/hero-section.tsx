@@ -19,8 +19,7 @@ export async function HeroSection() {
 
         <p className="max-w-xl text-base leading-relaxed text-text-muted tablet:text-lg tablet:leading-relaxed">
           Build a beautiful artist profile like a professional website —
-          and customize it as fast as updating your social feed. AI handles
-          the boring part (but important ones).
+          and customize it as fast as updating your social feed.
         </p>
 
         <div className="flex flex-col items-center gap-4 phone:flex-row">

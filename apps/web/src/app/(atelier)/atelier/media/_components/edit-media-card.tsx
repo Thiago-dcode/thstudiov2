@@ -7,7 +7,7 @@ import { Label } from "@repo/ui/components/shadcn/label";
 import { Button } from "@repo/ui/components/shadcn/button";
 import FormComponent from "@/lib/components/form-component";
 import { bytesToMB } from '@repo/common-lib/utils/bytes';
-import { ExternalLink, Sparkles, Trash2, Upload } from "lucide-react";
+import { ExternalLink, Eye, Sparkles, Trash2, Upload } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@repo/ui/components/shadcn/popover";
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
@@ -443,13 +443,13 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
                 {isEditing ? 'Edit Media' : (currentMedia.title || currentMedia.seo_filename || 'Media Preview')}
                 {!isEditing && currentMedia.public_id && (
                   <a
-                    href={`/media/${currentMedia.public_id}`}
+                    href={`/artists/${username}/media/${currentMedia.public_id}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-muted-foreground hover:text-foreground transition-colors"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <ExternalLink className="size-3.5" />
+                    <Eye className="size-3.5" />
                   </a>
                 )}
               </DrawerTitle>

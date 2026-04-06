@@ -1,5 +1,6 @@
 import { LayoutTemplate, Sparkles, Handshake } from "lucide-react";
 import type { ReactNode } from "react";
+import { WebSection } from "./web-section";
 
 const PILLARS: { icon: ReactNode; title: string; description: string }[] = [
   {
@@ -24,22 +25,13 @@ const PILLARS: { icon: ReactNode; title: string; description: string }[] = [
 
 export function ValuePillarsSection() {
   return (
-    <section className="relative overflow-hidden">
-      <div className="pillars-bg pointer-events-none absolute inset-0" aria-hidden />
-
-      <div className="relative mx-auto w-full max-w-(--screen-desktop) px-6 py-20 tablet:px-10 tablet:py-28">
-        <header className="mb-14 flex flex-col items-center gap-4 text-center">
-          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">
-            Why A11STUDIO
-          </span>
-          <h2 className="font-serif text-3xl font-medium italic tracking-tight tablet:text-4xl">
-            No more fighting with social media algorithms
-          </h2>
-          <p className="max-w-lg text-sm leading-relaxed text-text-muted tablet:text-base">
-            A professional home for your work — with the intelligence to grow your
-            career and the simplicity to never slow you down.
-          </p>
-        </header>
+    <WebSection className="overflow-hidden">
+      <WebSection.Container>
+        <WebSection.Header
+          badge="Why A11STUDIO"
+          title="Made by an artist for artists"
+          description="A professional home for your work — with the intelligence to grow your career and the simplicity to never slow you down."
+        />
 
         <div className="grid grid-cols-1 gap-6 tablet:grid-cols-3">
           {PILLARS.map((pillar) => (
@@ -60,26 +52,7 @@ export function ValuePillarsSection() {
             </article>
           ))}
         </div>
-      </div>
-
-      <style>{`
-        .pillars-bg {
-          background:
-            radial-gradient(
-              ellipse 50% 50% at 50% 0%,
-              oklch(57% 0.19 302 / 0.03) 0%,
-              transparent 70%
-            );
-        }
-        .pillar-card-glow {
-          background:
-            radial-gradient(
-              ellipse 80% 60% at 50% 0%,
-              oklch(57% 0.19 302 / 0.04) 0%,
-              transparent 70%
-            );
-        }
-      `}</style>
-    </section>
+      </WebSection.Container>
+    </WebSection>
   );
 }

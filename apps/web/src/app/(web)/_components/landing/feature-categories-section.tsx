@@ -4,6 +4,7 @@ import type { CategoryBase } from "@repo/common-lib/types/category";
 import { cn } from "@repo/ui/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
+import { WebSection } from "./web-section";
 
 function categoryBrowseHref(slug: string): string {
     return queryParamBuilder(
@@ -79,26 +80,21 @@ export async function FeatureCategoriesSection() {
     if (!categories.length) return null;
 
     return (
-        <section className="border-t border-border/40">
-            <div className="mx-auto w-full max-w-(--screen-desktop) px-6 py-20 tablet:px-10 tablet:py-28">
-                <header className="mb-12 flex flex-col items-center gap-4 text-center">
-                    <span className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">
-                        Explore
-                    </span>
-                    <h2 className="font-serif text-3xl font-medium italic tracking-tight tablet:text-4xl">
-                        Featured Categories
-                    </h2>
-                    <p className="max-w-md text-sm leading-relaxed text-text-muted tablet:text-base">
-                        Discover artists by discipline — each path leads to curated results.
-                    </p>
-                </header>
+        <WebSection>
+            <WebSection.Container>
+                <WebSection.Header
+                    badge="Explore"
+                    title="Featured Categories"
+                    description="Discover artists by discipline — each path leads to curated results."
+                    descriptionClassName="max-w-md"
+                />
 
                 <div className="grid grid-cols-1 gap-4 phone:grid-cols-2 tablet:grid-cols-3 laptop:grid-cols-4">
                     {categories.map((category) => (
                         <FeaturedCategoryCard key={category.id} category={category} />
                     ))}
                 </div>
-            </div>
-        </section>
+            </WebSection.Container>
+        </WebSection>
     );
 }
