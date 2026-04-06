@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "@repo/ui/globals.css";
 import { Toaster } from "@repo/ui/components/shadcn/sonner"
+import { ThemeProvider } from "@repo/ui/providers/theme.provider"
 import { ReactElement } from "react";
 import { Roboto, Playfair_Display } from 'next/font/google'
 import { cn } from "@repo/ui/lib/utils";
@@ -39,10 +40,12 @@ export default function RootLayout({
   children: ReactElement;
 }>) {
   return (
-    <html className={cn("", roboto.className, playfair.variable)} lang="en">
-      <body className=" w-screen h-screen flex  flex-col items-center justify-start">
-        {children}
-        <Toaster />
+    <html className={cn(roboto.className, playfair.variable)} lang="en" suppressHydrationWarning>
+      <body className="w-screen h-screen flex flex-col items-center justify-start">
+        <ThemeProvider>
+          {children}
+          <Toaster />
+        </ThemeProvider>
       </body>
     </html>
   );

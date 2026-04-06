@@ -50,11 +50,13 @@ function artistBioLine(a: ArtistCard): string {
 export type ArtistProfileCardProps = {
   artist: ArtistCard;
   className?: string;
+  compact?: boolean;
 };
 
 export function ArtistProfileCard({
   artist,
   className,
+  compact,
 }: ArtistProfileCardProps) {
   const name = artistDisplayName(artist);
   const href = `/artists/${encodeURIComponent(artist.username)}`;
@@ -73,7 +75,7 @@ export function ArtistProfileCard({
         className,
       )}
     >
-      <div className="relative aspect-4/5 w-full shrink-0 overflow-hidden rounded-2xl bg-fg-1/60">
+      <div className={cn("relative w-full shrink-0 overflow-hidden rounded-2xl bg-fg-1/60", compact ? "aspect-square" : "aspect-4/5")}>
         {artist.avatar ? (
           <Image
             src={artist.avatar}

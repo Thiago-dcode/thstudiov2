@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { BrandLogo } from "@repo/ui/components/custom/brand-logo"
+import { ThemeToggle } from "@repo/ui/components/custom/theme-toggle"
 
 const legalLinks = [
     { href: "/legal/privacy", label: "Privacy Policy" },
@@ -51,10 +52,11 @@ export const WebFooter = () => {
                     </div>
                 </div>
 
-                <div className="mt-12 pt-6 border-t border-fg-2">
+                <div className="mt-12 pt-6 border-t border-fg-2 flex items-center justify-between">
                     <p className="text-xs tracking-wider text-text-muted">
                         &copy; {year} A11STUDIO. All rights reserved.
                     </p>
+                    <ThemeToggle />
                 </div>
             </div>
         </footer>

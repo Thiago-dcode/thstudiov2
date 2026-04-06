@@ -2,7 +2,6 @@ import categoriesService from "@/modules/categories/categories.service";
 import { queryParamBuilder } from "@repo/common-lib/utils/query-builder";
 import type { CategoryBase } from "@repo/common-lib/types/category";
 import { cn } from "@repo/ui/lib/utils";
-import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -82,7 +81,10 @@ export async function FeatureCategoriesSection() {
     return (
         <section className="border-t border-border/40">
             <div className="mx-auto w-full max-w-(--screen-desktop) px-6 py-20 tablet:px-10 tablet:py-28">
-                <header className="mb-12 flex flex-col items-center gap-3 text-center">
+                <header className="mb-12 flex flex-col items-center gap-4 text-center">
+                    <span className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">
+                        Explore
+                    </span>
                     <h2 className="font-serif text-3xl font-medium italic tracking-tight tablet:text-4xl">
                         Featured Categories
                     </h2>

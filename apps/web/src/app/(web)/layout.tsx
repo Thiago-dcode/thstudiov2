@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { WebHeader } from "./_cpmponents/web-header";
+import { WebHeader } from "./_components/web-header";
 import { WebFooter } from "@/lib/components/web-footer";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 

@@ -13,21 +13,24 @@ export async function FeaturedArtistsSection() {
   const artists = usersResponse.data || [];
 
   if (!artists.length) return null;
-  console.log(artists)
   return (
     <section className="mx-auto w-full max-w-(--screen-desktop) px-6 py-20 tablet:px-10 tablet:py-28">
-      <header className="mb-12 flex flex-col items-center gap-3 text-center">
+      <header className="mb-12 flex flex-col items-center gap-4 text-center">
+        <span className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">
+          Discover
+        </span>
         <h2 className="font-serif text-3xl font-medium italic tracking-tight tablet:text-4xl">
-          Featured Artists
+          Artists you can connect with today
         </h2>
-        <p className="max-w-md text-sm leading-relaxed text-text-muted tablet:text-base">
-          A glimpse into the community shaping the platform.
+        <p className="max-w-lg text-sm leading-relaxed text-text-muted tablet:text-base">
+          Every portfolio is a direct line between artist and client.
+          Browse, discover, and start a conversation.
         </p>
       </header>
 
-      <div className="grid grid-cols-1 gap-4 phone:grid-cols-2 tablet:grid-cols-4">
+      <div className="mx-auto grid max-w-(--screen-laptop) grid-cols-1 gap-4 phone:grid-cols-2 tablet:grid-cols-4">
         {artists.map((artist) => (
-          <ArtistProfileCard key={artist.id} artist={artist} />
+          <ArtistProfileCard key={artist.id} artist={artist} compact />
         ))}
       </div>
 

@@ -36,18 +36,14 @@ export default async function CollectionListPage() {
             </AdminPageTitle>
             {collectionsResponse.data.length > 0 ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                    {collectionsResponse.data.map((collection) => {
-                        const images = collection.media.map(m => m.thumbnail as string);
-
-                        return (
-                            <Link key={collection.id} href={`/atelier/collection/edit/${collection.slug}`}>
-                                <CollectionCard
-                                    images={images.slice(0, 4)}
-                                    title={collection.title}
-                                />
-                            </Link>
-                        );
-                    })}
+                    {collectionsResponse.data.map((collection) => (
+                        <CollectionCard
+                            key={collection.id}
+                            collection={collection}
+                            username={userAuth.username}
+                            isAtelier
+                        />
+                    ))}
                 </div>
             ) : (
                 <div className="flex items-center justify-center h-64 text-muted-foreground">
