@@ -62,7 +62,7 @@ export class UserPortfolioService {
 
   async getAllByUsername(
     username: string,
-    filters?: Pick<PortfolioIndexRequest, 'is_highlight'>,
+    filters?: Omit<PortfolioIndexRequest, 'user_id'>,
   ): Promise<Portfolio[]> {
     const user = await this.userRepository.findByUsernameCompact(username);
     if (!user) return [];

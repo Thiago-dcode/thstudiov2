@@ -1,6 +1,8 @@
+import type { EnumType } from '@repo/common-lib/constants/enums';
 import { Type } from 'class-transformer';
 import { IsBoolean, IsNumber, IsOptional } from 'class-validator';
 import { OffsetPaginationRequest } from 'src/common/requests/offset-pagination.request';
+import { IsAvailableEnum } from 'src/common/validators/is-enum.validator';
 import { ModelExist } from 'src/common/validators/model-exist.validtor';
 
 export class IndexMediaRequest extends OffsetPaginationRequest {
@@ -18,5 +20,9 @@ export class IndexMediaRequest extends OffsetPaginationRequest {
   @IsBoolean()
   @Type(() => Boolean)
   is_highlight?: boolean;
+
+  @IsOptional()
+  @IsAvailableEnum('MEDIA_SHAPE')
+  shape?: EnumType<'MEDIA_SHAPE'>;
 }
 

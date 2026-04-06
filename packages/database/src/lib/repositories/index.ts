@@ -129,7 +129,7 @@ protected async handleOffsetPagination(query:QueryBuilder,pagination:OffsetPagin
   if(!pagination.paginated)return null;
   const count = await query.count(false);
   query.orderBy(this.options.primaryKey ||'id', 'DESC');
-  const perPage = pagination.per_page || 15;
+  const perPage = Math.min(pagination.per_page || 15, 50);
   query.limit(perPage);
   const page = !pagination?.page || pagination.page <= 0 ? 1 : pagination.page;
   if (pagination.page && pagination.page > 1) {

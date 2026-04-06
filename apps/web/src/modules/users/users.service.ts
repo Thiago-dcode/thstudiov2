@@ -45,10 +45,10 @@ export class UserService extends BaseService {
         });
     }
 
-    async getAllMedia(id: number): Promise<ApiResponse<Media[]>> {
+    async getAllMedia(id: number, params?: { page?: number; per_page?: number; paginated?: boolean }): Promise<ApiResponse<Media[]>> {
 
         return await this.fetchApi.get({
-            resource: `${id}/media`,
+            resource: queryParamBuilder(`${id}/media`, params),
             cacheOptions: {
                 cache: 'force-cache',
                 next: {

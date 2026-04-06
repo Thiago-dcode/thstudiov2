@@ -9,8 +9,10 @@ import { FiltersProvider } from "./_components/filters.provider"
 import categoriesService from "@/modules/categories/categories.service"
 import Web from "@/lib/components/web-page.component"
 import { cn } from "@repo/ui/lib/utils"
-import { ApiResponse } from "@repo/common-lib/types/response"
+import { ApiResponse, Pagination } from "@repo/common-lib/types/response"
 import { cleanObj } from "@repo/common-lib/utils/cleanObj"
+import { queryParamBuilder, QueryBuilder } from "@repo/common-lib/utils/query-builder"
+import { AppPagination } from "@repo/ui/components/custom/app-pagination"
 
 const PAGE_DESCRIPTION =
     "Browse artists on A11STUDIO. Discover portfolios, services, and creative professionals."
@@ -60,12 +62,31 @@ function extractCategorySlugs(categories: string | undefined): string[] | undefi
     return slugs.length > 0 ? slugs : undefined
 }
 
+function artistFiltersToQuery(filters: ArtistIndexRequest): QueryBuilder {
+    const out: QueryBuilder = {}
+    if (filters.page != null) out.page = filters.page
+    if (filters.per_page != null) out.per_page = filters.per_page
+    const search = filters.search?.trim()
+    if (search) out.search = search
+    if (filters.categories?.length) out.categories = filters.categories
+    const country = filters.country?.trim()
+    if (country) out.country = country
+    const state = filters.state?.trim()
+    if (state) out.state = state
+    const city = filters.city?.trim()
+    if (city) out.city = city
+    if (filters.lat != null) out.lat = filters.lat
+    if (filters.lng != null) out.lng = filters.lng
+    if (filters.radius_km != null) out.radius_km = filters.radius_km
+    return out
+}
+
 function buildArtistIndexRequest(
     raw: Record<string, string | string[] | undefined>,
 ): ArtistIndexRequest {
     const q = (key: string) => firstString(raw[key])
 
-    return cleanObj( {
+    return cleanObj({
         page: parseOptionalInt(q("page")),
         per_page: parseOptionalInt(q("per_page")),
         search: optionalTrim(q("search")),
@@ -86,18 +107,29 @@ export default async function ArtistsPage({
 }) {
     const params = await searchParams
     const artistRequest = buildArtistIndexRequest(params)
-   
+
     let artistsResult: ApiResponse<ArtistCard[]> | null = null
     const hasFilters = Object.keys(artistRequest).length > 0
     if (hasFilters) {
-        artistsResult = await usersService.findAll(artistRequest)
+        artistsResult = await usersService.findAll({
+            ...artistRequest,
+            per_page: Math.min(artistRequest.per_page || 30, 50),
+            page: artistRequest.page || 1,
+            paginated: true,
+        })
     }
     const artists: ArtistCard[] = !artistsResult ||
         artistsResult.error || !artistsResult.data ? [] : artistsResult.data
-    const totalCount =
-        artistsResult && !artistsResult.error && artistsResult.pagination != null
-            ? artistsResult.pagination.total_count
-            : artists.length
+    const pagination: Pagination | undefined =
+        artistsResult && !artistsResult.error ? artistsResult.pagination ?? undefined : undefined
+    const totalCount = pagination?.total_count ?? artists.length
+
+    const buildPaginationHref = (page: number) =>
+        queryParamBuilder(
+            "/artists",
+            artistFiltersToQuery({ ...artistRequest, page }),
+            { arrayStyle: "commas" },
+        )
     let categories: CategoryBase[] = []
     if (artistRequest.categories?.length) {
         const categoriesResult = await categoriesService.getAll({
@@ -145,8 +177,8 @@ export default async function ArtistsPage({
                                         {artistsResult.error
                                             ? "Results"
                                             : totalCount === 0
-                                              ? `No artists found${resultsForSearchSuffix}`
-                                              : `${totalCount.toLocaleString()} artist${totalCount === 1 ? "" : "s"} found${resultsForSearchSuffix}`}
+                                                ? `No artists found${resultsForSearchSuffix}`
+                                                : `${totalCount.toLocaleString()} artist${totalCount === 1 ? "" : "s"} found${resultsForSearchSuffix}`}
                                     </h2>
                                     {artistsResult.error ? (
                                         <p className="text-sm text-destructive" role="alert">
@@ -158,7 +190,15 @@ export default async function ArtistsPage({
                                             Try broadening your search or clearing some filters.
                                         </p>
                                     ) : (
-                                        <ArtistsGrid artists={artists} />
+                                        <div className="flex flex-col gap-4">
+                                            <ArtistsGrid artists={artists} />
+                                            {pagination && (
+                                                <AppPagination
+                                                    pagination={pagination}
+                                                    buildHref={buildPaginationHref}
+                                                />
+                                            )}
+                                        </div>
                                     )}
                                 </section>
                             ) : (

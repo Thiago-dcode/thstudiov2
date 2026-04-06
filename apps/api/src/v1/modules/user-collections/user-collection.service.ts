@@ -37,7 +37,7 @@ export class UserCollectionService {
 
   async getAllByUsername(
     username: string,
-    filters?: Pick<CollectionIndexRequest, 'is_highlight'>,
+    filters?: Omit<CollectionIndexRequest, 'user_id'>,
   ): Promise<Collection[]> {
     const user = await this.userRepository.findByUsernameCompact(username);
     if (!user) return [];

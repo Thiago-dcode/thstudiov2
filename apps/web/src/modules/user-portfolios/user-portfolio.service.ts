@@ -1,7 +1,7 @@
 import { BaseService } from "@/lib/services/base.service";
 import { ApiResponse } from "@repo/common-lib/types/response";
 import { fetchApi } from "@/lib/facade/fetchApi";
-import { FullPortfolio, Portfolio } from "@repo/common-lib/types/portfolio";
+import { FullPortfolio, Portfolio, PortfolioIndexRequest } from "@repo/common-lib/types/portfolio";
 import { queryParamBuilder } from "@repo/common-lib/utils/query-builder";
 
 class UserPortfolioService extends BaseService {
@@ -23,7 +23,7 @@ class UserPortfolioService extends BaseService {
 
     async getAllByUsername(
         username: string,
-        filters?: { is_highlight?: boolean },
+        filters?:Omit<PortfolioIndexRequest, 'user_id'>,
     ): Promise<ApiResponse<Portfolio[]>> {
         return await this.fetchApi.get({
             resource: queryParamBuilder(`/${username}/portfolios`, filters),

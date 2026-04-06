@@ -1,7 +1,7 @@
 import { BaseService } from "@/lib/services/base.service";
 import { ApiResponse } from "@repo/common-lib/types/response";
 import { fetchApi } from "@/lib/facade/fetchApi";
-import { FullCollection, Collection } from "@repo/common-lib/types/collection";
+import { FullCollection, Collection, CollectionIndexRequest } from "@repo/common-lib/types/collection";
 import { queryParamBuilder } from "@repo/common-lib/utils/query-builder";
 
 class UserCollectionService extends BaseService {
@@ -23,7 +23,7 @@ class UserCollectionService extends BaseService {
 
     async getAllByUsername(
         username: string,
-        filters?: { is_highlight?: boolean },
+        filters?: Omit<CollectionIndexRequest, 'user_id'>,
     ): Promise<ApiResponse<Collection[]>> {
         return await this.fetchApi.get({
             resource: queryParamBuilder(`/${username}/collections`, filters),
