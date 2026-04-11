@@ -1,0 +1,24 @@
+{
+  "name": "@repo/worker",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "build": "tsc",
+    "start": "node dist/main.js"
+  },
+  "dependencies": {
+    "@repo/backend-lib": "workspace:*",
+    "@repo/common-lib": "workspace:*",
+    "@repo/database": "workspace:*",
+    "bullmq": "^5.71.0",
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.4.0",
+    "tsx": "^4.19.4",
+    "typescript": "5.9.3"
+  }
+}

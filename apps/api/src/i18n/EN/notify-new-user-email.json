@@ -1,0 +1,21 @@
+{
+  "WELCOME_SUBJECT": "Welcome to {appName}",
+  "HI": "Hi",
+  "WELCOME": "WELCOME",
+  "WELCOME_MESSAGE": "We are excited to have you on board.",
+  "FEATURES_INTRO_PREFIX": "With",
+  "FEATURES_INTRO_SUFFIX": "you will be able to:",
+  "FEATURES": [
+    "Manage and organize all your artwork",
+    "Create outstanding portfolio(s) to reach more clients",
+    "Add info about your clients",
+    "Show your available services",
+    "Connect with other artists",
+    "And much more!"
+  ],
+  "CTA_START_TEXT": "Start creating your portfolio",
+  "CTA_START_BUTTON": "Start now",
+  "CTA_VERIFY_TEXT": "Verify your account to start creating your portfolio",
+  "CTA_VERIFY_BUTTON": "Verify your account"
+
+}

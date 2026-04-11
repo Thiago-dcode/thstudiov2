@@ -1,0 +1,10 @@
+{
+    "SUBJECT": "Your account has been temporarily banned",
+    "HI": "Hi",
+    "TITLE": "Account Temporarily Banned",
+    "DESCRIPTION": "Your account has been temporarily banned due to repeated content policy violations. You will not be able to perform certain actions until the ban is lifted.",
+    "INFO": "If you believe this is a mistake or would like to appeal, please contact our support team. Your account restrictions will be reviewed at the start of your next billing cycle.",
+    "CTA_TEXT": "Need help or want to appeal?",
+    "CTA_BUTTON": "Contact Support"
+}
+

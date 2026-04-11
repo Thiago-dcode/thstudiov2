@@ -61,3 +61,9 @@ pnpm-debug.log*
 .DS_Store
 *.pem
 
+# Database seed assets (large binaries; not committed — keep locally for `db:seed -n media`)
+packages/database/src/seeds/media-images/
+
+# Typescript
+*.tsconfig.tsbuildinfo
+"!**/*.tsbuildinfo",

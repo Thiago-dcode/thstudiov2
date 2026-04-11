@@ -1,0 +1,23 @@
+{
+    
+    "WELCOME_SUBJECT": "Bienvenido a {appName}",
+    "HI": "Hola",
+    "WELCOME": "BIENVENIDO",
+
+    "WELCOME_MESSAGE": "Estamos emocionados de tenerte a bordo.",
+    "FEATURES_INTRO_PREFIX": "Con",
+    "FEATURES_INTRO_SUFFIX": "podrás:",
+    "FEATURES": [
+        "Gestionar y organizar todas tus obras de arte",
+        "Crear portafolios excepcionales para llegar a más clientes",
+        "Añadir información sobre tus clientes",
+        "Mostrar tus servicios disponibles",
+        "Conectar con otros artistas",
+        "¡Y mucho más!"
+    ],
+    "CTA_START_TEXT": "Comienza a crear tu portafolio",
+    "CTA_START_BUTTON": "Comenzar ahora",
+    "CTA_VERIFY_TEXT": "Verifica tu cuenta para comenzar a crear tu portafolio",
+    "CTA_VERIFY_BUTTON": "Verificar cuenta"
+    
+}

@@ -1,49 +1,25 @@
 import { ClientNotInitializedException } from '../../client/exceptions';
 import { getClientConfig } from '../../client';
 import {
-  AvailableEnums,
+  ColumnAttributes,
+  ColumnAttributesWithAfter,
+  ColumnAttributesWithForeignKey,
   SqlFunction,
   SqlFunctionTimestamp,
   SqlTypes,
   TableName,
-} from '../../constants/types/database';
-import { ENUMS, SQL_FUNCTIONS } from '../../constants/constants';
+} from '@repo/common-lib/types/database';
+import { SQL_FUNCTIONS } from '@repo/common-lib/constants/database';
+import { AvailableEnums, EnumType } from '@repo/common-lib/constants/enums';
 
-export type OnAction = 'SET NULL' | 'CASCADE' | 'RESTRICT' | 'NO ACTION';
 
-export type ColumnAttributes<
-  T = string | number | boolean | null | SqlFunction,
-> = {
-  nullable?: boolean;
-  unique?: boolean;
-  primaryKey?: boolean;
-  default?: T | null;
-};
-export type ColumnAttributesOrAutoIncrement =
-  | ColumnAttributes
-  | {
-      autoIncrement?: boolean;
-      primaryKey?: boolean;
-    };
-
-export type ColumnAttributesWithType = ColumnAttributes & {
-  type?: SqlTypes;
-};
-export type ColumnAttributesWithForeignKey = Exclude<
-  ColumnAttributesWithType,
-  'primaryKey'
-> & {
-  constraintName?: string;
-  onDelete?: OnAction;
-  onUpdate?: OnAction;
-};
 export const DEFAULT_COLUMN_OPTIONS: ColumnAttributes = {
   nullable: false,
   unique: false,
   primaryKey: false,
 };
 export class ColumnBuilder {
-  protected static validateStringAndReturn(columnName: any): string {
+  protected static validateString(columnName: any): string {
     if (typeof columnName !== 'string') {
       throw new Error(`Column name must be a string, got ${typeof columnName}`);
     }
@@ -56,12 +32,27 @@ export class ColumnBuilder {
     }
     return sanitazedColumnName;
   }
+  protected static validateLength(length:number){
+    if (
+      length === undefined ||
+      length < 0 ||
+      isNaN(length) ||
+      length === Infinity ||
+      length === -Infinity
+    ) {
+      throw new Error('Length must be a positive number');
+    }
+    return length;
+  }
 
   public static id(columnName: string = 'id') {
-    return `${this.validateStringAndReturn(columnName || 'id')} ${this.getAutoIncrement(true)}`;
+    return `${this.validateString(columnName || 'id')} ${this.getAutoIncrement(true)}`;
+  }
+  public static uuid(columnName: string) {
+    return `${this.validateString(columnName)} varchar(36) UNIQUE NOT NULL`;
   }
   public static autoIncrement(columnName: string) {
-    return `${this.validateStringAndReturn(columnName)} ${this.getAutoIncrement()}`;
+    return `${this.validateString(columnName)} ${this.getAutoIncrement()}`;
   }
   public static getAutoIncrement(isPrimaryKey: boolean = false) {
     switch (getClientConfig()) {
@@ -76,41 +67,49 @@ export class ColumnBuilder {
     }
   }
   public static integer(columnName: string, options?: ColumnAttributes) {
-    return `${this.validateStringAndReturn(columnName)} INTEGER${options ? ' ' + this.buildOptions(options) : ''}`;
+    return `${this.validateString(columnName)} INTEGER${options ? ' ' + this.buildOptions(options) : ''}`;
+  }
+  public static smallInteger(columnName: string, options?: ColumnAttributes) {
+    return `${this.validateString(columnName)} SMALLINT${options ? ' ' + this.buildOptions(options) : ''}`;
   }
   public static float(columnName: string, options?: ColumnAttributes) {
-    return `${this.validateStringAndReturn(columnName)} REAL${options ? ' ' + this.buildOptions(options) : ''}`;
+    return `${this.validateString(columnName)} REAL${options ? ' ' + this.buildOptions(options) : ''}`;
   }
-  public static doubleFloat(columnName: string, options?: ColumnAttributes) {
-    return `${this.validateStringAndReturn(columnName)} DOUBLE PRECISION${options ? ' ' + this.buildOptions(options) : ''}`;
+  public static double(columnName: string, options?: ColumnAttributes) {
+    return `${this.validateString(columnName)} DOUBLE PRECISION${options ? ' ' + this.buildOptions(options) : ''}`;
   }
   public static decimal(columnName: string, options?: ColumnAttributes) {
-    return `${this.validateStringAndReturn(columnName)} DECIMAL${options ? ' ' + this.buildOptions(options) : ''}`;
+    return `${this.validateString(columnName)} DECIMAL${options ? ' ' + this.buildOptions(options) : ''}`;
   }
   public static bigint(columnName: string, options?: ColumnAttributes) {
-    return `${this.validateStringAndReturn(columnName)} BIGINT${options ? ' ' + this.buildOptions(options) : ''}`;
+    return `${this.validateString(columnName)} BIGINT${options ? ' ' + this.buildOptions(options) : ''}`;
   }
   public static boolean(columnName: string, options?: ColumnAttributes) {
-    return `${this.validateStringAndReturn(columnName)} BOOLEAN${options ? ' ' + this.buildOptions(options) : ''}`;
+    return `${this.validateString(columnName)} BOOLEAN${options ? ' ' + this.buildOptions(options) : ''}`;
   }
   public static string(
     columnName: string,
     length: number = 255,
     options?: ColumnAttributes,
   ) {
-    if (
-      length === undefined ||
-      length < 0 ||
-      isNaN(length) ||
-      length === Infinity ||
-      length === -Infinity
-    ) {
-      throw new Error('Length must be a positive number');
-    }
-    return `${this.validateStringAndReturn(columnName)} VARCHAR(${length}) ${this.buildOptions(options || {})}`;
+    
+    return `${this.validateString(columnName)} VARCHAR(${this.validateLength(length)}) ${this.buildOptions(options || {})}`;
   }
   public static text(columnName: string, options?: ColumnAttributes) {
-    return `${this.validateStringAndReturn(columnName)} TEXT${options ? ' ' + this.buildOptions(options) : ''}`;
+    return `${this.validateString(columnName)} TEXT${options ? ' ' + this.buildOptions(options) : ''}`;
+  }
+  public static array(columnName: string, type: string, options?: ColumnAttributes) {
+    const clientConfig = getClientConfig();
+    if (clientConfig !== 'postgres') {
+      throw new Error('Arrays are only supported in Postgres');
+    }
+    return `${this.validateString(columnName)} ${type}[]${options ? ' ' + this.buildOptions(options) : ''}`;
+  }
+  public static json(columnName: string, options?: ColumnAttributes) {
+    return `${this.validateString(columnName)} JSON${options ? ' ' + this.buildOptions(options) : ''}`;
+  }
+  public static jsonb(columnName: string, options?: ColumnAttributes) {
+    return `${this.validateString(columnName)} JSONB${options ? ' ' + this.buildOptions(options) : ''}`;
   }
   public static foreignKey(
     columnName: string,
@@ -120,13 +119,13 @@ export class ColumnBuilder {
   ) {
     // If onDelete is SET NULL, the column must be nullable
     const _options = {
-      type: 'INT',
+      type: 'INTEGER',
       ...options,
       unique: false,
       nullable:
         options?.onDelete || options?.onUpdate ? undefined : options?.nullable,
     };
-    return `${this.validateStringAndReturn(columnName)} ${_options.type} ${_options.constraintName ? `CONSTRAINT ${_options.constraintName} ` : ''}REFERENCES ${this.validateStringAndReturn(foreignTableName)} (${this.validateStringAndReturn(foreignTableColumnName)})${!_options.onDelete && !_options.onUpdate ? ' ' + this.buildOptions(_options) : ''}${
+    return `${this.validateString(columnName)} ${_options.type} ${_options.constraintName ? `CONSTRAINT ${_options.constraintName} ` : ''}REFERENCES ${this.validateString(foreignTableName)} (${this.validateString(foreignTableColumnName)})${!_options.onDelete && !_options.onUpdate ? ' ' + this.buildOptions(_options) : ''}${
       _options.onDelete || _options.onUpdate
         ? ' ' +
           this.buildForeignKeyOptions({
@@ -136,8 +135,14 @@ export class ColumnBuilder {
         : ''
     }`;
   }
+  public static uniques(name:string,uniques:string[]){
 
-  protected static buildOptions(options: ColumnAttributes) {
+    return `CONSTRAINT ${name} UNIQUE (${uniques.join(',')})`
+
+
+  }
+
+  public static buildOptions(options: ColumnAttributes | ColumnAttributesWithAfter) {
     const clientChoosen = getClientConfig();
     if (!clientChoosen) {
       throw new ClientNotInitializedException('Client not initialized');
@@ -176,6 +181,10 @@ export class ColumnBuilder {
     // 3. UNIQUE
     if (_options.unique) {
       concatenateOptions('UNIQUE');
+  }
+    // 4. AFTER (MySQL only)
+    if (clientChoosen === 'mysql' && 'after' in _options && _options.after) {
+      concatenateOptions(`AFTER ${_options.after}`);
     }
 
     return optionsString;
@@ -220,11 +229,11 @@ export class ColumnBuilder {
       unique: true,
       ...options,
     };
-    return `${this.validateStringAndReturn(columnName || 'email')} VARCHAR(255) ${this.buildOptions(_options)}`;
+    return `${this.validateString(columnName || 'email')} VARCHAR(255) ${this.buildOptions(_options)}`;
   }
   public static password(columnName: string = 'password') {
     // Handle the case where undefined is explicitly passed
-    return `${this.validateStringAndReturn(columnName || 'password')} VARCHAR(255) NOT NULL`;
+    return `${this.validateString(columnName || 'password')} VARCHAR(255) NOT NULL`;
   }
 
   public static timestamp(
@@ -238,21 +247,23 @@ export class ColumnBuilder {
       ...options,
     };
 
-    return `${this.validateStringAndReturn(columnName)} TIMESTAMP ${this.buildOptions(_options)}`;
+    const clientConfig = getClientConfig();
+    const timestampType = clientConfig === 'postgres' ? 'TIMESTAMPTZ' : 'TIMESTAMP';
+    return `${this.validateString(columnName)} ${timestampType} ${this.buildOptions(_options)}`;
   }
   // Function overloads for better type inference
   public static primaryKey(columnName: string, type: SqlTypes) {
-    return `${this.validateStringAndReturn(columnName)} ${type} PRIMARY KEY`;
+    return `${this.validateString(columnName)} ${type} PRIMARY KEY`;
   }
   public static enum(
     columnName: string,
-    enumName: keyof AvailableEnums,
-    options?: ColumnAttributes<(typeof ENUMS)[typeof enumName][number]>,
+    enumName:  AvailableEnums,
+    options?: ColumnAttributes<EnumType<typeof arguments[1]>>,
   ): string {
-    return `${this.validateStringAndReturn(columnName)} ${enumName}${options ? ' ' + this.buildOptions(options) : ''}`;
+    return `${this.validateString(columnName)} ${enumName}${options ? ' ' + this.buildOptions(options) : ''}`;
   }
   public static timestamps(
-    withDeletedAt: boolean = false,
+    withSoftDeletes: boolean = false,
     options: ColumnAttributes<SqlFunctionTimestamp> = {
       nullable: false,
       default: 'NOW()',
@@ -267,12 +278,14 @@ export class ColumnBuilder {
       this.timestamp('created_at', _options),
       this.timestamp('updated_at', _options),
     ];
-    if (withDeletedAt) {
+    if (withSoftDeletes) {
       columns.push(this.softDelete());
     }
     return columns;
   }
   public static softDelete(columnName: string = 'deleted_at') {
-    return `${this.validateStringAndReturn(columnName || 'deleted_at')} TIMESTAMP NULL`;
+    const clientConfig = getClientConfig();
+    const timestampType = clientConfig === 'postgres' ? 'TIMESTAMPTZ' : 'TIMESTAMP';
+    return `${this.validateString(columnName || 'deleted_at')} ${timestampType} NULL`;
   }
 }

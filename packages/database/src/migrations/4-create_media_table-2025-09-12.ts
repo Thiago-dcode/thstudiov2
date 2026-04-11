@@ -1,40 +1,60 @@
-import { createTimeStampsTrigger } from '../lib/scripts/utils';
 import { Column, Schema } from '../lib/facades';
-import Logger from '@repo/backend-lib/utils/console';
 
 const up = async () => {
-  await Schema.table('media').createIfNotExists([
+  await Schema.table('media').withTimestamps().createIfNotExists([
     Column.id(),
+    Column.uuid('public_id'),
     Column.string('title', 255, {
-      nullable: true,
+      nullable:true,
     }),
     Column.text('description', {
       nullable: true,
     }),
-
-    Column.integer('size'),
-    Column.string('url', 255, {
+    Column.integer('bytes'),
+    Column.integer('thumbnail_bytes',{
+      default:0
+    }),
+    Column.string('url',255, {
       unique: true,
     }),
+    //Generated automatically
     Column.string('thumbnail', 255, {
       nullable: true,
+    }),
+    Column.boolean('is_featured', {
+      default: false
+    }),
+    Column.boolean('is_highlight', {
+      default: false
+    }),
+    //Block media if user exceed account max size
+    Column.boolean('blocked',{
+      default:false
     }),
     Column.enum('shape', 'MEDIA_SHAPE', {
       nullable: true,
     }),
-    Column.enum('extension', 'MEDIA_EXTENSION'),
-    Column.enum('type', 'MEDIA_TYPE'),
+    Column.enum('compression_level', 'COMPRESSION_LEVEL', {
+      nullable: true,
+    }),
+    Column.string('extension', 5),
     Column.boolean('is_active', {
       default: true,
     }),
-    Column.text('tags', {
+    Column.string('seo_alt',255, {
       nullable: true,
     }),
+    Column.string('seo_title',255, {
+      nullable: true,
+    }),
+    Column.string('seo_description',255, {
+      nullable: true,
+    }),
+    Column.string('seo_filename',255),
     Column.foreignKey('user_id', 'users', 'id', {
       onDelete: 'CASCADE',
       onUpdate: 'CASCADE',
     }),
-    Column.timestamps(true),
   ]);
 
   await Schema.table('media_translations').createIfNotExists([
@@ -47,9 +67,8 @@ const up = async () => {
       onUpdate: 'CASCADE',
       nullable: false,
     }),
+    Column.uniques('UC_media_translation',['language_code','media_id'])
   ]);
-
-  await createTimeStampsTrigger('media');
 };
 
 const down = async () => {

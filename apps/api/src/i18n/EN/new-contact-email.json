@@ -1,0 +1,11 @@
+{
+  "SUBJECT": "New contact message from your portfolio",
+  "HI": "Hi",
+  "TITLE": "New Contact Message",
+  "NEW_MESSAGE_FROM": "You have received a new message from your portfolio contact form.",
+  "CONTACT_NAME": "Name",
+  "CONTACT_EMAIL": "Email",
+  "SUBJECT_LABEL": "Subject",
+  "MESSAGE_LABEL": "Message",
+  "FOOTER_NOTE": "You can reply directly to this email to respond to the sender."
+}

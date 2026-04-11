@@ -1,5 +1,5 @@
 import { InvalidDatabaseClientException } from '../client/exceptions';
-import { DatabaseConfig } from '../constants/types/database';
+import { DatabaseConfig } from '@repo/common-lib/types/database';
 
 // Mock the database drivers before importing the clients
 jest.mock('mysql2/promise', () => ({
@@ -15,6 +15,7 @@ jest.mock('pg', () => ({
     connect: jest.fn().mockResolvedValue({}),
     end: jest.fn().mockResolvedValue({}),
     query: jest.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
+    on: jest.fn(),
   })),
 }));
 

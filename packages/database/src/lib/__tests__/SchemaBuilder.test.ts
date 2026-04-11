@@ -2,8 +2,8 @@ import {
   DatabaseClient,
   DatabaseConfig,
   FullDatabaseConfig,
-} from '../constants/types/database';
-import { DEFAULT_DATABASE_SETTINGS } from '../constants/constants';
+} from '@repo/common-lib/types/database';
+import { DEFAULT_DATABASE_SETTINGS } from '@repo/common-lib/constants/database';
 import SchemaBuilder from '../builder/schemaBuilder';
 
 jest.mock('../client', () => {
@@ -106,24 +106,29 @@ describe('SchemaBuilder', () => {
       expect(schemaBuilder['tableName']).toBe(TABLE_NAME);
     });
 
-    it('should create multiple instances with different table names', () => {
+
+
+    it('tableIfExists should return instance when table exists', async () => {
+      // Arrange
+      mockClient.query.mockResolvedValueOnce({ rows: [{ exists: true }] });
+
       // Act
-      const builder1 = SchemaBuilder.table('users');
-      const builder2 = SchemaBuilder.table('orders' as any);
+      const builder = await SchemaBuilder.tableIfExists(TABLE_NAME);
 
       // Assert
-      expect(builder1['tableName']).toBe('users');
-      expect(builder2['tableName']).toBe('orders');
-      expect(builder1).not.toBe(builder2);
+      expect(builder).toBeInstanceOf(SchemaBuilder);
+      expect(builder && builder['tableName']).toBe(TABLE_NAME);
     });
 
-    it('should handle special characters in table names', () => {
+    it('tableIfExists should return null when table does not exist', async () => {
+      // Arrange
+      mockClient.query.mockResolvedValueOnce({ rows: [{ exists: false }] });
+
       // Act
-      const specialTableName = 'user_profiles_2024';
-      const schemaBuilder = SchemaBuilder.table(specialTableName as any);
+      const builder = await SchemaBuilder.tableIfExists('non_existing' as any);
 
       // Assert
-      expect(schemaBuilder['tableName']).toBe(specialTableName);
+      expect(builder).toBeNull();
     });
   });
 
@@ -620,23 +625,7 @@ describe('SchemaBuilder', () => {
       );
     });
 
-    it('should work with different table names', () => {
-      // Arrange
-      const tableNames = ['users', 'orders', 'products', 'categories'] as any;
-      const columns = ['id SERIAL PRIMARY KEY', 'name VARCHAR(255)'];
 
-      tableNames.forEach((tableName: any) => {
-        // Act
-        const builder = SchemaBuilder.table(tableName);
-        builder.create(columns);
-
-        // Assert
-        expect(builder['tableName']).toBe(tableName);
-        expect(builder['query']).toBe(
-          `CREATE TABLE ${tableName} (\n${columns.join(',\n')}\n);`,
-        );
-      });
-    });
 
     it('should handle multiple create operations on same instance', () => {
       // Arrange
@@ -1048,13 +1037,13 @@ describe('SchemaBuilder', () => {
       ];
 
       // Act
-      const builder = SchemaBuilder.table('profiles' as any);
+      const builder = SchemaBuilder.table('admin_users');
       const result = await builder.create(columns);
 
       // Assert
-      expect(builder['tableName']).toBe('profiles');
+      expect(builder['tableName']).toBe('admin_users');
       expect(builder['query']).toBe(
-        `CREATE TABLE profiles (\n${columns.join(',\n')}\n);`,
+        `CREATE TABLE admin_users (\n${columns.join(',\n')}\n);`,
       );
       expect(mockClient.query).toHaveBeenCalledWith(builder['query']);
       expect(result).toBeDefined();
@@ -1081,7 +1070,7 @@ describe('SchemaBuilder', () => {
 
       // Act
       const userBuilder = SchemaBuilder.table('users');
-      const postBuilder = SchemaBuilder.table('posts' as any);
+      const postBuilder = SchemaBuilder.table('media');
 
       await userBuilder.create(userColumns);
       await postBuilder.create(postColumns);
@@ -1092,9 +1081,9 @@ describe('SchemaBuilder', () => {
         `CREATE TABLE users (\n${userColumns.join(',\n')}\n);`,
       );
 
-      expect(postBuilder['tableName']).toBe('posts');
+      expect(postBuilder['tableName']).toBe('media');
       expect(postBuilder['query']).toBe(
-        `CREATE TABLE posts (\n${postColumns.join(',\n')}\n);`,
+        `CREATE TABLE media (\n${postColumns.join(',\n')}\n);`,
       );
 
       expect(mockClient.query).toHaveBeenCalledTimes(2);
@@ -1157,10 +1146,10 @@ name VARCHAR(255) NULL,
 username VARCHAR(255) NULL UNIQUE,
 email VARCHAR(255) NOT NULL UNIQUE,
 password VARCHAR(255) NOT NULL,
-role_id INT REFERENCES roles (id) ON DELETE SET NULL ON UPDATE CASCADE,
-created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-deleted_at TIMESTAMP NULL
+role_id INTEGER REFERENCES roles (id) ON DELETE SET NULL ON UPDATE CASCADE,
+created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+deleted_at TIMESTAMPTZ NULL
 );`;
 
       // Act
@@ -1216,9 +1205,9 @@ price INTEGER NOT NULL,
 stock_quantity INTEGER NOT NULL DEFAULT 0,
 is_active BOOLEAN NOT NULL DEFAULT true,
 category_id BIGINT NULL,
-supplier_id INT REFERENCES suppliers (id) ON DELETE SET NULL,
-created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-updated_at TIMESTAMP NULL
+supplier_id INTEGER REFERENCES suppliers (id) ON DELETE SET NULL,
+created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+updated_at TIMESTAMPTZ NULL
 );`;
 
       // Act
@@ -1284,11 +1273,11 @@ featured_image VARCHAR(500) NULL,
 is_published BOOLEAN NOT NULL DEFAULT false,
 is_featured BOOLEAN NOT NULL DEFAULT false,
 view_count INTEGER NOT NULL DEFAULT 0,
-author_id INT REFERENCES users (id) ON DELETE CASCADE,
-category_id INT REFERENCES categories (id) ON DELETE SET NULL,
-created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-deleted_at TIMESTAMP NULL
+author_id INTEGER REFERENCES users (id) ON DELETE CASCADE,
+category_id INTEGER REFERENCES categories (id) ON DELETE SET NULL,
+created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+deleted_at TIMESTAMPTZ NULL
 );`;
 
       // Act
@@ -1326,8 +1315,8 @@ key VARCHAR(100) NOT NULL UNIQUE,
 value VARCHAR(1000) NULL,
 description VARCHAR(500) NULL,
 is_active BOOLEAN NOT NULL DEFAULT true,
-created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );`;
 
       // Act
@@ -1348,7 +1337,7 @@ updated_at TIMESTAMP NOT NULL DEFAULT NOW()
         ColumnBuilder.string('description', 1000, {
           nullable: true,
         }),
-        ColumnBuilder.enum('billing_type', 'BILLING_TYPES', {
+        ColumnBuilder.enum('billing_type', 'BILLING_TYPE', {
           nullable: false,
           default: 'monthly',
         }),
@@ -1389,17 +1378,17 @@ updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 subscription_id SERIAL PRIMARY KEY,
 name VARCHAR(255) NOT NULL,
 description VARCHAR(1000) NULL,
-billing_type BILLING_TYPES NOT NULL DEFAULT 'monthly',
+billing_type BILLING_TYPE NOT NULL DEFAULT 'monthly',
 user_role USER_EDITORS_ROLES NULL DEFAULT 'editor',
 price INTEGER NOT NULL,
 duration_months INTEGER NOT NULL DEFAULT 1,
 is_active BOOLEAN NOT NULL DEFAULT true,
 is_featured BOOLEAN NOT NULL DEFAULT false,
-created_by INT REFERENCES users (id) ON DELETE CASCADE,
-updated_by INT REFERENCES users (id) ON DELETE SET NULL,
-created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-archived_at TIMESTAMP NULL
+created_by INTEGER REFERENCES users (id) ON DELETE CASCADE,
+updated_by INTEGER REFERENCES users (id) ON DELETE SET NULL,
+created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+archived_at TIMESTAMPTZ NULL
 );`;
 
       // Act
@@ -1432,7 +1421,7 @@ archived_at TIMESTAMP NULL
           nullable: true,
         }),
         ColumnBuilder.password('hashed_password'),
-        ColumnBuilder.enum('billing_preference', 'BILLING_TYPES', {
+        ColumnBuilder.enum('billing_preference', 'BILLING_TYPE', {
           nullable: false,
           default: 'monthly',
         }),
@@ -1503,7 +1492,7 @@ last_name VARCHAR(100) NOT NULL,
 primary_email VARCHAR(255) NOT NULL UNIQUE,
 secondary_email VARCHAR(255) NULL,
 hashed_password VARCHAR(255) NOT NULL,
-billing_preference BILLING_TYPES NOT NULL DEFAULT 'monthly',
+billing_preference BILLING_TYPE NOT NULL DEFAULT 'monthly',
 role USER_EDITORS_ROLES NOT NULL DEFAULT 'editor',
 phone_number VARCHAR(20) NULL,
 address VARCHAR(500) NULL,
@@ -1515,14 +1504,14 @@ is_active BOOLEAN NOT NULL DEFAULT true,
 email_notifications BOOLEAN NOT NULL DEFAULT true,
 sms_notifications BOOLEAN NOT NULL DEFAULT false,
 login_attempts INTEGER NOT NULL DEFAULT 0,
-last_login TIMESTAMP NULL,
-email_verified_at TIMESTAMP NULL,
-password_changed_at TIMESTAMP NULL,
-manager_id INT REFERENCES users (id) ON DELETE SET NULL,
-department_id INT REFERENCES departments (id) ON DELETE SET NULL,
-created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-deleted_at TIMESTAMP NULL
+last_login TIMESTAMPTZ NULL,
+email_verified_at TIMESTAMPTZ NULL,
+password_changed_at TIMESTAMPTZ NULL,
+manager_id INTEGER REFERENCES users (id) ON DELETE SET NULL,
+department_id INTEGER REFERENCES departments (id) ON DELETE SET NULL,
+created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+deleted_at TIMESTAMPTZ NULL
 );`;
 
       // Act
@@ -1714,6 +1703,561 @@ deleted_at TIMESTAMP NULL
         await expect(builderWithTruncate.truncate()).rejects.toThrow(
           'Table is locked',
         );
+      });
+    });
+  });
+
+  describe('Index Creation Methods', () => {
+    let schemaBuilder: SchemaBuilder;
+
+    beforeEach(async () => {
+      const { initClient } = require('../client');
+      await initClient(testConfig);
+      schemaBuilder = new SchemaBuilder(TABLE_NAME);
+    });
+
+    describe('createIndex() method', () => {
+      it('should create basic index with single column', async () => {
+        // Arrange
+        const indexName = 'idx_users_email';
+        const columns = 'email';
+
+        // Act
+        const result = await schemaBuilder.createIndex(columns, { name: indexName });
+
+        // Assert
+        expect(schemaBuilder['query']).toBe(
+          `CREATE INDEX ${indexName} ON ${TABLE_NAME} (${columns})`,
+        );
+        expect(mockClient.query).toHaveBeenCalledWith(schemaBuilder['query']);
+        expect(result).toBeDefined();
+      });
+
+      it('should create index with multiple columns', async () => {
+        // Arrange
+        const indexName = 'idx_users_name_email';
+        const columns = ['first_name', 'last_name', 'email'];
+
+        // Act
+        const result = await schemaBuilder.createIndex(columns, { name: indexName });
+
+        // Assert
+        expect(schemaBuilder['query']).toBe(
+          `CREATE INDEX ${indexName} ON ${TABLE_NAME} (${columns.join(', ')})`,
+        );
+        expect(mockClient.query).toHaveBeenCalledWith(schemaBuilder['query']);
+        expect(result).toBeDefined();
+      });
+
+      it('should create unique index', async () => {
+        // Arrange
+        const indexName = 'idx_users_unique_email';
+        const columns = 'email';
+
+        // Act
+        const result = await schemaBuilder.createIndex(columns, {
+          name: indexName,
+          unique: true,
+        });
+
+        // Assert
+        expect(schemaBuilder['query']).toBe(
+          `CREATE UNIQUE INDEX ${indexName} ON ${TABLE_NAME} (${columns})`,
+        );
+        expect(mockClient.query).toHaveBeenCalledWith(schemaBuilder['query']);
+        expect(result).toBeDefined();
+      });
+
+      it('should create index with BTREE type', async () => {
+        // Arrange
+        const indexName = 'idx_users_btree';
+        const columns = 'created_at';
+
+        // Act
+        const result = await schemaBuilder.createIndex(columns, {
+          name: indexName,
+          type: 'btree',
+        });
+
+        // Assert
+        expect(schemaBuilder['query']).toBe(
+          `CREATE INDEX ${indexName} ON ${TABLE_NAME} USING BTREE (${columns})`,
+        );
+        expect(mockClient.query).toHaveBeenCalledWith(schemaBuilder['query']);
+        expect(result).toBeDefined();
+      });
+
+      it('should create GIN index', async () => {
+        // Arrange
+        const indexName = 'idx_users_gin';
+        const columns = 'metadata';
+
+        // Act
+        const result = await schemaBuilder.createIndex(columns, {
+          name: indexName,
+          type: 'gin',
+        });
+
+        // Assert
+        expect(schemaBuilder['query']).toBe(
+          `CREATE INDEX ${indexName} ON ${TABLE_NAME} USING GIN (${columns})`,
+        );
+        expect(mockClient.query).toHaveBeenCalledWith(schemaBuilder['query']);
+        expect(result).toBeDefined();
+      });
+
+      it('should create GIST index', async () => {
+        // Arrange
+        const indexName = 'idx_users_gist';
+        const columns = 'location';
+
+        // Act
+        const result = await schemaBuilder.createIndex(columns, {
+          name: indexName,
+          type: 'gist',
+        });
+
+        // Assert
+        expect(schemaBuilder['query']).toBe(
+          `CREATE INDEX ${indexName} ON ${TABLE_NAME} USING GIST (${columns})`,
+        );
+        expect(mockClient.query).toHaveBeenCalledWith(schemaBuilder['query']);
+        expect(result).toBeDefined();
+      });
+
+      it('should create HASH index', async () => {
+        // Arrange
+        const indexName = 'idx_users_hash';
+        const columns = 'category';
+
+        // Act
+        const result = await schemaBuilder.createIndex(columns, {
+          name: indexName,
+          type: 'hash',
+        });
+
+        // Assert
+        expect(schemaBuilder['query']).toBe(
+          `CREATE INDEX ${indexName} ON ${TABLE_NAME} USING HASH (${columns})`,
+        );
+        expect(mockClient.query).toHaveBeenCalledWith(schemaBuilder['query']);
+        expect(result).toBeDefined();
+      });
+
+      it('should create partial index with WHERE clause', async () => {
+        // Arrange
+        const indexName = 'idx_active_users';
+        const columns = 'last_login';
+        const whereClause = 'is_active = true';
+
+        // Act
+        const result = await schemaBuilder.createIndex(columns, {
+          name: indexName,
+          where: whereClause,
+        });
+
+        // Assert
+        expect(schemaBuilder['query']).toBe(
+          `CREATE INDEX ${indexName} ON ${TABLE_NAME} (${columns}) WHERE ${whereClause}`,
+        );
+        expect(mockClient.query).toHaveBeenCalledWith(schemaBuilder['query']);
+        expect(result).toBeDefined();
+      });
+
+      it('should create complex index with all options', async () => {
+        // Arrange
+        const indexName = 'idx_complex_users';
+        const columns = ['status', 'created_at'];
+        const whereClause = 'status IN (\'active\', \'pending\')';
+
+        // Act
+        const result = await schemaBuilder.createIndex(columns, {
+          name: indexName,
+          unique: true,
+          type: 'btree',
+          where: whereClause,
+        });
+
+        // Assert
+        expect(schemaBuilder['query']).toBe(
+          `CREATE UNIQUE INDEX ${indexName} ON ${TABLE_NAME} USING BTREE (${columns.join(
+            ', ',
+          )}) WHERE ${whereClause}`,
+        );
+        expect(mockClient.query).toHaveBeenCalledWith(schemaBuilder['query']);
+        expect(result).toBeDefined();
+      });
+
+      it('should handle empty options object', async () => {
+        // Arrange
+        const indexName = 'idx_simple';
+        const columns = 'name';
+
+        // Act
+        const result = await schemaBuilder.createIndex(columns, { name: indexName, });
+
+        // Assert
+        expect(schemaBuilder['query']).toBe(
+          `CREATE INDEX ${indexName} ON ${TABLE_NAME} (${columns})`,
+        );
+        expect(mockClient.query).toHaveBeenCalledWith(schemaBuilder['query']);
+        expect(result).toBeDefined();
+      });
+
+      it('should handle undefined options', async () => {
+        // Arrange
+        const indexName = 'idx_undefined';
+        const columns = 'value';
+
+        // Act
+        const result = await schemaBuilder.createIndex(columns, { name: indexName });
+
+        // Assert
+        expect(schemaBuilder['query']).toBe(
+          `CREATE INDEX ${indexName} ON ${TABLE_NAME} (${columns})`,
+        );
+        expect(mockClient.query).toHaveBeenCalledWith(schemaBuilder['query']);
+        expect(result).toBeDefined();
+      });
+
+      it('should auto-generate index name when not provided', async () => {
+        // Arrange
+        const columns = ['user_id', 'created_at DESC'];
+
+        // Act
+        const result = await schemaBuilder.createIndex(columns);
+
+        // Assert
+        const expectedName = `idx_${TABLE_NAME}_user_id_created_at`;
+        expect(schemaBuilder['query']).toBe(
+          `CREATE INDEX ${expectedName} ON ${TABLE_NAME} (${columns.join(', ')})`,
+        );
+        expect(mockClient.query).toHaveBeenCalledWith(schemaBuilder['query']);
+        expect(result).toBeDefined();
+      });
+
+      it('should auto-generate index name for single column', async () => {
+        // Arrange
+        const columns = 'email';
+
+        // Act
+        const result = await schemaBuilder.createIndex(columns);
+
+        // Assert
+        const expectedName = `idx_${TABLE_NAME}_email`;
+        expect(schemaBuilder['query']).toBe(
+          `CREATE INDEX ${expectedName} ON ${TABLE_NAME} (${columns})`,
+        );
+        expect(mockClient.query).toHaveBeenCalledWith(schemaBuilder['query']);
+        expect(result).toBeDefined();
+      });
+    });
+
+    describe('createIndexIfNotExists() method', () => {
+      it('should create index if not exists with basic options', async () => {
+        // Arrange
+        const indexName = 'idx_safe_users';
+        const columns = 'email';
+
+        // Act
+        const result = await schemaBuilder.createIndexIfNotExists(columns, { name: indexName });
+
+        // Assert
+        expect(schemaBuilder['query']).toBe(
+          `CREATE INDEX IF NOT EXISTS ${indexName} ON ${TABLE_NAME} (${columns})`,
+        );
+        expect(mockClient.query).toHaveBeenCalledWith(schemaBuilder['query']);
+        expect(result).toBeDefined();
+      });
+
+      it('should create unique index if not exists', async () => {
+        // Arrange
+        const indexName = 'idx_unique_safe';
+        const columns = 'username';
+
+        // Act
+        const result = await schemaBuilder.createIndexIfNotExists(columns, {
+          name: indexName,
+          unique: true,
+        });
+
+        // Assert
+        expect(schemaBuilder['query']).toBe(
+          `CREATE UNIQUE INDEX IF NOT EXISTS ${indexName} ON ${TABLE_NAME} (${columns})`,
+        );
+        expect(mockClient.query).toHaveBeenCalledWith(schemaBuilder['query']);
+        expect(result).toBeDefined();
+      });
+
+      it('should create GIN index if not exists', async () => {
+        // Arrange
+        const indexName = 'idx_gin_safe';
+        const columns = 'tags';
+
+        // Act
+        const result = await schemaBuilder.createIndexIfNotExists(columns, {
+          name: indexName,
+          type: 'gin',
+        });
+
+        // Assert
+        expect(schemaBuilder['query']).toBe(
+          `CREATE INDEX IF NOT EXISTS ${indexName} ON ${TABLE_NAME} USING GIN (${columns})`,
+        );
+        expect(mockClient.query).toHaveBeenCalledWith(schemaBuilder['query']);
+        expect(result).toBeDefined();
+      });
+
+      it('should create partial index if not exists', async () => {
+        // Arrange
+        const indexName = 'idx_partial_safe';
+        const columns = 'score';
+        const whereClause = 'score > 0';
+
+        // Act
+        const result = await schemaBuilder.createIndexIfNotExists(columns, {
+          name: indexName,
+          where: whereClause,
+        });
+
+        // Assert
+        expect(schemaBuilder['query']).toBe(
+          `CREATE INDEX IF NOT EXISTS ${indexName} ON ${TABLE_NAME} (${columns}) WHERE ${whereClause}`,
+        );
+        expect(mockClient.query).toHaveBeenCalledWith(schemaBuilder['query']);
+        expect(result).toBeDefined();
+      });
+    });
+
+    describe('dropIndex() method', () => {
+      it('should drop index by name', async () => {
+        // Arrange
+        const indexName = 'idx_users_email';
+
+        // Act
+        const result = await schemaBuilder.dropIndex(indexName);
+
+        // Assert
+        expect(schemaBuilder['query']).toBe(`DROP INDEX ${indexName}`);
+        expect(mockClient.query).toHaveBeenCalledWith(schemaBuilder['query']);
+        expect(result).toBeDefined();
+      });
+    });
+
+    describe('dropIndexIfExists() method', () => {
+      it('should drop index if exists by name', async () => {
+        // Arrange
+        const indexName = 'idx_users_email_safe';
+
+        // Act
+        const result = await schemaBuilder.dropIndexIfExists(indexName);
+
+        // Assert
+        expect(schemaBuilder['query']).toBe(`DROP INDEX IF EXISTS ${indexName}`);
+        expect(mockClient.query).toHaveBeenCalledWith(schemaBuilder['query']);
+        expect(result).toBeDefined();
+      });
+    });
+
+    describe('Index Method Error Handling', () => {
+      it('should handle database errors during index creation', async () => {
+        // Arrange
+        const indexName = 'idx_error_test';
+        const columns = 'nonexistent_column';
+        const error = new Error('Column does not exist');
+        mockClient.query.mockRejectedValue(error);
+
+        // Act & Assert
+        await expect(
+          schemaBuilder.createIndex(columns, { name: indexName }),
+        ).rejects.toThrow('Column does not exist');
+      });
+
+      it('should handle database errors during createIndexIfNotExists', async () => {
+        // Arrange
+        const indexName = 'idx_error_safe';
+        const columns = 'bad_column';
+        const error = new Error('Syntax error in index definition');
+        mockClient.query.mockRejectedValue(error);
+
+        // Act & Assert
+        await expect(
+          schemaBuilder.createIndexIfNotExists(columns, { name: indexName }),
+        ).rejects.toThrow('Syntax error in index definition');
+      });
+
+      it('should handle database errors during dropIndex', async () => {
+        // Arrange
+        const indexName = 'idx_missing';
+        const error = new Error('Index does not exist');
+        mockClient.query.mockRejectedValue(error);
+
+        // Act & Assert
+        await expect(schemaBuilder.dropIndex(indexName)).rejects.toThrow(
+          'Index does not exist',
+        );
+      });
+
+      it('should handle database errors during dropIndexIfExists', async () => {
+        // Arrange
+        const indexName = 'idx_broken_safe';
+        const error = new Error('Permission denied');
+        mockClient.query.mockRejectedValue(error);
+
+        // Act & Assert
+        await expect(schemaBuilder.dropIndexIfExists(indexName)).rejects.toThrow(
+          'Permission denied',
+        );
+      });
+    });
+
+    describe('Index Method Integration Tests', () => {
+      it('should work with static table method', async () => {
+        // Arrange
+        const indexName = 'idx_static_test';
+        const columns = 'email';
+
+        // Act
+        const builder = SchemaBuilder.table('collection_translations');
+        const result = await builder.createIndex(columns, { name: indexName });
+
+        // Assert
+        expect(builder['tableName']).toBe('collection_translations');
+        expect(builder['query']).toBe(
+          `CREATE INDEX ${indexName} ON collection_translations (${columns})`,
+        );
+        expect(mockClient.query).toHaveBeenCalledWith(builder['query']);
+        expect(result).toBeDefined();
+      });
+
+      it('should create multiple indexes on same table', async () => {
+        // Arrange
+        const indexes = [
+          { name: 'idx_multi_1', columns: 'email' },
+          { name: 'idx_multi_2', columns: ['first_name', 'last_name'] },
+          { name: 'idx_multi_3', columns: 'created_at', type: 'btree' as const },
+        ];
+
+        // Act
+        for (const index of indexes) {
+          await schemaBuilder.createIndex(index.columns, {
+            name: index.name,
+            type: index.type,
+          });
+        }
+
+        // Assert
+        expect(mockClient.query).toHaveBeenCalledTimes(3);
+        expect(schemaBuilder['query']).toBe(
+          `CREATE INDEX ${indexes[2].name} ON ${TABLE_NAME} USING BTREE (${indexes[2].columns})`,
+        );
+      });
+
+      it('should handle concurrent index creation calls', async () => {
+        // Arrange
+        const indexName1 = 'idx_concurrent_1';
+        const indexName2 = 'idx_concurrent_2';
+        const columns1 = 'email';
+        const columns2 = 'phone';
+
+        // Act
+        const promise1 = schemaBuilder.createIndex(columns1, { name: indexName1 });
+        const promise2 = schemaBuilder.createIndex(columns2, { name: indexName2 });
+
+        const [result1, result2] = await Promise.all([promise1, promise2]);
+
+        // Assert
+        expect(mockClient.query).toHaveBeenCalledTimes(2);
+        expect(result1).toBeDefined();
+        expect(result2).toBeDefined();
+      });
+    });
+
+    describe('Index Method Edge Cases', () => {
+      it('should handle very long index names', async () => {
+        // Arrange
+        const longIndexName =
+          'idx_very_long_index_name_that_exceeds_normal_length_limits_and_should_still_work';
+        const columns = 'email';
+
+        // Act
+        const result = await schemaBuilder.createIndex(columns, { name: longIndexName });
+
+        // Assert
+        expect(schemaBuilder['query']).toBe(
+          `CREATE INDEX ${longIndexName} ON ${TABLE_NAME} (${columns})`,
+        );
+        expect(mockClient.query).toHaveBeenCalledWith(schemaBuilder['query']);
+        expect(result).toBeDefined();
+      });
+
+      it('should handle columns with special characters', async () => {
+        // Arrange
+        const indexName = 'idx_special_chars';
+        const columns = ['user_name', 'email_address', 'phone_number'];
+
+        // Act
+        const result = await schemaBuilder.createIndex(columns, { name: indexName });
+
+        // Assert
+        expect(schemaBuilder['query']).toBe(
+          `CREATE INDEX ${indexName} ON ${TABLE_NAME} (${columns.join(', ')})`,
+        );
+        expect(mockClient.query).toHaveBeenCalledWith(schemaBuilder['query']);
+        expect(result).toBeDefined();
+      });
+
+      it('should handle complex WHERE clauses', async () => {
+        // Arrange
+        const indexName = 'idx_complex_where';
+        const columns = 'score';
+        const complexWhere =
+          'score > 0 AND score <= 100 AND status = \'active\' AND created_at > \'2023-01-01\'';
+
+        // Act
+        const result = await schemaBuilder.createIndex(columns, {
+          name: indexName,
+          where: complexWhere,
+        });
+
+        // Assert
+        expect(schemaBuilder['query']).toBe(
+          `CREATE INDEX ${indexName} ON ${TABLE_NAME} (${columns}) WHERE ${complexWhere}`,
+        );
+        expect(mockClient.query).toHaveBeenCalledWith(schemaBuilder['query']);
+        expect(result).toBeDefined();
+      });
+
+      it('should handle single character column names', async () => {
+        // Arrange
+        const indexName = 'idx_single_char';
+        const columns = 'x';
+
+        // Act
+        const result = await schemaBuilder.createIndex(columns, { name: indexName });
+
+        // Assert
+        expect(schemaBuilder['query']).toBe(
+          `CREATE INDEX ${indexName} ON ${TABLE_NAME} (${columns})`,
+        );
+        expect(mockClient.query).toHaveBeenCalledWith(schemaBuilder['query']);
+        expect(result).toBeDefined();
+      });
+
+      it('should handle maximum number of columns in composite index', async () => {
+        // Arrange
+        const indexName = 'idx_max_columns';
+        const maxColumns = Array.from({ length: 32 }, (_, i) => `col${i + 1}`);
+
+        // Act
+        const result = await schemaBuilder.createIndex(maxColumns, { name: indexName });
+
+        // Assert
+        expect(schemaBuilder['query']).toBe(
+          `CREATE INDEX ${indexName} ON ${TABLE_NAME} (${maxColumns.join(', ')})`,
+        );
+        expect(mockClient.query).toHaveBeenCalledWith(schemaBuilder['query']);
+        expect(result).toBeDefined();
       });
     });
   });

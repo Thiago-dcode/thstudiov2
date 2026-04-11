@@ -35,6 +35,7 @@ describe('checkPortOrGetNext', () => {
   it('should return the provided port if it is available', async () => {
     // Mock successful port binding
     mockServer.listen.mockImplementation((port: number, callback: () => void) => {
+      expect(port).toBe(3000);
       callback();
     });
     
@@ -64,6 +65,7 @@ describe('checkPortOrGetNext', () => {
 
   it('should use default port 3000 if no port is provided', async () => {
     mockServer.listen.mockImplementation((port: number, callback: () => void) => {
+      expect(port).toBe(3000);
       callback();
     });
     
@@ -79,6 +81,7 @@ describe('checkPortOrGetNext', () => {
 
   it('should use default port 3000 if NaN is provided', async () => {
     mockServer.listen.mockImplementation((port: number, callback: () => void) => {
+      expect(port).toBe(3000);
       callback();
     });
     
@@ -93,7 +96,8 @@ describe('checkPortOrGetNext', () => {
   });
 
   it('should use default port 3000 if invalid string is provided', async () => {
-    mockServer.listen.mockImplementation((port: number, callback: () => void) => {      
+    mockServer.listen.mockImplementation((port: number, callback: () => void) => {        expect(port).toBe(3000);
+      expect(port).toBe(3000);
       callback();
     });
     
@@ -109,6 +113,7 @@ describe('checkPortOrGetNext', () => {
 
   it('should handle string port numbers correctly', async () => {
     mockServer.listen.mockImplementation((port: number, callback: () => void) => {
+      expect(port).toBe(3000);
       callback();
     });
     
@@ -126,6 +131,7 @@ describe('checkPortOrGetNext', () => {
     // Mock multiple port conflicts
     let callCount = 0;
     mockServer.listen.mockImplementation((port: number, callback: () => void) => {
+      expect(port).toBe(3000);
       callCount++;
       if (callCount <= 3) {
         // First 3 calls fail
@@ -156,6 +162,8 @@ describe('checkPortOrGetNext', () => {
 
   it('should handle non-EADDRINUSE errors by rejecting', async () => {
     mockServer.listen.mockImplementation((port: number, callback: () => void) => {
+      expect(port).toBe(3000);
+      callback();
       setTimeout(() => {
         const errorCallback = mockServer.on.mock.calls.find((call: any) => call[0] === 'error')?.[1];
         if (errorCallback) {
@@ -169,6 +177,7 @@ describe('checkPortOrGetNext', () => {
 
   it('should properly close the server after finding an available port', async () => {
     mockServer.listen.mockImplementation((port: number, callback: () => void) => {
+      expect(port).toBe(3000);
       setTimeout(() => {
         callback();
       }, 0);

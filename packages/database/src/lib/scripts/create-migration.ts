@@ -2,6 +2,7 @@ import path from 'node:path';
 import fs from 'node:fs';
 import Logger from '@repo/backend-lib/utils/console';
 import { databaseCliConfig } from './utils/config';
+import { utilsPath } from './utils';
 
 export const createMigration = async (
   migrationName: string,
@@ -12,14 +13,7 @@ export const createMigration = async (
       process.exit(1);
     }
     // Read the template file
-    const templatePath = path.join(
-      process.cwd(),
-      'src',
-      'lib',
-      'scripts',
-      'utils',
-      'migration_template.ts',
-    );
+    const templatePath = utilsPath('migration_template.ts');
     const templateExists = fs.existsSync(templatePath);
     if (!templateExists) {
       Logger.error('Template file does not exist', templatePath);

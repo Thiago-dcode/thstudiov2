@@ -1,5 +1,5 @@
-import net from 'node:net';
-
+import  net from 'node:net';
+import fs from 'node:fs';
 
 const checkPortOrGetNext =async (port: number = 3000): Promise<number> => {
     let _port = parseInt(port.toString());
@@ -27,5 +27,12 @@ const checkPortOrGetNext =async (port: number = 3000): Promise<number> => {
         });
     });
 }
+const checkFileExistsAsync = async (file: string) => {
+    return await fs.promises.access(file, fs.constants.F_OK)
+             .then(() => true)
+             .catch(() => false)
+  }
 
-export { checkPortOrGetNext };
+
+
+export { checkPortOrGetNext,  checkFileExistsAsync};

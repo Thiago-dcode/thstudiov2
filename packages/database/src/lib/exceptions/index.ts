@@ -6,7 +6,12 @@ export class DbException extends Error {
     this.code = code;
   }
 } 
-
+export class DbWrongTableException extends DbException {
+  constructor(message: string) {
+    super(message);
+    this.name = 'DbWrongTableException';
+  }
+}
 export default {
   DbException
 };

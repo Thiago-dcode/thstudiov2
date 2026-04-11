@@ -1,6 +1,5 @@
 import type { Config } from 'jest';
 import { baseConfig } from '@repo/jest-config/base';
-
 const config: Config = {
   ...baseConfig,
   rootDir: '.',

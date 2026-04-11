@@ -1,0 +1,6 @@
+Legacy `.cursorrules` file (Cursor will deprecate this).
+
+✅ The authoritative rules for this repo now live at:
+- `.cursor/rules/monorepo-architecture.mdc`
+
+Do not update this file; update the `.mdc` rule instead.

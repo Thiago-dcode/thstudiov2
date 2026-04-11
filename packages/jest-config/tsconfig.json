@@ -1,15 +1,9 @@
 {
-  "extends": "@repo/typescript-config/base.json",
+  "extends": "@repo/typescript-config/jest.json",
   "compilerOptions": {
-    "declaration": true,
-    "declarationMap": true,
-    "allowJs": true,
-    "esModuleInterop": true,
-    "incremental": false,
-    "module": "commonjs",
-    "moduleResolution": "Node10",
     "outDir": "dist",
-    "baseUrl": "src"
+    "rootDir": "src",
+    "tsBuildInfoFile": "dist/.tsbuildinfo"
   },
   "include": ["src"],
   "exclude": ["node_modules", "test", "dist", "**/*spec.ts"]

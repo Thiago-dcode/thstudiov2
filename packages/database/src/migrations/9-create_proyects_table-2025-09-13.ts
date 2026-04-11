@@ -1,14 +1,8 @@
-import { Column, Schema } from 'lib/facades';
-import {
-  createTimeStampsTrigger,
-  createUpdatedAtTrigger,
-} from '../lib/scripts/utils';
-
-const TABLE_NAME = 'users';
+import { Column, Schema } from '../lib/facades';
 
 const up = async () => {
   //Your migration code here
-  await Schema.table('projects').createIfNotExists([
+  await Schema.table('projects').withTimestamps(true).createIfNotExists([
     Column.id(),
     Column.string('title', 255),
     Column.text('description'),
@@ -17,6 +11,12 @@ const up = async () => {
     }),
     Column.float('budget', {
       nullable: true,
+    }),
+    Column.boolean('is_featured', {
+      default: false
+    }),
+    Column.boolean('is_highlight', {
+      default: false
     }),
     Column.timestamp('start_date', {
       nullable: true,
@@ -54,9 +54,7 @@ const up = async () => {
     Column.foreignKey('service_id', 'services', 'id', {
       onDelete: 'CASCADE',
     }),
-    Column.timestamps(true),
   ]);
-  await createTimeStampsTrigger('projects');
 
   await Schema.table('project_translations').createIfNotExists([
     Column.id(),
@@ -66,6 +64,7 @@ const up = async () => {
       onDelete: 'CASCADE',
     }),
     Column.enum('language_code', 'LANGUAGE_CODE'),
+    Column.uniques('UC_project_translation',['language_code','project_id'])
   ]);
   await Schema.table('project_media').createIfNotExists([
     Column.id(),
@@ -75,7 +74,8 @@ const up = async () => {
     Column.foreignKey('media_id', 'media', 'id', {
       onDelete: 'CASCADE',
     }),
-    Column.integer('sort_order'),
+    Column.smallInteger('position'),
+    Column.uniques('UC_project_media',['project_id','media_id'])
   ]);
 };
 

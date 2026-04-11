@@ -1,0 +1,10 @@
+{
+    "SUBJECT": "Tu cuenta ha sido bloqueada temporalmente",
+    "HI": "Hola",
+    "TITLE": "Cuenta bloqueada temporalmente",
+    "DESCRIPTION": "Tu cuenta ha sido bloqueada temporalmente debido a repetidas violaciones de las políticas de contenido. No podrás realizar ciertas acciones hasta que se levante el bloqueo.",
+    "INFO": "Si crees que se trata de un error o deseas apelar, por favor contacta a nuestro equipo de soporte. Las restricciones de tu cuenta se revisarán al inicio de tu próximo ciclo de facturación.",
+    "CTA_TEXT": "¿Necesitas ayuda o quieres apelar?",
+    "CTA_BUTTON": "Contactar soporte"
+}
+

@@ -3,20 +3,24 @@ import { connectDb, handleMigration } from './utils';
 import Logger from '@repo/backend-lib/utils/console';
 import { killClient } from '../client';
 import { QueryBuilder } from '../builder/queryBuilder';
+import type { MigrationScriptOptions } from './rollback';
+
 const MIGRATION_TABLE_NAME = 'migrations';
-export const migrate = async (tries: number = 3) => {
-  setTimeout(
-    () => {
-      Logger.error('❌ Migration timeout');
-      process.exit(1);
-    },
-    1 * 60 * 1000,
-  );
-  // 1 minute
+
+/** Large `migrate:refresh` / `db:fresh` runs can exceed a few minutes on slow machines. */
+const MIGRATION_TIMEOUT_MS = 15 * 60 * 1000;
+
+export const migrate = async (options: MigrationScriptOptions = {}) => {
+  const shouldExit = options.exitProcess !== false;
+  const timeoutId = setTimeout(() => {
+    Logger.error('❌ Migration timeout');
+    process.exit(1);
+  }, MIGRATION_TIMEOUT_MS);
   try {
     const start = Date.now();
     Logger.info('🔄 Initializing migration process');
     await connectDb();
+     Logger.info('🔄 Db connected');
     await SchemaBuilder.table(MIGRATION_TABLE_NAME).createIfNotExists([
       'id SERIAL PRIMARY KEY',
       'name VARCHAR(255) NOT NULL UNIQUE',
@@ -45,11 +49,13 @@ export const migrate = async (tries: number = 3) => {
       );
     else Logger.info('Nothing to migrate');
 
-    process.exit(0);
+    if (shouldExit) process.exit(0);
   } catch (error) {
     Logger.error('❌ Migration failed:', error);
-    process.exit(1);
+    if (shouldExit) process.exit(1);
+    throw error;
   } finally {
+    clearTimeout(timeoutId);
     await killClient();
   }
 };

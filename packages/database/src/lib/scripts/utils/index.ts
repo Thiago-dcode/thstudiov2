@@ -1,16 +1,17 @@
 import { databaseCliConfig } from './config';
 import path from 'node:path';
 import fs from 'node:fs';
-import { fileURLToPath, pathToFileURL } from 'node:url';
-import { Query, Schema } from '../../facades';
-import {
-  TRIGGER_UPDATE_CREATED_AT_FUNCTION_NAME,
-  TRIGGER_UPDATE_UPDATED_AT_FUNCTION_NAME,
-} from '../../constants/constants';
-import { DatabaseClient, TableName } from '../../constants/types/database';
+import { pathToFileURL } from 'node:url';
+import { Query } from '../../facades';
+import { DatabaseClient } from '@repo/common-lib/types/database';
 import Logger from '@repo/backend-lib/utils/console';
-import { getClient, initClient } from 'lib/client';
-import config from '@repo/backend-lib/config';
+import { initClient } from '../../client';
+import {config} from '@repo/common-lib/config';
+import {
+  createUpdatedAtTrigger,
+  createCreatedAtTrigger,
+  createTimeStampsTrigger,
+} from './triggers';
 
 const handleMigration = async (
   callback: (migration: any, migrationName: string) => Promise<void>,
@@ -77,34 +78,8 @@ const handleMigration = async (
     process.exit(1);
   }
 };
-
-const createUpdatedAtTrigger = async (tableName: TableName) => {
-  try {
-    await Schema.raw(`
-    CREATE TRIGGER update_${tableName}_updated_at 
-    BEFORE UPDATE ON ${tableName}
-    FOR EACH ROW 
-    EXECUTE FUNCTION ${TRIGGER_UPDATE_UPDATED_AT_FUNCTION_NAME}();
-  `);
-  } catch (error) {
-    Logger.error('❌ Trigger creation failed:', error);
-  }
-};
-const createCreaAtTrigger = async (tableName: TableName) => {
-  try {
-    await Schema.raw(`
-    CREATE TRIGGER update_${tableName}_created_at 
-    BEFORE INSERT ON ${tableName}
-    FOR EACH ROW 
-    EXECUTE FUNCTION ${TRIGGER_UPDATE_CREATED_AT_FUNCTION_NAME}();
-  `);
-  } catch (error) {
-    Logger.error('❌ Trigger creation failed:', error);
-  }
-};
-const createTimeStampsTrigger = async (tableName: TableName) => {
-  await createUpdatedAtTrigger(tableName);
-  await createCreaAtTrigger(tableName);
+const utilsPath = (fileName: string) => {
+  return path.join(process.cwd(), 'src', 'lib', 'scripts', 'utils', fileName);
 };
 const connectDb = async () => {
   const dbConfig = config().database;
@@ -122,6 +97,7 @@ export {
   handleMigration,
   createUpdatedAtTrigger,
   connectDb,
-  createCreaAtTrigger,
+  createCreatedAtTrigger,
   createTimeStampsTrigger,
+  utilsPath,
 };

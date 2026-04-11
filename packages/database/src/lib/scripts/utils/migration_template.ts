@@ -1,4 +1,3 @@
-const TABLE_NAME = 'users';
 
 const up = async () => {
 

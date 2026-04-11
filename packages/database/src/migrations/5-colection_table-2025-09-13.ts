@@ -1,15 +1,26 @@
-import { createTimeStampsTrigger, createUpdatedAtTrigger } from '../lib/scripts/utils';
 import { Column, Schema } from '../lib/facades';
-import Logger from '@repo/backend-lib/utils/console';
 
-const TABLE_NAME = 'users';
 
 const up = async () => {
-  await Schema.table('collections').createIfNotExists([
+  await Schema.table('collections').withTimestamps(true).createIfNotExists([
     Column.id(),
     Column.string('title', 255, {}),
+    Column.string('slug', 255),
+    Column.boolean('is_active', {
+      default: true
+    }),
+    Column.boolean('is_featured', {
+      default: false
+    }),
+    Column.boolean('is_highlight', {
+      default: false
+    }),
+
     Column.text('description'),
-    Column.timestamps(true),
+    Column.foreignKey('user_id', 'users', 'id', {
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE',
+    }),
   ]);
   await Schema.table('collection_media').create([
     Column.id(),
@@ -21,7 +32,8 @@ const up = async () => {
       onDelete: 'CASCADE',
       nullable: false,
     }),
-    Column.integer('sort_order'),
+    Column.smallInteger('position'),
+    Column.uniques('UC_collection_media', ['collection_id', 'media_id'])
   ]);
   await Schema.table('collection_translations').createIfNotExists([
     Column.id(),
@@ -32,11 +44,9 @@ const up = async () => {
       onDelete: 'CASCADE',
       nullable: false,
     }),
-    Column.integer('sort_order'),
+    Column.uniques('UC_collection_translation', ['language_code', 'collection_id'])
   ]);
-
-  await createTimeStampsTrigger('collections');
-};  
+};
 
 const down = async () => {
   await Schema.table('collection_translations').dropIfExists();

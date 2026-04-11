@@ -1,5 +1,5 @@
-import config from '@repo/backend-lib/config';
-import { DatabaseConfig, DatabaseClient } from '../constants/types/database';
+import {config} from '@repo/common-lib/config';
+import { DatabaseConfig, DatabaseClient } from '@repo/common-lib/types/database';
 export const getDatabaseConfig = (): DatabaseConfig => {
     const dbConfig = config().database;
   return {

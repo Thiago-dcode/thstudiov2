@@ -2,11 +2,12 @@ import {
   DatabaseClient,
   DatabaseConfig,
   FullDatabaseConfig,
-} from '../constants/types/database';
-import { DEFAULT_DATABASE_SETTINGS } from '../constants/constants';
+  TableName,
+} from '@repo/common-lib/types/database';
+import { DEFAULT_DATABASE_SETTINGS } from '@repo/common-lib/constants/database';
 import AlterBuilder from '../builder/alterBuilder';
 import { ColumnBuilder } from '../builder/columnBuilder';
-import { ColumnAttributesWithForeignKey } from 'lib/builder/columnBuilder';
+import { ColumnAttributesWithForeignKey } from '@repo/common-lib/types/database';
 
 jest.mock('../client', () => {
   const Client = (config: FullDatabaseConfig) => {
@@ -112,11 +113,11 @@ describe('AlterBuilder', () => {
     it('should create multiple instances with different table names', () => {
       // Act
       const builder1 = AlterBuilder.table('users');
-      const builder2 = AlterBuilder.table('orders' as any);
+      const builder2 = AlterBuilder.table('collection_translations');
 
       // Assert
       expect(builder1['tableName']).toBe('users');
-      expect(builder2['tableName']).toBe('orders');
+      expect(builder2['tableName']).toBe('collection_translations');
       expect(builder1).not.toBe(builder2);
     });
   });
@@ -170,7 +171,7 @@ describe('AlterBuilder', () => {
 
       // Assert
       expect(alterBuilder['query']).toBe(
-        `ALTER TABLE ${TABLE_NAME}\nADD ${ColumnBuilder.foreignKey(column, foreignTableName, foreignColumnName)}`,
+        `ALTER TABLE ${TABLE_NAME}\nADD ${ColumnBuilder.foreignKey(column, foreignTableName, foreignColumnName)};`,
       );
       expect(mockClient.query).toHaveBeenCalledWith(alterBuilder['query']);
       expect(result).toEqual([{ result: 'success' }]);
@@ -197,7 +198,7 @@ describe('AlterBuilder', () => {
 
       // Assert
       expect(alterBuilder['query']).toBe(
-        `ALTER TABLE ${TABLE_NAME}\nADD ${ColumnBuilder.foreignKey(column, foreignTableName, foreignColumnName, options)}`,
+        `ALTER TABLE ${TABLE_NAME}\nADD ${ColumnBuilder.foreignKey(column, foreignTableName, foreignColumnName, options)};`,
       );
       expect(mockClient.query).toHaveBeenCalledWith(alterBuilder['query']);
       expect(result).toEqual([{ result: 'success' }]);
@@ -219,9 +220,9 @@ describe('AlterBuilder', () => {
 
     it('should work with different table names', async () => {
       // Arrange
-      const tableNames = ['users', 'orders', 'products'] as any;
+      const tableNames: TableName[] = ['users', 'plans', 'admin_users_roles'];
       const column = 'ref_id';
-      const foreignTableName = 'references' as any;
+      const foreignTableName: TableName = 'client_media';
       const foreignColumnName = 'id';
       mockClient.query.mockResolvedValue([{ result: 'success' }]);
 
@@ -237,7 +238,7 @@ describe('AlterBuilder', () => {
         // Assert
         expect(builder['tableName']).toBe(tableName);
         expect(builder['query']).toBe(
-          `ALTER TABLE ${tableName}\nADD ${ColumnBuilder.foreignKey(column, foreignTableName, foreignColumnName)}`,
+          `ALTER TABLE ${tableName}\nADD ${ColumnBuilder.foreignKey(column, foreignTableName, foreignColumnName)};`,
         );
       }
     });
@@ -254,10 +255,10 @@ describe('AlterBuilder', () => {
 
       // Assert
       expect(firstQuery).toBe(
-        `ALTER TABLE ${TABLE_NAME}\nADD ${ColumnBuilder.foreignKey('user_id', 'users', 'id')}`,
+        `ALTER TABLE ${TABLE_NAME}\nADD ${ColumnBuilder.foreignKey('user_id', 'users', 'id')};`,
       );
       expect(secondQuery).toBe(
-        `ALTER TABLE ${TABLE_NAME}\nADD ${ColumnBuilder.foreignKey('role_id', 'admin_users_roles', 'id')}`,
+        `ALTER TABLE ${TABLE_NAME}\nADD ${ColumnBuilder.foreignKey('role_id', 'admin_users_roles', 'id')};`,
       );
     });
   });
@@ -273,7 +274,7 @@ describe('AlterBuilder', () => {
 
     it('should reset query to empty string', () => {
       // Arrange
-      alterBuilder['query'] = 'ALTER TABLE test ADD CONSTRAINT fk_test';
+      alterBuilder['query'] = 'ALTER TABLE test ADD CONSTRAINT fk_test;';
 
       // Act
       alterBuilder['reset']();
@@ -295,12 +296,10 @@ describe('AlterBuilder', () => {
   });
 
   describe('Integration Tests', () => {
-    let alterBuilder: AlterBuilder;
 
     beforeEach(async () => {
       const { initClient } = require('../client');
       await initClient(testConfig);
-      alterBuilder = new AlterBuilder(TABLE_NAME);
     });
 
     it('should work with different database clients', async () => {
@@ -316,7 +315,7 @@ describe('AlterBuilder', () => {
 
       await postgresBuilder.foreignKeyAdd('user_id', 'users' as any, 'id');
       expect(postgresBuilder['query']).toBe(
-        `ALTER TABLE ${TABLE_NAME}\nADD ${ColumnBuilder.foreignKey('user_id', 'users', 'id')}`,
+        `ALTER TABLE ${TABLE_NAME}\nADD ${ColumnBuilder.foreignKey('user_id', 'users', 'id')};`,
       );
 
       // Test MySQL
@@ -329,7 +328,7 @@ describe('AlterBuilder', () => {
       const mysqlBuilder = new AlterBuilder(TABLE_NAME);
       await mysqlBuilder.foreignKeyAdd('user_id', 'users' as any, 'id');
       expect(mysqlBuilder['query']).toBe(
-        `ALTER TABLE ${TABLE_NAME}\nADD ${ColumnBuilder.foreignKey('user_id', 'users', 'id')}`,
+        `ALTER TABLE ${TABLE_NAME}\nADD ${ColumnBuilder.foreignKey('user_id', 'users', 'id')};`,
       );
     });
 
@@ -351,7 +350,7 @@ describe('AlterBuilder', () => {
       // Assert
       expect(builder['tableName']).toBe(TABLE_NAME);
       expect(builder['query']).toBe(
-        `ALTER TABLE ${TABLE_NAME}\nADD ${ColumnBuilder.foreignKey(column, foreignTableName, foreignColumnName)}`,
+        `ALTER TABLE ${TABLE_NAME}\nADD ${ColumnBuilder.foreignKey(column, foreignTableName, foreignColumnName)};`,
       );
       expect(mockClient.query).toHaveBeenCalledWith(builder['query']);
       expect(result).toBeDefined();
@@ -380,7 +379,7 @@ describe('AlterBuilder', () => {
 
       // Assert
       expect(alterBuilder['query']).toBe(
-        `ALTER TABLE ${TABLE_NAME} DROP FOREIGN KEY ${constraintName}`,
+        `ALTER TABLE ${TABLE_NAME} DROP FOREIGN KEY ${constraintName};`,
       );
       expect(mockClient.query).toHaveBeenCalledWith(alterBuilder['query']);
       expect(result).toEqual([{ result: 'success' }]);
@@ -399,7 +398,7 @@ describe('AlterBuilder', () => {
 
       // Assert
       expect(alterBuilder['query']).toBe(
-        `ALTER TABLE ${TABLE_NAME} DROP CONSTRAINT ${constraintName}`,
+        `ALTER TABLE ${TABLE_NAME} DROP CONSTRAINT ${constraintName};`,
       );
       expect(mockClient.query).toHaveBeenCalledWith(alterBuilder['query']);
       expect(result).toEqual([{ result: 'success' }]);
@@ -437,7 +436,7 @@ describe('AlterBuilder', () => {
 
       // Assert
       expect(alterBuilder['query']).toBe(
-        `ALTER TABLE ${TABLE_NAME} DROP CONSTRAINT ${constraintName}`,
+        `ALTER TABLE ${TABLE_NAME} DROP CONSTRAINT ${constraintName};`,
       );
       expect(mockClient.query).toHaveBeenCalledWith(alterBuilder['query']);
       expect(result).toEqual([{ result: 'success' }]);
@@ -455,7 +454,7 @@ describe('AlterBuilder', () => {
 
         // Assert
         expect(builder['query']).toBe(
-          `ALTER TABLE ${TABLE_NAME} DROP CONSTRAINT ${constraintName}`,
+          `ALTER TABLE ${TABLE_NAME} DROP CONSTRAINT ${constraintName};`,
         );
       }
     });
@@ -481,7 +480,7 @@ describe('AlterBuilder', () => {
 
       // Assert
       expect(alterBuilder['query']).toBe(
-        `ALTER TABLE ${TABLE_NAME} ADD COLUMN ${columnName} ${columnDefinition}`,
+        `ALTER TABLE ${TABLE_NAME} ADD COLUMN ${columnName} ${columnDefinition};`,
       );
       expect(mockClient.query).toHaveBeenCalledWith(alterBuilder['query']);
       expect(result).toEqual([{ result: 'success' }]);
@@ -503,9 +502,57 @@ describe('AlterBuilder', () => {
 
         // Assert
         expect(builder['query']).toBe(
-          `ALTER TABLE ${TABLE_NAME} ADD COLUMN ${name} ${definition}`,
+          `ALTER TABLE ${TABLE_NAME} ADD COLUMN ${name} ${definition};`,
         );
       }
+    });
+
+    it('should add column with options (PostgreSQL - no AFTER)', async () => {
+      // Arrange
+      const columnName = 'email';
+      const columnDefinition = 'VARCHAR(255)';
+      const options = {
+        nullable: false,
+        unique: true,
+        default: 'test@example.com',
+        after: 'id'
+      };
+      mockClient.query.mockResolvedValue([{ result: 'success' }]);
+
+      // Act
+      const result = await alterBuilder.addColumn(columnName, columnDefinition, options);
+
+      // Assert
+      expect(alterBuilder['query']).toBe(
+        `ALTER TABLE ${TABLE_NAME} ADD COLUMN ${columnName} ${columnDefinition} NOT NULL DEFAULT 'test@example.com' UNIQUE;`,
+      );
+      expect(mockClient.query).toHaveBeenCalledWith(alterBuilder['query']);
+      expect(result).toEqual([{ result: 'success' }]);
+    });
+
+    it('should add column with options (MySQL - includes AFTER)', async () => {
+      // Arrange
+      const columnName = 'email';
+      const columnDefinition = 'VARCHAR(255)';
+      const options = {
+        nullable: false,
+        unique: true,
+        default: 'test@example.com',
+        after: 'id'
+      };
+      mockClient.query.mockResolvedValue([{ result: 'success' }]);
+      const { getClientConfig } = require('../client');
+      jest.mocked(getClientConfig).mockReturnValue('mysql');
+
+      // Act
+      const result = await alterBuilder.addColumn(columnName, columnDefinition, options);
+
+      // Assert
+      expect(alterBuilder['query']).toBe(
+        `ALTER TABLE ${TABLE_NAME} ADD COLUMN ${columnName} ${columnDefinition} NOT NULL DEFAULT 'test@example.com' UNIQUE AFTER id;`,
+      );
+      expect(mockClient.query).toHaveBeenCalledWith(alterBuilder['query']);
+      expect(result).toEqual([{ result: 'success' }]);
     });
   });
 
@@ -528,7 +575,7 @@ describe('AlterBuilder', () => {
 
       // Assert
       expect(alterBuilder['query']).toBe(
-        `ALTER TABLE ${TABLE_NAME} DROP COLUMN ${columnName}`,
+        `ALTER TABLE ${TABLE_NAME} DROP COLUMN ${columnName};`,
       );
       expect(mockClient.query).toHaveBeenCalledWith(alterBuilder['query']);
       expect(result).toEqual([{ result: 'success' }]);
@@ -546,7 +593,7 @@ describe('AlterBuilder', () => {
 
         // Assert
         expect(builder['query']).toBe(
-          `ALTER TABLE ${TABLE_NAME} DROP COLUMN ${columnName}`,
+          `ALTER TABLE ${TABLE_NAME} DROP COLUMN ${columnName};`,
         );
       }
     });
@@ -579,7 +626,7 @@ describe('AlterBuilder', () => {
 
       // Assert
       expect(alterBuilder['query']).toBe(
-        `ALTER TABLE ${TABLE_NAME}\nADD ${ColumnBuilder.foreignKey(column, foreignTableName, foreignColumnName)}`,
+        `ALTER TABLE ${TABLE_NAME}\nADD ${ColumnBuilder.foreignKey(column, foreignTableName, foreignColumnName)};`,
       );
     });
 
@@ -600,7 +647,7 @@ describe('AlterBuilder', () => {
 
       // Assert
       expect(alterBuilder['query']).toBe(
-        `ALTER TABLE ${TABLE_NAME}\nADD ${ColumnBuilder.foreignKey(column, foreignTableName, foreignColumnName)}`,
+        `ALTER TABLE ${TABLE_NAME}\nADD ${ColumnBuilder.foreignKey(column, foreignTableName, foreignColumnName)};`,
       );
     });
 

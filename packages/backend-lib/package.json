@@ -14,27 +14,75 @@
   },
   "exports": {
     ".": "./dist/index.js",
-    "./config": "./dist/config/index.js",
-    "./utils": "./dist/utils/index.js",
-    "./utils/console": "./dist/utils/console.js"
-  },
-  "peerDependencies": {
-    "@nestjs/common": ">=11.0.0",
-    "@nestjs/config": ">=4.0.2",
-    "@nestjs/core": ">=11.0.0",
-    "@nestjs/platform-express": ">=11.0.0"
+    "./utils": "./dist/src/utils/index.js",
+    "./utils/console": "./dist/src/utils/console.js",
+    "./services/log-service": "./dist/src/services/log-service/index.js",
+    "./services/log-service/types": "./dist/src/services/log-service/types.js",
+    "./services/log-service/base": "./dist/src/services/log-service/log.service.js",
+    "./services/log-service/factory": "./dist/src/services/log-service/factory-log.service.js",
+    "./services/log-service/console": "./dist/src/services/log-service/console-log.service.js",
+    "./services/log-service/file": "./dist/src/services/log-service/file-log.service.js",
+    "./services/mail-service": "./dist/src/services/mail-service/index.js",
+    "./services/mail-service/types": "./dist/src/services/mail-service/types.js",
+    "./services/mail-service/base": "./dist/src/services/mail-service/mail.service.js",
+    "./services/mail-service/factory": "./dist/src/services/mail-service/factory-mail.service.js",
+    "./services/view-service": "./dist/src/services/view-service/index.js",
+    "./services/view-service/types": "./dist/src/services/view-service/types.js",
+    "./services/view-service/base": "./dist/src/services/view-service/view.service.js",
+    "./services/view-service/factory": "./dist/src/services/view-service/factory-view.service.js",
+    "./services/storage-service/types": "./dist/src/services/storage-service/types.js",
+    "./services/storage-service/base": "./dist/src/services/storage-service/storage.service.js",
+    "./services/storage-service/factory": "./dist/src/services/storage-service/factory-storage.service.js",
+    "./services/compress-service/types": "./dist/src/services/compress-service/types.js",
+    "./services/compress-service/base": "./dist/src/services/compress-service/compress.service.js",
+    "./services/compress-service/factory": "./dist/src/services/compress-service/factory-compress.service.js",
+    "./services/llm-service/types": "./dist/src/services/llm-service/types.js",
+    "./services/llm-service/base": "./dist/src/services/llm-service/llm.service.js",
+    "./services/llm-service/factory": "./dist/src/services/llm-service/factory-llm.service.js",
+    "./services/payment-service/stripe": "./dist/src/services/payment-service/stripe/stripe.payment.service.js",
+    "./services/payment-service/paypal": "./dist/src/services/payment-service/paypal/paypal.payment.service.js"
   },
   "dependencies": {
-    "dotenv": "^16.4.5",
-    "picocolors": "^1.1.1"
+    "@aws-sdk/client-s3": "^3.1007.0",
+    "@aws-sdk/s3-request-presigner": "^3.1007.0",
+    "@paypal/paypal-server-sdk": "^2.2.0",
+    "@repo/common-lib": "workspace:*",
+    "@types/ejs": "^3.1.5",
+    "@types/multer": "^2.1.0",
+    "@types/nodemailer": "^7.0.11",
+    "@types/pug": "^2.0.10",
+    "date-fns": "^4.1.0",
+    "dotenv": "^17.3.1",
+    "ejs": "^5.0.1",
+    "image-size": "^2.0.2",
+    "install": "^0.13.0",
+    "nodemailer": "^8.0.2",
+    "openai": "^6.27.0",
+    "picocolors": "^1.1.1",
+    "pug": "^3.0.3",
+    "redis": "^5.11.0",
+    "sharp": "^0.34.5",
+    "stripe": "^20.4.1",
+    "uuid": "^13.0.0"
+  },
+  "peerDependencies": {
+    "bullmq": "^5.71.0"
+  },
+  "peerDependenciesMeta": {
+    "bullmq": {
+      "optional": true
+    }
   },
   "devDependencies": {
+    "@repo/common-lib": "workspace:*",
     "@repo/jest-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
-    "@types/jest": "^30.0.0",
-    "@types/node": "^22.0.0",
-    "jest": "^29.7.0",
-    "ts-jest": "^29.4.1",
-    "typescript": "^5.8.2"
+    "@swc/cli": "^0.8.0",
+    "@swc/core": "^1.15.18",
+    "@types/jest": "30.0.0",
+    "@types/node": "^25.4.0",
+    "jest": "30.3.0",
+    "ts-jest": "29.4.6",
+    "typescript": "^5.9.3"
   }
 }
