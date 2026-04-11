@@ -14,7 +14,6 @@ import {
 import { UserService } from '../users/users.service';
 import { MailService } from '@repo/backend-lib/services/mail-service';
 import { NewContactMail } from './mails/new-contact.mail';
-import { BaseUser } from '@repo/common-lib/types/user';
 
 @Processor(USER_CONTACTS_QUEUE)
 export class UserContactProcessor extends WorkerHost {

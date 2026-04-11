@@ -29,7 +29,7 @@ export class UserCollectionService {
   }
 
   async getByUsername(username: string, slug: string): Promise<FullCollection> {
-    const user = await this.userRepository.findOneBy('username', username, 'COMPACT');
+    const user = await this.userRepository.findByUsernameCompact(username);
     if (!user) return null;
 
     return await this.getById(user.id, slug);

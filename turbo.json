@@ -3,6 +3,7 @@
   "globalDependencies": ["**/.env.*local", "**/.env", ".env", "tsconfig.json"],
   "tasks": {
     "dev": {
+      "dependsOn": ["^build"],
       "cache": false,
       "persistent": true
     },
@@ -10,11 +11,15 @@
       "dependsOn": ["^build"],
       "outputs": [".next/**", "!.next/cache/**", "dist/**"]
     },
-    "lint": {},
+    "lint": {
+      "dependsOn": ["^build"]
+    },
     "test": {
+      "dependsOn": ["^build"],
       "outputs": ["coverage/**"]
     },
     "test:watch": {
+      "dependsOn": ["^build"],
       "cache": false,
       "persistent": true,
       "env": ["NODE_ENV=test"]
@@ -24,7 +29,9 @@
       "outputs": ["coverage/**"],
       "env": ["NODE_ENV=test"]
     },
-    "test:e2e": {},
+    "test:e2e": {
+      "dependsOn": ["^build"]
+    },
     "dbcli": {}
   }
 }

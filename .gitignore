@@ -65,5 +65,4 @@ pnpm-debug.log*
 packages/database/src/seeds/media-images/
 
 # Typescript
-*.tsconfig.tsbuildinfo
-"!**/*.tsbuildinfo",
+*.tsbuildinfo

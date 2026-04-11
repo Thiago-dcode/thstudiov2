@@ -5,8 +5,11 @@
     "outDir": "dist",
     "types": ["node"],
     "incremental": true,
-    "tsBuildInfoFile": "dist/.tsbuildinfo"
+    "tsBuildInfoFile": ".tsbuildinfo"
   },
   "include": ["src"],
-  "exclude": ["node_modules", "dist"]
+  "exclude": ["node_modules", "dist"],
+  "watchOptions": {
+    "excludeDirectories": ["**/node_modules", "dist", ".turbo"]
+  }
 }

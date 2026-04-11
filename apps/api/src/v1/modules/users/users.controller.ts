@@ -117,6 +117,7 @@ export class UserController {
       this.userExtraDataService.findOneByUserId(id),
       this.planService.findUserActivePlan(id),
     ]);
+
     return {
       extra_data,
       active_plan,

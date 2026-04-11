@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, Injectable } from '@nestjs/common';
 import { BenefitWithRedeemed, UserBenefit } from '@repo/common-lib/types/benefit';
 import { UserService } from '../users/users.service';
 import { UserBenefitRepository } from './user-benefit.repository';
@@ -14,9 +14,9 @@ export class UserBenefitService {
     private readonly helpers: Helpers,
   ) { }
 
-  async getByUserId(userId: number): Promise<BenefitWithRedeemed | null> {
+  async getByUserId(userId: number): Promise<BenefitWithRedeemed> {
     const user = await this.userService.getCompactedById(userId);
-    if (!user?.benefit_id) return null;
+    if (!user?.benefit_id) throw new HttpException('User has no benefit', 422);
     return await this.helpers.cacheRemember(`user-benefit-${userId}`, this.getByIdAndUser(user.benefit_id, user.id), {
       ttl: 1000 * 60 * 60 * 24,
     });

@@ -1,6 +1,6 @@
 import { PasswordRecoveryAttemptSchema } from "../schemas/password-recovery-attempt";
-import { UserAuthDeviceSchema } from "../schemas/user-session";
 import { BaseUser } from "./user";
+import { UserAuthDevice } from "./user-session";
 
 export type  UserAuth = BaseUser & {
     need_twofa?:false,
@@ -15,7 +15,7 @@ export type  UserAuth = BaseUser & {
   };
   
   export type TwoFactorAuth = {
-    user_auth_device: UserAuthDeviceSchema;
+    user_auth_device: UserAuthDevice;
     user: BaseUser;
     need_2fa: boolean;
   };

@@ -13,10 +13,10 @@ export class UserAboutPageService {
   ) {}
 
   async getByUsername(username: string): Promise<AboutPage | null> {
-    const user = await this.userRepository.findOneBy('username', username, 'COMPACT');
-    if (!user) return null;
+    const profile = await this.userRepository.getUserProfile(username);
+    if (!profile) return null;
 
-    const aboutPage = await this.aboutPageRepository.getFirstByUser(user.id);
+    const aboutPage = await this.aboutPageRepository.getFirstByUser(profile.id);
     if (!aboutPage) return null;
 
     if (aboutPage.photo) {

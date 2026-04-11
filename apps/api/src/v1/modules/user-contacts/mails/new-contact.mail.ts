@@ -4,7 +4,7 @@ import { ViewService } from '@repo/backend-lib/services/view-service/base';
 import { Injectable } from '@nestjs/common';
 import { I18nService } from 'nestjs-i18n';
 import { CreateUserContactInput } from '@repo/common-lib/types/user-contact';
-import { BaseUser, CompactUser } from '@repo/common-lib/types/user';
+import { CompactUser } from '@repo/common-lib/types/user';
 
 @Injectable()
 export class NewContactMail extends Mailable {

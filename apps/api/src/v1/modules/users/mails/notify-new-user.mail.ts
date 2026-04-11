@@ -1,5 +1,5 @@
 import { Mailable } from '@repo/backend-lib/services/mail-service/base';
-import { BaseUser } from '@repo/common-lib/types/user';
+import { BaseUser, User } from '@repo/common-lib/types/user';
 import { mailingFrom } from 'src/config/mailling';
 import { ViewService } from '@repo/backend-lib/services/view-service/base';
 import { Injectable } from '@nestjs/common';
@@ -8,7 +8,7 @@ import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class NotifyNewUserMail extends Mailable {
-  private user: BaseUser;
+  private user: BaseUser | User;
   constructor(
     private readonly viewService: ViewService,
     private readonly i18nService: I18nService,
@@ -16,7 +16,7 @@ export class NotifyNewUserMail extends Mailable {
   ) {
     super();
   }
-  setUser(user: BaseUser) {
+  setUser(user: BaseUser | User) {
     this.user = user;
     return this;
   }

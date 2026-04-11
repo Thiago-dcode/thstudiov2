@@ -4,7 +4,7 @@ import { mailingFrom } from 'src/config/mailling';
 import { ViewService } from '@repo/backend-lib/services/view-service/base';
 import { Injectable } from '@nestjs/common';
 import { I18nService } from 'nestjs-i18n';
-import { PasswordRecoveryAttempt } from '../auth.types';
+import { PasswordRecoveryAttempt } from '@repo/common-lib/types/auth';
 
 /** Mail only needs identity fields; `User` is not assignable to `BaseUser` (flat benefit/invitation FKs). */
 export type PasswordRecoveryMailUser = Pick<BaseUser, 'email' | 'username'>;

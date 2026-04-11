@@ -16,7 +16,7 @@ const ADMIN_ROLE_NAME: EnumType<'USER_ROLE'> = 'ADMIN';
  */
 @Injectable()
 export class AdminGuard implements CanActivate {
-  constructor(private readonly requestService: RequestService) {}
+  constructor(private readonly requestService: RequestService) { }
 
   canActivate(): boolean {
     const user = this.requestService.user;

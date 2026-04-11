@@ -3,7 +3,6 @@ import FormComponent from "@/lib/components/form-component";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { Errors } from "@repo/ui/components/custom/errors";
 import { createContext, FormEvent, ReactElement, ReactNode, useCallback, useContext, useEffect, useRef, useState } from "react";
-import { User } from "@repo/common-lib/types/user";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Button } from "@repo/ui/components/shadcn/button";
@@ -11,13 +10,14 @@ import { cn } from "@repo/ui/lib/utils";
 import { updateUserAction } from "@/modules/users/server-actions/update-user.action";
 import { setUserSession } from "@/modules/auth/server-actions/user-session.action";
 import { UpdateUserInputWithAssets } from "@repo/common-lib/types/user";
+import { UserAuth } from "@/modules/auth/auth.types";
 
 
 type InputsType = HTMLInputElement | HTMLTextAreaElement | null | undefined
 type FunnelActions = 'continue' | 'finish' | 'back'
 
 type FunnelContextType = {
-    user?: User,
+    user?: UserAuth,
     lastStep: number,
     isPending: boolean,
     actionElement?: HTMLInputElement,
@@ -51,7 +51,7 @@ export const useFunnel = () => useContext(FunnelContext);
 
 export const FunnelProvider = ({ children, user, lastStep, defaultCanContinue = false }: {
     children: ReactElement,
-    user: User & { token: string },
+    user: UserAuth,
     lastStep: number,
     defaultCanContinue?: boolean
 }) => {

@@ -12,6 +12,7 @@ import { PortfolioProvider } from "@/modules/portfolios/providers/create-update-
 import { CollectionProvider } from "@/modules/collections/providers/create-update-collection.provider";
 import { UserAccountBannedModal } from "@/modules/users/components/user-account-banned-modal";
 import { AlertPortfolioButton } from "@/modules/portfolios/components/alert-portfolio.button";
+import { UserBenefitModal } from "@/modules/user-benefit/components/user-benefit.modal";
 const AdminLayout = async ({ children }: { children: ReactNode }) => {
   const userAuth = await userSession();
   if (!userAuth) {
@@ -19,25 +20,26 @@ const AdminLayout = async ({ children }: { children: ReactNode }) => {
   }
   return <>
     <FinishSetupDialog user={userAuth} />
+    <UserBenefitModal user={userAuth} subscriptionPath="/atelier/settings/subscription"/>
     <MainNavProvider defaultShrinked>
       <UserMetricsProvider userId={userAuth.id}>
         <MediaProvider>
           <PortfolioProvider user={userAuth}>
-          <CollectionProvider user={userAuth}>
-            <UserAccountBannedModal />
-            <UploadMediaModal />
-            <AlertPortfolioButton />
-            <div className="flex size-full items-center justify-between ">
-              <AdminHeader />
-              <main className="size-full flex flex-col items-start justify-start  ">
-                <TopNav username={userAuth.username} />
+            <CollectionProvider user={userAuth}>
+              <UserAccountBannedModal />
+              <UploadMediaModal />
+              <AlertPortfolioButton />
+              <div className="flex size-full items-center justify-between ">
+                <AdminHeader />
+                <main className="size-full flex flex-col items-start justify-start  ">
+                  <TopNav username={userAuth.username} />
 
-                <div className="max-w-[1920px] flex w-full justify-start h-full overflow-y-scroll">   {children}</div>
+                  <div className="max-w-[1920px] flex w-full justify-start h-full overflow-y-scroll">   {children}</div>
 
-              </main>
+                </main>
 
-            </div>
-          </CollectionProvider>
+              </div>
+            </CollectionProvider>
           </PortfolioProvider>
         </MediaProvider>
       </UserMetricsProvider>

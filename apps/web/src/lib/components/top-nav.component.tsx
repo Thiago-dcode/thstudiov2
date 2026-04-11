@@ -1,10 +1,14 @@
 'use client'
 
+import { useUserMetrics } from "@/modules/users/providers/user-metrics.provider";
 import { useMainNav } from "../providers/main-nav.provider"
 import { PanelLeftClose, PanelLeftOpen, Menu, ExternalLink } from "lucide-react"
+import Link from "next/link";
+import { Button } from "@repo/ui/components/shadcn/button";
 
 export const TopNav = ({ username }: { username?: string }) => {
     const { shrinked, toggleShrinked, toggleMobile } = useMainNav();
+    const { metrics } = useUserMetrics()
 
     return (
         <nav className="border-b border-b-fg-2 w-full h-16 shrink-0 flex items-center justify-between px-4">
@@ -25,17 +29,20 @@ export const TopNav = ({ username }: { username?: string }) => {
                 </button>
             </div>
 
-            {username && (
-                <a
-                    href={`/artists/${username}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 text-sm text-text-muted hover:text-text transition-colors"
-                >
-                    <span className="hidden sm:inline">View profile</span>
-                    <ExternalLink size={14} />
-                </a>
-            )}
+            <div className="flex items-center justify-center gap-4">
+                {metrics?.active_plan  && <Link href={'/atelier/settings/subscription'} ><Button  variant={'secondary'} size={'sm'}>Updgrade</Button></Link>}
+                {username && (
+                    <a
+                        href={`/artists/${username}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 text-sm text-text-muted hover:text-text transition-colors"
+                    >
+                        <span className="hidden sm:inline">View profile</span>
+                        <ExternalLink size={14} />
+                    </a>
+                )}
+            </div>
         </nav>
     )
 }
