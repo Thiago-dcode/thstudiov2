@@ -12,6 +12,7 @@ import { usePreviewUrls } from "@repo/ui/hooks/usePreviewUrls"
 import { FileInput } from "@repo/ui/components/custom/file-input"
 import { Checkbox } from "@repo/ui/components/shadcn/checkbox"
 import { Label } from "@repo/ui/components/shadcn/label"
+import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip"
 import { Spinner } from "@repo/ui/components/shadcn/spinner"
 import { Combobox, ComboboxInput, ComboboxContent, ComboboxList, ComboboxItem, ComboboxEmpty } from "@repo/ui/components/shadcn/combobox"
 import { cn } from "@repo/ui/lib/utils"
@@ -41,6 +42,7 @@ export const CreateOrUpdateService = ({ defaultService, userAuth,portfolios }: {
     const priceRef = useRef(defaultService?.price != null ? String(defaultService.price) : '');
     const isActiveRef = useRef(defaultService?.is_active ?? true);
     const showPriceRef = useRef(defaultService?.show_price ?? false);
+    const isHighlightRef = useRef(defaultService?.is_highlight ?? false);
     const [selectedPortfolioId, setSelectedPortfolioId] = useState<number | undefined>(defaultService?.portfolio_id ?? undefined);
     const manuallyChangedSlug = useRef(false);
     const previousSlugRef = useRef<string | undefined>(defaultService?.slug);
@@ -63,6 +65,7 @@ export const CreateOrUpdateService = ({ defaultService, userAuth,portfolios }: {
                 price: priceRef.current ? Number(priceRef.current) : undefined,
                 is_active: isActiveRef.current,
                 show_price: showPriceRef.current,
+                is_highlight: isHighlightRef.current,
                 portfolio_id: selectedPortfolioId,
                 user_id: userAuth.id,
                 thumbnail: thumbnailFileRef.current,
@@ -155,6 +158,7 @@ export const CreateOrUpdateService = ({ defaultService, userAuth,portfolios }: {
             priceRef.current = defaultService.price != null ? String(defaultService.price) : '';
             isActiveRef.current = defaultService.is_active;
             showPriceRef.current = defaultService.show_price;
+            isHighlightRef.current = defaultService.is_highlight;
             setSelectedPortfolioId(defaultService.portfolio_id ?? undefined);
             setFeatures(defaultService.features?.length ? defaultService.features.map(f => f.title) : ['']);
             setTerms(defaultService.terms?.length ? defaultService.terms.map(t => t.title) : ['']);
@@ -297,6 +301,28 @@ export const CreateOrUpdateService = ({ defaultService, userAuth,portfolios }: {
                                     </Label>
                                 </div>
                             </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <Checkbox
+                                id="service-is-highlight"
+                                defaultChecked={isHighlightRef.current}
+                                onCheckedChange={(checked) => {
+                                    deleteInputErrorProperty('is_highlight');
+                                    isHighlightRef.current = checked === true;
+                                }}
+                                disabled={isPending}
+                            />
+                            <Label htmlFor="service-is-highlight" className="text-sm font-normal cursor-pointer">
+                                Show on profile page
+                            </Label>
+                            <InfoTooltip
+                                content={
+                                    <p className="text-sm">
+                                        When enabled, this service is highlighted on your public artist profile so visitors can find it more easily.
+                                    </p>
+                                }
+                            />
                         </div>
                     </div>
 

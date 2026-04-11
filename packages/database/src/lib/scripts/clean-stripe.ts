@@ -7,13 +7,14 @@ import { killClient } from '../client';
 
 const ALLOWED_ENVS = ['development', 'local', 'test'];
 
-const assertLocalEnvironment = () => {
+const assertLocalEnvironment = (shouldExit: boolean) => {
   const env = getConfigValue('app').env.toLowerCase();
   if (!ALLOWED_ENVS.includes(env)) {
     Logger.error(
       `❌ This script can only be run in local environments (${ALLOWED_ENVS.join(', ')}). Current: "${env}"`,
     );
-    process.exit(1);
+    if (shouldExit) process.exit(1);
+    throw new Error(`Stripe cleanup not allowed in environment: ${env}`);
   }
 };
 
@@ -131,10 +132,13 @@ const deleteAllProducts = async () => {
   Logger.success('✅ Cleared plan and plan_price stripe_id in database');
 };
 
-const cleanStripe = async () => {
+export type CleanStripeOptions = { exitProcess?: boolean };
+
+const cleanStripe = async (options: CleanStripeOptions = {}) => {
+  const shouldExit = options.exitProcess !== false;
   const start = Date.now();
   try {
-    assertLocalEnvironment();
+    assertLocalEnvironment(shouldExit);
     await connectDb();
 
     await deleteAllStripeSubscriptions();
@@ -144,10 +148,11 @@ const cleanStripe = async () => {
     Logger.success(
       `✅ Stripe cleanup completed in ${((Date.now() - start) / 1000).toFixed(2)}s`,
     );
-    process.exit(0);
+    if (shouldExit) process.exit(0);
   } catch (error) {
     Logger.error('❌ Stripe cleanup failed:', error);
-    process.exit(1);
+    if (shouldExit) process.exit(1);
+    throw error;
   } finally {
     await killClient();
   }

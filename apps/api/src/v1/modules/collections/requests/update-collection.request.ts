@@ -33,6 +33,10 @@ export class UpdateCollectionRequest {
   is_highlight?: boolean;
 
   @IsOptional()
+  @IsBoolean()
+  is_active?: boolean;
+
+  @IsOptional()
   @IsArray()
   @ArrayMaxSize(50, { message: 'Collections can have up to 50 media' })
   @ValidateNested({ each: true })

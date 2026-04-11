@@ -31,7 +31,7 @@ export class Helpers {
     key: string,
     toRemember: Promise<T>,
     options: {
-      append_language: boolean;
+      append_language?: boolean;
       ttl: number;
     } = {
         append_language: false,
@@ -39,7 +39,7 @@ export class Helpers {
       },
   ): Promise<T> {
     let _key = key;
-    if (options.append_language) {
+    if (options?.append_language) {
       _key += `-${this.requestService.language}`;
     }
     const cached = await this.cacheManager.get(_key);

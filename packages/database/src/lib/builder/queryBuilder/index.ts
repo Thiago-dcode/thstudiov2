@@ -303,13 +303,13 @@ private  handleBuildGet(columns: string[], values: SqlValue[], select: string[] 
   }
 
   /**
-   * Add a WHERE clause to the query
+   * Add a WHERE clause to the query.
+   * Two-arg form defaults to `=` (same as `where(column, '=', value)`).
    * @param column - The column name to filter on
-   * @param operator - The comparison operator (=, >, <, >=, <=, !=, LIKE, IS, IS NOT)
-   * @param value - The value to compare against
    * @returns This QueryBuilder instance for method chaining
    * @example
    * ```ts
+   * queryBuilder.where('status', 'active'); // status = 'active'
    * queryBuilder.where('age', '>=', 18);
    * queryBuilder.where('name', 'LIKE', '%John%');
    * queryBuilder.where('deleted_at', 'IS', null);
@@ -348,30 +348,66 @@ private  handleBuildGet(columns: string[], values: SqlValue[], select: string[] 
 
 
   }
-  public where(column: string, operator: SqlClauseWithoutIn, value: SqlValue) {
-    this.handlePushWhere(column, operator, value, 'where');
+  public where(column: string, value: SqlValue): this;
+  public where(
+    column: string,
+    operator: SqlClauseWithoutIn,
+    value: SqlValue,
+  ): this;
+  public where(
+    column: string,
+    operatorOrValue: SqlClauseWithoutIn | SqlValue,
+    value?: SqlValue,
+  ): this {
+    if (arguments.length === 2) {
+      this.handlePushWhere(column, '=', operatorOrValue as SqlValue, 'where');
+    } else {
+      this.handlePushWhere(
+        column,
+        operatorOrValue as SqlClauseWithoutIn,
+        value as SqlValue,
+        'where',
+      );
+    }
     return this;
   }
+ 
 
   /**
-   * Add an OR WHERE clause to the query
+   * Add an OR WHERE clause to the query.
+   * Two-arg form defaults to `=`.
    * @param column - The column name to filter on
-   * @param operator - The comparison operator
-   * @param value - The value to compare against
    * @returns This QueryBuilder instance for method chaining
    * @example
    * ```ts
    * queryBuilder
-   *   .where('status', '=', 'active')
-   *   .orWhere('role', '=', 'admin');
+   *   .where('status', 'active')
+   *   .orWhere('role', 'admin');
    * ```
    */
+  public orWhere(column: string, value: SqlValue): this;
   public orWhere(
     column: string,
     operator: SqlClauseWithoutIn,
     value: SqlValue,
-  ) {
-    this.handlePushWhere(column, operator, value,this.wheres.length === 0? 'where' : 'orWhere');
+  ): this;
+  public orWhere(
+    column: string,
+    operatorOrValue: SqlClauseWithoutIn | SqlValue,
+    value?: SqlValue,
+  ): this {
+    const type: WhereType =
+      this.wheres.length === 0 ? 'where' : 'orWhere';
+    if (arguments.length === 2) {
+      this.handlePushWhere(column, '=', operatorOrValue as SqlValue, type);
+    } else {
+      this.handlePushWhere(
+        column,
+        operatorOrValue as SqlClauseWithoutIn,
+        value as SqlValue,
+        type,
+      );
+    }
     return this;
   }
 

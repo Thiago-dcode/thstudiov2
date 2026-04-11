@@ -6,9 +6,12 @@ import { Injectable } from '@nestjs/common';
 import { I18nService } from 'nestjs-i18n';
 import { PasswordRecoveryAttempt } from '../auth.types';
 
+/** Mail only needs identity fields; `User` is not assignable to `BaseUser` (flat benefit/invitation FKs). */
+export type PasswordRecoveryMailUser = Pick<BaseUser, 'email' | 'username'>;
+
 @Injectable()
 export class PasswordRecoveryMail extends Mailable {
-  private user: BaseUser;
+  private user: PasswordRecoveryMailUser;
   private passwordRecoveryAttempt: PasswordRecoveryAttempt;
   constructor(
     private readonly viewService: ViewService,
@@ -16,7 +19,7 @@ export class PasswordRecoveryMail extends Mailable {
   ) {
     super();
   }
-  setData(user: BaseUser, passwordRecoveryAttempt: PasswordRecoveryAttempt) {
+  setData(user: PasswordRecoveryMailUser, passwordRecoveryAttempt: PasswordRecoveryAttempt) {
     this.user = user;
     this.passwordRecoveryAttempt = passwordRecoveryAttempt;
     return this;

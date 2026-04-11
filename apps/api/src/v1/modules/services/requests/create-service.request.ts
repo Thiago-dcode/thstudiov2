@@ -47,6 +47,10 @@ export class CreateServiceRequest {
   @IsBoolean()
   show_price?: boolean;
 
+  @IsOptional()
+  @IsBoolean()
+  is_highlight?: boolean;
+
   @ModelExist('users')
   @IsUserAuth()
   @IsNotEmpty()

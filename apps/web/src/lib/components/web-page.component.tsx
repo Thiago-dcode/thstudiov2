@@ -28,7 +28,7 @@ const Header = ({
 }) => {
     return (
         <header className="mb-8 desktop:mb-12 flex flex-col items-center gap-6 border-b border-border/40 pb-6">
-            <div className="max-w-2xl space-y-2">
+            <div className="w-full  max-w-5xl space-y-5">
                 <div className="flex items-baseline gap-4 justify-center">
                     <h1
                         className={cn(
@@ -41,7 +41,7 @@ const Header = ({
                     {children}
                 </div>
                 {description && (
-                    <p className="max-w-xl text-base leading-relaxed text-text-muted md:text-lg">
+                    <p className="w-full text-base leading-relaxed text-text-muted md:text-lg">
                         {description}
                     </p>
                 )}

@@ -21,6 +21,7 @@ export const ENUMS = {
   ] as const,
   PAYMENT_METHOD: ['CARD', 'PAYPAL'] as const,
   PLAN_OFFERS_TYPE: ['FREE', 'DISCOUNT'] as const,
+  BENEFIT_TYPE: ['EARLY_USER', 'VIP'] as const,
   PASSWORD_RECOVERY_ATTEMPT_STATUS: ['CODE_NOT_VALIDATED', 'CODE_VALIDATED', 'PASSWORD_CHANGED'],
   STRIPE_ERROR: [
     'StripeCardError',
@@ -97,7 +98,10 @@ export const TABLES_ENUM = {
   ABOUT_PAGE: 'about_page',
   USER_STORAGE_REQUESTS: 'user_storage_requests',
   LLM_TOKENS_USAGE: 'llm_tokens_usage',
-  MEDIA_MODERATIONS: 'media_moderations'
+  MEDIA_MODERATIONS: 'media_moderations',
+  BENEFITS: 'benefits',
+  USER_BENEFITS: 'user_benefits',
+  INVITATION_LINKS: 'invitation_links',
 } as const;
 
 export const COUNTRY_TO_LANGUAGES: Record<string, string> = {

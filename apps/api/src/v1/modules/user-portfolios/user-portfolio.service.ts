@@ -40,7 +40,7 @@ export class UserPortfolioService {
     };
   }
   async getByUsername(username: string, slug: string): Promise<FullPortfolio> {
-    const user = await this.userRepository.findOneBy('username', username, 'COMPACT');
+    const user = await this.userRepository.findByUsernameCompact(username);
     if (!user) return null;
     const portfolio = await this.portfolioRepository.getBySlug(slug, user.id);
     if (!portfolio) return null;

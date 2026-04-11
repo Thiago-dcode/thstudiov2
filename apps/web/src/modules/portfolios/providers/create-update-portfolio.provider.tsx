@@ -9,6 +9,7 @@ import { slugExistsAction } from "../server-actions/slug-exists.action";
 import { ActionReturn } from "@repo/common-lib/types/response";
 import { toast } from "@repo/ui/sonner"
 import { User } from "@repo/common-lib/types/user";
+import { UserAuth } from "@/modules/auth/auth.types";
 
 // ============================================================================
 // Types
@@ -21,7 +22,7 @@ type PortfolioFormData = Partial<
 >;
 
 type PortfolioContextType = {
-  user: User;
+  user: UserAuth;
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => Promise<void>;
   // `media` is overridden in this provider to be `Media[]` for UI purposes.
   handleSetFormData: (key: keyof CreatePortfolioInputWithFile, value: string | File | number | boolean | MediaPortfolio[]) => void;
@@ -67,7 +68,7 @@ export const usePortfolio = () => {
 
 type PortfolioProviderProps = {
   children: ReactNode;
-  user: User;
+  user: UserAuth;
   defaultPortfolio?: FullPortfolio;
 };
 
@@ -94,6 +95,7 @@ export const PortfolioProvider = ({
       slug: portfolio.slug,
       description: portfolio.description ?? undefined,
       is_highlight: portfolio.is_highlight,
+      is_active: portfolio.is_active,
       media: portfolio.media.sort((a,b)=>a.position - b.position),
     });
   }, []);
@@ -116,6 +118,7 @@ export const PortfolioProvider = ({
         description: (formData.description ?? undefined) as string | undefined,
         user_id: (formData.user_id ?? user.id) as number,
         is_highlight: formData.is_highlight ?? false,
+        is_active: formData.is_active ?? true,
         thumbnail: formData.thumbnail ? formData.thumbnail as File : undefined,
         media: media.length ? media : undefined,
       };
@@ -222,6 +225,7 @@ export const PortfolioProvider = ({
     if (formData.slug !== currentPortfolio.slug) return true;
     if ((formData.description ?? undefined) !== (currentPortfolio.description ?? undefined)) return true;
     if ((formData.is_highlight ?? false) !== currentPortfolio.is_highlight) return true;
+    if ((formData.is_active ?? true) !== currentPortfolio.is_active) return true;
     if (formData.thumbnail) return true;
 
     const currentMedia = formData.media ?? [];

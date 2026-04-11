@@ -89,6 +89,7 @@ export class PortfolioService {
       ...request,
       thumbnail: thumbnailPath,
       is_highlight: request.is_highlight ?? false,
+      is_active: request.is_active ?? true,
     });
     this.eventEmitter.emit(UPDATE_USER_EXTRA_DATA_METRICS, new UpdateUserExtraDataMetricsEvent(request.user_id));
     return portfolio;

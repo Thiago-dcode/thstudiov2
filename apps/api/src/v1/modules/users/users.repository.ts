@@ -8,23 +8,25 @@ import {
   UserProfile,
   ArtistIndexRequest,
   ArtistCard,
+  BaseUser,
+  BaseUserWithSecrets,
+  ProfileAddress,
 } from '@repo/common-lib/types/user';
-import { BaseUser, BaseUserWithSecrets } from '@repo/common-lib/types/user';
 import {
-  BaseUserWithRoleRowSchema,
-  BaseUserWithRoleSelectColumn,
+  UserCoreRoleRow,
+  UserCoreSelectColumn,
   UserSchema,
-  UserProfileSchema,
-  UserProfileSchemaColumns,
-  UserWithRoleRowSchema,
-  UserWithRoleSelectColumn,
-  ArtistSearchSchema,
-  ArtistSearchSchemaColumns,
+  UserProfileRow,
+  UserProfileSelectColumn,
+  UserFullSelectColumn,
+  UserFullBenefitRow,
+  UserFullBenefitSelectColumn,
+  ArtistSearchRow,
+  ArtistSearchSelectColumn,
 } from '@repo/common-lib/schemas/user';
-import { EnumType, TABLES_ENUM } from '@repo/common-lib/constants/enums';
+import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
 import { Join } from '@repo/common-lib/types/database';
 import { CategoryBase } from '@repo/common-lib/types/category';
-import { ProfileAddress } from '@repo/common-lib/types/user';
 import { RequestService } from 'src/common/services/request.service';
 import { QueryBuilder } from '@repo/database/queryBuilder';
 import { foldLatinDiacriticsForMatch } from '@repo/common-lib/utils/fold-latin-diacritics';
@@ -40,7 +42,7 @@ export class UserRepository extends BaseRepository {
     },
   ];
 
-  private readonly BASE_COLUMNS: BaseUserWithRoleSelectColumn[] = [
+  private readonly CORE_COLUMNS: UserCoreSelectColumn[] = [
     'users.id',
     'users.public_id',
     'users.email',
@@ -69,11 +71,12 @@ export class UserRepository extends BaseRepository {
     'users.email',
     'users.username',
     'users.name',
-    'users.surname'
+    'users.surname',
+    'users.benefit_id'
   ] as const;
 
-  private readonly FULL_COLUMNS: UserWithRoleSelectColumn[] = [
-    ...this.BASE_COLUMNS,
+  private readonly FULL_COLUMNS: UserFullSelectColumn[] = [
+    ...this.CORE_COLUMNS,
     'users.avatar',
     'users.banner',
     'users.name',
@@ -82,7 +85,18 @@ export class UserRepository extends BaseRepository {
     'users.biography',
   ];
 
-  private readonly ARTIST_SEARCH_COLUMNS: ArtistSearchSchemaColumns[] = [
+  private readonly BENEFIT_COLUMNS: UserFullBenefitSelectColumn[] = [
+    'benefits.id as b_id',
+    'benefits.name as b_name',
+    'benefits.type',
+    'benefits.trial_days',
+    'benefits.stripe_coupon_id',
+    'benefits.active',
+    'user_benefits.id as ub_id',
+    'user_benefits.redeemed',
+  ];
+
+  private readonly ARTIST_SEARCH_COLUMNS: ArtistSearchSelectColumn[] = [
     'users.id',
     'users.username',
     'users.name',
@@ -103,6 +117,12 @@ export class UserRepository extends BaseRepository {
 
   private joinUserRole(q: QueryBuilder): QueryBuilder {
     return q.join('role_id', TABLES_ENUM.ROLES, 'id', 'INNER');
+  }
+
+  private joinBenefit(q: QueryBuilder): QueryBuilder {
+    return q
+      .join('benefit_id', TABLES_ENUM.BENEFITS, 'id', 'LEFT')
+      .join('id', TABLES_ENUM.USER_BENEFITS, 'user_id', 'LEFT', `AND user_benefits.benefit_id = users.benefit_id`);
   }
   async findByIdCompact(id: number): Promise<CompactUser> {
     const result = await this.query()
@@ -138,10 +158,12 @@ export class UserRepository extends BaseRepository {
   }
 
   async findById(id: number): Promise<User> {
-    const result = await this.joinUserRole(this.query())
-      .select([...this.FULL_COLUMNS])
+    const query = this.joinUserRole(this.query());
+    this.joinBenefit(query);
+    const result = await query
+      .select([...this.FULL_COLUMNS, ...this.BENEFIT_COLUMNS])
       .where('id', '=', id)
-      .first<UserWithRoleRowSchema>();
+      .first<UserFullBenefitRow>();
     if (!result) {
       throw new HttpException(
         'User not found with id ' + id,
@@ -159,29 +181,21 @@ export class UserRepository extends BaseRepository {
   async findOneBy(
     column: keyof UserSchema,
     value: any,
-    format: EnumType<'FORMAT_TYPE'> = 'COMPACT',
-  ): Promise<BaseUser | User> {
-    let query = this.joinUserRole(this.query()).where(column, '=', value);
-    if (format === 'FULL') {
-      query = query.select(this.FULL_COLUMNS);
-    } else {
-      query = query.select(this.BASE_COLUMNS);
-    }
-    const result = await query.first<
-      BaseUserWithRoleRowSchema | UserWithRoleRowSchema
-    >();
+  ): Promise<BaseUser> {
+    const result = await this.joinUserRole(this.query())
+      .where(column, '=', value)
+      .select(this.CORE_COLUMNS)
+      .first<UserCoreRoleRow>();
     if (!result) {
       throw new HttpException(
         'User not found with ' + column + ' ' + value,
         HttpStatus.NOT_FOUND,
       );
     }
-    return format === 'FULL'
-      ? this.formatFullUser(result as UserWithRoleRowSchema)
-      : this.formatBaseUser(result as BaseUserWithRoleRowSchema);
+    return this.formatCoreUser(result);
   }
 
-  private readonly PROFILE_COLUMNS: UserProfileSchemaColumns[] = [
+  private readonly PROFILE_COLUMNS: UserProfileSelectColumn[] = [
     'users.id',
     'users.name',
     'users.surname',
@@ -214,7 +228,7 @@ export class UserRepository extends BaseRepository {
     'categories.tags',
     'categories.name as c_name',
     'category_translations.name as c_tr_name',
-    'categories.slug as c_slug' as UserProfileSchemaColumns,
+    'categories.slug as c_slug' as UserProfileSelectColumn,
     'categories.parent_id',
   ];
 
@@ -232,63 +246,55 @@ export class UserRepository extends BaseRepository {
         'LEFT',
         `AND category_translations.language_code = '${this.requestService.language}'`,
       )
-      .get<UserProfileSchema[]>();
+      .get<UserProfileRow[]>();
 
     if (!result || result.length === 0) return null;
 
     return this.formatUserProfile(result);
   }
-  async findOneByColumnWithSecrets(
+
+  async findOneByWithSecrets(
     column: string,
     value: any,
   ): Promise<BaseUserWithSecrets> {
-    const cols = [...this.BASE_COLUMNS, 'users.password', 'users.twofa_code'];
+    const cols = [...this.CORE_COLUMNS, 'users.password', 'users.twofa_code'];
     const result = await this.joinUserRole(this.query())
       .where(column, '=', value)
       .select(cols)
-      .first<
-        BaseUserWithRoleRowSchema & {
-          password: string;
-          twofa_code?: string;
-        }
-      >();
+      .first<UserCoreRoleRow & { password: string; twofa_code?: string }>();
     if (!result) return null;
-    return this.formatBaseUser(result, true) as BaseUserWithSecrets;
+    const core = this.formatCoreUser(result);
+    return { ...core, password: result.password, twofa_code: result.twofa_code };
   }
 
   async create(user: CreateUserInput): Promise<BaseUser> {
-    const result = await super._create<BaseUserWithRoleRowSchema>(user, {
-      select: this.BASE_COLUMNS,
+    const result = await super._create<UserCoreRoleRow>(user, {
+      select: this.CORE_COLUMNS,
       join: UserRepository.USER_ROLE_JOIN,
     });
-    return this.formatBaseUser(result, false) as BaseUser;
+    return this.formatCoreUser(result);
   }
+
   async updateById(id: number, user: UpdateUserInput): Promise<BaseUser> {
     const columns = Object.keys(user);
     const values = Object.values(user);
     if (columns.length && values.length) await this.query().where('id', '=', id).update(columns, values);
     const result = await this.joinUserRole(this.query())
-      .select(this.BASE_COLUMNS)
+      .select(this.CORE_COLUMNS)
       .where('id', '=', id)
-      .first<BaseUserWithRoleRowSchema>();
-    return this.formatBaseUser(result, false) as BaseUser;
+      .first<UserCoreRoleRow>();
+    return this.formatCoreUser(result);
   }
-  private formatBaseUser(
-    result: BaseUserWithRoleRowSchema &
-      Partial<Pick<UserSchema, 'password' | 'twofa_code'>>,
-    withSecrets: boolean = false,
-  ): BaseUser | BaseUserWithSecrets {
+  private formatCoreUser(result: UserCoreRoleRow): BaseUser {
     return {
-      id: result?.id,
+      id: result.id,
       public_id: result.public_id,
-      email: result?.email,
-      username: result?.username,
+      email: result.email,
+      username: result.username,
       role: { id: result.r_id, name: result.r_name },
-      profession: result?.profession,
-      email_validated: result?.email_validated,
+      profession: result.profession,
+      email_validated: result.email_validated,
       stripe_customer_id: result.stripe_customer_id,
-      password: withSecrets ? result?.password : undefined,
-      twofa_code: withSecrets ? result.twofa_code : undefined,
       twofa_enabled: result.twofa_enabled,
       twofa_expires_at: result.twofa_expires_at,
       username_reset_count: result.username_reset_count,
@@ -296,25 +302,38 @@ export class UserRepository extends BaseRepository {
       next_username_reset: result.next_username_reset ?? undefined,
       next_password_reset: result.next_password_reset ?? undefined,
       funnel_step: result.funnel_step,
-      is_active: result?.is_active,
-      banned: result?.banned,
-      banned_reason: result?.banned_reason,
+      is_active: result.is_active,
+      banned: result.banned,
+      banned_reason: result.banned_reason,
       is_featured: result.is_featured,
+      benefit_id: result.benefit_id,
+      invitation_link_id: result.invitation_link_id,
     };
   }
-  private formatFullUser(result: UserWithRoleRowSchema): User {
+  private formatFullUser(result: UserFullBenefitRow): User {
     return {
-      ...this.formatBaseUser(result),
+      ...this.formatCoreUser(result),
       avatar: result?.avatar,
       banner: result?.banner,
       name: result?.name,
       surname: result?.surname,
       short_biography: result?.short_biography,
       biography: result?.biography,
+      benefit: result.b_id != null
+        ? {
+          id: result.b_id,
+          type: result.type!,
+          name: result.b_name!,
+          trial_days: result.trial_days!,
+          stripe_coupon_id: result.stripe_coupon_id ?? null,
+          active: result.active!,
+          redeemed: result.redeemed ?? false,
+        }
+        : null,
     };
   }
 
-  private formatUserProfile(rows: UserProfileSchema[]): UserProfile {
+  private formatUserProfile(rows: UserProfileRow[]): UserProfile {
     const first = rows[0];
 
     const address: ProfileAddress | null = first.a_id != null
@@ -326,7 +345,7 @@ export class UserRepository extends BaseRepository {
       }
       : null;
 
-    const categoriesMap = new Map<number, Omit<CategoryBase,'is_featured'>>();
+    const categoriesMap = new Map<number, Omit<CategoryBase, 'is_featured'>>();
 
     for (const row of rows) {
       if (!row.c_id || categoriesMap.has(row.c_id)) continue;
@@ -368,7 +387,7 @@ export class UserRepository extends BaseRepository {
 
     await this.applyArtistFilters(filters, query);
 
-    const rows = await query.get<ArtistSearchSchema[]>();
+    const rows = await query.get<ArtistSearchRow[]>();
     if (!rows.length) return [];
 
     const userIds = rows.map((r) => r.id);
@@ -397,7 +416,7 @@ export class UserRepository extends BaseRepository {
       const pivotRows = await this.query()
         .rawSelect('DISTINCT user_categories.user_id')
         .join('id', 'user_categories', 'user_id', 'INNER')
-        .join('user_categories.category_id','categories','id','INNER')
+        .join('user_categories.category_id', 'categories', 'id', 'INNER')
         .whereIn('categories.slug', filters.categories)
         .get<{ user_id: number }[]>();
 
@@ -481,7 +500,7 @@ export class UserRepository extends BaseRepository {
   }
 
   private formatArtistCards(
-    rows: ArtistSearchSchema[],
+    rows: ArtistSearchRow[],
     categoriesMap: Map<number, Pick<CategoryBase, 'id' | 'name' | 'slug'>[]>,
   ): ArtistCard[] {
     return rows.map((row) => ({

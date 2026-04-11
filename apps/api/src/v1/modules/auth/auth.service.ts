@@ -7,14 +7,14 @@ import {
 import { LoginRequest } from './requests/login.request';
 import { UserRepository } from '../users/users.repository';
 import { JwtService } from '@nestjs/jwt';
-import { TwoFactorAuth, UserAuth, UserPayload, UserTwofa } from './auth.types';
+import { TwoFactorAuth, UserAuth, UserPayload, UserTwofa } from '@repo/common-lib/types/auth';
 import { ConfigService } from '@nestjs/config';
 import { BaseUser } from '@repo/common-lib/types/user';
 import { UserAuthDevicesService } from '../user-auth-devices/user-auth-devices.service';
 import { RequestService } from 'src/common/services/request.service';
 import { randomStr } from '@repo/common-lib/utils/random-string';
 import { addMinutes } from 'date-fns/addMinutes';
-import { UserAuthDevice } from '../user-auth-devices/user-auth-devices.types';
+import { UserAuthDevice } from '@repo/common-lib/types/user-session';
 import { UserSessionsService } from '../user-sessions/user-sessions.service';
 import { addDays } from 'date-fns';
 import { MailService } from '@repo/backend-lib/services/mail-service';
@@ -33,6 +33,8 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { NewUserEvent } from '../users/events/new-user.event';
 import { NEW_USER_EVENT } from '@repo/common-lib/constants/constants';
 import { RoleService } from '../roles/roles.service';
+import { InvitationLinkService } from '../invitation-links/invitation-link.service';
+import { UserBenefitService } from '../user-benefit/user-benefit.service';
 
 @Injectable()
 export class AuthService {
@@ -49,18 +51,41 @@ export class AuthService {
     private readonly passwordRecoveryAttemptsService: PasswordRecoveryAttemptsService,
     private readonly eventEmitter: EventEmitter2,
     private readonly roleService: RoleService,
+    private readonly invitationLinkService: InvitationLinkService,
+    private readonly userBenefitService: UserBenefitService
   ) { }
   async register(registerRequest: RegisterRequest) {
     const clientRole = await this.roleService.getByName('ARTIST');
+
+    let benefit_id: number | null = null;
+    let invitation_link_id: number | null = null;
+
+    if (registerRequest.invitation_code) {
+      const invitationLink = await this.invitationLinkService.validateCode(registerRequest.invitation_code);
+      if (invitationLink) {
+        benefit_id = invitationLink.benefit_id;
+        invitation_link_id = invitationLink.id;
+        await this.invitationLinkService.updateById(invitationLink.id, {
+          current_uses: invitationLink.current_uses + 1,
+        })
+      }
+    }
+
+    const { invitation_code, ...rest } = registerRequest;
     const user = await this.userRepository.create({
-      ...registerRequest,
+      ...rest,
       public_id: await generateUUID(),
       funnel_step: 1,
       username_reset_count: 0,
       password_reset_count: 0,
+      benefit_id,
+      invitation_link_id,
       password: await hash(registerRequest.password),
       role_id: clientRole.id,
     });
+    if (benefit_id) {
+      await this.userBenefitService.create(user.id, benefit_id);
+    }
     const result = await this.handle2fa(user, {
       ip_address: this.requestService.ip_address,
       user_agent: this.requestService.user_agent,
@@ -70,7 +95,7 @@ export class AuthService {
     return { ...result.user, need_twofa: true };
   }
   async login(authLoginRequest: LoginRequest): Promise<UserAuth | UserTwofa> {
-    const user = await this.userRepository.findOneByColumnWithSecrets(
+    const user = await this.userRepository.findOneByWithSecrets(
       'email',
       authLoginRequest.email,
     );
@@ -99,7 +124,7 @@ export class AuthService {
       : await this.handleLogin(user, result.user_auth_device);
   }
   async verify2fa(verify2faRequest: Verify2faRequest) {
-    const user = await this.userRepository.findOneByColumnWithSecrets(
+    const user = await this.userRepository.findOneByWithSecrets(
       'email',
       verify2faRequest.email,
     );
@@ -115,7 +140,7 @@ export class AuthService {
     ) {
       throw new BadRequestException('Invalid verification code or expired');
     }
-    //It should be created from the login process
+    //It should be have been created from the login process
     const userAuthDevice = await this.userAuthDevicesService.getOneOrCreate({
       user_id: user.id,
       user_agent: this.requestService?.user_agent || '-',
@@ -164,7 +189,7 @@ export class AuthService {
     return await this.handleLogin(user, authDevice);
   }
   async passwordRecovery({ email, fallback_url }: PasswordRecoveryRequest) {
-    const user = await this.userRepository.findOneBy('email', email, 'COMPACT');
+    const user = await this.userRepository.findOneBy('email', email);
     if (!user) {
       throw new UnauthorizedException('Unauthorized');
     }

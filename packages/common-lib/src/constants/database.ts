@@ -25,6 +25,24 @@ export const SQL_FUNCTIONS = [
   'UUID()',
   'UUID_SHORT()',
 ] as const;
+
+export const SQL_CLAUSES = {
+  '=': '=',
+  '>': '>',
+  '<': '<',
+  '>=': '>=',
+  '<=': '<=',
+  '!=': '!=',
+  LIKE: 'LIKE',
+  ILIKE: 'ILIKE',
+  'NOT ILIKE': 'NOT ILIKE',
+  'NOT LIKE': 'NOT LIKE',
+  IN: 'IN',
+  'NOT IN': 'NOT IN',
+  IS: 'IS',
+  'IS NOT': 'IS NOT',
+} as const;
+
 // MIGRATIONS
 export const MIGRATION_TABLE_NAME = 'migrations';
 

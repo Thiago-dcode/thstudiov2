@@ -42,6 +42,9 @@ const up = async () => {
     Column.boolean('is_trialing', {
       default: false,
     }),
+    Column.timestamp('trialing_ends_at', {
+      nullable: true,
+    }),
     Column.timestamp('cancel_at', {
       nullable: true,
     }),

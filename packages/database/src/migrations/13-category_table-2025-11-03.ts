@@ -89,10 +89,12 @@ const up = async () => {
 const down = async () => {
 
   //Your migration rollback code here
-  await Schema.table('category_translations').dropIfExists();
-  await Alter.table('categories').dropConstraint('categories_parent_id_fkey');
+  await Schema.table('collection_categories').dropIfExists();
+  await Schema.table('media_categories').dropIfExists();
   await Schema.table('portfolio_categories').dropIfExists();
   await Schema.table('user_categories').dropIfExists();
+  await Schema.table('category_translations').dropIfExists();
+  await Alter.table('categories').dropConstraintIfExists('categories_parent_id_fkey');
   await Schema.table('categories').dropIfExists();
 };
 

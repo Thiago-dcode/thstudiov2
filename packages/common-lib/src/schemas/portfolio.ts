@@ -10,6 +10,7 @@ export type PortfolioSchema = {
   description?: string | null;
   is_featured: boolean;
   is_highlight: boolean;
+  is_active: boolean;
   user_id: number;
   created_at: Date;
   updated_at: Date;
@@ -36,7 +37,8 @@ export type PortfolioFullSchema = PortfolioSchema & {
   url?: string | null; 
   blocked: boolean;
   shape?: EnumType<'MEDIA_SHAPE'> | null;
-  is_active: boolean;
+  /** From joined `media` row (collision with `portfolios.is_active`). */
+  m_is_active?: boolean | null;
   seo_alt?: string | null;
   seo_title?: string | null;
   seo_description?: string | null;

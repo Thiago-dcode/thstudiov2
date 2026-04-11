@@ -181,6 +181,10 @@ export class ServiceRepository extends BaseRepository {
       query.where('is_highlight', '=', filters.is_highlight);
     }
 
+    if (typeof filters.is_active === 'boolean') {
+      query.where('is_active', '=', filters.is_active);
+    }
+
     this.requestService.pagination =
       await this.handleOffsetPagination(query, filters);
     query.orderBy('created_at', 'DESC');

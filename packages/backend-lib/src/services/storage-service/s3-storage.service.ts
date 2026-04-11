@@ -2,7 +2,9 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { StorageService } from "./storage.service";
 import {
     DeleteObjectCommand,
+    DeleteObjectsCommand,
     GetObjectCommand,
+    ListObjectsV2Command,
     PutObjectCommand,
     S3Client,
   } from '@aws-sdk/client-s3';
@@ -70,6 +72,43 @@ export class S3StorageService extends StorageService {
             return false;
         }
     }
+    /**
+     * Recursively deletes all objects under the given prefix (directory).
+     * Handles pagination via `IsTruncated` to support prefixes with >1000 objects.
+     */
+    public async deleteDirectory(prefix: string): Promise<boolean> {
+        try {
+            let isTruncated = true;
+            let continuationToken: string | undefined;
+
+            while (isTruncated) {
+                const listCommand = new ListObjectsV2Command({
+                    Bucket: this.config.bucket,
+                    Prefix: prefix,
+                    ContinuationToken: continuationToken,
+                });
+                const listed = await this.s3Client.send(listCommand);
+
+                if (!listed.Contents || listed.Contents.length === 0) break;
+
+                const deleteCommand = new DeleteObjectsCommand({
+                    Bucket: this.config.bucket,
+                    Delete: {
+                        Objects: listed.Contents.map(({ Key }) => ({ Key })),
+                    },
+                });
+                await this.s3Client.send(deleteCommand);
+
+                isTruncated = listed.IsTruncated ?? false;
+                continuationToken = listed.NextContinuationToken;
+            }
+
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
     public async list(path: string): Promise<File[]> {
         throw new Error('Not implemented ' + path);
     }

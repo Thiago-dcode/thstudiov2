@@ -9,6 +9,8 @@ import { TwoFAMail } from './mails/twofa-mail';
 import { PasswordRecoveryAttemptsModule } from './password-recovery-attempts/password-recovery-attempts.module';
 import { PasswordRecoveryMail } from './mails/password-recovery-mail';
 import { RolesModule } from '../roles/roles.module';
+import { InvitationLinkModule } from '../invitation-links/invitation-link.module';
+import { UserBenefitModule } from '../user-benefit/user-benefit.module';
 
 @Module({
   imports: [
@@ -16,6 +18,8 @@ import { RolesModule } from '../roles/roles.module';
     UserSessionsModule,
     PasswordRecoveryAttemptsModule,
     RolesModule,
+    InvitationLinkModule,
+    UserBenefitModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, UserRepository, JwtService, TwoFAMail, PasswordRecoveryMail],

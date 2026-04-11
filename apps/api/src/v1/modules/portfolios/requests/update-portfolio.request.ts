@@ -44,6 +44,10 @@ export class UpdatePortfolioRequest {
   is_highlight?: boolean;
 
   @IsOptional()
+  @IsBoolean()
+  is_active?: boolean;
+
+  @IsOptional()
   thumbnail?: Express.Multer.File;
 
   @IsOptional()

@@ -67,7 +67,7 @@ export class UserService {
   }
   async findOne(id: number, findUserRequest?: FindUserRequest) {
     if (findUserRequest?.format === 'COMPACT') {
-      return await this.userRepository.findOneBy('id', id, 'COMPACT');
+      return await this.userRepository.findOneBy('id', id);
     }
     const result = await this.userRepository.findById(id);
     if (result?.avatar) {
@@ -92,8 +92,12 @@ export class UserService {
     return result;
   }
 
-  async getCompactedByUsername(username:string){
+  async getCompactedByUsername(username: string) {
     return await this.userRepository.findByUsernameCompact(username);
+  }
+  
+  async getCompactedById(id: number) {
+    return await this.userRepository.findByIdCompact(id);
   }
 
   async usernameExists(username: string): Promise<boolean> {
@@ -112,11 +116,7 @@ export class UserService {
   }
 
   async findOneByStripeId(id: string) {
-    return await this.userRepository.findOneBy(
-      'stripe_customer_id',
-      id,
-      'COMPACT',
-    );
+    return await this.userRepository.findOneBy('stripe_customer_id', id);
   }
 
   async update(
@@ -220,7 +220,7 @@ export class UserService {
 
   async updatePassword(userId: number, request: UpdateUserPasswordRequest) {
 
-    const user = await this.userRepository.findOneByColumnWithSecrets('id', userId);
+    const user = await this.userRepository.findOneByWithSecrets('id', userId);
 
     if (!user || user.id !== this.requestService.user.id) {
       throw new UnauthorizedException();

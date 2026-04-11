@@ -1,20 +1,22 @@
 import { Catch, ExceptionFilter, ArgumentsHost } from '@nestjs/common';
 import {
+  IP_ADDRESS_HEADER,
   LANGUAGE_HEADER,
   REQUEST_START_TIME,
+  USER_AGENT_HEADER,
   USER_ID_HEADER,
 } from '@repo/common-lib/constants/constants';
 import { FactoryLogService } from '@repo/backend-lib/services/log-service';
 import { API_ERRORS_CHANNEL, logConfig } from 'src/config/logging';
 import { format } from 'date-fns/format';
 import { VALIDATION_ERROR_STATUS } from '../utils/constants';
-import {Error as ApiError, ErrorResponse } from '@repo/common-lib/types/response';
+import { Error as ApiError, ErrorResponse } from '@repo/common-lib/types/response';
 import { RequestService } from '../services/request.service';
 import { ApiException } from '../exceptions/api-exception';
 
 @Catch()
 export class ResponseExceptionFilter implements ExceptionFilter {
-  constructor(private readonly requestService: RequestService) {}
+  constructor(private readonly requestService: RequestService) { }
   catch(exception: any, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse();
@@ -25,7 +27,7 @@ export class ResponseExceptionFilter implements ExceptionFilter {
         exception?.code || exception?.statusCode || exception?.status || 500;
       status = !isNaN(status) ? status : 500;
       status = VALIDATION_ERROR_STATUS.includes(status) ? status : 500;
-      const api_error_code= exception instanceof ApiException? exception.API_ERROR_CODE:undefined;
+      const api_error_code = exception instanceof ApiException ? exception.API_ERROR_CODE : undefined;
       const message: string =
         typeof exception?.message === 'string'
           ? exception?.message
@@ -35,7 +37,7 @@ export class ResponseExceptionFilter implements ExceptionFilter {
       const errors: string[] = Array.isArray(exception?.response?.message)
         ? exception?.response.message
         : [message];
-      const error:ApiError = {
+      const error: ApiError = {
         api_error_code,
         status_code: status,
         message,
@@ -65,8 +67,17 @@ export class ResponseExceptionFilter implements ExceptionFilter {
         data: null,
         error,
         audit: {
-          ip: this.requestService?.ip_address,
-          user_agent: this.requestService?.user_agent,
+          ip:
+            request?.get?.(IP_ADDRESS_HEADER) ||
+            request?.ip ||
+            request?.get?.('x-forwarded-for') ||
+            this.requestService?.ip_address ||
+            '-',
+          user_agent:
+            request?.get?.(USER_AGENT_HEADER) ||
+            request?.get?.('user-agent') ||
+            this.requestService?.user_agent ||
+            '-',
           request_time: !isNaN(requestStartTime)
             ? (Date.now() - requestStartTime) / 1000
             : 0,

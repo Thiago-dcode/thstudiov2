@@ -5,7 +5,7 @@ import {
   NestInterceptor,
 } from '@nestjs/common';
 import { Audit, SuccessResponse } from '@repo/common-lib/types/response';
-import { map } from 'rxjs';
+import { finalize, map } from 'rxjs';
 import { RequestService } from '../services/request.service';
 import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/constants';
 
@@ -14,7 +14,7 @@ export class ResponseInterceptor implements NestInterceptor {
   constructor(private readonly requestService: RequestService) {}
   intercept(_: ExecutionContext, next: CallHandler) {
     const startTime = Date.now();
-
+    
     return next.handle().pipe(
       map((res) => {
         const endTime = Date.now();
@@ -32,6 +32,9 @@ export class ResponseInterceptor implements NestInterceptor {
           audit,
         };
         return response;
+      }),
+      finalize(() => {
+        this.requestService.cleanUp();
       }),
     );
   }

@@ -74,6 +74,7 @@ export class ServiceService {
       ...rest,
       is_active: rest.is_active ?? true,
       show_price: rest.show_price ?? false,
+      is_highlight: rest.is_highlight ?? false,
       thumbnail: thumbnailPath,
     });
 
@@ -136,7 +137,6 @@ export class ServiceService {
 
     cleanObj(request);
     const { thumbnail, ...rest } = request;
-    console.log("REST",rest);
     const updated = await this.serviceRepository.updateById(id, {
       ...rest,
       ...(thumbnailPath ? { thumbnail: thumbnailPath } : {}),

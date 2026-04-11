@@ -299,6 +299,76 @@ describe('QueryBuilder', () => {
       expect(queryBuilder['values']).toEqual(['1']);
     });
 
+    describe('where(column, value) shorthand (default =)', () => {
+      it('treats two arguments as equality like where(column, "=", value)', () => {
+        queryBuilder.where('status', 'active');
+
+        expect(queryBuilder['wheres']).toHaveLength(1);
+        expect(queryBuilder['wheres'][0]).toEqual({
+          column: 'status',
+          operator: '=',
+          position: 0,
+          type: 'where',
+          value: 'active',
+        });
+        expect(queryBuilder['values']).toEqual(['active']);
+      });
+
+      it('supports explicit operator with three arguments', () => {
+        queryBuilder.where('status', '!=', 'deleted');
+
+        expect(queryBuilder['wheres'][0]).toMatchObject({
+          column: 'status',
+          operator: '!=',
+          value: 'deleted',
+        });
+        expect(queryBuilder['values']).toEqual(['deleted']);
+      });
+
+      it('uses three-arg form when arity is 3 even if value is undefined', () => {
+        queryBuilder.where('score', '>', undefined);
+
+        expect(queryBuilder['wheres'][0]).toMatchObject({
+          column: 'score',
+          operator: '>',
+          value: undefined,
+        });
+        expect(queryBuilder['values']).toEqual([undefined]);
+      });
+
+      it('chains shorthand where with explicit operator', () => {
+        queryBuilder.where('status', 'active').where('age', '>=', 18);
+
+        expect(queryBuilder['wheres']).toHaveLength(2);
+        expect(queryBuilder['wheres'][0]).toMatchObject({
+          operator: '=',
+          value: 'active',
+        });
+        expect(queryBuilder['wheres'][1]).toMatchObject({
+          operator: '>=',
+          value: 18,
+        });
+        expect(queryBuilder['values']).toEqual(['active', 18]);
+      });
+
+      it('orWhere two-arg form defaults to equality', () => {
+        queryBuilder.where('id', 1).orWhere('role', 'admin');
+
+        expect(queryBuilder['wheres']).toHaveLength(2);
+        expect(queryBuilder['wheres'][0]?.type).toBe('where');
+        expect(queryBuilder['wheres'][1]?.type).toBe('orWhere');
+        expect(queryBuilder['wheres'][0]).toMatchObject({
+          operator: '=',
+          value: 1,
+        });
+        expect(queryBuilder['wheres'][1]).toMatchObject({
+          operator: '=',
+          value: 'admin',
+        });
+        expect(queryBuilder['values']).toEqual([1, 'admin']);
+      });
+    });
+
     it('should support method chaining for WHERE conditions', () => {
       // Act
       expect(queryBuilder['valuesPosition']).toBe(0);

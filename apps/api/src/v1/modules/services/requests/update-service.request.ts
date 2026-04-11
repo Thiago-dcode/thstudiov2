@@ -49,6 +49,10 @@ export class UpdateServiceRequest {
   show_price?: boolean;
 
   @IsOptional()
+  @IsBoolean()
+  is_highlight?: boolean;
+
+  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => ServiceFeatureItem)

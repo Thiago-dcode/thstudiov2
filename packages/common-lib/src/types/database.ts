@@ -1,4 +1,4 @@
-import { SQL_FUNCTIONS  } from '../constants/database';
+import { SQL_CLAUSES, SQL_FUNCTIONS } from '../constants/database';
 import { AvailableEnums, EnumType ,TABLES_ENUM} from '../constants/enums';
 
 export type DatabaseClient = 'postgres' | 'mysql' | 'sqlite' | 'mongodb';
@@ -31,20 +31,8 @@ export type SqlValue =
   | undefined
   | EnumType<AvailableEnums>;
 export type SqlClause =
-  | '='
-  | '>'
-  | '<'
-  | '>='
-  | '<='
-  | '!='
-  | 'LIKE'
-  | 'ILIKE'
-  | 'NOT ILIKE'
-  | 'NOT LIKE'
-  | 'IN'
-  | 'NOT IN'
-  | 'IS'
-  | 'IS NOT';
+  (typeof SQL_CLAUSES)[keyof typeof SQL_CLAUSES];
+  
 export type SqlOperation =
   | 'where'
   | 'join'

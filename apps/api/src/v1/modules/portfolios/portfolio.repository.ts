@@ -28,6 +28,7 @@ export class PortfolioRepository extends BaseRepository {
     'portfolios.description',
     'portfolios.is_featured',
     'portfolios.is_highlight',
+    'portfolios.is_active',
     'portfolios.user_id',
     'portfolios.created_at',
     'portfolios.updated_at',
@@ -49,6 +50,7 @@ export class PortfolioRepository extends BaseRepository {
     'media.seo_title',
     'media.is_featured as m_is_featured',
     'media.is_highlight as m_is_highlight',
+    'media.is_active as m_is_active',
   ];
 
   constructor(private readonly requestService: RequestService) {
@@ -215,6 +217,10 @@ export class PortfolioRepository extends BaseRepository {
       query.where('is_highlight', '=', filters.is_highlight);
     }
 
+    if (typeof filters.is_active === 'boolean') {
+      query.where('is_active', '=', filters.is_active);
+    }
+
     this.requestService.pagination =
       await this.handleOffsetPagination(query, filters);
     query.orderBy('created_at', 'DESC');
@@ -232,6 +238,7 @@ export class PortfolioRepository extends BaseRepository {
       description: result.description,
       is_featured: result.is_featured,
       is_highlight: result.is_highlight,
+      is_active: result.is_active,
       user_id: result.user_id,
       created_at: result.created_at,
       updated_at: result.updated_at,
@@ -269,6 +276,7 @@ export class PortfolioRepository extends BaseRepository {
       description: first.description,
       is_featured: first.is_featured,
       is_highlight: first.is_highlight,
+      is_active: first.is_active,
       user_id: first.user_id,
       created_at: first.created_at,
       updated_at: first.updated_at,

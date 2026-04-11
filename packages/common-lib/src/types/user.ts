@@ -1,21 +1,18 @@
-import { EnumType } from "../constants/enums";
-import { UserSchema, BaseUserSchema } from "../schemas/user";
+import { UserSchema, UserCoreSchema } from "../schemas/user";
 import { CategoryBase } from "./category";
 import { Role } from "./role";
 import { FullPlan } from "./plan";
 import { OffsetPaginationRequest } from "./request";
 import { UserExtraData } from "./user-extra-data";
+import { Benefit } from "./benefit";
 
-// BaseUser derived from BaseUserSchema (without password, timestamps, extended profile fields, and flat role_id)
-// Always includes nested `role` from users ↔ roles join (see BaseUserWithRoleRowSchema).
+// Core user fields (no password/secrets, no profile display fields, no flat FK role_id).
+// Always includes nested `role` from users ↔ roles join (see UserCoreRoleRow).
 export type BaseUser = Omit<
-  BaseUserSchema,
+  UserCoreSchema,
   | 'password'
   | 'twofa_code'
-  | 'biography'
   | 'short_biography'
-  | 'avatar'
-  | 'banner'
   | 'role_id'
 > & {
   role: Pick<Role, 'id' | 'name'>;
@@ -28,14 +25,18 @@ export type BaseUserWithSecrets = BaseUser & {
 };
 
 // CompactUser: minimal user info (id, email, username)
-export type CompactUser = Pick<UserSchema, 'id' | 'email' | 'username' | 'name' | 'surname'>;
+export type CompactUser = Pick<UserSchema, 'id' | 'email' | 'username' | 'name' | 'surname'| 'benefit_id'>;
 
-// User extends the schema with all fields except timestamps, password, address_id, and flat role_id
+// Full user with all profile fields, nested role + benefit (no raw FKs, no secrets).
 export type User = Omit<
   UserSchema,
-  'created_at' | 'updated_at' | 'password' | 'address_id' | 'role_id'
+  'created_at' | 'updated_at' | 'password' | 'role_id' | 'benefit_id' | 'invitation_link_id'
 > & {
   role: Pick<Role, 'id' | 'name'>;
+  benefit: Benefit & {
+    redeemed:boolean,
+  } | null;
+  // invitation_link: InvitationLink | null;
 };
 
 export type ProfileAddress = {
@@ -53,9 +54,6 @@ export type UserProfile = Pick<UserSchema,
   address: ProfileAddress | null;
   categories: Omit<CategoryBase,'is_featured'>[];
 };
-export type FindUserRequest = {
-  format?: EnumType<'FORMAT_TYPE'>
-}
 
 export type CreateUserInput = Omit<UserSchema, 'id' | 'created_at' | 'updated_at' | 'is_featured'>;
 export type UpdateUserInput = Partial<CreateUserInput>;

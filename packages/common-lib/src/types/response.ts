@@ -49,9 +49,11 @@ export type ReturnError<T> = {
 }
 export type ActionResponseError<T> = ReturnError<T> & {
   data: null,
+  pagination?:undefined,
 }
 export type ActionResponseSuccess<T> = {
   data: T,
+  pagination?:Pagination,
   errors: null,
   inputErrors?: undefined,
 }

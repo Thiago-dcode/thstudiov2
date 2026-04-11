@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { Helpers } from "src/common/services/helpers.service";
-import { FullService, Service } from "@repo/common-lib/types/service";
+import { FullService, Service, ServiceIndexRequest } from "@repo/common-lib/types/service";
 import { UserRepository } from "../users/users.repository";
 import { ServiceRepository } from "../services/service.repository";
 
@@ -31,7 +31,7 @@ export class UserServiceService {
   }
 
   async getByUsername(username: string, slug: string): Promise<FullService> {
-    const user = await this.userRepository.findOneBy('username', username, 'COMPACT');
+    const user = await this.userRepository.findByUsernameCompact(username);
     if (!user) return null;
 
     return this.helpers.cacheRemember(
@@ -41,14 +41,35 @@ export class UserServiceService {
     );
   }
 
-  async getAllByUsername(username: string): Promise<Service[]> {
+  async getAllByUsername(
+    username: string,
+    filters?: Omit<ServiceIndexRequest, "user_id">,
+  ): Promise<Service[]> {
     const user = await this.userRepository.findByUsernameCompact(username);
     if (!user) return [];
 
-    return this.helpers.cacheRemember(
-      serviceCacheKeys.allByUser(user.id),
-      this.resolveAllServices(user.id),
-      { append_language: false, ttl: CACHE_TTL },
+    if (this.shouldCacheServicesList(filters)) {
+      return this.helpers.cacheRemember(
+        serviceCacheKeys.allByUser(user.id),
+        this.resolveAllServices(user.id),
+        { append_language: false, ttl: CACHE_TTL },
+      );
+    }
+
+    return this.resolveAllServices(user.id, filters);
+  }
+
+  private shouldCacheServicesList(
+    filters?: Omit<ServiceIndexRequest, "user_id">,
+  ): boolean {
+    if (filters == null) return true;
+    const { paginated, page, is_featured, is_highlight, is_active } = filters;
+    return (
+      paginated !== true &&
+      (page === undefined || page <= 1) &&
+      typeof is_featured !== "boolean" &&
+      typeof is_highlight !== "boolean" &&
+      typeof is_active !== "boolean"
     );
   }
 
@@ -72,12 +93,24 @@ export class UserServiceService {
     return service;
   }
 
-  private async resolveAllServices(userId: number): Promise<Service[]> {
-    const services = await this.serviceRepository.getAll({ user_id: userId });
+  private async resolveAllServices(
+    userId: number,
+    filters?: Omit<ServiceIndexRequest, "user_id">,
+  ): Promise<Service[]> {
+    const services = await this.serviceRepository.getAll({
+      user_id: userId,
+      ...filters,
+    });
 
-    return await Promise.all(services.map(async (service) => ({
-      ...service,
-      thumbnail: service.thumbnail ? await this.helpers.getAsset(service.thumbnail, { expireIn: CACHE_TTL_SECONDS }) : undefined,
-    })));
+    return await Promise.all(
+      services.map(async (service) => ({
+        ...service,
+        thumbnail: service.thumbnail
+          ? await this.helpers.getAsset(service.thumbnail, {
+              expireIn: CACHE_TTL_SECONDS,
+            })
+          : undefined,
+      })),
+    );
   }
 }

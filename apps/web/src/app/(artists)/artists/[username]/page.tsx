@@ -131,7 +131,6 @@ const ArtistHomePage = async ({ params }: { params: Promise<{ username: string }
                 <Suspense fallback={<div className="flex justify-center py-16"><Spinner /></div>}>
                     <ArtistSections
                         username={profile.username}
-                        userId={profile.id}
                     />
                 </Suspense>
             </div>

@@ -3,14 +3,14 @@ import FormComponent from "@/lib/components/form-component";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { Errors } from "@repo/ui/components/custom/errors";
 import { createContext, FormEvent, ReactElement, ReactNode, useCallback, useContext, useEffect, useRef, useState } from "react";
-import {  User } from "@repo/common-lib/types/user";
+import { User } from "@repo/common-lib/types/user";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Button } from "@repo/ui/components/shadcn/button";
 import { cn } from "@repo/ui/lib/utils";
 import { updateUserAction } from "@/modules/users/server-actions/update-user.action";
 import { setUserSession } from "@/modules/auth/server-actions/user-session.action";
-import { UpdateUserInputAvatarFile } from "@repo/common-lib/types/user copy";
+import { UpdateUserInputWithAssets } from "@repo/common-lib/types/user";
 
 
 type InputsType = HTMLInputElement | HTMLTextAreaElement | null | undefined
@@ -21,7 +21,7 @@ type FunnelContextType = {
     lastStep: number,
     isPending: boolean,
     actionElement?: HTMLInputElement,
-    inputs?: UpdateUserInputAvatarFile,
+    inputs?: UpdateUserInputWithAssets,
     errors?: string[],
     refInputs?: (HTMLInputElement | HTMLTextAreaElement)[],
     canContinue: boolean,
@@ -51,7 +51,7 @@ export const useFunnel = () => useContext(FunnelContext);
 
 export const FunnelProvider = ({ children, user, lastStep, defaultCanContinue = false }: {
     children: ReactElement,
-    user: User & {token:string},
+    user: User & { token: string },
     lastStep: number,
     defaultCanContinue?: boolean
 }) => {
@@ -149,7 +149,7 @@ export const ContainerFormFunnel = ({ children, onSubmitCallback, className }: {
             e.preventDefault();
             if (isPending || (!canContinue && actionRef.current?.value === 'continue')) return;
 
-           
+
             handleSubmit(e);
             if (onSubmitCallback) await onSubmitCallback(e);
         }}>
@@ -162,7 +162,7 @@ export const ContainerFormFunnel = ({ children, onSubmitCallback, className }: {
         </FormComponent.Form>
         {/* Error Messages */}
         {errors && errors.length > 0 && (
-            <Errors  errors={errors} />
+            <Errors errors={errors} />
         )}
     </FormComponent.Container>
 
@@ -197,7 +197,7 @@ export const ButtonSubmitFunnel = ({ text = 'Continue', simple = false }: {
     )
 }
 
-export const ButtonFinishFunnel = ({ variant='ghost',text = 'Finish' }: {
+export const ButtonFinishFunnel = ({ variant = 'ghost', text = 'Finish' }: {
     text?: string
     variant?: "base" | "link" | "default" | "primary" | "destructive" | "outline" | "secondary" | "ghost" | null | undefined
 }) => {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import {
     Dialog,
     DialogContent,
@@ -20,10 +20,13 @@ import { createUserContactAction } from "@/modules/user-contacts/server-actions/
 import { toast } from "@repo/ui/sonner"
 
 export const ArtistContactDialog = ({ children }: { children?: React.ReactNode }) => {
+    const [mounted, setMounted] = useState(false)
     const [open, setOpen] = useState(false)
     const { artist, isPending: loadingArtist } = useArtist()
     const { session, isLoading: loadingSession } = useSession()
     const isSelfContact = Boolean(session && artist && session.id === artist.id)
+
+    useEffect(() => { setMounted(true) }, [])
 
     const { handleSubmit, isPending, inputErrors, success, reset } = useHandleAction({
         action: createUserContactAction,
@@ -38,18 +41,22 @@ export const ArtistContactDialog = ({ children }: { children?: React.ReactNode }
         }
     })
 
+    const fallback = children ?? (
+        <Button variant="default" size="sm">
+            <Mail className="size-3.5" />
+            Contact
+        </Button>
+    )
+
+    if (!mounted) return fallback
+
     return (
         <Dialog open={open} onOpenChange={(v) => {
             setOpen(v)
             if (!v) reset()
         }}>
             <DialogTrigger asChild className="cursor-pointer">
-                {children ?? (
-                    <Button variant="default" size="sm">
-                        <Mail className="size-3.5" />
-                        Contact
-                    </Button>
-                )}
+                {fallback}
             </DialogTrigger>
 
             <DialogContent className="max-w-xl p-6 min-h-[400px]">

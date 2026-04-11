@@ -51,4 +51,8 @@ export class RegisterRequest {
       value === true || value === 'true' || value === '1' || value === 1,
   )
   email_validated: boolean = false;
+
+  @IsString()
+  @IsOptional()
+  invitation_code?: string;
 }

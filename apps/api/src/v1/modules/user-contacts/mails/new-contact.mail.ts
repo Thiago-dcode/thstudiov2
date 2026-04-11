@@ -4,11 +4,11 @@ import { ViewService } from '@repo/backend-lib/services/view-service/base';
 import { Injectable } from '@nestjs/common';
 import { I18nService } from 'nestjs-i18n';
 import { CreateUserContactInput } from '@repo/common-lib/types/user-contact';
-import { BaseUser } from '@repo/common-lib/types/user';
+import { BaseUser, CompactUser } from '@repo/common-lib/types/user';
 
 @Injectable()
 export class NewContactMail extends Mailable {
-  private artist: BaseUser;
+  private artist: CompactUser;
   private contact: CreateUserContactInput;
 
   constructor(
@@ -18,7 +18,7 @@ export class NewContactMail extends Mailable {
     super();
   }
 
-  setData(artist: BaseUser, contact: CreateUserContactInput) {
+  setData(artist: CompactUser, contact: CreateUserContactInput) {
     this.artist = artist;
     this.contact = contact;
     return this;

@@ -80,8 +80,8 @@ export const CollectionCard = ({
         )}
       </div>
       {title ? (
-        <div className="absolute bottom-[12%] left-[12%] z-20 pointer-events-none">
-          <h3 className="text-xs text-bg/90 font-semibold text-foreground truncate bg-text/50  px-2 py-1 shadow-md max-w-full pointer-events-auto">
+        <div className="absolute inset-x-[12%] bottom-[12%] z-20 pointer-events-none min-w-0">
+          <h3 className="w-full min-w-0 truncate text-xs text-bg/90 font-semibold text-foreground bg-text/50 px-2 py-1 shadow-md pointer-events-auto">
             {title}
           </h3>
         </div>

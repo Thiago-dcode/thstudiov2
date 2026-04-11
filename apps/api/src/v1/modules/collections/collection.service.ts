@@ -69,6 +69,7 @@ export class CollectionService {
       description: request.description,
       user_id: request.user_id,
       is_highlight: request.is_highlight ?? false,
+      is_active: request.is_active ?? true,
       media: request.media,
     });
     this.eventEmitter.emit(UPDATE_USER_EXTRA_DATA_METRICS, new UpdateUserExtraDataMetricsEvent(request.user_id));

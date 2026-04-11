@@ -13,14 +13,13 @@ import { I18nModule, I18nJsonLoader } from 'nestjs-i18n';
 import { join } from 'path';
 import { ServicesModule } from './common/services/services.module';
 import { VIEW_ENGINE } from './common/utils/constants';
-import { LanguageMiddleware } from './common/middlewares/language.middleware';
+import { RequestMiddleware } from './common/middlewares/request.middleware';
 import { LanguageResolver } from './i18n/resolvers/language.resolver';
 import { InterceptorProviders } from './common/intecerceptors/interceptor.providers';
 import { filterProviders } from './common/filters/filter.providers';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthGuard } from './common/guards/auth.guard';
 import { UserStrikesGuard } from './common/guards/user-strikes.guard';
-import { UserAuthDeviceMiddleware } from './common/middlewares/user-auth-device.middleware';
 import { UserSessionsModule } from './v1/modules/user-sessions/user-sessions.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { MediaModule } from './v1/modules/media/media.module';
@@ -49,6 +48,8 @@ import { ServiceModule } from './v1/modules/services/service.module';
 import { UserServiceModule } from './v1/modules/user-services/user-service.module';
 import { LocationModule } from './v1/modules/locations/location.module';
 import { RolesModule } from './v1/modules/roles/roles.module';
+import { InvitationLinkModule } from './v1/modules/invitation-links/invitation-link.module';
+import { UserBenefitModule } from './v1/modules/user-benefit/user-benefit.module';
 /** Feature modules mounted at `api/v1/*` (not under `admin/`). */
 const API_V1_MODULES = [
   AuthModule,
@@ -75,9 +76,24 @@ const API_V1_MODULES = [
   ServiceModule,
   UserServiceModule,
   LocationModule,
+  InvitationLinkModule,
+  UserBenefitModule,
 ];
+const ADMIN_V1_MODULES = [
+  AdminModule
+]
 @Module({
   imports: [
+    RouterModule.register([
+      ...API_V1_MODULES.map((module) => ({
+        path: 'api/v1',
+        module,
+      })),
+      ...ADMIN_V1_MODULES.map(module => {
+        return { path: 'api/v1/admin', module }
+      })
+      ,
+    ]),
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', '..', 'client'),
       serveRoot: '/',
@@ -132,13 +148,6 @@ const API_V1_MODULES = [
       }),
       inject: [ConfigService],
     }),
-    RouterModule.register([
-      ...API_V1_MODULES.map((module) => ({
-        path: 'api/v1',
-        module,
-      })),
-      { path: 'api/v1/admin', module: AdminModule },
-    ]),
     I18nModule.forRootAsync({
       loader: I18nJsonLoader,
       useFactory: () => ({
@@ -193,7 +202,6 @@ const API_V1_MODULES = [
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(LanguageMiddleware).forRoutes('*');
-    consumer.apply(UserAuthDeviceMiddleware).forRoutes('*');
+    consumer.apply(RequestMiddleware).forRoutes('*');
   }
 }

@@ -1,6 +1,162 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { FactoryCompressService } from '@repo/backend-lib/services/compress-service/factory';
+import { FactoryStorageService } from '@repo/backend-lib/services/storage-service/factory';
+import type { S3StorageConfig } from '@repo/backend-lib/services/storage-service/types';
+import Logger from '@repo/backend-lib/utils/console';
 import { EnumType } from "@repo/common-lib/constants/enums";
+import { getConfigValue } from '@repo/common-lib/config/utils';
 import { generateValidSlug } from "@repo/common-lib/utils/generate-valid-slug";
 import { Query, Schema } from "src/lib/facades";
+
+/** Same S3 key pattern as {@link CategoriesService.categoryThumbnailKey}: `categories/${slug}/thumbnail.webp`. */
+const CATEGORY_THUMBNAIL_REL_PATH = (slug: string) =>
+  `categories/${slug}/thumbnail.webp`;
+
+/** Matches {@link CategoriesService.storeCategoryThumbnail} / {@link Helpers.setAsset}. */
+const CATEGORY_THUMB_TARGET_SIZE_BYTES = Math.floor((100 / 1024) * 1024 * 1024);
+const CATEGORY_THUMB_QUALITY = 80;
+
+const CATEGORY_IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.webp', '.png'] as const;
+
+/**
+ * When the slug from the category `name` does not match the image basename
+ * (e.g. `handmade.jpg` for "Crafts & Handmade" → slug `crafts-handmade`).
+ */
+const CATEGORY_IMAGE_SLUG_ALIASES: Record<string, string> = {
+  'crafts-handmade': 'handmade',
+};
+
+function resolveCategoriesImagesDir(): string {
+  const dir = path.join(process.cwd(), 'src', 'seeds', 'categories-images');
+  if (fs.existsSync(dir)) {
+    return dir;
+  }
+  throw new Error(
+    `categories-images not found at ${dir}. Run dbcli from packages/database.`,
+  );
+}
+
+function isS3Configured(): boolean {
+  const c = getConfigValue('storage');
+  return !!(
+    c.bucket &&
+    c.region &&
+    c.accessKeyId &&
+    c.secretAccessKey
+  );
+}
+
+function buildS3Config(): S3StorageConfig {
+  const STORAGE_CONFIG = getConfigValue('storage');
+  if (
+    !STORAGE_CONFIG.bucket ||
+    !STORAGE_CONFIG.region ||
+    !STORAGE_CONFIG.accessKeyId ||
+    !STORAGE_CONFIG.secretAccessKey
+  ) {
+    throw new Error(
+      'S3 storage is not configured. Set STORAGE_BUCKET, STORAGE_REGION, STORAGE_ACCESS_KEY, STORAGE_SECRET_ACCESS_KEY.',
+    );
+  }
+  return {
+    driver: 's3',
+    bucket: STORAGE_CONFIG.bucket,
+    region: STORAGE_CONFIG.region,
+    accessKeyId: STORAGE_CONFIG.accessKeyId,
+    secretAccessKey: STORAGE_CONFIG.secretAccessKey,
+    signedUrlExpiration: STORAGE_CONFIG.signedUrlExpiration,
+  };
+}
+
+function mimeForImagePath(filePath: string): string {
+  const ext = path.extname(filePath).toLowerCase();
+  switch (ext) {
+    case '.jpg':
+    case '.jpeg':
+      return 'image/jpeg';
+    case '.png':
+      return 'image/png';
+    case '.webp':
+      return 'image/webp';
+    default:
+      return 'application/octet-stream';
+  }
+}
+
+function multerLike(buffer: Buffer, originalname: string, mimetype: string) {
+  return {
+    fieldname: 'thumbnail',
+    originalname,
+    encoding: '7bit',
+    mimetype,
+    size: buffer.length,
+    buffer,
+    destination: '',
+    filename: '',
+    path: '',
+  };
+}
+
+/** Resolve `src/seeds/categories-images/{basename}.{ext}` where basename is slug(name) or an alias. */
+function findCategorySourceImageFile(categoryName: string): string | null {
+  let dir: string;
+  try {
+    dir = resolveCategoriesImagesDir();
+  } catch {
+    return null;
+  }
+  const primarySlug = generateValidSlug(categoryName);
+  const basenames = [
+    primarySlug,
+    CATEGORY_IMAGE_SLUG_ALIASES[primarySlug],
+  ].filter((b): b is string => !!b);
+  const seen = new Set<string>();
+  for (const base of basenames) {
+    if (seen.has(base)) continue;
+    seen.add(base);
+    for (const ext of CATEGORY_IMAGE_EXTENSIONS) {
+      const fp = path.join(dir, `${base}${ext}`);
+      if (fs.existsSync(fp)) {
+        return fp;
+      }
+    }
+  }
+  return null;
+}
+
+async function uploadCategoryThumbnailFromFile(
+  allocatedSlug: string,
+  sourcePath: string,
+  compressService: ReturnType<typeof FactoryCompressService.create>,
+  storageService: ReturnType<typeof FactoryStorageService.create>,
+): Promise<string> {
+  const buffer = fs.readFileSync(sourcePath);
+  const originalname = path.basename(sourcePath);
+  const sourceFile = multerLike(buffer, originalname, mimeForImagePath(sourcePath));
+  const target =
+    sourceFile.size > CATEGORY_THUMB_TARGET_SIZE_BYTES
+      ? CATEGORY_THUMB_TARGET_SIZE_BYTES
+      : sourceFile.size;
+  const compressed = await compressService.optimizeImageToWebp(
+    sourceFile as Parameters<
+      typeof compressService.optimizeImageToWebp
+    >[0],
+    target,
+    CATEGORY_THUMB_QUALITY,
+  );
+  const out = multerLike(
+    compressed.buffer,
+    compressed.filename,
+    'image/webp',
+  );
+  const key = CATEGORY_THUMBNAIL_REL_PATH(allocatedSlug);
+  await storageService.write(
+    out as Parameters<typeof storageService.write>[0],
+    key,
+  );
+  return key;
+}
 
 const usedCategorySlugs = new Set<string>();
 
@@ -363,16 +519,49 @@ export const main = async () => {
             ]
         }
     ];
+
+    const s3Ok = isS3Configured();
+    const compressService = s3Ok
+      ? FactoryCompressService.create({ driver: 'sharp' })
+      : null;
+    const storageService = s3Ok
+      ? FactoryStorageService.create(buildS3Config())
+      : null;
+
     const createCategories = async (category: SeedCategory, parentId?: number) => {
         const slug = allocateCategorySlug(category.name);
-        const columns = ['name', 'slug', 'tags'];
-        const values: any[] = [category.name, slug, category.tags.join(',')];
+        let thumbnail: string | null = null;
+        const sourcePath = findCategorySourceImageFile(category.name);
+        if (sourcePath) {
+          if (compressService && storageService) {
+            thumbnail = await uploadCategoryThumbnailFromFile(
+              slug,
+              sourcePath,
+              compressService,
+              storageService,
+            );
+          } else {
+            Logger.warn(
+              `Category "${category.name}": found ${path.basename(sourcePath)} but S3 is not configured; skipping thumbnail upload.`,
+            );
+          }
+        }
+        const isFeatured = thumbnail != null;
+
+        const columns = ['name', 'slug', 'tags', 'thumbnail', 'is_featured'];
+        const values: unknown[] = [
+          category.name,
+          slug,
+          category.tags.join(','),
+          thumbnail,
+          isFeatured,
+        ];
 
         if (parentId !== undefined) {
             columns.push('parent_id');
             values.push(parentId);
         }
-        const parentCategory = await Query.table('categories').insertAndGet(columns, values, 'id');
+        const parentCategory = await Query.table('categories').insertAndGet(columns, values as any[], 'id');
         await Promise.all(category.translations.map(async (child) => {
             await Query.table('category_translations').insertAndGet(['name', 'language_code', 'category_id'], [child.name, child.code, parentCategory.id], 'id');
         }));

@@ -14,6 +14,7 @@ import {
 import { UserService } from '../users/users.service';
 import { MailService } from '@repo/backend-lib/services/mail-service';
 import { NewContactMail } from './mails/new-contact.mail';
+import { BaseUser } from '@repo/common-lib/types/user';
 
 @Processor(USER_CONTACTS_QUEUE)
 export class UserContactProcessor extends WorkerHost {
@@ -82,7 +83,7 @@ export class UserContactProcessor extends WorkerHost {
       // });
 
       // 3. Fetch artist user data
-      const artist = await this.userService.findOne(data.user_id);
+      const artist = await this.userService.findOneCompacted(data.user_id);
       if (artist) {
         // 4. Send email
         await this.mailService.sendAsync(

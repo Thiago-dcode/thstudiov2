@@ -30,47 +30,65 @@ export type UserSchema = {
   next_username_reset?: Date;
   next_password_reset?: Date;
   role_id: number;
+  benefit_id: number | null;
+  invitation_link_id: number | null;
   created_at: Date;
   updated_at: Date;
 };
 export type UserSchemaWithoutTimestamps = Omit<UserSchema, 'created_at' | 'updated_at'>;
-export type BaseUserSchema = Omit<UserSchema, 'created_at' | 'updated_at' | 'name' | 'surname' | 'biography' | 'avatar' | 'banner'>;
+export type UserCoreSchema = Omit<UserSchema, 'created_at' | 'updated_at' | 'name' | 'surname' | 'biography' | 'avatar' | 'banner'>;
 const tablesUser = [TABLES_ENUM.USERS] as const;
 export type UserSchemaColumns = TableColumn<typeof tablesUser, UserSchemaWithoutTimestamps>;
-export type BaseUserSchemaColumns = TableColumn<typeof tablesUser, BaseUserSchema>;
+export type UserCoreSchemaColumns = TableColumn<typeof tablesUser, UserCoreSchema>;
 
+// ==================== CORE USER + ROLE JOIN ====================
 /** users INNER JOIN roles — prefix colliding role columns (id, name). */
-export type BaseUserWithRoleRowSchema = BaseUserSchema & {
+export type UserCoreRoleRow = UserCoreSchema & {
   r_id: number;
   r_name: EnumType<'USER_ROLE'>;
 };
 
-const tablesUserWithRole = [TABLES_ENUM.USERS, TABLES_ENUM.ROLES] as const;
-export type BaseUserWithRoleRowColumns = TableColumn<
-  typeof tablesUserWithRole,
-  BaseUserWithRoleRowSchema
->;
-
-export type UserWithRoleRowSchema = UserSchema & {
+// ==================== FULL USER + ROLE JOIN ====================
+export type UserFullRoleRow = UserSchema & {
   r_id: number;
   r_name: EnumType<'USER_ROLE'>;
 };
-
-export type UserWithRoleRowColumns = TableColumn<
-  typeof tablesUserWithRole,
-  UserWithRoleRowSchema
->;
 
 /** Select list for users + roles join; r_* aliases avoid id/name collisions with users. */
-export type BaseUserWithRoleSelectColumn =
-  | BaseUserSchemaColumns
+export type UserCoreSelectColumn =
+  | UserCoreSchemaColumns
   | 'roles.id as r_id'
   | 'roles.name as r_name';
 
-export type UserWithRoleSelectColumn =
+export type UserFullSelectColumn =
   | UserSchemaColumns
   | 'roles.id as r_id'
   | 'roles.name as r_name';
+
+// ==================== FULL USER + ROLE + BENEFIT JOIN ====================
+// Joins: users + roles + user_benefits + benefits
+// Collisions: benefits.id → b_id, benefits.name → b_name, user_benefits.id → ub_id
+export type UserFullBenefitRow = UserFullRoleRow & {
+  b_id: number | null;
+  b_name: string | null;
+  type: EnumType<'BENEFIT_TYPE'> | null;
+  trial_days: number | null;
+  stripe_coupon_id: string | null;
+  active: boolean | null;
+  ub_id: number | null;
+  redeemed: boolean | null;
+};
+
+export type UserFullBenefitSelectColumn =
+  | UserFullSelectColumn
+  | 'benefits.id as b_id'
+  | 'benefits.name as b_name'
+  | 'benefits.type'
+  | 'benefits.trial_days'
+  | 'benefits.stripe_coupon_id'
+  | 'benefits.active'
+  | 'user_benefits.id as ub_id'
+  | 'user_benefits.redeemed';
 
 // ==================== USER PROFILE JOIN SCHEMA ====================
 // Joins: users + addresses + user_categories + categories
@@ -78,7 +96,7 @@ export type UserWithRoleSelectColumn =
 // - Address: a_
 // - UserCategories pivot: uc_
 // - Category: c_
-export type UserProfileSchema = {
+export type UserProfileRow = {
   // From users (all UserSchemaWithoutTimestamps keys needed for TableColumn compat)
   id: number;
   public_id: string;
@@ -97,7 +115,7 @@ export type UserProfileSchema = {
   is_featured?: boolean;
 
   // From address
-  a_id:number;
+  a_id: number;
   formated_address?: string | null;
   street?: string | null;
   city?: string | null;
@@ -115,8 +133,8 @@ export type UserProfileSchema = {
   /** Translation name for request language when present */
   c_tr_name?: string | null;
   c_slug?: string | null;
-  tags?:string | null;
-  parent_id?:number | null;
+  tags?: string | null;
+  parent_id?: number | null;
 };
 
 const tablesUserProfile = [
@@ -127,12 +145,12 @@ const tablesUserProfile = [
   TABLES_ENUM.CATEGORY_TRANSLATIONS,
 ] as const;
 
-export type UserProfileSchemaColumns = TableColumn<typeof tablesUserProfile, UserProfileSchema>;
+export type UserProfileSelectColumn = TableColumn<typeof tablesUserProfile, UserProfileRow>;
 
 // ==================== ARTIST SEARCH SCHEMA ====================
 // Joins: users + addresses (1:1, no row multiplication)
 // Collisions resolved by alias prefix: a_ for address id
-export type ArtistSearchSchema = {
+export type ArtistSearchRow = {
   id: number;
   username: string;
   name?: string | null;
@@ -152,5 +170,5 @@ const tablesArtistSearch = [
   TABLES_ENUM.ADDRESSES,
 ] as const;
 
-export type ArtistSearchSchemaColumns = TableColumn<typeof tablesArtistSearch, ArtistSearchSchema>;
+export type ArtistSearchSelectColumn = TableColumn<typeof tablesArtistSearch, ArtistSearchRow>;
 

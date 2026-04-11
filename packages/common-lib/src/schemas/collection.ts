@@ -8,6 +8,7 @@ export type CollectionSchema = {
   slug: string;
   is_featured: boolean;
   is_highlight: boolean;
+  is_active: boolean;
   description?: string | null;
   user_id: number;
   created_at: Date;

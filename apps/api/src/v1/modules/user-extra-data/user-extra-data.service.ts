@@ -73,7 +73,7 @@ export class UserExtraDataService {
       collections_count?: number;
       services_count?: number;
       enforceAiCredits?: boolean;
-      enforceUserStrikes?:boolean;
+      enforceUserStrikes?: boolean;
     },
   ) {
     const [userExtraData, currentPlan] = await Promise.all([
@@ -123,12 +123,12 @@ export class UserExtraDataService {
       }
     }
     if (portfolios_count && currentPlan.max_portfolios !== -1) {
-     
+
       const newProjectsCount = userExtraData.portfolios_count + portfolios_count;
-      console.log("ENFORCING PORTFOLIO_COUNT",newProjectsCount,currentPlan.max_portfolios)
+      console.log("ENFORCING PORTFOLIO_COUNT", newProjectsCount, currentPlan.max_portfolios)
       if (newProjectsCount > currentPlan.max_portfolios) {
         throw ApiException.maxProjects(
-          `Projects limit exceeded. Current: ${userExtraData.portfolios_count}, Adding: ${portfolios_count}, Max allowed: ${currentPlan.max_projects}`,
+          `Projects limit exceeded. Current: ${userExtraData.portfolios_count}, Adding: ${portfolios_count}, Max allowed: ${currentPlan.max_portfolios}`,
         );
       }
     }

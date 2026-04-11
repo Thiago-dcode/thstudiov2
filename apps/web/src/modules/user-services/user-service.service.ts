@@ -1,7 +1,8 @@
 import { BaseService } from "@/lib/services/base.service";
 import { ApiResponse } from "@repo/common-lib/types/response";
 import { fetchApi } from "@/lib/facade/fetchApi";
-import { FullService, Service } from "@repo/common-lib/types/service";
+import { FullService, Service, ServiceIndexRequest } from "@repo/common-lib/types/service";
+import { queryParamBuilder } from "@repo/common-lib/utils/query-builder";
 
 class UserServiceService extends BaseService {
     constructor() {
@@ -20,9 +21,12 @@ class UserServiceService extends BaseService {
         });
     }
 
-    async getAllByUsername(username: string): Promise<ApiResponse<Service[]>> {
+    async getAllByUsername(
+        username: string,
+        filters?: Omit<ServiceIndexRequest, 'user_id'>,
+    ): Promise<ApiResponse<Service[]>> {
         return await this.fetchApi.get({
-            resource: `/${username}/services`
+            resource: queryParamBuilder(`/${username}/services`, filters),
         });
     }
 

@@ -18,6 +18,7 @@ export type CollectionIndexRequest = OffsetPaginationRequest & {
   user_id?: number;
   is_featured?: boolean;
   is_highlight?: boolean;
+  is_active?: boolean;
 };
 
 type InternalCollectionFields =
@@ -26,7 +27,8 @@ type InternalCollectionFields =
   | 'updated_at'
   | 'is_featured';
 
-export type CreateCollectionInput = Omit<CollectionSchema, InternalCollectionFields> & {
+export type CreateCollectionInput = Omit<CollectionSchema, InternalCollectionFields | 'is_active'> & {
+  is_active?: boolean;
   media?: { id: number; position: number }[];
 };
 

@@ -24,14 +24,19 @@ export type ServiceIndexRequest = OffsetPaginationRequest & {
   user_id?: number;
   is_featured?: boolean;
   is_highlight?: boolean;
+  is_active?: boolean;
 };
 
 // Fields generated internally by the system (user cannot set these)
-type InternalServiceFields = 'id' | 'created_at' | 'updated_at' | 'is_featured' | 'is_highlight';
+type InternalServiceFields = 'id' | 'created_at' | 'updated_at' | 'is_featured';
 
 // What users can provide when creating a service (public API input)
-export type CreateServiceInput = Omit<ServiceSchema, InternalServiceFields | 'thumbnail'> & {
+export type CreateServiceInput = Omit<
+  ServiceSchema,
+  InternalServiceFields | 'thumbnail' | 'is_highlight'
+> & {
   thumbnail?: string;
+  is_highlight?: boolean;
   features?: { title: string }[];
   terms?: { title: string }[];
 };

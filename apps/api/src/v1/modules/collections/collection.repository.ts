@@ -28,6 +28,7 @@ export class CollectionRepository extends BaseRepository {
     'collections.title',
     'collections.is_featured',
     'collections.is_highlight',
+    'collections.is_active',
     'collections.description',
     'collections.user_id',
     'collections.created_at',
@@ -67,9 +68,43 @@ export class CollectionRepository extends BaseRepository {
   }
 
   async getAll(filters: CollectionIndexRequest): Promise<Collection[]> {
+    if (filters.paginated) {
+      return this.getAllPaginated(filters);
+    }
     const query = await this.applyFilters(filters, this.query());
     const results = await query.get<CollectionCompactSchema[]>();
     return this.formatCompactCollections(results);
+  }
+
+  /**
+   * Two-phase query: paginate on the base table first (1 row per collection),
+   * then fetch media for the paginated IDs. This avoids the JOIN row-multiplication
+   * bug where LIMIT operates on rows instead of distinct collections.
+   */
+  private async getAllPaginated(filters: CollectionIndexRequest): Promise<Collection[]> {
+    const baseQuery = this.query().select(this.BASE_COLUMNS);
+    this.applyWhereFilters(baseQuery, filters);
+    this.requestService.pagination =
+      await this.handleOffsetPagination(baseQuery, filters);
+    baseQuery.orderBy('created_at', 'DESC');
+    const baseResults = await baseQuery.get<CollectionSchema[]>();
+
+    if (!baseResults.length) return [];
+
+    const ids = baseResults.map((r) => r.id);
+
+    const fullResults = await this.query()
+      .select(this.COLUMNS)
+      .whereIn('collections.id', ids)
+      .join('id', 'collection_media', 'collection_id', 'LEFT')
+      .join('collection_media.media_id', 'media', 'id', 'LEFT')
+      .where('media.thumbnail', 'IS NOT', null)
+      .where('media.blocked', '=', false)
+      .orderBy('created_at', 'DESC')
+      .orderBy('collection_media.position', 'ASC')
+      .get<CollectionCompactSchema[]>();
+
+    return this.formatCompactCollections(fullResults);
   }
 
   async getBySlug(slug: string, userId: number): Promise<FullCollection> {
@@ -159,6 +194,21 @@ export class CollectionRepository extends BaseRepository {
     return await this.query().where('id', '=', id).delete();
   }
 
+  private applyWhereFilters(query: QueryBuilder, filters: CollectionIndexRequest): void {
+    if (filters.user_id) {
+      query.where('user_id', '=', filters.user_id);
+    }
+    if (typeof filters.is_featured === 'boolean') {
+      query.where('is_featured', '=', filters.is_featured);
+    }
+    if (typeof filters.is_highlight === 'boolean') {
+      query.where('is_highlight', '=', filters.is_highlight);
+    }
+    if (typeof filters.is_active === 'boolean') {
+      query.where('is_active', '=', filters.is_active);
+    }
+  }
+
   protected async applyFilters(
     filters: CollectionIndexRequest,
     query: QueryBuilder,
@@ -169,17 +219,7 @@ export class CollectionRepository extends BaseRepository {
       .where('media.thumbnail', 'IS NOT', null)
       .where('media.blocked', '=', false)
 
-    if (filters.user_id) {
-      query.where('user_id', '=', filters.user_id);
-    }
-
-    if (typeof filters.is_featured === 'boolean') {
-      query.where('is_featured', '=', filters.is_featured);
-    }
-
-    if (typeof filters.is_highlight === 'boolean') {
-      query.where('is_highlight', '=', filters.is_highlight);
-    }
+    this.applyWhereFilters(query, filters);
 
     this.requestService.pagination =
       await this.handleOffsetPagination(query, filters);
@@ -196,6 +236,7 @@ export class CollectionRepository extends BaseRepository {
       title: result.title,
       is_featured: result.is_featured,
       is_highlight: result.is_highlight,
+      is_active: result.is_active,
       description: result.description,
       user_id: result.user_id,
       created_at: result.created_at,
@@ -215,6 +256,7 @@ export class CollectionRepository extends BaseRepository {
           title: row.title,
           is_featured: row.is_featured,
           is_highlight: row.is_highlight,
+          is_active: row.is_active,
           description: row.description,
           user_id: row.user_id,
           created_at: row.created_at,
@@ -267,6 +309,7 @@ export class CollectionRepository extends BaseRepository {
       title: first.title,
       is_featured: first.is_featured,
       is_highlight: first.is_highlight,
+      is_active: first.is_active,
       description: first.description,
       user_id: first.user_id,
       created_at: first.created_at,

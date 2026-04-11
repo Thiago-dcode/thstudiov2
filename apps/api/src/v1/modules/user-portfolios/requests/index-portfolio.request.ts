@@ -18,5 +18,10 @@ export class IndexPortfolioRequest extends OffsetPaginationRequest {
   @IsBoolean()
   @Type(() => Boolean)
   is_highlight?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  @Type(() => Boolean)
+  is_active?: boolean;
 }
 

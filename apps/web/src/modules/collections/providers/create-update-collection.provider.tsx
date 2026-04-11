@@ -9,6 +9,7 @@ import { slugExistsAction } from "../server-actions/slug-exists.action";
 import { ActionReturn } from "@repo/common-lib/types/response";
 import { toast } from "@repo/ui/sonner";
 import { User } from "@repo/common-lib/types/user";
+import { UserAuth } from "@/modules/auth/auth.types";
 
 type CollectionFormData = Partial<
   Omit<CreateCollectionInput, 'media'> & {
@@ -17,7 +18,7 @@ type CollectionFormData = Partial<
 >;
 
 type CollectionContextType = {
-  user: User;
+  user: UserAuth;
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => Promise<void>;
   handleSetFormData: (key: keyof CreateCollectionInput, value: string | number | boolean | MediaPortfolio[]) => void;
   formData: CollectionFormData;
@@ -50,7 +51,7 @@ export const useCollection = () => {
 
 type CollectionProviderProps = {
   children: ReactNode;
-  user: User;
+  user: UserAuth;
 };
 
 export const CollectionProvider = ({
@@ -71,6 +72,7 @@ export const CollectionProvider = ({
       slug: collection.slug,
       description: collection.description ?? undefined,
       is_highlight: collection.is_highlight,
+      is_active: collection.is_active,
       media: collection.media.sort((a, b) => a.position - b.position),
     });
   }, []);
@@ -90,6 +92,7 @@ export const CollectionProvider = ({
         description: (formData.description ?? undefined) as string | undefined,
         user_id: (formData.user_id ?? user.id) as number,
         is_highlight: formData.is_highlight ?? false,
+        is_active: formData.is_active ?? true,
         media: media.length ? media : undefined,
       };
 
@@ -171,6 +174,7 @@ export const CollectionProvider = ({
     if (formData.slug !== currentCollection.slug) return true;
     if ((formData.description ?? undefined) !== (currentCollection.description ?? undefined)) return true;
     if (formData.is_highlight !== currentCollection.is_highlight) return true;
+    if ((formData.is_active ?? true) !== currentCollection.is_active) return true;
 
     const currentMedia = formData.media ?? [];
     const originalMedia = [...currentCollection.media].sort((a, b) => a.position - b.position);

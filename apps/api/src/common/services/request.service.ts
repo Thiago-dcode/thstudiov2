@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { EnumType } from '@repo/common-lib/constants/enums';
+import { UserAuth } from '@repo/common-lib/types/auth';
 import { Pagination } from '@repo/common-lib/types/response';
-import { UserAuth } from 'src/v1/modules/auth/auth.types';
 
 type RequestLanguage = EnumType<'LANGUAGE_CODE'>;
 @Injectable()
@@ -41,5 +41,13 @@ export class RequestService {
   }
   get pagination() {
     return this._pagination;
+  }
+
+  cleanUp() {
+    this._user = null;
+    this._language = null;
+    this._user_agent = null;
+    this._ip_address = null;
+    this._pagination = null;
   }
 }

@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { Public } from 'src/common/decorators/public.decorator';
 import { UserCollectionService } from './user-collection.service';
+import { IndexCollectionRequest } from '../collections/requests/index-collection.request';
 
 @Controller('users')
 export class UserCollectionController {
@@ -43,12 +44,8 @@ export class UserCollectionController {
   @Get(':username/collections')
   async getAllByUsername(
     @Param('username') username: string,
-    @Query('is_highlight') isHighlight?: string,
+    @Query() query: IndexCollectionRequest,
   ) {
-    return await this.userCollectionService.getAllByUsername(username, {
-      is_highlight: isHighlight === '1' || isHighlight === 'true' ? true
-        : isHighlight === '0' || isHighlight === 'false' ? false
-          : undefined,
-    });
+    return await this.userCollectionService.getAllByUsername(username, query);
   }
 }

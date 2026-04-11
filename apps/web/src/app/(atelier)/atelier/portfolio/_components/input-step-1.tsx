@@ -239,6 +239,28 @@ const ThumbnailInput = () => {
                         }
                     />
                 </div>
+
+                <div className="flex items-center gap-2">
+                    <Checkbox
+                        id="portfolio-is-active"
+                        checked={formData.is_active ?? true}
+                        onCheckedChange={(checked) => {
+                            deleteInputErrorProperty('is_active');
+                            handleSetFormData('is_active', checked === true);
+                        }}
+                        disabled={isPending}
+                    />
+                    <Label htmlFor="portfolio-is-active" className="text-sm font-normal cursor-pointer">
+                        Active
+                    </Label>
+                    <InfoTooltip
+                        content={
+                            <p className="text-sm">
+                                When disabled, this portfolio is hidden from your public artist profile and listings. You can still edit it in the atelier.
+                            </p>
+                        }
+                    />
+                </div>
             </div>
         </div>
     );

@@ -6,6 +6,7 @@ export const createPortfolioSchema = z.object({
     description: z.string().optional(),
     user_id: z.number(),
     is_highlight: z.boolean().optional(),
+    is_active: z.boolean().optional(),
     thumbnail: z.instanceof(File, { message: 'Thumbnail is required' }),
 });
 
@@ -16,6 +17,7 @@ export const updatePortfolioSchema = z.object({
     slug: z.string().min(3, 'Slug must be at least 3 characters long').regex(/^[a-z0-9-]+$/, 'Slug must contain only lowercase letters, numbers, and hyphens').optional(),
     description: z.string().optional(),
     is_highlight: z.boolean().optional(),
+    is_active: z.boolean().optional(),
     thumbnail: z.instanceof(File).optional(),
 });
 

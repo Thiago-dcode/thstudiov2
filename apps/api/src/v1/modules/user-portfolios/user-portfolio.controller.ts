@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { Public } from 'src/common/decorators/public.decorator';
 import { UserPortfolioService } from './user-portfolio.service';
+import { IndexPortfolioRequest } from './requests/index-portfolio.request';
 
 @Controller('users')
 export class UserPortfolioController {
@@ -43,12 +44,8 @@ export class UserPortfolioController {
   @Get(':username/portfolios')
   async getAllByUsername(
     @Param('username') username: string,
-    @Query('is_highlight') isHighlight?: string,
+    @Query() query: IndexPortfolioRequest,
   ) {
-    return await this.userPortfolioService.getAllByUsername(username, {
-      is_highlight: isHighlight === '1' || isHighlight === 'true' ? true
-        : isHighlight === '0' || isHighlight === 'false' ? false
-          : undefined,
-    });
+    return await this.userPortfolioService.getAllByUsername(username, query);
   }
 }

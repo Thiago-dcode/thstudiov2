@@ -6,6 +6,9 @@ const up = async () => {
     Column.id(),
     Column.string('title', 255, {}),
     Column.string('slug', 255),
+    Column.boolean('is_active', {
+      default: true
+    }),
     Column.boolean('is_featured', {
       default: false
     }),

@@ -20,6 +20,7 @@ export type PortfolioIndexRequest = OffsetPaginationRequest & {
   user_id?: number;
   is_featured?: boolean;
   is_highlight?: boolean;
+  is_active?: boolean;
 };
 
 // Fields generated internally by the system (user cannot set these)
@@ -30,9 +31,13 @@ type InternalPortfolioFields =
   | 'is_featured';
 
 // What users can provide when creating a portfolio (public API input)
-export type CreatePortfolioInput = Omit<PortfolioSchema, InternalPortfolioFields | 'thumbnail' | 'is_highlight'> & {
+export type CreatePortfolioInput = Omit<
+  PortfolioSchema,
+  InternalPortfolioFields | 'thumbnail' | 'is_highlight' | 'is_active'
+> & {
   thumbnail: string;
   is_highlight?: boolean;
+  is_active?: boolean;
   media?: {
     id: number,
     position: number

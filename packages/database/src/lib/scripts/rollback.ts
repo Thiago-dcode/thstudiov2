@@ -5,15 +5,24 @@ import { killClient } from '../client';
 import { QueryBuilder } from '../builder/queryBuilder';
 const MIGRATION_TABLE_NAME = 'migrations';
 
-export const rollback = async (steps: number | null = null) => {
+export type MigrationScriptOptions = { exitProcess?: boolean };
+
+export const rollback = async (
+  steps: number | null = null,
+  options: MigrationScriptOptions = {},
+) => {
+  const shouldExit = options.exitProcess !== false;
   try {
     const start = Date.now();
     Logger.info('🔄 Initializing rollback process');
     await connectDb();
     const exists = await SchemaBuilder.table(MIGRATION_TABLE_NAME).exists();
     if (!exists) {
-      Logger.error('❌ Migration table does not exist, you must run the migration command first');
-      process.exit(1);
+      Logger.error(
+        '❌ Migration table does not exist, you must run the migration command first',
+      );
+      if (shouldExit) process.exit(1);
+      throw new Error('Migrations table missing');
     }
     const queryBuilder = QueryBuilder.table(MIGRATION_TABLE_NAME);
     const stepCount = steps;
@@ -38,10 +47,11 @@ export const rollback = async (steps: number | null = null) => {
       );
     else Logger.info('Nothing to rollback');
 
-    process.exit(0);
+    if (shouldExit) process.exit(0);
   } catch (error) {
     Logger.error('❌ Rollback failed:', error);
-    process.exit(1);
+    if (shouldExit) process.exit(1);
+    throw error;
   } finally {
     await killClient();
   }

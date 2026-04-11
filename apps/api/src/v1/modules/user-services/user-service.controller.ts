@@ -3,9 +3,11 @@ import {
   Get,
   Param,
   ParseIntPipe,
+  Query,
 } from '@nestjs/common';
 import { Public } from 'src/common/decorators/public.decorator';
 import { UserServiceService } from './user-service.service';
+import { IndexUserServiceRequest } from './requests/index-service.request';
 
 @Controller('users')
 export class UserServiceController {
@@ -42,7 +44,8 @@ export class UserServiceController {
   @Get(':username/services')
   async getAllByUsername(
     @Param('username') username: string,
+    @Query() query: IndexUserServiceRequest,
   ) {
-    return await this.userServiceService.getAllByUsername(username);
+    return await this.userServiceService.getAllByUsername(username, query);
   }
 }
