@@ -1,21 +1,28 @@
 import { Injectable } from '@nestjs/common';
-import { ApiException } from 'src/common/exceptions/Api-exception';
+import { ApiException } from 'src/common/exceptions/api-exception';
 import { UserExtraDataRepository } from './user-extra-data.repository';
 import { OnEvent } from '@nestjs/event-emitter';
 import {
   UPDATE_USER_EXTRA_DATA_METRICS,
   USER_METRICS_QUEUE,
   JOB_COMPUTE_USER_METRICS,
+  SET_INITIAL_USER_EXTRA_DATA_EVENT,
 } from '@repo/common-lib/constants/constants';
 import { UpdateUserExtraDataMetricsEvent } from './events/update-user-extra-data-metrics.event';
+import { SetInitialUserExtraDataEvent } from './events/set-initial-user-extra-data.event';
 import { Helpers } from 'src/common/services/helpers.service';
 import { PlansService } from '../plans/plans.service';
 import { UserStorageRequestService } from '../user-storage-requests/user-storage-request.service';
 import { Queue } from 'bullmq';
 import { InjectQueue } from '@nestjs/bullmq';
+import { FactoryLogService } from '@repo/backend-lib/services/log-service';
 
 @Injectable()
 export class UserExtraDataService {
+  private readonly logger = FactoryLogService.createLogService('file', {
+    channel: 'users',
+  });
+
   constructor(
     private readonly userExtraDataRepository: UserExtraDataRepository,
     private readonly userRequestService: UserStorageRequestService,
@@ -173,5 +180,20 @@ export class UserExtraDataService {
       },
     );
 
+  }
+
+  @OnEvent(SET_INITIAL_USER_EXTRA_DATA_EVENT)
+  async handleSetInitialUserExtraData(event: SetInitialUserExtraDataEvent) {
+    const nextMonth = new Date();
+    nextMonth.setMonth(nextMonth.getMonth() + 1);
+    const extraData = await this.userExtraDataRepository.create({
+      user_id: event.userId,
+      next_ai_credits_reset: nextMonth,
+    });
+    this.logger
+      .name('new-user')
+      .info(`${SET_INITIAL_USER_EXTRA_DATA_EVENT} user [${event.userId}] extra data`, {
+        extraData,
+      });
   }
 }

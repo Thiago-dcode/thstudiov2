@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { AdminPageContainer, AdminPageTitle } from "../../__components/admin-page.component";
 import { EditUserPasswordDialog } from "./_components/edit-user-password.dialog";
 import { EditUserUsernameDialog } from "./_components/edit-user-username.dialog";
-import { KeyRound, Mail, User, CreditCard, ArrowRight, Calendar, RefreshCw, XCircle } from "lucide-react";
+import { KeyRound, Mail, User, CreditCard, ArrowRight, Calendar, RefreshCw, XCircle, Sparkles } from "lucide-react";
 import usersService from "@/modules/users/users.service";
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
 import { Button } from "@repo/ui/components/shadcn/button";
@@ -29,7 +29,7 @@ export default async function SettingsPage() {
     const user = userResponse.data;
     const activeSubscription = activeSubscriptionResponse.data ?? null;
     const isFree = activeSubscription?.plan_price.plan.is_free ?? true;
-    console.log("ACTIVE SUBSCRIPTION", activeSubscription)
+    const isTrialing = activeSubscription?.is_trialing ?? false;
     const planName = activeSubscription?.plan_price.plan.name ?? 'Free';
 
     const nextBillingDate = activeSubscription?.next_billing_date
@@ -116,8 +116,18 @@ export default async function SettingsPage() {
                                             {activeSubscription.plan_price.billing_type}
                                         </span>
                                     )}
+                                    {isTrialing && (
+                                        <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                                            <Sparkles className="size-2.5" />
+                                            Trial
+                                        </span>
+                                    )}
                                 </div>
-                                {!isFree && activeSubscription ? (
+                                {isTrialing && nextBillingDate ? (
+                                    <p className="text-xs text-amber-500">
+                                        Free trial ends {nextBillingDate}
+                                    </p>
+                                ) : !isFree && activeSubscription ? (
                                     <div className="flex items-center gap-3 text-xs text-text-muted">
                                         {activeSubscription.auto_renewal ? (
                                             <>

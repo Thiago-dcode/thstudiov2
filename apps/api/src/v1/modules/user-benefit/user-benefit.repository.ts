@@ -29,6 +29,20 @@ export class UserBenefitRepository extends BaseRepository {
     return this.format(result);
   }
 
+  async isRedeemed(userId: number, benefitId: number): Promise<boolean> {
+    const result = await this.query()
+      .select(['user_benefits.redeemed'])
+      .where('user_id', '=', userId)
+      .where('benefit_id', '=', benefitId)
+      .first<{ redeemed: boolean }>();
+
+    if (!result) {
+      return false;
+    }
+
+    return result.redeemed;
+  }
+
   async redeem(userId: number, benefitId: number): Promise<UserBenefit> {
     await this.query()
       .where('user_id', '=', userId)
@@ -37,10 +51,9 @@ export class UserBenefitRepository extends BaseRepository {
 
     const result = await this.query()
       .select(this.COLUMNS)
-      .where('user_id', '=', userId)
-      .where('benefit_id', '=', benefitId)
+      .where('user_id', userId)
+      .where('benefit_id', benefitId)
       .first<UserBenefitSchema>();
-
     if (!result) {
       throw new DbException('Could not redeem user benefit');
     }

@@ -14,12 +14,19 @@ import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import { getFriendlyApiErrors, getObjErrorFromZod } from "@/modules/auth/helpers";
 
 
+function parseOptionalPositiveInt(formData: FormData, key: string): number | undefined {
+    const raw = formData.get(key);
+    if (raw == null || String(raw).trim() === '') return undefined;
+    return parseInt(String(raw), 10);
+}
+
 export const initiateSubscriptionAction = async (formData: FormData): Promise<ActionReturn<HandleSubscriptionProcessResponse, InitiateSubscriptionRequest>> => {
     const validated = initiateSubscriptionSchema.safeParse({
         plan_price_id: parseInt(formData.get('plan_price_id') as string),
         payment_method: formData.get('payment_method'),
         success_url: formData.get('success_url'),
-        cancel_url: formData.get('cancel_url')
+        cancel_url: formData.get('cancel_url'),
+        benefit_id: parseOptionalPositiveInt(formData, 'benefit_id'),
     });
 
     if (!validated.success) {

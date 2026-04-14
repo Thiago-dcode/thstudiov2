@@ -8,6 +8,7 @@ import { createContext, ReactElement, ReactNode, useContext, useState } from "re
 import { useRouter } from "next/navigation";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { initiateSubscriptionAction } from "../server-actions/initiate-subscription.action";
+import { BenefitWithRedeemed } from "@repo/common-lib/types/benefit";
 
 type PlanSubscriptionContextType = {
   planSelected?: FullPlan;
@@ -19,12 +20,14 @@ type PlanSubscriptionContextType = {
   setPaymentMethod: (method: EnumType<'PAYMENT_METHOD'>) => void;
   successUrl: string;
   cancelUrl: string;
+  benefit?: BenefitWithRedeemed,
   onErrorComponent: ReactNode;
   onFreeComponent: ReactNode;
   isPending: boolean;
   errors: string[] | null;
   submitSubscription: () => void;
   onSubmit: (e: React.FormEvent) => void;
+  handleSubmit: (formData: FormData) => void;
 }
 
 const PlanSubscriptionContext = createContext<PlanSubscriptionContextType>({
@@ -40,6 +43,7 @@ const PlanSubscriptionContext = createContext<PlanSubscriptionContextType>({
   errors: null,
   submitSubscription: () => { },
   onSubmit: () => { },
+  handleSubmit: () => { },
 })
 
 export const UsePlanSubscription = () => useContext(PlanSubscriptionContext);
@@ -49,6 +53,7 @@ type PlanSubscriptionProviderProps = {
   availablePaymentMethods: PaymentMethod[];
   successUrl: string;
   cancelUrl: string;
+  benefit?: BenefitWithRedeemed,
   onErrorComponent: ReactNode;
   onFreeComponent: ReactNode;
 };
@@ -58,6 +63,7 @@ export const PlanSubscriptionProvider = ({
   availablePaymentMethods,
   successUrl,
   cancelUrl,
+  benefit,
   onErrorComponent,
   onFreeComponent,
 }: PlanSubscriptionProviderProps) => {
@@ -83,6 +89,7 @@ export const PlanSubscriptionProvider = ({
     },
     afterAction: async (result) => {
       if (result.data) {
+    
         if (result.data.ok) {
           if (result.data.redirect_url) router.push(result.data.redirect_url);
           else if (result.inputs?.success_url) router.push(result.inputs.success_url);
@@ -120,12 +127,14 @@ export const PlanSubscriptionProvider = ({
       setPaymentMethod,
       successUrl,
       cancelUrl,
+      benefit,
       onErrorComponent,
       onFreeComponent,
       isPending,
       errors,
       submitSubscription,
       onSubmit,
+      handleSubmit,
     }}>
       {children}
     </PlanSubscriptionContext.Provider>

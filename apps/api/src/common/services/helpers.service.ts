@@ -57,7 +57,7 @@ export class Helpers {
       appended_language?: boolean;
     },
   ) {
-    if (!options.appended_language) {
+    if (!options?.appended_language) {
       await this.cacheManager.del(key);
     } else {
       await Promise.all(

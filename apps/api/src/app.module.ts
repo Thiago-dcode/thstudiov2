@@ -50,6 +50,7 @@ import { LocationModule } from './v1/modules/locations/location.module';
 import { RolesModule } from './v1/modules/roles/roles.module';
 import { InvitationLinkModule } from './v1/modules/invitation-links/invitation-link.module';
 import { UserBenefitModule } from './v1/modules/user-benefit/user-benefit.module';
+import { UserSubscriptionModule } from './v1/modules/user-subscription/user-subscription.module';
 /** Feature modules mounted at `api/v1/*` (not under `admin/`). */
 const API_V1_MODULES = [
   AuthModule,
@@ -78,6 +79,7 @@ const API_V1_MODULES = [
   LocationModule,
   InvitationLinkModule,
   UserBenefitModule,
+  UserSubscriptionModule,
 ];
 const ADMIN_V1_MODULES = [
   AdminModule

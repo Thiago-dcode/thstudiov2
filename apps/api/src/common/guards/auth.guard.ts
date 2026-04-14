@@ -52,6 +52,7 @@ export class AuthGuard implements CanActivate {
         !payload?.role ||
         typeof payload.role.id !== 'number'
       ) {
+
         throw new UnauthorizedException();
       }
       //TODO: Verify user current session
@@ -82,17 +83,18 @@ export class AuthGuard implements CanActivate {
         id: payload.id,
         is_active: payload.is_active,
         is_featured: payload.is_featured ?? false,
-        benefit_id:payload.benefit_id,
-        invitation_link_id:payload.invitation_link_id,
+        benefit_id: payload.benefit_id,
+        invitation_link_id: payload.invitation_link_id,
         password_reset_count: payload.password_reset_count,
         username_reset_count: payload.username_reset_count,
         next_username_reset: payload.next_username_reset,
         next_password_reset: payload.next_password_reset,
         twofa_attempts: payload.twofa_attempts,
-       
+
       };
+
+
     } catch (error) {
-      console.log(error);
       throw new UnauthorizedException();
     }
     return true;

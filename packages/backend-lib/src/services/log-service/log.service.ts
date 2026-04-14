@@ -66,6 +66,10 @@ export abstract class LogService {
         this.config.name = name;
         return this;
     }
+    public requestId(requestId: string) {
+        this.config.requestId = requestId;
+        return this;
+    }
     public info(message: string, options?: LogOptions): this {
         console.log(this.beautifyLogMessage('info', message, options));
         return this;
@@ -91,7 +95,7 @@ export abstract class LogService {
         return this;
     }
     protected beautifyLogMessage(level: LogLevel, message: string, options?: LogOptions) {
-        let logMessage = `[${format(LogService.date, 'yyyy-mm-dd HH:mm:ss')}] - ${level.toUpperCase()} - ${message}`;
+        let logMessage = `[${format(LogService.date, 'yyyy-mm-dd HH:mm:ss')}] - ${level.toUpperCase()} -${this.config.requestId ? `[${this.config.requestId}]` : ''} ${message}`;
         if (options) {
             logMessage += ` - ${JSON.stringify(options)}`;
         }

@@ -9,6 +9,7 @@ import { AdminPageContainer, AdminPageTitle } from "../../../__components/admin-
 import { Button } from "@repo/ui/components/shadcn/button";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import userBenefitService from "@/modules/user-benefit/user-benefit.service";
 
 
 // This page is only for upgrade plans, downgrade or cancel should be handled by stripe portal
@@ -16,12 +17,12 @@ export default async function UpdateSubscriptionPage() {
     const user = await userSession();
     if (!user) redirect('/');
 
-    const [plans, activePlan, paymentMethods] = await Promise.all([
+    const [plans, activePlan, paymentMethods, benefit] = await Promise.all([
         plansService.getAll({ is_active: true }),
         usersService.getActivePlan(user.id),
         utilsService.getPaymentMethods({ enabled: true }),
+        userBenefitService.getByUserId(user.id)
     ]);
-
     if (plans.error || !plans.data || !paymentMethods.data) {
         redirect('/atelier/settings');
     }
@@ -77,6 +78,7 @@ export default async function UpdateSubscriptionPage() {
                     paymentMethods={paymentMethods.data}
                     successUrl={`${subscriptionBaseUrl}/success`}
                     cancelUrl={`${subscriptionBaseUrl}/failed`}
+                    benefit={benefit.data || undefined}
                     onFreeComponent={
                         <Button variant="outline" asChild className="w-full">
                             <Link href="/atelier/settings">Cancel</Link>

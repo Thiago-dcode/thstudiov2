@@ -27,6 +27,8 @@ import { MailProcessor } from './mail.processor';
 import { LogProcessor } from './log.processor';
 import KeyvRedis from '@keyv/redis';
 import { Helpers } from './helpers.service';
+import { AsyncLocalStorage } from 'async_hooks';
+import { RequestStore } from '@repo/common-lib/types/request';
 @Global()
 @Module({
   exports: [
@@ -37,12 +39,17 @@ import { Helpers } from './helpers.service';
     StorageService,
     CompressService,
     Helpers,
+    AsyncLocalStorage
   ],
   providers: [
     RequestService,
     Helpers,
     MailProcessor,
     LogProcessor,
+    {
+      provide:AsyncLocalStorage,
+      useValue: new AsyncLocalStorage<RequestStore>()
+    },
     {
       provide: StorageService,
       useFactory: () => {

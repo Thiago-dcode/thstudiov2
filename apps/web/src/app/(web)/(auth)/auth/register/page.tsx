@@ -2,18 +2,28 @@ import Link from "next/link";
 import authComponent from "@/lib/components/page-component";
 import { RegisterForm } from "../__components/register-form";
 
-export default async function Login() {
+export default async function RegisterPage({ searchParams }: {
+  searchParams: Promise<{
+    ref?: string
+  }>
+}) {
+
+  const { ref } = await searchParams;
+
+  console.log("REF", ref)
   return (
 
     <authComponent.Container>
 
       <authComponent.Content>
-       
+
         <authComponent.Header >
-          <authComponent.Title title="Create your account"/>
-          <authComponent.SubTitle  subTitle="And start build your dream portfolio"/>
+          <authComponent.Title title="Create your account" />
+          <authComponent.SubTitle subTitle="And start build your dream portfolio" />
         </authComponent.Header>
-        <RegisterForm />
+        <RegisterForm >
+          {ref? <input hidden name="invitation_code" defaultValue={ref} />:null}
+        </RegisterForm>
 
         <Link
           href="/auth/login"

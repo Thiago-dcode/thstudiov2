@@ -1,4 +1,4 @@
-import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { Processor } from '@nestjs/bullmq';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Job, Queue } from 'bullmq';
 import { OnEvent } from '@nestjs/event-emitter';
@@ -11,9 +11,10 @@ import {
   STORAGE_REQUESTS_QUEUE,
   JOB_CREATE_STORAGE_REQUEST,
 } from '@repo/common-lib/constants/constants';
+import { GlobalProcessor } from 'src/common/processors/global.processor';
 
 @Processor(STORAGE_REQUESTS_QUEUE)
-export class StorageRequestProcessor extends WorkerHost {
+export class StorageRequestProcessor extends GlobalProcessor {
   private readonly logger = FactoryLogService.createLogService('file', {
     channel: 'user-storage-requests',
   });

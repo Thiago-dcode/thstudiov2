@@ -35,12 +35,11 @@ export default async function SubscriptionCallbackPage({
     }
 
     const isSuccess = callback === 'success';
-    const message = cookie?.message;
 
     const title = isSuccess ? "Payment Successful!" : "Payment Failed";
     const subtitle = isSuccess
-        ? (message || "Your subscription has been updated. You're all set!")
-        : (message || "Something went wrong with your payment. Please try again.");
+        ? "Your subscription has been updated. You're all set!"
+        : "Something went wrong with your payment. Please try again.";
 
     return (
         <PageComponent.Container className="h-screen flex items-center justify-center m-auto">

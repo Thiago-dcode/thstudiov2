@@ -11,8 +11,6 @@ export const getUserBenefitAction = async (id: number): Promise<ActionReturn<Ben
 
 const result = await userBenefitService.getByUserId(id);
 
-  console.log("RESULT USERBENEFIT", result);
-
   if (result.data) {
     return {
       data: result.data,

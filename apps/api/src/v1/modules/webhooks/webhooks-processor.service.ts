@@ -1,4 +1,4 @@
-import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { Processor } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import Stripe from 'stripe';
 import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
@@ -15,9 +15,11 @@ import {
   CACHE_KEY_ACTIVE_SUBSCRIPTION,
   CACHE_KEY_ACTIVE_PLAN,
 } from '@repo/common-lib/constants/constants';
+import { GlobalProcessor } from 'src/common/processors/global.processor';
+import { UserBenefitService } from '../user-benefit/user-benefit.service';
 
 @Processor(STRIPE_WEBHOOKS_QUEUE)
-export class WebhookProcessor extends WorkerHost {
+export class WebhookProcessor extends GlobalProcessor {
   private readonly logger = FactoryLogService.createLogService('file', {
     channel: 'webhook',
     name: 'stripe',
@@ -31,6 +33,7 @@ export class WebhookProcessor extends WorkerHost {
     private readonly planSubscriptionService: PlanSubscriptionsService,
     private readonly planPriceService: PlanPricesService,
     private readonly userService: UserService,
+    private readonly userBenefitService: UserBenefitService,
     private readonly helpers: Helpers,
     private readonly appLogService: LogService,
   ) {
@@ -142,15 +145,18 @@ export class WebhookProcessor extends WorkerHost {
     const stripeSubscriptionId = subscription.id;
     const itemData = subscription.items.data[0];
     const stripeItemId = itemData.id;
-    const is_active = subscription.status === 'active';
     const is_trialing = subscription.status === 'trialing';
+    const is_active = subscription.status === 'active' || is_trialing;
     const start_billing_date = new Date(itemData.current_period_start * 1000);
     const next_billing_date = new Date(itemData.current_period_end * 1000);
     const stripe_cancel_at = subscription.cancel_at
       ? new Date(subscription.cancel_at * 1000)
       : null;
+    const has_payment_method = !!subscription.default_payment_method;
     const auto_renewal =
-      !subscription.cancel_at_period_end && !subscription.cancel_at;
+      !subscription.cancel_at_period_end &&
+      !subscription.cancel_at &&
+      (!is_trialing || has_payment_method);
     const user = await this.userService.findOneByStripeId(
       subscription.customer as string,
     );
@@ -198,8 +204,32 @@ export class WebhookProcessor extends WorkerHost {
         plan_offer_id: null,
       });
       this.logger.debug(`created subscription`, internalSubscription);
+      const benefitIdRaw = subscription.metadata?.benefit_id;
+      try {
+        if (benefitIdRaw != null && benefitIdRaw !== '') {
+          this.logger.debug(`Found benefit_id: {${benefitIdRaw}} `)
+          const benefitId = Number.parseInt(benefitIdRaw, 10);
+          if (Number.isInteger(benefitId) && benefitId > 0) {
+            this.logger.debug("Starting redeem");
+            await this.userBenefitService.redeem(user.id, benefitId);
+            this.logger.debug(`Redeemed benefit ${benefitId} for user ${user.id}`);
+        } else {
+            this.logger.warn(
+              `Invalid benefit_id in subscription metadata: ${benefitIdRaw}`,
+            );
+          }
+        }
+      } catch (error) {
+
+        console.log("ERROR REDEEMING", error);
+        this.logger.error(
+          `Something went wrong redeeming the benefit: ${benefitIdRaw}`, error instanceof Error ? error : undefined
+        );
+
+      }
+
     }
-    if (is_active) {
+    if (is_active || is_trialing) {
       const existingSubscriptions = await stripe.subscriptions.list({
         customer: user.stripe_customer_id,
         status: 'active',
@@ -244,6 +274,7 @@ export class WebhookProcessor extends WorkerHost {
     const internalSubscription =
       await this.planSubscriptionService.findActiveSubscription(user.id);
 
+    this.logger.debug("Subscription to delete", internalSubscription)
     if (internalSubscription?.stripe_id === subscription.id) {
       const freeSubscription =
         await this.planSubscriptionService.setFreeSubscription(user.id);

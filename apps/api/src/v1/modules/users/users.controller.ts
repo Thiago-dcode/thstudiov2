@@ -19,7 +19,7 @@ import { Public } from 'src/common/decorators/public.decorator';
 import { UserExtraDataService } from '../user-extra-data/user-extra-data.service';
 import { IsUserAuthPipe } from 'src/pipes/is-user-auth.pipe';
 import { PlansService } from '../plans/plans.service';
-import { PlanSubscriptionsService } from '../plan-subscriptions/plan-subscriptions.service';
+
 import { FindUserRequest } from './requests/find-user.request';
 import { CategoriesService } from '../categories/categories.service';
 import { AddressService } from '../addresses/address.service';
@@ -32,7 +32,6 @@ export class UserController {
     private readonly userService: UserService,
     private readonly userExtraDataService: UserExtraDataService,
     private readonly planService: PlansService,
-    private readonly planSubscriptionsService: PlanSubscriptionsService,
     private readonly categoriesService: CategoriesService,
     private readonly addressService: AddressService,
   ) { }
@@ -83,14 +82,6 @@ export class UserController {
   ) {
     return await this.planService.findUserActivePlan(+id);
   }
-  @Get(':id/subscription')
-  async findActive(
-    @Param('id', ParseIntPipe, new ModelExistPipe('users'), IsUserAuthPipe)
-    id: number,
-  ) {
-    return await this.planSubscriptionsService.findActiveSubscription(id);
-  }
-
   @Public()
   @Get(':id/categories')
   findAllCategories(

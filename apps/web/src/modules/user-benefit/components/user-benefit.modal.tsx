@@ -11,6 +11,7 @@ import { Button } from "@repo/ui/components/shadcn/button";
 import { ArrowRight, Gift, Sparkles } from "lucide-react";
 import { EnumType } from "@repo/common-lib/constants/enums";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 const BENEFIT_CONFIG: Record<EnumType<'BENEFIT_TYPE'>, { label: string; months: number }> = {
     EARLY_USER: { label: 'Early User', months: 3 },
@@ -20,6 +21,10 @@ const BENEFIT_CONFIG: Record<EnumType<'BENEFIT_TYPE'>, { label: string; months: 
 export const UserBenefitModal = ({ user, subscriptionPath }: { user: User | BaseUser | UserAuth, subscriptionPath?: string }) => {
     const [userBenefit, setUserBenefit] = useState<BenefitWithRedeemed | null>(null);
     const [open, setOpen] = useState(false);
+
+    const pathname = usePathname();
+
+   
 
     const { handleAction } = useHandleAction({
         action: async () => {
@@ -46,7 +51,7 @@ export const UserBenefitModal = ({ user, subscriptionPath }: { user: User | Base
         if (userBenefit) setOpen(true);
     }, [userBenefit]);
 
-    if (!userBenefit || userBenefit.redeemed) return null;
+    if (!userBenefit || userBenefit.redeemed || pathname === subscriptionPath) return null;
 
     const config = BENEFIT_CONFIG[userBenefit.type] ?? {
         label: userBenefit.type,

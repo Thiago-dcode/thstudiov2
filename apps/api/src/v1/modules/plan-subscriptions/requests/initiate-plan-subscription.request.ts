@@ -20,17 +20,23 @@ export class InitiatePlanSubscriptionRequest {
   @IsAvailableEnum('PAYMENT_METHOD')
   payment_method: EnumType<'PAYMENT_METHOD'>;
 
+  // @IsOptional()
+  // @IsInt()
+  // @IsPositive()
+  // @ModelExist('plan_offers')
+  // plan_offer_id?: number;
+
   @IsOptional()
   @IsInt()
   @IsPositive()
-  @ModelExist('plan_offers')
-  plan_offer_id?: number;
+  @ModelExist('benefits')
+  benefit_id?: number;
 
   @IsString()
-  success_url:string;
+  success_url: string;
 
   @IsString()
-  cancel_url:string;
+  cancel_url: string;
 
 
 }

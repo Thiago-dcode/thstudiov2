@@ -1,53 +1,71 @@
 import { Injectable } from '@nestjs/common';
-import { EnumType } from '@repo/common-lib/constants/enums';
+import { AsyncLocalStorage } from 'async_hooks';
 import { UserAuth } from '@repo/common-lib/types/auth';
 import { Pagination } from '@repo/common-lib/types/response';
+import { RequestLanguage, RequestStore } from '@repo/common-lib/types/request';
+import { generateUUID } from '@repo/common-lib/utils/generate-uuid';
 
-type RequestLanguage = EnumType<'LANGUAGE_CODE'>;
+
+
 @Injectable()
 export class RequestService {
-  private _user: UserAuth | null;
-  private _language: RequestLanguage | null;
-  private _user_agent: string | null;
-  private _ip_address: string | null;
-  private _pagination: Pagination | null = null;
-  constructor() {}
-  get user(): UserAuth {
-    return this._user;
-  }
-  set user(user: UserAuth) {
-    this._user = user;
-  }
-  get language(): RequestLanguage {
-    return this._language;
-  }
-  set language(language: RequestLanguage) {
-    this._language = language;
-  }
-  get user_agent(): string | null {
-    return this._user_agent;
-  }
-  set user_agent(user_agent: string) {
-    this._user_agent = user_agent;
-  }
-  get ip_address(): string | null {
-    return this._ip_address;
-  }
-  set ip_address(ip_address: string) {
-    this._ip_address = ip_address;
-  }
-  set pagination(pagination: Pagination | null) {
-    this._pagination = pagination;
-  }
-  get pagination() {
-    return this._pagination;
+
+  constructor(protected readonly storage: AsyncLocalStorage<RequestStore>) { }
+
+  /** Called once per request in the middleware to establish an isolated store. */
+  async run(callback: () => void): Promise<void> {
+    this.storage.run(
+      { requestId: await generateUUID(), user: null, language: null, user_agent: null, ip_address: null, path: null, pagination: null },
+      callback,
+    );
   }
 
-  cleanUp() {
-    this._user = null;
-    this._language = null;
-    this._user_agent = null;
-    this._ip_address = null;
-    this._pagination = null;
+  private get store(): RequestStore | undefined {
+    return this.storage.getStore();
+  }
+
+  get requestId(): string | null {
+    return this.store?.requestId ?? null;
+  }
+  get user(): UserAuth | null {
+    return this.store?.user ?? null;
+  }
+  set user(user: UserAuth | null) {
+    if (this.store) this.store.user = user;
+  }
+
+  get language(): RequestLanguage | null {
+    return this.store?.language ?? null;
+  }
+  set language(language: RequestLanguage) {
+    if (this.store) this.store.language = language;
+  }
+
+  get user_agent(): string | null {
+    return this.store?.user_agent ?? null;
+  }
+  set user_agent(user_agent: string) {
+    if (this.store) this.store.user_agent = user_agent;
+  }
+
+  get ip_address(): string | null {
+    return this.store?.ip_address ?? null;
+  }
+  set ip_address(ip_address: string) {
+    if (this.store) this.store.ip_address = ip_address;
+  }
+
+  get path(): string | null {
+    return this.store?.path ?? null;
+  }
+  set path(path: string) {
+    if (this.store) this.store.path = path;
+  }
+
+  get pagination(): Pagination | null {
+    return this.store?.pagination ?? null;
+  }
+  set pagination(pagination: Pagination | null) {
+    if (this.store) this.store.pagination = pagination;
   }
 }

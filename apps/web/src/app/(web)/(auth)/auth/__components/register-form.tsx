@@ -6,13 +6,13 @@ import { Input } from "@repo/ui/components/shadcn/input";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { Label } from '@repo/ui/components/shadcn/label'
 import { Eye, EyeClosed } from "lucide-react";
-import { useState } from "react";
+import { ReactNode, useState } from "react";
 import { registerServerAction } from "@/modules/auth/server-actions/register.action";
 import FormComponent from "@/lib/components/form-component";
-export const RegisterForm = () => {
+export const RegisterForm = ({ children }: { children?: ReactNode }) => {
     const router = useRouter();
     const [hidden, setHidden] = useState(true);
-    const { result, handleSubmit, errors, cleanErrors, isPending } = useHandleAction({
+    const { result, handleSubmit, errors, inputErrors, cleanErrors, isPending } = useHandleAction({
         action: registerServerAction,
         afterAction: async (result) => {
             if (result.data) {
@@ -33,6 +33,7 @@ export const RegisterForm = () => {
                 type="email"
                 id="email"
                 name="email"
+                error={inputErrors?.email}
                 defaultValue={result?.inputs?.email}
                 placeholder="you@example.com"
                 autoComplete="email"
@@ -47,6 +48,7 @@ export const RegisterForm = () => {
                 type="text"
                 id="username"
                 name="username"
+                error={inputErrors?.username}
                 defaultValue={result?.inputs?.username}
                 placeholder="username"
                 autoComplete="username"
@@ -81,8 +83,9 @@ export const RegisterForm = () => {
                         {hidden ? <Eye className="size-5" /> : <EyeClosed className="size-5" />}
                     </button>
                 </div>
+                {inputErrors?.password && <p id="error-password" className="text-xs text-red-500 mt-1">{inputErrors.password}</p>}
             </FormComponent.Field>
-
+            {children}
             {/* Submit Button */}
             <FormComponent.SubmitButton isPending={isPending}>
                 Sign up

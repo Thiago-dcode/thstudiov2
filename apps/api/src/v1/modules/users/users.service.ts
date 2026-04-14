@@ -1,14 +1,14 @@
 import { BadRequestException, HttpException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { UpdateUserRequest } from './requests/update-user.request';
 import { NewUserEvent } from './events/new-user.event';
-import { OnEvent } from '@nestjs/event-emitter';
+import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { UserRepository } from './users.repository';
 import { cleanObj } from '@repo/common-lib/utils/cleanObj';
-import { UserExtraDataRepository } from '../user-extra-data/user-extra-data.repository';
 import { LogService } from '@repo/backend-lib/services/log-service';
 import { MailService } from '@repo/backend-lib/services/mail-service';
 import { NotifyNewUserMail } from './mails/notify-new-user.mail';
-import { PlanSubscriptionsService } from '../plan-subscriptions/plan-subscriptions.service';
+import { SetFreeSubscriptionEvent } from '../plan-subscriptions/events/set-free-subscription.event';
+import { SetInitialUserExtraDataEvent } from '../user-extra-data/events/set-initial-user-extra-data.event';
 import { stripe } from '@repo/backend-lib/services/payment-service/stripe';
 import { RequestService } from 'src/common/services/request.service';
 import {
@@ -18,6 +18,8 @@ import {
   MAX_PASSWORD_RESET,
   MAX_USERNAME_RESET,
   NEW_USER_EVENT,
+  SET_FREE_SUBSCRIPTION_EVENT,
+  SET_INITIAL_USER_EXTRA_DATA_EVENT,
 } from '@repo/common-lib/constants/constants';
 import { FindUserRequest } from './requests/find-user.request';
 import { Helpers } from 'src/common/services/helpers.service';
@@ -33,8 +35,7 @@ import { IndexArtistsRequest } from './requests/index-artists.request';
 export class UserService {
   constructor(
     private readonly userRepository: UserRepository,
-    private readonly planSubscriptionService: PlanSubscriptionsService,
-    private readonly userExtraDataRepository: UserExtraDataRepository,
+    private readonly eventEmitter: EventEmitter2,
     private readonly logService: LogService,
     private readonly mailService: MailService,
     private readonly helpers: Helpers,
@@ -278,28 +279,17 @@ export class UserService {
         stripe_customer_id: stripeCustomer.id,
       });
 
-      //Handle set free plan
-      const result = await this.planSubscriptionService.setFreeSubscription(
-        event.user.id,
+      //Handle set free plan via event (avoids circular dependency)
+      await this.eventEmitter.emitAsync(
+        SET_FREE_SUBSCRIPTION_EVENT,
+        new SetFreeSubscriptionEvent(event.user.id),
       );
-      this.logService
-        .name('new-user')
-        .info(`${NEW_USER_EVENT} user [${event.user.id}] set free plan`, {
-          result,
-        });
 
-      //Create a user extra data
-      const nextMonth = new Date();
-      nextMonth.setMonth(nextMonth.getMonth() + 1);
-      const extraData = await this.userExtraDataRepository.create({
-        user_id: event.user.id,
-        next_ai_credits_reset: nextMonth,
-      });
-      this.logService
-        .name('new-user')
-        .info(`${NEW_USER_EVENT} user [${event.user.id}] extra data`, {
-          extraData,
-        });
+      //Create a user extra data via event
+      await this.eventEmitter.emitAsync(
+        SET_INITIAL_USER_EXTRA_DATA_EVENT,
+        new SetInitialUserExtraDataEvent(event.user.id),
+      );
       //Notify user
       await this.mailService.send(this.notifyNewUserMail.setUser(event.user));
     } catch (error) {

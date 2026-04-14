@@ -25,6 +25,7 @@ export type InitiateSubscriptionRequest ={
   payment_method:EnumType<'PAYMENT_METHOD'>
   success_url:string;
   cancel_url:string;
+  benefit_id?: number;
 }
 
 export type HandleSubscriptionProcessInput = {
@@ -32,6 +33,7 @@ export type HandleSubscriptionProcessInput = {
   newPlanPrice: FullPlanPrice;
   successUrl: string;
   cancelUrl: string;
+  benefit_id?:number
 }
 
 

@@ -3,7 +3,7 @@ import { getLowestMontlyPrice } from "@repo/common-lib/utils/calculatePrice";
 
 export const PlanPrice = ({ prices, isFree }: {
   prices: PlanPriceType[],
-  isFree: boolean
+  isFree: boolean,
 }) => {
 
   return <div className="flex items- gap-1 w-full ">

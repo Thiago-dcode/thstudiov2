@@ -67,6 +67,7 @@ export class AuthService {
         invitation_link_id = invitationLink.id;
         await this.invitationLinkService.updateById(invitationLink.id, {
           current_uses: invitationLink.current_uses + 1,
+          active: invitationLink.max_uses < invitationLink.current_uses + 1
         })
       }
     }

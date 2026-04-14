@@ -9,7 +9,7 @@ export type LoginRequest = {
 }
 export type UserRegisterRequest = LoginRequest & {
     username:string
-
+    invitation_code?: string;
   }
 export type Verify2faRequest = {
     email: string;

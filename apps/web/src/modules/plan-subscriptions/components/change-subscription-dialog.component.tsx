@@ -33,7 +33,7 @@ export const ChangeSubscriptionDialog = () => {
         <DialogContent className="w-full max-w-md p-8">
           <div className="flex flex-col items-center justify-center gap-4">
             <Spinner className="size-12" />
-            <p className="text-text-muted">Processing...</p>
+            <DialogTitle className="text-text-muted text-base font-normal">Processing...</DialogTitle>
           </div>
         </DialogContent>
       </Dialog>

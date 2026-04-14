@@ -1,4 +1,4 @@
-import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { Processor } from '@nestjs/bullmq';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Job, Queue } from 'bullmq';
 import { OnEvent } from '@nestjs/event-emitter';
@@ -30,9 +30,10 @@ import {
   MEDIA_MODERATION_EVENT,
   UPDATE_USER_EXTRA_DATA_METRICS,
 } from '@repo/common-lib/constants/constants';
+import { GlobalProcessor } from 'src/common/processors/global.processor';
 
 @Processor(AI_QUEUE)
-export class AiProcessor extends WorkerHost {
+export class AiProcessor extends GlobalProcessor {
   private readonly logger = FactoryLogService.createLogService('file', {
     channel: 'ai',
   });

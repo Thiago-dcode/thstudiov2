@@ -51,7 +51,7 @@ export class UserService extends BaseService {
             resource: queryParamBuilder(`${id}/media`, params),
             cacheOptions: {
                 cache: 'no-cache',
-              
+
             }
         });
     }
@@ -75,16 +75,7 @@ export class UserService extends BaseService {
     }
     async getActiveSubscription(userId: number): Promise<ApiResponse<FullPlanSubscription>> {
 
-        return await this.fetchApi.get({
-            resource: `${userId}/subscription`,
-            cacheOptions: {
-                cache: 'force-cache',
-                next: {
-                    tags: [`subscription-${userId}`]
-                }
-            }
-
-        })
+        return await this.fetchApi.get({ resource: `${userId}/subscription` })
     }
     async metrics(id: number): Promise<ApiResponse<UserMetrics>> {
 

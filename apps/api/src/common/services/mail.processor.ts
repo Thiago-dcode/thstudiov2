@@ -1,4 +1,4 @@
-import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { Processor } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { MailService, EmailDriverOptions } from '@repo/backend-lib/services/mail-service';
 import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
@@ -6,9 +6,10 @@ import {
   MAIL_QUEUE,
   JOB_SEND_MAIL,
 } from '@repo/common-lib/constants/constants';
+import { GlobalProcessor } from 'src/common/processors/global.processor';
 
 @Processor(MAIL_QUEUE)
-export class MailProcessor extends WorkerHost {
+export class MailProcessor extends GlobalProcessor {
   private readonly logger = FactoryLogService.createLogService('file', {
     channel: 'mail',
   });

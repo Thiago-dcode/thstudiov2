@@ -1,4 +1,4 @@
-import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { Processor } from '@nestjs/bullmq';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Job, Queue } from 'bullmq';
 import { OnEvent } from '@nestjs/event-emitter';
@@ -14,9 +14,10 @@ import {
 import { UserService } from '../users/users.service';
 import { MailService } from '@repo/backend-lib/services/mail-service';
 import { NewContactMail } from './mails/new-contact.mail';
+import { GlobalProcessor } from 'src/common/processors/global.processor';
 
 @Processor(USER_CONTACTS_QUEUE)
-export class UserContactProcessor extends WorkerHost {
+export class UserContactProcessor extends GlobalProcessor {
   private readonly logger = FactoryLogService.createLogService('file', {
     channel: 'user-contacts',
   });

@@ -51,6 +51,8 @@ export const MEDIA_MODERATION_EVENT = 'media.moderation' as const;
 export const CREATE_USER_STORAGE_REQUEST = 'create.user-storage-request' as const;
 export const CREATE_USER_CONTACT = 'create.user-contact' as const;
 export const CREATE_OR_UPDATE_LOCATION = 'create-or-update.location' as const;
+export const SET_INITIAL_USER_EXTRA_DATA_EVENT = 'set-initial.user-extra-data' as const;
+export const SET_FREE_SUBSCRIPTION_EVENT = 'set-free.subscription' as const;
 
 // ==================== QUEUES (BullMQ) ====================
 export const USER_METRICS_QUEUE = 'user-metrics' as const;

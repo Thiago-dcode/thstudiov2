@@ -1,4 +1,4 @@
-import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { Processor } from '@nestjs/bullmq';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Job, Queue } from 'bullmq';
 import { OnEvent } from '@nestjs/event-emitter';
@@ -18,9 +18,10 @@ import { CountryRepository } from './country.repository';
 import { StateRepository } from './state.repository';
 import { CityRepository } from './city.repository';
 import { CreateOrUpdateLocationEvent } from './events/create-or-update-location.event';
+import { GlobalProcessor } from 'src/common/processors/global.processor';
 
 @Processor(LOCATION_QUEUE)
-export class LocationProcessor extends WorkerHost {
+export class LocationProcessor extends GlobalProcessor {
   private readonly logger = FactoryLogService.createLogService('file', {
     channel: LOCATION_QUEUE,
   });

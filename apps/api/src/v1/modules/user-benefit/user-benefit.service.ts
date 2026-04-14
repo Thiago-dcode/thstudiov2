@@ -27,6 +27,11 @@ export class UserBenefitService {
     return await this.benefitRepository.findByIdAndUser(id, userId);
   }
 
+  async redeemed(userId: number, benefitId: number): Promise<boolean > {
+    const redeemed = await this.userBenefitRepository.isRedeemed(userId, benefitId);
+    return redeemed ;
+  }
+
   async redeem(userId: number, benefitId: number): Promise<UserBenefit> {
     const [result] = await Promise.all([this.userBenefitRepository.redeem(userId, benefitId), this.helpers.deleteCached(`user-benefit-${userId}`)]);
     return result;

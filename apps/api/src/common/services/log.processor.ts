@@ -1,13 +1,14 @@
-import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { Processor } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { LogService } from '@repo/backend-lib/services/log-service';
 import {
   LOG_QUEUE,
   JOB_FLUSH_LOGS,
 } from '@repo/common-lib/constants/constants';
+import { GlobalProcessor } from 'src/common/processors/global.processor';
 
 @Processor(LOG_QUEUE)
-export class LogProcessor extends WorkerHost {
+export class LogProcessor extends GlobalProcessor {
 
   async process(job: Job): Promise<any> {
     try {

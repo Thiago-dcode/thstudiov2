@@ -42,11 +42,10 @@ export default async function CallbackPage({
 
     const isSuccess = callback === 'success';
     const retryable = cookie?.retryable;
-    const message = cookie?.message;
     const successTitle = "Payment Successful!";
-    const successSubtitle = message || "Your subscription has been activated. Welcome aboard!";
+    const successSubtitle = "Your subscription has been activated. Welcome aboard!";
     const failedTitle = "Payment Failed";
-    const failedSubtitle = message || "Something went wrong with your payment. Please try again.";
+    const failedSubtitle = "Something went wrong with your payment. Please try again.";
     if (!retryable) {
         await usersService.update(userAuth.id, {
             funnel_step: FUNNEL_LAST_STEP + 1

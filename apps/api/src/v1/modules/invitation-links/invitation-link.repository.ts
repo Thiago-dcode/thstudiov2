@@ -51,7 +51,7 @@ export class InvitationLinkRepository extends BaseRepository {
       query.where('benefits.type', '=', filters.benefit_type);
     }
     if (typeof filters.active === 'boolean') {
-      query.where('invitation_links.active', '=', filters.active);
+      query.where('invitation_links.active', filters.active);
     }
 
     this.requestService.pagination =

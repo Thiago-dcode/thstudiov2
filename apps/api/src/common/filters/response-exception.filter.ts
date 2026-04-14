@@ -11,12 +11,11 @@ import { API_ERRORS_CHANNEL, logConfig } from 'src/config/logging';
 import { format } from 'date-fns/format';
 import { VALIDATION_ERROR_STATUS } from '../utils/constants';
 import { Error as ApiError, ErrorResponse } from '@repo/common-lib/types/response';
-import { RequestService } from '../services/request.service';
 import { ApiException } from '../exceptions/api-exception';
 
 @Catch()
 export class ResponseExceptionFilter implements ExceptionFilter {
-  constructor(private readonly requestService: RequestService) { }
+  constructor() { }
   catch(exception: any, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse();
@@ -71,12 +70,10 @@ export class ResponseExceptionFilter implements ExceptionFilter {
             request?.get?.(IP_ADDRESS_HEADER) ||
             request?.ip ||
             request?.get?.('x-forwarded-for') ||
-            this.requestService?.ip_address ||
             '-',
           user_agent:
             request?.get?.(USER_AGENT_HEADER) ||
             request?.get?.('user-agent') ||
-            this.requestService?.user_agent ||
             '-',
           request_time: !isNaN(requestStartTime)
             ? (Date.now() - requestStartTime) / 1000

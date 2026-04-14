@@ -7,7 +7,7 @@ import {
   HoverCardTrigger,
 } from "@repo/ui/components/shadcn/hover-card";
 import { cn } from "@repo/ui/lib/utils";
-import { CircleCheck, Info, Sparkles, X, Zap } from "lucide-react";
+import { Check, CircleCheck, Info, Sparkles, X, Zap } from "lucide-react";
 import { type ReactNode, useMemo } from "react";
 
 function formatMegaBytes(megabytes: number): string {
@@ -152,7 +152,7 @@ export const PlanFeatures = ({ plan }: { plan: BasePlan }) => {
         >
           <span
             className={cn(
-              "mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full",
+              "mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full",
               feature.not_available
                 ? "bg-fg-1/8 text-text-muted"
                 : "bg-accent/[0.12] text-accent",
@@ -162,7 +162,7 @@ export const PlanFeatures = ({ plan }: { plan: BasePlan }) => {
             {feature.not_available ? (
               <X className="size-3.5 stroke-[2.25]" />
             ) : (
-              <CircleCheck className="size-3.5 stroke-[2.25]" />
+              <Check className="size-3.5" />
             )}
           </span>
           <div className="min-w-0 flex-1 pt-0.5 text-sm leading-snug lg:text-[0.9375rem]">

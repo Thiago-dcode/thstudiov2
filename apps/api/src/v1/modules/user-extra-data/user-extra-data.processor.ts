@@ -1,4 +1,4 @@
-import { Processor, WorkerHost } from '@nestjs/bullmq';
+import { Processor } from '@nestjs/bullmq';
 import { Inject } from '@nestjs/common';
 import { Job } from 'bullmq';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
@@ -10,9 +10,10 @@ import {
   USER_METRICS_QUEUE,
   JOB_COMPUTE_USER_METRICS,
 } from '@repo/common-lib/constants/constants';
+import { GlobalProcessor } from 'src/common/processors/global.processor';
 
 @Processor(USER_METRICS_QUEUE)
-export class UserExtraDataProcessor extends WorkerHost {
+export class UserExtraDataProcessor extends GlobalProcessor {
   private readonly logger = FactoryLogService.createLogService('file', {
     channel: 'users',
   });
@@ -121,11 +122,13 @@ export class UserExtraDataProcessor extends WorkerHost {
       await this.userExtraDataRepository.updateByUserId(userId, metrics);
       log.info(`Metrics updated for user ${userId}`, metrics);
       return metrics;
-    } catch (error) {
+    } catch (caught: unknown) {
+      const errMsg =
+        caught instanceof Error ? caught.message : String(caught);
       log.error(`Failed to update metrics for user ${userId}`, {
-        error: error instanceof Error ? error.message : error,
+        error: errMsg,
       });
-      throw error; // Re-throw so BullMQ can retry
+      throw caught; // Re-throw so BullMQ can retry
     }
   }
 }
