@@ -1,3 +1,4 @@
+import { LogService } from '@repo/backend-lib/services/log-service';
 import { Injectable } from '@nestjs/common';
 import { BaseRepository } from '@repo/database/repositories';
 import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
@@ -9,8 +10,8 @@ import {
 
 @Injectable()
 export class CategoryTranslationsRepository extends BaseRepository {
-  constructor() {
-    super(TABLES_ENUM.CATEGORY_TRANSLATIONS);
+  constructor(protected readonly logService: LogService) {
+    super(TABLES_ENUM.CATEGORY_TRANSLATIONS, logService);
   }
 
   async findByCategoryAndLanguage(

@@ -1,3 +1,4 @@
+import { LogService } from '@repo/backend-lib/services/log-service';
 import { Injectable } from '@nestjs/common';
 import { QueryBuilder } from '@repo/database/queryBuilder';
 import { BaseRepository } from '@repo/database/repositories';
@@ -28,10 +29,11 @@ export class PlanPricesRepository extends BaseRepository {
     'plans.base_price',
     'plans.is_active',
     'plans.is_free',
+    'plans.top_tier',
   ];
 
-  constructor() {
-    super('plan_prices');
+  constructor(protected readonly logService: LogService) {
+    super('plan_prices', logService);
   }
 
   formatPlanPrice(result: PlanPriceWithPlanSchema) {
@@ -48,6 +50,7 @@ export class PlanPricesRepository extends BaseRepository {
         base_price: result.base_price,
         is_free: result.is_free,
         is_active: result.is_active,
+        top_tier: result.top_tier,
         short_description: result.short_description,
       },
     };

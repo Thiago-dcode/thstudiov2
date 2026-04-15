@@ -39,7 +39,7 @@ export type MediaIndexRequest = OffsetPaginationRequest & {
 }
 
 // Fields generated internally by the system (user cannot set these)
-type InternalMediaFields = 'id' | 'public_id' | 'bytes' | 'url' | 'thumbnail' | 'thumbnail_bytes' | 'shape' | 'extension' | 'blocked' | 'is_active' | 'is_featured' | 'is_highlight' | 'created_at' | 'updated_at';
+type InternalMediaFields = 'id' | 'public_id' | 'bytes' | 'url' | 'thumbnail' | 'thumbnail_bytes' | 'shape' | 'extension' | 'blocked_at' | 'is_active' | 'is_featured' | 'is_highlight' | 'created_at' | 'updated_at';
 
 // What users can provide when creating media (public API input)
 export type PublicCreateMediaInput = Omit<MediaSchema, InternalMediaFields>;

@@ -86,7 +86,7 @@ export const setInitiateSubscriptionCookie = async (data: HandleSubscriptionProc
     const cookieStore = await cookies();
     cookieStore.set(INITIATE_SUBCRIPTION_COOKIE, await encryptObj(data), {
         httpOnly: true,
-        maxAge: 60 * 7 // 7 min
+        maxAge: 60 * 10 // 10 min
     });
 }
 

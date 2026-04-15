@@ -1,3 +1,4 @@
+import { LogService } from '@repo/backend-lib/services/log-service';
 import { Injectable } from '@nestjs/common';
 import { BaseRepository } from '@repo/database/repositories';
 import { UserAuthDeviceSchemaColumns } from '@repo/common-lib/schemas/user-session';
@@ -15,10 +16,10 @@ export class UserAuthDevicesRepository extends BaseRepository {
     'user_auth_devices.user_agent',
     'user_auth_devices.ip_address',
     'user_auth_devices.disabled',
-    'user_auth_devices.blocked',
+    'user_auth_devices.blocked_at',
   ];
-  constructor() {
-    super('user_auth_devices');
+  constructor(protected readonly logService: LogService) {
+    super('user_auth_devices', logService);
   }
 
   async create(extraData: CreateUserAuthDeviceInput): Promise<UserAuthDevice> {

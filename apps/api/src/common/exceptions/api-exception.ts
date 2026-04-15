@@ -21,7 +21,7 @@ export class ApiException extends HttpException {
   }
 
   static mediaSize(message: string) {
-    return new ApiException(API_ERRORS.USER_LIMITS_MEDIA_SIZE_EXCEEDED, message);
+    return new ApiException(API_ERRORS.USER_LIMITS_storage_used_mb_EXCEEDED, message);
   }
 
   static dailyStorageRequests(message: string) {

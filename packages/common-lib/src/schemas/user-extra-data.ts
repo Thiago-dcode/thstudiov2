@@ -3,7 +3,7 @@ import { TableColumn } from "../types/database";
 
 export type UserExtraDataSchema = {
   id: number;
-  media_size: number;
+  storage_used_mb: number;
   media_count: number;
   projects_count: number;
   clients_count: number;

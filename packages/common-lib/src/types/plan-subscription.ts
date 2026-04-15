@@ -16,6 +16,7 @@ export type FullPlanSubscription = PlanSubscription & {
       base_price: number;
       is_popular: boolean;
       is_free: boolean;
+      top_tier: boolean;
     };
   };
 };

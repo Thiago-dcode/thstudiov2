@@ -51,6 +51,7 @@ import { RolesModule } from './v1/modules/roles/roles.module';
 import { InvitationLinkModule } from './v1/modules/invitation-links/invitation-link.module';
 import { UserBenefitModule } from './v1/modules/user-benefit/user-benefit.module';
 import { UserSubscriptionModule } from './v1/modules/user-subscription/user-subscription.module';
+import { PlanSubscriptionsProcessorModule } from './v1/modules/plan-subscriptions/plan-subscriptions-processor.module';
 /** Feature modules mounted at `api/v1/*` (not under `admin/`). */
 const API_V1_MODULES = [
   AuthModule,
@@ -84,6 +85,15 @@ const API_V1_MODULES = [
 const ADMIN_V1_MODULES = [
   AdminModule
 ]
+const ALL_APP_MODULES = [
+  ...API_V1_MODULES,
+  ...ADMIN_V1_MODULES,
+  AiProcessorModule,
+  PlanSubscriptionsProcessorModule,
+  ServicesModule,
+  UserExtraDataModule,
+  TestModule,
+];
 @Module({
   imports: [
     RouterModule.register([
@@ -164,12 +174,7 @@ const ADMIN_V1_MODULES = [
     }),
     EventEmitterModule.forRoot(),
     ScheduleModule.forRoot(),
-    ServicesModule,
-    UserExtraDataModule,
-    AiProcessorModule,
-    ...API_V1_MODULES,
-    AdminModule,
-    TestModule,
+    ...ALL_APP_MODULES,
   ],
   controllers: [],
   providers: [

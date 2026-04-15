@@ -51,6 +51,7 @@ export type FullPlanSubscriptionSchema = PlanSubscriptionSchema & {
   base_price: number;
   is_popular: boolean;
   is_free: boolean;
+  top_tier: boolean;
 };
 
 export type FullPlanSubscriptionWithoutTimestampsSchema = Omit<FullPlanSubscriptionSchema, 'created_at' | 'updated_at'>;

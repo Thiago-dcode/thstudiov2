@@ -42,8 +42,11 @@ const up = async () => {
     Column.boolean('show_service', {
       default: true,
     }),
-    Column.boolean('visible', {
+    Column.boolean('is_active', {
       default: true,
+    }),
+    Column.timestamp('blocked_at', {
+      nullable: true,
     }),
     Column.foreignKey('user_id', 'users', 'id', {
       onDelete: 'CASCADE',

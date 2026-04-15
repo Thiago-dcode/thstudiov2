@@ -17,7 +17,7 @@ export type ProjectSchema = {
   complete_date?: Date | null;
   show_client: boolean;
   show_service: boolean;
-  visible: boolean;
+  is_active: boolean;
   user_id: number;
   client_id: number;
   service_id: number;

@@ -8,9 +8,17 @@ import { PaymentMethodsService } from '../utils/payment-methods.service';
 import { UserBenefitModule } from '../user-benefit/user-benefit.module';
 
 @Module({
-  imports: [PlanPricesModule, PlansModule,UserBenefitModule],
+  imports: [
+    PlanPricesModule, 
+    PlansModule,
+    UserBenefitModule
+  ],
   controllers: [PlanSubscriptionsController],
-  providers: [PlanSubscriptionsService, PlanSubscriptionsRepository,PaymentMethodsService],
+  providers: [
+    PlanSubscriptionsService, 
+    PlanSubscriptionsRepository,
+    PaymentMethodsService
+  ],
   exports: [PlanSubscriptionsService],
 })
 export class PlanSubscriptionsModule {}

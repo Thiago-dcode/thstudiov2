@@ -194,7 +194,7 @@ export class MediaService {
         url: mediaPath,
         thumbnail: thumbnailPath,
         seo_filename: data.seo_filename || filename,
-        blocked: false,
+        blocked_at: null,
         is_featured:false,
         is_highlight:false,
         shape: await this.compressService.getImageShape(mediaFile.buffer),

@@ -1,3 +1,4 @@
+import { LogService } from '@repo/backend-lib/services/log-service';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { BaseRepository } from '@repo/database/repositories';
 import { UserContactSchema, UserContactSchemaColumns } from '@repo/common-lib/schemas/user-contact';
@@ -16,8 +17,8 @@ export class UserContactsRepository extends BaseRepository {
     'user_contacts.updated_at',
   ];
 
-  constructor() {
-    super(TABLES_ENUM.USER_CONTACTS);
+  constructor(protected readonly logService: LogService) {
+    super(TABLES_ENUM.USER_CONTACTS, logService);
   }
 
   async findAll(userId: number): Promise<UserContactSchema[]> {

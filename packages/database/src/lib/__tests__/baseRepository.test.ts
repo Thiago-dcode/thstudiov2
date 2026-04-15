@@ -1,3 +1,4 @@
+import { LogService } from '@repo/backend-lib/services/log-service';
 import { DatabaseConfig, FullDatabaseConfig, Join } from '@repo/common-lib/types/database';
 import { DEFAULT_DATABASE_SETTINGS } from '@repo/common-lib/constants/database';
 import { BaseRepository } from '../repositories';
@@ -53,8 +54,8 @@ jest.mock('../client', () => {
 
 // Concrete implementation of BaseRepository for testing
 class TestRepository extends BaseRepository {
-  constructor(tableName: any, options?: any) {
-    super(tableName, options);
+  constructor(tableName: any, protected readonly logService: LogService, options?: any) {
+    super(tableName, logService, options);
   }
 
   // Expose queryBuilder for inspection
@@ -101,7 +102,7 @@ describe('BaseRepository - buildQuery', () => {
 
     const { initClient } = require('../client');
     await initClient(testConfig);
-    repository = new TestRepository(TABLE_NAME);
+    repository = new TestRepository(TABLE_NAME, null as any);
   });
 
   afterEach(async () => {
@@ -319,12 +320,12 @@ describe('BaseRepository - buildQuery', () => {
         wheres: [
           { column: 'category', operator: '=', value: 'tech' },
           { column: 'status', operator: 'NOT IN', value: ['deleted', 'archived'] },
-          { column: 'visible', operator: '=', value: true },
+          { column: 'is_active', operator: '=', value: true },
         ],
       });
 
       expect(sql).toBe(
-        `SELECT * FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.category = $1 \nAND ${TABLE_NAME}.status NOT IN ($2,$3) \nAND ${TABLE_NAME}.visible = $4`
+        `SELECT * FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.category = $1 \nAND ${TABLE_NAME}.status NOT IN ($2,$3) \nAND ${TABLE_NAME}.is_active = $4`
       );
       expect(values).toEqual(['tech', 'deleted', 'archived', true]);
     });

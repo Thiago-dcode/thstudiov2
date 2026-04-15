@@ -1,3 +1,4 @@
+import { LogService } from '@repo/backend-lib/services/log-service';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { BaseRepository } from '@repo/database/repositories';
 import { QueryBuilder } from '@repo/database/queryBuilder';
@@ -29,7 +30,7 @@ export class MediaRepository extends BaseRepository {
     'media.url',
     'media.is_featured',
     'media.is_highlight',
-    'media.blocked',
+    'media.blocked_at',
     'media.shape',
     'media.compression_level',
     'media.extension',
@@ -50,8 +51,8 @@ export class MediaRepository extends BaseRepository {
     'users.name',
   ];
 
-  constructor(private readonly requestService: RequestService) {
-    super('media');
+  constructor(private readonly requestService: RequestService, protected readonly logService: LogService) {
+    super('media', logService);
   }
 
   async getAll(filters: MediaIndexRequest): Promise<Media[]> {
@@ -139,16 +140,21 @@ export class MediaRepository extends BaseRepository {
       query.where('is_active', '=', filters.is_active);
     }
 
-    if (typeof filters.blocked === 'boolean') {
-      query.where('blocked', '=', filters.blocked);
-    }
-
     if (typeof filters.is_featured === 'boolean') {
       query.where('is_featured', '=', filters.is_featured);
     }
 
     if (typeof filters.is_highlight === 'boolean') {
       query.where('is_highlight', '=', filters.is_highlight);
+    }
+
+    // `blocked` is a boolean filter in DTOs, but the DB uses `blocked_at`.
+    if (typeof filters.blocked === 'boolean') {
+      if (filters.blocked) {
+        query.where('blocked_at', 'IS NOT', null);
+      } else {
+        query.where('blocked_at', 'IS', null);
+      }
     }
     this.requestService.pagination =
       await this.handleOffsetPagination(query, filters);
@@ -179,7 +185,7 @@ export class MediaRepository extends BaseRepository {
       thumbnail: result.thumbnail,
       is_featured: result.is_featured,
       is_highlight: result.is_highlight,
-      blocked: result.blocked,
+      blocked_at: result.blocked_at,
       shape: result.shape,
       compression_level: result.compression_level,
       extension: result.extension,

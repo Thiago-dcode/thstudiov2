@@ -2,7 +2,7 @@ export type LogConfig = {
     logFolder?: string;
     channel: string;
     name?: string;
-    requestId?:string;
+    id?: string | (() => string | null);
     callback? :{
         channel: string;
         callback: (level: LogLevel, message: string, options?: LogOptions) => Promise<void>;

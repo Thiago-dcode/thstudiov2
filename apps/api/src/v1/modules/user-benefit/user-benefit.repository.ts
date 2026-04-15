@@ -1,3 +1,4 @@
+import { LogService } from '@repo/backend-lib/services/log-service';
 import { Injectable } from '@nestjs/common';
 import { BaseRepository } from '@repo/database/repositories';
 import { UserBenefitSchema, UserBenefitSchemaColumns } from '@repo/common-lib/schemas/benefit';
@@ -13,8 +14,8 @@ export class UserBenefitRepository extends BaseRepository {
     'user_benefits.redeemed',
   ] as const;
 
-  constructor() {
-    super('user_benefits');
+  constructor(protected readonly logService: LogService) {
+    super('user_benefits', logService);
   }
 
   async create(input: CreateUserBenefitInput): Promise<UserBenefit> {

@@ -1,3 +1,4 @@
+import { LogService } from '@repo/backend-lib/services/log-service';
 import { Injectable } from '@nestjs/common';
 import { BaseRepository } from '@repo/database/repositories';
 import { QueryBuilder } from '@repo/database/queryBuilder';
@@ -63,8 +64,8 @@ export class CollectionRepository extends BaseRepository {
     'media.is_highlight as m_is_highlight',
   ];
 
-  constructor(private readonly requestService: RequestService) {
-    super('collections');
+  constructor(private readonly requestService: RequestService, protected readonly logService: LogService) {
+    super('collections', logService);
   }
 
   async getAll(filters: CollectionIndexRequest): Promise<Collection[]> {
@@ -99,7 +100,7 @@ export class CollectionRepository extends BaseRepository {
       .join('id', 'collection_media', 'collection_id', 'LEFT')
       .join('collection_media.media_id', 'media', 'id', 'LEFT')
       .where('media.thumbnail', 'IS NOT', null)
-      .where('media.blocked', '=', false)
+      .where('media.blocked_at', null)
       .orderBy('created_at', 'DESC')
       .orderBy('collection_media.position', 'ASC')
       .get<CollectionCompactSchema[]>();
@@ -115,7 +116,7 @@ export class CollectionRepository extends BaseRepository {
       .join('id', 'collection_media', 'collection_id', 'LEFT')
       .join('collection_media.media_id', 'media', 'id', 'LEFT')
       .where('media.thumbnail', 'IS NOT', null)
-      .where('media.blocked', '=', false)
+      .where('media.blocked_at', 'IS', null)
       .orderBy('collection_media.position', 'ASC')
       .get<CollectionFullSchema[]>();
 
@@ -217,7 +218,7 @@ export class CollectionRepository extends BaseRepository {
       .join('id', 'collection_media', 'collection_id', 'LEFT')
       .join('collection_media.media_id', 'media', 'id', 'LEFT')
       .where('media.thumbnail', 'IS NOT', null)
-      .where('media.blocked', '=', false)
+      .where('media.blocked_at', 'IS', null)
 
     this.applyWhereFilters(query, filters);
 

@@ -1,7 +1,7 @@
-import { Processor } from '@nestjs/bullmq';
-import { Job } from 'bullmq';
+import { InjectQueue, Processor } from '@nestjs/bullmq';
+import { Job, Queue } from 'bullmq';
 import Stripe from 'stripe';
-import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
+import { LogService } from '@repo/backend-lib/services/log-service';
 import { PlanSubscriptionsService } from '../plan-subscriptions/plan-subscriptions.service';
 import { PlanPricesService } from '../plan-prices/plan-prices.service';
 import { UserService } from '../users/users.service';
@@ -14,36 +14,42 @@ import {
   JOB_STRIPE_WEBHOOK,
   CACHE_KEY_ACTIVE_SUBSCRIPTION,
   CACHE_KEY_ACTIVE_PLAN,
+  PLAN_SUBSCRIPTIONS_QUEUE,
+  JOB_ON_SUBSCRIPTION_CHANGES,
 } from '@repo/common-lib/constants/constants';
 import { GlobalProcessor } from 'src/common/processors/global.processor';
 import { UserBenefitService } from '../user-benefit/user-benefit.service';
 
 @Processor(STRIPE_WEBHOOKS_QUEUE)
 export class WebhookProcessor extends GlobalProcessor {
-  private readonly logger = FactoryLogService.createLogService('file', {
-    channel: 'webhook',
-    name: 'stripe',
-    callback: {
-      channel: 'webhook/error',
-      callback: Helpers.callback500ErrorMail,
-    },
-  });
-
   constructor(
     private readonly planSubscriptionService: PlanSubscriptionsService,
     private readonly planPriceService: PlanPricesService,
     private readonly userService: UserService,
     private readonly userBenefitService: UserBenefitService,
     private readonly helpers: Helpers,
-    private readonly appLogService: LogService,
+    private readonly logger: LogService,
+    @InjectQueue(PLAN_SUBSCRIPTIONS_QUEUE) private readonly subscriptionQueue: Queue,
   ) {
     super();
+    this.logger
+      .callback({
+        channel: 'webhook/error',
+        callback: Helpers.callback500ErrorMail,
+      });
   }
 
   async process(job: Job<Stripe.Event>): Promise<void> {
     const event = job.data;
+    this.logger.channel('webhook')
 
     try {
+      const object = event?.data?.object as any;
+      if (object?.metadata?.requestId) {
+        const requestId = object.metadata.requestId;
+        this.logger.id(requestId);
+      }
+
       switch (job.name) {
         case JOB_STRIPE_WEBHOOK:
           return await this.handleStripeEvent(event);
@@ -52,11 +58,12 @@ export class WebhookProcessor extends GlobalProcessor {
           throw new Error(`Job name "${job.name}" not recognized`);
       }
     } finally {
-      await this.appLogService.flushAsync();
+      await this.logger.flushAsync();
     }
   }
 
   private async handleStripeEvent(event: Stripe.Event): Promise<void> {
+    this.logger.name('stripe');
     this.logger.debug(`StripeProcessor ${event.type}`);
     try {
       switch (event.type) {
@@ -213,7 +220,7 @@ export class WebhookProcessor extends GlobalProcessor {
             this.logger.debug("Starting redeem");
             await this.userBenefitService.redeem(user.id, benefitId);
             this.logger.debug(`Redeemed benefit ${benefitId} for user ${user.id}`);
-        } else {
+          } else {
             this.logger.warn(
               `Invalid benefit_id in subscription metadata: ${benefitIdRaw}`,
             );
@@ -259,10 +266,23 @@ export class WebhookProcessor extends GlobalProcessor {
           : Promise.resolve(),
       ]);
     }
-    await this.helpers.deleteManyCached([
-      CACHE_KEY_ACTIVE_SUBSCRIPTION(user.id),
-      CACHE_KEY_ACTIVE_PLAN(user.id),
-    ]);
+
+    await Promise.all([
+      this.helpers.deleteManyCached([
+        CACHE_KEY_ACTIVE_SUBSCRIPTION(user.id),
+        CACHE_KEY_ACTIVE_PLAN(user.id),
+      ]),
+      this.subscriptionQueue.add(
+        JOB_ON_SUBSCRIPTION_CHANGES,
+        user,
+        {
+          jobId: `plan-subscription-${internalSubscription.user_id}-${Date.now()}`,
+          priority: 10,
+          removeOnComplete: true,
+          attempts: 3,
+          backoff: { type: 'exponential', delay: 1000 },
+        },
+      )])
   }
 
   private async handleSubscriptionDeleted(
@@ -281,6 +301,17 @@ export class WebhookProcessor extends GlobalProcessor {
       this.logger.debug(`Setting free plan to user`, {
         freeSubscription,
       });
+      await this.subscriptionQueue.add(
+        JOB_ON_SUBSCRIPTION_CHANGES,
+        user,
+        {
+          jobId: `plan-subscription-${internalSubscription.user_id}-${Date.now()}`,
+          priority: 10,
+          removeOnComplete: true,
+          attempts: 3,
+          backoff: { type: 'exponential', delay: 1000 },
+        },
+      )
     }
     await this.helpers.deleteManyCached([
       CACHE_KEY_ACTIVE_SUBSCRIPTION(user.id),

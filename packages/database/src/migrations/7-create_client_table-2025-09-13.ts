@@ -20,6 +20,12 @@ const up = async () => {
     Column.string('website', 255, {
       nullable: true,
     }),
+    Column.boolean('is_active', {
+      default: true,
+    }),
+    Column.timestamp('blocked_at', {
+      nullable: true,
+    }),
     Column.foreignKey('user_id', 'users', 'id', {
       onDelete: 'CASCADE',
     }),

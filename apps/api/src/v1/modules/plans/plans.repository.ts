@@ -1,3 +1,4 @@
+import { LogService } from '@repo/backend-lib/services/log-service';
 import { Injectable } from '@nestjs/common';
 import { QueryBuilder } from '@repo/database/queryBuilder';
 import { IndexPlanRequest } from './requests/index-plan.request';
@@ -31,10 +32,11 @@ export class PlansRepository extends BaseRepository {
     'plans.max_portfolios',
     'plans.max_collections',
     'plans.max_services',
-    'plans.max_media_size',
+    'plans.storage_limit_mb',
     'plans.limit_write_storage_per_day',
     'plans.ai_credits',
     'plans.is_active',
+    'plans.top_tier',
     'plan_prices.price',
     'plan_prices.plan_id',
     'plan_prices.paypal_id as pp_paypal_id',
@@ -53,8 +55,8 @@ export class PlansRepository extends BaseRepository {
     'plan_translations.description as pt_description',
   ];
 
-  constructor(private readonly requestService: RequestService) {
-    super('plans', {
+  constructor(private readonly requestService: RequestService, protected readonly logService: LogService) {
+    super('plans', logService, {
       softDelete: true,
     });
   }
@@ -123,13 +125,14 @@ export class PlansRepository extends BaseRepository {
           ),
           is_free: curr.is_free,
           is_popular: curr.is_popular,
+          top_tier: curr.top_tier,
           allow_media_compression: curr.allow_media_compression,
           max_clients: curr.max_clients,
           max_portfolios: curr.max_portfolios,
           max_projects: curr.max_projects,
           max_services: curr.max_services,
           max_collections: curr.max_collections,
-          max_media_size: curr.max_media_size,
+          storage_limit_mb: curr.storage_limit_mb,
           limit_write_storage_per_day: curr.limit_write_storage_per_day,
           ai_credits: curr.ai_credits,
           translation: translation

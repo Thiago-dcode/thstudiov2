@@ -1,3 +1,4 @@
+import { LogService } from '@repo/backend-lib/services/log-service';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { BaseRepository } from '@repo/database/repositories';
 import {
@@ -14,7 +15,7 @@ import {
 export class UserExtraDataRepository extends BaseRepository {
   private readonly COLUMNS: UserExtraDataSchemaColumns[] = [
     'user_extra_data.id',
-    'user_extra_data.media_size',
+    'user_extra_data.storage_used_mb',
     'user_extra_data.media_count',
     'user_extra_data.projects_count',
     'user_extra_data.clients_count',
@@ -32,8 +33,8 @@ export class UserExtraDataRepository extends BaseRepository {
     'user_extra_data.user_id',
   ] as const;
 
-  constructor() {
-    super('user_extra_data');
+  constructor(protected readonly logService: LogService) {
+    super('user_extra_data', logService);
   }
 
   async findByUserId(userId: number): Promise<UserExtraData> {
@@ -117,7 +118,7 @@ export class UserExtraDataRepository extends BaseRepository {
   ): UserExtraData {
     return {
       id: result.id,
-      media_size: result.media_size,
+      storage_used_mb: result.storage_used_mb,
       media_count: result.media_count,
       projects_count: result.projects_count,
       clients_count: result.clients_count,

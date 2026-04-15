@@ -66,8 +66,13 @@ export abstract class LogService {
         this.config.name = name;
         return this;
     }
-    public requestId(requestId: string) {
-        this.config.requestId = requestId;
+    public id(id: string | (() => string | null)) {
+        this.config.id = id;
+        return this;
+    }
+
+    public callback(callback: LogConfig['callback']) {
+        this.config.callback = callback;
         return this;
     }
     public info(message: string, options?: LogOptions): this {
@@ -94,8 +99,14 @@ export abstract class LogService {
         console.log(this.beautifyLogMessage('success', message, options));
         return this;
     }
-    protected beautifyLogMessage(level: LogLevel, message: string, options?: LogOptions) {
-        let logMessage = `[${format(LogService.date, 'yyyy-mm-dd HH:mm:ss')}] - ${level.toUpperCase()} -${this.config.requestId ? `[${this.config.requestId}]` : ''} ${message}`;
+    protected getLogId(): string | null {
+        return typeof this.config.id === 'function' ? this.config.id() : (this.config.id || null);
+    }
+
+    protected beautifyLogMessage(level: LogLevel, message: string, options?: LogOptions, id?: string | null) {
+        const logId = id !== undefined ? id : this.getLogId();
+        if (!LogService.date) LogService.date = new Date();
+        let logMessage = `[${format(LogService.date, 'yyyy-mm-dd HH:mm:ss')}] - ${level.toUpperCase()} -${logId ? `[${logId}]` : ''} ${message}`;
         if (options) {
             logMessage += ` - ${JSON.stringify(options)}`;
         }

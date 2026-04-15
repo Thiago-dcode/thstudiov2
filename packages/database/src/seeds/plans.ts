@@ -73,7 +73,8 @@ export const main = async () => {
       is_active: true,
       is_popular: false,
       is_free: true,
-      max_media_size: 1024, // 1GB storage in MB (~$0.023/month)
+      top_tier: false,
+      storage_limit_mb: 1024, // 1GB storage in MB (~$0.023/month)
       max_projects: 8,
       max_portfolios: 2,
       max_clients: 4,
@@ -146,7 +147,8 @@ export const main = async () => {
       is_active: true,
       is_free: false,
       is_popular: true,
-      max_media_size: 20 * 1024, // 20GB storage in MB (~$0.23/month)
+      top_tier: false,
+      storage_limit_mb: 20 * 1024, // 20GB storage in MB (~$0.23/month)
       max_projects: 20,
       max_portfolios: 5,
       max_clients: 10,
@@ -214,7 +216,8 @@ export const main = async () => {
       is_active: true,
       is_free: false,
       is_popular: false,
-      max_media_size: 51200, // 50GB storage in MB (~$1.15/month)
+      top_tier: true,
+      storage_limit_mb: 51200, // 50GB storage in MB (~$1.15/month)
       max_projects: -1,
       max_portfolios: -1,
       max_clients: -1,

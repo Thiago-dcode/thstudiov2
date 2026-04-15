@@ -63,6 +63,7 @@ export const USER_CONTACTS_QUEUE = 'user-contacts' as const;
 export const LOCATION_QUEUE = 'location' as const;
 export const MAIL_QUEUE = 'mail' as const;
 export const LOG_QUEUE = 'log' as const;
+export const PLAN_SUBSCRIPTIONS_QUEUE = 'plan-subscriptions' as const;
 
 // ==================== JOBS (BullMQ) ====================
 export const JOB_COMPUTE_USER_METRICS = 'compute-user-metrics' as const;
@@ -74,6 +75,7 @@ export const JOB_CREATE_USER_CONTACT = 'create-user-contact' as const;
 export const JOB_CREATE_OR_UPDATE_LOCATION = 'create-or-update-location' as const;
 export const JOB_SEND_MAIL = 'send-mail' as const;
 export const JOB_FLUSH_LOGS = 'flush-logs' as const;
+export const JOB_ON_SUBSCRIPTION_CHANGES = 'on-subscription-changes' as const;
 
 // ==================== CACHE KEYS ====================
 // Plans

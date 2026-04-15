@@ -26,6 +26,9 @@ const up = async () => {
     Column.boolean('show_price', {
       default: false,
     }),
+    Column.timestamp('blocked_at', {
+      nullable: true,
+    }),
     Column.foreignKey('user_id', 'users', 'id', {
       onDelete: 'CASCADE',
     }),

@@ -35,7 +35,7 @@ export const PlanFeatures = ({ plan }: { plan: BasePlan }) => {
         content: (
           <span className="text-pretty">
             <span className="font-bold tabular-nums text-text">
-              {formatMegaBytes(plan.max_media_size)}
+              {formatMegaBytes(plan.storage_limit_mb)}
             </span>
             <span className="text-text-muted"> of media storage</span>
           </span>

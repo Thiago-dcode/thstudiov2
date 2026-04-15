@@ -147,9 +147,9 @@ export class AuthService {
       user_agent: this.requestService?.user_agent || '-',
       ip_address: this.requestService?.ip_address || '-',
       disabled: false,
-      blocked: false,
+      blocked_at: null,
     });
-    if (userAuthDevice.blocked) {
+    if (userAuthDevice.blocked_at) {
       throw new ForbiddenException('Device is blocked');
     }
 
@@ -176,7 +176,7 @@ export class AuthService {
       user_agent: this.requestService.user_agent || '-',
       ip_address: this.requestService.ip_address || '-',
     });
-    if (!authDevice || authDevice.disabled || authDevice.blocked) {
+    if (!authDevice || authDevice.disabled || authDevice.blocked_at) {
       throw new UnauthorizedException('Invalid credentials');
     }
     const exists = await this.userSessionsService.sessionExists({
@@ -315,9 +315,9 @@ export class AuthService {
       user_agent: user_agent || this.requestService?.user_agent || '-',
       ip_address: ip_address || this.requestService?.ip_address || '-',
       disabled: true,
-      blocked: false,
+      blocked_at: null,
     });
-    if (userDevice.blocked) {
+    if (userDevice.blocked_at) {
       throw new ForbiddenException('Device is blocked');
     }
     if (!user.twofa_enabled || !userDevice.disabled) {

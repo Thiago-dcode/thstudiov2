@@ -23,7 +23,7 @@ export default async function MediaPage({ params }: Props) {
         notFound();
     }
 
-    if (!media || media.blocked) {
+    if (!media || media.blocked_at) {
         return (
             <Web.Container>
                 <ResourceNotFound 

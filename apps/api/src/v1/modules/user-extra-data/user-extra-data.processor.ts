@@ -50,8 +50,8 @@ export class UserExtraDataProcessor extends GlobalProcessor {
         Promise.all([
           Query.table('media')
             .select(['id', 'bytes', 'thumbnail_bytes'])
-            .where('blocked', '=', false)
             .where('user_id', '=', userId)
+            .softDeletes(true)
             .get<Pick<Media, 'id' | 'bytes' | 'thumbnail_bytes'>[]>(),
           this.cacheManager.del(`user-extra-data-${userId}`),
         ]),
@@ -61,7 +61,7 @@ export class UserExtraDataProcessor extends GlobalProcessor {
         (prev, curr) => prev + curr.bytes + curr.thumbnail_bytes,
         0,
       );
-      const media_size =
+      const storage_used_mb =
         totalBytes > 0
           ? Math.round((totalBytes / (1024 * 1024)) * 100) / 100
           : 0;
@@ -105,7 +105,7 @@ export class UserExtraDataProcessor extends GlobalProcessor {
         ]);
 
       const metrics = {
-        media_size,
+        storage_used_mb,
         media_count,
         portfolios_count,
         collections_count,

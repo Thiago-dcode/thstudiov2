@@ -67,8 +67,8 @@ export const UserMetrics = async ({ userId }: {
     if (!metricsResult.data) return <div>No data available</div>;
 
     const { extra_data, active_plan } = metricsResult.data;
-    const { clients_count, media_count, media_size,collections_count, portfolios_count, projects_count, services_count, ai_credits, ai_credits_consumed } = extra_data;
-    const { max_clients, max_media_size, max_portfolios,max_collections, max_projects, max_services, translation, name, ai_credits: plan_ai_credits } = active_plan;
+    const { clients_count, media_count, storage_used_mb,collections_count, portfolios_count, projects_count, services_count, ai_credits, ai_credits_consumed } = extra_data;
+    const { max_clients, storage_limit_mb, max_portfolios,max_collections, max_projects, max_services, translation, name, ai_credits: plan_ai_credits } = active_plan;
 
     const METRICS: {
         title: string,
@@ -83,8 +83,8 @@ export const UserMetrics = async ({ userId }: {
             },
             {
                 title: 'Storage',
-                used: media_size,
-                limit: max_media_size,
+                used: storage_used_mb,
+                limit: storage_limit_mb,
                 format: (used, limit) => `${(used / 1024).toFixed(1)} / ${(limit / 1024).toFixed(0)} GB`,
             },
             {

@@ -16,6 +16,9 @@ const up = async () => {
     Column.boolean('is_highlight', {
       default: false
     }),
+    Column.timestamp('blocked_at', {
+      nullable: true,
+    }),
     Column.foreignKey('user_id', 'users', 'id', {
       onDelete: 'CASCADE',
       onUpdate: 'CASCADE',

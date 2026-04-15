@@ -1,7 +1,7 @@
 import { Column, Schema } from '../lib/facades';
 
 const up = async () => {
-  await Schema.table('media').withTimestamps().createIfNotExists([
+  await Schema.table('media').withTimestamps(true).createIfNotExists([
     Column.id(),
     Column.uuid('public_id'),
     Column.string('title', 255, {
@@ -27,9 +27,8 @@ const up = async () => {
     Column.boolean('is_highlight', {
       default: false
     }),
-    //Block media if user exceed account max size
-    Column.boolean('blocked',{
-      default:false
+    Column.timestamp('blocked_at', {
+      nullable: true,
     }),
     Column.enum('shape', 'MEDIA_SHAPE', {
       nullable: true,

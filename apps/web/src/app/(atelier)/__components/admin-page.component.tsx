@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
+import { ReactNode } from "react";
 
 type AdminPageContainerProps = {
-    children: React.ReactNode;
+    children: ReactNode;
 };
 
 export const AdminPageContainer = ({ children }: AdminPageContainerProps) => {
@@ -18,7 +19,7 @@ type AdminPageTitleProps = {
     title: string;
     publicHref?: string;
     info?: string;
-    children?: React.ReactNode;
+    children?: ReactNode;
 };
 
 export const AdminPageTitle = ({ title, publicHref, info, children }: AdminPageTitleProps) => {
@@ -39,6 +40,24 @@ export const AdminPageTitle = ({ title, publicHref, info, children }: AdminPageT
                 {info && <InfoTooltip content={info} />}
             </div>
             {children}
+        </div>
+    );
+};
+
+type AdminPageEmptyStateProps = {
+    icon: ReactNode;
+    description: string;
+    children?: ReactNode;
+};
+
+export const AdminPageEmptyState = ({ icon, description, children }: AdminPageEmptyStateProps) => {
+    return (
+        <div className="flex flex-col items-center justify-center py-24 text-muted-foreground gap-3">
+            <div className="*:size-10 *:stroke-[1.5]">
+                {icon}
+            </div>
+            <p className="text-sm text-center max-w-sm">{description}</p>
+            {children && <div className="mt-2">{children}</div>}
         </div>
     );
 };

@@ -1,7 +1,6 @@
 import { ChangeSubscriptionDialog } from "@/modules/plan-subscriptions/components/change-subscription-dialog.component";
 import { PlanSubscriptionProvider } from "@/modules/plan-subscriptions/providers/plan-subscription.provider";
 import { PlanCard } from "@/modules/plans/components/plan.card";
-import { getHighestMontlyPrice } from "@repo/common-lib/utils/calculatePrice";
 import { FullPlan } from "@repo/common-lib/types/plan";
 import { PaymentMethod } from "@repo/common-lib/types/payment-method";
 import { ReactNode } from "react";
@@ -27,17 +26,9 @@ export default function PlanSubscriptionList({
     onFreeComponent,
     benefit
 }: PlanSubscriptionListProps) {
-    const paidPlans = plans.filter(plan => !plan.is_free);
-    const mostExpensivePlan = paidPlans.length > 0
-        ? paidPlans.reduce((maxPlan, currentPlan) => {
-            const maxPrice = getHighestMontlyPrice(maxPlan.prices);
-            const currentPrice = getHighestMontlyPrice(currentPlan.prices);
-            return currentPrice > maxPrice ? currentPlan : maxPlan;
-        }, paidPlans[0])
-        : null;
-
-    const montlyPlanPrice = mostExpensivePlan?.prices.find(p => p.billing_type === 'MONTHLY');
-    const mostExpensivePlanName = mostExpensivePlan?.translation?.name || mostExpensivePlan?.name || '';
+    const topTierPlan = plans.find(plan => plan.top_tier) ?? null;
+    const montlyPlanPrice = topTierPlan?.prices.find(p => p.billing_type === 'MONTHLY');
+    const topTierPlanName = topTierPlan?.translation?.name || topTierPlan?.name || '';
     return (
         <PlanSubscriptionProvider
             availablePaymentMethods={paymentMethods}
@@ -49,14 +40,13 @@ export default function PlanSubscriptionList({
         >
             <>
                 <ChangeSubscriptionDialog />
-               {montlyPlanPrice && <BenefitSubscriptionDialog planPrice={montlyPlanPrice} planName={mostExpensivePlanName} />}
+               {montlyPlanPrice && <BenefitSubscriptionDialog planPrice={montlyPlanPrice} planName={topTierPlanName} />}
 
                 <div className="size-full flex flex-wrap items-center justify-center gap-8">
                     {plans.map((plan) => (
                         <PlanCard
                             key={plan.id}
                             plan={plan}
-                            isMostExpensive={plan.id === mostExpensivePlan?.id}
                         />
                     ))}
                 </div>

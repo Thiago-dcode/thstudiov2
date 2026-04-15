@@ -24,5 +24,10 @@ export class IndexMediaRequest extends OffsetPaginationRequest {
   @IsOptional()
   @IsAvailableEnum('MEDIA_SHAPE')
   shape?: EnumType<'MEDIA_SHAPE'>;
+  
+  @IsOptional()
+  @IsBoolean()
+  @Type(() => Boolean)
+  blocked?: boolean;
 }
 

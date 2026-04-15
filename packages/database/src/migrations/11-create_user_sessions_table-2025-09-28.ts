@@ -8,8 +8,8 @@ const up = async () => {
     Column.boolean('disabled', {
       default: true,
     }),
-    Column.boolean('blocked', {
-      default: false,
+    Column.timestamp('blocked_at', {
+      nullable: true,
     }),
     Column.foreignKey('user_id', 'users', 'id', {
       onDelete: 'CASCADE',

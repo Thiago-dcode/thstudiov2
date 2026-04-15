@@ -17,6 +17,9 @@ const up = async () => {
     }),
 
     Column.text('description'),
+    Column.timestamp('blocked_at', {
+      nullable: true,
+    }),
     Column.foreignKey('user_id', 'users', 'id', {
       onDelete: 'CASCADE',
       onUpdate: 'CASCADE',

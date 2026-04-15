@@ -6,7 +6,7 @@ const up = async () => {
   await Schema.table(TABLE_NAME).withTimestamps(true).createIfNotExists([
     Column.id(),
     //MB
-    Column.float('media_size', {
+    Column.float('storage_used_mb', {
       default: 0,
     }),
     Column.smallInteger('media_count', {

@@ -210,7 +210,7 @@ async function seedMediaAssetsForUser(user: MediaSeedTargetUser): Promise<void> 
       url: mediaPath,
       thumbnail: thumbnailPath,
       seo_filename: baseName,
-      blocked: false,
+      blocked_at: null,
       is_featured: false,
       is_highlight: false,
       shape: await compressService.getImageShape(mediaFile.buffer),

@@ -39,6 +39,7 @@ export type PlanPriceWithPlanSchema = PlanPriceSchema & {
   base_price: number;
   is_active: boolean;
   is_free: boolean;
+  top_tier: boolean;
 };
 
 const tablesPlanPriceWithPlan = [TABLES_ENUM.PLAN_PRICES, TABLES_ENUM.PLANS] as const;

@@ -1,3 +1,4 @@
+import { LogService } from '@repo/backend-lib/services/log-service';
 import { Injectable } from '@nestjs/common';
 import { BaseRepository } from '@repo/database/repositories';
 import {
@@ -32,10 +33,10 @@ export class UserSessionsRepository extends BaseRepository {
       'user_auth_devices.user_agent',
       'user_auth_devices.ip_address',
       'user_auth_devices.disabled',
-      'user_auth_devices.blocked',
+      'user_auth_devices.blocked_at',
     ] as const;
-  constructor() {
-    super('user_sessions');
+  constructor(protected readonly logService: LogService) {
+    super('user_sessions', logService);
   }
 
   async create(session: CreateUserSessionInput) {
@@ -103,7 +104,7 @@ export class UserSessionsRepository extends BaseRepository {
         user_agent: userSession.user_agent,
         ip_address: userSession.ip_address,
         disabled: userSession.disabled,
-        blocked: userSession.blocked,
+        blocked_at: userSession.blocked_at,
         user_id: userSession.uad_user_id,
       },
     };

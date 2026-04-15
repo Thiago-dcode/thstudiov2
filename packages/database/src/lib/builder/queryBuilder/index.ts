@@ -138,15 +138,15 @@ export class QueryBuilder extends BaseBuilder {
     this._orderBy = '';
     this.buildSelectQuery();
     const result = await getClient().query(this.query, this.values);
-   if(resetQuery) this.reset();
-   else{
-    this.query = '';
-    this._select = selectTemp;
-    this._orderBy = orderByTemp;
-   }
+    if (resetQuery) this.reset();
+    else {
+      this.query = '';
+      this._select = selectTemp;
+      this._orderBy = orderByTemp;
+    }
     return parseInt(result.rows[0].count);
   }
-  
+
   public async first<T = any>(): Promise<T> {
     this.buildSelectQuery();
     const result = await getClient().query(this.query, this.values);
@@ -160,13 +160,13 @@ export class QueryBuilder extends BaseBuilder {
     this.reset();
     return result.rowCount > 0;
   }
-  
-  public softDeletes(softDelete:boolean, softDeleteCol = "deleted_at"){
-    this._softDeletes =softDelete;
+
+  public softDeletes(softDelete: boolean, softDeleteCol = "deleted_at") {
+    this._softDeletes = softDelete;
     this._softDeleteCol = softDeleteCol;
     return this;
   }
- 
+
   public static table(tableName: TableName) {
     this.throwIfTableNotExists(tableName);
     return new QueryBuilder(tableName);
@@ -196,13 +196,13 @@ export class QueryBuilder extends BaseBuilder {
     join: Join[] = [],
   ): Promise<T> {
     this.buildInsertQuery(columns, values);
-   await getClient().query(this.query, values.filter((value) => value !== null));
+    await getClient().query(this.query, values.filter((value) => value !== null));
     this.handleBuildGet(columns, values, select, join);
     const result = await this.first();
     return result;
   }
-private  handleBuildGet(columns: string[], values: SqlValue[], select: string[] | string = '*', join: Join[] = []){
-  this.reset();
+  private handleBuildGet(columns: string[], values: SqlValue[], select: string[] | string = '*', join: Join[] = []) {
+    this.reset();
     for (let index = 0; index < columns.length; index++) {
       const column = columns[index];
       const value = values[index];
@@ -214,7 +214,7 @@ private  handleBuildGet(columns: string[], values: SqlValue[], select: string[] 
     }
     this.select(select);
     this.joins.push(...join);
-}
+  }
   /**
    * Execute an UPDATE query
    * @param columns - Array of column names to update
@@ -249,17 +249,17 @@ private  handleBuildGet(columns: string[], values: SqlValue[], select: string[] 
    * ```
    */
   public async delete() {
-   
-    if(!this._softDeletes){
-     return this.__forceDelete();
+
+    if (!this._softDeletes) {
+      return this.__forceDelete();
     }
-    this.update([this._softDeleteCol],[new Date()]);
+    this.update([this._softDeleteCol], [new Date()]);
   }
-  public async __forceDelete(){
+  public async __forceDelete() {
     this.buildDeleteQuery();
     const result = await getClient().query(this.query, this.values);
-  this.reset();
-  return result.rowCount > 0;
+    this.reset();
+    return result.rowCount > 0;
   }
 
   // ============================================================================
@@ -315,33 +315,33 @@ private  handleBuildGet(columns: string[], values: SqlValue[], select: string[] 
    * queryBuilder.where('deleted_at', 'IS', null);
    * ```
    */
-  private handlePushWhere(column: string, operator: SqlClauseWithoutIn, value: SqlValue, type:WhereType,startGroup?:boolean, endGroup?:boolean) {
+  private handlePushWhere(column: string, operator: SqlClauseWithoutIn, value: SqlValue, type: WhereType, startGroup?: boolean, endGroup?: boolean) {
     this.operationsChain.push('where');
     const isNull = value === null;
-    if(!isNull) this.values.push(value);
-     this.wheres.push({
-       column,
-       operator: isNull ? operator=== '=' ? 'IS' : operator=== '!=' ? 'IS NOT' : operator : operator,
-       position: isNull ? -1 : this.valuesPosition++,
-       type,
-       value,
-       startWhereGroup:startGroup,
-       endWhereGroup:endGroup
-     } as WhereCondition);
-    
+    if (!isNull) this.values.push(value);
+    this.wheres.push({
+      column,
+      operator: isNull ? operator === '=' ? 'IS' : operator === '!=' ? 'IS NOT' : operator : operator,
+      position: isNull ? -1 : this.valuesPosition++,
+      type,
+      value,
+      startWhereGroup: startGroup,
+      endWhereGroup: endGroup
+    } as WhereCondition);
+
   }
-  public whereGroup(wheres:[string,SqlClause,SqlValue | SqlValue[], WhereType][]){
+  public whereGroup(wheres: [string, SqlClause, SqlValue | SqlValue[], WhereType][]) {
 
     for (let i = 0; i < wheres.length; i++) {
-      const [col,clause, value,type] = wheres[i];
-      const start = i ===0;
-      const end = wheres.length -1 === i;
-      if((clause==='IN' || clause == 'NOT IN')){
-        const _value = Array.isArray(value)?value:[value];
-        this.handlePushWhereIn(col,clause,_value,type,start,end);
+      const [col, clause, value, type] = wheres[i];
+      const start = i === 0;
+      const end = wheres.length - 1 === i;
+      if ((clause === 'IN' || clause == 'NOT IN')) {
+        const _value = Array.isArray(value) ? value : [value];
+        this.handlePushWhereIn(col, clause, _value, type, start, end);
         continue;
       }
-      this.handlePushWhere(col,clause,value as string,type,start, end);
+      this.handlePushWhere(col, clause, value as string, type, start, end);
     }
 
     return this;
@@ -371,7 +371,7 @@ private  handleBuildGet(columns: string[], values: SqlValue[], select: string[] 
     }
     return this;
   }
- 
+
 
   /**
    * Add an OR WHERE clause to the query.
@@ -411,7 +411,7 @@ private  handleBuildGet(columns: string[], values: SqlValue[], select: string[] 
     return this;
   }
 
-  private handlePushWhereIn(column: string,operator:'IN'| 'NOT IN', values: SqlValue[], type:WhereType,startGroup?:boolean, endGroup?:boolean) {
+  private handlePushWhereIn(column: string, operator: 'IN' | 'NOT IN', values: SqlValue[], type: WhereType, startGroup?: boolean, endGroup?: boolean) {
     this.operationsChain.push('where');
     this.values.push(...values);
     const startPosition = this.valuesPosition;
@@ -422,8 +422,8 @@ private  handleBuildGet(columns: string[], values: SqlValue[], select: string[] 
       values,
       type,
       operator,
-      startWhereGroup:startGroup,
-      endWhereGroup:endGroup
+      startWhereGroup: startGroup,
+      endWhereGroup: endGroup
     });
   }
   /**
@@ -437,7 +437,7 @@ private  handleBuildGet(columns: string[], values: SqlValue[], select: string[] 
    * ```
    */
   public whereIn(column: string, values: SqlValue[]) {
-    this.handlePushWhereIn(column,'IN', values, 'where');
+    this.handlePushWhereIn(column, 'IN', values, 'where');
     return this;
   }
 
@@ -452,7 +452,7 @@ private  handleBuildGet(columns: string[], values: SqlValue[], select: string[] 
    * ```
    */
   public whereNotIn(column: string, values: SqlValue[]) {
-    this.handlePushWhereIn(column,'NOT IN', values, 'where');
+    this.handlePushWhereIn(column, 'NOT IN', values, 'where');
     return this;
   }
 
@@ -469,7 +469,7 @@ private  handleBuildGet(columns: string[], values: SqlValue[], select: string[] 
    * ```
    */
   public orWhereIn(column: string, values: SqlValue[]) {
-    this.handlePushWhereIn(column,'IN', values, this.wheres.length === 0? 'where' : 'orWhere');
+    this.handlePushWhereIn(column, 'IN', values, this.wheres.length === 0 ? 'where' : 'orWhere');
     return this;
   }
 
@@ -486,7 +486,7 @@ private  handleBuildGet(columns: string[], values: SqlValue[], select: string[] 
    * ```
    */
   public orWhereNotIn(column: string, values: SqlValue[]) {
-    this.handlePushWhereIn(column,'NOT IN', values, this.wheres.length === 0? 'where' : 'orWhere');
+    this.handlePushWhereIn(column, 'NOT IN', values, this.wheres.length === 0 ? 'where' : 'orWhere');
     return this;
   }
 
@@ -541,7 +541,7 @@ private  handleBuildGet(columns: string[], values: SqlValue[], select: string[] 
     this._offset = offset;
     return this;
   }
-  public random(){
+  public random() {
     this._orderBy = 'RANDOM()';
   }
   public orderBy(column: string, order: 'ASC' | 'DESC' = 'ASC') {
@@ -604,9 +604,9 @@ private  handleBuildGet(columns: string[], values: SqlValue[], select: string[] 
     return this;
   }
 
-  protected setSoftDelete(){
-    if(this._softDeletes){
-      this.where(this._softDeleteCol,'=',null);
+  protected setSoftDelete() {
+    if (this._softDeletes) {
+      this.where(this._softDeleteCol, null);
     }
   }
   protected buildSelectQuery() {
@@ -620,7 +620,7 @@ private  handleBuildGet(columns: string[], values: SqlValue[], select: string[] 
     }
 
     this.setSoftDelete();
- 
+
     this.query += this.buildWheresQuery(this.wheres);
     this.query += this.buildGeoFilterQuery();
     if (this._orderBy) {
@@ -669,23 +669,23 @@ private  handleBuildGet(columns: string[], values: SqlValue[], select: string[] 
    */
   protected buildInsertQuery(columns: string[], values: SqlValue[]) {
     this.throwIfColumnsAndValuesLengthMismatch(columns, values);
-   this.throwIfNotInCompatibleOperations([], 'insert'); 
- let offset = 0;
-        this.query = `INSERT INTO ${this.tableName} (${columns.join(',')}) VALUES (${values.map((_, index) => {
-const isNull = values[index] === null;
-offset = isNull ? offset : offset + 1;
-          switch (getClient().config.client) {
-            case 'postgres':
-              return `${isNull ? 'NULL' : `$${offset}`}`;
-            case 'mysql':
-              return `${isNull ? 'NULL' : `?`}`;
-            default:
-              throw new QueryBuilderWrongDatabaseClientException(
-                getClient().config.client,
-              );
-          }
-        }).join(',')})`;    
-     
+    this.throwIfNotInCompatibleOperations([], 'insert');
+    let offset = 0;
+    this.query = `INSERT INTO ${this.tableName} (${columns.join(',')}) VALUES (${values.map((_, index) => {
+      const isNull = values[index] === null;
+      offset = isNull ? offset : offset + 1;
+      switch (getClient().config.client) {
+        case 'postgres':
+          return `${isNull ? 'NULL' : `$${offset}`}`;
+        case 'mysql':
+          return `${isNull ? 'NULL' : `?`}`;
+        default:
+          throw new QueryBuilderWrongDatabaseClientException(
+            getClient().config.client,
+          );
+      }
+    }).join(',')})`;
+
   }
 
   /**
@@ -699,29 +699,29 @@ offset = isNull ? offset : offset + 1;
     this.throwIfNotInCompatibleOperations(['where'], 'update');
     this.throwIfOperationNotAllowed(
       !this.operationsChain.includes('where') &&
-        !getClient().config.settings.allowUpdateWithoutWhere,
+      !getClient().config.settings.allowUpdateWithoutWhere,
       'update',
     );
     this.values.unshift(...values.filter((value) => value !== null));
     let offset = 0;
-        this.query = `UPDATE ${this.tableName} SET ${columns.map((column, index) =>{
-          const isNull = values[index] === null;
-          offset = isNull ? offset : offset + 1;
-          switch (getClient().config.client) {
-            case 'postgres':
-              return `${column} = ${ isNull ? 'NULL' : `$${offset}`}`;
-            case 'mysql':
-              return `${column} = ${ isNull ? 'NULL' : `?`}`;
-            default:
-              throw new QueryBuilderWrongDatabaseClientException(
-                getClient().config.client,
-              );
-          }
-        }).join(',')}`;
-    
+    this.query = `UPDATE ${this.tableName} SET ${columns.map((column, index) => {
+      const isNull = values[index] === null;
+      offset = isNull ? offset : offset + 1;
+      switch (getClient().config.client) {
+        case 'postgres':
+          return `${column} = ${isNull ? 'NULL' : `$${offset}`}`;
+        case 'mysql':
+          return `${column} = ${isNull ? 'NULL' : `?`}`;
+        default:
+          throw new QueryBuilderWrongDatabaseClientException(
+            getClient().config.client,
+          );
+      }
+    }).join(',')}`;
+
     this.setSoftDelete();
     this.query += this.buildWheresQuery(this.wheres, offset);
- 
+
   }
 
   /**
@@ -732,7 +732,7 @@ offset = isNull ? offset : offset + 1;
     this.throwIfNotInCompatibleOperations(['where'], 'delete');
     this.throwIfOperationNotAllowed(
       !this.operationsChain.includes('where') &&
-        !getClient().config.settings.allowDeleteWithoutWhere,
+      !getClient().config.settings.allowDeleteWithoutWhere,
       'delete',
     );
     this.query = `DELETE FROM ${this.tableName}`;
@@ -761,11 +761,11 @@ offset = isNull ? offset : offset + 1;
           ) {
             whereQuery = this.buildWhereInQuery(where, offset);
           }
-          
-          if(where.startWhereGroup){
+
+          if (where.startWhereGroup) {
             whereQuery = `(${whereQuery}`;
           }
-          if(where.endWhereGroup){
+          if (where.endWhereGroup) {
             whereQuery = `${whereQuery})`;
           }
           if (index === 0) {
@@ -923,12 +923,12 @@ offset = isNull ? offset : offset + 1;
     if (boolean) {
       throw new QueryBuilderOperationNotAllowedException(
         'Can not ' +
-          operation +
-          ' without where clause, if you want to ' +
-          operation +
-          ' without where clause, you must set allow' +
-          operation +
-          'WithoutWhere to true in the database config',
+        operation +
+        ' without where clause, if you want to ' +
+        operation +
+        ' without where clause, you must set allow' +
+        operation +
+        'WithoutWhere to true in the database config',
       );
     }
   }
@@ -950,9 +950,9 @@ offset = isNull ? offset : offset + 1;
     if (incompatibleOperations.length > 0) {
       throw new QueryBuilderMethodChainedException(
         'Method chaining not allowed before ' +
-          methodName +
-          ', you can only chain operations: ' +
-          compatibleOperations.join(', '),
+        methodName +
+        ', you can only chain operations: ' +
+        compatibleOperations.join(', '),
       );
     }
   }
@@ -967,6 +967,6 @@ offset = isNull ? offset : offset + 1;
         );
       }
     }
-    
+
   }
 }

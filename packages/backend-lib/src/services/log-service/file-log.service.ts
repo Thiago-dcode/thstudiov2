@@ -17,28 +17,33 @@ export class FileLogService extends LogService {
      * Call LogService.flush() to execute and write all queued logs.
      */
     public info(message: string, options?: LogOptions): this {
-        LogService.trackLog(() => this.writeLogAsync('info', message, options));
+        const id = this.getLogId();
+        LogService.trackLog(() => this.writeLogAsync('info', message, options, id));
         return this;
     }
     public error(message: string, options?: LogOptions): this {
-        LogService.trackLog(() => this.writeLogAsync('error', message, options));
+        const id = this.getLogId();
+        LogService.trackLog(() => this.writeLogAsync('error', message, options, id));
         return this;
     }
     public warn(message: string, options?: LogOptions): this {
-        LogService.trackLog(() => this.writeLogAsync('warn', message, options));
+        const id = this.getLogId();
+        LogService.trackLog(() => this.writeLogAsync('warn', message, options, id));
         return this;
     }
     public debug(message: string, options?: LogOptions): this {
-        LogService.trackLog(() => this.writeLogAsync('debug', message, options));
+        const id = this.getLogId();
+        LogService.trackLog(() => this.writeLogAsync('debug', message, options, id));
         return this;
     }
     public success(message: string, options?: LogOptions): this {
-        LogService.trackLog(() => this.writeLogAsync('success', message, options));
+        const id = this.getLogId();
+        LogService.trackLog(() => this.writeLogAsync('success', message, options, id));
         return this;
     }
 
-    private async writeLogAsync(level: LogLevel, message: string, options?: LogOptions): Promise<void> {
-        await this.writeLog(await this.getLogFile(), level, message, options);
+    private async writeLogAsync(level: LogLevel, message: string, options?: LogOptions, id?: string | null): Promise<void> {
+        await this.writeLog(await this.getLogFile(), level, message, options, id);
     }
 
     private async getLogFile() {
@@ -56,12 +61,12 @@ export class FileLogService extends LogService {
         return path.join(logFolder, `${today}${this.config.name ? `.${this.config.name}` : ''}.log`);
     }
 
-    private async writeLog(logFile: string, level: LogLevel, message: string, options?: LogOptions) {
+    private async writeLog(logFile: string, level: LogLevel, message: string, options?: LogOptions, id?: string | null) {
         try {
             if (!(await checkFileExistsAsync(logFile))) {
                 await fs.writeFile(logFile, '');
             }
-            await fs.appendFile(logFile, this.beautifyLogMessage(level, message, options));
+            await fs.appendFile(logFile, this.beautifyLogMessage(level, message, options, id));
             await this.callCallback(level, message, options);
         } catch (error) {
             console.error("ERROR LOGGIN", error);

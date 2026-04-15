@@ -92,10 +92,11 @@ import { RequestStore } from '@repo/common-lib/types/request';
     },
     {
       provide: LogService,
-      useFactory: (logQueue: Queue) => {
+      useFactory: (logQueue: Queue, requestService: RequestService) => {
+        logConfig.api.id = () => requestService.requestId;
         return FactoryLogService.createLogService('file', logConfig.api, logQueue);
       },
-      inject: [getQueueToken(LOG_QUEUE)],
+      inject: [getQueueToken(LOG_QUEUE), RequestService],
     },
   ],
   imports: [

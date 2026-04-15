@@ -13,7 +13,7 @@ export type MediaSchema = {
   thumbnail?: string;
   is_featured: boolean;
   is_highlight: boolean;
-  blocked: boolean;
+  blocked_at?: Date | null;
   shape?: EnumType<'MEDIA_SHAPE'>;
   compression_level?: EnumType<'COMPRESSION_LEVEL'>;
   extension: string;

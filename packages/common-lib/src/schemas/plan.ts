@@ -16,7 +16,8 @@ export type PlanSchema = {
   is_active: boolean;
   is_popular: boolean;
   is_free: boolean;
-  max_media_size: number;
+  top_tier: boolean;
+  storage_limit_mb: number;
   max_projects: number;
   max_portfolios: number;
   max_services: number;

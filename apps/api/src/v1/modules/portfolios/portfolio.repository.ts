@@ -1,3 +1,4 @@
+import { LogService } from '@repo/backend-lib/services/log-service';
 import { Injectable } from '@nestjs/common';
 import { BaseRepository } from '@repo/database/repositories';
 import { QueryBuilder } from '@repo/database/queryBuilder';
@@ -53,8 +54,8 @@ export class PortfolioRepository extends BaseRepository {
     'media.is_active as m_is_active',
   ];
 
-  constructor(private readonly requestService: RequestService) {
-    super('portfolios');
+  constructor(private readonly requestService: RequestService, protected readonly logService: LogService) {
+    super('portfolios', logService);
   }
 
   async getAll(filters: PortfolioIndexRequest): Promise<Portfolio[]> {
@@ -73,7 +74,7 @@ export class PortfolioRepository extends BaseRepository {
       .join('id', 'portfolio_collection', 'portfolio_id', 'LEFT')
       .join('portfolio_collection.collection_id', 'collections', 'id', 'LEFT')
       .where('media.thumbnail', 'IS NOT', null)
-      .where('media.blocked', '=', false)
+      .where('media.blocked_at',  null)
       .orderBy('portfolio_media.position', 'ASC')
       .get<PortfolioFullSchema[]>();
 
@@ -83,15 +84,15 @@ export class PortfolioRepository extends BaseRepository {
 
   async getOneCompact(id: number) {
 
-    const result = await this.query().select(this.COLUMNS).where('id', '=', id).first();
+    const result = await this.query().select(this.COLUMNS).where('id', id).first();
 
     return result ? this.formatPortfolio(result) : null;
   }
 
   async slugExists(slug: string, userId: number): Promise<boolean> {
     const result = await this.query()
-      .where('slug', '=', slug)
-      .where('user_id', '=', userId)
+      .where('slug', slug)
+      .where('user_id', userId)
       .exists();
 
     return !!result;

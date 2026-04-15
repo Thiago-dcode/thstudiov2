@@ -1,3 +1,4 @@
+import { LogService } from '@repo/backend-lib/services/log-service';
 import { Injectable } from '@nestjs/common';
 import { BaseRepository } from '@repo/database/repositories';
 import { QueryBuilder } from '@repo/database/queryBuilder';
@@ -22,8 +23,8 @@ export class CountryRepository extends BaseRepository {
         'countries.updated_at',
     ] as const;
 
-    constructor() {
-        super(TABLES_ENUM.COUNTRIES);
+    constructor(protected readonly logService: LogService) {
+        super(TABLES_ENUM.COUNTRIES, logService);
     }
 
     async getAll(filters: CountryIndexRequest): Promise<Country[]> {

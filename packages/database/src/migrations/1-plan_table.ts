@@ -28,7 +28,10 @@ const up = async () => {
     Column.boolean('is_free', {
       default: false,
     }),
-    Column.integer('max_media_size'),
+    Column.boolean('top_tier', {
+      default: false,
+    }),
+    Column.integer('storage_limit_mb'),
     Column.smallInteger('max_projects'),
     Column.smallInteger('max_portfolios'),
     Column.smallInteger('max_clients'),

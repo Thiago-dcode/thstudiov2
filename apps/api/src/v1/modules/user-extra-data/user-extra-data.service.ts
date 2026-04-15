@@ -95,11 +95,11 @@ export class UserExtraDataService {
         `Account banned until ${new Date(userExtraData.ban_lift).toISOString()}. Strikes: ${userExtraData.account_strikes}`,
       );
     }
-    if (size && currentPlan.max_media_size !== -1) {
-      const newSize = userExtraData.media_size + size;
-      if (newSize > currentPlan.max_media_size) {
+    if (size && currentPlan.storage_limit_mb !== -1) {
+      const newSize = userExtraData.storage_used_mb + size;
+      if (newSize > currentPlan.storage_limit_mb) {
         throw ApiException.mediaSize(
-          `Media size limit exceeded. Current: ${userExtraData.media_size}MB, Adding: ${size}MB, Max allowed: ${currentPlan.max_media_size}MB`,
+          `Media size limit exceeded. Current: ${userExtraData.storage_used_mb}MB, Adding: ${size}MB, Max allowed: ${currentPlan.storage_limit_mb}MB`,
         );
       }
     }

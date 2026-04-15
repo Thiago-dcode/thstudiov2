@@ -11,9 +11,7 @@ const up = async () => {
     CREATE OR REPLACE FUNCTION ${TRIGGER_UPDATE_UPDATED_AT_FUNCTION_NAME}()
     RETURNS TRIGGER AS $$
     BEGIN
-        IF NEW.updated_at IS NULL THEN
-            NEW.updated_at = CURRENT_TIMESTAMP;
-        END IF;
+        NEW.updated_at = CURRENT_TIMESTAMP;
         RETURN NEW;
     END;
     $$ language 'plpgsql';
@@ -35,20 +33,20 @@ const up = async () => {
 
   //Enums
   for (const enumName of Object.keys(ENUMS)) {
-    await Schema.createEnumIfNotExists(enumName as  AvailableEnums);
+    await Schema.createEnumIfNotExists(enumName as AvailableEnums);
   }
 
 
 
 
-  
+
   await Schema.table('payment_methods').withTimestamps(true).createIfNotExists([
     Column.id(),
-    Column.enum('payment_method','PAYMENT_METHOD',{
-      unique:true
+    Column.enum('payment_method', 'PAYMENT_METHOD', {
+      unique: true
     }),
-    Column.boolean('enabled',{
-      default:true
+    Column.boolean('enabled', {
+      default: true
     }),
   ]);
 };

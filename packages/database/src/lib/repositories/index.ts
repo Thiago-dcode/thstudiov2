@@ -3,7 +3,7 @@ import { Join, SqlClause, SqlValue, TableName } from '@repo/common-lib/types/dat
 import { Query } from '../facades';
 import { QueryBuilderException } from '../builder/queryBuilder/exceptions';
 import { OffsetPaginationRequest } from '@repo/common-lib/types/request';
-import { FactoryLogService } from '@repo/backend-lib/services/log-service';
+import { LogService } from '@repo/backend-lib/services/log-service';
 type WhereOptions = { column: string, operator: SqlClause, value: SqlValue | SqlValue[] };
 type BaseRepositoryOptions = {
   primaryKey?: string;
@@ -30,10 +30,8 @@ const DEFAULT_OPTIONS: BaseRepositoryOptions = {
 export abstract class BaseRepository {
 
   protected options: BaseRepositoryOptions;
-  protected logService = FactoryLogService.createLogService('file', {
-    channel: 'db',
-  });
-  constructor(protected readonly tableName: TableName, options?: BaseRepositoryOptions) {
+  
+  constructor(protected readonly tableName: TableName, protected readonly logService: LogService, options?: BaseRepositoryOptions) {
     this.options = { ...DEFAULT_OPTIONS, ...options };
   }
 

@@ -14,9 +14,10 @@ import { cn } from "@repo/ui/lib/utils"
 import { useState } from "react"
 import { Plus, Pencil } from "lucide-react"
 
-export const CreateOrUpdateAboutPage = ({ currentAboutPage, userId }: {
+export const CreateOrUpdateAboutPage = ({ currentAboutPage, userId, variant = "primary" }: {
     currentAboutPage?: AboutPage,
-    userId: number
+    userId: number,
+    variant?: "primary" | "outline" | "default" | "secondary" | "ghost" | "link" | "base" | "destructive"
 }) => {
     const [open, setOpen] = useState(false);
     const { handleSubmit, isPending, success, deleteInputErrorProperty, inputErrors, reset, cleanErrors } = useHandleAction({
@@ -44,7 +45,7 @@ export const CreateOrUpdateAboutPage = ({ currentAboutPage, userId }: {
             setOpen(e)
         }}>
             <DialogTrigger asChild>
-                <Button variant="primary" size="sm">
+                <Button variant={variant as any} size="sm">
                     {!currentAboutPage ? (
                         <><Plus className="size-4" /> Create About Page</>
                     ) : (

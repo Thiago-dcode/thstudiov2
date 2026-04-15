@@ -2,9 +2,9 @@ import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import collectionService from "@/modules/collections/collection.service";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { AdminPageContainer, AdminPageTitle } from "../../__components/admin-page.component";
+import { AdminPageContainer, AdminPageTitle, AdminPageEmptyState } from "../../__components/admin-page.component";
 import { Button } from "@repo/ui/components/shadcn/button";
-import { Plus } from "lucide-react";
+import { Plus, Library } from "lucide-react";
 import { CollectionCard } from "@/modules/collections/components/collection-card";
 
 export default async function CollectionListPage() {
@@ -46,9 +46,17 @@ export default async function CollectionListPage() {
                     ))}
                 </div>
             ) : (
-                <div className="flex items-center justify-center h-64 text-muted-foreground">
-                    No collections found
-                </div>
+                <AdminPageEmptyState 
+                    icon={<Library />}
+                    description="No collections created yet. Start by adding a set of related media."
+                >
+                    <Button asChild variant="outline" size="sm">
+                        <Link href={'collection/create'}>
+                            <Plus className="size-4 mr-2" />
+                            Create Collection
+                        </Link>
+                    </Button>
+                </AdminPageEmptyState>
             )}
         </AdminPageContainer>
     );

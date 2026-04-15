@@ -10,5 +10,6 @@ export type FullPlanPrice = PlanPrice & {
     base_price: number;
     is_active: boolean;
     is_free: boolean;
+    top_tier: boolean;
   };
 };

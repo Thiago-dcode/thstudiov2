@@ -1,3 +1,4 @@
+import { LogService } from '@repo/backend-lib/services/log-service';
 import { Injectable } from '@nestjs/common';
 import {
   CreatePlanSubscriptionInput,
@@ -52,10 +53,11 @@ export class PlanSubscriptionsRepository extends BaseRepository {
     'plans.base_price',
     'plans.is_popular',
     'plans.is_free',
+    'plans.top_tier',
   ];
 
-  constructor() {
-    super('plan_subscriptions', {
+  constructor(protected readonly logService: LogService) {
+    super('plan_subscriptions', logService, {
       softDelete: true,
     });
   }
@@ -95,6 +97,7 @@ export class PlanSubscriptionsRepository extends BaseRepository {
           base_price: result.base_price,
           is_popular: result.is_popular,
           is_free: result.is_free,
+          top_tier: result.top_tier,
         },
       },
     };

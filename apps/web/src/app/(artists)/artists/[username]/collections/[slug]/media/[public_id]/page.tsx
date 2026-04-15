@@ -40,7 +40,7 @@ export default async function MediaPage({ params, searchParams }: Props) {
 
     const { data: media } = await mediaService.getByPublicId(public_id);
 
-    if (!media || media.blocked) {
+    if (!media || media.blocked_at) {
         return (
             <Web.Container>
                 <ResourceNotFound

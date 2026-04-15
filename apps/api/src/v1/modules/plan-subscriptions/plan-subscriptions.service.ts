@@ -41,7 +41,7 @@ export class PlanSubscriptionsService {
     private readonly userBenefitsService: UserBenefitService,
     private readonly helpers: Helpers,
   ) {
-    this.logger.channel('subscriptions').requestId(this.requestService.requestId);
+    this.logger.channel('subscriptions');
   }
 
   async initiate({
@@ -271,13 +271,14 @@ export class PlanSubscriptionsService {
               quantity: 1,
             },
           ],
-          ...(benefit?.trial_days && {
-            subscription_data: {
-              trial_period_days: benefit.trial_days,
-              metadata: {
-                benefit_id: String(benefit_id),
-              },
+          subscription_data: {
+            metadata: {
+              ...(this.requestService.requestId ? { requestId: this.requestService.requestId } : {}),
+              ...(benefit?.trial_days ? { benefit_id: String(benefit_id) } : {})
             },
+            ...(benefit?.trial_days ? { trial_period_days: benefit.trial_days } : {})
+          },
+          ...(benefit?.trial_days && {
             payment_method_collection: 'if_required',
           }),
           success_url: successUrl,
@@ -310,6 +311,9 @@ export class PlanSubscriptionsService {
             price: newPlanPrice.stripe_id,
           },
         ],
+        metadata: {
+          ...(this.requestService.requestId ? { requestId: this.requestService.requestId } : {})
+        },
         automatic_tax: {
           enabled: true,
         },

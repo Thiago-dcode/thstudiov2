@@ -3,7 +3,8 @@ import { CreateOrUpdateAboutPage } from "@/modules/about-page/components/create-
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import usersService from "@/modules/users/users.service";
 import { redirect } from "next/navigation";
-import { AdminPageContainer, AdminPageTitle } from "../../__components/admin-page.component";
+import { AdminPageContainer, AdminPageTitle, AdminPageEmptyState } from "../../__components/admin-page.component";
+import { BookUser } from "lucide-react";
 
 export default async function AboutPage() {
     const userAuth = await userSession();
@@ -23,9 +24,12 @@ export default async function AboutPage() {
             {aboutPage ? (
                 <AboutPageDisplay aboutPage={aboutPage} />
             ) : (
-                <div className="flex items-center justify-center h-64 text-muted-foreground">
-                    No about page yet
-                </div>
+                <AdminPageEmptyState 
+                    icon={<BookUser />}
+                    description="No about page created yet. Share your background and artistic journey."
+                >
+                    <CreateOrUpdateAboutPage userId={userAuth.id} currentAboutPage={aboutPage || undefined} variant="outline" />
+                </AdminPageEmptyState>
             )}
         </AdminPageContainer>
     );

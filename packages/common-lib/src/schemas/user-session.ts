@@ -5,7 +5,7 @@ export type UserAuthDeviceSchema = {
   user_agent: string;
   ip_address: string;
   disabled: boolean;
-  blocked: boolean;
+  blocked_at?: Date | null;
   user_id: number;
   created_at: Date;
   updated_at: Date;
@@ -41,7 +41,7 @@ export type UserSessionSchemaWithUserAuthDevice = {
   user_agent: string;
   ip_address: string;
   disabled: boolean;
-  blocked: boolean;
+  blocked_at?: Date | null;
 };
 
 const tables = [TABLES_ENUM.USER_SESSIONS, TABLES_ENUM.USER_AUTH_DEVICES] as const;
