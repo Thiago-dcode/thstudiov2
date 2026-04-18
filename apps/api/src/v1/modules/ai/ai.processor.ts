@@ -118,8 +118,24 @@ export class AiProcessor extends GlobalProcessor {
         usage,
       );
 
-      // Check if AI credits are now exhausted and send email
-      await this.checkAiCreditsExhausted(usageData.user_id, log);
+      const creditsExhausted = await this.checkAiCreditsExhausted(usageData.user_id);
+
+      if (creditsExhausted) {
+        try {
+          const user = await this.userService.findOneCompacted(usageData.user_id);
+          if (user) {
+            await this.mailService.send(
+              this.userAiCreditsEndedMail.setUser(user),
+            );
+            log.info(`AI credits ended email sent to user ${usageData.user_id}`);
+          }
+        } catch (error) {
+          log.error(
+            `Failed to send AI credits email for user [${usageData.user_id}] - ${error instanceof Error ? error.message : 'Unknown error'}`,
+            error,
+          );
+        }
+      }
 
       this.eventEmitter.emit(
         UPDATE_USER_EXTRA_DATA_METRICS,
@@ -136,32 +152,14 @@ export class AiProcessor extends GlobalProcessor {
     }
   }
 
-  /** Send email when AI credits are exhausted (only once, at the threshold crossing) */
-  private async checkAiCreditsExhausted(userId: number, log: ReturnType<typeof this.logger.name>) {
-    try {
-      const extraData = await this.userExtraDataRepository.findByUserId(userId);
-      const currentPlan = await this.planService.findUserActivePlan(userId);
-      const totalAiCredits = extraData.ai_credits + currentPlan.ai_credits;
+  /** Check if AI credits just crossed the exhaustion threshold */
+  private async checkAiCreditsExhausted(userId: number): Promise<boolean> {
+    const extraData = await this.userExtraDataRepository.findByUserId(userId);
+    const currentPlan = await this.planService.findUserActivePlan(userId);
+    const totalAiCredits = extraData.ai_credits + currentPlan.ai_credits;
+    const newConsumed = extraData.ai_credits_consumed + 1;
 
-      const newConsumed = extraData.ai_credits_consumed + 1;
-
-      // Send email only at the exact threshold crossing
-      if (extraData.ai_credits_consumed < totalAiCredits && newConsumed >= totalAiCredits) {
-        const user = await this.userService.findOneCompacted(userId);
-        if (user) {
-          await this.mailService.send(
-            this.userAiCreditsEndedMail.setUser(user),
-          );
-          log.info(`AI credits ended email sent to user ${userId}`);
-        }
-      }
-    } catch (error) {
-      // Don't fail the job if email sending fails
-      log.error(
-        `Failed to check/send AI credits email for user [${userId}] - ${error instanceof Error ? error.message : 'Unknown error'}`,
-        error,
-      );
-    }
+    return extraData.ai_credits_consumed < totalAiCredits && newConsumed >= totalAiCredits;
   }
 
   private async handleMediaModeration(moderationData: CreateMediaModerationInput) {

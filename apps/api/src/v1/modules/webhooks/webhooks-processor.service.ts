@@ -42,6 +42,7 @@ export class WebhookProcessor extends GlobalProcessor {
   async process(job: Job<Stripe.Event>): Promise<void> {
     const event = job.data;
     this.logger.channel('webhook')
+    this.logger.name(job.name);
 
     try {
       const object = event?.data?.object as any;
@@ -63,7 +64,6 @@ export class WebhookProcessor extends GlobalProcessor {
   }
 
   private async handleStripeEvent(event: Stripe.Event): Promise<void> {
-    this.logger.name('stripe');
     this.logger.debug(`StripeProcessor ${event.type}`);
     try {
       switch (event.type) {

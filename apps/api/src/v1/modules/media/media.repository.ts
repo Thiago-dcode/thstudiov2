@@ -123,29 +123,40 @@ export class MediaRepository extends BaseRepository {
     filters: MediaIndexRequest,
     query: QueryBuilder,
   ): Promise<QueryBuilder> {
+
+    if (filters.search) {
+      const term = `%${filters.search}%`;
+      query.whereGroup([
+        ['title', 'ILIKE', term, 'where'],
+        ['seo_alt', 'ILIKE', term, 'orWhere'],
+        ['seo_title', 'ILIKE', term, 'orWhere'],
+        ['seo_description', 'ILIKE', term, 'orWhere'],
+        ['seo_filename', 'ILIKE', term, 'orWhere'],
+      ]);
+    }
     if (filters.user_id) {
-      query.where('user_id', '=', filters.user_id);
+      query.where('user_id', filters.user_id);
     }
     query.select(this.COLUMNS);
 
     if (filters.shape) {
-      query.where('shape', '=', filters.shape);
+      query.where('shape', filters.shape);
     }
 
     // if (filters.type) {
-    //   query.where('type', '=', filters.type);
+    //   query.where('type', filters.type);
     // }
 
     if (typeof filters.is_active === 'boolean') {
-      query.where('is_active', '=', filters.is_active);
+      query.where('is_active', filters.is_active);
     }
 
     if (typeof filters.is_featured === 'boolean') {
-      query.where('is_featured', '=', filters.is_featured);
+      query.where('is_featured', filters.is_featured);
     }
 
     if (typeof filters.is_highlight === 'boolean') {
-      query.where('is_highlight', '=', filters.is_highlight);
+      query.where('is_highlight', filters.is_highlight);
     }
 
     // `blocked` is a boolean filter in DTOs, but the DB uses `blocked_at`.

@@ -30,6 +30,7 @@ export type FullMedia = Media & {
   translations: MediaTranslation[]
 }
 export type MediaIndexRequest = OffsetPaginationRequest & {
+  search?:string;
   user_id?: number;
   shape?: EnumType<'MEDIA_SHAPE'>;
   is_active?: boolean;

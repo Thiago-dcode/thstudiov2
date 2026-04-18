@@ -28,6 +28,8 @@ export class PlanSubscriptionProcessor extends GlobalProcessor {
 
   async process(job: Job): Promise<any> {
     this.logger.channel('plan-subscriptions');
+    this.logger.name(job.name);
+    this.logger.info("Processing JOB: " + job.name);
     try {
       switch (job.name) {
         case JOB_ON_SUBSCRIPTION_CHANGES:
@@ -58,12 +60,10 @@ export class PlanSubscriptionProcessor extends GlobalProcessor {
 
       const userExtraData = await this.userExtraDataService.findOneByUserId(userId);
 
-      //Manage media.
       const diffStorage = currentPlan.storage_limit_mb - userExtraData.storage_used_mb;
+      this.logger.info(`Storage diff: ${diffStorage}MB (limit: ${currentPlan.storage_limit_mb}MB, used: ${userExtraData.storage_used_mb}MB)`);
 
-      //User has more storage than permited
       if (diffStorage < 0) {
-        //Start to block media
         let remainingToBlockMb = Math.abs(diffStorage);
         const media = await Query.table('media')
           .select(['id', 'bytes', 'thumbnail_bytes', 'blocked_at', 'is_active'])
@@ -82,13 +82,13 @@ export class PlanSubscriptionProcessor extends GlobalProcessor {
           mediaIdsToBlock.push(item.id);
         }
 
+        this.logger.info(`Blocking ${mediaIdsToBlock.length} media items (need to free ${Math.abs(diffStorage)}MB)`);
         if (mediaIdsToBlock.length > 0) {
           await Query.table('media')
             .whereIn('id', mediaIdsToBlock)
             .update(['blocked_at'], [new Date()]);
         }
       } else if (diffStorage > 0) {
-        //Start to unblock media.
         let remainingToUnblockMb = diffStorage;
         const blockedMedia = await Query.table('media')
           .select(['id', 'bytes', 'thumbnail_bytes', 'blocked_at', 'is_active'])
@@ -108,57 +108,56 @@ export class PlanSubscriptionProcessor extends GlobalProcessor {
           }
         }
 
+        this.logger.info(`Unblocking ${mediaIdsToUnblock.length} media items (${diffStorage}MB available)`);
         if (mediaIdsToUnblock.length > 0) {
           await Query.table('media')
             .whereIn('id', mediaIdsToUnblock)
             .update(['blocked_at'], [null]);
         }
       }
-
-      //Manage other entities
-      const limitsConfig:{
-        table:TableName,
-        maxLimit:number,
-        currentCount:number,
-        activeColumn:string
+      const limitsConfig: {
+        table: TableName,
+        maxLimit: number,
+        currentCount: number,
+        activeColumn: string
       }[] = [
-        {
-          table: 'portfolios',
-          maxLimit: currentPlan.max_portfolios,
-          currentCount: userExtraData.portfolios_count,
-          activeColumn: 'is_active',
-        },
-        {
-          table: 'collections',
-          maxLimit: currentPlan.max_collections,
-          currentCount: userExtraData.collections_count,
-          activeColumn: 'is_active',
-        },
-        {
-          table: 'projects',
-          maxLimit: currentPlan.max_projects,
-          currentCount: userExtraData.projects_count,
-          activeColumn: 'is_active',
-        },
-        {
-          table: 'clients',
-          maxLimit: currentPlan.max_clients,
-          currentCount: userExtraData.clients_count,
-          activeColumn: 'is_active',
-        },
-        {
-          table: 'services',
-          maxLimit: currentPlan.max_services,
-          currentCount: userExtraData.services_count,
-          activeColumn: 'is_active',
-        },
-      ];
+          {
+            table: 'portfolios',
+            maxLimit: currentPlan.max_portfolios,
+            currentCount: userExtraData.portfolios_count,
+            activeColumn: 'is_active',
+          },
+          {
+            table: 'collections',
+            maxLimit: currentPlan.max_collections,
+            currentCount: userExtraData.collections_count,
+            activeColumn: 'is_active',
+          },
+          {
+            table: 'projects',
+            maxLimit: currentPlan.max_projects,
+            currentCount: userExtraData.projects_count,
+            activeColumn: 'is_active',
+          },
+          {
+            table: 'clients',
+            maxLimit: currentPlan.max_clients,
+            currentCount: userExtraData.clients_count,
+            activeColumn: 'is_active',
+          },
+          {
+            table: 'services',
+            maxLimit: currentPlan.max_services,
+            currentCount: userExtraData.services_count,
+            activeColumn: 'is_active',
+          },
+        ];
 
       for (const config of limitsConfig) {
         const diff = config.maxLimit - config.currentCount;
+        this.logger.info(`[${config.table}] diff: ${diff} (limit: ${config.maxLimit}, current: ${config.currentCount})`);
 
         if (diff < 0) {
-          // Start to block entities
           const remainingToBlock = Math.abs(diff);
 
           let query = Query.table(config.table as any)
@@ -173,6 +172,7 @@ export class PlanSubscriptionProcessor extends GlobalProcessor {
 
           const entitiesToBlock = await query.get<{ id: number }[]>();
           const idsToBlock = entitiesToBlock.map((e) => e.id);
+          this.logger.info(`[${config.table}] Blocking ${idsToBlock.length} entities (exceeds limit by ${remainingToBlock})`);
 
           if (idsToBlock.length > 0) {
             await Query.table(config.table as any)
@@ -180,7 +180,6 @@ export class PlanSubscriptionProcessor extends GlobalProcessor {
               .update(['blocked_at'], [new Date()]);
           }
         } else if (diff > 0) {
-          // Start to unblock entities
           const remainingToUnblock = diff;
 
           let query = Query.table(config.table as any)
@@ -195,6 +194,7 @@ export class PlanSubscriptionProcessor extends GlobalProcessor {
 
           const entitiesToUnblock = await query.get<{ id: number }[]>();
           const idsToUnblock = entitiesToUnblock.map((e) => e.id);
+          this.logger.info(`[${config.table}] Unblocking ${idsToUnblock.length} entities (${diff} slots available)`);
 
           if (idsToUnblock.length > 0) {
             await Query.table(config.table)

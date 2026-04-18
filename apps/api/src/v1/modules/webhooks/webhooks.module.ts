@@ -6,11 +6,11 @@ import { PlanSubscriptionsModule } from '../plan-subscriptions/plan-subscription
 import { UserModule } from '../users/users.module';
 import { PlanPricesModule } from '../plan-prices/plan-prices.module';
 import { UserBenefitModule } from '../user-benefit/user-benefit.module';
-import { STRIPE_WEBHOOKS_QUEUE } from '@repo/common-lib/constants/constants';
+import { PLAN_SUBSCRIPTIONS_QUEUE, STRIPE_WEBHOOKS_QUEUE } from '@repo/common-lib/constants/constants';
 
 @Module({
   imports: [
-    BullModule.registerQueue({ name: STRIPE_WEBHOOKS_QUEUE }),
+    BullModule.registerQueue({ name: STRIPE_WEBHOOKS_QUEUE },{ name: PLAN_SUBSCRIPTIONS_QUEUE }),
     PlanSubscriptionsModule,
     UserModule,
     PlanPricesModule,
