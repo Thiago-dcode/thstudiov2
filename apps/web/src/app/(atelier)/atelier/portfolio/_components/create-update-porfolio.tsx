@@ -13,11 +13,15 @@ import { FullPortfolio } from "@repo/common-lib/types/portfolio";
 import { SubmitPortfolioButton } from "@/app/(atelier)/__components/submit-portfolio-button";
 
 
-export const CreateOrUpdatePortfolio = ({ defaultPortfolio }: {
-    defaultPortfolio?: FullPortfolio
+export const CreateOrUpdatePortfolio = ({
+    defaultPortfolio,
+}: {
+    defaultPortfolio?: FullPortfolio;
 }) => {
     const router = useRouter();
     const { handleSubmit, isPending, success, currentStep, canGoNextStep, MAX_STEPS, inputErrors, clear, handleStep, setPortfolio, currentPortfolio } = usePortfolio();
+
+    const readOnly = Boolean((currentPortfolio ?? defaultPortfolio)?.blocked_at);
 
     useEffect(() => {
         if (defaultPortfolio && currentPortfolio?.id !== defaultPortfolio.id) {
@@ -53,16 +57,35 @@ export const CreateOrUpdatePortfolio = ({ defaultPortfolio }: {
     }, [success]);
     return (
         <FormComponent.Container>
-            <FormComponent.Form onSubmit={handleSubmit} className="relative">
+            {readOnly ? (
+                <div
+                    role="status"
+                    className="mb-6 rounded-md border border-border/60 bg-fg-2/40 px-4 py-3 text-sm text-text-muted"
+                >
+                    This portfolio has been blocked. You can review it here, but it cannot be edited until the block is lifted.
+                </div>
+            ) : null}
+            <FormComponent.Form
+                onSubmit={async (e) => {
+                    if (readOnly) {
+                        e.preventDefault();
+                        return;
+                    }
+                    await handleSubmit(e);
+                }}
+                className="relative"
+            >
                 {isPending && (
                     <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-bg/70 backdrop-blur-[2px]">
                         <Spinner className="size-10 text-accent" />
                     </div>
                 )}
                 <div className="flex justify-start mt-4">
-                    <SubmitPortfolioButton />
+                    {!readOnly ? <SubmitPortfolioButton /> : null}
                 </div>
-                <StepComponent />
+                <div className={readOnly ? "pointer-events-none select-none opacity-90" : undefined}>
+                    <StepComponent />
+                </div>
 
                 {inputErrors && Object.keys(inputErrors).length > 0 && (
                     <div className="mt-4 flex flex-wrap gap-2">

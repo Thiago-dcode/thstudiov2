@@ -45,7 +45,7 @@ export class UserService extends BaseService {
         });
     }
 
-    async getAllMedia(id: number, params?: { page?: number; per_page?: number; paginated?: boolean; shape?: string }): Promise<ApiResponse<Media[]>> {
+    async getAllMedia(id: number, params?: { page?: number; per_page?: number; paginated?: boolean; shape?: string; search?: string }): Promise<ApiResponse<Media[]>> {
 
         return await this.fetchApi.get({
             resource: queryParamBuilder(`${id}/media`, params),

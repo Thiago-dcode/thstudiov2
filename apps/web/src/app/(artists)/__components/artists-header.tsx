@@ -15,6 +15,7 @@ import {
     DrawerClose,
 } from "@repo/ui/components/shadcn/drawer"
 import { ArtistContactDialog } from "./artist-contact.dialog"
+import { useSession } from "@/lib/hooks/useSession"
 
 export const ArtistsHeader = () => {
     const pathname = usePathname()
@@ -24,6 +25,7 @@ export const ArtistsHeader = () => {
     const [drawerOpen, setDrawerOpen] = useState(false)
     const [isMounted, setIsMounted] = useState(false)
     const { share, active: shareActive } = useShare({ fallbackCopy: true })
+    const { session, isLoading: sessionLoading } = useSession()
 
     useEffect(() => {
         const handleScroll = () => {
@@ -64,13 +66,21 @@ export const ArtistsHeader = () => {
             )}
         >
             <div className="max-w-(--screen-desktop) w-full h-16 flex items-center justify-between px-5 tablet:px-10">
-                <div className="flex items-center">
+                <div className="flex items-center gap-3 tablet:gap-4 min-w-0">
                     <Link
                         href="/"
-                        className="text-text hover:opacity-80 transition-opacity"
+                        className="text-text hover:opacity-80 transition-opacity shrink-0"
                     >
                         <BrandLogo />
                     </Link>
+                    {!sessionLoading && session ? (
+                        <Link
+                            href="/atelier"
+                            className="text-xs tracking-wider text-text-muted/45 hover:text-text-muted/90 transition-colors font-medium shrink-0 border-l border-fg-2/25 pl-3 tablet:pl-4"
+                        >
+                            Atelier
+                        </Link>
+                    ) : null}
                 </div>
 
                 {/* Desktop navigation */}

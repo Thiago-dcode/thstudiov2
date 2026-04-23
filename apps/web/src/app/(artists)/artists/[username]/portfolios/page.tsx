@@ -14,7 +14,7 @@ export default async function Page({ params }: Props) {
 
   const [userExist, response] = await Promise.all([
     usersService.usernameExists(username),
-    userPortfolioService.getAllByUsername(username),
+    userPortfolioService.getAllByUsername(username, { blocked: false }),
   ]);
 
   if (!userExist.data) {

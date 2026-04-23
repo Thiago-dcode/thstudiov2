@@ -19,7 +19,6 @@ export default async function PortfolioDetail({ params }: Props) {
     const { slug } = await params;
     const portfolioResponse = await userPortfolioService.getByUsername(userAuth.username, slug);
 
-    console.log("PORTFOLIORESPONSE",portfolioResponse)
     if (portfolioResponse.error) {
         return <div>{portfolioResponse?.error?.message || 'Something went wrong'}</div>;
     }

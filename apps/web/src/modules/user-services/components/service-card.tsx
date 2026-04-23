@@ -25,13 +25,19 @@ export function ServiceCard({
 }: ServiceCardProps) {
   const { title, thumbnail, description, show_price, price } = service;
   const href = serviceHref(service, username, isAtelier);
+  const isBlocked = Boolean(service.blocked_at && isAtelier);
 
   return (
     <Link
       href={href}
-      className="group flex h-22 flex-row phone-lg:h-full phone-lg:flex-col overflow-hidden rounded-sm border border-border/40 transition-colors duration-300 hover:border-border"
+      className={`group flex h-22 flex-row phone-lg:h-full phone-lg:flex-col overflow-hidden rounded-sm border border-border/40 transition-colors duration-300 hover:border-border ${isBlocked ? "opacity-60" : ""}`}
     >
       <div className="relative w-24 shrink-0 phone-lg:w-full phone-lg:aspect-3/2 overflow-hidden bg-fg-1">
+        {isBlocked ? (
+          <div className="absolute left-2 top-2 z-10 rounded-sm bg-black/70 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white">
+            Blocked
+          </div>
+        ) : null}
         {thumbnail ? (
           <Image
             src={thumbnail}

@@ -5,10 +5,25 @@ import { MediaRepository } from './media.repository';
 import { UserExtraDataModule } from '../user-extra-data/user-extra-data.module';
 import { UserModule } from '../users/users.module';
 import { AiModule } from '../ai/ai.module';
+import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
+import { RequestService } from 'src/common/services/request.service';
 
 @Module({
   controllers: [MediaController],
-  providers: [MediaService, MediaRepository],
+  providers: [
+    MediaService,
+    MediaRepository,
+    {
+      provide: LogService,
+      useFactory: (requestService: RequestService) => {
+        return FactoryLogService.createLogService('file', {
+          channel: 'media',
+          id: () => requestService.requestId,
+        });
+      },
+      inject: [RequestService],
+    },
+  ],
   imports: [UserExtraDataModule, UserModule, AiModule],
   exports: [MediaService],
 })

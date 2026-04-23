@@ -18,6 +18,7 @@ export type ProjectSchema = {
   show_client: boolean;
   show_service: boolean;
   is_active: boolean;
+  blocked_at?: Date | null;
   user_id: number;
   client_id: number;
   service_id: number;

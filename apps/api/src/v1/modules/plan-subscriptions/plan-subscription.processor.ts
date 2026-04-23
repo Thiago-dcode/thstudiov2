@@ -1,10 +1,12 @@
 import { Processor } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { LogService } from '@repo/backend-lib/services/log-service';
-import { Helpers } from 'src/common/services/helpers.service';
 import {
-  PLAN_SUBSCRIPTIONS_QUEUE,
+  CACHE_KEY_ACTIVE_PLAN,
+  CACHE_KEY_ACTIVE_SUBSCRIPTION,
+  CACHE_KEY_USER_EXTRA_DATA,
   JOB_ON_SUBSCRIPTION_CHANGES,
+  PLAN_SUBSCRIPTIONS_QUEUE,
 } from '@repo/common-lib/constants/constants';
 import { GlobalProcessor } from 'src/common/processors/global.processor';
 import { BaseUser } from '@repo/common-lib/types/user';
@@ -13,21 +15,23 @@ import { UserExtraDataService } from '../user-extra-data/user-extra-data.service
 import { PlansService } from '../plans/plans.service';
 import { Query } from '@repo/database/facades';
 import { TableName } from '@repo/common-lib/types/database';
+import { Helpers } from 'src/common/services/helpers.service';
+import { serviceCacheKeys } from '../user-services/user-service.service';
 
 @Processor(PLAN_SUBSCRIPTIONS_QUEUE)
 export class PlanSubscriptionProcessor extends GlobalProcessor {
-  constructor(private readonly logger: LogService, private readonly planService: PlansService, private readonly userExtraDataService: UserExtraDataService) {
+  constructor(
+    private readonly logger: LogService,
+    private readonly planService: PlansService,
+    private readonly userExtraDataService: UserExtraDataService,
+    private readonly helpers: Helpers,
+  ) {
     super();
-    this.logger.callback({
-      channel: 'plan-subscriptions/error',
-      callback: Helpers.callback500ErrorMail,
-    });
   }
 
   // ==================== JOB PROCESSOR ====================
 
   async process(job: Job): Promise<any> {
-    this.logger.channel('plan-subscriptions');
     this.logger.name(job.name);
     this.logger.info("Processing JOB: " + job.name);
     try {
@@ -50,6 +54,11 @@ export class PlanSubscriptionProcessor extends GlobalProcessor {
     const { id: userId } = data;
     try {
       this.logger.info(`Processing subscription changes for job data`, data);
+      await this.helpers.deleteManyCached([
+        CACHE_KEY_USER_EXTRA_DATA(userId),
+        CACHE_KEY_ACTIVE_PLAN(userId),
+        CACHE_KEY_ACTIVE_SUBSCRIPTION(userId),
+      ]);
       const currentPlan = await this.planService.findUserActivePlan(userId);
 
       if (!currentPlan) {
@@ -60,47 +69,65 @@ export class PlanSubscriptionProcessor extends GlobalProcessor {
 
       const userExtraData = await this.userExtraDataService.findOneByUserId(userId);
 
-      const diffStorage = currentPlan.storage_limit_mb - userExtraData.storage_used_mb;
-      this.logger.info(`Storage diff: ${diffStorage}MB (limit: ${currentPlan.storage_limit_mb}MB, used: ${userExtraData.storage_used_mb}MB)`);
+      const overLimitMb = userExtraData.storage_used_mb - currentPlan.storage_limit_mb;
+      this.logger.info(`Storage diff: ${overLimitMb}MB over limit (limit: ${currentPlan.storage_limit_mb}MB, used: ${userExtraData.storage_used_mb}MB)`);
 
-      if (diffStorage < 0) {
-        let remainingToBlockMb = Math.abs(diffStorage);
-        const media = await Query.table('media')
-          .select(['id', 'bytes', 'thumbnail_bytes', 'blocked_at', 'is_active'])
+      const blockedMediaResult = await Query.table('media')
+        .rawSelect('COALESCE(SUM(media.bytes + media.thumbnail_bytes), 0) as blocked_bytes')
+        .where('blocked_at', '!=', null)
+        .where('user_id', '=', userId)
+        .first<{ blocked_bytes: string }>();
+      const currentBlockedMb = parseInt(blockedMediaResult.blocked_bytes) / (1024 * 1024);
+
+      const haveToBeBlockedMb = overLimitMb;
+      const diffBlockedMb = haveToBeBlockedMb - currentBlockedMb;
+
+      this.logger.info(`Media blocked: ${currentBlockedMb.toFixed(2)}MB, should be blocked: ${Math.max(0, haveToBeBlockedMb).toFixed(2)}MB`);
+
+      if (haveToBeBlockedMb <= 0) {
+        if (currentBlockedMb > 0) {
+          this.logger.info(`Unblocking all blocked media (user is within storage limit)`);
+          await Query.table('media')
+            .where('blocked_at', '!=', null)
+            .where('user_id', '=', userId)
+            .update(['blocked_at'], [null]);
+        }
+      } else if (diffBlockedMb > 0) {
+        let remainingToBlockMb = diffBlockedMb;
+        const unblocked = await Query.table('media')
+          .select(['id', 'bytes', 'thumbnail_bytes'])
           .where('blocked_at', null)
-          .where('user_id', userId)
+          .where('user_id', '=', userId)
           .orderBy('is_active', 'ASC')
           .orderBy('updated_at', 'ASC')
-          .get<Pick<Media, 'id' | 'bytes' | 'thumbnail_bytes' | 'blocked_at' | 'is_active'>[]>();
+          .get<Pick<Media, 'id' | 'bytes' | 'thumbnail_bytes'>[]>();
 
         const mediaIdsToBlock: number[] = [];
-
-        for (const item of media) {
+        for (const item of unblocked) {
           if (remainingToBlockMb <= 0) break;
           const itemMb = (item.bytes + item.thumbnail_bytes) / (1024 * 1024);
           remainingToBlockMb -= itemMb;
           mediaIdsToBlock.push(item.id);
         }
 
-        this.logger.info(`Blocking ${mediaIdsToBlock.length} media items (need to free ${Math.abs(diffStorage)}MB)`);
+        this.logger.info(`Blocking ${mediaIdsToBlock.length} media items (need to free ${diffBlockedMb.toFixed(2)}MB more)`);
         if (mediaIdsToBlock.length > 0) {
           await Query.table('media')
             .whereIn('id', mediaIdsToBlock)
             .update(['blocked_at'], [new Date()]);
         }
-      } else if (diffStorage > 0) {
-        let remainingToUnblockMb = diffStorage;
-        const blockedMedia = await Query.table('media')
-          .select(['id', 'bytes', 'thumbnail_bytes', 'blocked_at', 'is_active'])
+      } else if (diffBlockedMb < 0) {
+        let remainingToUnblockMb = Math.abs(diffBlockedMb);
+        const blocked = await Query.table('media')
+          .select(['id', 'bytes', 'thumbnail_bytes'])
           .where('blocked_at', '!=', null)
           .where('user_id', '=', userId)
           .orderBy('is_active', 'DESC')
           .orderBy('updated_at', 'DESC')
-          .get<Pick<Media, 'id' | 'bytes' | 'thumbnail_bytes' | 'blocked_at' | 'is_active'>[]>();
+          .get<Pick<Media, 'id' | 'bytes' | 'thumbnail_bytes'>[]>();
 
         const mediaIdsToUnblock: number[] = [];
-
-        for (const item of blockedMedia) {
+        for (const item of blocked) {
           const itemMb = (item.bytes + item.thumbnail_bytes) / (1024 * 1024);
           if (itemMb <= remainingToUnblockMb) {
             remainingToUnblockMb -= itemMb;
@@ -108,7 +135,7 @@ export class PlanSubscriptionProcessor extends GlobalProcessor {
           }
         }
 
-        this.logger.info(`Unblocking ${mediaIdsToUnblock.length} media items (${diffStorage}MB available)`);
+        this.logger.info(`Unblocking ${mediaIdsToUnblock.length} media items (${Math.abs(diffBlockedMb).toFixed(2)}MB over-blocked)`);
         if (mediaIdsToUnblock.length > 0) {
           await Query.table('media')
             .whereIn('id', mediaIdsToUnblock)
@@ -154,66 +181,66 @@ export class PlanSubscriptionProcessor extends GlobalProcessor {
         ];
 
       for (const config of limitsConfig) {
-        const diff = config.maxLimit - config.currentCount;
-        this.logger.info(`[${config.table}] diff: ${diff} (limit: ${config.maxLimit}, current: ${config.currentCount})`);
 
-        if (diff < 0) {
-          const remainingToBlock = Math.abs(diff);
+        let query = Query.table(config.table as any).softDeletes(true)
+          .where('blocked_at', 'IS NOT', null)
+          .where('user_id', '=', userId);
 
-          let query = Query.table(config.table as any)
-            .select(['id', 'blocked_at'])
-            .where('blocked_at', '=', null)
-            .where('user_id', '=', userId);
+        if (config.activeColumn) {
+          //priorize !is_active ones
+          query.orderBy('is_active', 'ASC')
+        }
+        //Priorize old ones
+        query.orderBy('updated_at', 'ASC')
 
-          if (config.activeColumn) {
-            query = query.orderBy(config.activeColumn, 'ASC');
+        const currentBlocked = await query.count(false);
+        const haveToBeBlocked = config.currentCount - config.maxLimit;
+
+        this.logger.info(`[${config.table}] diff: ${haveToBeBlocked} (limit: ${config.maxLimit}, current: ${config.currentCount})`);
+
+        //-1 mean not limits
+        if (haveToBeBlocked <= 0 || config.maxLimit === -1) {
+          if (currentBlocked > 0) {
+            await query.update(['blocked_at'], [null], false);
           }
-          query = query.orderBy('updated_at', 'ASC').limit(remainingToBlock);
+        } else {
+          const amountToUnblock = currentBlocked - haveToBeBlocked;
+          if (amountToUnblock > 0) {
+            await query.limit(amountToUnblock).update(['blocked_at'], [null], false);
+          } else if (amountToUnblock < 0) {
+            const toBlock = Math.abs(amountToUnblock);
 
-          const entitiesToBlock = await query.get<{ id: number }[]>();
-          const idsToBlock = entitiesToBlock.map((e) => e.id);
-          this.logger.info(`[${config.table}] Blocking ${idsToBlock.length} entities (exceeds limit by ${remainingToBlock})`);
+            const blockQuery = Query.table(config.table as any).softDeletes(true)
+              .where('blocked_at', null)
+              .where('user_id', '=', userId);
+            if (config.activeColumn) {
+              blockQuery.orderBy(config.activeColumn, 'ASC');
+            }
+            blockQuery.orderBy('updated_at', 'ASC').limit(toBlock);
 
-          if (idsToBlock.length > 0) {
-            await Query.table(config.table as any)
-              .whereIn('id', idsToBlock)
-              .update(['blocked_at'], [new Date()]);
-          }
-        } else if (diff > 0) {
-          const remainingToUnblock = diff;
-
-          let query = Query.table(config.table as any)
-            .select(['id', 'blocked_at'])
-            .where('blocked_at', '!=', null)
-            .where('user_id', '=', userId);
-
-          if (config.activeColumn) {
-            query = query.orderBy(config.activeColumn, 'DESC');
-          }
-          query = query.orderBy('updated_at', 'DESC').limit(remainingToUnblock);
-
-          const entitiesToUnblock = await query.get<{ id: number }[]>();
-          const idsToUnblock = entitiesToUnblock.map((e) => e.id);
-          this.logger.info(`[${config.table}] Unblocking ${idsToUnblock.length} entities (${diff} slots available)`);
-
-          if (idsToUnblock.length > 0) {
-            await Query.table(config.table)
-              .whereIn('id', idsToUnblock)
-              .update(['blocked_at'], [null]);
+            await blockQuery.update(['blocked_at'], [new Date()]);
           }
         }
       }
 
+      await this.helpers.deleteManyCached([
+        CACHE_KEY_USER_EXTRA_DATA(userId),
+        CACHE_KEY_ACTIVE_PLAN(userId),
+        CACHE_KEY_ACTIVE_SUBSCRIPTION(userId),
+        serviceCacheKeys.allByUser(userId),
+      ]);
 
       return { success: true };
     } catch (error) {
       const isError = error instanceof Error;
       this.logger
-        .channel('plan-subscriptions/error')
+        .channel('subscriptions/error')
         .error(
           `Failed to process subscription changes - ${isError ? error.message : 'Unknown error'}`,
           isError ? error : undefined,
         );
+
+      this.logger.channel('subscriptions')
       throw error;
     }
   }

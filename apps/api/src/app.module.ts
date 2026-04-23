@@ -200,9 +200,6 @@ const ALL_APP_MODULES = [
         whitelist: true,
         forbidNonWhitelisted: false,
         transform: true,
-        transformOptions: {
-          enableImplicitConversion: true,
-        },
       }),
     },
   ],

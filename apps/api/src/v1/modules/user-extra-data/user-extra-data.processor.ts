@@ -3,6 +3,7 @@ import { Inject } from '@nestjs/common';
 import { Job } from 'bullmq';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { UserExtraDataRepository } from './user-extra-data.repository';
+import { CACHE_KEY_USER_EXTRA_DATA } from '@repo/common-lib/constants/constants';
 import { Query } from '@repo/database/facades';
 import { Media } from '@repo/common-lib/types/media';
 import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
@@ -53,7 +54,7 @@ export class UserExtraDataProcessor extends GlobalProcessor {
             .where('user_id', '=', userId)
             .softDeletes(true)
             .get<Pick<Media, 'id' | 'bytes' | 'thumbnail_bytes'>[]>(),
-          this.cacheManager.del(`user-extra-data-${userId}`),
+          this.cacheManager.del(CACHE_KEY_USER_EXTRA_DATA(userId)),
         ]),
       ]);
 

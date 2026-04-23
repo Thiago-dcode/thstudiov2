@@ -20,11 +20,8 @@ export class PortfolioService {
   });
   constructor(
     private readonly portfolioRepository: PortfolioRepository,
-    // private readonly userService: UserService,
     private readonly requestService: RequestService,
     private readonly userExtraDataService: UserExtraDataService,
-    // private readonly compressService: CompressService,
-    // private readonly storageService: StorageService,
     private readonly eventEmitter: EventEmitter2,
     private readonly helpers: Helpers,
     private readonly aiService: AiService,

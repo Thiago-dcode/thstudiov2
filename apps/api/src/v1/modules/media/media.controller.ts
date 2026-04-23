@@ -19,6 +19,7 @@ import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { ParseJsonArrayPipe } from 'src/common/pipes/parse-json-array.pipe';
 import { MediaService } from './media.service';
 import { ModelExistPipe } from 'src/pipes/model-exist.pipe';
+import { IsResourceBlockedPipe } from 'src/pipes/is-resource-blocked.pipe';
 import { Public } from 'src/common/decorators/public.decorator';
 
 @Throttle({
@@ -77,7 +78,7 @@ export class MediaController {
   }
   @Patch(':id')
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIntPipe, new IsResourceBlockedPipe('media')) id: number,
     @Body() updateMediaRequest: UpdateMediaRequest,
   ) {
     return await this.mediaService.update(id, updateMediaRequest);

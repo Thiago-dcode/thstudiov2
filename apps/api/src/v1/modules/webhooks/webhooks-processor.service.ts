@@ -32,16 +32,10 @@ export class WebhookProcessor extends GlobalProcessor {
     @InjectQueue(PLAN_SUBSCRIPTIONS_QUEUE) private readonly subscriptionQueue: Queue,
   ) {
     super();
-    this.logger
-      .callback({
-        channel: 'webhook/error',
-        callback: Helpers.callback500ErrorMail,
-      });
   }
 
   async process(job: Job<Stripe.Event>): Promise<void> {
     const event = job.data;
-    this.logger.channel('webhook')
     this.logger.name(job.name);
 
     try {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Media } from "@repo/common-lib/types/media";
 import { EditMediaCard } from "./edit-media-card";
 import { useMedia } from "@/modules/media/providers/media.provider";
@@ -31,6 +31,10 @@ type MediaGridProps = {
 export function MediaGrid({ media, username }: MediaGridProps) {
   const [currentMedia, setCurrentMedia] = useState(media);
   const { mediaPendingToUpdate, handleUploadUpdates, isLoading, generateManySeoMedia } = useMedia();
+
+  useEffect(() => {
+    setCurrentMedia(media);
+  }, [media]);
   const { canSelect, selectedMedia, selectionCount, setCanSelect, clearSelection } = useSelectMedia()
   const { aiCreditsInfo, refresh } = useUserMetrics();
   const [isDialogOpen, setIsDialogOpen] = useState(false);

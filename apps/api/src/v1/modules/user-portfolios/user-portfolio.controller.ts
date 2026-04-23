@@ -2,7 +2,6 @@ import {
   Controller,
   Get,
   Param,
-  ParseIntPipe,
   Query,
 } from '@nestjs/common';
 import { Public } from 'src/common/decorators/public.decorator';
@@ -14,7 +13,7 @@ export class UserPortfolioController {
   constructor(private readonly userPortfolioService: UserPortfolioService) { }
 
   @Public()
-  @Get(':username/portfolio/slug-exist/:slug')
+  @Get(':username/portfolios/slug-exist/:slug')
   async slugExists(
     @Param('username') username: string,
     @Param('slug') slug: string,
@@ -22,14 +21,14 @@ export class UserPortfolioController {
     return await this.userPortfolioService.slugExists(username,slug);
   }
 
-  @Public()
-  @Get(':user_id/portfolio/:slug')
-  async getById(
-    @Param('user_id', ParseIntPipe) userId: number,
-    @Param('slug') slug: string,
-  ) {
-    return await this.userPortfolioService.getById(userId, slug);
-  }
+  // @Public()
+  // @Get(':user_id/portfolios/:slug')
+  // async getById(
+  //   @Param('user_id', ParseIntPipe) userId: number,
+  //   @Param('slug') slug: string,
+  // ) {
+  //   return await this.userPortfolioService.getById(userId, slug);
+  // }
 
   @Public()
   @Get(':username/portfolios/:slug')

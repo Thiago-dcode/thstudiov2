@@ -6,18 +6,15 @@ import { FullPortfolio, Portfolio, PortfolioIndexRequest } from "@repo/common-li
 
 import { UserRepository } from "../users/users.repository";
 import { PortfolioRepository } from "../portfolios/portfolio.repository";
+import { CollectionService } from "../collections/collection.service";
 
 @Injectable()
 export class UserPortfolioService {
-  // private readonly logger = FactoryLogService.createLogService('file', {
-  //   channel: 'portfolio',
-  // });
+
   constructor(
     private readonly portfolioRepository: PortfolioRepository,
     private readonly userRepository: UserRepository,
-    // private readonly userService: UserService,
-    // private readonly compressService: CompressService,
-    // private readonly storageService: StorageService,
+    private readonly  collectionService: CollectionService,
     private readonly helpers: Helpers,
   ) { }
 
@@ -50,6 +47,7 @@ export class UserPortfolioService {
     }
     return {
       ...portfolio,
+      collections:await this.collectionService.findPortfolioCollections(portfolio.id),
       media: portfolio.media.length
         ? await Promise.all(portfolio.media.map(async (media) => ({
           ...media,
@@ -67,7 +65,10 @@ export class UserPortfolioService {
     const user = await this.userRepository.findByUsernameCompact(username);
     if (!user) return [];
 
+    console.log("FILTERS",filters)
     const portfolios = await this.portfolioRepository.getAll({ user_id: user.id, ...filters });
+
+
 
     return await Promise.all(portfolios.map(async (portfolio) => ({
       ...portfolio,

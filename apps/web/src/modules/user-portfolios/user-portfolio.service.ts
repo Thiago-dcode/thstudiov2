@@ -9,12 +9,6 @@ class UserPortfolioService extends BaseService {
         super(fetchApi(), 'users');
     }
 
-    async getById(userId: number, slug: string): Promise<ApiResponse<FullPortfolio | null>> {
-        return await this.fetchApi.get({
-            resource: `/${userId}/portfolio/${slug}`
-        });
-    }
-
     async getByUsername(username: string, slug: string): Promise<ApiResponse<FullPortfolio | null>> {
         return await this.fetchApi.get({
             resource: `/${username}/portfolios/${slug}`

@@ -11,6 +11,7 @@ export type PortfolioSchema = {
   is_featured: boolean;
   is_highlight: boolean;
   is_active: boolean;
+  blocked_at?: Date | null;
   user_id: number;
   created_at: Date;
   updated_at: Date;
@@ -47,20 +48,6 @@ export type PortfolioFullSchema = PortfolioSchema & {
   m_is_featured?: boolean | null;
   m_is_highlight?: boolean | null;
 
-  //TODO: implement collection relation ship;
-  // // From portfolio_collection (prefixed: pc_)
-  // pc_id: number;                          // COLLISION: id
-  // pc_portfolio_id: number;
-  // pc_collection_id: number;
-  // pc_position: number;
-
-  // // From collections (prefixed: c_)
-  // c_id: number;                           // COLLISION: id
-  // c_title: string;                        // COLLISION: title
-  // c_description?: string | null;          // COLLISION: description
-  // c_user_id: number;                      // COLLISION: user_id
-  // c_created_at: Date;                     // COLLISION: created_at
-  // c_updated_at: Date;                     // COLLISION: updated_at
 };
 
 const tablesPortfolioFull = [

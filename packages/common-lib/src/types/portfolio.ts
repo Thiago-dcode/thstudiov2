@@ -21,6 +21,7 @@ export type PortfolioIndexRequest = OffsetPaginationRequest & {
   is_featured?: boolean;
   is_highlight?: boolean;
   is_active?: boolean;
+  blocked?: boolean;
 };
 
 // Fields generated internally by the system (user cannot set these)

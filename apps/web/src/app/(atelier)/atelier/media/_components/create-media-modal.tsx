@@ -309,6 +309,11 @@ export function CreateMediaDialog({onSuccess}:{
     const { files } = useInputFile()
     const { previewUrls, cleanup } = usePreviewUrls({ files });
     const { session } = useSession();
+    const { metrics } = useUserMetrics();
+
+    const storageUsed = metrics?.extra_data.storage_used_mb ?? 0;
+    const storageLimit = metrics?.active_plan.storage_limit_mb ?? 0;
+    const isStorageFull = storageLimit > 0 && storageUsed >= storageLimit;
 
     const addedFilesRef = useRef(new Set<File>());
 
@@ -342,6 +347,17 @@ export function CreateMediaDialog({onSuccess}:{
         setOpen(false)
     }, [isLoading])
     if (!session) return null;
+
+    if (isStorageFull) {
+        return (
+            <Button className="p-2 text-sm" variant="secondary" size="default" disabled
+                title={`Storage full: ${(storageUsed / 1024).toFixed(1)} / ${(storageLimit / 1024).toFixed(1)} GB used`}
+            >
+                <Plus className="h-4 w-4" />
+                Create media
+            </Button>
+        );
+    }
 
     return (
 

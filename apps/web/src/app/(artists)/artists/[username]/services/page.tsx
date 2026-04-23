@@ -11,8 +11,9 @@ type Props = {
 export default async function Page({ params }: Props) {
   const { username } = await params;
 
-  const response = await userServiceService.getAllByUsername(username,{
-     is_active:true
+  const response = await userServiceService.getAllByUsername(username, {
+    is_active: true,
+    blocked: false,
   });
 
   if (!response.data) {

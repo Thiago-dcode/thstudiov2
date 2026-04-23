@@ -1,8 +1,8 @@
 import type { EnumType } from '@repo/common-lib/constants/enums';
-import { Type } from 'class-transformer';
-import { IsBoolean, IsOptional } from 'class-validator';
+import { IsOptional } from 'class-validator';
 import { OffsetPaginationRequest } from 'src/common/requests/offset-pagination.request';
 import { IsAvailableEnum } from 'src/common/validators/is-enum.validator';
+import { ToBoolean } from 'src/common/decorators/to-boolean.decorator';
 
 export class IndexInvitationLinkRequest extends OffsetPaginationRequest {
   @IsOptional()
@@ -10,7 +10,6 @@ export class IndexInvitationLinkRequest extends OffsetPaginationRequest {
   benefit_type?: EnumType<'BENEFIT_TYPE'>;
 
   @IsOptional()
-  @IsBoolean()
-  @Type(() => Boolean)
+  @ToBoolean()
   active?: boolean;
 }

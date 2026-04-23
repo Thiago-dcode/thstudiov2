@@ -3,6 +3,7 @@ import { ApiException } from 'src/common/exceptions/api-exception';
 import { UserExtraDataRepository } from './user-extra-data.repository';
 import { OnEvent } from '@nestjs/event-emitter';
 import {
+  CACHE_KEY_USER_EXTRA_DATA,
   UPDATE_USER_EXTRA_DATA_METRICS,
   USER_METRICS_QUEUE,
   JOB_COMPUTE_USER_METRICS,
@@ -40,7 +41,7 @@ export class UserExtraDataService {
 
   async findOneByUserId(userId: number) {
     return await this.helpers.cacheRemember(
-      `user-extra-data-${userId}`,
+      CACHE_KEY_USER_EXTRA_DATA(userId),
       this.userExtraDataRepository.findByUserId(userId),
       {
         append_language: false,

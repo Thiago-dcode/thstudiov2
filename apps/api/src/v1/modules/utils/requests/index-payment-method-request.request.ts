@@ -1,9 +1,9 @@
-import { IsBoolean, IsNotEmpty, IsOptional } from 'class-validator';
+import { IsNotEmpty, IsOptional } from 'class-validator';
+import { ToBoolean } from 'src/common/decorators/to-boolean.decorator';
 
 export class IndexPaymentMethodRequest {
-
   @IsOptional()
-  @IsBoolean()
+  @ToBoolean()
   @IsNotEmpty()
-  enabled: boolean;
+  enabled?: boolean;
 }

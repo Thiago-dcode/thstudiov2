@@ -40,9 +40,7 @@ export class PlanSubscriptionsService {
     private readonly paymentMethodsService: PaymentMethodsService,
     private readonly userBenefitsService: UserBenefitService,
     private readonly helpers: Helpers,
-  ) {
-    this.logger.channel('subscriptions');
-  }
+  ) {}
 
   async initiate({
     plan_price_id,

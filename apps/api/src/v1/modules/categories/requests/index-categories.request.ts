@@ -1,7 +1,6 @@
 import { Transform, Type } from 'class-transformer';
 import {
   IsArray,
-  IsBoolean,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -10,6 +9,7 @@ import {
 import { OffsetPaginationRequest } from 'src/common/requests/offset-pagination.request';
 import { ModelArrayExist } from 'src/common/validators/model-array-exist.validtor';
 import { ModelExist } from 'src/common/validators/model-exist.validtor';
+import { ToBoolean } from 'src/common/decorators/to-boolean.decorator';
 
 export class IndexCategoriesRequest extends OffsetPaginationRequest {
   @IsOptional()
@@ -18,11 +18,12 @@ export class IndexCategoriesRequest extends OffsetPaginationRequest {
   search: string;
 
   @IsOptional()
-  @IsBoolean()
+  @ToBoolean()
   random?: boolean;
 
   @IsOptional()
   @IsNumber()
+  @Type(() => Number)
   @ModelExist('categories')
   parent_id: number;
 
@@ -52,12 +53,10 @@ export class IndexCategoriesRequest extends OffsetPaginationRequest {
   slugs?: string[];
 
   @IsOptional()
-  @IsBoolean()
-  @Type(() => Boolean)
+  @ToBoolean()
   is_featured?: boolean;
   
   @IsOptional()
-  @IsBoolean()
-  @Type(() => Boolean)
+  @ToBoolean()
   with_thumbnail?: boolean;
 }

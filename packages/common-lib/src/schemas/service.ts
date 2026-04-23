@@ -15,6 +15,7 @@ export type ServiceSchema = {
   show_price: boolean;
   user_id: number;
   portfolio_id?: number | null;
+  blocked_at?: Date | null;
   created_at: Date;
   updated_at: Date;
 };

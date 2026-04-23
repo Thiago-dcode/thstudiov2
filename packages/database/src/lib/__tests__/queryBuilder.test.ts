@@ -1720,16 +1720,15 @@ describe('QueryBuilder', () => {
       await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
 
-      // Add incompatible operations
       queryBuilder.select(['id', 'name']);
-      queryBuilder.join('user_id', 'users', 'id');
+      queryBuilder.where('id', '=', 1);
 
       const columns = ['name'];
       const values = ['John'];
 
-      expect(() => queryBuilder['buildUpdateQuery'](columns, values)).toThrow(
-        'Method chaining not allowed before update, you can only chain operations: where',
-      );
+      expect(() => queryBuilder['buildUpdateQuery'](columns, values)).not.toThrow();
+      expect(queryBuilder['operationsChain']).not.toContain('select');
+      expect(queryBuilder['_select']).toBe('*');
     });
 
     it('should allow update when only where operations exist', async () => {
@@ -2867,6 +2866,312 @@ describe('QueryBuilder', () => {
         const [sql] = getClient().query.mock.calls[0];
         expect(sql).toContain('UPDATE');
         expect(sql).toContain('WHERE');
+      });
+    });
+  });
+
+  describe('resetQuery=false', () => {
+    let queryBuilder: QueryBuilder;
+    let postgresConfig: DatabaseConfig;
+
+    beforeEach(async () => {
+      postgresConfig = {
+        host: 'localhost',
+        port: 5432,
+        username: 'testuser',
+        password: 'testpass',
+        database: 'testdb',
+        client: 'postgres',
+      };
+      await initClient(postgresConfig);
+      queryBuilder = new QueryBuilder(TABLE_NAME);
+    });
+
+    describe('get', () => {
+      it('should preserve builder state and clear query when resetQuery=false', async () => {
+        const { getClient } = require('../client');
+        getClient().query.mockResolvedValue({ rows: [{ id: 1 }] });
+
+        queryBuilder
+          .select(['id', 'name'])
+          .where('status', '=', 'active')
+          .limit(10);
+
+        const rows = await queryBuilder.get(false);
+
+        expect(rows).toEqual([{ id: 1 }]);
+        expect(queryBuilder['query']).toBe('');
+        expect(queryBuilder['wheres']).toHaveLength(1);
+        expect(queryBuilder['values']).toEqual(['active']);
+        expect(queryBuilder['valuesPosition']).toBe(1);
+        expect(queryBuilder['_select']).toBe(
+          `${TABLE_NAME}.id,${TABLE_NAME}.name`,
+        );
+        expect(queryBuilder['_limit']).toBe(10);
+      });
+
+      it('should allow calling get() again after get(false) with identical SQL/params', async () => {
+        const { getClient } = require('../client');
+        getClient().query.mockResolvedValue({ rows: [] });
+
+        queryBuilder.where('status', '=', 'active');
+        await queryBuilder.get(false);
+        await queryBuilder.get(false);
+
+        expect(getClient().query).toHaveBeenCalledTimes(2);
+        const [sql1, params1] = getClient().query.mock.calls[0];
+        const [sql2, params2] = getClient().query.mock.calls[1];
+        expect(sql1).toBe(
+          `SELECT * FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.status = $1`,
+        );
+        expect(sql2).toBe(sql1);
+        expect(params1).toEqual(['active']);
+        expect(params2).toEqual(['active']);
+      });
+
+      it('should fully reset state when resetQuery=true (default)', async () => {
+        const { getClient } = require('../client');
+        getClient().query.mockResolvedValue({ rows: [] });
+
+        queryBuilder
+          .select(['id'])
+          .where('status', '=', 'active')
+          .limit(5);
+        await queryBuilder.get();
+
+        expect(queryBuilder['query']).toBe('');
+        expect(queryBuilder['wheres']).toHaveLength(0);
+        expect(queryBuilder['values']).toEqual([]);
+        expect(queryBuilder['valuesPosition']).toBe(0);
+        expect(queryBuilder['_select']).toBe('*');
+        expect(queryBuilder['_limit']).toBe(0);
+      });
+    });
+
+    describe('count', () => {
+      it('should preserve select/orderBy/wheres and clear query when resetQuery=false', async () => {
+        const { getClient } = require('../client');
+        getClient().query.mockResolvedValue({ rows: [{ count: '42' }] });
+
+        queryBuilder
+          .select(['id', 'name'])
+          .where('status', '=', 'active')
+          .orderBy('id', 'DESC');
+        const originalSelect = queryBuilder['_select'];
+        const originalOrderBy = queryBuilder['_orderBy'];
+
+        const total = await queryBuilder.count(false);
+
+        expect(total).toBe(42);
+        expect(queryBuilder['query']).toBe('');
+        expect(queryBuilder['_select']).toBe(originalSelect);
+        expect(queryBuilder['_orderBy']).toBe(originalOrderBy);
+        expect(queryBuilder['wheres']).toHaveLength(1);
+        expect(queryBuilder['values']).toEqual(['active']);
+        expect(queryBuilder['valuesPosition']).toBe(1);
+      });
+
+      it('should execute COUNT SQL using the overridden select without persisting it', async () => {
+        const { getClient } = require('../client');
+        getClient().query.mockResolvedValue({ rows: [{ count: '3' }] });
+
+        queryBuilder.select(['id']).where('status', '=', 'active');
+        await queryBuilder.count(false);
+
+        const [sql, params] = getClient().query.mock.calls[0];
+        expect(sql).toBe(
+          `SELECT count(${TABLE_NAME}.*) FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.status = $1`,
+        );
+        expect(params).toEqual(['active']);
+        expect(queryBuilder['_select']).toBe(`${TABLE_NAME}.id`);
+      });
+
+      it('should allow chaining get() after count(false) reusing the same WHERE', async () => {
+        const { getClient } = require('../client');
+        getClient().query
+          .mockResolvedValueOnce({ rows: [{ count: '3' }] })
+          .mockResolvedValueOnce({ rows: [{ id: 1 }, { id: 2 }, { id: 3 }] });
+
+        queryBuilder.where('status', '=', 'active');
+        const total = await queryBuilder.count(false);
+        const rows = await queryBuilder.get();
+
+        expect(total).toBe(3);
+        expect(rows).toEqual([{ id: 1 }, { id: 2 }, { id: 3 }]);
+
+        const [countSql, countParams] = getClient().query.mock.calls[0];
+        const [getSql, getParams] = getClient().query.mock.calls[1];
+        expect(countSql).toBe(
+          `SELECT count(${TABLE_NAME}.*) FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.status = $1`,
+        );
+        expect(getSql).toBe(
+          `SELECT * FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.status = $1`,
+        );
+        expect(countParams).toEqual(['active']);
+        expect(getParams).toEqual(['active']);
+      });
+
+      it('should fully reset state when resetQuery=true (default)', async () => {
+        const { getClient } = require('../client');
+        getClient().query.mockResolvedValue({ rows: [{ count: '0' }] });
+
+        queryBuilder
+          .select(['id'])
+          .where('status', '=', 'active')
+          .orderBy('id', 'ASC');
+        await queryBuilder.count();
+
+        expect(queryBuilder['query']).toBe('');
+        expect(queryBuilder['_select']).toBe('*');
+        expect(queryBuilder['_orderBy']).toBe('');
+        expect(queryBuilder['wheres']).toHaveLength(0);
+        expect(queryBuilder['values']).toEqual([]);
+      });
+    });
+
+    describe('update', () => {
+      it('should preserve wheres and splice unshifted SET values when resetQuery=false', async () => {
+        const { getClient } = require('../client');
+        getClient().query.mockResolvedValue({ rowCount: 1 });
+
+        queryBuilder.where('id', '=', 7);
+        await queryBuilder.update(
+          ['name', 'email'],
+          ['John', 'john@example.com'],
+          false,
+        );
+
+        expect(queryBuilder['query']).toBe('');
+        expect(queryBuilder['wheres']).toHaveLength(1);
+        expect(queryBuilder['values']).toEqual([7]);
+        expect(queryBuilder['valuesPosition']).toBe(1);
+      });
+
+      it('should only splice non-null SET values (NULLs are not unshifted)', async () => {
+        const { getClient } = require('../client');
+        getClient().query.mockResolvedValue({ rowCount: 1 });
+
+        queryBuilder.where('id', '=', 5);
+        await queryBuilder.update(
+          ['name', 'email', 'age'],
+          [null, 'a@b.com', 30],
+          false,
+        );
+
+        expect(queryBuilder['values']).toEqual([5]);
+        expect(queryBuilder['wheres']).toHaveLength(1);
+      });
+
+      it('should allow running update twice without accumulating values or shifting bindings', async () => {
+        const { getClient } = require('../client');
+        const calls: Array<{ sql: string; params: any[] }> = [];
+        getClient().query.mockImplementation((sql: string, params: any[]) => {
+          calls.push({ sql, params: [...params] });
+          return Promise.resolve({ rowCount: 1 });
+        });
+
+        queryBuilder.where('id', '=', 7);
+        await queryBuilder.update(['name'], ['John'], false);
+        await queryBuilder.update(['name'], ['Jane'], false);
+
+        expect(calls).toHaveLength(2);
+        expect(calls[0].sql).toBe(
+          `UPDATE ${TABLE_NAME} SET name = $1 \nWHERE ${TABLE_NAME}.id = $2`,
+        );
+        expect(calls[1].sql).toBe(calls[0].sql);
+        expect(calls[0].params).toEqual(['John', 7]);
+        expect(calls[1].params).toEqual(['Jane', 7]);
+        expect(queryBuilder['values']).toEqual([7]);
+      });
+
+      it('should fully reset state when resetQuery=true (default)', async () => {
+        const { getClient } = require('../client');
+        getClient().query.mockResolvedValue({ rowCount: 1 });
+
+        queryBuilder.where('id', '=', 1);
+        await queryBuilder.update(['name'], ['X']);
+
+        expect(queryBuilder['query']).toBe('');
+        expect(queryBuilder['wheres']).toHaveLength(0);
+        expect(queryBuilder['values']).toEqual([]);
+        expect(queryBuilder['valuesPosition']).toBe(0);
+      });
+
+      it('should allow update after get(false) with a prior select (removeSelect edge case)', async () => {
+        const { getClient } = require('../client');
+        const calls: Array<{ sql: string; params: any[] }> = [];
+        getClient().query.mockImplementation((sql: string, params: any[]) => {
+          calls.push({ sql, params: [...params] });
+          return Promise.resolve({ rows: [{ id: 1 }], rowCount: 1 });
+        });
+
+        queryBuilder
+          .select(['id', 'name'])
+          .where('id', '=', 1);
+        await queryBuilder.get(false);
+        await queryBuilder.update(['name'], ['Updated'], false);
+
+        expect(calls).toHaveLength(2);
+        expect(calls[0].sql).toBe(
+          `SELECT ${TABLE_NAME}.id,${TABLE_NAME}.name FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.id = $1`,
+        );
+        expect(calls[0].params).toEqual([1]);
+        expect(calls[1].sql).toBe(
+          `UPDATE ${TABLE_NAME} SET name = $1 \nWHERE ${TABLE_NAME}.id = $2`,
+        );
+        expect(calls[1].params).toEqual(['Updated', 1]);
+        expect(queryBuilder['_select']).toBe('*');
+        expect(queryBuilder['operationsChain']).not.toContain('select');
+        expect(queryBuilder['values']).toEqual([1]);
+      });
+
+      it('should allow update after count(false) with a prior select (removeSelect edge case)', async () => {
+        const { getClient } = require('../client');
+        const calls: Array<{ sql: string; params: any[] }> = [];
+        getClient().query.mockImplementation((sql: string, params: any[]) => {
+          calls.push({ sql, params: [...params] });
+          return Promise.resolve({ rows: [{ count: '5' }], rowCount: 1 });
+        });
+
+        queryBuilder
+          .select(['id', 'name'])
+          .where('status', '=', 'active');
+        await queryBuilder.count(false);
+        await queryBuilder.update(['status'], ['inactive'], false);
+
+        expect(calls).toHaveLength(2);
+        expect(calls[0].sql).toBe(
+          `SELECT count(${TABLE_NAME}.*) FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.status = $1`,
+        );
+        expect(calls[0].params).toEqual(['active']);
+        expect(calls[1].sql).toBe(
+          `UPDATE ${TABLE_NAME} SET status = $1 \nWHERE ${TABLE_NAME}.status = $2`,
+        );
+        expect(calls[1].params).toEqual(['inactive', 'active']);
+        expect(queryBuilder['_select']).toBe('*');
+        expect(queryBuilder['operationsChain']).not.toContain('select');
+      });
+
+      it('should allow get after select + update(false) (removeSelect clears for subsequent get)', async () => {
+        const { getClient } = require('../client');
+        const calls: Array<{ sql: string; params: any[] }> = [];
+        getClient().query.mockImplementation((sql: string, params: any[]) => {
+          calls.push({ sql, params: [...params] });
+          return Promise.resolve({ rows: [{ id: 1, name: 'Updated' }], rowCount: 1 });
+        });
+
+        queryBuilder
+          .select(['id', 'name'])
+          .where('id', '=', 1);
+        await queryBuilder.get(false);
+        await queryBuilder.update(['name'], ['Updated'], false);
+        await queryBuilder.get();
+
+        expect(calls).toHaveLength(3);
+        expect(calls[2].sql).toBe(
+          `SELECT * FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.id = $1`,
+        );
+        expect(calls[2].params).toEqual([1]);
       });
     });
   });

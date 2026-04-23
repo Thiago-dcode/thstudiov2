@@ -125,10 +125,13 @@ export class QueryBuilder extends BaseBuilder {
    *   .get();
    * ```
    */
-  public async get<T = any>(): Promise<T> {
+  public async get<T = any>(resetQuery = true): Promise<T> {
     this.buildSelectQuery();
     const result = await getClient().query(this.query, this.values);
-    this.reset();
+    if (resetQuery) this.reset();
+    else {
+      this.query = '';
+    }
     return result.rows;
   }
   public async count(resetQuery = true): Promise<number> {
@@ -229,10 +232,15 @@ export class QueryBuilder extends BaseBuilder {
    *   .update(['name', 'email'], ['Jane Doe', 'jane@example.com']);
    * ```
    */
-  public async update(columns: string[], values: SqlValue[]) {
+  public async update(columns: string[], values: SqlValue[], resetQuery = true) {
     this.buildUpdateQuery(columns, values);
     const result = await getClient().query(this.query, this.values);
-    this.reset();
+    if (resetQuery) this.reset();
+    else {
+      this.query = '';
+      const unshiftedCount = values.filter((value) => value !== null).length;
+      this.values.splice(0, unshiftedCount);
+    }
     return result;
   }
 
@@ -531,7 +539,9 @@ export class QueryBuilder extends BaseBuilder {
    */
 
   public limit(limit: number) {
-    this.operationsChain.push('limit');
+    if (!this.operationsChain.includes('limit')) {
+      this.operationsChain.push('limit');
+    }
     this._limit = limit;
     return this;
   }
@@ -695,8 +705,9 @@ export class QueryBuilder extends BaseBuilder {
    * @protected
    */
   protected buildUpdateQuery(columns: string[], values: SqlValue[]) {
+    this.removeNonWhereOps();
     this.throwIfColumnsAndValuesLengthMismatch(columns, values);
-    this.throwIfNotInCompatibleOperations(['where'], 'update');
+    this.throwIfNotInCompatibleOperations(['where', 'limit', 'orderBy', 'offset'], 'update');
     this.throwIfOperationNotAllowed(
       !this.operationsChain.includes('where') &&
       !getClient().config.settings.allowUpdateWithoutWhere,
@@ -720,8 +731,28 @@ export class QueryBuilder extends BaseBuilder {
     }).join(',')}`;
 
     this.setSoftDelete();
-    this.query += this.buildWheresQuery(this.wheres, offset);
 
+    if (this._limit || this._orderBy) {
+      const subquery = this.buildLimitedUpdateSubquery(offset);
+      this.query += ` \nWHERE ctid IN (${subquery})`;
+    } else {
+      this.query += this.buildWheresQuery(this.wheres, offset);
+    }
+  }
+
+  private buildLimitedUpdateSubquery(offset: number): string {
+    let sub = `SELECT ctid FROM ${this.tableName}`;
+    sub += this.buildWheresQuery(this.wheres, offset);
+    if (this._orderBy) {
+      sub += ` \nORDER BY ${this._orderBy}`;
+    }
+    if (this._limit) {
+      sub += ` \nLIMIT ${this._limit}`;
+    }
+    if (this._offset) {
+      sub += ` \nOFFSET ${this._offset}`;
+    }
+    return sub;
   }
 
   /**
@@ -869,6 +900,13 @@ export class QueryBuilder extends BaseBuilder {
     }
   }
 
+  protected removeNonWhereOps() {
+    this._select = '*';
+    this.operationsChain = this.operationsChain.filter(
+      (op) => op === 'where' || op === 'limit' || op === 'orderBy' || op === 'offset',
+    );
+  }
+
   /**
    * Reset the query builder state
    * @protected
@@ -952,7 +990,9 @@ export class QueryBuilder extends BaseBuilder {
         'Method chaining not allowed before ' +
         methodName +
         ', you can only chain operations: ' +
-        compatibleOperations.join(', '),
+        compatibleOperations.join(', ') +
+        '. Current chain: ' +
+        this.operationsChain.join(', '),
       );
     }
   }

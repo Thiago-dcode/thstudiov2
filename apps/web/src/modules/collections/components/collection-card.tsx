@@ -32,9 +32,15 @@ export const CollectionCard = ({
   const images = collectionPreviewImages(collection, isAtelier);
   const title = collection.title;
   const href = collectionHref(collection, username, isAtelier);
+  const isBlocked = Boolean(collection.blocked_at && isAtelier);
 
   const content = (
-    <article className="group cursor-pointer aspect-square relative">
+    <article className={`group cursor-pointer aspect-square relative ${isBlocked ? "opacity-60" : ""}`}>
+      {isBlocked ? (
+        <div className="absolute left-2 top-2 z-30 rounded-sm bg-black/70 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white">
+          Blocked
+        </div>
+      ) : null}
       <div className="absolute inset-0 flex items-center justify-center">
         {images.length === 0 ? (
           <div className="absolute w-[78%] h-[78%] rounded-md overflow-hidden border border-border shadow-md bg-fg-2 group-hover:scale-105 transition-transform duration-200">

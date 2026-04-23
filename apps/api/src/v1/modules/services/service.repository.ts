@@ -36,6 +36,7 @@ export class ServiceRepository extends BaseRepository {
     'services.show_price',
     'services.user_id',
     'services.portfolio_id',
+    'services.blocked_at',
     'services.created_at',
     'services.updated_at',
   ] as const;
@@ -186,6 +187,14 @@ export class ServiceRepository extends BaseRepository {
       query.where('is_active', '=', filters.is_active);
     }
 
+    if (typeof filters.blocked === 'boolean') {
+      if (filters.blocked) {
+        query.where('blocked_at', 'IS NOT', null);
+      } else {
+        query.where('blocked_at', 'IS', null);
+      }
+    }
+
     this.requestService.pagination =
       await this.handleOffsetPagination(query, filters);
     query.orderBy('created_at', 'DESC');
@@ -207,6 +216,7 @@ export class ServiceRepository extends BaseRepository {
       show_price: result.show_price,
       user_id: result.user_id,
       portfolio_id: result.portfolio_id,
+      blocked_at: result.blocked_at,
       created_at: result.created_at,
       updated_at: result.updated_at,
     };
@@ -259,6 +269,7 @@ export class ServiceRepository extends BaseRepository {
       show_price: first.show_price,
       user_id: first.user_id,
       portfolio_id: first.portfolio_id,
+      blocked_at: first.blocked_at,
       portfolio,
       created_at: first.created_at,
       updated_at: first.updated_at,

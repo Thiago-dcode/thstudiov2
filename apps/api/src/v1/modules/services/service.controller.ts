@@ -12,6 +12,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { ServiceService } from './service.service';
 import { CreateServiceRequest } from './requests/create-service.request';
 import { UpdateServiceRequest } from './requests/update-service.request';
+import { IsResourceBlockedPipe } from 'src/pipes/is-resource-blocked.pipe';
 
 @Controller('services')
 export class ServiceController {
@@ -30,7 +31,7 @@ export class ServiceController {
   @Patch(':id')
   @UseInterceptors(FileInterceptor('thumbnail'))
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIntPipe, new IsResourceBlockedPipe('services')) id: number,
     @Body() updateServiceRequest: UpdateServiceRequest,
     @UploadedFile() thumbnail: Express.Multer.File,
   ) {

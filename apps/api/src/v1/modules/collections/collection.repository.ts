@@ -8,6 +8,8 @@ import {
   CollectionFullSchemaColumns,
   CollectionSchema,
   CollectionSchemaColumns,
+  PortfolioCollectionSchema,
+  PortfolioCollectionSchemaColumns,
 } from '@repo/common-lib/schemas/collection';
 import {
   CreateCollectionInput,
@@ -16,6 +18,7 @@ import {
   Collection,
   CollectionIndexRequest,
   CollectionMedia,
+  PortfolioCollection,
 } from '@repo/common-lib/types/collection';
 import { DbException } from '@repo/database/exceptions';
 import { RequestService } from 'src/common/services/request.service';
@@ -31,6 +34,7 @@ export class CollectionRepository extends BaseRepository {
     'collections.is_highlight',
     'collections.is_active',
     'collections.description',
+    'collections.blocked_at',
     'collections.user_id',
     'collections.created_at',
     'collections.updated_at',
@@ -208,6 +212,79 @@ export class CollectionRepository extends BaseRepository {
     if (typeof filters.is_active === 'boolean') {
       query.where('is_active', '=', filters.is_active);
     }
+    if (typeof filters.blocked === 'boolean') {
+      if (filters.blocked) {
+        query.where('blocked_at', 'IS NOT', null);
+      } else {
+        query.where('blocked_at', 'IS', null);
+      }
+    }
+  }
+
+  public async getPortfolioCollections(portfolioId: number): Promise<PortfolioCollection[]> {
+    const PORTFOLIO_COLS: PortfolioCollectionSchemaColumns[] = [
+      'portfolio_collection.position as pc_position',
+      'portfolio_collection.collection_id as pc_collection_id',
+    ];
+
+    const rows = await this.query()
+      .select([...this.FULL_COLUMNS, ...PORTFOLIO_COLS])
+      .join('id', 'portfolio_collection', 'collection_id', 'LEFT')
+      .join('id', 'collection_media', 'collection_id', 'LEFT')
+      .join('collection_media.media_id', 'media', 'id', 'LEFT')
+      .where('portfolio_collection.portfolio_id', portfolioId)
+      .where('media.thumbnail', 'IS NOT', null)
+      .where('media.blocked_at', 'IS', null)
+      .orderBy('portfolio_collection.position', 'ASC')
+      .orderBy('collection_media.position', 'ASC')
+      .get<PortfolioCollectionSchema[]>();
+
+    return this.formatPortfolioCollections(rows);
+  }
+
+  private formatPortfolioCollections(rows: PortfolioCollectionSchema[]): PortfolioCollection[] {
+    const map = new Map<number, PortfolioCollection>();
+
+    for (const row of rows) {
+      let collection = map.get(row.id);
+      if (!collection) {
+        collection = {
+          id: row.id,
+          slug: row.slug,
+          title: row.title,
+          is_featured: row.is_featured,
+          is_highlight: row.is_highlight,
+          is_active: row.is_active,
+          description: row.description,
+          blocked_at: row.blocked_at,
+          user_id: row.user_id,
+          created_at: row.created_at,
+          updated_at: row.updated_at,
+          position: row.pc_position,
+          media: [],
+        };
+        map.set(row.id, collection);
+      }
+
+      if (row.m_id && !collection.media.some((m) => m.id === row.m_id)) {
+        collection.media.push({
+          id: row.m_id,
+          public_id: row.public_id,
+          title: row.m_title,
+          position: row.position,
+          thumbnail: row.thumbnail,
+          url: row.url,
+          seo_filename: row.seo_filename,
+          seo_alt: row.seo_alt,
+          seo_description: row.seo_description,
+          seo_title: row.seo_title,
+          shape: row.shape,
+          is_highlight: row.m_is_highlight ?? false,
+        });
+      }
+    }
+
+    return Array.from(map.values());
   }
 
   protected async applyFilters(
@@ -239,6 +316,7 @@ export class CollectionRepository extends BaseRepository {
       is_highlight: result.is_highlight,
       is_active: result.is_active,
       description: result.description,
+      blocked_at: result.blocked_at,
       user_id: result.user_id,
       created_at: result.created_at,
       updated_at: result.updated_at,
@@ -259,6 +337,7 @@ export class CollectionRepository extends BaseRepository {
           is_highlight: row.is_highlight,
           is_active: row.is_active,
           description: row.description,
+          blocked_at: row.blocked_at,
           user_id: row.user_id,
           created_at: row.created_at,
           updated_at: row.updated_at,
@@ -312,6 +391,7 @@ export class CollectionRepository extends BaseRepository {
       is_highlight: first.is_highlight,
       is_active: first.is_active,
       description: first.description,
+      blocked_at: first.blocked_at,
       user_id: first.user_id,
       created_at: first.created_at,
       updated_at: first.updated_at,

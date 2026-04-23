@@ -86,6 +86,9 @@ export const CACHE_KEY_ACTIVE_PLAN = (userId: number | string) => `active_plan_$
 // Subscriptions
 export const CACHE_KEY_ACTIVE_SUBSCRIPTION = (userId: number | string) => `active_subscription_${userId}` as const;
 
+// User extra data
+export const CACHE_KEY_USER_EXTRA_DATA = (userId: number | string) => `user-extra-data-${userId}` as const;
+
 // Categories
 export const CACHE_KEY_USER_CATEGORIES = (userId: number | string) => `user_categories_${userId}` as const;
 export const CACHE_KEY_CATEGORY_TRANSLATION = (

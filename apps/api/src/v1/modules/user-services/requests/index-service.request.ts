@@ -1,20 +1,21 @@
-import { Type } from 'class-transformer';
-import { IsBoolean, IsOptional } from 'class-validator';
+import { IsOptional } from 'class-validator';
 import { OffsetPaginationRequest } from 'src/common/requests/offset-pagination.request';
+import { ToBoolean } from 'src/common/decorators/to-boolean.decorator';
 
 export class IndexUserServiceRequest extends OffsetPaginationRequest {
   @IsOptional()
-  @IsBoolean()
-  @Type(() => Boolean)
+  @ToBoolean()
   is_featured?: boolean;
 
   @IsOptional()
-  @IsBoolean()
-  @Type(() => Boolean)
+  @ToBoolean()
   is_highlight?: boolean;
 
   @IsOptional()
-  @IsBoolean()
-  @Type(() => Boolean)
+  @ToBoolean()
   is_active?: boolean;
+
+  @IsOptional()
+  @ToBoolean()
+  blocked?: boolean;
 }

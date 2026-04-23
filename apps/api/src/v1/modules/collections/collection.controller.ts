@@ -14,6 +14,7 @@ import { CreateCollectionRequest } from './requests/create-collection.request';
 import { UpdateCollectionRequest } from './requests/update-collection.request';
 import { IndexCollectionRequest } from './requests/index-collection.request';
 import { Public } from 'src/common/decorators/public.decorator';
+import { IsResourceBlockedPipe } from 'src/pipes/is-resource-blocked.pipe';
 
 @Controller('collections')
 export class CollectionController {
@@ -32,7 +33,7 @@ export class CollectionController {
 
   @Patch(':id')
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseIntPipe, new IsResourceBlockedPipe('collections')) id: number,
     @Body() updateCollectionRequest: UpdateCollectionRequest,
   ) {
     return await this.collectionService.update(id, updateCollectionRequest);

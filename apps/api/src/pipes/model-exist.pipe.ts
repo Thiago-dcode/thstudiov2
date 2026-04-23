@@ -6,8 +6,8 @@ import type { TableName } from '@repo/common-lib/types/database';
 @Injectable()
 export class ModelExistPipe implements PipeTransform {
   constructor(
-    private readonly tableName: TableName,
-    private readonly column: string = 'id',
+    protected readonly tableName: TableName,
+    protected readonly column: string = 'id',
   ) {}
   async transform(value: any) {
     const schemaBuilder = await Schema.tableIfExists(this.tableName);

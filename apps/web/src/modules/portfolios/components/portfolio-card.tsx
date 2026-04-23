@@ -27,13 +27,14 @@ export function PortfolioCard({
   const { title, thumbnail, description } = portfolio;
   const href = portfolioHref(portfolio, username, isAtelier);
   const hasThumbnail = Boolean(thumbnail?.trim());
+  const isBlocked = Boolean(portfolio.blocked_at && isAtelier);
 
   return (
     <Link
       href={href}
       className="group relative flex flex-col overflow-hidden rounded-sm"
     >
-      <div className="relative aspect-square w-full overflow-hidden bg-fg-1">
+      <div className={`relative aspect-square w-full overflow-hidden bg-fg-1 ${isBlocked ? "opacity-60" : ""}`}>
         {hasThumbnail ? (
           <>
             <Image
@@ -53,6 +54,11 @@ export function PortfolioCard({
           </div>
         )}
 
+        {isBlocked ? (
+          <div className="absolute left-2 top-2 z-10 rounded-sm bg-black/70 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white">
+            Blocked
+          </div>
+        ) : null}
         <div className="absolute inset-x-0 bottom-0 p-3 md:p-4">
           <TitleTag className="text-sm font-serif italic tracking-tight text-white drop-shadow-md md:text-base">
             {title}

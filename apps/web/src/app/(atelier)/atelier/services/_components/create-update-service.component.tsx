@@ -14,7 +14,7 @@ import { Checkbox } from "@repo/ui/components/shadcn/checkbox"
 import { Label } from "@repo/ui/components/shadcn/label"
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip"
 import { Spinner } from "@repo/ui/components/shadcn/spinner"
-import { Combobox, ComboboxInput, ComboboxContent, ComboboxList, ComboboxItem, ComboboxEmpty } from "@repo/ui/components/shadcn/combobox"
+import { Combobox, ComboboxInput, ComboboxContent, ComboboxList, ComboboxItem } from "@repo/ui/components/shadcn/combobox"
 import { cn } from "@repo/ui/lib/utils"
 import { useState, useCallback, useEffect, useRef, useMemo } from "react"
 import { useRouter } from "next/navigation"
@@ -27,13 +27,18 @@ import { Portfolio } from "@repo/common-lib/types/portfolio"
 
 type ServiceActionInput = Parameters<typeof createOrUpdateServiceAction>[0];
 
-export const CreateOrUpdateService = ({ defaultService, userAuth,portfolios }: {
-    defaultService?: FullService
-    userAuth: UserAuth,
-    portfolios:Portfolio[]
+export const CreateOrUpdateService = ({
+    defaultService,
+    userAuth,
+    portfolios,
+}: {
+    defaultService?: FullService;
+    userAuth: UserAuth;
+    portfolios: Portfolio[];
 }) => {
     const router = useRouter();
     const isUpdate = !!defaultService;
+    const readOnly = Boolean(defaultService?.blocked_at);
 
     const titleRef = useRef(defaultService?.title ?? '');
     const slugRef = useRef(defaultService?.slug ?? '');
@@ -72,7 +77,6 @@ export const CreateOrUpdateService = ({ defaultService, userAuth,portfolios }: {
                 features: features.filter(f => f.trim()).map(f => ({ title: f.trim() })),
                 terms: terms.filter(t => t.trim()).map(t => ({ title: t.trim() })),
             };
-            console.log("PAYLOAD",payload)
 
             return await createOrUpdateServiceAction(payload, defaultService);
         },
@@ -147,8 +151,9 @@ export const CreateOrUpdateService = ({ defaultService, userAuth,portfolios }: {
 
     const handleSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        if (readOnly) return;
         await handleAction();
-    }, [handleAction]);
+    }, [handleAction, readOnly]);
 
     useEffect(() => {
         if (defaultService) {
@@ -180,6 +185,14 @@ export const CreateOrUpdateService = ({ defaultService, userAuth,portfolios }: {
 
     return (
         <FormComponent.Container>
+            {readOnly ? (
+                <div
+                    role="status"
+                    className="mb-6 rounded-md border border-border/60 bg-fg-2/40 px-4 py-3 text-sm text-text-muted"
+                >
+                    This service has been blocked. You can review it here, but it cannot be edited until the block is lifted.
+                </div>
+            ) : null}
             <FormComponent.Form onSubmit={handleSubmit} className="relative">
                 {isPending && (
                     <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-bg/70 backdrop-blur-[2px]">
@@ -187,7 +200,7 @@ export const CreateOrUpdateService = ({ defaultService, userAuth,portfolios }: {
                     </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className={`grid grid-cols-1 md:grid-cols-2 gap-6 ${readOnly ? "pointer-events-none select-none opacity-90" : ""}`}>
                     <div className="space-y-4">
                         <FormComponent.LabelInput
                             onChange={(e) => {
@@ -366,11 +379,13 @@ export const CreateOrUpdateService = ({ defaultService, userAuth,portfolios }: {
                     </div>
                 )}
 
-                <div className="sticky bottom-0 bg-bg p-2 mt-6">
-                    <FormComponent.SubmitButton isPending={isPending} success={success}>
-                        {isUpdate ? "Update Service" : "Create Service"}
-                    </FormComponent.SubmitButton>
-                </div>
+                {!readOnly ? (
+                    <div className="sticky bottom-0 bg-bg p-2 mt-6">
+                        <FormComponent.SubmitButton isPending={isPending} success={success}>
+                            {isUpdate ? "Update Service" : "Create Service"}
+                        </FormComponent.SubmitButton>
+                    </div>
+                ) : null}
             </FormComponent.Form>
         </FormComponent.Container>
     );
@@ -436,7 +451,6 @@ const PortfolioSelect = ({ portfolios, value, onChange }: {
             <Combobox
                 value={value ? String(value) : null}
                 onValueChange={(val) => {
-                    console.log("Changing",val)
                     onChange(val ? Number(val) : undefined);
                 }}
             >

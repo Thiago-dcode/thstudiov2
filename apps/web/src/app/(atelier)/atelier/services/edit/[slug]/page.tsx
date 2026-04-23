@@ -34,7 +34,11 @@ export default async function ServiceEdit({ params }: Props) {
     return (
         <AdminPageContainer>
             <AdminPageTitle title={"Edit: " + service.title} publicHref={publicHref} />
-            <CreateOrUpdateService defaultService={service} userAuth={userAuth} portfolios={portfolios.data || []} />
+            <CreateOrUpdateService
+                defaultService={service}
+                userAuth={userAuth}
+                portfolios={portfolios.data || []}
+            />
         </AdminPageContainer>
     );
 }

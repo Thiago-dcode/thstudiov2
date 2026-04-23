@@ -20,30 +20,30 @@ type Props = {
 export default async function Page({ params, searchParams }: Props) {
     const { username, slug } = await params;
 
-    const [userExist,response, userAuth] = await Promise.all([
+    const [userExist, response, userAuth] = await Promise.all([
         usersService.usernameExists(username),
         userPortfolioService.getByUsername(username, slug),
         userSession(),
     ]);
-    if(!userExist.data){
+    if (!userExist.data) {
         notFound();
     }
 
-    if (!response.data) {
+    const portfolio = response.data;
+    if (!portfolio || portfolio.blocked_at) {
         return (
             <Web.Container>
-                <ResourceNotFound 
-                    username={username} 
-                    message="The portfolio you're looking for doesn't exist or may have been removed." 
+                <ResourceNotFound
+                    username={username}
+                    message="The portfolio you're looking for doesn't exist or may have been removed."
                 />
             </Web.Container>
         );
     }
 
-    const portfolio = response.data;
     const canEdit = userAuth?.id === portfolio.user_id;
 
-    const qp= await searchParams;
+    const qp = await searchParams;
 
     let defaultCurrentItem: number | undefined = undefined;
 
@@ -103,7 +103,7 @@ export default async function Page({ params, searchParams }: Props) {
                             description: m.seo_description ?? undefined,
                             url: m.url ?? m.thumbnail,
                             alt: m.seo_alt ?? m.title ?? undefined,
-                            href:`${config.app_url}/artists/${username}/portfolios/${slug}/media/${m.public_id}?cb=1`,
+                            href: `${config.app_url}/artists/${username}/portfolios/${slug}/media/${m.public_id}?cb=1`,
                             shared: `${config.app_url}/artists/${username}/portfolios/${slug}/media/${m.public_id}`
                         }))}
                     >

@@ -10,6 +10,7 @@ export type CollectionSchema = {
   is_highlight: boolean;
   is_active: boolean;
   description?: string | null;
+  blocked_at?: Date | null;
   user_id: number;
   created_at: Date;
   updated_at: Date;
@@ -55,3 +56,21 @@ const tablesCollectionFull = [
   TABLES_ENUM.MEDIA,
 ] as const;
 export type CollectionFullSchemaColumns = TableColumn<typeof tablesCollectionFull, CollectionFullSchema>;
+
+// ==================== PORTFOLIO COLLECTION SCHEMA (WITH MEDIA) ====================
+// Joins: portfolio_collection + collections + collection_media + media
+// Only collision fields are prefixed with `pc_` for portfolio_collection
+export type PortfolioCollectionSchema = CollectionFullSchema & {
+  // From portfolio_collection (aliased, keys required so the SELECT `as` clause typechecks)
+  collection_id: number;
+  pc_position: number;          // COLLISION: position (collection_media.position)
+  pc_collection_id: number;     // COLLISION: collection_id (collection_media.collection_id)
+};
+
+const tablesPortfolioCollection = [
+  TABLES_ENUM.PORTFOLIO_COLLECTION,
+  TABLES_ENUM.COLLECTIONS,
+  TABLES_ENUM.COLLECTION_MEDIA,
+  TABLES_ENUM.MEDIA,
+] as const;
+export type PortfolioCollectionSchemaColumns = TableColumn<typeof tablesPortfolioCollection, PortfolioCollectionSchema>;

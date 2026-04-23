@@ -30,6 +30,7 @@ export class PortfolioRepository extends BaseRepository {
     'portfolios.is_featured',
     'portfolios.is_highlight',
     'portfolios.is_active',
+    'portfolios.blocked_at',
     'portfolios.user_id',
     'portfolios.created_at',
     'portfolios.updated_at',
@@ -71,8 +72,6 @@ export class PortfolioRepository extends BaseRepository {
       .where('user_id', '=', userId)
       .join('id', 'portfolio_media', 'portfolio_id', 'LEFT')
       .join('portfolio_media.media_id', 'media', 'id', 'LEFT')
-      .join('id', 'portfolio_collection', 'portfolio_id', 'LEFT')
-      .join('portfolio_collection.collection_id', 'collections', 'id', 'LEFT')
       .where('media.thumbnail', 'IS NOT', null)
       .where('media.blocked_at',  null)
       .orderBy('portfolio_media.position', 'ASC')
@@ -81,6 +80,8 @@ export class PortfolioRepository extends BaseRepository {
     if (!result || (Array.isArray(result) && result.length === 0)) return null;
     return this.formatFullPortfolio(Array.isArray(result) ? result : [result]);
   }
+
+
 
   async getOneCompact(id: number) {
 
@@ -222,6 +223,14 @@ export class PortfolioRepository extends BaseRepository {
       query.where('is_active', '=', filters.is_active);
     }
 
+    if (typeof filters.blocked === 'boolean') {
+      if (filters.blocked) {
+        query.where('blocked_at', 'IS NOT', null);
+      } else {
+        query.where('blocked_at', 'IS', null);
+      }
+    }
+
     this.requestService.pagination =
       await this.handleOffsetPagination(query, filters);
     query.orderBy('created_at', 'DESC');
@@ -240,6 +249,7 @@ export class PortfolioRepository extends BaseRepository {
       is_featured: result.is_featured,
       is_highlight: result.is_highlight,
       is_active: result.is_active,
+      blocked_at: result.blocked_at,
       user_id: result.user_id,
       created_at: result.created_at,
       updated_at: result.updated_at,
@@ -278,6 +288,7 @@ export class PortfolioRepository extends BaseRepository {
       is_featured: first.is_featured,
       is_highlight: first.is_highlight,
       is_active: first.is_active,
+      blocked_at: first.blocked_at,
       user_id: first.user_id,
       created_at: first.created_at,
       updated_at: first.updated_at,

@@ -1,9 +1,9 @@
-import { IsBoolean, IsNotEmpty, IsOptional } from 'class-validator';
+import { IsNotEmpty, IsOptional } from 'class-validator';
+import { ToBoolean } from 'src/common/decorators/to-boolean.decorator';
 
 export class IndexPlanRequest {
-
   @IsOptional()
-  @IsBoolean()
+  @ToBoolean()
   @IsNotEmpty()
-  is_active: boolean;
+  is_active?: boolean;
 }

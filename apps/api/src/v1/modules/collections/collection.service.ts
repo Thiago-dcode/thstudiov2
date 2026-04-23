@@ -40,6 +40,25 @@ export class CollectionService {
     );
   }
 
+  async findPortfolioCollections(portfolioId: number) {
+    const result = await this.collectionRepository.getPortfolioCollections(portfolioId);
+
+    return Promise.all(result.map(async (col) => {
+
+      return {
+        ...col,
+        media: await Promise.all(col.media.map(async (me) => {
+
+          return {
+            ...me,
+            thumbnail: await this.helper.getAsset(me.thumbnail)
+          }
+        }))
+      }
+
+    }))
+  }
+
   private async slugExists(slug: string, userId: number) {
     return {
       exists: await this.collectionRepository.slugExists(slug, userId)

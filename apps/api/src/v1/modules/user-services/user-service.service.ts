@@ -23,22 +23,14 @@ export class UserServiceService {
   ) { }
 
   async getById(userId: number, slug: string): Promise<FullService> {
-    return this.helpers.cacheRemember(
-      serviceCacheKeys.bySlug(userId, slug),
-      this.resolveFullService(userId, slug),
-      { append_language: false, ttl: CACHE_TTL },
-    );
+    return this.resolveFullService(userId, slug);
   }
 
   async getByUsername(username: string, slug: string): Promise<FullService> {
     const user = await this.userRepository.findByUsernameCompact(username);
     if (!user) return null;
 
-    return this.helpers.cacheRemember(
-      serviceCacheKeys.bySlug(user.id, slug),
-      this.resolveFullService(user.id, slug),
-      { append_language: false, ttl: CACHE_TTL },
-    );
+    return this.resolveFullService(user.id, slug);
   }
 
   async getAllByUsername(
@@ -63,13 +55,14 @@ export class UserServiceService {
     filters?: Omit<ServiceIndexRequest, "user_id">,
   ): boolean {
     if (filters == null) return true;
-    const { paginated, page, is_featured, is_highlight, is_active } = filters;
+    const { paginated, page, is_featured, is_highlight, is_active, blocked } = filters;
     return (
       paginated !== true &&
       (page === undefined || page <= 1) &&
       typeof is_featured !== "boolean" &&
       typeof is_highlight !== "boolean" &&
-      typeof is_active !== "boolean"
+      typeof is_active !== "boolean" &&
+      typeof blocked !== "boolean"
     );
   }
 

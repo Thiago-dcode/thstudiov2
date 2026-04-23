@@ -30,18 +30,18 @@ export default async function Page({ params, searchParams }: Props) {
         notFound();
     }
 
-    if (!response.data) {
+    const collection = response.data;
+    if (!collection || collection.blocked_at) {
         return (
             <Web.Container>
-                <ResourceNotFound 
-                    username={username} 
-                    message="The collection you're looking for doesn't exist or may have been removed." 
+                <ResourceNotFound
+                    username={username}
+                    message="The collection you're looking for doesn't exist or may have been removed."
                 />
             </Web.Container>
         );
     }
 
-    const collection = response.data;
     const canEdit = userAuth?.id === collection.user_id;
 
     const qp = await searchParams;

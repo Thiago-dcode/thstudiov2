@@ -11,6 +11,8 @@ import { PasswordRecoveryMail } from './mails/password-recovery-mail';
 import { RolesModule } from '../roles/roles.module';
 import { InvitationLinkModule } from '../invitation-links/invitation-link.module';
 import { UserBenefitModule } from '../user-benefit/user-benefit.module';
+import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
+import { RequestService } from 'src/common/services/request.service';
 
 @Module({
   imports: [
@@ -22,6 +24,22 @@ import { UserBenefitModule } from '../user-benefit/user-benefit.module';
     UserBenefitModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, UserRepository, JwtService, TwoFAMail, PasswordRecoveryMail],
+  providers: [
+    AuthService,
+    UserRepository,
+    JwtService,
+    TwoFAMail,
+    PasswordRecoveryMail,
+    {
+      provide: LogService,
+      useFactory: (requestService: RequestService) => {
+        return FactoryLogService.createLogService('file', {
+          channel: 'auth',
+          id: () => requestService.requestId,
+        });
+      },
+      inject: [RequestService],
+    },
+  ],
 })
 export class AuthModule {}

@@ -48,7 +48,9 @@ const SortableItem = ({
     );
 };
 
-export const CreateOrUpdateCollection = ({ defaultCollection }: {
+export const CreateOrUpdateCollection = ({
+    defaultCollection,
+}: {
     defaultCollection?: FullCollection;
 }) => {
     const router = useRouter();
@@ -71,6 +73,8 @@ export const CreateOrUpdateCollection = ({ defaultCollection }: {
         handlePushMediaSelected,
         handleRemoveMediaSelected,
     } = useCollection();
+
+    const readOnly = Boolean((currentCollection ?? defaultCollection)?.blocked_at);
 
     useEffect(() => {
         if (defaultCollection && currentCollection?.id !== defaultCollection.id) {
@@ -175,7 +179,24 @@ export const CreateOrUpdateCollection = ({ defaultCollection }: {
 
     return (
         <FormComponent.Container>
-            <FormComponent.Form onSubmit={handleSubmit} className="relative">
+            {readOnly ? (
+                <div
+                    role="status"
+                    className="mb-6 rounded-md border border-border/60 bg-fg-2/40 px-4 py-3 text-sm text-text-muted"
+                >
+                    This collection has been blocked. You can review it here, but it cannot be edited until the block is lifted.
+                </div>
+            ) : null}
+            <FormComponent.Form
+                onSubmit={async (e) => {
+                    if (readOnly) {
+                        e.preventDefault();
+                        return;
+                    }
+                    await handleSubmit(e);
+                }}
+                className="relative"
+            >
                 {isPending && (
                     <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-bg/70 backdrop-blur-[2px]">
                         <Spinner className="size-10 text-accent" />
@@ -183,11 +204,11 @@ export const CreateOrUpdateCollection = ({ defaultCollection }: {
                 )}
 
                 <div className="flex justify-start mt-4">
-                    <SubmitCollectionButton />
+                    {!readOnly ? <SubmitCollectionButton /> : null}
                 </div>
 
                 {/* Text fields */}
-                <div className="space-y-4">
+                <div className={`space-y-4 ${readOnly ? "pointer-events-none select-none opacity-90" : ""}`}>
                     <FormComponent.LabelInput
                         value={formData?.title || ''}
                         onChange={handleTitleChange}
@@ -282,7 +303,7 @@ export const CreateOrUpdateCollection = ({ defaultCollection }: {
                 </div>
 
                 {/* Media section */}
-                <section className="space-y-5 mt-8">
+                <section className={`space-y-5 mt-8 ${readOnly ? "pointer-events-none select-none opacity-90" : ""}`}>
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <h3 className="text-sm font-medium text-foreground">Media</h3>

@@ -14,11 +14,19 @@ export type FullCollection = CollectionSchema & {
   media: MediaPortfolio[];
 };
 
+// Collection attached to a portfolio via `portfolio_collection`.
+// `position` refers to the collection's position within the portfolio.
+export type PortfolioCollection = CollectionSchema & {
+  position: number;
+  media: MediaPortfolio[];
+};
+
 export type CollectionIndexRequest = OffsetPaginationRequest & {
   user_id?: number;
   is_featured?: boolean;
   is_highlight?: boolean;
   is_active?: boolean;
+  blocked?: boolean;
 };
 
 type InternalCollectionFields =

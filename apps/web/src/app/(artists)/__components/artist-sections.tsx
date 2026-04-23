@@ -46,18 +46,21 @@ export const ArtistSections = async ({
       paginated: true,
       is_highlight: true,
       is_active: true,
+      blocked: false,
       per_page: 3,
     }),
     userCollectionService.getAllByUsername(username, {
       is_highlight: true,
       is_active: true,
       paginated: true,
+      blocked: false,
       per_page: 4,
     }),
     userServiceService.getAllByUsername(username, {
       paginated: true,
       per_page: 4,
       is_active: true,
+      blocked: false,
       is_highlight: true,
     }),
   ]);

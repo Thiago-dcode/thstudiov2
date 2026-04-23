@@ -26,18 +26,19 @@ export default async function Page({ params }: Props) {
         notFound();
     }
 
-    if (!response.data) {
+    const service = response.data;
+    console.log("service",service)
+    if (!service || service.blocked_at) {
         return (
             <Web.Container>
-                <ResourceNotFound 
-                    username={username} 
-                    message="The service you're looking for doesn't exist or may have been removed." 
+                <ResourceNotFound
+                    username={username}
+                    message="The service you're looking for doesn't exist or may have been removed."
                 />
             </Web.Container>
         );
     }
 
-    const service = response.data;
     const canEdit = userAuth?.id === service.user_id;
     const hasDetails = service.features.length > 0 || service.terms.length > 0;
 

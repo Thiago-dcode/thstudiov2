@@ -23,6 +23,7 @@ export default async function UpdateSubscriptionPage() {
         utilsService.getPaymentMethods({ enabled: true }),
         userBenefitService.getByUserId(user.id)
     ]);
+    console.log(plans,paymentMethods)
     if (plans.error || !plans.data || !paymentMethods.data) {
         redirect('/atelier/settings');
     }
