@@ -1,7 +1,8 @@
-import { IsNotEmpty, IsNumber, IsOptional, IsString, IsBoolean, IsArray, ValidateNested, MinLength } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional, IsString, IsArray, ValidateNested, MinLength } from 'class-validator';
 import { Type } from 'class-transformer';
 import { IsUserAuth } from 'src/common/validators/is-user-auth.validtor';
 import { ModelExist } from 'src/common/validators/model-exist.validtor';
+import { ToBoolean } from 'src/common/decorators/to-boolean.decorator';
 
 class ServiceFeatureItem {
   @IsNotEmpty()
@@ -27,8 +28,10 @@ export class CreateServiceRequest {
   @IsString()
   @IsOptional()
   description?: string;
+
   @IsNumber()
   @IsOptional()
+  @Type(() => Number)
   @ModelExist('portfolios')
   portfolio_id?: number;
 
@@ -37,24 +40,26 @@ export class CreateServiceRequest {
 
   @IsOptional()
   @IsNumber()
+  @Type(() => Number)
   price?: number;
 
   @IsOptional()
-  @IsBoolean()
+  @ToBoolean()
   is_active?: boolean;
 
   @IsOptional()
-  @IsBoolean()
+  @ToBoolean()
   show_price?: boolean;
 
   @IsOptional()
-  @IsBoolean()
+  @ToBoolean()
   is_highlight?: boolean;
 
   @ModelExist('users')
   @IsUserAuth()
   @IsNotEmpty()
   @IsNumber()
+  @Type(() => Number)
   user_id: number;
 
   @IsOptional()

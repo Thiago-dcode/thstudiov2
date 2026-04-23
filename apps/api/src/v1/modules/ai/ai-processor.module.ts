@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { BullModule, getQueueToken } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { AiProcessor } from './ai.processor';
+import { AiTask } from './ai.task';
 import { UserExtraDataModule } from '../user-extra-data/user-extra-data.module';
 import { LlmTokensUsageRepository } from './llm-tokens-usage.repository';
 import { MediaModerationRepository } from './media-moderation.repository';
@@ -23,6 +24,7 @@ import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-se
   ],
   providers: [
     AiProcessor,
+    AiTask,
     LlmTokensUsageRepository,
     MediaModerationRepository,
     UserAiCreditsEndedMail,

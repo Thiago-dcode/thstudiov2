@@ -1,15 +1,18 @@
-import { IsNotEmpty, IsNumber, IsOptional, IsString, IsArray, IsBoolean, ValidateNested, MinLength, ArrayMaxSize } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional, IsString, IsArray, ValidateNested, MinLength, ArrayMaxSize } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ModelExist } from 'src/common/validators/model-exist.validtor';
+import { ToBoolean } from 'src/common/decorators/to-boolean.decorator';
 
 class CollectionMediaItem {
   @IsNotEmpty()
   @IsNumber()
+  @Type(() => Number)
   @ModelExist('media')
   id: number;
 
   @IsNotEmpty()
   @IsNumber()
+  @Type(() => Number)
   position: number;
 }
 
@@ -29,11 +32,11 @@ export class UpdateCollectionRequest {
   description?: string;
 
   @IsOptional()
-  @IsBoolean()
+  @ToBoolean()
   is_highlight?: boolean;
 
   @IsOptional()
-  @IsBoolean()
+  @ToBoolean()
   is_active?: boolean;
 
   @IsOptional()

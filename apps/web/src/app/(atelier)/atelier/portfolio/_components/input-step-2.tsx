@@ -8,6 +8,7 @@ import { arrayMove, rectSortingStrategy, SortableContext, useSortable } from "@d
 import { CSS } from "@dnd-kit/utilities"
 import { DndContext, DragEndEvent } from "@dnd-kit/core"
 import { SelectMediaDrawer } from "@/modules/media/components/select-media-drawer"
+import { SelectCollectionDrawer } from "@/modules/collections/components/select-collection-drawer"
 
 const SortableItem = ({
     children,
@@ -95,11 +96,17 @@ export default function InputStep2() {
                     </span>
                 )}
             </div>
-            <SelectMediaDrawer
+           <div className="flex items-center justify-center gap-2">
+           <SelectCollectionDrawer userId={user.id} collectionsSelected={[]} onSelect={(collection)=>{
+                console.log(collection)
+            }}/>
+           <SelectMediaDrawer
                 userId={user.id}
                 mediaSelected={mediaSelectedRecord}
                 onSelect={handlePushMediaSelected}
             />
+           
+           </div>
         </div>
 
         {/* Selected media grid */}
@@ -153,7 +160,7 @@ export default function InputStep2() {
                                     >
                                         <X className="size-3.5 cursor-pointer" />
                                     </button>
-                                    <div className="aspect-square w-full rounded-lg flex items-center justify-center">
+                                   <div className="aspect-square w-full rounded-lg flex items-center justify-center">
                                         <div
                                             className={cn(
                                                 "relative overflow-hidden rounded-sm",
@@ -165,7 +172,7 @@ export default function InputStep2() {
                                                 alt={m.title || ""}
                                                 className="w-full h-full object-cover"
                                             />
-                                        </div>
+                                        </div> 
                                     </div>
                                     <h3 className="text-xs font-medium text-foreground line-clamp-1 px-0.5">
                                         {m.title || m.seo_filename || 'Untitled'}

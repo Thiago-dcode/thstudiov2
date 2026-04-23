@@ -1,16 +1,15 @@
 'use server'
 
 import usersService from "@/modules/users/users.service";
-import type { UserService } from "@/modules/users/users.service";
 import { ActionReturn } from "@repo/common-lib/types/response";
-import { Media } from "@repo/common-lib/types/media";
+import { GetAllUserMediaQueryParams, Media } from "@repo/common-lib/types/media";
 import { getFriendlyApiErrors } from "@/modules/auth/helpers";
 
-export type GetAllUserMediaParams = Parameters<UserService['getAllMedia']>[1];
+export type GetAllUserMediaParams = GetAllUserMediaQueryParams;
 
 export const getAllUserMediaAction = async (
   userId: number,
-  params?: GetAllUserMediaParams,
+  params?: GetAllUserMediaQueryParams,
 ): Promise<ActionReturn<Media[], undefined>> => {
   const result = await usersService.getAllMedia(userId, params);
 

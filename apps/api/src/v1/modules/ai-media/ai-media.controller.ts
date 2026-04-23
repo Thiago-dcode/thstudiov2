@@ -1,17 +1,15 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { GetMediaSeoRequest } from './requests/get-media-seo.request';
-import { UserExtraDataService } from '../user-extra-data/user-extra-data.service';
 import { AiMediaService } from './ai-media.service';
+import { AiConsumptionGuard } from 'src/common/guards/ai-consumption.guard';
 
 @Controller('ai/media')
+@UseGuards(AiConsumptionGuard)
 export class AiMediaController {
-  constructor(private readonly aiMediaService: AiMediaService, private readonly userExtraData: UserExtraDataService) {}
+  constructor(private readonly aiMediaService: AiMediaService) {}
 
   @Post('seo')
   async getMediaSeo(@Body() getMediaSeoRequest: GetMediaSeoRequest) {
-    await this.userExtraData.enforceUserLimits(getMediaSeoRequest.user_id,{
-      enforceAiCredits:true
-    });
     return await this.aiMediaService.getMediaSeo(getMediaSeoRequest);
   }
 }

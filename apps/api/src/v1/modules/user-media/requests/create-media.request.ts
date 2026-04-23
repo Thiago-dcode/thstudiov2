@@ -1,13 +1,11 @@
+import { Type } from 'class-transformer';
 import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
-// import { ModelExist } from 'src/common/validators/model-exist.validtor';
-// import { IsUserAuth } from 'src/common/validators/is-user-auth.validtor';
 import type { EnumType } from '@repo/common-lib/constants/enums';
 import { IsAvailableEnum } from 'src/common/validators/is-enum.validator';
- import { IsUserAuth } from 'src/common/validators/is-user-auth.validtor';
+import { IsUserAuth } from 'src/common/validators/is-user-auth.validtor';
 import { ModelExist } from 'src/common/validators/model-exist.validtor';
 
 export class CreateMediaRequest {
-  
   @IsString()
   @IsOptional()
   title?: string;
@@ -16,10 +14,11 @@ export class CreateMediaRequest {
   @IsOptional()
   description?: string;
 
-   @ModelExist('users')
-   @IsUserAuth()
+  @ModelExist('users')
+  @IsUserAuth()
   @IsNotEmpty()
   @IsNumber()
+  @Type(() => Number)
   user_id: number;
 
   @IsString()
@@ -44,5 +43,4 @@ export class CreateMediaRequest {
 
   @IsOptional()
   media: Express.Multer.File;
-
 }

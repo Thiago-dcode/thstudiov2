@@ -1,7 +1,6 @@
 import { Type } from 'class-transformer';
 import {
   IsArray,
-  IsBoolean,
   IsNumber,
   IsOptional,
   IsString,
@@ -9,6 +8,7 @@ import {
 } from 'class-validator';
 import { ModelExist } from 'src/common/validators/model-exist.validtor';
 import { CategoryTranslationItem } from './category-translation-item.request';
+import { ToBoolean } from 'src/common/decorators/to-boolean.decorator';
 
 export class UpdateCategoryRequest {
   @IsString()
@@ -33,8 +33,7 @@ export class UpdateCategoryRequest {
   parent_id?: number;
 
   @IsOptional()
-  @IsBoolean()
-  @Type(() => Boolean)
+  @ToBoolean()
   is_featured?: boolean;
 
   @IsOptional()

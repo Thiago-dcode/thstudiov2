@@ -88,6 +88,7 @@ const ADMIN_V1_MODULES = [
 const ALL_APP_MODULES = [
   ...API_V1_MODULES,
   ...ADMIN_V1_MODULES,
+  /** Bull AI worker + scheduled tasks (`AiTask`: AI credits reset cron). */
   AiProcessorModule,
   PlanSubscriptionsProcessorModule,
   ServicesModule,
@@ -173,6 +174,7 @@ const ALL_APP_MODULES = [
       resolvers: [LanguageResolver],
     }),
     EventEmitterModule.forRoot(),
+    /** Registers `@Cron` / `@Interval` jobs from any imported module’s providers (e.g. `AiTask` in `AiProcessorModule`). */
     ScheduleModule.forRoot(),
     ...ALL_APP_MODULES,
   ],

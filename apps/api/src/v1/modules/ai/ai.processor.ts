@@ -10,8 +10,6 @@ import { MediaModerationEvent } from './events/media-moderation.event';
 import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
 import { MailService } from '@repo/backend-lib/services/mail-service';
 import { UpdateUserExtraDataMetricsEvent } from '../user-extra-data/events/update-user-extra-data-metrics.event';
-import { UserExtraDataRepository } from '../user-extra-data/user-extra-data.repository';
-import { PlansService } from '../plans/plans.service';
 import { UserAiCreditsEndedMail } from '../user-extra-data/mails/user-metrics-ended';
 import { UserAccountBannedMail } from '../users/mails/user-account-banned.mail';
 import { UserService } from '../users/users.service';
@@ -31,6 +29,7 @@ import {
   UPDATE_USER_EXTRA_DATA_METRICS,
 } from '@repo/common-lib/constants/constants';
 import { GlobalProcessor } from 'src/common/processors/global.processor';
+import { UserExtraDataService } from '../user-extra-data/user-extra-data.service';
 
 @Processor(AI_QUEUE)
 export class AiProcessor extends GlobalProcessor {
@@ -41,8 +40,7 @@ export class AiProcessor extends GlobalProcessor {
   constructor(
     private readonly llmTokensUsageRepository: LlmTokensUsageRepository,
     private readonly mediaModerationRepository: MediaModerationRepository,
-    private readonly userExtraDataRepository: UserExtraDataRepository,
-    private readonly planService: PlansService,
+    private readonly userExtraDataService: UserExtraDataService,
     private readonly mailService: MailService,
     private readonly userAiCreditsEndedMail: UserAiCreditsEndedMail,
     private readonly userAccountBannedMail: UserAccountBannedMail,
@@ -118,7 +116,7 @@ export class AiProcessor extends GlobalProcessor {
         usage,
       );
 
-      const creditsExhausted = await this.checkAiCreditsExhausted(usageData.user_id);
+      const creditsExhausted = await this.userExtraDataService.checkAiCreditsExhausted(usageData.user_id,1);
 
       if (creditsExhausted) {
         try {
@@ -152,15 +150,7 @@ export class AiProcessor extends GlobalProcessor {
     }
   }
 
-  /** Check if AI credits just crossed the exhaustion threshold */
-  private async checkAiCreditsExhausted(userId: number): Promise<boolean> {
-    const extraData = await this.userExtraDataRepository.findByUserId(userId);
-    const currentPlan = await this.planService.findUserActivePlan(userId);
-    const totalAiCredits = extraData.ai_credits + currentPlan.ai_credits;
-    const newConsumed = extraData.ai_credits_consumed + 1;
 
-    return extraData.ai_credits_consumed < totalAiCredits && newConsumed >= totalAiCredits;
-  }
 
   private async handleMediaModeration(moderationData: CreateMediaModerationInput) {
     const log = this.logger.name('media-moderation');
@@ -175,7 +165,7 @@ export class AiProcessor extends GlobalProcessor {
         //send a email to support 
       }
       if (!moderation.is_allowed) {
-        const extraData = await this.userExtraDataRepository.findByUserId(moderationData.user_id);
+        const extraData = await this.userExtraDataService.findOneByUserId(moderationData.user_id);
 
         const totalStrikes = extraData.account_strikes + 1;
 
@@ -195,17 +185,17 @@ export class AiProcessor extends GlobalProcessor {
             banLift.setDate(banLift.getDate() + durationDays);
           }
 
-        
-          
+
+
 
           await Promise.all([
-            this.userExtraDataRepository.updateById(extraData.id, {
+            this.userExtraDataService.update(extraData.id, {
               ban_start: banStart,
               ban_lift: banLift,
               ban_count: newBanCount,
             }),
             ...(isPermanentBan
-              ? [this.userService.banUser(moderationData.user_id,  'Account permanently banned due to repeated policy violations')]
+              ? [this.userService.banUser(moderationData.user_id, 'Account permanently banned due to repeated policy violations')]
               : []),
           ]);
 

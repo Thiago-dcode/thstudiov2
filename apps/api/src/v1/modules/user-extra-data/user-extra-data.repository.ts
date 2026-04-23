@@ -113,6 +113,15 @@ export class UserExtraDataRepository extends BaseRepository {
     return this.formatUserExtraData(result);
   }
 
+  async findDueForAiCreditsReset(today: Date): Promise<UserExtraData[]> {
+    const results = await this.query()
+      .select(this.COLUMNS)
+      .where('next_ai_credits_reset', '<=', today)
+      .get<UserExtraDataSchemaWithoutTimestamps[]>();
+
+    return results.map((r) => this.formatUserExtraData(r));
+  }
+
   private formatUserExtraData(
     result: UserExtraDataSchemaWithoutTimestamps,
   ): UserExtraData {

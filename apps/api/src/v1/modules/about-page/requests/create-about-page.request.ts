@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer';
 import {
   IsNotEmpty,
   IsString,
@@ -23,6 +24,7 @@ export class CreateAboutPageRequest {
  
   @IsNotEmpty()
   @IsNumber()
+  @Type(() => Number)
   @ModelExist('users')
   @IsUserAuth()
   user_id: number;

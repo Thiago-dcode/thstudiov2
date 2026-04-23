@@ -51,7 +51,7 @@ export class UserExtraDataProcessor extends GlobalProcessor {
         Promise.all([
           Query.table('media')
             .select(['id', 'bytes', 'thumbnail_bytes'])
-            .where('user_id', '=', userId)
+            .where('user_id',userId)
             .softDeletes(true)
             .get<Pick<Media, 'id' | 'bytes' | 'thumbnail_bytes'>[]>(),
           this.cacheManager.del(CACHE_KEY_USER_EXTRA_DATA(userId)),
@@ -72,35 +72,35 @@ export class UserExtraDataProcessor extends GlobalProcessor {
         await Promise.all([
           Query.table('projects')
             .softDeletes(true)
-            .where('user_id', '=', userId)
+            .where('user_id',userId)
             .count(),
           Query.table('portfolios')
             .softDeletes(true)
-            .where('user_id', '=', userId)
+            .where('user_id',userId)
             .count(),
           Query.table('collections')
-            .where('user_id', '=', userId)
+            .where('user_id',userId)
             .count(),
           Query.table('services')
             .softDeletes(true)
-            .where('user_id', '=', userId)
+            .where('user_id',userId)
             .count(),
           Query.table('clients')
             .softDeletes(true)
-            .where('user_id', '=', userId)
+            .where('user_id',userId)
             .count(),
           // Count successful AI requests (1 credit = 1 successful request)
           // Skip internal usage types (e.g. MODERATE_MEDIA_CONTENT)
           Query.table('llm_tokens_usage')
-            .where('user_id', '=', userId)
+            .where('user_id',userId)
             .where('created_at', '>', extraData.last_ai_credits_reset)
-            .where('matches_expected_response', '=', true)
+            .where('matches_expected_response',true)
             .where('usage_type', '!=', 'MODERATE_MEDIA_CONTENT')
             .count(),
           // Count moderation violations since last strike reset
           Query.table('media_moderations')
-            .where('user_id', '=', userId)
-            .where('is_allowed', '=', false)
+            .where('user_id',userId)
+            .where('is_allowed',false)
             .where('created_at', '>', extraData.ban_start)
             .count(),
         ]);

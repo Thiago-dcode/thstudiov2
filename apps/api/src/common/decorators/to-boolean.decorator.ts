@@ -3,13 +3,12 @@ import { Transform } from 'class-transformer';
 import { IsBoolean } from 'class-validator';
 
 /**
- * Validates + converts query-string booleans to real booleans.
+ * Validates + converts stringy booleans to real booleans.
  * Handles `"true"`, `"1"` → `true` and `"false"`, `"0"` → `false`.
  * Preserves `undefined`/`null` so `@IsOptional()` still works.
  *
- * Use on every `boolean` query-param property instead of bare `@IsBoolean()`.
- * Query params arrive as strings; `Boolean("0")` and `Boolean("false")`
- * are both `true` in JS, so explicit mapping is required.
+ * Use for **query params** and **multipart/form-data** fields (both arrive as strings).
+ * For typical **JSON** request bodies, native booleans usually do not need this.
  */
 export const ToBoolean = () =>
   applyDecorators(

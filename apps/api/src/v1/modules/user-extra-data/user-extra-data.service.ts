@@ -17,6 +17,7 @@ import { UserStorageRequestService } from '../user-storage-requests/user-storage
 import { Queue } from 'bullmq';
 import { InjectQueue } from '@nestjs/bullmq';
 import { FactoryLogService } from '@repo/backend-lib/services/log-service';
+import { UpdateOrCreateUserExtraDataInput } from '@repo/common-lib/types/user-extra-data';
 
 @Injectable()
 export class UserExtraDataService {
@@ -39,6 +40,11 @@ export class UserExtraDataService {
     return `This action returns all userExtraData`;
   }
 
+  async update(id: number, data: UpdateOrCreateUserExtraDataInput) {
+
+    return await this.userExtraDataRepository.updateById(id, data)
+  }
+
   async findOneByUserId(userId: number) {
     return await this.helpers.cacheRemember(
       CACHE_KEY_USER_EXTRA_DATA(userId),
@@ -48,6 +54,15 @@ export class UserExtraDataService {
         ttl: 1000 * 60 * 60 * 24,
       },
     );
+  }
+  /** Check if AI credits just crossed the exhaustion threshold */
+  async checkAiCreditsExhausted(userId: number, offset = 0): Promise<boolean> {
+    const extraData = await this.userExtraDataRepository.findByUserId(userId);
+    const currentPlan = await this.planService.findUserActivePlan(userId);
+    const totalAiCredits = extraData.ai_credits + currentPlan.ai_credits;
+    const newConsumed = extraData.ai_credits_consumed + offset;
+
+    return extraData.ai_credits_consumed < totalAiCredits && newConsumed >= totalAiCredits;
   }
 
   /**

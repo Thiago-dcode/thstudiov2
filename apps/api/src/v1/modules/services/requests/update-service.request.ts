@@ -1,6 +1,7 @@
-import { IsNotEmpty, IsNumber, IsOptional, IsString, IsBoolean, IsArray, ValidateNested, MinLength } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsOptional, IsString, IsArray, ValidateNested, MinLength } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ModelExist } from 'src/common/validators/model-exist.validtor';
+import { ToBoolean } from 'src/common/decorators/to-boolean.decorator';
 
 class ServiceFeatureItem {
   @IsNotEmpty()
@@ -31,25 +32,28 @@ export class UpdateServiceRequest {
 
   @IsNumber()
   @IsOptional()
+  @Type(() => Number)
   @ModelExist('portfolios')
   portfolio_id?: number;
+
   @IsOptional()
   thumbnail?: Express.Multer.File;
 
   @IsOptional()
   @IsNumber()
+  @Type(() => Number)
   price?: number;
 
   @IsOptional()
-  @IsBoolean()
+  @ToBoolean()
   is_active?: boolean;
 
   @IsOptional()
-  @IsBoolean()
+  @ToBoolean()
   show_price?: boolean;
 
   @IsOptional()
-  @IsBoolean()
+  @ToBoolean()
   is_highlight?: boolean;
 
   @IsOptional()

@@ -8,8 +8,8 @@ import { createOrUpdatePortfolioAction } from "../server-actions/create-update-p
 import { slugExistsAction } from "../server-actions/slug-exists.action";
 import { ActionReturn } from "@repo/common-lib/types/response";
 import { toast } from "@repo/ui/sonner"
-import { User } from "@repo/common-lib/types/user";
 import { UserAuth } from "@/modules/auth/auth.types";
+import { Collection, CollectionPortfolio } from "@repo/common-lib/types/collection";
 
 // ============================================================================
 // Types
@@ -18,6 +18,7 @@ import { UserAuth } from "@/modules/auth/auth.types";
 type PortfolioFormData = Partial<
   Omit<CreatePortfolioInputWithFile, 'media'> & {
     media?: MediaPortfolio[];
+    collections?: CollectionPortfolio[];
   }
 >;
 
@@ -25,7 +26,7 @@ type PortfolioContextType = {
   user: UserAuth;
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => Promise<void>;
   // `media` is overridden in this provider to be `Media[]` for UI purposes.
-  handleSetFormData: (key: keyof CreatePortfolioInputWithFile, value: string | File | number | boolean | MediaPortfolio[]) => void;
+  handleSetFormData: (key: keyof CreatePortfolioInputWithFile, value: string | File | number | boolean | MediaPortfolio[] | CollectionPortfolio[]) => void;
   handleStep: (direction: 'prev' | 'next') => void;
   currentStep: number;
   MAX_STEPS: number;
@@ -33,6 +34,9 @@ type PortfolioContextType = {
   mediaSelected: MediaPortfolio[];
   handlePushMediaSelected: (media: Media) => void;
   handleRemoveMediaSelected: (mediaId: number) => void;
+  collectionsSelected: CollectionPortfolio[];
+  handlePushCollectionSelected: (collection: Collection) => void;
+  handleRemoveCollectionSelected: (collectionId: number) => void;
   inputErrors: Record<string, string> | undefined;
   isPending: boolean;
   success: boolean;
@@ -96,7 +100,17 @@ export const PortfolioProvider = ({
       description: portfolio.description ?? undefined,
       is_highlight: portfolio.is_highlight,
       is_active: portfolio.is_active,
-      media: portfolio.media.sort((a,b)=>a.position - b.position),
+      media: portfolio.media.sort((a, b) => a.position - b.position),
+      collections: (portfolio.collections ?? []).map((c, i) => ({
+        id: c.id,
+        title: c.title,
+        slug: c.slug,
+        is_featured: c.is_featured,
+        is_highlight: c.is_highlight,
+        is_active: c.is_active,
+        description: c.description,
+        position: i + 1,
+      })),
     });
   }, []);
 
@@ -112,6 +126,11 @@ export const PortfolioProvider = ({
         position: idx + 1,
       }));
 
+      const collections = (formData.collections ?? []).map((c, idx) => ({
+        id: c.id,
+        position: idx + 1,
+      }));
+
       const payload: Partial<CreatePortfolioInputWithFile> = {
         title: (formData.title ?? "") as string,
         slug: (formData.slug ?? "") as string,
@@ -121,6 +140,7 @@ export const PortfolioProvider = ({
         is_active: formData.is_active ?? true,
         thumbnail: formData.thumbnail ? formData.thumbnail as File : undefined,
         media: media.length ? media : undefined,
+        collections: collections.length ? collections : undefined,
       };
 
       return await createOrUpdatePortfolioAction(payload, currentPortfolio);
@@ -133,7 +153,7 @@ export const PortfolioProvider = ({
         clear()
         toast.success(currentPortfolio ? "Portfolio updated successfully" : "Portfolio created successfully")
       }
-    }, 
+    },
     beforeAction: async () => {
       reset();
     }
@@ -206,6 +226,27 @@ export const PortfolioProvider = ({
     handleSetFormData('media', current.filter((media) => media.id !== mediaId));
   }, [formData.media, handleSetFormData]);
 
+  const handlePushCollectionSelected = useCallback((c: Collection) => {
+    const current = formData.collections ?? [];
+    if (current.some((x) => x.id === c.id)) return;
+    const collection: CollectionPortfolio = {
+      id: c.id,
+      title: c.title,
+      slug: c.slug,
+      is_featured: c.is_featured,
+      is_highlight: c.is_highlight,
+      is_active: c.is_active,
+      description: c.description ?? undefined,
+      position: current.length + 1,
+    };
+    handleSetFormData('collections', [...current, collection]);
+  }, [formData.collections, handleSetFormData]);
+
+  const handleRemoveCollectionSelected = useCallback((collectionId: number) => {
+    const current = formData.collections ?? [];
+    handleSetFormData('collections', current.filter((col) => col.id !== collectionId));
+  }, [formData.collections, handleSetFormData]);
+
   const firstStepIsCompleted = !firstStepRequiredFields.some(field => {
     if (!formData) return true;
     const hasField = formData[field];
@@ -215,8 +256,12 @@ export const PortfolioProvider = ({
     return true;
   })
   const mediaSelected = useMemo(() => {
-    return formData.media ? formData.media.sort((a, b) => a.position - b.position):[];
+    return formData.media ? formData.media.sort((a, b) => a.position - b.position) : [];
   }, [formData.media]);
+
+  const collectionsSelected = useMemo(() => {
+    return formData.collections ? formData.collections.sort((a, b) => a.position - b.position) : [];
+  }, [formData.collections]);
 
   const hasFormChanged = useMemo(() => {
     if (!currentPortfolio) return false;
@@ -234,6 +279,13 @@ export const PortfolioProvider = ({
     if (currentMedia.length !== originalMedia.length) return true;
     for (let i = 0; i < currentMedia.length; i++) {
       if (currentMedia[i].id !== originalMedia[i].id || currentMedia[i].position !== originalMedia[i].position) return true;
+    }
+
+    const currentCollections = (formData.collections ?? []).sort((a, b) => a.position - b.position);
+    const originalCollections = currentPortfolio.collections ?? [];
+    if (currentCollections.length !== originalCollections.length) return true;
+    for (let i = 0; i < currentCollections.length; i++) {
+      if (currentCollections[i].id !== originalCollections[i].id) return true;
     }
 
     return false;
@@ -298,6 +350,9 @@ export const PortfolioProvider = ({
     mediaSelected,
     handlePushMediaSelected,
     handleRemoveMediaSelected,
+    collectionsSelected,
+    handlePushCollectionSelected,
+    handleRemoveCollectionSelected,
     inputErrors,
     isPending,
     success,

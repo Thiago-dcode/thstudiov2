@@ -8,7 +8,7 @@ import { FullPlan } from "@repo/common-lib/types/plan";
 import { FullPlanSubscription } from "@repo/common-lib/types/plan-subscription";
 import { queryParamBuilder } from "@repo/common-lib/utils/query-builder";
 import { AboutPage } from "@repo/common-lib/types/about-page";
-import { Media } from "@repo/common-lib/types/media";
+import { GetAllUserMediaQueryParams, Media } from "@repo/common-lib/types/media";
 import { Address } from "@repo/common-lib/types/address";
 
 export class UserService extends BaseService {
@@ -45,7 +45,7 @@ export class UserService extends BaseService {
         });
     }
 
-    async getAllMedia(id: number, params?: { page?: number; per_page?: number; paginated?: boolean; shape?: string; search?: string }): Promise<ApiResponse<Media[]>> {
+    async getAllMedia(id: number, params?: GetAllUserMediaQueryParams): Promise<ApiResponse<Media[]>> {
 
         return await this.fetchApi.get({
             resource: queryParamBuilder(`${id}/media`, params),

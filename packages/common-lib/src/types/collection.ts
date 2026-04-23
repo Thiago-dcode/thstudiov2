@@ -4,6 +4,10 @@ import { MediaPortfolio } from "./media";
 
 // ==================== COLLECTION TYPES ====================
 
+export type CollectionPortfolio = Pick<CollectionSchema, 'id' | 'title' | 'slug' | 'is_featured' | 'is_highlight' | 'is_active' | 'description'> & {
+  position: number
+};
+
 export type CollectionMedia = Pick<MediaPortfolio, 'id' | 'thumbnail' | 'title' | 'position'>;
 
 export type Collection = CollectionSchema & {
