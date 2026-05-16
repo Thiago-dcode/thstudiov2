@@ -31,12 +31,12 @@ const routes: {
         },
         {
             name: 'Collections',
-            url: 'collection',
+            url: 'collections',
             icon: <Library size={20} />
         },
         {
             name: 'Portfolios',
-            url: 'portfolio',
+            url: 'portfolios',
             icon: <LayoutDashboard size={20} />
         },
         {

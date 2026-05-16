@@ -18,6 +18,7 @@ export const FinishSetupDialog = ({ user }: {
         setMounted(true);
     }, []);
 
+    console.log(user.funnel_step,FUNNEL_LAST_STEP);
     if (!mounted || user.funnel_step > FUNNEL_LAST_STEP) return null;
     return (
         <Dialog open={user.funnel_step <= FUNNEL_LAST_STEP}>

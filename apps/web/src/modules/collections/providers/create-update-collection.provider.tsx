@@ -1,28 +1,27 @@
 "use client";
 
 import { createContext, useContext, ReactNode, useState, useMemo, useCallback, useRef } from "react";
-import { CreateCollectionInput, FullCollection } from "@repo/common-lib/types/collection";
-import { Media, MediaPortfolio } from "@repo/common-lib/types/media";
+import { CreateCollectionInput, FullCollection, FullCollectionMedia } from "@repo/common-lib/types/collection";
+import { Media } from "@repo/common-lib/types/media";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { createOrUpdateCollectionAction } from "../server-actions/create-update-collection.action";
 import { slugExistsAction } from "../server-actions/slug-exists.action";
 import { ActionReturn } from "@repo/common-lib/types/response";
 import { toast } from "@repo/ui/sonner";
-import { User } from "@repo/common-lib/types/user";
 import { UserAuth } from "@/modules/auth/auth.types";
 
 type CollectionFormData = Partial<
   Omit<CreateCollectionInput, 'media'> & {
-    media?: MediaPortfolio[];
+    media?: FullCollectionMedia[];
   }
 >;
 
 type CollectionContextType = {
   user: UserAuth;
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => Promise<void>;
-  handleSetFormData: (key: keyof CreateCollectionInput, value: string | number | boolean | MediaPortfolio[]) => void;
+  handleSetFormData: (key: keyof CreateCollectionInput, value: string | number | boolean | FullCollectionMedia[]) => void;
   formData: CollectionFormData;
-  mediaSelected: MediaPortfolio[];
+  mediaSelected: FullCollectionMedia[];
   handlePushMediaSelected: (media: Media) => void;
   handleRemoveMediaSelected: (mediaId: number) => void;
   inputErrors: Record<string, string> | undefined;
@@ -155,7 +154,7 @@ export const CollectionProvider = ({
   const handlePushMediaSelected = useCallback((m: Media) => {
     const current = formData.media ?? [];
     if (current.some((x) => x.id === m.id)) return;
-    const media: MediaPortfolio = { ...m, position: current.length + 1 };
+    const media: FullCollectionMedia = { ...m, position: current.length + 1 };
     handleSetFormData('media', [...current, media]);
   }, [formData.media, handleSetFormData]);
 

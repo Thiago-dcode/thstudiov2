@@ -10,19 +10,28 @@ export type CollectionPortfolio = Pick<CollectionSchema, 'id' | 'title' | 'slug'
 
 export type CollectionMedia = Pick<MediaPortfolio, 'id' | 'thumbnail' | 'title' | 'position'>;
 
+export type FullCollectionMedia =MediaPortfolio;
+
 export type Collection = CollectionSchema & {
   media: CollectionMedia[];
 };
 
 export type FullCollection = CollectionSchema & {
-  media: MediaPortfolio[];
+  media: FullCollectionMedia[];
 };
 
 // Collection attached to a portfolio via `portfolio_collection`.
 // `position` refers to the collection's position within the portfolio.
-export type PortfolioCollection = CollectionSchema & {
+export type PortfolioCollection = Collection & {
   position: number;
-  media: MediaPortfolio[];
+  media: CollectionMedia[];
+};
+
+// Collection attached to a portfolio via `portfolio_collection`.
+// `position` refers to the collection's position within the portfolio.
+export type FullPortfolioCollection = Omit<Collection, 'media'> & {
+  position: number;
+  media: FullCollectionMedia[];
 };
 
 export type CollectionIndexRequest = OffsetPaginationRequest & {

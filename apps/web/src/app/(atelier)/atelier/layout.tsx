@@ -29,12 +29,12 @@ const AdminLayout = async ({ children }: { children: ReactNode }) => {
               <UserAccountBannedModal />
               <UploadMediaModal />
               <AlertPortfolioButton />
-              <div className="flex size-full items-center justify-between ">
+              <div className="flex size-full items-center justify-start">
                 <AdminHeader />
                 <main className="size-full flex flex-col items-start justify-start  ">
                   <TopNav username={userAuth.username} />
 
-                  <div className="max-w-[1920px] flex w-full justify-start h-full overflow-y-scroll">   {children}</div>
+                  <div className="flex w-full justify-start h-full overflow-y-scroll">   {children}</div>
 
                 </main>
 

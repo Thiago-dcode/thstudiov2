@@ -13,6 +13,7 @@ export default async function AtelierHomePage() {
     }
 
     const [userResponse, addressResponse, categoriesResponse] = await Promise.all([usersService.getOne(userAuth.id), usersService.address(userAuth.id), usersService.getAllCategories(userAuth.id)]);
+    console.log(userResponse)
     if (!userResponse.data) {
         notFound()
     }

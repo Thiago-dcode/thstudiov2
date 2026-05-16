@@ -7,22 +7,22 @@ import Link from "next/link";
 import { ArrowRight, X } from "lucide-react";
 
 export function AlertPortfolioButton() {
-  const { formData, currentPortfolio, isPending } = usePortfolio();
+  const { formData, currentPortfolio, isPending, portfolioItems } = usePortfolio();
   const pathname = usePathname();
   const [dismissed, setDismissed] = useState(false);
 
-  const isOnPortfolioPage = pathname.startsWith("/atelier/portfolio");
+  const isOnPortfolioPage = pathname.startsWith("/atelier/portfolios");
 
   const hasUnsavedWork =
     isPending ||
     !!currentPortfolio ||
-    !!(formData.title || formData.slug || formData.description || formData.media?.length);
+    !!(formData.title || formData.slug || formData.description || portfolioItems.length);
 
   if (!hasUnsavedWork || isOnPortfolioPage || dismissed) return null;
 
   const href = currentPortfolio
-    ? `/atelier/portfolio/edit/${currentPortfolio.slug}`
-    : "/atelier/portfolio/create";
+    ? `/atelier/portfolios/edit/${currentPortfolio.slug}`
+    : "/atelier/portfolios/create";
 
   const label = currentPortfolio
     ? "Editing portfolio"

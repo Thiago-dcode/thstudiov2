@@ -1,88 +1,123 @@
 'use client'
-import { FormEvent, useEffect, useState } from "react"
+import { FormEvent, useEffect, useRef, useState } from "react"
 import { ActionReturn } from "@repo/common-lib/types/response"
 
 
-export const useHandleAction = <K,T>({action,beforeAction,afterAction}:{
-    action: ((formData:FormData)=>Promise<ActionReturn<T,K>>) | (()=>Promise<ActionReturn<T,K>>),
-    beforeAction?: ((formData:FormData,prevResult?:ActionReturn<T,K>|null)=>Promise<void>) | ((prevResult?:ActionReturn<T,K>|null)=>Promise<void>) | (()=>Promise<void>)
-    afterAction?:(result:ActionReturn<T,K>)=>Promise<void>
-}) =>{
-    const [result,setResult] = useState<ActionReturn<T,K>|null>(null);
-    const [errors,setErrors] = useState<string[]|null>(null);
-    const [inputErrors, setInputErrors] = useState<Record<string,string>>()
-    const [isPending,setPending] = useState(false);
+export const useHandleAction = <K, T>({ action, beforeAction, afterAction, settings }: {
+    action: ((formData: FormData) => Promise<ActionReturn<T, K> | null>) | (() => Promise<ActionReturn<T, K>>),
+    beforeAction?: ((formData: FormData, prevResult?: ActionReturn<T, K> | null) => Promise<void>) | ((prevResult?: ActionReturn<T, K> | null) => Promise<void>) | (() => Promise<void>)
+    afterAction?: (result: ActionReturn<T, K>) => Promise<void>,
+    settings?: {
+        rateLimit?: number,
+    }
+}) => {
+    const [result, setResult] = useState<ActionReturn<T, K> | null>(null);
+    const [errors, setErrors] = useState<string[] | null>(null);
+    const [inputErrors, setInputErrors] = useState<Record<string, string>>()
+    const [isPending, setPending] = useState(false);
+    const prevRequest = useRef<Date>(null);
+    const nextRequest = useRef<FormData | undefined>(null);
+    const retryTimeout = useRef<ReturnType<typeof setTimeout>>(null);
 
-    const executeAction = async (formData?: FormData) => {
-        if(isPending) return;
+    const getRemainingCooldownMs = () => {
+        const ttlMs = (settings?.rateLimit ?? 0) * 1000;
+        const prevRequestTime = prevRequest.current?.getTime() ?? 0;
+        if (!ttlMs || !prevRequestTime) return 0;
+        const elapsedMs = Date.now() - prevRequestTime;
+        return Math.max(0, ttlMs - elapsedMs);
+
+    }
+    const scheduleRetry = () => {
+        if (nextRequest.current === null) return;
+        if (retryTimeout.current) clearTimeout(retryTimeout.current);
+
+        const _formData = nextRequest.current;
+        nextRequest.current = null;
+        const delay = getRemainingCooldownMs();
+
+        retryTimeout.current = setTimeout(() => {
+            retryTimeout.current = null;
+            executeAction(_formData, true);
+        }, delay);
+    }
+
+    const executeAction = async (formData?: FormData, isRetry = false) => {
+        if (isPending && !isRetry) return;
+
+        const cooldown = getRemainingCooldownMs();
+        if (cooldown > 0) {
+            nextRequest.current = formData;
+            if (!isPending) scheduleRetry();
+            return;
+        }
+
         setPending(true);
-        
         try {
-            if(beforeAction) {
-                // Check if beforeAction accepts formData parameter
-                if(beforeAction.length >= 1 && formData !== undefined) {
-                    await (beforeAction as (formData:FormData,prevResult?:ActionReturn<T,K>|null)=>Promise<void>)(formData, result);
-                } else if(beforeAction.length >= 1) {
-                    await (beforeAction as (prevResult?:ActionReturn<T,K>|null)=>Promise<void>)(result);
+            if (beforeAction) {
+                if (beforeAction.length >= 1 && formData !== undefined) {
+                    await (beforeAction as (formData: FormData, prevResult?: ActionReturn<T, K> | null) => Promise<void>)(formData, result);
+                } else if (beforeAction.length >= 1) {
+                    await (beforeAction as (prevResult?: ActionReturn<T, K> | null) => Promise<void>)(result);
                 } else {
-                    await (beforeAction as ()=>Promise<void>)();
+                    await (beforeAction as () => Promise<void>)();
                 }
             }
-            
-            // Call action - check if it accepts formData
-            // For Next.js server actions, always pass formData if it's provided
-            // The action signature will determine if it's used
+
             const actionResult = formData !== undefined
-                ? await (action as (formData:FormData)=>Promise<ActionReturn<T,K>>)(formData)
-                : await (action as ()=>Promise<ActionReturn<T,K>>)();
-            if(afterAction) await afterAction(actionResult);
+                ? await (action as (formData: FormData) => Promise<ActionReturn<T, K>>)(formData)
+                : await (action as () => Promise<ActionReturn<T, K>>)();
+            if (afterAction) await afterAction(actionResult);
             setErrors(actionResult.errors);
             setInputErrors(actionResult.inputErrors)
             setResult(actionResult);
+
+            prevRequest.current = new Date();
+            scheduleRetry();
         } finally {
             // isPending will be set to false in useEffect after result is set
         }
     }
 
-    const handleSubmit = async (e:FormEvent<HTMLFormElement>| FormData) => {
-        if(!(e instanceof FormData)){
+    const handleSubmit = async (e: FormEvent<HTMLFormElement> | FormData) => {
+        if (!(e instanceof FormData)) {
             e.preventDefault();
         }
-        const formData = e instanceof FormData? e: new FormData(e.currentTarget)
+        const formData = e instanceof FormData ? e : new FormData(e.currentTarget)
         await executeAction(formData);
     }
 
     const handleAction = async () => {
+
         await executeAction();
     }
 
-    const cleanErrors = () =>{
+    const cleanErrors = () => {
         setErrors(null)
         setInputErrors(undefined)
     }
     const deleteInputErrorProperty = (key: string) => {
         //avoid rerenders
-        if(!inputErrors || !inputErrors[key]) return;
+        if (!inputErrors || !inputErrors[key]) return;
         setInputErrors(prev => {
             if (!prev || !prev[key]) return prev;
             const { [key]: _, ...rest } = prev;
             return Object.keys(rest).length > 0 ? rest : undefined;
         });
     }
-    const cleanResult = () =>{
+    const cleanResult = () => {
         setResult(null);
     }
-    const reset = () =>{
+    const reset = () => {
         cleanErrors()
         cleanResult()
     }
-  
-    useEffect(()=>{
-        if(!result)return
-        setTimeout(()=>{
+
+    useEffect(() => {
+        if (!result) return
+        setTimeout(() => {
             setPending(false);
-        },300)
-    },[result])
+        }, 300)
+    }, [result])
 
     return {
         result,
@@ -101,4 +136,4 @@ export const useHandleAction = <K,T>({action,beforeAction,afterAction}:{
 
 }
 
-export type HandlerActionType <T,K>= ReturnType<typeof useHandleAction<T,K>>
+export type HandlerActionType<T, K> = ReturnType<typeof useHandleAction<T, K>>

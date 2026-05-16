@@ -1,4 +1,5 @@
 import portfolioService from "../portfolio.service";
+import Link from "next/link";
 import { PortfolioCard } from "./portfolio-card";
 
 export const UserPortfoliosSection = async ({
@@ -31,11 +32,12 @@ export const UserPortfoliosSection = async ({
   return (
     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 tablet:grid-cols-4 tablet:gap-5">
       {response.data.map((portfolio) => (
-        <PortfolioCard
+        <Link
           key={portfolio.id}
-          portfolio={portfolio}
-          username={username}
-        />
+          href={`/artists/${username}/portfolios/${portfolio.slug}`}
+        >
+          <PortfolioCard portfolio={portfolio} />
+        </Link>
       ))}
     </div>
   );

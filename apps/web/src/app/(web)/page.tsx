@@ -5,6 +5,8 @@ import { CtaSection } from "./_components/landing/cta-section";
 import { FeatureCategoriesSection } from "./_components/landing/feature-categories-section";
 import { HowItWorksSection } from "./_components/landing/how-it-works-section";
 import { SocialProofSection } from "./_components/landing/social-proof-section";
+import { FaqsContent } from "../../lib/components/faqs";
+import { WebSection } from "./_components/landing/web-section";
 
 export default function Home() {
   return (
@@ -13,9 +15,14 @@ export default function Home() {
       <ValuePillarsSection />
       <SocialProofSection />
       <FeatureCategoriesSection />
-      <HowItWorksSection />
+      {/* <HowItWorksSection /> */}
       <FeaturedArtistsSection />
       <CtaSection />
+      <WebSection>
+        <WebSection.Container>
+          <FaqsContent />
+        </WebSection.Container>
+      </WebSection>
     </>
   );
 }

@@ -24,19 +24,19 @@ function PrimaryFilterPanel() {
     return (
         <Accordion
             type="multiple"
-            defaultValue={[]}
+            defaultValue={['categories', 'location']}
             className="w-full rounded-sm bg-bg-2/30"
         >
-            <AccordionItem value="categories" className="border-b-2 border-border px-3">
-                <AccordionTrigger className="py-3 text-xs font-medium uppercase tracking-[0.12em] text-text-muted hover:no-underline data-[state=open]:text-text">
+            <AccordionItem value="categories" className="border-b-2 py-2 border-border px-3">
+                <AccordionTrigger className="cursor-pointer py-3 text-xs font-medium uppercase tracking-[0.12em] text-text-muted hover:no-underline data-[state=open]:text-text">
                     Categories
                 </AccordionTrigger>
                 <AccordionContent>
                     <CategoryFilter />
                 </AccordionContent>
             </AccordionItem>
-            <AccordionItem value="location" className="border-0 px-3">
-                <AccordionTrigger className="py-3 text-xs font-medium uppercase tracking-[0.12em] text-text-muted hover:no-underline data-[state=open]:text-text">
+            <AccordionItem value="location" className="border-0 py-2 px-3">
+                <AccordionTrigger className="py-3 text-xs font-medium uppercase tracking-[0.12em] text-text-muted hover:no-underline data-[state=open]:text-text cursor-pointer">
                     Location
                 </AccordionTrigger>
                 <AccordionContent>
@@ -61,7 +61,7 @@ export function PrimaryFiltersDropdown() {
                     aria-expanded={open}
                     aria-controls={open ? PRIMARY_FILTERS_CONTENT_ID : undefined}
                     className={cn(
-                        'group flex h-14 min-h-14 w-full shrink-0 justify-between gap-2 rounded-md border-2 border-border bg-bg-2/25 px-4 text-left shadow-none transition-colors',
+                        'group flex h-14 min-h-14 w-full shrink-0 justify-between gap-2 rounded-md border-2 border-border bg-bg-2 px-4 text-left shadow-none transition-colors',
                         'hover:bg-bg-2/40 hover:text-text',
                         'text-xs font-medium uppercase tracking-[0.12em] text-text-muted',
                         'tablet:h-14 tablet:w-12 tablet:justify-center tablet:rounded-none tablet:border-0 tablet:border-r-2 tablet:border-border tablet:px-0',
@@ -95,8 +95,8 @@ export function PrimaryFiltersDropdown() {
                 sideOffset={8}
                 collisionPadding={12}
                 className={cn(
-                    'w-[min(calc(100vw-1.5rem),20rem)] max-h-[min(70vh,28rem)] overflow-y-auto p-2',
-                    'border border-border bg-bg-2/95 text-text shadow-lg backdrop-blur-sm',
+                    'w-[min(100vw,32rem)] max-h-[min(70vh,42rem)] overflow-y-auto p-2',
+                    'border border-border bg-bg text-text shadow-lg backdrop-blur-sm',
                 )}
             >
                 <PrimaryFilterPanel />

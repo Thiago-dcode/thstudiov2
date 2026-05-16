@@ -87,12 +87,15 @@ export const ArtistSections = async ({
             <AccordionContent>
               <div className="grid grid-cols-1 gap-4 phone:grid-cols-2">
                 {portfolios.map((portfolio) => (
-                  <PortfolioCard
+                  <Link
                     key={portfolio.id}
-                    portfolio={portfolio}
-                    username={username}
-                    sizes="(max-width: 480px) 100vw, (max-width: 640px) 50vw, 34vw"
-                  />
+                    href={`/artists/${username}/portfolios/${portfolio.slug}`}
+                  >
+                    <PortfolioCard
+                      portfolio={portfolio}
+                      sizes="(max-width: 480px) 100vw, (max-width: 640px) 50vw, 34vw"
+                    />
+                  </Link>
                 ))}
               </div>
               <Link
@@ -115,11 +118,12 @@ export const ArtistSections = async ({
             <AccordionContent>
               <div className="grid grid-cols-2 gap-3">
                 {collections.map((collection) => (
-                  <CollectionCard
+                  <Link
                     key={collection.id}
-                    collection={collection}
-                    username={username}
-                  />
+                    href={`/artists/${username}/collections/${collection.slug}`}
+                  >
+                    <CollectionCard collection={collection} />
+                  </Link>
                 ))}
               </div>
               <Link
@@ -173,12 +177,15 @@ export const ArtistSections = async ({
             />
             <div className="grid grid-cols-2 gap-4 tablet:grid-cols-3 tablet-lg:gap-5">
               {portfolios.map((portfolio) => (
-                <PortfolioCard
+                <Link
                   key={portfolio.id}
-                  portfolio={portfolio}
-                  username={username}
-                  sizes="(max-width: 1024px) 50vw, 34vw"
-                />
+                  href={`/artists/${username}/portfolios/${portfolio.slug}`}
+                >
+                  <PortfolioCard
+                    portfolio={portfolio}
+                    sizes="(max-width: 1024px) 50vw, 34vw"
+                  />
+                </Link>
               ))}
             </div>
           </section>
@@ -192,11 +199,12 @@ export const ArtistSections = async ({
             />
             <div className="grid grid-cols-3 gap-4 tablet-lg:grid-cols-4 tablet-lg:gap-5">
               {collections.map((collection) => (
-                <CollectionCard
+                <Link
                   key={collection.id}
-                  collection={collection}
-                  username={username}
-                />
+                  href={`/artists/${username}/collections/${collection.slug}`}
+                >
+                  <CollectionCard collection={collection} />
+                </Link>
               ))}
             </div>
           </section>

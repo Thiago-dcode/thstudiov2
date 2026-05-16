@@ -1,9 +1,9 @@
-import { Type } from 'class-transformer';
-import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import type { EnumType } from '@repo/common-lib/constants/enums';
 import { IsAvailableEnum } from 'src/common/validators/is-enum.validator';
 import { IsUserAuth } from 'src/common/validators/is-user-auth.validtor';
 import { ModelExist } from 'src/common/validators/model-exist.validtor';
+import { ToInt } from 'src/common/decorators/to-int.decorator';
 
 export class CreateMediaRequest {
   @IsString()
@@ -17,8 +17,7 @@ export class CreateMediaRequest {
   @ModelExist('users')
   @IsUserAuth()
   @IsNotEmpty()
-  @IsNumber()
-  @Type(() => Number)
+  @ToInt()
   user_id: number;
 
   @IsString()

@@ -12,7 +12,7 @@ export const WebFooter = () => {
     const year = new Date().getFullYear()
 
     return (
-        <footer className="w-full mt-24 tablet:mt-32 border-t border-fg-2 bg-bg">
+        <footer className="w-full  border-t border-fg-2 bg-bg">
             <div className="max-w-(--screen-desktop) mx-auto px-5 tablet:px-10 py-12">
                 <div className="grid grid-cols-1 tablet:grid-cols-3 gap-10 tablet:gap-8">
                     <div className="flex flex-col gap-3">

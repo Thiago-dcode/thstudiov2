@@ -10,7 +10,7 @@ import { Input } from '@repo/ui/components/shadcn/input'
 import { cn } from '@repo/ui/lib/utils'
 import { Search } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { Suspense, useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import FiltersLists from './filters-lists'
 import { useFilters } from './filters.provider'
 import { PrimaryFiltersDropdown } from './primary-filter-component'
@@ -37,23 +37,19 @@ function artistFiltersToQueryBuilder(filters: ArtistIndexRequest): QueryBuilder 
 
 
 
-function FilterSearchInner({
-    initialFilters,
-}: {
-    initialFilters: ArtistIndexRequest
-}) {
+export function FilterSearch() {
     const router = useRouter()
-    const { filters, add } = useFilters()
+    const { filters, add, urlParams } = useFilters()
     const searchInput = useRef<HTMLInputElement | null>(null)
 
     const initialUrl = useMemo(
         () =>
             queryParamBuilder(
                 '/artists',
-                artistFiltersToQueryBuilder(initialFilters),
+                artistFiltersToQueryBuilder(urlParams),
                 { arrayStyle: 'commas' },
             ),
-        [initialFilters],
+        [urlParams],
     )
 
     const newUrl = useMemo(
@@ -98,7 +94,7 @@ function FilterSearchInner({
             <div
                 className={cn(
                     'flex w-full flex-col gap-3',
-                    'tablet:flex-row tablet:items-stretch tablet:gap-0 tablet:overflow-hidden tablet:rounded-md tablet:border-2 tablet:border-border tablet:shadow-sm tablet:ring-1 tablet:ring-border',
+                    'tablet:flex-row tablet:items-stretch tablet:gap-0 tablet:overflow-hidden tablet:rounded-md tablet:shadow-sm tablet:ring-1 tablet:ring-border',
                 )}
             >
                 <PrimaryFiltersDropdown />
@@ -138,27 +134,4 @@ function FilterSearchInner({
     )
 }
 
-export default function FilterSearch(props: {
-    initialFilters: ArtistIndexRequest
-    centered?: boolean
-}) {
-    return (
-        <Suspense
-            fallback={
-                <div
-                    className={cn(
-                        'mx-auto flex w-full flex-col gap-3',
-                        props.centered
-                            ? 'max-w-2xl tablet:max-w-3xl'
-                            : 'max-w-4xl',
-                    )}
-                    aria-hidden
-                >
-                    <div className="h-14 min-h-14 w-full rounded-md border-2 border-border bg-bg-2/20 tablet:rounded-md" />
-                </div>
-            }
-        >
-            <FilterSearchInner {...props} />
-        </Suspense>
-    )
-}
+

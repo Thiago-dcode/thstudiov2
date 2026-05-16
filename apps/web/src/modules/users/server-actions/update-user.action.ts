@@ -36,7 +36,7 @@ export const updateUserAction = async (id: number, formData: FormData): Promise<
 
     // Validate text fields
     const validated = updateUserSchema.safeParse(cleanData);
-    console.log("RESULT validated",validated)
+
     if (!validated.success) {
         return {
             errors: [],

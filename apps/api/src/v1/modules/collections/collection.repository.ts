@@ -8,8 +8,8 @@ import {
   CollectionFullSchemaColumns,
   CollectionSchema,
   CollectionSchemaColumns,
-  PortfolioCollectionSchema,
-  PortfolioCollectionSchemaColumns,
+  FullPortfolioCollectionSchema,
+  FullPortfolioCollectionSchemaColumns,
 } from '@repo/common-lib/schemas/collection';
 import {
   CreateCollectionInput,
@@ -18,11 +18,11 @@ import {
   Collection,
   CollectionIndexRequest,
   CollectionMedia,
-  PortfolioCollection,
+  FullCollectionMedia,
+  FullPortfolioCollection,
 } from '@repo/common-lib/types/collection';
 import { DbException } from '@repo/database/exceptions';
 import { RequestService } from 'src/common/services/request.service';
-import { MediaPortfolio } from '@repo/common-lib/types/media';
 
 @Injectable()
 export class CollectionRepository extends BaseRepository {
@@ -44,7 +44,6 @@ export class CollectionRepository extends BaseRepository {
     ...this.BASE_COLUMNS,
     'collection_media.position',
     'media.id as m_id',
-    'media.public_id',
     'media.thumbnail',
     'media.title as m_title',
   ] as const;
@@ -52,7 +51,6 @@ export class CollectionRepository extends BaseRepository {
 
   private readonly FULL_COLUMNS: CollectionFullSchemaColumns[] = [
     ...this.BASE_COLUMNS,
-    'collection_media.media_id',
     'collection_media.position',
     'media.id as m_id',
     'media.public_id',
@@ -60,12 +58,11 @@ export class CollectionRepository extends BaseRepository {
     'media.url',
     'media.shape',
     'media.title as m_title',
+    'media.seo_title',
     'media.seo_alt',
+    'media.seo_title',
     'media.seo_filename',
     'media.seo_description',
-    'media.seo_title',
-    'media.is_featured as m_is_featured',
-    'media.is_highlight as m_is_highlight',
   ];
 
   constructor(private readonly requestService: RequestService, protected readonly logService: LogService) {
@@ -78,7 +75,7 @@ export class CollectionRepository extends BaseRepository {
     }
     const query = await this.applyFilters(filters, this.query());
     const results = await query.get<CollectionCompactSchema[]>();
-    return this.formatCompactCollections(results);
+    return this.formatCollections(results);
   }
 
   /**
@@ -98,7 +95,7 @@ export class CollectionRepository extends BaseRepository {
 
     const ids = baseResults.map((r) => r.id);
 
-    const fullResults = await this.query()
+    const result = await this.query()
       .select(this.COLUMNS)
       .whereIn('collections.id', ids)
       .join('id', 'collection_media', 'collection_id', 'LEFT')
@@ -109,7 +106,7 @@ export class CollectionRepository extends BaseRepository {
       .orderBy('collection_media.position', 'ASC')
       .get<CollectionCompactSchema[]>();
 
-    return this.formatCompactCollections(fullResults);
+    return this.formatCollections(result);
   }
 
   async getBySlug(slug: string, userId: number): Promise<FullCollection> {
@@ -221,10 +218,9 @@ export class CollectionRepository extends BaseRepository {
     }
   }
 
-  public async getPortfolioCollections(portfolioId: number): Promise<PortfolioCollection[]> {
-    const PORTFOLIO_COLS: PortfolioCollectionSchemaColumns[] = [
+  public async getPortfolioCollections(portfolioId: number): Promise<FullPortfolioCollection[]> {
+    const PORTFOLIO_COLS: FullPortfolioCollectionSchemaColumns[] = [
       'portfolio_collection.position as pc_position',
-      'portfolio_collection.collection_id as pc_collection_id',
     ];
 
     const rows = await this.query()
@@ -237,13 +233,13 @@ export class CollectionRepository extends BaseRepository {
       .where('media.blocked_at', 'IS', null)
       .orderBy('portfolio_collection.position', 'ASC')
       .orderBy('collection_media.position', 'ASC')
-      .get<PortfolioCollectionSchema[]>();
+      .get<FullPortfolioCollectionSchema[]>();
 
     return this.formatPortfolioCollections(rows);
   }
 
-  private formatPortfolioCollections(rows: PortfolioCollectionSchema[]): PortfolioCollection[] {
-    const map = new Map<number, PortfolioCollection>();
+  private formatPortfolioCollections(rows: FullPortfolioCollectionSchema[]): FullPortfolioCollection[] {
+    const map = new Map<number, FullPortfolioCollection>();
 
     for (const row of rows) {
       let collection = map.get(row.id);
@@ -275,11 +271,11 @@ export class CollectionRepository extends BaseRepository {
           thumbnail: row.thumbnail,
           url: row.url,
           seo_filename: row.seo_filename,
+          seo_title: row.seo_title,
           seo_alt: row.seo_alt,
           seo_description: row.seo_description,
-          seo_title: row.seo_title,
           shape: row.shape,
-          is_highlight: row.m_is_highlight ?? false,
+          is_highlight: row.is_highlight
         });
       }
     }
@@ -324,7 +320,7 @@ export class CollectionRepository extends BaseRepository {
     };
   }
 
-  private formatCompactCollections(rows: CollectionCompactSchema[]): Collection[] {
+  private formatCollections(rows: CollectionCompactSchema[]): Collection[] {
     const map = new Map<number, Collection>();
 
     for (const row of rows) {
@@ -360,7 +356,7 @@ export class CollectionRepository extends BaseRepository {
   }
 
   private formatFullCollection(result: CollectionFullSchema[]): FullCollection {
-    const mediaMap = new Map<number, MediaPortfolio>();
+    const mediaMap = new Map<number, FullCollectionMedia>();
 
     for (const row of result) {
       if (!row.m_id || mediaMap.has(row.m_id)) continue;
@@ -372,12 +368,12 @@ export class CollectionRepository extends BaseRepository {
         position: row.position,
         thumbnail: row.thumbnail,
         url: row.url,
+        seo_title: row.seo_title,
         seo_filename: row.seo_filename,
         seo_alt: row.seo_alt,
         seo_description: row.seo_description,
-        seo_title: row.seo_title,
         shape: row.shape,
-        is_highlight: row.m_is_highlight ?? false,
+        is_highlight: row.is_highlight
       });
     }
 

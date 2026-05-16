@@ -28,26 +28,20 @@ export type CollectionCompactSchema = CollectionSchema & {
   position: number;
   // From media (only collisions prefixed with m_)
   m_id: number;                           // COLLISION: id
-  public_id: string;
   m_title?: string | null;                // COLLISION: title
   thumbnail?: string | null;
+  url?: string | null;
 }
 // ==================== COLLECTION FULL SCHEMA (WITH MEDIA) ====================
 // Joins: collections + collection_media + media
 // Only collision fields are prefixed (same pattern as PortfolioFullSchema)
 export type CollectionFullSchema = CollectionCompactSchema & {
-  // From collection_media
-  media_id: number;
-  position: number;
-
-  url?: string | null;
+  public_id: string;
   shape?: EnumType<'MEDIA_SHAPE'> | null;
-  seo_alt?: string | null;
   seo_title?: string | null;
+  seo_alt?: string | null;
   seo_description?: string | null;
   seo_filename: string;
-  m_is_featured?: boolean | null;         // COLLISION: is_featured
-  m_is_highlight?: boolean | null;        // COLLISION: is_highlight
 };
 
 const tablesCollectionFull = [
@@ -60,11 +54,14 @@ export type CollectionFullSchemaColumns = TableColumn<typeof tablesCollectionFul
 // ==================== PORTFOLIO COLLECTION SCHEMA (WITH MEDIA) ====================
 // Joins: portfolio_collection + collections + collection_media + media
 // Only collision fields are prefixed with `pc_` for portfolio_collection
-export type PortfolioCollectionSchema = CollectionFullSchema & {
-  // From portfolio_collection (aliased, keys required so the SELECT `as` clause typechecks)
-  collection_id: number;
+export type PortfolioCollectionSchema = CollectionCompactSchema & {
+  // From portfolio_collection (aliased, key required so the SELECT `as` clause typechecks)
   pc_position: number;          // COLLISION: position (collection_media.position)
-  pc_collection_id: number;     // COLLISION: collection_id (collection_media.collection_id)
+};
+
+export type FullPortfolioCollectionSchema = CollectionFullSchema & {
+  // From portfolio_collection (aliased, key required so the SELECT `as` clause typechecks)
+  pc_position: number;          // COLLISION: position (collection_media.position)
 };
 
 const tablesPortfolioCollection = [
@@ -74,3 +71,4 @@ const tablesPortfolioCollection = [
   TABLES_ENUM.MEDIA,
 ] as const;
 export type PortfolioCollectionSchemaColumns = TableColumn<typeof tablesPortfolioCollection, PortfolioCollectionSchema>;
+export type FullPortfolioCollectionSchemaColumns = TableColumn<typeof tablesPortfolioCollection, FullPortfolioCollectionSchema>;

@@ -1,10 +1,10 @@
 import { notFound } from "next/navigation";
-import { GalleryGrid } from "@repo/ui/components/custom/gallery-grid";
+import { GalleryGrid } from "@repo/ui/components/custom/gallery/gallery-grid";
 import userCollectionService from "@/modules/user-collections/user-collection.service";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import Link from "next/link";
 import { Pencil } from "lucide-react";
-import { Gallery } from "@repo/ui/components/custom/gallery";
+import { Gallery } from "@repo/ui/components/custom/gallery/gallery";
 import { GalleryProvider } from "@repo/ui/providers/gallery.provider";
 import { config } from "@/lib/config";
 import Web from "@/lib/components/web-page.component";
@@ -82,7 +82,7 @@ export default async function Page({ params, searchParams }: Props) {
             >
                 {canEdit && (
                     <Link
-                        href={`/atelier/collection/edit/${collection.slug}`}
+                        href={`/atelier/collections/edit/${collection.slug}`}
                         aria-label="Edit collection"
                         className="text-text-muted hover:text-text transition-colors self-start md:self-auto"
                     >
@@ -98,7 +98,7 @@ export default async function Page({ params, searchParams }: Props) {
                         items={collection.media.map((m) => ({
                             title: m.title,
                             description: m.seo_description ?? undefined,
-                            url: m.url ?? m.thumbnail,
+                            url: m.url,
                             alt: m.seo_alt ?? m.title ?? undefined,
                             href: `${config.app_url}/artists/${username}/collections/${slug}/media/${m.public_id}?cb=1`,
                             shared: `${config.app_url}/artists/${username}/collections/${slug}/media/${m.public_id}`

@@ -1,26 +1,23 @@
 "use client";
 
 import { createContext, useContext, ReactNode, useState, useMemo, useCallback, useRef } from "react";
-import { CreatePortfolioInputWithFile, FullPortfolio } from "@repo/common-lib/types/portfolio";
-import { Media, MediaPortfolio } from "@repo/common-lib/types/media";
+import {
+  CreatePortfolioInputWithFile,
+  FullPortfolio,
+  PortfolioFormData,
+  PortfolioItem,
+} from "@repo/common-lib/types/portfolio";
+import { MediaPortfolio } from "@repo/common-lib/types/media";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { createOrUpdatePortfolioAction } from "../server-actions/create-update-portfolio.action";
 import { slugExistsAction } from "../server-actions/slug-exists.action";
 import { ActionReturn } from "@repo/common-lib/types/response";
 import { toast } from "@repo/ui/sonner"
 import { UserAuth } from "@/modules/auth/auth.types";
-import { Collection, CollectionPortfolio } from "@repo/common-lib/types/collection";
+import { CollectionPortfolio } from "@repo/common-lib/types/collection";
+import { buildPortfolioItemsFromFullPortfolio } from "@repo/common-lib/utils/portfolio";
 
-// ============================================================================
-// Types
-// ============================================================================
 
-type PortfolioFormData = Partial<
-  Omit<CreatePortfolioInputWithFile, 'media'> & {
-    media?: MediaPortfolio[];
-    collections?: CollectionPortfolio[];
-  }
->;
 
 type PortfolioContextType = {
   user: UserAuth;
@@ -31,12 +28,6 @@ type PortfolioContextType = {
   currentStep: number;
   MAX_STEPS: number;
   formData: PortfolioFormData;
-  mediaSelected: MediaPortfolio[];
-  handlePushMediaSelected: (media: Media) => void;
-  handleRemoveMediaSelected: (mediaId: number) => void;
-  collectionsSelected: CollectionPortfolio[];
-  handlePushCollectionSelected: (collection: Collection) => void;
-  handleRemoveCollectionSelected: (collectionId: number) => void;
   inputErrors: Record<string, string> | undefined;
   isPending: boolean;
   success: boolean;
@@ -50,6 +41,10 @@ type PortfolioContextType = {
   clear: () => void;
   currentPortfolio: FullPortfolio | undefined;
   setPortfolio: (portfolio: FullPortfolio) => void;
+  portfolioItems: PortfolioItem[];
+  handleSetPortfolioItems: (items: PortfolioItem[]) => void;
+  handleShiftPortfolioItem: (item: Omit<PortfolioItem, 'position'>) => void;
+  handleRemovePortfolioItem: (id: number, kind: PortfolioItem['item']) => void;
 };
 
 // ============================================================================
@@ -77,7 +72,7 @@ type PortfolioProviderProps = {
 };
 
 const MAX_STEPS = 2;
-const firstStepRequiredFields: (keyof CreatePortfolioInputWithFile)[] = ['user_id', 'slug', 'title', 'thumbnail'];
+const firstStepRequiredFields: (keyof PortfolioFormData)[] = ['user_id', 'slug', 'title', 'thumbnail'];
 export const PortfolioProvider = ({
   children,
   user,
@@ -85,6 +80,8 @@ export const PortfolioProvider = ({
 }: PortfolioProviderProps) => {
 
   const [currentPortfolio, setCurrentPorfolio] = useState(defaultPortfolio);
+  const initialPortfolioItems = useRef(defaultPortfolio ? buildPortfolioItemsFromFullPortfolio(defaultPortfolio) : [])
+  const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>(initialPortfolioItems.current);
 
   const [formData, setFormData] = useState<PortfolioFormData>({
     user_id: user.id,
@@ -92,6 +89,9 @@ export const PortfolioProvider = ({
 
   const setPortfolio = useCallback((portfolio: FullPortfolio) => {
     setCurrentPorfolio(portfolio);
+    const initialItems = buildPortfolioItemsFromFullPortfolio(portfolio);
+    initialPortfolioItems.current = initialItems;
+    setPortfolioItems(initialItems);
     setCurrentStep(1);
     setFormData({
       user_id: portfolio.user_id,
@@ -100,17 +100,6 @@ export const PortfolioProvider = ({
       description: portfolio.description ?? undefined,
       is_highlight: portfolio.is_highlight,
       is_active: portfolio.is_active,
-      media: portfolio.media.sort((a, b) => a.position - b.position),
-      collections: (portfolio.collections ?? []).map((c, i) => ({
-        id: c.id,
-        title: c.title,
-        slug: c.slug,
-        is_featured: c.is_featured,
-        is_highlight: c.is_highlight,
-        is_active: c.is_active,
-        description: c.description,
-        position: i + 1,
-      })),
     });
   }, []);
 
@@ -121,15 +110,31 @@ export const PortfolioProvider = ({
 
   const { handleAction, isPending, success, deleteInputErrorProperty, inputErrors, reset } = useHandleAction({
     action: async () => {
-      const media = (formData.media ?? []).map((m, idx) => ({
-        id: m.id,
-        position: idx + 1,
-      }));
+      const media: { id: number, position: number }[] = [];
+      const collections: { id: number, position: number }[] = []
+      for (let index = 0; index < portfolioItems.length; index++) {
+        const { id, item } = portfolioItems[index];
+        const obj = {
+          id,
+          position: index + 1
+        }
+        switch (item) {
+          case 'media':
+            media.push(obj)
 
-      const collections = (formData.collections ?? []).map((c, idx) => ({
-        id: c.id,
-        position: idx + 1,
-      }));
+            break;
+          case 'collection':
+            collections.push(obj)
+
+            break;
+
+          default:
+            break;
+        }
+
+
+      }
+
 
       const payload: Partial<CreatePortfolioInputWithFile> = {
         title: (formData.title ?? "") as string,
@@ -194,6 +199,23 @@ export const PortfolioProvider = ({
     }, 1000);
   }, [formData, isPendingSlugExists, cleanResult, cleanErrors, handleActionSlug]);
 
+
+  const handleSetPortfolioItems = useCallback((items: PortfolioItem[]) => {
+    setPortfolioItems(items);
+  }, []);
+
+  const handleShiftPortfolioItem = useCallback((item: Omit<PortfolioItem, 'position'>) => {
+    setPortfolioItems((prev) => {
+      if (prev.some((x) => x.item === item.item && x.id === item.id)) return prev;
+      const next = { ...item, position: prev.length + 1 } as PortfolioItem;
+      return [next,...prev];
+    });
+  }, []);
+
+  const handleRemovePortfolioItem = useCallback((id: number, kind: PortfolioItem['item']) => {
+    setPortfolioItems((prev) => prev.filter((x) => !(x.item === kind && x.id === id)));
+  }, []);
+
   const handleSetFormData = useCallback((key: keyof CreatePortfolioInputWithFile, value: any) => {
 
     if (key === 'slug') {
@@ -214,39 +236,6 @@ export const PortfolioProvider = ({
 
   }, [cleanErrors, cleanResult])
 
-  const handlePushMediaSelected = useCallback((m: Media) => {
-    const current = formData.media ?? [];
-    if (current.some((x) => x.id === m.id)) return;
-    const media: MediaPortfolio = { ...m, position: current.length + 1 };
-    handleSetFormData('media', [...current, media]);
-  }, [formData.media, handleSetFormData]);
-
-  const handleRemoveMediaSelected = useCallback((mediaId: number) => {
-    const current = formData.media ?? [];
-    handleSetFormData('media', current.filter((media) => media.id !== mediaId));
-  }, [formData.media, handleSetFormData]);
-
-  const handlePushCollectionSelected = useCallback((c: Collection) => {
-    const current = formData.collections ?? [];
-    if (current.some((x) => x.id === c.id)) return;
-    const collection: CollectionPortfolio = {
-      id: c.id,
-      title: c.title,
-      slug: c.slug,
-      is_featured: c.is_featured,
-      is_highlight: c.is_highlight,
-      is_active: c.is_active,
-      description: c.description ?? undefined,
-      position: current.length + 1,
-    };
-    handleSetFormData('collections', [...current, collection]);
-  }, [formData.collections, handleSetFormData]);
-
-  const handleRemoveCollectionSelected = useCallback((collectionId: number) => {
-    const current = formData.collections ?? [];
-    handleSetFormData('collections', current.filter((col) => col.id !== collectionId));
-  }, [formData.collections, handleSetFormData]);
-
   const firstStepIsCompleted = !firstStepRequiredFields.some(field => {
     if (!formData) return true;
     const hasField = formData[field];
@@ -255,13 +244,9 @@ export const PortfolioProvider = ({
     if (field === 'thumbnail' && currentPortfolio?.thumbnail) return false;
     return true;
   })
-  const mediaSelected = useMemo(() => {
-    return formData.media ? formData.media.sort((a, b) => a.position - b.position) : [];
-  }, [formData.media]);
 
-  const collectionsSelected = useMemo(() => {
-    return formData.collections ? formData.collections.sort((a, b) => a.position - b.position) : [];
-  }, [formData.collections]);
+
+
 
   const hasFormChanged = useMemo(() => {
     if (!currentPortfolio) return false;
@@ -273,23 +258,16 @@ export const PortfolioProvider = ({
     if ((formData.is_active ?? true) !== currentPortfolio.is_active) return true;
     if (formData.thumbnail) return true;
 
-    const currentMedia = formData.media ?? [];
-    const originalMedia = [...currentPortfolio.media].sort((a, b) => a.position - b.position);
-
-    if (currentMedia.length !== originalMedia.length) return true;
-    for (let i = 0; i < currentMedia.length; i++) {
-      if (currentMedia[i].id !== originalMedia[i].id || currentMedia[i].position !== originalMedia[i].position) return true;
-    }
-
-    const currentCollections = (formData.collections ?? []).sort((a, b) => a.position - b.position);
-    const originalCollections = currentPortfolio.collections ?? [];
-    if (currentCollections.length !== originalCollections.length) return true;
-    for (let i = 0; i < currentCollections.length; i++) {
-      if (currentCollections[i].id !== originalCollections[i].id) return true;
+    const baselineItems = initialPortfolioItems.current;
+    if (baselineItems.length !== portfolioItems.length) return true;
+    for (let i = 0; i < portfolioItems.length; i++) {
+      const a = portfolioItems[i];
+      const b = baselineItems[i];
+      if (a.item !== b.item || a.id !== b.id) return true;
     }
 
     return false;
-  }, [formData, currentPortfolio]);
+  }, [formData, currentPortfolio, portfolioItems]);
 
   const canGoNextStep = useMemo(() => {
     const nextStep = currentStep + 1;
@@ -302,13 +280,12 @@ export const PortfolioProvider = ({
   }, [currentStep, formData, currentPortfolio]);
 
   const canSubmit = useMemo(() => {
-    const hasContent = !!(formData.media?.length || formData.collections?.length);
-    if (!firstStepIsCompleted || !hasContent) return false;
+    if (!firstStepIsCompleted || !portfolioItems.length) return false;
 
     if (currentPortfolio) return hasFormChanged;
 
     return currentStep === MAX_STEPS;
-  }, [currentStep, formData, currentPortfolio, hasFormChanged, firstStepIsCompleted])
+  }, [currentStep, currentPortfolio, hasFormChanged, firstStepIsCompleted, portfolioItems.length]);
 
 
   const handleStep = (direction: 'prev' | 'next') => {
@@ -326,6 +303,7 @@ export const PortfolioProvider = ({
     setFormData({ user_id: user.id });
     setCurrentStep(1);
     setCurrentPorfolio(undefined);
+    setPortfolioItems([]);
     // Reset action state (errors/result)
     reset();
     cleanErrors();
@@ -347,12 +325,6 @@ export const PortfolioProvider = ({
     currentStep,
     MAX_STEPS,
     formData,
-    mediaSelected,
-    handlePushMediaSelected,
-    handleRemoveMediaSelected,
-    collectionsSelected,
-    handlePushCollectionSelected,
-    handleRemoveCollectionSelected,
     inputErrors,
     isPending,
     success,
@@ -366,6 +338,10 @@ export const PortfolioProvider = ({
     clear,
     currentPortfolio,
     setPortfolio,
+    portfolioItems,
+    handleSetPortfolioItems,
+    handleShiftPortfolioItem,
+    handleRemovePortfolioItem,
   };
 
   return (

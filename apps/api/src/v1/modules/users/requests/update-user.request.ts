@@ -4,11 +4,10 @@ import {
   MaxLength,
   MinLength,
   Matches,
-  IsInt,
-  IsNumber,
   IsArray,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
+import { ToInt } from 'src/common/decorators/to-int.decorator';
 import { ModelArrayExist } from 'src/common/validators/model-array-exist.validtor';
 import { ModelExist } from 'src/common/validators/model-exist.validtor';
 
@@ -42,7 +41,7 @@ export class UpdateUserRequest {
   biography?: string;
 
   @IsOptional()
-  @IsNumber()
+  @ToInt()
   funnel_step?: number;
 
   @IsOptional()
@@ -51,7 +50,7 @@ export class UpdateUserRequest {
   short_biography?: string;
 
   @IsOptional()
-  @IsInt()
+  @ToInt()
   @ModelExist('addresses')
   address_id?: number;
 

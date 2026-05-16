@@ -2,6 +2,7 @@ import { IsNotEmpty, IsNumber, IsOptional, IsString, IsArray, ValidateNested, Mi
 import { Type } from 'class-transformer';
 import { ModelExist } from 'src/common/validators/model-exist.validtor';
 import { ToBoolean } from 'src/common/decorators/to-boolean.decorator';
+import { ToInt } from 'src/common/decorators/to-int.decorator';
 
 class ServiceFeatureItem {
   @IsNotEmpty()
@@ -30,9 +31,8 @@ export class UpdateServiceRequest {
   @IsString()
   description?: string;
 
-  @IsNumber()
   @IsOptional()
-  @Type(() => Number)
+  @ToInt()
   @ModelExist('portfolios')
   portfolio_id?: number;
 

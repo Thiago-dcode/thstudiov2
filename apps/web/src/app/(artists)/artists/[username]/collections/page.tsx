@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import Web from "@/lib/components/web-page.component";
 import { ArtistBreadcrumb } from "@/app/(artists)/__components/artist-breadcrumb";
 import { CollectionCard } from "@/modules/collections/components/collection-card";
+import Link from "next/link";
 
 type Props = {
   params: Promise<{ username: string }>;
@@ -37,11 +38,12 @@ export default async function Page({ params }: Props) {
       {collections.length > 0 ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {collections.map((collection) => (
-            <CollectionCard
-              key={collection.id}
-              collection={collection}
-              username={username}
-            />
+            <Link key={collection.id} href={`/artists/${username}/collections/${collection.slug}`} >
+              <CollectionCard
+                collection={collection}
+                isAtelier={false}
+              />
+            </Link>
           ))}
         </div>
       ) : (

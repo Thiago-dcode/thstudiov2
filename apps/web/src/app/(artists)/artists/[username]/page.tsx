@@ -115,17 +115,15 @@ const ArtistHomePage = async ({ params }: { params: Promise<{ username: string }
 
             {/* Short Biography — editorial pull-quote */}
             {profile.short_biography && (
-                <section className="w-full max-w-3xl mx-auto px-6 pt-2 pb-20">
-                    <div className="relative py-10">
-                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-12 h-px bg-border/60" />
-                        <blockquote className="max-w-xl mx-auto text-center text-base tablet:text-lg leading-[1.9] text-text-muted font-serif italic">
+                <section className="w-full mx-auto px-6  pb-20">
+                    <div className="relative py-8">
+                        <blockquote className=" w-full mx-auto text-center text-base tablet:text-lg leading-[1.9] text-text-muted font-serif italic">
                             &ldquo;{profile.short_biography}&rdquo;
                         </blockquote>
-                        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-px bg-border/60" />
+                       
                     </div>
                 </section>
             )}
-
             {/* Highlighted Content Sections */}
             <div className="w-full pt-8 pb-24">
                 <Suspense fallback={<div className="flex justify-center py-16"><Spinner /></div>}>

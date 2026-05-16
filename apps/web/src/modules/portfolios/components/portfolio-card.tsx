@@ -1,40 +1,36 @@
 import Image from "next/image";
-import Link from "next/link";
 import type { Portfolio } from "@repo/common-lib/types/portfolio";
+import { cn } from "@repo/ui/lib/utils";
 
 export type PortfolioCardProps = {
   portfolio: Portfolio;
-  username: string;
   isAtelier?: boolean;
   titleAs?: "h2" | "h3";
   sizes?: string;
+  className?: string;
 };
-
-function portfolioHref(portfolio: Portfolio, username: string, isAtelier: boolean | undefined) {
-  if (isAtelier) {
-    return `/atelier/portfolio/edit/${portfolio.slug}`;
-  }
-  return `/artists/${username}/portfolios/${portfolio.slug}`;
-}
 
 export function PortfolioCard({
   portfolio,
-  username,
   isAtelier,
   titleAs: TitleTag = "h3",
   sizes = "(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw",
+  className,
 }: PortfolioCardProps) {
   const { title, thumbnail, description } = portfolio;
-  const href = portfolioHref(portfolio, username, isAtelier);
   const hasThumbnail = Boolean(thumbnail?.trim());
   const isBlocked = Boolean(portfolio.blocked_at && isAtelier);
 
   return (
-    <Link
-      href={href}
-      className="group relative flex flex-col overflow-hidden rounded-sm"
+    <article
+      className={cn(
+        "group relative flex cursor-pointer flex-col overflow-hidden rounded-sm",
+        className,
+      )}
     >
-      <div className={`relative aspect-square w-full overflow-hidden bg-fg-1 ${isBlocked ? "opacity-60" : ""}`}>
+      <div
+        className={`relative aspect-square w-full overflow-hidden bg-fg-1 ${isBlocked ? "opacity-60" : ""}`}
+      >
         {hasThumbnail ? (
           <>
             <Image
@@ -71,7 +67,7 @@ export function PortfolioCard({
         </div>
       </div>
 
-      <div className="absolute inset-0 ring-1 ring-inset ring-white/10 rounded-sm transition-all duration-500 group-hover:ring-white/20" />
-    </Link>
+      <div className="pointer-events-none absolute inset-0 rounded-sm ring-1 ring-inset ring-white/10 transition-all duration-500 group-hover:ring-white/20" />
+    </article>
   );
 }

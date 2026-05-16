@@ -67,11 +67,11 @@ function LocationEntityCombobox({
     const busy = disabled || pending
 
     return (
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1 w-full">
             <Label className=" font-medium text-xs! uppercase tracking-[0.12em] leading-none text-text-muted">
                 {label}
             </Label>
-            <div className="min-w-0">
+            <div className="">
                 <Combobox
                     value={valueId !== undefined ? String(valueId) : null}
                     onValueChange={(val) => {
@@ -90,7 +90,7 @@ function LocationEntityCombobox({
                         showClear={!busy}
                         className={artistsFilterComboboxInputClassName}
                     />
-                    <ComboboxContent>
+                    <ComboboxContent className={'w-md'}>
                         <ComboboxEmpty>
                             {pending && items.length === 0 ? (
                                 <Spinner className="mx-auto size-3" />
@@ -100,7 +100,7 @@ function LocationEntityCombobox({
                                 '—'
                             ) : null}
                         </ComboboxEmpty>
-                        <ComboboxList>
+                        <ComboboxList className={'w-full'}>
                             {filtered.map((item) => (
                                 <ComboboxItem
                                     key={item.id}

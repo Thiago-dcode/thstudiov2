@@ -23,6 +23,7 @@ export default async function MediaPage({ params, searchParams }: Props) {
         userSession()
     ]);
 
+
     if (!user.data) {
         notFound();
     }
@@ -56,6 +57,7 @@ export default async function MediaPage({ params, searchParams }: Props) {
     const qp = await searchParams;
 
     const acceptCallback = qp?.cb == '1';
+    const backUrl = `/artists/${username}/portfolios/${slug}${acceptCallback ? `?ci=${encodeURIComponent(media.public_id)}` : ''}`;
 
 
 
@@ -64,11 +66,12 @@ export default async function MediaPage({ params, searchParams }: Props) {
             user={media.user}
             media={media}
             canEdit={canEdit}
+            backUrl={backUrl}
             breadcrumbs={
                 [
                     {
                         title: `Portfolio ${slug}`,
-                        url: `/artists/${username}/portfolios/${slug}${acceptCallback ? `?ci=m_${media.public_id}` : ''}`,
+                        url: backUrl,
                         isActive: false,
                     }
                 ]

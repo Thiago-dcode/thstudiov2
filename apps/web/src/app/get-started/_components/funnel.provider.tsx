@@ -70,6 +70,7 @@ export const FunnelProvider = ({ children, user, lastStep, defaultCanContinue = 
             }
             const currentStep = user.funnel_step;
             const newFormData = action === 'continue' ? formData : new FormData();
+          
             const nextStep = action === 'finish' ? lastStep + 1 : action === 'back' ? currentStep - 1 : currentStep + 1;
             newFormData.set('funnel_step', String(nextStep));
             return await updateUserAction(user.id, newFormData);
@@ -148,7 +149,6 @@ export const ContainerFormFunnel = ({ children, onSubmitCallback, className }: {
         <FormComponent.Form onSubmit={async (e) => {
             e.preventDefault();
             if (isPending || (!canContinue && actionRef.current?.value === 'continue')) return;
-
 
             handleSubmit(e);
             if (onSubmitCallback) await onSubmitCallback(e);

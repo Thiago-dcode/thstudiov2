@@ -108,8 +108,8 @@ const ALL_APP_MODULES = [
       ,
     ]),
     ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', '..', 'client'),
-      serveRoot: '/',
+      rootPath: join(__dirname, '..', 'assets'),
+      serveRoot: '/assets',
       exclude: ['/api*'],
     }),
     ConfigModule.forRoot({

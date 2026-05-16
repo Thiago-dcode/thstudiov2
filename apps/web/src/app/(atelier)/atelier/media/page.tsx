@@ -60,9 +60,9 @@ export default async function MediaAtelierPage({
     return (
         <AdminPageContainer>
             <AdminPageTitle title="Media">
-                <Suspense>
+                {pagination?.total_count ?<Suspense>
                     <MediaSearch />
-                </Suspense>
+                </Suspense>:null}
             </AdminPageTitle>
 
             <div className="flex flex-col gap-6">

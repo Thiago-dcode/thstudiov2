@@ -116,14 +116,18 @@ export const WebHeader = ({ session }: WebHeaderProps) => {
                         </DrawerTrigger>
 
                         <DrawerContent
-                            className="inset-y-0 left-auto right-0 w-72 h-full mt-0 rounded-none border-0 border-l border-fg-2 bg-bg [&>div:first-child]:hidden"
+                            className="inset-y-0 left-0 right-0 w-full h-full mt-0 rounded-none border-0 bg-bg [&>div:first-child]:hidden"
                         >
                             <DrawerTitle className="sr-only">Navigation</DrawerTitle>
 
-                            <div className="flex items-center justify-between h-16 px-6 border-b border-fg-2">
-                                <span className="text-sm font-medium tracking-wider text-text-muted">
-                                    Menu
-                                </span>
+                            <div className="flex items-center justify-between h-16 px-5 border-b border-fg-2">
+                                <Link
+                                    href="/"
+                                    onClick={() => setDrawerOpen(false)}
+                                    className="text-text hover:opacity-80 transition-opacity"
+                                >
+                                    <BrandLogo />
+                                </Link>
                                 <DrawerClose asChild>
                                     <button
                                         className="flex items-center justify-center size-10 text-text hover:opacity-80 transition-opacity"
@@ -134,52 +138,47 @@ export const WebHeader = ({ session }: WebHeaderProps) => {
                                 </DrawerClose>
                             </div>
 
-                            <div className="px-6 pb-4 tablet:hidden">
-                                <WebHeaderArtistSearch />
+                            <div className="flex flex-col flex-1 overflow-y-auto">
+                                <div className="px-5 pt-6 pb-4">
+                                    <WebHeaderArtistSearch />
+                                </div>
+
+                                <div className="px-5 pt-4">
+                                    {isAuthenticated ? (
+                                        <div className="grid gap-3">
+                                            {session?.username && (
+                                                <Button asChild variant="base" size="lg" className="w-full justify-between">
+                                                    <Link href={`/artists/${session.username}`}>
+                                                        Access Profile
+                                                        <ArrowRight className="size-3.5" />
+                                                    </Link>
+                                                </Button>
+                                            )}
+                                            <Button asChild variant="primary" size="lg" className="w-full justify-between">
+                                                <Link href="/atelier">
+                                                    Open Atelier
+                                                    <ArrowRight className="size-3.5" />
+                                                </Link>
+                                            </Button>
+                                        </div>
+                                    ) : (
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <Button asChild variant="base" size="lg" className="w-full">
+                                                <Link href="/auth/login">
+                                                    Sign in
+                                                </Link>
+                                            </Button>
+                                            <Button asChild variant="primary" size="lg" className="w-full">
+                                                <Link href="/auth/register">
+                                                    Get Started
+                                                </Link>
+                                            </Button>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
 
-                            <nav className="flex flex-col px-6 py-6 gap-1">
-                                {isAuthenticated ? (
-                                    <>
-                                        {session?.username && (
-                                            <Link
-                                                href={`/artists/${session.username}`}
-                                                className="text-sm tracking-wider font-medium py-3 transition-colors text-text-muted hover:text-text"
-                                            >
-                                                Access Profile
-                                            </Link>
-                                        )}
-                                        <Link
-                                            href="/atelier"
-                                            className="text-sm tracking-wider font-medium py-3 transition-colors text-text-muted hover:text-text flex items-center gap-2"
-                                        >
-                                            Go to Atelier
-                                            <ArrowRight className="size-3.5" />
-                                        </Link>
-                                    </>
-                                ) : (
-                                    <>
-                                        {!isLoginPage && (
-                                            <Link
-                                                href="/auth/login"
-                                                className="text-sm tracking-wider font-medium py-3 transition-colors text-text-muted hover:text-text"
-                                            >
-                                                Sign in
-                                            </Link>
-                                        )}
-                                        {!isRegisterPage && (
-                                            <Link
-                                                href="/auth/register"
-                                                className="text-sm tracking-wider font-medium py-3 transition-colors text-text-muted hover:text-text"
-                                            >
-                                                Get Started
-                                            </Link>
-                                        )}
-                                    </>
-                                )}
-                            </nav>
-
-                            <div className="mt-auto px-6 py-6 border-t border-fg-2">
+                            <div className="mt-auto px-5 py-6 border-t border-fg-2">
                                 <p className="text-xs tracking-wider text-accent-muted leading-relaxed">
                                     The portfolio platform built for artists.
                                 </p>

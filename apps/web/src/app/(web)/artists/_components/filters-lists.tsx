@@ -123,7 +123,7 @@ export default function FiltersLists() {
                                 aria-hidden
                             >
                                 <X className="size-3" />
-                            </span>
+                            </span> 
                         </Button>
                     ))}
                 </div>

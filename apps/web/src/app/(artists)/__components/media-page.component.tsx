@@ -1,17 +1,19 @@
 import { ArtistBreadcrumb, BreadcrumbEntry } from "@/app/(artists)/__components/artist-breadcrumb";
+import { FullscreenMedia } from "@/app/(artists)/__components/fullscreen-media";
 import Web from "@/lib/components/web-page.component";
 import { MediaWithUser } from "@repo/common-lib/types/media";
-import Link from "next/link";
 import { Pencil } from "lucide-react";
+import Link from "next/link";
 
 interface MediaPageComponentProps {
     user: { username: string };
     media: MediaWithUser;
     breadcrumbs?: BreadcrumbEntry[];
+    backUrl?: string;
     canEdit?: boolean;
 }
 
-export const MediaPageComponent = ({ user, media, breadcrumbs = [], canEdit }: MediaPageComponentProps) => {
+export const MediaPageComponent = ({ user, media, breadcrumbs = [], backUrl, canEdit }: MediaPageComponentProps) => {
     const allBreadcrumbs: BreadcrumbEntry[] = [
         ...breadcrumbs,
         {
@@ -26,9 +28,10 @@ export const MediaPageComponent = ({ user, media, breadcrumbs = [], canEdit }: M
             <ArtistBreadcrumb
                 username={user.username}
                 items={allBreadcrumbs}
+                backUrl={backUrl}
             />
-            <Web.Header 
-                title={media.title || 'Untitled'} 
+            <Web.Header
+                title={media.title || 'Untitled'}
                 description={media.description || media.seo_description || undefined}
             >
                 {canEdit && (
@@ -41,13 +44,12 @@ export const MediaPageComponent = ({ user, media, breadcrumbs = [], canEdit }: M
                     </Link>
                 )}
             </Web.Header>
-            <figure className="flex flex-col items-center justify-center w-full flex-1 min-h-[50vh]">
-                <img
-                    src={media.url}
-                    alt={media.seo_alt || media.title || ''}
-                    className="max-w-full max-h-[75vh] w-auto h-auto object-contain rounded-lg"
-                />
-            </figure>
+
+            <FullscreenMedia
+                url={media.url}
+                alt={media.seo_alt || media.title || ''}
+                title={media.title || undefined}
+            />
         </Web.Container>
     );
 };

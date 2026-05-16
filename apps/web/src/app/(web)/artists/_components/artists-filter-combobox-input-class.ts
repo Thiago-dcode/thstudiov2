@@ -6,7 +6,7 @@ import { cn } from '@repo/ui/lib/utils'
  * keep the real input and trigger strip aligned with !h-7 without changing the shared UI components.
  */
 export const artistsFilterComboboxInputClassName = cn(
-    'w-full !h-7 min-h-7 rounded-sm',
+    'w-full min-h-7 rounded-sm',
     '[&_[data-slot=input-group-control]]:!h-7 [&_[data-slot=input-group-control]]:min-h-0',
     '[&_[data-slot=input-group-control]]:py-0 [&_[data-slot=input-group-control]]:px-2',
     '[&_[data-slot=input-group-control]]:text-[11px] [&_[data-slot=input-group-control]]:leading-tight',

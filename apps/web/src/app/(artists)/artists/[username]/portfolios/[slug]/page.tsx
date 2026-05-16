@@ -1,16 +1,17 @@
 import { notFound } from "next/navigation";
-import { GalleryGrid } from "@repo/ui/components/custom/gallery-grid";
+import { PortfolioGrid } from "@repo/ui/components/custom/gallery/gallery-grid";
 import userPortfolioService from "@/modules/user-portfolios/user-portfolio.service";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import Link from "next/link";
 import { Pencil } from "lucide-react";
-import { Gallery } from "@repo/ui/components/custom/gallery";
+import { Gallery } from "@repo/ui/components/custom/gallery/gallery";
 import { GalleryProvider } from "@repo/ui/providers/gallery.provider";
 import { config } from "@/lib/config";
 import Web from "@/lib/components/web-page.component";
 import { ArtistBreadcrumb } from "@/app/(artists)/__components/artist-breadcrumb";
 import { ResourceNotFound } from "@/app/(artists)/__components/resource-not-found";
 import usersService from "@/modules/users/users.service";
+import { buildPortfolioItemsFromFullPortfolio, extractMediaFromPortfolioItems } from "@repo/common-lib/utils/portfolio";
 
 type Props = {
     params: Promise<{ username: string; slug: string }>;
@@ -41,32 +42,22 @@ export default async function Page({ params, searchParams }: Props) {
         );
     }
 
+    const portfolioItems = buildPortfolioItemsFromFullPortfolio(portfolio);
+    const mediaItems = extractMediaFromPortfolioItems(portfolioItems);
     const canEdit = userAuth?.id === portfolio.user_id;
-
     const qp = await searchParams;
 
     let defaultCurrentItem: number | undefined = undefined;
 
     if (qp?.ci) {
-
-        const splitted = qp.ci.split('_');
-        if (splitted.length === 2) {
-            const validTypes = ['m'];
-            const itemType = splitted[0];
-
-            if (validTypes.find(vt => vt === itemType)) {
-
-                if (itemType === 'm') {
-                    const public_id = splitted[1];
-                    const index = portfolio.media.findIndex(m => m.public_id === public_id);
-                    if (index !== -1) {
-                        defaultCurrentItem = index;
-                    }
-                }
-            }
-
+        const index = mediaItems.findIndex((m) => m.public_id === qp.ci);
+        if (index !== -1) {
+            defaultCurrentItem = index;
         }
     }
+
+
+
 
 
     return (
@@ -85,7 +76,7 @@ export default async function Page({ params, searchParams }: Props) {
             >
                 {canEdit && (
                     <Link
-                        href={`/atelier/portfolio/edit/${portfolio.slug}`}
+                        href={`/atelier/portfolios/edit/${portfolio.slug}`}
                         aria-label="Edit portfolio"
                         className="text-text-muted hover:text-text transition-colors self-start md:self-auto"
                     >
@@ -94,12 +85,12 @@ export default async function Page({ params, searchParams }: Props) {
                 )}
             </Web.Header>
 
-            <section className="relative">
+            <section className="relative m-auto">
                 {portfolio.media.length > 0 ? (
                     <GalleryProvider
                         defaultCurrentItem={defaultCurrentItem}
-                        items={portfolio.media.map((m) => ({
-                            title: m.title,
+                        items={mediaItems.map((m) => ({
+                            title: `${m.title ?? ''} ${m.fromCollection ? ` (Collection: ${m.fromCollection})` : ''}`,
                             description: m.seo_description ?? undefined,
                             url: m.url ?? m.thumbnail,
                             alt: m.seo_alt ?? m.title ?? undefined,
@@ -107,7 +98,7 @@ export default async function Page({ params, searchParams }: Props) {
                             shared: `${config.app_url}/artists/${username}/portfolios/${slug}/media/${m.public_id}`
                         }))}
                     >
-                        <GalleryGrid media={portfolio.media} />
+                        <PortfolioGrid portfolioItems={portfolioItems} />
                         <div className="hidden tablet:block">
                             <Gallery />
                         </div>

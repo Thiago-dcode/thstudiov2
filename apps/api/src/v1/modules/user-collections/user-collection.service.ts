@@ -22,7 +22,7 @@ export class UserCollectionService {
         ? await Promise.all(collection.media.map(async (media) => ({
           ...media,
           thumbnail: media.thumbnail ? await this.helpers.getAsset(media.thumbnail) : undefined,
-          url: media.url ? await this.helpers.getAsset(media.url) : undefined,
+          url:  media.url ? await this.helpers.getAsset(media.url) : undefined,
         })))
         : collection.media,
     };

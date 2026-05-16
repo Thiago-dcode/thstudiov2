@@ -42,6 +42,9 @@ dist
 .settings/
 *.sublime-workspace
 
+# Cursor
+.cursor/
+
 # IDE - VSCode
 .vscode/*
 !.vscode/settings.json

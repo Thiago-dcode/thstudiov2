@@ -72,7 +72,7 @@ const CategoryFilter = () => {
                             itemToStringLabel={(item) => categoryLabel(item as CategoryBase)}
                         >
                             <ComboboxInput
-                                placeholder="Search…"
+                                placeholder={categoriesSelected.length? categoriesSelected.map(c=>c.name).join(', '): "Search…"}
                                 onChange={(e) => handleOnChange(e.target.value)}
                                 disabled={busy}
                                 showClear={!busy}

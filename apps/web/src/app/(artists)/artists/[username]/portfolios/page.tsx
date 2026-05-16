@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { ArtistBreadcrumb } from "@/app/(artists)/__components/artist-breadcrumb";
 import Web from "@/lib/components/web-page.component";
 import { PortfolioCard } from "@/modules/portfolios/components/portfolio-card";
+import Link from "next/link";
 import userPortfolioService from "@/modules/user-portfolios/user-portfolio.service";
 import usersService from "@/modules/users/users.service";
 
@@ -41,12 +42,12 @@ export default async function Page({ params }: Props) {
       {portfolios.length > 0 ? (
         <Web.List>
           {portfolios.map((portfolio) => (
-            <PortfolioCard
+            <Link
               key={portfolio.id}
-              portfolio={portfolio}
-              username={username}
-              titleAs="h2"
-            />
+              href={`/artists/${username}/portfolios/${portfolio.slug}`}
+            >
+              <PortfolioCard portfolio={portfolio} titleAs="h2" />
+            </Link>
           ))}
         </Web.List>
       ) : (

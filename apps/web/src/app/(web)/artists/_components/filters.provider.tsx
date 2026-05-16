@@ -14,6 +14,8 @@ import {
 
 type FiltersContextValue = {
     filters: ArtistIndexRequest
+    /** Parsed request from the current page URL; updates when the server passes new `params`. */
+    urlParams: ArtistIndexRequest
 
     categoriesSelected: CategoryBase[]
     /** Replace the full category selection; updates `filters.categories`. */
@@ -125,6 +127,7 @@ export function FiltersProvider({ children, params: initialParams, defaultCatego
     const value = useMemo<FiltersContextValue>(
         () => ({
             filters,
+            urlParams: initialParams,
             categoriesSelected,
             setCategoriesSelected,
             pushCategory,
@@ -135,6 +138,7 @@ export function FiltersProvider({ children, params: initialParams, defaultCatego
         }),
         [
             filters,
+            initialParams,
             categoriesSelected,
             setCategoriesSelected,
             pushCategory,

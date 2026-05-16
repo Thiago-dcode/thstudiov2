@@ -27,7 +27,7 @@ const Header = ({
     titleClassName?: string
 }) => {
     return (
-        <header className="mb-8 desktop:mb-12 flex flex-col items-center gap-6 border-b border-border/40 pb-6">
+        <header className="mb-8 desktop:mb-12 flex flex-col items-center gap-6 pb-6">
             <div className="w-full  max-w-5xl space-y-5">
                 <div className="flex items-baseline gap-4 justify-center">
                     <h1

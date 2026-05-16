@@ -9,6 +9,7 @@ import { EventEmitter2 } from "@nestjs/event-emitter";
 import { UPDATE_USER_EXTRA_DATA_METRICS } from "@repo/common-lib/constants/constants";
 import { UpdateUserExtraDataMetricsEvent } from "../user-extra-data/events/update-user-extra-data-metrics.event";
 import { Helpers } from "src/common/services/helpers.service";
+import { FullPortfolioCollection } from "@repo/common-lib/types/collection";
 
 const MAX_COLLECTION_MEDIA = 50;
 
@@ -40,23 +41,21 @@ export class CollectionService {
     );
   }
 
-  async findPortfolioCollections(portfolioId: number) {
+  async findPortfolioCollections(portfolioId: number): Promise<FullPortfolioCollection[]> {
     const result = await this.collectionRepository.getPortfolioCollections(portfolioId);
 
-    return Promise.all(result.map(async (col) => {
-
-      return {
+    return Promise.all(
+      result.map(async (col) => ({
         ...col,
-        media: await Promise.all(col.media.map(async (me) => {
-
-          return {
+        media: await Promise.all(
+          col.media.map(async (me) => ({
             ...me,
-            thumbnail: await this.helper.getAsset(me.thumbnail)
-          }
-        }))
-      }
-
-    }))
+            thumbnail: me.thumbnail ? await this.helper.getAsset(me.thumbnail) : undefined,
+            url: me.url ? await this.helper.getAsset(me.url) : undefined,
+          })),
+        ),
+      })),
+    );
   }
 
   private async slugExists(slug: string, userId: number) {

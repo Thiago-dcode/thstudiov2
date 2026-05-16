@@ -1,4 +1,5 @@
-import { Sparkles, Palette, Users } from "lucide-react";
+import { ArrowRight, Sparkles, Palette, Users } from "lucide-react";
+import Link from "next/link";
 import type { ReactNode } from "react";
 
 const HIGHLIGHTS: { icon: ReactNode; text: string }[] = [
@@ -29,6 +30,16 @@ export function SocialProofSection() {
               </span>
             </div>
           ))}
+        </div>
+
+        <div className="mt-8 flex justify-center">
+          <Link
+            href="/auth/register"
+            className="group inline-flex items-center gap-2 text-sm font-medium tracking-wider text-text transition-colors hover:text-accent"
+          >
+            Start Free Now
+            <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+          </Link>
         </div>
       </div>
     </section>

@@ -1,7 +1,6 @@
 import { Type } from 'class-transformer';
 import {
   IsArray,
-  IsNumber,
   IsOptional,
   IsString,
   ValidateNested,
@@ -9,6 +8,7 @@ import {
 import { ModelExist } from 'src/common/validators/model-exist.validtor';
 import { CategoryTranslationItem } from './category-translation-item.request';
 import { ToBoolean } from 'src/common/decorators/to-boolean.decorator';
+import { ToInt } from 'src/common/decorators/to-int.decorator';
 
 export class UpdateCategoryRequest {
   @IsString()
@@ -27,8 +27,7 @@ export class UpdateCategoryRequest {
   tags?: string[];
 
   @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
+  @ToInt()
   @ModelExist('categories')
   parent_id?: number;
 

@@ -3,7 +3,6 @@ import { CategoryBase } from "@repo/common-lib/types/category"
 import { Metadata } from "next"
 import usersService from "@/modules/users/users.service"
 import { UpdateCategoriesProvider } from "@/modules/categories/providers/categories.provider"
-import { ArtistsBrowseLayout } from "./_components/artists-browse-layout"
 import { ArtistsGrid } from "./_components/artists-grid"
 import { FiltersProvider } from "./_components/filters.provider"
 import categoriesService from "@/modules/categories/categories.service"
@@ -13,6 +12,7 @@ import { ApiResponse, Pagination } from "@repo/common-lib/types/response"
 import { cleanObj } from "@repo/common-lib/utils/cleanObj"
 import { queryParamBuilder, QueryBuilder } from "@repo/common-lib/utils/query-builder"
 import { AppPagination } from "@repo/ui/components/custom/app-pagination"
+import { FilterSearch } from "./_components/filter-search"
 
 const PAGE_DESCRIPTION =
     "Browse artists on A11STUDIO. Discover portfolios, services, and creative professionals."
@@ -142,10 +142,13 @@ export default async function ArtistsPage({
         searchQuery !== undefined && searchQuery !== ""
             ? ` for "${searchQuery}"`
             : ""
+    const artistsErrorMessage =
+        artistsResult?.error?.message ||
+        "Something went wrong while searching artists. Please try again in a moment."
     return (
         <Web.Container
             className={cn(
-                "flex h-full w-full flex-col justify-center pt-16",
+                "flex h-full w-full flex-col justify-start"
             )}
         >
             <Web.Header
@@ -157,72 +160,86 @@ export default async function ArtistsPage({
                     userCategories={categories}
                 >
                     <div
-                        className={cn(
-                            "flex w-full flex-col items-start justify-start",
-                        )}
                     >
-                        <ArtistsBrowseLayout
-                            initialFilters={artistRequest}
-                            centerSearch={!artistsResult}
-                        >
-                            {artistsResult ? (
-                                <section
-                                    aria-labelledby="artists-results-heading"
-                                    className="flex w-full min-w-0 flex-col gap-4 border-t border-border pt-4"
+                        <FilterSearch />
+                        {artistsResult?.error ? (
+                            <section
+                                aria-labelledby="artists-error-heading"
+                                className="mx-auto flex w-full min-w-0 max-w-2xl flex-col items-center gap-2 border-t border-border pt-4 text-center tablet:max-w-3xl"
+                                role="alert"
+                            >
+                                <h2
+                                    id="artists-error-heading"
+                                    className="text-sm font-medium tracking-wide text-destructive"
                                 >
-                                    <h2
-                                        id="artists-results-heading"
-                                        className="text-sm font-medium tracking-wide text-text-muted"
-                                    >
-                                        {artistsResult.error
-                                            ? "Results"
-                                            : totalCount === 0
-                                                ? `No artists found${resultsForSearchSuffix}`
-                                                : `${totalCount.toLocaleString()} artist${totalCount === 1 ? "" : "s"} found${resultsForSearchSuffix}`}
-                                    </h2>
-                                    {artistsResult.error ? (
-                                        <p className="text-sm text-destructive" role="alert">
-                                            {artistsResult.error.message ||
-                                                "Could not load artists."}
-                                        </p>
-                                    ) : artists.length === 0 ? (
-                                        <p className="text-sm text-text-muted">
-                                            Try broadening your search or clearing some filters.
-                                        </p>
-                                    ) : (
-                                        <div className="flex flex-col gap-4">
-                                            <ArtistsGrid artists={artists} />
-                                            {pagination && (
-                                                <AppPagination
-                                                    pagination={pagination}
-                                                    buildHref={buildPaginationHref}
-                                                />
-                                            )}
-                                        </div>
+                                    We couldn&apos;t load artists
+                                </h2>
+                                <p className="text-sm text-text-muted">
+                                    {artistsErrorMessage}
+                                </p>
+                            </section>
+                        ) : artists.length ? (
+                            <section
+                                aria-labelledby="artists-results-heading"
+                                className="flex w-full flex-col gap-4 pt-4"
+                            >
+                                <h2
+                                    id="artists-results-heading"
+                                    className="text-sm font-medium tracking-wide text-text-muted"
+                                >
+                                    {`${totalCount.toLocaleString()} artist${totalCount === 1 ? "" : "s"} found${resultsForSearchSuffix}`}
+                                </h2>
+                                <div className="flex flex-col gap-4">
+                                    <ArtistsGrid artists={artists} />
+                                    {pagination && (
+                                        <AppPagination
+                                            pagination={pagination}
+                                            buildHref={buildPaginationHref}
+                                        />
                                     )}
-                                </section>
-                            ) : (
-                                <section
-                                    aria-labelledby="artists-empty-hint-heading"
-                                    className="mx-auto flex w-full min-w-0 max-w-2xl flex-col items-center gap-2 border-t border-border pt-4 text-center tablet:max-w-3xl"
+                                </div>
+                            </section>
+                        ) : hasFilters ? (
+                            <section
+                                aria-labelledby="artists-empty-results-heading"
+                                className="mx-auto flex w-full min-w-0 max-w-2xl flex-col items-center gap-2 pt-4 text-center tablet:max-w-3xl"
+                            >
+                                <h2
+                                    id="artists-empty-results-heading"
+                                    className="text-sm font-medium tracking-wide text-text"
                                 >
-                                    <h2
-                                        id="artists-empty-hint-heading"
-                                        className="sr-only"
-                                    >
-                                        How to find artists
-                                    </h2>
-                                    <p
-                                        className="text-sm text-text-muted"
-                                        role="status"
-                                    >
-                                        Type something in the search box or use
-                                        the filters above—name, category, or location—to discover
-                                        artists.
-                                    </p>
-                                </section>
-                            )}
-                        </ArtistsBrowseLayout>
+                                    No artists found{resultsForSearchSuffix}
+                                </h2>
+                                <p
+                                    className="text-sm text-text-muted"
+                                    role="status"
+                                >
+                                    Your current filters did not match any artists. Try
+                                    removing a filter, broadening the location, or searching
+                                    with a different keyword.
+                                </p>
+                            </section>
+                        ) : (
+                            <section
+                                aria-labelledby="artists-empty-hint-heading"
+                                className="mx-auto flex w-full min-w-0 max-w-2xl flex-col items-center gap-2 pt-4 text-center tablet:max-w-3xl"
+                            >
+                                <h2
+                                    id="artists-empty-hint-heading"
+                                    className="sr-only"
+                                >
+                                    How to find artists
+                                </h2>
+                                <p
+                                    className="text-sm text-text-muted"
+                                    role="status"
+                                >
+                                    Type something in the search box or use
+                                    the filters above—name, category, or location—to discover
+                                    artists.
+                                </p>
+                            </section>
+                        )}
                     </div>
                 </UpdateCategoriesProvider>
             </FiltersProvider>

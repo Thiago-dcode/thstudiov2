@@ -1,7 +1,7 @@
 import { PortfolioSchema } from "../schemas/portfolio";
-import { CollectionSchema } from "../schemas/collection";
 import { OffsetPaginationRequest } from "./request";
 import { MediaPortfolio } from "./media";
+import { FullPortfolioCollection, PortfolioCollection } from "./collection";
 
 // ==================== PORTFOLIO TYPES ====================
 
@@ -12,7 +12,7 @@ export type Portfolio = PortfolioSchema;
 
 export type FullPortfolio = Portfolio & {
   media: MediaPortfolio[];
-  collections: CollectionSchema[];
+  collections: FullPortfolioCollection[];
 };
 
 // Request type for listing portfolios
@@ -53,6 +53,26 @@ export type CreatePortfolioInput = Omit<
 export type CreatePortfolioInputWithFile = Omit<CreatePortfolioInput, 'thumbnail'> & {
   thumbnail: File;
 };
+
+/** Form state for create/update portfolio wizard (excludes nested media/collections arrays). */
+export type PortfolioFormData = Partial<
+  Omit<CreatePortfolioInputWithFile, 'media' | 'collections'>
+>;
+
+/** Discriminated union: use `row.item` to narrow to {@link MediaPortfolioItem} or {@link CollectionPortfolioItem}. */
+export type MediaPortfolioItem = MediaPortfolio & {
+  item: 'media';
+};
+
+export type CollectionPortfolioItem = PortfolioCollection & {
+  item: 'collection';
+};
+export type FullCollectionPortfolioItem = FullPortfolioCollection & {
+  item: 'collection';
+};
+export type PortfolioItem = MediaPortfolioItem | CollectionPortfolioItem;
+
+export type FullPortfolioItem = MediaPortfolioItem | FullCollectionPortfolioItem;
 
 export type UpdatePortfolioInput = Partial<
   Omit<PortfolioSchema, 'id' | 'created_at' | 'updated_at' | 'is_featured'>

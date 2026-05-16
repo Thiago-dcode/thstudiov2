@@ -1,13 +1,12 @@
-import { Type } from 'class-transformer';
 import {
   IsNotEmpty,
   IsString,
   IsOptional,
-  IsNumber,
   MaxLength,
 } from 'class-validator';
 import { IsUserAuth } from 'src/common/validators/is-user-auth.validtor';
 import { ModelExist } from 'src/common/validators/model-exist.validtor';
+import { ToInt } from 'src/common/decorators/to-int.decorator';
 
 export class CreateAboutPageRequest {
   @IsString()
@@ -23,8 +22,7 @@ export class CreateAboutPageRequest {
   description: string;
  
   @IsNotEmpty()
-  @IsNumber()
-  @Type(() => Number)
+  @ToInt()
   @ModelExist('users')
   @IsUserAuth()
   user_id: number;

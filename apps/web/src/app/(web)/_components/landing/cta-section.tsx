@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { Button } from "@repo/ui/components/shadcn/button";
 import { ArrowRight } from "lucide-react";
+import { WebSection } from "./web-section";
 
 export function CtaSection() {
   return (
-    <section className="relative overflow-hidden">
+    <WebSection className="overflow-hidden">
       <div className="cta-glow pointer-events-none absolute inset-0" aria-hidden />
 
-      <div className="relative mx-auto flex w-full max-w-(--screen-desktop) flex-col items-center gap-8 px-6 py-24 text-center tablet:px-10 tablet:py-36">
+      <WebSection.Container className="flex flex-col items-center gap-8 text-center">
         <span className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">
           Ready to begin?
         </span>
@@ -24,7 +25,7 @@ export function CtaSection() {
             <ArrowRight className="size-4" />
           </Link>
         </Button>
-      </div>
+      </WebSection.Container>
 
       <style>{`
         .cta-glow {
@@ -41,6 +42,6 @@ export function CtaSection() {
             );
         }
       `}</style>
-    </section>
+    </WebSection>
   );
 }

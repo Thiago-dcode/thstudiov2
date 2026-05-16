@@ -26,7 +26,7 @@ class UserPortfolioService extends BaseService {
 
     async slugExists(username: string, slug: string): Promise<ApiResponse<{ exists: boolean }>> {
         return await this.fetchApi.get({
-            resource: `/${username}/portfolio/slug-exist/${slug}`
+            resource: `/${username}/portfolios/slug-exist/${slug}`
         });
     }
 }

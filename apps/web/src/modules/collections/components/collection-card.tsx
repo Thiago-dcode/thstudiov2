@@ -1,41 +1,32 @@
-import Link from "next/link";
 import type { Collection } from "@repo/common-lib/types/collection";
+import { cn } from "@repo/ui/lib/utils";
 
 export type CollectionCardProps = {
   collection: Collection;
-  username: string;
   isAtelier?: boolean;
+  className?:string
 };
 
-function collectionPreviewImages(collection: Collection, isAtelier: boolean | undefined) {
-  const limit = isAtelier ? 4 : 3;
-  return collection.media
-    .slice()
-    .sort((a, b) => a.position - b.position)
-    .map((m) => m.thumbnail)
-    .filter((t): t is string => Boolean(t))
-    .slice(0, limit);
-}
 
-function collectionHref(collection: Collection, username: string, isAtelier: boolean | undefined) {
-  if (isAtelier) {
-    return `/atelier/collection/edit/${collection.slug}`;
-  }
-  return `/artists/${username}/collections/${collection.slug}`;
-}
+
 
 export const CollectionCard = ({
   collection,
-  username,
   isAtelier,
+  className
 }: CollectionCardProps) => {
-  const images = collectionPreviewImages(collection, isAtelier);
+  const images =collection.media
+  .slice()
+  .sort((a, b) => a.position - b.position)
+  .map((m) => m.thumbnail)
+  .filter((t): t is string => Boolean(t))
+  .slice(0, 3);
+
   const title = collection.title;
-  const href = collectionHref(collection, username, isAtelier);
   const isBlocked = Boolean(collection.blocked_at && isAtelier);
 
-  const content = (
-    <article className={`group cursor-pointer aspect-square relative ${isBlocked ? "opacity-60" : ""}`}>
+return (
+    <article className={cn(`group cursor-pointer aspect-square relative ${isBlocked ? "opacity-60" : ""}`,className)}>
       {isBlocked ? (
         <div className="absolute left-2 top-2 z-30 rounded-sm bg-black/70 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white">
           Blocked
@@ -43,7 +34,7 @@ export const CollectionCard = ({
       ) : null}
       <div className="absolute inset-0 flex items-center justify-center">
         {images.length === 0 ? (
-          <div className="absolute w-[78%] h-[78%] rounded-md overflow-hidden border border-border shadow-md bg-fg-2 group-hover:scale-105 transition-transform duration-200">
+          <div className="absolute w-[78%] h-[78%] rounded-md overflow-hidden  shadow-md bg-fg-2 group-hover:scale-105 transition-transform duration-200">
             <div className="w-full h-full" />
           </div>
         ) : (
@@ -54,7 +45,7 @@ export const CollectionCard = ({
               return (
                 <div
                   key={i}
-                  className="absolute w-[78%] h-[78%] rounded-md overflow-hidden border border-border shadow-md bg-fg-2 group-hover:scale-105 transition-transform duration-200 z-10"
+                  className="absolute w-[78%] h-[78%] rounded-md overflow-hidden  shadow-md bg-fg-2 group-hover:scale-105 transition-transform duration-200 z-10"
                 >
                   {image ? (
                     <img src={image} alt="" className="w-full h-full object-cover" />
@@ -72,7 +63,7 @@ export const CollectionCard = ({
             return (
               <div
                 key={i}
-                className="absolute w-[78%] h-[78%] rounded-md overflow-hidden border border-border shadow-sm bg-fg-2"
+                className="absolute w-[78%] h-[78%] rounded-md overflow-hidden shadow-sm bg-fg-2"
                 style={{
                   transform: `rotate(${rotation}deg) translate(${tx}px, ${ty}px)`,
                 }}
@@ -93,11 +84,5 @@ export const CollectionCard = ({
         </div>
       ) : null}
     </article>
-  );
-
-  return (
-    <Link href={href} className="block">
-      {content}
-    </Link>
   );
 };

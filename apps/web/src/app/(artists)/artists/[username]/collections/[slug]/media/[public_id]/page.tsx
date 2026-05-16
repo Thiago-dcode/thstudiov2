@@ -56,6 +56,7 @@ export default async function MediaPage({ params, searchParams }: Props) {
     const qp = await searchParams;
 
     const acceptCallback = qp?.cb == '1';
+    const backUrl = `/artists/${username}/collections/${slug}${acceptCallback ? `?ci=m_${media.public_id}` : ''}`;
 
 
 
@@ -64,11 +65,12 @@ export default async function MediaPage({ params, searchParams }: Props) {
             user={media.user}
             media={media}
             canEdit={canEdit}
+            backUrl={backUrl}
             breadcrumbs={
                 [
                     {
                         title: `Collection ${slug}`,
-                        url: `/artists/${username}/collections/${slug}${acceptCallback ? `?ci=m_${media.public_id}` : ''}`,
+                        url: backUrl,
                         isActive: false,
                     }
                 ]

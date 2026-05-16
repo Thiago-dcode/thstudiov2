@@ -1,50 +1,110 @@
 'use client'
 
-import { FormEvent, useEffect, useState } from 'react'
-import { usePathname, useRouter } from 'next/navigation'
-import { Search } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { usePathname } from 'next/navigation'
+import { Search, Loader2 } from 'lucide-react'
+import Image from 'next/image'
+import Link from 'next/link'
 import { Input } from '@repo/ui/components/shadcn/input'
 import { cn } from '@repo/ui/lib/utils'
+import { useHandleAction } from '@/modules/auth/hooks/useHandleAction'
+import { findArtistsAction } from '@/modules/users/server-actions/find-artists.action'
+import type { ArtistCard } from '@repo/common-lib/types/user'
+
+const MIN_CHARS = 3;
+
+function artistDisplayName(a: ArtistCard): string {
+    const full = [a.name, a.surname].filter(Boolean).join(' ').trim();
+    return full || a.username;
+}
+
+function initials(a: ArtistCard): string {
+    const n = artistDisplayName(a).trim();
+    if (!n) return '?';
+    const parts = n.split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+        const first = parts[0]?.[0];
+        const second = parts[1]?.[0];
+        if (first && second) return (first + second).toUpperCase();
+    }
+    return n.slice(0, 2).toUpperCase();
+}
 
 export function WebHeaderArtistSearch({ className }: { className?: string }) {
-    const router = useRouter()
     const pathname = usePathname()
-    const [query, setQuery] = useState('')
+    const inputRef = useRef<HTMLInputElement>(null)
+    const containerRef = useRef<HTMLDivElement>(null)
+    const [open, setOpen] = useState(false)
 
-    useEffect(() => {
-        setQuery('')
-    }, [pathname])
+    const { result, isPending, handleAction, cleanResult } = useHandleAction({
+        action: async () => {
+            const search = inputRef.current?.value.trim() ?? '';
+            if (!search) return null;
+            return await findArtistsAction({ search, paginated: true });
+        },
+        settings: { rateLimit: 1.5 },
+    })
 
-    const submit = () => {
-        const trimmed = query.trim()
-        const href = trimmed
-            ? `/artists?${new URLSearchParams({ search: trimmed }).toString()}`
-            : '/artists'
-        router.push(href)
-        setQuery('')
+    const artists = result?.data ?? [];
+
+    const handleChange = () => {
+        const value = inputRef.current?.value.trim() ?? '';
+        if (!value) {
+            cleanResult();
+            setOpen(false);
+            return;
+        }
+        handleAction();
+        setOpen(true);
     }
 
-    if(pathname==='/artists') return null;
+    const close = () => {
+        setOpen(false);
+    }
+
+    useEffect(() => {
+        if (inputRef.current?.value) inputRef.current.value = '';
+        cleanResult();
+        setOpen(false);
+    }, [pathname])
+
+    useEffect(() => {
+        if (!open) return;
+        const handleClickOutside = (e: MouseEvent) => {
+            if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+                close();
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [open])
+
+    if (pathname === '/artists') return null;
     return (
-        <form
+        <div
+            ref={containerRef}
             role="search"
             aria-label="Search artists"
-            className={cn('w-full min-w-0', className)}
-            onSubmit={(e: FormEvent) => {
-                e.preventDefault()
-                submit()
-            }}
+            className={cn('relative w-full min-w-0', className)}
         >
             <div className="relative">
-                <Search
-                    className="pointer-events-none absolute top-1/2 left-3 z-1 size-4 -translate-y-1/2 text-text-muted"
-                    aria-hidden
-                />
+                {isPending ? (
+                    <Loader2
+                        className="pointer-events-none absolute top-1/2 left-3 z-1 size-4 -translate-y-1/2 animate-spin text-text-muted"
+                        aria-hidden
+                    />
+                ) : (
+                    <Search
+                        className="pointer-events-none absolute top-1/2 left-3 z-1 size-4 -translate-y-1/2 text-text-muted"
+                        aria-hidden
+                    />
+                )}
                 <Input
+                    ref={inputRef}
                     type="search"
                     name="search"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
+                    onChange={handleChange}
+                    onFocus={() => { if (artists.length > 0) setOpen(true) }}
                     placeholder="Search artists…"
                     autoComplete="off"
                     className={cn(
@@ -54,6 +114,49 @@ export function WebHeaderArtistSearch({ className }: { className?: string }) {
                     )}
                 />
             </div>
-        </form>
+
+            {open && artists.length > 0 && (
+                <div className="absolute top-full left-0 z-50 mt-1.5 w-full overflow-hidden rounded-lg border border-border bg-bg shadow-lg">
+                    <ul className="max-h-80 overflow-y-auto py-1">
+                        {artists.map((artist) => (
+                            <li key={artist.id}>
+                                <Link
+                                    href={`/artists/${encodeURIComponent(artist.username)}`}
+                                    onClick={close}
+                                    className="flex items-center gap-3 px-3 py-2.5 transition-colors hover:bg-fg-1/50"
+                                >
+                                    <div className="size-9 shrink-0 overflow-hidden rounded-full bg-fg-1/60">
+                                        {artist.avatar ? (
+                                            <Image
+                                                src={artist.avatar}
+                                                alt=""
+                                                width={36}
+                                                height={36}
+                                                className="size-full object-cover"
+                                            />
+                                        ) : (
+                                            <span className="flex size-full items-center justify-center text-xs font-medium text-text-muted">
+                                                {initials(artist)}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="truncate text-sm font-medium leading-tight text-text">
+                                            {artistDisplayName(artist)}
+                                        </p>
+                                        <p className="truncate text-xs text-text-muted">
+                                            @{artist.username}
+                                            {artist.profession && (
+                                                <span className="text-text-muted/70"> · {artist.profession}</span>
+                                            )}
+                                        </p>
+                                    </div>
+                                </Link>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
+        </div>
     )
 }

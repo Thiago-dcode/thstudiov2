@@ -3,6 +3,7 @@ import { Type } from 'class-transformer';
 import { IsUserAuth } from 'src/common/validators/is-user-auth.validtor';
 import { ModelExist } from 'src/common/validators/model-exist.validtor';
 import { ToBoolean } from 'src/common/decorators/to-boolean.decorator';
+import { ToInt } from 'src/common/decorators/to-int.decorator';
 
 class ServiceFeatureItem {
   @IsNotEmpty()
@@ -29,9 +30,8 @@ export class CreateServiceRequest {
   @IsOptional()
   description?: string;
 
-  @IsNumber()
   @IsOptional()
-  @Type(() => Number)
+  @ToInt()
   @ModelExist('portfolios')
   portfolio_id?: number;
 
@@ -58,8 +58,7 @@ export class CreateServiceRequest {
   @ModelExist('users')
   @IsUserAuth()
   @IsNotEmpty()
-  @IsNumber()
-  @Type(() => Number)
+  @ToInt()
   user_id: number;
 
   @IsOptional()

@@ -56,10 +56,8 @@
   --color-fg-2: oklch(0.3 0.006 48.72);
   --color-text: oklch(0.975 0.006 48.72);
   --color-text-muted: oklch(0.82 0.007 48.72);
-  --color-accent: oklch(57% 0.19 302);
-  --color-accent-muted: oklch(57% 0.19 302 / 0.5);
-  --color-secondary: oklch(35% 0.12 85);
-  --color-secondary-fg: oklch(95% 0 0);
+  /* --color-accent: oklch(57% 0.19 302);
+  --color-accent-muted: oklch(57% 0.19 302 / 0.5); */
   --color-shadow: oklch(70% 0 0);
   --color-border: oklch(0.52 0.006 48.72);
   --color-success: oklch(55% 0.06 145);
