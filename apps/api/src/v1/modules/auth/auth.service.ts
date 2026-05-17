@@ -135,8 +135,9 @@ export class AuthService {
     if (user.banned) {
       throw new UnauthorizedException(user.banned_reason || 'Account permanently banned');
     }
+    const isCodeValid = await compare(verify2faRequest.twofa_code, user.twofa_code);
     if (
-      user.twofa_code !== verify2faRequest.twofa_code ||
+      !isCodeValid ||
       compareAsc(user.twofa_expires_at, new Date()) === -1
     ) {
       throw new BadRequestException('Invalid verification code or expired');
@@ -327,9 +328,10 @@ export class AuthService {
     //Start 2fa process
 
     const code = randomStr(6).toLowerCase();
+    const hashedCode = await hash(code);
     const expiresAt = addMinutes(new Date(), 10);
     const updatedUser = await this.userRepository.updateById(user.id, {
-      twofa_code: code,
+      twofa_code: hashedCode,
       twofa_expires_at: expiresAt,
     });
     this.mailService.send(

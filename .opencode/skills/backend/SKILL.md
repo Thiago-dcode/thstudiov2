@@ -1,0 +1,31 @@
+---
+name: backend
+description: Backend rules for NestJS, Database, Queues (BullMQ), Security, and Moderation. Use when working with apps/api, packages/database, packages/backend-lib, or when implementing API endpoints, services, or migrations.
+---
+
+# Backend Rules (NestJS)
+
+## Core Patterns
+
+- **Controllers**: Thin. No business logic. No direct DB calls.
+- **Services**: Contain business logic. Use repositories for DB access.
+- **DTOs**: Must validate input. Never trust frontend input.
+
+## Database Contract (MANDATORY)
+
+- **Source of Truth**: Migrations (`packages/database/src/migrations/`).
+- **Contract**: Every migration must have a matching Schema and Type in `packages/common-lib`.
+- **Naming**: Must match across DB, Schema, and Types.
+- **Repositories**: Centralize DB access in `apps/api/src/v1/modules/**`. Services should prefer repositories over raw queries.
+
+## Events & Queues (BullMQ)
+
+- **Pattern**: Event → Queue → Processor.
+- **Services emit events** (via `EventEmitter2`), heavy work happens in processors.
+- **Processors**: Handle persistence, retries, and side effects (e.g., `AiProcessor`).
+
+## Security & Moderation
+
+- **Moderation**: Pre-publication requirement. Stored in `media_moderations`. Severity 0-10.
+- **Strikes**: Enforced via global guard. Block mutating requests if threshold (`STRIKES_TO_BAN`) is reached.
+- **Uploads**: Validated on backend (MIME type + Magic bytes). Metadata stripped.

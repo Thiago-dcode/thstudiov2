@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 import path from "node:path";
 import dotenv from 'dotenv';
+import createNextIntlPlugin from 'next-intl/plugin';
 
 dotenv.config({ path: path.resolve(process.cwd(), '..', '..', '.env'), quiet: true });
 
@@ -20,4 +21,6 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
+
+export default withNextIntl(nextConfig);

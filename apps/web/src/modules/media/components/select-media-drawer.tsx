@@ -3,7 +3,7 @@ import { Drawer, DrawerClose, DrawerContent, DrawerHeader, DrawerTitle, DrawerTr
 import { FileInputProvider } from "@repo/ui/contexts/file.provider"
 import { ALLOWED_IMAGE_FILE_TYPES } from "@repo/common-lib/constants/constants"
 import { Image } from "lucide-react"
-import { CreateMediaDialog } from "@/app/(atelier)/atelier/media/_components/create-media-modal"
+import { CreateMediaDialog } from "@/app/[locale]/(atelier)/atelier/media/_components/create-media-modal"
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction"
 import { getAllUserMediaAction } from "@/modules/media/server-actions/get-all-user-media.action"
 import { useEffect, useMemo, useRef, useState, useCallback } from "react"
