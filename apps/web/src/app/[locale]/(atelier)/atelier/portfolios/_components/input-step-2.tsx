@@ -1,4 +1,4 @@
-import { Image, LayoutGrid, X } from "lucide-react"
+import { Image, X } from "lucide-react"
 import { usePortfolio } from "@/modules/portfolios/providers/create-update-portfolio.provider"
 import type {
     CollectionPortfolioItem,

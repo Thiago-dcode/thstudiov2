@@ -52,7 +52,7 @@ export const CreateOrUpdateService = ({
     const manuallyChangedSlug = useRef(false);
     const previousSlugRef = useRef<string | undefined>(defaultService?.slug);
     const slugCheckTimeout = useRef<NodeJS.Timeout>(null);
-    const slugChecksMemo = useRef<Record<string, ActionReturn<boolean, undefined>>>({});
+    const slugChecksMemo = useRef<Record<string, ActionReturn<boolean | null, undefined>>>({});
     const [features, setFeatures] = useState<string[]>(
         defaultService?.features?.map(f => f.title) ?? ['']
     );

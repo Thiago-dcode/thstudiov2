@@ -67,5 +67,8 @@ pnpm-debug.log*
 # Database seed assets (large binaries; not committed — keep locally for `db:seed -n media`)
 packages/database/src/seeds/media-images/
 
+# API assets (large media files)
+apps/api/assets/
+
 # Typescript
 *.tsbuildinfo

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "@repo/ui/globals.css";
 import { Toaster } from "@repo/ui/components/shadcn/sonner"
 import { ThemeProvider } from "@repo/ui/providers/theme.provider"
-import { ReactElement } from "react";
+import { ReactNode } from "react";
 import { Roboto, Playfair_Display } from 'next/font/google'
 import { cn } from "@repo/ui/lib/utils";
 import { notFound } from 'next/navigation';
@@ -42,7 +42,7 @@ export default async function RootLayout({
   children,
   params,
 }: Readonly<{
-  children: ReactElement;
+  children: ReactNode;
   params: Promise<{ locale: string }>;
 }>) {
   const { locale } = await params;

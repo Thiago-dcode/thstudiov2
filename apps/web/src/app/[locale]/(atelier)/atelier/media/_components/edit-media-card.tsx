@@ -7,7 +7,7 @@ import { Label } from "@repo/ui/components/shadcn/label";
 import { Button } from "@repo/ui/components/shadcn/button";
 import FormComponent from "@/lib/components/form-component";
 import { bytesToMB } from '@repo/common-lib/utils/bytes';
-import { ExternalLink, Eye, Sparkles, Trash2, Upload } from "lucide-react";
+import { Eye, Sparkles, Trash2, Upload } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@repo/ui/components/shadcn/popover";
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
