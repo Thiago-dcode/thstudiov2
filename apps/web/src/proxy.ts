@@ -7,7 +7,7 @@ import {
 import type { EnumType } from '@repo/common-lib/constants/enums';
 import { subMinutes } from 'date-fns';
 import { RequestCookies, ResponseCookies } from 'next/dist/compiled/@edge-runtime/cookies';
-import { routing } from './i18n/routing';
+import { routing, urlLocaleToLanguageCode } from './i18n/routing';
 import authService from './modules/auth/auth.service';
 import {
   deleteUserSessionByCookie,
@@ -47,7 +47,7 @@ const handleRefreshToken = async (
 
 const handleRememberMe = async (
   cookies: RequestCookies,
-  responseCookies: ResponseCookies,
+  _responseCookies: ResponseCookies,
 ) => {
   const rememberMe = await getRememberMeByCookie(cookies);
   if (!rememberMe) return;
@@ -57,8 +57,8 @@ const handleRememberMe = async (
 
 const proxy = async (req: NextRequest) => {
   const segments = req.nextUrl.pathname.split('/');
-  const firstSeg = (segments[1] ?? '').toUpperCase();
-  const isLocaleShaped = /^[A-Z]{2}$/.test(firstSeg);
+  const firstSeg = (segments[1] ?? '').toLowerCase();
+  const isLocaleShaped = /^[a-z]{2}$/.test(firstSeg);
 
   if (
     isLocaleShaped &&
@@ -71,14 +71,14 @@ const proxy = async (req: NextRequest) => {
 
   const response = intlMiddleware(req);
 
-  const resolvedLocale: EnumType<'LANGUAGE_CODE'> = (
+  const resolvedLanguageCode: EnumType<'LANGUAGE_CODE'> = (
     routing.locales as readonly string[]
   ).includes(firstSeg)
-    ? (firstSeg as EnumType<'LANGUAGE_CODE'>)
-    : routing.defaultLocale;
+    ? urlLocaleToLanguageCode(firstSeg)
+    : urlLocaleToLanguageCode(routing.defaultLocale);
 
-  response.cookies.set(LANGUAGE_COOKIE_NAME, resolvedLocale);
-  response.headers.set(LANGUAGE_HEADER, resolvedLocale);
+  response.cookies.set(LANGUAGE_COOKIE_NAME, resolvedLanguageCode);
+  response.headers.set(LANGUAGE_HEADER, resolvedLanguageCode);
 
   await handleRefreshToken(req.cookies, response.cookies);
   await handleRememberMe(req.cookies, response.cookies);

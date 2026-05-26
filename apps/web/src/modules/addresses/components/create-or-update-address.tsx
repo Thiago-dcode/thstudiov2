@@ -60,7 +60,8 @@ export const CreateOrUpdateAddress = ({userId,defaultAddress,onSuccess,onSuccess
         }, 1000);
     }, [search]);
     
-    const handleValueChange = useCallback((feature: GeoapifyFeature | null) => {
+    const handleValueChange = useCallback((value: unknown) => {
+        const feature = value as GeoapifyFeature | null;
         if (feature) {
             setSelectedLocation(feature);
             const {formatted, lat, lon, country_code, country, address_line1, city, state} = feature.properties;

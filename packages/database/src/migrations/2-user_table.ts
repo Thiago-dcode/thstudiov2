@@ -68,7 +68,7 @@ const up = async () => {
     ColumnBuilder.boolean('twofa_enabled', {
       default: true,
     }),
-    ColumnBuilder.string('twofa_code', 10, {
+    ColumnBuilder.string('twofa_code', 60, {
       nullable: true,
     }),
     ColumnBuilder.timestamp('twofa_expires_at', {

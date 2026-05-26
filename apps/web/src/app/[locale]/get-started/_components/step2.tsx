@@ -18,7 +18,7 @@ const Step2 = () => {
     const inputRef = useRef<HTMLInputElement>(null);
     const { user, setInputs, handleOnChange, setErrors } = useFunnel();
     const { files, errors } = useInputFile();
-    const [previewUrl, setPreviewUrl] = useState<string | undefined>(user?.avatar)
+    const [previewUrl, setPreviewUrl] = useState<string | undefined>((user as any)?.avatar)
     useEffect(() => {
         if (files && files.length > 0) {
             const file = files[0]
@@ -42,7 +42,7 @@ const Step2 = () => {
         setInputs(inputRef?.current)
     }, []);
     useEffect(() => {
-        setPreviewUrl(user?.avatar)
+        setPreviewUrl((user as any)?.avatar)
     }, [user])
 
     return (

@@ -11,8 +11,6 @@ import { useHandleAction } from '@/modules/auth/hooks/useHandleAction'
 import { findArtistsAction } from '@/modules/users/server-actions/find-artists.action'
 import type { ArtistCard } from '@repo/common-lib/types/user'
 
-const MIN_CHARS = 3;
-
 function artistDisplayName(a: ArtistCard): string {
     const full = [a.name, a.surname].filter(Boolean).join(' ').trim();
     return full || a.username;

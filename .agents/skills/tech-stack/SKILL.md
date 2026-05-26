@@ -17,7 +17,7 @@ description: High-level tech stack, project structure, and core principles. Use 
 
 ## Package Manager
 
-- **pnpm**: used for monorepo management and package resolutions.
+- **pnpm**: used for monorepo management and package resolution.
 
 ## Styling & UI
 

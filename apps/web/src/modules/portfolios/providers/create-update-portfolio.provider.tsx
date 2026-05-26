@@ -15,7 +15,14 @@ import { ActionReturn } from "@repo/common-lib/types/response";
 import { toast } from "@repo/ui/sonner"
 import { UserAuth } from "@/modules/auth/auth.types";
 import { CollectionPortfolio } from "@repo/common-lib/types/collection";
+import { CategoryBase } from "@repo/common-lib/types/category";
 import { buildPortfolioItemsFromFullPortfolio } from "@repo/common-lib/utils/portfolio";
+
+function categoryIdsEqual(a: CategoryBase[], b: CategoryBase[]) {
+  const idsA = a.map((c) => c.id).sort((x, y) => x - y).join(",");
+  const idsB = b.map((c) => c.id).sort((x, y) => x - y).join(",");
+  return idsA === idsB;
+}
 
 
 
@@ -45,6 +52,9 @@ type PortfolioContextType = {
   handleSetPortfolioItems: (items: PortfolioItem[]) => void;
   handleShiftPortfolioItem: (item: Omit<PortfolioItem, 'position'>) => void;
   handleRemovePortfolioItem: (id: number, kind: PortfolioItem['item']) => void;
+  categoriesSelected: CategoryBase[];
+  setCategorySelected: (category: CategoryBase) => void;
+  removeCategorySelected: (category: CategoryBase) => void;
 };
 
 // ============================================================================
@@ -81,7 +91,13 @@ export const PortfolioProvider = ({
 
   const [currentPortfolio, setCurrentPorfolio] = useState(defaultPortfolio);
   const initialPortfolioItems = useRef(defaultPortfolio ? buildPortfolioItemsFromFullPortfolio(defaultPortfolio) : [])
+  const initialCategories = useRef<CategoryBase[]>(
+    (defaultPortfolio?.categories ?? []) as CategoryBase[],
+  );
   const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>(initialPortfolioItems.current);
+  const [categoriesSelected, setCategoriesSelected] = useState<CategoryBase[]>(
+    initialCategories.current,
+  );
 
   const [formData, setFormData] = useState<PortfolioFormData>({
     user_id: user.id,
@@ -91,7 +107,10 @@ export const PortfolioProvider = ({
     setCurrentPorfolio(portfolio);
     const initialItems = buildPortfolioItemsFromFullPortfolio(portfolio);
     initialPortfolioItems.current = initialItems;
+    const portfolioCategories = (portfolio.categories ?? []) as CategoryBase[];
+    initialCategories.current = portfolioCategories;
     setPortfolioItems(initialItems);
+    setCategoriesSelected(portfolioCategories);
     setCurrentStep(1);
     setFormData({
       user_id: portfolio.user_id,
@@ -101,6 +120,18 @@ export const PortfolioProvider = ({
       is_highlight: portfolio.is_highlight,
       is_active: portfolio.is_active,
     });
+  }, []);
+
+  const setCategorySelected = useCallback((category: CategoryBase) => {
+    setCategoriesSelected((prev) => {
+      if (prev.some((c) => c.id === category.id)) return prev;
+      if (prev.length >= 5) return prev;
+      return [...prev, category];
+    });
+  }, []);
+
+  const removeCategorySelected = useCallback((category: CategoryBase) => {
+    setCategoriesSelected((prev) => prev.filter((c) => c.id !== category.id));
   }, []);
 
   const [currentStep, setCurrentStep] = useState(1);
@@ -146,6 +177,7 @@ export const PortfolioProvider = ({
         thumbnail: formData.thumbnail ? formData.thumbnail as File : undefined,
         media: media.length ? media : undefined,
         collections: collections.length ? collections : undefined,
+        categories: categoriesSelected.map((c) => c.id),
       };
 
       return await createOrUpdatePortfolioAction(payload, currentPortfolio);
@@ -169,7 +201,7 @@ export const PortfolioProvider = ({
     await handleAction();
   }, [handleAction]);
 
-  const slugChecksMemo = useRef<Record<string, ActionReturn<boolean, undefined>>>({})
+  const slugChecksMemo = useRef<Record<string, ActionReturn<boolean | null, undefined>>>({})
   const { handleAction: handleActionSlug, result: resultSlugExist, isPending: isPendingSlugExists, cleanResult, cleanErrors } = useHandleAction({
     action: async () => {
       // Normalize slug before checking to match how it's stored in DB (without trailing hyphens)
@@ -258,6 +290,8 @@ export const PortfolioProvider = ({
     if ((formData.is_active ?? true) !== currentPortfolio.is_active) return true;
     if (formData.thumbnail) return true;
 
+    if (!categoryIdsEqual(categoriesSelected, initialCategories.current)) return true;
+
     const baselineItems = initialPortfolioItems.current;
     if (baselineItems.length !== portfolioItems.length) return true;
     for (let i = 0; i < portfolioItems.length; i++) {
@@ -267,7 +301,7 @@ export const PortfolioProvider = ({
     }
 
     return false;
-  }, [formData, currentPortfolio, portfolioItems]);
+  }, [formData, currentPortfolio, portfolioItems, categoriesSelected]);
 
   const canGoNextStep = useMemo(() => {
     const nextStep = currentStep + 1;
@@ -304,6 +338,8 @@ export const PortfolioProvider = ({
     setCurrentStep(1);
     setCurrentPorfolio(undefined);
     setPortfolioItems([]);
+    initialCategories.current = [];
+    setCategoriesSelected([]);
     // Reset action state (errors/result)
     reset();
     cleanErrors();
@@ -342,6 +378,9 @@ export const PortfolioProvider = ({
     handleSetPortfolioItems,
     handleShiftPortfolioItem,
     handleRemovePortfolioItem,
+    categoriesSelected,
+    setCategorySelected,
+    removeCategorySelected,
   };
 
   return (

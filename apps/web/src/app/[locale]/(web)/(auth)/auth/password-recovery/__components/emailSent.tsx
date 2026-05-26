@@ -8,7 +8,7 @@ export const EmailSentTimer = ({ timeTillNextRecovery }: {
 }) => {
     const router = useRouter();
 
-    return <Timer expireIn={timeTillNextRecovery} options={{
+    return <Timer expiresIn={timeTillNextRecovery} options={{
         onFinish: async () => {
             router.refresh();
         }

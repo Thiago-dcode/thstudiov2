@@ -7,7 +7,11 @@ import userContactsService from "../user-contacts.service";
 import { getFriendlyApiErrors, getObjErrorFromZod } from "@/modules/auth/helpers";
 import { createUserContactSchema } from "../schemas/user-contact.schema";
 
-export const createUserContactAction = async (formData: FormData): Promise<ActionReturn<UserContact, any>> => {
+export const createUserContactAction = async (formData: FormData, userId?: number): Promise<ActionReturn<UserContact, any>> => {
+  if (userId) {
+    formData.set('user_id', userId.toString());
+  }
+
   const rawData = {
     name: formData.get('name') as string,
     email: formData.get('email') as string,

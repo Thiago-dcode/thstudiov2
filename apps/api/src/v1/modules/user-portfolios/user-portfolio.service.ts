@@ -47,7 +47,7 @@ export class UserPortfolioService {
     }
     return {
       ...portfolio,
-      collections:await this.collectionService.findPortfolioCollections(portfolio.id),
+      collections: await this.collectionService.findPortfolioCollections(portfolio.id),
       media: portfolio.media.length
         ? await Promise.all(portfolio.media.map(async (media) => ({
           ...media,

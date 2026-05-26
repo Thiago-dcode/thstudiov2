@@ -6,11 +6,10 @@ import { Errors } from "@repo/ui/components/custom/errors";
 import { Input } from "@repo/ui/components/shadcn/input";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { Label } from '@repo/ui/components/shadcn/label'
-import { Checkbox } from '@repo/ui/components/shadcn/checkbox'
 import { Eye, EyeClosed } from "lucide-react";
 import { useState } from "react";
 import FormComponent from "@/lib/components/form-component";
-export const LoginForm = ({ rememberMe }: {
+export const LoginForm = ({ rememberMe: _rememberMe }: {
     rememberMe: boolean
 }) => {
     const router = useRouter();

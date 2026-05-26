@@ -22,8 +22,8 @@ export type PortfolioSchemaWithoutTimestamps = Omit<PortfolioSchema, 'created_at
 const tablesPortfolio = [TABLES_ENUM.PORTFOLIOS] as const;
 export type PortfolioSchemaColumns = TableColumn<typeof tablesPortfolio, PortfolioSchema>;
 
-// ==================== PORTFOLIO FULL SCHEMA (WITH MEDIA & COLLECTIONS) ====================
-// Joins: portfolios + portfolio_media + media + portfolio_collection + collections
+// ==================== PORTFOLIO FULL SCHEMA (WITH MEDIA & COLLECTIONS & CATEGORIES) ====================
+// Joins: portfolios + portfolio_media + media + portfolio_collection + collections + portfolio_categories + categories + category_translations
 // Collisions: id, title, description, thumbnail, user_id, created_at, updated_at
 export type PortfolioFullSchema = PortfolioSchema & {
   // From portfolio_media (prefixed: pm_)
@@ -48,6 +48,10 @@ export type PortfolioFullSchema = PortfolioSchema & {
   m_is_featured?: boolean | null;
   m_is_highlight?: boolean | null;
 
+  // From portfolio_categories + categories + category_translations (prefixed: c_)
+  c_id?: number | null;                   // COLLISION: id
+  c_name?: string | null;                 // COLLISION: name (resolved via COALESCE with translation)
+  c_slug?: string | null;                 // COLLISION: slug
 };
 
 const tablesPortfolioFull = [
@@ -56,5 +60,8 @@ const tablesPortfolioFull = [
   TABLES_ENUM.MEDIA,
   TABLES_ENUM.PORTFOLIO_COLLECTION,
   TABLES_ENUM.COLLECTIONS,
+  TABLES_ENUM.PORTFOLIO_CATEGORIES,
+  TABLES_ENUM.CATEGORIES,
+  TABLES_ENUM.CATEGORY_TRANSLATIONS,
 ] as const;
 export type PortfolioFullSchemaColumns = TableColumn<typeof tablesPortfolioFull, PortfolioFullSchema>;

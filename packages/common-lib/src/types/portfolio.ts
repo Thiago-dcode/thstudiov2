@@ -2,6 +2,7 @@ import { PortfolioSchema } from "../schemas/portfolio";
 import { OffsetPaginationRequest } from "./request";
 import { MediaPortfolio } from "./media";
 import { FullPortfolioCollection, PortfolioCollection } from "./collection";
+import { CategoryBase } from "./category";
 
 // ==================== PORTFOLIO TYPES ====================
 
@@ -13,6 +14,7 @@ export type Portfolio = PortfolioSchema;
 export type FullPortfolio = Portfolio & {
   media: MediaPortfolio[];
   collections: FullPortfolioCollection[];
+  categories: CategoryBase[];
 };
 
 // Request type for listing portfolios
@@ -47,6 +49,7 @@ export type CreatePortfolioInput = Omit<
     id: number,
     position: number
   }[],
+  categories?: number[],
 };
 
 // For client-side usage with file upload
@@ -85,6 +88,7 @@ export type UpdatePortfolioInput = Partial<
     id: number;
     position: number;
   }[];
+  categories?: number[];
 };
 
 // For client-side update with file upload

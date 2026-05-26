@@ -1,7 +1,6 @@
 'use server'
 
 import { ActionReturn } from "@repo/common-lib/types/response"
-import { User } from "@repo/common-lib/types/user"
 import usersService from "../users.service"
 import { getFriendlyApiErrors } from "@/modules/auth/helpers"
 import { CategoryBase } from "@repo/common-lib/types/category"

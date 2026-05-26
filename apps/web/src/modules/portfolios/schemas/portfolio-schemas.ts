@@ -8,6 +8,7 @@ export const createPortfolioSchema = z.object({
     is_highlight: z.boolean().optional(),
     is_active: z.boolean().optional(),
     thumbnail: z.instanceof(File, { message: 'Thumbnail is required' }),
+    categories: z.array(z.number()).optional(),
 });
 
 export type CreatePortfolioSchemaType = z.infer<typeof createPortfolioSchema>;
@@ -19,6 +20,7 @@ export const updatePortfolioSchema = z.object({
     is_highlight: z.boolean().optional(),
     is_active: z.boolean().optional(),
     thumbnail: z.instanceof(File).optional(),
+    categories: z.array(z.number()).optional(),
 });
 
 export type UpdatePortfolioSchemaType = z.infer<typeof updatePortfolioSchema>;

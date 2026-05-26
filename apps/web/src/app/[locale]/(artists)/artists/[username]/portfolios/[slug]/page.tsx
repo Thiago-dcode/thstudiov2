@@ -12,6 +12,8 @@ import { ArtistBreadcrumb } from "@/app/[locale]/(artists)/__components/artist-b
 import { ResourceNotFound } from "@/app/[locale]/(artists)/__components/resource-not-found";
 import usersService from "@/modules/users/users.service";
 import { buildPortfolioItemsFromFullPortfolio, extractMediaFromPortfolioItems } from "@repo/common-lib/utils/portfolio";
+import { queryParamBuilder } from "@repo/common-lib/utils/query-builder";
+import { Badge } from "@repo/ui/components/shadcn/badge";
 
 type Props = {
     params: Promise<{ username: string; slug: string }>;
@@ -84,6 +86,25 @@ export default async function Page({ params, searchParams }: Props) {
                     </Link>
                 )}
             </Web.Header>
+
+            {portfolio.categories && portfolio.categories.length > 0 && (
+                <nav aria-label="Portfolio categories" className="mb-10 flex flex-wrap items-center gap-2">
+                    {portfolio.categories.map((category) => (
+                        <Link
+                            key={category.id}
+                            href={queryParamBuilder("/artists", { categories: [category.slug] }, { arrayStyle: "commas" })}
+                            className="group inline-flex items-center"
+                        >
+                            <Badge
+                                variant="outline"
+                                className="border-border/40 bg-fg-2/20 px-3 py-1 text-[11px] font-normal tracking-wide text-text-muted transition-all duration-200 group-hover:border-border/70 group-hover:bg-fg-1/40 group-hover:text-text"
+                            >
+                                {category.name}
+                            </Badge>
+                        </Link>
+                    ))}
+                </nav>
+            )}
 
             <section className="relative m-auto">
                 {portfolio.media.length > 0 ? (

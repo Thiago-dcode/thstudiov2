@@ -21,7 +21,7 @@ export default function Step1() {
             type="text"
             id="name"
             name="name"
-            defaultValue={inputs?.name || user?.name || undefined}
+            defaultValue={inputs?.name || (user as any)?.name || undefined}
             placeholder="Leonardo"
             autoComplete="given-name"
             required
@@ -36,7 +36,7 @@ export default function Step1() {
             type="text"
             id="surname"
             name="surname"
-            defaultValue={inputs?.surname || user?.surname || undefined}
+            defaultValue={inputs?.surname || (user as any)?.surname || undefined}
             placeholder="Piero da Vinci"
             autoComplete="family-name"
             required
@@ -50,7 +50,7 @@ export default function Step1() {
             id="profession"
             name="profession"
             max={100}
-            defaultValue={inputs?.profession || user?.profession || undefined}
+            defaultValue={inputs?.profession || (user as any)?.profession || undefined}
             placeholder="Renaissance polymath & professional dreamer"
             autoComplete="organization-title"
             onChange={handleOnChange}
@@ -62,7 +62,7 @@ export default function Step1() {
             label="Short bio about you"
             id="short_biography"
             name="short_biography"
-            defaultValue={inputs?.short_biography || user?.short_biography || undefined}
+            defaultValue={inputs?.short_biography || (user as any)?.short_biography || undefined}
             placeholder="I sketch flying machines at breakfast and dissect curiosity for a living..."
             rows={4}
             onChange={handleOnChange}

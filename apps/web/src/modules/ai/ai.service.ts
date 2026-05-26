@@ -1,6 +1,6 @@
 import { fetchApi } from "@/lib/facade/fetchApi";
 import { BaseService } from "@/lib/services/base.service";
-import { GetMediaSeoInput, GetMediaSeoResponse } from "@repo/common-lib/types/ai";
+import { GetMediaSeoInput } from "@repo/common-lib/types/ai";
 import { Media } from "@repo/common-lib/types/media";
 import { ApiResponse } from "@repo/common-lib/types/response";
 

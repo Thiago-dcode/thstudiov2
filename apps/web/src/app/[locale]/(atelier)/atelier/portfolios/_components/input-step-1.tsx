@@ -10,6 +10,8 @@ import { Label } from "@repo/ui/components/shadcn/label";
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
 import { useEffect, useRef, useState } from "react";
 import { generateValidSlug, isAValidSlugFormat } from "@repo/common-lib/utils/generate-valid-slug";
+import { UpdateCategoriesProvider } from "@/modules/categories/providers/categories.provider";
+import CategoryCombobox from "@/modules/categories/components/category-combobox";
 
 const ThumbnailInput = () => {
     const { files } = useInputFile();
@@ -77,7 +79,10 @@ const ThumbnailInput = () => {
         isCheckingSlugAvailability,
         isSlugAvailable,
         currentPortfolio,
-        isPending
+        isPending,
+        categoriesSelected,
+        setCategorySelected,
+        removeCategorySelected,
     } = usePortfolio();
 
     const manuallyChangedSlug = useRef(false);
@@ -217,6 +222,20 @@ const ThumbnailInput = () => {
                     placeholder="Describe your portfolio..."
                     disabled={isPending}
                 />
+
+                <div className="space-y-2">
+                    <Label className="text-sm font-medium">Categories</Label>
+                    <UpdateCategoriesProvider userCategories={categoriesSelected}>
+                        <CategoryCombobox
+                            categoriesSelected={categoriesSelected}
+                            setCategorySelected={setCategorySelected}
+                            removeCategorySelected={removeCategorySelected}
+                        />
+                    </UpdateCategoriesProvider>
+                    <p className="text-xs text-muted-foreground">
+                        Optional. Select up to 5 categories that describe this portfolio.
+                    </p>
+                </div>
 
                 <div className="flex items-center gap-2">
                     <Checkbox

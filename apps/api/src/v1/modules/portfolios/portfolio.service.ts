@@ -148,13 +148,14 @@ export class PortfolioService {
       }
     }
 
-    const { thumbnail, media, collections, ...rest } = request;
+    const { thumbnail, media, collections, categories, ...rest } = request;
 
     const updated = await this.portfolioRepository.updateById(id, {
       ...rest,
       ...(thumbnailPath ? { thumbnail: thumbnailPath } : {}),
       media: media ?? [],
       collections: collections ?? [],
+      categories,
     });
 
     return updated;

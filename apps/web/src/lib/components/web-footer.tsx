@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { BrandLogo } from "@repo/ui/components/custom/brand-logo"
 import { ThemeToggle } from "@repo/ui/components/custom/theme-toggle"
+import { WebFooterLanguageSwitcher } from "@/lib/components/web-footer-language-switcher"
 
 const legalLinks = [
     { href: "/legal/privacy", label: "Privacy Policy" },
@@ -56,7 +57,10 @@ export const WebFooter = () => {
                     <p className="text-xs tracking-wider text-text-muted">
                         &copy; {year} A11STUDIO. All rights reserved.
                     </p>
-                    <ThemeToggle />
+                    <div className="flex items-center gap-4">
+                        <WebFooterLanguageSwitcher />
+                        <ThemeToggle />
+                    </div>
                 </div>
             </div>
         </footer>

@@ -115,7 +115,7 @@ export const CollectionProvider = ({
     await handleAction();
   }, [handleAction]);
 
-  const slugChecksMemo = useRef<Record<string, ActionReturn<boolean, undefined>>>({});
+  const slugChecksMemo = useRef<Record<string, ActionReturn<boolean | null, undefined>>>({});
   const { handleAction: handleActionSlug, result: resultSlugExist, isPending: isPendingSlugExists, cleanResult, cleanErrors } = useHandleAction({
     action: async () => {
       const slugToCheck = formData.slug || '';

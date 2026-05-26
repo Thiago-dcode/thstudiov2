@@ -9,6 +9,7 @@ const serverEnvSchema = z.object({
     ASSETS_URL: z.string().min(1),
     GEOAPIFY_URL: z.string().min(1),
     GEOAPIFY_KEY: z.string().min(1),
+    SUPPORT_USER_ID: z.coerce.number().int().positive().default(1),
 });
 
 const parsed = serverEnvSchema.safeParse(process.env);

@@ -15,7 +15,11 @@ const parsed = clientEnvSchema.safeParse({
 });
 
 if (!parsed.success) {
-    console.error('Invalid client environment variables:', parsed.error.flatten().fieldErrors);
+    const flat = parsed.error.flatten();
+    console.error('Invalid client environment variables:', {
+        fieldErrors: flat.fieldErrors,
+        formErrors: flat.formErrors,
+    });
     throw new Error('Invalid client environment variables. Check the console for details.');
 }
 

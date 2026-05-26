@@ -31,7 +31,6 @@ export const UserCollectionsSection = async ({
         <CollectionCard
           key={collection.id}
           collection={collection}
-          username={username}
         />
       ))}
     </div>

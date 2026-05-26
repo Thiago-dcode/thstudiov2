@@ -5,6 +5,7 @@ import { cn } from "@repo/ui/lib/utils";
 import Image from "next/image";
 import Link from "next/link";
 import { WebSection } from "./web-section";
+import { getTranslations } from "next-intl/server";
 
 function categoryBrowseHref(slug: string): string {
     return queryParamBuilder(
@@ -20,14 +21,14 @@ function categoryInitial(name: string): string {
     return t.slice(0, 1).toUpperCase();
 }
 
-function FeaturedCategoryCard({ category }: { category: CategoryBase }) {
+function FeaturedCategoryCard({ category, ariaBrowse, browse }: { category: CategoryBase; ariaBrowse: string; browse: string }) {
     const href = categoryBrowseHref(category.slug);
     const label = category.name.trim() || category.slug;
 
     return (
         <Link
             href={href}
-            aria-label={`Browse artists in ${label}`}
+            aria-label={`${ariaBrowse} ${label}`}
             className={cn(
                 "group flex h-full min-h-0 flex-col overflow-hidden rounded-3xl bg-fg p-2 shadow-md ring-1 ring-border/40 transition-all duration-300",
                 "hover:-translate-y-0.5 hover:shadow-lg hover:ring-border/60",
@@ -62,7 +63,7 @@ function FeaturedCategoryCard({ category }: { category: CategoryBase }) {
 
                 <div className="mt-auto flex items-center justify-end border-t border-border/50 pt-2.5">
                     <span className="shrink-0 rounded-full bg-fg-2 px-3 py-1.5 text-center text-xs font-semibold text-text transition-colors group-hover:bg-fg-1 tablet:px-3.5 tablet:text-sm">
-                        Browse
+                        {browse}
                     </span>
                 </div>
             </div>
@@ -71,6 +72,7 @@ function FeaturedCategoryCard({ category }: { category: CategoryBase }) {
 }
 
 export async function FeatureCategoriesSection() {
+    const t = await getTranslations("landing.featureCategories");
     const categoriesResponse = await categoriesService.getAll({
         is_featured: true,
         with_thumbnail: true,
@@ -83,15 +85,20 @@ export async function FeatureCategoriesSection() {
         <WebSection>
             <WebSection.Container>
                 <WebSection.Header
-                    badge="Explore"
-                    title="Featured Categories"
-                    description="Discover artists by discipline — each path leads to curated results."
+                    badge={t("header.badge")}
+                    title={t("header.title")}
+                    description={t("header.description")}
                     descriptionClassName="max-w-md"
                 />
 
                 <div className="grid grid-cols-1 gap-4 phone:grid-cols-2 tablet:grid-cols-3 laptop:grid-cols-4">
                     {categories.map((category) => (
-                        <FeaturedCategoryCard key={category.id} category={category} />
+                        <FeaturedCategoryCard
+                            key={category.id}
+                            category={category}
+                            ariaBrowse={t("card.ariaBrowseArtistsIn")}
+                            browse={t("card.browse")}
+                        />
                     ))}
                 </div>
             </WebSection.Container>

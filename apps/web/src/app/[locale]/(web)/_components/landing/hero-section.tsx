@@ -3,9 +3,11 @@ import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import { serverEnv } from "@/env/server";
+import { getTranslations } from "next-intl/server";
 
 export async function HeroSection() {
   const session = await userSession();
+  const t = await getTranslations("landing.hero");
   // const categoriesResponse = await categoriesService.getAll({
   //   is_featured: true,
   //   paginated: true,
@@ -25,29 +27,27 @@ export async function HeroSection() {
             For artists of every discipline
           </span> */}
           <h1 className="w-full mx-2 font-serif text-5xl font-medium leading-[1.05] tracking-tight text-text phone-lg:text-6xl tablet:text-7xl laptop:text-[5.25rem]">
-            Let your <span className="hero-accent-text italic">art</span> be
-            found.
+            {t("titlePrefix")} <span className="hero-accent-text italic">{t("titleAccent")}</span> {t("titleSuffix")}
           </h1>
 
           <p className="max-w-xl text-base leading-relaxed text-text-muted tablet:text-lg tablet:leading-relaxed">
-            Build a beautiful artist profile like a professional website — and
-            customize it as fast as updating your social feed.
+            {t("subtitle")}
           </p>
           <div className="flex flex-col gap-4 items-center justify-center">
             <div className="flex flex-col items-center gap-3 phone:flex-row phone:gap-4">
               <Button asChild variant="primary" size="lg">
                 <Link href={session ? "/atelier" : "/auth/register"}>
-                  {session ? "Access Atelier" : "Start Free Now"}
+                  {session ? t("primaryCtaLoggedIn") : t("primaryCtaLoggedOut")}
                   <ArrowRight className="" />
                 </Link>
               </Button>
               <Button asChild variant="ghost" size="lg">
-                <Link href="/artists">Explore Artists</Link>
+                <Link href="/artists">{t("secondaryCta")}</Link>
               </Button>
             </div>
 
             <p className="text-xs tracking-wider text-text-muted/60">
-              Free to start &middot; No credit card required
+              {t("disclaimer")}
             </p>
           </div>
 

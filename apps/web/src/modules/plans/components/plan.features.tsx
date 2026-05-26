@@ -7,7 +7,7 @@ import {
   HoverCardTrigger,
 } from "@repo/ui/components/shadcn/hover-card";
 import { cn } from "@repo/ui/lib/utils";
-import { Check, CircleCheck, Info, Sparkles, X, Zap } from "lucide-react";
+import { Check, Info, Sparkles, X, Zap } from "lucide-react";
 import { type ReactNode, useMemo } from "react";
 
 function formatMegaBytes(megabytes: number): string {

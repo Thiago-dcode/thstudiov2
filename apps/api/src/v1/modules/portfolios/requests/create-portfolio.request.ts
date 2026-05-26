@@ -1,7 +1,8 @@
 import { IsNotEmpty, IsOptional, IsString, IsArray, ValidateNested, MinLength } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 import { IsUserAuth } from 'src/common/validators/is-user-auth.validtor';
 import { ModelExist } from 'src/common/validators/model-exist.validtor';
+import { ModelArrayExist } from 'src/common/validators/model-array-exist.validtor';
 import { ToBoolean } from 'src/common/decorators/to-boolean.decorator';
 import { ToInt } from 'src/common/decorators/to-int.decorator';
 
@@ -69,4 +70,10 @@ export class CreatePortfolioRequest {
   @ValidateNested({ each: true })
   @Type(() => PortfolioCollectionItem)
   collections?: PortfolioCollectionItem[];
+
+  @IsOptional()
+  @IsArray()
+  @Transform(({ value }) => value?.map((v: string) => parseInt(v, 10)))
+  @ModelArrayExist('categories')
+  categories?: number[];
 }

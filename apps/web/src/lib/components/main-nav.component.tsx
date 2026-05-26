@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMainNav } from "../providers/main-nav.provider"
 import { ReactNode, useEffect, useState } from "react";
-import { BookUser, Box, Briefcase, ChartBar, Grid, Home, Info, LayoutDashboard, Library, Settings, UserRoundPen } from "lucide-react";
+import { BookUser, Box, Briefcase, ChartBar, LayoutDashboard, Library, Settings, UserRoundPen } from "lucide-react";
 import { LogoutDialog } from "@/app/[locale]/(atelier)/__components/logout-dialog";
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
 

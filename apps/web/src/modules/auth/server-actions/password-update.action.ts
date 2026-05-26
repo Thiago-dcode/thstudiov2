@@ -7,10 +7,10 @@ import { config } from "@/lib/config";
 import { decrypt, encrypt } from "@repo/common-lib/utils/encrypt";
 import { PASSWORD_UPDATED_COOKIE_NAME } from "@repo/common-lib/constants/constants";
 import zod from "zod";
-import { BaseUser } from "@repo/common-lib/types/user";
+import { User } from "@repo/common-lib/types/user";
 import { deletePasswordAttemptCookie } from "./password-recovery.action";
 
-export const PasswordUpdateAction = async (formData:FormData):Promise<ActionReturn<BaseUser, {
+export const PasswordUpdateAction = async (formData:FormData):Promise<ActionReturn<User, {
     attempt?:string
 }>> =>{
     const {password,code} = {

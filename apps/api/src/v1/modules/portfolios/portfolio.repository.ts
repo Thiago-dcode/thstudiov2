@@ -18,6 +18,8 @@ import {
 import { DbException } from '@repo/database/exceptions';
 import { RequestService } from 'src/common/services/request.service';
 import { MediaPortfolio } from '@repo/common-lib/types/media';
+import { CategoryBase } from '@repo/common-lib/types/category';
+import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
 
 @Injectable()
 export class PortfolioRepository extends BaseRepository {
@@ -53,6 +55,8 @@ export class PortfolioRepository extends BaseRepository {
     'media.is_featured as m_is_featured',
     'media.is_highlight as m_is_highlight',
     'media.is_active as m_is_active',
+    'categories.id as c_id',
+    'categories.slug as c_slug',
   ];
 
   constructor(private readonly requestService: RequestService, protected readonly logService: LogService) {
@@ -66,14 +70,29 @@ export class PortfolioRepository extends BaseRepository {
   }
 
   async getBySlug(slug: string, userId: number): Promise<FullPortfolio> {
+    const lang = this.requestService.language;
     const result = await this.query()
-      .select(this.FULL_COLUMNS)
+      .rawSelect(
+        [
+          ...this.FULL_COLUMNS,
+          `COALESCE(category_translations.name, categories.name) as c_name`,
+        ].join(','),
+      )
       .where('slug', '=', slug)
       .where('user_id', '=', userId)
       .join('id', 'portfolio_media', 'portfolio_id', 'LEFT')
       .join('portfolio_media.media_id', 'media', 'id', 'LEFT')
+      .join('id', 'portfolio_categories', 'portfolio_id', 'LEFT')
+      .join('portfolio_categories.category_id', 'categories', 'id', 'LEFT')
+      .join(
+        'categories.id',
+        TABLES_ENUM.CATEGORY_TRANSLATIONS,
+        'category_id',
+        'LEFT',
+        `AND category_translations.language_code = '${lang}'`,
+      )
       .where('media.thumbnail', 'IS NOT', null)
-      .where('media.blocked_at',  null)
+      .where('media.blocked_at', null)
       .orderBy('portfolio_media.position', 'ASC')
       .get<PortfolioFullSchema[]>();
 
@@ -102,7 +121,50 @@ export class PortfolioRepository extends BaseRepository {
 
 
 
-  async create({ media, collections, ...portfolioData }: CreatePortfolioInput): Promise<Portfolio> {
+  async findCategoriesForPortfolio(portfolioId: number): Promise<CategoryBase[]> {
+    const lang = this.requestService.language;
+    const rows = await this.query()
+      .rawSelect(
+        `categories.id,
+         categories.tags,
+         categories.thumbnail,
+         categories.is_featured,
+         categories.parent_id,
+         COALESCE(category_translations.name, categories.name) AS name,
+         categories.slug`,
+      )
+      .join('id', 'portfolio_categories', 'portfolio_id', 'INNER')
+      .join('portfolio_categories.category_id', 'categories', 'id', 'INNER')
+      .join(
+        'categories.id',
+        TABLES_ENUM.CATEGORY_TRANSLATIONS,
+        'category_id',
+        'LEFT',
+        `AND category_translations.language_code = '${lang}'`,
+      )
+      .where('portfolio_categories.portfolio_id', '=', portfolioId)
+      .get<{
+        id: number;
+        tags: string | null;
+        thumbnail: string | null;
+        is_featured: boolean;
+        parent_id: number | null;
+        name: string;
+        slug: string;
+      }[]>();
+
+    return rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      slug: row.slug,
+      tags: row.tags ? row.tags.split(',') : [],
+      thumbnail: row.thumbnail,
+      parent_id: row.parent_id,
+      is_featured: row.is_featured,
+    }));
+  }
+
+  async create({ media, collections, categories, ...portfolioData }: CreatePortfolioInput): Promise<Portfolio> {
     const cols = Object.keys(portfolioData);
     const values = Object.values(portfolioData);
 
@@ -114,13 +176,15 @@ export class PortfolioRepository extends BaseRepository {
 
 
     await this.attachRelations(portfolioResult.id, {
-      media, collections
+      media,
+      collections,
+      categories,
     })
 
     return portfolioResult;
   }
 
-  async updateById(id: number, { media, collections, ...portfolioData }: UpdatePortfolioInput): Promise<Portfolio> {
+  async updateById(id: number, { media, collections, categories, ...portfolioData }: UpdatePortfolioInput): Promise<Portfolio> {
     const cols = Object.keys(portfolioData);
     const values = Object.values(portfolioData) as string[];
 
@@ -131,7 +195,9 @@ export class PortfolioRepository extends BaseRepository {
 
     // Re-attach media and collection relations in parallel
     await this.attachRelations(id, {
-      media, collections
+      media,
+      collections,
+      categories,
     });
 
     // Return the updated portfolio
@@ -147,14 +213,16 @@ export class PortfolioRepository extends BaseRepository {
     return this.formatPortfolio(result);
   }
 
-  private async attachRelations(portfolioId: number, { media, collections }: {
-    media: {
+  private async attachRelations(portfolioId: number, { media, collections, categories }: {
+    media?: {
       id: number;
       position: number;
-    }[], collections: {
+    }[];
+    collections?: {
       id: number;
       position: number;
-    }[]
+    }[];
+    categories?: number[];
   }) {
     // Attach media and collection relations in parallel
     const attachPromises: Promise<unknown>[] = [];
@@ -190,6 +258,18 @@ export class PortfolioRepository extends BaseRepository {
           })),
           removePrevious: true,
         })
+      );
+    }
+
+    if (categories !== undefined) {
+      attachPromises.push(
+        this.attach('portfolio_categories', {
+          modelCol: 'portfolio_id',
+          modelValue: portfolioId,
+          attachCol: 'category_id',
+          valuesToAttach: categories,
+          removePrevious: true,
+        }),
       );
     }
 
@@ -257,24 +337,37 @@ export class PortfolioRepository extends BaseRepository {
   }
   private formatFullPortfolio(result: PortfolioFullSchema[]): FullPortfolio {
     const mediaMap = new Map<number, MediaPortfolio>();
+    const categoriesMap = new Map<number, CategoryBase>();
 
     for (const row of result) {
-      if (!row.m_id || mediaMap.has(row.m_id)) continue;
+      if (row.m_id && !mediaMap.has(row.m_id)) {
+        mediaMap.set(row.m_id, {
+          id: row.m_id,
+          public_id: row.public_id,
+          title: row.m_title,
+          position: row.position,
+          thumbnail: row.m_thumbnail,
+          url: row.url,
+          seo_filename: row.seo_filename,
+          seo_alt: row.seo_alt,
+          seo_description: row.seo_description,
+          seo_title: row.seo_title,
+          shape: row.shape,
+          is_highlight: row.m_is_highlight ?? false,
+        });
+      }
 
-      mediaMap.set(row.m_id, {
-        id: row.m_id,
-        public_id: row.public_id,
-        title: row.m_title,
-        position: row.position,
-        thumbnail: row.m_thumbnail,
-        url: row.url,
-        seo_filename: row.seo_filename,
-        seo_alt: row.seo_alt,
-        seo_description: row.seo_description,
-        seo_title: row.seo_title,
-        shape: row.shape,
-        is_highlight: row.m_is_highlight ?? false,
-      });
+      if (row.c_id && !categoriesMap.has(row.c_id)) {
+        categoriesMap.set(row.c_id, {
+          id: row.c_id,
+          name: row.c_name ?? '',
+          slug: row.c_slug ?? '',
+          tags: [],
+          thumbnail: null,
+          parent_id: null,
+          is_featured: false,
+        });
+      }
     }
 
     const first = result[0];
@@ -293,7 +386,8 @@ export class PortfolioRepository extends BaseRepository {
       created_at: first.created_at,
       updated_at: first.updated_at,
       media: Array.from(mediaMap.values()),
-      collections: [], // TODO: implement collection relationship
+      collections: [],
+      categories: Array.from(categoriesMap.values()),
     };
   }
 }

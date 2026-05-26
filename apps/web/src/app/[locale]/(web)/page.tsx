@@ -3,7 +3,6 @@ import { FeaturedArtistsSection } from "./_components/landing/featured-artists-s
 import { ValuePillarsSection } from "./_components/landing/value-pillars-section";
 import { CtaSection } from "./_components/landing/cta-section";
 import { FeatureCategoriesSection } from "./_components/landing/feature-categories-section";
-import { HowItWorksSection } from "./_components/landing/how-it-works-section";
 import { SocialProofSection } from "./_components/landing/social-proof-section";
 import { FaqsContent } from "../../../lib/components/faqs";
 import { WebSection } from "./_components/landing/web-section";

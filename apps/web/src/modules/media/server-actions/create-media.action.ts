@@ -70,7 +70,12 @@ export const createMediaAction = async (input: CreateMediaInputWithFile): Promis
     const mediaData: CreateMediaInputWithFile = {
         ...validated.data,
         compression_level: validated.data.compression_level as EnumType<'COMPRESSION_LEVEL'> | undefined,
-        file: file
+        file: file,
+        description: validated.data.description ?? undefined,
+        title: validated.data.title ?? undefined,
+        seo_alt: validated.data.seo_alt ?? undefined,
+        seo_title: validated.data.seo_title ?? undefined,
+        seo_description: validated.data.seo_description ?? undefined,
     };
 
     // Create media
