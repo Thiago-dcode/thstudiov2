@@ -11,7 +11,7 @@ type ResourceLimitReachedProps = {
 
 export const ResourceLimitReached = ({ label, backHref, count, limit }: ResourceLimitReachedProps) => {
     return (
-        <div className="flex flex-col items-center justify-center py-24 text-muted-foreground gap-4 max-w-md mx-auto text-center">
+        <div className="flex flex-col items-center justify-center py-24 text-text-muted gap-4 max-w-md mx-auto text-center">
             <div className="rounded-full bg-error/10 p-4">
                 <ShieldAlert className="size-8 text-error" strokeWidth={1.5} />
             </div>

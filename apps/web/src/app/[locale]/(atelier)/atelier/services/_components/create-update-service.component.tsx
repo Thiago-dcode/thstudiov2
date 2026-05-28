@@ -172,13 +172,13 @@ export const CreateOrUpdateService = ({
 
     const getSlugStatusMessage = () => {
         if (isCheckingSlug) {
-            return <p className="text-sm text-muted-foreground">Checking availability...</p>;
+            return <p className="text-sm text-text-muted">Checking availability...</p>;
         }
         if (typeof isSlugAvailable === 'boolean' && defaultService?.slug !== slugRef.current) {
             if (isSlugAvailable) {
                 return <p className="text-sm text-green-600">&#10003; This slug is available</p>;
             }
-            return <p className="text-sm text-destructive">&#10007; This slug is already taken</p>;
+            return <p className="text-sm text-error">&#10007; This slug is already taken</p>;
         }
         return null;
     };
@@ -248,7 +248,7 @@ export const CreateOrUpdateService = ({
                                 disabled={isCheckingSlug || isPending}
                             />
                             {isValidSlug === false && (
-                                <p className="text-sm text-destructive">&#10007; Invalid slug format. Example: portrait-photography</p>
+                                <p className="text-sm text-error">&#10007; Invalid slug format. Example: portrait-photography</p>
                             )}
                             {getSlugStatusMessage()}
                         </div>
@@ -470,11 +470,11 @@ const PortfolioSelect = ({ portfolios, value, onChange }: {
                                 value={String(portfolio.id)}
                                 className="gap-2"
                             >
-                                <div className="size-6 shrink-0 overflow-hidden rounded-sm bg-muted">
+                                <div className="size-6 shrink-0 overflow-hidden rounded-sm bg-fg-2">
                                     {portfolio.thumbnail ? (
                                         <img src={portfolio.thumbnail} alt="" className="size-full object-cover" />
                                     ) : (
-                                        <div className="size-full bg-muted-foreground/20" />
+                                        <div className="size-full bg-fg-2-foreground/20" />
                                     )}
                                 </div>
                                 <span className="line-clamp-1">{portfolio.title}</span>
@@ -483,7 +483,7 @@ const PortfolioSelect = ({ portfolios, value, onChange }: {
                     </ComboboxList>
                 </ComboboxContent>
             </Combobox>
-            <p className="text-[0.8rem] text-muted-foreground">
+            <p className="text-[0.8rem] text-text-muted">
                 Link a portfolio so clients can see related photos of this service.
             </p>
         </div>

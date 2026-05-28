@@ -58,7 +58,7 @@ export const DynamicListInput = ({
                                 type="button"
                                 variant="ghost"
                                 size="icon"
-                                className="shrink-0 size-8 text-text-muted hover:text-destructive"
+                                className="shrink-0 size-8 text-text-muted hover:text-error"
                                 onClick={() => removeItem(index)}
                             >
                                 <X className="size-4" />

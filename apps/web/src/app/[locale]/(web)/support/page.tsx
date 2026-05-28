@@ -29,7 +29,7 @@ export default async function SupportPage() {
         </p>
       </div>
 
-      <div className='mt-10 rounded-xl border border-border bg-bg-2/20 p-5 tablet:p-7'>
+      <div className='mt-10 rounded-xl border border-border bg-fg-2/20 p-5 tablet:p-7'>
         <SupportForm
           supportUserId={supportUserId}
           defaultName={defaultName || undefined}

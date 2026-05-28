@@ -25,7 +25,7 @@ function PrimaryFilterPanel() {
         <Accordion
             type="multiple"
             defaultValue={['categories', 'location']}
-            className="w-full rounded-sm bg-bg-2/30"
+            className="w-full rounded-sm bg-fg-2/30"
         >
             <AccordionItem value="categories" className="border-b-2 py-2 border-border px-3">
                 <AccordionTrigger className="cursor-pointer py-3 text-xs font-medium uppercase tracking-[0.12em] text-text-muted hover:no-underline data-[state=open]:text-text">
@@ -61,12 +61,12 @@ export function PrimaryFiltersDropdown() {
                     aria-expanded={open}
                     aria-controls={open ? PRIMARY_FILTERS_CONTENT_ID : undefined}
                     className={cn(
-                        'group flex h-14 min-h-14 w-full shrink-0 justify-between gap-2 rounded-md border-2 border-border bg-bg-2 px-4 text-left shadow-none transition-colors',
-                        'hover:bg-bg-2/40 hover:text-text',
+                        'group flex h-14 min-h-14 w-full shrink-0 justify-between gap-2 rounded-md border-2 border-border bg-fg-2 px-4 text-left shadow-none transition-colors',
+                        'hover:bg-fg-2/40 hover:text-text',
                         'text-xs font-medium uppercase tracking-[0.12em] text-text-muted',
                         'tablet:h-14 tablet:w-12 tablet:justify-center tablet:rounded-none tablet:border-0 tablet:border-r-2 tablet:border-border tablet:px-0',
                         open &&
-                            'border-text/35 bg-bg-2/45 text-text ring-2 ring-text/10 tablet:ring-0',
+                            'border-text/35 bg-fg-2/45 text-text ring-2 ring-text/10 tablet:ring-0',
                     )}
                 >
                     <span className="flex min-w-0 items-center gap-2.5 tablet:gap-0">

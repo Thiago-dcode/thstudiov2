@@ -69,7 +69,7 @@ export function ArtistProfileCard({
       href={href}
       aria-label={`Open profile: ${name}, @${artist.username}`}
       className={cn(
-        "group flex h-full min-h-0 flex-col overflow-hidden rounded-3xl bg-fg p-2 shadow-md ring-1 ring-border/40 transition-all duration-300",
+        "max-w-72 group flex h-full min-h-0 flex-col overflow-hidden rounded-3xl bg-fg p-2 shadow-md ring-1 ring-border/40 transition-all duration-300",
         "hover:-translate-y-0.5 hover:shadow-lg hover:ring-border/60",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/25 focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
         className,
@@ -82,11 +82,10 @@ export function ArtistProfileCard({
             alt=""
             fill
             className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
-            sizes="(min-width: 1280px) 18vw, (min-width: 1024px) 22vw, (min-width: 768px) 28vw, 45vw"
           />
         ) : (
           <span
-            className="flex size-full items-center justify-center font-serif text-2xl italic tracking-tight text-text-muted/50 tablet:text-3xl"
+            className="flex size-full items-center justify-center font-serif text-3xl italic tracking-tight text-text-muted/50 tablet:text-4xl"
             aria-hidden
           >
             {initials(artist)}
@@ -96,16 +95,16 @@ export function ArtistProfileCard({
 
       <div className="flex min-h-0 flex-1 flex-col gap-2 px-1.5 pb-1 pt-3">
         <div className="min-w-0 space-y-1">
-          <h3 className="truncate font-sans text-sm font-semibold leading-tight text-text tablet:text-base">
+          <h4 className="truncate font-sans text-base font-medium leading-snug text-text tablet:text-lg">
             {name}
-          </h3>
-          <p className="line-clamp-2 text-xs leading-snug text-text-muted tablet:text-sm">
+          </h4>
+          <p className="line-clamp-2 text-sm leading-relaxed text-text-muted tablet:text-base">
             {artistBioLine(artist)}
           </p>
         </div>
 
         {loc ? (
-          <p className="line-clamp-1 text-[10px] text-text-muted/85 tablet:text-xs">
+          <p className="line-clamp-1 text-xs text-text-muted/85 tablet:text-sm">
             {loc}
           </p>
         ) : null}

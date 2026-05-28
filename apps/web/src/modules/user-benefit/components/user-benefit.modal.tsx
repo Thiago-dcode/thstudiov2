@@ -62,26 +62,26 @@ export const UserBenefitModal = ({ user, subscriptionPath }: { user: User | Base
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogContent className="max-w-md p-8">
                 <div className="flex flex-col items-center gap-6 text-center">
-                    <div className="flex size-16 items-center justify-center rounded-full bg-primary/10">
-                        <Gift className="size-8 text-primary" />
+                    <div className="flex size-16 items-center justify-center rounded-full bg-accent/10">
+                        <Gift className="size-8 text-accent-text" />
                     </div>
 
                     <DialogHeader className="items-center gap-2">
                         <DialogTitle className="text-2xl font-semibold">
                             You have a gift waiting
                         </DialogTitle>
-                        <DialogDescription className="text-base text-muted-foreground">
-                            As a <span className="font-semibold text-foreground">{config.label}</span> you
+                        <DialogDescription className="text-base text-text-muted">
+                            As a <span className="font-semibold text-text">{config.label}</span> you
                             get{' '}
-                            <span className="font-semibold text-primary">
+                            <span className="font-semibold text-accent-text">
                                 {config.months} months free
                             </span>{' '}
                             on any plan.
                         </DialogDescription>
                     </DialogHeader>
 
-                    <div className="flex w-full items-center gap-3 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 text-left text-sm text-muted-foreground">
-                        <Sparkles className="size-5 shrink-0 text-primary" />
+                    <div className="flex w-full items-center gap-3 rounded-lg border border-accent/20 bg-accent/5 px-4 py-3 text-left text-sm text-text-muted">
+                        <Sparkles className="size-5 shrink-0 text-accent-text" />
                         <span>
                             Your benefit will be applied automatically when you choose a plan &mdash; no
                             code needed.
@@ -97,7 +97,7 @@ export const UserBenefitModal = ({ user, subscriptionPath }: { user: User | Base
                             </Button>
                             <Button
                                 variant="ghost"
-                                className="w-full rounded-xl text-muted-foreground"
+                                className="w-full rounded-xl text-text-muted"
                                 onClick={() => setOpen(false)}
                             >
                                 Maybe later

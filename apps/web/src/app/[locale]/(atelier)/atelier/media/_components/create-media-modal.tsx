@@ -95,7 +95,7 @@ function MediaUploadContent() {
                                                     <p className="text-sm">
                                                         Controls the balance between image quality and file size. Lower compression (VERY_LOW, LOW) preserves more detail but creates larger files. Higher compression (HIGH, VERY_HIGH) reduces file size but may slightly reduce image quality.
                                                     </p>
-                                                    <p className="text-xs text-muted-foreground">
+                                                    <p className="text-xs text-text-muted">
                                                         This setting applies to all uploaded files. You can adjust individual files using the sliders below.
                                                     </p>
                                                 </div>
@@ -169,7 +169,7 @@ function MediaUploadContent() {
                                                 <p className="text-sm">
                                                     Automatically generates SEO title, description, alt text, and filename for each image using AI vision analysis.
                                                 </p>
-                                                <p className="text-xs text-muted-foreground">
+                                                <p className="text-xs text-text-muted">
                                                     Costs 1 AI credit per image. You have {remainingCredits} credit{remainingCredits !== 1 ? 's' : ''} remaining.
                                                 </p>
                                             </div>
@@ -350,7 +350,7 @@ export function CreateMediaDialog({onSuccess}:{
 
     if (isStorageFull) {
         return (
-            <Button className="p-2 text-sm" variant="secondary" size="default" disabled
+            <Button className="p-2 text-sm" variant="default" size="default" disabled
                 title={`Storage full: ${(storageUsed / 1024).toFixed(1)} / ${(storageLimit / 1024).toFixed(1)} GB used`}
             >
                 <Plus className="h-4 w-4" />
@@ -363,7 +363,7 @@ export function CreateMediaDialog({onSuccess}:{
 
         <Dialog open={open} onOpenChange={setOpen} >
             <DialogTrigger asChild>
-                <Button className="p-2 text-sm " variant="secondary" size="default">
+                <Button className="p-2 text-sm " variant="default" size="default">
                     <Plus className="h-4 w-4" />
                     Create media
                 </Button>

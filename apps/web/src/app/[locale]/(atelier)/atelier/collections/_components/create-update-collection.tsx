@@ -136,13 +136,13 @@ export const CreateOrUpdateCollection = ({
 
     const getSlugStatusMessage = () => {
         if (isCheckingSlugAvailability) {
-            return <p className="text-sm text-muted-foreground">Checking availability...</p>;
+            return <p className="text-sm text-text-muted">Checking availability...</p>;
         }
         if (typeof isSlugAvailable === 'boolean' && currentCollection?.slug !== formData.slug) {
             if (isSlugAvailable) {
                 return <p className="text-sm text-green-600">✓ This slug is available</p>;
             }
-            return <p className="text-sm text-destructive">✗ This slug is already taken</p>;
+            return <p className="text-sm text-error">✗ This slug is already taken</p>;
         }
         return null;
     };
@@ -236,7 +236,7 @@ export const CreateOrUpdateCollection = ({
                             disabled={isCheckingSlugAvailability || isPending}
                         />
                         {isValidSlug === false && (
-                            <p className="text-sm text-destructive">✗ Invalid slug format. Example: my-collection</p>
+                            <p className="text-sm text-error">✗ Invalid slug format. Example: my-collection</p>
                         )}
                         {getSlugStatusMessage()}
                     </div>
@@ -305,14 +305,14 @@ export const CreateOrUpdateCollection = ({
                 <section className={`space-y-5 mt-8 ${readOnly ? "pointer-events-none select-none opacity-90" : ""}`}>
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                            <h3 className="text-sm font-medium text-foreground">Media</h3>
+                            <h3 className="text-sm font-medium text-text">Media</h3>
                             {mediaSelected.length > 0 && (
-                                <span className="text-xs text-muted-foreground tabular-nums">
+                                <span className="text-xs text-text-muted tabular-nums">
                                     {mediaSelected.length} selected
                                 </span>
                             )}
                             {mediaSelected.length > 1 && (
-                                <span className="text-xs text-muted-foreground/70">
+                                <span className="text-xs text-text-muted/70">
                                     · Drag to reorder
                                 </span>
                             )}
@@ -326,8 +326,8 @@ export const CreateOrUpdateCollection = ({
 
                     {mediaSelected.length === 0 ? (
                         <div className="w-full min-h-[200px] rounded-xl border-2 border-dashed border-border/60 bg-fg-2/5 flex flex-col items-center justify-center gap-3 p-8">
-                            <Image className="size-8 text-muted-foreground/30" />
-                            <p className="text-sm text-muted-foreground/70">No media added yet</p>
+                            <Image className="size-8 text-text-muted/30" />
+                            <p className="text-sm text-text-muted/70">No media added yet</p>
                         </div>
                     ) : (
                         <DndContext onDragEnd={handleDragEnd}>
@@ -359,7 +359,7 @@ export const CreateOrUpdateCollection = ({
                                                     className={cn(
                                                         "absolute top-2 right-2 z-10 inline-flex items-center justify-center",
                                                         "size-7 rounded-full border border-border/50 bg-bg/70 backdrop-blur-sm",
-                                                        "text-muted-foreground hover:text-foreground hover:bg-bg",
+                                                        "text-text-muted hover:text-text hover:bg-bg",
                                                         "opacity-0 group-hover:opacity-100 focus:opacity-100",
                                                         "transition-opacity"
                                                     )}
@@ -375,7 +375,7 @@ export const CreateOrUpdateCollection = ({
                                                         />
                                                     </div>
                                                 </div>
-                                                <h3 className="text-xs font-medium text-foreground line-clamp-1 px-0.5">
+                                                <h3 className="text-xs font-medium text-text line-clamp-1 px-0.5">
                                                     {m.title || m.seo_filename || 'Untitled'}
                                                 </h3>
                                             </SortableItem>

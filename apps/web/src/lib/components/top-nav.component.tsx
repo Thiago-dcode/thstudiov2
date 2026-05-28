@@ -30,7 +30,7 @@ export const TopNav = ({ username }: { username?: string }) => {
             </div>
 
             <div className="flex items-center justify-center gap-4">
-                {metrics?.active_plan   && <Link href={'/atelier/settings/subscription'} ><Button  variant={'secondary'} size={'sm'}>Updgrade</Button></Link>}
+                {metrics?.active_plan && !metrics.active_plan.top_tier   && <Link href={'/atelier/settings/subscription'} ><Button  variant={'primary'} size={'sm'}>Updgrade</Button></Link>}
                 {username && (
                     <a
                         href={`/artists/${username}`}

@@ -1,1 +1,263 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+
+@source "./**/*.{js,ts,jsx,tsx,mdx}";
+@source "../../../packages/ui/src/**/*.{js,ts,jsx,tsx}";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  color-scheme: light;
+
+  --brand-subtle: #fff1e6;
+  --brand-light: #ffb97a;
+  --brand: #ff8932;
+  --brand-dark: #e06a10;
+  --brand-ink: #7a3800;
+
+  --surface: #fafaf9;
+  --surface-raised: #f4f3f0;
+  --surface-border: #e8e6e0;
+  --surface-muted: #a8a49c;
+  --surface-secondary: #6b6760;
+  --surface-primary: #2e2c28;
+  --surface-ink: #1a1916;
+
+  --semantic-success: #0d9488;
+  --semantic-success-soft: #ccfbf1;
+  --semantic-info: #2563eb;
+  --semantic-info-soft: #dbeafe;
+  --semantic-error: #dc2626;
+  --semantic-error-soft: #fee2e2;
+  --semantic-warning: #d97706;
+  --semantic-warning-soft: #fef3c7;
+
+  --color-bg: var(--surface);
+  --color-fg: var(--surface-raised);
+  --color-fg-1: color-mix(in oklab, var(--surface-raised) 65%, white);
+  --color-fg-2: color-mix(in oklab, var(--surface-raised) 35%, white);
+  --color-text: var(--surface-ink);
+  --color-text-muted: var(--surface-secondary);
+  --color-accent: var(--brand);
+  --color-accent-muted: color-mix(in oklab, var(--brand) 22%, white);
+  --color-secondary: var(--brand-subtle);
+  --color-secondary-fg: var(--brand-ink);
+  --color-border: var(--surface-border);
+  --color-success: var(--semantic-success);
+  --color-success-fg: #f0fdfa;
+  --color-error: var(--semantic-error);
+  --color-error-fg: #fff1f2;
+  --color-warning: var(--semantic-warning);
+  --color-warning-fg: #fffbeb;
+  --color-info: var(--semantic-info);
+  --color-info-fg: #eff6ff;
+
+  --size-lg: 1.125rem;
+  --size-base: 1rem;
+  --size-sm: 0.875rem;
+  --size-xs: 0.75rem;
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+
+  --ring-size: 2px;
+  --shadow-soft: 0 1px 2px rgb(26 25 22 / 0.08), 0 10px 24px rgb(26 25 22 / 0.06);
+  --shadow-strong: 0 8px 24px rgb(26 25 22 / 0.12), 0 24px 60px rgb(26 25 22 / 0.14);
+}
+
+.dark {
+  color-scheme: dark;
+
+  --brand-subtle: #3f2413;
+  --brand-light: #ffb97a;
+  --brand: #ff9d4d;
+  --brand-dark: #e06a10;
+  --brand-ink: #ffd4ae;
+
+  --surface: #141311;
+  --surface-raised: #1d1b18;
+  --surface-border: #36322b;
+  --surface-muted: #8f8779;
+  --surface-secondary: #bdb6aa;
+  --surface-primary: #ece6dc;
+  --surface-ink: #f7f2e8;
+
+  --semantic-success: #14b8a6;
+  --semantic-success-soft: #0f766e;
+  --semantic-info: #3b82f6;
+  --semantic-info-soft: #1d4ed8;
+  --semantic-error: #ef4444;
+  --semantic-error-soft: #991b1b;
+  --semantic-warning: #f59e0b;
+  --semantic-warning-soft: #92400e;
+
+  --color-fg-1: color-mix(in oklab, var(--surface-raised) 70%, black);
+  --color-fg-2: color-mix(in oklab, var(--surface-raised) 45%, black);
+  --color-text: var(--surface-ink);
+  --color-text-muted: var(--surface-secondary);
+  --color-accent-muted: color-mix(in oklab, var(--brand) 26%, black);
+  --color-secondary: #2e2117;
+  --color-secondary-fg: #ffd9bb;
+  --color-border: var(--surface-border);
+  --color-success-fg: #082f2f;
+  --color-error-fg: #2b0a0a;
+  --color-warning-fg: #3a2505;
+  --color-info-fg: #0d1f42;
+
+  --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.35), 0 16px 30px rgb(0 0 0 / 0.25);
+  --shadow-strong: 0 10px 30px rgb(0 0 0 / 0.5), 0 30px 80px rgb(0 0 0 / 0.45);
+}
+
+@theme {
+  --font-serif: var(--font-serif, ui-serif, Georgia, Cambria, "Times New Roman", Times, serif);
+
+  --breakpoint-phone: 480px;
+  --breakpoint-phone-lg: 640px;
+  --breakpoint-tablet: 768px;
+  --breakpoint-tablet-lg: 1024px;
+  --breakpoint-laptop: 1280px;
+  --breakpoint-desktop: 1536px;
+  --breakpoint-desktop-lg: 1920px;
+  --breakpoint-ultrawide: 2560px;
+
+  --text-lg: var(--size-lg);
+  --text-base: var(--size-base);
+  --text-sm: var(--size-sm);
+  --text-xs: var(--size-xs);
+
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+
+  --color-bg: var(--color-bg);
+  --color-fg: var(--color-fg);
+  --color-fg-1: var(--color-fg-1);
+  --color-fg-2: var(--color-fg-2);
+  --color-text: var(--color-text);
+  --color-text-muted: var(--color-text-muted);
+  --color-accent: var(--color-accent);
+  --color-accent-muted: var(--color-accent-muted);
+  --color-secondary: var(--color-secondary);
+  --color-secondary-fg: var(--color-secondary-fg);
+  --color-border: var(--color-border);
+  --color-success: var(--color-success);
+  --color-success-fg: var(--color-success-fg);
+  --color-error: var(--color-error);
+  --color-error-fg: var(--color-error-fg);
+  --color-warning: var(--color-warning);
+  --color-warning-fg: var(--color-warning-fg);
+  --color-info: var(--color-info);
+  --color-info-fg: var(--color-info-fg);
+
+  --color-brand-subtle: var(--brand-subtle);
+  --color-brand-light: var(--brand-light);
+  --color-brand: var(--brand);
+  --color-brand-dark: var(--brand-dark);
+  --color-brand-ink: var(--brand-ink);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-border: var(--surface-border);
+  --color-surface-muted: var(--surface-muted);
+  --color-surface-secondary: var(--surface-secondary);
+  --color-surface-primary: var(--surface-primary);
+  --color-surface-ink: var(--surface-ink);
+}
+
+* {
+  box-sizing: border-box;
+  border-color: var(--color-border);
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  background-image: radial-gradient(circle at 15% -10%, rgb(255 137 50 / 0.18), transparent 45%),
+    radial-gradient(circle at 100% 0, rgb(255 185 122 / 0.2), transparent 42%),
+    linear-gradient(180deg, var(--color-bg) 0%, color-mix(in oklab, var(--color-bg) 86%, white) 100%);
+  background-attachment: fixed;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.dark body {
+  background-image: radial-gradient(circle at 15% -12%, rgb(255 157 77 / 0.14), transparent 45%),
+    radial-gradient(circle at 100% 0, rgb(224 106 16 / 0.18), transparent 40%),
+    linear-gradient(180deg, var(--color-bg) 0%, color-mix(in oklab, var(--color-bg) 84%, black) 100%);
+}
+
+::selection {
+  background-color: color-mix(in oklab, var(--color-accent) 38%, white);
+  color: var(--brand-ink);
+}
+
+.dark ::selection {
+  background-color: color-mix(in oklab, var(--color-accent) 52%, black);
+  color: var(--surface-ink);
+}
+
+:where(button, [role="button"], a, input, select, textarea):focus-visible {
+  outline: var(--ring-size) solid color-mix(in oklab, var(--color-accent) 62%, white);
+  outline-offset: 2px;
+}
+
+.dark :where(button, [role="button"], a, input, select, textarea):focus-visible {
+  outline-color: color-mix(in oklab, var(--color-accent) 58%, black);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes enter-up {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes breathe {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+
+    50% {
+      transform: scale(1.015);
+    }
+  }
+
+  .animate-enter-up {
+    animation: enter-up 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .animate-breathe {
+    animation: breathe 5s ease-in-out infinite;
+  }
+}
+
+.surface-card {
+  background-color: var(--color-fg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+}
+
+.surface-card-strong {
+  background-color: var(--color-fg-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-strong);
+}

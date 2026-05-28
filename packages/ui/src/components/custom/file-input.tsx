@@ -95,14 +95,14 @@ const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
                         {fileName ? (
                             <>
                                 <p className="text-sm font-medium text-text">{fileName}</p>
-                                <p className="text-xs text-muted-foreground mt-1">Click to change file</p>
+                                <p className="text-xs text-text-muted mt-1">Click to change file</p>
                             </>
                         ) : (
                             <>
                                 <p className="text-sm font-medium text-text">
                                     Click to upload
                                 </p>
-                                <p className="text-xs text-muted-foreground mt-1">
+                                <p className="text-xs text-text-muted mt-1">
                                     or drag and drop
                                 </p>
                             </>

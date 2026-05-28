@@ -75,7 +75,7 @@ return (
       </div>
       {title ? (
         <div className="absolute inset-x-[12%] bottom-[12%] z-20 pointer-events-none min-w-0">
-          <h3 className="w-full min-w-0 truncate text-xs text-bg/90 font-semibold text-foreground bg-text/50 px-2 py-1 shadow-md pointer-events-auto">
+          <h3 className="w-full min-w-0 truncate text-xs text-bg/90 font-semibold text-text bg-text/50 px-2 py-1 shadow-md pointer-events-auto">
             {title}
           </h3>
         </div>

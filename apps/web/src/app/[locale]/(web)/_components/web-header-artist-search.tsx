@@ -106,7 +106,7 @@ export function WebHeaderArtistSearch({ className }: { className?: string }) {
                     placeholder="Search artists…"
                     autoComplete="off"
                     className={cn(
-                        'h-9 w-full rounded-md border border-border bg-bg-2/40 py-2 pr-3 pl-9',
+                        'h-9 w-full rounded-md border border-border bg-fg-2/40 py-2 pr-3 pl-9',
                         'text-sm placeholder:text-text-muted/70',
                         'focus-visible:border-text/40 focus-visible:ring-2 focus-visible:ring-text/15',
                     )}

@@ -220,7 +220,7 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
               value={getFieldValue('title')}
               onChange={(e) => handleInputChange('title', e.target.value)}
               placeholder="Enter title"
-              labelClassName="text-sm font-medium text-foreground"
+              labelClassName="text-sm font-medium text-text"
               error={inputErrors?.title}
               disabled={isPending}
             />
@@ -232,7 +232,7 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
               onChange={(e) => handleInputChange('description', e.target.value)}
               placeholder="Enter description"
               rows={6}
-              labelClassName="text-sm font-medium text-foreground"
+              labelClassName="text-sm font-medium text-text"
               error={inputErrors?.description}
               disabled={isPending}
             />
@@ -249,7 +249,7 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
               value={getFieldValue('seo_title')}
               onChange={(e) => handleInputChange('seo_title', e.target.value)}
               placeholder="Enter SEO title"
-              labelClassName="text-sm font-medium text-foreground"
+              labelClassName="text-sm font-medium text-text"
               extraInfo="The title that appears in search engine results and browser tabs. Helps improve search visibility."
               error={inputErrors?.seo_title}
               disabled={isPending}
@@ -263,7 +263,7 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
               onChange={(e) => handleInputChange('seo_description', e.target.value)}
               placeholder="Enter SEO description"
               rows={5}
-              labelClassName="text-sm font-medium text-foreground"
+              labelClassName="text-sm font-medium text-text"
               extraInfo="A brief summary that appears in search results. Helps users understand what the image is about before clicking."
               error={inputErrors?.seo_description}
               disabled={isPending}
@@ -276,7 +276,7 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
               value={getFieldValue('seo_alt')}
               onChange={(e) => handleInputChange('seo_alt', e.target.value)}
               placeholder="Enter alt text for accessibility"
-              labelClassName="text-sm font-medium text-foreground"
+              labelClassName="text-sm font-medium text-text"
               extraInfo="A text description of the image for screen readers and when images fail to load. Improves accessibility and SEO."
               error={inputErrors?.seo_alt}
               disabled={isPending}
@@ -289,7 +289,7 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
               value={getFieldValue('seo_filename')}
               onChange={(e) => handleInputChange('seo_filename', e.target.value)}
               placeholder="Enter filename"
-              labelClassName="text-sm font-medium text-foreground"
+              labelClassName="text-sm font-medium text-text"
               extraInfo="The filename used for SEO purposes. Can be edited to improve search visibility."
               error={inputErrors?.seo_filename}
               disabled={isPending}
@@ -306,20 +306,20 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
           <>
             {currentMedia.title && (
               <div className="space-y-2">
-                <Label className="text-xs text-muted-foreground font-semibold uppercase tracking-wide">Title</Label>
-                <p className="text-sm text-foreground leading-relaxed">{currentMedia.title}</p>
+                <Label className="text-xs text-text-muted font-semibold uppercase tracking-wide">Title</Label>
+                <p className="text-sm text-text leading-relaxed">{currentMedia.title}</p>
               </div>
             )}
             {currentMedia.description && (
               <div className="space-y-2">
-                <Label className="text-xs text-muted-foreground font-semibold uppercase tracking-wide">Description</Label>
-                <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{currentMedia.description}</p>
+                <Label className="text-xs text-text-muted font-semibold uppercase tracking-wide">Description</Label>
+                <p className="text-sm text-text leading-relaxed whitespace-pre-wrap">{currentMedia.description}</p>
               </div>
             )}
             {formattedDate && (
               <div className="space-y-2 pt-4">
-                <Label className="text-xs text-muted-foreground font-semibold uppercase tracking-wide">Last Updated</Label>
-                <p className="text-sm text-foreground">{formattedDate}</p>
+                <Label className="text-xs text-text-muted font-semibold uppercase tracking-wide">Last Updated</Label>
+                <p className="text-sm text-text">{formattedDate}</p>
               </div>
             )}
           </>
@@ -329,25 +329,25 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
           <>
             {currentMedia.seo_title && (
               <div className="space-y-2">
-                <Label className="text-xs text-muted-foreground font-semibold uppercase tracking-wide">SEO Title</Label>
-                <p className="text-sm text-foreground leading-relaxed">{currentMedia.seo_title}</p>
+                <Label className="text-xs text-text-muted font-semibold uppercase tracking-wide">SEO Title</Label>
+                <p className="text-sm text-text leading-relaxed">{currentMedia.seo_title}</p>
               </div>
             )}
             {currentMedia.seo_description && (
               <div className="space-y-2">
-                <Label className="text-xs text-muted-foreground font-semibold uppercase tracking-wide">SEO Description</Label>
-                <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap">{currentMedia.seo_description}</p>
+                <Label className="text-xs text-text-muted font-semibold uppercase tracking-wide">SEO Description</Label>
+                <p className="text-sm text-text leading-relaxed whitespace-pre-wrap">{currentMedia.seo_description}</p>
               </div>
             )}
             {currentMedia.seo_alt && (
               <div className="space-y-2">
-                <Label className="text-xs text-muted-foreground font-semibold uppercase tracking-wide">Alt Text</Label>
-                <p className="text-sm text-foreground leading-relaxed">{currentMedia.seo_alt}</p>
+                <Label className="text-xs text-text-muted font-semibold uppercase tracking-wide">Alt Text</Label>
+                <p className="text-sm text-text leading-relaxed">{currentMedia.seo_alt}</p>
               </div>
             )}
             <div className="space-y-2">
-              <Label className="text-xs text-muted-foreground font-semibold uppercase tracking-wide">Filename</Label>
-              <p className="text-xs font-mono text-foreground bg-fg-2 px-3 py-2 rounded-md">{currentMedia.seo_filename}</p>
+              <Label className="text-xs text-text-muted font-semibold uppercase tracking-wide">Filename</Label>
+              <p className="text-xs font-mono text-text bg-fg-2 px-3 py-2 rounded-md">{currentMedia.seo_filename}</p>
             </div>
           </>
         );
@@ -406,7 +406,7 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
                   className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-200"
                 />
               ) : (
-                <div className="flex items-center justify-center text-muted-foreground text-xs bg-fg-2 rounded-lg w-full h-full">
+                <div className="flex items-center justify-center text-text-muted text-xs bg-fg-2 rounded-lg w-full h-full">
                   No preview
                 </div>
               )}
@@ -420,11 +420,11 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
 
             {/* Title and Date - Stacked at Bottom */}
             <div className="flex flex-col">
-              <h3 className="text-xs font-medium text-foreground line-clamp-1">
+              <h3 className="text-xs font-medium text-text line-clamp-1">
                 {currentMedia.title || currentMedia.seo_filename || 'Untitled'}
               </h3>
               {formattedDate && (
-                <p className="text-[10px] text-muted-foreground">
+                <p className="text-[10px] text-text-muted">
                   {formattedDate}
                 </p>
               )}
@@ -446,7 +446,7 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
                     href={`/artists/${username}/media/${currentMedia.public_id}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-muted-foreground hover:text-foreground transition-colors"
+                    className="text-text-muted hover:text-text transition-colors"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <Eye className="size-3.5" />
@@ -454,7 +454,7 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
                 )}
               </DrawerTitle>
               {currentMedia.bytes && !isEditing && (
-                <p className="text-xs text-muted-foreground text-center">
+                <p className="text-xs text-text-muted text-center">
                   ({bytesToMB(currentMedia.bytes).toFixed(2)} MB)
                 </p>
               )}
@@ -491,7 +491,7 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
                     {aiCreditsInfo && (
                       <span className={cn(
                         "text-[10px] ml-0.5",
-                        !hasEnoughCredits ? "text-destructive font-medium" : "text-muted-foreground"
+                        !hasEnoughCredits ? "text-error font-medium" : "text-text-muted"
                       )}>
                         {aiCreditsInfo.consumed}/{aiCreditsInfo.total}
                         {!hasEnoughCredits && " (No credits)"}
@@ -503,13 +503,13 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
 
                 <Popover open={deletePopoverOpen} onOpenChange={setDeletePopoverOpen}>
                   <PopoverTrigger asChild>
-                    <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 px-2.5">
+                    <Button variant="ghost" size="sm" className="text-error hover:text-error hover:bg-error/10 h-8 px-2.5">
                       <Trash2 className="h-3.5 w-3.5 mr-1" />
                       <span className="text-xs font-medium">Delete</span>
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-56 p-3 z-100" align="end">
-                    <p className="text-sm text-muted-foreground mb-3">Are you sure you want to delete this media?</p>
+                    <p className="text-sm text-text-muted mb-3">Are you sure you want to delete this media?</p>
                     <div className="flex items-center gap-2">
                       <Button
                         variant="outline"
@@ -553,7 +553,7 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
                 type="button"
                 onClick={handleCancel}
                 variant="outline"
-                className="flex-1 hover:bg-fg-2 hover:text-foreground"
+                className="flex-1 hover:bg-fg-2 hover:text-text"
                 disabled={isPending}
               >
                 Cancel
@@ -586,7 +586,7 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
                   Edit
                 </Button>
                 <DrawerClose asChild>
-                  <Button variant="outline" className="flex-1 hover:bg-fg-2 hover:text-foreground">
+                  <Button variant="outline" className="flex-1 hover:bg-fg-2 hover:text-text">
                     Close
                   </Button>
                 </DrawerClose>

@@ -28,23 +28,27 @@ description: >
 
 ---
 
-## 2. Design Language — Co-Star & Editorial Journal
+## 2. Design Language — Warm Editorial
 
-**Style**: Dark-first minimalist + asymmetric editorial.
+**Style**: Light-first warm editorial with dark mode support. Brand color is orange.
 
-- **Colors**: Dark backgrounds (`oklch(5–15% 0 0)`), off-white text. No saturated accents.
+- **Colors**: Use design tokens from `globals.css` — never hardcode hex values.
+  - **Brand scale**: `--brand-subtle` → `--brand-light` → `--brand` (#ff8932) → `--brand-dark` → `--brand-text` → `--brand-ink`.
+  - **Surfaces**: `--surface` (bg) → `--surface-raised` → `--surface-border` → `--surface-muted` → `--surface-secondary` → `--surface-primary` → `--surface-ink` (text).
+  - **Semantic aliases**: `--color-bg`, `--color-fg`, `--color-fg-1`, `--color-fg-2`, `--color-text`, `--color-text-muted`, `--color-accent`, `--color-border`.
+  - Dark mode overrides via `.dark` class — all tokens adapt automatically.
 - **Typography**:
-  - **Body**: Clean serifs (Playfair, Lora) for credibility.
-  - **UI**: Sans/Mono for labels and interactive elements.
-  - **Scale**: 1.25–1.5 ratio. Line height 1.5–1.75.
-- **Layout**: Asymmetric Bento grids. Ample negative space.
-- **Tone**: Sparse, serious, mystical. No "tech startup" vibes.
+  - **Serif** (`--font-serif`) for editorial headings where appropriate.
+  - **Sans** for UI, labels, and interactive elements.
+  - **Scale**: `--size-xs` (0.75rem), `--size-sm` (0.875rem), `--size-base` (1rem), `--size-lg` (1.125rem). Use Tailwind `text-xs/sm/base/lg`.
+- **Layout**: Ample negative space. Subtle warm background gradients (brand-tinted radial gradients on body).
+- **Tone**: Warm, confident, editorial. Approachable but professional.
 
 ---
 
 ## 3. Visual Hierarchy & Layout
 
-- Use an **8px spacing grid** (8, 16, 24, 32, 48, 64px).
+- Use Tailwind spacing scale (based on 4px grid: 4, 8, 12, 16, 20, 24, 32, 40, 48, 64px).
 - Place the most important content top-left (F-pattern reading).
 - **One primary action per view** — never compete for attention.
 - Group related elements; separate unrelated ones with whitespace.
@@ -59,15 +63,35 @@ description: >
 - Clear heading hierarchy: H1 → H2 → H3, never skip levels.
 - Line length: **60–80 characters** for body text.
 - Contrast ratio: **≥ 4.5:1** for body, ≥ 3:1 for large text (WCAG AA).
+- Use `--radius-sm` (0.5rem), `--radius-md` (0.75rem), `--radius-lg` (1rem), `--radius-xl` (1.25rem) for border-radius — map to Tailwind `rounded-sm/md/lg/xl`.
 
 ---
 
-## 5. Color
+## 5. Color Tokens
 
-- Palette: 1 primary, 1 secondary, neutrals, semantic (success / warning / error / info).
+All colors come from `packages/ui/src/styles/globals.css`. **Never hardcode hex values — always use CSS variables or their Tailwind aliases.**
+
+| Purpose | Token | Tailwind class |
+|---------|-------|----------------|
+| Background | `--color-bg` | `bg-bg` |
+| Foreground surface | `--color-fg` | `bg-fg` |
+| Elevated surface | `--color-fg-1`, `--color-fg-2` | `bg-fg-1`, `bg-fg-2` |
+| Primary text | `--color-text` | `text-text` |
+| Muted text | `--color-text-muted` | `text-text-muted` |
+| Accent (brand orange) | `--color-accent` | `bg-accent`, `text-accent` |
+| Accent text | `--color-accent-text` | `text-accent-text` |
+| Accent muted | `--color-accent-muted` | `bg-accent-muted` |
+| Secondary | `--color-secondary` | `bg-secondary` |
+| Border | `--color-border` | `border-border` |
+| Success | `--color-success` / `--color-success-fg` | `text-success`, `bg-success-fg` |
+| Error | `--color-error` / `--color-error-fg` | `text-error`, `bg-error-fg` |
+| Warning | `--color-warning` / `--color-warning-fg` | `text-warning`, `bg-warning-fg` |
+| Info | `--color-info` / `--color-info-fg` | `text-info`, `bg-info-fg` |
+
 - **Never use color as the only differentiator** — pair with icon, label, or pattern.
-- Test contrast in both light and dark mode.
-- Semantic colors: green = success, red = error, amber = warning, blue = info.
+- Dark mode is handled via `.dark` class — tokens remap automatically, no manual overrides needed.
+- Use `surface-card` and `surface-card-strong` utility classes for card containers.
+- Shadows: `--shadow-soft` (cards) and `--shadow-strong` (elevated modals/dropdowns).
 
 ---
 
@@ -85,7 +109,7 @@ description: >
 
 - **Server First**: Default to Server Components. `use client` only when needed.
 - **Responsive / Mobile-First**: Design and verify on small screens first; fluid layouts, readable type, comfortable touch targets; no hardcoded px (use tokens).
-- Breakpoints: 320px (mobile) → 768px (tablet) → 1280px (desktop). Use `min-width` media queries.
+- Breakpoints (defined in `globals.css`): `phone` (480px) → `phone-lg` (640px) → `tablet` (768px) → `tablet-lg` (1024px) → `laptop` (1280px) → `desktop` (1536px) → `desktop-lg` (1920px) → `ultrawide` (2560px). Use `min-width` media queries.
 - No horizontal scroll on any breakpoint. Navigation must collapse gracefully on mobile.
 - **Images**: Always `next/image`. Use `fill` + `sizes` + `relative` parent. Add `loading="lazy"`, specify `width` and `height`. Use WebP.
 - **Performance**: No CLS (skeletons, explicit dims). Core Web Vitals: **LCP < 2.5s**, **CLS < 0.1**, **INP < 200ms**.
@@ -189,7 +213,9 @@ const { handleSubmit, isPending, errors } = useHandleAction({
 [ ] Nav shows active state
 [ ] Error messages are helpful
 [ ] useHandleAction used for all Server Actions
-[ ] No hardcoded px values — tokens only
+[ ] No hardcoded hex/px values — use design tokens from globals.css
+[ ] Cards use `surface-card` or `surface-card-strong` utility classes
+[ ] Border-radius uses `--radius-*` tokens
 ```
 
 ---

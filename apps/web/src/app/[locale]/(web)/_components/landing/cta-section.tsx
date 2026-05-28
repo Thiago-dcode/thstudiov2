@@ -16,10 +16,10 @@ export function CtaSection() {
         <span className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">
           {t("badge")}
         </span>
-        <h2 className="max-w-2xl font-serif text-3xl font-medium italic leading-[1.1] tracking-tight tablet:text-5xl">
+        <h2 className="max-w-2xl font-serif text-4xl font-bold italic leading-[1.05] tracking-tight tablet:text-6xl">
           {t("title")}
         </h2>
-        <p className="max-w-lg text-sm leading-relaxed text-text-muted tablet:text-base tablet:leading-relaxed">
+        <p className="max-w-lg text-base leading-relaxed text-text-muted tablet:text-lg tablet:leading-relaxed">
           {t("description")}
         </p>
         <Button asChild variant="primary" size="lg">

@@ -106,7 +106,7 @@ export const SelectCollectionDrawer = ({ userId, collectionsSelected, onSelect }
                     </div>
                 ) : collections.length > 0 ? (
                     <div className="space-y-3">
-                        <p className="text-[11px] text-muted-foreground">
+                        <p className="text-[11px] text-text-muted">
                             Click to add to your portfolio · {collections.length} available
                         </p>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -123,7 +123,7 @@ export const SelectCollectionDrawer = ({ userId, collectionsSelected, onSelect }
                                             "group relative aspect-square w-full overflow-hidden rounded-lg border border-border bg-fg-2",
                                             "transition-all duration-200 ease-out",
                                             "hover:shadow-md hover:-translate-y-0.5",
-                                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
+                                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
                                             isSelected ? "opacity-60 scale-95" : "opacity-100"
                                         )}
                                         style={{
@@ -175,11 +175,11 @@ export const SelectCollectionDrawer = ({ userId, collectionsSelected, onSelect }
                     </div>
                 ) : (
                     <div className="flex flex-col items-center justify-center py-16 gap-2">
-                        <LayoutGrid className="size-8 text-muted-foreground/40" />
-                        <p className="text-sm text-muted-foreground">
+                        <LayoutGrid className="size-8 text-text-muted/40" />
+                        <p className="text-sm text-text-muted">
                             No collections yet
                         </p>
-                        <p className="text-xs text-muted-foreground/70">
+                        <p className="text-xs text-text-muted/70">
                             Create your first collection to get started
                         </p>
                     </div>
@@ -188,7 +188,7 @@ export const SelectCollectionDrawer = ({ userId, collectionsSelected, onSelect }
 
             <div className="border-t px-4 py-3 flex items-center justify-between">
                 {collectionsSelectedLength > 0 ? (
-                    <p className="text-xs text-muted-foreground tabular-nums">
+                    <p className="text-xs text-text-muted tabular-nums">
                         {collectionsSelectedLength} item{collectionsSelectedLength !== 1 ? 's' : ''} selected
                     </p>
                 ) : (

@@ -4,17 +4,17 @@ import { cn } from "../../lib/utils"
 
 
 const badgeVariants = cva(
-  "inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+  "inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2",
   {
     variants: {
       variant: {
         default:
           "border-transparent bg-text text-bg hover:bg-text-muted shadow hover:bg-text/80",
         secondary:
-          "border-transparent bg-secondary text-secondary-text hover:bg-secondary/80",
+          "border-transparent bg-secondary text-secondary-fg hover:bg-secondary/80",
         destructive:
-          "border-transparent bg-red-700 text-white shadow hover:bg-red-500",
-        outline: "text-foreground",
+          "border-transparent bg-error text-error-fg shadow hover:bg-error/90",
+        outline: "text-text",
       },
     },
     defaultVariants: {

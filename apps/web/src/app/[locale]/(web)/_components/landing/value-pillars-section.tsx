@@ -14,7 +14,7 @@ export async function ValuePillarsSection() {
   const items = t.raw("items") as { title: string; description: string }[];
 
   return (
-    <WebSection className="overflow-hidden">
+    <WebSection id="value-pillars" className="overflow-hidden">
       <WebSection.Container>
         <WebSection.Header
           badge={t("header.badge")}
@@ -32,10 +32,10 @@ export async function ValuePillarsSection() {
               <span className="relative flex size-12 items-center justify-center rounded-xl bg-accent/10 text-accent">
                 {ICONS[index]}
               </span>
-              <h3 className="relative text-lg font-semibold tracking-tight text-text">
+              <h3 className="relative text-xl font-bold tracking-tight text-text">
                 {pillar.title}
               </h3>
-              <p className="relative text-sm leading-relaxed text-text-muted">
+              <p className="relative text-base leading-relaxed text-text-muted tablet:text-lg">
                 {pillar.description}
               </p>
             </article>

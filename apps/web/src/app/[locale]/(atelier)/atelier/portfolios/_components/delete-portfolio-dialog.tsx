@@ -53,7 +53,7 @@ export const DeletePortfolioDialog = ({
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="size-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                    className="size-8 text-text-muted hover:text-error hover:bg-error/10"
                     disabled={isPortfolioPending}
                     aria-label="Delete portfolio"
                 >
@@ -64,7 +64,7 @@ export const DeletePortfolioDialog = ({
                 <DialogHeader>
                     <DialogTitle className="text-base">Delete portfolio</DialogTitle>
                     <DialogDescription className="text-sm">
-                        <strong className="text-foreground font-medium">{portfolioTitle}</strong> will be permanently deleted. This cannot be undone.
+                        <strong className="text-text font-medium">{portfolioTitle}</strong> will be permanently deleted. This cannot be undone.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="flex items-center justify-end gap-2 mt-2">

@@ -13,12 +13,12 @@ type CreateResourceButtonProps = {
     resource: TableName,
     href: string,
     label: string,
-    variant?: 'primary' | 'outline',
+    variant?: 'default' | 'outline',
 }
 
 const TOAST_COOLDOWN_MS = 5000
 
-export const CreateResourceButton = ({ resource, href, label, variant = 'primary' }: CreateResourceButtonProps) => {
+export const CreateResourceButton = ({ resource, href, label, variant = 'default' }: CreateResourceButtonProps) => {
     const { metrics } = useUserMetrics()
     const lastToastRef = useRef(0)
 

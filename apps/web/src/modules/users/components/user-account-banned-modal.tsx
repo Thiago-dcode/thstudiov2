@@ -46,19 +46,19 @@ export const UserAccountBannedModal = () => {
                 onInteractOutside={(e) => e.preventDefault()}
             >
                 <DialogHeader className="items-center text-center">
-                    <ShieldAlert className="h-6 w-6 text-destructive" />
+                    <ShieldAlert className="h-6 w-6 text-error" />
                     <DialogTitle>Account Suspended</DialogTitle>
                     <DialogDescription className="text-xs">
                         Your account has been suspended due to policy violations.
                         {metrics?.extra_data?.ban_lift && (
                             <> Restrictions will be lifted on{" "}
-                                <span className="font-medium text-foreground">
+                                <span className="font-medium text-text">
                                     {new Date(metrics.extra_data.ban_lift).toLocaleDateString(undefined, { dateStyle: "medium" })}
                                 </span>.
                             </>
                         )}
                         {" "}
-                        <a href="mailto:support@thstudio.com" className="underline text-foreground">
+                        <a href="mailto:support@thstudio.com" className="underline text-text">
                             Contact support if you think this is a mistake
                         </a>
                     </DialogDescription>
@@ -68,7 +68,7 @@ export const UserAccountBannedModal = () => {
                     <Button
                         variant="ghost"
                         size="sm"
-                        className=" self-end text-muted-foreground border"
+                        className=" self-end text-text-muted border"
                         disabled={loggingOut}
                         onClick={handleLogout}
                     >

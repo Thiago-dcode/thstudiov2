@@ -1,6 +1,4 @@
 import { ArtistProfileCard } from "../../artists/_components/artist-profile-card";
-import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 import usersService from "@/modules/users/users.service";
 import { WebSection } from "./web-section";
 import { getTranslations } from "next-intl/server";
@@ -23,20 +21,18 @@ export async function FeaturedArtistsSection() {
           description={t("header.description")}
         />
 
-        <div className="mx-auto grid max-w-(--screen-laptop) grid-cols-1 gap-4 phone:grid-cols-2 tablet:grid-cols-4">
+        <div className="mx-auto grid w-full max-w-(--screen-laptop) grid-cols-[repeat(auto-fit,min(100%,18rem))] justify-center justify-items-center gap-4">
           {artists.map((artist) => (
-            <ArtistProfileCard key={artist.id} artist={artist} compact />
+            <ArtistProfileCard key={artist.id} artist={artist} className="w-full" />
           ))}
         </div>
 
         <div className="mt-10 flex justify-center">
-          <Link
+          <WebSection.ActionLink
             href="/artists"
-            className="group inline-flex items-center gap-2 text-sm font-medium tracking-wider text-text-muted transition-colors hover:text-text"
           >
             {t("browseAll")}
-            <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
-          </Link>
+          </WebSection.ActionLink>
         </div>
       </WebSection.Container>
     </WebSection>

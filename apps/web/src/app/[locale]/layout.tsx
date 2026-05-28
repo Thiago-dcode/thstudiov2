@@ -3,21 +3,12 @@ import "@repo/ui/globals.css";
 import { Toaster } from "@repo/ui/components/shadcn/sonner"
 import { ThemeProvider } from "@repo/ui/providers/theme.provider"
 import { ReactNode } from "react";
-import { Roboto, Playfair_Display } from 'next/font/google'
 import { cn } from "@repo/ui/lib/utils";
 import { notFound } from 'next/navigation';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
 import { routing } from '@/i18n/routing';
-
-const roboto = Roboto({
-  subsets: ['latin'],
-})
-
-const playfair = Playfair_Display({
-  subsets: ['latin'],
-  variable: '--font-serif',
-})
+import { dmSans, playfair } from '@/font';
 
 export const metadata: Metadata = {
   title: "A11STUDIO — The Portfolio Platform Built for Artists",
@@ -56,7 +47,7 @@ export default async function RootLayout({
   return (
     <html
       lang={locale.toLowerCase()}
-      className={cn(roboto.className, playfair.variable)}
+      className={cn(playfair.variable, dmSans.variable)}
       suppressHydrationWarning
     >
       <body className="w-screen h-screen flex flex-col items-center justify-start">

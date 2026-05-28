@@ -1,7 +1,7 @@
-import { ArrowRight, Sparkles, Palette, Users } from "lucide-react";
-import Link from "next/link";
 import type { ReactNode } from "react";
+import { Sparkles, Palette, Users } from "lucide-react";
 import { getTranslations } from "next-intl/server";
+import { WebSection } from "./web-section";
 
 const ICONS: ReactNode[] = [
   <Palette className="size-4 shrink-0 text-accent" />,
@@ -20,7 +20,7 @@ export async function SocialProofSection() {
           {highlights.map((text, index) => (
             <div key={text} className="flex items-center gap-2.5 text-center phone:text-left">
               {ICONS[index]}
-              <span className="text-sm font-medium tracking-wide text-text-muted">
+              <span className="text-base font-medium tracking-wide text-text-muted">
                 {text}
               </span>
             </div>
@@ -28,13 +28,12 @@ export async function SocialProofSection() {
         </div>
 
         <div className="mt-8 flex justify-center">
-          <Link
+          <WebSection.ActionLink
             href="/auth/register"
-            className="group inline-flex items-center gap-2 text-sm font-medium tracking-wider text-text transition-colors hover:text-accent"
+            className="text-text transition-colors hover:text-accent"
           >
             {t("cta")}
-            <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
-          </Link>
+          </WebSection.ActionLink>
         </div>
       </div>
     </section>

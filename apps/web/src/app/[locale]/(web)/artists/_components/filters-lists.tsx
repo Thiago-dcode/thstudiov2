@@ -136,8 +136,8 @@ export default function FiltersLists() {
                 size="sm"
                 onClick={onClearAll}
                 className={cn(
-                    'shrink-0 border-2 border-border bg-bg-2/40 text-[11px] font-medium uppercase tracking-widest text-text-muted shadow-none',
-                    'hover:border-text/35 hover:bg-bg-2 hover:text-text',
+                    'shrink-0 border-2 border-border bg-fg-2/40 text-[11px] font-medium uppercase tracking-widest text-text-muted shadow-none',
+                    'hover:border-text/35 hover:bg-fg-2 hover:text-text',
                 )}
             >
                 Clear all

@@ -32,7 +32,7 @@ export const AdminPageTitle = ({ title, publicHref, info, children }: AdminPageT
                         href={publicHref}
                         rel="noopener noreferrer"
                         aria-label="View public page"
-                        className="text-muted-foreground hover:text-foreground transition-colors"
+                        className="text-text-muted hover:text-text transition-colors"
                     >
                         <ExternalLink className="size-4" />
                     </Link>
@@ -52,7 +52,7 @@ type AdminPageEmptyStateProps = {
 
 export const AdminPageEmptyState = ({ icon, description, children }: AdminPageEmptyStateProps) => {
     return (
-        <div className="flex flex-col items-center justify-center py-24 text-muted-foreground gap-3">
+        <div className="flex flex-col items-center justify-center py-24 text-text-muted gap-3">
             <div className="*:size-10 *:stroke-[1.5]">
                 {icon}
             </div>

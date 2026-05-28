@@ -109,7 +109,7 @@ export function FilterSearch() {
                         ref={searchInput}
                         placeholder="Search artists by username, name, profession, bio…"
                         className={cn(
-                            'h-14 min-h-14 w-full rounded-md border-2 border-border bg-bg-2/40 pr-4 pl-12',
+                            'h-14 min-h-14 w-full rounded-md border-2 border-border bg-fg-2/40 pr-4 pl-12',
                             'text-base leading-snug placeholder:text-text-muted/70 tablet:text-lg',
                             'tablet:rounded-none tablet:border-0 tablet:border-y-0 tablet:border-r-2 tablet:border-border tablet:border-l-0',
                             'focus-visible:z-10 focus-visible:border-text/40 focus-visible:ring-2 focus-visible:ring-text/15',

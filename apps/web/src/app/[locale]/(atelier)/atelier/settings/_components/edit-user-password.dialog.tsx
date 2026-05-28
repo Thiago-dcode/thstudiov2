@@ -74,12 +74,12 @@ export const EditUserPasswordDialog = ({ user }: Props) => {
 
                 <FormComponent.Container>
                     {maxResetReached ? (
-                        <div className="rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm space-y-1">
-                            <p className="font-medium text-destructive">Monthly limit reached</p>
-                            <p className="text-muted-foreground">
+                        <div className="rounded-md border border-error/30 bg-error/5 px-4 py-3 text-sm space-y-1">
+                            <p className="font-medium text-error">Monthly limit reached</p>
+                            <p className="text-text-muted">
                                 You've used all {MAX_PASSWORD_RESET} password changes for this period.
                                 {resetDateFormatted && (
-                                    <> Available again on <span className="font-medium text-foreground">{resetDateFormatted}</span>.</>
+                                    <> Available again on <span className="font-medium text-text">{resetDateFormatted}</span>.</>
                                 )}
                             </p>
                         </div>
@@ -108,7 +108,7 @@ export const EditUserPasswordDialog = ({ user }: Props) => {
                             />
 
                             {effectiveCount > 0 && (
-                                <p className="text-xs text-muted-foreground">
+                                <p className="text-xs text-text-muted">
                                     {remaining} of {MAX_PASSWORD_RESET} change{remaining !== 1 ? 's' : ''} remaining this month
                                     {resetDateFormatted && <> · resets on {resetDateFormatted}</>}
                                 </p>

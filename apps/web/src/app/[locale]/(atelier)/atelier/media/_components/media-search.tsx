@@ -38,7 +38,7 @@ export function MediaSearch() {
 
     return (
         <form onSubmit={handleSubmit} className="relative w-full max-w-xs">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-text-muted pointer-events-none" />
             <Input
                 type="text"
                 placeholder="Search media…"
@@ -51,7 +51,7 @@ export function MediaSearch() {
                 <button
                     type="button"
                     onClick={handleClear}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text transition-colors"
                 >
                     <X className="size-3.5" />
                 </button>

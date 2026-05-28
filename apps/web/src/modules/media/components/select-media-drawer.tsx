@@ -139,7 +139,7 @@ export const SelectMediaDrawer = ({ userId, mediaSelected, onSelect }: { userId:
                         "h-7 px-2.5 rounded-md text-[11px] font-medium transition-colors",
                         !shapeFilter
                             ? "bg-accent/15 text-accent"
-                            : "text-muted-foreground hover:text-foreground hover:bg-fg-2"
+                            : "text-text-muted hover:text-text hover:bg-fg-2"
                     )}
                 >
                     All
@@ -154,7 +154,7 @@ export const SelectMediaDrawer = ({ userId, mediaSelected, onSelect }: { userId:
                             "h-7 px-2.5 rounded-md text-[11px] font-medium capitalize transition-colors",
                             shapeFilter === shape
                                 ? "bg-accent/15 text-accent"
-                                : "text-muted-foreground hover:text-foreground hover:bg-fg-2"
+                                : "text-text-muted hover:text-text hover:bg-fg-2"
                         )}
                     >
                         {shape.toLowerCase()}
@@ -170,7 +170,7 @@ export const SelectMediaDrawer = ({ userId, mediaSelected, onSelect }: { userId:
                     </div>
                 ) : media.length > 0 ? (
                     <div className="space-y-3">
-                        <p className="text-[11px] text-muted-foreground">
+                        <p className="text-[11px] text-text-muted">
                             Click to add to your portfolio · {media.length} available
                         </p>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -186,7 +186,7 @@ export const SelectMediaDrawer = ({ userId, mediaSelected, onSelect }: { userId:
                                             "group relative aspect-square w-full overflow-hidden rounded-lg border border-border bg-fg-2",
                                             "transition-all duration-200 ease-out",
                                             "hover:shadow-md hover:-translate-y-0.5",
-                                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
+                                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
                                             isSelected ? "opacity-60 scale-95" : "opacity-100"
                                         )}
                                         style={{
@@ -236,11 +236,11 @@ export const SelectMediaDrawer = ({ userId, mediaSelected, onSelect }: { userId:
                     </div>
                 ) : (
                     <div className="flex flex-col items-center justify-center py-16 gap-2">
-                        <Image className="size-8 text-muted-foreground/40" />
-                        <p className="text-sm text-muted-foreground">
+                        <Image className="size-8 text-text-muted/40" />
+                        <p className="text-sm text-text-muted">
                             No media yet
                         </p>
-                        <p className="text-xs text-muted-foreground/70">
+                        <p className="text-xs text-text-muted/70">
                             Upload your first image to get started
                         </p>
                     </div>
@@ -250,7 +250,7 @@ export const SelectMediaDrawer = ({ userId, mediaSelected, onSelect }: { userId:
             {/* Drawer footer */}
             <div className="border-t px-4 py-3 flex items-center justify-between">
                 {mediaSelectedLength > 0 ? (
-                    <p className="text-xs text-muted-foreground tabular-nums">
+                    <p className="text-xs text-text-muted tabular-nums">
                         {mediaSelectedLength} item{mediaSelectedLength !== 1 ? 's' : ''} selected
                     </p>
                 ) : (

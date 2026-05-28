@@ -19,7 +19,7 @@ export default async function AboutPage() {
     return (
         <AdminPageContainer>
             <AdminPageTitle title="About Page"  info="Share your background, artistic journey, and anything else you'd like your audience to know about you." publicHref={publicHref}>
-                <CreateOrUpdateAboutPage userId={userAuth.id} currentAboutPage={aboutPage || undefined} />
+                <CreateOrUpdateAboutPage  variant='default' userId={userAuth.id} currentAboutPage={aboutPage || undefined} />
             </AdminPageTitle>
             {aboutPage ? (
                 <AboutPageDisplay aboutPage={aboutPage} />
@@ -28,7 +28,7 @@ export default async function AboutPage() {
                     icon={<BookUser />}
                     description="No about page created yet. Share your background and artistic journey."
                 >
-                    <CreateOrUpdateAboutPage userId={userAuth.id} currentAboutPage={aboutPage || undefined} variant="outline" />
+                    <CreateOrUpdateAboutPage userId={userAuth.id} currentAboutPage={aboutPage || undefined} variant="primary" />
                 </AdminPageEmptyState>
             )}
         </AdminPageContainer>

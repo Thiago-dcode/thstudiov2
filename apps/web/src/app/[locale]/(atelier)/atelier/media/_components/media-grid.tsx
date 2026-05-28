@@ -109,22 +109,22 @@ export function MediaGrid({ media, username }: MediaGridProps) {
                 {aiCreditsInfo && (
                   <div className="px-6 py-3 bg-fg-2/50 rounded-md space-y-1">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Credits available:</span>
+                      <span className="text-text-muted">Credits available:</span>
                       <span className="font-medium">{creditsAvailable}</span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Credits needed:</span>
-                      <span className={cn("font-medium", !hasEnoughCredits && "text-destructive")}>
+                      <span className="text-text-muted">Credits needed:</span>
+                      <span className={cn("font-medium", !hasEnoughCredits && "text-error")}>
                         {creditsNeeded}
                       </span>
                     </div>
                     {isOverAiLimit && (
-                      <p className="text-xs text-destructive mt-2">
+                      <p className="text-xs text-error mt-2">
                         Limit: select up to {MAX_AI_GENERATE} items (remove {selectionCount - MAX_AI_GENERATE}).
                       </p>
                     )}
                     {!hasEnoughCredits && (
-                      <p className="text-xs text-destructive mt-2">
+                      <p className="text-xs text-error mt-2">
                         Insufficient credits. You need {creditsNeeded - creditsAvailable} more credits.
                       </p>
                     )}
@@ -152,7 +152,7 @@ export function MediaGrid({ media, username }: MediaGridProps) {
           ) : null}
           {currentMedia.length > 0 && (
             <Button
-              variant={canSelect ? "outline" : "primary"}
+              variant={canSelect ? "outline" : "default"}
               size="sm"
               disabled={isLoading}
               onClick={() => {
@@ -168,7 +168,7 @@ export function MediaGrid({ media, username }: MediaGridProps) {
         </div>
 
         {currentMedia.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 text-muted-foreground gap-3">
+          <div className="flex flex-col items-center justify-center py-24 text-text-muted gap-3">
             <ImageOff className="h-10 w-10 stroke-[1.5]" />
             <p className="text-sm">No media uploaded yet. Start by adding your first image.</p>
           </div>

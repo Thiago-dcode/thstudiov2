@@ -317,7 +317,7 @@ const LocationFilter = () => {
             </div>
 
             {locationError ? (
-                <p className="text-[10px] leading-snug text-destructive" role="alert">
+                <p className="text-[10px] leading-snug text-error" role="alert">
                     {locationError}
                 </p>
             ) : null}

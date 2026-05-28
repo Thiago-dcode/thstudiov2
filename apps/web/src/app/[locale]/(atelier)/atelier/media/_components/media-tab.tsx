@@ -37,20 +37,20 @@ export function MediaTabTrigger({
     !disabled && ["cursor-pointer"],
     // Selected state
     selected && [
-      "bg-background",
-      "text-foreground",
+      "bg-bg",
+      "text-text",
       "shadow-sm",
       "font-semibold",
       "border",
       "border-border",
       "ring-1",
-      "ring-ring/20",
+      "ring-accent/20",
     ],
     // Unselected state
     !selected &&
       !disabled && [
-        "text-muted-foreground",
-        "hover:text-foreground/80",
+        "text-text-muted",
+        "hover:text-text/80",
         "hover:bg-fg-2/50",
       ]
   );

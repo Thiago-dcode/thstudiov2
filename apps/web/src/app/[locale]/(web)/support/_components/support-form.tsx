@@ -84,7 +84,7 @@ export function SupportForm({
             name='subject'
             required
             defaultValue={subjectList[0].value}
-            className='h-12 w-full rounded-md border border-border bg-bg px-3 text-sm outline-none ring-offset-background transition-[color,box-shadow] focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50'
+            className='h-12 w-full rounded-md border border-border bg-bg px-3 text-sm outline-none ring-offset-bg transition-[color,box-shadow] focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-50'
           >
             {subjectList.map((option) => (
               <option key={option.value} value={option.value}>

@@ -46,7 +46,7 @@ function FeaturedCategoryCard({ category, ariaBrowse, browse }: { category: Cate
                     />
                 ) : (
                     <span
-                        className="flex size-full items-center justify-center font-serif text-3xl italic tracking-tight text-text-muted/45 tablet:text-4xl"
+                        className="flex size-full items-center justify-center font-serif text-4xl italic tracking-tight text-text-muted/45 tablet:text-5xl"
                         aria-hidden
                     >
                         {categoryInitial(label)}
@@ -56,9 +56,9 @@ function FeaturedCategoryCard({ category, ariaBrowse, browse }: { category: Cate
 
             <div className="flex min-h-0 flex-1 flex-col gap-2 px-1.5 pb-1 pt-3">
                 <div className="min-w-0 space-y-1">
-                    <h3 className="truncate font-sans text-sm font-semibold leading-tight text-text tablet:text-base">
+                    <h4 className="truncate font-sans text-base font-medium leading-snug text-text tablet:text-lg">
                         {label}
-                    </h3>
+                    </h4>
                 </div>
 
                 <div className="mt-auto flex items-center justify-end border-t border-border/50 pt-2.5">

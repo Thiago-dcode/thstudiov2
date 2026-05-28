@@ -1,14 +1,18 @@
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@repo/ui/lib/utils";
 
 function Root({
   children,
   className,
+  id,
 }: {
   children: ReactNode;
   className?: string;
+  id?: string;
 }) {
-  return <section className={cn("relative", className)}>{children}</section>;
+  return <section id={id} className={cn("relative", className)}>{children}</section>;
 }
 
 function Container({
@@ -53,12 +57,12 @@ function Header({
       <span className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">
         {badge}
       </span>
-      <h2 className="font-serif text-3xl font-medium italic tracking-tight tablet:text-4xl">
+      <h2 className="text-2xl font-bold leading-tight tracking-tight tablet:text-3xl laptop:text-[2.75rem]">
         {title}
       </h2>
       <p
         className={cn(
-          "max-w-lg text-sm leading-relaxed text-text-muted tablet:text-base",
+          "max-w-lg text-base leading-relaxed text-text-muted tablet:text-lg",
           descriptionClassName,
         )}
       >
@@ -68,4 +72,34 @@ function Header({
   );
 }
 
-export const WebSection = Object.assign(Root, { Container, Header });
+function ActionLink({
+  href,
+  children,
+  className,
+  iconClassName,
+}: {
+  href: string;
+  children: ReactNode;
+  className?: string;
+  iconClassName?: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className={cn(
+        "group inline-flex items-center gap-2 text-base font-medium tracking-wider transition-colors  text-text  hover:text-accent",
+        className,
+      )}
+    >
+      {children}
+      <ArrowRight
+        className={cn(
+          "size-3.5 transition-transform group-hover:translate-x-0.5",
+          iconClassName,
+        )}
+      />
+    </Link>
+  );
+}
+
+export const WebSection = Object.assign(Root, { Container, Header, ActionLink });

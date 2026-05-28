@@ -137,14 +137,14 @@ export default function InputStep2() {
         {/* Header row: selected count + add button */}
         <div className="flex flex-col gap-3 phone-lg:flex-row phone-lg:items-center phone-lg:justify-between phone-lg:gap-4">
             <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                <h3 className="text-sm font-medium text-foreground">Portfolio items</h3>
+                <h3 className="text-sm font-medium text-text">Portfolio items</h3>
                 {portfolioItems.length > 0 && (
-                    <span className="text-xs text-muted-foreground tabular-nums">
+                    <span className="text-xs text-text-muted tabular-nums">
                         {portfolioItems.length} selected
                     </span>
                 )}
                 {portfolioItems.length > 1 && (
-                    <span className="text-xs text-muted-foreground/70">
+                    <span className="text-xs text-text-muted/70">
                         · Drag to reorder
                     </span>
                 )}
@@ -171,8 +171,8 @@ export default function InputStep2() {
         {/* Selected media grid */}
         {portfolioItems.length === 0 ? (
             <div className="w-full min-h-[200px] rounded-xl border-2 border-dashed border-border/60 bg-fg-2/5 flex flex-col items-center justify-center gap-3 p-8">
-                <Image className="size-8 text-muted-foreground/30" />
-                <p className="text-sm text-muted-foreground/70">
+                <Image className="size-8 text-text-muted/30" />
+                <p className="text-sm text-text-muted/70">
                     No media or collections added yet
                 </p>
             </div>
@@ -215,7 +215,7 @@ export default function InputStep2() {
                                             className={cn(
                                                 "absolute top-2 right-2 z-10 inline-flex items-center justify-center",
                                                 "size-7 rounded-full border border-border/50 bg-bg/70 backdrop-blur-sm",
-                                                "text-muted-foreground hover:text-foreground hover:bg-bg",
+                                                "text-text-muted hover:text-text hover:bg-bg",
                                                 "opacity-0 group-hover:opacity-100 focus:opacity-100",
                                                 "transition-opacity"
                                             )}
@@ -225,7 +225,7 @@ export default function InputStep2() {
                                         <div className="aspect-square w-full rounded-lg flex items-center justify-center">
                                             {resolvePortfolioItemComponent(item)}
                                         </div>
-                                        <h3 className="text-xs font-medium text-foreground line-clamp-1 px-0.5">
+                                        <h3 className="text-xs font-medium text-text line-clamp-1 px-0.5">
                                             {portfolioItemLabel(item)}
                                         </h3>
                                     </SortableItem>

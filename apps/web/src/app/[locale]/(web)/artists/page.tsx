@@ -170,7 +170,7 @@ export default async function ArtistsPage({
                             >
                                 <h2
                                     id="artists-error-heading"
-                                    className="text-sm font-medium tracking-wide text-destructive"
+                                    className="text-sm font-medium tracking-wide text-error"
                                 >
                                     We couldn&apos;t load artists
                                 </h2>

@@ -49,7 +49,7 @@ const ThumbnailInput = () => {
                     </div>
                 </div>
             ) : (
-                <p className="text-sm text-muted-foreground italic">
+                <p className="text-sm text-text-muted italic">
                     Add a thumbnail image for your portfolio (required)
                 </p>
             )}
@@ -63,7 +63,7 @@ const ThumbnailInput = () => {
                 disabled={isPending}
             />
             {inputErrors?.thumbnail && (
-                <p className="text-sm text-destructive">{inputErrors.thumbnail}</p>
+                <p className="text-sm text-error">{inputErrors.thumbnail}</p>
             )}
         </div>
     );
@@ -150,13 +150,13 @@ const ThumbnailInput = () => {
     // Get slug status message
     const getSlugStatusMessage = () => {
         if (isCheckingSlugAvailability) {
-            return <p className="text-sm text-muted-foreground">Checking availability...</p>;
+            return <p className="text-sm text-text-muted">Checking availability...</p>;
         }
         if (typeof isSlugAvailable === 'boolean' && currentPortfolio?.slug !== formData.slug ) {
             if (isSlugAvailable) {
                 return <p className="text-sm text-green-600">✓ This slug is available</p>;
             } else {
-                return <p className="text-sm text-destructive">✗ This slug is already taken</p>;
+                return <p className="text-sm text-error">✗ This slug is already taken</p>;
             }
         }
         return null;
@@ -203,7 +203,7 @@ const ThumbnailInput = () => {
                         disabled={isCheckingSlugAvailability || isPending}
                 />
                     {isValidSlug === false && (
-                        <p className="text-sm text-destructive">✗ Invalid slug format. Example: my-portfolio</p>
+                        <p className="text-sm text-error">✗ Invalid slug format. Example: my-portfolio</p>
                     )}
                     {getSlugStatusMessage()}
                 </div>
@@ -232,7 +232,7 @@ const ThumbnailInput = () => {
                             removeCategorySelected={removeCategorySelected}
                         />
                     </UpdateCategoriesProvider>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-text-muted">
                         Optional. Select up to 5 categories that describe this portfolio.
                     </p>
                 </div>
