@@ -13,12 +13,64 @@ import {
     PopoverTrigger,
 } from '@repo/ui/components/shadcn/popover'
 import { cn } from '@repo/ui/lib/utils'
-import { ChevronDown, SlidersHorizontal } from 'lucide-react'
+import { CheckCircle2, ChevronDown, Loader2, LocateFixed, MapPinOff, SlidersHorizontal } from 'lucide-react'
 import { useState } from 'react'
 import CategoryFilter from './category-filter'
 import LocationFilter from './location-filter'
+import { NEAR_ME_RADIUS_KM, useNearMe } from './use-near-me'
 
 const PRIMARY_FILTERS_CONTENT_ID = 'artists-primary-filters-popover'
+
+function NearMeRow() {
+    const { geoState, isLocated, requestLocation } = useNearMe()
+    const isLocating = geoState === "locating"
+
+    return (
+        <div className="flex flex-col gap-1.5 px-3 py-2">
+            <button
+                type="button"
+                onClick={requestLocation}
+                disabled={isLocating}
+                className={cn(
+                    'flex w-full items-center gap-2.5 rounded-sm px-3 py-2.5 text-left text-xs font-medium transition-colors',
+                    'border border-border bg-fg-2/40 hover:bg-fg-2 hover:text-text',
+                    isLocated
+                        ? 'border-accent/30 bg-accent-muted/30 text-accent'
+                        : 'text-text-muted',
+                    isLocating ? 'cursor-wait opacity-70' : 'cursor-pointer',
+                )}
+                aria-live="polite"
+            >
+                {isLocating ? (
+                    <Loader2 className="size-3.5 shrink-0 animate-spin" aria-hidden />
+                ) : isLocated ? (
+                    <CheckCircle2 className="size-3.5 shrink-0 text-accent" aria-hidden />
+                ) : (
+                    <LocateFixed className="size-3.5 shrink-0" aria-hidden />
+                )}
+                <span>
+                    {isLocating
+                        ? 'Getting location…'
+                        : isLocated
+                          ? `Near me · ${NEAR_ME_RADIUS_KM} km`
+                          : 'Use my location'}
+                </span>
+            </button>
+
+            {geoState === 'denied' && (
+                <p role="alert" className="flex items-center gap-1.5 px-1 text-[10px] leading-snug text-text-muted">
+                    <MapPinOff className="size-3 shrink-0" aria-hidden />
+                    Location denied — enable it in browser settings and try again.
+                </p>
+            )}
+            {geoState === 'unavailable' && (
+                <p role="alert" className="px-1 text-[10px] leading-snug text-text-muted">
+                    Couldn&apos;t get your location. Please try again.
+                </p>
+            )}
+        </div>
+    )
+}
 
 function PrimaryFilterPanel() {
     return (
@@ -39,7 +91,8 @@ function PrimaryFilterPanel() {
                 <AccordionTrigger className="py-3 text-xs font-medium uppercase tracking-[0.12em] text-text-muted hover:no-underline data-[state=open]:text-text cursor-pointer">
                     Location
                 </AccordionTrigger>
-                <AccordionContent>
+                <AccordionContent className="flex flex-col gap-3">
+                    <NearMeRow />
                     <LocationFilter />
                 </AccordionContent>
             </AccordionItem>

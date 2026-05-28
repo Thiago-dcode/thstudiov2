@@ -10,7 +10,7 @@ const messages: Messages = {
         "Crea un perfil de artista hermoso como un sitio web profesional y personalizalo tan rapido como actualizar tu feed social.",
       primaryCtaLoggedIn: "Acceder a Atelier",
       primaryCtaLoggedOut: "Empieza gratis ahora",
-      secondaryCta: "Explorar artistas",
+      secondaryCta: "Encuentra artistas",
       disclaimer: "Gratis para empezar · No se requiere tarjeta",
     },
     valuePillars: {

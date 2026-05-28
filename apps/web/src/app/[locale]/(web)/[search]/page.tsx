@@ -1,6 +1,7 @@
 import { ArtistCard, ArtistIndexRequest } from "@repo/common-lib/types/user"
 import { CategoryBase } from "@repo/common-lib/types/category"
 import { Metadata } from "next"
+import { notFound } from "next/navigation"
 import usersService from "@/modules/users/users.service"
 import { UpdateCategoriesProvider } from "@/modules/categories/providers/categories.provider"
 import { ArtistsGrid } from "./_components/artists-grid"
@@ -13,6 +14,10 @@ import { cleanObj } from "@repo/common-lib/utils/cleanObj"
 import { queryParamBuilder, QueryBuilder } from "@repo/common-lib/utils/query-builder"
 import { AppPagination } from "@repo/ui/components/custom/app-pagination"
 import { FilterSearch } from "./_components/filter-search"
+import { SearchNearMeButton } from "./_components/search-near-me-button"
+import { NearMeSessionCleaner } from "./_components/near-me-session-cleaner"
+
+const VALID_SEARCH_SEGMENTS = ["artists", "portfolios"] as const
 
 const PAGE_DESCRIPTION =
     "Browse artists on A11STUDIO. Discover portfolios, services, and creative professionals."
@@ -101,10 +106,17 @@ function buildArtistIndexRequest(
 }
 
 export default async function ArtistsPage({
+    params: routeParams,
     searchParams,
 }: {
+    params: Promise<{ search: string }>
     searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
+    const { search } = await routeParams
+    if (!VALID_SEARCH_SEGMENTS.includes(search as (typeof VALID_SEARCH_SEGMENTS)[number])) {
+        notFound()
+    }
+
     const params = await searchParams
     const artistRequest = buildArtistIndexRequest(params)
 
@@ -152,7 +164,7 @@ export default async function ArtistsPage({
             )}
         >
             <Web.Header
-                title="Search for artists"
+                title={`Searching for ${search}`}
                 titleClassName="text-2xl tablet:text-3xl desktop:text-4xl"
             />
             <FiltersProvider params={artistRequest} defaultCategoriesSelected={categories}>
@@ -161,6 +173,7 @@ export default async function ArtistsPage({
                 >
                     <div
                     >
+                        <NearMeSessionCleaner />
                         <FilterSearch />
                         {artistsResult?.error ? (
                             <section
@@ -183,12 +196,12 @@ export default async function ArtistsPage({
                                 aria-labelledby="artists-results-heading"
                                 className="flex w-full flex-col gap-4 pt-4"
                             >
-                                <h2
+                                <h5
                                     id="artists-results-heading"
                                     className="text-sm font-medium tracking-wide text-text-muted"
                                 >
                                     {`${totalCount.toLocaleString()} artist${totalCount === 1 ? "" : "s"} found${resultsForSearchSuffix}`}
-                                </h2>
+                                </h5>
                                 <div className="flex flex-col gap-4">
                                     <ArtistsGrid artists={artists} />
                                     {pagination && (
@@ -199,45 +212,20 @@ export default async function ArtistsPage({
                                     )}
                                 </div>
                             </section>
-                        ) : hasFilters ? (
-                            <section
-                                aria-labelledby="artists-empty-results-heading"
-                                className="mx-auto flex w-full min-w-0 max-w-2xl flex-col items-center gap-2 pt-4 text-center tablet:max-w-3xl"
-                            >
-                                <h2
-                                    id="artists-empty-results-heading"
-                                    className="text-sm font-medium tracking-wide text-text"
-                                >
-                                    No artists found{resultsForSearchSuffix}
-                                </h2>
-                                <p
-                                    className="text-sm text-text-muted"
-                                    role="status"
-                                >
-                                    Your current filters did not match any artists. Try
-                                    removing a filter, broadening the location, or searching
-                                    with a different keyword.
-                                </p>
-                            </section>
                         ) : (
-                            <section
-                                aria-labelledby="artists-empty-hint-heading"
-                                className="mx-auto flex w-full min-w-0 max-w-2xl flex-col items-center gap-2 pt-4 text-center tablet:max-w-3xl"
-                            >
-                                <h2
-                                    id="artists-empty-hint-heading"
-                                    className="sr-only"
-                                >
-                                    How to find artists
-                                </h2>
-                                <p
-                                    className="text-sm text-text-muted"
-                                    role="status"
-                                >
-                                    Type something in the search box or use
-                                    the filters above—name, category, or location—to discover
-                                    artists.
-                                </p>
+                            <section className="mx-auto flex w-full min-w-0 max-w-2xl flex-col items-center gap-4 pt-8 text-center tablet:max-w-3xl">
+                                {hasFilters && (
+                                    <div className="flex flex-col items-center gap-2">
+                                        <h2 className="text-sm font-medium tracking-wide text-text">
+                                            No artists found{resultsForSearchSuffix}
+                                        </h2>
+                                        <p className="text-sm text-text-muted" role="status">
+                                            Your filters didn&apos;t match any artists. Try broadening
+                                            your search or look for artists near you.
+                                        </p>
+                                    </div>
+                                )}
+                                <SearchNearMeButton />
                             </section>
                         )}
                     </div>

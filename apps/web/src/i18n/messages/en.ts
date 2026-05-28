@@ -102,7 +102,7 @@ const messages: Messages = {
         "Build a beautiful artist profile like a professional website - and customize it as fast as updating your social feed.",
       primaryCtaLoggedIn: "Access Atelier",
       primaryCtaLoggedOut: "Start Free Now",
-      secondaryCta: "Explore Artists",
+      secondaryCta: "Find artists",
       disclaimer: "Free to start · No credit card required",
     },
     valuePillars: {

@@ -3,7 +3,7 @@
 import { CategoryBase } from '@repo/common-lib/types/category'
 import { Button } from '@repo/ui/components/shadcn/button'
 import { cn } from '@repo/ui/lib/utils'
-import { X } from 'lucide-react'
+import { LocateFixed, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useMemo } from 'react'
 import { useFilters } from './filters.provider'
@@ -16,6 +16,7 @@ function categoryLabel(c: CategoryBase) {
 type FilterBadgeItem = {
     key: string
     label: string
+    icon?: React.ReactNode
     onRemove: () => void
 }
 
@@ -38,6 +39,19 @@ export default function FiltersLists() {
                 },
             })
         }
+        if (filters.lat != null && filters.lng != null) {
+            out.push({
+                key: 'geo-location',
+                label: 'My location',
+                icon: <LocateFixed className="size-3 shrink-0" aria-hidden />,
+                onRemove: () => {
+                    deleteFilter('lat')
+                    deleteFilter('lng')
+                    deleteFilter('radius_km')
+                },
+            })
+        }
+
         const country = filters.country?.trim()
         if (country) {
             out.push({

@@ -52,6 +52,12 @@ type FiltersProviderProps = {
     defaultCategoriesSelected?: CategoryBase[]
 }
 
+/** Strip `page` so any filter change sends the user back to page 1. */
+function withoutPage<T extends ArtistIndexRequest>(filters: T): T {
+    const { page: _p, ...rest } = filters
+    return rest as T
+}
+
 export function FiltersProvider({ children, params: initialParams, defaultCategoriesSelected = [] }: FiltersProviderProps) {
     const [filters, setFilters] = useState<ArtistIndexRequest>(initialParams)
 
@@ -66,8 +72,21 @@ export function FiltersProvider({ children, params: initialParams, defaultCatego
 
     const add = useCallback(
         <K extends keyof ArtistIndexRequest>(key: K, value: ArtistIndexRequest[K]) => {
-           
-            setFilters((prev) => ({ ...prev, [key]: value }))
+            setFilters((prev) => {
+                const next = { ...prev, [key]: value }
+                // Geo-location and address filters are mutually exclusive.
+                if (key === "lat" || key === "lng" || key === "radius_km") {
+                    delete next.city
+                    delete next.state
+                    delete next.country
+                } else if (key === "city" || key === "state" || key === "country") {
+                    delete next.lat
+                    delete next.lng
+                    delete next.radius_km
+                }
+                // Reset pagination unless the caller is explicitly setting the page.
+                return key === "page" ? next : withoutPage(next)
+            })
         },
         [],
     )
@@ -76,7 +95,8 @@ export function FiltersProvider({ children, params: initialParams, defaultCatego
         setFilters((prev) => {
             const next = { ...prev }
             delete next[key]
-            return next
+            // Reset pagination when any other filter is removed.
+            return key === "page" ? next : withoutPage(next)
         })
     }, [])
 
@@ -89,11 +109,10 @@ export function FiltersProvider({ children, params: initialParams, defaultCatego
         setCategoriesSelectedState(categories)
         setFilters((prev) => {
             const slugs = categories.map((c) => c.slug)
-            if (slugs.length === 0) {
-                const { categories: _c, ...rest } = prev
-                return rest
-            }
-            return { ...prev, categories: slugs }
+            const next = slugs.length === 0
+                ? (({ categories: _c, ...rest }) => rest)(prev)
+                : { ...prev, categories: slugs }
+            return withoutPage(next)
         })
     }, [])
 
@@ -105,7 +124,7 @@ export function FiltersProvider({ children, params: initialParams, defaultCatego
         setFilters((prev) => {
             const slugs = prev.categories ?? []
             if (slugs.includes(category.slug)) return prev
-            return { ...prev, categories: [...slugs, category.slug] }
+            return withoutPage({ ...prev, categories: [...slugs, category.slug] })
         })
     }, [])
 
@@ -114,11 +133,10 @@ export function FiltersProvider({ children, params: initialParams, defaultCatego
         setFilters((prev) => {
             const slugs = prev.categories ?? []
             const next = slugs.filter((s) => s !== slug)
-            if (next.length === 0) {
-                const { categories: _c, ...rest } = prev
-                return rest
-            }
-            return { ...prev, categories: next }
+            const base = next.length === 0
+                ? (({ categories: _c, ...rest }) => rest)(prev)
+                : { ...prev, categories: next }
+            return withoutPage(base)
         })
     }, []);
 

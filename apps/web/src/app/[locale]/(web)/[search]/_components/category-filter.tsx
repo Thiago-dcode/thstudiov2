@@ -16,7 +16,7 @@ const CategoryFilter = () => {
     return (
         <CategoryCombobox
             categoriesSelected={categoriesSelected}
-            setCategoriesSelected={pushCategory}
+            setCategorySelected={pushCategory}
             removeCategorySelected={handleRemove}
             inputClassName={artistsFilterComboboxInputClassName}
         />

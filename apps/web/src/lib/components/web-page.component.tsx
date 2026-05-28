@@ -32,7 +32,7 @@ const Header = ({
                 <div className="flex items-baseline gap-4 justify-center">
                     <h1
                         className={cn(
-                            "text-3xl font-serif italic tracking-tight tablet:text-5xl desktop:text-6xl",
+                            "italic tracking-tight",
                             titleClassName,
                         )}
                     >

@@ -1,4 +1,4 @@
-import { ArtistProfileCard } from "../../artists/_components/artist-profile-card";
+import { ArtistProfileCard } from "../../[search]/_components/artist-profile-card";
 import usersService from "@/modules/users/users.service";
 import { WebSection } from "./web-section";
 import { getTranslations } from "next-intl/server";
