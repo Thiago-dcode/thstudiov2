@@ -1,0 +1,9 @@
+{
+  "SUBJECT": "Tu invitacion a TH Studio esta lista",
+  "TITLE": "La espera termino",
+  "DESCRIPTION": "Tu invitacion privada esta lista. Usa el enlace de abajo para crear tu cuenta y reclamar tu perfil de creador.",
+  "TIER_LABEL": "Nivel reservado",
+  "BENEFIT_DESCRIPTION": "Esta invitacion incluye {months} mes(es) gratis por tu beneficio {benefitType}.",
+  "CTA_TEXT": "Crear Mi Cuenta",
+  "URGENCY_NOTE": "Esta invitacion es personal y limitada. Reclama tu lugar antes de que expire."
+}

@@ -1,0 +1,14 @@
+{
+  "SUBJECT": "You are on the TH Studio wait list",
+  "HI": "Welcome",
+  "TITLE": "Your spot is reserved",
+  "POSITION_LABEL": "Your wait list position",
+  "POSITION_MESSAGE": "You are number #{position} in line.",
+  "TIER_VIP_TITLE": "Founder-circle VIP access unlocked",
+  "TIER_EARLY_USER_TITLE": "Early User access secured",
+  "BENEFIT_DESCRIPTION": "Your current tier includes {months} free month(s) when registration opens.",
+  "SCARCITY_HOOK": "The first 50 creators receive VIP access. Every spot after that joins the Early User circle, so your place matters.",
+  "COMING_SOON": "We will send your private registration link soon. Keep this email close: the next one opens the door.",
+  "CTA_TEXT": "See What You Will Create",
+  "CTA_DESCRIPTION": "Preview the kind of artist profile you will be able to launch on TH Studio."
+}

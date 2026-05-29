@@ -60,6 +60,43 @@ export class ResendEmailDriver extends EmailDriver {
 
     return data;
   }
+
+  public async sendBatch(options: EmailDriverOptions[]): Promise<any> {
+    const emails = options.map(({ from, to, subject, text, html, cc, replyTo }) => {
+      if (!html && (text === undefined || text === null)) {
+        throw new Error(
+          "ResendEmailDriver: one of `html` or `text` must be provided.",
+        );
+      }
+
+      const payload: Record<string, any> = {
+        from,
+        to,
+        subject,
+        ...(cc ? { cc } : {}),
+        ...(replyTo ? { replyTo } : {}),
+      };
+
+      if (html) {
+        payload.html = html;
+      } else {
+        payload.text = text;
+      }
+
+      return payload;
+    });
+
+    const { data, error } = await this.resend.batch.send(
+      emails as Parameters<Resend["batch"]["send"]>[0],
+    );
+
+    if (error) {
+      Logger.error(error);
+      throw error;
+    }
+
+    return data;
+  }
 }
 
 

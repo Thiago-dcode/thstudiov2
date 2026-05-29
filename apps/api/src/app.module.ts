@@ -52,6 +52,7 @@ import { InvitationLinkModule } from './v1/modules/invitation-links/invitation-l
 import { UserBenefitModule } from './v1/modules/user-benefit/user-benefit.module';
 import { UserSubscriptionModule } from './v1/modules/user-subscription/user-subscription.module';
 import { PlanSubscriptionsProcessorModule } from './v1/modules/plan-subscriptions/plan-subscriptions-processor.module';
+import { WaitListModule } from './v1/modules/wait-list/wait-list.module';
 /** Feature modules mounted at `api/v1/*` (not under `admin/`). */
 const API_V1_MODULES = [
   AuthModule,
@@ -79,6 +80,7 @@ const API_V1_MODULES = [
   UserServiceModule,
   LocationModule,
   InvitationLinkModule,
+  WaitListModule,
   UserBenefitModule,
   UserSubscriptionModule,
 ];

@@ -1,5 +1,5 @@
 import { Queue, JobsOptions } from "bullmq";
-import { JOB_SEND_MAIL } from "@repo/common-lib/constants/constants";
+import { JOB_SEND_MAIL, JOB_SEND_BATCH_EMAIL } from "@repo/common-lib/constants/constants";
 import { EmailDriver } from "./email-drivers/email-driver";
 import { Content, EmailDriverOptions, Envelop } from "./types";
 
@@ -27,6 +27,22 @@ export class MailService {
         return await this.emailDriver.sendEmail(options);
     }
 
+    public async sendBatch(mailables: Mailable[]): Promise<any> {
+        const payloads = await Promise.all(
+            mailables.map(async (mailable) => {
+                const { from, to, subject, cc, replyTo } = await mailable.envelope();
+                const { text, html } = await mailable.content();
+                return { from, to, subject, text, html, cc, replyTo } as EmailDriverOptions;
+            }),
+        );
+
+        return await this.emailDriver.sendBatch(payloads);
+    }
+
+    public async sendBatchRaw(options: EmailDriverOptions[]): Promise<any> {
+        return await this.emailDriver.sendBatch(options);
+    }
+
     /**
      * Queues the mailable for async delivery via BullMQ.
      * Requires a Queue instance passed in the constructor.
@@ -47,6 +63,34 @@ export class MailService {
             {
                 ...DEFAULT_MAIL_JOB_OPTIONS,
                 jobId: `mail-${Date.now()}`,
+                ...jobOptions,
+            },
+        );
+    }
+
+    /**
+     * Queues a batch of mailables for async delivery via BullMQ.
+     * Requires a Queue instance passed in the constructor.
+     */
+    public async sendBatchAsync(mailables: Mailable[], jobOptions?: JobsOptions): Promise<any> {
+        if (!this.queue) {
+            throw new Error('MailService: a BullMQ Queue is required for sendBatchAsync. Pass it in the constructor.');
+        }
+
+        const payloads = await Promise.all(
+            mailables.map(async (mailable) => {
+                const { from, to, subject, cc, replyTo } = await mailable.envelope();
+                const { text, html } = await mailable.content();
+                return { from, to, subject, text, html, cc, replyTo } as EmailDriverOptions;
+            }),
+        );
+
+        return await this.queue.add(
+            JOB_SEND_BATCH_EMAIL,
+            payloads,
+            {
+                ...DEFAULT_MAIL_JOB_OPTIONS,
+                jobId: `batch-mail-${Date.now()}`,
                 ...jobOptions,
             },
         );

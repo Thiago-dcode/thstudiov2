@@ -5,6 +5,7 @@ import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-se
 import {
   MAIL_QUEUE,
   JOB_SEND_MAIL,
+  JOB_SEND_BATCH_EMAIL,
 } from '@repo/common-lib/constants/constants';
 import { GlobalProcessor } from 'src/common/processors/global.processor';
 
@@ -27,6 +28,9 @@ export class MailProcessor extends GlobalProcessor {
         case JOB_SEND_MAIL:
           return await this.sendMail(job.data);
 
+        case JOB_SEND_BATCH_EMAIL:
+          return await this.sendBatchMail(job.data);
+
         default:
           throw new Error(`Job name "${job.name}" not recognized`);
       }
@@ -43,6 +47,20 @@ export class MailProcessor extends GlobalProcessor {
     } catch (error) {
       log.error(
         `Failed to send mail to ${data.to}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        error,
+      );
+      throw error;
+    }
+  }
+
+  private async sendBatchMail(data: EmailDriverOptions[]) {
+    const log = this.logger.name('send-batch-mail');
+    try {
+      await this.mailService.sendBatchRaw(data);
+      log.info(`Batch mail sent — ${data.length} email(s)`);
+    } catch (error) {
+      log.error(
+        `Failed to send batch mail (${data.length} emails): ${error instanceof Error ? error.message : 'Unknown error'}`,
         error,
       );
       throw error;

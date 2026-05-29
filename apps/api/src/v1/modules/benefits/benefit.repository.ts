@@ -1,9 +1,10 @@
 import { LogService } from '@repo/backend-lib/services/log-service';
 import { Injectable } from '@nestjs/common';
 import { BaseRepository } from '@repo/database/repositories';
-import { FullBenefitSchemaColumns, FullUserBenefitSchema } from '@repo/common-lib/schemas/benefit';
+import { BenefitSchema, FullBenefitSchemaColumns, FullUserBenefitSchema } from '@repo/common-lib/schemas/benefit';
 import {  BenefitWithRedeemed } from '@repo/common-lib/types/benefit';
 import { DbException } from '@repo/database/exceptions';
+import { EnumType } from '@repo/common-lib/constants/enums';
 
 @Injectable()
 export class BenefitRepository extends BaseRepository {
@@ -35,6 +36,12 @@ export class BenefitRepository extends BaseRepository {
     }
 
     return this.format(result);
+  }
+
+  async findByType(type: EnumType<'BENEFIT_TYPE'>): Promise<BenefitSchema | null> {
+    return this.query()
+      .where('type', '=', type)
+      .first<BenefitSchema>();
   }
 
   private format(result: FullUserBenefitSchema): BenefitWithRedeemed {

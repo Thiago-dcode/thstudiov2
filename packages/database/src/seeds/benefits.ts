@@ -7,6 +7,7 @@ const BENEFIT_BY_TYPE: Record<
 > = {
   EARLY_USER: { name: 'EARLY_USER_3_MONTH_FREE', trial_days: 90 },
   VIP: { name: 'VIP_USER_6_MONTH_FREE', trial_days: 180 },
+  FOUNDER: { name: 'FOUNDER_1_YEAR_FREE', trial_days: 365 },
 };
 
 export const main = async () => {

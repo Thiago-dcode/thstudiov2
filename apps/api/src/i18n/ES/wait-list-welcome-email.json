@@ -1,0 +1,14 @@
+{
+  "SUBJECT": "Ya estas en la lista de espera de TH Studio",
+  "HI": "Bienvenido",
+  "TITLE": "Tu lugar esta reservado",
+  "POSITION_LABEL": "Tu posicion en la lista",
+  "POSITION_MESSAGE": "Eres el numero #{position} en la fila.",
+  "TIER_VIP_TITLE": "Acceso VIP del circulo fundador desbloqueado",
+  "TIER_EARLY_USER_TITLE": "Acceso Early User asegurado",
+  "BENEFIT_DESCRIPTION": "Tu nivel actual incluye {months} mes(es) gratis cuando abramos el registro.",
+  "SCARCITY_HOOK": "Los primeros 50 creadores reciben acceso VIP. Cada lugar despues entra al circulo Early User, por eso tu posicion importa.",
+  "COMING_SOON": "Pronto enviaremos tu enlace privado de registro. Guarda este correo: el siguiente abre la puerta.",
+  "CTA_TEXT": "Mira Lo Que Podras Crear",
+  "CTA_DESCRIPTION": "Explora el tipo de perfil de artista que podras lanzar en TH Studio."
+}

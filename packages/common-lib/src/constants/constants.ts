@@ -53,6 +53,8 @@ export const CREATE_USER_CONTACT = 'create.user-contact' as const;
 export const CREATE_OR_UPDATE_LOCATION = 'create-or-update.location' as const;
 export const SET_INITIAL_USER_EXTRA_DATA_EVENT = 'set-initial.user-extra-data' as const;
 export const SET_FREE_SUBSCRIPTION_EVENT = 'set-free.subscription' as const;
+export const CREATE_WAIT_LIST_ENTRY = 'create.wait-list-entry' as const;
+export const INVITE_WAIT_LIST_BATCH = 'invite.wait-list-batch' as const;
 
 // ==================== QUEUES (BullMQ) ====================
 export const USER_METRICS_QUEUE = 'user-metrics' as const;
@@ -64,6 +66,7 @@ export const LOCATION_QUEUE = 'location' as const;
 export const MAIL_QUEUE = 'mail' as const;
 export const LOG_QUEUE = 'log' as const;
 export const PLAN_SUBSCRIPTIONS_QUEUE = 'plan-subscriptions' as const;
+export const WAIT_LIST_QUEUE = 'wait-list' as const;
 
 // ==================== JOBS (BullMQ) ====================
 export const JOB_COMPUTE_USER_METRICS = 'compute-user-metrics' as const;
@@ -74,8 +77,11 @@ export const JOB_CREATE_STORAGE_REQUEST = 'create-storage-request' as const;
 export const JOB_CREATE_USER_CONTACT = 'create-user-contact' as const;
 export const JOB_CREATE_OR_UPDATE_LOCATION = 'create-or-update-location' as const;
 export const JOB_SEND_MAIL = 'send-mail' as const;
+export const JOB_SEND_BATCH_EMAIL = 'send-batch-email' as const;
 export const JOB_FLUSH_LOGS = 'flush-logs' as const;
 export const JOB_ON_SUBSCRIPTION_CHANGES = 'on-subscription-changes' as const;
+export const JOB_CREATE_WAIT_LIST_ENTRY = 'create-wait-list-entry' as const;
+export const JOB_INVITE_WAIT_LIST_BATCH = 'invite-wait-list-batch' as const;
 
 // ==================== CACHE KEYS ====================
 // Plans
