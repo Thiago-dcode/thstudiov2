@@ -1,10 +1,11 @@
 export type MailConfig= {
-    host: string;
-    port: number;
-    username: string;
-    password: string;
+    host?: string;
+    port?: number;
+    username?: string;
+    password?: string;
+    api_key?:string
 }
-export type MailServiceDriver = 'nodemailer';
+export type MailServiceDriver = 'nodemailer' | 'resend';
 
 export type Envelop= {
     from: string,

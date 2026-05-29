@@ -1,6 +1,7 @@
 import { Queue } from "bullmq";
 import { MailService } from "./mail.service";
 import { NodemailerEmailDriver } from "./email-drivers/nodemailer-email-driver";
+import { ResendEmailDriver } from "./email-drivers/resend-email-driver";
 import { MailConfig, MailServiceDriver } from "./types";
 
 
@@ -9,6 +10,8 @@ export class FactoryMailService {
         switch (type) {
             case 'nodemailer':
                 return new MailService(new NodemailerEmailDriver(config), queue);
+            case 'resend':
+                return new MailService(new ResendEmailDriver(config), queue);
             default:
                 return new MailService(new NodemailerEmailDriver(config), queue);
         }

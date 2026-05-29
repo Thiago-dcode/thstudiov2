@@ -22,7 +22,7 @@ type FilterBadgeItem = {
 
 export default function FiltersLists() {
     const router = useRouter()
-    const { filters, categoriesSelected, delete: deleteFilter, removeCategory, clearAll } =
+    const { segment, filters, categoriesSelected, delete: deleteFilter, deleteMany, removeCategory, clearAll } =
         useFilters()
 
     const items = useMemo((): FilterBadgeItem[] => {
@@ -44,11 +44,7 @@ export default function FiltersLists() {
                 key: 'geo-location',
                 label: 'My location',
                 icon: <LocateFixed className="size-3 shrink-0" aria-hidden />,
-                onRemove: () => {
-                    deleteFilter('lat')
-                    deleteFilter('lng')
-                    deleteFilter('radius_km')
-                },
+                onRemove: () => deleteMany(['lat', 'lng', 'radius_km']),
             })
         }
 
@@ -57,11 +53,7 @@ export default function FiltersLists() {
             out.push({
                 key: `country-${country}`,
                 label: `Country: ${country}`,
-                onRemove: () => {
-                    deleteFilter('city')
-                    deleteFilter('state')
-                    deleteFilter('country')
-                },
+                onRemove: () => deleteMany(['city', 'state', 'country']),
             })
         }
 
@@ -70,10 +62,7 @@ export default function FiltersLists() {
             out.push({
                 key: `state-${state}`,
                 label: `State: ${state}`,
-                onRemove: () => {
-                    deleteFilter('city')
-                    deleteFilter('state')
-                },
+                onRemove: () => deleteMany(['city', 'state']),
             })
         }
 
@@ -99,6 +88,7 @@ export default function FiltersLists() {
         filters,
         categoriesSelected,
         deleteFilter,
+        deleteMany,
         removeCategory,
     ])
 
@@ -109,7 +99,7 @@ export default function FiltersLists() {
 
     const onClearAll = () => {
         clearAll()
-        router.push('/artists')
+        router.push(`/${segment}`)
     }
 
     return (

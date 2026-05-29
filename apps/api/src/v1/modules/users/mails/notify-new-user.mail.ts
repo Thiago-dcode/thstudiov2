@@ -1,6 +1,6 @@
 import { Mailable } from '@repo/backend-lib/services/mail-service/base';
 import { BaseUser, User } from '@repo/common-lib/types/user';
-import { mailingFrom } from 'src/config/mailling';
+import { mailingNoreplyEmail } from 'src/config/mailling';
 import { ViewService } from '@repo/backend-lib/services/view-service/base';
 import { Injectable } from '@nestjs/common';
 import { I18nService } from 'nestjs-i18n';
@@ -22,7 +22,7 @@ export class NotifyNewUserMail extends Mailable {
   }
   async envelope() {
     return {
-      from: mailingFrom,
+      from: mailingNoreplyEmail,
       to: this.user.email,
       subject: this.i18nService.translate(
         'notify-new-user-email.WELCOME_SUBJECT',

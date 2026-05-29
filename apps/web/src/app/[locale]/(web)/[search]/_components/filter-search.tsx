@@ -1,8 +1,6 @@
 'use client'
 
-import { ArtistIndexRequest } from '@repo/common-lib/types/user'
 import {
-    QueryBuilder,
     queryParamBuilder,
 } from '@repo/common-lib/utils/query-builder'
 import { Button } from '@repo/ui/components/shadcn/button'
@@ -14,52 +12,33 @@ import { useEffect, useMemo, useRef } from 'react'
 import FiltersLists from './filters-lists'
 import { useFilters } from './filters.provider'
 import { PrimaryFiltersDropdown } from './primary-filter-component'
-
-/** Same shape as `buildArtistIndexRequest` in `page.tsx` — only defined / non-empty values. */
-function artistFiltersToQueryBuilder(filters: ArtistIndexRequest): QueryBuilder {
-    const out: QueryBuilder = {}
-    if (filters.page != null) out.page = filters.page
-    if (filters.per_page != null) out.per_page = filters.per_page
-    const search = filters.search?.trim()
-    if (search) out.search = search
-    if (filters.categories?.length) out.categories = filters.categories
-    const country = filters.country?.trim()
-    if (country) out.country = country
-    const state = filters.state?.trim()
-    if (state) out.state = state
-    const city = filters.city?.trim()
-    if (city) out.city = city
-    if (filters.lat != null) out.lat = filters.lat
-    if (filters.lng != null) out.lng = filters.lng
-    if (filters.radius_km != null) out.radius_km = filters.radius_km
-    return out
-}
+import { filtersToQuery } from './search.utils'
 
 
 
 export function FilterSearch() {
     const router = useRouter()
-    const { filters, add, urlParams } = useFilters()
+    const { segment, filters, add, urlParams } = useFilters()
     const searchInput = useRef<HTMLInputElement | null>(null)
 
     const initialUrl = useMemo(
         () =>
             queryParamBuilder(
-                '/artists',
-                artistFiltersToQueryBuilder(urlParams),
+                `/${segment}`,
+                filtersToQuery(urlParams),
                 { arrayStyle: 'commas' },
             ),
-        [urlParams],
+        [segment, urlParams],
     )
 
     const newUrl = useMemo(
         () =>
             queryParamBuilder(
-                '/artists',
-                artistFiltersToQueryBuilder(filters),
+                `/${segment}`,
+                filtersToQuery(filters),
                 { arrayStyle: 'commas' },
             ),
-        [filters],
+        [segment, filters],
     )
     const urlHasChanged = useMemo(
         () => initialUrl !== newUrl,
@@ -78,7 +57,7 @@ export function FilterSearch() {
     return (
         <form
             role="search"
-            aria-label="Search artists"
+            aria-label={`Search ${segment}`}
             className={cn(
                 'mx-auto flex w-full max-w-4xl flex-col gap-3',
                 // centered ? 'max-w-2xl tablet:max-w-3xl' : 'max-w-4xl',
@@ -107,7 +86,7 @@ export function FilterSearch() {
                         type="search"
                         name="search"
                         ref={searchInput}
-                        placeholder="Search artists by username, name, profession, bio…"
+                        placeholder={`Search ${segment} by name, style, category…`}
                         className={cn(
                             'h-14 min-h-14 w-full rounded-md border-2 border-border bg-fg-2/40 pr-4 pl-12',
                             'text-base leading-snug placeholder:text-text-muted/70 tablet:text-lg',

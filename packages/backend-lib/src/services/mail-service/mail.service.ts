@@ -15,7 +15,7 @@ export class MailService {
     constructor(
         protected readonly emailDriver: EmailDriver,
         protected readonly queue?: Queue,
-    ) {}
+    ) { }
 
     public async send(mailable: Mailable): Promise<any> {
         const { from, to, subject, cc, replyTo } = await mailable.envelope();

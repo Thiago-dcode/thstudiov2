@@ -8,7 +8,7 @@ export const NEAR_ME_RADIUS_KM = 100
 export type GeoState = "idle" | "locating" | "denied" | "unavailable"
 
 export function useNearMe() {
-    const { add, filters } = useFilters()
+    const { addMany, filters } = useFilters()
     const [geoState, setGeoState] = useState<GeoState>("idle")
 
     const isLocated = filters.lat != null && filters.lng != null
@@ -23,9 +23,11 @@ export function useNearMe() {
 
         navigator.geolocation.getCurrentPosition(
             ({ coords }) => {
-                add("lat", coords.latitude)
-                add("lng", coords.longitude)
-                add("radius_km", NEAR_ME_RADIUS_KM)
+                addMany({
+                    lat: coords.latitude,
+                    lng: coords.longitude,
+                    radius_km: NEAR_ME_RADIUS_KM,
+                })
                 setGeoState("idle")
             },
             (err) => {
@@ -35,7 +37,7 @@ export function useNearMe() {
             },
             { enableHighAccuracy: false, timeout: 10_000, maximumAge: 300_000 },
         )
-    }, [add])
+    }, [addMany])
 
     return { geoState, isLocated, requestLocation }
 }

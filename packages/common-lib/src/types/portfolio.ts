@@ -3,11 +3,14 @@ import { OffsetPaginationRequest } from "./request";
 import { MediaPortfolio } from "./media";
 import { FullPortfolioCollection, PortfolioCollection } from "./collection";
 import { CategoryBase } from "./category";
+import { CompactUser } from "./user";
 
 // ==================== PORTFOLIO TYPES ====================
 
-// Portfolio base type
-export type Portfolio = PortfolioSchema;
+// Portfolio base type (always includes the owning artist from users join)
+export type Portfolio = PortfolioSchema & {
+  artist: CompactUser;
+};
 
 // Portfolio with nested media and collections (formatted output from joins)
 
@@ -24,6 +27,14 @@ export type PortfolioIndexRequest = OffsetPaginationRequest & {
   is_highlight?: boolean;
   is_active?: boolean;
   blocked?: boolean;
+  search?: string;
+  categories?: string[];
+  city?: string;
+  state?: string;
+  country?: string;
+  lat?: number;
+  lng?: number;
+  radius_km?: number;
 };
 
 // Fields generated internally by the system (user cannot set these)

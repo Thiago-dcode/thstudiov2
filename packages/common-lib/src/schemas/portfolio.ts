@@ -22,10 +22,33 @@ export type PortfolioSchemaWithoutTimestamps = Omit<PortfolioSchema, 'created_at
 const tablesPortfolio = [TABLES_ENUM.PORTFOLIOS] as const;
 export type PortfolioSchemaColumns = TableColumn<typeof tablesPortfolio, PortfolioSchema>;
 
-// ==================== PORTFOLIO FULL SCHEMA (WITH MEDIA & COLLECTIONS & CATEGORIES) ====================
-// Joins: portfolios + portfolio_media + media + portfolio_collection + collections + portfolio_categories + categories + category_translations
-// Collisions: id, title, description, thumbnail, user_id, created_at, updated_at
-export type PortfolioFullSchema = PortfolioSchema & {
+// ==================== PORTFOLIO + ARTIST SCHEMA (WITH JOINED USER) ====================
+// Joins: portfolios + users
+// Collisions: id
+export type PortfolioWithArtistSchema = PortfolioSchema & {
+  u_id: number;             // COLLISION: users.id
+  email: string;
+  username: string;
+  name?: string | null;
+  surname?: string | null;
+  benefit_id: number | null;
+};
+
+const tablesPortfolioWithArtist = [TABLES_ENUM.PORTFOLIOS, TABLES_ENUM.USERS] as const;
+export type PortfolioWithArtistSchemaColumns = TableColumn<typeof tablesPortfolioWithArtist, PortfolioWithArtistSchema>;
+
+const tablesPortfolioFull = [
+  TABLES_ENUM.PORTFOLIOS,
+  TABLES_ENUM.USERS,
+  TABLES_ENUM.PORTFOLIO_MEDIA,
+  TABLES_ENUM.MEDIA,
+  TABLES_ENUM.PORTFOLIO_COLLECTION,
+  TABLES_ENUM.COLLECTIONS,
+  TABLES_ENUM.PORTFOLIO_CATEGORIES,
+  TABLES_ENUM.CATEGORIES,
+  TABLES_ENUM.CATEGORY_TRANSLATIONS,
+] as const;
+export type PortfolioFullSchema = PortfolioWithArtistSchema & {
   // From portfolio_media (prefixed: pm_)
   media_id: number;
   position: number;
@@ -35,7 +58,7 @@ export type PortfolioFullSchema = PortfolioSchema & {
   public_id: string;
   m_title?: string | null;                // COLLISION: title
   m_thumbnail?: string | null;            // COLLISION: thumbnail
-  url?: string | null; 
+  url?: string | null;
   blocked_at?: Date | null;
   shape?: EnumType<'MEDIA_SHAPE'> | null;
   /** From joined `media` row (collision with `portfolios.is_active`). */
@@ -53,15 +76,4 @@ export type PortfolioFullSchema = PortfolioSchema & {
   c_name?: string | null;                 // COLLISION: name (resolved via COALESCE with translation)
   c_slug?: string | null;                 // COLLISION: slug
 };
-
-const tablesPortfolioFull = [
-  TABLES_ENUM.PORTFOLIOS,
-  TABLES_ENUM.PORTFOLIO_MEDIA,
-  TABLES_ENUM.MEDIA,
-  TABLES_ENUM.PORTFOLIO_COLLECTION,
-  TABLES_ENUM.COLLECTIONS,
-  TABLES_ENUM.PORTFOLIO_CATEGORIES,
-  TABLES_ENUM.CATEGORIES,
-  TABLES_ENUM.CATEGORY_TRANSLATIONS,
-] as const;
 export type PortfolioFullSchemaColumns = TableColumn<typeof tablesPortfolioFull, PortfolioFullSchema>;

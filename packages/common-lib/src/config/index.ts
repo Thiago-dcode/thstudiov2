@@ -1,25 +1,25 @@
-import  dotenv from 'dotenv'
+import dotenv from 'dotenv'
 dotenv.config()
-import  path from 'path';
-import  fs from 'fs';
+import path from 'path';
+import fs from 'fs';
 
 //IMPORTANT: This file is not available for next.js middleware,
 //So dont call this file from next.js middleware
-let envFilePath = path.resolve(process.cwd(),'..', '..', '.env');
+let envFilePath = path.resolve(process.cwd(), '..', '..', '.env');
 
- const config = (envPath?: string | undefined) => {
+const config = (envPath?: string | undefined) => {
   envFilePath = envPath || envFilePath;
-  if(!fs.existsSync(envFilePath)){
+  if (!fs.existsSync(envFilePath)) {
     throw new Error('Environment file not found');
   }
-  dotenv.config({ path: envPath || envFilePath ,quiet:true});
+  dotenv.config({ path: envPath || envFilePath, quiet: true });
   return {
     app: {
       api_key: process.env.APP_API_KEY || '',
       name: 'a11studio',
       url: process.env.APP_URL,
       env: process.env.NODE_ENV || 'development',
-      isProduction:process.env.NODE_ENV?.toLowerCase() =='production',
+      isProduction: process.env.NODE_ENV?.toLowerCase() == 'production',
       sendErrorEmails: process.env.SEND_ERROR_EMAILS == '1',
       frontendUrls: process.env.APP_FRONTEND_URLS ? process.env.APP_FRONTEND_URLS.split(',') : [],
       allowedOrigins: process.env.APP_ALLOWED_ORIGINS ? process.env.APP_ALLOWED_ORIGINS.split(',').map((origin) => origin.trim()) : [],
@@ -43,15 +43,18 @@ let envFilePath = path.resolve(process.cwd(),'..', '..', '.env');
       password: process.env.DB_PASSWORD || 'postgres',
       database: process.env.DB_NAME || 'thstudio',
     },
-    redis:{
-      url:process.env.REDIS_URL,
+    redis: {
+      url: process.env.REDIS_URL,
     },
     mailing: {
       host: process.env.SMTP_HOST,
       port: process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT) : 587,
       username: process.env.SMTP_USERNAME,
       password: process.env.SMTP_PASSWORD,
-      admins: process.env.SMTP_ADMINS ? process.env.SMTP_ADMINS.split(',') : [],
+      admins: process.env.ADMIN_EMAILS ? process.env.ADMIN_EMAILS.split(',') : [],
+      noreplyEmail: process.env.NOREPLY_EMAIL,
+      contactEmail: process.env.CONTACT_EMAIL,
+      api_key: process.env.RESEND_API_KEY,
     },
     storage: {
       bucket: process.env.STORAGE_BUCKET,
@@ -61,11 +64,11 @@ let envFilePath = path.resolve(process.cwd(),'..', '..', '.env');
       signedUrlExpiration: process.env.STORAGE_SIGNED_URL_EXPIRATION ? parseInt(process.env.STORAGE_SIGNED_URL_EXPIRATION) : 3600,
       folder: process.env.STORAGE_FOLDER,
     },
-    stripe:{
+    stripe: {
       secretKey: process.env.STRIPE_SECRET_KEY as string,
       webhookSecret: process.env.STRIPE_WEBHOOK_SECRET as string,
     },
-    paypal:{
+    paypal: {
       url: process.env.PAYPAL_URL as string,
       secretKey: process.env.PAYPAL_SECRET_KEY as string,
       clientId: process.env.PAYPAL_CLIENT_ID as string
@@ -81,4 +84,4 @@ let envFilePath = path.resolve(process.cwd(),'..', '..', '.env');
     },
   };
 };
-export { envFilePath ,config};
+export { envFilePath, config };

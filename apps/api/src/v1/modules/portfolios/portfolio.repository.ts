@@ -2,11 +2,13 @@ import { LogService } from '@repo/backend-lib/services/log-service';
 import { Injectable } from '@nestjs/common';
 import { BaseRepository } from '@repo/database/repositories';
 import { QueryBuilder } from '@repo/database/queryBuilder';
+import { foldLatinDiacriticsForMatch } from '@repo/common-lib/utils/fold-latin-diacritics';
 import {
   PortfolioFullSchema,
   PortfolioFullSchemaColumns,
+  PortfolioWithArtistSchema,
+  PortfolioWithArtistSchemaColumns,
   PortfolioSchema,
-  PortfolioSchemaColumns,
 } from '@repo/common-lib/schemas/portfolio';
 import {
   CreatePortfolioInput,
@@ -15,6 +17,7 @@ import {
   Portfolio,
   PortfolioIndexRequest,
 } from '@repo/common-lib/types/portfolio';
+import { CompactUser } from '@repo/common-lib/types/user';
 import { DbException } from '@repo/database/exceptions';
 import { RequestService } from 'src/common/services/request.service';
 import { MediaPortfolio } from '@repo/common-lib/types/media';
@@ -23,7 +26,7 @@ import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
 
 @Injectable()
 export class PortfolioRepository extends BaseRepository {
-  private readonly COLUMNS: PortfolioSchemaColumns[] = [
+  private readonly COLUMNS: PortfolioWithArtistSchemaColumns[] = [
     'portfolios.id',
     'portfolios.slug',
     'portfolios.title',
@@ -36,10 +39,17 @@ export class PortfolioRepository extends BaseRepository {
     'portfolios.user_id',
     'portfolios.created_at',
     'portfolios.updated_at',
+    // user (artist) — only id collides
+    'users.id as u_id',
+    'users.email',
+    'users.username',
+    'users.name',
+    'users.surname',
+    'users.benefit_id',
   ] as const;
 
   private readonly FULL_COLUMNS: PortfolioFullSchemaColumns[] = [
-    ...this.COLUMNS,
+    ...this.COLUMNS as unknown as PortfolioFullSchemaColumns[],
     'portfolio_media.media_id',
     'portfolio_media.position',
     'media.id as m_id',
@@ -65,7 +75,7 @@ export class PortfolioRepository extends BaseRepository {
 
   async getAll(filters: PortfolioIndexRequest): Promise<Portfolio[]> {
     const query = await this.applyFilters(filters, this.query());
-    const results = await query.get<PortfolioSchema[]>();
+    const results = await query.get<PortfolioWithArtistSchema[]>();
     return results.map((result) => this.formatPortfolio(result));
   }
 
@@ -78,11 +88,12 @@ export class PortfolioRepository extends BaseRepository {
           `COALESCE(category_translations.name, categories.name) as c_name`,
         ].join(','),
       )
-      .where('slug', '=', slug)
-      .where('user_id', '=', userId)
-      .join('id', 'portfolio_media', 'portfolio_id', 'LEFT')
+      .where('portfolios.slug', '=', slug)
+      .where('portfolios.user_id', '=', userId)
+      .join('portfolios.user_id', 'users', 'id', 'INNER')
+      .join('portfolios.id', 'portfolio_media', 'portfolio_id', 'LEFT')
       .join('portfolio_media.media_id', 'media', 'id', 'LEFT')
-      .join('id', 'portfolio_categories', 'portfolio_id', 'LEFT')
+      .join('portfolios.id', 'portfolio_categories', 'portfolio_id', 'LEFT')
       .join('portfolio_categories.category_id', 'categories', 'id', 'LEFT')
       .join(
         'categories.id',
@@ -102,11 +113,17 @@ export class PortfolioRepository extends BaseRepository {
 
 
 
-  async getOneCompact(id: number) {
-
-    const result = await this.query().select(this.COLUMNS).where('id', id).first();
-
+  async getOneCompact(id: number): Promise<Portfolio | null> {
+    const result = await this.getOneWithArtist(id);
     return result ? this.formatPortfolio(result) : null;
+  }
+
+  private async getOneWithArtist(id: number): Promise<PortfolioWithArtistSchema | null> {
+    return this.query()
+      .select(this.COLUMNS)
+      .join('portfolios.user_id', 'users', 'id', 'INNER')
+      .where('portfolios.id', '=', id)
+      .first<PortfolioWithArtistSchema>();
   }
 
   async slugExists(slug: string, userId: number): Promise<boolean> {
@@ -179,9 +196,9 @@ export class PortfolioRepository extends BaseRepository {
       media,
       collections,
       categories,
-    })
+    });
 
-    return portfolioResult;
+    return this.formatPortfolio(await this.getOneWithArtist(portfolioResult.id));
   }
 
   async updateById(id: number, { media, collections, categories, ...portfolioData }: UpdatePortfolioInput): Promise<Portfolio> {
@@ -201,10 +218,7 @@ export class PortfolioRepository extends BaseRepository {
     });
 
     // Return the updated portfolio
-    const result = await this.query()
-      .select(this.COLUMNS)
-      .where('id', '=', id)
-      .first<PortfolioSchema>();
+    const result = await this.getOneWithArtist(id);
 
     if (!result) {
       throw new DbException('Could not update portfolio');
@@ -285,41 +299,104 @@ export class PortfolioRepository extends BaseRepository {
     filters: PortfolioIndexRequest,
     query: QueryBuilder,
   ): Promise<QueryBuilder> {
-    query.select(this.COLUMNS);
+    query
+      .select(this.COLUMNS)
+      .join('portfolios.user_id', 'users', 'id', 'INNER')
+      .join('users.id', 'addresses', 'user_id', 'LEFT');
 
     if (filters.user_id) {
-      query.where('user_id', '=', filters.user_id);
+      query.where('portfolios.user_id', '=', filters.user_id);
     }
 
     if (typeof filters.is_featured === 'boolean') {
-      query.where('is_featured', '=', filters.is_featured);
+      query.where('portfolios.is_featured', '=', filters.is_featured);
     }
 
     if (typeof filters.is_highlight === 'boolean') {
-      query.where('is_highlight', '=', filters.is_highlight);
+      query.where('portfolios.is_highlight', '=', filters.is_highlight);
     }
 
     if (typeof filters.is_active === 'boolean') {
-      query.where('is_active', '=', filters.is_active);
+      query.where('portfolios.is_active', '=', filters.is_active);
     }
 
     if (typeof filters.blocked === 'boolean') {
       if (filters.blocked) {
-        query.where('blocked_at', 'IS NOT', null);
+        query.where('portfolios.blocked_at', 'IS NOT', null);
       } else {
-        query.where('blocked_at', 'IS', null);
+        query.where('portfolios.blocked_at', 'IS', null);
       }
+    }
+
+    if (filters.search) {
+      const search = filters.search.toLowerCase();
+      query.whereGroup([
+        ['portfolios.title', 'ILIKE', `%${search}%`, 'where'],
+        ['users.username', 'ILIKE', `%${search}%`, 'orWhere'],
+        ['users.name', 'ILIKE', `%${search}%`, 'orWhere'],
+        ['users.surname', 'ILIKE', `%${search}%`, 'orWhere'],
+      ]);
+    }
+
+    if (filters.categories?.length) {
+      const pivotRows = await this.query()
+        .rawSelect('DISTINCT portfolio_categories.portfolio_id')
+        .join('id', 'portfolio_categories', 'portfolio_id', 'INNER')
+        .join('portfolio_categories.category_id', 'categories', 'id', 'INNER')
+        .whereIn('categories.slug', filters.categories)
+        .get<{ portfolio_id: number }[]>();
+
+      const portfolioIds = pivotRows.map((r) => r.portfolio_id);
+      if (portfolioIds.length) {
+        query.whereIn('portfolios.id', portfolioIds);
+      } else {
+        query.where('portfolios.id', '=', -1);
+      }
+    }
+
+    const cityFilter = filters.city?.trim();
+    if (cityFilter) {
+      query.where(
+        'unaccent(addresses.city)',
+        'ILIKE',
+        `%${foldLatinDiacriticsForMatch(cityFilter)}%`,
+      );
+    }
+
+    const stateFilter = filters.state?.trim();
+    if (stateFilter) {
+      query.where(
+        'unaccent(addresses.state)',
+        'ILIKE',
+        `%${foldLatinDiacriticsForMatch(stateFilter)}%`,
+      );
+    }
+
+    const countryFilter = filters.country?.trim();
+    if (countryFilter) {
+      query.where(
+        'unaccent(addresses.country)',
+        'ILIKE',
+        `%${foldLatinDiacriticsForMatch(countryFilter)}%`,
+      );
+    }
+
+    if (filters.lat != null && filters.lng != null) {
+      const radius = filters.radius_km ?? 50;
+      query
+        .withinRadius('addresses.latitude', 'addresses.longitude', filters.lat, filters.lng, radius)
+        .orderByDistance('addresses.latitude', 'addresses.longitude', filters.lat, filters.lng, 'ASC');
     }
 
     this.requestService.pagination =
       await this.handleOffsetPagination(query, filters);
-    query.orderBy('created_at', 'DESC');
+    query.orderBy('portfolios.created_at', 'DESC');
     query.orderBy('portfolios.id', 'DESC');
 
     return query;
   }
 
-  private formatPortfolio(result: PortfolioSchema): Portfolio {
+  private formatPortfolio(result: PortfolioWithArtistSchema): Portfolio {
     return {
       id: result.id,
       slug: result.slug,
@@ -333,6 +410,18 @@ export class PortfolioRepository extends BaseRepository {
       user_id: result.user_id,
       created_at: result.created_at,
       updated_at: result.updated_at,
+      artist: this.formatArtist(result),
+    };
+  }
+
+  private formatArtist(result: PortfolioWithArtistSchema): CompactUser {
+    return {
+      id: result.u_id,
+      email: result.email,
+      username: result.username,
+      name: result.name,
+      surname: result.surname,
+      benefit_id: result.benefit_id,
     };
   }
   private formatFullPortfolio(result: PortfolioFullSchema[]): FullPortfolio {
@@ -385,6 +474,7 @@ export class PortfolioRepository extends BaseRepository {
       user_id: first.user_id,
       created_at: first.created_at,
       updated_at: first.updated_at,
+      artist: this.formatArtist(first),
       media: Array.from(mediaMap.values()),
       collections: [],
       categories: Array.from(categoriesMap.values()),

@@ -16,7 +16,7 @@ export class Error500Mail extends Mailable {
 
   async envelope() {
     return {
-      from: mailingFrom,
+      from: mailingNoreplyEmail,
       to: mailingAdmins,
       subject: 'ERROR 500',
     };

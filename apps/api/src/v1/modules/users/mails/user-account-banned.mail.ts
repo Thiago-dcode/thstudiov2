@@ -1,5 +1,5 @@
 import { Mailable } from '@repo/backend-lib/services/mail-service/base';
-import { mailingFrom } from 'src/config/mailling';
+import { mailingNoreplyEmail } from 'src/config/mailling';
 import { ViewService } from '@repo/backend-lib/services/view-service/base';
 import { Injectable } from '@nestjs/common';
 import { I18nService } from 'nestjs-i18n';
@@ -22,7 +22,7 @@ export class UserAccountBannedMail extends Mailable {
   }
   async envelope() {
     return {
-      from: mailingFrom,
+      from: mailingNoreplyEmail,
       to: this.user.email,
       subject: this.i18nService.translate('account-banned.SUBJECT', {
         lang: this.lang,

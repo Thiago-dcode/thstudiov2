@@ -36,19 +36,39 @@ const getMigrationFilePathRec = (migrationName: string, tries = 1) => {
   if (!fs.existsSync(migrationDirectory)) {
     fs.mkdirSync(migrationDirectory, { recursive: true });
   }
-  const numMigrationFiles = fs
-    .readdirSync(migrationDirectory)
-    .filter((file) => file.endsWith('.ts')).length;
+
+  // Slugify the user-provided name so the filename is filesystem-safe.
+  // (We also keep it stable across retries.)
+  const slug = migrationName
+    .trim()
+    .replace(/[^a-zA-Z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  const safeSlug = slug || 'migration';
+
+  // Use a full timestamp (down to ms) for incremental uniqueness:
+  // yyyy-mm-dd-hh-mm-ss-ms-migrationName.ts
+  // If we hit a collision (extremely unlikely), we retry by shifting ms by `tries`.
+  const now = new Date(Date.now() + tries);
+  const yyyy = String(now.getFullYear());
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  const hh = String(now.getHours()).padStart(2, '0');
+  const min = String(now.getMinutes()).padStart(2, '0');
+  const ss = String(now.getSeconds()).padStart(2, '0');
+  const ms = String(now.getMilliseconds()).padStart(3, '0');
+
+  const timestampPrefix = `${yyyy}-${mm}-${dd}-${hh}-${min}-${ss}-${ms}`;
+
   const migrationFilePath = path.join(
     migrationDirectory,
-    `${numMigrationFiles}-${migrationName}-${new Date().toISOString().split('T')[0]}.ts`,
+    `${timestampPrefix}-${safeSlug}.ts`,
   );
   if (fs.existsSync(migrationFilePath)) {
     Logger.info(
       'Migration file already exists, trying again...',
       migrationFilePath,
     );
-    return getMigrationFilePathRec(migrationName + '_' + tries, tries + 1);
+    return getMigrationFilePathRec(migrationName, tries + 1);
   }
   return migrationFilePath;
 };

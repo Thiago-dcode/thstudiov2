@@ -13,6 +13,7 @@ import {
 } from "react"
 
 type FiltersContextValue = {
+    segment: string
     filters: ArtistIndexRequest
     /** Parsed request from the current page URL; updates when the server passes new `params`. */
     urlParams: ArtistIndexRequest
@@ -29,8 +30,12 @@ type FiltersContextValue = {
         key: K,
         value: ArtistIndexRequest[K],
     ) => void
+    /** Set multiple filter keys in a single update. */
+    addMany: (entries: Partial<ArtistIndexRequest>) => void
     /** Drop a single filter key. */
     delete: (key: keyof ArtistIndexRequest) => void
+    /** Drop multiple filter keys in a single update. */
+    deleteMany: (keys: (keyof ArtistIndexRequest)[]) => void
     /** Reset all filters. */
     clearAll: () => void
 }
@@ -48,7 +53,8 @@ export const useFilters = () => {
 
 type FiltersProviderProps = {
     children: ReactNode
-    params: ArtistIndexRequest,
+    segment: string
+    params: ArtistIndexRequest
     defaultCategoriesSelected?: CategoryBase[]
 }
 
@@ -58,7 +64,7 @@ function withoutPage<T extends ArtistIndexRequest>(filters: T): T {
     return rest as T
 }
 
-export function FiltersProvider({ children, params: initialParams, defaultCategoriesSelected = [] }: FiltersProviderProps) {
+export function FiltersProvider({ children, segment, params: initialParams, defaultCategoriesSelected = [] }: FiltersProviderProps) {
     const [filters, setFilters] = useState<ArtistIndexRequest>(initialParams)
 
     const [categoriesSelected, setCategoriesSelectedState] =
@@ -91,12 +97,31 @@ export function FiltersProvider({ children, params: initialParams, defaultCatego
         [],
     )
 
+    const addMany = useCallback((entries: Partial<ArtistIndexRequest>) => {
+        setFilters((prev) => {
+            const next = { ...prev, ...entries }
+            const keys = Object.keys(entries) as (keyof ArtistIndexRequest)[]
+            const hasGeo = keys.some((k) => k === "lat" || k === "lng" || k === "radius_km")
+            const hasAddress = keys.some((k) => k === "city" || k === "state" || k === "country")
+            if (hasGeo) { delete next.city; delete next.state; delete next.country }
+            if (hasAddress) { delete next.lat; delete next.lng; delete next.radius_km }
+            return withoutPage(next)
+        })
+    }, [])
+
     const deleteFilter = useCallback((key: keyof ArtistIndexRequest) => {
         setFilters((prev) => {
             const next = { ...prev }
             delete next[key]
-            // Reset pagination when any other filter is removed.
             return key === "page" ? next : withoutPage(next)
+        })
+    }, [])
+
+    const deleteMany = useCallback((keys: (keyof ArtistIndexRequest)[]) => {
+        setFilters((prev) => {
+            const next = { ...prev }
+            for (const key of keys) delete next[key]
+            return withoutPage(next)
         })
     }, [])
 
@@ -144,6 +169,7 @@ export function FiltersProvider({ children, params: initialParams, defaultCatego
 
     const value = useMemo<FiltersContextValue>(
         () => ({
+            segment,
             filters,
             urlParams: initialParams,
             categoriesSelected,
@@ -151,10 +177,13 @@ export function FiltersProvider({ children, params: initialParams, defaultCatego
             pushCategory,
             removeCategory,
             add,
+            addMany,
             delete: deleteFilter,
+            deleteMany,
             clearAll,
         }),
         [
+            segment,
             filters,
             initialParams,
             categoriesSelected,
@@ -162,7 +191,9 @@ export function FiltersProvider({ children, params: initialParams, defaultCatego
             pushCategory,
             removeCategory,
             add,
+            addMany,
             deleteFilter,
+            deleteMany,
             clearAll,
         ],
     )
