@@ -1,43 +1,55 @@
-"use client"
+"use client";
 
-import { useCallback, useState } from "react"
-import { useFilters } from "./filters.provider"
+import { useCallback, useState } from "react";
+import { useFilters } from "./filters.provider";
 
-export const NEAR_ME_RADIUS_KM = 100
+export const NEAR_ME_RADIUS_KM = 100;
+export const NEAR_ME_SESSION_KEY = "nearMe.autoAsked";
 
-export type GeoState = "idle" | "locating" | "denied" | "unavailable"
+export type GeoState = "idle" | "locating" | "denied" | "unavailable";
 
-export function useNearMe() {
-    const { addMany, filters } = useFilters()
-    const [geoState, setGeoState] = useState<GeoState>("idle")
+type UseNearMeOptions = {
+  clearPreviousFilters?: boolean;
+};
 
-    const isLocated = filters.lat != null && filters.lng != null
+export function useNearMe({
+  clearPreviousFilters = false,
+}: UseNearMeOptions = {}) {
+  const { addMany, clearAll, filters } = useFilters();
+  const [geoState, setGeoState] = useState<GeoState>("idle");
 
-    const requestLocation = useCallback(() => {
-        if (!navigator.geolocation) {
-            setGeoState("unavailable")
-            return
-        }
+  const hasLocationFilter =
+    filters.lat != null || filters.lng != null || filters.radius_km != null;
+  const isLocated = filters.lat != null && filters.lng != null;
 
-        setGeoState("locating")
+  const requestLocation = useCallback(() => {
+    sessionStorage.setItem(NEAR_ME_SESSION_KEY, "1");
 
-        navigator.geolocation.getCurrentPosition(
-            ({ coords }) => {
-                addMany({
-                    lat: coords.latitude,
-                    lng: coords.longitude,
-                    radius_km: NEAR_ME_RADIUS_KM,
-                })
-                setGeoState("idle")
-            },
-            (err) => {
-                setGeoState(
-                    err.code === err.PERMISSION_DENIED ? "denied" : "unavailable",
-                )
-            },
-            { enableHighAccuracy: false, timeout: 10_000, maximumAge: 300_000 },
-        )
-    }, [addMany])
+    if (!navigator.geolocation) {
+      setGeoState("unavailable");
+      return;
+    }
 
-    return { geoState, isLocated, requestLocation }
+    setGeoState("locating");
+
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        if (clearPreviousFilters) clearAll();
+        addMany({
+          lat: coords.latitude,
+          lng: coords.longitude,
+          radius_km: NEAR_ME_RADIUS_KM,
+        });
+        setGeoState("idle");
+      },
+      (err) => {
+        setGeoState(
+          err.code === err.PERMISSION_DENIED ? "denied" : "unavailable",
+        );
+      },
+      { enableHighAccuracy: false, timeout: 10_000, maximumAge: 300_000 },
+    );
+  }, [addMany, clearAll, clearPreviousFilters]);
+
+  return { geoState, hasLocationFilter, isLocated, requestLocation };
 }

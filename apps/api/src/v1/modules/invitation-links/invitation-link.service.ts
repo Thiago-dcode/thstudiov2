@@ -26,6 +26,10 @@ export class InvitationLinkService {
     return this.invitationLinkRepository.updateById(id, data);
   }
 
+  async setExpiresAt(id: number, expiresAt: Date): Promise<InvitationLink> {
+    return this.invitationLinkRepository.updateById(id, { expires_at: expiresAt });
+  }
+
   async create({ benefit_id, active, expire_at, max_uses }: PublicCreateInvitationLinkInput) {
     return this.invitationLinkRepository.create({
 

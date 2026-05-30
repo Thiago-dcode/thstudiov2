@@ -9,7 +9,7 @@ import { Eye, EyeClosed } from "lucide-react";
 import { ReactNode, useState } from "react";
 import { registerServerAction } from "@/modules/auth/server-actions/register.action";
 import FormComponent from "@/lib/components/form-component";
-export const RegisterForm = ({ children }: { children?: ReactNode }) => {
+export const RegisterForm = ({ children, initialEmail }: { children?: ReactNode; initialEmail?: string }) => {
     const router = useRouter();
     const [hidden, setHidden] = useState(true);
     const { result, handleSubmit, errors, inputErrors, cleanErrors, isPending } = useHandleAction({
@@ -34,7 +34,7 @@ export const RegisterForm = ({ children }: { children?: ReactNode }) => {
                 id="email"
                 name="email"
                 error={inputErrors?.email}
-                defaultValue={result?.inputs?.email}
+                defaultValue={result?.inputs?.email ?? initialEmail}
                 placeholder="you@example.com"
                 autoComplete="email"
                 required

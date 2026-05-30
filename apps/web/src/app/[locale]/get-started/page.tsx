@@ -56,10 +56,10 @@ export default async function GetStartedLayout() {
         {user.funnel_step < FUNNEL_LAST_STEP ? <UserBenefitModal user={user} /> : null}
         <PageComponent.Container className={cn("max-w-2xl ",
             { "max-w-lg": user.funnel_step === 1 || user.funnel_step === 2 },
-            { " max-w-full": user.funnel_step === FUNNEL_LAST_STEP }
+            { " max-w-full justify-start": user.funnel_step === FUNNEL_LAST_STEP }
         )}>
 
-            <PageComponent.Content className="relative">
+            <PageComponent.Content className={cn("relative",  { " max-w-full justify-start border-none inset-shadow-none": user.funnel_step === FUNNEL_LAST_STEP })}>
                 <PageComponent.Header>
                     <PageComponent.Title title={currentStep.title} />
                     <PageComponent.SubTitle subTitle={currentStep.subTitle} />

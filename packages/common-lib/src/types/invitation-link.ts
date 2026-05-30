@@ -18,7 +18,8 @@ export type PublicCreateInvitationLinkInput = {
 export type CreateInvitationLinkInput = Omit<InvitationLinkSchema, 'id' | 'created_at' | 'updated_at' | 'current_uses'>;
 
 export type UpdateInvitationLinkInput = Partial<PublicCreateInvitationLinkInput> & {
-  current_uses?:number,
+  current_uses?: number;
+  expires_at?: Date | null;
 };
 
 

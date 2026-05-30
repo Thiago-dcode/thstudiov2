@@ -36,7 +36,10 @@ import nodemailer from "nodemailer";
           }
         
         }
-       
+
+        public async sendBatch(_options: EmailDriverOptions[]): Promise<any> {
+          throw new Error("NodemailerEmailDriver: sendBatch is not implemented.");
+        }
 }
 
 

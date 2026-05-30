@@ -1,98 +1,6 @@
-export interface FaqItem {
-  question: string;
-  answer: string;
-}
 
-export interface FaqsMessages {
-  title: string;
-  stillHaveQuestions: string;
-  items: FaqItem[];
-}
 
-export interface SupportSubject {
-  value: string;
-  label: string;
-}
-
-export interface SupportMessages {
-  contactLabel: string;
-  title: string;
-  description: string;
-  formContainer: {
-    nameLabel: string;
-    namePlaceholder: string;
-    emailLabel: string;
-    emailPlaceholder: string;
-    subjectLabel: string;
-    messageLabel: string;
-    messagePlaceholder: string;
-    submitButton: string;
-    successToast: string;
-  };
-  subjects: SupportSubject[];
-}
-
-export interface LandingMessages {
-  hero: {
-    titlePrefix: string;
-    titleAccent: string;
-    titleSuffix: string;
-    subtitle: string;
-    primaryCtaLoggedIn: string;
-    primaryCtaLoggedOut: string;
-    secondaryCta: string;
-    disclaimer: string;
-  };
-  valuePillars: {
-    header: {
-      badge: string;
-      title: string;
-      description: string;
-    };
-    items: {
-      title: string;
-      description: string;
-    }[];
-  };
-  socialProof: {
-    highlights: string[];
-    cta: string;
-  };
-  featureCategories: {
-    header: {
-      badge: string;
-      title: string;
-      description: string;
-    };
-    card: {
-      browse: string;
-      ariaBrowseArtistsIn: string;
-    };
-  };
-  featuredArtists: {
-    header: {
-      badge: string;
-      title: string;
-      description: string;
-    };
-    browseAll: string;
-  };
-  cta: {
-    badge: string;
-    title: string;
-    description: string;
-    button: string;
-  };
-}
-
-export interface Messages {
-  faqs: FaqsMessages;
-  landing: LandingMessages;
-  language: string;
-  support: SupportMessages;
-}
-
-const messages: Messages = {
+const messages = {
   landing: {
     hero: {
       titlePrefix: "Let your",
@@ -204,6 +112,71 @@ const messages: Messages = {
     ],
   },
   language: "Language",
+  search: {
+    segments: {
+      artists: "Artists",
+      portfolios: "Portfolios"
+    },
+    page: {
+      description: "Browse artists on A11STUDIO. Discover portfolios, services, and creative professionals.",
+      title: "Artists — A11STUDIO",
+      errorHeading: "We couldn't load {segment}",
+      errorMessage: "Something went wrong while searching. Please try again in a moment.",
+      searchingFor: "Searching for {segment}",
+      results: {
+        foundArtists: "{count, number} {count, plural, one {artist} other {artists}} found{suffix}",
+        foundPortfolios: "{count, number} {count, plural, one {portfolio} other {portfolios}} found{suffix}",
+        forQuery: ' for "{query}"'
+      },
+      empty: {
+        heading: "No {segment} found{suffix}",
+        output: "Your filters didn't match any {segment}. Try broadening your search{end}",
+        lookNear: " or look for {segment} near you."
+      }
+    },
+    filters: {
+      activeFilters: "Active filters",
+      clearAll: "Clear all",
+      searchAria: "Search {segment}",
+      searchPlaceholder: "Search {segment} by name, style, category…",
+      badge: {
+        search: "Search: {value}",
+        geoLocation: "My location",
+        country: "Country: {value}",
+        state: "State: {value}",
+        city: "City: {value}"
+      }
+    },
+    nearMe: {
+      gettingLocation: "Getting location…",
+      nearMe: "Near me · {radius} km",
+      searchClose: "Search close to me",
+      locationDenied: "Enable location in browser settings and try again.",
+      locationUnavailable: "Couldn't get your location. Please try again."
+    },
+    primaryFilters: {
+      categories: "Categories",
+      location: "Location",
+      ariaLabel: "Categories and location filters",
+      useMyLocation: "Use my location"
+    },
+    combobox: {
+      placeholder: "Search…",
+      empty: {
+        pending: "",
+        noMatches: "No matches.",
+        noItems: "—",
+        searchingCategories: "Type to search categories."
+      }
+    },
+    artistCard: {
+      openProfile: "Open profile: {name}, @{username}",
+      specialtiesTitle: "Specialties",
+      locationDetailsTitle: "Location details on profile",
+      noLocationTitle: "No location listed",
+      viewAction: "View"
+    }
+  },
   support: {
     contactLabel: "Contact Support",
     title: "Need help? Send us a message.",
@@ -231,4 +204,5 @@ const messages: Messages = {
   },
 };
 
+export type Translations = typeof messages;
 export default messages;

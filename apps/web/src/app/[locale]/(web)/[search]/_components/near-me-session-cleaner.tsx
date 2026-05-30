@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import { useEffect } from "react"
-import { NEAR_ME_SESSION_KEY } from "./search-near-me-button"
+import { useEffect } from "react";
+import { NEAR_ME_SESSION_KEY } from "./use-near-me";
 
 /**
  * Clears the near-me auto-ask session flag when the search page unmounts.
@@ -10,11 +10,11 @@ import { NEAR_ME_SESSION_KEY } from "./search-near-me-button"
  * SearchNearMeButton shows/hides based on search results.
  */
 export function NearMeSessionCleaner() {
-    useEffect(() => {
-        return () => {
-            sessionStorage.removeItem(NEAR_ME_SESSION_KEY)
-        }
-    }, [])
+  useEffect(() => {
+    return () => {
+      sessionStorage.removeItem(NEAR_ME_SESSION_KEY);
+    };
+  }, []);
 
-    return null
+  return null;
 }

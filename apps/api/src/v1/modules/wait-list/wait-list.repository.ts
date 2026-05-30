@@ -26,6 +26,7 @@ export class WaitListRepository extends BaseRepository {
     'wait_list.position',
     'wait_list.status',
     'wait_list.redeemed_at',
+    'wait_list.expires_at',
     'wait_list.invitation_link_id',
   ] as const;
 
@@ -87,6 +88,15 @@ export class WaitListRepository extends BaseRepository {
     }));
   }
 
+  async findByInvitationLinkId(invitationLinkId: number): Promise<WaitList | null> {
+    const result = await this.query()
+      .select(this.COLUMNS)
+      .where('invitation_link_id', '=', invitationLinkId)
+      .first<WaitListSchema>();
+
+    return result ? this.format(result) : null;
+  }
+
   async updateById(id: number, data: UpdateWaitListInput): Promise<WaitList> {
     const cols = Object.keys(data);
     const values = Object.values(data);
@@ -128,6 +138,7 @@ export class WaitListRepository extends BaseRepository {
       position: result.position,
       status: result.status,
       redeemed_at: result.redeemed_at,
+      expires_at: result.expires_at,
       invitation_link_id: result.invitation_link_id,
     };
   }

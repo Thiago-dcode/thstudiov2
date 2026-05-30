@@ -12,6 +12,7 @@ import {
 import { EnumType } from '@repo/common-lib/constants/enums';
 import { PublicCreateWaitListInput } from '@repo/common-lib/types/wait-list';
 import { Job, Queue } from 'bullmq';
+import { addDays } from 'date-fns';
 import { getConfigValue } from '@repo/common-lib/config/utils';
 import { GlobalProcessor } from 'src/common/processors/global.processor';
 import { BenefitRepository } from '../benefits/benefit.repository';
@@ -24,6 +25,8 @@ import { WaitListRepository } from './wait-list.repository';
 
 @Processor(WAIT_LIST_QUEUE)
 export class WaitListProcessor extends GlobalProcessor {
+  private static readonly INVITATION_EXPIRES_IN_DAYS = 7;
+
   private readonly logger = FactoryLogService.createLogService('file', {
     channel: WAIT_LIST_QUEUE,
   });
@@ -109,6 +112,7 @@ export class WaitListProcessor extends GlobalProcessor {
         position,
         status: 'WAITING',
         redeemed_at: null,
+        expires_at: null,
         invitation_link_id: invitationLink.id,
       });
 
@@ -159,6 +163,29 @@ export class WaitListProcessor extends GlobalProcessor {
         return { invited: 0 };
       }
 
+      const expiresAt = addDays(
+        new Date(),
+        WaitListProcessor.INVITATION_EXPIRES_IN_DAYS,
+      );
+
+      await Promise.all(
+        entries.map(async (entry) => {
+          if (!entry.invitation_link_id) {
+            throw new Error(`Wait list entry ${entry.id} has no invitation link`);
+          }
+
+          await this.invitationLinkService.setExpiresAt(
+            entry.invitation_link_id,
+            expiresAt,
+          );
+
+          return this.waitListRepository.updateById(entry.id, {
+            status: 'INVITED',
+            expires_at: expiresAt,
+          });
+        }),
+      );
+
       const appUrl = getConfigValue('app').url;
       const mailables = entries.map((entry) =>
         this.waitListInviteMail.setData({
@@ -167,19 +194,14 @@ export class WaitListProcessor extends GlobalProcessor {
           benefitType: entry.benefit_type,
           trialDays: entry.trial_days,
           benefitMonths: this.getBenefitMonths(entry.trial_days),
-          registrationUrl: `${appUrl}/auth/register?ref=${entry.invitation_code}`,
+          registrationUrl: `${appUrl}/auth/register?ref=${entry.invitation_code}&email=${entry.email}`,
+          expiresInDays: WaitListProcessor.INVITATION_EXPIRES_IN_DAYS,
         }),
       );
 
       await this.mailService.sendBatchAsync(mailables, {
         jobId: `wait-list-invite-mail-${Date.now()}`,
       });
-
-      await Promise.all(
-        entries.map((entry) =>
-          this.waitListRepository.updateById(entry.id, { status: 'INVITED' }),
-        ),
-      );
 
       log.info(`Wait list batch invitations queued: ${entries.length}`);
 

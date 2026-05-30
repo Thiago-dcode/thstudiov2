@@ -7,6 +7,7 @@ export type WaitListSchema = {
   position: number | null;
   status: EnumType<'WAIT_LIST_STATUS'>;
   redeemed_at: Date | null;
+  expires_at: Date | null;
   invitation_link_id: number | null;
   created_at: Date;
   updated_at: Date;

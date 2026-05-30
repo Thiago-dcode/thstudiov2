@@ -27,7 +27,7 @@ export default async function CollectionListPage() {
                 title="Collections"
                 info="Collections are simple sets of related media grouped by a specific event or theme, like 'The Wedding of John' or 'Morocco 2026'."
             >
-                <CreateResourceButton resource={TABLES_ENUM.COLLECTIONS} href="collection/create" label="Create Collection" />
+                <CreateResourceButton resource={TABLES_ENUM.COLLECTIONS} href="collections/create" label="Create Collection" />
             </AdminPageTitle>
             {collectionsResponse.data.length > 0 ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -44,7 +44,7 @@ export default async function CollectionListPage() {
                     icon={<Library />}
                     description="No collections created yet. Start by adding a set of related media."
                 >
-                    <CreateResourceButton resource={TABLES_ENUM.COLLECTIONS} href="collection/create" label="Create Collection" variant="outline" />
+                    <CreateResourceButton resource={TABLES_ENUM.COLLECTIONS} href="collections/create" label="Create Collection" variant="outline" />
                 </AdminPageEmptyState>
             )}
         </AdminPageContainer>

@@ -38,7 +38,7 @@ export const LogoutDialog = () => {
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
                 <button
-                    className={`flex items-center gap-3 px-3 py-2 rounded-md transition-colors text-red-400 hover:bg-red-500/10 w-full
+                    className={`cursor-pointer flex items-center gap-3 px-3 py-2 rounded-md transition-colors text-red-400 hover:bg-red-500/10 w-full
                         ${shrinked ? 'justify-center' : ''}
                     `}
                 >

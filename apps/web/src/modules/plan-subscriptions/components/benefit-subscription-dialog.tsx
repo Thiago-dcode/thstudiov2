@@ -6,13 +6,9 @@ import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { Gift, Sparkles, ArrowRight } from "lucide-react";
 import { UsePlanSubscription } from "../providers/plan-subscription.provider";
 import { PlanPrice } from "@repo/common-lib/types/plan-price";
-import { EnumType } from "@repo/common-lib/constants/enums";
 import { useState } from "react";
+import { BENEFIT_CONFIG } from "@/modules/user-benefit/user-benefit.utils";
 
-const BENEFIT_CONFIG: Record<EnumType<'BENEFIT_TYPE'>, { label: string; months: number }> = {
-    EARLY_USER: { label: 'Early User', months: 3 },
-    VIP: { label: 'VIP', months: 6 },
-};
 
 type BenefitSubscriptionDialogProps = {
     planPrice: PlanPrice;
@@ -107,7 +103,7 @@ export const BenefitSubscriptionDialog = ({ planPrice, planName }: BenefitSubscr
             onOpenChange={setOpen}
         >
             <DialogTrigger asChild>
-                <button className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full border border-accent/25 bg-accent/10 px-4 py-2.5 text-sm font-medium text-accent shadow-lg backdrop-blur-sm transition-all hover:bg-accent/20 hover:shadow-accent/10">
+                <button className="cursor-pointer fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full border border-accent/25 bg-accent/10 px-4 py-2.5 text-sm font-medium text-accent shadow-lg backdrop-blur-sm transition-all hover:bg-accent/20 hover:shadow-accent/10">
                     <Gift className="size-4" />
                     <span>Redeem benefit</span>
                 </button>
@@ -132,7 +128,7 @@ export const BenefitSubscriptionDialog = ({ planPrice, planName }: BenefitSubscr
                         <DialogDescription className="text-center text-base text-text-muted">
                             As a <span className="font-semibold text-text">{config.label}</span>, enjoy{' '}
                             <span className="font-semibold text-accent">{config.months} months free</span>{' '}
-                            on {planName}.
+                            on {planName} plan.
                         </DialogDescription>
                     </DialogHeader>
 

@@ -12,6 +12,7 @@ export type WaitListInviteMailData = {
   trialDays: number;
   benefitMonths: number;
   registrationUrl: string;
+  expiresInDays: number;
 };
 
 @Injectable()

@@ -9,14 +9,11 @@ import { BenefitWithRedeemed } from "@repo/common-lib/types/benefit";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@repo/ui/components/shadcn/dialog";
 import { Button } from "@repo/ui/components/shadcn/button";
 import { ArrowRight, Gift, Sparkles } from "lucide-react";
-import { EnumType } from "@repo/common-lib/constants/enums";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { BENEFIT_CONFIG } from "../user-benefit.utils";
 
-const BENEFIT_CONFIG: Record<EnumType<'BENEFIT_TYPE'>, { label: string; months: number }> = {
-    EARLY_USER: { label: 'Early User', months: 3 },
-    VIP: { label: 'VIP', months: 6 },
-};
+
 
 export const UserBenefitModal = ({ user, subscriptionPath }: { user: User | BaseUser | UserAuth, subscriptionPath?: string }) => {
     const [userBenefit, setUserBenefit] = useState<BenefitWithRedeemed | null>(null);

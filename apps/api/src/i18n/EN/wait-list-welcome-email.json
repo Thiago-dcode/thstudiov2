@@ -1,5 +1,5 @@
 {
-  "SUBJECT": "You are on the TH Studio wait list",
+  "SUBJECT": "You are on the A11STUDIO wait list",
   "HI": "Welcome",
   "TITLE": "Your spot is reserved",
   "POSITION_LABEL": "Your wait list position",
@@ -10,5 +10,5 @@
   "SCARCITY_HOOK": "The first 50 creators receive VIP access. Every spot after that joins the Early User circle, so your place matters.",
   "COMING_SOON": "We will send your private registration link soon. Keep this email close: the next one opens the door.",
   "CTA_TEXT": "See What You Will Create",
-  "CTA_DESCRIPTION": "Preview the kind of artist profile you will be able to launch on TH Studio."
+  "CTA_DESCRIPTION": "Preview the kind of artist profile you will be able to launch on A11STUDIO."
 }

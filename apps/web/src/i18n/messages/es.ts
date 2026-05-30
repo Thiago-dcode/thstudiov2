@@ -1,6 +1,6 @@
-import type { Messages } from './en';
+import type { Translations } from './en';
 
-const messages: Messages = {
+const messages: Translations = {
   landing: {
     hero: {
       titlePrefix: "Haz que tu",
@@ -112,6 +112,71 @@ const messages: Messages = {
     ],
   },
   language: "Idioma",
+  search: {
+    segments: {
+      artists: "Artistas",
+      portfolios: "Portafolios"
+    },
+    page: {
+      description: "Explora artistas en A11STUDIO. Descubre portafolios, servicios y profesionales creativos.",
+      title: "Artistas — A11STUDIO",
+      errorHeading: "No pudimos cargar {segment}",
+      errorMessage: "Algo salió mal durante la búsqueda. Por favor intenta de nuevo en un momento.",
+      searchingFor: "Buscando {segment}",
+      results: {
+        foundArtists: "{count, number} {count, plural, one {artista} other {artistas}} found{suffix}",
+        foundPortfolios: "{count, number} {count, plural, one {portafolio} other {portafolios}} found{suffix}",
+        forQuery: ' para "{query}"'
+      },
+      empty: {
+        heading: "No se encontraron {segment}{suffix}",
+        output: "Tus filtros no coincidieron con ningún {segment}. Intenta ampliar tu búsqueda{end}",
+        lookNear: " o busca {segment} cerca de ti."
+      }
+    },
+    filters: {
+      activeFilters: "Filtros activos",
+      clearAll: "Limpiar todo",
+      searchAria: "Buscar {segment}",
+      searchPlaceholder: "Buscar {segment} por nombre, estilo, categoría…",
+      badge: {
+        search: "Búsqueda: {value}",
+        geoLocation: "Mi ubicación",
+        country: "País: {value}",
+        state: "Estado: {value}",
+        city: "Ciudad: {value}"
+      }
+    },
+    nearMe: {
+      gettingLocation: "Obteniendo ubicación…",
+      nearMe: "Cerca de mí · {radius} km",
+      searchClose: "Buscar cerca de mí",
+      locationDenied: "Habilita la ubicación en la configuración del navegador e intenta nuevamente.",
+      locationUnavailable: "No se pudo obtener tu ubicación. Por favor intenta de nuevo."
+    },
+    primaryFilters: {
+      categories: "Categorías",
+      location: "Ubicación",
+      ariaLabel: "Filtros de categorías y ubicación",
+      useMyLocation: "Usar mi ubicación"
+    },
+    combobox: {
+      placeholder: "Buscar…",
+      empty: {
+        pending: "",
+        noMatches: "No se encontraron coincidencias.",
+        noItems: "—",
+        searchingCategories: "Escribe para buscar categorías."
+      }
+    },
+    artistCard: {
+      openProfile: "Abrir perfil: {name}, @{username}",
+      specialtiesTitle: "Especialidades",
+      locationDetailsTitle: "Detalles de ubicación en el perfil",
+      noLocationTitle: "No se muestra ubicación",
+      viewAction: "Ver"
+    }
+  },
   support: {
     contactLabel: "Contactar con Soporte",
     title: "¿Necesitas ayuda? Envíanos un mensaje.",

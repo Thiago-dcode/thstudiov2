@@ -35,6 +35,7 @@ import { NEW_USER_EVENT } from '@repo/common-lib/constants/constants';
 import { RoleService } from '../roles/roles.service';
 import { InvitationLinkService } from '../invitation-links/invitation-link.service';
 import { UserBenefitService } from '../user-benefit/user-benefit.service';
+import { WaitListService } from '../wait-list/wait-list.service';
 
 @Injectable()
 export class AuthService {
@@ -52,7 +53,8 @@ export class AuthService {
     private readonly eventEmitter: EventEmitter2,
     private readonly roleService: RoleService,
     private readonly invitationLinkService: InvitationLinkService,
-    private readonly userBenefitService: UserBenefitService
+    private readonly userBenefitService: UserBenefitService,
+    private readonly waitListService: WaitListService
   ) { }
   async register(registerRequest: RegisterRequest) {
     const clientRole = await this.roleService.getByName('ARTIST');
@@ -65,10 +67,22 @@ export class AuthService {
       if (invitationLink) {
         benefit_id = invitationLink.benefit_id;
         invitation_link_id = invitationLink.id;
+        const waitList = await this.waitListService.findByInvitationLinkId(invitationLink.id);
+        if (waitList && waitList.email.toLowerCase() !== registerRequest.email.toLowerCase()) {
+          throw new BadRequestException(
+            'We detected this invitation comes from a wait list, so you must register with the same email address',
+          );
+        }
         await this.invitationLinkService.updateById(invitationLink.id, {
           current_uses: invitationLink.current_uses + 1,
           active: invitationLink.max_uses < invitationLink.current_uses + 1
         })
+        if (waitList) {
+          await this.waitListService.updateById(waitList.id, {
+            status: 'REGISTERED',
+            redeemed_at: new Date(),
+          });
+        }
       }
     }
 

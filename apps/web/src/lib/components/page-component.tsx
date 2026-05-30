@@ -7,7 +7,7 @@ const Container = ({ children, className }: {
 }) => {
 
     return (
-        <div className="flex size-full  items-center justify-center py-8 px-1  m-auto">
+        <div className="flex size-full  items-center justify-center py-8 px-1  -auto">
             <div className={cn("w-full h-full  max-w-sm justify-center flex flex-col", className)}>
 
                 {children}
@@ -22,7 +22,7 @@ const Content = ({ children, className }: {
     className?: string
 }) => {
 
-    return (<div className={cn(" flex flex-col w-full justify-between items-center gap-8 rounded-xl  py-8 px-4 inset-shadow-xs inset-shadow-fg-2", className)}>
+    return (<div className={cn(" flex flex-col w-full justify-between items-center gap-8 rounded-xl py-8 px-4 inset-shadow-xs inset-shadow-fg-2", className)}>
         {children}
     </div>)
 }

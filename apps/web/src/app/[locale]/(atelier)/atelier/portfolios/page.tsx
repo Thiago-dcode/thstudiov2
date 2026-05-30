@@ -27,7 +27,7 @@ export default async function Atelier() {
                 title="Portfolio"
                 info="Portfolios represent broad categories of your work, such as 'Travel Photography' or 'Wedding Photography'. They are designed to showcase your best pieces to clients and can include both individual media and collections."
             >
-                <CreateResourceButton resource={TABLES_ENUM.PORTFOLIOS} href="portfolio/create" label="Create Portfolio" />
+                <CreateResourceButton resource={TABLES_ENUM.PORTFOLIOS} href="portfolios/create" label="Create Portfolio" />
             </AdminPageTitle>
             {portfoliosResponse.data.length > 0 ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -42,7 +42,7 @@ export default async function Atelier() {
                     icon={<LayoutDashboard />}
                     description="No portfolios created yet. Start by grouping your work."
                 >
-                    <CreateResourceButton resource={TABLES_ENUM.PORTFOLIOS} href="portfolio/create" label="Create Portfolio" variant="outline" />
+                    <CreateResourceButton resource={TABLES_ENUM.PORTFOLIOS} href="portfolios/create" label="Create Portfolio" variant="outline" />
                 </AdminPageEmptyState>
             )}
         </AdminPageContainer>

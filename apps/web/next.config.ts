@@ -26,7 +26,19 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
+        hostname: 's3.eu-north-1.amazonaws.com',
+      },
+      {
+        protocol: 'https',
         hostname: 'a11studio.s3.eu-north-1.amazonaws.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'local.a11studio.s3.eu-north-1.amazonaws.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'dev.a11studio.s3.eu-north-1.amazonaws.com',
       },
     ],
   },

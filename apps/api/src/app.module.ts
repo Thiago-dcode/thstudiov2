@@ -112,7 +112,7 @@ const ALL_APP_MODULES = [
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'assets'),
       serveRoot: '/assets',
-      exclude: ['/api*'],
+      exclude: ['/api/{*path}'],
     }),
     ConfigModule.forRoot({
       isGlobal: true,

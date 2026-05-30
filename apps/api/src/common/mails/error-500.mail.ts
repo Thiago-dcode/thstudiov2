@@ -1,5 +1,5 @@
 import { Mailable } from '@repo/backend-lib/services/mail-service/base';
-import { mailingAdmins, mailingFrom } from 'src/config/mailling';
+import { mailingAdmins, mailingNoreplyEmail } from 'src/config/mailling';
 import { ViewService } from '@repo/backend-lib/services/view-service/base';
 import { Injectable } from '@nestjs/common';
 import type { LogOptions } from '@repo/backend-lib/services/log-service/types';

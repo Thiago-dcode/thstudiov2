@@ -1,9 +1,10 @@
 {
-  "SUBJECT": "Your TH Studio invitation is ready",
+  "SUBJECT": "Your A11STUDIO invitation is ready",
   "TITLE": "Your wait is over",
   "DESCRIPTION": "Your private invitation is ready. Use the link below to create your account and claim your creator profile.",
   "TIER_LABEL": "Reserved tier",
   "BENEFIT_DESCRIPTION": "This invitation includes {months} free month(s) through your {benefitType} benefit.",
   "CTA_TEXT": "Create Your Account",
+  "EXPIRATION_NOTE": "This invitation link will expire in {days} days.",
   "URGENCY_NOTE": "This invitation is personal and limited. Claim your spot before it expires."
 }

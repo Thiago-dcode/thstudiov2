@@ -1,6 +1,8 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { Public } from 'src/common/decorators/public.decorator';
+import { AdminGuard } from 'src/common/guards/admin.guard';
 import { CreateWaitListRequest } from './requests/create-wait-list.request';
+import { InviteWaitListBatchRequest } from './requests/invite-wait-list-batch.request';
 import { WaitListService } from './wait-list.service';
 
 @Controller('wait-list')
@@ -11,5 +13,11 @@ export class WaitListController {
   @Post()
   async create(@Body() body: CreateWaitListRequest) {
     return this.waitListService.create(body);
+  }
+
+  @UseGuards(AdminGuard)
+  @Post('invite-batch')
+  async inviteBatch(@Body() body: InviteWaitListBatchRequest) {
+    return this.waitListService.inviteBatch(body.count);
   }
 }
