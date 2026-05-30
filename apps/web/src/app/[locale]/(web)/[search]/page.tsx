@@ -1,30 +1,38 @@
 import type { CategoryBase } from "@repo/common-lib/types/category";
-import type { Portfolio, PortfolioIndexRequest } from "@repo/common-lib/types/portfolio";
-import type {
-  ArtistCard,
-  ArtistIndexRequest,
-} from "@repo/common-lib/types/user";
-import { cleanObj } from "@repo/common-lib/utils/cleanObj";
-import {
-  firstString,
-  optionalTrim,
-  parseOptionalFloat,
-  parseOptionalInt,
-} from "@repo/common-lib/utils/parse-params";
+import type { PortfolioIndexRequest } from "@repo/common-lib/types/portfolio";
+import type { ArtistIndexRequest } from "@repo/common-lib/types/user";
+import type { Pagination } from "@repo/common-lib/types/response";
 import { queryParamBuilder } from "@repo/common-lib/utils/query-builder";
 import { AppPagination } from "@repo/ui/components/custom/app-pagination";
 import { cn } from "@repo/ui/lib/utils";
 import { notFound } from "next/navigation";
-import Web from "@/lib/components/web-page.component";
 import { getTranslations } from "next-intl/server";
+import Web from "@/lib/components/web-page.component";
+import portfolioService from "@/modules/portfolios/portfolio.service";
+import usersService from "@/modules/users/users.service";
+import categoriesService from "@/modules/categories/categories.service";
+import { UpdateCategoriesProvider } from "@/modules/categories/providers/categories.provider";
+import {
+  type SearchResult,
+  type SearchSegment,
+  buildSearchRequest,
+  filtersToQuery,
+  isSearchSegment,
+} from "./_components/search.utils";
+import { SearchSegmentToggle } from "./_components/search-segment-toggle";
+import { FiltersProvider } from "./_components/filters.provider";
+import { NearMeSessionCleaner } from "./_components/near-me-session-cleaner";
+import { FilterSearch } from "./_components/filter-search";
+import { ArtistsGrid } from "./_components/artists-grid";
+import { SearchNearMeButton } from "./_components/search-near-me-button";
 
-export const metadata = async (): Promise<{ title: string; description: string }> => {
+export async function generateMetadata() {
   const t = await getTranslations("search");
   return {
     title: t("page.title"),
     description: t("page.description"),
   };
-};
+}
 
 async function fetchSearchResults(
   segment: SearchSegment,
@@ -108,15 +116,11 @@ export default async function SearchPage({
       : "";
 
   // Determine the segment label for translations (artists/portfolios)
-  const segmentLabel = search === "artists" ? t("search.segments.artists") : t("search.segments.portfolios");
+  const segmentLabel = search === "artists" ? t("segments.artists") : t("segments.portfolios");
 
   const errorMessage =
     result.response?.error?.message ||
     t("page.errorMessage"); // fallback
-
-  // Build metadata
-  const metadataTitle = t("page.title");
-  const metadataDescription = t("page.description");
 
   return (
     <Web.Container className={cn("flex h-full w-full flex-col justify-start")}>
