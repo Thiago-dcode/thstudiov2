@@ -14,7 +14,7 @@ import {
   generateValidSlug,
   isAValidSlugFormat,
 } from '@repo/common-lib/utils/generate-valid-slug';
-import { cleanObj } from '@repo/common-lib/utils/cleanObj';
+import { cleanObj } from '@repo/common-lib/utils/object';
 import {
   CategoryBase,
   CreateCategoryInput,

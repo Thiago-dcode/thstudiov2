@@ -19,6 +19,7 @@ export const ENUMS = {
     'PENDING_PAYMENT',
     'PAUSED',
   ] as const,
+  EMAIL_TYPE: ['MARKETING','TRANSACTIONAL','WAITLIST_UPDATE','NOTIFICATION'] as const,
   PAYMENT_METHOD: ['CARD', 'PAYPAL'] as const,
   PLAN_OFFERS_TYPE: ['FREE', 'DISCOUNT'] as const,
   BENEFIT_TYPE: ['EARLY_USER', 'VIP', 'FOUNDER'] as const,
@@ -104,6 +105,7 @@ export const TABLES_ENUM = {
   USER_BENEFITS: 'user_benefits',
   INVITATION_LINKS: 'invitation_links',
   WAIT_LIST: 'wait_list',
+  EMAIL_PREFERENCES: 'email_preferences',
 } as const;
 
 export const COUNTRY_TO_LANGUAGES: Record<string, string> = {

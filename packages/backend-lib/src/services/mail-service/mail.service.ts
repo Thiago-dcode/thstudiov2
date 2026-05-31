@@ -20,6 +20,9 @@ export class MailService {
     public async send(mailable: Mailable): Promise<any> {
         const { from, to, subject, cc, replyTo } = await mailable.envelope();
         const { text, html } = await mailable.content();
+        if (!this.hasContent({ text, html })) {
+            return null;
+        }
         return await this.emailDriver.sendEmail({ from, to, subject, text, html, cc, replyTo });
     }
 
@@ -32,11 +35,19 @@ export class MailService {
             mailables.map(async (mailable) => {
                 const { from, to, subject, cc, replyTo } = await mailable.envelope();
                 const { text, html } = await mailable.content();
+                if (!this.hasContent({ text, html })) {
+                    return null;
+                }
                 return { from, to, subject, text, html, cc, replyTo } as EmailDriverOptions;
             }),
         );
 
-        return await this.emailDriver.sendBatch(payloads);
+        const sendablePayloads = payloads.filter((payload): payload is EmailDriverOptions => payload !== null);
+        if (sendablePayloads.length === 0) {
+            return null;
+        }
+
+        return await this.emailDriver.sendBatch(sendablePayloads);
     }
 
     public async sendBatchRaw(options: EmailDriverOptions[]): Promise<any> {
@@ -54,6 +65,9 @@ export class MailService {
 
         const { from, to, subject, cc, replyTo } = await mailable.envelope();
         const { text, html } = await mailable.content();
+        if (!this.hasContent({ text, html })) {
+            return null;
+        }
 
         const payload: EmailDriverOptions = { from, to, subject, text, html, cc, replyTo };
 
@@ -81,19 +95,31 @@ export class MailService {
             mailables.map(async (mailable) => {
                 const { from, to, subject, cc, replyTo } = await mailable.envelope();
                 const { text, html } = await mailable.content();
+                if (!this.hasContent({ text, html })) {
+                    return null;
+                }
                 return { from, to, subject, text, html, cc, replyTo } as EmailDriverOptions;
             }),
         );
 
+        const sendablePayloads = payloads.filter((payload): payload is EmailDriverOptions => payload !== null);
+        if (sendablePayloads.length === 0) {
+            return null;
+        }
+
         return await this.queue.add(
             JOB_SEND_BATCH_EMAIL,
-            payloads,
+            sendablePayloads,
             {
                 ...DEFAULT_MAIL_JOB_OPTIONS,
                 jobId: `batch-mail-${Date.now()}`,
                 ...jobOptions,
             },
         );
+    }
+
+    private hasContent({ text, html }: Content): boolean {
+        return Boolean(text || html);
     }
 }
 

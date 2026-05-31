@@ -1,4 +1,4 @@
-import { cleanObj, trimValues } from "../cleanObj";
+import { cleanObj, trimValues } from "../object";
 
 describe("cleanObj", () => {
   it("removes undefined keys", () => {

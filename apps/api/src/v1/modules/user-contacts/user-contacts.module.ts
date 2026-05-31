@@ -11,9 +11,11 @@ import { UserNotificationsRepository } from './user-notifications.repository';
 import { NewContactMail } from './mails/new-contact.mail';
 import { UserModule } from '../users/users.module';
 import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
+import { EmailPreferencesModule } from '../email-preferences/email-preferences.module';
 
 @Module({
   imports: [
+    EmailPreferencesModule,
     UserSessionsModule,
     UserModule,
     BullModule.registerQueue({ name: USER_CONTACTS_QUEUE }, { name: LOG_QUEUE }),

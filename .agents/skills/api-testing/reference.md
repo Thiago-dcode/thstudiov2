@@ -13,7 +13,7 @@ curl.exe -s http://localhost:8080/
 ```powershell
 curl.exe -s -X POST "http://localhost:8080/api/v1/auth/login" `
   -H "Content-Type: application/json" `
-  -d "{\"email\":\"contact.thiago.ferreira@gmail.com\",\"password\":\"thiago.1234\"}"
+  -d "{\"email\":\"thimplacable@proton.me\",\"password\":\"thiago.1234\"}"
 ```
 
 ### Login + save token
@@ -21,7 +21,7 @@ curl.exe -s -X POST "http://localhost:8080/api/v1/auth/login" `
 ```powershell
 $resp = curl.exe -s -X POST "http://localhost:8080/api/v1/auth/login" `
   -H "Content-Type: application/json" `
-  -d '{"email":"contact.thiago.ferreira@gmail.com","password":"thiago.1234"}' | ConvertFrom-Json
+  -d '{"email":"thimplacable@proton.me","password":"thiago.1234"}' | ConvertFrom-Json
 if ($resp.error) { $resp.error | ConvertTo-Json; exit 1 }
 $token = $resp.data.token
 if (-not $token) { Write-Host "2FA required or missing token"; $resp.data | ConvertTo-Json; exit 1 }
@@ -67,12 +67,12 @@ BASE=http://localhost:8080/api/v1
 # Login
 curl -s -X POST "$BASE/auth/login" \
   -H "Content-Type: application/json" \
-  -d '{"email":"contact.thiago.ferreira@gmail.com","password":"thiago.1234"}' | jq .
+  -d '{"email":"thimplacable@proton.me","password":"thiago.1234"}' | jq .
 
 # Token
 export TOKEN=$(curl -s -X POST "$BASE/auth/login" \
   -H "Content-Type: application/json" \
-  -d '{"email":"contact.thiago.ferreira@gmail.com","password":"thiago.1234"}' \
+  -d '{"email":"thimplacable@proton.me","password":"thiago.1234"}' \
   | jq -r '.data.token')
 
 # Authenticated
@@ -103,7 +103,7 @@ User by email:
 ```sql
 SELECT id, public_id, email, username, is_active, role_id, twofa_enabled
 FROM users
-WHERE email = 'contact.thiago.ferreira@gmail.com';
+WHERE email = 'thimplacable@proton.me';
 ```
 
 Latest sessions for user:
@@ -112,7 +112,7 @@ Latest sessions for user:
 SELECT us.id, us.token IS NOT NULL AS has_token, us.expires_at, us.created_at
 FROM user_sessions us
 JOIN users u ON u.id = us.user_id
-WHERE u.email = 'contact.thiago.ferreira@gmail.com'
+WHERE u.email = 'thimplacable@proton.me'
 ORDER BY us.created_at DESC
 LIMIT 3;
 ```

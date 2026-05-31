@@ -53,6 +53,8 @@ import { UserBenefitModule } from './v1/modules/user-benefit/user-benefit.module
 import { UserSubscriptionModule } from './v1/modules/user-subscription/user-subscription.module';
 import { PlanSubscriptionsProcessorModule } from './v1/modules/plan-subscriptions/plan-subscriptions-processor.module';
 import { WaitListModule } from './v1/modules/wait-list/wait-list.module';
+import { EmailPreferencesModule } from './v1/modules/email-preferences/email-preferences.module';
+import { UserEmailPreferencesModule } from './v1/modules/user-email-preferences/user-email-preferences.module';
 /** Feature modules mounted at `api/v1/*` (not under `admin/`). */
 const API_V1_MODULES = [
   AuthModule,
@@ -83,6 +85,8 @@ const API_V1_MODULES = [
   WaitListModule,
   UserBenefitModule,
   UserSubscriptionModule,
+  EmailPreferencesModule,
+  UserEmailPreferencesModule,
 ];
 const ADMIN_V1_MODULES = [
   AdminModule

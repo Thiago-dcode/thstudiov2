@@ -12,7 +12,7 @@ import { bytesToMB, mbToBytes } from '@repo/common-lib/utils/bytes';
 import { FactoryLogService } from '@repo/backend-lib/services/log-service';
 import path from 'path';
 import { CreateMediaInput } from '@repo/common-lib/types/media';
-import { cleanObj } from '@repo/common-lib/utils/cleanObj';
+import { cleanObj } from '@repo/common-lib/utils/object';
 import { CREATE_USER_STORAGE_REQUEST } from '@repo/common-lib/constants/constants';
 import { CreateUserStorageRequestEvent } from '../user-storage-requests/events/create-user-storage-request.event';
 import { IndexMediaRequest } from '../user-media/requests/index-media.request';

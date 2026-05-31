@@ -4,7 +4,7 @@ import { CREATE_OR_UPDATE_LOCATION } from '@repo/common-lib/constants/constants'
 import type { CreateOrUpdateLocationPayload } from '@repo/common-lib/types/location';
 import { AddressRepository } from './address.repository';
 import type { Address, CreateAddressInput, UpdateAddressInput } from '@repo/common-lib/types/address';
-import { cleanObj } from '@repo/common-lib/utils/cleanObj';
+import { cleanObj } from '@repo/common-lib/utils/object';
 import { RequestService } from 'src/common/services/request.service';
 import { CreateOrUpdateLocationEvent } from '../locations/events/create-or-update-location.event';
 

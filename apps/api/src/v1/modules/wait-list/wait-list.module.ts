@@ -11,9 +11,11 @@ import { WaitListController } from './wait-list.controller';
 import { WaitListProcessor } from './wait-list.processor';
 import { WaitListRepository } from './wait-list.repository';
 import { WaitListService } from './wait-list.service';
+import { EmailPreferencesModule } from '../email-preferences/email-preferences.module';
 
 @Module({
   imports: [
+    EmailPreferencesModule,
     InvitationLinkModule,
     BenefitsModule,
     BullModule.registerQueue({ name: WAIT_LIST_QUEUE }, { name: LOG_QUEUE }),

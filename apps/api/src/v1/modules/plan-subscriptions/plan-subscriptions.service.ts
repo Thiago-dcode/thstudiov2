@@ -24,7 +24,7 @@ import { LogService } from '@repo/backend-lib/services/log-service';
 import { paypal } from '@repo/backend-lib/services/payment-service/paypal';
 import { PaymentMethodsService } from '../utils/payment-methods.service';
 import { CACHE_KEY_ACTIVE_SUBSCRIPTION, CACHE_KEY_ACTIVE_PLAN } from '@repo/common-lib/constants/constants';
-import { cleanObj } from '@repo/common-lib/utils/cleanObj';
+import { cleanObj } from '@repo/common-lib/utils/object';
 import { CustomerPortalRequest } from './requests/customer-portal.request';
 import { Benefit } from '@repo/common-lib/types/benefit';
 import { UserBenefitService } from '../user-benefit/user-benefit.service';

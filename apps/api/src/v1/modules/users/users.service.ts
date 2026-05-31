@@ -3,7 +3,7 @@ import { UpdateUserRequest } from './requests/update-user.request';
 import { NewUserEvent } from './events/new-user.event';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { UserRepository } from './users.repository';
-import { cleanObj } from '@repo/common-lib/utils/cleanObj';
+import { cleanObj } from '@repo/common-lib/utils/object';
 import { LogService } from '@repo/backend-lib/services/log-service';
 import { MailService } from '@repo/backend-lib/services/mail-service';
 import { NotifyNewUserMail } from './mails/notify-new-user.mail';
@@ -18,6 +18,7 @@ import {
   MAX_PASSWORD_RESET,
   MAX_USERNAME_RESET,
   NEW_USER_EVENT,
+  CREATE_OR_UPDATE_EMAIL_PREFERENCE,
   SET_FREE_SUBSCRIPTION_EVENT,
   SET_INITIAL_USER_EXTRA_DATA_EVENT,
 } from '@repo/common-lib/constants/constants';
@@ -30,6 +31,7 @@ import { MediaModerationException } from 'src/common/exceptions/media-moderation
 import { ArtistCard, UpdateUserInput } from '@repo/common-lib/types/user';
 import { addMonths } from 'date-fns';
 import { IndexArtistsRequest } from './requests/index-artists.request';
+import { CreateOrUpdateEmailPreferenceEvent } from '../email-preferences/events/create-or-update-email-preference.event';
 
 @Injectable()
 export class UserService {
@@ -263,6 +265,15 @@ export class UserService {
   @OnEvent(NEW_USER_EVENT)
   async handleNewUserEvent(event: NewUserEvent) {
     try {
+      // Priority: enqueue email preference upsert immediately
+      this.eventEmitter.emit(
+        CREATE_OR_UPDATE_EMAIL_PREFERENCE,
+        new CreateOrUpdateEmailPreferenceEvent({
+          email: event.user.email,
+          user_id: event.user.id,
+        }),
+      );
+
       //Create stripe customer
       const stripeCustomer = await stripe.customers.create({
         email: event.user.email,

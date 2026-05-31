@@ -11,6 +11,7 @@ import { UserAccountBannedMail } from '../users/mails/user-account-banned.mail';
 import { PlansModule } from '../plans/plans.module';
 import { UserModule } from '../users/users.module';
 import { PlanSubscriptionsModule } from '../plan-subscriptions/plan-subscriptions.module';
+import { EmailPreferencesModule } from '../email-preferences/email-preferences.module';
 import { AI_QUEUE, LOG_QUEUE } from '@repo/common-lib/constants/constants';
 import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
 
@@ -21,6 +22,7 @@ import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-se
     PlansModule,
     UserModule,
     PlanSubscriptionsModule,
+    EmailPreferencesModule,
   ],
   providers: [
     AiProcessor,

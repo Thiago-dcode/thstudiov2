@@ -14,6 +14,7 @@ import { UserBenefitModule } from '../user-benefit/user-benefit.module';
 import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
 import { RequestService } from 'src/common/services/request.service';
 import { WaitListModule } from '../wait-list/wait-list.module';
+import { EmailPreferencesModule } from '../email-preferences/email-preferences.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { WaitListModule } from '../wait-list/wait-list.module';
     InvitationLinkModule,
     UserBenefitModule,
     WaitListModule,
+    EmailPreferencesModule,
   ],
   controllers: [AuthController],
   providers: [

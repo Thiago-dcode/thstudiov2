@@ -3,8 +3,12 @@ import { UserContactsRepository } from './user-contacts.repository';
 import { CreateUserContactRequest } from './requests/create-user-contact.request';
 import { UpdateUserContactRequest } from './requests/update-user-contact.request';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { CREATE_USER_CONTACT } from '@repo/common-lib/constants/constants';
+import {
+  CREATE_OR_UPDATE_EMAIL_PREFERENCE,
+  CREATE_USER_CONTACT,
+} from '@repo/common-lib/constants/constants';
 import { CreateUserContactEvent } from './events/create-user-contact.event';
+import { CreateOrUpdateEmailPreferenceEvent } from '../email-preferences/events/create-or-update-email-preference.event';
 
 @Injectable()
 export class UserContactsService {
@@ -14,6 +18,15 @@ export class UserContactsService {
   ) {}
 
   async create(data: CreateUserContactRequest) {
+    // Priority: enqueue email preference upsert immediately
+    this.eventEmitter.emit(
+      CREATE_OR_UPDATE_EMAIL_PREFERENCE,
+      new CreateOrUpdateEmailPreferenceEvent({
+        email: data.contact_email,
+        user_id: data.user_id,
+      }),
+    );
+
     this.eventEmitter.emit(
       CREATE_USER_CONTACT,
       new CreateUserContactEvent(data),

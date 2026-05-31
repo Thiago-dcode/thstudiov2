@@ -12,7 +12,7 @@ import { UpdateUserExtraDataMetricsEvent } from "../user-extra-data/events/updat
 import { AiService } from "../ai/ai.service";
 import { MediaModerationException } from "src/common/exceptions/media-moderation-exception";
 import { serviceCacheKeys } from "../user-services/user-service.service";
-import { cleanObj } from "@repo/common-lib/utils/cleanObj";
+import { cleanObj } from "@repo/common-lib/utils/object";
 
 @Injectable()
 export class ServiceService {
