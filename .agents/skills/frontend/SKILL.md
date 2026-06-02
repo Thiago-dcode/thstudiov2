@@ -30,10 +30,10 @@ description: >
 
 ## 2. Design Language — Warm Editorial
 
-**Style**: Light-first warm editorial with dark mode support. Brand color is orange.
+**Style**: Light-first warm editorial with dark mode support. Brand identity is a warm flame gradient (gold → orange → red): ember (`#ffd361`) → flare (`#fe9b22`) → blaze (`#d62713`).
 
 - **Colors**: Use design tokens from `globals.css` — never hardcode hex values.
-  - **Brand scale**: `--brand-subtle` → `--brand-light` → `--brand` (#ff8932) → `--brand-dark` → `--brand-text` → `--brand-ink`.
+  - **Brand scale**: `--brand-subtle` → `--brand-light` (ember `#ffd361`) → `--brand` (flare `#fe9b22`) → `--brand-dark` (blaze `#d62713`) → `--brand-text` → `--brand-ink`. Use `--brand-light` → `--brand` → `--brand-dark` as gradient stops; use the deeper `--brand-text`/`--brand-ink` for accent text (flare/blaze are too light for body-size text).
   - **Surfaces**: `--surface` (bg) → `--surface-raised` → `--surface-border` → `--surface-muted` → `--surface-secondary` → `--surface-primary` → `--surface-ink` (text).
   - **Semantic aliases**: `--color-bg`, `--color-fg`, `--color-fg-1`, `--color-fg-2`, `--color-text`, `--color-text-muted`, `--color-accent`, `--color-border`.
   - Dark mode overrides via `.dark` class — all tokens adapt automatically.
@@ -41,7 +41,7 @@ description: >
   - **Serif** (`--font-serif`) for editorial headings where appropriate.
   - **Sans** for UI, labels, and interactive elements.
   - **Scale**: `--size-xs` (0.75rem), `--size-sm` (0.875rem), `--size-base` (1rem), `--size-lg` (1.125rem). Use Tailwind `text-xs/sm/base/lg`.
-- **Layout**: Ample negative space. Subtle warm background gradients (brand-tinted radial gradients on body).
+- **Layout**: Ample negative space. Keep page backgrounds calm/off-white or off-black; use subtle token-driven flame gradients on cards, CTAs, and focused accents instead of full-page background gradients.
 - **Tone**: Warm, confident, editorial. Approachable but professional.
 
 ---
@@ -78,7 +78,7 @@ All colors come from `packages/ui/src/styles/globals.css`. **Never hardcode hex 
 | Elevated surface | `--color-fg-1`, `--color-fg-2` | `bg-fg-1`, `bg-fg-2` |
 | Primary text | `--color-text` | `text-text` |
 | Muted text | `--color-text-muted` | `text-text-muted` |
-| Accent (brand orange) | `--color-accent` | `bg-accent`, `text-accent` |
+| Accent (brand flare) | `--color-accent` | `bg-accent`, `text-accent` |
 | Accent text | `--color-accent-text` | `text-accent-text` |
 | Accent muted | `--color-accent-muted` | `bg-accent-muted` |
 | Secondary | `--color-secondary` | `bg-secondary` |

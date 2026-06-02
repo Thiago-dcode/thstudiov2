@@ -26,9 +26,12 @@ export async function ValuePillarsSection() {
           {items.map((pillar, index) => (
             <article
               key={pillar.title}
-              className="group relative flex flex-col gap-5 overflow-hidden rounded-2xl border border-border/40 bg-fg p-8 transition-all duration-300 hover:border-accent/20 hover:shadow-lg tablet:p-10"
+              className="surface-card group relative flex flex-col gap-5 overflow-hidden rounded-2xl p-8 transition-all duration-300 hover:border-accent/20 hover:shadow-lg tablet:p-10"
             >
-              <div className="pillar-card-glow pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100" aria-hidden />
+              <div
+                className="pillar-card-glow pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                aria-hidden
+              />
               <span className="relative flex size-12 items-center justify-center rounded-xl bg-accent/10 text-accent">
                 {ICONS[index]}
               </span>
@@ -42,6 +45,36 @@ export async function ValuePillarsSection() {
           ))}
         </div>
       </WebSection.Container>
+
+      <style>{`
+        .pillar-card-glow {
+          background:
+            radial-gradient(
+              circle at 18% 0%,
+              color-mix(in oklab, var(--brand-light) 20%, transparent),
+              transparent 42%
+            ),
+            radial-gradient(
+              circle at 100% 12%,
+              color-mix(in oklab, var(--brand-dark) 9%, transparent),
+              transparent 42%
+            );
+        }
+
+        .dark .pillar-card-glow {
+          background:
+            radial-gradient(
+              circle at 18% 0%,
+              color-mix(in oklab, var(--brand) 12%, transparent),
+              transparent 42%
+            ),
+            radial-gradient(
+              circle at 100% 12%,
+              color-mix(in oklab, var(--brand-dark) 10%, transparent),
+              transparent 42%
+            );
+        }
+      `}</style>
     </WebSection>
   );
 }

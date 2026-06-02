@@ -1,4 +1,4 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
 import { Public } from 'src/common/decorators/public.decorator';
 import { AdminGuard } from 'src/common/guards/admin.guard';
 import { CreateWaitListRequest } from './requests/create-wait-list.request';
@@ -13,6 +13,12 @@ export class WaitListController {
   @Post()
   async create(@Body() body: CreateWaitListRequest) {
     return this.waitListService.create(body);
+  }
+
+  @Public()
+  @Get('position')
+  async getCurrentPosition() {
+    return this.waitListService.getCurrentPosition();
   }
 
   @UseGuards(AdminGuard)

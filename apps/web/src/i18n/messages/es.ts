@@ -16,7 +16,12 @@ const messages: Translations = {
         placeholder: "Ingresa tu correo electronico",
         button: "Unirme a la lista",
         buttonPending: "Uniendome...",
-        hint: "Recibe acceso anticipado, novedades del producto y noticias de lanzamiento.",
+        hint: "El registro abrira pronto. Unete a la lista de espera y recibe acceso anticipado.",
+        hintTooltip:
+          "Los cupos anticipados son limitados y se asignan en el orden en que los artistas se unen.",
+        positionCount: "{position}/{max}",
+        spotWarning: "no pierdas tu puesto",
+        fullMessage: "La lista de espera esta llena.",
         successToast: "Ya estas en la lista de espera. Te avisaremos pronto.",
         successTitle: "Gracias por unirte a la lista de espera!",
         successMessage: "Se vienen grandes cosas. Pronto estaremos en contacto.",

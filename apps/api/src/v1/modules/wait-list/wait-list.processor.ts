@@ -7,6 +7,7 @@ import {
   INVITE_WAIT_LIST_BATCH,
   JOB_CREATE_WAIT_LIST_ENTRY,
   JOB_INVITE_WAIT_LIST_BATCH,
+  MAX_WAIT_LIST_SIZE,
   WAIT_LIST_QUEUE,
 } from '@repo/common-lib/constants/constants';
 import { EnumType } from '@repo/common-lib/constants/enums';
@@ -96,6 +97,12 @@ export class WaitListProcessor extends GlobalProcessor {
 
     try {
       const position = (await this.waitListRepository.getMaxPosition()) + 1;
+
+      if (position > MAX_WAIT_LIST_SIZE) {
+        log.warn(`Wait list is full. Skipping entry: ${data.email}`);
+        return { skipped: true, reason: 'wait_list_full' };
+      }
+
       const benefitType = this.getBenefitTypeForPosition(position);
       const benefit = await this.benefitRepository.findByType(benefitType);
 

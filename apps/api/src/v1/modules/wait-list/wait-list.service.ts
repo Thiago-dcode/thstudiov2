@@ -1,11 +1,16 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   CREATE_WAIT_LIST_ENTRY,
   INVITE_WAIT_LIST_BATCH,
   CREATE_OR_UPDATE_EMAIL_PREFERENCE,
+  MAX_WAIT_LIST_SIZE,
 } from '@repo/common-lib/constants/constants';
-import { PublicCreateWaitListInput, UpdateWaitListInput } from '@repo/common-lib/types/wait-list';
+import type {
+  PublicCreateWaitListInput,
+  UpdateWaitListInput,
+  WaitListPosition,
+} from '@repo/common-lib/types/wait-list';
 import { CreateWaitListEvent } from './events/create-wait-list.event';
 import { InviteWaitListBatchEvent } from './events/invite-wait-list-batch.event';
 import { IndexWaitListRequest } from './requests/index-wait-list.request';
@@ -31,7 +36,21 @@ export class WaitListService {
     return this.waitListRepository.updateById(id, data);
   }
 
+  async getCurrentPosition(): Promise<WaitListPosition> {
+    const maxPosition = await this.waitListRepository.getMaxPosition();
+
+    return {
+      position: maxPosition + 1,
+    };
+  }
+
   async create({ email }: PublicCreateWaitListInput) {
+    const maxPosition = await this.waitListRepository.getMaxPosition();
+
+    if (maxPosition >= MAX_WAIT_LIST_SIZE) {
+      throw new BadRequestException('Wait list is full');
+    }
+
     // Priority: enqueue email preference upsert immediately
     this.eventEmitter.emit(
       CREATE_OR_UPDATE_EMAIL_PREFERENCE,

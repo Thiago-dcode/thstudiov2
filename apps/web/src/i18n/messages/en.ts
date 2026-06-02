@@ -17,7 +17,12 @@ const messages = {
         placeholder: "Enter your email address",
         button: "Join waitlist",
         buttonPending: "Joining...",
-        hint: "Get early access, product updates, and launch news.",
+        hint: "Registration will be open soon. Join the waitlist and get early access.",
+        hintTooltip:
+          "Early spots are limited and filled in the order artists join.",
+        positionCount: "{position}/{max}",
+        spotWarning: "don't lose your spot",
+        fullMessage: "The waitlist is full.",
         successToast: "You are on the waitlist. We will keep you posted.",
         successTitle: "Thanks for joining the waitlist!",
         successMessage: "Big things are coming. We'll be in touch soon.",

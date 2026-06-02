@@ -1,18 +1,32 @@
 "use client";
 
+import { MAX_WAIT_LIST_SIZE } from "@repo/common-lib/constants/constants";
+import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
 import { Button } from "@repo/ui/components/shadcn/button";
 import { Input } from "@repo/ui/components/shadcn/input";
 import { toast } from "@repo/ui/sonner";
 import { useTranslations } from "next-intl";
+import type { FormEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { createWaitListSchema } from "@/modules/wait-list/schemas/wait-list.schema";
 import { createWaitListAction } from "@/modules/wait-list/server-actions/create-wait-list.action";
 
-export function HeroWaitListForm() {
+type HeroWaitListFormProps = {
+  currentPosition?: number | null;
+};
+
+export function HeroWaitListForm({ currentPosition }: HeroWaitListFormProps) {
   const t = useTranslations("landing.hero.waitList");
   const [isEmailValid, setIsEmailValid] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const displayPosition = currentPosition
+    ? Math.min(Math.max(currentPosition, 1), MAX_WAIT_LIST_SIZE)
+    : null;
+  const hasAvailableSpots =
+    currentPosition === null ||
+    currentPosition === undefined ||
+    currentPosition <= MAX_WAIT_LIST_SIZE;
 
   const emailInputRef = useRef<HTMLInputElement>(null);
 
@@ -36,6 +50,16 @@ export function HeroWaitListForm() {
     },
   });
 
+  const handleWaitListSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    if (!hasAvailableSpots) {
+      event.preventDefault();
+      toast.error(t("fullMessage"));
+      return;
+    }
+
+    await handleSubmit(event);
+  };
+
   useEffect(() => {
     if (!result?.data) return;
     setIsSuccess(true);
@@ -44,13 +68,10 @@ export function HeroWaitListForm() {
   if (isSuccess) {
     return (
       <div
-        role="status"
         aria-live="polite"
         className="wait-list-success flex w-full max-w-md flex-col items-center gap-2 rounded-md border border-border/40 bg-fg/50 px-5 py-6 text-center backdrop-blur-md"
       >
-        <h3 className="text-lg font-semibold text-text">
-          {t("successTitle")}
-        </h3>
+        <h3 className="text-lg font-semibold text-text">{t("successTitle")}</h3>
         <p className="max-w-sm text-sm leading-relaxed text-text-muted">
           {t("successMessage")}
         </p>
@@ -72,8 +93,18 @@ export function HeroWaitListForm() {
 
   return (
     <div className="w-full max-w-4xl">
+      <div className="mb-2 flex items-center justify-start gap-2">
+        <p
+          id="hero-wait-list-email-hint"
+          className="text-left text-xs text-text-muted"
+        >
+          {t("hint")}
+        </p>
+        <InfoTooltip content={t("hintTooltip")} />
+      </div>
+
       <form
-        onSubmit={handleSubmit}
+        onSubmit={handleWaitListSubmit}
         className="flex w-full flex-col gap-2 phone:flex-row phone:items-start"
         noValidate
       >
@@ -103,26 +134,54 @@ export function HeroWaitListForm() {
             >
               {inputErrors.email}
             </p>
-          ) : (
-            <p
-              id="hero-wait-list-email-hint"
-              className="text-left text-xs text-text-muted"
-            >
-              {t("hint")}
-            </p>
-          )}
+          ) : null}
         </div>
 
         <Button
           type="submit"
           variant="primary"
           size="lg"
-          disabled={isPending || !isEmailValid}
-          className="h-14 w-full shrink-0 rounded-sm phone:w-auto"
+          disabled={isPending || !isEmailValid || !hasAvailableSpots}
+          className="wait-list-fire-button h-14 w-full shrink-0 rounded-sm phone:w-auto"
         >
           {isPending ? t("buttonPending") : t("button")}
         </Button>
       </form>
+
+      {displayPosition ? (
+        <div className="mt-2 flex justify-start text-xs font-medium text-text-muted">
+          <span>
+            {t("positionCount", {
+              position: displayPosition,
+              max: MAX_WAIT_LIST_SIZE,
+            })}
+            , {t("spotWarning")}
+          </span>
+        </div>
+      ) : null}
+
+      <style>{`
+        .wait-list-fire-button {
+          color: var(--surface-ink);
+          background:
+            linear-gradient(
+              135deg,
+              var(--brand-light) 0%,
+              var(--brand) 54%,
+              color-mix(in oklab, var(--brand-dark) 42%, var(--brand)) 100%
+            );
+          box-shadow: 0 14px 32px color-mix(in oklab, var(--brand) 18%, transparent);
+        }
+
+        .wait-list-fire-button:not(:disabled):hover {
+          filter: brightness(1.04) saturate(1.03);
+          box-shadow: 0 18px 40px color-mix(in oklab, var(--brand-dark) 18%, transparent);
+        }
+
+        .dark .wait-list-fire-button {
+          color: var(--surface);
+        }
+      `}</style>
     </div>
   );
 }

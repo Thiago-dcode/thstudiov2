@@ -3,7 +3,13 @@ import { getTranslations } from "next-intl/server";
 import { serverEnv } from "@/env/server";
 import { HeroWaitListForm } from "@/modules/wait-list/components/hero-wait-list-form";
 
-export async function HeroSection() {
+type HeroSectionProps = {
+  currentWaitListPosition?: number | null;
+};
+
+export async function HeroSection({
+  currentWaitListPosition,
+}: HeroSectionProps) {
   const t = await getTranslations("landing.hero");
 
   return (
@@ -29,32 +35,27 @@ export async function HeroSection() {
       <div aria-hidden="true" className="hero-glow absolute inset-0 z-2" />
 
       {/* ── Content ── */}
-      <div className="relative z-10 mx-auto flex w-full  flex-col items-center gap-7 px-6 py-16 text-center tablet:gap-8 tablet:px-10 tablet:py-24">
-        {/* Badge */}
-        <span className="hero-stagger-1 inline-flex items-center gap-2 rounded-full border border-border/40 bg-fg/50 px-4 py-1.5 text-[0.6rem] font-medium uppercase tracking-[0.18em] text-text-muted backdrop-blur-md">
+      <div className="relative z-10 mx-auto flex w-full flex-col items-center gap-6 px-6 py-16 text-center tablet:gap-8 tablet:px-10 tablet:py-24">
+        <span className="hero-stagger-1 inline-flex items-center gap-2 rounded-full border border-border/40 bg-fg/50 px-4 py-1.5 text-[0.65rem] font-medium uppercase tracking-[0.18em] text-text-muted backdrop-blur-md">
           <Sparkles className="size-3 text-accent" aria-hidden="true" />
           {t("disclaimer")}
         </span>
 
-        <div className="w-full">
-          {/* Headline */}
-          <h1
-            id="hero-heading"
-            className="hero-title  font-black tracking-tight text-text"
-          >
-            {t("titlePrefix")}{" "}
-            <span className="hero-accent-text italic">{t("titleAccent")}</span>{" "}
-            {t("titleSuffix")}
-          </h1>
-        </div>
-        {/* Subtitle */}
-        <h4 className="hero-stagger-3 text-xl! max-w-2xl leading-relaxed text-text-muted">
-          {t("subtitle")}
-        </h4>
+        <h1
+          id="hero-heading"
+          className="hero-title hero-stagger-2 font-black tracking-tight text-text"
+        >
+          {t("titlePrefix")}{" "}
+          <span className="hero-accent-text italic">{t("titleAccent")}</span>{" "}
+          {t("titleSuffix")}
+        </h1>
 
-        {/* Wait list form */}
-        <div className="hero-stagger-4 flex w-full justify-center">
-          <HeroWaitListForm />
+        <p className="hero-stagger-3 max-w-2xl text-xl leading-relaxed text-text-muted">
+          {t("subtitle")}
+        </p>
+
+        <div className="hero-stagger-4 flex w-full justify-center pt-4 tablet:pt-6">
+          <HeroWaitListForm currentPosition={currentWaitListPosition} />
         </div>
       </div>
 

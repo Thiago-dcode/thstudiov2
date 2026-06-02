@@ -31,6 +31,7 @@ export const ALLOWED_IMAGE_FILE_TYPES: MimeTypes[] = ['image/jpeg', 'image/png',
 export const STRIKES_TO_BAN = 3;
 export const MAX_USERNAME_RESET = 3;
 export const MAX_PASSWORD_RESET = 3;
+export const MAX_WAIT_LIST_SIZE = 100;
 
 // Ban duration in days based on ban_count. null = permanent ban.
 export const BAN_DURATION_DAYS: Record<number, number | null> = {
