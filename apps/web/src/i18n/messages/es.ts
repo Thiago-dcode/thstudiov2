@@ -12,6 +12,7 @@ const messages: Translations = {
       primaryCtaLoggedOut: "Empieza gratis ahora",
       secondaryCta: "Encuentra artistas",
       waitList: {
+        hook: "Únete a la lista de espera para obtener acceso anticipado a la app.",
         label: "Unete a la lista de espera",
         placeholder: "Ingresa tu correo electronico",
         button: "Unirme a la lista",

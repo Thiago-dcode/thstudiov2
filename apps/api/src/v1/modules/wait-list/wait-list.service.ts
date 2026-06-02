@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   CREATE_WAIT_LIST_ENTRY,
@@ -37,17 +37,44 @@ export class WaitListService {
   }
 
   async getCurrentPosition(): Promise<WaitListPosition> {
-    const maxPosition = await this.waitListRepository.getMaxPosition();
+    const validatedCount = await this.waitListRepository.getValidatedCount();
 
     return {
-      position: maxPosition + 1,
+      position: validatedCount + 1,
     };
   }
 
-  async create({ email }: PublicCreateWaitListInput) {
-    const maxPosition = await this.waitListRepository.getMaxPosition();
+  async validate(token: string) {
+    const waitList = await this.waitListRepository.findByToken(token);
 
-    if (maxPosition >= MAX_WAIT_LIST_SIZE) {
+    if (!waitList) {
+      throw new NotFoundException('Invalid or expired token');
+    }
+
+    if (waitList.validated_at) {
+      return waitList;
+    }
+
+    const validatedCount = await this.waitListRepository.getValidatedCount();
+
+    return this.waitListRepository.updateByToken(token, {
+      validated_at: new Date(),
+      position: waitList.position ?? validatedCount + 1,
+    });
+  }
+
+  async create({ email }: PublicCreateWaitListInput) {
+    const existing = await this.waitListRepository.findByEmail(email);
+    if (existing) {
+      return {
+        email,
+        already_exists: true,
+      };
+    }
+
+    const validatedCount = await this.waitListRepository.getValidatedCount();
+
+    if (validatedCount >= MAX_WAIT_LIST_SIZE) {
       throw new BadRequestException('Wait list is full');
     }
 

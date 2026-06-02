@@ -1,11 +1,8 @@
 import { config } from '@repo/common-lib/config';
 import express from 'express';
-import { Worker } from 'bullmq';
 
 const appConfig = config();
 const WORKER_PORT = process.env.WORKER_PORT || 8081;
-
-const redisConnection = { url: appConfig.redis.url };
 
 const app = express();
 

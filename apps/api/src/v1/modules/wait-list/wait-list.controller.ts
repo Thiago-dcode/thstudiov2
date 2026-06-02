@@ -3,6 +3,7 @@ import { Public } from 'src/common/decorators/public.decorator';
 import { AdminGuard } from 'src/common/guards/admin.guard';
 import { CreateWaitListRequest } from './requests/create-wait-list.request';
 import { InviteWaitListBatchRequest } from './requests/invite-wait-list-batch.request';
+import { ValidateWaitListRequest } from './requests/validate-wait-list.request';
 import { WaitListService } from './wait-list.service';
 
 @Controller('wait-list')
@@ -19,6 +20,12 @@ export class WaitListController {
   @Get('position')
   async getCurrentPosition() {
     return this.waitListService.getCurrentPosition();
+  }
+
+  @Public()
+  @Post('validate')
+  async validate(@Body() body: ValidateWaitListRequest) {
+    return this.waitListService.validate(body.token);
   }
 
   @UseGuards(AdminGuard)

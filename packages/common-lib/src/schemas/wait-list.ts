@@ -4,10 +4,12 @@ import { TableColumn } from "../types/database";
 export type WaitListSchema = {
   id: number;
   email: string;
+  token: string;
   position: number | null;
   status: EnumType<'WAIT_LIST_STATUS'>;
   redeemed_at: Date | null;
   expires_at: Date | null;
+  validated_at: Date | null;
   invitation_link_id: number | null;
   created_at: Date;
   updated_at: Date;

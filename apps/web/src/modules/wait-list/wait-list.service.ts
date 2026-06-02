@@ -26,6 +26,13 @@ class WaitListService extends BaseService {
       resource: "position",
     });
   }
+
+  async validate(token: string): Promise<ApiResponse<WaitList>> {
+    return await this.fetchApi.post({
+      resource: "validate",
+      body: { token },
+    });
+  }
 }
 
 let WaitListServiceInstance: WaitListService | null = null;

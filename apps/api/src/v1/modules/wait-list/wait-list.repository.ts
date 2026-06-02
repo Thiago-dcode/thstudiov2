@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { LogService } from '@repo/backend-lib/services/log-service';
-import { EnumType } from '@repo/common-lib/constants/enums';
 import { WaitListSchema, WaitListSchemaColumns } from '@repo/common-lib/schemas/wait-list';
 import { CreateWaitListInput, UpdateWaitListInput, WaitList } from '@repo/common-lib/types/wait-list';
 import { DbException } from '@repo/database/exceptions';
@@ -12,21 +11,17 @@ type MaxPositionRow = {
   max_position: number | string | null;
 };
 
-export type WaitListInvitationBatchRow = WaitList & {
-  invitation_code: string;
-  benefit_type: EnumType<'BENEFIT_TYPE'>;
-  trial_days: number;
-};
-
 @Injectable()
 export class WaitListRepository extends BaseRepository {
   private readonly COLUMNS: WaitListSchemaColumns[] = [
     'wait_list.id',
     'wait_list.email',
+    'wait_list.token',
     'wait_list.position',
     'wait_list.status',
     'wait_list.redeemed_at',
     'wait_list.expires_at',
+    'wait_list.validated_at',
     'wait_list.invitation_link_id',
   ] as const;
 
@@ -61,31 +56,42 @@ export class WaitListRepository extends BaseRepository {
     return Number(result?.max_position ?? 0);
   }
 
-  async getWaitingBatch(limit: number): Promise<WaitListInvitationBatchRow[]> {
+  async getValidatedCount(): Promise<number> {
+    return await this.query()
+      .where('validated_at', 'IS NOT', null)
+      .count();
+  }
+
+  async getWaitingBatch(limit: number): Promise<WaitList[]> {
     const results = await this.query()
       .select([
         ...this.COLUMNS,
-        'invitation_links.code as invitation_code',
-        'benefits.type as benefit_type',
-        'benefits.trial_days',
       ])
-      .join('invitation_link_id', 'invitation_links', 'id', 'INNER')
-      .join('invitation_links.benefit_id', 'benefits', 'id', 'INNER')
       .where('wait_list.status', '=', 'WAITING')
+      .where('wait_list.validated_at', 'IS NOT', null)
       .orderBy('wait_list.position', 'ASC')
       .limit(limit)
-      .get<(WaitListSchema & {
-        invitation_code: string;
-        benefit_type: EnumType<'BENEFIT_TYPE'>;
-        trial_days: number;
-      })[]>();
+      .get<WaitListSchema[]>();
 
-    return results.map((result) => ({
-      ...this.format(result),
-      invitation_code: result.invitation_code,
-      benefit_type: result.benefit_type,
-      trial_days: result.trial_days,
-    }));
+    return results.map((result) => this.format(result));
+  }
+
+  async findByToken(token: string): Promise<WaitList | null> {
+    const result = await this.query()
+      .select(this.COLUMNS)
+      .where('token', '=', token)
+      .first<WaitListSchema>();
+
+    return result ? this.format(result) : null;
+  }
+
+  async findByEmail(email: string): Promise<WaitList | null> {
+    const result = await this.query()
+      .select(this.COLUMNS)
+      .where('email', '=', email)
+      .first<WaitListSchema>();
+
+    return result ? this.format(result) : null;
   }
 
   async findByInvitationLinkId(invitationLinkId: number): Promise<WaitList | null> {
@@ -117,6 +123,16 @@ export class WaitListRepository extends BaseRepository {
     return this.format(result);
   }
 
+  async updateByToken(token: string, data: UpdateWaitListInput): Promise<WaitList> {
+    const row = await this.findByToken(token);
+
+    if (!row) {
+      throw new DbException('Could not find wait list entry');
+    }
+
+    return this.updateById(row.id, data);
+  }
+
   async create(data: CreateWaitListInput): Promise<WaitList> {
     const cols = Object.keys(data);
     const values = Object.values(data);
@@ -135,10 +151,12 @@ export class WaitListRepository extends BaseRepository {
     return {
       id: result.id,
       email: result.email,
+      token: result.token,
       position: result.position,
       status: result.status,
       redeemed_at: result.redeemed_at,
       expires_at: result.expires_at,
+      validated_at: result.validated_at,
       invitation_link_id: result.invitation_link_id,
     };
   }

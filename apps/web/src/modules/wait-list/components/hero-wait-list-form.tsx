@@ -6,6 +6,7 @@ import { Button } from "@repo/ui/components/shadcn/button";
 import { Input } from "@repo/ui/components/shadcn/input";
 import { toast } from "@repo/ui/sonner";
 import { useTranslations } from "next-intl";
+import Link from 'next/link';
 import type { FormEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
@@ -20,6 +21,9 @@ export function HeroWaitListForm({ currentPosition }: HeroWaitListFormProps) {
   const t = useTranslations("landing.hero.waitList");
   const [isEmailValid, setIsEmailValid] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [waitListResultData, setWaitListResultData] = useState<
+    { email?: string; already_exists?: boolean } | null
+  >(null);
   const displayPosition = currentPosition
     ? Math.min(Math.max(currentPosition, 1), MAX_WAIT_LIST_SIZE)
     : null;
@@ -63,9 +67,29 @@ export function HeroWaitListForm({ currentPosition }: HeroWaitListFormProps) {
   useEffect(() => {
     if (!result?.data) return;
     setIsSuccess(true);
+    setWaitListResultData(result.data);
   }, [result]);
 
   if (isSuccess) {
+    if (waitListResultData?.already_exists) {
+      const email = waitListResultData.email ?? '';
+
+      return (
+        <div
+          aria-live="polite"
+          className="wait-list-success flex w-full max-w-md flex-col items-center gap-2 rounded-md border border-border/40 bg-fg/50 px-5 py-6 text-center backdrop-blur-md"
+        >
+          <h3 className="text-lg font-semibold text-text">
+            {email} is already on the wait list, check your email, if you think is an error{" "}
+            <Link href="/support" className="text-accent underline">
+              contact support
+            </Link>{" "}to support page.
+          </h3>
+          <div className="text-sm text-text-muted"> </div>
+        </div>
+      );
+    }
+
     return (
       <div
         aria-live="polite"

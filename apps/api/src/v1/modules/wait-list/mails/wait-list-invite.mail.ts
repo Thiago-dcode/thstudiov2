@@ -8,12 +8,16 @@ import { EmailPreferencesService } from 'src/v1/modules/email-preferences/email-
 
 export type WaitListInviteMailData = {
   email: string;
-  position: number;
-  benefitType: EnumType<'BENEFIT_TYPE'>;
-  trialDays: number;
-  benefitMonths: number;
-  registrationUrl: string;
-  expiresInDays: number;
+  // When present, this is the validation email.
+  validationUrl?: string;
+
+  // When present, this is the registration/invitation email.
+  position?: number;
+  benefitType?: EnumType<'BENEFIT_TYPE'>;
+  trialDays?: number;
+  benefitMonths?: number;
+  registrationUrl?: string;
+  expiresInDays?: number;
 };
 
 @Injectable()

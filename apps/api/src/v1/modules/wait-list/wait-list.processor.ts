@@ -12,6 +12,7 @@ import {
 } from '@repo/common-lib/constants/constants';
 import { EnumType } from '@repo/common-lib/constants/enums';
 import { PublicCreateWaitListInput } from '@repo/common-lib/types/wait-list';
+import { generateUUID } from '@repo/common-lib/utils/generate-uuid';
 import { Job, Queue } from 'bullmq';
 import { addDays } from 'date-fns';
 import { getConfigValue } from '@repo/common-lib/config/utils';
@@ -21,7 +22,6 @@ import { InvitationLinkService } from '../invitation-links/invitation-link.servi
 import { CreateWaitListEvent } from './events/create-wait-list.event';
 import { InviteWaitListBatchEvent } from './events/invite-wait-list-batch.event';
 import { WaitListInviteMail } from './mails/wait-list-invite.mail';
-import { WaitListWelcomeMail } from './mails/wait-list-welcome.mail';
 import { WaitListRepository } from './wait-list.repository';
 
 @Processor(WAIT_LIST_QUEUE)
@@ -37,7 +37,6 @@ export class WaitListProcessor extends GlobalProcessor {
     private readonly invitationLinkService: InvitationLinkService,
     private readonly benefitRepository: BenefitRepository,
     private readonly mailService: MailService,
-    private readonly waitListWelcomeMail: WaitListWelcomeMail,
     private readonly waitListInviteMail: WaitListInviteMail,
     @InjectQueue(WAIT_LIST_QUEUE) private readonly waitListQueue: Queue,
     private readonly appLogService: LogService,
@@ -96,52 +95,35 @@ export class WaitListProcessor extends GlobalProcessor {
     const log = this.logger.name(JOB_CREATE_WAIT_LIST_ENTRY);
 
     try {
-      const position = (await this.waitListRepository.getMaxPosition()) + 1;
+      const validatedCount = await this.waitListRepository.getValidatedCount();
 
-      if (position > MAX_WAIT_LIST_SIZE) {
+      if (validatedCount > MAX_WAIT_LIST_SIZE) {
         log.warn(`Wait list is full. Skipping entry: ${data.email}`);
         return { skipped: true, reason: 'wait_list_full' };
       }
 
-      const benefitType = this.getBenefitTypeForPosition(position);
-      const benefit = await this.benefitRepository.findByType(benefitType);
-
-      if (!benefit) {
-        throw new Error(`Benefit ${benefitType} not found`);
-      }
-
-      const invitationLink = await this.invitationLinkService.create({
-        benefit_id: benefit.id,
-      });
-
       const waitList = await this.waitListRepository.create({
         email: data.email,
-        position,
+        token: await generateUUID(),
+        position: null,
         status: 'WAITING',
         redeemed_at: null,
         expires_at: null,
-        invitation_link_id: invitationLink.id,
+        validated_at: null,
+        invitation_link_id: null,
       });
 
       await this.mailService.sendAsync(
-        this.waitListWelcomeMail.setData({
+        this.waitListInviteMail.setData({
           email: waitList.email,
-          position,
-          benefitType,
-          trialDays: benefit.trial_days,
-          benefitMonths: this.getBenefitMonths(benefit.trial_days),
-          profileUrl: `${getConfigValue('app').url}/artists/thsworld`,
+          validationUrl: `${getConfigValue('app').url}/wait-list/${waitList.token}`,
         }),
         {
-          jobId: `wait-list-welcome-${waitList.id}-${Date.now()}`,
+          jobId: `wait-list-validate-${waitList.id}-${Date.now()}`,
         },
       );
 
-      log.info(`Wait list entry created: ${data.email}`, {
-        email: data.email,
-        position,
-        benefit_type: benefitType,
-      });
+      log.info(`Wait list entry created: ${data.email}`, { email: data.email });
 
       return waitList;
     } catch (error) {
@@ -170,41 +152,41 @@ export class WaitListProcessor extends GlobalProcessor {
         return { invited: 0 };
       }
 
-      const expiresAt = addDays(
-        new Date(),
-        WaitListProcessor.INVITATION_EXPIRES_IN_DAYS,
-      );
-
-      await Promise.all(
-        entries.map(async (entry) => {
-          if (!entry.invitation_link_id) {
-            throw new Error(`Wait list entry ${entry.id} has no invitation link`);
-          }
-
-          await this.invitationLinkService.setExpiresAt(
-            entry.invitation_link_id,
-            expiresAt,
-          );
-
-          return this.waitListRepository.updateById(entry.id, {
-            status: 'INVITED',
-            expires_at: expiresAt,
-          });
-        }),
-      );
-
+      const expiresAt = addDays(new Date(), WaitListProcessor.INVITATION_EXPIRES_IN_DAYS);
       const appUrl = getConfigValue('app').url;
-      const mailables = entries.map((entry) =>
-        this.waitListInviteMail.setData({
+
+      const mailables = await Promise.all(entries.map(async (entry) => {
+        if (entry.position === null) {
+          throw new Error(`Wait list entry ${entry.id} has no validated position`);
+        }
+
+        const benefitType = this.getBenefitTypeForPosition(entry.position);
+        const benefit = await this.benefitRepository.findByType(benefitType);
+
+        if (!benefit) {
+          throw new Error(`Benefit ${benefitType} not found`);
+        }
+
+        const invitationLink = await this.invitationLinkService.create({
+          benefit_id: benefit.id,
+        });
+
+        await this.waitListRepository.updateById(entry.id, {
+          status: 'INVITED',
+          expires_at: expiresAt,
+          invitation_link_id: invitationLink.id,
+        });
+
+        return this.waitListInviteMail.setData({
           email: entry.email,
-          position: entry.position ?? 0,
-          benefitType: entry.benefit_type,
-          trialDays: entry.trial_days,
-          benefitMonths: this.getBenefitMonths(entry.trial_days),
-          registrationUrl: `${appUrl}/auth/register?ref=${entry.invitation_code}&email=${entry.email}`,
+          position: entry.position,
+          benefitType,
+          trialDays: benefit.trial_days,
+          benefitMonths: this.getBenefitMonths(benefit.trial_days),
+          registrationUrl: `${appUrl}/auth/register?ref=${invitationLink.code}&email=${entry.email}`,
           expiresInDays: WaitListProcessor.INVITATION_EXPIRES_IN_DAYS,
-        }),
-      );
+        });
+      }));
 
       await this.mailService.sendBatchAsync(mailables, {
         jobId: `wait-list-invite-mail-${Date.now()}`,

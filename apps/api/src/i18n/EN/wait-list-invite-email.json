@@ -6,5 +6,10 @@
   "BENEFIT_DESCRIPTION": "This invitation includes {months} free month(s) through your {benefitType} benefit.",
   "CTA_TEXT": "Create Your Account",
   "EXPIRATION_NOTE": "This invitation link will expire in {days} days.",
-  "URGENCY_NOTE": "This invitation is personal and limited. Claim your spot before it expires."
+  "URGENCY_NOTE": "This invitation is personal and limited. Claim your spot before it expires.",
+
+  "VALIDATE_TIER_LABEL": "Validate your email",
+  "VALIDATE_TITLE": "Confirm you own this email",
+  "VALIDATE_DESCRIPTION": "Click the button below to validate your wait list spot.",
+  "VALIDATE_CTA_TEXT": "Validate Email"
 }
