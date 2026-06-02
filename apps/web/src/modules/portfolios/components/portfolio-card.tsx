@@ -1,11 +1,10 @@
-import Image from "next/image";
 import type { Portfolio } from "@repo/common-lib/types/portfolio";
 import { cn } from "@repo/ui/lib/utils";
+import Image from "next/image";
 
 export type PortfolioCardProps = {
   portfolio: Portfolio;
   isAtelier?: boolean;
-  titleAs?: "h2" | "h3";
   sizes?: string;
   className?: string;
 };
@@ -13,7 +12,6 @@ export type PortfolioCardProps = {
 export function PortfolioCard({
   portfolio,
   isAtelier,
-  titleAs: TitleTag = "h3",
   sizes = "(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw",
   className,
 }: PortfolioCardProps) {
@@ -44,7 +42,10 @@ export function PortfolioCard({
           </>
         ) : (
           <div className="absolute inset-0 flex items-center justify-center bg-fg-1">
-            <span className="font-serif text-3xl italic text-text-muted/30">
+            <span
+              aria-hidden="true"
+              className="font-serif text-5xl italic text-text-muted/30"
+            >
               {title.charAt(0)}
             </span>
           </div>
@@ -56,9 +57,9 @@ export function PortfolioCard({
           </div>
         ) : null}
         <div className="absolute inset-x-0 bottom-0 p-3 md:p-4">
-          <TitleTag className="text-sm font-serif italic tracking-tight text-white drop-shadow-md md:text-base">
+          <h3 className="text-sm italic tracking-tight text-white drop-shadow-md md:text-base">
             {title}
-          </TitleTag>
+          </h3>
           {description ? (
             <p className="mt-0.5 line-clamp-1 text-xs leading-relaxed text-white/70">
               {description}

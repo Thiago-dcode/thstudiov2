@@ -1,7 +1,7 @@
+import type { Service } from "@repo/common-lib/types/service";
+import { ArrowUpRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
-import type { Service } from "@repo/common-lib/types/service";
 
 export type ServiceCardProps = {
   service: Service;
@@ -10,7 +10,11 @@ export type ServiceCardProps = {
   titleAs?: "h2" | "h3";
 };
 
-function serviceHref(service: Service, username: string, isAtelier: boolean | undefined) {
+function serviceHref(
+  service: Service,
+  username: string,
+  isAtelier: boolean | undefined,
+) {
   if (isAtelier) {
     return `/atelier/services/edit/${service.slug}`;
   }
@@ -48,7 +52,10 @@ export function ServiceCard({
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center bg-fg-1">
-            <span className="font-serif text-4xl italic text-text-muted/20">
+            <span
+              aria-hidden="true"
+              className="font-serif text-4xl italic text-text-muted/20"
+            >
               {title.charAt(0)}
             </span>
           </div>
@@ -60,7 +67,10 @@ export function ServiceCard({
           <TitleTag className="line-clamp-1 text-sm font-medium tracking-tight phone-lg:text-base tablet:text-lg">
             {title}
           </TitleTag>
-          <ArrowUpRight className="mt-0.5 size-4 shrink-0 text-text-muted opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+          <ArrowUpRight
+            aria-hidden="true"
+            className="mt-0.5 size-4 shrink-0 text-text-muted opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+          />
         </div>
 
         {description ? (

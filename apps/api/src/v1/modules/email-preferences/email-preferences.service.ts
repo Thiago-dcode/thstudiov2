@@ -1,11 +1,10 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { EmailPreferencesRepository } from './email-preferences.repository';
-import { EmailPreference } from '@repo/common-lib/types/email-preferences';
-import { CreateOrUpdateEmailPreferencePayload } from './events/create-or-update-email-preference.event';
+import type { EmailPreference } from '@repo/common-lib/types/email-preferences';
+import type { CreateOrUpdateEmailPreferencePayload } from './events/create-or-update-email-preference.event';
 import { cleanObj } from '@repo/common-lib/utils/object';
-import { RequestService } from 'src/common/services/request.service';
 import { getConfigValue } from '@repo/common-lib/config/utils';
-import { EnumType } from '@repo/common-lib/constants/enums';
+import type { EnumType } from '@repo/common-lib/constants/enums';
 
 type NonTransactionalEmailType = Exclude<EnumType<'EMAIL_TYPE'>, 'TRANSACTIONAL'>;
 
@@ -29,7 +28,6 @@ const EMAIL_TYPE_TO_PREFERENCE: Record<
 export class EmailPreferencesService {
   constructor(
     private readonly emailPreferencesRepository: EmailPreferencesRepository,
-    private readonly requestService: RequestService,
   ) { }
 
   async createOrUpdateByEmail(payload: CreateOrUpdateEmailPreferencePayload): Promise<EmailPreference> {
@@ -45,8 +43,6 @@ export class EmailPreferencesService {
       waitlist_updates: row.waitlist_updates,
     };
   }
-
-  
 
   async getOneByEmail(email: string): Promise<EmailPreference | null> {
     const row = await this.emailPreferencesRepository.findByColumn('email', email);
@@ -66,14 +62,6 @@ export class EmailPreferencesService {
   async getByToken(token: string): Promise<EmailPreference | null> {
     const row = await this.emailPreferencesRepository.findByColumn('token', token);
     if (!row) return null;
-
-    // Only allow users to access their own email preference rows.
-    if (!this.requestService.user) {
-      throw new UnauthorizedException();
-    }
-    if (!row.user_id || row.user_id !== this.requestService.user.id) {
-      throw new UnauthorizedException();
-    }
 
     return {
       id: row.id,
@@ -131,6 +119,6 @@ export class EmailPreferencesService {
       return '';
     }
 
-    return `${APP_CONFIG.url}/email-preferences?token=${encodeURIComponent(emailPreference.token)}`;
+    return `${APP_CONFIG.url}/email-preferences/${encodeURIComponent(emailPreference.token)}`;
   }
 }

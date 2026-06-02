@@ -12,10 +12,6 @@ export class CreateOrUpdateEmailPreferenceRequest {
 
   @IsOptional()
   @IsBoolean()
-  transactional?: boolean;
-
-  @IsOptional()
-  @IsBoolean()
   marketing?: boolean;
 
   @IsOptional()

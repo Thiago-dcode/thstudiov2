@@ -1,72 +1,60 @@
-import { Button } from "@repo/ui/components/shadcn/button";
-import { ArrowRight, ChevronDown, Sparkles } from "lucide-react";
-import Link from "next/link";
-import { userSession } from "@/modules/auth/server-actions/user-session.action";
-import { serverEnv } from "@/env/server";
+import { ChevronDown, Sparkles } from "lucide-react";
 import { getTranslations } from "next-intl/server";
+import { serverEnv } from "@/env/server";
+import { HeroWaitListForm } from "@/modules/wait-list/components/hero-wait-list-form";
 
 export async function HeroSection() {
-  const session = await userSession();
   const t = await getTranslations("landing.hero");
 
   return (
     <section
-      aria-label={`${t("titlePrefix")} ${t("titleAccent")} ${t("titleSuffix")}`}
-      className="relative flex w-full items-center justify-center overflow-hidden h-[calc(100vh-4rem)]"
-    
+      aria-labelledby="hero-heading"
+      className="relative flex w-full items-center justify-center overflow-hidden bg-bg h-[calc(100svh-4rem)] min-h-136"
     >
-      {/* ── Background video ── */}
+      {/* ── Background video (decorative) ── */}
       <video
         src={`${serverEnv.ASSETS_URL}/videos/hero-bg.mp4`}
         autoPlay
         loop
         muted
         playsInline
+        preload="auto"
         aria-hidden="true"
-        className="absolute inset-0 z-0 h-screen w-full object-cover"
+        tabIndex={-1}
+        className="pointer-events-none absolute inset-0 z-0 h-full w-full object-cover"
       />
 
       {/* ── Gradient overlays for contrast & brand warmth ── */}
-      <div
-        aria-hidden="true"
-        className="hero-overlay absolute inset-0 z-1"
-      />
-      <div
-        aria-hidden="true"
-        className="hero-glow absolute inset-0 z-2"
-      />
+      <div aria-hidden="true" className="hero-overlay absolute inset-0 z-1" />
+      <div aria-hidden="true" className="hero-glow absolute inset-0 z-2" />
 
       {/* ── Content ── */}
-      <div className="relative z-10 flex w-full max-w-5xl flex-col items-center gap-8 px-5 py-16 text-center tablet:py-24">
+      <div className="relative z-10 mx-auto flex w-full  flex-col items-center gap-7 px-6 py-16 text-center tablet:gap-8 tablet:px-10 tablet:py-24">
         {/* Badge */}
-        <span className="hero-stagger-1 inline-flex items-center gap-2 rounded-full border border-border/40 bg-fg/50 px-4 py-1 text-[10px] uppercase tracking-[0.2em] text-text-muted backdrop-blur-md">
+        <span className="hero-stagger-1 inline-flex items-center gap-2 rounded-full border border-border/40 bg-fg/50 px-4 py-1.5 text-[0.6rem] font-medium uppercase tracking-[0.18em] text-text-muted backdrop-blur-md">
           <Sparkles className="size-3 text-accent" aria-hidden="true" />
           {t("disclaimer")}
         </span>
 
-        {/* Headline */}
-        <h1 className="hero-stagger-2 mx-auto max-w-5xl text-7xl! font-black leading-[0.92] tracking-tight text-text">
-          {t("titlePrefix")}{" "}
-          <span className="hero-accent-text italic">{t("titleAccent")}</span>{" "}
-          {t("titleSuffix")}
-        </h1>
-
+        <div className="w-full">
+          {/* Headline */}
+          <h1
+            id="hero-heading"
+            className="hero-title  font-black tracking-tight text-text"
+          >
+            {t("titlePrefix")}{" "}
+            <span className="hero-accent-text italic">{t("titleAccent")}</span>{" "}
+            {t("titleSuffix")}
+          </h1>
+        </div>
         {/* Subtitle */}
-        <p className="hero-stagger-3 max-w-xl text-lg! leading-relaxed text-text-muted tablet:text-lg tablet:leading-relaxed">
+        <h4 className="hero-stagger-3 text-xl! max-w-2xl leading-relaxed text-text-muted">
           {t("subtitle")}
-        </p>
+        </h4>
 
-        {/* CTAs */}
-        <div className="hero-stagger-4 flex flex-col items-center gap-3 phone:flex-row phone:gap-4">
-          <Button asChild variant="primary" size="lg" className="min-h-[48px] min-w-[180px] text-base font-medium shadow-lg shadow-accent/20">
-            <Link href={session ? "/atelier" : "/auth/register"}>
-              {session ? t("primaryCtaLoggedIn") : t("primaryCtaLoggedOut")}
-              <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-            </Link>
-          </Button>
-          <Button asChild variant="ghost" size="lg" className="min-h-[48px] text-base">
-            <Link href="/artists">{t("secondaryCta")}</Link>
-          </Button>
+        {/* Wait list form */}
+        <div className="hero-stagger-4 flex w-full justify-center">
+          <HeroWaitListForm />
         </div>
       </div>
 
@@ -74,9 +62,9 @@ export async function HeroSection() {
       <a
         href="#value-pillars"
         aria-label="Scroll to next section"
-        className="hero-stagger-4 absolute bottom-8 left-1/2 z-10 -translate-x-1/2 text-text-muted/50 transition-colors hover:text-accent"
+        className="hero-stagger-4 absolute bottom-6 left-1/2 z-10 -translate-x-1/2 rounded-full p-2 text-text-muted/50 transition-colors hover:text-accent focus-visible:text-accent"
       >
-        <ChevronDown className="size-5 hero-bounce" />
+        <ChevronDown className="size-5 hero-bounce" aria-hidden="true" />
       </a>
 
       {/* ── Bottom fade ── */}
@@ -86,6 +74,12 @@ export async function HeroSection() {
       />
 
       <style>{`
+        /* ── Headline: fluid type that scales without overflow ── */
+        .hero-title {
+          font-size: clamp(3rem, 7vw + 1rem, 6.5rem);
+          line-height: 0.95;
+        }
+
         /* ── Overlay: darkens video for text contrast ── */
         .hero-overlay {
           background:

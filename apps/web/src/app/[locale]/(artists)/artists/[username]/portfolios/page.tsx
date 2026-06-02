@@ -46,7 +46,7 @@ export default async function Page({ params }: Props) {
               key={portfolio.id}
               href={`/artists/${username}/portfolios/${portfolio.slug}`}
             >
-              <PortfolioCard portfolio={portfolio} titleAs="h2" />
+              <PortfolioCard portfolio={portfolio} />
             </Link>
           ))}
         </Web.List>

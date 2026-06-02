@@ -54,14 +54,16 @@
   --color-info: var(--semantic-info);
   --color-info-fg: #eff6ff;
 
-  --size-4xl: clamp(1.75rem, 1.45rem + 1.5vw, 2.5rem);
-  --size-3xl: clamp(1.5rem, 1.3rem + 1vw, 2rem);
-  --size-2xl: clamp(1.25rem, 1.1rem + 0.75vw, 1.5rem);
-  --size-xl: clamp(1.0625rem, 1rem + 0.35vw, 1.25rem);
-  --size-lg: clamp(0.9375rem, 0.92rem + 0.2vw, 1.0625rem);
-  --size-base: clamp(0.875rem, 0.86rem + 0.1vw, 0.9375rem);
-  --size-sm: clamp(0.8125rem, 0.8rem + 0.06vw, 0.8125rem);
-  --size-xs: clamp(0.6875rem, 0.68rem + 0.04vw, 0.7rem);
+  /* Fluid modular type scale (~1.2 ratio). Body floor lifted to 16px for readability. */
+  --size-5xl: clamp(2.25rem, 1.85rem + 1.7vw, 2.75rem);
+  --size-4xl: clamp(1.875rem, 1.55rem + 1.2vw, 2.25rem);
+  --size-3xl: clamp(1.5rem, 1.3rem + 0.8vw, 1.75rem);
+  --size-2xl: clamp(1.25rem, 1.15rem + 0.4vw, 1.375rem);
+  --size-xl: clamp(1.125rem, 1.05rem + 0.3vw, 1.25rem);
+  --size-lg: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+  --size-base: clamp(0.9375rem, 0.9rem + 0.2vw, 1rem);
+  --size-sm: clamp(0.8125rem, 0.79rem + 0.12vw, 0.875rem);
+  --size-xs: clamp(0.6875rem, 0.66rem + 0.1vw, 0.75rem);
 
   --radius-sm: 0.5rem;
   --radius-md: 0.75rem;
@@ -132,6 +134,7 @@
   --breakpoint-desktop-lg: 1920px;
   --breakpoint-ultrawide: 2560px;
 
+  --text-5xl: var(--size-5xl);
   --text-4xl: var(--size-4xl);
   --text-3xl: var(--size-3xl);
   --text-2xl: var(--size-2xl);
@@ -209,10 +212,7 @@ body {
 /* Headings default to brand font */
 h1,
 h2,
-h3,
-h4,
-h5,
-h6 {
+h3 {
   font-family: var(--font-brand), serif;
   line-height: var(--leading-tight, 1.25);
   font-weight: 700;
@@ -237,7 +237,16 @@ h4 {
   font-size: var(--text-xl);
 }
 
-p {
+h5 {
+  font-size: var(--text-lg);
+}
+
+h6 {
+  font-size: var(--text-base);
+  letter-spacing: 0;
+}
+
+h4,h5,h6, p {
   font-family: var(--font-body), sans-serif;
   font-size: var(--text-base);
   line-height: var(--leading-relaxed, 1.625);

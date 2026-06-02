@@ -7,10 +7,21 @@ const messages = {
       titleAccent: "art",
       titleSuffix: "be found.",
       subtitle:
-        "Build a beautiful artist profile like a professional website - and customize it as fast as updating your social feed.",
+        "Get a professional website as easy as updating your social media feed.",
       primaryCtaLoggedIn: "Access Atelier",
       primaryCtaLoggedOut: "Start Free Now",
       secondaryCta: "Find artists",
+      waitList: {
+        hook: "Join the waitlist to get early access to the app.",
+        label: "Join the artist waitlist",
+        placeholder: "Enter your email address",
+        button: "Join waitlist",
+        buttonPending: "Joining...",
+        hint: "Get early access, product updates, and launch news.",
+        successToast: "You are on the waitlist. We will keep you posted.",
+        successTitle: "Thanks for joining the waitlist!",
+        successMessage: "Big things are coming. We'll be in touch soon.",
+      },
       disclaimer: "Free to start · No credit card required",
     },
     valuePillars: {

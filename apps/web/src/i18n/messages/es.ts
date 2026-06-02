@@ -11,6 +11,16 @@ const messages: Translations = {
       primaryCtaLoggedIn: "Acceder a Atelier",
       primaryCtaLoggedOut: "Empieza gratis ahora",
       secondaryCta: "Encuentra artistas",
+      waitList: {
+        label: "Unete a la lista de espera",
+        placeholder: "Ingresa tu correo electronico",
+        button: "Unirme a la lista",
+        buttonPending: "Uniendome...",
+        hint: "Recibe acceso anticipado, novedades del producto y noticias de lanzamiento.",
+        successToast: "Ya estas en la lista de espera. Te avisaremos pronto.",
+        successTitle: "Gracias por unirte a la lista de espera!",
+        successMessage: "Se vienen grandes cosas. Pronto estaremos en contacto.",
+      },
       disclaimer: "Gratis para empezar · No se requiere tarjeta",
     },
     valuePillars: {
