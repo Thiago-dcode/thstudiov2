@@ -1,13 +1,13 @@
 'use server';
 
 import { ActionReturn } from "@repo/common-lib/types/response";
-import { WaitList } from "@repo/common-lib/types/wait-list";
+import { WaitListCreateResponse } from "@repo/common-lib/types/wait-list";
 import { trimValues } from "@repo/common-lib/utils/cleanObj";
 import waitListService from "../wait-list.service";
 import { getFriendlyApiErrors, getObjErrorFromZod } from "@/modules/auth/helpers";
 import { createWaitListSchema } from "../schemas/wait-list.schema";
 
-export const createWaitListAction = async (formData: FormData): Promise<ActionReturn<WaitList, any>> => {
+export const createWaitListAction = async (formData: FormData): Promise<ActionReturn<WaitListCreateResponse, any>> => {
   const rawData = {
     email: formData.get('email') as string,
   };
@@ -25,7 +25,7 @@ export const createWaitListAction = async (formData: FormData): Promise<ActionRe
   }
 
   const result = await waitListService.create({
-    email: validated.data.email,
+    email: validated.data.email.trim().toLowerCase(),
   });
 
   if (result.error || result.data === null) {

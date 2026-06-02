@@ -1,9 +1,9 @@
+import { Transform } from 'class-transformer';
 import { IsEmail, IsNotEmpty } from 'class-validator';
-import { ModelNotExist } from 'src/common/validators/model-not-exist.validtor';
 
 export class CreateWaitListRequest {
   @IsEmail()
   @IsNotEmpty()
-  @ModelNotExist('wait_list', 'email')
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim().toLowerCase() : value))
   email: string;
 }

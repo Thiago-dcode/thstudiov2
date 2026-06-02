@@ -7,10 +7,10 @@ import {
   INVITE_WAIT_LIST_BATCH,
   JOB_CREATE_WAIT_LIST_ENTRY,
   JOB_INVITE_WAIT_LIST_BATCH,
-  MAX_WAIT_LIST_SIZE,
   WAIT_LIST_QUEUE,
 } from '@repo/common-lib/constants/constants';
 import { EnumType } from '@repo/common-lib/constants/enums';
+import type { InvitationLink } from '@repo/common-lib/types/invitation-link';
 import { PublicCreateWaitListInput } from '@repo/common-lib/types/wait-list';
 import { generateUUID } from '@repo/common-lib/utils/generate-uuid';
 import { Job, Queue } from 'bullmq';
@@ -23,6 +23,13 @@ import { CreateWaitListEvent } from './events/create-wait-list.event';
 import { InviteWaitListBatchEvent } from './events/invite-wait-list-batch.event';
 import { WaitListInviteMail } from './mails/wait-list-invite.mail';
 import { WaitListRepository } from './wait-list.repository';
+import type { WaitList } from '@repo/common-lib/types/wait-list';
+
+type PreparedWaitListInvite = {
+  entry: WaitList;
+  invitationLink: InvitationLink;
+  mailable: WaitListInviteMail;
+};
 
 @Processor(WAIT_LIST_QUEUE)
 export class WaitListProcessor extends GlobalProcessor {
@@ -50,7 +57,7 @@ export class WaitListProcessor extends GlobalProcessor {
       JOB_CREATE_WAIT_LIST_ENTRY,
       event.data,
       {
-        jobId: `wait-list-create-${event.data.email}-${Date.now()}`,
+        jobId: `wait-list-create-${encodeURIComponent(this.normalizeEmail(event.data.email))}`,
         priority: 10,
         removeOnComplete: true,
         attempts: 3,
@@ -65,7 +72,6 @@ export class WaitListProcessor extends GlobalProcessor {
       JOB_INVITE_WAIT_LIST_BATCH,
       { count: event.count },
       {
-        jobId: `wait-list-invite-batch-${Date.now()}`,
         priority: 10,
         removeOnComplete: true,
         attempts: 3,
@@ -93,25 +99,39 @@ export class WaitListProcessor extends GlobalProcessor {
 
   private async createWaitListEntry(data: PublicCreateWaitListInput) {
     const log = this.logger.name(JOB_CREATE_WAIT_LIST_ENTRY);
+    const normalizedEmail = this.normalizeEmail(data.email);
+    const emailLog = this.redactEmail(normalizedEmail);
 
     try {
-      const validatedCount = await this.waitListRepository.getValidatedCount();
+      let waitList = await this.waitListRepository.findByEmail(normalizedEmail);
 
-      if (validatedCount > MAX_WAIT_LIST_SIZE) {
-        log.warn(`Wait list is full. Skipping entry: ${data.email}`);
-        return { skipped: true, reason: 'wait_list_full' };
+      if (!waitList) {
+        try {
+          waitList = await this.waitListRepository.create({
+            email: normalizedEmail,
+            token: await generateUUID(),
+            position: null,
+            status: 'WAITING',
+            redeemed_at: null,
+            expires_at: null,
+            validated_at: null,
+            invitation_link_id: null,
+          });
+        } catch (error) {
+          if (!this.isUniqueEmailError(error)) {
+            throw error;
+          }
+
+          waitList = await this.waitListRepository.findByEmail(normalizedEmail);
+          if (!waitList) {
+            throw error;
+          }
+        }
       }
 
-      const waitList = await this.waitListRepository.create({
-        email: data.email,
-        token: await generateUUID(),
-        position: null,
-        status: 'WAITING',
-        redeemed_at: null,
-        expires_at: null,
-        validated_at: null,
-        invitation_link_id: null,
-      });
+      if (waitList.validated_at) {
+        return waitList;
+      }
 
       await this.mailService.sendAsync(
         this.waitListInviteMail.setData({
@@ -119,16 +139,16 @@ export class WaitListProcessor extends GlobalProcessor {
           validationUrl: `${getConfigValue('app').url}/wait-list/${waitList.token}`,
         }),
         {
-          jobId: `wait-list-validate-${waitList.id}-${Date.now()}`,
+          jobId: `wait-list-validate-${waitList.id}`,
         },
       );
 
-      log.info(`Wait list entry created: ${data.email}`, { email: data.email });
+      log.info(`Wait list entry created: ${emailLog}`, { email: emailLog });
 
       return waitList;
     } catch (error) {
       log.error(
-        `Failed to create wait list entry: ${data.email} - ${error instanceof Error ? error.message : 'Unknown error'}`,
+        `Failed to create wait list entry: ${emailLog} - ${error instanceof Error ? error.message : 'Unknown error'}`,
         error,
       );
       throw error;
@@ -145,7 +165,7 @@ export class WaitListProcessor extends GlobalProcessor {
     }
 
     try {
-      const entries = await this.waitListRepository.getWaitingBatch(count);
+      const entries = await this.waitListRepository.claimWaitingBatch(count);
 
       if (!entries.length) {
         log.info('No waiting wait list entries found for batch invite.');
@@ -155,46 +175,52 @@ export class WaitListProcessor extends GlobalProcessor {
       const expiresAt = addDays(new Date(), WaitListProcessor.INVITATION_EXPIRES_IN_DAYS);
       const appUrl = getConfigValue('app').url;
 
-      const mailables = await Promise.all(entries.map(async (entry) => {
-        if (entry.position === null) {
-          throw new Error(`Wait list entry ${entry.id} has no validated position`);
-        }
+      const preparedResults = await Promise.allSettled(
+        entries.map(async (entry) => this.prepareInviteWaitListEntry(entry, appUrl)),
+      );
 
-        const benefitType = this.getBenefitTypeForPosition(entry.position);
-        const benefit = await this.benefitRepository.findByType(benefitType);
+      const preparedInvites = preparedResults.flatMap((result) =>
+        result.status === 'fulfilled' && result.value ? [result.value] : [],
+      );
 
-        if (!benefit) {
-          throw new Error(`Benefit ${benefitType} not found`);
-        }
+      if (!preparedInvites.length) {
+        log.info('No wait list entries could be prepared for batch invite.');
+        return { invited: 0 };
+      }
 
-        const invitationLink = await this.invitationLinkService.create({
-          benefit_id: benefit.id,
-        });
+      try {
+        await this.mailService.sendBatchAsync(
+          preparedInvites.map((invite) => invite.mailable),
+        );
+      } catch (error) {
+        await Promise.allSettled(
+          preparedInvites.map((invite) =>
+            this.waitListRepository.updateById(invite.entry.id, {
+              status: 'WAITING',
+              expires_at: null,
+              invitation_link_id: null,
+            }),
+          ),
+        );
 
-        await this.waitListRepository.updateById(entry.id, {
-          status: 'INVITED',
-          expires_at: expiresAt,
-          invitation_link_id: invitationLink.id,
-        });
+        throw error;
+      }
 
-        return this.waitListInviteMail.setData({
-          email: entry.email,
-          position: entry.position,
-          benefitType,
-          trialDays: benefit.trial_days,
-          benefitMonths: this.getBenefitMonths(benefit.trial_days),
-          registrationUrl: `${appUrl}/auth/register?ref=${invitationLink.code}&email=${entry.email}`,
-          expiresInDays: WaitListProcessor.INVITATION_EXPIRES_IN_DAYS,
-        });
-      }));
+      await Promise.allSettled(
+        preparedInvites.map((invite) =>
+          this.waitListRepository.updateById(invite.entry.id, {
+            status: 'INVITED',
+            expires_at: expiresAt,
+            invitation_link_id: invite.invitationLink.id,
+          }),
+        ),
+      );
 
-      await this.mailService.sendBatchAsync(mailables, {
-        jobId: `wait-list-invite-mail-${Date.now()}`,
-      });
+      const invited = preparedInvites.length;
 
-      log.info(`Wait list batch invitations queued: ${entries.length}`);
+      log.info(`Wait list batch invitations queued: ${invited}/${entries.length}`);
 
-      return { invited: entries.length };
+      return { invited };
     } catch (error) {
       log.error(
         `Failed to invite wait list batch: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -204,11 +230,84 @@ export class WaitListProcessor extends GlobalProcessor {
     }
   }
 
+  private async prepareInviteWaitListEntry(
+    entry: WaitList,
+    appUrl: string,
+  ): Promise<PreparedWaitListInvite | null> {
+    const log = this.logger.name(JOB_INVITE_WAIT_LIST_BATCH);
+    const emailLog = this.redactEmail(entry.email);
+
+    try {
+      if (entry.position === null) {
+        throw new Error(`Wait list entry ${entry.id} has no validated position`);
+      }
+
+      const benefitType = this.getBenefitTypeForPosition(entry.position);
+      const benefit = await this.benefitRepository.findByType(benefitType);
+
+      if (!benefit) {
+        throw new Error(`Benefit ${benefitType} not found`);
+      }
+
+      const invitationLink = await this.invitationLinkService.create({
+        benefit_id: benefit.id,
+      });
+
+      return {
+        entry,
+        invitationLink,
+        mailable: this.waitListInviteMail.setData({
+          email: entry.email,
+          position: entry.position,
+          benefitType,
+          trialDays: benefit.trial_days,
+          benefitMonths: this.getBenefitMonths(benefit.trial_days),
+          registrationUrl: `${appUrl}/auth/register?ref=${invitationLink.code}&email=${encodeURIComponent(entry.email)}`,
+          expiresInDays: WaitListProcessor.INVITATION_EXPIRES_IN_DAYS,
+        }),
+      };
+    } catch (error) {
+      await this.waitListRepository.updateById(entry.id, {
+        status: 'WAITING',
+        expires_at: null,
+        invitation_link_id: null,
+      });
+
+      log.error(
+        `Failed to invite wait list entry: ${emailLog} - ${error instanceof Error ? error.message : 'Unknown error'}`,
+        error,
+      );
+      return null;
+    }
+  }
+
   private getBenefitTypeForPosition(position: number): EnumType<'BENEFIT_TYPE'> {
     return position <= 50 ? 'VIP' : 'EARLY_USER';
   }
 
   private getBenefitMonths(trialDays: number): number {
     return Math.round(trialDays / 30);
+  }
+
+  private normalizeEmail(email: string) {
+    return email.trim().toLowerCase();
+  }
+
+  private redactEmail(email: string) {
+    const [localPart, domain] = email.split('@');
+    if (!localPart || !domain) {
+      return '[redacted]';
+    }
+
+    return `${localPart.slice(0, 2)}***@${domain}`;
+  }
+
+  private isUniqueEmailError(error: unknown) {
+    if (!error || typeof error !== 'object') {
+      return false;
+    }
+
+    const code = 'code' in error ? (error as { code?: string | number }).code : undefined;
+    return code === '23505' || code === 23505 || code === '1062' || code === 1062;
   }
 }

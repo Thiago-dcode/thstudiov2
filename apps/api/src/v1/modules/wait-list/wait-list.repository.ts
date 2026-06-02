@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { LogService } from '@repo/backend-lib/services/log-service';
+import { Query } from '@repo/database/facades';
 import { WaitListSchema, WaitListSchemaColumns } from '@repo/common-lib/schemas/wait-list';
 import { CreateWaitListInput, UpdateWaitListInput, WaitList } from '@repo/common-lib/types/wait-list';
 import { DbException } from '@repo/database/exceptions';
@@ -76,6 +77,32 @@ export class WaitListRepository extends BaseRepository {
     return results.map((result) => this.format(result));
   }
 
+  async claimWaitingBatch(limit: number): Promise<WaitList[]> {
+    if (limit <= 0) {
+      return [];
+    }
+
+    const result = await Query.raw(
+      `WITH claimed AS (
+        SELECT id
+        FROM wait_list
+        WHERE status = 'WAITING'
+          AND validated_at IS NOT NULL
+        ORDER BY position ASC NULLS LAST, id ASC
+        LIMIT $1
+        FOR UPDATE SKIP LOCKED
+      )
+      UPDATE wait_list
+      SET status = 'INVITING'
+      WHERE id IN (SELECT id FROM claimed)
+      RETURNING id, email, token, position, status, redeemed_at, expires_at, validated_at, invitation_link_id;`,
+      [limit],
+    );
+
+    const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];
+    return rows.map((row: WaitListSchema) => this.format(row));
+  }
+
   async findByToken(token: string): Promise<WaitList | null> {
     const result = await this.query()
       .select(this.COLUMNS)
@@ -86,9 +113,10 @@ export class WaitListRepository extends BaseRepository {
   }
 
   async findByEmail(email: string): Promise<WaitList | null> {
+    const normalizedEmail = this.normalizeEmail(email);
     const result = await this.query()
       .select(this.COLUMNS)
-      .where('email', '=', email)
+      .where('email', '=', normalizedEmail)
       .first<WaitListSchema>();
 
     return result ? this.format(result) : null;
@@ -159,5 +187,9 @@ export class WaitListRepository extends BaseRepository {
       validated_at: result.validated_at,
       invitation_link_id: result.invitation_link_id,
     };
+  }
+
+  private normalizeEmail(email: string) {
+    return email.trim().toLowerCase();
   }
 }

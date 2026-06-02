@@ -74,7 +74,7 @@ export const useHandleAction = <K, T>({ action, beforeAction, afterAction, setti
             prevRequest.current = new Date();
             scheduleRetry();
         } finally {
-            // isPending will be set to false in useEffect after result is set
+            setPending(false);
         }
     }
 

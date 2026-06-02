@@ -1,6 +1,7 @@
 import type { ApiResponse } from "@repo/common-lib/types/response";
 import type {
   PublicCreateWaitListInput,
+  WaitListCreateResponse,
   WaitList,
   WaitListPosition,
 } from "@repo/common-lib/types/wait-list";
@@ -14,7 +15,7 @@ class WaitListService extends BaseService {
 
   async create(
     body: PublicCreateWaitListInput,
-  ): Promise<ApiResponse<WaitList>> {
+  ): Promise<ApiResponse<WaitListCreateResponse>> {
     return await this.fetchApi.post({
       resource: "",
       body,

@@ -10,6 +10,7 @@ import Link from 'next/link';
 import type { FormEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
+import type { WaitListCreateResponse } from "@repo/common-lib/types/wait-list";
 import { createWaitListSchema } from "@/modules/wait-list/schemas/wait-list.schema";
 import { createWaitListAction } from "@/modules/wait-list/server-actions/create-wait-list.action";
 
@@ -22,7 +23,7 @@ export function HeroWaitListForm({ currentPosition }: HeroWaitListFormProps) {
   const [isEmailValid, setIsEmailValid] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [waitListResultData, setWaitListResultData] = useState<
-    { email?: string; already_exists?: boolean } | null
+    WaitListCreateResponse | null
   >(null);
   const displayPosition = currentPosition
     ? Math.min(Math.max(currentPosition, 1), MAX_WAIT_LIST_SIZE)
@@ -148,7 +149,7 @@ export function HeroWaitListForm({ currentPosition }: HeroWaitListFormProps) {
                 ? "hero-wait-list-email-error"
                 : "hero-wait-list-email-hint"
             }
-            className="h-14 w-full rounded-sm border-border/60 bg-fg/60 px-4 text-base text-text backdrop-blur-md placeholder:text-text-muted focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/30"
+            className="h-14 w-full border-border/60 bg-fg/60 px-4 text-base text-text backdrop-blur-md placeholder:text-text-muted focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/30"
           />
 
           {inputErrors?.email ? (
@@ -166,7 +167,7 @@ export function HeroWaitListForm({ currentPosition }: HeroWaitListFormProps) {
           variant="primary"
           size="lg"
           disabled={isPending || !isEmailValid || !hasAvailableSpots}
-          className="wait-list-fire-button h-14 w-full shrink-0 rounded-sm phone:w-auto"
+          className="wait-list-fire-button h-14 w-full shrink-0  phone:w-auto"
         >
           {isPending ? t("buttonPending") : t("button")}
         </Button>

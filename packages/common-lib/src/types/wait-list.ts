@@ -6,6 +6,12 @@ export type PublicCreateWaitListInput = {
   email: string;
 };
 
+export type WaitListCreateResponse = {
+  email: string;
+  message: string;
+  already_exists?: true;
+};
+
 export type ValidateWaitListInput = {
   token: string;
 };

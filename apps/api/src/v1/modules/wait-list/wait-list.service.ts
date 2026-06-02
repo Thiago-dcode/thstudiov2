@@ -1,13 +1,13 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   CREATE_WAIT_LIST_ENTRY,
   INVITE_WAIT_LIST_BATCH,
   CREATE_OR_UPDATE_EMAIL_PREFERENCE,
-  MAX_WAIT_LIST_SIZE,
 } from '@repo/common-lib/constants/constants';
 import type {
   PublicCreateWaitListInput,
+  WaitListCreateResponse,
   UpdateWaitListInput,
   WaitListPosition,
 } from '@repo/common-lib/types/wait-list';
@@ -63,38 +63,34 @@ export class WaitListService {
     });
   }
 
-  async create({ email }: PublicCreateWaitListInput) {
-    const existing = await this.waitListRepository.findByEmail(email);
+  async create({ email }: PublicCreateWaitListInput): Promise<WaitListCreateResponse> {
+    const normalizedEmail = this.normalizeEmail(email);
+    const existing = await this.waitListRepository.findByEmail(normalizedEmail);
     if (existing) {
       return {
-        email,
+        email: existing.email,
+        message: 'You are already on the wait list',
         already_exists: true,
       };
-    }
-
-    const validatedCount = await this.waitListRepository.getValidatedCount();
-
-    if (validatedCount >= MAX_WAIT_LIST_SIZE) {
-      throw new BadRequestException('Wait list is full');
     }
 
     // Priority: enqueue email preference upsert immediately
     this.eventEmitter.emit(
       CREATE_OR_UPDATE_EMAIL_PREFERENCE,
       new CreateOrUpdateEmailPreferenceEvent({
-        email,
+        email: normalizedEmail,
       }),
     );
 
     this.eventEmitter.emit(
       CREATE_WAIT_LIST_ENTRY,
-      new CreateWaitListEvent({ email }),
+      new CreateWaitListEvent({ email: normalizedEmail }),
     );
 
     return {
-      email,
+      email: normalizedEmail,
       message: 'You have been added to the wait list',
-    };
+    } satisfies WaitListCreateResponse;
   }
 
   async inviteBatch(count: number) {
@@ -107,5 +103,9 @@ export class WaitListService {
       count,
       message: 'Wait list batch invitations have been queued',
     };
+  }
+
+  private normalizeEmail(email: string) {
+    return email.trim().toLowerCase();
   }
 }
