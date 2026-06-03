@@ -1,7 +1,9 @@
 import { ChevronDown, Sparkles } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { serverEnv } from "@/env/server";
-import { HeroWaitListForm } from "@/modules/wait-list/components/hero-wait-list-form";
+import { MAX_WAIT_LIST_SIZE } from "@repo/common-lib/constants/constants";
+import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
+import { WaitListForm } from "@/modules/wait-list/components/wait-list-form";
 
 type HeroSectionProps = {
   currentWaitListPosition?: number | null;
@@ -11,6 +13,12 @@ export async function HeroSection({
   currentWaitListPosition,
 }: HeroSectionProps) {
   const t = await getTranslations("landing.hero");
+
+  const tWaitList = await getTranslations("landing.hero.waitList");
+
+  const displayPosition = currentWaitListPosition
+    ? Math.min(Math.max(currentWaitListPosition, 1), MAX_WAIT_LIST_SIZE)
+    : null;
 
   return (
     <section
@@ -54,9 +62,34 @@ export async function HeroSection({
           {t("subtitle")}
         </p>
 
-        <div className="hero-stagger-4 flex w-full justify-center pt-4 tablet:pt-6">
-          <HeroWaitListForm currentPosition={currentWaitListPosition} />
-        </div>
+         <div className="hero-stagger-4 flex w-full justify-center pt-4 tablet:pt-6">
+           <div className="w-full max-w-4xl">
+             <div className="mb-2 flex items-center justify-start gap-2">
+               <p
+                 id="hero-wait-list-email-hint"
+                 className="text-left text-xs text-text-muted"
+               >
+                 {tWaitList("hint")}
+               </p>
+               <InfoTooltip content={tWaitList("hintTooltip")} />
+             </div>
+
+             <WaitListForm currentPosition={currentWaitListPosition} />
+
+             {displayPosition ? (
+               <div className="mt-2 flex justify-start text-xs font-medium text-text-muted">
+                 <span>
+                   {tWaitList("positionCount", {
+                     position: displayPosition,
+                     max: MAX_WAIT_LIST_SIZE,
+                   })}
+                   {", "}
+                   {tWaitList("spotWarning")}
+                 </span>
+               </div>
+             ) : null}
+           </div>
+         </div>
       </div>
 
       {/* ── Scroll down indicator ── */}

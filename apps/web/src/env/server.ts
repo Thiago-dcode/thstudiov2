@@ -10,6 +10,7 @@ const serverEnvSchema = z.object({
     GEOAPIFY_URL: z.string().min(1),
     GEOAPIFY_KEY: z.string().min(1),
     SUPPORT_USER_ID: z.coerce.number().int().positive().default(1),
+    REGISTRATION_IS_CLOSED: z.coerce.number().int().min(0).default(0),
 });
 
 const parsed = serverEnvSchema.safeParse(process.env);

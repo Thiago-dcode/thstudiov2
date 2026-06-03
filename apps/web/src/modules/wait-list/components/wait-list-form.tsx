@@ -1,7 +1,6 @@
 "use client";
 
 import { MAX_WAIT_LIST_SIZE } from "@repo/common-lib/constants/constants";
-import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
 import { Button } from "@repo/ui/components/shadcn/button";
 import { Input } from "@repo/ui/components/shadcn/input";
 import { toast } from "@repo/ui/sonner";
@@ -18,20 +17,14 @@ type HeroWaitListFormProps = {
   currentPosition?: number | null;
 };
 
-export function HeroWaitListForm({ currentPosition }: HeroWaitListFormProps) {
+export function WaitListForm({ currentPosition }: HeroWaitListFormProps) {
   const t = useTranslations("landing.hero.waitList");
   const [isEmailValid, setIsEmailValid] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [waitListResultData, setWaitListResultData] = useState<
     WaitListCreateResponse | null
   >(null);
-  const displayPosition = currentPosition
-    ? Math.min(Math.max(currentPosition, 1), MAX_WAIT_LIST_SIZE)
-    : null;
-  const hasAvailableSpots =
-    currentPosition === null ||
-    currentPosition === undefined ||
-    currentPosition <= MAX_WAIT_LIST_SIZE;
+  const hasAvailableSpots = currentPosition == null || currentPosition <= MAX_WAIT_LIST_SIZE;
 
   const emailInputRef = useRef<HTMLInputElement>(null);
 
@@ -96,10 +89,7 @@ export function HeroWaitListForm({ currentPosition }: HeroWaitListFormProps) {
         aria-live="polite"
         className="wait-list-success flex w-full max-w-md flex-col items-center gap-2 rounded-md border border-border/40 bg-fg/50 px-5 py-6 text-center backdrop-blur-md"
       >
-        <h3 className="text-lg font-semibold text-text">{t("successTitle")}</h3>
-        <p className="max-w-sm text-sm leading-relaxed text-text-muted">
-          {t("successMessage")}
-        </p>
+        <h3 className="text-lg font-semibold text-text">{t("successToast")}</h3>
 
         <style>{`
           @media (prefers-reduced-motion: no-preference) {
@@ -117,17 +107,7 @@ export function HeroWaitListForm({ currentPosition }: HeroWaitListFormProps) {
   }
 
   return (
-    <div className="w-full max-w-4xl">
-      <div className="mb-2 flex items-center justify-start gap-2">
-        <p
-          id="hero-wait-list-email-hint"
-          className="text-left text-xs text-text-muted"
-        >
-          {t("hint")}
-        </p>
-        <InfoTooltip content={t("hintTooltip")} />
-      </div>
-
+    <div className="w-full">
       <form
         onSubmit={handleWaitListSubmit}
         className="flex w-full flex-col gap-2 phone:flex-row phone:items-start"
@@ -144,11 +124,7 @@ export function HeroWaitListForm({ currentPosition }: HeroWaitListFormProps) {
             required
             onChange={handleEmailChange}
             aria-invalid={!!inputErrors?.email}
-            aria-describedby={
-              inputErrors?.email
-                ? "hero-wait-list-email-error"
-                : "hero-wait-list-email-hint"
-            }
+            aria-describedby={inputErrors?.email ? "hero-wait-list-email-error" : undefined}
             className="h-14 w-full border-border/60 bg-fg/60 px-4 text-base text-text backdrop-blur-md placeholder:text-text-muted focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/30"
           />
 
@@ -172,18 +148,6 @@ export function HeroWaitListForm({ currentPosition }: HeroWaitListFormProps) {
           {isPending ? t("buttonPending") : t("button")}
         </Button>
       </form>
-
-      {displayPosition ? (
-        <div className="mt-2 flex justify-start text-xs font-medium text-text-muted">
-          <span>
-            {t("positionCount", {
-              position: displayPosition,
-              max: MAX_WAIT_LIST_SIZE,
-            })}
-            , {t("spotWarning")}
-          </span>
-        </div>
-      ) : null}
 
       <style>{`
         .wait-list-fire-button {
