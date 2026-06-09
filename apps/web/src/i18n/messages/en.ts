@@ -24,8 +24,10 @@ const messages = {
         spotWarning: "don't lose your spot",
         fullMessage: "The waitlist is full.",
         successToast: "You are on the waitlist. We will keep you posted.",
-        successTitle: "Thanks for joining the waitlist!",
-        successMessage: "Big things are coming. We'll be in touch soon.",
+        successTitle: "Just one step more: confirm your email.",
+        successMessage:
+          "We sent you a confirmation email. Open it and click the link to secure your early access spot.",
+        successReserveMessage: "We’ll reserve your email after you validate it.",
       },
       disclaimer: "Free to start · No credit card required",
     },

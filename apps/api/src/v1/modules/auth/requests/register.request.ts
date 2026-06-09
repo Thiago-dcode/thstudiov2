@@ -1,4 +1,5 @@
 import { ModelNotExist } from 'src/common/validators/model-not-exist.validtor';
+import { NotIn } from 'src/common/validators/not-in.validtor';
 import {
   IsEmail,
   IsNotEmpty,
@@ -11,11 +12,29 @@ import {
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 
+const FORBIDDEN_USERNAMES = [
+  'admin',
+  'legal',
+  'support',
+  'billing',
+  'moderator',
+  'moderators',
+  'staff',
+  'security',
+  'system',
+  'root',
+  'verification',
+] as const;
+
 export class RegisterRequest {
   @IsEmail()
   @IsNotEmpty()
   @Transform(({ value }) => value.toLowerCase())
   @ModelNotExist('users', 'email')
+  @ModelNotExist('wait_list', 'email', {
+    extraConditions: [['validated_at', '!=', null]],
+    message: 'email already exists in wait list',
+  })
   email: string;
 
   @IsString()
@@ -25,7 +44,7 @@ export class RegisterRequest {
   @Matches(/^[a-zA-Z0-9]+$/, {
     message: 'username must be alphanumeric with no spaces',
   })
-  
+
   @IsOptional()
   @IsString()
   @MinLength(3)
@@ -33,6 +52,9 @@ export class RegisterRequest {
   @Matches(/^[a-zA-Z0-9]+$/, {
     message: 'username must be alphanumeric with no spaces',
   })
+  @NotIn([...FORBIDDEN_USERNAMES], {
+    message: 'username is not allowed',
+  }, false)
   @ModelNotExist('users', 'username')
   username: string;
 

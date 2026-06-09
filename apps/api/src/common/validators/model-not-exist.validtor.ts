@@ -4,7 +4,11 @@ import {
   ValidationOptions,
   ValidatorConstraint,
 } from 'class-validator';
-import { TableName } from '@repo/common-lib/types/database';
+import {
+  SqlClauseWithoutIn,
+  SqlValue,
+  TableName,
+} from '@repo/common-lib/types/database';
 import { DbException } from '@repo/database/exceptions';
 import { Injectable } from '@nestjs/common';
 import { BaseModelValidator } from './base-model.validator';
@@ -21,13 +25,36 @@ export class ModelNotExistValidator extends BaseModelValidator {
     if (!(await super.validate(value, args))) {
       return false;
     }
-    const [tableName, column] = args.constraints as [TableName, string];
+    const [tableName, column, extraConditions, customMessage] =
+      args.constraints as [
+        TableName,
+        string,
+        ModelNotExistCondition[] | null,
+        string | null,
+      ];
     const queryBuilder = QueryBuilder.table(tableName);
     try {
+      if (extraConditions) {
+        for (const [
+          conditionColumn,
+          conditionOperand,
+          conditionValue,
+        ] of extraConditions) {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+          queryBuilder.where(conditionColumn, conditionOperand, conditionValue);
+        }
+      }
+
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       const record = await queryBuilder.where(column, '=', value).exists();
       if (record) {
-        this.message = `${column} ${value} already exists`;
+        this.message =
+          customMessage ??
+          (extraConditions
+            ? `${column} ${value} already exists with ${formatModelNotExistCondition(
+                extraConditions,
+              )}`
+            : `${column} ${value} already exists`);
         return false;
       }
       return true;
@@ -46,9 +73,28 @@ export class ModelNotExistValidator extends BaseModelValidator {
   }
 }
 
+type ModelNotExistCondition = [string, SqlClauseWithoutIn, SqlValue];
+
+type ModelNotExistOptions = {
+  extraConditions?: ModelNotExistCondition[] | null;
+  message?: string | null;
+};
+
+function formatModelNotExistCondition(
+  conditions: ModelNotExistCondition[],
+) {
+  return conditions
+    .map(
+      ([conditionColumn, conditionOperand, conditionValue]) =>
+        `${conditionColumn} ${conditionOperand} ${conditionValue}`,
+    )
+    .join(', ');
+}
+
 export function ModelNotExist(
   tableName: TableName,
   column?: string,
+  modelNotExistOptions?: ModelNotExistOptions | null,
   validationOptions?: ValidationOptions,
 ) {
   return function (object: object, propertyName: string) {
@@ -56,7 +102,12 @@ export function ModelNotExist(
       name: 'modelNotExist',
       target: object.constructor,
       propertyName: propertyName,
-      constraints: [tableName, column],
+      constraints: [
+        tableName,
+        column,
+        modelNotExistOptions?.extraConditions ?? null,
+        modelNotExistOptions?.message ?? null,
+      ],
       options: validationOptions,
       validator: ModelNotExistValidator,
     });

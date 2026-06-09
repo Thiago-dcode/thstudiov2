@@ -24,8 +24,10 @@ const messages: Translations = {
         spotWarning: "no pierdas tu puesto",
         fullMessage: "La lista de espera esta llena.",
         successToast: "Ya estas en la lista de espera. Te avisaremos pronto.",
-        successTitle: "Gracias por unirte a la lista de espera!",
-        successMessage: "Se vienen grandes cosas. Pronto estaremos en contacto.",
+        successTitle: "Solo falta un paso mas: confirma tu correo.",
+        successMessage:
+          "Te enviamos un correo de confirmacion. Abrelo y haz clic en el enlace para asegurar tu acceso anticipado.",
+        successReserveMessage: "Reservaremos tu correo después de validarlo.",
       },
       disclaimer: "Gratis para empezar · No se requiere tarjeta",
     },

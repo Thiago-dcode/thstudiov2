@@ -66,7 +66,7 @@ export class WaitListService {
   async create({ email }: PublicCreateWaitListInput): Promise<WaitListCreateResponse> {
     const normalizedEmail = this.normalizeEmail(email);
     const existing = await this.waitListRepository.findByEmail(normalizedEmail);
-    if (existing) {
+    if (existing && existing.validated_at) {
       return {
         email: existing.email,
         message: 'You are already on the wait list',

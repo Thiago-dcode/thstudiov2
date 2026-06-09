@@ -1,6 +1,7 @@
 "use client";
 
 import { MAX_WAIT_LIST_SIZE } from "@repo/common-lib/constants/constants";
+import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
 import { Button } from "@repo/ui/components/shadcn/button";
 import { Input } from "@repo/ui/components/shadcn/input";
 import { toast } from "@repo/ui/sonner";
@@ -25,6 +26,9 @@ export function WaitListForm({ currentPosition }: HeroWaitListFormProps) {
     WaitListCreateResponse | null
   >(null);
   const hasAvailableSpots = currentPosition == null || currentPosition <= MAX_WAIT_LIST_SIZE;
+  const displayPosition = currentPosition
+    ? Math.min(Math.max(currentPosition, 1), MAX_WAIT_LIST_SIZE)
+    : null;
 
   const emailInputRef = useRef<HTMLInputElement>(null);
 
@@ -66,32 +70,35 @@ export function WaitListForm({ currentPosition }: HeroWaitListFormProps) {
 
   if (isSuccess) {
     if (waitListResultData?.already_exists) {
-      const email = waitListResultData.email ?? '';
+      const email = waitListResultData.email ?? "";
 
       return (
-        <div
-          aria-live="polite"
-          className="wait-list-success flex w-full max-w-md flex-col items-center gap-2 rounded-md border border-border/40 bg-fg/50 px-5 py-6 text-center backdrop-blur-md"
-        >
-          <h3 className="text-lg font-semibold text-text">
-            {email} is already on the wait list, check your email, if you think is an error{" "}
-            <Link href="/support" className="text-accent underline">
-              contact support
-            </Link>{" "}to support page.
-          </h3>
-          <div className="text-sm text-text-muted"> </div>
+        <div aria-live="polite" className="flex w-full justify-center">
+          <div
+            className="wait-list-success flex w-full max-w-md flex-col items-center gap-2 rounded-md border border-border/40 bg-fg/50 px-5 py-6 text-center backdrop-blur-md"
+          >
+            <h3 className="text-lg font-semibold text-text">
+              {email} is already on the wait list. Check your email. If this looks wrong, {" "}
+              <Link href="/support" className="text-accent underline">
+                contact support
+              </Link>
+              .
+            </h3>
+          </div>
         </div>
       );
     }
 
     return (
-      <div
-        aria-live="polite"
-        className="wait-list-success flex w-full max-w-md flex-col items-center gap-2 rounded-md border border-border/40 bg-fg/50 px-5 py-6 text-center backdrop-blur-md"
-      >
-        <h3 className="text-lg font-semibold text-text">{t("successToast")}</h3>
+      <div aria-live="polite" className="flex w-full justify-center">
+        <div
+          className="wait-list-success flex w-full max-w-md flex-col items-center gap-2 rounded-md border border-border/40 bg-fg/50 px-5 py-6 text-center backdrop-blur-md"
+        >
+          <h3 className="text-lg font-semibold text-text">{t("successTitle")}</h3>
+          <p className="text-sm text-text-muted">{t("successMessage")}</p>
+          <p className="text-sm text-text-muted">{t("successReserveMessage")}</p>
 
-        <style>{`
+          <style>{`
           @media (prefers-reduced-motion: no-preference) {
             .wait-list-success {
               animation: wait-list-pop 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
@@ -102,12 +109,20 @@ export function WaitListForm({ currentPosition }: HeroWaitListFormProps) {
             }
           }
         `}</style>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="w-full">
+      <div className="mb-2 flex items-center justify-start gap-2">
+        <p id="hero-wait-list-email-hint" className="text-left text-xs text-text-muted">
+          {t("hint")}
+        </p>
+        <InfoTooltip content={t("hintTooltip")} />
+      </div>
+
       <form
         onSubmit={handleWaitListSubmit}
         className="flex w-full flex-col gap-2 phone:flex-row phone:items-start"
@@ -148,6 +163,19 @@ export function WaitListForm({ currentPosition }: HeroWaitListFormProps) {
           {isPending ? t("buttonPending") : t("button")}
         </Button>
       </form>
+
+      {displayPosition ? (
+        <div className="mt-2 flex justify-start text-xs font-medium text-text-muted">
+          <span>
+            {t("positionCount", {
+              position: displayPosition,
+              max: MAX_WAIT_LIST_SIZE,
+            })}
+            {", "}
+            {t("spotWarning")}
+          </span>
+        </div>
+      ) : null}
 
       <style>{`
         .wait-list-fire-button {

@@ -4,7 +4,11 @@ import {
   ValidationOptions,
   ValidatorConstraint,
 } from 'class-validator';
-import { TableName } from '@repo/common-lib/types/database';
+import {
+  SqlClauseWithoutIn,
+  SqlValue,
+  TableName,
+} from '@repo/common-lib/types/database';
 import { DbException } from '@repo/database/exceptions';
 import { Injectable } from '@nestjs/common';
 import { BaseModelValidator } from './base-model.validator';
@@ -21,14 +25,36 @@ export class ModelExistValidator extends BaseModelValidator {
     if (!(await super.validate(value, args))) {
       return false;
     }
-    const [tableName, column] = args.constraints as [TableName, string];
+    const [tableName, column, extraConditions, customMessage] =
+      args.constraints as [
+        TableName,
+        string,
+        ModelExistCondition[] | null,
+        string | null,
+      ];
     const queryBuilder = QueryBuilder.table(tableName);
     let result = false;
     try {
+      if (extraConditions) {
+        for (const [
+          conditionColumn,
+          conditionOperand,
+          conditionValue,
+        ] of extraConditions) {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+          queryBuilder.where(conditionColumn, conditionOperand, conditionValue);
+        }
+      }
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       result = await queryBuilder.where(column, '=', value).exists();
       if (!result) {
-        this.message = `${tableName} with ${column} ${value} does not exist`;
+        this.message =
+          customMessage ??
+          (extraConditions
+            ? `${tableName} with ${column} ${value} and ${formatModelExistCondition(
+                extraConditions,
+              )} does not exist`
+            : `${tableName} with ${column} ${value} does not exist`);
       }
     } catch (error) {
       this.message =
@@ -44,9 +70,26 @@ export class ModelExistValidator extends BaseModelValidator {
   }
 }
 
+type ModelExistCondition = [string, SqlClauseWithoutIn, SqlValue];
+
+type ModelExistOptions = {
+  extraConditions?: ModelExistCondition[] | null;
+  message?: string | null;
+};
+
+function formatModelExistCondition(conditions: ModelExistCondition[]) {
+  return conditions
+    .map(
+      ([conditionColumn, conditionOperand, conditionValue]) =>
+        `${conditionColumn} ${conditionOperand} ${conditionValue}`,
+    )
+    .join(', ');
+}
+
 export function ModelExist(
   tableName: TableName,
-  column: string ='id',
+  column: string = 'id',
+  modelExistOptions?: ModelExistOptions | null,
   validationOptions?: ValidationOptions,
 ) {
   return function (object: object, propertyName: string) {
@@ -54,7 +97,12 @@ export function ModelExist(
       name: 'modelExist',
       target: object.constructor,
       propertyName: propertyName,
-      constraints: [tableName, column],
+      constraints: [
+        tableName,
+        column,
+        modelExistOptions?.extraConditions ?? null,
+        modelExistOptions?.message ?? null,
+      ],
       options: validationOptions,
       validator: ModelExistValidator,
     });
