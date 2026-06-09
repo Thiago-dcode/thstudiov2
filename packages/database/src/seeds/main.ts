@@ -6,6 +6,7 @@ import { main as benefits } from './benefits';
 import { main as invitationLinks } from './invitationLinks';
 import { main as roles } from './roles';
 import { ADMIN_USERNAME, main as adminUser } from './admin-user';
+import { main as supportUser } from './support-user';
 import { main as portfolioSeed } from './portfolio';
 import { main as collectionSeed } from './collection';
 import { main as mediaSeed } from './media';
@@ -18,9 +19,9 @@ export const main = async () => {
   await paymentMethods();
   await benefits();
   await invitationLinks();
-
+  await supportUser();
+  await adminUser();
   if (!getConfigValue('app').isProduction) {
-    await adminUser();
     await mediaSeed(ADMIN_USERNAME);
     await portfolioSeed(ADMIN_USERNAME, 5);
     await collectionSeed(ADMIN_USERNAME, 5);
