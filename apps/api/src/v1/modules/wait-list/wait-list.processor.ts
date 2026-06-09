@@ -22,13 +22,14 @@ import { InvitationLinkService } from '../invitation-links/invitation-link.servi
 import { CreateWaitListEvent } from './events/create-wait-list.event';
 import { InviteWaitListBatchEvent } from './events/invite-wait-list-batch.event';
 import { WaitListInviteMail } from './mails/wait-list-invite.mail';
+import { WaitListWelcomeMail } from './mails/wait-list-welcome.mail';
 import { WaitListRepository } from './wait-list.repository';
 import type { WaitList } from '@repo/common-lib/types/wait-list';
 
 type PreparedWaitListInvite = {
   entry: WaitList;
   invitationLink: InvitationLink;
-  mailable: WaitListInviteMail;
+  mailable: WaitListWelcomeMail;
 };
 
 @Processor(WAIT_LIST_QUEUE)
@@ -45,6 +46,7 @@ export class WaitListProcessor extends GlobalProcessor {
     private readonly benefitRepository: BenefitRepository,
     private readonly mailService: MailService,
     private readonly waitListInviteMail: WaitListInviteMail,
+    private readonly waitListWelcomeMail: WaitListWelcomeMail,
     @InjectQueue(WAIT_LIST_QUEUE) private readonly waitListQueue: Queue,
     private readonly appLogService: LogService,
   ) {
@@ -53,17 +55,29 @@ export class WaitListProcessor extends GlobalProcessor {
 
   @OnEvent(CREATE_WAIT_LIST_ENTRY)
   async handleCreateWaitListEvent(event: CreateWaitListEvent) {
-    await this.waitListQueue.add(
-      JOB_CREATE_WAIT_LIST_ENTRY,
-      event.data,
-      {
-        jobId: `wait-list-create-${encodeURIComponent(this.normalizeEmail(event.data.email))}`,
-        priority: 10,
-        removeOnComplete: true,
-        attempts: 3,
-        backoff: { type: 'exponential', delay: 1000 },
-      },
-    );
+    try {
+      await this.waitListQueue.add(
+        JOB_CREATE_WAIT_LIST_ENTRY,
+        event.data,
+        {
+          jobId: `wait-list-create-${encodeURIComponent(this.normalizeEmail(event.data.email))}`,
+          priority: 10,
+          removeOnComplete: true,
+          attempts: 3,
+          backoff: { type: 'exponential', delay: 1000 },
+        },
+      );
+    } catch (error) {
+      // BullMQ throws when the same `jobId` is already present.
+      // We treat that as a no-op because the processor logic is idempotent
+      // (unique wait-list email + throttling by `invitation_email_sent_at`).
+      const message = error instanceof Error ? error.message : String(error);
+      const lower = message.toLowerCase();
+      if (lower.includes('job') && (lower.includes('already') || lower.includes('exists') || lower.includes('exist'))) {
+        return;
+      }
+      throw error;
+    }
   }
 
   @OnEvent(INVITE_WAIT_LIST_BATCH)
@@ -116,6 +130,10 @@ export class WaitListProcessor extends GlobalProcessor {
             expires_at: null,
             validated_at: null,
             invitation_link_id: null,
+            invitation_email_sent_at: null,
+            welcome_email_sent_at: null,
+            last_reminder_email_sent_at: null,
+            reminder_count: 0,
           });
         } catch (error) {
           if (!this.isUniqueEmailError(error)) {
@@ -133,6 +151,15 @@ export class WaitListProcessor extends GlobalProcessor {
         return waitList;
       }
 
+      const ONE_HOUR_MS = 60 * 60 * 1000;
+      if (
+        waitList.invitation_email_sent_at
+        && Date.now() - new Date(waitList.invitation_email_sent_at).getTime() < ONE_HOUR_MS
+      ) {
+        log.info(`Skipping wait-list validation email (sent recently): ${emailLog}`, { email: emailLog });
+        return waitList;
+      }
+
       await this.mailService.sendAsync(
         this.waitListInviteMail.setData({
           email: waitList.email,
@@ -142,6 +169,10 @@ export class WaitListProcessor extends GlobalProcessor {
           jobId: `wait-list-validate-${waitList.id}`,
         },
       );
+
+      await this.waitListRepository.updateById(waitList.id, {
+        invitation_email_sent_at: new Date(),
+      });
 
       log.info(`Wait list entry created: ${emailLog}`, { email: emailLog });
 
@@ -175,8 +206,24 @@ export class WaitListProcessor extends GlobalProcessor {
       const expiresAt = addDays(new Date(), WaitListProcessor.INVITATION_EXPIRES_IN_DAYS);
       const appUrl = getConfigValue('app').url;
 
+      // Memoize benefit lookups per batch: each benefit type is fetched at most once.
+      const benefitTypes = new Set<EnumType<'BENEFIT_TYPE'>>();
+      for (const entry of entries) {
+        if (entry.position !== null) {
+          benefitTypes.add(this.getBenefitTypeForPosition(entry.position));
+        }
+      }
+
+      const uniqueBenefitTypes = Array.from(benefitTypes);
+      const benefitList = await Promise.all(
+        uniqueBenefitTypes.map((type) => this.benefitRepository.findByType(type)),
+      );
+      const benefitByType = new Map<EnumType<'BENEFIT_TYPE'>, Awaited<ReturnType<BenefitRepository['findByType']>>>(
+        uniqueBenefitTypes.map((type, i) => [type, benefitList[i]]),
+      );
+
       const preparedResults = await Promise.allSettled(
-        entries.map(async (entry) => this.prepareInviteWaitListEntry(entry, appUrl)),
+        entries.map(async (entry) => this.prepareInviteWaitListEntry(entry, appUrl, benefitByType)),
       );
 
       const preparedInvites = preparedResults.flatMap((result) =>
@@ -199,6 +246,9 @@ export class WaitListProcessor extends GlobalProcessor {
               status: 'WAITING',
               expires_at: null,
               invitation_link_id: null,
+              welcome_email_sent_at: null,
+              reminder_count: 0,
+              last_reminder_email_sent_at: null,
             }),
           ),
         );
@@ -212,6 +262,7 @@ export class WaitListProcessor extends GlobalProcessor {
             status: 'INVITED',
             expires_at: expiresAt,
             invitation_link_id: invite.invitationLink.id,
+            welcome_email_sent_at: new Date(),
           }),
         ),
       );
@@ -233,6 +284,7 @@ export class WaitListProcessor extends GlobalProcessor {
   private async prepareInviteWaitListEntry(
     entry: WaitList,
     appUrl: string,
+    benefitByType: Map<EnumType<'BENEFIT_TYPE'>, Awaited<ReturnType<BenefitRepository['findByType']>>>,
   ): Promise<PreparedWaitListInvite | null> {
     const log = this.logger.name(JOB_INVITE_WAIT_LIST_BATCH);
     const emailLog = this.redactEmail(entry.email);
@@ -243,7 +295,7 @@ export class WaitListProcessor extends GlobalProcessor {
       }
 
       const benefitType = this.getBenefitTypeForPosition(entry.position);
-      const benefit = await this.benefitRepository.findByType(benefitType);
+      const benefit = benefitByType.get(benefitType);
 
       if (!benefit) {
         throw new Error(`Benefit ${benefitType} not found`);
@@ -256,13 +308,13 @@ export class WaitListProcessor extends GlobalProcessor {
       return {
         entry,
         invitationLink,
-        mailable: this.waitListInviteMail.setData({
+        mailable: this.waitListWelcomeMail.setData({
           email: entry.email,
           position: entry.position,
           benefitType,
           trialDays: benefit.trial_days,
           benefitMonths: this.getBenefitMonths(benefit.trial_days),
-          registrationUrl: `${appUrl}/auth/register?ref=${invitationLink.code}&email=${encodeURIComponent(entry.email)}`,
+          registrationUrl: `${appUrl}/auth/register?ref=${invitationLink.code}`,
           expiresInDays: WaitListProcessor.INVITATION_EXPIRES_IN_DAYS,
         }),
       };
@@ -271,6 +323,9 @@ export class WaitListProcessor extends GlobalProcessor {
         status: 'WAITING',
         expires_at: null,
         invitation_link_id: null,
+        welcome_email_sent_at: null,
+        reminder_count: 0,
+        last_reminder_email_sent_at: null,
       });
 
       log.error(

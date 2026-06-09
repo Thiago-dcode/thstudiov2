@@ -24,14 +24,19 @@ const EMAIL_TYPE_TO_PREFERENCE: Record<
   WAITLIST_UPDATE: 'waitlist_updates',
 };
 
-@Injectable()
+  @Injectable()
 export class EmailPreferencesService {
   constructor(
     private readonly emailPreferencesRepository: EmailPreferencesRepository,
   ) { }
 
   async createOrUpdateByEmail(payload: CreateOrUpdateEmailPreferencePayload): Promise<EmailPreference> {
-    const row = await this.emailPreferencesRepository.upsertByEmail(cleanObj(payload));
+    // `transactional` can only be changed manually in DB.
+    // Ignore any app-provided value to prevent disabling it via API/UI.
+    const sanitizedPayload = cleanObj(payload);
+    delete (sanitizedPayload as Record<string, unknown>).transactional;
+
+    const row = await this.emailPreferencesRepository.upsertByEmail(sanitizedPayload);
     return {
       id: row.id,
       email: row.email,
@@ -92,8 +97,11 @@ export class EmailPreferencesService {
 
   async getDeliveryStatus(email: string, emailType: EnumType<'EMAIL_TYPE'>): Promise<EmailPreferenceDeliveryStatus> {
     if (emailType === 'TRANSACTIONAL') {
+      const emailPreference = await this.getOneByEmail(email);
+
       return {
-        canSend: true,
+        canSend: emailPreference ? emailPreference.transactional : true,
+        // Transactional emails should not include unsubscribe URLs.
         unsuscribeUrl: '',
       };
     }

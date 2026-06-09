@@ -220,6 +220,20 @@ const messages = {
       { value: "Partnership", label: "Partnership" },
     ],
   },
+  waitListValidate: {
+    metadata: {
+      title: "Validate Email - A11STUDIO",
+      description:
+        "Validate your email address to confirm your wait list spot.",
+    },
+    page: {
+      label: "Wait list",
+      title: "Email Validated!",
+      description:
+        "Thanks! Your email has been validated. We’ll email your invitation when it’s ready.",
+      status: "You’re all set.",
+    },
+  },
 };
 
 export type Translations = typeof messages;

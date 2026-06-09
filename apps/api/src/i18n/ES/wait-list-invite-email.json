@@ -1,14 +1,6 @@
 {
+  "FROM_NAME": "Bienvenido a A11STUDIO",
   "SUBJECT": "Tu invitacion a A11STUDIO esta lista",
-  "TITLE": "La espera termino",
-  "DESCRIPTION": "Tu invitacion privada esta lista. Usa el enlace de abajo para crear tu cuenta y reclamar tu perfil de creador.",
-  "TIER_LABEL": "Nivel reservado",
-  "BENEFIT_DESCRIPTION": "Esta invitacion incluye {months} mes(es) gratis por tu beneficio {benefitType}.",
-  "CTA_TEXT": "Crear Mi Cuenta",
-  "EXPIRATION_NOTE": "Este enlace de invitacion expirara en {days} dias.",
-  "URGENCY_NOTE": "Esta invitacion es personal y limitada. Reclama tu lugar antes de que expire.",
-
-  "VALIDATE_TIER_LABEL": "Valida tu correo",
   "VALIDATE_TITLE": "Confirma que este correo es tuyo",
   "VALIDATE_DESCRIPTION": "Haz clic en el boton de abajo para validar tu lugar en la lista de espera.",
   "VALIDATE_CTA_TEXT": "Validar Correo"

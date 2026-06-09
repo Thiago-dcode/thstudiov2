@@ -58,6 +58,17 @@ export class AuthService {
   ) { }
   async register(registerRequest: RegisterRequest) {
     const clientRole = await this.roleService.getByName('ARTIST');
+    const existingWaitListEntry = await this.waitListService.findByEmail(registerRequest.email);
+
+    if (existingWaitListEntry?.validated_at) {
+      const isExpired = existingWaitListEntry.expires_at
+        ? existingWaitListEntry.expires_at.getTime() <= new Date().getTime()
+        : false;
+
+      if (!isExpired) {
+        throw new BadRequestException('email already exists in wait list');
+      }
+    }
 
     let benefit_id: number | null = null;
     let invitation_link_id: number | null = null;

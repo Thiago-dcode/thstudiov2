@@ -11,6 +11,10 @@ export type WaitListSchema = {
   expires_at: Date | null;
   validated_at: Date | null;
   invitation_link_id: number | null;
+  invitation_email_sent_at: Date | null;
+  welcome_email_sent_at: Date | null;
+  last_reminder_email_sent_at: Date | null;
+  reminder_count: number;
   created_at: Date;
   updated_at: Date;
 };

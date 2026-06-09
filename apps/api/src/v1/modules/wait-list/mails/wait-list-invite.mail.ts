@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { ViewService } from '@repo/backend-lib/services/view-service/base';
-import { EnumType } from '@repo/common-lib/constants/enums';
 import { I18nService } from 'nestjs-i18n';
 import { mailingNoreplyEmail } from 'src/config/mailling';
 import { ApiMailService } from 'src/common/mails/api-mail-service';
@@ -8,16 +7,7 @@ import { EmailPreferencesService } from 'src/v1/modules/email-preferences/email-
 
 export type WaitListInviteMailData = {
   email: string;
-  // When present, this is the validation email.
-  validationUrl?: string;
-
-  // When present, this is the registration/invitation email.
-  position?: number;
-  benefitType?: EnumType<'BENEFIT_TYPE'>;
-  trialDays?: number;
-  benefitMonths?: number;
-  registrationUrl?: string;
-  expiresInDays?: number;
+  validationUrl: string;
 };
 
 @Injectable()
@@ -49,9 +39,10 @@ export class WaitListInviteMail extends ApiMailService {
 
   protected async buildEnvelope() {
     const data = this.getData();
+    const fromName = this.i18nService.translate('wait-list-invite-email.FROM_NAME');
 
     return {
-      from: mailingNoreplyEmail,
+      from: `${fromName} <${mailingNoreplyEmail}>`,
       to: data.email,
       subject: this.i18nService.translate('wait-list-invite-email.SUBJECT'),
     };

@@ -7,10 +7,12 @@ import { BenefitsModule } from '../benefits/benefits.module';
 import { InvitationLinkModule } from '../invitation-links/invitation-link.module';
 import { WaitListInviteMail } from './mails/wait-list-invite.mail';
 import { WaitListWelcomeMail } from './mails/wait-list-welcome.mail';
+import { WaitListReminderMail } from './mails/wait-list-reminder.mail';
 import { WaitListController } from './wait-list.controller';
 import { WaitListProcessor } from './wait-list.processor';
 import { WaitListRepository } from './wait-list.repository';
 import { WaitListService } from './wait-list.service';
+import { WaitListTask } from './wait-list.task';
 import { EmailPreferencesModule } from '../email-preferences/email-preferences.module';
 
 @Module({
@@ -27,6 +29,8 @@ import { EmailPreferencesModule } from '../email-preferences/email-preferences.m
     WaitListProcessor,
     WaitListWelcomeMail,
     WaitListInviteMail,
+    WaitListReminderMail,
+    WaitListTask,
     {
       provide: LogService,
       useFactory: (logQueue: Queue) => {

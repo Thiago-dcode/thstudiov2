@@ -1,14 +1,11 @@
 {
-  "SUBJECT": "You are on the A11STUDIO wait list",
-  "HI": "Welcome",
-  "TITLE": "Your spot is reserved",
-  "POSITION_LABEL": "Your wait list position",
-  "POSITION_MESSAGE": "You are number #{position} in line.",
-  "TIER_VIP_TITLE": "Founder-circle VIP access unlocked",
-  "TIER_EARLY_USER_TITLE": "Early User access secured",
-  "BENEFIT_DESCRIPTION": "Your current tier includes {months} free month(s) when registration opens.",
-  "SCARCITY_HOOK": "The first 50 creators receive VIP access. Every spot after that joins the Early User circle, so your place matters.",
-  "COMING_SOON": "We will send your private registration link soon. Keep this email close: the next one opens the door.",
-  "CTA_TEXT": "See What You Will Create",
-  "CTA_DESCRIPTION": "Preview the kind of artist profile you will be able to launch on A11STUDIO."
+  "FROM_NAME": "The wait is over",
+  "SUBJECT": "Your wait is over",
+  "TITLE": "Your registration link is ready",
+  "DESCRIPTION": "Create your account now to claim your reserved tier and free months.",
+  "TIER_LABEL": "Reserved tier",
+  "BENEFIT_DESCRIPTION": "Access to {benefitType} with {months} free month(s) when registration opens.",
+  "CTA_TEXT": "Create Your Account",
+  "EXPIRATION_NOTE": "This registration link will expire in {days} days.",
+  "URGENCY_NOTE": "This invitation is personal and limited. Complete your registration before it expires."
 }

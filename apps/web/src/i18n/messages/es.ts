@@ -220,6 +220,20 @@ const messages: Translations = {
       { value: "Partnership", label: "Colaboración" },
     ],
   },
+  waitListValidate: {
+    metadata: {
+      title: "Validar correo - A11STUDIO",
+      description:
+        "Valida tu dirección de correo para confirmar tu lugar en la lista de espera.",
+    },
+    page: {
+      label: "Lista de espera",
+      title: "¡Correo validado!",
+      description:
+        "¡Gracias! Tu correo ha sido validado. Te enviaremos la invitación cuando esté lista.",
+      status: "Ya está todo listo.",
+    },
+  },
 };
 
 export default messages;

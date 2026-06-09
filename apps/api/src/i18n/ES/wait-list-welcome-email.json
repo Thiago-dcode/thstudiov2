@@ -1,14 +1,11 @@
 {
-  "SUBJECT": "Ya estas en la lista de espera de A11STUDIO",
-  "HI": "Bienvenido",
-  "TITLE": "Tu lugar esta reservado",
-  "POSITION_LABEL": "Tu posicion en la lista",
-  "POSITION_MESSAGE": "Eres el numero #{position} en la fila.",
-  "TIER_VIP_TITLE": "Acceso VIP del circulo fundador desbloqueado",
-  "TIER_EARLY_USER_TITLE": "Acceso Early User asegurado",
-  "BENEFIT_DESCRIPTION": "Tu nivel actual incluye {months} mes(es) gratis cuando abramos el registro.",
-  "SCARCITY_HOOK": "Los primeros 50 creadores reciben acceso VIP. Cada lugar despues entra al circulo Early User, por eso tu posicion importa.",
-  "COMING_SOON": "Pronto enviaremos tu enlace privado de registro. Guarda este correo: el siguiente abre la puerta.",
-  "CTA_TEXT": "Mira Lo Que Podras Crear",
-  "CTA_DESCRIPTION": "Explora el tipo de perfil de artista que podras lanzar en A11STUDIO."
+  "FROM_NAME": "La espera terminó",
+  "SUBJECT": "Tu espera termino",
+  "TITLE": "Tu enlace de registro esta listo",
+  "DESCRIPTION": "Crea tu cuenta ahora para reclamar tu acceso reservado y los meses gratis.",
+  "TIER_LABEL": "Nivel reservado",
+  "BENEFIT_DESCRIPTION": "Acceso {benefitType} con {months} mes(es) gratis cuando abrimos el registro.",
+  "CTA_TEXT": "Crear Mi Cuenta",
+  "EXPIRATION_NOTE": "Este enlace de registro expirara en {days} dias.",
+  "URGENCY_NOTE": "Esta invitacion es personal y limitada. Completa tu registro antes de que expire."
 }

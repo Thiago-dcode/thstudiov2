@@ -32,6 +32,15 @@ export class WaitListService {
     return this.waitListRepository.findByInvitationLinkId(invitationLinkId);
   }
 
+  async findByEmail(email: string) {
+    return this.waitListRepository.findByEmail(email);
+  }
+
+  async getEmailByInvitationCode(code: string): Promise<{ email: string } | null> {
+    const email = await this.waitListRepository.findEmailByInvitationCode(code);
+    return email ? { email } : null;
+  }
+
   async updateById(id: number, data: UpdateWaitListInput) {
     return this.waitListRepository.updateById(id, data);
   }
@@ -40,7 +49,7 @@ export class WaitListService {
     const validatedCount = await this.waitListRepository.getValidatedCount();
 
     return {
-      position: validatedCount + 1,
+      position: validatedCount,
     };
   }
 

@@ -1,5 +1,6 @@
 import { Metadata } from "next"
 import Link from "next/link"
+import { serverEnv } from "@/env/server"
 
 export const metadata: Metadata = {
     title: "Privacy Policy — A11STUDIO",
@@ -9,6 +10,8 @@ export const metadata: Metadata = {
 const LAST_UPDATED = "March 16, 2026"
 
 export default function PrivacyPolicyPage() {
+    const supportEmail = serverEnv.SUPPORT_EMAIL
+
     return (
         <>
             <header className="space-y-4">
@@ -30,7 +33,7 @@ export default function PrivacyPolicyPage() {
                     A11STUDIO (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;) is the data
                     controller responsible for your personal data. For any privacy-related
                     inquiries, contact us at{" "}
-                    <A href="mailto:contact@a11studio.com">contact@a11studio.com</A>.
+                    <A href={`mailto:${supportEmail}`}>{supportEmail}</A>.
                 </P>
             </Section>
 
@@ -153,7 +156,7 @@ export default function PrivacyPolicyPage() {
                 </ul>
                 <P>
                     To exercise any of these rights, contact us at{" "}
-                    <A href="mailto:contact@a11studio.com">contact@a11studio.com</A>.
+                    <A href={`mailto:${supportEmail}`}>{supportEmail}</A>.
                 </P>
             </Section>
 
@@ -185,7 +188,7 @@ export default function PrivacyPolicyPage() {
                 <P>
                     For questions or concerns about this privacy policy or your personal
                     data, contact us at{" "}
-                    <A href="mailto:contact@a11studio.com">contact@a11studio.com</A>.
+                    <A href={`mailto:${supportEmail}`}>{supportEmail}</A>.
                 </P>
             </Section>
         </>

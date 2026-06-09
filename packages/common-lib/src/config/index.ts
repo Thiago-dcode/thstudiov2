@@ -9,10 +9,12 @@ let envFilePath = path.resolve(process.cwd(), '..', '..', '.env');
 
 const config = (envPath?: string | undefined) => {
   envFilePath = envPath || envFilePath;
-  if (!fs.existsSync(envFilePath)) {
-    throw new Error('Environment file not found');
+  // In containerized/production environments there is no physical .env file:
+  // variables are injected directly into process.env (e.g. via compose env_file).
+  // Only load from disk when the file actually exists; otherwise rely on process.env.
+  if (fs.existsSync(envFilePath)) {
+    dotenv.config({ path: envFilePath, quiet: true });
   }
-  dotenv.config({ path: envPath || envFilePath, quiet: true });
   return {
     app: {
       api_key: process.env.APP_API_KEY || '',
@@ -54,6 +56,7 @@ const config = (envPath?: string | undefined) => {
       admins: process.env.ADMIN_EMAILS ? process.env.ADMIN_EMAILS.split(',') : [],
       noreplyEmail: process.env.NOREPLY_EMAIL,
       contactEmail: process.env.CONTACT_EMAIL,
+      supportEmail: process.env.SUPPORT_EMAIL,
       api_key: process.env.RESEND_API_KEY,
     },
     storage: {

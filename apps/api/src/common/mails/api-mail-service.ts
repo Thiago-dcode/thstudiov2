@@ -44,42 +44,32 @@ export abstract class ApiMailService extends Mailable {
         return recipient ?? null;
     }
 
-    async content(): Promise<Content> {
-        const email = await this.getRecipientEmail();
+  async content(): Promise<Content> {
+    const email = await this.getRecipientEmail();
 
-        if (!email) {
-            return {};
-        }
+    if (!email) {
+      return {};
+    }
 
-        // Transactional emails should not be blocked or include unsubscribe URLs.
-        if (this._viewParams.emailType === 'TRANSACTIONAL') {
-            return {
-                html: await this.viewService.render(this._viewParams.viewPath, {
-                    ...this._viewParams.data,
-                    unsuscribeUrl: '',
-                }),
-            };
-        }
+    // If we don't have email preferences (e.g. manually constructed mailables),
+    // default to sending and do not include unsubscribe URLs.
+    if (!this.emailPreferencesService) {
+      return {
+        html: await this.viewService.render(this._viewParams.viewPath, {
+          ...this._viewParams.data,
+          unsuscribeUrl: '',
+        }),
+      };
+    }
 
-        // If we don't have email preferences (e.g. manually constructed mailables),
-        // default to sending.
-        if (!this.emailPreferencesService) {
-            return {
-                html: await this.viewService.render(this._viewParams.viewPath, {
-                    ...this._viewParams.data,
-                    unsuscribeUrl: '',
-                }),
-            };
-        }
+    const { canSend, unsuscribeUrl } = await this.emailPreferencesService.getDeliveryStatus(
+      email,
+      this._viewParams.emailType,
+    );
 
-        const { canSend, unsuscribeUrl } = await this.emailPreferencesService.getDeliveryStatus(
-            email,
-            this._viewParams.emailType,
-        );
-
-        if (!canSend) {
-            return {};
-        }
+    if (!canSend) {
+      return {};
+    }
 
         return {
             html: await this.viewService.render(this._viewParams.viewPath, {

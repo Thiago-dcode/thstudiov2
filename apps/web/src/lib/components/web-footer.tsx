@@ -2,6 +2,7 @@ import Link from "next/link"
 import { BrandLogo } from "@repo/ui/components/custom/brand-logo"
 import { ThemeToggle } from "@repo/ui/components/custom/theme-toggle"
 import { WebFooterLanguageSwitcher } from "@/lib/components/web-footer-language-switcher"
+import { serverEnv } from "@/env/server"
 
 const legalLinks = [
     { href: "/legal/privacy", label: "Privacy Policy" },
@@ -11,6 +12,7 @@ const legalLinks = [
 
 export const WebFooter = () => {
     const year = new Date().getFullYear()
+    const supportEmail = serverEnv.SUPPORT_EMAIL
 
     return (
         <footer className="w-full  border-t border-fg-2 bg-bg">
@@ -45,10 +47,10 @@ export const WebFooter = () => {
                             Contact
                         </span>
                         <a
-                            href="mailto:contact@a11studio.com"
+                            href={`mailto:${supportEmail}`}
                             className="text-sm tracking-wider text-text-muted hover:text-text transition-colors w-fit"
                         >
-                            contact@a11studio.com
+                            {supportEmail}
                         </a>
                     </div>
                 </div>

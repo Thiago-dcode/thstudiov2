@@ -3,7 +3,7 @@ import { LogConfig, LogLevel, LogOptions } from "./types";
 import { LogService } from "./log.service";
 import fs from 'node:fs/promises'
 import { checkFileExistsAsync } from '@repo/backend-lib/utils';
-import { differenceInDays, format } from "date-fns";
+import { format, isSameDay } from "date-fns";
 import { Queue } from "bullmq";
 export class FileLogService extends LogService {
 
@@ -47,8 +47,9 @@ export class FileLogService extends LogService {
     }
 
     private async getLogFile() {
-        if (!LogService.date || differenceInDays(new Date(), LogService.date) > 0) {
-            LogService.date = new Date();
+        const now = new Date();
+        if (!LogService.date || !isSameDay(now, LogService.date)) {
+            LogService.date = now;
         }
         const today = format(LogService.date, 'yyyy-MM-dd');
         if (!this.config.logFolder) {

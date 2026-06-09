@@ -28,6 +28,14 @@ class WaitListService extends BaseService {
     });
   }
 
+  async getEmailByInvitationCode(
+    code: string,
+  ): Promise<ApiResponse<{ email: string } | null>> {
+    return await this.fetchApi.get({
+      resource: `invitation/${encodeURIComponent(code)}`,
+    });
+  }
+
   async validate(token: string): Promise<ApiResponse<WaitList>> {
     return await this.fetchApi.post({
       resource: "validate",

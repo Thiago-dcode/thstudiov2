@@ -6,19 +6,19 @@ import { mailingNoreplyEmail } from 'src/config/mailling';
 import { ApiMailService } from 'src/common/mails/api-mail-service';
 import { EmailPreferencesService } from 'src/v1/modules/email-preferences/email-preferences.service';
 
-export type WaitListWelcomeMailData = {
+export type WaitListReminderMailData = {
   email: string;
   position: number;
   benefitType: EnumType<'BENEFIT_TYPE'>;
-  trialDays: number;
   benefitMonths: number;
   registrationUrl: string;
-  expiresInDays?: number;
+  hoursLeft: number;
+  isFinal: boolean;
 };
 
 @Injectable()
-export class WaitListWelcomeMail extends ApiMailService {
-  private data?: WaitListWelcomeMailData;
+export class WaitListReminderMail extends ApiMailService {
+  private data?: WaitListReminderMailData;
 
   constructor(
     viewService: ViewService,
@@ -26,39 +26,47 @@ export class WaitListWelcomeMail extends ApiMailService {
     private readonly i18nService: I18nService,
   ) {
     super(viewService, emailPreferencesService, {
-      viewPath: 'emails/wait-list/welcome',
+      viewPath: 'emails/wait-list/reminder',
       data: {},
       emailType: 'WAITLIST_UPDATE',
     });
   }
 
-  setData(data: WaitListWelcomeMailData) {
-    const mail = new WaitListWelcomeMail(this.viewService, this.emailPreferencesService!, this.i18nService);
+  setData(data: WaitListReminderMailData) {
+    const mail = new WaitListReminderMail(
+      this.viewService,
+      this.emailPreferencesService!,
+      this.i18nService,
+    );
+
     mail.data = data;
     mail.viewParams = {
-      viewPath: 'emails/wait-list/welcome',
-      data: { waitList: data, translatePath: 'wait-list-welcome-email' },
+      viewPath: 'emails/wait-list/reminder',
+      data: { reminder: data, translatePath: 'wait-list-reminder-email' },
       emailType: 'WAITLIST_UPDATE',
     };
+
     return mail;
   }
 
   protected async buildEnvelope() {
     const data = this.getData();
-    const fromName = this.i18nService.translate('wait-list-welcome-email.FROM_NAME');
+    const subjectKey = data.isFinal ? 'SUBJECT_FINAL' : 'SUBJECT';
+    const fromName = this.i18nService.translate('wait-list-reminder-email.FROM_NAME');
 
     return {
       from: `${fromName} <${mailingNoreplyEmail}>`,
       to: data.email,
-      subject: this.i18nService.translate('wait-list-welcome-email.SUBJECT'),
+      subject: this.i18nService.translate(`wait-list-reminder-email.${subjectKey}`),
     };
   }
 
   private getData() {
     if (!this.data) {
-      throw new Error('WaitListWelcomeMail requires data before rendering.');
+      throw new Error('WaitListReminderMail requires data before rendering.');
     }
 
     return this.data;
   }
 }
+

@@ -1,0 +1,192 @@
+name: a11studio-dev
+
+services:
+  api:
+    image: a11studio-dev-api
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: a11studio-dev-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      REDIS_URL: redis://redis:6379
+      API_PORT: 8080
+    ports:
+      - "${API_HOST_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:8080/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+    networks:
+      - a11studio-dev
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8080/api/v1}
+        NEXT_PUBLIC_GEOAPIFY_URL: ${NEXT_PUBLIC_GEOAPIFY_URL}
+        NEXT_PUBLIC_GEOAPIFY_KEY: ${NEXT_PUBLIC_GEOAPIFY_KEY}
+        APP_URL: ${APP_URL}
+        APP_API_KEY: ${APP_API_KEY}
+        API_V1_URL: ${API_V1_URL}
+        ASSETS_URL: ${ASSETS_URL}
+        GEOAPIFY_URL: ${GEOAPIFY_URL}
+        GEOAPIFY_KEY: ${GEOAPIFY_KEY}
+        ENCRYPTION_SECRET: ${ENCRYPTION_SECRET}
+        SUPPORT_EMAIL: ${SUPPORT_EMAIL}
+        SUPPORT_USERNAME: ${SUPPORT_USERNAME}
+        REGISTRATION_IS_CLOSED: ${REGISTRATION_IS_CLOSED}
+    container_name: a11studio-dev-web
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # next start requires production mode.
+      NODE_ENV: production
+      PORT: 3000
+      # Server-side calls from the web container must reach the api service by name,
+      # not localhost (which would resolve to the web container itself).
+      API_URL: http://api:8080
+      API_V1_URL: http://api:8080/api/v1
+    ports:
+      - "${WEB_HOST_PORT:-3000}:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.status<500?0:1)).catch(()=>process.exit(1))\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+    networks:
+      - a11studio-dev
+
+  worker:
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+    container_name: a11studio-dev-worker
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      REDIS_URL: redis://redis:6379
+      WORKER_PORT: 8081
+    ports:
+      - "${WORKER_HOST_PORT:-8081}:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:8081/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - a11studio-dev
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: a11studio-dev-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_INITDB_ARGS: --encoding=UTF-8 --lc-collate=C --lc-ctype=C
+    ports:
+      - "127.0.0.1:${DB_HOST_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    command: >
+      postgres
+      -c max_connections=200
+      -c shared_buffers=256MB
+      -c effective_cache_size=1GB
+      -c maintenance_work_mem=64MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c work_mem=4MB
+      -c min_wal_size=1GB
+      -c max_wal_size=4GB
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_NAME}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - a11studio-dev
+
+  redis:
+    image: redis:7-alpine
+    container_name: a11studio-dev-redis
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${REDIS_HOST_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - a11studio-dev
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: a11studio-dev-pgadmin
+    restart: unless-stopped
+    profiles:
+      - tools
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+    ports:
+      - "127.0.0.1:${PGADMIN_HOST_PORT:-8888}:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - a11studio-dev
+
+networks:
+  a11studio-dev:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  pgadmin_data:

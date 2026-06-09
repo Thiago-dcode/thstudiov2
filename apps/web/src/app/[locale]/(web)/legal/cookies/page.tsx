@@ -1,5 +1,6 @@
 import { Metadata } from "next"
 import Link from "next/link"
+import { serverEnv } from "@/env/server"
 
 export const metadata: Metadata = {
     title: "Cookie Policy — A11STUDIO",
@@ -9,6 +10,8 @@ export const metadata: Metadata = {
 const LAST_UPDATED = "March 16, 2026"
 
 export default function CookiePolicyPage() {
+    const supportEmail = serverEnv.SUPPORT_EMAIL
+
     return (
         <>
             <header className="space-y-4">
@@ -158,10 +161,10 @@ export default function CookiePolicyPage() {
                 <P>
                     If you have questions about our use of cookies, contact us at{" "}
                     <a
-                        href="mailto:contact@a11studio.com"
+                        href={`mailto:${supportEmail}`}
                         className="text-text underline underline-offset-4 hover:text-accent transition-colors"
                     >
-                        contact@a11studio.com
+                        {supportEmail}
                     </a>.
                 </P>
             </Section>

@@ -59,6 +59,7 @@ export class ModelNotExistValidator extends BaseModelValidator {
       }
       return true;
     } catch (error) {
+      console.log("MODEL NO EXIST",error)
       if (error instanceof DbException) {
         this.message = `Validation error: ${error.message}`;
       } else {

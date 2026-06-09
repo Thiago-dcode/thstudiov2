@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { Public } from 'src/common/decorators/public.decorator';
 import { AdminGuard } from 'src/common/guards/admin.guard';
 import { CreateWaitListRequest } from './requests/create-wait-list.request';
@@ -20,6 +20,14 @@ export class WaitListController {
   @Get('position')
   async getCurrentPosition() {
     return this.waitListService.getCurrentPosition();
+  }
+
+  // GET /api/v1/wait-list/invitation/{code} -> { email } for prefilling registration
+  @Public()
+  @Get('invitation/:code')
+  async getEmailByInvitationCode(@Param('code') code: string) {
+    if (!code) return null;
+    return this.waitListService.getEmailByInvitationCode(code);
   }
 
   @Public()

@@ -3,7 +3,7 @@ export const ENUMS = {
   PRODUCT_TYPE: ['PLAN'] as const,
   BILLING_TYPE: ['MONTHLY', 'QUARTERLY', 'YEARLY', 'LIFETIME'] as const,
   USER_EDITORS_ROLES: ['ADMIN', 'EDITOR'] as const,
-  USER_ROLE: ['ADMIN', 'CLIENT', 'ARTIST'] as const,
+  USER_ROLE: ['ADMIN','SUPPORT', 'CLIENT', 'ARTIST'] as const,
   LANGUAGE_CODE: ['EN', 'ES', 'PT'] as const,
   MEDIA_TYPE: ['IMAGE', 'VIDEO'] as const,
   MEDIA_SHAPE: ['SQUARE', 'LANDSCAPE', 'PORTRAIT'] as const,

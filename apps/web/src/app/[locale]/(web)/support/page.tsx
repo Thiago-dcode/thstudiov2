@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { userSession } from '@/modules/auth/server-actions/user-session.action';
 import { serverEnv } from '@/env/server';
+import usersService from '@/modules/users/users.service';
 import { SupportForm } from './_components/support-form';
 
 export const metadata: Metadata = {
@@ -11,9 +12,13 @@ export const metadata: Metadata = {
 
 export default async function SupportPage() {
   const session = await userSession();
-  const supportUserId = serverEnv.SUPPORT_USER_ID;
+  const supportUser = await usersService.getCompact(serverEnv.SUPPORT_USERNAME);
   const t = await getTranslations('support');
   const defaultName = session?.username;
+
+  if (!supportUser.data) {
+    throw new Error(`Support user "${serverEnv.SUPPORT_USERNAME}" was not found.`);
+  }
 
   return (
     <section className='mx-auto w-full max-w-3xl px-6 py-16 tablet:px-10 tablet:py-24'>
@@ -31,7 +36,7 @@ export default async function SupportPage() {
 
       <div className='mt-10 rounded-xl border border-border bg-fg-2/20 p-5 tablet:p-7'>
         <SupportForm
-          supportUserId={supportUserId}
+          supportUserId={supportUser.data.id}
           defaultName={defaultName || undefined}
           defaultEmail={session?.email || undefined}
         />

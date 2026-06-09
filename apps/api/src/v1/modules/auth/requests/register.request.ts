@@ -14,6 +14,9 @@ import { Transform } from 'class-transformer';
 
 const FORBIDDEN_USERNAMES = [
   'admin',
+  'a11studio',
+  'a11studio_support',
+  'www',
   'legal',
   'support',
   'billing',
@@ -31,10 +34,6 @@ export class RegisterRequest {
   @IsNotEmpty()
   @Transform(({ value }) => value.toLowerCase())
   @ModelNotExist('users', 'email')
-  @ModelNotExist('wait_list', 'email', {
-    extraConditions: [['validated_at', '!=', null]],
-    message: 'email already exists in wait list',
-  })
   email: string;
 
   @IsString()

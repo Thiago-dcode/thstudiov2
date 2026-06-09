@@ -105,8 +105,7 @@ export abstract class LogService {
 
     protected beautifyLogMessage(level: LogLevel, message: string, options?: LogOptions, id?: string | null) {
         const logId = id !== undefined ? id : this.getLogId();
-        if (!LogService.date) LogService.date = new Date();
-        let logMessage = `[${format(LogService.date, 'yyyy-mm-dd HH:mm:ss')}] - ${level.toUpperCase()} -${logId ? `[${logId}]` : ''} ${message}`;
+        let logMessage = `[${format(new Date(), 'yyyy-MM-dd HH:mm:ss')}] - ${level.toUpperCase()} -${logId ? `[${logId}]` : ''} ${message}`;
         if (options) {
             logMessage += ` - ${JSON.stringify(options)}`;
         }

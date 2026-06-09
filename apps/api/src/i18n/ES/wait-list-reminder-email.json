@@ -1,0 +1,13 @@
+{
+  "FROM_NAME": "No pierdas tu oportunidad",
+  "SUBJECT": "Tu acceso reservado {benefitType} esta esperando",
+  "SUBJECT_FINAL": "Ultima oportunidad: canjea tu invitacion",
+  "TITLE": "Tu invitacion sigue activa",
+  "TITLE_FINAL": "Ultima llamada",
+  "BENEFIT_DESCRIPTION": "Acceso reservado {benefitType} con {months} mes(es) gratis.",
+  "HOOK": "Tu acceso reservado {benefitType} y {months} mes(es) gratis desaparecen cuando este enlace expira. El lugar pasa al siguiente creador en la lista. Canjea tu invitacion ahora.",
+  "HOOK_FINAL": "Tu invitacion expira en aproximadamente {hours}h. Cuando termine, termina.",
+  "CTA_TEXT": "Canjear invitacion",
+  "COUNTDOWN": "Expira en aproximadamente {hours} horas."
+}
+

@@ -40,6 +40,12 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'dev.a11studio.s3.eu-north-1.amazonaws.com',
       },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '8080',
+        pathname: '/assets/**',
+      },
     ],
   },
 };
