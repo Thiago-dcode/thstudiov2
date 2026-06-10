@@ -1,12 +1,56 @@
 name: a11studio-dev
 
 services:
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: a11studio-dev-nginx
+    restart: unless-stopped
+    # The only public entrypoint on the droplet. 443 is ready for TLS once
+    # certificates are issued (see nginx/ssl.conf.template).
+    ports:
+      - "${HTTP_HOST_PORT:-80}:80"
+      - "${HTTPS_HOST_PORT:-443}:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/snippets:/etc/nginx/snippets:ro
+      - certbot_certs:/etc/letsencrypt:ro
+      - certbot_www:/var/www/certbot:ro
+    depends_on:
+      web:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - a11studio-dev
+
+  certbot:
+    image: certbot/certbot
+    container_name: a11studio-dev-certbot
+    # Run on demand only:
+    #   docker compose -f compose.dev.yaml --profile ssl run --rm certbot
+    profiles:
+      - ssl
+    volumes:
+      - certbot_certs:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+    entrypoint: >
+      sh -c "certbot certonly --webroot -w /var/www/certbot
+      --email ${LETSENCRYPT_EMAIL} -d ${DOMAIN}
+      --agree-tos --no-eff-email --non-interactive"
+
   api:
     image: a11studio-dev-api
     build:
       context: .
       dockerfile: apps/api/Dockerfile
-    container_name: a11studio-dev-api
+    # No container_name / fixed host port: this service sits behind nginx and is
+    # scaled horizontally (load balanced by nginx via Docker DNS).
     restart: unless-stopped
     env_file:
       - .env
@@ -15,8 +59,10 @@ services:
       DB_PORT: 5432
       REDIS_URL: redis://redis:6379
       API_PORT: 8080
-    ports:
-      - "${API_HOST_PORT:-8080}:8080"
+    expose:
+      - "8080"
+    deploy:
+      replicas: ${API_REPLICAS:-2}
     depends_on:
       postgres:
         condition: service_healthy
@@ -50,7 +96,8 @@ services:
         SUPPORT_EMAIL: ${SUPPORT_EMAIL}
         SUPPORT_USERNAME: ${SUPPORT_USERNAME}
         REGISTRATION_IS_CLOSED: ${REGISTRATION_IS_CLOSED}
-    container_name: a11studio-dev-web
+    # No container_name / fixed host port: this service sits behind nginx and is
+    # scaled horizontally (load balanced by nginx via Docker DNS).
     restart: unless-stopped
     env_file:
       - .env
@@ -62,8 +109,10 @@ services:
       # not localhost (which would resolve to the web container itself).
       API_URL: http://api:8080
       API_V1_URL: http://api:8080/api/v1
-    ports:
-      - "${WEB_HOST_PORT:-3000}:3000"
+    expose:
+      - "3000"
+    deploy:
+      replicas: ${WEB_REPLICAS:-2}
     depends_on:
       api:
         condition: service_healthy
@@ -89,8 +138,9 @@ services:
       DB_PORT: 5432
       REDIS_URL: redis://redis:6379
       WORKER_PORT: 8081
+    # Bind the worker health port to localhost only - not exposed publicly.
     ports:
-      - "${WORKER_HOST_PORT:-8081}:8081"
+      - "127.0.0.1:${WORKER_HOST_PORT:-8081}:8081"
     depends_on:
       postgres:
         condition: service_healthy
@@ -190,3 +240,5 @@ volumes:
   postgres_data:
   redis_data:
   pgadmin_data:
+  certbot_certs:
+  certbot_www:
