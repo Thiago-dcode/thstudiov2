@@ -11,7 +11,7 @@
 #   --skip-assets   Skip the assets directory check/warning
 #
 # This script is meant to run ON the droplet (165.232.38.110).
-# Managed by pm2 via ecosystem.config.js for boot persistence.
+# Boot persistence handled by systemd (a11studio.service).
 # =============================================================================
 
 set -euo pipefail
