@@ -61,7 +61,10 @@ async function bootstrap() {
     console.log(`🚀 API is running on port http://localhost:${port}`);
     
   // Inside app.listen callback:
-if (!configService.get('app.isProduction')) {
+  // Only forward Stripe webhooks via the Stripe CLI when running locally
+  // (NODE_ENV=local). On deployed dev/staging/prod servers the `stripe` CLI is
+  // not installed, so spawning it would only produce noise/errors.
+if (configService.get('app.env') === 'local') {
   const stripeProcess = spawn('stripe', ['listen', '--forward-to', `${configService.get('api.v1Url')}/webhooks/stripe`], {
     shell: true,
   });
