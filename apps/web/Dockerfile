@@ -1,4 +1,5 @@
-FROM node:22-bookworm-slim
+# ─── Stage 1: builder ────────────────────────────────────────────────────────
+FROM node:22-bookworm-slim AS builder
 
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
@@ -12,9 +13,7 @@ RUN apt-get update \
   && corepack enable \
   && corepack prepare pnpm@10.32.1 --activate
 
-# Dependency layer: invalidated only when the lockfile changes. `pnpm fetch`
-# downloads every package into the store from the lockfile alone, and the
-# BuildKit cache mount persists that store across builds.
+# Dependency layer: invalidated only when the lockfile changes.
 COPY pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store pnpm fetch
 
@@ -60,6 +59,22 @@ ENV REGISTRATION_IS_CLOSED=$REGISTRATION_IS_CLOSED
 
 RUN pnpm turbo run build --filter=@repo/web...
 
+# ─── Stage 2: runner ─────────────────────────────────────────────────────────
+FROM node:22-bookworm-slim AS runner
+
+ENV NODE_ENV=production
+
+WORKDIR /workspace/apps/web
+
+# Next.js standalone output is self-contained: it bundles its own node_modules
+# and a minimal server. We only need to add the static assets on top.
+COPY --from=builder /workspace/apps/web/.next/standalone ./
+COPY --from=builder /workspace/apps/web/.next/static ./apps/web/.next/static
+COPY --from=builder /workspace/apps/web/public ./apps/web/public
+
 EXPOSE 3000
 
-CMD ["pnpm", "--filter", "@repo/web", "start"]
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
+CMD ["node", "apps/web/server.js"]
