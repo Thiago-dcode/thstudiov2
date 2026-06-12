@@ -9,9 +9,18 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
-    "./base": "./dist/base/index.js",
-    "./nest": "./dist/nest/index.js",
-    "./next": "./dist/next/index.js "
+    "./base": {
+      "types": "./dist/base/index.d.ts",
+      "default": "./dist/base/index.js"
+    },
+    "./nest": {
+      "types": "./dist/nest/index.d.ts",
+      "default": "./dist/nest/index.js"
+    },
+    "./next": {
+      "types": "./dist/next/index.d.ts",
+      "default": "./dist/next/index.js"
+    }
   },
   "devDependencies": {
     "@jest/globals": "30.3.0",
