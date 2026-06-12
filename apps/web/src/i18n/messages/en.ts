@@ -1,5 +1,3 @@
-
-
 const messages = {
   landing: {
     hero: {
@@ -27,7 +25,8 @@ const messages = {
         successTitle: "Just one step more: confirm your email.",
         successMessage:
           "We sent you a confirmation email. Open it and click the link to secure your early access spot.",
-        successReserveMessage: "We’ll reserve your email after you validate it.",
+        successReserveMessage:
+          "We’ll reserve your email after you validate it.",
       },
       disclaimer: "Free to start · No credit card required",
     },
@@ -110,12 +109,13 @@ const messages = {
       {
         question: "What is a collection?",
         answer:
-          "A collection is a specific project or event grouped together. For example, \"Mary & John Wedding 2024\" would be a collection containing all the delivered photos from that particular shoot. It's how you organize individual jobs, sessions, or bodies of work.",
+          'A collection is a specific project or event grouped together. For example, "Mary & John Wedding 2024" would be a collection containing all the delivered photos from that particular shoot. It\'s how you organize individual jobs, sessions, or bodies of work.',
       },
       {
-        question: "What is the difference between a portfolio and a collection?",
+        question:
+          "What is the difference between a portfolio and a collection?",
         answer:
-          "A portfolio is your best-of — a showcase that spans multiple projects to demonstrate your expertise in a discipline (e.g. \"Wedding Photography\"). A collection is a single project or event (e.g. \"Mary & John Wedding 2024\"). Think of portfolios as what gets you hired and collections as how you organize each job.",
+          'A portfolio is your best-of — a showcase that spans multiple projects to demonstrate your expertise in a discipline (e.g. "Wedding Photography"). A collection is a single project or event (e.g. "Mary & John Wedding 2024"). Think of portfolios as what gets you hired and collections as how you organize each job.',
       },
       {
         question: "Why does A11STUDIO use AI?",
@@ -133,24 +133,29 @@ const messages = {
   search: {
     segments: {
       artists: "Artists",
-      portfolios: "Portfolios"
+      portfolios: "Portfolios",
     },
     page: {
-      description: "Browse artists on A11STUDIO. Discover portfolios, services, and creative professionals.",
+      description:
+        "Browse artists on A11STUDIO. Discover portfolios, services, and creative professionals.",
       title: "Artists — A11STUDIO",
       errorHeading: "We couldn't load {segment}",
-      errorMessage: "Something went wrong while searching. Please try again in a moment.",
+      errorMessage:
+        "Something went wrong while searching. Please try again in a moment.",
       searchingFor: "Searching for {segment}",
       results: {
-        foundArtists: "{count, number} {count, plural, one {artist} other {artists}} found{suffix}",
-        foundPortfolios: "{count, number} {count, plural, one {portfolio} other {portfolios}} found{suffix}",
-        forQuery: ' for "{query}"'
+        foundArtists:
+          "{count, number} {count, plural, one {artist} other {artists}} found{suffix}",
+        foundPortfolios:
+          "{count, number} {count, plural, one {portfolio} other {portfolios}} found{suffix}",
+        forQuery: ' for "{query}"',
       },
       empty: {
         heading: "No {segment} found{suffix}",
-        output: "Your filters didn't match any {segment}. Try broadening your search{end}",
-        lookNear: " or look for {segment} near you."
-      }
+        output:
+          "Your filters didn't match any {segment}. Try broadening your search{end}",
+        lookNear: " or look for {segment} near you.",
+      },
     },
     filters: {
       activeFilters: "Active filters",
@@ -162,21 +167,21 @@ const messages = {
         geoLocation: "My location",
         country: "Country: {value}",
         state: "State: {value}",
-        city: "City: {value}"
-      }
+        city: "City: {value}",
+      },
     },
     nearMe: {
       gettingLocation: "Getting location…",
       nearMe: "Near me · {radius} km",
       searchClose: "Search close to me",
       locationDenied: "Enable location in browser settings and try again.",
-      locationUnavailable: "Couldn't get your location. Please try again."
+      locationUnavailable: "Couldn't get your location. Please try again.",
     },
     primaryFilters: {
       categories: "Categories",
       location: "Location",
       ariaLabel: "Categories and location filters",
-      useMyLocation: "Use my location"
+      useMyLocation: "Use my location",
     },
     combobox: {
       placeholder: "Search…",
@@ -184,16 +189,16 @@ const messages = {
         pending: "",
         noMatches: "No matches.",
         noItems: "—",
-        searchingCategories: "Type to search categories."
-      }
+        searchingCategories: "Type to search categories.",
+      },
     },
     artistCard: {
       openProfile: "Open profile: {name}, @{username}",
       specialtiesTitle: "Specialties",
       locationDetailsTitle: "Location details on profile",
       noLocationTitle: "No location listed",
-      viewAction: "View"
-    }
+      viewAction: "View",
+    },
   },
   support: {
     contactLabel: "Contact Support",

@@ -26,26 +26,26 @@
   "dependencies": {
     "@repo/backend-lib": "workspace:*",
     "@repo/common-lib": "workspace:*",
-    "@repo/jest-config": "workspace:*",
-    "@repo/typescript-config": "workspace:*",
-    "@types/jest": "^30.0.0",
     "bcrypt": "^6.0.0",
     "commander": "^14.0.3",
     "dotenv": "^17.3.1",
-    "jest": "^30.3.0",
     "mysql2": "^3.19.1",
     "pg": "^8.20.0",
-    "ts-jest": "^29.4.6",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   },
   "devDependencies": {
     "@faker-js/faker": "^10.3.0",
+    "@repo/jest-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
     "@swc/cli": "^0.8.0",
     "@swc/core": "^1.15.18",
     "@types/bcrypt": "^6.0.0",
+    "@types/jest": "30.0.0",
     "@types/node": "^25.4.0",
     "@types/pg": "^8.18.0",
+    "jest": "30.3.0",
+    "ts-jest": "29.4.6",
     "tsx": "^4.21.0"
   }
 }

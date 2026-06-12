@@ -15,4 +15,3 @@ export const createAddressSchema = z.object({
 });
 
 export type CreateAddressSchemaType = z.infer<typeof createAddressSchema>;
-

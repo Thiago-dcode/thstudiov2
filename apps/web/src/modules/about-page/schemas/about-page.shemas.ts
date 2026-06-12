@@ -27,4 +27,3 @@ export const updateAboutPageSchema = z.object({
     .max(1000, { message: "Description must be less than 1000 characters" })
     .optional(),
 });
-  

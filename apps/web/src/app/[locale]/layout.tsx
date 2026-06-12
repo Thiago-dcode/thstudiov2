@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 import "@repo/ui/globals.css";
-import { Toaster } from "@repo/ui/components/shadcn/sonner"
-import { ThemeProvider } from "@repo/ui/providers/theme.provider"
-import { ReactNode } from "react";
+import { Toaster } from "@repo/ui/components/shadcn/sonner";
 import { cn } from "@repo/ui/lib/utils";
-import { notFound } from 'next/navigation';
-import { hasLocale, NextIntlClientProvider } from 'next-intl';
-import { setRequestLocale } from 'next-intl/server';
-import { routing } from '@/i18n/routing';
-import { dmSans, playfair } from '@/font';
+import { ThemeProvider } from "@repo/ui/providers/theme.provider";
+import { notFound } from "next/navigation";
+import { hasLocale, NextIntlClientProvider } from "next-intl";
+import { setRequestLocale } from "next-intl/server";
+import type { ReactNode } from "react";
+import { dmSans, playfair } from "@/font";
+import { routing } from "@/i18n/routing";
 
 export const metadata: Metadata = {
   title: "A11STUDIO — The Portfolio Platform Built for Artists",

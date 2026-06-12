@@ -1,17 +1,29 @@
 "use client";
 
-import { createContext, useContext, ReactNode, useState, useMemo, useCallback, useRef } from "react";
-import { CreateCollectionInput, FullCollection, FullCollectionMedia } from "@repo/common-lib/types/collection";
-import { Media } from "@repo/common-lib/types/media";
+import type {
+  CreateCollectionInput,
+  FullCollection,
+  FullCollectionMedia,
+} from "@repo/common-lib/types/collection";
+import type { Media } from "@repo/common-lib/types/media";
+import type { ActionReturn } from "@repo/common-lib/types/response";
+import { toast } from "@repo/ui/sonner";
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import type { UserAuth } from "@/modules/auth/auth.types";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { createOrUpdateCollectionAction } from "../server-actions/create-update-collection.action";
 import { slugExistsAction } from "../server-actions/slug-exists.action";
-import { ActionReturn } from "@repo/common-lib/types/response";
-import { toast } from "@repo/ui/sonner";
-import { UserAuth } from "@/modules/auth/auth.types";
 
 type CollectionFormData = Partial<
-  Omit<CreateCollectionInput, 'media'> & {
+  Omit<CreateCollectionInput, "media"> & {
     media?: FullCollectionMedia[];
   }
 >;
@@ -19,7 +31,10 @@ type CollectionFormData = Partial<
 type CollectionContextType = {
   user: UserAuth;
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => Promise<void>;
-  handleSetFormData: (key: keyof CreateCollectionInput, value: string | number | boolean | FullCollectionMedia[]) => void;
+  handleSetFormData: (
+    key: keyof CreateCollectionInput,
+    value: string | number | boolean | FullCollectionMedia[],
+  ) => void;
   formData: CollectionFormData;
   mediaSelected: FullCollectionMedia[];
   handlePushMediaSelected: (media: Media) => void;
@@ -57,7 +72,9 @@ export const CollectionProvider = ({
   children,
   user,
 }: CollectionProviderProps) => {
-  const [currentCollection, setCurrentCollection] = useState<FullCollection | undefined>(undefined);
+  const [currentCollection, setCurrentCollection] = useState<
+    FullCollection | undefined
+  >(undefined);
 
   const [formData, setFormData] = useState<CollectionFormData>({
     user_id: user.id,
@@ -78,7 +95,14 @@ export const CollectionProvider = ({
 
   const idTimeOut = useRef<NodeJS.Timeout>(null);
 
-  const { handleAction, isPending, success, deleteInputErrorProperty, inputErrors, reset } = useHandleAction({
+  const {
+    handleAction,
+    isPending,
+    success,
+    deleteInputErrorProperty,
+    inputErrors,
+    reset,
+  } = useHandleAction({
     action: async () => {
       const media = (formData.media ?? []).map((m, idx) => ({
         id: m.id,
@@ -99,10 +123,16 @@ export const CollectionProvider = ({
     },
     afterAction: async (result) => {
       if (result.errors) {
-        result.errors.forEach((error) => toast.error(error));
+        for (const error of result.errors) {
+          toast.error(error);
+        }
       } else if (result.data) {
         clear();
-        toast.success(currentCollection ? "Collection updated successfully" : "Collection created successfully");
+        toast.success(
+          currentCollection
+            ? "Collection updated successfully"
+            : "Collection created successfully",
+        );
       }
     },
     beforeAction: async () => {
@@ -110,27 +140,44 @@ export const CollectionProvider = ({
     },
   });
 
-  const handleSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    await handleAction();
-  }, [handleAction]);
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      await handleAction();
+    },
+    [handleAction],
+  );
 
-  const slugChecksMemo = useRef<Record<string, ActionReturn<boolean | null, undefined>>>({});
-  const { handleAction: handleActionSlug, result: resultSlugExist, isPending: isPendingSlugExists, cleanResult, cleanErrors } = useHandleAction({
+  const slugChecksMemo = useRef<
+    Record<string, ActionReturn<boolean | null, undefined>>
+  >({});
+  const {
+    handleAction: handleActionSlug,
+    result: resultSlugExist,
+    isPending: isPendingSlugExists,
+    cleanResult,
+    cleanErrors,
+  } = useHandleAction({
     action: async () => {
-      const slugToCheck = formData.slug || '';
+      const slugToCheck = formData.slug || "";
       if (slugChecksMemo.current[slugToCheck]) {
         return slugChecksMemo.current[slugToCheck];
       }
       return await slugExistsAction(user.username, slugToCheck);
     },
     afterAction: async (data) => {
-      slugChecksMemo.current[formData.slug || ''] = data;
+      slugChecksMemo.current[formData.slug || ""] = data;
     },
   });
 
   const checkSlugAvailability = useCallback(async () => {
-    if (!formData || !formData.slug || isPendingSlugExists || formData.slug === currentCollection?.slug) return;
+    if (
+      !formData ||
+      !formData.slug ||
+      isPendingSlugExists ||
+      formData.slug === currentCollection?.slug
+    )
+      return;
     if (idTimeOut.current) clearTimeout(idTimeOut.current);
     idTimeOut.current = setTimeout(() => {
       cleanResult();
@@ -138,54 +185,90 @@ export const CollectionProvider = ({
       handleActionSlug();
       if (idTimeOut.current) clearTimeout(idTimeOut.current);
     }, 1000);
-  }, [formData, isPendingSlugExists, cleanResult, cleanErrors, handleActionSlug]);
+  }, [
+    formData,
+    isPendingSlugExists,
+    cleanResult,
+    cleanErrors,
+    handleActionSlug,
+    currentCollection?.slug,
+  ]);
 
-  const handleSetFormData = useCallback((key: keyof CreateCollectionInput, value: any) => {
-    if (key === 'slug') {
-      cleanResult();
-      cleanErrors();
-    }
-    setFormData(prev => ({
-      ...prev,
-      [key]: value,
-    }));
-  }, [cleanErrors, cleanResult]);
+  const handleSetFormData = useCallback(
+    (key: keyof CreateCollectionInput, value: any) => {
+      if (key === "slug") {
+        cleanResult();
+        cleanErrors();
+      }
+      setFormData((prev) => ({
+        ...prev,
+        [key]: value,
+      }));
+    },
+    [cleanErrors, cleanResult],
+  );
 
-  const handlePushMediaSelected = useCallback((m: Media) => {
-    const current = formData.media ?? [];
-    if (current.some((x) => x.id === m.id)) return;
-    const media: FullCollectionMedia = { ...m, position: current.length + 1 };
-    handleSetFormData('media', [...current, media]);
-  }, [formData.media, handleSetFormData]);
+  const handlePushMediaSelected = useCallback(
+    (m: Media) => {
+      const current = formData.media ?? [];
+      if (current.some((x) => x.id === m.id)) return;
+      const media: FullCollectionMedia = { ...m, position: current.length + 1 };
+      handleSetFormData("media", [...current, media]);
+    },
+    [formData.media, handleSetFormData],
+  );
 
-  const handleRemoveMediaSelected = useCallback((mediaId: number) => {
-    const current = formData.media ?? [];
-    handleSetFormData('media', current.filter((media) => media.id !== mediaId));
-  }, [formData.media, handleSetFormData]);
+  const handleRemoveMediaSelected = useCallback(
+    (mediaId: number) => {
+      const current = formData.media ?? [];
+      handleSetFormData(
+        "media",
+        current.filter((media) => media.id !== mediaId),
+      );
+    },
+    [formData.media, handleSetFormData],
+  );
 
   const mediaSelected = useMemo(() => {
-    return formData.media ? formData.media.sort((a, b) => a.position - b.position) : [];
+    return formData.media
+      ? formData.media.sort((a, b) => a.position - b.position)
+      : [];
   }, [formData.media]);
 
   const hasFormChanged = useMemo(() => {
     if (!currentCollection) return false;
     if (formData.title !== currentCollection.title) return true;
     if (formData.slug !== currentCollection.slug) return true;
-    if ((formData.description ?? undefined) !== (currentCollection.description ?? undefined)) return true;
+    if (
+      (formData.description ?? undefined) !==
+      (currentCollection.description ?? undefined)
+    )
+      return true;
     if (formData.is_highlight !== currentCollection.is_highlight) return true;
-    if ((formData.is_active ?? true) !== currentCollection.is_active) return true;
+    if ((formData.is_active ?? true) !== currentCollection.is_active)
+      return true;
 
     const currentMedia = formData.media ?? [];
-    const originalMedia = [...currentCollection.media].sort((a, b) => a.position - b.position);
+    const originalMedia = [...currentCollection.media].sort(
+      (a, b) => a.position - b.position,
+    );
     if (currentMedia.length !== originalMedia.length) return true;
     for (let i = 0; i < currentMedia.length; i++) {
-      if (currentMedia[i].id !== originalMedia[i].id || currentMedia[i].position !== originalMedia[i].position) return true;
+      if (
+        currentMedia[i].id !== originalMedia[i].id ||
+        currentMedia[i].position !== originalMedia[i].position
+      )
+        return true;
     }
 
     return false;
   }, [formData, currentCollection]);
 
-  const requiredFieldsPresent = !!(formData.title && formData.slug && formData.media?.length);
+  const requiredFieldsPresent = !!(
+    formData.title &&
+    formData.slug &&
+    formData.media?.length
+  );
 
   const canSubmit = useMemo(() => {
     if (!requiredFieldsPresent) return false;
@@ -218,7 +301,10 @@ export const CollectionProvider = ({
     isPending,
     success,
     canSubmit,
-    isSlugAvailable: typeof resultSlugExist?.data === 'boolean' ? !resultSlugExist.data : undefined,
+    isSlugAvailable:
+      typeof resultSlugExist?.data === "boolean"
+        ? !resultSlugExist.data
+        : undefined,
     isCheckingSlugAvailability: isPendingSlugExists,
     checkSlugAvailability,
     deleteInputErrorProperty,

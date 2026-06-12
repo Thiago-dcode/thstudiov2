@@ -1,7 +1,7 @@
-import Link from "next/link";
-import { ArrowRight } from "lucide-react";
-import type { ReactNode } from "react";
 import { cn } from "@repo/ui/lib/utils";
+import { ArrowRight } from "lucide-react";
+import Link from "next/link";
+import type { ReactNode } from "react";
 
 function Root({
   children,
@@ -12,7 +12,11 @@ function Root({
   className?: string;
   id?: string;
 }) {
-  return <section id={id} className={cn("relative", className)}>{children}</section>;
+  return (
+    <section id={id} className={cn("relative", className)}>
+      {children}
+    </section>
+  );
 }
 
 function Container({
@@ -102,4 +106,8 @@ function ActionLink({
   );
 }
 
-export const WebSection = Object.assign(Root, { Container, Header, ActionLink });
+export const WebSection = Object.assign(Root, {
+  Container,
+  Header,
+  ActionLink,
+});

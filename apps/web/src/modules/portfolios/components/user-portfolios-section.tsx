@@ -1,5 +1,5 @@
-import portfolioService from "../portfolio.service";
 import Link from "next/link";
+import portfolioService from "../portfolio.service";
 import { PortfolioCard } from "./portfolio-card";
 
 export const UserPortfoliosSection = async ({

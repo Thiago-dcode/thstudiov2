@@ -1,8 +1,13 @@
-import { LayoutGrid, Sparkles, MessageCircle } from "lucide-react";
+import { LayoutGrid, MessageCircle, Sparkles } from "lucide-react";
 import type { ReactNode } from "react";
 import { WebSection } from "./web-section";
 
-const STEPS: { step: number; icon: ReactNode; title: string; description: string }[] = [
+const STEPS: {
+  step: number;
+  icon: ReactNode;
+  title: string;
+  description: string;
+}[] = [
   {
     step: 1,
     icon: <LayoutGrid className="size-6" />,
@@ -29,7 +34,10 @@ const STEPS: { step: number; icon: ReactNode; title: string; description: string
 export function HowItWorksSection() {
   return (
     <WebSection className="overflow-hidden">
-      <div className="how-it-works-bg pointer-events-none absolute inset-0" aria-hidden />
+      <div
+        className="how-it-works-bg pointer-events-none absolute inset-0"
+        aria-hidden
+      />
 
       <WebSection.Container>
         <WebSection.Header

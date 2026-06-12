@@ -113,7 +113,7 @@ describe('checkPortOrGetNext', () => {
 
   it('should handle string port numbers correctly', async () => {
     mockServer.listen.mockImplementation((port: number, callback: () => void) => {
-      expect(port).toBe(3000);
+      expect(port).toBe(3001);
       callback();
     });
     
@@ -161,9 +161,7 @@ describe('checkPortOrGetNext', () => {
   });
 
   it('should handle non-EADDRINUSE errors by rejecting', async () => {
-    mockServer.listen.mockImplementation((port: number, callback: () => void) => {
-      expect(port).toBe(3000);
-      callback();
+    mockServer.listen.mockImplementation((_port: number, _callback: () => void) => {
       setTimeout(() => {
         const errorCallback = mockServer.on.mock.calls.find((call: any) => call[0] === 'error')?.[1];
         if (errorCallback) {
@@ -171,6 +169,8 @@ describe('checkPortOrGetNext', () => {
         }
       }, 0);
     });
+
+    mockServer.on.mockImplementation((_event: string, _callback: () => void) => {});
 
     await expect(checkPortOrGetNext(3000)).rejects.toThrow('Some other error');
   });

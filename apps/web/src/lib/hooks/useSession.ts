@@ -1,8 +1,8 @@
-'use client'
+"use client";
 
-import { useEffect, useState } from 'react';
-import { userSession } from '@/modules/auth/server-actions/user-session.action';
-import { UserAuth } from '@/modules/auth/auth.types';
+import { useEffect, useState } from "react";
+import type { UserAuth } from "@/modules/auth/auth.types";
+import { userSession } from "@/modules/auth/server-actions/user-session.action";
 
 export const useSession = () => {
   const [session, setSession] = useState<UserAuth | null>(null);
@@ -23,7 +23,9 @@ export const useSession = () => {
         }
       } catch (err) {
         if (isMounted) {
-          setError(err instanceof Error ? err : new Error('Failed to fetch session'));
+          setError(
+            err instanceof Error ? err : new Error("Failed to fetch session"),
+          );
           setSession(null);
         }
       } finally {
@@ -46,4 +48,3 @@ export const useSession = () => {
     error,
   };
 };
-

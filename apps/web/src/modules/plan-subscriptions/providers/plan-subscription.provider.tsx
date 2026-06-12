@@ -1,14 +1,20 @@
-'use client'
+"use client";
 
-import { FullPlan } from "@repo/common-lib/types/plan";
-import { PlanPrice as PlanPriceType } from "@repo/common-lib/types/plan-price";
-import { PaymentMethod } from "@repo/common-lib/types/payment-method";
-import { EnumType } from "@repo/common-lib/constants/enums";
-import { createContext, ReactElement, ReactNode, useContext, useState } from "react";
+import type { EnumType } from "@repo/common-lib/constants/enums";
+import type { BenefitWithRedeemed } from "@repo/common-lib/types/benefit";
+import type { PaymentMethod } from "@repo/common-lib/types/payment-method";
+import type { FullPlan } from "@repo/common-lib/types/plan";
+import type { PlanPrice as PlanPriceType } from "@repo/common-lib/types/plan-price";
 import { useRouter } from "next/navigation";
+import {
+  createContext,
+  type ReactElement,
+  type ReactNode,
+  useContext,
+  useState,
+} from "react";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { initiateSubscriptionAction } from "../server-actions/initiate-subscription.action";
-import { BenefitWithRedeemed } from "@repo/common-lib/types/benefit";
 
 type PlanSubscriptionContextType = {
   planSelected?: FullPlan;
@@ -16,11 +22,11 @@ type PlanSubscriptionContextType = {
   priceSelected?: PlanPriceType;
   setPriceSelected: (price?: PlanPriceType) => void;
   availablePaymentMethods: PaymentMethod[];
-  paymentMethod?: EnumType<'PAYMENT_METHOD'>;
-  setPaymentMethod: (method: EnumType<'PAYMENT_METHOD'>) => void;
+  paymentMethod?: EnumType<"PAYMENT_METHOD">;
+  setPaymentMethod: (method: EnumType<"PAYMENT_METHOD">) => void;
   successUrl: string;
   cancelUrl: string;
-  benefit?: BenefitWithRedeemed,
+  benefit?: BenefitWithRedeemed;
   onErrorComponent: ReactNode;
   onFreeComponent: ReactNode;
   isPending: boolean;
@@ -28,23 +34,23 @@ type PlanSubscriptionContextType = {
   submitSubscription: () => void;
   onSubmit: (e: React.FormEvent) => void;
   handleSubmit: (formData: FormData) => void;
-}
+};
 
 const PlanSubscriptionContext = createContext<PlanSubscriptionContextType>({
-  setPlanSelected: () => { },
-  setPriceSelected: () => { },
-  setPaymentMethod: () => { },
+  setPlanSelected: () => {},
+  setPriceSelected: () => {},
+  setPaymentMethod: () => {},
   availablePaymentMethods: [],
-  successUrl: '',
-  cancelUrl: '',
+  successUrl: "",
+  cancelUrl: "",
   onErrorComponent: null,
   onFreeComponent: null,
   isPending: false,
   errors: null,
-  submitSubscription: () => { },
-  onSubmit: () => { },
-  handleSubmit: () => { },
-})
+  submitSubscription: () => {},
+  onSubmit: () => {},
+  handleSubmit: () => {},
+});
 
 export const UsePlanSubscription = () => useContext(PlanSubscriptionContext);
 
@@ -53,7 +59,7 @@ type PlanSubscriptionProviderProps = {
   availablePaymentMethods: PaymentMethod[];
   successUrl: string;
   cancelUrl: string;
-  benefit?: BenefitWithRedeemed,
+  benefit?: BenefitWithRedeemed;
   onErrorComponent: ReactNode;
   onFreeComponent: ReactNode;
 };
@@ -67,20 +73,25 @@ export const PlanSubscriptionProvider = ({
   onErrorComponent,
   onFreeComponent,
 }: PlanSubscriptionProviderProps) => {
-
   const [planSelected, _setPlanSelected] = useState<FullPlan>();
   const [priceSelected, setPriceSelected] = useState<PlanPriceType>();
-  const [paymentMethod, setPaymentMethod] = useState<EnumType<'PAYMENT_METHOD'> | undefined>(
-    availablePaymentMethods.find(pm => pm.enabled)?.payment_method
-  );
+  const [paymentMethod, setPaymentMethod] = useState<
+    EnumType<"PAYMENT_METHOD"> | undefined
+  >(availablePaymentMethods.find((pm) => pm.enabled)?.payment_method);
   const router = useRouter();
 
   const setPlanSelected = (plan?: FullPlan) => {
     if (plan) {
-      setPriceSelected(plan?.prices.find(p => p.billing_type === priceSelected?.billing_type || p.billing_type == 'YEARLY'))
+      setPriceSelected(
+        plan?.prices.find(
+          (p) =>
+            p.billing_type === priceSelected?.billing_type ||
+            p.billing_type === "YEARLY",
+        ),
+      );
     }
-    _setPlanSelected(plan)
-  }
+    _setPlanSelected(plan);
+  };
 
   const { errors, isPending, handleSubmit } = useHandleAction({
     action: initiateSubscriptionAction,
@@ -89,25 +100,24 @@ export const PlanSubscriptionProvider = ({
     },
     afterAction: async (result) => {
       if (result.data) {
-    
         if (result.data.ok) {
           if (result.data.redirect_url) router.push(result.data.redirect_url);
-          else if (result.inputs?.success_url) router.push(result.inputs.success_url);
-        }
-        else {
-          if (result.inputs?.cancel_url) router.push(result.inputs?.cancel_url)
+          else if (result.inputs?.success_url)
+            router.push(result.inputs.success_url);
+        } else {
+          if (result.inputs?.cancel_url) router.push(result.inputs?.cancel_url);
         }
       }
-    }
+    },
   });
 
   const submitSubscription = () => {
     if (!priceSelected || !paymentMethod) return;
     const formData = new FormData();
-    formData.set('plan_price_id', priceSelected.id.toString());
-    formData.set('payment_method', paymentMethod);
-    formData.set('success_url', successUrl);
-    formData.set('cancel_url', cancelUrl);
+    formData.set("plan_price_id", priceSelected.id.toString());
+    formData.set("payment_method", paymentMethod);
+    formData.set("success_url", successUrl);
+    formData.set("cancel_url", cancelUrl);
     handleSubmit(formData);
   };
 
@@ -117,26 +127,28 @@ export const PlanSubscriptionProvider = ({
   };
 
   return (
-    <PlanSubscriptionContext.Provider value={{
-      planSelected,
-      setPlanSelected,
-      priceSelected,
-      setPriceSelected,
-      availablePaymentMethods,
-      paymentMethod,
-      setPaymentMethod,
-      successUrl,
-      cancelUrl,
-      benefit,
-      onErrorComponent,
-      onFreeComponent,
-      isPending,
-      errors,
-      submitSubscription,
-      onSubmit,
-      handleSubmit,
-    }}>
+    <PlanSubscriptionContext.Provider
+      value={{
+        planSelected,
+        setPlanSelected,
+        priceSelected,
+        setPriceSelected,
+        availablePaymentMethods,
+        paymentMethod,
+        setPaymentMethod,
+        successUrl,
+        cancelUrl,
+        benefit,
+        onErrorComponent,
+        onFreeComponent,
+        isPending,
+        errors,
+        submitSubscription,
+        onSubmit,
+        handleSubmit,
+      }}
+    >
       {children}
     </PlanSubscriptionContext.Provider>
-  )
-}
+  );
+};

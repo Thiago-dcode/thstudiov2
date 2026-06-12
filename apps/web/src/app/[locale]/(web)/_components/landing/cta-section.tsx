@@ -1,16 +1,19 @@
 "use client";
 
-import Link from "next/link";
 import { Button } from "@repo/ui/components/shadcn/button";
 import { ArrowRight } from "lucide-react";
-import { WebSection } from "./web-section";
+import Link from "next/link";
 import { useTranslations } from "next-intl";
+import { WebSection } from "./web-section";
 
 export function CtaSection() {
   const t = useTranslations("landing.cta");
   return (
     <WebSection className="overflow-hidden">
-      <div className="cta-glow pointer-events-none absolute inset-0" aria-hidden />
+      <div
+        className="cta-glow pointer-events-none absolute inset-0"
+        aria-hidden
+      />
 
       <WebSection.Container className="flex flex-col items-center gap-8 text-center">
         <span className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">

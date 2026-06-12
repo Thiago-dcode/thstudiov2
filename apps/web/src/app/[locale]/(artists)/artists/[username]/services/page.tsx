@@ -1,8 +1,8 @@
-import userServiceService from "@/modules/user-services/user-service.service";
 import { notFound } from "next/navigation";
-import Web from "@/lib/components/web-page.component";
 import { ArtistBreadcrumb } from "@/app/[locale]/(artists)/__components/artist-breadcrumb";
+import Web from "@/lib/components/web-page.component";
 import { ServiceCard } from "@/modules/user-services/components/service-card";
+import userServiceService from "@/modules/user-services/user-service.service";
 
 type Props = {
   params: Promise<{ username: string }>;
@@ -27,7 +27,11 @@ export default async function Page({ params }: Props) {
       <ArtistBreadcrumb
         username={username}
         items={[
-          { url: `/artists/${username}/services`, title: "Services", isActive: true },
+          {
+            url: `/artists/${username}/services`,
+            title: "Services",
+            isActive: true,
+          },
         ]}
       />
 
@@ -36,7 +40,11 @@ export default async function Page({ params }: Props) {
       {services.length > 0 ? (
         <section className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 tablet:gap-6">
           {services.map((service) => (
-            <ServiceCard key={service.id} service={service} username={username} />
+            <ServiceCard
+              key={service.id}
+              service={service}
+              username={username}
+            />
           ))}
         </section>
       ) : (

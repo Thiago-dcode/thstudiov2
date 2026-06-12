@@ -1,5 +1,5 @@
-import type { ApiResponse } from "@repo/common-lib/types/response";
 import type { InvitationLink } from "@repo/common-lib/types/invitation-link";
+import type { ApiResponse } from "@repo/common-lib/types/response";
 import { fetchApi } from "@/lib/facade/fetchApi";
 import { BaseService } from "@/lib/services/base.service";
 
@@ -14,7 +14,9 @@ class InvitationLinkService extends BaseService {
     });
   }
 
-  async validateCode(code: string): Promise<ApiResponse<InvitationLink | null>> {
+  async validateCode(
+    code: string,
+  ): Promise<ApiResponse<InvitationLink | null>> {
     return await this.fetchApi.get({
       resource: `${encodeURIComponent(code)}/code/valid`,
     });
@@ -29,4 +31,3 @@ export default (() => {
   }
   return InvitationLinkServiceInstance;
 })();
-

@@ -1,12 +1,12 @@
-import { LayoutTemplate, Sparkles, Handshake } from "lucide-react";
+import { Handshake, LayoutTemplate, Sparkles } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
 import { WebSection } from "./web-section";
-import { getTranslations } from "next-intl/server";
 
 const ICONS: ReactNode[] = [
-  <LayoutTemplate className="size-6" />,
-  <Sparkles className="size-6" />,
-  <Handshake className="size-6" />,
+  <LayoutTemplate key="layout" className="size-6" />,
+  <Sparkles key="sparkles" className="size-6" />,
+  <Handshake key="handshake" className="size-6" />,
 ];
 
 export async function ValuePillarsSection() {

@@ -1,12 +1,12 @@
-import { ReactNode } from "react";
-import {
-  Tabs as TabsRoot,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-} from "@repo/ui/components/shadcn/tabs";
 import { DrawerFooter } from "@repo/ui/components/shadcn/drawer";
+import {
+  TabsContent,
+  TabsList,
+  Tabs as TabsRoot,
+  TabsTrigger,
+} from "@repo/ui/components/shadcn/tabs";
 import { cn } from "@repo/ui/lib/utils";
+import type { ReactNode } from "react";
 
 export type MediaTabs = "overall" | "seo";
 
@@ -52,7 +52,7 @@ export function MediaTabTrigger({
         "text-text-muted",
         "hover:text-text/80",
         "hover:bg-fg-2/50",
-      ]
+      ],
   );
 
   return (

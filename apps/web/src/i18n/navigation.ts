@@ -1,5 +1,5 @@
-import { createNavigation } from 'next-intl/navigation';
-import { routing, SUPPORTED_LOCALES, localeLabels } from './routing';
+import { createNavigation } from "next-intl/navigation";
+import { localeLabels, routing, SUPPORTED_LOCALES } from "./routing";
 
 export const { Link, redirect, usePathname, useRouter, getPathname } =
   createNavigation(routing);

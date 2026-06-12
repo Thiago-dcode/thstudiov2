@@ -1,10 +1,18 @@
 "use client";
 
-import { createContext, useContext, ReactNode, useState, useMemo, useCallback } from "react";
-import { Media } from "@repo/common-lib/types/media";
+import type { Media } from "@repo/common-lib/types/media";
 import { Checkbox } from "@repo/ui/components/shadcn/checkbox";
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from "react";
 
 // Type definitions for selection data
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export type SelectedMedia = {
   // TODO: Define selected media structure
 };
@@ -42,34 +50,30 @@ export const useSelectMedia = () => {
 };
 
 // Provider component
-export const SelectMediaProvider = ({
-  children,
-}: {
-  children: ReactNode;
-}) => {
+export const SelectMediaProvider = ({ children }: { children: ReactNode }) => {
   // State declarations
-  const [selectedMedia, setSelectedMedia] = useState<Record<number,Media>>({});
-  const [maxSelection, setMaxSelection] = useState<number | undefined>(undefined);
-  const [canSelect, setCanSelect] = useState(false)
+  const [selectedMedia, setSelectedMedia] = useState<Record<number, Media>>({});
+  const [maxSelection, setMaxSelection] = useState<number | undefined>(
+    undefined,
+  );
+  const [canSelect, setCanSelect] = useState(false);
 
   // Selection methods
   const selectMedia = useCallback((media: Media) => {
-
-    setSelectedMedia(prev=>{
-        return {...prev,[media.id]:media}
-    })
-   
+    setSelectedMedia((prev) => {
+      return { ...prev, [media.id]: media };
+    });
   }, []);
 
   const deselectMedia = useCallback((mediaId: number) => {
-    setSelectedMedia(prev => {
+    setSelectedMedia((prev) => {
       const { [mediaId]: _, ...rest } = prev;
       return rest;
     });
   }, []);
 
   const toggleMediaSelection = useCallback((media: Media) => {
-    setSelectedMedia(prev => {
+    setSelectedMedia((prev) => {
       if (prev[media.id]) {
         const { [media.id]: _, ...rest } = prev;
         return rest;
@@ -84,20 +88,21 @@ export const SelectMediaProvider = ({
   }, []);
 
   // Query methods
-  const isMediaSelected = useCallback((mediaId: number): boolean => {
-    return !!selectedMedia[mediaId];
-  }, [selectedMedia]);
+  const isMediaSelected = useCallback(
+    (mediaId: number): boolean => {
+      return !!selectedMedia[mediaId];
+    },
+    [selectedMedia],
+  );
 
   const getSelectedMediaIds = useCallback((): number[] => {
     return Object.keys(selectedMedia).map(Number);
   }, [selectedMedia]);
 
   // Computed values
-  const selectionCount:number = useMemo(() => {
+  const selectionCount: number = useMemo(() => {
     return Object.keys(selectedMedia).length;
   }, [selectedMedia]);
-
-
 
   const value: SelectMediaContextType = {
     selectedMedia,
@@ -149,4 +154,3 @@ export const SelectableMedia = ({
 };
 
 export default SelectMediaProvider;
-

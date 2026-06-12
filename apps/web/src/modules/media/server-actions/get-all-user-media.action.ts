@@ -1,9 +1,12 @@
-'use server'
+"use server";
 
-import usersService from "@/modules/users/users.service";
-import { ActionReturn } from "@repo/common-lib/types/response";
-import { GetAllUserMediaQueryParams, Media } from "@repo/common-lib/types/media";
+import type {
+  GetAllUserMediaQueryParams,
+  Media,
+} from "@repo/common-lib/types/media";
+import type { ActionReturn } from "@repo/common-lib/types/response";
 import { getFriendlyApiErrors } from "@/modules/auth/helpers";
+import usersService from "@/modules/users/users.service";
 
 export type GetAllUserMediaParams = GetAllUserMediaQueryParams;
 
@@ -27,4 +30,4 @@ export const getAllUserMediaAction = async (
     errors: getFriendlyApiErrors(result),
     inputErrors: undefined,
   };
-}
+};

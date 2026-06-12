@@ -1,40 +1,43 @@
-import { Metadata } from 'next';
-import { getTranslations } from 'next-intl/server';
-import { userSession } from '@/modules/auth/server-actions/user-session.action';
-import { serverEnv } from '@/env/server';
-import usersService from '@/modules/users/users.service';
-import { SupportForm } from './_components/support-form';
+import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
+import { serverEnv } from "@/env/server";
+import { userSession } from "@/modules/auth/server-actions/user-session.action";
+import usersService from "@/modules/users/users.service";
+import { SupportForm } from "./_components/support-form";
 
 export const metadata: Metadata = {
-  title: 'Support - A11STUDIO',
-  description: 'Contact A11STUDIO support for account, billing, or technical help.',
+  title: "Support - A11STUDIO",
+  description:
+    "Contact A11STUDIO support for account, billing, or technical help.",
 };
 
 export default async function SupportPage() {
   const session = await userSession();
   const supportUser = await usersService.getCompact(serverEnv.SUPPORT_USERNAME);
-  const t = await getTranslations('support');
+  const t = await getTranslations("support");
   const defaultName = session?.username;
 
   if (!supportUser.data) {
-    throw new Error(`Support user "${serverEnv.SUPPORT_USERNAME}" was not found.`);
+    throw new Error(
+      `Support user "${serverEnv.SUPPORT_USERNAME}" was not found.`,
+    );
   }
 
   return (
-    <section className='mx-auto w-full max-w-3xl px-6 py-16 tablet:px-10 tablet:py-24'>
-      <div className='space-y-3'>
-        <p className='text-[10px] font-medium uppercase tracking-[0.2em] text-text-muted'>
-          {t('contactLabel')}
+    <section className="mx-auto w-full max-w-3xl px-6 py-16 tablet:px-10 tablet:py-24">
+      <div className="space-y-3">
+        <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-text-muted">
+          {t("contactLabel")}
         </p>
-        <h1 className='text-3xl font-semibold tracking-tight text-text tablet:text-4xl'>
-          {t('title')}
+        <h1 className="text-3xl font-semibold tracking-tight text-text tablet:text-4xl">
+          {t("title")}
         </h1>
-        <p className='max-w-2xl text-sm leading-relaxed text-text-muted'>
-          {t('description')}
+        <p className="max-w-2xl text-sm leading-relaxed text-text-muted">
+          {t("description")}
         </p>
       </div>
 
-      <div className='mt-10 rounded-xl border border-border bg-fg-2/20 p-5 tablet:p-7'>
+      <div className="mt-10 rounded-xl border border-border bg-fg-2/20 p-5 tablet:p-7">
         <SupportForm
           supportUserId={supportUser.data.id}
           defaultName={defaultName || undefined}

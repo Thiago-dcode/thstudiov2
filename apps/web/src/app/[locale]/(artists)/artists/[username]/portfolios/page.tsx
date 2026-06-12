@@ -1,8 +1,8 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArtistBreadcrumb } from "@/app/[locale]/(artists)/__components/artist-breadcrumb";
 import Web from "@/lib/components/web-page.component";
 import { PortfolioCard } from "@/modules/portfolios/components/portfolio-card";
-import Link from "next/link";
 import userPortfolioService from "@/modules/user-portfolios/user-portfolio.service";
 import usersService from "@/modules/users/users.service";
 

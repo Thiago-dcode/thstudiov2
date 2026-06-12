@@ -1,12 +1,12 @@
-import type { ReactNode } from "react";
-import { Sparkles, Palette, Users } from "lucide-react";
+import { Palette, Sparkles, Users } from "lucide-react";
 import { getTranslations } from "next-intl/server";
+import type { ReactNode } from "react";
 import { WebSection } from "./web-section";
 
 const ICONS: ReactNode[] = [
-  <Palette className="size-4 shrink-0 text-accent" />,
-  <Sparkles className="size-4 shrink-0 text-accent" />,
-  <Users className="size-4 shrink-0 text-accent" />,
+  <Palette key="palette" className="size-4 shrink-0 text-accent" />,
+  <Sparkles key="sparkles" className="size-4 shrink-0 text-accent" />,
+  <Users key="users" className="size-4 shrink-0 text-accent" />,
 ];
 
 export async function SocialProofSection() {
@@ -18,7 +18,10 @@ export async function SocialProofSection() {
       <div className="mx-auto w-full max-w-(--screen-desktop) px-6 py-10 tablet:px-10 tablet:py-14">
         <div className="flex flex-col items-center gap-6 phone:flex-row phone:justify-center phone:gap-12">
           {highlights.map((text, index) => (
-            <div key={text} className="flex items-center gap-2.5 text-center phone:text-left">
+            <div
+              key={text}
+              className="flex items-center gap-2.5 text-center phone:text-left"
+            >
               {ICONS[index]}
               <span className="text-base font-medium tracking-wide text-text-muted">
                 {text}

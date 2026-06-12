@@ -1,12 +1,17 @@
-'use server'
+"use server";
 
-import collectionService from "@/modules/collections/collection.service";
-import type { CollectionIndexRequest } from "@repo/common-lib/types/collection";
-import { ActionReturn } from "@repo/common-lib/types/response";
-import { Collection } from "@repo/common-lib/types/collection";
+import type {
+  Collection,
+  CollectionIndexRequest,
+} from "@repo/common-lib/types/collection";
+import type { ActionReturn } from "@repo/common-lib/types/response";
 import { getFriendlyApiErrors } from "@/modules/auth/helpers";
+import collectionService from "@/modules/collections/collection.service";
 
-export type GetAllUserCollectionsParams = Omit<CollectionIndexRequest, 'user_id'>;
+export type GetAllUserCollectionsParams = Omit<
+  CollectionIndexRequest,
+  "user_id"
+>;
 
 export const getAllUserCollectionsAction = async (
   userId: number,
@@ -31,4 +36,4 @@ export const getAllUserCollectionsAction = async (
     errors: getFriendlyApiErrors(result),
     inputErrors: undefined,
   };
-}
+};

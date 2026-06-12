@@ -1,24 +1,44 @@
-'use client'
+"use client";
 
-import { useState, useMemo, useRef, useCallback, useEffect } from "react";
-import { Drawer, DrawerContent, DrawerTitle, DrawerTrigger, DrawerClose, DrawerHeader } from "@repo/ui/components/shadcn/drawer";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@repo/ui/components/shadcn/dialog";
-import { Label } from "@repo/ui/components/shadcn/label";
-import { Button } from "@repo/ui/components/shadcn/button";
-import FormComponent from "@/lib/components/form-component";
-import { bytesToMB } from '@repo/common-lib/utils/bytes';
-import { Eye, Sparkles, Trash2, Upload } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@repo/ui/components/shadcn/popover";
+import type { Media, UpdateMediaInput } from "@repo/common-lib/types/media";
+import { bytesToMB } from "@repo/common-lib/utils/bytes";
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
+import { Button } from "@repo/ui/components/shadcn/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@repo/ui/components/shadcn/dialog";
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@repo/ui/components/shadcn/drawer";
+import { Label } from "@repo/ui/components/shadcn/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@repo/ui/components/shadcn/popover";
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
-import { Media, UpdateMediaInput } from "@repo/common-lib/types/media";
-import { format } from "date-fns";
 import { cn } from "@repo/ui/lib/utils";
+import { format } from "date-fns";
+import { Eye, Sparkles, Trash2, Upload } from "lucide-react";
 import { useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import FormComponent from "@/lib/components/form-component";
+import {
+  type UploadMedia,
+  useMedia,
+} from "@/modules/media/providers/media.provider";
 import { useUserMetrics } from "@/modules/users/providers/user-metrics.provider";
-import { useMedia, UploadMedia } from "@/modules/media/providers/media.provider";
-import { MediaTab, MediaDrawerFooter, MediaTabs } from "./media-tab";
-
+import { MediaDrawerFooter, MediaTab, type MediaTabs } from "./media-tab";
 
 type MediaCardProps = {
   media: Media;
@@ -30,7 +50,7 @@ type Tabs = MediaTabs;
 export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
   const [currentMedia, setCurrentMedia] = useState(media);
   const [isEditing, setIsEditing] = useState(false);
-  const [activeTab, setActiveTab] = useState<MediaTabs>('overall');
+  const [activeTab, setActiveTab] = useState<MediaTabs>("overall");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const seoTitleRef = useRef<HTMLInputElement>(null);
@@ -38,28 +58,40 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
   const seoAltRef = useRef<HTMLInputElement>(null);
   const seoFilenameRef = useRef<HTMLInputElement>(null);
   const { refresh, aiCreditsInfo } = useUserMetrics();
-  const { upsertMediaUpload, removeMediaUpload, mediaUploads, uploadSingleMedia, generateSeoSingleMedia, deleteSingleMedia, generateUniqueMediaId } = useMedia()
+  const {
+    upsertMediaUpload,
+    removeMediaUpload,
+    mediaUploads,
+    uploadSingleMedia,
+    generateSeoSingleMedia,
+    deleteSingleMedia,
+    generateUniqueMediaId,
+  } = useMedia();
   const [deletePopoverOpen, setDeletePopoverOpen] = useState(false);
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    const mediaParam = searchParams.get('m');
+    const mediaParam = searchParams.get("m");
     if (mediaParam && mediaParam === media.public_id) {
-        setIsDrawerOpen(true);
+      setIsDrawerOpen(true);
     }
   }, [searchParams, media.public_id]);
 
-
   const currentMediaUpload = useMemo(
-    () => mediaUploads.find(m => m.id === currentMedia.id || m.data?.id === currentMedia.id),
-    [mediaUploads, currentMedia.id]
+    () =>
+      mediaUploads.find(
+        (m) => m.id === currentMedia.id || m.data?.id === currentMedia.id,
+      ),
+    [mediaUploads, currentMedia.id],
   );
 
   // Helper variables for cleaner access
   const inputErrors = currentMediaUpload?.error?.inputErrors;
 
   // AI Credits calculation
-  const creditsAvailable = aiCreditsInfo ? aiCreditsInfo.total - aiCreditsInfo.consumed : 0;
+  const creditsAvailable = aiCreditsInfo
+    ? aiCreditsInfo.total - aiCreditsInfo.consumed
+    : 0;
   const hasEnoughCredits = creditsAvailable >= 1;
 
   const handleGenerateSeo = useCallback(async () => {
@@ -70,13 +102,12 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
       return;
     }
     // Always show the SEO tab when generating
-    setActiveTab('seo');
+    setActiveTab("seo");
     const result = await generateSeoSingleMedia(currentMedia);
     if (result.data) {
       await refresh();
-    };
-
-  }, [currentMedia, currentMediaUpload, generateSeoSingleMedia, refresh, hasEnoughCredits]);
+    }
+  }, [currentMedia, generateSeoSingleMedia, refresh, hasEnoughCredits]);
 
   const isPending = currentMediaUpload?.pending;
   // Format date - use updated_at if available, otherwise fallback to created_at
@@ -84,7 +115,7 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
     const dateValue = currentMedia.updated_at || currentMedia.created_at;
     if (!dateValue) return null;
     try {
-      return format(new Date(dateValue), 'MMM d, yyyy');
+      return format(new Date(dateValue), "MMM d, yyyy");
     } catch {
       return null;
     }
@@ -116,10 +147,13 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
     await handleUpdate();
   };
 
-
   const handleInputChange = (key: keyof UpdateMediaInput, value: string) => {
     if (!currentMedia.id || !currentMedia.user_id || isPending) return;
-    if ((currentMediaUpload?.input[key] ?? currentMedia[key as keyof Media]) === value) return;
+    if (
+      (currentMediaUpload?.input[key] ?? currentMedia[key as keyof Media]) ===
+      value
+    )
+      return;
 
     // Get existing media upload or create a new one with all required fields
     const existingUpload = currentMediaUpload || {
@@ -130,11 +164,11 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
         seo_title: currentMedia.seo_title || undefined,
         seo_description: currentMedia.seo_description || undefined,
         seo_alt: currentMedia.seo_alt || undefined,
-        seo_filename: currentMedia.seo_filename || '',
+        seo_filename: currentMedia.seo_filename || "",
       },
       id: currentMedia.id,
       pending: false,
-      action: 'edit' as const,
+      action: "edit" as const,
       unique_id: generateUniqueMediaId(),
     };
 
@@ -143,13 +177,12 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
 
     const updatedUpload: UploadMedia = {
       ...existingUpload,
-      action: 'edit',
+      action: "edit",
       data: undefined,
       error: undefined,
       pending: false,
       onSuccess: async () => {
         setIsEditing(false);
-
       },
       previewUrl: currentMedia.thumbnail || undefined,
       input: {
@@ -159,7 +192,14 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
     };
 
     // Check if nothing has changed by comparing input fields with currentMedia
-    const inputFields: (keyof UpdateMediaInput)[] = ['title', 'description', 'seo_title', 'seo_description', 'seo_alt', 'seo_filename'];
+    const inputFields: (keyof UpdateMediaInput)[] = [
+      "title",
+      "description",
+      "seo_title",
+      "seo_description",
+      "seo_alt",
+      "seo_filename",
+    ];
     let hasChanged = false;
 
     for (const key of inputFields) {
@@ -167,8 +207,8 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
       const currentValue = currentMedia[key as keyof Media];
 
       // Normalize undefined/null/empty string for comparison
-      const normalizedUpdated = updatedValue ?? '';
-      const normalizedCurrent = currentValue ?? '';
+      const normalizedUpdated = updatedValue ?? "";
+      const normalizedCurrent = currentValue ?? "";
 
       if (normalizedUpdated !== normalizedCurrent) {
         hasChanged = true;
@@ -203,22 +243,22 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
   // Get the current value for a field (from upload if exists, otherwise from currentMedia)
   const getFieldValue = (key: keyof UpdateMediaInput): string => {
     if (currentMediaUpload?.input && key in currentMediaUpload.input) {
-      return String(currentMediaUpload.input[key] ?? '');
+      return String(currentMediaUpload.input[key] ?? "");
     }
-    return String(currentMedia[key] || '');
+    return String(currentMedia[key] || "");
   };
 
   const renderEditTabContent = (tab: MediaTabs) => {
     switch (tab) {
-      case 'overall':
+      case "overall":
         return (
           <>
             <FormComponent.LabelInput
               id="title"
               name="title"
               label="Title"
-              value={getFieldValue('title')}
-              onChange={(e) => handleInputChange('title', e.target.value)}
+              value={getFieldValue("title")}
+              onChange={(e) => handleInputChange("title", e.target.value)}
               placeholder="Enter title"
               labelClassName="text-sm font-medium text-text"
               error={inputErrors?.title}
@@ -228,8 +268,8 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
               id="description"
               name="description"
               label="Description"
-              value={getFieldValue('description')}
-              onChange={(e) => handleInputChange('description', e.target.value)}
+              value={getFieldValue("description")}
+              onChange={(e) => handleInputChange("description", e.target.value)}
               placeholder="Enter description"
               rows={6}
               labelClassName="text-sm font-medium text-text"
@@ -238,7 +278,7 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
             />
           </>
         );
-      case 'seo':
+      case "seo":
         return (
           <>
             <FormComponent.LabelInput
@@ -246,8 +286,8 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
               id="seo_title"
               name="seo_title"
               label="SEO Title"
-              value={getFieldValue('seo_title')}
-              onChange={(e) => handleInputChange('seo_title', e.target.value)}
+              value={getFieldValue("seo_title")}
+              onChange={(e) => handleInputChange("seo_title", e.target.value)}
               placeholder="Enter SEO title"
               labelClassName="text-sm font-medium text-text"
               extraInfo="The title that appears in search engine results and browser tabs. Helps improve search visibility."
@@ -259,8 +299,10 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
               id="seo_description"
               name="seo_description"
               label="SEO Description"
-              value={getFieldValue('seo_description')}
-              onChange={(e) => handleInputChange('seo_description', e.target.value)}
+              value={getFieldValue("seo_description")}
+              onChange={(e) =>
+                handleInputChange("seo_description", e.target.value)
+              }
               placeholder="Enter SEO description"
               rows={5}
               labelClassName="text-sm font-medium text-text"
@@ -273,8 +315,8 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
               id="seo_alt"
               name="seo_alt"
               label="Alt Text"
-              value={getFieldValue('seo_alt')}
-              onChange={(e) => handleInputChange('seo_alt', e.target.value)}
+              value={getFieldValue("seo_alt")}
+              onChange={(e) => handleInputChange("seo_alt", e.target.value)}
               placeholder="Enter alt text for accessibility"
               labelClassName="text-sm font-medium text-text"
               extraInfo="A text description of the image for screen readers and when images fail to load. Improves accessibility and SEO."
@@ -286,8 +328,10 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
               id="seo_filename"
               name="seo_filename"
               label="Filename"
-              value={getFieldValue('seo_filename')}
-              onChange={(e) => handleInputChange('seo_filename', e.target.value)}
+              value={getFieldValue("seo_filename")}
+              onChange={(e) =>
+                handleInputChange("seo_filename", e.target.value)
+              }
               placeholder="Enter filename"
               labelClassName="text-sm font-medium text-text"
               extraInfo="The filename used for SEO purposes. Can be edited to improve search visibility."
@@ -301,59 +345,84 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
 
   const renderPreviewTabContent = (tab: MediaTabs) => {
     switch (tab) {
-      case 'overall':
+      case "overall":
         return (
           <>
             {currentMedia.title && (
               <div className="space-y-2">
-                <Label className="text-xs text-text-muted font-semibold uppercase tracking-wide">Title</Label>
-                <p className="text-sm text-text leading-relaxed">{currentMedia.title}</p>
+                <Label className="text-xs text-text-muted font-semibold uppercase tracking-wide">
+                  Title
+                </Label>
+                <p className="text-sm text-text leading-relaxed">
+                  {currentMedia.title}
+                </p>
               </div>
             )}
             {currentMedia.description && (
               <div className="space-y-2">
-                <Label className="text-xs text-text-muted font-semibold uppercase tracking-wide">Description</Label>
-                <p className="text-sm text-text leading-relaxed whitespace-pre-wrap">{currentMedia.description}</p>
+                <Label className="text-xs text-text-muted font-semibold uppercase tracking-wide">
+                  Description
+                </Label>
+                <p className="text-sm text-text leading-relaxed whitespace-pre-wrap">
+                  {currentMedia.description}
+                </p>
               </div>
             )}
             {formattedDate && (
               <div className="space-y-2 pt-4">
-                <Label className="text-xs text-text-muted font-semibold uppercase tracking-wide">Last Updated</Label>
+                <Label className="text-xs text-text-muted font-semibold uppercase tracking-wide">
+                  Last Updated
+                </Label>
                 <p className="text-sm text-text">{formattedDate}</p>
               </div>
             )}
           </>
         );
-      case 'seo':
+      case "seo":
         return (
           <>
             {currentMedia.seo_title && (
               <div className="space-y-2">
-                <Label className="text-xs text-text-muted font-semibold uppercase tracking-wide">SEO Title</Label>
-                <p className="text-sm text-text leading-relaxed">{currentMedia.seo_title}</p>
+                <Label className="text-xs text-text-muted font-semibold uppercase tracking-wide">
+                  SEO Title
+                </Label>
+                <p className="text-sm text-text leading-relaxed">
+                  {currentMedia.seo_title}
+                </p>
               </div>
             )}
             {currentMedia.seo_description && (
               <div className="space-y-2">
-                <Label className="text-xs text-text-muted font-semibold uppercase tracking-wide">SEO Description</Label>
-                <p className="text-sm text-text leading-relaxed whitespace-pre-wrap">{currentMedia.seo_description}</p>
+                <Label className="text-xs text-text-muted font-semibold uppercase tracking-wide">
+                  SEO Description
+                </Label>
+                <p className="text-sm text-text leading-relaxed whitespace-pre-wrap">
+                  {currentMedia.seo_description}
+                </p>
               </div>
             )}
             {currentMedia.seo_alt && (
               <div className="space-y-2">
-                <Label className="text-xs text-text-muted font-semibold uppercase tracking-wide">Alt Text</Label>
-                <p className="text-sm text-text leading-relaxed">{currentMedia.seo_alt}</p>
+                <Label className="text-xs text-text-muted font-semibold uppercase tracking-wide">
+                  Alt Text
+                </Label>
+                <p className="text-sm text-text leading-relaxed">
+                  {currentMedia.seo_alt}
+                </p>
               </div>
             )}
             <div className="space-y-2">
-              <Label className="text-xs text-text-muted font-semibold uppercase tracking-wide">Filename</Label>
-              <p className="text-xs font-mono text-text bg-fg-2 px-3 py-2 rounded-md">{currentMedia.seo_filename}</p>
+              <Label className="text-xs text-text-muted font-semibold uppercase tracking-wide">
+                Filename
+              </Label>
+              <p className="text-xs font-mono text-text bg-fg-2 px-3 py-2 rounded-md">
+                {currentMedia.seo_filename}
+              </p>
             </div>
           </>
         );
     }
   };
-
 
   useEffect(() => {
     if (!currentMediaUpload) return;
@@ -361,14 +430,21 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
       ...currentMedia,
       ...currentMediaUpload.input,
       ...currentMediaUpload.data,
-
     });
-  }, [currentMediaUpload])
+  }, [currentMediaUpload, currentMedia]);
 
   return (
-    <Drawer direction="right" open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
+    <Drawer
+      direction="right"
+      open={isDrawerOpen}
+      onOpenChange={setIsDrawerOpen}
+    >
       <div className="relative border border-black/10">
-        {currentMediaUpload && !currentMediaUpload.deleted && !isPending && !currentMediaUpload.data && !currentMediaUpload.error ? (
+        {currentMediaUpload &&
+        !currentMediaUpload.deleted &&
+        !isPending &&
+        !currentMediaUpload.data &&
+        !currentMediaUpload.error ? (
           <Button
             onClick={(e) => {
               e.stopPropagation();
@@ -379,16 +455,14 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
             disabled={isPending}
             className="absolute top-2 left-2 z-20 shadow-md rounded-full"
           >
-
             <Upload className="h-4 w-4" />
-
           </Button>
         ) : null}
         <DrawerTrigger asChild disabled={isPending}>
           <article
             className={cn(
               "group flex flex-col p-2",
-              isPending ? "cursor-not-allowed opacity-60" : "cursor-pointer"
+              isPending ? "cursor-not-allowed opacity-60" : "cursor-pointer",
             )}
             onClick={(e) => {
               if (isPending) {
@@ -402,7 +476,11 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
               {currentMedia.thumbnail ? (
                 <img
                   src={currentMedia.thumbnail}
-                  alt={currentMedia.seo_alt || currentMedia.title || `${username} media`}
+                  alt={
+                    currentMedia.seo_alt ||
+                    currentMedia.title ||
+                    `${username} media`
+                  }
                   className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-200"
                 />
               ) : (
@@ -421,26 +499,25 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
             {/* Title and Date - Stacked at Bottom */}
             <div className="flex flex-col">
               <h3 className="text-xs font-medium text-text line-clamp-1">
-                {currentMedia.title || currentMedia.seo_filename || 'Untitled'}
+                {currentMedia.title || currentMedia.seo_filename || "Untitled"}
               </h3>
               {formattedDate && (
-                <p className="text-[10px] text-text-muted">
-                  {formattedDate}
-                </p>
+                <p className="text-[10px] text-text-muted">{formattedDate}</p>
               )}
             </div>
           </article>
         </DrawerTrigger>
       </div>
-      <DrawerContent
-        className="h-full w-[600px] max-w-[90vw] right-0 left-auto rounded-l-lg rounded-t-none opacity-90 z-100"
-
-      >
+      <DrawerContent className="h-full w-[600px] max-w-[90vw] right-0 left-auto rounded-l-lg rounded-t-none opacity-90 z-100">
         <DrawerHeader className="border-b p-2">
           <div className="flex items-center justify-between">
             <div className="flex items-end justify-start gap-2">
               <DrawerTitle className="font-semibold flex items-center gap-1.5">
-                {isEditing ? 'Edit Media' : (currentMedia.title || currentMedia.seo_filename || 'Media Preview')}
+                {isEditing
+                  ? "Edit Media"
+                  : currentMedia.title ||
+                    currentMedia.seo_filename ||
+                    "Media Preview"}
                 {!isEditing && currentMedia.public_id && (
                   <a
                     href={`/artists/${username}/media/${currentMedia.public_id}`}
@@ -468,7 +545,7 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
                     size="sm"
                     className={cn(
                       "transition-colors duration-200 h-8 px-2.5",
-                      !hasEnoughCredits && "opacity-50 cursor-not-allowed"
+                      !hasEnoughCredits && "opacity-50 cursor-not-allowed",
                     )}
                     onClick={handleGenerateSeo}
                     disabled={isPending || !hasEnoughCredits}
@@ -489,27 +566,39 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
                       iconClassName="w-3 h-3"
                     />
                     {aiCreditsInfo && (
-                      <span className={cn(
-                        "text-[10px] ml-0.5",
-                        !hasEnoughCredits ? "text-error font-medium" : "text-text-muted"
-                      )}>
+                      <span
+                        className={cn(
+                          "text-[10px] ml-0.5",
+                          !hasEnoughCredits
+                            ? "text-error font-medium"
+                            : "text-text-muted",
+                        )}
+                      >
                         {aiCreditsInfo.consumed}/{aiCreditsInfo.total}
                         {!hasEnoughCredits && " (No credits)"}
                       </span>
                     )}
                   </div>
                 </div>
-              ) :
-
-                <Popover open={deletePopoverOpen} onOpenChange={setDeletePopoverOpen}>
+              ) : (
+                <Popover
+                  open={deletePopoverOpen}
+                  onOpenChange={setDeletePopoverOpen}
+                >
                   <PopoverTrigger asChild>
-                    <Button variant="ghost" size="sm" className="text-error hover:text-error hover:bg-error/10 h-8 px-2.5">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-error hover:text-error hover:bg-error/10 h-8 px-2.5"
+                    >
                       <Trash2 className="h-3.5 w-3.5 mr-1" />
                       <span className="text-xs font-medium">Delete</span>
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-56 p-3 z-100" align="end">
-                    <p className="text-sm text-text-muted mb-3">Are you sure you want to delete this media?</p>
+                    <p className="text-sm text-text-muted mb-3">
+                      Are you sure you want to delete this media?
+                    </p>
                     <div className="flex items-center gap-2">
                       <Button
                         variant="outline"
@@ -526,13 +615,12 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
                         disabled={isPending}
                         onClick={handleDelete}
                       >
-                        {isPending ? <Spinner /> : 'Delete'}
+                        {isPending ? <Spinner /> : "Delete"}
                       </Button>
                     </div>
                   </PopoverContent>
                 </Popover>
-              }
-
+              )}
             </div>
           </div>
         </DrawerHeader>
@@ -564,7 +652,7 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
                 className="flex-1"
                 disabled={isPending || !currentMediaUpload || !currentMedia}
               >
-                {isPending ? <Spinner /> : 'Save Changes'}
+                {isPending ? <Spinner /> : "Save Changes"}
               </Button>
             </MediaDrawerFooter>
           </FormComponent.Form>
@@ -576,7 +664,6 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
               renderTabContent={renderPreviewTabContent}
             />
             <MediaDrawerFooter>
-
               <div className="flex gap-3 w-full">
                 <Button
                   onClick={() => setIsEditing(true)}
@@ -586,7 +673,10 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
                   Edit
                 </Button>
                 <DrawerClose asChild>
-                  <Button variant="outline" className="flex-1 hover:bg-fg-2 hover:text-text">
+                  <Button
+                    variant="outline"
+                    className="flex-1 hover:bg-fg-2 hover:text-text"
+                  >
                     Close
                   </Button>
                 </DrawerClose>
@@ -604,16 +694,10 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button
-              variant="base"
-              onClick={() => setShowCancelDialog(false)}
-            >
+            <Button variant="base" onClick={() => setShowCancelDialog(false)}>
               Keep Editing
             </Button>
-            <Button
-              variant="default"
-              onClick={confirmCancel}
-            >
+            <Button variant="default" onClick={confirmCancel}>
               Discard Changes
             </Button>
           </DialogFooter>
@@ -622,4 +706,3 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
     </Drawer>
   );
 }
-

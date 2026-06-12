@@ -3,7 +3,6 @@
 // import { createContext, ReactElement, useContext, useState } from "react";
 // import { UserAuth } from "../auth.types";
 
-
 // type SessionContextType = {
 //     session?: UserAuth,
 //     setSession: (session?: UserAuth) => void

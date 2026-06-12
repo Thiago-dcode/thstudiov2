@@ -28,10 +28,7 @@ export const UserCollectionsSection = async ({
   return (
     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 tablet:grid-cols-4 tablet:gap-5">
       {response.data.map((collection) => (
-        <CollectionCard
-          key={collection.id}
-          collection={collection}
-        />
+        <CollectionCard key={collection.id} collection={collection} />
       ))}
     </div>
   );

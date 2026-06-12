@@ -1,24 +1,28 @@
-import type { Metadata } from 'next';
-import { redirect } from 'next/navigation';
-import emailPreferencesService from '@/modules/email-preferences/email-preferences.service';
-import { EmailPreferencesForm } from './_components/email-preferences-form';
+import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import emailPreferencesService from "@/modules/email-preferences/email-preferences.service";
+import { EmailPreferencesForm } from "./_components/email-preferences-form";
 
 export const metadata: Metadata = {
-  title: 'Email preferences - A11STUDIO',
-  description: 'Update the types of emails you want to receive from A11STUDIO.',
+  title: "Email preferences - A11STUDIO",
+  description: "Update the types of emails you want to receive from A11STUDIO.",
 };
 
-export default async function EmailPreferencesPage({ params }: { params: Promise<{ token?: string }> }) {
+export default async function EmailPreferencesPage({
+  params,
+}: {
+  params: Promise<{ token?: string }>;
+}) {
   const { token } = await params;
 
   if (!token) {
-    redirect('/');
+    redirect("/");
   }
 
   const result = await emailPreferencesService.getByToken(token);
 
   if (result.error || !result.data) {
-    redirect('/');
+    redirect("/");
   }
 
   return (

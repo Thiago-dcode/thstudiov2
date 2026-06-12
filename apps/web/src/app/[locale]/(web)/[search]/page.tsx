@@ -1,30 +1,30 @@
 import type { CategoryBase } from "@repo/common-lib/types/category";
 import type { PortfolioIndexRequest } from "@repo/common-lib/types/portfolio";
-import type { ArtistIndexRequest } from "@repo/common-lib/types/user";
 import type { Pagination } from "@repo/common-lib/types/response";
+import type { ArtistIndexRequest } from "@repo/common-lib/types/user";
 import { queryParamBuilder } from "@repo/common-lib/utils/query-builder";
 import { AppPagination } from "@repo/ui/components/custom/app-pagination";
 import { cn } from "@repo/ui/lib/utils";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import Web from "@/lib/components/web-page.component";
-import portfolioService from "@/modules/portfolios/portfolio.service";
-import usersService from "@/modules/users/users.service";
 import categoriesService from "@/modules/categories/categories.service";
 import { UpdateCategoriesProvider } from "@/modules/categories/providers/categories.provider";
+import portfolioService from "@/modules/portfolios/portfolio.service";
+import usersService from "@/modules/users/users.service";
+import { ArtistsGrid } from "./_components/artists-grid";
+import { FilterSearch } from "./_components/filter-search";
+import { FiltersProvider } from "./_components/filters.provider";
+import { NearMeSessionCleaner } from "./_components/near-me-session-cleaner";
 import {
-  type SearchResult,
-  type SearchSegment,
   buildSearchRequest,
   filtersToQuery,
   isSearchSegment,
+  type SearchResult,
+  type SearchSegment,
 } from "./_components/search.utils";
-import { SearchSegmentToggle } from "./_components/search-segment-toggle";
-import { FiltersProvider } from "./_components/filters.provider";
-import { NearMeSessionCleaner } from "./_components/near-me-session-cleaner";
-import { FilterSearch } from "./_components/filter-search";
-import { ArtistsGrid } from "./_components/artists-grid";
 import { SearchNearMeButton } from "./_components/search-near-me-button";
+import { SearchSegmentToggle } from "./_components/search-segment-toggle";
 
 export async function generateMetadata() {
   const t = await getTranslations("search");
@@ -116,11 +116,11 @@ export default async function SearchPage({
       : "";
 
   // Determine the segment label for translations (artists/portfolios)
-  const segmentLabel = search === "artists" ? t("segments.artists") : t("segments.portfolios");
+  const segmentLabel =
+    search === "artists" ? t("segments.artists") : t("segments.portfolios");
 
   const errorMessage =
-    result.response?.error?.message ||
-    t("page.errorMessage"); // fallback
+    result.response?.error?.message || t("page.errorMessage"); // fallback
 
   return (
     <Web.Container className={cn("flex h-full w-full flex-col justify-start")}>
@@ -164,15 +164,16 @@ export default async function SearchPage({
                   className="text-sm font-medium tracking-wide text-text-muted"
                 >
                   {/* Pluralization handled by next-intl in the translation key */}
-                  {t("page.results.foundArtists", { 
-                    count: totalCount, 
-                    suffix: resultsForSearchSuffix 
+                  {t("page.results.foundArtists", {
+                    count: totalCount,
+                    suffix: resultsForSearchSuffix,
                   })}
                   {/* Note: We need to conditionally use the artists or portfolios key */}
-                  {search === "portfolios" && t("page.results.foundPortfolios", { 
-                    count: totalCount, 
-                    suffix: resultsForSearchSuffix 
-                  })}
+                  {search === "portfolios" &&
+                    t("page.results.foundPortfolios", {
+                      count: totalCount,
+                      suffix: resultsForSearchSuffix,
+                    })}
                 </h5>
                 <div className="flex flex-col gap-4">
                   {result.type === "artists" && (
@@ -180,7 +181,7 @@ export default async function SearchPage({
                   )}
                   {
                     result.type === "portfolios" &&
-                    null /* TODO: PortfoliosGrid */
+                      null /* TODO: PortfoliosGrid */
                   }
                   {pagination && (
                     <AppPagination
@@ -195,12 +196,17 @@ export default async function SearchPage({
                 {hasFilters && (
                   <div className="flex flex-col items-center gap-2">
                     <h2 className="text-sm font-medium tracking-wide text-text">
-                      {t("page.empty.heading", { segment: segmentLabel, suffix: resultsForSearchSuffix })}
+                      {t("page.empty.heading", {
+                        segment: segmentLabel,
+                        suffix: resultsForSearchSuffix,
+                      })}
                     </h2>
                     <output className="text-sm text-text-muted">
-                      {t("page.empty.output", { 
-                        segment: segmentLabel, 
-                        end: hasLocationFilter ? "." : ` ${t("page.empty.lookNear", { segment: segmentLabel })}` 
+                      {t("page.empty.output", {
+                        segment: segmentLabel,
+                        end: hasLocationFilter
+                          ? "."
+                          : ` ${t("page.empty.lookNear", { segment: segmentLabel })}`,
                       })}
                     </output>
                   </div>

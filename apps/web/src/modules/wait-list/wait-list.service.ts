@@ -1,8 +1,8 @@
 import type { ApiResponse } from "@repo/common-lib/types/response";
 import type {
   PublicCreateWaitListInput,
-  WaitListCreateResponse,
   WaitList,
+  WaitListCreateResponse,
   WaitListPosition,
 } from "@repo/common-lib/types/wait-list";
 import { fetchApi } from "@/lib/facade/fetchApi";

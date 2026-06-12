@@ -1,16 +1,16 @@
 "use client";
 
 import { MAX_WAIT_LIST_SIZE } from "@repo/common-lib/constants/constants";
+import type { WaitListCreateResponse } from "@repo/common-lib/types/wait-list";
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
 import { Button } from "@repo/ui/components/shadcn/button";
 import { Input } from "@repo/ui/components/shadcn/input";
 import { toast } from "@repo/ui/sonner";
+import Link from "next/link";
 import { useTranslations } from "next-intl";
-import Link from 'next/link';
 import type { FormEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
-import type { WaitListCreateResponse } from "@repo/common-lib/types/wait-list";
 import { createWaitListSchema } from "@/modules/wait-list/schemas/wait-list.schema";
 import { createWaitListAction } from "@/modules/wait-list/server-actions/create-wait-list.action";
 
@@ -22,10 +22,10 @@ export function WaitListForm({ currentPosition }: HeroWaitListFormProps) {
   const t = useTranslations("landing.hero.waitList");
   const [isEmailValid, setIsEmailValid] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [waitListResultData, setWaitListResultData] = useState<
-    WaitListCreateResponse | null
-  >(null);
-  const hasAvailableSpots = currentPosition == null || currentPosition <= MAX_WAIT_LIST_SIZE;
+  const [waitListResultData, setWaitListResultData] =
+    useState<WaitListCreateResponse | null>(null);
+  const hasAvailableSpots =
+    currentPosition == null || currentPosition <= MAX_WAIT_LIST_SIZE;
   const displayPosition = currentPosition
     ? Math.min(Math.max(currentPosition, 1), MAX_WAIT_LIST_SIZE)
     : null;
@@ -74,11 +74,10 @@ export function WaitListForm({ currentPosition }: HeroWaitListFormProps) {
 
       return (
         <div aria-live="polite" className="flex w-full justify-center">
-          <div
-            className="wait-list-success flex w-full max-w-md flex-col items-center gap-2 rounded-md border border-border/40 bg-fg/50 px-5 py-6 text-center backdrop-blur-md"
-          >
+          <div className="wait-list-success flex w-full max-w-md flex-col items-center gap-2 rounded-md border border-border/40 bg-fg/50 px-5 py-6 text-center backdrop-blur-md">
             <h3 className="text-lg font-semibold text-text">
-              {email} is already on the wait list. Check your email. If this looks wrong, {" "}
+              {email} is already on the wait list. Check your email. If this
+              looks wrong,{" "}
               <Link href="/support" className="text-accent underline">
                 contact support
               </Link>
@@ -91,12 +90,14 @@ export function WaitListForm({ currentPosition }: HeroWaitListFormProps) {
 
     return (
       <div aria-live="polite" className="flex w-full justify-center">
-        <div
-          className="wait-list-success flex w-full max-w-md flex-col items-center gap-2 rounded-md border border-border/40 bg-fg/50 px-5 py-6 text-center backdrop-blur-md"
-        >
-          <h3 className="text-lg font-semibold text-text">{t("successTitle")}</h3>
+        <div className="wait-list-success flex w-full max-w-md flex-col items-center gap-2 rounded-md border border-border/40 bg-fg/50 px-5 py-6 text-center backdrop-blur-md">
+          <h3 className="text-lg font-semibold text-text">
+            {t("successTitle")}
+          </h3>
           <p className="text-sm text-text-muted">{t("successMessage")}</p>
-          <p className="text-sm text-text-muted">{t("successReserveMessage")}</p>
+          <p className="text-sm text-text-muted">
+            {t("successReserveMessage")}
+          </p>
 
           <style>{`
           @media (prefers-reduced-motion: no-preference) {
@@ -117,7 +118,10 @@ export function WaitListForm({ currentPosition }: HeroWaitListFormProps) {
   return (
     <div className="w-full">
       <div className="mb-2 flex items-center justify-start gap-2">
-        <p id="hero-wait-list-email-hint" className="text-left text-xs text-text-muted">
+        <p
+          id="hero-wait-list-email-hint"
+          className="text-left text-xs text-text-muted"
+        >
           {t("hint")}
         </p>
         <InfoTooltip content={t("hintTooltip")} />
@@ -139,7 +143,9 @@ export function WaitListForm({ currentPosition }: HeroWaitListFormProps) {
             required
             onChange={handleEmailChange}
             aria-invalid={!!inputErrors?.email}
-            aria-describedby={inputErrors?.email ? "hero-wait-list-email-error" : undefined}
+            aria-describedby={
+              inputErrors?.email ? "hero-wait-list-email-error" : undefined
+            }
             className="h-14 w-full border-border/60 bg-fg/60 px-4 text-base text-text backdrop-blur-md placeholder:text-text-muted focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/30"
           />
 

@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "tsx watch src/main.ts",
     "build": "tsc",
-    "start": "node dist/main.js"
+    "start": "node dist/main.js",
+    "lint": "tsc --noEmit"
   },
   "dependencies": {
     "@repo/backend-lib": "workspace:*",

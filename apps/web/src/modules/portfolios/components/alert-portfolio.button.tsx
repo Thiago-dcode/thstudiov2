@@ -1,13 +1,14 @@
 "use client";
 
+import { ArrowRight, X } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { usePortfolio } from "../providers/create-update-portfolio.provider";
-import { usePathname } from "next/navigation";
-import Link from "next/link";
-import { ArrowRight, X } from "lucide-react";
 
 export function AlertPortfolioButton() {
-  const { formData, currentPortfolio, isPending, portfolioItems } = usePortfolio();
+  const { formData, currentPortfolio, isPending, portfolioItems } =
+    usePortfolio();
   const pathname = usePathname();
   const [dismissed, setDismissed] = useState(false);
 
@@ -16,7 +17,12 @@ export function AlertPortfolioButton() {
   const hasUnsavedWork =
     isPending ||
     !!currentPortfolio ||
-    !!(formData.title || formData.slug || formData.description || portfolioItems.length);
+    !!(
+      formData.title ||
+      formData.slug ||
+      formData.description ||
+      portfolioItems.length
+    );
 
   if (!hasUnsavedWork || isOnPortfolioPage || dismissed) return null;
 
@@ -24,9 +30,7 @@ export function AlertPortfolioButton() {
     ? `/atelier/portfolios/edit/${currentPortfolio.slug}`
     : "/atelier/portfolios/create";
 
-  const label = currentPortfolio
-    ? "Editing portfolio"
-    : "Creating portfolio";
+  const label = currentPortfolio ? "Editing portfolio" : "Creating portfolio";
 
   return (
     <div className="fixed bottom-6 right-6 z-50 flex items-center gap-1">
@@ -42,6 +46,7 @@ export function AlertPortfolioButton() {
         <ArrowRight className="size-4" />
       </Link>
       <button
+        type="button"
         onClick={() => setDismissed(true)}
         className="rounded-full border border-border bg-bg p-1.5 text-text-muted shadow-lg transition-colors hover:text-text"
       >

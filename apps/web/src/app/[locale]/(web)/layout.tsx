@@ -1,7 +1,7 @@
-import { ReactNode } from "react";
-import { WebHeader } from "./_components/web-header";
+import type { ReactNode } from "react";
 import { WebFooter } from "@/lib/components/web-footer";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
+import { WebHeader } from "./_components/web-header";
 
 export default async function WebLayout({ children }: { children: ReactNode }) {
   const session = await userSession();

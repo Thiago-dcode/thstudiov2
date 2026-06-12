@@ -1,12 +1,12 @@
-'use client';
-import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
-import { verify2faServerAction } from "@/modules/auth/server-actions/twofa.action";
+"use client";
 import { Errors } from "@repo/ui/components/custom/errors";
+import { Input } from "@repo/ui/components/shadcn/input";
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
-import { Input } from "@repo/ui/components/shadcn/input";
-import { TwoFaUser } from "@/modules/auth/auth.types";
 import FormComponent from "@/lib/components/form-component";
+import type { TwoFaUser } from "@/modules/auth/auth.types";
+import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
+import { verify2faServerAction } from "@/modules/auth/server-actions/twofa.action";
 
 export const TwoFaForm = ({ user }: { user: TwoFaUser }) => {
   const route = useRouter();
@@ -15,19 +15,19 @@ export const TwoFaForm = ({ user }: { user: TwoFaUser }) => {
     action: verify2faServerAction,
     afterAction: async (result) => {
       if (result.data) {
-        route.push(user.is_new ? '/get-started' : '/atelier');
+        route.push(user.is_new ? "/get-started" : "/atelier");
       }
-    }
-  })
-  const [twafaCode, setTwofaCode] = useState('')
-
+    },
+  });
+  const [twafaCode, setTwofaCode] = useState("");
 
   return (
     <FormComponent.Container>
-
-
-      <form ref={formRef} onSubmit={handleSubmit} className="w-full h-full flex flex-col gap-4">
-
+      <form
+        ref={formRef}
+        onSubmit={handleSubmit}
+        className="w-full h-full flex flex-col gap-4"
+      >
         <input type="hidden" name="email" value={user.email} />
 
         <FormComponent.Field>
@@ -38,10 +38,10 @@ export const TwoFaForm = ({ user }: { user: TwoFaUser }) => {
               e.target.value = value;
               setTwofaCode(value);
               if (errors) {
-                cleanErrors()
+                cleanErrors();
               }
               if (value.length === 6 && formRef?.current) {
-                formRef.current.requestSubmit()
+                formRef.current.requestSubmit();
               }
             }}
             disabled={isPending}
@@ -57,14 +57,9 @@ export const TwoFaForm = ({ user }: { user: TwoFaUser }) => {
             autoFocus
             className="w-full px-4 py-6 text-center text-lg font-semibold tracking-widest  rounded-lg focus:outline-none transition-all placeholder:font-normal placeholder:tracking-normal"
           />
-
         </FormComponent.Field>
-
       </form>
-      {errors && errors.length > 0 && (
-        <Errors  errors={errors} />
-      )}
-
+      {errors && errors.length > 0 && <Errors errors={errors} />}
     </FormComponent.Container>
-  )
-}
+  );
+};

@@ -1,21 +1,24 @@
-import createIntlMiddleware from 'next-intl/middleware';
-import { NextRequest, NextResponse } from 'next/server';
 import {
   LANGUAGE_COOKIE_NAME,
   LANGUAGE_HEADER,
-} from '@repo/common-lib/constants/constants';
-import type { EnumType } from '@repo/common-lib/constants/enums';
-import { subMinutes } from 'date-fns';
-import { RequestCookies, ResponseCookies } from 'next/dist/compiled/@edge-runtime/cookies';
-import { routing, urlLocaleToLanguageCode } from './i18n/routing';
-import authService from './modules/auth/auth.service';
+} from "@repo/common-lib/constants/constants";
+import type { EnumType } from "@repo/common-lib/constants/enums";
+import { subMinutes } from "date-fns";
+import type {
+  RequestCookies,
+  ResponseCookies,
+} from "next/dist/compiled/@edge-runtime/cookies";
+import { type NextRequest, NextResponse } from "next/server";
+import createIntlMiddleware from "next-intl/middleware";
+import { routing, urlLocaleToLanguageCode } from "./i18n/routing";
+import authService from "./modules/auth/auth.service";
 import {
   deleteUserSessionByCookie,
   getRememberMeByCookie,
   getUserSessionExpirationDateByCookie,
   setUserSessionByCookie,
   userSessionByCookie,
-} from './modules/auth/server-actions/user-session.action';
+} from "./modules/auth/server-actions/user-session.action";
 
 const intlMiddleware = createIntlMiddleware(routing);
 
@@ -25,7 +28,7 @@ const handleRefreshToken = async (
 ) => {
   const expirationDate = await getUserSessionExpirationDateByCookie(cookies);
   const tenMinutes = 10 * 60 * 1000;
-  const now = new Date().getTime();
+  const now = Date.now();
   const expirationDate10MinutesAgo = expirationDate
     ? subMinutes(expirationDate, 10).getTime()
     : null;
@@ -56,8 +59,8 @@ const handleRememberMe = async (
 };
 
 const proxy = async (req: NextRequest) => {
-  const segments = req.nextUrl.pathname.split('/');
-  const firstSeg = (segments[1] ?? '').toLowerCase();
+  const segments = req.nextUrl.pathname.split("/");
+  const firstSeg = (segments[1] ?? "").toLowerCase();
   const isLocaleShaped = /^[a-z]{2}$/.test(firstSeg);
 
   if (
@@ -65,13 +68,13 @@ const proxy = async (req: NextRequest) => {
     !(routing.locales as readonly string[]).includes(firstSeg)
   ) {
     const url = req.nextUrl.clone();
-    url.pathname = `/${segments.slice(2).join('/')}`;
+    url.pathname = `/${segments.slice(2).join("/")}`;
     return NextResponse.redirect(url);
   }
 
   const response = intlMiddleware(req);
 
-  const resolvedLanguageCode: EnumType<'LANGUAGE_CODE'> = (
+  const resolvedLanguageCode: EnumType<"LANGUAGE_CODE"> = (
     routing.locales as readonly string[]
   ).includes(firstSeg)
     ? urlLocaleToLanguageCode(firstSeg)
@@ -87,7 +90,7 @@ const proxy = async (req: NextRequest) => {
 };
 
 export const config = {
-  matcher: '/((?!api|_next/static|_next/image|favicon.ico).*)',
+  matcher: "/((?!api|_next/static|_next/image|favicon.ico).*)",
 };
 
 export default proxy;

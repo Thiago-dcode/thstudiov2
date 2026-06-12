@@ -36,4 +36,3 @@ export type GeoapifyAutocompleteResponse = {
     categories?: unknown[];
   };
 };
-

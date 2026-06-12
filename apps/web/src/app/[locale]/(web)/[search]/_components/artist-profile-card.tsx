@@ -75,7 +75,12 @@ export function ArtistProfileCard({
         className,
       )}
     >
-      <div className={cn("relative w-full shrink-0 overflow-hidden rounded-2xl bg-fg-1/60", compact ? "aspect-square" : "aspect-4/5")}>
+      <div
+        className={cn(
+          "relative w-full shrink-0 overflow-hidden rounded-2xl bg-fg-1/60",
+          compact ? "aspect-square" : "aspect-4/5",
+        )}
+      >
         {artist.avatar ? (
           <Image
             src={artist.avatar}

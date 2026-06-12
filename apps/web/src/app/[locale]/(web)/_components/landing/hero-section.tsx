@@ -54,11 +54,11 @@ export async function HeroSection({
           {t("subtitle")}
         </p>
 
-         <div className="hero-stagger-4 flex w-full justify-center pt-4 tablet:pt-6">
-           <div className="w-full max-w-4xl">
-             <WaitListForm currentPosition={currentWaitListPosition} />
-           </div>
-         </div>
+        <div className="hero-stagger-4 flex w-full justify-center pt-4 tablet:pt-6">
+          <div className="w-full max-w-4xl">
+            <WaitListForm currentPosition={currentWaitListPosition} />
+          </div>
+        </div>
       </div>
 
       {/* ── Scroll down indicator ── */}

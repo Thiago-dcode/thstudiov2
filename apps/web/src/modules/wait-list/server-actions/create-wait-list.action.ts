@@ -1,15 +1,20 @@
-'use server';
+"use server";
 
-import { ActionReturn } from "@repo/common-lib/types/response";
-import { WaitListCreateResponse } from "@repo/common-lib/types/wait-list";
+import type { ActionReturn } from "@repo/common-lib/types/response";
+import type { WaitListCreateResponse } from "@repo/common-lib/types/wait-list";
 import { trimValues } from "@repo/common-lib/utils/cleanObj";
-import waitListService from "../wait-list.service";
-import { getFriendlyApiErrors, getObjErrorFromZod } from "@/modules/auth/helpers";
+import {
+  getFriendlyApiErrors,
+  getObjErrorFromZod,
+} from "@/modules/auth/helpers";
 import { createWaitListSchema } from "../schemas/wait-list.schema";
+import waitListService from "../wait-list.service";
 
-export const createWaitListAction = async (formData: FormData): Promise<ActionReturn<WaitListCreateResponse, any>> => {
+export const createWaitListAction = async (
+  formData: FormData,
+): Promise<ActionReturn<WaitListCreateResponse, unknown>> => {
   const rawData = {
-    email: formData.get('email') as string,
+    email: formData.get("email") as string,
   };
 
   trimValues(rawData, { deep: true });

@@ -1,13 +1,16 @@
-import type { ArtistCard, ArtistIndexRequest } from "@repo/common-lib/types/user";
 import type { Portfolio } from "@repo/common-lib/types/portfolio";
 import type { ApiResponse } from "@repo/common-lib/types/response";
-import type { QueryBuilder } from "@repo/common-lib/utils/query-builder";
+import type {
+  ArtistCard,
+  ArtistIndexRequest,
+} from "@repo/common-lib/types/user";
 import {
   firstString,
   optionalTrim,
   parseOptionalFloat,
   parseOptionalInt,
 } from "@repo/common-lib/utils/parse-params";
+import type { QueryBuilder } from "@repo/common-lib/utils/query-builder";
 
 export const SEARCH_SEGMENTS = [
   { value: "artists", label: "Artists" },
@@ -17,8 +20,16 @@ export const SEARCH_SEGMENTS = [
 export type SearchSegment = (typeof SEARCH_SEGMENTS)[number]["value"];
 
 export type SearchResult =
-  | { type: "artists"; items: ArtistCard[]; response: ApiResponse<ArtistCard[]> | null }
-  | { type: "portfolios"; items: Portfolio[]; response: ApiResponse<Portfolio[]> | null };
+  | {
+      type: "artists";
+      items: ArtistCard[];
+      response: ApiResponse<ArtistCard[]> | null;
+    }
+  | {
+      type: "portfolios";
+      items: Portfolio[];
+      response: ApiResponse<Portfolio[]> | null;
+    };
 
 export function isSearchSegment(value: string): value is SearchSegment {
   return SEARCH_SEGMENTS.some((segment) => segment.value === value);
@@ -39,7 +50,10 @@ export function buildSearchRequest(
 
   const categoriesRaw = firstString(params.categories);
   const categories = categoriesRaw
-    ? categoriesRaw.split(",").map((c) => c.trim()).filter(Boolean)
+    ? categoriesRaw
+        .split(",")
+        .map((c) => c.trim())
+        .filter(Boolean)
     : undefined;
 
   const out: ArtistIndexRequest = {};
