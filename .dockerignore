@@ -1,6 +1,9 @@
 .git
 .turbo
 node_modules
+# Runtime assets are bind-mounted by compose, never baked into images.
+# On the droplet this directory is ~150MB and was bloating every build context.
+apps/api/assets
 **/node_modules
 **/dist
 **/.next

@@ -26,6 +26,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 20s
+      start_interval: 3s
     networks:
       - a11studio-dev
 
@@ -79,6 +80,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 45s
+      start_interval: 3s
     networks:
       - a11studio-dev
 
@@ -127,6 +129,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 45s
+      start_interval: 3s
     networks:
       - a11studio-dev
 
@@ -157,6 +160,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
+      start_interval: 3s
     networks:
       - a11studio-dev
 
@@ -193,6 +197,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
+      start_interval: 2s
     networks:
       - a11studio-dev
 
@@ -215,6 +220,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+      start_interval: 2s
     networks:
       - a11studio-dev
 

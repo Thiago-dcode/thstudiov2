@@ -3,12 +3,13 @@
 # deploy.sh — TH Studio dev-server deployment script
 #
 # Usage:
-#   ./scripts/deploy.sh [--skip-build] [--skip-migrate] [--skip-assets]
+#   ./scripts/deploy.sh [--skip-build] [--skip-migrate] [--skip-assets] [--no-cache]
 #
 # Options:
 #   --skip-build    Skip docker image rebuild (use existing images)
 #   --skip-migrate  Skip DB migrations
 #   --skip-assets   Skip the assets directory check/warning
+#   --no-cache      Force a full image rebuild without Docker layer cache
 #
 # This script is meant to run ON the droplet (165.232.38.110).
 # Boot persistence handled by systemd (a11studio.service).
@@ -33,12 +34,14 @@ COMPOSE="docker compose -f $COMPOSE_FILE"
 SKIP_BUILD=false
 SKIP_MIGRATE=false
 SKIP_ASSETS=false
+NO_CACHE=false
 
 for arg in "$@"; do
   case $arg in
     --skip-build)   SKIP_BUILD=true ;;
     --skip-migrate) SKIP_MIGRATE=true ;;
     --skip-assets)  SKIP_ASSETS=true ;;
+    --no-cache)     NO_CACHE=true ;;
     *)              error "Unknown argument: $arg"; exit 1 ;;
   esac
 done
@@ -105,8 +108,19 @@ echo ""
 
 # ── Step 3: Build images ──────────────────────────────────────────────────────
 if [[ "$SKIP_BUILD" == false ]]; then
-  info "Step 3/6 — Building Docker images (api, web, worker) …"
-  $COMPOSE build --no-cache api worker web
+  BUILD_FLAGS=""
+  if [[ "$NO_CACHE" == true ]]; then
+    warn "Step 3/6 — Building Docker images WITHOUT cache (--no-cache) …"
+    BUILD_FLAGS="--no-cache"
+  else
+    info "Step 3/6 — Building Docker images (api, web, worker) …"
+  fi
+  # Build one image at a time: the droplet has 1 vCPU / 1GB RAM and parallel
+  # builds cause swapping/OOM. api goes first so worker/web reuse its shared
+  # base + dependency layers from cache.
+  $COMPOSE build $BUILD_FLAGS api
+  $COMPOSE build $BUILD_FLAGS worker
+  $COMPOSE build $BUILD_FLAGS web
   success "Images built."
 else
   warn "Step 3/6 — Image build skipped (--skip-build)."
@@ -172,6 +186,14 @@ if [[ "$API_STATUS" == "200" ]]; then
 else
   warn    "API  → HTTP $API_STATUS (expected 200)"
 fi
+
+# ── Cleanup ──────────────────────────────────────────────────────────────────
+# Reclaim disk: drop dangling images from previous builds and cap the BuildKit
+# cache (keep enough to preserve layer-cache benefits between deploys).
+info "Cleaning up old images and excess build cache …"
+docker image prune -f >/dev/null
+docker builder prune -f --keep-storage 4GB >/dev/null
+success "Cleanup done."
 
 echo ""
 success "Deploy complete."

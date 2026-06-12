@@ -12,11 +12,17 @@ RUN apt-get update \
   && corepack enable \
   && corepack prepare pnpm@10.32.1 --activate
 
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.json ./
+# Dependency layer: invalidated only when the lockfile changes. `pnpm fetch`
+# downloads every package into the store from the lockfile alone, and the
+# BuildKit cache mount persists that store across builds.
+COPY pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store pnpm fetch
+
+COPY package.json turbo.json tsconfig.json ./
 COPY apps ./apps
 COPY packages ./packages
 
-RUN pnpm install --frozen-lockfile
+RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store pnpm install --frozen-lockfile --prefer-offline
 RUN pnpm turbo run build --filter=@repo/api...
 
 EXPOSE 8080
