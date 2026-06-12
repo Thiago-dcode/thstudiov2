@@ -25,7 +25,7 @@ RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store pnpm install --frozen-lo
 RUN pnpm turbo run build --filter=@repo/api...
 
 # Prune to production-only node_modules
-RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store pnpm deploy --filter=@repo/api --prod /prod/api
+RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store pnpm deploy --legacy --filter=@repo/api --prod /prod/api
 
 # ─── Stage 2: runner ─────────────────────────────────────────────────────────
 FROM node:22-bookworm-slim AS runner
