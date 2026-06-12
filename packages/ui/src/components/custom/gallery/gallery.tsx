@@ -59,7 +59,11 @@ export const Gallery = () => {
     const [fsControls, setFsControls] = useState(false)
 
     useEffect(() => {
-        if (!fullscreen) setFsControls(false)
+        if (!fullscreen) {
+            // This is a direct UI state reset derived from fullscreen.
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setFsControls(false)
+        }
     }, [fullscreen])
 
     useEffect(() => {
@@ -67,6 +71,8 @@ export const Gallery = () => {
     }, [isOpen, exitFullscreen])
 
     useEffect(() => {
+        // Derived UI state reset when switching items.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setFsControls(false)
     }, [currentItem])
 

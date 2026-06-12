@@ -11,7 +11,7 @@ export const useTimer = (expireIn: number, options?: TimerOptions) => {
   const [timeObj, setTimeObj] = useState<TimeObj>();
   const expireDate = useRef(new Date(new Date().getTime() + expireIn));
   const [finished, setFinished] = useState(false);
-  const [intervalId, setIntervaltId] = useState<NodeJS.Timeout>();
+  const intervalIdRef = useRef<NodeJS.Timeout | null>(null);
 
   const setTime = useCallback((expireDate: Date) => {
     const diff = expireDate.getTime() - new Date().getTime();
@@ -32,16 +32,24 @@ export const useTimer = (expireIn: number, options?: TimerOptions) => {
     const id = setInterval(() => {
       setTime(expireDate.current);
     }, 1000);
-    setIntervaltId(id);
-    return () => clearInterval(intervalId);
-  }, [expireDate]);
+
+    intervalIdRef.current = id;
+    return () => {
+      clearInterval(id);
+      intervalIdRef.current = null;
+    };
+  }, [setTime]);
 
   useEffect(() => {
     if (finished) {
       if (options?.onFinish) {
         options.onFinish();
       }
-      clearInterval(intervalId);
+
+      if (intervalIdRef.current) {
+        clearInterval(intervalIdRef.current);
+        intervalIdRef.current = null;
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [finished]);

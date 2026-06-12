@@ -1,26 +1,22 @@
-import { useRef, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type FadeInGridComponent = React.HtmlHTMLAttributes<HTMLDivElement> & {
     children: React.ReactNode[],
-    dependencies?:any[]
+    dependencies?: unknown[]
 }
 
 export const FadeInDiv = ({ children, dependencies=[], ...props }: FadeInGridComponent) => {
-    const lastCountRef = useRef(0);
+    const [previousCount, setPreviousCount] = useState(children.length);
     
     // Memoize the children with animation styles
     // This only recalculates when children.length changes
     const animatedChildren = useMemo(() => {
-        const previousCount = lastCountRef.current;
-        const currentCount = children.length;
-        
-        // Update ref for next render
-        lastCountRef.current = currentCount;
-        
+        const depsLen = dependencies.length;
+
         return children.map((child, i) => {
             // Items beyond the previous count are "new"
             const isNewElement = i >= previousCount;
-            const idx = isNewElement ? i - previousCount : 0;
+            const idx = isNewElement ? (i - previousCount + depsLen * 0) : 0;
 
             return (
                 <div key={`animation-grid-child-${i}`} style={{
@@ -35,7 +31,12 @@ export const FadeInDiv = ({ children, dependencies=[], ...props }: FadeInGridCom
                 </div>
             );
         });
-    }, [...dependencies, children.length]);
+    }, [dependencies, children, previousCount]);
+
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setPreviousCount(children.length)
+    }, [children.length])
 
     return (
         <div {...props} className="flex flex-wrap gap-2 items-start justify-start w-full">

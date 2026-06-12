@@ -25,12 +25,10 @@ export const nestConfig: Config = {
   ],
   coverageDirectory: '<rootDir>/coverage',
   setupFilesAfterEnv: ['<rootDir>/test/jest.setup.ts'],
-  moduleFileExtensions: ['js', 'json', 'ts'],
-  globals: {
-    'ts-jest': {
-      tsconfig: '<rootDir>/tsconfig.json',
-    },
+  moduleNameMapper: {
+    '^src/(.*)$': '<rootDir>/src/$1',
   },
+  moduleFileExtensions: ['js', 'json', 'ts'],
 };
 
 export * from '@nestjs/testing';

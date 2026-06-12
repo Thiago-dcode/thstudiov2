@@ -15,7 +15,6 @@ export const config = [
   js.configs.recommended,
   eslintConfigPrettier,
   ...tseslint.configs.recommended,
-  pluginReact.configs.flat.recommended,
   {
     languageOptions: {
       ...pluginReact.configs.flat.recommended.languageOptions,
@@ -34,6 +33,10 @@ export const config = [
       ...pluginReactHooks.configs.recommended.rules,
       // React scope no longer necessary with new JSX transform.
       "react/react-in-jsx-scope": "off",
+      // eslint-plugin-react@7.x currently crashes under our ESLint v10 setup
+      // ("contextOrFilename.getFilename is not a function"). Disable it
+      // to keep lint stable.
+      "react/display-name": "off",
     },
   },
 ];
