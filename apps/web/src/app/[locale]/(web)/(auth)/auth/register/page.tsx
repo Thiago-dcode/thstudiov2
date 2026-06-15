@@ -88,20 +88,6 @@ export default async function RegisterPage({
           Already have an account?
         </Link>
       </authComponent.Content>
-
-      <authComponent.Footer>
-        {/* <p> By signing in, you agree to our{' '}
-          <div>
-          <Link href="/terms" className="text-blue-600 hover:text-blue-500 underline">
-            Terms of Service
-          </Link>
-          {' '}and{' '}
-          <Link href="/privacy" className="text-blue-600 hover:text-blue-500 underline">
-            Privacy Policy
-          </Link>
-          </div>
-        </p> */}
-      </authComponent.Footer>
     </authComponent.Container>
   );
 }

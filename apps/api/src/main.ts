@@ -34,6 +34,14 @@ async function bootstrap() {
   const port = await checkPortOrGetNext(configService.get('api.port') || 8080);
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
+  // Startup config for debugging (no secrets).
+  logger.info('Starting API bootstrap', {
+    env: configService.get('app.env'),
+    port,
+    apiV1Url: configService.get('api.v1Url'),
+    allowedOrigins: configService.get('app.allowedOrigins'),
+  });
+
   await init({
     client: configService.get('database.client'),
     host: configService.get('database.host'),
@@ -47,6 +55,7 @@ async function bootstrap() {
     origin: configService.get('app.allowedOrigins'),
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   });
+  const ENVIRONMENT = configService.get('app.env')
 
   // Bracket array params (e.g. categories[]=1&categories[]=2 from queryParamBuilder) require
   // the extended parser; the default "simple" parser leaves the key as literal "categories[]".
@@ -58,25 +67,49 @@ async function bootstrap() {
 });
 
   await app.listen(port, () => {
-    console.log(`🚀 API is running on port http://localhost:${port}`);
+    console.log(`🚀 ENVIRONMENT: ${ENVIRONMENT} API is running on port http://localhost:${port}`);
     
   // Inside app.listen callback:
   // Only forward Stripe webhooks via the Stripe CLI when running locally
   // (NODE_ENV=local). On deployed dev/staging/prod servers the `stripe` CLI is
   // not installed, so spawning it would only produce noise/errors.
 if (configService.get('app.env') === 'local') {
-  const stripeProcess = spawn('stripe', ['listen', '--forward-to', `${configService.get('api.v1Url')}/webhooks/stripe`], {
+  const forwardToUrl = `${configService.get('api.v1Url')}/webhooks/stripe`;
+  logger.info('Stripe CLI listener: starting', { forwardToUrl });
+
+  const stripeArgs = ['listen', '--forward-to', forwardToUrl];
+  logger.info('Stripe CLI listener: spawn args', { stripeArgs });
+
+  const stripeProcess = spawn('stripe', stripeArgs, {
     shell: true,
+    env: process.env, // inherit env; no secrets should be needed for `stripe listen`
   });
 
   stripeProcess.stdout.on('data', (data) => {
-    console.log(`[Stripe] ${data}`);
+    const msg = data.toString().trim();
+    if (msg) logger.info('Stripe CLI stdout', { msg });
   });
 
+  stripeProcess.stderr.on('data', (data) => {
+    const msg = data.toString().trim();
+    if (msg) logger.error('Stripe CLI stderr', { msg });
+  });
 
   stripeProcess.on('error', (err) => {
+    logger.error('Stripe CLI listener: failed to start', { err: String(err) });
     console.error('Failed to start Stripe listener:', err);
   });
+
+  stripeProcess.on('close', (code, signal) => {
+    logger.info('Stripe CLI listener: exited', { code, signal });
+    console.log(`Stripe CLI listener exited (code=${code}, signal=${signal})`);
+  });
+
+  logger.info('Stripe CLI listener: spawned', { pid: stripeProcess.pid });
+}
+else{
+  logger.info('Stripe CLI listener: skipped (non-local env)', { env: configService.get('app.env') });
+  console.log("SKIP STRIPE SPIN UP");
 }
   });
 }

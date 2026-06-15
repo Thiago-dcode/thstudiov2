@@ -10,11 +10,11 @@ import { MainNav } from "./main-nav.component";
 
 export const AdminHeader = () => {
   const { shrinked, mobileOpen, setMobileOpen } = useMainNav();
-  const _pathname = usePathname();
+  const pathname = usePathname();
 
   useEffect(() => {
     setMobileOpen(false);
-  }, [setMobileOpen]);
+  }, [pathname, setMobileOpen]);
 
   return (
     <>

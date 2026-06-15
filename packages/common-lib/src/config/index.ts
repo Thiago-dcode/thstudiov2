@@ -43,7 +43,7 @@ const config = (envPath?: string | undefined) => {
       port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : 5432,
       username: process.env.DB_USERNAME || 'postgres',
       password: process.env.DB_PASSWORD || 'postgres',
-      database: process.env.DB_NAME || 'thstudio',
+      database: process.env.DB_NAME || 'a11studio',
     },
     redis: {
       url: process.env.REDIS_URL,

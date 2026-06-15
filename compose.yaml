@@ -1,7 +1,7 @@
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: thstudio-postgres
+    container_name: a11studio-postgres
     ports:
       - "${DB_PORT:-5432}:5432"
     volumes:
@@ -9,7 +9,7 @@ services:
     environment:
       - POSTGRES_USER=${DB_USERNAME:-admin}
       - POSTGRES_PASSWORD=${DB_PASSWORD:-1234}
-      - POSTGRES_DB=${DB_NAME:-thstudiodb}
+      - POSTGRES_DB=${DB_NAME:-a11studiodb}
       - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
     restart: unless-stopped
     command: >
@@ -27,7 +27,7 @@ services:
       -c min_wal_size=1GB
       -c max_wal_size=4GB
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-admin} -d ${DB_NAME:-thstudiodb}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-admin} -d ${DB_NAME:-a11studiodb}"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -35,12 +35,12 @@ services:
 
   pgadmin:
     image: dpage/pgadmin4
-    container_name: thstudio-pgadmin
+    container_name: a11studio-pgadmin
     restart: unless-stopped
     ports:
       - "${PGADMIN_PORT:-8888}:80"
     environment:
-      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL:-admin@thstudio.com}
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL:-admin@a11studio.com}
       - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD:-admin123}
     volumes:
       - pgadmin_data:/var/lib/pgadmin
@@ -50,7 +50,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: thstudio-redis
+    container_name: a11studio-redis
     ports:
       - "${REDIS_PORT:-6379}:6379"
     volumes:

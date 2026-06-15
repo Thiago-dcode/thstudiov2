@@ -3,8 +3,15 @@
   "compilerOptions": {
     "rootDir": ".",
     "outDir": "dist",
-    "tsBuildInfoFile": "dist/.tsbuildinfo"
+    "types": ["node", "multer"],
+    "tsBuildInfoFile": "dist/.tsbuildinfo",
+    "paths": {
+      // sharp@0.35.x omits a "types" condition in its package.json "exports"
+      // map, so node16 resolution cannot find its bundled declarations.
+      // Point the "sharp" specifier directly at the shipped type file.
+      "sharp": ["./node_modules/sharp/lib/index.d.ts"]
+    }
   },
   "include": ["src", "jest.config.ts"],
-  "exclude": ["node_modules", "test", "dist", "**/*spec.ts", "storage/logs"]
+  "exclude": ["node_modules", "test", "dist", "**/*spec.ts", "**/*.test.ts", "**/__tests__/**", "storage/logs"]
 }

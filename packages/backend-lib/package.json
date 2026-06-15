@@ -43,28 +43,28 @@
     "./services/payment-service/paypal": "./dist/src/services/payment-service/paypal/paypal.payment.service.js"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1007.0",
-    "@aws-sdk/s3-request-presigner": "^3.1007.0",
-    "@paypal/paypal-server-sdk": "^2.2.0",
+    "@aws-sdk/client-s3": "3.1066.0",
+    "@aws-sdk/s3-request-presigner": "3.1066.0",
+    "@paypal/paypal-server-sdk": "^2.4.0",
     "@repo/common-lib": "workspace:*",
     "@types/ejs": "^3.1.5",
     "@types/multer": "^2.1.0",
-    "@types/nodemailer": "^7.0.11",
+    "@types/nodemailer": "^8.0.1",
     "@types/pug": "^2.0.10",
-    "date-fns": "^4.1.0",
-    "dotenv": "^17.3.1",
-    "ejs": "^5.0.1",
+    "date-fns": "^4.4.0",
+    "dotenv": "^17.4.2",
+    "ejs": "^6.0.1",
     "image-size": "^2.0.2",
     "install": "^0.13.0",
-    "nodemailer": "^8.0.2",
-    "openai": "^6.27.0",
+    "nodemailer": "^8.0.11",
+    "openai": "^6.42.0",
     "picocolors": "^1.1.1",
-    "pug": "^3.0.3",
-    "redis": "^5.11.0",
+    "pug": "^3.0.4",
+    "redis": "^6.0.0",
     "resend": "^6.12.4",
-    "sharp": "^0.34.5",
-    "stripe": "^20.4.1",
-    "uuid": "^13.0.0"
+    "sharp": "0.35.0",
+    "stripe": "^22.2.0",
+    "uuid": "^14.0.0"
   },
   "peerDependencies": {
     "bullmq": "^5.71.0"
@@ -78,12 +78,12 @@
     "@repo/common-lib": "workspace:*",
     "@repo/jest-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
-    "@swc/cli": "^0.8.0",
-    "@swc/core": "^1.15.18",
+    "@swc/cli": "^0.8.1",
+    "@swc/core": "^1.15.41",
     "@types/jest": "30.0.0",
-    "@types/node": "^25.4.0",
-    "jest": "30.3.0",
-    "ts-jest": "29.4.6",
-    "typescript": "^5.9.3"
+    "@types/node": "^25.9.3",
+    "jest": "30.4.2",
+    "ts-jest": "29.4.11",
+    "typescript": "^6.0.3"
   }
 }

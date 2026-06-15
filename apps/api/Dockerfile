@@ -11,7 +11,7 @@ RUN apt-get update \
   && apt-get install -y --no-install-recommends ca-certificates \
   && rm -rf /var/lib/apt/lists/* \
   && corepack enable \
-  && corepack prepare pnpm@10.32.1 --activate
+  && corepack prepare pnpm@11.6.0 --activate
 
 # Dependency layer: invalidated only when the lockfile changes.
 COPY pnpm-lock.yaml pnpm-workspace.yaml ./
@@ -41,8 +41,9 @@ COPY --from=builder /prod/api/node_modules ./apps/api/node_modules
 COPY --from=builder /prod/api/package.json ./apps/api/package.json
 
 # Copy compiled output for the api app and all workspace packages it depends on
+# NOTE: apps/api/assets is intentionally NOT copied here. Runtime assets are
+# bind-mounted by compose (see .dockerignore) and never baked into the image.
 COPY --from=builder /workspace/apps/api/dist ./apps/api/dist
-COPY --from=builder /workspace/apps/api/assets ./apps/api/assets
 
 COPY --from=builder /workspace/packages/common-lib/dist ./packages/common-lib/dist
 COPY --from=builder /workspace/packages/common-lib/package.json ./packages/common-lib/package.json

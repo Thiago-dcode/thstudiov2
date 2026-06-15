@@ -64,7 +64,7 @@ export const UserAccountBannedModal = () => {
               </>
             )}{" "}
             <a
-              href="mailto:support@thstudio.com"
+              href="mailto:support@a11studio.com"
               className="underline text-text"
             >
               Contact support if you think this is a mistake

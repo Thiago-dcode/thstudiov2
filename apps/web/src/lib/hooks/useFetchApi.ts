@@ -19,6 +19,10 @@ export const useFetchApi = <T, K>(
   const [isLoading, setIsLoading] = useState(false);
   const isLoadingRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const beforeFetchCallback = options?.beforeFetchCallback;
+  const afterFetchCallback = options?.afterFetchCallback;
+  const callImmediately = options?.callImmediately;
+  const params = options?.params;
 
   const handleFetch = useCallback(
     async (request?: K) => {
@@ -34,14 +38,13 @@ export const useFetchApi = <T, K>(
 
       try {
         if (
-          options?.beforeFetchCallback &&
-          (await options.beforeFetchCallback(request))
+          beforeFetchCallback &&
+          (await beforeFetchCallback(request))
         ) {
           return;
         }
         const result = await handler(request);
-        if (options?.afterFetchCallback)
-          await options.afterFetchCallback(result);
+        if (afterFetchCallback) await afterFetchCallback(result);
         if (result.data && !result.error) {
           setData(result);
         } else if (result.error) {
@@ -58,7 +61,7 @@ export const useFetchApi = <T, K>(
         setIsLoading(false);
       }
     },
-    [handler, options.afterFetchCallback, options.beforeFetchCallback],
+    [handler, afterFetchCallback, beforeFetchCallback],
   );
 
   const reset = () => {
@@ -66,8 +69,8 @@ export const useFetchApi = <T, K>(
     setError(null);
   };
   useEffect(() => {
-    if (options?.callImmediately) {
-      handleFetch(options.params);
+    if (callImmediately) {
+      handleFetch(params);
     }
 
     // ✅ Cleanup: abort on unmount
@@ -76,7 +79,7 @@ export const useFetchApi = <T, K>(
         abortControllerRef.current.abort();
       }
     };
-  }, [options?.callImmediately, handleFetch, options.params]);
+  }, [callImmediately, handleFetch, params]);
 
   return {
     data,

@@ -2,8 +2,14 @@
   "extends": "@repo/typescript-config/nestjs.json",
   "compilerOptions": {
     "baseUrl": ".",
+    "ignoreDeprecations": "6.0",
+    "rootDir": "src",
     "outDir": "dist",
     "types": ["node","jest","multer"],
+    "paths": {
+      "stripe-types/*": ["./node_modules/stripe/cjs/resources/*.d.ts"],
+      "stripe-types/checkout": ["./node_modules/stripe/cjs/resources/Checkout/index.d.ts"]
+    },
     "incremental": true,
     "tsBuildInfoFile": ".tsbuildinfo",
     "declaration": false,

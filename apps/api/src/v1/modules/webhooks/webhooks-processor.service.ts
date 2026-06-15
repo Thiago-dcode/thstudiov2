@@ -1,6 +1,11 @@
 import { InjectQueue, Processor } from '@nestjs/bullmq';
 import { Job, Queue } from 'bullmq';
-import Stripe from 'stripe';
+import type { Checkout as StripeCheckout } from 'stripe-types/checkout';
+import type { Event as StripeEvent } from 'stripe-types/Events';
+import type { Invoice as StripeInvoice } from 'stripe-types/Invoices';
+import type { PaymentIntent as StripePaymentIntent } from 'stripe-types/PaymentIntents';
+import type { PaymentMethod as StripePaymentMethod } from 'stripe-types/PaymentMethods';
+import type { Subscription as StripeSubscription } from 'stripe-types/Subscriptions';
 import { LogService } from '@repo/backend-lib/services/log-service';
 import { PlanSubscriptionsService } from '../plan-subscriptions/plan-subscriptions.service';
 import { PlanPricesService } from '../plan-prices/plan-prices.service';
@@ -34,7 +39,7 @@ export class WebhookProcessor extends GlobalProcessor {
     super();
   }
 
-  async process(job: Job<Stripe.Event>): Promise<void> {
+  async process(job: Job<StripeEvent>): Promise<void> {
     const event = job.data;
     this.logger.name(job.name);
 
@@ -57,47 +62,47 @@ export class WebhookProcessor extends GlobalProcessor {
     }
   }
 
-  private async handleStripeEvent(event: Stripe.Event): Promise<void> {
+  private async handleStripeEvent(event: StripeEvent): Promise<void> {
     this.logger.debug(`StripeProcessor ${event.type}`);
     try {
       switch (event.type) {
         case 'checkout.session.completed':
           await this.handleCheckoutSessionCompleted(
-            event.data.object as Stripe.Checkout.Session,
+            event.data.object as StripeCheckout.Session,
           );
           break;
         case 'payment_intent.succeeded':
           await this.handlePaymentIntentSucceeded(
-            event.data.object as Stripe.PaymentIntent,
+            event.data.object as StripePaymentIntent,
           );
           break;
 
         case 'payment_method.attached':
           await this.handlePaymentMethodAttached(
-            event.data.object as Stripe.PaymentMethod,
+            event.data.object as StripePaymentMethod,
           );
           break;
 
         case 'customer.subscription.created':
         case 'customer.subscription.updated':
           await this.handleSubscriptionUpdate(
-            event.data.object as Stripe.Subscription,
+            event.data.object as StripeSubscription,
           );
           break;
 
         case 'customer.subscription.deleted':
           await this.handleSubscriptionDeleted(
-            event.data.object as Stripe.Subscription,
+            event.data.object as StripeSubscription,
           );
           break;
 
         case 'invoice.paid':
-          await this.handleInvoicePaid(event.data.object as Stripe.Invoice);
+          await this.handleInvoicePaid(event.data.object as StripeInvoice);
           break;
 
         case 'invoice.payment_failed':
           await this.handleInvoicePaymentFailed(
-            event.data.object as Stripe.Invoice,
+            event.data.object as StripeInvoice,
           );
           break;
 
@@ -117,7 +122,7 @@ export class WebhookProcessor extends GlobalProcessor {
   }
 
   private async handleCheckoutSessionCompleted(
-    session: Stripe.Checkout.Session,
+    session: StripeCheckout.Session,
   ): Promise<void> {
     this.logger.debug(
       `Checkout session completed: ${session.id} ${session.mode}`,
@@ -126,21 +131,21 @@ export class WebhookProcessor extends GlobalProcessor {
   }
 
   private async handlePaymentIntentSucceeded(
-    paymentIntent: Stripe.PaymentIntent,
+    paymentIntent: StripePaymentIntent,
   ): Promise<void> {
     this.logger.debug(`Payment intent succeeded: ${paymentIntent.id}`);
     // TODO: Update payment status
   }
 
   private async handlePaymentMethodAttached(
-    paymentMethod: Stripe.PaymentMethod,
+    paymentMethod: StripePaymentMethod,
   ): Promise<void> {
     this.logger.debug(`Payment method attached: ${paymentMethod.id}`);
     // TODO: Handle payment method attachment
   }
 
   private async handleSubscriptionUpdate(
-    subscription: Stripe.Subscription,
+    subscription: StripeSubscription,
   ): Promise<void> {
     this.logger.debug('Subscription ', subscription);
     const stripeSubscriptionId = subscription.id;
@@ -280,7 +285,7 @@ export class WebhookProcessor extends GlobalProcessor {
   }
 
   private async handleSubscriptionDeleted(
-    subscription: Stripe.Subscription,
+    subscription: StripeSubscription,
   ): Promise<void> {
     const user = await this.userService.findOneByStripeId(
       subscription.customer as string,
@@ -313,13 +318,13 @@ export class WebhookProcessor extends GlobalProcessor {
     ]);
   }
 
-  private async handleInvoicePaid(invoice: Stripe.Invoice): Promise<void> {
+  private async handleInvoicePaid(invoice: StripeInvoice): Promise<void> {
     this.logger.debug(`Invoice paid: ${invoice.id}`);
     // TODO: Handle successful invoice payment
   }
 
   private async handleInvoicePaymentFailed(
-    invoice: Stripe.Invoice,
+    invoice: StripeInvoice,
   ): Promise<void> {
     this.logger.warn(`Invoice payment failed: ${invoice.id}`);
     // TODO: Handle failed invoice payment

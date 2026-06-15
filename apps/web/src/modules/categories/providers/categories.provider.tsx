@@ -81,7 +81,7 @@ export const UpdateCategoriesProvider = ({
     [categoriesSelected],
   );
 
-  const _userCategoriesIdsKey = useMemo(
+  const userCategoriesIdsKey = useMemo(
     () =>
       userCategories
         .map((c) => c.id)
@@ -101,7 +101,7 @@ export const UpdateCategoriesProvider = ({
         {} as { [id: number]: CategoryBase },
       ),
     );
-  }, [userCategories.reduce]);
+  }, [userCategoriesIdsKey]);
 
   const {
     handleAction: runCategoriesFetch,

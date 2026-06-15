@@ -133,7 +133,7 @@ $COMPOSE up -d postgres redis
 
 info "Waiting for postgres to be healthy …"
 RETRIES=20
-until $COMPOSE exec -T postgres pg_isready -U "${DB_USERNAME:-admin}" -d "${DB_NAME:-thstudiodb}" >/dev/null 2>&1; do
+until $COMPOSE exec -T postgres pg_isready -U "${DB_USERNAME:-admin}" -d "${DB_NAME:-a11studiodb}" >/dev/null 2>&1; do
   RETRIES=$((RETRIES - 1))
   if [[ $RETRIES -le 0 ]]; then
     error "Postgres did not become healthy in time — aborting."

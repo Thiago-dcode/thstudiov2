@@ -3,7 +3,7 @@ import { config } from '@repo/common-lib/config';
 import { StripePaymentConfig } from './types';
 
 class StripePaymentService {
-    public readonly stripe: Stripe;
+    public readonly stripe: Stripe.Stripe;
     public readonly webhookSecret: string;
 
     constructor(private readonly stripeConfig: StripePaymentConfig) {
@@ -13,5 +13,5 @@ class StripePaymentService {
 }
 
 const stripeService = new StripePaymentService(config().stripe);
-export const stripe = stripeService.stripe;
+export const stripe: Stripe.Stripe = stripeService.stripe;
 export const stripeWebhookSecret = stripeService.webhookSecret;

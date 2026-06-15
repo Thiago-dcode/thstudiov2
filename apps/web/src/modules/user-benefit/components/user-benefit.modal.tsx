@@ -14,7 +14,7 @@ import {
 import { ArrowRight, Gift, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { getUserBenefitAction } from "../server-actions/get-user-benefit.action";
 import { BENEFIT_CONFIG } from "../user-benefit.utils";
@@ -32,6 +32,7 @@ export const UserBenefitModal = ({
   const [open, setOpen] = useState(false);
 
   const pathname = usePathname();
+  const hasFetched = useRef(false);
 
   const { handleAction } = useHandleAction({
     action: async () => {
@@ -51,6 +52,11 @@ export const UserBenefitModal = ({
       setUserBenefit(user.benefit);
       return;
     }
+
+    // Guard against the unstable `handleAction` reference re-triggering this
+    // effect on every render, which would spam the API and trip the throttler.
+    if (hasFetched.current) return;
+    hasFetched.current = true;
     handleAction();
   }, [user, userBenefit, handleAction]);
 

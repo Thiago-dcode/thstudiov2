@@ -390,7 +390,7 @@ export class PlanSubscriptionsService {
         application_context: {
           cancel_url: cancelUrl,
           return_url: successUrl,
-          brand_name: 'THSTUDIO',
+          brand_name: 'A11STUDIO',
           shipping_preference: 'NO_SHIPPING',
           user_action: 'SUBSCRIBE_NOW',
         },

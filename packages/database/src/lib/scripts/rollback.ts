@@ -22,7 +22,9 @@ export const rollback = async (
         '❌ Migration table does not exist, you must run the migration command first',
       );
       if (shouldExit) process.exit(1);
-      throw new Error('Migrations table missing');
+      // Allow callers like `migrate:refresh` (exitProcess: false) to continue
+      // and run `migrate`, which will create the migrations table.
+      return;
     }
     const queryBuilder = QueryBuilder.table(MIGRATION_TABLE_NAME);
     const stepCount = steps;
