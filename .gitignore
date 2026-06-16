@@ -24,6 +24,10 @@ playwright-report/
 
 certs
 *nginx
+scripts/a11studio-dev.service
+scripts/a11studio-prod.service
+scripts/deploy-dev.sh
+scripts/deploy-prod.sh
 
 # Turbo
 .turbo
