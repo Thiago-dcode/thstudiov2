@@ -1,9 +1,9 @@
-name: a11studio-dev
+name: a11studio-prod
 
 services:
   nginx:
     image: nginx:1.27-alpine
-    container_name: a11studio-dev-nginx
+    container_name: a11studio-prod-nginx
     restart: unless-stopped
     # The only public entrypoint on the droplet. 443 is ready for TLS once
     # certificates are issued (see nginx/ssl.conf.template).
@@ -29,13 +29,13 @@ services:
       start_period: 20s
       start_interval: 3s
     networks:
-      - a11studio-dev
+      - a11studio-prod
 
   certbot:
     image: certbot/certbot
-    container_name: a11studio-dev-certbot
+    container_name: a11studio-prod-certbot
     # Run on demand only:
-    #   docker compose -f compose.dev.yaml --profile ssl run --rm certbot
+    #   docker compose -f compose.prod.yaml --profile ssl run --rm certbot
     profiles:
       - ssl
     volumes:
@@ -47,7 +47,7 @@ services:
       --agree-tos --no-eff-email --non-interactive"
 
   api:
-    image: a11studio-dev-api
+    image: a11studio-prod-api
     build:
       context: .
       dockerfile: apps/api/Dockerfile
@@ -55,7 +55,7 @@ services:
     # scaled horizontally (load balanced by nginx via Docker DNS).
     restart: unless-stopped
     env_file:
-      - ${A11STUDIO_ENV_FILE:-.env}
+      - ${A11STUDIO_ENV_FILE:-.env.prod}
     environment:
       DB_HOST: postgres
       DB_PORT: 5432
@@ -83,15 +83,15 @@ services:
       start_period: 45s
       start_interval: 3s
     networks:
-      - a11studio-dev
+      - a11studio-prod
 
   web:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
       args:
-        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8080/api/v1}
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://a11studio.com}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.a11studio.com/api/v1}
         NEXT_PUBLIC_GEOAPIFY_URL: ${NEXT_PUBLIC_GEOAPIFY_URL}
         NEXT_PUBLIC_GEOAPIFY_KEY: ${NEXT_PUBLIC_GEOAPIFY_KEY}
         APP_URL: ${APP_URL}
@@ -108,7 +108,7 @@ services:
     # scaled horizontally (load balanced by nginx via Docker DNS).
     restart: unless-stopped
     env_file:
-      - ${A11STUDIO_ENV_FILE:-.env}
+      - ${A11STUDIO_ENV_FILE:-.env.prod}
     environment:
       # next start requires production mode.
       NODE_ENV: production
@@ -132,16 +132,16 @@ services:
       start_period: 45s
       start_interval: 3s
     networks:
-      - a11studio-dev
+      - a11studio-prod
 
   worker:
     build:
       context: .
       dockerfile: apps/worker/Dockerfile
-    container_name: a11studio-dev-worker
+    container_name: a11studio-prod-worker
     restart: unless-stopped
     env_file:
-      - ${A11STUDIO_ENV_FILE:-.env}
+      - ${A11STUDIO_ENV_FILE:-.env.prod}
     environment:
       DB_HOST: postgres
       DB_PORT: 5432
@@ -163,11 +163,11 @@ services:
       start_period: 30s
       start_interval: 3s
     networks:
-      - a11studio-dev
+      - a11studio-prod
 
   postgres:
     image: postgres:15-alpine
-    container_name: a11studio-dev-postgres
+    container_name: a11studio-prod-postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${DB_USERNAME}
@@ -200,11 +200,11 @@ services:
       start_period: 30s
       start_interval: 2s
     networks:
-      - a11studio-dev
+      - a11studio-prod
 
   redis:
     image: redis:7-alpine
-    container_name: a11studio-dev-redis
+    container_name: a11studio-prod-redis
     restart: unless-stopped
     ports:
       - "127.0.0.1:${REDIS_HOST_PORT:-6379}:6379"
@@ -223,11 +223,11 @@ services:
       start_period: 10s
       start_interval: 2s
     networks:
-      - a11studio-dev
+      - a11studio-prod
 
   pgadmin:
     image: dpage/pgadmin4
-    container_name: a11studio-dev-pgadmin
+    container_name: a11studio-prod-pgadmin
     restart: unless-stopped
     profiles:
       - tools
@@ -242,10 +242,10 @@ services:
       postgres:
         condition: service_healthy
     networks:
-      - a11studio-dev
+      - a11studio-prod
 
 networks:
-  a11studio-dev:
+  a11studio-prod:
     driver: bridge
 
 volumes:
