@@ -40,22 +40,23 @@ export default function PlanSubscriptionList({
       benefit={benefit}
       onErrorComponent={onErrorComponent}
       onFreeComponent={onFreeComponent}
+    
     >
-      <>
-        <ChangeSubscriptionDialog />
-        {montlyPlanPrice && (
-          <BenefitSubscriptionDialog
-            planPrice={montlyPlanPrice}
-            planName={topTierPlanName}
-          />
-        )}
+   <>
+   <ChangeSubscriptionDialog />
+      {montlyPlanPrice && (
+        <BenefitSubscriptionDialog
+          planPrice={montlyPlanPrice}
+          planName={topTierPlanName}
+        />
+      )}
 
-        <div className="size-full flex flex-wrap items-center justify-center gap-8">
-          {plans.map((plan) => (
-            <PlanCard key={plan.id} plan={plan} />
-          ))}
-        </div>
-      </>
+      <div className="size-full flex flex-wrap items-center justify-center gap-8">
+        {plans.map((plan) => (
+          <PlanCard key={plan.id} plan={plan} />
+        ))}
+      </div>
+   </>
     </PlanSubscriptionProvider>
   );
 }

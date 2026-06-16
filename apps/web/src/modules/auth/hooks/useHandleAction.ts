@@ -172,7 +172,7 @@ export const useHandleAction = <K, T>({
   const deleteInputErrorProperty = useCallback((key: string) => {
     //avoid rerenders
     setInputErrors((prev) => {
-      if (!prev || !prev[key]) return prev;
+      if (!prev?.[key]) return prev;
       const { [key]: _, ...rest } = prev;
       return Object.keys(rest).length > 0 ? rest : undefined;
     });

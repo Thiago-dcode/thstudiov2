@@ -7,7 +7,7 @@ import { TwoFaForm } from "../__components/twoFa-form";
 
 export default async function TwoFactorAuth() {
   const user = await get2faCookieData();
-  if (!user || !user?.email) {
+  if (!user?.email) {
     redirect("/auth/login");
   }
 

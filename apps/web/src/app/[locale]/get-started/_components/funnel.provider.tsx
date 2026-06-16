@@ -124,7 +124,7 @@ export const FunnelProvider = ({
   }, [inputs, cleanErrors]);
 
   useEffect(() => {
-    if (!inputs || !inputs.length) return;
+    if (!inputs?.length) return;
     handleOnChange();
   }, [inputs, handleOnChange]);
 

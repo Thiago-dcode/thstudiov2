@@ -29,10 +29,7 @@ export default async function PasswordRecoveryRecover({
     }
   }
   //TODO: validate the attempt
-  if (
-    !_passwordRecoveryAttemptCookie ||
-    !_passwordRecoveryAttemptCookie.code_validated
-  ) {
+  if (!_passwordRecoveryAttemptCookie?.code_validated) {
     const result = await authService.validatePasswordRecoveryAttempt({
       code: attempt,
     });

@@ -27,5 +27,5 @@ export const SetSessionClient = ({
       });
   }, [userAuth, redirect, router.push]);
 
-  return <></>;
+  return null;
 };

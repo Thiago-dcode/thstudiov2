@@ -305,7 +305,7 @@ export const EditAvatar = ({ defaultAvatar }: { defaultAvatar?: string }) => {
 
       <FormComponent.SubmitButton
         isPending={isPending}
-        disabled={!files || !files.length || isPending}
+        disabled={!files?.length || isPending}
       >
         Update
       </FormComponent.SubmitButton>
@@ -346,7 +346,7 @@ export const EditBanner = ({ defaultBanner }: { defaultBanner?: string }) => {
 
       <FormComponent.SubmitButton
         isPending={isPending}
-        disabled={!files || !files.length || isPending}
+        disabled={!files?.length || isPending}
       >
         Update
       </FormComponent.SubmitButton>

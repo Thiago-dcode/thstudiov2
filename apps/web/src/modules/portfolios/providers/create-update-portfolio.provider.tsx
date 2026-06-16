@@ -272,8 +272,7 @@ export const PortfolioProvider = ({
 
   const checkSlugAvailability = useCallback(async () => {
     if (
-      !formData ||
-      !formData.slug ||
+      !formData?.slug ||
       isPendingSlugExists ||
       formData.slug === currentPortfolio?.slug
     )

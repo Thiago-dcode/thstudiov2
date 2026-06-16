@@ -37,10 +37,7 @@ export const useFetchApi = <T, K>(
       setIsLoading(true);
 
       try {
-        if (
-          beforeFetchCallback &&
-          (await beforeFetchCallback(request))
-        ) {
+        if (beforeFetchCallback && (await beforeFetchCallback(request))) {
           return;
         }
         const result = await handler(request);

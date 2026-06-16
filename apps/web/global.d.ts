@@ -1,5 +1,5 @@
-import type { routing } from "./src/i18n/routing";
 import type { Messages as AppMessages } from "./src/i18n/messages/en";
+import type { routing } from "./src/i18n/routing";
 
 declare module "next-intl" {
   interface AppConfig {

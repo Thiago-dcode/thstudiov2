@@ -79,7 +79,7 @@ function MediaUploadContent() {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = e.target.files;
-    if (!selectedFiles || !selectedFiles.length) {
+    if (!selectedFiles?.length) {
       setError(undefined);
       return;
     }
@@ -376,10 +376,8 @@ export function CreateMediaDialog({
 
   useEffect(() => {
     if (
-      !previewUrls ||
-      !previewUrls.length ||
-      !files ||
-      !files.length ||
+      !previewUrls?.length ||
+      !files?.length ||
       !session ||
       files.length !== previewUrls.length
     )

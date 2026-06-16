@@ -5,4 +5,4 @@ export const { Link, redirect, usePathname, useRouter, getPathname } =
   createNavigation(routing);
 
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
-export { SUPPORTED_LOCALES, localeLabels };
+export { localeLabels, SUPPORTED_LOCALES };

@@ -172,8 +172,7 @@ export const CollectionProvider = ({
 
   const checkSlugAvailability = useCallback(async () => {
     if (
-      !formData ||
-      !formData.slug ||
+      !formData?.slug ||
       isPendingSlugExists ||
       formData.slug === currentCollection?.slug
     )

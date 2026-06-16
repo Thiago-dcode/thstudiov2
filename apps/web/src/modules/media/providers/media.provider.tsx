@@ -215,11 +215,7 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
       return prev.filter((upload) => {
         const toRemove =
           !upload.pending && (upload.data || upload.error || upload.deleted);
-        if (
-          toRemove &&
-          upload.previewUrl &&
-          upload.previewUrl.startsWith("blob:")
-        ) {
+        if (toRemove && upload.previewUrl?.startsWith("blob:")) {
           URL.revokeObjectURL(upload.previewUrl);
         }
         return !toRemove;

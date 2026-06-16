@@ -44,7 +44,7 @@ const Step2 = () => {
     }
   }, [files]);
   useEffect(() => {
-    if (!errors || !errors.length) return;
+    if (!errors?.length) return;
     setErrors(errors);
   }, [errors, setErrors]);
 
