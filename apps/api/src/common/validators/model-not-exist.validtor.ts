@@ -40,12 +40,12 @@ export class ModelNotExistValidator extends BaseModelValidator {
           conditionOperand,
           conditionValue,
         ] of extraConditions) {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+           
           queryBuilder.where(conditionColumn, conditionOperand, conditionValue);
         }
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+       
       const record = await queryBuilder.where(column, '=', value).exists();
       if (record) {
         this.message =

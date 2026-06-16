@@ -30,7 +30,7 @@ export class ModelArrayExistValidator extends BaseModelValidator {
     const queryBuilder = QueryBuilder.table(tableName);
     let result = false;
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+       
       result =
         (await queryBuilder.whereIn(column || 'id', value).count()) === value.length;
       if (!result) {

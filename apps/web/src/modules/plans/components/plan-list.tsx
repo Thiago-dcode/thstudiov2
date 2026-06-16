@@ -40,10 +40,8 @@ export default function PlanSubscriptionList({
       benefit={benefit}
       onErrorComponent={onErrorComponent}
       onFreeComponent={onFreeComponent}
-    
     >
-   <>
-   <ChangeSubscriptionDialog />
+      <ChangeSubscriptionDialog />
       {montlyPlanPrice && (
         <BenefitSubscriptionDialog
           planPrice={montlyPlanPrice}
@@ -56,7 +54,6 @@ export default function PlanSubscriptionList({
           <PlanCard key={plan.id} plan={plan} />
         ))}
       </div>
-   </>
     </PlanSubscriptionProvider>
   );
 }

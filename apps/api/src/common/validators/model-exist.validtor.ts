@@ -41,11 +41,11 @@ export class ModelExistValidator extends BaseModelValidator {
           conditionOperand,
           conditionValue,
         ] of extraConditions) {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+           
           queryBuilder.where(conditionColumn, conditionOperand, conditionValue);
         }
       }
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+       
       result = await queryBuilder.where(column, '=', value).exists();
       if (!result) {
         this.message =

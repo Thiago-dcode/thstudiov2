@@ -182,7 +182,7 @@ export class PlanSubscriptionProcessor extends GlobalProcessor {
 
       for (const config of limitsConfig) {
 
-        let query = Query.table(config.table as any).softDeletes(true)
+        const query = Query.table(config.table as any).softDeletes(true)
           .where('blocked_at', 'IS NOT', null)
           .where('user_id', '=', userId);
 

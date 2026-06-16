@@ -6,13 +6,7 @@ import type { PaymentMethod } from "@repo/common-lib/types/payment-method";
 import type { FullPlan } from "@repo/common-lib/types/plan";
 import type { PlanPrice as PlanPriceType } from "@repo/common-lib/types/plan-price";
 import { useRouter } from "next/navigation";
-import {
-  createContext,
-  type ReactElement,
-  type ReactNode,
-  useContext,
-  useState,
-} from "react";
+import { createContext, type ReactNode, useContext, useState } from "react";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { initiateSubscriptionAction } from "../server-actions/initiate-subscription.action";
 
@@ -55,7 +49,7 @@ const PlanSubscriptionContext = createContext<PlanSubscriptionContextType>({
 export const UsePlanSubscription = () => useContext(PlanSubscriptionContext);
 
 type PlanSubscriptionProviderProps = {
-  children: ReactElement;
+  children: ReactNode;
   availablePaymentMethods: PaymentMethod[];
   successUrl: string;
   cancelUrl: string;
