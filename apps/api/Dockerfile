@@ -24,9 +24,6 @@ COPY packages ./packages
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store pnpm install --frozen-lockfile --prefer-offline
 RUN pnpm turbo run build --filter=@repo/api...
 
-# Prune to production-only node_modules
-RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store pnpm deploy --legacy --filter=@repo/api --prod /prod/api
-
 # ─── Stage 2: runner ─────────────────────────────────────────────────────────
 FROM node:22-bookworm-slim AS runner
 
@@ -36,15 +33,11 @@ ENV NODE_ENV=production
 
 WORKDIR /workspace
 
-# Copy pruned production node_modules for the api app
-COPY --from=builder /prod/api/node_modules ./apps/api/node_modules
-COPY --from=builder /prod/api/package.json ./apps/api/package.json
-
-# Copy compiled output for the api app and all workspace packages it depends on
-# NOTE: apps/api/assets is intentionally NOT copied here. Runtime assets are
-# bind-mounted by compose (see .dockerignore) and never baked into the image.
+# Copy api app
 COPY --from=builder /workspace/apps/api/dist ./apps/api/dist
+COPY --from=builder /workspace/apps/api/package.json ./apps/api/package.json
 
+# Copy workspace packages
 COPY --from=builder /workspace/packages/common-lib/dist ./packages/common-lib/dist
 COPY --from=builder /workspace/packages/common-lib/package.json ./packages/common-lib/package.json
 
@@ -57,6 +50,11 @@ COPY --from=builder /workspace/packages/database/package.json ./packages/databas
 # Root package.json is needed so Node can resolve workspace: links
 COPY --from=builder /workspace/package.json ./package.json
 COPY --from=builder /workspace/pnpm-workspace.yaml ./pnpm-workspace.yaml
+COPY --from=builder /workspace/pnpm-lock.yaml ./pnpm-lock.yaml
+
+# Install production dependencies only
+RUN corepack enable && corepack prepare pnpm@11.6.0 --activate && \
+    pnpm install --frozen-lockfile --prod
 
 EXPOSE 8080
 
