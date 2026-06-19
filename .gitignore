@@ -78,6 +78,7 @@ pnpm-debug.log*
 # Misc
 .DS_Store
 *.pem
+*.bak
 
 # Database seed assets (large binaries; not committed — keep locally for `db:seed -n media`)
 packages/database/src/seeds/media-images/
