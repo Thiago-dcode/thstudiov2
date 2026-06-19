@@ -22,12 +22,19 @@ test-results/
 playwright/.cache/
 playwright-report/
 
+# TLS material — never commit (origin cert + private key live only on the host)
 certs
-*nginx
-scripts/a11studio-dev.service
-scripts/a11studio-prod.service
-scripts/deploy-dev.sh
-scripts/deploy-prod.sh
+
+# Runtime copies generated on the droplet from the canonical sources below.
+# Canonical, version-controlled sources (tracked):
+#   - dev.nginx/ & pro.nginx/                     (nginx config)
+#   - scripts/deploy-dev.sh & scripts/deploy-prod.sh
+#   - scripts/a11studio-dev.service & scripts/a11studio-prod.service
+# On the droplet these are copied to the runtime names below, which stay ignored
+# so they never collide with `git pull` during deploys.
+/nginx/
+scripts/deploy.sh
+scripts/a11studio.service
 
 # Turbo
 .turbo
