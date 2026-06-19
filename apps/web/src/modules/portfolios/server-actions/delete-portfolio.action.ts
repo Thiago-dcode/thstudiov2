@@ -5,19 +5,19 @@ import { getFriendlyApiErrors } from "@/modules/auth/helpers";
 import portfolioService from "../portfolio.service";
 
 export const deletePortfolioAction = async (
-  id: number,
+ id: number,
 ): Promise<ActionReturn<boolean>> => {
-  const response = await portfolioService.delete(id);
+ const response = await portfolioService.delete(id);
 
-  if (response.error) {
-    return {
-      data: null,
-      errors: getFriendlyApiErrors(response),
-    };
-  }
+ if (response.error) {
+ return {
+ data: null,
+ errors: getFriendlyApiErrors(response),
+ };
+ }
 
-  return {
-    data: true,
-    errors: null,
-  };
+ return {
+ data: true,
+ errors: null,
+ };
 };

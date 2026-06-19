@@ -3,63 +3,63 @@
 import type { CompactUser } from "@repo/common-lib/types/user";
 import { useParams } from "next/navigation";
 import {
-  createContext,
-  type ReactNode,
-  useContext,
-  useEffect,
-  useRef,
+ createContext,
+ type ReactNode,
+ useContext,
+ useEffect,
+ useRef,
 } from "react";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { getUserCompactedAction } from "@/modules/users/server-actions/get-compacted-user.action";
 
 type ArtistContextType = {
-  artist: CompactUser | null;
-  isLoading: boolean;
-  isPending: boolean;
-  refresh: () => Promise<void>;
+ artist: CompactUser | null;
+ isLoading: boolean;
+ isPending: boolean;
+ refresh: () => Promise<void>;
 };
 
 const ArtistContext = createContext<ArtistContextType | null>(null);
 
 export const useArtist = () => {
-  const context = useContext(ArtistContext);
-  if (!context) {
-    throw new Error("useArtist must be used within an ArtistProvider");
-  }
-  return context;
+ const context = useContext(ArtistContext);
+ if (!context) {
+ throw new Error("useArtist must be used within an ArtistProvider");
+ }
+ return context;
 };
 
 export const ArtistProvider = ({ children }: { children: ReactNode }) => {
-  const params = useParams();
-  const username = params.username as string | undefined;
-  const prevUsernameRef = useRef<string | undefined>(undefined);
+ const params = useParams();
+ const username = params.username as string | undefined;
+ const prevUsernameRef = useRef<string | undefined>(undefined);
 
-  const { result, isPending, handleAction } = useHandleAction({
-    action: async () => {
-      return await getUserCompactedAction(username!);
-    },
-  });
+ const { result, isPending, handleAction } = useHandleAction({
+ action: async () => {
+ return await getUserCompactedAction(username!);
+ },
+ });
 
-  useEffect(() => {
-    if (!username) return;
-    if (username === prevUsernameRef.current) return;
-    prevUsernameRef.current = username;
-    handleAction();
-  }, [username, handleAction]);
+ useEffect(() => {
+ if (!username) return;
+ if (username === prevUsernameRef.current) return;
+ prevUsernameRef.current = username;
+ handleAction();
+ }, [username, handleAction]);
 
-  const artist = result?.data ?? null;
+ const artist = result?.data ?? null;
 
-  console.log(artist);
+ console.log(artist);
 
-  const refresh = async () => {
-    if (username) await handleAction();
-  };
+ const refresh = async () => {
+ if (username) await handleAction();
+ };
 
-  const isLoading = !artist && isPending;
+ const isLoading = !artist && isPending;
 
-  return (
-    <ArtistContext.Provider value={{ artist, isLoading, isPending, refresh }}>
-      {children}
-    </ArtistContext.Provider>
-  );
+ return (
+ <ArtistContext.Provider value={{ artist, isLoading, isPending, refresh }}>
+ {children}
+ </ArtistContext.Provider>
+ );
 };

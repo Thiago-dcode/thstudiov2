@@ -10,11 +10,11 @@ import { NEAR_ME_SESSION_KEY } from "./use-near-me";
  * SearchNearMeButton shows/hides based on search results.
  */
 export function NearMeSessionCleaner() {
-  useEffect(() => {
-    return () => {
-      sessionStorage.removeItem(NEAR_ME_SESSION_KEY);
-    };
-  }, []);
+ useEffect(() => {
+ return () => {
+ sessionStorage.removeItem(NEAR_ME_SESSION_KEY);
+ };
+ }, []);
 
-  return null;
+ return null;
 }

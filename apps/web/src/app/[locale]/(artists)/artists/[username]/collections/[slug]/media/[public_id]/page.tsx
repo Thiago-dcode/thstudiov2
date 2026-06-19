@@ -8,69 +8,69 @@ import userCollectionService from "@/modules/user-collections/user-collection.se
 import usersService from "@/modules/users/users.service";
 
 type Props = {
-  params: Promise<{ username: string; slug: string; public_id: string }>;
-  searchParams: Promise<{
-    cb?: string;
-  }>;
+ params: Promise<{ username: string; slug: string; public_id: string }>;
+ searchParams: Promise<{
+ cb?: string;
+ }>;
 };
 
 export default async function MediaPage({ params, searchParams }: Props) {
-  const { username, slug, public_id } = await params;
+ const { username, slug, public_id } = await params;
 
-  const [user, slugExist, session] = await Promise.all([
-    usersService.usernameExists(username),
-    userCollectionService.slugExists(username, slug),
-    userSession(),
-  ]);
+ const [user, slugExist, session] = await Promise.all([
+ usersService.usernameExists(username),
+ userCollectionService.slugExists(username, slug),
+ userSession(),
+ ]);
 
-  if (!user.data) {
-    notFound();
-  }
+ if (!user.data) {
+ notFound();
+ }
 
-  if (!slugExist.data) {
-    return (
-      <Web.Container>
-        <ResourceNotFound
-          username={username}
-          message="The collection you're looking for doesn't exist or may have been removed."
-        />
-      </Web.Container>
-    );
-  }
+ if (!slugExist.data) {
+ return (
+ <Web.Container>
+ <ResourceNotFound
+ username={username}
+ message="The collection you're looking for doesn't exist or may have been removed."
+ />
+ </Web.Container>
+ );
+ }
 
-  const { data: media } = await mediaService.getByPublicId(public_id);
+ const { data: media } = await mediaService.getByPublicId(public_id);
 
-  if (!media || media.blocked_at) {
-    return (
-      <Web.Container>
-        <ResourceNotFound
-          username={username}
-          message="The media you're looking for doesn't exist or may have been removed."
-        />
-      </Web.Container>
-    );
-  }
+ if (!media || media.blocked_at) {
+ return (
+ <Web.Container>
+ <ResourceNotFound
+ username={username}
+ message="The media you're looking for doesn't exist or may have been removed."
+ />
+ </Web.Container>
+ );
+ }
 
-  const canEdit = session?.id === media.user_id;
+ const canEdit = session?.id === media.user_id;
 
-  const qp = await searchParams;
+ const qp = await searchParams;
 
-  const acceptCallback = qp?.cb === "1";
-  const backUrl = `/artists/${username}/collections/${slug}${acceptCallback ? `?ci=m_${media.public_id}` : ""}`;
+ const acceptCallback = qp?.cb === "1";
+ const backUrl = `/artists/${username}/collections/${slug}${acceptCallback ? `?ci=m_${media.public_id}` : ""}`;
 
-  return (
-    <MediaPageComponent
-      user={media.user}
-      media={media}
-      canEdit={canEdit}
-      backUrl={backUrl}
-      breadcrumbs={[
-        {
-          title: `Collection ${slug}`,
-          url: backUrl,
-          isActive: false,
-        },
-      ]}
-    />
-  );
+ return (
+ <MediaPageComponent
+ user={media.user}
+ media={media}
+ canEdit={canEdit}
+ backUrl={backUrl}
+ breadcrumbs={[
+ {
+ title: `Collection ${slug}`,
+ url: backUrl,
+ isActive: false,
+ },
+ ]}
+ />
+ );
 }

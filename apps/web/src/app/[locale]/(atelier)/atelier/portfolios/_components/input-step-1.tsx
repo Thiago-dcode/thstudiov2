@@ -1,16 +1,16 @@
 "use client";
 import { ALLOWED_IMAGE_FILE_TYPES } from "@repo/common-lib/constants/constants";
 import {
-  generateValidSlug,
-  isAValidSlugFormat,
+ generateValidSlug,
+ isAValidSlugFormat,
 } from "@repo/common-lib/utils/generate-valid-slug";
 import { FileInput } from "@repo/ui/components/custom/file-input";
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
 import { Checkbox } from "@repo/ui/components/shadcn/checkbox";
 import { Label } from "@repo/ui/components/shadcn/label";
 import {
-  FileInputProvider,
-  useInputFile,
+ FileInputProvider,
+ useInputFile,
 } from "@repo/ui/contexts/file.provider";
 import { usePreviewUrls } from "@repo/ui/hooks/usePreviewUrls";
 import { useEffect, useRef, useState } from "react";
@@ -20,297 +20,297 @@ import { UpdateCategoriesProvider } from "@/modules/categories/providers/categor
 import { usePortfolio } from "@/modules/portfolios/providers/create-update-portfolio.provider";
 
 const ThumbnailInput = () => {
-  const { files } = useInputFile();
+ const { files } = useInputFile();
 
-  const {
-    formData,
-    handleSetFormData,
-    deleteInputErrorProperty,
-    inputErrors,
-    isPending,
-    currentPortfolio,
-  } = usePortfolio();
-  const filesToPreview =
-    files ??
-    (formData.thumbnail instanceof File ? formData.thumbnail : undefined);
-  const { previewUrls } = usePreviewUrls({ files: filesToPreview });
+ const {
+ formData,
+ handleSetFormData,
+ deleteInputErrorProperty,
+ inputErrors,
+ isPending,
+ currentPortfolio,
+ } = usePortfolio();
+ const filesToPreview =
+ files ??
+ (formData.thumbnail instanceof File ? formData.thumbnail : undefined);
+ const { previewUrls } = usePreviewUrls({ files: filesToPreview });
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      deleteInputErrorProperty("thumbnail");
-      handleSetFormData("thumbnail", file);
-    }
-  };
+ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+ const file = e.target.files?.[0];
+ if (file) {
+ deleteInputErrorProperty("thumbnail");
+ handleSetFormData("thumbnail", file);
+ }
+ };
 
-  return (
-    <div className="space-y-4">
-      {previewUrls?.length || currentPortfolio?.thumbnail ? (
-        <div className="flex flex-col gap-2">
-          <div className="relative aspect-video w-full overflow-hidden rounded-lg border-2 border-border">
-            <img
-              src={previewUrls[0] || currentPortfolio?.thumbnail}
-              alt="Thumbnail Preview"
-              className="w-full h-full object-cover opacity-80"
-            />
-            {formData?.title && (
-              <div className="absolute inset-0 flex items-center justify-center p-4">
-                <h3 className="text-3xl bg-black/50 p-2 px-4 font-bold text-white text-center drop-shadow-lg">
-                  {formData.title}
-                </h3>
-              </div>
-            )}
-          </div>
-        </div>
-      ) : (
-        <p className="text-sm text-text-muted italic">
-          Add a thumbnail image for your portfolio (required)
-        </p>
-      )}
-      <FileInput
-        name="thumbnail"
-        id="thumbnail-input"
-        required={!currentPortfolio?.thumbnail}
-        onChange={(e) => {
-          handleFileChange(e);
-        }}
-        disabled={isPending}
-      />
-      {inputErrors?.thumbnail && (
-        <p className="text-sm text-error">{inputErrors.thumbnail}</p>
-      )}
-    </div>
-  );
+ return (
+ <div className="space-y-4">
+ {previewUrls?.length || currentPortfolio?.thumbnail ? (
+ <div className="flex flex-col gap-2">
+ <div className="relative aspect-video w-full overflow-hidden border-2 border-border">
+ <img
+ src={previewUrls[0] || currentPortfolio?.thumbnail}
+ alt="Thumbnail Preview"
+ className="w-full h-full object-cover opacity-80"
+ />
+ {formData?.title && (
+ <div className="absolute inset-0 flex items-center justify-center p-4">
+ <h3 className="text-3xl bg-black/50 p-2 px-4 font-bold text-white text-center drop-shadow-lg">
+ {formData.title}
+ </h3>
+ </div>
+ )}
+ </div>
+ </div>
+ ) : (
+ <p className="text-sm text-text-muted italic">
+ Add a thumbnail image for your portfolio (required)
+ </p>
+ )}
+ <FileInput
+ name="thumbnail"
+ id="thumbnail-input"
+ required={!currentPortfolio?.thumbnail}
+ onChange={(e) => {
+ handleFileChange(e);
+ }}
+ disabled={isPending}
+ />
+ {inputErrors?.thumbnail && (
+ <p className="text-sm text-error">{inputErrors.thumbnail}</p>
+ )}
+ </div>
+ );
 };
 
 const FirstStepInputs = () => {
-  const {
-    formData,
-    handleSetFormData,
-    inputErrors,
-    deleteInputErrorProperty,
-    checkSlugAvailability,
-    isCheckingSlugAvailability,
-    isSlugAvailable,
-    currentPortfolio,
-    isPending,
-    categoriesSelected,
-    setCategorySelected,
-    removeCategorySelected,
-  } = usePortfolio();
+ const {
+ formData,
+ handleSetFormData,
+ inputErrors,
+ deleteInputErrorProperty,
+ checkSlugAvailability,
+ isCheckingSlugAvailability,
+ isSlugAvailable,
+ currentPortfolio,
+ isPending,
+ categoriesSelected,
+ setCategorySelected,
+ removeCategorySelected,
+ } = usePortfolio();
 
-  const manuallyChangedSlug = useRef(false);
-  const previousSlugRef = useRef<string | undefined>(formData?.slug);
+ const manuallyChangedSlug = useRef(false);
+ const previousSlugRef = useRef<string | undefined>(formData?.slug);
 
-  const [isValidSlug, setIsValidSlug] = useState<boolean | undefined>(
-    undefined,
-  );
+ const [isValidSlug, setIsValidSlug] = useState<boolean | undefined>(
+ undefined,
+ );
 
-  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    deleteInputErrorProperty("title");
-    const newTitle = e.target.value;
-    handleSetFormData("title", newTitle);
+ const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+ deleteInputErrorProperty("title");
+ const newTitle = e.target.value;
+ handleSetFormData("title", newTitle);
 
-    // Only auto-generate slug if it's empty and wasn't manually changed
-    if (!manuallyChangedSlug.current) {
-      const generatedSlug = generateValidSlug(newTitle);
-      if (generatedSlug && isAValidSlugFormat(generatedSlug)) {
-        handleSetFormData("slug", generatedSlug);
-      } else if (!generatedSlug) {
-        handleSetFormData("slug", "");
-      }
-    }
-  };
+ // Only auto-generate slug if it's empty and wasn't manually changed
+ if (!manuallyChangedSlug.current) {
+ const generatedSlug = generateValidSlug(newTitle);
+ if (generatedSlug && isAValidSlugFormat(generatedSlug)) {
+ handleSetFormData("slug", generatedSlug);
+ } else if (!generatedSlug) {
+ handleSetFormData("slug", "");
+ }
+ }
+ };
 
-  const handleSlugChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Preserve trailing hyphen while typing to allow users to type hyphens
-    const newSlug = generateValidSlug(e.target.value, {
-      preserveTrailingHyphen: true,
-    });
+ const handleSlugChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+ // Preserve trailing hyphen while typing to allow users to type hyphens
+ const newSlug = generateValidSlug(e.target.value, {
+ preserveTrailingHyphen: true,
+ });
 
-    deleteInputErrorProperty("slug");
-    handleSetFormData("slug", newSlug);
-    manuallyChangedSlug.current = !!newSlug;
-  };
+ deleteInputErrorProperty("slug");
+ handleSetFormData("slug", newSlug);
+ manuallyChangedSlug.current = !!newSlug;
+ };
 
-  useEffect(() => {
-    const currentSlug = formData?.slug?.trim();
-    const previousSlug = previousSlugRef.current?.trim();
+ useEffect(() => {
+ const currentSlug = formData?.slug?.trim();
+ const previousSlug = previousSlugRef.current?.trim();
 
-    // Only check if slug actually changed (not on mount/navigation)
-    const slugChanged = currentSlug !== previousSlug;
+ // Only check if slug actually changed (not on mount/navigation)
+ const slugChanged = currentSlug !== previousSlug;
 
-    if (currentSlug) {
-      const isValid = isAValidSlugFormat(currentSlug);
-      setIsValidSlug(isValid);
+ if (currentSlug) {
+ const isValid = isAValidSlugFormat(currentSlug);
+ setIsValidSlug(isValid);
 
-      // Only check availability if slug changed and is valid
-      if (slugChanged && isValid && !currentSlug.endsWith("-")) {
-        checkSlugAvailability();
-      }
-    } else {
-      setIsValidSlug(undefined);
-    }
+ // Only check availability if slug changed and is valid
+ if (slugChanged && isValid && !currentSlug.endsWith("-")) {
+ checkSlugAvailability();
+ }
+ } else {
+ setIsValidSlug(undefined);
+ }
 
-    // Update the ref for next comparison
-    previousSlugRef.current = formData?.slug;
-  }, [formData?.slug, checkSlugAvailability]);
+ // Update the ref for next comparison
+ previousSlugRef.current = formData?.slug;
+ }, [formData?.slug, checkSlugAvailability]);
 
-  // Get slug status message
-  const getSlugStatusMessage = () => {
-    if (isCheckingSlugAvailability) {
-      return (
-        <p className="text-sm text-text-muted">Checking availability...</p>
-      );
-    }
-    if (
-      typeof isSlugAvailable === "boolean" &&
-      currentPortfolio?.slug !== formData.slug
-    ) {
-      if (isSlugAvailable) {
-        return (
-          <p className="text-sm text-green-600">✓ This slug is available</p>
-        );
-      } else {
-        return (
-          <p className="text-sm text-error">✗ This slug is already taken</p>
-        );
-      }
-    }
-    return null;
-  };
+ // Get slug status message
+ const getSlugStatusMessage = () => {
+ if (isCheckingSlugAvailability) {
+ return (
+ <p className="text-sm text-text-muted">Checking availability...</p>
+ );
+ }
+ if (
+ typeof isSlugAvailable === "boolean" &&
+ currentPortfolio?.slug !== formData.slug
+ ) {
+ if (isSlugAvailable) {
+ return (
+ <p className="text-sm text-green-600">✓ This slug is available</p>
+ );
+ } else {
+ return (
+ <p className="text-sm text-error">✗ This slug is already taken</p>
+ );
+ }
+ }
+ return null;
+ };
 
-  return (
-    <div className="flex flex-col md:flex-row gap-6 items-stretch">
-      <div className="shrink-0 md:w-1/3 flex flex-col">
-        <FileInputProvider allowedMimeTypes={ALLOWED_IMAGE_FILE_TYPES}>
-          <ThumbnailInput />
-        </FileInputProvider>
-      </div>
+ return (
+ <div className="flex flex-col md:flex-row gap-6 items-stretch">
+ <div className="shrink-0 md:w-1/3 flex flex-col">
+ <FileInputProvider allowedMimeTypes={ALLOWED_IMAGE_FILE_TYPES}>
+ <ThumbnailInput />
+ </FileInputProvider>
+ </div>
 
-      <div className="flex-1 space-y-4 flex flex-col">
-        <FormComponent.LabelInput
-          value={formData?.title || ""}
-          onChange={(e) => {
-            handleTitleChange(e);
-          }}
-          error={inputErrors?.title}
-          label="Title"
-          required
-          name="title"
-          id="title"
-          type="text"
-          placeholder="My Portfolio"
-          disabled={isPending}
-        />
+ <div className="flex-1 space-y-4 flex flex-col">
+ <FormComponent.LabelInput
+ value={formData?.title || ""}
+ onChange={(e) => {
+ handleTitleChange(e);
+ }}
+ error={inputErrors?.title}
+ label="Title"
+ required
+ name="title"
+ id="title"
+ type="text"
+ placeholder="My Portfolio"
+ disabled={isPending}
+ />
 
-        <div className="space-y-2">
-          <FormComponent.LabelInput
-            value={formData?.slug || ""}
-            onChange={(e) => {
-              handleSlugChange(e);
-            }}
-            error={inputErrors?.slug}
-            label="Slug"
-            required
-            name="slug"
-            id="slug"
-            type="text"
-            placeholder="my-portfolio"
-            extraInfo="A slug is a URL-friendly version of your title (e.g., 'my-awesome-portfolio'). It should be unique as it's used in the portfolio's URL to identify it and makes it easier to find."
-            disabled={isCheckingSlugAvailability || isPending}
-          />
-          {isValidSlug === false && (
-            <p className="text-sm text-error">
-              ✗ Invalid slug format. Example: my-portfolio
-            </p>
-          )}
-          {getSlugStatusMessage()}
-        </div>
+ <div className="space-y-2">
+ <FormComponent.LabelInput
+ value={formData?.slug || ""}
+ onChange={(e) => {
+ handleSlugChange(e);
+ }}
+ error={inputErrors?.slug}
+ label="Slug"
+ required
+ name="slug"
+ id="slug"
+ type="text"
+ placeholder="my-portfolio"
+ extraInfo="A slug is a URL-friendly version of your title (e.g., 'my-awesome-portfolio'). It should be unique as it's used in the portfolio's URL to identify it and makes it easier to find."
+ disabled={isCheckingSlugAvailability || isPending}
+ />
+ {isValidSlug === false && (
+ <p className="text-sm text-error">
+ ✗ Invalid slug format. Example: my-portfolio
+ </p>
+ )}
+ {getSlugStatusMessage()}
+ </div>
 
-        <FormComponent.LabelTextarea
-          value={formData?.description || ""}
-          onChange={(e) => {
-            deleteInputErrorProperty("description");
-            handleSetFormData("description", e.target.value);
-          }}
-          error={inputErrors?.description}
-          rows={4}
-          label="Description"
-          name="description"
-          id="description"
-          placeholder="Describe your portfolio..."
-          disabled={isPending}
-        />
+ <FormComponent.LabelTextarea
+ value={formData?.description || ""}
+ onChange={(e) => {
+ deleteInputErrorProperty("description");
+ handleSetFormData("description", e.target.value);
+ }}
+ error={inputErrors?.description}
+ rows={4}
+ label="Description"
+ name="description"
+ id="description"
+ placeholder="Describe your portfolio..."
+ disabled={isPending}
+ />
 
-        <div className="space-y-2">
-          <Label className="text-sm font-medium">Categories</Label>
-          <UpdateCategoriesProvider userCategories={categoriesSelected}>
-            <CategoryCombobox
-              categoriesSelected={categoriesSelected}
-              setCategorySelected={setCategorySelected}
-              removeCategorySelected={removeCategorySelected}
-            />
-          </UpdateCategoriesProvider>
-          <p className="text-xs text-text-muted">
-            Optional. Select up to 5 categories that describe this portfolio.
-          </p>
-        </div>
+ <div className="space-y-2">
+ <Label className="text-sm font-medium">Categories</Label>
+ <UpdateCategoriesProvider userCategories={categoriesSelected}>
+ <CategoryCombobox
+ categoriesSelected={categoriesSelected}
+ setCategorySelected={setCategorySelected}
+ removeCategorySelected={removeCategorySelected}
+ />
+ </UpdateCategoriesProvider>
+ <p className="text-xs text-text-muted">
+ Optional. Select up to 5 categories that describe this portfolio.
+ </p>
+ </div>
 
-        <div className="flex items-center gap-2">
-          <Checkbox
-            id="portfolio-is-highlight"
-            checked={formData.is_highlight ?? false}
-            onCheckedChange={(checked) => {
-              deleteInputErrorProperty("is_highlight");
-              handleSetFormData("is_highlight", checked === true);
-            }}
-            disabled={isPending}
-          />
-          <Label
-            htmlFor="portfolio-is-highlight"
-            className="text-sm font-normal cursor-pointer"
-          >
-            Show on profile page
-          </Label>
-          <InfoTooltip
-            content={
-              <p className="text-sm">
-                When enabled, this portfolio is highlighted on your public
-                artist profile so visitors can find it more easily.
-              </p>
-            }
-          />
-        </div>
+ <div className="flex items-center gap-2">
+ <Checkbox
+ id="portfolio-is-highlight"
+ checked={formData.is_highlight ?? false}
+ onCheckedChange={(checked) => {
+ deleteInputErrorProperty("is_highlight");
+ handleSetFormData("is_highlight", checked === true);
+ }}
+ disabled={isPending}
+ />
+ <Label
+ htmlFor="portfolio-is-highlight"
+ className="text-sm font-normal cursor-pointer"
+ >
+ Show on profile page
+ </Label>
+ <InfoTooltip
+ content={
+ <p className="text-sm">
+ When enabled, this portfolio is highlighted on your public
+ artist profile so visitors can find it more easily.
+ </p>
+ }
+ />
+ </div>
 
-        <div className="flex items-center gap-2">
-          <Checkbox
-            id="portfolio-is-active"
-            checked={formData.is_active ?? true}
-            onCheckedChange={(checked) => {
-              deleteInputErrorProperty("is_active");
-              handleSetFormData("is_active", checked === true);
-            }}
-            disabled={isPending}
-          />
-          <Label
-            htmlFor="portfolio-is-active"
-            className="text-sm font-normal cursor-pointer"
-          >
-            Active
-          </Label>
-          <InfoTooltip
-            content={
-              <p className="text-sm">
-                When disabled, this portfolio is hidden from your public artist
-                profile and listings. You can still edit it in the atelier.
-              </p>
-            }
-          />
-        </div>
-      </div>
-    </div>
-  );
+ <div className="flex items-center gap-2">
+ <Checkbox
+ id="portfolio-is-active"
+ checked={formData.is_active ?? true}
+ onCheckedChange={(checked) => {
+ deleteInputErrorProperty("is_active");
+ handleSetFormData("is_active", checked === true);
+ }}
+ disabled={isPending}
+ />
+ <Label
+ htmlFor="portfolio-is-active"
+ className="text-sm font-normal cursor-pointer"
+ >
+ Active
+ </Label>
+ <InfoTooltip
+ content={
+ <p className="text-sm">
+ When disabled, this portfolio is hidden from your public artist
+ profile and listings. You can still edit it in the atelier.
+ </p>
+ }
+ />
+ </div>
+ </div>
+ </div>
+ );
 };
 
 export default FirstStepInputs;

@@ -5,19 +5,19 @@ import { getFriendlyApiErrors } from "@/modules/auth/helpers";
 import collectionService from "../collection.service";
 
 export const deleteCollectionAction = async (
-  id: number,
+ id: number,
 ): Promise<ActionReturn<boolean>> => {
-  const response = await collectionService.delete(id);
+ const response = await collectionService.delete(id);
 
-  if (response.error) {
-    return {
-      data: null,
-      errors: getFriendlyApiErrors(response),
-    };
-  }
+ if (response.error) {
+ return {
+ data: null,
+ errors: getFriendlyApiErrors(response),
+ };
+ }
 
-  return {
-    data: true,
-    errors: null,
-  };
+ return {
+ data: true,
+ errors: null,
+ };
 };

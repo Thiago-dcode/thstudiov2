@@ -6,19 +6,19 @@ import { getFriendlyApiErrors } from "@/modules/auth/helpers";
 import usersService from "../users.service";
 
 export const getUserCategoriesAction = async (
-  id: number,
+ id: number,
 ): Promise<ActionReturn<CategoryBase[], undefined>> => {
-  const categoriesResponse = await usersService.getAllCategories(id);
+ const categoriesResponse = await usersService.getAllCategories(id);
 
-  if (categoriesResponse.data) {
-    return {
-      data: categoriesResponse.data,
-      errors: null,
-      inputErrors: undefined,
-    };
-  }
-  return {
-    data: null,
-    errors: getFriendlyApiErrors(categoriesResponse),
-  };
+ if (categoriesResponse.data) {
+ return {
+ data: categoriesResponse.data,
+ errors: null,
+ inputErrors: undefined,
+ };
+ }
+ return {
+ data: null,
+ errors: getFriendlyApiErrors(categoriesResponse),
+ };
 };

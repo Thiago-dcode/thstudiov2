@@ -8,67 +8,67 @@ import { ExpiresIn } from "../../__components/expiresIn";
 import { PasswordUpdateForm } from "../../__components/passwordUpdate-form";
 
 export default async function PasswordRecoveryRecover({
-  searchParams,
+ searchParams,
 }: {
-  searchParams: Promise<{ attempt?: string }>;
+ searchParams: Promise<{ attempt?: string }>;
 }) {
-  const [{ attempt }, passwordRecoveryAttemptCookie] = await Promise.all([
-    searchParams,
-    getPasswordRecoveryAttemptCookie(),
-  ]);
-  let _passwordRecoveryAttemptCookie = passwordRecoveryAttemptCookie;
-  let expiresAt: Date | null = null;
-  if (!attempt) {
-    redirect("/auth/password-recovery");
-  }
-  //If there is no cookie, it means that the user open the link in another browser.
-  if (_passwordRecoveryAttemptCookie) {
-    expiresAt = new Date(_passwordRecoveryAttemptCookie.expires_at);
-    if (expiresAt < new Date()) {
-      redirect("/auth/password-recovery");
-    }
-  }
-  //TODO: validate the attempt
-  if (!_passwordRecoveryAttemptCookie?.code_validated) {
-    const result = await authService.validatePasswordRecoveryAttempt({
-      code: attempt,
-    });
-    if (result.error || result.data === null) {
-      redirect("/auth/password-recovery");
-    }
-    expiresAt = new Date(result.data.expires_at);
-    if (expiresAt < new Date()) {
-      redirect("/auth/password-recovery");
-    }
-    _passwordRecoveryAttemptCookie = result.data;
-  }
+ const [{ attempt }, passwordRecoveryAttemptCookie] = await Promise.all([
+ searchParams,
+ getPasswordRecoveryAttemptCookie(),
+ ]);
+ let _passwordRecoveryAttemptCookie = passwordRecoveryAttemptCookie;
+ let expiresAt: Date | null = null;
+ if (!attempt) {
+ redirect("/auth/password-recovery");
+ }
+ //If there is no cookie, it means that the user open the link in another browser.
+ if (_passwordRecoveryAttemptCookie) {
+ expiresAt = new Date(_passwordRecoveryAttemptCookie.expires_at);
+ if (expiresAt < new Date()) {
+ redirect("/auth/password-recovery");
+ }
+ }
+ //TODO: validate the attempt
+ if (!_passwordRecoveryAttemptCookie?.code_validated) {
+ const result = await authService.validatePasswordRecoveryAttempt({
+ code: attempt,
+ });
+ if (result.error || result.data === null) {
+ redirect("/auth/password-recovery");
+ }
+ expiresAt = new Date(result.data.expires_at);
+ if (expiresAt < new Date()) {
+ redirect("/auth/password-recovery");
+ }
+ _passwordRecoveryAttemptCookie = result.data;
+ }
 
-  return (
-    <PageComponent.Container>
-      <PageComponent.Content>
-        <PageComponent.Header>
-          <Lock className="size-10" />
-          <PageComponent.Title title="Set New Password" />
-          <PageComponent.SubTitle subTitle="Choose a strong password for your account" />
-        </PageComponent.Header>
+ return (
+ <PageComponent.Container>
+ <PageComponent.Content>
+ <PageComponent.Header>
+ <Lock className="size-10" />
+ <PageComponent.Title title="Set New Password" />
+ <PageComponent.SubTitle subTitle="Choose a strong password for your account" />
+ </PageComponent.Header>
 
-        <PasswordUpdateForm passwordAttempt={_passwordRecoveryAttemptCookie} />
+ <PasswordUpdateForm passwordAttempt={_passwordRecoveryAttemptCookie} />
 
-        <div className="relative flex justify-center text-sm">
-          <p className="px-2 text-text-muted">Changed your mind?</p>
-          <Link href="/auth/login">Back to Sign In</Link>
-        </div>
-      </PageComponent.Content>
+ <div className="relative flex justify-center text-sm">
+ <p className="px-2 text-text-muted">Changed your mind?</p>
+ <Link href="/auth/login">Back to Sign In</Link>
+ </div>
+ </PageComponent.Content>
 
-      <PageComponent.Footer>
-        {/* Timer Warning */}
-        {expiresAt && (
-          <ExpiresIn
-            expiresIn={expiresAt.getTime() - Date.now()}
-            redirect="/auth/password-recovery"
-          />
-        )}
-      </PageComponent.Footer>
-    </PageComponent.Container>
-  );
+ <PageComponent.Footer>
+ {/* Timer Warning */}
+ {expiresAt && (
+ <ExpiresIn
+ expiresIn={expiresAt.getTime() - Date.now()}
+ redirect="/auth/password-recovery"
+ />
+ )}
+ </PageComponent.Footer>
+ </PageComponent.Container>
+ );
 }

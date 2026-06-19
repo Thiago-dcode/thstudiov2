@@ -15,43 +15,43 @@ import { UserMetricsProvider } from "@/modules/users/providers/user-metrics.prov
 import { FinishSetupDialog } from "../__components/finish-setup-dialog";
 
 const AdminLayout = async ({ children }: { children: ReactNode }) => {
-  const userAuth = await userSession();
-  if (!userAuth) {
-    redirect("/");
-  }
-  return (
-    <>
-      <FinishSetupDialog user={userAuth} />
-      <UserBenefitModal
-        user={userAuth}
-        subscriptionPath="/atelier/settings/subscription"
-      />
-      <MainNavProvider defaultShrinked>
-        <UserMetricsProvider userId={userAuth.id}>
-          <MediaProvider>
-            <PortfolioProvider user={userAuth}>
-              <CollectionProvider user={userAuth}>
-                <UserAccountBannedModal />
-                <UploadMediaModal />
-                <AlertPortfolioButton />
-                <div className="flex size-full items-center justify-start">
-                  <AdminHeader />
-                  <main className="size-full flex flex-col items-start justify-start  ">
-                    <TopNav username={userAuth.username} />
+ const userAuth = await userSession();
+ if (!userAuth) {
+ redirect("/");
+ }
+ return (
+ <>
+ <FinishSetupDialog user={userAuth} />
+ <UserBenefitModal
+ user={userAuth}
+ subscriptionPath="/atelier/settings/subscription"
+ />
+ <MainNavProvider defaultShrinked>
+ <UserMetricsProvider userId={userAuth.id}>
+ <MediaProvider>
+ <PortfolioProvider user={userAuth}>
+ <CollectionProvider user={userAuth}>
+ <UserAccountBannedModal />
+ <UploadMediaModal />
+ <AlertPortfolioButton />
+ <div className="flex size-full items-center justify-start">
+ <AdminHeader />
+ <main className="size-full flex flex-col items-start justify-start ">
+ <TopNav username={userAuth.username} />
 
-                    <div className="flex w-full justify-start h-full overflow-y-scroll">
-                      {" "}
-                      {children}
-                    </div>
-                  </main>
-                </div>
-              </CollectionProvider>
-            </PortfolioProvider>
-          </MediaProvider>
-        </UserMetricsProvider>
-      </MainNavProvider>
-    </>
-  );
+ <div className="flex w-full justify-start h-full overflow-y-scroll">
+ {" "}
+ {children}
+ </div>
+ </main>
+ </div>
+ </CollectionProvider>
+ </PortfolioProvider>
+ </MediaProvider>
+ </UserMetricsProvider>
+ </MainNavProvider>
+ </>
+ );
 };
 
 export default AdminLayout;

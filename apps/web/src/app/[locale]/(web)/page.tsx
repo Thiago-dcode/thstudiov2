@@ -9,23 +9,23 @@ import { ValuePillarsSection } from "./_components/landing/value-pillars-section
 import { WebSection } from "./_components/landing/web-section";
 
 export default async function Home() {
-  const waitListPosition = await WaitListService.getCurrentPosition();
-  const currentWaitListPosition = waitListPosition.data?.position ?? null;
+ const waitListPosition = await WaitListService.getCurrentPosition();
+ const currentWaitListPosition = waitListPosition.data?.position ?? null;
 
-  return (
-    <>
-      <HeroSection currentWaitListPosition={currentWaitListPosition} />
-      <ValuePillarsSection />
-      <SocialProofSection />
-      <FeatureCategoriesSection />
-      {/* <HowItWorksSection /> */}
-      <FeaturedArtistsSection />
-      <CtaSection />
-      <WebSection>
-        <WebSection.Container>
-          <FaqsContent />
-        </WebSection.Container>
-      </WebSection>
-    </>
-  );
+ return (
+ <>
+ <HeroSection currentWaitListPosition={currentWaitListPosition} />
+ <ValuePillarsSection />
+ <SocialProofSection />
+ <FeatureCategoriesSection />
+ {/* <HowItWorksSection /> */}
+ <FeaturedArtistsSection />
+ <CtaSection />
+ <WebSection>
+ <WebSection.Container>
+ <FaqsContent />
+ </WebSection.Container>
+ </WebSection>
+ </>
+ );
 }
