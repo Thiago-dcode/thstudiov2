@@ -4,30 +4,30 @@ import { fetchApi } from "@/lib/facade/fetchApi";
 import { BaseService } from "@/lib/services/base.service";
 
 class InvitationLinkService extends BaseService {
- constructor() {
- super(fetchApi(), "invitation-links");
- }
+  constructor() {
+    super(fetchApi(), "invitation-links");
+  }
 
- async findByCode(code: string): Promise<ApiResponse<InvitationLink>> {
- return await this.fetchApi.get({
- resource: `${encodeURIComponent(code)}/code`,
- });
- }
+  async findByCode(code: string): Promise<ApiResponse<InvitationLink>> {
+    return await this.fetchApi.get({
+      resource: `${encodeURIComponent(code)}/code`,
+    });
+  }
 
- async validateCode(
- code: string,
- ): Promise<ApiResponse<InvitationLink | null>> {
- return await this.fetchApi.get({
- resource: `${encodeURIComponent(code)}/code/valid`,
- });
- }
+  async validateCode(
+    code: string,
+  ): Promise<ApiResponse<InvitationLink | null>> {
+    return await this.fetchApi.get({
+      resource: `${encodeURIComponent(code)}/code/valid`,
+    });
+  }
 }
 
 let InvitationLinkServiceInstance: InvitationLinkService | null = null;
 
 export default (() => {
- if (!InvitationLinkServiceInstance) {
- InvitationLinkServiceInstance = new InvitationLinkService();
- }
- return InvitationLinkServiceInstance;
+  if (!InvitationLinkServiceInstance) {
+    InvitationLinkServiceInstance = new InvitationLinkService();
+  }
+  return InvitationLinkServiceInstance;
 })();

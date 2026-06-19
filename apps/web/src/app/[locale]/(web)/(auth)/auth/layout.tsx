@@ -3,15 +3,15 @@ import type { ReactNode } from "react";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 
 export default async function AuthLayout({
- children,
+  children,
 }: {
- children: ReactNode;
+  children: ReactNode;
 }) {
- const userAuth = await userSession();
+  const userAuth = await userSession();
 
- if (userAuth) {
- redirect("/");
- }
+  if (userAuth) {
+    redirect("/");
+  }
 
- return <>{children}</>;
+  return <>{children}</>;
 }

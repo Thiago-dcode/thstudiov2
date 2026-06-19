@@ -1,8 +1,8 @@
 "use server";
 
 import type {
- GetAllUserMediaQueryParams,
- Media,
+  GetAllUserMediaQueryParams,
+  Media,
 } from "@repo/common-lib/types/media";
 import type { ActionReturn } from "@repo/common-lib/types/response";
 import { getFriendlyApiErrors } from "@/modules/auth/helpers";
@@ -11,23 +11,23 @@ import usersService from "@/modules/users/users.service";
 export type GetAllUserMediaParams = GetAllUserMediaQueryParams;
 
 export const getAllUserMediaAction = async (
- userId: number,
- params?: GetAllUserMediaQueryParams,
+  userId: number,
+  params?: GetAllUserMediaQueryParams,
 ): Promise<ActionReturn<Media[], undefined>> => {
- const result = await usersService.getAllMedia(userId, params);
+  const result = await usersService.getAllMedia(userId, params);
 
- if (result.data) {
- return {
- data: result.data,
- pagination: result.pagination,
- errors: null,
- inputErrors: undefined,
- };
- }
+  if (result.data) {
+    return {
+      data: result.data,
+      pagination: result.pagination,
+      errors: null,
+      inputErrors: undefined,
+    };
+  }
 
- return {
- data: null,
- errors: getFriendlyApiErrors(result),
- inputErrors: undefined,
- };
+  return {
+    data: null,
+    errors: getFriendlyApiErrors(result),
+    inputErrors: undefined,
+  };
 };

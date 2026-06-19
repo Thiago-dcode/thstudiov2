@@ -6,21 +6,21 @@ import { artistsFilterComboboxInputClassName } from "./artists-filter-combobox-i
 import { useFilters } from "./filters.provider";
 
 const CategoryFilter = () => {
- const { categoriesSelected, pushCategory, removeCategory } = useFilters();
+  const { categoriesSelected, pushCategory, removeCategory } = useFilters();
 
- const handleRemove = useCallback(
- (cat: { slug: string }) => removeCategory(cat.slug),
- [removeCategory],
- );
+  const handleRemove = useCallback(
+    (cat: { slug: string }) => removeCategory(cat.slug),
+    [removeCategory],
+  );
 
- return (
- <CategoryCombobox
- categoriesSelected={categoriesSelected}
- setCategorySelected={pushCategory}
- removeCategorySelected={handleRemove}
- inputClassName={artistsFilterComboboxInputClassName}
- />
- );
+  return (
+    <CategoryCombobox
+      categoriesSelected={categoriesSelected}
+      setCategorySelected={pushCategory}
+      removeCategorySelected={handleRemove}
+      inputClassName={artistsFilterComboboxInputClassName}
+    />
+  );
 };
 
 export default CategoryFilter;

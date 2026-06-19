@@ -8,52 +8,52 @@ import { PlanSubscriptionProvider } from "@/modules/plan-subscriptions/providers
 import { PlanCard } from "@/modules/plans/components/plan.card";
 
 type PlanSubscriptionListProps = {
- plans: FullPlan[];
- paymentMethods: PaymentMethod[];
- successUrl: string;
- cancelUrl: string;
- benefit?: BenefitWithRedeemed;
- onErrorComponent: ReactNode;
- onFreeComponent: ReactNode;
+  plans: FullPlan[];
+  paymentMethods: PaymentMethod[];
+  successUrl: string;
+  cancelUrl: string;
+  benefit?: BenefitWithRedeemed;
+  onErrorComponent: ReactNode;
+  onFreeComponent: ReactNode;
 };
 
 export default function PlanSubscriptionList({
- plans,
- paymentMethods,
- successUrl,
- cancelUrl,
- onErrorComponent,
- onFreeComponent,
- benefit,
+  plans,
+  paymentMethods,
+  successUrl,
+  cancelUrl,
+  onErrorComponent,
+  onFreeComponent,
+  benefit,
 }: PlanSubscriptionListProps) {
- const topTierPlan = plans.find((plan) => plan.top_tier) ?? null;
- const montlyPlanPrice = topTierPlan?.prices.find(
- (p) => p.billing_type === "MONTHLY",
- );
- const topTierPlanName =
- topTierPlan?.translation?.name || topTierPlan?.name || "";
- return (
- <PlanSubscriptionProvider
- availablePaymentMethods={paymentMethods}
- successUrl={successUrl}
- cancelUrl={cancelUrl}
- benefit={benefit}
- onErrorComponent={onErrorComponent}
- onFreeComponent={onFreeComponent}
- >
- <ChangeSubscriptionDialog />
- {montlyPlanPrice && (
- <BenefitSubscriptionDialog
- planPrice={montlyPlanPrice}
- planName={topTierPlanName}
- />
- )}
+  const topTierPlan = plans.find((plan) => plan.top_tier) ?? null;
+  const montlyPlanPrice = topTierPlan?.prices.find(
+    (p) => p.billing_type === "MONTHLY",
+  );
+  const topTierPlanName =
+    topTierPlan?.translation?.name || topTierPlan?.name || "";
+  return (
+    <PlanSubscriptionProvider
+      availablePaymentMethods={paymentMethods}
+      successUrl={successUrl}
+      cancelUrl={cancelUrl}
+      benefit={benefit}
+      onErrorComponent={onErrorComponent}
+      onFreeComponent={onFreeComponent}
+    >
+      <ChangeSubscriptionDialog />
+      {montlyPlanPrice && (
+        <BenefitSubscriptionDialog
+          planPrice={montlyPlanPrice}
+          planName={topTierPlanName}
+        />
+      )}
 
- <div className="size-full flex flex-wrap items-center justify-center gap-8">
- {plans.map((plan) => (
- <PlanCard key={plan.id} plan={plan} />
- ))}
- </div>
- </PlanSubscriptionProvider>
- );
+      <div className="size-full flex flex-wrap items-center justify-center gap-8">
+        {plans.map((plan) => (
+          <PlanCard key={plan.id} plan={plan} />
+        ))}
+      </div>
+    </PlanSubscriptionProvider>
+  );
 }

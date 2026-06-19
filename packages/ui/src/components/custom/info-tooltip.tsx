@@ -4,25 +4,25 @@ import { Info } from "lucide-react"
 import { cn } from "../../lib/utils"
 
 type InfoTooltipProps = {
-  content: ReactNode
-  iconClassName?: string
-  openDelay?: number
+ content: ReactNode
+ iconClassName?: string
+ openDelay?: number
 }
 
 export const InfoTooltip = ({ 
-  content, 
-  iconClassName,
-  openDelay = 200 
+ content, 
+ iconClassName,
+ openDelay = 200 
 }: InfoTooltipProps) => {
-  return (
-    <HoverCard openDelay={openDelay}>
-      <HoverCardTrigger>
-        <Info className={cn("w-4 h-4 text-text-muted", iconClassName)} />
-      </HoverCardTrigger>
-      <HoverCardContent>
-        {content}
-      </HoverCardContent>
-    </HoverCard>
-  )
+ return (
+ <HoverCard openDelay={openDelay}>
+ <HoverCardTrigger>
+ <Info className={cn("w-4 h-4 text-text-muted", iconClassName)} />
+ </HoverCardTrigger>
+ <HoverCardContent>
+ {content}
+ </HoverCardContent>
+ </HoverCard>
+ )
 }
 

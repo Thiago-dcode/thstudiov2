@@ -6,18 +6,18 @@ import { getFriendlyApiErrors } from "@/modules/auth/helpers";
 import usersService from "../users.service";
 
 export const getUserCompactedAction = async (
- username: string,
+  username: string,
 ): Promise<ActionReturn<CompactUser, undefined>> => {
- const user = await usersService.getCompact(username);
+  const user = await usersService.getCompact(username);
 
- if (user.data) {
- return {
- data: user.data,
- errors: null,
- };
- }
- return {
- data: null,
- errors: getFriendlyApiErrors(user),
- };
+  if (user.data) {
+    return {
+      data: user.data,
+      errors: null,
+    };
+  }
+  return {
+    data: null,
+    errors: getFriendlyApiErrors(user),
+  };
 };

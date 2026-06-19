@@ -11,84 +11,84 @@ import authService from "../auth.service";
 import { deletePasswordAttemptCookie } from "./password-recovery.action";
 
 export const PasswordUpdateAction = async (
- formData: FormData,
+  formData: FormData,
 ): Promise<
- ActionReturn<
- User,
- {
- attempt?: string;
- }
- >
+  ActionReturn<
+    User,
+    {
+      attempt?: string;
+    }
+  >
 > => {
- const { password, code } = {
- password: formData.get("password") as string,
- code: formData.get("attempt") as string,
- };
+  const { password, code } = {
+    password: formData.get("password") as string,
+    code: formData.get("attempt") as string,
+  };
 
- const validatedPassword = zod
- .string("Invalid password")
- .min(8, "Invalid password")
- .safeParse(password);
+  const validatedPassword = zod
+    .string("Invalid password")
+    .min(8, "Invalid password")
+    .safeParse(password);
 
- if (!validatedPassword.success) {
- return {
- errors: ["Password must have at least 8 characters long"],
- data: null,
- inputs: {
- attempt: code,
- },
- };
- }
+  if (!validatedPassword.success) {
+    return {
+      errors: ["Password must have at least 8 characters long"],
+      data: null,
+      inputs: {
+        attempt: code,
+      },
+    };
+  }
 
- const result = await authService.updatePassword({
- code,
- password,
- });
- if (result.error) {
- const errorCode = result.error?.status_code;
+  const result = await authService.updatePassword({
+    code,
+    password,
+  });
+  if (result.error) {
+    const errorCode = result.error?.status_code;
 
- return {
- errors:
- errorCode === 400 ? result.error?.errors : ["Something went wrong"],
- data: null,
- inputs: {
- attempt: code,
- },
- };
- }
+    return {
+      errors:
+        errorCode === 400 ? result.error?.errors : ["Something went wrong"],
+      data: null,
+      inputs: {
+        attempt: code,
+      },
+    };
+  }
 
- await deletePasswordAttemptCookie();
+  await deletePasswordAttemptCookie();
 
- return {
- data: result.data!,
- errors: null,
- inputs: {},
- };
+  return {
+    data: result.data!,
+    errors: null,
+    inputs: {},
+  };
 };
 
 export const setPasswordUpdatedCookie = async () => {
- const cookieStore = await cookies();
- const data = encrypt("success", config.encryption_secret);
- cookieStore.set(PASSWORD_UPDATED_COOKIE_NAME, data, {
- httpOnly: true,
- maxAge: 30, //1 minute
- });
+  const cookieStore = await cookies();
+  const data = encrypt("success", config.encryption_secret);
+  cookieStore.set(PASSWORD_UPDATED_COOKIE_NAME, data, {
+    httpOnly: true,
+    maxAge: 30, //1 minute
+  });
 };
 export const getPasswordUpdatedCookie = async () => {
- const cookieStore = await cookies();
- const data = cookieStore.get(PASSWORD_UPDATED_COOKIE_NAME)?.value;
- if (!data) {
- return null;
- }
- const result = decrypt(data, config.encryption_secret);
- if (!result) return null;
- return result;
+  const cookieStore = await cookies();
+  const data = cookieStore.get(PASSWORD_UPDATED_COOKIE_NAME)?.value;
+  if (!data) {
+    return null;
+  }
+  const result = decrypt(data, config.encryption_secret);
+  if (!result) return null;
+  return result;
 };
 
 export const deletePasswordUpdatedCookie = async () => {
- const cookieStore = await cookies();
- cookieStore.set(PASSWORD_UPDATED_COOKIE_NAME, "", {
- httpOnly: true,
- maxAge: 0,
- });
+  const cookieStore = await cookies();
+  cookieStore.set(PASSWORD_UPDATED_COOKIE_NAME, "", {
+    httpOnly: true,
+    maxAge: 0,
+  });
 };

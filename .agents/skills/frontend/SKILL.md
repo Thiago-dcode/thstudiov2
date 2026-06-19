@@ -28,21 +28,48 @@ description: >
 
 ---
 
-## 2. Design Language — Warm Editorial
+## 2. Design Language — Editorial Minimalist
 
-**Style**: Light-first warm editorial with dark mode support. Brand identity is a warm flame gradient (gold → orange → red): ember (`#ffd361`) → flare (`#fe9b22`) → blaze (`#d62713`).
+**Style**: Professional, minimalist, editorial, quietly exclusive. Light-first with dark mode support. UI disappears — only the user's portfolio/art content commands attention. No decoration competing with content.
 
-- **Colors**: Use design tokens from `globals.css` — never hardcode hex values.
-  - **Brand scale**: `--brand-subtle` → `--brand-light` (ember `#ffd361`) → `--brand` (flare `#fe9b22`) → `--brand-dark` (blaze `#d62713`) → `--brand-text` → `--brand-ink`. Use `--brand-light` → `--brand` → `--brand-dark` as gradient stops; use the deeper `--brand-text`/`--brand-ink` for accent text (flare/blaze are too light for body-size text).
-  - **Surfaces**: `--surface` (bg) → `--surface-raised` → `--surface-border` → `--surface-muted` → `--surface-secondary` → `--surface-primary` → `--surface-ink` (text).
-  - **Semantic aliases**: `--color-bg`, `--color-fg`, `--color-fg-1`, `--color-fg-2`, `--color-text`, `--color-text-muted`, `--color-accent`, `--color-border`.
+**Tone references** (feeling, not literal copying): costarastrology.com (editorial restraint, typographic confidence, whitespace), zara.com (sharp edges, neutral palette, product-first, sparing accent).
+
+- **Colors**: Use design tokens from `globals.css` — **never hardcode hex values in components**.
+  - **Accent**: `--color-accent` (`#B20000`) — rationed strictly (see Accent Rationing Rule below).
+  - **Surfaces**: `--color-bg` (page) → `--color-fg` (card) → `--color-fg-1` (chip/hover fill) → `--color-fg-2` (card border).
+  - **Text**: `--color-text` (primary) → `--color-text-muted` (secondary).
+  - **Borders**: `--color-border` (default) → `--color-border-em` (emphasized).
   - Dark mode overrides via `.dark` class — all tokens adapt automatically.
 - **Typography**:
   - **Serif** (`--font-serif`) for editorial headings where appropriate.
   - **Sans** for UI, labels, and interactive elements.
   - **Scale**: `--size-xs` (0.75rem), `--size-sm` (0.875rem), `--size-base` (1rem), `--size-lg` (1.125rem). Use Tailwind `text-xs/sm/base/lg`.
-- **Layout**: Ample negative space. Keep page backgrounds calm/off-white or off-black; use subtle token-driven flame gradients on cards, CTAs, and focused accents instead of full-page background gradients.
-- **Tone**: Warm, confident, editorial. Approachable but professional.
+  - **Editorial hierarchy**: Confident type scale, real hierarchy, generous line-height/whitespace. Use weight/size (not color/decoration) to signal importance.
+- **Layout**: Ample negative space. Page backgrounds calm and neutral (`#F8F6F2` light / `#1C1B19` dark). Cards and chrome stay quiet — no gradients, no decorative fills on surfaces.
+- **Tone**: Restrained, confident, editorial. Professional and quietly exclusive.
+
+### Zero Radius Rule
+
+**Zero border-radius everywhere** — sharp corners only. Buttons, cards, inputs, modals, chips, avatars, everything. No `rounded-sm/md/lg/xl`. The only exceptions are functionally circular elements (slider thumb, scrollbar thumb) where `rounded-full` is required for the control to work.
+
+### Accent Rationing Rule
+
+`--color-accent` (`#B20000`) is **rationed** — use only for:
+- Waitlist / primary CTA buttons
+- Primary registration actions
+- Isolated punchy words/labels for deliberate emphasis
+
+**Never** use accent as:
+- Background fill on cards, sections, or decorative surfaces
+- Border decoration or ambient tinting
+- General text color or link color
+- Gradients or glow effects
+
+When in doubt, use neutral tokens. Secondary and ghost buttons remain neutral.
+
+### UI-as-Frame Rule
+
+Chrome (nav, cards, headers, controls) stays quiet: neutral tones, restrained type, generous whitespace. Uploaded portfolio/art is the visual focus everywhere. When in doubt, quieter UI.
 
 ---
 
@@ -63,7 +90,7 @@ description: >
 - Clear heading hierarchy: H1 → H2 → H3, never skip levels.
 - Line length: **60–80 characters** for body text.
 - Contrast ratio: **≥ 4.5:1** for body, ≥ 3:1 for large text (WCAG AA).
-- Use `--radius-sm` (0.5rem), `--radius-md` (0.75rem), `--radius-lg` (1rem), `--radius-xl` (1.25rem) for border-radius — map to Tailwind `rounded-sm/md/lg/xl`.
+- **Zero border-radius** — sharp corners everywhere (see Zero Radius Rule in §2).
 
 ---
 
@@ -73,16 +100,15 @@ All colors come from `packages/ui/src/styles/globals.css`. **Never hardcode hex 
 
 | Purpose | Token | Tailwind class |
 |---------|-------|----------------|
-| Background | `--color-bg` | `bg-bg` |
-| Foreground surface | `--color-fg` | `bg-fg` |
-| Elevated surface | `--color-fg-1`, `--color-fg-2` | `bg-fg-1`, `bg-fg-2` |
+| Page background | `--color-bg` | `bg-bg` |
+| Card / raised surface | `--color-fg` | `bg-fg` |
+| Chip / hover fill | `--color-fg-1` | `bg-fg-1` |
+| Card border | `--color-fg-2` | `bg-fg-2`, `border-fg-2` |
 | Primary text | `--color-text` | `text-text` |
-| Muted text | `--color-text-muted` | `text-text-muted` |
-| Accent (brand flare) | `--color-accent` | `bg-accent`, `text-accent` |
-| Accent text | `--color-accent-text` | `text-accent-text` |
-| Accent muted | `--color-accent-muted` | `bg-accent-muted` |
-| Secondary | `--color-secondary` | `bg-secondary` |
-| Border | `--color-border` | `border-border` |
+| Secondary text | `--color-text-muted` | `text-text-muted` |
+| Accent (rationed) | `--color-accent` | `bg-accent`, `text-accent` |
+| Default border | `--color-border` | `border-border` |
+| Emphasized border | `--color-border-em` | `border-border-em` |
 | Success | `--color-success` / `--color-success-fg` | `text-success`, `bg-success-fg` |
 | Error | `--color-error` / `--color-error-fg` | `text-error`, `bg-error-fg` |
 | Warning | `--color-warning` / `--color-warning-fg` | `text-warning`, `bg-warning-fg` |
@@ -98,6 +124,7 @@ All colors come from `packages/ui/src/styles/globals.css`. **Never hardcode hex 
 ## 6. CTAs & Buttons
 
 - **One primary CTA per view** — hierarchy: primary > secondary > ghost.
+- **Accent background** (`bg-accent`, `#B20000`) is permitted **only** on primary CTAs (waitlist, registration, key conversion actions). Secondary and ghost buttons remain neutral.
 - Minimum touch target: **44×44px**.
 - Always show hover, focus, active, and disabled states.
 - Button labels must describe the action: "Save changes" not "Submit".
@@ -215,7 +242,8 @@ const { handleSubmit, isPending, errors } = useHandleAction({
 [ ] useHandleAction used for all Server Actions
 [ ] No hardcoded hex/px values — use design tokens from globals.css
 [ ] Cards use `surface-card` or `surface-card-strong` utility classes
-[ ] Border-radius uses `--radius-*` tokens
+[ ] Zero border-radius everywhere — no `rounded-*` except `rounded-full` on functionally circular controls (slider thumb, scrollbar thumb)
+[ ] Accent color used only on CTAs and deliberate emphasis — not on cards, sections, or decoration
 ```
 
 ---

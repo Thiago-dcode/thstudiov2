@@ -6,18 +6,18 @@ import { getFriendlyApiErrors } from "@/modules/auth/helpers";
 import userBenefitService from "../user-benefit.service";
 
 export const getUserBenefitAction = async (
- id: number,
+  id: number,
 ): Promise<ActionReturn<BenefitWithRedeemed, undefined>> => {
- const result = await userBenefitService.getByUserId(id);
+  const result = await userBenefitService.getByUserId(id);
 
- if (result.data) {
- return {
- data: result.data,
- errors: null,
- };
- }
- return {
- data: null,
- errors: getFriendlyApiErrors(result),
- };
+  if (result.data) {
+    return {
+      data: result.data,
+      errors: null,
+    };
+  }
+  return {
+    data: null,
+    errors: getFriendlyApiErrors(result),
+  };
 };

@@ -6,6 +6,7 @@
     "dev": "tsx watch src/main.ts",
     "build": "tsc --incremental false",
     "start": "node dist/main.js",
+    "deploy": "echo 'deployed'",
     "lint": "tsc --noEmit"
   },
   "dependencies": {
