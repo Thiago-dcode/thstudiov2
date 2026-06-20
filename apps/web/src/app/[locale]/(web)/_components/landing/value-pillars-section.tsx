@@ -1,13 +1,11 @@
-import { Handshake, LayoutTemplate, Sparkles } from "lucide-react";
 import { getTranslations } from "next-intl/server";
-import type { ReactNode } from "react";
+import Image, { type StaticImageData } from "next/image";
+import brainIcon from "@/assets/icons/custom/brain.png";
+import cloudIcon from "@/assets/icons/custom/cloud.png";
+import handsIcon from "@/assets/icons/custom/hands.png";
 import { WebSection } from "./web-section";
 
-const ICONS: ReactNode[] = [
-  <LayoutTemplate key="layout" className="size-6" />,
-  <Sparkles key="sparkles" className="size-6" />,
-  <Handshake key="handshake" className="size-6" />,
-];
+const ICONS: StaticImageData[] = [cloudIcon, brainIcon, handsIcon];
 
 export async function ValuePillarsSection() {
   const t = await getTranslations("landing.valuePillars");
@@ -26,21 +24,30 @@ export async function ValuePillarsSection() {
           {items.map((pillar, index) => (
             <article
               key={pillar.title}
-              className="surface-card group relative flex flex-col gap-5 overflow-hidden p-8 transition-all duration-300 hover:border-border-em hover:shadow-lg tablet:p-10"
+              className="surface-card group relative flex flex-col overflow-hidden transition-all duration-300 hover:border-border-em hover:shadow-lg"
             >
               <div
                 className="pillar-card-glow pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
                 aria-hidden
               />
-              <span className="relative flex size-12 items-center justify-center bg-fg-1 text-text">
-                {ICONS[index]}
-              </span>
-              <h3 className="relative text-xl font-bold tracking-tight text-text">
-                {pillar.title}
-              </h3>
-              <p className="relative text-base leading-relaxed text-text-muted tablet:text-lg">
-                {pillar.description}
-              </p>
+
+              <div className="flex items-start justify-between p-8 tablet:p-10">
+                <Image src={ICONS[index]!} alt="" className="size-16 object-contain" />
+                <span className="font-mono text-sm text-text-muted opacity-40 select-none">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+              </div>
+
+              <div className="mx-8 border-t border-border tablet:mx-10" />
+
+              <div className="flex flex-col gap-3 p-8 pt-6 tablet:p-10 tablet:pt-6">
+                <h3 className="text-xl font-bold tracking-tight text-text">
+                  {pillar.title}
+                </h3>
+                <p className="text-base leading-relaxed text-text-muted tablet:text-lg">
+                  {pillar.description}
+                </p>
+              </div>
             </article>
           ))}
         </div>

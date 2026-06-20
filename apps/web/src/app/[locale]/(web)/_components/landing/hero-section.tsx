@@ -1,4 +1,4 @@
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Sparkle } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { serverEnv } from "@/env/server";
 import { WaitListForm } from "@/modules/wait-list/components/wait-list-form";
@@ -33,9 +33,9 @@ export async function HeroSection() {
       <div aria-hidden="true" className="hero-glow absolute inset-0 z-2" />
 
       {/* ── Content ── */}
-      <div className="relative z-10 mx-auto flex w-full flex-col items-center gap-6 px-6 py-16 text-center tablet:gap-8 tablet:px-10 tablet:py-24">
-        {/* <span className="hero-stagger-1 inline-flex items-center gap-2 border border-border/40 bg-fg/50 px-4 py-1.5 text-[0.65rem] font-medium uppercase tracking-[0.18em] text-text-muted backdrop-blur-md">
-          <Sparkles className="size-3 text-text-muted" aria-hidden="true" />
+      <div className="relative z-10 mx-auto flex w-full flex-col items-center text-center gap-8 laptop:gap-18 tablet:px-10 tablet:py-24 px-4">
+        {/* <span className="hero-stagger-1 inline-flex items-center gap-2 border border-border/40 bg-fg/50 px-4 py-1.5 text-[0.65rem] font-medium uppercase tracking-[0.18em] text-text-muted backdrop-blur-md max-w-fit">
+          <Sparkle className="size-3 text-text-muted" aria-hidden="true" />
           {t("disclaimer")}
         </span> */}
         <div className="flex flex-col w-full items-center gap-5">
@@ -44,7 +44,7 @@ export async function HeroSection() {
             className="hero-title hero-stagger-2  tracking-tight text-text"
           >
             {t("titlePrefix")}{" "}
-            <span className="text-accent ">{t("titleAccent")}</span>{" "}
+            <span className="text-fire itali">{t("titleAccent")}</span>{" "}
             {t("titleSuffix")}
           </h1>
 

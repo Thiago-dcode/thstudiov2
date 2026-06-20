@@ -1,13 +1,11 @@
-import { Palette, Sparkles, Users } from "lucide-react";
 import { getTranslations } from "next-intl/server";
-import type { ReactNode } from "react";
+import Image, { type StaticImageData } from "next/image";
+import arrowIcon from "@/assets/icons/custom/arrow.png";
+import crownIcon from "@/assets/icons/custom/crown.png";
+import starIcon from "@/assets/icons/custom/star.png";
 import { WebSection } from "./web-section";
 
-const ICONS: ReactNode[] = [
-  <Palette key="palette" className="size-4 shrink-0 text-text-muted" />,
-  <Sparkles key="sparkles" className="size-4 shrink-0 text-text-muted" />,
-  <Users key="users" className="size-4 shrink-0 text-text-muted" />,
-];
+const ICONS: StaticImageData[] = [crownIcon ,starIcon , arrowIcon];
 
 export async function SocialProofSection() {
   const t = await getTranslations("landing.socialProof");
@@ -15,25 +13,29 @@ export async function SocialProofSection() {
 
   return (
     <section className="border-y border-border/40">
-      <div className="mx-auto w-full max-w-(--screen-desktop) px-6 py-10 tablet:px-10 tablet:py-14">
-        <div className="flex flex-col items-center gap-6 phone:flex-row phone:justify-center phone:gap-12">
+      <div className="mx-auto w-full max-w-(--screen-desktop) px-6 tablet:px-10">
+        <div className="flex flex-col divide-y divide-border/40 phone:flex-row phone:divide-x phone:divide-y-0">
           {highlights.map((text, index) => (
             <div
               key={text}
-              className="flex items-center gap-2.5 text-center phone:text-left"
+              className="group flex flex-1 flex-col items-center gap-3 px-8 py-10 transition-colors duration-200 hover:bg-fg-1/40"
             >
-              {ICONS[index]}
-              <span className="text-base font-medium tracking-wide text-text-muted">
+              <Image
+                src={ICONS[index]!}
+                alt=""
+                className="size-7 object-contain opacity-60 transition-opacity duration-200 group-hover:opacity-100"
+              />
+              <span className="text-center text-xs font-semibold uppercase tracking-widest text-text-muted">
                 {text}
               </span>
             </div>
           ))}
         </div>
 
-        <div className="mt-8 flex justify-center">
+        <div className="flex justify-center border-t border-border/40 py-6">
           <WebSection.ActionLink
             href="/auth/register"
-            className="text-text transition-colors hover:text-text-muted"
+            className="text-sm text-text-muted transition-colors hover:text-text"
           >
             {t("cta")}
           </WebSection.ActionLink>

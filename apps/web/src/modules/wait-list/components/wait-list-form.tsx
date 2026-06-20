@@ -163,7 +163,7 @@ export function WaitListForm({ currentPosition }: HeroWaitListFormProps) {
       <div className="mb-2 flex items-center justify-start gap-2">
         <p
           id="hero-wait-list-email-hint"
-          className="text-left text-xs text-text-muted"
+          className="text-left text-text-muted"
         >
           {t("hint")}
         </p>

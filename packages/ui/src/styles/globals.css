@@ -9,10 +9,10 @@
 :root {
   color-scheme: light;
 
-  --color-accent: #FF3333;
+  --color-accent: #ED2100;
   --color-accent-fg: #FFFFFF;
 
-  --color-bg: #F8F6F2;
+  --color-bg: #FAFAFA;
   --color-fg: #FFFFFF;
   --color-fg-1: #EFEDE6;
   --color-fg-2: #E4E1D9;
@@ -168,13 +168,36 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* ── Blurred background orbs (pure CSS, no JS) ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 70% 60% at 10% 15%, rgba(255, 255, 255, 0.55) 0%, transparent 65%),
+    radial-gradient(ellipse 60% 70% at 90% 80%, rgba(255, 255, 255, 0.40) 0%, transparent 65%),
+    radial-gradient(ellipse 55% 50% at 60% 5%,  rgba(255, 255, 255, 0.30) 0%, transparent 55%),
+    radial-gradient(ellipse 40% 40% at 50% 100%, rgba(0, 0, 0, 0.06) 0%, transparent 60%);
+  filter: blur(48px);
+}
+
+.dark body::before {
+  background:
+    radial-gradient(ellipse 70% 60% at 10% 15%, rgba(255, 255, 255, 0.07) 0%, transparent 65%),
+    radial-gradient(ellipse 60% 70% at 90% 80%, rgba(255, 255, 255, 0.05) 0%, transparent 65%),
+    radial-gradient(ellipse 55% 50% at 60% 5%,  rgba(255, 255, 255, 0.04) 0%, transparent 55%),
+    radial-gradient(ellipse 40% 40% at 50% 100%, rgba(0, 0, 0, 0.25) 0%, transparent 60%);
+}
+
 /* Headings default to brand font */
 h1,
 h2,
 h3 {
   font-family: var(--font-brand), serif;
   line-height: var(--leading-tight, 1.25);
-  font-weight: 700;
+  font-weight: 500;
 }
 
 h1 {
@@ -290,6 +313,22 @@ h4,h5,h6, p {
   .animate-breathe {
     animation: breathe 5s ease-in-out infinite;
   }
+}
+
+/* ── Fire gradient text ── */
+.text-fire {
+  background-image: linear-gradient(
+    to bottom,
+    #EDBF00 0%,
+    #ED9800 22%,
+    #ED7000 48%,
+    var(--color-accent) 68%,
+    #b01800 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
 }
 
 .surface-card {

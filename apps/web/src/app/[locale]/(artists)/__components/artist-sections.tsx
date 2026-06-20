@@ -23,17 +23,17 @@ type ArtistSectionsProps = {
 const SectionHeader = ({ title, href }: { title: string; href?: string }) => (
   <div className="mb-6 flex items-center justify-between phone-lg:mb-8 tablet:mb-10">
     <div className="flex items-center gap-3 phone-lg:gap-4">
-      <span className="h-px w-5 bg-text phone-lg:w-8" aria-hidden="true" />
-      <h3 className="text-xl! font-medium! tracking-wider text-text uppercase">
+      <span className="h-px w-5 bg-text phone-lg:w-8 opacity-50" aria-hidden="true" />
+      <h3 className="text-lg! font-serif! font-normal! tracking-wider text-text uppercase">
         {title}
       </h3>
-      <span className="h-px w-5 bg-text phone-lg:w-8" aria-hidden="true" />
+      <span className="h-px w-5 bg-text phone-lg:w-8 opacity-50" aria-hidden="true" />
     </div>
     {href && (
       <Link
         href={href}
         aria-label={`View all ${title.toLowerCase()}`}
-        className="group inline-flex items-center gap-1.5 text-xs tracking-[0.15em] text-text-muted/70 uppercase transition-colors duration-300 hover:text-text"
+        className="group inline-flex items-center gap-1.5 text-xs tracking-[0.15em]  uppercase transition-colors duration-300 hover:text-text"
       >
         <span className="hidden phone:inline">View all</span>
         <ArrowRight

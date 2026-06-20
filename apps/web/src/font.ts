@@ -1,16 +1,16 @@
-import { Lora, Noto_Sans } from "next/font/google";
+import {Lato, Noto_Sans, Jost } from "next/font/google";
 
 export const playfair = Noto_Sans({
   subsets: ["latin"],
-  weight: ["300", "400"],
+  weight: ["200", "400", "600", "800"],
   style: ["normal"],
   variable: "--font-brand",
   display: "swap",
 });
 
-export const dmSans = Lora({
+export const dmSans =Jost({
   subsets: ["latin"],
-  weight: ["400", "700"],
+  weight: ["300", "400"],
   style: ["normal"],
   variable: "--font-body",
   display: "swap",
