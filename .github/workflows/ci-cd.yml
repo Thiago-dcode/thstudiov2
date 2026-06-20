@@ -50,6 +50,10 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
           script_stop: true
+          # Building images on the 1 vCPU / 1 GB droplet is slow (pnpm install can
+          # take many minutes). The action's default command_timeout is 10m, which
+          # aborts the deploy mid-build ("Run Command Timeout"). Give it room.
+          command_timeout: 40m
           script: |
             set -euo pipefail
             cd "${{ secrets.SSH_DEPLOY_DIR }}"
