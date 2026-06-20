@@ -15,7 +15,7 @@ RUN apt-get update \
   && apt-get install -y --no-install-recommends ca-certificates \
   && rm -rf /var/lib/apt/lists/* \
   && corepack enable \
-  && corepack prepare pnpm@10.32.1 --activate
+  && corepack prepare pnpm@11.6.0 --activate
 
 # Dependency layer: invalidated only when the lockfile or patches change.
 COPY pnpm-lock.yaml pnpm-workspace.yaml ./
