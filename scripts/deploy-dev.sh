@@ -118,15 +118,9 @@ if [[ "$SKIP_BUILD" == false ]]; then
   # Build one image at a time: the droplet has 1 vCPU / 1GB RAM and parallel
   # builds cause swapping/OOM. api goes first so worker/web reuse its shared
   # base + dependency layers from cache.
-  #
-  # --no-pull: use the locally cached base image (node:xx-bookworm-slim) instead
-  # of re-checking Docker Hub on every build. The droplet's network connection to
-  # registry-1.docker.io can be unreliable; the image is already present from the
-  # first successful build. To intentionally update the base image, run:
-  #   docker pull node:22-bookworm-slim && bash ./scripts/deploy.sh
-  $COMPOSE build $BUILD_FLAGS --no-pull api
-  $COMPOSE build $BUILD_FLAGS --no-pull worker
-  $COMPOSE build $BUILD_FLAGS --no-pull web
+  $COMPOSE build $BUILD_FLAGS api
+  $COMPOSE build $BUILD_FLAGS worker
+  $COMPOSE build $BUILD_FLAGS web
   success "Images built."
 else
   warn "Step 3/6 — Image build skipped (--skip-build)."

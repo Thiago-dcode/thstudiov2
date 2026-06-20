@@ -17,8 +17,9 @@ RUN apt-get update \
   && corepack enable \
   && corepack prepare pnpm@10.32.1 --activate
 
-# Dependency layer: invalidated only when the lockfile changes.
+# Dependency layer: invalidated only when the lockfile or patches change.
 COPY pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY patches ./patches
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store pnpm fetch
 
 COPY package.json turbo.json tsconfig.json ./
