@@ -117,8 +117,6 @@ export function WaitListForm({ currentPosition }: HeroWaitListFormProps) {
 
   return (
     <div className="w-full">
-    
-
       <form
         onSubmit={handleWaitListSubmit}
         className="flex w-full flex-col gap-2 phone:flex-row phone:items-start"

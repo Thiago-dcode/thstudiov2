@@ -2,8 +2,6 @@ import { ChevronDown } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { serverEnv } from "@/env/server";
 import { WaitListForm } from "@/modules/wait-list/components/wait-list-form";
-import waitListService from "@/modules/wait-list/wait-list.service";
-
 
 export async function HeroSection() {
   const t = await getTranslations("landing.hero");
@@ -11,7 +9,7 @@ export async function HeroSection() {
   // const waitListPosition = await waitListService.getCurrentPosition();
   // const currentWaitListPosition = waitListPosition.data?.position ?? null;
 
-  const videoSrc = `${serverEnv.ASSETS_URL}/videos/hero-bg.mp4`;
+  const _videoSrc = `${serverEnv.ASSETS_URL}/videos/hero-bg.mp4`;
   return (
     <section
       aria-labelledby="hero-heading"
@@ -19,7 +17,7 @@ export async function HeroSection() {
     >
       {/* ── Background video (decorative) ── */}
       <video
-        src={'https://artlist.io/52b0a462-2d57-4f28-9561-a57d14c2422e'}
+        src={"https://artlist.io/52b0a462-2d57-4f28-9561-a57d14c2422e"}
         autoPlay
         loop
         muted
@@ -41,7 +39,6 @@ export async function HeroSection() {
           {t("disclaimer")}
         </span> */}
         <div className="flex flex-col w-full items-center gap-5">
-
           <h1
             id="hero-heading"
             className="hero-title hero-stagger-2  tracking-tight text-text"
@@ -54,7 +51,6 @@ export async function HeroSection() {
           <h3 className="font-normal!  text-2xl! leading-relaxed text-text font-sans! ">
             {t("subtitle")}
           </h3>
-
         </div>
 
         <div className="hero-stagger-4 flex w-full justify-center pt-4 tablet:pt-6">

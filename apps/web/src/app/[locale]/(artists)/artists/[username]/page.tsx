@@ -167,11 +167,7 @@ const ArtistHomePage = async ({ params }: Props) => {
               {profile.profession}
             </p>
           )}
-          {fullName && (
-            <p className=" text-text">
-              @{profile.username}
-            </p>
-          )}
+          {fullName && <p className=" text-text">@{profile.username}</p>}
         </div>
 
         {profile.address?.formated_address && (

@@ -1,4 +1,3 @@
-import WaitListService from "@/modules/wait-list/wait-list.service";
 import { FaqsContent } from "../../../lib/components/faqs";
 import { CtaSection } from "./_components/landing/cta-section";
 import { FeatureCategoriesSection } from "./_components/landing/feature-categories-section";
@@ -9,7 +8,6 @@ import { ValuePillarsSection } from "./_components/landing/value-pillars-section
 import { WebSection } from "./_components/landing/web-section";
 
 export default async function Home() {
-
   return (
     <>
       <HeroSection />
