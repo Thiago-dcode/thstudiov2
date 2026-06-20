@@ -5,6 +5,9 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 ENV CI=true
+# Suppress telemetry HTTP calls during the build — speeds up both turbo and next.
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV TURBO_TELEMETRY_DISABLED=1
 
 WORKDIR /workspace
 
@@ -58,7 +61,11 @@ ENV SUPPORT_EMAIL=$SUPPORT_EMAIL
 ENV SUPPORT_USERNAME=$SUPPORT_USERNAME
 ENV REGISTRATION_IS_CLOSED=$REGISTRATION_IS_CLOSED
 
-RUN pnpm turbo run build --filter=@repo/web...
+# Mount the Next.js incremental cache so Turbopack can reuse prior compilation
+# artifacts. On a cold build this has no effect; on subsequent builds with
+# unchanged source files it can cut compile time from 20+ min to a few minutes.
+RUN --mount=type=cache,id=nextjs-cache-dev,target=/workspace/apps/web/.next/cache \
+    pnpm turbo run build --filter=@repo/web...
 
 # ─── Stage 2: runner ─────────────────────────────────────────────────────────
 FROM node:22-bookworm-slim AS runner

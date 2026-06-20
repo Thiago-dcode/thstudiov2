@@ -57,11 +57,11 @@ export function PortfolioCard({
           </div>
         ) : null}
         <div className="absolute inset-x-0 bottom-0 p-3 md:p-4">
-          <h3 className="text-sm italic tracking-tight text-white drop-shadow-md md:text-base">
+          <h3 className="text-sm! tracking-tigh t line-clamp-2 text-white drop-shadow-md md:text-base">
             {title}
           </h3>
           {description ? (
-            <p className="mt-0.5 line-clamp-1 text-xs leading-relaxed text-white/70">
+            <p className="mt-0.5 italic line-clamp-1 leading-relaxed text-white/70">
               {description}
             </p>
           ) : null}

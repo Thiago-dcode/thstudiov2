@@ -23,11 +23,11 @@ type ArtistSectionsProps = {
 const SectionHeader = ({ title, href }: { title: string; href?: string }) => (
   <div className="mb-6 flex items-center justify-between phone-lg:mb-8 tablet:mb-10">
     <div className="flex items-center gap-3 phone-lg:gap-4">
-      <span className="h-px w-5 bg-border/60 phone-lg:w-8" aria-hidden="true" />
-      <h2 className="text-xs font-medium tracking-wider text-text-muted uppercase">
+      <span className="h-px w-5 bg-text phone-lg:w-8" aria-hidden="true" />
+      <h3 className="text-xl! font-medium! tracking-wider text-text uppercase">
         {title}
-      </h2>
-      <span className="h-px w-5 bg-border/60 phone-lg:w-8" aria-hidden="true" />
+      </h3>
+      <span className="h-px w-5 bg-text phone-lg:w-8" aria-hidden="true" />
     </div>
     {href && (
       <Link

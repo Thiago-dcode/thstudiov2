@@ -117,15 +117,7 @@ export function WaitListForm({ currentPosition }: HeroWaitListFormProps) {
 
   return (
     <div className="w-full">
-      <div className="mb-2 flex items-center justify-start gap-2">
-        <p
-          id="hero-wait-list-email-hint"
-          className="text-left text-xs text-text-muted"
-        >
-          {t("hint")}
-        </p>
-        <InfoTooltip content={t("hintTooltip")} />
-      </div>
+    
 
       <form
         onSubmit={handleWaitListSubmit}
@@ -146,7 +138,7 @@ export function WaitListForm({ currentPosition }: HeroWaitListFormProps) {
             aria-describedby={
               inputErrors?.email ? "hero-wait-list-email-error" : undefined
             }
-            className="h-14 w-full border-border/60 bg-fg/60 px-4 text-base text-text backdrop-blur-md placeholder:text-text-muted focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/30"
+            className="h-14 w-full border-border/60 bg-fg/60 px-4 text-base text-text backdrop-blur-md placeholder:text-text-muted "
           />
 
           {inputErrors?.email ? (
@@ -169,6 +161,16 @@ export function WaitListForm({ currentPosition }: HeroWaitListFormProps) {
           {isPending ? t("buttonPending") : t("button")}
         </Button>
       </form>
+
+      <div className="mb-2 flex items-center justify-start gap-2">
+        <p
+          id="hero-wait-list-email-hint"
+          className="text-left text-xs text-text-muted"
+        >
+          {t("hint")}
+        </p>
+        <InfoTooltip content={t("hintTooltip")} />
+      </div>
 
       {displayPosition ? (
         <div className="mt-2 flex justify-start text-xs font-medium text-text-muted">

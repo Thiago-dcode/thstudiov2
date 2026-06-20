@@ -10,6 +10,10 @@ dotenv.config({
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // TypeScript is enforced in CI (test job) before deploy runs.
+  // Skipping the post-compile type-check here avoids a separate multi-minute
+  // pass on the resource-constrained droplet (1 vCPU / 1 GB).
+  typescript: { ignoreBuildErrors: true },
   experimental: {
     serverActions: {
       bodySizeLimit: "500mb",

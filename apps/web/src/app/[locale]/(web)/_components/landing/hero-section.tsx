@@ -1,17 +1,17 @@
-import { ChevronDown, Sparkles } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { serverEnv } from "@/env/server";
 import { WaitListForm } from "@/modules/wait-list/components/wait-list-form";
+import waitListService from "@/modules/wait-list/wait-list.service";
 
-type HeroSectionProps = {
-  currentWaitListPosition?: number | null;
-};
 
-export async function HeroSection({
-  currentWaitListPosition,
-}: HeroSectionProps) {
+export async function HeroSection() {
   const t = await getTranslations("landing.hero");
 
+  // const waitListPosition = await waitListService.getCurrentPosition();
+  // const currentWaitListPosition = waitListPosition.data?.position ?? null;
+
+  const videoSrc = `${serverEnv.ASSETS_URL}/videos/hero-bg.mp4`;
   return (
     <section
       aria-labelledby="hero-heading"
@@ -19,7 +19,7 @@ export async function HeroSection({
     >
       {/* ── Background video (decorative) ── */}
       <video
-        src={`${serverEnv.ASSETS_URL}/videos/hero-bg.mp4`}
+        src={'https://artlist.io/52b0a462-2d57-4f28-9561-a57d14c2422e'}
         autoPlay
         loop
         muted
@@ -36,27 +36,30 @@ export async function HeroSection({
 
       {/* ── Content ── */}
       <div className="relative z-10 mx-auto flex w-full flex-col items-center gap-6 px-6 py-16 text-center tablet:gap-8 tablet:px-10 tablet:py-24">
-        <span className="hero-stagger-1 inline-flex items-center gap-2 border border-border/40 bg-fg/50 px-4 py-1.5 text-[0.65rem] font-medium uppercase tracking-[0.18em] text-text-muted backdrop-blur-md">
+        {/* <span className="hero-stagger-1 inline-flex items-center gap-2 border border-border/40 bg-fg/50 px-4 py-1.5 text-[0.65rem] font-medium uppercase tracking-[0.18em] text-text-muted backdrop-blur-md">
           <Sparkles className="size-3 text-text-muted" aria-hidden="true" />
           {t("disclaimer")}
-        </span>
+        </span> */}
+        <div className="flex flex-col w-full items-center gap-5">
 
-        <h1
-          id="hero-heading"
-          className="hero-title hero-stagger-2 font-black tracking-tight text-text"
-        >
-          {t("titlePrefix")}{" "}
-          <span className="hero-accent-text italic">{t("titleAccent")}</span>{" "}
-          {t("titleSuffix")}
-        </h1>
+          <h1
+            id="hero-heading"
+            className="hero-title hero-stagger-2  tracking-tight text-text"
+          >
+            {t("titlePrefix")}{" "}
+            <span className="text-accent ">{t("titleAccent")}</span>{" "}
+            {t("titleSuffix")}
+          </h1>
 
-        <p className="hero-stagger-3 max-w-2xl text-xl leading-relaxed text-text-muted">
-          {t("subtitle")}
-        </p>
+          <h3 className="font-normal!  text-2xl! leading-relaxed text-text font-sans! ">
+            {t("subtitle")}
+          </h3>
+
+        </div>
 
         <div className="hero-stagger-4 flex w-full justify-center pt-4 tablet:pt-6">
           <div className="w-full max-w-4xl">
-            <WaitListForm currentPosition={currentWaitListPosition} />
+            <WaitListForm currentPosition={null} />
           </div>
         </div>
       </div>
@@ -96,14 +99,7 @@ export async function HeroSection({
  }
 
         /* ── Subtle neutral glow behind the headline ── */
-        .hero-glow {
-          background:
-            radial-gradient(
-              ellipse 60% 50% at 50% 45%,
-              color-mix(in oklab, var(--color-text) 4%, transparent) 0%,
-              transparent 70%
-            );
-        }
+       
 
         /* ── Accent emphasis text (isolated punchy word) ── */
         .hero-accent-text {

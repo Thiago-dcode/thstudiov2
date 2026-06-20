@@ -136,7 +136,7 @@ const ArtistHomePage = async ({ params }: Props) => {
 
         {/* Avatar — anchored at banner bottom */}
         <div className="absolute bottom-0 left-1/2 z-10 -translate-x-1/2 translate-y-1/2">
-          <div className="relative size-32 overflow-hidden bg-fg-1 shadow-2xl ring-[5px] ring-bg tablet:size-36 laptop:size-40">
+          <div className="relative size-32 overflow-hidden bg-fg-1 shadow-2xl ring-[5px] ring-bg tablet:size-36 laptop:size-40 rounded-full!">
             {profile.avatar ? (
               <Image
                 src={profile.avatar}
@@ -159,7 +159,7 @@ const ArtistHomePage = async ({ params }: Props) => {
       {/* Profile Identity + CTAs */}
       <section className="mx-auto flex w-full max-w-2xl flex-col items-center gap-6 px-6 pt-24 pb-12 text-center tablet:pt-28">
         <div className="space-y-3">
-          <h1 className="font-serif text-3xl italic tracking-tight tablet:text-4xl laptop:text-5xl">
+          <h1 className="font-serif  tracking-tight tablet:text-4xl laptop:text-5xl">
             {heading}
           </h1>
           {profile.profession && (
@@ -168,7 +168,7 @@ const ArtistHomePage = async ({ params }: Props) => {
             </p>
           )}
           {fullName && (
-            <p className="text-xs tracking-[0.25em] text-text-muted/70 uppercase">
+            <p className=" text-text">
               @{profile.username}
             </p>
           )}
@@ -185,7 +185,7 @@ const ArtistHomePage = async ({ params }: Props) => {
           <ul className="flex flex-wrap justify-center gap-2">
             {profile.categories.map((cat) => (
               <li key={cat.id}>
-                <Badge variant="outline">{cat.name}</Badge>
+                <Badge variant="secondary">{cat.name}</Badge>
               </li>
             ))}
           </ul>

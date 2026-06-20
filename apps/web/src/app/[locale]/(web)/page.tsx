@@ -9,12 +9,10 @@ import { ValuePillarsSection } from "./_components/landing/value-pillars-section
 import { WebSection } from "./_components/landing/web-section";
 
 export default async function Home() {
-  const waitListPosition = await WaitListService.getCurrentPosition();
-  const currentWaitListPosition = waitListPosition.data?.position ?? null;
 
   return (
     <>
-      <HeroSection currentWaitListPosition={currentWaitListPosition} />
+      <HeroSection />
       <ValuePillarsSection />
       <SocialProofSection />
       <FeatureCategoriesSection />

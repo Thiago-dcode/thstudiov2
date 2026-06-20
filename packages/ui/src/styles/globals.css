@@ -230,24 +230,7 @@ h4,h5,h6, p {
   }
 }
 
-::selection {
-  color: var(--color-text);
-  background-color: color-mix(in oklab, var(--color-accent) 30%, white);
-}
 
-.dark ::selection {
-  color: var(--color-text);
-  background-color: color-mix(in oklab, var(--color-accent) 40%, black);
-}
-
-:where(button, [role='button'], a, input, select, textarea):focus-visible {
-  outline: var(--ring-size) solid color-mix(in oklab, var(--color-accent) 50%, transparent);
-  outline-offset: 2px;
-}
-
-.dark :where(button, [role='button'], a, input, select, textarea):focus-visible {
-  outline-color: color-mix(in oklab, var(--color-accent) 60%, transparent);
-}
 
 @keyframes shake {
   0%,

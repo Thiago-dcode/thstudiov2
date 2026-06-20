@@ -64,7 +64,7 @@ export function ServiceCard({
 
       <div className="flex min-h-0 flex-1 flex-col justify-center gap-0.5 p-3 phone-lg:justify-start phone-lg:gap-2 phone-lg:p-4 tablet:p-5">
         <div className="flex items-start justify-between gap-3">
-          <TitleTag className="line-clamp-1 text-sm font-medium tracking-tight phone-lg:text-base tablet:text-lg">
+          <TitleTag className="line-clamp-2 text-sm! font-semibold! tracking-tight phone-lg:text-base tablet:text-lg">
             {title}
           </TitleTag>
           <ArrowUpRight
@@ -74,7 +74,7 @@ export function ServiceCard({
         </div>
 
         {description ? (
-          <p className="hidden phone-lg:line-clamp-1 text-sm leading-relaxed text-text-muted">
+          <p className="hidden phone-lg:line-clamp-2 text-sm leading-relaxed text-text-muted">
             {description}
           </p>
         ) : null}

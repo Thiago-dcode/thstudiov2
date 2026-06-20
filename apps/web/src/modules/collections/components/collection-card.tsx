@@ -90,7 +90,7 @@ export const CollectionCard = ({
       </div>
       {title ? (
         <div className="pointer-events-none absolute inset-x-[12%] bottom-[12%] z-20 min-w-0">
-          <h3 className="pointer-events-auto w-full min-w-0 truncate bg-text/50 px-2 py-1 text-xs font-semibold text-bg/90 shadow-md">
+          <h3 className="pointer-events-auto w-full min-w-0 line-clamp-2 px-2 py-1 text-sm! font-semibold text-bg shadow-md">
             {title}
           </h3>
         </div>
