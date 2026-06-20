@@ -68,6 +68,9 @@ ENV REGISTRATION_IS_CLOSED=$REGISTRATION_IS_CLOSED
 RUN --mount=type=cache,id=nextjs-cache-dev,target=/workspace/apps/web/.next/cache \
     pnpm turbo run build --filter=@repo/web...
 
+# Ensure public/ exists so the runner COPY succeeds even if the project has no static assets.
+RUN mkdir -p /workspace/apps/web/public
+
 # ─── Stage 2: runner ─────────────────────────────────────────────────────────
 FROM node:22-bookworm-slim AS runner
 
