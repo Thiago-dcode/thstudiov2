@@ -53,9 +53,11 @@ COPY --from=builder /workspace/packages/database/package.json ./packages/databas
 COPY --from=builder /workspace/package.json ./package.json
 COPY --from=builder /workspace/pnpm-workspace.yaml ./pnpm-workspace.yaml
 COPY --from=builder /workspace/pnpm-lock.yaml ./pnpm-lock.yaml
+COPY --from=builder /workspace/patches ./patches
 
 # Install production dependencies only
-RUN corepack enable && corepack prepare pnpm@11.6.0 --activate && \
+RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
+    corepack enable && corepack prepare pnpm@11.6.0 --activate && \
     pnpm install --frozen-lockfile --prod
 
 EXPOSE 8080
