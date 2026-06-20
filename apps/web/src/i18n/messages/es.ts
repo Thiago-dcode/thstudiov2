@@ -17,7 +17,7 @@ const messages: Translations = {
         placeholder: "Introduce tu correo electrónico",
         button: "Unirme a la lista",
         buttonPending: "Uniéndote...",
-        hint: "El registro abrirá pronto. Únete a la lista de espera y recibe acceso anticipado.",
+        hint: "Únete a la lista de espera, consigue acceso anticipado y beneficios.",
         hintTooltip:
           "Los cupos anticipados son limitados y se asignan en el orden en que los artistas se unen.",
         positionCount: "{position}/{max}",

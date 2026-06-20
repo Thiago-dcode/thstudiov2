@@ -15,7 +15,7 @@ const messages = {
         placeholder: "Enter your email address",
         button: "Join waitlist",
         buttonPending: "Joining...",
-        hint: "Registration will be open soon. Join the waitlist and get early access.",
+        hint: "Join the waitlist, get early access and benefits",
         hintTooltip:
           "Early spots are limited and filled in the order artists join.",
         positionCount: "{position}/{max}",
