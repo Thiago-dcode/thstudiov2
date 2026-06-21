@@ -107,14 +107,25 @@ export abstract class LogService {
         const logId = id !== undefined ? id : this.getLogId();
         let logMessage = `[${format(new Date(), 'yyyy-MM-dd HH:mm:ss')}] - ${level.toUpperCase()} -${logId ? `[${logId}]` : ''} ${message}`;
         if (options) {
-            logMessage += ` - ${JSON.stringify(options)}`;
+            // Error instances stringify to "{}" (their fields are non-enumerable); extract them
+            // explicitly so stacks are preserved in the log instead of being silently dropped.
+            const serializable = options instanceof Error
+                ? { name: options.name, message: options.message, stack: options.stack }
+                : options;
+            logMessage += ` - ${JSON.stringify(serializable)}`;
         }
         logMessage += `\n`;
         return logMessage;
     }
     protected async callCallback(level: LogLevel, message: string, options?: LogOptions) {
         if (this.config.callback && this.config.callback.channel === this.config.channel) {
-            await this.config.callback.callback(level, message, options);
+            // Never let a log callback throw/reject: doing so escapes as an unhandledRejection
+            // which, if logged back into the same channel, creates an infinite log loop.
+            try {
+                await this.config.callback.callback(level, message, options);
+            } catch (error) {
+                console.error('LogService: log callback failed (suppressed to avoid log loop)', error);
+            }
         }
     }
 

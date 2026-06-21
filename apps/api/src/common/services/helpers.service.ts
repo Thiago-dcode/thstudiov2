@@ -94,14 +94,21 @@ export class Helpers {
     //Send a email to admin emails
     console.log('CALLBACK CALLED FOR ERROR 500', level, message);
     if (!config().app.sendErrorEmails) return;
-    const mailService = FactoryMailService.createMailService(
-      mailingDriver,
-      mailingConfig,
-    );
-    const viewService = FactoryViewService.createViewService(VIEW_ENGINE, {
-      basePath: viewPath(''),
-    });
-    mailService.sendAsync(new Error500Mail(viewService, message, options));
+    try {
+      const mailService = FactoryMailService.createMailService(
+        mailingDriver,
+        mailingConfig,
+      );
+      const viewService = FactoryViewService.createViewService(VIEW_ENGINE, {
+        basePath: viewPath(''),
+      });
+      // Use the synchronous send() (no BullMQ queue needed here): this callback runs
+      // outside DI and has no queue, so sendAsync() would throw and feed the 500 log loop.
+      await mailService.send(new Error500Mail(viewService, message, options));
+    } catch (error) {
+      // Swallow: a failed error-alert email must never bubble up and re-trigger this callback.
+      console.error('callback500ErrorMail: failed to send 500 alert email', error);
+    }
   }
 
   public async deleteAsset(path?: string) {

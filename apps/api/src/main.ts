@@ -17,13 +17,20 @@ const logger = FactoryLogService.createLogService('file',{
 
 })
 
+function serializeError(error: unknown) {
+  if (error instanceof Error) {
+    return { name: error.name, message: error.message, stack: error.stack };
+  }
+  return { message: typeof error === 'string' ? error : JSON.stringify(error) };
+}
+
 process.on('uncaughtException', (error: Error) => {
-  logger.error('💥 Uncaught Exception:', error);
+  logger.error('💥 Uncaught Exception:', serializeError(error));
   console.error('💥 Uncaught Exception:', error);
 });
 
 process.on('unhandledRejection', (reason: unknown) => {
-  logger.error('💥 Uncaught Exception:', reason);
+  logger.error('💥 Unhandled Rejection:', serializeError(reason));
   console.error('💥 Unhandled Rejection:', reason);
 });
 

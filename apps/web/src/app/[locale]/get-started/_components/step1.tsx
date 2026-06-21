@@ -4,11 +4,13 @@ import FormComponent from "@/lib/components/form-component";
 import {
   ButtonSubmitFunnel,
   ContainerFormFunnel,
-  useFunnel,
+  useFunnelActions,
+  useFunnelState,
 } from "./funnel.provider";
 
 export default function Step1() {
-  const { user, inputs, setInputs, handleOnChange } = useFunnel();
+  const { user, setInputs, handleOnChange } = useFunnelActions();
+  const { inputs } = useFunnelState();
   const nameRef = useRef<HTMLInputElement>(null);
   const surnameRef = useRef<HTMLInputElement>(null);
   const professionRef = useRef<HTMLInputElement>(null);

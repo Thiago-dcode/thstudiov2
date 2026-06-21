@@ -7,7 +7,7 @@ import {
   ButtonStepBackFunnel,
   ButtonSubmitFunnel,
   ContainerFormFunnel,
-  useFunnel,
+  useFunnelActions,
 } from "./funnel.provider";
 
 export function Step4Client({
@@ -18,10 +18,13 @@ export function Step4Client({
   userAuth: UserAuth;
 }) {
   const [currentAddress, setCurrentAddress] = useState(defaultAddress);
-  const { setCanContinue } = useFunnel();
+  const { setCanContinue } = useFunnelActions();
 
   useEffect(() => {
-    setCanContinue(!!currentAddress);
+    setCanContinue((prev) => {
+      const next = !!currentAddress;
+      return prev === next ? prev : next;
+    });
   }, [currentAddress, setCanContinue]);
 
   return (

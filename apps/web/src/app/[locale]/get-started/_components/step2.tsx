@@ -9,7 +9,7 @@ import {
   ButtonStepBackFunnel,
   ButtonSubmitFunnel,
   ContainerFormFunnel,
-  useFunnel,
+  useFunnelActions,
 } from "./funnel.provider";
 
 export default function Container() {
@@ -24,11 +24,12 @@ export default function Container() {
 
 const Step2 = () => {
   const inputRef = useRef<HTMLInputElement>(null);
-  const { user, setInputs, handleOnChange, setErrors } = useFunnel();
+  const { user, setInputs, handleOnChange, setErrors } = useFunnelActions();
   const { files, errors } = useInputFile();
   const [previewUrl, setPreviewUrl] = useState<string | undefined>(
     (user as any)?.avatar,
   );
+  const avatarUrl = (user as { avatar?: string })?.avatar;
   useEffect(() => {
     if (files && files.length > 0) {
       const file = files[0];
@@ -51,9 +52,11 @@ const Step2 = () => {
   useEffect(() => {
     setInputs(inputRef?.current);
   }, [setInputs]);
+
   useEffect(() => {
-    setPreviewUrl((user as any)?.avatar);
-  }, [user]);
+    if (!avatarUrl) return;
+    setPreviewUrl((current) => (current === avatarUrl ? current : avatarUrl));
+  }, [avatarUrl]);
 
   return (
     <ContainerFormFunnel>

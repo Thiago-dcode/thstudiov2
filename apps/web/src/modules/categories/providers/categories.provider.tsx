@@ -142,7 +142,11 @@ export const UpdateCategoriesProvider = ({
     await runCategoriesFetch();
   };
 
+  const hasLoadedCategories = useRef(false);
+
   useEffect(() => {
+    if (hasLoadedCategories.current) return;
+    hasLoadedCategories.current = true;
     fetchParamsRef.current = currentRequest.current;
     void runCategoriesFetch();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- initial load only; params are read from refs at call time

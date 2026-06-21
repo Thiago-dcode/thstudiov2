@@ -15,11 +15,14 @@ import {
   ItemTitle,
 } from "@repo/ui/components/shadcn/item";
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { GeoapifyFeature } from "@/lib/hooks/types/geoapify";
 import { useLocationAutocomplete } from "@/lib/hooks/useGetLocation";
 import { createOrUpdateAddressAction } from "@/modules/addresses/server-actions/create-or-update-address.action";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
+
+const getFeatureKey = (feature: GeoapifyFeature) =>
+  `${feature.properties.lat}-${feature.properties.lon}-${feature.properties.formatted}`;
 
 export const CreateOrUpdateAddress = ({
   userId,
@@ -34,11 +37,20 @@ export const CreateOrUpdateAddress = ({
   onSuccessChange?: (success: boolean) => void;
   onPendingChange?: (isPending: boolean) => void;
 }) => {
-  const [selectedLocation, setSelectedLocation] =
-    useState<GeoapifyFeature | null>(null);
+  const [selectedKey, setSelectedKey] = useState<string | null>(() => {
+    if (
+      defaultAddress?.latitude != null &&
+      defaultAddress?.longitude != null &&
+      defaultAddress.formated_address
+    ) {
+      return `${defaultAddress.latitude}-${defaultAddress.longitude}-${defaultAddress.formated_address}`;
+    }
+    return null;
+  });
   const [inputValue, setInputValue] = useState(
     defaultAddress?.formated_address || "",
   );
+  const lastSubmittedKeyRef = useRef<string | null>(null);
   const { search, loading, result } = useLocationAutocomplete();
   const { isPending, handleSubmit, errors, success } = useHandleAction({
     action: async (formData) => {
@@ -62,6 +74,13 @@ export const CreateOrUpdateAddress = ({
       onPendingChange(isPending);
     }
   }, [isPending, onPendingChange]);
+
+  useEffect(() => {
+    if (errors?.length) {
+      lastSubmittedKeyRef.current = null;
+    }
+  }, [errors]);
+
   const isLoading = loading || isPending;
   const debounceTimerRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
@@ -85,42 +104,49 @@ export const CreateOrUpdateAddress = ({
 
   const handleValueChange = useCallback(
     (value: unknown) => {
-      const feature = value as GeoapifyFeature | null;
-      if (feature) {
-        setSelectedLocation(feature);
-        const {
-          formatted,
-          lat,
-          lon,
-          country_code,
-          country,
-          address_line1,
-          city,
-          state,
-        } = feature.properties;
+      const key = value as string | null;
+      if (!key) return;
 
-        // Convert address to FormData
-        const formData = new FormData();
-        formData.set("formated_address", formatted || "");
-        formData.set("street", address_line1 || "");
-        formData.set("city", city || "");
-        formData.set("state", state || "");
-        formData.set("zip", "");
-        formData.set("country", country || "");
-        formData.set("country_code", country_code || "");
-        if (lat !== null && lat !== undefined)
-          formData.set("latitude", lat.toString());
-        if (lon !== null && lon !== undefined)
-          formData.set("longitude", lon.toString());
-        if (userId) {
-          formData.set("user_id", userId.toString());
-        }
+      const feature = (result ?? []).find(
+        (item) => getFeatureKey(item) === key,
+      );
+      if (!feature) return;
+      if (lastSubmittedKeyRef.current === key) return;
 
-        setInputValue(formatted);
-        handleSubmit(formData);
+      lastSubmittedKeyRef.current = key;
+      setSelectedKey(key);
+
+      const {
+        formatted,
+        lat,
+        lon,
+        country_code,
+        country,
+        address_line1,
+        city,
+        state,
+      } = feature.properties;
+
+      const formData = new FormData();
+      formData.set("formated_address", formatted || "");
+      formData.set("street", address_line1 || "");
+      formData.set("city", city || "");
+      formData.set("state", state || "");
+      formData.set("zip", "");
+      formData.set("country", country || "");
+      formData.set("country_code", country_code || "");
+      if (lat !== null && lat !== undefined)
+        formData.set("latitude", lat.toString());
+      if (lon !== null && lon !== undefined)
+        formData.set("longitude", lon.toString());
+      if (userId) {
+        formData.set("user_id", userId.toString());
       }
+
+      setInputValue(formatted);
+      void handleSubmit(formData);
     },
-    [handleSubmit, userId],
+    [handleSubmit, result, userId],
   );
 
   useEffect(() => {
@@ -131,14 +157,21 @@ export const CreateOrUpdateAddress = ({
     };
   }, []);
 
-  const locations = result || [];
+  const locations = useMemo(() => result ?? [], [result]);
 
   return (
     <>
       <Combobox
         items={locations}
-        value={selectedLocation}
+        value={selectedKey}
         onValueChange={handleValueChange}
+        itemToStringLabel={(item) => {
+          if (typeof item === "string") return item;
+          if (item && typeof item === "object" && "properties" in item) {
+            return (item as GeoapifyFeature).properties?.formatted ?? "";
+          }
+          return "";
+        }}
       >
         <ComboboxInput
           placeholder="Search for your address..."
@@ -162,8 +195,8 @@ export const CreateOrUpdateAddress = ({
               const props = feature.properties;
               return (
                 <ComboboxItem
-                  key={`${props.lat}-${props.lon}`}
-                  value={feature}
+                  key={getFeatureKey(feature)}
+                  value={getFeatureKey(feature)}
                   className="cursor-pointer"
                 >
                   <Item size="sm" className="p-0 pointer-events-none">

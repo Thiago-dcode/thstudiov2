@@ -70,6 +70,10 @@ const config = (envPath?: string | undefined) => {
     stripe: {
       secretKey: process.env.STRIPE_SECRET_KEY as string,
       webhookSecret: process.env.STRIPE_WEBHOOK_SECRET as string,
+      // Stripe automatic tax requires a valid head office address on the account.
+      // Defaults to enabled; set STRIPE_AUTOMATIC_TAX=0 to disable on envs that lack it
+      // (e.g. test mode without a configured origin address).
+      automaticTax: process.env.STRIPE_AUTOMATIC_TAX !== '0',
     },
     paypal: {
       url: process.env.PAYPAL_URL as string,

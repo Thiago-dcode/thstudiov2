@@ -1,12 +1,6 @@
 "use client";
 import type { ActionReturn } from "@repo/common-lib/types/response";
-import {
-  type FormEvent,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { type FormEvent, useCallback, useRef, useState } from "react";
 
 export const useHandleAction = <K, T>({
   action,
@@ -187,14 +181,6 @@ export const useHandleAction = <K, T>({
     cleanErrors();
     cleanResult();
   }, [cleanErrors, cleanResult]);
-
-  useEffect(() => {
-    if (!result) return;
-    const timeout = setTimeout(() => {
-      updatePending(false);
-    }, 300);
-    return () => clearTimeout(timeout);
-  }, [result, updatePending]);
 
   return {
     result,

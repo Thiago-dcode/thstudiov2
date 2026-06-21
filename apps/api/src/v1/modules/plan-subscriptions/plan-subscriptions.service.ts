@@ -28,6 +28,7 @@ import { cleanObj } from '@repo/common-lib/utils/object';
 import { CustomerPortalRequest } from './requests/customer-portal.request';
 import { Benefit } from '@repo/common-lib/types/benefit';
 import { UserBenefitService } from '../user-benefit/user-benefit.service';
+import { config } from '@repo/common-lib/config';
 
 @Injectable()
 export class PlanSubscriptionsService {
@@ -260,7 +261,7 @@ export class PlanSubscriptionsService {
             address: 'auto',
           },
           automatic_tax: {
-            enabled: true,
+            enabled: config().stripe.automaticTax,
           },
 
           line_items: [
@@ -313,7 +314,7 @@ export class PlanSubscriptionsService {
           ...(this.requestService.requestId ? { requestId: this.requestService.requestId } : {})
         },
         automatic_tax: {
-          enabled: true,
+          enabled: config().stripe.automaticTax,
         },
         proration_behavior: isUpgrade ? 'always_invoice' : 'none',
         payment_behavior: isUpgrade ? 'error_if_incomplete' : undefined,

@@ -19,15 +19,18 @@ import type { UserAuth } from "@/modules/auth/auth.types";
 
 export const FinishSetupDialog = ({ user }: { user: UserAuth }) => {
   const [mounted, setMounted] = useState(false);
+  const [open, setOpen] = useState(true);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  console.log(user.funnel_step, FUNNEL_LAST_STEP);
   if (!mounted || user.funnel_step > FUNNEL_LAST_STEP) return null;
   return (
-    <Dialog open={user.funnel_step <= FUNNEL_LAST_STEP}>
+    <Dialog
+      open={open && user.funnel_step <= FUNNEL_LAST_STEP}
+      onOpenChange={setOpen}
+    >
       <DialogContent className="max-w-md p-8">
         <div className="flex flex-col items-center gap-6 text-center">
           <DialogTitle className="text-2xl font-semibold">

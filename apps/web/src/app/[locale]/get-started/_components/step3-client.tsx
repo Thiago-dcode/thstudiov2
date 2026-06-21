@@ -6,12 +6,12 @@ import {
   ButtonStepBackFunnel,
   ButtonSubmitFunnel,
   ContainerFormFunnel,
-  useFunnel,
+  useFunnelActions,
 } from "./funnel.provider";
 
 export function Step3Client() {
   const { categoriesSelected } = useUpdateCategories();
-  const { setCanContinue } = useFunnel();
+  const { setCanContinue } = useFunnelActions();
   const inputCategoryIds = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (inputCategoryIds.current) {
@@ -25,9 +25,9 @@ export function Step3Client() {
           },
           "",
         );
-        setCanContinue(true);
+        setCanContinue((prev) => (prev === true ? prev : true));
       } else {
-        setCanContinue(false);
+        setCanContinue((prev) => (prev === false ? prev : false));
       }
     }
   }, [categoriesSelected, setCanContinue]);

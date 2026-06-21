@@ -14,6 +14,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -26,26 +27,33 @@ import { updateUserAction } from "@/modules/users/server-actions/update-user.act
 type InputsType = HTMLInputElement | HTMLTextAreaElement | null | undefined;
 type FunnelActions = "continue" | "finish" | "back";
 
-type FunnelContextType = {
+// Stable slice: identities never change between renders (refs + memoized
+// callbacks). Consumers that only need these never re-render on state changes.
+type FunnelActionsContextType = {
   user?: UserAuth;
   lastStep: number;
-  isPending: boolean;
   actionElementRef: MutableRefObject<HTMLInputElement | null>;
-  inputs?: UpdateUserInputWithAssets;
-  errors?: string[];
-  refInputs?: (HTMLInputElement | HTMLTextAreaElement)[];
-  canContinue: boolean;
-  setCanContinue: (value: boolean) => void;
+  setCanContinue: (value: boolean | ((prev: boolean) => boolean)) => void;
   handleSubmit: (e: FormEvent<HTMLFormElement>) => Promise<void>;
   cleanErrors: () => void;
   handleOnChange: () => void;
   setErrors: (errors: string[]) => void;
   setInputs: (...inputs: InputsType[]) => void;
 };
-const FunnelContext = createContext<FunnelContextType>({
+
+// Reactive slice: changes drive re-renders (pending/validation/errors).
+type FunnelStateContextType = {
+  isPending: boolean;
+  canContinue: boolean;
+  errors?: string[];
+  inputs?: UpdateUserInputWithAssets;
+  refInputs?: (HTMLInputElement | HTMLTextAreaElement)[];
+};
+
+type FunnelContextType = FunnelActionsContextType & FunnelStateContextType;
+
+const FunnelActionsContext = createContext<FunnelActionsContextType>({
   lastStep: 0,
-  canContinue: false,
-  isPending: false,
   actionElementRef: { current: null },
   setCanContinue: () => {},
   handleSubmit: async () => {},
@@ -55,7 +63,21 @@ const FunnelContext = createContext<FunnelContextType>({
   handleOnChange: () => {},
 });
 
-export const useFunnel = () => useContext(FunnelContext);
+const FunnelStateContext = createContext<FunnelStateContextType>({
+  isPending: false,
+  canContinue: false,
+});
+
+export const useFunnelActions = () => useContext(FunnelActionsContext);
+export const useFunnelState = () => useContext(FunnelStateContext);
+
+// Backward-compat merged hook. Subscribes to BOTH contexts, so it re-renders
+// on any change. Prefer the granular hooks above to minimize re-renders.
+export const useFunnel = (): FunnelContextType => {
+  const actions = useFunnelActions();
+  const state = useFunnelState();
+  return { ...actions, ...state };
+};
 
 export const FunnelProvider = ({
   children,
@@ -72,7 +94,16 @@ export const FunnelProvider = ({
   const actionElementRef = useRef<HTMLInputElement | null>(null);
   const [inputs, _setInputs] =
     useState<(HTMLInputElement | HTMLTextAreaElement)[]>();
-  const [canContinue, setCanContinue] = useState(defaultCanContinue);
+  const [canContinue, _setCanContinue] = useState(defaultCanContinue);
+  const setCanContinue = useCallback(
+    (value: boolean | ((prev: boolean) => boolean)) => {
+      _setCanContinue((prev) => {
+        const next = typeof value === "function" ? value(prev) : value;
+        return prev === next ? prev : next;
+      });
+    },
+    [],
+  );
   const { result, handleSubmit, errors, cleanErrors, setErrors, isPending } =
     useHandleAction({
       action: async (formData) => {
@@ -122,46 +153,72 @@ export const FunnelProvider = ({
     });
   }, []);
 
+  // Mirror inputs into a ref so handleOnChange stays referentially stable and
+  // can live in the stable actions context without churning its identity.
+  const inputsRef = useRef(inputs);
+  inputsRef.current = inputs;
+
   const handleOnChange = useCallback(() => {
     cleanErrors();
-    if (!inputs?.length) return;
-    const nextCanContinue = inputs.every((input) => {
+    const currentInputs = inputsRef.current;
+    if (!currentInputs?.length) return;
+    const nextCanContinue = currentInputs.every((input) => {
       input?.parentElement?.classList.remove("input-required");
       return !input?.required || (input?.required && !!input?.value);
     });
     setCanContinue((prev) =>
       prev === nextCanContinue ? prev : nextCanContinue,
     );
-  }, [inputs, cleanErrors]);
+  }, [cleanErrors, setCanContinue]);
 
   useEffect(() => {
     if (!inputs?.length) return;
     handleOnChange();
   }, [inputs, handleOnChange]);
 
+  const actionsValue = useMemo<FunnelActionsContextType>(
+    () => ({
+      user,
+      lastStep,
+      actionElementRef,
+      setCanContinue,
+      cleanErrors,
+      setInputs,
+      setErrors,
+      handleOnChange,
+      handleSubmit,
+    }),
+    [
+      user,
+      lastStep,
+      setCanContinue,
+      cleanErrors,
+      setInputs,
+      setErrors,
+      handleOnChange,
+      handleSubmit,
+    ],
+  );
+
+  const stateValue = useMemo<FunnelStateContextType>(
+    () => ({
+      isPending,
+      canContinue,
+      errors: errors || undefined,
+      inputs: result?.inputs,
+      refInputs: inputs,
+    }),
+    [isPending, canContinue, errors, result?.inputs, inputs],
+  );
+
   //TODO:handle funnel logic
 
   return (
-    <FunnelContext.Provider
-      value={{
-        user,
-        lastStep,
-        isPending,
-        actionElementRef,
-        inputs: result?.inputs,
-        canContinue,
-        errors: errors || undefined,
-        refInputs: inputs,
-        handleSubmit,
-        setCanContinue,
-        cleanErrors,
-        setInputs,
-        setErrors,
-        handleOnChange,
-      }}
-    >
-      {children}
-    </FunnelContext.Provider>
+    <FunnelActionsContext.Provider value={actionsValue}>
+      <FunnelStateContext.Provider value={stateValue}>
+        {children}
+      </FunnelStateContext.Provider>
+    </FunnelActionsContext.Provider>
   );
 };
 export const ContainerFormFunnel = ({
@@ -174,8 +231,8 @@ export const ContainerFormFunnel = ({
   className?: string;
 }) => {
   const actionRef = useRef<HTMLInputElement>(null);
-  const { canContinue, isPending, handleSubmit, errors, actionElementRef } =
-    useFunnel();
+  const { handleSubmit, actionElementRef } = useFunnelActions();
+  const { canContinue, isPending, errors } = useFunnelState();
   return (
     <FormComponent.Container className={className}>
       <FormComponent.Form
@@ -215,7 +272,8 @@ export const ButtonSubmitFunnel = ({
   text?: string;
   simple?: boolean;
 }) => {
-  const { refInputs, canContinue, actionElementRef, isPending } = useFunnel();
+  const { actionElementRef } = useFunnelActions();
+  const { refInputs, canContinue, isPending } = useFunnelState();
   return (
     <>
       {/* Submit Button */}
@@ -261,7 +319,8 @@ export const ButtonFinishFunnel = ({
     | null
     | undefined;
 }) => {
-  const { actionElementRef, isPending } = useFunnel();
+  const { actionElementRef } = useFunnelActions();
+  const { isPending } = useFunnelState();
   return (
     <FormComponent.SubmitButton
       onClick={() => {
@@ -275,7 +334,8 @@ export const ButtonFinishFunnel = ({
   );
 };
 export const ButtonStepBackFunnel = () => {
-  const { refInputs, user, actionElementRef, isPending } = useFunnel();
+  const { user, actionElementRef } = useFunnelActions();
+  const { refInputs, isPending } = useFunnelState();
   return (
     <>
       {user && user.funnel_step > 1 && (

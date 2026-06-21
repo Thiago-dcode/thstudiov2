@@ -426,12 +426,12 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
 
   useEffect(() => {
     if (!currentMediaUpload) return;
-    setCurrentMedia({
-      ...currentMedia,
+    setCurrentMedia((prev) => ({
+      ...prev,
       ...currentMediaUpload.input,
       ...currentMediaUpload.data,
-    });
-  }, [currentMediaUpload, currentMedia]);
+    }));
+  }, [currentMediaUpload]);
 
   return (
     <Drawer
