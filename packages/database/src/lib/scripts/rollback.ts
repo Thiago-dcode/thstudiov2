@@ -1,5 +1,6 @@
 import SchemaBuilder from '../builder/schemaBuilder';
 import { connectDb, handleMigration } from './utils';
+import { migrationNameAliases } from './utils/migration-names';
 import Logger from '@repo/backend-lib/utils/console';
 import { killClient } from '../client';
 import { QueryBuilder } from '../builder/queryBuilder';
@@ -38,7 +39,9 @@ export const rollback = async (
         (stepCount === null || rollbackCount < stepCount)
       ) {
         await migration.down();
-        await queryBuilder.where('name', '=', migrationName).delete();
+        await queryBuilder
+          .whereIn('name', migrationNameAliases(migrationName))
+          .delete();
         rollbackCount++;
         Logger.success(`↩️ Rolled back ${migrationName}`);
       }
