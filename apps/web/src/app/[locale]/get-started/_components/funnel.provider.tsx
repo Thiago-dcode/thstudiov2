@@ -129,7 +129,9 @@ export const FunnelProvider = ({
       input?.parentElement?.classList.remove("input-required");
       return !input?.required || (input?.required && !!input?.value);
     });
-    setCanContinue((prev) => (prev === nextCanContinue ? prev : nextCanContinue));
+    setCanContinue((prev) =>
+      prev === nextCanContinue ? prev : nextCanContinue,
+    );
   }, [inputs, cleanErrors]);
 
   useEffect(() => {
@@ -227,7 +229,8 @@ export const ButtonSubmitFunnel = ({
               input.parentElement?.classList.add("input-required");
             }
           }
-          if (actionElementRef.current) actionElementRef.current.value = "continue";
+          if (actionElementRef.current)
+            actionElementRef.current.value = "continue";
         }}
         className={cn({
           "bg-text-muted cursor-not-allowed": !canContinue,
@@ -281,7 +284,8 @@ export const ButtonStepBackFunnel = () => {
             refInputs?.forEach((input) => {
               if (input) input.required = false;
             });
-            if (actionElementRef.current) actionElementRef.current.value = "back";
+            if (actionElementRef.current)
+              actionElementRef.current.value = "back";
           }}
           type="submit"
           className={cn({
