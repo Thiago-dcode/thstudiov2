@@ -1,4 +1,4 @@
-import { Schema, Column } from "src/lib/facades";
+import { Schema, Column } from '../lib/facades';
 const up = async () => {
 
   await Schema.table('user_auth_devices').withTimestamps(true).createIfNotExists([

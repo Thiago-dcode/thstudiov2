@@ -47,9 +47,13 @@ const handleMigration = async (
     // that don't fully follow the convention are simply sorted alphabetically
     // (no error is thrown).
     if (!rollback) {
-      migrations = migrations.sort((a: string, b: string) =>
-        a.localeCompare(b),
-      );
+      migrations = migrations
+        .filter(
+          (file) =>
+            (file.endsWith('.js') || file.endsWith('.ts')) &&
+            !file.endsWith('.d.ts'),
+        )
+        .sort((a: string, b: string) => a.localeCompare(b));
     }
 
     for (const migration of migrations) {

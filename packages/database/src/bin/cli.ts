@@ -1,18 +1,38 @@
 #!/usr/bin/env ts-node
 
+import path from 'node:path';
+import fs from 'node:fs';
 import { Command } from 'commander';
 import { migrate } from '../lib/scripts/migrate';
 import { createMigration } from '../lib/scripts/create-migration';
 import { seed } from '../lib/scripts/seed';
 import Logger from '@repo/backend-lib/utils/console';
-import { testDb } from 'src/lib/scripts/testDb';
+import { testDb } from '../lib/scripts/testDb';
 import { createSeeder } from '../lib/scripts/create-seed';
 import * as readline from 'readline';
 import { getConfigValue } from '@repo/common-lib/config/utils';
-import { rollback } from 'src/lib/scripts/rollback';
+import { rollback } from '../lib/scripts/rollback';
 import { cleanStripe } from '../lib/scripts/clean-stripe';
 import { cleanS3 } from '../lib/scripts/clean-s3';
 import { createStripeCustomers } from '../lib/scripts/create-stripe-customers';
+import {
+  databaseCliConfig,
+  setDatabaseCliConfig,
+} from '../lib/scripts/utils/config';
+
+// When running the compiled CLI (`node dist/src/bin/cli.js`), load migrations from
+// dist so Docker/production images do not need tsx or TypeScript sources.
+const distMigrationsDir = path.join(process.cwd(), 'dist', 'src', 'migrations');
+if (fs.existsSync(distMigrationsDir)) {
+  const distSeedsDir = path.join(process.cwd(), 'dist', 'src', 'seeds');
+  setDatabaseCliConfig({
+    ...databaseCliConfig,
+    migrationsDirectory: distMigrationsDir,
+    seedDirectory: fs.existsSync(distSeedsDir)
+      ? distSeedsDir
+      : databaseCliConfig.seedDirectory,
+  });
+}
 
 const program = new Command();
 

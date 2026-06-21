@@ -150,7 +150,7 @@ if [[ "$SKIP_MIGRATE" == false ]]; then
   $COMPOSE run --rm \
     -e DB_HOST=postgres \
     -e DB_PORT=5432 \
-    api sh -c "pnpm --filter @repo/database dbcli migrate"
+    api sh -c "cd packages/database && node dist/src/bin/cli.js migrate"
   success "Migrations complete."
 else
   warn "Step 5/6 — Migrations skipped (--skip-migrate)."

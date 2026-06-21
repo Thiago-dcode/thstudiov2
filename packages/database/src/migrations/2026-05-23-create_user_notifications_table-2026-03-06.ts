@@ -1,4 +1,4 @@
-import { Column, Schema } from 'src/lib/facades';
+import { Column, Schema } from '../lib/facades';
 
 const up = async () => {
 

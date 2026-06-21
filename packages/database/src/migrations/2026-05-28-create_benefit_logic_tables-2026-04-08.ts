@@ -1,5 +1,5 @@
 import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
-import { Alter, Column, Schema } from 'src/lib/facades';
+import { Alter, Column, Schema } from '../lib/facades';
 
 const BENEFITS = TABLES_ENUM.BENEFITS;
 const USER_BENEFITS = TABLES_ENUM.USER_BENEFITS;

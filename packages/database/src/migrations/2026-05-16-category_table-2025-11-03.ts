@@ -1,4 +1,4 @@
-import { Alter, Column, Schema } from "src/lib/facades";
+import { Alter, Column, Schema } from '../lib/facades';
 
 const up = async () => {
 
