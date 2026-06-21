@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import {
   createContext,
   type FormEvent,
+  type MutableRefObject,
   type ReactElement,
   type ReactNode,
   useCallback,
@@ -29,7 +30,7 @@ type FunnelContextType = {
   user?: UserAuth;
   lastStep: number;
   isPending: boolean;
-  actionElement?: HTMLInputElement;
+  actionElementRef: MutableRefObject<HTMLInputElement | null>;
   inputs?: UpdateUserInputWithAssets;
   errors?: string[];
   refInputs?: (HTMLInputElement | HTMLTextAreaElement)[];
@@ -37,7 +38,6 @@ type FunnelContextType = {
   setCanContinue: (value: boolean) => void;
   handleSubmit: (e: FormEvent<HTMLFormElement>) => Promise<void>;
   cleanErrors: () => void;
-  setActionElement: (input: HTMLInputElement) => void;
   handleOnChange: () => void;
   setErrors: (errors: string[]) => void;
   setInputs: (...inputs: InputsType[]) => void;
@@ -46,10 +46,10 @@ const FunnelContext = createContext<FunnelContextType>({
   lastStep: 0,
   canContinue: false,
   isPending: false,
+  actionElementRef: { current: null },
   setCanContinue: () => {},
   handleSubmit: async () => {},
   setErrors: () => {},
-  setActionElement: () => {},
   cleanErrors: () => {},
   setInputs: () => {},
   handleOnChange: () => {},
@@ -69,7 +69,7 @@ export const FunnelProvider = ({
   defaultCanContinue?: boolean;
 }) => {
   const router = useRouter();
-  const [actionElement, setActionElement] = useState<HTMLInputElement>();
+  const actionElementRef = useRef<HTMLInputElement | null>(null);
   const [inputs, _setInputs] =
     useState<(HTMLInputElement | HTMLTextAreaElement)[]>();
   const [canContinue, setCanContinue] = useState(defaultCanContinue);
@@ -107,20 +107,29 @@ export const FunnelProvider = ({
         }
       },
     });
-  const setInputs = useCallback((...inputs: InputsType[]) => {
-    _setInputs(inputs.filter((input) => !!input));
+  const setInputs = useCallback((...nextInputs: InputsType[]) => {
+    const filtered = nextInputs.filter(
+      (input): input is HTMLInputElement | HTMLTextAreaElement => !!input,
+    );
+    _setInputs((prev) => {
+      if (
+        prev?.length === filtered.length &&
+        prev.every((el, i) => el === filtered[i])
+      ) {
+        return prev;
+      }
+      return filtered;
+    });
   }, []);
 
   const handleOnChange = useCallback(() => {
     cleanErrors();
-    if (inputs) {
-      setCanContinue(
-        inputs.every((input) => {
-          input?.parentElement?.classList.remove("input-required");
-          return !input?.required || (input?.required && !!input?.value);
-        }),
-      );
-    }
+    if (!inputs?.length) return;
+    const nextCanContinue = inputs.every((input) => {
+      input?.parentElement?.classList.remove("input-required");
+      return !input?.required || (input?.required && !!input?.value);
+    });
+    setCanContinue((prev) => (prev === nextCanContinue ? prev : nextCanContinue));
   }, [inputs, cleanErrors]);
 
   useEffect(() => {
@@ -136,8 +145,7 @@ export const FunnelProvider = ({
         user,
         lastStep,
         isPending,
-        actionElement,
-        setActionElement,
+        actionElementRef,
         inputs: result?.inputs,
         canContinue,
         errors: errors || undefined,
@@ -164,7 +172,7 @@ export const ContainerFormFunnel = ({
   className?: string;
 }) => {
   const actionRef = useRef<HTMLInputElement>(null);
-  const { canContinue, isPending, handleSubmit, errors, setActionElement } =
+  const { canContinue, isPending, handleSubmit, errors, actionElementRef } =
     useFunnel();
   return (
     <FormComponent.Container className={className}>
@@ -182,9 +190,9 @@ export const ContainerFormFunnel = ({
         }}
       >
         <input
-          ref={(e) => {
-            actionRef.current = e;
-            if (e) setActionElement(e);
+          ref={(node) => {
+            actionRef.current = node;
+            actionElementRef.current = node;
           }}
           type="text"
           name="action"
@@ -205,7 +213,7 @@ export const ButtonSubmitFunnel = ({
   text?: string;
   simple?: boolean;
 }) => {
-  const { refInputs, canContinue, actionElement, isPending } = useFunnel();
+  const { refInputs, canContinue, actionElementRef, isPending } = useFunnel();
   return (
     <>
       {/* Submit Button */}
@@ -219,7 +227,7 @@ export const ButtonSubmitFunnel = ({
               input.parentElement?.classList.add("input-required");
             }
           }
-          if (actionElement) actionElement.value = "continue";
+          if (actionElementRef.current) actionElementRef.current.value = "continue";
         }}
         className={cn({
           "bg-text-muted cursor-not-allowed": !canContinue,
@@ -250,11 +258,11 @@ export const ButtonFinishFunnel = ({
     | null
     | undefined;
 }) => {
-  const { actionElement, isPending } = useFunnel();
+  const { actionElementRef, isPending } = useFunnel();
   return (
     <FormComponent.SubmitButton
       onClick={() => {
-        if (actionElement) actionElement.value = "finish";
+        if (actionElementRef.current) actionElementRef.current.value = "finish";
       }}
       isPending={isPending}
       variant={variant}
@@ -264,7 +272,7 @@ export const ButtonFinishFunnel = ({
   );
 };
 export const ButtonStepBackFunnel = () => {
-  const { refInputs, user, actionElement, isPending } = useFunnel();
+  const { refInputs, user, actionElementRef, isPending } = useFunnel();
   return (
     <>
       {user && user.funnel_step > 1 && (
@@ -273,7 +281,7 @@ export const ButtonStepBackFunnel = () => {
             refInputs?.forEach((input) => {
               if (input) input.required = false;
             });
-            if (actionElement) actionElement.value = "back";
+            if (actionElementRef.current) actionElementRef.current.value = "back";
           }}
           type="submit"
           className={cn({

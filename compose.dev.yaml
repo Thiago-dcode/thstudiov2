@@ -69,6 +69,8 @@ services:
       # the image. Mount from the host so they survive container rebuilds.
       # On the droplet: scp -r apps/api/assets/ <user>@<host>:<repo>/apps/api/assets/
       - ./apps/api/assets:/workspace/apps/api/assets:ro
+      # API file logs (FileLogService) — persist on the host for inspection.
+      - ./packages/backend-lib/storage/logs:/workspace/packages/backend-lib/storage/logs
     expose:
       - "8080"
     deploy:

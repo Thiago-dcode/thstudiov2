@@ -6,7 +6,10 @@ import {
   USER_AGENT_HEADER,
   USER_ID_HEADER,
 } from '@repo/common-lib/constants/constants';
-import { FactoryLogService } from '@repo/backend-lib/services/log-service';
+import {
+  FactoryLogService,
+  LogService,
+} from '@repo/backend-lib/services/log-service';
 import { API_ERRORS_CHANNEL, logConfig } from 'src/config/logging';
 import { format } from 'date-fns/format';
 import { VALIDATION_ERROR_STATUS } from '../utils/constants';
@@ -55,6 +58,9 @@ export class ResponseExceptionFilter implements ExceptionFilter {
           requestParams: request?.params,
           requestQuery: request?.query,
         });
+        void LogService.flush().catch((flushErr) =>
+          console.error('Failed to flush error logs:', flushErr),
+        );
       } catch (error) {
         console.error('Exception occurred:', error);
       }
@@ -101,6 +107,9 @@ export class ResponseExceptionFilter implements ExceptionFilter {
         logService
           .channel(API_ERRORS_CHANNEL + '/' + '500')
           .error(message, error);
+        void LogService.flush().catch((flushErr) =>
+          console.error('Failed to flush error logs:', flushErr),
+        );
       } catch (error) {
         console.error('Exception occurred:', error);
       }

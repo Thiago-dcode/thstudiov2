@@ -1,6 +1,7 @@
 import path from "path";
 import { LogConfig, LogLevel, LogOptions } from "./types";
 import { LogService } from "./log.service";
+import { resolveDefaultLogFolder } from "./log-path";
 import fs from 'node:fs/promises'
 import { checkFileExistsAsync } from '@repo/backend-lib/utils';
 import { format, isSameDay } from "date-fns";
@@ -53,7 +54,7 @@ export class FileLogService extends LogService {
         }
         const today = format(LogService.date, 'yyyy-MM-dd');
         if (!this.config.logFolder) {
-            this.config.logFolder = path.resolve(process.cwd(), '..', '..', 'packages', 'backend-lib', 'storage', 'logs');
+            this.config.logFolder = resolveDefaultLogFolder();
         }
         const logFolder = path.join(this.config.logFolder as string, this.config.channel);
         if (!(await checkFileExistsAsync(logFolder))) {
