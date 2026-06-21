@@ -1,5 +1,5 @@
 import { ENUMS, EnumType } from "@repo/common-lib/constants/enums";
-import { Query } from "src/lib/facades";
+import { Query } from "../lib/facades";
 
 export const main = async () => {
 

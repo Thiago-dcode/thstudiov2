@@ -25,7 +25,7 @@ const up = async () => {
       onUpdate: 'CASCADE',
     }),
   ]);
-  await Schema.table('collection_media').createIfNotExists([
+  await Schema.table('collection_media').create([
     Column.id(),
     Column.foreignKey('collection_id', 'collections', 'id', {
       onDelete: 'CASCADE',

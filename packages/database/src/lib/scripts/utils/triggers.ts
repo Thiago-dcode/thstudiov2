@@ -9,7 +9,6 @@ import Logger from '@repo/backend-lib/utils/console';
 const createUpdatedAtTrigger = async (tableName: TableName) => {
   try {
     await getClient().query(`
-    DROP TRIGGER IF EXISTS update_${tableName}_updated_at ON ${tableName};
     CREATE TRIGGER update_${tableName}_updated_at 
     BEFORE UPDATE ON ${tableName}
     FOR EACH ROW 
@@ -23,7 +22,6 @@ const createUpdatedAtTrigger = async (tableName: TableName) => {
 const createCreatedAtTrigger = async (tableName: TableName) => {
   try {
     await getClient().query(`
-    DROP TRIGGER IF EXISTS update_${tableName}_created_at ON ${tableName};
     CREATE TRIGGER update_${tableName}_created_at 
     BEFORE INSERT ON ${tableName}
     FOR EACH ROW 

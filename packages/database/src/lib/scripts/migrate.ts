@@ -4,7 +4,6 @@ import Logger from '@repo/backend-lib/utils/console';
 import { killClient } from '../client';
 import { QueryBuilder } from '../builder/queryBuilder';
 import type { MigrationScriptOptions } from './rollback';
-import { migrationNameAliases } from './utils/migration-names';
 
 const MIGRATION_TABLE_NAME = 'migrations';
 
@@ -31,7 +30,7 @@ export const migrate = async (options: MigrationScriptOptions = {}) => {
     let migrationCount = 0;
     await handleMigration(async (migration, migrationName) => {
       const migrationExists = await queryBuilder
-        .whereIn('name', migrationNameAliases(migrationName))
+        .where('name', '=', migrationName)
         .exists();
       if (!migrationExists) {
         Logger.info(`🔄 Migrating ${migrationName}`);

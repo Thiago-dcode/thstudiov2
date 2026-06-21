@@ -7,7 +7,7 @@ import Logger from '@repo/backend-lib/utils/console';
 import { EnumType } from "@repo/common-lib/constants/enums";
 import { getConfigValue } from '@repo/common-lib/config/utils';
 import { generateValidSlug } from "@repo/common-lib/utils/generate-valid-slug";
-import { Query, Schema } from "src/lib/facades";
+import { Query, Schema } from "../lib/facades";
 
 /** Same S3 key pattern as {@link CategoriesService.categoryThumbnailKey}: `categories/${slug}/thumbnail.webp`. */
 const CATEGORY_THUMBNAIL_REL_PATH = (slug: string) =>

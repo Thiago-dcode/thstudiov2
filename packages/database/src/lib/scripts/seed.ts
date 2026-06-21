@@ -17,7 +17,7 @@ const seed = async (className = 'main', options: SeedOptions = {}) => {
       fs.mkdirSync(seedDirectory, { recursive: true });
     }
     Logger.info(`Running ${className} seed`);
-    const mainSeedPath = path.join(seedDirectory, `${className}.ts`);
+    const mainSeedPath = path.join(seedDirectory, `${className}.js`);
     if (!fs.existsSync(mainSeedPath)) {
       Logger.error('Seed file does not exist: ', mainSeedPath);
       if (shouldExit) process.exit(1);

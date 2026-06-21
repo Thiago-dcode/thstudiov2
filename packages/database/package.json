@@ -8,8 +8,7 @@
     "dev": "tsc --watch",
     "test": "jest  --passWithNoTests --config ./jest.config.ts ",
     "test:watch": "jest  --passWithNoTests --config ./jest.config.ts  --watch",
-    "dbcli": "node dist/src/bin/cli.js",
-    "dbcli:dev": "tsx --tsconfig tsconfig.json src/bin/cli.ts"
+    "dbcli": "node dist/src/bin/cli.js"
   },
   "exports": {
     ".": "./dist/src/index.js",
