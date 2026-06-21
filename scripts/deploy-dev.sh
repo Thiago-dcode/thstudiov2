@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 # =============================================================================
-# deploy.sh — TH Studio dev-server deployment script
+# deploy-dev.sh — TH Studio dev-server deployment script
 #
 # Usage:
-#   ./scripts/deploy-dev.sh [--skip-build] [--skip-migrate] [--skip-assets] [--no-cache]
+#   ./scripts/deploy-dev.sh [--skip-pull] [--skip-migrate] [--skip-assets]
 #
 # Options:
-#   --skip-build    Skip docker image rebuild (use existing images)
+#   --skip-pull     Skip pulling prebuilt images from GHCR (use local images)
 #   --skip-migrate  Skip DB migrations
 #   --skip-assets   Skip the assets directory check/warning
-#   --no-cache      Force a full image rebuild without Docker layer cache
 #
-# This script is meant to run ON the droplet (165.232.38.110).
+# Images are built in GitHub Actions and published to GHCR. This script pulls
+# them on the droplet instead of compiling locally (see docs/deploy-ghcr.md).
 # Boot persistence handled by systemd (a11studio-dev.service).
 # =============================================================================
 
@@ -31,18 +31,22 @@ COMPOSE_FILE="$REPO_ROOT/compose.dev.yaml"
 COMPOSE="docker compose -f $COMPOSE_FILE"
 
 # ── Parse flags ───────────────────────────────────────────────────────────────
-SKIP_BUILD=false
+SKIP_PULL=false
 SKIP_MIGRATE=false
 SKIP_ASSETS=false
-NO_CACHE=false
 
 for arg in "$@"; do
   case $arg in
-    --skip-build)   SKIP_BUILD=true ;;
-    --skip-migrate) SKIP_MIGRATE=true ;;
-    --skip-assets)  SKIP_ASSETS=true ;;
-    --no-cache)     NO_CACHE=true ;;
-    *)              error "Unknown argument: $arg"; exit 1 ;;
+    --skip-pull|--skip-build) SKIP_PULL=true ;;
+    --skip-migrate)           SKIP_MIGRATE=true ;;
+    --skip-assets)            SKIP_ASSETS=true ;;
+    --no-cache)
+      warn "--no-cache is ignored: images are pulled from GHCR, not built on this host."
+      ;;
+    *)
+      error "Unknown argument: $arg"
+      exit 1
+      ;;
   esac
 done
 
@@ -60,8 +64,14 @@ if [[ ! -f "$COMPOSE_FILE" ]]; then
   exit 1
 fi
 
+if ! grep -qE '^DOCKER_IMAGE_OWNER=.+$' "$REPO_ROOT/.env"; then
+  error "DOCKER_IMAGE_OWNER is not set in .env — see docs/deploy-ghcr.md"
+  exit 1
+fi
+
 info "Repo root : $REPO_ROOT"
 info "Compose   : $COMPOSE_FILE"
+info "Images    : ghcr.io/<DOCKER_IMAGE_OWNER>/a11studio-dev-*:${DOCKER_IMAGE_TAG:-develop} (from .env)"
 echo ""
 
 # ── Step 1: Git pull ──────────────────────────────────────────────────────────
@@ -95,7 +105,7 @@ if [[ "$SKIP_ASSETS" == false ]]; then
   if [[ ! -d "$ASSETS_DIR" ]]; then
     error "Assets directory not found: $ASSETS_DIR"
     error "Run from your local machine:"
-    error "  scp -r apps/api/assets/ a11studio-dev:$ASSETS_DIR"
+    error "  scp -r apps/api/assets/ <user>@<host>:$ASSETS_DIR"
     exit 1
   fi
 
@@ -106,24 +116,17 @@ else
 fi
 echo ""
 
-# ── Step 3: Build images ──────────────────────────────────────────────────────
-if [[ "$SKIP_BUILD" == false ]]; then
-  BUILD_FLAGS=""
-  if [[ "$NO_CACHE" == true ]]; then
-    warn "Step 3/6 — Building Docker images WITHOUT cache (--no-cache) …"
-    BUILD_FLAGS="--no-cache"
-  else
-    info "Step 3/6 — Building Docker images (api, web, worker) …"
+# ── Step 3: Pull prebuilt images ──────────────────────────────────────────────
+if [[ "$SKIP_PULL" == false ]]; then
+  info "Step 3/6 — Pulling prebuilt images from GHCR (api, worker, web) …"
+  if ! $COMPOSE pull api worker web; then
+    error "Failed to pull images from GHCR."
+    error "Ensure docker is logged in: docs/deploy-ghcr.md (Step 4)"
+    exit 1
   fi
-  # Build one image at a time: the droplet has 1 vCPU / 1GB RAM and parallel
-  # builds cause swapping/OOM. api goes first so worker/web reuse its shared
-  # base + dependency layers from cache.
-  $COMPOSE build $BUILD_FLAGS api
-  $COMPOSE build $BUILD_FLAGS worker
-  $COMPOSE build $BUILD_FLAGS web
-  success "Images built."
+  success "Images pulled."
 else
-  warn "Step 3/6 — Image build skipped (--skip-build)."
+  warn "Step 3/6 — Image pull skipped (--skip-pull)."
 fi
 echo ""
 
@@ -201,11 +204,8 @@ else
 fi
 
 # ── Cleanup ──────────────────────────────────────────────────────────────────
-# Reclaim disk: drop dangling images from previous builds and cap the BuildKit
-# cache (keep enough to preserve layer-cache benefits between deploys).
-info "Cleaning up old images and excess build cache …"
+info "Cleaning up unused images …"
 docker image prune -f >/dev/null
-docker builder prune -f --keep-storage 4GB >/dev/null
 success "Cleanup done."
 
 echo ""

@@ -47,10 +47,13 @@ services:
       --agree-tos --no-eff-email --non-interactive"
 
   api:
-    image: a11studio-dev-api
+    # Prebuilt in GitHub Actions and pulled on the droplet (see docs/deploy-ghcr.md).
+    # `build:` remains for local `docker compose build` when developing offline.
+    image: ${DOCKER_REGISTRY:-ghcr.io}/${DOCKER_IMAGE_OWNER:?Set DOCKER_IMAGE_OWNER in .env}/a11studio-dev-api:${DOCKER_IMAGE_TAG:-develop}
     build:
       context: .
       dockerfile: apps/api/Dockerfile
+    pull_policy: always
     # No container_name / fixed host port: this service sits behind nginx and is
     # scaled horizontally (load balanced by nginx via Docker DNS).
     restart: unless-stopped
@@ -86,9 +89,11 @@ services:
       - a11studio-dev
 
   web:
+    image: ${DOCKER_REGISTRY:-ghcr.io}/${DOCKER_IMAGE_OWNER:?Set DOCKER_IMAGE_OWNER in .env}/a11studio-dev-web:${DOCKER_IMAGE_TAG:-develop}
     build:
       context: .
       dockerfile: apps/web/Dockerfile
+    pull_policy: always
       args:
         NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8080/api/v1}
@@ -135,9 +140,11 @@ services:
       - a11studio-dev
 
   worker:
+    image: ${DOCKER_REGISTRY:-ghcr.io}/${DOCKER_IMAGE_OWNER:?Set DOCKER_IMAGE_OWNER in .env}/a11studio-dev-worker:${DOCKER_IMAGE_TAG:-develop}
     build:
       context: .
       dockerfile: apps/worker/Dockerfile
+    pull_policy: always
     container_name: a11studio-dev-worker
     restart: unless-stopped
     env_file:
