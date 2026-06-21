@@ -10,6 +10,12 @@ const MIGRATION_TABLE_NAME = 'migrations';
 /** Large `migrate:refresh` / `db:fresh` runs can exceed a few minutes on slow machines. */
 const MIGRATION_TIMEOUT_MS = 15 * 60 * 1000;
 
+/** Match legacy `.ts` rows and current `.js` dist filenames for the same migration. */
+const migrationNameAliases = (filename: string): string[] => {
+  const base = filename.replace(/\.(ts|js)$/, '');
+  return [...new Set([filename, `${base}.ts`, `${base}.js`, base])];
+};
+
 export const migrate = async (options: MigrationScriptOptions = {}) => {
   const shouldExit = options.exitProcess !== false;
   const timeoutId = setTimeout(() => {
@@ -30,7 +36,7 @@ export const migrate = async (options: MigrationScriptOptions = {}) => {
     let migrationCount = 0;
     await handleMigration(async (migration, migrationName) => {
       const migrationExists = await queryBuilder
-        .where('name', '=', migrationName)
+        .whereIn('name', migrationNameAliases(migrationName))
         .exists();
       if (!migrationExists) {
         Logger.info(`🔄 Migrating ${migrationName}`);
