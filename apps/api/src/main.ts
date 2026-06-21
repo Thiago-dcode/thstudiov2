@@ -26,6 +26,25 @@ process.on('unhandledRejection', (reason: unknown) => {
   logger.error('💥 Uncaught Exception:', reason);
   console.error('💥 Unhandled Rejection:', reason);
 });
+
+function logStripeCliOutput(msg: string, stream: 'stdout' | 'stderr') {
+  if (!msg) return;
+
+  const isRoutineStderr =
+    stream === 'stderr' &&
+    (/^Getting ready/i.test(msg) ||
+      /^Ready!/i.test(msg) ||
+      /^-->/.test(msg) ||
+      /^<--/.test(msg));
+
+  if (stream === 'stdout' || isRoutineStderr) {
+    logger.info(`Stripe CLI ${stream}`, { msg });
+    return;
+  }
+
+  logger.warn(`Stripe CLI ${stream}`, { msg });
+}
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     rawBody: true,
@@ -63,54 +82,55 @@ async function bootstrap() {
   expressApp.set('query parser', 'extended');
 
   expressApp.get('/', (_, res) => {
-  res.json({ status: 'ok' });
-});
+    res.json({ status: 'ok' });
+  });
 
   await app.listen(port, () => {
     console.log(`🚀 ENVIRONMENT: ${ENVIRONMENT} API is running on port http://localhost:${port}`);
-    
-  // Inside app.listen callback:
-  // Only forward Stripe webhooks via the Stripe CLI when running locally
-  // (NODE_ENV=local). On deployed dev/staging/prod servers the `stripe` CLI is
-  // not installed, so spawning it would only produce noise/errors.
-if (configService.get('app.env') === 'local') {
-  const forwardToUrl = `${configService.get('api.v1Url')}/webhooks/stripe`;
-  logger.info('Stripe CLI listener: starting', { forwardToUrl });
 
-  const stripeArgs = ['listen', '--forward-to', forwardToUrl];
-  logger.info('Stripe CLI listener: spawn args', { stripeArgs });
+    // Only forward Stripe webhooks via the Stripe CLI when running locally.
+    // On deployed dev/staging/prod servers the `stripe` CLI is not installed.
+    if (configService.get('app.env') === 'local') {
+      const forwardToUrl = `${configService.get('api.v1Url')}/webhooks/stripe`;
+      logger.info('Stripe CLI listener: starting', { forwardToUrl });
 
-  const stripeProcess = spawn('stripe', stripeArgs, {
-    shell: true,
-    env: process.env, // inherit env; no secrets should be needed for `stripe listen`
-  });
+      const stripeArgs = ['listen', '--forward-to', forwardToUrl];
+      logger.info('Stripe CLI listener: spawn args', { stripeArgs });
 
-  stripeProcess.stdout.on('data', (data) => {
-    const msg = data.toString().trim();
-    if (msg) logger.info('Stripe CLI stdout', { msg });
-  });
+      const stripeProcess = spawn('stripe', stripeArgs, {
+        shell: true,
+        env: process.env,
+      });
 
-  stripeProcess.stderr.on('data', (data) => {
-    const msg = data.toString().trim();
-    if (msg) logger.error('Stripe CLI stderr', { msg });
-  });
+      stripeProcess.stdout.on('data', (data: Buffer) => {
+        logStripeCliOutput(data.toString().trim(), 'stdout');
+      });
 
-  stripeProcess.on('error', (err) => {
-    logger.error('Stripe CLI listener: failed to start', { err: String(err) });
-    console.error('Failed to start Stripe listener:', err);
-  });
+      stripeProcess.stderr.on('data', (data: Buffer) => {
+        logStripeCliOutput(data.toString().trim(), 'stderr');
+      });
 
-  stripeProcess.on('close', (code, signal) => {
-    logger.info('Stripe CLI listener: exited', { code, signal });
-    console.log(`Stripe CLI listener exited (code=${code}, signal=${signal})`);
-  });
+      stripeProcess.on('error', (err) => {
+        logger.error('Stripe CLI listener: failed to start', { err: String(err) });
+        console.error('Failed to start Stripe listener:', err);
+      });
 
-  logger.info('Stripe CLI listener: spawned', { pid: stripeProcess.pid });
-}
-else{
-  logger.info('Stripe CLI listener: skipped (non-local env)', { env: configService.get('app.env') });
-  console.log("SKIP STRIPE SPIN UP");
-}
+      stripeProcess.on('close', (code, signal) => {
+        if (code !== 0 && code !== null) {
+          logger.error('Stripe CLI listener: exited with error', { code, signal });
+        } else {
+          logger.info('Stripe CLI listener: exited', { code, signal });
+        }
+        console.log(`Stripe CLI listener exited (code=${code}, signal=${signal})`);
+      });
+
+      logger.info('Stripe CLI listener: spawned', { pid: stripeProcess.pid });
+    } else {
+      logger.info('Stripe CLI listener: skipped (non-local env)', {
+        env: configService.get('app.env'),
+      });
+      console.log('SKIP STRIPE SPIN UP');
+    }
   });
 }
 

@@ -13,6 +13,15 @@ export async function ValuePillarsSection() {
 
   return (
     <WebSection id="value-pillars" className="overflow-hidden">
+      <div
+        className="pointer-events-none absolute inset-0 overflow-hidden"
+        aria-hidden
+      >
+        <div className="absolute -left-1/4 top-1/3 size-96 bg-fg-1/25 blur-3xl" />
+        <div className="absolute -right-1/4 bottom-1/4 size-96 bg-fg-1/20 blur-3xl" />
+        <div className="absolute left-1/2 top-0 size-80 -translate-x-1/2 bg-fg-2/15 blur-[100px]" />
+      </div>
+
       <WebSection.Container>
         <WebSection.Header
           badge={t("header.badge")}

@@ -12,7 +12,7 @@ export default async function Home() {
     <>
       <HeroSection />
       <ValuePillarsSection />
-      <SocialProofSection />
+      {/* <SocialProofSection /> */}
       <FeatureCategoriesSection />
       {/* <HowItWorksSection /> */}
       <FeaturedArtistsSection />
