@@ -24,42 +24,27 @@ COPY apps ./apps
 COPY packages ./packages
 
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store pnpm install --frozen-lockfile --prefer-offline
-RUN pnpm turbo run build --filter=@repo/api...
+
+# Mount Turbo's task cache so unchanged packages are restored instead of recompiled.
+RUN --mount=type=cache,id=turbo-cache,target=/root/.cache/turbo \
+    pnpm turbo run build --filter=@repo/api...
+
+# Produce a self-contained production bundle: dist + a pruned, fully-resolved
+# node_modules (workspace deps hard-linked in, dev deps excluded). This replaces
+# the slow second `pnpm install --prod` that previously ran in the runner stage.
+RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
+    pnpm --filter=@repo/api deploy --prod /prod/api
 
 # ─── Stage 2: runner ─────────────────────────────────────────────────────────
 FROM node:22-bookworm-slim AS runner
 
-ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
 ENV NODE_ENV=production
 
-WORKDIR /workspace
+WORKDIR /app
 
-# Copy api app
-COPY --from=builder /workspace/apps/api/dist ./apps/api/dist
-COPY --from=builder /workspace/apps/api/package.json ./apps/api/package.json
-
-# Copy workspace packages
-COPY --from=builder /workspace/packages/common-lib/dist ./packages/common-lib/dist
-COPY --from=builder /workspace/packages/common-lib/package.json ./packages/common-lib/package.json
-
-COPY --from=builder /workspace/packages/backend-lib/dist ./packages/backend-lib/dist
-COPY --from=builder /workspace/packages/backend-lib/package.json ./packages/backend-lib/package.json
-
-COPY --from=builder /workspace/packages/database/dist ./packages/database/dist
-COPY --from=builder /workspace/packages/database/package.json ./packages/database/package.json
-
-# Root package.json is needed so Node can resolve workspace: links
-COPY --from=builder /workspace/package.json ./package.json
-COPY --from=builder /workspace/pnpm-workspace.yaml ./pnpm-workspace.yaml
-COPY --from=builder /workspace/pnpm-lock.yaml ./pnpm-lock.yaml
-COPY --from=builder /workspace/patches ./patches
-
-# Install production dependencies only
-RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
-    corepack enable && corepack prepare pnpm@11.6.0 --activate && \
-    pnpm install --frozen-lockfile --prod
+# The deploy bundle is portable: just copy it. No install step needed.
+COPY --from=builder /prod/api ./
 
 EXPOSE 8080
 
-CMD ["node", "apps/api/dist/main"]
+CMD ["node", "dist/main"]

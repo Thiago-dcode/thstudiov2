@@ -62,10 +62,12 @@ ENV SUPPORT_EMAIL=$SUPPORT_EMAIL
 ENV SUPPORT_USERNAME=$SUPPORT_USERNAME
 ENV REGISTRATION_IS_CLOSED=$REGISTRATION_IS_CLOSED
 
-# Mount the Next.js incremental cache so Turbopack can reuse prior compilation
-# artifacts. On a cold build this has no effect; on subsequent builds with
-# unchanged source files it can cut compile time from 20+ min to a few minutes.
-RUN --mount=type=cache,id=nextjs-cache-dev,target=/workspace/apps/web/.next/cache \
+# Mount both the Turbo task cache and the Next.js incremental cache so unchanged
+# packages are not recompiled and Turbopack can reuse prior compilation artifacts.
+# On a cold build this has no effect; on subsequent builds with unchanged source
+# files it can cut compile time from 20+ min to a few minutes.
+RUN --mount=type=cache,id=turbo-cache,target=/root/.cache/turbo \
+    --mount=type=cache,id=nextjs-cache-dev,target=/workspace/apps/web/.next/cache \
     pnpm turbo run build --filter=@repo/web...
 
 # Ensure public/ exists so the runner COPY succeeds even if the project has no static assets.
