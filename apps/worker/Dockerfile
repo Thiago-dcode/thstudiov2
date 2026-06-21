@@ -29,22 +29,38 @@ RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store pnpm install --frozen-lo
 RUN --mount=type=cache,id=turbo-cache,target=/root/.cache/turbo \
     pnpm turbo run build --filter=@repo/worker...
 
-# Produce a self-contained production bundle: dist + a pruned, fully-resolved
-# node_modules (workspace deps hard-linked in, dev deps excluded). This replaces
-# the slow second `pnpm install --prod` that previously ran in the runner stage.
-RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
-    pnpm --filter=@repo/worker deploy --prod /prod/worker
-
 # ─── Stage 2: runner ─────────────────────────────────────────────────────────
 FROM node:22-bookworm-slim AS runner
 
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
 ENV NODE_ENV=production
 
-WORKDIR /app
+WORKDIR /workspace
 
-# The deploy bundle is portable: just copy it. No install step needed.
-COPY --from=builder /prod/worker ./
+# IMPORTANT: copy only manifests first, then install. Keeping the prod install
+# above the dist COPYs means the (slow) install layer stays cached on code-only
+# changes — it is re-run solely when a package.json / lockfile / patch changes.
+COPY --from=builder /workspace/apps/worker/package.json ./apps/worker/package.json
+COPY --from=builder /workspace/packages/common-lib/package.json ./packages/common-lib/package.json
+COPY --from=builder /workspace/packages/backend-lib/package.json ./packages/backend-lib/package.json
+COPY --from=builder /workspace/packages/database/package.json ./packages/database/package.json
+COPY --from=builder /workspace/package.json ./package.json
+COPY --from=builder /workspace/pnpm-workspace.yaml ./pnpm-workspace.yaml
+COPY --from=builder /workspace/pnpm-lock.yaml ./pnpm-lock.yaml
+COPY --from=builder /workspace/patches ./patches
+
+# Install production dependencies only (cached unless dependencies change).
+RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
+    corepack enable && corepack prepare pnpm@11.6.0 --activate && \
+    pnpm install --frozen-lockfile --prod
+
+# Built artifacts change on every code edit, so copy them AFTER the install layer.
+COPY --from=builder /workspace/apps/worker/dist ./apps/worker/dist
+COPY --from=builder /workspace/packages/common-lib/dist ./packages/common-lib/dist
+COPY --from=builder /workspace/packages/backend-lib/dist ./packages/backend-lib/dist
+COPY --from=builder /workspace/packages/database/dist ./packages/database/dist
 
 EXPOSE 8081
 
-CMD ["node", "dist/main.js"]
+CMD ["node", "apps/worker/dist/main.js"]
