@@ -161,10 +161,7 @@ export function WaitListForm({ currentPosition }: HeroWaitListFormProps) {
       </form>
 
       <div className="mb-2 flex items-center justify-start gap-2">
-        <p
-          id="hero-wait-list-email-hint"
-          className="text-left text-text-muted"
-        >
+        <p id="hero-wait-list-email-hint" className="text-left text-text-muted">
           {t("hint")}
         </p>
         <InfoTooltip content={t("hintTooltip")} />

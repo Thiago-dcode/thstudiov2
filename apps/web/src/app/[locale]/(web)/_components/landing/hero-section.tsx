@@ -1,4 +1,4 @@
-import { ChevronDown, Sparkle } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { serverEnv } from "@/env/server";
 import { WaitListForm } from "@/modules/wait-list/components/wait-list-form";

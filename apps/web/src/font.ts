@@ -1,4 +1,4 @@
-import {Lato, Noto_Sans, Jost } from "next/font/google";
+import { Jost, Noto_Sans } from "next/font/google";
 
 export const playfair = Noto_Sans({
   subsets: ["latin"],
@@ -8,7 +8,7 @@ export const playfair = Noto_Sans({
   display: "swap",
 });
 
-export const dmSans =Jost({
+export const dmSans = Jost({
   subsets: ["latin"],
   weight: ["300", "400"],
   style: ["normal"],

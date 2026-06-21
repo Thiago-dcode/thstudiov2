@@ -1,5 +1,5 @@
-import { getTranslations } from "next-intl/server";
 import Image, { type StaticImageData } from "next/image";
+import { getTranslations } from "next-intl/server";
 import brainIcon from "@/assets/icons/custom/brain.png";
 import cloudIcon from "@/assets/icons/custom/cloud.png";
 import handsIcon from "@/assets/icons/custom/hands.png";
@@ -32,7 +32,11 @@ export async function ValuePillarsSection() {
               />
 
               <div className="flex items-start justify-between p-8 tablet:p-10">
-                <Image src={ICONS[index]!} alt="" className="size-16 object-contain" />
+                <Image
+                  src={ICONS[index]!}
+                  alt=""
+                  className="size-16 object-contain"
+                />
                 <span className="font-mono text-sm text-text-muted opacity-40 select-none">
                   {String(index + 1).padStart(2, "0")}
                 </span>

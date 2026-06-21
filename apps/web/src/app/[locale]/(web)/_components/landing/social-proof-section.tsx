@@ -1,11 +1,11 @@
-import { getTranslations } from "next-intl/server";
 import Image, { type StaticImageData } from "next/image";
+import { getTranslations } from "next-intl/server";
 import arrowIcon from "@/assets/icons/custom/arrow.png";
 import crownIcon from "@/assets/icons/custom/crown.png";
 import starIcon from "@/assets/icons/custom/star.png";
 import { WebSection } from "./web-section";
 
-const ICONS: StaticImageData[] = [crownIcon ,starIcon , arrowIcon];
+const ICONS: StaticImageData[] = [crownIcon, starIcon, arrowIcon];
 
 export async function SocialProofSection() {
   const t = await getTranslations("landing.socialProof");
