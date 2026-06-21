@@ -93,7 +93,6 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
-    pull_policy: always
       args:
         NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8080/api/v1}
@@ -109,6 +108,7 @@ services:
         SUPPORT_EMAIL: ${SUPPORT_EMAIL}
         SUPPORT_USERNAME: ${SUPPORT_USERNAME}
         REGISTRATION_IS_CLOSED: ${REGISTRATION_IS_CLOSED}
+    pull_policy: always
     # No container_name / fixed host port: this service sits behind nginx and is
     # scaled horizontally (load balanced by nginx via Docker DNS).
     restart: unless-stopped
