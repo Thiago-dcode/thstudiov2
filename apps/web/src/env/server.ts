@@ -39,12 +39,17 @@ function parseServerEnv(): ServerEnv | null {
 /** Read server env at call time so runtime container env wins over build-time snapshots. */
 export function getServerEnv(): ServerEnv {
   const env = parseServerEnv();
-  if (!env) {
-    throw new Error(
-      "Invalid server environment variables. Check the console for details.",
-    );
+  if (env) return env;
+
+  // Turbopack build workers may not inherit build-time env vars (see server.ts header).
+  // Defer hard failures to request time — same as the pre-proxy serverEnv export.
+  if (process.env.NEXT_PHASE === "phase-production-build") {
+    return {} as ServerEnv;
   }
-  return env;
+
+  throw new Error(
+    "Invalid server environment variables. Check the console for details.",
+  );
 }
 
 /** Lazy proxy — each property read uses the current process.env (Docker runtime). */
