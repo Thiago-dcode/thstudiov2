@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { getServerEnv } from "@/env/server";
 import waitListService from "@/modules/wait-list/wait-list.service";
 
 export const dynamic = "force-dynamic";
@@ -37,13 +36,7 @@ export default async function WaitListValidatePage({
       <figure
         className="relative aspect-3/4 overflow-hidden border border-border bg-fg-1"
         aria-hidden
-      >
-        <img
-          src={`${getServerEnv().ASSETS_URL}/images/wait-list-page.webp`}
-          alt=""
-          className="h-full w-full object-cover"
-        />
-      </figure>
+      />
 
       <article className="py-4 tablet:py-0">
         <p className="text-xs font-medium uppercase tracking-[0.22em] text-text-muted">

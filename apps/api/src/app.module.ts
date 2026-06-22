@@ -26,7 +26,6 @@ import { MediaModule } from './v1/modules/media/media.module';
 import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/constants';
 import { CategoriesModule } from './v1/modules/categories/categories.module';
 import { AdminModule } from './v1/modules/admin/admin.module';
-import { ServeStaticModule } from '@nestjs/serve-static';
 import { PlanSubscriptionsModule } from './v1/modules/plan-subscriptions/plan-subscriptions.module';
 import { WebhooksModule } from './v1/modules/webhooks/webhooks.module';
 import { UtilsModule } from './v1/modules/utils/app-utils.module';
@@ -113,11 +112,6 @@ const ALL_APP_MODULES = [
       })
       ,
     ]),
-    ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'assets'),
-      serveRoot: '/assets',
-      exclude: ['/api/{*path}'],
-    }),
     ConfigModule.forRoot({
       isGlobal: true,
       load: [config],

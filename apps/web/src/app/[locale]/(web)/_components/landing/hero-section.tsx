@@ -1,30 +1,15 @@
 import { ChevronDown } from "lucide-react";
 import { getTranslations } from "next-intl/server";
-import { serverEnv } from "@/env/server";
 import { WaitListForm } from "@/modules/wait-list/components/wait-list-form";
 
 export async function HeroSection() {
   const t = await getTranslations("landing.hero");
 
-  const _videoSrc = `${serverEnv.ASSETS_URL}/videos/hero-bg.mp4`;
   return (
     <section
       aria-labelledby="hero-heading"
       className="relative flex w-full items-center justify-center overflow-hidden bg-bg h-[calc(100svh-4rem)] min-h-136"
     >
-      {/* ── Background video (decorative) ── */}
-      <video
-        src={_videoSrc}
-        autoPlay
-        loop
-        muted
-        playsInline
-        preload="auto"
-        aria-hidden="true"
-        tabIndex={-1}
-        className="pointer-events-none absolute inset-0 z-0 h-full w-full object-cover"
-      />
-
       {/* ── Gradient overlays for contrast & brand warmth ── */}
       <div aria-hidden="true" className="hero-overlay absolute inset-0 z-1" />
       <div aria-hidden="true" className="hero-glow absolute inset-0 z-2" />

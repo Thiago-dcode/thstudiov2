@@ -6,7 +6,6 @@ const serverEnvSchema = z.object({
   APP_API_KEY: z.string().min(1),
   APP_URL: z.string().min(1),
   API_V1_URL: z.string().min(1),
-  ASSETS_URL: z.string().min(1),
   GEOAPIFY_URL: z.string().min(1),
   GEOAPIFY_KEY: z.string().min(1),
   SUPPORT_EMAIL: z.email().default("support@a11studio.com"),

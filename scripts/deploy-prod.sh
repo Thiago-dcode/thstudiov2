@@ -3,12 +3,11 @@
 # deploy.sh — TH Studio prod-server deployment script
 #
 # Usage:
-#   ./scripts/deploy-prod.sh [--skip-build] [--skip-migrate] [--skip-assets] [--no-cache]
+#   ./scripts/deploy-prod.sh [--skip-build] [--skip-migrate] [--no-cache]
 #
 # Options:
 #   --skip-build    Skip docker image rebuild (use existing images)
 #   --skip-migrate  Skip DB migrations
-#   --skip-assets   Skip the assets directory check/warning
 #   --no-cache      Force a full image rebuild without Docker layer cache
 #
 # This script is meant to run ON the production droplet.
@@ -33,14 +32,15 @@ COMPOSE="docker compose -f $COMPOSE_FILE"
 # ── Parse flags ───────────────────────────────────────────────────────────────
 SKIP_BUILD=false
 SKIP_MIGRATE=false
-SKIP_ASSETS=false
 NO_CACHE=false
 
 for arg in "$@"; do
   case $arg in
     --skip-build)   SKIP_BUILD=true ;;
     --skip-migrate) SKIP_MIGRATE=true ;;
-    --skip-assets)  SKIP_ASSETS=true ;;
+    --skip-assets)
+      warn "--skip-assets is deprecated (api static assets removed); ignoring."
+      ;;
     --no-cache)     NO_CACHE=true ;;
     *)              error "Unknown argument: $arg"; exit 1 ;;
   esac
@@ -65,7 +65,7 @@ info "Compose   : $COMPOSE_FILE"
 echo ""
 
 # ── Step 1: Git pull ──────────────────────────────────────────────────────────
-info "Step 1/6 — Pulling latest code from origin/main …"
+info "Step 1/5 — Pulling latest code from origin/main …"
 cd "$REPO_ROOT"
 
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
@@ -87,33 +87,14 @@ else
 fi
 echo ""
 
-# ── Step 2: Assets check ──────────────────────────────────────────────────────
-ASSETS_DIR="$REPO_ROOT/apps/api/assets"
-
-if [[ "$SKIP_ASSETS" == false ]]; then
-  info "Step 2/6 — Checking api assets …"
-  if [[ ! -d "$ASSETS_DIR" ]]; then
-    error "Assets directory not found: $ASSETS_DIR"
-    error "Run from your local machine:"
-    error "  scp -r apps/api/assets/ a11studio-prod:$ASSETS_DIR"
-    exit 1
-  fi
-
-  ASSET_COUNT=$(find "$ASSETS_DIR" -type f | wc -l)
-  info "Found $ASSET_COUNT asset file(s) in $ASSETS_DIR"
-else
-  warn "Step 2/6 — Assets check skipped."
-fi
-echo ""
-
-# ── Step 3: Build images ──────────────────────────────────────────────────────
+# ── Step 2: Build images ──────────────────────────────────────────────────────
 if [[ "$SKIP_BUILD" == false ]]; then
   BUILD_FLAGS=""
   if [[ "$NO_CACHE" == true ]]; then
-    warn "Step 3/6 — Building Docker images WITHOUT cache (--no-cache) …"
+    warn "Step 2/5 — Building Docker images WITHOUT cache (--no-cache) …"
     BUILD_FLAGS="--no-cache"
   else
-    info "Step 3/6 — Building Docker images (api, web, worker) …"
+    info "Step 2/5 — Building Docker images (api, web, worker) …"
   fi
   # Build one image at a time: the droplet has 1 vCPU / 1GB RAM and parallel
   # builds cause swapping/OOM. api goes first so worker/web reuse its shared
@@ -123,12 +104,12 @@ if [[ "$SKIP_BUILD" == false ]]; then
   $COMPOSE build $BUILD_FLAGS web
   success "Images built."
 else
-  warn "Step 3/6 — Image build skipped (--skip-build)."
+  warn "Step 2/5 — Image build skipped (--skip-build)."
 fi
 echo ""
 
-# ── Step 4: Start infrastructure (postgres + redis) ───────────────────────────
-info "Step 4/6 — Ensuring postgres and redis are up …"
+# ── Step 3: Start infrastructure (postgres + redis) ───────────────────────────
+info "Step 3/5 — Ensuring postgres and redis are up …"
 $COMPOSE up -d postgres redis
 
 info "Waiting for postgres to be healthy …"
@@ -144,21 +125,21 @@ done
 success "Postgres healthy."
 echo ""
 
-# ── Step 5: Migrations ────────────────────────────────────────────────────────
+# ── Step 4: Migrations ────────────────────────────────────────────────────────
 if [[ "$SKIP_MIGRATE" == false ]]; then
-  info "Step 5/6 — Running DB migrations …"
+  info "Step 4/5 — Running DB migrations …"
   $COMPOSE run --rm \
     -e DB_HOST=postgres \
     -e DB_PORT=5432 \
     api sh -c "cd packages/database && node dist/src/bin/cli.js migrate"
   success "Migrations complete."
 else
-  warn "Step 5/6 — Migrations skipped (--skip-migrate)."
+  warn "Step 4/5 — Migrations skipped (--skip-migrate)."
 fi
 echo ""
 
-# ── Step 6: Rolling restart of application services ──────────────────────────
-info "Step 6/6 — Starting / restarting application services …"
+# ── Step 5: Rolling restart of application services ──────────────────────────
+info "Step 5/5 — Starting / restarting application services …"
 
 # Bring everything up; compose will recreate only changed containers.
 $COMPOSE up -d --remove-orphans

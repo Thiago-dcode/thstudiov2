@@ -62,10 +62,6 @@ services:
       REDIS_URL: redis://redis:6379
       API_PORT: 8080
     volumes:
-      # Static assets (icons, images, videos) are gitignored and not baked into
-      # the image. Mount from the host so they survive container rebuilds.
-      # On the droplet: scp -r apps/api/assets/ <user>@<host>:<repo>/apps/api/assets/
-      - ./apps/api/assets:/workspace/apps/api/assets:ro
       - ./packages/backend-lib/storage/logs:/workspace/packages/backend-lib/storage/logs
     expose:
       - "8080"
@@ -98,7 +94,6 @@ services:
         APP_URL: ${APP_URL}
         APP_API_KEY: ${APP_API_KEY}
         API_V1_URL: ${API_V1_URL}
-        ASSETS_URL: ${ASSETS_URL}
         GEOAPIFY_URL: ${GEOAPIFY_URL}
         GEOAPIFY_KEY: ${GEOAPIFY_KEY}
         ENCRYPTION_SECRET: ${ENCRYPTION_SECRET}

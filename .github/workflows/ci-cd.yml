@@ -106,7 +106,6 @@ jobs:
             APP_URL=${{ secrets.APP_URL }}
             APP_API_KEY=${{ secrets.APP_API_KEY }}
             API_V1_URL=${{ secrets.API_V1_URL }}
-            ASSETS_URL=${{ secrets.ASSETS_URL }}
             GEOAPIFY_URL=${{ secrets.GEOAPIFY_URL }}
             GEOAPIFY_KEY=${{ secrets.GEOAPIFY_KEY }}
             ENCRYPTION_SECRET=${{ secrets.ENCRYPTION_SECRET }}
