@@ -120,6 +120,8 @@ services:
       # next start requires production mode.
       NODE_ENV: production
       PORT: 3000
+      # Server-rendered asset URLs must use the public API host, not the web host.
+      ASSETS_URL: ${ASSETS_URL}
       # Server-side calls from the web container must reach the api service by name,
       # not localhost (which would resolve to the web container itself).
       API_URL: http://api:8080

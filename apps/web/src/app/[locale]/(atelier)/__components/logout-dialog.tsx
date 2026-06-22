@@ -11,15 +11,25 @@ import {
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useCallback, useState } from "react";
 import { useMainNav } from "@/lib/providers/main-nav.provider";
 import { logoutServerAction } from "@/modules/auth/server-actions/logout.action";
 
 export const LogoutDialog = () => {
   const router = useRouter();
-  const { shrinked } = useMainNav();
+  const { shrinked, setMobileOpen } = useMainNav();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const handleOpenChange = useCallback(
+    (nextOpen: boolean) => {
+      if (nextOpen) {
+        setMobileOpen(false);
+      }
+      setOpen(nextOpen);
+    },
+    [setMobileOpen],
+  );
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     if (loading) return;
@@ -35,7 +45,7 @@ export const LogoutDialog = () => {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <button
           type="button"

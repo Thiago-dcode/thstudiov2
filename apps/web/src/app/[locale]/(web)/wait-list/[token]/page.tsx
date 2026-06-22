@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { serverEnv } from "@/env/server";
+import { getServerEnv } from "@/env/server";
 import waitListService from "@/modules/wait-list/wait-list.service";
+
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("waitListValidate");
@@ -37,7 +39,7 @@ export default async function WaitListValidatePage({
         aria-hidden
       >
         <img
-          src={`${serverEnv.ASSETS_URL}/images/wait-list-page.webp`}
+          src={`${getServerEnv().ASSETS_URL}/images/wait-list-page.webp`}
           alt=""
           className="h-full w-full object-cover"
         />

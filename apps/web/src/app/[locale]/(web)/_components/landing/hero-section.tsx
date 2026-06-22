@@ -14,7 +14,7 @@ export async function HeroSection() {
     >
       {/* ── Background video (decorative) ── */}
       <video
-        src={"https://artlist.io/52b0a462-2d57-4f28-9561-a57d14c2422e"}
+        src={_videoSrc}
         autoPlay
         loop
         muted

@@ -1,8 +1,8 @@
-import { Jost, Noto_Sans } from "next/font/google";
+import { Jost, Lato } from "next/font/google";
 
-export const playfair = Noto_Sans({
+export const playfair = Lato({
   subsets: ["latin"],
-  weight: ["200", "400", "600", "800"],
+  weight: ["700"],
   style: ["normal"],
   variable: "--font-brand",
   display: "swap",

@@ -14,27 +14,42 @@ const serverEnvSchema = z.object({
   REGISTRATION_IS_CLOSED: z.coerce.number().int().min(0).default(0),
 });
 
-const parsed = serverEnvSchema.safeParse(process.env);
+export type ServerEnv = z.infer<typeof serverEnvSchema>;
 
-// During `next build`, Turbopack worker processes collect page data in an isolated
-// context that does not inherit build-time env vars. Throwing here would abort the
-// build even for fully-dynamic routes that never use these values at build time.
-// We defer the hard throw to request time so the build always succeeds; any truly
-// missing var will surface the moment a real request tries to use it.
-const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build";
+function parseServerEnv(): ServerEnv | null {
+  const parsed = serverEnvSchema.safeParse(process.env);
+  const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build";
 
-if (!parsed.success) {
-  console.error(
-    "Invalid server environment variables:",
-    parsed.error.flatten().fieldErrors,
-  );
-  if (!isBuildPhase) {
+  if (!parsed.success) {
+    console.error(
+      "Invalid server environment variables:",
+      parsed.error.flatten().fieldErrors,
+    );
+    if (!isBuildPhase) {
+      throw new Error(
+        "Invalid server environment variables. Check the console for details.",
+      );
+    }
+    return null;
+  }
+
+  return parsed.data;
+}
+
+/** Read server env at call time so runtime container env wins over build-time snapshots. */
+export function getServerEnv(): ServerEnv {
+  const env = parseServerEnv();
+  if (!env) {
     throw new Error(
       "Invalid server environment variables. Check the console for details.",
     );
   }
+  return env;
 }
 
-export const serverEnv = (parsed.success ? parsed.data : {}) as z.infer<
-  typeof serverEnvSchema
->;
+/** Lazy proxy — each property read uses the current process.env (Docker runtime). */
+export const serverEnv: ServerEnv = new Proxy({} as ServerEnv, {
+  get(_target, prop) {
+    return getServerEnv()[prop as keyof ServerEnv];
+  },
+});

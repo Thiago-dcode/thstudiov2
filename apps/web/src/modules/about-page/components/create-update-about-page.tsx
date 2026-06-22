@@ -90,7 +90,7 @@ export const CreateOrUpdateAboutPage = ({
           )}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-5/6 overflow-auto">
+      <DialogContent className="max-w-2xl">
         <DialogTitle>
           {!currentAboutPage ? "Create About Page" : "Update About Page"}
         </DialogTitle>
@@ -124,7 +124,7 @@ export const CreateOrUpdateAboutPage = ({
               placeholder="Share your journey as an artist. What inspires you? What drives your creative vision? Let visitors connect with the person behind the art..."
             />
 
-            <div className="sticky bottom-0 bg-fg p-2">
+            <div className="pt-4">
               <FormComponent.SubmitButton
                 isPending={isPending}
                 success={success}
@@ -156,7 +156,7 @@ const PhotoInput = ({ defaultUrl }: { defaultUrl?: string }) => {
         {previewUrls?.length ? (
           <div className="mt-4 flex flex-col items-center gap-2">
             <h3 className="text-sm font-medium">Photo Preview:</h3>
-            <div className="relative aspect-3/4 max-h-[500px] max-w-[300px] overflow-hidden border-4 border-fg-2">
+            <div className="relative aspect-3/4 max-h-[200px] max-w-[150px] sm:max-h-[500px] sm:max-w-[300px] overflow-hidden border-4 border-fg-2">
               <img
                 src={previewUrls[0]}
                 alt="Photo Preview"

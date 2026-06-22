@@ -12,6 +12,6 @@ export const BrandLogo = ({ collapsed = false, className }: BrandLogoProps) => (
  className
  )}
  >
- A<span className="text-accent">11</span>{!collapsed && "STUDIO"}
+ A<span className="text-fire font-bold!">11</span>{!collapsed && "STUDIO"}
  </span>
 )
