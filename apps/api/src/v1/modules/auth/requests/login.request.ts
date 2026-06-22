@@ -4,7 +4,9 @@ import { ModelExist } from 'src/common/validators/model-exist.validtor';
 export class LoginRequest {
   @IsEmail()
   @IsNotEmpty()
-  @ModelExist('users', 'email')
+  @ModelExist('users', 'email',{
+    message:"Invalid credentials"
+  })
   email: string;
 
   @IsString()
