@@ -16,12 +16,6 @@ export class WaitListController {
     return this.waitListService.create(body);
   }
 
-  @Public()
-  @Get('position')
-  async getCurrentPosition() {
-    return this.waitListService.getCurrentPosition();
-  }
-
   // GET /api/v1/wait-list/invitation/{code} -> { email } for prefilling registration
   @Public()
   @Get('invitation/:code')

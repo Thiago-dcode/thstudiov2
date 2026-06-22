@@ -41,9 +41,6 @@ export default async function RegisterPage({
     }
 
     if (!bypassRegistrationClose) {
-      const waitListPosition = await waitListService.getCurrentPosition();
-      const currentWaitListPosition = waitListPosition.data?.position ?? null;
-
       return (
         <section
           aria-labelledby="wait-list-heading"
@@ -60,7 +57,7 @@ export default async function RegisterPage({
             </div>
 
             <div className="w-full max-w-4xl pt-4 tablet:pt-6">
-              <WaitListForm currentPosition={currentWaitListPosition} />
+              <WaitListForm />
             </div>
           </div>
         </section>

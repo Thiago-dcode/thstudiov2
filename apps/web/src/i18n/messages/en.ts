@@ -18,9 +18,6 @@ const messages = {
         hint: "Join the waitlist, get early access and benefits",
         hintTooltip:
           "Early spots are limited and filled in the order artists join.",
-        positionCount: "{position}/{max}",
-        spotWarning: "don't lose your spot",
-        fullMessage: "The waitlist is full.",
         successToast: "You are on the waitlist. We will keep you posted.",
         successTitle: "Just one step more: confirm your email.",
         successMessage:

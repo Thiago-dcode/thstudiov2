@@ -16,10 +16,6 @@ export type ValidateWaitListInput = {
   token: string;
 };
 
-export type WaitListPosition = {
-  position: number;
-};
-
 export type CreateWaitListInput = Omit<WaitListSchema, 'id' | 'created_at' | 'updated_at'>;
 
 export type UpdateWaitListInput = Partial<Omit<WaitListSchema, 'id' | 'email' | 'token' | 'created_at' | 'updated_at'>>;

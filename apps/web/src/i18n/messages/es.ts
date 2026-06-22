@@ -20,9 +20,6 @@ const messages: Translations = {
         hint: "Únete a la lista de espera, consigue acceso anticipado y beneficios.",
         hintTooltip:
           "Los cupos anticipados son limitados y se asignan en el orden en que los artistas se unen.",
-        positionCount: "{position}/{max}",
-        spotWarning: "no pierdas tu lugar",
-        fullMessage: "La lista de espera está llena.",
         successToast: "Ya estás en la lista de espera. Te avisaremos pronto.",
         successTitle: "Solo falta un paso más: confirma tu correo.",
         successMessage:

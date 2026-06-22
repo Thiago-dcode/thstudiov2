@@ -37,7 +37,7 @@ export const ArtistsHeader = () => {
 
   useEffect(() => {
     setDrawerOpen(false);
-  }, []);
+  }, [pathname]);
 
   useEffect(() => {
     setIsMounted(true);

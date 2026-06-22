@@ -6,9 +6,6 @@ import { WaitListForm } from "@/modules/wait-list/components/wait-list-form";
 export async function HeroSection() {
   const t = await getTranslations("landing.hero");
 
-  // const waitListPosition = await waitListService.getCurrentPosition();
-  // const currentWaitListPosition = waitListPosition.data?.position ?? null;
-
   const _videoSrc = `${serverEnv.ASSETS_URL}/videos/hero-bg.mp4`;
   return (
     <section
@@ -55,7 +52,7 @@ export async function HeroSection() {
 
         <div className="hero-stagger-4 flex w-full justify-center pt-4 tablet:pt-6">
           <div className="w-full max-w-4xl">
-            <WaitListForm currentPosition={null} />
+            <WaitListForm />
           </div>
         </div>
       </div>

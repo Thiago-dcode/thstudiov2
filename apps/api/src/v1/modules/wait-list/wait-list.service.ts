@@ -9,7 +9,6 @@ import type {
   PublicCreateWaitListInput,
   WaitListCreateResponse,
   UpdateWaitListInput,
-  WaitListPosition,
 } from '@repo/common-lib/types/wait-list';
 import { CreateWaitListEvent } from './events/create-wait-list.event';
 import { InviteWaitListBatchEvent } from './events/invite-wait-list-batch.event';
@@ -43,14 +42,6 @@ export class WaitListService {
 
   async updateById(id: number, data: UpdateWaitListInput) {
     return this.waitListRepository.updateById(id, data);
-  }
-
-  async getCurrentPosition(): Promise<WaitListPosition> {
-    const validatedCount = await this.waitListRepository.getValidatedCount();
-
-    return {
-      position: validatedCount,
-    };
   }
 
   async validate(token: string) {

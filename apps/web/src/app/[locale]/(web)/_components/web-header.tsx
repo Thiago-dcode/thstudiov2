@@ -35,7 +35,7 @@ export const WebHeader = ({ session }: WebHeaderProps) => {
 
   useEffect(() => {
     setDrawerOpen(false);
-  }, []);
+  }, [pathname]);
 
   useEffect(() => {
     setIsMounted(true);

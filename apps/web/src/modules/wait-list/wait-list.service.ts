@@ -3,7 +3,6 @@ import type {
   PublicCreateWaitListInput,
   WaitList,
   WaitListCreateResponse,
-  WaitListPosition,
 } from "@repo/common-lib/types/wait-list";
 import { fetchApi } from "@/lib/facade/fetchApi";
 import { BaseService } from "@/lib/services/base.service";
@@ -19,12 +18,6 @@ class WaitListService extends BaseService {
     return await this.fetchApi.post({
       resource: "",
       body,
-    });
-  }
-
-  async getCurrentPosition(): Promise<ApiResponse<WaitListPosition>> {
-    return await this.fetchApi.get({
-      resource: "position",
     });
   }
 

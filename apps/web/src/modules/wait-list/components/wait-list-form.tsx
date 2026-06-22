@@ -1,6 +1,5 @@
 "use client";
 
-import { MAX_WAIT_LIST_SIZE } from "@repo/common-lib/constants/constants";
 import type { WaitListCreateResponse } from "@repo/common-lib/types/wait-list";
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
 import { Button } from "@repo/ui/components/shadcn/button";
@@ -8,27 +7,17 @@ import { Input } from "@repo/ui/components/shadcn/input";
 import { toast } from "@repo/ui/sonner";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import type { FormEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { createWaitListSchema } from "@/modules/wait-list/schemas/wait-list.schema";
 import { createWaitListAction } from "@/modules/wait-list/server-actions/create-wait-list.action";
 
-type HeroWaitListFormProps = {
-  currentPosition?: number | null;
-};
-
-export function WaitListForm({ currentPosition }: HeroWaitListFormProps) {
+export function WaitListForm() {
   const t = useTranslations("landing.hero.waitList");
   const [isEmailValid, setIsEmailValid] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [waitListResultData, setWaitListResultData] =
     useState<WaitListCreateResponse | null>(null);
-  const hasAvailableSpots =
-    currentPosition == null || currentPosition <= MAX_WAIT_LIST_SIZE;
-  const displayPosition = currentPosition
-    ? Math.min(Math.max(currentPosition, 1), MAX_WAIT_LIST_SIZE)
-    : null;
 
   const emailInputRef = useRef<HTMLInputElement>(null);
 
@@ -51,16 +40,6 @@ export function WaitListForm({ currentPosition }: HeroWaitListFormProps) {
       }
     },
   });
-
-  const handleWaitListSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    if (!hasAvailableSpots) {
-      event.preventDefault();
-      toast.error(t("fullMessage"));
-      return;
-    }
-
-    await handleSubmit(event);
-  };
 
   useEffect(() => {
     if (!result?.data) return;
@@ -118,7 +97,7 @@ export function WaitListForm({ currentPosition }: HeroWaitListFormProps) {
   return (
     <div className="w-full">
       <form
-        onSubmit={handleWaitListSubmit}
+        onSubmit={handleSubmit}
         className="flex w-full flex-col gap-2 phone:flex-row phone:items-start"
         noValidate
       >
@@ -153,7 +132,7 @@ export function WaitListForm({ currentPosition }: HeroWaitListFormProps) {
           type="submit"
           variant="primary"
           size="lg"
-          disabled={isPending || !isEmailValid || !hasAvailableSpots}
+          disabled={isPending || !isEmailValid}
           className="wait-list-fire-button h-14 w-full shrink-0 phone:w-auto text-accent-fg"
         >
           {isPending ? t("buttonPending") : t("button")}
@@ -166,19 +145,6 @@ export function WaitListForm({ currentPosition }: HeroWaitListFormProps) {
         </p>
         <InfoTooltip content={t("hintTooltip")} />
       </div>
-
-      {displayPosition ? (
-        <div className="mt-2 flex justify-start text-xs font-medium text-text-muted">
-          <span>
-            {t("positionCount", {
-              position: displayPosition,
-              max: MAX_WAIT_LIST_SIZE,
-            })}
-            {", "}
-            {t("spotWarning")}
-          </span>
-        </div>
-      ) : null}
 
       <style>{`
         .wait-list-fire-button:not(:disabled):hover {
