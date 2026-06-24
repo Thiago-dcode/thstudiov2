@@ -30,7 +30,7 @@ export async function HeroSection() {
 
       {/* ── Gradient overlays for contrast & brand warmth ── */}
       <div aria-hidden="true" className="hero-overlay absolute inset-0 z-1" />
-      <div aria-hidden="true" className="hero-glow absolute inset-0 z-2" />
+      {/* <div aria-hidden="true" className="hero-glow absolute inset-0 z-2" /> */}
 
       {/* ── Content ── */}
       <div className="relative z-10 mx-auto flex w-full flex-col items-center text-center gap-8 laptop:gap-18 tablet:px-10 tablet:py-24 px-4">
@@ -38,24 +38,27 @@ export async function HeroSection() {
           <Sparkle className="size-3 text-text-muted" aria-hidden="true" />
           {t("disclaimer")}
         </span> */}
-        <div className="flex flex-col w-full items-center gap-5">
+        <div className="relative flex flex-col w-full items-center gap-5">
+          <div aria-hidden="true" className="hero-headline-glow" />
           <h1
             id="hero-heading"
-            className="hero-title hero-stagger-2  tracking-tight text-text"
+            className="hero-title hero-stagger-2 relative z-1 text-white! tracking-tight text-shadow-lg"
           >
             {t("titlePrefix")}{" "}
-            <span className="text-fire itali">{t("titleAccent")}</span>{" "}
+            <span className="text-fire text-shadow-none">
+              {t("titleAccent")}
+            </span>{" "}
             {t("titleSuffix")}
           </h1>
 
-          <h3 className="font-normal!  text-2xl! leading-relaxed text-text font-sans! ">
+          <h3 className="relative z-1 font-normal! text-2xl! leading-relaxed text-white/90! font-sans! ">
             {t("subtitle")}
           </h3>
         </div>
 
         <div className="hero-stagger-4 flex w-full justify-center pt-4 tablet:pt-6">
           <div className="w-full max-w-4xl">
-            <WaitListForm />
+            <WaitListForm from="hero" />
           </div>
         </div>
       </div>
@@ -69,12 +72,6 @@ export async function HeroSection() {
         <ChevronDown className="size-5 hero-bounce" aria-hidden="true" />
       </a>
 
-      {/* ── Bottom fade ── */}
-      <div
-        aria-hidden="true"
-        className="absolute inset-x-0 bottom-0 z-3 h-32 bg-linear-to-t from-bg to-transparent"
-      />
-
       <style>{`
  /* ── Headline: fluid type that scales without overflow ── */
  .hero-title {
@@ -86,16 +83,41 @@ export async function HeroSection() {
  .hero-overlay {
  background:
  linear-gradient(
+ to bottom,
+ color-mix(in oklab, var(--color-bg) 35%, transparent),
+ transparent 28%
+ ),
+ linear-gradient(
+ to top,
+ color-mix(in oklab, var(--color-bg) 0%, transparent),
+ transparent 22%
+ ),
+ linear-gradient(
  180deg,
- color-mix(in oklab, var(--color-bg) 72%, transparent) 0%,
- color-mix(in oklab, var(--color-bg) 40%, transparent) 40%,
- color-mix(in oklab, var(--color-bg) 55%, transparent) 70%,
- var(--color-bg) 100%
+ transparent 25%,
+ color-mix(in oklab, var(--color-bg) 25%, transparent) 50%,
+ transparent 75%
  );
  }
 
         /* ── Subtle neutral glow behind the headline ── */
-       
+        .hero-headline-glow {
+          pointer-events: none;
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          z-index: 0;
+          width: min(92vw, 38rem);
+          height: clamp(11rem, 32vw, 16rem);
+          transform: translate(-50%, -50%);
+          background: radial-gradient(
+            ellipse 100% 100% at 50% 50%,
+            color-mix(in oklab, var(--color-hero-glow) 50%, transparent) 0%,
+            color-mix(in oklab, var(--color-hero-glow) 22%, transparent) 45%,
+            transparent 72%
+          );
+          filter: blur(32px);
+        }
 
         /* ── Accent emphasis text (isolated punchy word) ── */
         .hero-accent-text {

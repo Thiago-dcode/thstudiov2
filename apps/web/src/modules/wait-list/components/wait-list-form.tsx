@@ -4,6 +4,7 @@ import type { WaitListCreateResponse } from "@repo/common-lib/types/wait-list";
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
 import { Button } from "@repo/ui/components/shadcn/button";
 import { Input } from "@repo/ui/components/shadcn/input";
+import { cn } from "@repo/ui/lib/utils";
 import { toast } from "@repo/ui/sonner";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
@@ -12,7 +13,11 @@ import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { createWaitListSchema } from "@/modules/wait-list/schemas/wait-list.schema";
 import { createWaitListAction } from "@/modules/wait-list/server-actions/create-wait-list.action";
 
-export function WaitListForm() {
+type WaitListFormProps = {
+  from?: "hero" | "register";
+};
+
+export function WaitListForm({ from = "register" }: WaitListFormProps) {
   const t = useTranslations("landing.hero.waitList");
   const [isEmailValid, setIsEmailValid] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -139,11 +144,17 @@ export function WaitListForm() {
         </Button>
       </form>
 
-      <div className="mb-2 flex items-center justify-start gap-2">
-        <p id="hero-wait-list-email-hint" className="text-left text-text-muted">
+      <div className="mb-2 flex items-center justify-start gap-2 ">
+        <p
+          id="hero-wait-list-email-hint"
+          className={cn("text-left", from === "hero" && "text-white/90")}
+        >
           {t("hint")}
         </p>
-        <InfoTooltip content={t("hintTooltip")} />
+        <InfoTooltip
+          content={t("hintTooltip")}
+          iconClassName={from === "hero" ? "text-white/90!" : undefined}
+        />
       </div>
 
       <style>{`

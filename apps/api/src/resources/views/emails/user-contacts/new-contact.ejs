@@ -1,21 +1,21 @@
 <%- include(globals.emailsPath + '/shared/head') %>
 
-<body style="width:100%; margin:0; padding:0; background-color:#141312;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#141312;">
+<body style="width:100%; margin:0; padding:0; background-color:#1C1B19;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#1C1B19;">
         <tr>
             <td align="center">
                 <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0"
-                    style="width:100%; max-width:600px; background-color:#1c1b19;">
+                    style="width:100%; max-width:600px; background-color:#242220;">
 
                     <%- include(globals.emailsPath + '/shared/header') %>
 
                     <!-- Greeting -->
                     <tr>
                         <td style="padding:40px 40px 0 40px; text-align:center;">
-                            <p style="font-family:Arial, Helvetica, sans-serif; font-size:13px; color:#807a73; letter-spacing:1px; text-transform:uppercase; margin:0 0 8px 0;">
+                            <p style="font-family:Arial, Helvetica, sans-serif; font-size:13px; color:#A8A59B; letter-spacing:1px; text-transform:uppercase; margin:0 0 8px 0;">
                                 <%= globals.t(translatePath + '.HI') %>
                             </p>
-                            <p style="font-family:Georgia, 'Times New Roman', Times, serif; font-size:20px; color:#e8e4df; margin:0 0 32px 0; font-weight:normal;">
+                            <p style="font-family:Georgia, 'Times New Roman', Times, serif; font-size:20px; color:#F0EEE9; margin:0 0 32px 0; font-weight:normal;">
                                 <%= artist.username %>
                             </p>
                         </td>
@@ -24,10 +24,10 @@
                     <!-- Title -->
                     <tr>
                         <td style="padding:0 40px; text-align:center;">
-                            <h1 style="font-family:Georgia, 'Times New Roman', Times, serif; font-size:28px; font-weight:normal; color:#e8e4df; margin:0 0 12px 0; letter-spacing:1px;">
+                            <h1 style="font-family:Georgia, 'Times New Roman', Times, serif; font-size:28px; font-weight:normal; color:#F0EEE9; margin:0 0 12px 0; letter-spacing:1px;">
                                 <%= globals.t(translatePath + '.TITLE') %>
                             </h1>
-                            <p style="font-family:Georgia, 'Times New Roman', Times, serif; font-size:15px; color:#b5afa8; margin:0 0 36px 0; line-height:1.6;">
+                            <p style="font-family:Georgia, 'Times New Roman', Times, serif; font-size:15px; color:#A8A59B; margin:0 0 36px 0; line-height:1.6;">
                                 <%= globals.t(translatePath + '.NEW_MESSAGE_FROM') %>
                             </p>
                         </td>
@@ -37,14 +37,14 @@
                     <tr>
                         <td style="padding:0 40px 32px 40px;">
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-                                style="background-color:#0f0e0d; border:1px solid #2a2826;">
+                                style="background-color:#322F2A; border:1px solid #38362F;">
 
                                 <tr>
                                     <td style="padding:20px 24px 12px 24px;">
-                                        <p style="font-family:Arial, Helvetica, sans-serif; font-size:11px; color:#807a73; letter-spacing:1px; text-transform:uppercase; margin:0 0 4px 0;">
+                                        <p style="font-family:Arial, Helvetica, sans-serif; font-size:11px; color:#A8A59B; letter-spacing:1px; text-transform:uppercase; margin:0 0 4px 0;">
                                             <%= globals.t(translatePath + '.CONTACT_NAME') %>
                                         </p>
-                                        <p style="font-family:Georgia, 'Times New Roman', Times, serif; font-size:15px; color:#e8e4df; margin:0;">
+                                        <p style="font-family:Georgia, 'Times New Roman', Times, serif; font-size:15px; color:#F0EEE9; margin:0;">
                                             <%= contact.contact_name %>
                                         </p>
                                     </td>
@@ -53,18 +53,18 @@
                                 <tr>
                                     <td style="padding:0 24px;">
                                         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-                                            <tr><td style="height:1px; background-color:#2a2826; font-size:1px; line-height:1px;">&nbsp;</td></tr>
+                                            <tr><td style="height:1px; background-color:#38362F; font-size:1px; line-height:1px;">&nbsp;</td></tr>
                                         </table>
                                     </td>
                                 </tr>
 
                                 <tr>
                                     <td style="padding:12px 24px;">
-                                        <p style="font-family:Arial, Helvetica, sans-serif; font-size:11px; color:#807a73; letter-spacing:1px; text-transform:uppercase; margin:0 0 4px 0;">
+                                        <p style="font-family:Arial, Helvetica, sans-serif; font-size:11px; color:#A8A59B; letter-spacing:1px; text-transform:uppercase; margin:0 0 4px 0;">
                                             <%= globals.t(translatePath + '.CONTACT_EMAIL') %>
                                         </p>
                                         <p style="font-family:Georgia, 'Times New Roman', Times, serif; font-size:15px; margin:0;">
-                                            <a href="mailto:<%= contact.contact_email %>" style="color:#c9b99a; text-decoration:none;">
+                                            <a href="mailto:<%= contact.contact_email %>" style="color:#FF4D3A; text-decoration:none;">
                                                 <%= contact.contact_email %>
                                             </a>
                                         </p>
@@ -74,17 +74,17 @@
                                 <tr>
                                     <td style="padding:0 24px;">
                                         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-                                            <tr><td style="height:1px; background-color:#2a2826; font-size:1px; line-height:1px;">&nbsp;</td></tr>
+                                            <tr><td style="height:1px; background-color:#38362F; font-size:1px; line-height:1px;">&nbsp;</td></tr>
                                         </table>
                                     </td>
                                 </tr>
 
                                 <tr>
                                     <td style="padding:12px 24px;">
-                                        <p style="font-family:Arial, Helvetica, sans-serif; font-size:11px; color:#807a73; letter-spacing:1px; text-transform:uppercase; margin:0 0 4px 0;">
+                                        <p style="font-family:Arial, Helvetica, sans-serif; font-size:11px; color:#A8A59B; letter-spacing:1px; text-transform:uppercase; margin:0 0 4px 0;">
                                             <%= globals.t(translatePath + '.SUBJECT_LABEL') %>
                                         </p>
-                                        <p style="font-family:Georgia, 'Times New Roman', Times, serif; font-size:15px; color:#e8e4df; margin:0;">
+                                        <p style="font-family:Georgia, 'Times New Roman', Times, serif; font-size:15px; color:#F0EEE9; margin:0;">
                                             <%= contact.subject %>
                                         </p>
                                     </td>
@@ -93,17 +93,17 @@
                                 <tr>
                                     <td style="padding:0 24px;">
                                         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-                                            <tr><td style="height:1px; background-color:#2a2826; font-size:1px; line-height:1px;">&nbsp;</td></tr>
+                                            <tr><td style="height:1px; background-color:#38362F; font-size:1px; line-height:1px;">&nbsp;</td></tr>
                                         </table>
                                     </td>
                                 </tr>
 
                                 <tr>
                                     <td style="padding:12px 24px 20px 24px;">
-                                        <p style="font-family:Arial, Helvetica, sans-serif; font-size:11px; color:#807a73; letter-spacing:1px; text-transform:uppercase; margin:0 0 8px 0;">
+                                        <p style="font-family:Arial, Helvetica, sans-serif; font-size:11px; color:#A8A59B; letter-spacing:1px; text-transform:uppercase; margin:0 0 8px 0;">
                                             <%= globals.t(translatePath + '.MESSAGE_LABEL') %>
                                         </p>
-                                        <p style="font-family:Georgia, 'Times New Roman', Times, serif; font-size:14px; color:#b5afa8; margin:0; line-height:1.7; white-space:pre-wrap;">
+                                        <p style="font-family:Georgia, 'Times New Roman', Times, serif; font-size:14px; color:#A8A59B; margin:0; line-height:1.7; white-space:pre-wrap;">
                                             <%= contact.message %>
                                         </p>
                                     </td>
@@ -116,7 +116,7 @@
                     <!-- Footer Note -->
                     <tr>
                         <td align="center" style="padding:0 40px 8px 40px;">
-                            <p style="font-family:Arial, Helvetica, sans-serif; font-size:12px; color:#807a73; margin:0;">
+                            <p style="font-family:Arial, Helvetica, sans-serif; font-size:12px; color:#A8A59B; margin:0;">
                                 <%= globals.t(translatePath + '.FOOTER_NOTE') %>
                             </p>
                         </td>

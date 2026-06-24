@@ -21,7 +21,7 @@ export const main = async () => {
   await invitationLinks();
   await supportUser();
   await adminUser();
-  if (!getConfigValue('app').isProduction) {
+  if (getConfigValue('app').env ==='local') {
     await mediaSeed(ADMIN_USERNAME);
     await portfolioSeed(ADMIN_USERNAME, 5);
     await collectionSeed(ADMIN_USERNAME, 5);

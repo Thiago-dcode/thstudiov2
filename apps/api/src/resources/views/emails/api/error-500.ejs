@@ -25,7 +25,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             margin: 0; padding: 0; width: 100%;
-            background-color: #141312;
+            background-color: #1C1B19;
             font-family: Georgia, 'Times New Roman', Times, serif;
             -webkit-text-size-adjust: 100%;
             -ms-text-size-adjust: 100%;
@@ -34,22 +34,22 @@
     </style>
 </head>
 
-<body style="width:100%; margin:0; padding:0; background-color:#141312;">
-    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color:#141312;">
+<body style="width:100%; margin:0; padding:0; background-color:#1C1B19;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color:#1C1B19;">
         <tr>
             <td align="center" style="padding:20px 0;">
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600"
-                    style="max-width:600px; width:100%; background-color:#1c1b19;">
+                    style="max-width:600px; width:100%; background-color:#242220;">
 
                     <!-- Header -->
                     <tr>
-                        <td style="padding:32px 0; text-align:center; background-color:#0f0e0d;">
-                            <p style="margin:0; font-family:Arial, Helvetica, sans-serif; font-size:11px; letter-spacing:3px; text-transform:uppercase; color:#c45c5c;">
+                        <td style="padding:32px 0; text-align:center; background-color:#322F2A;">
+                            <p style="margin:0; font-family:Arial, Helvetica, sans-serif; font-size:11px; letter-spacing:3px; text-transform:uppercase; color:#ef4444;">
                                 ERROR ALERT
                             </p>
                             <table role="presentation" width="40" cellpadding="0" cellspacing="0" border="0" style="margin:14px auto 0 auto;">
                                 <tr>
-                                    <td style="height:1px; background-color:#5c3333; font-size:1px; line-height:1px;">&nbsp;</td>
+                                    <td style="height:1px; background-color:#991b1b; font-size:1px; line-height:1px;">&nbsp;</td>
                                 </tr>
                             </table>
                         </td>
@@ -58,10 +58,10 @@
                     <!-- Title -->
                     <tr>
                         <td style="padding:36px 40px 24px 40px; text-align:center;">
-                            <h1 style="font-family:Georgia, 'Times New Roman', Times, serif; font-size:28px; font-weight:normal; color:#e8e4df; margin:0 0 8px 0; letter-spacing:1px;">
+                            <h1 style="font-family:Georgia, 'Times New Roman', Times, serif; font-size:28px; font-weight:normal; color:#F0EEE9; margin:0 0 8px 0; letter-spacing:1px;">
                                 HTTP 500
                             </h1>
-                            <p style="font-family:Georgia, 'Times New Roman', Times, serif; font-size:14px; color:#807a73; margin:0;">
+                            <p style="font-family:Georgia, 'Times New Roman', Times, serif; font-size:14px; color:#A8A59B; margin:0;">
                                 Internal Server Error
                             </p>
                         </td>
@@ -71,13 +71,13 @@
                     <tr>
                         <td style="padding:0 40px 24px 40px;">
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-                                style="background-color:#2a1a1a; border:1px solid #4a2a2a;">
+                                style="background-color:#2B0A0A; border:1px solid #991b1b;">
                                 <tr>
                                     <td style="padding:20px 24px;">
-                                        <p style="font-family:Arial, Helvetica, sans-serif; font-size:11px; color:#c45c5c; letter-spacing:1px; text-transform:uppercase; margin:0 0 8px 0;">
+                                        <p style="font-family:Arial, Helvetica, sans-serif; font-size:11px; color:#ef4444; letter-spacing:1px; text-transform:uppercase; margin:0 0 8px 0;">
                                             MESSAGE
                                         </p>
-                                        <p style="font-family:'Courier New', Courier, monospace; font-size:13px; color:#e8a0a0; margin:0; line-height:1.6;">
+                                        <p style="font-family:'Courier New', Courier, monospace; font-size:13px; color:#ef4444; margin:0; line-height:1.6;">
                                             <%= message %>
                                         </p>
                                     </td>
@@ -90,10 +90,10 @@
                     <tr>
                         <td style="padding:0 40px 32px 40px;">
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-                                style="background-color:#0f0e0d; border:1px solid #2a2826;">
+                                style="background-color:#322F2A; border:1px solid #38362F;">
                                 <tr>
                                     <td style="padding:20px 24px 12px 24px;">
-                                        <p style="font-family:Arial, Helvetica, sans-serif; font-size:11px; color:#807a73; letter-spacing:1px; text-transform:uppercase; margin:0 0 12px 0;">
+                                        <p style="font-family:Arial, Helvetica, sans-serif; font-size:11px; color:#A8A59B; letter-spacing:1px; text-transform:uppercase; margin:0 0 12px 0;">
                                             DETAILS
                                         </p>
                                     </td>
@@ -103,8 +103,8 @@
                                     <% if (Array.isArray(options)) { %>
                                         <% options.forEach(function(option, index) { %>
                                         <tr>
-                                            <td style="padding:0 24px 12px 24px;<%= index > 0 ? ' border-top:1px solid #2a2826; padding-top:12px;' : '' %>">
-                                                <p style="font-family:'Courier New', Courier, monospace; font-size:12px; color:#b5afa8; margin:0; line-height:1.5;">
+                                            <td style="padding:0 24px 12px 24px;<%= index > 0 ? ' border-top:1px solid #38362F; padding-top:12px;' : '' %>">
+                                                <p style="font-family:'Courier New', Courier, monospace; font-size:12px; color:#A8A59B; margin:0; line-height:1.5;">
                                                     <%= option %>
                                                 </p>
                                             </td>
@@ -113,7 +113,7 @@
                                     <% } else { %>
                                         <tr>
                                             <td style="padding:0 24px 20px 24px;">
-                                                <p style="font-family:'Courier New', Courier, monospace; font-size:12px; color:#b5afa8; margin:0; line-height:1.5;">
+                                                <p style="font-family:'Courier New', Courier, monospace; font-size:12px; color:#A8A59B; margin:0; line-height:1.5;">
                                                     <%= options %>
                                                 </p>
                                             </td>
@@ -122,7 +122,7 @@
                                 <% } else { %>
                                     <tr>
                                         <td style="padding:0 24px 20px 24px;">
-                                            <p style="font-family:'Courier New', Courier, monospace; font-size:12px; color:#807a73; margin:0; font-style:italic;">
+                                            <p style="font-family:'Courier New', Courier, monospace; font-size:12px; color:#A8A59B; margin:0; font-style:italic;">
                                                 No additional details available
                                             </p>
                                         </td>
@@ -137,17 +137,17 @@
                         <td style="padding:0 40px;">
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                                 <tr>
-                                    <td style="height:1px; background-color:#2a2826; font-size:1px; line-height:1px;">&nbsp;</td>
+                                    <td style="height:1px; background-color:#38362F; font-size:1px; line-height:1px;">&nbsp;</td>
                                 </tr>
                             </table>
                         </td>
                     </tr>
                     <tr>
                         <td style="padding:20px 40px 28px 40px; text-align:center;">
-                            <p style="font-family:Arial, Helvetica, sans-serif; font-size:11px; color:#807a73; margin:0 0 4px 0;">
+                            <p style="font-family:Arial, Helvetica, sans-serif; font-size:11px; color:#A8A59B; margin:0 0 4px 0;">
                                 Automated error notification from the application server.
                             </p>
-                            <p style="font-family:Arial, Helvetica, sans-serif; font-size:11px; color:#807a73; margin:0;">
+                            <p style="font-family:Arial, Helvetica, sans-serif; font-size:11px; color:#A8A59B; margin:0;">
                                 Please investigate and resolve this issue promptly.
                             </p>
                         </td>
