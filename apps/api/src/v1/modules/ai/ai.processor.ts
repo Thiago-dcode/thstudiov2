@@ -116,7 +116,7 @@ export class AiProcessor extends GlobalProcessor {
         usage,
       );
 
-      const creditsExhausted = await this.userExtraDataService.checkAiCreditsExhausted(usageData.user_id,1);
+      const creditsExhausted = await this.userExtraDataService.checkAiCreditsExhausted(usageData.user_id, 1);
 
       if (creditsExhausted) {
         try {

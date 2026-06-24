@@ -26,6 +26,6 @@
     ".next/types/**/*.ts",
     "src/lib/hooks/useLoadAsset.ts",
     "../../packages/ui/src/providers/gallery.provider.tsx"
-  ],
+, "../../packages/ui/src/components/custom/LazyVideo.tsx"  ],
   "exclude": ["node_modules"]
 }

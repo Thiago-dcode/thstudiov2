@@ -4,6 +4,7 @@ import { TableColumn } from "../types/database";
 export type AssetSchema = {
   id: number;
   url: string;
+  thumbnail?: string | null;
   slug: string;
   title?: string | null;
   description?: string | null;

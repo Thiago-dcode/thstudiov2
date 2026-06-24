@@ -115,6 +115,11 @@ export class Helpers {
     if (!path) return;
     return await Promise.all([this.storageService.delete(path), this.cacheManager.del(path)]);
   }
+
+  public async moveAsset(from: string, to: string): Promise<void> {
+    await this.storageService.move(from, to);
+    await this.cacheManager.del(from);
+  }
   /**
    * @param config.expireIn - Custom signed-URL expiration in **seconds**. Falls back to `s3StorageConfig.signedUrlExpiration`.
    */

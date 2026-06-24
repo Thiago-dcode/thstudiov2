@@ -5,15 +5,14 @@ import {
   Delete,
   Get,
   Param,
-  ParseIntPipe,
   Patch,
   Post,
-  UploadedFile,
+  UploadedFiles,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import { AdminGuard } from 'src/common/guards/admin.guard';
 import { AssetsService } from './assets.service';
 import { CreateAssetRequest } from './requests/create-asset.request';
@@ -35,25 +34,30 @@ export class AdminAssetsController {
   }
 
   @Post()
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(AnyFilesInterceptor())
   async create(
     @Body() createAssetRequest: CreateAssetRequest,
-    @UploadedFile() file: Express.Multer.File  ) {
+    @UploadedFiles() files: Express.Multer.File[],
+  ) {
+    const file = files.find(f => f.fieldname === 'file');
     if (!file) {
       throw new BadRequestException('File is required');
     }
 
-    createAssetRequest.asset = file;
+    const thumbnail = files.find(f => f.fieldname === 'thumbnail');
 
-    return this.assetsService.create(file, createAssetRequest);
+    return this.assetsService.create(file, thumbnail, createAssetRequest);
   }
 
-  @Patch(':id')
+  @Patch(':slug')
+  @UseInterceptors(AnyFilesInterceptor())
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('slug') slug: string,
     @Body() updateAssetRequest: UpdateAssetRequest,
+    @UploadedFiles() files: Express.Multer.File[],
   ) {
-    return this.assetsService.update(id, updateAssetRequest);
+    const thumbnail = files.find(f => f.fieldname === 'thumbnail');
+    return this.assetsService.update(slug, updateAssetRequest, thumbnail);
   }
 
   @Delete(':slug')

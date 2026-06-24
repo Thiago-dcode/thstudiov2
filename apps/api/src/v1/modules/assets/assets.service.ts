@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { AssetsRepository } from './assets.repository';
 import { StorageService } from '@repo/backend-lib/services/storage-service/base';
 import { Helpers } from 'src/common/services/helpers.service';
@@ -7,20 +7,37 @@ import { CreateAssetInput, UpdateAssetInput, Asset } from '@repo/common-lib/type
 import { ASSET_SIGNED_URL_EXPIRATION } from '@repo/common-lib/constants/constants';
 import path from 'path';
 
+const ALLOWED_IMAGE_MIMES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif'];
+const MAX_THUMBNAIL_SIZE = 2 * 1024 * 1024; // 2MB
+
+function validateThumbnail(file: Express.Multer.File): void {
+  if (!ALLOWED_IMAGE_MIMES.includes(file.mimetype)) {
+    throw new BadRequestException(`Thumbnail must be an image (jpeg, png, webp, gif, avif). Got: ${file.mimetype}`);
+  }
+  if (file.size > MAX_THUMBNAIL_SIZE) {
+    throw new BadRequestException(`Thumbnail must be less than 2MB. Got: ${(file.size / 1024 / 1024).toFixed(1)}MB`);
+  }
+}
+
 @Injectable()
 export class AssetsService {
   constructor(
     private readonly assetsRepository: AssetsRepository,
     private readonly storageService: StorageService,
     private readonly helpers: Helpers,
-  ) {}
+  ) { }
 
   async create(
     file: Express.Multer.File,
+    thumbnailFile: Express.Multer.File | undefined,
     dto: { title?: string; description?: string; slug?: string; filename?: string },
   ): Promise<Asset> {
+
+    // Validate thumbnail if provided
+    if (thumbnailFile) {
+      validateThumbnail(thumbnailFile);
+    }
     const originalFilename = dto.filename || file.originalname;
-    const extension = path.extname(file.originalname).replace('.', '') || 'bin';
 
     // Generate slug from title if not provided, fallback to filename
     let slug = dto.slug;
@@ -38,14 +55,24 @@ export class AssetsService {
     }
     slug = uniqueSlug;
 
-    const storagePath = `assets/${extension}/${slug}`;
+    const storagePath = `assets/${slug}/${originalFilename}`;
+
+
 
     // Store file to S3
     await this.storageService.write(file, storagePath);
 
+    // Store thumbnail to S3 if provided
+    let thumbnailPath: string | null = null;
+    if (thumbnailFile) {
+      thumbnailPath = `assets/${slug}/thumbnail/${originalFilename}`;
+      await this.helpers.setAsset({ asset: thumbnailFile, path: thumbnailPath, targetSizeMb: 0.1 });
+    }
+
     // Create DB record
     const assetData: CreateAssetInput = {
       url: storagePath,
+      thumbnail: thumbnailPath,
       slug,
       title: dto.title || null,
       description: dto.description || null,
@@ -53,26 +80,35 @@ export class AssetsService {
     };
 
     const asset = await this.assetsRepository.create(assetData);
+    await this.helpers.deleteCached(`asset:slug:${slug}`);
 
-    // Return asset with resolved URL
+    // Return asset with resolved URLs
     return {
       ...asset,
       url: await this.helpers.getAsset(asset.url, { expireIn: ASSET_SIGNED_URL_EXPIRATION }),
+      thumbnail: asset.thumbnail
+        ? await this.helpers.getAsset(asset.thumbnail, { expireIn: ASSET_SIGNED_URL_EXPIRATION })
+        : null,
     };
   }
 
   async update(
-    id: number,
+    slug: string,
     dto: UpdateAssetInput,
+    thumbnailFile?: Express.Multer.File,
   ): Promise<Asset> {
-    // Find by id (throw if not found)
-    const existing = await this.assetsRepository.findById(id);
+    // Find by slug (throw if not found)
+    const existing = await this.assetsRepository.findBySlug(slug);
     if (!existing) {
-      throw new NotFoundException(`Asset not found with id ${id}`);
+      throw new NotFoundException(`Asset not found with slug ${slug}`);
+    }
+    // Validate thumbnail if provided
+    if (thumbnailFile) {
+      validateThumbnail(thumbnailFile);
     }
 
     // If slug is changing, ensure uniqueness and update storage path
-    let urlUpdate: { url?: string } = {};
+    let urlUpdate: { url?: string; thumbnail?: string } = {};
     if (dto.slug && dto.slug !== existing.slug) {
       // Ensure new slug is unique
       let uniqueSlug = dto.slug;
@@ -84,22 +120,70 @@ export class AssetsService {
       dto.slug = uniqueSlug;
 
       // Derive new storage path from slug
-      const extension = existing.url.split('/')[1] || 'bin';
-      const newStoragePath = `assets/${extension}/${uniqueSlug}`;
+      const filename = existing.url.split('/').pop() || 'file';
+      const newStoragePath = `assets/${uniqueSlug}/${filename}`;
 
       // Move file in S3
-      await this.storageService.move(existing.url, newStoragePath);
+      await this.helpers.moveAsset(existing.url, newStoragePath);
       urlUpdate.url = newStoragePath;
+
+      // Move thumbnail in S3 if it exists
+      if (existing.thumbnail) {
+        const thumbnailFilename = existing.thumbnail.split('/').pop() || 'thumbnail';
+        const newThumbnailPath = `assets/${uniqueSlug}/thumbnail/${thumbnailFilename}`;
+        await this.helpers.moveAsset(existing.thumbnail, newThumbnailPath);
+        urlUpdate.thumbnail = newThumbnailPath;
+      }
+    }
+
+
+
+    // Handle thumbnail upload if provided
+    if (thumbnailFile) {
+      const slug = dto.slug || existing.slug;
+      const thumbnailFilename = thumbnailFile.originalname;
+      const thumbnailPath = `assets/${slug}/thumbnail/${thumbnailFilename}`;
+      await this.helpers.setAsset({ asset: thumbnailFile, path: thumbnailPath, targetSizeMb: 0.1 });
+      urlUpdate.thumbnail = thumbnailPath;
     }
 
     // Update metadata + url if slug changed
-    const updated = await this.assetsRepository.updateById(id, { ...dto, ...urlUpdate });
+    const updated = await this.assetsRepository.updateBySlug(slug, { ...dto, ...urlUpdate });
+    await this.helpers.deleteCached(`asset:slug:${slug}`);
+    if (dto.slug && dto.slug !== slug) {
+      await this.helpers.deleteCached(`asset:slug:${dto.slug}`);
+    }
 
-    // Return updated asset with resolved URL
+    // Return updated asset with resolved URLs
     return {
       ...updated,
       url: await this.helpers.getAsset(updated.url, { expireIn: ASSET_SIGNED_URL_EXPIRATION }),
+      thumbnail: updated.thumbnail
+        ? await this.helpers.getAsset(updated.thumbnail, { expireIn: ASSET_SIGNED_URL_EXPIRATION })
+        : null,
     };
+  }
+
+  async findAll(): Promise<Asset[]> {
+    const assets = await this.assetsRepository.findAll();
+    return Promise.all(
+      assets.map(async (asset) => ({
+        ...asset,
+        url: await this.helpers.getAsset(asset.url, { expireIn: ASSET_SIGNED_URL_EXPIRATION }),
+        thumbnail: asset.thumbnail
+          ? await this.helpers.getAsset(asset.thumbnail, { expireIn: ASSET_SIGNED_URL_EXPIRATION })
+          : null,
+      })),
+    );
+  }
+
+  async deleteBySlug(slug: string): Promise<void> {
+    const asset = await this.assetsRepository.findBySlug(slug);
+    if (!asset) {
+      throw new NotFoundException(`Asset not found with slug ${slug}`);
+    }
+
+    await Promise.all([this.helpers.deleteAsset(asset.url), this.helpers.deleteAsset(asset?.thumbnail), this.assetsRepository.deleteBySlug(slug),this.helpers.deleteCached(`asset:slug:${slug}`)]);
   }
 
   async getOneBySlug(slug: string): Promise<Asset> {
@@ -114,6 +198,9 @@ export class AssetsService {
         return {
           ...asset,
           url: await this.helpers.getAsset(asset.url, { expireIn: ASSET_SIGNED_URL_EXPIRATION }),
+          thumbnail: asset.thumbnail
+            ? await this.helpers.getAsset(asset.thumbnail, { expireIn: ASSET_SIGNED_URL_EXPIRATION })
+            : null,
         };
       })(),
       { ttl: ASSET_SIGNED_URL_EXPIRATION * 1000 },

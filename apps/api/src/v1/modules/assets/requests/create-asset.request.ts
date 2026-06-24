@@ -19,4 +19,7 @@ export class CreateAssetRequest {
 
   @IsOptional()
   asset: Express.Multer.File;
+
+  @IsOptional()
+  thumbnail: Express.Multer.File;
 }
