@@ -1,19 +1,23 @@
+import { LazyVideo } from "@repo/ui/components/custom/LazyVideo";
 import { ChevronDown } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 import assetService from "@/modules/assets/asset.service";
 import { WaitListForm } from "@/modules/wait-list/components/wait-list-form";
-import { LazyVideo } from "@repo/ui/components/custom/LazyVideo";
 
 async function HeroVideo() {
   const heroVideo = await assetService.getBySlug("hero-drone-video");
   if (!heroVideo.data?.url) return null;
-  return <LazyVideo src={heroVideo.data.url} poster={heroVideo.data.thumbnail ?? undefined} />;
+  return (
+    <LazyVideo
+      src={heroVideo.data.url}
+      poster={heroVideo.data.thumbnail ?? undefined}
+    />
+  );
 }
 
 export async function HeroSection() {
   const t = await getTranslations("landing.hero");
-
 
   return (
     <section
