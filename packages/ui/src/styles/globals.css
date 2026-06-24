@@ -13,8 +13,8 @@
   --color-accent-fg: #FFFFFF;
 
   --color-bg: #FAFFFB;
+  --color-bg-dark: #1C1B19;
   --color-fg: #FFFFFF;
-  --color-hero-glow: #1C1B19;
   --color-fg-1: #EFEDE6;
   --color-fg-2: #E4E1D9;
   --color-text: #2B2A27;
@@ -60,7 +60,7 @@
   color-scheme: dark;
 
   --color-bg: #1C1B19;
-  --color-hero-glow: #1C1B19;
+  --color-bg-dark: #1C1B19;
   --color-fg: #242220;
   --color-fg-1: #322F2A;
   --color-fg-2: #38362F;
