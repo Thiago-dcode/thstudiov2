@@ -1,7 +1,7 @@
 import { InjectQueue, Processor } from '@nestjs/bullmq';
 import { OnEvent } from '@nestjs/event-emitter';
 import { MailService } from '@repo/backend-lib/services/mail-service';
-import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
+import { LogService } from '@repo/backend-lib/services/log-service';
 import {
   CREATE_WAIT_LIST_ENTRY,
   INVITE_WAIT_LIST_BATCH,
@@ -36,10 +36,6 @@ type PreparedWaitListInvite = {
 export class WaitListProcessor extends GlobalProcessor {
   private static readonly INVITATION_EXPIRES_IN_DAYS = 7;
 
-  private readonly logger = FactoryLogService.createLogService('file', {
-    channel: WAIT_LIST_QUEUE,
-  });
-
   constructor(
     private readonly waitListRepository: WaitListRepository,
     private readonly invitationLinkService: InvitationLinkService,
@@ -48,13 +44,15 @@ export class WaitListProcessor extends GlobalProcessor {
     private readonly waitListInviteMail: WaitListInviteMail,
     private readonly waitListWelcomeMail: WaitListWelcomeMail,
     @InjectQueue(WAIT_LIST_QUEUE) private readonly waitListQueue: Queue,
-    private readonly appLogService: LogService,
+    private readonly logger: LogService,
   ) {
     super();
   }
 
   @OnEvent(CREATE_WAIT_LIST_ENTRY)
   async handleCreateWaitListEvent(event: CreateWaitListEvent) {
+    const emailLog = this.redactEmail(event.data.email);
+
     try {
       await this.waitListQueue.add(
         JOB_CREATE_WAIT_LIST_ENTRY,
@@ -67,35 +65,50 @@ export class WaitListProcessor extends GlobalProcessor {
           backoff: { type: 'exponential', delay: 1000 },
         },
       );
+      this.logger.info(`Wait list create job enqueued: ${emailLog}`);
     } catch (error) {
-      // BullMQ throws when the same `jobId` is already present.
-      // We treat that as a no-op because the processor logic is idempotent
-      // (unique wait-list email + throttling by `invitation_email_sent_at`).
       const message = error instanceof Error ? error.message : String(error);
       const lower = message.toLowerCase();
       if (lower.includes('job') && (lower.includes('already') || lower.includes('exists') || lower.includes('exist'))) {
+        this.logger.info(`Wait list create job already queued (skipped): ${emailLog}`);
         return;
       }
+
+      this.logger.error(
+        `Failed to enqueue wait list create job: ${emailLog} - ${message}`,
+        error,
+      );
       throw error;
     }
   }
 
   @OnEvent(INVITE_WAIT_LIST_BATCH)
   async handleInviteWaitListBatchEvent(event: InviteWaitListBatchEvent) {
-    await this.waitListQueue.add(
-      JOB_INVITE_WAIT_LIST_BATCH,
-      { count: event.count },
-      {
-        priority: 10,
-        removeOnComplete: true,
-        attempts: 3,
-        backoff: { type: 'exponential', delay: 1000 },
-      },
-    );
+    try {
+      await this.waitListQueue.add(
+        JOB_INVITE_WAIT_LIST_BATCH,
+        { count: event.count },
+        {
+          priority: 10,
+          removeOnComplete: true,
+          attempts: 3,
+          backoff: { type: 'exponential', delay: 1000 },
+        },
+      );
+      this.logger.info(`Wait list batch invite job enqueued: count=${event.count}`);
+    } catch (error) {
+      this.logger.error(
+        `Failed to enqueue wait list batch invite job - ${error instanceof Error ? error.message : 'Unknown error'}`,
+        error,
+      );
+      throw error;
+    }
   }
 
   async process(job: Job): Promise<unknown> {
     try {
+      this.logger.info(`Processing wait list job: ${job.name}`, { job_id: job.id });
+
       switch (job.name) {
         case JOB_CREATE_WAIT_LIST_ENTRY:
           return await this.createWaitListEntry(job.data);
@@ -104,15 +117,21 @@ export class WaitListProcessor extends GlobalProcessor {
           return await this.inviteWaitListBatch(job.data);
 
         default:
+          this.logger.error(`Unrecognized wait list job name: ${job.name}`);
           throw new Error(`Job name "${job.name}" not recognized`);
       }
+    } catch (error) {
+      this.logger.error(
+        `Wait list job failed: ${job.name} - ${error instanceof Error ? error.message : 'Unknown error'}`,
+        error,
+      );
+      throw error;
     } finally {
-      await this.appLogService.flushAsync();
+      await this.logger.flushAsync();
     }
   }
 
   private async createWaitListEntry(data: PublicCreateWaitListInput) {
-    const log = this.logger.name(JOB_CREATE_WAIT_LIST_ENTRY);
     const normalizedEmail = this.normalizeEmail(data.email);
     const emailLog = this.redactEmail(normalizedEmail);
 
@@ -135,6 +154,7 @@ export class WaitListProcessor extends GlobalProcessor {
             last_reminder_email_sent_at: null,
             reminder_count: 0,
           });
+          this.logger.info(`Wait list DB entry created: ${emailLog}`, { entry_id: waitList.id });
         } catch (error) {
           if (!this.isUniqueEmailError(error)) {
             throw error;
@@ -144,10 +164,12 @@ export class WaitListProcessor extends GlobalProcessor {
           if (!waitList) {
             throw error;
           }
+          this.logger.info(`Wait list DB entry already exists (race): ${emailLog}`, { entry_id: waitList.id });
         }
       }
 
       if (waitList.validated_at) {
+        this.logger.info(`Wait list entry already validated, skipping invite email: ${emailLog}`, { entry_id: waitList.id });
         return waitList;
       }
 
@@ -156,7 +178,7 @@ export class WaitListProcessor extends GlobalProcessor {
         waitList.invitation_email_sent_at
         && Date.now() - new Date(waitList.invitation_email_sent_at).getTime() < ONE_HOUR_MS
       ) {
-        log.info(`Skipping wait-list validation email (sent recently): ${emailLog}`, { email: emailLog });
+        this.logger.info(`Skipping wait-list validation email (sent recently): ${emailLog}`, { email: emailLog, entry_id: waitList.id });
         return waitList;
       }
 
@@ -174,11 +196,11 @@ export class WaitListProcessor extends GlobalProcessor {
         invitation_email_sent_at: new Date(),
       });
 
-      log.info(`Wait list entry created: ${emailLog}`, { email: emailLog });
+      this.logger.info(`Wait list validation email queued: ${emailLog}`, { entry_id: waitList.id });
 
       return waitList;
     } catch (error) {
-      log.error(
+      this.logger.error(
         `Failed to create wait list entry: ${emailLog} - ${error instanceof Error ? error.message : 'Unknown error'}`,
         error,
       );
@@ -187,11 +209,10 @@ export class WaitListProcessor extends GlobalProcessor {
   }
 
   private async inviteWaitListBatch(data: { count: number }) {
-    const log = this.logger.name(JOB_INVITE_WAIT_LIST_BATCH);
     const count = Math.floor(Number(data.count));
 
     if (!Number.isFinite(count) || count <= 0) {
-      log.warn(`Invalid wait list invite batch count: ${data.count}`);
+      this.logger.warn(`Invalid wait list invite batch count: ${data.count}`);
       return { invited: 0 };
     }
 
@@ -199,14 +220,15 @@ export class WaitListProcessor extends GlobalProcessor {
       const entries = await this.waitListRepository.claimWaitingBatch(count);
 
       if (!entries.length) {
-        log.info('No waiting wait list entries found for batch invite.');
+        this.logger.info('No waiting wait list entries found for batch invite.');
         return { invited: 0 };
       }
+
+      this.logger.info(`Claimed ${entries.length} wait list entries for batch invite.`);
 
       const expiresAt = addDays(new Date(), WaitListProcessor.INVITATION_EXPIRES_IN_DAYS);
       const appUrl = getConfigValue('app').url;
 
-      // Memoize benefit lookups per batch: each benefit type is fetched at most once.
       const benefitTypes = new Set<EnumType<'BENEFIT_TYPE'>>();
       for (const entry of entries) {
         if (entry.position !== null) {
@@ -230,8 +252,13 @@ export class WaitListProcessor extends GlobalProcessor {
         result.status === 'fulfilled' && result.value ? [result.value] : [],
       );
 
+      const failedCount = entries.length - preparedInvites.length;
+      if (failedCount > 0) {
+        this.logger.warn(`${failedCount}/${entries.length} wait list entries failed preparation for batch invite.`);
+      }
+
       if (!preparedInvites.length) {
-        log.info('No wait list entries could be prepared for batch invite.');
+        this.logger.info('No wait list entries could be prepared for batch invite.');
         return { invited: 0 };
       }
 
@@ -240,6 +267,11 @@ export class WaitListProcessor extends GlobalProcessor {
           preparedInvites.map((invite) => invite.mailable),
         );
       } catch (error) {
+        this.logger.error(
+          `Wait list batch mail send failed, reverting ${preparedInvites.length} entries to WAITING`,
+          error,
+        );
+
         await Promise.allSettled(
           preparedInvites.map((invite) =>
             this.waitListRepository.updateById(invite.entry.id, {
@@ -269,12 +301,12 @@ export class WaitListProcessor extends GlobalProcessor {
 
       const invited = preparedInvites.length;
 
-      log.info(`Wait list batch invitations queued: ${invited}/${entries.length}`);
+      this.logger.info(`Wait list batch invitations sent: ${invited}/${entries.length}`);
 
       return { invited };
     } catch (error) {
-      log.error(
-        `Failed to invite wait list batch: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      this.logger.error(
+        `Failed to invite wait list batch - ${error instanceof Error ? error.message : 'Unknown error'}`,
         error,
       );
       throw error;
@@ -286,7 +318,6 @@ export class WaitListProcessor extends GlobalProcessor {
     appUrl: string,
     benefitByType: Map<EnumType<'BENEFIT_TYPE'>, Awaited<ReturnType<BenefitRepository['findByType']>>>,
   ): Promise<PreparedWaitListInvite | null> {
-    const log = this.logger.name(JOB_INVITE_WAIT_LIST_BATCH);
     const emailLog = this.redactEmail(entry.email);
 
     try {
@@ -328,7 +359,7 @@ export class WaitListProcessor extends GlobalProcessor {
         last_reminder_email_sent_at: null,
       });
 
-      log.error(
+      this.logger.error(
         `Failed to invite wait list entry: ${emailLog} - ${error instanceof Error ? error.message : 'Unknown error'}`,
         error,
       );

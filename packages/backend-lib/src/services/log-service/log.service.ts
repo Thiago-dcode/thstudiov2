@@ -105,7 +105,7 @@ export abstract class LogService {
 
     protected beautifyLogMessage(level: LogLevel, message: string, options?: LogOptions, id?: string | null) {
         const logId = id !== undefined ? id : this.getLogId();
-        let logMessage = `[${format(new Date(), 'yyyy-MM-dd HH:mm:ss')}] - ${level.toUpperCase()} -${logId ? `[${logId}]` : ''} ${message}`;
+        let logMessage = `[${format(new Date(), 'yyyy-MM-dd HH:mm:ss')}][${this.config.channel}] - ${level.toUpperCase()} -${logId ? `[${logId}]` : ''} ${message}`;
         if (options) {
             // Error instances stringify to "{}" (their fields are non-enumerable); extract them
             // explicitly so stacks are preserved in the log instead of being silently dropped.
