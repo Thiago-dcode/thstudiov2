@@ -13,7 +13,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import createIntlMiddleware from "next-intl/middleware";
 import { routing, urlLocaleToLanguageCode } from "./i18n/routing";
 import authService from "./modules/auth/auth.service";
-import { setPostLoginRedirectByCookie } from "./modules/auth/server-actions/post-login-redirect.action";
+import { setPostLoginRedirectByCookie } from "./modules/auth/server-actions/post-login-redirect.cookies";
 import {
   deleteUserSessionByCookie,
   getRememberMeByCookie,
@@ -29,13 +29,12 @@ const handlePostLoginRedirect = async (
   responseCookies: ResponseCookies,
   pathname: string,
 ) => {
-  const userAuth = await userSessionByCookie(cookies);
-  if (userAuth) {
-    return;
-  }
-
   const pathWithoutLocale = stripLocalePrefix(pathname, routing.locales);
   if (!pathWithoutLocale) {
+    return;
+  }
+  const userAuth = await userSessionByCookie(cookies);
+  if (userAuth) {
     return;
   }
   setPostLoginRedirectByCookie(responseCookies, pathWithoutLocale);

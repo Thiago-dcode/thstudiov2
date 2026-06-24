@@ -1,6 +1,9 @@
 "use client";
 
-import { normalizePostLoginRedirect } from "@repo/common-lib/constants/post-login-redirects";
+import {
+  type AllowedPostLoginRedirect,
+  normalizePostLoginRedirect,
+} from "@repo/common-lib/constants/post-login-redirects";
 import { Errors } from "@repo/ui/components/custom/errors";
 import { Input } from "@repo/ui/components/shadcn/input";
 import { Label } from "@repo/ui/components/shadcn/label";
@@ -10,10 +13,7 @@ import { useState } from "react";
 import FormComponent from "@/lib/components/form-component";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { loginServerAction } from "@/modules/auth/server-actions/login.action";
-import {
-  type AllowedPostLoginRedirect,
-  deletePostLoginRedirect,
-} from "@/modules/auth/server-actions/post-login-redirect.action";
+import { deletePostLoginRedirect } from "@/modules/auth/server-actions/post-login-redirect.action";
 
 export const LoginForm = ({
   rememberMe: _rememberMe,

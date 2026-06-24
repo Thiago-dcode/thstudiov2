@@ -14,6 +14,10 @@ export const metadata: Metadata = {
   title: "A11STUDIO — The Portfolio Platform Built for Artists",
   description:
     "Showcase your work, get discovered, and connect with collectors and collaborators. A11STUDIO is the portfolio platform designed exclusively for artists.",
+  robots: {
+    index: false,
+    follow: false,
+  },
   openGraph: {
     title: "A11STUDIO — The Portfolio Platform Built for Artists",
     description:

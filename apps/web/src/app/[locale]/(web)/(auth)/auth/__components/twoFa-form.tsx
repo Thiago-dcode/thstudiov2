@@ -1,5 +1,8 @@
 "use client";
-import { normalizePostLoginRedirect } from "@repo/common-lib/constants/post-login-redirects";
+import {
+  type AllowedPostLoginRedirect,
+  normalizePostLoginRedirect,
+} from "@repo/common-lib/constants/post-login-redirects";
 import { Errors } from "@repo/ui/components/custom/errors";
 import { Input } from "@repo/ui/components/shadcn/input";
 import { useRouter } from "next/navigation";
@@ -7,10 +10,7 @@ import { useRef, useState } from "react";
 import FormComponent from "@/lib/components/form-component";
 import type { TwoFaUser } from "@/modules/auth/auth.types";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
-import {
-  type AllowedPostLoginRedirect,
-  deletePostLoginRedirect,
-} from "@/modules/auth/server-actions/post-login-redirect.action";
+import { deletePostLoginRedirect } from "@/modules/auth/server-actions/post-login-redirect.action";
 import { verify2faServerAction } from "@/modules/auth/server-actions/twofa.action";
 
 export const TwoFaForm = ({
