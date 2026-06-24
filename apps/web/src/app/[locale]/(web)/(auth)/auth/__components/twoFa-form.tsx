@@ -8,8 +8,8 @@ import FormComponent from "@/lib/components/form-component";
 import type { TwoFaUser } from "@/modules/auth/auth.types";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import {
-  deletePostLoginRedirect,
   type AllowedPostLoginRedirect,
+  deletePostLoginRedirect,
 } from "@/modules/auth/server-actions/post-login-redirect.action";
 import { verify2faServerAction } from "@/modules/auth/server-actions/twofa.action";
 

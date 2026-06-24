@@ -1,10 +1,10 @@
+import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import     assetService  from "@/modules/assets/asset.service";
+import { Suspense } from "react";
+import assetService from "@/modules/assets/asset.service";
 import waitListService from "@/modules/wait-list/wait-list.service";
-import { Spinner } from "@repo/ui/components/shadcn/spinner";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +28,7 @@ async function WaitListImage() {
       {heroImage.data && (
         <img
           src={heroImage.data.url}
-          alt={heroImage.data.title  || heroImage.data.filename}
+          alt={heroImage.data.title || heroImage.data.filename}
           className="h-full w-full object-cover"
         />
       )}
@@ -55,11 +55,7 @@ export default async function WaitListValidatePage({
 
   return (
     <section className="mx-auto grid w-full max-w-5xl gap-8 px-6 py-12 tablet:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)] tablet:items-center tablet:px-10 tablet:py-20">
-      <Suspense
-        fallback={
-          <Spinner/>
-        }
-      >
+      <Suspense fallback={<Spinner />}>
         <WaitListImage />
       </Suspense>
 

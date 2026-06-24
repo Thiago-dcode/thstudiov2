@@ -11,8 +11,8 @@ import FormComponent from "@/lib/components/form-component";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { loginServerAction } from "@/modules/auth/server-actions/login.action";
 import {
-  deletePostLoginRedirect,
   type AllowedPostLoginRedirect,
+  deletePostLoginRedirect,
 } from "@/modules/auth/server-actions/post-login-redirect.action";
 
 export const LoginForm = ({

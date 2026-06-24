@@ -13,6 +13,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import createIntlMiddleware from "next-intl/middleware";
 import { routing, urlLocaleToLanguageCode } from "./i18n/routing";
 import authService from "./modules/auth/auth.service";
+import { setPostLoginRedirectByCookie } from "./modules/auth/server-actions/post-login-redirect.action";
 import {
   deleteUserSessionByCookie,
   getRememberMeByCookie,
@@ -20,7 +21,6 @@ import {
   setUserSessionByCookie,
   userSessionByCookie,
 } from "./modules/auth/server-actions/user-session.action";
-import { setPostLoginRedirectByCookie } from "./modules/auth/server-actions/post-login-redirect.action";
 
 const intlMiddleware = createIntlMiddleware(routing);
 

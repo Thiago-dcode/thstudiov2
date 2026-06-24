@@ -2,8 +2,8 @@
 
 import { POST_LOGIN_REDIRECT_COOKIE_NAME } from "@repo/common-lib/constants/constants";
 import {
-  normalizePostLoginRedirect,
   type AllowedPostLoginRedirect,
+  normalizePostLoginRedirect,
 } from "@repo/common-lib/constants/post-login-redirects";
 import type {
   RequestCookies,
@@ -56,10 +56,11 @@ export const deletePostLoginRedirectByCookie = (
   });
 };
 
-export const getPostLoginRedirect = async (): Promise<AllowedPostLoginRedirect | null> => {
-  const cookieStore = await cookies();
-  return getPostLoginRedirectByCookie(cookieStore);
-};
+export const getPostLoginRedirect =
+  async (): Promise<AllowedPostLoginRedirect | null> => {
+    const cookieStore = await cookies();
+    return getPostLoginRedirectByCookie(cookieStore);
+  };
 
 export const deletePostLoginRedirect = async () => {
   const cookieStore = await cookies();
