@@ -165,7 +165,7 @@ const PhotoInput = ({ defaultUrl }: { defaultUrl?: string }) => {
             </div>
           </div>
         ) : (
-          <p className="text-sm text-text-muted italic">
+          <p className="text-sm text-text-muted ">
             Choose a photo (preferably of yourself) to display on your about
             page.
           </p>

@@ -47,7 +47,7 @@ export function MediaGalleryCard({
  />
  </div>
  ) : (
- <div className="media-gallery-card__frame media-gallery-card__placeholder w-full h-full aspect-square flex items-center justify-center bg-fg-1 text-xs text-text-muted italic">
+ <div className="media-gallery-card__frame media-gallery-card__placeholder w-full h-full aspect-square flex items-center justify-center bg-fg-1 text-xs text-text-muted ">
  void
  </div>
  )}

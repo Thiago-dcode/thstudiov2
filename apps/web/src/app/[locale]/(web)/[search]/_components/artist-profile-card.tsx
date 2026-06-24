@@ -90,7 +90,7 @@ export function ArtistProfileCard({
           />
         ) : (
           <span
-            className="flex size-full items-center justify-center font-serif text-3xl italic tracking-tight text-text-muted/50 tablet:text-4xl"
+            className="flex size-full items-center justify-center font-serif text-3xl  tracking-tight text-text-muted/50 tablet:text-4xl"
             aria-hidden
           >
             {initials(artist)}

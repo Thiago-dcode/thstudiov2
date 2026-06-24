@@ -10,7 +10,7 @@ export function ResourceNotFound({ username, message }: ResourceNotFoundProps) {
   return (
     <div className="py-8 w-full flex flex-col items-center justify-center min-h-[70vh] px-6 animate-in fade-in duration-700">
       <div className="relative flex flex-col items-center text-center max-w-lg">
-        <span className="text-[8rem] tablet:text-[10rem] font-serif italic leading-none tracking-tighter text-text/5 select-none">
+        <span className="text-[8rem] tablet:text-[10rem] font-serif  leading-none tracking-tighter text-text/5 select-none">
           404
         </span>
 
@@ -20,7 +20,7 @@ export function ResourceNotFound({ username, message }: ResourceNotFoundProps) {
           </div>
 
           <div className="space-y-3">
-            <h1 className="text-2xl tablet:text-3xl font-serif italic tracking-tight">
+            <h1 className="text-2xl tablet:text-3xl font-serif  tracking-tight">
               Resource not found
             </h1>
             <p className="text-sm tablet:text-base text-text-muted leading-relaxed max-w-xs mx-auto">

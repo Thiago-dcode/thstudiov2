@@ -31,7 +31,7 @@ export default async function AboutPage({ params }: Props) {
     return (
       <Web.Container>
         <div className="flex min-h-[60vh] items-center justify-center">
-          <p className="text-sm italic text-text-muted tracking-wide">
+          <p className="text-sm  text-text-muted tracking-wide">
             This artist hasn't shared their story yet.
           </p>
         </div>
@@ -70,7 +70,7 @@ export default async function AboutPage({ params }: Props) {
               <div className="space-y-2">
                 {aboutPage.title && (
                   <div className="flex items-baseline gap-4">
-                    <h1 className="text-4xl font-serif italic tracking-tight md:text-5xl lg:text-6xl">
+                    <h1 className="text-4xl font-serif  tracking-tight md:text-5xl lg:text-6xl">
                       {aboutPage.title}
                     </h1>
                     {canEdit && (

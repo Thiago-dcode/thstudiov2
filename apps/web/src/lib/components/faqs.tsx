@@ -13,7 +13,7 @@ export function FaqsContent() {
 
   return (
     <div className="flex flex-col gap-14">
-      <h2 className="font-serif text-2xl font-light italic leading-none tracking-tight tablet:text-3xl desktop:text-5xl">
+      <h2 className="font-serif text-2xl font-light  leading-none tracking-tight tablet:text-3xl desktop:text-5xl">
         {t("title")}
       </h2>
 

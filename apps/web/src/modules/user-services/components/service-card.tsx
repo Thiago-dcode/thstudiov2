@@ -54,7 +54,7 @@ export function ServiceCard({
           <div className="absolute inset-0 flex items-center justify-center bg-fg-1">
             <span
               aria-hidden="true"
-              className="font-serif text-4xl italic text-text-muted/20"
+              className="font-serif text-4xl  text-text-muted/20"
             >
               {title.charAt(0)}
             </span>
@@ -80,7 +80,7 @@ export function ServiceCard({
         ) : null}
 
         {show_price && price != null ? (
-          <span className="phone-lg:mt-auto pt-0.5 phone-lg:pt-2 text-sm font-serif italic text-text-muted">
+          <span className="phone-lg:mt-auto pt-0.5 phone-lg:pt-2 text-sm font-serif  text-text-muted">
             ${price.toFixed(2)}
           </span>
         ) : null}

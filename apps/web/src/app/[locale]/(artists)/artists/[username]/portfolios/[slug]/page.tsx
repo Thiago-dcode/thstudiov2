@@ -139,7 +139,7 @@ export default async function Page({ params, searchParams }: Props) {
             </div>
           </GalleryProvider>
         ) : (
-          <div className="flex min-h-[40vh] items-center justify-center border border-dashed border-border/60 text-sm italic text-text-muted">
+          <div className="flex min-h-[40vh] items-center justify-center border border-dashed border-border/60 text-sm  text-text-muted">
             This collection is currently empty.
           </div>
         )}

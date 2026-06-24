@@ -77,7 +77,7 @@ export default async function Page({ params }: Props) {
               </div>
             ) : (
               <div className="relative aspect-4/3 w-full flex flex-col items-center justify-center gap-3 border border-border/20 bg-fg-1">
-                <span className="font-serif text-7xl italic text-text-muted/10">
+                <span className="font-serif text-7xl  text-text-muted/10">
                   {service.title.charAt(0)}
                 </span>
               </div>
@@ -88,7 +88,7 @@ export default async function Page({ params }: Props) {
                 <span className="text-[10px] uppercase tracking-[0.2em] text-text-muted">
                   Starting at
                 </span>
-                <span className="font-serif text-2xl italic tracking-tight">
+                <span className="font-serif text-2xl  tracking-tight">
                   ${service.price.toFixed(2)}
                 </span>
               </div>
@@ -100,7 +100,7 @@ export default async function Page({ params }: Props) {
         <div className="md:col-span-7 flex flex-col">
           <header className="pb-8">
             <div className="flex items-start justify-between gap-4">
-              <h1 className="text-3xl font-serif italic tracking-tight tablet:text-4xl desktop:text-5xl leading-[1.1]">
+              <h1 className="text-3xl font-serif  tracking-tight tablet:text-4xl desktop:text-5xl leading-[1.1]">
                 {service.title}
               </h1>
               {canEdit && (
@@ -181,7 +181,7 @@ export default async function Page({ params }: Props) {
                   href={`/artists/${username}/portfolios/${service.portfolio.slug}`}
                   className="group inline-flex items-center gap-4 border border-border/30 px-6 py-2.5 transition-all hover:border-border hover:bg-text/5"
                 >
-                  <span className="font-serif text-lg italic text-text/90 group-hover:text-text">
+                  <span className="font-serif text-lg  text-text/90 group-hover:text-text">
                     {service.portfolio.title}
                   </span>
                   <ArrowRight className="size-4 shrink-0 text-text-muted transition-transform group-hover:translate-x-1 group-hover:text-text" />

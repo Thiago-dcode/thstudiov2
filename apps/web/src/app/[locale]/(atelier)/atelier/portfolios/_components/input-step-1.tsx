@@ -63,7 +63,7 @@ const ThumbnailInput = () => {
           </div>
         </div>
       ) : (
-        <p className="text-sm text-text-muted italic">
+        <p className="text-sm text-text-muted ">
           Add a thumbnail image for your portfolio (required)
         </p>
       )}

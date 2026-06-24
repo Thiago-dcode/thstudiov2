@@ -19,7 +19,7 @@ export function CtaSection() {
         <span className="text-xs font-semibold uppercase tracking-[0.2em] text-text-muted">
           {t("badge")}
         </span>
-        <h2 className="max-w-2xl font-serif text-4xl font-bold italic leading-[1.05] tracking-tight tablet:text-6xl">
+        <h2 className="max-w-2xl font-serif text-4xl font-bold  leading-[1.05] tracking-tight tablet:text-6xl">
           {t("title")}
         </h2>
         <p className="max-w-lg text-base leading-relaxed text-text-muted tablet:text-lg tablet:leading-relaxed">

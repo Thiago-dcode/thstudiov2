@@ -44,7 +44,7 @@ export function PortfolioCard({
           <div className="absolute inset-0 flex items-center justify-center bg-fg-1">
             <span
               aria-hidden="true"
-              className="font-serif text-5xl italic text-text-muted/30"
+              className="font-serif text-5xl  text-text-muted/30"
             >
               {title.charAt(0)}
             </span>
@@ -61,7 +61,7 @@ export function PortfolioCard({
             {title}
           </h3>
           {description ? (
-            <p className="mt-0.5 italic line-clamp-1 leading-relaxed text-white/70">
+            <p className="mt-0.5  line-clamp-1 leading-relaxed text-white/70">
               {description}
             </p>
           ) : null}

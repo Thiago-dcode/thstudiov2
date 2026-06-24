@@ -48,7 +48,7 @@ export default async function Page({ params }: Props) {
           ))}
         </section>
       ) : (
-        <div className="flex min-h-[40vh] items-center justify-center border border-dashed border-border/60 text-sm italic text-text-muted">
+        <div className="flex min-h-[40vh] items-center justify-center border border-dashed border-border/60 text-sm  text-text-muted">
           No services yet.
         </div>
       )}

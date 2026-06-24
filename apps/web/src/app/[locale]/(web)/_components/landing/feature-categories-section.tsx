@@ -54,7 +54,7 @@ function FeaturedCategoryCard({
           />
         ) : (
           <span
-            className="flex size-full items-center justify-center font-serif text-4xl italic tracking-tight text-text-muted/45 tablet:text-5xl"
+            className="flex size-full items-center justify-center font-serif text-4xl  tracking-tight text-text-muted/45 tablet:text-5xl"
             aria-hidden
           >
             {categoryInitial(label)}

@@ -63,7 +63,7 @@ const ViewAllLink = ({ href, label }: { href: string; label: string }) => (
 
 const EmptyState = ({ displayName }: { displayName: string }) => (
   <div className="mx-auto flex w-full max-w-xl flex-col items-center gap-5 px-6 text-center">
-    <p className="font-serif text-lg text-text-muted italic">
+    <p className="font-serif text-lg text-text-muted ">
       {displayName} hasn&apos;t published any work yet.
     </p>
     <p className="text-sm text-text-muted/70">
