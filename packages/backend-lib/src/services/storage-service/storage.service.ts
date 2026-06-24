@@ -14,4 +14,5 @@ export abstract class StorageService {
     public abstract deleteDirectory(prefix: string): Promise<boolean>;
     public abstract list(path: string): Promise<File[]>;
     public abstract exists(path: string): Promise<boolean>;
+    public abstract move(fromPath: string, toPath: string): Promise<boolean>;
 }

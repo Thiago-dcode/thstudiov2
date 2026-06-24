@@ -1,6 +1,7 @@
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { StorageService } from "./storage.service";
 import {
+    CopyObjectCommand,
     DeleteObjectCommand,
     DeleteObjectsCommand,
     GetObjectCommand,
@@ -114,6 +115,28 @@ export class S3StorageService extends StorageService {
     }
     public async exists(path: string): Promise<boolean> {
         throw new Error('Not implemented ' + path);
+    }
+    public async move(fromPath: string, toPath: string): Promise<boolean> {
+        try {
+            // Copy to new location
+            const copyCommand = new CopyObjectCommand({
+                Bucket: this.config.bucket,
+                CopySource: `${this.config.bucket}/${fromPath}`,
+                Key: toPath,
+            });
+            await this.s3Client.send(copyCommand);
+
+            // Delete old location
+            const deleteCommand = new DeleteObjectCommand({
+                Bucket: this.config.bucket,
+                Key: fromPath,
+            });
+            await this.s3Client.send(deleteCommand);
+
+            return true;
+        } catch {
+            return false;
+        }
     }
 
 

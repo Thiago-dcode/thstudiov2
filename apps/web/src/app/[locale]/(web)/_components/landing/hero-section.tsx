@@ -1,15 +1,27 @@
 import { ChevronDown } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { WaitListForm } from "@/modules/wait-list/components/wait-list-form";
+import assetService from "@/modules/assets/asset.service";
 
 export async function HeroSection() {
   const t = await getTranslations("landing.hero");
+  const heroVideo = await assetService.getBySlug("hero-drone-video");
 
   return (
     <section
       aria-labelledby="hero-heading"
       className="relative flex w-full items-center justify-center overflow-hidden bg-bg h-[calc(100svh-4rem)] min-h-136"
     >
+      {heroVideo.data  && (
+        <video
+          autoPlay
+          muted
+          src={heroVideo.data.url}
+          loop
+          disableRemotePlayback
+          className="absolute inset-0 z-0 h-full w-full object-cover"
+          aria-hidden="true"/>
+      )}
       {/* ── Gradient overlays for contrast & brand warmth ── */}
       <div aria-hidden="true" className="hero-overlay absolute inset-0 z-1" />
       <div aria-hidden="true" className="hero-glow absolute inset-0 z-2" />

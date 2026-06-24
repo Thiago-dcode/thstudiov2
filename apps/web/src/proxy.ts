@@ -3,6 +3,7 @@ import {
   LANGUAGE_HEADER,
 } from "@repo/common-lib/constants/constants";
 import type { EnumType } from "@repo/common-lib/constants/enums";
+import { stripLocalePrefix } from "@repo/common-lib/constants/post-login-redirects";
 import { subMinutes } from "date-fns";
 import type {
   RequestCookies,
@@ -19,8 +20,26 @@ import {
   setUserSessionByCookie,
   userSessionByCookie,
 } from "./modules/auth/server-actions/user-session.action";
+import { setPostLoginRedirectByCookie } from "./modules/auth/server-actions/post-login-redirect.action";
 
 const intlMiddleware = createIntlMiddleware(routing);
+
+const handlePostLoginRedirect = async (
+  cookies: RequestCookies,
+  responseCookies: ResponseCookies,
+  pathname: string,
+) => {
+  const userAuth = await userSessionByCookie(cookies);
+  if (userAuth) {
+    return;
+  }
+
+  const pathWithoutLocale = stripLocalePrefix(pathname, routing.locales);
+  if (!pathWithoutLocale) {
+    return;
+  }
+  setPostLoginRedirectByCookie(responseCookies, pathWithoutLocale);
+};
 
 const handleRefreshToken = async (
   cookies: RequestCookies,
@@ -83,6 +102,11 @@ const proxy = async (req: NextRequest) => {
   response.cookies.set(LANGUAGE_COOKIE_NAME, resolvedLanguageCode);
   response.headers.set(LANGUAGE_HEADER, resolvedLanguageCode);
 
+  await handlePostLoginRedirect(
+    req.cookies,
+    response.cookies,
+    req.nextUrl.pathname,
+  );
   await handleRefreshToken(req.cookies, response.cookies);
   await handleRememberMe(req.cookies, response.cookies);
 

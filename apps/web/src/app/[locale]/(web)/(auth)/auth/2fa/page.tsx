@@ -1,12 +1,16 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import PageComponent from "@/lib/components/page-component";
+import { getPostLoginRedirect } from "@/modules/auth/server-actions/post-login-redirect.action";
 import { get2faCookieData } from "@/modules/auth/server-actions/twofa.action";
 import { ExpiresIn } from "../__components/expiresIn";
 import { TwoFaForm } from "../__components/twoFa-form";
 
 export default async function TwoFactorAuth() {
-  const user = await get2faCookieData();
+  const [user, redirectTo] = await Promise.all([
+    get2faCookieData(),
+    getPostLoginRedirect(),
+  ]);
   if (!user?.email) {
     redirect("/auth/login");
   }
@@ -43,7 +47,7 @@ export default async function TwoFactorAuth() {
             </p>
           </PageComponent.SubTitle>
         </PageComponent.Header>
-        <TwoFaForm user={user} />
+        <TwoFaForm user={user} redirectTo={redirectTo} />
 
         {/* Footer Links */}
         <div className="pt-4 ">

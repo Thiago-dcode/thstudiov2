@@ -127,6 +127,20 @@ const messages = {
     ],
   },
   language: "Language",
+  footer: {
+    tagline: "The portfolio platform built for artists.",
+    legal: {
+      heading: "Legal",
+      privacy: "Privacy Policy",
+      terms: "Terms of Service",
+      cookies: "Cookie Policy",
+    },
+    contact: {
+      heading: "Contact",
+      support: "Support",
+    },
+    copyright: "© {year} A11STUDIO. All rights reserved.",
+  },
   search: {
     segments: {
       artists: "Artists",

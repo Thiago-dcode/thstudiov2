@@ -128,6 +128,20 @@ const messages: Translations = {
     ],
   },
   language: "Idioma",
+  footer: {
+    tagline: "La plataforma de portafolios creada para artistas.",
+    legal: {
+      heading: "Legal",
+      privacy: "Política de privacidad",
+      terms: "Términos de servicio",
+      cookies: "Política de cookies",
+    },
+    contact: {
+      heading: "Contacto",
+      support: "Soporte",
+    },
+    copyright: "© {year} A11STUDIO. Todos los derechos reservados.",
+  },
   search: {
     segments: {
       artists: "Artistas",

@@ -106,6 +106,7 @@ export const TABLES_ENUM = {
   INVITATION_LINKS: 'invitation_links',
   WAIT_LIST: 'wait_list',
   EMAIL_PREFERENCES: 'email_preferences',
+  ASSETS: 'assets',
 } as const;
 
 export const COUNTRY_TO_LANGUAGES: Record<string, string> = {

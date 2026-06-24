@@ -25,6 +25,9 @@ export const PASSWORD_UPDATED_COOKIE_NAME = 'x-app-password-updated' as const;
 // ==================== SUBSCRIPTION COOKIES ====================
 export const INITIATE_SUBCRIPTION_COOKIE = 'x-app-initiate_subscription' as const;
 
+// ==================== POST-LOGIN REDIRECT COOKIE ====================
+export const POST_LOGIN_REDIRECT_COOKIE_NAME = 'x-app-post-login-redirect' as const;
+
 // ==================== APP CONFIGURATION ====================
 export const FUNNEL_LAST_STEP = 5;
 export const ALLOWED_IMAGE_FILE_TYPES: MimeTypes[] = ['image/jpeg', 'image/png', 'image/webp'];
@@ -114,3 +117,8 @@ export const CACHE_KEY_USERNAME_EXISTS = (username: string) => `username_exists_
 export const CACHE_KEY_ROLES_ALL = 'roles_all' as const;
 export const CACHE_KEY_ROLE_BY_NAME = (name: string) =>
   `role_name_${name}` as const;
+
+// ==================== ASSETS ====================
+/** S3 signed URL expiration for assets in seconds (24 hours). */
+export const ASSET_SIGNED_URL_EXPIRATION = 86400 as const;
+

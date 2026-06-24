@@ -29,7 +29,7 @@ export const AdminHeader = () => {
           >
             <BrandLogo collapsed={shrinked} />
           </Link>
-        </div>
+        </div> 
         <MainNav />
       </header>
 

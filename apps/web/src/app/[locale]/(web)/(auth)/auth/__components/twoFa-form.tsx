@@ -1,4 +1,5 @@
 "use client";
+import { normalizePostLoginRedirect } from "@repo/common-lib/constants/post-login-redirects";
 import { Errors } from "@repo/ui/components/custom/errors";
 import { Input } from "@repo/ui/components/shadcn/input";
 import { useRouter } from "next/navigation";
@@ -6,17 +7,33 @@ import { useRef, useState } from "react";
 import FormComponent from "@/lib/components/form-component";
 import type { TwoFaUser } from "@/modules/auth/auth.types";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
+import {
+  deletePostLoginRedirect,
+  type AllowedPostLoginRedirect,
+} from "@/modules/auth/server-actions/post-login-redirect.action";
 import { verify2faServerAction } from "@/modules/auth/server-actions/twofa.action";
 
-export const TwoFaForm = ({ user }: { user: TwoFaUser }) => {
+export const TwoFaForm = ({
+  user,
+  redirectTo,
+}: {
+  user: TwoFaUser;
+  redirectTo: AllowedPostLoginRedirect | null;
+}) => {
   const route = useRouter();
   const formRef = useRef<HTMLFormElement | null>(null);
   const { handleSubmit, errors, cleanErrors, isPending } = useHandleAction({
     action: verify2faServerAction,
     afterAction: async (result) => {
-      if (result.data) {
-        route.push(user.is_new ? "/get-started" : "/atelier");
+      if (!result.data) {
+        return;
       }
+      const fallback = user.is_new ? "/get-started" : "/atelier";
+      const destination = redirectTo
+        ? normalizePostLoginRedirect(redirectTo)
+        : null;
+      await deletePostLoginRedirect();
+      route.push(destination ? `/${destination}` : fallback);
     },
   });
   const [twafaCode, setTwofaCode] = useState("");

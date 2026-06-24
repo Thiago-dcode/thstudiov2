@@ -17,7 +17,7 @@ import { FinishSetupDialog } from "../__components/finish-setup-dialog";
 const AdminLayout = async ({ children }: { children: ReactNode }) => {
   const userAuth = await userSession();
   if (!userAuth) {
-    redirect("/");
+    redirect("/auth/login");
   }
   return (
     <>
