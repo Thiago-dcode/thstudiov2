@@ -22,7 +22,7 @@ async function WaitListImage() {
 
   return (
     <figure
-      className="relative aspect-3/4 overflow-hidden border border-border bg-fg-1"
+      className="relative aspect-3/4 overflow-hidden border border-border bg-fg"
       aria-hidden
     >
       {heroImage.data && (

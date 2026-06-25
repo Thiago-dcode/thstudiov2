@@ -39,7 +39,7 @@ export function PlanCard({ plan, className }: PlanCardProps) {
       )}
       {plan.top_tier && !plan.is_popular && (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-          <span className="bg-fg-1 px-4 py-1 text-xs font-medium text-text">
+          <span className="bg-fg px-4 py-1 text-xs font-medium text-text">
             Best Value
           </span>
         </div>

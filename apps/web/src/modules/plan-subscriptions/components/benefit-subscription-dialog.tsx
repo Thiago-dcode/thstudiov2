@@ -60,7 +60,7 @@ export const BenefitSubscriptionDialog = ({
         <DialogContent className="w-full max-w-md p-10">
           <div className="flex flex-col items-center justify-center gap-5">
             <div className="relative flex size-16 items-center justify-center">
-              <span className="absolute inset-0 animate-ping bg-fg-1" />
+              <span className="absolute inset-0 animate-ping bg-fg" />
               <span className="absolute inset-0 animate-pulse bg-fg-2" />
               <Gift className="size-7 text-text" />
             </div>
@@ -133,7 +133,7 @@ export const BenefitSubscriptionDialog = ({
 
         <div className="flex flex-col items-center gap-6 p-8 pt-6">
           <div className="relative">
-            <div className="flex size-16 items-center justify-center bg-fg-1">
+            <div className="flex size-16 items-center justify-center bg-fg">
               <Gift className="size-7 text-text" />
             </div>
             <div className="absolute -right-1.5 -top-1.5 flex size-7 items-center justify-center bg-bg">
@@ -156,7 +156,7 @@ export const BenefitSubscriptionDialog = ({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex w-full items-start gap-3 border border-border bg-fg-1 px-4 py-3 text-sm text-text-muted">
+          <div className="flex w-full items-start gap-3 border border-border bg-fg px-4 py-3 text-sm text-text-muted">
             <Sparkles className="mt-0.5 size-4 shrink-0 text-text" />
             <span>
               No payment details required. Your{" "}
@@ -167,24 +167,24 @@ export const BenefitSubscriptionDialog = ({
             </span>
           </div>
 
-          <div className="flex w-full flex-col border border-fg-1/15 bg-fg-1/[0.03]">
+          <div className="flex w-full flex-col border border-fg-1/15 bg-fg/[0.03]">
             <div className="flex items-center justify-between px-4 py-3">
               <span className="text-sm text-text-muted">Plan</span>
               <span className="text-sm font-semibold text-text">
                 {planName}
               </span>
             </div>
-            <div className="mx-4 h-px bg-fg-1/10" />
+            <div className="mx-4 h-px bg-fg/10" />
             <div className="flex items-center justify-between px-4 py-3">
               <span className="text-sm text-text-muted">Billing cycle</span>
               <span className="text-sm capitalize text-text">
                 {planPrice.billing_type.toLowerCase()}
               </span>
             </div>
-            <div className="mx-4 h-px bg-fg-1/10" />
+            <div className="mx-4 h-px bg-fg/10" />
             <div className="flex items-center justify-between px-4 py-3">
               <span className="text-sm text-text-muted">Free period</span>
-              <span className="inline-flex items-center gap-1.5 bg-fg-1 px-2.5 py-0.5 text-sm font-semibold text-text">
+              <span className="inline-flex items-center gap-1.5 bg-fg px-2.5 py-0.5 text-sm font-semibold text-text">
                 <Gift className="size-3.5" />
                 {config.months} months
               </span>
@@ -194,7 +194,7 @@ export const BenefitSubscriptionDialog = ({
           <div className="flex w-full flex-col gap-2 pt-1">
             <Button
               onClick={handleSubmitSubscription}
-              variant="secondary"
+              variant="accent"
               className="w-full font-bold"
             >
               Redeem &amp; Subscribe

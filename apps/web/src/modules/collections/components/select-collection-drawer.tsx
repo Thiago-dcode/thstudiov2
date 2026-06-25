@@ -100,7 +100,7 @@ export const SelectCollectionDrawer = ({
                 Add collection
               </DrawerTitle>
               {collectionsSelectedLength > 0 && (
-                <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 bg-fg-1 text-text text-[11px] font-medium tabular-nums">
+                <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 bg-fg text-text text-[11px] font-medium tabular-nums">
                   {collectionsSelectedLength}
                 </span>
               )}

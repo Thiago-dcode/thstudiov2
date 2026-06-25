@@ -33,8 +33,8 @@ export const createAboutPageAction = async (
   >
 > => {
   const rawData: CreateAboutPageInputWithFile = {
-    description: formData.get("description") as string,
-    title: formData.get("title") as string,
+    description: (formData.get("description") as string) ?? "",
+    title: (formData.get("title") as string) ?? "",
     user_id: parseInt(formData.get("user_id") as string, 10),
   };
   trimValues(rawData, {
@@ -102,8 +102,8 @@ export const updateAboutPageAction = async (
   >
 > => {
   const rawData: UpdateAboutPageInputWithFile = {
-    description: formData.get("description") as string,
-    title: formData.get("title") as string,
+    description: (formData.get("description") as string) ?? "",
+    title: (formData.get("title") as string) ?? "",
   };
   trimValues(rawData, {
     deep: true,

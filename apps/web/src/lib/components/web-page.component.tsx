@@ -32,14 +32,14 @@ const Header = ({
   titleClassName?: string;
 }) => {
   return (
-    <header className="mb-8 desktop:mb-12 flex flex-col items-center gap-6 pb-6">
+    <header className="mb-8 desktop:mb-12 flex flex-col items-center justify-center gap-6 pb-6">
       <div className="w-full max-w-5xl space-y-5">
         <div className="flex items-baseline gap-4 justify-center">
           <h1 className={cn(" tracking-tight", titleClassName)}>{title}</h1>
           {children}
         </div>
         {description && (
-          <p className="w-full text-base leading-relaxed text-text-muted md:text-lg">
+          <p className="w-full text-base! leading-relaxed text-text md:text-lg text-center">
             {description}
           </p>
         )}

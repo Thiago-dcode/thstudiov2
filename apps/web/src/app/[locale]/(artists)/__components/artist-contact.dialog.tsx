@@ -91,7 +91,7 @@ export const ArtistContactDialog = ({
 
         {!loadingSession &&
           (isSelfContact ? (
-            <div className="flex min-h-[260px] items-center justify-center border border-fg-2/40 bg-fg-1/10 px-6 text-center text-sm text-text-muted">
+            <div className="flex min-h-[260px] items-center justify-center border border-fg-2/40 bg-fg/10 px-6 text-center text-sm text-text-muted">
               You can't contact yourself.
             </div>
           ) : (

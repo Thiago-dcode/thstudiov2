@@ -32,6 +32,7 @@ export const createOrUpdatePortfolioAction = async (
 ): Promise<ActionReturn<Portfolio, PortfolioActionInput>> => {
   const thumbnailFile = input?.thumbnail as File | undefined;
   const isUpdate = !!currentPortfolio;
+
   // Thumbnail is required only on create
   if (!isUpdate && (!thumbnailFile || thumbnailFile.size === 0)) {
     return {
@@ -76,11 +77,10 @@ export const createOrUpdatePortfolioAction = async (
   const rawData = {
     ...input,
     thumbnail: thumbnailFile,
-    description: input.description || undefined,
+    description: input.description?? '',
   };
 
   trimValues(rawData, { deep: true });
-
   // Validate with appropriate schema
   const schema = isUpdate ? updatePortfolioSchema : createPortfolioSchema;
   const validated = schema.safeParse(rawData);

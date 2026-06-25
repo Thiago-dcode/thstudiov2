@@ -34,7 +34,7 @@ export const CreateResourceButton = ({
       <Button
         variant="primary"
         size="sm"
-        className="opacity-60"
+        className="opacity-30 cursor-not-allowed"
         onClick={() => {
           const now = Date.now();
           if (now - lastToastRef.current < TOAST_COOLDOWN_MS) return;

@@ -55,6 +55,7 @@ const config = (envPath?: string | undefined) => {
       password: process.env.SMTP_PASSWORD,
       admins: process.env.ADMIN_EMAILS ? process.env.ADMIN_EMAILS.split(',') : [],
       noreplyEmail: process.env.NOREPLY_EMAIL,
+      fromDisplayName: process.env.MAIL_FROM_NAME || 'A11studio',
       contactEmail: process.env.CONTACT_EMAIL,
       supportEmail: process.env.SUPPORT_EMAIL,
       api_key: process.env.RESEND_API_KEY,

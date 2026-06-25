@@ -110,11 +110,7 @@ export function WebHeaderArtistSearch({ className }: { className?: string }) {
           }}
           placeholder="Search artists…"
           autoComplete="off"
-          className={cn(
-            "h-9 w-full border border-border bg-fg-2/40 py-2 pr-3 pl-9",
-            "text-sm placeholder:text-text-muted/70",
-            "focus-visible:border-text/40 focus-visible:ring-2 focus-visible:ring-text/15",
-          )}
+          className="h-9 w-full py-2 pr-3 pl-9 text-sm"
         />
       </div>
 
@@ -126,9 +122,9 @@ export function WebHeaderArtistSearch({ className }: { className?: string }) {
                 <Link
                   href={`/artists/${encodeURIComponent(artist.username)}`}
                   onClick={close}
-                  className="flex items-center gap-3 px-3 py-2.5 transition-colors hover:bg-fg-1/50"
+                  className="flex items-center gap-3 px-3 py-2.5 transition-colors hover:bg-fg/50"
                 >
-                  <div className="size-9 shrink-0 overflow-hidden bg-fg-1/60">
+                  <div className="size-9 shrink-0 overflow-hidden bg-fg/60">
                     {artist.avatar ? (
                       <Image
                         src={artist.avatar}

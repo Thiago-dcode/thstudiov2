@@ -136,7 +136,7 @@ export default async function SettingsPage() {
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-medium">{planName}</p>
                   {!isFree && activeSubscription && (
-                    <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-medium bg-fg-1 text-text-muted border border-fg-2">
+                    <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-medium bg-fg text-text-muted border border-fg-2">
                       {activeSubscription.plan_price.billing_type}
                     </span>
                   )}
@@ -181,7 +181,7 @@ export default async function SettingsPage() {
               </div>
             </div>
             <div className="flex flex-col items-end gap-3">
-              <Button variant="secondary" size="sm" asChild>
+              <Button variant="accent" size="sm" asChild>
                 <Link href="/atelier/settings/subscription" className="gap-1.5">
                   {isFree ? "Upgrade" : "Change"}{" "}
                   <ArrowRight className="size-3.5" />

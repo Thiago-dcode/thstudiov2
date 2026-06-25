@@ -350,11 +350,11 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
       : {
           input: {
             user_id: media.user_id,
-            title: media.title || undefined,
-            description: media.description || undefined,
-            seo_title: media.seo_title || undefined,
-            seo_description: media.seo_description || undefined,
-            seo_alt: media.seo_alt || undefined,
+            title: media.title ?? "",
+            description: media.description ?? "",
+            seo_title: media.seo_title ?? "",
+            seo_description: media.seo_description ?? "",
+            seo_alt: media.seo_alt ?? "",
             seo_filename: media.seo_filename || "",
           },
           action: "seo",
@@ -456,11 +456,11 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
       : {
           input: {
             user_id: media.user_id,
-            title: media.title || undefined,
-            description: media.description || undefined,
-            seo_title: media.seo_title || undefined,
-            seo_description: media.seo_description || undefined,
-            seo_alt: media.seo_alt || undefined,
+            title: media.title ?? "",
+            description: media.description ?? "",
+            seo_title: media.seo_title ?? "",
+            seo_description: media.seo_description ?? "",
+            seo_alt: media.seo_alt ?? "",
             seo_filename: media.seo_filename || "",
           },
           action: "delete",

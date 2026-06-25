@@ -26,6 +26,8 @@ import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { createOrUpdatePortfolioAction } from "../server-actions/create-update-portfolio.action";
 import { slugExistsAction } from "../server-actions/slug-exists.action";
 
+export const MAX_PORTFOLIO_CATEGORIES = 2;
+
 function categoryIdsEqual(a: CategoryBase[], b: CategoryBase[]) {
   const idsA = a
     .map((c) => c.id)
@@ -147,7 +149,7 @@ export const PortfolioProvider = ({
       user_id: portfolio.user_id,
       title: portfolio.title,
       slug: portfolio.slug,
-      description: portfolio.description ?? undefined,
+      description: portfolio.description ?? "",
       is_highlight: portfolio.is_highlight,
       is_active: portfolio.is_active,
     });
@@ -156,7 +158,7 @@ export const PortfolioProvider = ({
   const setCategorySelected = useCallback((category: CategoryBase) => {
     setCategoriesSelected((prev) => {
       if (prev.some((c) => c.id === category.id)) return prev;
-      if (prev.length >= 5) return prev;
+      if (prev.length >= MAX_PORTFOLIO_CATEGORIES) return prev;
       return [...prev, category];
     });
   }, []);
@@ -204,7 +206,7 @@ export const PortfolioProvider = ({
       const payload: Partial<CreatePortfolioInputWithFile> = {
         title: (formData.title ?? "") as string,
         slug: (formData.slug ?? "") as string,
-        description: (formData.description ?? undefined) as string | undefined,
+        description: (formData.description ?? "") as string,
         user_id: (formData.user_id ?? user.id) as number,
         is_highlight: formData.is_highlight ?? false,
         is_active: formData.is_active ?? true,
@@ -354,8 +356,8 @@ export const PortfolioProvider = ({
     if (formData.title !== currentPortfolio.title) return true;
     if (formData.slug !== currentPortfolio.slug) return true;
     if (
-      (formData.description ?? undefined) !==
-      (currentPortfolio.description ?? undefined)
+      (formData.description ?? "") !==
+      (currentPortfolio.description ?? "")
     )
       return true;
     if ((formData.is_highlight ?? false) !== currentPortfolio.is_highlight)

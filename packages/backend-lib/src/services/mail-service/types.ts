@@ -3,7 +3,8 @@ export type MailConfig= {
     port?: number;
     username?: string;
     password?: string;
-    api_key?:string
+    api_key?:string;
+    fromDisplayName?: string;
 }
 export type MailServiceDriver = 'nodemailer' | 'resend';
 

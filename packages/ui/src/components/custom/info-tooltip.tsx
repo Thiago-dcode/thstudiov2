@@ -17,7 +17,7 @@ export const InfoTooltip = ({
  return (
  <HoverCard openDelay={openDelay}>
  <HoverCardTrigger>
- <Info className={cn("w-4 h-4 text-text-muted", iconClassName)} />
+ <Info className={cn("w-5 h-5 text-text-muted cursor-help", iconClassName)} />
  </HoverCardTrigger>
  <HoverCardContent>
  {content}

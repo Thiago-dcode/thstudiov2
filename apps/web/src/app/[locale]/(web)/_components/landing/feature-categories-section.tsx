@@ -43,7 +43,7 @@ function FeaturedCategoryCard({
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text/25 focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
       )}
     >
-      <div className="relative aspect-4/3 w-full shrink-0 overflow-hidden bg-fg-1/60">
+      <div className="relative aspect-4/3 w-full shrink-0 overflow-hidden bg-fg/60">
         {category.thumbnail ? (
           <Image
             src={category.thumbnail}
@@ -70,7 +70,7 @@ function FeaturedCategoryCard({
         </div>
 
         <div className="mt-auto flex items-center justify-end border-t border-border/50 pt-2.5">
-          <span className="shrink-0 bg-fg-2 px-3 py-1.5 text-center text-xs font-semibold text-text transition-colors group-hover:bg-fg-1 tablet:px-3.5 tablet:text-sm">
+          <span className="shrink-0 bg-fg-2 px-3 py-1.5 text-center text-xs font-semibold text-text transition-colors group-hover:bg-fg tablet:px-3.5 tablet:text-sm">
             {browse}
           </span>
         </div>

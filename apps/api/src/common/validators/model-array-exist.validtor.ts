@@ -26,6 +26,10 @@ export class ModelArrayExistValidator extends BaseModelValidator {
       return false;
     }
 
+    if (value.length === 0) {
+      return true;
+    }
+
     const [tableName, column] = args.constraints as [TableName, string];
     const queryBuilder = QueryBuilder.table(tableName);
     let result = false;

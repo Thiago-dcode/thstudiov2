@@ -89,7 +89,7 @@ export default function EditUserComponent() {
   }, [success, closeAllModals]);
 
   if (!isMounted) {
-    return <div className="w-full max-w-4xl h-96 animate-pulse bg-fg-1" />;
+    return <div className="w-full max-w-4xl h-96 animate-pulse bg-fg" />;
   }
 
   return (
@@ -106,7 +106,7 @@ export default function EditUserComponent() {
           open={openBanner}
           onOpenChange={(value) => handleSetOpen(value, "banner")}
         >
-          <DialogTrigger className="absolute top-3 right-3 p-2 bg-fg-1 hover:bg-fg-2 transition-opacity cursor-pointer">
+          <DialogTrigger className="absolute top-3 right-3 p-2 bg-fg hover:bg-fg-2 transition-opacity cursor-pointer">
             <Pen className="size-3" />
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
@@ -130,7 +130,7 @@ export default function EditUserComponent() {
             </FormComponent.Container>
           </DialogContent>
         </Dialog>
-        <div className="absolute -bottom-16 left-6 w-32 h-32 border-4 border-white bg-gray-200 ">
+        <div className="absolute -bottom-16 left-6 w-32 h-32 border-4 border-white bg-gray-200  rounded-full">
           <Dialog
             open={openAvatar}
             onOpenChange={(value) => handleSetOpen(value, "avatar")}
@@ -163,7 +163,7 @@ export default function EditUserComponent() {
             <img
               src={user.avatar}
               alt={user.username || "User avatar"}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover rounded-full"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-4xl text-gray-500">
@@ -178,7 +178,7 @@ export default function EditUserComponent() {
           open={openProfile}
           onOpenChange={(value) => handleSetOpen(value, "profile")}
         >
-          <DialogTrigger className="absolute top-3 right-3 p-2 bg-fg-1 hover:bg-fg-2 transition-opacity cursor-pointer">
+          <DialogTrigger className="absolute top-3 right-3 p-2 bg-fg hover:bg-fg-2 transition-opacity cursor-pointer">
             <Pen className="size-3" />
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
@@ -212,7 +212,7 @@ export default function EditUserComponent() {
             open={openAddress}
             onOpenChange={(value) => handleSetOpen(value, "address")}
           >
-            <DialogTrigger className="p-2 bg-fg-1 hover:bg-fg-2 transition-opacity cursor-pointer">
+            <DialogTrigger className="p-2 bg-fg hover:bg-fg-2 transition-opacity cursor-pointer">
               <Pen className="size-2" />
             </DialogTrigger>
             <DialogContent className="w-fit">
@@ -240,7 +240,7 @@ export default function EditUserComponent() {
               open={openCategories}
               onOpenChange={(value) => handleSetOpen(value, "categories")}
             >
-              <DialogTrigger className="p-2 bg-fg-1 hover:bg-fg-2 transition-opacity cursor-pointer">
+              <DialogTrigger className="p-2 bg-fg hover:bg-fg-2 transition-opacity cursor-pointer">
                 <Pen className="size-2" />
               </DialogTrigger>
               <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
@@ -284,7 +284,7 @@ export const EditAvatar = ({ defaultAvatar }: { defaultAvatar?: string }) => {
         {previewUrls?.length && (
           <div className="mt-4 flex flex-col items-center gap-2">
             <h3 className="text-sm font-medium">Profile Preview:</h3>
-            <div className="relative w-32 h-32 overflow-hidden border-4 border-fg-2">
+            <div className="relative w-32 h-32 overflow-hidden border-4 rounded-full">
               <img
                 src={previewUrls[0]}
                 alt="Profile Preview"

@@ -34,7 +34,7 @@ export const ResourceLimitReached = ({
             Go Back
           </Link>
         </Button>
-        <Button asChild variant="primary" size="sm">
+        <Button asChild variant="accent" size="sm">
           <Link href="/atelier/settings/subscription">Upgrade Plan</Link>
         </Button>
       </div>

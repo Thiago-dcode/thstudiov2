@@ -36,7 +36,7 @@ export function ServiceCard({
       href={href}
       className={`group flex h-22 flex-row phone-lg:h-full phone-lg:flex-col overflow-hidden border border-border/40 transition-colors duration-300 hover:border-border ${isBlocked ? "opacity-60" : ""}`}
     >
-      <div className="relative w-24 shrink-0 phone-lg:w-full phone-lg:aspect-3/2 overflow-hidden bg-fg-1">
+      <div className="relative w-24 shrink-0 phone-lg:w-full phone-lg:aspect-3/2 overflow-hidden bg-fg">
         {isBlocked ? (
           <div className="absolute left-2 top-2 z-10 bg-black/70 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white">
             Blocked
@@ -51,7 +51,7 @@ export function ServiceCard({
             sizes="(max-width: 480px) 96px, (max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-fg-1">
+          <div className="absolute inset-0 flex items-center justify-center bg-fg">
             <span
               aria-hidden="true"
               className="font-serif text-4xl  text-text-muted/20"

@@ -10,10 +10,25 @@ import {
 import mediaService from "../media.service";
 import { updateMediaSchema } from "../schemas/media-shemas";
 
+const OPTIONAL_STRING_KEYS: (keyof UpdateMediaInput)[] = [
+  "title",
+  "description",
+  "seo_title",
+  "seo_description",
+  "seo_alt",
+  "seo_filename",
+];
+
 export const updateMediaAction = async (
   id: number,
   input: UpdateMediaInput,
 ): Promise<ActionReturn<Media, UpdateMediaInput>> => {
+  for (const key of OPTIONAL_STRING_KEYS) {
+    if (key in input) {
+      input[key] = (input[key] ?? "") as UpdateMediaInput[typeof key];
+    }
+  }
+
   // Trim string values
   trimValues(input, {
     deep: true,

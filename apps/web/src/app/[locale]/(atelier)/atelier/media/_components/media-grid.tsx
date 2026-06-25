@@ -15,7 +15,7 @@ import {
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { FileInputProvider } from "@repo/ui/contexts/file.provider";
 import { cn } from "@repo/ui/lib/utils";
-import { ImageOff, Sparkles, Upload } from "lucide-react";
+import { Brain, Upload } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useMedia } from "@/modules/media/providers/media.provider";
 import {
@@ -94,149 +94,164 @@ export function MediaGrid({ media, username }: MediaGridProps) {
             />
           </FileInputProvider>
         </div>
-        <div className="flex items-center justify-between sticky top-0 z-90">
-          {canSelect ? (
-            <Dialog
-              open={isGenerateSeoDialogOpen}
-              onOpenChange={setIsGenerateSeoDialogOpen}
-            >
-              <DialogTrigger asChild>
-                <Button
-                  type="button"
-                  variant="default"
-                  size="sm"
-                  disabled={!selectionCount || isLoading}
-                  className={cn("transition-colors duration-200 h-8 px-2.5")}
-                >
-                  <Sparkles className="h-3.5 w-3.5 mr-1" />
-                  {!isLoading ? (
-                    <span className="text-xs font-medium">
-                      {selectionCount
-                        ? `GENERATE AI SEO FOR ${selectionCount} MEDIA`
-                        : "GENERATE AI SEO"}
-                    </span>
-                  ) : (
-                    <Spinner />
+        {currentMedia.length > 0 && (
+          <div
+            className={cn(
+              "flex flex-wrap items-center gap-2 sticky top-0 z-90 bg-bg py-1 w-full",
+              canSelect ? "justify-between" : "justify-start",
+            )}
+          >
+            {canSelect ? (
+              <Dialog
+                open={isGenerateSeoDialogOpen}
+                onOpenChange={setIsGenerateSeoDialogOpen}
+              >
+                <DialogTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="default"
+                    size="sm"
+                    disabled={!selectionCount || isLoading}
+                    className="shrink-0 transition-colors duration-200"
+                  >
+                    <Brain className="h-3.5 w-3.5 shrink-0" />
+                    {!isLoading ? (
+                      <span className="text-xs! font-medium whitespace-nowrap">
+                        {selectionCount
+                          ? `Generate SEO (${selectionCount})`
+                          : "Generate SEO"}
+                      </span>
+                    ) : (
+                      <Spinner />
+                    )}
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md z-100">
+                  <DialogHeader>
+                    <DialogTitle className="text-lg!">
+                      Generate AI SEO
+                    </DialogTitle>
+                    <DialogDescription className="text-sm!">
+                      Generate AI-powered SEO metadata for {selectionCount}{" "}
+                      {selectionCount === 1
+                        ? "selected media item"
+                        : "selected media items"}
+                      ?
+                    </DialogDescription>
+                  </DialogHeader>
+                  {aiCreditsInfo && (
+                    <div className="px-6 py-3 bg-fg-2/50 space-y-1">
+                      <div className="flex items-center justify-between text-sm!">
+                        <span className="text-text-muted">
+                          Credits available:
+                        </span>
+                        <span className="font-medium">{creditsAvailable}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm!">
+                        <span className="text-text-muted">Credits needed:</span>
+                        <span
+                          className={cn(
+                            "font-medium",
+                            !hasEnoughCredits && "text-error",
+                          )}
+                        >
+                          {creditsNeeded}
+                        </span>
+                      </div>
+                      {isOverAiLimit && (
+                        <p className="text-xs! text-error mt-2">
+                          Limit: select up to {MAX_AI_GENERATE} items (remove{" "}
+                          {selectionCount - MAX_AI_GENERATE}).
+                        </p>
+                      )}
+                      {!hasEnoughCredits && (
+                        <p className="text-xs! text-error mt-2">
+                          Insufficient credits. You need{" "}
+                          {creditsNeeded - creditsAvailable} more credits.
+                        </p>
+                      )}
+                    </div>
                   )}
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Generate AI SEO</DialogTitle>
-                  <DialogDescription>
-                    Generate AI-powered SEO metadata for {selectionCount}{" "}
-                    {selectionCount === 1
-                      ? "selected media item"
-                      : "selected media items"}
-                    ?
-                  </DialogDescription>
-                </DialogHeader>
-                {aiCreditsInfo && (
-                  <div className="px-6 py-3 bg-fg-2/50 space-y-1">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-text-muted">
-                        Credits available:
-                      </span>
-                      <span className="font-medium">{creditsAvailable}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-text-muted">Credits needed:</span>
-                      <span
-                        className={cn(
-                          "font-medium",
-                          !hasEnoughCredits && "text-error",
-                        )}
-                      >
-                        {creditsNeeded}
-                      </span>
-                    </div>
-                    {isOverAiLimit && (
-                      <p className="text-xs text-error mt-2">
-                        Limit: select up to {MAX_AI_GENERATE} items (remove{" "}
-                        {selectionCount - MAX_AI_GENERATE}).
-                      </p>
-                    )}
-                    {!hasEnoughCredits && (
-                      <p className="text-xs text-error mt-2">
-                        Insufficient credits. You need{" "}
-                        {creditsNeeded - creditsAvailable} more credits.
-                      </p>
-                    )}
-                  </div>
-                )}
-                <DialogFooter>
-                  <Button
-                    variant="base"
-                    onClick={() => setIsGenerateSeoDialogOpen(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    variant="primary"
-                    disabled={!hasEnoughCredits || isOverAiLimit || isLoading}
-                    onClick={async () => {
-                      await handleGenerateSeo();
-                    }}
-                  >
-                    Generate SEO
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          ) : null}
-          {currentMedia.length > 0 && (
-            <Button
-              variant={canSelect ? "outline" : "default"}
-              size="sm"
-              disabled={isLoading}
-              onClick={() => {
-                setCanSelect(!canSelect);
-                if (canSelect) {
+                  <DialogFooter className="gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsGenerateSeoDialogOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      disabled={
+                        !hasEnoughCredits || isOverAiLimit || isLoading
+                      }
+                      onClick={async () => {
+                        await handleGenerateSeo();
+                      }}
+                    >
+                      Generate SEO
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            ) : (
+              <Button
+                variant="default"
+                size="sm"
+                disabled={isLoading}
+                className="shrink-0 whitespace-nowrap"
+                onClick={() => setCanSelect(true)}
+              >
+                Select media
+              </Button>
+            )}
+            {canSelect ? (
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={isLoading}
+                className="shrink-0 whitespace-nowrap"
+                onClick={() => {
+                  setCanSelect(false);
                   clearSelection();
-                }
-              }}
-            >
-              {canSelect ? "Cancel selection" : "Select media"}
-            </Button>
-          )}
-        </div>
-
-        {currentMedia.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 text-text-muted gap-3">
-            <ImageOff className="h-10 w-10 stroke-[1.5]" />
-            <p className="text-sm">
-              No media uploaded yet. Start by adding your first image.
-            </p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 justify-items-start w-full">
-            {currentMedia.map((item) => {
-              if (!canSelect)
-                return (
-                  <EditMediaCard
-                    key={`media-card-${item.id}`}
-                    media={item}
-                    username={username}
-                    onDeleted={handleRemoveCurrentMedia}
-                  />
-                );
-
-              return (
-                <SelectableMedia
-                  key={`media-selectable-${item.id}`}
-                  media={item}
-                >
-                  <EditMediaCard
-                    key={item.id}
-                    media={item}
-                    username={username}
-                    onDeleted={handleRemoveCurrentMedia}
-                  />{" "}
-                </SelectableMedia>
-              );
-            })}
+                }}
+              >
+                Cancel selection
+              </Button>
+            ) : null}
           </div>
         )}
+
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 justify-items-start w-full">
+          {currentMedia.map((item) => {
+            if (!canSelect)
+              return (
+                <EditMediaCard
+                  key={`media-card-${item.id}`}
+                  media={item}
+                  username={username}
+                  onDeleted={handleRemoveCurrentMedia}
+                />
+              );
+
+            return (
+              <SelectableMedia
+                key={`media-selectable-${item.id}`}
+                media={item}
+              >
+                <EditMediaCard
+                  key={item.id}
+                  media={item}
+                  username={username}
+                  onDeleted={handleRemoveCurrentMedia}
+                />{" "}
+              </SelectableMedia>
+            );
+          })}
+        </div>
+
       </div>
 
       {pendingCount > 0 && !isLoading && (
@@ -269,7 +284,7 @@ export function MediaGrid({ media, username }: MediaGridProps) {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="base" onClick={() => setIsDialogOpen(false)}>
+            <Button variant="outline" size={'sm'} className="" onClick={() => setIsDialogOpen(false)}>
               Cancel
             </Button>
             <Button

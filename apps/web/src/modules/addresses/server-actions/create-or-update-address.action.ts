@@ -20,13 +20,13 @@ export const createOrUpdateAddressAction = async (
 ): Promise<ActionReturn<Address, PublicCreateAddressInput>> => {
   // Extract fields from FormData
   const rawData: PublicCreateAddressInput = {
-    formated_address: (formData.get("formated_address") as string) || undefined,
-    street: (formData.get("street") as string) || undefined,
-    city: (formData.get("city") as string) || undefined,
-    state: (formData.get("state") as string) || undefined,
-    zip: (formData.get("zip") as string) || undefined,
-    country: (formData.get("country") as string) || undefined,
-    country_code: (formData.get("country_code") as string) || undefined,
+    formated_address: (formData.get("formated_address") as string) ?? "",
+    street: (formData.get("street") as string) ?? "",
+    city: (formData.get("city") as string) ?? "",
+    state: (formData.get("state") as string) ?? "",
+    zip: (formData.get("zip") as string) ?? "",
+    country: (formData.get("country") as string) ?? "",
+    country_code: (formData.get("country_code") as string) ?? "",
     latitude: formData.get("latitude")
       ? parseFloat(formData.get("latitude") as string)
       : undefined,

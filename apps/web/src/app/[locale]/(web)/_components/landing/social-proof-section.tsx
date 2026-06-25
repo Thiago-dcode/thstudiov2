@@ -18,7 +18,7 @@ export async function SocialProofSection() {
           {highlights.map((text, index) => (
             <div
               key={text}
-              className="group flex flex-1 flex-col items-center gap-3 px-8 py-10 transition-colors duration-200 hover:bg-fg-1/40"
+              className="group flex flex-1 flex-col items-center gap-3 px-8 py-10 transition-colors duration-200 hover:bg-fg/40"
             >
               <Image
                 src={ICONS[index]!}

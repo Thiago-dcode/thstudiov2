@@ -2,7 +2,6 @@ import {
   buildPortfolioItemsFromFullPortfolio,
   extractMediaFromPortfolioItems,
 } from "@repo/common-lib/utils/portfolio";
-import { queryParamBuilder } from "@repo/common-lib/utils/query-builder";
 import { Gallery } from "@repo/ui/components/custom/gallery/gallery";
 import { PortfolioGrid } from "@repo/ui/components/custom/gallery/gallery-grid";
 import { Badge } from "@repo/ui/components/shadcn/badge";
@@ -95,29 +94,17 @@ export default async function Page({ params, searchParams }: Props) {
       </Web.Header>
 
       {portfolio.categories && portfolio.categories.length > 0 && (
-        <nav
-          aria-label="Portfolio categories"
-          className="mb-10 flex flex-wrap items-center gap-2"
-        >
+        <div className="mb-10 flex flex-wrap items-center gap-2">
           {portfolio.categories.map((category) => (
-            <Link
+            <Badge
               key={category.id}
-              href={queryParamBuilder(
-                "/artists",
-                { categories: [category.slug] },
-                { arrayStyle: "commas" },
-              )}
-              className="group inline-flex items-center"
+              variant="outline"
+              className="border-border/40 bg-fg-2/20 px-3 py-1 text-[11px] font-normal tracking-wide text-text-muted"
             >
-              <Badge
-                variant="outline"
-                className="border-border/40 bg-fg-2/20 px-3 py-1 text-[11px] font-normal tracking-wide text-text-muted transition-all duration-200 group-hover:border-border/70 group-hover:bg-fg-1/40 group-hover:text-text"
-              >
-                {category.name}
-              </Badge>
-            </Link>
+              {category.name}
+            </Badge>
           ))}
-        </nav>
+        </div>
       )}
 
       <section className="relative m-auto">

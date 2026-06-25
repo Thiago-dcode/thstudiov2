@@ -107,6 +107,7 @@ const LabelInput = forwardRef<
     extraInfo?: string;
     containerClassName?: string;
     error?: string;
+    /** Size/layout overrides only — do not pass border, bg, or focus color classes. */
   } & React.InputHTMLAttributes<HTMLInputElement>
 >(
   (
@@ -150,7 +151,7 @@ const LabelInput = forwardRef<
           id={inputId}
           aria-invalid={!!error}
           aria-describedby={error ? errorId : undefined}
-          className={cn(inputClassName, error && "border-red-500")}
+          className={inputClassName}
           {...inputProps}
         />
         {error && (
@@ -175,6 +176,7 @@ const LabelTextarea = forwardRef<
     containerClassName?: string;
     error?: string;
     extraInfo?: string;
+    /** Size/layout overrides only — do not pass border, bg, or focus color classes. */
   } & React.TextareaHTMLAttributes<HTMLTextAreaElement>
 >(
   (
@@ -223,7 +225,7 @@ const LabelTextarea = forwardRef<
           id={textareaId}
           aria-invalid={!!error}
           aria-describedby={error ? errorId : undefined}
-          className={cn(textareaClassName, error && "border-red-500")}
+          className={textareaClassName}
           {...textareaProps}
         />
         {error && (

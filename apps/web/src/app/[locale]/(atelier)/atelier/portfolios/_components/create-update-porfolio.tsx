@@ -127,7 +127,7 @@ export const CreateOrUpdatePortfolio = ({
               <div
                 key={i}
                 className={`h-1 flex-1 transition-all duration-300 ${
-                  i < currentStep ? "bg-text" : "bg-fg-1"
+                  i < currentStep ? "bg-text" : "bg-fg"
                 }`}
               />
             ))}

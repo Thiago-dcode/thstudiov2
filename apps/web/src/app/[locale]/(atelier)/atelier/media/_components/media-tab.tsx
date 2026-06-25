@@ -117,7 +117,7 @@ type MediaDrawerFooterProps = {
 
 export function MediaDrawerFooter({ children }: MediaDrawerFooterProps) {
   return (
-    <DrawerFooter className="border-t px-6 py-4 bg-fg-1/60">
+    <DrawerFooter className="border-t px-6 py-4 bg-fg/60">
       <div className="flex gap-3 w-full">{children}</div>
     </DrawerFooter>
   );

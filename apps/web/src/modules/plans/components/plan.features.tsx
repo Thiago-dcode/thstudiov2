@@ -1,13 +1,9 @@
 "use client";
 
 import type { BasePlan } from "@repo/common-lib/types/plan";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@repo/ui/components/shadcn/hover-card";
+import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
 import { cn } from "@repo/ui/lib/utils";
-import { Check, Info, Sparkles, X, Zap } from "lucide-react";
+import { Brain, Check, X, Zap } from "lucide-react";
 import { type ReactNode, useMemo } from "react";
 
 function formatMegaBytes(megabytes: number): string {
@@ -90,11 +86,11 @@ export const PlanFeatures = ({ plan }: { plan: BasePlan }) => {
         content: plan.allow_media_compression ? (
           <span
             className={cn(
-              "inline-flex items-center gap-1.5 px-2 py-0.5 text-sm font-medium",
-              "bg-fg-1 text-text ring-1 ring-border-em",
+              "inline-flex items-center gap-1.5  py-0.5 text-sm font-medium",
+              "bg-fg text-text",
             )}
           >
-            <Zap className="size-3.5 shrink-0 opacity-90" aria-hidden />
+            <Zap className="size-3.5 shrink-0 text-accent" aria-hidden />
             Media compression
           </span>
         ) : (
@@ -111,12 +107,12 @@ export const PlanFeatures = ({ plan }: { plan: BasePlan }) => {
             {plan.ai_credits > 0 ? (
               <span
                 className={cn(
-                  "inline-flex items-center gap-1 px-2 py-0.5 text-sm font-medium",
-                  "bg-fg-1 text-text ring-1 ring-border-em",
+                  "inline-flex items-center gap-1 text-sm font-medium",
+                  "bg-fg text-text",
                 )}
               >
-                <Sparkles
-                  className="size-3.5 shrink-0 opacity-90"
+                <Brain
+                  className="size-3.5 shrink-0 opacity-90 text-accent"
                   aria-hidden
                 />
                 <span className="font-bold tabular-nums">
@@ -128,7 +124,7 @@ export const PlanFeatures = ({ plan }: { plan: BasePlan }) => {
                 {String(formatFeatureValue(plan.ai_credits))}
               </span>
             )}
-            <span className="text-text-muted"> AI Credits</span>
+            <span className="text-text-muted">AI Credits</span>
           </span>
         ),
         not_available: plan.ai_credits === 0,
@@ -145,24 +141,21 @@ export const PlanFeatures = ({ plan }: { plan: BasePlan }) => {
         <li
           key={feature.key}
           className={cn(
-            "flex items-start gap-3 border border-transparent px-2 py-2 transition-colors sm:px-2.5",
-            "hover:border-fg-1/12 hover:bg-fg-1/[0.06]",
+            "flex items-start gap-3 border  px-2 py-2 transition-colors sm:px-2.5",
+            "hover:border-fg-1/12 ",
             feature.not_available && "opacity-55",
           )}
         >
           <span
             className={cn(
-              "mt-0.5 flex size-5 shrink-0 items-center justify-center",
-              feature.not_available
-                ? "bg-fg-1/8 text-text-muted"
-                : "bg-fg-1 text-text",
+              "mt-0.5 flex size-5 shrink-0 items-center justify-center  rounded-full  font-bold",
             )}
             aria-hidden
           >
             {feature.not_available ? (
-              <X className="size-3.5 stroke-[2.25]" />
+              <X className="size-3.5 text-error! " />
             ) : (
-              <Check className="size-3.5" />
+              <Check className="size-5 text-success! font-bold " />
             )}
           </span>
           <div className="min-w-0 flex-1 pt-0.5 text-sm leading-snug lg:text-[0.9375rem]">
@@ -173,24 +166,10 @@ export const PlanFeatures = ({ plan }: { plan: BasePlan }) => {
             )}
           </div>
           {feature.extraInfo ? (
-            <HoverCard openDelay={200}>
-              <HoverCardTrigger asChild>
-                <button
-                  type="button"
-                  className="mt-0.5 inline-flex size-7 shrink-0 items-center justify-center text-text-muted transition-colors hover:bg-fg-1/10 hover:text-text"
-                  aria-label="More information"
-                >
-                  <Info className="size-4" aria-hidden />
-                </button>
-              </HoverCardTrigger>
-              <HoverCardContent
-                className="w-72 max-w-[min(18rem,calc(100vw-2rem))] text-sm leading-relaxed text-text"
-                side="top"
-                align="end"
-              >
-                {feature.extraInfo}
-              </HoverCardContent>
-            </HoverCard>
+            <InfoTooltip
+              content={feature.extraInfo}
+              iconClassName="mt-0.5 size-4 shrink-0"
+            />
           ) : null}
         </li>
       ))}

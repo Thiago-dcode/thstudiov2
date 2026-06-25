@@ -2,6 +2,7 @@
 
 import { Errors } from "@repo/ui/components/custom/errors";
 import { Label } from "@repo/ui/components/shadcn/label";
+import { Select } from "@repo/ui/components/shadcn/select";
 import { toast } from "@repo/ui/sonner";
 import { useTranslations } from "next-intl";
 import { useRef } from "react";
@@ -94,19 +95,20 @@ export function SupportForm({
             {t("formContainer.subjectLabel")}{" "}
             <span className="span-label text-red-500">*</span>
           </Label>
-          <select
+          <Select
             id="support-subject"
             name="subject"
             required
             defaultValue={subjectList[0].value}
-            className="h-12 w-full border border-border bg-bg px-3 text-sm outline-none ring-offset-bg transition-[color,box-shadow] focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-50"
+            aria-invalid={!!inputErrors?.subject}
+            className="h-12"
           >
             {subjectList.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
               </option>
             ))}
-          </select>
+          </Select>
           {inputErrors?.subject ? (
             <p className="text-xs text-red-500 mt-1">{inputErrors.subject}</p>
           ) : null}

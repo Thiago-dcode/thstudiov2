@@ -12,13 +12,13 @@
   --color-accent: #ED2100;
   --color-accent-fg: #FFFFFF;
 
-  --color-bg: #FAFFFB;
+  --color-bg: #FAFAF9;
   --color-bg-dark: #1C1B19;
   --color-fg: #FFFFFF;
   --color-fg-1: #EFEDE6;
   --color-fg-2: #E4E1D9;
-  --color-text: #2B2A27;
-  --color-text-muted: #6B685F;
+  --color-text: #000000;
+  --color-text-muted: #000000BB;
   --color-border: #E4E1D9;
   --color-border-em: #C9C6BB;
 
@@ -40,16 +40,16 @@
   --color-info: var(--semantic-info);
   --color-info-fg: #eff6ff;
 
-  /* Fluid modular type scale (~1.2 ratio). Body floor lifted to 16px for readability. */
+  /* Fluid modular type scale (~1.2 ratio). Body floor 16px; mobile floors lifted in @media below. */
   --size-5xl: clamp(2.25rem, 1.85rem + 1.7vw, 2.75rem);
   --size-4xl: clamp(1.875rem, 1.55rem + 1.2vw, 2.25rem);
   --size-3xl: clamp(1.5rem, 1.3rem + 0.8vw, 1.75rem);
   --size-2xl: clamp(1.25rem, 1.15rem + 0.4vw, 1.375rem);
   --size-xl: clamp(1.125rem, 1.05rem + 0.3vw, 1.25rem);
   --size-lg: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
-  --size-base: clamp(0.9375rem, 0.9rem + 0.2vw, 1rem);
-  --size-sm: clamp(0.8125rem, 0.79rem + 0.12vw, 0.875rem);
-  --size-xs: clamp(0.6875rem, 0.66rem + 0.1vw, 0.75rem);
+  --size-base: clamp(1rem, 0.95rem + 0.25vw, 1.0625rem);
+  --size-sm: clamp(0.875rem, 0.84rem + 0.15vw, 0.9375rem);
+  --size-xs: clamp(0.75rem, 0.72rem + 0.12vw, 0.8125rem);
 
   --ring-size: 2px;
   --shadow-soft: 0 1px 2px rgb(43 42 39 / 0.06), 0 8px 20px rgb(43 42 39 / 0.04);
@@ -64,8 +64,8 @@
   --color-fg: #242220;
   --color-fg-1: #322F2A;
   --color-fg-2: #38362F;
-  --color-text: #F0EEE9;
-  --color-text-muted: #A8A59B;
+  --color-text: #FFFFFF;
+  --color-text-muted: #FFFFFFBB;
   --color-border: #38362F;
   --color-border-em: #4A473F;
 
@@ -149,7 +149,7 @@ html {
 * {
   box-sizing: border-box;
   border-color: var(--color-border);
-  border-radius: 0;
+
 }
 
 html,
@@ -170,28 +170,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ── Blurred background orbs (pure CSS, no JS) ── */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background:
-    radial-gradient(ellipse 70% 60% at 10% 15%, rgba(255, 255, 255, 0.55) 0%, transparent 65%),
-    radial-gradient(ellipse 60% 70% at 90% 80%, rgba(255, 255, 255, 0.40) 0%, transparent 65%),
-    radial-gradient(ellipse 55% 50% at 60% 5%,  rgba(255, 255, 255, 0.30) 0%, transparent 55%),
-    radial-gradient(ellipse 40% 40% at 50% 100%, rgba(0, 0, 0, 0.06) 0%, transparent 60%);
-  filter: blur(48px);
-}
 
-.dark body::before {
-  background:
-    radial-gradient(ellipse 70% 60% at 10% 15%, rgba(255, 255, 255, 0.07) 0%, transparent 65%),
-    radial-gradient(ellipse 60% 70% at 90% 80%, rgba(255, 255, 255, 0.05) 0%, transparent 65%),
-    radial-gradient(ellipse 55% 50% at 60% 5%,  rgba(255, 255, 255, 0.04) 0%, transparent 55%),
-    radial-gradient(ellipse 40% 40% at 50% 100%, rgba(0, 0, 0, 0.25) 0%, transparent 60%);
-}
 
 /* Headings default to brand font */
 h1,
@@ -237,8 +216,19 @@ h4,h5,h6, p {
 }
 
 @media (max-width: 480px) {
+  :root {
+    --size-4xl: clamp(2rem, 1.65rem + 1.35vw, 2.375rem);
+    --size-3xl: clamp(1.625rem, 1.4rem + 0.9vw, 1.9375rem);
+    --size-2xl: clamp(1.375rem, 1.25rem + 0.5vw, 1.5rem);
+    --size-xl: clamp(1.1875rem, 1.1rem + 0.35vw, 1.3125rem);
+    --size-lg: clamp(1.0625rem, 1rem + 0.3vw, 1.1875rem);
+    --size-base: clamp(1.0625rem, 1rem + 0.3vw, 1.125rem);
+    --size-sm: clamp(0.9375rem, 0.9rem + 0.18vw, 1rem);
+    --size-xs: clamp(0.8125rem, 0.78rem + 0.15vw, 0.875rem);
+  }
+
   html {
-    font-size: 15px;
+    font-size: 17px;
   }
 
   h1,
@@ -344,6 +334,49 @@ h4,h5,h6, p {
   background-color: var(--color-fg);
   border: 1px solid var(--color-border-em);
   box-shadow: var(--shadow-strong);
+}
+
+/* ── Form field surface (Input, Textarea, Select, InputGroup) ── */
+.input-surface {
+  background-color: color-mix(in oklab, var(--color-fg) 88%, transparent);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--color-border-em);
+  box-shadow: var(--shadow-soft);
+  transition:
+    border-color 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (hover: hover) {
+  .input-surface:hover:not(:disabled):not(:focus-visible):not(:has(:focus-visible)) {
+    border-color: color-mix(in oklab, var(--color-text) 18%, var(--color-border-em));
+    background-color: var(--color-fg);
+  }
+}
+
+.input-surface:focus-visible,
+.input-surface:has(:focus-visible) {
+  outline: none;
+  border-color: color-mix(in oklab, var(--color-text) 40%, var(--color-border-em));
+  background-color: var(--color-fg);
+  box-shadow:
+    var(--shadow-strong),
+    0 0 0 var(--ring-size) color-mix(in oklab, var(--color-text) 10%, transparent);
+}
+
+.input-surface:disabled,
+.input-surface:has(:disabled) {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.input-surface[aria-invalid="true"],
+.input-surface:has([aria-invalid="true"]) {
+  border-color: var(--color-error);
+  box-shadow:
+    var(--shadow-soft),
+    0 0 0 var(--ring-size) color-mix(in oklab, var(--color-error) 18%, transparent);
 }
 
 .input-required .span-label {

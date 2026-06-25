@@ -120,7 +120,7 @@ export function WaitListForm({ from = "register" }: WaitListFormProps) {
             aria-describedby={
               inputErrors?.email ? "hero-wait-list-email-error" : undefined
             }
-            className="h-14 w-full border-border/60 bg-fg/60 px-4 text-base text-text backdrop-blur-md placeholder:text-text-muted "
+            className="h-14 w-full px-4 text-base"
           />
 
           {inputErrors?.email ? (
@@ -135,7 +135,7 @@ export function WaitListForm({ from = "register" }: WaitListFormProps) {
 
         <Button
           type="submit"
-          variant="primary"
+          variant="accent"
           size="lg"
           disabled={isPending || !isEmailValid}
           className="wait-list-fire-button h-14 w-full shrink-0 phone:w-auto text-accent-fg"

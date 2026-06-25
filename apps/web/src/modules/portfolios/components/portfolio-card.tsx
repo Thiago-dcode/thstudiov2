@@ -27,7 +27,7 @@ export function PortfolioCard({
       )}
     >
       <div
-        className={`relative aspect-square w-full overflow-hidden bg-fg-1 ${isBlocked ? "opacity-60" : ""}`}
+        className={`relative aspect-square w-full overflow-hidden bg-fg ${isBlocked ? "opacity-60" : ""}`}
       >
         {hasThumbnail ? (
           <>
@@ -41,7 +41,7 @@ export function PortfolioCard({
             <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/10 to-transparent transition-opacity duration-500" />
           </>
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-fg-1">
+          <div className="absolute inset-0 flex items-center justify-center bg-fg">
             <span
               aria-hidden="true"
               className="font-serif text-5xl  text-text-muted/30"

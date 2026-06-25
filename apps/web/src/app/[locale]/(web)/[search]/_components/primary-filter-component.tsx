@@ -41,7 +41,7 @@ function NearMeRow() {
         className={cn(
           "flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-xs font-medium transition-colors",
           "border border-border bg-fg-2/40 hover:bg-fg-2 hover:text-text",
-          isLocated ? "border-border-em bg-fg-1 text-text" : "text-text-muted",
+          isLocated ? "border-border-em bg-fg text-text" : "text-text-muted",
           isLocating ? "cursor-wait opacity-70" : "cursor-pointer",
         )}
         aria-live="polite"

@@ -97,7 +97,7 @@ export const ChangeSubscriptionDialog = () => {
     >
       <DialogContent
         className={cn(
-          " w-full lg:w-[1000px] h-full lg:h-fit p-0 overflow-y-auto",
+          " lg:w-[1000px] h-full lg:h-fit p-0 overflow-y-auto",
           {
             "w-4/5 lg:w-fit lg:max-w-[500px] h-fit max-h-[90vh]":
               planSelected?.is_free,
@@ -146,7 +146,7 @@ export const ChangeSubscriptionDialog = () => {
             </div>
 
             {!planSelected.is_free ? (
-              <div className="flex flex-col p-8 gap-4 items-center justify-between w-full h-full bg-fg-1">
+              <div className="flex flex-col p-8 gap-4 items-center justify-between w-full h-full bg-fg">
                 <div className="flex flex-col gap-3 w-full">
                   <h4 className="text-sm font-semibold text-text">
                     Billing Cycle
@@ -258,12 +258,12 @@ export const ChangeSubscriptionDialog = () => {
                 {priceSelected && (
                   <form
                     onSubmit={onSubmit}
-                    className="w-full font-bold lg:static sticky bottom-0 bg-fg-1 p-2"
+                    className="w-full font-bold lg:static sticky bottom-0 bg-fg p-2"
                   >
                     <Button
                       type={"submit"}
                       disabled={!priceSelected || !paymentMethod || isPending}
-                      variant={"secondary"}
+                      variant={"accent"}
                       className="w-full font-bold"
                     >
                       Complete Payment

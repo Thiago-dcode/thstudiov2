@@ -54,7 +54,7 @@ export default async function RootLayout({
       className={cn(playfair.variable, dmSans.variable)}
       suppressHydrationWarning
     >
-      <body className="w-screen h-dvh flex flex-col items-center justify-start">
+      <body className="w-screen h-dvh flex flex-col items-center justify-start dark">
         <NextIntlClientProvider>
           <ThemeProvider>
             {children}

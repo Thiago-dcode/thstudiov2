@@ -29,9 +29,9 @@ export const AdminPageTitle = ({
   children,
 }: AdminPageTitleProps) => {
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between gap-4">
       <div className="flex items-center gap-2">
-        <h1 className="text-2xl font-semibold">{title}</h1>
+        <h1 className="text-2xl! font-semibold">{title}</h1>
         {publicHref && (
           <Link
             href={publicHref}

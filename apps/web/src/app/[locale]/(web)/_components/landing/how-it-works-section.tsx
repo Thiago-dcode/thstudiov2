@@ -53,7 +53,7 @@ export function HowItWorksSection() {
               key={s.step}
               className="group flex flex-col items-center gap-5 text-center"
             >
-              <div className="relative flex size-16 items-center justify-center bg-fg-1 text-text transition-colors duration-300 group-hover:bg-fg-2">
+              <div className="relative flex size-16 items-center justify-center bg-fg text-text transition-colors duration-300 group-hover:bg-fg-2">
                 {s.icon}
                 <span className="absolute -right-1.5 -top-1.5 flex size-6 items-center justify-center bg-text text-[11px] font-bold text-fg">
                   {s.step}

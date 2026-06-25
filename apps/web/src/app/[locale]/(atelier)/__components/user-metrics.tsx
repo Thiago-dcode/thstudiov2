@@ -58,7 +58,7 @@ const STATUS_STYLES = {
   },
   accent: {
     bar: "bg-text",
-    track: "bg-fg-1",
+    track: "bg-fg",
     border: "border-border-em",
     label: "text-text",
   },
@@ -155,7 +155,7 @@ export const UserMetrics = async ({ userId }: { userId: number }) => {
             <span>{translation?.name || name} Plan</span> <Eye size={14} />
           </Badge>
         </PopoverTrigger>
-        <PopoverContent className="w-80 bg-fg-1/90">
+        <PopoverContent className="w-80 bg-fg">
           <PlanFeatures plan={active_plan} />
         </PopoverContent>
       </Popover>

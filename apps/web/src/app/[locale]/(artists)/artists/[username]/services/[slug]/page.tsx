@@ -65,7 +65,7 @@ export default async function Page({ params }: Props) {
         <div className="md:col-span-5">
           <div className="sticky top-24 space-y-6">
             {service.thumbnail ? (
-              <div className="relative aspect-4/3 w-full overflow-hidden border border-border/30 bg-fg-1">
+              <div className="relative aspect-4/3 w-full overflow-hidden border border-border/30 bg-fg">
                 <Image
                   src={service.thumbnail}
                   alt={service.title}
@@ -76,7 +76,7 @@ export default async function Page({ params }: Props) {
                 />
               </div>
             ) : (
-              <div className="relative aspect-4/3 w-full flex flex-col items-center justify-center gap-3 border border-border/20 bg-fg-1">
+              <div className="relative aspect-4/3 w-full flex flex-col items-center justify-center gap-3 border border-border/20 bg-fg">
                 <span className="font-serif text-7xl  text-text-muted/10">
                   {service.title.charAt(0)}
                 </span>

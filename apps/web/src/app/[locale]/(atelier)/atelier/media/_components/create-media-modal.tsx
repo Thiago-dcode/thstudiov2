@@ -32,14 +32,82 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "@/lib/hooks/useSession";
 import { useMedia } from "@/modules/media/providers/media.provider";
 import { useUserMetrics } from "@/modules/users/providers/user-metrics.provider";
+const MAX_FILES = 10;
+const COMPRESSION_LVLS = ENUMS.COMPRESSION_LEVEL;
+
+function getCompressionLvlIndex(
+  compressionLvl: EnumType<"COMPRESSION_LEVEL">,
+) {
+  for (let i = 0; i < COMPRESSION_LVLS.length; i++) {
+    if (compressionLvl === COMPRESSION_LVLS[i]) {
+      return i;
+    }
+  }
+  return COMPRESSION_LVLS.length - 2;
+}
+
+function CompressionSlider({
+  compressionLevel,
+  disabled,
+  onCompressionLevelChange,
+  onPreviewChange,
+}: {
+  compressionLevel: EnumType<"COMPRESSION_LEVEL">;
+  disabled?: boolean;
+  onCompressionLevelChange: (
+    level: EnumType<"COMPRESSION_LEVEL">,
+  ) => void;
+  onPreviewChange?: (level: EnumType<"COMPRESSION_LEVEL">) => void;
+}) {
+  const committedIndex = getCompressionLvlIndex(compressionLevel);
+  const [sliderIndex, setSliderIndex] = useState(committedIndex);
+  const isDraggingRef = useRef(false);
+
+  useEffect(() => {
+    if (!isDraggingRef.current) {
+      setSliderIndex(committedIndex);
+    }
+  }, [committedIndex]);
+
+  return (
+    <Slider
+      value={[sliderIndex]}
+      max={COMPRESSION_LVLS.length - 1}
+      min={0}
+      step={1}
+      disabled={disabled}
+      onPointerDown={() => {
+        isDraggingRef.current = true;
+      }}
+      onValueChange={(values) => {
+        if (disabled) return;
+        const next = values[0];
+        if (next === undefined) return;
+        setSliderIndex(next);
+        const preview = COMPRESSION_LVLS[next];
+        if (preview) onPreviewChange?.(preview);
+      }}
+      onValueCommit={(values) => {
+        isDraggingRef.current = false;
+        if (disabled) return;
+        const next = values[0];
+        if (next === undefined) return;
+        const compressionLvlSelected = COMPRESSION_LVLS[next];
+        if (!compressionLvlSelected) return;
+        onCompressionLevelChange(compressionLvlSelected);
+      }}
+    />
+  );
+}
 
 function MediaUploadContent() {
-  const COMPRESSION_LVLS = ENUMS.COMPRESSION_LEVEL;
-  const MAX_FILES = 15;
   const [error, setError] = useState<string>();
   const [globalCompressionLevel, setGlobalCompressionLevel] = useState<
     EnumType<"COMPRESSION_LEVEL">
   >(DEFAULT_COMPRESSION_LVL);
+  const [globalCompressionPreview, setGlobalCompressionPreview] = useState<
+    EnumType<"COMPRESSION_LEVEL"> | null
+  >(null);
   const {
     mediaPendingToCreate,
     upsertMediaUpload,
@@ -95,22 +163,11 @@ function MediaUploadContent() {
 
     setError(undefined);
   };
-  const getCompressionLvlIndex = (
-    compressionLvl: EnumType<"COMPRESSION_LEVEL">,
-  ) => {
-    for (let i = 0; i < COMPRESSION_LVLS.length; i++) {
-      if (compressionLvl === COMPRESSION_LVLS[i]) {
-        return i;
-      }
-    }
-    return COMPRESSION_LVLS.length - 2;
-  };
-
   return (
     <div className="h-full flex flex-col p-2">
       {mediaToShow && mediaToShow.length > 0 ? (
         <>
-          <div className="mb-4 space-y-3 p-1 border border-border bg-fg-1/50">
+          <div className="mb-4 space-y-3 p-1 border border-border bg-fg/50">
             <div className="flex items-center justify-between gap-3">
               <div className="flex-1">
                 <div className="flex items-center justify-between mb-1.5">
@@ -140,8 +197,8 @@ function MediaUploadContent() {
                       All files
                     </span>
                   </div>
-                  <span className="text-xs font-semibold text-text bg-fg-1 px-2 py-1">
-                    {globalCompressionLevel}
+                  <span className="text-xs font-semibold text-text bg-fg px-2 py-1">
+                    {globalCompressionPreview ?? globalCompressionLevel}
                   </span>
                 </div>
                 {!allow_media_compression && (
@@ -153,29 +210,21 @@ function MediaUploadContent() {
                     </p>
                   </div>
                 )}
-                <Slider
-                  defaultValue={[
-                    getCompressionLvlIndex(DEFAULT_COMPRESSION_LVL),
-                  ]}
-                  max={COMPRESSION_LVLS.length - 1}
-                  min={0}
-                  step={1}
+                <CompressionSlider
+                  compressionLevel={globalCompressionLevel}
                   disabled={!allow_media_compression}
-                  onValueChange={(e) => {
-                    if (!allow_media_compression) return;
-                    const compressionLvlSelected = COMPRESSION_LVLS[e[0]];
-                    if (!compressionLvlSelected) return;
+                  onPreviewChange={setGlobalCompressionPreview}
+                  onCompressionLevelChange={(compressionLvlSelected) => {
+                    setGlobalCompressionPreview(null);
                     setGlobalCompressionLevel(compressionLvlSelected);
                     setMediaUploads(
-                      mediaPendingToCreate.map((mu) => {
-                        return {
-                          ...mu,
-                          input: {
-                            ...mu.input,
-                            compression_level: compressionLvlSelected,
-                          },
-                        };
-                      }),
+                      mediaPendingToCreate.map((mu) => ({
+                        ...mu,
+                        input: {
+                          ...mu.input,
+                          compression_level: compressionLvlSelected,
+                        },
+                      })),
                     );
                   }}
                 />
@@ -224,7 +273,7 @@ function MediaUploadContent() {
                     }
                   />
                 </div>
-                <span className="text-xs font-semibold text-text bg-fg-1 px-2 py-1">
+                <span className="text-xs font-semibold text-text bg-fg px-2 py-1">
                   {remainingCredits} credit{remainingCredits !== 1 ? "s" : ""}
                 </span>
               </div>
@@ -249,7 +298,7 @@ function MediaUploadContent() {
             </div>
           </div>
           <div className="mb-4 overflow-y-auto flex-1 min-h-0">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
               {mediaPendingToCreate.map((media, index) => {
                 const currentCompressionLvl =
                   media.input.compression_level || DEFAULT_COMPRESSION_LVL;
@@ -273,12 +322,12 @@ function MediaUploadContent() {
                         className="max-h-full max-w-full object-contain"
                       />
                     </div>
-                    <div className="flex flex-col gap-2 px-1">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-text-muted font-medium">
+                    <div className="flex flex-col  px-1 gap-2">
+                      <div className="flex items-start justify-start gap-1">
+                        <span className="text-xs! text-text-muted font-medium">
                           Compression
                         </span>
-                        <span className="text-xs font-semibold text-text bg-fg-1 px-2 py-0.5">
+                        <span className="text-xs! font-normal lowercase text-text bg-fg">
                           {currentCompressionLvl}
                         </span>
                       </div>
@@ -287,17 +336,10 @@ function MediaUploadContent() {
                           Upgrade plan to adjust
                         </p>
                       )}
-                      <Slider
-                        value={[getCompressionLvlIndex(currentCompressionLvl)]}
-                        max={COMPRESSION_LVLS.length - 1}
-                        min={0}
-                        step={1}
+                      <CompressionSlider
+                        compressionLevel={currentCompressionLvl}
                         disabled={!allow_media_compression}
-                        onValueChange={(e) => {
-                          if (!allow_media_compression) return;
-                          const compressionLvlSelected = COMPRESSION_LVLS[e[0]];
-                          if (!compressionLvlSelected) return;
-
+                        onCompressionLevelChange={(compressionLvlSelected) => {
                           upsertMediaUpload({
                             ...media,
                             input: {
@@ -430,22 +472,34 @@ export function CreateMediaDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="p-2 text-sm " variant="default" size="default">
+        <Button className="text-xs! " variant="default" size="sm">
           <Plus className="h-4 w-4" />
-          Create media
+          Add media
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-[95vw] sm:max-w-2xl md:max-w-3xl lg:max-w-5xl h-[95vh] flex flex-col justify-between [&>button]:hidden p-0 z-100">
         <DialogHeader className="border-b pb-4 px-6 pt-6">
-          <DialogTitle>Create New Media</DialogTitle>
-          <DialogDescription>
-            Upload up to 10 images (JPEG, PNG, WebP)
+          <DialogTitle className="text-lg!">Create New Media</DialogTitle>
+          <DialogDescription className="text-sm!">
+            Upload up to {MAX_FILES + ''} images (JPEG, PNG, WebP)
           </DialogDescription>
         </DialogHeader>
         <div className="flex-1 min-h-0">
           <MediaUploadContent />
         </div>
-        <DialogFooter className="border-t p-2 full">
+        <DialogFooter className="border-t p-2 full flex flex-row gap-2">
+          {files?.length ? (
+            <Button
+              onClick={async () => {
+                setOpen(false);
+                await handleUploadInserts(onSuccess);
+              }}
+              variant={"primary"}
+              className="w-full"
+            >
+              Upload!
+            </Button>
+          ) : null}
           <DialogClose asChild>
             <Button
               onClick={() => {
@@ -453,24 +507,14 @@ export function CreateMediaDialog({
                 cleanup();
                 setOpen(false);
               }}
-              variant="outline"
-              className="w-full"
+              variant="destructive"
+              size={'sm'}
+              className="w-full max-w-32"
             >
               Close
             </Button>
           </DialogClose>
-          {files?.length ? (
-            <Button
-              onClick={async () => {
-                setOpen(false);
-                await handleUploadInserts(onSuccess);
-              }}
-              variant={"secondary"}
-              className="w-full"
-            >
-              Upload!
-            </Button>
-          ) : null}
+
         </DialogFooter>
       </DialogContent>
     </Dialog>

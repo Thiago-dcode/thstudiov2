@@ -159,11 +159,11 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
     const existingUpload = currentMediaUpload || {
       input: {
         user_id: currentMedia.user_id,
-        title: currentMedia.title || undefined,
-        description: currentMedia.description || undefined,
-        seo_title: currentMedia.seo_title || undefined,
-        seo_description: currentMedia.seo_description || undefined,
-        seo_alt: currentMedia.seo_alt || undefined,
+        title: currentMedia.title ?? "",
+        description: currentMedia.description ?? "",
+        seo_title: currentMedia.seo_title ?? "",
+        seo_description: currentMedia.seo_description ?? "",
+        seo_alt: currentMedia.seo_alt ?? "",
         seo_filename: currentMedia.seo_filename || "",
       },
       id: currentMedia.id,
@@ -498,11 +498,11 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
 
             {/* Title and Date - Stacked at Bottom */}
             <div className="flex flex-col">
-              <h3 className="text-xs font-medium text-text line-clamp-1">
+              <h3 className="text-sm! font-medium text-text line-clamp-1">
                 {currentMedia.title || currentMedia.seo_filename || "Untitled"}
               </h3>
               {formattedDate && (
-                <p className="text-[10px] text-text-muted">{formattedDate}</p>
+                <p className="text-[10px]! text-text-muted">{formattedDate}</p>
               )}
             </div>
           </article>
@@ -510,14 +510,16 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
       </div>
       <DrawerContent className="h-full w-[600px] max-w-[90vw] right-0 left-auto opacity-90 z-100">
         <DrawerHeader className="border-b p-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-end justify-start gap-2">
-              <DrawerTitle className="font-semibold flex items-center gap-1.5">
-                {isEditing
-                  ? "Edit Media"
-                  : currentMedia.title ||
-                    currentMedia.seo_filename ||
-                    "Media Preview"}
+          <div className="flex items-start justify-between gap-3 min-w-0">
+            <div className="flex min-w-0 flex-1 items-end justify-start gap-2">
+              <DrawerTitle className="font-semibold flex min-w-0 items-center gap-1.5">
+                <span className="truncate">
+                  {isEditing
+                    ? "Edit Media"
+                    : currentMedia.title ||
+                      currentMedia.seo_filename ||
+                      "Media Preview"}
+                </span>
                 {!isEditing && currentMedia.public_id && (
                   <a
                     href={`/artists/${username}/media/${currentMedia.public_id}`}
@@ -531,31 +533,31 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
                 )}
               </DrawerTitle>
               {currentMedia.bytes && !isEditing && (
-                <p className="text-xs text-text-muted text-center">
+                <p className="text-xs! text-text-muted shrink-0 whitespace-nowrap">
                   ({bytesToMB(currentMedia.bytes).toFixed(2)} MB)
                 </p>
               )}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
               {isEditing ? (
-                <div className="flex items-center gap-1">
+                <div className="flex flex-wrap items-center justify-end gap-1">
                   <Button
                     type="button"
                     variant="primary"
                     size="sm"
                     className={cn(
-                      "transition-colors duration-200 h-8 px-2.5",
+                      "h-8 shrink-0 px-2.5 transition-colors duration-200",
                       !hasEnoughCredits && "opacity-50 cursor-not-allowed",
                     )}
                     onClick={handleGenerateSeo}
                     disabled={isPending || !hasEnoughCredits}
                   >
-                    <Sparkles className="h-3.5 w-3.5 mr-1" />
-                    <span className="text-xs font-medium">
-                      {isPending ? <Spinner /> : "Generate Ai SEO"}
+                    <Sparkles className="h-3.5 w-3.5 shrink-0" />
+                    <span className="text-xs font-medium whitespace-nowrap">
+                      {isPending ? <Spinner /> : "Generate SEO"}
                     </span>
                   </Button>
-                  <div className="flex items-center gap-0.5">
+                  <div className="flex shrink-0 items-center gap-0.5">
                     <InfoTooltip
                       content={
                         !hasEnoughCredits
@@ -595,7 +597,7 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
                       <span className="text-xs font-medium">Delete</span>
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-56 p-3 z-100" align="end">
+                  <PopoverContent className="w-56 p-3" align="end">
                     <p className="text-sm text-text-muted mb-3">
                       Are you sure you want to delete this media?
                     </p>

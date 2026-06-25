@@ -43,7 +43,7 @@ export const TopNav = ({ username }: { username?: string }) => {
       <div className="flex items-center justify-center gap-4">
         {metrics?.active_plan && !metrics.active_plan.top_tier && (
           <Link href={"/atelier/settings/subscription"}>
-            <Button variant={"primary"} size={"sm"}>
+            <Button variant={"accent"} size={"sm"}>
               Updgrade
             </Button>
           </Link>

@@ -81,11 +81,11 @@ export const createMediaAction = async (
       | EnumType<"COMPRESSION_LEVEL">
       | undefined,
     file: file,
-    description: validated.data.description ?? undefined,
-    title: validated.data.title ?? undefined,
-    seo_alt: validated.data.seo_alt ?? undefined,
-    seo_title: validated.data.seo_title ?? undefined,
-    seo_description: validated.data.seo_description ?? undefined,
+    description: validated.data.description ?? "",
+    title: validated.data.title ?? "",
+    seo_alt: validated.data.seo_alt ?? "",
+    seo_title: validated.data.seo_title ?? "",
+    seo_description: validated.data.seo_description ?? "",
   };
 
   // Create media

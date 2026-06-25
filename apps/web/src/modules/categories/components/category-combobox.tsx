@@ -15,7 +15,7 @@ import { CheckIcon } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import { useUpdateCategories } from "@/modules/categories/providers/categories.provider";
 
-const MAX_CATEGORY_SELECTION = 5;
+const DEFAULT_MAX_CATEGORY_SELECTION = 5;
 
 function categoryLabel(c: CategoryBase) {
   return c.name;
@@ -26,11 +26,13 @@ const CategoryCombobox = ({
   setCategorySelected,
   removeCategorySelected,
   inputClassName,
+  maxSelection = DEFAULT_MAX_CATEGORY_SELECTION,
 }: {
   categoriesSelected: CategoryBase[];
   setCategorySelected: (categoryBase: CategoryBase) => void;
   removeCategorySelected: (categoryBase: CategoryBase) => void;
   inputClassName?: string;
+  maxSelection?: number;
 }) => {
   const { categories, handleOnChange, isLoading } = useUpdateCategories();
 
@@ -48,11 +50,11 @@ const CategoryCombobox = ({
     (cat: CategoryBase) => {
       if (categoriesSelected.some((c) => c.id === cat.id)) {
         removeCategorySelected(cat);
-      } else if (categoriesSelected.length < MAX_CATEGORY_SELECTION) {
+      } else if (categoriesSelected.length < maxSelection) {
         setCategorySelected(cat);
       }
     },
-    [categoriesSelected, setCategorySelected, removeCategorySelected],
+    [categoriesSelected, setCategorySelected, removeCategorySelected, maxSelection],
   );
 
   const isSelected = useCallback(

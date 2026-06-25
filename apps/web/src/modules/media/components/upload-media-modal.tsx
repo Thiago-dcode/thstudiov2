@@ -44,7 +44,7 @@ export const UploadMediaModal = () => {
     <div className="fixed bottom-4 right-4 z-200 pointer-events-auto w-80 max-h-[400px] flex flex-col overflow-hidden border border-border bg-fg shadow-lg">
       <div className="flex items-center justify-between border-b border-border px-4 py-3 shrink-0">
         <div className="flex flex-col gap-0.5">
-          <h3 className="text-sm font-semibold">
+          <h3 className="text-sm! font-semibold">
             {isCompleted ? "Upload complete" : "Uploading files"}
           </h3>
           <div className="flex items-center gap-2 text-xs text-text-muted">
@@ -55,7 +55,7 @@ export const UploadMediaModal = () => {
               </span>
             )}
             {successCount > 0 && (
-              <span className="text-green-600">
+              <span className="text-green-600 text-xs!">
                 {successCount} {successCount === 1 ? "success" : "success"}
               </span>
             )}
@@ -177,7 +177,7 @@ const SingleMediaUpload = ({ mediaUpload }: { mediaUpload: UploadMedia }) => {
       <div className="flex items-center gap-3 p-2">
         <Spinner className="size-8" />
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium truncate">
+          <p className="text-xs! font-normal truncate">
             {mediaUpload.input.file?.name || "Loading..."}
           </p>
           <p className="text-xs text-text-muted">Preparing upload...</p>
@@ -208,12 +208,12 @@ const SingleMediaUpload = ({ mediaUpload }: { mediaUpload: UploadMedia }) => {
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">
+            <p className="text-sm! font-medium truncate">
               {mediaUpload.input.file?.name ||
                 mediaUpload.input.seo_title ||
                 "Unknown file"}
             </p>
-            <p className="text-xs text-text-muted">{statusText}</p>
+            <p className="text-xs! text-text-muted">{statusText}</p>
           </div>
         </div>
       </HoverCardTrigger>

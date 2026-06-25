@@ -77,7 +77,7 @@ export function ArtistProfileCard({
     >
       <div
         className={cn(
-          "relative w-full shrink-0 overflow-hidden bg-fg-1/60",
+          "relative w-full shrink-0 overflow-hidden bg-fg/60",
           compact ? "aspect-square" : "aspect-4/5",
         )}
       >
@@ -135,7 +135,7 @@ export function ArtistProfileCard({
               {locationFields}
             </span>
           </div>
-          <span className="shrink-0 bg-fg-2 px-3 py-1.5 text-center text-xs font-semibold text-text transition-colors group-hover:bg-fg-1 tablet:px-3.5 tablet:text-sm">
+          <span className="shrink-0 bg-fg-2 px-3 py-1.5 text-center text-xs font-semibold text-text transition-colors group-hover:bg-fg tablet:px-3.5 tablet:text-sm">
             View
           </span>
         </div>

@@ -22,13 +22,13 @@ export const WebFooter = async () => {
         <div className="grid grid-cols-1 gap-10 phone-lg:grid-cols-2 tablet:grid-cols-3 tablet:gap-8">
           <div className="flex flex-col gap-3 phone-lg:col-span-2 tablet:col-span-1">
             <BrandLogo />
-            <p className="max-w-xs text-xs leading-relaxed tracking-wider text-text-muted">
+            <p className="max-w-xs text-xs leading-relaxed tracking-wider text-text">
               {t("tagline")}
             </p>
           </div>
 
           <div className="flex flex-col gap-3">
-            <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-text-muted">
+            <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-text">
               {t("legal.heading")}
             </span>
             <nav className="flex flex-col gap-2">
@@ -36,7 +36,7 @@ export const WebFooter = async () => {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="w-fit text-sm tracking-wider text-text-muted transition-colors hover:text-text"
+                  className="w-fit text-sm tracking-wider text-text transition-colors hover:text-text"
                 >
                   {t(`legal.${link.key}`)}
                 </Link>
@@ -45,19 +45,19 @@ export const WebFooter = async () => {
           </div>
 
           <div className="flex flex-col gap-3">
-            <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-text-muted">
+            <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-text">
               {t("contact.heading")}
             </span>
             <nav className="flex flex-col gap-2">
               <Link
                 href="/support"
-                className="w-fit text-sm tracking-wider text-text-muted transition-colors hover:text-text"
+                className="w-fit text-sm tracking-wider text-text transition-colors hover:text-text"
               >
                 {t("contact.support")}
               </Link>
               <a
                 href={`mailto:${supportEmail}`}
-                className="w-fit break-all text-sm tracking-wider text-text-muted transition-colors hover:text-text phone-lg:break-normal"
+                className="w-fit break-all text-sm tracking-wider text-text transition-colors hover:text-text phone-lg:break-normal"
               >
                 {supportEmail}
               </a>
@@ -66,7 +66,7 @@ export const WebFooter = async () => {
         </div>
 
         <div className="mt-10 flex flex-col gap-4 border-t border-fg-2 pt-6 tablet:mt-12 phone-lg:flex-row phone-lg:items-center phone-lg:justify-between">
-          <p className="text-center text-xs tracking-wider text-text-muted phone-lg:text-left">
+          <p className="text-center text-xs tracking-wider text-text phone-lg:text-left">
             {t("copyright", { year })}
           </p>
           <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-3 phone-lg:justify-end">

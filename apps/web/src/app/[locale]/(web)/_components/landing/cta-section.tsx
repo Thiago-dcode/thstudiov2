@@ -25,7 +25,7 @@ export function CtaSection() {
         <p className="max-w-lg text-base leading-relaxed text-text-muted tablet:text-lg tablet:leading-relaxed">
           {t("description")}
         </p>
-        <Button asChild variant="primary" size="lg">
+        <Button asChild variant="accent" size="lg">
           <Link href="/auth/register">
             {t("button")}
             <ArrowRight className="size-4" />

@@ -6,43 +6,53 @@ import { EnumType } from '@repo/common-lib/constants/enums';
 import { EmailPreferencesService } from 'src/v1/modules/email-preferences/email-preferences.service';
 
 type ViewParams = {
-    viewPath: string;
-    data: ViewData;
-    emailType: EnumType<'EMAIL_TYPE'>;
+  viewPath: string;
+  data: ViewData;
+  emailType: EnumType<'EMAIL_TYPE'>;
 };
 
 @Injectable()
 export abstract class ApiMailService extends Mailable {
-    private envelopePromise: Promise<Envelop> | null = null;
+  private envelopePromise: Promise<Envelop> | null = null;
 
-    constructor(
-        protected readonly viewService: ViewService,
-        protected readonly emailPreferencesService: EmailPreferencesService | undefined,
-        protected _viewParams: ViewParams,
-    ) {
-        super();
+  constructor(
+    protected readonly viewService: ViewService,
+    protected readonly emailPreferencesService: EmailPreferencesService | undefined,
+    protected _viewParams: ViewParams,
+  ) {
+    super();
+  }
+
+  protected abstract buildEnvelope(): Promise<Envelop>;
+
+  set viewParams(viewParams: ViewParams) {
+    this._viewParams = viewParams;
+    this.envelopePromise = null;
+  }
+  /** Formats a plain email as `Display Name <email@domain.com>` for mail clients. */
+  formatMailFrom(email: string, displayName: string): string {
+    if (email.includes('<')) {
+      return email;
     }
 
-    protected abstract buildEnvelope(): Promise<Envelop>;
+    return `${displayName} <${email}>`;
+  }
 
-    set viewParams(viewParams: ViewParams) {
-        this._viewParams = viewParams;
-        this.envelopePromise = null;
+  async envelope(): Promise<Envelop> {
+    if (!this.envelopePromise) {
+      this.envelopePromise = this.buildEnvelope();
     }
 
-    async envelope(): Promise<Envelop> {
-        if (!this.envelopePromise) {
-            this.envelopePromise = this.buildEnvelope();
-        }
+    const envelope = await this.envelopePromise;
+    envelope.from = this.formatMailFrom(envelope.from, 'A11STUDIO');
+    return envelope;
+  }
 
-        return await this.envelopePromise;
-    }
-
-    private async getRecipientEmail(): Promise<string | null> {
-        const { to } = await this.envelope();
-        const recipient = Array.isArray(to) ? to[0] : to;
-        return recipient ?? null;
-    }
+  private async getRecipientEmail(): Promise<string | null> {
+    const { to } = await this.envelope();
+    const recipient = Array.isArray(to) ? to[0] : to;
+    return recipient ?? null;
+  }
 
   async content(): Promise<Content> {
     const email = await this.getRecipientEmail();
@@ -71,11 +81,11 @@ export abstract class ApiMailService extends Mailable {
       return {};
     }
 
-        return {
-            html: await this.viewService.render(this._viewParams.viewPath, {
-                ...this._viewParams.data,
-                unsuscribeUrl,
-            }),
-        };
-    }
+    return {
+      html: await this.viewService.render(this._viewParams.viewPath, {
+        ...this._viewParams.data,
+        unsuscribeUrl,
+      }),
+    };
+  }
 }

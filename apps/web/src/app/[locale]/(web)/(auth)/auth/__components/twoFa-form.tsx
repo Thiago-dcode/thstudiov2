@@ -72,7 +72,7 @@ export const TwoFaForm = ({
             placeholder="Enter 6-digit code"
             required
             autoFocus
-            className="w-full px-4 py-6 text-center text-lg font-semibold tracking-widest focus:outline-none transition-all placeholder:font-normal placeholder:tracking-normal"
+            className="w-full px-4 py-6 text-center text-lg font-semibold tracking-widest"
           />
         </FormComponent.Field>
       </form>

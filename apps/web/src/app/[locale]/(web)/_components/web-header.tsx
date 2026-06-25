@@ -51,7 +51,7 @@ export const WebHeader = ({ session }: WebHeaderProps) => {
         "fixed top-0 left-0 right-0 z-50 flex items-center justify-center border-b transition-all duration-300 bg-bg",
         scrolled
           ? "border-b-fg-2/50 bg-transparent hover:bg-bg opacity-60 backdrop-blur-sm hover:opacity-100 hover:border-b-fg-2"
-          : "border-b-fg-2 opacity-100",
+          : "border-b-fg opacity-100",
       )}
     >
       <div className="max-w-(--screen-desktop) w-full h-16 flex items-center justify-between gap-3 px-5 tablet:gap-4 tablet:px-10">
@@ -75,7 +75,7 @@ export const WebHeader = ({ session }: WebHeaderProps) => {
                   Access Profile
                 </Link>
               )}
-              <Button asChild variant="primary" size="sm">
+              <Button asChild variant="accent" size="sm">
                 <Link href="/atelier">
                   Go to Atelier
                   <ArrowRight className="size-3.5" />
@@ -93,7 +93,7 @@ export const WebHeader = ({ session }: WebHeaderProps) => {
                 </Link>
               )}
               {!isRegisterPage && (
-                <Button asChild variant="primary" size="sm">
+                <Button asChild variant="accent" size="sm">
                   <Link href="/auth/register">
                     Get Started
                     <ArrowRight className="size-3.5" />
@@ -165,7 +165,7 @@ export const WebHeader = ({ session }: WebHeaderProps) => {
                       )}
                       <Button
                         asChild
-                        variant="primary"
+                        variant="accent"
                         size="lg"
                         className="w-full justify-between"
                       >
@@ -187,7 +187,7 @@ export const WebHeader = ({ session }: WebHeaderProps) => {
                       </Button>
                       <Button
                         asChild
-                        variant="primary"
+                        variant="accent"
                         size="lg"
                         className="w-full"
                       >

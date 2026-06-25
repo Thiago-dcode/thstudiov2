@@ -30,7 +30,7 @@ export default async function Atelier() {
   return (
     <AdminPageContainer>
       <AdminPageTitle
-        title="Portfolio"
+        title="Portfolios"
         info="Portfolios represent broad categories of your work, such as 'Travel Photography' or 'Wedding Photography'. They are designed to showcase your best pieces to clients and can include both individual media and collections."
       >
         <CreateResourceButton
@@ -59,7 +59,6 @@ export default async function Atelier() {
             resource={TABLES_ENUM.PORTFOLIOS}
             href="portfolios/create"
             label="Create Portfolio"
-            variant="outline"
           />
         </AdminPageEmptyState>
       )}

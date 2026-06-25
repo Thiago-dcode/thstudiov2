@@ -10,14 +10,15 @@ const buttonVariants = cva(
  variant: {
  default:
  "bg-text text-bg hover:bg-text-muted",
- primary:'bg-accent text-accent-fg hover:bg-accent/80',
- base:"bg-fg-2 text-text hover:bg-fg-1",
+ primary: "bg-text text-bg hover:bg-text-muted",
+ accent: "bg-accent text-accent-fg hover:bg-accent/80",
+ base:"bg-fg-2 text-text hover:bg-fg",
  destructive:
  "bg-error text-error-fg font-semibold shadow-sm hover:bg-error/90",
  outline:
  "border border-fg-2 bg-bg shadow-sm hover:bg-fg",
  secondary:
- "bg-fg-2 text-text shadow-sm hover:bg-fg-1",
+ "bg-fg text-text shadow-sm hover:bg-fg",
  ghost: "bg-transparent text-sm transition-colors text-text-muted hover:text-text",
  link: "text-text underline-offset-4 hover:underline",
  badge:

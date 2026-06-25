@@ -101,7 +101,7 @@ export const RegisterForm = ({
         </FormComponent.Field>
         {children}
         {/* Submit Button */}
-        <FormComponent.SubmitButton isPending={isPending}>
+        <FormComponent.SubmitButton isPending={isPending} variant="accent">
           Sign up
         </FormComponent.SubmitButton>
       </FormComponent.Form>

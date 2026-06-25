@@ -76,7 +76,7 @@ export const UserBenefitModal = ({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="max-w-md p-8">
         <div className="flex flex-col items-center gap-6 text-center">
-          <div className="flex size-16 items-center justify-center bg-fg-1">
+          <div className="flex size-16 items-center justify-center bg-fg">
             <Gift className="size-8 text-text" />
           </div>
 
@@ -95,7 +95,7 @@ export const UserBenefitModal = ({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex w-full items-center gap-3 border border-border bg-fg-1 px-4 py-3 text-left text-sm text-text-muted">
+          <div className="flex w-full items-center gap-3 border border-border bg-fg px-4 py-3 text-left text-sm text-text-muted">
             <Sparkles className="size-5 shrink-0 text-text" />
             <span>
               Your benefit will be applied automatically when you choose a plan

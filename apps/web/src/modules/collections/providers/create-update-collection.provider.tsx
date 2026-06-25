@@ -86,7 +86,7 @@ export const CollectionProvider = ({
       user_id: collection.user_id,
       title: collection.title,
       slug: collection.slug,
-      description: collection.description ?? undefined,
+      description: collection.description ?? "",
       is_highlight: collection.is_highlight,
       is_active: collection.is_active,
       media: collection.media.sort((a, b) => a.position - b.position),
@@ -112,7 +112,7 @@ export const CollectionProvider = ({
       const payload: Partial<CreateCollectionInput> = {
         title: (formData.title ?? "") as string,
         slug: (formData.slug ?? "") as string,
-        description: (formData.description ?? undefined) as string | undefined,
+        description: (formData.description ?? "") as string,
         user_id: (formData.user_id ?? user.id) as number,
         is_highlight: formData.is_highlight ?? false,
         is_active: formData.is_active ?? true,
@@ -239,8 +239,8 @@ export const CollectionProvider = ({
     if (formData.title !== currentCollection.title) return true;
     if (formData.slug !== currentCollection.slug) return true;
     if (
-      (formData.description ?? undefined) !==
-      (currentCollection.description ?? undefined)
+      (formData.description ?? "") !==
+      (currentCollection.description ?? "")
     )
       return true;
     if (formData.is_highlight !== currentCollection.is_highlight) return true;

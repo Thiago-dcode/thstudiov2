@@ -135,7 +135,7 @@ const ArtistHomePage = async ({ params }: Props) => {
 
         {/* Avatar — anchored at banner bottom */}
         <div className="absolute bottom-0 left-1/2 z-10 -translate-x-1/2 translate-y-1/2">
-          <div className="relative size-32 overflow-hidden bg-fg-1 shadow-2xl ring-[5px] ring-bg tablet:size-36 laptop:size-40 rounded-full!">
+          <div className="relative size-32 overflow-hidden bg-fg shadow-2xl ring-[5px] ring-bg tablet:size-36 laptop:size-40 rounded-full!">
             {profile.avatar ? (
               <Image
                 src={profile.avatar}

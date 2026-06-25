@@ -2,6 +2,7 @@
 
 import type { Media } from "@repo/common-lib/types/media";
 import { Checkbox } from "@repo/ui/components/shadcn/checkbox";
+import { cn } from "@repo/ui/lib/utils";
 import {
   createContext,
   type ReactNode,
@@ -140,15 +141,33 @@ export const SelectableMedia = ({
 
   const checked = isMediaSelected(media.id);
 
+  const handleToggle = () => toggleMediaSelection(media);
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === " " || event.key === "Enter") {
+      event.preventDefault();
+      handleToggle();
+    }
+  };
+
   return (
-    <div className="relative">
-      <div className="absolute top-2 right-2 z-10 bg-fg-2/30 shadow-sm p-1">
-        <Checkbox
-          checked={checked}
-          onCheckedChange={() => toggleMediaSelection(media)}
-        />
+    <div
+      role="checkbox"
+      aria-checked={checked}
+      aria-label={`Select ${media.title || media.seo_filename || "media"}`}
+      tabIndex={0}
+      onClick={handleToggle}
+      onKeyDown={handleKeyDown}
+      className={cn(
+        "relative cursor-pointer outline-none transition-all duration-200",
+        "focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
+        checked && "ring-2 ring-accent ring-offset-2 ring-offset-bg",
+      )}
+    >
+      <div className="pointer-events-none select-none">{children}</div>
+      <div className="absolute top-2 right-2 z-10 bg-fg-2/30 shadow-sm p-1 pointer-events-none">
+        <Checkbox checked={checked} tabIndex={-1} aria-hidden />
       </div>
-      {children}
     </div>
   );
 };

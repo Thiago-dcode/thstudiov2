@@ -66,7 +66,7 @@ export const createOrUpdateServiceAction = async (
   const rawData = {
     ...input,
     thumbnail: thumbnailFile,
-    description: input.description || undefined,
+    description: input.description ?? "",
     price: input.price != null ? Number(input.price) : undefined,
     features: input.features?.filter((f) => f.title.trim().length > 0),
     terms: input.terms?.filter((t) => t.title.trim().length > 0),
@@ -108,8 +108,6 @@ export const createOrUpdateServiceAction = async (
       };
     }
   }
-  console.log("RAWDATA", rawData);
-
   const service = isUpdate
     ? await serviceService.update(
         currentService.id,

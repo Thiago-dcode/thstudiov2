@@ -121,7 +121,7 @@ export const SelectMediaDrawer = ({
                 Add media
               </DrawerTitle>
               {mediaSelectedLength > 0 && (
-                <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 bg-fg-1 text-text text-[11px] font-medium tabular-nums">
+                <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 bg-fg text-text text-[11px] font-medium tabular-nums">
                   {mediaSelectedLength}
                 </span>
               )}
@@ -161,7 +161,7 @@ export const SelectMediaDrawer = ({
             className={cn(
               "h-7 px-2.5 text-[11px] font-medium transition-colors",
               !shapeFilter
-                ? "bg-fg-1 text-text"
+                ? "bg-fg text-text"
                 : "text-text-muted hover:text-text hover:bg-fg-2",
             )}
           >
@@ -176,7 +176,7 @@ export const SelectMediaDrawer = ({
               className={cn(
                 "h-7 px-2.5 text-[11px] font-medium capitalize transition-colors",
                 shapeFilter === shape
-                  ? "bg-fg-1 text-text"
+                  ? "bg-fg text-text"
                   : "text-text-muted hover:text-text hover:bg-fg-2",
               )}
             >

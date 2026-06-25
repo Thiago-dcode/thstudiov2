@@ -92,7 +92,7 @@ export const CreateOrUpdateService = ({
       const payload: ServiceActionInput = {
         title: titleRef.current,
         slug: slugRef.current,
-        description: descriptionRef.current || undefined,
+        description: descriptionRef.current ?? "",
         price: priceRef.current ? Number(priceRef.current) : undefined,
         is_active: isActiveRef.current,
         show_price: showPriceRef.current,

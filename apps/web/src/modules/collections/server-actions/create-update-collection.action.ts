@@ -38,7 +38,7 @@ export const createOrUpdateCollectionAction = async (
 
   const rawData = {
     ...input,
-    description: input.description || undefined,
+    description: input.description ?? "",
   };
 
   trimValues(rawData, { deep: true });

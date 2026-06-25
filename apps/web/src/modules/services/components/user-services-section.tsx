@@ -32,7 +32,7 @@ export const UserServicesSection = async ({
           href={`/artists/${username}/services/${service.slug}`}
           className="group flex flex-col overflow-hidden border border-border/40 transition-colors duration-300 hover:border-border"
         >
-          <div className="relative aspect-3/2 w-full overflow-hidden bg-fg-1">
+          <div className="relative aspect-3/2 w-full overflow-hidden bg-fg">
             {service.thumbnail ? (
               <Image
                 src={service.thumbnail}
@@ -42,7 +42,7 @@ export const UserServicesSection = async ({
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               />
             ) : (
-              <div className="absolute inset-0 flex items-center justify-center bg-fg-1">
+              <div className="absolute inset-0 flex items-center justify-center bg-fg">
                 <span className="font-serif text-4xl  text-text-muted/20">
                   {service.title.charAt(0)}
                 </span>

@@ -1,6 +1,7 @@
 "use client";
 
 import { BrandLogo } from "@repo/ui/components/custom/brand-logo";
+import { ShareButton } from "@repo/ui/components/custom/share-button";
 import {
   Drawer,
   DrawerClose,
@@ -8,9 +9,8 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "@repo/ui/components/shadcn/drawer";
-import { useShare } from "@repo/ui/hooks/useShare";
 import { cn } from "@repo/ui/lib/utils";
-import { Check, Menu, Share2, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -24,7 +24,6 @@ export const ArtistsHeader = () => {
   const [scrolled, setScrolled] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
-  const { share, active: shareActive } = useShare({ fallbackCopy: true });
   const { session, isLoading: sessionLoading } = useSession();
 
   useEffect(() => {
@@ -114,20 +113,7 @@ export const ArtistsHeader = () => {
               Contact
             </button>
           )}
-          <button
-            type="button"
-            onClick={() =>
-              share({ url: window.location.href, title: `@${username}` })
-            }
-            className="text-text-muted hover:text-text transition-colors cursor-pointer"
-            aria-label={shareActive ? "Shared" : "Share profile"}
-          >
-            {shareActive ? (
-              <Check className="size-4" strokeWidth={2} />
-            ) : (
-              <Share2 className="size-4" strokeWidth={2} />
-            )}
-          </button>
+          <ShareButton title={`@${username}`} ariaLabel="Share profile" />
         </nav>
 
         {/* Mobile hamburger */}
@@ -186,24 +172,12 @@ export const ArtistsHeader = () => {
                     Contact
                   </button>
                 </ArtistContactDialog>
-                <button
-                  type="button"
-                  onClick={() =>
-                    share({ url: window.location.href, title: `@${username}` })
-                  }
-                  className="flex items-center gap-2 cursor-pointer text-sm tracking-wider font-medium py-3 transition-colors hover:text-text text-text-muted text-left"
-                  aria-label={shareActive ? "Shared" : "Share profile"}
-                >
-                  {shareActive ? (
-                    <>
-                      <Check className="size-4" strokeWidth={2} /> Shared
-                    </>
-                  ) : (
-                    <>
-                      <Share2 className="size-4" strokeWidth={2} /> Share
-                    </>
-                  )}
-                </button>
+                <ShareButton
+                  title={`@${username}`}
+                  showLabel
+                  className="py-3"
+                  ariaLabel="Share profile"
+                />
               </nav>
             </DrawerContent>
           </Drawer>

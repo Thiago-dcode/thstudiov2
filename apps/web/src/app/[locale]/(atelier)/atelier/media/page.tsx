@@ -1,3 +1,5 @@
+import type { EnumType } from "@repo/common-lib/constants/enums";
+import { ENUMS } from "@repo/common-lib/constants/enums";
 import type { Pagination } from "@repo/common-lib/types/response";
 import { queryParamBuilder } from "@repo/common-lib/utils/query-builder";
 import { AppPagination } from "@repo/ui/components/custom/app-pagination";
@@ -12,6 +14,7 @@ import {
 } from "../../__components/admin-page.component";
 import { MediaGridClient } from "./_components/media-grid-client";
 import { MediaSearch } from "./_components/media-search";
+import { ImageOff } from "lucide-react";
 
 function parseOptionalInt(
   value: string | string[] | undefined,
@@ -31,6 +34,16 @@ function parseOptionalString(
   return s?.trim() || undefined;
 }
 
+function parseOptionalShape(
+  value: string | string[] | undefined,
+): EnumType<"MEDIA_SHAPE"> | undefined {
+  const s = parseOptionalString(value);
+  if (!s) return undefined;
+  return ENUMS.MEDIA_SHAPE.includes(s as EnumType<"MEDIA_SHAPE">)
+    ? (s as EnumType<"MEDIA_SHAPE">)
+    : undefined;
+}
+
 export default async function MediaAtelierPage({
   searchParams,
 }: {
@@ -45,12 +58,14 @@ export default async function MediaAtelierPage({
   const page = parseOptionalInt(params.page) ?? 1;
   const perPage = Math.min(parseOptionalInt(params.per_page) ?? 25, 50);
   const search = parseOptionalString(params.search);
+  const shape = parseOptionalShape(params.shape);
 
   const mediaResponse = await usersService.getAllMedia(userAuth.id, {
     page,
     per_page: perPage,
     paginated: true,
     ...(search && { search }),
+    ...(shape && { shape }),
   });
 
   const media = mediaResponse.data || [];
@@ -62,13 +77,17 @@ export default async function MediaAtelierPage({
     const query: Record<string, string | number> = { page: p };
     if (perPage !== 15) query.per_page = perPage;
     if (search) query.search = search;
+    if (shape) query.shape = shape;
     return queryParamBuilder("/atelier/media", query);
   };
+
+  const hasActiveFilters = Boolean(search || shape);
 
   return (
     <AdminPageContainer>
       <AdminPageTitle title="Media">
-        {pagination?.total_count ? (
+        {(pagination?.total_count && pagination.total_count > 0) ||
+        hasActiveFilters ? (
           <Suspense>
             <MediaSearch />
           </Suspense>
@@ -77,7 +96,12 @@ export default async function MediaAtelierPage({
 
       <div className="flex flex-col gap-6">
         <SelectMediaProvider>
-          <MediaGridClient media={media} username={userAuth.username} />
+         {media.length ? <MediaGridClient media={media} username={userAuth.username} />: <div className="flex flex-col items-center justify-center py-24 text-text-muted gap-3">
+            <ImageOff className="h-10 w-10 stroke-[1.5]" />
+            <p className="text-sm">
+             {hasActiveFilters?"No media found, try other filter combination":"No media uploaded yet. Start by adding your first image."}
+            </p>
+          </div>}
         </SelectMediaProvider>
         {pagination && (
           <AppPagination
