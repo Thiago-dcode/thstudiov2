@@ -77,7 +77,7 @@ export const createOrUpdatePortfolioAction = async (
   const rawData = {
     ...input,
     thumbnail: thumbnailFile,
-    description: input.description?? '',
+    description: input.description ?? "",
   };
 
   trimValues(rawData, { deep: true });

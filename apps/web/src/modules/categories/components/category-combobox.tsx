@@ -54,7 +54,12 @@ const CategoryCombobox = ({
         setCategorySelected(cat);
       }
     },
-    [categoriesSelected, setCategorySelected, removeCategorySelected, maxSelection],
+    [
+      categoriesSelected,
+      setCategorySelected,
+      removeCategorySelected,
+      maxSelection,
+    ],
   );
 
   const isSelected = useCallback(

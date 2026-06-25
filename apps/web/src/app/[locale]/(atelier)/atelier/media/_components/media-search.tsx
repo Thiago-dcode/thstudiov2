@@ -58,7 +58,9 @@ export function MediaSearch() {
     setValue(searchParams.get("search") ?? "");
   }, [searchParams]);
 
-  const navigate = (overrides: { search?: string; shape?: ShapeFilter } = {}) => {
+  const navigate = (
+    overrides: { search?: string; shape?: ShapeFilter } = {},
+  ) => {
     const params = buildMediaQueryParams(searchParams, overrides);
 
     startTransition(() => {
@@ -93,7 +95,7 @@ export function MediaSearch() {
           disabled={isPending}
         />
         {value && (
-        <button
+          <button
             type="button"
             onClick={handleClearSearch}
             className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text transition-colors"

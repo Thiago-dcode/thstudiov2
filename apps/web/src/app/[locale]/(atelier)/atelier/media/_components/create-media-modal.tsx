@@ -32,12 +32,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "@/lib/hooks/useSession";
 import { useMedia } from "@/modules/media/providers/media.provider";
 import { useUserMetrics } from "@/modules/users/providers/user-metrics.provider";
+
 const MAX_FILES = 10;
 const COMPRESSION_LVLS = ENUMS.COMPRESSION_LEVEL;
 
-function getCompressionLvlIndex(
-  compressionLvl: EnumType<"COMPRESSION_LEVEL">,
-) {
+function getCompressionLvlIndex(compressionLvl: EnumType<"COMPRESSION_LEVEL">) {
   for (let i = 0; i < COMPRESSION_LVLS.length; i++) {
     if (compressionLvl === COMPRESSION_LVLS[i]) {
       return i;
@@ -54,9 +53,7 @@ function CompressionSlider({
 }: {
   compressionLevel: EnumType<"COMPRESSION_LEVEL">;
   disabled?: boolean;
-  onCompressionLevelChange: (
-    level: EnumType<"COMPRESSION_LEVEL">,
-  ) => void;
+  onCompressionLevelChange: (level: EnumType<"COMPRESSION_LEVEL">) => void;
   onPreviewChange?: (level: EnumType<"COMPRESSION_LEVEL">) => void;
 }) {
   const committedIndex = getCompressionLvlIndex(compressionLevel);
@@ -105,9 +102,8 @@ function MediaUploadContent() {
   const [globalCompressionLevel, setGlobalCompressionLevel] = useState<
     EnumType<"COMPRESSION_LEVEL">
   >(DEFAULT_COMPRESSION_LVL);
-  const [globalCompressionPreview, setGlobalCompressionPreview] = useState<
-    EnumType<"COMPRESSION_LEVEL"> | null
-  >(null);
+  const [globalCompressionPreview, setGlobalCompressionPreview] =
+    useState<EnumType<"COMPRESSION_LEVEL"> | null>(null);
   const {
     mediaPendingToCreate,
     upsertMediaUpload,
@@ -481,7 +477,7 @@ export function CreateMediaDialog({
         <DialogHeader className="border-b pb-4 px-6 pt-6">
           <DialogTitle className="text-lg!">Create New Media</DialogTitle>
           <DialogDescription className="text-sm!">
-            Upload up to {MAX_FILES + ''} images (JPEG, PNG, WebP)
+            Upload up to {`${MAX_FILES}`} images (JPEG, PNG, WebP)
           </DialogDescription>
         </DialogHeader>
         <div className="flex-1 min-h-0">
@@ -508,13 +504,12 @@ export function CreateMediaDialog({
                 setOpen(false);
               }}
               variant="destructive"
-              size={'sm'}
+              size={"sm"}
               className="w-full max-w-32"
             >
               Close
             </Button>
           </DialogClose>
-
         </DialogFooter>
       </DialogContent>
     </Dialog>

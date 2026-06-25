@@ -3,6 +3,7 @@ import { ENUMS } from "@repo/common-lib/constants/enums";
 import type { Pagination } from "@repo/common-lib/types/response";
 import { queryParamBuilder } from "@repo/common-lib/utils/query-builder";
 import { AppPagination } from "@repo/ui/components/custom/app-pagination";
+import { ImageOff } from "lucide-react";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
@@ -14,7 +15,6 @@ import {
 } from "../../__components/admin-page.component";
 import { MediaGridClient } from "./_components/media-grid-client";
 import { MediaSearch } from "./_components/media-search";
-import { ImageOff } from "lucide-react";
 
 function parseOptionalInt(
   value: string | string[] | undefined,
@@ -96,12 +96,18 @@ export default async function MediaAtelierPage({
 
       <div className="flex flex-col gap-6">
         <SelectMediaProvider>
-         {media.length ? <MediaGridClient media={media} username={userAuth.username} />: <div className="flex flex-col items-center justify-center py-24 text-text-muted gap-3">
-            <ImageOff className="h-10 w-10 stroke-[1.5]" />
-            <p className="text-sm">
-             {hasActiveFilters?"No media found, try other filter combination":"No media uploaded yet. Start by adding your first image."}
-            </p>
-          </div>}
+          {media.length ? (
+            <MediaGridClient media={media} username={userAuth.username} />
+          ) : (
+            <div className="flex flex-col items-center justify-center py-24 text-text-muted gap-3">
+              <ImageOff className="h-10 w-10 stroke-[1.5]" />
+              <p className="text-sm">
+                {hasActiveFilters
+                  ? "No media found, try other filter combination"
+                  : "No media uploaded yet. Start by adding your first image."}
+              </p>
+            </div>
+          )}
         </SelectMediaProvider>
         {pagination && (
           <AppPagination

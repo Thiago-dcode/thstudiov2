@@ -238,10 +238,7 @@ export const CollectionProvider = ({
     if (!currentCollection) return false;
     if (formData.title !== currentCollection.title) return true;
     if (formData.slug !== currentCollection.slug) return true;
-    if (
-      (formData.description ?? "") !==
-      (currentCollection.description ?? "")
-    )
+    if ((formData.description ?? "") !== (currentCollection.description ?? ""))
       return true;
     if (formData.is_highlight !== currentCollection.is_highlight) return true;
     if ((formData.is_active ?? true) !== currentCollection.is_active)

@@ -17,7 +17,10 @@ import { useEffect, useRef, useState } from "react";
 import FormComponent from "@/lib/components/form-component";
 import CategoryCombobox from "@/modules/categories/components/category-combobox";
 import { UpdateCategoriesProvider } from "@/modules/categories/providers/categories.provider";
-import { usePortfolio, MAX_PORTFOLIO_CATEGORIES } from "@/modules/portfolios/providers/create-update-portfolio.provider";
+import {
+  MAX_PORTFOLIO_CATEGORIES,
+  usePortfolio,
+} from "@/modules/portfolios/providers/create-update-portfolio.provider";
 
 const ThumbnailInput = () => {
   const { files } = useInputFile();
@@ -254,7 +257,8 @@ const FirstStepInputs = () => {
             />
           </UpdateCategoriesProvider>
           <p className="text-xs text-text-muted">
-            Optional. Select up to {MAX_PORTFOLIO_CATEGORIES} categories that describe this portfolio.
+            Optional. Select up to {MAX_PORTFOLIO_CATEGORIES} categories that
+            describe this portfolio.
           </p>
         </div>
 

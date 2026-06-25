@@ -183,9 +183,7 @@ export function MediaGrid({ media, username }: MediaGridProps) {
                     <Button
                       size="sm"
                       variant="primary"
-                      disabled={
-                        !hasEnoughCredits || isOverAiLimit || isLoading
-                      }
+                      disabled={!hasEnoughCredits || isOverAiLimit || isLoading}
                       onClick={async () => {
                         await handleGenerateSeo();
                       }}
@@ -223,7 +221,6 @@ export function MediaGrid({ media, username }: MediaGridProps) {
           </div>
         )}
 
-
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 justify-items-start w-full">
           {currentMedia.map((item) => {
             if (!canSelect)
@@ -237,10 +234,7 @@ export function MediaGrid({ media, username }: MediaGridProps) {
               );
 
             return (
-              <SelectableMedia
-                key={`media-selectable-${item.id}`}
-                media={item}
-              >
+              <SelectableMedia key={`media-selectable-${item.id}`} media={item}>
                 <EditMediaCard
                   key={item.id}
                   media={item}
@@ -251,7 +245,6 @@ export function MediaGrid({ media, username }: MediaGridProps) {
             );
           })}
         </div>
-
       </div>
 
       {pendingCount > 0 && !isLoading && (
@@ -284,7 +277,12 @@ export function MediaGrid({ media, username }: MediaGridProps) {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" size={'sm'} className="" onClick={() => setIsDialogOpen(false)}>
+            <Button
+              variant="outline"
+              size={"sm"}
+              className=""
+              onClick={() => setIsDialogOpen(false)}
+            >
               Cancel
             </Button>
             <Button

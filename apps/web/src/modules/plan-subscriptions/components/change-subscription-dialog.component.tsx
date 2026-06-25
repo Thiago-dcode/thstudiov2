@@ -96,13 +96,10 @@ export const ChangeSubscriptionDialog = () => {
       open={!!planSelected}
     >
       <DialogContent
-        className={cn(
-          " lg:w-[1000px] h-full lg:h-fit p-0 overflow-y-auto",
-          {
-            "w-4/5 lg:w-fit lg:max-w-[500px] h-fit max-h-[90vh]":
-              planSelected?.is_free,
-          },
-        )}
+        className={cn(" lg:w-[1000px] h-full lg:h-fit p-0 overflow-y-auto", {
+          "w-4/5 lg:w-fit lg:max-w-[500px] h-fit max-h-[90vh]":
+            planSelected?.is_free,
+        })}
       >
         {planSelected && (
           <div className="flex lg:flex-row flex-col items-center justify-between">

@@ -355,10 +355,7 @@ export const PortfolioProvider = ({
 
     if (formData.title !== currentPortfolio.title) return true;
     if (formData.slug !== currentPortfolio.slug) return true;
-    if (
-      (formData.description ?? "") !==
-      (currentPortfolio.description ?? "")
-    )
+    if ((formData.description ?? "") !== (currentPortfolio.description ?? ""))
       return true;
     if ((formData.is_highlight ?? false) !== currentPortfolio.is_highlight)
       return true;

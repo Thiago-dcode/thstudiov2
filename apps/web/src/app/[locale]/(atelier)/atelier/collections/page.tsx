@@ -46,7 +46,7 @@ export default async function CollectionListPage() {
               key={collection.id}
               href={`/atelier/collections/edit/${collection.slug}`}
             >
-              <CollectionCard collection={collection}  />
+              <CollectionCard collection={collection} />
             </Link>
           ))}
         </div>

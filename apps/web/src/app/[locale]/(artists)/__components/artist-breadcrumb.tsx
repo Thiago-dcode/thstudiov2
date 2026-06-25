@@ -81,11 +81,9 @@ export const ArtistBreadcrumb = ({
               </BreadcrumbSeparator>
             )}
           </React.Fragment>
-          
         ))}
-       
       </BreadcrumbList>
-       <ShareButton title={`@${username}`} ariaLabel="Share profile" />
+      <ShareButton title={`@${username}`} ariaLabel="Share profile" />
     </Breadcrumb>
   );
 };
