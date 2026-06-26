@@ -9,11 +9,11 @@ export class FactoryMailService {
     public static createMailService(type: MailServiceDriver, config: MailConfig, queue?: Queue): MailService {
         switch (type) {
             case 'nodemailer':
-                return new MailService(new NodemailerEmailDriver(config), queue, config.fromDisplayName);
+                return new MailService(new NodemailerEmailDriver(config), queue);
             case 'resend':
-                return new MailService(new ResendEmailDriver(config), queue, config.fromDisplayName);
+                return new MailService(new ResendEmailDriver(config), queue);
             default:
-                return new MailService(new NodemailerEmailDriver(config), queue, config.fromDisplayName);
+                return new MailService(new NodemailerEmailDriver(config), queue);
         }
     }
 }
