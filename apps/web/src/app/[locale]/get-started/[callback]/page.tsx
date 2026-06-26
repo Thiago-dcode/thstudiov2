@@ -1,6 +1,7 @@
 import { FUNNEL_LAST_STEP } from "@repo/common-lib/constants/constants";
 import { Button } from "@repo/ui/components/shadcn/button";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import { CallbackSubscriptionPage } from "@/modules/plan-subscriptions/components/callback-subscription-page";
@@ -48,12 +49,12 @@ export default async function CallbackPage({
     redirect("/get-started");
   }
 
+
+  const t = await getTranslations("subscriptionCallback");
   const isSuccess = callback === "success";
   const retryable = cookie?.retryable;
-  const title = isSuccess ? "Activation complete." : "Activation incomplete.";
-  const subtitle = isSuccess
-    ? "Your subscription is now active."
-    : "We were unable to activate your subscription. Please try again.";
+  const title = isSuccess ? t("success.title") : t("failed.title");
+  const subtitle = isSuccess ? t("success.subtitle") : t("failed.subtitle");
 
   if (!retryable) {
     await usersService.update(userAuth.id, {
@@ -73,7 +74,7 @@ export default async function CallbackPage({
           className="w-full min-h-12 font-medium tracking-wide uppercase text-xs"
           asChild
         >
-          <Link href={"/get-started"}>Try again</Link>
+          <Link href={"/get-started"}>{t("tryAgain")}</Link>
         </Button>
       ) : null}
       <FunnelProvider
@@ -86,7 +87,7 @@ export default async function CallbackPage({
         >
           <ButtonSubmitFunnel
             simple={!isSuccess}
-            text={!isSuccess ? "Skip for now" : "Continue"}
+            text={!isSuccess ? t("skipForNow") : t("continue")}
           />
         </ContainerFormFunnel>
       </FunnelProvider>

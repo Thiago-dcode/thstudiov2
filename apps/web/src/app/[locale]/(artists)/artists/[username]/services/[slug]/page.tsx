@@ -84,11 +84,8 @@ export default async function Page({ params }: Props) {
             )}
 
             {service.show_price && service.price != null && (
-              <div className="flex items-baseline justify-between border-t border-border/30 pt-5">
-                <span className="text-[10px] uppercase tracking-[0.2em] text-text-muted">
-                  Starting at
-                </span>
-                <span className="font-serif text-2xl  tracking-tight">
+              <div className="flex items-baseline justify-between border-t border-border/30">
+                <span className="font-serif text-xl text-text-muted  tracking-tight">
                   ${service.price.toFixed(2)}
                 </span>
               </div>
@@ -132,9 +129,9 @@ export default async function Page({ params }: Props) {
               <div className="grid grid-cols-1 gap-10 py-8 sm:grid-cols-2 sm:gap-12">
                 {service.features.length > 0 && (
                   <section className="space-y-5">
-                    <h2 className="text-[10px] font-medium uppercase tracking-[0.2em] text-text-muted">
+                    <h4 className="font-medium uppercase tracking-wide text-text-muted">
                       What&apos;s included
-                    </h2>
+                    </h4>
                     <ul className="space-y-3.5">
                       {service.features.map((feature) => (
                         <li
@@ -151,9 +148,9 @@ export default async function Page({ params }: Props) {
 
                 {service.terms.length > 0 && (
                   <section className="space-y-5">
-                    <h2 className="text-[10px] font-medium uppercase tracking-[0.2em] text-text-muted">
+                    <h4 className="font-medium uppercase tracking-wide text-text-muted">
                       Terms
-                    </h2>
+                    </h4>
                     <ul className="space-y-3.5">
                       {service.terms.map((term) => (
                         <li
@@ -174,14 +171,14 @@ export default async function Page({ params }: Props) {
           {service.portfolio && (
             <div className="mt-auto border-t border-border/40 pt-8 pb-8">
               <div className="space-y-3">
-                <span className="block text-[10px] uppercase tracking-[0.2em] text-text-muted">
+                <span className="block uppercase tracking-wide text-text-muted">
                   Related portfolio
                 </span>
                 <Link
                   href={`/artists/${username}/portfolios/${service.portfolio.slug}`}
                   className="group inline-flex items-center gap-4 border border-border/30 px-6 py-2.5 transition-all hover:border-border hover:bg-text/5"
                 >
-                  <span className="font-serif text-lg  text-text/90 group-hover:text-text">
+                  <span className="font-serif text-text/90 group-hover:text-text">
                     {service.portfolio.title}
                   </span>
                   <ArrowRight className="size-4 shrink-0 text-text-muted transition-transform group-hover:translate-x-1 group-hover:text-text" />

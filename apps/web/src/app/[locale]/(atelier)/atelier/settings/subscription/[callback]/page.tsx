@@ -1,9 +1,13 @@
 import { Button } from "@repo/ui/components/shadcn/button";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import { CallbackSubscriptionPage } from "@/modules/plan-subscriptions/components/callback-subscription-page";
-import { getInitiateSubscriptionCookie } from "@/modules/plan-subscriptions/server-actions/initiate-subscription.action";
+import {
+  deleteInitiateSubscriptionCookie,
+  getInitiateSubscriptionCookie,
+} from "@/modules/plan-subscriptions/server-actions/initiate-subscription.action";
 
 const SETTINGS_URL = "/atelier/settings";
 const SUBSCRIPTION_URL = "/atelier/settings/subscription";
@@ -32,12 +36,11 @@ export default async function SubscriptionCallbackPage({
     redirect(SETTINGS_URL);
   }
 
-  const isSuccess = callback === "success";
 
-  const title = isSuccess ? "Activation complete." : "Activation incomplete.";
-  const subtitle = isSuccess
-    ? "Your subscription is now active."
-    : "We were unable to activate your subscription. Please try again.";
+  const t = await getTranslations("subscriptionCallback");
+  const isSuccess = callback === "success";
+  const title = isSuccess ? t("success.title") : t("failed.title");
+  const subtitle = isSuccess ? t("success.subtitle") : t("failed.subtitle");
 
   return (
     <CallbackSubscriptionPage
@@ -51,7 +54,7 @@ export default async function SubscriptionCallbackPage({
           className="w-full min-h-12 font-medium tracking-wide uppercase text-xs"
           asChild
         >
-          <Link href={SUBSCRIPTION_URL}>Try again</Link>
+          <Link href={SUBSCRIPTION_URL}>{t("tryAgain")}</Link>
         </Button>
       )}
       <Button
@@ -59,7 +62,9 @@ export default async function SubscriptionCallbackPage({
         className="w-full min-h-12 font-medium tracking-wide uppercase text-xs"
         asChild
       >
-        <Link href={SETTINGS_URL}>{isSuccess ? "Continue" : "Cancel"}</Link>
+        <Link href={SETTINGS_URL}>
+          {isSuccess ? t("continue") : t("cancel")}
+        </Link>
       </Button>
     </CallbackSubscriptionPage>
   );

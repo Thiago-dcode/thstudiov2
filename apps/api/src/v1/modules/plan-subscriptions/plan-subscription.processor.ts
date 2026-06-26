@@ -188,7 +188,7 @@ export class PlanSubscriptionProcessor extends GlobalProcessor {
 
         if (config.activeColumn) {
           //priorize !is_active ones
-          query.orderBy('is_active', 'ASC')
+          query.orderBy(config.activeColumn, 'ASC')
         }
         //Priorize old ones
         query.orderBy('updated_at', 'ASC')

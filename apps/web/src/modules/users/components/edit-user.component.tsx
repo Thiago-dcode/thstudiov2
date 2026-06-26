@@ -206,29 +206,41 @@ export default function EditUserComponent() {
             <p className="pt-2">{user.short_biography}</p>
           </div>
         </section>
-        <section className="flex items-center justify-start gap-2">
-          <p>{address?.formated_address || "No address set"}</p>
+        <section className="flex flex-wrap items-start gap-2 min-w-0">
+          <p className="min-w-0 flex-1 wrap-break-word text-text-muted">
+            {address?.formated_address || "No address set"}
+          </p>
           <Dialog
             open={openAddress}
             onOpenChange={(value) => handleSetOpen(value, "address")}
           >
-            <DialogTrigger className="p-2 bg-fg hover:bg-fg-2 transition-opacity cursor-pointer">
-              <Pen className="size-2" />
+            <DialogTrigger className="shrink-0 flex min-h-11 min-w-11 items-center justify-center bg-fg p-2 transition-opacity hover:bg-fg-2 cursor-pointer">
+              <Pen className="size-3" aria-hidden />
+              <span className="sr-only">Edit address</span>
             </DialogTrigger>
-            <DialogContent className="w-fit">
+            <DialogContent
+              className="max-w-2xl"
+              onOpenAutoFocus={(event) => event.preventDefault()}
+            >
               <DialogTitle>Edit Address</DialogTitle>
-              <DialogDescription>
+              <DialogDescription className="text-pretty">
                 {address
                   ? "Warning: Updating your address could affect your discovery and visibility in search results. Only update it if you really need it"
                   : "Update your address information below."}
               </DialogDescription>
-              <CreateOrUpdateAddress
-                userId={user.id}
-                defaultAddress={address}
-                onSuccess={(address) => {
-                  setAddress(address);
-                }}
-              />
+              <FormComponent.Container>
+                <div className="max-w-xl pt-4 w-full min-w-0">
+                  {openAddress ? (
+                    <CreateOrUpdateAddress
+                      userId={user.id}
+                      defaultAddress={address}
+                      onSuccess={(address) => {
+                        setAddress(address);
+                      }}
+                    />
+                  ) : null}
+                </div>
+              </FormComponent.Container>
             </DialogContent>
           </Dialog>
         </section>

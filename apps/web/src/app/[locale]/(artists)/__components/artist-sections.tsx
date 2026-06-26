@@ -206,12 +206,12 @@ export const ArtistSections = async ({
             </AccordionTrigger>
             <AccordionContent>
               <div className="grid grid-cols-1 gap-3">{serviceItems()}</div>
-              {services.length > 1 && (
-                <ViewAllLink
-                  href={`/artists/${username}/services`}
-                  label="View all services"
-                />
-              )}
+              (
+              <ViewAllLink
+                href={`/artists/${username}/services`}
+                label="View all services"
+              />
+              )
             </AccordionContent>
           </AccordionItem>
         )}

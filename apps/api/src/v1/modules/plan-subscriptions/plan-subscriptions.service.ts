@@ -41,7 +41,7 @@ export class PlanSubscriptionsService {
     private readonly paymentMethodsService: PaymentMethodsService,
     private readonly userBenefitsService: UserBenefitService,
     private readonly helpers: Helpers,
-  ) {}
+  ) { }
 
   async initiate({
     plan_price_id,
@@ -229,7 +229,6 @@ export class PlanSubscriptionsService {
         ? await stripe.subscriptions.retrieve(currentUserSubscription.stripe_id)
         : null;
 
-      console.log(stripeSubscription);
       const paymentMethods =
         await StripeService.getUserPaymentMethod(customerId);
       const hasCompleteSubscription =
@@ -277,9 +276,7 @@ export class PlanSubscriptionsService {
             },
             ...(benefit?.trial_days ? { trial_period_days: benefit.trial_days } : {})
           },
-          ...(benefit?.trial_days && {
-            payment_method_collection: 'if_required',
-          }),
+          payment_method_collection: benefit?.trial_days ? 'if_required' : 'always',
           success_url: successUrl,
           cancel_url: cancelUrl,
         });

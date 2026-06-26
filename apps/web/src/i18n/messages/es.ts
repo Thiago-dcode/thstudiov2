@@ -253,6 +253,21 @@ const messages: Translations = {
       status: "Ya está todo listo.",
     },
   },
+  subscriptionCallback: {
+    success: {
+      title: "Activación completada.",
+      subtitle: "Tu suscripción ya está activa.",
+    },
+    failed: {
+      title: "Activación incompleta.",
+      subtitle:
+        "No pudimos activar tu suscripción. Por favor, inténtalo de nuevo.",
+    },
+    tryAgain: "Intentar de nuevo",
+    continue: "Continuar",
+    skipForNow: "Omitir por ahora",
+    cancel: "Cancelar",
+  },
 };
 
 export default messages;

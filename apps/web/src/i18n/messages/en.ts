@@ -250,6 +250,21 @@ const messages = {
       status: "You’re all set.",
     },
   },
+  subscriptionCallback: {
+    success: {
+      title: "Activation complete.",
+      subtitle: "Your subscription is now active.",
+    },
+    failed: {
+      title: "Activation incomplete.",
+      subtitle:
+        "We were unable to activate your subscription. Please try again.",
+    },
+    tryAgain: "Try again",
+    continue: "Continue",
+    skipForNow: "Skip for now",
+    cancel: "Cancel",
+  },
 };
 
 export type Translations = typeof messages;

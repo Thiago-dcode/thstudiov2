@@ -2,9 +2,7 @@
 
 import { cn } from "@repo/ui/lib/utils";
 import { CheckCircle2, XCircle } from "lucide-react";
-import { useEffect } from "react";
 import PageComponent from "@/lib/components/page-component";
-import { deleteInitiateSubscriptionCookie } from "@/modules/plan-subscriptions/server-actions/initiate-subscription.action";
 
 export function CallbackSubscriptionPage({
   isSuccess,
@@ -19,10 +17,6 @@ export function CallbackSubscriptionPage({
   children: React.ReactNode;
   className?: string;
 }) {
-  useEffect(() => {
-    deleteInitiateSubscriptionCookie();
-  }, []);
-
   return (
     <PageComponent.Container
       className={cn("flex items-center justify-center m-auto", className)}

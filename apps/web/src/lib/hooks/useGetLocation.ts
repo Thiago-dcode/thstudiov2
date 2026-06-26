@@ -64,16 +64,6 @@ export const useLocationAutocomplete = () => {
       const resource = `autocomplete?text=${encodeURIComponent(
         input,
       )}&limit=5&apiKey=${apiKey}`;
-
-      console.log(`${LOG_PREFIX} search start`, {
-        input,
-        baseUrl: clientEnv.NEXT_PUBLIC_GEOAPIFY_URL,
-        resource: resource.replace(
-          clientEnv.NEXT_PUBLIC_GEOAPIFY_KEY,
-          maskApiKey(clientEnv.NEXT_PUBLIC_GEOAPIFY_KEY),
-        ),
-      });
-
       const response = await fetcher.get<
         ApiResponse<GeoapifyAutocompleteResponse>
       >({
@@ -82,10 +72,6 @@ export const useLocationAutocomplete = () => {
       });
 
       if ("error" in response && response.error) {
-        console.error(`${LOG_PREFIX} API error response`, {
-          input,
-          error: response.error,
-        });
         setError(response.error);
         setResult([]);
         return;
@@ -93,19 +79,13 @@ export const useLocationAutocomplete = () => {
 
       if (response.data) {
         const features = response.data.features ?? [];
-        console.log(`${LOG_PREFIX} search success`, {
-          input,
-          featureCount: features.length,
-        });
         cachedResult.current[input] = features;
         setResult(features);
         return;
       }
 
-      console.warn(`${LOG_PREFIX} empty response`, { input, response });
       setResult([]);
     } catch (error) {
-      console.error(`${LOG_PREFIX} search failed`, { input, error });
       setError(error);
       setResult([]);
     } finally {
