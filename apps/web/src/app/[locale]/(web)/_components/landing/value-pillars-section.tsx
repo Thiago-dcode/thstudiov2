@@ -22,18 +22,18 @@ export async function ValuePillarsSection() {
         <div className="absolute left-1/2 top-0 size-80 -translate-x-1/2 bg-fg-2/15 blur-[100px]" />
       </div>
 
-      <WebSection.Container>
+      <WebSection.Container className="">
         <WebSection.Header
           badge={t("header.badge")}
           title={t("header.title")}
           description={t("header.description")}
         />
 
-        <div className="grid grid-cols-1 gap-6 tablet:grid-cols-3">
+        <div className=" m-auto   flex  max-w-(--breakpoint-desktop-lg) items-center w-full justify-between gap-4 flex-col tablet-lg:flex-row">
           {items.map((pillar, index) => (
             <article
               key={pillar.title}
-              className="surface-card group relative flex flex-col overflow-hidden transition-all duration-300 hover:border-border-em hover:shadow-lg"
+              className="max-w-[500px] surface-card group relative flex flex-col overflow-hidden transition-all duration-300 hover:border-border-em hover:shadow-lg"
             >
               <div
                 className="pillar-card-glow pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"

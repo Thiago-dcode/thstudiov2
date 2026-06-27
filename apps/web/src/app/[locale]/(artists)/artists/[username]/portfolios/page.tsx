@@ -43,6 +43,7 @@ export default async function Page({ params }: Props) {
         <Web.List>
           {portfolios.map((portfolio) => (
             <Link
+              className="max-w-[500px] w-full tablet:w-96"
               key={portfolio.id}
               href={`/artists/${username}/portfolios/${portfolio.slug}`}
             >

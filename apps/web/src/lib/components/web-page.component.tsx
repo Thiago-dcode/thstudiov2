@@ -48,10 +48,10 @@ const Header = ({
   );
 };
 
-const List = ({ children }: { children: ReactNode }) => {
+const List = ({ children }: { children: Iterable<ReactNode> }) => {
   return (
-    <section className="grid grid-cols-2 gap-4 sm:grid-cols-3 tablet:grid-cols-4 tablet:gap-5">
-      {children}
+    <section className="flex w-full items-center justify-center desktop:justify-start gap-8 flex-wrap">
+      {Array.from(children)}
     </section>
   );
 };

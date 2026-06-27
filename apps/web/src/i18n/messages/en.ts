@@ -265,6 +265,69 @@ const messages = {
     skipForNow: "Skip for now",
     cancel: "Cancel",
   },
+  editUser: {
+    banner: {
+      alt: "Banner",
+      editTitle: "Edit Banner",
+      preview: "Banner Preview:",
+      previewAlt: "Banner preview",
+    },
+    avatar: {
+      editTitle: "Edit Avatar",
+      preview: "Profile Preview:",
+      previewAlt: "Profile preview",
+      alt: "User avatar",
+    },
+    profile: {
+      editTitle: "Edit Profile",
+      professionFallback: "Profession title",
+      biographyFallback: "Short biography",
+      firstName: {
+        label: "First Name",
+        placeholder: "Leonardo",
+      },
+      lastName: {
+        label: "Last Name",
+        placeholder: "Piero da Vinci",
+      },
+      profession: {
+        label: "Profession",
+        placeholder: "Renaissance polymath & professional dreamer",
+      },
+      shortBio: {
+        label: "Short bio about you",
+        placeholder:
+          "I sketch flying machines at breakfast and dissect curiosity for a living...",
+      },
+    },
+    address: {
+      editTitle: "Edit Address",
+      noAddress: "No address set",
+      updateDescription: "Update your address information below.",
+      warningDescription:
+        "Warning: Updating your address could affect your discovery and visibility in search results. Only update it if you really need it",
+    },
+    categories: {
+      title: "Categories",
+      editTitle: "Edit Categories",
+    },
+    update: "Update",
+  },
+  addressForm: {
+    label: "Address",
+    searchPlaceholder: "Search for your address…",
+    searching: "Searching locations…",
+    noLocations: "No locations found.",
+    minCharsHint: "Type at least 3 characters to search.",
+    saving: "Saving address…",
+  },
+  userCategories: {
+    searchLabel: "Search for a category",
+    searchPlaceholder: "design...",
+    clickHint: "Click on the categories you want",
+    noResults: "No results",
+    loadMore: "more",
+  },
 };
 
 export type Translations = typeof messages;

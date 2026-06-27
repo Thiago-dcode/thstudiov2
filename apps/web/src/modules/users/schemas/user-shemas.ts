@@ -1,5 +1,12 @@
 import * as z from "zod";
 
+const personNameField = (maxLength: number, field: "Name" | "Surname") =>
+  z
+    .string()
+    .min(1, `${field} is required`)
+    .max(maxLength, `${field} is too long`)
+    .regex(/^[^\d]*$/, `Invalid ${field}`);
+
 export const loginRequestSchema = z.object({
   password: z.string("Invalid password").min(3, "Invalid password"),
   user_agent: z.string().optional(),
@@ -7,18 +14,8 @@ export const loginRequestSchema = z.object({
 });
 
 export const createUserSchema = z.object({
-  name: z
-    .string()
-    .min(1, "Name is required")
-    .max(255, "Name is too long")
-    .nullable()
-    .optional(),
-  surname: z
-    .string()
-    .min(1, "Surname is required")
-    .max(255, "Surname is too long")
-    .nullable()
-    .optional(),
+  name: personNameField(80, "Name").nullable().optional(),
+  surname: personNameField(100, "Surname").nullable().optional(),
   username: z
     .string()
     .min(3, "Username must be at least 3 characters")
@@ -27,7 +24,7 @@ export const createUserSchema = z.object({
   password: z
     .string()
     .min(8, "Password must be at least 8 characters")
-    .max(255, "Password is too long"),
+    .max(50, "Password is too long"),
   profession: z.string().max(100, "Profession is too long").optional(),
   biography: z
     .string()
@@ -48,16 +45,8 @@ export const createUserSchema = z.object({
 
 export const updateUserSchema = z
   .object({
-    name: z
-      .string()
-      .min(1, "Name is required")
-      .max(255, "Name is too long")
-      .optional(),
-    surname: z
-      .string()
-      .min(1, "Surname is required")
-      .max(255, "Surname is too long")
-      .optional(),
+    name: personNameField(80, "Name").optional(),
+    surname: personNameField(100, "Surname").optional(),
     profession: z.string().max(100, "Profession is too long").optional(),
     username: z
       .string()
@@ -68,7 +57,7 @@ export const updateUserSchema = z
     password: z
       .string()
       .min(8, "Password must be at least 8 characters")
-      .max(255, "Password is too long")
+      .max(20, "Password is too long")
       .optional(),
     short_biography: z
       .string()

@@ -25,16 +25,16 @@ export const updateUserAction = async (
   const categories = formData.get("categories") as string;
   // Extract text fields from FormData
   const rawData: UpdateUserInputWithAssets = {
-    name: (formData.get("name") as string) ?? "",
-    surname: (formData.get("surname") as string) ?? "",
-    profession: (formData.get("profession") as string) ?? "",
-    username: (formData.get("username") as string) ?? "",
-    short_biography: (formData.get("short_biography") as string) ?? "",
+    name: (formData.get("name") as string) ?? undefined,
+    surname: (formData.get("surname") as string) ?? undefined,
+    profession: (formData.get("profession") as string) ?? undefined,
+    username: (formData.get("username") as string) ?? undefined,
+    short_biography: (formData.get("short_biography") as string) ?? undefined,
     funnel_step: formData.get("funnel_step")
       ? parseInt(formData.get("funnel_step") as string, 10)
       : undefined,
-    biography: (formData.get("biography") as string) ?? "",
-    email: (formData.get("email") as string) ?? "",
+    biography: (formData.get("biography") as string) ?? undefined,
+    email: (formData.get("email") as string) ?? undefined,
     categories: categories ? categories.split(",") : undefined,
   };
   trimValues(rawData, { deep: true });

@@ -1,8 +1,8 @@
 import { FUNNEL_LAST_STEP } from "@repo/common-lib/constants/constants";
 import { Button } from "@repo/ui/components/shadcn/button";
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import { CallbackSubscriptionPage } from "@/modules/plan-subscriptions/components/callback-subscription-page";
 import {
@@ -48,7 +48,6 @@ export default async function CallbackPage({
   ) {
     redirect("/get-started");
   }
-
 
   const t = await getTranslations("subscriptionCallback");
   const isSuccess = callback === "success";

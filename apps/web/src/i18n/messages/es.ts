@@ -268,6 +268,70 @@ const messages: Translations = {
     skipForNow: "Omitir por ahora",
     cancel: "Cancelar",
   },
+  editUser: {
+    banner: {
+      alt: "Banner",
+      editTitle: "Editar banner",
+      preview: "Vista previa del banner:",
+      previewAlt: "Vista previa del banner",
+    },
+    avatar: {
+      editTitle: "Editar avatar",
+      preview: "Vista previa del perfil:",
+      previewAlt: "Vista previa del perfil",
+      alt: "Avatar del usuario",
+    },
+    profile: {
+      editTitle: "Editar perfil",
+      professionFallback: "Título profesional",
+      biographyFallback: "Biografía breve",
+      firstName: {
+        label: "Nombre",
+        placeholder: "Leonardo",
+      },
+      lastName: {
+        label: "Apellido",
+        placeholder: "Piero da Vinci",
+      },
+      profession: {
+        label: "Profesión",
+        placeholder: "Polímata renacentista y soñador profesional",
+      },
+      shortBio: {
+        label: "Biografía breve sobre ti",
+        placeholder:
+          "Dibujo máquinas voladoras en el desayuno y disecciono la curiosidad para vivir...",
+      },
+    },
+    address: {
+      editTitle: "Editar dirección",
+      noAddress: "Sin dirección registrada",
+      updateDescription:
+        "Actualiza tu información de dirección a continuación.",
+      warningDescription:
+        "Advertencia: Actualizar tu dirección podría afectar tu descubrimiento y visibilidad en los resultados de búsqueda. Actualízala solo si realmente lo necesitas",
+    },
+    categories: {
+      title: "Categorías",
+      editTitle: "Editar categorías",
+    },
+    update: "Actualizar",
+  },
+  addressForm: {
+    label: "Dirección",
+    searchPlaceholder: "Busca tu dirección…",
+    searching: "Buscando ubicaciones…",
+    noLocations: "No se encontraron ubicaciones.",
+    minCharsHint: "Escribe al menos 3 caracteres para buscar.",
+    saving: "Guardando dirección…",
+  },
+  userCategories: {
+    searchLabel: "Buscar una categoría",
+    searchPlaceholder: "diseño...",
+    clickHint: "Haz clic en las categorías que desees",
+    noResults: "Sin resultados",
+    loadMore: "más",
+  },
 };
 
 export default messages;

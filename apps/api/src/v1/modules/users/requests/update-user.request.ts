@@ -14,17 +14,17 @@ import { ModelExist } from 'src/common/validators/model-exist.validtor';
 export class UpdateUserRequest {
   @IsOptional()
   @IsString()
-  @MaxLength(255)
+  @MaxLength(80)
   name?: string;
 
   @IsOptional()
   @IsString()
-  @MaxLength(255)
+  @MaxLength(120)
   surname?: string;
 
   @IsOptional()
   @IsString()
-  @MaxLength(255)
+  @MaxLength(120)
   profession?: string;
 
   @IsOptional()

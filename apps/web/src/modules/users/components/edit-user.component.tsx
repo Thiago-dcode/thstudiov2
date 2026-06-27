@@ -17,6 +17,7 @@ import {
 import { usePreviewUrls } from "@repo/ui/hooks/usePreviewUrls";
 import { Pen } from "lucide-react";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import fallbackBanner from "@/assets/images/fallback-banner.jpg";
 import FormComponent from "@/lib/components/form-component";
@@ -29,6 +30,7 @@ import {
 import { useEditUser } from "../providers/edit-user.provider";
 
 export default function EditUserComponent() {
+  const t = useTranslations("editUser");
   const {
     user,
     address,
@@ -97,7 +99,7 @@ export default function EditUserComponent() {
       {/* Banner */}
       <div className="relative group max-h-74 aspect-video w-full">
         <Image
-          alt="banner"
+          alt={t("banner.alt")}
           src={user.banner || fallbackBanner}
           fill
           className="object-cover"
@@ -110,7 +112,7 @@ export default function EditUserComponent() {
             <Pen className="size-3" />
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
-            <DialogTitle>Edit Banner</DialogTitle>
+            <DialogTitle>{t("banner.editTitle")}</DialogTitle>
             <FormComponent.Container>
               <FormComponent.Form
                 onSubmit={handleSubmit}
@@ -139,7 +141,7 @@ export default function EditUserComponent() {
               <Pen className="size-3" />
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
-              <DialogTitle>Edit Avatar</DialogTitle>
+              <DialogTitle>{t("avatar.editTitle")}</DialogTitle>
               <FormComponent.Container>
                 <FormComponent.Form
                   onSubmit={handleSubmit}
@@ -162,7 +164,7 @@ export default function EditUserComponent() {
           {user.avatar ? (
             <img
               src={user.avatar}
-              alt={user.username || "User avatar"}
+              alt={user.username || t("avatar.alt")}
               className="w-full h-full object-cover rounded-full"
             />
           ) : (
@@ -182,7 +184,7 @@ export default function EditUserComponent() {
             <Pen className="size-3" />
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
-            <DialogTitle>Edit Profile</DialogTitle>
+            <DialogTitle>{t("profile.editTitle")}</DialogTitle>
             <FormComponent.Container>
               <FormComponent.Form
                 onSubmit={handleSubmit}
@@ -201,32 +203,33 @@ export default function EditUserComponent() {
               {user.name} {user.surname}
             </h1>
             <p className=" text-text-muted">
-              {user.profession || "Profession title"}
+              {user.profession || t("profile.professionFallback")}
             </p>
-            <p className="pt-2">{user.short_biography}</p>
+            <p className="pt-2">
+              {user.short_biography || t("profile.biographyFallback")}
+            </p>
           </div>
         </section>
-        <section className="flex flex-wrap items-start gap-2 min-w-0">
-          <p className="min-w-0 flex-1 wrap-break-word text-text-muted">
-            {address?.formated_address || "No address set"}
+        <section className="flex items-start justify-start gap-2 min-w-0">
+          <p className=" wrap-break-word text-text-muted">
+            {address?.formated_address || t("address.noAddress")}
           </p>
           <Dialog
             open={openAddress}
             onOpenChange={(value) => handleSetOpen(value, "address")}
           >
-            <DialogTrigger className="shrink-0 flex min-h-11 min-w-11 items-center justify-center bg-fg p-2 transition-opacity hover:bg-fg-2 cursor-pointer">
+            <DialogTrigger className="shrink-0 flex items-center bg-fg p-2 transition-opacity hover:bg-fg-2 cursor-pointer">
               <Pen className="size-3" aria-hidden />
-              <span className="sr-only">Edit address</span>
             </DialogTrigger>
             <DialogContent
               className="max-w-2xl"
               onOpenAutoFocus={(event) => event.preventDefault()}
             >
-              <DialogTitle>Edit Address</DialogTitle>
+              <DialogTitle>{t("address.editTitle")}</DialogTitle>
               <DialogDescription className="text-pretty">
                 {address
-                  ? "Warning: Updating your address could affect your discovery and visibility in search results. Only update it if you really need it"
-                  : "Update your address information below."}
+                  ? t("address.warningDescription")
+                  : t("address.updateDescription")}
               </DialogDescription>
               <FormComponent.Container>
                 <div className="max-w-xl pt-4 w-full min-w-0">
@@ -247,16 +250,16 @@ export default function EditUserComponent() {
         {/*Categories section */}
         <section className="flex flex-col items-start justify-start gap-1 pt-8">
           <div className="flex items-center justify-start gap-2">
-            <h3 className="text-text-muted">Categories</h3>
+            <h3 className="text-text-muted">{t("categories.title")}</h3>
             <Dialog
               open={openCategories}
               onOpenChange={(value) => handleSetOpen(value, "categories")}
             >
               <DialogTrigger className="p-2 bg-fg hover:bg-fg-2 transition-opacity cursor-pointer">
-                <Pen className="size-2" />
+                <Pen className="size-3" />
               </DialogTrigger>
               <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                <DialogTitle>Edit Categories</DialogTitle>
+                <DialogTitle>{t("categories.editTitle")}</DialogTitle>
                 <UpdateCategoriesProvider userCategories={userCategories}>
                   <FormComponent.Container>
                     <FormComponent.Form
@@ -285,6 +288,7 @@ export default function EditUserComponent() {
   );
 }
 export const EditAvatar = ({ defaultAvatar }: { defaultAvatar?: string }) => {
+  const t = useTranslations("editUser");
   const { errors, inputErrors, deleteInputErrorProperty, isPending } =
     useEditUser();
   const { files } = useInputFile();
@@ -295,11 +299,11 @@ export const EditAvatar = ({ defaultAvatar }: { defaultAvatar?: string }) => {
       <div className="flexw-full max-w-2xl mx-auto p-4">
         {previewUrls?.length && (
           <div className="mt-4 flex flex-col items-center gap-2">
-            <h3 className="text-sm font-medium">Profile Preview:</h3>
+            <h3 className="text-sm font-medium">{t("avatar.preview")}</h3>
             <div className="relative w-32 h-32 overflow-hidden border-4 rounded-full">
               <img
                 src={previewUrls[0]}
-                alt="Profile Preview"
+                alt={t("avatar.previewAlt")}
                 className="w-full h-full object-cover"
               />
             </div>
@@ -317,7 +321,7 @@ export const EditAvatar = ({ defaultAvatar }: { defaultAvatar?: string }) => {
         isPending={isPending}
         disabled={!files?.length || isPending}
       >
-        Update
+        {t("update")}
       </FormComponent.SubmitButton>
 
       {errors && errors.length > 0 ? <Errors errors={errors} /> : null}
@@ -326,6 +330,7 @@ export const EditAvatar = ({ defaultAvatar }: { defaultAvatar?: string }) => {
 };
 
 export const EditBanner = ({ defaultBanner }: { defaultBanner?: string }) => {
+  const t = useTranslations("editUser");
   const { errors, inputErrors, deleteInputErrorProperty, isPending } =
     useEditUser();
   const { files } = useInputFile();
@@ -336,11 +341,11 @@ export const EditBanner = ({ defaultBanner }: { defaultBanner?: string }) => {
       <div className="w-full max-w-2xl mx-auto p-4">
         {previewUrls?.length ? (
           <div className="mt-4 flex flex-col items-center gap-2">
-            <h3 className="text-sm font-medium">Banner Preview:</h3>
+            <h3 className="text-sm font-medium">{t("banner.preview")}</h3>
             <div className="relative w-full aspect-video overflow-hidden border-4 border-fg-2">
               <img
                 src={previewUrls[0]}
-                alt="Banner Preview"
+                alt={t("banner.previewAlt")}
                 className="w-full h-full object-cover"
               />
             </div>
@@ -358,7 +363,7 @@ export const EditBanner = ({ defaultBanner }: { defaultBanner?: string }) => {
         isPending={isPending}
         disabled={!files?.length || isPending}
       >
-        Update
+        {t("update")}
       </FormComponent.SubmitButton>
 
       {errors && errors.length > 0 ? <Errors errors={errors} /> : null}
@@ -376,18 +381,19 @@ export const EditProfile = ({
     short_biography?: string | null;
   };
 }) => {
+  const t = useTranslations("editUser");
   const { errors, inputErrors, deleteInputErrorProperty, isPending } =
     useEditUser();
 
   return (
     <div className="w-full flex flex-col gap-4">
       <FormComponent.LabelInput
-        label="First Name"
+        label={t("profile.firstName.label")}
         type="text"
         id="name"
         name="name"
         defaultValue={user?.name || undefined}
-        placeholder="Leonardo"
+        placeholder={t("profile.firstName.placeholder")}
         autoComplete="given-name"
         required
         autoFocus
@@ -396,12 +402,12 @@ export const EditProfile = ({
       />
 
       <FormComponent.LabelInput
-        label="Last Name"
+        label={t("profile.lastName.label")}
         type="text"
         id="surname"
         name="surname"
         defaultValue={user?.surname || undefined}
-        placeholder="Piero da Vinci"
+        placeholder={t("profile.lastName.placeholder")}
         autoComplete="family-name"
         required
         error={inputErrors?.surname}
@@ -409,30 +415,30 @@ export const EditProfile = ({
       />
 
       <FormComponent.LabelInput
-        label="Profession"
+        label={t("profile.profession.label")}
         type="text"
         id="profession"
         name="profession"
         defaultValue={user?.profession || undefined}
-        placeholder="Renaissance polymath & professional dreamer"
+        placeholder={t("profile.profession.placeholder")}
         autoComplete="organization-title"
         error={inputErrors?.profession}
         onChange={() => deleteInputErrorProperty("profession")}
       />
 
       <FormComponent.LabelTextarea
-        label="Short bio about you"
+        label={t("profile.shortBio.label")}
         id="short_biography"
         name="short_biography"
         defaultValue={user?.short_biography || undefined}
-        placeholder="I sketch flying machines at breakfast and dissect curiosity for a living..."
+        placeholder={t("profile.shortBio.placeholder")}
         rows={4}
         error={inputErrors?.short_biography}
         onChange={() => deleteInputErrorProperty("short_biography")}
       />
 
       <FormComponent.SubmitButton isPending={isPending} disabled={isPending}>
-        Update
+        {t("update")}
       </FormComponent.SubmitButton>
 
       {errors && errors.length > 0 ? <Errors errors={errors} /> : null}
@@ -441,6 +447,7 @@ export const EditProfile = ({
 };
 
 export const EditCategories = () => {
+  const t = useTranslations("editUser");
   const { errors, isPending } = useEditUser();
   const { categoriesSelected } = useUpdateCategories();
   const inputCategoryIds = useRef<HTMLInputElement>(null);
@@ -474,7 +481,7 @@ export const EditCategories = () => {
           isPending
         }
       >
-        Update
+        {t("update")}
       </FormComponent.SubmitButton>
 
       {errors && errors.length > 0 ? <Errors errors={errors} /> : null}

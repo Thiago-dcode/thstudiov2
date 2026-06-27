@@ -99,7 +99,7 @@ export async function FeatureCategoriesSection() {
           descriptionClassName="max-w-md"
         />
 
-        <div className="grid grid-cols-1 gap-4 phone:grid-cols-2 tablet:grid-cols-3 laptop:grid-cols-4">
+        <div className="grid grid-cols-1 gap-8 phone:grid-cols-2 tablet:grid-cols-3 laptop:grid-cols-4">
           {categories.map((category) => (
             <FeaturedCategoryCard
               key={category.id}

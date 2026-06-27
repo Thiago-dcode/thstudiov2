@@ -12,6 +12,7 @@ import { Label } from "@repo/ui/components/shadcn/label";
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { cn } from "@repo/ui/lib/utils";
 import { Loader2, MapPin } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { GeoapifyFeature } from "@/lib/hooks/types/geoapify";
 import { useLocationAutocomplete } from "@/lib/hooks/useGetLocation";
@@ -48,6 +49,7 @@ export const CreateOrUpdateAddress = ({
   onSuccessChange?: (success: boolean) => void;
   onPendingChange?: (isPending: boolean) => void;
 }) => {
+  const t = useTranslations("addressForm");
   const [selectedKey, setSelectedKey] = useState<string | null>(() => {
     if (
       defaultAddress?.latitude != null &&
@@ -180,7 +182,7 @@ export const CreateOrUpdateAddress = ({
         htmlFor={ADDRESS_INPUT_ID}
         className="text-xs tracking-wide text-text-muted"
       >
-        Address
+        {t("label")}
       </Label>
 
       <div className="relative min-w-0">
@@ -199,7 +201,7 @@ export const CreateOrUpdateAddress = ({
           <ComboboxInput
             id={ADDRESS_INPUT_ID}
             name="address-search"
-            placeholder="Search for your address…"
+            placeholder={t("searchPlaceholder")}
             value={inputValue}
             onChange={handleInputChange}
             disabled={isLoading}
@@ -223,12 +225,12 @@ export const CreateOrUpdateAddress = ({
               {loading ? (
                 <>
                   <Spinner className="size-4" />
-                  <span>Searching locations…</span>
+                  <span>{t("searching")}</span>
                 </>
               ) : canSearch ? (
-                "No locations found."
+                t("noLocations")
               ) : (
-                "Type at least 3 characters to search."
+                t("minCharsHint")
               )}
             </ComboboxEmpty>
             <ComboboxList className="p-1">
@@ -278,12 +280,10 @@ export const CreateOrUpdateAddress = ({
           aria-live="polite"
         >
           <Loader2 className="size-3.5 shrink-0 animate-spin" aria-hidden />
-          Saving address…
+          {t("saving")}
         </p>
       ) : showHint ? (
-        <p className="text-xs text-text-muted">
-          Type at least 3 characters to search.
-        </p>
+        <p className="text-xs text-text-muted">{t("minCharsHint")}</p>
       ) : null}
 
       <Errors errors={errors || []} />

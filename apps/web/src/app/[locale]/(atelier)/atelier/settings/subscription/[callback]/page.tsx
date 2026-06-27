@@ -1,13 +1,10 @@
 import { Button } from "@repo/ui/components/shadcn/button";
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import { CallbackSubscriptionPage } from "@/modules/plan-subscriptions/components/callback-subscription-page";
-import {
-  deleteInitiateSubscriptionCookie,
-  getInitiateSubscriptionCookie,
-} from "@/modules/plan-subscriptions/server-actions/initiate-subscription.action";
+import { getInitiateSubscriptionCookie } from "@/modules/plan-subscriptions/server-actions/initiate-subscription.action";
 
 const SETTINGS_URL = "/atelier/settings";
 const SUBSCRIPTION_URL = "/atelier/settings/subscription";
@@ -35,7 +32,6 @@ export default async function SubscriptionCallbackPage({
   if (!cookie || !validCallbacks.includes(callback) || token !== cookie.token) {
     redirect(SETTINGS_URL);
   }
-
 
   const t = await getTranslations("subscriptionCallback");
   const isSuccess = callback === "success";

@@ -4,10 +4,12 @@ import { Skeleton } from "@repo/ui/components/shadcn/skeleton";
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { cn } from "@repo/ui/lib/utils";
 import { ArrowDown } from "lucide-react";
+import { useTranslations } from "next-intl";
 import FormComponent from "@/lib/components/form-component";
 import { useUpdateCategories } from "../providers/categories.provider";
 
 export const UserCategoriesComponent = () => {
+  const t = useTranslations("userCategories");
   const {
     searchRef,
     categories,
@@ -28,11 +30,11 @@ export const UserCategoriesComponent = () => {
           ref={searchRef}
           className="w-full h-12 text-base"
           inputClassName="text-base"
-          label="Search for a category"
+          label={t("searchLabel")}
           type="text"
           id="search-category"
           name="search-category"
-          placeholder="design..."
+          placeholder={t("searchPlaceholder")}
           autoComplete="given-name"
           autoFocus
           onChange={() => {
@@ -63,9 +65,7 @@ export const UserCategoriesComponent = () => {
       </div>
       <div className="flex flex-col items-start justify-start gap-1 pt-4 py-1 px-2 w-full">
         {categories.length > 0 && (
-          <p className="mb-1 text-sm text-text-muted">
-            Click on the categories you want
-          </p>
+          <p className="mb-1 text-sm text-text-muted">{t("clickHint")}</p>
         )}
         <div className="overflow-y-scroll max-h-[250px] w-full">
           {categories.length > 0 ? (
@@ -90,7 +90,7 @@ export const UserCategoriesComponent = () => {
               })}
             </FadeInDiv>
           ) : !isLoading && categoriesResponse ? (
-            <p>No results</p>
+            <p>{t("noResults")}</p>
           ) : isLoading ? (
             <div className="w-full flex flex-wrap items-start justify-start gap-2">
               {Array.from({ length: 15 }).map((_, i) => {
@@ -120,7 +120,7 @@ export const UserCategoriesComponent = () => {
             }}
             variant={"ghost"}
           >
-            more <ArrowDown />
+            {t("loadMore")} <ArrowDown />
           </Button>
         )}
     </div>
