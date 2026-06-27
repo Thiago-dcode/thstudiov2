@@ -139,6 +139,13 @@ export class CollectionRepository extends BaseRepository {
     return !!result;
   }
 
+  async countHighlights(userId: number): Promise<number> {
+    return this.query()
+      .where('user_id', '=', userId)
+      .where('is_highlight', '=', true)
+      .count();
+  }
+
   async create({ media, ...collectionData }: CreateCollectionInput): Promise<Collection> {
     const cols = Object.keys(collectionData);
     const values = Object.values(collectionData);

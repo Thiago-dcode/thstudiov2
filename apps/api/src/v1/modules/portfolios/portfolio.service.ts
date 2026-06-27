@@ -1,5 +1,7 @@
 import { BadRequestException, Injectable, UnauthorizedException } from "@nestjs/common";
 import { FactoryLogService } from "@repo/backend-lib/services/log-service";
+import { MAX_HIGHLIGHT_PORTFOLIOS } from "@repo/common-lib/constants/highlights";
+import type { HighlightCount } from "@repo/common-lib/types/general";
 import { Helpers } from "src/common/services/helpers.service";
 import { CreatePortfolioRequest } from "./requests/create-portfolio.request";
 import { UpdatePortfolioRequest } from "./requests/update-portfolio.request";
@@ -12,6 +14,13 @@ import { UPDATE_USER_EXTRA_DATA_METRICS } from "@repo/common-lib/constants/const
 import { UpdateUserExtraDataMetricsEvent } from "../user-extra-data/events/update-user-extra-data-metrics.event";
 import { AiService } from "../ai/ai.service";
 import { MediaModerationException } from "src/common/exceptions/media-moderation-exception";
+import { ApiException } from "src/common/exceptions/api-exception";
+
+const CACHE_TTL = 1000 * 60 * 60 * 24;
+
+export const portfolioCacheKeys = {
+  highlightCount: (userId: number) => `portfolio-highlight-count-${userId}`,
+};
 
 @Injectable()
 export class PortfolioService {
@@ -45,6 +54,41 @@ export class PortfolioService {
     }
   }
 
+  async countHighlights(): Promise<HighlightCount> {
+    const userId = this.requestService.user.id;
+    return this.helpers.cacheRemember(
+      portfolioCacheKeys.highlightCount(userId),
+      this.resolveHighlightCount(userId),
+      { append_language: false, ttl: CACHE_TTL },
+    );
+  }
+
+  private async resolveHighlightCount(userId: number): Promise<HighlightCount> {
+    const count = await this.portfolioRepository.countHighlights(userId);
+    return { count };
+  }
+
+  private async invalidateHighlightCountCache(userId: number) {
+    await this.helpers.deleteCached(portfolioCacheKeys.highlightCount(userId));
+  }
+
+  private async enforceHighlightLimit(
+    userId: number,
+    isHighlight: boolean | undefined,
+    currentlyHighlighted = false,
+  ) {
+    if (isHighlight !== true || currentlyHighlighted) {
+      return;
+    }
+
+    const count = await this.portfolioRepository.countHighlights(userId);
+    if (count >= MAX_HIGHLIGHT_PORTFOLIOS) {
+      throw ApiException.maxHighlights(
+        `You can highlight up to ${MAX_HIGHLIGHT_PORTFOLIOS} portfolios on your profile page`,
+      );
+    }
+  }
+
   async create(request: CreatePortfolioRequest) {
 
     if (request.media?.length === 0 && request.collections?.length === 0) {
@@ -55,6 +99,7 @@ export class PortfolioService {
 
       throw new BadRequestException(`Slug ${request.slug} already exists`);
     }
+    await this.enforceHighlightLimit(request.user_id, request.is_highlight);
     await this.userExtraDataService.enforceUserLimits(request.user_id, {
       portfolios_count: 1,
     });
@@ -88,6 +133,7 @@ export class PortfolioService {
       is_highlight: request.is_highlight ?? false,
       is_active: request.is_active ?? true,
     });
+    await this.invalidateHighlightCountCache(request.user_id);
     this.eventEmitter.emit(UPDATE_USER_EXTRA_DATA_METRICS, new UpdateUserExtraDataMetricsEvent(request.user_id));
     return portfolio;
 
@@ -103,6 +149,12 @@ export class PortfolioService {
     if (portfolio.user_id !== this.requestService.user.id) {
       throw new UnauthorizedException();
     }
+
+    await this.enforceHighlightLimit(
+      portfolio.user_id,
+      request.is_highlight,
+      portfolio.is_highlight,
+    );
 
     // Update is atomic: media and collections are fully replaced, so at least 1 must be provided
     if ((!request.media || request.media.length === 0) && (!request.collections || request.collections.length === 0)) {
@@ -158,6 +210,8 @@ export class PortfolioService {
       categories,
     });
 
+    await this.invalidateHighlightCountCache(portfolio.user_id);
+
     return updated;
   }
 
@@ -178,6 +232,7 @@ export class PortfolioService {
       portfolio.thumbnail ? this.helpers.deleteAsset(portfolio.thumbnail) : undefined,
       this.portfolioRepository.delete(id),
     ]);
+    await this.invalidateHighlightCountCache(portfolio.user_id);
     this.eventEmitter.emit(UPDATE_USER_EXTRA_DATA_METRICS, new UpdateUserExtraDataMetricsEvent(portfolio.user_id));
   }
 

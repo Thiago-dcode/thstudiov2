@@ -1,5 +1,7 @@
 import { BadRequestException, Injectable, UnauthorizedException } from "@nestjs/common";
 import { FactoryLogService } from "@repo/backend-lib/services/log-service";
+import { MAX_HIGHLIGHT_SERVICES } from "@repo/common-lib/constants/highlights";
+import type { HighlightCount } from "@repo/common-lib/types/general";
 import { Helpers } from "src/common/services/helpers.service";
 import { CreateServiceRequest } from "./requests/create-service.request";
 import { UpdateServiceRequest } from "./requests/update-service.request";
@@ -11,8 +13,11 @@ import { UPDATE_USER_EXTRA_DATA_METRICS } from "@repo/common-lib/constants/const
 import { UpdateUserExtraDataMetricsEvent } from "../user-extra-data/events/update-user-extra-data-metrics.event";
 import { AiService } from "../ai/ai.service";
 import { MediaModerationException } from "src/common/exceptions/media-moderation-exception";
+import { ApiException } from "src/common/exceptions/api-exception";
 import { serviceCacheKeys } from "../user-services/user-service.service";
 import { cleanObj } from "@repo/common-lib/utils/object";
+
+const CACHE_TTL = 1000 * 60 * 60 * 24;
 
 @Injectable()
 export class ServiceService {
@@ -35,10 +40,47 @@ export class ServiceService {
     };
   }
 
+  async countHighlights(): Promise<HighlightCount> {
+    const userId = this.requestService.user.id;
+    return this.helpers.cacheRemember(
+      serviceCacheKeys.highlightCount(userId),
+      this.resolveHighlightCount(userId),
+      { append_language: false, ttl: CACHE_TTL },
+    );
+  }
+
+  private async resolveHighlightCount(userId: number): Promise<HighlightCount> {
+    const count = await this.serviceRepository.countHighlights(userId);
+    return { count };
+  }
+
+  private highlightCountCacheKey(userId: number) {
+    return serviceCacheKeys.highlightCount(userId);
+  }
+
+  private async enforceHighlightLimit(
+    userId: number,
+    isHighlight: boolean | undefined,
+    currentlyHighlighted = false,
+  ) {
+    if (isHighlight !== true || currentlyHighlighted) {
+      return;
+    }
+
+    const count = await this.serviceRepository.countHighlights(userId);
+    if (count >= MAX_HIGHLIGHT_SERVICES) {
+      throw ApiException.maxHighlights(
+        `You can highlight up to ${MAX_HIGHLIGHT_SERVICES} services on your profile page`,
+      );
+    }
+  }
+
   async create(request: CreateServiceRequest) {
     if ((await this.slugExists(request.slug, request.user_id)).exists) {
       throw new BadRequestException(`Slug ${request.slug} already exists`);
     }
+
+    await this.enforceHighlightLimit(request.user_id, request.is_highlight);
 
     await this.userExtraDataService.enforceUserLimits(request.user_id, {
       services_count: 1,
@@ -80,6 +122,7 @@ export class ServiceService {
 
     await this.helpers.deleteManyCached([
       serviceCacheKeys.allByUser(request.user_id),
+      this.highlightCountCacheKey(request.user_id),
     ]);
 
     this.eventEmitter.emit(
@@ -100,6 +143,12 @@ export class ServiceService {
     if (service.user_id !== this.requestService.user.id) {
       throw new UnauthorizedException();
     }
+
+    await this.enforceHighlightLimit(
+      service.user_id,
+      request.is_highlight,
+      service.is_highlight,
+    );
 
     if (request.slug && request.slug !== service.slug) {
       if ((await this.slugExists(request.slug, service.user_id)).exists) {
@@ -145,6 +194,7 @@ export class ServiceService {
     const keysToInvalidate = [
       serviceCacheKeys.bySlug(service.user_id, service.slug),
       serviceCacheKeys.allByUser(service.user_id),
+      this.highlightCountCacheKey(service.user_id),
     ];
     if (request.slug && request.slug !== service.slug) {
       keysToInvalidate.push(serviceCacheKeys.bySlug(service.user_id, request.slug));

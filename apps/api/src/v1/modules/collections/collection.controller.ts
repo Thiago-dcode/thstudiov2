@@ -26,6 +26,11 @@ export class CollectionController {
     return await this.collectionService.findAll(indexCollectionRequest);
   }
 
+  @Get('highlight-count')
+  async countHighlights() {
+    return await this.collectionService.countHighlights();
+  }
+
   @Post()
   async create(@Body() createCollectionRequest: CreateCollectionRequest) {
     return await this.collectionService.create(createCollectionRequest);

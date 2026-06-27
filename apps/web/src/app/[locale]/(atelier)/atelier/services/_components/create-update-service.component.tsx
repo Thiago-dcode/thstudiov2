@@ -1,6 +1,7 @@
 "use client";
 
 import { ALLOWED_IMAGE_FILE_TYPES } from "@repo/common-lib/constants/constants";
+import { MAX_HIGHLIGHT_SERVICES } from "@repo/common-lib/constants/highlights";
 import type { Portfolio } from "@repo/common-lib/types/portfolio";
 import type { ActionReturn } from "@repo/common-lib/types/response";
 import type { FullService, Service } from "@repo/common-lib/types/service";
@@ -8,6 +9,7 @@ import {
   generateValidSlug,
   isAValidSlugFormat,
 } from "@repo/common-lib/utils/generate-valid-slug";
+import { isHighlightToggleDisabled } from "@repo/common-lib/utils/highlights";
 import { FileInput } from "@repo/ui/components/custom/file-input";
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
 import { Checkbox } from "@repo/ui/components/shadcn/checkbox";
@@ -34,6 +36,7 @@ import FormComponent from "@/lib/components/form-component";
 import type { UserAuth } from "@/modules/auth/auth.types";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { createOrUpdateServiceAction } from "@/modules/services/server-actions/create-update-service.action";
+import { getServiceHighlightCountAction } from "@/modules/services/server-actions/get-highlight-count.action";
 import { serviceSlugExistsAction } from "@/modules/services/server-actions/slug-exists.action";
 
 type ServiceActionInput = Parameters<typeof createOrUpdateServiceAction>[0];
@@ -50,7 +53,45 @@ export const CreateOrUpdateService = ({
   const router = useRouter();
   const isUpdate = !!defaultService;
   const readOnly = Boolean(defaultService?.blocked_at);
+  const highlightLimit = MAX_HIGHLIGHT_SERVICES;
 
+  const highlightCountMemo = useRef<ActionReturn<
+    number | null,
+    undefined
+  > | null>(null);
+  const forceHighlightFetchRef = useRef(false);
+
+  const {
+    handleAction: handleHighlightCountAction,
+    result: highlightCountResult,
+    isPending: isLoadingHighlightCount,
+    cleanResult: cleanHighlightResult,
+  } = useHandleAction({
+    action: async () => {
+      if (highlightCountMemo.current && !forceHighlightFetchRef.current) {
+        return highlightCountMemo.current;
+      }
+      forceHighlightFetchRef.current = false;
+      return await getServiceHighlightCountAction();
+    },
+    afterAction: async (data) => {
+      highlightCountMemo.current = data;
+    },
+  });
+
+  const fetchHighlightCount = useCallback(
+    async (options?: { force?: boolean }) => {
+      if (options?.force) {
+        highlightCountMemo.current = null;
+        forceHighlightFetchRef.current = true;
+        cleanHighlightResult();
+      }
+      await handleHighlightCountAction();
+    },
+    [handleHighlightCountAction, cleanHighlightResult],
+  );
+
+  const highlightCount = highlightCountResult?.data ?? 0;
   const titleRef = useRef(defaultService?.title ?? "");
   const slugRef = useRef(defaultService?.slug ?? "");
   const slugInputRef = useRef<HTMLInputElement>(null);
@@ -61,6 +102,18 @@ export const CreateOrUpdateService = ({
   const isActiveRef = useRef(defaultService?.is_active ?? true);
   const showPriceRef = useRef(defaultService?.show_price ?? false);
   const isHighlightRef = useRef(defaultService?.is_highlight ?? false);
+  const originallyHighlightedRef = useRef(
+    defaultService?.is_highlight ?? false,
+  );
+  const [isHighlighted, setIsHighlighted] = useState(
+    defaultService?.is_highlight ?? false,
+  );
+  const highlightToggleDisabled = isHighlightToggleDisabled(
+    highlightCount,
+    highlightLimit,
+    isHighlighted,
+    originallyHighlightedRef.current,
+  );
   const [selectedPortfolioId, setSelectedPortfolioId] = useState<
     number | undefined
   >(defaultService?.portfolio_id ?? undefined);
@@ -114,6 +167,7 @@ export const CreateOrUpdateService = ({
           toast.error(error);
         }
       } else if (result.data) {
+        await fetchHighlightCount({ force: true });
         toast.success(isUpdate ? "Service updated" : "Service created");
         router.push("/atelier/services");
         router.refresh();
@@ -206,6 +260,10 @@ export const CreateOrUpdateService = ({
   );
 
   useEffect(() => {
+    void fetchHighlightCount();
+  }, [fetchHighlightCount]);
+
+  useEffect(() => {
     if (defaultService) {
       titleRef.current = defaultService.title;
       slugRef.current = defaultService.slug;
@@ -215,6 +273,7 @@ export const CreateOrUpdateService = ({
       isActiveRef.current = defaultService.is_active;
       showPriceRef.current = defaultService.show_price;
       isHighlightRef.current = defaultService.is_highlight;
+      setIsHighlighted(defaultService.is_highlight);
       setSelectedPortfolioId(defaultService.portfolio_id ?? undefined);
       setFeatures(
         defaultService.features?.length
@@ -405,30 +464,46 @@ export const CreateOrUpdateService = ({
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="service-is-highlight"
-                defaultChecked={isHighlightRef.current}
-                onCheckedChange={(checked) => {
-                  deleteInputErrorProperty("is_highlight");
-                  isHighlightRef.current = checked === true;
-                }}
-                disabled={isPending}
-              />
-              <Label
-                htmlFor="service-is-highlight"
-                className="text-sm font-normal cursor-pointer"
-              >
-                Show on profile page
-              </Label>
-              <InfoTooltip
-                content={
-                  <p className="text-sm">
-                    When enabled, this service is highlighted on your public
-                    artist profile so visitors can find it more easily.
-                  </p>
-                }
-              />
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="service-is-highlight"
+                  checked={isHighlighted}
+                  onCheckedChange={(checked) => {
+                    deleteInputErrorProperty("is_highlight");
+                    const value = checked === true;
+                    isHighlightRef.current = value;
+                    setIsHighlighted(value);
+                  }}
+                  disabled={
+                    isPending ||
+                    isLoadingHighlightCount ||
+                    highlightToggleDisabled
+                  }
+                />
+                <Label
+                  htmlFor="service-is-highlight"
+                  className="text-sm font-normal cursor-pointer"
+                >
+                  Show on profile page
+                </Label>
+                <InfoTooltip
+                  content={
+                    <p className="text-sm">
+                      When enabled, this service is highlighted on your public
+                      artist profile so visitors can find it more easily. You
+                      can highlight up to {highlightLimit} services on your
+                      profile page.
+                    </p>
+                  }
+                />
+              </div>
+              {!isLoadingHighlightCount && highlightToggleDisabled && (
+                <p className="text-xs text-text-muted">
+                  You&apos;ve reached the limit of {highlightLimit} highlighted
+                  services on your profile page.
+                </p>
+              )}
             </div>
           </div>
 

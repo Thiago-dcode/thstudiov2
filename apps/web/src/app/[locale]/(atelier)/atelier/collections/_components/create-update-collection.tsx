@@ -16,6 +16,7 @@ import {
   generateValidSlug,
   isAValidSlugFormat,
 } from "@repo/common-lib/utils/generate-valid-slug";
+import { isHighlightToggleDisabled } from "@repo/common-lib/utils/highlights";
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
 import { Checkbox } from "@repo/ui/components/shadcn/checkbox";
 import { Label } from "@repo/ui/components/shadcn/label";
@@ -92,11 +93,29 @@ export const CreateOrUpdateCollection = ({
     mediaSelected,
     handlePushMediaSelected,
     handleRemoveMediaSelected,
+    highlightCount,
+    highlightLimit,
+    isLoadingHighlightCount,
+    fetchHighlightCount,
   } = useCollection();
+
+  const isCurrentlyHighlighted = formData.is_highlight ?? false;
+  const originallyHighlighted =
+    (currentCollection ?? defaultCollection)?.is_highlight ?? false;
+  const highlightToggleDisabled = isHighlightToggleDisabled(
+    highlightCount,
+    highlightLimit,
+    isCurrentlyHighlighted,
+    originallyHighlighted,
+  );
 
   const readOnly = Boolean(
     (currentCollection ?? defaultCollection)?.blocked_at,
   );
+
+  useEffect(() => {
+    void fetchHighlightCount();
+  }, [fetchHighlightCount]);
 
   useEffect(() => {
     if (defaultCollection && currentCollection?.id !== defaultCollection.id) {
@@ -303,30 +322,44 @@ export const CreateOrUpdateCollection = ({
             disabled={isPending}
           />
 
-          <div className="flex items-center gap-2">
-            <Checkbox
-              id="collection-is-highlight"
-              checked={formData.is_highlight ?? false}
-              onCheckedChange={(checked) => {
-                deleteInputErrorProperty("is_highlight");
-                handleSetFormData("is_highlight", checked === true);
-              }}
-              disabled={isPending}
-            />
-            <Label
-              htmlFor="collection-is-highlight"
-              className="text-sm font-normal cursor-pointer"
-            >
-              Show on profile page
-            </Label>
-            <InfoTooltip
-              content={
-                <p className="text-sm">
-                  When enabled, this collection is highlighted on your public
-                  artist profile so visitors can find it more easily.
-                </p>
-              }
-            />
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="collection-is-highlight"
+                checked={formData.is_highlight ?? false}
+                onCheckedChange={(checked) => {
+                  deleteInputErrorProperty("is_highlight");
+                  handleSetFormData("is_highlight", checked === true);
+                }}
+                disabled={
+                  isPending ||
+                  isLoadingHighlightCount ||
+                  highlightToggleDisabled
+                }
+              />
+              <Label
+                htmlFor="collection-is-highlight"
+                className="text-sm font-normal cursor-pointer"
+              >
+                Show on profile page
+              </Label>
+              <InfoTooltip
+                content={
+                  <p className="text-sm">
+                    When enabled, this collection is highlighted on your public
+                    artist profile so visitors can find it more easily. You can
+                    highlight up to {highlightLimit} collections on your profile
+                    page.
+                  </p>
+                }
+              />
+            </div>
+            {!isLoadingHighlightCount && highlightToggleDisabled && (
+              <p className="text-xs text-text-muted">
+                You&apos;ve reached the limit of {highlightLimit} highlighted
+                collections on your profile page.
+              </p>
+            )}
           </div>
 
           <div className="flex items-center gap-2">

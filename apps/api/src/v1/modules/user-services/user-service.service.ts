@@ -12,6 +12,7 @@ const CACHE_TTL_SECONDS = CACHE_TTL / 1000;
 export const serviceCacheKeys = {
   bySlug: (userId: number, slug: string) => `service-${userId}-${slug}`,
   allByUser: (userId: number) => `services-user-${userId}`,
+  highlightCount: (userId: number) => `service-highlight-count-${userId}`,
 };
 
 @Injectable()

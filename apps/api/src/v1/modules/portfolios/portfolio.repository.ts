@@ -135,8 +135,12 @@ export class PortfolioRepository extends BaseRepository {
     return !!result;
   }
 
-
-
+  async countHighlights(userId: number): Promise<number> {
+    return this.query()
+      .where('user_id', '=', userId)
+      .where('is_highlight', '=', true)
+      .count();
+  }
 
   async findCategoriesForPortfolio(portfolioId: number): Promise<CategoryBase[]> {
     const lang = this.requestService.language;

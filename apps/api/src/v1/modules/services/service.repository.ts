@@ -73,6 +73,13 @@ export class ServiceRepository extends BaseRepository {
     return !!result;
   }
 
+  async countHighlights(userId: number): Promise<number> {
+    return this.query()
+      .where('user_id', '=', userId)
+      .where('is_highlight', '=', true)
+      .count();
+  }
+
   async getBySlug(slug: string, userId: number): Promise<FullService> {
     const result = await this.query()
       .select(this.FULL_COLUMNS)

@@ -1,4 +1,9 @@
 import {
+  MAX_HIGHLIGHT_COLLECTIONS,
+  MAX_HIGHLIGHT_PORTFOLIOS,
+  MAX_HIGHLIGHT_SERVICES,
+} from "@repo/common-lib/constants/highlights";
+import {
   Accordion,
   AccordionContent,
   AccordionItem,
@@ -94,18 +99,18 @@ export const ArtistSections = async ({
       is_highlight: true,
       is_active: true,
       blocked: false,
-      per_page: 3,
+      per_page: MAX_HIGHLIGHT_PORTFOLIOS,
     }),
     userCollectionService.getAllByUsername(username, {
       is_highlight: true,
       is_active: true,
       paginated: true,
       blocked: false,
-      per_page: 4,
+      per_page: MAX_HIGHLIGHT_COLLECTIONS,
     }),
     userServiceService.getAllByUsername(username, {
       paginated: true,
-      per_page: 4,
+      per_page: MAX_HIGHLIGHT_SERVICES,
       is_active: true,
       blocked: false,
       is_highlight: true,
@@ -115,6 +120,18 @@ export const ArtistSections = async ({
   const portfolios = portfolioRes.data ?? [];
   const collections = collectionRes.data ?? [];
   const services = serviceRes.data ?? [];
+  const portfolioTotal =
+    portfolioRes.error === null
+      ? (portfolioRes.pagination?.total_count ?? portfolios.length)
+      : portfolios.length;
+  const collectionTotal =
+    collectionRes.error === null
+      ? (collectionRes.pagination?.total_count ?? collections.length)
+      : collections.length;
+  const serviceTotal =
+    serviceRes.error === null
+      ? (serviceRes.pagination?.total_count ?? services.length)
+      : services.length;
 
   if (!portfolios.length && !collections.length && !services.length) {
     return <EmptyState displayName={displayName} />;
@@ -172,10 +189,12 @@ export const ArtistSections = async ({
               <div className="grid grid-cols-1 gap-4 phone:grid-cols-2">
                 {portfolioItems()}
               </div>
-              <ViewAllLink
-                href={`/artists/${username}/portfolios`}
-                label="View all portfolios"
-              />
+              {portfolioTotal > MAX_HIGHLIGHT_PORTFOLIOS && (
+                <ViewAllLink
+                  href={`/artists/${username}/portfolios`}
+                  label="View all portfolios"
+                />
+              )}
             </AccordionContent>
           </AccordionItem>
         )}
@@ -189,10 +208,12 @@ export const ArtistSections = async ({
             </AccordionTrigger>
             <AccordionContent>
               <div className="grid grid-cols-2 gap-3">{collectionItems()}</div>
-              <ViewAllLink
-                href={`/artists/${username}/collections`}
-                label="View all collections"
-              />
+              {collectionTotal > MAX_HIGHLIGHT_COLLECTIONS && (
+                <ViewAllLink
+                  href={`/artists/${username}/collections`}
+                  label="View all collections"
+                />
+              )}
             </AccordionContent>
           </AccordionItem>
         )}
@@ -206,10 +227,12 @@ export const ArtistSections = async ({
             </AccordionTrigger>
             <AccordionContent>
               <div className="grid grid-cols-1 gap-3">{serviceItems()}</div>
-              <ViewAllLink
-                href={`/artists/${username}/services`}
-                label="View all services"
-              />
+              {serviceTotal > MAX_HIGHLIGHT_SERVICES && (
+                <ViewAllLink
+                  href={`/artists/${username}/services`}
+                  label="View all services"
+                />
+              )}
             </AccordionContent>
           </AccordionItem>
         )}
@@ -221,7 +244,11 @@ export const ArtistSections = async ({
           <section>
             <SectionHeader
               title="Portfolios"
-              href={`/artists/${username}/portfolios`}
+              href={
+                portfolioTotal > MAX_HIGHLIGHT_PORTFOLIOS
+                  ? `/artists/${username}/portfolios`
+                  : undefined
+              }
             />
             <div className="grid grid-cols-2 gap-4 tablet:grid-cols-3 tablet-lg:gap-5">
               {portfolioItems("(max-width: 1024px) 50vw, 34vw")}
@@ -233,7 +260,11 @@ export const ArtistSections = async ({
           <section>
             <SectionHeader
               title="Collections"
-              href={`/artists/${username}/collections`}
+              href={
+                collectionTotal > MAX_HIGHLIGHT_COLLECTIONS
+                  ? `/artists/${username}/collections`
+                  : undefined
+              }
             />
             <div className="grid grid-cols-3 gap-4 tablet-lg:grid-cols-4 tablet-lg:gap-5">
               {collectionItems()}
@@ -246,7 +277,7 @@ export const ArtistSections = async ({
             <SectionHeader
               title="Services"
               href={
-                services.length > 1
+                serviceTotal > MAX_HIGHLIGHT_SERVICES
                   ? `/artists/${username}/services`
                   : undefined
               }

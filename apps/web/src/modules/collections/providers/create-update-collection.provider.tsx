@@ -1,5 +1,6 @@
 "use client";
 
+import { MAX_HIGHLIGHT_COLLECTIONS } from "@repo/common-lib/constants/highlights";
 import type {
   CreateCollectionInput,
   FullCollection,
@@ -20,6 +21,7 @@ import {
 import type { UserAuth } from "@/modules/auth/auth.types";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { createOrUpdateCollectionAction } from "../server-actions/create-update-collection.action";
+import { getCollectionHighlightCountAction } from "../server-actions/get-highlight-count.action";
 import { slugExistsAction } from "../server-actions/slug-exists.action";
 
 type CollectionFormData = Partial<
@@ -51,6 +53,10 @@ type CollectionContextType = {
   clear: () => void;
   currentCollection: FullCollection | undefined;
   setCollection: (collection: FullCollection) => void;
+  highlightCount: number;
+  highlightLimit: number;
+  isLoadingHighlightCount: boolean;
+  fetchHighlightCount: (options?: { force?: boolean }) => Promise<void>;
 };
 
 const CollectionContext = createContext<CollectionContextType | null>(null);
@@ -94,6 +100,44 @@ export const CollectionProvider = ({
   }, []);
 
   const idTimeOut = useRef<NodeJS.Timeout>(null);
+  const highlightCountMemo = useRef<ActionReturn<
+    number | null,
+    undefined
+  > | null>(null);
+  const forceHighlightFetchRef = useRef(false);
+  const highlightLimit = MAX_HIGHLIGHT_COLLECTIONS;
+
+  const {
+    handleAction: handleHighlightCountAction,
+    result: highlightCountResult,
+    isPending: isLoadingHighlightCount,
+    cleanResult: cleanHighlightResult,
+  } = useHandleAction({
+    action: async () => {
+      if (highlightCountMemo.current && !forceHighlightFetchRef.current) {
+        return highlightCountMemo.current;
+      }
+      forceHighlightFetchRef.current = false;
+      return await getCollectionHighlightCountAction();
+    },
+    afterAction: async (data) => {
+      highlightCountMemo.current = data;
+    },
+  });
+
+  const fetchHighlightCount = useCallback(
+    async (options?: { force?: boolean }) => {
+      if (options?.force) {
+        highlightCountMemo.current = null;
+        forceHighlightFetchRef.current = true;
+        cleanHighlightResult();
+      }
+      await handleHighlightCountAction();
+    },
+    [handleHighlightCountAction, cleanHighlightResult],
+  );
+
+  const highlightCount = highlightCountResult?.data ?? 0;
 
   const {
     handleAction,
@@ -127,6 +171,7 @@ export const CollectionProvider = ({
           toast.error(error);
         }
       } else if (result.data) {
+        await fetchHighlightCount({ force: true });
         clear();
         toast.success(
           currentCollection
@@ -308,6 +353,10 @@ export const CollectionProvider = ({
     clear,
     currentCollection,
     setCollection,
+    highlightCount,
+    highlightLimit,
+    isLoadingHighlightCount,
+    fetchHighlightCount,
   };
 
   return (

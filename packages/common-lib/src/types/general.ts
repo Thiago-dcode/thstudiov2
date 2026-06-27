@@ -49,4 +49,6 @@ type MimeTypes =
   | 'application/xml'
   | 'application/octet-stream'
 
-export type { MimeTypes } 
+export type HighlightCount = { count: number };
+
+export type { MimeTypes };

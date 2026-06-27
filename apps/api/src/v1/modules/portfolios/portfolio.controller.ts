@@ -29,6 +29,11 @@ export class PortfolioController {
     return await this.portfolioService.findAll(indexPortfolioRequest);
   }
 
+  @Get('highlight-count')
+  async countHighlights() {
+    return await this.portfolioService.countHighlights();
+  }
+
   @Post()
   @UseInterceptors(FileInterceptor('thumbnail'))
   async create(

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Cron } from '@nestjs/schedule';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import {
   FactoryLogService,
   LogService,
@@ -14,7 +14,7 @@ export class LogRetentionTask {
     channel: 'system',
   });
 
-  @Cron('0 1 * * *', {
+  @Cron(CronExpression.EVERY_DAY_AT_1AM, {
     name: 'log-retention-cleanup',
     timeZone: 'UTC',
   })
@@ -24,7 +24,7 @@ export class LogRetentionTask {
     if (retentionDays < 1) {
       return;
     }
-
+    
     const log = this.logger.name('log-retention-cleanup');
     const logRoot = resolveDefaultLogFolder();
 

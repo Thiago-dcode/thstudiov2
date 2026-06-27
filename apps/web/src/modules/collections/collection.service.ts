@@ -4,6 +4,7 @@ import type {
   CreateCollectionInput,
   UpdateCollectionInput,
 } from "@repo/common-lib/types/collection";
+import type { HighlightCount } from "@repo/common-lib/types/general";
 import type { ApiResponse } from "@repo/common-lib/types/response";
 import { queryParamBuilder } from "@repo/common-lib/utils/query-builder";
 import { fetchApi } from "@/lib/facade/fetchApi";
@@ -19,6 +20,9 @@ class CollectionService extends BaseService {
     return await this.fetchApi.get({
       resource: request ? queryParamBuilder("", request) : "",
     });
+  }
+  async getHighlightCount(): Promise<ApiResponse<HighlightCount>> {
+    return await this.fetchApi.get({ resource: "/highlight-count" });
   }
   async create(body: CreateCollectionInput): Promise<ApiResponse<Collection>> {
     return await this.fetchApi.post({ body });

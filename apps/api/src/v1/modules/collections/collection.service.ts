@@ -1,4 +1,6 @@
 import { BadRequestException, Injectable, UnauthorizedException } from "@nestjs/common";
+import { MAX_HIGHLIGHT_COLLECTIONS } from "@repo/common-lib/constants/highlights";
+import type { HighlightCount } from "@repo/common-lib/types/general";
 import { CreateCollectionRequest } from "./requests/create-collection.request";
 import { UpdateCollectionRequest } from "./requests/update-collection.request";
 import { IndexCollectionRequest } from "./requests/index-collection.request";
@@ -9,9 +11,15 @@ import { EventEmitter2 } from "@nestjs/event-emitter";
 import { UPDATE_USER_EXTRA_DATA_METRICS } from "@repo/common-lib/constants/constants";
 import { UpdateUserExtraDataMetricsEvent } from "../user-extra-data/events/update-user-extra-data-metrics.event";
 import { Helpers } from "src/common/services/helpers.service";
+import { ApiException } from "src/common/exceptions/api-exception";
 import { FullPortfolioCollection } from "@repo/common-lib/types/collection";
 
 const MAX_COLLECTION_MEDIA = 50;
+const CACHE_TTL = 1000 * 60 * 60 * 24;
+
+export const collectionCacheKeys = {
+  highlightCount: (userId: number) => `collection-highlight-count-${userId}`,
+};
 
 @Injectable()
 export class CollectionService {
@@ -64,6 +72,41 @@ export class CollectionService {
     };
   }
 
+  async countHighlights(): Promise<HighlightCount> {
+    const userId = this.requestService.user.id;
+    return this.helper.cacheRemember(
+      collectionCacheKeys.highlightCount(userId),
+      this.resolveHighlightCount(userId),
+      { append_language: false, ttl: CACHE_TTL },
+    );
+  }
+
+  private async resolveHighlightCount(userId: number): Promise<HighlightCount> {
+    const count = await this.collectionRepository.countHighlights(userId);
+    return { count };
+  }
+
+  private async invalidateHighlightCountCache(userId: number) {
+    await this.helper.deleteCached(collectionCacheKeys.highlightCount(userId));
+  }
+
+  private async enforceHighlightLimit(
+    userId: number,
+    isHighlight: boolean | undefined,
+    currentlyHighlighted = false,
+  ) {
+    if (isHighlight !== true || currentlyHighlighted) {
+      return;
+    }
+
+    const count = await this.collectionRepository.countHighlights(userId);
+    if (count >= MAX_HIGHLIGHT_COLLECTIONS) {
+      throw ApiException.maxHighlights(
+        `You can highlight up to ${MAX_HIGHLIGHT_COLLECTIONS} collections on your profile page`,
+      );
+    }
+  }
+
   async create(request: CreateCollectionRequest) {
     if (!request.media || request.media.length === 0) {
       throw new BadRequestException('Collections must have at least 1 media');
@@ -76,6 +119,8 @@ export class CollectionService {
     if ((await this.slugExists(request.slug, request.user_id)).exists) {
       throw new BadRequestException(`Slug ${request.slug} already exists`);
     }
+
+    await this.enforceHighlightLimit(request.user_id, request.is_highlight);
 
     await this.userExtraDataService.enforceUserLimits(request.user_id, {
       collections_count: 1,
@@ -90,6 +135,7 @@ export class CollectionService {
       is_active: request.is_active ?? true,
       media: request.media,
     });
+    await this.invalidateHighlightCountCache(request.user_id);
     this.eventEmitter.emit(UPDATE_USER_EXTRA_DATA_METRICS, new UpdateUserExtraDataMetricsEvent(request.user_id));
     return collection;
   }
@@ -105,6 +151,12 @@ export class CollectionService {
       throw new UnauthorizedException();
     }
 
+    await this.enforceHighlightLimit(
+      collection.user_id,
+      request.is_highlight,
+      collection.is_highlight,
+    );
+
     if (!request.media || request.media.length === 0) {
       throw new BadRequestException('Collections must have at least 1 media');
     }
@@ -119,10 +171,12 @@ export class CollectionService {
       }
     }
 
-    return await this.collectionRepository.updateById(id, {
+    const updated = await this.collectionRepository.updateById(id, {
       ...request,
       media: request.media,
     });
+    await this.invalidateHighlightCountCache(collection.user_id);
+    return updated;
   }
 
   async delete(id: number) {
@@ -137,6 +191,7 @@ export class CollectionService {
     }
 
     await this.collectionRepository.delete(id);
+    await this.invalidateHighlightCountCache(collection.user_id);
     this.eventEmitter.emit(UPDATE_USER_EXTRA_DATA_METRICS, new UpdateUserExtraDataMetricsEvent(collection.user_id));
   }
 }

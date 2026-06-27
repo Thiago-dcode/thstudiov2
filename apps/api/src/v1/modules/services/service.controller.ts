@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   Param,
   ParseIntPipe,
   Patch,
@@ -17,6 +18,11 @@ import { IsResourceBlockedPipe } from 'src/pipes/is-resource-blocked.pipe';
 @Controller('services')
 export class ServiceController {
   constructor(private readonly serviceService: ServiceService) {}
+
+  @Get('highlight-count')
+  async countHighlights() {
+    return await this.serviceService.countHighlights();
+  }
 
   @Post()
   @UseInterceptors(FileInterceptor('thumbnail'))

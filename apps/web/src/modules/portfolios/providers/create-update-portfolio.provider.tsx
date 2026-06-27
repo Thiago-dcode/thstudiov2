@@ -1,5 +1,6 @@
 "use client";
 
+import { MAX_HIGHLIGHT_PORTFOLIOS } from "@repo/common-lib/constants/highlights";
 import type { CategoryBase } from "@repo/common-lib/types/category";
 import type { CollectionPortfolio } from "@repo/common-lib/types/collection";
 import type { MediaPortfolio } from "@repo/common-lib/types/media";
@@ -24,6 +25,7 @@ import {
 import type { UserAuth } from "@/modules/auth/auth.types";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { createOrUpdatePortfolioAction } from "../server-actions/create-update-portfolio.action";
+import { getPortfolioHighlightCountAction } from "../server-actions/get-highlight-count.action";
 import { slugExistsAction } from "../server-actions/slug-exists.action";
 
 export const MAX_PORTFOLIO_CATEGORIES = 2;
@@ -78,6 +80,10 @@ type PortfolioContextType = {
   categoriesSelected: CategoryBase[];
   setCategorySelected: (category: CategoryBase) => void;
   removeCategorySelected: (category: CategoryBase) => void;
+  highlightCount: number;
+  highlightLimit: number;
+  isLoadingHighlightCount: boolean;
+  fetchHighlightCount: (options?: { force?: boolean }) => Promise<void>;
 };
 
 // ============================================================================
@@ -170,6 +176,44 @@ export const PortfolioProvider = ({
   const [currentStep, setCurrentStep] = useState(1);
 
   const idTimeOut = useRef<NodeJS.Timeout>(null);
+  const highlightCountMemo = useRef<ActionReturn<
+    number | null,
+    undefined
+  > | null>(null);
+  const forceHighlightFetchRef = useRef(false);
+  const highlightLimit = MAX_HIGHLIGHT_PORTFOLIOS;
+
+  const {
+    handleAction: handleHighlightCountAction,
+    result: highlightCountResult,
+    isPending: isLoadingHighlightCount,
+    cleanResult: cleanHighlightResult,
+  } = useHandleAction({
+    action: async () => {
+      if (highlightCountMemo.current && !forceHighlightFetchRef.current) {
+        return highlightCountMemo.current;
+      }
+      forceHighlightFetchRef.current = false;
+      return await getPortfolioHighlightCountAction();
+    },
+    afterAction: async (data) => {
+      highlightCountMemo.current = data;
+    },
+  });
+
+  const fetchHighlightCount = useCallback(
+    async (options?: { force?: boolean }) => {
+      if (options?.force) {
+        highlightCountMemo.current = null;
+        forceHighlightFetchRef.current = true;
+        cleanHighlightResult();
+      }
+      await handleHighlightCountAction();
+    },
+    [handleHighlightCountAction, cleanHighlightResult],
+  );
+
+  const highlightCount = highlightCountResult?.data ?? 0;
 
   const {
     handleAction,
@@ -226,6 +270,7 @@ export const PortfolioProvider = ({
           toast.error(error);
         }
       } else if (result.data) {
+        await fetchHighlightCount({ force: true });
         clear();
         toast.success(
           currentPortfolio
@@ -461,6 +506,10 @@ export const PortfolioProvider = ({
     categoriesSelected,
     setCategorySelected,
     removeCategorySelected,
+    highlightCount,
+    highlightLimit,
+    isLoadingHighlightCount,
+    fetchHighlightCount,
   };
 
   return (

@@ -19,10 +19,10 @@ export default async function ServiceEdit({ params }: Props) {
   }
 
   const { slug } = await params;
-  const serviceResponse = await userServiceService.getByUsername(
-    userAuth.username,
-    slug,
-  );
+  const [serviceResponse, portfolios] = await Promise.all([
+    userServiceService.getByUsername(userAuth.username, slug),
+    userPortfolioService.getAllByUsername(userAuth.username),
+  ]);
 
   if (serviceResponse.error) {
     return (
@@ -38,9 +38,6 @@ export default async function ServiceEdit({ params }: Props) {
   const publicHref = userAuth.username
     ? `/artists/${userAuth.username}/services/${service.slug}`
     : undefined;
-  const portfolios = await userPortfolioService.getAllByUsername(
-    userAuth.username,
-  );
   return (
     <AdminPageContainer>
       <AdminPageTitle

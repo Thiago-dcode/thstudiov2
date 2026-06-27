@@ -48,6 +48,10 @@ export class ApiException extends HttpException {
     return new ApiException(API_ERRORS.USER_LIMITS_MAX_SERVICES_EXCEEDED, message);
   }
 
+  static maxHighlights(message: string) {
+    return new ApiException(API_ERRORS.USER_LIMITS_MAX_HIGHLIGHTS_EXCEEDED, message);
+  }
+
   static aiCredits(message: string) {
     return new ApiException(API_ERRORS.USER_LIMITS_AI_CREDITS_EXCEEDED, message);
   }

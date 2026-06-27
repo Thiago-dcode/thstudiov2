@@ -30,12 +30,16 @@ export const CreateOrUpdatePortfolio = ({
     handleStep,
     setPortfolio,
     currentPortfolio,
+    fetchHighlightCount,
   } = usePortfolio();
 
   const readOnly = Boolean((currentPortfolio ?? defaultPortfolio)?.blocked_at);
 
   useEffect(() => {
-    console.log("PORTFOLIO", defaultPortfolio);
+    void fetchHighlightCount();
+  }, [fetchHighlightCount]);
+
+  useEffect(() => {
     if (defaultPortfolio && currentPortfolio?.id !== defaultPortfolio.id) {
       setPortfolio(defaultPortfolio);
     }

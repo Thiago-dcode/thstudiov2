@@ -24,7 +24,6 @@ export default async function CollectionEdit({ params }: Props) {
     slug,
   );
 
-  console.log("Collection", collectionResponse);
   if (collectionResponse.error) {
     return (
       <div>{collectionResponse?.error?.message || "Something went wrong"}</div>
