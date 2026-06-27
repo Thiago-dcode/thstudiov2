@@ -34,6 +34,12 @@ export class PortfolioController {
     return await this.portfolioService.countHighlights();
   }
 
+  @Public()
+  @Get('featured')
+  async findFeatured() {
+    return await this.portfolioService.findFeatured();
+  }
+
   @Post()
   @UseInterceptors(FileInterceptor('thumbnail'))
   async create(

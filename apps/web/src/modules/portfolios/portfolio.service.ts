@@ -1,6 +1,7 @@
 import type { HighlightCount } from "@repo/common-lib/types/general";
 import type {
   CreatePortfolioInputWithFile,
+  FullPortfolio,
   Portfolio,
   PortfolioIndexRequest,
   UpdatePortfolioInputWithFile,
@@ -23,6 +24,9 @@ class PortfolioService extends BaseService {
   }
   async getHighlightCount(): Promise<ApiResponse<HighlightCount>> {
     return await this.fetchApi.get({ resource: "/highlight-count" });
+  }
+  async getFeatured(): Promise<ApiResponse<FullPortfolio | null>> {
+    return await this.fetchApi.get({ resource: "/featured" });
   }
   async create(
     body: CreatePortfolioInputWithFile,

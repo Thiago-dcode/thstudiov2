@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, UnauthorizedException } from "@nestjs/
 import { FactoryLogService } from "@repo/backend-lib/services/log-service";
 import { MAX_HIGHLIGHT_PORTFOLIOS } from "@repo/common-lib/constants/highlights";
 import type { HighlightCount } from "@repo/common-lib/types/general";
+import type { FullPortfolio } from "@repo/common-lib/types/portfolio";
 import { Helpers } from "src/common/services/helpers.service";
 import { CreatePortfolioRequest } from "./requests/create-portfolio.request";
 import { UpdatePortfolioRequest } from "./requests/update-portfolio.request";
@@ -46,6 +47,26 @@ export class PortfolioService {
         return portfolio;
       }),
     );
+  }
+
+  async findFeatured(): Promise<FullPortfolio | null> {
+    const portfolio = await this.portfolioRepository.getFeatured();
+    if (!portfolio) return null;
+
+    if (portfolio.thumbnail) {
+      portfolio.thumbnail = await this.helpers.getAsset(portfolio.thumbnail);
+    }
+
+    return {
+      ...portfolio,
+      media: portfolio.media.length
+        ? await Promise.all(portfolio.media.map(async (media) => ({
+          ...media,
+          thumbnail: media.thumbnail ? await this.helpers.getAsset(media.thumbnail) : undefined,
+          url: media.url ? await this.helpers.getAsset(media.url) : undefined,
+        })))
+        : portfolio.media,
+    };
   }
 
   private async slugExists(slug: string, userId: number) {

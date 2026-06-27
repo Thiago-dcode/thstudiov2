@@ -54,16 +54,18 @@ function Header({
   return (
     <header
       className={cn(
-        "mb-14 flex flex-col items-center gap-4 text-center",
+        "mb-12 flex flex-col items-center gap-4 text-center",
         className,
       )}
     >
-      <span className="text-xs font-semibold uppercase tracking-[0.2em] text-text-muted">
-        {badge}
-      </span>
-      <h2 className="text-2xl font-bold leading-tight tracking-tight tablet:text-3xl laptop:text-[2.75rem]">
-        {title}
-      </h2>
+      <div className="flex flex-col items-center gap-1.5">
+        <span className="text-xs font-semibold uppercase tracking-[0.2em] text-text-muted">
+          {badge}
+        </span>
+        <h2 className="text-2xl font-bold leading-tight tracking-tight tablet:text-3xl laptop:text-[2.75rem]">
+          {title}
+        </h2>
+      </div>
       <p
         className={cn(
           "max-w-lg text-base leading-relaxed text-text-muted tablet:text-lg",

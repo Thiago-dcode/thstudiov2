@@ -82,6 +82,15 @@ const messages: Translations = {
       },
       browseAll: "Ver todos los artistas",
     },
+    featuredPortfolio: {
+      header: {
+        badge: "Inspírate",
+        title: "Inspírate con este portafolio",
+        description: "Esto es lo que podrás crear.",
+      },
+      by: "Creado por",
+      viewProfile: "Ver el perfil de @{username}",
+    },
     cta: {
       badge: "¿Listo para empezar?",
       title: "Tu próximo cliente está buscando a alguien como tú",

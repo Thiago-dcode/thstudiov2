@@ -79,17 +79,43 @@ export class PortfolioRepository extends BaseRepository {
     return results.map((result) => this.formatPortfolio(result));
   }
 
-  async getBySlug(slug: string, userId: number): Promise<FullPortfolio> {
+  async getBySlug(slug: string, userId: number): Promise<FullPortfolio | null> {
+    const result = await this.applyFullPortfolioQuery(this.query())
+      .where('portfolios.slug', '=', slug)
+      .where('portfolios.user_id', '=', userId)
+      .orderBy('portfolio_media.position', 'ASC')
+      .get<PortfolioFullSchema[]>();
+
+    if (!result || (Array.isArray(result) && result.length === 0)) return null;
+    return this.formatFullPortfolio(Array.isArray(result) ? result : [result]);
+  }
+
+  async getFeatured(): Promise<FullPortfolio | null> {
+    const result = await this.applyFullPortfolioQuery(this.query())
+      .where('portfolios.is_featured', '=', true)
+      .where('portfolios.is_active', '=', true)
+      .where('portfolios.blocked_at', 'IS', null)
+      .orderBy('portfolios.created_at', 'DESC')
+      .orderBy('portfolios.id', 'DESC')
+      .orderBy('portfolio_media.position', 'ASC')
+      .get<PortfolioFullSchema[]>();
+
+    if (!result?.length) return null;
+
+    const featuredId = result[0].id;
+    const rows = result.filter((row) => row.id === featuredId);
+    return this.formatFullPortfolio(rows);
+  }
+
+  private applyFullPortfolioQuery(query: QueryBuilder): QueryBuilder {
     const lang = this.requestService.language;
-    const result = await this.query()
+    return query
       .rawSelect(
         [
           ...this.FULL_COLUMNS,
           `COALESCE(category_translations.name, categories.name) as c_name`,
         ].join(','),
       )
-      .where('portfolios.slug', '=', slug)
-      .where('portfolios.user_id', '=', userId)
       .join('portfolios.user_id', 'users', 'id', 'INNER')
       .join('portfolios.id', 'portfolio_media', 'portfolio_id', 'LEFT')
       .join('portfolio_media.media_id', 'media', 'id', 'LEFT')
@@ -103,15 +129,8 @@ export class PortfolioRepository extends BaseRepository {
         `AND category_translations.language_code = '${lang}'`,
       )
       .where('media.thumbnail', 'IS NOT', null)
-      .where('media.blocked_at', null)
-      .orderBy('portfolio_media.position', 'ASC')
-      .get<PortfolioFullSchema[]>();
-
-    if (!result || (Array.isArray(result) && result.length === 0)) return null;
-    return this.formatFullPortfolio(Array.isArray(result) ? result : [result]);
+      .where('media.blocked_at', null);
   }
-
-
 
   async getOneCompact(id: number): Promise<Portfolio | null> {
     const result = await this.getOneWithArtist(id);

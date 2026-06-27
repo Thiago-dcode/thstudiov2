@@ -81,6 +81,15 @@ const messages = {
       },
       browseAll: "Browse All Artists",
     },
+    featuredPortfolio: {
+      header: {
+        badge: "Get inspired",
+        title: "Get inspired with this portfolio",
+        description: "This is what you'll be able to build.",
+      },
+      by: "Created by",
+      viewProfile: "View @{username}'s profile",
+    },
     cta: {
       badge: "Ready to begin?",
       title: "Your next client is searching for someone like you",
