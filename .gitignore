@@ -69,6 +69,8 @@ dist
 
 # Debug
 logs
+storage/logs/*
+!storage/logs/.gitkeep
 *.log
 npm-debug.log*
 yarn-debug.log*

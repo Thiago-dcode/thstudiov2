@@ -24,6 +24,14 @@ import {
   updateMediaApi,
 } from "../api/media-api.client";
 import { deleteMediaAction } from "../server-actions/delete-media.action";
+import {
+  isTransientMediaUploadError,
+  MEDIA_UPLOAD_CONCURRENCY,
+  MEDIA_UPLOAD_MAX_RETRIES,
+  MEDIA_UPLOAD_RETRY_BASE_DELAY_MS,
+  runWithConcurrency,
+  sleep,
+} from "../utils/media-upload-concurrency";
 
 // ============================================================================
 // Types
@@ -291,6 +299,17 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
         );
       } else {
         result = await createMediaApi(media.input);
+
+        for (
+          let attempt = 1;
+          attempt < MEDIA_UPLOAD_MAX_RETRIES &&
+          !result.data &&
+          isTransientMediaUploadError(result.errors ?? []);
+          attempt += 1
+        ) {
+          await sleep(MEDIA_UPLOAD_RETRY_BASE_DELAY_MS * attempt);
+          result = await createMediaApi(media.input);
+        }
       }
 
       if (result.data) {
@@ -552,11 +571,15 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
   const handleUpload = async () => {
     if (!mediaUploads.length || isLoading) return Promise.resolve();
 
-    await Promise.all(mediaUploads.map((m) => uploadSingleMedia(m.unique_id)));
+    await runWithConcurrency(mediaUploads, MEDIA_UPLOAD_CONCURRENCY, (m) =>
+      uploadSingleMedia(m.unique_id),
+    );
   };
 
   const generateManySeoMedia = async (media: Media[]) => {
-    await Promise.all(media.map((m) => generateSeoSingleMedia(m)));
+    await runWithConcurrency(media, MEDIA_UPLOAD_CONCURRENCY, (m) =>
+      generateSeoSingleMedia(m),
+    );
   };
 
   const handleUploadUpdates = async () => {
@@ -566,8 +589,8 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
       (m) => !!m.id && !m.pending && !m.data && !m.error,
     );
 
-    await Promise.all(
-      uploadsToUpdate.map((m) => uploadSingleMedia(m.unique_id)),
+    await runWithConcurrency(uploadsToUpdate, MEDIA_UPLOAD_CONCURRENCY, (m) =>
+      uploadSingleMedia(m.unique_id),
     );
   };
 
@@ -578,8 +601,8 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
       (m) => !m.id && !m.pending && !m.data && !m.error,
     );
 
-    await Promise.all(
-      uploadsToInsert.map((m) => uploadSingleMedia(m.unique_id, onSuccess)),
+    await runWithConcurrency(uploadsToInsert, MEDIA_UPLOAD_CONCURRENCY, (m) =>
+      uploadSingleMedia(m.unique_id, onSuccess),
     );
   };
 

@@ -3,7 +3,7 @@
   "compilerOptions": {
     "rootDir": ".",
     "outDir": "dist",
-    "types": ["node", "multer"],
+    "types": ["node", "multer", "jest"],
     "tsBuildInfoFile": "dist/.tsbuildinfo",
     "paths": {
       // sharp@0.35.x omits a "types" condition in its package.json "exports"
@@ -13,5 +13,5 @@
     }
   },
   "include": ["src", "jest.config.ts"],
-  "exclude": ["node_modules", "test", "dist", "**/*spec.ts", "**/*.test.ts", "**/__tests__/**", "storage/logs"]
+  "exclude": ["node_modules", "test", "dist", "**/*spec.ts", "**/__tests__/**"]
 }

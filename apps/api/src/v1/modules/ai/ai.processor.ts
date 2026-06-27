@@ -153,7 +153,7 @@ export class AiProcessor extends GlobalProcessor {
 
 
   private async handleMediaModeration(moderationData: CreateMediaModerationInput) {
-    const log = this.logger.name('media-moderation');
+    const log = this.logger.name('moderate-content');
     try {
       const moderation = await this.mediaModerationRepository.create(moderationData);
       log.info(

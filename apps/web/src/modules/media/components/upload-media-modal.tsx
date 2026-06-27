@@ -90,19 +90,17 @@ export const UploadMediaModal = () => {
         </Button>
       </div>
       <div
-        className={`overflow-hidden transition-all duration-300 ease-in-out flex-1 min-h-0 ${
-          compact ? "max-h-0 opacity-0" : "opacity-100"
+        className={`flex-1 min-h-0 overflow-y-auto overscroll-contain transition-all duration-300 ease-in-out ${
+          compact ? "max-h-0 opacity-0 pointer-events-none" : "opacity-100"
         }`}
       >
-        <div className="max-h-[400px] overflow-y-auto overscroll-contain">
-          <div className=" h-f flex flex-col items-start justify-start gap-3 px-4 pt-4 pb-40 ">
-            {mediaUploadsToDisplay.map((mediaUpload) => (
-              <SingleMediaUpload
-                key={`media-uploading-${mediaUpload.unique_id}`}
-                mediaUpload={mediaUpload}
-              />
-            ))}
-          </div>
+        <div className="flex flex-col items-start justify-start gap-3 px-4 py-4">
+          {mediaUploadsToDisplay.map((mediaUpload) => (
+            <SingleMediaUpload
+              key={`media-uploading-${mediaUpload.unique_id}`}
+              mediaUpload={mediaUpload}
+            />
+          ))}
         </div>
       </div>
       {isCompleted && (
@@ -217,7 +215,12 @@ const SingleMediaUpload = ({ mediaUpload }: { mediaUpload: UploadMedia }) => {
           </div>
         </div>
       </HoverCardTrigger>
-      <HoverCardContent className="w-64">
+      <HoverCardContent
+        side="left"
+        align="start"
+        collisionPadding={16}
+        className="z-210 w-64"
+      >
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             {statusIcon}

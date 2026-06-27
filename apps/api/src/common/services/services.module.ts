@@ -25,6 +25,7 @@ import { MAIL_QUEUE, LOG_QUEUE } from '@repo/common-lib/constants/constants';
 import { Queue } from 'bullmq';
 import { MailProcessor } from './mail.processor';
 import { LogProcessor } from './log.processor';
+import { LogRetentionTask } from './log-retention.task';
 import KeyvRedis from '@keyv/redis';
 import { Helpers } from './helpers.service';
 import { AsyncLocalStorage } from 'async_hooks';
@@ -46,6 +47,7 @@ import { RequestStore } from '@repo/common-lib/types/request';
     Helpers,
     MailProcessor,
     LogProcessor,
+    LogRetentionTask,
     {
       provide:AsyncLocalStorage,
       useValue: new AsyncLocalStorage<RequestStore>()

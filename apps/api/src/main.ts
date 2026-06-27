@@ -6,16 +6,18 @@ import { init } from '@repo/database';
 import { useContainer } from 'class-validator';
 import { spawn } from 'child_process';
 import { FactoryLogService } from '@repo/backend-lib/services/log-service';
-import { Helpers } from './common/services/helpers.service';
+import { API_ERRORS_CHANNEL, logConfig } from './config/logging';
 
-const logger = FactoryLogService.createLogService('file',{
-  channel:'api/500',
-  callback:{
-    channel:'api/500',
-    callback: Helpers.callback500ErrorMail,
-  }
+const bootstrapLogger = FactoryLogService.createLogService('file', {
+  channel: 'api/bootstrap',
+  logFolder: logConfig.api.logFolder,
+});
 
-})
+/** Fatal process errors only — same channel as HTTP 500 responses in ResponseExceptionFilter. */
+const fatalErrorLogger = FactoryLogService.createLogService('file', {
+  ...logConfig.api,
+  channel: `${API_ERRORS_CHANNEL}/500`,
+});
 
 function serializeError(error: unknown) {
   if (error instanceof Error) {
@@ -25,12 +27,12 @@ function serializeError(error: unknown) {
 }
 
 process.on('uncaughtException', (error: Error) => {
-  logger.error('💥 Uncaught Exception:', serializeError(error));
+  fatalErrorLogger.error('💥 Uncaught Exception:', serializeError(error));
   console.error('💥 Uncaught Exception:', error);
 });
 
 process.on('unhandledRejection', (reason: unknown) => {
-  logger.error('💥 Unhandled Rejection:', serializeError(reason));
+  fatalErrorLogger.error('💥 Unhandled Rejection:', serializeError(reason));
   console.error('💥 Unhandled Rejection:', reason);
 });
 
@@ -45,11 +47,11 @@ function logStripeCliOutput(msg: string, stream: 'stdout' | 'stderr') {
       /^<--/.test(msg));
 
   if (stream === 'stdout' || isRoutineStderr) {
-    logger.info(`Stripe CLI ${stream}`, { msg });
+    bootstrapLogger.info(`Stripe CLI ${stream}`, { msg });
     return;
   }
 
-  logger.warn(`Stripe CLI ${stream}`, { msg });
+  bootstrapLogger.warn(`Stripe CLI ${stream}`, { msg });
 }
 
 async function bootstrap() {
@@ -61,7 +63,7 @@ async function bootstrap() {
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
   // Startup config for debugging (no secrets).
-  logger.info('Starting API bootstrap', {
+  bootstrapLogger.info('Starting API bootstrap', {
     env: configService.get('app.env'),
     port,
     apiV1Url: configService.get('api.v1Url'),
@@ -99,10 +101,10 @@ async function bootstrap() {
     // On deployed dev/staging/prod servers the `stripe` CLI is not installed.
     if (configService.get('app.env') === 'local') {
       const forwardToUrl = `${configService.get('api.v1Url')}/webhooks/stripe`;
-      logger.info('Stripe CLI listener: starting', { forwardToUrl });
+      bootstrapLogger.info('Stripe CLI listener: starting', { forwardToUrl });
 
       const stripeArgs = ['listen', '--forward-to', forwardToUrl];
-      logger.info('Stripe CLI listener: spawn args', { stripeArgs });
+      bootstrapLogger.info('Stripe CLI listener: spawn args', { stripeArgs });
 
       const stripeProcess = spawn('stripe', stripeArgs, {
         shell: true,
@@ -118,22 +120,22 @@ async function bootstrap() {
       });
 
       stripeProcess.on('error', (err) => {
-        logger.error('Stripe CLI listener: failed to start', { err: String(err) });
+        bootstrapLogger.error('Stripe CLI listener: failed to start', { err: String(err) });
         console.error('Failed to start Stripe listener:', err);
       });
 
       stripeProcess.on('close', (code, signal) => {
         if (code !== 0 && code !== null) {
-          logger.error('Stripe CLI listener: exited with error', { code, signal });
+          bootstrapLogger.error('Stripe CLI listener: exited with error', { code, signal });
         } else {
-          logger.info('Stripe CLI listener: exited', { code, signal });
+          bootstrapLogger.info('Stripe CLI listener: exited', { code, signal });
         }
         console.log(`Stripe CLI listener exited (code=${code}, signal=${signal})`);
       });
 
-      logger.info('Stripe CLI listener: spawned', { pid: stripeProcess.pid });
+      bootstrapLogger.info('Stripe CLI listener: spawned', { pid: stripeProcess.pid });
     } else {
-      logger.info('Stripe CLI listener: skipped (non-local env)', {
+      bootstrapLogger.info('Stripe CLI listener: skipped (non-local env)', {
         env: configService.get('app.env'),
       });
       console.log('SKIP STRIPE SPIN UP');

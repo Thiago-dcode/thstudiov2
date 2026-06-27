@@ -87,10 +87,9 @@ export class PostgresClient extends Client<PgPool> {
       user: this.config.username,
       password: this.config.password,
       database: this.config.database,
-      max: 20, // Maximum number of clients in the pool
-      idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
-      connectionTimeoutMillis: 2000, // Return an error after 2 seconds if connection could not be established
-    
+      max: 30,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 10000,
     });
 
     // Set timezone to UTC for all connections to ensure consistent timestamp handling
