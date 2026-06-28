@@ -18,9 +18,14 @@ export function FaqsContent() {
       </h2>
 
       <div className="flex flex-col">
-        <Accordion  defaultValue={`faq-${0}`}  type="single" collapsible className="w-full">
+        <Accordion
+          defaultValue={`faq-${0}`}
+          type="single"
+          collapsible
+          className="w-full"
+        >
           {items.map((faq, index) => (
-            <AccordionItem  key={index} value={`faq-${index}`}>
+            <AccordionItem key={index} value={`faq-${index}`}>
               <AccordionTrigger className="text-base! font-medium tablet:text-xl py-4">
                 {faq.question}
               </AccordionTrigger>

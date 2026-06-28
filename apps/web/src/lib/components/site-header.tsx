@@ -33,7 +33,9 @@ const SiteHeaderContext = createContext<SiteHeaderContextValue | null>(null);
 export function useSiteHeader() {
   const context = useContext(SiteHeaderContext);
   if (!context) {
-    throw new Error("SiteHeader compound components must be used within SiteHeader");
+    throw new Error(
+      "SiteHeader compound components must be used within SiteHeader",
+    );
   }
   return context;
 }

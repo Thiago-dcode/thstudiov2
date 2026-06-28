@@ -3,8 +3,7 @@ import { cn } from "@repo/ui/lib/utils";
 import NextImage from "next/image";
 import type { ReactNode } from "react";
 
-const DEFAULT_SIZES =
-  "(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 50vw";
+const DEFAULT_SIZES = "(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 50vw";
 
 type RootProps = {
   children: ReactNode;
@@ -187,12 +186,7 @@ function Item({
 
   return (
     <Root className={className}>
-      <Image
-        src={thumbnail}
-        alt={title}
-        sizes={sizes}
-        isBlocked={isBlocked}
-      />
+      <Image src={thumbnail} alt={title} sizes={sizes} isBlocked={isBlocked} />
       <Details>
         <Title>{title}</Title>
         {description ? <Description>{description}</Description> : null}

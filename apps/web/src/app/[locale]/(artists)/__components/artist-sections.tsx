@@ -56,7 +56,11 @@ const SectionHeader = ({ title, href }: { title: string; href?: string }) => (
   </div>
 );
 
-const SectionListContainer = ({ children }: { children: ReactNode }) => <div className="grid grid-cols-2 tablet:grid-cols-3 gap-6 tablet-lg:grid-cols-4 laptop:grid-cols-5 tablet-lg:gap-12">{children}</div>
+const SectionListContainer = ({ children }: { children: ReactNode }) => (
+  <div className="grid grid-cols-2 tablet:grid-cols-3 gap-6 tablet-lg:grid-cols-4 laptop:grid-cols-5 tablet-lg:gap-12">
+    {children}
+  </div>
+);
 
 const ViewAllLink = ({ href, label }: { href: string; label: string }) => (
   <Link
@@ -252,9 +256,7 @@ export const ArtistSections = async ({
                   : undefined
               }
             />
-            <SectionListContainer>
-              {portfolioItems()}
-            </SectionListContainer>
+            <SectionListContainer>{portfolioItems()}</SectionListContainer>
           </section>
         )}
 
@@ -268,9 +270,7 @@ export const ArtistSections = async ({
                   : undefined
               }
             />
-            <SectionListContainer>
-              {collectionItems()}
-            </SectionListContainer>
+            <SectionListContainer>{collectionItems()}</SectionListContainer>
           </section>
         )}
 
@@ -284,9 +284,7 @@ export const ArtistSections = async ({
                   : undefined
               }
             />
-            <SectionListContainer>
-              {serviceItems()}
-            </SectionListContainer>
+            <SectionListContainer>{serviceItems()}</SectionListContainer>
           </section>
         )}
       </div>
