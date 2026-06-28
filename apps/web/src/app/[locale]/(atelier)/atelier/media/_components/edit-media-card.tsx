@@ -508,7 +508,7 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
           </article>
         </DrawerTrigger>
       </div>
-      <DrawerContent className="h-full w-[600px] max-w-[90vw] right-0 left-auto opacity-90 z-100">
+      <DrawerContent className="h-full w-[600px] max-w-[90vw] right-0 left-auto opacity-90 ">
         <DrawerHeader className="border-b p-2">
           <div className="flex items-start justify-between gap-3 min-w-0">
             <div className="flex min-w-0 flex-1 items-end justify-start gap-2">

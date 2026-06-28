@@ -1,46 +1,44 @@
 "use client";
 
-import { BrandLogo } from "@repo/ui/components/custom/brand-logo";
 import { ShareButton } from "@repo/ui/components/custom/share-button";
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerTitle,
-  DrawerTrigger,
-} from "@repo/ui/components/shadcn/drawer";
 import { cn } from "@repo/ui/lib/utils";
-import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { SiteHeader, useSiteHeader } from "@/lib/components/site-header";
 import { useSession } from "@/lib/hooks/useSession";
 import { ArtistContactDialog } from "./artist-contact.dialog";
+
+function ArtistsHeaderContactAction() {
+  const { isMounted } = useSiteHeader();
+
+  if (!isMounted) {
+    return (
+      <button
+        type="button"
+        className="text-sm tracking-wider transition-colors hover:text-text font-medium text-text-muted"
+      >
+        Contact
+      </button>
+    );
+  }
+
+  return (
+    <ArtistContactDialog>
+      <button
+        type="button"
+        className="text-sm tracking-wider transition-colors hover:text-text font-medium text-text-muted"
+      >
+        Contact
+      </button>
+    </ArtistContactDialog>
+  );
+}
 
 export const ArtistsHeader = () => {
   const pathname = usePathname();
   const params = useParams();
   const username = params.username as string;
-  const [scrolled, setScrolled] = useState(false);
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
   const { session, isLoading: sessionLoading } = useSession();
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  useEffect(() => {
-    setDrawerOpen(false);
-  }, [pathname]);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   const navItems = [
     { label: `@${username}`, href: `/artists/${username}` },
@@ -56,22 +54,10 @@ export const ArtistsHeader = () => {
       : pathname?.startsWith(href);
 
   return (
-    <header
-      className={cn(
-        "fixed top-0 left-0 right-0 z-50 flex items-center justify-center border-b transition-all duration-300 bg-bg",
-        scrolled
-          ? "border-b-fg-2/50 bg-transparent hover:bg-bg opacity-60 backdrop-blur-sm hover:opacity-100 hover:border-b-fg-2"
-          : "border-b-fg-2 opacity-100",
-      )}
-    >
-      <div className="max-w-(--screen-desktop) w-full h-16 flex items-center justify-between px-5 tablet:px-10">
+    <SiteHeader variant="artist">
+      <SiteHeader.Bar>
         <div className="flex items-center gap-3 tablet:gap-4 min-w-0">
-          <Link
-            href="/"
-            className="text-text hover:opacity-80 transition-opacity shrink-0"
-          >
-            <BrandLogo />
-          </Link>
+          <SiteHeader.Logo />
           {!sessionLoading && session ? (
             <Link
               href="/atelier"
@@ -82,8 +68,7 @@ export const ArtistsHeader = () => {
           ) : null}
         </div>
 
-        {/* Desktop navigation */}
-        <nav className="hidden tablet:flex items-center gap-8">
+        <SiteHeader.Actions>
           {navItems.map((item) => (
             <Link
               key={item.href}
@@ -96,101 +81,49 @@ export const ArtistsHeader = () => {
               {item.label}
             </Link>
           ))}
-          {isMounted ? (
-            <ArtistContactDialog>
-              <button
-                type="button"
-                className="text-sm tracking-wider transition-colors hover:text-text font-medium text-text-muted"
-              >
-                Contact
-              </button>
-            </ArtistContactDialog>
-          ) : (
-            <button
-              type="button"
-              className="text-sm tracking-wider transition-colors hover:text-text font-medium text-text-muted"
-            >
-              Contact
-            </button>
-          )}
+          <ArtistsHeaderContactAction />
           <ShareButton title={`@${username}`} ariaLabel="Share profile" />
-        </nav>
+        </SiteHeader.Actions>
 
-        {/* Mobile hamburger */}
-        {isMounted ? (
-          <Drawer
-            open={drawerOpen}
-            onOpenChange={setDrawerOpen}
-            direction="right"
-          >
-            <DrawerTrigger asChild>
-              <button
-                type="button"
-                className="tablet:hidden flex items-center justify-center size-10 text-text hover:opacity-80 transition-opacity"
-                aria-label="Open navigation"
-              >
-                <Menu className="size-5" />
-              </button>
-            </DrawerTrigger>
+        <SiteHeader.MobileControls>
+          <ShareButton
+            title={`@${username}`}
+            ariaLabel="Share profile"
+            className="flex items-center justify-center size-10 shrink-0"
+          />
 
-            <DrawerContent className="inset-y-0 left-auto right-0 w-72 h-full mt-0 border-0 border-l border-fg-2 bg-bg [&>div:first-child]:hidden">
-              <DrawerTitle className="sr-only">Navigation</DrawerTitle>
+          <SiteHeader.MobileMenu contentClassName="inset-y-0 left-auto right-0 w-72 h-full border-l border-fg-2">
+            <SiteHeader.MobileDrawerBar className="px-6">
+              <span className="text-sm font-medium tracking-wider text-text-muted">
+                Menu
+              </span>
+            </SiteHeader.MobileDrawerBar>
 
-              <div className="flex items-center justify-between h-16 px-6 border-b border-fg-2">
-                <span className="text-sm font-medium tracking-wider text-text-muted">
-                  Menu
-                </span>
-                <DrawerClose asChild>
-                  <button
-                    type="button"
-                    className="flex items-center justify-center size-10 text-text hover:opacity-80 transition-opacity"
-                    aria-label="Close navigation"
-                  >
-                    <X className="size-5" />
-                  </button>
-                </DrawerClose>
-              </div>
-
-              <nav className="flex flex-col px-6 py-6 gap-1">
-                {navItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={cn(
-                      "text-sm tracking-wider font-medium py-3 transition-colors hover:text-text",
-                      isActive(item.href) ? "text-text" : "text-text-muted",
-                    )}
-                  >
-                    {item.label}
-                  </Link>
-                ))}
-                <ArtistContactDialog>
-                  <button
-                    type="button"
-                    className="cursor-pointer text-sm tracking-wider font-medium py-3 transition-colors hover:text-text text-text-muted text-left"
-                  >
-                    Contact
-                  </button>
-                </ArtistContactDialog>
-                <ShareButton
-                  title={`@${username}`}
-                  showLabel
-                  className="py-3"
-                  ariaLabel="Share profile"
-                />
-              </nav>
-            </DrawerContent>
-          </Drawer>
-        ) : (
-          <button
-            type="button"
-            className="tablet:hidden flex items-center justify-center size-10 text-text hover:opacity-80 transition-opacity"
-            aria-label="Open navigation"
-          >
-            <Menu className="size-5" />
-          </button>
-        )}
-      </div>
-    </header>
+            <nav className="flex flex-col px-6 py-6 gap-1">
+              {navItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "text-sm tracking-wider font-medium py-3 transition-colors hover:text-text",
+                    isActive(item.href) ? "text-text" : "text-text-muted",
+                  )}
+                >
+                  {item.label}
+                </Link>
+              ))}
+              <ArtistContactDialog>
+                <button
+                  type="button"
+                  className="cursor-pointer text-sm tracking-wider font-medium py-3 transition-colors hover:text-text text-text-muted text-left"
+                >
+                  Contact
+                </button>
+              </ArtistContactDialog>
+            </nav>
+          </SiteHeader.MobileMenu>
+        </SiteHeader.MobileControls>
+      </SiteHeader.Bar>
+    </SiteHeader>
   );
 };

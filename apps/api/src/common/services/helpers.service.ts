@@ -71,6 +71,12 @@ export class Helpers {
     await Promise.all(keys.map((key) => this.cacheManager.del(key)));
   }
 
+  /** Clears cached signed URL for a storage path without deleting the file. */
+  public async invalidateAssetCache(path?: string | null): Promise<void> {
+    if (!path) return;
+    await this.cacheManager.del(path);
+  }
+
   public getNextBillingDate(billingType: EnumType<'BILLING_TYPE'>) {
     const now = new Date();
     switch (billingType) {

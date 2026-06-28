@@ -97,7 +97,7 @@ export function MediaGrid({ media, username }: MediaGridProps) {
         {currentMedia.length > 0 && (
           <div
             className={cn(
-              "flex flex-wrap items-center gap-2 sticky top-0 z-90 bg-bg py-1 w-full",
+              "flex flex-wrap items-center gap-2  top-0  bg-bg py-1 w-full",
               canSelect ? "justify-between" : "justify-start",
             )}
           >

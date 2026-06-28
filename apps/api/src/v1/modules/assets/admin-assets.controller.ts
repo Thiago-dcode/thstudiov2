@@ -56,8 +56,9 @@ export class AdminAssetsController {
     @Body() updateAssetRequest: UpdateAssetRequest,
     @UploadedFiles() files: Express.Multer.File[],
   ) {
+    const file = files.find(f => f.fieldname === 'file');
     const thumbnail = files.find(f => f.fieldname === 'thumbnail');
-    return this.assetsService.update(slug, updateAssetRequest, thumbnail);
+    return this.assetsService.update(slug, updateAssetRequest, file, thumbnail);
   }
 
   @Delete(':slug')

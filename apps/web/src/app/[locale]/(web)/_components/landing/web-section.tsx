@@ -29,7 +29,7 @@ function Container({
   return (
     <div
       className={cn(
-        "relative mx-auto w-full max-w-(--breakpoint-desktop-lg) px-6 py-20 tablet:px-10 tablet:py-28",
+        "relative mx-auto w-full max-w-(--breakpoint-ultrawide) px-6 py-20 tablet:px-10 tablet:py-28",
         className,
       )}
     >

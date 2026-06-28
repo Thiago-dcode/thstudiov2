@@ -216,7 +216,10 @@ const ArtistHomePage = async ({ params }: Props) => {
 
       {/* Short Biography — editorial pull-quote */}
       {profile.short_biography && (
-        <section className="mx-auto w-full px-6 pb-20" aria-label="About">
+        <section
+          className="mx-auto w-full max-w-(--breakpoint-desktop-lg) px-4 pb-20 phone-lg:px-6 tablet:px-10 laptop:px-12"
+          aria-label="About"
+        >
           <div className="relative py-8">
             <blockquote className="mx-auto w-full text-center font-serif text-base leading-[1.9] text-text-muted  tablet:text-lg">
               &ldquo;{profile.short_biography}&rdquo;

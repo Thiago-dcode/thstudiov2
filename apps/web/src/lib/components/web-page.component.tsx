@@ -50,7 +50,7 @@ const Header = ({
 
 const List = ({ children }: { children: Iterable<ReactNode> }) => {
   return (
-    <section className="flex w-full items-center justify-center desktop:justify-start gap-8 flex-wrap">
+    <section className="grid w-full grid-cols-2 gap-4 sm:grid-cols-3 tablet:grid-cols-4 tablet:gap-5">
       {Array.from(children)}
     </section>
   );

@@ -91,7 +91,7 @@ export class AssetsRepository extends BaseRepository {
     }
     const result = await this.query()
       .select(this.COLUMNS)
-      .where('slug', '=', slug)
+      .where('slug', '=', data.slug ?? slug)
       .first<AssetSchema>();
     return this.formatAsset(result);
   }

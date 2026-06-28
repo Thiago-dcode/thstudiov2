@@ -43,11 +43,11 @@ export default async function Page({ params }: Props) {
         <Web.List>
           {portfolios.map((portfolio) => (
             <Link
-              className="max-w-[500px] w-full tablet:w-96"
+              className="block w-full min-w-0"
               key={portfolio.id}
               href={`/artists/${username}/portfolios/${portfolio.slug}`}
             >
-              <PortfolioCard portfolio={portfolio} />
+              <PortfolioCard.Item portfolio={portfolio} />
             </Link>
           ))}
         </Web.List>

@@ -12,4 +12,8 @@ export class UpdateAssetRequest {
   @IsString()
   @IsOptional()
   slug?: string;
+
+  @IsString()
+  @IsOptional()
+  filename?: string;
 }

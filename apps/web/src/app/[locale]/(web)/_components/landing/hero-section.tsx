@@ -39,7 +39,7 @@ export async function HeroSection() {
         <div className="flex flex-col w-full items-center gap-5">
           <h1
             id="hero-heading"
-            className="hero-title hero-stagger-2 text-white! tracking-tight text-shadow-lg"
+            className="hero-title hero-stagger-2 text-white! tracking-tight text-shadow-lg text-6xl! tablet-lg:text-8xl!"
           >
             {t("titlePrefix")}{" "}
             <span className="text-fire text-shadow-none">
@@ -48,7 +48,7 @@ export async function HeroSection() {
             {t("titleSuffix")}
           </h1>
 
-          <h3 className="font-normal! text-2xl! leading-relaxed text-white/90! font-sans! ">
+          <h3 className="font-normal! laptop:text-2xl! text-xl! leading-relaxed text-white/90! font-sans! ">
             {t("subtitle")}
           </h3>
         </div>

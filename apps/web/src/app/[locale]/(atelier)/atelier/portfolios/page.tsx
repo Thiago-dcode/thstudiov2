@@ -45,8 +45,9 @@ export default async function Atelier() {
             <Link
               key={portfolio.id}
               href={`/atelier/portfolios/edit/${portfolio.slug}`}
+              className="block w-full min-w-0"
             >
-              <PortfolioCard portfolio={portfolio} isAtelier />
+              <PortfolioCard.Item portfolio={portfolio} isAtelier />
             </Link>
           ))}
         </div>

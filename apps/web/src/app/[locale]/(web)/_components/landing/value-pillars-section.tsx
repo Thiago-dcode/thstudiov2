@@ -29,7 +29,7 @@ export async function ValuePillarsSection() {
           description={t("header.description")}
         />
 
-        <div className=" m-auto   flex  max-w-(--breakpoint-desktop-lg) items-center w-full justify-between gap-4 flex-col tablet-lg:flex-row">
+        <div className=" m-auto   flex   items-center w-full justify-between gap-4 flex-col tablet-lg:flex-row">
           {items.map((pillar, index) => (
             <article
               key={pillar.title}

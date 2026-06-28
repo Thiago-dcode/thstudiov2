@@ -39,7 +39,6 @@
 .mansonry-grid {
   columns: 1;
   column-gap: var(--size-base);
-  max-width: var(--breakpoint-desktop);
   margin: 0 auto;
 }
 

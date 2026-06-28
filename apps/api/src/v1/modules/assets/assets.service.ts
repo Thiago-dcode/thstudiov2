@@ -95,22 +95,22 @@ export class AssetsService {
   async update(
     slug: string,
     dto: UpdateAssetInput,
+    file?: Express.Multer.File,
     thumbnailFile?: Express.Multer.File,
   ): Promise<Asset> {
-    // Find by slug (throw if not found)
     const existing = await this.assetsRepository.findBySlug(slug);
     if (!existing) {
       throw new NotFoundException(`Asset not found with slug ${slug}`);
     }
-    // Validate thumbnail if provided
+
     if (thumbnailFile) {
       validateThumbnail(thumbnailFile);
     }
 
-    // If slug is changing, ensure uniqueness and update storage path
-    let urlUpdate: { url?: string; thumbnail?: string } = {};
+    const urlUpdate: { url?: string; thumbnail?: string; filename?: string } = {};
+    let targetSlug = existing.slug;
+
     if (dto.slug && dto.slug !== existing.slug) {
-      // Ensure new slug is unique
       let uniqueSlug = dto.slug;
       let counter = 1;
       while (await this.assetsRepository.slugExists(uniqueSlug)) {
@@ -118,16 +118,14 @@ export class AssetsService {
         counter++;
       }
       dto.slug = uniqueSlug;
+      targetSlug = uniqueSlug;
 
-      // Derive new storage path from slug
       const filename = existing.url.split('/').pop() || 'file';
       const newStoragePath = `assets/${uniqueSlug}/${filename}`;
 
-      // Move file in S3
       await this.helpers.moveAsset(existing.url, newStoragePath);
       urlUpdate.url = newStoragePath;
 
-      // Move thumbnail in S3 if it exists
       if (existing.thumbnail) {
         const thumbnailFilename = existing.thumbnail.split('/').pop() || 'thumbnail';
         const newThumbnailPath = `assets/${uniqueSlug}/thumbnail/${thumbnailFilename}`;
@@ -136,25 +134,61 @@ export class AssetsService {
       }
     }
 
+    if (file) {
+      const originalFilename = dto.filename || file.originalname;
+      const newStoragePath = `assets/${targetSlug}/${originalFilename}`;
+      const currentUrl = urlUpdate.url ?? existing.url;
 
+      await this.storageService.write(file, newStoragePath);
 
-    // Handle thumbnail upload if provided
+      if (currentUrl !== newStoragePath) {
+        await this.helpers.deleteAsset(currentUrl);
+      } else {
+        await this.helpers.invalidateAssetCache(newStoragePath);
+      }
+
+      urlUpdate.url = newStoragePath;
+      urlUpdate.filename = dto.filename || originalFilename;
+    } else if (dto.filename && dto.filename !== existing.filename) {
+      const currentUrl = urlUpdate.url ?? existing.url;
+      const newStoragePath = `assets/${targetSlug}/${dto.filename}`;
+
+      if (currentUrl !== newStoragePath) {
+        await this.helpers.moveAsset(currentUrl, newStoragePath);
+        urlUpdate.url = newStoragePath;
+        urlUpdate.filename = dto.filename;
+      }
+    }
+
     if (thumbnailFile) {
-      const slug = dto.slug || existing.slug;
       const thumbnailFilename = thumbnailFile.originalname;
-      const thumbnailPath = `assets/${slug}/thumbnail/${thumbnailFilename}`;
+      const thumbnailPath = `assets/${targetSlug}/thumbnail/${thumbnailFilename}`;
       await this.helpers.setAsset({ asset: thumbnailFile, path: thumbnailPath, targetSizeMb: 0.1 });
       urlUpdate.thumbnail = thumbnailPath;
     }
 
-    // Update metadata + url if slug changed
     const updated = await this.assetsRepository.updateBySlug(slug, { ...dto, ...urlUpdate });
-    await this.helpers.deleteCached(`asset:slug:${slug}`);
+
+    const cacheKeys = [`asset:slug:${slug}`];
     if (dto.slug && dto.slug !== slug) {
-      await this.helpers.deleteCached(`asset:slug:${dto.slug}`);
+      cacheKeys.push(`asset:slug:${dto.slug}`);
     }
 
-    // Return updated asset with resolved URLs
+    const storageChanged = !!(file || thumbnailFile
+      || (dto.slug && dto.slug !== existing.slug)
+      || (dto.filename && dto.filename !== existing.filename));
+
+    if (storageChanged) {
+      cacheKeys.push(
+        existing.url,
+        existing.thumbnail,
+        urlUpdate.url,
+        urlUpdate.thumbnail,
+      );
+    }
+
+    await this.helpers.deleteManyCached(cacheKeys.filter(Boolean) as string[]);
+
     return {
       ...updated,
       url: await this.helpers.getAsset(updated.url, { expireIn: ASSET_SIGNED_URL_EXPIRATION }),

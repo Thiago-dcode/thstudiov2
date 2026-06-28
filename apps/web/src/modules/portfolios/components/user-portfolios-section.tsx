@@ -35,8 +35,9 @@ export const UserPortfoliosSection = async ({
         <Link
           key={portfolio.id}
           href={`/artists/${username}/portfolios/${portfolio.slug}`}
+          className="block w-full min-w-0"
         >
-          <PortfolioCard portfolio={portfolio} />
+          <PortfolioCard.Item portfolio={portfolio} />
         </Link>
       ))}
     </div>

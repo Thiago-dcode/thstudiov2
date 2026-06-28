@@ -32,6 +32,8 @@ description: >
 
 **Style**: Professional, minimalist, editorial, quietly exclusive. Light-first with dark mode support. UI disappears — only the user's portfolio/art content commands attention. No decoration competing with content.
 
+**Three non-negotiables**: **breathe** (generous space), **restraint** (less chrome, less noise), **exclusivity** (curated, not crowded).
+
 **Tone references** (feeling, not literal copying): costarastrology.com (editorial restraint, typographic confidence, whitespace), zara.com (sharp edges, neutral palette, product-first, sparing accent).
 
 - **Colors**: Use design tokens from `globals.css` — **never hardcode hex values in components**.
@@ -45,8 +47,35 @@ description: >
   - **Sans** for UI, labels, and interactive elements.
   - **Scale**: `--size-xs` (0.75rem), `--size-sm` (0.875rem), `--size-base` (1rem), `--size-lg` (1.125rem). Use Tailwind `text-xs/sm/base/lg`.
   - **Editorial hierarchy**: Confident type scale, real hierarchy, generous line-height/whitespace. Use weight/size (not color/decoration) to signal importance.
-- **Layout**: Ample negative space. Page backgrounds calm and neutral (`#F8F6F2` light / `#1C1B19` dark). Cards and chrome stay quiet — no gradients, no decorative fills on surfaces.
-- **Tone**: Restrained, confident, editorial. Professional and quietly exclusive.
+- **Layout**: Ample negative space — pages must **breathe**. Page backgrounds calm and neutral (`#F8F6F2` light / `#1C1B19` dark). Cards and chrome stay quiet — no gradients, no decorative fills on surfaces.
+- **Tone**: Restrained, confident, editorial. Professional and quietly exclusive — curated, never crowded.
+
+### Breathe & Exclusivity Rule
+
+Every layout must feel **spacious and curated** — never dense, never generic SaaS.
+
+**Breathe (space)**:
+- **Prefer air over density.** When in doubt, add padding, margin, or gap — never cram.
+- **Section rhythm**: generous vertical padding (`py-20` mobile → `py-28` tablet+). Section headers need clear separation from content (`mb-12`+).
+- **Content width**: constrain prose and headings (`max-w-lg` / `max-w-xl`) so lines don't stretch edge-to-edge on wide screens.
+- **Group spacing**: related items stay tight (`gap-2`–`gap-4`); unrelated groups get real separation (`gap-8`–`gap-16`, or a divider/whitespace break).
+- **Grids**: use fewer columns before shrinking cards. A 3-column grid with breathing room beats a 5-column squeeze.
+- **Stack before shrink**: on tight viewports, reduce columns or stack — don't compress type, padding, or touch targets to fit more in.
+
+**Exclusivity (curated feel)**:
+- **Show less, better.** Fewer nav items, fewer CTAs, fewer badges, fewer labels per card. Quality and restraint signal premium.
+- **One hero moment per view** — one headline, one primary action, one visual focus. Never compete for attention.
+- **Quiet chrome**: nav, cards, filters, and metadata stay neutral and understated. No busy borders, pills, gradients, or decorative fills.
+- **Editorial copy**: confident, short, human. Avoid startup jargon, exclamation marks, and "feature dump" layouts.
+- **Curated emptiness**: empty states and sparse pages should still feel intentional — centered, spacious, with one clear next step.
+- **No marketplace clutter**: avoid patterns that feel like e-commerce grids, dashboards, or social feeds unless the page truly requires it.
+
+**Anti-patterns** (reject these):
+- Tight grids with `gap-2`/`gap-3` and 4–5+ columns on desktop
+- Edge-to-edge text blocks with no max-width
+- Multiple accent-colored elements on one screen
+- Stacked badges, chips, and metadata competing with the artwork
+- Sections with no vertical pause between them
 
 ### Zero Radius Rule
 
@@ -75,11 +104,12 @@ Chrome (nav, cards, headers, controls) stays quiet: neutral tones, restrained ty
 
 ## 3. Visual Hierarchy & Layout
 
-- Use Tailwind spacing scale (based on 4px grid: 4, 8, 12, 16, 20, 24, 32, 40, 48, 64px).
+- Use Tailwind spacing scale (based on 4px grid: 4, 8, 12, 16, 20, 24, 32, 40, 48, 64px). **Default upward** — reach for `gap-6`, `gap-8`, `py-16`, `py-20` before smaller values.
 - Place the most important content top-left (F-pattern reading).
 - **One primary action per view** — never compete for attention.
-- Group related elements; separate unrelated ones with whitespace.
+- Group related elements; separate unrelated ones with **generous whitespace** (see Breathe & Exclusivity Rule).
 - Keep above-the-fold content self-explanatory — the user should know what the page is without scrolling.
+- **Reference spacing** (landing/editorial pages): `WebSection.Container` uses `px-6 py-20 tablet:px-10 tablet:py-28` — match or exceed this rhythm for marketing surfaces.
 
 ---
 
@@ -244,6 +274,8 @@ const { handleSubmit, isPending, errors } = useHandleAction({
 [ ] Cards use `surface-card` or `surface-card-strong` utility classes
 [ ] Zero border-radius everywhere — no `rounded-*` except `rounded-full` on functionally circular controls (slider thumb, scrollbar thumb)
 [ ] Accent color used only on CTAs and deliberate emphasis — not on cards, sections, or decoration
+[ ] Layout breathes — generous section padding, constrained prose width, no cramped multi-column grids
+[ ] Page feels curated/exclusive — few competing elements, quiet chrome, one clear focal point
 ```
 
 ---
@@ -252,8 +284,8 @@ const { handleSubmit, isPending, errors } = useHandleAction({
 
 When generating UI code or design recommendations:
 
-1. **Structure first** — layout and hierarchy.
-2. **Apply tokens** — spacing, type scale, color system.
+1. **Structure first** — layout and hierarchy. Ask: does this breathe? Does it feel exclusive or crowded?
+2. **Apply tokens** — spacing, type scale, color system. Prefer generous spacing defaults.
 3. **Add states** — hover, focus, active, disabled, loading, empty, error.
 4. **Test mentally** — keyboard-only, mobile, dark mode, slow network.
 5. **Note tradeoffs** — if a decision sacrifices one principle for another, say so.

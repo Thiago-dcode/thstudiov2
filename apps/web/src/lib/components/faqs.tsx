@@ -12,19 +12,19 @@ export function FaqsContent() {
   const items = t.raw("items") as { question: string; answer: string }[];
 
   return (
-    <div className="flex flex-col gap-14">
-      <h2 className="font-serif text-2xl font-light  leading-none tracking-tight tablet:text-3xl desktop:text-5xl">
+    <div className="flex flex-col gap-8">
+      <h2 className="font-serif text-2xl! font-light  leading-none tracking-tight tablet:text-3xl desktop:text-5xl">
         {t("title")}
       </h2>
 
       <div className="flex flex-col">
-        <Accordion type="single" collapsible className="w-full">
+        <Accordion  defaultValue={`faq-${0}`}  type="single" collapsible className="w-full">
           {items.map((faq, index) => (
-            <AccordionItem key={index} value={`faq-${index}`}>
-              <AccordionTrigger className="text-base font-medium tablet:text-xl">
+            <AccordionItem  key={index} value={`faq-${index}`}>
+              <AccordionTrigger className="text-base! font-medium tablet:text-xl py-4">
                 {faq.question}
               </AccordionTrigger>
-              <AccordionContent className="w-full text-base leading-[1.3] text-text-muted">
+              <AccordionContent className="w-full text-base! leading-[1.3] text-text-muted">
                 {faq.answer}
               </AccordionContent>
             </AccordionItem>

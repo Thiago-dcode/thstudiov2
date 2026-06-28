@@ -101,6 +101,8 @@
   --breakpoint-desktop-lg: 1920px;
   --breakpoint-ultrawide: 2560px;
 
+  --screen-desktop: var(--breakpoint-desktop);
+
   --text-5xl: var(--size-5xl);
   --text-4xl: var(--size-4xl);
   --text-3xl: var(--size-3xl);

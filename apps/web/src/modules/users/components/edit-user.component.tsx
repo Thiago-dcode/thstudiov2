@@ -199,9 +199,9 @@ export default function EditUserComponent() {
         <section className="py-2 flex items-start justify-between">
           <div className="flex flex-col items-start justify-start">
             {" "}
-            <h1 className="text-lg font-bold">
+            <h3 className="text-lg font-bold">
               {user.name} {user.surname}
-            </h1>
+            </h3>
             <p className=" text-text-muted">
               {user.profession || t("profile.professionFallback")}
             </p>
@@ -250,7 +250,7 @@ export default function EditUserComponent() {
         {/*Categories section */}
         <section className="flex flex-col items-start justify-start gap-1 pt-8">
           <div className="flex items-center justify-start gap-2">
-            <h3 className="text-text-muted">{t("categories.title")}</h3>
+            <h4 className="text-text-muted">{t("categories.title")}</h4>
             <Dialog
               open={openCategories}
               onOpenChange={(value) => handleSetOpen(value, "categories")}

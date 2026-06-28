@@ -18,7 +18,7 @@ export const WebFooter = async () => {
 
   return (
     <footer className="w-full border-t border-fg-2 bg-bg">
-      <div className="mx-auto max-w-(--screen-desktop) px-5 py-10 tablet:px-10 tablet:py-12">
+      <div className="mx-auto max-w-(--screen-ultrawide) px-5 py-10 tablet:px-10 tablet:py-12">
         <div className="grid grid-cols-1 gap-10 phone-lg:grid-cols-2 tablet:grid-cols-3 tablet:gap-8">
           <div className="flex flex-col gap-3 phone-lg:col-span-2 tablet:col-span-1">
             <BrandLogo />
@@ -65,7 +65,7 @@ export const WebFooter = async () => {
           </div>
         </div>
 
-        <div className="mt-10 flex flex-col gap-4 border-t border-fg-2 pt-6 tablet:mt-12 phone-lg:flex-row phone-lg:items-center phone-lg:justify-between">
+        <div className="mt-10 flex flex-col gap-4 border-t border-fg-2 pt-6 tablet:mt-12 phone-lg:flex-row phone-lg:items-center phone-lg:justify-center phone-lg:gap-8">
           <p className="text-center text-xs tracking-wider text-text phone-lg:text-left">
             {t("copyright", { year })}
           </p>

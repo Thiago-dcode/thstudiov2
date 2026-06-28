@@ -138,14 +138,14 @@ export const ArtistSections = async ({
   }
 
   // Card item renderers — shared between the mobile accordion and desktop sections.
-  const portfolioItems = (sizes?: string): ReactNode =>
+  const portfolioItems = (): ReactNode =>
     portfolios.map((portfolio) => (
       <Link
         key={portfolio.id}
         href={`/artists/${username}/portfolios/${portfolio.slug}`}
-        className=""
+        className="block w-full min-w-0"
       >
-        <PortfolioCard portfolio={portfolio} sizes={sizes} />
+        <PortfolioCard.Item portfolio={portfolio} />
       </Link>
     ));
 
@@ -171,7 +171,7 @@ export const ArtistSections = async ({
     ));
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-4 phone-lg:px-6 tablet:px-12">
+    <div className="mx-auto w-full max-w-(--breakpoint-desktop-lg) px-4 phone-lg:px-6 tablet:px-10 laptop:px-12">
       {/* Mobile: collapsible accordion */}
       <Accordion
         type="multiple"
@@ -250,8 +250,8 @@ export const ArtistSections = async ({
                   : undefined
               }
             />
-            <div className="grid grid-cols-2 gap-4 tablet:grid-cols-3 tablet-lg:gap-5">
-              {portfolioItems("(max-width: 1024px) 50vw, 34vw")}
+            <div className="grid grid-cols-2 gap-8 tablet:grid-cols-3 tablet-lg:grid-cols-4 laptop:grid-cols-4 desktop:grid-cols-5 tablet-lg:gap-5">
+              {portfolioItems()}
             </div>
           </section>
         )}
@@ -266,7 +266,7 @@ export const ArtistSections = async ({
                   : undefined
               }
             />
-            <div className="grid grid-cols-3 gap-4 tablet-lg:grid-cols-4 tablet-lg:gap-5">
+            <div className="grid grid-cols-3 gap-4 tablet-lg:grid-cols-4 laptop:grid-cols-5 desktop:grid-cols-6 tablet-lg:gap-5">
               {collectionItems()}
             </div>
           </section>
@@ -282,7 +282,7 @@ export const ArtistSections = async ({
                   : undefined
               }
             />
-            <div className="grid grid-cols-2 gap-4 tablet:grid-cols-3 tablet:gap-4 tablet-lg:grid-cols-4 tablet-lg:gap-5">
+            <div className="grid grid-cols-2 gap-4 tablet:grid-cols-3 tablet-lg:grid-cols-4 laptop:grid-cols-4 desktop:grid-cols-5 tablet:gap-4 tablet-lg:gap-5">
               {serviceItems()}
             </div>
           </section>

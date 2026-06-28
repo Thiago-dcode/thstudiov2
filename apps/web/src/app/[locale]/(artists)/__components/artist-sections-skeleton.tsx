@@ -29,7 +29,7 @@ const CardGridSkeleton = ({
 
 export const ArtistSectionsSkeleton = () => (
   <div
-    className="mx-auto w-full max-w-5xl space-y-20 px-4 phone-lg:px-6 tablet:space-y-28 tablet:px-12"
+    className="mx-auto w-full max-w-(--breakpoint-desktop-lg) space-y-20 px-4 phone-lg:px-6 tablet:space-y-28 tablet:px-10 laptop:px-12"
     aria-hidden="true"
   >
     <section>
