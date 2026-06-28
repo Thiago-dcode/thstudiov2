@@ -56,6 +56,8 @@ const SectionHeader = ({ title, href }: { title: string; href?: string }) => (
   </div>
 );
 
+const SectionListContainer = ({ children }: { children: ReactNode }) => <div className="grid grid-cols-2 tablet:grid-cols-3 gap-6 tablet-lg:grid-cols-4 laptop:grid-cols-5 tablet-lg:gap-12">{children}</div>
+
 const ViewAllLink = ({ href, label }: { href: string; label: string }) => (
   <Link
     href={href}
@@ -207,7 +209,7 @@ export const ArtistSections = async ({
               </span>
             </AccordionTrigger>
             <AccordionContent>
-              <div className="grid grid-cols-2 gap-3">{collectionItems()}</div>
+              <div className="grid grid-cols-1 gap-3">{collectionItems()}</div>
               {collectionTotal > MAX_HIGHLIGHT_COLLECTIONS && (
                 <ViewAllLink
                   href={`/artists/${username}/collections`}
@@ -239,7 +241,7 @@ export const ArtistSections = async ({
       </Accordion>
 
       {/* Desktop: regular sections */}
-      <div className="hidden space-y-20 phone-lg:block tablet:space-y-28">
+      <div className="hidden phone-lg:block tablet:space-y-28">
         {portfolios.length > 0 && (
           <section>
             <SectionHeader
@@ -250,9 +252,9 @@ export const ArtistSections = async ({
                   : undefined
               }
             />
-            <div className="grid grid-cols-2 gap-8 tablet:grid-cols-3 tablet-lg:grid-cols-4 laptop:grid-cols-4 desktop:grid-cols-5 tablet-lg:gap-5">
+            <SectionListContainer>
               {portfolioItems()}
-            </div>
+            </SectionListContainer>
           </section>
         )}
 
@@ -266,9 +268,9 @@ export const ArtistSections = async ({
                   : undefined
               }
             />
-            <div className="grid grid-cols-3 gap-4 tablet-lg:grid-cols-4 laptop:grid-cols-5 desktop:grid-cols-6 tablet-lg:gap-5">
+            <SectionListContainer>
               {collectionItems()}
-            </div>
+            </SectionListContainer>
           </section>
         )}
 
@@ -282,9 +284,9 @@ export const ArtistSections = async ({
                   : undefined
               }
             />
-            <div className="grid grid-cols-2 gap-4 tablet:grid-cols-3 tablet-lg:grid-cols-4 laptop:grid-cols-4 desktop:grid-cols-5 tablet:gap-4 tablet-lg:gap-5">
+            <SectionListContainer>
               {serviceItems()}
-            </div>
+            </SectionListContainer>
           </section>
         )}
       </div>
