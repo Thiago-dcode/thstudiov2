@@ -239,7 +239,7 @@ export default function InputStep2() {
                       <div className="aspect-square w-full flex items-center justify-center">
                         {resolvePortfolioItemComponent(item)}
                       </div>
-                      <h3 className="text-xs font-medium text-text line-clamp-1 px-0.5">
+                      <h3 className="text-xs! font-medium text-text line-clamp-1 px-0.5">
                         {portfolioItemLabel(item)}
                       </h3>
                     </SortableItem>

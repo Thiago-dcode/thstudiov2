@@ -46,7 +46,6 @@ export default async function ServiceEdit({ params }: Props) {
       />
       <CreateOrUpdateService
         defaultService={service}
-        userAuth={userAuth}
         portfolios={portfolios.data || []}
       />
     </AdminPageContainer>

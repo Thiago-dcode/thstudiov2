@@ -17,6 +17,6 @@ export const fileStorageConfig: StorageConfig = {
   folder: STORAGE_CONFIG.folder || 'uploads',
 };
 
-export const compressConfig: CompressConfig  ={
-  driver:'sharp'
+export const compressConfig: CompressConfig = {
+  driver: 'sharp'
 }

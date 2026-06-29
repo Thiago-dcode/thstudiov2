@@ -40,7 +40,7 @@ export default async function Atelier() {
         />
       </AdminPageTitle>
       {portfoliosResponse.data.length > 0 ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 laptop:grid-cols-4 desktop-lg:grid-cols-5 gap-4">
           {portfoliosResponse.data.map((portfolio) => (
             <Link
               key={portfolio.id}

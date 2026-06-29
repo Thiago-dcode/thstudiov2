@@ -26,7 +26,6 @@ import type { UserAuth } from "@/modules/auth/auth.types";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { createOrUpdatePortfolioAction } from "../server-actions/create-update-portfolio.action";
 import { getPortfolioHighlightCountAction } from "../server-actions/get-highlight-count.action";
-import { slugExistsAction } from "../server-actions/slug-exists.action";
 
 export const MAX_PORTFOLIO_CATEGORIES = 2;
 
@@ -65,9 +64,6 @@ type PortfolioContextType = {
   success: boolean;
   canSubmit: boolean;
   canGoNextStep: boolean;
-  isSlugAvailable?: boolean;
-  isCheckingSlugAvailability: boolean;
-  checkSlugAvailability: () => Promise<void>;
   deleteInputErrorProperty: (key: string) => void;
   reset: () => void;
   clear: () => void;
@@ -175,7 +171,6 @@ export const PortfolioProvider = ({
 
   const [currentStep, setCurrentStep] = useState(1);
 
-  const idTimeOut = useRef<NodeJS.Timeout>(null);
   const highlightCountMemo = useRef<ActionReturn<
     number | null,
     undefined
@@ -292,54 +287,6 @@ export const PortfolioProvider = ({
     [handleAction],
   );
 
-  const slugChecksMemo = useRef<
-    Record<string, ActionReturn<boolean | null, undefined>>
-  >({});
-  const {
-    handleAction: handleActionSlug,
-    result: resultSlugExist,
-    isPending: isPendingSlugExists,
-    cleanResult,
-    cleanErrors,
-  } = useHandleAction({
-    action: async () => {
-      // Normalize slug before checking to match how it's stored in DB (without trailing hyphens)
-
-      const slugToCheck = formData.slug || "";
-
-      if (slugChecksMemo.current[slugToCheck]) {
-        return slugChecksMemo.current[slugToCheck];
-      }
-      return await slugExistsAction(user.username, slugToCheck);
-    },
-    afterAction: async (data) => {
-      slugChecksMemo.current[formData.slug || ""] = data;
-    },
-  });
-
-  const checkSlugAvailability = useCallback(async () => {
-    if (
-      !formData?.slug ||
-      isPendingSlugExists ||
-      formData.slug === currentPortfolio?.slug
-    )
-      return;
-    if (idTimeOut.current) clearTimeout(idTimeOut.current);
-    idTimeOut.current = setTimeout(() => {
-      cleanResult();
-      cleanErrors();
-      handleActionSlug();
-      if (idTimeOut.current) clearTimeout(idTimeOut.current);
-    }, 1000);
-  }, [
-    formData,
-    isPendingSlugExists,
-    cleanResult,
-    cleanErrors,
-    handleActionSlug,
-    currentPortfolio?.slug,
-  ]);
-
   const handleSetPortfolioItems = useCallback((items: PortfolioItem[]) => {
     setPortfolioItems(items);
   }, []);
@@ -367,10 +314,6 @@ export const PortfolioProvider = ({
 
   const handleSetFormData = useCallback(
     (key: keyof CreatePortfolioInputWithFile, value: any) => {
-      if (key === "slug") {
-        cleanResult();
-        cleanErrors();
-      }
       setFormData((prev) => {
         if (prev) {
           return {
@@ -383,7 +326,7 @@ export const PortfolioProvider = ({
         };
       });
     },
-    [cleanErrors, cleanResult],
+    [],
   );
 
   const firstStepIsCompleted = !firstStepRequiredFields.some((field) => {
@@ -464,16 +407,7 @@ export const PortfolioProvider = ({
     setCategoriesSelected([]);
     // Reset action state (errors/result)
     reset();
-    cleanErrors();
-    cleanResult();
-
-    // Clear slug memo + pending timeout
-    slugChecksMemo.current = {};
-    if (idTimeOut.current) {
-      clearTimeout(idTimeOut.current);
-      idTimeOut.current = null;
-    }
-  }, [user, reset, cleanErrors, cleanResult]);
+  }, [user, reset]);
 
   const contextValue: PortfolioContextType = {
     user,
@@ -488,12 +422,6 @@ export const PortfolioProvider = ({
     success,
     canGoNextStep,
     canSubmit,
-    isSlugAvailable:
-      typeof resultSlugExist?.data === "boolean"
-        ? !resultSlugExist.data
-        : undefined,
-    isCheckingSlugAvailability: isPendingSlugExists,
-    checkSlugAvailability,
     deleteInputErrorProperty,
     reset,
     clear,

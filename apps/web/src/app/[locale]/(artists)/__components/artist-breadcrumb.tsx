@@ -42,7 +42,7 @@ export const ArtistBreadcrumb = ({
 
   return (
     <Breadcrumb className={cn("mb-8 md:mb-12 flex gap-4 w-full", className)}>
-      <BreadcrumbList className="flex-nowrap gap-2 text-[10px] uppercase tracking-[0.2em] text-text-muted">
+      <BreadcrumbList className="flex-wrap gap-2 text-[10px] uppercase tracking-[0.2em] text-text-muted">
         {backUrl && (
           <BreadcrumbItem>
             <BreadcrumbLink asChild>

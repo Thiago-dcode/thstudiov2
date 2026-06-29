@@ -38,7 +38,7 @@ export default async function Page({ params }: Props) {
       <Web.Header title="Services" />
 
       {services.length > 0 ? (
-        <section className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 tablet:gap-6">
+        <section className=" grid-cols-1 tablet:grid-cols-2 gap-5 grid laptop:grid-cols-3 desktop-lg:grid-cols-5 tablet:gap-6">
           {services.map((service) => (
             <ServiceCard
               key={service.id}

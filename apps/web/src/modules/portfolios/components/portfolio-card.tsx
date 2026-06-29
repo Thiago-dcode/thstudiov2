@@ -2,6 +2,7 @@ import type { Portfolio } from "@repo/common-lib/types/portfolio";
 import { cn } from "@repo/ui/lib/utils";
 import NextImage from "next/image";
 import type { ReactNode } from "react";
+import { CardDescription, CardTitle } from "@/lib/components/card-text";
 
 const DEFAULT_SIZES = "(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 50vw";
 
@@ -132,42 +133,6 @@ function MetaItem({ children, separator, className }: MetaItemProps) {
   );
 }
 
-type TitleProps = {
-  children: ReactNode;
-  className?: string;
-};
-
-function Title({ children, className }: TitleProps) {
-  return (
-    <h3
-      className={cn(
-        "text-sm! line-clamp-1 leading-snug tracking-tight text-text transition-colors duration-300 group-hover:text-text-muted",
-        className,
-      )}
-    >
-      {children}
-    </h3>
-  );
-}
-
-type DescriptionProps = {
-  children: ReactNode;
-  className?: string;
-};
-
-function Description({ children, className }: DescriptionProps) {
-  return (
-    <p
-      className={cn(
-        "line-clamp-2 text-xs! leading-relaxed text-text-muted transition-colors duration-300 group-hover:text-text-muted/80",
-        className,
-      )}
-    >
-      {children}
-    </p>
-  );
-}
-
 export type PortfolioCardItemProps = {
   portfolio: Portfolio;
   isAtelier?: boolean;
@@ -188,8 +153,8 @@ function Item({
     <Root className={className}>
       <Image src={thumbnail} alt={title} sizes={sizes} isBlocked={isBlocked} />
       <Details>
-        <Title>{title}</Title>
-        {description ? <Description>{description}</Description> : null}
+        <CardTitle className="line-clamp-1">{title}</CardTitle>
+        {description ? <CardDescription>{description}</CardDescription> : null}
       </Details>
     </Root>
   );
@@ -201,7 +166,7 @@ export const PortfolioCard = Object.assign(Root, {
   Details,
   Meta,
   MetaItem,
-  Title,
-  Description,
+  Title: CardTitle,
+  Description: CardDescription,
   Item,
 });

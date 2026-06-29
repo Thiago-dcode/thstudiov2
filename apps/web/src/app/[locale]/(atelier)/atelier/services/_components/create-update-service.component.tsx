@@ -1,15 +1,12 @@
 "use client";
 
 import { ALLOWED_IMAGE_FILE_TYPES } from "@repo/common-lib/constants/constants";
-import { MAX_HIGHLIGHT_SERVICES } from "@repo/common-lib/constants/highlights";
 import type { Portfolio } from "@repo/common-lib/types/portfolio";
-import type { ActionReturn } from "@repo/common-lib/types/response";
-import type { FullService, Service } from "@repo/common-lib/types/service";
+import type { FullService } from "@repo/common-lib/types/service";
 import {
   generateValidSlug,
   isAValidSlugFormat,
 } from "@repo/common-lib/utils/generate-valid-slug";
-import { isHighlightToggleDisabled } from "@repo/common-lib/utils/highlights";
 import { FileInput } from "@repo/ui/components/custom/file-input";
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
 import { Checkbox } from "@repo/ui/components/shadcn/checkbox";
@@ -28,265 +25,76 @@ import {
 } from "@repo/ui/contexts/file.provider";
 import { usePreviewUrls } from "@repo/ui/hooks/usePreviewUrls";
 import { cn } from "@repo/ui/lib/utils";
-import { toast } from "@repo/ui/sonner";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { DynamicListInput } from "@/lib/components/dynamic-list-input";
 import FormComponent from "@/lib/components/form-component";
-import type { UserAuth } from "@/modules/auth/auth.types";
-import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
-import { createOrUpdateServiceAction } from "@/modules/services/server-actions/create-update-service.action";
-import { getServiceHighlightCountAction } from "@/modules/services/server-actions/get-highlight-count.action";
-import { serviceSlugExistsAction } from "@/modules/services/server-actions/slug-exists.action";
-
-type ServiceActionInput = Parameters<typeof createOrUpdateServiceAction>[0];
+import { useCreateUpdateService } from "@/modules/services/providers/create-update-service.provider";
 
 export const CreateOrUpdateService = ({
   defaultService,
-  userAuth,
   portfolios,
 }: {
   defaultService?: FullService;
-  userAuth: UserAuth;
   portfolios: Portfolio[];
 }) => {
   const router = useRouter();
-  const isUpdate = !!defaultService;
-  const readOnly = Boolean(defaultService?.blocked_at);
-  const highlightLimit = MAX_HIGHLIGHT_SERVICES;
-
-  const highlightCountMemo = useRef<ActionReturn<
-    number | null,
-    undefined
-  > | null>(null);
-  const forceHighlightFetchRef = useRef(false);
-
   const {
-    handleAction: handleHighlightCountAction,
-    result: highlightCountResult,
-    isPending: isLoadingHighlightCount,
-    cleanResult: cleanHighlightResult,
-  } = useHandleAction({
-    action: async () => {
-      if (highlightCountMemo.current && !forceHighlightFetchRef.current) {
-        return highlightCountMemo.current;
-      }
-      forceHighlightFetchRef.current = false;
-      return await getServiceHighlightCountAction();
-    },
-    afterAction: async (data) => {
-      highlightCountMemo.current = data;
-    },
-  });
-
-  const fetchHighlightCount = useCallback(
-    async (options?: { force?: boolean }) => {
-      if (options?.force) {
-        highlightCountMemo.current = null;
-        forceHighlightFetchRef.current = true;
-        cleanHighlightResult();
-      }
-      await handleHighlightCountAction();
-    },
-    [handleHighlightCountAction, cleanHighlightResult],
-  );
-
-  const highlightCount = highlightCountResult?.data ?? 0;
-  const titleRef = useRef(defaultService?.title ?? "");
-  const slugRef = useRef(defaultService?.slug ?? "");
-  const slugInputRef = useRef<HTMLInputElement>(null);
-  const descriptionRef = useRef(defaultService?.description ?? "");
-  const priceRef = useRef(
-    defaultService?.price != null ? String(defaultService.price) : "",
-  );
-  const isActiveRef = useRef(defaultService?.is_active ?? true);
-  const showPriceRef = useRef(defaultService?.show_price ?? false);
-  const isHighlightRef = useRef(defaultService?.is_highlight ?? false);
-  const originallyHighlightedRef = useRef(
-    defaultService?.is_highlight ?? false,
-  );
-  const [isHighlighted, setIsHighlighted] = useState(
-    defaultService?.is_highlight ?? false,
-  );
-  const highlightToggleDisabled = isHighlightToggleDisabled(
-    highlightCount,
-    highlightLimit,
-    isHighlighted,
-    originallyHighlightedRef.current,
-  );
-  const [selectedPortfolioId, setSelectedPortfolioId] = useState<
-    number | undefined
-  >(defaultService?.portfolio_id ?? undefined);
-  const manuallyChangedSlug = useRef(false);
-  const previousSlugRef = useRef<string | undefined>(defaultService?.slug);
-  const slugCheckTimeout = useRef<NodeJS.Timeout>(null);
-  const slugChecksMemo = useRef<
-    Record<string, ActionReturn<boolean | null, undefined>>
-  >({});
-  const [features, setFeatures] = useState<string[]>(
-    defaultService?.features?.map((f) => f.title) ?? [""],
-  );
-  const [terms, setTerms] = useState<string[]>(
-    defaultService?.terms?.map((t) => t.title) ?? [""],
-  );
-  const [isValidSlug, setIsValidSlug] = useState<boolean | undefined>(
-    undefined,
-  );
-
-  const {
-    handleAction,
+    currentService,
+    setService,
+    clear,
+    handleSubmit,
     isPending,
     success,
     inputErrors,
     deleteInputErrorProperty,
-    reset,
-  } = useHandleAction<ServiceActionInput, Service>({
-    action: async () => {
-      const payload: ServiceActionInput = {
-        title: titleRef.current,
-        slug: slugRef.current,
-        description: descriptionRef.current ?? "",
-        price: priceRef.current ? Number(priceRef.current) : undefined,
-        is_active: isActiveRef.current,
-        show_price: showPriceRef.current,
-        is_highlight: isHighlightRef.current,
-        portfolio_id: selectedPortfolioId,
-        user_id: userAuth.id,
-        thumbnail: thumbnailFileRef.current,
-        features: features
-          .filter((f) => f.trim())
-          .map((f) => ({ title: f.trim() })),
-        terms: terms.filter((t) => t.trim()).map((t) => ({ title: t.trim() })),
-      };
-
-      return await createOrUpdateServiceAction(payload, defaultService);
-    },
-    afterAction: async (result) => {
-      if (result.errors) {
-        for (const error of result.errors) {
-          toast.error(error);
-        }
-      } else if (result.data) {
-        await fetchHighlightCount({ force: true });
-        toast.success(isUpdate ? "Service updated" : "Service created");
-        router.push("/atelier/services");
-        router.refresh();
-      }
-    },
-    beforeAction: async () => {
-      reset();
-    },
-  });
-
-  const {
-    handleAction: handleSlugCheck,
-    result: slugExistResult,
-    isPending: isCheckingSlug,
-    cleanResult: cleanSlugResult,
-    cleanErrors: cleanSlugErrors,
-  } = useHandleAction({
-    action: async () => {
-      const slugToCheck = slugRef.current;
-      if (slugChecksMemo.current[slugToCheck]) {
-        return slugChecksMemo.current[slugToCheck];
-      }
-      return await serviceSlugExistsAction(userAuth.username, slugToCheck);
-    },
-    afterAction: async (data) => {
-      slugChecksMemo.current[slugRef.current] = data;
-    },
-  });
-
-  const isSlugAvailable =
-    typeof slugExistResult?.data === "boolean"
-      ? !slugExistResult.data
-      : undefined;
-
-  const checkSlugAvailability = useCallback(() => {
-    if (
-      !slugRef.current ||
-      isCheckingSlug ||
-      slugRef.current === defaultService?.slug
-    )
-      return;
-    if (slugCheckTimeout.current) clearTimeout(slugCheckTimeout.current);
-    slugCheckTimeout.current = setTimeout(() => {
-      cleanSlugResult();
-      cleanSlugErrors();
-      handleSlugCheck();
-      if (slugCheckTimeout.current) clearTimeout(slugCheckTimeout.current);
-    }, 1000);
-  }, [
+    canSubmit,
+    readOnly,
+    isUpdate,
+    titleRef,
+    slugRef,
+    slugInputRef,
+    descriptionRef,
+    priceRef,
+    isActiveRef,
+    showPriceRef,
+    isHighlightRef,
+    manuallyChangedSlug,
+    notifyFormChange,
+    updateSlug,
+    handleThumbnailChange,
+    features,
+    setFeatures,
+    terms,
+    setTerms,
+    selectedPortfolioId,
+    setSelectedPortfolioId,
+    isHighlighted,
+    setIsHighlighted,
+    isValidSlug,
+    isSlugAvailable,
     isCheckingSlug,
-    cleanSlugResult,
-    cleanSlugErrors,
-    handleSlugCheck,
-    defaultService?.slug,
-  ]);
-
-  const updateSlug = useCallback(
-    (newSlug: string) => {
-      slugRef.current = newSlug;
-      if (slugInputRef.current) slugInputRef.current.value = newSlug;
-
-      const currentSlug = newSlug.trim();
-      const previousSlug = previousSlugRef.current?.trim();
-      const slugChanged = currentSlug !== previousSlug;
-
-      if (currentSlug) {
-        const valid = isAValidSlugFormat(currentSlug);
-        setIsValidSlug(valid);
-        if (slugChanged && valid && !currentSlug.endsWith("-")) {
-          checkSlugAvailability();
-        }
-      } else {
-        setIsValidSlug(undefined);
-      }
-
-      previousSlugRef.current = newSlug;
-    },
-    [checkSlugAvailability],
-  );
-
-  const thumbnailFileRef = { current: undefined as File | undefined };
-
-  const handleSubmit = useCallback(
-    async (e: React.FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
-      if (readOnly) return;
-      await handleAction();
-    },
-    [handleAction, readOnly],
-  );
+    highlightLimit,
+    highlightToggleDisabled,
+    isLoadingHighlightCount,
+  } = useCreateUpdateService();
 
   useEffect(() => {
-    void fetchHighlightCount();
-  }, [fetchHighlightCount]);
-
-  useEffect(() => {
-    if (defaultService) {
-      titleRef.current = defaultService.title;
-      slugRef.current = defaultService.slug;
-      descriptionRef.current = defaultService.description ?? "";
-      priceRef.current =
-        defaultService.price != null ? String(defaultService.price) : "";
-      isActiveRef.current = defaultService.is_active;
-      showPriceRef.current = defaultService.show_price;
-      isHighlightRef.current = defaultService.is_highlight;
-      setIsHighlighted(defaultService.is_highlight);
-      setSelectedPortfolioId(defaultService.portfolio_id ?? undefined);
-      setFeatures(
-        defaultService.features?.length
-          ? defaultService.features.map((f) => f.title)
-          : [""],
-      );
-      setTerms(
-        defaultService.terms?.length
-          ? defaultService.terms.map((t) => t.title)
-          : [""],
-      );
+    if (defaultService && currentService?.id !== defaultService.id) {
+      setService(defaultService);
     }
-  }, [defaultService]);
+    if (!defaultService && currentService) {
+      clear();
+    }
+  }, [clear, currentService, defaultService, setService]);
+
+  useEffect(() => {
+    if (success) {
+      clear();
+      router.push("/atelier/services");
+      router.refresh();
+    }
+  }, [clear, router, success]);
 
   const getSlugStatusMessage = () => {
     if (isCheckingSlug) {
@@ -296,7 +104,7 @@ export const CreateOrUpdateService = ({
     }
     if (
       typeof isSlugAvailable === "boolean" &&
-      defaultService?.slug !== slugRef.current
+      currentService?.slug !== slugRef.current
     ) {
       if (isSlugAvailable) {
         return (
@@ -340,6 +148,7 @@ export const CreateOrUpdateService = ({
               onChange={(e) => {
                 const newTitle = e.target.value;
                 titleRef.current = newTitle;
+                notifyFormChange();
                 deleteInputErrorProperty("title");
 
                 if (!manuallyChangedSlug.current) {
@@ -368,6 +177,7 @@ export const CreateOrUpdateService = ({
                   const newSlug = generateValidSlug(e.target.value, {
                     preserveTrailingHyphen: true,
                   });
+                  notifyFormChange();
                   deleteInputErrorProperty("slug");
                   manuallyChangedSlug.current = !!newSlug;
                   updateSlug(newSlug);
@@ -394,6 +204,7 @@ export const CreateOrUpdateService = ({
             <FormComponent.LabelTextarea
               onChange={(e) => {
                 descriptionRef.current = e.target.value;
+                notifyFormChange();
                 deleteInputErrorProperty("description");
               }}
               defaultValue={descriptionRef.current}
@@ -408,7 +219,10 @@ export const CreateOrUpdateService = ({
               <PortfolioSelect
                 portfolios={portfolios}
                 value={selectedPortfolioId}
-                onChange={setSelectedPortfolioId}
+                onChange={(value) => {
+                  notifyFormChange();
+                  setSelectedPortfolioId(value);
+                }}
               />
             )}
 
@@ -416,6 +230,7 @@ export const CreateOrUpdateService = ({
               <FormComponent.LabelInput
                 onChange={(e) => {
                   priceRef.current = e.target.value;
+                  notifyFormChange();
                   deleteInputErrorProperty("price");
                 }}
                 defaultValue={priceRef.current}
@@ -437,6 +252,7 @@ export const CreateOrUpdateService = ({
                     defaultChecked={showPriceRef.current}
                     onCheckedChange={(checked) => {
                       showPriceRef.current = !!checked;
+                      notifyFormChange();
                     }}
                   />
                   <Label
@@ -452,6 +268,7 @@ export const CreateOrUpdateService = ({
                     defaultChecked={isActiveRef.current}
                     onCheckedChange={(checked) => {
                       isActiveRef.current = !!checked;
+                      notifyFormChange();
                     }}
                   />
                   <Label
@@ -474,6 +291,7 @@ export const CreateOrUpdateService = ({
                     const value = checked === true;
                     isHighlightRef.current = value;
                     setIsHighlighted(value);
+                    notifyFormChange();
                   }}
                   disabled={
                     isPending ||
@@ -511,23 +329,27 @@ export const CreateOrUpdateService = ({
             <FileInputProvider allowedMimeTypes={ALLOWED_IMAGE_FILE_TYPES}>
               <ThumbnailInput
                 defaultUrl={defaultService?.thumbnail || undefined}
-                onFileChange={(file) => {
-                  thumbnailFileRef.current = file;
-                }}
+                onFileChange={handleThumbnailChange}
                 error={inputErrors?.thumbnail}
               />
             </FileInputProvider>
 
             <DynamicListInput
               value={features}
-              onChange={setFeatures}
+              onChange={(value) => {
+                notifyFormChange();
+                setFeatures(value);
+              }}
               label="Features"
               placeholder="e.g. 2-hour session"
             />
 
             <DynamicListInput
               value={terms}
-              onChange={setTerms}
+              onChange={(value) => {
+                notifyFormChange();
+                setTerms(value);
+              }}
               label="Terms"
               placeholder="e.g. 50% deposit required"
             />
@@ -551,7 +373,11 @@ export const CreateOrUpdateService = ({
 
         {!readOnly ? (
           <div className="sticky bottom-0 bg-bg p-2 mt-6">
-            <FormComponent.SubmitButton isPending={isPending} success={success}>
+            <FormComponent.SubmitButton
+              disabled={!canSubmit || isPending || success}
+              isPending={isPending}
+              success={success}
+            >
               {isUpdate ? "Update Service" : "Create Service"}
             </FormComponent.SubmitButton>
           </div>
@@ -572,10 +398,12 @@ const ThumbnailInput = ({
 }) => {
   const { files } = useInputFile();
   const { previewUrls } = usePreviewUrls({ defaultUrl, files });
+  const onFileChangeRef = useRef(onFileChange);
+  onFileChangeRef.current = onFileChange;
 
   useEffect(() => {
-    onFileChange(files?.[0]);
-  }, [files, onFileChange]);
+    onFileChangeRef.current(files?.[0]);
+  }, [files]);
 
   return (
     <div className="space-y-1">
@@ -614,17 +442,6 @@ const PortfolioSelect = ({
     [portfolios, value],
   );
 
-  const [inputValue, setInputValue] = useState(selectedPortfolio?.title || "");
-
-  // Reset input value when value prop changes externally (e.g. initial load)
-  useEffect(() => {
-    if (selectedPortfolio) {
-      setInputValue(selectedPortfolio.title);
-    } else if (!value) {
-      setInputValue("");
-    }
-  }, [selectedPortfolio, value]);
-
   return (
     <div className="space-y-1">
       <Label className="block text-xs tracking-wide text-text-muted">
@@ -638,36 +455,32 @@ const PortfolioSelect = ({
       >
         <ComboboxInput
           placeholder="Select a portfolio..."
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
+          value={selectedPortfolio?.title ?? ""}
+          readOnly
           showClear
         />
         <ComboboxContent>
           <ComboboxList>
-            {portfolios
-              .filter((p) =>
-                p.title.toLowerCase().includes(inputValue.toLowerCase()),
-              )
-              .map((portfolio) => (
-                <ComboboxItem
-                  key={portfolio.id}
-                  value={String(portfolio.id)}
-                  className="gap-2"
-                >
-                  <div className="size-6 shrink-0 overflow-hidden bg-fg-2">
-                    {portfolio.thumbnail ? (
-                      <img
-                        src={portfolio.thumbnail}
-                        alt=""
-                        className="size-full object-cover"
-                      />
-                    ) : (
-                      <div className="size-full bg-fg-2-foreground/20" />
-                    )}
-                  </div>
-                  <span className="line-clamp-1">{portfolio.title}</span>
-                </ComboboxItem>
-              ))}
+            {portfolios.map((portfolio) => (
+              <ComboboxItem
+                key={portfolio.id}
+                value={String(portfolio.id)}
+                className="gap-2"
+              >
+                <div className="size-6 shrink-0 overflow-hidden bg-fg-2">
+                  {portfolio.thumbnail ? (
+                    <img
+                      src={portfolio.thumbnail}
+                      alt=""
+                      className="size-full object-cover"
+                    />
+                  ) : (
+                    <div className="size-full bg-fg-2-foreground/20" />
+                  )}
+                </div>
+                <span className="line-clamp-1">{portfolio.title}</span>
+              </ComboboxItem>
+            ))}
           </ComboboxList>
         </ComboboxContent>
       </Combobox>

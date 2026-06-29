@@ -22,6 +22,7 @@ import {
   MAX_PORTFOLIO_CATEGORIES,
   usePortfolio,
 } from "@/modules/portfolios/providers/create-update-portfolio.provider";
+import { usePortfolioSlug } from "./portfolio-slug.context";
 
 const ThumbnailInput = () => {
   const { files } = useInputFile();
@@ -93,9 +94,6 @@ const FirstStepInputs = () => {
     handleSetFormData,
     inputErrors,
     deleteInputErrorProperty,
-    checkSlugAvailability,
-    isCheckingSlugAvailability,
-    isSlugAvailable,
     currentPortfolio,
     isPending,
     categoriesSelected,
@@ -105,6 +103,9 @@ const FirstStepInputs = () => {
     highlightLimit,
     isLoadingHighlightCount,
   } = usePortfolio();
+
+  const { checkSlugAvailability, isCheckingSlugAvailability, isSlugAvailable } =
+    usePortfolioSlug();
 
   const isCurrentlyHighlighted = formData.is_highlight ?? false;
   const originallyHighlighted = currentPortfolio?.is_highlight ?? false;
@@ -161,8 +162,13 @@ const FirstStepInputs = () => {
       setIsValidSlug(isValid);
 
       // Only check availability if slug changed and is valid
-      if (slugChanged && isValid && !currentSlug.endsWith("-")) {
-        checkSlugAvailability();
+      if (
+        slugChanged &&
+        isValid &&
+        !currentSlug.endsWith("-") &&
+        currentSlug !== currentPortfolio?.slug?.trim()
+      ) {
+        checkSlugAvailability(currentSlug);
       }
     } else {
       setIsValidSlug(undefined);
@@ -170,7 +176,7 @@ const FirstStepInputs = () => {
 
     // Update the ref for next comparison
     previousSlugRef.current = formData?.slug;
-  }, [formData?.slug, checkSlugAvailability]);
+  }, [formData?.slug, checkSlugAvailability, currentPortfolio?.slug]);
 
   // Get slug status message
   const getSlugStatusMessage = () => {

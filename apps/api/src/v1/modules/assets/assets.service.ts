@@ -237,7 +237,7 @@ export class AssetsService {
             : null,
         };
       })(),
-      { ttl: ASSET_SIGNED_URL_EXPIRATION * 1000 },
+      { ttl: ASSET_SIGNED_URL_EXPIRATION * 950 },
     );
   }
 }

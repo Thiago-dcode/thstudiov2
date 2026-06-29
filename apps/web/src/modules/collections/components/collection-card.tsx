@@ -1,6 +1,7 @@
 import type { Collection } from "@repo/common-lib/types/collection";
 import { cn } from "@repo/ui/lib/utils";
 import Image from "next/image";
+import { CardTitle } from "@/lib/components/card-text";
 
 export type CollectionCardProps = {
   collection: Collection;
@@ -90,9 +91,9 @@ export const CollectionCard = ({
       </div>
       {title ? (
         <div className="pointer-events-none absolute inset-x-[12%] bottom-[12%] z-20 min-w-0">
-          <h3 className="pointer-events-auto w-full min-w-0 line-clamp-2 px-2 py-1 text-sm! font-semibold bg-fg/30 shadow-md">
+          <CardTitle className="pointer-events-auto w-full min-w-0 px-2 py-1 bg-fg/30 shadow-md">
             {title}
-          </h3>
+          </CardTitle>
         </div>
       ) : null}
     </article>

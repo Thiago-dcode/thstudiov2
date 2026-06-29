@@ -16,7 +16,10 @@ import { CollectionCard } from "@/modules/collections/components/collection-card
 import { PortfolioCard } from "@/modules/portfolios/components/portfolio-card";
 import userCollectionService from "@/modules/user-collections/user-collection.service";
 import userPortfolioService from "@/modules/user-portfolios/user-portfolio.service";
-import { ServiceCard } from "@/modules/user-services/components/service-card";
+import {
+  ServiceCard,
+  ServiceCardRow,
+} from "@/modules/user-services/components/service-card";
 import userServiceService from "@/modules/user-services/user-service.service";
 import { ArtistContactDialog } from "./artist-contact.dialog";
 
@@ -166,14 +169,14 @@ export const ArtistSections = async ({
       </Link>
     ));
 
-  const serviceItems = (): ReactNode =>
+  const serviceRowItems = (): ReactNode =>
     services.map((service) => (
-      <ServiceCard
-        key={service.id}
-        service={service}
-        username={username}
-        titleAs="h3"
-      />
+      <ServiceCardRow key={service.id} service={service} username={username} />
+    ));
+
+  const serviceColumnItems = (): ReactNode =>
+    services.map((service) => (
+      <ServiceCard key={service.id} service={service} username={username} />
     ));
 
   return (
@@ -182,7 +185,7 @@ export const ArtistSections = async ({
       <Accordion
         type="multiple"
         defaultValue={portfolios.length > 0 ? ["portfolios"] : []}
-        className="space-y-2 phone-lg:hidden"
+        className="space-y-8 phone-lg:hidden"
       >
         {portfolios.length > 0 && (
           <AccordionItem value="portfolios" className="border-border/30">
@@ -232,7 +235,7 @@ export const ArtistSections = async ({
               </span>
             </AccordionTrigger>
             <AccordionContent>
-              <div className="grid grid-cols-1 gap-3">{serviceItems()}</div>
+              <div className="grid grid-cols-1 gap-3">{serviceRowItems()}</div>
               {serviceTotal > MAX_HIGHLIGHT_SERVICES && (
                 <ViewAllLink
                   href={`/artists/${username}/services`}
@@ -245,7 +248,7 @@ export const ArtistSections = async ({
       </Accordion>
 
       {/* Desktop: regular sections */}
-      <div className="hidden phone-lg:block tablet:space-y-28">
+      <div className="hidden phone-lg:block tablet:space-y-40">
         {portfolios.length > 0 && (
           <section>
             <SectionHeader
@@ -284,7 +287,7 @@ export const ArtistSections = async ({
                   : undefined
               }
             />
-            <SectionListContainer>{serviceItems()}</SectionListContainer>
+            <SectionListContainer>{serviceColumnItems()}</SectionListContainer>
           </section>
         )}
       </div>

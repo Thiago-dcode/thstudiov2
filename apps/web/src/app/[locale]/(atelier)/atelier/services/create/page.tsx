@@ -43,10 +43,7 @@ export default async function ServiceCreate() {
   return (
     <AdminPageContainer>
       <AdminPageTitle title="Create a service" />
-      <CreateOrUpdateService
-        userAuth={userAuth}
-        portfolios={portfolios?.data || []}
-      />
+      <CreateOrUpdateService portfolios={portfolios?.data || []} />
     </AdminPageContainer>
   );
 }

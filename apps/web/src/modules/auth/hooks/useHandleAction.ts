@@ -2,6 +2,16 @@
 import type { ActionReturn } from "@repo/common-lib/types/response";
 import { type FormEvent, useCallback, useRef, useState } from "react";
 
+function isUnrecognizedActionError(error: unknown): boolean {
+  if (typeof error !== "object" || error === null) return false;
+  if ("name" in error && error.name === "UnrecognizedActionError") return true;
+  return (
+    "message" in error &&
+    typeof error.message === "string" &&
+    error.message.includes("was not found on the server")
+  );
+}
+
 export const useHandleAction = <K, T>({
   action,
   beforeAction,
@@ -133,6 +143,13 @@ export const useHandleAction = <K, T>({
 
         prevRequest.current = new Date();
         scheduleRetry();
+      } catch (error) {
+        if (isUnrecognizedActionError(error)) {
+          // Client bundle is stale (common after Turbopack HMR or deploy skew).
+          window.location.reload();
+          return;
+        }
+        throw error;
       } finally {
         updatePending(false);
       }
