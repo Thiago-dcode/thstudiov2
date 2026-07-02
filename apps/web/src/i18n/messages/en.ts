@@ -147,8 +147,7 @@ const messages = {
     hero: {
       label: "About",
       title: "The portfolio platform built for artists",
-      lead:
-        "A11STUDIO brings together the polish of a professional portfolio website and the simplicity of social media — so you never have to choose between the two.",
+      lead: "A11STUDIO brings together the polish of a professional portfolio website and the simplicity of social media — so you never have to choose between the two.",
     },
     what: {
       title: "What is A11STUDIO?",

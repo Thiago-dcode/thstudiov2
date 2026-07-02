@@ -148,8 +148,7 @@ const messages: Translations = {
     hero: {
       label: "Acerca de",
       title: "La plataforma de portafolios creada para artistas",
-      lead:
-        "A11STUDIO une el acabado de un portafolio profesional con la simplicidad de las redes sociales — para que nunca tengas que elegir entre uno u otro.",
+      lead: "A11STUDIO une el acabado de un portafolio profesional con la simplicidad de las redes sociales — para que nunca tengas que elegir entre uno u otro.",
     },
     what: {
       title: "¿Qué es A11STUDIO?",

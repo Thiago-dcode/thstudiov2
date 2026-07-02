@@ -1,12 +1,11 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import * as z from "zod";
 import { serverEnv } from "@/env/server";
 import authComponent from "@/lib/components/page-component";
 import invitationLinkService from "@/modules/invitation-links/invitation-link.service";
-import { WaitListForm } from "@/modules/wait-list/components/wait-list-form";
 import waitListService from "@/modules/wait-list/wait-list.service";
 import { RegisterForm } from "../__components/register-form";
-import { redirect } from "next/navigation";
 
 export default async function RegisterPage({
   searchParams,
@@ -22,7 +21,6 @@ export default async function RegisterPage({
 
   // Resolve the prefill email server-side from the invitation `ref` so we never
 
-
   if (registrationIsClosed) {
     // If registration is closed, allow bypass only for valid invitation refs.
     let bypassRegistrationClose = false;
@@ -34,10 +32,9 @@ export default async function RegisterPage({
     }
 
     if (!bypassRegistrationClose) {
-      redirect('/#home-hero-section')
+      redirect("/#home-hero-section");
     }
   }
-
 
   const validatedEmail = z.email().safeParse(email);
 

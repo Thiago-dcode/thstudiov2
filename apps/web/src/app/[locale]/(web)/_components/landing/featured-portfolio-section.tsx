@@ -43,7 +43,7 @@ export async function FeaturedPortfolioSection() {
         />
         <section className=" relative m-auto">
           {/* <PortfolioCard.Item className="tablet:hidden" portfolio={portfolio} /> */}
-       <p className=" mb-2 text-sm text-text-muted">
+          <p className=" mb-2 text-sm text-text-muted">
             {t("by")}{" "}
             <Link
               href={`/artists/${portfolio.artist.username}`}

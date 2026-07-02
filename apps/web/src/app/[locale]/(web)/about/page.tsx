@@ -96,7 +96,9 @@ export default async function AboutPage() {
       </Section>
 
       <Section id="who" title={t("who.title")}>
-        <p className="text-sm leading-relaxed text-text-muted">{t("who.intro")}</p>
+        <p className="text-sm leading-relaxed text-text-muted">
+          {t("who.intro")}
+        </p>
         <BulletList items={whoItems} />
         <P>{t("who.closing")}</P>
       </Section>
