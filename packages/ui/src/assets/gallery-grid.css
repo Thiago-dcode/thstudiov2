@@ -37,7 +37,7 @@
    ------------------------------------------------------------------- */
 
 .mansonry-grid {
-  columns: 1;
+  columns: 2;
   column-gap: var(--size-base);
   margin: 0 auto;
 }

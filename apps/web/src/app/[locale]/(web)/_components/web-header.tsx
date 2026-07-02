@@ -4,6 +4,7 @@ import { Button } from "@repo/ui/components/shadcn/button";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { RegistrationCtaButton } from "@/lib/components/registration-cta-button";
 import { SiteHeader } from "@/lib/components/site-header";
 import type { UserAuth } from "@/modules/auth/auth.types";
 import { WebHeaderArtistSearch } from "./web-header-artist-search";
@@ -54,14 +55,7 @@ export const WebHeader = ({ session }: WebHeaderProps) => {
                   Sign in
                 </Link>
               )}
-              {!isRegisterPage && (
-                <Button asChild variant="accent" size="sm">
-                  <Link href="/auth/register">
-                    Get Started
-                    <ArrowRight className="size-3.5" />
-                  </Link>
-                </Button>
-              )}
+              {!isRegisterPage && <RegistrationCtaButton size="sm" />}
             </>
           )}
         </SiteHeader.Actions>
@@ -105,9 +99,7 @@ export const WebHeader = ({ session }: WebHeaderProps) => {
                   <Button asChild variant="base" size="lg" className="w-full">
                     <Link href="/auth/login">Sign in</Link>
                   </Button>
-                  <Button asChild variant="accent" size="lg" className="w-full">
-                    <Link href="/auth/register">Get Started</Link>
-                  </Button>
+                  <RegistrationCtaButton size="lg" className="w-full" />
                 </div>
               )}
             </div>

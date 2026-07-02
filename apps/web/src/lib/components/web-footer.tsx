@@ -3,6 +3,7 @@ import { ThemeToggle } from "@repo/ui/components/custom/theme-toggle";
 import { getTranslations } from "next-intl/server";
 import { serverEnv } from "@/env/server";
 import { Link } from "@/i18n/navigation";
+import { RegistrationCtaButton } from "@/lib/components/registration-cta-button";
 import { WebFooterLanguageSwitcher } from "@/lib/components/web-footer-language-switcher";
 
 const legalLinks = [
@@ -25,6 +26,7 @@ export const WebFooter = async () => {
             <p className="max-w-xs text-xs leading-relaxed tracking-wider text-text">
               {t("tagline")}
             </p>
+            <RegistrationCtaButton size="sm" className="w-fit" />
           </div>
 
           <div className="flex flex-col gap-3">
@@ -49,6 +51,12 @@ export const WebFooter = async () => {
               {t("contact.heading")}
             </span>
             <nav className="flex flex-col gap-2">
+              <Link
+                href="/about"
+                className="w-fit text-sm tracking-wider text-text transition-colors hover:text-text"
+              >
+                {t("contact.about")}
+              </Link>
               <Link
                 href="/support"
                 className="w-fit text-sm tracking-wider text-text transition-colors hover:text-text"

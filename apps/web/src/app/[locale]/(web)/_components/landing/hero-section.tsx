@@ -21,6 +21,7 @@ export async function HeroSection() {
 
   return (
     <section
+    id="home-hero-section"
       aria-labelledby="hero-heading"
       className="relative flex w-full items-center justify-center overflow-hidden bg-bg h-[calc(100svh-4rem)] min-h-136"
     >

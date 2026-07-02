@@ -34,6 +34,8 @@ export function MediaGalleryCard({
  {media.thumbnail ? (
  <div className="media-gallery-card__frame relative aspect-auto overflow-hidden w-full h-full">
  <Image
+ preload={index < 5}
+ unoptimized
  src={media.thumbnail}
  alt={media.seo_alt || media.title || ""}
  width={800}

@@ -1,13 +1,10 @@
-"use client";
-
-import { Button } from "@repo/ui/components/shadcn/button";
-import { ArrowRight } from "lucide-react";
-import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { getTranslations } from "next-intl/server";
+import { RegistrationCtaButton } from "@/lib/components/registration-cta-button";
 import { WebSection } from "./web-section";
 
-export function CtaSection() {
-  const t = useTranslations("landing.cta");
+export async function CtaSection() {
+  const t = await getTranslations("landing.cta");
+
   return (
     <WebSection className="overflow-hidden">
       <div
@@ -25,12 +22,7 @@ export function CtaSection() {
         <p className="max-w-lg text-base leading-relaxed text-text-muted tablet:text-lg tablet:leading-relaxed">
           {t("description")}
         </p>
-        <Button asChild variant="accent" size="lg">
-          <Link href="/auth/register">
-            {t("button")}
-            <ArrowRight className="size-4" />
-          </Link>
-        </Button>
+        <RegistrationCtaButton intent="createPortfolio" size="lg" />
       </WebSection.Container>
 
       <style>{`
