@@ -7,9 +7,9 @@ import { notFound } from "next/navigation";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
 import type { ReactNode } from "react";
+import { getServerEnv } from "@/env/server";
 import { dmSans, playfair } from "@/font";
 import { routing } from "@/i18n/routing";
-import { getServerEnv } from "@/env/server";
 import { AppStatusProvider } from "@/lib/providers/app-status.provider";
 
 export const metadata: Metadata = {
