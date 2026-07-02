@@ -198,6 +198,7 @@ export class MediaService {
         is_featured:false,
         is_highlight:false,
         shape: await this.compressService.getImageShape(mediaFile.buffer),
+        aspect_ratio: await this.compressService.getImageAspectRatio(mediaFile.buffer),
         is_active: true,
         seo_title: data.seo_title || data.title || defaultSeoText,
         seo_alt: data.seo_alt || data.title || defaultSeoText,

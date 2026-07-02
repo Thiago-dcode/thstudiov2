@@ -60,6 +60,10 @@
   margin-bottom: var(--size-lg);
 }
 
+.mansonry-grid .media-gallery-card__frame {
+  aspect-ratio: var(--media-aspect-ratio, 1 / 1);
+}
+
 /* -------------------------------------------------------------------
    3. Uniform Grid – equal-size cells, media adapts inside
    ------------------------------------------------------------------- */

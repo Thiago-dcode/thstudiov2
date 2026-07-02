@@ -1,18 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { EnumType } from "@repo/common-lib/constants/enums";
+import { aspectRatioToCss } from "@repo/common-lib/utils/aspect-ratio";
 import { useGallery } from "@repo/ui/providers/gallery.provider";
 import type { GalleryGridMedia } from "./gallery-grid";
-
-const toDataShape = (shape?: EnumType<'MEDIA_SHAPE'> | null) => {
- switch (shape) {
- case 'LANDSCAPE': return 'landscape';
- case 'PORTRAIT': return 'portrait';
- case 'SQUARE':
- default: return 'square';
- }
-};
 
 export function MediaGalleryCard({ 
  media, 
@@ -24,15 +15,18 @@ export function MediaGalleryCard({
  gridStyle?: string;
 }) {
  const { setCurrentItem } = useGallery();
+ const isMasonry = gridStyle === "mansonry-grid";
  
  return (
  <button
  onClick={() => setCurrentItem(index)}
  className="cursor-pointer media-gallery-card group relative w-full overflow-hidden transition-all duration-500 ease-out hover:ring-1 hover:ring-text/20"
- data-shape={toDataShape(media.shape)}
  >
  {media.thumbnail ? (
- <div className="media-gallery-card__frame relative aspect-auto overflow-hidden w-full h-full">
+ <div
+ className="media-gallery-card__frame relative overflow-hidden w-full h-full"
+ style={isMasonry ? { ['--media-aspect-ratio' as string]: aspectRatioToCss(media.aspect_ratio) } : undefined}
+ >
  <Image
  preload={index < 5}
  unoptimized

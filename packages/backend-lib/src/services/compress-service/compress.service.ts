@@ -1,4 +1,5 @@
 import { EnumType } from "@repo/common-lib/constants/enums";
+import { resolveAspectRatio } from "@repo/common-lib/utils/aspect-ratio";
 import { CompressConfig } from "./types";
 import { imageSize } from 'image-size'
 export abstract class CompressService {
@@ -51,6 +52,11 @@ export abstract class CompressService {
     
     return 'SQUARE'
 
+   }
+
+   public async getImageAspectRatio(buffer: Buffer): Promise<EnumType<'ASPECT_RATIO'>> {
+    const { width, height } = await this.getImageSize(buffer);
+    return resolveAspectRatio(width, height);
    }
     /**
      * Optimizes an image file to WebP format with specified quality and size constraints.

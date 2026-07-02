@@ -61,6 +61,7 @@ export type PortfolioFullSchema = PortfolioWithArtistSchema & {
   url?: string | null;
   blocked_at?: Date | null;
   shape?: EnumType<'MEDIA_SHAPE'> | null;
+  aspect_ratio?: EnumType<'ASPECT_RATIO'> | null;
   /** From joined `media` row (collision with `portfolios.is_active`). */
   m_is_active?: boolean | null;
   seo_alt?: string | null;

@@ -5,3 +5,4 @@ export * from './get-accept-language';
 export * from './query-builder';
 export * from './object';
 export * from './parse-params';
+export * from './aspect-ratio';

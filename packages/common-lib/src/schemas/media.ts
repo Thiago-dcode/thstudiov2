@@ -15,6 +15,7 @@ export type MediaSchema = {
   is_highlight: boolean;
   blocked_at?: Date | null;
   shape?: EnumType<'MEDIA_SHAPE'>;
+  aspect_ratio: EnumType<'ASPECT_RATIO'>;
   compression_level?: EnumType<'COMPRESSION_LEVEL'>;
   extension: string;
   is_active: boolean;

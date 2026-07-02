@@ -9,6 +9,7 @@ export function buildPortfolioItemsFromFullPortfolio(portfolio: FullPortfolio): 
 
     const portfolioItems: FullPortfolioItem[] = [];
 
+
     portfolio.media.forEach(m => {
         portfolioItems.push({ ...m, item: 'media' })
 
@@ -18,7 +19,22 @@ export function buildPortfolioItemsFromFullPortfolio(portfolio: FullPortfolio): 
 
     });
 
-    return portfolioItems.sort((a, b) => a.position - b.position);
+     portfolioItems.sort((a, b) => a.position - b.position);
+     let currentIndex = 0;
+     return portfolioItems.map(item => {
+
+        const _item=  {
+            ...item,
+            index:currentIndex,
+        }
+        if(item.item === 'media'){
+            currentIndex++;
+        }
+        else if(item.item ==='collection'){
+            currentIndex += item.media.length;
+        }
+        return _item;
+     })
 }
 
 export function extractMediaFromPortfolioItems(portfolioItems: FullPortfolioItem[]) {

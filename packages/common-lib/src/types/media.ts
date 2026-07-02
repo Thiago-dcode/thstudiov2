@@ -11,7 +11,7 @@ import { EnumType } from "../constants/enums";
 export type Media = MediaSchema;
 // Media translation without id
 
-export type MediaPortfolio = Pick<Media, 'id' | 'public_id' | 'title' | 'thumbnail' | 'url'| 'seo_alt' | 'seo_description' | 'seo_filename' | 'seo_title' | 'shape' | 'is_highlight'> & {
+export type MediaPortfolio = Pick<Media, 'id' | 'public_id' | 'title' | 'thumbnail' | 'url'| 'seo_alt' | 'seo_description' | 'seo_filename' | 'seo_title' | 'shape' | 'aspect_ratio' | 'is_highlight'> & {
   position: number
 };
 export type MediaTranslation = MediaTranslationSchema;
@@ -43,7 +43,7 @@ export type MediaIndexRequest = OffsetPaginationRequest & {
 export type GetAllUserMediaQueryParams = Omit<MediaIndexRequest, 'user_id'>;
 
 // Fields generated internally by the system (user cannot set these)
-type InternalMediaFields = 'id' | 'public_id' | 'bytes' | 'url' | 'thumbnail' | 'thumbnail_bytes' | 'shape' | 'extension' | 'blocked_at' | 'is_active' | 'is_featured' | 'is_highlight' | 'created_at' | 'updated_at';
+type InternalMediaFields = 'id' | 'public_id' | 'bytes' | 'url' | 'thumbnail' | 'thumbnail_bytes' | 'shape' | 'aspect_ratio' | 'extension' | 'blocked_at' | 'is_active' | 'is_featured' | 'is_highlight' | 'created_at' | 'updated_at';
 
 // What users can provide when creating media (public API input)
 export type PublicCreateMediaInput = Omit<MediaSchema, InternalMediaFields>;

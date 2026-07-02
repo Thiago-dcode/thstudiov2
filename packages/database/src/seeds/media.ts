@@ -214,6 +214,7 @@ async function seedMediaAssetsForUser(user: MediaSeedTargetUser): Promise<void> 
       is_featured: false,
       is_highlight: false,
       shape: await compressService.getImageShape(mediaFile.buffer),
+      aspect_ratio: await compressService.getImageAspectRatio(mediaFile.buffer),
       is_active: true,
       seo_title: defaultSeoText,
       seo_alt: defaultSeoText,

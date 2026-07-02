@@ -5,16 +5,16 @@ const up = async () => {
     Column.id(),
     Column.uuid('public_id'),
     Column.string('title', 255, {
-      nullable:true,
+      nullable: true,
     }),
     Column.text('description', {
       nullable: true,
     }),
     Column.integer('bytes'),
-    Column.integer('thumbnail_bytes',{
-      default:0
+    Column.integer('thumbnail_bytes', {
+      default: 0
     }),
-    Column.string('url',255, {
+    Column.string('url', 255, {
       unique: true,
     }),
     //Generated automatically
@@ -33,6 +33,9 @@ const up = async () => {
     Column.enum('shape', 'MEDIA_SHAPE', {
       nullable: true,
     }),
+    Column.enum('aspect_ratio', 'ASPECT_RATIO', {
+      default: '1:1'
+    }),
     Column.enum('compression_level', 'COMPRESSION_LEVEL', {
       nullable: true,
     }),
@@ -40,16 +43,16 @@ const up = async () => {
     Column.boolean('is_active', {
       default: true,
     }),
-    Column.string('seo_alt',255, {
+    Column.string('seo_alt', 255, {
       nullable: true,
     }),
-    Column.string('seo_title',255, {
+    Column.string('seo_title', 255, {
       nullable: true,
     }),
-    Column.string('seo_description',255, {
+    Column.string('seo_description', 255, {
       nullable: true,
     }),
-    Column.string('seo_filename',255),
+    Column.string('seo_filename', 255),
     Column.foreignKey('user_id', 'users', 'id', {
       onDelete: 'CASCADE',
       onUpdate: 'CASCADE',
@@ -66,7 +69,7 @@ const up = async () => {
       onUpdate: 'CASCADE',
       nullable: false,
     }),
-    Column.uniques('UC_media_translation',['language_code','media_id'])
+    Column.uniques('UC_media_translation', ['language_code', 'media_id'])
   ]);
 };
 

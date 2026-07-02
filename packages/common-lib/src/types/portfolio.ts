@@ -84,9 +84,13 @@ export type CollectionPortfolioItem = PortfolioCollection & {
 export type FullCollectionPortfolioItem = FullPortfolioCollection & {
   item: 'collection';
 };
-export type PortfolioItem = MediaPortfolioItem | CollectionPortfolioItem;
+export type PortfolioItem = (MediaPortfolioItem | CollectionPortfolioItem)& {
+  index?:number
+};
 
-export type FullPortfolioItem = MediaPortfolioItem | FullCollectionPortfolioItem;
+export type FullPortfolioItem = (MediaPortfolioItem | FullCollectionPortfolioItem ) & {
+  index?:number
+};
 
 export type UpdatePortfolioInput = Partial<
   Omit<PortfolioSchema, 'id' | 'created_at' | 'updated_at' | 'is_featured'>

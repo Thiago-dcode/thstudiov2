@@ -38,6 +38,7 @@ export type CollectionCompactSchema = CollectionSchema & {
 export type CollectionFullSchema = CollectionCompactSchema & {
   public_id: string;
   shape?: EnumType<'MEDIA_SHAPE'> | null;
+  aspect_ratio?: EnumType<'ASPECT_RATIO'> | null;
   seo_title?: string | null;
   seo_alt?: string | null;
   seo_description?: string | null;
