@@ -9,6 +9,8 @@ import { setRequestLocale } from "next-intl/server";
 import type { ReactNode } from "react";
 import { dmSans, playfair } from "@/font";
 import { routing } from "@/i18n/routing";
+import { getServerEnv } from "@/env/server";
+import { AppStatusProvider } from "@/lib/providers/app-status.provider";
 
 export const metadata: Metadata = {
   title: "A11STUDIO — The Portfolio Platform Built for Artists",
@@ -45,8 +47,8 @@ export default async function RootLayout({
   if (!hasLocale(routing.locales, locale)) {
     notFound();
   }
-
   setRequestLocale(locale);
+  const isRegisterClose = !getServerEnv().REGISTRATION_IS_CLOSED;
 
   return (
     <html
@@ -55,12 +57,14 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <body className="w-screen h-dvh flex flex-col items-center justify-start">
-        <NextIntlClientProvider>
-          <ThemeProvider>
-            {children}
-            <Toaster />
-          </ThemeProvider>
-        </NextIntlClientProvider>
+        <AppStatusProvider isRegisterClose={isRegisterClose}>
+          <NextIntlClientProvider>
+            <ThemeProvider>
+              {children}
+              <Toaster />
+            </ThemeProvider>
+          </NextIntlClientProvider>
+        </AppStatusProvider>
       </body>
     </html>
   );
