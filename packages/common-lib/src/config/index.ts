@@ -23,6 +23,10 @@ const config = (envPath?: string | undefined) => {
       env: process.env.NODE_ENV || 'development',
       isProduction: process.env.NODE_ENV?.toLowerCase() == 'production',
       sendErrorEmails: process.env.SEND_ERROR_EMAILS == '1',
+      // Minimum time between two 500-alert emails for the *same* recurring error
+      // (message + request path). Prevents inbox floods when a bug is hit repeatedly
+      // by real traffic (e.g. a broken landing-page endpoint). Set to 0 to disable.
+      errorEmailThrottleMinutes: process.env.ERROR_EMAIL_THROTTLE_MINUTES ? parseInt(process.env.ERROR_EMAIL_THROTTLE_MINUTES, 10) : 15,
       frontendUrls: process.env.APP_FRONTEND_URLS ? process.env.APP_FRONTEND_URLS.split(',') : [],
       allowedOrigins: process.env.APP_ALLOWED_ORIGINS ? process.env.APP_ALLOWED_ORIGINS.split(',').map((origin) => origin.trim()) : [],
     },
