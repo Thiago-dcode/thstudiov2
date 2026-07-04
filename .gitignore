@@ -82,8 +82,9 @@ pnpm-debug.log*
 *.pem
 *.bak
 
-# Database seed assets (large binaries; not committed — keep locally for `db:seed -n media`)
+# Database seed assets (large binaries; not committed — keep locally for `db:seed -n media` / `db:seed -n assets`)
 packages/database/src/seeds/media-images/
+packages/database/src/seeds/assets/
 
 # API assets (large media files — keep locally, not in git)
 apps/api/assets/

@@ -12,7 +12,6 @@
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   border-radius: 0;
   overflow: hidden;
-  break-inside: avoid;
 }
 
 .media-gallery-card:hover {
@@ -33,35 +32,122 @@
 }
 
 /* -------------------------------------------------------------------
-   2. Masonry Grid – CSS column-based masonry layout
+   2. Masonry Grid – span-based CSS Grid with dense auto-flow
    ------------------------------------------------------------------- */
 
+/*
+  Container wrapper enables container queries so grid-auto-rows can
+  reference cqw (container query width) for perfectly square base cells.
+*/
+.mansonry-grid-wrapper {
+  container-type: inline-size;
+}
+
 .mansonry-grid {
-  columns: 2;
-  column-gap: var(--size-base);
+  display: grid;
+  /* mobile: 4 columns — spans 2 and 4 divide cleanly, no orphaned gaps */
+  grid-template-columns: repeat(4, 1fr);
+  /* cell height == column width → square base cell */
+  grid-auto-rows: calc((100cqw - 3 * var(--size-base)) / 4);
+  grid-auto-flow: dense;
+  gap: var(--size-base);
   margin: 0 auto;
+}
+
+/* ---------------------------------------------------------------
+   Mobile bucket spans (4-col grid)
+   ultra-wide: 4×2  wide: 4×2  square: 2×2  tall: 2×3  ultra-tall: 2×3
+   All spans are multiples of 2 or equal to 4 — no orphaned columns.
+   --------------------------------------------------------------- */
+
+/* Default fallback – square */
+.mansonry-grid .media-gallery-card {
+  grid-column: span 2;
+  grid-row: span 2;
+}
+
+.mansonry-grid .media-gallery-card[data-ratio="ultra-wide"] {
+  grid-column: span 4;
+  grid-row: span 2;
+}
+
+.mansonry-grid .media-gallery-card[data-ratio="wide"] {
+  grid-column: span 4;
+  grid-row: span 2;
+}
+
+.mansonry-grid .media-gallery-card[data-ratio="square"] {
+  grid-column: span 2;
+  grid-row: span 2;
+}
+
+.mansonry-grid .media-gallery-card[data-ratio="tall"] {
+  grid-column: span 2;
+  grid-row: span 3;
+}
+
+.mansonry-grid .media-gallery-card[data-ratio="ultra-tall"] {
+  grid-column: span 2;
+  grid-row: span 3;
 }
 
 @media (min-width: 768px) {
   .mansonry-grid {
-    columns: 3;
-    column-gap: var(--size-lg);
+    /* tablet: 6 columns — spans 2, 4, 6 all divide cleanly */
+    grid-template-columns: repeat(6, 1fr);
+    grid-auto-rows: calc((100cqw - 5 * var(--size-sm)) / 6);
+    gap: var(--size-sm);
+  }
+
+  /* ---------------------------------------------------------------
+     Tablet bucket spans (6-col grid)
+     ultra-wide: 6×2  wide: 4×2  square: 2×2  tall: 2×3  ultra-tall: 2×4
+     All spans are multiples of 2 — no orphaned columns.
+     --------------------------------------------------------------- */
+
+  .mansonry-grid .media-gallery-card {
+    grid-column: span 2;
+    grid-row: span 2;
+  }
+
+  .mansonry-grid .media-gallery-card[data-ratio="ultra-wide"] {
+    grid-column: span 6;
+    grid-row: span 2;
+  }
+
+  .mansonry-grid .media-gallery-card[data-ratio="wide"] {
+    grid-column: span 4;
+    grid-row: span 2;
+  }
+
+  .mansonry-grid .media-gallery-card[data-ratio="square"] {
+    grid-column: span 2;
+    grid-row: span 2;
+  }
+
+  .mansonry-grid .media-gallery-card[data-ratio="tall"] {
+    grid-column: span 2;
+    grid-row: span 3;
+  }
+
+  .mansonry-grid .media-gallery-card[data-ratio="ultra-tall"] {
+    grid-column: span 2;
+    grid-row: span 4;
   }
 }
 
-@media (min-width: 1200px) {
+@media (min-width: 1280px) {
   .mansonry-grid {
-    columns: 5;
+    /* laptop+: 8 columns — spans 2, 4, 6 all divide cleanly */
+    grid-template-columns: repeat(8, 1fr);
+    grid-auto-rows: calc((100cqw - 7 * var(--size-sm)) / 8);
   }
 }
 
-/* Masonry-specific card overrides */
-.mansonry-grid .media-gallery-card {
-  margin-bottom: var(--size-lg);
-}
-
+/* Frame fills the grid cell fully; image covers via object-fit */
 .mansonry-grid .media-gallery-card__frame {
-  aspect-ratio: var(--media-aspect-ratio, 1 / 1);
+  width: 100%;
+  height: 100%;
 }
 
 /* -------------------------------------------------------------------

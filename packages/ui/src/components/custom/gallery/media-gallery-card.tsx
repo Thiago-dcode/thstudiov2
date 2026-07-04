@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { aspectRatioToCss } from "@repo/common-lib/utils/aspect-ratio";
+import { aspectRatioToBucket } from "@repo/common-lib/utils/aspect-ratio";
 import { useGallery } from "@repo/ui/providers/gallery.provider";
 import type { GalleryGridMedia } from "./gallery-grid";
 
@@ -21,11 +21,11 @@ export function MediaGalleryCard({
  <button
  onClick={() => setCurrentItem(index)}
  className="cursor-pointer media-gallery-card group relative w-full overflow-hidden transition-all duration-500 ease-out hover:ring-1 hover:ring-text/20"
+ data-ratio={isMasonry ? aspectRatioToBucket(media.aspect_ratio) : undefined}
  >
  {media.thumbnail ? (
  <div
  className="media-gallery-card__frame relative overflow-hidden w-full h-full"
- style={isMasonry ? { ['--media-aspect-ratio' as string]: aspectRatioToCss(media.aspect_ratio) } : undefined}
  >
  <Image
  preload={index < 5}
@@ -39,7 +39,7 @@ export function MediaGalleryCard({
  ? "max-h-full max-w-full h-auto w-auto object-contain transition-transform duration-700 ease-out group-hover:scale-105"
  : "h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
  }
- sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+ sizes="(max-width: 768px) 50vw, (max-width: 1280px) 33vw, 25vw"
  />
  </div>
  ) : (

@@ -63,6 +63,9 @@ services:
       API_PORT: 8080
     volumes:
       - ./storage/logs:/workspace/storage/logs
+      # Local-only seed binaries (gitignored); used when running db:seed inside the api container
+      - ./packages/database/src/seeds/media-images:/workspace/packages/database/src/seeds/media-images
+      - ./packages/database/src/seeds/assets:/workspace/packages/database/src/seeds/assets
     expose:
       - "8080"
     deploy:

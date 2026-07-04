@@ -12,13 +12,21 @@ export const GalleryGridContainer = ({ children, style = 'mansonry-grid' }: {
     style?: AvailableGridStyles,
     children: ReactNode
 }) => {
+    if (style === 'mansonry-grid') {
+        return (
+            <div className="mansonry-grid-wrapper">
+                <div className={style}>
+                    {children}
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className={style}>
             {children}
-        </div>)
-
-
+        </div>
+    );
 }
 
 export const PortfolioGrid = ({ portfolioItems, style = 'mansonry-grid' }: {

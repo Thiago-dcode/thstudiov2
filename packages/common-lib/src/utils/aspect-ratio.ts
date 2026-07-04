@@ -2,6 +2,25 @@ import { ENUMS, EnumType } from '../constants/enums';
 
 export const DEFAULT_ASPECT_RATIO: EnumType<'ASPECT_RATIO'> = '1:1';
 
+export type AspectRatioBucket = 'ultra-wide' | 'wide' | 'square' | 'tall' | 'ultra-tall';
+
+const ASPECT_RATIO_BUCKET_MAP: Record<EnumType<'ASPECT_RATIO'>, AspectRatioBucket> = {
+  '21:9': 'ultra-wide',
+  '16:9': 'ultra-wide',
+  '3:2':  'wide',
+  '4:3':  'wide',
+  '5:4':  'wide',
+  '1:1':  'square',
+  '4:5':  'tall',
+  '3:4':  'tall',
+  '2:3':  'ultra-tall',
+  '9:16': 'ultra-tall',
+};
+
+export function aspectRatioToBucket(value: EnumType<'ASPECT_RATIO'>): AspectRatioBucket {
+  return ASPECT_RATIO_BUCKET_MAP[value] ?? 'square';
+}
+
 const ASPECT_RATIO_VALUES: Record<EnumType<'ASPECT_RATIO'>, number> = {
   '1:1': 1,
   '5:4': 5 / 4,

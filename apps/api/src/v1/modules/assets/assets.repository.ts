@@ -7,7 +7,6 @@ import {
 } from '@repo/common-lib/schemas/assets';
 import {
   CreateAssetInput,
-  UpdateAssetInput,
   Asset,
 } from '@repo/common-lib/types/assets';
 
@@ -69,30 +68,6 @@ export class AssetsRepository extends BaseRepository {
     const result = await super._create<AssetSchema>(data, {
       select: this.COLUMNS,
     });
-    return this.formatAsset(result);
-  }
-
-  async updateById(id: number, data: UpdateAssetInput): Promise<Asset> {
-    const columns = Object.keys(data);
-    const values = Object.values(data);
-    await this.query().where('id', '=', id).update(columns, values);
-    const result = await this.query()
-      .select(this.COLUMNS)
-      .where('id', '=', id)
-      .first<AssetSchema>();
-    return this.formatAsset(result);
-  }
-
-  async updateBySlug(slug: string, data: UpdateAssetInput): Promise<Asset> {
-    const columns = Object.keys(data);
-    const values = Object.values(data);
-    if (columns.length > 0) {
-      await this.query().where('slug', '=', slug).update(columns, values);
-    }
-    const result = await this.query()
-      .select(this.COLUMNS)
-      .where('slug', '=', data.slug ?? slug)
-      .first<AssetSchema>();
     return this.formatAsset(result);
   }
 

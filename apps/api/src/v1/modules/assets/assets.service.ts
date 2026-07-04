@@ -3,7 +3,7 @@ import { AssetsRepository } from './assets.repository';
 import { StorageService } from '@repo/backend-lib/services/storage-service/base';
 import { Helpers } from 'src/common/services/helpers.service';
 import { generateValidSlug } from '@repo/common-lib/utils/generate-valid-slug';
-import { CreateAssetInput, UpdateAssetInput, Asset } from '@repo/common-lib/types/assets';
+import { CreateAssetInput, Asset } from '@repo/common-lib/types/assets';
 import { ASSET_SIGNED_URL_EXPIRATION } from '@repo/common-lib/constants/constants';
 import path from 'path';
 
@@ -38,22 +38,16 @@ export class AssetsService {
       validateThumbnail(thumbnailFile);
     }
     const originalFilename = dto.filename || file.originalname;
+    const title = dto.title ?? path.parse(originalFilename).name;
 
-    // Generate slug from title if not provided, fallback to filename
     let slug = dto.slug;
     if (!slug) {
-      const slugSource = dto.title || path.parse(originalFilename).name;
-      slug = generateValidSlug(slugSource);
+      slug = generateValidSlug(title);
     }
 
-    // Ensure slug is unique
-    let uniqueSlug = slug;
-    let counter = 1;
-    while (await this.assetsRepository.slugExists(uniqueSlug)) {
-      uniqueSlug = `${slug}-${counter}`;
-      counter++;
+    if (await this.assetsRepository.slugExists(slug)) {
+      throw new BadRequestException(`Slug "${slug}" already exists`);
     }
-    slug = uniqueSlug;
 
     const storagePath = `assets/${slug}/${originalFilename}`;
 
@@ -74,9 +68,9 @@ export class AssetsService {
       url: storagePath,
       thumbnail: thumbnailPath,
       slug,
-      title: dto.title || null,
-      description: dto.description || null,
-      filename: dto.filename || slug,
+      title,
+      description: dto.description ?? null,
+      filename: originalFilename,
     };
 
     const asset = await this.assetsRepository.create(assetData);
@@ -88,112 +82,6 @@ export class AssetsService {
       url: await this.helpers.getAsset(asset.url, { expireIn: ASSET_SIGNED_URL_EXPIRATION }),
       thumbnail: asset.thumbnail
         ? await this.helpers.getAsset(asset.thumbnail, { expireIn: ASSET_SIGNED_URL_EXPIRATION })
-        : null,
-    };
-  }
-
-  async update(
-    slug: string,
-    dto: UpdateAssetInput,
-    file?: Express.Multer.File,
-    thumbnailFile?: Express.Multer.File,
-  ): Promise<Asset> {
-    const existing = await this.assetsRepository.findBySlug(slug);
-    if (!existing) {
-      throw new NotFoundException(`Asset not found with slug ${slug}`);
-    }
-
-    if (thumbnailFile) {
-      validateThumbnail(thumbnailFile);
-    }
-
-    const urlUpdate: { url?: string; thumbnail?: string; filename?: string } = {};
-    let targetSlug = existing.slug;
-
-    if (dto.slug && dto.slug !== existing.slug) {
-      let uniqueSlug = dto.slug;
-      let counter = 1;
-      while (await this.assetsRepository.slugExists(uniqueSlug)) {
-        uniqueSlug = `${dto.slug}-${counter}`;
-        counter++;
-      }
-      dto.slug = uniqueSlug;
-      targetSlug = uniqueSlug;
-
-      const filename = existing.url.split('/').pop() || 'file';
-      const newStoragePath = `assets/${uniqueSlug}/${filename}`;
-
-      await this.helpers.moveAsset(existing.url, newStoragePath);
-      urlUpdate.url = newStoragePath;
-
-      if (existing.thumbnail) {
-        const thumbnailFilename = existing.thumbnail.split('/').pop() || 'thumbnail';
-        const newThumbnailPath = `assets/${uniqueSlug}/thumbnail/${thumbnailFilename}`;
-        await this.helpers.moveAsset(existing.thumbnail, newThumbnailPath);
-        urlUpdate.thumbnail = newThumbnailPath;
-      }
-    }
-
-    if (file) {
-      const originalFilename = dto.filename || file.originalname;
-      const newStoragePath = `assets/${targetSlug}/${originalFilename}`;
-      const currentUrl = urlUpdate.url ?? existing.url;
-
-      await this.storageService.write(file, newStoragePath);
-
-      if (currentUrl !== newStoragePath) {
-        await this.helpers.deleteAsset(currentUrl);
-      } else {
-        await this.helpers.invalidateAssetCache(newStoragePath);
-      }
-
-      urlUpdate.url = newStoragePath;
-      urlUpdate.filename = dto.filename || originalFilename;
-    } else if (dto.filename && dto.filename !== existing.filename) {
-      const currentUrl = urlUpdate.url ?? existing.url;
-      const newStoragePath = `assets/${targetSlug}/${dto.filename}`;
-
-      if (currentUrl !== newStoragePath) {
-        await this.helpers.moveAsset(currentUrl, newStoragePath);
-        urlUpdate.url = newStoragePath;
-        urlUpdate.filename = dto.filename;
-      }
-    }
-
-    if (thumbnailFile) {
-      const thumbnailFilename = thumbnailFile.originalname;
-      const thumbnailPath = `assets/${targetSlug}/thumbnail/${thumbnailFilename}`;
-      await this.helpers.setAsset({ asset: thumbnailFile, path: thumbnailPath, targetSizeMb: 0.1 });
-      urlUpdate.thumbnail = thumbnailPath;
-    }
-
-    const updated = await this.assetsRepository.updateBySlug(slug, { ...dto, ...urlUpdate });
-
-    const cacheKeys = [`asset:slug:${slug}`];
-    if (dto.slug && dto.slug !== slug) {
-      cacheKeys.push(`asset:slug:${dto.slug}`);
-    }
-
-    const storageChanged = !!(file || thumbnailFile
-      || (dto.slug && dto.slug !== existing.slug)
-      || (dto.filename && dto.filename !== existing.filename));
-
-    if (storageChanged) {
-      cacheKeys.push(
-        existing.url,
-        existing.thumbnail,
-        urlUpdate.url,
-        urlUpdate.thumbnail,
-      );
-    }
-
-    await this.helpers.deleteManyCached(cacheKeys.filter(Boolean) as string[]);
-
-    return {
-      ...updated,
-      url: await this.helpers.getAsset(updated.url, { expireIn: ASSET_SIGNED_URL_EXPIRATION }),
-      thumbnail: updated.thumbnail
-        ? await this.helpers.getAsset(updated.thumbnail, { expireIn: ASSET_SIGNED_URL_EXPIRATION })
         : null,
     };
   }

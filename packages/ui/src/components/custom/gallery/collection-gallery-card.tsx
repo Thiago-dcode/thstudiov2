@@ -19,7 +19,7 @@ export function CollectionGalleryCard({
  <button
  onClick={() => setCurrentItem(index)}
  className="cursor-pointer media-gallery-card group relative h-full w-full overflow-hidden p-0! transition-all duration-500 ease-out hover:ring-1 hover:ring-text/20"
- data-shape={'square'}
+ data-ratio="square"
  >
  <CollectionStackCard className="h-full w-full" collection={collection} />
  </button>

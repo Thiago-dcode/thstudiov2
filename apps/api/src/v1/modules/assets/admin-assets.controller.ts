@@ -5,7 +5,6 @@ import {
   Delete,
   Get,
   Param,
-  Patch,
   Post,
   UploadedFiles,
   UseGuards,
@@ -16,7 +15,6 @@ import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import { AdminGuard } from 'src/common/guards/admin.guard';
 import { AssetsService } from './assets.service';
 import { CreateAssetRequest } from './requests/create-asset.request';
-import { UpdateAssetRequest } from './requests/update-asset.request';
 
 @Throttle({
   short: { limit: 50, ttl: 1000 },
@@ -47,18 +45,6 @@ export class AdminAssetsController {
     const thumbnail = files.find(f => f.fieldname === 'thumbnail');
 
     return this.assetsService.create(file, thumbnail, createAssetRequest);
-  }
-
-  @Patch(':slug')
-  @UseInterceptors(AnyFilesInterceptor())
-  async update(
-    @Param('slug') slug: string,
-    @Body() updateAssetRequest: UpdateAssetRequest,
-    @UploadedFiles() files: Express.Multer.File[],
-  ) {
-    const file = files.find(f => f.fieldname === 'file');
-    const thumbnail = files.find(f => f.fieldname === 'thumbnail');
-    return this.assetsService.update(slug, updateAssetRequest, file, thumbnail);
   }
 
   @Delete(':slug')

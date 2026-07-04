@@ -10,6 +10,7 @@ import { main as supportUser } from './support-user';
 import { main as portfolioSeed } from './portfolio';
 import { main as collectionSeed } from './collection';
 import { main as mediaSeed } from './media';
+import { main as assetsSeed } from './assets';
 import { main as serviceSeed } from './service';
 
 export const main = async () => {
@@ -21,7 +22,8 @@ export const main = async () => {
   await invitationLinks();
   await supportUser();
   await adminUser();
-  if (getConfigValue('app').env ==='local') {
+  await assetsSeed();
+  if (!getConfigValue('app').isProduction) {
     await mediaSeed(ADMIN_USERNAME);
     await portfolioSeed(ADMIN_USERNAME, 5);
     await collectionSeed(ADMIN_USERNAME, 5);

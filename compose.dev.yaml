@@ -67,6 +67,9 @@ services:
     volumes:
       # API file logs (FileLogService) — persist on the host for inspection.
       - ./storage/logs:/workspace/storage/logs
+      # Local-only seed binaries (gitignored); used by `scripts/dbcli-dev.sh db:seed -n media|assets`
+      - ./packages/database/src/seeds/media-images:/workspace/packages/database/src/seeds/media-images
+      - ./packages/database/src/seeds/assets:/workspace/packages/database/src/seeds/assets
     expose:
       - "8080"
     deploy:
