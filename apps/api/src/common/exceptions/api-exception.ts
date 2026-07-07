@@ -40,6 +40,10 @@ export class ApiException extends HttpException {
     return new ApiException(API_ERRORS.USER_LIMITS_MAX_PORTFOLIOS_EXCEEDED, message);
   }
 
+  static maxPortfolioItems(message: string) {
+    return new ApiException(API_ERRORS.USER_LIMITS_MAX_PORTFOLIO_ITEMS_EXCEEDED, message);
+  }
+
   static maxClients(message: string) {
     return new ApiException(API_ERRORS.USER_LIMITS_MAX_CLIENTS_EXCEEDED, message);
   }

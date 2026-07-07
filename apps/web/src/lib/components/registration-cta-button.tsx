@@ -16,12 +16,14 @@ type RegistrationCtaButtonProps = {
   size?: "sm" | "lg";
   className?: string;
   intent?: "getStarted" | "createPortfolio";
+  onClick?: (event: MouseEvent<HTMLAnchorElement>) => void;
 };
 
 export function RegistrationCtaButton({
   size = "lg",
   className,
   intent = "getStarted",
+  onClick,
 }: RegistrationCtaButtonProps) {
   const pathname = usePathname();
   const { isRegisterClose } = useAppStatus();
@@ -37,6 +39,8 @@ export function RegistrationCtaButton({
   const href = registrationIsClosed ? HERO_SECTION_HREF : "/auth/register";
 
   const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
+    onClick?.(event);
+
     if (!registrationIsClosed || pathname !== "/") return;
 
     event.preventDefault();

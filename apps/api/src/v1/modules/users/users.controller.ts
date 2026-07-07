@@ -104,10 +104,12 @@ export class UserController {
     @Param('id', ParseIntPipe, new ModelExistPipe('users'), IsUserAuthPipe)
     id: number,
   ) {
-    const [extra_data, active_plan] = await Promise.all([
+    const [extra_data, userActivePlan] = await Promise.all([
       this.userExtraDataService.findOneByUserId(id),
       this.planService.findUserActivePlan(id),
     ]);
+
+    const active_plan = userActivePlan ?? (await this.planService.findFreePlan());
 
     return {
       extra_data,

@@ -1,12 +1,13 @@
-import { IsNotEmpty, IsOptional, IsString, IsArray, ValidateNested, MinLength } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsArray, ValidateNested, MinLength, ArrayMaxSize } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
+import { MAX_CATEGORIES_PORTFOLIO } from '@repo/common-lib/constants/constants';
 import { IsUserAuth } from 'src/common/validators/is-user-auth.validtor';
 import { ModelExist } from 'src/common/validators/model-exist.validtor';
 import { ModelArrayExist } from 'src/common/validators/model-array-exist.validtor';
 import { ToBoolean } from 'src/common/decorators/to-boolean.decorator';
 import { ToInt } from 'src/common/decorators/to-int.decorator';
 
-class PortfolioMediaItem {
+ class PortfolioMediaItem {
   @IsNotEmpty()
   @ToInt()
   @ModelExist('media')
@@ -33,7 +34,6 @@ export class CreatePortfolioRequest {
   @IsNotEmpty()
   title: string;
 
-  //TODO: create endpoint to check slug availability
   @IsString()
   @MinLength(3, { message: 'Slug must be at least 3 characters long' })
   slug: string;
@@ -73,6 +73,9 @@ export class CreatePortfolioRequest {
 
   @IsOptional()
   @IsArray()
+  @ArrayMaxSize(MAX_CATEGORIES_PORTFOLIO, {
+    message: `Portfolios can have up to ${MAX_CATEGORIES_PORTFOLIO} categories`,
+  })
   @Transform(({ value }) => value?.map((v: string) => parseInt(v, 10)))
   @ModelArrayExist('categories')
   categories?: number[];

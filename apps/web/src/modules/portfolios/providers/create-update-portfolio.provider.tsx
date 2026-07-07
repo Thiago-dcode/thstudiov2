@@ -1,5 +1,9 @@
 "use client";
 
+import {
+  MAX_CATEGORIES_PORTFOLIO,
+  MAX_PORTFOLIO_ITEMS,
+} from "@repo/common-lib/constants/constants";
 import { MAX_HIGHLIGHT_PORTFOLIOS } from "@repo/common-lib/constants/highlights";
 import type { CategoryBase } from "@repo/common-lib/types/category";
 import type { CollectionPortfolio } from "@repo/common-lib/types/collection";
@@ -11,23 +15,27 @@ import type {
   PortfolioItem,
 } from "@repo/common-lib/types/portfolio";
 import type { ActionReturn } from "@repo/common-lib/types/response";
-import { buildPortfolioItemsFromFullPortfolio } from "@repo/common-lib/utils/portfolio";
+import {
+  buildPortfolioItemsFromFullPortfolio,
+  countPortfolioItemSlot,
+  countPortfolioItemSlots,
+} from "@repo/common-lib/utils/portfolio";
 import { toast } from "@repo/ui/sonner";
 import {
   createContext,
   type ReactNode,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
+import { toastErrorThrottled } from "@/lib/utils/throttled-toast";
 import type { UserAuth } from "@/modules/auth/auth.types";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { createOrUpdatePortfolioAction } from "../server-actions/create-update-portfolio.action";
 import { getPortfolioHighlightCountAction } from "../server-actions/get-highlight-count.action";
-
-export const MAX_PORTFOLIO_CATEGORIES = 2;
 
 function categoryIdsEqual(a: CategoryBase[], b: CategoryBase[]) {
   const idsA = a
@@ -64,12 +72,21 @@ type PortfolioContextType = {
   success: boolean;
   canSubmit: boolean;
   canGoNextStep: boolean;
+  /**
+   * `false` during SSR and the initial client render, `true` after mount.
+   * Consumers gate hydration-sensitive UI (e.g. button `disabled` state that
+   * depends on effect-populated provider state) to avoid hydration mismatches.
+   */
+  isHydrated: boolean;
   deleteInputErrorProperty: (key: string) => void;
   reset: () => void;
   clear: () => void;
   currentPortfolio: FullPortfolio | undefined;
   setPortfolio: (portfolio: FullPortfolio) => void;
   portfolioItems: PortfolioItem[];
+  portfolioItemCount: number;
+  portfolioItemLimit: number;
+  isPortfolioItemsLimitReached: boolean;
   handleSetPortfolioItems: (items: PortfolioItem[]) => void;
   handleShiftPortfolioItem: (item: Omit<PortfolioItem, "position">) => void;
   handleRemovePortfolioItem: (id: number, kind: PortfolioItem["item"]) => void;
@@ -118,6 +135,11 @@ export const PortfolioProvider = ({
   user,
   defaultPortfolio,
 }: PortfolioProviderProps) => {
+  const [isHydrated, setIsHydrated] = useState(false);
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
+
   const [currentPortfolio, setCurrentPorfolio] = useState(defaultPortfolio);
   const initialPortfolioItems = useRef(
     defaultPortfolio
@@ -160,7 +182,12 @@ export const PortfolioProvider = ({
   const setCategorySelected = useCallback((category: CategoryBase) => {
     setCategoriesSelected((prev) => {
       if (prev.some((c) => c.id === category.id)) return prev;
-      if (prev.length >= MAX_PORTFOLIO_CATEGORIES) return prev;
+      if (prev.length >= MAX_CATEGORIES_PORTFOLIO) {
+        toast.error(
+          `Portfolios can have up to ${MAX_CATEGORIES_PORTFOLIO} categories`,
+        );
+        return prev;
+      }
       return [...prev, category];
     });
   }, []);
@@ -294,14 +321,34 @@ export const PortfolioProvider = ({
   const handleShiftPortfolioItem = useCallback(
     (item: Omit<PortfolioItem, "position">) => {
       setPortfolioItems((prev) => {
-        if (prev.some((x) => x.item === item.item && x.id === item.id))
+        if (prev.some((x) => x.item === item.item && x.id === item.id)) {
           return prev;
+        }
+
+        const currentCount = countPortfolioItemSlots(prev);
+        const additionalCount = countPortfolioItemSlot(item);
+
+        if (currentCount + additionalCount > MAX_PORTFOLIO_ITEMS) {
+          toastErrorThrottled(
+            `Portfolios can have up to ${MAX_PORTFOLIO_ITEMS} items`,
+          );
+          return prev;
+        }
+
         const next = { ...item, position: prev.length + 1 } as PortfolioItem;
         return [next, ...prev];
       });
     },
     [],
   );
+
+  const portfolioItemCount = useMemo(
+    () => countPortfolioItemSlots(portfolioItems),
+    [portfolioItems],
+  );
+
+  const isPortfolioItemsLimitReached =
+    portfolioItemCount >= MAX_PORTFOLIO_ITEMS;
 
   const handleRemovePortfolioItem = useCallback(
     (id: number, kind: PortfolioItem["item"]) => {
@@ -422,12 +469,16 @@ export const PortfolioProvider = ({
     success,
     canGoNextStep,
     canSubmit,
+    isHydrated,
     deleteInputErrorProperty,
     reset,
     clear,
     currentPortfolio,
     setPortfolio,
     portfolioItems,
+    portfolioItemCount,
+    portfolioItemLimit: MAX_PORTFOLIO_ITEMS,
+    isPortfolioItemsLimitReached,
     handleSetPortfolioItems,
     handleShiftPortfolioItem,
     handleRemovePortfolioItem,

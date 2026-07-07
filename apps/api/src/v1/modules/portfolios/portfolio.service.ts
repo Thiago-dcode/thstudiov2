@@ -11,11 +11,13 @@ import { UserExtraDataService } from "../user-extra-data/user-extra-data.service
 import { RequestService } from "src/common/services/request.service";
 import { PortfolioRepository } from "./portfolio.repository";
 import { EventEmitter2 } from "@nestjs/event-emitter";
-import { UPDATE_USER_EXTRA_DATA_METRICS } from "@repo/common-lib/constants/constants";
+import { MAX_PORTFOLIO_ITEMS, UPDATE_USER_EXTRA_DATA_METRICS } from "@repo/common-lib/constants/constants";
+import { TABLES_ENUM } from "@repo/common-lib/constants/enums";
 import { UpdateUserExtraDataMetricsEvent } from "../user-extra-data/events/update-user-extra-data-metrics.event";
 import { AiService } from "../ai/ai.service";
 import { MediaModerationException } from "src/common/exceptions/media-moderation-exception";
 import { ApiException } from "src/common/exceptions/api-exception";
+import { Query } from "@repo/database/facades";
 
 const CACHE_TTL = 1000 * 60 * 60 * 24;
 
@@ -110,11 +112,35 @@ export class PortfolioService {
     }
   }
 
+  private async enforcePortfolioItemsLimit(
+    collectionIds: number[],
+    mediaIds: number[],
+  ) {
+    const collectionMediaCount = collectionIds.length
+      ? await Query.table(TABLES_ENUM.COLLECTION_MEDIA)
+          .whereIn('collection_id', collectionIds)
+          .count()
+      : 0;
+
+    const totalItemCount = mediaIds.length + collectionMediaCount;
+
+    if (totalItemCount > MAX_PORTFOLIO_ITEMS) {
+      throw ApiException.maxPortfolioItems(
+        `Portfolios can have up to ${MAX_PORTFOLIO_ITEMS} items`,
+      );
+    }
+  }
+
   async create(request: CreatePortfolioRequest) {
 
     if (request.media?.length === 0 && request.collections?.length === 0) {
       throw new BadRequestException('Portfolios must have at least 1 media or 1 collection');
     }
+
+    await this.enforcePortfolioItemsLimit(
+      request.collections?.map((collection) => collection.id) ?? [],
+      request.media?.map((media) => media.id) ?? [],
+    );
 
     if ((await this.slugExists(request.slug, request.user_id)).exists) {
 
@@ -181,6 +207,11 @@ export class PortfolioService {
     if ((!request.media || request.media.length === 0) && (!request.collections || request.collections.length === 0)) {
       throw new BadRequestException('Portfolios must have at least 1 media or 1 collection');
     }
+
+    await this.enforcePortfolioItemsLimit(
+      request.collections?.map((collection) => collection.id) ?? [],
+      request.media?.map((media) => media.id) ?? [],
+    );
 
     // Validate slug uniqueness if slug is being changed
     if (request.slug && request.slug !== portfolio.slug) {

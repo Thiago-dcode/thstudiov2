@@ -1,5 +1,19 @@
 import { MediaPortfolio } from "../types/media";
-import { FullPortfolio, FullPortfolioItem } from "../types/portfolio";
+import {
+  CollectionPortfolioItem,
+  FullPortfolio,
+  FullPortfolioItem,
+  PortfolioItem,
+} from "../types/portfolio";
+
+export function countPortfolioItemSlot(item: Omit<PortfolioItem, "position">): number {
+  if (item.item === "media") return 1;
+  return (item as CollectionPortfolioItem).media?.length ?? 0;
+}
+
+export function countPortfolioItemSlots(items: PortfolioItem[]): number {
+  return items.reduce((total, item) => total + countPortfolioItemSlot(item), 0);
+}
 
 
 type MediaItemPortfolio = MediaPortfolio & {

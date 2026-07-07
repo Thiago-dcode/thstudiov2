@@ -8,13 +8,12 @@ import { UserExtraDataService } from "../user-extra-data/user-extra-data.service
 import { RequestService } from "src/common/services/request.service";
 import { CollectionRepository } from "./collection.repository";
 import { EventEmitter2 } from "@nestjs/event-emitter";
-import { UPDATE_USER_EXTRA_DATA_METRICS } from "@repo/common-lib/constants/constants";
+import { MAX_COLLECTION_ITEMS, UPDATE_USER_EXTRA_DATA_METRICS } from "@repo/common-lib/constants/constants";
 import { UpdateUserExtraDataMetricsEvent } from "../user-extra-data/events/update-user-extra-data-metrics.event";
 import { Helpers } from "src/common/services/helpers.service";
 import { ApiException } from "src/common/exceptions/api-exception";
 import { FullPortfolioCollection } from "@repo/common-lib/types/collection";
 
-const MAX_COLLECTION_MEDIA = 50;
 const CACHE_TTL = 1000 * 60 * 60 * 24;
 
 export const collectionCacheKeys = {
@@ -112,8 +111,8 @@ export class CollectionService {
       throw new BadRequestException('Collections must have at least 1 media');
     }
 
-    if (request.media.length > MAX_COLLECTION_MEDIA) {
-      throw new BadRequestException(`Collections can have up to ${MAX_COLLECTION_MEDIA} media`);
+    if (request.media.length > MAX_COLLECTION_ITEMS) {
+      throw new BadRequestException(`Collections can have up to ${MAX_COLLECTION_ITEMS} media`);
     }
 
     if ((await this.slugExists(request.slug, request.user_id)).exists) {
@@ -161,8 +160,8 @@ export class CollectionService {
       throw new BadRequestException('Collections must have at least 1 media');
     }
 
-    if (request.media.length > MAX_COLLECTION_MEDIA) {
-      throw new BadRequestException(`Collections can have up to ${MAX_COLLECTION_MEDIA} media`);
+    if (request.media.length > MAX_COLLECTION_ITEMS) {
+      throw new BadRequestException(`Collections can have up to ${MAX_COLLECTION_ITEMS} media`);
     }
 
     if (request.slug && request.slug !== collection.slug) {

@@ -95,6 +95,8 @@ export const CreateOrUpdateCollection = ({
     handleRemoveMediaSelected,
     highlightCount,
     highlightLimit,
+    mediaItemLimit,
+    isMediaLimitReached,
     isLoadingHighlightCount,
     fetchHighlightCount,
   } = useCollection();
@@ -397,11 +399,6 @@ export const CreateOrUpdateCollection = ({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <h3 className="text-sm font-medium text-text">Media</h3>
-              {mediaSelected.length > 0 && (
-                <span className="text-xs text-text-muted tabular-nums">
-                  {mediaSelected.length} selected
-                </span>
-              )}
               {mediaSelected.length > 1 && (
                 <span className="text-xs text-text-muted/70">
                   · Drag to reorder
@@ -412,7 +409,30 @@ export const CreateOrUpdateCollection = ({
               userId={user.id}
               mediaSelected={mediaSelectedRecord}
               onSelect={handlePushMediaSelected}
+              maxSelection={mediaItemLimit}
+              addButtonDisabled={isMediaLimitReached}
             />
+          </div>
+
+          <div className="flex items-center gap-0.5">
+            <InfoTooltip
+              iconClassName="size-3.5"
+              content={
+                <p className="text-sm">
+                  Each media item you add to this collection counts toward this
+                  limit. You can include up to {mediaItemLimit} media items in
+                  total.
+                </p>
+              }
+            />
+            <p
+              className={cn(
+                "text-xs tabular-nums",
+                isMediaLimitReached ? "text-error" : "text-text-muted",
+              )}
+            >
+              {mediaSelected.length} / {mediaItemLimit} media
+            </p>
           </div>
 
           {mediaSelected.length === 0 ? (

@@ -1,3 +1,4 @@
+import { MAX_CATEGORIES_PORTFOLIO } from "@repo/common-lib/constants/constants";
 import * as z from "zod";
 
 export const createPortfolioSchema = z.object({
@@ -14,7 +15,13 @@ export const createPortfolioSchema = z.object({
   is_highlight: z.boolean().optional(),
   is_active: z.boolean().optional(),
   thumbnail: z.instanceof(File, { message: "Thumbnail is required" }),
-  categories: z.array(z.number()).optional(),
+  categories: z
+    .array(z.number())
+    .max(
+      MAX_CATEGORIES_PORTFOLIO,
+      `Portfolios can have up to ${MAX_CATEGORIES_PORTFOLIO} categories`,
+    )
+    .optional(),
 });
 
 export type CreatePortfolioSchemaType = z.infer<typeof createPortfolioSchema>;
@@ -33,7 +40,13 @@ export const updatePortfolioSchema = z.object({
   is_highlight: z.boolean().optional(),
   is_active: z.boolean().optional(),
   thumbnail: z.instanceof(File).optional(),
-  categories: z.array(z.number()).optional(),
+  categories: z
+    .array(z.number())
+    .max(
+      MAX_CATEGORIES_PORTFOLIO,
+      `Portfolios can have up to ${MAX_CATEGORIES_PORTFOLIO} categories`,
+    )
+    .optional(),
 });
 
 export type UpdatePortfolioSchemaType = z.infer<typeof updatePortfolioSchema>;

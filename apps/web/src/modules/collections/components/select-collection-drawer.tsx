@@ -19,10 +19,12 @@ export const SelectCollectionDrawer = ({
   userId,
   collectionsSelected,
   onSelect,
+  addButtonDisabled = false,
 }: {
   userId: number;
   collectionsSelected: Record<number, unknown>;
   onSelect: (collection: Collection) => void;
+  addButtonDisabled?: boolean;
 }) => {
   const [open, setOpen] = useState(false);
   const [collections, setCollections] = useState<Collection[]>([]);
@@ -87,6 +89,7 @@ export const SelectCollectionDrawer = ({
           type="button"
           variant="secondary"
           className="gap-2 h-8 px-3 text-xs"
+          disabled={addButtonDisabled}
         >
           <LayoutGrid className="size-3.5" />
           Add collection

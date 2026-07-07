@@ -11,6 +11,7 @@ import type {
   MediaPortfolioItem,
   PortfolioItem,
 } from "@repo/common-lib/types/portfolio";
+import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
 import { cn } from "@repo/ui/lib/utils";
 import { Image, X } from "lucide-react";
 import { type ReactNode, useMemo } from "react";
@@ -96,7 +97,6 @@ function resolvePortfolioItemComponent(row: PortfolioItem): ReactNode {
         </div>
       );
     case "collection": {
-      console.log("COLLECTION", row);
       return (
         <CollectionCard className="w-[80%]" collection={row} isAtelier={true} />
       );
@@ -108,6 +108,9 @@ export default function InputStep2() {
   const {
     user,
     portfolioItems,
+    portfolioItemCount,
+    portfolioItemLimit,
+    isPortfolioItemsLimitReached,
     handleShiftPortfolioItem,
     handleSetPortfolioItems,
     handleRemovePortfolioItem,
@@ -155,11 +158,6 @@ export default function InputStep2() {
       <div className="flex flex-col gap-3 phone-lg:flex-row phone-lg:items-center phone-lg:justify-between phone-lg:gap-4">
         <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
           <h3 className="text-sm font-medium text-text">Portfolio items</h3>
-          {portfolioItems.length > 0 && (
-            <span className="text-xs text-text-muted tabular-nums">
-              {portfolioItems.length} selected
-            </span>
-          )}
           {portfolioItems.length > 1 && (
             <span className="text-xs text-text-muted/70">
               · Drag to reorder
@@ -176,6 +174,7 @@ export default function InputStep2() {
                 item: "collection",
               });
             }}
+            addButtonDisabled={isPortfolioItemsLimitReached}
           />
           <SelectMediaDrawer
             userId={user.id}
@@ -183,8 +182,31 @@ export default function InputStep2() {
             onSelect={(media) => {
               handleShiftPortfolioItem({ ...media, item: "media" });
             }}
+            addButtonDisabled={isPortfolioItemsLimitReached}
           />
         </div>
+      </div>
+
+      <div className="flex items-center gap-0.5">
+        <InfoTooltip
+          iconClassName="size-3.5"
+          content={
+            <p className="text-sm">
+              This count includes each media you add directly, plus every media
+              item inside any collection you add. For example, one collection
+              with 10 images counts as 10 items toward the limit of{" "}
+              {portfolioItemLimit}.
+            </p>
+          }
+        />
+        <p
+          className={cn(
+            "text-xs tabular-nums",
+            isPortfolioItemsLimitReached ? "text-error" : "text-text-muted",
+          )}
+        >
+          {portfolioItemCount} / {portfolioItemLimit} items
+        </p>
       </div>
 
       {/* Selected media grid */}

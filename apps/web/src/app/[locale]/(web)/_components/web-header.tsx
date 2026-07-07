@@ -5,12 +5,20 @@ import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { RegistrationCtaButton } from "@/lib/components/registration-cta-button";
-import { SiteHeader } from "@/lib/components/site-header";
+import { SiteHeader, useSiteHeader } from "@/lib/components/site-header";
 import type { UserAuth } from "@/modules/auth/auth.types";
 import { WebHeaderArtistSearch } from "./web-header-artist-search";
 
 interface WebHeaderProps {
   session: UserAuth | null;
+}
+
+function DrawerRegistrationCtaButton() {
+  const { closeDrawer } = useSiteHeader();
+
+  return (
+    <RegistrationCtaButton size="lg" className="w-full" onClick={closeDrawer} />
+  );
 }
 
 export const WebHeader = ({ session }: WebHeaderProps) => {
@@ -99,7 +107,7 @@ export const WebHeader = ({ session }: WebHeaderProps) => {
                   <Button asChild variant="base" size="lg" className="w-full">
                     <Link href="/auth/login">Sign in</Link>
                   </Button>
-                  <RegistrationCtaButton size="lg" className="w-full" />
+                  <DrawerRegistrationCtaButton />
                 </div>
               )}
             </div>

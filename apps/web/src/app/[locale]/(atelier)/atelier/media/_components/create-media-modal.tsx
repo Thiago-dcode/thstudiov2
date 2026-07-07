@@ -466,9 +466,15 @@ export function CreateMediaDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(next) => !isLoading && setOpen(next)}>
       <DialogTrigger asChild>
-        <Button className="text-xs! " variant="default" size="sm">
+        <Button
+          className="text-xs! "
+          variant="default"
+          size="sm"
+          disabled={isLoading}
+          title={isLoading ? "Upload in progress..." : undefined}
+        >
           <Plus className="h-4 w-4" />
           Add media
         </Button>

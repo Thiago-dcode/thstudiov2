@@ -69,6 +69,7 @@ export const UserMetrics = async ({ userId }: { userId: number }) => {
   if (!metricsResult.data) return <div>No data available</div>;
 
   const { extra_data, active_plan } = metricsResult.data;
+  if (!extra_data || !active_plan) return <div>No data available</div>;
   const {
     clients_count,
     media_count,

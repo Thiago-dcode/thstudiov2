@@ -577,6 +577,32 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const generateManySeoMedia = async (media: Media[]) => {
+    // Pre-register every selected media as a queued "seo" upload so the modal
+    // reflects the whole batch, not just the few requests currently in-flight
+    // (limited by MEDIA_UPLOAD_CONCURRENCY). generateSeoSingleMedia matches
+    // these by id and flips them to pending as workers pick them up.
+    for (const m of media) {
+      upsertMediaUpload({
+        input: {
+          user_id: m.user_id,
+          title: m.title ?? "",
+          description: m.description ?? "",
+          seo_title: m.seo_title ?? "",
+          seo_description: m.seo_description ?? "",
+          seo_alt: m.seo_alt ?? "",
+          seo_filename: m.seo_filename || "",
+        },
+        action: "seo",
+        previewUrl: m.thumbnail || undefined,
+        id: m.id,
+        pending: false,
+        data: undefined,
+        error: undefined,
+        deleted: undefined,
+        unique_id: generateUniqueMediaId(),
+      });
+    }
+
     await runWithConcurrency(media, MEDIA_UPLOAD_CONCURRENCY, (m) =>
       generateSeoSingleMedia(m),
     );

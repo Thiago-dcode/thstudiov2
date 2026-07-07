@@ -1,5 +1,6 @@
-import { IsNotEmpty, IsOptional, IsString, IsArray, ValidateNested, MinLength } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsArray, ValidateNested, MinLength, ArrayMaxSize } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
+import { MAX_CATEGORIES_PORTFOLIO } from '@repo/common-lib/constants/constants';
 import { ModelExist } from 'src/common/validators/model-exist.validtor';
 import { ModelArrayExist } from 'src/common/validators/model-array-exist.validtor';
 import { ToBoolean } from 'src/common/decorators/to-boolean.decorator';
@@ -67,6 +68,9 @@ export class UpdatePortfolioRequest {
 
   @IsOptional()
   @IsArray()
+  @ArrayMaxSize(MAX_CATEGORIES_PORTFOLIO, {
+    message: `Portfolios can have up to ${MAX_CATEGORIES_PORTFOLIO} categories`,
+  })
   @Transform(({ value }) => value?.map((v: string) => parseInt(v, 10)))
   @ModelArrayExist('categories')
   categories?: number[];

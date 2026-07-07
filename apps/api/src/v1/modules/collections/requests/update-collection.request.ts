@@ -1,5 +1,6 @@
 import { IsNotEmpty, IsNumber, IsOptional, IsString, IsArray, ValidateNested, MinLength, ArrayMaxSize } from 'class-validator';
 import { Type } from 'class-transformer';
+import { MAX_COLLECTION_ITEMS } from '@repo/common-lib/constants/constants';
 import { ModelExist } from 'src/common/validators/model-exist.validtor';
 import { ToBoolean } from 'src/common/decorators/to-boolean.decorator';
 
@@ -41,7 +42,7 @@ export class UpdateCollectionRequest {
 
   @IsOptional()
   @IsArray()
-  @ArrayMaxSize(50, { message: 'Collections can have up to 50 media' })
+  @ArrayMaxSize(MAX_COLLECTION_ITEMS, { message: `Collections can have up to ${MAX_COLLECTION_ITEMS} media` })
   @ValidateNested({ each: true })
   @Type(() => CollectionMediaItem)
   media?: CollectionMediaItem[];

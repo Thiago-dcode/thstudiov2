@@ -6,14 +6,15 @@ import { Check, Save } from "lucide-react";
 import { usePortfolio } from "@/modules/portfolios/providers/create-update-portfolio.provider";
 
 export const SubmitPortfolioButton = () => {
-  const { canSubmit, isPending, success, currentPortfolio } = usePortfolio();
+  const { canSubmit, isPending, success, currentPortfolio, isHydrated } =
+    usePortfolio();
 
   return (
     <Button
       type="submit"
       variant="outline"
       size="sm"
-      disabled={!canSubmit || isPending}
+      disabled={!isHydrated || !canSubmit || isPending}
       className="gap-1.5 h-8 px-3 text-xs bg-text text-bg hover:text-text"
     >
       {isPending ? (

@@ -14,28 +14,36 @@ import { type UploadMedia, useMedia } from "../providers/media.provider";
 export const UploadMediaModal = () => {
   const [mounted, setMounted] = useState(false);
   const [compact, setCompact] = useState(false);
-  const { mediaUploads, isCompleted, handleRemoveCompleted } = useMedia();
+  const { mediaUploads, isCompleted, isLoading, handleRemoveCompleted } =
+    useMedia();
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const pendingLength = useMemo(
-    () => mediaUploads.filter((m) => m.pending).length,
-    [mediaUploads],
-  );
-  const successCount = useMemo(
-    () => mediaUploads.filter((m) => m.data).length,
-    [mediaUploads],
-  );
-  const failedCount = useMemo(
-    () => mediaUploads.filter((m) => m.error).length,
-    [mediaUploads],
-  );
+  // While a batch is uploading, also surface queued items (limited by the
+  // upload concurrency) so the modal reflects the whole batch, not just the
+  // few requests currently in-flight.
   const mediaUploadsToDisplay = useMemo(
     () =>
-      mediaUploads.filter((m) => m.pending || m.data || m.error || m.deleted),
-    [mediaUploads],
+      mediaUploads.filter(
+        (m) => m.pending || m.data || m.error || m.deleted || isLoading,
+      ),
+    [mediaUploads, isLoading],
+  );
+  const remainingLength = useMemo(
+    () =>
+      mediaUploadsToDisplay.filter((m) => !m.data && !m.error && !m.deleted)
+        .length,
+    [mediaUploadsToDisplay],
+  );
+  const successCount = useMemo(
+    () => mediaUploadsToDisplay.filter((m) => m.data).length,
+    [mediaUploadsToDisplay],
+  );
+  const failedCount = useMemo(
+    () => mediaUploadsToDisplay.filter((m) => m.error).length,
+    [mediaUploadsToDisplay],
   );
 
   if (!mounted || !mediaUploadsToDisplay.length) return null;
@@ -48,12 +56,7 @@ export const UploadMediaModal = () => {
             {isCompleted ? "Upload complete" : "Uploading files"}
           </h3>
           <div className="flex items-center gap-2 text-xs text-text-muted">
-            {pendingLength > 0 && (
-              <span>
-                {pendingLength}{" "}
-                {pendingLength === 1 ? "remaining" : "remaining"}
-              </span>
-            )}
+            {remainingLength > 0 && <span>{remainingLength} remaining</span>}
             {successCount > 0 && (
               <span className="text-green-600 text-xs!">
                 {successCount} {successCount === 1 ? "success" : "success"}
@@ -65,7 +68,7 @@ export const UploadMediaModal = () => {
               </span>
             )}
             {isCompleted &&
-              pendingLength === 0 &&
+              remainingLength === 0 &&
               successCount > 0 &&
               failedCount === 0 && (
                 <span className="text-green-600">All complete</span>
@@ -124,15 +127,27 @@ export const UploadMediaModal = () => {
 };
 
 const SingleMediaUpload = ({ mediaUpload }: { mediaUpload: UploadMedia }) => {
+  const isQueued =
+    !mediaUpload.pending &&
+    !mediaUpload.data &&
+    !mediaUpload.error &&
+    !mediaUpload.deleted;
+
   const statusIcon = mediaUpload.pending ? (
     <Spinner className="size-5 text-blue-500" />
   ) : mediaUpload.data ? (
     <CircleCheckIcon className="size-5 text-green-500" />
   ) : mediaUpload.error ? (
     <OctagonXIcon className="size-5 text-red-500" />
+  ) : isQueued ? (
+    <Spinner className="size-5 text-text-muted" />
   ) : null;
 
   const statusText = useMemo(() => {
+    if (isQueued) {
+      return "Queued...";
+    }
+
     if (mediaUpload.pending) {
       switch (mediaUpload.action) {
         case "create":

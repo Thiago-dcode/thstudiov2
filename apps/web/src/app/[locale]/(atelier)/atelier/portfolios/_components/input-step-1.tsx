@@ -1,5 +1,8 @@
 "use client";
-import { ALLOWED_IMAGE_FILE_TYPES } from "@repo/common-lib/constants/constants";
+import {
+  ALLOWED_IMAGE_FILE_TYPES,
+  MAX_CATEGORIES_PORTFOLIO,
+} from "@repo/common-lib/constants/constants";
 import {
   generateValidSlug,
   isAValidSlugFormat,
@@ -18,10 +21,7 @@ import { useEffect, useRef, useState } from "react";
 import FormComponent from "@/lib/components/form-component";
 import CategoryCombobox from "@/modules/categories/components/category-combobox";
 import { UpdateCategoriesProvider } from "@/modules/categories/providers/categories.provider";
-import {
-  MAX_PORTFOLIO_CATEGORIES,
-  usePortfolio,
-} from "@/modules/portfolios/providers/create-update-portfolio.provider";
+import { usePortfolio } from "@/modules/portfolios/providers/create-update-portfolio.provider";
 import { usePortfolioSlug } from "./portfolio-slug.context";
 
 const ThumbnailInput = () => {
@@ -272,12 +272,12 @@ const FirstStepInputs = () => {
               categoriesSelected={categoriesSelected}
               setCategorySelected={setCategorySelected}
               removeCategorySelected={removeCategorySelected}
-              maxSelection={MAX_PORTFOLIO_CATEGORIES}
+              maxSelection={MAX_CATEGORIES_PORTFOLIO}
             />
           </UpdateCategoriesProvider>
-          <p className="text-xs text-text-muted">
-            Optional. Select up to {MAX_PORTFOLIO_CATEGORIES} categories that
-            describe this portfolio.
+          <p className="text-xs text-text-muted tabular-nums">
+            {categoriesSelected.length} / {MAX_CATEGORIES_PORTFOLIO} categories
+            · Optional. Select categories that describe this portfolio.
           </p>
         </div>
 

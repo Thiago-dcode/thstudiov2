@@ -27,10 +27,14 @@ export const SelectMediaDrawer = ({
   userId,
   mediaSelected,
   onSelect,
+  maxSelection,
+  addButtonDisabled = false,
 }: {
   userId: number;
   mediaSelected: Record<number, unknown>;
   onSelect: (media: Media) => void;
+  maxSelection?: number;
+  addButtonDisabled?: boolean;
 }) => {
   const [open, setOpen] = useState(false);
   const [media, setMedia] = useState<Media[]>([]);
@@ -41,6 +45,8 @@ export const SelectMediaDrawer = ({
     () => Object.keys(mediaSelected).length,
     [mediaSelected],
   );
+  const isSelectionLimitReached =
+    maxSelection !== undefined && mediaSelectedLength >= maxSelection;
   const currentPage = useRef(1);
   const nextPage = useRef<undefined | number>(undefined);
   const shapeRef = useRef<ShapeFilter>(undefined);
@@ -107,6 +113,7 @@ export const SelectMediaDrawer = ({
           type="button"
           variant="secondary"
           className="gap-2 h-8 px-3 text-xs"
+          disabled={addButtonDisabled || isSelectionLimitReached}
         >
           <Image className="size-3.5" />
           Add media
@@ -122,7 +129,9 @@ export const SelectMediaDrawer = ({
               </DrawerTitle>
               {mediaSelectedLength > 0 && (
                 <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 bg-fg text-text text-[11px] font-medium tabular-nums">
-                  {mediaSelectedLength}
+                  {maxSelection !== undefined
+                    ? `${mediaSelectedLength} / ${maxSelection}`
+                    : mediaSelectedLength}
                 </span>
               )}
               <Button
@@ -195,6 +204,9 @@ export const SelectMediaDrawer = ({
             <div className="space-y-3">
               <p className="text-[11px] text-text-muted">
                 Click to add to your portfolio · {media.length} available
+                {maxSelection !== undefined
+                  ? ` · up to ${maxSelection} items`
+                  : ""}
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {media.map((m) => {
@@ -203,7 +215,11 @@ export const SelectMediaDrawer = ({
                     <button
                       key={m.id}
                       type="button"
-                      onClick={() => (!isSelected ? onSelect(m) : null)}
+                      onClick={() =>
+                        !isSelected && !isSelectionLimitReached
+                          ? onSelect(m)
+                          : null
+                      }
                       aria-pressed={!!isSelected}
                       className={cn(
                         "group relative aspect-square w-full overflow-hidden border border-border bg-fg-2",
@@ -274,8 +290,9 @@ export const SelectMediaDrawer = ({
         <div className="border-t px-4 py-3 flex items-center justify-between">
           {mediaSelectedLength > 0 ? (
             <p className="text-xs text-text-muted tabular-nums">
-              {mediaSelectedLength} item{mediaSelectedLength !== 1 ? "s" : ""}{" "}
-              selected
+              {maxSelection !== undefined
+                ? `${mediaSelectedLength} / ${maxSelection} item${mediaSelectedLength !== 1 ? "s" : ""} selected`
+                : `${mediaSelectedLength} item${mediaSelectedLength !== 1 ? "s" : ""} selected`}
             </p>
           ) : (
             <span />

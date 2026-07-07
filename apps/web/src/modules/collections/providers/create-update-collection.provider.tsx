@@ -1,5 +1,6 @@
 "use client";
 
+import { MAX_COLLECTION_ITEMS } from "@repo/common-lib/constants/constants";
 import { MAX_HIGHLIGHT_COLLECTIONS } from "@repo/common-lib/constants/highlights";
 import type {
   CreateCollectionInput,
@@ -18,6 +19,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { toastErrorThrottled } from "@/lib/utils/throttled-toast";
 import type { UserAuth } from "@/modules/auth/auth.types";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { createOrUpdateCollectionAction } from "../server-actions/create-update-collection.action";
@@ -55,6 +57,8 @@ type CollectionContextType = {
   setCollection: (collection: FullCollection) => void;
   highlightCount: number;
   highlightLimit: number;
+  mediaItemLimit: number;
+  isMediaLimitReached: boolean;
   isLoadingHighlightCount: boolean;
   fetchHighlightCount: (options?: { force?: boolean }) => Promise<void>;
 };
@@ -255,6 +259,12 @@ export const CollectionProvider = ({
   const handlePushMediaSelected = useCallback(
     (m: Media) => {
       const current = formData.media ?? [];
+      if (current.length >= MAX_COLLECTION_ITEMS) {
+        toastErrorThrottled(
+          `Collections can have up to ${MAX_COLLECTION_ITEMS} media items`,
+        );
+        return;
+      }
       if (current.some((x) => x.id === m.id)) return;
       const media: FullCollectionMedia = { ...m, position: current.length + 1 };
       handleSetFormData("media", [...current, media]);
@@ -278,6 +288,8 @@ export const CollectionProvider = ({
       ? formData.media.sort((a, b) => a.position - b.position)
       : [];
   }, [formData.media]);
+
+  const isMediaLimitReached = mediaSelected.length >= MAX_COLLECTION_ITEMS;
 
   const hasFormChanged = useMemo(() => {
     if (!currentCollection) return false;
@@ -355,6 +367,8 @@ export const CollectionProvider = ({
     setCollection,
     highlightCount,
     highlightLimit,
+    mediaItemLimit: MAX_COLLECTION_ITEMS,
+    isMediaLimitReached,
     isLoadingHighlightCount,
     fetchHighlightCount,
   };

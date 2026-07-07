@@ -37,6 +37,7 @@ export const CreateOrUpdatePortfolio = ({
     fetchHighlightCount,
     formData,
     user,
+    isHydrated,
   } = usePortfolio();
 
   const checkSlugAvailabilityAction = useCallback(
@@ -189,7 +190,7 @@ export const CreateOrUpdatePortfolio = ({
                 type="button"
                 onClick={() => handleStep("prev")}
                 variant="ghost"
-                disabled={currentStep <= 1 || isPending}
+                disabled={!isHydrated || currentStep <= 1 || isPending}
                 className={`gap-2 ${currentStep <= 1 ? "invisible" : ""}`}
               >
                 <ArrowLeft className="size-4" />
@@ -209,7 +210,7 @@ export const CreateOrUpdatePortfolio = ({
                     handleStep("next");
                   }}
                   variant="default"
-                  disabled={!canGoNextStep || isPending}
+                  disabled={!isHydrated || !canGoNextStep || isPending}
                   className="gap-2"
                 >
                   Next
