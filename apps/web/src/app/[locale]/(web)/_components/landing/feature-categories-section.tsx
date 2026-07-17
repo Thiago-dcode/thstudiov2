@@ -83,6 +83,7 @@ export async function FeatureCategoriesSection() {
   const t = await getTranslations("landing.featureCategories");
   const categoriesResponse = await categoriesService.getAll({
     is_featured: true,
+    is_active: true,
     with_thumbnail: true,
   });
 

@@ -30,6 +30,7 @@ export type CategoryIndexRequest = OffsetPaginationRequest & {
     /** When set, only categories with these slugs are returned (order not guaranteed). */
     slugs?: string[],
     is_featured?: boolean,
+    is_active?: boolean,
     with_thumbnail?: boolean
 }
 
@@ -44,6 +45,7 @@ export type CreateCategoryInput = {
     tags: string;
     thumbnail: string | null;
     is_featured: boolean;
+    is_active: boolean;
     parent_id: number | null;
     translations: CreateCategoryTranslationRow[];
 }
@@ -54,6 +56,7 @@ export type UpdateCategoryInput = Partial<{
     tags: string;
     thumbnail: string | null;
     is_featured: boolean;
+    is_active: boolean;
     parent_id: number | null;
 }>
 /** `name` is the label for the current request language: translation if present, else `categories.name`. */

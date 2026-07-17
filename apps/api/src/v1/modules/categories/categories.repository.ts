@@ -27,6 +27,7 @@ export class CategoriesRepository extends BaseRepository {
     'categories.slug',
     'categories.parent_id',
     'categories.is_featured',
+    'categories.is_active',
     'categories.tags',
     'categories.thumbnail',
     'category_translations.name as tr_name',
@@ -39,6 +40,7 @@ export class CategoriesRepository extends BaseRepository {
     'tags',
     'thumbnail',
     'is_featured',
+    'is_active',
     'parent_id',
     'created_at',
     'updated_at',
@@ -83,15 +85,16 @@ export class CategoriesRepository extends BaseRepository {
   async create(
     input: Omit<CreateCategoryInput, 'translations'>,
   ): Promise<CategorySchema> {
-    const { name, slug, tags, thumbnail, is_featured, parent_id } = input;
+    const { name, slug, tags, thumbnail, is_featured, is_active, parent_id } = input;
 
-    const cols = ['name', 'slug', 'tags', 'thumbnail', 'is_featured', 'parent_id'];
+    const cols = ['name', 'slug', 'tags', 'thumbnail', 'is_featured', 'is_active', 'parent_id'];
     const values = [
       name,
       slug,
       tags,
       thumbnail,
       is_featured,
+      is_active,
       parent_id,
     ] as const;
 
@@ -131,6 +134,7 @@ export class CategoriesRepository extends BaseRepository {
       parent_id,
       thumbnail,
       is_featured,
+      is_active,
       tr_name,
     } = row;
     const displayName =
@@ -143,6 +147,7 @@ export class CategoriesRepository extends BaseRepository {
       parent_id,
       thumbnail,
       is_featured,
+      is_active,
     };
   }
 
@@ -209,6 +214,16 @@ export class CategoriesRepository extends BaseRepository {
 
     if (typeof filters.is_featured === 'boolean') {
       query.where('categories.is_featured', '=', filters.is_featured);
+    }
+
+    if (typeof filters.is_active === 'boolean') {
+      query.where('categories.is_active', '=', filters.is_active);
+    } else if (
+      !filters.user_id &&
+      !filters.slugs?.length &&
+      !filters.categories?.length
+    ) {
+      query.where('categories.is_active', '=', true);
     }
 
     this.requestService.pagination =

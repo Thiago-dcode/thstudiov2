@@ -14,6 +14,7 @@ export type PlanSubscriptionSchema = {
   user_id: number;
   plan_price_id: number;
   plan_offer_id: number | null;
+  prev_subscription_id: number | null;
   is_active: boolean;
   is_trialing: boolean;
   cancel_at: Date | null;

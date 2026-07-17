@@ -150,6 +150,7 @@ export const main = async () => {
       'cancel_at',
       'paypal_id',
       'plan_offer_id',
+      'prev_subscription_id',
       'plan_price_id',
     ],
     [
@@ -163,6 +164,7 @@ export const main = async () => {
       null,
       null,
       true,
+      null,
       null,
       null,
       null,

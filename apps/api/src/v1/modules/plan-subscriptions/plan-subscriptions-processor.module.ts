@@ -5,17 +5,21 @@ import { PLAN_SUBSCRIPTIONS_QUEUE, LOG_QUEUE } from '@repo/common-lib/constants/
 import { PlanSubscriptionProcessor } from './plan-subscription.processor';
 import { UserExtraDataModule } from '../user-extra-data/user-extra-data.module';
 import { PlansModule } from '../plans/plans.module';
+import { EmailPreferencesModule } from '../email-preferences/email-preferences.module';
 import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
 import { Helpers } from 'src/common/services/helpers.service';
+import { SubscriptionChangedMail } from './mails/subscription-changed.mail';
 
 @Module({
   imports: [
     BullModule.registerQueue({ name: PLAN_SUBSCRIPTIONS_QUEUE }, { name: LOG_QUEUE }),
     UserExtraDataModule,
-    PlansModule
+    PlansModule,
+    EmailPreferencesModule,
   ],
   providers: [
     PlanSubscriptionProcessor,
+    SubscriptionChangedMail,
     {
       provide: LogService,
       useFactory: (logQueue: Queue) => {

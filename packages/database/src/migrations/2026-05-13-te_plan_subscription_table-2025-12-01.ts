@@ -29,6 +29,11 @@ const up = async () => {
     Column.foreignKey('user_id', 'users', 'id', {
       onDelete: 'SET NULL',
     }),
+    Column.foreignKey('prev_subscription_id', 'plan_subscriptions', 'id', {
+      onDelete: 'SET NULL',
+      nullable: true,
+      unique: true,
+    }),
     Column.foreignKey('plan_price_id', 'plan_prices', 'id', {
       onDelete: 'SET NULL',
     }),

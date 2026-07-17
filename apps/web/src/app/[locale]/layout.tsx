@@ -8,7 +8,7 @@ import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
 import type { ReactNode } from "react";
 import { getServerEnv } from "@/env/server";
-import { dmSans, playfair } from "@/font";
+import { body, brand } from "@/font";
 import { routing } from "@/i18n/routing";
 import { AppStatusProvider } from "@/lib/providers/app-status.provider";
 
@@ -53,7 +53,7 @@ export default async function RootLayout({
   return (
     <html
       lang={locale.toLowerCase()}
-      className={cn(playfair.variable, dmSans.variable)}
+      className={cn(brand.variable, body.variable)}
       suppressHydrationWarning
     >
       <body className="w-screen h-dvh flex flex-col items-center justify-start">

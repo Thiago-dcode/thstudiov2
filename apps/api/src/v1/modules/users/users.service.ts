@@ -98,7 +98,7 @@ export class UserService {
   async getCompactedByUsername(username: string) {
     return await this.userRepository.findByUsernameCompact(username);
   }
-  
+
   async getCompactedById(id: number) {
     return await this.userRepository.findByIdCompact(id);
   }
@@ -302,7 +302,9 @@ export class UserService {
         new SetInitialUserExtraDataEvent(event.user.id),
       );
       //Notify user
-      await this.mailService.send(this.notifyNewUserMail.setUser(event.user));
+      await this.mailService.sendAsync(this.notifyNewUserMail.setUser(event.user), {
+        delay: 3 * 60 * 1000
+      });
     } catch (error) {
       this.logService
         .name('new-user')

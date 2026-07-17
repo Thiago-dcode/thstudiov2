@@ -1,33 +1,33 @@
 <%- include(globals.emailsPath + '/shared/head') %>
 
-<body style="width:100%; margin:0; padding:0; background-color:#1C1B19;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#1C1B19;">
+<body class="e-bg" style="width:100%; margin:0; padding:0 4px; background-color:#FAFAF9;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="e-bg" style="background-color:#FAFAF9;">
         <tr>
             <td align="center">
-                <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0"
-                    style="width:100%; max-width:600px; background-color:#242220;">
+                <table role="presentation" width="800" cellpadding="0" cellspacing="0" border="0"
+                    class="e-bg" style="width:100%; max-width:800px; background-color:#FAFAF9;">
 
                     <%- include(globals.emailsPath + '/shared/header') %>
 
                     <!-- Greeting -->
                     <tr>
-                        <td style="padding:40px 40px 0 40px; text-align:center;">
-                            <p style="font-family:Arial, Helvetica, sans-serif; font-size:13px; color:#A8A59B; letter-spacing:1px; text-transform:uppercase; margin:0 0 8px 0;">
+                        <td style="padding:0 0 24px; text-align:center;">
+                            <p class="e-text-muted" style="font-size:13px; color:#46443F; letter-spacing:1px; text-transform:uppercase; margin:0 0 8px 0;">
                                 <%= globals.t(translatePath + '.HI') %>
                             </p>
-                            <p style="font-family:Georgia, 'Times New Roman', Times, serif; font-size:20px; color:#F0EEE9; margin:0 0 32px 0; font-weight:normal;">
+                            <h2 class="e-text" style="font-size:20px; font-weight:600; color:#000000; margin:0;">
                                 <%= user.username %>
-                            </p>
+                            </h2>
                         </td>
                     </tr>
 
                     <!-- Welcome Title -->
                     <tr>
-                        <td style="padding:0 40px; text-align:center;">
-                            <h1 style="font-family:Georgia, 'Times New Roman', Times, serif; font-size:32px; font-weight:normal; color:#F0EEE9; margin:0 0 12px 0; letter-spacing:1px;">
+                        <td style="padding:0 0 24px; text-align:center;">
+                            <h1 class="e-text" style="font-size:20px; font-weight:600; color:#000000; margin:0 0 12px 0; letter-spacing:1px;">
                                 <%= globals.t(translatePath + '.WELCOME') %>
                             </h1>
-                            <p style="font-family:Georgia, 'Times New Roman', Times, serif; font-size:15px; color:#A8A59B; margin:0 0 36px 0; line-height:1.6;">
+                            <p class="e-text-muted" style="font-size:14px; color:#46443F; margin:0; line-height:1.6;">
                                 <%= globals.t(translatePath + '.WELCOME_MESSAGE') %>
                             </p>
                         </td>
@@ -36,26 +36,34 @@
                     <% if (typeof features !== 'undefined' && Array.isArray(features) && features.length > 0) { %>
                     <!-- Features Intro -->
                     <tr>
-                        <td style="padding:0 40px 16px 40px; text-align:center;">
-                            <p style="font-family:Georgia, 'Times New Roman', Times, serif; font-size:16px; color:#A8A59B; margin:0; line-height:1.6;">
-                                <%= globals.t(translatePath + '.FEATURES_INTRO_PREFIX') %>
-                                <span style="color:#F0EEE9; font-weight:bold;"><%= globals.appName %></span>
-                                <%= globals.t(translatePath + '.FEATURES_INTRO_SUFFIX') %>
+                        <td style="padding:0 0 24px; text-align:center;">
+                            <p class="e-text-muted" style="font-size:14px; color:#46443F; margin:0; line-height:1.6;">
+                                <%= globals.t(translatePath + '.FEATURES_INTRO') %>
+                                <span class="e-text" style="color:#000000; font-weight:600;"><%= globals.t(translatePath + '.FEATURES_INTRO_EMPHASIS') %></span>
                             </p>
                         </td>
                     </tr>
 
                     <!-- Features List -->
                     <tr>
-                        <td style="padding:0 40px 36px 40px;">
+                        <td>
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-                                style="background-color:#322F2A; border:1px solid #38362F;">
+                                class="e-card e-border-em" style="border:1.5px solid #C9C6BB; background-color:#FFFFFF;">
                                 <% features.forEach(function(feature, index) { %>
                                 <tr>
-                                    <td style="padding:14px 20px; text-align:center; font-family:Georgia, 'Times New Roman', Times, serif; font-size:14px; color:#F0EEE9;<%= index > 0 ? ' border-top:1px solid #38362F;' : '' %>">
+                                    <td class="e-text" style="padding:24px 12px; text-align:center; font-size:14px; color:#000000;">
                                         <%= feature %>
                                     </td>
                                 </tr>
+                                <% if (index < features.length - 1) { %>
+                                <tr>
+                                    <td style="padding:0;">
+                                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                                            <tr><td class="e-border" style="height:1px; background-color:#E4E1D9; font-size:1px; line-height:1px;">&nbsp;</td></tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                <% } %>
                                 <% }) %>
                             </table>
                         </td>
@@ -64,15 +72,15 @@
 
                     <!-- CTA -->
                     <tr>
-                        <td align="center" style="padding:0 40px 8px 40px;">
-                            <p style="font-family:Georgia, 'Times New Roman', Times, serif; font-size:15px; color:#A8A59B; margin:0 0 16px 0;">
+                        <td align="center" style="padding:24px 0 0;">
+                            <p class="e-text-muted" style="font-size:14px; color:#46443F; margin:0 0 16px 0;">
                                 <%= globals.t(translatePath + '.CTA_START_TEXT') %>
                             </p>
                             <table role="presentation" cellpadding="0" cellspacing="0" border="0">
                                 <tr>
-                                    <td align="center" style="background-color:#C41D00;">
-                                        <a href="<%= globals.appUrl %>"
-                                            style="display:inline-block; padding:16px 48px; font-family:Arial, Helvetica, sans-serif; font-size:13px; font-weight:bold; text-decoration:none; color:#FFFFFF; letter-spacing:1.5px; text-transform:uppercase;">
+                                    <td align="center" class="e-accent-bg" style="background-color:#ED2100;">
+                                        <a href="<%= redirectHref %>"
+                                            style="display:inline-block; padding:16px 48px; font-size:13px; font-weight:bold; text-decoration:none; color:#FFFFFF; letter-spacing:1.5px; text-transform:uppercase;">
                                             <%= globals.t(translatePath + '.CTA_START_BUTTON') %>
                                         </a>
                                     </td>

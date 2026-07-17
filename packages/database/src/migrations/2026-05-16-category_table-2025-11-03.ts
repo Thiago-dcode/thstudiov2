@@ -13,6 +13,9 @@ const up = async () => {
     Column.boolean('is_featured', {
       default: false
     }),
+    Column.boolean('is_active', {
+      default: true
+    }),
     Column.string('name', 255, {
       unique: true
     }),
@@ -54,7 +57,7 @@ const up = async () => {
       onDelete: 'CASCADE',
       nullable: false,
     }),
-    
+
     Column.foreignKey('category_id', 'categories', 'id', {
       onDelete: 'CASCADE',
       nullable: false,
@@ -67,7 +70,7 @@ const up = async () => {
       onDelete: 'CASCADE',
       nullable: false,
     }),
-    
+
     Column.foreignKey('category_id', 'categories', 'id', {
       onDelete: 'CASCADE',
       nullable: false,

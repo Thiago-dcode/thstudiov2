@@ -7,6 +7,7 @@ import { AiModule } from '../ai/ai.module';
 import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
 import { RequestService } from 'src/common/services/request.service';
 import { CollectionModule } from '../collections/collection.module';
+import { LayoutModule } from '../layouts/layout.module';
 
 @Module({
   controllers: [PortfolioController],
@@ -24,7 +25,7 @@ import { CollectionModule } from '../collections/collection.module';
       inject: [RequestService],
     },
   ],
-  imports: [UserExtraDataModule, AiModule,CollectionModule],
+  imports: [UserExtraDataModule, AiModule, CollectionModule, LayoutModule],
   exports: [PortfolioService],
 })
 export class PortfolioModule {}

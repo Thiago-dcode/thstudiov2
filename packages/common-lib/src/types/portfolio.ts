@@ -4,6 +4,7 @@ import { MediaPortfolio } from "./media";
 import { FullPortfolioCollection, PortfolioCollection } from "./collection";
 import { CategoryBase } from "./category";
 import { CompactUser } from "./user";
+import { PortfolioLayout, PortfolioLayoutInput } from "./layout";
 
 // ==================== PORTFOLIO TYPES ====================
 
@@ -18,6 +19,7 @@ export type FullPortfolio = Portfolio & {
   media: MediaPortfolio[];
   collections: FullPortfolioCollection[];
   categories: CategoryBase[];
+  layout?: PortfolioLayout;
 };
 
 // Request type for listing portfolios
@@ -61,6 +63,7 @@ export type CreatePortfolioInput = Omit<
     position: number
   }[],
   categories?: number[],
+  layout?: PortfolioLayoutInput,
 };
 
 // For client-side usage with file upload
@@ -104,6 +107,7 @@ export type UpdatePortfolioInput = Partial<
     position: number;
   }[];
   categories?: number[];
+  layout?: PortfolioLayoutInput;
 };
 
 // For client-side update with file upload

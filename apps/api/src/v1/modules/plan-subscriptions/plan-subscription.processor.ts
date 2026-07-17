@@ -1,6 +1,7 @@
 import { Processor } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { LogService } from '@repo/backend-lib/services/log-service';
+import { MailService } from '@repo/backend-lib/services/mail-service';
 import {
   CACHE_KEY_ACTIVE_PLAN,
   CACHE_KEY_ACTIVE_SUBSCRIPTION,
@@ -17,6 +18,13 @@ import { Query } from '@repo/database/facades';
 import { TableName } from '@repo/common-lib/types/database';
 import { Helpers } from 'src/common/services/helpers.service';
 import { serviceCacheKeys } from '../user-services/user-service.service';
+import { SubscriptionChangedMail } from './mails/subscription-changed.mail';
+
+/** Job payload enriched by the webhook processor with the previous plan's identity, used to detect upgrade vs downgrade. */
+export type SubscriptionChangesJobData = BaseUser & {
+  prevPlanName: string | null;
+  prevPlanBasePrice: number | null;
+};
 
 @Processor(PLAN_SUBSCRIPTIONS_QUEUE)
 export class PlanSubscriptionProcessor extends GlobalProcessor {
@@ -25,6 +33,8 @@ export class PlanSubscriptionProcessor extends GlobalProcessor {
     private readonly planService: PlansService,
     private readonly userExtraDataService: UserExtraDataService,
     private readonly helpers: Helpers,
+    private readonly mailService: MailService,
+    private readonly subscriptionChangedMail: SubscriptionChangedMail,
   ) {
     super();
   }
@@ -49,7 +59,7 @@ export class PlanSubscriptionProcessor extends GlobalProcessor {
 
   // ==================== JOB HANDLERS ====================
 
-  private async onSubscriptionChanges(data: BaseUser) {
+  private async onSubscriptionChanges(data: SubscriptionChangesJobData) {
     this.logger.name('on-subscription-changes');
     const { id: userId } = data;
     try {
@@ -229,6 +239,23 @@ export class PlanSubscriptionProcessor extends GlobalProcessor {
         CACHE_KEY_ACTIVE_SUBSCRIPTION(userId),
         serviceCacheKeys.allByUser(userId),
       ]);
+
+      // Notify the user about the plan change (upgrade vs downgrade copy).
+      // No previous plan (first-ever subscription) counts as an upgrade.
+      const isUpgrade =
+        data.prevPlanBasePrice === null ||
+        currentPlan.base_price > data.prevPlanBasePrice;
+
+      await this.mailService.sendAsync(
+        this.subscriptionChangedMail.setData(
+          { email: data.email, username: data.username },
+          {
+            newPlanName: currentPlan.name,
+            prevPlanName: data.prevPlanName,
+            isUpgrade,
+          },
+        ),
+      );
 
       return { success: true };
     } catch (error) {

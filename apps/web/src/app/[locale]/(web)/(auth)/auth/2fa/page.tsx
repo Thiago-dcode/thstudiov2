@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import PageComponent from "@/lib/components/page-component";
-import { getPostLoginRedirect } from "@/modules/auth/server-actions/post-login-redirect.action";
+import { getRedirectTo } from "@/modules/auth/server-actions/redirect-to.action";
 import { get2faCookieData } from "@/modules/auth/server-actions/twofa.action";
 import { ExpiresIn } from "../__components/expiresIn";
 import { TwoFaForm } from "../__components/twoFa-form";
@@ -9,7 +9,7 @@ import { TwoFaForm } from "../__components/twoFa-form";
 export default async function TwoFactorAuth() {
   const [user, redirectTo] = await Promise.all([
     get2faCookieData(),
-    getPostLoginRedirect(),
+    getRedirectTo(),
   ]);
   if (!user?.email) {
     redirect("/auth/login");

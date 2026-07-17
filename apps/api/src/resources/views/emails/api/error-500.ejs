@@ -5,7 +5,8 @@
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="color-scheme" content="dark">
+    <meta name="color-scheme" content="light dark">
+    <meta name="supported-color-schemes" content="light dark">
     <title>Server Error 500</title>
     <!--[if mso]>
     <noscript>
@@ -16,40 +17,79 @@
         </xml>
     </noscript>
     <style type="text/css">
-        body, table, td, a { font-family: Arial, sans-serif !important; }
+        body, table, td, a { font-family: Arial, Helvetica, sans-serif !important; }
+        h1, h2, h3 { font-family: Arial, Helvetica, sans-serif !important; }
         table { border-collapse: collapse !important; }
         table, td { mso-table-lspace:0pt; mso-table-rspace:0pt; }
     </style>
     <![endif]-->
     <style type="text/css">
+        @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=Jost:wght@300;400&display=swap');
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, table, td, th, p, a, span, div {
+            font-family: Jost, Arial, Helvetica, sans-serif;
+        }
+        h1, h2, h3, .brand, .brand span {
+            font-family: Archivo, Arial, Helvetica, sans-serif;
+        }
         body {
             margin: 0; padding: 0; width: 100%;
-            background-color: #1C1B19;
-            font-family: Georgia, 'Times New Roman', Times, serif;
+            background-color: #FAFAF9;
+            color: #000000;
             -webkit-text-size-adjust: 100%;
             -ms-text-size-adjust: 100%;
         }
         img { border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
+
+        .e-bg { background-color: #fafaf9 !important; }
+        .e-card { background-color: #ffffff !important; }
+        .e-subtle { background-color: #efede6 !important; }
+        .e-border { background-color: #e4e1d9 !important; }
+        .e-border-em { border-color: #c9c6bb !important; }
+        .e-text { color: #000000 !important; }
+        .e-text-muted { color: #46443f !important; }
+        .e-error-bg { background-color: #fee2e2 !important; }
+        .e-error-border { border-color: #f3aeb4 !important; }
+        .e-error-line { background-color: #f3aeb4 !important; }
+        .e-error-text { color: #e11d2e !important; }
+
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #1c1b19 !important;
+                color: #ffffff !important;
+            }
+            .e-bg { background-color: #1c1b19 !important; }
+            .e-card { background-color: #242220 !important; }
+            .e-subtle { background-color: #322f2a !important; }
+            .e-border { background-color: #38362f !important; }
+            .e-border-em { border-color: #4a473f !important; }
+            .e-text { color: #ffffff !important; }
+            .e-text-muted { color: #c6c4c0 !important; }
+            .e-error-bg { background-color: #2b0a0a !important; }
+            .e-error-border { border-color: #991b1b !important; }
+            .e-error-line { background-color: #991b1b !important; }
+            .e-error-text { color: #ef4444 !important; }
+        }
     </style>
 </head>
 
-<body style="width:100%; margin:0; padding:0; background-color:#1C1B19;">
-    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color:#1C1B19;">
+<body class="e-bg" style="width:100%; margin:0; padding:0; background-color:#FAFAF9;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" class="e-bg" style="background-color:#FAFAF9;">
         <tr>
             <td align="center" style="padding:20px 0;">
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600"
-                    style="max-width:600px; width:100%; background-color:#242220;">
+                    class="e-bg" style="max-width:600px; width:100%; background-color:#FAFAF9;">
 
                     <!-- Header -->
                     <tr>
-                        <td style="padding:32px 0; text-align:center; background-color:#322F2A;">
-                            <p style="margin:0; font-family:Arial, Helvetica, sans-serif; font-size:11px; letter-spacing:3px; text-transform:uppercase; color:#ef4444;">
+                        <td class="e-subtle" style="padding:32px 0; text-align:center; background-color:#EFEDE6;">
+                            <p class="e-error-text" style="margin:0; font-size:11px; letter-spacing:3px; text-transform:uppercase; color:#E11D2E;">
                                 ERROR ALERT
                             </p>
                             <table role="presentation" width="40" cellpadding="0" cellspacing="0" border="0" style="margin:14px auto 0 auto;">
                                 <tr>
-                                    <td style="height:1px; background-color:#991b1b; font-size:1px; line-height:1px;">&nbsp;</td>
+                                    <td class="e-error-line" style="height:1px; background-color:#F3AEB4; font-size:1px; line-height:1px;">&nbsp;</td>
                                 </tr>
                             </table>
                         </td>
@@ -58,10 +98,10 @@
                     <!-- Title -->
                     <tr>
                         <td style="padding:36px 40px 24px 40px; text-align:center;">
-                            <h1 style="font-family:Georgia, 'Times New Roman', Times, serif; font-size:28px; font-weight:normal; color:#F0EEE9; margin:0 0 8px 0; letter-spacing:1px;">
+                            <h1 class="e-text" style="font-size:28px; font-weight:normal; color:#000000; margin:0 0 8px 0; letter-spacing:1px;">
                                 HTTP 500
                             </h1>
-                            <p style="font-family:Georgia, 'Times New Roman', Times, serif; font-size:14px; color:#A8A59B; margin:0;">
+                            <p class="e-text-muted" style="font-size:14px; color:#46443F; margin:0;">
                                 Internal Server Error
                             </p>
                         </td>
@@ -71,13 +111,13 @@
                     <tr>
                         <td style="padding:0 40px 24px 40px;">
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-                                style="background-color:#2B0A0A; border:1px solid #991b1b;">
+                                class="e-error-bg e-error-border" style="border:1.5px solid #F3AEB4; background-color:#FEE2E2;">
                                 <tr>
-                                    <td style="padding:20px 24px;">
-                                        <p style="font-family:Arial, Helvetica, sans-serif; font-size:11px; color:#ef4444; letter-spacing:1px; text-transform:uppercase; margin:0 0 8px 0;">
+                                    <td style="padding:24px 12px;">
+                                        <p class="e-error-text" style="font-size:11px; color:#E11D2E; letter-spacing:1px; text-transform:uppercase; margin:0 0 8px 0;">
                                             MESSAGE
                                         </p>
-                                        <p style="font-family:'Courier New', Courier, monospace; font-size:13px; color:#ef4444; margin:0; line-height:1.6;">
+                                        <p class="e-error-text" style="font-family:'Courier New', Courier, monospace; font-size:13px; color:#E11D2E; margin:0; line-height:1.6;">
                                             <%= message %>
                                         </p>
                                     </td>
@@ -90,10 +130,10 @@
                     <tr>
                         <td style="padding:0 40px 32px 40px;">
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-                                style="background-color:#322F2A; border:1px solid #38362F;">
+                                class="e-card e-border-em" style="border:1.5px solid #C9C6BB; background-color:#FFFFFF;">
                                 <tr>
-                                    <td style="padding:20px 24px 12px 24px;">
-                                        <p style="font-family:Arial, Helvetica, sans-serif; font-size:11px; color:#A8A59B; letter-spacing:1px; text-transform:uppercase; margin:0 0 12px 0;">
+                                    <td style="padding:24px 12px 12px 12px;">
+                                        <p class="e-text-muted" style="font-size:11px; color:#46443F; letter-spacing:1px; text-transform:uppercase; margin:0 0 12px 0;">
                                             DETAILS
                                         </p>
                                     </td>
@@ -102,9 +142,18 @@
                                 <% if (options && options !== 'No additional details available') { %>
                                     <% if (Array.isArray(options)) { %>
                                         <% options.forEach(function(option, index) { %>
+                                        <% if (index > 0) { %>
                                         <tr>
-                                            <td style="padding:0 24px 12px 24px;<%= index > 0 ? ' border-top:1px solid #38362F; padding-top:12px;' : '' %>">
-                                                <p style="font-family:'Courier New', Courier, monospace; font-size:12px; color:#A8A59B; margin:0; line-height:1.5;">
+                                            <td style="padding:0;">
+                                                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                                                    <tr><td class="e-border" style="height:1px; background-color:#E4E1D9; font-size:1px; line-height:1px;">&nbsp;</td></tr>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                        <% } %>
+                                        <tr>
+                                            <td style="padding:24px 12px;">
+                                                <p class="e-text-muted" style="font-family:'Courier New', Courier, monospace; font-size:12px; color:#46443F; margin:0; line-height:1.5;">
                                                     <%= option %>
                                                 </p>
                                             </td>
@@ -112,8 +161,8 @@
                                         <% }); %>
                                     <% } else { %>
                                         <tr>
-                                            <td style="padding:0 24px 20px 24px;">
-                                                <p style="font-family:'Courier New', Courier, monospace; font-size:12px; color:#A8A59B; margin:0; line-height:1.5;">
+                                            <td style="padding:0 12px 24px 12px;">
+                                                <p class="e-text-muted" style="font-family:'Courier New', Courier, monospace; font-size:12px; color:#46443F; margin:0; line-height:1.5;">
                                                     <%= options %>
                                                 </p>
                                             </td>
@@ -121,8 +170,8 @@
                                     <% } %>
                                 <% } else { %>
                                     <tr>
-                                        <td style="padding:0 24px 20px 24px;">
-                                            <p style="font-family:'Courier New', Courier, monospace; font-size:12px; color:#A8A59B; margin:0; font-style:italic;">
+                                        <td style="padding:0 12px 24px 12px;">
+                                            <p class="e-text-muted" style="font-family:'Courier New', Courier, monospace; font-size:12px; color:#46443F; margin:0; font-style:italic;">
                                                 No additional details available
                                             </p>
                                         </td>
@@ -137,17 +186,17 @@
                         <td style="padding:0 40px;">
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                                 <tr>
-                                    <td style="height:1px; background-color:#38362F; font-size:1px; line-height:1px;">&nbsp;</td>
+                                    <td class="e-border" style="height:1px; background-color:#E4E1D9; font-size:1px; line-height:1px;">&nbsp;</td>
                                 </tr>
                             </table>
                         </td>
                     </tr>
                     <tr>
                         <td style="padding:20px 40px 28px 40px; text-align:center;">
-                            <p style="font-family:Arial, Helvetica, sans-serif; font-size:11px; color:#A8A59B; margin:0 0 4px 0;">
+                            <p class="e-text-muted" style="font-size:11px; color:#46443F; margin:0 0 4px 0;">
                                 Automated error notification from the application server.
                             </p>
-                            <p style="font-family:Arial, Helvetica, sans-serif; font-size:11px; color:#A8A59B; margin:0;">
+                            <p class="e-text-muted" style="font-size:11px; color:#46443F; margin:0;">
                                 Please investigate and resolve this issue promptly.
                             </p>
                         </td>

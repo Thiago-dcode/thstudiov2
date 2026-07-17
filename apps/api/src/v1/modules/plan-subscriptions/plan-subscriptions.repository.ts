@@ -27,6 +27,7 @@ export class PlanSubscriptionsRepository extends BaseRepository {
     'plan_subscriptions.user_id',
     'plan_subscriptions.plan_price_id',
     'plan_subscriptions.plan_offer_id',
+    'plan_subscriptions.prev_subscription_id',
     'plan_subscriptions.is_active',
     'plan_subscriptions.is_trialing',
     'plan_subscriptions.cancel_at',
@@ -78,6 +79,7 @@ export class PlanSubscriptionsRepository extends BaseRepository {
       user_id: result.user_id,
       plan_price_id: result.plan_price_id,
       plan_offer_id: result.plan_offer_id,
+      prev_subscription_id: result.prev_subscription_id,
       is_active: result.is_active,
       is_trialing: result.is_trialing,
       cancel_at: result.cancel_at,
@@ -121,6 +123,15 @@ export class PlanSubscriptionsRepository extends BaseRepository {
   async findOneByColumn(colName: string, value: SqlValue) {
     return this.query()
       .where(colName, '=', value)
+      .first<PlanSubscriptionSchema | null>();
+  }
+
+  async findLatestSubscription(
+    userId: number,
+  ): Promise<PlanSubscriptionSchema | null> {
+    return this.query()
+      .where('user_id', '=', userId)
+      .orderBy('id', 'DESC')
       .first<PlanSubscriptionSchema | null>();
   }
 

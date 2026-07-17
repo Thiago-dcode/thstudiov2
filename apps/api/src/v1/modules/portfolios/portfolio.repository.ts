@@ -22,7 +22,47 @@ import { DbException } from '@repo/database/exceptions';
 import { RequestService } from 'src/common/services/request.service';
 import { MediaPortfolio } from '@repo/common-lib/types/media';
 import { CategoryBase } from '@repo/common-lib/types/category';
-import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
+import {
+  ColumBaseLayoutConfig,
+  PortfolioLayout,
+} from '@repo/common-lib/types/layout';
+import { EnumType, TABLES_ENUM } from '@repo/common-lib/constants/enums';
+import { MIN_COLUMN_BASE_COLUMNS } from '@repo/common-lib/constants/constants';
+
+export function formatPortfolioLayout(
+  row: Pick<PortfolioFullSchema, 'layout_id' | 'layout_name' | 'config'>,
+): PortfolioLayout | undefined {
+  if (!row.layout_id || !row.layout_name) {
+    return undefined;
+  }
+
+  const parsedConfig =
+    typeof row.config === 'string'
+      ? (JSON.parse(row.config) as Record<string, unknown> | null)
+      : row.config;
+
+  switch (row.layout_name as EnumType<'LAYOUT_TYPE'>) {
+    case 'MASONRY':
+      return { name: 'MASONRY', config: null };
+    case 'UNIFORM':
+      return { name: 'UNIFORM', config: null };
+    case 'COLUMN_BASE': {
+      const columns =
+        parsedConfig &&
+        typeof parsedConfig === 'object' &&
+        typeof (parsedConfig as { columns?: unknown }).columns === 'number'
+          ? (parsedConfig as { columns: number }).columns
+          : MIN_COLUMN_BASE_COLUMNS;
+
+      return {
+        name: 'COLUMN_BASE',
+        config: { columns } satisfies ColumBaseLayoutConfig,
+      };
+    }
+    default:
+      return undefined;
+  }
+}
 
 @Injectable()
 export class PortfolioRepository extends BaseRepository {
@@ -68,6 +108,11 @@ export class PortfolioRepository extends BaseRepository {
     'media.is_active as m_is_active',
     'categories.id as c_id',
     'categories.slug as c_slug',
+    'categories.is_featured as c_is_featured',
+    'categories.is_active as c_is_active',
+    'layout_config.layout_id',
+    'layout_config.config',
+    'layouts.name as layout_name',
   ];
 
   constructor(private readonly requestService: RequestService, protected readonly logService: LogService) {
@@ -129,6 +174,8 @@ export class PortfolioRepository extends BaseRepository {
         'LEFT',
         `AND category_translations.language_code = '${lang}'`,
       )
+      .join('portfolios.id', TABLES_ENUM.LAYOUT_CONFIG, 'portfolio_id', 'LEFT')
+      .join('layout_config.layout_id', TABLES_ENUM.LAYOUTS, 'id', 'LEFT')
       .where('media.thumbnail', 'IS NOT', null)
       .where('media.blocked_at', null);
   }
@@ -170,6 +217,7 @@ export class PortfolioRepository extends BaseRepository {
          categories.tags,
          categories.thumbnail,
          categories.is_featured,
+         categories.is_active,
          categories.parent_id,
          COALESCE(category_translations.name, categories.name) AS name,
          categories.slug`,
@@ -189,6 +237,7 @@ export class PortfolioRepository extends BaseRepository {
         tags: string | null;
         thumbnail: string | null;
         is_featured: boolean;
+        is_active: boolean;
         parent_id: number | null;
         name: string;
         slug: string;
@@ -202,10 +251,12 @@ export class PortfolioRepository extends BaseRepository {
       thumbnail: row.thumbnail,
       parent_id: row.parent_id,
       is_featured: row.is_featured,
+      is_active: row.is_active,
     }));
   }
 
-  async create({ media, collections, categories, ...portfolioData }: CreatePortfolioInput): Promise<Portfolio> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async create({ media, collections, categories, layout: _layout, ...portfolioData }: CreatePortfolioInput): Promise<Portfolio> {
     const cols = Object.keys(portfolioData);
     const values = Object.values(portfolioData);
 
@@ -224,8 +275,8 @@ export class PortfolioRepository extends BaseRepository {
 
     return this.formatPortfolio(await this.getOneWithArtist(portfolioResult.id));
   }
-
-  async updateById(id: number, { media, collections, categories, ...portfolioData }: UpdatePortfolioInput): Promise<Portfolio> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async updateById(id: number, { media, collections, categories, layout: _layout, ...portfolioData }: UpdatePortfolioInput): Promise<Portfolio> {
     const cols = Object.keys(portfolioData);
     const values = Object.values(portfolioData) as string[];
 
@@ -479,7 +530,8 @@ export class PortfolioRepository extends BaseRepository {
           tags: [],
           thumbnail: null,
           parent_id: null,
-          is_featured: false,
+          is_featured: row.c_is_featured ?? false,
+          is_active: row.c_is_active ?? true,
         });
       }
     }
@@ -503,6 +555,7 @@ export class PortfolioRepository extends BaseRepository {
       media: Array.from(mediaMap.values()),
       collections: [],
       categories: Array.from(categoriesMap.values()),
+      layout: formatPortfolioLayout(first),
     };
   }
 }

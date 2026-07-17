@@ -25,8 +25,8 @@ export const PASSWORD_UPDATED_COOKIE_NAME = 'x-app-password-updated' as const;
 // ==================== SUBSCRIPTION COOKIES ====================
 export const INITIATE_SUBCRIPTION_COOKIE = 'x-app-initiate_subscription' as const;
 
-// ==================== POST-LOGIN REDIRECT COOKIE ====================
-export const POST_LOGIN_REDIRECT_COOKIE_NAME = 'x-app-post-login-redirect' as const;
+// ==================== REDIRECT-TO COOKIE ====================
+export const REDIRECT_TO_COOKIE_NAME = 'x-app-redirect-to' as const;
 
 // ==================== APP CONFIGURATION ====================
 export const FUNNEL_LAST_STEP = 5;
@@ -37,6 +37,8 @@ export const MAX_PASSWORD_RESET = 3;
 export const MAX_COLLECTION_ITEMS =30;
 export const MAX_PORTFOLIO_ITEMS=100;
 export const MAX_CATEGORIES_PORTFOLIO = 3;
+export const MIN_COLUMN_BASE_COLUMNS = 1;
+export const MAX_COLUMN_BASE_COLUMNS = 12;
 
 // Ban duration in days based on ban_count. null = permanent ban.
 export const BAN_DURATION_DAYS: Record<number, number | null> = {
@@ -120,6 +122,11 @@ export const CACHE_KEY_USERNAME_EXISTS = (username: string) => `username_exists_
 export const CACHE_KEY_ROLES_ALL = 'roles_all' as const;
 export const CACHE_KEY_ROLE_BY_NAME = (name: string) =>
   `role_name_${name}` as const;
+
+// Layouts
+export const CACHE_KEY_LAYOUTS_ALL = 'layouts_all' as const;
+export const CACHE_KEY_LAYOUT_BY_NAME = (name: string) =>
+  `layout_name_${name}` as const;
 
 // ==================== ASSETS ====================
 /** S3 signed URL expiration for assets in seconds (24 hours). */

@@ -18,6 +18,7 @@ import { AiService } from "../ai/ai.service";
 import { MediaModerationException } from "src/common/exceptions/media-moderation-exception";
 import { ApiException } from "src/common/exceptions/api-exception";
 import { Query } from "@repo/database/facades";
+import { LayoutService } from "../layouts/layout.service";
 
 const CACHE_TTL = 1000 * 60 * 60 * 24;
 
@@ -37,6 +38,7 @@ export class PortfolioService {
     private readonly eventEmitter: EventEmitter2,
     private readonly helpers: Helpers,
     private readonly aiService: AiService,
+    private readonly layoutService: LayoutService,
   ) { }
 
   async findAll(data: IndexPortfolioRequest) {
@@ -150,6 +152,12 @@ export class PortfolioService {
     await this.userExtraDataService.enforceUserLimits(request.user_id, {
       portfolios_count: 1,
     });
+
+    const resolvedLayout = await this.layoutService.resolveLayoutConfig(
+      request.layout?.layout_id,
+      request.layout?.config,
+    );
+
     let thumbnailPath = undefined;
     if (request.thumbnail) {
       thumbnailPath = `users/${this.requestService.user.public_id}/portfolio/${request.slug}/thumbnail.webp`;
@@ -175,11 +183,22 @@ export class PortfolioService {
     }
 
     const portfolio = await this.portfolioRepository.create({
-      ...request,
+      title: request.title,
+      slug: request.slug,
+      description: request.description,
+      user_id: request.user_id,
+      media: request.media,
+      collections: request.collections,
+      categories: request.categories,
       thumbnail: thumbnailPath,
       is_highlight: request.is_highlight ?? false,
       is_active: request.is_active ?? true,
     });
+    await this.layoutService.persistConfig(
+      resolvedLayout.layout,
+      portfolio.id,
+      resolvedLayout.config,
+    );
     await this.invalidateHighlightCountCache(request.user_id);
     this.eventEmitter.emit(UPDATE_USER_EXTRA_DATA_METRICS, new UpdateUserExtraDataMetricsEvent(request.user_id));
     return portfolio;
@@ -220,6 +239,13 @@ export class PortfolioService {
       }
     }
 
+    const resolvedLayout = request.layout
+      ? await this.layoutService.resolveLayoutConfig(
+          request.layout.layout_id,
+          request.layout.config,
+        )
+      : null;
+
     // Handle thumbnail upload if a new one is provided
     let thumbnailPath: string | undefined;
     if (request.thumbnail) {
@@ -252,15 +278,25 @@ export class PortfolioService {
       }
     }
 
-    const { thumbnail, media, collections, categories, ...rest } = request;
-
     const updated = await this.portfolioRepository.updateById(id, {
-      ...rest,
+      title: request.title,
+      slug: request.slug,
+      description: request.description,
+      is_highlight: request.is_highlight,
+      is_active: request.is_active,
       ...(thumbnailPath ? { thumbnail: thumbnailPath } : {}),
-      media: media ?? [],
-      collections: collections ?? [],
-      categories,
+      media: request.media ?? [],
+      collections: request.collections ?? [],
+      categories: request.categories,
     });
+
+    if (resolvedLayout) {
+      await this.layoutService.persistConfig(
+        resolvedLayout.layout,
+        id,
+        resolvedLayout.config,
+      );
+    }
 
     await this.invalidateHighlightCountCache(portfolio.user_id);
 

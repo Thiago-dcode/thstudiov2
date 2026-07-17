@@ -14,6 +14,7 @@ export const getAllCategoriesAction = async (
   const result = await categoriesService.getAll({
     page: 1,
     paginated: true,
+    is_active: true,
     ...params,
   });
 

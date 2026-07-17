@@ -1,8 +1,8 @@
 "use client";
 import {
-  type AllowedPostLoginRedirect,
-  normalizePostLoginRedirect,
-} from "@repo/common-lib/constants/post-login-redirects";
+  resolveRedirectToTarget,
+  type RedirectToKey,
+} from "@repo/common-lib/constants/redirect-to";
 import { Errors } from "@repo/ui/components/custom/errors";
 import { Input } from "@repo/ui/components/shadcn/input";
 import { useRouter } from "next/navigation";
@@ -10,7 +10,7 @@ import { useRef, useState } from "react";
 import FormComponent from "@/lib/components/form-component";
 import type { TwoFaUser } from "@/modules/auth/auth.types";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
-import { deletePostLoginRedirect } from "@/modules/auth/server-actions/post-login-redirect.action";
+import { deleteRedirectTo } from "@/modules/auth/server-actions/redirect-to.action";
 import { verify2faServerAction } from "@/modules/auth/server-actions/twofa.action";
 
 export const TwoFaForm = ({
@@ -18,7 +18,7 @@ export const TwoFaForm = ({
   redirectTo,
 }: {
   user: TwoFaUser;
-  redirectTo: AllowedPostLoginRedirect | null;
+  redirectTo: RedirectToKey | null;
 }) => {
   const route = useRouter();
   const formRef = useRef<HTMLFormElement | null>(null);
@@ -30,9 +30,9 @@ export const TwoFaForm = ({
       }
       const fallback = user.is_new ? "/get-started" : "/atelier";
       const destination = redirectTo
-        ? normalizePostLoginRedirect(redirectTo)
+        ? resolveRedirectToTarget(redirectTo)
         : null;
-      await deletePostLoginRedirect();
+      await deleteRedirectTo();
       route.push(destination ? `/${destination}` : fallback);
     },
   });

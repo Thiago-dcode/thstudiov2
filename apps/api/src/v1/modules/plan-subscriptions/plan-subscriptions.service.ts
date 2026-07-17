@@ -195,6 +195,10 @@ export class PlanSubscriptionsService {
       ttl: 1000 * 60 * 60 * 24,
     });
   }
+
+  async findLatestSubscription(userId: number) {
+    return this.planSubscriptionsRepository.findLatestSubscription(userId);
+  }
   async handleStripeSubscription({
     currentUserSubscription,
     newPlanPrice,
@@ -472,6 +476,8 @@ export class PlanSubscriptionsService {
       throw new HttpException('Lifetime price not found', 500);
     }
 
+    const latestSubscription =
+      await this.planSubscriptionsRepository.findLatestSubscription(userId);
     await this.desactivateAllUserSubscriptions(userId);
 
     const subscription = await this.create({
@@ -490,6 +496,7 @@ export class PlanSubscriptionsService {
       cancel_at: null,
       paypal_id: null,
       plan_offer_id: null,
+      prev_subscription_id: latestSubscription?.id ?? null,
       plan_price_id: lifetimePrice.id,
     });
     this.logger.info('Free subscription successfully set for user', { userId, subscriptionId: subscription.id, planPriceId: lifetimePrice.id });

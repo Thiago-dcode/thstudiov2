@@ -135,6 +135,7 @@ export type UserProfileRow = {
   c_slug?: string | null;
   tags?: string | null;
   parent_id?: number | null;
+  c_is_active?: boolean | null;
 };
 
 const tablesUserProfile = [

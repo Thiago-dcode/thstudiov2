@@ -15,7 +15,7 @@ import {
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { FileInputProvider } from "@repo/ui/contexts/file.provider";
 import { cn } from "@repo/ui/lib/utils";
-import { Brain, Upload } from "lucide-react";
+import { Brain, ImageOff, Upload } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useMedia } from "@/modules/media/providers/media.provider";
 import {
@@ -29,9 +29,14 @@ import { EditMediaCard } from "./edit-media-card";
 type MediaGridProps = {
   media: Media[];
   username: string;
+  hasActiveFilters: boolean;
 };
 
-export function MediaGrid({ media, username }: MediaGridProps) {
+export function MediaGrid({
+  media,
+  username,
+  hasActiveFilters,
+}: MediaGridProps) {
   const [currentMedia, setCurrentMedia] = useState(media);
   const {
     mediaPendingToUpdate,
@@ -94,7 +99,7 @@ export function MediaGrid({ media, username }: MediaGridProps) {
             />
           </FileInputProvider>
         </div>
-        {currentMedia.length > 0 && (
+        {currentMedia.length > 0 ? (
           <div
             className={cn(
               "flex flex-wrap items-center gap-2  top-0  bg-bg py-1 w-full",
@@ -218,6 +223,15 @@ export function MediaGrid({ media, username }: MediaGridProps) {
                 Cancel selection
               </Button>
             ) : null}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-24 text-text-muted gap-3">
+            <ImageOff className="h-10 w-10 stroke-[1.5]" />
+            <p className="text-sm">
+              {hasActiveFilters
+                ? "No media found, try other filter combination"
+                : "No media uploaded yet. Start by adding your first image."}
+            </p>
           </div>
         )}
 

@@ -193,6 +193,9 @@ export class WebhookProcessor extends GlobalProcessor {
       );
       this.logger.debug(`Updated subscription`, internalSubscription);
     } else {
+      const latestSub =
+        await this.planSubscriptionService.findLatestSubscription(user.id);
+
       internalSubscription = await this.planSubscriptionService.create({
         payment_method: 'CARD',
         plan_price_id: planPrice.id,
@@ -208,6 +211,7 @@ export class WebhookProcessor extends GlobalProcessor {
         user_id: user.id,
         paypal_id: null,
         plan_offer_id: null,
+        prev_subscription_id: latestSub?.id ?? null,
       });
       this.logger.debug(`created subscription`, internalSubscription);
       const benefitIdRaw = subscription.metadata?.benefit_id;
@@ -266,6 +270,13 @@ export class WebhookProcessor extends GlobalProcessor {
       ]);
     }
 
+    // _internalSubscription is the plan the user was on before this webhook event (or null if brand new).
+    const subscriptionChangeJobPayload = {
+      ...user,
+      prevPlanName: _internalSubscription?.plan_price?.plan?.name ?? null,
+      prevPlanBasePrice: _internalSubscription?.plan_price?.plan?.base_price ?? null,
+    };
+
     await Promise.all([
       this.helpers.deleteManyCached([
         CACHE_KEY_ACTIVE_SUBSCRIPTION(user.id),
@@ -273,7 +284,7 @@ export class WebhookProcessor extends GlobalProcessor {
       ]),
       this.subscriptionQueue.add(
         JOB_ON_SUBSCRIPTION_CHANGES,
-        user,
+        subscriptionChangeJobPayload,
         {
           jobId: `plan-subscription-${internalSubscription.user_id}-${Date.now()}`,
           priority: 10,
@@ -300,9 +311,14 @@ export class WebhookProcessor extends GlobalProcessor {
       this.logger.debug(`Setting free plan to user`, {
         freeSubscription,
       });
+      const subscriptionChangeJobPayload = {
+        ...user,
+        prevPlanName: internalSubscription.plan_price.plan.name,
+        prevPlanBasePrice: internalSubscription.plan_price.plan.base_price,
+      };
       await this.subscriptionQueue.add(
         JOB_ON_SUBSCRIPTION_CHANGES,
-        user,
+        subscriptionChangeJobPayload,
         {
           jobId: `plan-subscription-${internalSubscription.user_id}-${Date.now()}`,
           priority: 10,

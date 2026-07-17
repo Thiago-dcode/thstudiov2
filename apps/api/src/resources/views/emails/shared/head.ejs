@@ -1,58 +1,170 @@
 <!DOCTYPE html>
 <html>
-
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="x-ua-compatible" content="ie=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="x-apple-disable-message-reformatting" content="yes">
-    <meta name="color-scheme" content="dark">
-    <meta name="supported-color-schemes" content="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="x-ua-compatible" content="ie=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="x-apple-disable-message-reformatting" content="yes" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="supported-color-schemes" content="light dark" />
     <title><%= globals.appName %></title>
     <style>
-        :root { color-scheme: dark; supported-color-schemes: dark; }
+      /*
+         * Fonts match apps/web/src/font.ts:
+         *   brand → Archivo (headings / wordmark)
+         *   body  → Jost (default copy)
+         */
+      @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=Jost:wght@300;400&display=swap');
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+      /*
+         * Email brand palette — mirrors packages/ui/src/styles/globals.css.
+         * Light values are the default (inline + base CSS). Dark overrides via
+         * @media (prefers-color-scheme: dark) on .e-* utility classes.
+         *
+         *   .e-bg           #FAFAF9 → #1C1B19   page background
+         *   .e-card         #FFFFFF → #242220   card surface
+         *   .e-subtle       #EFEDE6 → #322F2A   chip / callout fill
+         *   .e-border       #E4E1D9 → #38362F   divider
+         *   .e-border-em    #C9C6BB → #4A473F   emphasized border
+         *   .e-text         #000000 → #FFFFFF   primary text
+         *   .e-text-muted   #46443F → #C6C4C0   secondary text
+         *   .e-accent       #ED2100 (both modes)
+         *   .e-error-bg     #FEE2E2 → #2B0A0A
+         *   .e-error-border #F3AEB4 → #991B1B
+         *   .e-error-text   #E11D2E → #EF4444
+         */
+      :root {
+        color-scheme: light dark;
+        supported-color-schemes: light dark;
+      }
 
-        table { border-collapse: separate; }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-        img {
-            border: 0; height: auto; line-height: 100%;
-            outline: none; text-decoration: none;
-            -ms-interpolation-mode: bicubic;
-        }
+      table {
+        border-collapse: separate;
+      }
 
-        a[x-apple-data-detectors] {
-            color: inherit !important;
-            text-decoration: none !important;
-        }
+      img {
+        border: 0;
+        height: auto;
+        line-height: 100%;
+        outline: none;
+        text-decoration: none;
+        -ms-interpolation-mode: bicubic;
+      }
 
-        .ExternalClass { width: 100%; }
-        .ExternalClass,
-        .ExternalClass p,
-        .ExternalClass span,
-        .ExternalClass font,
-        .ExternalClass td,
-        .ExternalClass div { line-height: 100%; }
+      a[x-apple-data-detectors] {
+        color: inherit !important;
+        text-decoration: none !important;
+      }
 
+      .ExternalClass {
+        width: 100%;
+      }
+      .ExternalClass,
+      .ExternalClass p,
+      .ExternalClass span,
+      .ExternalClass font,
+      .ExternalClass td,
+      .ExternalClass div {
+        line-height: 100%;
+      }
+
+      body,
+      table,
+      td,
+      th,
+      p,
+      a,
+      span,
+      div {
+        font-family: Jost, Arial, Helvetica, sans-serif;
+      }
+
+      h1,
+      h2,
+      h3,
+      .brand,
+      .brand span {
+        font-family: Archivo, Arial, Helvetica, sans-serif;
+      }
+
+      body {
+        font-size: 16px;
+        margin: 0;
+        padding: 0;
+        background-color: #fafaf9;
+        color: #000000;
+        width: 100%;
+        -webkit-text-size-adjust: 100%;
+        -ms-text-size-adjust: 100%;
+      }
+
+      a {
+        color: #ed2100;
+      }
+
+      /* Light-mode defaults (fallback for clients without prefers-color-scheme) */
+      .e-bg { background-color: #fafaf9 !important; }
+      .e-card { background-color: #ffffff !important; }
+      .e-subtle { background-color: #efede6 !important; }
+      .e-border { background-color: #e4e1d9 !important; }
+      .e-border-em { border-color: #c9c6bb !important; }
+      .e-text { color: #000000 !important; }
+      .e-text-muted { color: #46443f !important; }
+      .e-accent { color: #ed2100 !important; }
+      .e-accent-bg { background-color: #ed2100 !important; }
+      .e-error-bg { background-color: #fee2e2 !important; }
+      .e-error-border { border-color: #f3aeb4 !important; }
+      .e-error-line { background-color: #f3aeb4 !important; }
+      .e-error-text { color: #e11d2e !important; }
+
+      @media (prefers-color-scheme: dark) {
         body {
-            font-family: Georgia, 'Times New Roman', Times, serif;
-            margin: 0;
-            padding: 0;
-            background-color: #1C1B19;
-            color: #F0EEE9;
-            width: 100%;
-            -webkit-text-size-adjust: 100%;
-            -ms-text-size-adjust: 100%;
+          background-color: #1c1b19 !important;
+          color: #ffffff !important;
         }
-
-        a { color: #FF4D3A; }
+        .e-bg { background-color: #1c1b19 !important; }
+        .e-card { background-color: #242220 !important; }
+        .e-subtle { background-color: #322f2a !important; }
+        .e-border { background-color: #38362f !important; }
+        .e-border-em { border-color: #4a473f !important; }
+        .e-text { color: #ffffff !important; }
+        .e-text-muted { color: #c6c4c0 !important; }
+        .e-accent { color: #ed2100 !important; }
+        .e-accent-bg { background-color: #ed2100 !important; }
+        .e-error-bg { background-color: #2b0a0a !important; }
+        .e-error-border { border-color: #991b1b !important; }
+        .e-error-line { background-color: #991b1b !important; }
+        .e-error-text { color: #ef4444 !important; }
+      }
     </style>
     <!--[if mso]>
-    <style type="text/css">
-        body, table, td, a { font-family: Georgia, Times New Roman, Times, serif !important; }
-        table { border-collapse: collapse !important; }
-        table, td { mso-table-lspace:0pt; mso-table-rspace:0pt; }
-    </style>
+      <style type="text/css">
+        body,
+        table,
+        td,
+        a {
+          font-family: Arial, Helvetica, sans-serif !important;
+        }
+        h1,
+        h2,
+        h3 {
+          font-family: Arial, Helvetica, sans-serif !important;
+        }
+        table {
+          border-collapse: collapse !important;
+        }
+        table,
+        td {
+          mso-table-lspace: 0pt;
+          mso-table-rspace: 0pt;
+        }
+      </style>
     <![endif]-->
-</head>
+  </head>
+</html>

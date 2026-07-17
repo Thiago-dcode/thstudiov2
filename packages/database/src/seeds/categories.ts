@@ -221,7 +221,6 @@ export const main = async () => {
                 { name: 'Automotive Photography', tags: ['automotive', 'car', 'vehicle', 'automobile', 'motor', 'racing'], translations: [{ code: 'EN', name: 'Automotive Photography' }, { code: 'ES', name: 'Fotografía Automotriz' }, { code: 'PT', name: 'Fotografia Automotiva' }] },
                 { name: 'Real Estate Photography', tags: ['real-estate', 'property', 'home', 'house', 'interior', 'listing'], translations: [{ code: 'EN', name: 'Real Estate Photography' }, { code: 'ES', name: 'Fotografía Inmobiliaria' }, { code: 'PT', name: 'Fotografia Imobiliária' }] },
                 { name: 'Lifestyle Photography', tags: ['lifestyle', 'candid', 'natural', 'everyday', 'authentic', 'casual'], translations: [{ code: 'EN', name: 'Lifestyle Photography' }, { code: 'ES', name: 'Fotografía de Estilo de Vida' }, { code: 'PT', name: 'Fotografia Lifestyle' }] },
-                { name: 'Boudoir Photography', tags: ['boudoir', 'intimate', 'sensual', 'bedroom', 'glamorous', 'personal'], translations: [{ code: 'EN', name: 'Boudoir Photography' }, { code: 'ES', name: 'Fotografía Boudoir' }, { code: 'PT', name: 'Fotografia Boudoir' }] },
                 { name: 'Corporate Photography', tags: ['corporate', 'business', 'professional', 'office', 'team', 'executive'], translations: [{ code: 'EN', name: 'Corporate Photography' }, { code: 'ES', name: 'Fotografía Corporativa' }, { code: 'PT', name: 'Fotografia Corporativa' }] },
                 { name: 'Family Photography', tags: ['family', 'children', 'kids', 'parents', 'generations', 'portraits'], translations: [{ code: 'EN', name: 'Family Photography' }, { code: 'ES', name: 'Fotografía Familiar' }, { code: 'PT', name: 'Fotografia de Família' }] }
             ]
@@ -528,7 +527,11 @@ export const main = async () => {
       ? FactoryStorageService.create(buildS3Config())
       : null;
 
-    const createCategories = async (category: SeedCategory, parentId?: number) => {
+    const createCategories = async (
+        category: SeedCategory,
+        parentId?: number,
+        isActive = false,
+    ) => {
         const slug = allocateCategorySlug(category.name);
         let thumbnail: string | null = null;
         const sourcePath = findCategorySourceImageFile(category.name);
@@ -548,13 +551,14 @@ export const main = async () => {
         }
         const isFeatured = thumbnail != null;
 
-        const columns = ['name', 'slug', 'tags', 'thumbnail', 'is_featured'];
+        const columns = ['name', 'slug', 'tags', 'thumbnail', 'is_featured', 'is_active'];
         const values: unknown[] = [
           category.name,
           slug,
           category.tags.join(','),
           thumbnail,
           isFeatured,
+          isActive,
         ];
 
         if (parentId !== undefined) {
@@ -566,7 +570,7 @@ export const main = async () => {
             await Query.table('category_translations').insertAndGet(['name', 'language_code', 'category_id'], [child.name, child.code, parentCategory.id], 'id');
         }));
         if (category.children) {
-            await Promise.all(category.children.map(child => createCategories(child, parentCategory.id)))
+            await Promise.all(category.children.map(child => createCategories(child, parentCategory.id, isActive)))
         }
     }
 
@@ -576,6 +580,6 @@ export const main = async () => {
 
     // Insert categories sequentially to avoid any potential issues with parallel inserts
     for (const category of categories) {
-        await createCategories(category);
+        await createCategories(category, undefined, category.name === 'Photography');
     }
 };

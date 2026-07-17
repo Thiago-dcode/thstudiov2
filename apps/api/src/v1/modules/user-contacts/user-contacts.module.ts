@@ -37,6 +37,6 @@ import { EmailPreferencesModule } from '../email-preferences/email-preferences.m
       inject: [getQueueToken(LOG_QUEUE)],
     },
   ],
-  exports: [UserContactsService],
+  exports: [UserContactsService, NewContactMail],
 })
 export class UserContactsModule {}

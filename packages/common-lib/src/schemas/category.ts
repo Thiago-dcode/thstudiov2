@@ -6,6 +6,7 @@ export type CategorySchema = {
   tags: string;
   thumbnail?: string | null;
   is_featured: boolean;
+  is_active: boolean;
   name: string;
   slug: string;
   parent_id?: number | null;

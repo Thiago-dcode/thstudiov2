@@ -1,13 +1,13 @@
 import Link from "next/link";
 import authComponent from "@/lib/components/page-component";
-import { getPostLoginRedirect } from "@/modules/auth/server-actions/post-login-redirect.action";
+import { getRedirectTo } from "@/modules/auth/server-actions/redirect-to.action";
 import { getRememberMe } from "@/modules/auth/server-actions/user-session.action";
 import { LoginForm } from "../__components/login-form";
 
 export default async function Login() {
   const [rememberMe, redirectTo] = await Promise.all([
     getRememberMe(),
-    getPostLoginRedirect(),
+    getRedirectTo(),
   ]);
   return (
     <authComponent.Container>

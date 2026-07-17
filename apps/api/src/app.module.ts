@@ -55,6 +55,7 @@ import { WaitListModule } from './v1/modules/wait-list/wait-list.module';
 import { EmailPreferencesModule } from './v1/modules/email-preferences/email-preferences.module';
 import { UserEmailPreferencesModule } from './v1/modules/user-email-preferences/user-email-preferences.module';
 import { AssetsModule } from './v1/modules/assets/assets.module';
+import { LayoutModule } from './v1/modules/layouts/layout.module';
 /** Feature modules mounted at `api/v1/*` (not under `admin/`). */
 const API_V1_MODULES = [
   AuthModule,
@@ -88,6 +89,7 @@ const API_V1_MODULES = [
   EmailPreferencesModule,
   UserEmailPreferencesModule,
   AssetsModule,
+  LayoutModule,
 ];
 const ADMIN_V1_MODULES = [
   AdminModule

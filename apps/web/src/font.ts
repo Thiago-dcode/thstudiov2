@@ -1,14 +1,14 @@
-import { Jost, Lato } from "next/font/google";
+import { Jost, Archivo  } from "next/font/google";
 
-export const playfair = Lato({
+export const brand = Archivo ({
   subsets: ["latin"],
-  weight: ["700"],
+  weight: ["400",'500',"600"],
   style: ["normal"],
   variable: "--font-brand",
   display: "swap",
 });
 
-export const dmSans = Jost({
+export const body = Jost({
   subsets: ["latin"],
   weight: ["300", "400"],
   style: ["normal"],

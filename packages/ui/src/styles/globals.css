@@ -180,7 +180,7 @@ h2,
 h3 {
   font-family: var(--font-brand), serif;
   line-height: var(--leading-tight, 1.25);
-  font-weight: 500;
+  font-weight: 400;
 }
 
 h1 {

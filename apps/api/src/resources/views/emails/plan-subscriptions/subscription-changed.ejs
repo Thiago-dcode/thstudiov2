@@ -1,0 +1,108 @@
+<%- include(globals.emailsPath + '/shared/head') %>
+
+<body class="e-bg" style="width:100%; margin:0; padding:0 4px; background-color:#FAFAF9;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="e-bg" style="background-color:#FAFAF9;">
+        <tr>
+            <td align="center">
+                <table role="presentation" width="800" cellpadding="0" cellspacing="0" border="0"
+                    class="e-bg" style="width:100%; max-width:800px; background-color:#FAFAF9;">
+
+                    <%- include(globals.emailsPath + '/shared/header') %>
+
+                    <!-- Greeting -->
+                    <tr>
+                        <td style="padding:0 0 24px; text-align:center;">
+                            <p class="e-text-muted" style="font-size:13px; color:#46443F; letter-spacing:1px; text-transform:uppercase; margin:0 0 8px 0;">
+                                <%= t(translatePath + '.HI') %>
+                            </p>
+                            <h2 class="e-text" style="font-size:20px; font-weight:600; color:#000000; margin:0;">
+                                <%= user.username %>
+                            </h2>
+                        </td>
+                    </tr>
+
+                    <!-- Title -->
+                    <tr>
+                        <td style="padding:0 0 24px; text-align:center;">
+                            <h1 class="e-text" style="font-size:20px; font-weight:600; color:#000000; margin:0 0 12px 0; letter-spacing:1px;">
+                                <% if (isUpgrade) { %>
+                                    <%= t(translatePath + '.TITLE_UPGRADE') %>
+                                <% } else { %>
+                                    <%= t(translatePath + '.TITLE_DOWNGRADE') %>
+                                <% } %>
+                            </h1>
+                            <p class="e-text-muted" style="font-size:14px; color:#46443F; margin:0; line-height:1.6;">
+                                <% if (isUpgrade) { %>
+                                    <%= t(translatePath + '.DESCRIPTION_UPGRADE') %>
+                                <% } else { %>
+                                    <%= t(translatePath + '.DESCRIPTION_DOWNGRADE') %>
+                                <% } %>
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Plan name -->
+                    <tr>
+                        <td>
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                                class="e-card e-border-em" style="border:1.5px solid #C9C6BB; background-color:#FFFFFF;">
+                                <tr>
+                                    <td style="padding:24px 12px; text-align:center;">
+                                        <p class="e-text-muted" style="font-size:11px; color:#46443F; letter-spacing:1px; text-transform:uppercase; margin:0 0 8px 0;">
+                                            <%= t(translatePath + '.PLAN_LABEL') %>
+                                        </p>
+                                        <p class="e-accent" style="font-size:22px; color:#ED2100; margin:0; font-weight:normal; letter-spacing:1px;">
+                                            <%= newPlanName %>
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Info Box (downgrade only) -->
+                    <% if (!isUpgrade) { %>
+                    <tr>
+                        <td style="padding:24px 0 0;">
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                                class="e-card e-border-em" style="border:1.5px solid #C9C6BB; background-color:#FFFFFF;">
+                                <tr>
+                                    <td style="padding:24px 12px; text-align:center;">
+                                        <p class="e-text-muted" style="font-size:14px; margin:0; color:#46443F; line-height:1.6;">
+                                            <%= t(translatePath + '.INFO_DOWNGRADE') %>
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <% } %>
+
+                    <!-- CTA -->
+                    <tr>
+                        <td align="center" style="padding:24px 0 0;">
+                            <p class="e-text-muted" style="font-size:14px; color:#46443F; margin:0 0 16px 0;">
+                                <%= t(translatePath + '.CTA_TEXT') %>
+                            </p>
+                            <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                                <tr>
+                                    <td align="center" class="e-accent-bg" style="background-color:#ED2100;">
+                                        <a href="<%= redirectHref %>"
+                                            style="display:inline-block; padding:16px 48px; font-size:13px; font-weight:bold; text-decoration:none; color:#FFFFFF; letter-spacing:1.5px; text-transform:uppercase;">
+                                            <%= t(translatePath + '.CTA_BUTTON') %>
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <%- include(globals.emailsPath + '/shared/footer') %>
+
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+
+</html>

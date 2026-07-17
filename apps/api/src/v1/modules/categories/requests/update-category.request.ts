@@ -36,5 +36,9 @@ export class UpdateCategoryRequest {
   is_featured?: boolean;
 
   @IsOptional()
+  @ToBoolean()
+  is_active?: boolean;
+
+  @IsOptional()
   thumbnail?: Express.Multer.File;
 }

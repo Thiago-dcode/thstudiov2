@@ -36,6 +36,7 @@ export const ENUMS = {
   PLAN_OFFERS_TYPE: ['FREE', 'DISCOUNT'] as const,
   BENEFIT_TYPE: ['EARLY_USER', 'VIP', 'FOUNDER'] as const,
   WAIT_LIST_STATUS: ['WAITING', 'INVITING', 'INVITED', 'REGISTERED', 'EXPIRED', 'REJECTED'] as const,
+  LAYOUT_TYPE: ['MASONRY', 'UNIFORM', 'COLUMN_BASE'] as const,
   PASSWORD_RECOVERY_ATTEMPT_STATUS: ['CODE_NOT_VALIDATED', 'CODE_VALIDATED', 'PASSWORD_CHANGED'],
   STRIPE_ERROR: [
     'StripeCardError',
@@ -119,6 +120,8 @@ export const TABLES_ENUM = {
   WAIT_LIST: 'wait_list',
   EMAIL_PREFERENCES: 'email_preferences',
   ASSETS: 'assets',
+  LAYOUTS: 'layouts',
+  LAYOUT_CONFIG: 'layout_config',
 } as const;
 
 export const COUNTRY_TO_LANGUAGES: Record<string, string> = {

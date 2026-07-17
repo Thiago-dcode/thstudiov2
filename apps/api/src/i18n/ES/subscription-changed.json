@@ -1,0 +1,13 @@
+{
+    "SUBJECT_UPGRADE": "¡Bienvenido a tu nuevo plan!",
+    "SUBJECT_DOWNGRADE": "Tu suscripción ha cambiado",
+    "HI": "Hola",
+    "TITLE_UPGRADE": "Has mejorado tu plan",
+    "TITLE_DOWNGRADE": "Tu suscripción ha bajado de plan",
+    "PLAN_LABEL": "Tu plan actual",
+    "DESCRIPTION_UPGRADE": "¡Felicidades! Tu suscripción ha sido mejorada y ahora tienes acceso a todas las funciones incluidas en tu nuevo plan. Estamos emocionados de ver lo que vas a crear.",
+    "DESCRIPTION_DOWNGRADE": "Tu suscripción ha bajado de plan. Es posible que algunos de tus recursos ya no encajen dentro de los límites de tu nuevo plan.",
+    "INFO_DOWNGRADE": "Para ajustarse a los límites de tu nuevo plan, es posible que algunos de tus portafolios, colecciones, proyectos, clientes, servicios o archivos multimedia sean bloqueados temporalmente. Puedes revisarlos y gestionarlos desde tu Atelier.",
+    "CTA_TEXT": "¿Listo para seguir creando?",
+    "CTA_BUTTON": "Ir al Atelier"
+}

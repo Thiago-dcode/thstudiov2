@@ -3,7 +3,11 @@ import {
   LANGUAGE_HEADER,
 } from "@repo/common-lib/constants/constants";
 import type { EnumType } from "@repo/common-lib/constants/enums";
-import { stripLocalePrefix } from "@repo/common-lib/constants/post-login-redirects";
+import {
+  isRedirectToKey,
+  REDIRECT_TO_QUERY_PARAM,
+  REDIRECT_TO_TARGETS,
+} from "@repo/common-lib/constants/redirect-to";
 import { subMinutes } from "date-fns";
 import type {
   RequestCookies,
@@ -13,7 +17,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import createIntlMiddleware from "next-intl/middleware";
 import { routing, urlLocaleToLanguageCode } from "./i18n/routing";
 import authService from "./modules/auth/auth.service";
-import { setPostLoginRedirectByCookie } from "./modules/auth/server-actions/post-login-redirect.cookies";
+import { setRedirectToByCookie } from "./modules/auth/server-actions/redirect-to.cookies";
 import {
   deleteUserSessionByCookie,
   getRememberMeByCookie,
@@ -24,20 +28,51 @@ import {
 
 const intlMiddleware = createIntlMiddleware(routing);
 
-const handlePostLoginRedirect = async (
-  cookies: RequestCookies,
-  responseCookies: ResponseCookies,
-  pathname: string,
-) => {
-  const pathWithoutLocale = stripLocalePrefix(pathname, routing.locales);
-  if (!pathWithoutLocale) {
-    return;
+/** Copies cookies/headers already set on `from` (language cookie, refreshed session, etc) onto `to`. */
+const copyResponseExtras = (from: NextResponse, to: NextResponse) => {
+  for (const cookie of from.cookies.getAll()) {
+    to.cookies.set(cookie);
   }
-  const userAuth = await userSessionByCookie(cookies);
-  if (userAuth) {
-    return;
+  const languageHeader = from.headers.get(LANGUAGE_HEADER);
+  if (languageHeader) {
+    to.headers.set(LANGUAGE_HEADER, languageHeader);
   }
-  setPostLoginRedirectByCookie(responseCookies, pathWithoutLocale);
+};
+
+/**
+ * Turns `response` into a redirect to the same destination with the
+ * `redirectTo` query param stripped, while preserving any cookies/headers
+ * already set on it. If `response` was itself already a redirect (e.g. from
+ * the intl middleware), the param is stripped from its target instead of the
+ * original request URL.
+ */
+const stripRedirectToParam = (
+  response: NextResponse,
+  requestUrl: URL,
+): NextResponse => {
+  const location = response.headers.get("location");
+  const targetUrl = location ? new URL(location) : new URL(requestUrl);
+  targetUrl.searchParams.delete(REDIRECT_TO_QUERY_PARAM);
+
+  const redirectResponse = NextResponse.redirect(targetUrl);
+  copyResponseExtras(response, redirectResponse);
+  return redirectResponse;
+};
+
+/**
+ * Turns `response` into a redirect straight to `targetPath`, preserving any
+ * cookies/headers already set on it. Used when the user is already logged in,
+ * so there's no need to go through the `redirectTo` cookie + login flow.
+ */
+const redirectToTarget = (
+  response: NextResponse,
+  requestUrl: URL,
+  targetPath: string,
+): NextResponse => {
+  const targetUrl = new URL(`/${targetPath}`, requestUrl);
+  const redirectResponse = NextResponse.redirect(targetUrl);
+  copyResponseExtras(response, redirectResponse);
+  return redirectResponse;
 };
 
 const handleRefreshToken = async (
@@ -90,7 +125,7 @@ const proxy = async (req: NextRequest) => {
     return NextResponse.redirect(url);
   }
 
-  const response = intlMiddleware(req);
+  let response = intlMiddleware(req);
 
   const resolvedLanguageCode: EnumType<"LANGUAGE_CODE"> = (
     routing.locales as readonly string[]
@@ -101,13 +136,25 @@ const proxy = async (req: NextRequest) => {
   response.cookies.set(LANGUAGE_COOKIE_NAME, resolvedLanguageCode);
   response.headers.set(LANGUAGE_HEADER, resolvedLanguageCode);
 
-  await handlePostLoginRedirect(
-    req.cookies,
-    response.cookies,
-    req.nextUrl.pathname,
-  );
   await handleRefreshToken(req.cookies, response.cookies);
   await handleRememberMe(req.cookies, response.cookies);
+
+  const redirectToParam =
+    req.nextUrl.searchParams.get(REDIRECT_TO_QUERY_PARAM) ?? "";
+
+  if (isRedirectToKey(redirectToParam)) {
+    const userAuth = await userSessionByCookie(req.cookies);
+    if (userAuth) {
+      response = redirectToTarget(
+        response,
+        req.nextUrl,
+        REDIRECT_TO_TARGETS[redirectToParam],
+      );
+    } else {
+      setRedirectToByCookie(response.cookies, redirectToParam);
+      response = stripRedirectToParam(response, req.nextUrl);
+    }
+  }
 
   return response;
 };

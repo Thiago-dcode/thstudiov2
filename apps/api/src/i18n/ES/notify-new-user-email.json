@@ -1,23 +1,16 @@
 {
-    
-    "WELCOME_SUBJECT": "Bienvenido a {appName}",
-    "HI": "Hola",
-    "WELCOME": "BIENVENIDO",
-
-    "WELCOME_MESSAGE": "Estamos emocionados de tenerte a bordo.",
-    "FEATURES_INTRO_PREFIX": "Con",
-    "FEATURES_INTRO_SUFFIX": "podrás:",
-    "FEATURES": [
-        "Gestionar y organizar todas tus obras de arte",
-        "Crear portafolios excepcionales para llegar a más clientes",
-        "Añadir información sobre tus clientes",
-        "Mostrar tus servicios disponibles",
-        "Conectar con otros artistas",
-        "¡Y mucho más!"
-    ],
-    "CTA_START_TEXT": "Comienza a crear tu portafolio",
-    "CTA_START_BUTTON": "Comenzar ahora",
-    "CTA_VERIFY_TEXT": "Verifica tu cuenta para comenzar a crear tu portafolio",
-    "CTA_VERIFY_BUTTON": "Verificar cuenta"
-    
+  "WELCOME_SUBJECT": "Bienvenido a {appName} — tu portafolio empieza aquí",
+  "HI": "Hola",
+  "WELCOME": "Ya estás dentro",
+  "WELCOME_MESSAGE": "A11STUDIO nació de un artista, para artistas",
+  "FEATURES_INTRO": "Todo gira en torno a una idea:",
+  "FEATURES_INTRO_EMPHASIS": "tu arte es lo primero.",
+  "FEATURES": [
+    "Crea un portafolio profesional en minutos — sin escribir código",
+    "Publica y organiza tu trabajo en galerías cuidadas",
+    "Deja que el SEO, el hosting y lo técnico queden en segundo plano",
+    "Preséntate con elegancia y abre puertas a nuevos clientes"
+  ],
+  "CTA_START_TEXT": "Tu portafolio está a solo unos minutos.",
+  "CTA_START_BUTTON": "Abrir tu atelier"
 }

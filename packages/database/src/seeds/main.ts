@@ -5,6 +5,7 @@ import { main as paymentMethods } from './paymentMethods';
 import { main as benefits } from './benefits';
 import { main as invitationLinks } from './invitationLinks';
 import { main as roles } from './roles';
+import { main as layouts } from './layouts';
 import { ADMIN_USERNAME, main as adminUser } from './admin-user';
 import { main as supportUser } from './support-user';
 import { main as portfolioSeed } from './portfolio';
@@ -20,6 +21,7 @@ export const main = async () => {
   await paymentMethods();
   await benefits();
   await invitationLinks();
+  await layouts();
   await supportUser();
   await adminUser();
   await assetsSeed();

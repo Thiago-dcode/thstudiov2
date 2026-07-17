@@ -95,6 +95,7 @@ export class CategoriesService {
       tags: tagsStr,
       thumbnail: thumbnailPath,
       is_featured: request.is_featured ?? false,
+      is_active: request.is_active ?? true,
       parent_id: request.parent_id ?? null,
       translations: translationRows,
     };
@@ -137,6 +138,9 @@ export class CategoriesService {
     }
     if (request.is_featured !== undefined) {
       patch.is_featured = request.is_featured;
+    }
+    if (request.is_active !== undefined) {
+      patch.is_active = request.is_active;
     }
     if (nextThumbnail !== undefined) {
       patch.thumbnail = nextThumbnail;

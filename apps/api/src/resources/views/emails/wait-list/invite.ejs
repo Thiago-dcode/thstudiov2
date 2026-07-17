@@ -1,32 +1,34 @@
 <%- include(globals.emailsPath + '/shared/head') %>
 
-<body style="width:100%; margin:0; padding:0; background-color:#1C1B19;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#1C1B19;">
+<body class="e-bg" style="width:100%; margin:0; padding:0 4px; background-color:#FAFAF9;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="e-bg" style="background-color:#FAFAF9;">
         <tr>
             <td align="center">
-                <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0"
-                    style="width:100%; max-width:600px; background-color:#242220;">
+                <table role="presentation" width="800" cellpadding="0" cellspacing="0" border="0"
+                    class="e-bg" style="width:100%; max-width:800px; background-color:#FAFAF9;">
 
                     <%- include(globals.emailsPath + '/shared/header') %>
 
+                    <!-- Title -->
                     <tr>
-                        <td style="padding:40px 40px 0 40px; text-align:center;">
-                            <h1 style="font-family:Georgia, 'Times New Roman', Times, serif; font-size:32px; font-weight:normal; color:#F0EEE9; margin:0 0 12px 0; letter-spacing:1px;">
+                        <td style="padding:0 0 24px; text-align:center;">
+                            <h1 class="e-text" style="font-size:20px; font-weight:600; color:#000000; margin:0 0 12px 0; letter-spacing:1px;">
                                 <%= globals.t(translatePath + '.VALIDATE_TITLE') %>
                             </h1>
-                            <p style="font-family:Georgia, 'Times New Roman', Times, serif; font-size:15px; color:#A8A59B; margin:0 0 30px 0; line-height:1.6;">
+                            <p class="e-text-muted" style="font-size:14px; color:#46443F; margin:0; line-height:1.6;">
                                 <%= globals.t(translatePath + '.VALIDATE_DESCRIPTION') %>
                             </p>
                         </td>
                     </tr>
 
+                    <!-- CTA -->
                     <tr>
-                        <td align="center" style="padding:0 40px 32px 40px;">
+                        <td align="center" style="padding:0 0 24px;">
                             <table role="presentation" cellpadding="0" cellspacing="0" border="0">
                                 <tr>
-                                    <td align="center" style="background-color:#C41D00;">
+                                    <td align="center" class="e-accent-bg" style="background-color:#ED2100;">
                                         <a href="<%= invite.validationUrl %>"
-                                            style="display:inline-block; padding:16px 48px; font-family:Arial, Helvetica, sans-serif; font-size:13px; font-weight:bold; text-decoration:none; color:#FFFFFF; letter-spacing:1.5px; text-transform:uppercase;">
+                                            style="display:inline-block; padding:16px 48px; font-size:13px; font-weight:bold; text-decoration:none; color:#FFFFFF; letter-spacing:1.5px; text-transform:uppercase;">
                                             <%= globals.t(translatePath + '.VALIDATE_CTA_TEXT') %>
                                         </a>
                                     </td>

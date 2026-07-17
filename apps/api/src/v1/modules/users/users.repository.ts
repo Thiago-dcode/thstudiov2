@@ -231,6 +231,7 @@ export class UserRepository extends BaseRepository {
     'category_translations.name as c_tr_name',
     'categories.slug as c_slug' as UserProfileSelectColumn,
     'categories.parent_id',
+    'categories.is_active as c_is_active',
   ];
 
   async getUserProfile(username: string): Promise<UserProfile | null> {
@@ -357,6 +358,7 @@ export class UserRepository extends BaseRepository {
         parent_id: row.parent_id ?? null,
         thumbnail: null,
         tags: row.tags ? row.tags.split(',') : [],
+        is_active: row.c_is_active ?? true,
       });
     }
 

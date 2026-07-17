@@ -1,29 +1,30 @@
 <%- include(globals.emailsPath + '/shared/head') %>
 
-<body style="width:100%; margin:0; padding:0; background-color:#1C1B19;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#1C1B19;">
+<body class="e-bg" style="width:100%; margin:0; padding:0 4px; background-color:#FAFAF9;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="e-bg" style="background-color:#FAFAF9;">
         <tr>
             <td align="center">
-                <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0"
-                    style="width:100%; max-width:600px; background-color:#242220;">
+                <table role="presentation" width="800" cellpadding="0" cellspacing="0" border="0"
+                    class="e-bg" style="width:100%; max-width:800px; background-color:#FAFAF9;">
 
                     <%- include(globals.emailsPath + '/shared/header') %>
 
-                    <!-- Content -->
+                    <!-- Greeting -->
                     <tr>
-                        <td style="padding:40px 40px 0 40px; text-align:center;">
-                            <p style="font-family:Arial, Helvetica, sans-serif; font-size:13px; color:#A8A59B; letter-spacing:1px; text-transform:uppercase; margin:0 0 8px 0;">
+                        <td style="padding:0 0 24px; text-align:center;">
+                            <p class="e-text-muted" style="font-size:13px; color:#46443F; letter-spacing:1px; text-transform:uppercase; margin:0 0 8px 0;">
                                 <%= globals.t(translatePath + '.HI') %>
                             </p>
-                            <p style="font-family:Georgia, 'Times New Roman', Times, serif; font-size:20px; color:#F0EEE9; margin:0 0 32px 0; font-weight:normal;">
+                            <h2 class="e-text" style="font-size:20px; font-weight:600; color:#000000; margin:0;">
                                 <%= user.username %>
-                            </p>
+                            </h2>
                         </td>
                     </tr>
 
+                    <!-- Title -->
                     <tr>
-                        <td style="padding:0 40px; text-align:center;">
-                            <h1 style="font-family:Georgia, 'Times New Roman', Times, serif; font-size:32px; font-weight:normal; color:#F0EEE9; margin:0 0 12px 0; letter-spacing:1px;">
+                        <td style="padding:0 0 24px; text-align:center;">
+                            <h1 class="e-text" style="font-size:20px; font-weight:600; color:#000000; margin:0; letter-spacing:1px;">
                                 <%= globals.t(translatePath + '.TITLE') %>
                             </h1>
                         </td>
@@ -31,15 +32,15 @@
 
                     <!-- Verification Code -->
                     <tr>
-                        <td align="center" style="padding:0 40px 36px 40px;">
+                        <td>
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-                                style="background-color:#322F2A; border:1px solid #38362F;">
+                                class="e-card e-border-em" style="border:1.5px solid #C9C6BB; background-color:#FFFFFF;">
                                 <tr>
-                                    <td style="padding:28px; text-align:center;">
-                                        <p style="font-family:Arial, Helvetica, sans-serif; font-size:11px; color:#A8A59B; letter-spacing:2px; text-transform:uppercase; margin:0 0 16px 0;">
+                                    <td style="padding:24px 12px; text-align:center;">
+                                        <p class="e-text-muted" style="font-size:11px; color:#46443F; letter-spacing:2px; text-transform:uppercase; margin:0 0 16px 0;">
                                             <%= globals.t(translatePath + '.CODE_LABEL') %>
                                         </p>
-                                        <p style="font-family:'Courier New', Courier, monospace; font-size:38px; font-weight:bold; letter-spacing:10px; margin:0; color:#F0EEE9;">
+                                        <p class="e-text" style="font-family:'Courier New', Courier, monospace; font-size:38px; font-weight:bold; letter-spacing:10px; margin:0; color:#000000;">
                                             <%= user.twofa_code %>
                                         </p>
                                     </td>
@@ -50,12 +51,12 @@
 
                     <!-- Security Warning -->
                     <tr>
-                        <td align="center" style="padding:0 40px 32px 40px;">
+                        <td style="padding:24px 0 0;">
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-                                style="background-color:#2B0A0A; border:1px solid #991b1b;">
+                                class="e-error-bg e-error-border" style="border:1.5px solid #F3AEB4; background-color:#FEE2E2;">
                                 <tr>
-                                    <td style="padding:16px 20px; text-align:center;">
-                                        <p style="font-family:Georgia, 'Times New Roman', Times, serif; font-size:13px; margin:0; color:#ef4444; line-height:1.5;">
+                                    <td style="padding:24px 12px; text-align:center;">
+                                        <p class="e-error-text" style="font-size:13px; margin:0; color:#E11D2E; line-height:1.5;">
                                             <%= globals.t(translatePath + '.SECURITY_WARNING') %>
                                         </p>
                                     </td>
@@ -66,8 +67,8 @@
 
                     <!-- Expiration -->
                     <tr>
-                        <td align="center" style="padding:0 40px 8px 40px;">
-                            <p style="font-family:Arial, Helvetica, sans-serif; font-size:12px; margin:0; color:#A8A59B; line-height:1.5;">
+                        <td align="center" style="padding:20px 0;">
+                            <p class="e-text-muted" style="font-size:12px; margin:0; color:#46443F; line-height:1.5;">
                                 <%= globals.t(translatePath + '.EXPIRATION_INFO') %>
                             </p>
                         </td>

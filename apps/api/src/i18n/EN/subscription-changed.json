@@ -1,0 +1,13 @@
+{
+    "SUBJECT_UPGRADE": "Welcome to your new plan!",
+    "SUBJECT_DOWNGRADE": "Your subscription has changed",
+    "HI": "Hi",
+    "TITLE_UPGRADE": "You've been upgraded",
+    "TITLE_DOWNGRADE": "Your subscription was downgraded",
+    "PLAN_LABEL": "Your current plan",
+    "DESCRIPTION_UPGRADE": "Congratulations! Your subscription has been upgraded and you now have access to all the features included in your new plan. We're excited to see what you'll create.",
+    "DESCRIPTION_DOWNGRADE": "Your subscription has been downgraded. Some of your resources may no longer fit within your new plan's limits.",
+    "INFO_DOWNGRADE": "To match your new plan's limits, some of your portfolios, collections, projects, clients, services or media files may be temporarily blocked. You can review and manage them from your Atelier.",
+    "CTA_TEXT": "Ready to keep creating?",
+    "CTA_BUTTON": "Go to Atelier"
+}

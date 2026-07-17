@@ -47,6 +47,8 @@ const tablesPortfolioFull = [
   TABLES_ENUM.PORTFOLIO_CATEGORIES,
   TABLES_ENUM.CATEGORIES,
   TABLES_ENUM.CATEGORY_TRANSLATIONS,
+  TABLES_ENUM.LAYOUT_CONFIG,
+  TABLES_ENUM.LAYOUTS,
 ] as const;
 export type PortfolioFullSchema = PortfolioWithArtistSchema & {
   // From portfolio_media (prefixed: pm_)
@@ -76,5 +78,12 @@ export type PortfolioFullSchema = PortfolioWithArtistSchema & {
   c_id?: number | null;                   // COLLISION: id
   c_name?: string | null;                 // COLLISION: name (resolved via COALESCE with translation)
   c_slug?: string | null;                 // COLLISION: slug
+  c_is_featured?: boolean | null;
+  c_is_active?: boolean | null;
+
+  // From layout_config + layouts (1:1, no collision with main portfolio cols)
+  layout_id?: number | null;
+  config?: Record<string, unknown> | null;
+  layout_name?: EnumType<'LAYOUT_TYPE'> | null;
 };
 export type PortfolioFullSchemaColumns = TableColumn<typeof tablesPortfolioFull, PortfolioFullSchema>;

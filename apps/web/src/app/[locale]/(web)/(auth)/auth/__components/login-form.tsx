@@ -1,9 +1,9 @@
 "use client";
 
 import {
-  type AllowedPostLoginRedirect,
-  normalizePostLoginRedirect,
-} from "@repo/common-lib/constants/post-login-redirects";
+  resolveRedirectToTarget,
+  type RedirectToKey,
+} from "@repo/common-lib/constants/redirect-to";
 import { Errors } from "@repo/ui/components/custom/errors";
 import { Input } from "@repo/ui/components/shadcn/input";
 import { Label } from "@repo/ui/components/shadcn/label";
@@ -13,14 +13,14 @@ import { useState } from "react";
 import FormComponent from "@/lib/components/form-component";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { loginServerAction } from "@/modules/auth/server-actions/login.action";
-import { deletePostLoginRedirect } from "@/modules/auth/server-actions/post-login-redirect.action";
+import { deleteRedirectTo } from "@/modules/auth/server-actions/redirect-to.action";
 
 export const LoginForm = ({
   rememberMe: _rememberMe,
   redirectTo,
 }: {
   rememberMe: boolean;
-  redirectTo: AllowedPostLoginRedirect | null;
+  redirectTo: RedirectToKey | null;
 }) => {
   const router = useRouter();
   const [hidden, setHidden] = useState(true);
@@ -35,9 +35,9 @@ export const LoginForm = ({
           router.push("/auth/2fa");
           return;
         }
-        await deletePostLoginRedirect();
+        await deleteRedirectTo();
         const destination = redirectTo
-          ? normalizePostLoginRedirect(redirectTo)
+          ? resolveRedirectToTarget(redirectTo)
           : null;
         router.push(destination ? `/${destination}` : "/atelier");
       },

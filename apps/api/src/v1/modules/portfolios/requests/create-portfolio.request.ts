@@ -6,8 +6,12 @@ import { ModelExist } from 'src/common/validators/model-exist.validtor';
 import { ModelArrayExist } from 'src/common/validators/model-array-exist.validtor';
 import { ToBoolean } from 'src/common/decorators/to-boolean.decorator';
 import { ToInt } from 'src/common/decorators/to-int.decorator';
+import {
+  PortfolioLayoutInput,
+  TransformPortfolioLayout,
+} from './portfolio-layout.input';
 
- class PortfolioMediaItem {
+class PortfolioMediaItem {
   @IsNotEmpty()
   @ToInt()
   @ModelExist('media')
@@ -79,4 +83,10 @@ export class CreatePortfolioRequest {
   @Transform(({ value }) => value?.map((v: string) => parseInt(v, 10)))
   @ModelArrayExist('categories')
   categories?: number[];
+
+  @IsOptional()
+  @TransformPortfolioLayout()
+  @ValidateNested()
+  @Type(() => PortfolioLayoutInput)
+  layout?: PortfolioLayoutInput;
 }

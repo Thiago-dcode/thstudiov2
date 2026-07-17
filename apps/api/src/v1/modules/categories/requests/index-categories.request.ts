@@ -55,6 +55,10 @@ export class IndexCategoriesRequest extends OffsetPaginationRequest {
   @IsOptional()
   @ToBoolean()
   is_featured?: boolean;
+
+  @IsOptional()
+  @ToBoolean()
+  is_active?: boolean;
   
   @IsOptional()
   @ToBoolean()

@@ -47,6 +47,7 @@ export const UpdateCategoriesProvider = ({
   const searchRef = useRef<HTMLInputElement>(null);
   const currentRequest = useRef<CategoryIndexRequest>({
     random: true,
+    is_active: true,
   });
   const fetchParamsRef = useRef<CategoryIndexRequest>(currentRequest.current);
   const idTimeOut = useRef<NodeJS.Timeout>(null);

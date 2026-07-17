@@ -20,7 +20,7 @@ export class NewContactMail extends ApiMailService {
     super(viewService, emailPreferencesService, {
       viewPath: 'emails/user-contacts/new-contact',
       data: {},
-      emailType: 'NOTIFICATION',
+      emailType: 'TRANSACTIONAL',
     });
   }
 
@@ -30,7 +30,7 @@ export class NewContactMail extends ApiMailService {
     this.viewParams = {
       viewPath: 'emails/user-contacts/new-contact',
       data: { artist: this.artist, contact: this.contact, translatePath: 'new-contact-email' },
-      emailType: 'NOTIFICATION',
+      emailType: 'TRANSACTIONAL',
     };
     return this;
   }
