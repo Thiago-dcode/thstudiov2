@@ -5,6 +5,11 @@ import type {
   BaseUser,
   UpdateUserPasswordInput,
 } from "@repo/common-lib/types/user";
+import {
+  isSessionOwner,
+  requireSession,
+  unauthorizedActionReturn,
+} from "@/modules/auth/helpers";
 import { updateUserPasswordSchema } from "../schemas/user-shemas";
 import usersService from "../users.service";
 
@@ -12,6 +17,11 @@ export const updateUserPasswordAction = async (
   id: number,
   formData: FormData,
 ): Promise<ActionReturn<BaseUser, UpdateUserPasswordInput>> => {
+  const session = await requireSession();
+  if (!isSessionOwner(session, id)) {
+    return unauthorizedActionReturn<BaseUser, UpdateUserPasswordInput>();
+  }
+
   const rawData: UpdateUserPasswordInput = {
     old_password: formData.get("old_password") as string,
     new_password: formData.get("new_password") as string,

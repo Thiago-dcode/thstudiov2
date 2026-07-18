@@ -1,5 +1,5 @@
-import Link from "next/link";
-import { redirect } from "next/navigation";
+import { Link } from "@/i18n/navigation";
+import { redirect } from "@/i18n/redirect";
 import PageComponent from "@/lib/components/page-component";
 import { getPasswordRecoveryAttemptCookie } from "@/modules/auth/server-actions/password-recovery.action";
 import { PasswordRecoveryForm } from "../__components/PasswordRecovery-form";
@@ -11,7 +11,8 @@ export default async function PasswordRecovery() {
     await getPasswordRecoveryAttemptCookie(),
   );
   if (timeTillNextRecovery > 0) {
-    redirect("/auth/password-recovery/success");
+    await redirect("/auth/password-recovery/success");
+    return;
   }
   return (
     <authComponent.Container>

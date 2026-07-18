@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
+import { redirect } from "@/i18n/redirect";
 import emailPreferencesService from "@/modules/email-preferences/email-preferences.service";
 import { EmailPreferencesForm } from "./_components/email-preferences-form";
 
@@ -16,13 +16,15 @@ export default async function EmailPreferencesPage({
   const { token } = await params;
 
   if (!token) {
-    redirect("/");
+    await redirect("/");
+    return;
   }
 
   const result = await emailPreferencesService.getByToken(token);
 
   if (result.error || !result.data) {
-    redirect("/");
+    await redirect("/");
+    return;
   }
 
   return (

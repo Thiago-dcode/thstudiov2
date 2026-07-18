@@ -1,8 +1,7 @@
 "use client";
 
 import { Timer } from "@repo/ui/components/custom/Timer";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 
 export const TryAgainButton = ({ nextAttempt }: { nextAttempt: number }) => {
   const route = useRouter();

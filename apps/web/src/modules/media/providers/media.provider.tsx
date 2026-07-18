@@ -500,7 +500,7 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
     });
 
     try {
-      const result = await deleteMediaAction(media.id, media.user_id);
+      const result = await deleteMediaAction(media.id);
 
       if (!result.data) {
         const error = {

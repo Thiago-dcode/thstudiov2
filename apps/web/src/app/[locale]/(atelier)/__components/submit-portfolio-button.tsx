@@ -1,17 +1,6 @@
 "use client";
 
-import { Button } from "@repo/ui/components/shadcn/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@repo/ui/components/shadcn/dialog";
-import { Spinner } from "@repo/ui/components/shadcn/spinner";
-import { cn } from "@repo/ui/lib/utils";
-import { Check, Save } from "lucide-react";
-import { useEffect, useState } from "react";
+import { ConfirmSubmitButton } from "@/app/[locale]/(atelier)/__components/confirm-submit-button";
 import { usePortfolio } from "@/modules/portfolios/providers/create-update-portfolio.provider";
 
 export const SubmitPortfolioButton = () => {
@@ -23,82 +12,22 @@ export const SubmitPortfolioButton = () => {
     isHydrated,
     submitPortfolio,
   } = usePortfolio();
-  const [open, setOpen] = useState(false);
   const isUpdate = Boolean(currentPortfolio);
   const isActionable = isHydrated && canSubmit && !isPending;
 
-  useEffect(() => {
-    if (success) setOpen(false);
-  }, [success]);
-
   return (
-    <>
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        disabled={!isActionable}
-        onClick={() => {
-          if (isActionable) setOpen(true);
-        }}
-        className={cn(
-          "gap-1.5 h-8 px-3 text-xs",
-          isActionable
-            ? "bg-text text-bg hover:text-text"
-            : "border-border text-text-muted",
-        )}
-      >
-        {isPending ? (
-          <Spinner className="size-3.5" />
-        ) : success ? (
-          <Check className="size-3.5" />
-        ) : (
-          <Save className="size-3.5" />
-        )}
-        {isUpdate ? "Update" : "Save"}
-      </Button>
-
-      <Dialog open={open} onOpenChange={(v) => !isPending && setOpen(v)}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="text-base">
-              {isUpdate ? "Update portfolio" : "Save portfolio"}
-            </DialogTitle>
-            <DialogDescription className="text-sm">
-              {isUpdate
-                ? "Your changes will be saved and applied to your live portfolio."
-                : "Your portfolio will be created and saved to your account."}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="mt-2 flex items-center justify-end gap-2">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              disabled={isPending}
-              onClick={() => setOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              variant="default"
-              size="sm"
-              disabled={isPending}
-              onClick={() => void submitPortfolio()}
-              className="gap-1.5"
-            >
-              {isPending ? (
-                <Spinner className="size-3.5" />
-              ) : isUpdate ? (
-                "Update"
-              ) : (
-                "Save"
-              )}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </>
+    <ConfirmSubmitButton
+      isActionable={isActionable}
+      isPending={isPending}
+      success={success}
+      buttonLabel={isUpdate ? "Update" : "Save"}
+      dialogTitle={isUpdate ? "Update portfolio" : "Save portfolio"}
+      dialogDescription={
+        isUpdate
+          ? "Your changes will be saved and applied to your live portfolio."
+          : "Your portfolio will be created and saved to your account."
+      }
+      onConfirm={() => void submitPortfolio()}
+    />
   );
 };

@@ -34,6 +34,7 @@ export function EmailPreferencesForm({
     <FormComponent.Container>
       <FormComponent.Form onSubmit={handleSubmit} className="gap-5">
         <input type="hidden" name="email" value={emailPreference.email} />
+        <input type="hidden" name="token" value={emailPreference.token} />
         {emailPreference.user_id ? (
           <input
             type="hidden"

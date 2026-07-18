@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { MediaPageComponent } from "@/app/[locale]/(artists)/__components/media-page.component";
 import { ResourceNotFound } from "@/app/[locale]/(artists)/__components/resource-not-found";
 import Web from "@/lib/components/web-page.component";
@@ -12,6 +13,7 @@ type Props = {
 
 export default async function MediaPage({ params }: Props) {
   const { username, public_id } = await params;
+  const tNotFound = await getTranslations("artists.resourceNotFound");
 
   const [user, { data: media }, session] = await Promise.all([
     usersService.getCompact(username),
@@ -26,10 +28,7 @@ export default async function MediaPage({ params }: Props) {
   if (!media || media.blocked_at) {
     return (
       <Web.Container>
-        <ResourceNotFound
-          username={username}
-          message="The media you're looking for doesn't exist or may have been removed."
-        />
+        <ResourceNotFound username={username} message={tNotFound("media")} />
       </Web.Container>
     );
   }

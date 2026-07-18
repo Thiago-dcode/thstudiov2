@@ -1,9 +1,10 @@
 import { Mail, Pencil } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { ArtistBreadcrumb } from "@/app/[locale]/(artists)/__components/artist-breadcrumb";
 import { ArtistContactDialog } from "@/app/[locale]/(artists)/__components/artist-contact.dialog";
+import { Link } from "@/i18n/navigation";
 import Web from "@/lib/components/web-page.component";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import userAboutPageService from "@/modules/user-about-page/user-about-page.service";
@@ -15,6 +16,8 @@ type Props = {
 
 export default async function AboutPage({ params }: Props) {
   const { username } = await params;
+  const t = await getTranslations("artists.about");
+  const tEdit = await getTranslations("artists.editAria");
 
   const [user, { data: aboutPage }, userAuth] = await Promise.all([
     usersService.usernameExists(username),
@@ -32,7 +35,7 @@ export default async function AboutPage({ params }: Props) {
       <Web.Container>
         <div className="flex min-h-[60vh] items-center justify-center">
           <p className="text-sm  text-text-muted tracking-wide">
-            This artist hasn't shared their story yet.
+            {t("notShared")}
           </p>
         </div>
       </Web.Container>
@@ -44,10 +47,13 @@ export default async function AboutPage({ params }: Props) {
       <ArtistBreadcrumb
         username={username}
         items={[
-          { url: `/artists/${username}/about`, title: "About", isActive: true },
+          {
+            url: `/artists/${username}/about`,
+            title: t("heading"),
+            isActive: true,
+          },
         ]}
       />
-      {/* <Web.Header title={'About'} /> */}
       <div className="w-full items-start justify-center flex">
         <div className="">
           <div className="flex w-full flex-col lg:flex-row gap-12 lg:gap-20">
@@ -76,7 +82,7 @@ export default async function AboutPage({ params }: Props) {
                     {canEdit && (
                       <Link
                         href="/atelier/about"
-                        aria-label="Edit about page"
+                        aria-label={tEdit("editAboutPage")}
                         className="text-text-muted hover:text-text transition-colors"
                       >
                         <Pencil className="size-4 md:size-5" />
@@ -99,7 +105,7 @@ export default async function AboutPage({ params }: Props) {
                     className="inline-flex items-center gap-3 text-sm tracking-wider uppercase hover:text-text text-text-muted transition-colors duration-300 group"
                   >
                     <Mail className="size-4 transition-transform duration-300 group-hover:-translate-y-px" />
-                    <span>Get in touch</span>
+                    <span>{t("getInTouch")}</span>
                   </button>
                 </ArtistContactDialog>
               </div>

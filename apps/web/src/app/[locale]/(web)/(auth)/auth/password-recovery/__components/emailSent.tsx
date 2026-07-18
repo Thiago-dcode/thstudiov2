@@ -1,7 +1,7 @@
 "use client";
 
 import { Timer } from "@repo/ui/components/custom/Timer";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 
 export const EmailSentTimer = ({
   timeTillNextRecovery,

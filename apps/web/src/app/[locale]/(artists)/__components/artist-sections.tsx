@@ -10,8 +10,9 @@ import {
   AccordionTrigger,
 } from "@repo/ui/components/shadcn/accordion";
 import { ArrowRight, Mail } from "lucide-react";
-import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
+import { Link } from "@/i18n/navigation";
 import { CollectionCard } from "@/modules/collections/components/collection-card";
 import { PortfolioCard } from "@/modules/portfolios/components/portfolio-card";
 import userCollectionService from "@/modules/user-collections/user-collection.service";
@@ -28,7 +29,17 @@ type ArtistSectionsProps = {
   displayName: string;
 };
 
-const SectionHeader = ({ title, href }: { title: string; href?: string }) => (
+const SectionHeader = ({
+  title,
+  href,
+  viewAllLabel,
+  viewAllAriaLabel,
+}: {
+  title: string;
+  href?: string;
+  viewAllLabel: string;
+  viewAllAriaLabel: string;
+}) => (
   <div className="mb-6 flex items-center justify-between phone-lg:mb-8 tablet:mb-10">
     <div className="flex items-center gap-3 phone-lg:gap-4">
       <span
@@ -46,10 +57,10 @@ const SectionHeader = ({ title, href }: { title: string; href?: string }) => (
     {href && (
       <Link
         href={href}
-        aria-label={`View all ${title.toLowerCase()}`}
+        aria-label={viewAllAriaLabel}
         className="group inline-flex items-center gap-1.5 text-xs tracking-[0.15em]  uppercase transition-colors duration-300 hover:text-text"
       >
-        <span className="hidden phone:inline">View all</span>
+        <span className="hidden phone:inline">{viewAllLabel}</span>
         <ArrowRight
           className="size-3 transition-transform duration-300 group-hover:translate-x-0.5"
           aria-hidden="true"
@@ -65,24 +76,36 @@ const SectionListContainer = ({ children }: { children: ReactNode }) => (
   </div>
 );
 
-const ViewAllLink = ({ href, label }: { href: string; label: string }) => (
+const ViewAllLink = ({
+  href,
+  label,
+  text,
+}: {
+  href: string;
+  label: string;
+  text: string;
+}) => (
   <Link
     href={href}
     aria-label={label}
     className="mt-4 inline-flex items-center gap-1.5 text-xs tracking-[0.15em] text-text-muted/70 uppercase transition-colors duration-300 hover:text-text"
   >
-    View all <ArrowRight className="size-3" aria-hidden="true" />
+    {text} <ArrowRight className="size-3" aria-hidden="true" />
   </Link>
 );
 
-const EmptyState = ({ displayName }: { displayName: string }) => (
+const EmptyState = ({
+  title,
+  subtitle,
+  cta,
+}: {
+  title: string;
+  subtitle: string;
+  cta: string;
+}) => (
   <div className="mx-auto flex w-full max-w-xl flex-col items-center gap-5 px-6 text-center">
-    <p className="font-serif text-lg text-text-muted ">
-      {displayName} hasn&apos;t published any work yet.
-    </p>
-    <p className="text-sm text-text-muted/70">
-      Check back soon, or reach out to start a conversation.
-    </p>
+    <p className="font-serif text-lg text-text-muted ">{title}</p>
+    <p className="text-sm text-text-muted/70">{subtitle}</p>
     <ArtistContactDialog>
       <button
         type="button"
@@ -92,7 +115,7 @@ const EmptyState = ({ displayName }: { displayName: string }) => (
           className="size-3.5 transition-transform duration-300 group-hover:-translate-y-px"
           aria-hidden="true"
         />
-        <span>Get in touch</span>
+        <span>{cta}</span>
       </button>
     </ArtistContactDialog>
   </div>
@@ -102,6 +125,7 @@ export const ArtistSections = async ({
   username,
   displayName,
 }: ArtistSectionsProps) => {
+  const t = await getTranslations("artists.sections");
   const [portfolioRes, collectionRes, serviceRes] = await Promise.all([
     userPortfolioService.getAllByUsername(username, {
       paginated: true,
@@ -143,7 +167,13 @@ export const ArtistSections = async ({
       : services.length;
 
   if (!portfolios.length && !collections.length && !services.length) {
-    return <EmptyState displayName={displayName} />;
+    return (
+      <EmptyState
+        title={t("emptyState.title", { name: displayName })}
+        subtitle={t("emptyState.subtitle")}
+        cta={t("emptyState.cta")}
+      />
+    );
   }
 
   // Card item renderers — shared between the mobile accordion and desktop sections.
@@ -191,7 +221,7 @@ export const ArtistSections = async ({
           <AccordionItem value="portfolios" className="border-border/30">
             <AccordionTrigger className="py-3 hover:no-underline">
               <span className="text-xs tracking-[0.25em] text-text-muted uppercase">
-                Portfolios
+                {t("portfolios")}
               </span>
             </AccordionTrigger>
             <AccordionContent>
@@ -201,7 +231,8 @@ export const ArtistSections = async ({
               {portfolioTotal > MAX_HIGHLIGHT_PORTFOLIOS && (
                 <ViewAllLink
                   href={`/artists/${username}/portfolios`}
-                  label="View all portfolios"
+                  label={t("viewAllPortfolios")}
+                  text={t("viewAll")}
                 />
               )}
             </AccordionContent>
@@ -212,7 +243,7 @@ export const ArtistSections = async ({
           <AccordionItem value="collections" className="border-border/30">
             <AccordionTrigger className="py-3 hover:no-underline">
               <span className="text-xs tracking-[0.25em] text-text-muted uppercase">
-                Collections
+                {t("collections")}
               </span>
             </AccordionTrigger>
             <AccordionContent>
@@ -220,7 +251,8 @@ export const ArtistSections = async ({
               {collectionTotal > MAX_HIGHLIGHT_COLLECTIONS && (
                 <ViewAllLink
                   href={`/artists/${username}/collections`}
-                  label="View all collections"
+                  label={t("viewAllCollections")}
+                  text={t("viewAll")}
                 />
               )}
             </AccordionContent>
@@ -231,7 +263,7 @@ export const ArtistSections = async ({
           <AccordionItem value="services" className="border-border/30">
             <AccordionTrigger className="py-3 hover:no-underline">
               <span className="text-xs tracking-[0.25em] text-text-muted uppercase">
-                Services
+                {t("services")}
               </span>
             </AccordionTrigger>
             <AccordionContent>
@@ -239,7 +271,8 @@ export const ArtistSections = async ({
               {serviceTotal > MAX_HIGHLIGHT_SERVICES && (
                 <ViewAllLink
                   href={`/artists/${username}/services`}
-                  label="View all services"
+                  label={t("viewAllServices")}
+                  text={t("viewAll")}
                 />
               )}
             </AccordionContent>
@@ -252,7 +285,9 @@ export const ArtistSections = async ({
         {portfolios.length > 0 && (
           <section>
             <SectionHeader
-              title="Portfolios"
+              title={t("portfolios")}
+              viewAllLabel={t("viewAll")}
+              viewAllAriaLabel={t("viewAllPortfolios")}
               href={
                 portfolioTotal > MAX_HIGHLIGHT_PORTFOLIOS
                   ? `/artists/${username}/portfolios`
@@ -266,7 +301,9 @@ export const ArtistSections = async ({
         {collections.length > 0 && (
           <section>
             <SectionHeader
-              title="Collections"
+              title={t("collections")}
+              viewAllLabel={t("viewAll")}
+              viewAllAriaLabel={t("viewAllCollections")}
               href={
                 collectionTotal > MAX_HIGHLIGHT_COLLECTIONS
                   ? `/artists/${username}/collections`
@@ -280,7 +317,9 @@ export const ArtistSections = async ({
         {services.length > 0 && (
           <section>
             <SectionHeader
-              title="Services"
+              title={t("services")}
+              viewAllLabel={t("viewAll")}
+              viewAllAriaLabel={t("viewAllServices")}
               href={
                 serviceTotal > MAX_HIGHLIGHT_SERVICES
                   ? `/artists/${username}/services`

@@ -1,8 +1,10 @@
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { ArtistBreadcrumb } from "@/app/[locale]/(artists)/__components/artist-breadcrumb";
 import Web from "@/lib/components/web-page.component";
 import { ServiceCard } from "@/modules/user-services/components/service-card";
 import userServiceService from "@/modules/user-services/user-service.service";
+import usersService from "@/modules/users/users.service";
 
 type Props = {
   params: Promise<{ username: string }>;
@@ -10,11 +12,19 @@ type Props = {
 
 export default async function Page({ params }: Props) {
   const { username } = await params;
+  const t = await getTranslations("artists.services");
 
-  const response = await userServiceService.getAllByUsername(username, {
-    is_active: true,
-    blocked: false,
-  });
+  const [userExist, response] = await Promise.all([
+    usersService.usernameExists(username),
+    userServiceService.getAllByUsername(username, {
+      is_active: true,
+      blocked: false,
+    }),
+  ]);
+
+  if (!userExist.data) {
+    notFound();
+  }
 
   if (!response.data) {
     notFound();
@@ -29,13 +39,13 @@ export default async function Page({ params }: Props) {
         items={[
           {
             url: `/artists/${username}/services`,
-            title: "Services",
+            title: t("pageTitle"),
             isActive: true,
           },
         ]}
       />
 
-      <Web.Header title="Services" />
+      <Web.Header title={t("pageTitle")} />
 
       {services.length > 0 ? (
         <section className=" grid-cols-1 tablet:grid-cols-2 gap-5 grid laptop:grid-cols-3 desktop-lg:grid-cols-5 tablet:gap-6">
@@ -49,7 +59,7 @@ export default async function Page({ params }: Props) {
         </section>
       ) : (
         <div className="flex min-h-[40vh] items-center justify-center border border-dashed border-border/60 text-sm  text-text-muted">
-          No services yet.
+          {t("empty")}
         </div>
       )}
     </Web.Container>

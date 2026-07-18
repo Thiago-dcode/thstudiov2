@@ -1,7 +1,7 @@
-import Link from "next/link";
-import { redirect } from "next/navigation";
 import * as z from "zod";
 import { serverEnv } from "@/env/server";
+import { Link } from "@/i18n/navigation";
+import { redirect } from "@/i18n/redirect";
 import authComponent from "@/lib/components/page-component";
 import invitationLinkService from "@/modules/invitation-links/invitation-link.service";
 import waitListService from "@/modules/wait-list/wait-list.service";
@@ -32,7 +32,8 @@ export default async function RegisterPage({
     }
 
     if (!bypassRegistrationClose) {
-      redirect("/#home-hero-section");
+      await redirect("/#home-hero-section");
+      return;
     }
   }
 

@@ -3,11 +3,12 @@ import { Badge } from "@repo/ui/components/shadcn/badge";
 import { ArrowRight, Mail, MapPin } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
-import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 import fallbackBanner from "@/assets/images/fallback-banner.jpg";
 import { serverEnv } from "@/env/server";
+import { Link } from "@/i18n/navigation";
 import UserService from "@/modules/users/users.service";
 import { ArtistContactDialog } from "../../__components/artist-contact.dialog";
 import { ArtistSections } from "../../__components/artist-sections";
@@ -29,8 +30,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { data: profile } = await UserService.getProfile(username);
 
   if (!profile) {
+    const t = await getTranslations("artists.notFound");
     return {
-      title: "Artist not found",
+      title: t("heading"),
       robots: { index: false, follow: false },
     };
   }
@@ -98,7 +100,10 @@ const buildProfileJsonLd = (profile: UserProfile) => {
 
 const ArtistHomePage = async ({ params }: Props) => {
   const { username } = await params;
-  const { data: profile } = await UserService.getProfile(username);
+  const [{ data: profile }, t] = await Promise.all([
+    UserService.getProfile(username),
+    getTranslations("artists.profile"),
+  ]);
 
   if (!profile) {
     notFound();
@@ -197,7 +202,7 @@ const ArtistHomePage = async ({ params }: Props) => {
                 className="size-3.5 transition-transform duration-300 group-hover:-translate-y-px"
                 aria-hidden="true"
               />
-              <span>Get in touch</span>
+              <span>{t("getInTouch")}</span>
             </button>
           </ArtistContactDialog>
 
@@ -205,7 +210,7 @@ const ArtistHomePage = async ({ params }: Props) => {
             href={`/artists/${profile.username}/about`}
             className="group inline-flex min-h-11 items-center gap-2.5 border border-border/50 px-7 py-3 text-xs tracking-[0.15em] text-text-muted uppercase transition-all duration-300 hover:border-text/30 hover:text-text"
           >
-            <span>About {heading}</span>
+            <span>{t("aboutHeading", { name: heading })}</span>
             <ArrowRight
               className="size-3.5 transition-transform duration-300 group-hover:translate-x-0.5"
               aria-hidden="true"

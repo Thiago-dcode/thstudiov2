@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import authComponent from "@/lib/components/page-component";
 import { getRedirectTo } from "@/modules/auth/server-actions/redirect-to.action";
 import { getRememberMe } from "@/modules/auth/server-actions/user-session.action";

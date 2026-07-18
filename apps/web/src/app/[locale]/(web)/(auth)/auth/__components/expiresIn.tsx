@@ -2,8 +2,8 @@
 
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { useTimer } from "@repo/ui/hooks/useTimer";
-import { useRouter } from "next/navigation";
 import { useMemo } from "react";
+import { useRouter } from "@/i18n/navigation";
 
 export const ExpiresIn = ({
   expiresIn,

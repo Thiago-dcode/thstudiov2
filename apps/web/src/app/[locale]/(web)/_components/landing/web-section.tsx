@@ -1,7 +1,7 @@
 import { cn } from "@repo/ui/lib/utils";
 import { ArrowRight } from "lucide-react";
-import Link from "next/link";
 import type { ReactNode } from "react";
+import { Link } from "@/i18n/navigation";
 
 function Root({
   children,

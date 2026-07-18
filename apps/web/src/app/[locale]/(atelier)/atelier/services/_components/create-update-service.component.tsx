@@ -1,6 +1,9 @@
 "use client";
 
-import { ALLOWED_IMAGE_FILE_TYPES } from "@repo/common-lib/constants/constants";
+import {
+  ALLOWED_IMAGE_FILE_TYPES,
+  MAX_SERVICE_PRICE,
+} from "@repo/common-lib/constants/constants";
 import type { Portfolio } from "@repo/common-lib/types/portfolio";
 import type { FullService } from "@repo/common-lib/types/service";
 import {
@@ -27,6 +30,8 @@ import { usePreviewUrls } from "@repo/ui/hooks/usePreviewUrls";
 import { cn } from "@repo/ui/lib/utils";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef } from "react";
+import { StickyFormFooter } from "@/app/[locale]/(atelier)/__components/sticky-form-footer";
+import { SubmitServiceButton } from "@/app/[locale]/(atelier)/__components/submit-service-button";
 import { DynamicListInput } from "@/lib/components/dynamic-list-input";
 import FormComponent from "@/lib/components/form-component";
 import { useCreateUpdateService } from "@/modules/services/providers/create-update-service.provider";
@@ -48,7 +53,6 @@ export const CreateOrUpdateService = ({
     success,
     inputErrors,
     deleteInputErrorProperty,
-    canSubmit,
     readOnly,
     isUpdate,
     serviceInput,
@@ -221,10 +225,39 @@ export const CreateOrUpdateService = ({
 
             <div className="grid grid-cols-2 gap-4">
               <FormComponent.LabelInput
+                onKeyDown={(e) => {
+                  if (e.key === "-" || e.key === "Minus") {
+                    e.preventDefault();
+                  }
+                }}
                 onChange={(e) => {
+                  if (e.target.value !== "") {
+                    const parsed = Number(e.target.value);
+                    if (!Number.isNaN(parsed)) {
+                      if (parsed < 0) {
+                        e.target.value = "0";
+                      } else if (parsed > MAX_SERVICE_PRICE) {
+                        e.target.value = String(MAX_SERVICE_PRICE);
+                      }
+                    }
+                  }
                   serviceInput.current.price = e.target.value;
                   notifyFormChange();
                   deleteInputErrorProperty("price");
+                }}
+                onBlur={(e) => {
+                  if (e.target.value === "") return;
+                  const parsed = Number(e.target.value);
+                  if (Number.isNaN(parsed)) return;
+                  const rounded = Math.round(Math.max(0, parsed) * 100) / 100;
+                  e.target.value = String(rounded);
+                  serviceInput.current.price = e.target.value;
+                }}
+                onPaste={(e) => {
+                  const pasted = e.clipboardData.getData("text");
+                  if (pasted.includes("-")) {
+                    e.preventDefault();
+                  }
                 }}
                 defaultValue={serviceInput.current.price}
                 error={inputErrors?.price}
@@ -233,6 +266,7 @@ export const CreateOrUpdateService = ({
                 id="price"
                 type="number"
                 min="0"
+                max={MAX_SERVICE_PRICE}
                 step="0.01"
                 placeholder="0.00"
                 extraInfo="Price is optional, leave it to 0."
@@ -365,15 +399,11 @@ export const CreateOrUpdateService = ({
         )}
 
         {!readOnly ? (
-          <div className="sticky bottom-0 bg-bg p-2 mt-6">
-            <FormComponent.SubmitButton
-              disabled={!canSubmit || isPending || success}
-              isPending={isPending}
-              success={success}
-            >
-              {isUpdate ? "Update Service" : "Create Service"}
-            </FormComponent.SubmitButton>
-          </div>
+          <StickyFormFooter>
+            <div className="flex items-center justify-end">
+              <SubmitServiceButton />
+            </div>
+          </StickyFormFooter>
         ) : null}
       </FormComponent.Form>
     </FormComponent.Container>

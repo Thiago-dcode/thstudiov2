@@ -1,6 +1,6 @@
 import { MailOpen } from "lucide-react";
-import Link from "next/link";
-import { redirect } from "next/navigation";
+import { Link } from "@/i18n/navigation";
+import { redirect } from "@/i18n/redirect";
 import authComponent from "@/lib/components/page-component";
 import { getPasswordRecoveryAttemptCookie } from "@/modules/auth/server-actions/password-recovery.action";
 import { ExpiresIn } from "../../__components/expiresIn";
@@ -11,11 +11,13 @@ export default async function PasswordRecoverySuccess() {
   const passwordRecoveryAttemptCookie =
     await getPasswordRecoveryAttemptCookie();
   if (!passwordRecoveryAttemptCookie) {
-    redirect("/auth/password-recovery");
+    await redirect("/auth/password-recovery");
+    return;
   }
   const expiresAt = new Date(passwordRecoveryAttemptCookie.expires_at);
   if (expiresAt < new Date() || passwordRecoveryAttemptCookie.code_validated) {
-    redirect("/auth/password-recovery");
+    await redirect("/auth/password-recovery");
+    return;
   }
 
   return (

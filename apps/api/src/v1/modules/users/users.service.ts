@@ -68,9 +68,22 @@ export class UserService {
       },
     );
   }
+  /** Fields only the account owner should see when fetching a user by numeric id. */
+  private omitPrivateFields<T extends { email?: string; banned?: boolean; banned_reason?: string | null }>(
+    user: T,
+    id: number,
+  ): T {
+    if (this.requestService.user?.id === id) {
+      return user;
+    }
+    const { email, banned, banned_reason, ...rest } = user;
+    return rest as T;
+  }
+
   async findOne(id: number, findUserRequest?: FindUserRequest) {
     if (findUserRequest?.format === 'COMPACT') {
-      return await this.userRepository.findOneBy('id', id);
+      const result = await this.userRepository.findOneBy('id', id);
+      return this.omitPrivateFields(result, id);
     }
     const result = await this.userRepository.findById(id);
     if (result?.avatar) {
@@ -79,7 +92,7 @@ export class UserService {
     if (result?.banner) {
       result.banner = await this.helpers.getAsset(result.banner);
     }
-    return result;
+    return this.omitPrivateFields(result, id);
   }
 
 

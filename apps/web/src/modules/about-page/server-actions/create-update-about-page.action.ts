@@ -12,6 +12,8 @@ import { cleanObj, trimValues } from "@repo/common-lib/utils/cleanObj";
 import {
   getFriendlyApiErrors,
   getObjErrorFromZod,
+  requireSession,
+  unauthorizedActionReturn,
 } from "@/modules/auth/helpers";
 import aboutPageService from "../about-page.service";
 import {
@@ -32,10 +34,19 @@ export const createAboutPageAction = async (
     }
   >
 > => {
+  const session = await requireSession();
+  if (!session) {
+    return unauthorizedActionReturn<
+      AboutPage,
+      { title?: string; description?: string; photo?: File }
+    >();
+  }
+
+  // Bind ownership to the session — ignore any client-supplied user_id.
   const rawData: CreateAboutPageInputWithFile = {
     description: (formData.get("description") as string) ?? "",
     title: (formData.get("title") as string) ?? "",
-    user_id: parseInt(formData.get("user_id") as string, 10),
+    user_id: session.id,
   };
   trimValues(rawData, {
     deep: true,
@@ -50,6 +61,7 @@ export const createAboutPageAction = async (
       inputs: validated.data,
     };
   }
+
   cleanObj(rawData);
   const photoFile = formData.get("photo") as File | null;
   // Validate avatar file if provided
@@ -101,6 +113,16 @@ export const updateAboutPageAction = async (
     }
   >
 > => {
+  // Real ownership of `id` is validated against the about-page row on the API
+  // (aboutPageService.update); this only needs to confirm the caller is signed in.
+  const session = await requireSession();
+  if (!session) {
+    return unauthorizedActionReturn<
+      AboutPage,
+      { title?: string; description?: string; photo?: File }
+    >();
+  }
+
   const rawData: UpdateAboutPageInputWithFile = {
     description: (formData.get("description") as string) ?? "",
     title: (formData.get("title") as string) ?? "",

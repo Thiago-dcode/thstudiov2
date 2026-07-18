@@ -9,8 +9,9 @@ import {
 } from "@repo/ui/components/shadcn/breadcrumb";
 import { cn } from "@repo/ui/lib/utils";
 import { ArrowLeft, ChevronRight } from "lucide-react";
-import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import * as React from "react";
+import { Link } from "@/i18n/navigation";
 
 export type BreadcrumbEntry = {
   url: string;
@@ -25,12 +26,13 @@ type ArtistBreadcrumbProps = {
   className?: string;
 };
 
-export const ArtistBreadcrumb = ({
+export const ArtistBreadcrumb = async ({
   username,
   items = [],
   backUrl,
   className,
 }: ArtistBreadcrumbProps) => {
+  const t = await getTranslations("artists");
   const allItems: BreadcrumbEntry[] = [
     {
       url: `/artists/${username}`,
@@ -48,11 +50,11 @@ export const ArtistBreadcrumb = ({
             <BreadcrumbLink asChild>
               <Link
                 href={backUrl}
-                aria-label="Go back"
+                aria-label={t("breadcrumb.goBack")}
                 className="inline-flex cursor-pointer items-center gap-1.5 text-[10px] uppercase tracking-[0.2em] text-text-muted/70 transition-colors hover:text-text"
               >
                 <ArrowLeft className="size-3.5" />
-                <span>Go back</span>
+                <span>{t("breadcrumb.goBack")}</span>
               </Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
@@ -83,7 +85,7 @@ export const ArtistBreadcrumb = ({
           </React.Fragment>
         ))}
       </BreadcrumbList>
-      <ShareButton title={`@${username}`} ariaLabel="Share profile" />
+      <ShareButton title={`@${username}`} ariaLabel={t("shareProfile")} />
     </Breadcrumb>
   );
 };

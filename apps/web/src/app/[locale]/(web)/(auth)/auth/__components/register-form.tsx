@@ -4,8 +4,8 @@ import { Errors } from "@repo/ui/components/custom/errors";
 import { Input } from "@repo/ui/components/shadcn/input";
 import { Label } from "@repo/ui/components/shadcn/label";
 import { Eye, EyeClosed } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { type ReactNode, useState } from "react";
+import { useRouter } from "@/i18n/navigation";
 import FormComponent from "@/lib/components/form-component";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { registerServerAction } from "@/modules/auth/server-actions/register.action";
@@ -75,7 +75,7 @@ export const RegisterForm = ({
               id="password"
               name="password"
               placeholder="Enter your password"
-              autoComplete="current-password"
+              autoComplete="new-password"
               required
             />
             <button

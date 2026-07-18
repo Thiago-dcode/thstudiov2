@@ -16,6 +16,7 @@ import { ArtistsGrid } from "./_components/artists-grid";
 import { FilterSearch } from "./_components/filter-search";
 import { FiltersProvider } from "./_components/filters.provider";
 import { NearMeSessionCleaner } from "./_components/near-me-session-cleaner";
+import { PortfoliosGrid } from "./_components/portfolios-grid";
 import {
   buildSearchRequest,
   filtersToQuery,
@@ -164,25 +165,23 @@ export default async function SearchPage({
                   className="text-sm font-medium tracking-wide text-text-muted"
                 >
                   {/* Pluralization handled by next-intl in the translation key */}
-                  {t("page.results.foundArtists", {
-                    count: totalCount,
-                    suffix: resultsForSearchSuffix,
-                  })}
-                  {/* Note: We need to conditionally use the artists or portfolios key */}
-                  {search === "portfolios" &&
-                    t("page.results.foundPortfolios", {
-                      count: totalCount,
-                      suffix: resultsForSearchSuffix,
-                    })}
+                  {search === "portfolios"
+                    ? t("page.results.foundPortfolios", {
+                        count: totalCount,
+                        suffix: resultsForSearchSuffix,
+                      })
+                    : t("page.results.foundArtists", {
+                        count: totalCount,
+                        suffix: resultsForSearchSuffix,
+                      })}
                 </h5>
                 <div className="flex flex-col gap-4">
                   {result.type === "artists" && (
                     <ArtistsGrid artists={result.items} />
                   )}
-                  {
-                    result.type === "portfolios" &&
-                      null /* TODO: PortfoliosGrid */
-                  }
+                  {result.type === "portfolios" && (
+                    <PortfoliosGrid portfolios={result.items} />
+                  )}
                   {pagination && (
                     <AppPagination
                       pagination={pagination}

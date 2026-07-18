@@ -28,6 +28,7 @@ import {
 } from "@repo/ui/components/shadcn/popover";
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { cn } from "@repo/ui/lib/utils";
+import { toast } from "@repo/ui/sonner";
 import { format } from "date-fns";
 import { Eye, Sparkles, Trash2, Upload } from "lucide-react";
 import { useSearchParams } from "next/navigation";
@@ -226,13 +227,15 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
     upsertMediaUpload(updatedUpload);
   };
   const handleDelete = async () => {
-    setDeletePopoverOpen(false);
-    setIsDrawerOpen(false);
     const result = await deleteSingleMedia(currentMedia);
     if (result.data) {
+      setDeletePopoverOpen(false);
+      setIsDrawerOpen(false);
       onDeleted?.(currentMedia.id);
+      await refresh();
+    } else {
+      toast.error(result.errors?.[0] ?? "Failed to delete media");
     }
-    refresh();
   };
 
   const handleTabChange = (value: string) => {
@@ -532,11 +535,13 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
                   </a>
                 )}
               </DrawerTitle>
-              {currentMedia.bytes && !isEditing && (
+              {currentMedia.bytes != null &&
+              currentMedia.bytes > 0 &&
+              !isEditing ? (
                 <p className="text-xs! text-text-muted shrink-0 whitespace-nowrap">
                   ({bytesToMB(currentMedia.bytes).toFixed(2)} MB)
                 </p>
-              )}
+              ) : null}
             </div>
             <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
               {isEditing ? (

@@ -2,6 +2,8 @@ import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CREATE_OR_UPDATE_LOCATION } from '@repo/common-lib/constants/constants';
 import type { CreateOrUpdateLocationPayload } from '@repo/common-lib/types/location';
+import { Query } from '@repo/database/facades';
+import type { ClientSchema } from '@repo/common-lib/schemas/client';
 import { AddressRepository } from './address.repository';
 import type { Address, CreateAddressInput, UpdateAddressInput } from '@repo/common-lib/types/address';
 import { cleanObj } from '@repo/common-lib/utils/object';
@@ -32,6 +34,9 @@ export class AddressService {
     if (!data.user_id && !data.client_id) {
       throw new BadRequestException('User id or client id must be sent');
     }
+    if (data.client_id) {
+      await this.assertOwnsClient(data.client_id);
+    }
     cleanObj(data);
     const result = await this.addressRepository.create(data);
     this.emitCreateOrUpdateLocationFromAddress(result);
@@ -42,11 +47,13 @@ export class AddressService {
 
     const address = await this.addressRepository.getOneById(id);
 
-    // Check authorization - user can only update their own address or client address
-    if (address.user_id && address.user_id !== this.requestService.user.id) {
-      throw new UnauthorizedException();
+    if (address.user_id) {
+      if (address.user_id !== this.requestService.user.id) {
+        throw new UnauthorizedException();
+      }
+    } else if (address.client_id) {
+      await this.assertOwnsClient(address.client_id);
     }
-    // If it's a client address, you might want to add additional checks here
 
     if (!Object.values(data).length) {
       return address;
@@ -59,6 +66,16 @@ export class AddressService {
       this.emitCreateOrUpdateLocationFromAddress(result);
     }
     return result;
+  }
+
+  private async assertOwnsClient(clientId: number): Promise<void> {
+    const client = await Query.table('clients')
+      .select(['user_id'])
+      .where('id', '=', clientId)
+      .first<Pick<ClientSchema, 'user_id'>>();
+    if (!client || client.user_id !== this.requestService.user.id) {
+      throw new UnauthorizedException();
+    }
   }
 
   /** When `country` is in the patch: omitted `state` / `city` → null. */

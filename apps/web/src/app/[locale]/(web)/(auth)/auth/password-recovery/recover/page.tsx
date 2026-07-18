@@ -1,6 +1,6 @@
 import { Lock } from "lucide-react";
-import Link from "next/link";
-import { redirect } from "next/navigation";
+import { Link } from "@/i18n/navigation";
+import { redirect } from "@/i18n/redirect";
 import PageComponent from "@/lib/components/page-component";
 import authService from "@/modules/auth/auth.service";
 import { getPasswordRecoveryAttemptCookie } from "@/modules/auth/server-actions/password-recovery.action";
@@ -19,13 +19,15 @@ export default async function PasswordRecoveryRecover({
   let _passwordRecoveryAttemptCookie = passwordRecoveryAttemptCookie;
   let expiresAt: Date | null = null;
   if (!attempt) {
-    redirect("/auth/password-recovery");
+    await redirect("/auth/password-recovery");
+    return;
   }
   //If there is no cookie, it means that the user open the link in another browser.
   if (_passwordRecoveryAttemptCookie) {
     expiresAt = new Date(_passwordRecoveryAttemptCookie.expires_at);
     if (expiresAt < new Date()) {
-      redirect("/auth/password-recovery");
+      await redirect("/auth/password-recovery");
+      return;
     }
   }
   //TODO: validate the attempt
@@ -34,13 +36,20 @@ export default async function PasswordRecoveryRecover({
       code: attempt,
     });
     if (result.error || result.data === null) {
-      redirect("/auth/password-recovery");
+      await redirect("/auth/password-recovery");
+      return;
     }
     expiresAt = new Date(result.data.expires_at);
     if (expiresAt < new Date()) {
-      redirect("/auth/password-recovery");
+      await redirect("/auth/password-recovery");
+      return;
     }
     _passwordRecoveryAttemptCookie = result.data;
+  }
+
+  if (!_passwordRecoveryAttemptCookie) {
+    await redirect("/auth/password-recovery");
+    return;
   }
 
   return (

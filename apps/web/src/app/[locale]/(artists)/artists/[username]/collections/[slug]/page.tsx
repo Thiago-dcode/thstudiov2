@@ -2,10 +2,11 @@ import { Gallery } from "@repo/ui/components/custom/gallery/gallery";
 import { GalleryGrid } from "@repo/ui/components/custom/gallery/gallery-grid";
 import { GalleryProvider } from "@repo/ui/providers/gallery.provider";
 import { Pencil } from "lucide-react";
-import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { ArtistBreadcrumb } from "@/app/[locale]/(artists)/__components/artist-breadcrumb";
 import { ResourceNotFound } from "@/app/[locale]/(artists)/__components/resource-not-found";
+import { Link } from "@/i18n/navigation";
 import Web from "@/lib/components/web-page.component";
 import { config } from "@/lib/config";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
@@ -19,6 +20,9 @@ type Props = {
 
 export default async function Page({ params, searchParams }: Props) {
   const { username, slug } = await params;
+  const t = await getTranslations("artists.collections");
+  const tNotFound = await getTranslations("artists.resourceNotFound");
+  const tEdit = await getTranslations("artists.editAria");
 
   const [userExist, response, userAuth] = await Promise.all([
     usersService.usernameExists(username),
@@ -36,7 +40,7 @@ export default async function Page({ params, searchParams }: Props) {
       <Web.Container>
         <ResourceNotFound
           username={username}
-          message="The collection you're looking for doesn't exist or may have been removed."
+          message={tNotFound("collection")}
         />
       </Web.Container>
     );
@@ -75,7 +79,7 @@ export default async function Page({ params, searchParams }: Props) {
         items={[
           {
             url: `/artists/${username}/collections`,
-            title: "Collections",
+            title: t("pageTitle"),
             isActive: false,
           },
           {
@@ -93,7 +97,7 @@ export default async function Page({ params, searchParams }: Props) {
         {canEdit && (
           <Link
             href={`/atelier/collections/edit/${collection.slug}`}
-            aria-label="Edit collection"
+            aria-label={tEdit("editCollection")}
             className="text-text-muted hover:text-text transition-colors self-start md:self-auto"
           >
             <Pencil className="size-4 md:size-5" />
@@ -124,7 +128,7 @@ export default async function Page({ params, searchParams }: Props) {
           </GalleryProvider>
         ) : (
           <div className="flex min-h-[40vh] items-center justify-center border border-dashed border-border/60 text-sm  text-text-muted">
-            This collection is currently empty.
+            {t("galleryEmpty")}
           </div>
         )}
       </section>

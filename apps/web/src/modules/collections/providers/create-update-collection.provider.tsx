@@ -55,6 +55,8 @@ function buildCollectionInput(
 type CollectionContextType = {
   user: UserAuth;
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => Promise<void>;
+  /** Submits the collection without requiring a form submit event (e.g. from a confirmation dialog). */
+  submitCollection: () => Promise<void>;
   handleSetFormData: (
     key: keyof CreateCollectionInput,
     value: string | number | boolean | FullCollectionMedia[],
@@ -214,6 +216,10 @@ export const CollectionProvider = ({
     [handleAction],
   );
 
+  const submitCollection = useCallback(async () => {
+    await handleAction();
+  }, [handleAction]);
+
   const slugChecksMemo = useRef<
     Record<string, ActionReturn<boolean | null, undefined>>
   >({});
@@ -359,6 +365,7 @@ export const CollectionProvider = ({
   const contextValue: CollectionContextType = {
     user,
     handleSubmit,
+    submitCollection,
     handleSetFormData,
     collectionInput,
     setCollectionInput,

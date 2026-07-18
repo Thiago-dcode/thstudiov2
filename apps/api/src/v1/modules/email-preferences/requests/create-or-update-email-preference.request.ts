@@ -5,6 +5,10 @@ export class CreateOrUpdateEmailPreferenceRequest {
   @IsString()
   email: string;
 
+  // Proof-of-control: must match the token issued for this email (see EmailPreferencesController).
+  @IsString()
+  token: string;
+
   @IsOptional()
   @IsNumber()
   @IsPositive()

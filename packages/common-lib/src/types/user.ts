@@ -46,9 +46,10 @@ export type ProfileAddress = {
   state?: string | null;
 };
 
+// Public-facing profile: excludes email/banned/banned_reason, never meant to leave the account owner's view.
 export type UserProfile = Pick<UserSchema,
-  | 'id' | 'name' | 'surname' | 'username' | 'email'
-  | 'avatar' | 'banner' | 'banned' | 'banned_reason'
+  | 'id' | 'name' | 'surname' | 'username'
+  | 'avatar' | 'banner'
   | 'is_active' | 'short_biography' | 'biography' | 'profession' | 'is_featured'
 > & {
   address: ProfileAddress | null;

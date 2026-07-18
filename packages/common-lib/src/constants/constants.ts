@@ -37,6 +37,8 @@ export const MAX_PASSWORD_RESET = 3;
 export const MAX_COLLECTION_ITEMS =30;
 export const MAX_PORTFOLIO_ITEMS=100;
 export const MAX_CATEGORIES_PORTFOLIO = 3;
+/** Postgres `real` (4-byte float) tops out around 3.4e38; keep prices well under that and sane for a service listing. */
+export const MAX_SERVICE_PRICE = 999999.99;
 export const MIN_COLUMN_BASE_COLUMNS = 1;
 export const MAX_COLUMN_BASE_COLUMNS = 12;
 /**

@@ -1,7 +1,9 @@
 import { ArrowLeft, Search } from "lucide-react";
-import Link from "next/link";
+import { getTranslations } from "next-intl/server";
+import { Link } from "@/i18n/navigation";
 
-export default function ArtistNotFound() {
+export default async function ArtistNotFound() {
+  const t = await getTranslations("artists.notFound");
   return (
     <div className="py-8 w-full flex flex-col items-center justify-center min-h-[70vh] px-6 animate-in fade-in duration-700">
       <div className="relative flex flex-col items-center text-center max-w-lg">
@@ -16,11 +18,10 @@ export default function ArtistNotFound() {
 
           <div className="space-y-3">
             <h1 className="text-2xl tablet:text-3xl font-serif  tracking-tight">
-              Artist not found
+              {t("heading")}
             </h1>
             <p className="text-sm tablet:text-base text-text-muted leading-relaxed max-w-xs mx-auto">
-              The profile you&apos;re looking for doesn&apos;t exist or may have
-              been removed.
+              {t("description")}
             </p>
           </div>
 
@@ -31,7 +32,7 @@ export default function ArtistNotFound() {
             className="inline-flex items-center gap-2.5 px-7 py-3 text-xs tracking-[0.15em] uppercase text-text-muted border border-border/50 hover:text-text hover:border-text/30 transition-all duration-300 group"
           >
             <ArrowLeft className="size-3.5 transition-transform duration-300 group-hover:-translate-x-0.5" />
-            <span>Back to home</span>
+            <span>{t("backHome")}</span>
           </Link>
         </div>
       </div>

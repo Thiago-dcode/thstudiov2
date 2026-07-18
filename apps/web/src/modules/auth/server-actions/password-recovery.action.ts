@@ -44,7 +44,7 @@ export const passwordRecoveryAction = async (
       expiresAt < new Date() ||
       passwordRecoveryAttemptCookie.code_validated
     ) {
-      await deleteCookie(PASSWORD_RECOVERY_ATTEMPT_COOKIE_NAME);
+      await deletePasswordAttemptCookie();
     } else {
       //TODO: make user wait 1 minute and 30 seconds before trying again
       const waitTime = 1000 * 60 * 1.5;
@@ -108,9 +108,5 @@ export const getPasswordRecoveryAttemptCookie = async () => {
 };
 
 export const deletePasswordAttemptCookie = async () => {
-  const cookieStore = await cookies();
-  cookieStore.set(PASSWORD_RECOVERY_ATTEMPT_COOKIE_NAME, "", {
-    httpOnly: true,
-    maxAge: 0,
-  });
+  await deleteCookie(PASSWORD_RECOVERY_ATTEMPT_COOKIE_NAME);
 };

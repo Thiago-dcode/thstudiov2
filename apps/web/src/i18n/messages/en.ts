@@ -293,6 +293,7 @@ const messages = {
       portfolios: "Portfolios",
     },
     headerArtistSearch: {
+      placeholder: "Search artists…",
       registrationClosedToast:
         "Artist search is unavailable while registration is closed. Join the waitlist to get early access.",
     },
@@ -376,6 +377,11 @@ const messages = {
       messagePlaceholder: "Tell us how we can help...",
       submitButton: "Send to support",
       successToast: "Your message was sent to support.",
+    },
+    unavailable: {
+      heading: "Support is temporarily unavailable",
+      description:
+        "We couldn't load the support form right now. Please try again shortly.",
     },
     subjects: [
       { value: "General question", label: "General question" },
@@ -477,6 +483,115 @@ const messages = {
     clickHint: "Click on the categories you want",
     noResults: "No results",
     loadMore: "more",
+  },
+  artists: {
+    shareProfile: "Share profile",
+    breadcrumb: {
+      goBack: "Go back",
+    },
+    header: {
+      atelier: "Atelier",
+      contact: "Contact",
+      menu: "Menu",
+      nav: {
+        portfolios: "Portfolios",
+        collections: "Collections",
+        services: "Services",
+        about: "About",
+      },
+    },
+    contactDialog: {
+      contactButton: "Contact",
+      contactTitle: "Contact {name}",
+      contactTitleFallback: "Contact",
+      description: "Send a message directly to this artist.",
+      selfContact: "You can't contact yourself.",
+      form: {
+        nameLabel: "Name",
+        namePlaceholder: "Your name",
+        emailLabel: "Email",
+        emailPlaceholder: "your@email.com",
+        subjectLabel: "Subject",
+        subjectPlaceholder: "Commission inquiry",
+        messageLabel: "Message",
+        messagePlaceholder: "Tell the artist about your project...",
+        submit: "Send Message",
+      },
+      successToast: "Message sent successfully!",
+    },
+    sections: {
+      portfolios: "Portfolios",
+      collections: "Collections",
+      services: "Services",
+      viewAll: "View all",
+      viewAllPortfolios: "View all portfolios",
+      viewAllCollections: "View all collections",
+      viewAllServices: "View all services",
+      emptyState: {
+        title: "{name} hasn't published any work yet.",
+        subtitle: "Check back soon, or reach out to start a conversation.",
+        cta: "Get in touch",
+      },
+    },
+    notFound: {
+      heading: "Artist not found",
+      description:
+        "The profile you're looking for doesn't exist or may have been removed.",
+      backHome: "Back to home",
+    },
+    resourceNotFound: {
+      heading: "Resource not found",
+      backToProfile: "Back to profile",
+      portfolio:
+        "The portfolio you're looking for doesn't exist or may have been removed.",
+      collection:
+        "The collection you're looking for doesn't exist or may have been removed.",
+      service:
+        "The service you're looking for doesn't exist or may have been removed.",
+      media:
+        "The media you're looking for doesn't exist or may have been removed.",
+    },
+    profile: {
+      getInTouch: "Get in touch",
+      aboutHeading: "About {name}",
+    },
+    editAria: {
+      editPortfolio: "Edit portfolio",
+      editCollection: "Edit collection",
+      editService: "Edit service",
+      editMedia: "Edit media",
+      editAboutPage: "Edit about page",
+    },
+    portfolios: {
+      pageTitle: "Portfolios",
+      empty: "No portfolios yet.",
+      galleryEmpty: "This portfolio is currently empty.",
+    },
+    collections: {
+      pageTitle: "Collections",
+      empty: "No collections yet.",
+      galleryEmpty: "This collection is currently empty.",
+    },
+    services: {
+      pageTitle: "Services",
+      empty: "No services yet.",
+      whatsIncluded: "What's included",
+      terms: "Terms",
+      relatedPortfolio: "Related portfolio",
+    },
+    about: {
+      notShared: "This artist hasn't shared their story yet.",
+      heading: "About",
+      getInTouch: "Get in touch",
+    },
+    media: {
+      untitled: "Untitled",
+      editAria: "Edit media",
+    },
+    fullscreen: {
+      enter: "View fullscreen",
+      exit: "Exit fullscreen",
+    },
   },
 };
 

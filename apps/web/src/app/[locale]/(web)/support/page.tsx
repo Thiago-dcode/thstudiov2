@@ -1,3 +1,4 @@
+import { MailWarning } from "lucide-react";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { serverEnv } from "@/env/server";
@@ -17,12 +18,6 @@ export default async function SupportPage() {
   const t = await getTranslations("support");
   const defaultName = session?.username;
 
-  if (!supportUser.data) {
-    throw new Error(
-      `Support user "${serverEnv.SUPPORT_USERNAME}" was not found.`,
-    );
-  }
-
   return (
     <section className="mx-auto w-full max-w-3xl px-6 py-16 tablet:px-10 tablet:py-24">
       <div className="space-y-3">
@@ -38,11 +33,26 @@ export default async function SupportPage() {
       </div>
 
       <div className="mt-10 border border-border bg-fg-2/20 p-5 tablet:p-7">
-        <SupportForm
-          supportUserId={supportUser.data.id}
-          defaultName={defaultName || undefined}
-          defaultEmail={session?.email || undefined}
-        />
+        {supportUser.data ? (
+          <SupportForm
+            supportUserId={supportUser.data.id}
+            defaultName={defaultName || undefined}
+            defaultEmail={session?.email || undefined}
+          />
+        ) : (
+          <div className="flex flex-col items-center gap-3 py-10 text-center">
+            <MailWarning
+              className="size-6 text-text-muted/60"
+              strokeWidth={1.5}
+            />
+            <h2 className="text-base font-medium text-text">
+              {t("unavailable.heading")}
+            </h2>
+            <p className="max-w-sm text-sm leading-relaxed text-text-muted">
+              {t("unavailable.description")}
+            </p>
+          </div>
+        )}
       </div>
     </section>
   );

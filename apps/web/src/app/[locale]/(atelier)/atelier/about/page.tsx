@@ -31,7 +31,6 @@ export default async function AboutPage() {
       >
         <CreateOrUpdateAboutPage
           variant="default"
-          userId={userAuth.id}
           currentAboutPage={aboutPage || undefined}
         />
       </AdminPageTitle>
@@ -43,7 +42,6 @@ export default async function AboutPage() {
           description="No about page created yet. Share your background and artistic journey."
         >
           <CreateOrUpdateAboutPage
-            userId={userAuth.id}
             currentAboutPage={aboutPage || undefined}
             variant="primary"
           />

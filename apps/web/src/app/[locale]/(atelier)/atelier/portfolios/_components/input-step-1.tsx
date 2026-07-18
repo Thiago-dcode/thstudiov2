@@ -17,12 +17,11 @@ import {
   useInputFile,
 } from "@repo/ui/contexts/file.provider";
 import { usePreviewUrls } from "@repo/ui/hooks/usePreviewUrls";
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import FormComponent from "@/lib/components/form-component";
 import CategoryCombobox from "@/modules/categories/components/category-combobox";
 import { UpdateCategoriesProvider } from "@/modules/categories/providers/categories.provider";
 import { usePortfolio } from "@/modules/portfolios/providers/create-update-portfolio.provider";
-import { usePortfolioSlug } from "./portfolio-slug.context";
 
 const ThumbnailInput = () => {
   const { files } = useInputFile();
@@ -103,12 +102,12 @@ const FirstStepInputs = () => {
     highlightCount,
     highlightLimit,
     isLoadingHighlightCount,
+    isSlugFormatValid,
+    isCheckingSlugAvailability,
+    isSlugAvailable,
   } = usePortfolio();
 
   const categoriesSelected = portfolioInput.categories;
-
-  const { checkSlugAvailability, isCheckingSlugAvailability, isSlugAvailable } =
-    usePortfolioSlug();
 
   const isCurrentlyHighlighted = portfolioInput.is_highlight ?? false;
   const originallyHighlighted = currentPortfolio?.is_highlight ?? false;
@@ -120,11 +119,6 @@ const FirstStepInputs = () => {
   );
 
   const manuallyChangedSlug = useRef(false);
-  const previousSlugRef = useRef<string | undefined>(portfolioInput.slug);
-
-  const [isValidSlug, setIsValidSlug] = useState<boolean | undefined>(
-    undefined,
-  );
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     deleteInputErrorProperty("title");
@@ -152,34 +146,6 @@ const FirstStepInputs = () => {
     handleSetFormData("slug", newSlug);
     manuallyChangedSlug.current = !!newSlug;
   };
-
-  useEffect(() => {
-    const currentSlug = portfolioInput.slug?.trim();
-    const previousSlug = previousSlugRef.current?.trim();
-
-    // Only check if slug actually changed (not on mount/navigation)
-    const slugChanged = currentSlug !== previousSlug;
-
-    if (currentSlug) {
-      const isValid = isAValidSlugFormat(currentSlug);
-      setIsValidSlug(isValid);
-
-      // Only check availability if slug changed and is valid
-      if (
-        slugChanged &&
-        isValid &&
-        !currentSlug.endsWith("-") &&
-        currentSlug !== currentPortfolio?.slug?.trim()
-      ) {
-        checkSlugAvailability(currentSlug);
-      }
-    } else {
-      setIsValidSlug(undefined);
-    }
-
-    // Update the ref for next comparison
-    previousSlugRef.current = portfolioInput.slug;
-  }, [portfolioInput.slug, checkSlugAvailability, currentPortfolio?.slug]);
 
   // Get slug status message
   const getSlugStatusMessage = () => {
@@ -245,7 +211,7 @@ const FirstStepInputs = () => {
             extraInfo="A slug is a URL-friendly version of your title (e.g., 'my-awesome-portfolio'). It should be unique as it's used in the portfolio's URL to identify it and makes it easier to find."
             disabled={isCheckingSlugAvailability || isPending}
           />
-          {isValidSlug === false && (
+          {isSlugFormatValid === false && (
             <p className="text-sm text-error">
               ✗ Invalid slug format. Example: my-portfolio
             </p>

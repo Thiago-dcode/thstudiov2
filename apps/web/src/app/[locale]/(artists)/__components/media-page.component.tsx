@@ -1,11 +1,12 @@
 import type { MediaWithUser } from "@repo/common-lib/types/media";
 import { Pencil } from "lucide-react";
-import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import {
   ArtistBreadcrumb,
   type BreadcrumbEntry,
 } from "@/app/[locale]/(artists)/__components/artist-breadcrumb";
 import { FullscreenMedia } from "@/app/[locale]/(artists)/__components/fullscreen-media";
+import { Link } from "@/i18n/navigation";
 import Web from "@/lib/components/web-page.component";
 
 interface MediaPageComponentProps {
@@ -16,18 +17,20 @@ interface MediaPageComponentProps {
   canEdit?: boolean;
 }
 
-export const MediaPageComponent = ({
+export const MediaPageComponent = async ({
   user,
   media,
   breadcrumbs = [],
   backUrl,
   canEdit,
 }: MediaPageComponentProps) => {
+  const t = await getTranslations("artists.media");
+  const untitled = t("untitled");
   const allBreadcrumbs: BreadcrumbEntry[] = [
     ...breadcrumbs,
     {
       url: `/artists/media/${media.public_id}`,
-      title: media.title || "Untitled",
+      title: media.title || untitled,
       isActive: true,
     },
   ];
@@ -40,13 +43,13 @@ export const MediaPageComponent = ({
         backUrl={backUrl}
       />
       <Web.Header
-        title={media.title || "Untitled"}
+        title={media.title || untitled}
         description={media.description || media.seo_description || undefined}
       >
         {canEdit && (
           <Link
             href={`/atelier/media?m=${media.public_id}`}
-            aria-label="Edit media"
+            aria-label={t("editAria")}
             className="text-text-muted hover:text-text transition-colors self-start md:self-auto"
           >
             <Pencil className="size-4 md:size-5" />

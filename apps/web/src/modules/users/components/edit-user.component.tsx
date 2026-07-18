@@ -297,7 +297,7 @@ export const EditAvatar = ({ defaultAvatar }: { defaultAvatar?: string }) => {
   return (
     <div className="w-full flex flex-col items-center gap-2">
       <div className="flexw-full max-w-2xl mx-auto p-4">
-        {previewUrls?.length && (
+        {previewUrls?.length ? (
           <div className="mt-4 flex flex-col items-center gap-2">
             <h3 className="text-sm font-medium">{t("avatar.preview")}</h3>
             <div className="relative w-32 h-32 overflow-hidden border-4 rounded-full">
@@ -308,7 +308,7 @@ export const EditAvatar = ({ defaultAvatar }: { defaultAvatar?: string }) => {
               />
             </div>
           </div>
-        )}
+        ) : null}
       </div>
       <FileInput
         onChange={() => deleteInputErrorProperty("avatar")}

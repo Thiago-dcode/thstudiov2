@@ -1,9 +1,10 @@
 import { ArrowRight, Check, Circle, Pencil } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { ArtistBreadcrumb } from "@/app/[locale]/(artists)/__components/artist-breadcrumb";
 import { ResourceNotFound } from "@/app/[locale]/(artists)/__components/resource-not-found";
+import { Link } from "@/i18n/navigation";
 import Web from "@/lib/components/web-page.component";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import userServiceService from "@/modules/user-services/user-service.service";
@@ -15,6 +16,9 @@ type Props = {
 
 export default async function Page({ params }: Props) {
   const { username, slug } = await params;
+  const t = await getTranslations("artists.services");
+  const tNotFound = await getTranslations("artists.resourceNotFound");
+  const tEdit = await getTranslations("artists.editAria");
 
   const [userExist, response, userAuth] = await Promise.all([
     usersService.usernameExists(username),
@@ -27,14 +31,10 @@ export default async function Page({ params }: Props) {
   }
 
   const service = response.data;
-  console.log("service", service);
   if (!service || service.blocked_at) {
     return (
       <Web.Container>
-        <ResourceNotFound
-          username={username}
-          message="The service you're looking for doesn't exist or may have been removed."
-        />
+        <ResourceNotFound username={username} message={tNotFound("service")} />
       </Web.Container>
     );
   }
@@ -49,7 +49,7 @@ export default async function Page({ params }: Props) {
         items={[
           {
             url: `/artists/${username}/services`,
-            title: "Services",
+            title: t("pageTitle"),
             isActive: false,
           },
           {
@@ -103,7 +103,7 @@ export default async function Page({ params }: Props) {
               {canEdit && (
                 <Link
                   href={`/atelier/services/edit/${service.slug}`}
-                  aria-label="Edit service"
+                  aria-label={tEdit("editService")}
                   className="mt-1 shrink-0 border border-border/40 p-2 text-text-muted transition-colors hover:border-border hover:text-text"
                 >
                   <Pencil className="size-3.5" />
@@ -130,7 +130,7 @@ export default async function Page({ params }: Props) {
                 {service.features.length > 0 && (
                   <section className="space-y-5">
                     <h4 className="font-medium uppercase tracking-wide text-text-muted">
-                      What&apos;s included
+                      {t("whatsIncluded")}
                     </h4>
                     <ul className="space-y-3.5">
                       {service.features.map((feature) => (
@@ -149,7 +149,7 @@ export default async function Page({ params }: Props) {
                 {service.terms.length > 0 && (
                   <section className="space-y-5">
                     <h4 className="font-medium uppercase tracking-wide text-text-muted">
-                      Terms
+                      {t("terms")}
                     </h4>
                     <ul className="space-y-3.5">
                       {service.terms.map((term) => (
@@ -172,7 +172,7 @@ export default async function Page({ params }: Props) {
             <div className="mt-auto border-t border-border/40 pt-8 pb-8">
               <div className="space-y-3">
                 <span className="block uppercase tracking-wide text-text-muted">
-                  Related portfolio
+                  {t("relatedPortfolio")}
                 </span>
                 <Link
                   href={`/artists/${username}/portfolios/${service.portfolio.slug}`}

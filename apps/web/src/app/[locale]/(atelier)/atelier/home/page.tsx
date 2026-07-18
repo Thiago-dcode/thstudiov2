@@ -18,7 +18,6 @@ export default async function AtelierHomePage() {
       usersService.getAllCategories(userAuth.id),
     ],
   );
-  console.log(userResponse);
   if (!userResponse.data) {
     notFound();
   }

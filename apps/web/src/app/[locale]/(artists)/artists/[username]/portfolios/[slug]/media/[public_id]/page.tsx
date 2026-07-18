@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { MediaPageComponent } from "@/app/[locale]/(artists)/__components/media-page.component";
 import { ResourceNotFound } from "@/app/[locale]/(artists)/__components/resource-not-found";
 import Web from "@/lib/components/web-page.component";
@@ -16,10 +17,12 @@ type Props = {
 
 export default async function MediaPage({ params, searchParams }: Props) {
   const { username, slug, public_id } = await params;
+  const tNotFound = await getTranslations("artists.resourceNotFound");
+  const tPortfolios = await getTranslations("artists.portfolios");
 
-  const [user, slugExist, session] = await Promise.all([
+  const [user, portfolioResponse, session] = await Promise.all([
     usersService.usernameExists(username),
-    userPortfolioService.slugExists(username, slug),
+    userPortfolioService.getByUsername(username, slug),
     userSession(),
   ]);
 
@@ -27,12 +30,14 @@ export default async function MediaPage({ params, searchParams }: Props) {
     notFound();
   }
 
-  if (!slugExist.data) {
+  const portfolio = portfolioResponse.data;
+
+  if (!portfolio || portfolio.blocked_at) {
     return (
       <Web.Container>
         <ResourceNotFound
           username={username}
-          message="The portfolio you're looking for doesn't exist or may have been removed."
+          message={tNotFound("portfolio")}
         />
       </Web.Container>
     );
@@ -40,13 +45,17 @@ export default async function MediaPage({ params, searchParams }: Props) {
 
   const { data: media } = await mediaService.getByPublicId(public_id);
 
-  if (!media || media.blocked_at) {
+  const belongsToPortfolio =
+    !!media &&
+    (portfolio.media.some((m) => m.public_id === media.public_id) ||
+      portfolio.collections.some((c) =>
+        c.media.some((m) => m.public_id === media.public_id),
+      ));
+
+  if (!media || media.blocked_at || !belongsToPortfolio) {
     return (
       <Web.Container>
-        <ResourceNotFound
-          username={username}
-          message="The media you're looking for doesn't exist or may have been removed."
-        />
+        <ResourceNotFound username={username} message={tNotFound("media")} />
       </Web.Container>
     );
   }
@@ -66,7 +75,7 @@ export default async function MediaPage({ params, searchParams }: Props) {
       backUrl={backUrl}
       breadcrumbs={[
         {
-          title: `Portfolio ${slug}`,
+          title: `${tPortfolios("pageTitle")} ${slug}`,
           url: backUrl,
           isActive: false,
         },

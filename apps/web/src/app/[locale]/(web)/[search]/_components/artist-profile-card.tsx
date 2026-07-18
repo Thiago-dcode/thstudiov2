@@ -2,7 +2,7 @@ import type { ArtistCard } from "@repo/common-lib/types/user";
 import { cn } from "@repo/ui/lib/utils";
 import { MapPin, Tags } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 
 function artistDisplayName(a: ArtistCard): string {
   const full = [a.name, a.surname].filter(Boolean).join(" ").trim();

@@ -294,6 +294,7 @@ const messages: Translations = {
       portfolios: "Portafolios",
     },
     headerArtistSearch: {
+      placeholder: "Buscar artistas…",
       registrationClosedToast:
         "La búsqueda de artistas no está disponible mientras el registro esté cerrado. Únete a la lista de espera para obtener acceso anticipado.",
     },
@@ -379,6 +380,11 @@ const messages: Translations = {
       messagePlaceholder: "Cuéntanos cómo podemos ayudarte...",
       submitButton: "Enviar a soporte",
       successToast: "Tu mensaje se envió a soporte.",
+    },
+    unavailable: {
+      heading: "Soporte no disponible temporalmente",
+      description:
+        "No pudimos cargar el formulario de soporte en este momento. Inténtalo de nuevo en unos minutos.",
     },
     subjects: [
       { value: "General question", label: "Pregunta general" },
@@ -481,6 +487,113 @@ const messages: Translations = {
     clickHint: "Haz clic en las categorías que desees",
     noResults: "Sin resultados",
     loadMore: "más",
+  },
+  artists: {
+    shareProfile: "Compartir perfil",
+    breadcrumb: {
+      goBack: "Volver",
+    },
+    header: {
+      atelier: "Atelier",
+      contact: "Contacto",
+      menu: "Menú",
+      nav: {
+        portfolios: "Portafolios",
+        collections: "Colecciones",
+        services: "Servicios",
+        about: "Acerca de",
+      },
+    },
+    contactDialog: {
+      contactButton: "Contacto",
+      contactTitle: "Contactar a {name}",
+      contactTitleFallback: "Contacto",
+      description: "Envía un mensaje directamente a este artista.",
+      selfContact: "No puedes contactarte a ti mismo.",
+      form: {
+        nameLabel: "Nombre",
+        namePlaceholder: "Tu nombre",
+        emailLabel: "Correo electrónico",
+        emailPlaceholder: "tu@correo.com",
+        subjectLabel: "Asunto",
+        subjectPlaceholder: "Consulta por encargo",
+        messageLabel: "Mensaje",
+        messagePlaceholder: "Cuéntale al artista sobre tu proyecto...",
+        submit: "Enviar mensaje",
+      },
+      successToast: "¡Mensaje enviado con éxito!",
+    },
+    sections: {
+      portfolios: "Portafolios",
+      collections: "Colecciones",
+      services: "Servicios",
+      viewAll: "Ver todo",
+      viewAllPortfolios: "Ver todos los portafolios",
+      viewAllCollections: "Ver todas las colecciones",
+      viewAllServices: "Ver todos los servicios",
+      emptyState: {
+        title: "{name} aún no ha publicado ningún trabajo.",
+        subtitle: "Vuelve pronto, o contáctanos para iniciar una conversación.",
+        cta: "Ponte en contacto",
+      },
+    },
+    notFound: {
+      heading: "Artista no encontrado",
+      description:
+        "El perfil que buscas no existe o pudo haber sido eliminado.",
+      backHome: "Volver al inicio",
+    },
+    resourceNotFound: {
+      heading: "Recurso no encontrado",
+      backToProfile: "Volver al perfil",
+      portfolio:
+        "El portafolio que buscas no existe o pudo haber sido eliminado.",
+      collection:
+        "La colección que buscas no existe o pudo haber sido eliminada.",
+      service: "El servicio que buscas no existe o pudo haber sido eliminado.",
+      media: "El contenido que buscas no existe o pudo haber sido eliminado.",
+    },
+    profile: {
+      getInTouch: "Ponte en contacto",
+      aboutHeading: "Acerca de {name}",
+    },
+    editAria: {
+      editPortfolio: "Editar portafolio",
+      editCollection: "Editar colección",
+      editService: "Editar servicio",
+      editMedia: "Editar contenido",
+      editAboutPage: "Editar página Acerca de",
+    },
+    portfolios: {
+      pageTitle: "Portafolios",
+      empty: "Aún no hay portafolios.",
+      galleryEmpty: "Este portafolio está vacío por ahora.",
+    },
+    collections: {
+      pageTitle: "Colecciones",
+      empty: "Aún no hay colecciones.",
+      galleryEmpty: "Esta colección está vacía por ahora.",
+    },
+    services: {
+      pageTitle: "Servicios",
+      empty: "Aún no hay servicios.",
+      whatsIncluded: "Qué incluye",
+      terms: "Términos",
+      relatedPortfolio: "Portafolio relacionado",
+    },
+    about: {
+      notShared: "Este artista aún no ha compartido su historia.",
+      heading: "Acerca de",
+      getInTouch: "Ponte en contacto",
+    },
+    media: {
+      untitled: "Sin título",
+      editAria: "Editar contenido",
+    },
+    fullscreen: {
+      enter: "Ver en pantalla completa",
+      exit: "Salir de pantalla completa",
+    },
   },
 };
 

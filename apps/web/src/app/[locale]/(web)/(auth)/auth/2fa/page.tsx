@@ -1,5 +1,5 @@
-import Link from "next/link";
-import { redirect } from "next/navigation";
+import { Link } from "@/i18n/navigation";
+import { redirect } from "@/i18n/redirect";
 import PageComponent from "@/lib/components/page-component";
 import { getRedirectTo } from "@/modules/auth/server-actions/redirect-to.action";
 import { get2faCookieData } from "@/modules/auth/server-actions/twofa.action";
@@ -12,15 +12,22 @@ export default async function TwoFactorAuth() {
     getRedirectTo(),
   ]);
   if (!user?.email) {
-    redirect("/auth/login");
+    await redirect("/auth/login");
+    return;
   }
 
-  // Mask email for privacy (show first 2 chars and domain)
-  const maskedEmail = user.email.replace(
-    /(.{2})(.*)(@.*)/,
-    (_, start, middle, domain) =>
-      start + "*".repeat(Math.min(middle.length, 8)) + domain,
-  );
+  // Mask email for privacy (works for 1-char local parts too)
+  const maskEmail = (email: string) => {
+    const at = email.indexOf("@");
+    if (at <= 0) return email;
+    const local = email.slice(0, at);
+    const domain = email.slice(at);
+    if (local.length <= 1) {
+      return `${local}*${domain}`;
+    }
+    return `${local.slice(0, 2)}${"*".repeat(Math.min(local.length - 2, 8))}${domain}`;
+  };
+  const maskedEmail = maskEmail(user.email);
   const expiresIn = () => {
     const expiresAt = user.twofa_expires_at
       ? new Date(user.twofa_expires_at)

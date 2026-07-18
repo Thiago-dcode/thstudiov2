@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { MediaPageComponent } from "@/app/[locale]/(artists)/__components/media-page.component";
 import { ResourceNotFound } from "@/app/[locale]/(artists)/__components/resource-not-found";
 import Web from "@/lib/components/web-page.component";
@@ -16,10 +17,12 @@ type Props = {
 
 export default async function MediaPage({ params, searchParams }: Props) {
   const { username, slug, public_id } = await params;
+  const tNotFound = await getTranslations("artists.resourceNotFound");
+  const tCollections = await getTranslations("artists.collections");
 
-  const [user, slugExist, session] = await Promise.all([
+  const [user, collectionResponse, session] = await Promise.all([
     usersService.usernameExists(username),
-    userCollectionService.slugExists(username, slug),
+    userCollectionService.getByUsername(username, slug),
     userSession(),
   ]);
 
@@ -27,12 +30,14 @@ export default async function MediaPage({ params, searchParams }: Props) {
     notFound();
   }
 
-  if (!slugExist.data) {
+  const collection = collectionResponse.data;
+
+  if (!collection || collection.blocked_at) {
     return (
       <Web.Container>
         <ResourceNotFound
           username={username}
-          message="The collection you're looking for doesn't exist or may have been removed."
+          message={tNotFound("collection")}
         />
       </Web.Container>
     );
@@ -40,13 +45,13 @@ export default async function MediaPage({ params, searchParams }: Props) {
 
   const { data: media } = await mediaService.getByPublicId(public_id);
 
-  if (!media || media.blocked_at) {
+  const belongsToCollection =
+    !!media && collection.media.some((m) => m.public_id === media.public_id);
+
+  if (!media || media.blocked_at || !belongsToCollection) {
     return (
       <Web.Container>
-        <ResourceNotFound
-          username={username}
-          message="The media you're looking for doesn't exist or may have been removed."
-        />
+        <ResourceNotFound username={username} message={tNotFound("media")} />
       </Web.Container>
     );
   }
@@ -66,7 +71,7 @@ export default async function MediaPage({ params, searchParams }: Props) {
       backUrl={backUrl}
       breadcrumbs={[
         {
-          title: `Collection ${slug}`,
+          title: `${tCollections("pageTitle")} ${slug}`,
           url: backUrl,
           isActive: false,
         },

@@ -1,7 +1,7 @@
 "use client";
 
 import { Errors } from "@repo/ui/components/custom/errors";
-import { useRouter } from "next/navigation";
+import { useRouter } from "@/i18n/navigation";
 import FormComponent from "@/lib/components/form-component";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { passwordRecoveryAction } from "@/modules/auth/server-actions/password-recovery.action";

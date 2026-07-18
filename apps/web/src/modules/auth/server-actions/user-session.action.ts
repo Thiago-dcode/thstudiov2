@@ -33,7 +33,13 @@ export const userSessionByCookie = async (
   if (!cookieValue) {
     return null;
   }
-  const userAuth = JSON.parse(cookieValue) as UserAuth;
+  let userAuth: UserAuth | null;
+  try {
+    userAuth = JSON.parse(cookieValue) as UserAuth;
+  } catch (error) {
+    console.error("Failed to parse user session cookie:", error);
+    return null;
+  }
   if (!userAuth?.token || !userAuth?.id) {
     return null;
   }

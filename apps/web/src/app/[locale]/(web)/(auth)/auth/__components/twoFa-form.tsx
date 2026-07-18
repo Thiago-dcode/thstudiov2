@@ -5,8 +5,8 @@ import {
 } from "@repo/common-lib/constants/redirect-to";
 import { Errors } from "@repo/ui/components/custom/errors";
 import { Input } from "@repo/ui/components/shadcn/input";
-import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
+import { useRouter } from "@/i18n/navigation";
 import FormComponent from "@/lib/components/form-component";
 import type { TwoFaUser } from "@/modules/auth/auth.types";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";

@@ -66,6 +66,8 @@ type CreateUpdateServiceContextType = {
   setService: (service: FullService) => void;
   clear: () => void;
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => Promise<void>;
+  /** Submits the service without requiring a form submit event (e.g. from a confirmation dialog). */
+  submitService: () => Promise<void>;
   isPending: boolean;
   success: boolean;
   inputErrors: Record<string, string> | undefined;
@@ -396,6 +398,11 @@ export function CreateUpdateServiceProvider({
     [canSubmit, handleAction, readOnly],
   );
 
+  const submitService = useCallback(async () => {
+    if (readOnly || !canSubmit) return;
+    await handleAction();
+  }, [canSubmit, handleAction, readOnly]);
+
   const populateFromService = useCallback(
     (service: FullService) => {
       serviceInput.current = {
@@ -456,6 +463,7 @@ export function CreateUpdateServiceProvider({
       setService,
       clear,
       handleSubmit,
+      submitService,
       isPending,
       success,
       inputErrors,
@@ -492,6 +500,7 @@ export function CreateUpdateServiceProvider({
       setService,
       clear,
       handleSubmit,
+      submitService,
       isPending,
       success,
       inputErrors,

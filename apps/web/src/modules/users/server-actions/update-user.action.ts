@@ -12,6 +12,9 @@ import { revalidateTag } from "next/cache";
 import {
   getFriendlyApiErrors,
   getObjErrorFromZod,
+  isSessionOwner,
+  requireSession,
+  unauthorizedActionReturn,
 } from "@/modules/auth/helpers";
 import { updateUserSchema } from "../schemas/user-shemas";
 import usersService from "../users.service";
@@ -22,6 +25,11 @@ export const updateUserAction = async (
   id: number,
   formData: FormData,
 ): Promise<ActionReturn<BaseUser, UpdateUserInputWithAssets>> => {
+  const session = await requireSession();
+  if (!isSessionOwner(session, id)) {
+    return unauthorizedActionReturn<BaseUser, UpdateUserInputWithAssets>();
+  }
+
   const categories = formData.get("categories") as string;
   // Extract text fields from FormData
   const rawData: UpdateUserInputWithAssets = {

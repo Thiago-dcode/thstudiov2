@@ -1,8 +1,8 @@
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
+import { redirect } from "@/i18n/redirect";
 import assetService from "@/modules/assets/asset.service";
 import waitListService from "@/modules/wait-list/wait-list.service";
 
@@ -45,12 +45,14 @@ export default async function WaitListValidatePage({
   const t = await getTranslations("waitListValidate");
 
   if (!token) {
-    redirect("/");
+    await redirect("/");
+    return;
   }
 
   const result = await waitListService.validate(token);
   if (result.error || !result.data) {
-    redirect("/");
+    await redirect("/");
+    return;
   }
 
   return (

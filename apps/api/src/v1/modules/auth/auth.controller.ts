@@ -20,12 +20,14 @@ export class AuthController {
     return await this.authService.register(registerRequest);
   }
   @Public()
+  @Throttle({ medium: { limit: 5, ttl: 60000 } })
   @Post('login')
   async login(@Body() authLoginDto: LoginRequest) {
     return await this.authService.login(authLoginDto);
   }
 
   @Public()
+  @Throttle({ medium: { limit: 5, ttl: 60000 } })
   @Post('verify-2fa')
   async verify2fa(@Body() verify2faDto: Verify2faRequest) {
     return await this.authService.verify2fa(verify2faDto);
@@ -39,12 +41,17 @@ export class AuthController {
     return await this.authService.refreshToken();
   }
   @Public()
+  // Stricter than the controller default: password-recovery sends an email
+  // and is already cooled-down server-side in AuthService, but should also
+  // be rate-limited per-IP to slow down enumeration/spam.
+  @Throttle({ medium: { limit: 3, ttl: 60000 } })
   @Post('password-recovery')
   async passwordRecovery(@Body() passwordRecoveryDto: PasswordRecoveryRequest) {
     return await this.authService.passwordRecovery(passwordRecoveryDto);
   }
 
   @Public()
+  @Throttle({ medium: { limit: 8, ttl: 60000 } })
   @Post('validate-password-recovery-attempt')
   async checkPasswordRecoveryAttempt(
     @Body()
@@ -55,6 +62,7 @@ export class AuthController {
     );
   }
   @Public()
+  @Throttle({ medium: { limit: 5, ttl: 60000 } })
   @Post('update-password')
   async updatePassword(@Body() updatePasswordDto: UpdatePasswordRequest) {
     return await this.authService.updatePassword(updatePasswordDto);

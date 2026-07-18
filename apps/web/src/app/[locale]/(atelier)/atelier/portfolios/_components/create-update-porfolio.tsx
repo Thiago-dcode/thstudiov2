@@ -1,20 +1,17 @@
 "use client";
 
 import type { FullPortfolio } from "@repo/common-lib/types/portfolio";
-import type { ActionReturn } from "@repo/common-lib/types/response";
 import { Button } from "@repo/ui/components/shadcn/button";
 import { Skeleton } from "@repo/ui/components/shadcn/skeleton";
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo } from "react";
+import { useEffect, useMemo } from "react";
+import { StickyFormFooter } from "@/app/[locale]/(atelier)/__components/sticky-form-footer";
 import { SubmitPortfolioButton } from "@/app/[locale]/(atelier)/__components/submit-portfolio-button";
 import FormComponent from "@/lib/components/form-component";
-import { useCheckSlugAvalability } from "@/lib/hooks/useCheckSlugAvalability";
 import { usePortfolio } from "@/modules/portfolios/providers/create-update-portfolio.provider";
-import { slugExistsAction } from "@/modules/portfolios/server-actions/slug-exists.action";
-import { PortfolioSlugContext } from "./portfolio-slug.context";
 
 export const CreateOrUpdatePortfolio = ({
   defaultPortfolio,
@@ -36,45 +33,8 @@ export const CreateOrUpdatePortfolio = ({
     setPortfolio,
     currentPortfolio,
     fetchHighlightCount,
-    portfolioInput,
-    user,
     isHydrated,
   } = usePortfolio();
-
-  const checkSlugAvailabilityAction = useCallback(
-    async (slug: string): Promise<ActionReturn<boolean | null, undefined>> => {
-      const result = await slugExistsAction(user.username, slug);
-      return {
-        data: !result.data,
-        errors: null,
-        inputErrors: undefined,
-      };
-    },
-    [user.username],
-  );
-
-  const {
-    checkSlugAvailability,
-    isAvailable: isSlugAvailable,
-    isLoading: isCheckingSlugAvailability,
-    resetSlugCheck,
-    resetSlugResult,
-  } = useCheckSlugAvalability({
-    actionFn: checkSlugAvailabilityAction,
-  });
-
-  useEffect(() => {
-    resetSlugResult();
-  }, [portfolioInput.slug, resetSlugResult]);
-
-  const slugContextValue = useMemo(
-    () => ({
-      checkSlugAvailability,
-      isSlugAvailable,
-      isCheckingSlugAvailability,
-    }),
-    [checkSlugAvailability, isSlugAvailable, isCheckingSlugAvailability],
-  );
 
   const readOnly = Boolean((currentPortfolio ?? defaultPortfolio)?.blocked_at);
 
@@ -87,10 +47,9 @@ export const CreateOrUpdatePortfolio = ({
       setPortfolio(defaultPortfolio);
     }
     if (!defaultPortfolio && currentPortfolio) {
-      resetSlugCheck();
       clear();
     }
-  }, [defaultPortfolio, setPortfolio, currentPortfolio, clear, resetSlugCheck]);
+  }, [defaultPortfolio, setPortfolio, currentPortfolio, clear]);
 
   const StepComponent = useMemo(
     () =>
@@ -113,64 +72,61 @@ export const CreateOrUpdatePortfolio = ({
   useEffect(() => {
     const slug = portfolioResult?.data?.slug;
     if (!success || !slug) return;
-    resetSlugCheck();
     router.push(`/atelier/portfolios/edit/${slug}`);
-  }, [success, portfolioResult, router, resetSlugCheck]);
+  }, [success, portfolioResult, router]);
   return (
-    <PortfolioSlugContext.Provider value={slugContextValue}>
-      <FormComponent.Container>
-        {readOnly ? (
-          <div
-            role="status"
-            className="mb-6 border border-border/60 bg-fg-2/40 px-4 py-3 text-sm text-text-muted"
-          >
-            This portfolio has been blocked. You can review it here, but it
-            cannot be edited until the block is lifted.
-          </div>
-        ) : null}
-        <FormComponent.Form
-          onSubmit={async (e) => {
-            if (readOnly) {
-              e.preventDefault();
-              return;
-            }
-            await handleSubmit(e);
-          }}
-          className="relative"
+    <FormComponent.Container>
+      {readOnly ? (
+        <div
+          role="status"
+          className="mb-6 border border-border/60 bg-fg-2/40 px-4 py-3 text-sm text-text-muted"
         >
-          {isPending && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center bg-bg/70 backdrop-blur-[2px]">
-              <Spinner className="size-10 text-text" />
-            </div>
-          )}
-
-          <div
-            className={
-              readOnly
-                ? "pointer-events-none select-none opacity-90"
-                : undefined
-            }
-          >
-            <StepComponent />
+          This portfolio has been blocked. You can review it here, but it cannot
+          be edited until the block is lifted.
+        </div>
+      ) : null}
+      <FormComponent.Form
+        onSubmit={async (e) => {
+          if (readOnly) {
+            e.preventDefault();
+            return;
+          }
+          await handleSubmit(e);
+        }}
+        className="relative"
+      >
+        {isPending && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-bg/70 backdrop-blur-[2px]">
+            <Spinner className="size-10 text-text" />
           </div>
+        )}
 
-          {inputErrors && Object.keys(inputErrors).length > 0 && (
-            <div className="mt-4 flex flex-wrap gap-2">
-              {Object.entries(inputErrors).map(([field, message]) => (
-                <span
-                  key={field}
-                  className="inline-flex items-center gap-1.5 bg-error/10 px-2.5 py-1 text-xs text-error"
-                  title={message}
-                >
-                  <span className="size-1.5 bg-error" />
-                  {field}
-                </span>
-              ))}
-            </div>
-          )}
+        <div
+          className={
+            readOnly ? "pointer-events-none select-none opacity-90" : undefined
+          }
+        >
+          <StepComponent />
+        </div>
 
-          {/* Step progress + navigation */}
-          <div className="sticky bottom-0 z-20 -mx-4 mt-6 border-t border-border bg-bg px-4 py-3 sm:-mx-6 sm:mt-10 sm:px-6 sm:py-4">
+        {inputErrors && Object.keys(inputErrors).length > 0 && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {Object.entries(inputErrors).map(([field, message]) => (
+              <span
+                key={field}
+                className="inline-flex items-center gap-1.5 bg-error/10 px-2.5 py-1 text-xs text-error"
+                title={message}
+              >
+                <span className="size-1.5 bg-error" />
+                {field}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Step progress + navigation */}
+        <StickyFormFooter
+          top={
             <div className="flex items-center gap-1.5">
               {Array.from({ length: MAX_STEPS }, (_, i) => (
                 <div
@@ -181,47 +137,47 @@ export const CreateOrUpdatePortfolio = ({
                 />
               ))}
             </div>
+          }
+        >
+          <div className="mt-3 flex items-center justify-between gap-2 sm:mt-4">
+            <Button
+              type="button"
+              onClick={() => handleStep("prev")}
+              variant="ghost"
+              disabled={!isHydrated || currentStep <= 1 || isPending}
+              className={`gap-2 ${currentStep <= 1 ? "invisible" : ""}`}
+            >
+              <ArrowLeft className="size-4" />
+              <span className="hidden phone-lg:inline">Back</span>
+            </Button>
 
-            <div className="mt-3 flex items-center justify-between gap-2 sm:mt-4">
-              <Button
-                type="button"
-                onClick={() => handleStep("prev")}
-                variant="ghost"
-                disabled={!isHydrated || currentStep <= 1 || isPending}
-                className={`gap-2 ${currentStep <= 1 ? "invisible" : ""}`}
-              >
-                <ArrowLeft className="size-4" />
-                <span className="hidden phone-lg:inline">Back</span>
-              </Button>
+            <span className="shrink-0 text-xs text-text-muted tabular-nums">
+              Step {currentStep} of {MAX_STEPS}
+            </span>
 
-              <span className="shrink-0 text-xs text-text-muted tabular-nums">
-                Step {currentStep} of {MAX_STEPS}
-              </span>
-
-              <div className="flex items-center gap-2">
-                {!readOnly ? <SubmitPortfolioButton /> : null}
-                {currentStep < MAX_STEPS ? (
-                  <Button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleStep("next");
-                    }}
-                    variant="default"
-                    size="sm"
-                    disabled={!isHydrated || !canGoNextStep || isPending}
-                    className="gap-1.5 h-8 px-3 text-xs"
-                  >
-                    <span className="hidden phone-lg:inline">Next</span>
-                    <ArrowRight className="size-3.5" />
-                  </Button>
-                ) : null}
-              </div>
+            <div className="flex items-center gap-2">
+              {!readOnly ? <SubmitPortfolioButton /> : null}
+              {currentStep < MAX_STEPS ? (
+                <Button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleStep("next");
+                  }}
+                  variant="default"
+                  size="sm"
+                  disabled={!isHydrated || !canGoNextStep || isPending}
+                  className="gap-1.5 h-8 px-3 text-xs"
+                >
+                  <span className="hidden phone-lg:inline">Next</span>
+                  <ArrowRight className="size-3.5" />
+                </Button>
+              ) : null}
             </div>
           </div>
-        </FormComponent.Form>
-      </FormComponent.Container>
-    </PortfolioSlugContext.Provider>
+        </StickyFormFooter>
+      </FormComponent.Form>
+    </FormComponent.Container>
   );
 };

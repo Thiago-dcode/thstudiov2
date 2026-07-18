@@ -6,10 +6,9 @@ import { cn } from "@repo/ui/lib/utils";
 import { toast } from "@repo/ui/sonner";
 import { Loader2, Search } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
+import { Link, usePathname } from "@/i18n/navigation";
 import { useAppStatus } from "@/lib/providers/app-status.provider";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { findArtistsAction } from "@/modules/users/server-actions/find-artists.action";
@@ -139,7 +138,7 @@ export function WebHeaderArtistSearch({ className }: { className?: string }) {
             if (blockIfRegistrationClosed()) return;
             if (artists.length > 0) setOpen(true);
           }}
-          placeholder="Search artists…"
+          placeholder={t("placeholder")}
           autoComplete="off"
           className={cn(
             "h-9 w-full py-2 pr-3 pl-9 text-sm",

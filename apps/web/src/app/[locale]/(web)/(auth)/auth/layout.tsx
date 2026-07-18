@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
+import { redirect } from "@/i18n/redirect";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 
 export default async function AuthLayout({
@@ -10,7 +10,8 @@ export default async function AuthLayout({
   const userAuth = await userSession();
 
   if (userAuth) {
-    redirect("/");
+    await redirect("/");
+    return;
   }
 
   return <>{children}</>;

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { Helpers } from 'src/common/services/helpers.service';
 import { AboutPageRepositoy } from './about-page.repository';
 import { CreateAboutPageRequest } from './requests/create-about-page.request';
@@ -11,6 +11,7 @@ import { UpdateAboutPageRequest } from './requests/update-about-page.request';
 import { UserService } from '../users/users.service';
 import { AiService } from '../ai/ai.service';
 import { MediaModerationException } from 'src/common/exceptions/media-moderation-exception';
+import { RequestService } from 'src/common/services/request.service';
 
 @Injectable()
 export class AboutPageService {
@@ -19,6 +20,7 @@ export class AboutPageService {
     private readonly userService: UserService,
     private readonly helpers: Helpers,
     private readonly aiService: AiService,
+    private readonly requestService: RequestService,
   ) {}
 
   public async findOneByUser(id: number) {
@@ -30,10 +32,12 @@ export class AboutPageService {
   }
 
   public async create({ photo, ...rest }: CreateAboutPageRequest) {
-    const data: CreateAboutPageInput = rest;
+    // Never trust client-supplied user_id — always bind to the authenticated caller.
+    const userId = this.requestService.user.id;
+    const data: CreateAboutPageInput = { ...rest, user_id: userId };
     if (photo) {
       const [user_public_id, id] = await Promise.all([
-        this.userService.getPublicId(data.user_id),
+        this.userService.getPublicId(userId),
         generateUUID(),
       ]);
       const photoPath = `users/${user_public_id}/about_page/${id}`;
@@ -45,7 +49,7 @@ export class AboutPageService {
       });
       const photoUrl = await this.helpers.getAsset(photoPath);
       const { moderation } = await this.aiService.moderateContent(photoUrl, {
-        user_id: data.user_id,
+        user_id: userId,
       });
       if (!moderation.is_allowed) {
         await this.helpers.deleteAsset(photoPath);
@@ -59,6 +63,9 @@ export class AboutPageService {
   public async update(id: number, { photo, ...rest }: UpdateAboutPageRequest) {
     const data: UpdateAboutPageInput = rest;
     const aboutPage = await this.aboutPageRepository.getOneById(id);
+    if (aboutPage.user_id !== this.requestService.user.id) {
+      throw new UnauthorizedException();
+    }
     if (photo) {
       const newId = await generateUUID();
       const newPhotoPath = await this.helpers.setAsset({

@@ -2,8 +2,7 @@
 
 import { Button } from "@repo/ui/components/shadcn/button";
 import { ArrowRight } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { Link, usePathname } from "@/i18n/navigation";
 import { RegistrationCtaButton } from "@/lib/components/registration-cta-button";
 import { SiteHeader, useSiteHeader } from "@/lib/components/site-header";
 import type { UserAuth } from "@/modules/auth/auth.types";

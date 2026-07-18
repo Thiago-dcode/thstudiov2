@@ -1,8 +1,9 @@
-import { IsNotEmpty, IsNumber, IsOptional, IsString, IsArray, ValidateNested, MinLength } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsArray, ValidateNested, MinLength } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ModelExist } from 'src/common/validators/model-exist.validtor';
 import { ToBoolean } from 'src/common/decorators/to-boolean.decorator';
 import { ToInt } from 'src/common/decorators/to-int.decorator';
+import { ToPrice } from 'src/common/decorators/to-price.decorator';
 
 class ServiceFeatureItem {
   @IsNotEmpty()
@@ -40,8 +41,7 @@ export class UpdateServiceRequest {
   thumbnail?: Express.Multer.File;
 
   @IsOptional()
-  @IsNumber()
-  @Type(() => Number)
+  @ToPrice()
   price?: number;
 
   @IsOptional()

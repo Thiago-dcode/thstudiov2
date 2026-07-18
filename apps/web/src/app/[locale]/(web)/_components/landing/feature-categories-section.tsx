@@ -2,8 +2,8 @@ import type { CategoryBase } from "@repo/common-lib/types/category";
 import { queryParamBuilder } from "@repo/common-lib/utils/query-builder";
 import { cn } from "@repo/ui/lib/utils";
 import Image from "next/image";
-import Link from "next/link";
 import { getTranslations } from "next-intl/server";
+import { Link } from "@/i18n/navigation";
 import categoriesService from "@/modules/categories/categories.service";
 import { WebSection } from "./web-section";
 

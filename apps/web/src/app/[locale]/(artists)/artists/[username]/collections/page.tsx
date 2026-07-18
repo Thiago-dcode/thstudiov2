@@ -1,6 +1,7 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { ArtistBreadcrumb } from "@/app/[locale]/(artists)/__components/artist-breadcrumb";
+import { Link } from "@/i18n/navigation";
 import Web from "@/lib/components/web-page.component";
 import { CollectionCard } from "@/modules/collections/components/collection-card";
 import userCollectionService from "@/modules/user-collections/user-collection.service";
@@ -12,6 +13,7 @@ type Props = {
 
 export default async function Page({ params }: Props) {
   const { username } = await params;
+  const t = await getTranslations("artists.collections");
 
   const [userExist, response] = await Promise.all([
     usersService.usernameExists(username),
@@ -31,13 +33,13 @@ export default async function Page({ params }: Props) {
         items={[
           {
             url: `/artists/${username}/collections`,
-            title: "Collections",
+            title: t("pageTitle"),
             isActive: true,
           },
         ]}
       />
 
-      <Web.Header title="Collections" />
+      <Web.Header title={t("pageTitle")} />
 
       {collections.length > 0 ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -52,7 +54,7 @@ export default async function Page({ params }: Props) {
         </div>
       ) : (
         <div className="flex min-h-[40vh] items-center justify-center border border-dashed border-border/60 text-sm  text-text-muted">
-          No collections yet.
+          {t("empty")}
         </div>
       )}
     </Web.Container>

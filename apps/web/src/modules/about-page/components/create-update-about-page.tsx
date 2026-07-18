@@ -27,11 +27,9 @@ import {
 
 export const CreateOrUpdateAboutPage = ({
   currentAboutPage,
-  userId,
   variant = "primary",
 }: {
   currentAboutPage?: AboutPage;
-  userId: number;
   variant?:
     | "primary"
     | "outline"
@@ -54,7 +52,6 @@ export const CreateOrUpdateAboutPage = ({
   } = useHandleAction({
     action: async (formData) => {
       if (!currentAboutPage) {
-        formData.set("user_id", `${userId}`);
         return await createAboutPageAction(formData);
       }
       return await updateAboutPageAction(currentAboutPage.id, formData);

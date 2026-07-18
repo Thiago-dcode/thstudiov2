@@ -1,14 +1,15 @@
 import { Button } from "@repo/ui/components/shadcn/button";
 import { CheckCircle2 } from "lucide-react";
-import Link from "next/link";
-import { redirect } from "next/navigation";
+import { Link } from "@/i18n/navigation";
+import { redirect } from "@/i18n/redirect";
 import PageComponent from "@/lib/components/page-component";
 import { getPasswordUpdatedCookie } from "@/modules/auth/server-actions/password-update.action";
 
 export default async function PasswordUpdateSuccess() {
   const passwordUpdatedCookie = await getPasswordUpdatedCookie();
   if (!passwordUpdatedCookie) {
-    redirect("/auth/password-recovery");
+    await redirect("/auth/password-recovery");
+    return;
   }
 
   return (

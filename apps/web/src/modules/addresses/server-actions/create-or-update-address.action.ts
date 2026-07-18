@@ -10,6 +10,9 @@ import { revalidateTag } from "next/cache";
 import {
   getFriendlyApiErrors,
   getObjErrorFromZod,
+  isSessionOwner,
+  requireSession,
+  unauthorizedActionReturn,
 } from "@/modules/auth/helpers";
 import addressService from "../address.service";
 import { createAddressSchema } from "../schemas/address.schema";
@@ -18,6 +21,11 @@ export const createOrUpdateAddressAction = async (
   formData: FormData,
   addressId?: number,
 ): Promise<ActionReturn<Address, PublicCreateAddressInput>> => {
+  const session = await requireSession();
+  if (!session) {
+    return unauthorizedActionReturn<Address, PublicCreateAddressInput>();
+  }
+
   // Extract fields from FormData
   const rawData: PublicCreateAddressInput = {
     formated_address: (formData.get("formated_address") as string) ?? "",
@@ -57,6 +65,15 @@ export const createOrUpdateAddressAction = async (
       data: null,
       inputs: rawData,
     };
+  }
+
+  // Client-owned addresses (client_id set, no user_id) are validated for ownership
+  // on the backend once that address belongs to one of the caller's clients.
+  if (
+    validated.data.user_id !== undefined &&
+    !isSessionOwner(session, validated.data.user_id)
+  ) {
+    return unauthorizedActionReturn<Address, PublicCreateAddressInput>(rawData);
   }
 
   const result = !addressId

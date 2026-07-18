@@ -26,6 +26,7 @@ export const createOrUpdateEmailPreferenceAction = async (
 ): Promise<ActionReturn<EmailPreference, any>> => {
   const rawData = {
     email: formData.get("email") as string,
+    token: formData.get("token") as string,
     user_id: parseOptionalPositiveInt(formData.get("user_id")),
     marketing: formData.get("marketing") === "on",
     notifications: formData.get("notifications") === "on",

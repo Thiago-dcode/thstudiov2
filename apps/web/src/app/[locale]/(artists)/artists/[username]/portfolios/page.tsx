@@ -1,6 +1,7 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { ArtistBreadcrumb } from "@/app/[locale]/(artists)/__components/artist-breadcrumb";
+import { Link } from "@/i18n/navigation";
 import Web from "@/lib/components/web-page.component";
 import { PortfolioCard } from "@/modules/portfolios/components/portfolio-card";
 import userPortfolioService from "@/modules/user-portfolios/user-portfolio.service";
@@ -12,6 +13,7 @@ type Props = {
 
 export default async function Page({ params }: Props) {
   const { username } = await params;
+  const t = await getTranslations("artists.portfolios");
 
   const [userExist, response] = await Promise.all([
     usersService.usernameExists(username),
@@ -31,13 +33,13 @@ export default async function Page({ params }: Props) {
         items={[
           {
             url: `/artists/${username}/portfolios`,
-            title: "Portfolios",
+            title: t("pageTitle"),
             isActive: true,
           },
         ]}
       />
 
-      <Web.Header title="Portfolios" />
+      <Web.Header title={t("pageTitle")} />
 
       {portfolios.length > 0 ? (
         <Web.List>
@@ -53,7 +55,7 @@ export default async function Page({ params }: Props) {
         </Web.List>
       ) : (
         <div className="flex min-h-[40vh] items-center justify-center border border-dashed border-border/60 text-sm  text-text-muted">
-          No portfolios yet.
+          {t("empty")}
         </div>
       )}
     </Web.Container>

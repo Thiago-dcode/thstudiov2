@@ -25,6 +25,7 @@ import { cn } from "@repo/ui/lib/utils";
 import { Image, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { StickyFormFooter } from "@/app/[locale]/(atelier)/__components/sticky-form-footer";
 import { SubmitCollectionButton } from "@/app/[locale]/(atelier)/__components/submit-collection-button";
 import FormComponent from "@/lib/components/form-component";
 import { useCollection } from "@/modules/collections/providers/create-update-collection.provider";
@@ -265,10 +266,6 @@ export const CreateOrUpdateCollection = ({
             <Spinner className="size-10 text-text" />
           </div>
         )}
-
-        <div className="flex justify-start mt-4">
-          {!readOnly ? <SubmitCollectionButton /> : null}
-        </div>
 
         {/* Text fields */}
         <div
@@ -523,6 +520,14 @@ export const CreateOrUpdateCollection = ({
             ))}
           </div>
         )}
+
+        {!readOnly ? (
+          <StickyFormFooter>
+            <div className="flex items-center justify-end">
+              <SubmitCollectionButton />
+            </div>
+          </StickyFormFooter>
+        ) : null}
       </FormComponent.Form>
     </FormComponent.Container>
   );

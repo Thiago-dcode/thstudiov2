@@ -12,6 +12,7 @@ import {
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { toast } from "@repo/ui/sonner";
 import { Mail } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import FormComponent from "@/lib/components/form-component";
 import { useSession } from "@/lib/hooks/useSession";
@@ -24,6 +25,7 @@ export const ArtistContactDialog = ({
 }: {
   children?: React.ReactNode;
 }) => {
+  const t = useTranslations("artists.contactDialog");
   const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
   const { artist, isPending: loadingArtist } = useArtist();
@@ -39,7 +41,7 @@ export const ArtistContactDialog = ({
       action: createUserContactAction,
       afterAction: async (result) => {
         if (result.data) {
-          toast.success("Message sent successfully!");
+          toast.success(t("successToast"));
           setOpen(false);
           reset();
         } else if (result.errors) {
@@ -53,7 +55,7 @@ export const ArtistContactDialog = ({
   const fallback = children ?? (
     <Button variant="default" size="sm">
       <Mail className="size-3.5" />
-      Contact
+      {t("contactButton")}
     </Button>
   );
 
@@ -75,11 +77,15 @@ export const ArtistContactDialog = ({
         <DialogHeader className="gap-1">
           <DialogTitle className="text-base font-semibold tracking-tight">
             {artist
-              ? `Contact ${artist.name ? `${artist.name} ${artist.surname ?? ""}`.trim() : artist.username}`
-              : "Contact"}
+              ? t("contactTitle", {
+                  name: artist.name
+                    ? `${artist.name} ${artist.surname ?? ""}`.trim()
+                    : artist.username,
+                })
+              : t("contactTitleFallback")}
           </DialogTitle>
           <DialogDescription className="text-xs text-text-muted">
-            Send a message directly to this artist.
+            {t("description")}
           </DialogDescription>
         </DialogHeader>
 
@@ -92,45 +98,45 @@ export const ArtistContactDialog = ({
         {!loadingSession &&
           (isSelfContact ? (
             <div className="flex min-h-[260px] items-center justify-center border border-fg-2/40 bg-fg/10 px-6 text-center text-sm text-text-muted">
-              You can't contact yourself.
+              {t("selfContact")}
             </div>
           ) : (
             <FormComponent.Container>
               <FormComponent.Form onSubmit={handleSubmit}>
                 <input type="hidden" name="user_id" value={artist?.id ?? ""} />
                 <FormComponent.LabelInput
-                  label="Name"
+                  label={t("form.nameLabel")}
                   id="contact-name"
                   name="name"
-                  placeholder="Your name"
+                  placeholder={t("form.namePlaceholder")}
                   required
                   error={inputErrors?.name}
                 />
 
                 <FormComponent.LabelInput
-                  label="Email"
+                  label={t("form.emailLabel")}
                   id="contact-email"
                   name="email"
                   type="email"
-                  placeholder="your@email.com"
+                  placeholder={t("form.emailPlaceholder")}
                   required
                   error={inputErrors?.email}
                 />
 
                 <FormComponent.LabelInput
-                  label="Subject"
+                  label={t("form.subjectLabel")}
                   id="contact-subject"
                   name="subject"
-                  placeholder="Commission inquiry"
+                  placeholder={t("form.subjectPlaceholder")}
                   required
                   error={inputErrors?.subject}
                 />
 
                 <FormComponent.LabelTextarea
-                  label="Message"
+                  label={t("form.messageLabel")}
                   id="contact-message"
                   name="message"
-                  placeholder="Tell the artist about your project..."
+                  placeholder={t("form.messagePlaceholder")}
                   rows={4}
                   required
                   error={inputErrors?.message}
@@ -140,7 +146,7 @@ export const ArtistContactDialog = ({
                   isPending={isPending}
                   success={success}
                 >
-                  Send Message
+                  {t("form.submit")}
                 </FormComponent.SubmitButton>
               </FormComponent.Form>
             </FormComponent.Container>
