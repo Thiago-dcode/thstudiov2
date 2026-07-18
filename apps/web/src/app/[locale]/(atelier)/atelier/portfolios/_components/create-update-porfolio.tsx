@@ -209,11 +209,12 @@ export const CreateOrUpdatePortfolio = ({
                       handleStep("next");
                     }}
                     variant="default"
+                    size="sm"
                     disabled={!isHydrated || !canGoNextStep || isPending}
-                    className="gap-2"
+                    className="gap-1.5 h-8 px-3 text-xs"
                   >
                     <span className="hidden phone-lg:inline">Next</span>
-                    <ArrowRight className="size-4" />
+                    <ArrowRight className="size-3.5" />
                   </Button>
                 ) : null}
               </div>
