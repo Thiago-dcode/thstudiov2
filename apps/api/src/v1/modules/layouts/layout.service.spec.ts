@@ -7,7 +7,7 @@ import { LayoutRepository } from './layout.repository';
 describe('LayoutService', () => {
   let service: LayoutService;
   let layoutRepository: {
-    findAllActive: jest.Mock;
+    findAll: jest.Mock;
     findById: jest.Mock;
     findByName: jest.Mock;
     upsertConfigForPortfolio: jest.Mock;
@@ -26,7 +26,7 @@ describe('LayoutService', () => {
 
   beforeEach(async () => {
     layoutRepository = {
-      findAllActive: jest.fn(),
+      findAll: jest.fn(),
       findById: jest.fn(),
       findByName: jest.fn(),
       upsertConfigForPortfolio: jest.fn(),

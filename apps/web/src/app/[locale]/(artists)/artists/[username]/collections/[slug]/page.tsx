@@ -114,7 +114,10 @@ export default async function Page({ params, searchParams }: Props) {
               shared: `${config.app_url}/artists/${username}/collections/${slug}/media/${m.public_id}`,
             }))}
           >
-            <GalleryGrid media={collection.media} style="uniform-grid" />
+            <GalleryGrid
+              media={collection.media}
+              layout={{ name: "UNIFORM", config: null }}
+            />
             <div className="hidden tablet:block">
               <Gallery />
             </div>

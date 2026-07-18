@@ -87,14 +87,23 @@ export type CollectionPortfolioItem = PortfolioCollection & {
 export type FullCollectionPortfolioItem = FullPortfolioCollection & {
   item: 'collection';
 };
-export type PortfolioItem = (MediaPortfolioItem | CollectionPortfolioItem)& {
-  index?:number
+export type PortfolioItem = (MediaPortfolioItem | CollectionPortfolioItem) & {
+  index?: number
 };
 
-export type FullPortfolioItem = (MediaPortfolioItem | FullCollectionPortfolioItem ) & {
-  index?:number
+export type FullPortfolioItem = (MediaPortfolioItem | FullCollectionPortfolioItem) & {
+  index?: number
 };
 
+export type PortfolioInput = Partial<
+  Omit<CreatePortfolioInputWithFile, 'media' | 'collections' | 'categories'>
+> & {
+  portfolioItems: PortfolioItem[],
+  categories:CategoryBase[]
+  /** Current wizard step (UI state kept alongside the input for a single source of truth). */
+  currentStep: number
+
+}
 export type UpdatePortfolioInput = Partial<
   Omit<PortfolioSchema, 'id' | 'created_at' | 'updated_at' | 'is_featured'>
 > & {

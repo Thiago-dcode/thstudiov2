@@ -26,6 +26,40 @@ import { serviceSlugExistsAction } from "../server-actions/slug-exists.action";
 
 type ServiceActionInput = Parameters<typeof createOrUpdateServiceAction>[0];
 
+/**
+ * Single source of truth for the ref-backed (uncontrolled) service form fields.
+ * Kept in one ref so inputs stay uncontrolled and don't re-render on each keystroke.
+ * Reactive lists (features/terms/portfolio/highlight) remain in React state.
+ */
+export type ServiceInput = {
+  title: string;
+  slug: string;
+  description: string;
+  price: string;
+  is_active: boolean;
+  show_price: boolean;
+  is_highlight: boolean;
+  thumbnail: File | undefined;
+  /** slug tracking metadata */
+  manuallyChangedSlug: boolean;
+  previousSlug: string | undefined;
+  originallyHighlighted: boolean;
+};
+
+const createEmptyServiceInput = (): ServiceInput => ({
+  title: "",
+  slug: "",
+  description: "",
+  price: "",
+  is_active: true,
+  show_price: false,
+  is_highlight: false,
+  thumbnail: undefined,
+  manuallyChangedSlug: false,
+  previousSlug: undefined,
+  originallyHighlighted: false,
+});
+
 type CreateUpdateServiceContextType = {
   user: UserAuth;
   currentService: FullService | undefined;
@@ -40,15 +74,9 @@ type CreateUpdateServiceContextType = {
   hasUnsavedWork: boolean;
   readOnly: boolean;
   isUpdate: boolean;
-  titleRef: MutableRefObject<string>;
-  slugRef: MutableRefObject<string>;
+  /** Single source of truth for the ref-backed form fields. */
+  serviceInput: MutableRefObject<ServiceInput>;
   slugInputRef: MutableRefObject<HTMLInputElement | null>;
-  descriptionRef: MutableRefObject<string>;
-  priceRef: MutableRefObject<string>;
-  isActiveRef: MutableRefObject<boolean>;
-  showPriceRef: MutableRefObject<boolean>;
-  isHighlightRef: MutableRefObject<boolean>;
-  manuallyChangedSlug: MutableRefObject<boolean>;
   notifyFormChange: () => void;
   updateSlug: (newSlug: string) => void;
   handleThumbnailChange: (file: File | undefined) => void;
@@ -137,18 +165,8 @@ export function CreateUpdateServiceProvider({
 
   const highlightCount = highlightCountResult?.data ?? 0;
 
-  const titleRef = useRef("");
-  const slugRef = useRef("");
+  const serviceInput = useRef<ServiceInput>(createEmptyServiceInput());
   const slugInputRef = useRef<HTMLInputElement>(null);
-  const descriptionRef = useRef("");
-  const priceRef = useRef("");
-  const isActiveRef = useRef(true);
-  const showPriceRef = useRef(false);
-  const isHighlightRef = useRef(false);
-  const originallyHighlightedRef = useRef(false);
-  const manuallyChangedSlug = useRef(false);
-  const previousSlugRef = useRef<string | undefined>(undefined);
-  const thumbnailFileRef = useRef<File | undefined>(undefined);
 
   const [isHighlighted, setIsHighlighted] = useState(false);
   const [selectedPortfolioId, setSelectedPortfolioId] = useState<
@@ -174,17 +192,18 @@ export function CreateUpdateServiceProvider({
     reset,
   } = useHandleAction<ServiceActionInput, Service>({
     action: async () => {
+      const input = serviceInput.current;
       const payload: ServiceActionInput = {
-        title: titleRef.current,
-        slug: slugRef.current,
-        description: descriptionRef.current ?? "",
-        price: priceRef.current ? Number(priceRef.current) : undefined,
-        is_active: isActiveRef.current,
-        show_price: showPriceRef.current,
-        is_highlight: isHighlightRef.current,
+        title: input.title,
+        slug: input.slug,
+        description: input.description ?? "",
+        price: input.price ? Number(input.price) : undefined,
+        is_active: input.is_active,
+        show_price: input.show_price,
+        is_highlight: input.is_highlight,
         portfolio_id: selectedPortfolioId,
         user_id: user.id,
-        thumbnail: thumbnailFileRef.current,
+        thumbnail: input.thumbnail,
         features: features
           .filter((f) => f.trim())
           .map((f) => ({ title: f.trim() })),
@@ -230,11 +249,11 @@ export function CreateUpdateServiceProvider({
 
   const updateSlug = useCallback(
     (newSlug: string) => {
-      slugRef.current = newSlug;
+      serviceInput.current.slug = newSlug;
       if (slugInputRef.current) slugInputRef.current.value = newSlug;
 
       const currentSlug = newSlug.trim();
-      const previousSlug = previousSlugRef.current?.trim();
+      const previousSlug = serviceInput.current.previousSlug?.trim();
       const slugChanged = currentSlug !== previousSlug;
 
       if (currentSlug) {
@@ -252,15 +271,15 @@ export function CreateUpdateServiceProvider({
         setIsValidSlug(undefined);
       }
 
-      previousSlugRef.current = newSlug;
+      serviceInput.current.previousSlug = newSlug;
     },
     [checkSlugAvailability, currentService?.slug],
   );
 
   const handleThumbnailChange = useCallback(
     (file: File | undefined) => {
-      if (thumbnailFileRef.current === file) return;
-      thumbnailFileRef.current = file;
+      if (serviceInput.current.thumbnail === file) return;
+      serviceInput.current.thumbnail = file;
       notifyFormChange();
     },
     [notifyFormChange],
@@ -274,20 +293,22 @@ export function CreateUpdateServiceProvider({
   const hasFormChanged = useMemo(() => {
     if (!currentService) return false;
 
-    if (titleRef.current !== currentService.title) return true;
-    if (slugRef.current !== currentService.slug) return true;
-    if ((descriptionRef.current ?? "") !== (currentService.description ?? "")) {
+    const input = serviceInput.current;
+
+    if (input.title !== currentService.title) return true;
+    if (input.slug !== currentService.slug) return true;
+    if ((input.description ?? "") !== (currentService.description ?? "")) {
       return true;
     }
 
-    const currentPrice = priceRef.current.trim();
+    const currentPrice = input.price.trim();
     const originalPrice =
       currentService.price != null ? String(currentService.price) : "";
     if (currentPrice !== originalPrice) return true;
 
-    if (isActiveRef.current !== currentService.is_active) return true;
-    if (showPriceRef.current !== currentService.show_price) return true;
-    if (isHighlightRef.current !== currentService.is_highlight) return true;
+    if (input.is_active !== currentService.is_active) return true;
+    if (input.show_price !== currentService.show_price) return true;
+    if (input.is_highlight !== currentService.is_highlight) return true;
 
     if (
       (selectedPortfolioId ?? null) !== (currentService.portfolio_id ?? null)
@@ -295,7 +316,7 @@ export function CreateUpdateServiceProvider({
       return true;
     }
 
-    if (thumbnailFileRef.current) return true;
+    if (input.thumbnail) return true;
 
     const originalFeatures =
       currentService.features?.map((feature) => feature.title) ?? [];
@@ -327,24 +348,25 @@ export function CreateUpdateServiceProvider({
   ]);
 
   const canSubmit = useMemo(() => {
-    const hasTitle = !!titleRef.current.trim();
-    const hasSlug = !!slugRef.current.trim();
+    const hasTitle = !!serviceInput.current.title.trim();
+    const hasSlug = !!serviceInput.current.slug.trim();
     if (!hasTitle || !hasSlug) return false;
     if (isUpdate) return hasFormChanged;
     return true;
   }, [formRevision, hasFormChanged, isUpdate]);
 
   const hasUnsavedWork = useMemo(() => {
-    const hasTitle = !!titleRef.current.trim();
-    const hasSlug = !!slugRef.current.trim();
+    const input = serviceInput.current;
+    const hasTitle = !!input.title.trim();
+    const hasSlug = !!input.slug.trim();
     const hasDraftContent =
       hasTitle ||
       hasSlug ||
-      !!descriptionRef.current.trim() ||
-      !!priceRef.current.trim() ||
+      !!input.description.trim() ||
+      !!input.price.trim() ||
       features.some((feature) => feature.trim()) ||
       terms.some((term) => term.trim()) ||
-      !!thumbnailFileRef.current ||
+      !!input.thumbnail ||
       selectedPortfolioId !== undefined;
 
     return isPending || (isUpdate ? hasFormChanged : hasDraftContent);
@@ -362,7 +384,7 @@ export function CreateUpdateServiceProvider({
     highlightCount,
     highlightLimit,
     isHighlighted,
-    originallyHighlightedRef.current,
+    serviceInput.current.originallyHighlighted,
   );
 
   const handleSubmit = useCallback(
@@ -376,17 +398,19 @@ export function CreateUpdateServiceProvider({
 
   const populateFromService = useCallback(
     (service: FullService) => {
-      titleRef.current = service.title;
-      slugRef.current = service.slug;
-      descriptionRef.current = service.description ?? "";
-      priceRef.current = service.price != null ? String(service.price) : "";
-      isActiveRef.current = service.is_active;
-      showPriceRef.current = service.show_price;
-      isHighlightRef.current = service.is_highlight;
-      originallyHighlightedRef.current = service.is_highlight;
-      manuallyChangedSlug.current = false;
-      previousSlugRef.current = service.slug;
-      thumbnailFileRef.current = undefined;
+      serviceInput.current = {
+        title: service.title,
+        slug: service.slug,
+        description: service.description ?? "",
+        price: service.price != null ? String(service.price) : "",
+        is_active: service.is_active,
+        show_price: service.show_price,
+        is_highlight: service.is_highlight,
+        thumbnail: undefined,
+        manuallyChangedSlug: false,
+        previousSlug: service.slug,
+        originallyHighlighted: service.is_highlight,
+      };
       setIsHighlighted(service.is_highlight);
       setSelectedPortfolioId(service.portfolio_id ?? undefined);
       setFeatures(
@@ -411,17 +435,7 @@ export function CreateUpdateServiceProvider({
 
   const clear = useCallback(() => {
     setCurrentService(undefined);
-    titleRef.current = "";
-    slugRef.current = "";
-    descriptionRef.current = "";
-    priceRef.current = "";
-    isActiveRef.current = true;
-    showPriceRef.current = false;
-    isHighlightRef.current = false;
-    originallyHighlightedRef.current = false;
-    manuallyChangedSlug.current = false;
-    previousSlugRef.current = undefined;
-    thumbnailFileRef.current = undefined;
+    serviceInput.current = createEmptyServiceInput();
     setIsHighlighted(false);
     setSelectedPortfolioId(undefined);
     setFeatures([""]);
@@ -450,15 +464,8 @@ export function CreateUpdateServiceProvider({
       hasUnsavedWork,
       readOnly,
       isUpdate,
-      titleRef,
-      slugRef,
+      serviceInput,
       slugInputRef,
-      descriptionRef,
-      priceRef,
-      isActiveRef,
-      showPriceRef,
-      isHighlightRef,
-      manuallyChangedSlug,
       notifyFormChange,
       updateSlug,
       handleThumbnailChange,

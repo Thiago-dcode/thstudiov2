@@ -31,7 +31,7 @@ export const RegisterForm = ({
   return (
     <FormComponent.Container>
       {/* Form */}
-      <FormComponent.Form onSubmit={handleSubmit}>
+      <FormComponent.Form onSubmit={handleSubmit} noValidate>
         {/* Email Field */}
         <FormComponent.LabelInput
           label="Email Address"

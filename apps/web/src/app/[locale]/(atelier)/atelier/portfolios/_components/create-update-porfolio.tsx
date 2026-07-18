@@ -26,6 +26,7 @@ export const CreateOrUpdatePortfolio = ({
     handleSubmit,
     isPending,
     success,
+    portfolioResult,
     currentStep,
     canGoNextStep,
     MAX_STEPS,
@@ -35,7 +36,7 @@ export const CreateOrUpdatePortfolio = ({
     setPortfolio,
     currentPortfolio,
     fetchHighlightCount,
-    formData,
+    portfolioInput,
     user,
     isHydrated,
   } = usePortfolio();
@@ -64,7 +65,7 @@ export const CreateOrUpdatePortfolio = ({
 
   useEffect(() => {
     resetSlugResult();
-  }, [formData?.slug, resetSlugResult]);
+  }, [portfolioInput.slug, resetSlugResult]);
 
   const slugContextValue = useMemo(
     () => ({
@@ -110,12 +111,11 @@ export const CreateOrUpdatePortfolio = ({
   );
 
   useEffect(() => {
-    if (success) {
-      resetSlugCheck();
-      clear();
-      router.push("/atelier/portfolios");
-    }
-  }, [success, clear, router.push, resetSlugCheck]);
+    const slug = portfolioResult?.data?.slug;
+    if (!success || !slug) return;
+    resetSlugCheck();
+    router.push(`/atelier/portfolios/edit/${slug}`);
+  }, [success, portfolioResult, router, resetSlugCheck]);
   return (
     <PortfolioSlugContext.Provider value={slugContextValue}>
       <FormComponent.Container>
@@ -143,9 +143,7 @@ export const CreateOrUpdatePortfolio = ({
               <Spinner className="size-10 text-text" />
             </div>
           )}
-          <div className="flex justify-start mt-4">
-            {!readOnly ? <SubmitPortfolioButton /> : null}
-          </div>
+         
           <div
             className={
               readOnly
@@ -171,21 +169,20 @@ export const CreateOrUpdatePortfolio = ({
             </div>
           )}
 
-          {/* Step Progress */}
-          <div className="mt-10 space-y-5">
+          {/* Step progress + navigation */}
+          <div className="sticky bottom-0 z-20 -mx-4 mt-6 border-t border-border bg-bg px-4 py-3 sm:-mx-6 sm:mt-10 sm:px-6 sm:py-4">
             <div className="flex items-center gap-1.5">
               {Array.from({ length: MAX_STEPS }, (_, i) => (
                 <div
                   key={i}
                   className={`h-1 flex-1 transition-all duration-300 ${
-                    i < currentStep ? "bg-text" : "bg-fg"
+                    i < currentStep ? "bg-text" : "bg-fg-2"
                   }`}
                 />
               ))}
             </div>
 
-            {/* Navigation */}
-            <div className="flex items-center justify-between pb-4">
+            <div className="mt-3 flex items-center justify-between gap-2 sm:mt-4">
               <Button
                 type="button"
                 onClick={() => handleStep("prev")}
@@ -194,29 +191,32 @@ export const CreateOrUpdatePortfolio = ({
                 className={`gap-2 ${currentStep <= 1 ? "invisible" : ""}`}
               >
                 <ArrowLeft className="size-4" />
-                Back
+                <span className="hidden phone-lg:inline">Back</span>
               </Button>
 
-              <span className="text-xs text-text-muted tabular-nums">
-                {currentStep} / {MAX_STEPS}
+              <span className="shrink-0 text-xs text-text-muted tabular-nums">
+                Step {currentStep} of {MAX_STEPS}
               </span>
 
-              {currentStep < MAX_STEPS ? (
-                <Button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handleStep("next");
-                  }}
-                  variant="default"
-                  disabled={!isHydrated || !canGoNextStep || isPending}
-                  className="gap-2"
-                >
-                  Next
-                  <ArrowRight className="size-4" />
-                </Button>
-              ) : null}
+              <div className="flex items-center gap-2">
+                {!readOnly ? <SubmitPortfolioButton /> : null}
+                {currentStep < MAX_STEPS ? (
+                  <Button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleStep("next");
+                    }}
+                    variant="default"
+                    disabled={!isHydrated || !canGoNextStep || isPending}
+                    className="gap-2"
+                  >
+                    <span className="hidden phone-lg:inline">Next</span>
+                    <ArrowRight className="size-4" />
+                  </Button>
+                ) : null}
+              </div>
             </div>
           </div>
         </FormComponent.Form>

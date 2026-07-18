@@ -28,7 +28,7 @@ const ThumbnailInput = () => {
   const { files } = useInputFile();
 
   const {
-    formData,
+    portfolioInput,
     handleSetFormData,
     deleteInputErrorProperty,
     inputErrors,
@@ -37,7 +37,9 @@ const ThumbnailInput = () => {
   } = usePortfolio();
   const filesToPreview =
     files ??
-    (formData.thumbnail instanceof File ? formData.thumbnail : undefined);
+    (portfolioInput.thumbnail instanceof File
+      ? portfolioInput.thumbnail
+      : undefined);
   const { previewUrls } = usePreviewUrls({ files: filesToPreview });
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -58,10 +60,10 @@ const ThumbnailInput = () => {
               alt="Thumbnail Preview"
               className="w-full h-full object-cover opacity-80"
             />
-            {formData?.title && (
+            {portfolioInput.title && (
               <div className="absolute inset-0 flex items-center justify-center p-4">
                 <h3 className="text-3xl bg-black/50 p-2 px-4 font-bold text-white text-center drop-shadow-lg">
-                  {formData.title}
+                  {portfolioInput.title}
                 </h3>
               </div>
             )}
@@ -90,13 +92,12 @@ const ThumbnailInput = () => {
 
 const FirstStepInputs = () => {
   const {
-    formData,
+    portfolioInput,
     handleSetFormData,
     inputErrors,
     deleteInputErrorProperty,
     currentPortfolio,
     isPending,
-    categoriesSelected,
     setCategorySelected,
     removeCategorySelected,
     highlightCount,
@@ -104,10 +105,12 @@ const FirstStepInputs = () => {
     isLoadingHighlightCount,
   } = usePortfolio();
 
+  const categoriesSelected = portfolioInput.categories;
+
   const { checkSlugAvailability, isCheckingSlugAvailability, isSlugAvailable } =
     usePortfolioSlug();
 
-  const isCurrentlyHighlighted = formData.is_highlight ?? false;
+  const isCurrentlyHighlighted = portfolioInput.is_highlight ?? false;
   const originallyHighlighted = currentPortfolio?.is_highlight ?? false;
   const highlightToggleDisabled = isHighlightToggleDisabled(
     highlightCount,
@@ -117,7 +120,7 @@ const FirstStepInputs = () => {
   );
 
   const manuallyChangedSlug = useRef(false);
-  const previousSlugRef = useRef<string | undefined>(formData?.slug);
+  const previousSlugRef = useRef<string | undefined>(portfolioInput.slug);
 
   const [isValidSlug, setIsValidSlug] = useState<boolean | undefined>(
     undefined,
@@ -151,7 +154,7 @@ const FirstStepInputs = () => {
   };
 
   useEffect(() => {
-    const currentSlug = formData?.slug?.trim();
+    const currentSlug = portfolioInput.slug?.trim();
     const previousSlug = previousSlugRef.current?.trim();
 
     // Only check if slug actually changed (not on mount/navigation)
@@ -175,8 +178,8 @@ const FirstStepInputs = () => {
     }
 
     // Update the ref for next comparison
-    previousSlugRef.current = formData?.slug;
-  }, [formData?.slug, checkSlugAvailability, currentPortfolio?.slug]);
+    previousSlugRef.current = portfolioInput.slug;
+  }, [portfolioInput.slug, checkSlugAvailability, currentPortfolio?.slug]);
 
   // Get slug status message
   const getSlugStatusMessage = () => {
@@ -187,7 +190,7 @@ const FirstStepInputs = () => {
     }
     if (
       typeof isSlugAvailable === "boolean" &&
-      currentPortfolio?.slug !== formData.slug
+      currentPortfolio?.slug !== portfolioInput.slug
     ) {
       if (isSlugAvailable) {
         return (
@@ -212,7 +215,7 @@ const FirstStepInputs = () => {
 
       <div className="flex-1 space-y-4 flex flex-col">
         <FormComponent.LabelInput
-          value={formData?.title || ""}
+          value={portfolioInput.title || ""}
           onChange={(e) => {
             handleTitleChange(e);
           }}
@@ -228,7 +231,7 @@ const FirstStepInputs = () => {
 
         <div className="space-y-2">
           <FormComponent.LabelInput
-            value={formData?.slug || ""}
+            value={portfolioInput.slug || ""}
             onChange={(e) => {
               handleSlugChange(e);
             }}
@@ -251,7 +254,7 @@ const FirstStepInputs = () => {
         </div>
 
         <FormComponent.LabelTextarea
-          value={formData?.description || ""}
+          value={portfolioInput.description || ""}
           onChange={(e) => {
             deleteInputErrorProperty("description");
             handleSetFormData("description", e.target.value);
@@ -285,7 +288,7 @@ const FirstStepInputs = () => {
           <div className="flex items-center gap-2">
             <Checkbox
               id="portfolio-is-highlight"
-              checked={formData.is_highlight ?? false}
+              checked={portfolioInput.is_highlight ?? false}
               onCheckedChange={(checked) => {
                 deleteInputErrorProperty("is_highlight");
                 handleSetFormData("is_highlight", checked === true);
@@ -322,7 +325,7 @@ const FirstStepInputs = () => {
         <div className="flex items-center gap-2">
           <Checkbox
             id="portfolio-is-active"
-            checked={formData.is_active ?? true}
+            checked={portfolioInput.is_active ?? true}
             onCheckedChange={(checked) => {
               deleteInputErrorProperty("is_active");
               handleSetFormData("is_active", checked === true);

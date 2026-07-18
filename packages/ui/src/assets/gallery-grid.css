@@ -32,18 +32,18 @@
 }
 
 /* -------------------------------------------------------------------
-   2. Masonry Grid – span-based CSS Grid with dense auto-flow
+   2. Masonry Layout – span-based CSS Grid with dense auto-flow
    ------------------------------------------------------------------- */
 
 /*
   Container wrapper enables container queries so grid-auto-rows can
   reference cqw (container query width) for perfectly square base cells.
 */
-.mansonry-grid-wrapper {
+.layout-masonry-wrapper {
   container-type: inline-size;
 }
 
-.mansonry-grid {
+.layout-masonry {
   display: grid;
   /* mobile: 4 columns — spans 2 and 4 divide cleanly, no orphaned gaps */
   grid-template-columns: repeat(4, 1fr);
@@ -61,38 +61,38 @@
    --------------------------------------------------------------- */
 
 /* Default fallback – square */
-.mansonry-grid .media-gallery-card {
+.layout-masonry .media-gallery-card {
   grid-column: span 2;
   grid-row: span 2;
 }
 
-.mansonry-grid .media-gallery-card[data-ratio="ultra-wide"] {
+.layout-masonry .media-gallery-card[data-ratio="ultra-wide"] {
   grid-column: span 4;
   grid-row: span 2;
 }
 
-.mansonry-grid .media-gallery-card[data-ratio="wide"] {
+.layout-masonry .media-gallery-card[data-ratio="wide"] {
   grid-column: span 4;
   grid-row: span 2;
 }
 
-.mansonry-grid .media-gallery-card[data-ratio="square"] {
+.layout-masonry .media-gallery-card[data-ratio="square"] {
   grid-column: span 2;
   grid-row: span 2;
 }
 
-.mansonry-grid .media-gallery-card[data-ratio="tall"] {
+.layout-masonry .media-gallery-card[data-ratio="tall"] {
   grid-column: span 2;
   grid-row: span 3;
 }
 
-.mansonry-grid .media-gallery-card[data-ratio="ultra-tall"] {
+.layout-masonry .media-gallery-card[data-ratio="ultra-tall"] {
   grid-column: span 2;
   grid-row: span 3;
 }
 
 @media (min-width: 768px) {
-  .mansonry-grid {
+  .layout-masonry {
     /* tablet: 6 columns — spans 2, 4, 6 all divide cleanly */
     grid-template-columns: repeat(6, 1fr);
     grid-auto-rows: calc((100cqw - 5 * var(--size-sm)) / 6);
@@ -105,39 +105,39 @@
      All spans are multiples of 2 — no orphaned columns.
      --------------------------------------------------------------- */
 
-  .mansonry-grid .media-gallery-card {
+  .layout-masonry .media-gallery-card {
     grid-column: span 2;
     grid-row: span 2;
   }
 
-  .mansonry-grid .media-gallery-card[data-ratio="ultra-wide"] {
+  .layout-masonry .media-gallery-card[data-ratio="ultra-wide"] {
     grid-column: span 6;
     grid-row: span 2;
   }
 
-  .mansonry-grid .media-gallery-card[data-ratio="wide"] {
+  .layout-masonry .media-gallery-card[data-ratio="wide"] {
     grid-column: span 4;
     grid-row: span 2;
   }
 
-  .mansonry-grid .media-gallery-card[data-ratio="square"] {
+  .layout-masonry .media-gallery-card[data-ratio="square"] {
     grid-column: span 2;
     grid-row: span 2;
   }
 
-  .mansonry-grid .media-gallery-card[data-ratio="tall"] {
+  .layout-masonry .media-gallery-card[data-ratio="tall"] {
     grid-column: span 2;
     grid-row: span 3;
   }
 
-  .mansonry-grid .media-gallery-card[data-ratio="ultra-tall"] {
+  .layout-masonry .media-gallery-card[data-ratio="ultra-tall"] {
     grid-column: span 2;
     grid-row: span 4;
   }
 }
 
 @media (min-width: 1280px) {
-  .mansonry-grid {
+  .layout-masonry {
     /* laptop+: 8 columns — spans 2, 4, 6 all divide cleanly */
     grid-template-columns: repeat(8, 1fr);
     grid-auto-rows: calc((100cqw - 7 * var(--size-sm)) / 8);
@@ -145,16 +145,16 @@
 }
 
 /* Frame fills the grid cell fully; image covers via object-fit */
-.mansonry-grid .media-gallery-card__frame {
+.layout-masonry .media-gallery-card__frame {
   width: 100%;
   height: 100%;
 }
 
 /* -------------------------------------------------------------------
-   3. Uniform Grid – equal-size cells, media adapts inside
+   3. Uniform Layout – equal-size cells, media adapts inside
    ------------------------------------------------------------------- */
 
-.uniform-grid {
+.layout-uniform {
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--size-base);
@@ -162,20 +162,19 @@
 }
 
 @media (min-width: 768px) {
-  .uniform-grid {
+  .layout-uniform {
     grid-template-columns: repeat(3, 1fr);
     gap: var(--size-lg);
   }
 }
 
 @media (min-width: 1200px) {
-  .uniform-grid {
+  .layout-uniform {
     grid-template-columns: repeat(4, 1fr);
   }
 }
 
-/* Uniform-specific card overrides */
-.uniform-grid .media-gallery-card {
+.layout-uniform .media-gallery-card {
   background-color: transparent;
   aspect-ratio: 1 / 1;
   display: flex;
@@ -189,12 +188,12 @@
 }
 
 @media (min-width: 768px) {
-  .uniform-grid .media-gallery-card {
+  .layout-uniform .media-gallery-card {
     padding: var(--size-xl, 2rem);
   }
 }
 
-.uniform-grid .media-gallery-card__frame {
+.layout-uniform .media-gallery-card__frame {
   flex: 1 1 auto;
   min-width: 0;
   min-height: 0;
@@ -206,6 +205,67 @@
   border-radius: 0;
 }
 
-.uniform-grid .media-gallery-card__frame img {
+.layout-uniform .media-gallery-card__frame img {
   object-fit: contain;
+}
+
+/* -------------------------------------------------------------------
+   4. Column-base Layout – configurable, equal N-column grid.
+   The configured column count is the desktop maximum; smaller viewports
+   are capped (mobile / tablet / desktop) via pre-computed variables set
+   inline from the layout config. Each var resolves to a literal integer
+   so repeat() stays valid. Defaults to 1 when config is null.
+   Cells are square with images covering edge-to-edge — except when
+   resolved to a single column, where the card's inline `aspect-ratio`
+   (set per-item from the media's own ratio) overrides this default so
+   the media isn't cropped into a square.
+   ------------------------------------------------------------------- */
+
+.layout-column-base {
+  display: grid;
+  grid-template-columns: repeat(var(--layout-cols-mobile, 1), 1fr);
+  gap: var(--size-base);
+  margin: 0 auto;
+}
+
+@media (min-width: 768px) {
+  .layout-column-base {
+    grid-template-columns: repeat(var(--layout-cols-tablet, 1), 1fr);
+    gap: var(--size-sm);
+  }
+}
+
+@media (min-width: 1280px) {
+  .layout-column-base {
+    grid-template-columns: repeat(var(--layout-cols-desktop, 1), 1fr);
+  }
+}
+
+.layout-column-base .media-gallery-card {
+  aspect-ratio: 1 / 1;
+  box-sizing: border-box;
+  min-height: 0;
+  min-width: 0;
+}
+
+/*
+  Single column: the card no longer stretches to the grid's full inline
+  size. Instead it centers and sizes itself from its (inline, per-item)
+  aspect-ratio, capped by max-height so a tall/landscape image at full
+  container width never balloons into a giant cell.
+*/
+.layout-column-base .media-gallery-card[data-single-column] {
+  justify-self: center;
+  width: auto;
+  max-width: 100%;
+  max-height: min(60vh, 640px);
+}
+
+.layout-column-base .media-gallery-card__frame {
+  width: 100%;
+  height: 100%;
+}
+
+.layout-column-base .media-gallery-card__frame img {
+  object-fit: cover;
 }

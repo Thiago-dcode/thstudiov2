@@ -120,7 +120,10 @@ export default async function Page({ params, searchParams }: Props) {
               shared: `${config.app_url}/artists/${username}/portfolios/${slug}/media/${m.public_id}`,
             }))}
           >
-            <PortfolioGrid portfolioItems={portfolioItems} />
+            <PortfolioGrid
+              portfolioItems={portfolioItems}
+              layout={portfolio.layout}
+            />
             <div className="hidden tablet:block">
               <Gallery />
             </div>

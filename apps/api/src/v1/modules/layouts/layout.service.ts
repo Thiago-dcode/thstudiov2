@@ -14,10 +14,12 @@ import {
   ColumBaseLayoutConfig,
   Layout,
   LayoutConfig,
+  LayoutIndexRequest,
 } from '@repo/common-lib/types/layout';
 import { LayoutConfigSchemaWithoutTimestamps } from '@repo/common-lib/schemas/layout';
 import { Helpers } from 'src/common/services/helpers.service';
 import { LayoutRepository } from './layout.repository';
+import { IndexLayoutsRequest } from './requests/index-layouts.request';
 
 const LAYOUTS_CACHE_TTL_MS = 1000 * 60 * 60 * 24 * 7;
 
@@ -60,12 +62,25 @@ export class LayoutService {
     private readonly helpers: Helpers,
   ) {}
 
-  async findAllActive(): Promise<Layout[]> {
-    return await this.helpers.cacheRemember(
-      CACHE_KEY_LAYOUTS_ALL,
-      this.layoutRepository.findAllActive(),
-      { append_language: false, ttl: LAYOUTS_CACHE_TTL_MS },
-    );
+  async findAll(indexLayoutsRequest: IndexLayoutsRequest): Promise<Layout[]> {
+    const filters: LayoutIndexRequest = {
+      ...indexLayoutsRequest,
+      // Default to active layouts (same as previous findAllActive behavior).
+      is_active: indexLayoutsRequest.is_active ?? true,
+    };
+
+    const useCache =
+      filters.is_active === true && filters.paginated !== true;
+
+    if (useCache) {
+      return await this.helpers.cacheRemember(
+        CACHE_KEY_LAYOUTS_ALL,
+        this.layoutRepository.findAll(filters),
+        { append_language: false, ttl: LAYOUTS_CACHE_TTL_MS },
+      );
+    }
+
+    return await this.layoutRepository.findAll(filters);
   }
 
   async findByName(name: LayoutName): Promise<Layout> {

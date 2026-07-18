@@ -19,6 +19,7 @@ import { CollectionCard } from "@/modules/collections/components/collection-card
 import { SelectCollectionDrawer } from "@/modules/collections/components/select-collection-drawer";
 import { SelectMediaDrawer } from "@/modules/media/components/select-media-drawer";
 import { usePortfolio } from "@/modules/portfolios/providers/create-update-portfolio.provider";
+import { PortfolioLayoutControls } from "./portfolio-layout-controls";
 
 const SortableItem = ({
   children,
@@ -107,7 +108,7 @@ function resolvePortfolioItemComponent(row: PortfolioItem): ReactNode {
 export default function InputStep2() {
   const {
     user,
-    portfolioItems,
+    portfolioInput,
     portfolioItemCount,
     portfolioItemLimit,
     isPortfolioItemsLimitReached,
@@ -115,6 +116,8 @@ export default function InputStep2() {
     handleSetPortfolioItems,
     handleRemovePortfolioItem,
   } = usePortfolio();
+
+  const portfolioItems = portfolioInput.portfolioItems;
 
   const ItemsRecords = useMemo(() => {
     const mediaRecord: Record<number, MediaPortfolioItem> = {};
@@ -135,6 +138,8 @@ export default function InputStep2() {
     };
   }, [portfolioItems]);
 
+
+
   const buildItemId = (item: PortfolioItem) => `${item.item}-${item.id}`;
   const sortableIds = useMemo(
     () => portfolioItems.map((item) => buildItemId(item)),
@@ -153,18 +158,11 @@ export default function InputStep2() {
   };
 
   return (
-    <section className="space-y-5">
-      {/* Header row: selected count + add button */}
-      <div className="flex flex-col gap-3 phone-lg:flex-row phone-lg:items-center phone-lg:justify-between phone-lg:gap-4">
-        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-          <h3 className="text-sm font-medium text-text">Portfolio items</h3>
-          {portfolioItems.length > 1 && (
-            <span className="text-xs text-text-muted/70">
-              · Drag to reorder
-            </span>
-          )}
-        </div>
-        <div className="flex flex-wrap items-center gap-2 phone-lg:shrink-0 phone-lg:justify-end">
+    <section className="space-y-4">
+      {/* Layout controls + add buttons */}
+      <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+        <PortfolioLayoutControls />
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0 sm:flex-wrap sm:justify-end">
           <SelectCollectionDrawer
             userId={user.id}
             collectionsSelected={ItemsRecords.collectionRecord}
@@ -187,7 +185,8 @@ export default function InputStep2() {
         </div>
       </div>
 
-      <div className="flex items-center gap-0.5">
+      {/* Item count + reorder hint */}
+      <div className="flex flex-wrap items-center gap-1.5">
         <InfoTooltip
           iconClassName="size-3.5"
           content={
@@ -201,13 +200,19 @@ export default function InputStep2() {
         />
         <p
           className={cn(
-            "text-xs tabular-nums",
+            "text-xs! tabular-nums",
             isPortfolioItemsLimitReached ? "text-error" : "text-text-muted",
           )}
         >
           {portfolioItemCount} / {portfolioItemLimit} items
         </p>
+        {portfolioItems.length > 1 && (
+          <span className="text-xs! text-text-muted/70">
+            · Drag to reorder
+          </span>
+        )}
       </div>
+
 
       {/* Selected media grid */}
       {portfolioItems.length === 0 ? (
@@ -220,10 +225,13 @@ export default function InputStep2() {
       ) : (
         <DndContext onDragEnd={handleDragEnd}>
           <SortableContext items={sortableIds} strategy={rectSortingStrategy}>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
               {portfolioItems.map((item, index) => {
                 return (
-                  <div key={buildItemId(item)} className=" bg-fg/60 p-4">
+                  <div
+                    key={buildItemId(item)}
+                    className="bg-fg/60 p-2.5 sm:p-4"
+                  >
                     <SortableItem
                       id={buildItemId(item)}
                       containerClassname="group relative"
@@ -252,8 +260,8 @@ export default function InputStep2() {
                           "absolute top-2 right-2 z-10 inline-flex items-center justify-center",
                           "size-7 border border-border/50 bg-bg/70 backdrop-blur-sm",
                           "text-text-muted hover:text-text hover:bg-bg",
-                          "opacity-0 group-hover:opacity-100 focus:opacity-100",
-                          "transition-opacity",
+                          "opacity-100 transition-opacity",
+                          "sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100",
                         )}
                       >
                         <X className="size-3.5 cursor-pointer" />

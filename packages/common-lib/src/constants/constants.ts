@@ -39,6 +39,18 @@ export const MAX_PORTFOLIO_ITEMS=100;
 export const MAX_CATEGORIES_PORTFOLIO = 3;
 export const MIN_COLUMN_BASE_COLUMNS = 1;
 export const MAX_COLUMN_BASE_COLUMNS = 12;
+/**
+ * COLUMN_BASE is responsive: the configured column count is the desktop
+ * maximum, and smaller viewports are capped so cells never get too small.
+ */
+export const COLUMN_BASE_RESPONSIVE_CAPS = {
+  /** < 768px */
+  mobile: 2,
+  /** 768px – 1279px */
+  tablet: 4,
+  /** >= 1280px (full configured count, up to MAX_COLUMN_BASE_COLUMNS) */
+  desktop: MAX_COLUMN_BASE_COLUMNS,
+} as const;
 
 // Ban duration in days based on ban_count. null = permanent ban.
 export const BAN_DURATION_DAYS: Record<number, number | null> = {

@@ -4,16 +4,21 @@ import { AlertButton } from "@/lib/components/alert-button";
 import { useCollection } from "../providers/create-update-collection.provider";
 
 export function AlertCollectionButton() {
-  const { formData, currentCollection, isPending, mediaSelected, canSubmit } =
-    useCollection();
+  const {
+    collectionInput,
+    currentCollection,
+    isPending,
+    mediaSelected,
+    canSubmit,
+  } = useCollection();
 
   const hasUnsavedWork =
     isPending ||
     !!currentCollection ||
     !!(
-      formData.title ||
-      formData.slug ||
-      formData.description ||
+      collectionInput.title ||
+      collectionInput.slug ||
+      collectionInput.description ||
       mediaSelected.length
     );
 

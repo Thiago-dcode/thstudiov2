@@ -4,17 +4,17 @@ import { AlertButton } from "@/lib/components/alert-button";
 import { usePortfolio } from "../providers/create-update-portfolio.provider";
 
 export function AlertPortfolioButton() {
-  const { formData, currentPortfolio, isPending, portfolioItems, canSubmit } =
+  const { portfolioInput, currentPortfolio, isPending, canSubmit } =
     usePortfolio();
 
   const hasUnsavedWork =
     isPending ||
     !!currentPortfolio ||
     !!(
-      formData.title ||
-      formData.slug ||
-      formData.description ||
-      portfolioItems.length
+      portfolioInput.title ||
+      portfolioInput.slug ||
+      portfolioInput.description ||
+      portfolioInput.portfolioItems.length
     );
 
   return (

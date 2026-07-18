@@ -1,5 +1,9 @@
 import { LayoutSchema } from '../schemas/layout';
+import { OffsetPaginationRequest } from './request';
 
+export type LayoutIndexRequest = OffsetPaginationRequest & {
+  is_active?: boolean;
+};
 
 export type MansoryLayoutConfig = null;
 export type UniformLayoutConfig = null;
@@ -11,16 +15,22 @@ export type LayoutConfig = MansoryLayoutConfig | UniformLayoutConfig | ColumBase
 export type MasonryLayout = {
   name: 'MASONRY';
   config: MansoryLayoutConfig;
+  /** id of the `layouts` row this resolved from (present when joined from a portfolio). */
+  layout_id?: number;
 };
 
 export type UniformLayout = {
   name: 'UNIFORM';
   config: UniformLayoutConfig;
+  /** id of the `layouts` row this resolved from (present when joined from a portfolio). */
+  layout_id?: number;
 };
 
 export type ColumnBaseLayout = {
   name: 'COLUMN_BASE';
   config: ColumBaseLayoutConfig;
+  /** id of the `layouts` row this resolved from (present when joined from a portfolio). */
+  layout_id?: number;
 };
 
 export type PortfolioLayout = MasonryLayout | UniformLayout | ColumnBaseLayout;

@@ -33,11 +33,7 @@ export const setRedirectToByCookie = (
   if (!isRedirectToKey(redirectTo)) {
     return;
   }
-  cookieStore.set(
-    REDIRECT_TO_COOKIE_NAME,
-    redirectTo,
-    redirectToCookieOptions,
-  );
+  cookieStore.set(REDIRECT_TO_COOKIE_NAME, redirectTo, redirectToCookieOptions);
 };
 
 export const deleteRedirectToByCookie = (

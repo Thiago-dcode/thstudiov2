@@ -1,8 +1,8 @@
-import { Jost, Archivo  } from "next/font/google";
+import { Archivo, Jost } from "next/font/google";
 
-export const brand = Archivo ({
+export const brand = Archivo({
   subsets: ["latin"],
-  weight: ["400",'500',"600"],
+  weight: ["400", "500", "600"],
   style: ["normal"],
   variable: "--font-brand",
   display: "swap",

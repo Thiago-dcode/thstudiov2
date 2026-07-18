@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { LogService } from '@repo/backend-lib/services/log-service';
 import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
 import { Query } from '@repo/database/facades';
+import { RequestService } from 'src/common/services/request.service';
 import { LayoutRepository } from './layout.repository';
 
 jest.mock('@repo/database/facades', () => ({
@@ -36,6 +37,10 @@ describe('LayoutRepository', () => {
         {
           provide: LogService,
           useValue: { info: jest.fn(), error: jest.fn(), warn: jest.fn() },
+        },
+        {
+          provide: RequestService,
+          useValue: { pagination: null },
         },
       ],
     }).compile();

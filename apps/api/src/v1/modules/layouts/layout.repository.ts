@@ -5,11 +5,17 @@ import {
   LayoutConfigSchemaWithoutTimestamps,
   LayoutSchemaColumns,
 } from '@repo/common-lib/schemas/layout';
-import { Layout, LayoutConfig } from '@repo/common-lib/types/layout';
+import {
+  Layout,
+  LayoutConfig,
+  LayoutIndexRequest,
+} from '@repo/common-lib/types/layout';
 import { SqlValue } from '@repo/common-lib/types/database';
 import { BaseRepository } from '@repo/database/repositories';
 import { DbException } from '@repo/database/exceptions';
 import { Query } from '@repo/database/facades';
+import { QueryBuilder } from '@repo/database/queryBuilder';
+import { RequestService } from 'src/common/services/request.service';
 
 function isUniqueViolation(error: unknown): boolean {
   return (
@@ -28,17 +34,33 @@ export class LayoutRepository extends BaseRepository {
     `${TABLES_ENUM.LAYOUTS}.is_active`,
   ] as const;
 
-  constructor(protected readonly logService: LogService) {
+  constructor(
+    private readonly requestService: RequestService,
+    protected readonly logService: LogService,
+  ) {
     super(TABLES_ENUM.LAYOUTS, logService);
   }
 
-  async findAllActive(): Promise<Layout[]> {
-    const rows = await this.query()
-      .select(this.LAYOUT_COLUMNS)
-      .where('is_active', true)
-      .orderBy('id', 'ASC')
-      .get<Layout[]>();
+  async findAll(filters: LayoutIndexRequest): Promise<Layout[]> {
+    const query = await this.applyFilters(filters, this.query().select(this.LAYOUT_COLUMNS));
+    const rows = await query.get<Layout[]>();
     return rows ?? [];
+  }
+
+  protected async applyFilters(
+    filters: LayoutIndexRequest,
+    query: QueryBuilder,
+  ): Promise<QueryBuilder> {
+    if (typeof filters.is_active === 'boolean') {
+      query.where('is_active', '=', filters.is_active);
+    }
+
+    this.requestService.pagination = await this.handleOffsetPagination(
+      query,
+      filters,
+    );
+    query.orderBy('id', 'ASC');
+    return query;
   }
 
   async findById(id: number): Promise<Layout | null> {

@@ -8,10 +8,12 @@ import { MAX_HIGHLIGHT_PORTFOLIOS } from "@repo/common-lib/constants/highlights"
 import type { CategoryBase } from "@repo/common-lib/types/category";
 import type { CollectionPortfolio } from "@repo/common-lib/types/collection";
 import type { MediaPortfolio } from "@repo/common-lib/types/media";
+import type { PortfolioLayoutInput } from "@repo/common-lib/types/layout";
 import type {
   CreatePortfolioInputWithFile,
   FullPortfolio,
-  PortfolioFormData,
+  Portfolio,
+  PortfolioInput,
   PortfolioItem,
 } from "@repo/common-lib/types/portfolio";
 import type { ActionReturn } from "@repo/common-lib/types/response";
@@ -23,7 +25,9 @@ import {
 import { toast } from "@repo/ui/sonner";
 import {
   createContext,
+  type Dispatch,
   type ReactNode,
+  type SetStateAction,
   useCallback,
   useContext,
   useEffect,
@@ -49,10 +53,62 @@ function categoryIdsEqual(a: CategoryBase[], b: CategoryBase[]) {
   return idsA === idsB;
 }
 
+function layoutInputFromFullPortfolio(
+  portfolio: FullPortfolio | undefined,
+): PortfolioLayoutInput | undefined {
+  if (!portfolio?.layout?.layout_id) return undefined;
+
+  return {
+    layout_id: portfolio.layout.layout_id,
+    config: portfolio.layout.config,
+  };
+}
+
+function layoutInputsEqual(
+  a: PortfolioLayoutInput | undefined,
+  b: PortfolioLayoutInput | undefined,
+) {
+  if (a === b) return true;
+  if (!a || !b) return !a && !b;
+  if (a.layout_id !== b.layout_id) return false;
+  return JSON.stringify(a.config ?? null) === JSON.stringify(b.config ?? null);
+}
+
+/** Builds the single-source-of-truth input from an existing portfolio (edit) or an empty draft (create). */
+function buildPortfolioInput(
+  user: UserAuth,
+  portfolio?: FullPortfolio,
+): PortfolioInput {
+  if (!portfolio) {
+    return {
+      user_id: user.id,
+      portfolioItems: [],
+      categories: [],
+      currentStep: 1,
+    };
+  }
+
+  return {
+    user_id: portfolio.user_id,
+    title: portfolio.title,
+    slug: portfolio.slug,
+    description: portfolio.description ?? "",
+    is_highlight: portfolio.is_highlight,
+    is_active: portfolio.is_active,
+    blocked_at: portfolio.blocked_at,
+    portfolioItems: buildPortfolioItemsFromFullPortfolio(portfolio),
+    categories: (portfolio.categories ?? []) as CategoryBase[],
+    layout: layoutInputFromFullPortfolio(portfolio),
+    currentStep: 1,
+  };
+}
+
 type PortfolioContextType = {
   user: UserAuth;
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => Promise<void>;
-  // `media` is overridden in this provider to be `Media[]` for UI purposes.
+  /** Submits the portfolio without requiring a form submit event (e.g. from a confirmation dialog). */
+  submitPortfolio: () => Promise<void>;
+  /** Updates a single scalar field on `portfolioInput`. */
   handleSetFormData: (
     key: keyof CreatePortfolioInputWithFile,
     value:
@@ -61,15 +117,22 @@ type PortfolioContextType = {
       | number
       | boolean
       | MediaPortfolio[]
-      | CollectionPortfolio[],
+      | CollectionPortfolio[]
+      | PortfolioLayoutInput
   ) => void;
   handleStep: (direction: "prev" | "next") => void;
   currentStep: number;
   MAX_STEPS: number;
-  formData: PortfolioFormData;
+  /** Single source of truth for the whole create/update form. */
+  portfolioInput: PortfolioInput;
+  setPortfolioInput: Dispatch<SetStateAction<PortfolioInput>>;
   inputErrors: Record<string, string> | undefined;
   isPending: boolean;
   success: boolean;
+  portfolioResult: ActionReturn<
+    Portfolio | null,
+    Partial<CreatePortfolioInputWithFile>
+  > | null;
   canSubmit: boolean;
   canGoNextStep: boolean;
   /**
@@ -83,16 +146,15 @@ type PortfolioContextType = {
   clear: () => void;
   currentPortfolio: FullPortfolio | undefined;
   setPortfolio: (portfolio: FullPortfolio) => void;
-  portfolioItems: PortfolioItem[];
   portfolioItemCount: number;
   portfolioItemLimit: number;
   isPortfolioItemsLimitReached: boolean;
   handleSetPortfolioItems: (items: PortfolioItem[]) => void;
   handleShiftPortfolioItem: (item: Omit<PortfolioItem, "position">) => void;
   handleRemovePortfolioItem: (id: number, kind: PortfolioItem["item"]) => void;
-  categoriesSelected: CategoryBase[];
   setCategorySelected: (category: CategoryBase) => void;
   removeCategorySelected: (category: CategoryBase) => void;
+  setLayout: (layout: PortfolioLayoutInput) => void;
   highlightCount: number;
   highlightLimit: number;
   isLoadingHighlightCount: boolean;
@@ -124,7 +186,7 @@ type PortfolioProviderProps = {
 };
 
 const MAX_STEPS = 2;
-const firstStepRequiredFields: (keyof PortfolioFormData)[] = [
+const firstStepRequiredFields: (keyof PortfolioInput)[] = [
   "user_id",
   "slug",
   "title",
@@ -141,62 +203,48 @@ export const PortfolioProvider = ({
   }, []);
 
   const [currentPortfolio, setCurrentPorfolio] = useState(defaultPortfolio);
-  const initialPortfolioItems = useRef(
-    defaultPortfolio
-      ? buildPortfolioItemsFromFullPortfolio(defaultPortfolio)
-      : [],
+
+  const initialPortfolioInput = useRef<PortfolioInput>(
+    buildPortfolioInput(user, defaultPortfolio),
   );
-  const initialCategories = useRef<CategoryBase[]>(
-    (defaultPortfolio?.categories ?? []) as CategoryBase[],
-  );
-  const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>(
-    initialPortfolioItems.current,
-  );
-  const [categoriesSelected, setCategoriesSelected] = useState<CategoryBase[]>(
-    initialCategories.current,
+  const [portfolioInput, setPortfolioInput] = useState<PortfolioInput>(
+    initialPortfolioInput.current,
   );
 
-  const [formData, setFormData] = useState<PortfolioFormData>({
-    user_id: user.id,
-  });
+  const currentStep = portfolioInput.currentStep;
 
-  const setPortfolio = useCallback((portfolio: FullPortfolio) => {
-    setCurrentPorfolio(portfolio);
-    const initialItems = buildPortfolioItemsFromFullPortfolio(portfolio);
-    initialPortfolioItems.current = initialItems;
-    const portfolioCategories = (portfolio.categories ?? []) as CategoryBase[];
-    initialCategories.current = portfolioCategories;
-    setPortfolioItems(initialItems);
-    setCategoriesSelected(portfolioCategories);
-    setCurrentStep(1);
-    setFormData({
-      user_id: portfolio.user_id,
-      title: portfolio.title,
-      slug: portfolio.slug,
-      description: portfolio.description ?? "",
-      is_highlight: portfolio.is_highlight,
-      is_active: portfolio.is_active,
-    });
-  }, []);
+  const setPortfolio = useCallback(
+    (portfolio: FullPortfolio) => {
+      setCurrentPorfolio(portfolio);
+      initialPortfolioInput.current = buildPortfolioInput(user, portfolio);
+      setPortfolioInput(initialPortfolioInput.current);
+    },
+    [user],
+  );
 
   const setCategorySelected = useCallback((category: CategoryBase) => {
-    setCategoriesSelected((prev) => {
-      if (prev.some((c) => c.id === category.id)) return prev;
-      if (prev.length >= MAX_CATEGORIES_PORTFOLIO) {
+    setPortfolioInput((prev) => {
+      if (prev.categories.some((c) => c.id === category.id)) return prev;
+      if (prev.categories.length >= MAX_CATEGORIES_PORTFOLIO) {
         toast.error(
           `Portfolios can have up to ${MAX_CATEGORIES_PORTFOLIO} categories`,
         );
         return prev;
       }
-      return [...prev, category];
+      return { ...prev, categories: [...prev.categories, category] };
     });
   }, []);
 
   const removeCategorySelected = useCallback((category: CategoryBase) => {
-    setCategoriesSelected((prev) => prev.filter((c) => c.id !== category.id));
+    setPortfolioInput((prev) => ({
+      ...prev,
+      categories: prev.categories.filter((c) => c.id !== category.id),
+    }));
   }, []);
 
-  const [currentStep, setCurrentStep] = useState(1);
+  const setLayout = useCallback((layout: PortfolioLayoutInput) => {
+    setPortfolioInput((prev) => ({ ...prev, layout }));
+  }, []);
 
   const highlightCountMemo = useRef<ActionReturn<
     number | null,
@@ -238,6 +286,7 @@ export const PortfolioProvider = ({
   const highlightCount = highlightCountResult?.data ?? 0;
 
   const {
+    result:portfolioResult,
     handleAction,
     isPending,
     success,
@@ -248,8 +297,9 @@ export const PortfolioProvider = ({
     action: async () => {
       const media: { id: number; position: number }[] = [];
       const collections: { id: number; position: number }[] = [];
-      for (let index = 0; index < portfolioItems.length; index++) {
-        const { id, item } = portfolioItems[index];
+      const items = portfolioInput.portfolioItems;
+      for (let index = 0; index < items.length; index++) {
+        const { id, item } = items[index];
         const obj = {
           id,
           position: index + 1,
@@ -270,18 +320,20 @@ export const PortfolioProvider = ({
       }
 
       const payload: Partial<CreatePortfolioInputWithFile> = {
-        title: (formData.title ?? "") as string,
-        slug: (formData.slug ?? "") as string,
-        description: (formData.description ?? "") as string,
-        user_id: (formData.user_id ?? user.id) as number,
-        is_highlight: formData.is_highlight ?? false,
-        is_active: formData.is_active ?? true,
-        thumbnail: formData.thumbnail
-          ? (formData.thumbnail as File)
-          : undefined,
+        title: (portfolioInput.title ?? "") as string,
+        slug: (portfolioInput.slug ?? "") as string,
+        description: (portfolioInput.description ?? "") as string,
+        user_id: (portfolioInput.user_id ?? user.id) as number,
+        is_highlight: portfolioInput.is_highlight ?? false,
+        is_active: portfolioInput.is_active ?? true,
+        thumbnail:
+          portfolioInput.thumbnail instanceof File
+            ? portfolioInput.thumbnail
+            : undefined,
         media: media.length ? media : undefined,
         collections: collections.length ? collections : undefined,
-        categories: categoriesSelected.map((c) => c.id),
+        categories: portfolioInput.categories.map((c) => c.id),
+        layout: portfolioInput.layout,
       };
 
       return await createOrUpdatePortfolioAction(payload, currentPortfolio);
@@ -314,18 +366,23 @@ export const PortfolioProvider = ({
     [handleAction],
   );
 
+  const submitPortfolio = useCallback(async () => {
+    await handleAction();
+  }, [handleAction]);
+
   const handleSetPortfolioItems = useCallback((items: PortfolioItem[]) => {
-    setPortfolioItems(items);
+    setPortfolioInput((prev) => ({ ...prev, portfolioItems: items }));
   }, []);
 
   const handleShiftPortfolioItem = useCallback(
     (item: Omit<PortfolioItem, "position">) => {
-      setPortfolioItems((prev) => {
-        if (prev.some((x) => x.item === item.item && x.id === item.id)) {
+      setPortfolioInput((prev) => {
+        const prevItems = prev.portfolioItems;
+        if (prevItems.some((x) => x.item === item.item && x.id === item.id)) {
           return prev;
         }
 
-        const currentCount = countPortfolioItemSlots(prev);
+        const currentCount = countPortfolioItemSlots(prevItems);
         const additionalCount = countPortfolioItemSlot(item);
 
         if (currentCount + additionalCount > MAX_PORTFOLIO_ITEMS) {
@@ -335,16 +392,16 @@ export const PortfolioProvider = ({
           return prev;
         }
 
-        const next = { ...item, position: prev.length + 1 } as PortfolioItem;
-        return [next, ...prev];
+        const next = { ...item, position: prevItems.length + 1 } as PortfolioItem;
+        return { ...prev, portfolioItems: [next, ...prevItems] };
       });
     },
     [],
   );
 
   const portfolioItemCount = useMemo(
-    () => countPortfolioItemSlots(portfolioItems),
-    [portfolioItems],
+    () => countPortfolioItemSlots(portfolioInput.portfolioItems),
+    [portfolioInput.portfolioItems],
   );
 
   const isPortfolioItemsLimitReached =
@@ -352,33 +409,28 @@ export const PortfolioProvider = ({
 
   const handleRemovePortfolioItem = useCallback(
     (id: number, kind: PortfolioItem["item"]) => {
-      setPortfolioItems((prev) =>
-        prev.filter((x) => !(x.item === kind && x.id === id)),
-      );
+      setPortfolioInput((prev) => ({
+        ...prev,
+        portfolioItems: prev.portfolioItems.filter(
+          (x) => !(x.item === kind && x.id === id),
+        ),
+      }));
     },
     [],
   );
 
   const handleSetFormData = useCallback(
     (key: keyof CreatePortfolioInputWithFile, value: any) => {
-      setFormData((prev) => {
-        if (prev) {
-          return {
-            ...prev,
-            [key]: value,
-          };
-        }
-        return {
-          [key]: value,
-        };
-      });
+      setPortfolioInput((prev) => ({
+        ...prev,
+        [key]: value,
+      }));
     },
     [],
   );
 
   const firstStepIsCompleted = !firstStepRequiredFields.some((field) => {
-    if (!formData) return true;
-    const hasField = formData[field];
+    const hasField = portfolioInput[field];
     if (hasField) return false;
 
     if (field === "thumbnail" && currentPortfolio?.thumbnail) return false;
@@ -388,29 +440,36 @@ export const PortfolioProvider = ({
   const hasFormChanged = useMemo(() => {
     if (!currentPortfolio) return false;
 
-    if (formData.title !== currentPortfolio.title) return true;
-    if (formData.slug !== currentPortfolio.slug) return true;
-    if ((formData.description ?? "") !== (currentPortfolio.description ?? ""))
-      return true;
-    if ((formData.is_highlight ?? false) !== currentPortfolio.is_highlight)
-      return true;
-    if ((formData.is_active ?? true) !== currentPortfolio.is_active)
-      return true;
-    if (formData.thumbnail) return true;
+    const initial = initialPortfolioInput.current;
 
-    if (!categoryIdsEqual(categoriesSelected, initialCategories.current))
+    if (portfolioInput.title !== currentPortfolio.title) return true;
+    if (portfolioInput.slug !== currentPortfolio.slug) return true;
+    if (
+      (portfolioInput.description ?? "") !== (currentPortfolio.description ?? "")
+    )
+      return true;
+    if ((portfolioInput.is_highlight ?? false) !== currentPortfolio.is_highlight)
+      return true;
+    if ((portfolioInput.is_active ?? true) !== currentPortfolio.is_active)
+      return true;
+    if (portfolioInput.thumbnail) return true;
+
+    if (!categoryIdsEqual(portfolioInput.categories, initial.categories))
       return true;
 
-    const baselineItems = initialPortfolioItems.current;
-    if (baselineItems.length !== portfolioItems.length) return true;
-    for (let i = 0; i < portfolioItems.length; i++) {
-      const a = portfolioItems[i];
+    if (!layoutInputsEqual(portfolioInput.layout, initial.layout)) return true;
+
+    const baselineItems = initial.portfolioItems;
+    const items = portfolioInput.portfolioItems;
+    if (baselineItems.length !== items.length) return true;
+    for (let i = 0; i < items.length; i++) {
+      const a = items[i];
       const b = baselineItems[i];
       if (a.item !== b.item || a.id !== b.id) return true;
     }
 
     return false;
-  }, [formData, currentPortfolio, portfolioItems, categoriesSelected]);
+  }, [portfolioInput, currentPortfolio]);
 
   const canGoNextStep = useMemo(() => {
     const nextStep = currentStep + 1;
@@ -423,7 +482,8 @@ export const PortfolioProvider = ({
   }, [currentStep, firstStepIsCompleted]);
 
   const canSubmit = useMemo(() => {
-    if (!firstStepIsCompleted || !portfolioItems.length) return false;
+    if (!firstStepIsCompleted || !portfolioInput.portfolioItems.length)
+      return false;
 
     if (currentPortfolio) return hasFormChanged;
 
@@ -433,25 +493,28 @@ export const PortfolioProvider = ({
     currentPortfolio,
     hasFormChanged,
     firstStepIsCompleted,
-    portfolioItems.length,
+    portfolioInput.portfolioItems.length,
   ]);
 
   const handleStep = (direction: "prev" | "next") => {
     if (direction === "prev" && currentStep > 1) {
-      setCurrentStep((prev) => prev - 1);
+      setPortfolioInput((prev) => ({
+        ...prev,
+        currentStep: prev.currentStep - 1,
+      }));
     } else if (direction === "next" && canGoNextStep) {
-      setCurrentStep((prev) => prev + 1);
+      setPortfolioInput((prev) => ({
+        ...prev,
+        currentStep: prev.currentStep + 1,
+      }));
     }
   };
 
   const clear = useCallback(() => {
-    // Reset local state
-    setFormData({ user_id: user.id });
-    setCurrentStep(1);
+    // Reset to an empty draft (single source of truth)
+    initialPortfolioInput.current = buildPortfolioInput(user);
+    setPortfolioInput(initialPortfolioInput.current);
     setCurrentPorfolio(undefined);
-    setPortfolioItems([]);
-    initialCategories.current = [];
-    setCategoriesSelected([]);
     // Reset action state (errors/result)
     reset();
   }, [user, reset]);
@@ -459,14 +522,17 @@ export const PortfolioProvider = ({
   const contextValue: PortfolioContextType = {
     user,
     handleSubmit,
+    submitPortfolio,
     handleSetFormData,
     handleStep,
     currentStep,
     MAX_STEPS,
-    formData,
+    portfolioInput,
+    setPortfolioInput,
     inputErrors,
     isPending,
     success,
+    portfolioResult,
     canGoNextStep,
     canSubmit,
     isHydrated,
@@ -475,16 +541,15 @@ export const PortfolioProvider = ({
     clear,
     currentPortfolio,
     setPortfolio,
-    portfolioItems,
     portfolioItemCount,
     portfolioItemLimit: MAX_PORTFOLIO_ITEMS,
     isPortfolioItemsLimitReached,
     handleSetPortfolioItems,
     handleShiftPortfolioItem,
     handleRemovePortfolioItem,
-    categoriesSelected,
     setCategorySelected,
     removeCategorySelected,
+    setLayout,
     highlightCount,
     highlightLimit,
     isLoadingHighlightCount,

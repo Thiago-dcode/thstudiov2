@@ -12,6 +12,7 @@ describe('formatPortfolioLayout', () => {
     expect(layout).toEqual({
       name: 'COLUMN_BASE',
       config: { columns: 3 },
+      layout_id: 3,
     });
   });
 
@@ -25,6 +26,7 @@ describe('formatPortfolioLayout', () => {
     expect(layout).toEqual({
       name: 'MASONRY',
       config: null,
+      layout_id: 1,
     });
   });
 
@@ -38,6 +40,7 @@ describe('formatPortfolioLayout', () => {
     expect(layout).toEqual({
       name: 'UNIFORM',
       config: null,
+      layout_id: 2,
     });
   });
 

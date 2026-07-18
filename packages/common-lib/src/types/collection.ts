@@ -53,6 +53,14 @@ export type CreateCollectionInput = Omit<CollectionSchema, InternalCollectionFie
   media?: { id: number; position: number }[];
 };
 
+/**
+ * Single source of truth for the create/update collection form.
+ * Media is kept as full objects (for the UI) instead of `{ id, position }`.
+ */
+export type CollectionInput = Partial<Omit<CreateCollectionInput, 'media'>> & {
+  media: FullCollectionMedia[];
+};
+
 export type UpdateCollectionInput = Partial<
   Omit<CollectionSchema, 'id' | 'created_at' | 'updated_at' | 'is_featured'>
 > & {

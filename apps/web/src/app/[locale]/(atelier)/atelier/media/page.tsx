@@ -95,13 +95,11 @@ export default async function MediaAtelierPage({
 
       <div className="flex flex-col gap-6">
         <SelectMediaProvider>
-        
-            <MediaGridClient
-              media={media}
-              username={userAuth.username}
-              hasActiveFilters={hasActiveFilters}
-            />
-        
+          <MediaGridClient
+            media={media}
+            username={userAuth.username}
+            hasActiveFilters={hasActiveFilters}
+          />
         </SelectMediaProvider>
         {pagination && (
           <AppPagination

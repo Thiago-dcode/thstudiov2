@@ -9,7 +9,7 @@ type AdminPageContainerProps = {
 
 export const AdminPageContainer = ({ children }: AdminPageContainerProps) => {
   return (
-    <section className="size-full p-6 flex flex-col gap-6 overflow-auto">
+    <section className="size-full p-4 sm:p-6 flex flex-col gap-5 sm:gap-6 overflow-auto">
       {children}
     </section>
   );
@@ -29,22 +29,24 @@ export const AdminPageTitle = ({
   children,
 }: AdminPageTitleProps) => {
   return (
-    <div className="flex items-center justify-between gap-4">
-      <div className="flex items-center gap-2">
-        <h1 className="text-2xl! font-semibold">{title}</h1>
+    <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center gap-2 min-w-0">
+        <h1 className="text-lg sm:text-2xl! font-semibold truncate">
+          {title}
+        </h1>
         {publicHref && (
           <Link
             href={publicHref}
             rel="noopener noreferrer"
             aria-label="View public page"
-            className="text-text-muted hover:text-text transition-colors"
+            className="shrink-0 text-text-muted hover:text-text transition-colors"
           >
             <ExternalLink className="size-4" />
           </Link>
         )}
         {info && <InfoTooltip content={info} />}
       </div>
-      {children}
+      {children && <div className="flex shrink-0 items-center gap-1">{children}</div>}
     </div>
   );
 };

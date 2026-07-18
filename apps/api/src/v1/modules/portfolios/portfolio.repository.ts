@@ -43,20 +43,21 @@ export function formatPortfolioLayout(
 
   switch (row.layout_name as EnumType<'LAYOUT_TYPE'>) {
     case 'MASONRY':
-      return { name: 'MASONRY', config: null };
+      return { name: 'MASONRY', config: null, layout_id: row.layout_id };
     case 'UNIFORM':
-      return { name: 'UNIFORM', config: null };
+      return { name: 'UNIFORM', config: null, layout_id: row.layout_id };
     case 'COLUMN_BASE': {
       const columns =
         parsedConfig &&
-        typeof parsedConfig === 'object' &&
-        typeof (parsedConfig as { columns?: unknown }).columns === 'number'
+          typeof parsedConfig === 'object' &&
+          typeof (parsedConfig as { columns?: unknown }).columns === 'number'
           ? (parsedConfig as { columns: number }).columns
           : MIN_COLUMN_BASE_COLUMNS;
 
       return {
         name: 'COLUMN_BASE',
         config: { columns } satisfies ColumBaseLayoutConfig,
+        layout_id: row.layout_id,
       };
     }
     default:

@@ -83,7 +83,7 @@ export const CreateOrUpdateCollection = ({
     clear,
     setCollection,
     currentCollection,
-    formData,
+    collectionInput,
     handleSetFormData,
     deleteInputErrorProperty,
     checkSlugAvailability,
@@ -101,7 +101,7 @@ export const CreateOrUpdateCollection = ({
     fetchHighlightCount,
   } = useCollection();
 
-  const isCurrentlyHighlighted = formData.is_highlight ?? false;
+  const isCurrentlyHighlighted = collectionInput.is_highlight ?? false;
   const originallyHighlighted =
     (currentCollection ?? defaultCollection)?.is_highlight ?? false;
   const highlightToggleDisabled = isHighlightToggleDisabled(
@@ -137,7 +137,7 @@ export const CreateOrUpdateCollection = ({
 
   // --- Slug logic ---
   const manuallyChangedSlug = useRef(false);
-  const previousSlugRef = useRef<string | undefined>(formData?.slug);
+  const previousSlugRef = useRef<string | undefined>(collectionInput.slug);
   const [isValidSlug, setIsValidSlug] = useState<boolean | undefined>(
     undefined,
   );
@@ -166,7 +166,7 @@ export const CreateOrUpdateCollection = ({
   };
 
   useEffect(() => {
-    const currentSlug = formData?.slug?.trim();
+    const currentSlug = collectionInput.slug?.trim();
     const previousSlug = previousSlugRef.current?.trim();
     const slugChanged = currentSlug !== previousSlug;
 
@@ -179,8 +179,8 @@ export const CreateOrUpdateCollection = ({
     } else {
       setIsValidSlug(undefined);
     }
-    previousSlugRef.current = formData?.slug;
-  }, [formData?.slug, checkSlugAvailability]);
+    previousSlugRef.current = collectionInput.slug;
+  }, [collectionInput.slug, checkSlugAvailability]);
 
   const getSlugStatusMessage = () => {
     if (isCheckingSlugAvailability) {
@@ -190,7 +190,7 @@ export const CreateOrUpdateCollection = ({
     }
     if (
       typeof isSlugAvailable === "boolean" &&
-      currentCollection?.slug !== formData.slug
+      currentCollection?.slug !== collectionInput.slug
     ) {
       if (isSlugAvailable) {
         return (
@@ -275,7 +275,7 @@ export const CreateOrUpdateCollection = ({
           className={`space-y-4 ${readOnly ? "pointer-events-none select-none opacity-90" : ""}`}
         >
           <FormComponent.LabelInput
-            value={formData?.title || ""}
+            value={collectionInput.title || ""}
             onChange={handleTitleChange}
             error={inputErrors?.title}
             label="Title"
@@ -289,7 +289,7 @@ export const CreateOrUpdateCollection = ({
 
           <div className="space-y-2">
             <FormComponent.LabelInput
-              value={formData?.slug || ""}
+              value={collectionInput.slug || ""}
               onChange={handleSlugChange}
               error={inputErrors?.slug}
               label="Slug"
@@ -310,7 +310,7 @@ export const CreateOrUpdateCollection = ({
           </div>
 
           <FormComponent.LabelTextarea
-            value={formData?.description || ""}
+            value={collectionInput.description || ""}
             onChange={(e) => {
               deleteInputErrorProperty("description");
               handleSetFormData("description", e.target.value);
@@ -328,7 +328,7 @@ export const CreateOrUpdateCollection = ({
             <div className="flex items-center gap-2">
               <Checkbox
                 id="collection-is-highlight"
-                checked={formData.is_highlight ?? false}
+                checked={collectionInput.is_highlight ?? false}
                 onCheckedChange={(checked) => {
                   deleteInputErrorProperty("is_highlight");
                   handleSetFormData("is_highlight", checked === true);
@@ -367,7 +367,7 @@ export const CreateOrUpdateCollection = ({
           <div className="flex items-center gap-2">
             <Checkbox
               id="collection-is-active"
-              checked={formData.is_active ?? true}
+              checked={collectionInput.is_active ?? true}
               onCheckedChange={(checked) => {
                 deleteInputErrorProperty("is_active");
                 handleSetFormData("is_active", checked === true);

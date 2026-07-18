@@ -51,15 +51,8 @@ export const CreateOrUpdateService = ({
     canSubmit,
     readOnly,
     isUpdate,
-    titleRef,
-    slugRef,
+    serviceInput,
     slugInputRef,
-    descriptionRef,
-    priceRef,
-    isActiveRef,
-    showPriceRef,
-    isHighlightRef,
-    manuallyChangedSlug,
     notifyFormChange,
     updateSlug,
     handleThumbnailChange,
@@ -104,7 +97,7 @@ export const CreateOrUpdateService = ({
     }
     if (
       typeof isSlugAvailable === "boolean" &&
-      currentService?.slug !== slugRef.current
+      currentService?.slug !== serviceInput.current.slug
     ) {
       if (isSlugAvailable) {
         return (
@@ -147,11 +140,11 @@ export const CreateOrUpdateService = ({
             <FormComponent.LabelInput
               onChange={(e) => {
                 const newTitle = e.target.value;
-                titleRef.current = newTitle;
+                serviceInput.current.title = newTitle;
                 notifyFormChange();
                 deleteInputErrorProperty("title");
 
-                if (!manuallyChangedSlug.current) {
+                if (!serviceInput.current.manuallyChangedSlug) {
                   const generatedSlug = generateValidSlug(newTitle);
                   if (generatedSlug && isAValidSlugFormat(generatedSlug)) {
                     updateSlug(generatedSlug);
@@ -160,7 +153,7 @@ export const CreateOrUpdateService = ({
                   }
                 }
               }}
-              defaultValue={titleRef.current}
+              defaultValue={serviceInput.current.title}
               error={inputErrors?.title}
               label="Title"
               required={!isUpdate}
@@ -179,10 +172,10 @@ export const CreateOrUpdateService = ({
                   });
                   notifyFormChange();
                   deleteInputErrorProperty("slug");
-                  manuallyChangedSlug.current = !!newSlug;
+                  serviceInput.current.manuallyChangedSlug = !!newSlug;
                   updateSlug(newSlug);
                 }}
-                defaultValue={slugRef.current}
+                defaultValue={serviceInput.current.slug}
                 error={inputErrors?.slug}
                 label="Slug"
                 required={!isUpdate}
@@ -203,11 +196,11 @@ export const CreateOrUpdateService = ({
 
             <FormComponent.LabelTextarea
               onChange={(e) => {
-                descriptionRef.current = e.target.value;
+                serviceInput.current.description = e.target.value;
                 notifyFormChange();
                 deleteInputErrorProperty("description");
               }}
-              defaultValue={descriptionRef.current}
+              defaultValue={serviceInput.current.description}
               error={inputErrors?.description}
               rows={4}
               label="Description"
@@ -229,11 +222,11 @@ export const CreateOrUpdateService = ({
             <div className="grid grid-cols-2 gap-4">
               <FormComponent.LabelInput
                 onChange={(e) => {
-                  priceRef.current = e.target.value;
+                  serviceInput.current.price = e.target.value;
                   notifyFormChange();
                   deleteInputErrorProperty("price");
                 }}
-                defaultValue={priceRef.current}
+                defaultValue={serviceInput.current.price}
                 error={inputErrors?.price}
                 label="Price"
                 name="price"
@@ -249,9 +242,9 @@ export const CreateOrUpdateService = ({
                 <div className="flex items-center gap-2">
                   <Checkbox
                     id="show_price"
-                    defaultChecked={showPriceRef.current}
+                    defaultChecked={serviceInput.current.show_price}
                     onCheckedChange={(checked) => {
-                      showPriceRef.current = !!checked;
+                      serviceInput.current.show_price = !!checked;
                       notifyFormChange();
                     }}
                   />
@@ -265,9 +258,9 @@ export const CreateOrUpdateService = ({
                 <div className="flex items-center gap-2">
                   <Checkbox
                     id="is_active"
-                    defaultChecked={isActiveRef.current}
+                    defaultChecked={serviceInput.current.is_active}
                     onCheckedChange={(checked) => {
-                      isActiveRef.current = !!checked;
+                      serviceInput.current.is_active = !!checked;
                       notifyFormChange();
                     }}
                   />
@@ -289,7 +282,7 @@ export const CreateOrUpdateService = ({
                   onCheckedChange={(checked) => {
                     deleteInputErrorProperty("is_highlight");
                     const value = checked === true;
-                    isHighlightRef.current = value;
+                    serviceInput.current.is_highlight = value;
                     setIsHighlighted(value);
                     notifyFormChange();
                   }}

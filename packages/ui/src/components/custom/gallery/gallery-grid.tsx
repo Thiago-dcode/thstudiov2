@@ -1,63 +1,107 @@
-import { ReactNode } from "react";
-import "../../../assets/gallery-grid.css";
-import { MediaGalleryCard } from "./media-gallery-card";
+import type { PortfolioLayout } from "@repo/common-lib/types/layout";
 import { MediaPortfolio } from "@repo/common-lib/types/media";
 import { PortfolioItem } from "@repo/common-lib/types/portfolio";
+import { ReactNode } from "react";
+import "../../../assets/gallery-grid.css";
 import { CollectionGalleryCard } from "./collection-gallery-card";
-export type GalleryGridMedia = Pick<MediaPortfolio, 'id' | 'thumbnail' | 'title' | 'seo_alt' | 'aspect_ratio'>;
+import {
+  getGalleryGridClassName,
+  getGalleryGridContainerStyle,
+  needsMasonryWrapper,
+  normalizeGalleryLayout,
+} from "./gallery-layout";
+import { MediaGalleryCard } from "./media-gallery-card";
 
-export type AvailableGridStyles = 'mansonry-grid' | 'uniform-grid';
+export type GalleryGridMedia = Pick<
+    MediaPortfolio,
+    "id" | "thumbnail" | "title" | "seo_alt" | "aspect_ratio"
+>;
 
-export const GalleryGridContainer = ({ children, style = 'mansonry-grid' }: {
-    style?: AvailableGridStyles,
-    children: ReactNode
+type GalleryGridProps = {
+    layout?: PortfolioLayout;
+};
+
+export const GalleryGridContainer = ({
+    children,
+    layout,
+}: GalleryGridProps & {
+    children: ReactNode;
 }) => {
-    if (style === 'mansonry-grid') {
-        return (
-            <div className="mansonry-grid-wrapper">
-                <div className={style}>
-                    {children}
-                </div>
-            </div>
-        );
-    }
+  const resolvedLayout = normalizeGalleryLayout(layout);
+  const gridClassName = getGalleryGridClassName(resolvedLayout);
+  const containerStyle = getGalleryGridContainerStyle(resolvedLayout);
+
+  if (needsMasonryWrapper(resolvedLayout)) {
+    return (
+      <div className="layout-masonry-wrapper">
+        <div className={gridClassName} style={containerStyle}>
+          {children}
+        </div>
+      </div>
+    );
+  }
 
     return (
-        <div className={style}>
+        <div className={gridClassName} style={containerStyle}>
             {children}
         </div>
     );
-}
+};
 
-export const PortfolioGrid = ({ portfolioItems, style = 'mansonry-grid' }: {
-    portfolioItems: PortfolioItem[],
-    style?: AvailableGridStyles,
+export const PortfolioGrid = ({
+    portfolioItems,
+    layout,
+}: GalleryGridProps & {
+    portfolioItems: PortfolioItem[];
 }) => {
+    const resolvedLayout = normalizeGalleryLayout(layout);
+
     return (
-        <GalleryGridContainer style={style}>
+        <GalleryGridContainer layout={resolvedLayout}>
             {portfolioItems.map((item, i) => {
-
-                if (item.item === 'media') {
-                    return <MediaGalleryCard key={`${item.item}-${item.id}`} media={item} index={item.index || i} gridStyle={style} />
+                if (item.item === "media") {
+                    return (
+                        <MediaGalleryCard
+                            key={`${item.item}-${item.id}`}
+                            media={item}
+                            index={item.index || i}
+                            layout={resolvedLayout}
+                        />
+                    );
                 }
-                else if (item.item === 'collection') {
 
-                    return <CollectionGalleryCard key={`${item.item}-${item.id}`} collection={item} index={item.index || i} gridStyle={style} />
+                if (item.item === "collection") {
+                    return (
+                        <CollectionGalleryCard
+                            key={`${item.item}-${item.id}`}
+                            collection={item}
+                            index={item.index || i}
+                        />
+                    );
                 }
             })}
         </GalleryGridContainer>
-    )
-}
+    );
+};
 
-export const GalleryGrid = ({ media, style = 'mansonry-grid' }: {
-    media: GalleryGridMedia[],
-    style?: AvailableGridStyles,
+export const GalleryGrid = ({
+    media,
+    layout,
+}: GalleryGridProps & {
+    media: GalleryGridMedia[];
 }) => {
+    const resolvedLayout = normalizeGalleryLayout(layout);
+
     return (
-        <GalleryGridContainer style={style}>
+        <GalleryGridContainer layout={resolvedLayout}>
             {media.map((m, i) => (
-                <MediaGalleryCard key={m.id} media={m} index={i} gridStyle={style} />
+                <MediaGalleryCard
+                    key={m.id}
+                    media={m}
+                    index={i}
+                    layout={resolvedLayout}
+                />
             ))}
         </GalleryGridContainer>
-    )
-}
+    );
+};

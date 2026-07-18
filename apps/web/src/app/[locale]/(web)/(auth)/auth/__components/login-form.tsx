@@ -1,8 +1,8 @@
 "use client";
 
 import {
-  resolveRedirectToTarget,
   type RedirectToKey,
+  resolveRedirectToTarget,
 } from "@repo/common-lib/constants/redirect-to";
 import { Errors } from "@repo/ui/components/custom/errors";
 import { Input } from "@repo/ui/components/shadcn/input";

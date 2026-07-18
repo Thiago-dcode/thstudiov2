@@ -3,6 +3,7 @@
 import { MAX_COLLECTION_ITEMS } from "@repo/common-lib/constants/constants";
 import { MAX_HIGHLIGHT_COLLECTIONS } from "@repo/common-lib/constants/highlights";
 import type {
+  CollectionInput,
   CreateCollectionInput,
   FullCollection,
   FullCollectionMedia,
@@ -12,7 +13,9 @@ import type { ActionReturn } from "@repo/common-lib/types/response";
 import { toast } from "@repo/ui/sonner";
 import {
   createContext,
+  type Dispatch,
   type ReactNode,
+  type SetStateAction,
   useCallback,
   useContext,
   useMemo,
@@ -26,11 +29,28 @@ import { createOrUpdateCollectionAction } from "../server-actions/create-update-
 import { getCollectionHighlightCountAction } from "../server-actions/get-highlight-count.action";
 import { slugExistsAction } from "../server-actions/slug-exists.action";
 
-type CollectionFormData = Partial<
-  Omit<CreateCollectionInput, "media"> & {
-    media?: FullCollectionMedia[];
+/** Builds the single-source-of-truth input from an existing collection (edit) or an empty draft (create). */
+function buildCollectionInput(
+  user: UserAuth,
+  collection?: FullCollection,
+): CollectionInput {
+  if (!collection) {
+    return {
+      user_id: user.id,
+      media: [],
+    };
   }
->;
+
+  return {
+    user_id: collection.user_id,
+    title: collection.title,
+    slug: collection.slug,
+    description: collection.description ?? "",
+    is_highlight: collection.is_highlight,
+    is_active: collection.is_active,
+    media: [...collection.media].sort((a, b) => a.position - b.position),
+  };
+}
 
 type CollectionContextType = {
   user: UserAuth;
@@ -39,7 +59,9 @@ type CollectionContextType = {
     key: keyof CreateCollectionInput,
     value: string | number | boolean | FullCollectionMedia[],
   ) => void;
-  formData: CollectionFormData;
+  /** Single source of truth for the whole create/update form. */
+  collectionInput: CollectionInput;
+  setCollectionInput: Dispatch<SetStateAction<CollectionInput>>;
   mediaSelected: FullCollectionMedia[];
   handlePushMediaSelected: (media: Media) => void;
   handleRemoveMediaSelected: (mediaId: number) => void;
@@ -86,22 +108,17 @@ export const CollectionProvider = ({
     FullCollection | undefined
   >(undefined);
 
-  const [formData, setFormData] = useState<CollectionFormData>({
-    user_id: user.id,
-  });
+  const [collectionInput, setCollectionInput] = useState<CollectionInput>(() =>
+    buildCollectionInput(user),
+  );
 
-  const setCollection = useCallback((collection: FullCollection) => {
-    setCurrentCollection(collection);
-    setFormData({
-      user_id: collection.user_id,
-      title: collection.title,
-      slug: collection.slug,
-      description: collection.description ?? "",
-      is_highlight: collection.is_highlight,
-      is_active: collection.is_active,
-      media: collection.media.sort((a, b) => a.position - b.position),
-    });
-  }, []);
+  const setCollection = useCallback(
+    (collection: FullCollection) => {
+      setCurrentCollection(collection);
+      setCollectionInput(buildCollectionInput(user, collection));
+    },
+    [user],
+  );
 
   const idTimeOut = useRef<NodeJS.Timeout>(null);
   const highlightCountMemo = useRef<ActionReturn<
@@ -152,18 +169,18 @@ export const CollectionProvider = ({
     reset,
   } = useHandleAction({
     action: async () => {
-      const media = (formData.media ?? []).map((m, idx) => ({
+      const media = collectionInput.media.map((m, idx) => ({
         id: m.id,
         position: idx + 1,
       }));
 
       const payload: Partial<CreateCollectionInput> = {
-        title: (formData.title ?? "") as string,
-        slug: (formData.slug ?? "") as string,
-        description: (formData.description ?? "") as string,
-        user_id: (formData.user_id ?? user.id) as number,
-        is_highlight: formData.is_highlight ?? false,
-        is_active: formData.is_active ?? true,
+        title: (collectionInput.title ?? "") as string,
+        slug: (collectionInput.slug ?? "") as string,
+        description: (collectionInput.description ?? "") as string,
+        user_id: (collectionInput.user_id ?? user.id) as number,
+        is_highlight: collectionInput.is_highlight ?? false,
+        is_active: collectionInput.is_active ?? true,
         media: media.length ? media : undefined,
       };
 
@@ -208,22 +225,22 @@ export const CollectionProvider = ({
     cleanErrors,
   } = useHandleAction({
     action: async () => {
-      const slugToCheck = formData.slug || "";
+      const slugToCheck = collectionInput.slug || "";
       if (slugChecksMemo.current[slugToCheck]) {
         return slugChecksMemo.current[slugToCheck];
       }
       return await slugExistsAction(user.username, slugToCheck);
     },
     afterAction: async (data) => {
-      slugChecksMemo.current[formData.slug || ""] = data;
+      slugChecksMemo.current[collectionInput.slug || ""] = data;
     },
   });
 
   const checkSlugAvailability = useCallback(async () => {
     if (
-      !formData?.slug ||
+      !collectionInput.slug ||
       isPendingSlugExists ||
-      formData.slug === currentCollection?.slug
+      collectionInput.slug === currentCollection?.slug
     )
       return;
     if (idTimeOut.current) clearTimeout(idTimeOut.current);
@@ -234,7 +251,7 @@ export const CollectionProvider = ({
       if (idTimeOut.current) clearTimeout(idTimeOut.current);
     }, 1000);
   }, [
-    formData,
+    collectionInput.slug,
     isPendingSlugExists,
     cleanResult,
     cleanErrors,
@@ -248,7 +265,7 @@ export const CollectionProvider = ({
         cleanResult();
         cleanErrors();
       }
-      setFormData((prev) => ({
+      setCollectionInput((prev) => ({
         ...prev,
         [key]: value,
       }));
@@ -256,52 +273,49 @@ export const CollectionProvider = ({
     [cleanErrors, cleanResult],
   );
 
-  const handlePushMediaSelected = useCallback(
-    (m: Media) => {
-      const current = formData.media ?? [];
+  const handlePushMediaSelected = useCallback((m: Media) => {
+    setCollectionInput((prev) => {
+      const current = prev.media;
       if (current.length >= MAX_COLLECTION_ITEMS) {
         toastErrorThrottled(
           `Collections can have up to ${MAX_COLLECTION_ITEMS} media items`,
         );
-        return;
+        return prev;
       }
-      if (current.some((x) => x.id === m.id)) return;
+      if (current.some((x) => x.id === m.id)) return prev;
       const media: FullCollectionMedia = { ...m, position: current.length + 1 };
-      handleSetFormData("media", [...current, media]);
-    },
-    [formData.media, handleSetFormData],
-  );
+      return { ...prev, media: [...current, media] };
+    });
+  }, []);
 
-  const handleRemoveMediaSelected = useCallback(
-    (mediaId: number) => {
-      const current = formData.media ?? [];
-      handleSetFormData(
-        "media",
-        current.filter((media) => media.id !== mediaId),
-      );
-    },
-    [formData.media, handleSetFormData],
-  );
+  const handleRemoveMediaSelected = useCallback((mediaId: number) => {
+    setCollectionInput((prev) => ({
+      ...prev,
+      media: prev.media.filter((media) => media.id !== mediaId),
+    }));
+  }, []);
 
   const mediaSelected = useMemo(() => {
-    return formData.media
-      ? formData.media.sort((a, b) => a.position - b.position)
-      : [];
-  }, [formData.media]);
+    return [...collectionInput.media].sort((a, b) => a.position - b.position);
+  }, [collectionInput.media]);
 
   const isMediaLimitReached = mediaSelected.length >= MAX_COLLECTION_ITEMS;
 
   const hasFormChanged = useMemo(() => {
     if (!currentCollection) return false;
-    if (formData.title !== currentCollection.title) return true;
-    if (formData.slug !== currentCollection.slug) return true;
-    if ((formData.description ?? "") !== (currentCollection.description ?? ""))
+    if (collectionInput.title !== currentCollection.title) return true;
+    if (collectionInput.slug !== currentCollection.slug) return true;
+    if (
+      (collectionInput.description ?? "") !==
+      (currentCollection.description ?? "")
+    )
       return true;
-    if (formData.is_highlight !== currentCollection.is_highlight) return true;
-    if ((formData.is_active ?? true) !== currentCollection.is_active)
+    if (collectionInput.is_highlight !== currentCollection.is_highlight)
+      return true;
+    if ((collectionInput.is_active ?? true) !== currentCollection.is_active)
       return true;
 
-    const currentMedia = formData.media ?? [];
+    const currentMedia = collectionInput.media;
     const originalMedia = [...currentCollection.media].sort(
       (a, b) => a.position - b.position,
     );
@@ -315,12 +329,12 @@ export const CollectionProvider = ({
     }
 
     return false;
-  }, [formData, currentCollection]);
+  }, [collectionInput, currentCollection]);
 
   const requiredFieldsPresent = !!(
-    formData.title &&
-    formData.slug &&
-    formData.media?.length
+    collectionInput.title &&
+    collectionInput.slug &&
+    collectionInput.media.length
   );
 
   const canSubmit = useMemo(() => {
@@ -330,7 +344,7 @@ export const CollectionProvider = ({
   }, [requiredFieldsPresent, currentCollection, hasFormChanged]);
 
   const clear = useCallback(() => {
-    setFormData({ user_id: user.id });
+    setCollectionInput(buildCollectionInput(user));
     setCurrentCollection(undefined);
     reset();
     cleanErrors();
@@ -346,7 +360,8 @@ export const CollectionProvider = ({
     user,
     handleSubmit,
     handleSetFormData,
-    formData,
+    collectionInput,
+    setCollectionInput,
     mediaSelected,
     handlePushMediaSelected,
     handleRemoveMediaSelected,
