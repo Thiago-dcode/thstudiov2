@@ -7,8 +7,8 @@ import {
 import { MAX_HIGHLIGHT_PORTFOLIOS } from "@repo/common-lib/constants/highlights";
 import type { CategoryBase } from "@repo/common-lib/types/category";
 import type { CollectionPortfolio } from "@repo/common-lib/types/collection";
-import type { MediaPortfolio } from "@repo/common-lib/types/media";
 import type { PortfolioLayoutInput } from "@repo/common-lib/types/layout";
+import type { MediaPortfolio } from "@repo/common-lib/types/media";
 import type {
   CreatePortfolioInputWithFile,
   FullPortfolio,
@@ -118,7 +118,7 @@ type PortfolioContextType = {
       | boolean
       | MediaPortfolio[]
       | CollectionPortfolio[]
-      | PortfolioLayoutInput
+      | PortfolioLayoutInput,
   ) => void;
   handleStep: (direction: "prev" | "next") => void;
   currentStep: number;
@@ -286,7 +286,7 @@ export const PortfolioProvider = ({
   const highlightCount = highlightCountResult?.data ?? 0;
 
   const {
-    result:portfolioResult,
+    result: portfolioResult,
     handleAction,
     isPending,
     success,
@@ -392,7 +392,10 @@ export const PortfolioProvider = ({
           return prev;
         }
 
-        const next = { ...item, position: prevItems.length + 1 } as PortfolioItem;
+        const next = {
+          ...item,
+          position: prevItems.length + 1,
+        } as PortfolioItem;
         return { ...prev, portfolioItems: [next, ...prevItems] };
       });
     },
@@ -445,10 +448,13 @@ export const PortfolioProvider = ({
     if (portfolioInput.title !== currentPortfolio.title) return true;
     if (portfolioInput.slug !== currentPortfolio.slug) return true;
     if (
-      (portfolioInput.description ?? "") !== (currentPortfolio.description ?? "")
+      (portfolioInput.description ?? "") !==
+      (currentPortfolio.description ?? "")
     )
       return true;
-    if ((portfolioInput.is_highlight ?? false) !== currentPortfolio.is_highlight)
+    if (
+      (portfolioInput.is_highlight ?? false) !== currentPortfolio.is_highlight
+    )
       return true;
     if ((portfolioInput.is_active ?? true) !== currentPortfolio.is_active)
       return true;

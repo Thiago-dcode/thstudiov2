@@ -31,9 +31,7 @@ export const AdminPageTitle = ({
   return (
     <div className="flex items-center justify-between gap-3">
       <div className="flex items-center gap-2 min-w-0">
-        <h1 className="text-lg sm:text-2xl! font-semibold truncate">
-          {title}
-        </h1>
+        <h1 className="text-lg sm:text-2xl! font-semibold truncate">{title}</h1>
         {publicHref && (
           <Link
             href={publicHref}
@@ -46,7 +44,9 @@ export const AdminPageTitle = ({
         )}
         {info && <InfoTooltip content={info} />}
       </div>
-      {children && <div className="flex shrink-0 items-center gap-1">{children}</div>}
+      {children && (
+        <div className="flex shrink-0 items-center gap-1">{children}</div>
+      )}
     </div>
   );
 };

@@ -138,8 +138,6 @@ export default function InputStep2() {
     };
   }, [portfolioItems]);
 
-
-
   const buildItemId = (item: PortfolioItem) => `${item.item}-${item.id}`;
   const sortableIds = useMemo(
     () => portfolioItems.map((item) => buildItemId(item)),
@@ -207,12 +205,9 @@ export default function InputStep2() {
           {portfolioItemCount} / {portfolioItemLimit} items
         </p>
         {portfolioItems.length > 1 && (
-          <span className="text-xs! text-text-muted/70">
-            · Drag to reorder
-          </span>
+          <span className="text-xs! text-text-muted/70">· Drag to reorder</span>
         )}
       </div>
-
 
       {/* Selected media grid */}
       {portfolioItems.length === 0 ? (

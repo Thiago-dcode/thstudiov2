@@ -9,9 +9,7 @@ class LayoutsService extends BaseService {
     super(fetchApi(), "layouts");
   }
 
-  async getAll(
-    request?: LayoutIndexRequest,
-  ): Promise<ApiResponse<Layout[]>> {
+  async getAll(request?: LayoutIndexRequest): Promise<ApiResponse<Layout[]>> {
     return await this.fetchApi.get({
       resource: request ? queryParamBuilder("", request) : "",
     });

@@ -143,7 +143,7 @@ export const CreateOrUpdatePortfolio = ({
               <Spinner className="size-10 text-text" />
             </div>
           )}
-         
+
           <div
             className={
               readOnly

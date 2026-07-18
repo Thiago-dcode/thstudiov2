@@ -1,9 +1,8 @@
 "use client";
 
+import { COLUMN_BASE_RESPONSIVE_CAPS } from "@repo/common-lib/constants/constants";
+import { PortfolioGrid } from "@repo/ui/components/custom/gallery/gallery-grid";
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
-import {
-  PortfolioGrid,
-} from "@repo/ui/components/custom/gallery/gallery-grid";
 import { Button } from "@repo/ui/components/shadcn/button";
 import {
   Dialog,
@@ -13,9 +12,8 @@ import {
   DialogTitle,
 } from "@repo/ui/components/shadcn/dialog";
 import { Slider } from "@repo/ui/components/shadcn/slider";
-import { GalleryProvider } from "@repo/ui/providers/gallery.provider";
 import { cn } from "@repo/ui/lib/utils";
-import { COLUMN_BASE_RESPONSIVE_CAPS } from "@repo/common-lib/constants/constants";
+import { GalleryProvider } from "@repo/ui/providers/gallery.provider";
 import { Eye, Wrench } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
@@ -106,8 +104,8 @@ export function PortfolioLayoutControls() {
             <div className="space-y-1.5">
               <p>The layout adapts to the visitor's screen size.</p>
               <p>
-                For the column layout, the number you pick is the maximum used on
-                large screens. Smaller devices show fewer columns — up to{" "}
+                For the column layout, the number you pick is the maximum used
+                on large screens. Smaller devices show fewer columns — up to{" "}
                 {COLUMN_BASE_RESPONSIVE_CAPS.mobile} on mobile and{" "}
                 {COLUMN_BASE_RESPONSIVE_CAPS.tablet} on tablet — so a choice of{" "}
                 {COLUMN_BASE_COLUMN_LIMITS.max} columns still shows just{" "}
@@ -147,31 +145,30 @@ export function PortfolioLayoutControls() {
           })}
         </div>
         <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          aria-label="Preview layout"
+          disabled={!previewLayout || !hasItems}
+          onClick={() => setPreviewOpen(true)}
+          className="size-8 border-border/50 text-text-muted hover:border-border hover:bg-fg/50 hover:text-text active:scale-100 [&_svg]:size-4"
+        >
+          <Eye />
+        </Button>
+
+        {supportsConfig ? (
+          <Button
             type="button"
             variant="outline"
             size="icon"
-            aria-label="Preview layout"
-            disabled={!previewLayout || !hasItems}
-            onClick={() => setPreviewOpen(true)}
+            aria-label="Edit layout settings"
+            onClick={() => setConfigOpen(true)}
             className="size-8 border-border/50 text-text-muted hover:border-border hover:bg-fg/50 hover:text-text active:scale-100 [&_svg]:size-4"
           >
-            <Eye />
+            <Wrench />
           </Button>
-       
-
-          {supportsConfig ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              aria-label="Edit layout settings"
-              onClick={() => setConfigOpen(true)}
-              className="size-8 border-border/50 text-text-muted hover:border-border hover:bg-fg/50 hover:text-text active:scale-100 [&_svg]:size-4"
-            >
-              <Wrench />
-            </Button>
-          ) : null}
-        </div>
+        ) : null}
+      </div>
 
       {/* Layout preview */}
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
