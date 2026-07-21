@@ -15,6 +15,7 @@ export type WaitListSchema = {
   welcome_email_sent_at: Date | null;
   last_reminder_email_sent_at: Date | null;
   reminder_count: number;
+  language: EnumType<'LANGUAGE_CODE'>;
   created_at: Date;
   updated_at: Date;
 };

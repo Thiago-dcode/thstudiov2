@@ -16,14 +16,14 @@ export const deleteMediaAction = async (
   // (mediaService.delete); this only needs to confirm the caller is signed in.
   const session = await requireSession();
   if (!session) {
-    return unauthorizedActionReturn<boolean>();
+    return await unauthorizedActionReturn<boolean>();
   }
   const response = await mediaService.delete(id);
 
   if (response.error) {
     return {
       data: null,
-      errors: getFriendlyApiErrors(response),
+      errors: await getFriendlyApiErrors(response),
     };
   }
 

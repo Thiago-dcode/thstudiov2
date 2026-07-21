@@ -15,7 +15,7 @@ export const getOneUserAction = async (
 ): Promise<ActionReturn<User, undefined>> => {
   const session = await requireSession();
   if (!isSessionOwner(session, id)) {
-    return unauthorizedActionReturn<User, undefined>();
+    return await unauthorizedActionReturn<User, undefined>();
   }
 
   const user = await usersService.getOne(id);
@@ -28,6 +28,6 @@ export const getOneUserAction = async (
   }
   return {
     data: null,
-    errors: getFriendlyApiErrors(user),
+    errors: await getFriendlyApiErrors(user),
   };
 };

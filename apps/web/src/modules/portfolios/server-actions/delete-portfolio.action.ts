@@ -13,7 +13,7 @@ export const deletePortfolioAction = async (
 ): Promise<ActionReturn<boolean>> => {
   const session = await requireSession();
   if (!session) {
-    return unauthorizedActionReturn<boolean>();
+    return await unauthorizedActionReturn<boolean>();
   }
 
   const response = await portfolioService.delete(id);
@@ -21,7 +21,7 @@ export const deletePortfolioAction = async (
   if (response.error) {
     return {
       data: null,
-      errors: getFriendlyApiErrors(response),
+      errors: await getFriendlyApiErrors(response),
     };
   }
 

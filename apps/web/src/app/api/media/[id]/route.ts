@@ -1,6 +1,7 @@
 import type { Media, UpdateMediaInput } from "@repo/common-lib/types/media";
 import { cleanObj, trimValues } from "@repo/common-lib/utils/cleanObj";
 import { type NextRequest, NextResponse } from "next/server";
+import { getTranslations } from "next-intl/server";
 import { getBackendHeaders } from "@/app/api/_helpers/backend-headers";
 import { parseBackendResponse } from "@/app/api/_helpers/parse-backend-response";
 import { getObjErrorFromZod } from "@/modules/auth/helpers";
@@ -11,10 +12,11 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const t = await getTranslations();
   const session = await userSession();
   if (!session) {
     return NextResponse.json(
-      { data: null, errors: ["Unauthorized"] },
+      { data: null, errors: [t("actions.unauthorized")] },
       { status: 401 },
     );
   }
@@ -25,7 +27,7 @@ export async function PATCH(
     if (!id || Number.isNaN(id)) {
       return NextResponse.json({
         data: null,
-        errors: ["Invalid media ID"],
+        errors: [t("actions.invalidMediaId")],
       });
     }
 
@@ -54,7 +56,7 @@ export async function PATCH(
       return NextResponse.json({
         data: null,
         errors: [],
-        inputErrors: { _form: "No fields to update" },
+        inputErrors: { _form: t("actions.noFieldsToUpdate") },
       });
     }
 
@@ -85,7 +87,7 @@ export async function PATCH(
     });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "An unexpected error occurred";
+      error instanceof Error ? error.message : t("actions.unexpectedError");
     return NextResponse.json(
       { data: null, errors: [message] },
       { status: 500 },

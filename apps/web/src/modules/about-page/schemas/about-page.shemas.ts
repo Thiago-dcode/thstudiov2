@@ -1,29 +1,32 @@
 import * as z from "zod";
+import type { Translator } from "@/lib/validation/zod-helpers";
 
-export const createAboutPageSchema = z.object({
-  title: z
-    .string({ message: "Title must be a valid string" })
-    .min(5, { message: "Title must be at least 5 characters" })
-    .max(255, { message: "Title must be less than 255 characters" })
-    .optional(),
-  description: z
-    .string({ message: "Description is required and must be a valid string" })
-    .min(20, { message: "Description must be at least 20 characters" })
-    .max(1000, { message: "Description must be less than 1000 characters" }),
-  user_id: z
-    .number({ message: "User ID is required and must be a valid number" })
-    .positive({ message: "User ID must be a positive number" }),
-});
+export const createAboutPageSchema = (t: Translator) =>
+  z.object({
+    title: z
+      .string({ message: t("validation.aboutPage.titleType") })
+      .min(5, { message: t("validation.aboutPage.titleMin") })
+      .max(255, { message: t("validation.aboutPage.titleMax") })
+      .optional(),
+    description: z
+      .string({ message: t("validation.aboutPage.descriptionRequired") })
+      .min(20, { message: t("validation.aboutPage.descriptionMin") })
+      .max(1000, { message: t("validation.aboutPage.descriptionMax") }),
+    user_id: z
+      .number({ message: t("validation.aboutPage.userIdRequired") })
+      .positive({ message: t("validation.aboutPage.userIdPositive") }),
+  });
 
-export const updateAboutPageSchema = z.object({
-  title: z
-    .string({ message: "Title must be a valid string" })
-    .min(5, { message: "Title must be at least 5 characters" })
-    .max(255, { message: "Title must be less than 255 characters" })
-    .optional(),
-  description: z
-    .string({ message: "Description must be a valid string" })
-    .min(20, { message: "Description must be at least 20 characters" })
-    .max(1000, { message: "Description must be less than 1000 characters" })
-    .optional(),
-});
+export const updateAboutPageSchema = (t: Translator) =>
+  z.object({
+    title: z
+      .string({ message: t("validation.aboutPage.titleType") })
+      .min(5, { message: t("validation.aboutPage.titleMin") })
+      .max(255, { message: t("validation.aboutPage.titleMax") })
+      .optional(),
+    description: z
+      .string({ message: t("validation.aboutPage.descriptionType") })
+      .min(20, { message: t("validation.aboutPage.descriptionMin") })
+      .max(1000, { message: t("validation.aboutPage.descriptionMax") })
+      .optional(),
+  });

@@ -10,6 +10,7 @@ import type {
 import type { ActionReturn } from "@repo/common-lib/types/response";
 import { cleanObj, trimValues } from "@repo/common-lib/utils/cleanObj";
 import { revalidateTag } from "next/cache";
+import { getTranslations } from "next-intl/server";
 import {
   getFriendlyApiErrors,
   getObjErrorFromZod,
@@ -22,12 +23,13 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 export const createMediaAction = async (
   input: CreateMediaInputWithFile,
 ): Promise<ActionReturn<Media, CreateMediaInputWithFile>> => {
-  // Validate file
+  const t = await getTranslations();
 
+  // Validate file
   if (!input.file || input.file.size === 0) {
     return {
       errors: [],
-      inputErrors: { file: "File is required" },
+      inputErrors: { file: t("validation.required", { field: t("fields.file") }) },
       data: null,
       inputs: input,
     };
@@ -36,7 +38,9 @@ export const createMediaAction = async (
   if (input.file.size > MAX_FILE_SIZE) {
     return {
       errors: [],
-      inputErrors: { file: "File size must be less than 10MB" },
+      inputErrors: {
+        file: t("validation.file.tooLarge", { field: t("fields.file"), mb: 10 }),
+      },
       data: null,
       inputs: input,
     };
@@ -45,7 +49,9 @@ export const createMediaAction = async (
   if (!ALLOWED_IMAGE_FILE_TYPES.includes(input.file.type as MimeTypes)) {
     return {
       errors: [],
-      inputErrors: { file: "File must be an image (JPEG, PNG or WebP)" },
+      inputErrors: {
+        file: t("validation.file.invalidType", { field: t("fields.file") }),
+      },
       data: null,
       inputs: input,
     };
@@ -103,6 +109,6 @@ export const createMediaAction = async (
 
   return {
     data: null,
-    errors: getFriendlyApiErrors(media),
+    errors: await getFriendlyApiErrors(media),
   };
 };

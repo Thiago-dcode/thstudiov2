@@ -1,0 +1,10 @@
+{
+  "SUBJECT": "A espera terminou",
+  "TITLE": "Obrigado pela sua paciência",
+  "DESCRIPTION": "O acesso antecipado está aberto para você",
+  "TIER_LABEL": "Nível reservado",
+  "BENEFIT_DESCRIPTION": "Este convite te dá {months} mês(es) grátis do plano {planName} — resgate abaixo.",
+  "CTA_TEXT": "Criar Sua Conta",
+  "EXPIRATION_NOTE": "Este link de registro expira em {days} dias — depois disso, você perderá seus benefícios de acesso antecipado.",
+  "URGENCY_NOTE": "Este convite é pessoal e limitado. Complete seu registro antes que expire."
+}

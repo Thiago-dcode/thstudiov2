@@ -4,6 +4,7 @@ import type { TableName } from "@repo/common-lib/types/database";
 import { Button } from "@repo/ui/components/shadcn/button";
 import { toast } from "@repo/ui/sonner";
 import { Plus } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRef } from "react";
 import { useUserMetrics } from "@/modules/users/providers/user-metrics.provider";
@@ -24,6 +25,7 @@ export const CreateResourceButton = ({
   label,
   variant = "default",
 }: CreateResourceButtonProps) => {
+  const t = useTranslations("atelier.common");
   const { metrics } = useUserMetrics();
   const lastToastRef = useRef(0);
 
@@ -40,7 +42,11 @@ export const CreateResourceButton = ({
           if (now - lastToastRef.current < TOAST_COOLDOWN_MS) return;
           lastToastRef.current = now;
           toast.error(
-            `You've reached your plan limit for ${limitInfo.label} (${limitInfo.count}/${limitInfo.limit}). Upgrade your plan to create more.`,
+            t("planLimitToast", {
+              label: limitInfo.label,
+              count: limitInfo.count,
+              limit: limitInfo.limit,
+            }),
           );
         }}
       >

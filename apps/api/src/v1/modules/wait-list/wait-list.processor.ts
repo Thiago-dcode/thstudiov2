@@ -11,7 +11,7 @@ import {
 } from '@repo/common-lib/constants/constants';
 import { EnumType } from '@repo/common-lib/constants/enums';
 import type { InvitationLink } from '@repo/common-lib/types/invitation-link';
-import { PublicCreateWaitListInput } from '@repo/common-lib/types/wait-list';
+import { CreateWaitListJobInput } from '@repo/common-lib/types/wait-list';
 import { generateUUID } from '@repo/common-lib/utils/generate-uuid';
 import { Job, Queue } from 'bullmq';
 import { addDays } from 'date-fns';
@@ -133,7 +133,7 @@ export class WaitListProcessor extends GlobalProcessor {
     }
   }
 
-  private async createWaitListEntry(data: PublicCreateWaitListInput) {
+  private async createWaitListEntry(data: CreateWaitListJobInput) {
     const normalizedEmail = this.normalizeEmail(data.email);
     const emailLog = this.redactEmail(normalizedEmail);
 
@@ -155,6 +155,7 @@ export class WaitListProcessor extends GlobalProcessor {
             welcome_email_sent_at: null,
             last_reminder_email_sent_at: null,
             reminder_count: 0,
+            language: data.language,
           });
           this.logger.info(`Wait list DB entry created: ${emailLog}`, { entry_id: waitList.id });
         } catch (error) {
@@ -185,10 +186,13 @@ export class WaitListProcessor extends GlobalProcessor {
       }
 
       await this.mailService.sendAsync(
-        this.waitListInviteMail.setData({
-          email: waitList.email,
-          validationUrl: `${getConfigValue('app').url}/wait-list/${waitList.token}`,
-        }),
+        this.waitListInviteMail.setData(
+          {
+            email: waitList.email,
+            validationUrl: `${getConfigValue('app').url}/wait-list/${waitList.token}`,
+          },
+          waitList.language,
+        ),
         {
           jobId: `wait-list-validate-${waitList.id}`,
         },
@@ -429,16 +433,19 @@ export class WaitListProcessor extends GlobalProcessor {
       return {
         entry,
         invitationLink,
-        mailable: this.waitListWelcomeMail.setData({
-          email: entry.email,
-          position: entry.position,
-          benefitType,
-          planName,
-          trialDays: benefit.trial_days,
-          benefitMonths: this.getBenefitMonths(benefit.trial_days),
-          registrationUrl,
-          expiresInDays: WaitListProcessor.INVITATION_EXPIRES_IN_DAYS,
-        }),
+        mailable: this.waitListWelcomeMail.setData(
+          {
+            email: entry.email,
+            position: entry.position,
+            benefitType,
+            planName,
+            trialDays: benefit.trial_days,
+            benefitMonths: this.getBenefitMonths(benefit.trial_days),
+            registrationUrl,
+            expiresInDays: WaitListProcessor.INVITATION_EXPIRES_IN_DAYS,
+          },
+          entry.language,
+        ),
       };
     } catch (error) {
       await this.waitListRepository.updateById(entry.id, {

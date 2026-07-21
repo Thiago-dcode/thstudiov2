@@ -26,9 +26,10 @@ export class WaitListInviteMail extends ApiMailService {
     }, i18nService);
   }
 
-  setData(data: WaitListInviteMailData) {
+  setData(data: WaitListInviteMailData, lang?: string) {
     const mail = new WaitListInviteMail(this.viewService, this.emailPreferencesService!, this.i18nService!);
     mail.data = data;
+    if (lang) mail.lang = lang;
     mail.viewParams = {
       viewPath: 'emails/wait-list/invite',
       data: { invite: data, translatePath: 'wait-list-invite-email' },

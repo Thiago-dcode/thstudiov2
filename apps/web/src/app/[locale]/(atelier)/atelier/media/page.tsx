@@ -3,6 +3,7 @@ import { ENUMS } from "@repo/common-lib/constants/enums";
 import type { Pagination } from "@repo/common-lib/types/response";
 import { queryParamBuilder } from "@repo/common-lib/utils/query-builder";
 import { AppPagination } from "@repo/ui/components/custom/app-pagination";
+import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
@@ -48,6 +49,7 @@ export default async function MediaAtelierPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  const t = await getTranslations("atelier.media");
   const userAuth = await userSession();
   if (!userAuth) {
     redirect("/");
@@ -84,7 +86,7 @@ export default async function MediaAtelierPage({
 
   return (
     <AdminPageContainer>
-      <AdminPageTitle title="Media">
+      <AdminPageTitle title={t("pageTitle")}>
         {(pagination?.total_count && pagination.total_count > 0) ||
         hasActiveFilters ? (
           <Suspense>

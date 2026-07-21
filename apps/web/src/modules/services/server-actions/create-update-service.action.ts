@@ -9,6 +9,7 @@ import type {
   UpdateServiceInputWithFile,
 } from "@repo/common-lib/types/service";
 import { cleanObj, trimValues } from "@repo/common-lib/utils/cleanObj";
+import { getTranslations } from "next-intl/server";
 import {
   getFriendlyApiErrors,
   getObjErrorFromZod,
@@ -32,11 +33,12 @@ export const createOrUpdateServiceAction = async (
 ): Promise<ActionReturn<Service, ServiceActionInput>> => {
   const thumbnailFile = input?.thumbnail as File | undefined;
   const isUpdate = !!currentService;
+  const t = await getTranslations();
 
   const userAuth = await userSession();
   if (!userAuth) {
     return {
-      errors: ["Unauthorized"],
+      errors: [t("actions.unauthorized")],
       data: null,
     };
   }
@@ -46,7 +48,10 @@ export const createOrUpdateServiceAction = async (
       return {
         errors: [],
         inputErrors: {
-          thumbnail: "Thumbnail file size must be less than 10MB",
+          thumbnail: t("validation.file.tooLarge", {
+            field: t("fields.thumbnail"),
+            mb: 10,
+          }),
         },
         data: null,
       };
@@ -56,7 +61,9 @@ export const createOrUpdateServiceAction = async (
       return {
         errors: [],
         inputErrors: {
-          thumbnail: "Thumbnail must be an image (JPEG, PNG or WebP)",
+          thumbnail: t("validation.file.invalidType", {
+            field: t("fields.thumbnail"),
+          }),
         },
         data: null,
       };
@@ -74,7 +81,7 @@ export const createOrUpdateServiceAction = async (
 
   trimValues(rawData, { deep: true });
 
-  const schema = isUpdate ? updateServiceSchema : createServiceSchema;
+  const schema = isUpdate ? updateServiceSchema(t) : createServiceSchema(t);
   const validated = schema.safeParse(rawData);
 
   if (!validated.success) {
@@ -96,7 +103,7 @@ export const createOrUpdateServiceAction = async (
     if (slugExistsResponse.error) {
       return {
         data: null,
-        errors: getFriendlyApiErrors(slugExistsResponse),
+        errors: await getFriendlyApiErrors(slugExistsResponse),
       };
     }
 
@@ -104,7 +111,7 @@ export const createOrUpdateServiceAction = async (
       return {
         data: null,
         errors: [],
-        inputErrors: { slug: "Slug already exists" },
+        inputErrors: { slug: t("actions.slugAlreadyExists") },
       };
     }
   }
@@ -125,6 +132,6 @@ export const createOrUpdateServiceAction = async (
 
   return {
     data: null,
-    errors: getFriendlyApiErrors(service),
+    errors: await getFriendlyApiErrors(service),
   };
 };

@@ -1,5 +1,6 @@
 import { TABLES_ENUM } from "@repo/common-lib/constants/enums";
 import { Briefcase } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import { ServiceCard } from "@/modules/user-services/components/service-card";
@@ -12,6 +13,7 @@ import {
 import { CreateResourceButton } from "../../__components/create-resource-button";
 
 export default async function ServicesPage() {
+  const t = await getTranslations("atelier.services");
   const userAuth = await userSession();
   if (!userAuth) {
     redirect("/");
@@ -25,14 +27,11 @@ export default async function ServicesPage() {
 
   return (
     <AdminPageContainer>
-      <AdminPageTitle
-        title="Services"
-        info="Services are the offerings you provide to your clients, such as 'Wedding Photography' or 'Web Design'."
-      >
+      <AdminPageTitle title={t("pageTitle")} info={t("pageInfo")}>
         <CreateResourceButton
           resource={TABLES_ENUM.SERVICES}
           href="services/create"
-          label="Create Service"
+          label={t("createButtonLabel")}
         />
       </AdminPageTitle>
       {services.length > 0 ? (
@@ -49,12 +48,12 @@ export default async function ServicesPage() {
       ) : (
         <AdminPageEmptyState
           icon={<Briefcase />}
-          description="No services created yet. Start by adding what you offer to clients."
+          description={t("emptyStateDescription")}
         >
           <CreateResourceButton
             resource={TABLES_ENUM.SERVICES}
             href="services/create"
-            label="Create Service"
+            label={t("createButtonLabel")}
             variant="outline"
           />
         </AdminPageEmptyState>

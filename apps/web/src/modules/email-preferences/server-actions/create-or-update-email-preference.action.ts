@@ -3,6 +3,7 @@
 import type { EmailPreference } from "@repo/common-lib/types/email-preferences";
 import type { ActionReturn } from "@repo/common-lib/types/response";
 import { cleanObj, trimValues } from "@repo/common-lib/utils/object";
+import { getTranslations } from "next-intl/server";
 import {
   getFriendlyApiErrors,
   getObjErrorFromZod,
@@ -35,7 +36,8 @@ export const createOrUpdateEmailPreferenceAction = async (
 
   trimValues(rawData, { deep: true });
 
-  const validated = createOrUpdateEmailPreferenceSchema.safeParse(rawData);
+  const t = await getTranslations();
+  const validated = createOrUpdateEmailPreferenceSchema(t).safeParse(rawData);
   if (!validated.success) {
     return {
       data: null,
@@ -52,7 +54,7 @@ export const createOrUpdateEmailPreferenceAction = async (
   if (result.error || result.data === null) {
     return {
       data: null,
-      errors: getFriendlyApiErrors(result),
+      errors: await getFriendlyApiErrors(result),
       inputs: rawData,
     };
   }

@@ -1,9 +1,11 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { ConfirmSubmitButton } from "@/app/[locale]/(atelier)/__components/confirm-submit-button";
 import { usePortfolio } from "@/modules/portfolios/providers/create-update-portfolio.provider";
 
 export const SubmitPortfolioButton = () => {
+  const t = useTranslations("atelier.common");
   const {
     canSubmit,
     isPending,
@@ -20,12 +22,16 @@ export const SubmitPortfolioButton = () => {
       isActionable={isActionable}
       isPending={isPending}
       success={success}
-      buttonLabel={isUpdate ? "Update" : "Save"}
-      dialogTitle={isUpdate ? "Update portfolio" : "Save portfolio"}
+      buttonLabel={isUpdate ? t("update") : t("save")}
+      dialogTitle={
+        isUpdate
+          ? t("submit.updatePortfolioTitle")
+          : t("submit.savePortfolioTitle")
+      }
       dialogDescription={
         isUpdate
-          ? "Your changes will be saved and applied to your live portfolio."
-          : "Your portfolio will be created and saved to your account."
+          ? t("submit.updatePortfolioDescription")
+          : t("submit.createPortfolioDescription")
       }
       onConfirm={() => void submitPortfolio()}
     />

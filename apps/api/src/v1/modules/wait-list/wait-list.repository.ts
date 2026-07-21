@@ -24,6 +24,7 @@ type InvitedDueForReminderRow = {
   invitation_code: string;
   benefit_type: EnumType<'BENEFIT_TYPE'>;
   trial_days: number;
+  language: EnumType<'LANGUAGE_CODE'>;
 };
 
 @Injectable()
@@ -42,6 +43,7 @@ export class WaitListRepository extends BaseRepository {
     'wait_list.welcome_email_sent_at',
     'wait_list.last_reminder_email_sent_at',
     'wait_list.reminder_count',
+    'wait_list.language',
   ] as const;
 
   constructor(
@@ -142,7 +144,7 @@ export class WaitListRepository extends BaseRepository {
       SET status = 'INVITING'
       WHERE id IN (SELECT id FROM claimed)
         RETURNING id, email, token, position, status, redeemed_at, expires_at, validated_at, invitation_link_id,
-                  invitation_email_sent_at, welcome_email_sent_at, last_reminder_email_sent_at, reminder_count;`,
+                  invitation_email_sent_at, welcome_email_sent_at, last_reminder_email_sent_at, reminder_count, language;`,
       [limit],
     );
 
@@ -170,6 +172,7 @@ export class WaitListRepository extends BaseRepository {
         w.welcome_email_sent_at,
         w.reminder_count,
         w.last_reminder_email_sent_at,
+        w.language,
         il.code AS invitation_code,
         b.type AS benefit_type,
         b.trial_days
@@ -300,6 +303,7 @@ export class WaitListRepository extends BaseRepository {
       welcome_email_sent_at: result.welcome_email_sent_at,
       last_reminder_email_sent_at: result.last_reminder_email_sent_at,
       reminder_count: result.reminder_count,
+      language: result.language,
     };
   }
 

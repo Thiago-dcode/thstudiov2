@@ -3,6 +3,7 @@
 import { PASSWORD_RECOVERY_ATTEMPT_COOKIE_NAME } from "@repo/common-lib/constants/constants";
 import type { ActionReturn } from "@repo/common-lib/types/response";
 import { cookies } from "next/headers";
+import { getTranslations } from "next-intl/server";
 import { serverEnv } from "@/env/server";
 import { deleteCookie, encryptObj, getEncryptedJsonCookie } from "@/lib/utils";
 import authService from "../auth.service";
@@ -19,11 +20,12 @@ export const passwordRecoveryAction = async (
     }
   >
 > => {
+  const t = await getTranslations();
   const credentials = {
     email: formData.get("email") as string,
     fallback_url: `${serverEnv.APP_URL}/auth/password-recovery/recover`,
   };
-  const validatedData = passwordRecoveryRequestSchema.safeParse(credentials);
+  const validatedData = passwordRecoveryRequestSchema(t).safeParse(credentials);
   if (!validatedData.success) {
     const errors = Object.values(
       validatedData.error.flatten().fieldErrors,
@@ -53,7 +55,7 @@ export const passwordRecoveryAction = async (
         new Date(passwordRecoveryAttemptCookie.updated_at).getTime();
       if (timeDifference < waitTime) {
         return {
-          errors: ["You must wait 1 minute and 30 seconds before trying again"],
+          errors: [t("actions.passwordRecoveryCooldown")],
           data: null,
           inputs: { email: credentials.email },
         };
@@ -66,7 +68,7 @@ export const passwordRecoveryAction = async (
     return {
       data: null,
       errors:
-        errorCode === 400 ? result.error.errors : ["Something went wrong"],
+        errorCode === 400 ? result.error.errors : [t("actions.genericError")],
       inputs: {
         email: credentials.email,
       },

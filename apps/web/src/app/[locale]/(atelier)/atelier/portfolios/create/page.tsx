@@ -1,4 +1,5 @@
 import { TABLES_ENUM } from "@repo/common-lib/constants/enums";
+import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import {
   AdminPageContainer,
@@ -11,6 +12,7 @@ import usersService from "@/modules/users/users.service";
 import { CreateOrUpdatePortfolio } from "../_components/create-update-porfolio";
 
 export default async function PortfolioCreate() {
+  const t = await getTranslations("atelier.portfolios");
   const userAuth = await userSession();
   if (!userAuth) {
     redirect("/");
@@ -24,7 +26,7 @@ export default async function PortfolioCreate() {
   if (limitInfo?.isAtLimit) {
     return (
       <AdminPageContainer>
-        <AdminPageTitle title="Create a portfolio" />
+        <AdminPageTitle title={t("createTitle")} />
         <ResourceLimitReached
           label={limitInfo.label}
           backHref="/atelier/portfolios"
@@ -37,7 +39,7 @@ export default async function PortfolioCreate() {
 
   return (
     <AdminPageContainer>
-      <AdminPageTitle title="Create a portfolio" />
+      <AdminPageTitle title={t("createTitle")} />
       <CreateOrUpdatePortfolio />
     </AdminPageContainer>
   );

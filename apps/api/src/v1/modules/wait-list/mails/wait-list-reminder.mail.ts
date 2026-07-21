@@ -32,7 +32,7 @@ export class WaitListReminderMail extends ApiMailService {
     }, i18nService);
   }
 
-  setData(data: WaitListReminderMailData) {
+  setData(data: WaitListReminderMailData, lang?: string) {
     const mail = new WaitListReminderMail(
       this.viewService,
       this.emailPreferencesService!,
@@ -40,6 +40,7 @@ export class WaitListReminderMail extends ApiMailService {
     );
 
     mail.data = data;
+    if (lang) mail.lang = lang;
     mail.viewParams = {
       viewPath: 'emails/wait-list/reminder',
       data: { reminder: data, translatePath: 'wait-list-reminder-email' },

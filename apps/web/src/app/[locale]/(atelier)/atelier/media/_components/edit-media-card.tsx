@@ -31,6 +31,7 @@ import { cn } from "@repo/ui/lib/utils";
 import { toast } from "@repo/ui/sonner";
 import { format } from "date-fns";
 import { Eye, Sparkles, Trash2, Upload } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import FormComponent from "@/lib/components/form-component";
@@ -49,6 +50,7 @@ type MediaCardProps = {
 type Tabs = MediaTabs;
 
 export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
+  const t = useTranslations("atelier.media.card");
   const [currentMedia, setCurrentMedia] = useState(media);
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState<MediaTabs>("overall");
@@ -234,7 +236,7 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
       onDeleted?.(currentMedia.id);
       await refresh();
     } else {
-      toast.error(result.errors?.[0] ?? "Failed to delete media");
+      toast.error(result.errors?.[0] ?? t("deleteFailed"));
     }
   };
 
@@ -259,10 +261,10 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
             <FormComponent.LabelInput
               id="title"
               name="title"
-              label="Title"
+              label={t("titleLabel")}
               value={getFieldValue("title")}
               onChange={(e) => handleInputChange("title", e.target.value)}
-              placeholder="Enter title"
+              placeholder={t("titlePlaceholder")}
               labelClassName="text-sm font-medium text-text"
               error={inputErrors?.title}
               disabled={isPending}
@@ -270,10 +272,10 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
             <FormComponent.LabelTextarea
               id="description"
               name="description"
-              label="Description"
+              label={t("descriptionLabel")}
               value={getFieldValue("description")}
               onChange={(e) => handleInputChange("description", e.target.value)}
-              placeholder="Enter description"
+              placeholder={t("descriptionPlaceholder")}
               rows={6}
               labelClassName="text-sm font-medium text-text"
               error={inputErrors?.description}
@@ -288,12 +290,12 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
               ref={seoTitleRef}
               id="seo_title"
               name="seo_title"
-              label="SEO Title"
+              label={t("seoTitleLabel")}
               value={getFieldValue("seo_title")}
               onChange={(e) => handleInputChange("seo_title", e.target.value)}
-              placeholder="Enter SEO title"
+              placeholder={t("seoTitlePlaceholder")}
               labelClassName="text-sm font-medium text-text"
-              extraInfo="The title that appears in search engine results and browser tabs. Helps improve search visibility."
+              extraInfo={t("seoTitleInfo")}
               error={inputErrors?.seo_title}
               disabled={isPending}
             />
@@ -301,15 +303,15 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
               ref={seoDescriptionRef}
               id="seo_description"
               name="seo_description"
-              label="SEO Description"
+              label={t("seoDescriptionLabel")}
               value={getFieldValue("seo_description")}
               onChange={(e) =>
                 handleInputChange("seo_description", e.target.value)
               }
-              placeholder="Enter SEO description"
+              placeholder={t("seoDescriptionPlaceholder")}
               rows={5}
               labelClassName="text-sm font-medium text-text"
-              extraInfo="A brief summary that appears in search results. Helps users understand what the image is about before clicking."
+              extraInfo={t("seoDescriptionInfo")}
               error={inputErrors?.seo_description}
               disabled={isPending}
             />
@@ -317,12 +319,12 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
               ref={seoAltRef}
               id="seo_alt"
               name="seo_alt"
-              label="Alt Text"
+              label={t("altTextLabel")}
               value={getFieldValue("seo_alt")}
               onChange={(e) => handleInputChange("seo_alt", e.target.value)}
-              placeholder="Enter alt text for accessibility"
+              placeholder={t("altTextPlaceholder")}
               labelClassName="text-sm font-medium text-text"
-              extraInfo="A text description of the image for screen readers and when images fail to load. Improves accessibility and SEO."
+              extraInfo={t("altTextInfo")}
               error={inputErrors?.seo_alt}
               disabled={isPending}
             />
@@ -330,14 +332,14 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
               ref={seoFilenameRef}
               id="seo_filename"
               name="seo_filename"
-              label="Filename"
+              label={t("filenameLabel")}
               value={getFieldValue("seo_filename")}
               onChange={(e) =>
                 handleInputChange("seo_filename", e.target.value)
               }
-              placeholder="Enter filename"
+              placeholder={t("filenamePlaceholder")}
               labelClassName="text-sm font-medium text-text"
-              extraInfo="The filename used for SEO purposes. Can be edited to improve search visibility."
+              extraInfo={t("filenameInfo")}
               error={inputErrors?.seo_filename}
               disabled={isPending}
             />
@@ -354,7 +356,7 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
             {currentMedia.title && (
               <div className="space-y-2">
                 <Label className="text-xs text-text-muted font-semibold uppercase tracking-wide">
-                  Title
+                  {t("titleLabel")}
                 </Label>
                 <p className="text-sm text-text leading-relaxed">
                   {currentMedia.title}
@@ -364,7 +366,7 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
             {currentMedia.description && (
               <div className="space-y-2">
                 <Label className="text-xs text-text-muted font-semibold uppercase tracking-wide">
-                  Description
+                  {t("descriptionLabel")}
                 </Label>
                 <p className="text-sm text-text leading-relaxed whitespace-pre-wrap">
                   {currentMedia.description}
@@ -374,7 +376,7 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
             {formattedDate && (
               <div className="space-y-2 pt-4">
                 <Label className="text-xs text-text-muted font-semibold uppercase tracking-wide">
-                  Last Updated
+                  {t("lastUpdated")}
                 </Label>
                 <p className="text-sm text-text">{formattedDate}</p>
               </div>
@@ -387,7 +389,7 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
             {currentMedia.seo_title && (
               <div className="space-y-2">
                 <Label className="text-xs text-text-muted font-semibold uppercase tracking-wide">
-                  SEO Title
+                  {t("seoTitleLabel")}
                 </Label>
                 <p className="text-sm text-text leading-relaxed">
                   {currentMedia.seo_title}
@@ -397,7 +399,7 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
             {currentMedia.seo_description && (
               <div className="space-y-2">
                 <Label className="text-xs text-text-muted font-semibold uppercase tracking-wide">
-                  SEO Description
+                  {t("seoDescriptionLabel")}
                 </Label>
                 <p className="text-sm text-text leading-relaxed whitespace-pre-wrap">
                   {currentMedia.seo_description}
@@ -407,7 +409,7 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
             {currentMedia.seo_alt && (
               <div className="space-y-2">
                 <Label className="text-xs text-text-muted font-semibold uppercase tracking-wide">
-                  Alt Text
+                  {t("altTextLabel")}
                 </Label>
                 <p className="text-sm text-text leading-relaxed">
                   {currentMedia.seo_alt}
@@ -416,7 +418,7 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
             )}
             <div className="space-y-2">
               <Label className="text-xs text-text-muted font-semibold uppercase tracking-wide">
-                Filename
+                {t("filenameLabel")}
               </Label>
               <p className="text-xs font-mono text-text bg-fg-2 px-3 py-2">
                 {currentMedia.seo_filename}
@@ -482,13 +484,13 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
                   alt={
                     currentMedia.seo_alt ||
                     currentMedia.title ||
-                    `${username} media`
+                    t("altFallback", { username })
                   }
                   className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-200"
                 />
               ) : (
                 <div className="flex items-center justify-center text-text-muted text-xs bg-fg-2 w-full h-full">
-                  No preview
+                  {t("noPreview")}
                 </div>
               )}
               {/* Loading Overlay */}
@@ -502,7 +504,9 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
             {/* Title and Date - Stacked at Bottom */}
             <div className="flex flex-col">
               <h3 className="text-sm! font-medium text-text line-clamp-1">
-                {currentMedia.title || currentMedia.seo_filename || "Untitled"}
+                {currentMedia.title ||
+                  currentMedia.seo_filename ||
+                  t("untitled")}
               </h3>
               {formattedDate && (
                 <p className="text-[10px]! text-text-muted">{formattedDate}</p>
@@ -518,10 +522,10 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
               <DrawerTitle className="font-semibold flex min-w-0 items-center gap-1.5">
                 <span className="truncate">
                   {isEditing
-                    ? "Edit Media"
+                    ? t("editMedia")
                     : currentMedia.title ||
                       currentMedia.seo_filename ||
-                      "Media Preview"}
+                      t("mediaPreview")}
                 </span>
                 {!isEditing && currentMedia.public_id && (
                   <a
@@ -559,15 +563,15 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
                   >
                     <Sparkles className="h-3.5 w-3.5 shrink-0" />
                     <span className="text-xs font-medium whitespace-nowrap">
-                      {isPending ? <Spinner /> : "Generate SEO"}
+                      {isPending ? <Spinner /> : t("generateSeo")}
                     </span>
                   </Button>
                   <div className="flex shrink-0 items-center gap-0.5">
                     <InfoTooltip
                       content={
                         !hasEnoughCredits
-                          ? "No AI credits available. You need at least 1 credit to generate SEO metadata. Please upgrade your plan or wait for credits to reset."
-                          : "Automatically generate SEO fields with AI. Analyzes your image content and generates optimized titles, descriptions, alt text, and filenames for better search visibility."
+                          ? t("noCreditsAvailable")
+                          : t("generateSeoTooltip")
                       }
                       openDelay={200}
                       iconClassName="w-3 h-3"
@@ -582,7 +586,7 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
                         )}
                       >
                         {aiCreditsInfo.consumed}/{aiCreditsInfo.total}
-                        {!hasEnoughCredits && " (No credits)"}
+                        {!hasEnoughCredits && t("noCreditsSuffix")}
                       </span>
                     )}
                   </div>
@@ -599,12 +603,14 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
                       className="text-error hover:text-error hover:bg-error/10 h-8 px-2.5"
                     >
                       <Trash2 className="h-3.5 w-3.5 mr-1" />
-                      <span className="text-xs font-medium">Delete</span>
+                      <span className="text-xs font-medium">
+                        {t("delete")}
+                      </span>
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-56 p-3" align="end">
                     <p className="text-sm text-text-muted mb-3">
-                      Are you sure you want to delete this media?
+                      {t("deleteConfirm")}
                     </p>
                     <div className="flex items-center gap-2">
                       <Button
@@ -613,7 +619,7 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
                         className="flex-1"
                         onClick={() => setDeletePopoverOpen(false)}
                       >
-                        Cancel
+                        {t("cancel")}
                       </Button>
                       <Button
                         variant="destructive"
@@ -622,7 +628,7 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
                         disabled={isPending}
                         onClick={handleDelete}
                       >
-                        {isPending ? <Spinner /> : "Delete"}
+                        {isPending ? <Spinner /> : t("delete")}
                       </Button>
                     </div>
                   </PopoverContent>
@@ -651,7 +657,7 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
                 className="flex-1 hover:bg-fg-2 hover:text-text"
                 disabled={isPending}
               >
-                Cancel
+                {t("cancel")}
               </Button>
               <Button
                 type="submit"
@@ -659,7 +665,7 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
                 className="flex-1"
                 disabled={isPending || !currentMediaUpload || !currentMedia}
               >
-                {isPending ? <Spinner /> : "Save Changes"}
+                {isPending ? <Spinner /> : t("saveChanges")}
               </Button>
             </MediaDrawerFooter>
           </FormComponent.Form>
@@ -677,14 +683,14 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
                   variant="default"
                   className="flex-1"
                 >
-                  Edit
+                  {t("edit")}
                 </Button>
                 <DrawerClose asChild>
                   <Button
                     variant="outline"
                     className="flex-1 hover:bg-fg-2 hover:text-text"
                   >
-                    Close
+                    {t("close")}
                   </Button>
                 </DrawerClose>
               </div>
@@ -695,17 +701,15 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
       <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
         <DialogContent className="max-w-md max-h-[300px] z-100">
           <DialogHeader>
-            <DialogTitle>Discard Changes?</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to cancel? All unsaved changes will be lost.
-            </DialogDescription>
+            <DialogTitle>{t("discardTitle")}</DialogTitle>
+            <DialogDescription>{t("discardBody")}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="base" onClick={() => setShowCancelDialog(false)}>
-              Keep Editing
+              {t("keepEditing")}
             </Button>
             <Button variant="default" onClick={confirmCancel}>
-              Discard Changes
+              {t("discardChanges")}
             </Button>
           </DialogFooter>
         </DialogContent>

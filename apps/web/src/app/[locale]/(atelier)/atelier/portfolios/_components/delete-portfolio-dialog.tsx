@@ -12,6 +12,7 @@ import {
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { toast } from "@repo/ui/sonner";
 import { Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
@@ -27,6 +28,7 @@ export const DeletePortfolioDialog = ({
   portfolioId,
   portfolioTitle,
 }: DeletePortfolioDialogProps) => {
+  const t = useTranslations("atelier.portfolios.deletePortfolio");
   const router = useRouter();
   const { isPending: isPortfolioPending } = usePortfolio();
   const [open, setOpen] = useState(false);
@@ -41,7 +43,7 @@ export const DeletePortfolioDialog = ({
           toast.error(error);
         }
       } else if (result.data) {
-        toast.success("Portfolio deleted");
+        toast.success(t("successToast"));
         setOpen(false);
         router.push("/atelier/portfolios");
         router.refresh();
@@ -60,17 +62,21 @@ export const DeletePortfolioDialog = ({
           size="icon"
           className="size-8 text-text-muted hover:text-error hover:bg-error/10"
           disabled={isPortfolioPending}
-          aria-label="Delete portfolio"
+          aria-label={t("ariaLabel")}
         >
           <Trash2 className="size-4" />
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle className="text-base">Delete portfolio</DialogTitle>
+          <DialogTitle className="text-base">{t("title")}</DialogTitle>
           <DialogDescription className="text-sm">
-            <strong className="text-text font-medium">{portfolioTitle}</strong>{" "}
-            will be permanently deleted. This cannot be undone.
+            {t.rich("description", {
+              title: portfolioTitle,
+              strong: (chunks) => (
+                <strong className="text-text font-medium">{chunks}</strong>
+              ),
+            })}
           </DialogDescription>
         </DialogHeader>
         <div className="flex items-center justify-end gap-2 mt-2">
@@ -80,7 +86,7 @@ export const DeletePortfolioDialog = ({
             disabled={isPending || isPortfolioPending}
             onClick={() => setOpen(false)}
           >
-            Cancel
+            {t("cancel")}
           </Button>
           <Button
             variant="destructive"
@@ -88,7 +94,7 @@ export const DeletePortfolioDialog = ({
             disabled={isPending || isPortfolioPending}
             onClick={handleAction}
           >
-            {isPending ? <Spinner className="size-3.5" /> : "Delete"}
+            {isPending ? <Spinner className="size-3.5" /> : t("delete")}
           </Button>
         </div>
       </DialogContent>

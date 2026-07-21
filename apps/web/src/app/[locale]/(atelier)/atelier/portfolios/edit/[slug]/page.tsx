@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { notFound, redirect } from "next/navigation";
 import {
   AdminPageContainer,
@@ -13,6 +14,7 @@ type Props = {
 };
 
 export default async function PortfolioDetail({ params }: Props) {
+  const t = await getTranslations("atelier.portfolios");
   const userAuth = await userSession();
   if (!userAuth) {
     redirect("/");
@@ -26,7 +28,7 @@ export default async function PortfolioDetail({ params }: Props) {
 
   if (portfolioResponse.error) {
     return (
-      <div>{portfolioResponse?.error?.message || "Something went wrong"}</div>
+      <div>{portfolioResponse?.error?.message || t("loadError")}</div>
     );
   }
 
@@ -42,7 +44,7 @@ export default async function PortfolioDetail({ params }: Props) {
   return (
     <AdminPageContainer>
       <AdminPageTitle
-        title={`Edit: ${portfolio.title}`}
+        title={t("editTitlePrefix", { title: portfolio.title })}
         publicHref={publicHref}
       >
         <DeletePortfolioDialog

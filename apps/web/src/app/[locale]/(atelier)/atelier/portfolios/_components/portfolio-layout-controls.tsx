@@ -15,6 +15,7 @@ import { Slider } from "@repo/ui/components/shadcn/slider";
 import { cn } from "@repo/ui/lib/utils";
 import { GalleryProvider } from "@repo/ui/providers/gallery.provider";
 import { Eye, Wrench } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import {
@@ -29,6 +30,7 @@ import { getAllLayoutsAction } from "@/modules/layouts/server-actions/layouts.ac
 import { usePortfolio } from "@/modules/portfolios/providers/create-update-portfolio.provider";
 
 export function PortfolioLayoutControls() {
+  const t = useTranslations("atelier.portfolios.layout");
   const { portfolioInput, handleSetFormData } = usePortfolio();
   const portfolioItems = portfolioInput.portfolioItems;
 
@@ -97,19 +99,18 @@ export function PortfolioLayoutControls() {
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-1.5">
-        <span className="text-xs! font-medium text-text">Layout</span>
+        <span className="text-xs! font-medium text-text">{t("label")}</span>
         <InfoTooltip
           iconClassName="size-3.5"
           content={
             <div className="space-y-1.5">
-              <p>The layout adapts to the visitor's screen size.</p>
+              <p>{t("info")}</p>
               <p>
-                For the column layout, the number you pick is the maximum used
-                on large screens. Smaller devices show fewer columns — up to{" "}
-                {COLUMN_BASE_RESPONSIVE_CAPS.mobile} on mobile and{" "}
-                {COLUMN_BASE_RESPONSIVE_CAPS.tablet} on tablet — so a choice of{" "}
-                {COLUMN_BASE_COLUMN_LIMITS.max} columns still shows just{" "}
-                {COLUMN_BASE_RESPONSIVE_CAPS.mobile} on a phone.
+                {t("columnsInfo", {
+                  mobile: COLUMN_BASE_RESPONSIVE_CAPS.mobile,
+                  tablet: COLUMN_BASE_RESPONSIVE_CAPS.tablet,
+                  max: COLUMN_BASE_COLUMN_LIMITS.max,
+                })}
               </p>
             </div>
           }
@@ -120,7 +121,7 @@ export function PortfolioLayoutControls() {
         <div
           className="grid grid-cols-3 gap-1.5 sm:flex sm:flex-wrap"
           role="group"
-          aria-label="Portfolio layout"
+          aria-label={t("ariaGroup")}
         >
           {layouts.map((layout) => {
             const selected = layout.id === portfolioInput.layout?.layout_id;
@@ -148,7 +149,7 @@ export function PortfolioLayoutControls() {
           type="button"
           variant="outline"
           size="icon"
-          aria-label="Preview layout"
+          aria-label={t("previewAria")}
           disabled={!previewLayout || !hasItems}
           onClick={() => setPreviewOpen(true)}
           className="size-8 border-border/50 text-text-muted hover:border-border hover:bg-fg/50 hover:text-text active:scale-100 [&_svg]:size-4"
@@ -161,7 +162,7 @@ export function PortfolioLayoutControls() {
             type="button"
             variant="outline"
             size="icon"
-            aria-label="Edit layout settings"
+            aria-label={t("editSettingsAria")}
             onClick={() => setConfigOpen(true)}
             className="size-8 border-border/50 text-text-muted hover:border-border hover:bg-fg/50 hover:text-text active:scale-100 [&_svg]:size-4"
           >
@@ -174,13 +175,13 @@ export function PortfolioLayoutControls() {
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
         <DialogContent className="sm:max-w-4xl">
           <DialogHeader>
-            <DialogTitle>Layout preview</DialogTitle>
+            <DialogTitle>{t("previewTitle")}</DialogTitle>
             <DialogDescription>
-              A preview of your selected items using the{" "}
-              {selectedLayout
-                ? formatLayoutLabel(selectedLayout.name)
-                : "selected"}{" "}
-              layout. The result adapts to the visitor's screen size.
+              {t("previewDescription", {
+                layoutName: selectedLayout
+                  ? formatLayoutLabel(selectedLayout.name)
+                  : t("selectedFallback"),
+              })}
             </DialogDescription>
           </DialogHeader>
 
@@ -195,7 +196,7 @@ export function PortfolioLayoutControls() {
             </div>
           ) : (
             <div className="flex min-h-[30vh] items-center justify-center border border-dashed border-border/60 text-sm text-text-muted">
-              Add items to preview the layout.
+              {t("previewEmpty")}
             </div>
           )}
         </DialogContent>
@@ -206,16 +207,15 @@ export function PortfolioLayoutControls() {
         <Dialog open={configOpen} onOpenChange={setConfigOpen}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Layout settings</DialogTitle>
-              <DialogDescription>
-                Choose how many columns to show on large screens. Smaller
-                devices automatically use fewer.
-              </DialogDescription>
+              <DialogTitle>{t("settingsTitle")}</DialogTitle>
+              <DialogDescription>{t("settingsDescription")}</DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4 py-2">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-text-muted">Columns</span>
+                <span className="text-sm text-text-muted">
+                  {t("columns")}
+                </span>
                 <span className="text-sm font-medium tabular-nums text-text">
                   {columns}
                 </span>

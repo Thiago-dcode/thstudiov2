@@ -64,7 +64,7 @@ export async function HeroSection() {
       {/* ── Scroll down indicator ── */}
       <a
         href="#value-pillars"
-        aria-label="Scroll to next section"
+        aria-label={t("scrollToNextSection")}
         className="hero-stagger-4 absolute bottom-6 left-1/2 z-10 -translate-x-1/2 p-2 text-text-muted/50 transition-colors hover:text-text focus-visible:text-text"
       >
         <ChevronDown

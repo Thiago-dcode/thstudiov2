@@ -1,6 +1,7 @@
 "use server";
 
 import type { ActionReturn } from "@repo/common-lib/types/response";
+import { getTranslations } from "next-intl/server";
 import authService from "../auth.service";
 import type { LoginReturn } from "../auth.types";
 import { loginRequestSchema } from "../schemas/auth.shema";
@@ -20,11 +21,12 @@ export const loginServerAction = async (
 > => {
   // Clean up any existing 2FA cookie from previous login attempts
   await delete2faCookie();
+  const t = await getTranslations();
 
   if (!formData) {
     return {
       data: null,
-      errors: ["Form data is required"],
+      errors: [t("actions.formDataRequired")],
       inputs: {
         email: undefined,
         rememberMe: false,
@@ -41,7 +43,7 @@ export const loginServerAction = async (
       : undefined,
     remember_me: !!formData.get("remember_me"),
   };
-  const validatedData = loginRequestSchema.safeParse(credentials);
+  const validatedData = loginRequestSchema(t).safeParse(credentials);
   if (!validatedData.success) {
     const errors = Object.values(
       validatedData.error.flatten().fieldErrors,
@@ -65,7 +67,7 @@ export const loginServerAction = async (
       result.error &&
       (result.error.status_code === 400 || result.error.status_code === 401)
         ? result.error.errors
-        : ["Something went wrong"];
+        : [t("actions.genericError")];
     return {
       data: null,
       errors,

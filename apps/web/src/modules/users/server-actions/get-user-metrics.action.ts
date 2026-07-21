@@ -19,6 +19,6 @@ export const getUserMetricsAction = async (
   }
   return {
     data: null,
-    errors: getFriendlyApiErrors(metrics),
+    errors: await getFriendlyApiErrors(metrics),
   };
 };

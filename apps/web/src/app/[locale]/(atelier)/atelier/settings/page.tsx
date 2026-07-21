@@ -4,6 +4,7 @@ import {
   ArrowRight,
   Calendar,
   CreditCard,
+  Globe,
   KeyRound,
   Mail,
   RefreshCw,
@@ -11,6 +12,7 @@ import {
   User,
   XCircle,
 } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { config } from "@/lib/config";
@@ -23,8 +25,10 @@ import {
 } from "../../__components/admin-page.component";
 import { EditUserPasswordDialog } from "./_components/edit-user-password.dialog";
 import { EditUserUsernameDialog } from "./_components/edit-user-username.dialog";
+import { AtelierLanguageSwitcher } from "./_components/language-switcher";
 
 export default async function SettingsPage() {
+  const t = await getTranslations("atelier.settings");
   const userAuth = await userSession();
   if (!userAuth) {
     redirect("/");
@@ -43,7 +47,8 @@ export default async function SettingsPage() {
   const activeSubscription = activeSubscriptionResponse.data ?? null;
   const isFree = activeSubscription?.plan_price.plan.is_free ?? true;
   const isTrialing = activeSubscription?.is_trialing ?? false;
-  const planName = activeSubscription?.plan_price.plan.name ?? "Free";
+  const planName =
+    activeSubscription?.plan_price.plan.name ?? t("subscription.freePlanName");
 
   const nextBillingDate = activeSubscription?.next_billing_date
     ? new Date(
@@ -67,13 +72,15 @@ export default async function SettingsPage() {
 
   return (
     <AdminPageContainer>
-      <AdminPageTitle title="Settings" />
+      <AdminPageTitle title={t("pageTitle")} />
 
       <div className="flex flex-col gap-4 max-w-lg">
         {/* Account info */}
         <section className="border border-fg-2 divide-y divide-fg-2">
           <div className="px-4 py-3">
-            <h2 className="text-sm font-medium text-text-muted">Account</h2>
+            <h3 className="text-sm! font-medium text-text-muted">
+              {t("account.heading")}
+            </h3>
           </div>
 
           <div className="flex items-center justify-between px-4 py-3">
@@ -81,10 +88,12 @@ export default async function SettingsPage() {
               <User className="size-4 text-text-muted" />
               <div>
                 <div className="flex items-center gap-1.5">
-                  <p className="text-sm font-medium">{user.username}</p>
-                  <InfoTooltip content="Your username appears in your public URL. Pick something short and memorable — you can't change it often." />
+                  <p className="text-sm! font-medium">{user.username}</p>
+                  <InfoTooltip content={t("account.usernameInfo")} />
                 </div>
-                <p className="text-xs text-text-muted">Username</p>
+                <p className="text-xs! text-text-muted">
+                  {t("account.usernameLabel")}
+                </p>
               </div>
             </div>
             <EditUserUsernameDialog user={user} />
@@ -94,26 +103,51 @@ export default async function SettingsPage() {
             <div className="flex items-center gap-3">
               <Mail className="size-4 text-text-muted" />
               <div>
-                <p className="text-sm font-medium">{user.email}</p>
-                <p className="text-xs text-text-muted">Email</p>
+                <p className="text-sm! font-medium">{user.email}</p>
+                <p className="text-xs! text-text-muted">
+                  {t("account.emailLabel")}
+                </p>
               </div>
             </div>
+          </div>
+        </section>
+
+        {/* Language */}
+        <section className="border border-fg-2 divide-y divide-fg-2">
+          <div className="px-4 py-3">
+            <h3 className="text-sm! font-medium text-text-muted">
+              {t("language.heading")}
+            </h3>
+          </div>
+
+          <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center gap-3">
+              <Globe className="size-4 text-text-muted" />
+              <p className="text-xs! text-text-muted">
+                {t("language.description")}
+              </p>
+            </div>
+            <AtelierLanguageSwitcher />
           </div>
         </section>
 
         {/* Security */}
         <section className="border border-fg-2 divide-y divide-fg-2">
           <div className="px-4 py-3">
-            <h2 className="text-sm font-medium text-text-muted">Security</h2>
+            <h3 className="text-sm! font-medium text-text-muted">
+              {t("security.heading")}
+            </h3>
           </div>
 
           <div className="flex items-center justify-between px-4 py-3">
             <div className="flex items-center gap-3">
               <KeyRound className="size-4 text-text-muted" />
               <div>
-                <p className="text-sm font-medium">Password</p>
-                <p className="text-xs text-text-muted">
-                  Update your account password
+                <p className="text-sm! font-medium">
+                  {t("security.passwordLabel")}
+                </p>
+                <p className="text-xs! text-text-muted">
+                  {t("security.passwordDescription")}
                 </p>
               </div>
             </div>
@@ -124,9 +158,9 @@ export default async function SettingsPage() {
         {/* Subscription */}
         <section className="border border-fg-2 divide-y divide-fg-2">
           <div className="px-4 py-3">
-            <h2 className="text-sm font-medium text-text-muted">
-              Subscription
-            </h2>
+            <h3 className="text-sm! font-medium text-text-muted">
+              {t("subscription.heading")}
+            </h3>
           </div>
 
           <div className="flex items-center justify-between px-4 py-3">
@@ -134,7 +168,7 @@ export default async function SettingsPage() {
               <CreditCard className="size-4 text-text-muted" />
               <div className="flex flex-col gap-0.5">
                 <div className="flex items-center gap-2">
-                  <p className="text-sm font-medium">{planName}</p>
+                  <p className="text-sm! font-medium">{planName}</p>
                   {!isFree && activeSubscription && (
                     <span className="inline-flex items-center px-2 py-0.5 text-[10px] font-medium bg-fg text-text-muted border border-fg-2">
                       {activeSubscription.plan_price.billing_type}
@@ -143,22 +177,22 @@ export default async function SettingsPage() {
                   {isTrialing && (
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium bg-amber-500/10 text-amber-500 border border-amber-500/20">
                       <Sparkles className="size-2.5" />
-                      Trial
+                      {t("subscription.trial")}
                     </span>
                   )}
                 </div>
                 {isTrialing && nextBillingDate ? (
-                  <p className="text-xs text-amber-500">
-                    Free trial ends {nextBillingDate}
+                  <p className="text-xs! text-amber-500">
+                    {t("subscription.freeTrialEnds", { date: nextBillingDate })}
                   </p>
                 ) : !isFree && activeSubscription ? (
-                  <div className="flex items-center gap-3 text-xs text-text-muted">
+                  <div className="flex items-center gap-3 text-xs! text-text-muted">
                     {activeSubscription.auto_renewal ? (
                       <>
                         {nextBillingDate && (
                           <span className="flex items-center gap-1">
                             <Calendar className="size-3" />
-                            Renews {nextBillingDate}
+                            {t("subscription.renews", { date: nextBillingDate })}
                           </span>
                         )}
                         <span className="flex items-center gap-1">
@@ -169,13 +203,13 @@ export default async function SettingsPage() {
                     ) : cancelAtFormatted ? (
                       <span className="flex items-center gap-1 text-amber-500">
                         <XCircle className="size-3" />
-                        Cancels {cancelAtFormatted}
+                        {t("subscription.cancels", { date: cancelAtFormatted })}
                       </span>
                     ) : null}
                   </div>
                 ) : (
-                  <p className="text-xs text-text-muted">
-                    You are on the free plan
+                  <p className="text-xs! text-text-muted">
+                    {t("subscription.onFreePlan")}
                   </p>
                 )}
               </div>
@@ -183,7 +217,7 @@ export default async function SettingsPage() {
             <div className="flex flex-col items-end gap-3">
               <Button variant="accent" size="sm" asChild>
                 <Link href="/atelier/settings/subscription" className="gap-1.5">
-                  {isFree ? "Upgrade" : "Change"}{" "}
+                  {isFree ? t("subscription.upgrade") : t("subscription.change")}{" "}
                   <ArrowRight className="size-3.5" />
                 </Link>
               </Button>

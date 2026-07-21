@@ -4,6 +4,7 @@ import type {
   ErrorResponse,
 } from "@repo/common-lib/types/response";
 import { cookies } from "next/headers";
+import { getTranslations } from "next-intl/server";
 import type { ZodError } from "zod";
 import { serverEnv } from "@/env/server";
 import { fetchFrontApi } from "@/lib/facade/fetchApi";
@@ -35,9 +36,12 @@ export const setUserSessionApi = async (
   }
 };
 
-export const getFriendlyApiErrors = (errors: ErrorResponse): string[] => {
+export const getFriendlyApiErrors = async (
+  errors: ErrorResponse,
+): Promise<string[]> => {
   if (errors.error.status_code === 500) {
-    return ["An unexpected error occurred. Please try again later."];
+    const t = await getTranslations();
+    return [t("actions.genericError")];
   }
   return errors.error.errors;
 };
@@ -96,11 +100,14 @@ export const requireOwner = (
  * Standard "Unauthorized" ActionReturn shape for server actions rejecting
  * a request that doesn't belong to the caller.
  */
-export const unauthorizedActionReturn = <T, K = Record<string, any>>(
+export const unauthorizedActionReturn = async <T, K = Record<string, any>>(
   inputs?: K,
-): ActionReturn<T, K> => ({
-  data: null,
-  errors: ["Unauthorized"],
-  inputErrors: undefined,
-  inputs,
-});
+): Promise<ActionReturn<T, K>> => {
+  const t = await getTranslations();
+  return {
+    data: null,
+    errors: [t("actions.unauthorized")],
+    inputErrors: undefined,
+    inputs,
+  };
+};

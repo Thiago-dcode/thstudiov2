@@ -1,6 +1,6 @@
-import type { Translations } from "./en";
+import type { Messages } from "./en";
 
-const messages: Translations = {
+const messages = {
   landing: {
     hero: {
       titlePrefix: "Haz que tu",
@@ -25,8 +25,11 @@ const messages: Translations = {
         successMessage:
           "Te enviamos un correo de confirmación. Ábrelo y haz clic en el enlace para asegurar tu acceso anticipado.",
         successReserveMessage: "Reservaremos tu correo después de validarlo.",
+        alreadyExists:
+          '{email} ya está en la lista de espera. Revisa tu correo. Si esto no es correcto, <supportLink>contacta con soporte</supportLink>.',
       },
       disclaimer: "Gratis para empezar · No se requiere tarjeta",
+      scrollToNextSection: "Ir a la siguiente sección",
     },
     valuePillars: {
       header: {
@@ -270,6 +273,18 @@ const messages: Translations = {
     },
   },
   language: "Idioma",
+  error: {
+    title: "Algo salió mal",
+    description:
+      "Tuvimos un error inesperado. Inténtalo de nuevo o vuelve al inicio.",
+    tryAgain: "Intentar de nuevo",
+    backToHome: "Volver al inicio",
+  },
+  siteHeader: {
+    openNavigation: "Abrir navegación",
+    closeNavigation: "Cerrar navegación",
+    navigation: "Navegación",
+  },
   footer: {
     tagline: "La plataforma de portafolios creada para artistas.",
     cta: {
@@ -595,6 +610,552 @@ const messages: Translations = {
       exit: "Salir de pantalla completa",
     },
   },
-};
+  validation: {
+    required: "{field} es obligatorio",
+    invalid: "{field} no es válido",
+    tooLong: "{field} es demasiado largo",
+    minLength: "{field} debe tener al menos {min} caracteres",
+    maxLength: "{field} debe tener como máximo {max} caracteres",
+    email: {
+      invalid: "Correo electrónico no válido",
+    },
+    slug: {
+      tooShort: "El slug debe tener al menos 3 caracteres",
+      invalidFormat:
+        "El slug solo puede contener letras minúsculas, números y guiones",
+    },
+    avatarUrlInvalid: "URL de avatar no válida",
+    fallbackUrlInvalid: "URL de respaldo no válida",
+    thumbnailRequired: "La miniatura es obligatoria",
+    maxCategories: "Los portafolios pueden tener hasta {max} categorías",
+    maxPortfolioItems: "Los portafolios pueden tener hasta {max} elementos",
+    minCollectionMedia: "Se requiere al menos un elemento multimedia",
+    maxCollectionMedia: "Las colecciones pueden tener hasta {max} archivos",
+    file: {
+      tooLarge: "{field} debe pesar menos de {mb}MB",
+      invalidType: "{field} debe ser una imagen (JPEG, PNG o WebP)",
+    },
+    aboutPage: {
+      titleType: "El título debe ser una cadena de texto válida",
+      titleMin: "El título debe tener al menos 5 caracteres",
+      titleMax: "El título debe tener menos de 255 caracteres",
+      descriptionRequired:
+        "La descripción es obligatoria y debe ser una cadena de texto válida",
+      descriptionType: "La descripción debe ser una cadena de texto válida",
+      descriptionMin: "La descripción debe tener al menos 20 caracteres",
+      descriptionMax: "La descripción debe tener menos de 1000 caracteres",
+      userIdRequired:
+        "El ID de usuario es obligatorio y debe ser un número válido",
+      userIdPositive: "El ID de usuario debe ser un número positivo",
+    },
+    auth: {
+      invalidEmail: "Correo electrónico no válido",
+      invalidPassword: "Contraseña no válida",
+      invalidUsername: "Nombre de usuario no válido",
+      usernameAllowedChars:
+        "El nombre de usuario solo puede contener letras, números, guiones bajos y guiones",
+      invalidCode: "Código no válido",
+      codeLength: "El código debe tener {length} dígitos",
+      invalidFallbackUrl: "URL de respaldo no válida",
+    },
+    subscription: {
+      urlMustBeAppOrigin: "La URL debe pertenecer al dominio de la app",
+    },
+    service: {
+      featureTitleRequired: "El título de la característica es obligatorio",
+      termTitleRequired: "El título del término es obligatorio",
+    },
+    emailPreference: {
+      tokenRequired: "Falta el token",
+    },
+    user: {
+      usernameAlphanumeric:
+        "El nombre de usuario debe ser alfanumérico y sin espacios",
+      passwordMustContainNumber: "La contraseña debe contener al menos un número",
+      passwordNoSpaces: "La contraseña no puede contener espacios",
+    },
+  },
+  fields: {
+    title: "Título",
+    name: "Nombre",
+    surname: "Apellido",
+    subject: "Asunto",
+    message: "Mensaje",
+    artistId: "ID del artista",
+    username: "Nombre de usuario",
+    password: "Contraseña",
+    profession: "Profesión",
+    biography: "Biografía",
+    shortBiography: "Biografía breve",
+    currentPassword: "Contraseña actual",
+    newPassword: "Contraseña",
+    thumbnail: "Miniatura",
+    avatar: "Avatar",
+    banner: "Banner",
+    photo: "Foto",
+    file: "Archivo",
+    userId: "ID de usuario",
+    mediaId: "ID de archivo",
+  },
+  portfolios: {
+    toastCreated: "Portafolio creado con éxito",
+    toastUpdated: "Portafolio actualizado con éxito",
+  },
+  atelier: {
+    common: {
+      viewPublicPage: "Ver página pública",
+      cancel: "Cancelar",
+      save: "Guardar",
+      update: "Actualizar",
+      planLimitReached: "Límite del plan alcanzado",
+      planLimitDescription:
+        "Has usado <strong>{count}</strong> de <strong>{limit}</strong> {label} permitidos en tu plan actual. Actualiza tu plan para crear más, o gestiona tus {label} existentes.",
+      goBack: "Volver",
+      upgradePlan: "Mejorar plan",
+      planLimitToast:
+        "Has alcanzado el límite de tu plan para {label} ({count}/{limit}). Mejora tu plan para crear más.",
+      logout: "Cerrar sesión",
+      logoutConfirmTitle: "Cerrar sesión",
+      logoutConfirmDescription:
+        "¿Seguro que quieres cerrar sesión? Tendrás que iniciar sesión de nuevo para acceder a tu cuenta.",
+      completeProfileTitle: "Completa tu perfil",
+      completeProfileDescription:
+        "¡Ya casi está! Completa la configuración de tu perfil para desbloquear todas las funciones y tener la mejor experiencia.",
+      continueSettingUp: "Continuar configuración",
+      skipForNow: "Omitir por ahora",
+      metrics: {
+        noDataAvailable: "No hay datos disponibles",
+        media: "Contenido",
+        storage: "Almacenamiento",
+        clients: "Clientes",
+        portfolios: "Portafolios",
+        collections: "Colecciones",
+        projects: "Proyectos",
+        services: "Servicios",
+        aiCredits: "Créditos de IA",
+        planSuffix: "Plan",
+      },
+      submit: {
+        updateCollectionTitle: "Actualizar colección",
+        saveCollectionTitle: "Guardar colección",
+        updateCollectionDescription:
+          "Tus cambios se guardarán y se aplicarán a tu colección en vivo.",
+        createCollectionDescription:
+          "Tu colección se creará y se guardará en tu cuenta.",
+        updatePortfolioTitle: "Actualizar portafolio",
+        savePortfolioTitle: "Guardar portafolio",
+        updatePortfolioDescription:
+          "Tus cambios se guardarán y se aplicarán a tu portafolio en vivo.",
+        createPortfolioDescription:
+          "Tu portafolio se creará y se guardará en tu cuenta.",
+        updateServiceLabel: "Actualizar servicio",
+        createServiceLabel: "Crear servicio",
+        updateServiceTitle: "Actualizar servicio",
+        createServiceTitle: "Crear servicio",
+        updateServiceDescription:
+          "Tus cambios se guardarán y se aplicarán a tu servicio en vivo.",
+        createServiceDescription:
+          "Tu servicio se creará y se guardará en tu cuenta.",
+      },
+    },
+    portfolios: {
+      pageTitle: "Portafolios",
+      pageInfo:
+        "Los portafolios representan categorías amplias de tu trabajo, como 'Fotografía de viajes' o 'Fotografía de bodas'. Están diseñados para mostrar tus mejores piezas a los clientes y pueden incluir tanto contenido individual como colecciones.",
+      createButtonLabel: "Crear portafolio",
+      emptyStateDescription:
+        "Aún no has creado portafolios. Empieza agrupando tu trabajo.",
+      loadError: "Algo salió mal",
+      createTitle: "Crear un portafolio",
+      editTitlePrefix: "Editar: {title}",
+      blockedBadge: "Bloqueado",
+      deletePortfolio: {
+        ariaLabel: "Eliminar portafolio",
+        title: "Eliminar portafolio",
+        description:
+          "<strong>{title}</strong> se eliminará permanentemente. Esta acción no se puede deshacer.",
+        cancel: "Cancelar",
+        delete: "Eliminar",
+        successToast: "Portafolio eliminado",
+      },
+      form: {
+        blockedNotice:
+          "Este portafolio ha sido bloqueado. Puedes revisarlo aquí, pero no se puede editar hasta que se levante el bloqueo.",
+        back: "Atrás",
+        next: "Siguiente",
+        stepOf: "Paso {current} de {total}",
+        thumbnailHint:
+          "Añade una imagen de miniatura para tu portafolio (obligatorio)",
+        thumbnailAlt: "Vista previa de la miniatura",
+        titleLabel: "Título",
+        titlePlaceholder: "Mi portafolio",
+        slugLabel: "Slug",
+        slugPlaceholder: "mi-portafolio",
+        slugInfo:
+          "Un slug es una versión de tu título apta para URL (ej. 'mi-portafolio-genial'). Debe ser único, ya que se usa en la URL del portafolio para identificarlo y facilitar su búsqueda.",
+        slugChecking: "Comprobando disponibilidad...",
+        slugAvailable: "✓ Este slug está disponible",
+        slugTaken: "✗ Este slug ya está en uso",
+        slugInvalidFormat: "✗ Formato de slug no válido. Ejemplo: mi-portafolio",
+        descriptionLabel: "Descripción",
+        descriptionPlaceholder: "Describe tu portafolio...",
+        categoriesLabel: "Categorías",
+        categoriesCountHint:
+          "{count} / {max} categorías · Opcional. Selecciona categorías que describan este portafolio.",
+        showOnProfile: "Mostrar en la página de perfil",
+        showOnProfileInfo:
+          "Cuando está activado, este portafolio se destaca en tu perfil público de artista para que los visitantes lo encuentren más fácilmente. Puedes destacar hasta {limit} portafolios en tu página de perfil.",
+        highlightLimitReached:
+          "Has alcanzado el límite de {limit} portafolios destacados en tu página de perfil.",
+        active: "Activo",
+        activeInfo:
+          "Cuando está desactivado, este portafolio se oculta de tu perfil público de artista y de los listados. Aún puedes editarlo en el atelier.",
+      },
+      items: {
+        noItems: "Aún no se han añadido contenidos ni colecciones",
+        itemsCountLabel: "{count} / {limit} elementos",
+        dragToReorder: "· Arrastra para reordenar",
+        countInfo:
+          "Este conteo incluye cada contenido que añades directamente, más cada elemento dentro de cualquier colección que agregues. Por ejemplo, una colección con 10 imágenes cuenta como 10 elementos del límite de {limit}.",
+        removeItem: "Eliminar {label}",
+        untitled: "Sin título",
+      },
+      layout: {
+        label: "Diseño",
+        info: "El diseño se adapta al tamaño de pantalla del visitante.",
+        columnsInfo:
+          "Para el diseño en columnas, el número que elijas es el máximo usado en pantallas grandes. Los dispositivos más pequeños muestran menos columnas — hasta {mobile} en móvil y {tablet} en tablet — de modo que elegir {max} columnas igual muestra solo {mobile} en un teléfono.",
+        ariaGroup: "Diseño del portafolio",
+        previewAria: "Previsualizar diseño",
+        editSettingsAria: "Editar ajustes de diseño",
+        previewTitle: "Vista previa del diseño",
+        previewDescription:
+          "Una vista previa de tus elementos seleccionados usando el diseño {layoutName}. El resultado se adapta al tamaño de pantalla del visitante.",
+        previewEmpty: "Añade elementos para previsualizar el diseño.",
+        settingsTitle: "Ajustes de diseño",
+        settingsDescription:
+          "Elige cuántas columnas mostrar en pantallas grandes. Los dispositivos más pequeños usan menos automáticamente.",
+        columns: "Columnas",
+        selectedFallback: "seleccionado",
+      },
+    },
+    services: {
+      pageTitle: "Servicios",
+      pageInfo:
+        "Los servicios son las ofertas que brindas a tus clientes, como 'Fotografía de bodas' o 'Diseño web'.",
+      createButtonLabel: "Crear servicio",
+      emptyStateDescription:
+        "Aún no has creado servicios. Empieza añadiendo lo que ofreces a tus clientes.",
+      loadError: "Algo salió mal",
+      createTitle: "Crear un servicio",
+      editTitlePrefix: "Editar: {title}",
+      form: {
+        blockedNotice:
+          "Este servicio ha sido bloqueado. Puedes revisarlo aquí, pero no se puede editar hasta que se levante el bloqueo.",
+        slugChecking: "Comprobando disponibilidad...",
+        slugAvailable: "✓ Este slug está disponible",
+        slugTaken: "✗ Este slug ya está en uso",
+        titleLabel: "Título",
+        titlePlaceholder: "Fotografía de retrato",
+        slugLabel: "Slug",
+        slugPlaceholder: "fotografia-de-retrato",
+        slugInfo:
+          "Identificador apto para URL. Solo letras minúsculas, números y guiones.",
+        slugInvalidFormat:
+          "✗ Formato de slug no válido. Ejemplo: fotografia-de-retrato",
+        descriptionLabel: "Descripción",
+        descriptionPlaceholder: "Describe tu servicio...",
+        priceLabel: "Precio",
+        priceInfo: "El precio es opcional, déjalo en 0.",
+        showPrice: "Mostrar precio",
+        active: "Activo",
+        showOnProfile: "Mostrar en la página de perfil",
+        showOnProfileInfo:
+          "Cuando está activado, este servicio se destaca en tu perfil público de artista para que los visitantes lo encuentren más fácilmente. Puedes destacar hasta {limit} servicios en tu página de perfil.",
+        highlightLimitReached:
+          "Has alcanzado el límite de {limit} servicios destacados en tu página de perfil.",
+        thumbnailLabel: "Miniatura",
+        thumbnailAlt: "Vista previa de la miniatura",
+        featuresLabel: "Características",
+        featuresPlaceholder: "ej. sesión de 2 horas",
+        termsLabel: "Términos",
+        termsPlaceholder: "ej. depósito del 50% requerido",
+        portfolioLinkLabel: "Vincular a un portafolio (opcional)",
+        portfolioSelectPlaceholder: "Selecciona un portafolio...",
+        portfolioLinkInfo:
+          "Vincula un portafolio para que los clientes vean fotos relacionadas con este servicio.",
+      },
+    },
+    collections: {
+      pageTitle: "Colecciones",
+      pageInfo:
+        "Las colecciones son conjuntos simples de contenido relacionado, agrupados por un evento o tema específico, como 'La boda de Juan' o 'Marruecos 2026'.",
+      createButtonLabel: "Crear colección",
+      emptyStateDescription:
+        "Aún no has creado colecciones. Empieza añadiendo un conjunto de contenido relacionado.",
+      loadError: "Algo salió mal",
+      createTitle: "Crear una colección",
+      editTitlePrefix: "Editar: {title}",
+      deleteCollection: {
+        ariaLabel: "Eliminar colección",
+        title: "Eliminar colección",
+        description:
+          "<strong>{title}</strong> se eliminará permanentemente. Esta acción no se puede deshacer.",
+        cancel: "Cancelar",
+        delete: "Eliminar",
+        successToast: "Colección eliminada",
+      },
+      form: {
+        blockedNotice:
+          "Esta colección ha sido bloqueada. Puedes revisarla aquí, pero no se puede editar hasta que se levante el bloqueo.",
+        titleLabel: "Título",
+        titlePlaceholder: "Mi colección",
+        slugLabel: "Slug",
+        slugPlaceholder: "mi-coleccion",
+        slugInfo:
+          "Un slug es una versión de tu título apta para URL (ej. 'mi-coleccion-genial'). Debe ser único, ya que se usa en la URL de la colección.",
+        slugChecking: "Comprobando disponibilidad...",
+        slugAvailable: "✓ Este slug está disponible",
+        slugTaken: "✗ Este slug ya está en uso",
+        slugInvalidFormat: "✗ Formato de slug no válido. Ejemplo: mi-coleccion",
+        descriptionLabel: "Descripción",
+        descriptionPlaceholder: "Describe tu colección...",
+        showOnProfile: "Mostrar en la página de perfil",
+        showOnProfileInfo:
+          "Cuando está activado, esta colección se destaca en tu perfil público de artista para que los visitantes la encuentren más fácilmente. Puedes destacar hasta {limit} colecciones en tu página de perfil.",
+        highlightLimitReached:
+          "Has alcanzado el límite de {limit} colecciones destacadas en tu página de perfil.",
+        active: "Activo",
+        activeInfo:
+          "Cuando está desactivado, esta colección se oculta de tu perfil público de artista y de los listados. Aún puedes editarla en el atelier.",
+      },
+      media: {
+        sectionLabel: "Contenido",
+        dragToReorder: "· Arrastra para reordenar",
+        countInfo:
+          "Cada elemento multimedia que añadas a esta colección cuenta para este límite. Puedes incluir hasta {limit} elementos en total.",
+        countLabel: "{count} / {limit} contenidos",
+        noMedia: "Aún no se ha añadido contenido",
+        removeMedia: "Eliminar {label}",
+        mediaFallback: "contenido",
+        untitled: "Sin título",
+      },
+    },
+    media: {
+      pageTitle: "Contenido",
+      tabs: {
+        overallInfo: "Información general",
+        seo: "SEO",
+      },
+      upload: {
+        maxFilesError:
+          "Se permiten un máximo de {max} archivos. Puedes añadir {remaining} más.",
+        globalCompression: "Compresión global",
+        compressionTooltipTitle: "Nivel de compresión",
+        compressionTooltipBody:
+          "Controla el equilibrio entre la calidad de imagen y el tamaño de archivo. Una compresión menor (VERY_LOW, LOW) conserva más detalle pero genera archivos más grandes. Una compresión mayor (HIGH, VERY_HIGH) reduce el tamaño pero puede reducir ligeramente la calidad.",
+        compressionTooltipHint:
+          "Este ajuste se aplica a todos los archivos subidos. Puedes ajustar archivos individuales con los controles de abajo.",
+        allFiles: "Todos los archivos",
+        upgradeRequired: "Actualización necesaria:",
+        upgradeRequiredBody:
+          "El control de compresión no está disponible en tu plan actual. Actualiza para acceder a esta función.",
+        aiSeoGeneration: "Generación de SEO con IA",
+        aiSeoTooltipBody:
+          "Genera automáticamente título, descripción, texto alternativo y nombre de archivo SEO para cada imagen usando análisis de visión por IA.",
+        aiSeoCreditsHint:
+          "Cuesta 1 crédito de IA por imagen. Te quedan {count} {count, plural, one {crédito} other {créditos}}.",
+        creditsLabel: "{count} {count, plural, one {crédito} other {créditos}}",
+        noCreditsTitle: "Sin créditos de IA:",
+        noCreditsBody:
+          "Has usado todos tus créditos de IA. Mejora tu plan o espera al próximo reinicio.",
+        filesCount: "{count}/{max} archivos",
+        maxReached: "Límite alcanzado",
+        compressionLabel: "Compresión",
+        upgradeToAdjust: "Mejora tu plan para ajustar",
+        previewAlt: "Vista previa {index}",
+        createNewMedia: "Crear nuevo contenido",
+        uploadUpToImages: "Sube hasta {max} imágenes (JPEG, PNG, WebP)",
+        uploadButton: "¡Subir!",
+        close: "Cerrar",
+        createMedia: "Crear contenido",
+        addMedia: "Añadir contenido",
+        storageFullTitle: "Almacenamiento lleno: {used} / {limit} GB usados",
+        uploadInProgress: "Subida en curso...",
+      },
+      card: {
+        deleteFailed: "No se pudo eliminar el contenido",
+        titleLabel: "Título",
+        titlePlaceholder: "Introduce el título",
+        descriptionLabel: "Descripción",
+        descriptionPlaceholder: "Introduce la descripción",
+        seoTitleLabel: "Título SEO",
+        seoTitlePlaceholder: "Introduce el título SEO",
+        seoTitleInfo:
+          "El título que aparece en los resultados de búsqueda y en las pestañas del navegador. Mejora la visibilidad en buscadores.",
+        seoDescriptionLabel: "Descripción SEO",
+        seoDescriptionPlaceholder: "Introduce la descripción SEO",
+        seoDescriptionInfo:
+          "Un breve resumen que aparece en los resultados de búsqueda. Ayuda a los usuarios a entender de qué trata la imagen antes de hacer clic.",
+        altTextLabel: "Texto alternativo",
+        altTextPlaceholder: "Introduce el texto alternativo para accesibilidad",
+        altTextInfo:
+          "Una descripción textual de la imagen para lectores de pantalla y cuando las imágenes no cargan. Mejora la accesibilidad y el SEO.",
+        filenameLabel: "Nombre de archivo",
+        filenamePlaceholder: "Introduce el nombre de archivo",
+        filenameInfo:
+          "El nombre de archivo usado con fines de SEO. Puede editarse para mejorar la visibilidad en buscadores.",
+        lastUpdated: "Última actualización",
+        noPreview: "Sin vista previa",
+        altFallback: "Contenido de {username}",
+        untitled: "Sin título",
+        editMedia: "Editar contenido",
+        mediaPreview: "Vista previa del contenido",
+        generateSeo: "Generar SEO",
+        noCreditsAvailable:
+          "No hay créditos de IA disponibles. Necesitas al menos 1 crédito para generar metadatos SEO. Mejora tu plan o espera a que se reinicien los créditos.",
+        generateSeoTooltip:
+          "Genera automáticamente los campos SEO con IA. Analiza el contenido de tu imagen y genera títulos, descripciones, texto alternativo y nombres de archivo optimizados para mejorar la visibilidad en búsquedas.",
+        noCreditsSuffix: " (Sin créditos)",
+        delete: "Eliminar",
+        deleteConfirm: "¿Seguro que quieres eliminar este contenido?",
+        cancel: "Cancelar",
+        discardTitle: "¿Descartar cambios?",
+        discardBody:
+          "¿Seguro que quieres cancelar? Se perderán todos los cambios sin guardar.",
+        keepEditing: "Seguir editando",
+        discardChanges: "Descartar cambios",
+        saveChanges: "Guardar cambios",
+        edit: "Editar",
+        close: "Cerrar",
+      },
+      grid: {
+        generateSeoCount: "Generar SEO ({count})",
+        generateSeoTitle: "Generar SEO con IA",
+        generateSeoDescription:
+          "¿Generar metadatos SEO con IA para {count} {count, plural, one {contenido seleccionado} other {contenidos seleccionados}}?",
+        creditsAvailable: "Créditos disponibles:",
+        creditsNeeded: "Créditos necesarios:",
+        overAiLimit:
+          "Límite: selecciona hasta {max} elementos (quita {excess}).",
+        insufficientCredits:
+          "Créditos insuficientes. Necesitas {needed} créditos más.",
+        cancel: "Cancelar",
+        selectMedia: "Seleccionar contenido",
+        cancelSelection: "Cancelar selección",
+        noMediaFiltered:
+          "No se encontró contenido, prueba otra combinación de filtros",
+        noMediaEmpty:
+          "Aún no has subido contenido. Empieza añadiendo tu primera imagen.",
+        updateItems:
+          "Actualizar {count} {count, plural, one {elemento} other {elementos}}",
+        confirmUpdatesTitle: "Confirmar actualizaciones",
+        confirmUpdatesDescription:
+          "¿Seguro que quieres actualizar {count} {count, plural, one {contenido} other {contenidos}}? Esta acción guardará todos los cambios pendientes.",
+        updateAll: "Actualizar todo",
+      },
+      search: {
+        placeholder: "Buscar contenido…",
+        all: "Todos",
+      },
+    },
+    home: {
+      pageTitle: "Panel",
+    },
+    about: {
+      pageTitle: "Página Sobre mí",
+      pageInfo:
+        "Comparte tu trayectoria, tu recorrido artístico y todo lo que te gustaría que tu audiencia supiera sobre ti.",
+      emptyStateDescription:
+        "Aún no has creado una página Sobre mí. Comparte tu trayectoria y tu recorrido artístico.",
+    },
+    settings: {
+      pageTitle: "Ajustes",
+      account: {
+        heading: "Cuenta",
+        usernameInfo:
+          "Tu nombre de usuario aparece en tu URL pública. Elige algo corto y memorable — no podrás cambiarlo con frecuencia.",
+        usernameLabel: "Nombre de usuario",
+        emailLabel: "Correo electrónico",
+      },
+      language: {
+        heading: "Idioma",
+        description: "Elige el idioma de tu panel",
+      },
+      security: {
+        heading: "Seguridad",
+        passwordLabel: "Contraseña",
+        passwordDescription: "Actualiza la contraseña de tu cuenta",
+      },
+      subscription: {
+        heading: "Suscripción",
+        trial: "Prueba",
+        freeTrialEnds: "La prueba gratuita termina el {date}",
+        renews: "Se renueva el {date}",
+        cancels: "Se cancela el {date}",
+        onFreePlan: "Estás en el plan gratuito",
+        upgrade: "Mejorar plan",
+        change: "Cambiar",
+        freePlanName: "Gratis",
+      },
+      changePlan: {
+        pageTitle: "Cambiar plan",
+        backToSettings: "Volver a Ajustes",
+        alreadyOnBest: "Ya tienes el plan más completo.",
+        currentPlanIs:
+          "Tu plan actual es <strong>{planName}</strong> — no hay nada superior a lo que actualizar por ahora.",
+        currentPlanFallback: "tu plan actual",
+        goBackToSettings: "Volver a Ajustes",
+        cancel: "Cancelar",
+      },
+      changePassword: {
+        triggerLabel: "Cambiar contraseña",
+        title: "Cambiar contraseña",
+        description: "Introduce tu contraseña actual y elige una nueva.",
+        monthlyLimitReached: "Límite mensual alcanzado",
+        usedAllChanges:
+          "Has usado los {max} cambios de contraseña permitidos para este periodo.",
+        availableAgainOn:
+          "Disponible de nuevo el <strong>{date}</strong>.",
+        currentPasswordLabel: "Contraseña actual",
+        newPasswordLabel: "Nueva contraseña",
+        newPasswordInfo: "8–20 caracteres, al menos un número, sin espacios",
+        remainingChanges:
+          "{remaining} de {max} {remaining, plural, one {cambio} other {cambios}} restantes este mes",
+        resetsOn: " · se reinicia el {date}",
+        submit: "Actualizar contraseña",
+        successToast: "¡Contraseña actualizada con éxito!",
+      },
+      changeUsername: {
+        title: "Cambiar nombre de usuario",
+        description: "Elige un nuevo nombre de usuario para tu cuenta.",
+        monthlyLimitReached: "Límite mensual alcanzado",
+        usedAllChanges:
+          "Has usado los {max} cambios de nombre de usuario permitidos para este periodo.",
+        availableAgainOn:
+          "Disponible de nuevo el <strong>{date}</strong>.",
+        newUsernameLabel: "Nuevo nombre de usuario",
+        newUsernameInfo: "3–20 caracteres, solo letras y números",
+        remainingChanges:
+          "{remaining} de {max} {remaining, plural, one {cambio} other {cambios}} restantes este mes",
+        resetsOn: " · se reinicia el {date}",
+        submit: "Actualizar nombre de usuario",
+        successToast: "¡Nombre de usuario actualizado con éxito!",
+      },
+    },
+  },
+  actions: {
+    unauthorized: "No autorizado",
+    slugAlreadyExists: "El slug ya existe",
+    genericError: "Algo salió mal. Inténtalo de nuevo más tarde.",
+    formDataRequired: "Se requieren los datos del formulario",
+    passwordRecoveryCooldown:
+      "Debes esperar 1 minuto y 30 segundos antes de volver a intentarlo",
+    noFieldsToUpdate: "No hay campos para actualizar",
+    invalidMediaId: "ID de archivo no válido",
+    unexpectedError: "Ocurrió un error inesperado",
+    userIdAndMediaIdRequired: "Se requieren user_id y media_id",
+  },
+} satisfies Messages;
 
 export default messages;

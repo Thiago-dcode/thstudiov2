@@ -1,5 +1,6 @@
 import { TABLES_ENUM } from "@repo/common-lib/constants/enums";
 import { LayoutDashboard } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
@@ -13,6 +14,7 @@ import {
 import { CreateResourceButton } from "../../__components/create-resource-button";
 
 export default async function Atelier() {
+  const t = await getTranslations("atelier.portfolios");
   const userAuth = await userSession();
   if (!userAuth) {
     redirect("/");
@@ -23,20 +25,19 @@ export default async function Atelier() {
 
   if (portfoliosResponse.error) {
     return (
-      <div>{portfoliosResponse?.error?.message || "Something went wrong"}</div>
+      <div>
+        {portfoliosResponse?.error?.message || t("loadError")}
+      </div>
     );
   }
 
   return (
     <AdminPageContainer>
-      <AdminPageTitle
-        title="Portfolios"
-        info="Portfolios represent broad categories of your work, such as 'Travel Photography' or 'Wedding Photography'. They are designed to showcase your best pieces to clients and can include both individual media and collections."
-      >
+      <AdminPageTitle title={t("pageTitle")} info={t("pageInfo")}>
         <CreateResourceButton
           resource={TABLES_ENUM.PORTFOLIOS}
           href="portfolios/create"
-          label="Create Portfolio"
+          label={t("createButtonLabel")}
         />
       </AdminPageTitle>
       {portfoliosResponse.data.length > 0 ? (
@@ -47,19 +48,23 @@ export default async function Atelier() {
               href={`/atelier/portfolios/edit/${portfolio.slug}`}
               className="block w-full min-w-0"
             >
-              <PortfolioCard.Item portfolio={portfolio} isAtelier />
+              <PortfolioCard.Item
+                portfolio={portfolio}
+                isAtelier
+                blockedLabel={t("blockedBadge")}
+              />
             </Link>
           ))}
         </div>
       ) : (
         <AdminPageEmptyState
           icon={<LayoutDashboard />}
-          description="No portfolios created yet. Start by grouping your work."
+          description={t("emptyStateDescription")}
         >
           <CreateResourceButton
             resource={TABLES_ENUM.PORTFOLIOS}
             href="portfolios/create"
-            label="Create Portfolio"
+            label={t("createButtonLabel")}
           />
         </AdminPageEmptyState>
       )}

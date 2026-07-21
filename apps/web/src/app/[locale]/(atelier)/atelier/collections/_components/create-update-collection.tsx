@@ -23,6 +23,7 @@ import { Label } from "@repo/ui/components/shadcn/label";
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { cn } from "@repo/ui/lib/utils";
 import { Image, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { StickyFormFooter } from "@/app/[locale]/(atelier)/__components/sticky-form-footer";
@@ -75,6 +76,7 @@ export const CreateOrUpdateCollection = ({
 }: {
   defaultCollection?: FullCollection;
 }) => {
+  const t = useTranslations("atelier.collections");
   const router = useRouter();
   const {
     handleSubmit,
@@ -186,7 +188,9 @@ export const CreateOrUpdateCollection = ({
   const getSlugStatusMessage = () => {
     if (isCheckingSlugAvailability) {
       return (
-        <p className="text-sm text-text-muted">Checking availability...</p>
+        <p className="text-sm text-text-muted">
+          {t("form.slugChecking")}
+        </p>
       );
     }
     if (
@@ -195,10 +199,10 @@ export const CreateOrUpdateCollection = ({
     ) {
       if (isSlugAvailable) {
         return (
-          <p className="text-sm text-green-600">✓ This slug is available</p>
+          <p className="text-sm text-green-600">{t("form.slugAvailable")}</p>
         );
       }
-      return <p className="text-sm text-error">✗ This slug is already taken</p>;
+      return <p className="text-sm text-error">{t("form.slugTaken")}</p>;
     }
     return null;
   };
@@ -247,8 +251,7 @@ export const CreateOrUpdateCollection = ({
           role="status"
           className="mb-6 border border-border/60 bg-fg-2/40 px-4 py-3 text-sm text-text-muted"
         >
-          This collection has been blocked. You can review it here, but it
-          cannot be edited until the block is lifted.
+          {t("form.blockedNotice")}
         </div>
       ) : null}
       <FormComponent.Form
@@ -275,12 +278,12 @@ export const CreateOrUpdateCollection = ({
             value={collectionInput.title || ""}
             onChange={handleTitleChange}
             error={inputErrors?.title}
-            label="Title"
+            label={t("form.titleLabel")}
             required
             name="title"
             id="title"
             type="text"
-            placeholder="My Collection"
+            placeholder={t("form.titlePlaceholder")}
             disabled={isPending}
           />
 
@@ -289,18 +292,18 @@ export const CreateOrUpdateCollection = ({
               value={collectionInput.slug || ""}
               onChange={handleSlugChange}
               error={inputErrors?.slug}
-              label="Slug"
+              label={t("form.slugLabel")}
               required
               name="slug"
               id="slug"
               type="text"
-              placeholder="my-collection"
-              extraInfo="A slug is a URL-friendly version of your title (e.g., 'my-awesome-collection'). It should be unique as it's used in the collection's URL."
+              placeholder={t("form.slugPlaceholder")}
+              extraInfo={t("form.slugInfo")}
               disabled={isCheckingSlugAvailability || isPending}
             />
             {isValidSlug === false && (
               <p className="text-sm text-error">
-                ✗ Invalid slug format. Example: my-collection
+                {t("form.slugInvalidFormat")}
               </p>
             )}
             {getSlugStatusMessage()}
@@ -314,10 +317,10 @@ export const CreateOrUpdateCollection = ({
             }}
             error={inputErrors?.description}
             rows={4}
-            label="Description"
+            label={t("form.descriptionLabel")}
             name="description"
             id="description"
-            placeholder="Describe your collection..."
+            placeholder={t("form.descriptionPlaceholder")}
             disabled={isPending}
           />
 
@@ -340,23 +343,19 @@ export const CreateOrUpdateCollection = ({
                 htmlFor="collection-is-highlight"
                 className="text-sm font-normal cursor-pointer"
               >
-                Show on profile page
+                {t("form.showOnProfile")}
               </Label>
               <InfoTooltip
                 content={
                   <p className="text-sm">
-                    When enabled, this collection is highlighted on your public
-                    artist profile so visitors can find it more easily. You can
-                    highlight up to {highlightLimit} collections on your profile
-                    page.
+                    {t("form.showOnProfileInfo", { limit: highlightLimit })}
                   </p>
                 }
               />
             </div>
             {!isLoadingHighlightCount && highlightToggleDisabled && (
               <p className="text-xs text-text-muted">
-                You&apos;ve reached the limit of {highlightLimit} highlighted
-                collections on your profile page.
+                {t("form.highlightLimitReached", { limit: highlightLimit })}
               </p>
             )}
           </div>
@@ -375,16 +374,10 @@ export const CreateOrUpdateCollection = ({
               htmlFor="collection-is-active"
               className="text-sm font-normal cursor-pointer"
             >
-              Active
+              {t("form.active")}
             </Label>
             <InfoTooltip
-              content={
-                <p className="text-sm">
-                  When disabled, this collection is hidden from your public
-                  artist profile and listings. You can still edit it in the
-                  atelier.
-                </p>
-              }
+              content={<p className="text-sm">{t("form.activeInfo")}</p>}
             />
           </div>
         </div>
@@ -395,10 +388,12 @@ export const CreateOrUpdateCollection = ({
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <h3 className="text-sm font-medium text-text">Media</h3>
+              <h3 className="text-sm font-medium text-text">
+                {t("media.sectionLabel")}
+              </h3>
               {mediaSelected.length > 1 && (
                 <span className="text-xs text-text-muted/70">
-                  · Drag to reorder
+                  {t("media.dragToReorder")}
                 </span>
               )}
             </div>
@@ -416,9 +411,7 @@ export const CreateOrUpdateCollection = ({
               iconClassName="size-3.5"
               content={
                 <p className="text-sm">
-                  Each media item you add to this collection counts toward this
-                  limit. You can include up to {mediaItemLimit} media items in
-                  total.
+                  {t("media.countInfo", { limit: mediaItemLimit })}
                 </p>
               }
             />
@@ -428,14 +421,19 @@ export const CreateOrUpdateCollection = ({
                 isMediaLimitReached ? "text-error" : "text-text-muted",
               )}
             >
-              {mediaSelected.length} / {mediaItemLimit} media
+              {t("media.countLabel", {
+                count: mediaSelected.length,
+                limit: mediaItemLimit,
+              })}
             </p>
           </div>
 
           {mediaSelected.length === 0 ? (
             <div className="w-full min-h-[200px] border-2 border-dashed border-border/60 bg-fg-2/5 flex flex-col items-center justify-center gap-3 p-8">
               <Image className="size-8 text-text-muted/30" />
-              <p className="text-sm text-text-muted/70">No media added yet</p>
+              <p className="text-sm text-text-muted/70">
+                {t("media.noMedia")}
+              </p>
             </div>
           ) : (
             <DndContext onDragEnd={handleDragEnd}>
@@ -463,7 +461,9 @@ export const CreateOrUpdateCollection = ({
                         </div>
                         <button
                           type="button"
-                          aria-label={`Remove ${m.title || "media"}`}
+                          aria-label={t("media.removeMedia", {
+                            label: m.title || t("media.mediaFallback"),
+                          })}
                           onPointerDown={(e) => e.stopPropagation()}
                           onClick={(e) => {
                             e.preventDefault();
@@ -495,7 +495,7 @@ export const CreateOrUpdateCollection = ({
                           </div>
                         </div>
                         <h3 className="text-xs font-medium text-text line-clamp-1 px-0.5">
-                          {m.title || m.seo_filename || "Untitled"}
+                          {m.title || m.seo_filename || t("media.untitled")}
                         </h3>
                       </SortableItem>
                     </div>

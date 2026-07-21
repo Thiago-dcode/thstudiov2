@@ -28,7 +28,10 @@ export function WaitListForm({ from = "register" }: WaitListFormProps) {
 
   const isEmail = (input?: string) => {
     const value = (input ?? emailInputRef.current?.value ?? "").trim();
-    return createWaitListSchema.safeParse({ email: value }).success;
+    // Only `.success` is read here, so the message text never surfaces —
+    // an identity translator avoids needing the full message catalog client-side.
+    return createWaitListSchema((key) => key).safeParse({ email: value })
+      .success;
   };
 
   const handleEmailChange = () => {
@@ -60,12 +63,14 @@ export function WaitListForm({ from = "register" }: WaitListFormProps) {
         <div aria-live="polite" className="flex w-full justify-center">
           <div className="wait-list-success flex w-full max-w-md flex-col items-center gap-2 border border-border/40 bg-fg/50 px-5 py-6 text-center backdrop-blur-md">
             <h3 className="text-lg font-semibold text-text">
-              {email} is already on the wait list. Check your email. If this
-              looks wrong,{" "}
-              <Link href="/support" className="text-text underline">
-                contact support
-              </Link>
-              .
+              {t.rich("alreadyExists", {
+                email,
+                supportLink: (chunks) => (
+                  <Link href="/support" className="text-text underline">
+                    {chunks}
+                  </Link>
+                ),
+              })}
             </h3>
           </div>
         </div>

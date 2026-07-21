@@ -1,0 +1,13 @@
+{
+    "SUBJECT_UPGRADE": "Bem-vindo ao seu novo plano!",
+    "SUBJECT_DOWNGRADE": "Sua assinatura foi alterada",
+    "HI": "Olá",
+    "TITLE_UPGRADE": "Seu plano foi atualizado",
+    "TITLE_DOWNGRADE": "Sua assinatura foi reduzida",
+    "PLAN_LABEL": "Seu plano atual",
+    "DESCRIPTION_UPGRADE": "Parabéns! Sua assinatura foi atualizada e agora você tem acesso a todos os recursos incluídos no seu novo plano. Estamos ansiosos para ver o que você vai criar.",
+    "DESCRIPTION_DOWNGRADE": "Sua assinatura foi reduzida. Alguns dos seus recursos podem não caber mais nos limites do seu novo plano.",
+    "INFO_DOWNGRADE": "Para se ajustar aos limites do seu novo plano, alguns dos seus portfólios, coleções, projetos, clientes, serviços ou arquivos de mídia podem ser temporariamente bloqueados. Você pode revisá-los e gerenciá-los no seu Atelier.",
+    "CTA_TEXT": "Pronto para continuar criando?",
+    "CTA_BUTTON": "Ir para o Atelier"
+}

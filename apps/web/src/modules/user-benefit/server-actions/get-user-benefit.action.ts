@@ -18,6 +18,6 @@ export const getUserBenefitAction = async (
   }
   return {
     data: null,
-    errors: getFriendlyApiErrors(result),
+    errors: await getFriendlyApiErrors(result),
   };
 };

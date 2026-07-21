@@ -8,6 +8,7 @@ import {
   DialogTitle,
 } from "@repo/ui/components/shadcn/dialog";
 import { ArrowRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
@@ -18,6 +19,7 @@ import {
 import type { UserAuth } from "@/modules/auth/auth.types";
 
 export const FinishSetupDialog = ({ user }: { user: UserAuth }) => {
+  const t = useTranslations("atelier.common");
   const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(true);
 
@@ -34,19 +36,16 @@ export const FinishSetupDialog = ({ user }: { user: UserAuth }) => {
       <DialogContent className="max-w-md p-8">
         <div className="flex flex-col items-center gap-6 text-center">
           <DialogTitle className="text-2xl font-semibold">
-            Complete Your Profile
+            {t("completeProfileTitle")}
           </DialogTitle>
-          <p className="text-text-muted">
-            You're almost there! Complete your profile setup to unlock all
-            features and get the best experience.
-          </p>
+          <p className="text-text-muted">{t("completeProfileDescription")}</p>
 
           <Button asChild variant="default" className="w-full font-bold">
             <Link
               href={"/get-started"}
               className="flex items-center justify-center gap-2"
             >
-              Continue Setting Up <ArrowRight className="size-4" />
+              {t("continueSettingUp")} <ArrowRight className="size-4" />
             </Link>
           </Button>
 
@@ -56,7 +55,7 @@ export const FinishSetupDialog = ({ user }: { user: UserAuth }) => {
             lastStep={FUNNEL_LAST_STEP}
           >
             <ContainerFormFunnel>
-              <ButtonFinishFunnel text="Skip for now" />
+              <ButtonFinishFunnel text={t("skipForNow")} />
             </ContainerFormFunnel>
           </FunnelProvider>
         </div>

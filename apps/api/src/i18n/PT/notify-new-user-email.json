@@ -1,0 +1,14 @@
+{
+  "WELCOME_SUBJECT": "Bem-vindo, {username} — sua arte vem primeiro",
+  "HI": "Bem-vindo",
+  "WELCOME": "Sua jornada começa aqui.",
+  "WELCOME_MESSAGE": "O A11STUDIO foi criado por um artista, para artistas. Foque apenas na sua arte, nós cuidamos do resto.",
+  "FEATURES": [
+    "Crie um portfólio profissional em minutos — sem precisar programar.",
+    "Publique e organize seu trabalho em galerias cuidadosamente selecionadas.",
+    "Deixe a hospedagem, o SEO e a manutenção técnica desaparecerem em segundo plano.",
+    "Apresente-se com a elegância que seu trabalho merece."
+  ],
+  "CTA_START_TEXT": "Seu atelier está pronto. Só falta a sua arte.",
+  "CTA_START_BUTTON": "Abrir seu atelier"
+}

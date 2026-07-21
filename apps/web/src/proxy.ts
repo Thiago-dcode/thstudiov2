@@ -28,6 +28,23 @@ import {
 
 const intlMiddleware = createIntlMiddleware(routing);
 
+/**
+ * Top-level path segments reserved by real routes under `[locale]`. A 2-letter
+ * segment matching one of these is never a stale/unsupported locale prefix,
+ * so it must never be treated as one by the stale-locale-prefix cleanup below.
+ */
+const RESERVED_TOP_LEVEL_SEGMENTS = [
+  "atelier",
+  "artists",
+  "auth",
+  "about",
+  "support",
+  "legal",
+  "get-started",
+  "wait-list",
+  "email-preferences",
+] as const;
+
 /** Copies cookies/headers already set on `from` (language cookie, refreshed session, etc) onto `to`. */
 const copyResponseExtras = (from: NextResponse, to: NextResponse) => {
   for (const cookie of from.cookies.getAll()) {
@@ -115,11 +132,23 @@ const proxy = async (req: NextRequest) => {
   const segments = req.nextUrl.pathname.split("/");
   const firstSeg = (segments[1] ?? "").toLowerCase();
   const isLocaleShaped = /^[a-z]{2}$/.test(firstSeg);
+  // Real path content after the 2-letter segment (ignores a bare trailing
+  // slash, e.g. "/fr/" has no trailing content, same as "/fr").
+  const hasTrailingPath = segments.slice(2).some(Boolean);
 
-  if (
+  // Only treat a 2-letter first segment as a stale/unsupported locale prefix
+  // (and strip it) when there is real path content after it to preserve —
+  // e.g. "/fr/about" -> "/about". A bare "/fr" is indistinguishable from a
+  // legitimate 2-letter search query, so it must fall through untouched to
+  // next-intl and ultimately `(web)/[search]` instead of being redirected
+  // away to "/".
+  const isStaleLocalePrefix =
     isLocaleShaped &&
-    !(routing.locales as readonly string[]).includes(firstSeg)
-  ) {
+    hasTrailingPath &&
+    !(routing.locales as readonly string[]).includes(firstSeg) &&
+    !(RESERVED_TOP_LEVEL_SEGMENTS as readonly string[]).includes(firstSeg);
+
+  if (isStaleLocalePrefix) {
     const url = req.nextUrl.clone();
     url.pathname = `/${segments.slice(2).join("/")}`;
     return NextResponse.redirect(url);

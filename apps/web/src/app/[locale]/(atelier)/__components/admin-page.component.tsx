@@ -1,5 +1,6 @@
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
 import { ExternalLink } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -22,12 +23,13 @@ type AdminPageTitleProps = {
   children?: ReactNode;
 };
 
-export const AdminPageTitle = ({
+export const AdminPageTitle = async ({
   title,
   publicHref,
   info,
   children,
 }: AdminPageTitleProps) => {
+  const t = await getTranslations("atelier.common");
   return (
     <div className="flex items-center justify-between gap-3">
       <div className="flex items-center gap-2 min-w-0">
@@ -36,7 +38,7 @@ export const AdminPageTitle = ({
           <Link
             href={publicHref}
             rel="noopener noreferrer"
-            aria-label="View public page"
+            aria-label={t("viewPublicPage")}
             className="shrink-0 text-text-muted hover:text-text transition-colors"
           >
             <ExternalLink className="size-4" />

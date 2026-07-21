@@ -1,6 +1,14 @@
 "use client";
 
+import { Check, ChevronDown, Globe } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@repo/ui/components/shadcn/dropdown-menu";
+import { cn } from "@repo/ui/lib/utils";
 import {
   Link as LocaleLink,
   localeLabels,
@@ -10,34 +18,50 @@ import {
 } from "@/i18n/navigation";
 
 export const WebFooterLanguageSwitcher = () => {
-  const locale = useLocale();
+  const locale = useLocale() as SupportedLocale;
   const pathname = usePathname();
   const t = useTranslations();
 
   return (
-    <div className="flex items-center gap-2">
-      <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-text-muted">
-        {t("language")}
-      </span>
-      <div className="flex gap-1">
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        aria-label={t("language")}
+        className={cn(
+          "group inline-flex items-center gap-2 text-xs tracking-wider text-text-muted",
+          "outline-none transition-colors hover:text-text",
+          "focus-visible:text-text data-[state=open]:text-text",
+        )}
+      >
+        <Globe className="size-3.5" aria-hidden />
+        {localeLabels[locale]}
+        <ChevronDown
+          className="size-3.5 transition-transform duration-200 group-data-[state=open]:rotate-180"
+          aria-hidden
+        />
+      </DropdownMenuTrigger>
+
+      <DropdownMenuContent align="end" sideOffset={8} className="min-w-36">
         {(SUPPORTED_LOCALES as readonly SupportedLocale[]).map((loc) => (
-          // Shared routing (`defineRouting` without `pathnames`): `href` is `string | UrlObject` only —
-          // never pass `params` here. `usePathname()` from `@/i18n/navigation` is already localized
-          // and resolved (dynamic segments filled).
-          <LocaleLink
-            key={loc}
-            href={pathname}
-            locale={loc}
-            className={`text-xs tracking-wider transition-colors ${
-              locale === loc
-                ? "text-text font-medium"
-                : "text-text-muted hover:text-text"
-            }`}
-          >
-            {localeLabels[loc]}
-          </LocaleLink>
+          <DropdownMenuItem key={loc} asChild>
+            {/* Shared routing (`defineRouting` without `pathnames`): `href` is `string | UrlObject`
+                only — never pass `params`. `usePathname()` from `@/i18n/navigation` is already
+                localized and resolved (dynamic segments filled). */}
+            <LocaleLink
+              href={pathname}
+              locale={loc}
+              className={cn(
+                "flex w-full cursor-pointer items-center gap-2 text-xs tracking-wider",
+                locale === loc ? "font-medium text-text" : "text-text-muted",
+              )}
+            >
+              {localeLabels[loc]}
+              {locale === loc && (
+                <Check className="ml-auto size-3.5" aria-hidden />
+              )}
+            </LocaleLink>
+          </DropdownMenuItem>
         ))}
-      </div>
-    </div>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };

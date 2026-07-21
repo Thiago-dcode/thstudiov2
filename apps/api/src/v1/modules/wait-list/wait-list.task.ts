@@ -45,15 +45,18 @@ export class WaitListTask {
           const hoursLeft = Math.max(1, Math.round((expiresAtMs - nowMs) / 3_600_000));
 
           await this.mailService.sendAsync(
-            this.waitListReminderMail.setData({
-              email: row.email,
-              position: row.position,
-              benefitType: row.benefit_type,
-              benefitMonths: Math.round(row.trial_days / 30),
-              registrationUrl: `${appUrl}/auth/register?ref=${row.invitation_code}`,
-              hoursLeft,
-              isFinal,
-            }),
+            this.waitListReminderMail.setData(
+              {
+                email: row.email,
+                position: row.position,
+                benefitType: row.benefit_type,
+                benefitMonths: Math.round(row.trial_days / 30),
+                registrationUrl: `${appUrl}/auth/register?ref=${row.invitation_code}`,
+                hoursLeft,
+                isFinal,
+              },
+              row.language,
+            ),
             {
               jobId: `wait-list-reminder-${row.id}-${row.reminder_count}`,
             },

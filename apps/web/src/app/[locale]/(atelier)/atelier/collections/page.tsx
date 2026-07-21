@@ -1,5 +1,6 @@
 import { TABLES_ENUM } from "@repo/common-lib/constants/enums";
 import { Library } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
@@ -13,6 +14,7 @@ import {
 import { CreateResourceButton } from "../../__components/create-resource-button";
 
 export default async function CollectionListPage() {
+  const t = await getTranslations("atelier.collections");
   const userAuth = await userSession();
   if (!userAuth) {
     redirect("/");
@@ -23,20 +25,17 @@ export default async function CollectionListPage() {
 
   if (collectionsResponse.error) {
     return (
-      <div>{collectionsResponse?.error?.message || "Something went wrong"}</div>
+      <div>{collectionsResponse?.error?.message || t("loadError")}</div>
     );
   }
 
   return (
     <AdminPageContainer>
-      <AdminPageTitle
-        title="Collections"
-        info="Collections are simple sets of related media grouped by a specific event or theme, like 'The Wedding of John' or 'Morocco 2026'."
-      >
+      <AdminPageTitle title={t("pageTitle")} info={t("pageInfo")}>
         <CreateResourceButton
           resource={TABLES_ENUM.COLLECTIONS}
           href="collections/create"
-          label="Create Collection"
+          label={t("createButtonLabel")}
         />
       </AdminPageTitle>
       {collectionsResponse.data.length > 0 ? (
@@ -53,12 +52,12 @@ export default async function CollectionListPage() {
       ) : (
         <AdminPageEmptyState
           icon={<Library />}
-          description="No collections created yet. Start by adding a set of related media."
+          description={t("emptyStateDescription")}
         >
           <CreateResourceButton
             resource={TABLES_ENUM.COLLECTIONS}
             href="collections/create"
-            label="Create Collection"
+            label={t("createButtonLabel")}
             variant="outline"
           />
         </AdminPageEmptyState>

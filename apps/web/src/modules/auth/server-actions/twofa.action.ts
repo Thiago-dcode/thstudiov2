@@ -2,6 +2,7 @@
 import { TWO_FA_COOKIE_NAME } from "@repo/common-lib/constants/constants";
 import type { ActionReturn } from "@repo/common-lib/types/response";
 import { cookies } from "next/headers";
+import { getTranslations } from "next-intl/server";
 import { encryptObj, getEncryptedJsonCookie } from "@/lib/utils";
 import authService from "../auth.service";
 import type { TwoFaUser, UserAuth } from "../auth.types";
@@ -27,7 +28,8 @@ export const verify2faServerAction = async (
       ? (formData.get("twofa_code") as string)
       : undefined,
   };
-  const validatedData = verify2faRequestSchema.safeParse(credentials);
+  const t = await getTranslations();
+  const validatedData = verify2faRequestSchema(t).safeParse(credentials);
   if (!validatedData.success) {
     const errors = Object.values(
       validatedData.error.flatten().fieldErrors,
@@ -51,7 +53,7 @@ export const verify2faServerAction = async (
       errors:
         result.error && result.error.status_code === 400
           ? [result.error?.errors.join(",")]
-          : ["Something went wrong"],
+          : [t("actions.genericError")],
       inputs: {
         email: credentials.email,
         twofa_code: credentials.twofa_code,

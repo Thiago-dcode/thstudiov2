@@ -7,6 +7,7 @@ import {
 import { Skeleton } from "@repo/ui/components/shadcn/skeleton";
 import { cn } from "@repo/ui/lib/utils";
 import { Eye } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { PlanFeatures } from "@/modules/plans/components/plan.features";
 import usersService from "@/modules/users/users.service";
 
@@ -65,11 +66,12 @@ const STATUS_STYLES = {
 } as const;
 
 export const UserMetrics = async ({ userId }: { userId: number }) => {
+  const t = await getTranslations("atelier.common.metrics");
   const metricsResult = await usersService.metrics(userId);
-  if (!metricsResult.data) return <div>No data available</div>;
+  if (!metricsResult.data) return <div>{t("noDataAvailable")}</div>;
 
   const { extra_data, active_plan } = metricsResult.data;
-  if (!extra_data || !active_plan) return <div>No data available</div>;
+  if (!extra_data || !active_plan) return <div>{t("noDataAvailable")}</div>;
   const {
     clients_count,
     media_count,
@@ -100,44 +102,44 @@ export const UserMetrics = async ({ userId }: { userId: number }) => {
     format?: (used: number, limit: number) => string;
   }[] = [
     {
-      title: "Media",
+      title: t("media"),
       used: media_count,
       limit: -1,
     },
     {
-      title: "Storage",
+      title: t("storage"),
       used: storage_used_mb,
       limit: storage_limit_mb,
       format: (used, limit) =>
         `${(used / 1024).toFixed(1)} / ${(limit / 1024).toFixed(0)} GB`,
     },
     {
-      title: "Clients",
+      title: t("clients"),
       used: clients_count,
       limit: max_clients,
     },
     {
-      title: "Portfolios",
+      title: t("portfolios"),
       used: portfolios_count,
       limit: max_portfolios,
     },
     {
-      title: "Collections",
+      title: t("collections"),
       used: collections_count,
       limit: max_collections,
     },
     {
-      title: "Projects",
+      title: t("projects"),
       used: projects_count,
       limit: max_projects,
     },
     {
-      title: "Services",
+      title: t("services"),
       used: services_count,
       limit: max_services,
     },
     {
-      title: "AI Credits",
+      title: t("aiCredits"),
       used: ai_credits_consumed,
       limit: ai_credits + plan_ai_credits,
     },
@@ -153,7 +155,10 @@ export const UserMetrics = async ({ userId }: { userId: number }) => {
       <Popover>
         <PopoverTrigger>
           <Badge className="w-fit flex gap-2 cursor-pointer hover:opacity-80 transition-opacity">
-            <span>{translation?.name || name} Plan</span> <Eye size={14} />
+            <span>
+              {translation?.name || name} {t("planSuffix")}
+            </span>{" "}
+            <Eye size={14} />
           </Badge>
         </PopoverTrigger>
         <PopoverContent className="w-80 bg-fg">

@@ -24,6 +24,7 @@ import {
   countPortfolioItemSlots,
 } from "@repo/common-lib/utils/portfolio";
 import { toast } from "@repo/ui/sonner";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import {
   createContext,
@@ -206,6 +207,7 @@ export const PortfolioProvider = ({
   defaultPortfolio,
 }: PortfolioProviderProps) => {
   const router = useRouter();
+  const t = useTranslations();
   const [isHydrated, setIsHydrated] = useState(false);
   useEffect(() => {
     setIsHydrated(true);
@@ -344,13 +346,13 @@ export const PortfolioProvider = ({
       if (prev.categories.some((c) => c.id === category.id)) return prev;
       if (prev.categories.length >= MAX_CATEGORIES_PORTFOLIO) {
         toast.error(
-          `Portfolios can have up to ${MAX_CATEGORIES_PORTFOLIO} categories`,
+          t("validation.maxCategories", { max: MAX_CATEGORIES_PORTFOLIO }),
         );
         return prev;
       }
       return { ...prev, categories: [...prev.categories, category] };
     });
-  }, []);
+  }, [t]);
 
   const removeCategorySelected = useCallback((category: CategoryBase) => {
     setPortfolioInput((prev) => ({
@@ -471,8 +473,8 @@ export const PortfolioProvider = ({
         }
         toast.success(
           currentPortfolio
-            ? "Portfolio updated successfully"
-            : "Portfolio created successfully",
+            ? t("portfolios.toastUpdated")
+            : t("portfolios.toastCreated"),
         );
       }
     },
@@ -510,7 +512,7 @@ export const PortfolioProvider = ({
 
         if (currentCount + additionalCount > MAX_PORTFOLIO_ITEMS) {
           toastErrorThrottled(
-            `Portfolios can have up to ${MAX_PORTFOLIO_ITEMS} items`,
+            t("validation.maxPortfolioItems", { max: MAX_PORTFOLIO_ITEMS }),
           );
           return prev;
         }
@@ -522,7 +524,7 @@ export const PortfolioProvider = ({
         return { ...prev, portfolioItems: [next, ...prevItems] };
       });
     },
-    [],
+    [t],
   );
 
   const portfolioItemCount = useMemo(

@@ -16,6 +16,7 @@ import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { FileInputProvider } from "@repo/ui/contexts/file.provider";
 import { cn } from "@repo/ui/lib/utils";
 import { Brain, ImageOff, Upload } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { useMedia } from "@/modules/media/providers/media.provider";
 import {
@@ -37,6 +38,7 @@ export function MediaGrid({
   username,
   hasActiveFilters,
 }: MediaGridProps) {
+  const t = useTranslations("atelier.media.grid");
   const [currentMedia, setCurrentMedia] = useState(media);
   const {
     mediaPendingToUpdate,
@@ -123,8 +125,8 @@ export function MediaGrid({
                     {!isLoading ? (
                       <span className="text-xs! font-medium whitespace-nowrap">
                         {selectionCount
-                          ? `Generate SEO (${selectionCount})`
-                          : "Generate SEO"}
+                          ? t("generateSeoCount", { count: selectionCount })
+                          : t("generateSeoTitle")}
                       </span>
                     ) : (
                       <Spinner />
@@ -134,26 +136,24 @@ export function MediaGrid({
                 <DialogContent className="max-w-md z-100">
                   <DialogHeader>
                     <DialogTitle className="text-lg!">
-                      Generate AI SEO
+                      {t("generateSeoTitle")}
                     </DialogTitle>
                     <DialogDescription className="text-sm!">
-                      Generate AI-powered SEO metadata for {selectionCount}{" "}
-                      {selectionCount === 1
-                        ? "selected media item"
-                        : "selected media items"}
-                      ?
+                      {t("generateSeoDescription", { count: selectionCount })}
                     </DialogDescription>
                   </DialogHeader>
                   {aiCreditsInfo && (
                     <div className="px-6 py-3 bg-fg-2/50 space-y-1">
                       <div className="flex items-center justify-between text-sm!">
                         <span className="text-text-muted">
-                          Credits available:
+                          {t("creditsAvailable")}
                         </span>
                         <span className="font-medium">{creditsAvailable}</span>
                       </div>
                       <div className="flex items-center justify-between text-sm!">
-                        <span className="text-text-muted">Credits needed:</span>
+                        <span className="text-text-muted">
+                          {t("creditsNeeded")}
+                        </span>
                         <span
                           className={cn(
                             "font-medium",
@@ -165,14 +165,17 @@ export function MediaGrid({
                       </div>
                       {isOverAiLimit && (
                         <p className="text-xs! text-error mt-2">
-                          Limit: select up to {MAX_AI_GENERATE} items (remove{" "}
-                          {selectionCount - MAX_AI_GENERATE}).
+                          {t("overAiLimit", {
+                            max: MAX_AI_GENERATE,
+                            excess: selectionCount - MAX_AI_GENERATE,
+                          })}
                         </p>
                       )}
                       {!hasEnoughCredits && (
                         <p className="text-xs! text-error mt-2">
-                          Insufficient credits. You need{" "}
-                          {creditsNeeded - creditsAvailable} more credits.
+                          {t("insufficientCredits", {
+                            needed: creditsNeeded - creditsAvailable,
+                          })}
                         </p>
                       )}
                     </div>
@@ -183,7 +186,7 @@ export function MediaGrid({
                       size="sm"
                       onClick={() => setIsGenerateSeoDialogOpen(false)}
                     >
-                      Cancel
+                      {t("cancel")}
                     </Button>
                     <Button
                       size="sm"
@@ -193,7 +196,7 @@ export function MediaGrid({
                         await handleGenerateSeo();
                       }}
                     >
-                      Generate SEO
+                      {t("generateSeoTitle")}
                     </Button>
                   </DialogFooter>
                 </DialogContent>
@@ -206,7 +209,7 @@ export function MediaGrid({
                 className="shrink-0 whitespace-nowrap"
                 onClick={() => setCanSelect(true)}
               >
-                Select media
+                {t("selectMedia")}
               </Button>
             )}
             {canSelect ? (
@@ -220,7 +223,7 @@ export function MediaGrid({
                   clearSelection();
                 }}
               >
-                Cancel selection
+                {t("cancelSelection")}
               </Button>
             ) : null}
           </div>
@@ -229,8 +232,8 @@ export function MediaGrid({
             <ImageOff className="h-10 w-10 stroke-[1.5]" />
             <p className="text-sm">
               {hasActiveFilters
-                ? "No media found, try other filter combination"
-                : "No media uploaded yet. Start by adding your first image."}
+                ? t("noMediaFiltered")
+                : t("noMediaEmpty")}
             </p>
           </div>
         )}
@@ -270,9 +273,7 @@ export function MediaGrid({
             className="shadow-lg hover:shadow-xl transition-shadow relative"
           >
             <Upload className="h-4 w-4" />
-            <span>
-              Update {pendingCount} {pendingCount === 1 ? "item" : "items"}
-            </span>
+            <span>{t("updateItems", { count: pendingCount })}</span>
             <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold h-5 w-5 flex items-center justify-center">
               {pendingCount}
             </span>
@@ -283,11 +284,9 @@ export function MediaGrid({
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-md max-h-[300px]">
           <DialogHeader>
-            <DialogTitle>Confirm Updates</DialogTitle>
+            <DialogTitle>{t("confirmUpdatesTitle")}</DialogTitle>
             <DialogDescription>
-              Are you sure you want to update {pendingCount}{" "}
-              {pendingCount === 1 ? "media item" : "media items"}? This action
-              will save all pending changes.
+              {t("confirmUpdatesDescription", { count: pendingCount })}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -297,7 +296,7 @@ export function MediaGrid({
               className=""
               onClick={() => setIsDialogOpen(false)}
             >
-              Cancel
+              {t("cancel")}
             </Button>
             <Button
               variant="primary"
@@ -305,7 +304,7 @@ export function MediaGrid({
                 await handleConfirmUpdate();
               }}
             >
-              Update All
+              {t("updateAll")}
             </Button>
           </DialogFooter>
         </DialogContent>

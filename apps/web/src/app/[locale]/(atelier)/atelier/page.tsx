@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
@@ -8,13 +9,14 @@ import {
 import { UserMetrics, UserMetricsSkeleton } from "../__components/user-metrics";
 
 export default async function AtelierPage() {
+  const t = await getTranslations("atelier.home");
   const userAuth = await userSession();
   if (!userAuth) {
     redirect("/");
   }
   return (
     <AdminPageContainer>
-      <AdminPageTitle title="Dashboard" />
+      <AdminPageTitle title={t("pageTitle")} />
       <div className="border-b border-b-fg-2 pb-10 w-full">
         <Suspense fallback={<UserMetricsSkeleton />}>
           <UserMetrics userId={userAuth.id} />

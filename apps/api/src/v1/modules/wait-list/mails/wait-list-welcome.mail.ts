@@ -35,7 +35,7 @@ export class WaitListWelcomeMail extends ApiMailService {
     }, i18nService);
   }
 
-  setData(data: WaitListWelcomeMailData) {
+  setData(data: WaitListWelcomeMailData, lang?: string) {
     const mail = new WaitListWelcomeMail(
       this.viewService,
       this.emailPreferencesService!,
@@ -43,6 +43,7 @@ export class WaitListWelcomeMail extends ApiMailService {
       this.configService,
     );
     mail.data = data;
+    if (lang) mail.lang = lang;
     mail.viewParams = {
       viewPath: 'emails/wait-list/welcome',
       data: { waitList: data, translatePath: 'wait-list-welcome-email' },

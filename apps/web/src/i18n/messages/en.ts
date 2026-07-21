@@ -24,8 +24,11 @@ const messages = {
           "We sent you a confirmation email. Open it and click the link to secure your early access spot.",
         successReserveMessage:
           "We’ll reserve your email after you validate it.",
+        alreadyExists:
+          '{email} is already on the wait list. Check your email. If this looks wrong, <supportLink>contact support</supportLink>.',
       },
       disclaimer: "Free to start · No credit card required",
+      scrollToNextSection: "Scroll to next section",
     },
     valuePillars: {
       header: {
@@ -269,6 +272,18 @@ const messages = {
     },
   },
   language: "Language",
+  error: {
+    title: "Something went wrong",
+    description:
+      "We hit an unexpected error. Please try again, or head back home.",
+    tryAgain: "Try again",
+    backToHome: "Back to home",
+  },
+  siteHeader: {
+    openNavigation: "Open navigation",
+    closeNavigation: "Close navigation",
+    navigation: "Navigation",
+  },
   footer: {
     tagline: "The portfolio platform built for artists.",
     cta: {
@@ -593,7 +608,544 @@ const messages = {
       exit: "Exit fullscreen",
     },
   },
+  validation: {
+    required: "{field} is required",
+    invalid: "Invalid {field}",
+    tooLong: "{field} is too long",
+    minLength: "{field} must be at least {min} characters",
+    maxLength: "{field} must be at most {max} characters",
+    email: {
+      invalid: "Invalid email address",
+    },
+    slug: {
+      tooShort: "Slug must be at least 3 characters long",
+      invalidFormat:
+        "Slug must contain only lowercase letters, numbers, and hyphens",
+    },
+    avatarUrlInvalid: "Invalid avatar URL",
+    fallbackUrlInvalid: "Invalid fallback url",
+    thumbnailRequired: "Thumbnail is required",
+    maxCategories: "Portfolios can have up to {max} categories",
+    maxPortfolioItems: "Portfolios can have up to {max} items",
+    minCollectionMedia: "At least one media item is required",
+    maxCollectionMedia: "Collections can have up to {max} media",
+    file: {
+      tooLarge: "{field} file size must be less than {mb}MB",
+      invalidType: "{field} must be an image (JPEG, PNG or WebP)",
+    },
+    aboutPage: {
+      titleType: "Title must be a valid string",
+      titleMin: "Title must be at least 5 characters",
+      titleMax: "Title must be less than 255 characters",
+      descriptionRequired:
+        "Description is required and must be a valid string",
+      descriptionType: "Description must be a valid string",
+      descriptionMin: "Description must be at least 20 characters",
+      descriptionMax: "Description must be less than 1000 characters",
+      userIdRequired: "User ID is required and must be a valid number",
+      userIdPositive: "User ID must be a positive number",
+    },
+    auth: {
+      invalidEmail: "Invalid email",
+      invalidPassword: "Invalid password",
+      invalidUsername: "Invalid username",
+      usernameAllowedChars:
+        "Username can only contain letters, numbers, underscores, and hyphens",
+      invalidCode: "Invalid code",
+      codeLength: "Code must be {length} digits",
+      invalidFallbackUrl: "Invalid fallback url",
+    },
+    subscription: {
+      urlMustBeAppOrigin: "URL must be on the app's origin",
+    },
+    service: {
+      featureTitleRequired: "Feature title is required",
+      termTitleRequired: "Term title is required",
+    },
+    emailPreference: {
+      tokenRequired: "Missing token",
+    },
+    user: {
+      usernameAlphanumeric: "Username must be alphanumeric with no spaces",
+      passwordMustContainNumber: "Password must contain at least one number",
+      passwordNoSpaces: "Password cannot contain spaces",
+    },
+  },
+  fields: {
+    title: "Title",
+    name: "Name",
+    surname: "Surname",
+    subject: "Subject",
+    message: "Message",
+    artistId: "Artist ID",
+    username: "Username",
+    password: "Password",
+    profession: "Profession",
+    biography: "Biography",
+    shortBiography: "Short biography",
+    currentPassword: "Current password",
+    newPassword: "Password",
+    thumbnail: "Thumbnail",
+    avatar: "Avatar",
+    banner: "Banner",
+    photo: "Photo",
+    file: "File",
+    userId: "User ID",
+    mediaId: "Media ID",
+  },
+  portfolios: {
+    toastCreated: "Portfolio created successfully",
+    toastUpdated: "Portfolio updated successfully",
+  },
+  atelier: {
+    common: {
+      viewPublicPage: "View public page",
+      cancel: "Cancel",
+      save: "Save",
+      update: "Update",
+      planLimitReached: "Plan limit reached",
+      planLimitDescription:
+        "You’ve used <strong>{count}</strong> of <strong>{limit}</strong> {label} allowed on your current plan. Upgrade your plan to create more, or manage your existing {label}.",
+      goBack: "Go Back",
+      upgradePlan: "Upgrade Plan",
+      planLimitToast:
+        "You've reached your plan limit for {label} ({count}/{limit}). Upgrade your plan to create more.",
+      logout: "Logout",
+      logoutConfirmTitle: "Logout",
+      logoutConfirmDescription:
+        "Are you sure you want to logout? You'll need to sign in again to access your account.",
+      completeProfileTitle: "Complete Your Profile",
+      completeProfileDescription:
+        "You're almost there! Complete your profile setup to unlock all features and get the best experience.",
+      continueSettingUp: "Continue Setting Up",
+      skipForNow: "Skip for now",
+      metrics: {
+        noDataAvailable: "No data available",
+        media: "Media",
+        storage: "Storage",
+        clients: "Clients",
+        portfolios: "Portfolios",
+        collections: "Collections",
+        projects: "Projects",
+        services: "Services",
+        aiCredits: "AI Credits",
+        planSuffix: "Plan",
+      },
+      submit: {
+        updateCollectionTitle: "Update collection",
+        saveCollectionTitle: "Save collection",
+        updateCollectionDescription:
+          "Your changes will be saved and applied to your live collection.",
+        createCollectionDescription:
+          "Your collection will be created and saved to your account.",
+        updatePortfolioTitle: "Update portfolio",
+        savePortfolioTitle: "Save portfolio",
+        updatePortfolioDescription:
+          "Your changes will be saved and applied to your live portfolio.",
+        createPortfolioDescription:
+          "Your portfolio will be created and saved to your account.",
+        updateServiceLabel: "Update Service",
+        createServiceLabel: "Create Service",
+        updateServiceTitle: "Update service",
+        createServiceTitle: "Create service",
+        updateServiceDescription:
+          "Your changes will be saved and applied to your live service.",
+        createServiceDescription:
+          "Your service will be created and saved to your account.",
+      },
+    },
+    portfolios: {
+      pageTitle: "Portfolios",
+      pageInfo:
+        "Portfolios represent broad categories of your work, such as 'Travel Photography' or 'Wedding Photography'. They are designed to showcase your best pieces to clients and can include both individual media and collections.",
+      createButtonLabel: "Create Portfolio",
+      emptyStateDescription:
+        "No portfolios created yet. Start by grouping your work.",
+      loadError: "Something went wrong",
+      createTitle: "Create a portfolio",
+      editTitlePrefix: "Edit: {title}",
+      blockedBadge: "Blocked",
+      deletePortfolio: {
+        ariaLabel: "Delete portfolio",
+        title: "Delete portfolio",
+        description:
+          "<strong>{title}</strong> will be permanently deleted. This cannot be undone.",
+        cancel: "Cancel",
+        delete: "Delete",
+        successToast: "Portfolio deleted",
+      },
+      form: {
+        blockedNotice:
+          "This portfolio has been blocked. You can review it here, but it cannot be edited until the block is lifted.",
+        back: "Back",
+        next: "Next",
+        stepOf: "Step {current} of {total}",
+        thumbnailHint: "Add a thumbnail image for your portfolio (required)",
+        thumbnailAlt: "Thumbnail Preview",
+        titleLabel: "Title",
+        titlePlaceholder: "My Portfolio",
+        slugLabel: "Slug",
+        slugPlaceholder: "my-portfolio",
+        slugInfo:
+          "A slug is a URL-friendly version of your title (e.g., 'my-awesome-portfolio'). It should be unique as it's used in the portfolio's URL to identify it and makes it easier to find.",
+        slugChecking: "Checking availability...",
+        slugAvailable: "✓ This slug is available",
+        slugTaken: "✗ This slug is already taken",
+        slugInvalidFormat: "✗ Invalid slug format. Example: my-portfolio",
+        descriptionLabel: "Description",
+        descriptionPlaceholder: "Describe your portfolio...",
+        categoriesLabel: "Categories",
+        categoriesCountHint:
+          "{count} / {max} categories · Optional. Select categories that describe this portfolio.",
+        showOnProfile: "Show on profile page",
+        showOnProfileInfo:
+          "When enabled, this portfolio is highlighted on your public artist profile so visitors can find it more easily. You can highlight up to {limit} portfolios on your profile page.",
+        highlightLimitReached:
+          "You've reached the limit of {limit} highlighted portfolios on your profile page.",
+        active: "Active",
+        activeInfo:
+          "When disabled, this portfolio is hidden from your public artist profile and listings. You can still edit it in the atelier.",
+      },
+      items: {
+        noItems: "No media or collections added yet",
+        itemsCountLabel: "{count} / {limit} items",
+        dragToReorder: "· Drag to reorder",
+        countInfo:
+          "This count includes each media you add directly, plus every media item inside any collection you add. For example, one collection with 10 images counts as 10 items toward the limit of {limit}.",
+        removeItem: "Remove {label}",
+        untitled: "Untitled",
+      },
+      layout: {
+        label: "Layout",
+        info: "The layout adapts to the visitor's screen size.",
+        columnsInfo:
+          "For the column layout, the number you pick is the maximum used on large screens. Smaller devices show fewer columns — up to {mobile} on mobile and {tablet} on tablet — so a choice of {max} columns still shows just {mobile} on a phone.",
+        ariaGroup: "Portfolio layout",
+        previewAria: "Preview layout",
+        editSettingsAria: "Edit layout settings",
+        previewTitle: "Layout preview",
+        previewDescription:
+          "A preview of your selected items using the {layoutName} layout. The result adapts to the visitor's screen size.",
+        previewEmpty: "Add items to preview the layout.",
+        settingsTitle: "Layout settings",
+        settingsDescription:
+          "Choose how many columns to show on large screens. Smaller devices automatically use fewer.",
+        columns: "Columns",
+        selectedFallback: "selected",
+      },
+    },
+    services: {
+      pageTitle: "Services",
+      pageInfo:
+        "Services are the offerings you provide to your clients, such as 'Wedding Photography' or 'Web Design'.",
+      createButtonLabel: "Create Service",
+      emptyStateDescription:
+        "No services created yet. Start by adding what you offer to clients.",
+      loadError: "Something went wrong",
+      createTitle: "Create a service",
+      editTitlePrefix: "Edit: {title}",
+      form: {
+        blockedNotice:
+          "This service has been blocked. You can review it here, but it cannot be edited until the block is lifted.",
+        slugChecking: "Checking availability...",
+        slugAvailable: "✓ This slug is available",
+        slugTaken: "✗ This slug is already taken",
+        titleLabel: "Title",
+        titlePlaceholder: "Portrait Photography",
+        slugLabel: "Slug",
+        slugPlaceholder: "portrait-photography",
+        slugInfo:
+          "URL-friendly identifier. Only lowercase letters, numbers and hyphens.",
+        slugInvalidFormat:
+          "✗ Invalid slug format. Example: portrait-photography",
+        descriptionLabel: "Description",
+        descriptionPlaceholder: "Describe your service...",
+        priceLabel: "Price",
+        priceInfo: "Price is optional, leave it to 0.",
+        showPrice: "Show price",
+        active: "Active",
+        showOnProfile: "Show on profile page",
+        showOnProfileInfo:
+          "When enabled, this service is highlighted on your public artist profile so visitors can find it more easily. You can highlight up to {limit} services on your profile page.",
+        highlightLimitReached:
+          "You've reached the limit of {limit} highlighted services on your profile page.",
+        thumbnailLabel: "Thumbnail",
+        thumbnailAlt: "Thumbnail Preview",
+        featuresLabel: "Features",
+        featuresPlaceholder: "e.g. 2-hour session",
+        termsLabel: "Terms",
+        termsPlaceholder: "e.g. 50% deposit required",
+        portfolioLinkLabel: "Link to Portfolio (Optional)",
+        portfolioSelectPlaceholder: "Select a portfolio...",
+        portfolioLinkInfo:
+          "Link a portfolio so clients can see related photos of this service.",
+      },
+    },
+    collections: {
+      pageTitle: "Collections",
+      pageInfo:
+        "Collections are simple sets of related media grouped by a specific event or theme, like 'The Wedding of John' or 'Morocco 2026'.",
+      createButtonLabel: "Create Collection",
+      emptyStateDescription:
+        "No collections created yet. Start by adding a set of related media.",
+      loadError: "Something went wrong",
+      createTitle: "Create a collection",
+      editTitlePrefix: "Edit: {title}",
+      deleteCollection: {
+        ariaLabel: "Delete collection",
+        title: "Delete collection",
+        description:
+          "<strong>{title}</strong> will be permanently deleted. This cannot be undone.",
+        cancel: "Cancel",
+        delete: "Delete",
+        successToast: "Collection deleted",
+      },
+      form: {
+        blockedNotice:
+          "This collection has been blocked. You can review it here, but it cannot be edited until the block is lifted.",
+        titleLabel: "Title",
+        titlePlaceholder: "My Collection",
+        slugLabel: "Slug",
+        slugPlaceholder: "my-collection",
+        slugInfo:
+          "A slug is a URL-friendly version of your title (e.g., 'my-awesome-collection'). It should be unique as it's used in the collection's URL.",
+        slugChecking: "Checking availability...",
+        slugAvailable: "✓ This slug is available",
+        slugTaken: "✗ This slug is already taken",
+        slugInvalidFormat: "✗ Invalid slug format. Example: my-collection",
+        descriptionLabel: "Description",
+        descriptionPlaceholder: "Describe your collection...",
+        showOnProfile: "Show on profile page",
+        showOnProfileInfo:
+          "When enabled, this collection is highlighted on your public artist profile so visitors can find it more easily. You can highlight up to {limit} collections on your profile page.",
+        highlightLimitReached:
+          "You've reached the limit of {limit} highlighted collections on your profile page.",
+        active: "Active",
+        activeInfo:
+          "When disabled, this collection is hidden from your public artist profile and listings. You can still edit it in the atelier.",
+      },
+      media: {
+        sectionLabel: "Media",
+        dragToReorder: "· Drag to reorder",
+        countInfo:
+          "Each media item you add to this collection counts toward this limit. You can include up to {limit} media items in total.",
+        countLabel: "{count} / {limit} media",
+        noMedia: "No media added yet",
+        removeMedia: "Remove {label}",
+        mediaFallback: "media",
+        untitled: "Untitled",
+      },
+    },
+    media: {
+      pageTitle: "Media",
+      tabs: {
+        overallInfo: "Overall Info",
+        seo: "SEO",
+      },
+      upload: {
+        maxFilesError:
+          "Maximum {max} files allowed. You can add {remaining} more {remaining, plural, one {file} other {files}}.",
+        globalCompression: "Global Compression",
+        compressionTooltipTitle: "Compression Level",
+        compressionTooltipBody:
+          "Controls the balance between image quality and file size. Lower compression (VERY_LOW, LOW) preserves more detail but creates larger files. Higher compression (HIGH, VERY_HIGH) reduces file size but may slightly reduce image quality.",
+        compressionTooltipHint:
+          "This setting applies to all uploaded files. You can adjust individual files using the sliders below.",
+        allFiles: "All files",
+        upgradeRequired: "Upgrade required:",
+        upgradeRequiredBody:
+          "Compression control is not available in your current plan. Upgrade to access this feature.",
+        aiSeoGeneration: "AI SEO Generation",
+        aiSeoTooltipBody:
+          "Automatically generates SEO title, description, alt text, and filename for each image using AI vision analysis.",
+        aiSeoCreditsHint:
+          "Costs 1 AI credit per image. You have {count} {count, plural, one {credit} other {credits}} remaining.",
+        creditsLabel: "{count} {count, plural, one {credit} other {credits}}",
+        noCreditsTitle: "No AI credits:",
+        noCreditsBody:
+          "You have used all your AI credits. Upgrade your plan or wait for the next reset.",
+        filesCount: "{count}/{max} files",
+        maxReached: "Maximum reached",
+        compressionLabel: "Compression",
+        upgradeToAdjust: "Upgrade plan to adjust",
+        previewAlt: "Preview {index}",
+        createNewMedia: "Create New Media",
+        uploadUpToImages: "Upload up to {max} images (JPEG, PNG, WebP)",
+        uploadButton: "Upload!",
+        close: "Close",
+        createMedia: "Create media",
+        addMedia: "Add media",
+        storageFullTitle: "Storage full: {used} / {limit} GB used",
+        uploadInProgress: "Upload in progress...",
+      },
+      card: {
+        deleteFailed: "Failed to delete media",
+        titleLabel: "Title",
+        titlePlaceholder: "Enter title",
+        descriptionLabel: "Description",
+        descriptionPlaceholder: "Enter description",
+        seoTitleLabel: "SEO Title",
+        seoTitlePlaceholder: "Enter SEO title",
+        seoTitleInfo:
+          "The title that appears in search engine results and browser tabs. Helps improve search visibility.",
+        seoDescriptionLabel: "SEO Description",
+        seoDescriptionPlaceholder: "Enter SEO description",
+        seoDescriptionInfo:
+          "A brief summary that appears in search results. Helps users understand what the image is about before clicking.",
+        altTextLabel: "Alt Text",
+        altTextPlaceholder: "Enter alt text for accessibility",
+        altTextInfo:
+          "A text description of the image for screen readers and when images fail to load. Improves accessibility and SEO.",
+        filenameLabel: "Filename",
+        filenamePlaceholder: "Enter filename",
+        filenameInfo:
+          "The filename used for SEO purposes. Can be edited to improve search visibility.",
+        lastUpdated: "Last Updated",
+        noPreview: "No preview",
+        altFallback: "{username} media",
+        untitled: "Untitled",
+        editMedia: "Edit Media",
+        mediaPreview: "Media Preview",
+        generateSeo: "Generate SEO",
+        noCreditsAvailable:
+          "No AI credits available. You need at least 1 credit to generate SEO metadata. Please upgrade your plan or wait for credits to reset.",
+        generateSeoTooltip:
+          "Automatically generate SEO fields with AI. Analyzes your image content and generates optimized titles, descriptions, alt text, and filenames for better search visibility.",
+        noCreditsSuffix: " (No credits)",
+        delete: "Delete",
+        deleteConfirm: "Are you sure you want to delete this media?",
+        cancel: "Cancel",
+        discardTitle: "Discard Changes?",
+        discardBody:
+          "Are you sure you want to cancel? All unsaved changes will be lost.",
+        keepEditing: "Keep Editing",
+        discardChanges: "Discard Changes",
+        saveChanges: "Save Changes",
+        edit: "Edit",
+        close: "Close",
+      },
+      grid: {
+        generateSeoCount: "Generate SEO ({count})",
+        generateSeoTitle: "Generate AI SEO",
+        generateSeoDescription:
+          "Generate AI-powered SEO metadata for {count} selected {count, plural, one {media item} other {media items}}?",
+        creditsAvailable: "Credits available:",
+        creditsNeeded: "Credits needed:",
+        overAiLimit: "Limit: select up to {max} items (remove {excess}).",
+        insufficientCredits:
+          "Insufficient credits. You need {needed} more credits.",
+        cancel: "Cancel",
+        selectMedia: "Select media",
+        cancelSelection: "Cancel selection",
+        noMediaFiltered: "No media found, try other filter combination",
+        noMediaEmpty: "No media uploaded yet. Start by adding your first image.",
+        updateItems: "Update {count} {count, plural, one {item} other {items}}",
+        confirmUpdatesTitle: "Confirm Updates",
+        confirmUpdatesDescription:
+          "Are you sure you want to update {count} {count, plural, one {media item} other {media items}}? This action will save all pending changes.",
+        updateAll: "Update All",
+      },
+      search: {
+        placeholder: "Search media…",
+        all: "All",
+      },
+    },
+    home: {
+      pageTitle: "Dashboard",
+    },
+    about: {
+      pageTitle: "About Page",
+      pageInfo:
+        "Share your background, artistic journey, and anything else you'd like your audience to know about you.",
+      emptyStateDescription:
+        "No about page created yet. Share your background and artistic journey.",
+    },
+    settings: {
+      pageTitle: "Settings",
+      account: {
+        heading: "Account",
+        usernameInfo:
+          "Your username appears in your public URL. Pick something short and memorable — you can't change it often.",
+        usernameLabel: "Username",
+        emailLabel: "Email",
+      },
+      language: {
+        heading: "Language",
+        description: "Choose the language for your dashboard",
+      },
+      security: {
+        heading: "Security",
+        passwordLabel: "Password",
+        passwordDescription: "Update your account password",
+      },
+      subscription: {
+        heading: "Subscription",
+        trial: "Trial",
+        freeTrialEnds: "Free trial ends {date}",
+        renews: "Renews {date}",
+        cancels: "Cancels {date}",
+        onFreePlan: "You are on the free plan",
+        upgrade: "Upgrade",
+        change: "Change",
+        freePlanName: "Free",
+      },
+      changePlan: {
+        pageTitle: "Change Plan",
+        backToSettings: "Back to Settings",
+        alreadyOnBest: "You're already on the most powerful plan.",
+        currentPlanIs:
+          "Your current plan is <strong>{planName}</strong> — there's nothing higher to upgrade to right now.",
+        currentPlanFallback: "your current plan",
+        goBackToSettings: "Go back to Settings",
+        cancel: "Cancel",
+      },
+      changePassword: {
+        triggerLabel: "Change Password",
+        title: "Change Password",
+        description: "Enter your current password and choose a new one.",
+        monthlyLimitReached: "Monthly limit reached",
+        usedAllChanges:
+          "You've used all {max} password changes for this period.",
+        availableAgainOn: "Available again on <strong>{date}</strong>.",
+        currentPasswordLabel: "Current Password",
+        newPasswordLabel: "New Password",
+        newPasswordInfo: "8–20 characters, at least one number, no spaces",
+        remainingChanges:
+          "{remaining} of {max} {remaining, plural, one {change} other {changes}} remaining this month",
+        resetsOn: " · resets on {date}",
+        submit: "Update Password",
+        successToast: "Password updated successfully!",
+      },
+      changeUsername: {
+        title: "Change Username",
+        description: "Choose a new username for your account.",
+        monthlyLimitReached: "Monthly limit reached",
+        usedAllChanges:
+          "You've used all {max} username changes for this period.",
+        availableAgainOn: "Available again on <strong>{date}</strong>.",
+        newUsernameLabel: "New Username",
+        newUsernameInfo: "3–20 characters, letters and numbers only",
+        remainingChanges:
+          "{remaining} of {max} {remaining, plural, one {change} other {changes}} remaining this month",
+        resetsOn: " · resets on {date}",
+        submit: "Update Username",
+        successToast: "Username updated successfully!",
+      },
+    },
+  },
+  actions: {
+    unauthorized: "Unauthorized",
+    slugAlreadyExists: "Slug already exists",
+    genericError: "Something went wrong. Please try again later.",
+    formDataRequired: "Form data is required",
+    passwordRecoveryCooldown:
+      "You must wait 1 minute and 30 seconds before trying again",
+    noFieldsToUpdate: "No fields to update",
+    invalidMediaId: "Invalid media ID",
+    unexpectedError: "An unexpected error occurred",
+    userIdAndMediaIdRequired: "user_id and media_id are required",
+  },
 };
 
-export type Translations = typeof messages;
+export type Messages = typeof messages;
 export default messages;

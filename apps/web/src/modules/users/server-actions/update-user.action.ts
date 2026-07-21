@@ -9,6 +9,7 @@ import type {
 } from "@repo/common-lib/types/user";
 import { cleanObj, trimValues } from "@repo/common-lib/utils/cleanObj";
 import { revalidateTag } from "next/cache";
+import { getTranslations } from "next-intl/server";
 import {
   getFriendlyApiErrors,
   getObjErrorFromZod,
@@ -27,7 +28,7 @@ export const updateUserAction = async (
 ): Promise<ActionReturn<BaseUser, UpdateUserInputWithAssets>> => {
   const session = await requireSession();
   if (!isSessionOwner(session, id)) {
-    return unauthorizedActionReturn<BaseUser, UpdateUserInputWithAssets>();
+    return await unauthorizedActionReturn<BaseUser, UpdateUserInputWithAssets>();
   }
 
   const categories = formData.get("categories") as string;
@@ -51,7 +52,8 @@ export const updateUserAction = async (
   cleanObj(cleanData);
 
   // Validate text fields
-  const validated = updateUserSchema.safeParse(cleanData);
+  const t = await getTranslations();
+  const validated = updateUserSchema(t).safeParse(cleanData);
 
   if (!validated.success) {
     return {
@@ -68,7 +70,12 @@ export const updateUserAction = async (
     if (avatarFile.size > MAX_FILE_SIZE) {
       return {
         errors: [],
-        inputErrors: { avatar: "Avatar file size must be less than 8MB" },
+        inputErrors: {
+          avatar: t("validation.file.tooLarge", {
+            field: t("fields.avatar"),
+            mb: 8,
+          }),
+        },
         data: null,
         inputs: rawData,
       };
@@ -76,7 +83,11 @@ export const updateUserAction = async (
     if (!ALLOWED_IMAGE_FILE_TYPES.includes(avatarFile.type as MimeTypes)) {
       return {
         errors: [],
-        inputErrors: { avatar: "Avatar must be an image (JPEG, PNG or WebP)" },
+        inputErrors: {
+          avatar: t("validation.file.invalidType", {
+            field: t("fields.avatar"),
+          }),
+        },
         data: null,
         inputs: rawData,
       };
@@ -90,7 +101,12 @@ export const updateUserAction = async (
     if (bannerFile.size > MAX_FILE_SIZE) {
       return {
         errors: [],
-        inputErrors: { banner: "Banner file size must be less than 8MB" },
+        inputErrors: {
+          banner: t("validation.file.tooLarge", {
+            field: t("fields.banner"),
+            mb: 8,
+          }),
+        },
         data: null,
         inputs: rawData,
       };
@@ -98,7 +114,11 @@ export const updateUserAction = async (
     if (!ALLOWED_IMAGE_FILE_TYPES.includes(bannerFile.type as MimeTypes)) {
       return {
         errors: [],
-        inputErrors: { banner: "Banner must be an image (JPEG, PNG or WebP)" },
+        inputErrors: {
+          banner: t("validation.file.invalidType", {
+            field: t("fields.banner"),
+          }),
+        },
         data: null,
         inputs: rawData,
       };
@@ -110,7 +130,7 @@ export const updateUserAction = async (
 
   if (result.error) {
     return {
-      errors: getFriendlyApiErrors(result),
+      errors: await getFriendlyApiErrors(result),
       data: null,
       inputs: rawData,
     };

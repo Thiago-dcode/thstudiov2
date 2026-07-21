@@ -4,6 +4,7 @@ import type { Media } from "@repo/common-lib/types/media";
 import { trimValues } from "@repo/common-lib/utils/cleanObj";
 import { revalidateTag } from "next/cache";
 import { type NextRequest, NextResponse } from "next/server";
+import { getTranslations } from "next-intl/server";
 import { getBackendHeaders } from "@/app/api/_helpers/backend-headers";
 import { parseBackendResponse } from "@/app/api/_helpers/parse-backend-response";
 import { getObjErrorFromZod } from "@/modules/auth/helpers";
@@ -13,10 +14,11 @@ import { createMediaSchema } from "@/modules/media/schemas/media-shemas";
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 export async function POST(request: NextRequest) {
+  const t = await getTranslations();
   const session = await userSession();
   if (!session) {
     return NextResponse.json(
-      { data: null, errors: ["Unauthorized"] },
+      { data: null, errors: [t("actions.unauthorized")] },
       { status: 401 },
     );
   }
@@ -29,7 +31,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         data: null,
         errors: [],
-        inputErrors: { file: "File is required" },
+        inputErrors: { file: t("validation.required", { field: t("fields.file") }) },
       });
     }
 
@@ -37,7 +39,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         data: null,
         errors: [],
-        inputErrors: { file: "File size must be less than 10MB" },
+        inputErrors: {
+          file: t("validation.file.tooLarge", { field: t("fields.file"), mb: 10 }),
+        },
       });
     }
 
@@ -45,7 +49,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         data: null,
         errors: [],
-        inputErrors: { file: "File must be an image (JPEG, PNG or WebP)" },
+        inputErrors: {
+          file: t("validation.file.invalidType", { field: t("fields.file") }),
+        },
       });
     }
 
@@ -108,7 +114,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "An unexpected error occurred";
+      error instanceof Error ? error.message : t("actions.unexpectedError");
     return NextResponse.json(
       { data: null, errors: [message] },
       { status: 500 },

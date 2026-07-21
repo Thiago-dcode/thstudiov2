@@ -23,7 +23,7 @@ export const createOrUpdateAddressAction = async (
 ): Promise<ActionReturn<Address, PublicCreateAddressInput>> => {
   const session = await requireSession();
   if (!session) {
-    return unauthorizedActionReturn<Address, PublicCreateAddressInput>();
+    return await unauthorizedActionReturn<Address, PublicCreateAddressInput>();
   }
 
   // Extract fields from FormData
@@ -73,7 +73,7 @@ export const createOrUpdateAddressAction = async (
     validated.data.user_id !== undefined &&
     !isSessionOwner(session, validated.data.user_id)
   ) {
-    return unauthorizedActionReturn<Address, PublicCreateAddressInput>(rawData);
+    return await unauthorizedActionReturn<Address, PublicCreateAddressInput>(rawData);
   }
 
   const result = !addressId
@@ -83,7 +83,7 @@ export const createOrUpdateAddressAction = async (
   if (result.error) {
     return {
       data: null,
-      errors: getFriendlyApiErrors(result),
+      errors: await getFriendlyApiErrors(result),
     };
   }
 

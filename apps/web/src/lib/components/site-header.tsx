@@ -10,6 +10,7 @@ import {
 } from "@repo/ui/components/shadcn/drawer";
 import { cn } from "@repo/ui/lib/utils";
 import { Menu, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -44,11 +45,12 @@ const menuButtonClassName =
   "tablet:hidden flex items-center justify-center size-10 text-text hover:opacity-80 transition-opacity";
 
 function MenuButton(props: React.ComponentProps<"button">) {
+  const t = useTranslations("siteHeader");
   return (
     <button
       type="button"
       className={menuButtonClassName}
-      aria-label="Open navigation"
+      aria-label={t("openNavigation")}
       {...props}
     >
       <Menu className="size-5" />
@@ -200,6 +202,7 @@ function MobileMenu({
   contentClassName?: string;
 }) {
   const { drawerOpen, setDrawerOpen, isMounted } = useSiteHeader();
+  const t = useTranslations("siteHeader");
 
   if (!isMounted) {
     return <MenuButton />;
@@ -217,7 +220,7 @@ function MobileMenu({
           contentClassName,
         )}
       >
-        <DrawerTitle className="sr-only">Navigation</DrawerTitle>
+        <DrawerTitle className="sr-only">{t("navigation")}</DrawerTitle>
         {children}
       </DrawerContent>
     </Drawer>
@@ -231,6 +234,7 @@ function MobileDrawerBar({
   children: ReactNode;
   className?: string;
 }) {
+  const t = useTranslations("siteHeader");
   return (
     <div
       className={cn(
@@ -243,7 +247,7 @@ function MobileDrawerBar({
         <button
           type="button"
           className="flex items-center justify-center size-10 text-text hover:opacity-80 transition-opacity"
-          aria-label="Close navigation"
+          aria-label={t("closeNavigation")}
         >
           <X className="size-5" />
         </button>

@@ -10,12 +10,14 @@ import {
 } from "@repo/ui/components/shadcn/dialog";
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { LogOut } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useCallback, useState } from "react";
 import { useMainNav } from "@/lib/providers/main-nav.provider";
 import { logoutServerAction } from "@/modules/auth/server-actions/logout.action";
 
 export const LogoutDialog = () => {
+  const t = useTranslations("atelier.common");
   const router = useRouter();
   const { shrinked, setMobileOpen } = useMainNav();
   const [open, setOpen] = useState(false);
@@ -54,26 +56,25 @@ export const LogoutDialog = () => {
  `}
         >
           <LogOut size={20} />
-          {!shrinked && <span>Logout</span>}
+          {!shrinked && <span>{t("logout")}</span>}
         </button>
       </DialogTrigger>
       <DialogContent className="max-w-sm">
         {!loading ? (
           <>
             <DialogHeader>
-              <DialogTitle>Logout</DialogTitle>
+              <DialogTitle>{t("logoutConfirmTitle")}</DialogTitle>
               <DialogDescription>
-                Are you sure you want to logout? You'll need to sign in again to
-                access your account.
+                {t("logoutConfirmDescription")}
               </DialogDescription>
             </DialogHeader>
             <div className="flex items-center justify-end gap-3 mt-4">
               <Button variant="outline" onClick={() => setOpen(false)}>
-                Cancel
+                {t("cancel")}
               </Button>
               <form onSubmit={handleSubmit}>
                 <Button disabled={loading} type="submit">
-                  Logout
+                  {t("logout")}
                 </Button>
               </form>
             </div>

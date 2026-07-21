@@ -10,6 +10,7 @@ import { generateUUID } from "@repo/common-lib/utils/generate-uuid";
 import { queryParamBuilder } from "@repo/common-lib/utils/query-builder";
 import { revalidateTag } from "next/cache";
 import { cookies } from "next/headers";
+import { getTranslations } from "next-intl/server";
 import { encryptObj, getEncryptedJsonCookie } from "@/lib/utils";
 import {
   getFriendlyApiErrors,
@@ -33,7 +34,8 @@ export const initiateSubscriptionAction = async (
 ): Promise<
   ActionReturn<HandleSubscriptionProcessResponse, InitiateSubscriptionRequest>
 > => {
-  const validated = initiateSubscriptionSchema.safeParse({
+  const t = await getTranslations();
+  const validated = initiateSubscriptionSchema(t).safeParse({
     plan_price_id: parseInt(formData.get("plan_price_id") as string, 10),
     payment_method: formData.get("payment_method"),
     success_url: formData.get("success_url"),
@@ -80,14 +82,14 @@ export const initiateSubscriptionAction = async (
 
     return {
       data: null,
-      errors: getFriendlyApiErrors(result),
+      errors: await getFriendlyApiErrors(result),
       inputs: validated.data,
     };
   } catch (e) {
     console.error("Error during initiateSubscriptionAction", e);
     return {
       data: null,
-      errors: ["Something went wrong. Please try again later."],
+      errors: [t("actions.genericError")],
       inputs: validated.data,
     };
   }

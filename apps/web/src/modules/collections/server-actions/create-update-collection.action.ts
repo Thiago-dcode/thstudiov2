@@ -7,6 +7,7 @@ import type {
 } from "@repo/common-lib/types/collection";
 import type { ActionReturn } from "@repo/common-lib/types/response";
 import { cleanObj, trimValues } from "@repo/common-lib/utils/cleanObj";
+import { getTranslations } from "next-intl/server";
 import {
   getFriendlyApiErrors,
   getObjErrorFromZod,
@@ -27,11 +28,12 @@ export const createOrUpdateCollectionAction = async (
   currentCollection?: Collection,
 ): Promise<ActionReturn<Collection, CollectionActionInput>> => {
   const isUpdate = !!currentCollection;
+  const t = await getTranslations();
 
   const userAuth = await userSession();
   if (!userAuth) {
     return {
-      errors: ["Unauthorized"],
+      errors: [t("actions.unauthorized")],
       data: null,
     };
   }
@@ -43,7 +45,7 @@ export const createOrUpdateCollectionAction = async (
 
   trimValues(rawData, { deep: true });
 
-  const schema = isUpdate ? updateCollectionSchema : createCollectionSchema;
+  const schema = isUpdate ? updateCollectionSchema(t) : createCollectionSchema(t);
   const validated = schema.safeParse(rawData);
 
   if (!validated.success) {
@@ -69,7 +71,7 @@ export const createOrUpdateCollectionAction = async (
     if (slugExistsResponse.error) {
       return {
         data: null,
-        errors: getFriendlyApiErrors(slugExistsResponse),
+        errors: await getFriendlyApiErrors(slugExistsResponse),
       };
     }
 
@@ -77,7 +79,7 @@ export const createOrUpdateCollectionAction = async (
       return {
         data: null,
         errors: [],
-        inputErrors: { slug: "Slug already exists" },
+        inputErrors: { slug: t("actions.slugAlreadyExists") },
       };
     }
   }
@@ -99,6 +101,6 @@ export const createOrUpdateCollectionAction = async (
 
   return {
     data: null,
-    errors: getFriendlyApiErrors(collection),
+    errors: await getFriendlyApiErrors(collection),
   };
 };

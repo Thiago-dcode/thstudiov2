@@ -9,6 +9,7 @@ import type {
 } from "@repo/common-lib/types/portfolio";
 import type { ActionReturn } from "@repo/common-lib/types/response";
 import { cleanObj, trimValues } from "@repo/common-lib/utils/cleanObj";
+import { getTranslations } from "next-intl/server";
 import {
   getFriendlyApiErrors,
   getObjErrorFromZod,
@@ -32,12 +33,13 @@ export const createOrUpdatePortfolioAction = async (
 ): Promise<ActionReturn<Portfolio, PortfolioActionInput>> => {
   const thumbnailFile = input?.thumbnail as File | undefined;
   const isUpdate = !!currentPortfolio;
+  const t = await getTranslations();
 
   // Thumbnail is required only on create
   if (!isUpdate && (!thumbnailFile || thumbnailFile.size === 0)) {
     return {
       errors: [],
-      inputErrors: { thumbnail: "Thumbnail is required" },
+      inputErrors: { thumbnail: t("validation.thumbnailRequired") },
       data: null,
     };
   }
@@ -45,7 +47,7 @@ export const createOrUpdatePortfolioAction = async (
   const userAuth = await userSession();
   if (!userAuth) {
     return {
-      errors: ["Unauthorized"],
+      errors: [t("actions.unauthorized")],
 
       data: null,
     };
@@ -56,7 +58,10 @@ export const createOrUpdatePortfolioAction = async (
       return {
         errors: [],
         inputErrors: {
-          thumbnail: "Thumbnail file size must be less than 10MB",
+          thumbnail: t("validation.file.tooLarge", {
+            field: t("fields.thumbnail"),
+            mb: 10,
+          }),
         },
         data: null,
       };
@@ -66,7 +71,9 @@ export const createOrUpdatePortfolioAction = async (
       return {
         errors: [],
         inputErrors: {
-          thumbnail: "Thumbnail must be an image (JPEG, PNG or WebP)",
+          thumbnail: t("validation.file.invalidType", {
+            field: t("fields.thumbnail"),
+          }),
         },
         data: null,
       };
@@ -82,7 +89,7 @@ export const createOrUpdatePortfolioAction = async (
 
   trimValues(rawData, { deep: true });
   // Validate with appropriate schema
-  const schema = isUpdate ? updatePortfolioSchema : createPortfolioSchema;
+  const schema = isUpdate ? updatePortfolioSchema(t) : createPortfolioSchema(t);
   const validated = schema.safeParse(rawData);
 
   if (!validated.success) {
@@ -109,7 +116,7 @@ export const createOrUpdatePortfolioAction = async (
     if (slugExistsResponse.error) {
       return {
         data: null,
-        errors: getFriendlyApiErrors(slugExistsResponse),
+        errors: await getFriendlyApiErrors(slugExistsResponse),
       };
     }
 
@@ -117,7 +124,7 @@ export const createOrUpdatePortfolioAction = async (
       return {
         data: null,
         errors: [],
-        inputErrors: { slug: "Slug already exists" },
+        inputErrors: { slug: t("actions.slugAlreadyExists") },
       };
     }
   }
@@ -140,6 +147,6 @@ export const createOrUpdatePortfolioAction = async (
 
   return {
     data: null,
-    errors: getFriendlyApiErrors(portfolio),
+    errors: await getFriendlyApiErrors(portfolio),
   };
 };

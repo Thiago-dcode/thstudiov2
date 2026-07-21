@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { notFound, redirect } from "next/navigation";
 import {
   AdminPageContainer,
@@ -13,6 +14,7 @@ type Props = {
 };
 
 export default async function ServiceEdit({ params }: Props) {
+  const t = await getTranslations("atelier.services");
   const userAuth = await userSession();
   if (!userAuth) {
     redirect("/");
@@ -26,7 +28,7 @@ export default async function ServiceEdit({ params }: Props) {
 
   if (serviceResponse.error) {
     return (
-      <div>{serviceResponse?.error?.message || "Something went wrong"}</div>
+      <div>{serviceResponse?.error?.message || t("loadError")}</div>
     );
   }
 
@@ -41,7 +43,7 @@ export default async function ServiceEdit({ params }: Props) {
   return (
     <AdminPageContainer>
       <AdminPageTitle
-        title={`Edit: ${service.title}`}
+        title={t("editTitlePrefix", { title: service.title })}
         publicHref={publicHref}
       />
       <CreateOrUpdateService

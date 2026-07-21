@@ -33,7 +33,7 @@ export const getAllUserCollectionsAction = async (
 
   return {
     data: null,
-    errors: getFriendlyApiErrors(result),
+    errors: await getFriendlyApiErrors(result),
     inputErrors: undefined,
   };
 };

@@ -19,6 +19,6 @@ export const getUserCategoriesAction = async (
   }
   return {
     data: null,
-    errors: getFriendlyApiErrors(categoriesResponse),
+    errors: await getFriendlyApiErrors(categoriesResponse),
   };
 };

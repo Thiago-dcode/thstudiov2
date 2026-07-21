@@ -18,6 +18,6 @@ export const getCitiesAction = async (
   }
   return {
     data: null,
-    errors: getFriendlyApiErrors(result),
+    errors: await getFriendlyApiErrors(result),
   };
 };

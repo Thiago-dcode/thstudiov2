@@ -1,6 +1,7 @@
 import { ENUMS } from "@repo/common-lib/constants/enums";
 import * as z from "zod";
 import { serverEnv } from "@/env/server";
+import type { Translator } from "@/lib/validation/zod-helpers";
 
 /**
  * Both URLs are forwarded as-is to the payment provider (Stripe/PayPal) as the
@@ -15,19 +16,22 @@ const isSameOriginAsApp = (url: string): boolean => {
   }
 };
 
-const appOriginUrl = () =>
+const appOriginUrl = (t: Translator) =>
   z
     .url()
-    .refine(isSameOriginAsApp, { message: "URL must be on the app's origin" });
+    .refine(isSameOriginAsApp, {
+      message: t("validation.subscription.urlMustBeAppOrigin"),
+    });
 
-export const initiateSubscriptionSchema = z.object({
-  plan_price_id: z.number(),
-  payment_method: z.enum(ENUMS.PAYMENT_METHOD),
-  success_url: appOriginUrl(),
-  cancel_url: appOriginUrl(),
-  benefit_id: z.number().int().positive().optional(),
-});
+export const initiateSubscriptionSchema = (t: Translator) =>
+  z.object({
+    plan_price_id: z.number(),
+    payment_method: z.enum(ENUMS.PAYMENT_METHOD),
+    success_url: appOriginUrl(t),
+    cancel_url: appOriginUrl(t),
+    benefit_id: z.number().int().positive().optional(),
+  });
 
 export type InitiateSubscriptionSchemaType = z.infer<
-  typeof initiateSubscriptionSchema
+  ReturnType<typeof initiateSubscriptionSchema>
 >;

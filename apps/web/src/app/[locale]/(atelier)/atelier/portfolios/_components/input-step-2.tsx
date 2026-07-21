@@ -14,6 +14,7 @@ import type {
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
 import { cn } from "@repo/ui/lib/utils";
 import { Image, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { type ReactNode, useMemo } from "react";
 import { CollectionCard } from "@/modules/collections/components/collection-card";
 import { SelectCollectionDrawer } from "@/modules/collections/components/select-collection-drawer";
@@ -71,12 +72,12 @@ function getMediaShapeClass(shape?: string | null) {
   }
 }
 
-function portfolioItemLabel(row: PortfolioItem): string {
+function portfolioItemLabel(row: PortfolioItem, untitledLabel: string): string {
   switch (row.item) {
     case "media":
-      return row.title || row.seo_filename || "Untitled";
+      return row.title || row.seo_filename || untitledLabel;
     case "collection":
-      return row.title || "Untitled";
+      return row.title || untitledLabel;
   }
 }
 
@@ -106,6 +107,7 @@ function resolvePortfolioItemComponent(row: PortfolioItem): ReactNode {
 }
 
 export default function InputStep2() {
+  const t = useTranslations("atelier.portfolios.items");
   const {
     user,
     portfolioInput,
@@ -189,10 +191,7 @@ export default function InputStep2() {
           iconClassName="size-3.5"
           content={
             <p className="text-sm">
-              This count includes each media you add directly, plus every media
-              item inside any collection you add. For example, one collection
-              with 10 images counts as 10 items toward the limit of{" "}
-              {portfolioItemLimit}.
+              {t("countInfo", { limit: portfolioItemLimit })}
             </p>
           }
         />
@@ -202,10 +201,15 @@ export default function InputStep2() {
             isPortfolioItemsLimitReached ? "text-error" : "text-text-muted",
           )}
         >
-          {portfolioItemCount} / {portfolioItemLimit} items
+          {t("itemsCountLabel", {
+            count: portfolioItemCount,
+            limit: portfolioItemLimit,
+          })}
         </p>
         {portfolioItems.length > 1 && (
-          <span className="text-xs! text-text-muted/70">· Drag to reorder</span>
+          <span className="text-xs! text-text-muted/70">
+            {t("dragToReorder")}
+          </span>
         )}
       </div>
 
@@ -213,9 +217,7 @@ export default function InputStep2() {
       {portfolioItems.length === 0 ? (
         <div className="w-full min-h-[200px] border-2 border-dashed border-border/60 bg-fg-2/5 flex flex-col items-center justify-center gap-3 p-8">
           <Image className="size-8 text-text-muted/30" />
-          <p className="text-sm text-text-muted/70">
-            No media or collections added yet
-          </p>
+          <p className="text-sm text-text-muted/70">{t("noItems")}</p>
         </div>
       ) : (
         <DndContext onDragEnd={handleDragEnd}>
@@ -244,7 +246,9 @@ export default function InputStep2() {
                       </div>
                       <button
                         type="button"
-                        aria-label={`Remove ${portfolioItemLabel(item)}`}
+                        aria-label={t("removeItem", {
+                          label: portfolioItemLabel(item, t("untitled")),
+                        })}
                         onPointerDown={(e) => e.stopPropagation()}
                         onClick={(e) => {
                           e.preventDefault();
@@ -265,7 +269,7 @@ export default function InputStep2() {
                         {resolvePortfolioItemComponent(item)}
                       </div>
                       <h3 className="text-xs! font-medium text-text line-clamp-1 px-0.5">
-                        {portfolioItemLabel(item)}
+                        {portfolioItemLabel(item, t("untitled"))}
                       </h3>
                     </SortableItem>
                   </div>

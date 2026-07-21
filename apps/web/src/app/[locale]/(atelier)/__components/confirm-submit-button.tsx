@@ -11,6 +11,7 @@ import {
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { cn } from "@repo/ui/lib/utils";
 import { Check, Save } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 type ConfirmSubmitButtonProps = {
@@ -34,6 +35,7 @@ export function ConfirmSubmitButton({
   confirmLabel,
   onConfirm,
 }: ConfirmSubmitButtonProps) {
+  const t = useTranslations("atelier.common");
   const [open, setOpen] = useState(false);
   const resolvedConfirmLabel = confirmLabel ?? buttonLabel;
 
@@ -84,7 +86,7 @@ export function ConfirmSubmitButton({
               disabled={isPending}
               onClick={() => setOpen(false)}
             >
-              Cancel
+              {t("cancel")}
             </Button>
             <Button
               type="button"

@@ -24,6 +24,7 @@ type ImageProps = {
   alt: string;
   sizes?: string;
   isBlocked?: boolean;
+  blockedLabel?: string;
   className?: string;
 };
 
@@ -32,6 +33,7 @@ function Image({
   alt,
   sizes = DEFAULT_SIZES,
   isBlocked,
+  blockedLabel = "Blocked",
   className,
 }: ImageProps) {
   const hasThumbnail = Boolean(src?.trim());
@@ -65,12 +67,18 @@ function Image({
         )}
       </div>
 
-      {isBlocked ? <BlockedBadge /> : null}
+      {isBlocked ? <BlockedBadge label={blockedLabel} /> : null}
     </div>
   );
 }
 
-function BlockedBadge({ className }: { className?: string }) {
+function BlockedBadge({
+  label = "Blocked",
+  className,
+}: {
+  label?: string;
+  className?: string;
+}) {
   return (
     <div
       className={cn(
@@ -78,7 +86,7 @@ function BlockedBadge({ className }: { className?: string }) {
         className,
       )}
     >
-      Blocked
+      {label}
     </div>
   );
 }
@@ -138,6 +146,7 @@ export type PortfolioCardItemProps = {
   isAtelier?: boolean;
   sizes?: string;
   className?: string;
+  blockedLabel?: string;
 };
 
 function Item({
@@ -145,13 +154,20 @@ function Item({
   isAtelier,
   sizes = DEFAULT_SIZES,
   className,
+  blockedLabel,
 }: PortfolioCardItemProps) {
   const { title, thumbnail, description } = portfolio;
   const isBlocked = Boolean(portfolio.blocked_at && isAtelier);
 
   return (
     <Root className={className}>
-      <Image src={thumbnail} alt={title} sizes={sizes} isBlocked={isBlocked} />
+      <Image
+        src={thumbnail}
+        alt={title}
+        sizes={sizes}
+        isBlocked={isBlocked}
+        blockedLabel={blockedLabel}
+      />
       <Details>
         <CardTitle className="line-clamp-1">{title}</CardTitle>
         {description ? <CardDescription>{description}</CardDescription> : null}

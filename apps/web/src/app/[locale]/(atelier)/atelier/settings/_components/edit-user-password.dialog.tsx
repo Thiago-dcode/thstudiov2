@@ -14,6 +14,7 @@ import {
 } from "@repo/ui/components/shadcn/dialog";
 import { toast } from "@repo/ui/sonner";
 import { KeyRound } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import FormComponent from "@/lib/components/form-component";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
@@ -24,6 +25,7 @@ type Props = {
 };
 
 export const EditUserPasswordDialog = ({ user }: Props) => {
+  const t = useTranslations("atelier.settings.changePassword");
   const [open, setOpen] = useState(false);
 
   const { handleSubmit, isPending, errors, success, reset } = useHandleAction({
@@ -34,7 +36,7 @@ export const EditUserPasswordDialog = ({ user }: Props) => {
 
   useEffect(() => {
     if (success) {
-      toast.success("Password updated successfully!");
+      toast.success(t("successToast"));
       setOpen(false);
       reset();
     }
@@ -68,32 +70,34 @@ export const EditUserPasswordDialog = ({ user }: Props) => {
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="gap-2">
           <KeyRound className="size-4" />
-          Change Password
+          {t("triggerLabel")}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>Change Password</DialogTitle>
-          <DialogDescription>
-            Enter your current password and choose a new one.
-          </DialogDescription>
+          <DialogTitle>{t("title")}</DialogTitle>
+          <DialogDescription>{t("description")}</DialogDescription>
         </DialogHeader>
 
         <FormComponent.Container>
           {maxResetReached ? (
             <div className=" border border-error/30 bg-error/5 px-4 py-3 text-sm space-y-1">
-              <p className="font-medium text-error">Monthly limit reached</p>
+              <p className="font-medium text-error">
+                {t("monthlyLimitReached")}
+              </p>
               <p className="text-text-muted">
-                You've used all {MAX_PASSWORD_RESET} password changes for this
-                period.
+                {t("usedAllChanges", { max: MAX_PASSWORD_RESET })}
                 {resetDateFormatted && (
                   <>
                     {" "}
-                    Available again on{" "}
-                    <span className="font-medium text-text">
-                      {resetDateFormatted}
-                    </span>
-                    .
+                    {t.rich("availableAgainOn", {
+                      date: resetDateFormatted,
+                      strong: (chunks) => (
+                        <span className="font-medium text-text">
+                          {chunks}
+                        </span>
+                      ),
+                    })}
                   </>
                 )}
               </p>
@@ -101,7 +105,7 @@ export const EditUserPasswordDialog = ({ user }: Props) => {
           ) : (
             <FormComponent.Form onSubmit={handleSubmit} className="pt-2">
               <FormComponent.LabelInput
-                label="Current Password"
+                label={t("currentPasswordLabel")}
                 id="old_password"
                 name="old_password"
                 type="password"
@@ -114,13 +118,13 @@ export const EditUserPasswordDialog = ({ user }: Props) => {
               />
 
               <FormComponent.LabelInput
-                label="New Password"
+                label={t("newPasswordLabel")}
                 id="new_password"
                 name="new_password"
                 type="password"
                 autoComplete="new-password"
                 required
-                extraInfo="8–20 characters, at least one number, no spaces"
+                extraInfo={t("newPasswordInfo")}
                 onChange={() => {
                   if (errors) reset();
                 }}
@@ -128,9 +132,13 @@ export const EditUserPasswordDialog = ({ user }: Props) => {
 
               {effectiveCount > 0 && (
                 <p className="text-xs text-text-muted">
-                  {remaining} of {MAX_PASSWORD_RESET} change
-                  {remaining !== 1 ? "s" : ""} remaining this month
-                  {resetDateFormatted && <> · resets on {resetDateFormatted}</>}
+                  {t("remainingChanges", {
+                    remaining,
+                    max: MAX_PASSWORD_RESET,
+                  })}
+                  {resetDateFormatted && (
+                    <>{t("resetsOn", { date: resetDateFormatted })}</>
+                  )}
                 </p>
               )}
 
@@ -138,7 +146,7 @@ export const EditUserPasswordDialog = ({ user }: Props) => {
                 isPending={isPending}
                 disabled={isPending}
               >
-                Update Password
+                {t("submit")}
               </FormComponent.SubmitButton>
 
               {errors && errors.length > 0 && <Errors errors={errors} />}

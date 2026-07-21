@@ -7,6 +7,7 @@ import { Button } from "@repo/ui/components/shadcn/button";
 import { Input } from "@repo/ui/components/shadcn/input";
 import { cn } from "@repo/ui/lib/utils";
 import { Search, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 
@@ -47,6 +48,7 @@ function buildMediaQueryParams(
 const filterButtonClass = "h-7 px-2.5 text-[11px] font-medium";
 
 export function MediaSearch() {
+  const t = useTranslations("atelier.media.search");
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentSearch = searchParams.get("search") ?? "";
@@ -88,7 +90,7 @@ export function MediaSearch() {
         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-text-muted pointer-events-none" />
         <Input
           type="text"
-          placeholder="Search media…"
+          placeholder={t("placeholder")}
           value={value}
           onChange={(e) => setValue(e.target.value)}
           className="pl-8 pr-8 h-9 text-xs"
@@ -113,7 +115,7 @@ export function MediaSearch() {
           disabled={isPending}
           className={cn(filterButtonClass, currentShape && "hover:bg-fg-2")}
         >
-          All
+          {t("all")}
         </Button>
         {SHAPE_OPTIONS.map((shape) => (
           <Button

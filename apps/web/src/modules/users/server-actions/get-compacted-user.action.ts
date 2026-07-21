@@ -18,6 +18,6 @@ export const getUserCompactedAction = async (
   }
   return {
     data: null,
-    errors: getFriendlyApiErrors(user),
+    errors: await getFriendlyApiErrors(user),
   };
 };

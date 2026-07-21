@@ -3,6 +3,7 @@
 import type { ActionReturn } from "@repo/common-lib/types/response";
 import type { WaitListCreateResponse } from "@repo/common-lib/types/wait-list";
 import { trimValues } from "@repo/common-lib/utils/cleanObj";
+import { getTranslations } from "next-intl/server";
 import {
   getFriendlyApiErrors,
   getObjErrorFromZod,
@@ -19,7 +20,8 @@ export const createWaitListAction = async (
 
   trimValues(rawData, { deep: true });
 
-  const validated = createWaitListSchema.safeParse(rawData);
+  const t = await getTranslations();
+  const validated = createWaitListSchema(t).safeParse(rawData);
   if (!validated.success) {
     return {
       data: null,
@@ -36,7 +38,7 @@ export const createWaitListAction = async (
   if (result.error || result.data === null) {
     return {
       data: null,
-      errors: getFriendlyApiErrors(result),
+      errors: await getFriendlyApiErrors(result),
       inputs: rawData,
     };
   }

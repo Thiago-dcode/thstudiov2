@@ -21,7 +21,7 @@ export const getAllUserMediaAction = async (
 ): Promise<ActionReturn<Media[], undefined>> => {
   const session = await requireSession();
   if (!isSessionOwner(session, userId)) {
-    return unauthorizedActionReturn<Media[], undefined>();
+    return await unauthorizedActionReturn<Media[], undefined>();
   }
 
   const result = await usersService.getAllMedia(userId, params);
@@ -37,7 +37,7 @@ export const getAllUserMediaAction = async (
 
   return {
     data: null,
-    errors: getFriendlyApiErrors(result),
+    errors: await getFriendlyApiErrors(result),
     inputErrors: undefined,
   };
 };

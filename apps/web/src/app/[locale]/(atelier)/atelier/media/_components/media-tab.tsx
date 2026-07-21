@@ -6,15 +6,16 @@ import {
   TabsTrigger,
 } from "@repo/ui/components/shadcn/tabs";
 import { cn } from "@repo/ui/lib/utils";
+import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
 export type MediaTabs = "overall" | "seo";
 
 export const MEDIA_TABS: MediaTabs[] = ["overall", "seo"];
 
-export const MEDIA_TAB_CONFIG: Record<MediaTabs, { label: string }> = {
-  overall: { label: "Overall Info" },
-  seo: { label: "SEO" },
+const MEDIA_TAB_LABEL_KEYS: Record<MediaTabs, string> = {
+  overall: "tabs.overallInfo",
+  seo: "tabs.seo",
 };
 
 type MediaTabTriggerProps = {
@@ -28,6 +29,7 @@ export function MediaTabTrigger({
   selected = false,
   disabled = false,
 }: MediaTabTriggerProps) {
+  const t = useTranslations("atelier.media");
   const className = cn(
     // Base styles
     "font-medium transition-colors duration-200 px-4 py-2",
@@ -62,7 +64,7 @@ export function MediaTabTrigger({
       data-selected={selected}
       disabled={disabled}
     >
-      {MEDIA_TAB_CONFIG[tab].label}
+      {t(MEDIA_TAB_LABEL_KEYS[tab] as "tabs.overallInfo" | "tabs.seo")}
     </TabsTrigger>
   );
 }

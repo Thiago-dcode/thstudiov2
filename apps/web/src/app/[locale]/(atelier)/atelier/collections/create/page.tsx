@@ -1,4 +1,5 @@
 import { TABLES_ENUM } from "@repo/common-lib/constants/enums";
+import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import {
   AdminPageContainer,
@@ -11,6 +12,7 @@ import usersService from "@/modules/users/users.service";
 import { CreateOrUpdateCollection } from "../_components/create-update-collection";
 
 export default async function CollectionCreate() {
+  const t = await getTranslations("atelier.collections");
   const userAuth = await userSession();
   if (!userAuth) {
     redirect("/");
@@ -24,7 +26,7 @@ export default async function CollectionCreate() {
   if (limitInfo?.isAtLimit) {
     return (
       <AdminPageContainer>
-        <AdminPageTitle title="Create a collection" />
+        <AdminPageTitle title={t("createTitle")} />
         <ResourceLimitReached
           label={limitInfo.label}
           backHref="/atelier/collections"

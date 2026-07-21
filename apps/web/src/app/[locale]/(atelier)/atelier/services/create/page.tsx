@@ -1,4 +1,5 @@
 import { TABLES_ENUM } from "@repo/common-lib/constants/enums";
+import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import {
   AdminPageContainer,
@@ -12,6 +13,7 @@ import usersService from "@/modules/users/users.service";
 import { CreateOrUpdateService } from "../_components/create-update-service.component";
 
 export default async function ServiceCreate() {
+  const t = await getTranslations("atelier.services");
   const userAuth = await userSession();
   if (!userAuth) {
     redirect("/");
@@ -29,7 +31,7 @@ export default async function ServiceCreate() {
   if (limitInfo?.isAtLimit) {
     return (
       <AdminPageContainer>
-        <AdminPageTitle title="Create a service" />
+        <AdminPageTitle title={t("createTitle")} />
         <ResourceLimitReached
           label={limitInfo.label}
           backHref="/atelier/services"

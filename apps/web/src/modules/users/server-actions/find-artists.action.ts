@@ -21,6 +21,6 @@ export const findArtistsAction = async (
   }
   return {
     data: null,
-    errors: getFriendlyApiErrors(result),
+    errors: await getFriendlyApiErrors(result),
   };
 };

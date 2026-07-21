@@ -9,6 +9,7 @@ import type {
 import type { MimeTypes } from "@repo/common-lib/types/general";
 import type { ActionReturn } from "@repo/common-lib/types/response";
 import { cleanObj, trimValues } from "@repo/common-lib/utils/cleanObj";
+import { getTranslations } from "next-intl/server";
 import {
   getFriendlyApiErrors,
   getObjErrorFromZod,
@@ -36,7 +37,7 @@ export const createAboutPageAction = async (
 > => {
   const session = await requireSession();
   if (!session) {
-    return unauthorizedActionReturn<
+    return await unauthorizedActionReturn<
       AboutPage,
       { title?: string; description?: string; photo?: File }
     >();
@@ -51,7 +52,8 @@ export const createAboutPageAction = async (
   trimValues(rawData, {
     deep: true,
   });
-  const validated = createAboutPageSchema.safeParse(rawData);
+  const t = await getTranslations();
+  const validated = createAboutPageSchema(t).safeParse(rawData);
 
   if (!validated.success) {
     return {
@@ -69,7 +71,12 @@ export const createAboutPageAction = async (
     if (photoFile.size > MAX_FILE_SIZE) {
       return {
         errors: [],
-        inputErrors: { photo: "Photo file size must be less than 10MB" },
+        inputErrors: {
+          photo: t("validation.file.tooLarge", {
+            field: t("fields.photo"),
+            mb: 10,
+          }),
+        },
         data: null,
         inputs: validated.data,
       };
@@ -77,7 +84,9 @@ export const createAboutPageAction = async (
     if (!ALLOWED_IMAGE_FILE_TYPES.includes(photoFile.type as MimeTypes)) {
       return {
         errors: [],
-        inputErrors: { photo: "Photo must be an image (JPEG, PNG or WebP)" },
+        inputErrors: {
+          photo: t("validation.file.invalidType", { field: t("fields.photo") }),
+        },
         data: null,
         inputs: validated.data,
       };
@@ -97,7 +106,7 @@ export const createAboutPageAction = async (
 
   return {
     data: null,
-    errors: getFriendlyApiErrors(aboutPage),
+    errors: await getFriendlyApiErrors(aboutPage),
   };
 };
 export const updateAboutPageAction = async (
@@ -117,7 +126,7 @@ export const updateAboutPageAction = async (
   // (aboutPageService.update); this only needs to confirm the caller is signed in.
   const session = await requireSession();
   if (!session) {
-    return unauthorizedActionReturn<
+    return await unauthorizedActionReturn<
       AboutPage,
       { title?: string; description?: string; photo?: File }
     >();
@@ -130,7 +139,8 @@ export const updateAboutPageAction = async (
   trimValues(rawData, {
     deep: true,
   });
-  const validated = updateAboutPageSchema.safeParse(rawData);
+  const t = await getTranslations();
+  const validated = updateAboutPageSchema(t).safeParse(rawData);
 
   if (!validated.success) {
     return {
@@ -146,7 +156,12 @@ export const updateAboutPageAction = async (
     if (photoFile.size > MAX_FILE_SIZE) {
       return {
         errors: [],
-        inputErrors: { photo: "Photo file size must be less than 10MB" },
+        inputErrors: {
+          photo: t("validation.file.tooLarge", {
+            field: t("fields.photo"),
+            mb: 10,
+          }),
+        },
         data: null,
         inputs: validated.data,
       };
@@ -154,7 +169,9 @@ export const updateAboutPageAction = async (
     if (!ALLOWED_IMAGE_FILE_TYPES.includes(photoFile.type as MimeTypes)) {
       return {
         errors: [],
-        inputErrors: { photo: "Photo must be an image (JPEG, PNG or WebP)" },
+        inputErrors: {
+          photo: t("validation.file.invalidType", { field: t("fields.photo") }),
+        },
         data: null,
         inputs: validated.data,
       };
@@ -175,6 +192,6 @@ export const updateAboutPageAction = async (
 
   return {
     data: null,
-    errors: getFriendlyApiErrors(aboutPage),
+    errors: await getFriendlyApiErrors(aboutPage),
   };
 };

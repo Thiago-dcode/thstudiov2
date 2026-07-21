@@ -13,7 +13,7 @@ export const deleteCollectionAction = async (
 ): Promise<ActionReturn<boolean>> => {
   const session = await requireSession();
   if (!session) {
-    return unauthorizedActionReturn<boolean>();
+    return await unauthorizedActionReturn<boolean>();
   }
 
   const response = await collectionService.delete(id);
@@ -21,7 +21,7 @@ export const deleteCollectionAction = async (
   if (response.error) {
     return {
       data: null,
-      errors: getFriendlyApiErrors(response),
+      errors: await getFriendlyApiErrors(response),
     };
   }
 

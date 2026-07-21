@@ -5,6 +5,7 @@ import { Button } from "@repo/ui/components/shadcn/button";
 import { Skeleton } from "@repo/ui/components/shadcn/skeleton";
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo } from "react";
@@ -18,6 +19,7 @@ export const CreateOrUpdatePortfolio = ({
 }: {
   defaultPortfolio?: FullPortfolio;
 }) => {
+  const t = useTranslations("atelier.portfolios.form");
   const router = useRouter();
   const {
     handleSubmit,
@@ -81,8 +83,7 @@ export const CreateOrUpdatePortfolio = ({
           role="status"
           className="mb-6 border border-border/60 bg-fg-2/40 px-4 py-3 text-sm text-text-muted"
         >
-          This portfolio has been blocked. You can review it here, but it cannot
-          be edited until the block is lifted.
+          {t("blockedNotice")}
         </div>
       ) : null}
       <FormComponent.Form
@@ -148,11 +149,11 @@ export const CreateOrUpdatePortfolio = ({
               className={`gap-2 ${currentStep <= 1 ? "invisible" : ""}`}
             >
               <ArrowLeft className="size-4" />
-              <span className="hidden phone-lg:inline">Back</span>
+              <span className="hidden phone-lg:inline">{t("back")}</span>
             </Button>
 
             <span className="shrink-0 text-xs text-text-muted tabular-nums">
-              Step {currentStep} of {MAX_STEPS}
+              {t("stepOf", { current: currentStep, total: MAX_STEPS })}
             </span>
 
             <div className="flex items-center gap-2">
@@ -170,7 +171,7 @@ export const CreateOrUpdatePortfolio = ({
                   disabled={!isHydrated || !canGoNextStep || isPending}
                   className="gap-1.5 h-8 px-3 text-xs"
                 >
-                  <span className="hidden phone-lg:inline">Next</span>
+                  <span className="hidden phone-lg:inline">{t("next")}</span>
                   <ArrowRight className="size-3.5" />
                 </Button>
               ) : null}

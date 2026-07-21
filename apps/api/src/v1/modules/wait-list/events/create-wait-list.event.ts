@@ -1,5 +1,5 @@
-import { PublicCreateWaitListInput } from '@repo/common-lib/types/wait-list';
+import { CreateWaitListJobInput } from '@repo/common-lib/types/wait-list';
 
 export class CreateWaitListEvent {
-  constructor(public readonly data: PublicCreateWaitListInput) {}
+  constructor(public readonly data: CreateWaitListJobInput) {}
 }

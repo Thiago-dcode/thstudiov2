@@ -5,6 +5,7 @@ import type {
   BaseUser,
   UpdateUserPasswordInput,
 } from "@repo/common-lib/types/user";
+import { getTranslations } from "next-intl/server";
 import {
   isSessionOwner,
   requireSession,
@@ -19,7 +20,7 @@ export const updateUserPasswordAction = async (
 ): Promise<ActionReturn<BaseUser, UpdateUserPasswordInput>> => {
   const session = await requireSession();
   if (!isSessionOwner(session, id)) {
-    return unauthorizedActionReturn<BaseUser, UpdateUserPasswordInput>();
+    return await unauthorizedActionReturn<BaseUser, UpdateUserPasswordInput>();
   }
 
   const rawData: UpdateUserPasswordInput = {
@@ -27,7 +28,8 @@ export const updateUserPasswordAction = async (
     new_password: formData.get("new_password") as string,
   };
 
-  const validated = updateUserPasswordSchema.safeParse(rawData);
+  const t = await getTranslations();
+  const validated = updateUserPasswordSchema(t).safeParse(rawData);
 
   if (!validated.success) {
     const errors = validated.error.issues.map(
@@ -48,7 +50,7 @@ export const updateUserPasswordAction = async (
       errors:
         status_code === 422 || status_code === 420
           ? errors
-          : ["Something went wrong"],
+          : [t("actions.genericError")],
       data: null,
       inputs: rawData,
     };

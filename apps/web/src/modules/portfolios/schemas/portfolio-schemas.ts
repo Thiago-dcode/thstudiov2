@@ -1,52 +1,50 @@
 import { MAX_CATEGORIES_PORTFOLIO } from "@repo/common-lib/constants/constants";
 import * as z from "zod";
+import {
+  requiredString,
+  slugField,
+  type Translator,
+} from "@/lib/validation/zod-helpers";
 
-export const createPortfolioSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  slug: z
-    .string()
-    .min(3, "Slug must be at least 3 characters long")
-    .regex(
-      /^[a-z0-9-]+$/,
-      "Slug must contain only lowercase letters, numbers, and hyphens",
-    ),
-  description: z.string().optional(),
-  user_id: z.number(),
-  is_highlight: z.boolean().optional(),
-  is_active: z.boolean().optional(),
-  thumbnail: z.instanceof(File, { message: "Thumbnail is required" }),
-  categories: z
-    .array(z.number())
-    .max(
-      MAX_CATEGORIES_PORTFOLIO,
-      `Portfolios can have up to ${MAX_CATEGORIES_PORTFOLIO} categories`,
-    )
-    .optional(),
-});
+export const createPortfolioSchema = (t: Translator) =>
+  z.object({
+    title: requiredString(t, t("fields.title")),
+    slug: slugField(t),
+    description: z.string().optional(),
+    user_id: z.number(),
+    is_highlight: z.boolean().optional(),
+    is_active: z.boolean().optional(),
+    thumbnail: z.instanceof(File, { message: t("validation.thumbnailRequired") }),
+    categories: z
+      .array(z.number())
+      .max(
+        MAX_CATEGORIES_PORTFOLIO,
+        t("validation.maxCategories", { max: MAX_CATEGORIES_PORTFOLIO }),
+      )
+      .optional(),
+  });
 
-export type CreatePortfolioSchemaType = z.infer<typeof createPortfolioSchema>;
+export type CreatePortfolioSchemaType = z.infer<
+  ReturnType<typeof createPortfolioSchema>
+>;
 
-export const updatePortfolioSchema = z.object({
-  title: z.string().min(1, "Title is required").optional(),
-  slug: z
-    .string()
-    .min(3, "Slug must be at least 3 characters long")
-    .regex(
-      /^[a-z0-9-]+$/,
-      "Slug must contain only lowercase letters, numbers, and hyphens",
-    )
-    .optional(),
-  description: z.string().optional(),
-  is_highlight: z.boolean().optional(),
-  is_active: z.boolean().optional(),
-  thumbnail: z.instanceof(File).optional(),
-  categories: z
-    .array(z.number())
-    .max(
-      MAX_CATEGORIES_PORTFOLIO,
-      `Portfolios can have up to ${MAX_CATEGORIES_PORTFOLIO} categories`,
-    )
-    .optional(),
-});
+export const updatePortfolioSchema = (t: Translator) =>
+  z.object({
+    title: requiredString(t, t("fields.title")).optional(),
+    slug: slugField(t).optional(),
+    description: z.string().optional(),
+    is_highlight: z.boolean().optional(),
+    is_active: z.boolean().optional(),
+    thumbnail: z.instanceof(File).optional(),
+    categories: z
+      .array(z.number())
+      .max(
+        MAX_CATEGORIES_PORTFOLIO,
+        t("validation.maxCategories", { max: MAX_CATEGORIES_PORTFOLIO }),
+      )
+      .optional(),
+  });
 
-export type UpdatePortfolioSchemaType = z.infer<typeof updatePortfolioSchema>;
+export type UpdatePortfolioSchemaType = z.infer<
+  ReturnType<typeof updatePortfolioSchema>
+>;

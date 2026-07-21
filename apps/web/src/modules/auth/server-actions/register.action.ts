@@ -2,6 +2,7 @@
 
 import type { ActionReturn } from "@repo/common-lib/types/response";
 import type { BaseUser } from "@repo/common-lib/types/user";
+import { getTranslations } from "next-intl/server";
 import authService from "../auth.service";
 import { getObjErrorFromZod } from "../helpers";
 import { registerRequestSchema } from "../schemas/auth.shema";
@@ -34,7 +35,8 @@ export const registerServerAction = async (
       ? (formData.get("invitation_code") as string)
       : undefined,
   };
-  const validatedData = registerRequestSchema.safeParse(credentials);
+  const t = await getTranslations();
+  const validatedData = registerRequestSchema(t).safeParse(credentials);
   if (!validatedData.success) {
     return {
       data: null,
@@ -49,7 +51,7 @@ export const registerServerAction = async (
       result.error &&
       (result.error.status_code === 400 || result.error.status_code === 401)
         ? result.error.errors
-        : ["Something went wrong"];
+        : [t("actions.genericError")];
     return {
       data: null,
       errors,

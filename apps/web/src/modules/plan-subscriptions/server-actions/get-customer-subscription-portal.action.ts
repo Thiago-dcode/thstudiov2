@@ -1,6 +1,7 @@
 "use server";
 
 import type { ActionReturn } from "@repo/common-lib/types/response";
+import { getTranslations } from "next-intl/server";
 import * as z from "zod";
 import {
   getFriendlyApiErrors,
@@ -42,14 +43,15 @@ export const getCustomerSubscriptionPortalAction = async (
 
     return {
       data: null,
-      errors: getFriendlyApiErrors(result),
+      errors: await getFriendlyApiErrors(result),
       inputs: validated.data,
     };
   } catch (e) {
     console.error("Error during getCustomerSubscriptionPortalAction", e);
+    const t = await getTranslations();
     return {
       data: null,
-      errors: ["Something went wrong. Please try again later."],
+      errors: [t("actions.genericError")],
       inputs: validated.data,
     };
   }

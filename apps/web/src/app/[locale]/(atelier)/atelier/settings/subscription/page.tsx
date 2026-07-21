@@ -1,5 +1,6 @@
 import { Button } from "@repo/ui/components/shadcn/button";
 import { ArrowLeft } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { config } from "@/lib/config";
@@ -16,6 +17,7 @@ import {
 
 // This page is only for upgrade plans, downgrade or cancel should be handled by stripe portal
 export default async function UpdateSubscriptionPage() {
+  const t = await getTranslations("atelier.settings.changePlan");
   const user = await userSession();
   if (!user) redirect("/");
 
@@ -43,30 +45,31 @@ export default async function UpdateSubscriptionPage() {
     const currentPlanName =
       activePlan?.data?.translation?.name ||
       activePlan?.data?.name ||
-      "your current plan";
+      t("currentPlanFallback");
     return (
       <AdminPageContainer>
-        <AdminPageTitle title="Change Plan">
+        <AdminPageTitle title={t("pageTitle")}>
           <Button variant="ghost" size="sm" asChild>
             <Link href="/atelier/settings" className="gap-2">
-              <ArrowLeft className="size-4" /> Back to Settings
+              <ArrowLeft className="size-4" /> {t("backToSettings")}
             </Link>
           </Button>
         </AdminPageTitle>
 
         <div className="flex items-center justify-center pt-8">
           <section className="w-full max-w-lg border border-fg-2 px-6 py-6 space-y-2">
-            <p className="text-base font-semibold">
-              You're already on the most powerful plan.
-            </p>
+            <p className="text-base font-semibold">{t("alreadyOnBest")}</p>
             <p className="text-sm text-text-muted">
-              Your current plan is{" "}
-              <span className="font-medium text-text">{currentPlanName}</span> —
-              there’s nothing higher to upgrade to right now.
+              {t.rich("currentPlanIs", {
+                planName: currentPlanName,
+                strong: (chunks) => (
+                  <span className="font-medium text-text">{chunks}</span>
+                ),
+              })}
             </p>
             <div className="pt-2">
               <Button asChild className="w-full">
-                <Link href="/atelier/settings">Go back to Settings</Link>
+                <Link href="/atelier/settings">{t("goBackToSettings")}</Link>
               </Button>
             </div>
           </section>
@@ -79,10 +82,10 @@ export default async function UpdateSubscriptionPage() {
 
   return (
     <AdminPageContainer>
-      <AdminPageTitle title="Change Plan">
+      <AdminPageTitle title={t("pageTitle")}>
         <Button variant="ghost" size="sm" asChild>
           <Link href="/atelier/settings" className="gap-2">
-            <ArrowLeft className="size-4" /> Back to Settings
+            <ArrowLeft className="size-4" /> {t("backToSettings")}
           </Link>
         </Button>
       </AdminPageTitle>
@@ -96,12 +99,12 @@ export default async function UpdateSubscriptionPage() {
           benefit={benefit.data || undefined}
           onFreeComponent={
             <Button variant="outline" asChild className="w-full">
-              <Link href="/atelier/settings">Cancel</Link>
+              <Link href="/atelier/settings">{t("cancel")}</Link>
             </Button>
           }
           onErrorComponent={
             <Button variant="outline" asChild className="w-full">
-              <Link href="/atelier/settings">Back to Settings</Link>
+              <Link href="/atelier/settings">{t("backToSettings")}</Link>
             </Button>
           }
         />

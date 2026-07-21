@@ -2,7 +2,7 @@ import type { EnumType } from "@repo/common-lib/constants/enums";
 import { defineRouting } from "next-intl/routing";
 
 // URL locale slugs (lowercase for URLs). Maps to uppercase LANGUAGE_CODE internally.
-export const SUPPORTED_LOCALES = ["en", "es"] as const;
+export const SUPPORTED_LOCALES = ["en", "es", "pt"] as const;
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
 
 // Map from URL locale slug to uppercase LANGUAGE_CODE
@@ -12,6 +12,7 @@ const LOCALE_TO_LANGUAGE_CODE: Record<
 > = {
   en: "EN",
   es: "ES",
+  pt: "PT",
 };
 
 export const routing = defineRouting({
@@ -30,4 +31,5 @@ export const urlLocaleToLanguageCode = (
 export const localeLabels: Record<SupportedLocale, string> = {
   en: "English",
   es: "Español",
+  pt: "Português",
 };

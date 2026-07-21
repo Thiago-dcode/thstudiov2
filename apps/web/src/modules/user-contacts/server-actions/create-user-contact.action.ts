@@ -3,6 +3,7 @@
 import type { ActionReturn } from "@repo/common-lib/types/response";
 import type { UserContact } from "@repo/common-lib/types/user-contact";
 import { cleanObj, trimValues } from "@repo/common-lib/utils/cleanObj";
+import { getTranslations } from "next-intl/server";
 import {
   getFriendlyApiErrors,
   getObjErrorFromZod,
@@ -28,7 +29,8 @@ export const createUserContactAction = async (
 
   trimValues(rawData, { deep: true });
 
-  const validated = createUserContactSchema.safeParse(rawData);
+  const t = await getTranslations();
+  const validated = createUserContactSchema(t).safeParse(rawData);
   if (!validated.success) {
     return {
       data: null,
@@ -51,7 +53,7 @@ export const createUserContactAction = async (
   if (result.error || result.data === null) {
     return {
       data: null,
-      errors: getFriendlyApiErrors(result),
+      errors: await getFriendlyApiErrors(result),
       inputs: rawData,
     };
   }

@@ -1,9 +1,11 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { ConfirmSubmitButton } from "@/app/[locale]/(atelier)/__components/confirm-submit-button";
 import { useCollection } from "@/modules/collections/providers/create-update-collection.provider";
 
 export const SubmitCollectionButton = () => {
+  const t = useTranslations("atelier.common");
   const { canSubmit, isPending, success, currentCollection, submitCollection } =
     useCollection();
   const isUpdate = Boolean(currentCollection);
@@ -14,12 +16,16 @@ export const SubmitCollectionButton = () => {
       isActionable={isActionable}
       isPending={isPending}
       success={success}
-      buttonLabel={isUpdate ? "Update" : "Save"}
-      dialogTitle={isUpdate ? "Update collection" : "Save collection"}
+      buttonLabel={isUpdate ? t("update") : t("save")}
+      dialogTitle={
+        isUpdate
+          ? t("submit.updateCollectionTitle")
+          : t("submit.saveCollectionTitle")
+      }
       dialogDescription={
         isUpdate
-          ? "Your changes will be saved and applied to your live collection."
-          : "Your collection will be created and saved to your account."
+          ? t("submit.updateCollectionDescription")
+          : t("submit.createCollectionDescription")
       }
       onConfirm={() => void submitCollection()}
     />

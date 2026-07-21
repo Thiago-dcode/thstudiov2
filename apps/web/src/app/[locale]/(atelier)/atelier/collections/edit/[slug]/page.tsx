@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { notFound, redirect } from "next/navigation";
 import {
   AdminPageContainer,
@@ -13,6 +14,7 @@ type Props = {
 };
 
 export default async function CollectionEdit({ params }: Props) {
+  const t = await getTranslations("atelier.collections");
   const userAuth = await userSession();
   if (!userAuth) {
     redirect("/");
@@ -26,7 +28,7 @@ export default async function CollectionEdit({ params }: Props) {
 
   if (collectionResponse.error) {
     return (
-      <div>{collectionResponse?.error?.message || "Something went wrong"}</div>
+      <div>{collectionResponse?.error?.message || t("loadError")}</div>
     );
   }
 
@@ -42,7 +44,7 @@ export default async function CollectionEdit({ params }: Props) {
   return (
     <AdminPageContainer>
       <AdminPageTitle
-        title={`Edit: ${collection.title}`}
+        title={t("editTitlePrefix", { title: collection.title })}
         publicHref={publicHref}
       >
         <DeleteCollectionDialog

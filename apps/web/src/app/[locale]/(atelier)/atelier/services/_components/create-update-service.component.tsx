@@ -28,6 +28,7 @@ import {
 } from "@repo/ui/contexts/file.provider";
 import { usePreviewUrls } from "@repo/ui/hooks/usePreviewUrls";
 import { cn } from "@repo/ui/lib/utils";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef } from "react";
 import { StickyFormFooter } from "@/app/[locale]/(atelier)/__components/sticky-form-footer";
@@ -43,6 +44,7 @@ export const CreateOrUpdateService = ({
   defaultService?: FullService;
   portfolios: Portfolio[];
 }) => {
+  const t = useTranslations("atelier.services.form");
   const router = useRouter();
   const {
     currentService,
@@ -95,9 +97,7 @@ export const CreateOrUpdateService = ({
 
   const getSlugStatusMessage = () => {
     if (isCheckingSlug) {
-      return (
-        <p className="text-sm text-text-muted">Checking availability...</p>
-      );
+      return <p className="text-sm text-text-muted">{t("slugChecking")}</p>;
     }
     if (
       typeof isSlugAvailable === "boolean" &&
@@ -105,16 +105,10 @@ export const CreateOrUpdateService = ({
     ) {
       if (isSlugAvailable) {
         return (
-          <p className="text-sm text-green-600">
-            &#10003; This slug is available
-          </p>
+          <p className="text-sm text-green-600">{t("slugAvailable")}</p>
         );
       }
-      return (
-        <p className="text-sm text-error">
-          &#10007; This slug is already taken
-        </p>
-      );
+      return <p className="text-sm text-error">{t("slugTaken")}</p>;
     }
     return null;
   };
@@ -126,8 +120,7 @@ export const CreateOrUpdateService = ({
           role="status"
           className="mb-6 border border-border/60 bg-fg-2/40 px-4 py-3 text-sm text-text-muted"
         >
-          This service has been blocked. You can review it here, but it cannot
-          be edited until the block is lifted.
+          {t("blockedNotice")}
         </div>
       ) : null}
       <FormComponent.Form onSubmit={handleSubmit} className="relative">
@@ -159,12 +152,12 @@ export const CreateOrUpdateService = ({
               }}
               defaultValue={serviceInput.current.title}
               error={inputErrors?.title}
-              label="Title"
+              label={t("titleLabel")}
               required={!isUpdate}
               name="title"
               id="title"
               type="text"
-              placeholder="Portrait Photography"
+              placeholder={t("titlePlaceholder")}
             />
 
             <div className="space-y-2">
@@ -181,18 +174,18 @@ export const CreateOrUpdateService = ({
                 }}
                 defaultValue={serviceInput.current.slug}
                 error={inputErrors?.slug}
-                label="Slug"
+                label={t("slugLabel")}
                 required={!isUpdate}
                 name="slug"
                 id="slug"
                 type="text"
-                placeholder="portrait-photography"
-                extraInfo="URL-friendly identifier. Only lowercase letters, numbers and hyphens."
+                placeholder={t("slugPlaceholder")}
+                extraInfo={t("slugInfo")}
                 disabled={isCheckingSlug || isPending}
               />
               {isValidSlug === false && (
                 <p className="text-sm text-error">
-                  &#10007; Invalid slug format. Example: portrait-photography
+                  {t("slugInvalidFormat")}
                 </p>
               )}
               {getSlugStatusMessage()}
@@ -207,10 +200,10 @@ export const CreateOrUpdateService = ({
               defaultValue={serviceInput.current.description}
               error={inputErrors?.description}
               rows={4}
-              label="Description"
+              label={t("descriptionLabel")}
               name="description"
               id="description"
-              placeholder="Describe your service..."
+              placeholder={t("descriptionPlaceholder")}
             />
             {portfolios.length > 0 && (
               <PortfolioSelect
@@ -261,7 +254,7 @@ export const CreateOrUpdateService = ({
                 }}
                 defaultValue={serviceInput.current.price}
                 error={inputErrors?.price}
-                label="Price"
+                label={t("priceLabel")}
                 name="price"
                 id="price"
                 type="number"
@@ -269,7 +262,7 @@ export const CreateOrUpdateService = ({
                 max={MAX_SERVICE_PRICE}
                 step="0.01"
                 placeholder="0.00"
-                extraInfo="Price is optional, leave it to 0."
+                extraInfo={t("priceInfo")}
               />
 
               <div className="flex flex-col gap-3 pt-5">
@@ -286,7 +279,7 @@ export const CreateOrUpdateService = ({
                     htmlFor="show_price"
                     className="text-xs text-text-muted cursor-pointer"
                   >
-                    Show price
+                    {t("showPrice")}
                   </Label>
                 </div>
                 <div className="flex items-center gap-2">
@@ -302,7 +295,7 @@ export const CreateOrUpdateService = ({
                     htmlFor="is_active"
                     className="text-xs text-text-muted cursor-pointer"
                   >
-                    Active
+                    {t("active")}
                   </Label>
                 </div>
               </div>
@@ -330,23 +323,19 @@ export const CreateOrUpdateService = ({
                   htmlFor="service-is-highlight"
                   className="text-sm font-normal cursor-pointer"
                 >
-                  Show on profile page
+                  {t("showOnProfile")}
                 </Label>
                 <InfoTooltip
                   content={
                     <p className="text-sm">
-                      When enabled, this service is highlighted on your public
-                      artist profile so visitors can find it more easily. You
-                      can highlight up to {highlightLimit} services on your
-                      profile page.
+                      {t("showOnProfileInfo", { limit: highlightLimit })}
                     </p>
                   }
                 />
               </div>
               {!isLoadingHighlightCount && highlightToggleDisabled && (
                 <p className="text-xs text-text-muted">
-                  You&apos;ve reached the limit of {highlightLimit} highlighted
-                  services on your profile page.
+                  {t("highlightLimitReached", { limit: highlightLimit })}
                 </p>
               )}
             </div>
@@ -367,8 +356,8 @@ export const CreateOrUpdateService = ({
                 notifyFormChange();
                 setFeatures(value);
               }}
-              label="Features"
-              placeholder="e.g. 2-hour session"
+              label={t("featuresLabel")}
+              placeholder={t("featuresPlaceholder")}
             />
 
             <DynamicListInput
@@ -377,8 +366,8 @@ export const CreateOrUpdateService = ({
                 notifyFormChange();
                 setTerms(value);
               }}
-              label="Terms"
-              placeholder="e.g. 50% deposit required"
+              label={t("termsLabel")}
+              placeholder={t("termsPlaceholder")}
             />
           </div>
         </div>
@@ -419,6 +408,7 @@ const ThumbnailInput = ({
   onFileChange: (file: File | undefined) => void;
   error?: string;
 }) => {
+  const t = useTranslations("atelier.services.form");
   const { files } = useInputFile();
   const { previewUrls } = usePreviewUrls({ defaultUrl, files });
   const onFileChangeRef = useRef(onFileChange);
@@ -431,7 +421,7 @@ const ThumbnailInput = ({
   return (
     <div className="space-y-1">
       <Label className="block text-xs tracking-wide text-text-muted">
-        Thumbnail
+        {t("thumbnailLabel")}
       </Label>
       <div className={cn("w-full flex flex-col gap-3")}>
         {previewUrls?.length ? (
@@ -439,7 +429,7 @@ const ThumbnailInput = ({
             <div className="relative aspect-video w-full max-w-[400px] overflow-hidden border-4 border-fg-2">
               <img
                 src={previewUrls[0]}
-                alt="Thumbnail Preview"
+                alt={t("thumbnailAlt")}
                 className="w-full h-full object-cover"
               />
             </div>
@@ -460,6 +450,7 @@ const PortfolioSelect = ({
   value?: number;
   onChange: (value: number | undefined) => void;
 }) => {
+  const t = useTranslations("atelier.services.form");
   const selectedPortfolio = useMemo(
     () => portfolios.find((p) => p.id === value),
     [portfolios, value],
@@ -468,7 +459,7 @@ const PortfolioSelect = ({
   return (
     <div className="space-y-1">
       <Label className="block text-xs tracking-wide text-text-muted">
-        Link to Portfolio (Optional)
+        {t("portfolioLinkLabel")}
       </Label>
       <Combobox
         value={value ? String(value) : null}
@@ -477,7 +468,7 @@ const PortfolioSelect = ({
         }}
       >
         <ComboboxInput
-          placeholder="Select a portfolio..."
+          placeholder={t("portfolioSelectPlaceholder")}
           value={selectedPortfolio?.title ?? ""}
           readOnly
           showClear
@@ -507,9 +498,7 @@ const PortfolioSelect = ({
           </ComboboxList>
         </ComboboxContent>
       </Combobox>
-      <p className="text-[0.8rem] text-text-muted">
-        Link a portfolio so clients can see related photos of this service.
-      </p>
+      <p className="text-[0.8rem] text-text-muted">{t("portfolioLinkInfo")}</p>
     </div>
   );
 };

@@ -24,6 +24,6 @@ export const getAllLayoutsAction = async (
   }
   return {
     data: null,
-    errors: getFriendlyApiErrors(result),
+    errors: await getFriendlyApiErrors(result),
   };
 };

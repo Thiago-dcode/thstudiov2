@@ -5,12 +5,14 @@ import {
   CREATE_WAIT_LIST_ENTRY,
   INVITE_WAIT_LIST_BATCH,
   CREATE_OR_UPDATE_EMAIL_PREFERENCE,
+  DEFAULT_LANGUAGE,
 } from '@repo/common-lib/constants/constants';
 import type {
   PublicCreateWaitListInput,
   WaitListCreateResponse,
   UpdateWaitListInput,
 } from '@repo/common-lib/types/wait-list';
+import { RequestService } from 'src/common/services/request.service';
 import { CreateWaitListEvent } from './events/create-wait-list.event';
 import { InviteWaitListBatchEvent } from './events/invite-wait-list-batch.event';
 import { IndexWaitListRequest } from './requests/index-wait-list.request';
@@ -23,6 +25,7 @@ export class WaitListService {
     private readonly waitListRepository: WaitListRepository,
     private readonly eventEmitter: EventEmitter2,
     private readonly logger: LogService,
+    private readonly requestService: RequestService,
   ) { }
 
   async findAll(filters: IndexWaitListRequest) {
@@ -104,6 +107,7 @@ export class WaitListService {
   async create({ email }: PublicCreateWaitListInput): Promise<WaitListCreateResponse> {
     const normalizedEmail = this.normalizeEmail(email);
     const emailLog = this.redactEmail(normalizedEmail);
+    const language = this.requestService.language ?? DEFAULT_LANGUAGE;
 
     try {
       const existing = await this.waitListRepository.findByEmail(normalizedEmail);
@@ -116,7 +120,7 @@ export class WaitListService {
         };
       }
 
-      this.logger.info(`Emitting wait list create events: ${emailLog}`);
+      this.logger.info(`Emitting wait list create events: ${emailLog}`, { language });
 
       this.eventEmitter.emit(
         CREATE_OR_UPDATE_EMAIL_PREFERENCE,
@@ -127,7 +131,7 @@ export class WaitListService {
 
       this.eventEmitter.emit(
         CREATE_WAIT_LIST_ENTRY,
-        new CreateWaitListEvent({ email: normalizedEmail }),
+        new CreateWaitListEvent({ email: normalizedEmail, language }),
       );
 
       return {

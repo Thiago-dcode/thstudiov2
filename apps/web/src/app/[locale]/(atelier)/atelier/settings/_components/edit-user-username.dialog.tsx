@@ -14,6 +14,7 @@ import {
 } from "@repo/ui/components/shadcn/dialog";
 import { toast } from "@repo/ui/sonner";
 import { Pencil } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import FormComponent from "@/lib/components/form-component";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
@@ -24,6 +25,7 @@ type Props = {
 };
 
 export const EditUserUsernameDialog = ({ user }: Props) => {
+  const t = useTranslations("atelier.settings.changeUsername");
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState(user.username ?? "");
 
@@ -43,7 +45,7 @@ export const EditUserUsernameDialog = ({ user }: Props) => {
 
   useEffect(() => {
     if (success) {
-      toast.success("Username updated successfully!");
+      toast.success(t("successToast"));
       setOpen(false);
       reset();
     }
@@ -90,27 +92,29 @@ export const EditUserUsernameDialog = ({ user }: Props) => {
       </DialogTrigger>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>Change Username</DialogTitle>
-          <DialogDescription>
-            Choose a new username for your account.
-          </DialogDescription>
+          <DialogTitle>{t("title")}</DialogTitle>
+          <DialogDescription>{t("description")}</DialogDescription>
         </DialogHeader>
 
         <FormComponent.Container>
           {maxResetReached ? (
             <div className=" border border-error/30 bg-error/5 px-4 py-3 text-sm space-y-1">
-              <p className="font-medium text-error">Monthly limit reached</p>
+              <p className="font-medium text-error">
+                {t("monthlyLimitReached")}
+              </p>
               <p className="text-text-muted">
-                You've used all {MAX_USERNAME_RESET} username changes for this
-                period.
+                {t("usedAllChanges", { max: MAX_USERNAME_RESET })}
                 {resetDateFormatted && (
                   <>
                     {" "}
-                    Available again on{" "}
-                    <span className="font-medium text-text">
-                      {resetDateFormatted}
-                    </span>
-                    .
+                    {t.rich("availableAgainOn", {
+                      date: resetDateFormatted,
+                      strong: (chunks) => (
+                        <span className="font-medium text-text">
+                          {chunks}
+                        </span>
+                      ),
+                    })}
                   </>
                 )}
               </p>
@@ -118,7 +122,7 @@ export const EditUserUsernameDialog = ({ user }: Props) => {
           ) : (
             <FormComponent.Form onSubmit={handleSubmit} className="pt-2">
               <FormComponent.LabelInput
-                label="New Username"
+                label={t("newUsernameLabel")}
                 id="username"
                 name="username"
                 type="text"
@@ -126,7 +130,7 @@ export const EditUserUsernameDialog = ({ user }: Props) => {
                 autoFocus
                 required
                 defaultValue={user.username ?? ""}
-                extraInfo="3–20 characters, letters and numbers only"
+                extraInfo={t("newUsernameInfo")}
                 onChange={(e) => {
                   setValue(e.target.value);
                   deleteInputErrorProperty("username");
@@ -136,9 +140,13 @@ export const EditUserUsernameDialog = ({ user }: Props) => {
 
               {effectiveCount > 0 && (
                 <p className="text-xs text-text-muted">
-                  {remaining} of {MAX_USERNAME_RESET} change
-                  {remaining !== 1 ? "s" : ""} remaining this month
-                  {resetDateFormatted && <> · resets on {resetDateFormatted}</>}
+                  {t("remainingChanges", {
+                    remaining,
+                    max: MAX_USERNAME_RESET,
+                  })}
+                  {resetDateFormatted && (
+                    <>{t("resetsOn", { date: resetDateFormatted })}</>
+                  )}
                 </p>
               )}
 
@@ -146,7 +154,7 @@ export const EditUserUsernameDialog = ({ user }: Props) => {
                 isPending={isPending}
                 disabled={isPending || isUnchanged}
               >
-                Update Username
+                {t("submit")}
               </FormComponent.SubmitButton>
 
               {errors && errors.length > 0 && <Errors errors={errors} />}

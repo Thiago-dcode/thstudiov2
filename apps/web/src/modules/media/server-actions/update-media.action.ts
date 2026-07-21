@@ -3,6 +3,7 @@
 import type { Media, UpdateMediaInput } from "@repo/common-lib/types/media";
 import type { ActionReturn } from "@repo/common-lib/types/response";
 import { cleanObj, trimValues } from "@repo/common-lib/utils/cleanObj";
+import { getTranslations } from "next-intl/server";
 import {
   getFriendlyApiErrors,
   getObjErrorFromZod,
@@ -57,9 +58,10 @@ export const updateMediaAction = async (
 
   // Check if there's any data to update
   if (!Object.keys(cleanedData).length) {
+    const t = await getTranslations();
     return {
       errors: [],
-      inputErrors: { _form: "No fields to update" },
+      inputErrors: { _form: t("actions.noFieldsToUpdate") },
       data: null,
       inputs: input,
     };
@@ -78,6 +80,6 @@ export const updateMediaAction = async (
 
   return {
     data: null,
-    errors: getFriendlyApiErrors(media),
+    errors: await getFriendlyApiErrors(media),
   };
 };

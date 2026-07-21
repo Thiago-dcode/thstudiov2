@@ -1,4 +1,5 @@
 import { BookUser } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { AboutPageDisplay } from "@/modules/about-page/components/about-page-display";
 import { CreateOrUpdateAboutPage } from "@/modules/about-page/components/create-update-about-page";
@@ -11,6 +12,7 @@ import {
 } from "../../__components/admin-page.component";
 
 export default async function AboutPage() {
+  const t = await getTranslations("atelier.about");
   const userAuth = await userSession();
   if (!userAuth) {
     redirect("/");
@@ -25,8 +27,8 @@ export default async function AboutPage() {
   return (
     <AdminPageContainer>
       <AdminPageTitle
-        title="About Page"
-        info="Share your background, artistic journey, and anything else you'd like your audience to know about you."
+        title={t("pageTitle")}
+        info={t("pageInfo")}
         publicHref={publicHref}
       >
         <CreateOrUpdateAboutPage
@@ -39,7 +41,7 @@ export default async function AboutPage() {
       ) : (
         <AdminPageEmptyState
           icon={<BookUser />}
-          description="No about page created yet. Share your background and artistic journey."
+          description={t("emptyStateDescription")}
         >
           <CreateOrUpdateAboutPage
             currentAboutPage={aboutPage || undefined}

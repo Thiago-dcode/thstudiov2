@@ -17,6 +17,7 @@ import {
   useInputFile,
 } from "@repo/ui/contexts/file.provider";
 import { usePreviewUrls } from "@repo/ui/hooks/usePreviewUrls";
+import { useTranslations } from "next-intl";
 import { useRef } from "react";
 import FormComponent from "@/lib/components/form-component";
 import CategoryCombobox from "@/modules/categories/components/category-combobox";
@@ -24,6 +25,7 @@ import { UpdateCategoriesProvider } from "@/modules/categories/providers/categor
 import { usePortfolio } from "@/modules/portfolios/providers/create-update-portfolio.provider";
 
 const ThumbnailInput = () => {
+  const t = useTranslations("atelier.portfolios.form");
   const { files } = useInputFile();
 
   const {
@@ -56,7 +58,7 @@ const ThumbnailInput = () => {
           <div className="relative aspect-video w-full overflow-hidden border-2 border-border">
             <img
               src={previewUrls[0] || currentPortfolio?.thumbnail}
-              alt="Thumbnail Preview"
+              alt={t("thumbnailAlt")}
               className="w-full h-full object-cover opacity-80"
             />
             {portfolioInput.title && (
@@ -69,9 +71,7 @@ const ThumbnailInput = () => {
           </div>
         </div>
       ) : (
-        <p className="text-sm text-text-muted ">
-          Add a thumbnail image for your portfolio (required)
-        </p>
+        <p className="text-sm text-text-muted ">{t("thumbnailHint")}</p>
       )}
       <FileInput
         name="thumbnail"
@@ -90,6 +90,7 @@ const ThumbnailInput = () => {
 };
 
 const FirstStepInputs = () => {
+  const t = useTranslations("atelier.portfolios.form");
   const {
     portfolioInput,
     handleSetFormData,
@@ -150,9 +151,7 @@ const FirstStepInputs = () => {
   // Get slug status message
   const getSlugStatusMessage = () => {
     if (isCheckingSlugAvailability) {
-      return (
-        <p className="text-sm text-text-muted">Checking availability...</p>
-      );
+      return <p className="text-sm text-text-muted">{t("slugChecking")}</p>;
     }
     if (
       typeof isSlugAvailable === "boolean" &&
@@ -160,12 +159,10 @@ const FirstStepInputs = () => {
     ) {
       if (isSlugAvailable) {
         return (
-          <p className="text-sm text-green-600">✓ This slug is available</p>
+          <p className="text-sm text-green-600">{t("slugAvailable")}</p>
         );
       } else {
-        return (
-          <p className="text-sm text-error">✗ This slug is already taken</p>
-        );
+        return <p className="text-sm text-error">{t("slugTaken")}</p>;
       }
     }
     return null;
@@ -186,12 +183,12 @@ const FirstStepInputs = () => {
             handleTitleChange(e);
           }}
           error={inputErrors?.title}
-          label="Title"
+          label={t("titleLabel")}
           required
           name="title"
           id="title"
           type="text"
-          placeholder="My Portfolio"
+          placeholder={t("titlePlaceholder")}
           disabled={isPending}
         />
 
@@ -202,19 +199,17 @@ const FirstStepInputs = () => {
               handleSlugChange(e);
             }}
             error={inputErrors?.slug}
-            label="Slug"
+            label={t("slugLabel")}
             required
             name="slug"
             id="slug"
             type="text"
-            placeholder="my-portfolio"
-            extraInfo="A slug is a URL-friendly version of your title (e.g., 'my-awesome-portfolio'). It should be unique as it's used in the portfolio's URL to identify it and makes it easier to find."
+            placeholder={t("slugPlaceholder")}
+            extraInfo={t("slugInfo")}
             disabled={isCheckingSlugAvailability || isPending}
           />
           {isSlugFormatValid === false && (
-            <p className="text-sm text-error">
-              ✗ Invalid slug format. Example: my-portfolio
-            </p>
+            <p className="text-sm text-error">{t("slugInvalidFormat")}</p>
           )}
           {getSlugStatusMessage()}
         </div>
@@ -227,15 +222,17 @@ const FirstStepInputs = () => {
           }}
           error={inputErrors?.description}
           rows={4}
-          label="Description"
+          label={t("descriptionLabel")}
           name="description"
           id="description"
-          placeholder="Describe your portfolio..."
+          placeholder={t("descriptionPlaceholder")}
           disabled={isPending}
         />
 
         <div className="space-y-2">
-          <Label className="text-sm font-medium">Categories</Label>
+          <Label className="text-sm font-medium">
+            {t("categoriesLabel")}
+          </Label>
           <UpdateCategoriesProvider userCategories={categoriesSelected}>
             <CategoryCombobox
               categoriesSelected={categoriesSelected}
@@ -245,8 +242,10 @@ const FirstStepInputs = () => {
             />
           </UpdateCategoriesProvider>
           <p className="text-xs text-text-muted tabular-nums">
-            {categoriesSelected.length} / {MAX_CATEGORIES_PORTFOLIO} categories
-            · Optional. Select categories that describe this portfolio.
+            {t("categoriesCountHint", {
+              count: categoriesSelected.length,
+              max: MAX_CATEGORIES_PORTFOLIO,
+            })}
           </p>
         </div>
 
@@ -267,23 +266,19 @@ const FirstStepInputs = () => {
               htmlFor="portfolio-is-highlight"
               className="text-sm font-normal cursor-pointer"
             >
-              Show on profile page
+              {t("showOnProfile")}
             </Label>
             <InfoTooltip
               content={
                 <p className="text-sm">
-                  When enabled, this portfolio is highlighted on your public
-                  artist profile so visitors can find it more easily. You can
-                  highlight up to {highlightLimit} portfolios on your profile
-                  page.
+                  {t("showOnProfileInfo", { limit: highlightLimit })}
                 </p>
               }
             />
           </div>
           {!isLoadingHighlightCount && highlightToggleDisabled && (
             <p className="text-xs text-text-muted">
-              You&apos;ve reached the limit of {highlightLimit} highlighted
-              portfolios on your profile page.
+              {t("highlightLimitReached", { limit: highlightLimit })}
             </p>
           )}
         </div>
@@ -302,15 +297,10 @@ const FirstStepInputs = () => {
             htmlFor="portfolio-is-active"
             className="text-sm font-normal cursor-pointer"
           >
-            Active
+            {t("active")}
           </Label>
           <InfoTooltip
-            content={
-              <p className="text-sm">
-                When disabled, this portfolio is hidden from your public artist
-                profile and listings. You can still edit it in the atelier.
-              </p>
-            }
+            content={<p className="text-sm">{t("activeInfo")}</p>}
           />
         </div>
       </div>

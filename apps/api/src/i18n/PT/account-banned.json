@@ -1,0 +1,9 @@
+{
+    "SUBJECT": "Sua conta foi temporariamente banida",
+    "HI": "Olá",
+    "TITLE": "Conta Temporariamente Banida",
+    "DESCRIPTION": "Sua conta foi temporariamente banida devido a violações repetidas das políticas de conteúdo. Você não poderá realizar certas ações até que o banimento seja removido.",
+    "INFO": "Se você acredita que isso é um erro ou gostaria de recorrer, contate nossa equipe de suporte. As restrições da sua conta serão revisadas no início do seu próximo ciclo de faturamento.",
+    "CTA_TEXT": "Precisa de ajuda ou quer recorrer?",
+    "CTA_BUTTON": "Contatar Suporte"
+}
