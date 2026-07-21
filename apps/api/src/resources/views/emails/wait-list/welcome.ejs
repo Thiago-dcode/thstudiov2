@@ -13,7 +13,7 @@
           <tr>
             <td style="padding:0 0 24px; text-align:center;">
               <p class="e-text-muted" style="font-size:13px; color:#46443F; letter-spacing:1px; text-transform:uppercase; margin:0 0 8px 0;">
-                <%= globals.t(translatePath + '.TIER_LABEL') %>: <%= waitList.benefitType %>
+                <%= globals.t(translatePath + '.TIER_LABEL') %>: <%= globals.t('benefit-type.' + waitList.benefitType) %>
               </p>
               <h1 class="e-text" style="font-size:20px; font-weight:600; color:#000000; margin:0 0 12px 0; letter-spacing:1px;">
                 <%= globals.t(translatePath + '.TITLE') %>
@@ -31,13 +31,13 @@
                 class="e-card e-border-em" style="border:1.5px solid #C9C6BB; background-color:#FFFFFF;">
                 <tr>
                   <td style="padding:24px 12px; text-align:center;">
-                    <p class="e-accent" style="font-size:28px; margin:0; color:#ED2100; line-height:1.3; letter-spacing:1px;">
+                    <!-- <p class="e-accent" style="font-size:28px; margin:0; color:#ED2100; line-height:1.3; letter-spacing:1px;">
                       #<%= waitList.position %>
-                    </p>
-                    <p class="e-text-muted" style="font-size:14px; color:#46443F; margin:14px 0 0 0; line-height:1.6;">
+                    </p> -->
+                    <p class="e-text-muted" style="font-size:14px; color:#46443F; line-height:1.6;">
                       <%= globals.t(translatePath + '.BENEFIT_DESCRIPTION')
                         .replace('{months}', waitList.benefitMonths)
-                        .replace('{benefitType}', waitList.benefitType) %>
+                        .replace('{planName}', waitList.planName) %>
                     </p>
                   </td>
                 </tr>
@@ -45,48 +45,32 @@
             </td>
           </tr>
 
-          <!-- Expiration -->
-          <% if (waitList.expiresInDays) { %>
+      
+  <!-- CTA -->
+  <tr>
+    <td align="center" style="padding:24px 0 0;">
+      <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td align="center" class="e-accent-bg" style="background-color:#ED2100;">
+            <a href="<%= waitList.registrationUrl %>"
+              style="display:inline-block; padding:16px 48px; font-size:13px; font-weight:bold; text-decoration:none; color:#FFFFFF; letter-spacing:1.5px; text-transform:uppercase;">
+              <%= globals.t(translatePath + '.CTA_TEXT') %>
+            </a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+        <!-- Expiration -->
+        <% if (waitList.expiresInDays) { %>
           <tr>
-            <td align="center" style="padding:20px 0 0;">
-              <p class="e-text-muted" style="font-size:12px; color:#46443F; margin:0; line-height:1.5;">
-                <%= globals.t(translatePath + '.EXPIRATION_NOTE').replace('{days}', waitList.expiresInDays) %>
+            <td align="center" style="padding:24px 0 0;">
+              <p  style="font-size:13px; margin:0; line-height:1.6; text-align:center;">
+                * <%= globals.t(translatePath + '.EXPIRATION_NOTE').replace('{days}', waitList.expiresInDays) %>
               </p>
             </td>
           </tr>
           <% } %>
-
-          <!-- Urgency Warning -->
-          <tr>
-            <td style="padding:24px 0 0;">
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-                class="e-error-bg e-error-border" style="border:1.5px solid #F3AEB4; background-color:#FEE2E2;">
-                <tr>
-                  <td style="padding:24px 12px; text-align:center;">
-                    <p class="e-error-text" style="font-size:13px; margin:0; color:#E11D2E; line-height:1.6;">
-                      <%= globals.t(translatePath + '.URGENCY_NOTE') %>
-                    </p>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-          <!-- CTA -->
-          <tr>
-            <td align="center" style="padding:24px 0 0;">
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
-                <tr>
-                  <td align="center" class="e-accent-bg" style="background-color:#ED2100;">
-                    <a href="<%= waitList.registrationUrl %>"
-                      style="display:inline-block; padding:16px 48px; font-size:13px; font-weight:bold; text-decoration:none; color:#FFFFFF; letter-spacing:1.5px; text-transform:uppercase;">
-                      <%= globals.t(translatePath + '.CTA_TEXT') %>
-                    </a>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
 
           <%- include(globals.emailsPath + '/shared/footer') %>
 

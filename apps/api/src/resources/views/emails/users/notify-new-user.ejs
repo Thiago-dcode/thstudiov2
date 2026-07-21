@@ -11,53 +11,59 @@
 
                     <!-- Greeting -->
                     <tr>
-                        <td style="padding:0 0 24px; text-align:center;">
+                        <td style="padding:0 0 4px; text-align:center;">
                             <p class="e-text-muted" style="font-size:13px; color:#46443F; letter-spacing:1px; text-transform:uppercase; margin:0 0 8px 0;">
-                                <%= globals.t(translatePath + '.HI') %>
+                                <%= t(translatePath + '.HI') %>
                             </p>
-                            <h2 class="e-text" style="font-size:20px; font-weight:600; color:#000000; margin:0;">
+                            <p class="e-text" style="font-size:15px; font-weight:500; color:#000000; margin:0;">
                                 <%= user.username %>
-                            </h2>
+                            </p>
                         </td>
                     </tr>
 
                     <!-- Welcome Title -->
                     <tr>
-                        <td style="padding:0 0 24px; text-align:center;">
-                            <h1 class="e-text" style="font-size:20px; font-weight:600; color:#000000; margin:0 0 12px 0; letter-spacing:1px;">
-                                <%= globals.t(translatePath + '.WELCOME') %>
+                        <td style="padding:20px 0 32px; text-align:center;">
+                            <h1 class="e-text" style="font-size:26px; font-weight:600; color:#000000; margin:0 0 16px 0; letter-spacing:0.5px;">
+                                <%= t(translatePath + '.WELCOME') %>
                             </h1>
-                            <p class="e-text-muted" style="font-size:14px; color:#46443F; margin:0; line-height:1.6;">
-                                <%= globals.t(translatePath + '.WELCOME_MESSAGE') %>
+                            <p class="e-text-muted" style="font-size:14px; color:#46443F; text-align:center; line-height:1.7; margin:0 auto; max-width:440px;">
+                                <%= t(translatePath + '.WELCOME_MESSAGE') %>
                             </p>
                         </td>
                     </tr>
 
                     <% if (typeof features !== 'undefined' && Array.isArray(features) && features.length > 0) { %>
                     <!-- Features Intro -->
-                    <tr>
+                    <!-- <tr>
                         <td style="padding:0 0 24px; text-align:center;">
                             <p class="e-text-muted" style="font-size:14px; color:#46443F; margin:0; line-height:1.6;">
-                                <%= globals.t(translatePath + '.FEATURES_INTRO') %>
-                                <span class="e-text" style="color:#000000; font-weight:600;"><%= globals.t(translatePath + '.FEATURES_INTRO_EMPHASIS') %></span>
+                                <%= t(translatePath + '.FEATURES_INTRO') %>
+                                <span class="e-text" style="color:#000000; font-weight:600;"> <%= t(translatePath + '.FEATURES_INTRO_EMPHASIS') %></span>
                             </p>
                         </td>
-                    </tr>
+                    </tr> -->
 
                     <!-- Features List -->
                     <tr>
-                        <td>
+                        <td style="padding:0 0 32px;">
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
-                                class="e-card e-border-em" style="border:1.5px solid #C9C6BB; background-color:#FFFFFF;">
+                                class="e-card e-border-em" style="width:100%; border:1.5px solid #C9C6BB; background-color:#FFFFFF;">
                                 <% features.forEach(function(feature, index) { %>
                                 <tr>
-                                    <td class="e-text" style="padding:24px 12px; text-align:center; font-size:14px; color:#000000;">
-                                        <%= feature %>
+                                    <td style="padding:22px 28px;">
+                                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;">
+                                            <tr>
+                                                <td class="e-text" style="font-size:14px; color:#000000; line-height:1.6; word-break:break-word;">
+                                                    <%= feature %>
+                                                </td>
+                                            </tr>
+                                        </table>
                                     </td>
                                 </tr>
                                 <% if (index < features.length - 1) { %>
                                 <tr>
-                                    <td style="padding:0;">
+                                    <td style="padding:0 28px;">
                                         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                                             <tr><td class="e-border" style="height:1px; background-color:#E4E1D9; font-size:1px; line-height:1px;">&nbsp;</td></tr>
                                         </table>
@@ -74,14 +80,14 @@
                     <tr>
                         <td align="center" style="padding:24px 0 0;">
                             <p class="e-text-muted" style="font-size:14px; color:#46443F; margin:0 0 16px 0;">
-                                <%= globals.t(translatePath + '.CTA_START_TEXT') %>
+                                <%= t(translatePath + '.CTA_START_TEXT') %>
                             </p>
                             <table role="presentation" cellpadding="0" cellspacing="0" border="0">
                                 <tr>
                                     <td align="center" class="e-accent-bg" style="background-color:#ED2100;">
                                         <a href="<%= redirectHref %>"
                                             style="display:inline-block; padding:16px 48px; font-size:13px; font-weight:bold; text-decoration:none; color:#FFFFFF; letter-spacing:1.5px; text-transform:uppercase;">
-                                            <%= globals.t(translatePath + '.CTA_START_BUTTON') %>
+                                            <%= t(translatePath + '.CTA_START_BUTTON') %>
                                         </a>
                                     </td>
                                 </tr>

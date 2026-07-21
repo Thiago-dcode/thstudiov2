@@ -1,13 +1,13 @@
 {
-  "FROM_NAME": "Don't miss your chance",
-  "SUBJECT": "Your reserved {benefitType} access is waiting",
+  "SUBJECT": "Your {benefitType} access is waiting for you",
   "SUBJECT_FINAL": "Final chance: redeem your wait list invitation",
+  "KICKER": "Wait list reminder",
   "TITLE": "Your invitation is still active",
   "TITLE_FINAL": "Final call",
   "BENEFIT_DESCRIPTION": "Reserved {benefitType} access with {months} free month(s).",
   "HOOK": "Your reserved {benefitType} access and {months} free month(s) vanish when this link expires, and the spot goes to the next creator in line. Claim it now.",
   "HOOK_FINAL": "Your invitation expires in about {hours}h. Once it's gone, it's gone.",
-  "CTA_TEXT": "Redeem Invitation",
+  "CTA_TEXT": "Create your account",
   "COUNTDOWN": "Expires in about {hours} hours."
 }
 

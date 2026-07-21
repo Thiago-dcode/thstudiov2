@@ -17,35 +17,37 @@ export class PasswordRecoveryMail extends ApiMailService {
   constructor(
     viewService: ViewService,
     emailPreferencesService: EmailPreferencesService,
-    private readonly i18nService: I18nService,
+    i18nService: I18nService,
   ) {
     super(viewService, emailPreferencesService, {
       viewPath: 'emails/auth/password-recovery-mail',
       data: {},
       emailType: 'TRANSACTIONAL',
-    });
+    }, i18nService);
   }
-  setData(user: PasswordRecoveryMailUser, passwordRecoveryAttempt: PasswordRecoveryAttempt) {
-    this.user = user;
-    this.passwordRecoveryAttempt = passwordRecoveryAttempt;
+  setData(user: PasswordRecoveryMailUser, passwordRecoveryAttempt: PasswordRecoveryAttempt, lang?: string) {
+    const mail = new PasswordRecoveryMail(this.viewService, this.emailPreferencesService!, this.i18nService!);
+    mail.user = user;
+    mail.passwordRecoveryAttempt = passwordRecoveryAttempt;
+    if (lang) mail.lang = lang;
 
-    this.viewParams = {
+    mail.viewParams = {
       viewPath: 'emails/auth/password-recovery-mail',
       data: {
-        user: this.user,
+        user: mail.user,
         translatePath: 'password-recovery-mail',
-        passwordRecoveryAttempt: this.passwordRecoveryAttempt,
+        passwordRecoveryAttempt: mail.passwordRecoveryAttempt,
       },
       emailType: 'TRANSACTIONAL',
     };
-    return this;
+    return mail;
   }
 
   protected async buildEnvelope() {
     return {
-      from: mailingNoreplyEmail,
+      from: `${mailingNoreplyEmail}`,
       to: this.user.email,
-      subject: this.i18nService.translate('password-recovery-mail.SUBJECT'),
+      subject: this.t('password-recovery-mail.SUBJECT'),
     };
   }
 }

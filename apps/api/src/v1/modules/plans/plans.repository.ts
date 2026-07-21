@@ -169,6 +169,13 @@ export class PlansRepository extends BaseRepository {
     //TODO: create a response dto
     return result;
   }
+  /** Base plan rows only — no translation join, so it's safe to call outside a request context (e.g. queue processors). */
+  async findActivePlans(): Promise<PlanSchema[]> {
+    return await QueryBuilder.table('plans')
+      .where('is_active', '=', true)
+      .get<PlanSchema[]>();
+  }
+
   async findFreePlan(): Promise<Omit<FullPlan, 'translation'>> {
     const result = await QueryBuilder.table('plans')
       .select(this.BASE_COLUMNS)

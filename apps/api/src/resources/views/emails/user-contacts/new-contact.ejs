@@ -13,13 +13,13 @@
                     <tr>
                         <td style="padding:0 0 24px; text-align:center;">
                             <p class="e-text-muted" style="font-size:13px; color:#46443F; letter-spacing:1px; text-transform:uppercase;">
-                                <%= globals.t(translatePath + '.HI') %>
+                                <%= t(translatePath + '.HI') %>
                             </p>
                             <h2 class="e-text" style="font-size:20px; padding-top:8px; font-weight:600; color:#000000;">
                                 <%= artist.username %>
                             </h2>
                             <p class="e-text" style="font-size:14px; padding-top:15px; letter-spacing:1px; color:#000000;">
-                                <%= globals.t(translatePath + '.TITLE') %>
+                                <%= t(translatePath + '.TITLE') %>
                             </p>
                         </td>
                     </tr>
@@ -33,7 +33,7 @@
                                 <tr>
                                     <td style="padding:24px 12px;">
                                         <p class="e-text-muted" style="font-size:11px; color:#46443F; letter-spacing:1px; text-transform:uppercase; margin:0 0 8px 0;">
-                                            <%= globals.t(translatePath + '.CONTACT_NAME') %>
+                                            <%= t(translatePath + '.CONTACT_NAME') %>
                                         </p>
                                         <p class="e-text" style="margin:0; color:#000000;">
                                             <%= contact.contact_name %>
@@ -52,7 +52,7 @@
                                 <tr>
                                     <td style="padding:24px 12px;">
                                         <p class="e-text-muted" style="font-size:11px; color:#46443F; letter-spacing:1px; text-transform:uppercase; margin:0 0 8px 0;">
-                                            <%= globals.t(translatePath + '.CONTACT_EMAIL') %>
+                                            <%= t(translatePath + '.CONTACT_EMAIL') %>
                                         </p>
                                         <p style="margin:0;">
                                             <a href="mailto:<%= contact.contact_email %>" class="e-accent" style="color:#ED2100; text-decoration:underline;">
@@ -73,7 +73,7 @@
                                 <tr>
                                     <td style="padding:24px 12px;">
                                         <p class="e-text-muted" style="font-size:11px; color:#46443F; letter-spacing:1px; text-transform:uppercase; margin:0 0 8px 0;">
-                                            <%= globals.t(translatePath + '.SUBJECT_LABEL') %>
+                                            <%= t(translatePath + '.SUBJECT_LABEL') %>
                                         </p>
                                         <p class="e-text" style="margin:0; color:#000000;">
                                             <%= contact.subject %>
@@ -92,7 +92,7 @@
                                 <tr>
                                     <td style="padding:24px 12px;">
                                         <p class="e-text-muted" style="font-size:11px; color:#46443F; letter-spacing:1px; text-transform:uppercase; margin:0 0 8px 0;">
-                                            <%= globals.t(translatePath + '.MESSAGE_LABEL') %>
+                                            <%= t(translatePath + '.MESSAGE_LABEL') %>
                                         </p>
                                         <p class="e-text" style="margin:0; color:#000000; line-height:1.7; white-space:pre-wrap;"><%= (contact.message || '').trim() %></p>
                                     </td>
@@ -105,8 +105,8 @@
                     <!-- Footer Note -->
                     <tr>
                         <td align="center" style="padding:20px 0;">
-                            <p class="e-text-muted" style="font-size:12px; color:#46443F; margin:0;">
-                                <%= globals.t(translatePath + '.FOOTER_NOTE') %>
+                            <p class="e-text-muted" style="color:#46443F; margin:0;">
+                                <%= t(translatePath + '.FOOTER_NOTE') %>
                             </p>
                         </td>
                     </tr>

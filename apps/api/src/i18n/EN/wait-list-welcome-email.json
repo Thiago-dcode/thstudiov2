@@ -1,11 +1,10 @@
 {
-  "FROM_NAME": "The wait is over",
-  "SUBJECT": "Your wait is over",
-  "TITLE": "Your registration link is ready",
-  "DESCRIPTION": "Create your account now to claim your reserved tier and free months.",
+  "SUBJECT": "The waiting is over",
+  "TITLE": "Thanks for your patience  ",
+  "DESCRIPTION": "The early access is open for you",
   "TIER_LABEL": "Reserved tier",
-  "BENEFIT_DESCRIPTION": "Access to {benefitType} with {months} free month(s) when registration opens.",
+  "BENEFIT_DESCRIPTION": "This invitation gives you {months} free month(s) of {planName} plan — claim it below.",
   "CTA_TEXT": "Create Your Account",
-  "EXPIRATION_NOTE": "This registration link will expire in {days} days.",
+  "EXPIRATION_NOTE": "This registration link expires in {days} days — after that, you'll lose your early access benefits.",
   "URGENCY_NOTE": "This invitation is personal and limited. Complete your registration before it expires."
 }

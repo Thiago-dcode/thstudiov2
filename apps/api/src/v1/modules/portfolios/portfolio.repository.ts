@@ -87,6 +87,7 @@ export class PortfolioRepository extends BaseRepository {
     'users.name',
     'users.surname',
     'users.benefit_id',
+    'users.language',
   ] as const;
 
   private readonly FULL_COLUMNS: PortfolioFullSchemaColumns[] = [
@@ -498,6 +499,7 @@ export class PortfolioRepository extends BaseRepository {
       name: result.name,
       surname: result.surname,
       benefit_id: result.benefit_id,
+      language: result.language,
     };
   }
   private formatFullPortfolio(result: PortfolioFullSchema[]): FullPortfolio {

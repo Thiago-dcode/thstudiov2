@@ -18,28 +18,34 @@ export class NotifyNewUserMail extends ApiMailService {
   constructor(
     viewService: ViewService,
     emailPreferencesService: EmailPreferencesService,
-    private readonly i18nService: I18nService,
+    i18nService: I18nService,
     private readonly configService: ConfigService,
   ) {
     super(viewService, emailPreferencesService, {
       viewPath: 'emails/users/notify-new-user',
       data: {},
       emailType: 'TRANSACTIONAL',
-    });
+    }, i18nService);
   }
 
-  setUser(user: BaseUser | User) {
-    this.user = user;
+  setUser(user: BaseUser | User, lang?: string) {
+    const mail = new NotifyNewUserMail(
+      this.viewService,
+      this.emailPreferencesService!,
+      this.i18nService!,
+      this.configService,
+    );
+    mail.user = user;
+    if (lang) mail.lang = lang;
 
-    const t = this.i18nService.translate.bind(this.i18nService);
     const features = Array.from({ length: WELCOME_FEATURE_COUNT }, (_, index) =>
-      t(`notify-new-user-email.FEATURES.${index}`),
+      mail.t(`notify-new-user-email.FEATURES.${index}`),
     );
 
-    this.viewParams = {
+    mail.viewParams = {
       viewPath: 'emails/users/notify-new-user',
       data: {
-        user: this.user,
+        user: mail.user,
         features,
         translatePath: 'notify-new-user-email',
         redirectHref: buildRedirectToUrl(
@@ -49,15 +55,15 @@ export class NotifyNewUserMail extends ApiMailService {
       },
       emailType: 'TRANSACTIONAL',
     };
-    return this;
+    return mail;
   }
 
   protected async buildEnvelope() {
     return {
-      from: mailingNoreplyEmail,
+      from: `${mailingNoreplyEmail}`,
       to: this.user.email,
-      subject: this.i18nService.translate('notify-new-user-email.WELCOME_SUBJECT', {
-        args: { appName: this.configService.get('app.name') },
+      subject: this.t('notify-new-user-email.WELCOME_SUBJECT', {
+        args: { username: this.user.username },
       }),
     };
   }

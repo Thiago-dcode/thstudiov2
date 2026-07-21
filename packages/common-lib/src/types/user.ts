@@ -25,7 +25,7 @@ export type BaseUserWithSecrets = BaseUser & {
 };
 
 // CompactUser: minimal user info (id, email, username)
-export type CompactUser = Pick<UserSchema, 'id' | 'email' | 'username' | 'name' | 'surname'| 'benefit_id'>;
+export type CompactUser = Pick<UserSchema, 'id' | 'email' | 'username' | 'name' | 'surname'| 'benefit_id' | 'language'>;
 
 // Full user with all profile fields, nested role + benefit (no raw FKs, no secrets).
 export type User = Omit<

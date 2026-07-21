@@ -1,10 +1,10 @@
 import type { EnumType } from "@repo/common-lib/constants/enums";
 
-export const BENEFIT_CONFIG: Record<
-  EnumType<"BENEFIT_TYPE">,
-  { label: string; months: number }
-> = {
-  EARLY_USER: { label: "Early User", months: 3 },
-  VIP: { label: "VIP", months: 6 },
-  FOUNDER: { label: "FOUNDER", months: 12 },
+// Display label only — the free-month count always comes from the benefit's
+// own `trial_days` (single source of truth shared with the wait-list emails),
+// never hardcoded here.
+export const BENEFIT_CONFIG: Record<EnumType<"BENEFIT_TYPE">, { label: string }> = {
+  EARLY_USER: { label: "Early User" },
+  VIP: { label: "VIP" },
+  FOUNDER: { label: "FOUNDER" },
 };

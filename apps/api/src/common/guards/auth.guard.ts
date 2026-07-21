@@ -14,6 +14,7 @@ import { RequestService } from 'src/common/services/request.service';
 import { USER_ID_HEADER } from '@repo/common-lib/constants/constants';
 import { UserSessionsService } from 'src/v1/modules/user-sessions/user-sessions.service';
 import { UserPayload } from '@repo/common-lib/types/auth';
+import { UserService } from 'src/v1/modules/users/users.service';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -23,6 +24,7 @@ export class AuthGuard implements CanActivate {
     private requestService: RequestService,
     private reflector: Reflector,
     private userSessionsService: UserSessionsService,
+    private userService: UserService,
   ) { }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -90,9 +92,16 @@ export class AuthGuard implements CanActivate {
         next_username_reset: payload.next_username_reset,
         next_password_reset: payload.next_password_reset,
         twofa_attempts: payload.twofa_attempts,
+        language: payload.language,
 
       };
 
+      const currentLanguage = this.requestService.language;
+      if (currentLanguage && currentLanguage != payload.language) {
+        this.userService
+          .updateLanguageIfChanged(payload.id, currentLanguage)
+          .catch(() => {});
+      }
 
     } catch (error) {
       throw new UnauthorizedException();

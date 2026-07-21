@@ -32,6 +32,7 @@ export type UserSchema = {
   role_id: number;
   benefit_id: number | null;
   invitation_link_id: number | null;
+  language: EnumType<'LANGUAGE_CODE'>;
   created_at: Date;
   updated_at: Date;
 };

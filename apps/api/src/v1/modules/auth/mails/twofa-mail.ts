@@ -12,29 +12,31 @@ export class TwoFAMail extends ApiMailService {
   constructor(
     viewService: ViewService,
     emailPreferencesService: EmailPreferencesService,
-    private readonly i18nService: I18nService,
+    i18nService: I18nService,
   ) {
     super(viewService, emailPreferencesService, {
       viewPath: 'emails/auth/twofa-mail',
       data: {},
       emailType: 'TRANSACTIONAL',
-    });
+    }, i18nService);
   }
-  setUser(user: BaseUser & { twofa_code: string }) {
-    this.user = user;
+  setUser(user: BaseUser & { twofa_code: string }, lang?: string) {
+    const mail = new TwoFAMail(this.viewService, this.emailPreferencesService!, this.i18nService!);
+    mail.user = user;
+    if (lang) mail.lang = lang;
 
-    this.viewParams = {
+    mail.viewParams = {
       viewPath: 'emails/auth/twofa-mail',
-      data: { user: this.user, translatePath: 'twofa-email' },
+      data: { user: mail.user, translatePath: 'twofa-email' },
       emailType: 'TRANSACTIONAL',
     };
-    return this;
+    return mail;
   }
   protected async buildEnvelope() {
     return {
-      from: mailingNoreplyEmail,
+      from: `${mailingNoreplyEmail}`,
       to: this.user.email,
-      subject: this.i18nService.translate('twofa-email.SUBJECT'),
+      subject: this.t('twofa-email.SUBJECT'),
     };
   }
 }

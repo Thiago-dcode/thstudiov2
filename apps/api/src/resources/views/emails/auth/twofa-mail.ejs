@@ -13,7 +13,7 @@
                     <tr>
                         <td style="padding:0 0 24px; text-align:center;">
                             <p class="e-text-muted" style="font-size:13px; color:#46443F; letter-spacing:1px; text-transform:uppercase; margin:0 0 8px 0;">
-                                <%= globals.t(translatePath + '.HI') %>
+                                <%= t(translatePath + '.HI') %>
                             </p>
                             <h2 class="e-text" style="font-size:20px; font-weight:600; color:#000000; margin:0;">
                                 <%= user.username %>
@@ -25,7 +25,7 @@
                     <tr>
                         <td style="padding:0 0 24px; text-align:center;">
                             <h1 class="e-text" style="font-size:20px; font-weight:600; color:#000000; margin:0; letter-spacing:1px;">
-                                <%= globals.t(translatePath + '.TITLE') %>
+                                <%= t(translatePath + '.TITLE') %>
                             </h1>
                         </td>
                     </tr>
@@ -38,11 +38,9 @@
                                 <tr>
                                     <td style="padding:24px 12px; text-align:center;">
                                         <p class="e-text-muted" style="font-size:11px; color:#46443F; letter-spacing:2px; text-transform:uppercase; margin:0 0 16px 0;">
-                                            <%= globals.t(translatePath + '.CODE_LABEL') %>
+                                            <%= t(translatePath + '.CODE_LABEL') %>
                                         </p>
-                                        <p class="e-text" style="font-family:'Courier New', Courier, monospace; font-size:38px; font-weight:bold; letter-spacing:10px; margin:0; color:#000000;">
-                                            <%= user.twofa_code %>
-                                        </p>
+                                        <p class="e-text" style="font-family:'Courier New', Courier, monospace; font-size:38px; font-weight:bold; letter-spacing:10px; margin:0; color:#000000; -webkit-user-select:all; user-select:all;"><%= user.twofa_code %></p>
                                     </td>
                                 </tr>
                             </table>
@@ -57,7 +55,7 @@
                                 <tr>
                                     <td style="padding:24px 12px; text-align:center;">
                                         <p class="e-error-text" style="font-size:13px; margin:0; color:#E11D2E; line-height:1.5;">
-                                            <%= globals.t(translatePath + '.SECURITY_WARNING') %>
+                                            <%= t(translatePath + '.SECURITY_WARNING') %>
                                         </p>
                                     </td>
                                 </tr>
@@ -69,7 +67,7 @@
                     <tr>
                         <td align="center" style="padding:20px 0;">
                             <p class="e-text-muted" style="font-size:12px; margin:0; color:#46443F; line-height:1.5;">
-                                <%= globals.t(translatePath + '.EXPIRATION_INFO') %>
+                                <%= t(translatePath + '.EXPIRATION_INFO') %>
                             </p>
                         </td>
                     </tr>

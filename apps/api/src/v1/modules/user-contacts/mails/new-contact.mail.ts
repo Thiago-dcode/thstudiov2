@@ -15,31 +15,34 @@ export class NewContactMail extends ApiMailService {
   constructor(
     viewService: ViewService,
     emailPreferencesService: EmailPreferencesService,
-    private readonly i18nService: I18nService,
+    i18nService: I18nService,
   ) {
     super(viewService, emailPreferencesService, {
       viewPath: 'emails/user-contacts/new-contact',
       data: {},
       emailType: 'TRANSACTIONAL',
-    });
+    }, i18nService);
   }
 
-  setData(artist: CompactUser, contact: CreateUserContactInput) {
-    this.artist = artist;
-    this.contact = contact;
-    this.viewParams = {
+  setData(artist: CompactUser, contact: CreateUserContactInput, lang?: string) {
+    const mail = new NewContactMail(this.viewService, this.emailPreferencesService!, this.i18nService!);
+    mail.artist = artist;
+    mail.contact = contact;
+    if (lang) mail.lang = lang;
+
+    mail.viewParams = {
       viewPath: 'emails/user-contacts/new-contact',
-      data: { artist: this.artist, contact: this.contact, translatePath: 'new-contact-email' },
+      data: { artist: mail.artist, contact: mail.contact, translatePath: 'new-contact-email' },
       emailType: 'TRANSACTIONAL',
     };
-    return this;
+    return mail;
   }
 
   protected async buildEnvelope() {
     return {
-      from: mailingNoreplyEmail,
+      from: `${mailingNoreplyEmail}`,
       to: this.artist.email,
-      subject: this.i18nService.translate('new-contact-email.SUBJECT'),
+      subject: this.t('new-contact-email.SUBJECT'),
       replyTo: this.contact.contact_email,
     };
   }

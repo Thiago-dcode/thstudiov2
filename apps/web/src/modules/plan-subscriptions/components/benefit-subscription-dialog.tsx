@@ -15,6 +15,7 @@ import { ArrowRight, Gift, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { BENEFIT_CONFIG } from "@/modules/user-benefit/user-benefit.utils";
 import { UsePlanSubscription } from "../providers/plan-subscription.provider";
+import { CustomIconClient } from "@/lib/components/custom-icon-client";
 
 type BenefitSubscriptionDialogProps = {
   planPrice: PlanPrice;
@@ -38,10 +39,8 @@ export const BenefitSubscriptionDialog = ({
 
   if (!benefit || benefit.redeemed) return null;
 
-  const config = BENEFIT_CONFIG[benefit.type] ?? {
-    label: benefit.name,
-    months: Math.round(benefit.trial_days / 30),
-  };
+  const label = BENEFIT_CONFIG[benefit.type]?.label ?? benefit.name;
+  const months = Math.round(benefit.trial_days / 30);
 
   const handleSubmitSubscription = () => {
     const formData = new FormData();
@@ -124,7 +123,7 @@ export const BenefitSubscriptionDialog = ({
           type="button"
           className="cursor-pointer fixed bottom-6 right-6 z-50 flex items-center gap-2 border border-border-em bg-accent px-4 py-2.5 text-sm font-medium text-accent-fg shadow-lg backdrop-blur-sm transition-all hover:bg-accent/90"
         >
-          <Gift className="size-4" />
+         <CustomIconClient name="gift" alt="" size="xs"/>
           <span>Redeem benefit</span>
         </button>
       </DialogTrigger>
@@ -133,12 +132,7 @@ export const BenefitSubscriptionDialog = ({
 
         <div className="flex flex-col items-center gap-6 p-8 pt-6">
           <div className="relative">
-            <div className="flex size-16 items-center justify-center bg-fg">
-              <Gift className="size-7 text-text" />
-            </div>
-            <div className="absolute -right-1.5 -top-1.5 flex size-7 items-center justify-center bg-bg">
-              <Sparkles className="size-4 text-text" />
-            </div>
+            <CustomIconClient name="gift" alt="" size="sm"/>
           </div>
 
           <DialogHeader className="items-center gap-2">
@@ -147,27 +141,26 @@ export const BenefitSubscriptionDialog = ({
             </DialogTitle>
             <DialogDescription className="text-center text-base text-text-muted">
               As a{" "}
-              <span className="font-semibold text-text">{config.label}</span>,
+              <span className="font-semibold text-text">{label}</span>,
               enjoy{" "}
               <span className="font-semibold text-accent">
-                {config.months} months free
+                {months} months free
               </span>{" "}
               on {planName} plan.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex w-full items-start gap-3 border border-border bg-fg px-4 py-3 text-sm text-text-muted">
-            <Sparkles className="mt-0.5 size-4 shrink-0 text-text" />
+          <div className="text-center flex w-full items-start gap-3 border border-border bg-fg px-4 py-3 text-sm text-text-muted">
             <span>
               No payment details required. Your{" "}
               <span className="font-medium text-text">
-                {config.months}-month free access
+                {months}-month free access
               </span>{" "}
               activates instantly.
             </span>
           </div>
 
-          <div className="flex w-full flex-col border border-fg-1/15 bg-fg/[0.03]">
+          <div className="flex w-full flex-col border border-fg-1/15 ">
             <div className="flex items-center justify-between px-4 py-3">
               <span className="text-sm text-text-muted">Plan</span>
               <span className="text-sm font-semibold text-text">
@@ -182,11 +175,11 @@ export const BenefitSubscriptionDialog = ({
               </span>
             </div>
             <div className="mx-4 h-px bg-fg/10" />
-            <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center justify-between  py-3">
               <span className="text-sm text-text-muted">Free period</span>
               <span className="inline-flex items-center gap-1.5 bg-fg px-2.5 py-0.5 text-sm font-semibold text-text">
                 <Gift className="size-3.5" />
-                {config.months} months
+                {months} months
               </span>
             </div>
           </div>
@@ -197,15 +190,8 @@ export const BenefitSubscriptionDialog = ({
               variant="accent"
               className="w-full font-bold"
             >
-              Redeem &amp; Subscribe
+              Subscribe
               <ArrowRight className="ml-2 size-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              className="w-full text-text-muted"
-              onClick={() => setOpen(false)}
-            >
-              Not now
             </Button>
           </div>
         </div>

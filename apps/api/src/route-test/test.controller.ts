@@ -7,14 +7,16 @@ import {
   Param,
   ParseIntPipe,
   Query,
+  Scope,
   UseGuards,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { mailingContactEmail } from 'src/config/mailling';
 import { MailService } from '@repo/backend-lib/services/mail-service';
 import { ViewService } from '@repo/backend-lib/services/view-service/base';
 import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/constants';
 import { buildRedirectToUrl } from '@repo/common-lib/constants/redirect-to';
-import { BaseUser } from '@repo/common-lib/types/user';
+import { BaseUser, CompactUser, User } from '@repo/common-lib/types/user';
 import { I18nService } from 'nestjs-i18n';
 import { ProdGuard } from 'src/common/guards/prod.guard';
 import { viewPath } from 'src/common/utils';
@@ -49,10 +51,17 @@ type PreviewLanguage = (typeof PREVIEW_LANGUAGES)[number];
  * - new-contact, notify-new-user, password-recovery, twofa
  * - wait-list-welcome, wait-list-invite, wait-list-reminder
  * - subscription-changed, user-ai-credits-ended, user-account-banned
+ *
+ * Request-scoped: `previewUser`/`lang` are resolved once per request in
+ * `previewEmail()` and read by every handler, instead of being threaded
+ * through as parameters.
  */
-@Controller('test')
+@Controller({ path: 'test', scope: Scope.REQUEST })
 @UseGuards(ProdGuard)
 export class TestController {
+  private previewUser!: User;
+  private lang!: PreviewLanguage;
+
   constructor(
     private readonly mailService: MailService,
     private readonly notifyNewUserMail: NotifyNewUserMail,
@@ -78,7 +87,7 @@ export class TestController {
 
   /**
    * Preview an email in the browser.
-   * Optional query: lang=EN|ES (default EN), send=1 to send + render (default: preview only).
+   * Optional query: lang=EN|ES (default: the previewed user's own language), send=1 to send + render (default: preview only).
    * Variant query params: final=1 (wait-list-reminder), upgrade=1 (subscription-changed).
    *
    * GET /test/view/email/:type/:userId?lang=es
@@ -86,7 +95,7 @@ export class TestController {
    */
   @Public()
   @SkipResponseTransform()
-  @Get('view/email/:type/:userId')
+  @Get('email/:type/:userId')
   @Header('Content-Type', 'text/html; charset=utf-8')
   async previewEmail(
     @Param('type') type: string,
@@ -97,53 +106,49 @@ export class TestController {
     @Query('upgrade') upgrade?: string,
   ) {
     const shouldSend = this.parseSendFlag(send);
-    const previewLang = this.resolvePreviewLang(lang);
+    this.previewUser = await this.userRepository.findById(userId);
+    this.lang = this.resolvePreviewLang(lang, this.previewUser.language);
 
     switch (type) {
       case 'new-contact':
-        return this.handleNewContact(userId, shouldSend, previewLang);
+        return this.handleNewContact(shouldSend);
       case 'notify-new-user':
-        return this.handleNotifyNewUser(userId, shouldSend, previewLang);
+        return this.handleNotifyNewUser(shouldSend);
       case 'password-recovery':
-        return this.handlePasswordRecovery(userId, shouldSend, previewLang);
+        return this.handlePasswordRecovery(shouldSend);
       case 'twofa':
-        return this.handleTwoFa(userId, shouldSend, previewLang);
+        return this.handleTwoFa(shouldSend);
       case 'wait-list-welcome':
-        return this.handleWaitListWelcome(userId, shouldSend, previewLang);
+        return this.handleWaitListWelcome(shouldSend);
       case 'wait-list-invite':
-        return this.handleWaitListInvite(userId, shouldSend, previewLang);
+        return this.handleWaitListInvite(shouldSend);
       case 'wait-list-reminder':
-        return this.handleWaitListReminder(userId, shouldSend, previewLang, this.parseBooleanFlag(final, 'final'));
+        return this.handleWaitListReminder(shouldSend, this.parseBooleanFlag(final, 'final'));
       case 'subscription-changed':
-        return this.handleSubscriptionChanged(
-          userId,
-          shouldSend,
-          previewLang,
-          this.parseBooleanFlag(upgrade, 'upgrade'),
-        );
+        return this.handleSubscriptionChanged(shouldSend, this.parseBooleanFlag(upgrade, 'upgrade'));
       case 'user-ai-credits-ended':
-        return this.handleUserAiCreditsEnded(userId, shouldSend, previewLang);
+        return this.handleUserAiCreditsEnded(shouldSend);
       case 'user-account-banned':
-        return this.handleUserAccountBanned(userId, shouldSend, previewLang);
+        return this.handleUserAccountBanned(shouldSend);
       default:
         throw new NotFoundException(`Unknown email type: ${type}`);
     }
   }
 
-  private resolvePreviewLang(lang?: string): PreviewLanguage {
-    const normalized = (lang ?? DEFAULT_LANGUAGE).trim().toUpperCase();
+  private resolvePreviewLang(lang?: string, fallback?: string): PreviewLanguage {
+    const normalized = (lang ?? fallback ?? DEFAULT_LANGUAGE).trim().toUpperCase();
     if (PREVIEW_LANGUAGES.includes(normalized as PreviewLanguage)) {
       return normalized as PreviewLanguage;
     }
     throw new BadRequestException(`lang must be one of: ${PREVIEW_LANGUAGES.join(', ')}`);
   }
 
-  private createTranslator(lang: PreviewLanguage) {
+  private createTranslator() {
     return (key: string, options?: Record<string, unknown>) =>
-      this.i18nService.translate(key, { lang, ...options });
+      this.i18nService.translate(key, { lang: this.lang, ...options });
   }
 
-  private renderEmailPreview(view: string, lang: PreviewLanguage, data: Record<string, unknown>) {
+  private renderEmailPreview(view: string, data: Record<string, unknown>) {
     return this.viewService.render(view, {
       ...data,
       globals: {
@@ -152,7 +157,7 @@ export class TestController {
         beautyUrl: 'www.a11studio.com',
         appUrl: this.configService.get('app.url'),
         env: this.configService.get('app.env'),
-        t: this.createTranslator(lang),
+        t: this.createTranslator(),
       },
     });
   }
@@ -181,154 +186,159 @@ export class TestController {
     return this.configService.get('app.url');
   }
 
-  private async handleNewContact(userId: number, shouldSend: boolean, lang: PreviewLanguage) {
-    const artist = await this.userRepository.findByIdCompact(userId);
-    const contact = createMockNewContactInput(userId);
+  private toCompactUser(user: User): CompactUser {
+    return {
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      name: user.name,
+      surname: user.surname,
+      benefit_id: user.benefit?.id ?? null,
+      language: user.language,
+    };
+  }
+
+  private async handleNewContact(shouldSend: boolean) {
+    const artist = this.toCompactUser(this.previewUser);
+    const contact = createMockNewContactInput(this.previewUser.id);
+    const t = this.createTranslator();
 
     if (shouldSend) {
-      await this.mailService.send(this.newContactMail.setData(artist, contact));
+      await this.mailService.send(this.newContactMail.setData(artist, contact, this.lang));
     }
 
-    return this.renderEmailPreview('emails/user-contacts/new-contact', lang, {
+    return this.renderEmailPreview('emails/user-contacts/new-contact', {
       artist,
       contact,
       translatePath: 'new-contact-email',
+      t,
       unsuscribeUrl: '',
     });
   }
 
-  private async handleNotifyNewUser(userId: number, shouldSend: boolean, lang: PreviewLanguage) {
-    const user = await this.userRepository.findById(userId);
-    const t = this.createTranslator(lang);
+  private async handleNotifyNewUser(shouldSend: boolean) {
+    const user = this.previewUser;
+    const t = this.createTranslator();
     const features = Array.from({ length: WELCOME_FEATURE_COUNT }, (_, index) =>
       t(`notify-new-user-email.FEATURES.${index}`),
     );
 
     if (shouldSend) {
-      this.notifyNewUserMail.setUser(user);
-      await this.mailService.send(this.notifyNewUserMail);
+      await this.mailService.send(this.notifyNewUserMail.setUser(user, this.lang));
     }
 
-    return this.renderEmailPreview('emails/users/notify-new-user', lang, {
+    return this.renderEmailPreview('emails/users/notify-new-user', {
       user,
       features,
       translatePath: 'notify-new-user-email',
+      t,
       unsuscribeUrl: '',
       redirectHref: buildRedirectToUrl(`${this.appUrl()}/auth/login`, 'get-started'),
     });
   }
 
-  private async handlePasswordRecovery(userId: number, shouldSend: boolean, lang: PreviewLanguage) {
-    const user = await this.userRepository.findById(userId);
+  private async handlePasswordRecovery(shouldSend: boolean) {
+    const user = this.previewUser;
     const fallbackUrl = `${this.appUrl()}/auth/password-recovery/recover`;
-    const passwordRecoveryAttempt = createMockPasswordRecoveryAttempt(userId, fallbackUrl);
+    const passwordRecoveryAttempt = createMockPasswordRecoveryAttempt(user.id, fallbackUrl);
+    const t = this.createTranslator();
 
     if (shouldSend) {
       await this.mailService.send(
         this.passwordRecoveryMail.setData(
           { email: user.email, username: user.username },
           passwordRecoveryAttempt,
+          this.lang,
         ),
       );
     }
 
-    return this.renderEmailPreview('emails/auth/password-recovery-mail', lang, {
+    return this.renderEmailPreview('emails/auth/password-recovery-mail', {
       user: { email: user.email, username: user.username },
       passwordRecoveryAttempt,
       translatePath: 'password-recovery-mail',
+      t,
       unsuscribeUrl: '',
     });
   }
 
-  private async handleTwoFa(userId: number, shouldSend: boolean, lang: PreviewLanguage) {
-    const user = await this.userRepository.findById(userId);
+  private async handleTwoFa(shouldSend: boolean) {
     const twofaUser = {
-      ...user,
+      ...this.previewUser,
       twofa_code: createMockTwofaCode(),
     } as unknown as BaseUser & { twofa_code: string };
+    const t = this.createTranslator();
 
     if (shouldSend) {
-      await this.mailService.send(this.twoFAMail.setUser(twofaUser));
+      await this.mailService.send(this.twoFAMail.setUser(twofaUser, this.lang));
     }
 
-    return this.renderEmailPreview('emails/auth/twofa-mail', lang, {
+    return this.renderEmailPreview('emails/auth/twofa-mail', {
       user: twofaUser,
       translatePath: 'twofa-email',
+      t,
       unsuscribeUrl: '',
     });
   }
 
-  private async handleWaitListWelcome(userId: number, shouldSend: boolean, lang: PreviewLanguage) {
-    const user = await this.userRepository.findById(userId);
-    const waitList = createMockWaitListWelcomeData(user.email, this.appUrl());
+  private async handleWaitListWelcome(shouldSend: boolean) {
+    const waitList = createMockWaitListWelcomeData(this.previewUser.email, this.appUrl());
 
     if (shouldSend) {
       await this.mailService.send(this.waitListWelcomeMail.setData(waitList));
     }
 
-    return this.renderEmailPreview('emails/wait-list/welcome', lang, {
+    return this.renderEmailPreview('emails/wait-list/welcome', {
       waitList,
       translatePath: 'wait-list-welcome-email',
       unsuscribeUrl: '',
     });
   }
 
-  private async handleWaitListInvite(userId: number, shouldSend: boolean, lang: PreviewLanguage) {
-    const user = await this.userRepository.findById(userId);
-    const invite = createMockWaitListInviteData(user.email, this.appUrl());
+  private async handleWaitListInvite(shouldSend: boolean) {
+    const invite = createMockWaitListInviteData(this.previewUser.email, this.appUrl());
 
     if (shouldSend) {
       await this.mailService.send(this.waitListInviteMail.setData(invite));
     }
 
-    return this.renderEmailPreview('emails/wait-list/invite', lang, {
+    return this.renderEmailPreview('emails/wait-list/invite', {
       invite,
       translatePath: 'wait-list-invite-email',
       unsuscribeUrl: '',
     });
   }
 
-  private async handleWaitListReminder(
-    userId: number,
-    shouldSend: boolean,
-    lang: PreviewLanguage,
-    isFinal: boolean,
-  ) {
-    const user = await this.userRepository.findById(userId);
-    const reminder = createMockWaitListReminderData(user.email, this.appUrl(), isFinal);
+  private async handleWaitListReminder(shouldSend: boolean, isFinal: boolean) {
+    const reminder = createMockWaitListReminderData(this.previewUser.email, this.appUrl(), isFinal);
 
     if (shouldSend) {
       await this.mailService.send(this.waitListReminderMail.setData(reminder));
     }
 
-    return this.renderEmailPreview('emails/wait-list/reminder', lang, {
+    return this.renderEmailPreview('emails/wait-list/reminder', {
       reminder,
       translatePath: 'wait-list-reminder-email',
       unsuscribeUrl: '',
     });
   }
 
-  private async handleSubscriptionChanged(
-    userId: number,
-    shouldSend: boolean,
-    lang: PreviewLanguage,
-    isUpgrade: boolean,
-  ) {
-    const user = await this.userRepository.findById(userId);
+  private async handleSubscriptionChanged(shouldSend: boolean, isUpgrade: boolean) {
+    const user = this.previewUser;
     const subscriptionData = createMockSubscriptionChangedData(isUpgrade);
-    const t = this.createTranslator(lang);
+    const t = this.createTranslator();
 
     if (shouldSend) {
       await this.mailService.send(
         this.subscriptionChangedMail.setData(
           { email: user.email, username: user.username },
           subscriptionData,
-          lang,
+          this.lang,
         ),
       );
     }
 
-    return this.renderEmailPreview('emails/plan-subscriptions/subscription-changed', lang, {
+    return this.renderEmailPreview('emails/plan-subscriptions/subscription-changed', {
       user: { email: user.email, username: user.username },
       translatePath: 'subscription-changed',
       t,
@@ -340,17 +350,17 @@ export class TestController {
     });
   }
 
-  private async handleUserAiCreditsEnded(userId: number, shouldSend: boolean, lang: PreviewLanguage) {
-    const user = await this.userRepository.findById(userId);
-    const t = this.createTranslator(lang);
+  private async handleUserAiCreditsEnded(shouldSend: boolean) {
+    const user = this.previewUser;
+    const t = this.createTranslator();
 
     if (shouldSend) {
       await this.mailService.send(
-        this.userAiCreditsEndedMail.setUser({ email: user.email, username: user.username }, lang),
+        this.userAiCreditsEndedMail.setUser({ email: user.email, username: user.username }, this.lang),
       );
     }
 
-    return this.renderEmailPreview('emails/user-extra-data/user-ai-credits-ended', lang, {
+    return this.renderEmailPreview('emails/user-extra-data/user-ai-credits-ended', {
       user: { email: user.email, username: user.username },
       translatePath: 'ai-credits-ended',
       t,
@@ -359,20 +369,21 @@ export class TestController {
     });
   }
 
-  private async handleUserAccountBanned(userId: number, shouldSend: boolean, lang: PreviewLanguage) {
-    const user = await this.userRepository.findById(userId);
-    const t = this.createTranslator(lang);
+  private async handleUserAccountBanned(shouldSend: boolean) {
+    const user = this.previewUser;
+    const t = this.createTranslator();
 
     if (shouldSend) {
       await this.mailService.send(
-        this.userAccountBannedMail.setUser({ email: user.email, username: user.username }, lang),
+        this.userAccountBannedMail.setUser({ email: user.email, username: user.username }, this.lang),
       );
     }
 
-    return this.renderEmailPreview('emails/users/user-account-banned', lang, {
+    return this.renderEmailPreview('emails/users/user-account-banned', {
       user: { email: user.email, username: user.username },
       translatePath: 'account-banned',
       t,
+      supportEmail: mailingContactEmail,
       unsuscribeUrl: '',
     });
   }

@@ -116,6 +116,7 @@ export const JOB_UPSERT_EMAIL_PREFERENCE_BY_EMAIL = 'upsert-email-preference-by-
 export const CACHE_KEY_PLANS = 'plans' as const;
 export const CACHE_KEY_FREE_PLAN = 'free-plan' as const;
 export const CACHE_KEY_ACTIVE_PLAN = (userId: number | string) => `active_plan_${userId}` as const;
+export const CACHE_KEY_ACTIVE_PLANS_BASE = 'active-plans-base' as const;
 
 // Subscriptions
 export const CACHE_KEY_ACTIVE_SUBSCRIPTION = (userId: number | string) => `active_subscription_${userId}` as const;

@@ -5,6 +5,7 @@ import { LOG_QUEUE, WAIT_LIST_QUEUE } from '@repo/common-lib/constants/constants
 import { Queue } from 'bullmq';
 import { BenefitsModule } from '../benefits/benefits.module';
 import { InvitationLinkModule } from '../invitation-links/invitation-link.module';
+import { PlansModule } from '../plans/plans.module';
 import { WaitListInviteMail } from './mails/wait-list-invite.mail';
 import { WaitListWelcomeMail } from './mails/wait-list-welcome.mail';
 import { WaitListReminderMail } from './mails/wait-list-reminder.mail';
@@ -20,6 +21,7 @@ import { EmailPreferencesModule } from '../email-preferences/email-preferences.m
     EmailPreferencesModule,
     InvitationLinkModule,
     BenefitsModule,
+    PlansModule,
     BullModule.registerQueue({ name: WAIT_LIST_QUEUE }, { name: LOG_QUEUE }),
   ],
   controllers: [WaitListController],

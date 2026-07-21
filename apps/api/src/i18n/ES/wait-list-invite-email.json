@@ -1,7 +1,6 @@
 {
-  "FROM_NAME": "Bienvenido a A11STUDIO",
-  "SUBJECT": "Tu invitacion a A11STUDIO esta lista",
+  "SUBJECT": "Tu invitación a A11STUDIO está lista",
   "VALIDATE_TITLE": "Confirma que este correo es tuyo",
-  "VALIDATE_DESCRIPTION": "Haz clic en el boton de abajo para validar tu lugar en la lista de espera.",
+  "VALIDATE_DESCRIPTION": "Haz clic en el botón de abajo para validar tu lugar en la lista de espera.",
   "VALIDATE_CTA_TEXT": "Validar Correo"
 }

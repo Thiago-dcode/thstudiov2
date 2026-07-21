@@ -46,7 +46,6 @@ const AdminLayout = async ({ children }: { children: ReactNode }) => {
                     <AdminHeader />
                     <main className="size-full flex flex-col items-start justify-start ">
                       <TopNav username={userAuth.username} />
-
                       <div className="flex w-full justify-start h-full overflow-y-scroll">
                         {" "}
                         {children}

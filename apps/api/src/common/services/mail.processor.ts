@@ -8,11 +8,16 @@ import {
   JOB_SEND_BATCH_EMAIL,
 } from '@repo/common-lib/constants/constants';
 import { GlobalProcessor } from 'src/common/processors/global.processor';
+import { Helpers } from './helpers.service';
 
 @Processor(MAIL_QUEUE)
 export class MailProcessor extends GlobalProcessor {
   private readonly logger = FactoryLogService.createLogService('file', {
     channel: 'mail',
+    callback: {
+      channel: 'mail/error',
+      callback: Helpers.callback500ErrorMail
+    }
   });
 
   constructor(
@@ -41,12 +46,23 @@ export class MailProcessor extends GlobalProcessor {
 
   private async sendMail(data: EmailDriverOptions) {
     const log = this.logger.name('send-mail');
+    const to = Array.isArray(data.to) ? data.to.join(', ') : data.to;
     try {
-      await this.mailService.sendRaw(data);
-      log.info(`Mail sent to ${Array.isArray(data.to) ? data.to.join(', ') : data.to} — subject: ${data.subject}`);
+      log.info(`Sending mail via provider`, {
+        to,
+        from: data.from,
+        subject: data.subject,
+        has_html: Boolean(data.html),
+        has_text: Boolean(data.text),
+      });
+      const result = await this.mailService.sendRaw(data);
+      log.info(`Mail sent to ${to} — subject: ${data.subject}`, {
+        provider_response: result ?? null,
+      });
+      return result;
     } catch (error) {
-      log.error(
-        `Failed to send mail to ${data.to}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      log.channel('mail/error').error(
+        `Failed to send mail to ${to}: ${error instanceof Error ? error.message : 'Unknown error'}`,
         error,
       );
       throw error;
@@ -55,13 +71,31 @@ export class MailProcessor extends GlobalProcessor {
 
   private async sendBatchMail(data: EmailDriverOptions[]) {
     const log = this.logger.name('send-batch-mail');
+    const recipients = data.map((email) => ({
+      to: Array.isArray(email.to) ? email.to.join(', ') : email.to,
+      from: email.from,
+      subject: email.subject,
+      has_html: Boolean(email.html),
+      has_text: Boolean(email.text),
+    }));
+
     try {
-      await this.mailService.sendBatchRaw(data);
-      log.info(`Batch mail sent — ${data.length} email(s)`);
+      log.info(`Sending batch mail via provider — ${data.length} email(s)`, {
+        recipients,
+      });
+      const result = await this.mailService.sendBatchRaw(data);
+      log.info(`Batch mail sent — ${data.length} email(s)`, {
+        recipients,
+        provider_response: result ?? null,
+      });
+      return result;
     } catch (error) {
-      log.error(
+      log.channel('mail/error').error(
         `Failed to send batch mail (${data.length} emails): ${error instanceof Error ? error.message : 'Unknown error'}`,
-        error,
+        {
+          recipients,
+          error,
+        },
       );
       throw error;
     }

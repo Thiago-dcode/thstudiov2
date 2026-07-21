@@ -254,6 +254,7 @@ export class PlanSubscriptionProcessor extends GlobalProcessor {
             prevPlanName: data.prevPlanName,
             isUpgrade,
           },
+          data.language,
         ),
       );
 

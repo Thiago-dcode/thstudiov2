@@ -67,10 +67,8 @@ export const UserBenefitModal = ({
   if (!userBenefit || userBenefit.redeemed || pathname === subscriptionPath)
     return null;
 
-  const config = BENEFIT_CONFIG[userBenefit.type] ?? {
-    label: userBenefit.type,
-    months: Math.round(userBenefit.trial_days / 30),
-  };
+  const label = BENEFIT_CONFIG[userBenefit.type]?.label ?? userBenefit.type;
+  const months = Math.round(userBenefit.trial_days / 30);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -86,20 +84,20 @@ export const UserBenefitModal = ({
             </DialogTitle>
             <DialogDescription className="text-base text-text-muted">
               As a{" "}
-              <span className="font-semibold text-text">{config.label}</span>{" "}
-              you get{" "}
+              <span className="font-semibold text-text">{label}</span> you
+              get{" "}
               <span className="font-semibold text-accent">
-                {config.months} months free
-              </span>{" "}
-              on any plan.
+                {months} months free.
+              </span>
             </DialogDescription>
           </DialogHeader>
 
           <div className="flex w-full items-center gap-3 border border-border bg-fg px-4 py-3 text-left text-sm text-text-muted">
             <Sparkles className="size-5 shrink-0 text-text" />
             <span>
-              Your benefit will be applied automatically when you choose a plan
-              &mdash; no code needed.
+              {subscriptionPath
+                ? "Claim it right below. We will guide you to get the benefit"
+                : "Once you finish your welcome setup we will guide you to get the benefit."}
             </span>
           </div>
 
@@ -110,7 +108,7 @@ export const UserBenefitModal = ({
                   href={subscriptionPath}
                   className="flex items-center justify-center gap-2"
                 >
-                  Choose a plan <ArrowRight className="size-4" />
+                  Claim now <ArrowRight className="size-4" />
                 </Link>
               </Button>
               <Button

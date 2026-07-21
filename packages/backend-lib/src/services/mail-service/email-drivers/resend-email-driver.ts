@@ -58,6 +58,7 @@ export class ResendEmailDriver extends EmailDriver {
       throw error;
     }
 
+    Logger.info(`Resend email accepted id=${data?.id ?? 'n/a'} to=${to} subject=${subject}`);
     return data;
   }
 
@@ -94,6 +95,12 @@ export class ResendEmailDriver extends EmailDriver {
       Logger.error(error);
       throw error;
     }
+
+    const ids = Array.isArray(data) ? data.map((item) => item?.id).join(',') : String(data);
+    const recipients = emails
+      .map((email) => `${Array.isArray(email.to) ? email.to.join('|') : email.to}<${email.subject}>`)
+      .join('; ');
+    Logger.info(`Resend batch accepted count=${emails.length} ids=${ids} recipients=${recipients}`);
 
     return data;
   }

@@ -32,6 +32,7 @@ export type PortfolioWithArtistSchema = PortfolioSchema & {
   name?: string | null;
   surname?: string | null;
   benefit_id: number | null;
+  language: EnumType<'LANGUAGE_CODE'>;
 };
 
 const tablesPortfolioWithArtist = [TABLES_ENUM.PORTFOLIOS, TABLES_ENUM.USERS] as const;

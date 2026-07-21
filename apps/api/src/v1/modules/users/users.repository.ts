@@ -63,6 +63,7 @@ export class UserRepository extends BaseRepository {
     'users.next_username_reset',
     'users.next_password_reset',
     'users.role_id',
+    'users.language',
     'roles.id as r_id',
     'roles.name as r_name',
   ];
@@ -73,7 +74,8 @@ export class UserRepository extends BaseRepository {
     'users.username',
     'users.name',
     'users.surname',
-    'users.benefit_id'
+    'users.benefit_id',
+    'users.language'
   ] as const;
 
   private readonly FULL_COLUMNS: UserFullSelectColumn[] = [
@@ -284,6 +286,14 @@ export class UserRepository extends BaseRepository {
       .first<UserCoreRoleRow>();
     return this.formatCoreUser(result);
   }
+
+  /** No-op at the DB level when `language` already matches, so calling this on every authenticated request doesn't churn the row. */
+  async updateLanguageIfChanged(id: number, language: UserSchema['language']): Promise<void> {
+    await this.query()
+      .where('id', '=', id)
+      .where('language', '!=', language)
+      .update(['language'], [language]);
+  }
   private formatCoreUser(result: UserCoreRoleRow): BaseUser {
     return {
       id: result.id,
@@ -307,6 +317,7 @@ export class UserRepository extends BaseRepository {
       is_featured: result.is_featured,
       benefit_id: result.benefit_id,
       invitation_link_id: result.invitation_link_id,
+      language: result.language,
     };
   }
   private formatFullUser(result: UserFullBenefitRow): User {

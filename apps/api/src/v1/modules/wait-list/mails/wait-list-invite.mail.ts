@@ -17,17 +17,17 @@ export class WaitListInviteMail extends ApiMailService {
   constructor(
     viewService: ViewService,
     emailPreferencesService: EmailPreferencesService,
-    private readonly i18nService: I18nService,
+    i18nService: I18nService,
   ) {
     super(viewService, emailPreferencesService, {
       viewPath: 'emails/wait-list/invite',
       data: {},
       emailType: 'WAITLIST_UPDATE',
-    });
+    }, i18nService);
   }
 
   setData(data: WaitListInviteMailData) {
-    const mail = new WaitListInviteMail(this.viewService, this.emailPreferencesService!, this.i18nService);
+    const mail = new WaitListInviteMail(this.viewService, this.emailPreferencesService!, this.i18nService!);
     mail.data = data;
     mail.viewParams = {
       viewPath: 'emails/wait-list/invite',
@@ -39,12 +39,11 @@ export class WaitListInviteMail extends ApiMailService {
 
   protected async buildEnvelope() {
     const data = this.getData();
-    const fromName = this.i18nService.translate('wait-list-invite-email.FROM_NAME');
 
     return {
-      from: `${fromName} <${mailingNoreplyEmail}>`,
+      from: `${mailingNoreplyEmail}`,
       to: data.email,
-      subject: this.i18nService.translate('wait-list-invite-email.SUBJECT'),
+      subject: this.t('wait-list-invite-email.SUBJECT'),
     };
   }
 

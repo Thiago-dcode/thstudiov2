@@ -87,7 +87,7 @@ export class UserContactProcessor extends GlobalProcessor {
       if (artist) {
         // 4. Send email
         await this.mailService.sendAsync(
-          this.newContactMail.setData(artist, data)
+          this.newContactMail.setData(artist, data, artist.language)
         );
       } else {
         log.warn(`Artist with ID ${data.user_id} not found, skipping email.`);

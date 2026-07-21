@@ -3,7 +3,6 @@ import "@repo/ui/globals.css";
 import { Toaster } from "@repo/ui/components/shadcn/sonner";
 import { cn } from "@repo/ui/lib/utils";
 import { ThemeProvider } from "@repo/ui/providers/theme.provider";
-import { notFound } from "next/navigation";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
 import type { ReactNode } from "react";
@@ -42,11 +41,11 @@ export default async function RootLayout({
   children: ReactNode;
   params: Promise<{ locale: string }>;
 }>) {
-  const { locale } = await params;
+  const { locale: requestedLocale } = await params;
+  const locale = hasLocale(routing.locales, requestedLocale)
+    ? requestedLocale
+    : routing.defaultLocale;
 
-  if (!hasLocale(routing.locales, locale)) {
-    notFound();
-  }
   setRequestLocale(locale);
   const isRegisterClose = !getServerEnv().REGISTRATION_IS_CLOSED;
 

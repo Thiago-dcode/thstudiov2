@@ -47,6 +47,7 @@ export function createMockWaitListWelcomeData(
     email,
     position: 12,
     benefitType: 'VIP' as EnumType<'BENEFIT_TYPE'>,
+    planName: 'Studio',
     trialDays: 90,
     benefitMonths: 3,
     registrationUrl: `${appUrl}/auth/register?ref=preview-invite-code`,

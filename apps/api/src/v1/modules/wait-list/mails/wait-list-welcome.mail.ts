@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ViewService } from '@repo/backend-lib/services/view-service/base';
 import { EnumType } from '@repo/common-lib/constants/enums';
 import { I18nService } from 'nestjs-i18n';
+import { ConfigService } from '@nestjs/config';
 import { mailingNoreplyEmail } from 'src/config/mailling';
 import { ApiMailService } from 'src/common/mails/api-mail-service';
 import { EmailPreferencesService } from 'src/v1/modules/email-preferences/email-preferences.service';
@@ -10,6 +11,7 @@ export type WaitListWelcomeMailData = {
   email: string;
   position: number;
   benefitType: EnumType<'BENEFIT_TYPE'>;
+  planName: string;
   trialDays: number;
   benefitMonths: number;
   registrationUrl: string;
@@ -23,17 +25,23 @@ export class WaitListWelcomeMail extends ApiMailService {
   constructor(
     viewService: ViewService,
     emailPreferencesService: EmailPreferencesService,
-    private readonly i18nService: I18nService,
+    i18nService: I18nService,
+    private readonly configService: ConfigService,
   ) {
     super(viewService, emailPreferencesService, {
       viewPath: 'emails/wait-list/welcome',
       data: {},
       emailType: 'WAITLIST_UPDATE',
-    });
+    }, i18nService);
   }
 
   setData(data: WaitListWelcomeMailData) {
-    const mail = new WaitListWelcomeMail(this.viewService, this.emailPreferencesService!, this.i18nService);
+    const mail = new WaitListWelcomeMail(
+      this.viewService,
+      this.emailPreferencesService!,
+      this.i18nService!,
+      this.configService,
+    );
     mail.data = data;
     mail.viewParams = {
       viewPath: 'emails/wait-list/welcome',
@@ -45,12 +53,13 @@ export class WaitListWelcomeMail extends ApiMailService {
 
   protected async buildEnvelope() {
     const data = this.getData();
-    const fromName = this.i18nService.translate('wait-list-welcome-email.FROM_NAME');
 
     return {
-      from: `${fromName} <${mailingNoreplyEmail}>`,
+      from: `${mailingNoreplyEmail}`,
       to: data.email,
-      subject: this.i18nService.translate('wait-list-welcome-email.SUBJECT'),
+      subject: this.t('wait-list-welcome-email.SUBJECT', {
+        args: { appName: this.configService.get('app.name').toUpperCase() },
+      }),
     };
   }
 

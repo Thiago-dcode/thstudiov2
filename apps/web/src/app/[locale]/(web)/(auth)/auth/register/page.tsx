@@ -29,6 +29,8 @@ export default async function RegisterPage({
         await invitationLinkService.validateCode(ref);
       bypassRegistrationClose =
         !invitationLinkResult.error && !!invitationLinkResult.data;
+
+        console.log("Invitation link",invitationLinkResult)
     }
 
     if (!bypassRegistrationClose) {
@@ -43,7 +45,7 @@ export default async function RegisterPage({
   let initialEmail = validatedEmail.success ? validatedEmail.data : undefined;
   if (!initialEmail && ref) {
     const invitationEmail = await waitListService.getEmailByInvitationCode(ref);
-    if (invitationEmail.data?.email) {
+    if (invitationEmail.data?.email) {  
       initialEmail = invitationEmail.data.email;
     }
   }

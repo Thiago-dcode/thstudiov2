@@ -145,6 +145,7 @@ export class WaitListService {
 
   async inviteBatch(count: number) {
     try {
+      console.log('EMITING')
       if (!Number.isFinite(count) || count <= 0) {
         this.logger.warn(`Invalid wait list batch invite count: ${count}`);
       }

@@ -23,20 +23,20 @@ export class WaitListReminderMail extends ApiMailService {
   constructor(
     viewService: ViewService,
     emailPreferencesService: EmailPreferencesService,
-    private readonly i18nService: I18nService,
+    i18nService: I18nService,
   ) {
     super(viewService, emailPreferencesService, {
       viewPath: 'emails/wait-list/reminder',
       data: {},
       emailType: 'WAITLIST_UPDATE',
-    });
+    }, i18nService);
   }
 
   setData(data: WaitListReminderMailData) {
     const mail = new WaitListReminderMail(
       this.viewService,
       this.emailPreferencesService!,
-      this.i18nService,
+      this.i18nService!,
     );
 
     mail.data = data;
@@ -52,12 +52,13 @@ export class WaitListReminderMail extends ApiMailService {
   protected async buildEnvelope() {
     const data = this.getData();
     const subjectKey = data.isFinal ? 'SUBJECT_FINAL' : 'SUBJECT';
-    const fromName = this.i18nService.translate('wait-list-reminder-email.FROM_NAME');
+    const benefitTypeLabel = this.t(`benefit-type.${data.benefitType}`);
 
     return {
-      from: `${fromName} <${mailingNoreplyEmail}>`,
+      from: `${mailingNoreplyEmail}`,
       to: data.email,
-      subject: this.i18nService.translate(`wait-list-reminder-email.${subjectKey}`),
+      subject: this.t(`wait-list-reminder-email.${subjectKey}`)
+        .replace('{benefitType}', benefitTypeLabel),
     };
   }
 

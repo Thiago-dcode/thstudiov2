@@ -1,11 +1,10 @@
 {
-  "FROM_NAME": "La espera terminó",
-  "SUBJECT": "Tu espera termino",
-  "TITLE": "Tu enlace de registro esta listo",
-  "DESCRIPTION": "Crea tu cuenta ahora para reclamar tu acceso reservado y los meses gratis.",
+  "SUBJECT": "La espera terminó",
+  "TITLE": "Gracias por tu paciencia",
+  "DESCRIPTION": "El acceso anticipado está abierto para ti",
   "TIER_LABEL": "Nivel reservado",
-  "BENEFIT_DESCRIPTION": "Acceso {benefitType} con {months} mes(es) gratis cuando abrimos el registro.",
+  "BENEFIT_DESCRIPTION": "Esta invitación te da {months} mes(es) gratis del plan {planName} — reclámalo abajo.",
   "CTA_TEXT": "Crear Mi Cuenta",
-  "EXPIRATION_NOTE": "Este enlace de registro expirara en {days} dias.",
-  "URGENCY_NOTE": "Esta invitacion es personal y limitada. Completa tu registro antes de que expire."
+  "EXPIRATION_NOTE": "Este enlace de registro expira en {days} días — después de eso, perderás los beneficios de acceso anticipado.",
+  "URGENCY_NOTE": "Esta invitación es personal y limitada. Completa tu registro antes de que expire."
 }

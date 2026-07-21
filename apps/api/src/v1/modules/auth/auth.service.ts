@@ -31,11 +31,14 @@ import { UpdatePasswordRequest } from './requests/update-password.request';
 import { RegisterRequest } from './requests/register.request';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { NewUserEvent } from '../users/events/new-user.event';
-import { NEW_USER_EVENT } from '@repo/common-lib/constants/constants';
+import { DEFAULT_LANGUAGE, NEW_USER_EVENT } from '@repo/common-lib/constants/constants';
 import { RoleService } from '../roles/roles.service';
 import { InvitationLinkService } from '../invitation-links/invitation-link.service';
 import { UserBenefitService } from '../user-benefit/user-benefit.service';
 import { WaitListService } from '../wait-list/wait-list.service';
+import { LogService } from '@repo/backend-lib/services/log-service';
+import { InvitationLink } from '@repo/common-lib/types/invitation-link';
+import { WaitList } from '@repo/common-lib/types/wait-list';
 
 @Injectable()
 export class AuthService {
@@ -54,49 +57,41 @@ export class AuthService {
     private readonly roleService: RoleService,
     private readonly invitationLinkService: InvitationLinkService,
     private readonly userBenefitService: UserBenefitService,
-    private readonly waitListService: WaitListService
+    private readonly waitListService: WaitListService,
+    private readonly logService: LogService
   ) { }
   async register(registerRequest: RegisterRequest) {
     const clientRole = await this.roleService.getByName('ARTIST');
-    const existingWaitListEntry = await this.waitListService.findByEmail(registerRequest.email);
-
-    if (existingWaitListEntry?.validated_at) {
-      const isExpired = existingWaitListEntry.expires_at
-        ? existingWaitListEntry.expires_at.getTime() <= new Date().getTime()
-        : false;
-
-      if (!isExpired) {
-        throw new BadRequestException('email already exists in wait list');
-      }
-    }
 
     let benefit_id: number | null = null;
-    let invitation_link_id: number | null = null;
-
+    let invitationLink: InvitationLink | null = null;
+    let waitList: WaitList | null = null;
     if (registerRequest.invitation_code) {
-      const invitationLink = await this.invitationLinkService.validateCode(registerRequest.invitation_code);
+      invitationLink = await this.invitationLinkService.validateCode(registerRequest.invitation_code);
       if (invitationLink) {
         benefit_id = invitationLink.benefit_id;
-        invitation_link_id = invitationLink.id;
-        const waitList = await this.waitListService.findByInvitationLinkId(invitationLink.id);
+        waitList = await this.waitListService.findByInvitationLinkId(invitationLink.id);
         if (waitList && waitList.email.toLowerCase() !== registerRequest.email.toLowerCase()) {
           throw new BadRequestException(
             'We detected this invitation comes from a wait list, so you must register with the same email address',
           );
         }
-        await this.invitationLinkService.updateById(invitationLink.id, {
-          current_uses: invitationLink.current_uses + 1,
-          active: invitationLink.max_uses < invitationLink.current_uses + 1
-        })
-        if (waitList) {
-          await this.waitListService.updateById(waitList.id, {
-            status: 'REGISTERED',
-            redeemed_at: new Date(),
-          });
+      }
+
+    }
+    if (!waitList) {
+      //Prevent register with reserved email from wait list
+      const existingWaitListEntry = await this.waitListService.findByEmail(registerRequest.email);
+      if (existingWaitListEntry?.validated_at) {
+        const isExpired = existingWaitListEntry.expires_at
+          ? existingWaitListEntry.expires_at.getTime() <= new Date().getTime()
+          : false;
+
+        if (!isExpired) {
+          throw new BadRequestException('Email already in use');
         }
       }
     }
-
     const { invitation_code, ...rest } = registerRequest;
     const user = await this.userRepository.create({
       ...rest,
@@ -105,10 +100,23 @@ export class AuthService {
       username_reset_count: 0,
       password_reset_count: 0,
       benefit_id,
-      invitation_link_id,
+      invitation_link_id: invitationLink ? invitationLink.id : null,
       password: await hash(registerRequest.password),
       role_id: clientRole.id,
+      language: this.requestService.language ?? DEFAULT_LANGUAGE,
     });
+    if (invitationLink) {
+      await this.invitationLinkService.updateById(invitationLink.id, {
+        current_uses: invitationLink.current_uses + 1,
+        active: invitationLink.max_uses < invitationLink.current_uses + 1
+      })
+    }
+    if (waitList) {
+      await this.waitListService.updateById(waitList.id, {
+        status: 'REGISTERED',
+        redeemed_at: new Date(),
+      });
+    }
     if (benefit_id) {
       await this.userBenefitService.create(user.id, benefit_id);
     }
@@ -252,9 +260,15 @@ export class AuthService {
       },
     );
 
-    this.mailService.send(
-      this.passwordRecoveryMail.setData(user, passwordRecoveryAttempt),
-    );
+    this.mailService
+      .send(this.passwordRecoveryMail.setData(user, passwordRecoveryAttempt, user.language))
+      .catch((error: Error) =>
+        this.logService.error('Failed to send password recovery email', {
+          message: error?.message,
+          stack: error?.stack,
+          userId: user.id,
+        }),
+      );
     return passwordRecoveryAttempt;
   }
   async checkPasswordRecoveryAttempt(
@@ -359,9 +373,15 @@ export class AuthService {
       twofa_code: hashedCode,
       twofa_expires_at: expiresAt,
     });
-    this.mailService.send(
-      this.twoFAMail.setUser({ ...updatedUser, twofa_code: code }),
-    );
+    this.mailService
+      .send(this.twoFAMail.setUser({ ...updatedUser, twofa_code: code }, updatedUser.language))
+      .catch((error: Error) =>
+        this.logService.error('Failed to send 2FA email', {
+          message: error?.message,
+          stack: error?.stack,
+          userId: updatedUser.id,
+        }),
+      );
     return {
       user_auth_device: userDevice,
       user: updatedUser,

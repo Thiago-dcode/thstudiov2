@@ -127,10 +127,19 @@ const proxy = async (req: NextRequest) => {
 
   let response = intlMiddleware(req);
 
+  // next-intl may redirect to a different locale than the current URL segment
+  // (driven by the NEXT_LOCALE cookie or Accept-Language negotiation). When it
+  // does, trust that resolved destination instead of the pre-redirect URL, so
+  // the language sent to the API agrees with next-intl's own fallback chain.
+  const redirectLocation = response.headers.get("location");
+  const effectiveFirstSeg = redirectLocation
+    ? (new URL(redirectLocation, req.url).pathname.split("/")[1] ?? "").toLowerCase()
+    : firstSeg;
+
   const resolvedLanguageCode: EnumType<"LANGUAGE_CODE"> = (
     routing.locales as readonly string[]
-  ).includes(firstSeg)
-    ? urlLocaleToLanguageCode(firstSeg)
+  ).includes(effectiveFirstSeg)
+    ? urlLocaleToLanguageCode(effectiveFirstSeg)
     : urlLocaleToLanguageCode(routing.defaultLocale);
 
   response.cookies.set(LANGUAGE_COOKIE_NAME, resolvedLanguageCode);

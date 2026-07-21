@@ -123,7 +123,7 @@ export class AiProcessor extends GlobalProcessor {
           const user = await this.userService.findOneCompacted(usageData.user_id);
           if (user) {
             await this.mailService.send(
-              this.userAiCreditsEndedMail.setUser(user),
+              this.userAiCreditsEndedMail.setUser(user, user.language),
             );
             log.info(`AI credits ended email sent to user ${usageData.user_id}`);
           }
@@ -202,7 +202,7 @@ export class AiProcessor extends GlobalProcessor {
           const user = await this.userService.findOneCompacted(moderationData.user_id);
           if (user) {
             await this.mailService.send(
-              this.userAccountBannedMail.setUser(user),
+              this.userAccountBannedMail.setUser(user, user.language),
             );
             log.info(`Account banned email sent to user ${moderationData.user_id} (ban_count: ${newBanCount}, ban_lift: ${banLift.toISOString()})`);
           }

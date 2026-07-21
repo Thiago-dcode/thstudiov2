@@ -1,6 +1,7 @@
 <tr>
     <td style="padding:32px 0 0 0;">
         <% const footerUnsubscribeUrl = (typeof unsubscribeUrl !== 'undefined' && unsubscribeUrl) || (typeof ususcribeUrl !== 'undefined' && ususcribeUrl) || (typeof unsuscribeUrl !== 'undefined' && unsuscribeUrl) || ''; %>
+        <% const footerT = typeof t !== 'undefined' ? t : globals.t; %>
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
             <tr>
                 <td style="padding:0 40px;">
@@ -20,11 +21,11 @@
             </tr>
             <tr>
                 <td style="padding:0 0 24px 0; text-align:center;">
-                    <p class="e-text-muted" style="margin:0 0 6px 0; font-size:11px; color:#46443F; letter-spacing:0.5px;">
+                    <p class="e-text-muted" style="margin:0 0 6px 0;  color:#46443F; letter-spacing:0.5px;">
                         &copy; <%= new Date().getFullYear() %> <%= globals.appName %> &middot;
-                        <%= globals.t('email.FOOTER.ALL_RIGHTS_RESERVED') %>
+                        <%= footerT('email.FOOTER.ALL_RIGHTS_RESERVED') %>
                     </p>
-                    <a href="<%= globals.appUrl %>" class="e-text-muted" style="font-size:11px; color:#46443F; text-decoration:none; letter-spacing:0.5px;">
+                    <a href="<%= globals.appUrl %>" class="e-text-muted" style=" color:#46443F; text-decoration:none; letter-spacing:0.5px;">
                         <%= globals.beautyUrl %>
                     </a>
                     <% if (footerUnsubscribeUrl) { %>

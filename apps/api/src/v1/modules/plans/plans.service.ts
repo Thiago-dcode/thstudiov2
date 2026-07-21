@@ -3,7 +3,7 @@ import { QueryBuilder } from '@repo/database/queryBuilder';
 import { PlansRepository } from './plans.repository';
 import { IndexPlanRequest } from './requests/index-plan.request';
 import { Helpers } from 'src/common/services/helpers.service';
-import { CACHE_KEY_PLANS, CACHE_KEY_FREE_PLAN, CACHE_KEY_ACTIVE_PLAN } from '@repo/common-lib/constants/constants';
+import { CACHE_KEY_PLANS, CACHE_KEY_FREE_PLAN, CACHE_KEY_ACTIVE_PLAN, CACHE_KEY_ACTIVE_PLANS_BASE } from '@repo/common-lib/constants/constants';
 
 @Injectable()
 export class PlansService {
@@ -20,6 +20,17 @@ export class PlansService {
       this.plansRepository.findAll(indexPlanRequest),
       {
         append_language: true,
+        ttl: 1000 * 60 * 60 * 24,
+      },
+    );
+  }
+
+  async findActivePlans() {
+    return await this.helpers.cacheRemember(
+      CACHE_KEY_ACTIVE_PLANS_BASE,
+      this.plansRepository.findActivePlans(),
+      {
+        append_language: false,
         ttl: 1000 * 60 * 60 * 24,
       },
     );

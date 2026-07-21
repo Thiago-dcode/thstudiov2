@@ -1,16 +1,14 @@
 {
-  "WELCOME_SUBJECT": "Welcome to {appName} — your portfolio starts here",
-  "HI": "Hi",
-  "WELCOME": "You're in",
-  "WELCOME_MESSAGE": "A11STUDIO was built by an artist, for artists — so you can spend less time on technology and more time creating work you're proud of.",
-  "FEATURES_INTRO": "Everything here is built around one idea:",
-  "FEATURES_INTRO_EMPHASIS": "your art comes first.",
+  "WELCOME_SUBJECT": "Welcome to {username} — your art comes first",
+  "HI": "Welcome",
+  "WELCOME": "Your journey starts here.",
+  "WELCOME_MESSAGE": "A11STUDIO was built by an artist, for artists. Just focus on your art, we take care of the rest.",
   "FEATURES": [
-    "Build a professional portfolio in minutes — no code required",
-    "Publish and organize your work in curated galleries",
-    "Let SEO, hosting, and technical upkeep happen behind the scenes",
-    "Present yourself beautifully and open doors to new clients"
+    "Build a professional portfolio in minutes — no code required.",
+    "Publish and organize your work in curated galleries.",
+    "Let hosting, SEO, and technical upkeep disappear into the background.",
+    "Present yourself with the elegance your work deserves."
   ],
-  "CTA_START_TEXT": "Your portfolio is only a few minutes away.",
+  "CTA_START_TEXT": "Your atelier is ready. All it's missing is your art.",
   "CTA_START_BUTTON": "Open your atelier"
 }

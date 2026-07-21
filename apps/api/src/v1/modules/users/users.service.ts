@@ -29,6 +29,7 @@ import { compare, hash } from '@repo/common-lib/utils/hash';
 import { AiService } from '../ai/ai.service';
 import { MediaModerationException } from 'src/common/exceptions/media-moderation-exception';
 import { ArtistCard, UpdateUserInput } from '@repo/common-lib/types/user';
+import { EnumType } from '@repo/common-lib/constants/enums';
 import { addMonths } from 'date-fns';
 import { IndexArtistsRequest } from './requests/index-artists.request';
 import { CreateOrUpdateEmailPreferenceEvent } from '../email-preferences/events/create-or-update-email-preference.event';
@@ -45,6 +46,11 @@ export class UserService {
     private readonly notifyNewUserMail: NotifyNewUserMail,
     private readonly aiService: AiService,
   ) { }
+
+  /** No-op when `language` already matches; safe to call on every authenticated request. */
+  async updateLanguageIfChanged(id: number, language: EnumType<'LANGUAGE_CODE'>): Promise<void> {
+    await this.userRepository.updateLanguageIfChanged(id, language);
+  }
 
   async findAll(filters: IndexArtistsRequest): Promise<ArtistCard[]> {
     const artists = await this.userRepository.findAllArtists(filters);
@@ -315,7 +321,7 @@ export class UserService {
         new SetInitialUserExtraDataEvent(event.user.id),
       );
       //Notify user
-      await this.mailService.sendAsync(this.notifyNewUserMail.setUser(event.user), {
+      await this.mailService.sendAsync(this.notifyNewUserMail.setUser(event.user, event.user.language), {
         delay: 3 * 60 * 1000
       });
     } catch (error) {

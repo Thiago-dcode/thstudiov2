@@ -83,7 +83,7 @@ export const metadata: Metadata = {
 
 ### Dynamic Sitemaps
 
-```ts
+```ts     
 // app/sitemap.ts
 import { MetadataRoute } from "next";
 
