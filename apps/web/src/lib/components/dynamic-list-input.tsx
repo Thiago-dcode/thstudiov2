@@ -4,6 +4,7 @@ import { Button } from "@repo/ui/components/shadcn/button";
 import { Input } from "@repo/ui/components/shadcn/input";
 import { Label } from "@repo/ui/components/shadcn/label";
 import { Plus, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 type DynamicListInputProps = {
   value: string[];
@@ -20,6 +21,7 @@ export const DynamicListInput = ({
   placeholder,
   error,
 }: DynamicListInputProps) => {
+  const t = useTranslations("atelier.common");
   const items = value.length > 0 ? value : [""];
 
   const updateItem = (index: number, newValue: string) => {
@@ -76,7 +78,7 @@ export const DynamicListInput = ({
           onClick={addItem}
         >
           <Plus className="size-3.5" />
-          Add
+          {t("add")}
         </Button>
       )}
       {error && <p className="text-xs text-red-500 mt-1">{error}</p>}

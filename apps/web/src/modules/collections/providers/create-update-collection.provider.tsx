@@ -11,6 +11,7 @@ import type {
 import type { Media } from "@repo/common-lib/types/media";
 import type { ActionReturn } from "@repo/common-lib/types/response";
 import { toast } from "@repo/ui/sonner";
+import { useTranslations } from "next-intl";
 import {
   createContext,
   type Dispatch,
@@ -106,6 +107,7 @@ export const CollectionProvider = ({
   children,
   user,
 }: CollectionProviderProps) => {
+  const t = useTranslations("atelier.collections");
   const [currentCollection, setCurrentCollection] = useState<
     FullCollection | undefined
   >(undefined);
@@ -197,9 +199,7 @@ export const CollectionProvider = ({
         await fetchHighlightCount({ force: true });
         clear();
         toast.success(
-          currentCollection
-            ? "Collection updated successfully"
-            : "Collection created successfully",
+          currentCollection ? t("toastUpdated") : t("toastCreated"),
         );
       }
     },

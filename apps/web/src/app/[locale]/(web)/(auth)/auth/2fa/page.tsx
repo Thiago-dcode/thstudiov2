@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { redirect } from "@/i18n/redirect";
 import PageComponent from "@/lib/components/page-component";
@@ -7,6 +8,7 @@ import { ExpiresIn } from "../__components/expiresIn";
 import { TwoFaForm } from "../__components/twoFa-form";
 
 export default async function TwoFactorAuth() {
+  const t = await getTranslations("auth.twoFa");
   const [user, redirectTo] = await Promise.all([
     get2faCookieData(),
     getRedirectTo(),
@@ -45,11 +47,13 @@ export default async function TwoFactorAuth() {
         <PageComponent.Header>
           {/* <MailOpen className="size-10" /> */}
           <PageComponent.Title
-            title={user.is_new ? "Validate your email" : "Device verification"}
+            title={
+              user.is_new ? t("titleValidateEmail") : t("titleDeviceVerification")
+            }
           />
           <PageComponent.SubTitle>
             <p className="text-sm">
-              We've sent a verification code to{" "}
+              {t("codeSentTo")}{" "}
               <span className="font-medium">{maskedEmail}</span>
             </p>
           </PageComponent.SubTitle>
@@ -59,9 +63,9 @@ export default async function TwoFactorAuth() {
         {/* Footer Links */}
         <div className="pt-4 ">
           <p className="text-sm text-text-muted">
-            Having trouble?{" "}
+            {t("havingTrouble")}{" "}
             <Link href="/auth/login" className=" transition-colors text-text">
-              Back to login
+              {t("backToLogin")}
             </Link>
           </p>
         </div>

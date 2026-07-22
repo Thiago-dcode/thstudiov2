@@ -4,6 +4,7 @@ import {
   FileInputProvider,
   useInputFile,
 } from "@repo/ui/contexts/file.provider";
+import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import {
   ButtonStepBackFunnel,
@@ -23,6 +24,7 @@ export default function Container() {
 }
 
 const Step2 = () => {
+  const t = useTranslations("editUser.avatar");
   const inputRef = useRef<HTMLInputElement>(null);
   const { user, setInputs, handleOnChange, setErrors } = useFunnelActions();
   const { files, errors } = useInputFile();
@@ -63,11 +65,11 @@ const Step2 = () => {
       <div className="flex flex-col gap-4 w-full max-w-2xl mx-auto p-4">
         {previewUrl && (
           <div className="mt-4 flex flex-col items-center gap-2">
-            <h3 className="text-sm font-medium">Profile Preview:</h3>
+            <h3 className="text-sm font-medium">{t("preview")}</h3>
             <div className="relative w-32 h-32 overflow-hidden border-4 border-fg-2">
               <img
                 src={previewUrl}
-                alt="Profile Preview"
+                alt={t("previewAlt")}
                 className="w-full h-full object-cover"
               />
             </div>

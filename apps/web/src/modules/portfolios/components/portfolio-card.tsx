@@ -33,7 +33,7 @@ function Image({
   alt,
   sizes = DEFAULT_SIZES,
   isBlocked,
-  blockedLabel = "Blocked",
+  blockedLabel,
   className,
 }: ImageProps) {
   const hasThumbnail = Boolean(src?.trim());
@@ -73,7 +73,7 @@ function Image({
 }
 
 function BlockedBadge({
-  label = "Blocked",
+  label,
   className,
 }: {
   label?: string;

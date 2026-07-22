@@ -4,6 +4,7 @@ import { Errors } from "@repo/ui/components/custom/errors";
 import { Input } from "@repo/ui/components/shadcn/input";
 import { Label } from "@repo/ui/components/shadcn/label";
 import { Eye, EyeClosed } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { type ReactNode, useState } from "react";
 import { useRouter } from "@/i18n/navigation";
 import FormComponent from "@/lib/components/form-component";
@@ -16,6 +17,7 @@ export const RegisterForm = ({
   children?: ReactNode;
   initialEmail?: string;
 }) => {
+  const t = useTranslations("auth.register");
   const router = useRouter();
   const [hidden, setHidden] = useState(true);
   const { result, handleSubmit, errors, inputErrors, cleanErrors, isPending } =
@@ -34,13 +36,13 @@ export const RegisterForm = ({
       <FormComponent.Form onSubmit={handleSubmit} noValidate>
         {/* Email Field */}
         <FormComponent.LabelInput
-          label="Email Address"
+          label={t("emailLabel")}
           type="email"
           id="email"
           name="email"
           error={inputErrors?.email}
           defaultValue={result?.inputs?.email ?? initialEmail}
-          placeholder="you@example.com"
+          placeholder={t("emailPlaceholder")}
           autoComplete="email"
           required
           autoFocus
@@ -49,13 +51,13 @@ export const RegisterForm = ({
 
         {/* Username Field */}
         <FormComponent.LabelInput
-          label="Username"
+          label={t("usernameLabel")}
           type="text"
           id="username"
           name="username"
           error={inputErrors?.username}
           defaultValue={result?.inputs?.username}
-          placeholder="username"
+          placeholder={t("usernamePlaceholder")}
           autoComplete="username"
           required
           onChange={() => cleanErrors()}
@@ -63,7 +65,7 @@ export const RegisterForm = ({
         {/* Password Field */}
         <FormComponent.Field>
           <Label htmlFor="password" className="block">
-            Password *
+            {t("passwordLabel")}
           </Label>
           <div className="relative">
             <Input
@@ -74,7 +76,7 @@ export const RegisterForm = ({
               type={hidden ? "password" : "text"}
               id="password"
               name="password"
-              placeholder="Enter your password"
+              placeholder={t("passwordPlaceholder")}
               autoComplete="new-password"
               required
             />
@@ -102,7 +104,7 @@ export const RegisterForm = ({
         {children}
         {/* Submit Button */}
         <FormComponent.SubmitButton isPending={isPending} variant="accent">
-          Sign up
+          {t("submit")}
         </FormComponent.SubmitButton>
       </FormComponent.Form>
       {errors && errors.length > 0 && <Errors errors={errors} />}

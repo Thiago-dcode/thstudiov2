@@ -15,6 +15,7 @@ import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { FileInputProvider } from "@repo/ui/contexts/file.provider";
 import { cn } from "@repo/ui/lib/utils";
 import { Check, Image, RefreshCw, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CreateMediaDialog } from "@/app/[locale]/(atelier)/atelier/media/_components/create-media-modal";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
@@ -36,6 +37,8 @@ export const SelectMediaDrawer = ({
   maxSelection?: number;
   addButtonDisabled?: boolean;
 }) => {
+  const t = useTranslations("atelier.media.drawer");
+  const tCommon = useTranslations("atelier.common");
   const [open, setOpen] = useState(false);
   const [media, setMedia] = useState<Media[]>([]);
   const [shapeFilter, setShapeFilter] = useState<ShapeFilter>(undefined);
@@ -116,7 +119,7 @@ export const SelectMediaDrawer = ({
           disabled={addButtonDisabled || isSelectionLimitReached}
         >
           <Image className="size-3.5" />
-          Add media
+          {t("addMedia")}
         </Button>
       </DrawerTrigger>
       <DrawerContent className="h-full w-[600px] max-w-[90vw] right-0 left-auto flex flex-col">
@@ -125,7 +128,7 @@ export const SelectMediaDrawer = ({
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <DrawerTitle className="text-base font-semibold">
-                Add media
+                {t("title")}
               </DrawerTitle>
               {mediaSelectedLength > 0 && (
                 <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 bg-fg text-text text-[11px] font-medium tabular-nums">
@@ -141,7 +144,7 @@ export const SelectMediaDrawer = ({
                 className="size-7"
                 disabled={isPending}
                 onClick={handleRefresh}
-                aria-label="Refresh media"
+                aria-label={t("refreshAria")}
               >
                 <RefreshCw
                   className={cn("size-3.5", isPending && "animate-spin")}
@@ -174,7 +177,7 @@ export const SelectMediaDrawer = ({
                 : "text-text-muted hover:text-text hover:bg-fg-2",
             )}
           >
-            All
+            {t("filterAll")}
           </button>
           {SHAPE_OPTIONS.map((shape) => (
             <button
@@ -203,9 +206,9 @@ export const SelectMediaDrawer = ({
           ) : media.length > 0 ? (
             <div className="space-y-3">
               <p className="text-[11px] text-text-muted">
-                Click to add to your portfolio · {media.length} available
+                {t("hint", { count: media.length })}
                 {maxSelection !== undefined
-                  ? ` · up to ${maxSelection} items`
+                  ? ` ${t("hintMax", { max: maxSelection })}`
                   : ""}
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -235,7 +238,9 @@ export const SelectMediaDrawer = ({
                         backgroundSize: "cover",
                         backgroundPosition: "center",
                       }}
-                      title={isSelected ? "Already added" : "Add to portfolio"}
+                      title={
+                        isSelected ? t("alreadyAdded") : t("addToPortfolio")
+                      }
                     >
                       {/* Hover overlay */}
                       <div className="absolute inset-0 bg-black/0 transition-colors duration-200 group-hover:bg-black/20" />
@@ -270,7 +275,7 @@ export const SelectMediaDrawer = ({
                     onClick={handleLoadMore}
                   >
                     {isPending && <Spinner className="size-3.5" />}
-                    {isPending ? "Loading..." : "Load more"}
+                    {isPending ? tCommon("loading") : tCommon("loadMore")}
                   </Button>
                 </div>
               )}
@@ -278,10 +283,8 @@ export const SelectMediaDrawer = ({
           ) : (
             <div className="flex flex-col items-center justify-center py-16 gap-2">
               <Image className="size-8 text-text-muted/40" />
-              <p className="text-sm text-text-muted">No media yet</p>
-              <p className="text-xs text-text-muted/70">
-                Upload your first image to get started
-              </p>
+              <p className="text-sm text-text-muted">{t("emptyTitle")}</p>
+              <p className="text-xs text-text-muted/70">{t("emptySubtitle")}</p>
             </div>
           )}
         </div>
@@ -291,8 +294,11 @@ export const SelectMediaDrawer = ({
           {mediaSelectedLength > 0 ? (
             <p className="text-xs text-text-muted tabular-nums">
               {maxSelection !== undefined
-                ? `${mediaSelectedLength} / ${maxSelection} item${mediaSelectedLength !== 1 ? "s" : ""} selected`
-                : `${mediaSelectedLength} item${mediaSelectedLength !== 1 ? "s" : ""} selected`}
+                ? t("itemsSelectedWithMax", {
+                    count: mediaSelectedLength,
+                    max: maxSelection,
+                  })
+                : t("itemsSelected", { count: mediaSelectedLength })}
             </p>
           ) : (
             <span />
@@ -305,7 +311,7 @@ export const SelectMediaDrawer = ({
               className="gap-1.5 h-8"
             >
               <X className="size-3.5" />
-              Close
+              {tCommon("close")}
             </Button>
           </DrawerClose>
         </div>

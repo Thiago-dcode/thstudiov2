@@ -10,10 +10,10 @@ import { Link } from "@/i18n/navigation";
 import portfolioService from "@/modules/portfolios/portfolio.service";
 import { WebSection } from "./web-section";
 
-const MAX_FEATURED_ITEMS = 15;
-const PHONE_FEATURED_COUNT = 7;
-const TABLET_FEATURED_COUNT = 11;
-const LAPTOP_FEATURED_COUNT = 13;
+const MAX_FEATURED_ITEMS = 12;
+const PHONE_FEATURED_COUNT = 6;
+const TABLET_FEATURED_COUNT = 9;
+const LAPTOP_FEATURED_COUNT = 9;
 
 export async function FeaturedPortfolioSection() {
   const t = await getTranslations("landing.featuredPortfolio");

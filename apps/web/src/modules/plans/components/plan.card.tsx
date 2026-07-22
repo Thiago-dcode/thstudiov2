@@ -2,6 +2,7 @@
 
 import type { FullPlan } from "@repo/common-lib/types/plan";
 import { cn } from "@repo/ui/lib/utils";
+import { useTranslations } from "next-intl";
 import { UsePlanSubscription } from "@/modules/plan-subscriptions/providers/plan-subscription.provider";
 import { PlanFeatures } from "./plan.features";
 import { PlanHeader } from "./plan.header";
@@ -13,6 +14,7 @@ export type PlanCardProps = {
 };
 
 export function PlanCard({ plan, className }: PlanCardProps) {
+  const t = useTranslations("plans.card");
   // Extract data from plan
   const name = plan.translation?.name || plan.name;
   const short_description =
@@ -33,14 +35,14 @@ export function PlanCard({ plan, className }: PlanCardProps) {
       {plan.is_popular && (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2">
           <span className="bg-text px-4 py-1 text-xs font-medium text-accent-fg">
-            Popular
+            {t("popular")}
           </span>
         </div>
       )}
       {plan.top_tier && !plan.is_popular && (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2">
           <span className="bg-accent text-bg! px-4 py-1 text-xs font-medium">
-            Best Value
+            {t("bestValue")}
           </span>
         </div>
       )}
@@ -50,7 +52,7 @@ export function PlanCard({ plan, className }: PlanCardProps) {
       <PlanPrice isFree={plan.is_free} prices={plan.prices} />
       <div className="w-full">
         <p className="w-full py-3 bg-text text-bg text-center font-bold">
-          {plan.is_free ? "Get started" : `Go ${plan.name}`}
+          {plan.is_free ? t("getStarted") : t("goPlan", { planName: plan.name })}
         </p>
       </div>
       <PlanFeatures plan={plan} />

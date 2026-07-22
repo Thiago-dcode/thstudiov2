@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { redirect } from "@/i18n/redirect";
 import PageComponent from "@/lib/components/page-component";
@@ -7,6 +8,7 @@ import { getTimeTillNextRecovery } from "./__utils/utils";
 
 const authComponent = PageComponent;
 export default async function PasswordRecovery() {
+  const t = await getTranslations("auth.passwordRecovery");
   const timeTillNextRecovery = getTimeTillNextRecovery(
     await getPasswordRecoveryAttemptCookie(),
   );
@@ -20,8 +22,8 @@ export default async function PasswordRecovery() {
         <authComponent.Header>
           {" "}
           {/* Header */}
-          <PageComponent.Title title="Password Recovery" />
-          <PageComponent.SubTitle subTitle="Enter your email and we'll send you a recovery link" />
+          <PageComponent.Title title={t("title")} />
+          <PageComponent.SubTitle subTitle={t("subtitle")} />
         </authComponent.Header>
         <PasswordRecoveryForm />
 
@@ -31,17 +33,17 @@ export default async function PasswordRecovery() {
           className="text-sm transition-colors text-text-muted hover:text-text "
           href={"/auth/login"}
         >
-          Remember your password?
+          {t("rememberPassword")}
         </Link>
       </authComponent.Content>
       <authComponent.Footer>
         <p>
-          Need help?{" "}
+          {t("needHelp")}{" "}
           <Link
             href="/support"
             className="text-blue-500 hover:text-blue-600 underline"
           >
-            Contact Support
+            {t("contactSupport")}
           </Link>
         </p>
       </authComponent.Footer>

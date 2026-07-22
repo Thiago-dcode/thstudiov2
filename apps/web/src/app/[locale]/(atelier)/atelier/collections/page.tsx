@@ -15,6 +15,7 @@ import { CreateResourceButton } from "../../__components/create-resource-button"
 
 export default async function CollectionListPage() {
   const t = await getTranslations("atelier.collections");
+  const tCommon = await getTranslations("atelier.common");
   const userAuth = await userSession();
   if (!userAuth) {
     redirect("/");
@@ -45,7 +46,11 @@ export default async function CollectionListPage() {
               key={collection.id}
               href={`/atelier/collections/edit/${collection.slug}`}
             >
-              <CollectionCard collection={collection} />
+              <CollectionCard
+                collection={collection}
+                isAtelier
+                blockedLabel={tCommon("blocked")}
+              />
             </Link>
           ))}
         </div>

@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { I18nService } from 'nestjs-i18n';
 import { Content, Envelop, Mailable } from '@repo/backend-lib/services/mail-service';
+import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
 import { ViewService } from '@repo/backend-lib/services/view-service/base';
 import { ViewData } from '@repo/backend-lib/services/view-service/types';
 import { EnumType } from '@repo/common-lib/constants/enums';
 import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/constants';
-import Logger from '@repo/backend-lib/utils/console';
 import { EmailPreferencesService } from 'src/v1/modules/email-preferences/email-preferences.service';
 
 type ViewParams = {
@@ -16,6 +16,11 @@ type ViewParams = {
 
 @Injectable()
 export abstract class ApiMailService extends Mailable {
+  /** Own instance (not DI-shared) so its `email` channel never gets mutated by other consumers. */
+  private static readonly emailLog: LogService = FactoryLogService.createLogService('file', {
+    channel: 'email',
+  });
+
   private envelopePromise: Promise<Envelop> | null = null;
   /** Set by subclasses (via `this.lang = lang`) before `envelope()`/`content()` run. */
   protected lang: string = DEFAULT_LANGUAGE;
@@ -92,6 +97,11 @@ export abstract class ApiMailService extends Mailable {
     // If we don't have email preferences (e.g. manually constructed mailables),
     // default to sending and do not include unsubscribe URLs.
     if (!this.emailPreferencesService) {
+      ApiMailService.emailLog.info(`Sending mail (no preference check): ${email}`, {
+        email,
+        email_type: this._viewParams.emailType,
+        view: this._viewParams.viewPath,
+      });
       return {
         html: await this.viewService.render(
           this._viewParams.viewPath,
@@ -106,11 +116,19 @@ export abstract class ApiMailService extends Mailable {
     );
 
     if (!canSend) {
-      Logger.warn(
-        `Mail skipped by email preferences: ${email} type=${this._viewParams.emailType} view=${this._viewParams.viewPath}`,
-      );
+      ApiMailService.emailLog.warn(`Mail skipped by email preferences: ${email}`, {
+        email,
+        email_type: this._viewParams.emailType,
+        view: this._viewParams.viewPath,
+      });
       return {};
     }
+
+    ApiMailService.emailLog.info(`Sending mail: ${email}`, {
+      email,
+      email_type: this._viewParams.emailType,
+      view: this._viewParams.viewPath,
+    });
 
     return {
       html: await this.viewService.render(

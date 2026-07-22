@@ -8,6 +8,7 @@ import { Errors } from "@repo/ui/components/custom/errors";
 import { Input } from "@repo/ui/components/shadcn/input";
 import { Label } from "@repo/ui/components/shadcn/label";
 import { Eye, EyeClosed } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useRouter } from "@/i18n/navigation";
 import FormComponent from "@/lib/components/form-component";
@@ -22,6 +23,7 @@ export const LoginForm = ({
   rememberMe: boolean;
   redirectTo: RedirectToKey | null;
 }) => {
+  const t = useTranslations("auth.login");
   const router = useRouter();
   const [hidden, setHidden] = useState(true);
   const { result, handleSubmit, errors, cleanErrors, isPending, success } =
@@ -51,12 +53,12 @@ export const LoginForm = ({
       <FormComponent.Form onSubmit={handleSubmit}>
         {/* Email Field */}
         <FormComponent.LabelInput
-          label="Email Address"
+          label={t("emailLabel")}
           type="email"
           id="email"
           name="email"
           defaultValue={result?.inputs?.email}
-          placeholder="you@example.com"
+          placeholder={t("emailPlaceholder")}
           autoComplete="email"
           required
           autoFocus
@@ -66,7 +68,7 @@ export const LoginForm = ({
         {/* Password Field */}
         <FormComponent.Field>
           <Label htmlFor="password" className="block ">
-            Password
+            {t("passwordLabel")}
           </Label>
           <div className="relative">
             <Input
@@ -77,7 +79,7 @@ export const LoginForm = ({
               type={hidden ? "password" : "text"}
               id="password"
               name="password"
-              placeholder="Enter your password"
+              placeholder={t("passwordPlaceholder")}
               autoComplete="current-password"
               required
             />
@@ -116,7 +118,7 @@ export const LoginForm = ({
 
         {/* Submit Button */}
         <FormComponent.SubmitButton success={success} isPending={isPending}>
-          Sign In
+          {t("submit")}
         </FormComponent.SubmitButton>
       </FormComponent.Form>
       {errors && errors.length > 0 && <Errors errors={errors} />}

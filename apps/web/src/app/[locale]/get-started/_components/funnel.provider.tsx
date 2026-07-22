@@ -4,6 +4,7 @@ import { Errors } from "@repo/ui/components/custom/errors";
 import { Button } from "@repo/ui/components/shadcn/button";
 import { cn } from "@repo/ui/lib/utils";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import {
   createContext,
@@ -91,6 +92,7 @@ export const FunnelProvider = ({
   defaultCanContinue?: boolean;
 }) => {
   const router = useRouter();
+  const t = useTranslations("getStarted.actions");
   const actionElementRef = useRef<HTMLInputElement | null>(null);
   const [inputs, _setInputs] =
     useState<(HTMLInputElement | HTMLTextAreaElement)[]>();
@@ -112,7 +114,7 @@ export const FunnelProvider = ({
         if (!validActions.some((va) => va === action))
           return {
             data: null,
-            errors: ["something went wrong"],
+            errors: [t("somethingWentWrong")],
             inputs: undefined,
           };
         const currentStep = user.funnel_step;
@@ -266,12 +268,13 @@ export const ContainerFormFunnel = ({
   );
 };
 export const ButtonSubmitFunnel = ({
-  text = "Continue",
+  text,
   simple = false,
 }: {
   text?: string;
   simple?: boolean;
 }) => {
+  const t = useTranslations("getStarted.actions");
   const { actionElementRef } = useFunnelActions();
   const { refInputs, canContinue, isPending } = useFunnelState();
   return (
@@ -296,7 +299,7 @@ export const ButtonSubmitFunnel = ({
         })}
         isPending={isPending}
       >
-        {text} {!simple ? <ArrowRight /> : null}
+        {text ?? t("continue")} {!simple ? <ArrowRight /> : null}
       </FormComponent.SubmitButton>
     </>
   );
@@ -304,7 +307,7 @@ export const ButtonSubmitFunnel = ({
 
 export const ButtonFinishFunnel = ({
   variant = "ghost",
-  text = "Finish",
+  text,
 }: {
   text?: string;
   variant?:
@@ -319,6 +322,7 @@ export const ButtonFinishFunnel = ({
     | null
     | undefined;
 }) => {
+  const t = useTranslations("getStarted.actions");
   const { actionElementRef } = useFunnelActions();
   const { isPending } = useFunnelState();
   return (
@@ -329,11 +333,12 @@ export const ButtonFinishFunnel = ({
       isPending={isPending}
       variant={variant}
     >
-      {text}
+      {text ?? t("finish")}
     </FormComponent.SubmitButton>
   );
 };
 export const ButtonStepBackFunnel = () => {
+  const t = useTranslations("getStarted.actions");
   const { user, actionElementRef } = useFunnelActions();
   const { refInputs, isPending } = useFunnelState();
   return (
@@ -353,7 +358,7 @@ export const ButtonStepBackFunnel = () => {
           })}
           variant={"ghost"}
         >
-          <ArrowLeft /> step back
+          <ArrowLeft /> {t("stepBack")}
         </Button>
       )}
     </>

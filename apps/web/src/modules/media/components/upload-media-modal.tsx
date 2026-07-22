@@ -8,10 +8,13 @@ import {
 } from "@repo/ui/components/shadcn/hover-card";
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { CircleCheckIcon, Eye, EyeOff, OctagonXIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { type UploadMedia, useMedia } from "../providers/media.provider";
 
 export const UploadMediaModal = () => {
+  const t = useTranslations("atelier.media.uploadStatus");
+  const tCommon = useTranslations("atelier.common");
   const [mounted, setMounted] = useState(false);
   const [compact, setCompact] = useState(false);
   const { mediaUploads, isCompleted, isLoading, handleRemoveCompleted } =
@@ -53,25 +56,27 @@ export const UploadMediaModal = () => {
       <div className="flex items-center justify-between border-b border-border px-4 py-3 shrink-0">
         <div className="flex flex-col gap-0.5">
           <h3 className="text-sm! font-semibold">
-            {isCompleted ? "Upload complete" : "Uploading files"}
+            {isCompleted ? t("uploadComplete") : t("uploadingFiles")}
           </h3>
           <div className="flex items-center gap-2 text-xs text-text-muted">
-            {remainingLength > 0 && <span>{remainingLength} remaining</span>}
+            {remainingLength > 0 && (
+              <span>{t("remaining", { count: remainingLength })}</span>
+            )}
             {successCount > 0 && (
               <span className="text-green-600 text-xs!">
-                {successCount} {successCount === 1 ? "success" : "success"}
+                {successCount} {t("success")}
               </span>
             )}
             {failedCount > 0 && (
               <span className="text-red-600">
-                {failedCount} {failedCount === 1 ? "failed" : "failed"}
+                {failedCount} {t("failed")}
               </span>
             )}
             {isCompleted &&
               remainingLength === 0 &&
               successCount > 0 &&
               failedCount === 0 && (
-                <span className="text-green-600">All complete</span>
+                <span className="text-green-600">{t("allComplete")}</span>
               )}
           </div>
         </div>
@@ -118,7 +123,7 @@ export const UploadMediaModal = () => {
               handleRemoveCompleted();
             }}
           >
-            Close
+            {tCommon("close")}
           </Button>
         </div>
       )}
@@ -127,6 +132,8 @@ export const UploadMediaModal = () => {
 };
 
 const SingleMediaUpload = ({ mediaUpload }: { mediaUpload: UploadMedia }) => {
+  const t = useTranslations("atelier.media.uploadStatus");
+  const tCommon = useTranslations("atelier.common");
   const isQueued =
     !mediaUpload.pending &&
     !mediaUpload.data &&
@@ -145,41 +152,41 @@ const SingleMediaUpload = ({ mediaUpload }: { mediaUpload: UploadMedia }) => {
 
   const statusText = useMemo(() => {
     if (isQueued) {
-      return "Queued...";
+      return t("queued");
     }
 
     if (mediaUpload.pending) {
       switch (mediaUpload.action) {
         case "create":
-          return "Uploading...";
+          return t("uploading");
         case "edit":
-          return "Updating...";
+          return t("updating");
         case "seo":
-          return "Generating SEO...";
+          return t("generatingSeo");
         case "delete":
-          return "Deleting...";
+          return t("deleting");
       }
     }
 
     if (mediaUpload.data || mediaUpload.deleted) {
       switch (mediaUpload.action) {
         case "create":
-          return "Uploaded";
+          return t("uploaded");
         case "edit":
-          return "Updated";
+          return t("updated");
         case "seo":
-          return "SEO generated";
+          return t("seoGenerated");
         case "delete":
-          return "Deleted";
+          return t("deleted");
       }
     }
 
     if (mediaUpload.error) {
-      return mediaUpload.error.errors?.join(", ") || "Failed";
+      return mediaUpload.error.errors?.join(", ") || t("failedFallback");
     }
 
     return "";
-  }, [mediaUpload]);
+  }, [mediaUpload, isQueued, t]);
 
   const errorMessages = mediaUpload.error?.errors || [];
   const inputErrors = mediaUpload.error?.inputErrors || {};
@@ -191,9 +198,9 @@ const SingleMediaUpload = ({ mediaUpload }: { mediaUpload: UploadMedia }) => {
         <Spinner className="size-8" />
         <div className="flex-1 min-w-0">
           <p className="text-xs! font-normal truncate">
-            {mediaUpload.input.file?.name || "Loading..."}
+            {mediaUpload.input.file?.name || tCommon("loading")}
           </p>
-          <p className="text-xs text-text-muted">Preparing upload...</p>
+          <p className="text-xs text-text-muted">{t("preparingUpload")}</p>
         </div>
       </div>
     );
@@ -206,12 +213,12 @@ const SingleMediaUpload = ({ mediaUpload }: { mediaUpload: UploadMedia }) => {
             {mediaUpload.previewUrl ? (
               <img
                 src={mediaUpload.previewUrl}
-                alt="Preview"
+                alt={t("previewAlt")}
                 className="h-full w-full object-cover"
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-text-muted text-xs">
-                No preview
+                {t("noPreview")}
               </div>
             )}
             {statusIcon && (
@@ -224,7 +231,7 @@ const SingleMediaUpload = ({ mediaUpload }: { mediaUpload: UploadMedia }) => {
             <p className="text-sm! font-medium truncate">
               {mediaUpload.input.file?.name ||
                 mediaUpload.input.seo_title ||
-                "Unknown file"}
+                t("unknownFile")}
             </p>
             <p className="text-xs! text-text-muted">{statusText}</p>
           </div>

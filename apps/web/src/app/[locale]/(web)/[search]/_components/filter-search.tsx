@@ -4,18 +4,21 @@ import { Button } from "@repo/ui/components/shadcn/button";
 import { Input } from "@repo/ui/components/shadcn/input";
 import { cn } from "@repo/ui/lib/utils";
 import { Search } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRef } from "react";
 import { useFilters } from "./filters.provider";
 import FiltersLists from "./filters-lists";
 import { PrimaryFiltersDropdown } from "./primary-filter-component";
 
 export function FilterSearch() {
+  const t = useTranslations("search");
   const { segment, add } = useFilters();
   const searchInput = useRef<HTMLInputElement | null>(null);
+  const segmentLabel = t(`segments.${segment}`);
 
   return (
     <search
-      aria-label={`Search ${segment}`}
+      aria-label={t("filters.searchAria", { segment: segmentLabel })}
       className={cn(
         "mx-auto flex w-full max-w-4xl flex-col gap-3",
         // centered ? 'max-w-2xl tablet:max-w-3xl' : 'max-w-4xl',
@@ -47,7 +50,9 @@ export function FilterSearch() {
               type="search"
               name="search"
               ref={searchInput}
-              placeholder={`Search ${segment} by name, style, category…`}
+              placeholder={t("filters.searchPlaceholder", {
+                segment: segmentLabel,
+              })}
               className="h-14 min-h-14 w-full pr-4 pl-12 text-base leading-snug tablet:text-lg"
               autoComplete="off"
             />
@@ -60,7 +65,7 @@ export function FilterSearch() {
               "",
             )}
           >
-            Search
+            {t("filters.searchButton")}
           </Button>
         </div>
       </form>

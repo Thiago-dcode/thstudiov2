@@ -15,6 +15,7 @@ import { CreateResourceButton } from "../../__components/create-resource-button"
 
 export default async function Atelier() {
   const t = await getTranslations("atelier.portfolios");
+  const tCommon = await getTranslations("atelier.common");
   const userAuth = await userSession();
   if (!userAuth) {
     redirect("/");
@@ -51,7 +52,7 @@ export default async function Atelier() {
               <PortfolioCard.Item
                 portfolio={portfolio}
                 isAtelier
-                blockedLabel={t("blockedBadge")}
+                blockedLabel={tCommon("blocked")}
               />
             </Link>
           ))}

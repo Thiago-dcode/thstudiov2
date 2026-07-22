@@ -6,12 +6,14 @@ import { CardTitle } from "@/lib/components/card-text";
 export type CollectionCardProps = {
   collection: Collection;
   isAtelier?: boolean;
+  blockedLabel?: string;
   className?: string;
 };
 
 export const CollectionCard = ({
   collection,
   isAtelier,
+  blockedLabel,
   className,
 }: CollectionCardProps) => {
   const images = collection.media
@@ -33,7 +35,7 @@ export const CollectionCard = ({
     >
       {isBlocked ? (
         <div className="absolute left-2 top-2 z-30 bg-black/70 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white">
-          Blocked
+          {blockedLabel}
         </div>
       ) : null}
       <div className="absolute inset-0 flex items-center justify-center">

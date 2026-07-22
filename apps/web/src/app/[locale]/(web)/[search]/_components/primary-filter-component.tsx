@@ -21,6 +21,7 @@ import {
   MapPinOff,
   SlidersHorizontal,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import CategoryFilter from "./category-filter";
 import LocationFilter from "./location-filter";
@@ -29,6 +30,7 @@ import { NEAR_ME_RADIUS_KM, useNearMe } from "./use-near-me";
 const PRIMARY_FILTERS_CONTENT_ID = "artists-primary-filters-popover";
 
 function NearMeRow() {
+  const t = useTranslations("search");
   const { geoState, isLocated, requestLocation } = useNearMe();
   const isLocating = geoState === "locating";
 
@@ -55,10 +57,10 @@ function NearMeRow() {
         )}
         <span>
           {isLocating
-            ? "Getting location…"
+            ? t("nearMe.gettingLocation")
             : isLocated
-              ? `Near me · ${NEAR_ME_RADIUS_KM} km`
-              : "Use my location"}
+              ? t("nearMe.nearMe", { radius: NEAR_ME_RADIUS_KM })
+              : t("primaryFilters.useMyLocation")}
         </span>
       </button>
 
@@ -68,7 +70,7 @@ function NearMeRow() {
           className="flex items-center gap-1.5 px-1 text-[10px] leading-snug text-text-muted"
         >
           <MapPinOff className="size-3 shrink-0" aria-hidden />
-          Location denied — enable it in browser settings and try again.
+          {t("nearMe.locationDenied")}
         </p>
       )}
       {geoState === "unavailable" && (
@@ -76,7 +78,7 @@ function NearMeRow() {
           role="alert"
           className="px-1 text-[10px] leading-snug text-text-muted"
         >
-          Couldn&apos;t get your location. Please try again.
+          {t("nearMe.locationUnavailable")}
         </p>
       )}
     </div>
@@ -84,6 +86,8 @@ function NearMeRow() {
 }
 
 function PrimaryFilterPanel() {
+  const t = useTranslations("search.primaryFilters");
+
   return (
     <Accordion
       type="multiple"
@@ -95,7 +99,7 @@ function PrimaryFilterPanel() {
         className="border-b-2 py-2 border-border px-3"
       >
         <AccordionTrigger className="cursor-pointer py-3 text-xs font-medium uppercase tracking-[0.12em] text-text-muted hover:no-underline data-[state=open]:text-text">
-          Categories
+          {t("categories")}
         </AccordionTrigger>
         <AccordionContent>
           <CategoryFilter />
@@ -103,7 +107,7 @@ function PrimaryFilterPanel() {
       </AccordionItem>
       <AccordionItem value="location" className="border-0 py-2 px-3">
         <AccordionTrigger className="py-3 text-xs font-medium uppercase tracking-[0.12em] text-text-muted hover:no-underline data-[state=open]:text-text cursor-pointer">
-          Location
+          {t("location")}
         </AccordionTrigger>
         <AccordionContent className="flex flex-col gap-3">
           <NearMeRow />
@@ -116,6 +120,7 @@ function PrimaryFilterPanel() {
 
 /** Categories & location filters: trigger in the search bar, panel in a popover. */
 export function PrimaryFiltersDropdown() {
+  const t = useTranslations("search.primaryFilters");
   const [open, setOpen] = useState(false);
 
   return (
@@ -124,7 +129,7 @@ export function PrimaryFiltersDropdown() {
         <Button
           type="button"
           variant="ghost"
-          aria-label="Categories and location filters"
+          aria-label={t("ariaLabel")}
           aria-expanded={open}
           aria-controls={open ? PRIMARY_FILTERS_CONTENT_ID : undefined}
           className={cn(
@@ -145,7 +150,7 @@ export function PrimaryFiltersDropdown() {
               )}
               aria-hidden
             />
-            <span className="tablet:sr-only">Categories &amp; location</span>
+            <span className="tablet:sr-only">{t("categoriesAndLocation")}</span>
           </span>
           <ChevronDown
             className={cn(

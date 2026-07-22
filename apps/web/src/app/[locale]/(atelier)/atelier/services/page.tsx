@@ -14,6 +14,7 @@ import { CreateResourceButton } from "../../__components/create-resource-button"
 
 export default async function ServicesPage() {
   const t = await getTranslations("atelier.services");
+  const tCommon = await getTranslations("atelier.common");
   const userAuth = await userSession();
   if (!userAuth) {
     redirect("/");
@@ -42,6 +43,7 @@ export default async function ServicesPage() {
               service={service}
               username={userAuth.username}
               isAtelier
+              blockedLabel={tCommon("blocked")}
             />
           ))}
         </div>

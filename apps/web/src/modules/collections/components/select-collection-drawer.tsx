@@ -11,6 +11,7 @@ import {
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { cn } from "@repo/ui/lib/utils";
 import { Check, LayoutGrid, RefreshCw, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { getAllUserCollectionsAction } from "@/modules/collections/server-actions/get-all-user-collections.action";
@@ -26,6 +27,8 @@ export const SelectCollectionDrawer = ({
   onSelect: (collection: Collection) => void;
   addButtonDisabled?: boolean;
 }) => {
+  const t = useTranslations("atelier.collections.drawer");
+  const tCommon = useTranslations("atelier.common");
   const [open, setOpen] = useState(false);
   const [collections, setCollections] = useState<Collection[]>([]);
   const collectionMap = useRef(new Map<number, Collection>());
@@ -92,7 +95,7 @@ export const SelectCollectionDrawer = ({
           disabled={addButtonDisabled}
         >
           <LayoutGrid className="size-3.5" />
-          Add collection
+          {t("addCollection")}
         </Button>
       </DrawerTrigger>
       <DrawerContent className="h-full w-[600px] max-w-[90vw] right-0 left-auto flex flex-col">
@@ -100,7 +103,7 @@ export const SelectCollectionDrawer = ({
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <DrawerTitle className="text-base font-semibold">
-                Add collection
+                {t("title")}
               </DrawerTitle>
               {collectionsSelectedLength > 0 && (
                 <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 bg-fg text-text text-[11px] font-medium tabular-nums">
@@ -114,7 +117,7 @@ export const SelectCollectionDrawer = ({
                 className="size-7"
                 disabled={isPending}
                 onClick={handleRefresh}
-                aria-label="Refresh collections"
+                aria-label={t("refreshAria")}
               >
                 <RefreshCw
                   className={cn("size-3.5", isPending && "animate-spin")}
@@ -132,7 +135,7 @@ export const SelectCollectionDrawer = ({
           ) : collections.length > 0 ? (
             <div className="space-y-3">
               <p className="text-[11px] text-text-muted">
-                Click to add to your portfolio · {collections.length} available
+                {t("hint", { count: collections.length })}
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {collections.map((c) => {
@@ -158,7 +161,9 @@ export const SelectCollectionDrawer = ({
                         backgroundSize: "cover",
                         backgroundPosition: "center",
                       }}
-                      title={isSelected ? "Already added" : "Add to portfolio"}
+                      title={
+                        isSelected ? t("alreadyAdded") : t("addToPortfolio")
+                      }
                     >
                       <div className="absolute inset-0 bg-black/0 transition-colors duration-200 group-hover:bg-black/20" />
 
@@ -168,8 +173,7 @@ export const SelectCollectionDrawer = ({
                         </p>
                         {c.media?.length > 0 && (
                           <p className="text-[10px] text-white/70">
-                            {c.media.length} item
-                            {c.media.length !== 1 ? "s" : ""}
+                            {t("itemCount", { count: c.media.length })}
                           </p>
                         )}
                       </div>
@@ -196,7 +200,7 @@ export const SelectCollectionDrawer = ({
                     onClick={handleLoadMore}
                   >
                     {isPending && <Spinner className="size-3.5" />}
-                    {isPending ? "Loading..." : "Load more"}
+                    {isPending ? tCommon("loading") : tCommon("loadMore")}
                   </Button>
                 </div>
               )}
@@ -204,10 +208,8 @@ export const SelectCollectionDrawer = ({
           ) : (
             <div className="flex flex-col items-center justify-center py-16 gap-2">
               <LayoutGrid className="size-8 text-text-muted/40" />
-              <p className="text-sm text-text-muted">No collections yet</p>
-              <p className="text-xs text-text-muted/70">
-                Create your first collection to get started
-              </p>
+              <p className="text-sm text-text-muted">{t("emptyTitle")}</p>
+              <p className="text-xs text-text-muted/70">{t("emptySubtitle")}</p>
             </div>
           )}
         </div>
@@ -215,8 +217,7 @@ export const SelectCollectionDrawer = ({
         <div className="border-t px-4 py-3 flex items-center justify-between">
           {collectionsSelectedLength > 0 ? (
             <p className="text-xs text-text-muted tabular-nums">
-              {collectionsSelectedLength} item
-              {collectionsSelectedLength !== 1 ? "s" : ""} selected
+              {t("itemsSelected", { count: collectionsSelectedLength })}
             </p>
           ) : (
             <span />
@@ -229,7 +230,7 @@ export const SelectCollectionDrawer = ({
               className="gap-1.5 h-8"
             >
               <X className="size-3.5" />
-              Close
+              {tCommon("close")}
             </Button>
           </DrawerClose>
         </div>

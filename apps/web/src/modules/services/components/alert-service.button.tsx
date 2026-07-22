@@ -1,9 +1,11 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { AlertButton } from "@/lib/components/alert-button";
 import { useCreateUpdateService } from "../providers/create-update-service.provider";
 
 export function AlertServiceButton() {
+  const t = useTranslations("atelier.common");
   const { currentService, hasUnsavedWork, canSubmit } =
     useCreateUpdateService();
 
@@ -16,7 +18,7 @@ export function AlertServiceButton() {
           ? `/atelier/services/edit/${currentService.slug}`
           : "/atelier/services/create"
       }
-      label={currentService ? "Editing service" : "Creating service"}
+      label={currentService ? t("editingService") : t("creatingService")}
     />
   );
 }

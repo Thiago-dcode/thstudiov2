@@ -1,4 +1,5 @@
 import { Lock } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { redirect } from "@/i18n/redirect";
 import PageComponent from "@/lib/components/page-component";
@@ -12,6 +13,7 @@ export default async function PasswordRecoveryRecover({
 }: {
   searchParams: Promise<{ attempt?: string }>;
 }) {
+  const t = await getTranslations("auth.passwordRecovery");
   const [{ attempt }, passwordRecoveryAttemptCookie] = await Promise.all([
     searchParams,
     getPasswordRecoveryAttemptCookie(),
@@ -57,15 +59,15 @@ export default async function PasswordRecoveryRecover({
       <PageComponent.Content>
         <PageComponent.Header>
           <Lock className="size-10" />
-          <PageComponent.Title title="Set New Password" />
-          <PageComponent.SubTitle subTitle="Choose a strong password for your account" />
+          <PageComponent.Title title={t("setNewPasswordTitle")} />
+          <PageComponent.SubTitle subTitle={t("setNewPasswordSubtitle")} />
         </PageComponent.Header>
 
         <PasswordUpdateForm passwordAttempt={_passwordRecoveryAttemptCookie} />
 
         <div className="relative flex justify-center text-sm">
-          <p className="px-2 text-text-muted">Changed your mind?</p>
-          <Link href="/auth/login">Back to Sign In</Link>
+          <p className="px-2 text-text-muted">{t("changedYourMind")}</p>
+          <Link href="/auth/login">{t("backToSignIn")}</Link>
         </div>
       </PageComponent.Content>
 

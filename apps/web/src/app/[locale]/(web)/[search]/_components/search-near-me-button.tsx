@@ -2,6 +2,7 @@
 
 import { cn } from "@repo/ui/lib/utils";
 import { CheckCircle2, Loader2, LocateFixed, MapPinOff } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect } from "react";
 import {
   NEAR_ME_RADIUS_KM,
@@ -16,6 +17,7 @@ type SearchNearMeButtonProps = {
 export function SearchNearMeButton({
   clearPreviousFilters = false,
 }: SearchNearMeButtonProps) {
+  const t = useTranslations("search.nearMe");
   const { geoState, hasLocationFilter, isLocated, requestLocation } = useNearMe(
     {
       clearPreviousFilters,
@@ -64,10 +66,10 @@ export function SearchNearMeButton({
         )}
         <span className="text-xs font-medium tracking-wide">
           {isLocating
-            ? "Getting location…"
+            ? t("gettingLocation")
             : isLocated
-              ? `Near me · ${NEAR_ME_RADIUS_KM} km`
-              : "Search close to me"}
+              ? t("nearMe", { radius: NEAR_ME_RADIUS_KM })
+              : t("searchClose")}
         </span>
       </button>
 
@@ -77,13 +79,13 @@ export function SearchNearMeButton({
           className="flex items-center gap-1.5 text-xs text-text-muted"
         >
           <MapPinOff className="size-3.5 shrink-0" aria-hidden />
-          Enable location in browser settings and try again.
+          {t("locationDenied")}
         </p>
       )}
 
       {geoState === "unavailable" && (
         <p role="alert" className="text-xs text-text-muted">
-          Couldn&apos;t get your location. Please try again.
+          {t("locationUnavailable")}
         </p>
       )}
     </div>

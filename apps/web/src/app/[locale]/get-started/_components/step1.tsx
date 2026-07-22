@@ -1,4 +1,5 @@
 "use client";
+import { useTranslations } from "next-intl";
 import { useEffect, useRef } from "react";
 import FormComponent from "@/lib/components/form-component";
 import {
@@ -9,6 +10,7 @@ import {
 } from "./funnel.provider";
 
 export default function Step1() {
+  const t = useTranslations("editUser.profile");
   const { user, setInputs, handleOnChange } = useFunnelActions();
   const { inputs } = useFunnelState();
   const nameRef = useRef<HTMLInputElement>(null);
@@ -28,14 +30,14 @@ export default function Step1() {
     <ContainerFormFunnel>
       <FormComponent.LabelInput
         ref={nameRef}
-        label="First Name"
+        label={t("firstName.label")}
         type="text"
         id="name"
         name="name"
         defaultValue={
           inputs?.name || (user as { name?: string })?.name || undefined
         }
-        placeholder="Leonardo"
+        placeholder={t("firstName.placeholder")}
         autoComplete="given-name"
         required
         autoFocus
@@ -45,7 +47,7 @@ export default function Step1() {
       {/* Surname Field */}
       <FormComponent.LabelInput
         ref={surnameRef}
-        label="Last Name"
+        label={t("lastName.label")}
         type="text"
         id="surname"
         name="surname"
@@ -54,7 +56,7 @@ export default function Step1() {
           (user as { surname?: string })?.surname ||
           undefined
         }
-        placeholder="Piero da Vinci"
+        placeholder={t("lastName.placeholder")}
         autoComplete="family-name"
         required
         onChange={handleOnChange}
@@ -62,7 +64,7 @@ export default function Step1() {
       {/* Profession Field */}
       <FormComponent.LabelInput
         ref={professionRef}
-        label="Profession"
+        label={t("profession.label")}
         type="text"
         id="profession"
         name="profession"
@@ -70,7 +72,7 @@ export default function Step1() {
         defaultValue={
           inputs?.profession || (user as any)?.profession || undefined
         }
-        placeholder="Renaissance polymath & professional dreamer"
+        placeholder={t("profession.placeholder")}
         autoComplete="organization-title"
         onChange={handleOnChange}
       />
@@ -78,13 +80,13 @@ export default function Step1() {
       {/* Description Field */}
       <FormComponent.LabelTextarea
         ref={shortBioRef}
-        label="Short bio about you"
+        label={t("shortBio.label")}
         id="short_biography"
         name="short_biography"
         defaultValue={
           inputs?.short_biography || (user as any)?.short_biography || undefined
         }
-        placeholder="I sketch flying machines at breakfast and dissect curiosity for a living..."
+        placeholder={t("shortBio.placeholder")}
         rows={4}
         onChange={handleOnChange}
       />

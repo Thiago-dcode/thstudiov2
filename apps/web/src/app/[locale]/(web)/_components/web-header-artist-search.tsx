@@ -112,7 +112,7 @@ export function WebHeaderArtistSearch({ className }: { className?: string }) {
     <div
       ref={containerRef}
       role="search"
-      aria-label="Search artists"
+      aria-label={t("ariaLabel")}
       className={cn("relative w-full min-w-0", className)}
     >
       <div className="relative">

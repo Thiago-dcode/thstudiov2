@@ -1,3 +1,4 @@
+import { getTranslations } from "next-intl/server";
 import * as z from "zod";
 import { serverEnv } from "@/env/server";
 import { Link } from "@/i18n/navigation";
@@ -14,6 +15,7 @@ export default async function RegisterPage({
     email?: string;
   }>;
 }) {
+  const t = await getTranslations("auth.register");
   const registrationIsClosed = serverEnv.REGISTRATION_IS_CLOSED === 1;
 
   const { ref, email } = await searchParams;
@@ -43,8 +45,8 @@ export default async function RegisterPage({
     <authComponent.Container>
       <authComponent.Content>
         <authComponent.Header>
-          <authComponent.Title title="Create your account" />
-          <authComponent.SubTitle subTitle="And start build your dream portfolio" />
+          <authComponent.Title title={t("title")} />
+          <authComponent.SubTitle subTitle={t("subtitle")} />
         </authComponent.Header>
         <RegisterForm initialEmail={initialEmail}>
           {ref ? (
@@ -56,7 +58,7 @@ export default async function RegisterPage({
           href="/auth/login"
           className="text-sm transition-colors text-text-muted hover:text-text "
         >
-          Already have an account?
+          {t("alreadyHaveAccount")}
         </Link>
       </authComponent.Content>
     </authComponent.Container>

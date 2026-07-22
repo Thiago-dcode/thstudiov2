@@ -2,6 +2,7 @@
 
 import { Button } from "@repo/ui/components/shadcn/button";
 import { ArrowRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
 import { RegistrationCtaButton } from "@/lib/components/registration-cta-button";
 import { SiteHeader, useSiteHeader } from "@/lib/components/site-header";
@@ -21,6 +22,7 @@ function DrawerRegistrationCtaButton() {
 }
 
 export const WebHeader = ({ session }: WebHeaderProps) => {
+  const t = useTranslations("webHeader");
   const pathname = usePathname();
 
   const isLoginPage = pathname === "/auth/login";
@@ -42,12 +44,12 @@ export const WebHeader = ({ session }: WebHeaderProps) => {
                   href={`/artists/${session.username}`}
                   className="text-sm tracking-wider font-medium transition-colors text-text-muted hover:text-text"
                 >
-                  Access Profile
+                  {t("accessProfile")}
                 </Link>
               )}
               <Button asChild variant="accent" size="sm">
                 <Link href="/atelier">
-                  Go to Atelier
+                  {t("goToAtelier")}
                   <ArrowRight className="size-3.5" />
                 </Link>
               </Button>
@@ -59,7 +61,7 @@ export const WebHeader = ({ session }: WebHeaderProps) => {
                   href="/auth/login"
                   className="text-sm tracking-wider font-medium transition-colors text-text-muted hover:text-text"
                 >
-                  Sign in
+                  {t("signIn")}
                 </Link>
               )}
               {!isRegisterPage && <RegistrationCtaButton size="sm" />}
@@ -84,7 +86,7 @@ export const WebHeader = ({ session }: WebHeaderProps) => {
                       className="w-full justify-between"
                     >
                       <Link href={`/artists/${session.username}`}>
-                        Access Profile
+                        {t("accessProfile")}
                         <ArrowRight className="size-3.5" />
                       </Link>
                     </Button>
@@ -96,7 +98,7 @@ export const WebHeader = ({ session }: WebHeaderProps) => {
                     className="w-full justify-between"
                   >
                     <Link href="/atelier">
-                      Open Atelier
+                      {t("openAtelier")}
                       <ArrowRight className="size-3.5" />
                     </Link>
                   </Button>
@@ -104,7 +106,7 @@ export const WebHeader = ({ session }: WebHeaderProps) => {
               ) : (
                 <div className="grid grid-cols-2 gap-3">
                   <Button asChild variant="base" size="lg" className="w-full">
-                    <Link href="/auth/login">Sign in</Link>
+                    <Link href="/auth/login">{t("signIn")}</Link>
                   </Button>
                   <DrawerRegistrationCtaButton />
                 </div>
@@ -114,7 +116,7 @@ export const WebHeader = ({ session }: WebHeaderProps) => {
 
           <SiteHeader.MobileDrawerFooter className="px-5 py-6">
             <p className="text-xs tracking-wider text-text-muted leading-relaxed">
-              The portfolio platform built for artists.
+              {t("tagline")}
             </p>
           </SiteHeader.MobileDrawerFooter>
         </SiteHeader.MobileMenu>

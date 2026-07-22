@@ -5,6 +5,7 @@ import { Errors } from "@repo/ui/components/custom/errors";
 import { Checkbox } from "@repo/ui/components/shadcn/checkbox";
 import { Label } from "@repo/ui/components/shadcn/label";
 import { toast } from "@repo/ui/sonner";
+import { useTranslations } from "next-intl";
 import FormComponent from "@/lib/components/form-component";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { createOrUpdateEmailPreferenceAction } from "@/modules/email-preferences/server-actions/create-or-update-email-preference.action";
@@ -14,11 +15,12 @@ export function EmailPreferencesForm({
 }: {
   emailPreference: EmailPreference;
 }) {
+  const t = useTranslations("emailPreferences.form");
   const { handleSubmit, isPending, inputErrors, errors } = useHandleAction({
     action: createOrUpdateEmailPreferenceAction,
     afterAction: async (result) => {
       if (result.data) {
-        toast.success("Preferences updated");
+        toast.success(t("toastUpdated"));
         return;
       }
 
@@ -44,7 +46,7 @@ export function EmailPreferencesForm({
         ) : null}
 
         <div className=" border border-border bg-bg px-4 py-3 text-sm text-text-muted">
-          Managing preferences for{" "}
+          {t("managingFor")}{" "}
           <span className="font-medium text-text">{emailPreference.email}</span>
         </div>
 
@@ -52,8 +54,8 @@ export function EmailPreferencesForm({
           <PreferenceToggle
             id="marketing"
             name="marketing"
-            label="Marketing emails"
-            description="Product news, launches, and occasional updates."
+            label={t("marketingLabel")}
+            description={t("marketingDescription")}
             defaultChecked={emailPreference.marketing}
             error={inputErrors?.marketing}
           />
@@ -61,8 +63,8 @@ export function EmailPreferencesForm({
           <PreferenceToggle
             id="notifications"
             name="notifications"
-            label="Notifications"
-            description="Account alerts and relevant platform notices."
+            label={t("notificationsLabel")}
+            description={t("notificationsDescription")}
             defaultChecked={emailPreference.notifications}
             error={inputErrors?.notifications}
           />
@@ -70,8 +72,8 @@ export function EmailPreferencesForm({
           <PreferenceToggle
             id="waitlist_updates"
             name="waitlist_updates"
-            label="Waitlist updates"
-            description="Progress updates about the waitlist and access changes."
+            label={t("waitlistLabel")}
+            description={t("waitlistDescription")}
             defaultChecked={emailPreference.waitlist_updates}
             error={inputErrors?.waitlist_updates}
           />
@@ -82,7 +84,7 @@ export function EmailPreferencesForm({
         </FormComponent.Errors>
 
         <FormComponent.SubmitButton isPending={isPending} className="h-12">
-          Save preferences
+          {t("save")}
         </FormComponent.SubmitButton>
       </FormComponent.Form>
     </FormComponent.Container>

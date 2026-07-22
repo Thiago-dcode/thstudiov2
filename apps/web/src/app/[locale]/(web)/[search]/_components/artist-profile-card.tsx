@@ -2,6 +2,7 @@ import type { ArtistCard } from "@repo/common-lib/types/user";
 import { cn } from "@repo/ui/lib/utils";
 import { MapPin, Tags } from "lucide-react";
 import Image from "next/image";
+import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 
 function artistDisplayName(a: ArtistCard): string {
@@ -53,11 +54,12 @@ export type ArtistProfileCardProps = {
   compact?: boolean;
 };
 
-export function ArtistProfileCard({
+export async function ArtistProfileCard({
   artist,
   className,
   compact,
 }: ArtistProfileCardProps) {
+  const t = await getTranslations("search.artistCard");
   const name = artistDisplayName(artist);
   const href = `/artists/${encodeURIComponent(artist.username)}`;
   const loc = artistLocation(artist);
@@ -67,7 +69,7 @@ export function ArtistProfileCard({
   return (
     <Link
       href={href}
-      aria-label={`Open profile: ${name}, @${artist.username}`}
+      aria-label={t("openProfile", { name, username: artist.username })}
       className={cn(
         "max-w-72 group flex h-full min-h-0 flex-col overflow-hidden bg-fg p-2 shadow-md ring-1 ring-border/40 transition-all duration-300",
         "hover:-translate-y-0.5 hover:shadow-lg hover:ring-border/60",
@@ -118,7 +120,7 @@ export function ArtistProfileCard({
           <div className="flex min-w-0 items-center gap-3 text-text-muted">
             <span
               className="inline-flex items-center gap-1 text-xs font-medium tablet:text-sm"
-              title="Specialties"
+              title={t("specialtiesTitle")}
             >
               <Tags className="size-3.5 shrink-0 opacity-70" aria-hidden />
               {categoryCount}
@@ -127,8 +129,8 @@ export function ArtistProfileCard({
               className="inline-flex items-center gap-1 text-xs font-medium tablet:text-sm"
               title={
                 locationFields
-                  ? "Location details on profile"
-                  : "No location listed"
+                  ? t("locationDetailsTitle")
+                  : t("noLocationTitle")
               }
             >
               <MapPin className="size-3.5 shrink-0 opacity-70" aria-hidden />
@@ -136,7 +138,7 @@ export function ArtistProfileCard({
             </span>
           </div>
           <span className="shrink-0 bg-fg-2 px-3 py-1.5 text-center text-xs font-semibold text-text transition-colors group-hover:bg-fg tablet:px-3.5 tablet:text-sm">
-            View
+            {t("viewAction")}
           </span>
         </div>
       </div>

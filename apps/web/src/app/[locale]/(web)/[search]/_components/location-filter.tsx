@@ -11,6 +11,7 @@ import {
 } from "@repo/ui/components/shadcn/combobox";
 import { Label } from "@repo/ui/components/shadcn/label";
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
+import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { getCitiesAction } from "@/modules/locations/server-actions/get-cities.action";
@@ -40,6 +41,8 @@ function LocationEntityCombobox({
   disabled,
   pending,
   placeholder,
+  noMatchesLabel,
+  noItemsLabel,
 }: {
   label: string;
   items: LocationEntity[];
@@ -48,6 +51,8 @@ function LocationEntityCombobox({
   disabled: boolean;
   pending: boolean;
   placeholder: string;
+  noMatchesLabel: string;
+  noItemsLabel: string;
 }) {
   const selected = useMemo(
     () =>
@@ -106,9 +111,9 @@ function LocationEntityCombobox({
               {pending && items.length === 0 ? (
                 <Spinner className="mx-auto size-3" />
               ) : filtered.length === 0 && items.length > 0 ? (
-                "No matches."
+                noMatchesLabel
               ) : items.length === 0 && !pending ? (
-                "—"
+                noItemsLabel
               ) : null}
             </ComboboxEmpty>
             <ComboboxList className={"w-full"}>
@@ -130,7 +135,11 @@ function LocationEntityCombobox({
 }
 
 const LocationFilter = () => {
+  const t = useTranslations("search");
   const { filters, add, delete: deleteFilter } = useFilters();
+  const searchPlaceholder = t("combobox.placeholder");
+  const noItems = t("combobox.empty.noItems");
+  const noMatches = t("combobox.empty.noMatches");
 
   const [selectedCountryId, setSelectedCountryId] = useState<
     number | undefined
@@ -293,31 +302,35 @@ const LocationFilter = () => {
     <div className="flex w-full max-w-full flex-col gap-4">
       <div
         role="group"
-        aria-label="Location filters"
+        aria-label={t("locationFilter.ariaLabel")}
         className="flex flex-col gap-3"
       >
         <LocationEntityCombobox
-          label="Country"
+          label={t("locationFilter.country")}
           items={countries}
           valueId={selectedCountryId}
           onValueChange={onCountryChange}
           disabled={false}
           pending={countriesPending}
-          placeholder="Search…"
+          placeholder={searchPlaceholder}
+          noMatchesLabel={noMatches}
+          noItemsLabel={noItems}
         />
 
         <LocationEntityCombobox
-          label="State / region"
+          label={t("locationFilter.state")}
           items={states}
           valueId={selectedStateId}
           onValueChange={onStateChange}
           disabled={!selectedCountryId}
           pending={statesPending}
-          placeholder={selectedCountryId ? "Search…" : "—"}
+          placeholder={selectedCountryId ? searchPlaceholder : noItems}
+          noMatchesLabel={noMatches}
+          noItemsLabel={noItems}
         />
 
         <LocationEntityCombobox
-          label="City"
+          label={t("locationFilter.city")}
           items={cities}
           valueId={selectedCityId}
           onValueChange={onCityChange}
@@ -325,7 +338,11 @@ const LocationFilter = () => {
             selectedCountryId === undefined || selectedStateId === undefined
           }
           pending={citiesPending}
-          placeholder={selectedCountryId && selectedStateId ? "Search…" : "—"}
+          placeholder={
+            selectedCountryId && selectedStateId ? searchPlaceholder : noItems
+          }
+          noMatchesLabel={noMatches}
+          noItemsLabel={noItems}
         />
       </div>
 

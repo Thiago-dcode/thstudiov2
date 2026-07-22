@@ -3,6 +3,7 @@
 import type { ArtistIndexRequest } from "@repo/common-lib/types/user";
 import { queryParamBuilder } from "@repo/common-lib/utils/query-builder";
 import { cn } from "@repo/ui/lib/utils";
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import {
   filtersToQuery,
@@ -17,9 +18,11 @@ export function SearchSegmentToggle({
   active: SearchSegment;
   filters: ArtistIndexRequest;
 }) {
+  const t = useTranslations("search.segments");
+
   return (
-    <nav aria-label="Search type" className="flex gap-1 bg-fg-2 p-1">
-      {SEARCH_SEGMENTS.map(({ value, label }) => {
+    <nav aria-label={t("ariaLabel")} className="flex gap-1 bg-fg-2 p-1">
+      {SEARCH_SEGMENTS.map(({ value }) => {
         const isActive = active === value;
         const { page: _, ...filtersWithoutPage } = filters;
         const href = queryParamBuilder(
@@ -40,7 +43,7 @@ export function SearchSegmentToggle({
             )}
             aria-current={isActive ? "page" : undefined}
           >
-            {label}
+            {t(value)}
           </Link>
         );
       })}

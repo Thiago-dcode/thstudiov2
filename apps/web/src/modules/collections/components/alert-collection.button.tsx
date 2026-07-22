@@ -1,9 +1,11 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { AlertButton } from "@/lib/components/alert-button";
 import { useCollection } from "../providers/create-update-collection.provider";
 
 export function AlertCollectionButton() {
+  const t = useTranslations("atelier.common");
   const {
     collectionInput,
     currentCollection,
@@ -31,7 +33,9 @@ export function AlertCollectionButton() {
           ? `/atelier/collections/edit/${currentCollection.slug}`
           : "/atelier/collections/create"
       }
-      label={currentCollection ? "Editing collection" : "Creating collection"}
+      label={
+        currentCollection ? t("editingCollection") : t("creatingCollection")
+      }
     />
   );
 }

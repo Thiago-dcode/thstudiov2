@@ -7,11 +7,13 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useUserMetrics } from "@/modules/users/providers/user-metrics.provider";
 import { useMainNav } from "../providers/main-nav.provider";
 
 export const TopNav = ({ username }: { username?: string }) => {
+  const t = useTranslations("atelier.topNav");
   const { shrinked, toggleShrinked, toggleMobile } = useMainNav();
   const { metrics } = useUserMetrics();
 
@@ -22,7 +24,7 @@ export const TopNav = ({ username }: { username?: string }) => {
           type="button"
           onClick={toggleMobile}
           className="md:hidden p-1.5 text-text-muted hover:text-text hover:bg-fg-2 transition-colors"
-          aria-label="Open menu"
+          aria-label={t("openMenuAria")}
         >
           <Menu size={18} />
         </button>
@@ -30,7 +32,9 @@ export const TopNav = ({ username }: { username?: string }) => {
           type="button"
           onClick={toggleShrinked}
           className="hidden md:block p-1.5 text-text-muted hover:text-text hover:bg-fg-2 transition-colors"
-          aria-label={shrinked ? "Expand sidebar" : "Collapse sidebar"}
+          aria-label={
+            shrinked ? t("expandSidebarAria") : t("collapseSidebarAria")
+          }
         >
           {shrinked ? (
             <PanelLeftOpen size={18} />
@@ -44,7 +48,7 @@ export const TopNav = ({ username }: { username?: string }) => {
         {metrics?.active_plan && !metrics.active_plan.top_tier && (
           <Link href={"/atelier/settings/subscription"}>
             <Button variant={"accent"} size={"sm"}>
-              Updgrade
+              {t("upgrade")}
             </Button>
           </Link>
         )}
@@ -55,7 +59,7 @@ export const TopNav = ({ username }: { username?: string }) => {
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 text-sm text-text-muted hover:text-text transition-colors"
           >
-            <span className="hidden sm:inline">View profile</span>
+            <span className="hidden sm:inline">{t("viewProfile")}</span>
             <ExternalLink size={14} />
           </a>
         )}

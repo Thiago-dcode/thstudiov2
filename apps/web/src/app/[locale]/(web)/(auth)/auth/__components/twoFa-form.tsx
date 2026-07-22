@@ -5,6 +5,7 @@ import {
 } from "@repo/common-lib/constants/redirect-to";
 import { Errors } from "@repo/ui/components/custom/errors";
 import { Input } from "@repo/ui/components/shadcn/input";
+import { useTranslations } from "next-intl";
 import { useRef, useState } from "react";
 import { useRouter } from "@/i18n/navigation";
 import FormComponent from "@/lib/components/form-component";
@@ -20,6 +21,7 @@ export const TwoFaForm = ({
   user: TwoFaUser;
   redirectTo: RedirectToKey | null;
 }) => {
+  const t = useTranslations("auth.twoFa");
   const route = useRouter();
   const formRef = useRef<HTMLFormElement | null>(null);
   const { handleSubmit, errors, cleanErrors, isPending } = useHandleAction({
@@ -69,7 +71,7 @@ export const TwoFaForm = ({
             value={twafaCode}
             autoComplete="one-time-code"
             inputMode="numeric"
-            placeholder="Enter 6-digit code"
+            placeholder={t("codePlaceholder")}
             required
             autoFocus
             className="w-full px-4 py-6 text-center text-lg font-semibold tracking-widest"

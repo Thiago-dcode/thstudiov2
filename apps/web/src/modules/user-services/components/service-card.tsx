@@ -9,6 +9,7 @@ export type ServiceCardProps = {
   service: Service;
   username: string;
   isAtelier?: boolean;
+  blockedLabel?: string;
 };
 
 function serviceHref(
@@ -26,6 +27,7 @@ type ServiceCardThumbnailProps = {
   title: string;
   thumbnail: string | null | undefined;
   isBlocked: boolean;
+  blockedLabel?: string;
   variant: "column" | "row";
 };
 
@@ -33,6 +35,7 @@ function ServiceCardThumbnail({
   title,
   thumbnail,
   isBlocked,
+  blockedLabel,
   variant,
 }: ServiceCardThumbnailProps) {
   return (
@@ -44,7 +47,7 @@ function ServiceCardThumbnail({
     >
       {isBlocked ? (
         <div className="absolute left-2 top-2 z-10 bg-black/70 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white">
-          Blocked
+          {blockedLabel}
         </div>
       ) : null}
       {thumbnail ? (
@@ -129,6 +132,7 @@ export function ServiceCard({
   service,
   username,
   isAtelier,
+  blockedLabel,
 }: ServiceCardProps) {
   const { title, thumbnail, description, show_price, price } = service;
   const href = serviceHref(service, username, isAtelier);
@@ -146,6 +150,7 @@ export function ServiceCard({
         title={title}
         thumbnail={thumbnail}
         isBlocked={isBlocked}
+        blockedLabel={blockedLabel}
         variant="column"
       />
       <ServiceCardBody
@@ -163,6 +168,7 @@ export function ServiceCardRow({
   service,
   username,
   isAtelier,
+  blockedLabel,
 }: ServiceCardProps) {
   const { title, thumbnail, description, show_price, price } = service;
   const href = serviceHref(service, username, isAtelier);
@@ -180,6 +186,7 @@ export function ServiceCardRow({
         title={title}
         thumbnail={thumbnail}
         isBlocked={isBlocked}
+        blockedLabel={blockedLabel}
         variant="row"
       />
       <ServiceCardBody

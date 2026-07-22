@@ -12,12 +12,12 @@ import {
   DialogTitle,
 } from "@repo/ui/components/shadcn/dialog";
 import { ArrowRight, Gift, Sparkles } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { getUserBenefitAction } from "../server-actions/get-user-benefit.action";
-import { BENEFIT_CONFIG } from "../user-benefit.utils";
 
 export const UserBenefitModal = ({
   user,
@@ -26,6 +26,8 @@ export const UserBenefitModal = ({
   user: User | BaseUser | UserAuth;
   subscriptionPath?: string;
 }) => {
+  const t = useTranslations("userBenefitModal");
+  const tBenefit = useTranslations("benefitSubscriptionDialog");
   const [userBenefit, setUserBenefit] = useState<BenefitWithRedeemed | null>(
     null,
   );
@@ -67,7 +69,11 @@ export const UserBenefitModal = ({
   if (!userBenefit || userBenefit.redeemed || pathname === subscriptionPath)
     return null;
 
-  const label = BENEFIT_CONFIG[userBenefit.type]?.label ?? userBenefit.type;
+  const benefitTypeKey =
+    `benefitTypes.${userBenefit.type}` as `benefitTypes.${typeof userBenefit.type}`;
+  const label = tBenefit.has(benefitTypeKey)
+    ? tBenefit(benefitTypeKey)
+    : userBenefit.type;
   const months = Math.round(userBenefit.trial_days / 30);
 
   return (
@@ -80,24 +86,26 @@ export const UserBenefitModal = ({
 
           <DialogHeader className="items-center gap-2">
             <DialogTitle className="text-2xl font-semibold">
-              You have a gift waiting
+              {t("title")}
             </DialogTitle>
             <DialogDescription className="text-base text-text-muted">
-              As a{" "}
-              <span className="font-semibold text-text">{label}</span> you
-              get{" "}
-              <span className="font-semibold text-accent">
-                {months} months free.
-              </span>
+              {t.rich("description", {
+                label,
+                months,
+                name: (chunks) => (
+                  <span className="font-semibold text-text">{chunks}</span>
+                ),
+                free: (chunks) => (
+                  <span className="font-semibold text-accent">{chunks}</span>
+                ),
+              })}
             </DialogDescription>
           </DialogHeader>
 
           <div className="flex w-full items-center gap-3 border border-border bg-fg px-4 py-3 text-left text-sm text-text-muted">
             <Sparkles className="size-5 shrink-0 text-text" />
             <span>
-              {subscriptionPath
-                ? "Claim it right below. We will guide you to get the benefit"
-                : "Once you finish your welcome setup we will guide you to get the benefit."}
+              {subscriptionPath ? t("claimBelow") : t("claimAfterSetup")}
             </span>
           </div>
 
@@ -108,7 +116,7 @@ export const UserBenefitModal = ({
                   href={subscriptionPath}
                   className="flex items-center justify-center gap-2"
                 >
-                  Claim now <ArrowRight className="size-4" />
+                  {t("claimNow")} <ArrowRight className="size-4" />
                 </Link>
               </Button>
               <Button
@@ -116,7 +124,7 @@ export const UserBenefitModal = ({
                 className="w-full text-text-muted"
                 onClick={() => setOpen(false)}
               >
-                Maybe later
+                {t("maybeLater")}
               </Button>
             </div>
           ) : (
@@ -125,7 +133,7 @@ export const UserBenefitModal = ({
               className="w-full font-bold"
               onClick={() => setOpen(false)}
             >
-              Got it, thanks!
+              {t("gotItThanks")}
             </Button>
           )}
         </div>

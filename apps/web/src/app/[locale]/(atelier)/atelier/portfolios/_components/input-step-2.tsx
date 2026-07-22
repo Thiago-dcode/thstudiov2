@@ -81,7 +81,10 @@ function portfolioItemLabel(row: PortfolioItem, untitledLabel: string): string {
   }
 }
 
-function resolvePortfolioItemComponent(row: PortfolioItem): ReactNode {
+function resolvePortfolioItemComponent(
+  row: PortfolioItem,
+  blockedLabel: string,
+): ReactNode {
   switch (row.item) {
     case "media":
       return (
@@ -100,7 +103,12 @@ function resolvePortfolioItemComponent(row: PortfolioItem): ReactNode {
       );
     case "collection": {
       return (
-        <CollectionCard className="w-[80%]" collection={row} isAtelier={true} />
+        <CollectionCard
+          className="w-[80%]"
+          collection={row}
+          isAtelier={true}
+          blockedLabel={blockedLabel}
+        />
       );
     }
   }
@@ -108,6 +116,7 @@ function resolvePortfolioItemComponent(row: PortfolioItem): ReactNode {
 
 export default function InputStep2() {
   const t = useTranslations("atelier.portfolios.items");
+  const tCommon = useTranslations("atelier.common");
   const {
     user,
     portfolioInput,
@@ -266,7 +275,10 @@ export default function InputStep2() {
                         <X className="size-3.5 cursor-pointer" />
                       </button>
                       <div className="aspect-square w-full flex items-center justify-center">
-                        {resolvePortfolioItemComponent(item)}
+                        {resolvePortfolioItemComponent(
+                          item,
+                          tCommon("blocked"),
+                        )}
                       </div>
                       <h3 className="text-xs! font-medium text-text line-clamp-1 px-0.5">
                         {portfolioItemLabel(item, t("untitled"))}

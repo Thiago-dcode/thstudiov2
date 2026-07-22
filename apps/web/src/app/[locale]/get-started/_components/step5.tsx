@@ -1,4 +1,5 @@
 import { FUNNEL_LAST_STEP } from "@repo/common-lib/constants/constants";
+import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { config } from "@/lib/config";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
@@ -10,6 +11,7 @@ import utilsService from "@/modules/utils/utils.service";
 import { ButtonFinishFunnel, ContainerFormFunnel } from "./funnel.provider";
 
 export default async function Step5() {
+  const t = await getTranslations("getStarted.actions");
   const user = await userSession();
   if (!user) redirect("/");
   const [plans, paymentMethods, activeSubscription, benefit] =
@@ -47,13 +49,13 @@ export default async function Step5() {
         <ContainerFormFunnel>
           <ButtonFinishFunnel
             variant={"default"}
-            text={"Continue without benefits"}
+            text={t("continueWithoutBenefits")}
           />
         </ContainerFormFunnel>
       }
       onErrorComponent={
         <ContainerFormFunnel>
-          <ButtonFinishFunnel text={"Try again later"} />
+          <ButtonFinishFunnel text={t("tryAgainLater")} />
         </ContainerFormFunnel>
       }
     />

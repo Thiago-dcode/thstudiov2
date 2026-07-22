@@ -10,12 +10,14 @@ import {
 } from "@repo/ui/components/shadcn/dialog";
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { ShieldAlert } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { logoutServerAction } from "@/modules/auth/server-actions/logout.action";
 import { useUserMetrics } from "../providers/user-metrics.provider";
 
 export const UserAccountBannedModal = () => {
+  const t = useTranslations("userAccountBanned");
   const [mounted, setMounted] = useState(false);
   const { isUserAccountBanned, metrics } = useUserMetrics();
   const [loggingOut, setLoggingOut] = useState(false);
@@ -47,27 +49,24 @@ export const UserAccountBannedModal = () => {
       >
         <DialogHeader className="items-center text-center">
           <ShieldAlert className="h-6 w-6 text-error" />
-          <DialogTitle>Account Suspended</DialogTitle>
+          <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription className="text-xs">
-            Your account has been suspended due to policy violations.
+            {t("description")}
             {metrics?.extra_data?.ban_lift && (
               <>
                 {" "}
-                Restrictions will be lifted on{" "}
-                <span className="font-medium text-text">
-                  {new Date(metrics.extra_data.ban_lift).toLocaleDateString(
-                    undefined,
-                    { dateStyle: "medium" },
-                  )}
-                </span>
-                .
+                {t("restrictionsLiftedOn", {
+                  date: new Date(
+                    metrics.extra_data.ban_lift,
+                  ).toLocaleDateString(undefined, { dateStyle: "medium" }),
+                })}
               </>
             )}{" "}
             <a
               href="mailto:support@a11studio.com"
               className="underline text-text"
             >
-              Contact support if you think this is a mistake
+              {t("contactSupport")}
             </a>
           </DialogDescription>
         </DialogHeader>
@@ -80,7 +79,7 @@ export const UserAccountBannedModal = () => {
             disabled={loggingOut}
             onClick={handleLogout}
           >
-            {loggingOut ? <Spinner className="size-4" /> : "Logout"}
+            {loggingOut ? <Spinner className="size-4" /> : t("logout")}
           </Button>
         </div>
       </DialogContent>

@@ -44,7 +44,7 @@ export default async function ServiceCreate() {
 
   return (
     <AdminPageContainer>
-      <AdminPageTitle title="Create a service" />
+      <AdminPageTitle title={t("createTitle")} />
       <CreateOrUpdateService portfolios={portfolios?.data || []} />
     </AdminPageContainer>
   );

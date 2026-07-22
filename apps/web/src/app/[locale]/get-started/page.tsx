@@ -2,6 +2,7 @@ import { FUNNEL_LAST_STEP } from "@repo/common-lib/constants/constants";
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { cn } from "@repo/ui/lib/utils";
 import dynamic from "next/dynamic";
+import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import PageComponent from "@/lib/components/page-component";
 import { SetSessionClient } from "@/modules/auth/components/SetSessionClient";
@@ -11,6 +12,7 @@ import usersService from "@/modules/users/users.service";
 import { FunnelProvider } from "./_components/funnel.provider";
 
 export default async function GetStartedLayout() {
+  const t = await getTranslations("getStarted");
   const userAuth = await userSession();
   if (!userAuth) {
     redirect("/");
@@ -38,24 +40,24 @@ export default async function GetStartedLayout() {
   });
   const stepsContent = {
     1: {
-      title: "Complete Your Profile",
-      subTitle: "Tell us a bit about yourself to get started",
+      title: t("steps.profile.title"),
+      subTitle: t("steps.profile.subtitle"),
     },
     2: {
-      title: "Select your profile photo",
-      subTitle: "This will be your face for potential clients",
+      title: t("steps.photo.title"),
+      subTitle: t("steps.photo.subtitle"),
     },
     3: {
-      title: "Select up to 5 categories",
-      subTitle: "These categories will help your profile be discovered",
+      title: t("steps.categories.title"),
+      subTitle: t("steps.categories.subtitle"),
     },
     4: {
-      title: "Add Your Location",
-      subTitle: "Help clients discover your profile by location",
+      title: t("steps.location.title"),
+      subTitle: t("steps.location.subtitle"),
     },
     5: {
-      title: "Choose Your Plan",
-      subTitle: "Select the perfect plan for your creative journey",
+      title: t("steps.plan.title"),
+      subTitle: t("steps.plan.subtitle"),
     },
   };
   const currentStep =
@@ -97,7 +99,10 @@ export default async function GetStartedLayout() {
 
         <PageComponent.Footer>
           <p className="text-text-muted">
-            Step {user.funnel_step} of {FUNNEL_LAST_STEP}
+            {t("stepOf", {
+              current: user.funnel_step,
+              total: FUNNEL_LAST_STEP,
+            })}
           </p>
         </PageComponent.Footer>
       </PageComponent.Container>

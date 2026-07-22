@@ -2,6 +2,7 @@
 
 import { BrandLogo } from "@repo/ui/components/custom/brand-logo";
 import { X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
@@ -9,6 +10,7 @@ import { useMainNav } from "../providers/main-nav.provider";
 import { MainNav } from "./main-nav.component";
 
 export const AdminHeader = () => {
+  const t = useTranslations("atelier.nav");
   const { shrinked, mobileOpen, setMobileOpen } = useMainNav();
   const pathname = usePathname();
 
@@ -52,7 +54,7 @@ export const AdminHeader = () => {
               type="button"
               onClick={() => setMobileOpen(false)}
               className="p-1.5 text-text-muted hover:text-text hover:bg-fg-2 transition-colors"
-              aria-label="Close menu"
+              aria-label={t("closeMenuAria")}
             >
               <X size={18} />
             </button>

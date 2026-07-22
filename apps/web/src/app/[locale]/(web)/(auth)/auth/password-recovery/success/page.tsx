@@ -1,4 +1,5 @@
 import { MailOpen } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { redirect } from "@/i18n/redirect";
 import authComponent from "@/lib/components/page-component";
@@ -8,6 +9,7 @@ import { TryAgainButton } from "../__components/tryAgainButton";
 import { getTimeTillNextRecovery } from "../__utils/utils";
 
 export default async function PasswordRecoverySuccess() {
+  const t = await getTranslations("auth.passwordRecovery");
   const passwordRecoveryAttemptCookie =
     await getPasswordRecoveryAttemptCookie();
   if (!passwordRecoveryAttemptCookie) {
@@ -26,12 +28,12 @@ export default async function PasswordRecoverySuccess() {
         {/* Header */}
         <authComponent.Header>
           <MailOpen className="size-10" />
-          <authComponent.Title title="Check your Email" />
-          <authComponent.SubTitle subTitle=" We've sent a password recovery link to your email address" />
+          <authComponent.Title title={t("checkEmailTitle")} />
+          <authComponent.SubTitle subTitle={t("checkEmailSubtitle")} />
         </authComponent.Header>
 
         <div className="w-full flex flex-col items-center gap-2">
-          <p>Didn't recieve the email?</p>
+          <p>{t("didntReceiveEmail")}</p>
           <TryAgainButton
             nextAttempt={getTimeTillNextRecovery(passwordRecoveryAttemptCookie)}
           />
@@ -43,7 +45,7 @@ export default async function PasswordRecoverySuccess() {
           href="/auth/login"
           className="block text-center text-text-muted hover:text-text text-sm"
         >
-          Remember password?
+          {t("rememberPasswordShort")}
         </Link>
       </authComponent.Content>
 

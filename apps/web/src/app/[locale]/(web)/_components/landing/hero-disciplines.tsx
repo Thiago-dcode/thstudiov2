@@ -1,40 +1,44 @@
 "use client";
 
-const DISCIPLINES = [
-  "Photography",
-  "Illustration",
-  "Painting",
-  "Sculpture",
-  "Tattoo",
-  "Design",
-  "Fashion",
-  "Animation",
-  "Digital Art",
-  "Architecture",
-  "Film",
+import { useTranslations } from "next-intl";
+
+const DISCIPLINE_KEYS = [
+  "photography",
+  "illustration",
+  "painting",
+  "sculpture",
+  "tattoo",
+  "design",
+  "fashion",
+  "animation",
+  "digitalArt",
+  "architecture",
+  "film",
 ] as const;
 
 export function HeroDisciplines() {
+  const t = useTranslations("landing.hero");
+
   return (
     <section
       className="hero-disciplines-mask relative z-10 mx-auto max-w-(--screen-desktop) overflow-hidden"
-      aria-label="Disciplines welcomed"
+      aria-label={t("disciplinesAria")}
     >
       <div className="hero-disciplines-track flex w-max items-center">
         <ul className="flex shrink-0 items-center gap-3 pr-3">
-          {DISCIPLINES.map((label) => (
-            <li key={label}>
+          {DISCIPLINE_KEYS.map((key) => (
+            <li key={key}>
               <span className="block whitespace-nowrap border border-border/50 bg-fg/40 px-5 py-2.5 text-sm font-medium tracking-wide text-text-muted backdrop-blur-md transition-colors hover:border-border-em hover:text-text">
-                {label}
+                {t(`disciplines.${key}`)}
               </span>
             </li>
           ))}
         </ul>
         <ul className="flex shrink-0 items-center gap-3 pr-3" aria-hidden>
-          {DISCIPLINES.map((label) => (
-            <li key={`${label}-clone`}>
+          {DISCIPLINE_KEYS.map((key) => (
+            <li key={`${key}-clone`}>
               <span className="block whitespace-nowrap border border-border/50 bg-fg/40 px-5 py-2.5 text-sm font-medium tracking-wide text-text-muted backdrop-blur-md transition-colors hover:border-border-em hover:text-text">
-                {label}
+                {t(`disciplines.${key}`)}
               </span>
             </li>
           ))}

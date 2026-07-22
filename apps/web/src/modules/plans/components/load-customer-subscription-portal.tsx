@@ -1,6 +1,7 @@
 "use client";
 
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { getCustomerSubscriptionPortalAction } from "@/modules/plan-subscriptions/server-actions/get-customer-subscription-portal.action";
@@ -10,6 +11,7 @@ type Props = {
 };
 
 export const LoadCustomerSubscriptionPortal = ({ returnUrl }: Props) => {
+  const t = useTranslations("plans.portal");
   const router = useRouter();
 
   const { handleAction, isPending } = useHandleAction({
@@ -32,10 +34,10 @@ export const LoadCustomerSubscriptionPortal = ({ returnUrl }: Props) => {
     >
       {isPending ? (
         <span className="inline-flex items-center gap-1.5">
-          <Spinner className="size-3" /> Loading…
+          <Spinner className="size-3" /> {t("loading")}
         </span>
       ) : (
-        "Manage your subscription"
+        t("manageSubscription")
       )}
     </button>
   );

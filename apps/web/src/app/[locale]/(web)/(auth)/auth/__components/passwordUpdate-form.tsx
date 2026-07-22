@@ -3,6 +3,7 @@ import { Errors } from "@repo/ui/components/custom/errors";
 import { Input } from "@repo/ui/components/shadcn/input";
 import { Label } from "@repo/ui/components/shadcn/label";
 import { Eye, EyeClosed } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useRouter } from "@/i18n/navigation";
 import FormComponent from "@/lib/components/form-component";
@@ -18,6 +19,7 @@ export const PasswordUpdateForm = ({
 }: {
   passwordAttempt: PasswordRecoveryAttempt;
 }) => {
+  const t = useTranslations("auth.passwordRecovery");
   const route = useRouter();
   const [hiddenPassword, setHiddenPassword] = useState(true);
   const { result, errors, cleanErrors, handleSubmit, isPending } =
@@ -43,7 +45,7 @@ export const PasswordUpdateForm = ({
         {/* New Password Field */}
         <FormComponent.Field>
           <Label htmlFor="password" className="block">
-            New Password
+            {t("newPasswordLabel")}
           </Label>
           <div className="relative">
             <Input
@@ -54,7 +56,7 @@ export const PasswordUpdateForm = ({
               type={hiddenPassword ? "password" : "text"}
               id="password"
               name="password"
-              placeholder="Enter your new password"
+              placeholder={t("newPasswordPlaceholder")}
               autoComplete="new-password"
               required
               autoFocus
@@ -81,7 +83,7 @@ export const PasswordUpdateForm = ({
 
         {/* Submit Button */}
         <FormComponent.SubmitButton isPending={isPending}>
-          Reset password
+          {t("resetSubmit")}
         </FormComponent.SubmitButton>
       </FormComponent.Form>
 

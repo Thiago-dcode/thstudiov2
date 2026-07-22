@@ -13,8 +13,8 @@ import {
 import type { QueryBuilder } from "@repo/common-lib/utils/query-builder";
 
 export const SEARCH_SEGMENTS = [
-  { value: "artists", label: "Artists" },
-  { value: "portfolios", label: "Portfolios" },
+  { value: "artists" },
+  { value: "portfolios" },
 ] as const;
 
 export type SearchSegment = (typeof SEARCH_SEGMENTS)[number]["value"];

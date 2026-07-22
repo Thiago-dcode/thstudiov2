@@ -11,6 +11,7 @@ import {
   Settings,
   UserRoundPen,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { type ReactNode, useEffect, useState } from "react";
@@ -18,48 +19,56 @@ import { LogoutDialog } from "@/app/[locale]/(atelier)/__components/logout-dialo
 import { useMainNav } from "../providers/main-nav.provider";
 
 const routes: {
-  name: string;
+  nameKey:
+    | "dashboard"
+    | "home"
+    | "media"
+    | "collections"
+    | "portfolios"
+    | "services"
+    | "about"
+    | "settings";
   url: string;
   matches?: string[];
   icon: ReactNode;
 }[] = [
   {
-    name: "Dashboard",
+    nameKey: "dashboard",
     url: "",
     icon: <ChartBar size={20} />,
   },
   {
-    name: "Home",
+    nameKey: "home",
     url: "home",
     icon: <UserRoundPen size={20} />,
   },
   {
-    name: "Media",
+    nameKey: "media",
     url: "media",
     icon: <Box size={20} />,
   },
   {
-    name: "Collections",
+    nameKey: "collections",
     url: "collections",
     icon: <Library size={20} />,
   },
   {
-    name: "Portfolios",
+    nameKey: "portfolios",
     url: "portfolios",
     icon: <LayoutDashboard size={20} />,
   },
   {
-    name: "Services",
+    nameKey: "services",
     url: "services",
     icon: <Briefcase size={20} />,
   },
   {
-    name: "About",
+    nameKey: "about",
     url: "about",
     icon: <BookUser size={20} />,
   },
   {
-    name: "Settings",
+    nameKey: "settings",
     url: "settings",
     icon: <Settings size={20} />,
   },
@@ -70,6 +79,7 @@ export const MainNav = ({
 }: {
   forceExpanded?: boolean;
 }) => {
+  const t = useTranslations("atelier.nav");
   const [isClient, setIsClient] = useState(false);
   const pathname = usePathname();
   const { shrinked } = useMainNav();
@@ -85,6 +95,7 @@ export const MainNav = ({
     <div className="flex flex-col items-start w-full justify-between h-full">
       <nav className="flex flex-col gap-2 w-full px-2">
         {routes.map((route) => {
+          const name = t(route.nameKey);
           const url = `/atelier${!route.url ? "" : "/"}${route.url}`;
           const isActive =
             pathname === url ||
@@ -93,14 +104,14 @@ export const MainNav = ({
             <Link
               key={route.url}
               href={url}
-              title={isShrinked ? route.name : undefined}
+              title={isShrinked ? name : undefined}
               className={`text-sm flex items-center gap-3 transition-colors duration-200
  ${isShrinked ? "justify-center px-2 py-2" : "px-3 py-2"}
  ${isActive ? "bg-text text-bg" : "hover:bg-fg-2"}
  `}
             >
               <span className="shrink-0">{route.icon}</span>
-              {!isShrinked && <span className="truncate">{route.name}</span>}
+              {!isShrinked && <span className="truncate">{name}</span>}
             </Link>
           );
         })}

@@ -16,11 +16,14 @@ import {
 } from "@repo/ui/components/shadcn/dialog";
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { cn } from "@repo/ui/lib/utils";
+import { useTranslations } from "next-intl";
 import { AssetComponent } from "@/lib/components/asset-component";
 import { PlanFeatures } from "@/modules/plans/components/plan.features";
 import { UsePlanSubscription } from "../providers/plan-subscription.provider";
 
 export const ChangeSubscriptionDialog = () => {
+  const t = useTranslations("changeSubscriptionDialog");
+  const tBilling = useTranslations("benefitSubscriptionDialog.billingTypes");
   const {
     planSelected,
     setPlanSelected,
@@ -43,7 +46,7 @@ export const ChangeSubscriptionDialog = () => {
           <div className="flex flex-col items-center justify-center gap-4">
             <Spinner className="size-12" />
             <DialogTitle className="text-text-muted text-base font-normal">
-              Processing...
+              {t("processing")}
             </DialogTitle>
           </div>
         </DialogContent>
@@ -73,7 +76,7 @@ export const ChangeSubscriptionDialog = () => {
               </svg>
             </div>
             <DialogTitle className="text-2xl font-semibold text-red-500">
-              Something went wrong
+              {t("errorTitle")}
             </DialogTitle>
             <div className="flex flex-col gap-2">
               {errors.map((error, index) => (
@@ -120,7 +123,7 @@ export const ChangeSubscriptionDialog = () => {
                 </p>
               </div>
               <div className="hidden lg:flex flex-col items-start justify-start gap-2">
-                <p className="text-text-muted text-lg">This plan includes: </p>
+                <p className="text-text-muted text-lg">{t("thisPlanIncludes")}</p>
                 <PlanFeatures plan={planSelected} />
               </div>
               <Accordion
@@ -131,7 +134,7 @@ export const ChangeSubscriptionDialog = () => {
                 <AccordionItem value="features" className="w-full border-b-0">
                   <AccordionTrigger>
                     <p className="text-text-muted text-lg">
-                      This plan includes:{" "}
+                      {t("thisPlanIncludes")}
                     </p>
                   </AccordionTrigger>
                   <AccordionContent>
@@ -146,7 +149,7 @@ export const ChangeSubscriptionDialog = () => {
               <div className="flex flex-col p-8 gap-4 items-center justify-between w-full h-full bg-fg">
                 <div className="flex flex-col gap-3 w-full">
                   <h4 className="text-sm font-semibold text-text">
-                    Billing Cycle
+                    {t("billingCycle")}
                   </h4>
                   <div className="flex flex-col items-start justify-start gap-2 w-full">
                     {planSelected.prices.map((price) => {
@@ -170,7 +173,15 @@ export const ChangeSubscriptionDialog = () => {
                             <CircleSelect
                               selected={priceSelected?.id === price.id}
                             />
-                            <p>{price.billing_type}</p>
+                            <p>
+                              {tBilling(
+                                price.billing_type as
+                                  | "MONTHLY"
+                                  | "QUARTERLY"
+                                  | "YEARLY"
+                                  | "LIFETIME",
+                              )}
+                            </p>
                           </div>
                         </Button>
                       );
@@ -181,7 +192,7 @@ export const ChangeSubscriptionDialog = () => {
                   <div className="flex flex-col gap-4 w-full">
                     {/* Price Display */}
                     <div className="flex items-start justify-between">
-                      <p className="font-bold">Total</p>
+                      <p className="font-bold">{t("total")}</p>
                       <div className="flex flex-col items-end justify-start gap-2">
                         <p className="text-base font-base text-text">
                           <span className="text-sm text-text-muted">
@@ -191,7 +202,7 @@ export const ChangeSubscriptionDialog = () => {
                           </span>
                           €{getMonthlyPrice(priceSelected)?.toFixed(2)}
                           <span className="text-sm text-text-muted">
-                            /month
+                            {t("perMonth")}
                           </span>
                         </p>
                         {priceSelected.billing_type !== "MONTHLY" && (
@@ -199,7 +210,15 @@ export const ChangeSubscriptionDialog = () => {
                             €{priceSelected.price}
                             <span className="text-sm text-text-muted ">
                               {" "}
-                              billed {priceSelected.billing_type.toLowerCase()}
+                              {t("billed", {
+                                billingType: tBilling(
+                                  priceSelected.billing_type as
+                                    | "MONTHLY"
+                                    | "QUARTERLY"
+                                    | "YEARLY"
+                                    | "LIFETIME",
+                                ),
+                              })}
                             </span>
                           </p>
                         )}
@@ -209,7 +228,7 @@ export const ChangeSubscriptionDialog = () => {
                     {/* Payment Method */}
                     <div className="flex flex-col gap-3 w-full">
                       <h4 className="text-sm font-semibold text-text">
-                        Payment Method
+                        {t("paymentMethod")}
                       </h4>
                       <div className="flex flex-col gap-2">
                         {availablePaymentMethods
@@ -263,13 +282,13 @@ export const ChangeSubscriptionDialog = () => {
                       variant={"accent"}
                       className="w-full font-bold"
                     >
-                      Complete Payment
+                      {t("completePayment")}
                     </Button>
                   </form>
                 )}
                 <AssetComponent
                   file="icons/trust-payment.png"
-                  alt="trust payment"
+                  alt={t("trustPaymentAlt")}
                   height={100}
                   width={300}
                 />

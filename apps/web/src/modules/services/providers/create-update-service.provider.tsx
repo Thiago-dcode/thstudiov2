@@ -6,6 +6,7 @@ import type { FullService, Service } from "@repo/common-lib/types/service";
 import { isAValidSlugFormat } from "@repo/common-lib/utils/generate-valid-slug";
 import { isHighlightToggleDisabled } from "@repo/common-lib/utils/highlights";
 import { toast } from "@repo/ui/sonner";
+import { useTranslations } from "next-intl";
 import {
   createContext,
   type MutableRefObject,
@@ -122,6 +123,7 @@ export function CreateUpdateServiceProvider({
   children,
   user,
 }: CreateUpdateServiceProviderProps) {
+  const t = useTranslations("atelier.services");
   const [currentService, setCurrentService] = useState<FullService | undefined>(
     undefined,
   );
@@ -221,7 +223,7 @@ export function CreateUpdateServiceProvider({
         }
       } else if (result.data) {
         await fetchHighlightCount({ force: true });
-        toast.success(isUpdate ? "Service updated" : "Service created");
+        toast.success(isUpdate ? t("toastUpdated") : t("toastCreated"));
       }
     },
     beforeAction: async () => {

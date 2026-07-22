@@ -30,6 +30,20 @@ const messages = {
       },
       disclaimer: "Gratis para empezar · No se requiere tarjeta",
       scrollToNextSection: "Ir a la siguiente sección",
+      disciplinesAria: "Disciplinas bienvenidas",
+      disciplines: {
+        photography: "Fotografía",
+        illustration: "Ilustración",
+        painting: "Pintura",
+        sculpture: "Escultura",
+        tattoo: "Tatuaje",
+        design: "Diseño",
+        fashion: "Moda",
+        animation: "Animación",
+        digitalArt: "Arte digital",
+        architecture: "Arquitectura",
+        film: "Cine",
+      },
     },
     valuePillars: {
       header: {
@@ -103,6 +117,29 @@ const messages = {
         "Crea un portafolio profesional en minutos, deja que la IA se encargue del resto y empieza a ser descubierto. Gratis para empezar, sin tarjeta y sin condiciones.",
       button: "Crear mi portafolio",
       waitListButton: "Únete a la lista de espera",
+    },
+    howItWorks: {
+      badge: "Cómo funciona",
+      title: "Desde la subida hasta tu primer cliente",
+      description:
+        "Un portafolio que construye tu carrera, no solo muestra tu trabajo.",
+      steps: {
+        organize: {
+          title: "Organiza y personaliza",
+          description:
+            "Sube tu trabajo y organízalo en un portafolio impactante. Personaliza el diseño como si editaras una publicación en redes — sin código, sin fricción.",
+        },
+        ai: {
+          title: "La IA te posiciona",
+          description:
+            "La IA genera tu biografía, descripciones y etiquetas. Optimiza tu portafolio para buscadores para que las personas adecuadas te encuentren.",
+        },
+        connect: {
+          title: "Los clientes conectan",
+          description:
+            "Coleccionistas, agencias y colaboradores descubren tu portafolio y te contactan directamente. Relaciones reales, sin intermediarios.",
+        },
+      },
     },
   },
   faqs: {
@@ -307,9 +344,11 @@ const messages = {
     segments: {
       artists: "Artistas",
       portfolios: "Portafolios",
+      ariaLabel: "Tipo de búsqueda",
     },
     headerArtistSearch: {
       placeholder: "Buscar artistas…",
+      ariaLabel: "Buscar artistas",
       registrationClosedToast:
         "La búsqueda de artistas no está disponible mientras el registro esté cerrado. Únete a la lista de espera para obtener acceso anticipado.",
     },
@@ -340,6 +379,9 @@ const messages = {
       clearAll: "Limpiar todo",
       searchAria: "Buscar {segment}",
       searchPlaceholder: "Buscar {segment} por nombre, estilo o categoría…",
+      searchButton: "Buscar",
+      removeFilter: "Quitar filtro {label}",
+      categoryFallback: "Categoría #{id}",
       badge: {
         search: "Búsqueda: {value}",
         geoLocation: "Mi ubicación",
@@ -360,8 +402,15 @@ const messages = {
     primaryFilters: {
       categories: "Categorías",
       location: "Ubicación",
+      categoriesAndLocation: "Categorías y ubicación",
       ariaLabel: "Filtros de categorías y ubicación",
       useMyLocation: "Usar mi ubicación",
+    },
+    locationFilter: {
+      ariaLabel: "Filtros de ubicación",
+      country: "País",
+      state: "Estado / región",
+      city: "Ciudad",
     },
     combobox: {
       placeholder: "Buscar…",
@@ -438,6 +487,231 @@ const messages = {
     continue: "Continuar",
     skipForNow: "Omitir por ahora",
     cancel: "Cancelar",
+  },
+  benefitSubscriptionDialog: {
+    trigger: "Canjear beneficio",
+    title: "Canjea tu beneficio",
+    description:
+      "Como <name>{label}</name>, disfruta de <free>{months, plural, one {# mes gratis} other {# meses gratis}}</free> en el plan {planName}.",
+    noPayment:
+      "No se requieren datos de pago. Tu <access>acceso gratuito de {months, plural, one {# mes} other {# meses}}</access> se activa al instante.",
+    plan: "Plan",
+    billingCycle: "Ciclo de facturación",
+    freePeriod: "Periodo gratuito",
+    freeMonths: "{months, plural, one {# mes} other {# meses}}",
+    subscribe: "Suscribirse",
+    activatingTitle: "Activando tu beneficio",
+    activatingSubtitle: "Configurando tu suscripción…",
+    errorTitle: "Algo salió mal",
+    billingTypes: {
+      MONTHLY: "Mensual",
+      QUARTERLY: "Trimestral",
+      YEARLY: "Anual",
+      LIFETIME: "De por vida",
+    },
+    benefitTypes: {
+      EARLY_USER: "Usuario anticipado",
+      VIP: "VIP",
+      FOUNDER: "Fundador",
+    },
+  },
+  auth: {
+    login: {
+      title: "Hola de nuevo",
+      subtitle: "Inicia sesión para acceder a tu cuenta",
+      problemWithLogin: "¿Problemas para iniciar sesión?",
+      agreePrefix: "Al iniciar sesión, aceptas nuestros",
+      termsOfService: "Términos de servicio",
+      and: "y",
+      privacyPolicy: "Política de privacidad",
+      emailLabel: "Correo electrónico",
+      emailPlaceholder: "tu@ejemplo.com",
+      passwordLabel: "Contraseña",
+      passwordPlaceholder: "Introduce tu contraseña",
+      submit: "Iniciar sesión",
+    },
+    register: {
+      title: "Crea tu cuenta",
+      subtitle: "Y empieza a construir el portafolio de tus sueños",
+      alreadyHaveAccount: "¿Ya tienes una cuenta?",
+      emailLabel: "Correo electrónico",
+      emailPlaceholder: "tu@ejemplo.com",
+      usernameLabel: "Nombre de usuario",
+      usernamePlaceholder: "usuario",
+      passwordLabel: "Contraseña *",
+      passwordPlaceholder: "Introduce tu contraseña",
+      submit: "Registrarse",
+    },
+    twoFa: {
+      titleValidateEmail: "Valida tu correo",
+      titleDeviceVerification: "Verificación del dispositivo",
+      codeSentTo: "Hemos enviado un código de verificación a",
+      havingTrouble: "¿Tienes problemas?",
+      backToLogin: "Volver al inicio de sesión",
+      codePlaceholder: "Introduce el código de 6 dígitos",
+    },
+    passwordRecovery: {
+      title: "Recuperación de contraseña",
+      subtitle: "Introduce tu correo y te enviaremos un enlace de recuperación",
+      rememberPassword: "¿Recuerdas tu contraseña?",
+      needHelp: "¿Necesitas ayuda?",
+      contactSupport: "Contactar con soporte",
+      emailLabel: "Correo electrónico",
+      emailPlaceholder: "tu@correo.com",
+      submit: "Enviar",
+      checkEmailTitle: "Revisa tu correo",
+      checkEmailSubtitle:
+        "Hemos enviado un enlace de recuperación de contraseña a tu correo electrónico",
+      didntReceiveEmail: "¿No recibiste el correo?",
+      rememberPasswordShort: "¿Recuerdas la contraseña?",
+      tryAgain: "Intentar de nuevo",
+      tryAgainIn: "Inténtalo de nuevo en",
+      setNewPasswordTitle: "Establecer nueva contraseña",
+      setNewPasswordSubtitle: "Elige una contraseña segura para tu cuenta",
+      changedYourMind: "¿Cambiaste de opinión?",
+      backToSignIn: "Volver a iniciar sesión",
+      newPasswordLabel: "Nueva contraseña",
+      newPasswordPlaceholder: "Introduce tu nueva contraseña",
+      resetSubmit: "Restablecer contraseña",
+      successTitle: "Contraseña actualizada con éxito",
+      successSubtitle:
+        "Tu contraseña ha sido cambiada. Ya puedes iniciar sesión con tu nueva contraseña.",
+      continueToSignIn: "Continuar para iniciar sesión",
+    },
+    expiresIn: {
+      remaining:
+        "Te quedan {minutes, plural, =0 {} one {# minuto} other {# minutos}}{minutes, plural, =0 {} other { y }}{seconds, plural, one {# segundo} other {# segundos}}",
+    },
+  },
+  getStarted: {
+    stepOf: "Paso {current} de {total}",
+    steps: {
+      profile: {
+        title: "Completa tu perfil",
+        subtitle: "Cuéntanos un poco sobre ti para empezar",
+      },
+      photo: {
+        title: "Selecciona tu foto de perfil",
+        subtitle: "Esta será tu imagen ante posibles clientes",
+      },
+      categories: {
+        title: "Selecciona hasta 5 categorías",
+        subtitle: "Estas categorías ayudarán a que descubran tu perfil",
+      },
+      location: {
+        title: "Añade tu ubicación",
+        subtitle: "Ayuda a los clientes a descubrir tu perfil por ubicación",
+      },
+      plan: {
+        title: "Elige tu plan",
+        subtitle: "Selecciona el plan perfecto para tu camino creativo",
+      },
+    },
+    actions: {
+      continue: "Continuar",
+      finish: "Finalizar",
+      continueWithoutBenefits: "Continuar sin beneficios",
+      tryAgainLater: "Intentar más tarde",
+      stepBack: "volver atrás",
+      somethingWentWrong: "algo salió mal",
+    },
+  },
+  plans: {
+    card: {
+      popular: "Popular",
+      bestValue: "Mejor valor",
+      getStarted: "Empezar",
+      goPlan: "Ir a {planName}",
+    },
+    price: {
+      free: "Gratis",
+      from: "desde",
+      perMonth: "/mes",
+    },
+    features: {
+      unlimited: "Ilimitado",
+      ofMediaStorage: "de almacenamiento de contenido",
+      projects: "Proyectos",
+      portfolios: "Portafolios",
+      services: "Servicios",
+      clients: "Clientes",
+      mediaCompression: "Compresión de contenido",
+      mediaCompressionTooltip:
+        "Elige el nivel de compresión preferido al subir fotos. Equilibra la calidad de imagen y el tamaño del archivo para optimizar tu almacenamiento y los tiempos de carga.",
+      aiCredits: "Créditos de IA",
+      aiCreditsTooltip:
+        "Aprovecha la IA para automatizar tareas repetitivas. Genera automáticamente títulos, descripciones y etiquetas para tu contenido basándote en el análisis, ahorrándote tiempo y esfuerzo.",
+    },
+    portal: {
+      loading: "Cargando…",
+      manageSubscription: "Gestionar tu suscripción",
+    },
+  },
+  changeSubscriptionDialog: {
+    processing: "Procesando...",
+    errorTitle: "Algo salió mal",
+    thisPlanIncludes: "Este plan incluye:",
+    billingCycle: "Ciclo de facturación",
+    total: "Total",
+    perMonth: "/mes",
+    billed: "facturado {billingType}",
+    paymentMethod: "Método de pago",
+    completePayment: "Completar pago",
+    trustPaymentAlt: "pago seguro",
+  },
+  userBenefitModal: {
+    title: "Tienes un regalo esperándote",
+    description:
+      "Como <name>{label}</name> obtienes <free>{months, plural, one {# mes gratis} other {# meses gratis}}</free>.",
+    claimBelow:
+      "Canjéalo justo abajo. Te guiaremos para obtener el beneficio",
+    claimAfterSetup:
+      "Cuando termines la configuración de bienvenida te guiaremos para obtener el beneficio.",
+    claimNow: "Canjear ahora",
+    maybeLater: "Quizá más tarde",
+    gotItThanks: "Entendido, ¡gracias!",
+  },
+  userAccountBanned: {
+    title: "Cuenta suspendida",
+    description:
+      "Tu cuenta ha sido suspendida por incumplir las políticas.",
+    restrictionsLiftedOn: "Las restricciones se levantarán el {date}.",
+    contactSupport: "Contacta con soporte si crees que es un error",
+    logout: "Cerrar sesión",
+  },
+  emailPreferences: {
+    metadata: {
+      title: "Preferencias de correo - A11STUDIO",
+      description:
+        "Actualiza los tipos de correos que quieres recibir de A11STUDIO.",
+    },
+    page: {
+      eyebrow: "Preferencias de correo",
+      title: "Gestiona las preferencias de tu bandeja de entrada",
+      subtitle:
+        "Elige las actualizaciones que quieres conservar y respetaremos tu elección.",
+    },
+    form: {
+      toastUpdated: "Preferencias actualizadas",
+      managingFor: "Gestionando preferencias de",
+      marketingLabel: "Correos de marketing",
+      marketingDescription:
+        "Novedades del producto, lanzamientos y actualizaciones ocasionales.",
+      notificationsLabel: "Notificaciones",
+      notificationsDescription:
+        "Alertas de la cuenta y avisos relevantes de la plataforma.",
+      waitlistLabel: "Actualizaciones de la lista de espera",
+      waitlistDescription:
+        "Actualizaciones sobre el progreso de la lista de espera y cambios de acceso.",
+      save: "Guardar preferencias",
+    },
+  },
+  webHeader: {
+    accessProfile: "Acceder al perfil",
+    goToAtelier: "Ir a Atelier",
+    signIn: "Iniciar sesión",
+    openAtelier: "Abrir Atelier",
+    tagline: "La plataforma de portafolios creada para artistas.",
   },
   editUser: {
     banner: {
@@ -707,6 +981,18 @@ const messages = {
       cancel: "Cancelar",
       save: "Guardar",
       update: "Actualizar",
+      create: "Crear",
+      close: "Cerrar",
+      add: "Añadir",
+      loading: "Cargando...",
+      loadMore: "Cargar más",
+      blocked: "Bloqueado",
+      editingCollection: "Editando colección",
+      creatingCollection: "Creando colección",
+      editingPortfolio: "Editando portafolio",
+      creatingPortfolio: "Creando portafolio",
+      editingService: "Editando servicio",
+      creatingService: "Creando servicio",
       planLimitReached: "Límite del plan alcanzado",
       planLimitDescription:
         "Has usado <strong>{count}</strong> de <strong>{limit}</strong> {label} permitidos en tu plan actual. Actualiza tu plan para crear más, o gestiona tus {label} existentes.",
@@ -849,6 +1135,8 @@ const messages = {
       loadError: "Algo salió mal",
       createTitle: "Crear un servicio",
       editTitlePrefix: "Editar: {title}",
+      toastCreated: "Servicio creado con éxito",
+      toastUpdated: "Servicio actualizado con éxito",
       form: {
         blockedNotice:
           "Este servicio ha sido bloqueado. Puedes revisarlo aquí, pero no se puede editar hasta que se levante el bloqueo.",
@@ -896,6 +1184,21 @@ const messages = {
       loadError: "Algo salió mal",
       createTitle: "Crear una colección",
       editTitlePrefix: "Editar: {title}",
+      toastCreated: "Colección creada con éxito",
+      toastUpdated: "Colección actualizada con éxito",
+      drawer: {
+        addCollection: "Añadir colección",
+        title: "Añadir colección",
+        refreshAria: "Actualizar colecciones",
+        hint: "Haz clic para añadir a tu portafolio · {count} disponibles",
+        alreadyAdded: "Ya añadida",
+        addToPortfolio: "Añadir al portafolio",
+        itemCount: "{count, plural, one {# elemento} other {# elementos}}",
+        emptyTitle: "Aún no hay colecciones",
+        emptySubtitle: "Crea tu primera colección para empezar",
+        itemsSelected:
+          "{count, plural, one {# elemento seleccionado} other {# elementos seleccionados}}",
+      },
       deleteCollection: {
         ariaLabel: "Eliminar colección",
         title: "Eliminar colección",
@@ -1058,9 +1361,65 @@ const messages = {
         placeholder: "Buscar contenido…",
         all: "Todos",
       },
+      drawer: {
+        addMedia: "Añadir contenido",
+        title: "Añadir contenido",
+        refreshAria: "Actualizar contenido",
+        filterAll: "Todos",
+        hint: "Haz clic para añadir a tu portafolio · {count} disponibles",
+        hintMax: "· hasta {max} elementos",
+        alreadyAdded: "Ya añadido",
+        addToPortfolio: "Añadir al portafolio",
+        emptyTitle: "Aún no hay contenido",
+        emptySubtitle: "Sube tu primera imagen para empezar",
+        itemsSelected:
+          "{count, plural, one {# elemento seleccionado} other {# elementos seleccionados}}",
+        itemsSelectedWithMax:
+          "{count} / {max} {count, plural, one {elemento} other {elementos}} seleccionados",
+      },
+      uploadStatus: {
+        uploadComplete: "Subida completa",
+        uploadingFiles: "Subiendo archivos",
+        remaining: "{count} restantes",
+        success: "correcto",
+        failed: "fallido",
+        allComplete: "Todo completo",
+        queued: "En cola...",
+        uploading: "Subiendo...",
+        updating: "Actualizando...",
+        generatingSeo: "Generando SEO...",
+        deleting: "Eliminando...",
+        uploaded: "Subido",
+        updated: "Actualizado",
+        seoGenerated: "SEO generado",
+        deleted: "Eliminado",
+        failedFallback: "Fallido",
+        preparingUpload: "Preparando subida...",
+        previewAlt: "Vista previa",
+        noPreview: "Sin vista previa",
+        unknownFile: "Archivo desconocido",
+      },
     },
     home: {
       pageTitle: "Panel",
+    },
+    nav: {
+      dashboard: "Panel",
+      home: "Inicio",
+      media: "Contenido",
+      collections: "Colecciones",
+      portfolios: "Portafolios",
+      services: "Servicios",
+      about: "Sobre mí",
+      settings: "Ajustes",
+      closeMenuAria: "Cerrar menú",
+    },
+    topNav: {
+      openMenuAria: "Abrir menú",
+      expandSidebarAria: "Expandir barra lateral",
+      collapseSidebarAria: "Contraer barra lateral",
+      upgrade: "Mejorar plan",
+      viewProfile: "Ver perfil",
     },
     about: {
       pageTitle: "Página Sobre mí",
@@ -1068,6 +1427,24 @@ const messages = {
         "Comparte tu trayectoria, tu recorrido artístico y todo lo que te gustaría que tu audiencia supiera sobre ti.",
       emptyStateDescription:
         "Aún no has creado una página Sobre mí. Comparte tu trayectoria y tu recorrido artístico.",
+      form: {
+        createButton: "Crear página Sobre mí",
+        editButton: "Editar página Sobre mí",
+        createTitle: "Crear página Sobre mí",
+        updateTitle: "Actualizar página Sobre mí",
+        titleLabel: "Título",
+        titlePlaceholder: "La historia detrás del lienzo",
+        descriptionLabel: "Descripción",
+        descriptionPlaceholder:
+          "Comparte tu recorrido como artista. ¿Qué te inspira? ¿Qué impulsa tu visión creativa? Deja que los visitantes conecten con la persona detrás del arte...",
+        createSubmit: "Crear",
+        updateSubmit: "Actualizar",
+        photoPreview: "Vista previa de la foto:",
+        photoPreviewAlt: "Vista previa de la foto",
+        choosePhotoHint:
+          "Elige una foto (preferiblemente tuya) para mostrar en tu página Sobre mí.",
+        photoAlt: "Foto de la página Sobre mí",
+      },
     },
     settings: {
       pageTitle: "Ajustes",

@@ -1,6 +1,13 @@
 import type { AboutPage } from "@repo/common-lib/types/about-page";
+import { getTranslations } from "next-intl/server";
 
-export const AboutPageDisplay = ({ aboutPage }: { aboutPage: AboutPage }) => {
+export const AboutPageDisplay = async ({
+  aboutPage,
+}: {
+  aboutPage: AboutPage;
+}) => {
+  const t = await getTranslations("atelier.about.form");
+
   return (
     <article className="w-full border border-fg-2 bg-fg p-6">
       <div className="flex flex-col md:flex-row gap-6">
@@ -9,7 +16,7 @@ export const AboutPageDisplay = ({ aboutPage }: { aboutPage: AboutPage }) => {
             <div className="relative aspect-3/4 w-48 overflow-hidden border-2 border-fg-2">
               <img
                 src={aboutPage.photo}
-                alt="About photo"
+                alt={t("photoAlt")}
                 className="h-full w-full object-cover"
               />
             </div>

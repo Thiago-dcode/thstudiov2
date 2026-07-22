@@ -1,17 +1,12 @@
 "use client";
 
-import type { CategoryBase } from "@repo/common-lib/types/category";
 import { Button } from "@repo/ui/components/shadcn/button";
 import { cn } from "@repo/ui/lib/utils";
 import { LocateFixed, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { useFilters } from "./filters.provider";
 import { NEAR_ME_SESSION_KEY } from "./use-near-me";
-
-function categoryLabel(c: CategoryBase) {
-  const name = c.name;
-  return name?.trim() ? name : `Category #${c.id}`;
-}
 
 type FilterBadgeItem = {
   key: string;
@@ -21,6 +16,7 @@ type FilterBadgeItem = {
 };
 
 export default function FiltersLists() {
+  const t = useTranslations("search.filters");
   const {
     filters,
     categoriesSelected,
@@ -37,7 +33,7 @@ export default function FiltersLists() {
     if (search) {
       out.push({
         key: `search-${search}`,
-        label: `Search: ${search}`,
+        label: t("badge.search", { value: search }),
         onRemove: () => {
           deleteFilter("search");
         },
@@ -46,7 +42,7 @@ export default function FiltersLists() {
     if (filters.lat != null && filters.lng != null) {
       out.push({
         key: "geo-location",
-        label: "My location",
+        label: t("badge.geoLocation"),
         icon: <LocateFixed className="size-3 shrink-0" aria-hidden />,
         onRemove: () => {
           sessionStorage.setItem(NEAR_ME_SESSION_KEY, "1");
@@ -59,7 +55,7 @@ export default function FiltersLists() {
     if (country) {
       out.push({
         key: `country-${country}`,
-        label: `Country: ${country}`,
+        label: t("badge.country", { value: country }),
         onRemove: () => deleteMany(["city", "state", "country"]),
       });
     }
@@ -68,7 +64,7 @@ export default function FiltersLists() {
     if (state) {
       out.push({
         key: `state-${state}`,
-        label: `State: ${state}`,
+        label: t("badge.state", { value: state }),
         onRemove: () => deleteMany(["city", "state"]),
       });
     }
@@ -77,21 +73,22 @@ export default function FiltersLists() {
     if (city) {
       out.push({
         key: `city-${city}`,
-        label: `City: ${city}`,
+        label: t("badge.city", { value: city }),
         onRemove: () => deleteFilter("city"),
       });
     }
 
     for (const cat of categoriesSelected) {
+      const name = cat.name?.trim();
       out.push({
         key: `category-${cat.id}`,
-        label: categoryLabel(cat),
+        label: name ? name : t("categoryFallback", { id: cat.id }),
         onRemove: () => removeCategory(cat.slug),
       });
     }
 
     return out;
-  }, [filters, categoriesSelected, deleteFilter, deleteMany, removeCategory]);
+  }, [filters, categoriesSelected, deleteFilter, deleteMany, removeCategory, t]);
 
   const hasSearch = Boolean(filters.search?.trim());
   const showClearAll = items.length > 0 || hasSearch;
@@ -113,7 +110,7 @@ export default function FiltersLists() {
     <div className="flex w-full min-w-0 flex-row flex-wrap items-center gap-2">
       {items.length > 0 ? (
         <ul
-          aria-label="Active filters"
+          aria-label={t("activeFilters")}
           className="flex min-w-0 flex-1 flex-wrap gap-2"
         >
           {items.map((item) => (
@@ -121,7 +118,7 @@ export default function FiltersLists() {
               <Button
                 type="button"
                 variant="badge"
-                aria-label={`Remove filter ${item.label}`}
+                aria-label={t("removeFilter", { label: item.label })}
                 onClick={item.onRemove}
               >
                 <span className="min-w-0 flex-1 text-left line-clamp-2">
@@ -150,7 +147,7 @@ export default function FiltersLists() {
           "hover:border-text/35 hover:bg-fg-2 hover:text-text",
         )}
       >
-        Clear all
+        {t("clearAll")}
       </Button>
     </div>
   );

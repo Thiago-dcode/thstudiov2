@@ -39,7 +39,7 @@ export default async function CollectionCreate() {
 
   return (
     <AdminPageContainer>
-      <AdminPageTitle title="Create a collection" />
+      <AdminPageTitle title={t("createTitle")} />
       <CreateOrUpdateCollection />
     </AdminPageContainer>
   );

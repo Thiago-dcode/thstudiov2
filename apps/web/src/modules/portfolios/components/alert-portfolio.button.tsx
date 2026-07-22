@@ -1,9 +1,11 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { AlertButton } from "@/lib/components/alert-button";
 import { usePortfolio } from "../providers/create-update-portfolio.provider";
 
 export function AlertPortfolioButton() {
+  const t = useTranslations("atelier.common");
   const { portfolioInput, currentPortfolio, isPending, canSubmit } =
     usePortfolio();
 
@@ -26,7 +28,9 @@ export function AlertPortfolioButton() {
           ? `/atelier/portfolios/edit/${currentPortfolio.slug}`
           : "/atelier/portfolios/create"
       }
-      label={currentPortfolio ? "Editing portfolio" : "Creating portfolio"}
+      label={
+        currentPortfolio ? t("editingPortfolio") : t("creatingPortfolio")
+      }
     />
   );
 }

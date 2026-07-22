@@ -17,6 +17,7 @@ import {
 import { usePreviewUrls } from "@repo/ui/hooks/usePreviewUrls";
 import { cn } from "@repo/ui/lib/utils";
 import { Pencil, Plus } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import FormComponent from "@/lib/components/form-component";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
@@ -40,6 +41,7 @@ export const CreateOrUpdateAboutPage = ({
     | "base"
     | "destructive";
 }) => {
+  const t = useTranslations("atelier.about.form");
   const [open, setOpen] = useState(false);
   const {
     handleSubmit,
@@ -78,18 +80,18 @@ export const CreateOrUpdateAboutPage = ({
         <Button variant={variant as any} size="sm">
           {!currentAboutPage ? (
             <>
-              <Plus className="size-4" /> Create About Page
+              <Plus className="size-4" /> {t("createButton")}
             </>
           ) : (
             <>
-              <Pencil className="size-4" /> Edit About Page
+              <Pencil className="size-4" /> {t("editButton")}
             </>
           )}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl">
         <DialogTitle>
-          {!currentAboutPage ? "Create About Page" : "Update About Page"}
+          {!currentAboutPage ? t("createTitle") : t("updateTitle")}
         </DialogTitle>
         <FormComponent.Container className="">
           <FormComponent.Form onSubmit={handleSubmit}>
@@ -102,23 +104,23 @@ export const CreateOrUpdateAboutPage = ({
               onChange={() => deleteInputErrorProperty("title")}
               error={inputErrors?.title}
               defaultValue={currentAboutPage?.title || undefined}
-              label="Title"
+              label={t("titleLabel")}
               required={!currentAboutPage}
               name="title"
               id="title"
               type="text"
-              placeholder="The story behind the canvas"
+              placeholder={t("titlePlaceholder")}
             />
             <FormComponent.LabelTextarea
               onChange={() => deleteInputErrorProperty("description")}
               error={inputErrors?.description}
               rows={8}
               defaultValue={currentAboutPage?.description || undefined}
-              label="Description"
+              label={t("descriptionLabel")}
               required={!currentAboutPage}
               name="description"
               id="description"
-              placeholder="Share your journey as an artist. What inspires you? What drives your creative vision? Let visitors connect with the person behind the art..."
+              placeholder={t("descriptionPlaceholder")}
             />
 
             <div className="pt-4">
@@ -126,7 +128,7 @@ export const CreateOrUpdateAboutPage = ({
                 isPending={isPending}
                 success={success}
               >
-                {!currentAboutPage ? "Create" : "Update"}
+                {!currentAboutPage ? t("createSubmit") : t("updateSubmit")}
               </FormComponent.SubmitButton>
             </div>
           </FormComponent.Form>
@@ -137,6 +139,7 @@ export const CreateOrUpdateAboutPage = ({
 };
 
 const PhotoInput = ({ defaultUrl }: { defaultUrl?: string }) => {
+  const t = useTranslations("atelier.about.form");
   const { files } = useInputFile();
   const { previewUrls } = usePreviewUrls({
     defaultUrl,
@@ -152,20 +155,17 @@ const PhotoInput = ({ defaultUrl }: { defaultUrl?: string }) => {
       <div>
         {previewUrls?.length ? (
           <div className="mt-4 flex flex-col items-center gap-2">
-            <h3 className="text-sm font-medium">Photo Preview:</h3>
+            <h3 className="text-sm font-medium">{t("photoPreview")}</h3>
             <div className="relative aspect-3/4 max-h-[200px] max-w-[150px] sm:max-h-[500px] sm:max-w-[300px] overflow-hidden border-4 border-fg-2">
               <img
                 src={previewUrls[0]}
-                alt="Photo Preview"
+                alt={t("photoPreviewAlt")}
                 className="w-full h-full object-cover"
               />
             </div>
           </div>
         ) : (
-          <p className="text-sm text-text-muted ">
-            Choose a photo (preferably of yourself) to display on your about
-            page.
-          </p>
+          <p className="text-sm text-text-muted ">{t("choosePhotoHint")}</p>
         )}
       </div>
       <FileInput name="photo" id="photo-input" />

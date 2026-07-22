@@ -12,6 +12,7 @@ import {
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { cn } from "@repo/ui/lib/utils";
 import { CheckIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useCallback, useMemo } from "react";
 import { useUpdateCategories } from "@/modules/categories/providers/categories.provider";
 
@@ -34,6 +35,7 @@ const CategoryCombobox = ({
   inputClassName?: string;
   maxSelection?: number;
 }) => {
+  const t = useTranslations("search.combobox");
   const { categories, handleOnChange, isLoading } = useUpdateCategories();
 
   const sortedCategories = useMemo(() => {
@@ -89,7 +91,7 @@ const CategoryCombobox = ({
                 placeholder={
                   categoriesSelected.length
                     ? categoriesSelected.map((c) => c.name).join(", ")
-                    : "Search…"
+                    : t("placeholder")
                 }
                 onChange={(e) => handleOnChange(e.target.value)}
                 disabled={busy}
@@ -101,7 +103,7 @@ const CategoryCombobox = ({
                   {busy && sortedCategories.length === 0 ? (
                     <Spinner className="mx-auto size-3" />
                   ) : sortedCategories.length === 0 && !busy ? (
-                    "Type to search categories."
+                    t("empty.searchingCategories")
                   ) : null}
                 </ComboboxEmpty>
                 <ComboboxList>

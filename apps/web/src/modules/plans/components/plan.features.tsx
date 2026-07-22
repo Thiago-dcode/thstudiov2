@@ -4,21 +4,24 @@ import type { BasePlan } from "@repo/common-lib/types/plan";
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
 import { cn } from "@repo/ui/lib/utils";
 import { Brain, Check, X, Zap } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { type ReactNode, useMemo } from "react";
 
 function formatMegaBytes(megabytes: number): string {
   return `${(Math.ceil(megabytes / 1024)).toFixed(1)} GB`;
 }
 
-function formatFeatureValue(
-  value: number | boolean,
-): string | number | boolean {
-  if (typeof value === "boolean") return value;
-  if (value === -1) return "Unlimited";
-  return value;
-}
-
 export const PlanFeatures = ({ plan }: { plan: BasePlan }) => {
+  const t = useTranslations("plans.features");
+
+  const formatFeatureValue = (
+    value: number | boolean,
+  ): string | number | boolean => {
+    if (typeof value === "boolean") return value;
+    if (value === -1) return t("unlimited");
+    return value;
+  };
+
   const features: {
     key: string;
     content: string | ReactNode;
@@ -33,7 +36,7 @@ export const PlanFeatures = ({ plan }: { plan: BasePlan }) => {
             <span className="font-bold tabular-nums text-text">
               {formatMegaBytes(plan.storage_limit_mb)}
             </span>
-            <span className="text-text-muted"> of media storage</span>
+            <span className="text-text-muted"> {t("ofMediaStorage")}</span>
           </span>
         ),
       },
@@ -44,7 +47,7 @@ export const PlanFeatures = ({ plan }: { plan: BasePlan }) => {
             <span className="font-bold tabular-nums text-text">
               {String(formatFeatureValue(plan.max_projects))}
             </span>
-            <span className="text-text-muted"> Projects</span>
+            <span className="text-text-muted"> {t("projects")}</span>
           </span>
         ),
       },
@@ -55,7 +58,7 @@ export const PlanFeatures = ({ plan }: { plan: BasePlan }) => {
             <span className="font-bold tabular-nums text-text">
               {String(formatFeatureValue(plan.max_portfolios))}
             </span>
-            <span className="text-text-muted"> Portfolios</span>
+            <span className="text-text-muted"> {t("portfolios")}</span>
           </span>
         ),
       },
@@ -66,7 +69,7 @@ export const PlanFeatures = ({ plan }: { plan: BasePlan }) => {
             <span className="font-bold tabular-nums text-text">
               {String(formatFeatureValue(plan.max_services))}
             </span>
-            <span className="text-text-muted"> Services</span>
+            <span className="text-text-muted"> {t("services")}</span>
           </span>
         ),
       },
@@ -77,7 +80,7 @@ export const PlanFeatures = ({ plan }: { plan: BasePlan }) => {
             <span className="font-bold tabular-nums text-text">
               {String(formatFeatureValue(plan.max_clients))}
             </span>
-            <span className="text-text-muted"> Clients</span>
+            <span className="text-text-muted"> {t("clients")}</span>
           </span>
         ),
       },
@@ -91,14 +94,13 @@ export const PlanFeatures = ({ plan }: { plan: BasePlan }) => {
             )}
           >
             <Zap className="size-3.5 shrink-0 text-accent" aria-hidden />
-            Media compression
+            {t("mediaCompression")}
           </span>
         ) : (
-          <span className="text-text">Media compression</span>
+          <span className="text-text">{t("mediaCompression")}</span>
         ),
         not_available: !plan.allow_media_compression,
-        extraInfo:
-          "Choose your preferred compression level when uploading photos. Balance between image quality and file size to optimize your storage and loading times.",
+        extraInfo: t("mediaCompressionTooltip"),
       },
       {
         key: "ai-credits",
@@ -124,15 +126,14 @@ export const PlanFeatures = ({ plan }: { plan: BasePlan }) => {
                 {String(formatFeatureValue(plan.ai_credits))}
               </span>
             )}
-            <span className="text-text-muted">AI Credits</span>
+            <span className="text-text-muted">{t("aiCredits")}</span>
           </span>
         ),
         not_available: plan.ai_credits === 0,
-        extraInfo:
-          "Leverage AI to automate repetitive tasks. Automatically generate titles, descriptions, and tags for your media based on content analysis, saving you time and effort.",
+        extraInfo: t("aiCreditsTooltip"),
       },
     ],
-    [plan],
+    [plan, t],
   );
 
   return (
