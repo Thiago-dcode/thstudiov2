@@ -19,11 +19,11 @@ export class MailService {
 
     public async send(mailable: Mailable): Promise<any> {
         const { from, to, subject, cc, replyTo } = await mailable.envelope();
-        const { text, html } = await mailable.content();
+        const { text, html, headers } = await mailable.content();
         if (!this.hasContent({ text, html })) {
             return null;
         }
-        return await this.emailDriver.sendEmail({ from, to, subject, text, html, cc, replyTo });
+        return await this.emailDriver.sendEmail({ from, to, subject, text, html, cc, replyTo, headers });
     }
 
     public async sendRaw(options: EmailDriverOptions): Promise<any> {
@@ -34,11 +34,11 @@ export class MailService {
         const payloads = await Promise.all(
             mailables.map(async (mailable) => {
                 const { from, to, subject, cc, replyTo } = await mailable.envelope();
-                const { text, html } = await mailable.content();
+                const { text, html, headers } = await mailable.content();
                 if (!this.hasContent({ text, html })) {
                     return null;
                 }
-                return { from, to, subject, text, html, cc, replyTo } as EmailDriverOptions;
+                return { from, to, subject, text, html, cc, replyTo, headers } as EmailDriverOptions;
             }),
         );
 
@@ -64,12 +64,12 @@ export class MailService {
         }
 
         const { from, to, subject, cc, replyTo } = await mailable.envelope();
-        const { text, html } = await mailable.content();
+        const { text, html, headers } = await mailable.content();
         if (!this.hasContent({ text, html })) {
             return null;
         }
 
-        const payload: EmailDriverOptions = { from, to, subject, text, html, cc, replyTo };
+        const payload: EmailDriverOptions = { from, to, subject, text, html, cc, replyTo, headers };
 
         return await this.queue.add(
             JOB_SEND_MAIL,
@@ -94,11 +94,11 @@ export class MailService {
         const payloads = await Promise.all(
             mailables.map(async (mailable) => {
                 const { from, to, subject, cc, replyTo } = await mailable.envelope();
-                const { text, html } = await mailable.content();
+                const { text, html, headers } = await mailable.content();
                 if (!this.hasContent({ text, html })) {
                     return null;
                 }
-                return { from, to, subject, text, html, cc, replyTo } as EmailDriverOptions;
+                return { from, to, subject, text, html, cc, replyTo, headers } as EmailDriverOptions;
             }),
         );
 

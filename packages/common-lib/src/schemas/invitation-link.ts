@@ -6,6 +6,8 @@ export type InvitationLinkSchema = {
   id: number;
   code: string;
   benefit_id: number;
+  email: string | null;
+  language: EnumType<'LANGUAGE_CODE'> | null;
   max_uses: number;
   current_uses: number;
   expires_at: Date | null;

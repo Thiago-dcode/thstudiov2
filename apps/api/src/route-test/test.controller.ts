@@ -11,7 +11,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { mailingContactEmail } from 'src/config/mailling';
+import { mailingContactEmail, mailingSupportEmail } from 'src/config/mailling';
 import { MailService } from '@repo/backend-lib/services/mail-service';
 import { ViewService } from '@repo/backend-lib/services/view-service/base';
 import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/constants';
@@ -42,9 +42,10 @@ import {
 } from './mocks/email-preview.mock-data';
 import { Public } from 'src/common/decorators/public.decorator';
 import { SkipResponseTransform } from 'src/common/decorators/skip-response-transform.decorator';
+import { ENUMS, EnumType } from '@repo/common-lib/constants/enums';
 
-const PREVIEW_LANGUAGES = ['EN', 'ES'] as const;
-type PreviewLanguage = (typeof PREVIEW_LANGUAGES)[number];
+const PREVIEW_LANGUAGES = ENUMS.LANGUAGE_CODE;
+type PreviewLanguage = EnumType<'LANGUAGE_CODE'>;
 
 /**
  * Supported email preview types (web user flows):
@@ -149,15 +150,18 @@ export class TestController {
   }
 
   private renderEmailPreview(view: string, data: Record<string, unknown>) {
+    const t = this.createTranslator();
     return this.viewService.render(view, {
       ...data,
+      // Same contract as ApiMailService: top-level lang-bound `t`.
+      // ViewService mirrors it onto globals.t for includes.
+      t,
       globals: {
         emailsPath: viewPath('emails'),
         appName: this.configService.get('app.name'),
         beautyUrl: 'www.a11studio.com',
         appUrl: this.configService.get('app.url'),
         env: this.configService.get('app.env'),
-        t: this.createTranslator(),
       },
     });
   }
@@ -202,6 +206,8 @@ export class TestController {
     const artist = this.toCompactUser(this.previewUser);
     const contact = createMockNewContactInput(this.previewUser.id);
     const t = this.createTranslator();
+    const isSupportContact =
+      !!mailingSupportEmail && artist.email.trim().toLowerCase() === mailingSupportEmail.trim().toLowerCase();
 
     if (shouldSend) {
       await this.mailService.send(this.newContactMail.setData(artist, contact, this.lang));
@@ -211,6 +217,7 @@ export class TestController {
       artist,
       contact,
       translatePath: 'new-contact-email',
+      isSupportContact,
       t,
       unsuscribeUrl: '',
     });
@@ -285,7 +292,7 @@ export class TestController {
     const waitList = createMockWaitListWelcomeData(this.previewUser.email, this.appUrl());
 
     if (shouldSend) {
-      await this.mailService.send(this.waitListWelcomeMail.setData(waitList));
+      await this.mailService.send(this.waitListWelcomeMail.setData(waitList, this.lang));
     }
 
     return this.renderEmailPreview('emails/wait-list/welcome', {
@@ -299,7 +306,7 @@ export class TestController {
     const invite = createMockWaitListInviteData(this.previewUser.email, this.appUrl());
 
     if (shouldSend) {
-      await this.mailService.send(this.waitListInviteMail.setData(invite));
+      await this.mailService.send(this.waitListInviteMail.setData(invite, this.lang));
     }
 
     return this.renderEmailPreview('emails/wait-list/invite', {
@@ -313,7 +320,7 @@ export class TestController {
     const reminder = createMockWaitListReminderData(this.previewUser.email, this.appUrl(), isFinal);
 
     if (shouldSend) {
-      await this.mailService.send(this.waitListReminderMail.setData(reminder));
+      await this.mailService.send(this.waitListReminderMail.setData(reminder, this.lang));
     }
 
     return this.renderEmailPreview('emails/wait-list/reminder', {

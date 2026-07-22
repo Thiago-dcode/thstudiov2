@@ -1,0 +1,9 @@
+{
+  "SUBJECT": "You're invited to {appName}",
+  "TITLE": "You've been invited",
+  "DESCRIPTION": "Use your personal invitation to create your account and claim your benefits.",
+  "TIER_LABEL": "Reserved tier",
+  "BENEFIT_DESCRIPTION": "This invitation gives you {months} free month(s) — claim it below.",
+  "CTA_TEXT": "Create Your Account",
+  "EXPIRATION_NOTE": "This registration link expires in {days} days — after that, you'll lose your invitation benefits."
+}

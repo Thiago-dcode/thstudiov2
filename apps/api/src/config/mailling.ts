@@ -6,3 +6,4 @@ export const mailingDriver: MailServiceDriver = 'resend';
 export const mailingAdmins = mailingConfig.admins;
 export const mailingNoreplyEmail = mailingConfig.noreplyEmail;
 export const mailingContactEmail = mailingConfig.contactEmail;
+export const mailingSupportEmail = mailingConfig.supportEmail;

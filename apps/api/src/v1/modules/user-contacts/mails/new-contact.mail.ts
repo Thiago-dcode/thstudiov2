@@ -1,4 +1,4 @@
-import { mailingNoreplyEmail } from 'src/config/mailling';
+import { mailingNoreplyEmail, mailingSupportEmail } from 'src/config/mailling';
 import { ViewService } from '@repo/backend-lib/services/view-service/base';
 import { Injectable } from '@nestjs/common';
 import { I18nService } from 'nestjs-i18n';
@@ -11,6 +11,8 @@ import { EmailPreferencesService } from 'src/v1/modules/email-preferences/email-
 export class NewContactMail extends ApiMailService {
   private artist: CompactUser;
   private contact: CreateUserContactInput;
+  /** True when this contact form submission was addressed to the support inbox (e.g. `/support` page) rather than an artist profile. */
+  private isSupportContact = false;
 
   constructor(
     viewService: ViewService,
@@ -30,9 +32,17 @@ export class NewContactMail extends ApiMailService {
     mail.contact = contact;
     if (lang) mail.lang = lang;
 
+    mail.isSupportContact =
+      !!mailingSupportEmail && artist.email.trim().toLowerCase() === mailingSupportEmail.trim().toLowerCase();
+
     mail.viewParams = {
       viewPath: 'emails/user-contacts/new-contact',
-      data: { artist: mail.artist, contact: mail.contact, translatePath: 'new-contact-email' },
+      data: {
+        artist: mail.artist,
+        contact: mail.contact,
+        translatePath: 'new-contact-email',
+        isSupportContact: mail.isSupportContact,
+      },
       emailType: 'TRANSACTIONAL',
     };
     return mail;
@@ -42,7 +52,7 @@ export class NewContactMail extends ApiMailService {
     return {
       from: `${mailingNoreplyEmail}`,
       to: this.artist.email,
-      subject: this.t('new-contact-email.SUBJECT'),
+      subject: this.t(this.isSupportContact ? 'new-contact-email.SUPPORT_SUBJECT' : 'new-contact-email.SUBJECT'),
       replyTo: this.contact.contact_email,
     };
   }

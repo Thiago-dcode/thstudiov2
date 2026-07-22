@@ -7,5 +7,8 @@
   "CONTACT_EMAIL": "E-mail",
   "SUBJECT_LABEL": "Assunto",
   "MESSAGE_LABEL": "Mensagem",
-  "FOOTER_NOTE": "Você pode responder diretamente a este e-mail para contatar o remetente."
+  "FOOTER_NOTE": "Você pode responder diretamente a este e-mail para contatar o remetente.",
+  "SUPPORT_BADGE": "Solicitação de suporte",
+  "SUPPORT_SUBJECT": "A11STUDIO - Nova solicitação de suporte",
+  "SUPPORT_TITLE": "Alguém entrou em contato com o suporte da A11STUDIO"
 }

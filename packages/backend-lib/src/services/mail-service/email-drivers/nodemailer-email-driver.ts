@@ -17,7 +17,7 @@ import nodemailer from "nodemailer";
                 },
               });
         }
-        public async sendEmail({from,to,subject,text,html,cc,replyTo}: EmailDriverOptions) {
+        public async sendEmail({from,to,subject,text,html,cc,replyTo,headers}: EmailDriverOptions) {
 
           try {
             Logger.info(from,to,subject);
@@ -25,10 +25,11 @@ import nodemailer from "nodemailer";
                 from,
                 to,
                 subject,
-                text, 
+                text,
                 html,
                 cc,
                 replyTo,
+                headers,
               });
           } catch (error) {
             Logger.error(error);

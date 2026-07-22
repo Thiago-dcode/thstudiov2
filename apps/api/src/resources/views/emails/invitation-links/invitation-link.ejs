@@ -13,7 +13,7 @@
           <tr>
             <td style="padding:0 0 24px; text-align:center;">
               <p class="e-text-muted" style="font-size:13px; color:#46443F; letter-spacing:1px; text-transform:uppercase; margin:0 0 8px 0;">
-                <%= t(translatePath + '.TIER_LABEL') %>: <%= t('benefit-type.' + waitList.benefitType) %>
+                <%= t(translatePath + '.TIER_LABEL') %>: <%= t('benefit-type.' + invitation.benefitType) %>
               </p>
               <h1 class="e-text" style="font-size:20px; font-weight:600; color:#000000; margin:0 0 12px 0; letter-spacing:1px;">
                 <%= t(translatePath + '.TITLE') %>
@@ -24,20 +24,16 @@
             </td>
           </tr>
 
-          <!-- Position -->
+          <!-- Benefit -->
           <tr>
             <td>
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
                 class="e-card e-border-em" style="border:1.5px solid #C9C6BB; background-color:#FFFFFF;">
                 <tr>
                   <td style="padding:24px 12px; text-align:center;">
-                    <!-- <p class="e-accent" style="font-size:28px; margin:0; color:#ED2100; line-height:1.3; letter-spacing:1px;">
-                      #<%= waitList.position %>
-                    </p> -->
                     <p class="e-text-muted" style="font-size:14px; color:#46443F; line-height:1.6;">
                       <%= t(translatePath + '.BENEFIT_DESCRIPTION')
-                        .replace('{months}', waitList.benefitMonths)
-                        .replace('{planName}', waitList.planName) %>
+                        .replace('{months}', invitation.benefitMonths) %>
                     </p>
                   </td>
                 </tr>
@@ -45,28 +41,28 @@
             </td>
           </tr>
 
-      
-  <!-- CTA -->
-  <tr>
-    <td align="center" style="padding:24px 0 0;">
-      <table role="presentation" cellpadding="0" cellspacing="0" border="0">
-        <tr>
-          <td align="center" class="e-accent-bg" style="background-color:#ED2100;">
-            <a href="<%= waitList.registrationUrl %>"
-              style="display:inline-block; padding:16px 48px; font-size:13px; font-weight:bold; text-decoration:none; color:#FFFFFF; letter-spacing:1.5px;">
-              <%= t(translatePath + '.CTA_TEXT') %>
-            </a>
-          </td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-        <!-- Expiration -->
-        <% if (waitList.expiresInDays) { %>
+          <!-- CTA -->
           <tr>
             <td align="center" style="padding:24px 0 0;">
-              <p  style="font-size:13px; margin:0; line-height:1.6; text-align:center;">
-                * <%= t(translatePath + '.EXPIRATION_NOTE').replace('{days}', waitList.expiresInDays) %>
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td align="center" class="e-accent-bg" style="background-color:#ED2100;">
+                    <a href="<%= invitation.registrationUrl %>"
+                      style="display:inline-block; padding:16px 48px; font-size:13px; font-weight:bold; text-decoration:none; color:#FFFFFF; letter-spacing:1.5px;">
+                      <%= t(translatePath + '.CTA_TEXT') %>
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Expiration -->
+          <% if (invitation.expiresInDays) { %>
+          <tr>
+            <td align="center" style="padding:24px 0 0;">
+              <p style="font-size:13px; margin:0; line-height:1.6; text-align:center;">
+                * <%= t(translatePath + '.EXPIRATION_NOTE').replace('{days}', invitation.expiresInDays) %>
               </p>
             </td>
           </tr>

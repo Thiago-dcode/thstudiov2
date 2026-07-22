@@ -26,6 +26,7 @@ export class ResendEmailDriver extends EmailDriver {
     html,
     cc,
     replyTo,
+    headers,
   }: EmailDriverOptions): Promise<any> {
     Logger.info(from, to, subject);
 
@@ -43,6 +44,7 @@ export class ResendEmailDriver extends EmailDriver {
       subject,
       ...(cc ? { cc } : {}),
       ...(replyTo ? { replyTo } : {}),
+      ...(headers ? { headers } : {}),
     } as any;
 
     if (html) {
@@ -63,7 +65,7 @@ export class ResendEmailDriver extends EmailDriver {
   }
 
   public async sendBatch(options: EmailDriverOptions[]): Promise<any> {
-    const emails = options.map(({ from, to, subject, text, html, cc, replyTo }) => {
+    const emails = options.map(({ from, to, subject, text, html, cc, replyTo, headers }) => {
       if (!html && (text === undefined || text === null)) {
         throw new Error(
           "ResendEmailDriver: one of `html` or `text` must be provided.",
@@ -76,6 +78,7 @@ export class ResendEmailDriver extends EmailDriver {
         subject,
         ...(cc ? { cc } : {}),
         ...(replyTo ? { replyTo } : {}),
+        ...(headers ? { headers } : {}),
       };
 
       if (html) {
@@ -96,7 +99,7 @@ export class ResendEmailDriver extends EmailDriver {
       throw error;
     }
 
-    const ids = Array.isArray(data) ? data.map((item) => item?.id).join(',') : String(data);
+    const ids = Array.isArray(data?.data) ? data.data.map((item) => item?.id).join(',') : String(data);
     const recipients = emails
       .map((email) => `${Array.isArray(email.to) ? email.to.join('|') : email.to}<${email.subject}>`)
       .join('; ');

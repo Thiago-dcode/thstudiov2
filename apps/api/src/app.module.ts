@@ -24,6 +24,7 @@ import { UserSessionsModule } from './v1/modules/user-sessions/user-sessions.mod
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { MediaModule } from './v1/modules/media/media.module';
 import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/constants';
+import { getConfigValue } from '@repo/common-lib/config/utils';
 import { CategoriesModule } from './v1/modules/categories/categories.module';
 import { AdminModule } from './v1/modules/admin/admin.module';
 import { PlanSubscriptionsModule } from './v1/modules/plan-subscriptions/plan-subscriptions.module';
@@ -171,6 +172,11 @@ const ALL_APP_MODULES = [
         fallbackLanguage: DEFAULT_LANGUAGE,
         loaderOptions: {
           path: join(__dirname, 'i18n'),
+          // Reload translations on file changes without a full app restart —
+          // this only helps once a file/folder already exists under dist/i18n;
+          // a brand-new top-level language folder still needs one restart so
+          // Nest's asset-copy watcher (and this loader) can pick it up.
+          watch: !getConfigValue('app').isProduction,
         },
         viewEngine: VIEW_ENGINE,
         disableMiddleware: true,

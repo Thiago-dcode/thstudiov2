@@ -44,6 +44,13 @@ const up = async () => {
       onDelete: 'CASCADE',
       nullable: false,
     }),
+    Column.email('email', {
+      nullable: true,
+      unique: false,
+    }),
+    Column.enum('language', 'LANGUAGE_CODE', {
+      nullable: true,
+    }),
     Column.integer('max_uses', {
       default: 1,
     }),

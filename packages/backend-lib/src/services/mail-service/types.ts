@@ -16,8 +16,9 @@ export type Envelop= {
     replyTo?: string,
 }
 export type Content={
-    text?: string, 
-    html?: string, 
+    text?: string,
+    html?: string,
+    headers?: Record<string, string>,
 }
 export type EmailDriverOptions={
     from: string ,
@@ -27,4 +28,5 @@ export type EmailDriverOptions={
     html?: string,
     cc?: string | string[],
     replyTo?: string,
+    headers?: Record<string, string>,
 }

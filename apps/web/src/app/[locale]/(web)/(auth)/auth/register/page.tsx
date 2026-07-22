@@ -4,7 +4,6 @@ import { Link } from "@/i18n/navigation";
 import { redirect } from "@/i18n/redirect";
 import authComponent from "@/lib/components/page-component";
 import invitationLinkService from "@/modules/invitation-links/invitation-link.service";
-import waitListService from "@/modules/wait-list/wait-list.service";
 import { RegisterForm } from "../__components/register-form";
 
 export default async function RegisterPage({
@@ -19,8 +18,9 @@ export default async function RegisterPage({
 
   const { ref, email } = await searchParams;
 
-  // Resolve the prefill email server-side from the invitation `ref` so we never
+  const validatedEmail = z.email().safeParse(email);
 
+  let initialEmail = validatedEmail.success ? validatedEmail.data : undefined;
   if (registrationIsClosed) {
     // If registration is closed, allow bypass only for valid invitation refs.
     let bypassRegistrationClose = false;
@@ -30,7 +30,7 @@ export default async function RegisterPage({
       bypassRegistrationClose =
         !invitationLinkResult.error && !!invitationLinkResult.data;
 
-        console.log("Invitation link",invitationLinkResult)
+      initialEmail = invitationLinkResult.data?.email || initialEmail;
     }
 
     if (!bypassRegistrationClose) {
@@ -39,16 +39,6 @@ export default async function RegisterPage({
     }
   }
 
-  const validatedEmail = z.email().safeParse(email);
-
-  // expose the address in the email link (which pushes mails to spam/promotions).
-  let initialEmail = validatedEmail.success ? validatedEmail.data : undefined;
-  if (!initialEmail && ref) {
-    const invitationEmail = await waitListService.getEmailByInvitationCode(ref);
-    if (invitationEmail.data?.email) {  
-      initialEmail = invitationEmail.data.email;
-    }
-  }
   return (
     <authComponent.Container>
       <authComponent.Content>

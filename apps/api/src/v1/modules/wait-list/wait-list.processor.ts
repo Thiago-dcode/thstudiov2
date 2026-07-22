@@ -414,8 +414,9 @@ export class WaitListProcessor extends GlobalProcessor {
       }
 
       const invitationLink = await this.invitationLinkService.create({
-        benefit_id: benefit.id,
-      });
+        email:entry.email,
+        benefit_type: benefitType,
+      },true);
 
       const registrationUrl = `${appUrl}/auth/register?ref=${invitationLink.code}`;
 

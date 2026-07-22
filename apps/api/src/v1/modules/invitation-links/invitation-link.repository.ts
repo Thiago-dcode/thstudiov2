@@ -23,6 +23,8 @@ export class InvitationLinkRepository extends BaseRepository {
     'invitation_links.id',
     'invitation_links.code',
     'invitation_links.benefit_id',
+    'invitation_links.email',
+    'invitation_links.language',
     'invitation_links.max_uses',
     'invitation_links.current_uses',
     'invitation_links.expires_at',
@@ -105,11 +107,17 @@ export class InvitationLinkRepository extends BaseRepository {
     return this.format(result);
   }
 
+  async deleteById(id: number): Promise<void> {
+    await this.query().where('id', '=', id).delete();
+  }
+
   private format(result: InvitationLinkSchema): InvitationLink {
     return {
       id: result.id,
       code: result.code,
       benefit_id: result.benefit_id,
+      email: result.email,
+      language: result.language,
       max_uses: result.max_uses,
       current_uses: result.current_uses,
       expires_at: result.expires_at,
@@ -122,6 +130,8 @@ export class InvitationLinkRepository extends BaseRepository {
       id: row.id,
       code: row.code,
       benefit_id: row.benefit_id,
+      email: row.email,
+      language: row.language,
       max_uses: row.max_uses,
       current_uses: row.current_uses,
       expires_at: row.expires_at,

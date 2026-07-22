@@ -8,7 +8,6 @@ import { ViewService } from '@repo/backend-lib/services/view-service/base';
 import { FactoryViewService } from '@repo/backend-lib/services/view-service/factory';
 import { viewPath } from 'src/common/utils';
 import { VIEW_ENGINE } from 'src/common/utils/constants';
-import { I18nService } from 'nestjs-i18n';
 import { CacheModule } from '@nestjs/cache-manager';
 import {
   FactoryLogService,
@@ -66,7 +65,7 @@ import { RequestStore } from '@repo/common-lib/types/request';
     },
     {
       provide: ViewService,
-      useFactory: (configService: ConfigService, i18nService: I18nService) => {
+      useFactory: (configService: ConfigService) => {
         return FactoryViewService.createViewService(VIEW_ENGINE, {
           basePath: viewPath(''),
           globals: {
@@ -75,11 +74,13 @@ import { RequestStore } from '@repo/common-lib/types/request';
             beautyUrl: 'www.a11studio.com',
             appUrl: configService.get('app.url'),
             env: configService.get('app.env'),
-            t: i18nService.translate.bind(i18nService),
+            // Do NOT put unbound i18n here — ApiMailService injects the
+            // lang-bound `t` per email. Leaving a default would silently
+            // fall back to EN when templates call globals.t.
           },
         });
       },
-      inject: [ConfigService, I18nService],
+      inject: [ConfigService],
     },
     {
       provide: MailService,

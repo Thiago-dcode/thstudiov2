@@ -24,7 +24,7 @@ export abstract class ApiMailService extends Mailable {
     protected readonly viewService: ViewService,
     protected readonly emailPreferencesService: EmailPreferencesService | undefined,
     protected _viewParams: ViewParams,
-    /** Optional: only mails that call `this.t(...)` or rely on the auto-injected `data.t` need this. */
+    /** Required for translated emails — ApiMailService injects lang-bound `t` into every render. */
     protected readonly i18nService?: I18nService,
   ) {
     super();
@@ -69,6 +69,19 @@ export abstract class ApiMailService extends Mailable {
     return recipient ?? null;
   }
 
+  /**
+   * Builds the view payload for every email. Always injects the lang-bound
+   * `t` from this mailable so templates (and shared includes like footer)
+   * use one translator — never the unbound default on ViewService globals.
+   */
+  private buildViewData(extra: ViewData = {}): ViewData {
+    return {
+      ...this._viewParams.data,
+      ...extra,
+      ...(this.i18nService ? { t: this.t } : {}),
+    };
+  }
+
   async content(): Promise<Content> {
     const email = await this.getRecipientEmail();
 
@@ -80,11 +93,10 @@ export abstract class ApiMailService extends Mailable {
     // default to sending and do not include unsubscribe URLs.
     if (!this.emailPreferencesService) {
       return {
-        html: await this.viewService.render(this._viewParams.viewPath, {
-          ...this._viewParams.data,
-          t: this.i18nService ? this.t : undefined,
-          unsuscribeUrl: '',
-        }),
+        html: await this.viewService.render(
+          this._viewParams.viewPath,
+          this.buildViewData({ unsuscribeUrl: '' }),
+        ),
       };
     }
 
@@ -101,11 +113,23 @@ export abstract class ApiMailService extends Mailable {
     }
 
     return {
-      html: await this.viewService.render(this._viewParams.viewPath, {
-        ...this._viewParams.data,
-        t: this.i18nService ? this.t : undefined,
-        unsuscribeUrl,
-      }),
+      html: await this.viewService.render(
+        this._viewParams.viewPath,
+        this.buildViewData({ unsuscribeUrl }),
+      ),
+      headers: this.buildUnsubscribeHeaders(unsuscribeUrl),
+    };
+  }
+
+  /** RFC 8058 one-click unsubscribe headers — lets mail clients offer unsubscribe without opening the email. */
+  private buildUnsubscribeHeaders(unsuscribeUrl: string): Record<string, string> | undefined {
+    if (!unsuscribeUrl) {
+      return undefined;
+    }
+
+    return {
+      'List-Unsubscribe': `<${unsuscribeUrl}>`,
+      'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
     };
   }
 }
