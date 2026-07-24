@@ -36,7 +36,11 @@ export const MAX_USERNAME_RESET = 3;
 export const MAX_PASSWORD_RESET = 3;
 export const MAX_COLLECTION_ITEMS =30;
 export const MAX_PORTFOLIO_ITEMS=100;
-export const MAX_CATEGORIES_PORTFOLIO = 3;
+/** Per-type category caps for a portfolio; the combined total is their sum. */
+export const MAX_DISCIPLINES_PORTFOLIO = 3;
+export const MAX_STYLES_PORTFOLIO = 3;
+export const MAX_CATEGORIES_PORTFOLIO =
+  MAX_DISCIPLINES_PORTFOLIO + MAX_STYLES_PORTFOLIO;
 /** Postgres `real` (4-byte float) tops out around 3.4e38; keep prices well under that and sane for a service listing. */
 export const MAX_SERVICE_PRICE = 999999.99;
 export const MIN_COLUMN_BASE_COLUMNS = 1;

@@ -1,10 +1,12 @@
 import type {
   CreateMediaInputWithFile,
   Media,
+  MediaIndexRequest,
   MediaWithUser,
   UpdateMediaInput,
 } from "@repo/common-lib/types/media";
 import type { ApiResponse } from "@repo/common-lib/types/response";
+import { queryParamBuilder } from "@repo/common-lib/utils/query-builder";
 import { fetchApi } from "@/lib/facade/fetchApi";
 import { BaseService } from "@/lib/services/base.service";
 
@@ -12,8 +14,21 @@ class MediaService extends BaseService {
   constructor() {
     super(fetchApi(), "media");
   }
-  async findAll(): Promise<ApiResponse<Media[]>> {
-    return await this.fetchApi.get();
+  async findAll(
+    request?: MediaIndexRequest,
+  ): Promise<ApiResponse<Media[]>> {
+    return await this.fetchApi.get({
+      resource: request ? queryParamBuilder("", request) : "",
+    });
+  }
+
+  async findAllWithUser(
+    request: MediaIndexRequest = {},
+  ): Promise<ApiResponse<MediaWithUser[]>> {
+    const filters: MediaIndexRequest = { ...request, compact: false }
+    return await this.fetchApi.get({
+      resource: queryParamBuilder("", filters),
+    });
   }
   async getByPublicId(publicId: string): Promise<ApiResponse<MediaWithUser>> {
     return await this.fetchApi.get({

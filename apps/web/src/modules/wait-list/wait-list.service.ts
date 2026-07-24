@@ -1,8 +1,8 @@
 import type { ApiResponse } from "@repo/common-lib/types/response";
 import type {
   PublicCreateWaitListInput,
-  WaitList,
   WaitListCreateResponse,
+  WaitListValidateResponse,
 } from "@repo/common-lib/types/wait-list";
 import { fetchApi } from "@/lib/facade/fetchApi";
 import { BaseService } from "@/lib/services/base.service";
@@ -29,7 +29,7 @@ class WaitListService extends BaseService {
     });
   }
 
-  async validate(token: string): Promise<ApiResponse<WaitList>> {
+  async validate(token: string): Promise<ApiResponse<WaitListValidateResponse>> {
     return await this.fetchApi.post({
       resource: "validate",
       body: { token },

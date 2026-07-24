@@ -6,11 +6,10 @@ import { Gallery } from "@repo/ui/components/custom/gallery/gallery";
 import { PortfolioGrid } from "@repo/ui/components/custom/gallery/gallery-grid";
 import { GalleryProvider } from "@repo/ui/providers/gallery.provider";
 import { getTranslations } from "next-intl/server";
-import { Link } from "@/i18n/navigation";
 import portfolioService from "@/modules/portfolios/portfolio.service";
 import { WebSection } from "./web-section";
 
-const MAX_FEATURED_ITEMS = 12;
+const MAX_FEATURED_ITEMS = 9;
 const PHONE_FEATURED_COUNT = 6;
 const TABLET_FEATURED_COUNT = 9;
 const LAPTOP_FEATURED_COUNT = 9;
@@ -34,17 +33,16 @@ export async function FeaturedPortfolioSection() {
     portfolioItems.slice(0, Math.min(portfolioItems.length, count));
 
   return (
-    <WebSection className="overflow-hidden">
-      <WebSection.Container>
-        <WebSection.Header
-          badge={t("header.badge")}
-          title={portfolio.title}
-          description={t("header.description")}
-        />
-        <section className=" relative m-auto">
-          {/* <PortfolioCard.Item className="tablet:hidden" portfolio={portfolio} /> */}
-          <p className=" mb-2 text-sm text-text-muted">
-            {t("by")}{" "}
+    <WebSection id="featured-portfolio" className="overflow-hidden max-w-(--breakpoint-ultrawide) max-h-screen mx-auto">
+      <WebSection.Container className="pt-28">
+
+        <div className="flex items-end justify-between gap-0.5 mb-2 border-b w-full border-b-text/80!">
+          <h3 className="text-2xl! laptop:text-4xl! line-clamp-1 uppercase">{portfolio.title}</h3>
+          <p className="">A portfolio by <span className="text-text font-bold tracking-wide">@{portfolio.artist.username}</span></p>
+        </div>
+        <section className=" m-auto overflow-hidden">
+          {/* <p className=" mb-2 text-sm text-text-muted">
+            A portfolio created by{" "}
             <Link
               href={`/artists/${portfolio.artist.username}`}
               className="font-medium text-text underline-offset-4 transition-colors hover:text-text-muted hover:underline"
@@ -54,7 +52,7 @@ export async function FeaturedPortfolioSection() {
             >
               @{portfolio.artist.username}
             </Link>
-          </p>
+          </p> */}
           <GalleryProvider
             items={mediaItems.map((m) => ({
               url: m.url ?? m.thumbnail,
@@ -84,23 +82,23 @@ export async function FeaturedPortfolioSection() {
             </div>
           </GalleryProvider>
 
-          <div className="absolute inset-x-0 bottom-0 z-10">
-            <div
-              className="featured-portfolio-fade pointer-events-none"
-              aria-hidden
-            />
-            <div className="absolute inset-x-0 bottom-12 tablet:bottom-16 flex justify-center">
-              <WebSection.ActionLink
-                href={`/artists/${portfolio.artist.username}/portfolios`}
-                className="relative z-20 bg-bg/10 px-4 py-2 backdrop-blur-sm"
-              >
-                {t("exploreMore")}
-              </WebSection.ActionLink>
-            </div>
-          </div>
+
         </section>
       </WebSection.Container>
-
+      <div className="absolute inset-x-0 bottom-0 z-10">
+        <div
+          className="featured-portfolio-fade pointer-events-none"
+          aria-hidden
+        />
+        <div className="absolute inset-x-0 bottom-10 flex justify-center">
+          <WebSection.ActionLink
+            href={`/artists/${portfolio.artist.username}/portfolios`}
+            className="relative z-20 bg-bg/10 px-4 py-2 backdrop-blur-sm"
+          >
+            {t("exploreMore")}
+          </WebSection.ActionLink>
+        </div>
+      </div>
       <style>{`
         .featured-portfolio-fade {
           height: clamp(18rem, 42vw, 32rem);

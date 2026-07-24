@@ -1,3 +1,4 @@
+import type { EnumType } from '@repo/common-lib/constants/enums';
 import { Transform, Type } from 'class-transformer';
 import {
   IsArray,
@@ -9,6 +10,7 @@ import {
 import { OffsetPaginationRequest } from 'src/common/requests/offset-pagination.request';
 import { ModelArrayExist } from 'src/common/validators/model-array-exist.validtor';
 import { ModelExist } from 'src/common/validators/model-exist.validtor';
+import { IsAvailableEnum } from 'src/common/validators/is-enum.validator';
 import { ToBoolean } from 'src/common/decorators/to-boolean.decorator';
 
 export class IndexCategoriesRequest extends OffsetPaginationRequest {
@@ -59,7 +61,15 @@ export class IndexCategoriesRequest extends OffsetPaginationRequest {
   @IsOptional()
   @ToBoolean()
   is_active?: boolean;
-  
+
+  @IsOptional()
+  @IsAvailableEnum('CATEGORY_TYPE')
+  type?: EnumType<'CATEGORY_TYPE'>;
+
+  @IsOptional()
+  @ToBoolean()
+  exclude_parents?: boolean;
+
   @IsOptional()
   @ToBoolean()
   with_thumbnail?: boolean;

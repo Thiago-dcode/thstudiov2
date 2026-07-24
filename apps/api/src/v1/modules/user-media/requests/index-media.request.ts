@@ -24,6 +24,10 @@ export class IndexMediaRequest extends OffsetPaginationRequest {
 
   @IsOptional()
   @ToBoolean()
+  is_value_pillars?: boolean;
+
+  @IsOptional()
+  @ToBoolean()
   is_highlight?: boolean;
 
   @IsOptional()
@@ -33,4 +37,8 @@ export class IndexMediaRequest extends OffsetPaginationRequest {
   @IsOptional()
   @ToBoolean()
   blocked?: boolean;
+
+  @IsOptional()
+  @ToBoolean()
+  compact?: boolean = true;
 }

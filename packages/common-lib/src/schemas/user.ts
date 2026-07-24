@@ -137,6 +137,7 @@ export type UserProfileRow = {
   tags?: string | null;
   parent_id?: number | null;
   c_is_active?: boolean | null;
+  c_type?: EnumType<'CATEGORY_TYPE'> | null;
 };
 
 const tablesUserProfile = [

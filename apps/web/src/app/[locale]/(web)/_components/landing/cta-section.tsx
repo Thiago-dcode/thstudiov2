@@ -6,11 +6,8 @@ export async function CtaSection() {
   const t = await getTranslations("landing.cta");
 
   return (
-    <WebSection className="overflow-hidden">
-      <div
-        className="cta-glow pointer-events-none absolute inset-0"
-        aria-hidden
-      />
+    <WebSection className="overflow-hidden h-screen pt-24 flex items-center justify-center">
+    
 
       <WebSection.Container className="flex flex-col items-center gap-8 text-center">
         <span className="text-xs font-semibold uppercase tracking-[0.2em] text-text-muted">
@@ -25,11 +22,6 @@ export async function CtaSection() {
         <RegistrationCtaButton intent="createPortfolio" size="lg" />
       </WebSection.Container>
 
-      <style>{`
- .cta-glow {
- background: transparent;
- }
- `}</style>
     </WebSection>
   );
 }

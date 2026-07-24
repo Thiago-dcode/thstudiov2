@@ -11,6 +11,7 @@ export default async function Home() {
     <>
       <HeroSection />
       <ValuePillarsSection />
+
       {/* <SocialProofSection /> */}
       {/* <FeatureCategoriesSection /> */}
       <FeaturedPortfolioSection />

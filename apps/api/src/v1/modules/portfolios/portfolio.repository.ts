@@ -162,6 +162,7 @@ export class PortfolioRepository extends BaseRepository {
         [
           ...this.FULL_COLUMNS,
           `COALESCE(category_translations.name, categories.name) as c_name`,
+          `categories.type as c_type`,
         ].join(','),
       )
       .join('portfolios.user_id', 'users', 'id', 'INNER')
@@ -220,6 +221,7 @@ export class PortfolioRepository extends BaseRepository {
          categories.thumbnail,
          categories.is_featured,
          categories.is_active,
+         categories.type,
          categories.parent_id,
          COALESCE(category_translations.name, categories.name) AS name,
          categories.slug`,
@@ -240,6 +242,7 @@ export class PortfolioRepository extends BaseRepository {
         thumbnail: string | null;
         is_featured: boolean;
         is_active: boolean;
+        type: EnumType<'CATEGORY_TYPE'>;
         parent_id: number | null;
         name: string;
         slug: string;
@@ -254,6 +257,7 @@ export class PortfolioRepository extends BaseRepository {
       parent_id: row.parent_id,
       is_featured: row.is_featured,
       is_active: row.is_active,
+      type: row.type,
     }));
   }
 
@@ -535,6 +539,7 @@ export class PortfolioRepository extends BaseRepository {
           parent_id: null,
           is_featured: row.c_is_featured ?? false,
           is_active: row.c_is_active ?? true,
+          type: row.c_type ?? 'DISCIPLINE',
         });
       }
     }

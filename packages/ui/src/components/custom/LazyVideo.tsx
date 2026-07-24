@@ -4,10 +4,11 @@ import { useEffect, useRef } from "react";
 
 interface LazyVideoProps {
   src: string;
+  className?:string
   poster?: string;
 }
 
-export function LazyVideo({ src, poster }: LazyVideoProps) {
+export function LazyVideo({ src, className,poster }: LazyVideoProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -40,7 +41,7 @@ export function LazyVideo({ src, poster }: LazyVideoProps) {
       disablePictureInPicture
       preload="none"
       poster={poster}
-      className="absolute inset-0 z-0 h-full w-full object-cover"
+      className={className}
       aria-hidden="true"
     >
       <source src={src.replace(/\.mp4$/, ".webm")} type="video/webm" />

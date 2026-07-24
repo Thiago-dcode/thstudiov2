@@ -24,6 +24,9 @@ const up = async () => {
     Column.boolean('is_featured', {
       default: false
     }),
+    Column.boolean('is_value_pillars', {
+      default: false
+    }),
     Column.boolean('is_highlight', {
       default: false
     }),

@@ -1,4 +1,4 @@
-import { TABLES_ENUM } from "../constants/enums";
+import { EnumType, TABLES_ENUM } from "../constants/enums";
 import { TableColumn } from "../types/database";
 
 export type CategorySchema = {
@@ -7,6 +7,7 @@ export type CategorySchema = {
   thumbnail?: string | null;
   is_featured: boolean;
   is_active: boolean;
+  type: EnumType<'CATEGORY_TYPE'>;
   name: string;
   slug: string;
   parent_id?: number | null;

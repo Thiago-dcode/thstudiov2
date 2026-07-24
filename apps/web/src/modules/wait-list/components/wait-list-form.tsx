@@ -106,6 +106,18 @@ export function WaitListForm({ from = "register" }: WaitListFormProps) {
 
   return (
     <div className="w-full">
+      <div className="mb-2 flex items-center justify-start gap-2">
+        <p
+          id="hero-wait-list-email-hint"
+          className={cn("text-left", from === "hero" && "text-white/90")}
+        >
+          {t("hint")}
+        </p>
+        <InfoTooltip
+          content={t("hintTooltip")}
+          iconClassName={from === "hero" ? "text-white/90!" : undefined}
+        />
+      </div>
       <form
         onSubmit={handleSubmit}
         className="flex w-full flex-col gap-2 phone:flex-row phone:items-start"
@@ -125,7 +137,7 @@ export function WaitListForm({ from = "register" }: WaitListFormProps) {
             aria-describedby={
               inputErrors?.email ? "hero-wait-list-email-error" : undefined
             }
-            className="h-14 w-full px-4 text-base"
+            className="h-12 w-full px-4 text-base"
           />
 
           {inputErrors?.email ? (
@@ -143,24 +155,11 @@ export function WaitListForm({ from = "register" }: WaitListFormProps) {
           variant="accent"
           size="lg"
           disabled={isPending || !isEmailValid}
-          className="wait-list-fire-button h-14 w-full shrink-0 phone:w-auto text-accent-fg"
+          className=" h-12 py-0 shrink-0 text-accent-fg"
         >
           {isPending ? t("buttonPending") : t("button")}
         </Button>
       </form>
-
-      <div className="mb-2 flex items-center justify-start gap-2 ">
-        <p
-          id="hero-wait-list-email-hint"
-          className={cn("text-left", from === "hero" && "text-white/90")}
-        >
-          {t("hint")}
-        </p>
-        <InfoTooltip
-          content={t("hintTooltip")}
-          iconClassName={from === "hero" ? "text-white/90!" : undefined}
-        />
-      </div>
 
       <style>{`
         .wait-list-fire-button:not(:disabled):hover {

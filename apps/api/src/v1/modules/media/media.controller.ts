@@ -8,6 +8,7 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
   UploadedFile,
   UploadedFiles,
   UseInterceptors,
@@ -21,6 +22,7 @@ import { MediaService } from './media.service';
 import { ModelExistPipe } from 'src/pipes/model-exist.pipe';
 import { IsResourceBlockedPipe } from 'src/pipes/is-resource-blocked.pipe';
 import { Public } from 'src/common/decorators/public.decorator';
+import { IndexMediaRequest } from '../user-media/requests/index-media.request';
 
 @Throttle({
   short: { limit: 50, ttl: 1000 },
@@ -30,11 +32,11 @@ import { Public } from 'src/common/decorators/public.decorator';
 @Controller('media')
 export class MediaController {
   constructor(private readonly mediaService: MediaService) { }
+
+  @Public()
   @Get()
-  async findAll() {
-    return {
-      message: 'Hello World',
-    };
+  async findAll(@Query() query: IndexMediaRequest) {
+    return await this.mediaService.findAll(query);
   }
 
   @Public()

@@ -7,7 +7,7 @@ const messages = {
       titleAccent: "arte",
       titleSuffix: "sea descubierto.",
       subtitle:
-        "Crea un sitio web profesional para tu arte con la misma facilidad con la que actualizas tus redes sociales.",
+        "Sube tu mejor arte, del resto nos encargamos nosotros.",
       primaryCtaLoggedIn: "Acceder a Atelier",
       primaryCtaLoggedOut: "Empieza gratis ahora",
       secondaryCta: "Encuentra artistas",
@@ -17,9 +17,9 @@ const messages = {
         placeholder: "Introduce tu correo electrónico",
         button: "Unirme a la lista",
         buttonPending: "Uniéndote...",
-        hint: "Únete a la lista de espera, consigue acceso anticipado y beneficios.",
+        hint: "Únete a la lista de espera y sé de los primeros en entrar a A11STUDIO.",
         hintTooltip:
-          "Los cupos anticipados son limitados y se asignan en el orden en que los artistas se unen.",
+          "Únete a la lista de espera y forma parte de los primeros usuarios con acceso anticipado, que recibirán beneficios exclusivos. La lista es limitada: una vez alcanzado el cupo máximo, se cerrará.",
         successToast: "Ya estás en la lista de espera. Te avisaremos pronto.",
         successTitle: "Solo falta un paso más: confirma tu correo.",
         successMessage:
@@ -52,21 +52,83 @@ const messages = {
         description:
           "Un espacio profesional para tu obra, con la inteligencia necesaria para hacer crecer tu carrera y la simplicidad para no frenarte.",
       },
+      cta: "Trae tu arte",
+      scrollToNextSection: "Ir a la siguiente sección",
       items: [
         {
-          title: "Tu sitio. Tan fácil como las redes sociales.",
+          title: "Solo arte",
           description:
-            "Se ve y funciona como un sitio web personalizado, pero puedes reorganizar, actualizar y publicar tan rápido como subir una historia. Organiza toda tu obra de forma clara y atractiva, sin tocar una línea de código.",
+            "Un lugar solo para el arte. Sin ruido, sin distracciones.",
         },
         {
-          title: "La IA hace el trabajo pesado",
+          title: "Inteligencia",
           description:
-            "¿No sabes qué poner en tu biografía? Deja que la IA la genere. ¿Necesitas descripciones, etiquetas o SEO? La IA escribe, optimiza y posiciona tu portafolio para que la audiencia correcta te encuentre.",
+            "La IA se encarga de lo técnico y aburrido. Tú te enfocas en crear.",
         },
         {
-          title: "Creado para conexiones reales",
+          title: "Foco",
           description:
-            "Esto no es un feed que oculta tu trabajo. Clientes, coleccionistas y colaboradores llegan a tu portafolio y te contactan directamente. Una plataforma pensada para fortalecer la relación entre artista y cliente.",
+            "Tu único trabajo es compartir lo mejor de tu obra. Del resto nos encargamos nosotros.",
+        },
+        {
+          title: "Comunidad",
+          description:
+            "Una comunidad basada en el buen gusto, no en las tendencias. Gente que valora el oficio sobre el ruido.",
+        },
+        {
+          title: "Calidad",
+          description:
+            "Valoramos la calidad sobre la cantidad, tómate tu tiempo para subir tu mejor arte.",
+        },
+        {
+          title: "Clientes",
+          description:
+            "Conectamos las necesidades de los clientes con los artistas indicados. Rápido, directo y de confianza.",
+        },
+        {
+          title: "Sin algoritmos",
+          description:
+            "El buen trabajo habla por sí solo. Sin feeds, sin juegos, sin perseguir el engagement.",
+        },
+        {
+          title: "Propiedad",
+          description:
+            "Un hogar para tu obra que te pertenece. Permanente, no alquilado a una plataforma.",
+        },
+        {
+          title: "Simplicidad",
+          description:
+            "Tan fácil de actualizar como una publicación en redes. Sin código, sin configuración.",
+        },
+        {
+          title: "Oficio",
+          description:
+            "Hecho para priorizar la calidad, siempre. El gran arte merece una gran presentación.",
+        },
+        {
+          title: "Descubrimiento",
+          description:
+            "Que te encuentren los clientes que importan. Visibilidad ganada por talento, no por algoritmos.",
+        },
+        {
+          title: "Tiempo",
+          description:
+            "Menos tiempo configurando, más tiempo creando. Cada minuto ahorrado vuelve a tu arte.",
+        },
+        {
+          title: "Credibilidad",
+          description:
+            "Una presencia profesional, sin el lío técnico. Confianza desde la primera visita.",
+        },
+        {
+          title: "Elegancia",
+          description:
+            "Un espacio minimalista donde tu arte es el protagonista. Nada compite por la atención.",
+        },
+        {
+          title: "Confianza",
+          description:
+            "Una forma rápida y fiable de encontrar talento real. Sin conjeturas, sin horas perdidas.",
         },
       ],
     },
@@ -116,7 +178,7 @@ const messages = {
       description:
         "Crea un portafolio profesional en minutos, deja que la IA se encargue del resto y empieza a ser descubierto. Gratis para empezar, sin tarjeta y sin condiciones.",
       button: "Crear mi portafolio",
-      waitListButton: "Únete a la lista de espera",
+      waitListButton: "Trae tu arte",
     },
     howItWorks: {
       badge: "Cómo funciona",
@@ -322,6 +384,10 @@ const messages = {
     closeNavigation: "Cerrar navegación",
     navigation: "Navegación",
   },
+  waitListDialog: {
+    title: "El registro está cerrado por ahora",
+    description: "Únete a la lista de espera y sé de los primeros en entrar a A11STUDIO.",
+  },
   footer: {
     tagline: "La plataforma de portafolios creada para artistas.",
     cta: {
@@ -467,10 +533,19 @@ const messages = {
     },
     page: {
       label: "Lista de espera",
-      title: "¡Correo validado!",
+      title: "Correo confirmado.",
       description:
-        "Gracias. Tu correo ha sido validado. Te enviaremos la invitación cuando esté lista.",
-      status: "Ya está todo listo.",
+        "Tu lugar en la lista de espera está reservado. No tienes que hacer nada más — te escribiremos en cuanto sea tu turno.",
+      status: "Acceso anticipado, antes de abrir al público.",
+      benefit: {
+        label: "Tu beneficio",
+        tiers: {
+          VIP: "Miembro fundador",
+          EARLY_USER: "Miembro de acceso anticipado",
+          FOUNDER: "Fundador",
+        },
+        line: "{tier} — {months} meses gratis.",
+      },
     },
   },
   subscriptionCallback: {
@@ -612,8 +687,8 @@ const messages = {
       finish: "Finalizar",
       continueWithoutBenefits: "Continuar sin beneficios",
       tryAgainLater: "Intentar más tarde",
-      stepBack: "volver atrás",
-      somethingWentWrong: "algo salió mal",
+      stepBack: "Volver atrás",
+      somethingWentWrong: "Algo salió mal",
     },
   },
   plans: {
@@ -669,7 +744,7 @@ const messages = {
       "Cuando termines la configuración de bienvenida te guiaremos para obtener el beneficio.",
     claimNow: "Canjear ahora",
     maybeLater: "Quizá más tarde",
-    gotItThanks: "Entendido, ¡gracias!",
+    gotItThanks: "Entendido, gracias.",
   },
   userAccountBanned: {
     title: "Cuenta suspendida",
@@ -776,6 +851,10 @@ const messages = {
     clickHint: "Haz clic en las categorías que desees",
     noResults: "Sin resultados",
     loadMore: "más",
+    disciplinesTitle: "Disciplinas",
+    artStylesTitle: "Estilos artísticos",
+    visibilityHint:
+      "Elegir pocas categorías (se recomiendan 1–3) mejora tu visibilidad.",
   },
   artists: {
     shareProfile: "Compartir perfil",
@@ -810,7 +889,7 @@ const messages = {
         messagePlaceholder: "Cuéntale al artista sobre tu proyecto...",
         submit: "Enviar mensaje",
       },
-      successToast: "¡Mensaje enviado con éxito!",
+      successToast: "Mensaje enviado con éxito.",
     },
     sections: {
       portfolios: "Portafolios",
@@ -1006,7 +1085,7 @@ const messages = {
         "¿Seguro que quieres cerrar sesión? Tendrás que iniciar sesión de nuevo para acceder a tu cuenta.",
       completeProfileTitle: "Completa tu perfil",
       completeProfileDescription:
-        "¡Ya casi está! Completa la configuración de tu perfil para desbloquear todas las funciones y tener la mejor experiencia.",
+        "Ya casi está. Completa la configuración de tu perfil para desbloquear todas las funciones y tener la mejor experiencia.",
       continueSettingUp: "Continuar configuración",
       skipForNow: "Omitir por ahora",
       metrics: {
@@ -1088,6 +1167,12 @@ const messages = {
         categoriesLabel: "Categorías",
         categoriesCountHint:
           "{count} / {max} categorías · Opcional. Selecciona categorías que describan este portafolio.",
+        categoriesVisibilityHint:
+          "Elegir pocas categorías (se recomiendan 1–3) mejora tu visibilidad.",
+        disciplinesLabel: "Disciplinas",
+        artStylesLabel: "Estilos artísticos",
+        disciplinesCountHint: "{count} / {max} disciplinas",
+        artStylesCountHint: "{count} / {max} estilos artísticos",
         showOnProfile: "Mostrar en la página de perfil",
         showOnProfileInfo:
           "Cuando está activado, este portafolio se destaca en tu perfil público de artista para que los visitantes lo encuentren más fácilmente. Puedes destacar hasta {limit} portafolios en tu página de perfil.",
@@ -1279,7 +1364,7 @@ const messages = {
         previewAlt: "Vista previa {index}",
         createNewMedia: "Crear nuevo contenido",
         uploadUpToImages: "Sube hasta {max} imágenes (JPEG, PNG, WebP)",
-        uploadButton: "¡Subir!",
+        uploadButton: "Subir",
         close: "Cerrar",
         createMedia: "Crear contenido",
         addMedia: "Añadir contenido",
@@ -1501,7 +1586,7 @@ const messages = {
           "{remaining} de {max} {remaining, plural, one {cambio} other {cambios}} restantes este mes",
         resetsOn: " · se reinicia el {date}",
         submit: "Actualizar contraseña",
-        successToast: "¡Contraseña actualizada con éxito!",
+        successToast: "Contraseña actualizada con éxito.",
       },
       changeUsername: {
         title: "Cambiar nombre de usuario",
@@ -1517,7 +1602,7 @@ const messages = {
           "{remaining} de {max} {remaining, plural, one {cambio} other {cambios}} restantes este mes",
         resetsOn: " · se reinicia el {date}",
         submit: "Actualizar nombre de usuario",
-        successToast: "¡Nombre de usuario actualizado con éxito!",
+        successToast: "Nombre de usuario actualizado con éxito.",
       },
     },
   },

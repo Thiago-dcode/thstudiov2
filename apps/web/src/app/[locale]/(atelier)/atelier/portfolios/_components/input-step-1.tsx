@@ -1,7 +1,8 @@
 "use client";
 import {
   ALLOWED_IMAGE_FILE_TYPES,
-  MAX_CATEGORIES_PORTFOLIO,
+  MAX_DISCIPLINES_PORTFOLIO,
+  MAX_STYLES_PORTFOLIO,
 } from "@repo/common-lib/constants/constants";
 import {
   generateValidSlug,
@@ -109,6 +110,12 @@ const FirstStepInputs = () => {
   } = usePortfolio();
 
   const categoriesSelected = portfolioInput.categories;
+  const disciplineSelected = categoriesSelected.filter(
+    (c) => c.type === "DISCIPLINE",
+  );
+  const styleSelected = categoriesSelected.filter(
+    (c) => c.type === "ART_STYLE",
+  );
 
   const isCurrentlyHighlighted = portfolioInput.is_highlight ?? false;
   const originallyHighlighted = currentPortfolio?.is_highlight ?? false;
@@ -229,24 +236,56 @@ const FirstStepInputs = () => {
           disabled={isPending}
         />
 
-        <div className="space-y-2">
-          <Label className="text-sm font-medium">
-            {t("categoriesLabel")}
-          </Label>
-          <UpdateCategoriesProvider userCategories={categoriesSelected}>
-            <CategoryCombobox
-              categoriesSelected={categoriesSelected}
-              setCategorySelected={setCategorySelected}
-              removeCategorySelected={removeCategorySelected}
-              maxSelection={MAX_CATEGORIES_PORTFOLIO}
-            />
-          </UpdateCategoriesProvider>
-          <p className="text-xs text-text-muted tabular-nums">
-            {t("categoriesCountHint", {
-              count: categoriesSelected.length,
-              max: MAX_CATEGORIES_PORTFOLIO,
-            })}
+        <div className="space-y-4">
+          <p className="text-xs text-text-muted">
+            {t("categoriesVisibilityHint")}
           </p>
+
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">
+              {t("disciplinesLabel")}
+            </Label>
+            <UpdateCategoriesProvider
+              userCategories={disciplineSelected}
+              initialRequest={{ type: "DISCIPLINE", exclude_parents: true }}
+            >
+              <CategoryCombobox
+                categoriesSelected={disciplineSelected}
+                setCategorySelected={setCategorySelected}
+                removeCategorySelected={removeCategorySelected}
+                maxSelection={MAX_DISCIPLINES_PORTFOLIO}
+              />
+            </UpdateCategoriesProvider>
+            <p className="text-xs text-text-muted tabular-nums">
+              {t("disciplinesCountHint", {
+                count: disciplineSelected.length,
+                max: MAX_DISCIPLINES_PORTFOLIO,
+              })}
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">
+              {t("artStylesLabel")}
+            </Label>
+            <UpdateCategoriesProvider
+              userCategories={styleSelected}
+              initialRequest={{ type: "ART_STYLE" }}
+            >
+              <CategoryCombobox
+                categoriesSelected={styleSelected}
+                setCategorySelected={setCategorySelected}
+                removeCategorySelected={removeCategorySelected}
+                maxSelection={MAX_STYLES_PORTFOLIO}
+              />
+            </UpdateCategoriesProvider>
+            <p className="text-xs text-text-muted tabular-nums">
+              {t("artStylesCountHint", {
+                count: styleSelected.length,
+                max: MAX_STYLES_PORTFOLIO,
+              })}
+            </p>
+          </div>
         </div>
 
         <div className="space-y-1">

@@ -38,16 +38,23 @@ const UpdateCategoriesContext =
 type UpdateCategoriesProviderProps = {
   children: ReactNode;
   userCategories: CategoryBase[];
+  /** Extra static filters merged into every fetch (e.g. `{ type: 'DISCIPLINE', exclude_parents: true }`). */
+  initialRequest?: Partial<CategoryIndexRequest>;
+  /** Max categories that can be selected in this provider. Defaults to 5. */
+  maxSelections?: number;
 };
 
 export const UpdateCategoriesProvider = ({
   children,
   userCategories,
+  initialRequest,
+  maxSelections = 5,
 }: UpdateCategoriesProviderProps) => {
   const searchRef = useRef<HTMLInputElement>(null);
   const currentRequest = useRef<CategoryIndexRequest>({
     random: true,
     is_active: true,
+    ...initialRequest,
   });
   const fetchParamsRef = useRef<CategoryIndexRequest>(currentRequest.current);
   const idTimeOut = useRef<NodeJS.Timeout>(null);
@@ -159,7 +166,7 @@ export const UpdateCategoriesProvider = ({
         const { [category.id]: _, ...rest } = prev;
         return rest;
       } else {
-        if (categoriesSelectedValue.length >= 5) return prev;
+        if (categoriesSelectedValue.length >= maxSelections) return prev;
         return { ...prev, [category.id]: category };
       }
     });

@@ -16,6 +16,9 @@ const up = async () => {
     Column.boolean('is_active', {
       default: true
     }),
+    Column.enum('type', 'CATEGORY_TYPE', {
+      default: 'DISCIPLINE'
+    }),
     Column.string('name', 255, {
       unique: true
     }),

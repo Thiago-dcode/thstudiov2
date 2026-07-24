@@ -1,7 +1,14 @@
 import { EnumType } from "../constants/enums";
 import { WaitListSchema } from "../schemas/wait-list";
+import { BenefitSchema } from "../schemas/benefit";
 
 export type WaitList = Omit<WaitListSchema, 'created_at' | 'updated_at'>;
+
+export type WaitListBenefit = Pick<BenefitSchema, 'type' | 'name' | 'trial_days'>;
+
+export type WaitListValidateResponse = WaitList & {
+  benefit: WaitListBenefit | null;
+};
 
 export type PublicCreateWaitListInput = {
   email: string;

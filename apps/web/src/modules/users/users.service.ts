@@ -4,6 +4,7 @@ import type { CategoryBase } from "@repo/common-lib/types/category";
 import type {
   GetAllUserMediaQueryParams,
   Media,
+  MediaWithUser,
 } from "@repo/common-lib/types/media";
 import type { FullPlan } from "@repo/common-lib/types/plan";
 import type { FullPlanSubscription } from "@repo/common-lib/types/plan-subscription";

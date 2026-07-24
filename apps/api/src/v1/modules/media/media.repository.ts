@@ -29,6 +29,7 @@ export class MediaRepository extends BaseRepository {
     'media.thumbnail',
     'media.url',
     'media.is_featured',
+    'media.is_value_pillars',
     'media.is_highlight',
     'media.blocked_at',
     'media.shape',
@@ -50,16 +51,27 @@ export class MediaRepository extends BaseRepository {
     'users.id as u_id',
     'users.username',
     'users.name',
+    'users.surname',
   ];
 
   constructor(private readonly requestService: RequestService, protected readonly logService: LogService) {
     super('media', logService);
   }
 
-  async getAll(filters: MediaIndexRequest): Promise<Media[]> {
-    const query = await this.applyFilters(filters, this.query());
-    const results = await query.get<MediaSchema[]>();
-    return results.map((result) => this.formatMedia(result));
+  async getAll(filters: MediaIndexRequest = {}): Promise<Media[] | MediaWithUser[]> {
+    const compact = filters.compact !== false;
+    const baseQuery = compact
+      ? this.query()
+      : this.query().join('user_id', 'users', 'id');
+    const query = await this.applyFilters(filters, baseQuery, compact);
+
+    if (compact) {
+      const results = await query.get<MediaSchema[]>();
+      return results.map((result) => this.formatMedia(result));
+    }
+
+    const results = await query.get<MediaWithUserSchema[]>();
+    return results.map((result) => this.formatMediaWithUser(result));
   }
 
   async findById(id: number): Promise<MediaWithUser> {
@@ -123,6 +135,7 @@ export class MediaRepository extends BaseRepository {
   async applyFilters(
     filters: MediaIndexRequest,
     query: QueryBuilder,
+    compact = true,
   ): Promise<QueryBuilder> {
 
     if (filters.search) {
@@ -138,7 +151,7 @@ export class MediaRepository extends BaseRepository {
     if (filters.user_id) {
       query.where('user_id', filters.user_id);
     }
-    query.select(this.COLUMNS);
+    query.select(compact ? this.COLUMNS : this.COLUMNS_WITH_USER);
 
     if (filters.shape) {
       query.where('shape', filters.shape);
@@ -154,6 +167,10 @@ export class MediaRepository extends BaseRepository {
 
     if (typeof filters.is_featured === 'boolean') {
       query.where('is_featured', filters.is_featured);
+    }
+
+    if (typeof filters.is_value_pillars === 'boolean') {
+      query.where('is_value_pillars', filters.is_value_pillars);
     }
 
     if (typeof filters.is_highlight === 'boolean') {
@@ -181,6 +198,7 @@ export class MediaRepository extends BaseRepository {
         id: result.u_id,
         username: result.username,
         name: result.name,
+        surname: result.surname,
       },
     };
   }
@@ -196,6 +214,7 @@ export class MediaRepository extends BaseRepository {
       url: result.url,
       thumbnail: result.thumbnail,
       is_featured: result.is_featured,
+      is_value_pillars: result.is_value_pillars,
       is_highlight: result.is_highlight,
       blocked_at: result.blocked_at,
       shape: result.shape,

@@ -31,6 +31,10 @@ export type CategoryIndexRequest = OffsetPaginationRequest & {
     slugs?: string[],
     is_featured?: boolean,
     is_active?: boolean,
+    /** Filter by category kind (DISCIPLINE vs ART_STYLE). */
+    type?: EnumType<'CATEGORY_TYPE'>,
+    /** When true, only categories that have a parent are returned (excludes top-level rows). */
+    exclude_parents?: boolean,
     with_thumbnail?: boolean
 }
 
@@ -46,6 +50,7 @@ export type CreateCategoryInput = {
     thumbnail: string | null;
     is_featured: boolean;
     is_active: boolean;
+    type: EnumType<'CATEGORY_TYPE'>;
     parent_id: number | null;
     translations: CreateCategoryTranslationRow[];
 }
@@ -57,6 +62,7 @@ export type UpdateCategoryInput = Partial<{
     thumbnail: string | null;
     is_featured: boolean;
     is_active: boolean;
+    type: EnumType<'CATEGORY_TYPE'>;
     parent_id: number | null;
 }>
 /** `name` is the label for the current request language: translation if present, else `categories.name`. */

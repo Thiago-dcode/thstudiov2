@@ -8,7 +8,7 @@ import { useTranslations } from "next-intl";
 import FormComponent from "@/lib/components/form-component";
 import { useUpdateCategories } from "../providers/categories.provider";
 
-export const UserCategoriesComponent = () => {
+export const UserCategoriesComponent = ({ title }: { title?: string } = {}) => {
   const t = useTranslations("userCategories");
   const {
     searchRef,
@@ -25,6 +25,9 @@ export const UserCategoriesComponent = () => {
 
   return (
     <div className="flex flex-col items-center justify-center w-full gap-2">
+      {title && (
+        <h3 className="w-full text-left text-base font-medium">{title}</h3>
+      )}
       <div className="flex items-end w-full gap-2">
         <FormComponent.LabelInput
           ref={searchRef}

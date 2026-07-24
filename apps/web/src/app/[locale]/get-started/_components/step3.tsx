@@ -1,6 +1,6 @@
+import type { CategoryBase } from "@repo/common-lib/types/category";
 import { redirect } from "next/navigation";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
-import { UpdateCategoriesProvider } from "@/modules/categories/providers/categories.provider";
 import usersService from "@/modules/users/users.service";
 import { Step3Client } from "./step3-client";
 
@@ -10,10 +10,14 @@ export default async function Step3() {
     redirect("/");
   }
   const userCategories = await usersService.getAllCategories(user.id);
+  const all: CategoryBase[] = userCategories.data || [];
+  const disciplineCategories = all.filter((c) => c.type === "DISCIPLINE");
+  const styleCategories = all.filter((c) => c.type === "ART_STYLE");
 
   return (
-    <UpdateCategoriesProvider userCategories={userCategories.data || []}>
-      <Step3Client />
-    </UpdateCategoriesProvider>
+    <Step3Client
+      disciplineCategories={disciplineCategories}
+      styleCategories={styleCategories}
+    />
   );
 }

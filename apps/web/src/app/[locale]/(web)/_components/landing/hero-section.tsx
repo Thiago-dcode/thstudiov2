@@ -4,14 +4,26 @@ import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 import assetService from "@/modules/assets/asset.service";
 import { WaitListForm } from "@/modules/wait-list/components/wait-list-form";
+import { ScrollHashLink } from "./scroll-hash-link";
+import { WebSection } from "./web-section";
+
+function HeroVideoFallback() {
+  return (
+    <div
+      aria-hidden="true"
+      className="justify-self-end inset-0 z-0 object-cover max-h-3/5 w-screen bg-bg-dark"
+    />
+  );
+}
 
 async function HeroVideo() {
   const heroVideo = await assetService.getBySlug("hero-drone-video");
-  if (!heroVideo.data?.url) return null;
+  if (!heroVideo.data?.url) return <HeroVideoFallback />;
   return (
     <LazyVideo
       src={heroVideo.data.url}
       poster={heroVideo.data.thumbnail ?? undefined}
+      className="justify-self-end inset-0 z-0 object-cover max-h-full laptop:max-h-3/5  w-screen"
     />
   );
 }
@@ -20,98 +32,66 @@ export async function HeroSection() {
   const t = await getTranslations("landing.hero");
 
   return (
-    <section
+
+
+    <WebSection
       id="home-hero-section"
       aria-labelledby="hero-heading"
-      className="relative flex w-full items-center justify-center overflow-hidden bg-bg h-[calc(100svh-4rem)] min-h-136"
+      className=" relative flex flex-col w-full items-center justify-start overflow-hidden bg-bg h-[calc(100svh-4rem)] max-w-(--breakpoint-ultrawide) mx-auto"
     >
-      <Suspense fallback={null}>
+    <Suspense fallback={<HeroVideoFallback />}>
         <HeroVideo />
       </Suspense>
 
-      <div aria-hidden="true" className="hero-overlay absolute inset-0 z-1" />
 
       {/* ── Content ── */}
-      <div className="relative z-10 mx-auto flex w-full flex-col items-center text-center gap-8 laptop:gap-18 tablet:px-10 tablet:py-24 px-4">
-        {/* <span className="hero-stagger-1 inline-flex items-center gap-2 border border-border/40 bg-fg/50 px-4 py-1.5 text-[0.65rem] font-medium uppercase tracking-[0.18em] text-text-muted backdrop-blur-md max-w-fit">
-          <Sparkle className="size-3 text-text-muted" aria-hidden="true" />
-          {t("disclaimer")}
-        </span> */}
-        <div className="flex flex-col w-full items-center gap-5">
+      <div className="max-h-1/2 z-10 mx-auto flex flex-col items-center text-center gap-5 laptop:gap-8 w-full  pt-2 px-2 laptop:px-4">
+
+        <div className="flex flex-col items-start gap-2 w-full">
           <h1
-            id="hero-heading"
-            className="hero-title hero-stagger-2 text-white! tracking-tight text-shadow-lg text-6xl! tablet-lg:text-8xl!"
+            className="hero-stagger-1 tracking-tight text-shadow-lg text-6xl! phone-lg:6xl!   laptop:text-7xl! desktop-lg:text-9xl! text-left"
           >
             {t("titlePrefix")}{" "}
-            <span className="text-fire text-shadow-none">
+            <span className="text-accent">
               {t("titleAccent")}
             </span>{" "}
             {t("titleSuffix")}
           </h1>
 
-          <h3 className="font-normal! laptop:text-2xl! text-xl! leading-relaxed text-white/90! font-sans! ">
+          <h3 className="hero-stagger-2 font-normal! phone-lg:text-2xl! text-lg! leading-relaxed text-white/90! font-sans! max-w-5xl text-left">
             {t("subtitle")}
           </h3>
         </div>
 
-        <div className="hero-stagger-4 flex w-full justify-center pt-4 tablet:pt-6">
-          <div className="w-full max-w-4xl">
+        <div className="hero-stagger-4 flex w-full justify-start pt-8 phone-lg:pt-4 pb-6">
+          <div className="w-full max-w-3xl">
             <WaitListForm from="hero" />
           </div>
         </div>
       </div>
-
+     
       {/* ── Scroll down indicator ── */}
-      <a
+      <ScrollHashLink
         href="#value-pillars"
         aria-label={t("scrollToNextSection")}
-        className="hero-stagger-4 absolute bottom-6 left-1/2 z-10 -translate-x-1/2 p-2 text-text-muted/50 transition-colors hover:text-text focus-visible:text-text"
+        className="z-100 absolute bottom-6 left-1/2 -translate-x-1/2 p-2 text-text-muted/50 transition-colors hover:text-text focus-visible:text-text"
       >
         <ChevronDown
           className="size-5 hero-bounce text-white/80!"
           aria-hidden="true"
         />
-      </a>
+      </ScrollHashLink>
 
       <style>{`
- /* ── Headline: fluid type that scales without overflow ── */
- .hero-title {
- font-size: clamp(3rem, 7vw + 1rem, 6.5rem);
- line-height: 0.95;
- }
-
- .hero-overlay {
- background:
- linear-gradient(
- to bottom,
- color-mix(in oklab, var(--color-bg-dark) 82%, transparent),
- transparent 38%
- ),
- linear-gradient(
- to top,
- color-mix(in oklab, var(--color-bg-dark) 75%, transparent),
- transparent 42%
- );
- }
-
-        /* ── Accent emphasis text (isolated punchy word) ── */
-        .hero-accent-text {
-          display: inline-block;
-          padding-inline: 0.15em;
-          color: var(--color-accent);
-        }
-
  /* ── Staggered entrance animations ── */
  @media (prefers-reduced-motion: no-preference) {
  .hero-stagger-1,
  .hero-stagger-2,
- .hero-stagger-3,
  .hero-stagger-4 {
  animation: hero-enter 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
  }
  .hero-stagger-1 { animation-delay: 0.1s; }
  .hero-stagger-2 { animation-delay: 0.25s; }
- .hero-stagger-3 { animation-delay: 0.4s; }
  .hero-stagger-4 { animation-delay: 0.55s; }
 
  @keyframes hero-enter {
@@ -135,6 +115,6 @@ export async function HeroSection() {
  }
  }
  `}</style>
-    </section>
+    </WebSection>
   );
 }

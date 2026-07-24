@@ -96,6 +96,7 @@ export class CategoriesService {
       thumbnail: thumbnailPath,
       is_featured: request.is_featured ?? false,
       is_active: request.is_active ?? true,
+      type: request.type ?? 'DISCIPLINE',
       parent_id: request.parent_id ?? null,
       translations: translationRows,
     };
@@ -141,6 +142,9 @@ export class CategoriesService {
     }
     if (request.is_active !== undefined) {
       patch.is_active = request.is_active;
+    }
+    if (request.type !== undefined) {
+      patch.type = request.type;
     }
     if (nextThumbnail !== undefined) {
       patch.thumbnail = nextThumbnail;

@@ -10,9 +10,12 @@ import {
 import type {
   PublicCreateWaitListInput,
   WaitListCreateResponse,
+  WaitListValidateResponse,
   UpdateWaitListInput,
 } from '@repo/common-lib/types/wait-list';
+import { getWaitListBenefitType } from '@repo/common-lib/utils/wait-list';
 import { RequestService } from 'src/common/services/request.service';
+import { BenefitRepository } from '../benefits/benefit.repository';
 import { CreateWaitListEvent } from './events/create-wait-list.event';
 import { InviteWaitListBatchEvent } from './events/invite-wait-list-batch.event';
 import { IndexWaitListRequest } from './requests/index-wait-list.request';
@@ -23,6 +26,7 @@ import { CreateOrUpdateEmailPreferenceEvent } from '../email-preferences/events/
 export class WaitListService {
   constructor(
     private readonly waitListRepository: WaitListRepository,
+    private readonly benefitRepository: BenefitRepository,
     private readonly eventEmitter: EventEmitter2,
     private readonly logger: LogService,
     private readonly requestService: RequestService,
@@ -65,7 +69,7 @@ export class WaitListService {
     return this.waitListRepository.updateById(id, data);
   }
 
-  async validate(token: string) {
+  async validate(token: string): Promise<WaitListValidateResponse> {
     try {
       const waitList = await this.waitListRepository.findByToken(token);
 
@@ -76,7 +80,7 @@ export class WaitListService {
 
       if (waitList.validated_at) {
         this.logger.info(`Wait list token already validated: entry ${waitList.id}`);
-        return waitList;
+        return { ...waitList, benefit: await this.resolveBenefit(waitList.position) };
       }
 
       const validatedCount = await this.waitListRepository.getValidatedCount();
@@ -92,7 +96,7 @@ export class WaitListService {
         position,
       });
 
-      return updated;
+      return { ...updated, benefit: await this.resolveBenefit(updated.position) };
     } catch (error) {
       if (!(error instanceof NotFoundException)) {
         this.logger.error(
@@ -172,6 +176,15 @@ export class WaitListService {
       );
       throw error;
     }
+  }
+
+  private async resolveBenefit(position: number | null) {
+    if (position === null) return null;
+
+    const benefit = await this.benefitRepository.findByType(getWaitListBenefitType(position));
+    if (!benefit) return null;
+
+    return { type: benefit.type, name: benefit.name, trial_days: benefit.trial_days };
   }
 
   private normalizeEmail(email: string) {

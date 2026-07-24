@@ -20,6 +20,7 @@ export type MediaUser = {
   id: number;
   username: string;
   name?: string | null;
+  surname?: string | null;
 };
 
 export type MediaWithUser = Media & {
@@ -36,14 +37,17 @@ export type MediaIndexRequest = OffsetPaginationRequest & {
   is_active?: boolean;
   blocked?: boolean;
   is_featured?: boolean;
+  is_value_pillars?: boolean;
   is_highlight?: boolean;
+  /** When false, join users and return `MediaWithUser[]`. Defaults to true (`Media[]`). */
+  compact?: boolean;
 }
 
 /** Query params for listing a user's media (GET /users/:id/media; `user_id` is the path param). */
 export type GetAllUserMediaQueryParams = Omit<MediaIndexRequest, 'user_id'>;
 
 // Fields generated internally by the system (user cannot set these)
-type InternalMediaFields = 'id' | 'public_id' | 'bytes' | 'url' | 'thumbnail' | 'thumbnail_bytes' | 'shape' | 'aspect_ratio' | 'extension' | 'blocked_at' | 'is_active' | 'is_featured' | 'is_highlight' | 'created_at' | 'updated_at';
+type InternalMediaFields = 'id' | 'public_id' | 'bytes' | 'url' | 'thumbnail' | 'thumbnail_bytes' | 'shape' | 'aspect_ratio' | 'extension' | 'blocked_at' | 'is_active' | 'is_featured' | 'is_value_pillars' | 'is_highlight' | 'created_at' | 'updated_at';
 
 // What users can provide when creating media (public API input)
 export type PublicCreateMediaInput = Omit<MediaSchema, InternalMediaFields>;

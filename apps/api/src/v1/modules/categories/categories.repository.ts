@@ -28,6 +28,7 @@ export class CategoriesRepository extends BaseRepository {
     'categories.parent_id',
     'categories.is_featured',
     'categories.is_active',
+    'categories.type',
     'categories.tags',
     'categories.thumbnail',
     'category_translations.name as tr_name',
@@ -41,6 +42,7 @@ export class CategoriesRepository extends BaseRepository {
     'thumbnail',
     'is_featured',
     'is_active',
+    'type',
     'parent_id',
     'created_at',
     'updated_at',
@@ -85,9 +87,9 @@ export class CategoriesRepository extends BaseRepository {
   async create(
     input: Omit<CreateCategoryInput, 'translations'>,
   ): Promise<CategorySchema> {
-    const { name, slug, tags, thumbnail, is_featured, is_active, parent_id } = input;
+    const { name, slug, tags, thumbnail, is_featured, is_active, type, parent_id } = input;
 
-    const cols = ['name', 'slug', 'tags', 'thumbnail', 'is_featured', 'is_active', 'parent_id'];
+    const cols = ['name', 'slug', 'tags', 'thumbnail', 'is_featured', 'is_active', 'type', 'parent_id'];
     const values = [
       name,
       slug,
@@ -95,6 +97,7 @@ export class CategoriesRepository extends BaseRepository {
       thumbnail,
       is_featured,
       is_active,
+      type,
       parent_id,
     ] as const;
 
@@ -135,6 +138,7 @@ export class CategoriesRepository extends BaseRepository {
       thumbnail,
       is_featured,
       is_active,
+      type,
       tr_name,
     } = row;
     const displayName =
@@ -148,6 +152,7 @@ export class CategoriesRepository extends BaseRepository {
       thumbnail,
       is_featured,
       is_active,
+      type,
     };
   }
 
@@ -202,6 +207,14 @@ export class CategoriesRepository extends BaseRepository {
     }
     if (filters.parent_id) {
       query.where('parent_id', '=', filters.parent_id);
+    }
+
+    if (filters.type) {
+      query.where('categories.type', '=', filters.type);
+    }
+
+    if (filters.exclude_parents) {
+      query.where('categories.parent_id', 'IS NOT', null);
     }
 
     if (filters.categories?.length) {

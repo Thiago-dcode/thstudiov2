@@ -1,4 +1,5 @@
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
+import { getBenefitMonths } from "@repo/common-lib/utils/wait-list";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
@@ -55,6 +56,8 @@ export default async function WaitListValidatePage({
     return;
   }
 
+  const { benefit } = result.data;
+
   return (
     <section className="mx-auto grid w-full max-w-5xl gap-8 px-6 py-12 tablet:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)] tablet:items-center tablet:px-10 tablet:py-20">
       <Suspense fallback={<Spinner />}>
@@ -62,9 +65,6 @@ export default async function WaitListValidatePage({
       </Suspense>
 
       <article className="py-4 tablet:py-0">
-        <p className="text-xs font-medium uppercase tracking-[0.22em] text-text-muted">
-          {t("page.label")}
-        </p>
         <div className="mt-5 space-y-4">
           <h1 className="max-w-xl text-4xl font-semibold tracking-tight text-text tablet:text-5xl">
             {t("page.title")}
@@ -76,6 +76,20 @@ export default async function WaitListValidatePage({
         <p className="mt-8 text-sm font-medium text-accent">
           {t("page.status")}
         </p>
+
+        {benefit && (
+          <div className="mt-8 border-t border-border pt-6">
+            <p className="text-xs font-medium uppercase tracking-[0.15em] text-text-muted">
+              {t("page.benefit.label")}
+            </p>
+            <p className="mt-2 text-lg font-medium text-text">
+              {t("page.benefit.line", {
+                tier: t(`page.benefit.tiers.${benefit.type}`),
+                months: getBenefitMonths(benefit.trial_days),
+              })}
+            </p>
+          </div>
+        )}
       </article>
     </section>
   );

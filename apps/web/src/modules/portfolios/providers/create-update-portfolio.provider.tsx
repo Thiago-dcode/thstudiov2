@@ -1,8 +1,9 @@
 "use client";
 
 import {
-  MAX_CATEGORIES_PORTFOLIO,
+  MAX_DISCIPLINES_PORTFOLIO,
   MAX_PORTFOLIO_ITEMS,
+  MAX_STYLES_PORTFOLIO,
 } from "@repo/common-lib/constants/constants";
 import { MAX_HIGHLIGHT_PORTFOLIOS } from "@repo/common-lib/constants/highlights";
 import type { CategoryBase } from "@repo/common-lib/types/category";
@@ -344,10 +345,15 @@ export const PortfolioProvider = ({
   const setCategorySelected = useCallback((category: CategoryBase) => {
     setPortfolioInput((prev) => {
       if (prev.categories.some((c) => c.id === category.id)) return prev;
-      if (prev.categories.length >= MAX_CATEGORIES_PORTFOLIO) {
-        toast.error(
-          t("validation.maxCategories", { max: MAX_CATEGORIES_PORTFOLIO }),
-        );
+      const max =
+        category.type === "ART_STYLE"
+          ? MAX_STYLES_PORTFOLIO
+          : MAX_DISCIPLINES_PORTFOLIO;
+      const sameTypeCount = prev.categories.filter(
+        (c) => c.type === category.type,
+      ).length;
+      if (sameTypeCount >= max) {
+        toast.error(t("validation.maxCategories", { max }));
         return prev;
       }
       return { ...prev, categories: [...prev.categories, category] };

@@ -3,9 +3,9 @@ const messages = {
     hero: {
       titlePrefix: "Let your",
       titleAccent: "art",
-      titleSuffix: "be found.",
+      titleSuffix: "be discovered.",
       subtitle:
-        "Get a professional website as easy as updating your social media feed.",
+        "All you have to do is upload your art. We take care of the rest.",
       primaryCtaLoggedIn: "Access Atelier",
       primaryCtaLoggedOut: "Start Free Now",
       secondaryCta: "Find artists",
@@ -15,9 +15,9 @@ const messages = {
         placeholder: "Enter your email address",
         button: "Join waitlist",
         buttonPending: "Joining...",
-        hint: "Join the waitlist, get early access and benefits",
+        hint: "Join the wait list and become one of the first to get into A11STUDIO.",
         hintTooltip:
-          "Early spots are limited and filled in the order artists join.",
+          "Join the wait list and become one of our early access members, unlocking exclusive benefits. Spots are limited, and once we reach capacity, the wait list will close.",
         successToast: "You are on the waitlist. We will keep you posted.",
         successTitle: "Just one step more: confirm your email.",
         successMessage:
@@ -49,24 +49,71 @@ const messages = {
         badge: "Why A11STUDIO",
         title: "Made by an artist for artists",
         description:
-          "A professional home for your work - with the intelligence to grow your career and the simplicity to never slow you down.",
+          "A professional home for your work — with the intelligence to grow your career and the simplicity to never slow you down.",
       },
+      cta: "Bring your art",
+      scrollToNextSection: "Scroll to next section",
       items: [
         {
-          title: "Your Site. Social-Media Easy.",
-          description:
-            "It looks and performs like a custom website - but you can rearrange, update, and publish as fast as posting a story. Organize your entire body of work beautifully, without touching a line of code.",
+          "title": "Just Art",
+          "description": "A place for art, and nothing else. No noise, no distractions."
         },
         {
-          title: "AI Does the Heavy Lifting",
-          description:
-            "Writer's block on your bio? Let AI generate it. Need descriptions, tags, or SEO? AI writes, optimizes, and positions your portfolio so the right audience finds you - not the other way around.",
+          "title": "Intelligence",
+          "description": "AI quietly handles the boring, technical stuff. You focus on creating."
         },
         {
-          title: "Built for Real Connections",
-          description:
-            "This isn't a feed that buries your work. Clients, collectors, and collaborators land on your portfolio and reach you directly. A platform designed around the artist-client relationship.",
+          "title": "Focus",
+          "description": "Your only job is to share your best work. We take care of the rest."
         },
+        {
+          "title": "Community",
+          "description": "A community built on taste, not trends. People who value craft over noise."
+        },
+        {
+          "title": "Quality",
+          "description": "We value quality over quantity — take your time to upload your best work."
+        },
+        {
+          "title": "Clients",
+          "description": "We connect client needs with the right artists. Fast, direct, and trustworthy."
+        },
+        {
+          "title": "No Algorithms",
+          "description": "Great work speaks for itself. No feeds, no games, no chasing engagement."
+        },
+        {
+          "title": "Ownership",
+          "description": "A home for your work that belongs to you. Permanent, not rented from a platform."
+        },
+        {
+          "title": "Simplicity",
+          "description": "As easy to update as a social post. No coding, no configuration."
+        },
+        {
+          "title": "Craftsmanship",
+          "description": "Built for quality first, always. Great art deserves great presentation."
+        },
+        {
+          "title": "Discovery",
+          "description": "Be found by the clients who matter. Visibility earned by talent, not algorithms."
+        },
+        {
+          "title": "Time",
+          "description": "Less time configuring, more time creating. Every minute saved goes back to your art."
+        },
+        {
+          "title": "Credibility",
+          "description": "A professional presence, without the technical hassle. Trusted by clients from the first visit."
+        },
+        {
+          "title": "Elegance",
+          "description": "A minimal space where your art takes center stage. Nothing competes for attention."
+        },
+        {
+          "title": "Trust",
+          "description": "A fast, reliable way to find real talent. No guesswork, no wasted hours."
+        }
       ],
     },
     socialProof: {
@@ -82,7 +129,7 @@ const messages = {
         badge: "Explore",
         title: "Featured Categories",
         description:
-          "Discover artists by discipline - each path leads to curated results.",
+          "Discover artists by discipline — each path leads to curated results.",
       },
       card: {
         browse: "Browse",
@@ -113,9 +160,9 @@ const messages = {
       badge: "Ready to begin?",
       title: "Your next client is searching for someone like you",
       description:
-        "Create a stunning portfolio in minutes, let AI handle the rest, and start getting discovered. Free to start - no credit card, no strings.",
+        "Create a stunning portfolio in minutes, let AI handle the rest, and start getting discovered. Free to start — no credit card, no strings.",
       button: "Create Your Portfolio",
-      waitListButton: "Join the wait list",
+      waitListButton: "Bring your art",
     },
     howItWorks: {
       badge: "How it works",
@@ -174,7 +221,7 @@ const messages = {
       {
         question: "Can I use A11STUDIO for free?",
         answer:
-          "Yes! A11STUDIO offers a free tier that lets you create your profile, build portfolios, and start showcasing your work right away. Premium plans unlock additional features like AI-powered tools, more storage, and advanced customization options.",
+          "Yes. A11STUDIO offers a free tier that lets you create your profile, build portfolios, and start showcasing your work right away. Premium plans unlock additional features like AI-powered tools, more storage, and advanced customization options.",
       },
     ],
   },
@@ -321,6 +368,10 @@ const messages = {
     closeNavigation: "Close navigation",
     navigation: "Navigation",
   },
+  waitListDialog: {
+    title: "Registration is now closed",
+    description: "Join the wait list and become one of the first to get into A11STUDIO.",
+  },
   footer: {
     tagline: "The portfolio platform built for artists.",
     cta: {
@@ -464,10 +515,19 @@ const messages = {
     },
     page: {
       label: "Wait list",
-      title: "Email Validated!",
+      title: "Email confirmed.",
       description:
-        "Thanks! Your email has been validated. We’ll email your invitation when it’s ready.",
-      status: "You’re all set.",
+        "Your spot on the waitlist is reserved. There’s nothing else to do — we’ll email you as soon as it’s your turn.",
+      status: "Early access, before we open to everyone.",
+      benefit: {
+        label: "Your benefit",
+        tiers: {
+          VIP: "Founding member",
+          EARLY_USER: "Early access member",
+          FOUNDER: "Founder",
+        },
+        line: "{tier} — {months} months free.",
+      },
     },
   },
   subscriptionCallback: {
@@ -489,7 +549,7 @@ const messages = {
     trigger: "Redeem benefit",
     title: "Redeem Your Benefit",
     description:
-      "As a <name>{label}</name>, enjoy <free>{months, plural, one {# month free} other {# months free}}</free> on {planName} plan.",
+      "As a <name>{label}</name>, enjoy <free>{months, plural, one {# month free} other {# months free}}</free> on the {planName} plan.",
     noPayment:
       "No payment details required. Your <access>{months, plural, one {#-month free access} other {#-month free access}}</access> activates instantly.",
     plan: "Plan",
@@ -529,7 +589,7 @@ const messages = {
     },
     register: {
       title: "Create your account",
-      subtitle: "And start build your dream portfolio",
+      subtitle: "And start building your dream portfolio",
       alreadyHaveAccount: "Already have an account?",
       emailLabel: "Email Address",
       emailPlaceholder: "you@example.com",
@@ -609,8 +669,8 @@ const messages = {
       finish: "Finish",
       continueWithoutBenefits: "Continue without benefits",
       tryAgainLater: "Try again later",
-      stepBack: "step back",
-      somethingWentWrong: "something went wrong",
+      stepBack: "Step back",
+      somethingWentWrong: "Something went wrong",
     },
   },
   plans: {
@@ -661,18 +721,18 @@ const messages = {
     description:
       "As a <name>{label}</name> you get <free>{months, plural, one {# month free} other {# months free}}</free>.",
     claimBelow:
-      "Claim it right below. We will guide you to get the benefit",
+      "Claim it right below. We will guide you to get the benefit.",
     claimAfterSetup:
       "Once you finish your welcome setup we will guide you to get the benefit.",
     claimNow: "Claim now",
     maybeLater: "Maybe later",
-    gotItThanks: "Got it, thanks!",
+    gotItThanks: "Got it, thanks.",
   },
   userAccountBanned: {
     title: "Account Suspended",
     description: "Your account has been suspended due to policy violations.",
     restrictionsLiftedOn: "Restrictions will be lifted on {date}.",
-    contactSupport: "Contact support if you think this is a mistake",
+    contactSupport: "Contact support if you think this is a mistake.",
     logout: "Logout",
   },
   emailPreferences: {
@@ -749,7 +809,7 @@ const messages = {
       noAddress: "No address set",
       updateDescription: "Update your address information below.",
       warningDescription:
-        "Warning: Updating your address could affect your discovery and visibility in search results. Only update it if you really need it",
+        "Warning: Updating your address could affect your discovery and visibility in search results. Only update it if you really need it.",
     },
     categories: {
       title: "Categories",
@@ -771,6 +831,10 @@ const messages = {
     clickHint: "Click on the categories you want",
     noResults: "No results",
     loadMore: "more",
+    disciplinesTitle: "Disciplines",
+    artStylesTitle: "Art styles",
+    visibilityHint:
+      "Choosing a few categories (1–3 recommended) improves your visibility.",
   },
   artists: {
     shareProfile: "Share profile",
@@ -805,7 +869,7 @@ const messages = {
         messagePlaceholder: "Tell the artist about your project...",
         submit: "Send Message",
       },
-      successToast: "Message sent successfully!",
+      successToast: "Message sent successfully.",
     },
     sections: {
       portfolios: "Portfolios",
@@ -1001,7 +1065,7 @@ const messages = {
         "Are you sure you want to logout? You'll need to sign in again to access your account.",
       completeProfileTitle: "Complete Your Profile",
       completeProfileDescription:
-        "You're almost there! Complete your profile setup to unlock all features and get the best experience.",
+        "You're almost there. Complete your profile setup to unlock all features and get the best experience.",
       continueSettingUp: "Continue Setting Up",
       skipForNow: "Skip for now",
       metrics: {
@@ -1082,6 +1146,12 @@ const messages = {
         categoriesLabel: "Categories",
         categoriesCountHint:
           "{count} / {max} categories · Optional. Select categories that describe this portfolio.",
+        categoriesVisibilityHint:
+          "Choosing a few categories (1–3 recommended) improves your visibility.",
+        disciplinesLabel: "Disciplines",
+        artStylesLabel: "Art styles",
+        disciplinesCountHint: "{count} / {max} disciplines",
+        artStylesCountHint: "{count} / {max} art styles",
         showOnProfile: "Show on profile page",
         showOnProfileInfo:
           "When enabled, this portfolio is highlighted on your public artist profile so visitors can find it more easily. You can highlight up to {limit} portfolios on your profile page.",
@@ -1273,7 +1343,7 @@ const messages = {
         previewAlt: "Preview {index}",
         createNewMedia: "Create New Media",
         uploadUpToImages: "Upload up to {max} images (JPEG, PNG, WebP)",
-        uploadButton: "Upload!",
+        uploadButton: "Upload",
         close: "Close",
         createMedia: "Create media",
         addMedia: "Add media",
@@ -1490,7 +1560,7 @@ const messages = {
           "{remaining} of {max} {remaining, plural, one {change} other {changes}} remaining this month",
         resetsOn: " · resets on {date}",
         submit: "Update Password",
-        successToast: "Password updated successfully!",
+        successToast: "Password updated successfully.",
       },
       changeUsername: {
         title: "Change Username",
@@ -1505,7 +1575,7 @@ const messages = {
           "{remaining} of {max} {remaining, plural, one {change} other {changes}} remaining this month",
         resetsOn: " · resets on {date}",
         submit: "Update Username",
-        successToast: "Username updated successfully!",
+        successToast: "Username updated successfully.",
       },
     },
   },

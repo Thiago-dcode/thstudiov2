@@ -81,6 +81,7 @@ export type PortfolioFullSchema = PortfolioWithArtistSchema & {
   c_slug?: string | null;                 // COLLISION: slug
   c_is_featured?: boolean | null;
   c_is_active?: boolean | null;
+  c_type?: EnumType<'CATEGORY_TYPE'> | null;
 
   // From layout_config + layouts (1:1, no collision with main portfolio cols)
   layout_id?: number | null;

@@ -13,6 +13,7 @@ import { EnumType } from '@repo/common-lib/constants/enums';
 import type { InvitationLink } from '@repo/common-lib/types/invitation-link';
 import { CreateWaitListJobInput } from '@repo/common-lib/types/wait-list';
 import { generateUUID } from '@repo/common-lib/utils/generate-uuid';
+import { getBenefitMonths, getWaitListBenefitType } from '@repo/common-lib/utils/wait-list';
 import { Job, Queue } from 'bullmq';
 import { addDays } from 'date-fns';
 import { getConfigValue } from '@repo/common-lib/config/utils';
@@ -248,7 +249,7 @@ export class WaitListProcessor extends GlobalProcessor {
       const benefitTypes = new Set<EnumType<'BENEFIT_TYPE'>>();
       for (const entry of entries) {
         if (entry.position !== null) {
-          benefitTypes.add(this.getBenefitTypeForPosition(entry.position));
+          benefitTypes.add(getWaitListBenefitType(entry.position));
         }
       }
 
@@ -406,7 +407,7 @@ export class WaitListProcessor extends GlobalProcessor {
         throw new Error(`Wait list entry ${entry.id} has no validated position`);
       }
 
-      const benefitType = this.getBenefitTypeForPosition(entry.position);
+      const benefitType = getWaitListBenefitType(entry.position);
       const benefit = benefitByType.get(benefitType);
 
       if (!benefit) {
@@ -441,7 +442,7 @@ export class WaitListProcessor extends GlobalProcessor {
             benefitType,
             planName,
             trialDays: benefit.trial_days,
-            benefitMonths: this.getBenefitMonths(benefit.trial_days),
+            benefitMonths: getBenefitMonths(benefit.trial_days),
             registrationUrl,
             expiresInDays: WaitListProcessor.INVITATION_EXPIRES_IN_DAYS,
           },
@@ -464,14 +465,6 @@ export class WaitListProcessor extends GlobalProcessor {
       );
       return null;
     }
-  }
-
-  private getBenefitTypeForPosition(position: number): EnumType<'BENEFIT_TYPE'> {
-    return position <= 50 ? 'VIP' : 'EARLY_USER';
-  }
-
-  private getBenefitMonths(trialDays: number): number {
-    return Math.round(trialDays / 30);
   }
 
   private normalizeEmail(email: string) {

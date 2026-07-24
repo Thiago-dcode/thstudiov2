@@ -12,6 +12,7 @@ export type MediaSchema = {
   url: string;
   thumbnail?: string;
   is_featured: boolean;
+  is_value_pillars: boolean;
   is_highlight: boolean;
   blocked_at?: Date | null;
   shape?: EnumType<'MEDIA_SHAPE'>;
@@ -38,6 +39,7 @@ export type MediaWithUserSchema = MediaSchema & {
   u_id: number;              // COLLISION: id
   username: string;
   name?: string | null;
+  surname?: string | null;
 }
 
 const tablesMediaWithUser = [TABLES_ENUM.MEDIA, TABLES_ENUM.USERS] as const;

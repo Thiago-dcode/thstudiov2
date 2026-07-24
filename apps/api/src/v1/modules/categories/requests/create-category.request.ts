@@ -6,9 +6,11 @@ import {
   IsString,
   ValidateNested,
 } from 'class-validator';
+import type { EnumType } from '@repo/common-lib/constants/enums';
 import { ModelExist } from 'src/common/validators/model-exist.validtor';
 import { CategoryTranslationItem } from './category-translation-item.request';
 import { ModelNotExist } from 'src/common/validators/model-not-exist.validtor';
+import { IsAvailableEnum } from 'src/common/validators/is-enum.validator';
 import { ToBoolean } from 'src/common/decorators/to-boolean.decorator';
 import { ToInt } from 'src/common/decorators/to-int.decorator';
 
@@ -41,6 +43,11 @@ export class CreateCategoryRequest {
   @IsOptional()
   @ToBoolean()
   is_active?: boolean;
+
+  @IsOptional()
+  @IsAvailableEnum('CATEGORY_TYPE')
+  type?: EnumType<'CATEGORY_TYPE'>;
+
   @IsOptional()
   thumbnail?: Express.Multer.File;
 }
