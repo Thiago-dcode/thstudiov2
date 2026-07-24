@@ -2,8 +2,9 @@ const messages = {
   landing: {
     hero: {
       titlePrefix: "Let your",
-      titleAccent: "art",
-      titleSuffix: "be discovered.",
+      titleAccentWords: ["art", "talent", "vision", "passion"],
+      titleConnector: "be",
+      titleDiscoverWords: ["discovered", "found", "shared"],
       subtitle:
         "All you have to do is upload your art. We take care of the rest.",
       primaryCtaLoggedIn: "Access Atelier",
@@ -56,63 +57,63 @@ const messages = {
       items: [
         {
           "title": "Just Art",
-          "description": "A place for art, and nothing else. No noise, no distractions."
+          "description": "A place for {art}, and nothing else. No noise, no distractions."
         },
         {
           "title": "Intelligence",
-          "description": "AI quietly handles the boring, technical stuff. You focus on creating."
+          "description": "{AI} quietly handles the boring, technical stuff. You focus on creating."
         },
         {
           "title": "Focus",
-          "description": "Your only job is to share your best work. We take care of the rest."
+          "description": "Your only job is to share your {best} work. We take care of the rest."
         },
         {
           "title": "Community",
-          "description": "A community built on taste, not trends. People who value craft over noise."
+          "description": "A community built on {taste}, not trends. People who value craft over noise."
         },
         {
           "title": "Quality",
-          "description": "We value quality over quantity — take your time to upload your best work."
+          "description": "We value {quality} over quantity — take your time to upload your best work."
         },
         {
           "title": "Clients",
-          "description": "We connect client needs with the right artists. Fast, direct, and trustworthy."
+          "description": "We connect client needs with the right {artists}. Fast, direct, and trustworthy."
         },
         {
           "title": "No Algorithms",
-          "description": "Great work speaks for itself. No feeds, no games, no chasing engagement."
+          "description": "Great work {speaks} for itself. No feeds, no games, no chasing engagement."
         },
         {
           "title": "Ownership",
-          "description": "A home for your work that belongs to you. Permanent, not rented from a platform."
+          "description": "A home for your work that {belongs} to you. Permanent, not rented from a platform."
         },
         {
           "title": "Simplicity",
-          "description": "As easy to update as a social post. No coding, no configuration."
+          "description": "As easy to {update} as a social post. No coding, no configuration."
         },
         {
           "title": "Craftsmanship",
-          "description": "Built for quality first, always. Great art deserves great presentation."
+          "description": "Built for {quality} first, always. Great art deserves great presentation."
         },
         {
           "title": "Discovery",
-          "description": "Be found by the clients who matter. Visibility earned by talent, not algorithms."
+          "description": "Be found by the clients who matter. Visibility earned by {talent}, not algorithms."
         },
         {
           "title": "Time",
-          "description": "Less time configuring, more time creating. Every minute saved goes back to your art."
+          "description": "Less time configuring, more time {creating}. Every minute saved goes back to your art."
         },
         {
           "title": "Credibility",
-          "description": "A professional presence, without the technical hassle. Trusted by clients from the first visit."
+          "description": "A professional presence, without the technical hassle. Trusted by clients from the first {visit}."
         },
         {
           "title": "Elegance",
-          "description": "A minimal space where your art takes center stage. Nothing competes for attention."
+          "description": "A minimal space where your art takes {center} stage. Nothing competes for attention."
         },
         {
           "title": "Trust",
-          "description": "A fast, reliable way to find real talent. No guesswork, no wasted hours."
+          "description": "A fast, reliable way to find real {talent}. No guesswork, no wasted hours."
         }
       ],
     },

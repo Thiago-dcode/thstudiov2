@@ -3,7 +3,7 @@ import { CustomIcon, type IconName } from "@/lib/components/custom-icon";
 import { WebSection } from "./web-section";
 import mediaService from "@/modules/media/media.service";
 import { MediaCarousel } from "@/modules/media/components/media-carousel";
-import { ValuesMarquee } from "./values-marquee";
+import { ValueCarousel } from "./values-carousel";
 import { RegistrationCtaButton } from "@/lib/components/registration-cta-button";
 import { ScrollHashLink } from "./scroll-hash-link";
 import { ChevronDown } from "lucide-react";
@@ -39,9 +39,9 @@ export async function ValuePillarsSection() {
             </div>
           </div>
 
-          <div className="flex flex-col w-full  gap-8 "> 
-            
-             <ValuesMarquee items={items} />
+          <div className="flex flex-col w-full  gap-8 ">
+
+            <ValueCarousel items={items}/>
             <RegistrationCtaButton
               size="lg"
               className=" self-end mr-4 py-2"

@@ -1,4 +1,5 @@
 import { LazyVideo } from "@repo/ui/components/custom/LazyVideo";
+import { SlotMachine } from "@repo/ui/components/custom/slot-machine";
 import { ChevronDown } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
@@ -30,6 +31,8 @@ async function HeroVideo() {
 
 export async function HeroSection() {
   const t = await getTranslations("landing.hero");
+  const accentWords = t.raw("titleAccentWords") as string[];
+  const discoverWords = t.raw("titleDiscoverWords") as string[];
 
   return (
 
@@ -45,17 +48,28 @@ export async function HeroSection() {
 
 
       {/* ── Content ── */}
-      <div className="max-h-1/2 z-10 mx-auto flex flex-col items-center text-center gap-5 laptop:gap-8 w-full  pt-2 px-2 laptop:px-4">
+      <div className="max-h-1/2 z-10 mx-auto flex flex-col items-center text-center gap-5 laptop:gap-8 w-full  pt-3 px-2 laptop:px-4">
 
         <div className="flex flex-col items-start gap-2 w-full">
           <h1
-            className="hero-stagger-1 tracking-tight text-shadow-lg text-6xl! phone-lg:6xl!   laptop:text-7xl! desktop-lg:text-9xl! text-left"
+            className="uppercase hero-stagger-1 tracking-tight text-shadow-lg text-6xl! phone-lg:6xl!   laptop:text-7xl! desktop-lg:text-7xl! text-left font-sans!"
           >
             {t("titlePrefix")}{" "}
-            <span className="text-accent">
-              {t("titleAccent")}
-            </span>{" "}
-            {t("titleSuffix")}
+            <SlotMachine
+              texts={accentWords}
+              itemHeight="1.2em"
+              interval={2800}
+              fitWidth
+              className="text-accent translate-y-[-0.11em]"
+            />{" "}
+            {t("titleConnector")}{" "}
+            <SlotMachine
+              texts={discoverWords}
+              itemHeight="1.2em"
+              interval={3400}
+              fitWidth
+              className="translate-y-[-0.11em]"
+            />.
           </h1>
 
           <h3 className="hero-stagger-2 font-normal! phone-lg:text-2xl! text-lg! leading-relaxed text-white/90! font-sans! max-w-5xl text-left">

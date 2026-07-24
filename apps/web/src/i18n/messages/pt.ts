@@ -4,8 +4,9 @@ const messages = {
   landing: {
     hero: {
       titlePrefix: "Deixe sua",
-      titleAccent: "arte",
-      titleSuffix: "ser descoberta.",
+      titleAccentWords: ["arte", "talento", "visão", "paixão"],
+      titleConnector: "ser",
+      titleDiscoverWords: ["descoberta", "encontrada", "compartilhada"],
       subtitle:
         "Basta enviar sua arte. Nós cuidamos do resto.",
       primaryCtaLoggedIn: "Acessar o Atelier",
@@ -60,77 +61,77 @@ const messages = {
         {
           title: "Só arte",
           description:
-            "Um espaço só para a arte. Sem ruído, sem distrações.",
+            "Um espaço só para a {arte}. Sem ruído, sem distrações.",
         },
         {
           title: "Inteligência",
           description:
-            "A IA cuida da parte técnica e chata. Você foca em criar.",
+            "A {IA} cuida da parte técnica e chata. Você foca em criar.",
         },
         {
           title: "Foco",
           description:
-            "Seu único trabalho é compartilhar o seu melhor. Do resto cuidamos nós.",
+            "Seu único trabalho é compartilhar o seu {melhor}. Do resto cuidamos nós.",
         },
         {
           title: "Comunidade",
           description:
-            "Uma comunidade construída sobre bom gosto, não sobre tendências. Gente que valoriza o ofício, não o ruído.",
+            "Uma comunidade construída sobre bom {gosto}, não sobre tendências. Gente que valoriza o ofício, não o ruído.",
         },
         {
           title: "Qualidade",
           description:
-            "Valorizamos a qualidade acima da quantidade, leve o tempo que precisar para enviar sua melhor arte.",
+            "Valorizamos a {qualidade} acima da quantidade, leve o tempo que precisar para enviar sua melhor arte.",
         },
         {
           title: "Clientes",
           description:
-            "Conectamos as necessidades dos clientes aos artistas certos. Rápido, direto e confiável.",
+            "Conectamos as necessidades dos clientes aos {artistas} certos. Rápido, direto e confiável.",
         },
         {
           title: "Sem algoritmos",
           description:
-            "Um bom trabalho fala por si só. Sem feeds, sem jogos, sem correr atrás de engajamento.",
+            "Um bom trabalho {fala} por si só. Sem feeds, sem jogos, sem correr atrás de engajamento.",
         },
         {
           title: "Propriedade",
           description:
-            "Um lar para o seu trabalho que pertence a você. Permanente, não alugado de uma plataforma.",
+            "Um lar para o seu trabalho que {pertence} a você. Permanente, não alugado de uma plataforma.",
         },
         {
           title: "Simplicidade",
           description:
-            "Tão fácil de atualizar quanto um post. Sem código, sem configuração.",
+            "Tão fácil de {atualizar} quanto um post. Sem código, sem configuração.",
         },
         {
           title: "Ofício",
           description:
-            "Feito para priorizar a qualidade, sempre. Uma grande obra merece uma grande apresentação.",
+            "Feito para priorizar a {qualidade}, sempre. Uma grande obra merece uma grande apresentação.",
         },
         {
           title: "Descoberta",
           description:
-            "Seja encontrado pelos clientes que importam. Visibilidade conquistada pelo talento, não por algoritmos.",
+            "Seja encontrado pelos clientes que importam. Visibilidade conquistada pelo {talento}, não por algoritmos.",
         },
         {
           title: "Tempo",
           description:
-            "Menos tempo configurando, mais tempo criando. Cada minuto economizado volta para a sua arte.",
+            "Menos tempo configurando, mais tempo {criando}. Cada minuto economizado volta para a sua arte.",
         },
         {
           title: "Credibilidade",
           description:
-            "Uma presença profissional, sem a dor de cabeça técnica. Confiança conquistada desde a primeira visita.",
+            "Uma presença profissional, sem a dor de cabeça técnica. Confiança conquistada desde a primeira {visita}.",
         },
         {
           title: "Elegância",
           description:
-            "Um espaço minimalista onde a sua arte é a protagonista. Nada disputa a atenção.",
+            "Um espaço minimalista onde a sua arte é a {protagonista}. Nada disputa a atenção.",
         },
         {
           title: "Confiança",
           description:
-            "Uma forma rápida e confiável de encontrar talento de verdade. Sem apostas, sem horas perdidas.",
+            "Uma forma rápida e confiável de encontrar {talento} de verdade. Sem apostas, sem horas perdidas.",
         },
       ],
     },
