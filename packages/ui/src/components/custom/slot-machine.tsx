@@ -152,7 +152,7 @@ export const SlotMachine = ({
         const observer = new ResizeObserver(measure)
         observer.observe(el)
         // Re-measure once webfonts have swapped in (metrics change).
-        document.fonts?.ready.then(measure).catch(() => {})
+        document.fonts?.ready.then(measure).catch(() => { })
 
         return () => observer.disconnect()
     }, [fitWidth, texts])
@@ -184,7 +184,7 @@ export const SlotMachine = ({
                 <span
                     ref={sizerRef}
                     aria-hidden="true"
-                    className="pointer-events-none invisible absolute left-0 top-0 flex flex-col"
+                    className="pointer-events-none invisible absolute left-0 top-0 flex flex-col items-start"
                 >
                     {texts.map((word, i) => (
                         <span
@@ -208,8 +208,8 @@ export const SlotMachine = ({
                 }}
                 onTransitionEnd={handleTransitionEnd}
             >
-                {strip.map((word, i) => (
-                    <span
+                {strip.map((word, i) => {
+                    return (<span
                         key={i}
                         className={cn(
                             "flex shrink-0 items-center justify-center whitespace-nowrap",
@@ -219,8 +219,8 @@ export const SlotMachine = ({
                         aria-hidden={i % len !== position % len}
                     >
                         {word}
-                    </span>
-                ))}
+                    </span>)
+                })}
             </span>
         </span>
     )

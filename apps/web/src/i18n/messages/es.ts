@@ -3,10 +3,10 @@ import type { Messages } from "./en";
 const messages = {
   landing: {
     hero: {
-      titlePrefix: "Haz que tu",
-      titleAccentWords: ["arte", "talento", "visión", "pasión"],
-      titleConnector: "sea",
-      titleDiscoverWords: ["descubierto", "encontrado", "compartido"],
+      titlePrefix: "Deja que tu",
+      titleAccentWords: ["arte", "visión", "talento", "pasión", "voz"],
+      titleConnector: "se",
+      titleDiscoverWords: ["comparta", "note", "revele", "encuentre", "descubra"],
       subtitle:
         "Sube tu mejor arte, del resto nos encargamos nosotros.",
       primaryCtaLoggedIn: "Acceder a Atelier",
@@ -169,15 +169,15 @@ const messages = {
         description:
           "Un portafolio real en A11STUDIO — curado, pulido y listo para compartir.",
       },
-      by: "Creado por",
+      by: "Un portafolio de",
       viewProfile: "Ver el perfil de @{username}",
       exploreMore: "Inspírate",
     },
     cta: {
-      badge: "¿Listo para empezar?",
-      title: "Tu próximo cliente está buscando a alguien como tú",
+      badge: "Cuando tú quieras",
+      title: "Tu próximo cliente ya está buscando a alguien como tú",
       description:
-        "Crea un portafolio profesional en minutos, deja que la IA se encargue del resto y empieza a ser descubierto. Gratis para empezar, sin tarjeta y sin condiciones.",
+        "Crea un portafolio a la altura de tu obra, en minutos. Nosotros nos ocupamos de la tecnología para que tú te quedes con el oficio. Gratis para empezar, sin tarjeta.",
       button: "Crear mi portafolio",
       waitListButton: "Trae tu arte",
     },

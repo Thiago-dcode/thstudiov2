@@ -6,6 +6,7 @@ import { Gallery } from "@repo/ui/components/custom/gallery/gallery";
 import { PortfolioGrid } from "@repo/ui/components/custom/gallery/gallery-grid";
 import { GalleryProvider } from "@repo/ui/providers/gallery.provider";
 import { getTranslations } from "next-intl/server";
+import { Link } from "@/i18n/navigation";
 import portfolioService from "@/modules/portfolios/portfolio.service";
 import { WebSection } from "./web-section";
 
@@ -36,23 +37,22 @@ export async function FeaturedPortfolioSection() {
     <WebSection id="featured-portfolio" className="overflow-hidden max-w-(--breakpoint-ultrawide) max-h-screen mx-auto">
       <WebSection.Container className="pt-28">
 
-        <div className="flex items-end justify-between gap-0.5 mb-2 border-b w-full border-b-text/80!">
+        <div className="flex items-end flex-col laptop:flex-row px-2 justify-between gap-0.5 mb-2 border-b w-full border-b-text/80!">
           <h3 className="text-2xl! laptop:text-4xl! line-clamp-1 uppercase">{portfolio.title}</h3>
-          <p className="">A portfolio by <span className="text-text font-bold tracking-wide">@{portfolio.artist.username}</span></p>
-        </div>
-        <section className=" m-auto overflow-hidden">
-          {/* <p className=" mb-2 text-sm text-text-muted">
-            A portfolio created by{" "}
+          <p>
+            {t("by")}{" "}
             <Link
               href={`/artists/${portfolio.artist.username}`}
-              className="font-medium text-text underline-offset-4 transition-colors hover:text-text-muted hover:underline"
+              className="text-text font-bold tracking-wide underline-offset-4 transition-colors hover:text-text-muted hover:underline"
               aria-label={t("viewProfile", {
                 username: portfolio.artist.username,
               })}
             >
               @{portfolio.artist.username}
             </Link>
-          </p> */}
+          </p>
+        </div>
+        <section className=" m-auto overflow-hidden">
           <GalleryProvider
             items={mediaItems.map((m) => ({
               url: m.url ?? m.thumbnail,

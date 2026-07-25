@@ -20,7 +20,7 @@ export default async function Home() {
       <FeaturedArtistsSection />
       <CtaSection />
       <WebSection>
-        <WebSection.Container>
+        <WebSection.Container className="max-w-(--breakpoint-laptop) pb-20">
           <FaqsContent />
         </WebSection.Container>
       </WebSection>

@@ -93,3 +93,4 @@ apps/api/assets/
 *.tsbuildinfo
 
 sync-seed-assets.sh
+SEO-AUDIT.md

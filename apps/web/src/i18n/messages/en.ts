@@ -2,9 +2,21 @@ const messages = {
   landing: {
     hero: {
       titlePrefix: "Let your",
-      titleAccentWords: ["art", "talent", "vision", "passion"],
+      titleAccentWords: [
+        "art",
+        "vision",
+        "craft",
+        "passion",
+        "voice",
+      ],
       titleConnector: "be",
-      titleDiscoverWords: ["discovered", "found", "shared"],
+      titleDiscoverWords: [
+        "shared",
+        "noticed",
+        "revealed",
+        "found",
+        "discovered",
+      ],
       subtitle:
         "All you have to do is upload your art. We take care of the rest.",
       primaryCtaLoggedIn: "Access Atelier",
@@ -50,70 +62,70 @@ const messages = {
         badge: "Why A11STUDIO",
         title: "Made by an artist for artists",
         description:
-          "A professional home for your work — with the intelligence to grow your career and the simplicity to never slow you down.",
+          "A professional home for your work — with the {intelligence} to grow your career and the simplicity to never slow you down.",
       },
       cta: "Bring your art",
       scrollToNextSection: "Scroll to next section",
       items: [
         {
           "title": "Just Art",
-          "description": "A place for {art}, and nothing else. No noise, no distractions."
+          "description": "A place for art, and nothing else. No noise, no distractions."
         },
         {
           "title": "Intelligence",
-          "description": "{AI} quietly handles the boring, technical stuff. You focus on creating."
+          "description": "AI quietly handles the boring, technical stuff. You focus on creating."
         },
         {
           "title": "Focus",
-          "description": "Your only job is to share your {best} work. We take care of the rest."
+          "description": "Your only job is to share your best work. We take care of the rest."
         },
         {
           "title": "Community",
-          "description": "A community built on {taste}, not trends. People who value craft over noise."
+          "description": "A community built on taste, not trends. People who value craft over noise."
         },
         {
           "title": "Quality",
-          "description": "We value {quality} over quantity — take your time to upload your best work."
+          "description": "We value quality over quantity — take your time to upload your best work."
         },
         {
           "title": "Clients",
-          "description": "We connect client needs with the right {artists}. Fast, direct, and trustworthy."
+          "description": "We connect client needs with the right artists. Fast, direct, and trustworthy."
         },
         {
           "title": "No Algorithms",
-          "description": "Great work {speaks} for itself. No feeds, no games, no chasing engagement."
+          "description": "Great work speaks for itself. No feeds, no games, no chasing engagement."
         },
         {
           "title": "Ownership",
-          "description": "A home for your work that {belongs} to you. Permanent, not rented from a platform."
+          "description": "A home for your work that belongs to you. Permanent, not rented from a platform."
         },
         {
           "title": "Simplicity",
-          "description": "As easy to {update} as a social post. No coding, no configuration."
+          "description": "As easy to update as a social post. No coding, no configuration."
         },
         {
           "title": "Craftsmanship",
-          "description": "Built for {quality} first, always. Great art deserves great presentation."
+          "description": "Built for quality first, always. Great art deserves great presentation."
         },
         {
           "title": "Discovery",
-          "description": "Be found by the clients who matter. Visibility earned by {talent}, not algorithms."
+          "description": "Be found by the clients who matter. Visibility earned by talent, not algorithms."
         },
         {
           "title": "Time",
-          "description": "Less time configuring, more time {creating}. Every minute saved goes back to your art."
+          "description": "Less time configuring, more time creating. Every minute saved goes back to your art."
         },
         {
           "title": "Credibility",
-          "description": "A professional presence, without the technical hassle. Trusted by clients from the first {visit}."
+          "description": "A professional presence, without the technical hassle. Trusted by clients from the first visit."
         },
         {
           "title": "Elegance",
-          "description": "A minimal space where your art takes {center} stage. Nothing competes for attention."
+          "description": "A minimal space where your art takes center stage. Nothing competes for attention."
         },
         {
           "title": "Trust",
-          "description": "A fast, reliable way to find real {talent}. No guesswork, no wasted hours."
+          "description": "A fast, reliable way to find real talent. No guesswork, no wasted hours."
         }
       ],
     },
@@ -153,15 +165,15 @@ const messages = {
         description:
           "A live portfolio on A11STUDIO — curated, polished, and ready to share.",
       },
-      by: "Created by",
+      by: "A portfolio by",
       viewProfile: "View @{username}'s profile",
       exploreMore: "Get inspired",
     },
     cta: {
-      badge: "Ready to begin?",
-      title: "Your next client is searching for someone like you",
+      badge: "Ready when you are",
+      title: "Your next client is already looking for someone like you",
       description:
-        "Create a stunning portfolio in minutes, let AI handle the rest, and start getting discovered. Free to start — no credit card, no strings.",
+        "Build a portfolio as considered as your work — in minutes. We handle the technology so you can stay with the craft. Free to start, no credit card.",
       button: "Create Your Portfolio",
       waitListButton: "Bring your art",
     },

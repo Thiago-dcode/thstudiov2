@@ -24,7 +24,7 @@ async function HeroVideo() {
     <LazyVideo
       src={heroVideo.data.url}
       poster={heroVideo.data.thumbnail ?? undefined}
-      className="justify-self-end inset-0 z-0 object-cover max-h-full laptop:max-h-3/5  w-screen"
+      className="justify-self-end inset-0 z-0 object-cover h-2/5 laptop:h-2/5 desktop:h-3/5  w-screen"
     />
   );
 }
@@ -40,7 +40,7 @@ export async function HeroSection() {
     <WebSection
       id="home-hero-section"
       aria-labelledby="hero-heading"
-      className=" relative flex flex-col w-full items-center justify-start overflow-hidden bg-bg h-[calc(100svh-4rem)] max-w-(--breakpoint-ultrawide) mx-auto"
+      className="  flex flex-col w-full items-center justify-start overflow-hidden bg-bg min-h-[calc(100svh-4rem)] laptop:h-[calc(100svh-4rem)] laptop:min-h-auto max-w-(--breakpoint-ultrawide) mx-auto"
     >
     <Suspense fallback={<HeroVideoFallback />}>
         <HeroVideo />
@@ -50,34 +50,36 @@ export async function HeroSection() {
       {/* ── Content ── */}
       <div className="max-h-1/2 z-10 mx-auto flex flex-col items-center text-center gap-5 laptop:gap-8 w-full  pt-3 px-2 laptop:px-4">
 
-        <div className="flex flex-col items-start gap-2 w-full">
+        <div className="flex flex-col items-start gap-0 w-full">
           <h1
-            className="uppercase hero-stagger-1 tracking-tight text-shadow-lg text-6xl! phone-lg:6xl!   laptop:text-7xl! desktop-lg:text-7xl! text-left font-sans!"
+            className="uppercase hero-stagger-1 tracking-tight text-shadow-lg text-5xl! phone-lg:6xl!   laptop:text-7xl! desktop-lg:text-7xl! text-left font-sans!"
           >
             {t("titlePrefix")}{" "}
             <SlotMachine
               texts={accentWords}
               itemHeight="1.2em"
-              interval={2800}
+              interval={2000}
               fitWidth
+              spinDuration={1800}
               className="text-accent translate-y-[-0.11em]"
             />{" "}
             {t("titleConnector")}{" "}
             <SlotMachine
               texts={discoverWords}
               itemHeight="1.2em"
-              interval={3400}
+              interval={2500}
+              spinDuration={1800}
               fitWidth
               className="translate-y-[-0.11em]"
             />.
           </h1>
 
-          <h3 className="hero-stagger-2 font-normal! phone-lg:text-2xl! text-lg! leading-relaxed text-white/90! font-sans! max-w-5xl text-left">
+          <h3 className="hero-stagger-2 font-normal!  phone-lg:text-2xl! text-lg! leading-relaxed  font-sans! max-w-5xl text-left">
             {t("subtitle")}
           </h3>
         </div>
 
-        <div className="hero-stagger-4 flex w-full justify-start pt-8 phone-lg:pt-4 pb-6">
+        <div className="hero-stagger-4 flex w-full justify-start pt-8  phone-lg:pt-4 ">
           <div className="w-full max-w-3xl">
             <WaitListForm from="hero" />
           </div>
@@ -88,10 +90,10 @@ export async function HeroSection() {
       <ScrollHashLink
         href="#value-pillars"
         aria-label={t("scrollToNextSection")}
-        className="z-100 absolute bottom-6 left-1/2 -translate-x-1/2 p-2 text-text-muted/50 transition-colors hover:text-text focus-visible:text-text"
+        className="z-100  absolute bottom-10 left-1/2  -translate-x-1/2 p-2 text-text-muted/50 transition-colors hover:text-text focus-visible:text-text"
       >
         <ChevronDown
-          className="size-5 hero-bounce text-white/80!"
+          className="size-5 hero-bounce text-text-muted"
           aria-hidden="true"
         />
       </ScrollHashLink>

@@ -18,7 +18,7 @@ type WaitListFormProps = {
 };
 
 export function WaitListForm({ from = "register" }: WaitListFormProps) {
-  const t = useTranslations("landing.hero.waitList");
+  const t = useTranslations("landing.hero");
   const [isEmailValid, setIsEmailValid] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [waitListResultData, setWaitListResultData] =
@@ -63,7 +63,7 @@ export function WaitListForm({ from = "register" }: WaitListFormProps) {
         <div aria-live="polite" className="flex w-full justify-center">
           <div className="wait-list-success flex w-full max-w-md flex-col items-center gap-2 border border-border/40 bg-fg/50 px-5 py-6 text-center backdrop-blur-md">
             <h3 className="text-lg font-semibold text-text">
-              {t.rich("alreadyExists", {
+              {t.rich("waitList.alreadyExists", {
                 email,
                 supportLink: (chunks) => (
                   <Link href="/support" className="text-text underline">
@@ -81,11 +81,13 @@ export function WaitListForm({ from = "register" }: WaitListFormProps) {
       <div aria-live="polite" className="flex w-full justify-center">
         <div className="wait-list-success flex w-full max-w-md flex-col items-center gap-2 border border-border/40 bg-fg/50 px-5 py-6 text-center backdrop-blur-md">
           <h3 className="text-lg font-semibold text-text">
-            {t("successTitle")}
+            {t("waitList.successTitle")}
           </h3>
-          <p className="text-sm text-text-muted">{t("successMessage")}</p>
           <p className="text-sm text-text-muted">
-            {t("successReserveMessage")}
+            {t("waitList.successMessage")}
+          </p>
+          <p className="text-sm text-text-muted">
+            {t("waitList.successReserveMessage")}
           </p>
 
           <style>{`
@@ -106,18 +108,18 @@ export function WaitListForm({ from = "register" }: WaitListFormProps) {
 
   return (
     <div className="w-full">
-      <div className="mb-2 flex items-center justify-start gap-2">
+      {from === 'hero' ? <div className="mb-2 flex items-center justify-start gap-2">
         <p
           id="hero-wait-list-email-hint"
-          className={cn("text-left", from === "hero" && "text-white/90")}
+          className={cn("text-left text-sm! text-text-muted!")}
         >
-          {t("hint")}
+          {t("waitList.hint")}
         </p>
         <InfoTooltip
-          content={t("hintTooltip")}
-          iconClassName={from === "hero" ? "text-white/90!" : undefined}
+          content={t("waitList.hintTooltip")}
+          iconClassName={'text-text-muted'}
         />
-      </div>
+      </div> : null}
       <form
         onSubmit={handleSubmit}
         className="flex w-full flex-col gap-2 phone:flex-row phone:items-start"
@@ -130,14 +132,14 @@ export function WaitListForm({ from = "register" }: WaitListFormProps) {
             name="email"
             type="email"
             autoComplete="email"
-            placeholder={t("placeholder")}
+            placeholder={t("waitList.placeholder")}
             required
             onChange={handleEmailChange}
             aria-invalid={!!inputErrors?.email}
             aria-describedby={
               inputErrors?.email ? "hero-wait-list-email-error" : undefined
             }
-            className="h-12 w-full px-4 text-base"
+            className="h-10 laptop:h-12 w-full px-4 text-base"
           />
 
           {inputErrors?.email ? (
@@ -155,9 +157,11 @@ export function WaitListForm({ from = "register" }: WaitListFormProps) {
           variant="accent"
           size="lg"
           disabled={isPending || !isEmailValid}
-          className=" h-12 py-0 shrink-0 text-accent-fg"
+          className=" h-10 laptop:h-12 py-0 shrink-0 text-accent-fg"
         >
-          {isPending ? t("buttonPending") : t("button")}
+          {isPending
+            ? t("waitList.buttonPending")
+            : t("waitList.button")}
         </Button>
       </form>
 

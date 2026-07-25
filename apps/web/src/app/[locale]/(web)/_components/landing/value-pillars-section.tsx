@@ -26,10 +26,10 @@ export async function ValuePillarsSection() {
     <WebSection id="value-pillars" className="relative">
 
 
-      <WebSection.Container className=" pl-0 px-0 tablet:px-0  h-screen flex flex-col items-center  pt-24 ">
-        <div className="h-full w-full flex flex-col items-center  justify-center gap-24 ">
+      <WebSection.Container className=" pl-0 px-0 tablet:px-0  min-h-screen h-full flex flex-col items-center pt-24 ">
+        <div className="h-full w-full flex flex-col items-center  justify-center gap-24 m-auto ">
 
-          <div className=" w-full pr-4">
+          <div className=" w-full ">
             <div className="flex justify-start flex-col tablet:flex-row gap-4">
               <MediaCarousel media={media} />
               <div className="order-first tablet:order-2 flex flex-col gap-4 max-w-lg ">
@@ -56,7 +56,7 @@ export async function ValuePillarsSection() {
         className="z-100 absolute bottom-6 left-1/2 -translate-x-1/2 p-2 text-text-muted/50 transition-colors hover:text-text focus-visible:text-text"
       >
         <ChevronDown
-          className="size-5 hero-bounce text-white/80!"
+          className="size-5 hero-bounce text-text-muted"
           aria-hidden="true"
         />
       </ScrollHashLink>
