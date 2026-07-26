@@ -11,14 +11,17 @@ import { body, brand } from "@/font";
 import { routing } from "@/i18n/routing";
 import { AppStatusProvider } from "@/lib/providers/app-status.provider";
 
+const appUrl = getServerEnv().APP_URL;
+const isProduction = process.env.NODE_ENV?.toLowerCase() === "production";
+
 export const metadata: Metadata = {
+  ...(appUrl ? { metadataBase: new URL(appUrl) } : {}),
   title: "A11STUDIO — The Portfolio Platform Built for Artists",
   description:
     "Showcase your work, get discovered, and connect with collectors and collaborators. A11STUDIO is the portfolio platform designed exclusively for artists.",
-  robots: {
-    index: false,
-    follow: false,
-  },
+  // Site-wide noindex OUTSIDE production; in production pages are indexable by default and each
+  // page's own metadata (e.g. a missing entity, or a noindex flag) can still opt out.
+  ...(isProduction ? {} : { robots: { index: false, follow: false } }),
   openGraph: {
     title: "A11STUDIO — The Portfolio Platform Built for Artists",
     description:

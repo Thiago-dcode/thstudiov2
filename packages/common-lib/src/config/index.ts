@@ -71,6 +71,7 @@ const config = (envPath?: string | undefined) => {
       secretAccessKey: process.env.STORAGE_SECRET_ACCESS_KEY,
       signedUrlExpiration: process.env.STORAGE_SIGNED_URL_EXPIRATION ? parseInt(process.env.STORAGE_SIGNED_URL_EXPIRATION) : 3600,
       folder: process.env.STORAGE_FOLDER,
+      cdnUrl: process.env.CDN_URL,
     },
     stripe: {
       secretKey: process.env.STRIPE_SECRET_KEY as string,

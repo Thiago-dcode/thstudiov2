@@ -1,11 +1,15 @@
 import { ArrowRight, Check, Circle, Pencil } from "lucide-react";
+import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { ArtistBreadcrumb } from "@/app/[locale]/(artists)/__components/artist-breadcrumb";
 import { ResourceNotFound } from "@/app/[locale]/(artists)/__components/resource-not-found";
 import { Link } from "@/i18n/navigation";
+import { urlLocaleToLanguageCode } from "@/i18n/routing";
 import Web from "@/lib/components/web-page.component";
+import { buildSeoMetadata } from "@/lib/seo/build-metadata";
+import { buildServiceJsonLd, JsonLd } from "@/lib/seo/json-ld";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import userServiceService from "@/modules/user-services/user-service.service";
 import usersService from "@/modules/users/users.service";
@@ -13,6 +17,25 @@ import usersService from "@/modules/users/users.service";
 type Props = {
   params: Promise<{ username: string; slug: string }>;
 };
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string; username: string; slug: string }>;
+}): Promise<Metadata> {
+  const { locale, username, slug } = await params;
+  const { data } = await userServiceService.getSeoMetadata(
+    username,
+    slug,
+    urlLocaleToLanguageCode(locale),
+  );
+
+  if (!data) {
+    return { robots: { index: false, follow: false } };
+  }
+
+  return buildSeoMetadata(data, locale, { title: data.seo_title || username });
+}
 
 export default async function Page({ params }: Props) {
   const { username, slug } = await params;
@@ -44,6 +67,7 @@ export default async function Page({ params }: Props) {
 
   return (
     <Web.Container className="">
+      <JsonLd data={buildServiceJsonLd(service, username)} />
       <ArtistBreadcrumb
         username={username}
         items={[

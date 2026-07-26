@@ -28,9 +28,7 @@ export function AlertPortfolioButton() {
           ? `/atelier/portfolios/edit/${currentPortfolio.slug}`
           : "/atelier/portfolios/create"
       }
-      label={
-        currentPortfolio ? t("editingPortfolio") : t("creatingPortfolio")
-      }
+      label={currentPortfolio ? t("editingPortfolio") : t("creatingPortfolio")}
     />
   );
 }

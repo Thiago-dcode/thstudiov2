@@ -1,3 +1,4 @@
+import type { EntitySeoMetadata } from "@repo/common-lib/types/ai";
 import type {
   Collection,
   CollectionIndexRequest,
@@ -28,6 +29,16 @@ class UserCollectionService extends BaseService {
   ): Promise<ApiResponse<FullCollection | null>> {
     return await this.fetchApi.get({
       resource: `/${username}/collections/${slug}`,
+    });
+  }
+
+  async getSeoMetadata(
+    username: string,
+    slug: string,
+    lang: string,
+  ): Promise<ApiResponse<EntitySeoMetadata | null>> {
+    return await this.fetchApi.get({
+      resource: `/${username}/collections/${slug}/metadata?lan=${lang}`,
     });
   }
 

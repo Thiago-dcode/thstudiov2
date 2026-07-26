@@ -56,6 +56,9 @@ const up = async () => {
       nullable: true,
     }),
     Column.string('seo_filename', 255),
+    Column.timestamp('seo_generated_at', {
+      nullable: true,
+    }),
     Column.foreignKey('user_id', 'users', 'id', {
       onDelete: 'CASCADE',
       onUpdate: 'CASCADE',
@@ -64,8 +67,11 @@ const up = async () => {
 
   await Schema.table('media_translations').createIfNotExists([
     Column.id(),
-    Column.string('name'),
-    Column.string('description'),
+    Column.string('name', 255, { nullable: true }),
+    Column.string('description', 255, { nullable: true }),
+    Column.string('seo_title', 70, { nullable: true }),
+    Column.string('seo_description', 160, { nullable: true }),
+    Column.string('seo_alt', 160, { nullable: true }),
     Column.enum('language_code', 'LANGUAGE_CODE'),
     Column.foreignKey('media_id', 'media', 'id', {
       onDelete: 'CASCADE',

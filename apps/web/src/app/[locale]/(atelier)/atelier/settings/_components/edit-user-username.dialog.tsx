@@ -110,9 +110,7 @@ export const EditUserUsernameDialog = ({ user }: Props) => {
                     {t.rich("availableAgainOn", {
                       date: resetDateFormatted,
                       strong: (chunks) => (
-                        <span className="font-medium text-text">
-                          {chunks}
-                        </span>
+                        <span className="font-medium text-text">{chunks}</span>
                       ),
                     })}
                   </>
@@ -144,9 +142,8 @@ export const EditUserUsernameDialog = ({ user }: Props) => {
                     remaining,
                     max: MAX_USERNAME_RESET,
                   })}
-                  {resetDateFormatted && (
-                    <>{t("resetsOn", { date: resetDateFormatted })}</>
-                  )}
+                  {resetDateFormatted &&
+                    t("resetsOn", { date: resetDateFormatted })}
                 </p>
               )}
 

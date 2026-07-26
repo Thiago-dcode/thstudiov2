@@ -46,7 +46,11 @@ type InternalCollectionFields =
   | 'id'
   | 'created_at'
   | 'updated_at'
-  | 'is_featured';
+  | 'is_featured'
+  | 'seo_title'
+  | 'seo_description'
+  | 'seo_generated_at'
+  | 'is_indexable';
 
 export type CreateCollectionInput = Omit<CollectionSchema, InternalCollectionFields | 'is_active'> & {
   is_active?: boolean;
@@ -62,7 +66,7 @@ export type CollectionInput = Partial<Omit<CreateCollectionInput, 'media'>> & {
 };
 
 export type UpdateCollectionInput = Partial<
-  Omit<CollectionSchema, 'id' | 'created_at' | 'updated_at' | 'is_featured'>
+  Omit<CollectionSchema, InternalCollectionFields>
 > & {
   media: { id: number; position: number }[];
 };

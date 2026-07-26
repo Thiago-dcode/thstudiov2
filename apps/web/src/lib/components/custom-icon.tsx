@@ -1,13 +1,13 @@
-import Image from "next/image";
 import { cn } from "@repo/ui/lib/utils";
+import Image from "next/image";
 import {
+  type CustomIconProps,
   getIconAlt,
   isIconName,
   SIZE_CLASSES,
-  type CustomIconProps,
 } from "./custom-icon.shared";
 
-export type { IconName, IconSize, CustomIconProps } from "./custom-icon.shared";
+export type { CustomIconProps, IconName, IconSize } from "./custom-icon.shared";
 export { isIconName } from "./custom-icon.shared";
 
 export async function CustomIcon({

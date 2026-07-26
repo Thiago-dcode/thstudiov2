@@ -1,4 +1,4 @@
-import type { GetMediaSeoInput } from "@repo/common-lib/types/ai";
+import type { GenerateMediaMetadataInput } from "@repo/common-lib/types/ai";
 import type { Media } from "@repo/common-lib/types/media";
 import type { ApiResponse } from "@repo/common-lib/types/response";
 import { fetchApi } from "@/lib/facade/fetchApi";
@@ -9,9 +9,11 @@ class AiService extends BaseService {
     super(fetchApi(), "ai");
   }
 
-  async getMediaSeo(body?: GetMediaSeoInput): Promise<ApiResponse<Media>> {
+  async generateMediaMetadata(
+    body?: GenerateMediaMetadataInput,
+  ): Promise<ApiResponse<Media>> {
     return await this.fetchApi.post({
-      resource: "media/seo",
+      resource: "media/metadata",
       body,
     });
   }

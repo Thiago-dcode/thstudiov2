@@ -231,9 +231,7 @@ export function MediaGrid({
           <div className="flex flex-col items-center justify-center py-24 text-text-muted gap-3">
             <ImageOff className="h-10 w-10 stroke-[1.5]" />
             <p className="text-sm">
-              {hasActiveFilters
-                ? t("noMediaFiltered")
-                : t("noMediaEmpty")}
+              {hasActiveFilters ? t("noMediaFiltered") : t("noMediaEmpty")}
             </p>
           </div>
         )}

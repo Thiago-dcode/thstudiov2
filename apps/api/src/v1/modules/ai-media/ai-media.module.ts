@@ -5,11 +5,12 @@ import { MediaModule } from '../media/media.module';
 import { AiModule } from '../ai/ai.module';
 import { AddressModule } from '../addresses/address.module';
 import { UserExtraDataModule } from '../user-extra-data/user-extra-data.module';
+import { CategoriesModule } from '../categories/categories.module';
 import { AiConsumptionGuard } from 'src/common/guards/ai-consumption.guard';
 
 @Module({
   controllers: [AiMediaController],
   providers: [AiMediaService, AiConsumptionGuard],
-  imports: [MediaModule, AiModule, AddressModule, UserExtraDataModule],
+  imports: [MediaModule, AiModule, AddressModule, UserExtraDataModule, CategoriesModule],
 })
 export class AiMediaModule {}

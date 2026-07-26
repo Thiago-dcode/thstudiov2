@@ -2,6 +2,7 @@ import { LogService } from '@repo/backend-lib/services/log-service';
 import { Injectable } from '@nestjs/common';
 import { BaseRepository } from '@repo/database/repositories';
 import { QueryBuilder } from '@repo/database/queryBuilder';
+import { Query } from '@repo/database/facades';
 import {
   CollectionCompactSchema,
   CollectionFullSchema,
@@ -21,6 +22,9 @@ import {
   FullCollectionMedia,
   FullPortfolioCollection,
 } from '@repo/common-lib/types/collection';
+import { EntitySeoFields, SeoTranslation } from '@repo/common-lib/types/ai';
+import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
+import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/constants';
 import { DbException } from '@repo/database/exceptions';
 import { RequestService } from 'src/common/services/request.service';
 
@@ -33,6 +37,10 @@ export class CollectionRepository extends BaseRepository {
     'collections.is_featured',
     'collections.is_highlight',
     'collections.is_active',
+    'collections.is_indexable',
+    'collections.seo_title',
+    'collections.seo_description',
+    'collections.seo_generated_at',
     'collections.description',
     'collections.blocked_at',
     'collections.user_id',
@@ -59,11 +67,10 @@ export class CollectionRepository extends BaseRepository {
     'media.shape',
     'media.aspect_ratio',
     'media.title as m_title',
-    'media.seo_title',
+    'media.seo_title as m_seo_title',
     'media.seo_alt',
-    'media.seo_title',
     'media.seo_filename',
-    'media.seo_description',
+    'media.seo_description as m_seo_description',
   ];
 
   constructor(private readonly requestService: RequestService, protected readonly logService: LogService) {
@@ -124,6 +131,154 @@ export class CollectionRepository extends BaseRepository {
 
     if (!result || (Array.isArray(result) && result.length === 0)) return null;
     return this.formatFullCollection(Array.isArray(result) ? result : [result]);
+  }
+
+  async getFullById(id: number): Promise<FullCollection | null> {
+    const result = await this.query()
+      .select(this.FULL_COLUMNS)
+      .where('collections.id', '=', id)
+      .join('id', 'collection_media', 'collection_id', 'LEFT')
+      .join('collection_media.media_id', 'media', 'id', 'LEFT')
+      .where('media.thumbnail', 'IS NOT', null)
+      .where('media.blocked_at', 'IS', null)
+      .orderBy('collection_media.position', 'ASC')
+      .get<CollectionFullSchema[]>();
+
+    if (!result || (Array.isArray(result) && result.length === 0)) {
+      // Still return base collection when it has no media yet
+      const base = await this.query()
+        .select(this.BASE_COLUMNS)
+        .where('id', '=', id)
+        .first<CollectionSchema>();
+      return base ? { ...this.formatBaseCollection(base), media: [] } : null;
+    }
+    return this.formatFullCollection(Array.isArray(result) ? result : [result]);
+  }
+
+  /** Collections with no SEO yet, or content newer than last SEO generation. */
+  async findDueForSeoGeneration(): Promise<{ id: number; user_id: number }[]> {
+    const result = await Query.raw(
+      `SELECT id, user_id
+       FROM ${TABLES_ENUM.COLLECTIONS}
+       WHERE blocked_at IS NULL
+         AND is_active = true
+         AND is_indexable = true
+         AND (seo_generated_at IS NULL OR seo_generated_at < updated_at)
+       ORDER BY updated_at ASC`,
+    );
+    const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];
+    return (Array.isArray(rows) ? rows : []).map((row: { id: number; user_id: number }) => ({
+      id: Number(row.id),
+      user_id: Number(row.user_id),
+    }));
+  }
+
+  /**
+   * Sitemap enumeration: publicly indexable collections + owner username + up to `imageCap` gallery
+   * thumbnail PATHS (ordered by pivot position). Same visibility predicate as
+   * `findDueForSeoGeneration`. Paths are signed into URLs by the sitemap service.
+   */
+  async getSitemapCollections(
+    limit: number,
+    offset: number,
+    imageCap: number,
+  ): Promise<{ username: string; slug: string; updated_at: string; image_paths: string[] }[]> {
+    const result = await Query.raw(
+      `SELECT c.slug, c.updated_at, u.username,
+         COALESCE((
+           SELECT array_agg(x.thumbnail)
+           FROM (
+             SELECT m.thumbnail
+             FROM ${TABLES_ENUM.COLLECTION_MEDIA} cm
+             JOIN ${TABLES_ENUM.MEDIA} m ON m.id = cm.media_id
+             WHERE cm.collection_id = c.id
+               AND m.thumbnail IS NOT NULL AND m.blocked_at IS NULL AND m.is_active = true
+             ORDER BY cm.position ASC
+             LIMIT $3
+           ) x
+         ), ARRAY[]::text[]) AS image_paths
+       FROM ${TABLES_ENUM.COLLECTIONS} c
+       INNER JOIN ${TABLES_ENUM.USERS} u ON u.id = c.user_id
+       WHERE c.blocked_at IS NULL AND c.is_active = true AND c.is_indexable = true
+       ORDER BY c.updated_at DESC
+       LIMIT $1 OFFSET $2`,
+      [limit, offset, imageCap],
+    );
+    const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];
+    return (Array.isArray(rows) ? rows : []).map(
+      (row: { username: string; slug: string; updated_at: string; image_paths: string[] | null }) => ({
+        username: row.username,
+        slug: row.slug,
+        updated_at: row.updated_at,
+        image_paths: row.image_paths ?? [],
+      }),
+    );
+  }
+
+  /** Count for `getSitemapCollections` (same predicate). */
+  async countSitemapCollections(): Promise<number> {
+    const result = await Query.raw(
+      `SELECT COUNT(*)::int AS count FROM ${TABLES_ENUM.COLLECTIONS}
+       WHERE blocked_at IS NULL AND is_active = true AND is_indexable = true`,
+    );
+    const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];
+    return Number((Array.isArray(rows) ? rows : [])[0]?.count ?? 0);
+  }
+
+  /**
+   * Persist the EN-fallback SEO onto the main row and stamp `seo_generated_at` via DB
+   * `CURRENT_TIMESTAMP` (same statement) so it equals the trigger-set `updated_at` and the row
+   * settles instead of being regenerated on every batch run.
+   */
+  async updateSeoById(id: number, seo: EntitySeoFields): Promise<void> {
+    await Query.raw(
+      `UPDATE ${TABLES_ENUM.COLLECTIONS}
+       SET seo_title = $1, seo_description = $2, seo_generated_at = CURRENT_TIMESTAMP
+       WHERE id = $3`,
+      [seo.seo_title ?? null, seo.seo_description ?? null, id],
+    );
+  }
+
+  /** Lean SEO-only read for `generateMetadata`, localized to the request language. */
+  async getSeoMetadataBySlug(
+    slug: string,
+    userId: number,
+  ): Promise<{ seo_title: string | null; seo_description: string | null; is_indexable: boolean } | null> {
+    const lang = this.requestService.language ?? DEFAULT_LANGUAGE;
+    const result = await Query.raw(
+      `SELECT c.is_indexable,
+              COALESCE(ct.seo_title, c.seo_title) AS seo_title,
+              COALESCE(ct.seo_description, c.seo_description) AS seo_description
+       FROM ${TABLES_ENUM.COLLECTIONS} c
+       LEFT JOIN ${TABLES_ENUM.COLLECTION_TRANSLATIONS} ct
+         ON ct.collection_id = c.id AND ct.language_code = $1
+       WHERE c.slug = $2 AND c.user_id = $3 AND c.blocked_at IS NULL
+       LIMIT 1`,
+      [lang, slug, userId],
+    );
+    const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];
+    const row = (Array.isArray(rows) ? rows : [])[0] as
+      | { seo_title: string | null; seo_description: string | null; is_indexable: boolean }
+      | undefined;
+    if (!row) return null;
+    return {
+      seo_title: row.seo_title ?? null,
+      seo_description: row.seo_description ?? null,
+      is_indexable: row.is_indexable,
+    };
+  }
+
+  /** Upsert per-locale SEO rows into collection_translations (one row per app language). */
+  async upsertSeoTranslations(collectionId: number, rows: SeoTranslation[]): Promise<void> {
+    for (const r of rows) {
+      await Query.raw(
+        `INSERT INTO ${TABLES_ENUM.COLLECTION_TRANSLATIONS} (language_code, collection_id, seo_title, seo_description)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (language_code, collection_id)
+         DO UPDATE SET seo_title = EXCLUDED.seo_title, seo_description = EXCLUDED.seo_description`,
+        [r.language_code, collectionId, r.seo_title ?? null, r.seo_description ?? null],
+      );
+    }
   }
 
   async getOneCompact(id: number) {
@@ -259,6 +414,10 @@ export class CollectionRepository extends BaseRepository {
           is_featured: row.is_featured,
           is_highlight: row.is_highlight,
           is_active: row.is_active,
+          is_indexable: row.is_indexable,
+          seo_title: row.seo_title,
+          seo_description: row.seo_description,
+          seo_generated_at: row.seo_generated_at,
           description: row.description,
           blocked_at: row.blocked_at,
           user_id: row.user_id,
@@ -279,9 +438,9 @@ export class CollectionRepository extends BaseRepository {
           thumbnail: row.thumbnail,
           url: row.url,
           seo_filename: row.seo_filename,
-          seo_title: row.seo_title,
+          seo_title: row.m_seo_title,
           seo_alt: row.seo_alt,
-          seo_description: row.seo_description,
+          seo_description: row.m_seo_description,
           shape: row.shape,
           aspect_ratio: row.aspect_ratio ?? '1:1',
           is_highlight: row.is_highlight
@@ -320,6 +479,10 @@ export class CollectionRepository extends BaseRepository {
       is_featured: result.is_featured,
       is_highlight: result.is_highlight,
       is_active: result.is_active,
+      is_indexable: result.is_indexable,
+      seo_title: result.seo_title,
+      seo_description: result.seo_description,
+      seo_generated_at: result.seo_generated_at,
       description: result.description,
       blocked_at: result.blocked_at,
       user_id: result.user_id,
@@ -341,6 +504,10 @@ export class CollectionRepository extends BaseRepository {
           is_featured: row.is_featured,
           is_highlight: row.is_highlight,
           is_active: row.is_active,
+          is_indexable: row.is_indexable,
+          seo_title: row.seo_title,
+          seo_description: row.seo_description,
+          seo_generated_at: row.seo_generated_at,
           description: row.description,
           blocked_at: row.blocked_at,
           user_id: row.user_id,
@@ -377,10 +544,10 @@ export class CollectionRepository extends BaseRepository {
         position: row.position,
         thumbnail: row.thumbnail,
         url: row.url,
-        seo_title: row.seo_title,
+        seo_title: row.m_seo_title,
         seo_filename: row.seo_filename,
         seo_alt: row.seo_alt,
-        seo_description: row.seo_description,
+        seo_description: row.m_seo_description,
         shape: row.shape,
         aspect_ratio: row.aspect_ratio ?? '1:1',
         is_highlight: row.is_highlight
@@ -396,6 +563,10 @@ export class CollectionRepository extends BaseRepository {
       is_featured: first.is_featured,
       is_highlight: first.is_highlight,
       is_active: first.is_active,
+      is_indexable: first.is_indexable,
+      seo_title: first.seo_title,
+      seo_description: first.seo_description,
+      seo_generated_at: first.seo_generated_at,
       description: first.description,
       blocked_at: first.blocked_at,
       user_id: first.user_id,

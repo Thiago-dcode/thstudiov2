@@ -1,5 +1,5 @@
-import { getTranslations } from "next-intl/server";
 import { notFound, redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import {
   AdminPageContainer,
   AdminPageTitle,
@@ -27,9 +27,7 @@ export default async function CollectionEdit({ params }: Props) {
   );
 
   if (collectionResponse.error) {
-    return (
-      <div>{collectionResponse?.error?.message || t("loadError")}</div>
-    );
+    return <div>{collectionResponse?.error?.message || t("loadError")}</div>;
   }
 
   if (!collectionResponse.data) {

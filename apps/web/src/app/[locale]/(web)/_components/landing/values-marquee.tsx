@@ -1,15 +1,23 @@
 "use client";
 
-import { ReactNode, useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 
 export type ValueItem = { title: string; description: string };
 
 const SPEED = 30; // pixels per second — keeps motion constant at any width
 
-export const ValuesMarquee = ({ items, itemNode = (item, i) => <div key={i} className="mr-12 flex w-72 shrink-0 flex-col gap-2">
-  <h3 className="text-lg! font-medium!">{item.title}</h3>
-  <p className="text-sm! text-text-muted">{item.description}</p>
-</div> }: { items: ValueItem[], itemNode?: (item: ValueItem, i: number) => ReactNode }) => {
+export const ValuesMarquee = ({
+  items,
+  itemNode = (item, i) => (
+    <div key={i} className="mr-12 flex w-72 shrink-0 flex-col gap-2">
+      <h3 className="text-lg! font-medium!">{item.title}</h3>
+      <p className="text-sm! text-text-muted">{item.description}</p>
+    </div>
+  ),
+}: {
+  items: ValueItem[];
+  itemNode?: (item: ValueItem, i: number) => ReactNode;
+}) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const setRef = useRef<HTMLDivElement>(null);
   const [copies, setCopies] = useState(2);

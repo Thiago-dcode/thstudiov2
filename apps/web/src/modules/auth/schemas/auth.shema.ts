@@ -1,7 +1,7 @@
 import * as z from "zod";
 import {
-  minLengthMessage,
   maxLengthMessage,
+  minLengthMessage,
   type Translator,
 } from "@/lib/validation/zod-helpers";
 

@@ -1,6 +1,6 @@
 import { BookUser } from "lucide-react";
-import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { AboutPageDisplay } from "@/modules/about-page/components/about-page-display";
 import { CreateOrUpdateAboutPage } from "@/modules/about-page/components/create-update-about-page";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";

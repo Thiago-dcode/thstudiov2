@@ -45,7 +45,9 @@ export const createOrUpdateCollectionAction = async (
 
   trimValues(rawData, { deep: true });
 
-  const schema = isUpdate ? updateCollectionSchema(t) : createCollectionSchema(t);
+  const schema = isUpdate
+    ? updateCollectionSchema(t)
+    : createCollectionSchema(t);
   const validated = schema.safeParse(rawData);
 
   if (!validated.success) {

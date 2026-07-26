@@ -1,6 +1,8 @@
 import { Injectable } from "@nestjs/common";
 import { Helpers } from "src/common/services/helpers.service";
 import { FullCollection, Collection, CollectionIndexRequest } from "@repo/common-lib/types/collection";
+import { EntitySeoMetadata } from "@repo/common-lib/types/ai";
+import { CACHE_KEY_COLLECTION_SEO, SEO_METADATA_CACHE_TTL } from "@repo/common-lib/constants/constants";
 import { UserRepository } from "../users/users.repository";
 import { CollectionRepository } from "../collections/collection.repository";
 
@@ -26,6 +28,27 @@ export class UserCollectionService {
         })))
         : collection.media,
     };
+  }
+
+  /** Lean, locale-resolved SEO for generateMetadata — no full-graph load. */
+  async getSeoMetadata(username: string, slug: string): Promise<EntitySeoMetadata | null> {
+    const user = await this.userRepository.findByUsernameCompact(username);
+    if (!user) return null;
+    return this.helpers.cacheRemember(
+      CACHE_KEY_COLLECTION_SEO(user.id, slug),
+      async () => {
+        const meta = await this.collectionRepository.getSeoMetadataBySlug(slug, user.id);
+        if (!meta) return null;
+        return {
+          seo_title: meta.seo_title,
+          seo_description: meta.seo_description,
+          og_image: null,
+          canonical_path: `/artists/${username}/collections/${slug}`,
+          noindex: !meta.is_indexable,
+        };
+      },
+      { ttl: SEO_METADATA_CACHE_TTL, append_language: true },
+    );
   }
 
   async getByUsername(username: string, slug: string): Promise<FullCollection> {

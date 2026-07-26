@@ -1,14 +1,28 @@
 import type { Messages } from "./en";
 
 const messages = {
+  seo: {
+    organizationDescription:
+      "A11STUDIO é a plataforma de portfólios onde os artistas são descobertos — mostre seu trabalho e conecte-se com clientes, colecionadores e colaboradores.",
+  },
   landing: {
+    metadata: {
+      title: "A11STUDIO — Onde os artistas são descobertos",
+      description:
+        "A plataforma de portfólios para artistas. Mostre seu trabalho, seja descoberto por clientes e colecionadores e deixe a IA cuidar do seu SEO automaticamente.",
+    },
     hero: {
       titlePrefix: "Deixe que sua",
       titleAccentWords: ["arte", "visão", "criação", "paixão", "voz"],
       titleConnector: "se",
-      titleDiscoverWords: ["compartilhe", "note", "revele", "encontre", "descubra"],
-      subtitle:
-        "Basta enviar sua arte. Nós cuidamos do resto.",
+      titleDiscoverWords: [
+        "compartilhe",
+        "note",
+        "revele",
+        "encontre",
+        "descubra",
+      ],
+      subtitle: "Basta enviar sua arte. Nós cuidamos do resto.",
       primaryCtaLoggedIn: "Acessar o Atelier",
       primaryCtaLoggedOut: "Comece grátis agora",
       secondaryCta: "Encontrar artistas",
@@ -29,7 +43,7 @@ const messages = {
         successReserveMessage:
           "Vamos reservar seu e-mail assim que você o validar.",
         alreadyExists:
-          '{email} já está na lista de espera. Confira seu e-mail. Se isso parece errado, <supportLink>fale com o suporte</supportLink>.',
+          "{email} já está na lista de espera. Confira seu e-mail. Se isso parece errado, <supportLink>fale com o suporte</supportLink>.",
       },
       disclaimer: "Grátis para começar · Sem cartão de crédito",
       scrollToNextSection: "Rolar para a próxima seção",
@@ -60,8 +74,7 @@ const messages = {
       items: [
         {
           title: "Só arte",
-          description:
-            "Um espaço só para a {arte}. Sem ruído, sem distrações.",
+          description: "Um espaço só para a {arte}. Sem ruído, sem distrações.",
         },
         {
           title: "Inteligência",
@@ -209,39 +222,84 @@ const messages = {
   },
   faqs: {
     title: "Perguntas frequentes",
-    stillHaveQuestions: "Ainda tem dúvidas? Estamos aqui para <link>ajudar</link>",
+    stillHaveQuestions:
+      "Ainda tem dúvidas? Estamos aqui para <link>ajudar</link>",
+    viewAll: "Ver todas as perguntas",
     items: [
       {
+        id: "what-is-a11studio",
         question: "O que é a A11STUDIO?",
         answer:
-          "A A11STUDIO é uma plataforma de portfólios feita para artistas visuais que fica entre um site profissional e a facilidade das redes sociais. Você tem um site polido e com cara personalizada — mas atualizá-lo é tão simples quanto postar um story. Sem código, sem habilidades de web design, só arrastar, soltar e publicar.",
+          "A A11STUDIO combina as melhores partes de um site de portfólio profissional com a simplicidade e a proximidade das redes sociais. Os sites tradicionais te dão controle total sobre como apresenta seu trabalho, enquanto as redes sociais tornam a publicação muito fácil. Em vez de te obrigar a escolher, a A11STUDIO oferece os dois: um lar profissional e polido para a sua arte, tão fácil de atualizar quanto postar um story. Saiba mais <a href='/about'>sobre nossa missão</a>.",
       },
       {
+        id: "what-is-a-portfolio",
         question: "O que é um portfólio?",
         answer:
-          'Um portfólio é sua seleção de destaque — uma vitrine cuidada do seu melhor trabalho dentro de uma disciplina ou estilo. Por exemplo, um portfólio de "Fotografia de Casamento" traria as fotos mais fortes de todos os casamentos que você já fotografou. É o que os clientes veem para avaliar sua habilidade e te contratar.',
+          "Um portfólio é sua seleção de destaque — uma vitrine cuidada do seu melhor trabalho dentro de uma disciplina ou estilo. Por exemplo, um portfólio de “Fotografia de Casamento” traria as fotos mais fortes de todos os casamentos que você já fotografou. É o que os clientes veem para avaliar sua habilidade e decidir te contratar.",
       },
       {
+        id: "what-is-a-collection",
         question: "O que é uma coleção?",
         answer:
-          'Uma coleção é um projeto ou evento específico agrupado. Por exemplo, "Casamento de Maria e João 2024" seria uma coleção com todas as fotos entregues daquele ensaio. É como você organiza trabalhos individuais, sessões ou conjuntos de obras.',
+          "Uma coleção é um projeto ou evento específico agrupado — por exemplo, “Casamento de Maria e João 2024” reuniria todas as fotos entregues daquele ensaio. Enquanto um <a href='#what-is-a-portfolio'>portfólio</a> é a sua seleção do melhor ao longo de vários projetos, uma coleção é a forma de organizar o trabalho de um único job, sessão ou conjunto de obras.",
       },
       {
-        question: "Qual é a diferença entre um portfólio e uma coleção?",
+        id: "create-account",
+        question: "Como posso criar uma conta?",
         answer:
-          'Um portfólio é o seu melhor de si — uma vitrine que abrange vários projetos para demonstrar sua expertise em uma disciplina (ex.: "Fotografia de Casamento"). Uma coleção é um único projeto ou evento (ex.: "Casamento de Maria e João 2024"). Pense no portfólio como o que te contrata e na coleção como a forma de organizar cada trabalho.',
+          "Começar leva só um minuto. Acesse a <a href='/auth/register'>página de cadastro</a>, crie sua conta gratuita e configure seu perfil. Você monta seu primeiro portfólio em minutos — sem precisar programar, hospedar ou ter habilidades de web design. Se os cadastros estiverem temporariamente fechados, você pode entrar na lista de espera e avisaremos assim que sua vaga abrir.",
       },
       {
+        id: "why-ai",
         question: "Por que a A11STUDIO usa IA?",
         answer:
-          "Para que você possa focar no que faz de melhor — criar arte. A IA cuida de tudo o resto nos bastidores: gera títulos, descrições e tags otimizados para SEO, categoriza suas mídias automaticamente e escreve texto alternativo para que buscadores e assistentes de IA te encontrem. Você nunca precisa aprender sobre SEO ou marketing — só suba suas melhores peças e a IA garante que o público certo as descubra.",
+          "Para que você possa focar no que faz de melhor — criar arte. Tudo o que é técnico acontece nos bastidores: a IA gera títulos, descrições e tags otimizados para SEO, categoriza suas mídias automaticamente e escreve texto alternativo para que buscadores e assistentes de IA te encontrem. Você nunca precisa aprender SEO ou marketing — só suba suas melhores peças e deixe o público certo as descobrir.",
       },
       {
-        question: "Posso usar a A11STUDIO de graça?",
+        id: "what-is-seo",
+        question: "O que é SEO?",
         answer:
-          "Sim. A A11STUDIO oferece um plano gratuito que permite criar seu perfil, montar portfólios e começar a mostrar seu trabalho imediatamente. Os planos premium desbloqueiam recursos adicionais, como ferramentas com IA, mais armazenamento e opções avançadas de personalização.",
+          "SEO (otimização para mecanismos de busca) é o que ajuda seu trabalho a aparecer quando alguém pesquisa no Google — ou pergunta a um assistente de IA — por um artista como você. Normalmente exige conhecimento técnico, mas a A11STUDIO faz isso por você automaticamente, escrevendo títulos, descrições, tags e texto alternativo otimizados nos bastidores para que as pessoas certas encontrem seu portfólio. Saiba mais sobre <a href='#why-ai'>como nossa IA faz isso</a>.",
+      },
+      {
+        id: "position-profile",
+        question: "Como posso posicionar meu perfil?",
+        answer:
+          "A A11STUDIO cuida por você das partes difíceis da visibilidade — SEO, indexação nos buscadores e otimização acontecem automaticamente. Para aproveitar ao máximo, complete seu perfil, escolha as categorias que combinam com o seu trabalho e suba suas peças mais fortes. Quanto mais completo e polido o seu perfil, mais fácil fica para os clientes certos te descobrirem. Precisa de ajuda? <a href='/support'>Fale com a gente</a>.",
+      },
+      {
+        id: "get-clients",
+        question: "Como posso conseguir clientes?",
+        answer:
+          "A A11STUDIO foi feita para conectar artistas a pessoas que valorizam o seu trabalho. A melhor forma de atrair clientes é completar seu perfil, mostrar seus portfólios mais fortes e manter seu trabalho organizado para que os visitantes entendam na hora o que você oferece. A plataforma cuida da descoberta — SEO e indexação — para que os clientes que procuram o seu tipo de trabalho te encontrem. Garanta que seu <a href='#position-profile'>perfil esteja bem posicionado</a> para ter o maior alcance.",
+      },
+      {
+        id: "upload-videos",
+        question: "Posso subir vídeos?",
+        answer:
+          "Ainda não — por enquanto a A11STUDIO suporta imagens e foi projetada para exibi-las lindamente. O suporte a vídeo está no nosso roadmap para uma versão futura, para que cineastas, animadores e artistas do movimento também possam apresentar seu trabalho aqui. Quer ser avisado quando chegar? <a href='/support'>Entre em contato</a>.",
+      },
+      {
+        id: "is-free",
+        question: "A A11STUDIO é gratuita?",
+        answer:
+          "Sim. A A11STUDIO oferece um plano gratuito que permite criar seu perfil, montar portfólios e começar a mostrar seu trabalho imediatamente. Os planos premium desbloqueiam recursos extras, como ferramentas com IA, mais armazenamento e personalização avançada — mas você pode começar de graça e fazer upgrade só se precisar.",
       },
     ],
+    page: {
+      metadata: {
+        title: "Perguntas frequentes — A11STUDIO",
+        description:
+          "Respostas às perguntas mais comuns sobre a A11STUDIO — o que é, portfólios, criar uma conta, IA, posicionar seu perfil e preços.",
+      },
+      hero: {
+        label: "Perguntas frequentes",
+        title: "Perguntas frequentes",
+        lead: "Tudo o que você precisa saber sobre a A11STUDIO — o que é, como começar e como ela ajuda as pessoas certas a descobrirem seu trabalho.",
+      },
+      navLabel: "Nesta página",
+    },
   },
   about: {
     metadata: {
@@ -388,7 +446,8 @@ const messages = {
   },
   waitListDialog: {
     title: "As inscrições estão fechadas no momento",
-    description: "Entre na lista de espera e seja um dos primeiros a entrar na A11STUDIO.",
+    description:
+      "Entre na lista de espera e seja um dos primeiros a entrar na A11STUDIO.",
   },
   footer: {
     tagline: "A plataforma de portfólios feita para artistas.",
@@ -404,6 +463,7 @@ const messages = {
     contact: {
       heading: "Contato",
       about: "Sobre",
+      faqs: "Perguntas frequentes",
       support: "Suporte",
     },
     copyright: "© {year} A11STUDIO. Todos os direitos reservados.",
@@ -740,8 +800,7 @@ const messages = {
     title: "Você tem um presente esperando",
     description:
       "Como <name>{label}</name> você ganha <free>{months, plural, one {# mês grátis} other {# meses grátis}}</free>.",
-    claimBelow:
-      "Resgate logo abaixo. Vamos te guiar para obter o benefício",
+    claimBelow: "Resgate logo abaixo. Vamos te guiar para obter o benefício",
     claimAfterSetup:
       "Assim que você concluir a configuração de boas-vindas, vamos te guiar para obter o benefício.",
     claimNow: "Resgatar agora",
@@ -901,7 +960,8 @@ const messages = {
       viewAllServices: "Ver todos os serviços",
       emptyState: {
         title: "{name} ainda não publicou nenhum trabalho.",
-        subtitle: "Volte em breve, ou entre em contato para começar uma conversa.",
+        subtitle:
+          "Volte em breve, ou entre em contato para começar uma conversa.",
         cta: "Entrar em contato",
       },
     },
@@ -920,8 +980,7 @@ const messages = {
         "A coleção que você procura não existe ou pode ter sido removida.",
       service:
         "O serviço que você procura não existe ou pode ter sido removido.",
-      media:
-        "A mídia que você procura não existe ou pode ter sido removida.",
+      media: "A mídia que você procura não existe ou pode ter sido removida.",
     },
     profile: {
       getInTouch: "Entrar em contato",
@@ -999,7 +1058,8 @@ const messages = {
       descriptionType: "A descrição deve ser um texto válido",
       descriptionMin: "A descrição deve ter pelo menos 20 caracteres",
       descriptionMax: "A descrição deve ter menos de 1000 caracteres",
-      userIdRequired: "O ID do usuário é obrigatório e deve ser um número válido",
+      userIdRequired:
+        "O ID do usuário é obrigatório e deve ser um número válido",
       userIdPositive: "O ID do usuário deve ser um número positivo",
     },
     auth: {
@@ -1163,6 +1223,8 @@ const messages = {
         slugAvailable: "✓ Este slug está disponível",
         slugTaken: "✗ Este slug já está em uso",
         slugInvalidFormat: "✗ Formato de slug inválido. Exemplo: meu-portfolio",
+        slugChangeWarning:
+          "É melhor não alterar o slug depois de definido — alterá-lo muda o seu link público, então os links existentes para esta página podem parar de funcionar.",
         descriptionLabel: "Descrição",
         descriptionPlaceholder: "Descreva seu portfólio...",
         categoriesLabel: "Categorias",
@@ -1237,6 +1299,8 @@ const messages = {
           "Identificador compatível com URL. Apenas letras minúsculas, números e hífens.",
         slugInvalidFormat:
           "✗ Formato de slug inválido. Exemplo: fotografia-de-retrato",
+        slugChangeWarning:
+          "É melhor não alterar o slug depois de definido — alterá-lo muda o seu link público, então os links existentes para esta página podem parar de funcionar.",
         descriptionLabel: "Descrição",
         descriptionPlaceholder: "Descreva seu serviço...",
         priceLabel: "Preço",
@@ -1307,6 +1371,8 @@ const messages = {
         slugAvailable: "✓ Este slug está disponível",
         slugTaken: "✗ Este slug já está em uso",
         slugInvalidFormat: "✗ Formato de slug inválido. Exemplo: minha-colecao",
+        slugChangeWarning:
+          "É melhor não alterar o slug depois de definido — alterá-lo muda o seu link público, então os links existentes para esta página podem parar de funcionar.",
         descriptionLabel: "Descrição",
         descriptionPlaceholder: "Descreva sua coleção...",
         showOnProfile: "Mostrar na página de perfil",
@@ -1349,9 +1415,9 @@ const messages = {
         upgradeRequired: "Upgrade necessário:",
         upgradeRequiredBody:
           "O controle de compressão não está disponível no seu plano atual. Faça upgrade para acessar este recurso.",
-        aiSeoGeneration: "Geração de SEO com IA",
+        aiSeoGeneration: "Gerar metadados",
         aiSeoTooltipBody:
-          "Gera automaticamente título, descrição, texto alternativo e nome de arquivo SEO para cada imagem usando análise de visão por IA.",
+          "O SEO (otimização para mecanismos de busca) ajuda seu trabalho a ser encontrado no Google e no Google Imagens. Usa IA para analisar a imagem e gerar um título, uma descrição, um texto alternativo e um nome de arquivo artísticos e ricos em palavras-chave, e a marca automaticamente com as categorias correspondentes.",
         aiSeoCreditsHint:
           "Custa 1 crédito de IA por imagem. Você tem {count} {count, plural, one {crédito} other {créditos}} restantes.",
         creditsLabel: "{count} {count, plural, one {crédito} other {créditos}}",
@@ -1369,8 +1435,7 @@ const messages = {
         close: "Fechar",
         createMedia: "Criar mídia",
         addMedia: "Adicionar mídia",
-        storageFullTitle:
-          "Armazenamento cheio: {used} / {limit} GB utilizados",
+        storageFullTitle: "Armazenamento cheio: {used} / {limit} GB utilizados",
         uploadInProgress: "Envio em andamento...",
       },
       card: {
@@ -1394,18 +1459,18 @@ const messages = {
         filenameLabel: "Nome do arquivo",
         filenamePlaceholder: "Digite o nome do arquivo",
         filenameInfo:
-          "O nome do arquivo usado para fins de SEO. Pode ser editado para melhorar a visibilidade nas buscas.",
+          "Nome de arquivo SEO definido automaticamente no upload ou ao gerar metadados com IA. Não é editável.",
         lastUpdated: "Última atualização",
         noPreview: "Sem prévia",
         altFallback: "Mídia de {username}",
         untitled: "Sem título",
         editMedia: "Editar mídia",
         mediaPreview: "Prévia da mídia",
-        generateSeo: "Gerar SEO",
+        generateSeo: "Gerar metadados",
         noCreditsAvailable:
-          "Nenhum crédito de IA disponível. Você precisa de pelo menos 1 crédito para gerar metadados SEO. Faça upgrade do seu plano ou aguarde a renovação dos créditos.",
+          "Nenhum crédito de IA disponível. Você precisa de pelo menos 1 crédito para gerar metadados. Faça upgrade do seu plano ou aguarde a renovação dos créditos.",
         generateSeoTooltip:
-          "Gera automaticamente os campos SEO com IA. Analisa o conteúdo da sua imagem e gera títulos, descrições, textos alternativos e nomes de arquivo otimizados para melhor visibilidade em buscas.",
+          "O SEO (otimização para mecanismos de busca) ajuda seu trabalho a ser encontrado no Google e no Google Imagens. Usa IA para analisar a imagem e gerar um título, uma descrição, um texto alternativo e um nome de arquivo artísticos e ricos em palavras-chave, e a marca automaticamente com as categorias correspondentes.",
         noCreditsSuffix: " (Sem créditos)",
         delete: "Excluir",
         deleteConfirm: "Tem certeza de que deseja excluir esta mídia?",
@@ -1420,14 +1485,13 @@ const messages = {
         close: "Fechar",
       },
       grid: {
-        generateSeoCount: "Gerar SEO ({count})",
-        generateSeoTitle: "Gerar SEO com IA",
+        generateSeoCount: "Gerar metadados ({count})",
+        generateSeoTitle: "Gerar metadados com IA",
         generateSeoDescription:
-          "Gerar metadados SEO com IA para {count} {count, plural, one {mídia selecionada} other {mídias selecionadas}}?",
+          "Gerar metadados com IA para {count} {count, plural, one {mídia selecionada} other {mídias selecionadas}}?",
         creditsAvailable: "Créditos disponíveis:",
         creditsNeeded: "Créditos necessários:",
-        overAiLimit:
-          "Limite: selecione até {max} itens (remova {excess}).",
+        overAiLimit: "Limite: selecione até {max} itens (remova {excess}).",
         insufficientCredits:
           "Créditos insuficientes. Você precisa de mais {needed} créditos.",
         cancel: "Cancelar",

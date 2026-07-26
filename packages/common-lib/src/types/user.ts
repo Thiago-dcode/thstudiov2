@@ -51,12 +51,16 @@ export type UserProfile = Pick<UserSchema,
   | 'id' | 'name' | 'surname' | 'username'
   | 'avatar' | 'banner'
   | 'is_active' | 'short_biography' | 'biography' | 'profession' | 'is_featured'
+  | 'seo_title' | 'seo_description' | 'seo_generated_at'
 > & {
   address: ProfileAddress | null;
   categories: Omit<CategoryBase,'is_featured'>[];
 };
 
-export type CreateUserInput = Omit<UserSchema, 'id' | 'created_at' | 'updated_at' | 'is_featured'>;
+export type CreateUserInput = Omit<
+  UserSchema,
+  'id' | 'created_at' | 'updated_at' | 'is_featured' | 'seo_title' | 'seo_description' | 'seo_generated_at'
+>;
 export type UpdateUserInput = Partial<CreateUserInput>;
 export type UpdateUserInputWithAssets = Omit<UpdateUserInput, 'avatar' | 'banner'> & {
   categories?: (string | number)[]

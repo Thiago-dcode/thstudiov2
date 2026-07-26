@@ -1,4 +1,5 @@
 import { MimeTypes } from "../types/general";
+import { EnumType } from "./enums";
 
 // ==================== LANGUAGE / LOCALIZATION ====================
 export const DEFAULT_LANGUAGE = 'EN' as const;
@@ -32,6 +33,15 @@ export const REDIRECT_TO_COOKIE_NAME = 'x-app-redirect-to' as const;
 export const FUNNEL_LAST_STEP = 5;
 export const ALLOWED_IMAGE_FILE_TYPES: MimeTypes[] = ['image/jpeg', 'image/png', 'image/webp'];
 export const STRIKES_TO_BAN = 3;
+/**
+ * LLM usage types that count against a user's AI credit quota. Only user-initiated
+ * generation counts; platform-driven background SEO (portfolio/collection/service/user
+ * metadata crons) is billed to the platform, not the artist. Keep this in sync wherever
+ * AI credits are counted or the "credits exhausted" email is triggered.
+ */
+export const CREDIT_CONSUMING_LLM_USAGE_TYPES: EnumType<'LLM_USAGE_TYPE'>[] = [
+  'GENERATE_MEDIA_METADATA',
+];
 export const MAX_USERNAME_RESET = 3;
 export const MAX_PASSWORD_RESET = 3;
 export const MAX_COLLECTION_ITEMS =30;
@@ -74,6 +84,8 @@ export const WEBHOOK_STRIPE_EVENT = 'webhook.stripe.event' as const;
 export const UPDATE_USER_EXTRA_DATA_METRICS = 'update-user-extra-data-metrics.event' as const;
 export const LLM_TOKENS_USAGE_EVENT = 'llm.tokens.usage' as const;
 export const MEDIA_MODERATION_EVENT = 'media.moderation' as const;
+export const GENERATE_ENTITY_METADATA_EVENT = 'generate.entity.metadata' as const;
+export const GENERATE_SINGLE_ENTITY_METADATA_EVENT = 'generate.single.entity.metadata' as const;
 export const CREATE_USER_STORAGE_REQUEST = 'create.user-storage-request' as const;
 export const CREATE_USER_CONTACT = 'create.user-contact' as const;
 export const CREATE_OR_UPDATE_LOCATION = 'create-or-update.location' as const;
@@ -103,6 +115,8 @@ export const JOB_COMPUTE_USER_METRICS = 'compute-user-metrics' as const;
 export const JOB_STRIPE_WEBHOOK = 'stripe-webhook' as const;
 export const JOB_RECORD_LLM_USAGE = 'record-llm-usage' as const;
 export const JOB_RECORD_MEDIA_MODERATION = 'record-media-moderation' as const;
+export const JOB_GENERATE_ENTITY_METADATA = 'generate-entity-metadata' as const;
+export const JOB_GENERATE_SINGLE_ENTITY_METADATA = 'generate-single-entity-metadata' as const;
 export const JOB_CREATE_STORAGE_REQUEST = 'create-storage-request' as const;
 export const JOB_CREATE_USER_CONTACT = 'create-user-contact' as const;
 export const JOB_CREATE_OR_UPDATE_LOCATION = 'create-or-update-location' as const;
@@ -130,6 +144,16 @@ export const CACHE_KEY_USER_EXTRA_DATA = (userId: number | string) => `user-extr
 
 // Categories
 export const CACHE_KEY_USER_CATEGORIES = (userId: number | string) => `user_categories_${userId}` as const;
+/** All active categories (canonical names) used to feed the AI media-tagging prompt. */
+export const CACHE_KEY_ACTIVE_CATEGORIES = 'active_categories_for_tagging' as const;
+
+/** Per-entity SEO metadata cache (language is appended per request via `append_language`). */
+export const CACHE_KEY_PORTFOLIO_SEO = (userId: number, slug: string) => `seo_portfolio_${userId}_${slug}` as const;
+export const CACHE_KEY_COLLECTION_SEO = (userId: number, slug: string) => `seo_collection_${userId}_${slug}` as const;
+export const CACHE_KEY_SERVICE_SEO = (userId: number, slug: string) => `seo_service_${userId}_${slug}` as const;
+export const CACHE_KEY_MEDIA_SEO = (publicId: string) => `seo_media_${publicId}` as const;
+/** SEO metadata is served to crawlers and changes rarely — cache a full day. */
+export const SEO_METADATA_CACHE_TTL = 1000 * 60 * 60 * 24;
 export const CACHE_KEY_CATEGORY_TRANSLATION = (
   categoryId: number | string,
   languageCode: string,

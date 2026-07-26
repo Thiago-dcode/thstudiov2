@@ -32,10 +32,6 @@ export class CreateMediaRequest {
   @IsOptional()
   seo_description?: string;
 
-  @IsString()
-  @IsOptional()
-  seo_filename?: string;
-
   @IsOptional()
   @IsAvailableEnum('COMPRESSION_LEVEL')
   compression_level: EnumType<'COMPRESSION_LEVEL'>;

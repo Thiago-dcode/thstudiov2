@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     const backendHeaders = await getBackendHeaders(session.token);
 
     const backendResponse = await fetch(
-      `${backendHeaders.baseUrl}/ai/media/seo`,
+      `${backendHeaders.baseUrl}/ai/media/metadata`,
       {
         method: "POST",
         headers: {

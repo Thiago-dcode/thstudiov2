@@ -32,6 +32,15 @@ export class UserServiceController {
   }
 
   @Public()
+  @Get(':username/services/:slug/metadata')
+  async getServiceMetadata(
+    @Param('username') username: string,
+    @Param('slug') slug: string,
+  ) {
+    return await this.userServiceService.getSeoMetadata(username, slug);
+  }
+
+  @Public()
   @Get(':username/services/:slug')
   async getByUsername(
     @Param('username') username: string,

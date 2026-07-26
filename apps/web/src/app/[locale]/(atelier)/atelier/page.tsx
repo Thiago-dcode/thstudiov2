@@ -1,5 +1,5 @@
-import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import {

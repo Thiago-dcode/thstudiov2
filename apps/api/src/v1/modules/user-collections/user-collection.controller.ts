@@ -32,6 +32,15 @@ export class UserCollectionController {
   }
 
   @Public()
+  @Get(':username/collections/:slug/metadata')
+  async getCollectionMetadata(
+    @Param('username') username: string,
+    @Param('slug') slug: string,
+  ) {
+    return await this.userCollectionService.getSeoMetadata(username, slug);
+  }
+
+  @Public()
   @Get(':username/collections/:slug')
   async getByUsername(
     @Param('username') username: string,

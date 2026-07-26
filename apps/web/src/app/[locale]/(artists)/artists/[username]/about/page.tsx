@@ -1,9 +1,11 @@
 import { Mail, Pencil } from "lucide-react";
+import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { ArtistBreadcrumb } from "@/app/[locale]/(artists)/__components/artist-breadcrumb";
 import { ArtistContactDialog } from "@/app/[locale]/(artists)/__components/artist-contact.dialog";
+import { serverEnv } from "@/env/server";
 import { Link } from "@/i18n/navigation";
 import Web from "@/lib/components/web-page.component";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
@@ -13,6 +15,53 @@ import usersService from "@/modules/users/users.service";
 type Props = {
   params: Promise<{ username: string }>;
 };
+
+const SITE_NAME = "A11STUDIO";
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { username } = await params;
+  const [{ data: profile }, { data: aboutPage }] = await Promise.all([
+    usersService.getProfile(username),
+    userAboutPageService.getByUsername(username),
+  ]);
+
+  if (!profile) {
+    return { robots: { index: false, follow: false } };
+  }
+
+  const name =
+    [profile.name, profile.surname].filter(Boolean).join(" ") ||
+    `@${profile.username}`;
+  const title = aboutPage?.title?.trim() || `About ${name}`;
+  const description = aboutPage?.description?.trim()
+    ? aboutPage.description.trim().slice(0, 160)
+    : `Learn more about ${name} on ${SITE_NAME}.`;
+
+  // The about page is a supporting page about the same artist as /artists/{username}.
+  // Point its canonical at the profile so ranking signal consolidates there (no cannibalization).
+  const canonical = `${serverEnv.APP_URL}/artists/${username}`;
+  const ogImage = aboutPage?.photo || profile.avatar || undefined;
+
+  return {
+    title,
+    description,
+    alternates: { canonical },
+    openGraph: {
+      type: "profile",
+      title,
+      description,
+      url: canonical,
+      siteName: SITE_NAME,
+      ...(ogImage ? { images: [{ url: ogImage, alt: name }] } : {}),
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      ...(ogImage ? { images: [ogImage] } : {}),
+    },
+  };
+}
 
 export default async function AboutPage({ params }: Props) {
   const { username } = await params;

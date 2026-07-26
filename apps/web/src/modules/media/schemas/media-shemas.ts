@@ -11,7 +11,6 @@ export const createMediaSchema = z.object({
   seo_alt: z.string().max(255).nullable().optional(),
   seo_title: z.string().max(255).nullable().optional(),
   seo_description: z.string().max(255).nullable().optional(),
-  seo_filename: z.string().min(1).max(255),
   user_id: z.number().int().positive(),
 });
 
@@ -22,7 +21,6 @@ export const updateMediaSchema = z
     seo_alt: z.string().max(255).nullable().optional(),
     seo_title: z.string().max(255).nullable().optional(),
     seo_description: z.string().max(255).nullable().optional(),
-    seo_filename: z.string().max(255).nullable().optional(),
   })
   .partial();
 

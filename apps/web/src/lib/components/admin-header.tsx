@@ -2,9 +2,9 @@
 
 import { BrandLogo } from "@repo/ui/components/custom/brand-logo";
 import { X } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useEffect } from "react";
 import { useMainNav } from "../providers/main-nav.provider";
 import { MainNav } from "./main-nav.component";

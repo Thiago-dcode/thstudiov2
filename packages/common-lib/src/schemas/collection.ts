@@ -9,12 +9,15 @@ export type CollectionSchema = {
   is_featured: boolean;
   is_highlight: boolean;
   is_active: boolean;
+  is_indexable: boolean;
+  seo_title?: string | null;
+  seo_description?: string | null;
+  seo_generated_at?: Date | null;
   description?: string | null;
   blocked_at?: Date | null;
   user_id: number;
   created_at: Date;
   updated_at: Date;
-
 };
 
 export type CollectionSchemaWithoutTimestamps = Omit<CollectionSchema, 'created_at' | 'updated_at'>;
@@ -39,10 +42,10 @@ export type CollectionFullSchema = CollectionCompactSchema & {
   public_id: string;
   shape?: EnumType<'MEDIA_SHAPE'> | null;
   aspect_ratio?: EnumType<'ASPECT_RATIO'> | null;
-  seo_title?: string | null;
-  seo_alt?: string | null;
-  seo_description?: string | null;
-  seo_filename: string;
+  m_seo_title?: string | null;            // COLLISION: collections.seo_title
+  m_seo_description?: string | null;      // COLLISION: collections.seo_description
+  seo_alt?: string | null;                // media only — no collision
+  seo_filename: string;                   // media only — no collision
 };
 
 const tablesCollectionFull = [

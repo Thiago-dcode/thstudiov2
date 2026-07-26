@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { UserExtraDataRepository } from '../user-extra-data/user-extra-data.repository';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
+import { GENERATE_ENTITY_METADATA_EVENT } from '@repo/common-lib/constants/constants';
+import { UserExtraDataRepository } from '../user-extra-data/user-extra-data.repository';
+import { GenerateEntityMetadataEvent } from './events/generate-entity-metadata.event';
 
 @Injectable()
 export class AiTask {
@@ -11,6 +14,7 @@ export class AiTask {
 
   constructor(
     private readonly userExtraDataRepository: UserExtraDataRepository,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT, {
@@ -60,5 +64,49 @@ export class AiTask {
     } finally {
       await LogService.flush();
     }
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT, {
+    name: 'portfolio-task',
+    timeZone: 'UTC',
+  })
+  async handlePortfolioTask() {
+    this.eventEmitter.emit(
+      GENERATE_ENTITY_METADATA_EVENT,
+      new GenerateEntityMetadataEvent({ entity: 'portfolio' }),
+    );
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT, {
+    name: 'collection-task',
+    timeZone: 'UTC',
+  })
+  async handleCollectionTask() {
+    this.eventEmitter.emit(
+      GENERATE_ENTITY_METADATA_EVENT,
+      new GenerateEntityMetadataEvent({ entity: 'collection' }),
+    );
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT, {
+    name: 'service-task',
+    timeZone: 'UTC',
+  })
+  async handleServiceTask() {
+    this.eventEmitter.emit(
+      GENERATE_ENTITY_METADATA_EVENT,
+      new GenerateEntityMetadataEvent({ entity: 'service' }),
+    );
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT, {
+    name: 'user-task',
+    timeZone: 'UTC',
+  })
+  async handleUserTask() {
+    this.eventEmitter.emit(
+      GENERATE_ENTITY_METADATA_EVENT,
+      new GenerateEntityMetadataEvent({ entity: 'user' }),
+    );
   }
 }

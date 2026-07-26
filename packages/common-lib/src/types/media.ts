@@ -47,7 +47,7 @@ export type MediaIndexRequest = OffsetPaginationRequest & {
 export type GetAllUserMediaQueryParams = Omit<MediaIndexRequest, 'user_id'>;
 
 // Fields generated internally by the system (user cannot set these)
-type InternalMediaFields = 'id' | 'public_id' | 'bytes' | 'url' | 'thumbnail' | 'thumbnail_bytes' | 'shape' | 'aspect_ratio' | 'extension' | 'blocked_at' | 'is_active' | 'is_featured' | 'is_value_pillars' | 'is_highlight' | 'created_at' | 'updated_at';
+type InternalMediaFields = 'id' | 'public_id' | 'bytes' | 'url' | 'thumbnail' | 'thumbnail_bytes' | 'shape' | 'aspect_ratio' | 'extension' | 'blocked_at' | 'is_active' | 'is_featured' | 'is_value_pillars' | 'is_highlight' | 'seo_filename' | 'seo_generated_at' | 'created_at' | 'updated_at';
 
 // What users can provide when creating media (public API input)
 export type PublicCreateMediaInput = Omit<MediaSchema, InternalMediaFields>;
@@ -60,6 +60,10 @@ export type CreateMediaInput = Omit<MediaSchema, 'id' | 'created_at' | 'updated_
 
 // What users can update
 export type UpdateMediaInput = Partial<Omit<MediaSchema, InternalMediaFields>>;
+
+// What the internal service can update (public fields + system-only SEO filename/timestamp + storage keys)
+export type UpdateMediaInternalInput = UpdateMediaInput &
+  Partial<Pick<MediaSchema, 'seo_filename' | 'seo_generated_at' | 'url' | 'thumbnail'>>;
 
 // ==================== MEDIA TRANSLATION TYPES ====================
 

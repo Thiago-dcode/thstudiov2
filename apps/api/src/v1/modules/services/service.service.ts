@@ -9,8 +9,9 @@ import { UserExtraDataService } from "../user-extra-data/user-extra-data.service
 import { RequestService } from "src/common/services/request.service";
 import { ServiceRepository } from "./service.repository";
 import { EventEmitter2 } from "@nestjs/event-emitter";
-import { UPDATE_USER_EXTRA_DATA_METRICS } from "@repo/common-lib/constants/constants";
+import { CACHE_KEY_SERVICE_SEO, GENERATE_SINGLE_ENTITY_METADATA_EVENT, UPDATE_USER_EXTRA_DATA_METRICS } from "@repo/common-lib/constants/constants";
 import { UpdateUserExtraDataMetricsEvent } from "../user-extra-data/events/update-user-extra-data-metrics.event";
+import { GenerateSingleEntityMetadataEvent } from "../ai/events/generate-single-entity-metadata.event";
 import { AiService } from "../ai/ai.service";
 import { MediaModerationException } from "src/common/exceptions/media-moderation-exception";
 import { ApiException } from "src/common/exceptions/api-exception";
@@ -129,6 +130,14 @@ export class ServiceService {
       UPDATE_USER_EXTRA_DATA_METRICS,
       new UpdateUserExtraDataMetricsEvent(request.user_id),
     );
+    this.eventEmitter.emit(
+      GENERATE_SINGLE_ENTITY_METADATA_EVENT,
+      new GenerateSingleEntityMetadataEvent({
+        entity: 'service',
+        id: service.id,
+        user_id: service.user_id,
+      }),
+    );
 
     return service;
   }
@@ -200,6 +209,15 @@ export class ServiceService {
       keysToInvalidate.push(serviceCacheKeys.bySlug(service.user_id, request.slug));
     }
     await this.helpers.deleteManyCached(keysToInvalidate);
+
+    // Content changed → drop cached SEO metadata (old + new slug, all locales).
+    for (const s of new Set(
+      [service.slug, request.slug].filter(Boolean) as string[],
+    )) {
+      await this.helpers.deleteCached(CACHE_KEY_SERVICE_SEO(service.user_id, s), {
+        appended_language: true,
+      });
+    }
 
     return updated;
   }

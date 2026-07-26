@@ -8,7 +8,7 @@ import {
     ListObjectsV2Command,
     PutObjectCommand,
     S3Client,
-  } from '@aws-sdk/client-s3';
+} from '@aws-sdk/client-s3';
 import { S3StorageConfig } from "./types";
 
 export class S3StorageService extends StorageService {
@@ -32,32 +32,37 @@ export class S3StorageService extends StorageService {
             Key: path,
             Body: file.buffer,
             ContentType: file.mimetype,
-          });
-            const result = await this.s3Client.send(command);
-            return !!result;
-         
-    }
-    public async writeAnGet(file: Express.Multer.File, path: string){
-       const result = await this.write(file,path);
-       if(!result) return null;
+        });
+        const result = await this.s3Client.send(command);
+        return !!result;
 
-       return await this.getUrl(path);
+    }
+    public async writeAnGet(file: Express.Multer.File, path: string) {
+        const result = await this.write(file, path);
+        if (!result) return null;
+
+        return await this.getUrl(path);
     }
     /**
      * @param config.expireIn - Custom expiration in **seconds**. Falls back to `S3StorageConfig.signedUrlExpiration`.
      */
     public async getUrl(path: string, config?: { expireIn?: number }): Promise<string> {
+        //Resolve CDN
+        if (this.config.cdnUrl) {
+
+            return `${this.config.cdnUrl}/${path}`
+        }
         const command = new GetObjectCommand({
             Bucket: this.config.bucket,
             Key: path,
-          });
-            const url = await getSignedUrl(this.s3Client, command, {
-              expiresIn: config?.expireIn ?? this.config.signedUrlExpiration,
-            });
-            return url;
+        });
+        const url = await getSignedUrl(this.s3Client, command, {
+            expiresIn: config?.expireIn ?? this.config.signedUrlExpiration,
+        });
+        return url;
     }
     public async read(path: string): Promise<File> {
-        
+
         throw new Error('Not implemented ' + path);
     }
     public async delete(path: string): Promise<boolean> {
@@ -65,11 +70,11 @@ export class S3StorageService extends StorageService {
             const command = new DeleteObjectCommand({
                 Bucket: this.config.bucket,
                 Key: path,
-              });
-                await this.s3Client.send(command);
-                return true;
+            });
+            await this.s3Client.send(command);
+            return true;
         } catch (error) {
-          
+
             return false;
         }
     }

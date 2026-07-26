@@ -52,7 +52,9 @@ export function PlanCard({ plan, className }: PlanCardProps) {
       <PlanPrice isFree={plan.is_free} prices={plan.prices} />
       <div className="w-full">
         <p className="w-full py-3 bg-text text-bg text-center font-bold">
-          {plan.is_free ? t("getStarted") : t("goPlan", { planName: plan.name })}
+          {plan.is_free
+            ? t("getStarted")
+            : t("goPlan", { planName: plan.name })}
         </p>
       </div>
       <PlanFeatures plan={plan} />

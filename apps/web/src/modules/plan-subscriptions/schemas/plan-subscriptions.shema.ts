@@ -17,11 +17,9 @@ const isSameOriginAsApp = (url: string): boolean => {
 };
 
 const appOriginUrl = (t: Translator) =>
-  z
-    .url()
-    .refine(isSameOriginAsApp, {
-      message: t("validation.subscription.urlMustBeAppOrigin"),
-    });
+  z.url().refine(isSameOriginAsApp, {
+    message: t("validation.subscription.urlMustBeAppOrigin"),
+  });
 
 export const initiateSubscriptionSchema = (t: Translator) =>
   z.object({

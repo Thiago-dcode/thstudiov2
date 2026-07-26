@@ -1,7 +1,5 @@
 "use client";
 
-import { Check, ChevronDown } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,6 +7,8 @@ import {
   DropdownMenuTrigger,
 } from "@repo/ui/components/shadcn/dropdown-menu";
 import { cn } from "@repo/ui/lib/utils";
+import { Check, ChevronDown } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import {
   Link as LocaleLink,
   localeLabels,

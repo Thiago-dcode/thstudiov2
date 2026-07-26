@@ -26,10 +26,13 @@ import {
   ArtistSearchSelectColumn,
 } from '@repo/common-lib/schemas/user';
 import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
+import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/constants';
 import { Join } from '@repo/common-lib/types/database';
 import { CategoryBase } from '@repo/common-lib/types/category';
+import { EntitySeoFields, SeoTranslation } from '@repo/common-lib/types/ai';
 import { RequestService } from 'src/common/services/request.service';
 import { QueryBuilder } from '@repo/database/queryBuilder';
+import { Query } from '@repo/database/facades';
 import { foldLatinDiacriticsForMatch } from '@repo/common-lib/utils/fold-latin-diacritics';
 
 @Injectable()
@@ -86,6 +89,9 @@ export class UserRepository extends BaseRepository {
     'users.surname',
     'users.short_biography',
     'users.biography',
+    'users.seo_title',
+    'users.seo_description',
+    'users.seo_generated_at',
   ];
 
   private readonly BENEFIT_COLUMNS: UserFullBenefitSelectColumn[] = [
@@ -210,6 +216,9 @@ export class UserRepository extends BaseRepository {
     'users.biography',
     'users.profession',
     'users.is_featured',
+    'users.seo_title',
+    'users.seo_description',
+    'users.seo_generated_at',
 
     // Address — minimal
     'addresses.id as a_id',
@@ -246,13 +255,141 @@ export class UserRepository extends BaseRepository {
         TABLES_ENUM.CATEGORY_TRANSLATIONS,
         'category_id',
         'LEFT',
-        `AND category_translations.language_code = '${this.requestService.language}'`,
+        `AND category_translations.language_code = '${this.requestService.language ?? DEFAULT_LANGUAGE}'`,
       )
       .get<UserProfileRow[]>();
 
     if (!result || result.length === 0) return null;
 
     return this.formatUserProfile(result);
+  }
+
+  async getUserProfileById(id: number): Promise<UserProfile | null> {
+    const result = await this.query()
+      .select(this.PROFILE_COLUMNS)
+      .where('users.id', '=', id)
+      .join('id', 'addresses', 'user_id', 'LEFT')
+      .join('id', 'user_categories', 'user_id', 'LEFT')
+      .join('user_categories.category_id', 'categories', 'id', 'LEFT')
+      .join(
+        'categories.id',
+        TABLES_ENUM.CATEGORY_TRANSLATIONS,
+        'category_id',
+        'LEFT',
+        `AND category_translations.language_code = '${this.requestService.language ?? DEFAULT_LANGUAGE}'`,
+      )
+      .get<UserProfileRow[]>();
+
+    if (!result || result.length === 0) return null;
+
+    return this.formatUserProfile(result);
+  }
+
+  /** Active non-banned artists with no SEO yet, or profile newer than last SEO generation. */
+  async findDueForSeoGeneration(): Promise<{ id: number; user_id: number }[]> {
+    const result = await Query.raw(
+      `SELECT u.id, u.id AS user_id
+       FROM ${TABLES_ENUM.USERS} u
+       INNER JOIN ${TABLES_ENUM.ROLES} r ON r.id = u.role_id
+       WHERE r.name = 'ARTIST'
+         AND u.banned = false
+         AND u.is_active = true
+         AND (u.seo_generated_at IS NULL OR u.seo_generated_at < u.updated_at)
+       ORDER BY u.updated_at ASC`,
+    );
+    const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];
+    return (Array.isArray(rows) ? rows : []).map((row: { id: number; user_id: number }) => ({
+      id: Number(row.id),
+      user_id: Number(row.user_id),
+    }));
+  }
+
+  /**
+   * Sitemap enumeration: active, non-banned ARTIST profiles that have at least one publicly
+   * indexable portfolio (quality gate — skip empty/thin profiles). `is_paid` (an active,
+   * non-free subscription) sorts first so paid artists land in the earliest sitemap shards
+   * (Google ignores `<priority>`, so shard order is the real crawl-priority lever).
+   */
+  async getSitemapArtists(
+    limit: number,
+    offset: number,
+  ): Promise<
+    { username: string; updated_at: string; is_paid: boolean; avatar: string | null; banner: string | null }[]
+  > {
+    const result = await Query.raw(
+      `SELECT u.username, u.updated_at, u.avatar, u.banner,
+         EXISTS(
+           SELECT 1 FROM ${TABLES_ENUM.PLAN_SUBSCRIPTIONS} ps
+           JOIN ${TABLES_ENUM.PLAN_PRICES} pp ON pp.id = ps.plan_price_id
+           JOIN ${TABLES_ENUM.PLANS} p ON p.id = pp.plan_id
+           WHERE ps.user_id = u.id AND ps.is_active = true AND p.is_free = false
+         ) AS is_paid
+       FROM ${TABLES_ENUM.USERS} u
+       INNER JOIN ${TABLES_ENUM.ROLES} r ON r.id = u.role_id
+       WHERE r.name = 'ARTIST' AND u.banned = false AND u.is_active = true
+         AND EXISTS(
+           SELECT 1 FROM ${TABLES_ENUM.PORTFOLIOS} pf
+           WHERE pf.user_id = u.id AND pf.blocked_at IS NULL
+             AND pf.is_active = true AND pf.is_indexable = true
+         )
+       ORDER BY is_paid DESC, u.updated_at DESC
+       LIMIT $1 OFFSET $2`,
+      [limit, offset],
+    );
+    const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];
+    return (Array.isArray(rows) ? rows : []).map(
+      (row: { username: string; updated_at: string; is_paid: boolean; avatar: string | null; banner: string | null }) => ({
+        username: row.username,
+        updated_at: row.updated_at,
+        is_paid: Boolean(row.is_paid),
+        avatar: row.avatar ?? null,
+        banner: row.banner ?? null,
+      }),
+    );
+  }
+
+  /** Count for `getSitemapArtists` (same predicate) — lets the web compute shard counts. */
+  async countSitemapArtists(): Promise<number> {
+    const result = await Query.raw(
+      `SELECT COUNT(*)::int AS count
+       FROM ${TABLES_ENUM.USERS} u
+       INNER JOIN ${TABLES_ENUM.ROLES} r ON r.id = u.role_id
+       WHERE r.name = 'ARTIST' AND u.banned = false AND u.is_active = true
+         AND EXISTS(
+           SELECT 1 FROM ${TABLES_ENUM.PORTFOLIOS} pf
+           WHERE pf.user_id = u.id AND pf.blocked_at IS NULL
+             AND pf.is_active = true AND pf.is_indexable = true
+         )`,
+    );
+    const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];
+    return Number((Array.isArray(rows) ? rows : [])[0]?.count ?? 0);
+  }
+
+  /**
+   * Persist the EN-fallback SEO onto the main row and stamp `seo_generated_at` via DB
+   * `CURRENT_TIMESTAMP` (same statement) so it equals the trigger-set `updated_at` and the row
+   * settles instead of being regenerated on every batch run.
+   */
+  async updateSeoById(id: number, seo: EntitySeoFields): Promise<void> {
+    await Query.raw(
+      `UPDATE ${TABLES_ENUM.USERS}
+       SET seo_title = $1, seo_description = $2, seo_generated_at = CURRENT_TIMESTAMP
+       WHERE id = $3`,
+      [seo.seo_title ?? null, seo.seo_description ?? null, id],
+    );
+  }
+
+  /** Upsert per-locale SEO rows into user_translations (one row per app language). */
+  async upsertSeoTranslations(userId: number, rows: SeoTranslation[]): Promise<void> {
+    for (const r of rows) {
+      await Query.raw(
+        `INSERT INTO ${TABLES_ENUM.USER_TRANSLATIONS} (language_code, user_id, seo_title, seo_description)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (language_code, user_id)
+         DO UPDATE SET seo_title = EXCLUDED.seo_title, seo_description = EXCLUDED.seo_description`,
+        [r.language_code, userId, r.seo_title ?? null, r.seo_description ?? null],
+      );
+    }
   }
 
   async findOneByWithSecrets(
@@ -330,6 +467,9 @@ export class UserRepository extends BaseRepository {
       surname: result?.surname,
       short_biography: result?.short_biography,
       biography: result?.biography,
+      seo_title: result?.seo_title,
+      seo_description: result?.seo_description,
+      seo_generated_at: result?.seo_generated_at,
       benefit: result.b_id != null
         ? {
           id: result.b_id,
@@ -384,6 +524,9 @@ export class UserRepository extends BaseRepository {
       biography: first.biography,
       profession: first.profession ?? null,
       is_featured: first.is_featured,
+      seo_title: first.seo_title,
+      seo_description: first.seo_description,
+      seo_generated_at: first.seo_generated_at,
       address,
       categories: Array.from(categoriesMap.values()),
     };
@@ -481,7 +624,7 @@ export class UserRepository extends BaseRepository {
   private async fetchCategoriesForUsers(
     userIds: number[],
   ): Promise<Map<number, Pick<CategoryBase, 'id' | 'name' | 'slug'>[]>> {
-    const lang = this.requestService.language;
+    const lang = this.requestService.language ?? DEFAULT_LANGUAGE;
     const rows = await this.query()
       .rawSelect(
         `user_categories.user_id, categories.id, COALESCE(category_translations.name, categories.name) AS name, categories.slug`,

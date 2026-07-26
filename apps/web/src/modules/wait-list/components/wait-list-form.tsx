@@ -108,18 +108,20 @@ export function WaitListForm({ from = "register" }: WaitListFormProps) {
 
   return (
     <div className="w-full">
-      {from === 'hero' ? <div className="mb-2 flex items-center justify-start gap-2">
-        <p
-          id="hero-wait-list-email-hint"
-          className={cn("text-left text-sm! text-text-muted!")}
-        >
-          {t("waitList.hint")}
-        </p>
-        <InfoTooltip
-          content={t("waitList.hintTooltip")}
-          iconClassName={'text-text-muted'}
-        />
-      </div> : null}
+      {from === "hero" ? (
+        <div className="mb-2 flex items-center justify-start gap-2">
+          <p
+            id="hero-wait-list-email-hint"
+            className={cn("text-left text-sm! text-text-muted!")}
+          >
+            {t("waitList.hint")}
+          </p>
+          <InfoTooltip
+            content={t("waitList.hintTooltip")}
+            iconClassName={"text-text-muted"}
+          />
+        </div>
+      ) : null}
       <form
         onSubmit={handleSubmit}
         className="flex w-full flex-col gap-2 phone:flex-row phone:items-start"
@@ -159,9 +161,7 @@ export function WaitListForm({ from = "register" }: WaitListFormProps) {
           disabled={isPending || !isEmailValid}
           className=" h-10 laptop:h-12 py-0 shrink-0 text-accent-fg"
         >
-          {isPending
-            ? t("waitList.buttonPending")
-            : t("waitList.button")}
+          {isPending ? t("waitList.buttonPending") : t("waitList.button")}
         </Button>
       </form>
 

@@ -28,8 +28,8 @@ import {
 } from "@repo/ui/contexts/file.provider";
 import { usePreviewUrls } from "@repo/ui/hooks/usePreviewUrls";
 import { cn } from "@repo/ui/lib/utils";
-import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef } from "react";
 import { StickyFormFooter } from "@/app/[locale]/(atelier)/__components/sticky-form-footer";
 import { SubmitServiceButton } from "@/app/[locale]/(atelier)/__components/submit-service-button";
@@ -104,9 +104,7 @@ export const CreateOrUpdateService = ({
       currentService?.slug !== serviceInput.current.slug
     ) {
       if (isSlugAvailable) {
-        return (
-          <p className="text-sm text-green-600">{t("slugAvailable")}</p>
-        );
+        return <p className="text-sm text-green-600">{t("slugAvailable")}</p>;
       }
       return <p className="text-sm text-error">{t("slugTaken")}</p>;
     }
@@ -184,11 +182,14 @@ export const CreateOrUpdateService = ({
                 disabled={isCheckingSlug || isPending}
               />
               {isValidSlug === false && (
-                <p className="text-sm text-error">
-                  {t("slugInvalidFormat")}
-                </p>
+                <p className="text-sm text-error">{t("slugInvalidFormat")}</p>
               )}
               {getSlugStatusMessage()}
+              {isUpdate && (
+                <p className="text-sm text-amber-600">
+                  {t("slugChangeWarning")}
+                </p>
+              )}
             </div>
 
             <FormComponent.LabelTextarea

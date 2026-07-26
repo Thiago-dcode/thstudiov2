@@ -8,6 +8,7 @@ import {
 import { FullscreenMedia } from "@/app/[locale]/(artists)/__components/fullscreen-media";
 import { Link } from "@/i18n/navigation";
 import Web from "@/lib/components/web-page.component";
+import { buildMediaJsonLd, JsonLd } from "@/lib/seo/json-ld";
 
 interface MediaPageComponentProps {
   user: { username: string };
@@ -37,6 +38,7 @@ export const MediaPageComponent = async ({
 
   return (
     <Web.Container>
+      <JsonLd data={buildMediaJsonLd(media, user.username)} />
       <ArtistBreadcrumb
         username={user.username}
         items={allBreadcrumbs}

@@ -35,25 +35,19 @@ export async function HeroSection() {
   const discoverWords = t.raw("titleDiscoverWords") as string[];
 
   return (
-
-
     <WebSection
       id="home-hero-section"
       aria-labelledby="hero-heading"
       className="  flex flex-col w-full items-center justify-start overflow-hidden bg-bg min-h-[calc(100svh-4rem)] laptop:h-[calc(100svh-4rem)] laptop:min-h-auto max-w-(--breakpoint-ultrawide) mx-auto"
     >
-    <Suspense fallback={<HeroVideoFallback />}>
+      <Suspense fallback={<HeroVideoFallback />}>
         <HeroVideo />
       </Suspense>
 
-
       {/* ── Content ── */}
       <div className="max-h-1/2 z-10 mx-auto flex flex-col items-center text-center gap-5 laptop:gap-8 w-full  pt-3 px-2 laptop:px-4">
-
         <div className="flex flex-col items-start gap-0 w-full">
-          <h1
-            className="uppercase hero-stagger-1 tracking-tight text-shadow-lg text-5xl! phone-lg:6xl!   laptop:text-7xl! desktop-lg:text-7xl! text-left font-sans!"
-          >
+          <h1 className="uppercase hero-stagger-1 tracking-tight text-shadow-lg text-5xl! phone-lg:6xl!   laptop:text-7xl! desktop-lg:text-7xl! text-left font-sans!">
             {t("titlePrefix")}{" "}
             <SlotMachine
               texts={accentWords}
@@ -71,7 +65,8 @@ export async function HeroSection() {
               spinDuration={1800}
               fitWidth
               className="translate-y-[-0.11em]"
-            />.
+            />
+            .
           </h1>
 
           <h3 className="hero-stagger-2 font-normal!  phone-lg:text-2xl! text-lg! leading-relaxed  font-sans! max-w-5xl text-left">
@@ -85,7 +80,7 @@ export async function HeroSection() {
           </div>
         </div>
       </div>
-     
+
       {/* ── Scroll down indicator ── */}
       <ScrollHashLink
         href="#value-pillars"

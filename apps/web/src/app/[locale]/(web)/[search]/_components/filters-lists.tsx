@@ -88,7 +88,14 @@ export default function FiltersLists() {
     }
 
     return out;
-  }, [filters, categoriesSelected, deleteFilter, deleteMany, removeCategory, t]);
+  }, [
+    filters,
+    categoriesSelected,
+    deleteFilter,
+    deleteMany,
+    removeCategory,
+    t,
+  ]);
 
   const hasSearch = Boolean(filters.search?.trim());
   const showClearAll = items.length > 0 || hasSearch;

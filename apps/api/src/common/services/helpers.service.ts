@@ -29,7 +29,11 @@ export class Helpers {
 
   public async cacheRemember<T>(
     key: string,
-    toRemember: Promise<T>,
+    /**
+     * Value producer. Prefer a factory `() => Promise<T>` so the work only runs on a cache MISS;
+     * an already-started `Promise<T>` is still accepted (legacy callers) but runs even on a hit.
+     */
+    toRemember: Promise<T> | (() => Promise<T> | T),
     options: {
       append_language?: boolean;
       ttl: number;
@@ -46,7 +50,9 @@ export class Helpers {
     if (cached) {
       return JSON.parse(cached as string);
     }
-    const result = await toRemember;
+    const result = await (typeof toRemember === 'function'
+      ? (toRemember as () => Promise<T> | T)()
+      : toRemember);
     await this.cacheManager.set(_key, JSON.stringify(result), options.ttl);
     return result;
   }
@@ -158,7 +164,14 @@ export class Helpers {
   }
 
   public async moveAsset(from: string, to: string): Promise<void> {
-    await this.storageService.move(from, to);
+    const moved = await this.storageService.move(from, to);
+    if (!moved) {
+      throw new HttpException(
+        `An error ocurred moving asset: <<${from}>> → <<${to}>>`,
+        500,
+      );
+    }
+    // Only invalidate the old key once the move is confirmed.
     await this.cacheManager.del(from);
   }
   /**

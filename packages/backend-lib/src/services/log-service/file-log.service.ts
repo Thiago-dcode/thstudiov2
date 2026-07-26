@@ -16,38 +16,47 @@ export class FileLogService extends LogService {
     /**
      * Deferred log methods - they queue the log but do NOT execute it.
      * Call LogService.flush() to execute and write all queued logs.
+     *
+     * Snapshot name/channel/id at schedule time: `.name()` mutates shared config,
+     * and flush runs later — without a snapshot every pending line would land in
+     * whichever file name was set last.
      */
     public info(message: string, options?: LogOptions): this {
-        const id = this.getLogId();
-        LogService.trackLog(() => this.writeLogAsync('info', message, options, id));
-        return this;
+        return this.trackDeferred('info', message, options);
     }
     public error(message: string, options?: LogOptions): this {
-        const id = this.getLogId();
-        LogService.trackLog(() => this.writeLogAsync('error', message, options, id));
-        return this;
+        return this.trackDeferred('error', message, options);
     }
     public warn(message: string, options?: LogOptions): this {
-        const id = this.getLogId();
-        LogService.trackLog(() => this.writeLogAsync('warn', message, options, id));
-        return this;
+        return this.trackDeferred('warn', message, options);
     }
     public debug(message: string, options?: LogOptions): this {
-        const id = this.getLogId();
-        LogService.trackLog(() => this.writeLogAsync('debug', message, options, id));
-        return this;
+        return this.trackDeferred('debug', message, options);
     }
     public success(message: string, options?: LogOptions): this {
+        return this.trackDeferred('success', message, options);
+    }
+
+    private trackDeferred(level: LogLevel, message: string, options?: LogOptions): this {
         const id = this.getLogId();
-        LogService.trackLog(() => this.writeLogAsync('success', message, options, id));
+        const name = this.config.name;
+        const channel = this.config.channel;
+        LogService.trackLog(() => this.writeLogAsync(level, message, options, id, name, channel));
         return this;
     }
 
-    private async writeLogAsync(level: LogLevel, message: string, options?: LogOptions, id?: string | null): Promise<void> {
-        await this.writeLog(await this.getLogFile(), level, message, options, id);
+    private async writeLogAsync(
+        level: LogLevel,
+        message: string,
+        options?: LogOptions,
+        id?: string | null,
+        name?: string,
+        channel?: string,
+    ): Promise<void> {
+        await this.writeLog(await this.getLogFile(name, channel), level, message, options, id);
     }
 
-    private async getLogFile() {
+    private async getLogFile(name = this.config.name, channel = this.config.channel) {
         const now = new Date();
         if (!LogService.date || !isSameDay(now, LogService.date)) {
             LogService.date = now;
@@ -56,11 +65,11 @@ export class FileLogService extends LogService {
         if (!this.config.logFolder) {
             this.config.logFolder = resolveDefaultLogFolder();
         }
-        const logFolder = path.join(this.config.logFolder as string, this.config.channel);
+        const logFolder = path.join(this.config.logFolder as string, channel);
         if (!(await checkFileExistsAsync(logFolder))) {
             await fs.mkdir(logFolder, { recursive: true });
         }
-        return path.join(logFolder, `${today}${this.config.name ? `.${this.config.name}` : ''}.log`);
+        return path.join(logFolder, `${today}${name ? `.${name}` : ''}.log`);
     }
 
     private async writeLog(logFile: string, level: LogLevel, message: string, options?: LogOptions, id?: string | null) {

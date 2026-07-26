@@ -1,7 +1,7 @@
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
 import { ExternalLink } from "lucide-react";
-import { getTranslations } from "next-intl/server";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
 
 type AdminPageContainerProps = {

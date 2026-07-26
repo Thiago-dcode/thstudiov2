@@ -20,7 +20,7 @@ import {
 } from "react";
 import {
   createMediaApi,
-  generateMediaSeoApi,
+  generateMediaMetadataApi,
   updateMediaApi,
 } from "../api/media-api.client";
 import { deleteMediaAction } from "../server-actions/delete-media.action";
@@ -374,7 +374,6 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
             seo_title: media.seo_title ?? "",
             seo_description: media.seo_description ?? "",
             seo_alt: media.seo_alt ?? "",
-            seo_filename: media.seo_filename || "",
           },
           action: "seo",
           previewUrl: media.thumbnail || undefined,
@@ -392,7 +391,7 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
     });
 
     try {
-      const result = await generateMediaSeoApi({
+      const result = await generateMediaMetadataApi({
         media_id: media.id,
         user_id: media.user_id,
       });
@@ -480,7 +479,6 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
             seo_title: media.seo_title ?? "",
             seo_description: media.seo_description ?? "",
             seo_alt: media.seo_alt ?? "",
-            seo_filename: media.seo_filename || "",
           },
           action: "delete",
           previewUrl: media.thumbnail || undefined,
@@ -590,7 +588,6 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
           seo_title: m.seo_title ?? "",
           seo_description: m.seo_description ?? "",
           seo_alt: m.seo_alt ?? "",
-          seo_filename: m.seo_filename || "",
         },
         action: "seo",
         previewUrl: m.thumbnail || undefined,

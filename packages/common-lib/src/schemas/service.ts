@@ -12,7 +12,11 @@ export type ServiceSchema = {
   is_active: boolean;
   is_featured: boolean;
   is_highlight: boolean;
+  is_indexable: boolean;
   show_price: boolean;
+  seo_title?: string | null;
+  seo_description?: string | null;
+  seo_generated_at?: Date | null;
   user_id: number;
   portfolio_id?: number | null;
   blocked_at?: Date | null;

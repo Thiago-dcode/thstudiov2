@@ -14,24 +14,27 @@ Use this skill when implementing a new API module end-to-end in this monorepo.
 3. Ask for the exact methods to implement if the user did not list them.
 4. Keep controllers thin, services for business logic, repositories for DB access.
 5. Load and apply `.agents/skills/collision-prevention/SKILL.md` before writing join queries.
+6. ALWAYS create and run migrations through the `dbcli` command. Never hand-author a
+   migration file in `packages/database/src/migrations/`, and never run a migration by
+   executing a source `.ts` file directly. The compiled CLI runs from `dist` (`.js`),
+   which is what the `migrations` ledger records; bypassing it produces `.ts`/`.js`
+   name mismatches that break `rollback` and cause re-runs.
 
 ## Required Order
 
 ### 1) Create migration first
 
-Use `packages/database/src/bin/cli.ts` with `make:migration`.
-
-From repo root, run one of these:
+Always generate the migration with the `dbcli make:migration` command — never create the
+file by hand. From repo root:
 
 ```bash
 pnpm --filter @repo/database dbcli make:migration create-<entity>-table
 ```
 
-or direct file execution:
-
-```bash
-pnpm --filter @repo/database exec tsx --tsconfig tsconfig.json src/bin/cli.ts make:migration create-<entity>-table
-```
+`dbcli` maps to `node dist/src/bin/cli.js`, so build the package first if `dist` is stale
+(`pnpm --filter @repo/database build`). Do NOT run the CLI against the TypeScript source
+(e.g. `tsx src/bin/cli.ts`) to create or apply migrations: the ledger would record `.ts`
+names that the compiled (`.js`) rollback cannot resolve.
 
 Then implement migration following the same pattern used by:
 

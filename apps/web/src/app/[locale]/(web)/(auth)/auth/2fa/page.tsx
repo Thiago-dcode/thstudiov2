@@ -48,7 +48,9 @@ export default async function TwoFactorAuth() {
           {/* <MailOpen className="size-10" /> */}
           <PageComponent.Title
             title={
-              user.is_new ? t("titleValidateEmail") : t("titleDeviceVerification")
+              user.is_new
+                ? t("titleValidateEmail")
+                : t("titleDeviceVerification")
             }
           />
           <PageComponent.SubTitle>

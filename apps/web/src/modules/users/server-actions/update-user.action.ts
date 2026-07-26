@@ -28,7 +28,10 @@ export const updateUserAction = async (
 ): Promise<ActionReturn<BaseUser, UpdateUserInputWithAssets>> => {
   const session = await requireSession();
   if (!isSessionOwner(session, id)) {
-    return await unauthorizedActionReturn<BaseUser, UpdateUserInputWithAssets>();
+    return await unauthorizedActionReturn<
+      BaseUser,
+      UpdateUserInputWithAssets
+    >();
   }
 
   const categories = formData.get("categories") as string;

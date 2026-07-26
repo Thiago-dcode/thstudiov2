@@ -1,3 +1,4 @@
+import type { EntitySeoMetadata } from "@repo/common-lib/types/ai";
 import type { ApiResponse } from "@repo/common-lib/types/response";
 import type {
   FullService,
@@ -28,6 +29,16 @@ class UserServiceService extends BaseService {
   ): Promise<ApiResponse<FullService | null>> {
     return await this.fetchApi.get({
       resource: `/${username}/services/${slug}`,
+    });
+  }
+
+  async getSeoMetadata(
+    username: string,
+    slug: string,
+    lang: string,
+  ): Promise<ApiResponse<EntitySeoMetadata | null>> {
+    return await this.fetchApi.get({
+      resource: `/${username}/services/${slug}/metadata?lan=${lang}`,
     });
   }
 

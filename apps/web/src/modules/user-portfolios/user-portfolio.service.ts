@@ -1,3 +1,4 @@
+import type { EntitySeoMetadata } from "@repo/common-lib/types/ai";
 import type {
   FullPortfolio,
   Portfolio,
@@ -19,6 +20,17 @@ class UserPortfolioService extends BaseService {
   ): Promise<ApiResponse<FullPortfolio | null>> {
     return await this.fetchApi.get({
       resource: `/${username}/portfolios/${slug}`,
+    });
+  }
+
+  /** Lean, locale-resolved SEO for generateMetadata. `lang` (EN/ES/PT) forces the API locale. */
+  async getSeoMetadata(
+    username: string,
+    slug: string,
+    lang: string,
+  ): Promise<ApiResponse<EntitySeoMetadata | null>> {
+    return await this.fetchApi.get({
+      resource: `/${username}/portfolios/${slug}/metadata?lan=${lang}`,
     });
   }
 

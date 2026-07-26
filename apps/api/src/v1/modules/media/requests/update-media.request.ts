@@ -20,9 +20,4 @@ export class UpdateMediaRequest {
   @IsString()
   @IsOptional()
   seo_description?: string;
-
-  @IsString()
-  @IsOptional()
-  seo_filename?: string;
-
 }

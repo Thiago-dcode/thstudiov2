@@ -24,6 +24,8 @@ export type MediaSchema = {
   seo_title?: string;
   seo_description?: string;
   seo_filename: string;
+  /** Internal: when AI SEO was last generated. Never returned in API responses. */
+  seo_generated_at?: Date | null;
   user_id: number;
   created_at: Date;
   updated_at: Date;

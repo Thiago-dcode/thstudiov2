@@ -10,6 +10,7 @@ export const s3StorageConfig: S3StorageConfig = {
   accessKeyId: STORAGE_CONFIG.accessKeyId,
   secretAccessKey: STORAGE_CONFIG.secretAccessKey,
   signedUrlExpiration: STORAGE_CONFIG.signedUrlExpiration,
+  cdnUrl: STORAGE_CONFIG.cdnUrl,
 };
 
 export const fileStorageConfig: StorageConfig = {

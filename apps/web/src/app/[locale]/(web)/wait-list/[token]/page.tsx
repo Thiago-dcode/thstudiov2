@@ -1,5 +1,5 @@
-import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { getBenefitMonths } from "@repo/common-lib/utils/wait-list";
+import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";

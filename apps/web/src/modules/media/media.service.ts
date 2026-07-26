@@ -1,3 +1,4 @@
+import type { EntitySeoMetadata } from "@repo/common-lib/types/ai";
 import type {
   CreateMediaInputWithFile,
   Media,
@@ -14,9 +15,7 @@ class MediaService extends BaseService {
   constructor() {
     super(fetchApi(), "media");
   }
-  async findAll(
-    request?: MediaIndexRequest,
-  ): Promise<ApiResponse<Media[]>> {
+  async findAll(request?: MediaIndexRequest): Promise<ApiResponse<Media[]>> {
     return await this.fetchApi.get({
       resource: request ? queryParamBuilder("", request) : "",
     });
@@ -25,7 +24,7 @@ class MediaService extends BaseService {
   async findAllWithUser(
     request: MediaIndexRequest = {},
   ): Promise<ApiResponse<MediaWithUser[]>> {
-    const filters: MediaIndexRequest = { ...request, compact: false }
+    const filters: MediaIndexRequest = { ...request, compact: false };
     return await this.fetchApi.get({
       resource: queryParamBuilder("", filters),
     });
@@ -33,6 +32,14 @@ class MediaService extends BaseService {
   async getByPublicId(publicId: string): Promise<ApiResponse<MediaWithUser>> {
     return await this.fetchApi.get({
       resource: `/${publicId}`,
+    });
+  }
+  async getSeoMetadata(
+    publicId: string,
+    lang: string,
+  ): Promise<ApiResponse<EntitySeoMetadata | null>> {
+    return await this.fetchApi.get({
+      resource: `/${publicId}/metadata?lan=${lang}`,
     });
   }
   async create(body: CreateMediaInputWithFile): Promise<ApiResponse<Media>> {

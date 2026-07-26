@@ -8,7 +8,13 @@ import { useTranslations } from "next-intl";
 import FormComponent from "@/lib/components/form-component";
 import { useUpdateCategories } from "../providers/categories.provider";
 
-export const UserCategoriesComponent = ({ title }: { title?: string } = {}) => {
+export const UserCategoriesComponent = ({
+  title,
+  compact = false,
+}: {
+  title?: string;
+  compact?: boolean;
+} = {}) => {
   const t = useTranslations("userCategories");
   const {
     searchRef,
@@ -31,8 +37,8 @@ export const UserCategoriesComponent = ({ title }: { title?: string } = {}) => {
       <div className="flex items-end w-full gap-2">
         <FormComponent.LabelInput
           ref={searchRef}
-          className="w-full h-12 text-base"
-          inputClassName="text-base"
+          className={cn("w-full text-base", compact ? "h-10 text-sm" : "h-12")}
+          inputClassName={cn(compact ? "text-sm" : "text-base")}
           label={t("searchLabel")}
           type="text"
           id="search-category"
@@ -70,7 +76,12 @@ export const UserCategoriesComponent = ({ title }: { title?: string } = {}) => {
         {categories.length > 0 && (
           <p className="mb-1 text-sm text-text-muted">{t("clickHint")}</p>
         )}
-        <div className="overflow-y-scroll max-h-[250px] w-full">
+        <div
+          className={cn(
+            "overflow-y-auto overflow-x-hidden w-full",
+            compact ? "max-h-[140px]" : "max-h-[250px]",
+          )}
+        >
           {categories.length > 0 ? (
             <FadeInDiv dependencies={[categoriesSelected.length]}>
               {categories.map((category) => {

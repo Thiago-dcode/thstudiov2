@@ -213,9 +213,7 @@ export function PortfolioLayoutControls() {
 
             <div className="space-y-4 py-2">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-text-muted">
-                  {t("columns")}
-                </span>
+                <span className="text-sm text-text-muted">{t("columns")}</span>
                 <span className="text-sm font-medium tabular-nums text-text">
                   {columns}
                 </span>

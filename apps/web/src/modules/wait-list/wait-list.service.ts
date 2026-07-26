@@ -29,7 +29,9 @@ class WaitListService extends BaseService {
     });
   }
 
-  async validate(token: string): Promise<ApiResponse<WaitListValidateResponse>> {
+  async validate(
+    token: string,
+  ): Promise<ApiResponse<WaitListValidateResponse>> {
     return await this.fetchApi.post({
       resource: "validate",
       body: { token },

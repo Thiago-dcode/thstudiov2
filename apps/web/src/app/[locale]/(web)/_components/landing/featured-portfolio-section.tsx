@@ -34,11 +34,15 @@ export async function FeaturedPortfolioSection() {
     portfolioItems.slice(0, Math.min(portfolioItems.length, count));
 
   return (
-    <WebSection id="featured-portfolio" className="overflow-hidden max-w-(--breakpoint-ultrawide) max-h-screen mx-auto">
+    <WebSection
+      id="featured-portfolio"
+      className="overflow-hidden max-w-(--breakpoint-ultrawide) max-h-screen mx-auto"
+    >
       <WebSection.Container className="pt-28">
-
         <div className="flex items-end flex-col laptop:flex-row px-2 justify-between gap-0.5 mb-2 border-b w-full border-b-text/80!">
-          <h3 className="text-2xl! laptop:text-4xl! line-clamp-1 uppercase">{portfolio.title}</h3>
+          <h3 className="text-2xl! laptop:text-4xl! line-clamp-1 uppercase">
+            {portfolio.title}
+          </h3>
           <p>
             {t("by")}{" "}
             <Link
@@ -81,8 +85,6 @@ export async function FeaturedPortfolioSection() {
               <Gallery />
             </div>
           </GalleryProvider>
-
-
         </section>
       </WebSection.Container>
       <div className="absolute inset-x-0 bottom-0 z-10">

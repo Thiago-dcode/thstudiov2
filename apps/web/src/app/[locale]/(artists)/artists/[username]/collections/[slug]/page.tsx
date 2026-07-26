@@ -2,13 +2,17 @@ import { Gallery } from "@repo/ui/components/custom/gallery/gallery";
 import { GalleryGrid } from "@repo/ui/components/custom/gallery/gallery-grid";
 import { GalleryProvider } from "@repo/ui/providers/gallery.provider";
 import { Pencil } from "lucide-react";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { ArtistBreadcrumb } from "@/app/[locale]/(artists)/__components/artist-breadcrumb";
 import { ResourceNotFound } from "@/app/[locale]/(artists)/__components/resource-not-found";
 import { Link } from "@/i18n/navigation";
+import { urlLocaleToLanguageCode } from "@/i18n/routing";
 import Web from "@/lib/components/web-page.component";
 import { config } from "@/lib/config";
+import { buildSeoMetadata } from "@/lib/seo/build-metadata";
+import { buildCollectionJsonLd, JsonLd } from "@/lib/seo/json-ld";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import userCollectionService from "@/modules/user-collections/user-collection.service";
 import usersService from "@/modules/users/users.service";
@@ -17,6 +21,25 @@ type Props = {
   params: Promise<{ username: string; slug: string }>;
   searchParams: Promise<{ ci?: string }>;
 };
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string; username: string; slug: string }>;
+}): Promise<Metadata> {
+  const { locale, username, slug } = await params;
+  const { data } = await userCollectionService.getSeoMetadata(
+    username,
+    slug,
+    urlLocaleToLanguageCode(locale),
+  );
+
+  if (!data) {
+    return { robots: { index: false, follow: false } };
+  }
+
+  return buildSeoMetadata(data, locale, { title: data.seo_title || username });
+}
 
 export default async function Page({ params, searchParams }: Props) {
   const { username, slug } = await params;
@@ -74,6 +97,7 @@ export default async function Page({ params, searchParams }: Props) {
 
   return (
     <Web.Container>
+      <JsonLd data={buildCollectionJsonLd(collection, username)} />
       <ArtistBreadcrumb
         username={username}
         items={[

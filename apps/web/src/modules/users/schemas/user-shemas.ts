@@ -5,8 +5,8 @@ import {
   minLengthMessage,
   personNameField,
   requiredString,
-  tooLongMessage,
   type Translator,
+  tooLongMessage,
 } from "@/lib/validation/zod-helpers";
 
 export const loginRequestSchema = (t: Translator) =>
@@ -21,9 +21,7 @@ export const loginRequestSchema = (t: Translator) =>
 export const createUserSchema = (t: Translator) =>
   z.object({
     name: personNameField(t, 80, t("fields.name")).nullable().optional(),
-    surname: personNameField(t, 100, t("fields.surname"))
-      .nullable()
-      .optional(),
+    surname: personNameField(t, 100, t("fields.surname")).nullable().optional(),
     username: z
       .string()
       .min(3, minLengthMessage(t, t("fields.username"), 3))
@@ -110,12 +108,8 @@ export const updateUserPasswordSchema = (t: Translator) =>
 export type LoginRequestSchemaType = z.infer<
   ReturnType<typeof loginRequestSchema>
 >;
-export type CreateUserSchemaType = z.infer<
-  ReturnType<typeof createUserSchema>
->;
-export type UpdateUserSchemaType = z.infer<
-  ReturnType<typeof updateUserSchema>
->;
+export type CreateUserSchemaType = z.infer<ReturnType<typeof createUserSchema>>;
+export type UpdateUserSchemaType = z.infer<ReturnType<typeof updateUserSchema>>;
 export type UpdateUserPasswordSchemaType = z.infer<
   ReturnType<typeof updateUserPasswordSchema>
 >;

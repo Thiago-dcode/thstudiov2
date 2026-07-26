@@ -8,8 +8,8 @@ import {
   DialogTitle,
 } from "@repo/ui/components/shadcn/dialog";
 import { ArrowRight } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import {
   ButtonFinishFunnel,

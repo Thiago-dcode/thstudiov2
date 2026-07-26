@@ -97,10 +97,36 @@ const up = async () => {
     ColumnBuilder.enum('language', 'LANGUAGE_CODE', {
       default: DEFAULT_LANGUAGE,
     }),
+    ColumnBuilder.string('seo_title', 70, {
+      nullable: true,
+    }),
+    ColumnBuilder.string('seo_description', 160, {
+      nullable: true,
+    }),
+    ColumnBuilder.timestamp('seo_generated_at', {
+      nullable: true,
+    }),
+  ]);
+
+  // Per-locale SEO for artist profiles (EN/ES/PT). Main users.seo_* columns hold the EN fallback.
+  await SchemaBuilder.table('user_translations').createIfNotExists([
+    ColumnBuilder.id(),
+    ColumnBuilder.string('seo_title', 70, {
+      nullable: true,
+    }),
+    ColumnBuilder.string('seo_description', 160, {
+      nullable: true,
+    }),
+    ColumnBuilder.enum('language_code', 'LANGUAGE_CODE'),
+    ColumnBuilder.foreignKey('user_id', 'users', 'id', {
+      onDelete: 'CASCADE',
+    }),
+    ColumnBuilder.uniques('UC_user_translation', ['language_code', 'user_id']),
   ]);
 };
 
 const down = async () => {
+  await SchemaBuilder.table('user_translations').dropIfExists();
   await SchemaBuilder.table(USERS).dropIfExists();
   await SchemaBuilder.table(ROLES).dropIfExists();
 };

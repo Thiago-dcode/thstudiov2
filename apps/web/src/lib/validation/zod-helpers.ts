@@ -26,7 +26,8 @@ export const slugField = (t: Translator) =>
     .regex(SLUG_REGEX, t("validation.slug.invalidFormat"));
 
 /** Shared email rule used across contact, user, and preference schemas. */
-export const emailField = (t: Translator) => z.email(t("validation.email.invalid"));
+export const emailField = (t: Translator) =>
+  z.email(t("validation.email.invalid"));
 
 /** `{field} must be at least {min} characters` */
 export const minLengthMessage = (

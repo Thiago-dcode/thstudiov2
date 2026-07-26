@@ -6,7 +6,7 @@ import {
 import { IndexCategoriesRequest } from './requests/index-categories.request';
 import { CategoriesRepository } from './categories.repository';
 import { Helpers } from 'src/common/services/helpers.service';
-import { CACHE_KEY_USER_CATEGORIES } from '@repo/common-lib/constants/constants';
+import { CACHE_KEY_ACTIVE_CATEGORIES, CACHE_KEY_USER_CATEGORIES } from '@repo/common-lib/constants/constants';
 import { CreateCategoryRequest } from './requests/create-category.request';
 import { UpdateCategoryRequest } from './requests/update-category.request';
 import { RequestService } from 'src/common/services/request.service';
@@ -50,6 +50,18 @@ export class CategoriesService {
       }))
     }
     return result;
+  }
+
+  /**
+   * All active categories (disciplines + art styles) with canonical English names — used to feed
+   * the AI media-tagging prompt (ids must be language-independent). Cached for 1 day.
+   */
+  async findAllActive() {
+    return this.helpers.cacheRemember(
+      CACHE_KEY_ACTIVE_CATEGORIES,
+      this.categoryRepository.findActiveForTagging(),
+      { ttl: 1000 * 60 * 60 * 24 },
+    );
   }
 
   async findAllUserCategories(userId: number) {

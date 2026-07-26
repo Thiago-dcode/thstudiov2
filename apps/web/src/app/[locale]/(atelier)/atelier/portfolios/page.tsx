@@ -1,8 +1,8 @@
 import { TABLES_ENUM } from "@repo/common-lib/constants/enums";
 import { LayoutDashboard } from "lucide-react";
-import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import { PortfolioCard } from "@/modules/portfolios/components/portfolio-card";
 import portfolioService from "@/modules/portfolios/portfolio.service";
@@ -25,11 +25,7 @@ export default async function Atelier() {
   });
 
   if (portfoliosResponse.error) {
-    return (
-      <div>
-        {portfoliosResponse?.error?.message || t("loadError")}
-      </div>
-    );
+    return <div>{portfoliosResponse?.error?.message || t("loadError")}</div>;
   }
 
   return (

@@ -1,14 +1,17 @@
 const messages = {
+  seo: {
+    organizationDescription:
+      "A11STUDIO is the portfolio platform where artists get discovered — showcase your work and connect with clients, collectors and collaborators.",
+  },
   landing: {
+    metadata: {
+      title: "A11STUDIO — Where Artists Get Discovered",
+      description:
+        "The portfolio platform built for artists. Showcase your work, get discovered by clients and collectors, and let AI handle your SEO automatically.",
+    },
     hero: {
       titlePrefix: "Let your",
-      titleAccentWords: [
-        "art",
-        "vision",
-        "craft",
-        "passion",
-        "voice",
-      ],
+      titleAccentWords: ["art", "vision", "craft", "passion", "voice"],
       titleConnector: "be",
       titleDiscoverWords: [
         "shared",
@@ -38,7 +41,7 @@ const messages = {
         successReserveMessage:
           "We’ll reserve your email after you validate it.",
         alreadyExists:
-          '{email} is already on the wait list. Check your email. If this looks wrong, <supportLink>contact support</supportLink>.',
+          "{email} is already on the wait list. Check your email. If this looks wrong, <supportLink>contact support</supportLink>.",
       },
       disclaimer: "Free to start · No credit card required",
       scrollToNextSection: "Scroll to next section",
@@ -68,65 +71,80 @@ const messages = {
       scrollToNextSection: "Scroll to next section",
       items: [
         {
-          "title": "Just Art",
-          "description": "A place for art, and nothing else. No noise, no distractions."
+          title: "Just Art",
+          description:
+            "A place for art, and nothing else. No noise, no distractions.",
         },
         {
-          "title": "Intelligence",
-          "description": "AI quietly handles the boring, technical stuff. You focus on creating."
+          title: "Intelligence",
+          description:
+            "AI quietly handles the boring, technical stuff. You focus on creating.",
         },
         {
-          "title": "Focus",
-          "description": "Your only job is to share your best work. We take care of the rest."
+          title: "Focus",
+          description:
+            "Your only job is to share your best work. We take care of the rest.",
         },
         {
-          "title": "Community",
-          "description": "A community built on taste, not trends. People who value craft over noise."
+          title: "Community",
+          description:
+            "A community built on taste, not trends. People who value craft over noise.",
         },
         {
-          "title": "Quality",
-          "description": "We value quality over quantity — take your time to upload your best work."
+          title: "Quality",
+          description:
+            "We value quality over quantity — take your time to upload your best work.",
         },
         {
-          "title": "Clients",
-          "description": "We connect client needs with the right artists. Fast, direct, and trustworthy."
+          title: "Clients",
+          description:
+            "We connect client needs with the right artists. Fast, direct, and trustworthy.",
         },
         {
-          "title": "No Algorithms",
-          "description": "Great work speaks for itself. No feeds, no games, no chasing engagement."
+          title: "No Algorithms",
+          description:
+            "Great work speaks for itself. No feeds, no games, no chasing engagement.",
         },
         {
-          "title": "Ownership",
-          "description": "A home for your work that belongs to you. Permanent, not rented from a platform."
+          title: "Ownership",
+          description:
+            "A home for your work that belongs to you. Permanent, not rented from a platform.",
         },
         {
-          "title": "Simplicity",
-          "description": "As easy to update as a social post. No coding, no configuration."
+          title: "Simplicity",
+          description:
+            "As easy to update as a social post. No coding, no configuration.",
         },
         {
-          "title": "Craftsmanship",
-          "description": "Built for quality first, always. Great art deserves great presentation."
+          title: "Craftsmanship",
+          description:
+            "Built for quality first, always. Great art deserves great presentation.",
         },
         {
-          "title": "Discovery",
-          "description": "Be found by the clients who matter. Visibility earned by talent, not algorithms."
+          title: "Discovery",
+          description:
+            "Be found by the clients who matter. Visibility earned by talent, not algorithms.",
         },
         {
-          "title": "Time",
-          "description": "Less time configuring, more time creating. Every minute saved goes back to your art."
+          title: "Time",
+          description:
+            "Less time configuring, more time creating. Every minute saved goes back to your art.",
         },
         {
-          "title": "Credibility",
-          "description": "A professional presence, without the technical hassle. Trusted by clients from the first visit."
+          title: "Credibility",
+          description:
+            "A professional presence, without the technical hassle. Trusted by clients from the first visit.",
         },
         {
-          "title": "Elegance",
-          "description": "A minimal space where your art takes center stage. Nothing competes for attention."
+          title: "Elegance",
+          description:
+            "A minimal space where your art takes center stage. Nothing competes for attention.",
         },
         {
-          "title": "Trust",
-          "description": "A fast, reliable way to find real talent. No guesswork, no wasted hours."
-        }
+          title: "Trust",
+          description:
+            "A fast, reliable way to find real talent. No guesswork, no wasted hours.",
+        },
       ],
     },
     socialProof: {
@@ -204,39 +222,82 @@ const messages = {
   faqs: {
     title: "Frequently asked questions",
     stillHaveQuestions: "Still have questions? We're here to <link>help</link>",
+    viewAll: "Browse all FAQs",
     items: [
       {
+        id: "what-is-a11studio",
         question: "What is A11STUDIO?",
         answer:
-          "A11STUDIO is a portfolio platform built for visual artists that sits right between a professional website and the ease of social media. You get a polished, custom-looking site — but updating it is as simple as posting a story. No code, no web design skills, just drag, drop, and publish.",
+          "A11STUDIO combines the best parts of a professional portfolio website with the simplicity and engagement of social media. Traditional websites give you complete control over how you present your work, while social media makes publishing effortless. Instead of forcing you to choose, A11STUDIO gives you both — a polished, professional home for your art that's as easy to update as posting a story. Learn more <a href='/about'>about our mission</a>.",
       },
       {
+        id: "what-is-a-portfolio",
         question: "What is a portfolio?",
         answer:
-          "A portfolio is your highlight reel — a curated showcase of your absolute best work within a discipline or style. For example, a \"Wedding Photography\" portfolio would feature the strongest shots across all the weddings you've ever shot. It's what clients see to judge your skill and hire you.",
+          "A portfolio is your highlight reel — a curated showcase of your absolute best work within a discipline or style. For example, a “Wedding Photography” portfolio would feature the strongest shots across every wedding you've ever shot. It's what clients see to judge your skill and decide to hire you.",
       },
       {
+        id: "what-is-a-collection",
         question: "What is a collection?",
         answer:
-          'A collection is a specific project or event grouped together. For example, "Mary & John Wedding 2024" would be a collection containing all the delivered photos from that particular shoot. It\'s how you organize individual jobs, sessions, or bodies of work.',
+          "A collection is a specific project or event grouped together — for example, “Maria & João Wedding 2024” would hold all the delivered photos from that single shoot. While a <a href='#what-is-a-portfolio'>portfolio</a> is your curated best-of across many projects, a collection is how you organize the work from one job, session, or body of work.",
       },
       {
-        question:
-          "What is the difference between a portfolio and a collection?",
+        id: "create-account",
+        question: "How can I create an account?",
         answer:
-          'A portfolio is your best-of — a showcase that spans multiple projects to demonstrate your expertise in a discipline (e.g. "Wedding Photography"). A collection is a single project or event (e.g. "Mary & John Wedding 2024"). Think of portfolios as what gets you hired and collections as how you organize each job.',
+          "Getting started takes just a minute. Head to the <a href='/auth/register'>sign-up page</a>, create your free account, and set up your profile. You can build your first portfolio in minutes — no coding, hosting, or web design skills required. If registrations are temporarily closed, you can join the wait-list and we'll let you know the moment your spot opens.",
       },
       {
+        id: "why-ai",
         question: "Why does A11STUDIO use AI?",
         answer:
-          "So you can focus on what you do best — creating art. AI handles everything else behind the scenes: it generates SEO-optimized titles, descriptions, and tags for your work, categorizes your media automatically, and writes alt text so search engines and AI assistants can find you. You never need to learn about SEO or marketing — just upload your best pieces and AI makes sure the right audience discovers them.",
+          "So you can focus on what you do best — creating art. Everything technical happens behind the scenes: AI generates SEO-optimized titles, descriptions, and tags for your work, categorizes your media automatically, and writes alt text so search engines and AI assistants can find you. You never have to learn SEO or marketing — just upload your best pieces and let the right audience discover them.",
       },
       {
-        question: "Can I use A11STUDIO for free?",
+        id: "what-is-seo",
+        question: "What is SEO?",
         answer:
-          "Yes. A11STUDIO offers a free tier that lets you create your profile, build portfolios, and start showcasing your work right away. Premium plans unlock additional features like AI-powered tools, more storage, and advanced customization options.",
+          "SEO (search engine optimization) is what helps your work show up when someone searches Google — or asks an AI assistant — for an artist like you. It normally takes technical know-how, but A11STUDIO handles it for you automatically, writing optimized titles, descriptions, tags, and alt text behind the scenes so the right people can find your portfolio. Read more about <a href='#why-ai'>how our AI does this</a>.",
+      },
+      {
+        id: "position-profile",
+        question: "How can I position my profile?",
+        answer:
+          "A11STUDIO handles the hard parts of visibility for you — SEO, search-engine indexing, and optimization all happen automatically. To get the most out of it, complete your profile, choose the categories that match your craft, and upload your strongest work. The more complete and polished your profile, the easier it is for the right clients to discover you. Need a hand? <a href='/support'>Reach out to us</a>.",
+      },
+      {
+        id: "get-clients",
+        question: "How can I get clients?",
+        answer:
+          "A11STUDIO is built to connect artists with people who value their work. The best way to attract clients is to complete your profile, showcase your strongest portfolios, and keep your work organized so visitors instantly understand what you offer. The platform takes care of discovery — SEO and search indexing — so clients looking for your kind of work can find you. Make sure your <a href='#position-profile'>profile is well positioned</a> to get the most reach.",
+      },
+      {
+        id: "upload-videos",
+        question: "Can I upload videos?",
+        answer:
+          "Not yet — A11STUDIO currently supports images and is designed to showcase them beautifully. Video support is on our roadmap for a future version, so filmmakers, animators, and motion artists will be able to present their work here too. Want to be notified when it lands? <a href='/support'>Get in touch</a>.",
+      },
+      {
+        id: "is-free",
+        question: "Is A11STUDIO free?",
+        answer:
+          "Yes. A11STUDIO offers a free tier that lets you create your profile, build portfolios, and start showcasing your work right away. Premium plans unlock extra features like AI-powered tools, more storage, and advanced customization — but you can start for free and upgrade only if you need to.",
       },
     ],
+    page: {
+      metadata: {
+        title: "FAQ — A11STUDIO",
+        description:
+          "Answers to common questions about A11STUDIO — what it is, portfolios, creating an account, AI, positioning your profile, and pricing.",
+      },
+      hero: {
+        label: "FAQ",
+        title: "Frequently asked questions",
+        lead: "Everything you need to know about A11STUDIO — what it is, how to get started, and how it helps the right people discover your work.",
+      },
+      navLabel: "On this page",
+    },
   },
   about: {
     metadata: {
@@ -383,7 +444,8 @@ const messages = {
   },
   waitListDialog: {
     title: "Registration is now closed",
-    description: "Join the wait list and become one of the first to get into A11STUDIO.",
+    description:
+      "Join the wait list and become one of the first to get into A11STUDIO.",
   },
   footer: {
     tagline: "The portfolio platform built for artists.",
@@ -399,6 +461,7 @@ const messages = {
     contact: {
       heading: "Contact",
       about: "About",
+      faqs: "FAQs",
       support: "Support",
     },
     copyright: "© {year} A11STUDIO. All rights reserved.",
@@ -733,8 +796,7 @@ const messages = {
     title: "You have a gift waiting",
     description:
       "As a <name>{label}</name> you get <free>{months, plural, one {# month free} other {# months free}}</free>.",
-    claimBelow:
-      "Claim it right below. We will guide you to get the benefit.",
+    claimBelow: "Claim it right below. We will guide you to get the benefit.",
     claimAfterSetup:
       "Once you finish your welcome setup we will guide you to get the benefit.",
     claimNow: "Claim now",
@@ -764,11 +826,9 @@ const messages = {
       toastUpdated: "Preferences updated",
       managingFor: "Managing preferences for",
       marketingLabel: "Marketing emails",
-      marketingDescription:
-        "Product news, launches, and occasional updates.",
+      marketingDescription: "Product news, launches, and occasional updates.",
       notificationsLabel: "Notifications",
-      notificationsDescription:
-        "Account alerts and relevant platform notices.",
+      notificationsDescription: "Account alerts and relevant platform notices.",
       waitlistLabel: "Waitlist updates",
       waitlistDescription:
         "Progress updates about the waitlist and access changes.",
@@ -987,8 +1047,7 @@ const messages = {
       titleType: "Title must be a valid string",
       titleMin: "Title must be at least 5 characters",
       titleMax: "Title must be less than 255 characters",
-      descriptionRequired:
-        "Description is required and must be a valid string",
+      descriptionRequired: "Description is required and must be a valid string",
       descriptionType: "Description must be a valid string",
       descriptionMin: "Description must be at least 20 characters",
       descriptionMax: "Description must be less than 1000 characters",
@@ -1154,6 +1213,8 @@ const messages = {
         slugAvailable: "✓ This slug is available",
         slugTaken: "✗ This slug is already taken",
         slugInvalidFormat: "✗ Invalid slug format. Example: my-portfolio",
+        slugChangeWarning:
+          "It's best to keep the slug unchanged once it's set — changing it updates your public link, so any existing links to this page may stop working.",
         descriptionLabel: "Description",
         descriptionPlaceholder: "Describe your portfolio...",
         categoriesLabel: "Categories",
@@ -1228,6 +1289,8 @@ const messages = {
           "URL-friendly identifier. Only lowercase letters, numbers and hyphens.",
         slugInvalidFormat:
           "✗ Invalid slug format. Example: portrait-photography",
+        slugChangeWarning:
+          "It's best to keep the slug unchanged once it's set — changing it updates your public link, so any existing links to this page may stop working.",
         descriptionLabel: "Description",
         descriptionPlaceholder: "Describe your service...",
         priceLabel: "Price",
@@ -1298,6 +1361,8 @@ const messages = {
         slugAvailable: "✓ This slug is available",
         slugTaken: "✗ This slug is already taken",
         slugInvalidFormat: "✗ Invalid slug format. Example: my-collection",
+        slugChangeWarning:
+          "It's best to keep the slug unchanged once it's set — changing it updates your public link, so any existing links to this page may stop working.",
         descriptionLabel: "Description",
         descriptionPlaceholder: "Describe your collection...",
         showOnProfile: "Show on profile page",
@@ -1340,9 +1405,9 @@ const messages = {
         upgradeRequired: "Upgrade required:",
         upgradeRequiredBody:
           "Compression control is not available in your current plan. Upgrade to access this feature.",
-        aiSeoGeneration: "AI SEO Generation",
+        aiSeoGeneration: "Generate media metadata",
         aiSeoTooltipBody:
-          "Automatically generates SEO title, description, alt text, and filename for each image using AI vision analysis.",
+          "SEO (Search Engine Optimization) helps your work get found on Google and Google Images. This uses AI to analyze the image and generate an artistic, keyword-rich title, description, alt text and filename — and auto-tags it with matching categories.",
         aiSeoCreditsHint:
           "Costs 1 AI credit per image. You have {count} {count, plural, one {credit} other {credits}} remaining.",
         creditsLabel: "{count} {count, plural, one {credit} other {credits}}",
@@ -1384,18 +1449,18 @@ const messages = {
         filenameLabel: "Filename",
         filenamePlaceholder: "Enter filename",
         filenameInfo:
-          "The filename used for SEO purposes. Can be edited to improve search visibility.",
+          "SEO filename set automatically from the upload or when AI generates metadata. Not editable.",
         lastUpdated: "Last Updated",
         noPreview: "No preview",
         altFallback: "{username} media",
         untitled: "Untitled",
         editMedia: "Edit Media",
         mediaPreview: "Media Preview",
-        generateSeo: "Generate SEO",
+        generateSeo: "Generate media metadata",
         noCreditsAvailable:
-          "No AI credits available. You need at least 1 credit to generate SEO metadata. Please upgrade your plan or wait for credits to reset.",
+          "No AI credits available. You need at least 1 credit to generate media metadata. Please upgrade your plan or wait for credits to reset.",
         generateSeoTooltip:
-          "Automatically generate SEO fields with AI. Analyzes your image content and generates optimized titles, descriptions, alt text, and filenames for better search visibility.",
+          "SEO (Search Engine Optimization) helps your work get found on Google and Google Images. This uses AI to analyze the image and generate an artistic, keyword-rich title, description, alt text and filename — and auto-tags it with matching categories.",
         noCreditsSuffix: " (No credits)",
         delete: "Delete",
         deleteConfirm: "Are you sure you want to delete this media?",
@@ -1410,10 +1475,10 @@ const messages = {
         close: "Close",
       },
       grid: {
-        generateSeoCount: "Generate SEO ({count})",
-        generateSeoTitle: "Generate AI SEO",
+        generateSeoCount: "Generate media metadata ({count})",
+        generateSeoTitle: "Generate media metadata",
         generateSeoDescription:
-          "Generate AI-powered SEO metadata for {count} selected {count, plural, one {media item} other {media items}}?",
+          "Generate AI-powered media metadata for {count} selected {count, plural, one {media item} other {media items}}?",
         creditsAvailable: "Credits available:",
         creditsNeeded: "Credits needed:",
         overAiLimit: "Limit: select up to {max} items (remove {excess}).",
@@ -1423,7 +1488,8 @@ const messages = {
         selectMedia: "Select media",
         cancelSelection: "Cancel selection",
         noMediaFiltered: "No media found, try other filter combination",
-        noMediaEmpty: "No media uploaded yet. Start by adding your first image.",
+        noMediaEmpty:
+          "No media uploaded yet. Start by adding your first image.",
         updateItems: "Update {count} {count, plural, one {item} other {items}}",
         confirmUpdatesTitle: "Confirm Updates",
         confirmUpdatesDescription:

@@ -31,8 +31,8 @@ import { cn } from "@repo/ui/lib/utils";
 import { toast } from "@repo/ui/sonner";
 import { format } from "date-fns";
 import { Eye, Sparkles, Trash2, Upload } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import FormComponent from "@/lib/components/form-component";
 import {
@@ -59,7 +59,6 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
   const seoTitleRef = useRef<HTMLInputElement>(null);
   const seoDescriptionRef = useRef<HTMLTextAreaElement>(null);
   const seoAltRef = useRef<HTMLInputElement>(null);
-  const seoFilenameRef = useRef<HTMLInputElement>(null);
   const { refresh, aiCreditsInfo } = useUserMetrics();
   const {
     upsertMediaUpload,
@@ -167,16 +166,12 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
         seo_title: currentMedia.seo_title ?? "",
         seo_description: currentMedia.seo_description ?? "",
         seo_alt: currentMedia.seo_alt ?? "",
-        seo_filename: currentMedia.seo_filename || "",
       },
       id: currentMedia.id,
       pending: false,
       action: "edit" as const,
       unique_id: generateUniqueMediaId(),
     };
-
-    // Update the input field with the new value
-    // For seo_filename, preserve existing value if new value is empty (since it's required in CreateMediaInputWithFile)
 
     const updatedUpload: UploadMedia = {
       ...existingUpload,
@@ -201,7 +196,6 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
       "seo_title",
       "seo_description",
       "seo_alt",
-      "seo_filename",
     ];
     let hasChanged = false;
 
@@ -328,21 +322,15 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
               error={inputErrors?.seo_alt}
               disabled={isPending}
             />
-            <FormComponent.LabelInput
-              ref={seoFilenameRef}
-              id="seo_filename"
-              name="seo_filename"
-              label={t("filenameLabel")}
-              value={getFieldValue("seo_filename")}
-              onChange={(e) =>
-                handleInputChange("seo_filename", e.target.value)
-              }
-              placeholder={t("filenamePlaceholder")}
-              labelClassName="text-sm font-medium text-text"
-              extraInfo={t("filenameInfo")}
-              error={inputErrors?.seo_filename}
-              disabled={isPending}
-            />
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-text">
+                {t("filenameLabel")}
+              </Label>
+              <p className="text-xs font-mono text-text bg-fg-2 px-3 py-2">
+                {currentMedia.seo_filename}
+              </p>
+              <p className="text-xs text-text-muted">{t("filenameInfo")}</p>
+            </div>
           </>
         );
     }
@@ -603,9 +591,7 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
                       className="text-error hover:text-error hover:bg-error/10 h-8 px-2.5"
                     >
                       <Trash2 className="h-3.5 w-3.5 mr-1" />
-                      <span className="text-xs font-medium">
-                        {t("delete")}
-                      </span>
+                      <span className="text-xs font-medium">{t("delete")}</span>
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-56 p-3" align="end">

@@ -13,6 +13,31 @@ import {
   createTimeStampsTrigger,
 } from './triggers';
 
+// Migration files live as `.ts` in source (`src/migrations`) and are compiled to
+// `.js` in `dist/src/migrations`. The production CLI always runs from dist, so the
+// canonical identity stored in the `migrations` table is the `.js` name. Normalizing
+// here keeps `migrate` and `rollback` in agreement no matter which extension happens
+// to be on disk (or was recorded previously), so rollback never fails to locate a
+// file just because the DB stored a `.ts` name.
+const MIGRATION_EXTENSIONS = ['.js', '.ts'] as const;
+
+const stripMigrationExtension = (name: string) =>
+  name.replace(/\.(js|ts)$/i, '');
+
+const normalizeMigrationName = (name: string) =>
+  `${stripMigrationExtension(name)}.js`;
+
+// Resolve the actual migration file on disk, tolerating either extension so the CLI
+// works whether it is run from dist (`.js`) or against source (`.ts`).
+const resolveMigrationPath = (directory: string, name: string): string | null => {
+  const base = stripMigrationExtension(name);
+  for (const ext of MIGRATION_EXTENSIONS) {
+    const candidate = path.join(directory, `${base}${ext}`);
+    if (fs.existsSync(candidate)) return candidate;
+  }
+  return null;
+};
+
 const handleMigration = async (
   callback: (migration: any, migrationName: string) => Promise<void>,
   rollback: boolean = false,
@@ -57,10 +82,11 @@ const handleMigration = async (
     }
 
     for (const migration of migrations) {
-      const migrationPath = path.join(migrationDirectory, migration);
-      if (!fs.existsSync(migrationPath)) {
-        Logger.error('❌ Migration file not found', migrationPath);
-        throw new Error(`Migration file not found: ${migrationPath}`);
+      const migrationPath = resolveMigrationPath(migrationDirectory, migration);
+      if (!migrationPath) {
+        const expected = path.join(migrationDirectory, normalizeMigrationName(migration));
+        Logger.error('❌ Migration file not found', expected);
+        throw new Error(`Migration file not found: ${expected}`);
       }
       const migrationFile = await import(pathToFileURL(migrationPath).href);
       if (!migrationFile.up || !migrationFile.down) {
@@ -70,7 +96,9 @@ const handleMigration = async (
         );
         throw new Error(`Invalid migration file (missing up/down): ${migrationPath}`);
       }
-      await callback(migrationFile, migration);
+      // Store/compare a canonical `.js` identity so the `migrations` table stays
+      // consistent regardless of the on-disk extension used for this run.
+      await callback(migrationFile, normalizeMigrationName(migration));
     }
   } catch (error) {
     Logger.error('❌ Migration failed:', error);

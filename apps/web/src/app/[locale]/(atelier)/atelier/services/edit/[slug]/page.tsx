@@ -1,5 +1,5 @@
-import { getTranslations } from "next-intl/server";
 import { notFound, redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import {
   AdminPageContainer,
   AdminPageTitle,
@@ -27,9 +27,7 @@ export default async function ServiceEdit({ params }: Props) {
   ]);
 
   if (serviceResponse.error) {
-    return (
-      <div>{serviceResponse?.error?.message || t("loadError")}</div>
-    );
+    return <div>{serviceResponse?.error?.message || t("loadError")}</div>;
   }
 
   if (!serviceResponse.data) {

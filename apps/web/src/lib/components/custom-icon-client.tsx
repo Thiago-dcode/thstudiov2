@@ -1,16 +1,16 @@
 "use client";
 
+import { cn } from "@repo/ui/lib/utils";
 import Image, { type StaticImageData } from "next/image";
 import { useEffect, useState } from "react";
-import { cn } from "@repo/ui/lib/utils";
 import {
+  type CustomIconProps,
   getIconAlt,
   isIconName,
   SIZE_CLASSES,
-  type CustomIconProps,
 } from "./custom-icon.shared";
 
-export type { IconName, IconSize, CustomIconProps } from "./custom-icon.shared";
+export type { CustomIconProps, IconName, IconSize } from "./custom-icon.shared";
 export { isIconName } from "./custom-icon.shared";
 
 export function CustomIconClient({

@@ -38,6 +38,6 @@ import { EmailPreferencesModule } from '../email-preferences/email-preferences.m
     AiModule,
     EmailPreferencesModule,
   ],
-  exports: [UserService],
+  exports: [UserService, UserRepository],
 })
 export class UserModule {}

@@ -26,7 +26,7 @@ import { LayoutModule } from '../layouts/layout.module';
     },
   ],
   imports: [UserExtraDataModule, AiModule, CollectionModule, LayoutModule],
-  exports: [PortfolioService],
+  exports: [PortfolioService, PortfolioRepository],
 })
 export class PortfolioModule {}
 

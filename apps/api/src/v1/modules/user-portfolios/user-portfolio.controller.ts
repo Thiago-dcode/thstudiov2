@@ -31,6 +31,15 @@ export class UserPortfolioController {
   // }
 
   @Public()
+  @Get(':username/portfolios/:slug/metadata')
+  async getPortfolioMetadata(
+    @Param('username') username: string,
+    @Param('slug') slug: string,
+  ) {
+    return await this.userPortfolioService.getSeoMetadata(username, slug);
+  }
+
+  @Public()
   @Get(':username/portfolios/:slug')
   async getByUsername(
     @Param('username') username: string,

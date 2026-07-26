@@ -17,7 +17,6 @@ const OPTIONAL_STRING_KEYS = [
   "seo_title",
   "seo_description",
   "seo_alt",
-  "seo_filename",
 ] as const satisfies ReadonlyArray<keyof UpdateMediaInput>;
 
 export const updateMediaAction = async (

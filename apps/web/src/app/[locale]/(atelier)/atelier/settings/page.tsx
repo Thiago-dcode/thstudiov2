@@ -12,9 +12,9 @@ import {
   User,
   XCircle,
 } from "lucide-react";
-import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { config } from "@/lib/config";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import { LoadCustomerSubscriptionPortal } from "@/modules/plans/components/load-customer-subscription-portal";
@@ -192,7 +192,9 @@ export default async function SettingsPage() {
                         {nextBillingDate && (
                           <span className="flex items-center gap-1">
                             <Calendar className="size-3" />
-                            {t("subscription.renews", { date: nextBillingDate })}
+                            {t("subscription.renews", {
+                              date: nextBillingDate,
+                            })}
                           </span>
                         )}
                         <span className="flex items-center gap-1">
@@ -217,7 +219,9 @@ export default async function SettingsPage() {
             <div className="flex flex-col items-end gap-3">
               <Button variant="accent" size="sm" asChild>
                 <Link href="/atelier/settings/subscription" className="gap-1.5">
-                  {isFree ? t("subscription.upgrade") : t("subscription.change")}{" "}
+                  {isFree
+                    ? t("subscription.upgrade")
+                    : t("subscription.change")}{" "}
                   <ArrowRight className="size-3.5" />
                 </Link>
               </Button>

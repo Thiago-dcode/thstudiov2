@@ -16,10 +16,14 @@ export const SubmitServiceButton = () => {
       isPending={isPending}
       success={success}
       buttonLabel={
-        isUpdate ? t("submit.updateServiceLabel") : t("submit.createServiceLabel")
+        isUpdate
+          ? t("submit.updateServiceLabel")
+          : t("submit.createServiceLabel")
       }
       dialogTitle={
-        isUpdate ? t("submit.updateServiceTitle") : t("submit.createServiceTitle")
+        isUpdate
+          ? t("submit.updateServiceTitle")
+          : t("submit.createServiceTitle")
       }
       dialogDescription={
         isUpdate

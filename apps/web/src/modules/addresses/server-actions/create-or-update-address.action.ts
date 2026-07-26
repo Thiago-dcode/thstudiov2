@@ -73,7 +73,9 @@ export const createOrUpdateAddressAction = async (
     validated.data.user_id !== undefined &&
     !isSessionOwner(session, validated.data.user_id)
   ) {
-    return await unauthorizedActionReturn<Address, PublicCreateAddressInput>(rawData);
+    return await unauthorizedActionReturn<Address, PublicCreateAddressInput>(
+      rawData,
+    );
   }
 
   const result = !addressId

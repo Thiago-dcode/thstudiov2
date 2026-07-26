@@ -1,4 +1,4 @@
-import type { GetMediaSeoInput } from "@repo/common-lib/types/ai";
+import type { GenerateMediaMetadataInput } from "@repo/common-lib/types/ai";
 import type {
   CreateMediaInputWithFile,
   Media,
@@ -70,21 +70,21 @@ export async function updateMediaApi(
   }
 }
 
-export async function generateMediaSeoApi(
-  input: GetMediaSeoInput,
-): Promise<ActionReturn<Media, GetMediaSeoInput>> {
+export async function generateMediaMetadataApi(
+  input: GenerateMediaMetadataInput,
+): Promise<ActionReturn<Media, GenerateMediaMetadataInput>> {
   try {
-    const response = await fetch("/api/media/seo", {
+    const response = await fetch("/api/media/metadata", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(input),
     });
-    return await parseResponse<Media, GetMediaSeoInput>(response);
+    return await parseResponse<Media, GenerateMediaMetadataInput>(response);
   } catch (error) {
     return {
       data: null,
       errors: [
-        error instanceof Error ? error.message : "Failed to generate SEO",
+        error instanceof Error ? error.message : "Failed to generate metadata",
       ],
     };
   }

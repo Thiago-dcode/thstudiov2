@@ -1,14 +1,14 @@
 "use server";
 
-import type { GetMediaSeoInput } from "@repo/common-lib/types/ai";
+import type { GenerateMediaMetadataInput } from "@repo/common-lib/types/ai";
 import type { Media } from "@repo/common-lib/types/media";
 import type { ActionReturn } from "@repo/common-lib/types/response";
 import { getFriendlyApiErrors } from "@/modules/auth/helpers";
 import aiService from "../ai.service";
 
-export const getMediaSeoAction = async (
-  input: GetMediaSeoInput,
-): Promise<ActionReturn<Media, GetMediaSeoInput>> => {
+export const generateMediaMetadataAction = async (
+  input: GenerateMediaMetadataInput,
+): Promise<ActionReturn<Media, GenerateMediaMetadataInput>> => {
   // Validate required fields
   if (!input.user_id || !input.media_id) {
     const inputErrors: Record<string, string> = {};
@@ -27,7 +27,7 @@ export const getMediaSeoAction = async (
   }
 
   // Call AI service
-  const result = await aiService.getMediaSeo(input);
+  const result = await aiService.generateMediaMetadata(input);
 
   if (result.data) {
     return {

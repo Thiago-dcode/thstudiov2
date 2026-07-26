@@ -29,7 +29,9 @@ export const createMediaAction = async (
   if (!input.file || input.file.size === 0) {
     return {
       errors: [],
-      inputErrors: { file: t("validation.required", { field: t("fields.file") }) },
+      inputErrors: {
+        file: t("validation.required", { field: t("fields.file") }),
+      },
       data: null,
       inputs: input,
     };
@@ -39,7 +41,10 @@ export const createMediaAction = async (
     return {
       errors: [],
       inputErrors: {
-        file: t("validation.file.tooLarge", { field: t("fields.file"), mb: 10 }),
+        file: t("validation.file.tooLarge", {
+          field: t("fields.file"),
+          mb: 10,
+        }),
       },
       data: null,
       inputs: input,

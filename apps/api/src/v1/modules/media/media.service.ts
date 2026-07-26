@@ -10,10 +10,11 @@ import { AiService } from '../ai/ai.service';
 import { generateUUID } from '@repo/common-lib/utils/generate-uuid';
 import { bytesToMB, mbToBytes } from '@repo/common-lib/utils/bytes';
 import { FactoryLogService } from '@repo/backend-lib/services/log-service';
-import path from 'path';
-import { CreateMediaInput } from '@repo/common-lib/types/media';
+import { CreateMediaInput, UpdateMediaInternalInput } from '@repo/common-lib/types/media';
+import { EntitySeoMetadata, MediaSeoTranslation } from '@repo/common-lib/types/ai';
 import { cleanObj } from '@repo/common-lib/utils/object';
 import { CREATE_USER_STORAGE_REQUEST } from '@repo/common-lib/constants/constants';
+import { CACHE_KEY_MEDIA_SEO, SEO_METADATA_CACHE_TTL } from '@repo/common-lib/constants/constants';
 import { CreateUserStorageRequestEvent } from '../user-storage-requests/events/create-user-storage-request.event';
 import { IndexMediaRequest } from '../user-media/requests/index-media.request';
 import { Helpers } from 'src/common/services/helpers.service';
@@ -108,6 +109,11 @@ export class MediaService {
 
 
 
+  /** Remove a single trailing file extension while keeping any forward-slash S3 dirs intact. */
+  private stripExtension(name: string): string {
+    return name.replace(/\.[^./\\]+$/, '');
+  }
+
   public async create({ media, ...data }: CreateMediaRequest) {
     try {
 
@@ -119,7 +125,12 @@ export class MediaService {
         this.userService.findOne(data.user_id),
         generateUUID(),
       ]);
-      const filename = data.seo_filename || path.parse(media.originalname).name;
+      // Strip any trailing extension so we don't end up with keys like
+      // `.../lanzarote-3.jpg.webp`. Filename is derived from the upload only
+      // (clients cannot set seo_filename; AI may overwrite it later).
+      // The per-media `mediaPublicId` folder isolates each media so two uploads (or an AI
+      // rename) that resolve to the same filename never collide within the same user.
+      const filename = this.stripExtension(media.originalname);
       const basePath = `users/${user.public_id}/media/${mediaPublicId}/${filename}`;
       const thumbnailPath = `${basePath}-thumbnail.webp`;
 
@@ -193,11 +204,11 @@ export class MediaService {
         extension: 'webp',
         url: mediaPath,
         thumbnail: thumbnailPath,
-        seo_filename: data.seo_filename || filename,
+        seo_filename: filename,
         blocked_at: null,
-        is_featured:false,
-        is_value_pillars:false,
-        is_highlight:false,
+        is_featured: false,
+        is_value_pillars: false,
+        is_highlight: false,
         shape: await this.compressService.getImageShape(mediaFile.buffer),
         aspect_ratio: await this.compressService.getImageAspectRatio(mediaFile.buffer),
         is_active: true,
@@ -241,7 +252,10 @@ export class MediaService {
     );
   }
 
-  public async update(id: number, data: UpdateMediaRequest) {
+  public async update(
+    id: number,
+    data: UpdateMediaRequest & Pick<UpdateMediaInternalInput, 'seo_filename' | 'seo_generated_at'>,
+  ) {
     cleanObj(data);
 
     const media = await this.mediaRepository.findById(id);
@@ -249,7 +263,34 @@ export class MediaService {
       throw new UnauthorizedException();
     }
 
-    // Process assets once and store them
+    const internalData: UpdateMediaInternalInput = { ...data };
+
+    // On the FIRST SEO generation, rename the stored objects so their S3 keys become keyword-rich.
+    // Both the media file and its thumbnail are moved so they stay aligned (as `create` produces them).
+    if (data.seo_filename && !media.seo_generated_at && media.url) {
+      const newFilename = this.stripExtension(data.seo_filename);
+      const dir = media.url.slice(0, media.url.lastIndexOf('/'));
+      const currentFilename = this.stripExtension(media.url.slice(dir.length + 1));
+      if (newFilename && newFilename !== currentFilename) {
+        const newUrl = `${dir}/${newFilename}.webp`;
+        const newThumbnail = media.thumbnail ? `${dir}/${newFilename}-thumbnail.webp` : media.thumbnail;
+        await Promise.all([
+          this.helpers.moveAsset(media.url, newUrl),
+          media.thumbnail && newThumbnail
+            ? this.helpers.moveAsset(media.thumbnail, newThumbnail)
+            : Promise.resolve(),
+        ]);
+        media.url = newUrl;
+        internalData.url = newUrl;
+        internalData.seo_filename = newFilename;
+        if (media.thumbnail && newThumbnail) {
+          media.thumbnail = newThumbnail;
+          internalData.thumbnail = newThumbnail;
+        }
+      }
+    }
+
+    // Process assets once and store them (using the possibly-renamed key)
     const processedThumbnail = media.thumbnail
       ? await this.helpers.getAsset(media.thumbnail)
       : media.thumbnail;
@@ -257,19 +298,89 @@ export class MediaService {
       ? await this.helpers.getAsset(media.url)
       : media.url;
 
-    if (!Object.values(data).length) {
+    if (!Object.values(internalData).length) {
       // Return media with processed assets
       media.thumbnail = processedThumbnail;
       media.url = processedUrl;
       return media;
     }
 
-    const result = await this.mediaRepository.updateById(id, data);
+    const result = await this.mediaRepository.updateById(id, internalData);
 
     // Reuse the processed assets
     result.thumbnail = processedThumbnail;
     result.url = processedUrl;
 
+    // SEO (title/description/alt/blocked/active) may have changed → drop the cached metadata.
+    await this.invalidateSeoCache(media.public_id);
+
     return result;
+  }
+
+  /** Clear the cached SEO metadata for a media (all locales). */
+  public async invalidateSeoCache(publicId: string) {
+    await this.helpers.deleteCached(CACHE_KEY_MEDIA_SEO(publicId), {
+      appended_language: true,
+    });
+  }
+
+  /**
+   * Replace the media's category tags with `categoryIds` (media_categories pivot).
+   * Ownership-checked like {@link update}. A no-op (returns early) when the list is empty so an
+   * empty AI result does not wipe existing tags.
+   */
+  public async attachCategories(id: number, categoryIds: number[]) {
+    if (!categoryIds.length) return;
+
+    const media = await this.mediaRepository.findById(id);
+    if (media.user_id !== this.requestService.user.id) {
+      throw new UnauthorizedException();
+    }
+
+    return this.mediaRepository.attach('media_categories', {
+      modelCol: 'media_id',
+      modelValue: id,
+      attachCol: 'category_id',
+      valuesToAttach: categoryIds,
+      removePrevious: true,
+    });
+  }
+
+  /**
+   * Persist per-locale media SEO (media_translations). Called right after {@link update}, which
+   * already ownership-checks the media, so no extra check here. No-op on an empty list.
+   */
+  public async upsertSeoTranslations(id: number, rows: MediaSeoTranslation[]) {
+    if (!rows.length) return;
+    return this.mediaRepository.upsertSeoTranslations(id, rows);
+  }
+
+  /**
+   * Lean, locale-resolved SEO for `generateMetadata` on the media detail page.
+   * Cached per (publicId, language); invalidated on media update.
+   */
+  public async getSeoMetadata(publicId: string): Promise<EntitySeoMetadata | null> {
+    // Cache the thumbnail PATH (stable); sign `og_image` fresh per request (presigned URL expires ~1h).
+    const cached = await this.helpers.cacheRemember(
+      CACHE_KEY_MEDIA_SEO(publicId),
+      async () => {
+        const meta = await this.mediaRepository.getSeoMetadataByPublicId(publicId);
+        if (!meta) return null;
+        return {
+          seo_title: meta.seo_title,
+          seo_description: meta.seo_description,
+          thumbnail_path: meta.thumbnail,
+          canonical_path: `/artists/${meta.username}/media/${publicId}`,
+          noindex: meta.blocked || !meta.is_active,
+        };
+      },
+      { ttl: SEO_METADATA_CACHE_TTL, append_language: true },
+    );
+    if (!cached) return null;
+    const { thumbnail_path, ...rest } = cached;
+    return {
+      ...rest,
+      og_image: thumbnail_path ? await this.helpers.getAsset(thumbnail_path) : null,
+    };
   }
 }

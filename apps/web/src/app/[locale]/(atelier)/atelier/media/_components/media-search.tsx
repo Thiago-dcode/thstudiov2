@@ -7,8 +7,8 @@ import { Button } from "@repo/ui/components/shadcn/button";
 import { Input } from "@repo/ui/components/shadcn/input";
 import { cn } from "@repo/ui/lib/utils";
 import { Search, X } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useEffect, useState, useTransition } from "react";
 
 const SHAPE_OPTIONS = ENUMS.MEDIA_SHAPE;

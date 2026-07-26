@@ -1,6 +1,8 @@
 import { Injectable } from "@nestjs/common";
 import { Helpers } from "src/common/services/helpers.service";
 import { FullService, Service, ServiceIndexRequest } from "@repo/common-lib/types/service";
+import { EntitySeoMetadata } from "@repo/common-lib/types/ai";
+import { CACHE_KEY_SERVICE_SEO, SEO_METADATA_CACHE_TTL } from "@repo/common-lib/constants/constants";
 import { UserRepository } from "../users/users.repository";
 import { ServiceRepository } from "../services/service.repository";
 
@@ -32,6 +34,34 @@ export class UserServiceService {
     if (!user) return null;
 
     return this.resolveFullService(user.id, slug);
+  }
+
+  /** Lean, locale-resolved SEO for generateMetadata — no full-graph load. */
+  async getSeoMetadata(username: string, slug: string): Promise<EntitySeoMetadata | null> {
+    const user = await this.userRepository.findByUsernameCompact(username);
+    if (!user) return null;
+    // Cache the thumbnail PATH (stable); sign `og_image` fresh per request (presigned URL expires ~1h).
+    const cached = await this.helpers.cacheRemember(
+      CACHE_KEY_SERVICE_SEO(user.id, slug),
+      async () => {
+        const meta = await this.serviceRepository.getSeoMetadataBySlug(slug, user.id);
+        if (!meta) return null;
+        return {
+          seo_title: meta.seo_title,
+          seo_description: meta.seo_description,
+          thumbnail_path: meta.thumbnail,
+          canonical_path: `/artists/${username}/services/${slug}`,
+          noindex: !meta.is_indexable,
+        };
+      },
+      { ttl: SEO_METADATA_CACHE_TTL, append_language: true },
+    );
+    if (!cached) return null;
+    const { thumbnail_path, ...rest } = cached;
+    return {
+      ...rest,
+      og_image: thumbnail_path ? await this.helpers.getAsset(thumbnail_path) : null,
+    };
   }
 
   async getAllByUsername(

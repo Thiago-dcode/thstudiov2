@@ -40,6 +40,12 @@ export class MediaController {
   }
 
   @Public()
+  @Get(':public_id/metadata')
+  async getMediaMetadata(@Param('public_id') public_id: string) {
+    return await this.mediaService.getSeoMetadata(public_id);
+  }
+
+  @Public()
   @Get(':public_id')
   async getOneByPublicId(@Param('public_id', new ModelExistPipe('media', 'public_id')) public_id: string) {
 

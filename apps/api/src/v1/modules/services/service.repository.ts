@@ -18,6 +18,9 @@ import {
   Service,
   ServiceIndexRequest,
 } from '@repo/common-lib/types/service';
+import { EntitySeoFields, SeoTranslation } from '@repo/common-lib/types/ai';
+import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
+import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/constants';
 import { DbException } from '@repo/database/exceptions';
 import { RequestService } from 'src/common/services/request.service';
 
@@ -33,7 +36,11 @@ export class ServiceRepository extends BaseRepository {
     'services.is_active',
     'services.is_featured',
     'services.is_highlight',
+    'services.is_indexable',
     'services.show_price',
+    'services.seo_title',
+    'services.seo_description',
+    'services.seo_generated_at',
     'services.user_id',
     'services.portfolio_id',
     'services.blocked_at',
@@ -97,6 +104,133 @@ export class ServiceRepository extends BaseRepository {
   async getOneCompact(id: number) {
     const result = await this.query().select(this.COLUMNS).where('id', '=', id).first();
     return result ? this.formatService(result) : null;
+  }
+
+  async getFullById(id: number): Promise<FullService | null> {
+    const result = await this.query()
+      .select(this.FULL_COLUMNS)
+      .where('services.id', '=', id)
+      .join('id', 'service_features', 'service_id', 'LEFT')
+      .join('id', 'service_terms', 'service_id', 'LEFT')
+      .join('portfolio_id', 'portfolios', 'id', 'LEFT')
+      .get<ServiceFullSchema[]>();
+
+    if (!result || (Array.isArray(result) && result.length === 0)) return null;
+    return this.formatFullService(Array.isArray(result) ? result : [result]);
+  }
+
+  /** Services with no SEO yet, or content newer than last SEO generation. */
+  async findDueForSeoGeneration(): Promise<{ id: number; user_id: number }[]> {
+    const result = await Query.raw(
+      `SELECT id, user_id
+       FROM ${TABLES_ENUM.SERVICES}
+       WHERE blocked_at IS NULL
+         AND is_active = true
+         AND is_indexable = true
+         AND (seo_generated_at IS NULL OR seo_generated_at < updated_at)
+       ORDER BY updated_at ASC`,
+    );
+    const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];
+    return (Array.isArray(rows) ? rows : []).map((row: { id: number; user_id: number }) => ({
+      id: Number(row.id),
+      user_id: Number(row.user_id),
+    }));
+  }
+
+  /**
+   * Sitemap enumeration: publicly indexable services + owner username + the single cover
+   * `thumbnail` PATH. Same visibility predicate as `findDueForSeoGeneration`. The path is signed
+   * into a URL by the sitemap service.
+   */
+  async getSitemapServices(
+    limit: number,
+    offset: number,
+  ): Promise<{ username: string; slug: string; updated_at: string; thumbnail: string | null }[]> {
+    const result = await Query.raw(
+      `SELECT s.slug, s.updated_at, s.thumbnail, u.username
+       FROM ${TABLES_ENUM.SERVICES} s
+       INNER JOIN ${TABLES_ENUM.USERS} u ON u.id = s.user_id
+       WHERE s.blocked_at IS NULL AND s.is_active = true AND s.is_indexable = true
+       ORDER BY s.updated_at DESC
+       LIMIT $1 OFFSET $2`,
+      [limit, offset],
+    );
+    const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];
+    return (Array.isArray(rows) ? rows : []).map(
+      (row: { username: string; slug: string; updated_at: string; thumbnail: string | null }) => ({
+        username: row.username,
+        slug: row.slug,
+        updated_at: row.updated_at,
+        thumbnail: row.thumbnail ?? null,
+      }),
+    );
+  }
+
+  /** Count for `getSitemapServices` (same predicate). */
+  async countSitemapServices(): Promise<number> {
+    const result = await Query.raw(
+      `SELECT COUNT(*)::int AS count FROM ${TABLES_ENUM.SERVICES}
+       WHERE blocked_at IS NULL AND is_active = true AND is_indexable = true`,
+    );
+    const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];
+    return Number((Array.isArray(rows) ? rows : [])[0]?.count ?? 0);
+  }
+
+  /**
+   * Persist the EN-fallback SEO onto the main row and stamp `seo_generated_at` via DB
+   * `CURRENT_TIMESTAMP` (same statement) so it equals the trigger-set `updated_at` and the row
+   * settles instead of being regenerated on every batch run.
+   */
+  async updateSeoById(id: number, seo: EntitySeoFields): Promise<void> {
+    await Query.raw(
+      `UPDATE ${TABLES_ENUM.SERVICES}
+       SET seo_title = $1, seo_description = $2, seo_generated_at = CURRENT_TIMESTAMP
+       WHERE id = $3`,
+      [seo.seo_title ?? null, seo.seo_description ?? null, id],
+    );
+  }
+
+  /** Lean SEO-only read for `generateMetadata`, localized to the request language. */
+  async getSeoMetadataBySlug(
+    slug: string,
+    userId: number,
+  ): Promise<{ seo_title: string | null; seo_description: string | null; thumbnail: string | null; is_indexable: boolean } | null> {
+    const lang = this.requestService.language ?? DEFAULT_LANGUAGE;
+    const result = await Query.raw(
+      `SELECT s.thumbnail, s.is_indexable,
+              COALESCE(st.seo_title, s.seo_title) AS seo_title,
+              COALESCE(st.seo_description, s.seo_description) AS seo_description
+       FROM ${TABLES_ENUM.SERVICES} s
+       LEFT JOIN ${TABLES_ENUM.SERVICE_TRANSLATIONS} st
+         ON st.service_id = s.id AND st.language_code = $1
+       WHERE s.slug = $2 AND s.user_id = $3 AND s.blocked_at IS NULL
+       LIMIT 1`,
+      [lang, slug, userId],
+    );
+    const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];
+    const row = (Array.isArray(rows) ? rows : [])[0] as
+      | { seo_title: string | null; seo_description: string | null; thumbnail: string | null; is_indexable: boolean }
+      | undefined;
+    if (!row) return null;
+    return {
+      seo_title: row.seo_title ?? null,
+      seo_description: row.seo_description ?? null,
+      thumbnail: row.thumbnail ?? null,
+      is_indexable: row.is_indexable,
+    };
+  }
+
+  /** Upsert per-locale SEO rows into service_translations (one row per app language). */
+  async upsertSeoTranslations(serviceId: number, rows: SeoTranslation[]): Promise<void> {
+    for (const r of rows) {
+      await Query.raw(
+        `INSERT INTO ${TABLES_ENUM.SERVICE_TRANSLATIONS} (language_code, service_id, seo_title, seo_description)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (language_code, service_id)
+         DO UPDATE SET seo_title = EXCLUDED.seo_title, seo_description = EXCLUDED.seo_description`,
+        [r.language_code, serviceId, r.seo_title ?? null, r.seo_description ?? null],
+      );
+    }
   }
 
   async create({ features, terms, ...serviceData }: CreateServiceInput): Promise<Service> {
@@ -220,7 +354,11 @@ export class ServiceRepository extends BaseRepository {
       is_active: result.is_active,
       is_featured: result.is_featured,
       is_highlight: result.is_highlight,
+      is_indexable: result.is_indexable,
       show_price: result.show_price,
+      seo_title: result.seo_title,
+      seo_description: result.seo_description,
+      seo_generated_at: result.seo_generated_at,
       user_id: result.user_id,
       portfolio_id: result.portfolio_id,
       blocked_at: result.blocked_at,
@@ -273,7 +411,11 @@ export class ServiceRepository extends BaseRepository {
       is_active: first.is_active,
       is_featured: first.is_featured,
       is_highlight: first.is_highlight,
+      is_indexable: first.is_indexable,
       show_price: first.show_price,
+      seo_title: first.seo_title,
+      seo_description: first.seo_description,
+      seo_generated_at: first.seo_generated_at,
       user_id: first.user_id,
       portfolio_id: first.portfolio_id,
       blocked_at: first.blocked_at,

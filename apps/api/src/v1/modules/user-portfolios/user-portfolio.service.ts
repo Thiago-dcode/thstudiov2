@@ -3,6 +3,8 @@ import { Injectable } from "@nestjs/common";
 import { Helpers } from "src/common/services/helpers.service";
 
 import { FullPortfolio, Portfolio, PortfolioIndexRequest } from "@repo/common-lib/types/portfolio";
+import { EntitySeoMetadata } from "@repo/common-lib/types/ai";
+import { CACHE_KEY_PORTFOLIO_SEO, SEO_METADATA_CACHE_TTL } from "@repo/common-lib/constants/constants";
 
 import { UserRepository } from "../users/users.repository";
 import { PortfolioRepository } from "../portfolios/portfolio.repository";
@@ -55,6 +57,38 @@ export class UserPortfolioService {
           url: media.url ? await this.helpers.getAsset(media.url) : undefined,
         })))
         : portfolio.media,
+    };
+  }
+
+  /**
+   * Lean, locale-resolved SEO for `generateMetadata` — does not load the full portfolio graph.
+   * Cached per (user, slug, language); invalidated on portfolio update.
+   */
+  async getSeoMetadata(username: string, slug: string): Promise<EntitySeoMetadata | null> {
+    const user = await this.userRepository.findByUsernameCompact(username);
+    if (!user) return null;
+    // Cache the thumbnail PATH (stable), not the signed URL — the presigned URL expires (~1h) well
+    // before this 24h cache would, so `og_image` is signed fresh per request outside the cache.
+    const cached = await this.helpers.cacheRemember(
+      CACHE_KEY_PORTFOLIO_SEO(user.id, slug),
+      async () => {
+        const meta = await this.portfolioRepository.getSeoMetadataBySlug(slug, user.id);
+        if (!meta) return null;
+        return {
+          seo_title: meta.seo_title,
+          seo_description: meta.seo_description,
+          thumbnail_path: meta.thumbnail,
+          canonical_path: `/artists/${username}/portfolios/${slug}`,
+          noindex: !meta.is_indexable,
+        };
+      },
+      { ttl: SEO_METADATA_CACHE_TTL, append_language: true },
+    );
+    if (!cached) return null;
+    const { thumbnail_path, ...rest } = cached;
+    return {
+      ...rest,
+      og_image: thumbnail_path ? await this.helpers.getAsset(thumbnail_path) : null,
     };
   }
 

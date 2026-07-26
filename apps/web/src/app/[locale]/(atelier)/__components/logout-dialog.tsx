@@ -10,8 +10,8 @@ import {
 } from "@repo/ui/components/shadcn/dialog";
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { LogOut } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { type FormEvent, useCallback, useState } from "react";
 import { useMainNav } from "@/lib/providers/main-nav.provider";
 import { logoutServerAction } from "@/modules/auth/server-actions/logout.action";

@@ -58,6 +58,12 @@ export const WebFooter = async () => {
                 {t("contact.about")}
               </Link>
               <Link
+                href="/faqs"
+                className="w-fit text-sm tracking-wider text-text transition-colors hover:text-text"
+              >
+                {t("contact.faqs")}
+              </Link>
+              <Link
                 href="/support"
                 className="w-fit text-sm tracking-wider text-text transition-colors hover:text-text"
               >

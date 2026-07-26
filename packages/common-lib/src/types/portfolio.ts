@@ -44,7 +44,11 @@ type InternalPortfolioFields =
   | 'id'
   | 'created_at'
   | 'updated_at'
-  | 'is_featured';
+  | 'is_featured'
+  | 'seo_title'
+  | 'seo_description'
+  | 'seo_generated_at'
+  | 'is_indexable';
 
 // What users can provide when creating a portfolio (public API input)
 export type CreatePortfolioInput = Omit<
@@ -105,7 +109,7 @@ export type PortfolioInput = Partial<
 
 }
 export type UpdatePortfolioInput = Partial<
-  Omit<PortfolioSchema, 'id' | 'created_at' | 'updated_at' | 'is_featured'>
+  Omit<PortfolioSchema, InternalPortfolioFields>
 > & {
   media: {
     id: number;

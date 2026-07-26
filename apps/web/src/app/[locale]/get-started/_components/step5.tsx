@@ -1,6 +1,6 @@
 import { FUNNEL_LAST_STEP } from "@repo/common-lib/constants/constants";
-import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { config } from "@/lib/config";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import PlanSubscriptionList from "@/modules/plans/components/plan-list";

@@ -29,7 +29,15 @@ export type ServiceIndexRequest = OffsetPaginationRequest & {
 };
 
 // Fields generated internally by the system (user cannot set these)
-type InternalServiceFields = 'id' | 'created_at' | 'updated_at' | 'is_featured';
+type InternalServiceFields =
+  | 'id'
+  | 'created_at'
+  | 'updated_at'
+  | 'is_featured'
+  | 'seo_title'
+  | 'seo_description'
+  | 'seo_generated_at'
+  | 'is_indexable';
 
 // What users can provide when creating a service (public API input)
 export type CreateServiceInput = Omit<

@@ -2,6 +2,7 @@ import { LogService } from '@repo/backend-lib/services/log-service';
 import { Injectable } from '@nestjs/common';
 import { BaseRepository } from '@repo/database/repositories';
 import { QueryBuilder } from '@repo/database/queryBuilder';
+import { Query } from '@repo/database/facades';
 import { foldLatinDiacriticsForMatch } from '@repo/common-lib/utils/fold-latin-diacritics';
 import {
   PortfolioFullSchema,
@@ -17,6 +18,7 @@ import {
   Portfolio,
   PortfolioIndexRequest,
 } from '@repo/common-lib/types/portfolio';
+import { EntitySeoFields, SeoTranslation } from '@repo/common-lib/types/ai';
 import { CompactUser } from '@repo/common-lib/types/user';
 import { DbException } from '@repo/database/exceptions';
 import { RequestService } from 'src/common/services/request.service';
@@ -27,7 +29,7 @@ import {
   PortfolioLayout,
 } from '@repo/common-lib/types/layout';
 import { EnumType, TABLES_ENUM } from '@repo/common-lib/constants/enums';
-import { MIN_COLUMN_BASE_COLUMNS } from '@repo/common-lib/constants/constants';
+import { DEFAULT_LANGUAGE, MIN_COLUMN_BASE_COLUMNS } from '@repo/common-lib/constants/constants';
 
 export function formatPortfolioLayout(
   row: Pick<PortfolioFullSchema, 'layout_id' | 'layout_name' | 'config'>,
@@ -76,6 +78,10 @@ export class PortfolioRepository extends BaseRepository {
     'portfolios.is_featured',
     'portfolios.is_highlight',
     'portfolios.is_active',
+    'portfolios.is_indexable',
+    'portfolios.seo_title',
+    'portfolios.seo_description',
+    'portfolios.seo_generated_at',
     'portfolios.blocked_at',
     'portfolios.user_id',
     'portfolios.created_at',
@@ -103,8 +109,8 @@ export class PortfolioRepository extends BaseRepository {
     'media.title as m_title',
     'media.seo_alt',
     'media.seo_filename',
-    'media.seo_description',
-    'media.seo_title',
+    'media.seo_description as m_seo_description',
+    'media.seo_title as m_seo_title',
     'media.is_featured as m_is_featured',
     'media.is_highlight as m_is_highlight',
     'media.is_active as m_is_active',
@@ -138,6 +144,153 @@ export class PortfolioRepository extends BaseRepository {
     return this.formatFullPortfolio(Array.isArray(result) ? result : [result]);
   }
 
+  async getFullById(id: number): Promise<FullPortfolio | null> {
+    const result = await this.applyFullPortfolioQuery(this.query())
+      .where('portfolios.id', '=', id)
+      .orderBy('portfolio_media.position', 'ASC')
+      .get<PortfolioFullSchema[]>();
+
+    if (!result || (Array.isArray(result) && result.length === 0)) return null;
+    return this.formatFullPortfolio(Array.isArray(result) ? result : [result]);
+  }
+
+  /** Portfolios with no SEO yet, or content newer than last SEO generation. */
+  async findDueForSeoGeneration(): Promise<{ id: number; user_id: number }[]> {
+    const result = await Query.raw(
+      `SELECT id, user_id
+       FROM ${TABLES_ENUM.PORTFOLIOS}
+       WHERE blocked_at IS NULL
+         AND is_active = true
+         AND is_indexable = true
+         AND (seo_generated_at IS NULL OR seo_generated_at < updated_at)
+       ORDER BY updated_at ASC`,
+    );
+    const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];
+    return (Array.isArray(rows) ? rows : []).map((row: { id: number; user_id: number }) => ({
+      id: Number(row.id),
+      user_id: Number(row.user_id),
+    }));
+  }
+
+  /**
+   * Sitemap enumeration: publicly indexable portfolios + owner username + up to `imageCap` gallery
+   * thumbnail PATHS (ordered by pivot position) for the image-sitemap extension. Paths are signed
+   * into URLs by the sitemap service. Same visibility predicate as `findDueForSeoGeneration`.
+   */
+  async getSitemapPortfolios(
+    limit: number,
+    offset: number,
+    imageCap: number,
+  ): Promise<{ username: string; slug: string; updated_at: string; image_paths: string[] }[]> {
+    const result = await Query.raw(
+      `SELECT p.slug, p.updated_at, u.username,
+         COALESCE((
+           SELECT array_agg(x.thumbnail)
+           FROM (
+             SELECT m.thumbnail
+             FROM ${TABLES_ENUM.PORTFOLIO_MEDIA} pm
+             JOIN ${TABLES_ENUM.MEDIA} m ON m.id = pm.media_id
+             WHERE pm.portfolio_id = p.id
+               AND m.thumbnail IS NOT NULL AND m.blocked_at IS NULL AND m.is_active = true
+             ORDER BY pm.position ASC
+             LIMIT $3
+           ) x
+         ), ARRAY[]::text[]) AS image_paths
+       FROM ${TABLES_ENUM.PORTFOLIOS} p
+       INNER JOIN ${TABLES_ENUM.USERS} u ON u.id = p.user_id
+       WHERE p.blocked_at IS NULL AND p.is_active = true AND p.is_indexable = true
+       ORDER BY p.updated_at DESC
+       LIMIT $1 OFFSET $2`,
+      [limit, offset, imageCap],
+    );
+    const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];
+    return (Array.isArray(rows) ? rows : []).map(
+      (row: { username: string; slug: string; updated_at: string; image_paths: string[] | null }) => ({
+        username: row.username,
+        slug: row.slug,
+        updated_at: row.updated_at,
+        image_paths: row.image_paths ?? [],
+      }),
+    );
+  }
+
+  /** Count for `getSitemapPortfolios` (same predicate). */
+  async countSitemapPortfolios(): Promise<number> {
+    const result = await Query.raw(
+      `SELECT COUNT(*)::int AS count FROM ${TABLES_ENUM.PORTFOLIOS}
+       WHERE blocked_at IS NULL AND is_active = true AND is_indexable = true`,
+    );
+    const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];
+    return Number((Array.isArray(rows) ? rows : [])[0]?.count ?? 0);
+  }
+
+  /**
+   * Persist the EN-fallback SEO onto the main row and stamp `seo_generated_at`.
+   * `seo_generated_at` is set to DB `CURRENT_TIMESTAMP` in the same statement so it equals the
+   * `updated_at` value the BEFORE-UPDATE trigger writes — otherwise `seo_generated_at < updated_at`
+   * would stay true and the row would be regenerated on every batch run forever.
+   */
+  async updateSeoById(id: number, seo: EntitySeoFields): Promise<void> {
+    await Query.raw(
+      `UPDATE ${TABLES_ENUM.PORTFOLIOS}
+       SET seo_title = $1, seo_description = $2, seo_generated_at = CURRENT_TIMESTAMP
+       WHERE id = $3`,
+      [seo.seo_title ?? null, seo.seo_description ?? null, id],
+    );
+  }
+
+  /**
+   * Lean SEO-only read for `generateMetadata`: returns the portfolio's SEO localized to the request
+   * language (COALESCE translation → main-row EN fallback) plus the cover thumbnail and index flag.
+   * Does NOT fetch media/layout/collections (that is the render fetch's job).
+   */
+  async getSeoMetadataBySlug(
+    slug: string,
+    userId: number,
+  ): Promise<{
+    seo_title: string | null;
+    seo_description: string | null;
+    thumbnail: string | null;
+    is_indexable: boolean;
+  } | null> {
+    const lang = this.requestService.language ?? DEFAULT_LANGUAGE;
+    const result = await Query.raw(
+      `SELECT p.thumbnail, p.is_indexable,
+              COALESCE(pt.seo_title, p.seo_title) AS seo_title,
+              COALESCE(pt.seo_description, p.seo_description) AS seo_description
+       FROM ${TABLES_ENUM.PORTFOLIOS} p
+       LEFT JOIN ${TABLES_ENUM.PORTFOLIO_TRANSLATIONS} pt
+         ON pt.portfolio_id = p.id AND pt.language_code = $1
+       WHERE p.slug = $2 AND p.user_id = $3 AND p.blocked_at IS NULL
+       LIMIT 1`,
+      [lang, slug, userId],
+    );
+    const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];
+    const row = (Array.isArray(rows) ? rows : [])[0] as
+      | { seo_title: string | null; seo_description: string | null; thumbnail: string | null; is_indexable: boolean }
+      | undefined;
+    if (!row) return null;
+    return {
+      seo_title: row.seo_title ?? null,
+      seo_description: row.seo_description ?? null,
+      thumbnail: row.thumbnail ?? null,
+      is_indexable: row.is_indexable,
+    };
+  }
+
+  /** Upsert per-locale SEO rows into portfolio_translations (one row per app language). */
+  async upsertSeoTranslations(portfolioId: number, rows: SeoTranslation[]): Promise<void> {
+    for (const r of rows) {
+      await Query.raw(
+        `INSERT INTO ${TABLES_ENUM.PORTFOLIO_TRANSLATIONS} (language_code, portfolio_id, seo_title, seo_description)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (language_code, portfolio_id)
+         DO UPDATE SET seo_title = EXCLUDED.seo_title, seo_description = EXCLUDED.seo_description`,
+        [r.language_code, portfolioId, r.seo_title ?? null, r.seo_description ?? null],
+      );
+    }
+  }
+
   async getFeatured(): Promise<FullPortfolio | null> {
     const result = await this.applyFullPortfolioQuery(this.query())
       .where('portfolios.is_featured', '=', true)
@@ -156,7 +309,7 @@ export class PortfolioRepository extends BaseRepository {
   }
 
   private applyFullPortfolioQuery(query: QueryBuilder): QueryBuilder {
-    const lang = this.requestService.language;
+    const lang = this.requestService.language ?? DEFAULT_LANGUAGE;
     return query
       .rawSelect(
         [
@@ -213,7 +366,7 @@ export class PortfolioRepository extends BaseRepository {
   }
 
   async findCategoriesForPortfolio(portfolioId: number): Promise<CategoryBase[]> {
-    const lang = this.requestService.language;
+    const lang = this.requestService.language ?? DEFAULT_LANGUAGE;
     const rows = await this.query()
       .rawSelect(
         `categories.id,
@@ -487,6 +640,10 @@ export class PortfolioRepository extends BaseRepository {
       is_featured: result.is_featured,
       is_highlight: result.is_highlight,
       is_active: result.is_active,
+      is_indexable: result.is_indexable,
+      seo_title: result.seo_title,
+      seo_description: result.seo_description,
+      seo_generated_at: result.seo_generated_at,
       blocked_at: result.blocked_at,
       user_id: result.user_id,
       created_at: result.created_at,
@@ -521,8 +678,8 @@ export class PortfolioRepository extends BaseRepository {
           url: row.url,
           seo_filename: row.seo_filename,
           seo_alt: row.seo_alt,
-          seo_description: row.seo_description,
-          seo_title: row.seo_title,
+          seo_description: row.m_seo_description,
+          seo_title: row.m_seo_title,
           shape: row.shape,
           aspect_ratio: row.aspect_ratio ?? '1:1',
           is_highlight: row.m_is_highlight ?? false,
@@ -555,6 +712,10 @@ export class PortfolioRepository extends BaseRepository {
       is_featured: first.is_featured,
       is_highlight: first.is_highlight,
       is_active: first.is_active,
+      is_indexable: first.is_indexable,
+      seo_title: first.seo_title,
+      seo_description: first.seo_description,
+      seo_generated_at: first.seo_generated_at,
       blocked_at: first.blocked_at,
       user_id: first.user_id,
       created_at: first.created_at,

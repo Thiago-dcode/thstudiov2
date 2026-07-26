@@ -162,7 +162,9 @@ const proxy = async (req: NextRequest) => {
   // the language sent to the API agrees with next-intl's own fallback chain.
   const redirectLocation = response.headers.get("location");
   const effectiveFirstSeg = redirectLocation
-    ? (new URL(redirectLocation, req.url).pathname.split("/")[1] ?? "").toLowerCase()
+    ? (
+        new URL(redirectLocation, req.url).pathname.split("/")[1] ?? ""
+      ).toLowerCase()
     : firstSeg;
 
   const resolvedLanguageCode: EnumType<"LANGUAGE_CODE"> = (
@@ -198,7 +200,9 @@ const proxy = async (req: NextRequest) => {
 };
 
 export const config = {
-  matcher: "/((?!api|_next/static|_next/image|favicon.ico).*)",
+  // Exclude files with an extension (`.*\..*`) so metadata routes — sitemap.xml, sitemap/N.xml,
+  // robots.txt — are served by Next directly instead of being rewritten under `[locale]`.
+  matcher: "/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)",
 };
 
 export default proxy;

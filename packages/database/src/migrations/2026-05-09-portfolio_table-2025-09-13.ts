@@ -16,6 +16,18 @@ const up = async () => {
     Column.boolean('is_highlight', {
       default: false
     }),
+    Column.boolean('is_indexable', {
+      default: true
+    }),
+    Column.string('seo_title', 70, {
+      nullable: true,
+    }),
+    Column.string('seo_description', 160, {
+      nullable: true,
+    }),
+    Column.timestamp('seo_generated_at', {
+      nullable: true,
+    }),
     Column.timestamp('blocked_at', {
       nullable: true,
     }),
@@ -49,8 +61,10 @@ const up = async () => {
   ]);
   await Schema.table('portfolio_translations').createIfNotExists([
     Column.id(),
-    Column.string('name'),
-    Column.text('description'),
+    Column.string('name', 255, { nullable: true }),
+    Column.text('description', { nullable: true }),
+    Column.string('seo_title', 70, { nullable: true }),
+    Column.string('seo_description', 160, { nullable: true }),
     Column.enum('language_code', 'LANGUAGE_CODE'),
     Column.foreignKey('portfolio_id', 'portfolios', 'id', {
       onDelete: 'CASCADE',

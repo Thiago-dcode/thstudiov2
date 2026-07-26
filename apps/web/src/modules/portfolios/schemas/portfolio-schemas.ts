@@ -14,7 +14,9 @@ export const createPortfolioSchema = (t: Translator) =>
     user_id: z.number(),
     is_highlight: z.boolean().optional(),
     is_active: z.boolean().optional(),
-    thumbnail: z.instanceof(File, { message: t("validation.thumbnailRequired") }),
+    thumbnail: z.instanceof(File, {
+      message: t("validation.thumbnailRequired"),
+    }),
     categories: z
       .array(z.number())
       .max(

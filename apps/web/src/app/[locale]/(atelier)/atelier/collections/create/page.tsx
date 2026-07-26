@@ -1,6 +1,6 @@
 import { TABLES_ENUM } from "@repo/common-lib/constants/enums";
-import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import {
   AdminPageContainer,
   AdminPageTitle,

@@ -23,8 +23,8 @@ import { Label } from "@repo/ui/components/shadcn/label";
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { cn } from "@repo/ui/lib/utils";
 import { Image, X } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { StickyFormFooter } from "@/app/[locale]/(atelier)/__components/sticky-form-footer";
 import { SubmitCollectionButton } from "@/app/[locale]/(atelier)/__components/submit-collection-button";
@@ -188,9 +188,7 @@ export const CreateOrUpdateCollection = ({
   const getSlugStatusMessage = () => {
     if (isCheckingSlugAvailability) {
       return (
-        <p className="text-sm text-text-muted">
-          {t("form.slugChecking")}
-        </p>
+        <p className="text-sm text-text-muted">{t("form.slugChecking")}</p>
       );
     }
     if (
@@ -307,6 +305,11 @@ export const CreateOrUpdateCollection = ({
               </p>
             )}
             {getSlugStatusMessage()}
+            {defaultCollection && (
+              <p className="text-sm text-amber-600">
+                {t("form.slugChangeWarning")}
+              </p>
+            )}
           </div>
 
           <FormComponent.LabelTextarea
@@ -431,9 +434,7 @@ export const CreateOrUpdateCollection = ({
           {mediaSelected.length === 0 ? (
             <div className="w-full min-h-[200px] border-2 border-dashed border-border/60 bg-fg-2/5 flex flex-col items-center justify-center gap-3 p-8">
               <Image className="size-8 text-text-muted/30" />
-              <p className="text-sm text-text-muted/70">
-                {t("media.noMedia")}
-              </p>
+              <p className="text-sm text-text-muted/70">{t("media.noMedia")}</p>
             </div>
           ) : (
             <DndContext onDragEnd={handleDragEnd}>

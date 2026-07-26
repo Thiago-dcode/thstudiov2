@@ -14,6 +14,7 @@ import {
   UpdateCategoryInput,
 } from '@repo/common-lib/types/category';
 import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
+import { MediaMetadataPromptCategory } from '@repo/common-lib/types/ai';
 import { QueryBuilder } from '@repo/database/queryBuilder';
 
 @Injectable()
@@ -56,6 +57,17 @@ export class CategoriesRepository extends BaseRepository {
     return this.formatCategories(
       await query.get<CategoryWithTranslationsSchema[]>(),
     );
+  }
+
+  /**
+   * Active categories with their canonical (English) `name` and `type`, no translation join.
+   * Used to feed the AI media-tagging prompt where ids must be language-independent.
+   */
+  async findActiveForTagging(): Promise<MediaMetadataPromptCategory[]> {
+    return this.query()
+      .select(['id', 'name', 'type'])
+      .where('is_active', '=', true)
+      .get<MediaMetadataPromptCategory[]>();
   }
 
   async slugExists(slug: string, excludeId?: number): Promise<boolean> {

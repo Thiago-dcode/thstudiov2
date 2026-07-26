@@ -1,14 +1,28 @@
 import type { Messages } from "./en";
 
 const messages = {
+  seo: {
+    organizationDescription:
+      "A11STUDIO es la plataforma de portafolios donde los artistas son descubiertos: muestra tu trabajo y conecta con clientes, coleccionistas y colaboradores.",
+  },
   landing: {
+    metadata: {
+      title: "A11STUDIO — Donde los artistas son descubiertos",
+      description:
+        "La plataforma de portafolios para artistas. Muestra tu trabajo, haz que clientes y coleccionistas te descubran y deja que la IA optimice tu SEO automáticamente.",
+    },
     hero: {
       titlePrefix: "Deja que tu",
       titleAccentWords: ["arte", "visión", "talento", "pasión", "voz"],
       titleConnector: "se",
-      titleDiscoverWords: ["comparta", "note", "revele", "encuentre", "descubra"],
-      subtitle:
-        "Sube tu mejor arte, del resto nos encargamos nosotros.",
+      titleDiscoverWords: [
+        "comparta",
+        "note",
+        "revele",
+        "encuentre",
+        "descubra",
+      ],
+      subtitle: "Sube tu mejor arte, del resto nos encargamos nosotros.",
       primaryCtaLoggedIn: "Acceder a Atelier",
       primaryCtaLoggedOut: "Empieza gratis ahora",
       secondaryCta: "Encuentra artistas",
@@ -27,7 +41,7 @@ const messages = {
           "Te enviamos un correo de confirmación. Ábrelo y haz clic en el enlace para asegurar tu acceso anticipado.",
         successReserveMessage: "Reservaremos tu correo después de validarlo.",
         alreadyExists:
-          '{email} ya está en la lista de espera. Revisa tu correo. Si esto no es correcto, <supportLink>contacta con soporte</supportLink>.',
+          "{email} ya está en la lista de espera. Revisa tu correo. Si esto no es correcto, <supportLink>contacta con soporte</supportLink>.",
       },
       disclaimer: "Gratis para empezar · No se requiere tarjeta",
       scrollToNextSection: "Ir a la siguiente sección",
@@ -209,38 +223,82 @@ const messages = {
     title: "Preguntas frecuentes",
     stillHaveQuestions:
       "¿Aún tienes preguntas? Estamos aquí para <link>ayudar</link>",
+    viewAll: "Ver todas las preguntas",
     items: [
       {
+        id: "what-is-a11studio",
         question: "¿Qué es A11STUDIO?",
         answer:
-          "A11STUDIO es una plataforma de portafolios creada para artistas visuales que combina la presencia de un sitio web profesional con la facilidad de uso de las redes sociales. Obtienes un sitio pulido y con aspecto personalizado, pero actualizarlo es tan sencillo como publicar una historia. Sin código, sin conocimientos de diseño web: solo arrastra, suelta y publica.",
+          "A11STUDIO combina lo mejor de un sitio web de portafolio profesional con la simplicidad y la cercanía de las redes sociales. Los sitios web tradicionales te dan control total sobre cómo presentas tu trabajo, mientras que las redes sociales hacen que publicar sea muy fácil. En lugar de obligarte a elegir, A11STUDIO te ofrece ambos: un hogar profesional y pulido para tu arte, tan fácil de actualizar como publicar una historia. Conoce más <a href='/about'>sobre nuestra misión</a>.",
       },
       {
+        id: "what-is-a-portfolio",
         question: "¿Qué es un portafolio?",
         answer:
-          'Un portafolio es tu selección destacada: una muestra cuidada de tu mejor trabajo dentro de una disciplina o estilo. Por ejemplo, un portafolio de "Fotografía de bodas" presentaría las mejores imágenes de todas las bodas que has cubierto. Es lo que los clientes ven para evaluar tu talento y contratarte.',
+          "Un portafolio es tu selección destacada: una muestra cuidada de tu mejor trabajo dentro de una disciplina o estilo. Por ejemplo, un portafolio de “Fotografía de bodas” presentaría las mejores imágenes de todas las bodas que has cubierto. Es lo que los clientes ven para evaluar tu talento y decidir contratarte.",
       },
       {
+        id: "what-is-a-collection",
         question: "¿Qué es una colección?",
         answer:
-          'Una colección agrupa un proyecto o evento específico. Por ejemplo, "Boda de María y Juan 2024" sería una colección con todas las fotos entregadas de esa sesión. Es la forma de organizar trabajos individuales, sesiones o cuerpos de obra.',
+          "Una colección agrupa un proyecto o evento específico; por ejemplo, “Boda de María y Juan 2024” reuniría todas las fotos entregadas de esa sesión. Mientras que un <a href='#what-is-a-portfolio'>portafolio</a> es tu selección de lo mejor a lo largo de muchos proyectos, una colección es la forma de organizar el trabajo de un solo encargo, sesión o cuerpo de obra.",
       },
       {
-        question: "¿Cuál es la diferencia entre un portafolio y una colección?",
+        id: "create-account",
+        question: "¿Cómo puedo crear una cuenta?",
         answer:
-          'Un portafolio reúne lo mejor de tu trabajo: una vitrina que abarca múltiples proyectos para demostrar tu experiencia en una disciplina (por ejemplo, "Fotografía de bodas"). Una colección corresponde a un solo proyecto o evento (por ejemplo, "Boda de María y Juan 2024"). Piensa en los portafolios como lo que te ayuda a conseguir clientes y en las colecciones como la forma de organizar cada trabajo.',
+          "Empezar toma solo un minuto. Ve a la <a href='/auth/register'>página de registro</a>, crea tu cuenta gratuita y configura tu perfil. Puedes construir tu primer portafolio en minutos, sin necesidad de programar, alojar ni tener conocimientos de diseño web. Si los registros están cerrados temporalmente, puedes unirte a la lista de espera y te avisaremos en cuanto se libere tu lugar.",
       },
       {
+        id: "why-ai",
         question: "¿Por qué A11STUDIO usa IA?",
         answer:
-          "Para que puedas concentrarte en lo que mejor haces: crear arte. La IA se encarga del trabajo detrás de escena: genera títulos, descripciones y etiquetas optimizados para SEO, categoriza tus medios automáticamente y escribe texto alternativo para que los motores de búsqueda y los asistentes de IA puedan encontrarte. No necesitas aprender SEO ni marketing: solo sube tus mejores piezas y la IA ayuda a que la audiencia correcta las descubra.",
+          "Para que puedas concentrarte en lo que mejor haces: crear arte. Todo lo técnico ocurre detrás de escena: la IA genera títulos, descripciones y etiquetas optimizados para SEO, categoriza tus medios automáticamente y escribe texto alternativo para que los motores de búsqueda y los asistentes de IA puedan encontrarte. Nunca tienes que aprender SEO ni marketing: solo sube tus mejores piezas y deja que la audiencia correcta las descubra.",
       },
       {
-        question: "¿Puedo usar A11STUDIO gratis?",
+        id: "what-is-seo",
+        question: "¿Qué es el SEO?",
         answer:
-          "Sí. A11STUDIO ofrece un plan gratuito que te permite crear tu perfil, construir portafolios y empezar a mostrar tu trabajo de inmediato. Los planes premium desbloquean funciones adicionales, como herramientas impulsadas por IA, más almacenamiento y opciones avanzadas de personalización.",
+          "El SEO (optimización para motores de búsqueda) es lo que ayuda a que tu trabajo aparezca cuando alguien busca en Google —o le pregunta a un asistente de IA— por un artista como tú. Normalmente requiere conocimientos técnicos, pero A11STUDIO lo hace por ti automáticamente, escribiendo títulos, descripciones, etiquetas y texto alternativo optimizados detrás de escena para que las personas correctas encuentren tu portafolio. Conoce más sobre <a href='#why-ai'>cómo lo hace nuestra IA</a>.",
+      },
+      {
+        id: "position-profile",
+        question: "¿Cómo puedo posicionar mi perfil?",
+        answer:
+          "A11STUDIO se encarga por ti de las partes difíciles de la visibilidad: el SEO, la indexación en buscadores y la optimización ocurren automáticamente. Para sacarle el máximo provecho, completa tu perfil, elige las categorías que corresponden a tu oficio y sube tu trabajo más fuerte. Cuanto más completo y pulido esté tu perfil, más fácil será que los clientes correctos te descubran. ¿Necesitas ayuda? <a href='/support'>Escríbenos</a>.",
+      },
+      {
+        id: "get-clients",
+        question: "¿Cómo puedo conseguir clientes?",
+        answer:
+          "A11STUDIO está hecho para conectar a los artistas con personas que valoran su trabajo. La mejor forma de atraer clientes es completar tu perfil, mostrar tus portafolios más fuertes y mantener tu trabajo organizado para que los visitantes entiendan al instante lo que ofreces. La plataforma se encarga del descubrimiento —SEO e indexación— para que los clientes que buscan tu tipo de trabajo te encuentren. Asegúrate de que tu <a href='#position-profile'>perfil esté bien posicionado</a> para lograr el mayor alcance.",
+      },
+      {
+        id: "upload-videos",
+        question: "¿Puedo subir videos?",
+        answer:
+          "Todavía no: por ahora A11STUDIO admite imágenes y está diseñado para mostrarlas de forma hermosa. El soporte de video está en nuestra hoja de ruta para una versión futura, de modo que cineastas, animadores y artistas del movimiento también podrán presentar su trabajo aquí. ¿Quieres que te avisemos cuando esté disponible? <a href='/support'>Contáctanos</a>.",
+      },
+      {
+        id: "is-free",
+        question: "¿A11STUDIO es gratis?",
+        answer:
+          "Sí. A11STUDIO ofrece un plan gratuito que te permite crear tu perfil, construir portafolios y empezar a mostrar tu trabajo de inmediato. Los planes premium desbloquean funciones adicionales, como herramientas impulsadas por IA, más almacenamiento y personalización avanzada, pero puedes empezar gratis y mejorar solo si lo necesitas.",
       },
     ],
+    page: {
+      metadata: {
+        title: "Preguntas frecuentes — A11STUDIO",
+        description:
+          "Respuestas a las preguntas más comunes sobre A11STUDIO — qué es, portafolios, crear una cuenta, IA, posicionar tu perfil y precios.",
+      },
+      hero: {
+        label: "Preguntas frecuentes",
+        title: "Preguntas frecuentes",
+        lead: "Todo lo que necesitas saber sobre A11STUDIO: qué es, cómo empezar y cómo ayuda a que las personas correctas descubran tu trabajo.",
+      },
+      navLabel: "En esta página",
+    },
   },
   about: {
     metadata: {
@@ -387,7 +445,8 @@ const messages = {
   },
   waitListDialog: {
     title: "El registro está cerrado por ahora",
-    description: "Únete a la lista de espera y sé de los primeros en entrar a A11STUDIO.",
+    description:
+      "Únete a la lista de espera y sé de los primeros en entrar a A11STUDIO.",
   },
   footer: {
     tagline: "La plataforma de portafolios creada para artistas.",
@@ -403,6 +462,7 @@ const messages = {
     contact: {
       heading: "Contacto",
       about: "Acerca de",
+      faqs: "Preguntas frecuentes",
       support: "Soporte",
     },
     copyright: "© {year} A11STUDIO. Todos los derechos reservados.",
@@ -739,8 +799,7 @@ const messages = {
     title: "Tienes un regalo esperándote",
     description:
       "Como <name>{label}</name> obtienes <free>{months, plural, one {# mes gratis} other {# meses gratis}}</free>.",
-    claimBelow:
-      "Canjéalo justo abajo. Te guiaremos para obtener el beneficio",
+    claimBelow: "Canjéalo justo abajo. Te guiaremos para obtener el beneficio",
     claimAfterSetup:
       "Cuando termines la configuración de bienvenida te guiaremos para obtener el beneficio.",
     claimNow: "Canjear ahora",
@@ -749,8 +808,7 @@ const messages = {
   },
   userAccountBanned: {
     title: "Cuenta suspendida",
-    description:
-      "Tu cuenta ha sido suspendida por incumplir las políticas.",
+    description: "Tu cuenta ha sido suspendida por incumplir las políticas.",
     restrictionsLiftedOn: "Las restricciones se levantarán el {date}.",
     contactSupport: "Contacta con soporte si crees que es un error",
     logout: "Cerrar sesión",
@@ -1025,7 +1083,8 @@ const messages = {
     user: {
       usernameAlphanumeric:
         "El nombre de usuario debe ser alfanumérico y sin espacios",
-      passwordMustContainNumber: "La contraseña debe contener al menos un número",
+      passwordMustContainNumber:
+        "La contraseña debe contener al menos un número",
       passwordNoSpaces: "La contraseña no puede contener espacios",
     },
   },
@@ -1162,7 +1221,10 @@ const messages = {
         slugChecking: "Comprobando disponibilidad...",
         slugAvailable: "✓ Este slug está disponible",
         slugTaken: "✗ Este slug ya está en uso",
-        slugInvalidFormat: "✗ Formato de slug no válido. Ejemplo: mi-portafolio",
+        slugInvalidFormat:
+          "✗ Formato de slug no válido. Ejemplo: mi-portafolio",
+        slugChangeWarning:
+          "Es mejor no cambiar el slug una vez definido: al cambiarlo se actualiza tu enlace público, por lo que los enlaces existentes a esta página podrían dejar de funcionar.",
         descriptionLabel: "Descripción",
         descriptionPlaceholder: "Describe tu portafolio...",
         categoriesLabel: "Categorías",
@@ -1237,6 +1299,8 @@ const messages = {
           "Identificador apto para URL. Solo letras minúsculas, números y guiones.",
         slugInvalidFormat:
           "✗ Formato de slug no válido. Ejemplo: fotografia-de-retrato",
+        slugChangeWarning:
+          "Es mejor no cambiar el slug una vez definido: al cambiarlo se actualiza tu enlace público, por lo que los enlaces existentes a esta página podrían dejar de funcionar.",
         descriptionLabel: "Descripción",
         descriptionPlaceholder: "Describe tu servicio...",
         priceLabel: "Precio",
@@ -1307,6 +1371,8 @@ const messages = {
         slugAvailable: "✓ Este slug está disponible",
         slugTaken: "✗ Este slug ya está en uso",
         slugInvalidFormat: "✗ Formato de slug no válido. Ejemplo: mi-coleccion",
+        slugChangeWarning:
+          "Es mejor no cambiar el slug una vez definido: al cambiarlo se actualiza tu enlace público, por lo que los enlaces existentes a esta página podrían dejar de funcionar.",
         descriptionLabel: "Descripción",
         descriptionPlaceholder: "Describe tu colección...",
         showOnProfile: "Mostrar en la página de perfil",
@@ -1349,9 +1415,9 @@ const messages = {
         upgradeRequired: "Actualización necesaria:",
         upgradeRequiredBody:
           "El control de compresión no está disponible en tu plan actual. Actualiza para acceder a esta función.",
-        aiSeoGeneration: "Generación de SEO con IA",
+        aiSeoGeneration: "Generar metadatos",
         aiSeoTooltipBody:
-          "Genera automáticamente título, descripción, texto alternativo y nombre de archivo SEO para cada imagen usando análisis de visión por IA.",
+          "El SEO (optimización para motores de búsqueda) ayuda a que tu trabajo se encuentre en Google y Google Imágenes. Usa IA para analizar la imagen y generar un título, una descripción, un texto alternativo y un nombre de archivo artísticos y ricos en palabras clave, y la etiqueta automáticamente con las categorías correspondientes.",
         aiSeoCreditsHint:
           "Cuesta 1 crédito de IA por imagen. Te quedan {count} {count, plural, one {crédito} other {créditos}}.",
         creditsLabel: "{count} {count, plural, one {crédito} other {créditos}}",
@@ -1393,18 +1459,18 @@ const messages = {
         filenameLabel: "Nombre de archivo",
         filenamePlaceholder: "Introduce el nombre de archivo",
         filenameInfo:
-          "El nombre de archivo usado con fines de SEO. Puede editarse para mejorar la visibilidad en buscadores.",
+          "Nombre de archivo SEO definido automáticamente al subir o al generar metadatos con IA. No se puede editar.",
         lastUpdated: "Última actualización",
         noPreview: "Sin vista previa",
         altFallback: "Contenido de {username}",
         untitled: "Sin título",
         editMedia: "Editar contenido",
         mediaPreview: "Vista previa del contenido",
-        generateSeo: "Generar SEO",
+        generateSeo: "Generar metadatos",
         noCreditsAvailable:
-          "No hay créditos de IA disponibles. Necesitas al menos 1 crédito para generar metadatos SEO. Mejora tu plan o espera a que se reinicien los créditos.",
+          "No hay créditos de IA disponibles. Necesitas al menos 1 crédito para generar metadatos. Mejora tu plan o espera a que se reinicien los créditos.",
         generateSeoTooltip:
-          "Genera automáticamente los campos SEO con IA. Analiza el contenido de tu imagen y genera títulos, descripciones, texto alternativo y nombres de archivo optimizados para mejorar la visibilidad en búsquedas.",
+          "El SEO (optimización para motores de búsqueda) ayuda a que tu trabajo se encuentre en Google y Google Imágenes. Usa IA para analizar la imagen y generar un título, una descripción, un texto alternativo y un nombre de archivo artísticos y ricos en palabras clave, y la etiqueta automáticamente con las categorías correspondientes.",
         noCreditsSuffix: " (Sin créditos)",
         delete: "Eliminar",
         deleteConfirm: "¿Seguro que quieres eliminar este contenido?",
@@ -1419,10 +1485,10 @@ const messages = {
         close: "Cerrar",
       },
       grid: {
-        generateSeoCount: "Generar SEO ({count})",
-        generateSeoTitle: "Generar SEO con IA",
+        generateSeoCount: "Generar metadatos ({count})",
+        generateSeoTitle: "Generar metadatos con IA",
         generateSeoDescription:
-          "¿Generar metadatos SEO con IA para {count} {count, plural, one {contenido seleccionado} other {contenidos seleccionados}}?",
+          "¿Generar metadatos con IA para {count} {count, plural, one {contenido seleccionado} other {contenidos seleccionados}}?",
         creditsAvailable: "Créditos disponibles:",
         creditsNeeded: "Créditos necesarios:",
         overAiLimit:
@@ -1578,8 +1644,7 @@ const messages = {
         monthlyLimitReached: "Límite mensual alcanzado",
         usedAllChanges:
           "Has usado los {max} cambios de contraseña permitidos para este periodo.",
-        availableAgainOn:
-          "Disponible de nuevo el <strong>{date}</strong>.",
+        availableAgainOn: "Disponible de nuevo el <strong>{date}</strong>.",
         currentPasswordLabel: "Contraseña actual",
         newPasswordLabel: "Nueva contraseña",
         newPasswordInfo: "8–20 caracteres, al menos un número, sin espacios",
@@ -1595,8 +1660,7 @@ const messages = {
         monthlyLimitReached: "Límite mensual alcanzado",
         usedAllChanges:
           "Has usado los {max} cambios de nombre de usuario permitidos para este periodo.",
-        availableAgainOn:
-          "Disponible de nuevo el <strong>{date}</strong>.",
+        availableAgainOn: "Disponible de nuevo el <strong>{date}</strong>.",
         newUsernameLabel: "Nuevo nombre de usuario",
         newUsernameInfo: "3–20 caracteres, solo letras y números",
         remainingChanges:

@@ -31,7 +31,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         data: null,
         errors: [],
-        inputErrors: { file: t("validation.required", { field: t("fields.file") }) },
+        inputErrors: {
+          file: t("validation.required", { field: t("fields.file") }),
+        },
       });
     }
 
@@ -40,7 +42,10 @@ export async function POST(request: NextRequest) {
         data: null,
         errors: [],
         inputErrors: {
-          file: t("validation.file.tooLarge", { field: t("fields.file"), mb: 10 }),
+          file: t("validation.file.tooLarge", {
+            field: t("fields.file"),
+            mb: 10,
+          }),
         },
       });
     }
@@ -80,7 +85,6 @@ export async function POST(request: NextRequest) {
 
     const backendFormData = new FormData();
     backendFormData.append("file", file);
-    backendFormData.append("seo_filename", rest.seo_filename);
     backendFormData.append("user_id", String(rest.user_id));
     if (rest.title) backendFormData.append("title", rest.title);
     if (rest.description)

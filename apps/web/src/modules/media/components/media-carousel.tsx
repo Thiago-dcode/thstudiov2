@@ -1,6 +1,6 @@
 "use client";
 
-import { MediaWithUser } from "@repo/common-lib/types/media";
+import type { MediaWithUser } from "@repo/common-lib/types/media";
 import { cn } from "@repo/ui/lib/utils";
 import useEmblaCarousel from "embla-carousel-react";
 import NextImage from "next/image";
@@ -46,7 +46,7 @@ export const MediaCarousel = ({ media }: { media: MediaWithUser[] }) => {
       onFocusCapture={() => setIsPaused(true)}
       onBlurCapture={() => setIsPaused(false)}
     >
-     {activeUser?.username ? (
+      {activeUser?.username ? (
         <Link
           href={`/artists/${encodeURIComponent(activeUser.username)}`}
           className="pl-1 w-fit text-sm text-text-muted transition-colors hover:text-text focus-visible:text-text focus-visible:outline-none"
@@ -77,7 +77,6 @@ export const MediaCarousel = ({ media }: { media: MediaWithUser[] }) => {
           })}
         </div>
       </div>
-    
 
       {hasControls ? (
         <div className="flex items-center justify-between">

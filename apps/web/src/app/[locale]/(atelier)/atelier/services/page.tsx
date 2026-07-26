@@ -1,7 +1,7 @@
 import { TABLES_ENUM } from "@repo/common-lib/constants/enums";
 import { Briefcase } from "lucide-react";
-import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import { ServiceCard } from "@/modules/user-services/components/service-card";
 import userServiceService from "@/modules/user-services/user-service.service";

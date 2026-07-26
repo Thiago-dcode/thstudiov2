@@ -1,8 +1,8 @@
 "use client";
 
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
-import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { getCustomerSubscriptionPortalAction } from "@/modules/plan-subscriptions/server-actions/get-customer-subscription-portal.action";
 

@@ -10,6 +10,38 @@ const MIGRATION_TABLE_NAME = 'migrations';
 /** Large `migrate:refresh` / `db:fresh` runs can exceed a few minutes on slow machines. */
 const MIGRATION_TIMEOUT_MS = 15 * 60 * 1000;
 
+/**
+ * Reconcile legacy ledger rows to the canonical `.js` identity.
+ *
+ * The compiled CLI runs migrations from `dist/src/migrations` (`.js`), but older
+ * runs against the TypeScript source recorded `.ts` names in the `migrations`
+ * table. Since `handleMigration` now stores/compares the normalized `.js` name,
+ * any leftover `.ts` row would no longer match its file and the migration would
+ * be re-applied. Rewrite those rows to `.js` once, dropping duplicates that would
+ * violate the UNIQUE(name) constraint.
+ */
+const normalizeMigrationLedger = async (
+  queryBuilder: ReturnType<typeof QueryBuilder.table>,
+) => {
+  const rows = await QueryBuilder.table(MIGRATION_TABLE_NAME)
+    .select(['name'])
+    .get<{ name: string }[]>();
+  const existing = new Set(rows.map((row) => row.name));
+  for (const { name } of rows) {
+    const normalized = name.replace(/\.(js|ts)$/i, '') + '.js';
+    if (normalized === name) continue;
+    if (existing.has(normalized)) {
+      // A `.js` row already exists — drop the stale `.ts` duplicate.
+      await queryBuilder.where('name', '=', name).delete();
+    } else {
+      await queryBuilder.where('name', '=', name).update(['name'], [normalized]);
+      existing.add(normalized);
+    }
+    existing.delete(name);
+    Logger.info(`🔧 Normalized migration ledger entry: ${name} → ${normalized}`);
+  }
+};
+
 export const migrate = async (options: MigrationScriptOptions = {}) => {
   const shouldExit = options.exitProcess !== false;
   const timeoutId = setTimeout(() => {
@@ -27,6 +59,7 @@ export const migrate = async (options: MigrationScriptOptions = {}) => {
       'created_at TIMESTAMP NOT NULL',
     ]);
     const queryBuilder = QueryBuilder.table(MIGRATION_TABLE_NAME);
+    await normalizeMigrationLedger(queryBuilder);
     let migrationCount = 0;
     await handleMigration(async (migration, migrationName) => {
       const migrationExists = await queryBuilder

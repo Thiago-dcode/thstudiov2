@@ -2,6 +2,10 @@ import { LogService } from '@repo/backend-lib/services/log-service';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { BaseRepository } from '@repo/database/repositories';
 import { QueryBuilder } from '@repo/database/queryBuilder';
+import { Query } from '@repo/database/facades';
+import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
+import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/constants';
+import { MediaSeoTranslation } from '@repo/common-lib/types/ai';
 import {
   MediaSchema,
   MediaSchemaColumns,
@@ -10,7 +14,7 @@ import {
 } from '@repo/common-lib/schemas/media';
 import {
   CreateMediaInput,
-  UpdateMediaInput,
+  UpdateMediaInternalInput,
   Media,
   MediaWithUser,
   MediaIndexRequest,
@@ -41,6 +45,7 @@ export class MediaRepository extends BaseRepository {
     'media.seo_title',
     'media.seo_description',
     'media.seo_filename',
+    'media.seo_generated_at',
     'media.user_id',
     'media.created_at',
     'media.updated_at',
@@ -117,7 +122,7 @@ export class MediaRepository extends BaseRepository {
     return this.formatMedia(result);
   }
 
-  async updateById(id: number, data: UpdateMediaInput): Promise<Media> {
+  async updateById(id: number, data: UpdateMediaInternalInput): Promise<Media> {
     const columns = Object.keys(data);
     const values = Object.values(data);
     await this.query().where('id', '=', id).update(columns, values);
@@ -226,9 +231,70 @@ export class MediaRepository extends BaseRepository {
       seo_title: result.seo_title,
       seo_description: result.seo_description,
       seo_filename: result.seo_filename,
+      seo_generated_at: result.seo_generated_at,
       user_id: result.user_id,
       created_at: result.created_at,
       updated_at: result.updated_at,
     };
+  }
+
+  /**
+   * Lean SEO-only read for `generateMetadata`: media SEO localized to the request language
+   * (COALESCE translation → main-row EN fallback) + owner username + thumbnail + visibility flags.
+   */
+  async getSeoMetadataByPublicId(publicId: string): Promise<{
+    seo_title: string | null;
+    seo_description: string | null;
+    thumbnail: string | null;
+    username: string;
+    is_active: boolean;
+    blocked: boolean;
+  } | null> {
+    const lang = this.requestService.language ?? DEFAULT_LANGUAGE;
+    const result = await Query.raw(
+      `SELECT m.thumbnail, m.is_active, (m.blocked_at IS NOT NULL) AS blocked, u.username,
+              COALESCE(mt.seo_title, m.seo_title) AS seo_title,
+              COALESCE(mt.seo_description, m.seo_description) AS seo_description
+       FROM ${TABLES_ENUM.MEDIA} m
+       INNER JOIN ${TABLES_ENUM.USERS} u ON u.id = m.user_id
+       LEFT JOIN ${TABLES_ENUM.MEDIA_TRANSLATIONS} mt
+         ON mt.media_id = m.id AND mt.language_code = $1
+       WHERE m.public_id = $2
+       LIMIT 1`,
+      [lang, publicId],
+    );
+    const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];
+    const row = (Array.isArray(rows) ? rows : [])[0] as
+      | {
+          seo_title: string | null;
+          seo_description: string | null;
+          thumbnail: string | null;
+          username: string;
+          is_active: boolean;
+          blocked: boolean;
+        }
+      | undefined;
+    if (!row) return null;
+    return {
+      seo_title: row.seo_title ?? null,
+      seo_description: row.seo_description ?? null,
+      thumbnail: row.thumbnail ?? null,
+      username: row.username,
+      is_active: row.is_active,
+      blocked: row.blocked,
+    };
+  }
+
+  /** Upsert per-locale SEO rows into media_translations (one row per app language). */
+  async upsertSeoTranslations(mediaId: number, rows: MediaSeoTranslation[]): Promise<void> {
+    for (const r of rows) {
+      await Query.raw(
+        `INSERT INTO ${TABLES_ENUM.MEDIA_TRANSLATIONS} (language_code, media_id, seo_title, seo_description, seo_alt)
+         VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT (language_code, media_id)
+         DO UPDATE SET seo_title = EXCLUDED.seo_title, seo_description = EXCLUDED.seo_description, seo_alt = EXCLUDED.seo_alt`,
+        [r.language_code, mediaId, r.seo_title ?? null, r.seo_description ?? null, r.seo_alt ?? null],
+      );
+    }
   }
 }

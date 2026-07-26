@@ -21,7 +21,9 @@ export const PlanPrice = ({
           <span className="text-3xl font-bold text-text">
             €{getLowestMontlyPrice(prices)?.toFixed(2) || "0.00"}
           </span>
-          <span className="text-sm text-text-muted self-end">{t("perMonth")}</span>
+          <span className="text-sm text-text-muted self-end">
+            {t("perMonth")}
+          </span>
         </>
       )}
     </div>

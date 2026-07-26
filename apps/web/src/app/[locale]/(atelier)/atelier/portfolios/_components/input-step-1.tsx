@@ -165,9 +165,7 @@ const FirstStepInputs = () => {
       currentPortfolio?.slug !== portfolioInput.slug
     ) {
       if (isSlugAvailable) {
-        return (
-          <p className="text-sm text-green-600">{t("slugAvailable")}</p>
-        );
+        return <p className="text-sm text-green-600">{t("slugAvailable")}</p>;
       } else {
         return <p className="text-sm text-error">{t("slugTaken")}</p>;
       }
@@ -219,6 +217,9 @@ const FirstStepInputs = () => {
             <p className="text-sm text-error">{t("slugInvalidFormat")}</p>
           )}
           {getSlugStatusMessage()}
+          {currentPortfolio?.id && (
+            <p className="text-sm text-amber-600">{t("slugChangeWarning")}</p>
+          )}
         </div>
 
         <FormComponent.LabelTextarea
@@ -265,9 +266,7 @@ const FirstStepInputs = () => {
           </div>
 
           <div className="space-y-2">
-            <Label className="text-sm font-medium">
-              {t("artStylesLabel")}
-            </Label>
+            <Label className="text-sm font-medium">{t("artStylesLabel")}</Label>
             <UpdateCategoriesProvider
               userCategories={styleSelected}
               initialRequest={{ type: "ART_STYLE" }}
@@ -338,9 +337,7 @@ const FirstStepInputs = () => {
           >
             {t("active")}
           </Label>
-          <InfoTooltip
-            content={<p className="text-sm">{t("activeInfo")}</p>}
-          />
+          <InfoTooltip content={<p className="text-sm">{t("activeInfo")}</p>} />
         </div>
       </div>
     </div>

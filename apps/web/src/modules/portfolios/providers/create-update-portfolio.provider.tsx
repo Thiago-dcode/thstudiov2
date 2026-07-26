@@ -25,8 +25,8 @@ import {
   countPortfolioItemSlots,
 } from "@repo/common-lib/utils/portfolio";
 import { toast } from "@repo/ui/sonner";
-import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   createContext,
   type Dispatch,
@@ -342,23 +342,26 @@ export const PortfolioProvider = ({
     [user, resetSlugCheck],
   );
 
-  const setCategorySelected = useCallback((category: CategoryBase) => {
-    setPortfolioInput((prev) => {
-      if (prev.categories.some((c) => c.id === category.id)) return prev;
-      const max =
-        category.type === "ART_STYLE"
-          ? MAX_STYLES_PORTFOLIO
-          : MAX_DISCIPLINES_PORTFOLIO;
-      const sameTypeCount = prev.categories.filter(
-        (c) => c.type === category.type,
-      ).length;
-      if (sameTypeCount >= max) {
-        toast.error(t("validation.maxCategories", { max }));
-        return prev;
-      }
-      return { ...prev, categories: [...prev.categories, category] };
-    });
-  }, [t]);
+  const setCategorySelected = useCallback(
+    (category: CategoryBase) => {
+      setPortfolioInput((prev) => {
+        if (prev.categories.some((c) => c.id === category.id)) return prev;
+        const max =
+          category.type === "ART_STYLE"
+            ? MAX_STYLES_PORTFOLIO
+            : MAX_DISCIPLINES_PORTFOLIO;
+        const sameTypeCount = prev.categories.filter(
+          (c) => c.type === category.type,
+        ).length;
+        if (sameTypeCount >= max) {
+          toast.error(t("validation.maxCategories", { max }));
+          return prev;
+        }
+        return { ...prev, categories: [...prev.categories, category] };
+      });
+    },
+    [t],
+  );
 
   const removeCategorySelected = useCallback((category: CategoryBase) => {
     setPortfolioInput((prev) => ({

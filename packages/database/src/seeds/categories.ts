@@ -25,6 +25,7 @@ const CATEGORY_IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.webp', '.png'] as const;
  */
 const CATEGORY_IMAGE_SLUG_ALIASES: Record<string, string> = {
   'crafts-handmade': 'handmade',
+  'craft-object-design': 'handmade',
 };
 
 function resolveCategoriesImagesDir(): string {
@@ -189,248 +190,980 @@ export const main = async () => {
     const categories: SeedCategory[] = [
         {
             name: 'Photography',
-            tags: ['photo', 'photos', 'camera', 'photographer', 'photoshoot'],
+            tags: [
+                'photo', 'photos', 'photography', 'camera', 'photographer', 'photoshoot',
+                'fotografia', 'fotógrafo', 'fotografa', 'camara', 'sesión',
+            ],
             translations: [
                 { code: 'EN', name: 'Photography' },
                 { code: 'ES', name: 'Fotografía' },
-                { code: 'PT', name: 'Fotografia' }
+                { code: 'PT', name: 'Fotografia' },
             ],
             children: [
-                { name: 'Portrait Photography', tags: ['portrait', 'headshot', 'people', 'studio', 'professional'], translations: [{ code: 'EN', name: 'Portrait Photography' }, { code: 'ES', name: 'Fotografía de Retrato' }, { code: 'PT', name: 'Fotografia de Retrato' }] },
-                { name: 'Wedding & Events', tags: ['wedding', 'event', 'ceremony', 'celebration', 'party'], translations: [{ code: 'EN', name: 'Wedding & Events' }, { code: 'ES', name: 'Bodas y Eventos' }, { code: 'PT', name: 'Casamentos e Eventos' }] },
-                { name: 'Fashion & Editorial', tags: ['fashion', 'editorial', 'model', 'runway', 'lookbook'], translations: [{ code: 'EN', name: 'Fashion & Editorial' }, { code: 'ES', name: 'Moda y Editorial' }, { code: 'PT', name: 'Moda e Editorial' }] },
-                { name: 'Product & Commercial', tags: ['product', 'commercial', 'ecommerce', 'studio', 'advertising'], translations: [{ code: 'EN', name: 'Product & Commercial' }, { code: 'ES', name: 'Producto y Comercial' }, { code: 'PT', name: 'Produto e Comercial' }] },
-                { name: 'Architecture & Real Estate', tags: ['architecture', 'real-estate', 'interior', 'building', 'property'], translations: [{ code: 'EN', name: 'Architecture & Real Estate' }, { code: 'ES', name: 'Arquitectura e Inmobiliaria' }, { code: 'PT', name: 'Arquitetura e Imóveis' }] },
-                { name: 'Landscape & Nature', tags: ['landscape', 'nature', 'wildlife', 'travel', 'outdoor'], translations: [{ code: 'EN', name: 'Landscape & Nature' }, { code: 'ES', name: 'Paisaje y Naturaleza' }, { code: 'PT', name: 'Paisagem e Natureza' }] },
-                { name: 'Aerial & Drone', tags: ['aerial', 'drone', 'uav', 'birds-eye', 'overhead'], translations: [{ code: 'EN', name: 'Aerial & Drone' }, { code: 'ES', name: 'Aérea y Dron' }, { code: 'PT', name: 'Aérea e Drone' }] },
-                { name: 'Documentary & Street', tags: ['documentary', 'street', 'photojournalism', 'candid', 'urban'], translations: [{ code: 'EN', name: 'Documentary & Street' }, { code: 'ES', name: 'Documental y Callejera' }, { code: 'PT', name: 'Documental e de Rua' }] }
-            ]
+                {
+                    name: 'Portrait Photography',
+                    tags: [
+                        'portrait', 'headshot', 'people', 'studio', 'professional', 'retrato',
+                        'fotografia de retrato', 'retrato profesional', 'headshots',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Portrait Photography' },
+                        { code: 'ES', name: 'Fotografía de Retrato' },
+                        { code: 'PT', name: 'Fotografia de Retrato' },
+                    ],
+                },
+                {
+                    name: 'Wedding & Event Photography',
+                    tags: [
+                        'wedding', 'event', 'ceremony', 'celebration', 'party', 'boda', 'bodas',
+                        'eventos', 'fotografia de bodas', 'casamento', 'casamentos', 'fotógrafo de bodas',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Wedding & Event Photography' },
+                        { code: 'ES', name: 'Fotografía de Bodas y Eventos' },
+                        { code: 'PT', name: 'Fotografia de Casamentos e Eventos' },
+                    ],
+                },
+                {
+                    name: 'Fashion & Editorial Photography',
+                    tags: [
+                        'fashion', 'editorial', 'model', 'runway', 'lookbook', 'moda',
+                        'fotografia de moda', 'editorial de moda', 'pasarela', 'modelo',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Fashion & Editorial Photography' },
+                        { code: 'ES', name: 'Fotografía de Moda y Editorial' },
+                        { code: 'PT', name: 'Fotografia de Moda e Editorial' },
+                    ],
+                },
+                {
+                    name: 'Product & Commercial Photography',
+                    tags: [
+                        'product', 'commercial', 'ecommerce', 'studio', 'advertising', 'producto',
+                        'fotografia de producto', 'fotografia comercial', 'catálogo', 'publicitaria',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Product & Commercial Photography' },
+                        { code: 'ES', name: 'Fotografía de Producto y Comercial' },
+                        { code: 'PT', name: 'Fotografia de Produto e Comercial' },
+                    ],
+                },
+                {
+                    name: 'Architecture & Real Estate Photography',
+                    tags: [
+                        'architecture', 'real-estate', 'interior', 'building', 'property',
+                        'arquitectura', 'inmobiliaria', 'inmuebles', 'fotografia arquitectonica',
+                        'fotografia inmobiliaria', 'imóveis',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Architecture & Real Estate Photography' },
+                        { code: 'ES', name: 'Fotografía de Arquitectura e Inmobiliaria' },
+                        { code: 'PT', name: 'Fotografia de Arquitetura e Imóveis' },
+                    ],
+                },
+                {
+                    name: 'Landscape & Nature Photography',
+                    tags: [
+                        'landscape', 'nature', 'wildlife', 'travel', 'outdoor', 'paisaje',
+                        'naturaleza', 'fotografia de paisaje', 'naturaleza salvaje', 'paisagem',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Landscape & Nature Photography' },
+                        { code: 'ES', name: 'Fotografía de Paisaje y Naturaleza' },
+                        { code: 'PT', name: 'Fotografia de Paisagem e Natureza' },
+                    ],
+                },
+                {
+                    name: 'Aerial & Drone Photography',
+                    tags: [
+                        'aerial', 'drone', 'uav', 'birds-eye', 'overhead', 'aerea', 'aérea',
+                        'dron', 'fotografia aerea', 'fotografia aérea', 'fotografia con dron',
+                        'vista aerea', 'drone photography',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Aerial & Drone Photography' },
+                        { code: 'ES', name: 'Fotografía Aérea y Dron' },
+                        { code: 'PT', name: 'Fotografia Aérea e Drone' },
+                    ],
+                },
+                {
+                    name: 'Documentary & Street Photography',
+                    tags: [
+                        'documentary', 'street', 'photojournalism', 'candid', 'urban',
+                        'documental', 'callejera', 'fotografia callejera', 'fotoperiodismo',
+                        'street photography', 'rua',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Documentary & Street Photography' },
+                        { code: 'ES', name: 'Fotografía Documental y Callejera' },
+                        { code: 'PT', name: 'Fotografia Documental e de Rua' },
+                    ],
+                },
+            ],
         },
         {
             name: 'Film & Video',
-            tags: ['film', 'video', 'filmmaker', 'cinema', 'footage'],
+            tags: [
+                'film', 'video', 'filmmaker', 'cinema', 'footage', 'cine', 'videografo',
+                'producción audiovisual', 'audiovisual',
+            ],
             translations: [
                 { code: 'EN', name: 'Film & Video' },
                 { code: 'ES', name: 'Cine y Video' },
-                { code: 'PT', name: 'Cinema e Vídeo' }
+                { code: 'PT', name: 'Cinema e Vídeo' },
             ],
             children: [
-                { name: 'Cinematography', tags: ['cinematography', 'camera', 'dop', 'lighting', 'camera-work'], translations: [{ code: 'EN', name: 'Cinematography' }, { code: 'ES', name: 'Cinematografía' }, { code: 'PT', name: 'Cinematografia' }] },
-                { name: 'Video Editing', tags: ['editing', 'editor', 'post-production', 'premiere', 'davinci'], translations: [{ code: 'EN', name: 'Video Editing' }, { code: 'ES', name: 'Edición de Video' }, { code: 'PT', name: 'Edição de Vídeo' }] },
-                { name: 'Color Grading', tags: ['color', 'grading', 'colorist', 'davinci', 'lut'], translations: [{ code: 'EN', name: 'Color Grading' }, { code: 'ES', name: 'Corrección de Color' }, { code: 'PT', name: 'Correção de Cor' }] },
-                { name: 'Music Videos', tags: ['music-video', 'band', 'performance', 'artist', 'song'], translations: [{ code: 'EN', name: 'Music Videos' }, { code: 'ES', name: 'Videos Musicales' }, { code: 'PT', name: 'Videoclipes' }] },
-                { name: 'Commercials & Promos', tags: ['commercial', 'promo', 'advertising', 'brand', 'marketing'], translations: [{ code: 'EN', name: 'Commercials & Promos' }, { code: 'ES', name: 'Comerciales y Promos' }, { code: 'PT', name: 'Comerciais e Promos' }] },
-                { name: 'Documentary', tags: ['documentary', 'non-fiction', 'film', 'storytelling', 'reportage'], translations: [{ code: 'EN', name: 'Documentary' }, { code: 'ES', name: 'Documental' }, { code: 'PT', name: 'Documentário' }] }
-            ]
+                {
+                    name: 'Film Cinematography',
+                    tags: [
+                        'cinematography', 'camera', 'dop', 'lighting', 'camera-work',
+                        'cinematografia', 'dirección de fotografia', 'camara', 'iluminacion',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Film Cinematography' },
+                        { code: 'ES', name: 'Cinematografía de Cine y Video' },
+                        { code: 'PT', name: 'Cinematografia de Cinema e Vídeo' },
+                    ],
+                },
+                {
+                    name: 'Video Editing',
+                    tags: [
+                        'editing', 'editor', 'post-production', 'premiere', 'davinci',
+                        'edicion', 'edición de video', 'montaje', 'postproduccion', 'edição',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Video Editing' },
+                        { code: 'ES', name: 'Edición de Video' },
+                        { code: 'PT', name: 'Edição de Vídeo' },
+                    ],
+                },
+                {
+                    name: 'Video Color Grading',
+                    tags: [
+                        'color', 'grading', 'colorist', 'davinci', 'lut', 'corrección de color',
+                        'correccion de color', 'color grading', 'etalonaje', 'correção de cor',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Video Color Grading' },
+                        { code: 'ES', name: 'Corrección de Color para Video' },
+                        { code: 'PT', name: 'Correção de Cor para Vídeo' },
+                    ],
+                },
+                {
+                    name: 'Music Video Production',
+                    tags: [
+                        'music-video', 'band', 'performance', 'artist', 'song', 'videoclip',
+                        'video musical', 'videos musicales', 'clip musical',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Music Video Production' },
+                        { code: 'ES', name: 'Producción de Videos Musicales' },
+                        { code: 'PT', name: 'Produção de Videoclipes' },
+                    ],
+                },
+                {
+                    name: 'Commercial & Promo Videos',
+                    tags: [
+                        'commercial', 'promo', 'advertising', 'brand', 'marketing',
+                        'comercial', 'spot', 'video publicitario', 'promocional', 'anuncio',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Commercial & Promo Videos' },
+                        { code: 'ES', name: 'Videos Comerciales y Promocionales' },
+                        { code: 'PT', name: 'Vídeos Comerciais e Promocionais' },
+                    ],
+                },
+                {
+                    name: 'Documentary Filmmaking',
+                    tags: [
+                        'documentary', 'non-fiction', 'film', 'storytelling', 'reportage',
+                        'documental', 'cine documental', 'reportaje', 'documentário',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Documentary Filmmaking' },
+                        { code: 'ES', name: 'Cine Documental' },
+                        { code: 'PT', name: 'Cinema Documentário' },
+                    ],
+                },
+            ],
         },
         {
             name: 'Motion & Animation',
-            tags: ['animation', 'motion', 'animator', 'animated', 'movement'],
+            tags: [
+                'animation', 'motion', 'animator', 'animated', 'movement', 'animación',
+                'animacion', 'motion graphics', 'animação',
+            ],
             translations: [
                 { code: 'EN', name: 'Motion & Animation' },
                 { code: 'ES', name: 'Motion y Animación' },
-                { code: 'PT', name: 'Motion e Animação' }
+                { code: 'PT', name: 'Motion e Animação' },
             ],
             children: [
-                { name: '2D Animation', tags: ['2d', 'frame-by-frame', 'hand-drawn', 'cartoon', 'traditional'], translations: [{ code: 'EN', name: '2D Animation' }, { code: 'ES', name: 'Animación 2D' }, { code: 'PT', name: 'Animação 2D' }] },
-                { name: '3D Animation', tags: ['3d', 'cgi', 'rigged', 'computer-animation', 'pixar'], translations: [{ code: 'EN', name: '3D Animation' }, { code: 'ES', name: 'Animación 3D' }, { code: 'PT', name: 'Animação 3D' }] },
-                { name: 'Motion Graphics', tags: ['motion', 'after-effects', 'kinetic', 'typography', 'dynamic'], translations: [{ code: 'EN', name: 'Motion Graphics' }, { code: 'ES', name: 'Gráficos en Movimiento' }, { code: 'PT', name: 'Motion Graphics' }] },
-                { name: 'Character Animation', tags: ['character', 'rigging', 'walk-cycle', 'acting', 'performance'], translations: [{ code: 'EN', name: 'Character Animation' }, { code: 'ES', name: 'Animación de Personajes' }, { code: 'PT', name: 'Animação de Personagens' }] },
-                { name: 'Logo Animation', tags: ['logo', 'brand', 'intro', 'reveal', 'branding'], translations: [{ code: 'EN', name: 'Logo Animation' }, { code: 'ES', name: 'Animación de Logo' }, { code: 'PT', name: 'Animação de Logo' }] },
-                { name: 'Visual Effects (VFX)', tags: ['vfx', 'compositing', 'effects', 'cgi', 'special-effects'], translations: [{ code: 'EN', name: 'Visual Effects (VFX)' }, { code: 'ES', name: 'Efectos Visuales (VFX)' }, { code: 'PT', name: 'Efeitos Visuais (VFX)' }] }
-            ]
+                {
+                    name: '2D Animation',
+                    tags: [
+                        '2d', 'frame-by-frame', 'hand-drawn', 'cartoon', 'traditional',
+                        'animación 2d', 'animacion 2d', 'dibujo animado', 'animação 2d',
+                    ],
+                    translations: [
+                        { code: 'EN', name: '2D Animation' },
+                        { code: 'ES', name: 'Animación 2D' },
+                        { code: 'PT', name: 'Animação 2D' },
+                    ],
+                },
+                {
+                    name: '3D Animation',
+                    tags: [
+                        '3d', 'cgi', 'rigged', 'computer-animation', 'pixar',
+                        'animación 3d', 'animacion 3d', 'animación por computadora', 'animação 3d',
+                    ],
+                    translations: [
+                        { code: 'EN', name: '3D Animation' },
+                        { code: 'ES', name: 'Animación 3D' },
+                        { code: 'PT', name: 'Animação 3D' },
+                    ],
+                },
+                {
+                    name: 'Motion Graphics Design',
+                    tags: [
+                        'motion', 'after-effects', 'kinetic', 'typography', 'dynamic',
+                        'gráficos en movimiento', 'motion graphics', 'graficos en movimiento',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Motion Graphics Design' },
+                        { code: 'ES', name: 'Diseño de Motion Graphics' },
+                        { code: 'PT', name: 'Design de Motion Graphics' },
+                    ],
+                },
+                {
+                    name: 'Character Animation',
+                    tags: [
+                        'character', 'rigging', 'walk-cycle', 'acting', 'performance',
+                        'animación de personajes', 'animacion de personajes', 'personaje',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Character Animation' },
+                        { code: 'ES', name: 'Animación de Personajes' },
+                        { code: 'PT', name: 'Animação de Personagens' },
+                    ],
+                },
+                {
+                    name: 'Logo Animation',
+                    tags: [
+                        'logo', 'brand', 'intro', 'reveal', 'branding',
+                        'animación de logo', 'animacion de logo', 'logo animado', 'intro logo',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Logo Animation' },
+                        { code: 'ES', name: 'Animación de Logo' },
+                        { code: 'PT', name: 'Animação de Logo' },
+                    ],
+                },
+                {
+                    name: 'Visual Effects (VFX)',
+                    tags: [
+                        'vfx', 'compositing', 'effects', 'cgi', 'special-effects',
+                        'efectos visuales', 'efectos especiales', 'compositing', 'fx',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Visual Effects (VFX)' },
+                        { code: 'ES', name: 'Efectos Visuales (VFX)' },
+                        { code: 'PT', name: 'Efeitos Visuais (VFX)' },
+                    ],
+                },
+            ],
         },
         {
             name: 'Illustration',
-            tags: ['illustration', 'illustrator', 'drawing', 'art', 'sketch'],
+            tags: [
+                'illustration', 'illustrator', 'drawing', 'art', 'sketch',
+                'ilustración', 'ilustracion', 'ilustrador', 'dibujo', 'ilustração',
+            ],
             translations: [
                 { code: 'EN', name: 'Illustration' },
                 { code: 'ES', name: 'Ilustración' },
-                { code: 'PT', name: 'Ilustração' }
+                { code: 'PT', name: 'Ilustração' },
             ],
             children: [
-                { name: 'Editorial Illustration', tags: ['editorial', 'magazine', 'article', 'publication', 'newspaper'], translations: [{ code: 'EN', name: 'Editorial Illustration' }, { code: 'ES', name: 'Ilustración Editorial' }, { code: 'PT', name: 'Ilustração Editorial' }] },
-                { name: 'Character Design', tags: ['character', 'mascot', 'avatar', 'game-character', 'nft'], translations: [{ code: 'EN', name: 'Character Design' }, { code: 'ES', name: 'Diseño de Personajes' }, { code: 'PT', name: 'Design de Personagens' }] },
-                { name: 'Concept Art', tags: ['concept', 'game', 'film', 'visdev', 'entertainment'], translations: [{ code: 'EN', name: 'Concept Art' }, { code: 'ES', name: 'Arte Conceptual' }, { code: 'PT', name: 'Arte Conceitual' }] },
-                { name: 'Comic & Manga', tags: ['comic', 'manga', 'graphic-novel', 'cartoon', 'anime'], translations: [{ code: 'EN', name: 'Comic & Manga' }, { code: 'ES', name: 'Cómic y Manga' }, { code: 'PT', name: 'Quadrinhos e Mangá' }] },
-                { name: "Children's Books", tags: ['children', 'kids', 'storybook', 'youth', 'picture-book'], translations: [{ code: 'EN', name: "Children's Books" }, { code: 'ES', name: 'Libros Infantiles' }, { code: 'PT', name: 'Livros Infantis' }] },
-                { name: 'Fantasy & Sci-Fi', tags: ['fantasy', 'sci-fi', 'creatures', 'imaginative', 'magic'], translations: [{ code: 'EN', name: 'Fantasy & Sci-Fi' }, { code: 'ES', name: 'Fantasía y Ciencia Ficción' }, { code: 'PT', name: 'Fantasia e Ficção Científica' }] }
-            ]
+                {
+                    name: 'Editorial Illustration',
+                    tags: [
+                        'editorial', 'magazine', 'article', 'publication', 'newspaper',
+                        'ilustración editorial', 'ilustracion editorial', 'revista',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Editorial Illustration' },
+                        { code: 'ES', name: 'Ilustración Editorial' },
+                        { code: 'PT', name: 'Ilustração Editorial' },
+                    ],
+                },
+                {
+                    name: 'Character Design Illustration',
+                    tags: [
+                        'character', 'mascot', 'avatar', 'game-character', 'nft',
+                        'diseño de personajes', 'personaje', 'mascota', 'character design',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Character Design Illustration' },
+                        { code: 'ES', name: 'Ilustración y Diseño de Personajes' },
+                        { code: 'PT', name: 'Ilustração e Design de Personagens' },
+                    ],
+                },
+                {
+                    name: 'Concept Art Illustration',
+                    tags: [
+                        'concept', 'game', 'film', 'visdev', 'entertainment',
+                        'arte conceptual', 'concept art', 'diseño conceptual',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Concept Art Illustration' },
+                        { code: 'ES', name: 'Ilustración de Arte Conceptual' },
+                        { code: 'PT', name: 'Ilustração de Arte Conceitual' },
+                    ],
+                },
+                {
+                    name: 'Comic & Manga Illustration',
+                    tags: [
+                        'comic', 'manga', 'graphic-novel', 'cartoon', 'anime',
+                        'cómic', 'comic', 'historieta', 'quadrinhos', 'mangá',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Comic & Manga Illustration' },
+                        { code: 'ES', name: 'Ilustración de Cómic y Manga' },
+                        { code: 'PT', name: 'Ilustração de Quadrinhos e Mangá' },
+                    ],
+                },
+                {
+                    name: "Children's Book Illustration",
+                    tags: [
+                        'children', 'kids', 'storybook', 'youth', 'picture-book',
+                        'infantil', 'libros infantiles', 'cuento', 'ilustración infantil',
+                    ],
+                    translations: [
+                        { code: 'EN', name: "Children's Book Illustration" },
+                        { code: 'ES', name: 'Ilustración de Libros Infantiles' },
+                        { code: 'PT', name: 'Ilustração de Livros Infantis' },
+                    ],
+                },
+                {
+                    name: 'Fantasy & Sci-Fi Illustration',
+                    tags: [
+                        'fantasy', 'sci-fi', 'creatures', 'imaginative', 'magic',
+                        'fantasía', 'fantasia', 'ciencia ficción', 'ficção científica',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Fantasy & Sci-Fi Illustration' },
+                        { code: 'ES', name: 'Ilustración de Fantasía y Ciencia Ficción' },
+                        { code: 'PT', name: 'Ilustração de Fantasia e Ficção Científica' },
+                    ],
+                },
+            ],
         },
         {
             name: 'Graphic Design',
-            tags: ['graphic', 'design', 'visual', 'designer', 'layout'],
+            tags: [
+                'graphic', 'design', 'visual', 'designer', 'layout',
+                'diseño gráfico', 'diseño grafico', 'diseñador', 'design gráfico',
+            ],
             translations: [
                 { code: 'EN', name: 'Graphic Design' },
                 { code: 'ES', name: 'Diseño Gráfico' },
-                { code: 'PT', name: 'Design Gráfico' }
+                { code: 'PT', name: 'Design Gráfico' },
             ],
             children: [
-                { name: 'Branding & Identity', tags: ['branding', 'identity', 'brand-book', 'style-guide', 'corporate'], translations: [{ code: 'EN', name: 'Branding & Identity' }, { code: 'ES', name: 'Identidad de Marca' }, { code: 'PT', name: 'Branding e Identidade' }] },
-                { name: 'Logo Design', tags: ['logo', 'brand', 'emblem', 'mark', 'symbol'], translations: [{ code: 'EN', name: 'Logo Design' }, { code: 'ES', name: 'Diseño de Logotipo' }, { code: 'PT', name: 'Design de Logotipo' }] },
-                { name: 'Print & Editorial', tags: ['print', 'editorial', 'magazine', 'layout', 'publication'], translations: [{ code: 'EN', name: 'Print & Editorial' }, { code: 'ES', name: 'Impresión y Editorial' }, { code: 'PT', name: 'Impressão e Editorial' }] },
-                { name: 'Packaging', tags: ['packaging', 'box', 'label', 'product', 'container'], translations: [{ code: 'EN', name: 'Packaging' }, { code: 'ES', name: 'Empaque' }, { code: 'PT', name: 'Embalagem' }] },
-                { name: 'Poster & Advertising', tags: ['poster', 'advertising', 'campaign', 'promotional', 'ads'], translations: [{ code: 'EN', name: 'Poster & Advertising' }, { code: 'ES', name: 'Póster y Publicidad' }, { code: 'PT', name: 'Pôster e Publicidade' }] },
-                { name: 'Typography & Lettering', tags: ['typography', 'lettering', 'type', 'font', 'calligraphy'], translations: [{ code: 'EN', name: 'Typography & Lettering' }, { code: 'ES', name: 'Tipografía y Lettering' }, { code: 'PT', name: 'Tipografia e Lettering' }] }
-            ]
+                {
+                    name: 'Brand Identity Design',
+                    tags: [
+                        'branding', 'identity', 'brand-book', 'style-guide', 'corporate',
+                        'identidad de marca', 'marca', 'identidad visual', 'branding',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Brand Identity Design' },
+                        { code: 'ES', name: 'Diseño de Identidad de Marca' },
+                        { code: 'PT', name: 'Design de Identidade de Marca' },
+                    ],
+                },
+                {
+                    name: 'Logo Design',
+                    tags: [
+                        'logo', 'brand', 'emblem', 'mark', 'symbol',
+                        'diseño de logotipo', 'logotipo', 'logo design', 'isotipo',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Logo Design' },
+                        { code: 'ES', name: 'Diseño de Logotipo' },
+                        { code: 'PT', name: 'Design de Logotipo' },
+                    ],
+                },
+                {
+                    name: 'Print & Editorial Design',
+                    tags: [
+                        'print', 'editorial', 'magazine', 'layout', 'publication',
+                        'diseño editorial', 'impresión', 'maquetación', 'revista',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Print & Editorial Design' },
+                        { code: 'ES', name: 'Diseño de Impresión y Editorial' },
+                        { code: 'PT', name: 'Design de Impressão e Editorial' },
+                    ],
+                },
+                {
+                    name: 'Packaging Design',
+                    tags: [
+                        'packaging', 'box', 'label', 'product', 'container',
+                        'empaque', 'envase', 'embalaje', 'diseño de empaque', 'embalagem',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Packaging Design' },
+                        { code: 'ES', name: 'Diseño de Empaque' },
+                        { code: 'PT', name: 'Design de Embalagem' },
+                    ],
+                },
+                {
+                    name: 'Poster & Advertising Design',
+                    tags: [
+                        'poster', 'advertising', 'campaign', 'promotional', 'ads',
+                        'póster', 'poster', 'publicidad', 'cartel', 'afiche', 'campaña',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Poster & Advertising Design' },
+                        { code: 'ES', name: 'Diseño de Póster y Publicidad' },
+                        { code: 'PT', name: 'Design de Pôster e Publicidade' },
+                    ],
+                },
+                {
+                    name: 'Typography & Lettering Design',
+                    tags: [
+                        'typography', 'lettering', 'type', 'font', 'calligraphy',
+                        'tipografía', 'tipografia', 'lettering', 'caligrafía', 'fuentes',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Typography & Lettering Design' },
+                        { code: 'ES', name: 'Diseño de Tipografía y Lettering' },
+                        { code: 'PT', name: 'Design de Tipografia e Lettering' },
+                    ],
+                },
+            ],
         },
         {
             name: 'Product & Web Design',
-            tags: ['product-design', 'web', 'ui', 'ux', 'digital'],
+            tags: [
+                'product-design', 'web', 'ui', 'ux', 'digital',
+                'diseño de producto', 'diseño web', 'interfaz', 'experiencia de usuario',
+            ],
             translations: [
                 { code: 'EN', name: 'Product & Web Design' },
                 { code: 'ES', name: 'Diseño de Producto y Web' },
-                { code: 'PT', name: 'Design de Produto e Web' }
+                { code: 'PT', name: 'Design de Produto e Web' },
             ],
             children: [
-                { name: 'UI Design', tags: ['ui', 'interface', 'frontend', 'screen', 'visual'], translations: [{ code: 'EN', name: 'UI Design' }, { code: 'ES', name: 'Diseño de Interfaz' }, { code: 'PT', name: 'Design de Interface' }] },
-                { name: 'UX Design', tags: ['ux', 'usability', 'wireframe', 'research', 'user-experience'], translations: [{ code: 'EN', name: 'UX Design' }, { code: 'ES', name: 'Diseño UX' }, { code: 'PT', name: 'Design UX' }] },
-                { name: 'Web Design', tags: ['web', 'website', 'responsive', 'landing', 'homepage'], translations: [{ code: 'EN', name: 'Web Design' }, { code: 'ES', name: 'Diseño Web' }, { code: 'PT', name: 'Web Design' }] },
-                { name: 'Mobile App Design', tags: ['mobile', 'app', 'ios', 'android', 'application'], translations: [{ code: 'EN', name: 'Mobile App Design' }, { code: 'ES', name: 'Diseño de App Móvil' }, { code: 'PT', name: 'Design de App Móvel' }] },
-                { name: 'Design Systems', tags: ['design-system', 'components', 'tokens', 'library', 'ui-kit'], translations: [{ code: 'EN', name: 'Design Systems' }, { code: 'ES', name: 'Sistemas de Diseño' }, { code: 'PT', name: 'Design Systems' }] }
-            ]
+                {
+                    name: 'UI Design',
+                    tags: [
+                        'ui', 'interface', 'frontend', 'screen', 'visual',
+                        'diseño de interfaz', 'interfaz de usuario', 'ui design',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'UI Design' },
+                        { code: 'ES', name: 'Diseño de Interfaz (UI)' },
+                        { code: 'PT', name: 'Design de Interface (UI)' },
+                    ],
+                },
+                {
+                    name: 'UX Design',
+                    tags: [
+                        'ux', 'usability', 'wireframe', 'research', 'user-experience',
+                        'diseño ux', 'experiencia de usuario', 'usabilidad', 'wireframes',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'UX Design' },
+                        { code: 'ES', name: 'Diseño de Experiencia (UX)' },
+                        { code: 'PT', name: 'Design de Experiência (UX)' },
+                    ],
+                },
+                {
+                    name: 'Web Design',
+                    tags: [
+                        'web', 'website', 'responsive', 'landing', 'homepage',
+                        'diseño web', 'sitio web', 'página web', 'landing page',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Web Design' },
+                        { code: 'ES', name: 'Diseño Web' },
+                        { code: 'PT', name: 'Design Web' },
+                    ],
+                },
+                {
+                    name: 'Mobile App Design',
+                    tags: [
+                        'mobile', 'app', 'ios', 'android', 'application',
+                        'diseño de app', 'aplicación móvil', 'app móvil', 'app movil',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Mobile App Design' },
+                        { code: 'ES', name: 'Diseño de App Móvil' },
+                        { code: 'PT', name: 'Design de App Móvel' },
+                    ],
+                },
+                {
+                    name: 'Design Systems',
+                    tags: [
+                        'design-system', 'components', 'tokens', 'library', 'ui-kit',
+                        'sistemas de diseño', 'sistema de diseño', 'componentes', 'ui kit',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Design Systems' },
+                        { code: 'ES', name: 'Sistemas de Diseño' },
+                        { code: 'PT', name: 'Sistemas de Design' },
+                    ],
+                },
+            ],
         },
         {
             name: '3D & CGI',
-            tags: ['3d', 'cgi', 'modeling', 'render', 'blender'],
+            tags: [
+                '3d', 'cgi', 'modeling', 'render', 'blender',
+                'modelado 3d', 'modelagem 3d', 'tres dimensiones', 'cgi 3d',
+            ],
             translations: [
                 { code: 'EN', name: '3D & CGI' },
                 { code: 'ES', name: '3D y CGI' },
-                { code: 'PT', name: '3D e CGI' }
+                { code: 'PT', name: '3D e CGI' },
             ],
             children: [
-                { name: 'Character Modeling', tags: ['character', 'sculpt', 'topology', 'game-ready', 'rigging'], translations: [{ code: 'EN', name: 'Character Modeling' }, { code: 'ES', name: 'Modelado de Personajes' }, { code: 'PT', name: 'Modelagem de Personagens' }] },
-                { name: 'Environment Art', tags: ['environment', 'scene', 'props', 'level-design', 'landscape'], translations: [{ code: 'EN', name: 'Environment Art' }, { code: 'ES', name: 'Arte de Entornos' }, { code: 'PT', name: 'Arte de Ambientes' }] },
-                { name: 'Product Visualization', tags: ['product', 'visualization', 'render', 'industrial', 'commercial'], translations: [{ code: 'EN', name: 'Product Visualization' }, { code: 'ES', name: 'Visualización de Producto' }, { code: 'PT', name: 'Visualização de Produto' }] },
-                { name: 'Sculpting', tags: ['sculpting', 'zbrush', 'organic', 'high-poly', 'detailing'], translations: [{ code: 'EN', name: 'Sculpting' }, { code: 'ES', name: 'Escultura Digital' }, { code: 'PT', name: 'Escultura Digital' }] },
-                { name: 'Rendering & Lighting', tags: ['rendering', 'lighting', 'vray', 'octane', 'cycles'], translations: [{ code: 'EN', name: 'Rendering & Lighting' }, { code: 'ES', name: 'Renderizado e Iluminación' }, { code: 'PT', name: 'Renderização e Iluminação' }] }
-            ]
+                {
+                    name: '3D Character Modeling',
+                    tags: [
+                        'character', 'sculpt', 'topology', 'game-ready', 'rigging',
+                        'modelado de personajes', 'personaje 3d', 'modelagem de personagens',
+                    ],
+                    translations: [
+                        { code: 'EN', name: '3D Character Modeling' },
+                        { code: 'ES', name: 'Modelado 3D de Personajes' },
+                        { code: 'PT', name: 'Modelagem 3D de Personagens' },
+                    ],
+                },
+                {
+                    name: '3D Environment Art',
+                    tags: [
+                        'environment', 'scene', 'props', 'level-design', 'landscape',
+                        'entornos 3d', 'escenarios', 'ambientes 3d', 'environment art',
+                    ],
+                    translations: [
+                        { code: 'EN', name: '3D Environment Art' },
+                        { code: 'ES', name: 'Arte 3D de Entornos' },
+                        { code: 'PT', name: 'Arte 3D de Ambientes' },
+                    ],
+                },
+                {
+                    name: '3D Product Visualization',
+                    tags: [
+                        'product', 'visualization', 'render', 'industrial', 'commercial',
+                        'visualización de producto', 'product viz', 'render de producto',
+                    ],
+                    translations: [
+                        { code: 'EN', name: '3D Product Visualization' },
+                        { code: 'ES', name: 'Visualización 3D de Producto' },
+                        { code: 'PT', name: 'Visualização 3D de Produto' },
+                    ],
+                },
+                {
+                    name: '3D Digital Sculpting',
+                    tags: [
+                        'sculpting', 'zbrush', 'organic', 'high-poly', 'detailing',
+                        'escultura digital', 'escultura 3d', 'zbrush', 'sculpt',
+                    ],
+                    translations: [
+                        { code: 'EN', name: '3D Digital Sculpting' },
+                        { code: 'ES', name: 'Escultura Digital 3D' },
+                        { code: 'PT', name: 'Escultura Digital 3D' },
+                    ],
+                },
+                {
+                    name: '3D Rendering & Lighting',
+                    tags: [
+                        'rendering', 'lighting', 'vray', 'octane', 'cycles',
+                        'renderizado', 'iluminación', 'iluminacion', 'render 3d',
+                    ],
+                    translations: [
+                        { code: 'EN', name: '3D Rendering & Lighting' },
+                        { code: 'ES', name: 'Renderizado e Iluminación 3D' },
+                        { code: 'PT', name: 'Renderização e Iluminação 3D' },
+                    ],
+                },
+            ],
         },
         {
             name: 'Fine & Traditional Art',
-            tags: ['fine-art', 'traditional', 'art', 'handmade', 'analog'],
+            tags: [
+                'fine-art', 'traditional', 'art', 'handmade', 'analog',
+                'arte fino', 'arte tradicional', 'bellas artes', 'artes plásticas',
+            ],
             translations: [
                 { code: 'EN', name: 'Fine & Traditional Art' },
                 { code: 'ES', name: 'Arte Fino y Tradicional' },
-                { code: 'PT', name: 'Arte Fina e Tradicional' }
+                { code: 'PT', name: 'Arte Fina e Tradicional' },
             ],
             children: [
-                { name: 'Painting', tags: ['painting', 'canvas', 'oil', 'acrylic', 'brush'], translations: [{ code: 'EN', name: 'Painting' }, { code: 'ES', name: 'Pintura' }, { code: 'PT', name: 'Pintura' }] },
-                { name: 'Drawing', tags: ['drawing', 'pencil', 'sketch', 'ink', 'graphite'], translations: [{ code: 'EN', name: 'Drawing' }, { code: 'ES', name: 'Dibujo' }, { code: 'PT', name: 'Desenho' }] },
-                { name: 'Printmaking', tags: ['printmaking', 'linocut', 'screen-print', 'etching', 'engraving'], translations: [{ code: 'EN', name: 'Printmaking' }, { code: 'ES', name: 'Grabado' }, { code: 'PT', name: 'Gravura' }] },
-                { name: 'Watercolor', tags: ['watercolor', 'aquarelle', 'wash', 'fluid', 'transparent'], translations: [{ code: 'EN', name: 'Watercolor' }, { code: 'ES', name: 'Acuarela' }, { code: 'PT', name: 'Aquarela' }] },
-                { name: 'Mixed Media', tags: ['mixed-media', 'collage', 'experimental', 'layered', 'multimedia'], translations: [{ code: 'EN', name: 'Mixed Media' }, { code: 'ES', name: 'Técnica Mixta' }, { code: 'PT', name: 'Mídia Mista' }] }
-            ]
+                {
+                    name: 'Fine Art Painting',
+                    tags: [
+                        'painting', 'canvas', 'oil', 'acrylic', 'brush',
+                        'pintura', 'óleo', 'oleo', 'acrílico', 'lienzo',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Fine Art Painting' },
+                        { code: 'ES', name: 'Pintura Artística' },
+                        { code: 'PT', name: 'Pintura Artística' },
+                    ],
+                },
+                {
+                    name: 'Fine Art Drawing',
+                    tags: [
+                        'drawing', 'pencil', 'sketch', 'ink', 'graphite',
+                        'dibujo', 'lápiz', 'lapiz', 'boceto', 'tinta', 'desenho',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Fine Art Drawing' },
+                        { code: 'ES', name: 'Dibujo Artístico' },
+                        { code: 'PT', name: 'Desenho Artístico' },
+                    ],
+                },
+                {
+                    name: 'Fine Art Printmaking',
+                    tags: [
+                        'printmaking', 'linocut', 'screen-print', 'etching', 'engraving',
+                        'grabado', 'serigrafía', 'serigrafia', 'xilografía', 'gravura',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Fine Art Printmaking' },
+                        { code: 'ES', name: 'Grabado Artístico' },
+                        { code: 'PT', name: 'Gravura Artística' },
+                    ],
+                },
+                {
+                    name: 'Watercolor Painting',
+                    tags: [
+                        'watercolor', 'aquarelle', 'wash', 'fluid', 'transparent',
+                        'acuarela', 'aquarela', 'pintura en acuarela',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Watercolor Painting' },
+                        { code: 'ES', name: 'Pintura en Acuarela' },
+                        { code: 'PT', name: 'Pintura em Aquarela' },
+                    ],
+                },
+                {
+                    name: 'Mixed Media Art',
+                    tags: [
+                        'mixed-media', 'collage', 'experimental', 'layered', 'multimedia',
+                        'técnica mixta', 'tecnica mixta', 'collage', 'mídia mista',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Mixed Media Art' },
+                        { code: 'ES', name: 'Arte en Técnica Mixta' },
+                        { code: 'PT', name: 'Arte em Mídia Mista' },
+                    ],
+                },
+            ],
         },
         {
             name: 'Fashion & Textile',
-            tags: ['fashion', 'textile', 'clothing', 'apparel', 'designer'],
+            tags: [
+                'fashion', 'textile', 'clothing', 'apparel', 'designer',
+                'moda', 'textil', 'diseño de moda', 'vestuario', 'têxtil',
+            ],
             translations: [
                 { code: 'EN', name: 'Fashion & Textile' },
                 { code: 'ES', name: 'Moda y Textil' },
-                { code: 'PT', name: 'Moda e Têxtil' }
+                { code: 'PT', name: 'Moda e Têxtil' },
             ],
             children: [
-                { name: 'Fashion Design', tags: ['fashion', 'clothing', 'garment', 'couture', 'apparel'], translations: [{ code: 'EN', name: 'Fashion Design' }, { code: 'ES', name: 'Diseño de Moda' }, { code: 'PT', name: 'Design de Moda' }] },
-                { name: 'Textile & Pattern', tags: ['textile', 'pattern', 'fabric', 'surface-design', 'print'], translations: [{ code: 'EN', name: 'Textile & Pattern' }, { code: 'ES', name: 'Textil y Estampado' }, { code: 'PT', name: 'Têxtil e Estampa' }] },
-                { name: 'Accessories', tags: ['accessories', 'bags', 'jewelry', 'footwear', 'luxury'], translations: [{ code: 'EN', name: 'Accessories' }, { code: 'ES', name: 'Accesorios' }, { code: 'PT', name: 'Acessórios' }] },
-                { name: 'Costume Design', tags: ['costume', 'theater', 'film', 'cosplay', 'character'], translations: [{ code: 'EN', name: 'Costume Design' }, { code: 'ES', name: 'Diseño de Vestuario' }, { code: 'PT', name: 'Design de Figurino' }] }
-            ]
+                {
+                    name: 'Fashion Design',
+                    tags: [
+                        'fashion', 'clothing', 'garment', 'couture', 'apparel',
+                        'diseño de moda', 'alta costura', 'ropa', 'indumentaria',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Fashion Design' },
+                        { code: 'ES', name: 'Diseño de Moda' },
+                        { code: 'PT', name: 'Design de Moda' },
+                    ],
+                },
+                {
+                    name: 'Textile & Pattern Design',
+                    tags: [
+                        'textile', 'pattern', 'fabric', 'surface-design', 'print',
+                        'estampado', 'textil', 'tela', 'diseño textil', 'estampa',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Textile & Pattern Design' },
+                        { code: 'ES', name: 'Diseño Textil y de Estampado' },
+                        { code: 'PT', name: 'Design Têxtil e de Estampa' },
+                    ],
+                },
+                {
+                    name: 'Fashion Accessories Design',
+                    tags: [
+                        'accessories', 'bags', 'jewelry', 'footwear', 'luxury',
+                        'accesorios', 'bolsos', 'calzado', 'complementos', 'acessórios',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Fashion Accessories Design' },
+                        { code: 'ES', name: 'Diseño de Accesorios de Moda' },
+                        { code: 'PT', name: 'Design de Acessórios de Moda' },
+                    ],
+                },
+                {
+                    name: 'Costume Design',
+                    tags: [
+                        'costume', 'theater', 'film', 'cosplay', 'character',
+                        'diseño de vestuario', 'figurino', 'vestuario teatral', 'disfraz',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Costume Design' },
+                        { code: 'ES', name: 'Diseño de Vestuario' },
+                        { code: 'PT', name: 'Design de Figurino' },
+                    ],
+                },
+            ],
         },
         {
             name: 'Craft & Object Design',
-            tags: ['crafts', 'handmade', 'artisan', 'maker', 'handcrafted'],
+            tags: [
+                'crafts', 'handmade', 'artisan', 'maker', 'handcrafted',
+                'artesanía', 'artesania', 'hecho a mano', 'artesanato', 'manualidades',
+            ],
             translations: [
                 { code: 'EN', name: 'Craft & Object Design' },
                 { code: 'ES', name: 'Artesanía y Diseño de Objetos' },
-                { code: 'PT', name: 'Artesanato e Design de Objetos' }
+                { code: 'PT', name: 'Artesanato e Design de Objetos' },
             ],
             children: [
-                { name: 'Ceramics', tags: ['ceramics', 'pottery', 'clay', 'porcelain', 'kiln'], translations: [{ code: 'EN', name: 'Ceramics' }, { code: 'ES', name: 'Cerámica' }, { code: 'PT', name: 'Cerâmica' }] },
-                { name: 'Jewelry', tags: ['jewelry', 'accessories', 'handmade', 'wearable', 'artisan'], translations: [{ code: 'EN', name: 'Jewelry' }, { code: 'ES', name: 'Joyería' }, { code: 'PT', name: 'Joalheria' }] },
-                { name: 'Woodworking', tags: ['woodworking', 'wood', 'furniture', 'carving', 'carpentry'], translations: [{ code: 'EN', name: 'Woodworking' }, { code: 'ES', name: 'Carpintería' }, { code: 'PT', name: 'Marcenaria' }] },
-                { name: 'Glass & Resin', tags: ['glass', 'resin', 'epoxy', 'casting', 'glasswork'], translations: [{ code: 'EN', name: 'Glass & Resin' }, { code: 'ES', name: 'Vidrio y Resina' }, { code: 'PT', name: 'Vidro e Resina' }] },
-                { name: 'Leatherwork', tags: ['leather', 'leathercraft', 'handmade', 'bags', 'wallets'], translations: [{ code: 'EN', name: 'Leatherwork' }, { code: 'ES', name: 'Marroquinería' }, { code: 'PT', name: 'Couro' }] }
-            ]
+                {
+                    name: 'Ceramic Craft',
+                    tags: [
+                        'ceramics', 'pottery', 'clay', 'porcelain', 'kiln',
+                        'cerámica', 'ceramica', 'alfarería', 'porcelana', 'cerâmica',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Ceramic Craft' },
+                        { code: 'ES', name: 'Artesanía en Cerámica' },
+                        { code: 'PT', name: 'Artesanato em Cerâmica' },
+                    ],
+                },
+                {
+                    name: 'Jewelry Craft',
+                    tags: [
+                        'jewelry', 'accessories', 'handmade', 'wearable', 'artisan',
+                        'joyería', 'joyeria', 'joyas', 'bisutería', 'joalheria',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Jewelry Craft' },
+                        { code: 'ES', name: 'Artesanía en Joyería' },
+                        { code: 'PT', name: 'Artesanato em Joalheria' },
+                    ],
+                },
+                {
+                    name: 'Woodworking Craft',
+                    tags: [
+                        'woodworking', 'wood', 'furniture', 'carving', 'carpentry',
+                        'carpintería', 'carpinteria', 'madera', 'ebanistería', 'marcenaria',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Woodworking Craft' },
+                        { code: 'ES', name: 'Artesanía en Carpintería' },
+                        { code: 'PT', name: 'Artesanato em Marcenaria' },
+                    ],
+                },
+                {
+                    name: 'Glass & Resin Craft',
+                    tags: [
+                        'glass', 'resin', 'epoxy', 'casting', 'glasswork',
+                        'vidrio', 'resina', 'epoxi', 'vitral', 'vidro',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Glass & Resin Craft' },
+                        { code: 'ES', name: 'Artesanía en Vidrio y Resina' },
+                        { code: 'PT', name: 'Artesanato em Vidro e Resina' },
+                    ],
+                },
+                {
+                    name: 'Leatherwork Craft',
+                    tags: [
+                        'leather', 'leathercraft', 'handmade', 'bags', 'wallets',
+                        'marroquinería', 'marroquineria', 'cuero', 'piel', 'couro',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Leatherwork Craft' },
+                        { code: 'ES', name: 'Artesanía en Marroquinería' },
+                        { code: 'PT', name: 'Artesanato em Couro' },
+                    ],
+                },
+            ],
         },
         {
-            name: 'Spatial & Interior',
-            tags: ['spatial', 'interior', 'environmental', 'space', 'experiential'],
+            name: 'Spatial & Interior Design',
+            tags: [
+                'spatial', 'interior', 'environmental', 'space', 'experiential',
+                'diseño de interiores', 'espacial', 'espacios', 'interiores',
+            ],
             translations: [
-                { code: 'EN', name: 'Spatial & Interior' },
-                { code: 'ES', name: 'Espacial e Interior' },
-                { code: 'PT', name: 'Espacial e Interior' }
+                { code: 'EN', name: 'Spatial & Interior Design' },
+                { code: 'ES', name: 'Diseño Espacial e Interior' },
+                { code: 'PT', name: 'Design Espacial e Interior' },
             ],
             children: [
-                { name: 'Interior Design', tags: ['interior', 'decor', 'furniture', 'residential', 'home'], translations: [{ code: 'EN', name: 'Interior Design' }, { code: 'ES', name: 'Diseño de Interiores' }, { code: 'PT', name: 'Design de Interiores' }] },
-                { name: 'Exhibition & Set Design', tags: ['exhibition', 'set-design', 'stage', 'installation', 'scenography'], translations: [{ code: 'EN', name: 'Exhibition & Set Design' }, { code: 'ES', name: 'Exposiciones y Escenografía' }, { code: 'PT', name: 'Exposições e Cenografia' }] },
-                { name: 'Environmental & Signage', tags: ['environmental', 'signage', 'wayfinding', 'public-space', 'navigation'], translations: [{ code: 'EN', name: 'Environmental & Signage' }, { code: 'ES', name: 'Ambiental y Señalización' }, { code: 'PT', name: 'Ambiental e Sinalização' }] }
-            ]
+                {
+                    name: 'Interior Design',
+                    tags: [
+                        'interior', 'decor', 'furniture', 'residential', 'home',
+                        'diseño de interiores', 'decoración', 'decoracion', 'hogar',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Interior Design' },
+                        { code: 'ES', name: 'Diseño de Interiores' },
+                        { code: 'PT', name: 'Design de Interiores' },
+                    ],
+                },
+                {
+                    name: 'Exhibition & Set Design',
+                    tags: [
+                        'exhibition', 'set-design', 'stage', 'installation', 'scenography',
+                        'escenografía', 'escenografia', 'exposiciones', 'montaje', 'set design',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Exhibition & Set Design' },
+                        { code: 'ES', name: 'Diseño de Exposiciones y Escenografía' },
+                        { code: 'PT', name: 'Design de Exposições e Cenografia' },
+                    ],
+                },
+                {
+                    name: 'Environmental & Signage Design',
+                    tags: [
+                        'environmental', 'signage', 'wayfinding', 'public-space', 'navigation',
+                        'señalización', 'senalizacion', 'ambientación', 'wayfinding', 'sinalização',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Environmental & Signage Design' },
+                        { code: 'ES', name: 'Diseño Ambiental y de Señalización' },
+                        { code: 'PT', name: 'Design Ambiental e de Sinalização' },
+                    ],
+                },
+            ],
         },
         {
             name: 'Tattoo & Body Art',
-            tags: ['tattoo', 'ink', 'body-art', 'tattooing', 'tattoos'],
+            tags: [
+                'tattoo', 'ink', 'body-art', 'tattooing', 'tattoos',
+                'tatuaje', 'tatuajes', 'tatuador', 'arte corporal', 'tatuagem',
+            ],
             translations: [
                 { code: 'EN', name: 'Tattoo & Body Art' },
                 { code: 'ES', name: 'Tatuaje y Arte Corporal' },
-                { code: 'PT', name: 'Tatuagem e Arte Corporal' }
+                { code: 'PT', name: 'Tatuagem e Arte Corporal' },
             ],
             children: [
-                { name: 'Fine Line', tags: ['fine-line', 'minimal', 'delicate', 'single-needle', 'micro'], translations: [{ code: 'EN', name: 'Fine Line' }, { code: 'ES', name: 'Línea Fina' }, { code: 'PT', name: 'Linha Fina' }] },
-                { name: 'Traditional & Neo-Traditional', tags: ['traditional', 'neo-traditional', 'old-school', 'bold', 'americana'], translations: [{ code: 'EN', name: 'Traditional & Neo-Traditional' }, { code: 'ES', name: 'Tradicional y Neo-Tradicional' }, { code: 'PT', name: 'Tradicional e Neo-Tradicional' }] },
-                { name: 'Realism', tags: ['realism', 'portrait', 'photorealistic', 'black-grey', 'shading'], translations: [{ code: 'EN', name: 'Realism' }, { code: 'ES', name: 'Realismo' }, { code: 'PT', name: 'Realismo' }] },
-                { name: 'Blackwork & Geometric', tags: ['blackwork', 'geometric', 'tribal', 'ornamental', 'dotwork'], translations: [{ code: 'EN', name: 'Blackwork & Geometric' }, { code: 'ES', name: 'Blackwork y Geométrico' }, { code: 'PT', name: 'Blackwork e Geométrico' }] }
-            ]
-        }
+                {
+                    name: 'Fine Line Tattoo',
+                    tags: [
+                        'fine-line', 'minimal', 'delicate', 'single-needle', 'micro',
+                        'línea fina', 'linea fina', 'tatuaje fine line', 'microrealismo',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Fine Line Tattoo' },
+                        { code: 'ES', name: 'Tatuaje de Línea Fina' },
+                        { code: 'PT', name: 'Tatuagem de Linha Fina' },
+                    ],
+                },
+                {
+                    name: 'Traditional & Neo-Traditional Tattoo',
+                    tags: [
+                        'traditional', 'neo-traditional', 'old-school', 'bold', 'americana',
+                        'tatuaje tradicional', 'old school', 'neotradicional', 'tradicional',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Traditional & Neo-Traditional Tattoo' },
+                        { code: 'ES', name: 'Tatuaje Tradicional y Neo-Tradicional' },
+                        { code: 'PT', name: 'Tatuagem Tradicional e Neo-Tradicional' },
+                    ],
+                },
+                {
+                    name: 'Realism Tattoo',
+                    tags: [
+                        'realism', 'portrait', 'photorealistic', 'black-grey', 'shading',
+                        'realismo', 'tatuaje realista', 'black and grey', 'retrato tatuaje',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Realism Tattoo' },
+                        { code: 'ES', name: 'Tatuaje Realista' },
+                        { code: 'PT', name: 'Tatuagem Realista' },
+                    ],
+                },
+                {
+                    name: 'Blackwork & Geometric Tattoo',
+                    tags: [
+                        'blackwork', 'geometric', 'tribal', 'ornamental', 'dotwork',
+                        'tatuaje geometrico', 'geométrico', 'ornamental', 'dotwork', 'tribal',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Blackwork & Geometric Tattoo' },
+                        { code: 'ES', name: 'Tatuaje Blackwork y Geométrico' },
+                        { code: 'PT', name: 'Tatuagem Blackwork e Geométrica' },
+                    ],
+                },
+            ],
+        },
     ];
 
     // Art styles are global aesthetics shared across every discipline (a photo, a film,
     // or a logo can all be "brutalist"). They are flat, top-level, and typed ART_STYLE.
     const artStyles: SeedCategory[] = [
         // Movements & eras
-        { name: 'Minimalism', tags: ['minimalism', 'minimal', 'clean', 'simple', 'negative-space'], translations: [{ code: 'EN', name: 'Minimalism' }, { code: 'ES', name: 'Minimalismo' }, { code: 'PT', name: 'Minimalismo' }] },
-        { name: 'Maximalism', tags: ['maximalism', 'maximal', 'bold', 'busy', 'eclectic'], translations: [{ code: 'EN', name: 'Maximalism' }, { code: 'ES', name: 'Maximalismo' }, { code: 'PT', name: 'Maximalismo' }] },
-        { name: 'Brutalism', tags: ['brutalism', 'brutalist', 'raw', 'concrete', 'bold'], translations: [{ code: 'EN', name: 'Brutalism' }, { code: 'ES', name: 'Brutalismo' }, { code: 'PT', name: 'Brutalismo' }] },
-        { name: 'Art Deco', tags: ['art-deco', 'deco', 'geometric', 'luxury', '1920s'], translations: [{ code: 'EN', name: 'Art Deco' }, { code: 'ES', name: 'Art Déco' }, { code: 'PT', name: 'Art Déco' }] },
-        { name: 'Art Nouveau', tags: ['art-nouveau', 'nouveau', 'organic', 'floral', 'ornate'], translations: [{ code: 'EN', name: 'Art Nouveau' }, { code: 'ES', name: 'Art Nouveau' }, { code: 'PT', name: 'Art Nouveau' }] },
-        { name: 'Bauhaus', tags: ['bauhaus', 'modernist', 'geometric', 'primary-colors', 'functional'], translations: [{ code: 'EN', name: 'Bauhaus' }, { code: 'ES', name: 'Bauhaus' }, { code: 'PT', name: 'Bauhaus' }] },
-        { name: 'Swiss / International', tags: ['swiss', 'international', 'grid', 'helvetica', 'typographic'], translations: [{ code: 'EN', name: 'Swiss / International' }, { code: 'ES', name: 'Estilo Suizo' }, { code: 'PT', name: 'Estilo Suíço' }] },
-        { name: 'Memphis', tags: ['memphis', 'postmodern', '80s', 'playful', 'geometric'], translations: [{ code: 'EN', name: 'Memphis' }, { code: 'ES', name: 'Memphis' }, { code: 'PT', name: 'Memphis' }] },
-        { name: 'Pop Art', tags: ['pop-art', 'pop', 'bold', 'comic', 'warhol'], translations: [{ code: 'EN', name: 'Pop Art' }, { code: 'ES', name: 'Pop Art' }, { code: 'PT', name: 'Pop Art' }] },
-        { name: 'Surrealism', tags: ['surrealism', 'surreal', 'dreamlike', 'oneiric', 'strange'], translations: [{ code: 'EN', name: 'Surrealism' }, { code: 'ES', name: 'Surrealismo' }, { code: 'PT', name: 'Surrealismo' }] },
-        { name: 'Abstract', tags: ['abstract', 'non-representational', 'shapes', 'forms', 'expressive'], translations: [{ code: 'EN', name: 'Abstract' }, { code: 'ES', name: 'Abstracto' }, { code: 'PT', name: 'Abstrato' }] },
-        { name: 'Psychedelic', tags: ['psychedelic', 'trippy', 'colorful', '60s', 'swirls'], translations: [{ code: 'EN', name: 'Psychedelic' }, { code: 'ES', name: 'Psicodélico' }, { code: 'PT', name: 'Psicodélico' }] },
-        { name: 'Baroque', tags: ['baroque', 'ornate', 'dramatic', 'ornamental', 'classical'], translations: [{ code: 'EN', name: 'Baroque' }, { code: 'ES', name: 'Barroco' }, { code: 'PT', name: 'Barroco' }] },
-        { name: 'Gothic', tags: ['gothic', 'dark', 'medieval', 'dramatic', 'ornate'], translations: [{ code: 'EN', name: 'Gothic' }, { code: 'ES', name: 'Gótico' }, { code: 'PT', name: 'Gótico' }] },
+        { name: 'Minimalism', tags: ['minimalism', 'minimal', 'clean', 'simple', 'negative-space', 'minimalismo', 'minimalista'], translations: [{ code: 'EN', name: 'Minimalism' }, { code: 'ES', name: 'Minimalismo' }, { code: 'PT', name: 'Minimalismo' }] },
+        { name: 'Maximalism', tags: ['maximalism', 'maximal', 'bold', 'busy', 'eclectic', 'maximalismo', 'maximalista'], translations: [{ code: 'EN', name: 'Maximalism' }, { code: 'ES', name: 'Maximalismo' }, { code: 'PT', name: 'Maximalismo' }] },
+        { name: 'Brutalism', tags: ['brutalism', 'brutalist', 'raw', 'concrete', 'bold', 'brutalismo', 'brutalista'], translations: [{ code: 'EN', name: 'Brutalism' }, { code: 'ES', name: 'Brutalismo' }, { code: 'PT', name: 'Brutalismo' }] },
+        { name: 'Art Deco', tags: ['art-deco', 'deco', 'geometric', 'luxury', '1920s', 'art deco', 'art déco'], translations: [{ code: 'EN', name: 'Art Deco' }, { code: 'ES', name: 'Art Déco' }, { code: 'PT', name: 'Art Déco' }] },
+        { name: 'Art Nouveau', tags: ['art-nouveau', 'nouveau', 'organic', 'floral', 'ornate', 'modernismo', 'art nouveau'], translations: [{ code: 'EN', name: 'Art Nouveau' }, { code: 'ES', name: 'Art Nouveau' }, { code: 'PT', name: 'Art Nouveau' }] },
+        { name: 'Bauhaus', tags: ['bauhaus', 'modernist', 'geometric', 'primary-colors', 'functional', 'escuela bauhaus'], translations: [{ code: 'EN', name: 'Bauhaus' }, { code: 'ES', name: 'Bauhaus' }, { code: 'PT', name: 'Bauhaus' }] },
+        { name: 'Swiss / International Style', tags: ['swiss', 'international', 'grid', 'helvetica', 'typographic', 'estilo suizo', 'estilo suíço', 'suizo'], translations: [{ code: 'EN', name: 'Swiss / International Style' }, { code: 'ES', name: 'Estilo Suizo Internacional' }, { code: 'PT', name: 'Estilo Suíço Internacional' }] },
+        { name: 'Memphis Style', tags: ['memphis', 'postmodern', '80s', 'playful', 'geometric', 'estilo memphis', 'posmoderno'], translations: [{ code: 'EN', name: 'Memphis Style' }, { code: 'ES', name: 'Estilo Memphis' }, { code: 'PT', name: 'Estilo Memphis' }] },
+        { name: 'Pop Art', tags: ['pop-art', 'pop', 'bold', 'comic', 'warhol', 'arte pop', 'pop art'], translations: [{ code: 'EN', name: 'Pop Art' }, { code: 'ES', name: 'Pop Art' }, { code: 'PT', name: 'Pop Art' }] },
+        { name: 'Surrealism', tags: ['surrealism', 'surreal', 'dreamlike', 'oneiric', 'strange', 'surrealismo', 'surrealista'], translations: [{ code: 'EN', name: 'Surrealism' }, { code: 'ES', name: 'Surrealismo' }, { code: 'PT', name: 'Surrealismo' }] },
+        { name: 'Abstract Art Style', tags: ['abstract', 'non-representational', 'shapes', 'forms', 'expressive', 'abstracto', 'abstrato', 'arte abstracto'], translations: [{ code: 'EN', name: 'Abstract Art Style' }, { code: 'ES', name: 'Estilo Abstracto' }, { code: 'PT', name: 'Estilo Abstrato' }] },
+        { name: 'Psychedelic Style', tags: ['psychedelic', 'trippy', 'colorful', '60s', 'swirls', 'psicodélico', 'psicodelico', 'psicodélico'], translations: [{ code: 'EN', name: 'Psychedelic Style' }, { code: 'ES', name: 'Estilo Psicodélico' }, { code: 'PT', name: 'Estilo Psicodélico' }] },
+        { name: 'Baroque Style', tags: ['baroque', 'ornate', 'dramatic', 'ornamental', 'classical', 'barroco', 'estilo barroco'], translations: [{ code: 'EN', name: 'Baroque Style' }, { code: 'ES', name: 'Estilo Barroco' }, { code: 'PT', name: 'Estilo Barroco' }] },
+        { name: 'Gothic Style', tags: ['gothic', 'dark', 'medieval', 'dramatic', 'ornate', 'gótico', 'gotico', 'estilo gótico'], translations: [{ code: 'EN', name: 'Gothic Style' }, { code: 'ES', name: 'Estilo Gótico' }, { code: 'PT', name: 'Estilo Gótico' }] },
         // Mood & retro
-        { name: 'Vintage & Retro', tags: ['vintage', 'retro', 'nostalgic', 'aged', 'classic'], translations: [{ code: 'EN', name: 'Vintage & Retro' }, { code: 'ES', name: 'Vintage y Retro' }, { code: 'PT', name: 'Vintage e Retrô' }] },
-        { name: 'Noir', tags: ['noir', 'film-noir', 'moody', 'high-contrast', 'shadows'], translations: [{ code: 'EN', name: 'Noir' }, { code: 'ES', name: 'Noir' }, { code: 'PT', name: 'Noir' }] },
-        { name: 'Grunge', tags: ['grunge', 'gritty', 'distressed', 'textured', 'raw'], translations: [{ code: 'EN', name: 'Grunge' }, { code: 'ES', name: 'Grunge' }, { code: 'PT', name: 'Grunge' }] },
-        { name: 'Dark Academia', tags: ['dark-academia', 'academic', 'moody', 'vintage', 'literary'], translations: [{ code: 'EN', name: 'Dark Academia' }, { code: 'ES', name: 'Dark Academia' }, { code: 'PT', name: 'Dark Academia' }] },
-        { name: 'Cottagecore', tags: ['cottagecore', 'cozy', 'rural', 'pastoral', 'whimsical'], translations: [{ code: 'EN', name: 'Cottagecore' }, { code: 'ES', name: 'Cottagecore' }, { code: 'PT', name: 'Cottagecore' }] },
-        { name: 'Y2K', tags: ['y2k', '2000s', 'chrome', 'futuristic', 'retro'], translations: [{ code: 'EN', name: 'Y2K' }, { code: 'ES', name: 'Y2K' }, { code: 'PT', name: 'Y2K' }] },
+        { name: 'Vintage & Retro Style', tags: ['vintage', 'retro', 'nostalgic', 'aged', 'classic', 'retrô', 'estilo vintage', 'estilo retro'], translations: [{ code: 'EN', name: 'Vintage & Retro Style' }, { code: 'ES', name: 'Estilo Vintage y Retro' }, { code: 'PT', name: 'Estilo Vintage e Retrô' }] },
+        { name: 'Noir Style', tags: ['noir', 'film-noir', 'moody', 'high-contrast', 'shadows', 'estilo noir', 'cine negro'], translations: [{ code: 'EN', name: 'Noir Style' }, { code: 'ES', name: 'Estilo Noir' }, { code: 'PT', name: 'Estilo Noir' }] },
+        { name: 'Grunge Style', tags: ['grunge', 'gritty', 'distressed', 'textured', 'raw', 'estilo grunge'], translations: [{ code: 'EN', name: 'Grunge Style' }, { code: 'ES', name: 'Estilo Grunge' }, { code: 'PT', name: 'Estilo Grunge' }] },
+        { name: 'Dark Academia', tags: ['dark-academia', 'academic', 'moody', 'vintage', 'literary', 'academia oscura'], translations: [{ code: 'EN', name: 'Dark Academia' }, { code: 'ES', name: 'Dark Academia' }, { code: 'PT', name: 'Dark Academia' }] },
+        { name: 'Cottagecore', tags: ['cottagecore', 'cozy', 'rural', 'pastoral', 'whimsical', 'estilo cottagecore', 'rural'], translations: [{ code: 'EN', name: 'Cottagecore' }, { code: 'ES', name: 'Cottagecore' }, { code: 'PT', name: 'Cottagecore' }] },
+        { name: 'Y2K Style', tags: ['y2k', '2000s', 'chrome', 'futuristic', 'retro', 'estilo y2k', 'años 2000'], translations: [{ code: 'EN', name: 'Y2K Style' }, { code: 'ES', name: 'Estilo Y2K' }, { code: 'PT', name: 'Estilo Y2K' }] },
         // Digital & rendering
-        { name: 'Flat Design', tags: ['flat', 'flat-design', 'minimal', 'vector', 'simple'], translations: [{ code: 'EN', name: 'Flat Design' }, { code: 'ES', name: 'Diseño Plano' }, { code: 'PT', name: 'Design Plano' }] },
-        { name: 'Glassmorphism', tags: ['glassmorphism', 'glass', 'frosted', 'blur', 'translucent'], translations: [{ code: 'EN', name: 'Glassmorphism' }, { code: 'ES', name: 'Glassmorphism' }, { code: 'PT', name: 'Glassmorphism' }] },
-        { name: 'Isometric', tags: ['isometric', '3d', 'geometric', 'perspective', 'technical'], translations: [{ code: 'EN', name: 'Isometric' }, { code: 'ES', name: 'Isométrico' }, { code: 'PT', name: 'Isométrico' }] },
-        { name: 'Low Poly', tags: ['low-poly', 'polygonal', '3d', 'faceted', 'geometric'], translations: [{ code: 'EN', name: 'Low Poly' }, { code: 'ES', name: 'Low Poly' }, { code: 'PT', name: 'Low Poly' }] },
-        { name: 'Pixel Art', tags: ['pixel-art', 'pixel', '8bit', 'retro', 'sprite'], translations: [{ code: 'EN', name: 'Pixel Art' }, { code: 'ES', name: 'Pixel Art' }, { code: 'PT', name: 'Pixel Art' }] },
-        { name: 'Monochrome', tags: ['monochrome', 'monochromatic', 'single-color', 'tonal', 'grayscale'], translations: [{ code: 'EN', name: 'Monochrome' }, { code: 'ES', name: 'Monocromático' }, { code: 'PT', name: 'Monocromático' }] },
-        { name: 'Duotone', tags: ['duotone', 'two-tone', 'bicolor', 'gradient', 'bold'], translations: [{ code: 'EN', name: 'Duotone' }, { code: 'ES', name: 'Duotono' }, { code: 'PT', name: 'Duotone' }] },
-        { name: 'Holographic', tags: ['holographic', 'iridescent', 'chrome', 'metallic', 'shimmer'], translations: [{ code: 'EN', name: 'Holographic' }, { code: 'ES', name: 'Holográfico' }, { code: 'PT', name: 'Holográfico' }] },
+        { name: 'Flat Design Style', tags: ['flat', 'flat-design', 'minimal', 'vector', 'simple', 'diseño plano', 'design plano'], translations: [{ code: 'EN', name: 'Flat Design Style' }, { code: 'ES', name: 'Estilo de Diseño Plano' }, { code: 'PT', name: 'Estilo de Design Plano' }] },
+        { name: 'Glassmorphism', tags: ['glassmorphism', 'glass', 'frosted', 'blur', 'translucent', 'efecto vidrio', 'vidrio esmerilado'], translations: [{ code: 'EN', name: 'Glassmorphism' }, { code: 'ES', name: 'Glassmorphism' }, { code: 'PT', name: 'Glassmorphism' }] },
+        { name: 'Isometric Style', tags: ['isometric', '3d', 'geometric', 'perspective', 'technical', 'isométrico', 'isometrico'], translations: [{ code: 'EN', name: 'Isometric Style' }, { code: 'ES', name: 'Estilo Isométrico' }, { code: 'PT', name: 'Estilo Isométrico' }] },
+        { name: 'Low Poly Style', tags: ['low-poly', 'polygonal', '3d', 'faceted', 'geometric', 'bajo poligonaje', 'low poly'], translations: [{ code: 'EN', name: 'Low Poly Style' }, { code: 'ES', name: 'Estilo Low Poly' }, { code: 'PT', name: 'Estilo Low Poly' }] },
+        { name: 'Pixel Art Style', tags: ['pixel-art', 'pixel', '8bit', 'retro', 'sprite', 'pixel art', 'arte pixel'], translations: [{ code: 'EN', name: 'Pixel Art Style' }, { code: 'ES', name: 'Estilo Pixel Art' }, { code: 'PT', name: 'Estilo Pixel Art' }] },
+        { name: 'Monochrome Style', tags: ['monochrome', 'monochromatic', 'single-color', 'tonal', 'grayscale', 'monocromático', 'monocromatico', 'escala de grises'], translations: [{ code: 'EN', name: 'Monochrome Style' }, { code: 'ES', name: 'Estilo Monocromático' }, { code: 'PT', name: 'Estilo Monocromático' }] },
+        { name: 'Duotone Style', tags: ['duotone', 'two-tone', 'bicolor', 'gradient', 'bold', 'duotono', 'bitono'], translations: [{ code: 'EN', name: 'Duotone Style' }, { code: 'ES', name: 'Estilo Duotono' }, { code: 'PT', name: 'Estilo Duotone' }] },
+        { name: 'Holographic Style', tags: ['holographic', 'iridescent', 'chrome', 'metallic', 'shimmer', 'holográfico', 'holografico', 'iridiscente'], translations: [{ code: 'EN', name: 'Holographic Style' }, { code: 'ES', name: 'Estilo Holográfico' }, { code: 'PT', name: 'Estilo Holográfico' }] },
         // Retro-futurism
-        { name: 'Vaporwave', tags: ['vaporwave', 'aesthetic', '80s', 'neon', 'retro'], translations: [{ code: 'EN', name: 'Vaporwave' }, { code: 'ES', name: 'Vaporwave' }, { code: 'PT', name: 'Vaporwave' }] },
-        { name: 'Synthwave', tags: ['synthwave', 'outrun', 'retrowave', 'neon', '80s'], translations: [{ code: 'EN', name: 'Synthwave' }, { code: 'ES', name: 'Synthwave' }, { code: 'PT', name: 'Synthwave' }] },
-        { name: 'Cyberpunk', tags: ['cyberpunk', 'neon', 'futuristic', 'dystopian', 'tech'], translations: [{ code: 'EN', name: 'Cyberpunk' }, { code: 'ES', name: 'Cyberpunk' }, { code: 'PT', name: 'Cyberpunk' }] },
-        { name: 'Steampunk', tags: ['steampunk', 'victorian', 'brass', 'gears', 'retro-futuristic'], translations: [{ code: 'EN', name: 'Steampunk' }, { code: 'ES', name: 'Steampunk' }, { code: 'PT', name: 'Steampunk' }] },
-        { name: 'Solarpunk', tags: ['solarpunk', 'eco', 'green', 'utopian', 'sustainable'], translations: [{ code: 'EN', name: 'Solarpunk' }, { code: 'ES', name: 'Solarpunk' }, { code: 'PT', name: 'Solarpunk' }] },
+        { name: 'Vaporwave', tags: ['vaporwave', 'aesthetic', '80s', 'neon', 'retro', 'estilo vaporwave', 'estética vaporwave'], translations: [{ code: 'EN', name: 'Vaporwave' }, { code: 'ES', name: 'Vaporwave' }, { code: 'PT', name: 'Vaporwave' }] },
+        { name: 'Synthwave', tags: ['synthwave', 'outrun', 'retrowave', 'neon', '80s', 'estilo synthwave'], translations: [{ code: 'EN', name: 'Synthwave' }, { code: 'ES', name: 'Synthwave' }, { code: 'PT', name: 'Synthwave' }] },
+        { name: 'Cyberpunk', tags: ['cyberpunk', 'neon', 'futuristic', 'dystopian', 'tech', 'ciberpunk', 'estilo cyberpunk'], translations: [{ code: 'EN', name: 'Cyberpunk' }, { code: 'ES', name: 'Cyberpunk' }, { code: 'PT', name: 'Cyberpunk' }] },
+        { name: 'Steampunk', tags: ['steampunk', 'victorian', 'brass', 'gears', 'retro-futuristic', 'estilo steampunk', 'victoriano'], translations: [{ code: 'EN', name: 'Steampunk' }, { code: 'ES', name: 'Steampunk' }, { code: 'PT', name: 'Steampunk' }] },
+        { name: 'Solarpunk', tags: ['solarpunk', 'eco', 'green', 'utopian', 'sustainable', 'estilo solarpunk', 'ecológico'], translations: [{ code: 'EN', name: 'Solarpunk' }, { code: 'ES', name: 'Solarpunk' }, { code: 'PT', name: 'Solarpunk' }] },
         // Craft & print
-        { name: 'Hand-drawn', tags: ['hand-drawn', 'sketch', 'doodle', 'organic', 'illustrated'], translations: [{ code: 'EN', name: 'Hand-drawn' }, { code: 'ES', name: 'Dibujado a Mano' }, { code: 'PT', name: 'Desenhado à Mão' }] },
-        { name: 'Collage', tags: ['collage', 'cut-paper', 'mixed-media', 'layered', 'montage'], translations: [{ code: 'EN', name: 'Collage' }, { code: 'ES', name: 'Collage' }, { code: 'PT', name: 'Colagem' }] },
-        { name: 'Risograph', tags: ['risograph', 'riso', 'print', 'grain', 'spot-color'], translations: [{ code: 'EN', name: 'Risograph' }, { code: 'ES', name: 'Risografía' }, { code: 'PT', name: 'Risografia' }] },
-        { name: 'Woodcut & Linocut', tags: ['woodcut', 'linocut', 'printmaking', 'block-print', 'carved'], translations: [{ code: 'EN', name: 'Woodcut & Linocut' }, { code: 'ES', name: 'Xilografía y Linograbado' }, { code: 'PT', name: 'Xilogravura e Linogravura' }] },
-        { name: 'Ukiyo-e', tags: ['ukiyo-e', 'japanese', 'woodblock', 'traditional', 'edo'], translations: [{ code: 'EN', name: 'Ukiyo-e' }, { code: 'ES', name: 'Ukiyo-e' }, { code: 'PT', name: 'Ukiyo-e' }] },
-        { name: 'Folk Art', tags: ['folk-art', 'folk', 'traditional', 'naive', 'craft'], translations: [{ code: 'EN', name: 'Folk Art' }, { code: 'ES', name: 'Arte Folclórico' }, { code: 'PT', name: 'Arte Folclórica' }] },
+        { name: 'Hand-drawn Style', tags: ['hand-drawn', 'sketch', 'doodle', 'organic', 'illustrated', 'dibujado a mano', 'a mano', 'desenhado à mão'], translations: [{ code: 'EN', name: 'Hand-drawn Style' }, { code: 'ES', name: 'Estilo Dibujado a Mano' }, { code: 'PT', name: 'Estilo Desenhado à Mão' }] },
+        { name: 'Collage Style', tags: ['collage', 'cut-paper', 'mixed-media', 'layered', 'montage', 'colagem', 'estilo collage'], translations: [{ code: 'EN', name: 'Collage Style' }, { code: 'ES', name: 'Estilo Collage' }, { code: 'PT', name: 'Estilo Colagem' }] },
+        { name: 'Risograph Style', tags: ['risograph', 'riso', 'print', 'grain', 'spot-color', 'risografía', 'risografia'], translations: [{ code: 'EN', name: 'Risograph Style' }, { code: 'ES', name: 'Estilo Risografía' }, { code: 'PT', name: 'Estilo Risografia' }] },
+        { name: 'Woodcut & Linocut Style', tags: ['woodcut', 'linocut', 'printmaking', 'block-print', 'carved', 'xilografía', 'xilografia', 'linograbado', 'linogravura'], translations: [{ code: 'EN', name: 'Woodcut & Linocut Style' }, { code: 'ES', name: 'Estilo Xilografía y Linograbado' }, { code: 'PT', name: 'Estilo Xilogravura e Linogravura' }] },
+        { name: 'Ukiyo-e Style', tags: ['ukiyo-e', 'japanese', 'woodblock', 'traditional', 'edo', 'ukiyo e', 'japonés', 'japones'], translations: [{ code: 'EN', name: 'Ukiyo-e Style' }, { code: 'ES', name: 'Estilo Ukiyo-e' }, { code: 'PT', name: 'Estilo Ukiyo-e' }] },
+        { name: 'Folk Art Style', tags: ['folk-art', 'folk', 'traditional', 'naive', 'craft', 'folclórico', 'folclorico', 'arte popular', 'naive'], translations: [{ code: 'EN', name: 'Folk Art Style' }, { code: 'ES', name: 'Estilo de Arte Folclórico' }, { code: 'PT', name: 'Estilo de Arte Folclórica' }] },
     ];
 
     const s3Ok = isS3Configured();

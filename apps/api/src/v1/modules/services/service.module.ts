@@ -24,6 +24,6 @@ import { RequestService } from 'src/common/services/request.service';
     },
   ],
   imports: [UserExtraDataModule, AiModule],
-  exports: [ServiceService],
+  exports: [ServiceService, ServiceRepository],
 })
 export class ServiceModule {}

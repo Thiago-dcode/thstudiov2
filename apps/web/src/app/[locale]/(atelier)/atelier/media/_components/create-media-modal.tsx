@@ -429,7 +429,6 @@ export function CreateMediaDialog({
       newMediaUploads.push({
         file,
         previewUrl,
-        seo_filename: file.name,
         user_id: session.id,
       });
     }
@@ -480,9 +479,7 @@ export function CreateMediaDialog({
       </DialogTrigger>
       <DialogContent className="max-w-[95vw] sm:max-w-2xl md:max-w-3xl lg:max-w-5xl h-[95vh] flex flex-col justify-between [&>button]:hidden p-0 z-100">
         <DialogHeader className="border-b pb-4 px-6 pt-6">
-          <DialogTitle className="text-lg!">
-            {t("createNewMedia")}
-          </DialogTitle>
+          <DialogTitle className="text-lg!">{t("createNewMedia")}</DialogTitle>
           <DialogDescription className="text-sm!">
             {t("uploadUpToImages", { max: MAX_FILES })}
           </DialogDescription>

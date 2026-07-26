@@ -49,8 +49,7 @@ export function Step3Client({
     useState<CategoryBase[]>(styleCategories);
 
   const combinedIds = useMemo(
-    () =>
-      [...disciplineSelected, ...styleSelected].map((c) => c.id).join(","),
+    () => [...disciplineSelected, ...styleSelected].map((c) => c.id).join(","),
     [disciplineSelected, styleSelected],
   );
 
@@ -60,7 +59,7 @@ export function Step3Client({
   }, [combinedIds, setCanContinue]);
 
   return (
-    <>
+    <div className="flex w-full flex-col gap-4">
       <p className="text-sm text-text-muted">{t("visibilityHint")}</p>
 
       <UpdateCategoriesProvider
@@ -69,7 +68,7 @@ export function Step3Client({
         maxSelections={MAX_DISCIPLINES}
       >
         <SelectionReporter onChange={setDisciplineSelected} />
-        <UserCategoriesComponent title={t("disciplinesTitle")} />
+        <UserCategoriesComponent title={t("disciplinesTitle")} compact />
       </UpdateCategoriesProvider>
 
       <UpdateCategoriesProvider
@@ -78,7 +77,7 @@ export function Step3Client({
         maxSelections={MAX_STYLES}
       >
         <SelectionReporter onChange={setStyleSelected} />
-        <UserCategoriesComponent title={t("artStylesTitle")} />
+        <UserCategoriesComponent title={t("artStylesTitle")} compact />
       </UpdateCategoriesProvider>
 
       <ContainerFormFunnel className="sticky bottom-0 bg-bg p-2">
@@ -92,6 +91,6 @@ export function Step3Client({
         <ButtonSubmitFunnel />
         <ButtonStepBackFunnel />
       </ContainerFormFunnel>
-    </>
+    </div>
   );
 }

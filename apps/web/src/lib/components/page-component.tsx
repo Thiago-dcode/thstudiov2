@@ -9,10 +9,10 @@ const Container = ({
   className?: string;
 }) => {
   return (
-    <div className="flex size-full items-center justify-center py-8 px-1 -auto">
+    <div className="flex size-full justify-center overflow-y-auto py-8 px-1">
       <div
         className={cn(
-          "w-full h-full max-w-sm justify-center flex flex-col",
+          "w-full min-h-full max-w-sm my-auto justify-center flex flex-col",
           className,
         )}
       >

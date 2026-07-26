@@ -3,18 +3,28 @@ import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
 import { Link } from "@/i18n/navigation";
+import { buildOrganizationJsonLd, JsonLd } from "@/lib/seo/json-ld";
+import { buildStaticPageMetadata } from "@/lib/seo/static-metadata";
 
-export async function generateMetadata(): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
   const t = await getTranslations("about.metadata");
-
-  return {
+  return buildStaticPageMetadata({
+    path: "/about",
     title: t("title"),
     description: t("description"),
-  };
+    locale,
+    ogType: "article",
+  });
 }
 
 export default async function AboutPage() {
   const t = await getTranslations("about");
+  const tSeo = await getTranslations("seo");
 
   const valueItems = t.raw("values.items") as {
     title: string;
@@ -30,6 +40,7 @@ export default async function AboutPage() {
 
   return (
     <article className="mx-auto w-full max-w-3xl px-6 py-20 tablet:px-10 tablet:py-28">
+      <JsonLd data={buildOrganizationJsonLd(tSeo("organizationDescription"))} />
       <header className="space-y-4">
         <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-text-muted">
           {t("hero.label")}

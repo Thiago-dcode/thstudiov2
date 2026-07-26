@@ -123,7 +123,9 @@ export const ChangeSubscriptionDialog = () => {
                 </p>
               </div>
               <div className="hidden lg:flex flex-col items-start justify-start gap-2">
-                <p className="text-text-muted text-lg">{t("thisPlanIncludes")}</p>
+                <p className="text-text-muted text-lg">
+                  {t("thisPlanIncludes")}
+                </p>
                 <PlanFeatures plan={planSelected} />
               </div>
               <Accordion

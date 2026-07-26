@@ -10,9 +10,9 @@ import {
 } from "@repo/ui/components/shadcn/drawer";
 import { cn } from "@repo/ui/lib/utils";
 import { Menu, X } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import {
   createContext,
   type ReactNode,

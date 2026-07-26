@@ -11,6 +11,10 @@ export type PortfolioSchema = {
   is_featured: boolean;
   is_highlight: boolean;
   is_active: boolean;
+  is_indexable: boolean;
+  seo_title?: string | null;
+  seo_description?: string | null;
+  seo_generated_at?: Date | null;
   blocked_at?: Date | null;
   user_id: number;
   created_at: Date;
@@ -67,10 +71,10 @@ export type PortfolioFullSchema = PortfolioWithArtistSchema & {
   aspect_ratio?: EnumType<'ASPECT_RATIO'> | null;
   /** From joined `media` row (collision with `portfolios.is_active`). */
   m_is_active?: boolean | null;
-  seo_alt?: string | null;
-  seo_title?: string | null;
-  seo_description?: string | null;
-  seo_filename: string;
+  m_seo_title?: string | null;            // COLLISION: portfolios.seo_title
+  m_seo_description?: string | null;      // COLLISION: portfolios.seo_description
+  seo_alt?: string | null;                // media only — no collision
+  seo_filename: string;                   // media only — no collision
   m_user_id: number;                      // COLLISION: user_id
   m_is_featured?: boolean | null;
   m_is_highlight?: boolean | null;

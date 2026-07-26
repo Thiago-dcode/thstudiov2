@@ -93,9 +93,7 @@ export const EditUserPasswordDialog = ({ user }: Props) => {
                     {t.rich("availableAgainOn", {
                       date: resetDateFormatted,
                       strong: (chunks) => (
-                        <span className="font-medium text-text">
-                          {chunks}
-                        </span>
+                        <span className="font-medium text-text">{chunks}</span>
                       ),
                     })}
                   </>
@@ -136,9 +134,8 @@ export const EditUserPasswordDialog = ({ user }: Props) => {
                     remaining,
                     max: MAX_PASSWORD_RESET,
                   })}
-                  {resetDateFormatted && (
-                    <>{t("resetsOn", { date: resetDateFormatted })}</>
-                  )}
+                  {resetDateFormatted &&
+                    t("resetsOn", { date: resetDateFormatted })}
                 </p>
               )}
 

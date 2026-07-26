@@ -11,9 +11,9 @@ import {
   Settings,
   UserRoundPen,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { type ReactNode, useEffect, useState } from "react";
 import { LogoutDialog } from "@/app/[locale]/(atelier)/__components/logout-dialog";
 import { useMainNav } from "../providers/main-nav.provider";
