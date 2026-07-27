@@ -105,6 +105,7 @@ jobs:
             NEXT_PUBLIC_GEOAPIFY_KEY=${{ secrets.NEXT_PUBLIC_GEOAPIFY_KEY }}
             APP_URL=${{ secrets.APP_URL }}
             APP_API_KEY=${{ secrets.APP_API_KEY }}
+            APP_TOKEN=${{ secrets.APP_TOKEN }}
             API_V1_URL=${{ secrets.API_V1_URL }}
             GEOAPIFY_URL=${{ secrets.GEOAPIFY_URL }}
             GEOAPIFY_KEY=${{ secrets.GEOAPIFY_KEY }}

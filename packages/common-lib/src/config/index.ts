@@ -18,6 +18,8 @@ const config = (envPath?: string | undefined) => {
   return {
     app: {
       api_key: process.env.APP_API_KEY || '',
+      // Private token gating otherwise-public machine endpoints (e.g. the sitemap feed) to our own app.
+      token: process.env.APP_TOKEN || '',
       name: 'a11studio',
       url: process.env.APP_URL,
       env: process.env.NODE_ENV || 'development',

@@ -1,4 +1,5 @@
 import "server-only";
+import { APP_TOKEN_HEADER } from "@repo/common-lib/constants/constants";
 import type {
   SitemapArtistItem,
   SitemapCounts,
@@ -24,7 +25,10 @@ async function getData<T>(path: string, fallback: T): Promise<T> {
   try {
     const res = await fetch(`${serverEnv.API_V1_URL}${path}`, {
       next: { revalidate: SITEMAP_REVALIDATE },
-      headers: { Accept: "application/json" },
+      headers: {
+        Accept: "application/json",
+        [APP_TOKEN_HEADER]: serverEnv.APP_TOKEN,
+      },
     });
     if (!res.ok) return fallback;
     const json = (await res.json()) as { data?: T };

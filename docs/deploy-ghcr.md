@@ -50,6 +50,7 @@ These are baked into the Next.js image at build time in CI:
 | `NEXT_PUBLIC_GEOAPIFY_KEY` | yes |
 | `APP_URL` | yes |
 | `APP_API_KEY` | yes |
+| `APP_TOKEN` | yes |
 | `API_V1_URL` | yes |
 | `GEOAPIFY_URL` | yes |
 | `GEOAPIFY_KEY` | yes |

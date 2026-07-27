@@ -4,6 +4,7 @@ import * as z from "zod";
 const serverEnvSchema = z.object({
   ENCRYPTION_SECRET: z.string().min(1),
   APP_API_KEY: z.string().min(1),
+  APP_TOKEN: z.string().min(1),
   APP_URL: z.string().min(1),
   API_V1_URL: z.string().min(1),
   GEOAPIFY_URL: z.string().min(1),
