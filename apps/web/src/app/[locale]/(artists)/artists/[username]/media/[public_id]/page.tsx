@@ -11,7 +11,7 @@ import mediaService from "@/modules/media/media.service";
 import usersService from "@/modules/users/users.service";
 
 type Props = {
-  params: Promise<{ username: string; public_id: string }>;
+  params: Promise<{ locale: string; username: string; public_id: string }>;
 };
 
 export async function generateMetadata({
@@ -33,12 +33,12 @@ export async function generateMetadata({
 }
 
 export default async function MediaPage({ params }: Props) {
-  const { username, public_id } = await params;
+  const { locale, username, public_id } = await params;
   const tNotFound = await getTranslations("artists.resourceNotFound");
 
   const [user, { data: media }, session] = await Promise.all([
     usersService.getCompact(username),
-    mediaService.getByPublicId(public_id),
+    mediaService.getByPublicId(public_id, urlLocaleToLanguageCode(locale)),
     userSession(),
   ]);
 

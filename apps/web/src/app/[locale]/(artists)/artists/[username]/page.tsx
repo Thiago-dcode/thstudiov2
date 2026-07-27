@@ -1,3 +1,5 @@
+import { PLATFORM_CURRENCY } from "@repo/common-lib/constants/constants";
+import type { Service } from "@repo/common-lib/types/service";
 import type { UserProfile } from "@repo/common-lib/types/user";
 import { Badge } from "@repo/ui/components/shadcn/badge";
 import { ArrowRight, Mail, MapPin } from "lucide-react";
@@ -9,6 +11,7 @@ import { Suspense } from "react";
 import fallbackBanner from "@/assets/images/fallback-banner.jpg";
 import { serverEnv } from "@/env/server";
 import { Link } from "@/i18n/navigation";
+import userServiceService from "@/modules/user-services/user-service.service";
 import UserService from "@/modules/users/users.service";
 import { ArtistContactDialog } from "../../__components/artist-contact.dialog";
 import { ArtistSections } from "../../__components/artist-sections";
@@ -68,9 +71,39 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-const buildProfileJsonLd = (profile: UserProfile) => {
+const buildProfileJsonLd = (profile: UserProfile, services: Service[]) => {
   const name = displayName(profile);
   const canonical = canonicalUrl(profile.username);
+
+  const addr = profile.address;
+  const address =
+    addr && (addr.street || addr.city || addr.state || addr.formated_address)
+      ? {
+          "@type": "PostalAddress",
+          ...(addr.street ? { streetAddress: addr.street } : {}),
+          ...(addr.city ? { addressLocality: addr.city } : {}),
+          ...(addr.state ? { addressRegion: addr.state } : {}),
+          ...(addr.formated_address ? { name: addr.formated_address } : {}),
+        }
+      : null;
+
+  // The artist's disciplines/styles — what this professional is known for.
+  const knowsAbout = (profile.categories ?? [])
+    .map((c) => c.name)
+    .filter(Boolean);
+
+  // High commercial-intent surface: expose the artist's services as offerings.
+  const makesOffer = services.map((s) => ({
+    "@type": "Offer",
+    itemOffered: {
+      "@type": "Service",
+      name: s.title,
+      url: `${serverEnv.APP_URL}/artists/${profile.username}/services/${s.slug}`,
+    },
+    ...(s.show_price && s.price != null
+      ? { price: s.price.toFixed(2), priceCurrency: PLATFORM_CURRENCY }
+      : {}),
+  }));
 
   return {
     "@context": "https://schema.org",
@@ -86,22 +119,23 @@ const buildProfileJsonLd = (profile: UserProfile) => {
       ...(profile.short_biography
         ? { description: profile.short_biography }
         : {}),
-      ...(profile.address?.formated_address
-        ? {
-            address: {
-              "@type": "PostalAddress",
-              name: profile.address.formated_address,
-            },
-          }
-        : {}),
+      ...(knowsAbout.length ? { knowsAbout } : {}),
+      ...(address ? { address } : {}),
+      ...(makesOffer.length ? { makesOffer } : {}),
+      // `sameAs` intentionally omitted — no social-links data model yet (user_contacts is a
+      // contact-form inbox, not social URLs). Add once artist social links are stored.
     },
   };
 };
 
 const ArtistHomePage = async ({ params }: Props) => {
   const { username } = await params;
-  const [{ data: profile }, t] = await Promise.all([
+  const [{ data: profile }, { data: services }, t] = await Promise.all([
     UserService.getProfile(username),
+    userServiceService.getAllByUsername(username, {
+      blocked: false,
+      is_active: true,
+    }),
     getTranslations("artists.profile"),
   ]);
 
@@ -111,7 +145,7 @@ const ArtistHomePage = async ({ params }: Props) => {
 
   const fullName = [profile.name, profile.surname].filter(Boolean).join(" ");
   const heading = fullName || `@${profile.username}`;
-  const jsonLd = buildProfileJsonLd(profile);
+  const jsonLd = buildProfileJsonLd(profile, services ?? []);
 
   return (
     <div className="min-h-screen w-full animate-in fade-in duration-1000">

@@ -26,9 +26,12 @@ class UserCollectionService extends BaseService {
   async getByUsername(
     username: string,
     slug: string,
+    lang?: string,
   ): Promise<ApiResponse<FullCollection | null>> {
     return await this.fetchApi.get({
-      resource: `/${username}/collections/${slug}`,
+      resource: lang
+        ? `/${username}/collections/${slug}?lan=${lang}`
+        : `/${username}/collections/${slug}`,
     });
   }
 

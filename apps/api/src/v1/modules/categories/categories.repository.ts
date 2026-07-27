@@ -223,6 +223,10 @@ export class CategoriesRepository extends BaseRepository {
 
     if (filters.type) {
       query.where('categories.type', '=', filters.type);
+    } else {
+      // TAGS are LLM-only (media content tagging); never surface them in the user-facing
+      // category index (pickers, search filters). Explicitly querying type=TAGS still works.
+      query.where('categories.type', '!=', 'TAGS');
     }
 
     if (filters.exclude_parents) {

@@ -268,6 +268,32 @@ export class CollectionRepository extends BaseRepository {
     };
   }
 
+  /**
+   * Distinct content TAGS across the collection's media, localized to the request language
+   * (COALESCE translation → English name). Feeds `CollectionPage.keywords` — collections carry no
+   * categories of their own, so their keywords aggregate the media's LLM-assigned tags.
+   */
+  async getTagsByCollectionId(collectionId: number): Promise<string[]> {
+    const lang = this.requestService.language ?? DEFAULT_LANGUAGE;
+    const result = await Query.raw(
+      `SELECT DISTINCT COALESCE(ct.name, c.name) AS name
+       FROM ${TABLES_ENUM.COLLECTION_MEDIA} cm
+       INNER JOIN ${TABLES_ENUM.MEDIA_CATEGORIES} mc ON mc.media_id = cm.media_id
+       INNER JOIN ${TABLES_ENUM.CATEGORIES} c
+         ON c.id = mc.category_id AND c.type = 'TAGS' AND c.is_active = true
+       LEFT JOIN ${TABLES_ENUM.CATEGORY_TRANSLATIONS} ct
+         ON ct.category_id = c.id AND ct.language_code = $1
+       WHERE cm.collection_id = $2
+       ORDER BY name
+       LIMIT 15`,
+      [lang, collectionId],
+    );
+    const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];
+    return (Array.isArray(rows) ? rows : [])
+      .map((r) => (r as { name?: string | null }).name)
+      .filter((n): n is string => !!n);
+  }
+
   /** Upsert per-locale SEO rows into collection_translations (one row per app language). */
   async upsertSeoTranslations(collectionId: number, rows: SeoTranslation[]): Promise<void> {
     for (const r of rows) {

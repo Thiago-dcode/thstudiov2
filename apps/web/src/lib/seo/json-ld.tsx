@@ -1,3 +1,4 @@
+import { PLATFORM_CURRENCY } from "@repo/common-lib/constants/constants";
 import type { FullCollection } from "@repo/common-lib/types/collection";
 import type { MediaWithUser } from "@repo/common-lib/types/media";
 import type { FullPortfolio } from "@repo/common-lib/types/portfolio";
@@ -191,6 +192,8 @@ export function buildMediaJsonLd(media: MediaWithUser, username: string) {
   const description = media.description || media.seo_description;
   if (description) image.description = description;
   if (media.seo_alt) image.caption = media.seo_alt;
+  // LLM-assigned content tags (localized) → keywords for Google Images / entity understanding.
+  if (media.tags?.length) image.keywords = media.tags.join(", ");
   if (media.created_at) {
     const uploaded = new Date(media.created_at);
     if (!Number.isNaN(uploaded.getTime())) image.uploadDate = uploaded.toISOString();
@@ -238,12 +241,19 @@ export function buildCollectionJsonLd(
     author: personRef(username, `@${username}`),
   };
   if (collection.description) page.description = collection.description;
+  // Collections have no categories; keywords aggregate their media's content tags (localized).
+  if (collection.tags?.length) page.keywords = collection.tags.join(", ");
   const g = gallery(collection.media ?? []);
   if (g) page.mainEntity = g;
   return graph([page, breadcrumb(username, collection.title, path)]);
 }
 
-/** Service + breadcrumb. Price is omitted from the Offer because there is no stored currency. */
+/**
+ * Service + breadcrumb. Keywords come from the "what's included" features (services carry no
+ * categories) + the linked portfolio. An `Offer` (priced in the platform currency) is emitted only
+ * when `show_price` is on and a price exists — matching exactly what the page renders, so the
+ * structured price never contradicts the visible one.
+ */
 export function buildServiceJsonLd(service: FullService, username: string) {
   const path = `/artists/${username}/services/${service.slug}`;
   const svc: Record<string, unknown> = {
@@ -253,5 +263,23 @@ export function buildServiceJsonLd(service: FullService, username: string) {
     provider: personRef(username, `@${username}`),
   };
   if (service.description) svc.description = service.description;
+  const keywords = [
+    ...new Set(
+      [
+        ...(service.features ?? []).map((f) => f.title),
+        service.portfolio?.title,
+      ].filter((k): k is string => !!k),
+    ),
+  ];
+  if (keywords.length) svc.keywords = keywords.join(", ");
+  if (service.show_price && service.price != null) {
+    svc.offers = {
+      "@type": "Offer",
+      price: service.price.toFixed(2),
+      priceCurrency: PLATFORM_CURRENCY,
+      availability: "https://schema.org/InStock",
+      url: abs(path),
+    };
+  }
   return graph([svc, breadcrumb(username, service.title, path)]);
 }

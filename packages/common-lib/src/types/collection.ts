@@ -18,6 +18,8 @@ export type Collection = CollectionSchema & {
 
 export type FullCollection = CollectionSchema & {
   media: FullCollectionMedia[];
+  /** Distinct content tags aggregated across the collection's media, localized (detail fetch only). */
+  tags?: string[];
 };
 
 // Collection attached to a portfolio via `portfolio_collection`.

@@ -18,16 +18,19 @@ export class UserCollectionService {
     const collection = await this.collectionRepository.getBySlug(slug, userId);
     if (!collection) return null;
 
-    return {
-      ...collection,
-      media: collection.media.length
-        ? await Promise.all(collection.media.map(async (media) => ({
+    const [media, tags] = await Promise.all([
+      collection.media.length
+        ? Promise.all(collection.media.map(async (media) => ({
           ...media,
           thumbnail: media.thumbnail ? await this.helpers.getAsset(media.thumbnail) : undefined,
           url:  media.url ? await this.helpers.getAsset(media.url) : undefined,
         })))
-        : collection.media,
-    };
+        : Promise.resolve(collection.media),
+      // Aggregate the media's content tags → CollectionPage.keywords (localized).
+      this.collectionRepository.getTagsByCollectionId(collection.id),
+    ]);
+
+    return { ...collection, media, tags };
   }
 
   /** Lean, locale-resolved SEO for generateMetadata — no full-graph load. */

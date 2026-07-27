@@ -993,16 +993,22 @@ const messages = {
     },
     portfolios: {
       pageTitle: "Portafolios",
+      metaDescription:
+        "Explora los portafolios de {name} en A11STUDIO: colecciones seleccionadas de sus mejores trabajos.",
       empty: "Aún no hay portafolios.",
       galleryEmpty: "Este portafolio está vacío por ahora.",
     },
     collections: {
       pageTitle: "Colecciones",
+      metaDescription:
+        "Explora las colecciones de {name} en A11STUDIO: conjuntos seleccionados de su trabajo.",
       empty: "Aún no hay colecciones.",
       galleryEmpty: "Esta colección está vacía por ahora.",
     },
     services: {
       pageTitle: "Servicios",
+      metaDescription:
+        "Descubre los servicios que ofrece {name} en A11STUDIO y ponte en contacto para colaborar.",
       empty: "Aún no hay servicios.",
       whatsIncluded: "Qué incluye",
       terms: "Términos",

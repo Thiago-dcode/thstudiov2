@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { LLMService } from '@repo/backend-lib/services/llm-service/base';
-import { LLM_TOKENS_USAGE_EVENT, MEDIA_MODERATION_EVENT } from '@repo/common-lib/constants/constants';
+import { LLM_TOKENS_USAGE_EVENT, MAX_TAGS_MEDIA, MEDIA_MODERATION_EVENT } from '@repo/common-lib/constants/constants';
 import { openAiLLMConfig } from 'src/config/llm';
 import { FactoryLogService } from '@repo/backend-lib/services/log-service';
 import {
@@ -107,7 +107,10 @@ export class AiService {
 
         Field rules:
         - seo_filename: ≤${MEDIA_SEO_FILENAME_MAX} chars, lowercase, hyphens instead of spaces, only letters/numbers/"-"/"_", keyword-rich. LANGUAGE-NEUTRAL (universal/English terms) — ONE value shared by all locales.
-        - category_ids: from the CATEGORIES list below, the ids of every category (disciplines AND art styles) that genuinely applies. Only ids from the list. Empty array if none.
+        - category_ids: ids from the CATEGORIES list below (each item has a "type"). Include:
+            · every DISCIPLINE and ART_STYLE that genuinely applies (no cap), AND
+            · up to ${MAX_TAGS_MEDIA} TAGS describing concrete things clearly VISIBLE in the image — subject (people, dog, car), scene/place (city, beach, street), setting/light (night, sunset, studio), or mood (moody, serene).
+          Only ids from the list. Never invent. Do not over-tag: pick TAGS only when clearly present. Empty array if none.
         - translations: for EACH locale key (${SEO_LOCALES.join(', ')}), written IN THAT LANGUAGE:
             · seo_title: ≤${MEDIA_SEO_TITLE_MAX} chars.
             · seo_description: ≤${MEDIA_SEO_DESCRIPTION_MAX} chars, compelling + search-intent aligned, gallery-caption tone.
@@ -137,16 +140,20 @@ export class AiService {
 
         seoFilename = this.clamp(parsed.seo_filename ?? parsed.filename, MEDIA_SEO_FILENAME_MAX);
 
-        const validIds = new Set(categories.map((c) => c.id));
-        categoryIds = Array.isArray(parsed.category_ids)
+        const typeById = new Map(categories.map((c) => [c.id, c.type]));
+        const validCategoryIds = Array.isArray(parsed.category_ids)
           ? [
             ...new Set(
               (parsed.category_ids as unknown[])
                 .map((n) => Number(n))
-                .filter((n): n is number => Number.isInteger(n) && validIds.has(n)),
+                .filter((n): n is number => Number.isInteger(n) && typeById.has(n)),
             ),
           ]
           : [];
+        // Disciplines/styles are uncapped; TAGS are capped so the pivot + JSON-LD keywords stay tight.
+        const tagIds = validCategoryIds.filter((id) => typeById.get(id) === 'TAGS');
+        const nonTagIds = validCategoryIds.filter((id) => typeById.get(id) !== 'TAGS');
+        categoryIds = [...nonTagIds, ...tagIds.slice(0, MAX_TAGS_MEDIA)];
 
         translations = this.buildMediaTranslations(parsed.translations);
         matchesExpectedResponse = translations.some((t) => !!(t.seo_title || t.seo_description));

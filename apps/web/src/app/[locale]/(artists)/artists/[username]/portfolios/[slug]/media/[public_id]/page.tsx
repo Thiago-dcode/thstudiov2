@@ -1,22 +1,46 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { MediaPageComponent } from "@/app/[locale]/(artists)/__components/media-page.component";
 import { ResourceNotFound } from "@/app/[locale]/(artists)/__components/resource-not-found";
+import { urlLocaleToLanguageCode } from "@/i18n/routing";
 import Web from "@/lib/components/web-page.component";
+import { buildSeoMetadata } from "@/lib/seo/build-metadata";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import mediaService from "@/modules/media/media.service";
 import userPortfolioService from "@/modules/user-portfolios/user-portfolio.service";
 import usersService from "@/modules/users/users.service";
 
 type Props = {
-  params: Promise<{ username: string; slug: string; public_id: string }>;
+  params: Promise<{
+    locale: string;
+    username: string;
+    slug: string;
+    public_id: string;
+  }>;
   searchParams: Promise<{
     cb?: string;
   }>;
 };
 
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale, public_id } = await params;
+  const { data } = await mediaService.getSeoMetadata(
+    public_id,
+    urlLocaleToLanguageCode(locale),
+  );
+
+  if (!data) {
+    return { robots: { index: false, follow: false } };
+  }
+
+  // canonical_path is the PRIMARY media URL (/artists/{username}/media/{public_id}), so this nested
+  // view consolidates its ranking signal there instead of cannibalizing it.
+  return buildSeoMetadata(data, locale, { title: data.seo_title || "Artwork" });
+}
+
 export default async function MediaPage({ params, searchParams }: Props) {
-  const { username, slug, public_id } = await params;
+  const { locale, username, slug, public_id } = await params;
   const tNotFound = await getTranslations("artists.resourceNotFound");
   const tPortfolios = await getTranslations("artists.portfolios");
 
@@ -43,7 +67,10 @@ export default async function MediaPage({ params, searchParams }: Props) {
     );
   }
 
-  const { data: media } = await mediaService.getByPublicId(public_id);
+  const { data: media } = await mediaService.getByPublicId(
+    public_id,
+    urlLocaleToLanguageCode(locale),
+  );
 
   const belongsToPortfolio =
     !!media &&

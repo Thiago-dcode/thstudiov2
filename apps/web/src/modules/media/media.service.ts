@@ -29,9 +29,12 @@ class MediaService extends BaseService {
       resource: queryParamBuilder("", filters),
     });
   }
-  async getByPublicId(publicId: string): Promise<ApiResponse<MediaWithUser>> {
+  async getByPublicId(
+    publicId: string,
+    lang?: string,
+  ): Promise<ApiResponse<MediaWithUser>> {
     return await this.fetchApi.get({
-      resource: `/${publicId}`,
+      resource: lang ? `/${publicId}?lan=${lang}` : `/${publicId}`,
     });
   }
   async getSeoMetadata(

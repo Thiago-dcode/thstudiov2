@@ -57,6 +57,15 @@ export const MAX_DISCIPLINES_PORTFOLIO = 3;
 export const MAX_STYLES_PORTFOLIO = 3;
 export const MAX_CATEGORIES_PORTFOLIO =
   MAX_DISCIPLINES_PORTFOLIO + MAX_STYLES_PORTFOLIO;
+/** Max LLM-assigned content TAGS per media (bounds the pivot + JSON-LD keywords array). */
+export const MAX_TAGS_MEDIA = 8;
+/**
+ * Platform-wide currency for service prices. Services have no per-listing currency column, so the
+ * visible price symbol AND the JSON-LD `Offer.priceCurrency` both derive from here — keep them in
+ * sync (Google penalizes a structured-data price that doesn't match the visible one).
+ */
+export const PLATFORM_CURRENCY = "EUR";
+export const PLATFORM_CURRENCY_SYMBOL = "€";
 /** Postgres `real` (4-byte float) tops out around 3.4e38; keep prices well under that and sane for a service listing. */
 export const MAX_SERVICE_PRICE = 999999.99;
 export const MIN_COLUMN_BASE_COLUMNS = 1;

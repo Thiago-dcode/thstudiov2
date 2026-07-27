@@ -1166,6 +1166,90 @@ export const main = async () => {
         { name: 'Folk Art Style', tags: ['folk-art', 'folk', 'traditional', 'naive', 'craft', 'folclórico', 'folclorico', 'arte popular', 'naive'], translations: [{ code: 'EN', name: 'Folk Art Style' }, { code: 'ES', name: 'Estilo de Arte Folclórico' }, { code: 'PT', name: 'Estilo de Arte Folclórica' }] },
     ];
 
+    // Content TAGS: concrete, per-image descriptors the LLM picks (never user-editable) to enrich
+    // media JSON-LD keywords + on-page chips. Kept bounded — they ride in every media-tagging prompt.
+    const contentTags: SeedCategory[] = [
+        // Subjects — people
+        { name: 'People', tags: ['people', 'person', 'human', 'personas', 'gente', 'pessoas'], translations: [{ code: 'EN', name: 'People' }, { code: 'ES', name: 'Personas' }, { code: 'PT', name: 'Pessoas' }] },
+        { name: 'Portrait', tags: ['portrait', 'face', 'headshot', 'retrato', 'rosto'], translations: [{ code: 'EN', name: 'Portrait' }, { code: 'ES', name: 'Retrato' }, { code: 'PT', name: 'Retrato' }] },
+        { name: 'Child', tags: ['child', 'kid', 'children', 'niño', 'niños', 'criança'], translations: [{ code: 'EN', name: 'Child' }, { code: 'ES', name: 'Niño' }, { code: 'PT', name: 'Criança' }] },
+        { name: 'Woman', tags: ['woman', 'female', 'mujer', 'mulher'], translations: [{ code: 'EN', name: 'Woman' }, { code: 'ES', name: 'Mujer' }, { code: 'PT', name: 'Mulher' }] },
+        { name: 'Man', tags: ['man', 'male', 'hombre', 'homem'], translations: [{ code: 'EN', name: 'Man' }, { code: 'ES', name: 'Hombre' }, { code: 'PT', name: 'Homem' }] },
+        { name: 'Couple', tags: ['couple', 'pareja', 'casal'], translations: [{ code: 'EN', name: 'Couple' }, { code: 'ES', name: 'Pareja' }, { code: 'PT', name: 'Casal' }] },
+        { name: 'Crowd', tags: ['crowd', 'group', 'multitud', 'grupo', 'multidão'], translations: [{ code: 'EN', name: 'Crowd' }, { code: 'ES', name: 'Multitud' }, { code: 'PT', name: 'Multidão' }] },
+        // Subjects — nature & animals
+        { name: 'Animal', tags: ['animal', 'wildlife', 'animales', 'fauna'], translations: [{ code: 'EN', name: 'Animal' }, { code: 'ES', name: 'Animal' }, { code: 'PT', name: 'Animal' }] },
+        { name: 'Dog', tags: ['dog', 'puppy', 'perro', 'cachorro'], translations: [{ code: 'EN', name: 'Dog' }, { code: 'ES', name: 'Perro' }, { code: 'PT', name: 'Cachorro' }] },
+        { name: 'Cat', tags: ['cat', 'kitten', 'gato'], translations: [{ code: 'EN', name: 'Cat' }, { code: 'ES', name: 'Gato' }, { code: 'PT', name: 'Gato' }] },
+        { name: 'Bird', tags: ['bird', 'pájaro', 'pajaro', 'pássaro'], translations: [{ code: 'EN', name: 'Bird' }, { code: 'ES', name: 'Pájaro' }, { code: 'PT', name: 'Pássaro' }] },
+        { name: 'Flower', tags: ['flower', 'floral', 'flor', 'flores'], translations: [{ code: 'EN', name: 'Flower' }, { code: 'ES', name: 'Flor' }, { code: 'PT', name: 'Flor' }] },
+        { name: 'Plant', tags: ['plant', 'greenery', 'planta', 'plantas'], translations: [{ code: 'EN', name: 'Plant' }, { code: 'ES', name: 'Planta' }, { code: 'PT', name: 'Planta' }] },
+        { name: 'Tree', tags: ['tree', 'trees', 'árbol', 'arbol', 'árvore'], translations: [{ code: 'EN', name: 'Tree' }, { code: 'ES', name: 'Árbol' }, { code: 'PT', name: 'Árvore' }] },
+        // Subjects — objects
+        { name: 'Food', tags: ['food', 'meal', 'dish', 'comida', 'comida'], translations: [{ code: 'EN', name: 'Food' }, { code: 'ES', name: 'Comida' }, { code: 'PT', name: 'Comida' }] },
+        { name: 'Drink', tags: ['drink', 'beverage', 'bebida'], translations: [{ code: 'EN', name: 'Drink' }, { code: 'ES', name: 'Bebida' }, { code: 'PT', name: 'Bebida' }] },
+        { name: 'Car', tags: ['car', 'vehicle', 'auto', 'coche', 'carro'], translations: [{ code: 'EN', name: 'Car' }, { code: 'ES', name: 'Coche' }, { code: 'PT', name: 'Carro' }] },
+        { name: 'Boat', tags: ['boat', 'ship', 'barco', 'barco'], translations: [{ code: 'EN', name: 'Boat' }, { code: 'ES', name: 'Barco' }, { code: 'PT', name: 'Barco' }] },
+        { name: 'Building', tags: ['building', 'architecture', 'edificio', 'edifício', 'predio'], translations: [{ code: 'EN', name: 'Building' }, { code: 'ES', name: 'Edificio' }, { code: 'PT', name: 'Edifício' }] },
+        // Scene & place
+        { name: 'City', tags: ['city', 'urban', 'ciudad', 'cidade'], translations: [{ code: 'EN', name: 'City' }, { code: 'ES', name: 'Ciudad' }, { code: 'PT', name: 'Cidade' }] },
+        { name: 'Street', tags: ['street', 'road', 'calle', 'rua'], translations: [{ code: 'EN', name: 'Street' }, { code: 'ES', name: 'Calle' }, { code: 'PT', name: 'Rua' }] },
+        { name: 'Beach', tags: ['beach', 'seaside', 'playa', 'praia'], translations: [{ code: 'EN', name: 'Beach' }, { code: 'ES', name: 'Playa' }, { code: 'PT', name: 'Praia' }] },
+        { name: 'Sea', tags: ['sea', 'ocean', 'mar', 'océano', 'oceano'], translations: [{ code: 'EN', name: 'Sea' }, { code: 'ES', name: 'Mar' }, { code: 'PT', name: 'Mar' }] },
+        { name: 'Mountain', tags: ['mountain', 'mountains', 'montaña', 'montanha'], translations: [{ code: 'EN', name: 'Mountain' }, { code: 'ES', name: 'Montaña' }, { code: 'PT', name: 'Montanha' }] },
+        { name: 'Forest', tags: ['forest', 'woods', 'bosque', 'floresta'], translations: [{ code: 'EN', name: 'Forest' }, { code: 'ES', name: 'Bosque' }, { code: 'PT', name: 'Floresta' }] },
+        { name: 'Desert', tags: ['desert', 'dunes', 'desierto', 'deserto'], translations: [{ code: 'EN', name: 'Desert' }, { code: 'ES', name: 'Desierto' }, { code: 'PT', name: 'Deserto' }] },
+        { name: 'Lake', tags: ['lake', 'lago'], translations: [{ code: 'EN', name: 'Lake' }, { code: 'ES', name: 'Lago' }, { code: 'PT', name: 'Lago' }] },
+        { name: 'River', tags: ['river', 'río', 'rio'], translations: [{ code: 'EN', name: 'River' }, { code: 'ES', name: 'Río' }, { code: 'PT', name: 'Rio' }] },
+        { name: 'Countryside', tags: ['countryside', 'rural', 'campo', 'campo'], translations: [{ code: 'EN', name: 'Countryside' }, { code: 'ES', name: 'Campo' }, { code: 'PT', name: 'Campo' }] },
+        { name: 'Garden', tags: ['garden', 'jardín', 'jardin', 'jardim'], translations: [{ code: 'EN', name: 'Garden' }, { code: 'ES', name: 'Jardín' }, { code: 'PT', name: 'Jardim' }] },
+        { name: 'Interior', tags: ['interior', 'indoor', 'room', 'interior', 'ambiente interno'], translations: [{ code: 'EN', name: 'Interior' }, { code: 'ES', name: 'Interior' }, { code: 'PT', name: 'Interior' }] },
+        { name: 'Sky', tags: ['sky', 'clouds', 'cielo', 'céu', 'ceu'], translations: [{ code: 'EN', name: 'Sky' }, { code: 'ES', name: 'Cielo' }, { code: 'PT', name: 'Céu' }] },
+        { name: 'Waterfall', tags: ['waterfall', 'cascada', 'cachoeira'], translations: [{ code: 'EN', name: 'Waterfall' }, { code: 'ES', name: 'Cascada' }, { code: 'PT', name: 'Cachoeira' }] },
+        // Setting, light & time
+        { name: 'Night', tags: ['night', 'nocturnal', 'noche', 'noite'], translations: [{ code: 'EN', name: 'Night' }, { code: 'ES', name: 'Noche' }, { code: 'PT', name: 'Noite' }] },
+        { name: 'Sunset', tags: ['sunset', 'dusk', 'atardecer', 'pôr do sol', 'por do sol'], translations: [{ code: 'EN', name: 'Sunset' }, { code: 'ES', name: 'Atardecer' }, { code: 'PT', name: 'Pôr do Sol' }] },
+        { name: 'Sunrise', tags: ['sunrise', 'dawn', 'amanecer', 'nascer do sol'], translations: [{ code: 'EN', name: 'Sunrise' }, { code: 'ES', name: 'Amanecer' }, { code: 'PT', name: 'Nascer do Sol' }] },
+        { name: 'Golden Hour', tags: ['golden-hour', 'golden hour', 'hora dorada', 'hora dourada'], translations: [{ code: 'EN', name: 'Golden Hour' }, { code: 'ES', name: 'Hora Dorada' }, { code: 'PT', name: 'Hora Dourada' }] },
+        { name: 'Studio Setting', tags: ['studio', 'estudio', 'estúdio', 'estudio fotografico'], translations: [{ code: 'EN', name: 'Studio Setting' }, { code: 'ES', name: 'Estudio' }, { code: 'PT', name: 'Estúdio' }] },
+        { name: 'Outdoor', tags: ['outdoor', 'outside', 'exterior', 'ao ar livre'], translations: [{ code: 'EN', name: 'Outdoor' }, { code: 'ES', name: 'Exterior' }, { code: 'PT', name: 'Ao Ar Livre' }] },
+        { name: 'Natural Light', tags: ['natural-light', 'daylight', 'luz natural'], translations: [{ code: 'EN', name: 'Natural Light' }, { code: 'ES', name: 'Luz Natural' }, { code: 'PT', name: 'Luz Natural' }] },
+        { name: 'Neon Lights', tags: ['neon', 'neon-lights', 'neón', 'neon'], translations: [{ code: 'EN', name: 'Neon Lights' }, { code: 'ES', name: 'Luces de Neón' }, { code: 'PT', name: 'Luzes de Neon' }] },
+        { name: 'Fog', tags: ['fog', 'mist', 'niebla', 'névoa', 'nevoa'], translations: [{ code: 'EN', name: 'Fog' }, { code: 'ES', name: 'Niebla' }, { code: 'PT', name: 'Névoa' }] },
+        { name: 'Rain', tags: ['rain', 'rainy', 'lluvia', 'chuva'], translations: [{ code: 'EN', name: 'Rain' }, { code: 'ES', name: 'Lluvia' }, { code: 'PT', name: 'Chuva' }] },
+        { name: 'Snow', tags: ['snow', 'snowy', 'nieve', 'neve'], translations: [{ code: 'EN', name: 'Snow' }, { code: 'ES', name: 'Nieve' }, { code: 'PT', name: 'Neve' }] },
+        // Season
+        { name: 'Winter', tags: ['winter', 'invierno', 'inverno'], translations: [{ code: 'EN', name: 'Winter' }, { code: 'ES', name: 'Invierno' }, { code: 'PT', name: 'Inverno' }] },
+        { name: 'Summer', tags: ['summer', 'verano', 'verão', 'verao'], translations: [{ code: 'EN', name: 'Summer' }, { code: 'ES', name: 'Verano' }, { code: 'PT', name: 'Verão' }] },
+        { name: 'Autumn', tags: ['autumn', 'fall', 'otoño', 'otono', 'outono'], translations: [{ code: 'EN', name: 'Autumn' }, { code: 'ES', name: 'Otoño' }, { code: 'PT', name: 'Outono' }] },
+        { name: 'Spring', tags: ['spring', 'primavera'], translations: [{ code: 'EN', name: 'Spring' }, { code: 'ES', name: 'Primavera' }, { code: 'PT', name: 'Primavera' }] },
+        // Mood
+        { name: 'Moody', tags: ['moody', 'somber', 'sombrío', 'sombrio'], translations: [{ code: 'EN', name: 'Moody' }, { code: 'ES', name: 'Sombrío' }, { code: 'PT', name: 'Sombrio' }] },
+        { name: 'Serene', tags: ['serene', 'calm', 'sereno', 'tranquilo'], translations: [{ code: 'EN', name: 'Serene' }, { code: 'ES', name: 'Sereno' }, { code: 'PT', name: 'Sereno' }] },
+        { name: 'Dramatic', tags: ['dramatic', 'dramático', 'dramatico'], translations: [{ code: 'EN', name: 'Dramatic' }, { code: 'ES', name: 'Dramático' }, { code: 'PT', name: 'Dramático' }] },
+        { name: 'Joyful', tags: ['joyful', 'happy', 'alegre', 'feliz'], translations: [{ code: 'EN', name: 'Joyful' }, { code: 'ES', name: 'Alegre' }, { code: 'PT', name: 'Alegre' }] },
+        { name: 'Melancholic', tags: ['melancholic', 'melancholy', 'melancólico', 'melancolico'], translations: [{ code: 'EN', name: 'Melancholic' }, { code: 'ES', name: 'Melancólico' }, { code: 'PT', name: 'Melancólico' }] },
+        { name: 'Romantic', tags: ['romantic', 'romántico', 'romantico', 'romântico'], translations: [{ code: 'EN', name: 'Romantic' }, { code: 'ES', name: 'Romántico' }, { code: 'PT', name: 'Romântico' }] },
+        { name: 'Mysterious', tags: ['mysterious', 'enigmatic', 'misterioso'], translations: [{ code: 'EN', name: 'Mysterious' }, { code: 'ES', name: 'Misterioso' }, { code: 'PT', name: 'Misterioso' }] },
+        { name: 'Nostalgic', tags: ['nostalgic', 'nostálgico', 'nostalgico'], translations: [{ code: 'EN', name: 'Nostalgic' }, { code: 'ES', name: 'Nostálgico' }, { code: 'PT', name: 'Nostálgico' }] },
+        // Composition & technique
+        { name: 'Close-up', tags: ['close-up', 'closeup', 'primer plano', 'grande plano'], translations: [{ code: 'EN', name: 'Close-up' }, { code: 'ES', name: 'Primer Plano' }, { code: 'PT', name: 'Close-up' }] },
+        { name: 'Macro', tags: ['macro', 'macro'], translations: [{ code: 'EN', name: 'Macro' }, { code: 'ES', name: 'Macro' }, { code: 'PT', name: 'Macro' }] },
+        { name: 'Aerial View', tags: ['aerial', 'aerial-view', 'vista aérea', 'vista aerea'], translations: [{ code: 'EN', name: 'Aerial View' }, { code: 'ES', name: 'Vista Aérea' }, { code: 'PT', name: 'Vista Aérea' }] },
+        { name: 'Symmetry', tags: ['symmetry', 'symmetrical', 'simetría', 'simetria'], translations: [{ code: 'EN', name: 'Symmetry' }, { code: 'ES', name: 'Simetría' }, { code: 'PT', name: 'Simetria' }] },
+        { name: 'Long Exposure', tags: ['long-exposure', 'larga exposición', 'longa exposição'], translations: [{ code: 'EN', name: 'Long Exposure' }, { code: 'ES', name: 'Larga Exposición' }, { code: 'PT', name: 'Longa Exposição' }] },
+        { name: 'Silhouette', tags: ['silhouette', 'silueta', 'silhueta'], translations: [{ code: 'EN', name: 'Silhouette' }, { code: 'ES', name: 'Silueta' }, { code: 'PT', name: 'Silhueta' }] },
+        { name: 'Reflection', tags: ['reflection', 'reflejo', 'reflexo'], translations: [{ code: 'EN', name: 'Reflection' }, { code: 'ES', name: 'Reflejo' }, { code: 'PT', name: 'Reflexo' }] },
+        { name: 'Black and White', tags: ['black-and-white', 'bw', 'blanco y negro', 'preto e branco'], translations: [{ code: 'EN', name: 'Black and White' }, { code: 'ES', name: 'Blanco y Negro' }, { code: 'PT', name: 'Preto e Branco' }] },
+        { name: 'Texture', tags: ['texture', 'textura'], translations: [{ code: 'EN', name: 'Texture' }, { code: 'ES', name: 'Textura' }, { code: 'PT', name: 'Textura' }] },
+        { name: 'Pattern', tags: ['pattern', 'patrón', 'patron', 'padrão'], translations: [{ code: 'EN', name: 'Pattern' }, { code: 'ES', name: 'Patrón' }, { code: 'PT', name: 'Padrão' }] },
+        // Color
+        { name: 'Colorful', tags: ['colorful', 'vivid', 'colorido'], translations: [{ code: 'EN', name: 'Colorful' }, { code: 'ES', name: 'Colorido' }, { code: 'PT', name: 'Colorido' }] },
+        { name: 'Pastel Colors', tags: ['pastel', 'soft-colors', 'pastel', 'tons pastel'], translations: [{ code: 'EN', name: 'Pastel Colors' }, { code: 'ES', name: 'Colores Pastel' }, { code: 'PT', name: 'Tons Pastel' }] },
+        { name: 'Warm Tones', tags: ['warm-tones', 'warm', 'tonos cálidos', 'tons quentes'], translations: [{ code: 'EN', name: 'Warm Tones' }, { code: 'ES', name: 'Tonos Cálidos' }, { code: 'PT', name: 'Tons Quentes' }] },
+        { name: 'Cool Tones', tags: ['cool-tones', 'cool', 'tonos fríos', 'tons frios'], translations: [{ code: 'EN', name: 'Cool Tones' }, { code: 'ES', name: 'Tonos Fríos' }, { code: 'PT', name: 'Tons Frios' }] },
+    ];
+
     const s3Ok = isS3Configured();
     const compressService = s3Ok
       ? FactoryCompressService.create({ driver: 'sharp' })
@@ -1238,5 +1322,11 @@ export const main = async () => {
     // Art styles: global, active, and typed ART_STYLE so they surface in the style pickers.
     for (const style of artStyles) {
         await createCategories(style, undefined, true, 'ART_STYLE');
+    }
+
+    // Content TAGS: active (so findActiveForTagging feeds them to the LLM) but LLM-only — the
+    // user-facing pickers filter by type, so these never appear in the discipline/style selectors.
+    for (const tag of contentTags) {
+        await createCategories(tag, undefined, true, 'TAGS');
     }
 };

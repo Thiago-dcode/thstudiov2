@@ -1,15 +1,38 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { ArtistBreadcrumb } from "@/app/[locale]/(artists)/__components/artist-breadcrumb";
 import { Link } from "@/i18n/navigation";
 import Web from "@/lib/components/web-page.component";
+import { buildStaticPageMetadata } from "@/lib/seo/static-metadata";
 import { PortfolioCard } from "@/modules/portfolios/components/portfolio-card";
 import userPortfolioService from "@/modules/user-portfolios/user-portfolio.service";
 import usersService from "@/modules/users/users.service";
 
 type Props = {
-  params: Promise<{ username: string }>;
+  params: Promise<{ locale: string; username: string }>;
 };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale, username } = await params;
+  const [{ data: user }, t] = await Promise.all([
+    usersService.getCompact(username),
+    getTranslations("artists.portfolios"),
+  ]);
+
+  if (!user) {
+    return { robots: { index: false, follow: false } };
+  }
+
+  const name =
+    [user.name, user.surname].filter(Boolean).join(" ") || `@${username}`;
+  return buildStaticPageMetadata({
+    path: `/artists/${username}/portfolios`,
+    title: `${name} — ${t("pageTitle")}`,
+    description: t("metaDescription", { name }),
+    locale,
+  });
+}
 
 export default async function Page({ params }: Props) {
   const { username } = await params;

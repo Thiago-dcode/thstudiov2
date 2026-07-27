@@ -18,7 +18,7 @@ import userCollectionService from "@/modules/user-collections/user-collection.se
 import usersService from "@/modules/users/users.service";
 
 type Props = {
-  params: Promise<{ username: string; slug: string }>;
+  params: Promise<{ locale: string; username: string; slug: string }>;
   searchParams: Promise<{ ci?: string }>;
 };
 
@@ -42,14 +42,18 @@ export async function generateMetadata({
 }
 
 export default async function Page({ params, searchParams }: Props) {
-  const { username, slug } = await params;
+  const { locale, username, slug } = await params;
   const t = await getTranslations("artists.collections");
   const tNotFound = await getTranslations("artists.resourceNotFound");
   const tEdit = await getTranslations("artists.editAria");
 
   const [userExist, response, userAuth] = await Promise.all([
     usersService.usernameExists(username),
-    userCollectionService.getByUsername(username, slug),
+    userCollectionService.getByUsername(
+      username,
+      slug,
+      urlLocaleToLanguageCode(locale),
+    ),
     userSession(),
   ]);
 

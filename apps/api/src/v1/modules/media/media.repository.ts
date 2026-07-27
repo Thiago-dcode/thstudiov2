@@ -285,6 +285,29 @@ export class MediaRepository extends BaseRepository {
     };
   }
 
+  /**
+   * The media's LLM-assigned content TAGS, localized to the request language
+   * (COALESCE translation → main-row English name). Used for JSON-LD keywords + on-page chips.
+   */
+  async getTagsByMediaId(mediaId: number): Promise<string[]> {
+    const lang = this.requestService.language ?? DEFAULT_LANGUAGE;
+    const result = await Query.raw(
+      `SELECT COALESCE(ct.name, c.name) AS name
+       FROM ${TABLES_ENUM.MEDIA_CATEGORIES} mc
+       INNER JOIN ${TABLES_ENUM.CATEGORIES} c
+         ON c.id = mc.category_id AND c.type = 'TAGS' AND c.is_active = true
+       LEFT JOIN ${TABLES_ENUM.CATEGORY_TRANSLATIONS} ct
+         ON ct.category_id = c.id AND ct.language_code = $1
+       WHERE mc.media_id = $2
+       ORDER BY c.id`,
+      [lang, mediaId],
+    );
+    const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];
+    return (Array.isArray(rows) ? rows : [])
+      .map((r) => (r as { name?: string | null }).name)
+      .filter((n): n is string => !!n);
+  }
+
   /** Upsert per-locale SEO rows into media_translations (one row per app language). */
   async upsertSeoTranslations(mediaId: number, rows: MediaSeoTranslation[]): Promise<void> {
     for (const r of rows) {

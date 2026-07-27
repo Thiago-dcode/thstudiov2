@@ -1,3 +1,4 @@
+import { PLATFORM_CURRENCY_SYMBOL } from "@repo/common-lib/constants/constants";
 import { ArrowRight, Check, Circle, Pencil } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
@@ -110,7 +111,8 @@ export default async function Page({ params }: Props) {
             {service.show_price && service.price != null && (
               <div className="flex items-baseline justify-between border-t border-border/30">
                 <span className="font-serif text-xl text-text-muted  tracking-tight">
-                  ${service.price.toFixed(2)}
+                  {PLATFORM_CURRENCY_SYMBOL}
+                  {service.price.toFixed(2)}
                 </span>
               </div>
             )}

@@ -1,3 +1,4 @@
+import { PLATFORM_CURRENCY_SYMBOL } from "@repo/common-lib/constants/constants";
 import type { Service } from "@repo/common-lib/types/service";
 import { cn } from "@repo/ui/lib/utils";
 import { ArrowUpRight } from "lucide-react";
@@ -121,7 +122,8 @@ function ServiceCardBody({
             isColumn ? "mt-auto pt-2" : "pt-0.5",
           )}
         >
-          ${price.toFixed(2)}
+          {PLATFORM_CURRENCY_SYMBOL}
+          {price.toFixed(2)}
         </span>
       ) : null}
     </div>

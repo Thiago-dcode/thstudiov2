@@ -25,6 +25,8 @@ export type MediaUser = {
 
 export type MediaWithUser = Media & {
   user: MediaUser;
+  /** LLM-assigned content tags, localized to the request language (media detail fetch only). */
+  tags?: string[];
 };
 
 export type FullMedia = Media & {

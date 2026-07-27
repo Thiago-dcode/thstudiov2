@@ -995,16 +995,22 @@ const messages = {
     },
     portfolios: {
       pageTitle: "Portfólios",
+      metaDescription:
+        "Explore os portfólios de {name} no A11STUDIO — coleções selecionadas dos seus melhores trabalhos.",
       empty: "Ainda não há portfólios.",
       galleryEmpty: "Este portfólio está vazio no momento.",
     },
     collections: {
       pageTitle: "Coleções",
+      metaDescription:
+        "Explore as coleções de {name} no A11STUDIO — conjuntos selecionados do seu trabalho.",
       empty: "Ainda não há coleções.",
       galleryEmpty: "Esta coleção está vazia no momento.",
     },
     services: {
       pageTitle: "Serviços",
+      metaDescription:
+        "Conheça os serviços oferecidos por {name} no A11STUDIO e entre em contato para colaborar.",
       empty: "Ainda não há serviços.",
       whatsIncluded: "O que está incluído",
       terms: "Termos",

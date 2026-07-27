@@ -10,7 +10,7 @@ import { AiService } from '../ai/ai.service';
 import { generateUUID } from '@repo/common-lib/utils/generate-uuid';
 import { bytesToMB, mbToBytes } from '@repo/common-lib/utils/bytes';
 import { FactoryLogService } from '@repo/backend-lib/services/log-service';
-import { CreateMediaInput, UpdateMediaInternalInput } from '@repo/common-lib/types/media';
+import { CreateMediaInput, MediaWithUser, UpdateMediaInternalInput } from '@repo/common-lib/types/media';
 import { EntitySeoMetadata, MediaSeoTranslation } from '@repo/common-lib/types/ai';
 import { cleanObj } from '@repo/common-lib/utils/object';
 import { CREATE_USER_STORAGE_REQUEST } from '@repo/common-lib/constants/constants';
@@ -62,10 +62,16 @@ export class MediaService {
 
     if (!media) return null;
 
-    const [thumbnail, url] = await Promise.all([this.helpers.getAsset(media.thumbnail), this.helpers.getAsset(media.url)]);
+    const [thumbnail, url, tags] = await Promise.all([
+      this.helpers.getAsset(media.thumbnail),
+      this.helpers.getAsset(media.url),
+      this.mediaRepository.getTagsByMediaId(media.id),
+    ]);
 
     media.thumbnail = thumbnail;
     media.url = url;
+    // Localized content tags (LLM-assigned) for JSON-LD keywords + on-page chips.
+    (media as MediaWithUser).tags = tags;
 
     return media;
   }

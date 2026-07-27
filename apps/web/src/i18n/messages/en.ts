@@ -989,16 +989,22 @@ const messages = {
     },
     portfolios: {
       pageTitle: "Portfolios",
+      metaDescription:
+        "Browse {name}'s portfolios on A11STUDIO — curated collections of their best work.",
       empty: "No portfolios yet.",
       galleryEmpty: "This portfolio is currently empty.",
     },
     collections: {
       pageTitle: "Collections",
+      metaDescription:
+        "Browse {name}'s collections on A11STUDIO — curated sets of their work.",
       empty: "No collections yet.",
       galleryEmpty: "This collection is currently empty.",
     },
     services: {
       pageTitle: "Services",
+      metaDescription:
+        "Explore the services offered by {name} on A11STUDIO and get in touch to collaborate.",
       empty: "No services yet.",
       whatsIncluded: "What's included",
       terms: "Terms",
