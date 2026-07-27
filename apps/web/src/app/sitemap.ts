@@ -1,48 +1,17 @@
 import type { MetadataRoute } from "next";
 import { serverEnv } from "@/env/server";
 import {
+  buildSitemapDescriptors,
   getSitemapArtists,
   getSitemapCollections,
-  getSitemapCounts,
   getSitemapPortfolios,
   getSitemapServices,
+  SITEMAP_SHARD_SIZE as SHARD_SIZE,
 } from "@/lib/seo/sitemap-source";
 
 // Child sitemaps are ISR-cached (not rebuilt per request); the sitemap index is regenerated daily.
 // Must be a numeric literal — Next cannot statically analyze imported constants for segment config.
 export const revalidate = 86400;
-
-/**
- * URLs per child sitemap, per entity. The protocol max is 50k URLs / 50MB per file — image-bearing
- * entities (portfolios/collections carry gallery images) use smaller shards to bound file size, and
- * every size stays ≤ the API's `MAX_PER_PAGE` so one shard == one API page.
- */
-const SHARD_SIZE = {
-  artists: 5000,
-  portfolios: 2000,
-  collections: 2000,
-  services: 5000,
-} as const;
-
-type Kind = keyof typeof SHARD_SIZE;
-// Artists first (paid users are ordered into the earliest artist shards by the API).
-const KIND_ORDER: Kind[] = ["artists", "portfolios", "collections", "services"];
-
-type Descriptor = { kind: "static" } | { kind: Kind; page: number };
-
-/**
- * The ordered list of child sitemaps. `generateSitemaps` and the default export BOTH call this so a
- * numeric shard id resolves to the same (kind, page) in either place. Static shard is always id 0.
- */
-async function buildDescriptors(): Promise<Descriptor[]> {
-  const counts = await getSitemapCounts();
-  const list: Descriptor[] = [{ kind: "static" }];
-  for (const kind of KIND_ORDER) {
-    const shards = Math.ceil((counts[kind] ?? 0) / SHARD_SIZE[kind]);
-    for (let page = 0; page < shards; page++) list.push({ kind, page });
-  }
-  return list;
-}
 
 const SUPPORTED = ["en", "es", "pt"] as const;
 // localePrefix is "as-needed": en (default) is unprefixed; es/pt are prefixed.
@@ -95,7 +64,7 @@ function staticEntries(): MetadataRoute.Sitemap {
 }
 
 export async function generateSitemaps(): Promise<{ id: number }[]> {
-  const list = await buildDescriptors();
+  const list = await buildSitemapDescriptors();
   return list.map((_, id) => ({ id }));
 }
 
@@ -104,7 +73,7 @@ export default async function sitemap(props: {
   id: number | Promise<number>;
 }): Promise<MetadataRoute.Sitemap> {
   const id = Number(await props.id);
-  const list = await buildDescriptors();
+  const list = await buildSitemapDescriptors();
   const desc = list[id];
   if (!desc) return [];
   if (desc.kind === "static") return staticEntries();

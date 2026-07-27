@@ -160,23 +160,29 @@ export function buildFaqPageJsonLd(
   return graph([{ "@type": "FAQPage", mainEntity }]);
 }
 
-/** ImageObject (Google Images + "licensable") + breadcrumb for a media/artwork page. */
+/**
+ * ImageObject (Google Images + "licensable") + breadcrumb for a media/artwork page.
+ * `additionalType: VisualArtwork` marks it as a creative work while keeping `ImageObject` as the
+ * primary type so Google Images / the Licensable badge still apply. The **licensable pair** is
+ * `acquireLicensePage` (where to license) + `license` (the usage terms) — both required for the
+ * "Licensable" badge — reinforced by `creator`/`creditText`/`copyrightHolder`.
+ */
 export function buildMediaJsonLd(media: MediaWithUser, username: string) {
   // `media.user` is not guaranteed populated by every fetch path; fall back to the route username.
-  const artist = displayName(
-    media.user?.name,
-    media.user?.surname,
-    media.user?.username ?? username,
-  );
+  const artistUsername = media.user?.username ?? username;
+  const artist = displayName(media.user?.name, media.user?.surname, artistUsername);
   const path = `/artists/${username}/media/${media.public_id}`;
+  const creator = personRef(artistUsername, artist);
   const image: Record<string, unknown> = {
     "@type": "ImageObject",
+    additionalType: "https://schema.org/VisualArtwork",
     url: abs(path),
     representativeOfPage: true,
-    creator: personRef(media.user?.username ?? username, artist),
+    creator,
     creditText: artist,
-    // Where a client can license/acquire the work → powers the Google Images "Licensable" badge.
+    copyrightHolder: creator,
     acquireLicensePage: abs(path),
+    license: abs("/legal/terms"),
   };
   if (media.url) image.contentUrl = media.url;
   if (media.thumbnail) image.thumbnailUrl = media.thumbnail;
@@ -185,6 +191,10 @@ export function buildMediaJsonLd(media: MediaWithUser, username: string) {
   const description = media.description || media.seo_description;
   if (description) image.description = description;
   if (media.seo_alt) image.caption = media.seo_alt;
+  if (media.created_at) {
+    const uploaded = new Date(media.created_at);
+    if (!Number.isNaN(uploaded.getTime())) image.uploadDate = uploaded.toISOString();
+  }
   return graph([image, breadcrumb(username, name || "Artwork", path)]);
 }
 
