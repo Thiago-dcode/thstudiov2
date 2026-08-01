@@ -106,9 +106,9 @@ function FaqSection({ faq }: { faq: FaqItem }) {
       >
         {faq.question}
       </h2>
-      {/* biome-ignore lint/security/noDangerouslySetInnerHtml: answers are trusted, authored in our own translation files */}
       <div
         className={faqAnswerClassName}
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: answers are trusted, authored in our own translation files
         dangerouslySetInnerHTML={{ __html: faq.answer }}
       />
     </section>

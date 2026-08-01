@@ -735,7 +735,13 @@ export const EditCategories = ({
         />
       </UpdateCategoriesProvider>
 
-      <input type="text" name="categories" hidden readOnly value={combinedIds} />
+      <input
+        type="text"
+        name="categories"
+        hidden
+        readOnly
+        value={combinedIds}
+      />
       <FormComponent.SubmitButton
         className="sticky bottom-0"
         isPending={isPending}

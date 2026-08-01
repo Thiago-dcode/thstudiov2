@@ -1,14 +1,11 @@
 import { BrandLogo } from "@repo/ui/components/custom/brand-logo";
 import { ThemeToggle } from "@repo/ui/components/custom/theme-toggle";
-import type { ComponentType, SVGProps } from "react";
 import { getTranslations } from "next-intl/server";
+import type { ComponentType, SVGProps } from "react";
 import { serverEnv } from "@/env/server";
 import { Link } from "@/i18n/navigation";
 import { RegistrationCtaButton } from "@/lib/components/registration-cta-button";
-import {
-  InstagramIcon,
-  LinkedInIcon,
-} from "@/lib/components/social-icons";
+import { InstagramIcon, LinkedInIcon } from "@/lib/components/social-icons";
 import { WebFooterLanguageSwitcher } from "@/lib/components/web-footer-language-switcher";
 import { config } from "@/lib/config";
 import { SOCIAL, type SocialKey } from "@/lib/social";
@@ -101,7 +98,9 @@ export const WebFooter = async () => {
         <div className="mt-10 flex flex-col gap-4 border-t border-fg-2 pt-6 tablet:mt-12 phone-lg:flex-row phone-lg:items-center phone-lg:justify-center phone-lg:gap-8">
           <p className="text-center text-xs! tracking-wider text-text phone-lg:text-left">
             {t("copyright", { year })}
-            <span className="ml-2 text-text-muted/60 text-xs!">v{config.app_version}</span>
+            <span className="ml-2 text-text-muted/60 text-xs!">
+              v{config.app_version}
+            </span>
           </p>
           <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-3 phone-lg:justify-end">
             <nav

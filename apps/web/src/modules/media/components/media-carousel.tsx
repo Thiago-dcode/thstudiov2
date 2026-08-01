@@ -46,8 +46,6 @@ export const MediaCarousel = ({ media }: { media: MediaWithUser[] }) => {
       onFocusCapture={() => setIsPaused(true)}
       onBlurCapture={() => setIsPaused(false)}
     >
-    
-
       <div className="overflow-hidden" ref={emblaRef}>
         <div className="flex">
           {media.map((item) => {

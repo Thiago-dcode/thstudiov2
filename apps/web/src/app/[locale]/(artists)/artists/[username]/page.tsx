@@ -11,14 +11,14 @@ import { Suspense } from "react";
 import fallbackBanner from "@/assets/images/fallback-banner.jpg";
 import { serverEnv } from "@/env/server";
 import { Link } from "@/i18n/navigation";
-import { DEFAULT_OG_IMAGE } from "@/lib/config";
-import userServiceService from "@/modules/user-services/user-service.service";
-import UserService from "@/modules/users/users.service";
 import {
   FacebookIcon,
   InstagramIcon,
   YoutubeIcon,
 } from "@/lib/components/social-icons";
+import { DEFAULT_OG_IMAGE } from "@/lib/config";
+import userServiceService from "@/modules/user-services/user-service.service";
+import UserService from "@/modules/users/users.service";
 import { ArtistContactDialog } from "../../__components/artist-contact.dialog";
 import { ArtistSections } from "../../__components/artist-sections";
 import { ArtistSectionsSkeleton } from "../../__components/artist-sections-skeleton";
@@ -166,7 +166,8 @@ const ArtistHomePage = async ({ params }: Props) => {
   // Built from profession + locality — deliberately NOT the short bio, which is already shown below
   // as an editorial pull-quote; this complements it rather than duplicating it.
   const profession = profile.profession?.trim();
-  const locality = profile.address?.city?.trim() || profile.address?.state?.trim();
+  const locality =
+    profile.address?.city?.trim() || profile.address?.state?.trim();
   const summary =
     profession && locality
       ? t("summaryProfessionLocation", {

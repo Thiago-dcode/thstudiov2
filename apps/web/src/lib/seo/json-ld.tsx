@@ -1,10 +1,10 @@
 import { PLATFORM_CURRENCY } from "@repo/common-lib/constants/constants";
-import { ORGANIZATION_SAME_AS } from "@/lib/config";
 import type { FullCollection } from "@repo/common-lib/types/collection";
 import type { MediaWithUser } from "@repo/common-lib/types/media";
 import type { FullPortfolio } from "@repo/common-lib/types/portfolio";
 import type { FullService } from "@repo/common-lib/types/service";
 import { serverEnv } from "@/env/server";
+import { ORGANIZATION_SAME_AS } from "@/lib/config";
 
 const SITE_NAME = "A11STUDIO";
 
@@ -176,7 +176,11 @@ export function buildFaqPageJsonLd(
 export function buildMediaJsonLd(media: MediaWithUser, username: string) {
   // `media.user` is not guaranteed populated by every fetch path; fall back to the route username.
   const artistUsername = media.user?.username ?? username;
-  const artist = displayName(media.user?.name, media.user?.surname, artistUsername);
+  const artist = displayName(
+    media.user?.name,
+    media.user?.surname,
+    artistUsername,
+  );
   const path = `/artists/${username}/media/${media.public_id}`;
   const creator = personRef(artistUsername, artist);
   const image: Record<string, unknown> = {
@@ -201,7 +205,8 @@ export function buildMediaJsonLd(media: MediaWithUser, username: string) {
   if (media.tags?.length) image.keywords = media.tags.join(", ");
   if (media.created_at) {
     const uploaded = new Date(media.created_at);
-    if (!Number.isNaN(uploaded.getTime())) image.uploadDate = uploaded.toISOString();
+    if (!Number.isNaN(uploaded.getTime()))
+      image.uploadDate = uploaded.toISOString();
   }
   return graph([image, breadcrumb(username, name || "Artwork", path)]);
 }
