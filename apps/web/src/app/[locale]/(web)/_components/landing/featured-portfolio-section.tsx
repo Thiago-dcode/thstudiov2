@@ -39,7 +39,7 @@ export async function FeaturedPortfolioSection() {
       className="overflow-hidden max-w-(--breakpoint-ultrawide) max-h-screen mx-auto"
     >
       <WebSection.Container className="pt-28">
-        <div className="flex items-end flex-col laptop:flex-row px-2 justify-between gap-0.5 mb-2 border-b w-full border-b-text/80!">
+        <div className="flex items-end flex-col laptop:flex-row px-4 justify-between gap-0.5 mb-2 border-b w-full border-b-text/80!">
           <h3 className="text-2xl! laptop:text-4xl! line-clamp-1 uppercase">
             {portfolio.title}
           </h3>
@@ -47,7 +47,7 @@ export async function FeaturedPortfolioSection() {
             {t("by")}{" "}
             <Link
               href={`/artists/${portfolio.artist.username}`}
-              className="text-text font-bold tracking-wide underline-offset-4 transition-colors hover:text-text-muted hover:underline"
+              className="text-text font-semibold tracking-wide underline-offset-4 transition-colors hover:text-text-muted hover:underline"
               aria-label={t("viewProfile", {
                 username: portfolio.artist.username,
               })}

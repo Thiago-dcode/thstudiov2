@@ -51,6 +51,7 @@ export type UserProfile = Pick<UserSchema,
   | 'id' | 'name' | 'surname' | 'username'
   | 'avatar' | 'banner'
   | 'is_active' | 'short_biography' | 'biography' | 'profession' | 'is_featured'
+  | 'phone_number' | 'facebook_link' | 'website_link' | 'instagram_link' | 'youtube_link'
   | 'seo_title' | 'seo_description' | 'seo_generated_at'
 > & {
   address: ProfileAddress | null;

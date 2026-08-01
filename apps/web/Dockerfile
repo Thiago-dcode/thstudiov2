@@ -45,6 +45,9 @@ ARG ENCRYPTION_SECRET
 ARG SUPPORT_EMAIL
 ARG SUPPORT_USERNAME
 ARG REGISTRATION_IS_CLOSED
+# CDN host must be present at build time: next.config.ts bakes it into next/image
+# remotePatterns. Runtime-only CDN_URL would leave CDN images rejected by the optimizer.
+ARG CDN_URL
 
 # Promote all args to ENV so they are visible during `next build`
 ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
@@ -61,6 +64,7 @@ ENV ENCRYPTION_SECRET=$ENCRYPTION_SECRET
 ENV SUPPORT_EMAIL=$SUPPORT_EMAIL
 ENV SUPPORT_USERNAME=$SUPPORT_USERNAME
 ENV REGISTRATION_IS_CLOSED=$REGISTRATION_IS_CLOSED
+ENV CDN_URL=$CDN_URL
 
 # Mount both the Turbo task cache and the Next.js incremental cache so unchanged
 # packages are not recompiled and Turbopack can reuse prior compilation artifacts.

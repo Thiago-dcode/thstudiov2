@@ -1,5 +1,6 @@
 "use client";
 
+import type { CategoryBase } from "@repo/common-lib/types/category";
 import { Errors } from "@repo/ui/components/custom/errors";
 import { FileInput } from "@repo/ui/components/custom/file-input";
 import { Badge } from "@repo/ui/components/shadcn/badge";
@@ -15,12 +16,17 @@ import {
   useInputFile,
 } from "@repo/ui/contexts/file.provider";
 import { usePreviewUrls } from "@repo/ui/hooks/usePreviewUrls";
-import { Pen } from "lucide-react";
+import { Globe, Pen, Phone } from "lucide-react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import fallbackBanner from "@/assets/images/fallback-banner.jpg";
 import FormComponent from "@/lib/components/form-component";
+import {
+  FacebookIcon,
+  InstagramIcon,
+  YoutubeIcon,
+} from "@/lib/components/social-icons";
 import { CreateOrUpdateAddress } from "@/modules/addresses/components/create-or-update-address";
 import { UserCategoriesComponent } from "@/modules/categories/components/user-categories.component";
 import {
@@ -28,6 +34,9 @@ import {
   useUpdateCategories,
 } from "@/modules/categories/providers/categories.provider";
 import { useEditUser } from "../providers/edit-user.provider";
+
+const MAX_DISCIPLINES = 5;
+const MAX_STYLES = 5;
 
 export default function EditUserComponent() {
   const t = useTranslations("editUser");
@@ -46,6 +55,7 @@ export default function EditUserComponent() {
   const [openProfile, setOpenProfile] = useState(false);
   const [openCategories, setOpenCategories] = useState(false);
   const [openAddress, setOpenAddress] = useState(false);
+  const [openContact, setOpenContact] = useState(false);
 
   const [isMounted, setIsMounted] = useState(false);
 
@@ -55,7 +65,13 @@ export default function EditUserComponent() {
 
   const handleSetOpen = (
     value: boolean,
-    dialog: "profile" | "avatar" | "banner" | "categories" | "address",
+    dialog:
+      | "profile"
+      | "avatar"
+      | "banner"
+      | "categories"
+      | "address"
+      | "contact",
   ) => {
     if (!value && isPending) return;
 
@@ -75,6 +91,9 @@ export default function EditUserComponent() {
       case "address":
         setOpenAddress(value);
         break;
+      case "contact":
+        setOpenContact(value);
+        break;
     }
   };
   const closeAllModals = () => {
@@ -83,6 +102,7 @@ export default function EditUserComponent() {
     setOpenProfile(false);
     setOpenCategories(false);
     setOpenAddress(false);
+    setOpenContact(false);
     reset();
   };
 
@@ -247,6 +267,35 @@ export default function EditUserComponent() {
             </DialogContent>
           </Dialog>
         </section>
+        {/* Contact & links section */}
+        <section className="flex flex-col items-start justify-start gap-3 pt-8">
+          <div className="flex items-center justify-start gap-2">
+            <h4 className="text-text-muted">{t("contact.title")}</h4>
+            <Dialog
+              open={openContact}
+              onOpenChange={(value) => handleSetOpen(value, "contact")}
+            >
+              <DialogTrigger className="p-2 bg-fg hover:bg-fg-2 transition-opacity cursor-pointer">
+                <Pen className="size-3" aria-hidden />
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                <DialogTitle>{t("contact.editTitle")}</DialogTitle>
+                <DialogDescription className="text-pretty">
+                  {t("contact.description")}
+                </DialogDescription>
+                <FormComponent.Container>
+                  <FormComponent.Form
+                    onSubmit={handleSubmit}
+                    className="max-w-xl pt-4"
+                  >
+                    <EditContactLinks user={user} />
+                  </FormComponent.Form>
+                </FormComponent.Container>
+              </DialogContent>
+            </Dialog>
+          </div>
+          <ContactLinksSummary user={user} />
+        </section>
         {/*Categories section */}
         <section className="flex flex-col items-start justify-start gap-1 pt-8">
           <div className="flex items-center justify-start gap-2">
@@ -260,16 +309,14 @@ export default function EditUserComponent() {
               </DialogTrigger>
               <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
                 <DialogTitle>{t("categories.editTitle")}</DialogTitle>
-                <UpdateCategoriesProvider userCategories={userCategories}>
-                  <FormComponent.Container>
-                    <FormComponent.Form
-                      onSubmit={handleSubmit}
-                      className="max-w-xl pt-4"
-                    >
-                      <EditCategories />
-                    </FormComponent.Form>
-                  </FormComponent.Container>
-                </UpdateCategoriesProvider>
+                <FormComponent.Container>
+                  <FormComponent.Form
+                    onSubmit={handleSubmit}
+                    className="max-w-xl pt-4"
+                  >
+                    <EditCategories userCategories={userCategories} />
+                  </FormComponent.Form>
+                </FormComponent.Container>
               </DialogContent>
             </Dialog>
           </div>
@@ -446,40 +493,253 @@ export const EditProfile = ({
   );
 };
 
-export const EditCategories = () => {
-  const t = useTranslations("editUser");
-  const { errors, isPending } = useEditUser();
-  const { categoriesSelected } = useUpdateCategories();
-  const inputCategoryIds = useRef<HTMLInputElement>(null);
+type ContactLinksUser = {
+  phone_number?: string | null;
+  facebook_link?: string | null;
+  website_link?: string | null;
+  instagram_link?: string | null;
+  youtube_link?: string | null;
+};
 
-  useEffect(() => {
-    if (inputCategoryIds.current) {
-      inputCategoryIds.current.value = "";
-      if (categoriesSelected.length > 0) {
-        inputCategoryIds.current.value = categoriesSelected.reduce(
-          (acc, curr, idx) => {
-            let str = `${acc}${curr.id}`;
-            if (idx !== categoriesSelected.length - 1) str += ",";
-            return str;
-          },
-          "",
+const CONTACT_ICONS = {
+  phone: Phone,
+  website: Globe,
+  instagram: InstagramIcon,
+  facebook: FacebookIcon,
+  youtube: YoutubeIcon,
+} as const;
+
+export const ContactLinksSummary = ({ user }: { user: ContactLinksUser }) => {
+  const t = useTranslations("editUser");
+
+  const items = [
+    {
+      key: "phone" as const,
+      value: user.phone_number,
+      href: user.phone_number ? `tel:${user.phone_number}` : null,
+      external: false,
+    },
+    {
+      key: "website" as const,
+      value: user.website_link,
+      href: user.website_link ?? null,
+      external: true,
+    },
+    {
+      key: "instagram" as const,
+      value: user.instagram_link,
+      href: user.instagram_link ?? null,
+      external: true,
+    },
+    {
+      key: "facebook" as const,
+      value: user.facebook_link,
+      href: user.facebook_link ?? null,
+      external: true,
+    },
+    {
+      key: "youtube" as const,
+      value: user.youtube_link,
+      href: user.youtube_link ?? null,
+      external: true,
+    },
+  ].filter((item) => item.value);
+
+  if (items.length === 0) {
+    return <p className="text-sm text-text-muted">{t("contact.empty")}</p>;
+  }
+
+  return (
+    <ul className="flex w-full flex-col gap-2">
+      {items.map(({ key, value, href, external }) => {
+        const Icon = CONTACT_ICONS[key];
+        return (
+          <li
+            key={key}
+            className="flex min-w-0 items-center gap-2 text-sm text-text-muted"
+          >
+            <Icon className="size-4 shrink-0" aria-hidden />
+            {href ? (
+              <a
+                href={href}
+                {...(external
+                  ? { target: "_blank", rel: "noreferrer noopener" }
+                  : {})}
+                className="truncate transition-colors hover:text-text"
+              >
+                {value}
+              </a>
+            ) : (
+              <span className="truncate">{value}</span>
+            )}
+          </li>
         );
-      }
-    }
-  }, [categoriesSelected]);
+      })}
+    </ul>
+  );
+};
+
+export const EditContactLinks = ({ user }: { user: ContactLinksUser }) => {
+  const t = useTranslations("editUser");
+  const { errors, inputErrors, deleteInputErrorProperty, isPending } =
+    useEditUser();
 
   return (
     <div className="w-full flex flex-col gap-4">
-      <UserCategoriesComponent />
-      <input ref={inputCategoryIds} type="text" name="categories" hidden />
+      <FormComponent.LabelInput
+        label={t("contact.phone.label")}
+        type="tel"
+        inputMode="tel"
+        id="phone_number"
+        name="phone_number"
+        defaultValue={user?.phone_number || undefined}
+        placeholder={t("contact.phone.placeholder")}
+        autoComplete="tel"
+        extraInfo={t("contact.phone.hint")}
+        error={inputErrors?.phone_number}
+        onChange={() => deleteInputErrorProperty("phone_number")}
+      />
+
+      <FormComponent.LabelInput
+        label={t("contact.instagram.label")}
+        type="url"
+        inputMode="url"
+        id="instagram_link"
+        name="instagram_link"
+        defaultValue={user?.instagram_link || undefined}
+        placeholder={t("contact.instagram.placeholder")}
+        autoComplete="url"
+        error={inputErrors?.instagram_link}
+        onChange={() => deleteInputErrorProperty("instagram_link")}
+      />
+
+      <FormComponent.LabelInput
+        label={t("contact.facebook.label")}
+        type="url"
+        inputMode="url"
+        id="facebook_link"
+        name="facebook_link"
+        defaultValue={user?.facebook_link || undefined}
+        placeholder={t("contact.facebook.placeholder")}
+        autoComplete="url"
+        error={inputErrors?.facebook_link}
+        onChange={() => deleteInputErrorProperty("facebook_link")}
+      />
+
+      <FormComponent.LabelInput
+        label={t("contact.youtube.label")}
+        type="url"
+        inputMode="url"
+        id="youtube_link"
+        name="youtube_link"
+        defaultValue={user?.youtube_link || undefined}
+        placeholder={t("contact.youtube.placeholder")}
+        autoComplete="url"
+        error={inputErrors?.youtube_link}
+        onChange={() => deleteInputErrorProperty("youtube_link")}
+      />
+
+      <FormComponent.LabelInput
+        label={t("contact.website.label")}
+        type="url"
+        inputMode="url"
+        id="website_link"
+        name="website_link"
+        defaultValue={user?.website_link || undefined}
+        placeholder={t("contact.website.placeholder")}
+        autoComplete="url"
+        error={inputErrors?.website_link}
+        onChange={() => deleteInputErrorProperty("website_link")}
+      />
+
+      <FormComponent.SubmitButton isPending={isPending} disabled={isPending}>
+        {t("update")}
+      </FormComponent.SubmitButton>
+
+      {errors && errors.length > 0 ? <Errors errors={errors} /> : null}
+    </div>
+  );
+};
+
+/**
+ * Bridges a provider's internal selection out to the parent so both pickers
+ * (rendered in separate providers) can be combined into one submitted value.
+ */
+function SelectionReporter({
+  onChange,
+}: {
+  onChange: (categories: CategoryBase[]) => void;
+}) {
+  const { categoriesSelected } = useUpdateCategories();
+  useEffect(() => {
+    onChange(categoriesSelected);
+  }, [categoriesSelected, onChange]);
+  return null;
+}
+
+export const EditCategories = ({
+  userCategories,
+}: {
+  userCategories: CategoryBase[];
+}) => {
+  const t = useTranslations("editUser");
+  const tCategories = useTranslations("userCategories");
+  const { errors, isPending } = useEditUser();
+
+  const disciplineCategories = useMemo(
+    () => userCategories.filter((c) => c.type === "DISCIPLINE"),
+    [userCategories],
+  );
+  const styleCategories = useMemo(
+    () => userCategories.filter((c) => c.type === "ART_STYLE"),
+    [userCategories],
+  );
+
+  const [disciplineSelected, setDisciplineSelected] =
+    useState<CategoryBase[]>(disciplineCategories);
+  const [styleSelected, setStyleSelected] =
+    useState<CategoryBase[]>(styleCategories);
+
+  const combinedIds = useMemo(
+    () => [...disciplineSelected, ...styleSelected].map((c) => c.id).join(","),
+    [disciplineSelected, styleSelected],
+  );
+
+  const totalSelected = disciplineSelected.length + styleSelected.length;
+
+  return (
+    <div className="w-full flex flex-col gap-4">
+      <p className="text-sm text-text-muted">{tCategories("visibilityHint")}</p>
+
+      <UpdateCategoriesProvider
+        userCategories={disciplineCategories}
+        initialRequest={{ type: "DISCIPLINE", exclude_parents: true }}
+        maxSelections={MAX_DISCIPLINES}
+      >
+        <SelectionReporter onChange={setDisciplineSelected} />
+        <UserCategoriesComponent
+          title={tCategories("disciplinesTitle")}
+          compact
+        />
+      </UpdateCategoriesProvider>
+
+      <UpdateCategoriesProvider
+        userCategories={styleCategories}
+        initialRequest={{ type: "ART_STYLE" }}
+        maxSelections={MAX_STYLES}
+      >
+        <SelectionReporter onChange={setStyleSelected} />
+        <UserCategoriesComponent
+          title={tCategories("artStylesTitle")}
+          compact
+        />
+      </UpdateCategoriesProvider>
+
+      <input type="text" name="categories" hidden readOnly value={combinedIds} />
       <FormComponent.SubmitButton
         className="sticky bottom-0"
         isPending={isPending}
-        disabled={
-          categoriesSelected.length === 0 ||
-          categoriesSelected.length > 10 ||
-          isPending
-        }
+        disabled={totalSelected === 0 || isPending}
       >
         {t("update")}
       </FormComponent.SubmitButton>

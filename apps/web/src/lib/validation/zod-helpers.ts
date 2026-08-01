@@ -1,3 +1,13 @@
+import {
+  FACEBOOK_URL_REGEX,
+  INSTAGRAM_URL_REGEX,
+  LINK_MAX_LENGTH,
+  normalizePhone,
+  PHONE_MAX_LENGTH,
+  PHONE_REGEX,
+  WEBSITE_URL_REGEX,
+  YOUTUBE_URL_REGEX,
+} from "@repo/common-lib/constants/validation";
 import * as z from "zod";
 
 /**
@@ -46,6 +56,70 @@ export const maxLengthMessage = (
 /** `{field} is too long` */
 export const tooLongMessage = (t: Translator, fieldLabel: string) =>
   t("validation.tooLong", { field: fieldLabel });
+
+/**
+ * Optional free-text field constrained to `regex`. An empty string is allowed and
+ * means "clear this field" (the API converts it to `null`); any other value must match.
+ * Shared by all social/website link fields so the rule lives in one place.
+ */
+const optionalPatternField = (
+  regex: RegExp,
+  invalidMessage: string,
+  maxMessage: string,
+  maxLength: number = LINK_MAX_LENGTH,
+) =>
+  z
+    .string()
+    .max(maxLength, maxMessage)
+    .refine((value) => value === "" || regex.test(value), invalidMessage)
+    .optional();
+
+/** Phone number: optional, normalized (spaces/dashes stripped), 9–15 digits with optional `+`. */
+export const phoneField = (t: Translator) =>
+  z.preprocess(
+    (value) =>
+      typeof value === "string" ? normalizePhone(value.trim()) : value,
+    z
+      .string()
+      .max(PHONE_MAX_LENGTH, tooLongMessage(t, t("fields.phoneNumber")))
+      .refine(
+        (value) => value === "" || PHONE_REGEX.test(value),
+        t("validation.phone.invalid"),
+      )
+      .optional(),
+  );
+
+/** Instagram profile URL (empty allowed). */
+export const instagramUrlField = (t: Translator) =>
+  optionalPatternField(
+    INSTAGRAM_URL_REGEX,
+    t("validation.url.instagram"),
+    tooLongMessage(t, t("fields.instagramLink")),
+  );
+
+/** Facebook profile/page URL (empty allowed). */
+export const facebookUrlField = (t: Translator) =>
+  optionalPatternField(
+    FACEBOOK_URL_REGEX,
+    t("validation.url.facebook"),
+    tooLongMessage(t, t("fields.facebookLink")),
+  );
+
+/** YouTube channel/handle URL (empty allowed). */
+export const youtubeUrlField = (t: Translator) =>
+  optionalPatternField(
+    YOUTUBE_URL_REGEX,
+    t("validation.url.youtube"),
+    tooLongMessage(t, t("fields.youtubeLink")),
+  );
+
+/** Generic website URL (empty allowed). */
+export const websiteUrlField = (t: Translator) =>
+  optionalPatternField(
+    WEBSITE_URL_REGEX,
+    t("validation.url.website"),
+    tooLongMessage(t, t("fields.websiteLink")),
+  );
 
 /** A person's given/family name field: required, capped length, no digits. */
 export const personNameField = (

@@ -22,12 +22,12 @@ export async function ValuePillarsSection() {
   return (
     <WebSection id="value-pillars" className="relative">
       <WebSection.Container className=" pl-0 px-0 tablet:px-0  min-h-screen h-full flex flex-col items-center pt-24 ">
-        <div className="h-full w-full flex flex-col items-center  justify-center gap-24 m-auto ">
+        <div className="h-full w-full flex flex-col items-center  justify-center gap-12 desktop-lg:gap-24 m-auto ">
           <div className=" w-full ">
             <div className="flex justify-start flex-col tablet:flex-row gap-4">
               <MediaCarousel media={media} />
               <div className="order-first tablet:order-2 flex flex-col gap-4 max-w-lg ">
-                <h2 className="hidden tablet:flex text-4xl! tablet:text-6xl! desktop:text-8xl! flex-col items-start justify-start gap-2">
+                <h2 className="hidden tablet:flex text-4xl! tablet:text-6xl! desktop:text-7xl! desktop-lg:text-8xl! flex-col items-start justify-start gap-2">
                   {" "}
                   <span>LET'S</span> <span>MAKE</span> <span>ART</span>{" "}
                   <span>GREAT</span> <span className="">AGAIN</span>

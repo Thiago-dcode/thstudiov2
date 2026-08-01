@@ -3,7 +3,7 @@ import { serverEnv } from "@/env/server";
 import { Link } from "@/i18n/navigation";
 
 export const metadata: Metadata = {
-  title: "Cookie Policy — A11STUDIO",
+  title: { absolute: "Cookie Policy — A11STUDIO" },
   description: "How A11STUDIO uses cookies and similar technologies.",
 };
 

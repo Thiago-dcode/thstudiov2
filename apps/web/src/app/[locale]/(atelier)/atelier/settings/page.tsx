@@ -233,6 +233,10 @@ export default async function SettingsPage() {
             </div>
           </div>
         </section>
+
+        <p className="px-1 text-[10px]! text-text-muted/60">
+          v{config.app_version}
+        </p>
       </div>
     </AdminPageContainer>
   );

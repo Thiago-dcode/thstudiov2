@@ -38,6 +38,21 @@ const up = async () => {
     ColumnBuilder.text('short_biography', {
       nullable: true,
     }),
+    ColumnBuilder.string('phone_number', 20, {
+      nullable: true,
+    }),
+    ColumnBuilder.string('facebook_link', 255, {
+      nullable: true,
+    }),
+    ColumnBuilder.string('website_link', 255, {
+      nullable: true,
+    }),
+    ColumnBuilder.string('instagram_link', 255, {
+      nullable: true,
+    }),
+    ColumnBuilder.string('youtube_link', 255, {
+      nullable: true,
+    }),
     ColumnBuilder.string('avatar', 255, {
       nullable: true,
     }),

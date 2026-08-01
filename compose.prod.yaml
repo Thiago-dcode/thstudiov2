@@ -104,6 +104,8 @@ services:
         SUPPORT_EMAIL: ${SUPPORT_EMAIL}
         SUPPORT_USERNAME: ${SUPPORT_USERNAME}
         REGISTRATION_IS_CLOSED: ${REGISTRATION_IS_CLOSED}
+        # Baked into next/image remotePatterns at build time (see apps/web/Dockerfile).
+        CDN_URL: ${CDN_URL}
     # No container_name / fixed host port: this service sits behind nginx and is
     # scaled horizontally (load balanced by nginx via Docker DNS).
     restart: unless-stopped

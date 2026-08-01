@@ -47,6 +47,11 @@ export const updateUserAction = async (
       : undefined,
     biography: (formData.get("biography") as string) ?? undefined,
     email: (formData.get("email") as string) ?? undefined,
+    phone_number: (formData.get("phone_number") as string) ?? undefined,
+    facebook_link: (formData.get("facebook_link") as string) ?? undefined,
+    website_link: (formData.get("website_link") as string) ?? undefined,
+    instagram_link: (formData.get("instagram_link") as string) ?? undefined,
+    youtube_link: (formData.get("youtube_link") as string) ?? undefined,
     categories: categories ? categories.split(",") : undefined,
   };
   trimValues(rawData, { deep: true });

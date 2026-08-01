@@ -113,6 +113,7 @@ jobs:
             SUPPORT_EMAIL=${{ secrets.SUPPORT_EMAIL }}
             SUPPORT_USERNAME=${{ secrets.SUPPORT_USERNAME }}
             REGISTRATION_IS_CLOSED=${{ secrets.REGISTRATION_IS_CLOSED }}
+            CDN_URL=${{ secrets.CDN_URL }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

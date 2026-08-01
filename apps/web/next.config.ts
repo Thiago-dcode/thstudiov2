@@ -8,6 +8,23 @@ dotenv.config({
   quiet: true,
 });
 
+/** Allow the configured CDN host (CloudFront) through next/image. Empty when CDN_URL is unset. */
+const cdnRemotePattern = (() => {
+  const cdnUrl = process.env.CDN_URL;
+  if (!cdnUrl) return [];
+  try {
+    const { protocol, hostname } = new URL(cdnUrl);
+    return [
+      {
+        protocol: protocol.replace(":", "") as "https" | "http",
+        hostname,
+      },
+    ];
+  } catch {
+    return [];
+  }
+})();
+
 const nextConfig: NextConfig = {
   output: "standalone",
   // TypeScript is enforced in CI (test job) before deploy runs.
@@ -48,6 +65,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "dev.a11studio.s3.eu-north-1.amazonaws.com",
       },
+      // CDN host (CloudFront custom domain or *.cloudfront.net). Public images are now served from
+      // the CDN, so next/image must allow it — otherwise it rejects the URL and the image 404s.
+      // Derived from CDN_URL so custom domains work too; must be present at BUILD time.
+      ...cdnRemotePattern,
     ],
   },
 };

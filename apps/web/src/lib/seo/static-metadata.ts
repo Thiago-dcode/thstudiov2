@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { serverEnv } from "@/env/server";
 import { SUPPORTED_LOCALES, type SupportedLocale } from "@/i18n/routing";
+import { DEFAULT_OG_IMAGE } from "@/lib/config";
 
 const SITE_NAME = "A11STUDIO";
 
@@ -24,11 +25,16 @@ type StaticPageMetaInput = {
   title: string;
   description: string;
   locale: string;
-  /** Absolute OG/Twitter image URL. */
+  /** OG/Twitter image URL (absolute, or root-relative — resolved via `metadataBase`). Defaults to the brand logo. */
   image?: string;
   ogType?: "website" | "article";
   /** Override the default indexable behaviour (e.g. keep a page out of the index). */
   noindex?: boolean;
+  /**
+   * When the `title` already contains the brand (e.g. the landing page), set this so it opts out of
+   * the root layout's `%s · A11STUDIO` template instead of double-branding.
+   */
+  titleAbsolute?: boolean;
 };
 
 /**
@@ -42,9 +48,10 @@ export function buildStaticPageMetadata({
   title,
   description,
   locale,
-  image,
+  image = DEFAULT_OG_IMAGE,
   ogType = "website",
   noindex = false,
+  titleAbsolute = false,
 }: StaticPageMetaInput): Metadata {
   const base = serverEnv.APP_URL;
   // "/" must not become "//"; every other path keeps its single leading slash.
@@ -63,7 +70,7 @@ export function buildStaticPageMetadata({
   const canonical = url(current);
 
   return {
-    title,
+    title: titleAbsolute ? { absolute: title } : title,
     description,
     alternates: { canonical, languages },
     // Only force noindex when asked; otherwise inherit the env-aware default from the root layout.

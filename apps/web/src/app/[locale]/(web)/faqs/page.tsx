@@ -1,4 +1,3 @@
-import { ChevronDown } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getTranslations } from "next-intl/server";
@@ -16,6 +15,7 @@ export async function generateMetadata({
   return buildStaticPageMetadata({
     path: "/faqs",
     title: t("page.metadata.title"),
+    titleAbsolute: true,
     description: t("page.metadata.description"),
     locale,
   });
@@ -28,6 +28,7 @@ export default async function FaqsPage() {
   return (
     <div className="mx-auto w-full max-w-(--screen-desktop) px-6 py-16 tablet:px-10 tablet:py-24">
       <JsonLd data={buildFaqPageJsonLd(items)} />
+
       <header className="max-w-2xl space-y-4">
         <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-text-muted">
           {t("page.hero.label")}
@@ -40,15 +41,37 @@ export default async function FaqsPage() {
         </p>
       </header>
 
-      <div className="mt-12 grid grid-cols-1 gap-10  desktop:gap-16 w-full">
-        <div className="w-full">
-          <div className="border-t border-border w-full">
-            {items.map((faq) => (
-              <FaqEntry key={faq.id} faq={faq} />
-            ))}
-          </div>
+      <div className="mt-12 grid grid-cols-1 gap-10 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-16">
+        {/* Aside nav — jump to any question by its id. */}
+        <aside className="hidden lg:block">
+          <nav
+            aria-label={t("page.navLabel")}
+            className="sticky top-24 space-y-3"
+          >
+            <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-text-muted">
+              {t("page.navLabel")}
+            </p>
+            <ul className="space-y-1 border-l border-border">
+              {items.map((faq) => (
+                <li key={faq.id}>
+                  <a
+                    href={`#${faq.id}`}
+                    className="-ml-px block border-l border-transparent py-1.5 pl-4 text-sm leading-snug text-text-muted transition-colors hover:border-text hover:text-text"
+                  >
+                    {faq.question}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </aside>
 
-          <div className="mt-8 text-base tablet:text-lg">
+        <div className="min-w-0">
+          {items.map((faq) => (
+            <FaqSection key={faq.id} faq={faq} />
+          ))}
+
+          <div className="mt-10 border-t border-border pt-8 text-base tablet:text-lg">
             <span>
               {t.rich("stillHaveQuestions", {
                 link: (children) => (
@@ -68,20 +91,26 @@ export default async function FaqsPage() {
   );
 }
 
-function FaqEntry({ faq }: { faq: FaqItem }) {
+/** One question rendered as a titled section (no accordion) so all answers are visible + crawlable. */
+function FaqSection({ faq }: { faq: FaqItem }) {
+  const headingId = `${faq.id}-heading`;
   return (
-    <details
+    <section
       id={faq.id}
-      className="group scroll-mt-28 border-b border-border w-full"
+      aria-labelledby={headingId}
+      className="scroll-mt-28 border-b border-border py-8 first:pt-0"
     >
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-4 text-base font-medium text-text marker:content-none [&::-webkit-details-marker]:hidden">
+      <h2
+        id={headingId}
+        className="mb-4 font-serif text-xl font-semibold tracking-tight text-text tablet:text-2xl"
+      >
         {faq.question}
-        <ChevronDown className="size-4 shrink-0 text-text-muted transition-transform duration-200 group-open:rotate-180" />
-      </summary>
-      <div className={`pb-4 ${faqAnswerClassName}`}>
-        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: answers are trusted, authored in our own translation files */}
-        <div dangerouslySetInnerHTML={{ __html: faq.answer }} />
-      </div>
-    </details>
+      </h2>
+      {/* biome-ignore lint/security/noDangerouslySetInnerHtml: answers are trusted, authored in our own translation files */}
+      <div
+        className={faqAnswerClassName}
+        dangerouslySetInnerHTML={{ __html: faq.answer }}
+      />
+    </section>
   );
 }

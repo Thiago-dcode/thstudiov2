@@ -4,6 +4,9 @@ const messages = {
   seo: {
     organizationDescription:
       "A11STUDIO es la plataforma de portafolios donde los artistas son descubiertos: muestra tu trabajo y conecta con clientes, coleccionistas y colaboradores.",
+    defaultTitle: "A11STUDIO — Donde los Artistas son Descubiertos",
+    defaultDescription:
+      "Muestra tu trabajo, hazte descubrir y conecta con clientes, coleccionistas y colaboradores. A11STUDIO es la plataforma de portafolios diseñada exclusivamente para artistas.",
   },
   landing: {
     metadata: {
@@ -253,25 +256,25 @@ const messages = {
         id: "why-ai",
         question: "¿Por qué A11STUDIO usa IA?",
         answer:
-          "Para que puedas concentrarte en lo que mejor haces: crear arte. Todo lo técnico ocurre detrás de escena: la IA genera títulos, descripciones y etiquetas optimizados para SEO, categoriza tus medios automáticamente y escribe texto alternativo para que los motores de búsqueda y los asistentes de IA puedan encontrarte. Nunca tienes que aprender SEO ni marketing: solo sube tus mejores piezas y deja que la audiencia correcta las descubra.",
+          "Para que puedas concentrarte en lo que mejor haces: crear arte. Todo lo técnico ocurre detrás de escena: nuestra IA escribe <strong>títulos, descripciones y etiquetas optimizados para SEO</strong>, categoriza tus medios automáticamente y genera texto alternativo para que los motores de búsqueda y los asistentes de IA puedan encontrarte. Nunca tienes que aprender SEO ni marketing: solo <a href='#position-profile'>sube tus mejores piezas y completa tu perfil</a>, y deja que la audiencia correcta las descubra.",
       },
       {
         id: "what-is-seo",
         question: "¿Qué es el SEO?",
         answer:
-          "El SEO (optimización para motores de búsqueda) es lo que ayuda a que tu trabajo aparezca cuando alguien busca en Google —o le pregunta a un asistente de IA— por un artista como tú. Normalmente requiere conocimientos técnicos, pero A11STUDIO lo hace por ti automáticamente, escribiendo títulos, descripciones, etiquetas y texto alternativo optimizados detrás de escena para que las personas correctas encuentren tu portafolio. Conoce más sobre <a href='#why-ai'>cómo lo hace nuestra IA</a>.",
+          "El SEO (optimización para motores de búsqueda) es lo que ayuda a que tu trabajo aparezca cuando alguien busca en Google —o le pregunta a un asistente de IA como ChatGPT— por un artista como tú. Normalmente requiere conocimientos técnicos reales, pero <strong>A11STUDIO lo hace por ti automáticamente</strong>, escribiendo títulos, descripciones, etiquetas y texto alternativo optimizados detrás de escena para que las personas correctas encuentren tu portafolio. Tu parte es simplemente <a href='#position-profile'>posicionar bien tu perfil</a> — luego mira <a href='#why-ai'>cómo lo hace nuestra IA</a>.",
       },
       {
         id: "position-profile",
         question: "¿Cómo puedo posicionar mi perfil?",
         answer:
-          "A11STUDIO se encarga por ti de las partes difíciles de la visibilidad: el SEO, la indexación en buscadores y la optimización ocurren automáticamente. Para sacarle el máximo provecho, completa tu perfil, elige las categorías que corresponden a tu oficio y sube tu trabajo más fuerte. Cuanto más completo y pulido esté tu perfil, más fácil será que los clientes correctos te descubran. ¿Necesitas ayuda? <a href='/support'>Escríbenos</a>.",
+          "A11STUDIO ya hace por ti la parte difícil: <strong>el SEO, la indexación en buscadores y la optimización ocurren automáticamente</strong>, y nuestra IA escribe los títulos, descripciones, etiquetas y texto alternativo detrás de escena. Tu único trabajo es darle material real y rico con el que trabajar. Cuanto más completo y específico sea tu perfil, más probable será que los clientes correctos —y asistentes de IA como ChatGPT o las respuestas de IA de Google— muestren tu trabajo. Así puedes posicionarte bien:<ul><li><strong>Completa tu perfil y tu ubicación.</strong> Añade tu nombre, profesión y ciudad — la ubicación impulsa el descubrimiento local, para que los clientes que buscan un artista cerca te encuentren.</li><li><strong>Elige las categorías que corresponden a tu oficio.</strong> Selecciona tus disciplinas y estilos con honestidad; así filtran los clientes y así entienden los buscadores lo que haces.</li><li><strong>Sube tu mejor trabajo con títulos y descripciones reales.</strong> Dale a cada pieza un título claro y específico y una breve descripción — la IA los enriquece, pero necesita detalle genuino (tema, estilo, lugar) sobre el que construir.</li><li><strong>Añade un banner y miniaturas cuidadas.</strong> Son lo primero que ven los visitantes — y las tarjetas para compartir en redes; una imagen pulida hace que la gente se quede.</li><li><strong>Completa tus servicios.</strong> Indica qué ofreces y los detalles que un cliente necesita para contratarte — los servicios apuntan a búsquedas de alta intención, listas para comprar.</li><li><strong>Escribe tu página Acerca de.</strong> Tu historia y experiencia generan la confianza que convierte a un visitante en cliente.</li><li><strong>Organiza tus portafolios y colecciones.</strong> Mantén ordenados tus <a href='#what-is-a-portfolio'>portafolios</a> con lo mejor y tus <a href='#what-is-a-collection'>colecciones</a> por proyecto para que los visitantes entiendan al instante tu trabajo.</li></ul>Haz esto y A11STUDIO se encarga de todo lo técnico por encima — nunca tienes que aprender SEO. ¿Aún con dudas? <a href='/support'>Escríbenos</a>.",
       },
       {
         id: "get-clients",
         question: "¿Cómo puedo conseguir clientes?",
         answer:
-          "A11STUDIO está hecho para conectar a los artistas con personas que valoran su trabajo. La mejor forma de atraer clientes es completar tu perfil, mostrar tus portafolios más fuertes y mantener tu trabajo organizado para que los visitantes entiendan al instante lo que ofreces. La plataforma se encarga del descubrimiento —SEO e indexación— para que los clientes que buscan tu tipo de trabajo te encuentren. Asegúrate de que tu <a href='#position-profile'>perfil esté bien posicionado</a> para lograr el mayor alcance.",
+          "A11STUDIO está hecho para conectar a los artistas con las personas que valoran su trabajo. La mejor forma de atraer clientes es <strong>completar tu perfil, mostrar tus portafolios más fuertes y añadir servicios claros</strong> para que quienes están listos para contratar vean exactamente lo que ofreces. Mantén todo organizado para que los visitantes entiendan al instante tu trabajo. La plataforma se encarga del descubrimiento —SEO e indexación— para que los clientes (y los asistentes de IA) que buscan tu tipo de trabajo te encuentren. Asegúrate de que tu <a href='#position-profile'>perfil esté bien posicionado</a> para lograr el mayor alcance.",
       },
       {
         id: "upload-videos",
@@ -464,6 +467,11 @@ const messages = {
       about: "Acerca de",
       faqs: "Preguntas frecuentes",
       support: "Soporte",
+    },
+    social: {
+      heading: "Redes",
+      instagram: "A11STUDIO en Instagram",
+      linkedin: "A11STUDIO en LinkedIn",
     },
     copyright: "© {year} A11STUDIO. Todos los derechos reservados.",
   },
@@ -894,6 +902,34 @@ const messages = {
       title: "Categorías",
       editTitle: "Editar categorías",
     },
+    contact: {
+      title: "Contacto y enlaces",
+      editTitle: "Editar contacto y enlaces",
+      description:
+        "Añade un teléfono y enlaces sociales para que los clientes puedan contactarte. Todos los campos son opcionales: deja uno vacío para eliminarlo.",
+      empty: "Aún no hay datos de contacto.",
+      phone: {
+        label: "Teléfono",
+        placeholder: "+34 684 317 619",
+        hint: "Incluye el prefijo del país, p. ej. +34. De 9 a 15 dígitos.",
+      },
+      instagram: {
+        label: "Instagram",
+        placeholder: "https://instagram.com/tuusuario",
+      },
+      facebook: {
+        label: "Facebook",
+        placeholder: "https://facebook.com/tupagina",
+      },
+      youtube: {
+        label: "YouTube",
+        placeholder: "https://youtube.com/@tucanal",
+      },
+      website: {
+        label: "Sitio web",
+        placeholder: "https://tuestudio.com",
+      },
+    },
     update: "Actualizar",
   },
   addressForm: {
@@ -983,6 +1019,20 @@ const messages = {
     profile: {
       getInTouch: "Ponte en contacto",
       aboutHeading: "Acerca de {name}",
+      connect: "Conectar",
+      phoneLabel: "Llamar a {name}",
+      websiteLabel: "Visitar el sitio web de {name}",
+      instagramLabel: "{name} en Instagram",
+      facebookLabel: "{name} en Facebook",
+      youtubeLabel: "{name} en YouTube",
+      summaryProfessionLocation:
+        "{name}, {profession} con base en {location}, muestra sus portafolios, colecciones y servicios en A11STUDIO.",
+      summaryProfession:
+        "{name}, {profession}, muestra sus portafolios, colecciones y servicios en A11STUDIO.",
+      summaryLocation:
+        "{name}, con base en {location}, muestra sus portafolios, colecciones y servicios en A11STUDIO.",
+      summaryFallback:
+        "{name} muestra sus portafolios, colecciones y servicios en A11STUDIO.",
     },
     editAria: {
       editPortfolio: "Editar portafolio",
@@ -1093,6 +1143,19 @@ const messages = {
         "La contraseña debe contener al menos un número",
       passwordNoSpaces: "La contraseña no puede contener espacios",
     },
+    phone: {
+      invalid:
+        "Introduce un teléfono válido, p. ej. +34684317619 o 684317619 (9–15 dígitos).",
+    },
+    url: {
+      instagram:
+        "Introduce una URL de Instagram válida, p. ej. https://instagram.com/tuusuario",
+      facebook:
+        "Introduce una URL de Facebook válida, p. ej. https://facebook.com/tupagina",
+      youtube:
+        "Introduce una URL de YouTube válida, p. ej. https://youtube.com/@tucanal",
+      website: "Introduce una URL válida que empiece por https://",
+    },
   },
   fields: {
     title: "Título",
@@ -1115,6 +1178,11 @@ const messages = {
     file: "Archivo",
     userId: "ID de usuario",
     mediaId: "ID de archivo",
+    phoneNumber: "Teléfono",
+    instagramLink: "Enlace de Instagram",
+    facebookLink: "Enlace de Facebook",
+    youtubeLink: "Enlace de YouTube",
+    websiteLink: "Enlace del sitio web",
   },
   portfolios: {
     toastCreated: "Portafolio creado con éxito",

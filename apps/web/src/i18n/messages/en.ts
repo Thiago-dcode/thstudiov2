@@ -2,6 +2,9 @@ const messages = {
   seo: {
     organizationDescription:
       "A11STUDIO is the portfolio platform where artists get discovered — showcase your work and connect with clients, collectors and collaborators.",
+    defaultTitle: "A11STUDIO — Where Artists Get Discovered",
+    defaultDescription:
+      "Showcase your work, get discovered, and connect with clients, collectors and collaborators. A11STUDIO is the portfolio platform designed exclusively for artists.",
   },
   landing: {
     metadata: {
@@ -252,25 +255,25 @@ const messages = {
         id: "why-ai",
         question: "Why does A11STUDIO use AI?",
         answer:
-          "So you can focus on what you do best — creating art. Everything technical happens behind the scenes: AI generates SEO-optimized titles, descriptions, and tags for your work, categorizes your media automatically, and writes alt text so search engines and AI assistants can find you. You never have to learn SEO or marketing — just upload your best pieces and let the right audience discover them.",
+          "So you can focus on what you do best — creating art. Everything technical happens behind the scenes: our AI writes <strong>SEO-optimized titles, descriptions and tags</strong> for your work, categorizes your media automatically, and generates alt text so search engines and AI assistants can find you. You never have to learn SEO or marketing — just <a href='#position-profile'>upload your best pieces and complete your profile</a>, and let the right audience discover them.",
       },
       {
         id: "what-is-seo",
         question: "What is SEO?",
         answer:
-          "SEO (search engine optimization) is what helps your work show up when someone searches Google — or asks an AI assistant — for an artist like you. It normally takes technical know-how, but A11STUDIO handles it for you automatically, writing optimized titles, descriptions, tags, and alt text behind the scenes so the right people can find your portfolio. Read more about <a href='#why-ai'>how our AI does this</a>.",
+          "SEO (search engine optimization) is what helps your work show up when someone searches Google — or asks an AI assistant like ChatGPT — for an artist like you. It normally takes real technical know-how, but <strong>A11STUDIO handles it for you automatically</strong>, writing optimized titles, descriptions, tags and alt text behind the scenes so the right people find your portfolio. Your part is simply to <a href='#position-profile'>position your profile well</a> — then see <a href='#why-ai'>how our AI does the rest</a>.",
       },
       {
         id: "position-profile",
         question: "How can I position my profile?",
         answer:
-          "A11STUDIO handles the hard parts of visibility for you — SEO, search-engine indexing, and optimization all happen automatically. To get the most out of it, complete your profile, choose the categories that match your craft, and upload your strongest work. The more complete and polished your profile, the easier it is for the right clients to discover you. Need a hand? <a href='/support'>Reach out to us</a>.",
+          "A11STUDIO already does the hard part for you — <strong>SEO, search-engine indexing, and optimization all run automatically</strong>, and our AI writes the titles, descriptions, tags and alt text behind the scenes. Your only job is to give it rich, real material to work with. The more complete and specific your profile, the more likely the right clients — and AI assistants like ChatGPT or Google's AI Overviews — are to surface your work. Here is how to position yourself well:<ul><li><strong>Complete your profile and location.</strong> Add your name, profession and city — location powers local discovery, so clients searching for an artist near them can find you.</li><li><strong>Choose the categories that match your craft.</strong> Pick your disciplines and styles honestly; this is how clients filter results and how search engines understand what you do.</li><li><strong>Upload your strongest work with real titles and descriptions.</strong> Give each piece a clear, specific title and a short description — the AI enriches them, but it needs genuine detail (subject, style, place) to build on.</li><li><strong>Add a banner and clean thumbnails.</strong> They are the first thing visitors — and social share cards — see; a polished visual makes people stay.</li><li><strong>Fill in your services.</strong> List what you offer and the details clients need to hire you — services target high-intent, ready-to-buy searches.</li><li><strong>Write your About page.</strong> Your story and experience build the trust that turns a visitor into a client.</li><li><strong>Organize your portfolios and collections.</strong> Keep your best-of <a href='#what-is-a-portfolio'>portfolios</a> and per-project <a href='#what-is-a-collection'>collections</a> tidy so visitors instantly understand your work.</li></ul>Do these and A11STUDIO handles everything technical on top — you never have to learn SEO yourself. Still unsure? <a href='/support'>Reach out to us</a>.",
       },
       {
         id: "get-clients",
         question: "How can I get clients?",
         answer:
-          "A11STUDIO is built to connect artists with people who value their work. The best way to attract clients is to complete your profile, showcase your strongest portfolios, and keep your work organized so visitors instantly understand what you offer. The platform takes care of discovery — SEO and search indexing — so clients looking for your kind of work can find you. Make sure your <a href='#position-profile'>profile is well positioned</a> to get the most reach.",
+          "A11STUDIO is built to connect artists with the people who value their work. The best way to attract clients is to <strong>complete your profile, showcase your strongest portfolios, and add clear services</strong> so buyers ready to hire see exactly what you offer. Keep everything organized so visitors instantly understand your work. The platform takes care of discovery — SEO and search indexing — so clients (and AI assistants) looking for your kind of work can find you. Make sure your <a href='#position-profile'>profile is well positioned</a> to get the most reach.",
       },
       {
         id: "upload-videos",
@@ -463,6 +466,11 @@ const messages = {
       about: "About",
       faqs: "FAQs",
       support: "Support",
+    },
+    social: {
+      heading: "Social",
+      instagram: "A11STUDIO on Instagram",
+      linkedin: "A11STUDIO on LinkedIn",
     },
     copyright: "© {year} A11STUDIO. All rights reserved.",
   },
@@ -888,6 +896,34 @@ const messages = {
       title: "Categories",
       editTitle: "Edit Categories",
     },
+    contact: {
+      title: "Contact & links",
+      editTitle: "Edit contact & links",
+      description:
+        "Add a phone number and social links so clients can reach you. Every field is optional — leave one empty to remove it.",
+      empty: "No contact details yet.",
+      phone: {
+        label: "Phone number",
+        placeholder: "+34 684 317 619",
+        hint: "Include your country code, e.g. +34. 9–15 digits.",
+      },
+      instagram: {
+        label: "Instagram",
+        placeholder: "https://instagram.com/yourhandle",
+      },
+      facebook: {
+        label: "Facebook",
+        placeholder: "https://facebook.com/yourpage",
+      },
+      youtube: {
+        label: "YouTube",
+        placeholder: "https://youtube.com/@yourchannel",
+      },
+      website: {
+        label: "Website",
+        placeholder: "https://yourstudio.com",
+      },
+    },
     update: "Update",
   },
   addressForm: {
@@ -979,6 +1015,20 @@ const messages = {
     profile: {
       getInTouch: "Get in touch",
       aboutHeading: "About {name}",
+      connect: "Connect",
+      phoneLabel: "Call {name}",
+      websiteLabel: "Visit {name}'s website",
+      instagramLabel: "{name} on Instagram",
+      facebookLabel: "{name} on Facebook",
+      youtubeLabel: "{name} on YouTube",
+      summaryProfessionLocation:
+        "{name}, {profession} based in {location}, showcases their portfolios, collections and services on A11STUDIO.",
+      summaryProfession:
+        "{name}, {profession}, showcases their portfolios, collections and services on A11STUDIO.",
+      summaryLocation:
+        "{name}, based in {location}, showcases their portfolios, collections and services on A11STUDIO.",
+      summaryFallback:
+        "{name} showcases their portfolios, collections and services on A11STUDIO.",
     },
     editAria: {
       editPortfolio: "Edit portfolio",
@@ -1085,6 +1135,19 @@ const messages = {
       passwordMustContainNumber: "Password must contain at least one number",
       passwordNoSpaces: "Password cannot contain spaces",
     },
+    phone: {
+      invalid:
+        "Enter a valid phone number, e.g. +34684317619 or 684317619 (9–15 digits).",
+    },
+    url: {
+      instagram:
+        "Enter a valid Instagram URL, e.g. https://instagram.com/yourhandle",
+      facebook:
+        "Enter a valid Facebook URL, e.g. https://facebook.com/yourpage",
+      youtube:
+        "Enter a valid YouTube URL, e.g. https://youtube.com/@yourchannel",
+      website: "Enter a valid URL starting with https://",
+    },
   },
   fields: {
     title: "Title",
@@ -1107,6 +1170,11 @@ const messages = {
     file: "File",
     userId: "User ID",
     mediaId: "Media ID",
+    phoneNumber: "Phone number",
+    instagramLink: "Instagram link",
+    facebookLink: "Facebook link",
+    youtubeLink: "YouTube link",
+    websiteLink: "Website link",
   },
   portfolios: {
     toastCreated: "Portfolio created successfully",

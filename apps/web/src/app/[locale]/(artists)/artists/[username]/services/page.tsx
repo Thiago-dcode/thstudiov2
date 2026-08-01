@@ -14,22 +14,23 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, username } = await params;
-  const [{ data: user }, t] = await Promise.all([
-    usersService.getCompact(username),
+  const [{ data: profile }, t] = await Promise.all([
+    usersService.getProfile(username),
     getTranslations("artists.services"),
   ]);
 
-  if (!user) {
+  if (!profile) {
     return { robots: { index: false, follow: false } };
   }
 
   const name =
-    [user.name, user.surname].filter(Boolean).join(" ") || `@${username}`;
+    [profile.name, profile.surname].filter(Boolean).join(" ") || `@${username}`;
   return buildStaticPageMetadata({
     path: `/artists/${username}/services`,
     title: `${name} — ${t("pageTitle")}`,
     description: t("metaDescription", { name }),
     locale,
+    image: profile.banner || profile.avatar || undefined,
   });
 }
 

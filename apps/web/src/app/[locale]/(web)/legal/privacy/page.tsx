@@ -3,7 +3,7 @@ import { serverEnv } from "@/env/server";
 import { Link } from "@/i18n/navigation";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy — A11STUDIO",
+  title: { absolute: "Privacy Policy — A11STUDIO" },
   description: "How A11STUDIO collects, uses, and protects your personal data.",
 };
 

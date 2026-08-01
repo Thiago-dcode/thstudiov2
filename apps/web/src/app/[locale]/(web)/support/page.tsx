@@ -7,7 +7,7 @@ import usersService from "@/modules/users/users.service";
 import { SupportForm } from "./_components/support-form";
 
 export const metadata: Metadata = {
-  title: "Support - A11STUDIO",
+  title: { absolute: "Support - A11STUDIO" },
   description:
     "Contact A11STUDIO support for account, billing, or technical help.",
 };

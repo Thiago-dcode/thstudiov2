@@ -24,7 +24,7 @@ async function HeroVideo() {
     <LazyVideo
       src={heroVideo.data.url}
       poster={heroVideo.data.thumbnail ?? undefined}
-      className="justify-self-end inset-0 z-0 object-cover h-2/5 laptop:h-2/5 desktop:h-3/5  w-screen"
+      className="justify-self-end inset-0 z-0 object-cover h-3/5 desktop:h-2/5 desktop-lg:h-3/5  w-screen"
     />
   );
 }
@@ -38,7 +38,7 @@ export async function HeroSection() {
     <WebSection
       id="home-hero-section"
       aria-labelledby="hero-heading"
-      className="  flex flex-col w-full items-center justify-start overflow-hidden bg-bg min-h-[calc(100svh-4rem)] laptop:h-[calc(100svh-4rem)] laptop:min-h-auto max-w-(--breakpoint-ultrawide) mx-auto"
+      className="  flex flex-col w-full items-center justify-start overflow-hidden bg-bg min-h-[calc(100svh-4rem)] laptop:h-[calc(100svh-4rem)]  max-w-(--breakpoint-ultrawide) mx-auto"
     >
       <Suspense fallback={<HeroVideoFallback />}>
         <HeroVideo />
@@ -47,7 +47,7 @@ export async function HeroSection() {
       {/* ── Content ── */}
       <div className="max-h-1/2 z-10 mx-auto flex flex-col items-center text-center gap-5 laptop:gap-8 w-full  pt-3 px-2 laptop:px-4">
         <div className="flex flex-col items-start gap-0 w-full">
-          <h1 className="uppercase hero-stagger-1 tracking-tight text-shadow-lg text-5xl! phone-lg:6xl!   laptop:text-7xl! desktop-lg:text-7xl! text-left font-sans!">
+          <h1 className="uppercase hero-stagger-1 tracking-tight text-shadow-lg text-5xl!  laptop:text-6xl! desktop-lg:text-7xl! text-left font-sans!">
             {t("titlePrefix")}{" "}
             <SlotMachine
               texts={accentWords}
@@ -74,7 +74,7 @@ export async function HeroSection() {
           </h3>
         </div>
 
-        <div className="hero-stagger-4 flex w-full justify-start pt-8  phone-lg:pt-4 ">
+        <div className="hero-stagger-4 flex w-full justify-start pt-0 phone:pt-8 tablet:pt-12 laptop:pt-4 ">
           <div className="w-full max-w-3xl">
             <WaitListForm from="hero" />
           </div>

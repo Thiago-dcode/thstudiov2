@@ -6,6 +6,7 @@ import { ViewService } from '@repo/backend-lib/services/view-service/base';
 import { ViewData } from '@repo/backend-lib/services/view-service/types';
 import { EnumType } from '@repo/common-lib/constants/enums';
 import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/constants';
+import { getConfigValue } from '@repo/common-lib/config/utils';
 import { EmailPreferencesService } from 'src/v1/modules/email-preferences/email-preferences.service';
 
 type ViewParams = {
@@ -83,7 +84,26 @@ export abstract class ApiMailService extends Mailable {
     return {
       ...this._viewParams.data,
       ...extra,
+      contact: this.getContactInfo(),
       ...(this.i18nService ? { t: this.t } : {}),
+    };
+  }
+
+  /**
+   * Company contact details rendered in every email footer, sourced entirely
+   * from env-backed config. The postal address is legally mandatory
+   * (CAN-SPAM / GDPR), so keep COMPANY_ADDRESS set in every deployed env.
+   */
+  private getContactInfo(): {
+    address?: string;
+    social: { instagram?: string };
+  } {
+    const app = getConfigValue('app');
+    return {
+      address: app.address,
+      social: {
+        instagram: app.social?.instagram,
+      },
     };
   }
 

@@ -2,7 +2,7 @@ import { PLATFORM_CURRENCY } from "@repo/common-lib/constants/constants";
 import type { Service } from "@repo/common-lib/types/service";
 import type { UserProfile } from "@repo/common-lib/types/user";
 import { Badge } from "@repo/ui/components/shadcn/badge";
-import { ArrowRight, Mail, MapPin } from "lucide-react";
+import { ArrowRight, Globe, Mail, MapPin, Phone } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
@@ -11,8 +11,14 @@ import { Suspense } from "react";
 import fallbackBanner from "@/assets/images/fallback-banner.jpg";
 import { serverEnv } from "@/env/server";
 import { Link } from "@/i18n/navigation";
+import { DEFAULT_OG_IMAGE } from "@/lib/config";
 import userServiceService from "@/modules/user-services/user-service.service";
 import UserService from "@/modules/users/users.service";
+import {
+  FacebookIcon,
+  InstagramIcon,
+  YoutubeIcon,
+} from "@/lib/components/social-icons";
 import { ArtistContactDialog } from "../../__components/artist-contact.dialog";
 import { ArtistSections } from "../../__components/artist-sections";
 import { ArtistSectionsSkeleton } from "../../__components/artist-sections-skeleton";
@@ -48,7 +54,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     ? profile.short_biography.trim().slice(0, 160)
     : `Discover ${name}'s portfolios, collections and services on ${SITE_NAME}.`;
   const canonical = canonicalUrl(profile.username);
-  const ogImage = profile.banner || profile.avatar || undefined;
+  // Prefer the artist's own banner/avatar; fall back to the brand logo so share cards are never blank.
+  const ogImage = profile.banner || profile.avatar || DEFAULT_OG_IMAGE;
 
   return {
     title,
@@ -60,13 +67,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description,
       url: canonical,
       siteName: SITE_NAME,
-      ...(ogImage ? { images: [{ url: ogImage, alt: name }] } : {}),
+      images: [{ url: ogImage, alt: name }],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      ...(ogImage ? { images: [ogImage] } : {}),
+      images: [ogImage],
     },
   };
 }
@@ -91,6 +98,14 @@ const buildProfileJsonLd = (profile: UserProfile, services: Service[]) => {
   const knowsAbout = (profile.categories ?? [])
     .map((c) => c.name)
     .filter(Boolean);
+
+  // Verified external profiles for this artist — strengthens entity disambiguation.
+  const sameAs = [
+    profile.instagram_link,
+    profile.facebook_link,
+    profile.youtube_link,
+    profile.website_link,
+  ].filter((link): link is string => Boolean(link));
 
   // High commercial-intent surface: expose the artist's services as offerings.
   const makesOffer = services.map((s) => ({
@@ -121,9 +136,9 @@ const buildProfileJsonLd = (profile: UserProfile, services: Service[]) => {
         : {}),
       ...(knowsAbout.length ? { knowsAbout } : {}),
       ...(address ? { address } : {}),
+      ...(profile.phone_number ? { telephone: profile.phone_number } : {}),
       ...(makesOffer.length ? { makesOffer } : {}),
-      // `sameAs` intentionally omitted — no social-links data model yet (user_contacts is a
-      // contact-form inbox, not social URLs). Add once artist social links are stored.
+      ...(sameAs.length ? { sameAs } : {}),
     },
   };
 };
@@ -146,6 +161,24 @@ const ArtistHomePage = async ({ params }: Props) => {
   const fullName = [profile.name, profile.surname].filter(Boolean).join(" ");
   const heading = fullName || `@${profile.username}`;
   const jsonLd = buildProfileJsonLd(profile, services ?? []);
+
+  // Answer-shaped TL;DR (GEO §G2): a concise, structured summary AI engines and search can lift.
+  // Built from profession + locality — deliberately NOT the short bio, which is already shown below
+  // as an editorial pull-quote; this complements it rather than duplicating it.
+  const profession = profile.profession?.trim();
+  const locality = profile.address?.city?.trim() || profile.address?.state?.trim();
+  const summary =
+    profession && locality
+      ? t("summaryProfessionLocation", {
+          name: heading,
+          profession,
+          location: locality,
+        })
+      : profession
+        ? t("summaryProfession", { name: heading, profession })
+        : locality
+          ? t("summaryLocation", { name: heading, location: locality })
+          : t("summaryFallback", { name: heading });
 
   return (
     <div className="min-h-screen w-full animate-in fade-in duration-1000">
@@ -208,6 +241,12 @@ const ArtistHomePage = async ({ params }: Props) => {
           {fullName && <p className=" text-text">@{profile.username}</p>}
         </div>
 
+        {summary && (
+          <p className="max-w-xl text-sm leading-relaxed text-text-muted tablet:text-base">
+            {summary}
+          </p>
+        )}
+
         {profile.address?.formated_address && (
           <p className="flex items-center gap-1.5 text-sm text-text-muted/80">
             <MapPin className="size-3.5 shrink-0" aria-hidden="true" />
@@ -251,6 +290,72 @@ const ArtistHomePage = async ({ params }: Props) => {
             />
           </Link>
         </div>
+
+        {/* Social & contact links — quiet, secondary to the identity + CTAs */}
+        {(profile.phone_number ||
+          profile.instagram_link ||
+          profile.facebook_link ||
+          profile.youtube_link ||
+          profile.website_link) && (
+          <nav
+            aria-label={t("connect")}
+            className="flex flex-wrap items-center justify-center gap-2 pt-2"
+          >
+            {profile.phone_number && (
+              <a
+                href={`tel:${profile.phone_number}`}
+                aria-label={t("phoneLabel", { name: heading })}
+                className="inline-flex size-11 items-center justify-center border border-border/50 text-text-muted transition-colors duration-300 hover:border-text/30 hover:text-text"
+              >
+                <Phone className="size-4" aria-hidden="true" />
+              </a>
+            )}
+            {profile.instagram_link && (
+              <a
+                href={profile.instagram_link}
+                target="_blank"
+                rel="noreferrer noopener"
+                aria-label={t("instagramLabel", { name: heading })}
+                className="inline-flex size-11 items-center justify-center border border-border/50 text-text-muted transition-colors duration-300 hover:border-text/30 hover:text-text"
+              >
+                <InstagramIcon className="size-4" />
+              </a>
+            )}
+            {profile.facebook_link && (
+              <a
+                href={profile.facebook_link}
+                target="_blank"
+                rel="noreferrer noopener"
+                aria-label={t("facebookLabel", { name: heading })}
+                className="inline-flex size-11 items-center justify-center border border-border/50 text-text-muted transition-colors duration-300 hover:border-text/30 hover:text-text"
+              >
+                <FacebookIcon className="size-4" />
+              </a>
+            )}
+            {profile.youtube_link && (
+              <a
+                href={profile.youtube_link}
+                target="_blank"
+                rel="noreferrer noopener"
+                aria-label={t("youtubeLabel", { name: heading })}
+                className="inline-flex size-11 items-center justify-center border border-border/50 text-text-muted transition-colors duration-300 hover:border-text/30 hover:text-text"
+              >
+                <YoutubeIcon className="size-4" />
+              </a>
+            )}
+            {profile.website_link && (
+              <a
+                href={profile.website_link}
+                target="_blank"
+                rel="noreferrer noopener"
+                aria-label={t("websiteLabel", { name: heading })}
+                className="inline-flex size-11 items-center justify-center border border-border/50 text-text-muted transition-colors duration-300 hover:border-text/30 hover:text-text"
+              >
+                <Globe className="size-4" aria-hidden="true" />
+              </a>
+            )}
+          </nav>
+        )}
       </section>
 
       {/* Short Biography — editorial pull-quote */}

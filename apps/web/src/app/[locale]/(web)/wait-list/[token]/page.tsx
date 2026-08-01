@@ -13,7 +13,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("waitListValidate");
 
   return {
-    title: t("metadata.title"),
+    title: { absolute: t("metadata.title") },
     description: t("metadata.description"),
   };
 }

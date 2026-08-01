@@ -16,6 +16,7 @@ export async function generateMetadata({
   return buildStaticPageMetadata({
     path: "/about",
     title: t("title"),
+    titleAbsolute: true,
     description: t("description"),
     locale,
     ogType: "article",

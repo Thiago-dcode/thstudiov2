@@ -124,7 +124,7 @@ function Bar({
   return (
     <div
       className={cn(
-        "w-full h-20 flex items-center justify-between px-6 tablet:px-12 laptop:px-16",
+        "w-full h-20 flex items-center justify-between px-2 tablet:px-8 laptop:px-10",
         className,
       )}
     >

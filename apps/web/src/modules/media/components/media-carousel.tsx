@@ -40,20 +40,13 @@ export const MediaCarousel = ({ media }: { media: MediaWithUser[] }) => {
 
   return (
     <div
-      className="flex w-full max-w-full  laptop:max-w-2xl desktop:max-w-4xl flex-col gap-0.5"
+      className="flex w-full max-w-full  tablet:max-w-2xl desktop-lg:max-w-4xl flex-col gap-0.5"
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
       onFocusCapture={() => setIsPaused(true)}
       onBlurCapture={() => setIsPaused(false)}
     >
-      {activeUser?.username ? (
-        <Link
-          href={`/artists/${encodeURIComponent(activeUser.username)}`}
-          className="pl-1 w-fit text-sm text-text-muted transition-colors hover:text-text focus-visible:text-text focus-visible:outline-none"
-        >
-          @{activeUser.username}
-        </Link>
-      ) : null}
+    
 
       <div className="overflow-hidden" ref={emblaRef}>
         <div className="flex">
@@ -77,7 +70,14 @@ export const MediaCarousel = ({ media }: { media: MediaWithUser[] }) => {
           })}
         </div>
       </div>
-
+      {activeUser?.username ? (
+        <Link
+          href={`/artists/${encodeURIComponent(activeUser.username)}`}
+          className="pl-1 w-fit text-sm text-text-muted transition-colors hover:text-text focus-visible:text-text focus-visible:outline-none"
+        >
+          @{activeUser.username}
+        </Link>
+      ) : null}
       {hasControls ? (
         <div className="flex items-center justify-between">
           <CarouselButton label="Previous slide" onClick={scrollPrev}>

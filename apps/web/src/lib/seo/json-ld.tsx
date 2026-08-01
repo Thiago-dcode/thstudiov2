@@ -1,4 +1,5 @@
 import { PLATFORM_CURRENCY } from "@repo/common-lib/constants/constants";
+import { ORGANIZATION_SAME_AS } from "@/lib/config";
 import type { FullCollection } from "@repo/common-lib/types/collection";
 import type { MediaWithUser } from "@repo/common-lib/types/media";
 import type { FullPortfolio } from "@repo/common-lib/types/portfolio";
@@ -110,7 +111,11 @@ export function buildOrganizationJsonLd(description: string) {
       "@id": `${abs("/")}#organization`,
       name: SITE_NAME,
       url: abs("/"),
+      // The 512px app icon doubles as the brand logo (knowledge-panel signal).
+      logo: abs("/android-chrome-512x512.png"),
       description,
+      // Official brand profiles (single source: lib/social) — entity identity for search + AI.
+      ...(ORGANIZATION_SAME_AS.length ? { sameAs: ORGANIZATION_SAME_AS } : {}),
     },
   ]);
 }

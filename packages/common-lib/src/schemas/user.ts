@@ -11,6 +11,11 @@ export type UserSchema = {
   profession?: string | null;
   biography?: string | null;
   email: string;
+  phone_number?: string | null;
+  facebook_link?: string | null;
+  website_link?: string | null;
+  instagram_link?: string | null;
+  youtube_link?: string | null;
   avatar?: string;
   banner?: string;
   is_featured: boolean;
@@ -40,7 +45,7 @@ export type UserSchema = {
   updated_at: Date;
 };
 export type UserSchemaWithoutTimestamps = Omit<UserSchema, 'created_at' | 'updated_at'>;
-export type UserCoreSchema = Omit<UserSchema, 'created_at' | 'updated_at' | 'name' | 'surname' | 'biography' | 'avatar' | 'banner' | 'seo_title' | 'seo_description' | 'seo_generated_at'>;
+export type UserCoreSchema = Omit<UserSchema, 'created_at' | 'updated_at' | 'name' | 'surname' | 'biography' | 'avatar' | 'banner' | 'seo_title' | 'seo_description' | 'seo_generated_at' | 'phone_number' | 'facebook_link' | 'website_link' | 'instagram_link' | 'youtube_link'>;
 const tablesUser = [TABLES_ENUM.USERS] as const;
 export type UserSchemaColumns = TableColumn<typeof tablesUser, UserSchemaWithoutTimestamps>;
 export type UserCoreSchemaColumns = TableColumn<typeof tablesUser, UserCoreSchema>;
@@ -117,6 +122,11 @@ export type UserProfileRow = {
   biography?: string | null;
   profession?: string | null;
   is_featured?: boolean;
+  phone_number?: string | null;
+  facebook_link?: string | null;
+  website_link?: string | null;
+  instagram_link?: string | null;
+  youtube_link?: string | null;
   seo_title?: string | null;
   seo_description?: string | null;
   seo_generated_at?: Date | null;

@@ -7,9 +7,33 @@ import {
   IsArray,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
+import {
+  PHONE_REGEX,
+  PHONE_MAX_LENGTH,
+  LINK_MAX_LENGTH,
+  INSTAGRAM_URL_REGEX,
+  FACEBOOK_URL_REGEX,
+  YOUTUBE_URL_REGEX,
+  WEBSITE_URL_REGEX,
+  normalizePhone,
+} from '@repo/common-lib/constants/validation';
 import { ToInt } from 'src/common/decorators/to-int.decorator';
 import { ModelArrayExist } from 'src/common/validators/model-array-exist.validtor';
 import { ModelExist } from 'src/common/validators/model-exist.validtor';
+
+/** Trim a string field; convert an emptied value to `null` so it clears the column. */
+const emptyToNull = ({ value }: { value: unknown }) => {
+  if (typeof value !== 'string') return value;
+  const trimmed = value.trim();
+  return trimmed === '' ? null : trimmed;
+};
+
+/** Normalize a phone (strip spaces/dashes/parens); convert an emptied value to `null` to clear it. */
+const normalizePhoneOrNull = ({ value }: { value: unknown }) => {
+  if (typeof value !== 'string') return value;
+  const normalized = normalizePhone(value.trim());
+  return normalized === '' ? null : normalized;
+};
 
 export class UpdateUserRequest {
   @IsOptional()
@@ -59,6 +83,51 @@ export class UpdateUserRequest {
   @Transform(({ value }) => value?.map((v: string) => parseInt(v, 10)))
   @ModelArrayExist('categories')
   categories?: number[];
+
+  @IsOptional()
+  @Transform(normalizePhoneOrNull)
+  @IsString()
+  @MaxLength(PHONE_MAX_LENGTH)
+  @Matches(PHONE_REGEX, {
+    message: 'phone_number must be a valid phone number (9–15 digits, optional +country code)',
+  })
+  phone_number?: string | null;
+
+  @IsOptional()
+  @Transform(emptyToNull)
+  @IsString()
+  @MaxLength(LINK_MAX_LENGTH)
+  @Matches(FACEBOOK_URL_REGEX, {
+    message: 'facebook_link must be a valid Facebook URL (https://facebook.com/...)',
+  })
+  facebook_link?: string | null;
+
+  @IsOptional()
+  @Transform(emptyToNull)
+  @IsString()
+  @MaxLength(LINK_MAX_LENGTH)
+  @Matches(WEBSITE_URL_REGEX, {
+    message: 'website_link must be a valid URL (https://example.com)',
+  })
+  website_link?: string | null;
+
+  @IsOptional()
+  @Transform(emptyToNull)
+  @IsString()
+  @MaxLength(LINK_MAX_LENGTH)
+  @Matches(INSTAGRAM_URL_REGEX, {
+    message: 'instagram_link must be a valid Instagram URL (https://instagram.com/handle)',
+  })
+  instagram_link?: string | null;
+
+  @IsOptional()
+  @Transform(emptyToNull)
+  @IsString()
+  @MaxLength(LINK_MAX_LENGTH)
+  @Matches(YOUTUBE_URL_REGEX, {
+    message: 'youtube_link must be a valid YouTube URL (https://youtube.com/@handle)',
+  })
+  youtube_link?: string | null;
 
   @IsOptional()
   avatar?: Express.Multer.File;

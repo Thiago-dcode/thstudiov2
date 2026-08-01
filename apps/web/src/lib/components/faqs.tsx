@@ -17,7 +17,7 @@ export type FaqItem = { id: string; question: string; answer: string };
  * the `<a>` tag in the message.
  */
 export const faqAnswerClassName =
-  "w-full text-base! leading-[1.4] text-text-muted [&_a]:font-medium [&_a]:text-text [&_a]:underline [&_a]:underline-offset-4 [&_a]:transition-colors [&_a:hover]:text-text-muted";
+  "w-full text-base! leading-[1.5] text-text-muted [&_a]:font-medium [&_a]:text-text [&_a]:underline [&_a]:underline-offset-4 [&_a]:transition-colors [&_a:hover]:text-text-muted [&_strong]:font-semibold [&_strong]:text-text [&_p]:mt-3 [&_ul]:mt-3 [&_ul]:list-disc [&_ul]:space-y-2 [&_ul]:pl-5 [&_li]:leading-[1.5]";
 
 export function FaqsContent() {
   const t = useTranslations("faqs");

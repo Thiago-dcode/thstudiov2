@@ -47,12 +47,44 @@ const SEO_SYSTEM_PROMPT =
 /** Quality rules shared by media + entity prompts (kept identical so caching stays effective). */
 const SEO_QUALITY_RULES = `Quality rules (apply to every language):
         - FRONT-LOAD the primary keyword; art-catalog voice. Priority of signals: art style → discipline/medium → subject → city.
-        - Real searchable terms first; evocative but NEVER keyword-stuffed.
+        - Real searchable terms first; evocative but NEVER keyword-stuffed. Write natural, human, art-world prose — never repeat the same word/phrase to try to rank; each word must earn its place.
         - NEVER include: the platform/brand name, the artist's username/handle/login, or filler words used as padding ("portfolio", "gallery", "collection", "photo").
         - If provided title/description look like placeholder, lorem, or non-descriptive text, IGNORE them and build from the real signals (style, discipline, subject, city, categories).
         - The artist's real name may appear only at the end, and only if it is a real personal name (not a handle).
-        - Do NOT invent a city, style, medium, or subject that is not clearly present. When unsure, stay generic and honest.
+        - Do NOT invent a city, style, medium, or subject that is not clearly present. When unsure, stay generic and honest — but ALWAYS return a real, descriptive phrase (never "untitled", "n/a", or a placeholder).
+        - Every field is PLAIN TEXT: no quotes, JSON, HTML, markdown, or emoji inside the value.
+        - No profanity, slurs, or offensive language — this text is public and indexed.
         Good title examples: "Brutalist Architecture Photography — Madrid", "Fine-Art Wedding Photography in Tuscany", "Analog Portrait Photography · Lisbon", "Minimalist Logo & Brand Design".`;
+
+/**
+ * Junk only when it is the WHOLE value — matching these as substrings would wrongly reject legitimate
+ * text (art literally titled "Untitled …", Spanish/Portuguese "todo", "for example" in prose).
+ */
+const SEO_WHOLE_JUNK = new Set([
+  'untitled', 'na', 'n/a', 'tbd', 'todo', 'unknown', 'none', 'null', 'test',
+  'sin titulo', 'sin título', 'sem titulo', 'sem título',
+]);
+
+/** Unambiguous echoed-instruction / placeholder fragments — safe to match anywhere in the value. */
+const SEO_ECHO_RE =
+  /lorem ipsum|placeholder|seo[- ]?(title|description|alt)|(your|the)\s+(title|text|description)\s+here|description here/i;
+
+/** Strong profanity / slurs (en/es/pt), whole-token match. Ambiguous accent-collision words are omitted on purpose. */
+const SEO_PROFANITY = new Set([
+  // en
+  'fuck', 'fucking', 'motherfucker', 'shit', 'bitch', 'cunt', 'asshole', 'bastard', 'dick', 'pussy',
+  'slut', 'whore', 'nigger', 'faggot', 'retard',
+  // es
+  'mierda', 'puta', 'puto', 'cabron', 'cabrón', 'gilipollas', 'joder', 'polla', 'maricon', 'maricón',
+  // pt
+  'merda', 'caralho', 'porra', 'buceta', 'foder', 'viado', 'corno',
+]);
+
+/** Common words (len ≥ 4, en/es/pt) excluded from the stuffing frequency check so they don't false-trigger. */
+const SEO_STOPWORDS = new Set([
+  'with', 'from', 'this', 'that', 'your', 'into', 'style', 'para', 'como', 'este', 'esta', 'sobre',
+  'dos', 'das', 'uma', 'com', 'and', 'the', 'for',
+]);
 
 @Injectable()
 export class AiService {
@@ -552,6 +584,51 @@ export class AiService {
     return value.length > max ? value.slice(0, max) : value;
   }
 
+  /**
+   * Validate one AI-generated SEO string and truncate it to `max` on a word boundary. Returns `null`
+   * when the text is junk (placeholder / markup leak / no real content), keyword-stuffed, or contains
+   * profanity — the caller then leaves the field empty so the entity's own title is used instead.
+   * Deliberately does NOT dedupe against other rows in the DB (per product decision).
+   */
+  private sanitizeSeoText(value: unknown, max: number): string | null {
+    if (typeof value !== 'string') return null;
+    const text = value.replace(/\s+/g, ' ').trim();
+    if (text.length < 3) return null;
+    // Structural leakage (JSON/HTML) — never belongs in a meta value.
+    if (/[{}<>]/.test(text)) return null;
+    // Whole-value junk / echoed-instruction fragments.
+    if (SEO_WHOLE_JUNK.has(text.toLowerCase()) || SEO_ECHO_RE.test(text)) return null;
+    // Too little character variety ("aaaaaa", "-----", "....").
+    if (new Set(text.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '')).size < 3) return null;
+
+    const tokens = text.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [];
+    // Profanity (whole-token, so "Scunthorpe"-type substrings are safe).
+    if (tokens.some((t) => SEO_PROFANITY.has(t))) return null;
+    // Keyword stuffing: the same word three times in a row.
+    for (let i = 0; i + 2 < tokens.length; i++) {
+      if (tokens[i] === tokens[i + 1] && tokens[i] === tokens[i + 2]) return null;
+    }
+    // Keyword stuffing: one content word repeated too often / dominating the text.
+    const content = tokens.filter((t) => t.length >= 4 && !SEO_STOPWORDS.has(t));
+    if (content.length) {
+      const freq = new Map<string, number>();
+      let peak = 0;
+      for (const w of content) {
+        const n = (freq.get(w) ?? 0) + 1;
+        freq.set(w, n);
+        if (n > peak) peak = n;
+      }
+      if (peak >= 4) return null;
+      if (content.length >= 4 && peak >= 3 && peak / content.length >= 0.4) return null;
+    }
+
+    if (text.length <= max) return text;
+    // Truncate without cutting a word in half when a clean break is available.
+    const cut = text.slice(0, max);
+    const lastSpace = cut.lastIndexOf(' ');
+    return (lastSpace > max * 0.6 ? cut.slice(0, lastSpace) : cut).trimEnd();
+  }
+
   private parseLlmJson(text: string): Record<string, unknown> {
     let jsonText = text.trim();
     if (jsonText.startsWith('```')) {
@@ -592,8 +669,8 @@ export class AiService {
       const v = this.localeObject(raw, lc);
       return {
         language_code: lc,
-        seo_title: this.clamp(v.seo_title ?? v.title, ENTITY_SEO_TITLE_MAX),
-        seo_description: this.clamp(v.seo_description ?? v.description, ENTITY_SEO_DESCRIPTION_MAX),
+        seo_title: this.sanitizeSeoText(v.seo_title ?? v.title, ENTITY_SEO_TITLE_MAX),
+        seo_description: this.sanitizeSeoText(v.seo_description ?? v.description, ENTITY_SEO_DESCRIPTION_MAX),
       };
     });
     const en = rows.find((r) => r.language_code === 'EN');
@@ -612,9 +689,9 @@ export class AiService {
       const v = this.localeObject(raw, lc);
       return {
         language_code: lc,
-        seo_title: this.clamp(v.seo_title ?? v.title, MEDIA_SEO_TITLE_MAX),
-        seo_description: this.clamp(v.seo_description ?? v.description, MEDIA_SEO_DESCRIPTION_MAX),
-        seo_alt: this.clamp(v.seo_alt ?? v.alt, MEDIA_SEO_ALT_MAX),
+        seo_title: this.sanitizeSeoText(v.seo_title ?? v.title, MEDIA_SEO_TITLE_MAX),
+        seo_description: this.sanitizeSeoText(v.seo_description ?? v.description, MEDIA_SEO_DESCRIPTION_MAX),
+        seo_alt: this.sanitizeSeoText(v.seo_alt ?? v.alt, MEDIA_SEO_ALT_MAX),
       };
     });
     const en = rows.find((r) => r.language_code === 'EN');

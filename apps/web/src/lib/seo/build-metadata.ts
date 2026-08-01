@@ -2,6 +2,7 @@ import type { EntitySeoMetadata } from "@repo/common-lib/types/ai";
 import type { Metadata } from "next";
 import { serverEnv } from "@/env/server";
 import { SUPPORTED_LOCALES, type SupportedLocale } from "@/i18n/routing";
+import { DEFAULT_OG_IMAGE } from "@/lib/config";
 
 const SITE_NAME = "A11STUDIO";
 
@@ -44,6 +45,8 @@ export function buildSeoMetadata(
 
   const title = meta.seo_title?.trim() || fallback.title;
   const description = meta.seo_description?.trim() || fallback.description;
+  // Entities usually carry their own og image; fall back to the brand logo so cards are never blank.
+  const ogImage = meta.og_image || DEFAULT_OG_IMAGE;
 
   return {
     title,
@@ -61,15 +64,13 @@ export function buildSeoMetadata(
       alternateLocale: SUPPORTED_LOCALES.filter((l) => l !== current).map(
         (l) => OG_LOCALE[l],
       ),
-      ...(meta.og_image
-        ? { images: [{ url: meta.og_image, alt: title }] }
-        : {}),
+      images: [{ url: ogImage, alt: title }],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      ...(meta.og_image ? { images: [meta.og_image] } : {}),
+      images: [ogImage],
     },
   };
 }

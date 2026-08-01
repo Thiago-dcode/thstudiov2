@@ -20,6 +20,11 @@ const config = (envPath?: string | undefined) => {
       api_key: process.env.APP_API_KEY || '',
       // Private token gating otherwise-public machine endpoints (e.g. the sitemap feed) to our own app.
       token: process.env.APP_TOKEN || '',
+      address: process.env.COMPANY_ADDRESS,
+      phone: process.env.COMPANY_PHONE,
+      social: {
+        instagram: process.env.INSTAGRAM_LINK,
+      },
       name: 'a11studio',
       url: process.env.APP_URL,
       env: process.env.NODE_ENV || 'development',

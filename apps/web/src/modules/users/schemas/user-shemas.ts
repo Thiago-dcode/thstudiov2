@@ -1,12 +1,17 @@
 import * as z from "zod";
 import {
   emailField,
+  facebookUrlField,
+  instagramUrlField,
   maxLengthMessage,
   minLengthMessage,
   personNameField,
+  phoneField,
   requiredString,
   type Translator,
   tooLongMessage,
+  websiteUrlField,
+  youtubeUrlField,
 } from "@/lib/validation/zod-helpers";
 
 export const loginRequestSchema = (t: Translator) =>
@@ -86,6 +91,11 @@ export const updateUserSchema = (t: Translator) =>
         .max(5000, tooLongMessage(t, t("fields.biography")))
         .optional(),
       email: emailField(t).optional(),
+      phone_number: phoneField(t),
+      facebook_link: facebookUrlField(t),
+      website_link: websiteUrlField(t),
+      instagram_link: instagramUrlField(t),
+      youtube_link: youtubeUrlField(t),
       is_active: z.boolean().optional(),
       twofa_attempts: z.number().int().min(0).optional(),
       funnel_step: z.number().int().min(0).optional(),

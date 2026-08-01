@@ -3,7 +3,7 @@ import { serverEnv } from "@/env/server";
 import { Link } from "@/i18n/navigation";
 
 export const metadata: Metadata = {
-  title: "Terms of Service — A11STUDIO",
+  title: { absolute: "Terms of Service — A11STUDIO" },
   description:
     "Terms and conditions for using the A11STUDIO portfolio platform.",
 };

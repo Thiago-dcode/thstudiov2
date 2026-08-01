@@ -8,6 +8,7 @@ import { cn } from "@repo/ui/lib/utils";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import Web from "@/lib/components/web-page.component";
+import { buildStaticPageMetadata } from "@/lib/seo/static-metadata";
 import categoriesService from "@/modules/categories/categories.service";
 import { UpdateCategoriesProvider } from "@/modules/categories/providers/categories.provider";
 import portfolioService from "@/modules/portfolios/portfolio.service";
@@ -27,12 +28,28 @@ import {
 import { SearchNearMeButton } from "./_components/search-near-me-button";
 import { SearchSegmentToggle } from "./_components/search-segment-toggle";
 
-export async function generateMetadata() {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string; search: string }>;
+}) {
+  const { locale, search } = await params;
   const t = await getTranslations("search");
-  return {
+  if (!isSearchSegment(search)) {
+    return {
+      title: { absolute: t("page.title") },
+      robots: { index: false, follow: false },
+    };
+  }
+  // Canonical points at the clean segment URL (no query string), so all filtered/param variants
+  // (`?search=`, `?categories=`, geo filters) consolidate here instead of bloating the index.
+  return buildStaticPageMetadata({
+    path: `/${search}`,
     title: t("page.title"),
+    titleAbsolute: true,
     description: t("page.description"),
-  };
+    locale,
+  });
 }
 
 async function fetchSearchResults(
