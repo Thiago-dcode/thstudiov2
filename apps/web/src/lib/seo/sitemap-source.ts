@@ -18,6 +18,12 @@ const EMPTY_COUNTS: SitemapCounts = {
 };
 
 /**
+ * Cap on each sitemap request. Static generation aborts a route after 60s, so an unreachable or
+ * slow API must fail fast enough to fall back rather than burn the whole budget and fail the build.
+ */
+const SITEMAP_FETCH_TIMEOUT_MS = 10_000;
+
+/**
  * Fetch a sitemap endpoint and unwrap the API `{ data }` envelope. Failures degrade to `fallback`
  * so a transient API hiccup never hard-fails the build or a shard render.
  */
@@ -25,6 +31,7 @@ async function getData<T>(path: string, fallback: T): Promise<T> {
   try {
     const res = await fetch(`${serverEnv.API_V1_URL}${path}`, {
       next: { revalidate: SITEMAP_REVALIDATE },
+      signal: AbortSignal.timeout(SITEMAP_FETCH_TIMEOUT_MS),
       headers: {
         Accept: "application/json",
         [APP_TOKEN_HEADER]: serverEnv.APP_TOKEN,

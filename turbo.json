@@ -9,7 +9,20 @@
     },
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"],
+      "env": [
+        "APP_URL",
+        "APP_API_KEY",
+        "APP_TOKEN",
+        "API_V1_URL",
+        "GEOAPIFY_URL",
+        "GEOAPIFY_KEY",
+        "ENCRYPTION_SECRET",
+        "SUPPORT_EMAIL",
+        "SUPPORT_USERNAME",
+        "REGISTRATION_IS_CLOSED",
+        "CDN_URL"
+      ]
     },
     "lint": {
       "dependsOn": ["^build"]
