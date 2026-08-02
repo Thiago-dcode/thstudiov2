@@ -32,6 +32,10 @@ const nextConfig: NextConfig = {
   // pass on the resource-constrained droplet (1 vCPU / 1 GB).
   typescript: { ignoreBuildErrors: true },
   experimental: {
+    // Next 16.2 cannot drive TypeScript 7 through the programmatic compiler API.
+    // Shelling out to the project-local `tsc` CLI is the supported path until
+    // Next ships native TS7 support.
+    useTypeScriptCli: true,
     serverActions: {
       bodySizeLimit: "500mb",
     },

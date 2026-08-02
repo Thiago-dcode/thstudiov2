@@ -23,23 +23,23 @@
   },
   "dependencies": {
     "@types/crypto-js": "^4.2.2",
-    "@types/multer": "^2.1.0",
+    "@types/multer": "^2.2.0",
     "bcrypt": "^6.0.0",
     "crypto-js": "^4.2.0",
     "date-fns": "^4.4.0",
     "dotenv": "^17.4.2",
     "ejs": "^6.0.1",
     "install": "^0.13.0",
-    "uuid": "^14.0.0"
+    "uuid": "^14.0.1"
   },
   "devDependencies": {
     "@repo/jest-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/bcrypt": "^6.0.0",
     "@types/jest": "30.0.0",
-    "@types/node": "^25.9.3",
+    "@types/node": "^26.1.2",
     "jest": "30.4.2",
-    "ts-jest": "29.4.11",
+    "ts-jest": "29.4.12",
     "typescript": "^6.0.3"
   }
 }

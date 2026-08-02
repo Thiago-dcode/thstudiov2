@@ -5,7 +5,6 @@
     "rootDir": ".",
     "outDir": "dist",
     "tsBuildInfoFile": "dist/.tsbuildinfo",
-    "baseUrl": ".",
     "ignoreDeprecations": "6.0"
   },
   "module": "esnext",

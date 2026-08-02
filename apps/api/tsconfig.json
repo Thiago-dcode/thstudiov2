@@ -1,12 +1,18 @@
 {
   "extends": "@repo/typescript-config/nestjs.json",
   "compilerOptions": {
+    // This app stays on TypeScript 6 (see package.json): the Nest CLI needs the
+    // programmatic compiler API, which TS 7.0 does not ship. `baseUrl` must stay
+    // with it — the Nest SWC builder reads it straight from here and panics on an
+    // empty value. The `"*": ["./*"]` path below is TS7's replacement for it, kept
+    // so `src/...` absolute imports survive the eventual move to TS 7.1.
     "baseUrl": ".",
     "ignoreDeprecations": "6.0",
     "rootDir": "src",
     "outDir": "dist",
     "types": ["node","jest","multer"],
     "paths": {
+      "*": ["./*"],
       "stripe-types/*": ["./node_modules/stripe/cjs/resources/*.d.ts"],
       "stripe-types/checkout": ["./node_modules/stripe/cjs/resources/Checkout/index.d.ts"]
     },

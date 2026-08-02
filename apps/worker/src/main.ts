@@ -1,6 +1,6 @@
 import { config } from '@repo/common-lib/config';
 import express from 'express';
-import { Job, Queue, Worker } from 'bullmq';
+import { Job, Worker } from 'bullmq';
 const appConfig = config();
 const WORKER_PORT = process.env.WORKER_PORT || 8081;
 
@@ -12,7 +12,7 @@ app.get('/', (_req, res) => {
 
 // TODO: Register workers here
 // Example:
-const myWorker = new Worker('queue-name', async (job: Job) => {
+new Worker('queue-name', async (job: Job) => {
 
   JobStrategyFactory.resolve(job)
 

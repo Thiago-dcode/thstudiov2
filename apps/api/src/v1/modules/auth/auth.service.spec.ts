@@ -20,6 +20,7 @@ import { RoleService } from '../roles/roles.service';
 import { InvitationLinkService } from '../invitation-links/invitation-link.service';
 import { UserBenefitService } from '../user-benefit/user-benefit.service';
 import { WaitListService } from '../wait-list/wait-list.service';
+import { LogService } from '@repo/backend-lib/services/log-service';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -43,6 +44,7 @@ describe('AuthService', () => {
         { provide: InvitationLinkService, useValue: {} },
         { provide: UserBenefitService, useValue: {} },
         { provide: WaitListService, useValue: {} },
+        { provide: LogService, useValue: {} },
       ],
     }).compile();
 
