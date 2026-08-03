@@ -167,13 +167,13 @@ async function seedAssets(): Promise<void> {
 
     await deleteExistingAssetBySlug(slug, storageService);
 
-    const storagePath = `assets/${slug}/${originalFilename}`;
+    const storagePath = `assets/${slug}`;
     const assetFile = readFileForUpload(path.join(assetsDir, originalFilename), originalFilename);
     await storageService.write(assetFile, storagePath);
 
     let thumbnailPath: string | null = null;
     if (entry.thumbnail) {
-      thumbnailPath = `assets/${slug}/thumbnail/${originalFilename}`;
+      thumbnailPath = `assets/${slug}-thumbnail`;
       const thumbnailFile = readFileForUpload(
         path.join(assetsDir, entry.thumbnail),
         entry.thumbnail,

@@ -49,7 +49,7 @@ export class AssetsService {
       throw new BadRequestException(`Slug "${slug}" already exists`);
     }
 
-    const storagePath = `assets/${slug}/${originalFilename}`;
+    const storagePath = `assets/${slug}`;
 
 
 
@@ -59,7 +59,7 @@ export class AssetsService {
     // Store thumbnail to S3 if provided
     let thumbnailPath: string | null = null;
     if (thumbnailFile) {
-      thumbnailPath = `assets/${slug}/thumbnail/${originalFilename}`;
+      thumbnailPath = `assets/${slug}-thumbnail`;
       await this.helpers.setAsset({ asset: thumbnailFile, path: thumbnailPath, targetSizeMb: 0.1 });
     }
 
@@ -105,7 +105,7 @@ export class AssetsService {
       throw new NotFoundException(`Asset not found with slug ${slug}`);
     }
 
-    await Promise.all([this.helpers.deleteAsset(asset.url), this.helpers.deleteAsset(asset?.thumbnail), this.assetsRepository.deleteBySlug(slug),this.helpers.deleteCached(`asset:slug:${slug}`)]);
+    await Promise.all([this.helpers.deleteAsset(asset.url), this.helpers.deleteAsset(asset?.thumbnail), this.assetsRepository.deleteBySlug(slug), this.helpers.deleteCached(`asset:slug:${slug}`)]);
   }
 
   async getOneBySlug(slug: string): Promise<Asset> {
