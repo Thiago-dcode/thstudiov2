@@ -6,7 +6,10 @@ export async function CtaSection() {
   const t = await getTranslations("landing.cta");
 
   return (
-    <WebSection className="relative flex min-h-[calc(100svh-4rem)] items-center justify-center overflow-hidden">
+    <WebSection
+      id="landing-cta-section"
+      className="relative flex min-h-[calc(100svh-4rem)] items-center justify-center overflow-hidden"
+    >
       <WebSection.Container className="flex max-w-3xl flex-col items-center gap-8 py-24 text-center tablet:gap-10 tablet:py-32">
         <div className="flex flex-col items-center gap-5">
           <span aria-hidden="true" className="h-px w-12 bg-border-em" />

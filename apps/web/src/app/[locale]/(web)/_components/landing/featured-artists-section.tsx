@@ -13,7 +13,7 @@ export async function FeaturedArtistsSection() {
   if (!artists.length) return null;
 
   return (
-    <WebSection>
+    <WebSection id="featured-artists">
       <WebSection.Container>
         <WebSection.Header
           badge={t("header.badge")}

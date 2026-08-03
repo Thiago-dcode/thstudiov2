@@ -11,6 +11,7 @@ import {
   normalizeGalleryLayout,
 } from "./gallery-layout";
 import { MediaGalleryCard } from "./media-gallery-card";
+import { cn } from "../../../lib/utils";
 
 export type GalleryGridMedia = Pick<
     MediaPortfolio,
@@ -34,7 +35,7 @@ export const GalleryGridContainer = ({
   if (needsMasonryWrapper(resolvedLayout)) {
     return (
       <div className="layout-masonry-wrapper">
-        <div className={gridClassName} style={containerStyle}>
+        <div className={cn(gridClassName)} style={containerStyle}>
           {children}
         </div>
       </div>
@@ -42,7 +43,7 @@ export const GalleryGridContainer = ({
   }
 
     return (
-        <div className={gridClassName} style={containerStyle}>
+        <div className={cn(gridClassName)} style={containerStyle}>
             {children}
         </div>
     );

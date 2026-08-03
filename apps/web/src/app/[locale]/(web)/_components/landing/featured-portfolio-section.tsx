@@ -5,15 +5,10 @@ import {
 import { Gallery } from "@repo/ui/components/custom/gallery/gallery";
 import { PortfolioGrid } from "@repo/ui/components/custom/gallery/gallery-grid";
 import { GalleryProvider } from "@repo/ui/providers/gallery.provider";
+import Link from "next/link";
 import { getTranslations } from "next-intl/server";
-import { Link } from "@/i18n/navigation";
 import portfolioService from "@/modules/portfolios/portfolio.service";
 import { WebSection } from "./web-section";
-
-const MAX_FEATURED_ITEMS = 9;
-const PHONE_FEATURED_COUNT = 6;
-const TABLET_FEATURED_COUNT = 9;
-const LAPTOP_FEATURED_COUNT = 9;
 
 export async function FeaturedPortfolioSection() {
   const t = await getTranslations("landing.featuredPortfolio");
@@ -22,84 +17,68 @@ export async function FeaturedPortfolioSection() {
 
   if (!portfolio) return null;
 
-  const portfolioItems = buildPortfolioItemsFromFullPortfolio(portfolio).slice(
-    0,
-    MAX_FEATURED_ITEMS,
-  );
+  const portfolioItems = buildPortfolioItemsFromFullPortfolio(portfolio);
   const mediaItems = extractMediaFromPortfolioItems(portfolioItems);
 
   if (!portfolioItems.length) return null;
-
-  const sliceFeaturedItems = (count: number) =>
-    portfolioItems.slice(0, Math.min(portfolioItems.length, count));
 
   return (
     <WebSection
       id="featured-portfolio"
       className="overflow-hidden max-w-(--breakpoint-ultrawide) max-h-screen mx-auto"
     >
-      <WebSection.Container className="pt-28">
-        <div className="flex items-end flex-col laptop:flex-row px-4 justify-between gap-0.5 mb-2 border-b w-full border-b-text/80!">
-          <h3 className="text-2xl! laptop:text-4xl! line-clamp-1 uppercase">
-            {portfolio.title}
-          </h3>
-          <p>
-            {t("by")}{" "}
-            <Link
-              href={`/artists/${portfolio.artist.username}`}
-              className="text-text font-semibold tracking-wide underline-offset-4 transition-colors hover:text-text-muted hover:underline"
-              aria-label={t("viewProfile", {
-                username: portfolio.artist.username,
-              })}
+      <WebSection.Container className="pt-24">
+        <div className="flex w-full flex-col laptop:flex-row gap-8">
+          <div className="flex flex-col  gap-8 laptop:max-w-1/3">
+            <div className="flex flex-col items-start justify-start gap-2">
+              <h2 className="line-clamp-2 laptop:line-clamp-1">
+                {portfolio.title}
+              </h2>
+              <p className=" line-clamp-3 laptop:line-clamp-none">
+                {portfolio.description}
+              </p>
+            </div>
+
+            <div className="hidden laptop:flex items-center">
+              <WebSection.ActionLink
+                href={`/artists/${portfolio.artist.username}/portfolios`}
+                className="bg-bg/10 backdrop-blur-sm"
+              >
+                {t("exploreMore")}
+              </WebSection.ActionLink>
+            </div>
+          </div>
+          <div className=" m-auto overflow-hidden size-full max-w-(--breakpoint-laptop)">
+            <GalleryProvider
+              items={mediaItems.map((m) => ({
+                url: m.url ?? m.thumbnail,
+                alt: m.seo_alt ?? m.title ?? undefined,
+              }))}
             >
-              @{portfolio.artist.username}
-            </Link>
-          </p>
-        </div>
-        <section className=" m-auto overflow-hidden">
-          <GalleryProvider
-            items={mediaItems.map((m) => ({
-              url: m.url ?? m.thumbnail,
-              alt: m.seo_alt ?? m.title ?? undefined,
-            }))}
-          >
-            <div className="tablet:hidden">
-              <PortfolioGrid
-                portfolioItems={sliceFeaturedItems(PHONE_FEATURED_COUNT)}
-              />
-            </div>
-            <div className="hidden tablet:block laptop:hidden">
-              <PortfolioGrid
-                portfolioItems={sliceFeaturedItems(TABLET_FEATURED_COUNT)}
-              />
-            </div>
-            <div className="hidden laptop:block desktop:hidden">
-              <PortfolioGrid
-                portfolioItems={sliceFeaturedItems(LAPTOP_FEATURED_COUNT)}
-              />
-            </div>
-            <div className="hidden desktop:block">
-              <PortfolioGrid portfolioItems={portfolioItems} />
-            </div>
-            <div className="tablet:block">
+              <h4 className="text-end pb-1 mr-1">
+                A portfolio by:{" "}
+                <Link
+                  href={`artists/${portfolio.artist.username}`}
+                  className="font-medium"
+                >
+                  {portfolio.artist.username}
+                </Link>
+              </h4>
               <Gallery />
-            </div>
-          </GalleryProvider>
-        </section>
+              <PortfolioGrid portfolioItems={portfolioItems} />
+            </GalleryProvider>
+          </div>
+        </div>
       </WebSection.Container>
       <div className="absolute inset-x-0 bottom-0 z-10">
         <div
           className="featured-portfolio-fade pointer-events-none"
           aria-hidden
         />
-        <div className="absolute inset-x-0 bottom-10 flex justify-center">
-          <WebSection.ActionLink
-            href={`/artists/${portfolio.artist.username}/portfolios`}
-            className="relative z-20 bg-bg/10 px-4 py-2 backdrop-blur-sm"
-          >
-            {t("exploreMore")}
-          </WebSection.ActionLink>
-        </div>
+        <WebSection.NextSectionLink
+          href="#landing-cta-section"
+          ariaLabel={t("scrollToNextSection")}
+        />
       </div>
       <style>{`
         .featured-portfolio-fade {

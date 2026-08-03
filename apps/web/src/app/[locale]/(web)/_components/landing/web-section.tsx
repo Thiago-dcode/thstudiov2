@@ -1,7 +1,8 @@
 import { cn } from "@repo/ui/lib/utils";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ChevronDown } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link } from "@/i18n/navigation";
+import { ScrollHashLink } from "./scroll-hash-link";
 
 function Root({
   children,
@@ -108,8 +109,48 @@ function ActionLink({
   );
 }
 
+function NextSectionLink({
+  href,
+  ariaLabel,
+  className,
+}: {
+  href: `#${string}`;
+  ariaLabel: string;
+  className?: string;
+}) {
+  return (
+    <>
+      <ScrollHashLink
+        href={href}
+        aria-label={ariaLabel}
+        className={cn(
+          "hidden phone-xs:block  z-100 absolute bottom-6 left-1/2 -translate-x-1/2 p-2 text-text-muted/50 transition-colors hover:text-text focus-visible:text-text",
+          className,
+        )}
+      >
+        <ChevronDown
+          className="size-5 next-section-bounce text-text-muted"
+          aria-hidden="true"
+        />
+      </ScrollHashLink>
+      <style>{`
+@media (prefers-reduced-motion: no-preference) {
+  .next-section-bounce {
+    animation: next-section-float 2.4s ease-in-out infinite;
+  }
+  @keyframes next-section-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(5px); }
+  }
+}
+`}</style>
+    </>
+  );
+}
+
 export const WebSection = Object.assign(Root, {
   Container,
   Header,
   ActionLink,
+  NextSectionLink,
 });

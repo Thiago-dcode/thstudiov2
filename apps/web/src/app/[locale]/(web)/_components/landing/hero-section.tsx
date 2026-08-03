@@ -1,11 +1,9 @@
 import { LazyVideo } from "@repo/ui/components/custom/LazyVideo";
 import { SlotMachine } from "@repo/ui/components/custom/slot-machine";
-import { ChevronDown } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 import assetService from "@/modules/assets/asset.service";
 import { WaitListForm } from "@/modules/wait-list/components/wait-list-form";
-import { ScrollHashLink } from "./scroll-hash-link";
 import { WebSection } from "./web-section";
 
 function HeroVideoFallback() {
@@ -81,17 +79,11 @@ export async function HeroSection() {
         </div>
       </div>
 
-      {/* ── Scroll down indicator ── */}
-      <ScrollHashLink
+      <WebSection.NextSectionLink
         href="#value-pillars"
-        aria-label={t("scrollToNextSection")}
-        className="z-100  absolute bottom-10 left-1/2  -translate-x-1/2 p-2 text-text-muted/50 transition-colors hover:text-text focus-visible:text-text"
-      >
-        <ChevronDown
-          className="size-5 hero-bounce text-text-muted"
-          aria-hidden="true"
-        />
-      </ScrollHashLink>
+        ariaLabel={t("scrollToNextSection")}
+        className="bottom-10"
+      />
 
       <style>{`
  /* ── Staggered entrance animations ── */
@@ -114,15 +106,6 @@ export async function HeroSection() {
  opacity: 1;
  transform: translateY(0);
  }
- }
-
- .hero-bounce {
- animation: hero-float 2.4s ease-in-out infinite;
- }
-
- @keyframes hero-float {
- 0%, 100% { transform: translateY(0); }
- 50% { transform: translateY(5px); }
  }
  }
  `}</style>

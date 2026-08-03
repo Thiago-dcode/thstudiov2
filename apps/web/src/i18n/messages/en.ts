@@ -189,6 +189,7 @@ const messages = {
       by: "A portfolio by",
       viewProfile: "View @{username}'s profile",
       exploreMore: "Get inspired",
+      scrollToNextSection: "Scroll to next section",
     },
     cta: {
       badge: "Ready when you are",

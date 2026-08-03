@@ -1,9 +1,7 @@
-import { ChevronDown } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { RegistrationCtaButton } from "@/lib/components/registration-cta-button";
 import { MediaCarousel } from "@/modules/media/components/media-carousel";
 import mediaService from "@/modules/media/media.service";
-import { ScrollHashLink } from "./scroll-hash-link";
 import { ValueCarousel } from "./values-carousel";
 import { WebSection } from "./web-section";
 
@@ -21,7 +19,7 @@ export async function ValuePillarsSection() {
 
   return (
     <WebSection id="value-pillars" className="relative">
-      <WebSection.Container className=" pl-0 px-0 tablet:px-0  min-h-screen h-full flex flex-col items-center pt-24 ">
+      <WebSection.Container className=" pl-0 px-0 tablet:px-0  min-h-screen h-full flex flex-col items-center pt-20 tablet:pt-24 ">
         <div className="h-full w-full flex flex-col items-center  justify-center gap-12 desktop-lg:gap-24 m-auto ">
           <div className=" w-full ">
             <div className="flex justify-start flex-col tablet:flex-row gap-4">
@@ -51,16 +49,10 @@ export async function ValuePillarsSection() {
           </div>
         </div>
       </WebSection.Container>
-      <ScrollHashLink
+      <WebSection.NextSectionLink
         href="#featured-portfolio"
-        aria-label={t("scrollToNextSection")}
-        className="z-100 absolute bottom-6 left-1/2 -translate-x-1/2 p-2 text-text-muted/50 transition-colors hover:text-text focus-visible:text-text"
-      >
-        <ChevronDown
-          className="size-5 hero-bounce text-text-muted"
-          aria-hidden="true"
-        />
-      </ScrollHashLink>
+        ariaLabel={t("scrollToNextSection")}
+      />
     </WebSection>
   );
 }

@@ -190,6 +190,7 @@ const messages = {
       by: "Um portfólio de",
       viewProfile: "Ver o perfil de @{username}",
       exploreMore: "Inspire-se",
+      scrollToNextSection: "Rolar para a próxima seção",
     },
     cta: {
       badge: "Quando você quiser",
