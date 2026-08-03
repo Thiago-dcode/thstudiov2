@@ -65,7 +65,10 @@ export async function FeaturedPortfolioSection() {
                 </Link>
               </h4>
               <Gallery />
-              <PortfolioGrid layout={portfolio.layout} portfolioItems={portfolioItems} />
+              <PortfolioGrid
+                layout={portfolio.layout}
+                portfolioItems={portfolioItems}
+              />
             </GalleryProvider>
           </div>
         </div>
