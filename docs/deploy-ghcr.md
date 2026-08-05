@@ -1,13 +1,31 @@
-# GHCR deploy setup (dev droplet)
+# GHCR deploy setup (dev + prod droplets)
 
-Images for `api`, `worker`, and `web` are **built in GitHub Actions** and **pulled on the DigitalOcean droplet**. The droplet no longer compiles the monorepo.
+Images for `api`, `worker`, and `web` are **built in GitHub Actions** and **pulled on the DigitalOcean droplets**. Neither droplet compiles the monorepo.
+
+Dev and prod are the same pipeline with different branches, image names, and GitHub Environments:
+
+| | dev | prod |
+|---|---|---|
+| Branch | `develop` | `main` |
+| GitHub Environment | `dev` | `prod` |
+| Images | `a11studio-dev-*:develop` | `a11studio-prod-*:main` |
+| Compose file | `compose.dev.yaml` | `compose.prod.yaml` |
+| Deploy script | `scripts/deploy-dev.sh` | `scripts/deploy-prod.sh` |
+| Droplet | `165.232.38.110` | `134.209.31.146` |
+| Deploy dir | `/root/apps/a11studio` | `/root/apps/a11studio` |
+| Domain | `dev.a11studio.com` | `a11studio.com` + `api.a11studio.com` |
+| nginx source | `dev.nginx/` | `pro.nginx/` |
 
 ## Flow
 
-1. Push to `develop`
+1. Push to `develop` (or `main` for prod)
 2. GitHub Actions: test → build images → push to GHCR
-3. GitHub Actions: SSH to droplet → `docker login` → `./scripts/deploy-dev.sh`
+3. GitHub Actions: SSH to droplet → `docker login` → `./scripts/deploy-dev.sh` (or `deploy-prod.sh`)
 4. Droplet: `docker compose pull` → migrations → `docker compose up -d`
+
+Both droplets use a **single `.env`** file. Compose only interpolates `${DOCKER_IMAGE_OWNER}`
+and friends from `.env` in the project directory — never from an `env_file:` entry — so the
+registry settings must live there regardless of what `env_file:` points at.
 
 ---
 
@@ -207,3 +225,81 @@ The api image includes pnpm for migrations. If you see this, an old local image 
 - **GHCR**: free for typical dev usage
 - **GitHub Actions**: free tier minutes (build runs on `ubuntu-latest`, not the droplet)
 - **Droplet**: stays on the $6 plan — it only pulls and runs containers now
+
+---
+
+# Prod droplet
+
+Same pipeline as dev, driven by the `main` branch and the **`prod` GitHub Environment**.
+Secret *names* are identical to dev — only the values differ — so the workflow needs no
+renaming: setting `environment: prod` on the job resolves `${{ secrets.* }}` from the prod
+environment automatically.
+
+## Flow
+
+1. Push (or merge) to `main`
+2. `build-and-push-prod` → `ghcr.io/thiago-dcode/a11studio-prod-{api,worker,web}:main` (+ `:sha-<commit>`)
+3. `deploy-prod` → SSH to `134.209.31.146` → `docker login` → `./scripts/deploy-prod.sh`
+4. Droplet: `docker compose -f compose.prod.yaml pull` → migrations → `up -d`
+
+## Prod environment secrets
+
+All 23 live in **Settings → Environments → prod**. Same names as dev:
+
+| Secret | Prod value |
+|---|---|
+| `SSH_HOST` | `134.209.31.146` |
+| `SSH_USER` | `root` |
+| `SSH_PORT` | `22` |
+| `SSH_DEPLOY_DIR` | `/root/apps/a11studio` |
+| `SSH_PRIVATE_KEY` | contents of `~/.ssh/a11studio_pro` |
+| `GHCR_USERNAME` / `GHCR_READ_TOKEN` | same as dev (same GHCR account) |
+| `NEXT_PUBLIC_*`, `APP_*`, `API_V1_URL`, `GEOAPIFY_*`, `ENCRYPTION_SECRET`, `SUPPORT_*`, `CDN_URL`, `REGISTRATION_IS_CLOSED`, `ASSETS_URL` | prod values — must match the droplet `.env` |
+
+The `NEXT_PUBLIC_*` / `APP_*` group is **baked into the web image at build time**. If they
+drift from the droplet `.env`, the site renders but API calls fail — fix the secret and push
+to `main` to rebuild.
+
+## Droplet `.env` (registry settings)
+
+Beyond the app values, the prod `.env` needs:
+
+```bash
+DOCKER_REGISTRY=ghcr.io
+DOCKER_IMAGE_OWNER=thiago-dcode
+DOCKER_IMAGE_TAG=main
+DOMAIN=a11studio.com
+LETSENCRYPT_EMAIL=hello@a11studio.com
+```
+
+## nginx runtime copy
+
+`/nginx/` is **gitignored** — it is a runtime copy so `git pull` never conflicts during a
+deploy. The tracked source is `pro.nginx/`:
+
+```bash
+cp -r pro.nginx/. nginx/
+```
+
+Re-run this after changing anything in `pro.nginx/`; `deploy-prod.sh` force-recreates the
+nginx container each deploy so bind-mounted config and certs are picked up.
+
+## TLS
+
+`certs/cloudflare-origin.pem` + `.key`, bind-mounted read-only into nginx. The Cloudflare
+origin cert covers `*.a11studio.com`, `*.dev.a11studio.com`, and `a11studio.com`, so the same
+cert serves both droplets. Cloudflare SSL mode must be **Full (Strict)**.
+
+## Boot persistence
+
+`scripts/a11studio-prod.service` installed as `/etc/systemd/system/a11studio.service`,
+`systemctl enable a11studio`.
+
+## Verify
+
+```bash
+docker compose -f compose.prod.yaml ps
+docker images | grep a11studio-prod
+curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1/
+curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1/api/v1/categories
+```

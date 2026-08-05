@@ -1,17 +1,18 @@
 #!/usr/bin/env bash
 # =============================================================================
-# deploy.sh — TH Studio prod-server deployment script
+# deploy-prod.sh — TH Studio prod-server deployment script
 #
 # Usage:
-#   ./scripts/deploy-prod.sh [--skip-build] [--skip-migrate] [--no-cache]
+#   ./scripts/deploy-prod.sh [--skip-pull] [--skip-migrate]
 #
 # Options:
-#   --skip-build    Skip docker image rebuild (use existing images)
+#   --skip-pull     Skip pulling prebuilt images from GHCR (use local images)
 #   --skip-migrate  Skip DB migrations
-#   --no-cache      Force a full image rebuild without Docker layer cache
 #
+# Images are built in GitHub Actions and published to GHCR. This script pulls
+# them on the droplet instead of compiling locally (see docs/deploy-ghcr.md).
 # This script is meant to run ON the production droplet.
-# Boot persistence handled by systemd (a11studio-prod.service).
+# Boot persistence handled by systemd (a11studio.service).
 # =============================================================================
 
 set -euo pipefail
@@ -30,19 +31,23 @@ COMPOSE_FILE="$REPO_ROOT/compose.prod.yaml"
 COMPOSE="docker compose -f $COMPOSE_FILE"
 
 # ── Parse flags ───────────────────────────────────────────────────────────────
-SKIP_BUILD=false
+SKIP_PULL=false
 SKIP_MIGRATE=false
-NO_CACHE=false
 
 for arg in "$@"; do
   case $arg in
-    --skip-build)   SKIP_BUILD=true ;;
-    --skip-migrate) SKIP_MIGRATE=true ;;
+    --skip-pull|--skip-build) SKIP_PULL=true ;;
+    --skip-migrate)           SKIP_MIGRATE=true ;;
     --skip-assets)
       warn "--skip-assets is deprecated (api static assets removed); ignoring."
       ;;
-    --no-cache)     NO_CACHE=true ;;
-    *)              error "Unknown argument: $arg"; exit 1 ;;
+    --no-cache)
+      warn "--no-cache is ignored: images are pulled from GHCR, not built on this host."
+      ;;
+    *)
+      error "Unknown argument: $arg"
+      exit 1
+      ;;
   esac
 done
 
@@ -60,8 +65,14 @@ if [[ ! -f "$COMPOSE_FILE" ]]; then
   exit 1
 fi
 
+if ! grep -qE '^DOCKER_IMAGE_OWNER=.+$' "$REPO_ROOT/.env"; then
+  error "DOCKER_IMAGE_OWNER is not set in .env — see docs/deploy-ghcr.md"
+  exit 1
+fi
+
 info "Repo root : $REPO_ROOT"
 info "Compose   : $COMPOSE_FILE"
+info "Images    : ghcr.io/<DOCKER_IMAGE_OWNER>/a11studio-prod-*:${DOCKER_IMAGE_TAG:-main} (from .env)"
 echo ""
 
 # ── Step 1: Git pull ──────────────────────────────────────────────────────────
@@ -87,24 +98,17 @@ else
 fi
 echo ""
 
-# ── Step 2: Build images ──────────────────────────────────────────────────────
-if [[ "$SKIP_BUILD" == false ]]; then
-  BUILD_FLAGS=""
-  if [[ "$NO_CACHE" == true ]]; then
-    warn "Step 2/5 — Building Docker images WITHOUT cache (--no-cache) …"
-    BUILD_FLAGS="--no-cache"
-  else
-    info "Step 2/5 — Building Docker images (api, web, worker) …"
+# ── Step 2: Pull prebuilt images ──────────────────────────────────────────────
+if [[ "$SKIP_PULL" == false ]]; then
+  info "Step 2/5 — Pulling prebuilt images from GHCR (api, worker, web) …"
+  if ! $COMPOSE pull api worker web; then
+    error "Failed to pull images from GHCR."
+    error "Ensure docker is logged in: docs/deploy-ghcr.md (Step 4)"
+    exit 1
   fi
-  # Build one image at a time: the droplet has 1 vCPU / 1GB RAM and parallel
-  # builds cause swapping/OOM. api goes first so worker/web reuse its shared
-  # base + dependency layers from cache.
-  $COMPOSE build $BUILD_FLAGS api
-  $COMPOSE build $BUILD_FLAGS worker
-  $COMPOSE build $BUILD_FLAGS web
-  success "Images built."
+  success "Images pulled."
 else
-  warn "Step 2/5 — Image build skipped (--skip-build)."
+  warn "Step 2/5 — Image pull skipped (--skip-pull)."
 fi
 echo ""
 
@@ -114,7 +118,7 @@ $COMPOSE up -d postgres redis
 
 info "Waiting for postgres to be healthy …"
 RETRIES=20
-until $COMPOSE exec -T postgres pg_isready -U "${DB_USERNAME:-admin}" -d "${DB_NAME:-thstudiodb}" >/dev/null 2>&1; do
+until $COMPOSE exec -T postgres pg_isready -U "${DB_USERNAME:-admin}" -d "${DB_NAME:-a11studiodb}" >/dev/null 2>&1; do
   RETRIES=$((RETRIES - 1))
   if [[ $RETRIES -le 0 ]]; then
     error "Postgres did not become healthy in time — aborting."
@@ -144,6 +148,17 @@ info "Step 5/5 — Starting / restarting application services …"
 # Bring everything up; compose will recreate only changed containers.
 $COMPOSE up -d --remove-orphans
 
+# nginx config and TLS certs are bind-mounted from the host (NOT baked into the
+# image). `docker compose up -d` only recreates containers whose image/config
+# changed, so edits under nginx/conf.d, nginx/snippets, or certs/ do NOT take
+# effect until the container is recreated.
+#
+# IMPORTANT bind-mount pitfall: never `rm -rf`/recreate a bind-mounted host dir
+# (nginx/, certs/) while its container is running — the mount then points at the
+# old (deleted) inode. Edit files in place, then force-recreate.
+info "Force-recreating nginx so bind-mounted config/certs are current …"
+$COMPOSE up -d --force-recreate nginx
+
 # Give nginx and app containers a moment to settle, then show status.
 sleep 5
 echo ""
@@ -169,11 +184,8 @@ else
 fi
 
 # ── Cleanup ──────────────────────────────────────────────────────────────────
-# Reclaim disk: drop dangling images from previous builds and cap the BuildKit
-# cache (keep enough to preserve layer-cache benefits between deploys).
-info "Cleaning up old images and excess build cache …"
+info "Cleaning up unused images …"
 docker image prune -f >/dev/null
-docker builder prune -f --keep-storage 4GB >/dev/null
 success "Cleanup done."
 
 echo ""

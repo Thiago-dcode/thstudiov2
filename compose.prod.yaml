@@ -47,15 +47,18 @@ services:
       --agree-tos --no-eff-email --non-interactive"
 
   api:
-    image: a11studio-prod-api
+    # Prebuilt in GitHub Actions and pulled on the droplet (see docs/deploy-ghcr.md).
+    # `build:` remains for local `docker compose build` when developing offline.
+    image: ${DOCKER_REGISTRY:-ghcr.io}/${DOCKER_IMAGE_OWNER:?Set DOCKER_IMAGE_OWNER in .env}/a11studio-prod-api:${DOCKER_IMAGE_TAG:-main}
     build:
       context: .
       dockerfile: apps/api/Dockerfile
+    pull_policy: always
     # No container_name / fixed host port: this service sits behind nginx and is
     # scaled horizontally (load balanced by nginx via Docker DNS).
     restart: unless-stopped
     env_file:
-      - ${A11STUDIO_ENV_FILE:-.env.prod}
+      - ${A11STUDIO_ENV_FILE:-.env}
     environment:
       DB_HOST: postgres
       DB_PORT: 5432
@@ -86,6 +89,7 @@ services:
       - a11studio-prod
 
   web:
+    image: ${DOCKER_REGISTRY:-ghcr.io}/${DOCKER_IMAGE_OWNER:?Set DOCKER_IMAGE_OWNER in .env}/a11studio-prod-web:${DOCKER_IMAGE_TAG:-main}
     build:
       context: .
       dockerfile: apps/web/Dockerfile
@@ -106,11 +110,12 @@ services:
         REGISTRATION_IS_CLOSED: ${REGISTRATION_IS_CLOSED}
         # Baked into next/image remotePatterns at build time (see apps/web/Dockerfile).
         CDN_URL: ${CDN_URL}
+    pull_policy: always
     # No container_name / fixed host port: this service sits behind nginx and is
     # scaled horizontally (load balanced by nginx via Docker DNS).
     restart: unless-stopped
     env_file:
-      - ${A11STUDIO_ENV_FILE:-.env.prod}
+      - ${A11STUDIO_ENV_FILE:-.env}
     environment:
       # next start requires production mode.
       NODE_ENV: production
@@ -137,13 +142,15 @@ services:
       - a11studio-prod
 
   worker:
+    image: ${DOCKER_REGISTRY:-ghcr.io}/${DOCKER_IMAGE_OWNER:?Set DOCKER_IMAGE_OWNER in .env}/a11studio-prod-worker:${DOCKER_IMAGE_TAG:-main}
     build:
       context: .
       dockerfile: apps/worker/Dockerfile
+    pull_policy: always
     container_name: a11studio-prod-worker
     restart: unless-stopped
     env_file:
-      - ${A11STUDIO_ENV_FILE:-.env.prod}
+      - ${A11STUDIO_ENV_FILE:-.env}
     environment:
       DB_HOST: postgres
       DB_PORT: 5432
