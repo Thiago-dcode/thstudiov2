@@ -205,6 +205,28 @@ Add `DOCKER_IMAGE_OWNER=your-github-username` to droplet `.env`.
 - Check `GHCR_READ_TOKEN` and `GHCR_USERNAME` GitHub secrets.
 - PAT must have `read:packages`.
 - Username must be lowercase.
+- **The PAT may have expired.** Check it without exposing the value:
+  ```bash
+  curl -sI -H "Authorization: Bearer $TOKEN" https://api.github.com/user \
+    | grep -i github-authentication-token-expiration
+  ```
+  As of 2026-08-06 the token in use expires **2026-08-20 11:48 UTC**.
+
+### Rotating the GHCR token
+
+Dev and prod share a single PAT, so expiry breaks **both** droplets at once — and it fails
+silently: running containers keep serving, and the error only surfaces at the next deploy's
+`docker compose pull`. After minting a replacement (`read:packages` only), update it in
+**both** places:
+
+```bash
+gh secret set GHCR_READ_TOKEN --env dev  < token.txt
+gh secret set GHCR_READ_TOKEN --env prod < token.txt
+rm token.txt
+```
+
+The droplets need no manual step — CI runs `docker login` on every deploy and overwrites
+`/root/.docker/config.json`.
 
 ### `manifest unknown` on first deploy
 
