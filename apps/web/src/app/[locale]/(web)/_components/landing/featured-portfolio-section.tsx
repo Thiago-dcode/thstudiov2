@@ -29,7 +29,7 @@ export async function FeaturedPortfolioSection() {
     >
       <WebSection.Container className="pt-24">
         <div className="flex w-full flex-col laptop:flex-row gap-8">
-          <div className="flex flex-col  gap-8 laptop:max-w-1/3">
+          <div className="flex flex-col  gap-8  w-full laptop:max-w-1/3">
             <div className="flex flex-col items-start justify-start gap-2">
               <h2 className="line-clamp-2 laptop:line-clamp-1">
                 {portfolio.title}

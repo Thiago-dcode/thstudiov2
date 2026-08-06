@@ -1,5 +1,5 @@
 [Unit]
-Description=TH Studio dev stack
+Description=A11Studio dev stack
 After=docker.service
 Requires=docker.service
 
