@@ -90,6 +90,13 @@ async function bootstrap() {
   const expressApp = app.getHttpAdapter().getInstance();
   expressApp.set('query parser', 'extended');
 
+  // We sit behind exactly one reverse proxy (nginx). Without this, `req.ip` is the
+  // nginx container IP for *every* request, which collapses ThrottlerGuard into a
+  // single global bucket — one attacker could exhaust the login limit for all users.
+  // `1` (not `true`) so only the last hop is trusted and X-Forwarded-For cannot be
+  // spoofed by prepending entries.
+  expressApp.set('trust proxy', 1);
+
   expressApp.get('/', (_, res) => {
     res.json({ status: 'ok' });
   });

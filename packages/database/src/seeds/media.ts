@@ -34,7 +34,7 @@ import { Query } from '../lib/facades';
 
 const IMAGE_EXT = new Set(['.jpg', '.jpeg', '.png', '.webp', '.gif']);
 
-/** Same default admin username as `admin-user.ts` (`SEED_ADMIN_USERNAME` default). */
+/** Same admin username as `admin-user.ts` (from the required `ADMIN_USERNAME` env var). */
 const MEDIA_SEED_USERNAME = 'thsworld';
 
 /** Same allowlist as `src/lib/scripts/clean-stripe.ts`. */

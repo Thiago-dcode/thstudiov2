@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AdminGuard } from 'src/common/guards/admin.guard';
 import { TestController } from './test.controller';
 import { NotifyNewUserMail } from 'src/v1/modules/users/mails/notify-new-user.mail';
 import { UserAccountBannedMail } from 'src/v1/modules/users/mails/user-account-banned.mail';
@@ -17,6 +18,7 @@ import { UserAiCreditsEndedMail } from 'src/v1/modules/user-extra-data/mails/use
   imports: [EmailPreferencesModule, UserContactsModule],
   controllers: [TestController],
   providers: [
+    AdminGuard,
     NotifyNewUserMail,
     UserAccountBannedMail,
     UserAiCreditsEndedMail,

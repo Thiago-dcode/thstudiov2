@@ -5,6 +5,8 @@ services:
     image: nginx:1.27-alpine
     container_name: a11studio-prod-nginx
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     # The only public entrypoint on the droplet. 443 is ready for TLS once
     # certificates are issued (see nginx/ssl.conf.template).
     ports:
@@ -22,7 +24,9 @@ services:
       api:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ >/dev/null 2>&1 || exit 1"]
+      # /healthz, not /: the default server now returns 444 for unknown hosts so the
+      # origin doesn't confirm liveness to scanners. See pro.nginx/conf.d/default.conf.
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/healthz >/dev/null 2>&1 || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -41,10 +45,22 @@ services:
     volumes:
       - certbot_certs:/etc/letsencrypt
       - certbot_www:/var/www/certbot
-    entrypoint: >
-      sh -c "certbot certonly --webroot -w /var/www/certbot
-      --email ${LETSENCRYPT_EMAIL} -d ${DOMAIN}
-      --agree-tos --no-eff-email --non-interactive"
+    # exec form, not `sh -c`: the previous version spliced ${DOMAIN} and
+    # ${LETSENCRYPT_EMAIL} unquoted into a shell string, so a .env value containing
+    # `;` or backticks executed arbitrary commands in a container holding the certs.
+    entrypoint:
+      - certbot
+      - certonly
+      - --webroot
+      - -w
+      - /var/www/certbot
+      - --email
+      - ${LETSENCRYPT_EMAIL:-}
+      - -d
+      - ${DOMAIN:-}
+      - --agree-tos
+      - --no-eff-email
+      - --non-interactive
 
   api:
     # Prebuilt in GitHub Actions and pulled on the droplet (see docs/deploy-ghcr.md).
@@ -57,6 +73,8 @@ services:
     # No container_name / fixed host port: this service sits behind nginx and is
     # scaled horizontally (load balanced by nginx via Docker DNS).
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     env_file:
       - ${A11STUDIO_ENV_FILE:-.env}
     environment:
@@ -99,21 +117,26 @@ services:
         NEXT_PUBLIC_GEOAPIFY_URL: ${NEXT_PUBLIC_GEOAPIFY_URL}
         NEXT_PUBLIC_GEOAPIFY_KEY: ${NEXT_PUBLIC_GEOAPIFY_KEY}
         APP_URL: ${APP_URL}
-        APP_API_KEY: ${APP_API_KEY}
-        APP_TOKEN: ${APP_TOKEN}
         API_V1_URL: ${API_V1_URL}
         GEOAPIFY_URL: ${GEOAPIFY_URL}
-        GEOAPIFY_KEY: ${GEOAPIFY_KEY}
-        ENCRYPTION_SECRET: ${ENCRYPTION_SECRET}
         SUPPORT_EMAIL: ${SUPPORT_EMAIL}
         SUPPORT_USERNAME: ${SUPPORT_USERNAME}
         REGISTRATION_IS_CLOSED: ${REGISTRATION_IS_CLOSED}
         # Baked into next/image remotePatterns at build time (see apps/web/Dockerfile).
         CDN_URL: ${CDN_URL}
+      # Secrets, not build args: a build arg is promoted to ENV in the builder stage
+      # and therefore persists in layer metadata and any exported build cache.
+      secrets:
+        - app_api_key
+        - app_token
+        - geoapify_key
+        - encryption_secret
     pull_policy: always
     # No container_name / fixed host port: this service sits behind nginx and is
     # scaled horizontally (load balanced by nginx via Docker DNS).
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     env_file:
       - ${A11STUDIO_ENV_FILE:-.env}
     environment:
@@ -149,6 +172,8 @@ services:
     pull_policy: always
     container_name: a11studio-prod-worker
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     env_file:
       - ${A11STUDIO_ENV_FILE:-.env}
     environment:
@@ -178,6 +203,8 @@ services:
     image: postgres:15-alpine
     container_name: a11studio-prod-postgres
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     environment:
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -215,6 +242,8 @@ services:
     image: redis:7-alpine
     container_name: a11studio-prod-redis
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     ports:
       - "127.0.0.1:${REDIS_HOST_PORT:-6379}:6379"
     volumes:
@@ -238,6 +267,8 @@ services:
     image: dpage/pgadmin4
     container_name: a11studio-prod-pgadmin
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     profiles:
       - tools
     environment:
@@ -252,6 +283,19 @@ services:
         condition: service_healthy
     networks:
       - a11studio-prod
+
+# Build-time secrets sourced from the environment (i.e. the .env loaded by compose).
+# Referenced by the web service's `build.secrets`; consumed via `--mount=type=secret`
+# in apps/web/Dockerfile so they never reach a layer or the build cache.
+secrets:
+  app_api_key:
+    environment: APP_API_KEY
+  app_token:
+    environment: APP_TOKEN
+  geoapify_key:
+    environment: GEOAPIFY_KEY
+  encryption_secret:
+    environment: ENCRYPTION_SECRET
 
 networks:
   a11studio-prod:

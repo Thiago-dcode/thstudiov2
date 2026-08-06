@@ -9,8 +9,8 @@ const serverEnvSchema = z.object({
   API_V1_URL: z.string().min(1),
   GEOAPIFY_URL: z.string().min(1),
   GEOAPIFY_KEY: z.string().min(1),
-  SUPPORT_EMAIL: z.email().default("support@a11studio.com"),
-  SUPPORT_USERNAME: z.string().min(1).default("a11studio_support"),
+  SUPPORT_EMAIL: z.email(),
+  SUPPORT_USERNAME: z.string().min(1),
   REGISTRATION_IS_CLOSED: z.coerce.number().int().min(0).default(0),
 });
 

@@ -4,7 +4,6 @@ import { PASSWORD_RECOVERY_ATTEMPT_COOKIE_NAME } from "@repo/common-lib/constant
 import type { ActionReturn } from "@repo/common-lib/types/response";
 import { cookies } from "next/headers";
 import { getTranslations } from "next-intl/server";
-import { serverEnv } from "@/env/server";
 import { deleteCookie, encryptObj, getEncryptedJsonCookie } from "@/lib/utils";
 import authService from "../auth.service";
 import type { PasswordRecoveryAttempt } from "../auth.types";
@@ -21,9 +20,10 @@ export const passwordRecoveryAction = async (
   >
 > => {
   const t = await getTranslations();
+  // No `fallback_url`: the API builds the recovery link server-side from `app.url`
+  // so it can never be pointed at an attacker-controlled host.
   const credentials = {
     email: formData.get("email") as string,
-    fallback_url: `${serverEnv.APP_URL}/auth/password-recovery/recover`,
   };
   const validatedData = passwordRecoveryRequestSchema(t).safeParse(credentials);
   if (!validatedData.success) {

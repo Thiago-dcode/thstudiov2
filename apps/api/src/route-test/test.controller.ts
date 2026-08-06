@@ -18,6 +18,7 @@ import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/constants';
 import { buildRedirectToUrl } from '@repo/common-lib/constants/redirect-to';
 import { BaseUser, CompactUser, User } from '@repo/common-lib/types/user';
 import { I18nService } from 'nestjs-i18n';
+import { AdminGuard } from 'src/common/guards/admin.guard';
 import { ProdGuard } from 'src/common/guards/prod.guard';
 import { viewPath } from 'src/common/utils';
 import { PasswordRecoveryMail } from 'src/v1/modules/auth/mails/password-recovery-mail';
@@ -40,7 +41,6 @@ import {
   createMockWaitListReminderData,
   createMockWaitListWelcomeData,
 } from './mocks/email-preview.mock-data';
-import { Public } from 'src/common/decorators/public.decorator';
 import { SkipResponseTransform } from 'src/common/decorators/skip-response-transform.decorator';
 import { ENUMS, EnumType } from '@repo/common-lib/constants/enums';
 
@@ -57,8 +57,12 @@ type PreviewLanguage = EnumType<'LANGUAGE_CODE'>;
  * `previewEmail()` and read by every handler, instead of being threaded
  * through as parameters.
  */
+// ProdGuard alone only blocks NODE_ENV=production, which left every route here open
+// on dev.a11studio.com. AdminGuard additionally requires an authenticated ADMIN, so
+// the email preview can no longer be used anonymously to read arbitrary users' data
+// or to send mail to them via `?send=1`.
 @Controller({ path: 'test', scope: Scope.REQUEST })
-@UseGuards(ProdGuard)
+@UseGuards(ProdGuard, AdminGuard)
 export class TestController {
   private previewUser!: User;
   private lang!: PreviewLanguage;
@@ -94,7 +98,6 @@ export class TestController {
    * GET /test/view/email/:type/:userId?lang=es
    * GET /test/view/email/:type/:userId?lang=EN&send=1
    */
-  @Public()
   @SkipResponseTransform()
   @Get('email/:type/:userId')
   @Header('Content-Type', 'text/html; charset=utf-8')

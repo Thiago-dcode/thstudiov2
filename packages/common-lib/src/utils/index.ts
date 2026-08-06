@@ -1,4 +1,5 @@
 export * from './random-string';
+export * from './require-env';
 export * from './generate-uuid';
 export * from './fold-latin-diacritics';
 export * from './get-accept-language';

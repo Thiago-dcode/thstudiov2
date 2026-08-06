@@ -74,15 +74,39 @@ export class UserService {
       },
     );
   }
-  /** Fields only the account owner should see when fetching a user by numeric id. */
-  private omitPrivateFields<T extends { email?: string; banned?: boolean; banned_reason?: string | null }>(
+  /**
+   * Fields only the account owner should see when fetching a user by numeric id.
+   *
+   * `GET /users/:id` is authenticated but not owner-restricted, so any logged-in user
+   * can request any id. Previously only `email`/`banned`/`banned_reason` were stripped,
+   * which left billing identifiers, account-recovery counters and the 2FA flag readable
+   * for every account by simple id enumeration. Anything not needed to render another
+   * user's public-facing profile is removed here.
+   */
+  private omitPrivateFields<T extends Record<string, any>>(
     user: T,
     id: number,
   ): T {
     if (this.requestService.user?.id === id) {
       return user;
     }
-    const { email, banned, banned_reason, ...rest } = user;
+    const {
+      email,
+      banned,
+      banned_reason,
+      stripe_customer_id,
+      phone_number,
+      email_validated,
+      twofa_enabled,
+      twofa_expires_at,
+      funnel_step,
+      username_reset_count,
+      password_reset_count,
+      next_username_reset,
+      next_password_reset,
+      role_id,
+      ...rest
+    } = user;
     return rest as T;
   }
 

@@ -80,6 +80,15 @@ pnpm-debug.log*
 # Misc
 .DS_Store
 *.pem
+# Private keys must never be committable from anywhere, not just certs/.
+*.key
+*.p12
+*.pfx
+id_rsa*
+id_ed25519*
+
+# Local Claude Code tool-permission config — machine-specific, not for the repo.
+.claude/settings.local.json
 *.bak
 
 # Database seed assets (large binaries; not committed — keep locally for `db:seed -n media` / `db:seed -n assets`)

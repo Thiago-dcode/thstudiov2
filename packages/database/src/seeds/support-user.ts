@@ -6,7 +6,7 @@
  * Usage:
  *   pnpm dbcli db:seed -n support-user
  *
- * Override defaults:
+ * Required env (no defaults — the seed throws if any is unset):
  *   SUPPORT_EMAIL=... SUPPORT_USERNAME=... SUPPORT_PASSWORD=... pnpm dbcli db:seed -n support-user
  *
  * Re-running skips if the email or username is already taken.
@@ -17,14 +17,12 @@ import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
 import { LogService } from '@repo/backend-lib/services/log-service';
 import Logger from '@repo/backend-lib/utils/console';
 import { randomUUID } from 'node:crypto';
+import { requireEnv } from '@repo/common-lib/utils/require-env';
 import { Query } from '../lib/facades';
 
-const SUPPORT_EMAIL =
-  process.env.SUPPORT_EMAIL ?? 'support@a11studio.com';
-export const SUPPORT_USERNAME =
-  process.env.SUPPORT_USERNAME ?? 'a11studio_support';
-const SUPPORT_PASSWORD =
-  process.env.SUPPORT_PASSWORD ?? 'support.1234';
+const SUPPORT_EMAIL = requireEnv('SUPPORT_EMAIL');
+export const SUPPORT_USERNAME = requireEnv('SUPPORT_USERNAME');
+const SUPPORT_PASSWORD = requireEnv('SUPPORT_PASSWORD');
 
 export const main = async () => {
   const emailTaken = await Query.table(TABLES_ENUM.USERS)

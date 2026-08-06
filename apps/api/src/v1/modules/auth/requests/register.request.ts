@@ -7,7 +7,6 @@ import {
   MaxLength,
   MinLength,
   Matches,
-  IsBoolean,
   IsOptional,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
@@ -65,13 +64,10 @@ export class RegisterRequest {
   @Matches(/^\S+$/, { message: 'password cannot contain spaces' })
   password: string;
 
-  @IsBoolean()
-  @IsOptional()
-  @Transform(
-    ({ value }) =>
-      value === true || value === 'true' || value === '1' || value === 1,
-  )
-  email_validated: boolean = false;
+  // `email_validated` is deliberately NOT accepted from the client. It is the
+  // proof-of-email gate in `AuthService.handleLogin`, so allowing registration to set
+  // it let anyone create a pre-verified account for an address they do not own.
+  // Only the server sets it, after the emailed code is verified.
 
   @IsString()
   @IsOptional()

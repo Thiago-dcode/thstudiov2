@@ -63,4 +63,7 @@ COPY --from=builder /workspace/packages/database/dist ./packages/database/dist
 
 EXPOSE 8081
 
+# Drop root — see apps/api/Dockerfile for why there is no recursive chown.
+USER node
+
 CMD ["node", "apps/worker/dist/main.js"]

@@ -40,7 +40,6 @@ export const verify2faRequestSchema = (t: Translator) =>
 export const passwordRecoveryRequestSchema = (t: Translator) =>
   z.object({
     email: z.email(t("validation.auth.invalidEmail")),
-    fallback_url: z.string(t("validation.auth.invalidFallbackUrl")),
   });
 
 export type LoginRequestSchemaType = z.infer<

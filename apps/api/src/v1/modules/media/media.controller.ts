@@ -22,6 +22,7 @@ import { MediaService } from './media.service';
 import { ModelExistPipe } from 'src/pipes/model-exist.pipe';
 import { IsResourceBlockedPipe } from 'src/pipes/is-resource-blocked.pipe';
 import { Public } from 'src/common/decorators/public.decorator';
+import { imageUploadOptions } from 'src/common/utils/upload-options';
 import { IndexMediaRequest } from '../user-media/requests/index-media.request';
 
 @Throttle({
@@ -55,7 +56,7 @@ export class MediaController {
   }
 
   @Post('bulk')
-  @UseInterceptors(FilesInterceptor('files'))
+  @UseInterceptors(FilesInterceptor('files', undefined, imageUploadOptions))
   async createBulk(
     @Body('items', new ParseJsonArrayPipe(CreateMediaRequest))
     createMediaItemsRequest: CreateMediaRequest[],
@@ -72,7 +73,7 @@ export class MediaController {
     return data;
   }
   @Post()
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', imageUploadOptions))
   async create(
     @Body() createMediaRequest: CreateMediaRequest,
     @UploadedFile() file: Express.Multer.File,

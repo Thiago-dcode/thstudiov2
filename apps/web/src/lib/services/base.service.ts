@@ -1,4 +1,5 @@
 import {
+  APP_TOKEN_HEADER,
   IP_ADDRESS_HEADER,
   LANGUAGE_HEADER,
   USER_AGENT_HEADER,
@@ -6,6 +7,7 @@ import {
 import type { ApiResponse } from "@repo/common-lib/types/response";
 import type { FetchApi } from "@repo/frontend-lib/fetch/fetch-api";
 import { headers } from "next/headers";
+import { serverEnv } from "@/env/server";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import { getLanguage } from "../server-actions/get-language.server.action";
 
@@ -27,6 +29,9 @@ export class BaseService {
         "Content-Type": "application/json",
         [LANGUAGE_HEADER]: language,
         Authorization: `Bearer ${session?.token ?? ""}`,
+        // Proves to the API that the forwarded user-agent/IP below come from our own
+        // server and not from an arbitrary client (see RequestMiddleware).
+        [APP_TOKEN_HEADER]: serverEnv.APP_TOKEN,
         [USER_AGENT_HEADER]: headersList.get("user-agent") ?? "",
         [IP_ADDRESS_HEADER]: headersList.get("x-forwarded-for") ?? "",
       };

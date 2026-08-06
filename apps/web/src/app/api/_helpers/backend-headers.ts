@@ -1,4 +1,5 @@
 import {
+  APP_TOKEN_HEADER,
   IP_ADDRESS_HEADER,
   LANGUAGE_HEADER,
   USER_AGENT_HEADER,
@@ -15,6 +16,9 @@ export async function getBackendHeaders(token: string) {
     headers: {
       Authorization: `Bearer ${token}`,
       [LANGUAGE_HEADER]: language,
+      // Proves to the API that the forwarded user-agent/IP below come from our own
+      // server and not from an arbitrary client (see RequestMiddleware).
+      [APP_TOKEN_HEADER]: serverEnv.APP_TOKEN,
       [USER_AGENT_HEADER]: headersList.get("user-agent") ?? "",
       [IP_ADDRESS_HEADER]: headersList.get("x-forwarded-for") ?? "",
     },

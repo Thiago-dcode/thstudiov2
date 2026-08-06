@@ -9,6 +9,29 @@ node_modules
 .env
 .env.*
 !.env.example
+
+# TLS material. The build context is the repo root, and on the droplet
+# certs/cloudflare-origin.key is a wildcard private key covering *.a11studio.com —
+# without this it is uploaded to the Docker daemon on every build.
+certs
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa*
+id_ed25519*
+
+# Not needed to build any image; also keeps deploy topology out of the context.
+docs
+.github
+scripts
+storage
+.claude
+.agents
+.opencode
+dev.nginx
+pro.nginx
+nginx
 npm-debug.log*
 pnpm-debug.log*
 yarn-debug.log*

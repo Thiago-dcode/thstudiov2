@@ -32,7 +32,7 @@ import { Query } from '../lib/facades';
 const IMAGE_EXT = new Set(['.jpg', '.jpeg', '.png', '.webp', '.gif']);
 const MEDIA_RELATION_COUNT = 20;
 
-/** Same default as `media.ts` (`MEDIA_SEED_USERNAME`) / `admin-user` (`SEED_ADMIN_USERNAME`). */
+/** Same default as `media.ts` (`MEDIA_SEED_USERNAME`) / `admin-user` (`ADMIN_USERNAME`). */
 const PORTFOLIO_SEED_USERNAME = 'thsworld';
 
 const ALLOWED_APP_ENVS = ['development', 'local', 'test'] as const;

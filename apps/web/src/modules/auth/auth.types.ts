@@ -21,7 +21,6 @@ export type RefreshTokenRequest = {
 };
 export type PasswordRecoveryRequest = {
   email: string;
-  fallback_url: string;
 };
 export type CheckPasswordRecoveryRequest = {
   email: string;

@@ -2,6 +2,7 @@ import dotenv from 'dotenv'
 dotenv.config()
 import path from 'path';
 import fs from 'fs';
+import { requireEnv } from '../utils/require-env';
 
 //IMPORTANT: This file is not available for next.js middleware,
 //So dont call this file from next.js middleware
@@ -45,15 +46,23 @@ const config = (envPath?: string | undefined) => {
       maxTwofaAttempts: process.env.MAX_TWOFA_ATTEMPTS ? parseInt(process.env.MAX_TWOFA_ATTEMPTS) : 3,
     },
     jwt: {
-      secret: process.env.JWT_SECRET || 'secret',
+      // Lazy: only entrypoints that actually sign/verify tokens require this.
+      // Eager evaluation would break `dbcli migrate`/`db:seed`, which need DB creds only.
+      get secret() {
+        return requireEnv('JWT_SECRET');
+      },
       expiresIn: process.env.JWT_EXPIRES_IN || '24h',
     },
     database: {
       client: process.env.DB_CLIENT || 'postgres',
       host: process.env.DB_HOST || 'localhost',
       port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : 5432,
-      username: process.env.DB_USERNAME || 'postgres',
-      password: process.env.DB_PASSWORD || 'postgres',
+      get username() {
+        return requireEnv('DB_USERNAME');
+      },
+      get password() {
+        return requireEnv('DB_PASSWORD');
+      },
       database: process.env.DB_NAME || 'a11studio',
     },
     redis: {
@@ -95,7 +104,10 @@ const config = (envPath?: string | undefined) => {
     },
 
     encryption: {
-      secret: process.env.ENCRYPTION_SECRET || 'secret',
+      // Lazy for the same reason as `jwt.secret` above.
+      get secret() {
+        return requireEnv('ENCRYPTION_SECRET');
+      },
     },
     llm: {
       apiKey: process.env.OPENAI_API_KEY || '',

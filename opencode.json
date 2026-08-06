@@ -6,7 +6,7 @@
   "mcp": {
     "postgres": {
       "type": "local",
-      "command": ["npx", "-y", "@modelcontextprotocol/server-postgres", "postgres://admin:1234@localhost:5432/a11studiodb"]
+      "command": ["npx", "-y", "@modelcontextprotocol/server-postgres", "postgres://{env:DB_USERNAME}:{env:DB_PASSWORD}@{env:DB_HOST}:{env:DB_PORT}/{env:DB_NAME}"]
     }
   }
 }

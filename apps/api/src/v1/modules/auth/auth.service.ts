@@ -95,6 +95,8 @@ export class AuthService {
     const { invitation_code, ...rest } = registerRequest;
     const user = await this.userRepository.create({
       ...rest,
+      // Explicit: never trust a spread from the request for the email-proof gate.
+      email_validated: false,
       public_id: await generateUUID(),
       funnel_step: 1,
       username_reset_count: 0,
@@ -169,10 +171,23 @@ export class AuthService {
       throw new UnauthorizedException(user.banned_reason || 'Account permanently banned');
     }
     const isCodeValid = await compare(verify2faRequest.twofa_code, user.twofa_code);
-    if (
-      !isCodeValid ||
-      compareAsc(user.twofa_expires_at, new Date()) === -1
-    ) {
+    const isExpired = compareAsc(user.twofa_expires_at, new Date()) === -1;
+
+    if (!isCodeValid || isExpired) {
+      // `MAX_TWOFA_ATTEMPTS` and the `twofa_attempts` column existed but nothing ever
+      // read or incremented them, so a 6-character code could be brute-forced freely.
+      // Burn the code once the budget is spent; the user must restart the login flow.
+      const attempts = (user.twofa_attempts ?? 0) + 1;
+      const maxAttempts =
+        this.configService.get<number>('api.maxTwofaAttempts') ?? 3;
+
+      await this.userRepository.updateById(
+        user.id,
+        attempts >= maxAttempts
+          ? { twofa_attempts: 0, twofa_code: null, twofa_expires_at: null }
+          : { twofa_attempts: attempts },
+      );
+
       throw new BadRequestException('Invalid verification code or expired');
     }
     //It should be have been created from the login process
@@ -194,6 +209,7 @@ export class AuthService {
       this.userRepository.updateById(user.id, {
         twofa_code: null,
         twofa_expires_at: null,
+        twofa_attempts: 0,
         email_validated: true,
       }),
     ]);
@@ -223,7 +239,12 @@ export class AuthService {
     }
     return await this.handleLogin(user, authDevice);
   }
-  async passwordRecovery({ email, fallback_url }: PasswordRecoveryRequest) {
+  async passwordRecovery({ email }: PasswordRecoveryRequest) {
+    // Built server-side, never taken from the request. When this came from the client
+    // an attacker could pass their own URL and the victim would receive a genuine,
+    // correctly-branded recovery email whose button carried the valid `code` to the
+    // attacker's site — a one-click account takeover.
+    const fallback_url = `${this.configService.get<string>('app.url')}/auth/password-recovery/recover`;
     const user = await this.userRepository.findOneBy('email', email);
     if (!user) {
       throw new UnauthorizedException('Unauthorized');

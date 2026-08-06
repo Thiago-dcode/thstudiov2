@@ -9,8 +9,10 @@
  * Usage:
  *   pnpm dbcli db:seed -n admin-user
  *
- * Override defaults (recommended for non-local):
- *   SEED_ADMIN_EMAIL=... SEED_ADMIN_USERNAME=... SEED_ADMIN_PASSWORD=... pnpm dbcli db:seed -n admin-user
+ * Required env (no defaults — the seed throws if any is unset):
+ *   ADMIN_EMAIL=... ADMIN_USERNAME=... ADMIN_PASSWORD=... pnpm dbcli db:seed -n admin-user
+ *
+ * Note: distinct from `ADMIN_EMAILS` (plural), which is the 500-alert recipient list.
  *
  * Re-running skips if the email or username is already taken.
  */
@@ -21,15 +23,13 @@ import { stripe } from '@repo/backend-lib/services/payment-service/stripe';
 import { LogService } from '@repo/backend-lib/services/log-service';
 import Logger from '@repo/backend-lib/utils/console';
 import { randomUUID } from 'node:crypto';
+import { requireEnv } from '@repo/common-lib/utils/require-env';
 import { Query } from '../lib/facades';
 
-const ADMIN_EMAIL =
-  process.env.SEED_ADMIN_EMAIL ?? 'thimplacable@proton.me';
-/** Same value used by `SEED_ADMIN_USERNAME`; exported for `main.ts` and other seeds that target the admin user. */
-export const ADMIN_USERNAME =
-  process.env.SEED_ADMIN_USERNAME ?? 'thsworld';
-const ADMIN_PASSWORD =
-  process.env.SEED_ADMIN_PASSWORD ?? 'thiago.1234';
+const ADMIN_EMAIL = requireEnv('ADMIN_EMAIL');
+/** Same value used by `ADMIN_USERNAME`; exported for `main.ts` and other seeds that target the admin user. */
+export const ADMIN_USERNAME = requireEnv('ADMIN_USERNAME');
+const ADMIN_PASSWORD = requireEnv('ADMIN_PASSWORD');
 
 export const main = async () => {
   const emailTaken = await Query.table(TABLES_ENUM.USERS)

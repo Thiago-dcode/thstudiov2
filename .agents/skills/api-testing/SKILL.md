@@ -51,8 +51,8 @@ Types: `packages/common-lib/src/types/response.ts`.
 
 ```json
 {
-  "email": "thimplacable@proton.me",
-  "password": "thiago.1234"
+  "email": "$ADMIN_EMAIL",
+  "password": "$ADMIN_PASSWORD"
 }
 ```
 
@@ -85,7 +85,7 @@ On Windows PowerShell, use **`curl.exe`** (not the `curl` alias). Save the token
 ```powershell
 $login = curl.exe -s -X POST "http://localhost:8080/api/v1/auth/login" `
   -H "Content-Type: application/json" `
-  -d '{"email":"thimplacable@proton.me","password":"thiago.1234"}'
+  -d "{\"email\":\"$env:ADMIN_EMAIL\",\"password\":\"$env:ADMIN_PASSWORD\"}"
 $token = ($login | ConvertFrom-Json).data.token
 ```
 
@@ -94,7 +94,7 @@ Bash:
 ```bash
 TOKEN=$(curl -s -X POST "http://localhost:8080/api/v1/auth/login" \
   -H "Content-Type: application/json" \
-  -d '{"email":"thimplacable@proton.me","password":"thiago.1234"}' \
+  -d "{\"email\":\"$ADMIN_EMAIL\",\"password\":\"$ADMIN_PASSWORD\"}" \
   | jq -r '.data.token')
 ```
 
@@ -147,17 +147,17 @@ Use **`CallMcpTool`** with `server: "user-postgres"`, `toolName: "query"`, `argu
 Rules:
 
 - **Read-only** SELECT only (tool enforces read-only).
-- Tie queries to the test user: `WHERE email = 'thimplacable@proton.me'` or `WHERE user_id = <id from login data>`.
+- Tie queries to the test user: `WHERE email = '$ADMIN_EMAIL'` or `WHERE user_id = <id from login data>`.
 - Schema resource: fetch `postgres://admin@localhost:5432/migrations/schema` if column names are unclear.
 
 Common checks after login:
 
 ```sql
-SELECT id, email, is_active, twofa_enabled FROM users WHERE email = 'thimplacable@proton.me';
+SELECT id, email, is_active, twofa_enabled FROM users WHERE email = '$ADMIN_EMAIL';
 
 SELECT id, user_id, expires_at, created_at
 FROM user_sessions
-WHERE user_id = (SELECT id FROM users WHERE email = 'thimplacable@proton.me')
+WHERE user_id = (SELECT id FROM users WHERE email = '$ADMIN_EMAIL')
 ORDER BY created_at DESC
 LIMIT 5;
 ```
@@ -177,7 +177,9 @@ End each test run with:
 
 ## Security notes
 
-- Credentials above are **local dev only**; never commit or paste into PRs/logs unnecessarily.
+- Credentials come from `ADMIN_EMAIL` / `ADMIN_PASSWORD` in your local `.env` — they are
+  **never hardcoded here**. `packages/database/src/seeds/admin-user.ts` throws if they are
+  unset, so there is no default to fall back to. Never paste real values into PRs/logs.
 - Do not run destructive SQL via MCP; the query tool is read-only.
 - Do not expose production URLs or secrets in skill edits.
 

@@ -8,6 +8,19 @@ on:
 env:
   REGISTRY: ghcr.io
 
+# Least privilege by default. Without this, every job inherits the repository's
+# default GITHUB_TOKEN scope — which on older repos is read/write on all scopes —
+# including the deploy jobs, which need no token access at all. The build jobs
+# raise this to `packages: write` locally where they actually push to GHCR.
+permissions:
+  contents: read
+
+# A new push to the same branch makes an in-flight run obsolete. Deploy runs are
+# exempt from cancellation so a half-applied deploy is never interrupted.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -104,16 +117,20 @@ jobs:
             NEXT_PUBLIC_GEOAPIFY_URL=${{ secrets.NEXT_PUBLIC_GEOAPIFY_URL }}
             NEXT_PUBLIC_GEOAPIFY_KEY=${{ secrets.NEXT_PUBLIC_GEOAPIFY_KEY }}
             APP_URL=${{ secrets.APP_URL }}
-            APP_API_KEY=${{ secrets.APP_API_KEY }}
-            APP_TOKEN=${{ secrets.APP_TOKEN }}
             API_V1_URL=${{ secrets.API_V1_URL }}
             GEOAPIFY_URL=${{ secrets.GEOAPIFY_URL }}
-            GEOAPIFY_KEY=${{ secrets.GEOAPIFY_KEY }}
-            ENCRYPTION_SECRET=${{ secrets.ENCRYPTION_SECRET }}
             SUPPORT_EMAIL=${{ secrets.SUPPORT_EMAIL }}
             SUPPORT_USERNAME=${{ secrets.SUPPORT_USERNAME }}
             REGISTRATION_IS_CLOSED=${{ secrets.REGISTRATION_IS_CLOSED }}
             CDN_URL=${{ secrets.CDN_URL }}
+          # Real secrets go through BuildKit secret mounts, never build-args: a
+          # build-arg becomes ENV in the builder stage and `cache-to: mode=max`
+          # exports that stage to the shared Actions cache.
+          secrets: |
+            app_api_key=${{ secrets.APP_API_KEY }}
+            app_token=${{ secrets.APP_TOKEN }}
+            geoapify_key=${{ secrets.GEOAPIFY_KEY }}
+            encryption_secret=${{ secrets.ENCRYPTION_SECRET }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -124,7 +141,10 @@ jobs:
     environment: dev
     steps:
       - name: SSH deploy
-        uses: appleboy/ssh-action@v1.0.3
+        # Pinned to a commit SHA, not the mutable v1.0.3 tag: this action receives the
+        # root SSH private key for the droplet, so a retagged upstream release would
+        # hand over the host. Update deliberately, verifying the new SHA.
+        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262 # v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
@@ -132,11 +152,19 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           script_stop: true
           command_timeout: 15m
+          # Passed as env rather than interpolated into the script text: a secret
+          # containing a quote or newline would otherwise break out of the string and
+          # inject into a root shell.
+          envs: DEPLOY_DIR,GHCR_TOKEN,GHCR_USER
           script: |
-            set -euo pipefail
-            cd "${{ secrets.SSH_DEPLOY_DIR }}"
-            echo "${{ secrets.GHCR_READ_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
+            set -eu
+            cd "$DEPLOY_DIR"
+            printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
             bash ./scripts/deploy-dev.sh
+        env:
+          DEPLOY_DIR: ${{ secrets.SSH_DEPLOY_DIR }}
+          GHCR_TOKEN: ${{ secrets.GHCR_READ_TOKEN }}
+          GHCR_USER: ${{ secrets.GHCR_USERNAME }}
 
   build-and-push-prod:
     needs: test
@@ -202,16 +230,18 @@ jobs:
             NEXT_PUBLIC_GEOAPIFY_URL=${{ secrets.NEXT_PUBLIC_GEOAPIFY_URL }}
             NEXT_PUBLIC_GEOAPIFY_KEY=${{ secrets.NEXT_PUBLIC_GEOAPIFY_KEY }}
             APP_URL=${{ secrets.APP_URL }}
-            APP_API_KEY=${{ secrets.APP_API_KEY }}
-            APP_TOKEN=${{ secrets.APP_TOKEN }}
             API_V1_URL=${{ secrets.API_V1_URL }}
             GEOAPIFY_URL=${{ secrets.GEOAPIFY_URL }}
-            GEOAPIFY_KEY=${{ secrets.GEOAPIFY_KEY }}
-            ENCRYPTION_SECRET=${{ secrets.ENCRYPTION_SECRET }}
             SUPPORT_EMAIL=${{ secrets.SUPPORT_EMAIL }}
             SUPPORT_USERNAME=${{ secrets.SUPPORT_USERNAME }}
             REGISTRATION_IS_CLOSED=${{ secrets.REGISTRATION_IS_CLOSED }}
             CDN_URL=${{ secrets.CDN_URL }}
+          # See the dev build step: secrets must not travel as build-args.
+          secrets: |
+            app_api_key=${{ secrets.APP_API_KEY }}
+            app_token=${{ secrets.APP_TOKEN }}
+            geoapify_key=${{ secrets.GEOAPIFY_KEY }}
+            encryption_secret=${{ secrets.ENCRYPTION_SECRET }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -222,7 +252,8 @@ jobs:
     environment: prod
     steps:
       - name: SSH deploy
-        uses: appleboy/ssh-action@v1.0.3
+        # SHA-pinned — see the dev deploy job for why.
+        uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262 # v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
@@ -230,8 +261,13 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           script_stop: true
           command_timeout: 15m
+          envs: DEPLOY_DIR,GHCR_TOKEN,GHCR_USER
           script: |
-            set -euo pipefail
-            cd "${{ secrets.SSH_DEPLOY_DIR }}"
-            echo "${{ secrets.GHCR_READ_TOKEN }}" | docker login ghcr.io -u "${{ secrets.GHCR_USERNAME }}" --password-stdin
+            set -eu
+            cd "$DEPLOY_DIR"
+            printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
             bash ./scripts/deploy-prod.sh
+        env:
+          DEPLOY_DIR: ${{ secrets.SSH_DEPLOY_DIR }}
+          GHCR_TOKEN: ${{ secrets.GHCR_READ_TOKEN }}
+          GHCR_USER: ${{ secrets.GHCR_USERNAME }}

@@ -3,13 +3,17 @@ services:
     image: postgres:15-alpine
     container_name: a11studio-postgres
     ports:
-      - "${DB_PORT:-5432}:5432"
+      # Bind to loopback only: Docker's iptables rules bypass most UFW configs, so a
+      # bare "5432:5432" exposes the DB on every interface if this file is ever run
+      # on a host with a public IP.
+      - "127.0.0.1:${DB_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
-      - POSTGRES_USER=${DB_USERNAME:-admin}
-      - POSTGRES_PASSWORD=${DB_PASSWORD:-1234}
-      - POSTGRES_DB=${DB_NAME:-a11studiodb}
+      # `:?` makes compose fail fast when the var is unset — no credential defaults.
+      - POSTGRES_USER=${DB_USERNAME:?DB_USERNAME is required (see .env)}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:?DB_PASSWORD is required (see .env)}
+      - POSTGRES_DB=${DB_NAME:?DB_NAME is required (see .env)}
       - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
     restart: unless-stopped
     command: >
@@ -27,7 +31,7 @@ services:
       -c min_wal_size=1GB
       -c max_wal_size=4GB
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-admin} -d ${DB_NAME:-a11studiodb}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:?} -d ${DB_NAME:?}"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -38,10 +42,10 @@ services:
     container_name: a11studio-pgadmin
     restart: unless-stopped
     ports:
-      - "${PGADMIN_PORT:-8888}:80"
+      - "127.0.0.1:${PGADMIN_PORT:-8888}:80"
     environment:
-      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL:-admin@a11studio.com}
-      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD:-admin123}
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL:?PGADMIN_EMAIL is required (see .env)}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD:?PGADMIN_PASSWORD is required (see .env)}
     volumes:
       - pgadmin_data:/var/lib/pgadmin
     depends_on:
@@ -52,7 +56,9 @@ services:
     image: redis:7-alpine
     container_name: a11studio-redis
     ports:
-      - "${REDIS_PORT:-6379}:6379"
+      # Loopback only — this Redis has no `requirepass`, and an internet-reachable
+      # unauthenticated Redis is a well-known RCE vector (CONFIG SET dir/dbfilename).
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
     command: >

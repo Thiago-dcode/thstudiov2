@@ -1,3 +1,8 @@
-!.env
-
-!.env.local 
+# Keep secrets out of AI-editor indexing and context uploads.
+# NOTE: these must NOT be negations (`!.env`) — a leading `!` re-includes the file.
+.env
+.env.*
+!.env.example
+certs/
+*.key
+*.pem

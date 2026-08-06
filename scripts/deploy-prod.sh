@@ -98,6 +98,28 @@ else
 fi
 echo ""
 
+# ── Step 1b: Sync nginx config from the tracked source ────────────────────────
+# `compose.prod.yaml` mounts ./nginx, but the reviewed config lives in ./pro.nginx.
+# These used to be kept in sync by hand, so security changes to pro.nginx/ could sit
+# in git without ever reaching the running proxy. Copy on every deploy instead.
+info "Step 1b/5 — Syncing nginx config (pro.nginx → nginx) …"
+if [[ -d pro.nginx ]]; then
+  mkdir -p nginx
+  cp -r pro.nginx/. nginx/
+  success "nginx config synced."
+else
+  warn "pro.nginx/ not found — leaving nginx/ untouched."
+fi
+echo ""
+
+# ── Step 1c: Ownership for bind-mounted writable paths ────────────────────────
+# The api/worker containers run as uid 1000 (`node`), not root. The log directory is
+# a host bind mount, so it must be writable by that uid or file logging silently fails.
+info "Step 1c/5 — Ensuring storage/logs is writable by the container user …"
+mkdir -p storage/logs
+chown -R 1000:1000 storage/logs || warn "Could not chown storage/logs — check file logging after deploy."
+echo ""
+
 # ── Step 2: Pull prebuilt images ──────────────────────────────────────────────
 if [[ "$SKIP_PULL" == false ]]; then
   info "Step 2/5 — Pulling prebuilt images from GHCR (api, worker, web) …"

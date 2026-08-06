@@ -63,4 +63,13 @@ COPY --from=builder /workspace/packages/database/dist ./packages/database/dist
 
 EXPOSE 8080
 
+# Drop root. The node images ship an unprivileged `node` user (uid 1000) for this.
+#
+# Deliberately no `chown -R /workspace`: application files stay root-owned and
+# world-readable, so the process can read them but cannot rewrite its own code — a
+# recursive chown would also duplicate the whole node_modules tree into a new layer.
+# The only path the API writes to is the bind-mounted /workspace/storage/logs, which
+# the deploy script chowns to uid 1000 on the host.
+USER node
+
 CMD ["node", "apps/api/dist/main"]

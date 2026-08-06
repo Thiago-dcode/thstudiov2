@@ -11,6 +11,24 @@ import {
 } from '@aws-sdk/client-s3';
 import { S3StorageConfig } from "./types";
 
+/** Extension → Content-Type for objects we serve. Anything unknown is sent as a
+ * non-renderable download rather than being guessed, so an unexpected extension can
+ * never be served as HTML/JS from the CDN origin. */
+const CONTENT_TYPE_BY_EXTENSION: Record<string, string> = {
+    jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    png: 'image/png',
+    webp: 'image/webp',
+    avif: 'image/avif',
+    gif: 'image/gif',
+    svg: 'application/octet-stream', // never image/svg+xml: SVG executes script
+};
+
+const resolveContentType = (path: string): string => {
+    const extension = path.split('.').pop()?.toLowerCase() ?? '';
+    return CONTENT_TYPE_BY_EXTENSION[extension] ?? 'application/octet-stream';
+};
+
 export class S3StorageService extends StorageService {
     private s3Client: S3Client;
     constructor(protected readonly config: S3StorageConfig) {
@@ -31,7 +49,12 @@ export class S3StorageService extends StorageService {
             Bucket: this.config.bucket,
             Key: path,
             Body: file.buffer,
-            ContentType: file.mimetype,
+            // Derived from the stored key, never from the client-supplied `file.mimetype`.
+            // Objects are served from the CDN domain, so echoing back an attacker's
+            // Content-Type (e.g. `text/html`) would turn an upload into stored XSS.
+            ContentType: resolveContentType(path),
+            // Belt and braces: instructs browsers not to re-sniff a type we didn't set.
+            Metadata: { 'x-content-type-options': 'nosniff' },
         });
         const result = await this.s3Client.send(command);
         return !!result;
