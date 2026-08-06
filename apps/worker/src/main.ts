@@ -11,12 +11,12 @@ app.get('/', (_req, res) => {
 });
 
 // TODO: Register workers here
-// Example:
-new Worker('queue-name', async (job: Job) => {
+// // Example:
+// new Worker('queue-name', async (job: Job) => {
 
-  JobStrategyFactory.resolve(job)
+//   JobStrategyFactory.resolve(job)
 
-});
+// });
 
 const server = app.listen(WORKER_PORT, () => {
   console.log(`[worker] listening on port ${WORKER_PORT}`);
