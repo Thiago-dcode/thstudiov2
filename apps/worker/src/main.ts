@@ -1,6 +1,6 @@
 import { config } from '@repo/common-lib/config';
 import express from 'express';
-import { Job, Worker } from 'bullmq';
+// import { Job } from 'bullmq';
 const appConfig = config();
 const WORKER_PORT = process.env.WORKER_PORT || 8081;
 
@@ -35,42 +35,42 @@ process.on('SIGINT', shutdown);
 
 
 
-abstract class JobStrategy {
+// abstract class JobStrategy {
 
-  constructor(public readonly job: Job) { }
+//   constructor(public readonly job: Job) { }
 
-  abstract handle(): Promise<any>
+//   abstract handle(): Promise<any>
 
-}
-
-
-class VideoProcessStrategy extends JobStrategy {
+// }
 
 
-
-  async handle() {
-
-  }
-}
-
-
-class JobStrategyFactory {
+// class VideoProcessStrategy extends JobStrategy {
 
 
 
-  static async resolve(job: Job) {
+//   async handle() {
+
+//   }
+// }
+
+
+// class JobStrategyFactory {
 
 
 
-    switch (job.name) {
-      case 'video':
-
-        return (new VideoProcessStrategy(job)).handle()
-
-      default:
-    }
+//   static async resolve(job: Job) {
 
 
-  }
-}
+
+//     switch (job.name) {
+//       case 'video':
+
+//         return (new VideoProcessStrategy(job)).handle()
+
+//       default:
+//     }
+
+
+//   }
+// }
 
