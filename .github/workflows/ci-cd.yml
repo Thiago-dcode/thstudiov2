@@ -149,7 +149,12 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT }}
+          # Deliberately a literal, not `secrets.SSH_PORT`. A port number is not a
+          # secret, and storing one has two costs: GitHub masks every occurrence of
+          # the value in every log line (a secret of "22" redacts unrelated 22s), and
+          # a typo'd value surfaces only as `parse "***" as int` with nothing to
+          # inspect — exactly how the prod deploy failed on run 31087852716.
+          port: 22
           script_stop: true
           command_timeout: 15m
           # Passed as env rather than interpolated into the script text: a secret
@@ -258,7 +263,8 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT }}
+          # Literal, not a secret — see the dev deploy job.
+          port: 22
           script_stop: true
           command_timeout: 15m
           envs: DEPLOY_DIR,GHCR_TOKEN,GHCR_USER
