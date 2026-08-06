@@ -139,6 +139,12 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
     runs-on: ubuntu-latest
     environment: dev
+    # `packages: read` lets the run's own GITHUB_TOKEN pull the images this workflow
+    # just pushed, which replaces the long-lived GHCR PAT entirely — see the login
+    # line below.
+    permissions:
+      contents: read
+      packages: read
     steps:
       - name: SSH deploy
         # Pinned to a commit SHA, not the mutable v1.0.3 tag: this action receives the
@@ -168,8 +174,12 @@ jobs:
             bash ./scripts/deploy-dev.sh
         env:
           DEPLOY_DIR: ${{ secrets.SSH_DEPLOY_DIR }}
-          GHCR_TOKEN: ${{ secrets.GHCR_READ_TOKEN }}
-          GHCR_USER: ${{ secrets.GHCR_USERNAME }}
+          # The run's own GITHUB_TOKEN, not a stored PAT. It is minted per run and
+          # expires with it, so there is no shared long-lived credential to leak or
+          # to silently expire mid-flight — the previous PAT was shared by dev and
+          # prod and due to expire 2026-08-20.
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_USER: ${{ github.actor }}
 
   build-and-push-prod:
     needs: test
@@ -255,6 +265,10 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: prod
+    # See the dev deploy job.
+    permissions:
+      contents: read
+      packages: read
     steps:
       - name: SSH deploy
         # SHA-pinned — see the dev deploy job for why.
@@ -275,5 +289,6 @@ jobs:
             bash ./scripts/deploy-prod.sh
         env:
           DEPLOY_DIR: ${{ secrets.SSH_DEPLOY_DIR }}
-          GHCR_TOKEN: ${{ secrets.GHCR_READ_TOKEN }}
-          GHCR_USER: ${{ secrets.GHCR_USERNAME }}
+          # Per-run token — see the dev deploy job.
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_USER: ${{ github.actor }}
