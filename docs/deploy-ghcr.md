@@ -290,6 +290,26 @@ nginx container each deploy so bind-mounted config and certs are picked up.
 origin cert covers `*.a11studio.com`, `*.dev.a11studio.com`, and `a11studio.com`, so the same
 cert serves both droplets. Cloudflare SSL mode must be **Full (Strict)**.
 
+## DNS (Cloudflare)
+
+The `a11studio.com` zone is on Cloudflare (`coen`/`ligia.ns.cloudflare.com`). Prod needs
+these records — none of them existed when the pipeline was wired up:
+
+| Name | Type | Value | Proxy |
+|---|---|---|---|
+| `a11studio.com` | A | `134.209.31.146` | proxied |
+| `api.a11studio.com` | A | `134.209.31.146` | proxied |
+| `cdn.a11studio.com` | CNAME | the CloudFront distribution host | see below |
+
+`CDN_URL` is **baked into the web image at build time** — `apps/web/next.config.ts` derives
+`images.remotePatterns` from it, and a value that fails `new URL()` is swallowed by a `catch`
+that returns `[]`, silently dropping the pattern so every CDN image 404s with no error.
+So `CDN_URL` must (a) include the scheme and (b) point at a host that resolves, **before**
+`build-and-push-prod` runs. Changing it on the droplet afterwards does nothing without a rebuild.
+
+For a CloudFront origin, set the `cdn` record to **DNS-only** (grey cloud) unless the
+distribution is configured to accept Cloudflare in front of it.
+
 ## Boot persistence
 
 `scripts/a11studio-prod.service` installed as `/etc/systemd/system/a11studio.service`,
