@@ -36,8 +36,8 @@ const AdminLayout = async ({ children }: { children: ReactNode }) => {
               <CollectionProvider user={userAuth}>
                 <CreateUpdateServiceProvider user={userAuth}>
                   <UserAccountBannedModal />
-                  <UploadMediaModal />
-                  <div className="fixed flex flex-col bottom-6 right-6 z-100 gap-2 ">
+                  <div className="fixed flex flex-col items-end bottom-6 right-6 z-100 gap-2 ">
+                    <UploadMediaModal />
                     <AlertPortfolioButton />
                     <AlertCollectionButton />
                     <AlertServiceButton />

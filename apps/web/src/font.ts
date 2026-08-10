@@ -10,7 +10,7 @@ export const brand = Archivo({
 
 export const body = Jost({
   subsets: ["latin"],
-  weight: ["300", "400", "500"],
+  weight: ["300", "400", "500", "600", "700"],
   style: ["normal"],
   variable: "--font-body",
   display: "swap",

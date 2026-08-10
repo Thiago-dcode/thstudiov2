@@ -1389,7 +1389,7 @@ const messages = {
           "Você atingiu o limite de {limit} serviços destacados na sua página de perfil.",
         thumbnailLabel: "Miniatura",
         thumbnailAlt: "Prévia da miniatura",
-        featuresLabel: "Recursos",
+        featuresLabel: "O que inclui",
         featuresPlaceholder: "ex. sessão de 2 horas",
         termsLabel: "Termos",
         termsPlaceholder: "ex. depósito de 50% necessário",
@@ -1487,15 +1487,16 @@ const messages = {
         compressionTooltipHint:
           "Essa configuração se aplica a todos os arquivos enviados. Você pode ajustar arquivos individuais usando os controles abaixo.",
         allFiles: "Todos os arquivos",
-        upgradeRequired: "Upgrade necessário:",
-        upgradeRequiredBody:
-          "O controle de compressão não está disponível no seu plano atual. Faça upgrade para acessar este recurso.",
+        upgradeRequired: "Faça upgrade para acessar este recurso.",
         aiSeoGeneration: "Gerar metadados",
+        aiSeoBadge: "Metadados IA",
         aiSeoTooltipBody:
           "O SEO (otimização para mecanismos de busca) ajuda seu trabalho a ser encontrado no Google e no Google Imagens. Usa IA para analisar a imagem e gerar um título, uma descrição, um texto alternativo e um nome de arquivo artísticos e ricos em palavras-chave, e a marca automaticamente com as categorias correspondentes.",
         aiSeoCreditsHint:
-          "Custa 1 crédito de IA por imagem. Você tem {count} {count, plural, one {crédito} other {créditos}} restantes.",
+          "Custa 1 crédito de IA por imagem. <remaining>Você tem {count} {count, plural, one {crédito} other {créditos}} restantes.</remaining>",
         creditsLabel: "{count} {count, plural, one {crédito} other {créditos}}",
+        creditsUsageSummary:
+          "{used} {used, plural, one {crédito} other {créditos}} usados · restam {remaining}",
         noCreditsTitle: "Sem créditos de IA:",
         noCreditsBody:
           "Você usou todos os seus créditos de IA. Faça upgrade do seu plano ou aguarde a próxima renovação.",

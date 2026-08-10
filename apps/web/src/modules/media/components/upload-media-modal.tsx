@@ -7,7 +7,7 @@ import {
   HoverCardTrigger,
 } from "@repo/ui/components/shadcn/hover-card";
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
-import { CircleCheckIcon, Eye, EyeOff, OctagonXIcon } from "lucide-react";
+import { ChevronDownIcon, CircleCheckIcon, OctagonXIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { type UploadMedia, useMedia } from "../providers/media.provider";
@@ -49,10 +49,44 @@ export const UploadMediaModal = () => {
     [mediaUploadsToDisplay],
   );
 
+  const overallState = useMemo(() => {
+    if (!isCompleted) return "loading";
+    if (failedCount === 0) return "success";
+    if (successCount === 0) return "error";
+    return "mixed";
+  }, [isCompleted, failedCount, successCount]);
+
   if (!mounted || !mediaUploadsToDisplay.length) return null;
 
+  const overallIcon =
+    overallState === "loading" ? (
+      <Spinner className="size-6 text-blue-500" />
+    ) : overallState === "success" ? (
+      <CircleCheckIcon className="size-6 text-green-500" />
+    ) : overallState === "mixed" ? (
+      <OctagonXIcon className="size-6 text-yellow-500" />
+    ) : (
+      <OctagonXIcon className="size-6 text-red-500" />
+    );
+
+  if (compact) {
+    return (
+      <button
+        type="button"
+        className=" z-200 pointer-events-auto w-14 h-14 flex flex-col items-center justify-center border border-border bg-fg shadow-lg cursor-pointer hover:bg-fg-1 transition-colors"
+        onClick={() => setCompact(false)}
+        aria-label="Expand upload status"
+      >
+        {overallIcon}
+        <span className="text-[9px] text-text-muted mt-0.5 leading-none tabular-nums">
+          {mediaUploadsToDisplay.length}
+        </span>
+      </button>
+    );
+  }
+
   return (
-    <div className="fixed bottom-4 right-4 z-200 pointer-events-auto w-80 max-h-[400px] flex flex-col overflow-hidden border border-border bg-fg shadow-lg">
+    <div className=" z-200 pointer-events-auto w-80 max-h-[400px] flex flex-col overflow-hidden border border-border bg-fg shadow-lg">
       <div className="flex items-center justify-between border-b border-border px-4 py-3 shrink-0">
         <div className="flex flex-col gap-0.5">
           <h3 className="text-sm! font-semibold">
@@ -87,21 +121,13 @@ export const UploadMediaModal = () => {
           onPointerDown={(e) => e.stopPropagation()}
           onClick={(e) => {
             e.stopPropagation();
-            setCompact(!compact);
+            setCompact(true);
           }}
         >
-          {compact ? (
-            <EyeOff className="h-4 w-4" />
-          ) : (
-            <Eye className="h-4 w-4" />
-          )}
+          <ChevronDownIcon className="h-4 w-4" />
         </Button>
       </div>
-      <div
-        className={`flex-1 min-h-0 overflow-y-auto overscroll-contain transition-all duration-300 ease-in-out ${
-          compact ? "max-h-0 opacity-0 pointer-events-none" : "opacity-100"
-        }`}
-      >
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
         <div className="flex flex-col items-start justify-start gap-3 px-4 py-4">
           {mediaUploadsToDisplay.map((mediaUpload) => (
             <SingleMediaUpload

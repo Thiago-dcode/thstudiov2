@@ -91,10 +91,7 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
   const inputErrors = currentMediaUpload?.error?.inputErrors;
 
   // AI Credits calculation
-  const creditsAvailable = aiCreditsInfo
-    ? aiCreditsInfo.total - aiCreditsInfo.consumed
-    : 0;
-  const hasEnoughCredits = creditsAvailable >= 1;
+  const hasEnoughCredits = aiCreditsInfo.hasCredits;
 
   const handleGenerateSeo = useCallback(async () => {
     if (!currentMedia.user_id || !currentMedia.id) {
@@ -105,11 +102,8 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
     }
     // Always show the SEO tab when generating
     setActiveTab("seo");
-    const result = await generateSeoSingleMedia(currentMedia);
-    if (result.data) {
-      await refresh();
-    }
-  }, [currentMedia, generateSeoSingleMedia, refresh, hasEnoughCredits]);
+    await generateSeoSingleMedia(currentMedia);
+  }, [currentMedia, generateSeoSingleMedia, hasEnoughCredits]);
 
   const isPending = currentMediaUpload?.pending;
   // Format date - use updated_at if available, otherwise fallback to created_at
@@ -503,7 +497,7 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
           </article>
         </DrawerTrigger>
       </div>
-      <DrawerContent className="h-full w-[600px] max-w-[90vw] right-0 left-auto opacity-90 ">
+      <DrawerContent className="h-full w-150 max-w-[90vw] right-0 left-auto opacity-90 ">
         <DrawerHeader className="border-b p-2">
           <div className="flex items-start justify-between gap-3 min-w-0">
             <div className="flex min-w-0 flex-1 items-end justify-start gap-2">
@@ -564,19 +558,17 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
                       openDelay={200}
                       iconClassName="w-3 h-3"
                     />
-                    {aiCreditsInfo && (
-                      <span
-                        className={cn(
-                          "text-[10px] ml-0.5",
-                          !hasEnoughCredits
-                            ? "text-error font-medium"
-                            : "text-text-muted",
-                        )}
-                      >
-                        {aiCreditsInfo.consumed}/{aiCreditsInfo.total}
-                        {!hasEnoughCredits && t("noCreditsSuffix")}
-                      </span>
-                    )}
+                    <span
+                      className={cn(
+                        "text-[10px] ml-0.5",
+                        !hasEnoughCredits
+                          ? "text-error font-medium"
+                          : "text-text-muted",
+                      )}
+                    >
+                      {aiCreditsInfo.consumed}/{aiCreditsInfo.total}
+                      {!hasEnoughCredits && t("noCreditsSuffix")}
+                    </span>
                   </div>
                 </div>
               ) : (

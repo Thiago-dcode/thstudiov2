@@ -85,15 +85,15 @@ export function MediaSearch() {
   };
 
   return (
-    <div className="flex flex-col items-end gap-2 shrink-0">
-      <form onSubmit={handleSubmit} className="relative w-full max-w-xs">
-        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-text-muted pointer-events-none" />
+    <div className="flex flex-col items-start gap-2 w-full max-w-96">
+      <form onSubmit={handleSubmit} className="relative w-full">
+        <Search className="absolute left-2.5  top-1/2 -translate-y-1/2 size-3.5 text-text-muted pointer-events-none z-30" />
         <Input
           type="text"
           placeholder={t("placeholder")}
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          className="pl-8 pr-8 h-9 text-xs"
+          className="pl-8  h-9 text-xs!"
           disabled={isPending}
         />
         {value && (

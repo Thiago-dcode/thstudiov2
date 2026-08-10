@@ -18,6 +18,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useUserMetrics } from "@/modules/users/providers/user-metrics.provider";
 import {
   createMediaApi,
   generateMediaMetadataApi,
@@ -105,6 +106,7 @@ export const useMedia = () => {
 
 export const MediaProvider = ({ children }: { children: ReactNode }) => {
   const [mediaUploads, setMediaUploads] = useState<UploadMedia[]>([]);
+  const { refresh: refreshUserMetrics } = useUserMetrics();
 
   const nextUniqueId = useRef(Date.now());
   const generateUniqueMediaId = useCallback(() => {
@@ -429,6 +431,7 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
       };
 
       upsertMediaUpload(updatedUpload);
+      await refreshUserMetrics();
 
       if (onSuccess) {
         await onSuccess(result, media);

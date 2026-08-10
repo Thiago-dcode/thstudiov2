@@ -27,7 +27,7 @@
                     <a href="<%= globals.appUrl %>" class="e-text-muted" style=" color:#46443F; text-decoration:none; letter-spacing:0.5px;">
                         <%= globals.beautyUrl %>
                     </a>
-                    <% const footerContact = (typeof contact !== 'undefined' && contact) || {}; %>
+                    <% const footerContact = (typeof companyInfo !== 'undefined' && companyInfo) || {}; %>
                     <% if (footerContact.address) { %>
                         <p class="e-text-muted" style="margin:10px 0 0 0; color:#8F8C84; font-size:11px; line-height:1.5; letter-spacing:0.3px;">
                             <%= footerContact.address %>

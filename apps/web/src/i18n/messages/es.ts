@@ -1389,7 +1389,7 @@ const messages = {
           "Has alcanzado el límite de {limit} servicios destacados en tu página de perfil.",
         thumbnailLabel: "Miniatura",
         thumbnailAlt: "Vista previa de la miniatura",
-        featuresLabel: "Características",
+        featuresLabel: "Qué incluye",
         featuresPlaceholder: "ej. sesión de 2 horas",
         termsLabel: "Términos",
         termsPlaceholder: "ej. depósito del 50% requerido",
@@ -1487,15 +1487,16 @@ const messages = {
         compressionTooltipHint:
           "Este ajuste se aplica a todos los archivos subidos. Puedes ajustar archivos individuales con los controles de abajo.",
         allFiles: "Todos los archivos",
-        upgradeRequired: "Actualización necesaria:",
-        upgradeRequiredBody:
-          "El control de compresión no está disponible en tu plan actual. Actualiza para acceder a esta función.",
+        upgradeRequired: "Actualiza para acceder a esta función",
         aiSeoGeneration: "Generar metadatos",
+        aiSeoBadge: "Metadatos IA",
         aiSeoTooltipBody:
           "El SEO (optimización para motores de búsqueda) ayuda a que tu trabajo se encuentre en Google y Google Imágenes. Usa IA para analizar la imagen y generar un título, una descripción, un texto alternativo y un nombre de archivo artísticos y ricos en palabras clave, y la etiqueta automáticamente con las categorías correspondientes.",
         aiSeoCreditsHint:
-          "Cuesta 1 crédito de IA por imagen. Te quedan {count} {count, plural, one {crédito} other {créditos}}.",
+          "Cuesta 1 crédito de IA por imagen. <remaining>Te quedan {count} {count, plural, one {crédito} other {créditos}}.</remaining>",
         creditsLabel: "{count} {count, plural, one {crédito} other {créditos}}",
+        creditsUsageSummary:
+          "{used} {used, plural, one {crédito} other {créditos}} usados · quedan {remaining}",
         noCreditsTitle: "Sin créditos de IA:",
         noCreditsBody:
           "Has usado todos tus créditos de IA. Mejora tu plan o espera al próximo reinicio.",

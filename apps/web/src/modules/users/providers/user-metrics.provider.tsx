@@ -14,6 +14,12 @@ import {
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { getUserMetricsAction } from "@/modules/users/server-actions/get-user-metrics.action";
 
+type AiCreditsInfo = {
+  consumed: number;
+  total: number;
+  remaining: number;
+  hasCredits: boolean;
+};
 // Context type
 type UserMetricsContextType = {
   metrics: UserMetrics | null;
@@ -23,7 +29,7 @@ type UserMetricsContextType = {
   cleanErrors: () => void;
   refresh: () => Promise<void>;
   success: boolean;
-  aiCreditsInfo: { consumed: number; total: number } | null;
+  aiCreditsInfo: AiCreditsInfo;
   isUserAccountBanned: boolean;
 };
 
@@ -98,13 +104,19 @@ export const UserMetricsProvider = ({
   const isLoading = !metrics && isPending;
 
   // Calculate AI credits
-  const aiCreditsInfo = useMemo(() => {
-    if (!metrics?.extra_data || !metrics?.active_plan) return null;
+  const aiCreditsInfo: AiCreditsInfo = useMemo(() => {
+    if (!metrics?.extra_data || !metrics?.active_plan)
+      return { consumed: 0, hasCredits: false, total: 0, remaining: 0 };
     const consumed = metrics.extra_data.ai_credits_consumed || 0;
     const total =
       (metrics.extra_data.ai_credits || 0) +
       (metrics.active_plan.ai_credits || 0);
-    return { consumed, total };
+    return {
+      consumed,
+      total,
+      remaining: total - consumed,
+      hasCredits: consumed < total,
+    };
   }, [metrics]);
 
   const isUserAccountBanned = useMemo(() => {
