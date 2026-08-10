@@ -1379,7 +1379,7 @@ const messages = {
           "You've reached the limit of {limit} highlighted services on your profile page.",
         thumbnailLabel: "Thumbnail",
         thumbnailAlt: "Thumbnail Preview",
-        featuresLabel: "Features",
+        featuresLabel: "What's included",
         featuresPlaceholder: "e.g. 2-hour session",
         termsLabel: "Terms",
         termsPlaceholder: "e.g. 50% deposit required",
@@ -1477,22 +1477,23 @@ const messages = {
         compressionTooltipHint:
           "This setting applies to all uploaded files. You can adjust individual files using the sliders below.",
         allFiles: "All files",
-        upgradeRequired: "Upgrade required:",
-        upgradeRequiredBody:
-          "Compression control is not available in your current plan. Upgrade to access this feature.",
-        aiSeoGeneration: "Generate media metadata",
+        upgradeRequired: "Upgrade to access this feature.",
+        aiSeoGeneration: "Generate metadata",
+        aiSeoBadge: "AI metadata",
         aiSeoTooltipBody:
           "SEO (Search Engine Optimization) helps your work get found on Google and Google Images. This uses AI to analyze the image and generate an artistic, keyword-rich title, description, alt text and filename — and auto-tags it with matching categories.",
         aiSeoCreditsHint:
-          "Costs 1 AI credit per image. You have {count} {count, plural, one {credit} other {credits}} remaining.",
+          "Costs 1 AI credit per image. <remaining>You have {count} {count, plural, one {credit} other {credits}} remaining.</remaining>",
         creditsLabel: "{count} {count, plural, one {credit} other {credits}}",
+        creditsUsageSummary:
+          "{used} {used, plural, one {credit} other {credits}} used · {remaining} left",
         noCreditsTitle: "No AI credits:",
         noCreditsBody:
           "You have used all your AI credits. Upgrade your plan or wait for the next reset.",
         filesCount: "{count}/{max} files",
         maxReached: "Maximum reached",
         compressionLabel: "Compression",
-        upgradeToAdjust: "Upgrade plan to adjust",
+        upgradeToAdjust: "Updgrade required",
         previewAlt: "Preview {index}",
         createNewMedia: "Create New Media",
         uploadUpToImages: "Upload up to {max} images (JPEG, PNG, WebP)",

@@ -84,7 +84,7 @@ export abstract class ApiMailService extends Mailable {
     return {
       ...this._viewParams.data,
       ...extra,
-      contact: this.getContactInfo(),
+      companyInfo: this.getContactInfo(),
       ...(this.i18nService ? { t: this.t } : {}),
     };
   }

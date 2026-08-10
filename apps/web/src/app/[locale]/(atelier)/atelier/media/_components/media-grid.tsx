@@ -57,15 +57,13 @@ export function MediaGrid({
     setCanSelect,
     clearSelection,
   } = useSelectMedia();
-  const { aiCreditsInfo, refresh } = useUserMetrics();
+  const { aiCreditsInfo } = useUserMetrics();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isGenerateSeoDialogOpen, setIsGenerateSeoDialogOpen] = useState(false);
 
   const MAX_AI_GENERATE = 10;
 
-  const creditsAvailable = aiCreditsInfo
-    ? aiCreditsInfo.total - aiCreditsInfo.consumed
-    : 0;
+  const creditsAvailable = aiCreditsInfo.remaining;
   const creditsNeeded = selectionCount;
   const hasEnoughCredits = creditsAvailable >= creditsNeeded;
   const isOverAiLimit = selectionCount > MAX_AI_GENERATE;
@@ -80,7 +78,6 @@ export function MediaGrid({
     setCanSelect(false);
     clearSelection();
     await generateManySeoMedia(Object.values(selectedMedia));
-    refresh();
   };
 
   const handleRemoveCurrentMedia = (mediaId: number) => {
@@ -142,44 +139,42 @@ export function MediaGrid({
                       {t("generateSeoDescription", { count: selectionCount })}
                     </DialogDescription>
                   </DialogHeader>
-                  {aiCreditsInfo && (
-                    <div className="px-6 py-3 bg-fg-2/50 space-y-1">
-                      <div className="flex items-center justify-between text-sm!">
-                        <span className="text-text-muted">
-                          {t("creditsAvailable")}
-                        </span>
-                        <span className="font-medium">{creditsAvailable}</span>
-                      </div>
-                      <div className="flex items-center justify-between text-sm!">
-                        <span className="text-text-muted">
-                          {t("creditsNeeded")}
-                        </span>
-                        <span
-                          className={cn(
-                            "font-medium",
-                            !hasEnoughCredits && "text-error",
-                          )}
-                        >
-                          {creditsNeeded}
-                        </span>
-                      </div>
-                      {isOverAiLimit && (
-                        <p className="text-xs! text-error mt-2">
-                          {t("overAiLimit", {
-                            max: MAX_AI_GENERATE,
-                            excess: selectionCount - MAX_AI_GENERATE,
-                          })}
-                        </p>
-                      )}
-                      {!hasEnoughCredits && (
-                        <p className="text-xs! text-error mt-2">
-                          {t("insufficientCredits", {
-                            needed: creditsNeeded - creditsAvailable,
-                          })}
-                        </p>
-                      )}
+                  <div className="px-6 py-3 bg-fg-2/50 space-y-1">
+                    <div className="flex items-center justify-between text-sm!">
+                      <span className="text-text-muted">
+                        {t("creditsAvailable")}
+                      </span>
+                      <span className="font-medium">{creditsAvailable}</span>
                     </div>
-                  )}
+                    <div className="flex items-center justify-between text-sm!">
+                      <span className="text-text-muted">
+                        {t("creditsNeeded")}
+                      </span>
+                      <span
+                        className={cn(
+                          "font-medium",
+                          !hasEnoughCredits && "text-error",
+                        )}
+                      >
+                        {creditsNeeded}
+                      </span>
+                    </div>
+                    {isOverAiLimit && (
+                      <p className="text-xs! text-error mt-2">
+                        {t("overAiLimit", {
+                          max: MAX_AI_GENERATE,
+                          excess: selectionCount - MAX_AI_GENERATE,
+                        })}
+                      </p>
+                    )}
+                    {!hasEnoughCredits && (
+                      <p className="text-xs! text-error mt-2">
+                        {t("insufficientCredits", {
+                          needed: creditsNeeded - creditsAvailable,
+                        })}
+                      </p>
+                    )}
+                  </div>
                   <DialogFooter className="gap-2">
                     <Button
                       variant="outline"

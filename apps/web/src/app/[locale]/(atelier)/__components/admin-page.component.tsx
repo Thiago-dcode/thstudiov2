@@ -31,9 +31,11 @@ export const AdminPageTitle = async ({
 }: AdminPageTitleProps) => {
   const t = await getTranslations("atelier.common");
   return (
-    <div className="flex items-center justify-between gap-3">
-      <div className="flex items-center gap-2 min-w-0">
-        <h1 className="text-lg sm:text-2xl! font-semibold truncate">{title}</h1>
+    <div className="flex  flex-col tablet:flex-row items-start justify-between gap-3">
+      <div className="flex items-center  gap-2 min-w-0">
+        <h1 className="self-start text-xl! sm:text-2xl! font-semibold truncate">
+          {title}
+        </h1>
         {publicHref && (
           <Link
             href={publicHref}
@@ -47,7 +49,9 @@ export const AdminPageTitle = async ({
         {info && <InfoTooltip content={info} />}
       </div>
       {children && (
-        <div className="flex shrink-0 items-center gap-1">{children}</div>
+        <div className="flex shrink-0 items-center gap-1 w-full tablet:w-auto">
+          {children}
+        </div>
       )}
     </div>
   );

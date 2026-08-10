@@ -21,4 +21,5 @@ export class AiConsumptionGuard implements CanActivate {
 
     return true;
   }
+
 }

@@ -24,9 +24,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@repo/ui/components/shadcn/dialog";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@repo/ui/components/shadcn/popover";
 import { Slider } from "@repo/ui/components/shadcn/slider";
 import { useInputFile } from "@repo/ui/contexts/file.provider";
 import { usePreviewUrls } from "@repo/ui/hooks/usePreviewUrls";
+import { cn } from "@repo/ui/lib/utils";
 import { Plus, Sparkles, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -98,6 +104,54 @@ function CompressionSlider({
   );
 }
 
+function CompressionSliderWithUpgradeHint({
+  compressionLevel,
+  disabled,
+  upgradeHint,
+  onCompressionLevelChange,
+}: {
+  compressionLevel: EnumType<"COMPRESSION_LEVEL">;
+  disabled?: boolean;
+  upgradeHint: string;
+  onCompressionLevelChange: (level: EnumType<"COMPRESSION_LEVEL">) => void;
+}) {
+  const [open, setOpen] = useState(false);
+
+  if (!disabled) {
+    return (
+      <CompressionSlider
+        compressionLevel={compressionLevel}
+        onCompressionLevelChange={onCompressionLevelChange}
+      />
+    );
+  }
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <div
+          className="w-full cursor-not-allowed"
+          onMouseLeave={() => setOpen(false)}
+        >
+          <CompressionSlider
+            compressionLevel={compressionLevel}
+            disabled
+            onCompressionLevelChange={onCompressionLevelChange}
+          />
+        </div>
+      </PopoverTrigger>
+      <PopoverContent
+        side="top"
+        align="start"
+        className="w-auto p-2"
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
+        <p className="text-xs! text-amber-600">{upgradeHint}</p>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 function MediaUploadContent() {
   const t = useTranslations("atelier.media.upload");
   const [error, setError] = useState<string>();
@@ -120,28 +174,14 @@ function MediaUploadContent() {
     () => mediaPendingToCreate.filter((m) => !m.pending && !m.data && !m.error),
     [mediaPendingToCreate],
   );
-
-  const [generateSeo, setGenerateSeo] = useState(false);
-  const remainingCredits = aiCreditsInfo
-    ? aiCreditsInfo.total - aiCreditsInfo.consumed
-    : 0;
-  const hasCredits = remainingCredits > 0;
-
-  useEffect(() => {
-    const needsUpdate = mediaToShow.some((m) => m.generate_seo !== generateSeo);
-    if (!needsUpdate) return;
-    setMediaUploads(
-      mediaPendingToCreate.map((mu) => ({
-        ...mu,
-        generate_seo: generateSeo,
-      })),
-    );
-  }, [
-    generateSeo,
-    mediaPendingToCreate.map,
-    mediaToShow.some,
-    setMediaUploads,
-  ]);
+  const willGenerateMetadata = useMemo(
+    () =>
+      mediaToShow.reduce(
+        (prev, curr) => (curr.generate_seo ? prev + 1 : prev),
+        0,
+      ),
+    [mediaToShow],
+  );
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = e.target.files;
@@ -170,42 +210,39 @@ function MediaUploadContent() {
               <div className="flex-1">
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-text">
+                    <span className="text-xs! font-medium text-text">
                       {t("globalCompression")}
                     </span>
                     <InfoTooltip
                       content={
                         <div className="space-y-2">
-                          <p className="font-medium">
+                          {!allow_media_compression && (
+                            <div className="">
+                              <p className="text-xs! text-amber-600">
+                                <span className="font-medium!">
+                                  {t("upgradeRequired")}
+                                </span>
+                              </p>
+                            </div>
+                          )}
+                          <p className="font-medium! text-sm!">
                             {t("compressionTooltipTitle")}
                           </p>
-                          <p className="text-sm">
+                          <p className="text-sm!">
                             {t("compressionTooltipBody")}
                           </p>
-                          <p className="text-xs text-text-muted">
+                          <p className="text-xs! text-text-muted">
                             {t("compressionTooltipHint")}
                           </p>
                         </div>
                       }
                     />
-                    <span className="text-xs text-text-muted bg-fg-2 px-2 py-0.5">
-                      {t("allFiles")}
-                    </span>
                   </div>
                   <span className="text-xs font-semibold text-text bg-fg px-2 py-1">
                     {globalCompressionPreview ?? globalCompressionLevel}
                   </span>
                 </div>
-                {!allow_media_compression && (
-                  <div className="mb-2 p-2 bg-amber-500/10 border border-amber-500/20">
-                    <p className="text-xs text-amber-600">
-                      <span className="font-medium">
-                        {t("upgradeRequired")}
-                      </span>{" "}
-                      {t("upgradeRequiredBody")}
-                    </p>
-                  </div>
-                )}
+
                 <CompressionSlider
                   compressionLevel={globalCompressionLevel}
                   disabled={!allow_media_compression}
@@ -231,54 +268,74 @@ function MediaUploadContent() {
                 <div className="flex items-center gap-2">
                   <Checkbox
                     id="generate-seo"
-                    checked={generateSeo}
-                    disabled={!hasCredits}
+                    disabled={!aiCreditsInfo.hasCredits}
                     onCheckedChange={(checked) => {
                       const value = checked === true;
-                      setGenerateSeo(value);
                       setMediaUploads(
-                        mediaPendingToCreate.map((mu) => ({
-                          ...mu,
-                          generate_seo: value,
-                        })),
+                        mediaPendingToCreate.map((mu, i) => {
+                          return {
+                            ...mu,
+                            generate_seo: !value
+                              ? false
+                              : i < aiCreditsInfo.remaining,
+                          };
+                        }),
                       );
                     }}
                   />
                   <label
                     htmlFor="generate-seo"
-                    className="flex items-center gap-1.5 text-sm font-medium text-text cursor-pointer select-none"
+                    className="flex items-center gap-1.5 text-xs! font-medium text-text cursor-pointer select-none"
                   >
-                    <Sparkles className="h-3.5 w-3.5" />
                     {t("aiSeoGeneration")}
                   </label>
                   <InfoTooltip
                     content={
                       <div className="space-y-2">
+                        {!aiCreditsInfo.hasCredits && (
+                          <p className="text-xs! text-amber-600">
+                            <span className="font-medium!">
+                              {t("noCreditsTitle")}
+                            </span>
+                          </p>
+                        )}
                         <p className="font-medium">{t("aiSeoGeneration")}</p>
-                        <p className="text-sm">{t("aiSeoTooltipBody")}</p>
-                        <p className="text-xs text-text-muted">
-                          {t("aiSeoCreditsHint", { count: remainingCredits })}
+                        <p className="text-sm!">{t("aiSeoTooltipBody")}</p>
+                        <p className="text-xs! text-text-muted">
+                          {t.rich("aiSeoCreditsHint", {
+                            count: aiCreditsInfo.remaining,
+                            remaining: (chunks) => (
+                              <span className="font-semibold text-text">
+                                {chunks}
+                              </span>
+                            ),
+                          })}
                         </p>
                       </div>
                     }
                   />
                 </div>
-                <span className="text-xs font-semibold text-text bg-fg px-2 py-1">
-                  {t("creditsLabel", { count: remainingCredits })}
+                <span
+                  className={cn(
+                    "text-xs",
+                    aiCreditsInfo.remaining - willGenerateMetadata <= 0
+                      ? "text-accent"
+                      : "text-text-muted",
+                  )}
+                >
+                  {willGenerateMetadata > 0
+                    ? t("creditsUsageSummary", {
+                        used: willGenerateMetadata,
+                        remaining:
+                          aiCreditsInfo.remaining - willGenerateMetadata,
+                      })
+                    : t("creditsLabel", { count: aiCreditsInfo.remaining })}
                 </span>
               </div>
-              {!hasCredits && (
-                <div className="p-2 bg-amber-500/10 border border-amber-500/20">
-                  <p className="text-xs text-amber-600">
-                    <span className="font-medium">{t("noCreditsTitle")}</span>{" "}
-                    {t("noCreditsBody")}
-                  </p>
-                </div>
-              )}
             </div>
 
             <div className="flex items-center justify-between pt-2 border-t border-border/50">
-              <span className="text-sm text-text-muted">
+              <span className="text-sm! text-text-muted">
                 {t("filesCount", { count: currentCount, max: MAX_FILES })}
               </span>
               {isMaxReached && (
@@ -300,6 +357,12 @@ function MediaUploadContent() {
                     className="flex flex-col gap-3"
                   >
                     <div className="relative aspect-square flex flex-col items-center justify-center overflow-hidden border border-border bg-fg-2 shadow-md min-h-[200px]">
+                      {media.generate_seo && (
+                        <div className="absolute top-1.5 left-1.5 z-10 flex items-center gap-1 bg-black/60 text-white px-1.5 py-0.5 text-[10px] font-medium">
+                          <Sparkles className="h-3 w-3" />
+                          {t("aiSeoBadge")}
+                        </div>
+                      )}
                       <button
                         type="button"
                         onClick={() => removeMediaUpload(media.unique_id)}
@@ -322,14 +385,10 @@ function MediaUploadContent() {
                           {currentCompressionLvl}
                         </span>
                       </div>
-                      {!allow_media_compression && (
-                        <p className="text-xs text-amber-600">
-                          {t("upgradeToAdjust")}
-                        </p>
-                      )}
-                      <CompressionSlider
+                      <CompressionSliderWithUpgradeHint
                         compressionLevel={currentCompressionLvl}
                         disabled={!allow_media_compression}
+                        upgradeHint={t("upgradeToAdjust")}
                         onCompressionLevelChange={(compressionLvlSelected) => {
                           upsertMediaUpload({
                             ...media,
@@ -346,7 +405,7 @@ function MediaUploadContent() {
               })}
             </div>
           </div>
-          {error && <p className="text-sm text-red-500 mb-2">{error}</p>}
+          {error && <p className="text-sm! text-red-500 mb-2">{error}</p>}
           <div className="mt-auto">
             <FileInput
               multiple
@@ -362,11 +421,11 @@ function MediaUploadContent() {
       ) : (
         <div className="h-full flex flex-col">
           <div className="mb-2 flex items-center justify-between">
-            <span className="text-sm text-text-muted">
+            <span className="text-sm! text-text-muted">
               {t("filesCount", { count: currentCount, max: MAX_FILES })}
             </span>
           </div>
-          {error && <p className="text-sm text-red-500 mb-2">{error}</p>}
+          {error && <p className="text-sm! text-red-500 mb-2">{error}</p>}
           <div className="flex-1 min-h-0">
             <FileInput
               multiple
@@ -448,7 +507,7 @@ export function CreateMediaDialog({
   if (isStorageFull) {
     return (
       <Button
-        className="p-2 text-sm"
+        className="p-2 text-sm!"
         variant="default"
         size="default"
         disabled
@@ -477,10 +536,10 @@ export function CreateMediaDialog({
           {t("addMedia")}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-[95vw] sm:max-w-2xl md:max-w-3xl lg:max-w-5xl h-[95vh] flex flex-col justify-between [&>button]:hidden p-0 z-100">
+      <DialogContent className="max-w-[100vw] sm:max-w-2xl md:max-w-3xl lg:max-w-5xl h-[98vh] flex flex-col justify-between [&>button]:hidden p-0 z-100">
         <DialogHeader className="border-b pb-4 px-6 pt-6">
-          <DialogTitle className="text-lg!">{t("createNewMedia")}</DialogTitle>
-          <DialogDescription className="text-sm!">
+          <DialogTitle className="text-sm!">{t("createNewMedia")}</DialogTitle>
+          <DialogDescription className="text-xs!">
             {t("uploadUpToImages", { max: MAX_FILES })}
           </DialogDescription>
         </DialogHeader>
