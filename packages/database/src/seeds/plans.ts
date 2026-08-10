@@ -1,7 +1,79 @@
 import { Query } from '../lib/facades';
 import { stripe } from '@repo/backend-lib/services/payment-service/stripe';
 import { LogService } from '@repo/backend-lib/services/log-service';
-import { CreatePlanWithDetailsInput } from '@repo/common-lib/schemas/plan';
+import Logger from '@repo/backend-lib/utils/console';
+import {
+  CreatePlanWithDetailsInput,
+  PlanSchema,
+  PlanTranslationSchema,
+} from '@repo/common-lib/schemas/plan';
+import { CreatePlanPriceInput, PlanPriceSchema } from '@repo/common-lib/schemas/plan-price';
+
+/** Creates or updates the Stripe product for a plan, matching by `stripe_id` when available. */
+async function upsertStripeProduct(
+  existingStripeId: string | null,
+  name: string,
+  description: string,
+): Promise<string> {
+  if (existingStripeId) {
+    try {
+      const updated = await stripe.products.update(existingStripeId, {
+        name,
+        description,
+        active: true,
+      });
+      return updated.id;
+    } catch (error) {
+      Logger.warn(
+        `Stripe product ${existingStripeId} could not be updated, recreating: ${(error as Error).message}`,
+      );
+    }
+  }
+  const created = await stripe.products.create({ active: true, name, description });
+  return created.id;
+}
+
+/**
+ * Stripe prices are immutable once created, so a price change requires creating a new
+ * Stripe price and archiving the old one. Returns the same `stripe_id` when the amount
+ * has not changed to avoid needless churn.
+ */
+async function upsertStripePrice(
+  productId: string,
+  existingStripeId: string | null,
+  existingAmount: number | null,
+  billingType: CreatePlanPriceInput['billing_type'],
+  amount: number,
+): Promise<string> {
+  if (existingStripeId && existingAmount === amount) {
+    return existingStripeId;
+  }
+
+  const created = await stripe.prices.create({
+    product: productId,
+    currency: 'eur',
+    unit_amount: amount * 100,
+    recurring:
+      billingType !== 'LIFETIME'
+        ? {
+            interval: 'month',
+            interval_count: billingType === 'MONTHLY' ? 1 : billingType === 'QUARTERLY' ? 3 : 12,
+          }
+        : undefined,
+  });
+
+  if (existingStripeId) {
+    try {
+      await stripe.prices.update(existingStripeId, { active: false });
+    } catch (error) {
+      Logger.warn(
+        `Could not archive old Stripe price ${existingStripeId}: ${(error as Error).message}`,
+      );
+    }
+  }
+
+  return created.id;
+}
 
 /**
  * ============================================================================
@@ -277,27 +349,39 @@ export const main = async () => {
       ],
     },
   ];
-  await Query.table('plan_translations').delete();
-  await Query.table('plans').delete();
   for (const _plan of plans) {
     const { translations, prices, ...plan } = _plan;
 
-    const stripeProduct = await stripe.products.create({
-      active: true,
-      name: plan.name,
-      description: plan.description,
-    });
-    plan.stripe_id = stripeProduct.id;
+    const existingPlan = await Query.table('plans')
+      .where('name', '=', plan.name)
+      .first<PlanSchema>();
 
-    // Insert plan with all data
-    const { id } = await Query.table('plans').insertAndGet(
-      Object.keys(plan),
-      Object.values(plan),
-      ['id'],
+    const stripeProductId = await upsertStripeProduct(
+      existingPlan?.stripe_id ?? null,
+      plan.name,
+      plan.description,
     );
+    plan.stripe_id = stripeProductId;
+
+    let planId: number;
+    if (existingPlan) {
+      planId = existingPlan.id;
+      await Query.table('plans')
+        .where('id', '=', planId)
+        .update(Object.keys(plan), Object.values(plan));
+      Logger.info(`Plan "${plan.name}" updated (id=${planId}).`);
+    } else {
+      const inserted = await Query.table('plans').insertAndGet(
+        Object.keys(plan),
+        Object.values(plan),
+        ['id'],
+      );
+      planId = inserted.id;
+      Logger.info(`Plan "${plan.name}" created (id=${planId}).`);
+    }
 
     for (const price of prices) {
-      price.plan_id = id;
+      price.plan_id = planId;
 
       // Calculate price based on billing type
       switch (price.billing_type) {
@@ -315,35 +399,55 @@ export const main = async () => {
           break;
       }
 
+      const existingPrice = await Query.table('plan_prices')
+        .where('plan_id', '=', planId)
+        .where('billing_type', '=', price.billing_type)
+        .first<PlanPriceSchema>();
+
       if (!plan.is_free) {
-
-        const stripePrice = await stripe.prices.create({
-          product: stripeProduct.id,
-          currency: 'eur',
-          unit_amount: price.price * 100,
-          recurring: price.billing_type !== 'LIFETIME' ? {
-            interval: 'month',
-            interval_count: price.billing_type === 'MONTHLY' ? 1 :
-              price.billing_type === 'QUARTERLY' ? 3 : 12
-          } : undefined,
-        });
-        price.stripe_id = stripePrice.id;
-
+        price.stripe_id = await upsertStripePrice(
+          stripeProductId,
+          existingPrice?.stripe_id ?? null,
+          existingPrice?.price ?? null,
+          price.billing_type,
+          price.price,
+        );
+      } else {
+        price.stripe_id = null;
       }
 
-
-      // Insert plan price with all data
-      await Query.table('plan_prices').insert(
-        Object.keys(price),
-        Object.values(price),
-      );
+      if (existingPrice) {
+        await Query.table('plan_prices')
+          .where('id', '=', existingPrice.id)
+          .update(['price', 'stripe_id'], [price.price, price.stripe_id]);
+      } else {
+        await Query.table('plan_prices').insert(
+          Object.keys(price),
+          Object.values(price),
+        );
+      }
     }
     for (const translation of translations) {
-      translation.plan_id = id;
-      await Query.table('plan_translations').insert(
-        Object.keys(translation),
-        Object.values(translation),
-      );
+      translation.plan_id = planId;
+
+      const existingTranslation = await Query.table('plan_translations')
+        .where('plan_id', '=', planId)
+        .where('language_code', '=', translation.language_code)
+        .first<PlanTranslationSchema>();
+
+      if (existingTranslation) {
+        await Query.table('plan_translations')
+          .where('id', '=', existingTranslation.id)
+          .update(
+            ['name', 'short_description', 'description'],
+            [translation.name, translation.short_description, translation.description],
+          );
+      } else {
+        await Query.table('plan_translations').insert(
+          Object.keys(translation),
+          Object.values(translation),
+        );
+      }
     }
   }
 

@@ -2,17 +2,19 @@ import { getConfigValue } from '@repo/common-lib/config/utils';
 import { FactoryStorageService } from '@repo/backend-lib/services/storage-service/factory';
 import type { S3StorageConfig } from '@repo/backend-lib/services/storage-service/types';
 import Logger from '@repo/backend-lib/utils/console';
+import {
+  DESTRUCTIVE_PASSWORD_HASH_ENV,
+  verifyDestructivePassword,
+} from './utils/destructive-password';
 
-const ALLOWED_ENVS = ['development', 'local', 'test'];
-
-const assertLocalEnvironment = (shouldExit: boolean) => {
-  const env = getConfigValue('app').env.toLowerCase();
-  if (!ALLOWED_ENVS.includes(env)) {
+const assertDestructivePassword = async (password: string, shouldExit: boolean) => {
+  const isValid = await verifyDestructivePassword(password);
+  if (!isValid) {
     Logger.error(
-      `❌ This script can only be run in local environments (${ALLOWED_ENVS.join(', ')}). Current: "${env}"`,
+      `❌ Invalid password (check ${DESTRUCTIVE_PASSWORD_HASH_ENV}). Refusing S3 cleanup.`,
     );
     if (shouldExit) process.exit(1);
-    throw new Error(`S3 cleanup not allowed in environment: ${env}`);
+    throw new Error('Invalid destructive-action password');
   }
 };
 
@@ -38,13 +40,13 @@ const buildS3Config = (): S3StorageConfig => {
   };
 };
 
-export type CleanS3Options = { exitProcess?: boolean };
+export type CleanS3Options = { exitProcess?: boolean; password: string };
 
-const cleanS3 = async (options: CleanS3Options = {}) => {
+const cleanS3 = async (options: CleanS3Options) => {
   const shouldExit = options.exitProcess !== false;
   const start = Date.now();
   try {
-    assertLocalEnvironment(shouldExit);
+    await assertDestructivePassword(options.password, shouldExit);
 
     const s3Config = buildS3Config();
     const storageService = FactoryStorageService.create(s3Config);

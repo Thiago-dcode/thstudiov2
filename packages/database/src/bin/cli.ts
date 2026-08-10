@@ -16,6 +16,10 @@ import { cleanStripe } from '../lib/scripts/clean-stripe';
 import { cleanS3 } from '../lib/scripts/clean-s3';
 import { createStripeCustomers } from '../lib/scripts/create-stripe-customers';
 import {
+  DESTRUCTIVE_PASSWORD_HASH_ENV,
+  verifyDestructivePassword,
+} from '../lib/scripts/utils/destructive-password';
+import {
   databaseCliConfig,
   setDatabaseCliConfig,
 } from '../lib/scripts/utils/config';
@@ -51,8 +55,83 @@ async function confirmAction(message: string): Promise<boolean> {
   });
 }
 
-/** Same allowlist as clean:stripe — Stripe API cleanup only runs in these envs. */
-const DB_FRESH_ENVS = ['development', 'local', 'test'];
+/** Prompt for a password without echoing characters to the terminal. */
+async function askPassword(message: string): Promise<string> {
+  if (!process.stdin.isTTY) {
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    });
+    return new Promise((resolve) => {
+      rl.question(`${message}: `, (answer) => {
+        rl.close();
+        resolve(answer);
+      });
+    });
+  }
+
+  return new Promise((resolve) => {
+    const stdin = process.stdin;
+    const stdout = process.stdout;
+    stdout.write(`${message}: `);
+    stdin.setRawMode(true);
+    stdin.resume();
+    stdin.setEncoding('utf8');
+
+    let password = '';
+    const onData = (char: string) => {
+      switch (char) {
+        case '\n':
+        case '\r':
+        case '\u0004':
+          stdin.setRawMode(false);
+          stdin.removeListener('data', onData);
+          stdin.pause();
+          stdout.write('\n');
+          resolve(password);
+          break;
+        case '\u0003':
+          stdin.setRawMode(false);
+          stdin.removeListener('data', onData);
+          stdout.write('\n');
+          process.exit(1);
+          break;
+        case '\u007f':
+        case '\b':
+          if (password.length > 0) {
+            password = password.slice(0, -1);
+          }
+          break;
+        default:
+          password += char;
+          break;
+      }
+    };
+    stdin.on('data', onData);
+  });
+}
+
+/**
+ * Prompts for the destructive-action password and validates it, returning the
+ * plaintext so it can be forwarded to sub-scripts (clean:s3, clean:stripe), which
+ * re-validate it themselves rather than trusting the CLI's check.
+ */
+async function promptDestructivePassword(): Promise<string> {
+  if (!process.env[DESTRUCTIVE_PASSWORD_HASH_ENV]) {
+    Logger.error(
+      `❌ ${DESTRUCTIVE_PASSWORD_HASH_ENV} is not set. Refusing destructive CLI command.`,
+    );
+    process.exit(1);
+  }
+
+  const password = await askPassword('Enter migrate:refresh password');
+  const isValid = await verifyDestructivePassword(password);
+  if (!isValid) {
+    Logger.error('❌ Invalid password');
+    process.exit(1);
+  }
+  return password;
+}
 
 async function migrateRefreshCore(): Promise<void> {
   await rollback(null, { exitProcess: false });
@@ -121,19 +200,12 @@ program
 program
   .command('migrate:refresh')
   .description(
-    'Rollback all migrations, migrate, then clean:s3 in dev/local/test (local/staging: destructive DB; S3 only in allowed envs)',
+    'Rollback all migrations, then migrate (password required; destructive)',
   )
   .action(async () => {
-    const env = getConfigValue('app').env.toLowerCase();
-    if (env === 'production' || env === 'prod') {
-      Logger.error('❌ migrate:refresh cannot be used in production');
-      process.exit(1);
-    }
-    const willCleanS3 = DB_FRESH_ENVS.includes(env);
+    await promptDestructivePassword();
     Logger.warn(
-      willCleanS3
-        ? '⚠️  This will rollback ALL migrations (down), run migrate (up), then empty the S3 bucket (clean:s3). DB and object storage data may be lost.'
-        : '⚠️  This will rollback ALL migrations (down), then run migrate (up). All data in migrated tables may be lost. clean:s3 is skipped outside development/local/test.',
+      '⚠️  This will rollback ALL migrations (down), then run migrate (up). All data in migrated tables may be lost.',
     );
     const confirmed = await confirmAction('Are you sure you want to continue?');
     if (!confirmed) {
@@ -142,13 +214,6 @@ program
     }
     try {
       await migrateRefreshCore();
-      if (willCleanS3) {
-        await cleanS3({ exitProcess: false });
-      } else {
-        Logger.info(
-          'ℹ️  Skipping clean:s3 (only runs when app env is development, local, or test).',
-        );
-      }
       process.exit(0);
     } catch {
       process.exit(1);
@@ -158,20 +223,10 @@ program
 program
   .command('db:fresh')
   .description(
-    'migrate:refresh, clean:stripe, then db:seed (main). Local/test only; destructive.',
+    'migrate:refresh, clean:s3, clean:stripe, then db:seed (main). Password required; destructive.',
   )
   .action(async () => {
-    const env = getConfigValue('app').env.toLowerCase();
-    if (env === 'production' || env === 'prod') {
-      Logger.error('❌ db:fresh cannot be used in production');
-      process.exit(1);
-    }
-    if (!DB_FRESH_ENVS.includes(env)) {
-      Logger.error(
-        `❌ db:fresh requires a local/test app env (${DB_FRESH_ENVS.join(', ')}). Current: "${env}"`,
-      );
-      process.exit(1);
-    }
+    const password = await promptDestructivePassword();
     Logger.warn(
       '⚠️  This will rollback ALL migrations, migrate, empty the S3 bucket, delete Stripe customers/subscriptions (test mode), then run the main seed.',
     );
@@ -182,8 +237,8 @@ program
     }
     try {
       await migrateRefreshCore();
-      await cleanS3({ exitProcess: false });
-      await cleanStripe({ exitProcess: false });
+      await cleanS3({ exitProcess: false, password });
+      await cleanStripe({ exitProcess: false, password });
       await seed('main', { exitProcess: false });
       process.exit(0);
     } catch {
@@ -206,28 +261,30 @@ program
   });
 program
   .command('clean:stripe')
-  .description('Delete all Stripe customers and subscriptions (local only)')
+  .description('Delete all Stripe customers and subscriptions (password required; destructive)')
   .action(async () => {
+    const password = await promptDestructivePassword();
     Logger.warn('⚠️  This will delete ALL Stripe customers and subscriptions!');
     const confirmed = await confirmAction('Are you sure you want to continue?');
     if (!confirmed) {
       Logger.info('Stripe cleanup cancelled.');
       process.exit(0);
     }
-    await cleanStripe();
+    await cleanStripe({ password });
   });
 
 program
   .command('clean:s3')
-  .description('Empty the S3 bucket (local only)')
+  .description('Empty the S3 bucket (password required; destructive)')
   .action(async () => {
+    const password = await promptDestructivePassword();
     Logger.warn('⚠️  This will delete ALL objects in the S3 bucket!');
     const confirmed = await confirmAction('Are you sure you want to continue?');
     if (!confirmed) {
       Logger.info('S3 cleanup cancelled.');
       process.exit(0);
     }
-    await cleanS3();
+    await cleanS3({ password });
   });
 
 program

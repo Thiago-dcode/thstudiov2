@@ -3,7 +3,7 @@ import { main as plans } from './plans';
 import { main as categorySeeder } from './categories';
 import { main as paymentMethods } from './paymentMethods';
 import { main as benefits } from './benefits';
-import { main as invitationLinks } from './invitationLinks';
+// import { main as invitationLinks } from './invitationLinks';
 import { main as roles } from './roles';
 import { main as layouts } from './layouts';
 import { ADMIN_USERNAME, main as adminUser } from './admin-user';
@@ -20,7 +20,7 @@ export const main = async () => {
   await categorySeeder();
   await paymentMethods();
   await benefits();
-  await invitationLinks();
+  // await invitationLinks();
   await layouts();
   await supportUser();
   await adminUser();
