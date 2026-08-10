@@ -7,7 +7,8 @@ import Logger from '@repo/backend-lib/utils/console';
 import { EnumType } from "@repo/common-lib/constants/enums";
 import { getConfigValue } from '@repo/common-lib/config/utils';
 import { generateValidSlug } from "@repo/common-lib/utils/generate-valid-slug";
-import { Query, Schema } from "../lib/facades";
+import { CategorySchema } from "@repo/common-lib/schemas/category";
+import { Query } from "../lib/facades";
 
 /** Same S3 key pattern as {@link CategoriesService.categoryThumbnailKey}: `categories/${slug}/thumbnail.webp`. */
 const CATEGORY_THUMBNAIL_REL_PATH = (slug: string) =>
@@ -171,6 +172,12 @@ function allocateCategorySlug(name: string): string {
     }
     usedCategorySlugs.add(candidate);
     return candidate;
+}
+
+/** Reserves an already-persisted slug so later categories in the same run don't collide with it. */
+function reserveExistingCategorySlug(slug: string): string {
+    usedCategorySlugs.add(slug);
+    return slug;
 }
 
 type SeedCategory = {
@@ -1265,8 +1272,18 @@ export const main = async () => {
         inheritedType: EnumType<'CATEGORY_TYPE'> = 'DISCIPLINE',
     ) => {
         const categoryType = category.type ?? inheritedType;
-        const slug = allocateCategorySlug(category.name);
-        let thumbnail: string | null = null;
+
+        const existingCategory = await Query.table('categories')
+            .where('name', '=', category.name)
+            .first<Pick<CategorySchema, 'id' | 'slug' | 'thumbnail'>>();
+
+        // Reuse the persisted slug on update so thumbnail S3 keys and any external
+        // references (links, category pages) stay stable across re-seeds.
+        const slug = existingCategory
+            ? reserveExistingCategorySlug(existingCategory.slug)
+            : allocateCategorySlug(category.name);
+
+        let thumbnail: string | null = existingCategory?.thumbnail ?? null;
         const sourcePath = findCategorySourceImageFile(category.name);
         if (sourcePath) {
           if (compressService && storageService) {
@@ -1299,18 +1316,35 @@ export const main = async () => {
             columns.push('parent_id');
             values.push(parentId);
         }
-        const parentCategory = await Query.table('categories').insertAndGet(columns, values as any[], 'id');
+
+        let categoryId: number;
+        if (existingCategory) {
+            categoryId = existingCategory.id;
+            await Query.table('categories')
+                .where('id', '=', categoryId)
+                .update(columns, values as any[]);
+        } else {
+            const inserted = await Query.table('categories').insertAndGet(columns, values as any[], 'id');
+            categoryId = inserted.id;
+        }
+
         await Promise.all(category.translations.map(async (child) => {
-            await Query.table('category_translations').insertAndGet(['name', 'language_code', 'category_id'], [child.name, child.code, parentCategory.id], 'id');
+            const existingTranslation = await Query.table('category_translations')
+                .where('category_id', '=', categoryId)
+                .where('language_code', '=', child.code)
+                .first<{ id: number }>();
+            if (existingTranslation) {
+                await Query.table('category_translations')
+                    .where('id', '=', existingTranslation.id)
+                    .update(['name'], [child.name]);
+            } else {
+                await Query.table('category_translations').insertAndGet(['name', 'language_code', 'category_id'], [child.name, child.code, categoryId], 'id');
+            }
         }));
         if (category.children) {
-            await Promise.all(category.children.map(child => createCategories(child, parentCategory.id, isActive, categoryType)))
+            await Promise.all(category.children.map(child => createCategories(child, categoryId, isActive, categoryType)))
         }
     }
-
-    // Truncate tables in correct order, handling foreign keys
-    await Schema.table('category_translations').truncate();
-    await Query.raw('TRUNCATE TABLE categories RESTART IDENTITY CASCADE');
 
     // Insert categories sequentially to avoid any potential issues with parallel inserts.
     // All disciplines are seeded active so the whole curated set is discoverable in the

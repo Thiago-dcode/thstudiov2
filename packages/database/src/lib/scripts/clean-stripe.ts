@@ -1,20 +1,21 @@
 import { stripe } from '@repo/backend-lib/services/payment-service/stripe';
-import { getConfigValue } from '@repo/common-lib/config/utils';
 import Logger from '@repo/backend-lib/utils/console';
 import { connectDb } from './utils';
 import { Query } from '../facades';
 import { killClient } from '../client';
+import {
+  DESTRUCTIVE_PASSWORD_HASH_ENV,
+  verifyDestructivePassword,
+} from './utils/destructive-password';
 
-const ALLOWED_ENVS = ['development', 'local', 'test'];
-
-const assertLocalEnvironment = (shouldExit: boolean) => {
-  const env = getConfigValue('app').env.toLowerCase();
-  if (!ALLOWED_ENVS.includes(env)) {
+const assertDestructivePassword = async (password: string, shouldExit: boolean) => {
+  const isValid = await verifyDestructivePassword(password);
+  if (!isValid) {
     Logger.error(
-      `❌ This script can only be run in local environments (${ALLOWED_ENVS.join(', ')}). Current: "${env}"`,
+      `❌ Invalid password (check ${DESTRUCTIVE_PASSWORD_HASH_ENV}). Refusing Stripe cleanup.`,
     );
     if (shouldExit) process.exit(1);
-    throw new Error(`Stripe cleanup not allowed in environment: ${env}`);
+    throw new Error('Invalid destructive-action password');
   }
 };
 
@@ -132,13 +133,13 @@ const deleteAllProducts = async () => {
   Logger.success('✅ Cleared plan and plan_price stripe_id in database');
 };
 
-export type CleanStripeOptions = { exitProcess?: boolean };
+export type CleanStripeOptions = { exitProcess?: boolean; password: string };
 
-const cleanStripe = async (options: CleanStripeOptions = {}) => {
+const cleanStripe = async (options: CleanStripeOptions) => {
   const shouldExit = options.exitProcess !== false;
   const start = Date.now();
   try {
-    assertLocalEnvironment(shouldExit);
+    await assertDestructivePassword(options.password, shouldExit);
     await connectDb();
 
     await deleteAllStripeSubscriptions();
