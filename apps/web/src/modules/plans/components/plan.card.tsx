@@ -34,14 +34,14 @@ export function PlanCard({ plan, className }: PlanCardProps) {
     >
       {plan.is_popular && (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-          <span className="bg-text px-4 py-1 text-xs font-medium text-accent-fg">
+          <span className="bg-text px-4 py-1 text-xs font-medium text-bg">
             {t("popular")}
           </span>
         </div>
       )}
       {plan.top_tier && !plan.is_popular && (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-          <span className="bg-accent text-bg! px-4 py-1 text-xs font-medium">
+          <span className="bg-accent  px-4 py-1 text-xs font-medium text-accent-fg">
             {t("bestValue")}
           </span>
         </div>

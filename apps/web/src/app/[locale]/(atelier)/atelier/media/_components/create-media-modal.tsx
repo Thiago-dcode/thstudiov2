@@ -536,7 +536,7 @@ export function CreateMediaDialog({
           {t("addMedia")}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-[100vw] sm:max-w-2xl md:max-w-3xl lg:max-w-5xl h-[98vh] flex flex-col justify-between [&>button]:hidden p-0 z-100">
+      <DialogContent className="w-full max-w-[100vw] sm:max-w-2xl md:max-w-3xl lg:max-w-5xl max-h-[98vh] h-full  flex flex-col justify-between [&>button]:hidden p-0 z-100">
         <DialogHeader className="border-b pb-4 px-6 pt-6">
           <DialogTitle className="text-sm!">{t("createNewMedia")}</DialogTitle>
           <DialogDescription className="text-xs!">

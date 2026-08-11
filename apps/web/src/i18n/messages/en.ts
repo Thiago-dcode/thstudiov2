@@ -36,7 +36,7 @@ const messages = {
         buttonPending: "Joining...",
         hint: "Join the wait list and become one of the first to get into A11STUDIO.",
         hintTooltip:
-          "Join the wait list and become one of our early access members, unlocking exclusive benefits. Spots are limited, and once we reach capacity, the wait list will close.",
+          "Join the wait list and become one of our early access members, unlocking exclusive benefits. Spots are limited, and once we reach capacity, the wait list will close. <learnMore>Learn how it works</learnMore>",
         successToast: "You are on the waitlist. We will keep you posted.",
         successTitle: "Just one step more: confirm your email.",
         successMessage:
@@ -192,10 +192,10 @@ const messages = {
       scrollToNextSection: "Scroll to next section",
     },
     cta: {
-      badge: "Ready when you are",
-      title: "Your next client is already looking for someone like you",
+      badge: "Get discovered",
+      title: "Less time on the setup. More time on the work.",
       description:
-        "Build a portfolio as considered as your work — in minutes. We handle the technology so you can stay with the craft. Free to start, no credit card.",
+        "A11STUDIO handles SEO, metadata, and positioning. You upload your best work — we take care of the rest.",
       button: "Create Your Portfolio",
       waitListButton: "Bring your art",
     },
@@ -250,7 +250,13 @@ const messages = {
         id: "create-account",
         question: "How can I create an account?",
         answer:
-          "Getting started takes just a minute. Head to the <a href='/auth/register'>sign-up page</a>, create your free account, and set up your profile. You can build your first portfolio in minutes — no coding, hosting, or web design skills required. If registrations are temporarily closed, you can join the wait-list and we'll let you know the moment your spot opens.",
+          "Getting started takes just a minute. Head to the <a href='/auth/register'>sign-up page</a>, create your free account, and set up your profile. You can build your first portfolio in minutes — no coding, hosting, or web design skills required. If registrations are temporarily closed, you can <a href='#wait-list-how-it-works'>join the wait list</a> and we'll let you know the moment your spot opens.",
+      },
+      {
+        id: "wait-list-how-it-works",
+        question: "How does the wait list work?",
+        answer:
+          "When registration is closed, the wait list is how you get early access to A11STUDIO. Here is the flow:<ul><li><strong>Join with your email.</strong> Enter your address on the wait list form. We'll send a confirmation email right away.</li><li><strong>Confirm your email.</strong> Open the message and click the link. Your spot is only reserved after you validate — until then we do not lock a position for you.</li><li><strong>Get your place in line.</strong> Your position is assigned when you confirm, in the order people validate. Earlier confirmed spots unlock stronger early-access benefits.</li><li><strong>Wait for your invite.</strong> When it is your turn, we email a personal registration link. You have <strong>7 days</strong> to create your account before the invite expires; we also send reminders before the deadline.</li><li><strong>Register and redeem.</strong> Use the link to sign up. Your wait-list benefit (free months on our top plan) is ready to redeem after you join.</li></ul><p><strong>Conditions</strong></p><ul><li>Spots are limited. Once we reach capacity, the wait list closes.</li><li>Email confirmation is required. Unconfirmed emails do not hold a position.</li><li>Benefits depend on your validated position: the first 50 confirmed members become <strong>founding members</strong> (6 months free); later confirmed members become <strong>early access members</strong> (3 months free).</li><li>Each invite is single-use for the email on the list and expires after 7 days if unused.</li><li>If you are already confirmed on the wait list, submitting the same email again will not create a new entry — check your inbox, or <a href='/support'>contact support</a> if something looks wrong.</li></ul>",
       },
       {
         id: "why-ai",
@@ -293,12 +299,12 @@ const messages = {
       metadata: {
         title: "FAQ — A11STUDIO",
         description:
-          "Answers to common questions about A11STUDIO — what it is, portfolios, creating an account, AI, positioning your profile, and pricing.",
+          "Answers to common questions about A11STUDIO — what it is, portfolios, creating an account, the wait list, AI, positioning your profile, and pricing.",
       },
       hero: {
         label: "FAQ",
         title: "Frequently asked questions",
-        lead: "Everything you need to know about A11STUDIO — what it is, how to get started, and how it helps the right people discover your work.",
+        lead: "Everything you need to know about A11STUDIO — what it is, how to get started, the wait list, and how it helps the right people discover your work.",
       },
       navLabel: "On this page",
     },
