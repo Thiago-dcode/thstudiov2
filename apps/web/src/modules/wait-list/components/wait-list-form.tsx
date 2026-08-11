@@ -26,7 +26,7 @@ export function WaitListHint({ className }: { className?: string } = {}) {
     >
       <p
         id="hero-wait-list-email-hint"
-        className="min-w-0 flex-1 text-left text-sm! leading-snug text-text-muted! tablet:text-base!"
+        className="min-w-0 text-left text-sm! leading-snug text-text-muted! tablet:text-base!"
       >
         {t("waitList.hint")}
       </p>

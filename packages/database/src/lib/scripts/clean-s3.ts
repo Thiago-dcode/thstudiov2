@@ -3,22 +3,14 @@ import { FactoryStorageService } from '@repo/backend-lib/services/storage-servic
 import type { S3StorageConfig } from '@repo/backend-lib/services/storage-service/types';
 import Logger from '@repo/backend-lib/utils/console';
 import {
-  DESTRUCTIVE_PASSWORD_HASH_ENV,
+  DESTRUCTIVE_PASSWORD_ENV,
   verifyDestructivePassword,
 } from './utils/destructive-password';
 
-const assertDestructivePassword = async (password: string, shouldExit: boolean) => {
-  let isValid: boolean;
-  try {
-    isValid = await verifyDestructivePassword(password);
-  } catch (err) {
-    Logger.error(err instanceof Error ? `❌ ${err.message}` : '❌ Invalid password');
-    if (shouldExit) process.exit(1);
-    throw err;
-  }
-  if (!isValid) {
+const assertDestructivePassword = (password: string, shouldExit: boolean) => {
+  if (!verifyDestructivePassword(password)) {
     Logger.error(
-      `❌ Invalid password (check ${DESTRUCTIVE_PASSWORD_HASH_ENV}). Refusing S3 cleanup.`,
+      `❌ Invalid password (check ${DESTRUCTIVE_PASSWORD_ENV}). Refusing S3 cleanup.`,
     );
     if (shouldExit) process.exit(1);
     throw new Error('Invalid destructive-action password');
@@ -53,7 +45,7 @@ const cleanS3 = async (options: CleanS3Options) => {
   const shouldExit = options.exitProcess !== false;
   const start = Date.now();
   try {
-    await assertDestructivePassword(options.password, shouldExit);
+    assertDestructivePassword(options.password, shouldExit);
 
     const s3Config = buildS3Config();
     const storageService = FactoryStorageService.create(s3Config);

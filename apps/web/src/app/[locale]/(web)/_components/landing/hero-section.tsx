@@ -47,7 +47,7 @@ export async function HeroSection() {
 
       {/* ── Content ── */}
       <div className="max-h-1/2 z-10 mx-auto flex flex-col text-center justify-start h-full w-full pt-3 px-2">
-        <div className="flex flex-col items-start gap-2 w-full">
+        <div className="flex flex-col items-start w-full">
           <h1 className="uppercase hero-stagger-1 tracking-tight text-5xl! laptop:text-6xl! desktop-lg:text-8xl! text-left">
             {t("titlePrefix")}{" "}
             <SlotMachine
@@ -70,7 +70,7 @@ export async function HeroSection() {
             .
           </h1>
 
-          <h3 className="hero-stagger-2 font-light! phone-lg:text-3xl! text-lg! leading-relaxed max-w-4xl text-left">
+          <h3 className="hero-stagger-2 font-light!  phone-lg:text-3xl! font-sans! text-text-muted text-lg! leading-relaxed max-w-4xl text-left">
             {t("subtitle")}
           </h3>
         </div>

@@ -54,8 +54,8 @@ case "${1:-}" in
   rollback | db:seed | db:wipe | migrate:fresh | migrate:reset)
     if [[ "${DBCLI_YES:-0}" != "1" ]]; then
       warn "About to run '$*' against PRODUCTION ($(grep '^DB_NAME=' .env | cut -d= -f2))."
-      read -r -p "Type 'yes' to continue: " reply
-      [[ "$reply" == "yes" ]] || { error "Aborted."; exit 1; }
+      read -r -p "Type 'continue' to proceed: " reply
+      [[ "$reply" == "continue" ]] || { error "Aborted."; exit 1; }
     fi
     ;;
 esac

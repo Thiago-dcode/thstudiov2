@@ -16,7 +16,7 @@ import { cleanStripe } from '../lib/scripts/clean-stripe';
 import { cleanS3 } from '../lib/scripts/clean-s3';
 import { createStripeCustomers } from '../lib/scripts/create-stripe-customers';
 import {
-  DESTRUCTIVE_PASSWORD_HASH_ENV,
+  DESTRUCTIVE_PASSWORD_ENV,
   verifyDestructivePassword,
 } from '../lib/scripts/utils/destructive-password';
 import {
@@ -40,17 +40,17 @@ if (fs.existsSync(distMigrationsDir)) {
 
 const program = new Command();
 
-// Helper function to ask for user confirmation
+/** Requires the user to type the exact word "continue" — no accidental yes/y/enter. */
 async function confirmAction(message: string): Promise<boolean> {
   const rl = readline.createInterface({
     input: process.stdin,
-    output: process.stdout
+    output: process.stdout,
   });
 
   return new Promise((resolve) => {
-    rl.question(`${message} (yes/no): `, (answer) => {
+    rl.question(`${message} Type "continue" to proceed: `, (answer) => {
       rl.close();
-      resolve(answer.toLowerCase() === 'yes' || answer.toLowerCase() === 'y');
+      resolve(answer.trim().toLowerCase() === 'continue');
     });
   });
 }
@@ -149,9 +149,9 @@ async function askPassword(message: string): Promise<string> {
  * re-validate it themselves rather than trusting the CLI's check.
  */
 async function promptDestructivePassword(): Promise<string> {
-  if (!process.env[DESTRUCTIVE_PASSWORD_HASH_ENV]) {
+  if (!process.env[DESTRUCTIVE_PASSWORD_ENV]) {
     Logger.error(
-      `❌ ${DESTRUCTIVE_PASSWORD_HASH_ENV} is not set. Refusing destructive CLI command.`,
+      `❌ ${DESTRUCTIVE_PASSWORD_ENV} is not set. Refusing destructive CLI command.`,
     );
     process.exit(1);
   }
@@ -161,14 +161,7 @@ async function promptDestructivePassword(): Promise<string> {
     Logger.error('❌ No password entered');
     process.exit(1);
   }
-  let isValid: boolean;
-  try {
-    isValid = await verifyDestructivePassword(password);
-  } catch (err) {
-    Logger.error(err instanceof Error ? `❌ ${err.message}` : '❌ Invalid password');
-    process.exit(1);
-  }
-  if (!isValid) {
+  if (!verifyDestructivePassword(password)) {
     Logger.error('❌ Invalid password');
     process.exit(1);
   }
@@ -230,7 +223,7 @@ program
     // Ask for confirmation when rolling back all migrations
     if (_all) {
       Logger.warn('⚠️  You are about to rollback ALL migrations!');
-      const confirmed = await confirmAction('Are you sure you want to continue?');
+      const confirmed = await confirmAction('Are you sure?');
       if (!confirmed) {
         Logger.info('Rollback cancelled.');
         process.exit(0);
@@ -249,7 +242,7 @@ program
     Logger.warn(
       '⚠️  This will rollback ALL migrations (down), then run migrate (up). All data in migrated tables may be lost.',
     );
-    const confirmed = await confirmAction('Are you sure you want to continue?');
+    const confirmed = await confirmAction('Are you sure?');
     if (!confirmed) {
       Logger.info('migrate:refresh cancelled.');
       process.exit(0);
@@ -272,7 +265,7 @@ program
     Logger.warn(
       '⚠️  This will rollback ALL migrations, migrate, empty the S3 bucket, delete Stripe customers/subscriptions (test mode), then run the main seed.',
     );
-    const confirmed = await confirmAction('Are you sure you want to continue?');
+    const confirmed = await confirmAction('Are you sure?');
     if (!confirmed) {
       Logger.info('db:fresh cancelled.');
       process.exit(0);
@@ -307,7 +300,7 @@ program
   .action(async () => {
     const password = await promptDestructivePassword();
     Logger.warn('⚠️  This will delete ALL Stripe customers and subscriptions!');
-    const confirmed = await confirmAction('Are you sure you want to continue?');
+    const confirmed = await confirmAction('Are you sure?');
     if (!confirmed) {
       Logger.info('Stripe cleanup cancelled.');
       process.exit(0);
@@ -321,7 +314,7 @@ program
   .action(async () => {
     const password = await promptDestructivePassword();
     Logger.warn('⚠️  This will delete ALL objects in the S3 bucket!');
-    const confirmed = await confirmAction('Are you sure you want to continue?');
+    const confirmed = await confirmAction('Are you sure?');
     if (!confirmed) {
       Logger.info('S3 cleanup cancelled.');
       process.exit(0);

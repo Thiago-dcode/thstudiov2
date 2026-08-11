@@ -10,7 +10,7 @@
 #   ./scripts/rediscli-prod.sh flush-queues       # delete bull:* only  (destructive)
 #   ./scripts/rediscli-prod.sh flush              # FLUSHALL            (destructive)
 #
-# Destructive subcommands print what will be lost and require typing 'yes'.
+# Destructive subcommands print what will be lost and require typing 'continue'.
 # Set REDISCLI_YES=1 to skip the prompt in automation.
 #
 # Note: redis runs with `--appendonly yes`, so a flush is written straight through
@@ -45,8 +45,8 @@ rcli() { "${COMPOSE[@]}" exec -T redis redis-cli "$@"; }
 
 confirm() {
   [[ "${REDISCLI_YES:-0}" == "1" ]] && return 0
-  read -r -p "Type 'yes' to continue: " reply
-  [[ "$reply" == "yes" ]] || { error "Aborted."; exit 1; }
+  read -r -p "Type 'continue' to proceed: " reply
+  [[ "$reply" == "continue" ]] || { error "Aborted."; exit 1; }
 }
 
 # Counts keys matching a pattern using SCAN — KEYS blocks the server, and this

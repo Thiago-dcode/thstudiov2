@@ -4,22 +4,14 @@ import { connectDb } from './utils';
 import { Query } from '../facades';
 import { killClient } from '../client';
 import {
-  DESTRUCTIVE_PASSWORD_HASH_ENV,
+  DESTRUCTIVE_PASSWORD_ENV,
   verifyDestructivePassword,
 } from './utils/destructive-password';
 
-const assertDestructivePassword = async (password: string, shouldExit: boolean) => {
-  let isValid: boolean;
-  try {
-    isValid = await verifyDestructivePassword(password);
-  } catch (err) {
-    Logger.error(err instanceof Error ? `❌ ${err.message}` : '❌ Invalid password');
-    if (shouldExit) process.exit(1);
-    throw err;
-  }
-  if (!isValid) {
+const assertDestructivePassword = (password: string, shouldExit: boolean) => {
+  if (!verifyDestructivePassword(password)) {
     Logger.error(
-      `❌ Invalid password (check ${DESTRUCTIVE_PASSWORD_HASH_ENV}). Refusing Stripe cleanup.`,
+      `❌ Invalid password (check ${DESTRUCTIVE_PASSWORD_ENV}). Refusing Stripe cleanup.`,
     );
     if (shouldExit) process.exit(1);
     throw new Error('Invalid destructive-action password');
@@ -146,7 +138,7 @@ const cleanStripe = async (options: CleanStripeOptions) => {
   const shouldExit = options.exitProcess !== false;
   const start = Date.now();
   try {
-    await assertDestructivePassword(options.password, shouldExit);
+    assertDestructivePassword(options.password, shouldExit);
     await connectDb();
 
     await deleteAllStripeSubscriptions();
