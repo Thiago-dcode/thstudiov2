@@ -1,17 +1,20 @@
 import type { MetadataRoute } from "next";
 import { serverEnv } from "@/env/server";
 import {
-  buildSitemapDescriptors,
   getSitemapArtists,
   getSitemapCollections,
   getSitemapPortfolios,
   getSitemapServices,
+  getSitemapShardIds,
+  resolveSitemapShard,
   SITEMAP_SHARD_SIZE as SHARD_SIZE,
 } from "@/lib/seo/sitemap-source";
 
-// Child sitemaps are ISR-cached (not rebuilt per request); the sitemap index is regenerated daily.
-// Must be a numeric literal — Next cannot statically analyze imported constants for segment config.
-export const revalidate = 86400;
+// Child sitemaps are ISR-cached (not rebuilt per request). Must be a numeric literal — Next cannot
+// statically analyze imported constants for segment config — so keep it in step with
+// SITEMAP_REVALIDATE. Short (1h) because shards are prerendered at build time against the
+// previously deployed API, so anything newer than the build is stale until this elapses.
+export const revalidate = 3600;
 
 const SUPPORTED = ["en", "es", "pt"] as const;
 // localePrefix is "as-needed": en (default) is unprefixed; es/pt are prefixed.
@@ -64,8 +67,8 @@ function staticEntries(): MetadataRoute.Sitemap {
 }
 
 export async function generateSitemaps(): Promise<{ id: number }[]> {
-  const list = await buildSitemapDescriptors();
-  return list.map((_, id) => ({ id }));
+  const ids = await getSitemapShardIds();
+  return ids.map((id) => ({ id }));
 }
 
 export default async function sitemap(props: {
@@ -73,8 +76,7 @@ export default async function sitemap(props: {
   id: number | Promise<number>;
 }): Promise<MetadataRoute.Sitemap> {
   const id = Number(await props.id);
-  const list = await buildSitemapDescriptors();
-  const desc = list[id];
+  const desc = await resolveSitemapShard(id);
   if (!desc) return [];
   if (desc.kind === "static") return staticEntries();
 

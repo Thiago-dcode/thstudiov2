@@ -7,8 +7,12 @@ import type {
 } from "@repo/common-lib/types/sitemap";
 import { serverEnv } from "@/env/server";
 
-/** Child sitemaps are ISR-cached this long (seconds) instead of rebuilt per request. */
-export const SITEMAP_REVALIDATE = 86400;
+/**
+ * Child sitemaps are ISR-cached this long (seconds) instead of rebuilt per request. Kept short
+ * (1h) because a shard body is prerendered at build time against the *currently deployed* API:
+ * anything that changes between build and serve is stale until this elapses.
+ */
+export const SITEMAP_REVALIDATE = 3600;
 
 const EMPTY_COUNTS: SitemapCounts = {
   artists: 0,
@@ -75,18 +79,66 @@ export type SitemapDescriptor =
   | { kind: SitemapKind; page: number };
 
 /**
- * The ordered list of child sitemaps; the array index IS the shard id. Shared by `sitemap.ts`
- * (to resolve a shard id → (kind, page)) and `robots.ts` (to advertise every child sitemap), so
- * the two can never disagree on how many shards exist or their order. Static shard is always id 0.
+ * Ids reserved per entity kind. Shard ids MUST NOT depend on how many entities exist: a shard body
+ * is prerendered into the image at build time (against the counts of the *previously deployed*
+ * API), so if ids were packed consecutively, the first artist to appear would shift every later id
+ * by one and each stale prerender would then serve another kind's content under its URL — the
+ * profile shard vanishing while a portfolio shard was served twice. A fixed block per kind means an
+ * id always denotes the same (kind, page); the worst case degrades to stale-but-correct-kind until
+ * `SITEMAP_REVALIDATE`. Blocks are sparse on purpose — robots.txt only advertises ids that have
+ * content, so the gaps are never visible.
  */
-export async function buildSitemapDescriptors(): Promise<SitemapDescriptor[]> {
+export const SITEMAP_ID_BLOCK = 50;
+
+/** First id of a kind's block. Id 0 is always the static shard. */
+function blockStart(kind: SitemapKind): number {
+  return 1 + SITEMAP_KIND_ORDER.indexOf(kind) * SITEMAP_ID_BLOCK;
+}
+
+/**
+ * How many shards a kind currently needs (0 when it has no entities). Capped at the block size —
+ * at the smallest shard size that is 100k entities of one kind, far past the point where the block
+ * size should be raised.
+ */
+function shardCount(counts: SitemapCounts, kind: SitemapKind): number {
+  return Math.min(
+    Math.ceil((counts[kind] ?? 0) / SITEMAP_SHARD_SIZE[kind]),
+    SITEMAP_ID_BLOCK,
+  );
+}
+
+/**
+ * Resolve a shard id → (kind, page) by fixed arithmetic, then validate the page against live
+ * counts so an id inside a kind's block but past its data returns `null` (empty shard → 404)
+ * instead of an out-of-range page.
+ */
+export async function resolveSitemapShard(
+  id: number,
+): Promise<SitemapDescriptor | null> {
+  if (!Number.isInteger(id) || id < 0) return null;
+  if (id === 0) return { kind: "static" };
+
   const counts = await getSitemapCounts();
-  const list: SitemapDescriptor[] = [{ kind: "static" }];
   for (const kind of SITEMAP_KIND_ORDER) {
-    const shards = Math.ceil((counts[kind] ?? 0) / SITEMAP_SHARD_SIZE[kind]);
-    for (let page = 0; page < shards; page++) list.push({ kind, page });
+    const start = blockStart(kind);
+    if (id < start || id >= start + SITEMAP_ID_BLOCK) continue;
+    const page = id - start;
+    return page < shardCount(counts, kind) ? { kind, page } : null;
   }
-  return list;
+  return null;
+}
+
+/** Every shard id that currently has content, in crawl-priority order (static first). */
+export async function getSitemapShardIds(): Promise<number[]> {
+  const counts = await getSitemapCounts();
+  const ids = [0];
+  for (const kind of SITEMAP_KIND_ORDER) {
+    const start = blockStart(kind);
+    for (let page = 0; page < shardCount(counts, kind); page++) {
+      ids.push(start + page);
+    }
+  }
+  return ids;
 }
 
 /**
@@ -94,8 +146,8 @@ export async function buildSitemapDescriptors(): Promise<SitemapDescriptor[]> {
  * NOT emit a `/sitemap.xml` index, so robots.txt must list the children directly.
  */
 export async function getSitemapChildPaths(): Promise<string[]> {
-  const list = await buildSitemapDescriptors();
-  return list.map((_, id) => `/sitemap/${id}.xml`);
+  const ids = await getSitemapShardIds();
+  return ids.map((id) => `/sitemap/${id}.xml`);
 }
 
 export function getSitemapArtists(
