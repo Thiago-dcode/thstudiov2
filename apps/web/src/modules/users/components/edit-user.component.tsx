@@ -131,13 +131,10 @@ export default function EditUserComponent() {
           <DialogTrigger className="absolute top-3 right-3 p-2 bg-fg hover:bg-fg-2 transition-opacity cursor-pointer">
             <Pen className="size-3" />
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className=" max-w-xl w-screen">
             <DialogTitle>{t("banner.editTitle")}</DialogTitle>
             <FormComponent.Container>
-              <FormComponent.Form
-                onSubmit={handleSubmit}
-                className="max-w-xl pt-4"
-              >
+              <FormComponent.Form onSubmit={handleSubmit} className=" pt-4">
                 <FileInputProvider
                   allowedMimeTypes={[
                     "image/jpeg",
@@ -160,7 +157,7 @@ export default function EditUserComponent() {
             <DialogTrigger className="absolute right-1 p-2 bg-fg hover:bg-fg-2 transition-opacity cursor-pointer shadow-md ">
               <Pen className="size-3" />
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-2xl w-screen">
               <DialogTitle>{t("avatar.editTitle")}</DialogTitle>
               <FormComponent.Container>
                 <FormComponent.Form

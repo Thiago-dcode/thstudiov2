@@ -10,6 +10,9 @@ import { useTranslations } from "next-intl";
 
 export type FaqItem = { id: string; question: string; answer: string };
 
+/** Deep-link id for the wait-list FAQ (must match `faqs.items[].id` in i18n). */
+export const WAIT_LIST_FAQ_ID = "wait-list-how-it-works" as const;
+
 /**
  * Shared styles for the rich HTML rendered inside a FAQ answer.
  * Answers come from the translation files and may include custom markup

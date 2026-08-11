@@ -73,7 +73,7 @@ export const ArtistContactDialog = ({
         {fallback}
       </DialogTrigger>
 
-      <DialogContent className="max-w-xl p-6 min-h-[400px]">
+      <DialogContent className="max-w-xl w-screen p-6 min-h-[400px]">
         <DialogHeader className="gap-1">
           <DialogTitle className="text-base font-semibold tracking-tight">
             {artist

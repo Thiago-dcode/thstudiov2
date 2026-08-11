@@ -25,36 +25,18 @@ export async function FeaturedPortfolioSection() {
   return (
     <WebSection
       id="featured-portfolio"
-      className="overflow-hidden max-w-(--breakpoint-ultrawide) max-h-screen mx-auto"
+      className="overflow-hidden max-w-(--breakpoint-ultrawide) max-h-[200svh] mx-auto"
     >
       <WebSection.Container className="pt-24">
-        <div className="flex w-full flex-col laptop:flex-row gap-8">
-          <div className="flex flex-col  gap-8  w-full laptop:max-w-1/3">
+        <div className="flex w-full flex-col  gap-2">
+          <div className="flex flex-col   w-full">
             <div className="flex flex-col items-start justify-start gap-2">
               <h2 className="line-clamp-2 laptop:line-clamp-1">
                 {portfolio.title}
               </h2>
-              <p className=" line-clamp-3 laptop:line-clamp-none">
+              {/* <p className=" line-clamp-3 laptop:line-clamp-none">
                 {portfolio.description}
-              </p>
-            </div>
-
-            <div className="hidden laptop:flex items-center">
-              <WebSection.ActionLink
-                href={`/artists/${portfolio.artist.username}/portfolios`}
-                className="bg-bg/10 backdrop-blur-sm"
-              >
-                {t("exploreMore")}
-              </WebSection.ActionLink>
-            </div>
-          </div>
-          <div className=" m-auto overflow-hidden size-full max-w-(--breakpoint-laptop)">
-            <GalleryProvider
-              items={mediaItems.map((m) => ({
-                url: m.url ?? m.thumbnail,
-                alt: m.seo_alt ?? m.title ?? undefined,
-              }))}
-            >
+              </p> */}
               <h4 className="text-end pb-1 mr-1">
                 A portfolio by:{" "}
                 <Link
@@ -64,6 +46,24 @@ export async function FeaturedPortfolioSection() {
                   {portfolio.artist.username}
                 </Link>
               </h4>
+            </div>
+            {/* <div className="hidden laptop:flex items-center self-end">
+              <WebSection.ActionLink
+                href={`/artists/${portfolio.artist.username}/portfolios`}
+                className="bg-bg/10 backdrop-blur-sm text-end text-lg!"
+              >
+                {t("exploreMore")}
+              </WebSection.ActionLink>
+            </div> */}
+          </div>
+
+          <div className=" flex flex-col m-auto overflow-hidden size-full">
+            <GalleryProvider
+              items={mediaItems.map((m) => ({
+                url: m.url ?? m.thumbnail,
+                alt: m.seo_alt ?? m.title ?? undefined,
+              }))}
+            >
               <Gallery />
               <PortfolioGrid
                 layout={portfolio.layout}

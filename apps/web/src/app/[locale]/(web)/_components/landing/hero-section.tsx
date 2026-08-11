@@ -3,7 +3,10 @@ import { SlotMachine } from "@repo/ui/components/custom/slot-machine";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 import assetService from "@/modules/assets/asset.service";
-import { WaitListForm } from "@/modules/wait-list/components/wait-list-form";
+import {
+  WaitListForm,
+  WaitListHint,
+} from "@/modules/wait-list/components/wait-list-form";
 import { WebSection } from "./web-section";
 
 function HeroVideoFallback() {
@@ -22,7 +25,7 @@ async function HeroVideo() {
     <LazyVideo
       src={heroVideo.data.url}
       poster={heroVideo.data.thumbnail ?? undefined}
-      className="justify-self-end inset-0 z-0 object-cover h-3/5 desktop:h-2/5 desktop-lg:h-3/5  w-screen"
+      className="justify-self-end inset-0 z-0 object-cover h-2/5 desktop:h-6/12 desktop-lg:h-3/5  w-screen"
     />
   );
 }
@@ -36,45 +39,46 @@ export async function HeroSection() {
     <WebSection
       id="home-hero-section"
       aria-labelledby="hero-heading"
-      className="  flex flex-col w-full items-center justify-start overflow-hidden bg-bg min-h-[calc(100svh-4rem)] laptop:h-[calc(100svh-4rem)]  max-w-(--breakpoint-ultrawide) mx-auto"
+      className="flex flex-col w-full items-center justify-start overflow-hidden bg-bg h-[calc(100svh-4rem)]  max-w-(--breakpoint-ultrawide) mx-auto"
     >
       <Suspense fallback={<HeroVideoFallback />}>
         <HeroVideo />
       </Suspense>
 
       {/* ── Content ── */}
-      <div className="max-h-1/2 z-10 mx-auto flex flex-col items-center text-center gap-5 laptop:gap-8 w-full  pt-3 px-2 laptop:px-4">
-        <div className="flex flex-col items-start gap-0 w-full">
-          <h1 className="uppercase hero-stagger-1 tracking-tight text-shadow-lg text-5xl!  laptop:text-6xl! desktop-lg:text-7xl! text-left font-sans!">
+      <div className="max-h-1/2 z-10 mx-auto flex flex-col text-center justify-start h-full w-full pt-3 px-2">
+        <div className="flex flex-col items-start gap-2 w-full">
+          <h1 className="uppercase hero-stagger-1 tracking-tight text-5xl! laptop:text-6xl! desktop-lg:text-8xl! text-left">
             {t("titlePrefix")}{" "}
             <SlotMachine
               texts={accentWords}
               itemHeight="1.2em"
-              interval={2000}
+              interval={3000}
               fitWidth
-              spinDuration={1800}
+              spinDuration={2500}
               className="text-accent translate-y-[-0.11em]"
             />{" "}
             {t("titleConnector")}{" "}
             <SlotMachine
               texts={discoverWords}
               itemHeight="1.2em"
-              interval={2500}
-              spinDuration={1800}
+              interval={3200}
+              spinDuration={2500}
               fitWidth
               className="translate-y-[-0.11em]"
             />
             .
           </h1>
 
-          <h3 className="hero-stagger-2 font-normal!  phone-lg:text-2xl! text-lg! leading-relaxed  font-sans! max-w-5xl text-left">
+          <h3 className="hero-stagger-2 font-light! phone-lg:text-3xl! text-lg! leading-relaxed max-w-4xl text-left">
             {t("subtitle")}
           </h3>
         </div>
 
-        <div className="hero-stagger-4 flex w-full justify-start pt-0 phone:pt-8 tablet:pt-12 laptop:pt-4 ">
-          <div className="w-full max-w-3xl">
-            <WaitListForm from="hero" />
+        <div className="hero-stagger-4 flex w-full  pt-4 phone-xs:pt-12 desktop-lg:pt-24 ">
+          <div className="flex w-full max-w-3xl flex-col ">
+            <WaitListHint />
+            <WaitListForm />
           </div>
         </div>
       </div>
@@ -82,7 +86,6 @@ export async function HeroSection() {
       <WebSection.NextSectionLink
         href="#value-pillars"
         ariaLabel={t("scrollToNextSection")}
-        className="bottom-10"
       />
 
       <style>{`

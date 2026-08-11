@@ -9,15 +9,45 @@ import { toast } from "@repo/ui/sonner";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
+import { WAIT_LIST_FAQ_ID } from "@/lib/components/faqs";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { createWaitListSchema } from "@/modules/wait-list/schemas/wait-list.schema";
 import { createWaitListAction } from "@/modules/wait-list/server-actions/create-wait-list.action";
 
-type WaitListFormProps = {
-  from?: "hero" | "register";
-};
+export function WaitListHint({ className }: { className?: string } = {}) {
+  const t = useTranslations("landing.hero");
 
-export function WaitListForm({ from = "register" }: WaitListFormProps) {
+  return (
+    <div
+      className={cn(
+        "flex items-start justify-start gap-2 text-left",
+        className,
+      )}
+    >
+      <p
+        id="hero-wait-list-email-hint"
+        className="min-w-0 flex-1 text-left text-sm! leading-snug text-text-muted! tablet:text-base!"
+      >
+        {t("waitList.hint")}
+      </p>
+      <InfoTooltip
+        content={t.rich("waitList.hintTooltip", {
+          learnMore: (chunks) => (
+            <Link
+              href={`/faqs#${WAIT_LIST_FAQ_ID}`}
+              className="font-medium text-text underline underline-offset-4 transition-colors hover:text-text-muted"
+            >
+              {chunks}
+            </Link>
+          ),
+        })}
+        iconClassName="text-text-muted"
+      />
+    </div>
+  );
+}
+
+export function WaitListForm({ className }: { className?: string } = {}) {
   const t = useTranslations("landing.hero");
   const [isEmailValid, setIsEmailValid] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -108,23 +138,12 @@ export function WaitListForm({ from = "register" }: WaitListFormProps) {
 
   return (
     <div className="w-full">
-      {from === "hero" ? (
-        <div className="mb-2 flex items-center justify-start gap-2">
-          <p
-            id="hero-wait-list-email-hint"
-            className={cn("text-left text-sm! text-text-muted!")}
-          >
-            {t("waitList.hint")}
-          </p>
-          <InfoTooltip
-            content={t("waitList.hintTooltip")}
-            iconClassName={"text-text-muted"}
-          />
-        </div>
-      ) : null}
       <form
         onSubmit={handleSubmit}
-        className="flex w-full flex-col gap-2 phone:flex-row phone:items-start"
+        className={cn(
+          "flex w-full flex-col gap-2 phone:flex-row phone:items-start",
+          className,
+        )}
         noValidate
       >
         <div className="flex w-full flex-1 flex-col gap-1.5">

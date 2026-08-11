@@ -86,7 +86,7 @@ export const UploadMediaModal = () => {
   }
 
   return (
-    <div className=" z-200 pointer-events-auto w-80 max-h-[400px] flex flex-col overflow-hidden border border-border bg-fg shadow-lg">
+    <div className=" z-200 pointer-events-auto max-w-80 w-full max-h-[400px] flex flex-col overflow-hidden border border-border bg-fg shadow-lg">
       <div className="flex items-center justify-between border-b border-border px-4 py-3 shrink-0">
         <div className="flex flex-col gap-0.5">
           <h3 className="text-sm! font-semibold">

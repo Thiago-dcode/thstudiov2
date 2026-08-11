@@ -37,7 +37,7 @@ const messages = {
         buttonPending: "Entrando...",
         hint: "Entre na lista de espera e seja um dos primeiros a entrar na A11STUDIO.",
         hintTooltip:
-          "Entre na lista de espera e faça parte dos primeiros usuários com acesso antecipado, que receberão benefícios exclusivos. A lista é limitada: assim que atingirmos o número máximo de vagas, ela será fechada.",
+          "Entre na lista de espera e faça parte dos primeiros usuários com acesso antecipado, que receberão benefícios exclusivos. A lista é limitada: assim que atingirmos o número máximo de vagas, ela será fechada. <learnMore>Como funciona</learnMore>",
         successToast:
           "Você está na lista de espera. Vamos te manter informado.",
         successTitle: "Falta só mais um passo: confirme seu e-mail.",
@@ -193,10 +193,10 @@ const messages = {
       scrollToNextSection: "Rolar para a próxima seção",
     },
     cta: {
-      badge: "Quando você quiser",
-      title: "Seu próximo cliente já está procurando alguém como você",
+      badge: "Seja descoberto",
+      title: "Menos tempo na preparação. Mais tempo no ofício.",
       description:
-        "Crie um portfólio à altura do seu trabalho, em minutos. Cuidamos da tecnologia para você ficar com o ofício. Grátis para começar, sem cartão.",
+        "A11STUDIO cuida do SEO, dos metadados e do posicionamento. Você envia seu melhor trabalho — do resto cuidamos nós.",
       button: "Criar seu portfólio",
       waitListButton: "Traga sua arte",
     },
@@ -252,7 +252,13 @@ const messages = {
         id: "create-account",
         question: "Como posso criar uma conta?",
         answer:
-          "Começar leva só um minuto. Acesse a <a href='/auth/register'>página de cadastro</a>, crie sua conta gratuita e configure seu perfil. Você monta seu primeiro portfólio em minutos — sem precisar programar, hospedar ou ter habilidades de web design. Se os cadastros estiverem temporariamente fechados, você pode entrar na lista de espera e avisaremos assim que sua vaga abrir.",
+          "Começar leva só um minuto. Acesse a <a href='/auth/register'>página de cadastro</a>, crie sua conta gratuita e configure seu perfil. Você monta seu primeiro portfólio em minutos — sem precisar programar, hospedar ou ter habilidades de web design. Se os cadastros estiverem temporariamente fechados, você pode <a href='#wait-list-how-it-works'>entrar na lista de espera</a> e avisaremos assim que sua vaga abrir.",
+      },
+      {
+        id: "wait-list-how-it-works",
+        question: "Como funciona a lista de espera?",
+        answer:
+          "Quando o cadastro está fechado, a lista de espera é o caminho para ter acesso antecipado à A11STUDIO. Este é o fluxo:<ul><li><strong>Entre com seu e-mail.</strong> Digite seu endereço no formulário da lista. Enviaremos um e-mail de confirmação na hora.</li><li><strong>Confirme seu e-mail.</strong> Abra a mensagem e clique no link. Sua vaga só é reservada depois da validação — até lá não travamos uma posição para você.</li><li><strong>Garanta seu lugar na fila.</strong> Sua posição é atribuída ao confirmar, na ordem em que as pessoas validam. Quem confirma antes desbloqueia benefícios de acesso antecipado mais fortes.</li><li><strong>Aguarde o convite.</strong> Quando for a sua vez, enviamos um link pessoal de cadastro. Você tem <strong>7 dias</strong> para criar a conta antes de o convite expirar; também enviamos lembretes antes do prazo.</li><li><strong>Cadastre-se e resgate.</strong> Use o link para criar sua conta. Seu benefício da lista (meses grátis no nosso plano superior) fica pronto para resgatar depois de entrar.</li></ul><p><strong>Condições</strong></p><ul><li>As vagas são limitadas. Ao atingirmos a capacidade, a lista de espera fecha.</li><li>A confirmação do e-mail é obrigatória. E-mails não confirmados não mantêm uma posição.</li><li>Os benefícios dependem da sua posição validada: os primeiros 50 membros confirmados tornam-se <strong>membros fundadores</strong> (6 meses grátis); quem confirma depois torna-se <strong>membro de acesso antecipado</strong> (3 meses grátis).</li><li>Cada convite é de uso único para o e-mail da lista e expira em 7 dias se não for usado.</li><li>Se você já está confirmado na lista, enviar o mesmo e-mail de novo não cria uma nova entrada — confira sua caixa de entrada, ou <a href='/support'>fale com o suporte</a> se algo parecer errado.</li></ul>",
       },
       {
         id: "why-ai",
@@ -295,12 +301,12 @@ const messages = {
       metadata: {
         title: "Perguntas frequentes — A11STUDIO",
         description:
-          "Respostas às perguntas mais comuns sobre a A11STUDIO — o que é, portfólios, criar uma conta, IA, posicionar seu perfil e preços.",
+          "Respostas às perguntas mais comuns sobre a A11STUDIO — o que é, portfólios, criar uma conta, a lista de espera, IA, posicionar seu perfil e preços.",
       },
       hero: {
         label: "Perguntas frequentes",
         title: "Perguntas frequentes",
-        lead: "Tudo o que você precisa saber sobre a A11STUDIO — o que é, como começar e como ela ajuda as pessoas certas a descobrirem seu trabalho.",
+        lead: "Tudo o que você precisa saber sobre a A11STUDIO — o que é, como começar, a lista de espera e como ela ajuda as pessoas certas a descobrirem seu trabalho.",
       },
       navLabel: "Nesta página",
     },
