@@ -58,16 +58,10 @@ async function confirmAction(message: string): Promise<boolean> {
 /** Prompt for a password without echoing characters to the terminal. */
 async function askPassword(message: string): Promise<string> {
   if (!process.stdin.isTTY) {
-    const rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout,
-    });
-    return new Promise((resolve) => {
-      rl.question(`${message}: `, (answer) => {
-        rl.close();
-        resolve(answer);
-      });
-    });
+    Logger.error(
+      '❌ No interactive TTY — cannot prompt for password. Re-run via dbcli-dev.sh / dbcli-prod.sh from a real terminal (those scripts allocate -it).',
+    );
+    process.exit(1);
   }
 
   return new Promise((resolve) => {
@@ -79,32 +73,70 @@ async function askPassword(message: string): Promise<string> {
     stdin.setEncoding('utf8');
 
     let password = '';
-    const onData = (char: string) => {
-      switch (char) {
-        case '\n':
-        case '\r':
-        case '\u0004':
-          stdin.setRawMode(false);
-          stdin.removeListener('data', onData);
-          stdin.pause();
-          stdout.write('\n');
-          resolve(password);
-          break;
-        case '\u0003':
-          stdin.setRawMode(false);
-          stdin.removeListener('data', onData);
-          stdout.write('\n');
-          process.exit(1);
-          break;
-        case '\u007f':
-        case '\b':
-          if (password.length > 0) {
-            password = password.slice(0, -1);
-          }
-          break;
-        default:
-          password += char;
-          break;
+    let inBracketedPaste = false;
+
+    const finish = () => {
+      stdin.setRawMode(false);
+      stdin.removeListener('data', onData);
+      stdin.pause();
+      stdout.write('\n');
+      resolve(password);
+    };
+
+    const onData = (chunk: string) => {
+      // Pastes often arrive as one multi-char chunk (sometimes wrapped in
+      // bracketed-paste markers). Walk byte-by-byte so typing and paste both work.
+      for (let i = 0; i < chunk.length; i++) {
+        if (chunk.startsWith('\u001b[200~', i)) {
+          inBracketedPaste = true;
+          i += 5; // loop +1 → skip full "\x1b[200~"
+          continue;
+        }
+        if (chunk.startsWith('\u001b[201~', i)) {
+          inBracketedPaste = false;
+          i += 5;
+          continue;
+        }
+
+        const char = chunk[i]!;
+        switch (char) {
+          case '\n':
+          case '\r':
+          case '\u0004':
+            finish();
+            return;
+          case '\u0003':
+            stdin.setRawMode(false);
+            stdin.removeListener('data', onData);
+            stdout.write('\n');
+            process.exit(1);
+            break;
+          case '\u007f':
+          case '\b':
+            if (password.length > 0) {
+              password = password.slice(0, -1);
+              stdout.write('\b \b');
+            }
+            break;
+          default:
+            // Drop other escape sequences (arrows, etc.) outside of a paste.
+            if (!inBracketedPaste && char === '\u001b') {
+              while (i + 1 < chunk.length) {
+                i += 1;
+                const next = chunk[i]!;
+                if ((next >= 'A' && next <= 'Z') || (next >= 'a' && next <= 'z') || next === '~') {
+                  break;
+                }
+              }
+              break;
+            }
+            if (char < ' ' && char !== '\t') {
+              break;
+            }
+            password += char;
+            stdout.write('*');
+            break;
+        }
       }
     };
     stdin.on('data', onData);
@@ -125,6 +157,10 @@ async function promptDestructivePassword(): Promise<string> {
   }
 
   const password = await askPassword('Enter migrate:refresh password');
+  if (!password) {
+    Logger.error('❌ No password entered');
+    process.exit(1);
+  }
   const isValid = await verifyDestructivePassword(password);
   if (!isValid) {
     Logger.error('❌ Invalid password');

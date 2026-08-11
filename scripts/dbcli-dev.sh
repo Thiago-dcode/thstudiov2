@@ -19,7 +19,14 @@ COMPOSE_FILE="$REPO_ROOT/compose.dev.yaml"
 COMPOSE=(docker compose -f "$COMPOSE_FILE")
 
 run_dbcli() {
-  "${COMPOSE[@]}" exec api sh -c \
+  # -it is required for migrate:refresh / db:fresh / clean:* password + confirm prompts.
+  # Skip -t when stdin is not a TTY (CI / pipes) so docker does not fail.
+  TTY_FLAGS=()
+  if [[ -t 0 ]]; then
+    TTY_FLAGS+=(-it)
+  fi
+
+  "${COMPOSE[@]}" exec "${TTY_FLAGS[@]}" api sh -c \
     'cd /workspace/packages/database && node dist/src/bin/cli.js "$@"' \
     _ "$@"
 }

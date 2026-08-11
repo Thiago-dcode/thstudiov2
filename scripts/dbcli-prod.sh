@@ -60,8 +60,15 @@ case "${1:-}" in
     ;;
 esac
 
+# -it is required for migrate:refresh / db:fresh / clean:* password + confirm prompts.
+# Skip -t when stdin is not a TTY (CI / pipes) so docker does not fail.
+TTY_FLAGS=()
+if [[ -t 0 ]]; then
+  TTY_FLAGS+=(-it)
+fi
+
 info "Running: $*"
-"${COMPOSE[@]}" run --rm \
+"${COMPOSE[@]}" run --rm "${TTY_FLAGS[@]}" \
   -e DB_HOST=postgres \
   -e DB_PORT=5432 \
   api sh -c 'cd /workspace/packages/database && node dist/src/bin/cli.js "$@"' _ "$@"
