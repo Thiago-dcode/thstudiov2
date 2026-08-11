@@ -60,13 +60,13 @@ docker exec a11studio-prod-redis redis-cli --scan --pattern "users/*" \
 
 ### 0.3 Post-deploy verification (do these on the live prod URL)
 
-> **Blocked until the pre-launch crawl block comes off.** Verified 2026-08-11 that prod still serves `Disallow: /` plus a site-wide `X-Robots-Tag: noindex, nofollow, noarchive`, so the first item below **fails by design**. The two places to remove, in this order:
-> 1. `add_header X-Robots-Tag …` — `nginx/snippets/security-headers.conf` (line ~39). Drop this **before** deleting the Cloudflare Access application, never after.
-> 2. The `location = /robots.txt { … return 200 "User-agent: *\nDisallow: /\n"; }` block — `nginx/conf.d/default.conf` (line ~118), which shadows `apps/web/src/app/robots.ts`.
+> **Crawl block removed 2026-08-11 — the site is live to crawlers.** Both pre-launch blocks were deleted from `pro.nginx/` (the tracked source; `deploy-prod.sh` step 1b copies it over `nginx/`, so editing the deployed copy on the droplet directly would be reverted on the next deploy):
+> 1. `add_header X-Robots-Tag "noindex, nofollow, noarchive" always;` — `pro.nginx/snippets/security-headers.conf`.
+> 2. The `location = /robots.txt { … return 200 "User-agent: *\nDisallow: /\n"; }` block — `pro.nginx/conf.d/default.conf`, which shadowed `apps/web/src/app/robots.ts`.
 >
-> The comment justifying the header (“`cdn.a11studio.com` has no DNS record, so every image 404s”) is **stale** — the CDN resolves and serves `200`s as of 2026-08-11.
+> Both were removed only after §0.1, §0.2 and the mechanical §0.3 checks were green, and after §B.7 and §A.2a were deployed and verified privately. The old justification for the header (“`cdn.a11studio.com` has no DNS record, so every image 404s”) was already **stale** — the CDN resolves and serves `200`s.
 >
-> ⚠️ **The Cloudflare Access gate is no longer in front of this origin.** Unauthenticated public requests to `https://a11studio.com` return `200` with full HTML, so the “Access is the primary gate, this header is the safety net” assumption in `security-headers.conf` no longer holds — right now `X-Robots-Tag` + `Disallow: /` are the **only** thing keeping prod out of the index. Treat removing them as the actual go-live switch, and confirm §0.3 is green first.
+> ⚠️ **The Cloudflare Access gate was already gone before this.** Unauthenticated public requests returned `200` with full HTML, so the “Access is the primary gate, this header is the safety net” assumption in `security-headers.conf` did not hold — those two nginx blocks were the *only* thing keeping prod out of the index. De-indexing now lives entirely in the app (`NODE_ENV` gate + the §B.7 completeness gate); re-adding a proxy-level `noindex` would silently override every per-page decision.
 
 - [ ] 🚀 **`/robots.txt`** returns real robots text with `Allow: /`, the child `Sitemap:` lines, and `Host:` — **not** app HTML (guards against the proxy-matcher regression class from §A.1). **Pre-confirmed safe:** fetched the app directly behind the proxy (`docker exec a11studio-prod-nginx wget -qO- http://web:3000/robots.txt`) on 2026-08-11 — it already returns `Allow: /`, the authed-area `Disallow:` list, `Host: https://a11studio.com`, and one `Sitemap:` line per child. Removing the nginx override exposes correct output; only the override is in the way.
 - [~] 🚀 **`/sitemap/1.xml`** (and each advertised child) returns real XML with **CloudFront** image locs and **zero** presigned URLs / unescaped `&`. ✅ content verified 2026-08-11: shards `0`–`3` all `200` (static ×7, portfolio, collection, service), every `image:loc` on CloudFront, **0** presigned, **0** unescaped `&`, `/sitemap/4.xml` correctly `404`s. Re-check once the profile shard exists (see below).
