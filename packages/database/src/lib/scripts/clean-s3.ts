@@ -8,7 +8,14 @@ import {
 } from './utils/destructive-password';
 
 const assertDestructivePassword = async (password: string, shouldExit: boolean) => {
-  const isValid = await verifyDestructivePassword(password);
+  let isValid: boolean;
+  try {
+    isValid = await verifyDestructivePassword(password);
+  } catch (err) {
+    Logger.error(err instanceof Error ? `❌ ${err.message}` : '❌ Invalid password');
+    if (shouldExit) process.exit(1);
+    throw err;
+  }
   if (!isValid) {
     Logger.error(
       `❌ Invalid password (check ${DESTRUCTIVE_PASSWORD_HASH_ENV}). Refusing S3 cleanup.`,

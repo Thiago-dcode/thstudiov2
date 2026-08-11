@@ -161,7 +161,13 @@ async function promptDestructivePassword(): Promise<string> {
     Logger.error('❌ No password entered');
     process.exit(1);
   }
-  const isValid = await verifyDestructivePassword(password);
+  let isValid: boolean;
+  try {
+    isValid = await verifyDestructivePassword(password);
+  } catch (err) {
+    Logger.error(err instanceof Error ? `❌ ${err.message}` : '❌ Invalid password');
+    process.exit(1);
+  }
   if (!isValid) {
     Logger.error('❌ Invalid password');
     process.exit(1);
