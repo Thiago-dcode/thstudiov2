@@ -22,3 +22,13 @@ export const isRegistrationClosed = () => {
     return isTruthyEnv(process.env.REGISTRATION_IS_CLOSED);
 }
 
+/**
+ * Bare hostname of an app URL, for display in emails ("www.a11studio.com"). Always derive it from
+ * APP_URL instead of writing a hostname literal — the display host must match the canonical
+ * production origin (and therefore the nginx vhost that actually serves the app).
+ */
+export const displayHost = (url: string | undefined) => {
+    if (!url) return '';
+    return url.replace(/^https?:\/\//, '').replace(/\/+$/, '');
+}
+

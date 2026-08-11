@@ -6,7 +6,7 @@ import { mailingConfig, mailingDriver } from 'src/config/mailling';
 import { ConfigService } from '@nestjs/config';
 import { ViewService } from '@repo/backend-lib/services/view-service/base';
 import { FactoryViewService } from '@repo/backend-lib/services/view-service/factory';
-import { viewPath } from 'src/common/utils';
+import { displayHost, viewPath } from 'src/common/utils';
 import { VIEW_ENGINE } from 'src/common/utils/constants';
 import { CacheModule } from '@nestjs/cache-manager';
 import {
@@ -71,7 +71,9 @@ import { RequestStore } from '@repo/common-lib/types/request';
           globals: {
             emailsPath: viewPath('emails'),
             appName: configService.get('app.name'),
-            beautyUrl: 'www.a11studio.com',
+            // Footer link text only (the href is appUrl). Derived from app.url rather than
+            // hardcoded so the display host always matches the canonical production origin.
+            beautyUrl: displayHost(configService.get<string>('app.url')),
             appUrl: configService.get('app.url'),
             env: configService.get('app.env'),
             // Do NOT put unbound i18n here — ApiMailService injects the
