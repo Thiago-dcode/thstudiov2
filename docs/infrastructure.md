@@ -1,6 +1,6 @@
 # Infrastructure, Networking & CI/CD
 
-A complete walkthrough of the A11 Studio stack — from a `git push` to a browser
+A complete walkthrough of the TH Studio stack — from a `git push` to a browser
 rendering the page. Concepts are named correctly and explained inline.
 
 ---
@@ -49,7 +49,7 @@ Two identical environments — same topology, different branch and secrets:
 |---|---|---|
 | Branch | `develop` | `main` |
 | Droplet | `165.232.38.110` | `134.209.31.146` |
-| Public domain | `dev.a11studio.com` | `www.a11studio.com` (apex 301s to www) |
+| Public domain | `dev.a11studio.com` | `a11studio.com` (www 301s to apex) |
 | API domain | `apidev.a11studio.com` | `api.a11studio.com` |
 | nginx source | `dev.nginx/` | `pro.nginx/` |
 | Compose file | `compose.dev.yaml` | `compose.prod.yaml` |
@@ -805,16 +805,16 @@ signals open simultaneously.
 3. [ ] Commit, push to main → CI deploys automatically
 
 4. [ ] Verify no X-Robots-Tag header:
-       curl -I https://www.a11studio.com/ | grep -i x-robots
+       curl -I https://a11studio.com/ | grep -i x-robots
        (should return nothing)
 
 5. [ ] Verify robots.txt allows crawling:
-       curl https://www.a11studio.com/robots.txt
+       curl https://a11studio.com/robots.txt
        (should return Allow: / with sitemap URLs)
 
 6. [ ] Submit sitemaps in Google Search Console:
-       https://www.a11studio.com/sitemap/0.xml
-       https://www.a11studio.com/sitemap/1.xml
+       https://a11studio.com/sitemap/0.xml
+       https://a11studio.com/sitemap/1.xml
 
 7. [ ] Request indexing for the homepage in Search Console
 ```

@@ -13,7 +13,7 @@ Dev and prod are the same pipeline with different branches, image names, and Git
 | Deploy script | `scripts/deploy-dev.sh` | `scripts/deploy-prod.sh` |
 | Droplet | `165.232.38.110` | `134.209.31.146` |
 | Deploy dir | `/root/apps/a11studio` | `/root/apps/a11studio` |
-| Domain | `dev.a11studio.com` | `www.a11studio.com` + `api.a11studio.com` (apex → www) |
+| Domain | `dev.a11studio.com` | `a11studio.com` + `api.a11studio.com` (www → apex) |
 | nginx source | `dev.nginx/` | `pro.nginx/` |
 
 ## Flow
@@ -319,8 +319,8 @@ these records — none of them existed when the pipeline was wired up:
 
 | Name | Type | Value | Proxy |
 |---|---|---|---|
-| `a11studio.com` | A | `134.209.31.146` | proxied (nginx 301 → www) |
-| `www.a11studio.com` | A | `134.209.31.146` | proxied (canonical app host) |
+| `a11studio.com` | A | `134.209.31.146` | proxied (canonical app host) |
+| `www.a11studio.com` | A | `134.209.31.146` | proxied (nginx 301 → apex) |
 | `api.a11studio.com` | A | `134.209.31.146` | proxied |
 | `cdn.a11studio.com` | CNAME | the CloudFront distribution host | see below |
 

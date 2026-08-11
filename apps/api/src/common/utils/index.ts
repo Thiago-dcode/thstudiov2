@@ -23,9 +23,9 @@ export const isRegistrationClosed = () => {
 }
 
 /**
- * Bare hostname of an app URL, for display in emails ("www.a11studio.com"). Always derive it from
- * APP_URL instead of writing a hostname literal — the display host must match the canonical
- * production origin (and therefore the nginx vhost that actually serves the app).
+ * Bare hostname of an app URL, for display in emails ("a11studio.com"). Always derive it from
+ * APP_URL instead of writing a hostname literal: the previous literal said `www.a11studio.com`
+ * while the proxy served no www vhost, so emails advertised a host that answered with a TLS error.
  */
 export const displayHost = (url: string | undefined) => {
     if (!url) return '';

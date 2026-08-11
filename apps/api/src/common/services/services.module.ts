@@ -72,7 +72,8 @@ import { RequestStore } from '@repo/common-lib/types/request';
             emailsPath: viewPath('emails'),
             appName: configService.get('app.name'),
             // Footer link text only (the href is appUrl). Derived from app.url rather than
-            // hardcoded so the display host always matches the canonical production origin.
+            // hardcoded: it read `www.a11studio.com`, a host the proxy served no vhost for,
+            // so every email advertised a hostname that answered with a TLS error.
             beautyUrl: displayHost(configService.get<string>('app.url')),
             appUrl: configService.get('app.url'),
             env: configService.get('app.env'),
