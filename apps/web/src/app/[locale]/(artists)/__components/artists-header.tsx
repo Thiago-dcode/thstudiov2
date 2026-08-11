@@ -36,7 +36,8 @@ function ArtistsHeaderContactAction() {
   );
 }
 
-export const ArtistsHeader = () => {
+/** `shareReady` comes from the layout: an incomplete profile gets no share affordance. */
+export const ArtistsHeader = ({ shareReady }: { shareReady: boolean }) => {
   const pathname = usePathname();
   const params = useParams();
   const username = params.username as string;
@@ -86,18 +87,22 @@ export const ArtistsHeader = () => {
             </Link>
           ))}
           <ArtistsHeaderContactAction />
-          <ShareButton
-            title={`@${username}`}
-            ariaLabel={tShare("shareProfile")}
-          />
+          {shareReady && (
+            <ShareButton
+              title={`@${username}`}
+              ariaLabel={tShare("shareProfile")}
+            />
+          )}
         </SiteHeader.Actions>
 
         <SiteHeader.MobileControls>
-          <ShareButton
-            title={`@${username}`}
-            ariaLabel={tShare("shareProfile")}
-            className="flex items-center justify-center size-10 shrink-0"
-          />
+          {shareReady && (
+            <ShareButton
+              title={`@${username}`}
+              ariaLabel={tShare("shareProfile")}
+              className="flex items-center justify-center size-10 shrink-0"
+            />
+          )}
 
           <SiteHeader.MobileMenu contentClassName="inset-y-0 left-auto right-0 w-72 h-full border-l border-fg-2">
             <SiteHeader.MobileDrawerBar className="px-6">

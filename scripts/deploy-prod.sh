@@ -76,7 +76,7 @@ info "Images    : ghcr.io/<DOCKER_IMAGE_OWNER>/a11studio-prod-*:${DOCKER_IMAGE_T
 echo ""
 
 # ── Step 1: Git pull ──────────────────────────────────────────────────────────
-info "Step 1/5 — Pulling latest code from origin/main …"
+info "Step 1/6 — Pulling latest code from origin/main …"
 cd "$REPO_ROOT"
 
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
@@ -102,7 +102,7 @@ echo ""
 # `compose.prod.yaml` mounts ./nginx, but the reviewed config lives in ./pro.nginx.
 # These used to be kept in sync by hand, so security changes to pro.nginx/ could sit
 # in git without ever reaching the running proxy. Copy on every deploy instead.
-info "Step 1b/5 — Syncing nginx config (pro.nginx → nginx) …"
+info "Step 1b/6 — Syncing nginx config (pro.nginx → nginx) …"
 if [[ -d pro.nginx ]]; then
   mkdir -p nginx
   cp -r pro.nginx/. nginx/
@@ -115,14 +115,14 @@ echo ""
 # ── Step 1c: Ownership for bind-mounted writable paths ────────────────────────
 # The api/worker containers run as uid 1000 (`node`), not root. The log directory is
 # a host bind mount, so it must be writable by that uid or file logging silently fails.
-info "Step 1c/5 — Ensuring storage/logs is writable by the container user …"
+info "Step 1c/6 — Ensuring storage/logs is writable by the container user …"
 mkdir -p storage/logs
 chown -R 1000:1000 storage/logs || warn "Could not chown storage/logs — check file logging after deploy."
 echo ""
 
 # ── Step 2: Pull prebuilt images ──────────────────────────────────────────────
 if [[ "$SKIP_PULL" == false ]]; then
-  info "Step 2/5 — Pulling prebuilt images from GHCR (api, worker, web) …"
+  info "Step 2/6 — Pulling prebuilt images from GHCR (api, worker, web) …"
   if ! $COMPOSE pull api worker web; then
     error "Failed to pull images from GHCR."
     error "Ensure docker is logged in: docs/deploy-ghcr.md (Step 4)"
@@ -130,12 +130,12 @@ if [[ "$SKIP_PULL" == false ]]; then
   fi
   success "Images pulled."
 else
-  warn "Step 2/5 — Image pull skipped (--skip-pull)."
+  warn "Step 2/6 — Image pull skipped (--skip-pull)."
 fi
 echo ""
 
 # ── Step 3: Start infrastructure (postgres + redis) ───────────────────────────
-info "Step 3/5 — Ensuring postgres and redis are up …"
+info "Step 3/6 — Ensuring postgres and redis are up …"
 $COMPOSE up -d postgres redis
 
 info "Waiting for postgres to be healthy …"
@@ -153,19 +153,19 @@ echo ""
 
 # ── Step 4: Migrations ────────────────────────────────────────────────────────
 if [[ "$SKIP_MIGRATE" == false ]]; then
-  info "Step 4/5 — Running DB migrations …"
+  info "Step 4/6 — Running DB migrations …"
   $COMPOSE run --rm \
     -e DB_HOST=postgres \
     -e DB_PORT=5432 \
     api sh -c "cd packages/database && node dist/src/bin/cli.js migrate"
   success "Migrations complete."
 else
-  warn "Step 4/5 — Migrations skipped (--skip-migrate)."
+  warn "Step 4/6 — Migrations skipped (--skip-migrate)."
 fi
 echo ""
 
 # ── Step 5: Rolling restart of application services ──────────────────────────
-info "Step 5/5 — Starting / restarting application services …"
+info "Step 5/6 — Starting / restarting application services …"
 
 # Bring everything up; compose will recreate only changed containers.
 $COMPOSE up -d --remove-orphans
@@ -183,6 +183,31 @@ $COMPOSE up -d --force-recreate nginx
 
 # Give nginx and app containers a moment to settle, then show status.
 sleep 5
+echo ""
+
+# ── Step 6: Invalidate cached asset URLs ─────────────────────────────────────
+# `HelpersService.getAsset` memoises path→url in Redis for the lifetime of the
+# signed URL. A release that changes how those URLs are built — or one deployed
+# while the cache still holds presigned S3 links instead of stable CloudFront
+# ones — keeps serving the old value until it expires, which breaks `og:image`
+# and JSON-LD `contentUrl` for crawlers that cache the first card they fetch.
+# Runs *after* the new containers are live so the repopulated values come from
+# the new code. Never fatal: a cold cache costs one signing round-trip, so a
+# flush failure must not fail an otherwise good deploy.
+info "Step 6/6 — Flushing cached user asset URLs (users/*) …"
+# `</dev/null` on every exec: `compose exec -T` inherits stdin, and this script runs over
+# SSH from CI — an exec that reads stdin can swallow whatever the session sends next.
+if CACHED=$($COMPOSE exec -T redis sh -c 'redis-cli --scan --pattern "users/*" | wc -l' </dev/null 2>/dev/null); then
+  CACHED=$(echo "$CACHED" | tr -cd '0-9')
+  if [[ "${CACHED:-0}" -gt 0 ]]; then
+    $COMPOSE exec -T redis sh -c 'redis-cli --scan --pattern "users/*" | xargs -r redis-cli del' </dev/null >/dev/null
+    success "Flushed ${CACHED} cached asset URL(s)."
+  else
+    info "No cached asset URLs to flush."
+  fi
+else
+  warn "Could not reach redis to flush users/* — verify og:image / JSON-LD contentUrl manually."
+fi
 echo ""
 info "Container status:"
 $COMPOSE ps --format "table {{.Service}}\t{{.Status}}\t{{.Ports}}"

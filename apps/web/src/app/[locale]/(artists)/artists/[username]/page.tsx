@@ -17,15 +17,14 @@ import {
   YoutubeIcon,
 } from "@/lib/components/social-icons";
 import { DEFAULT_OG_IMAGE } from "@/lib/config";
+import { buildStaticPageMetadata } from "@/lib/seo/static-metadata";
 import userServiceService from "@/modules/user-services/user-service.service";
 import UserService from "@/modules/users/users.service";
 import { ArtistContactDialog } from "../../__components/artist-contact.dialog";
 import { ArtistSections } from "../../__components/artist-sections";
 import { ArtistSectionsSkeleton } from "../../__components/artist-sections-skeleton";
 
-type Props = { params: Promise<{ username: string }> };
-
-const SITE_NAME = "A11STUDIO";
+type Props = { params: Promise<{ locale: string; username: string }> };
 
 const displayName = (profile: UserProfile) =>
   [profile.name, profile.surname].filter(Boolean).join(" ") ||
@@ -35,47 +34,54 @@ const canonicalUrl = (username: string) =>
   `${serverEnv.APP_URL}/artists/${username}`;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { username } = await params;
-  const { data: profile } = await UserService.getProfile(username);
+  const { locale, username } = await params;
+  const [{ data: profile }, t] = await Promise.all([
+    UserService.getProfile(username),
+    getTranslations("artists.profile"),
+  ]);
 
   if (!profile) {
-    const t = await getTranslations("artists.notFound");
+    const tNotFound = await getTranslations("artists.notFound");
     return {
-      title: t("heading"),
+      title: tNotFound("heading"),
       robots: { index: false, follow: false },
     };
   }
 
+  const path = `/artists/${profile.username}`;
+
+  // A profile still missing work, name, profession or locality must not read as a finished artist
+  // page: a messenger caches whatever it fetched the first time, so pasting the link would keep
+  // showing a polished card for an unfinished profile. Brand image + neutral copy + noindex until
+  // the artist completes it (same gate as the sitemap — see `is_share_ready`).
+  if (!profile.is_share_ready) {
+    return buildStaticPageMetadata({
+      path,
+      title: `@${profile.username}`,
+      description: t("metaIncomplete"),
+      locale,
+      image: DEFAULT_OG_IMAGE,
+      noindex: true,
+    });
+  }
+
   const name = displayName(profile);
-  const title = profile.profession
-    ? `${name} — ${profile.profession}`
-    : `${name} (@${profile.username})`;
+  // Share-ready guarantees both, so the answer-shaped summary always has real values to fill in.
+  const profession = profile.profession?.trim() ?? "";
+  const location =
+    profile.address?.city?.trim() || profile.address?.state?.trim() || "";
   const description = profile.short_biography?.trim()
     ? profile.short_biography.trim().slice(0, 160)
-    : `Discover ${name}'s portfolios, collections and services on ${SITE_NAME}.`;
-  const canonical = canonicalUrl(profile.username);
-  // Prefer the artist's own banner/avatar; fall back to the brand logo so share cards are never blank.
-  const ogImage = profile.banner || profile.avatar || DEFAULT_OG_IMAGE;
+    : t("summaryProfessionLocation", { name, profession, location });
 
-  return {
-    title,
+  return buildStaticPageMetadata({
+    path,
+    title: `${name} — ${profession}`,
     description,
-    alternates: { canonical },
-    openGraph: {
-      type: "profile",
-      title,
-      description,
-      url: canonical,
-      siteName: SITE_NAME,
-      images: [{ url: ogImage, alt: name }],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-      images: [ogImage],
-    },
-  };
+    locale,
+    image: profile.banner || profile.avatar || DEFAULT_OG_IMAGE,
+    ogType: "profile",
+  });
 }
 
 const buildProfileJsonLd = (profile: UserProfile, services: Service[]) => {
@@ -160,7 +166,11 @@ const ArtistHomePage = async ({ params }: Props) => {
 
   const fullName = [profile.name, profile.surname].filter(Boolean).join(" ");
   const heading = fullName || `@${profile.username}`;
-  const jsonLd = buildProfileJsonLd(profile, services ?? []);
+  // Structured data only for profiles we let search engines and answer engines treat as real artist
+  // entities — an incomplete profile is noindexed, so publishing its contact facts buys nothing.
+  const jsonLd = profile.is_share_ready
+    ? buildProfileJsonLd(profile, services ?? [])
+    : null;
 
   // Answer-shaped TL;DR (GEO §G2): a concise, structured summary AI engines and search can lift.
   // Built from profession + locality — deliberately NOT the short bio, which is already shown below
@@ -183,13 +193,15 @@ const ArtistHomePage = async ({ params }: Props) => {
 
   return (
     <div className="min-h-screen w-full animate-in fade-in duration-1000">
-      <script
-        type="application/ld+json"
-        // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD is escaped (`<` -> \u003c) to prevent XSS.
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
-        }}
-      />
+      {jsonLd && (
+        <script
+          type="application/ld+json"
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD is escaped (`<` -> \u003c) to prevent XSS.
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
+          }}
+        />
+      )}
 
       {/* Hero Banner — full-bleed up to desktop */}
       <section className="relative w-full" aria-label="Profile banner">

@@ -56,6 +56,11 @@ export type UserProfile = Pick<UserSchema,
 > & {
   address: ProfileAddress | null;
   categories: Omit<CategoryBase,'is_featured'>[];
+  /**
+   * Complete enough to be shared/indexed: a public portfolio plus name, profession and locality
+   * (see `isArtistShareReady`). Drives `noindex` + the muted share card on incomplete profiles.
+   */
+  is_share_ready: boolean;
 };
 
 export type CreateUserInput = Omit<

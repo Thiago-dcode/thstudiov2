@@ -8,6 +8,7 @@ import { ArtistContactDialog } from "@/app/[locale]/(artists)/__components/artis
 import { serverEnv } from "@/env/server";
 import { Link } from "@/i18n/navigation";
 import Web from "@/lib/components/web-page.component";
+import { DEFAULT_OG_IMAGE } from "@/lib/config";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import userAboutPageService from "@/modules/user-about-page/user-about-page.service";
 import usersService from "@/modules/users/users.service";
@@ -40,25 +41,32 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   // The about page is a supporting page about the same artist as /artists/{username}.
   // Point its canonical at the profile so ranking signal consolidates there (no cannibalization).
   const canonical = `${serverEnv.APP_URL}/artists/${username}`;
-  const ogImage = aboutPage?.photo || profile.avatar || undefined;
+  // Incomplete profiles get the brand card and stay unindexed, matching the profile page and the
+  // sitemap; complete ones fall back to the brand logo only so a share is never blank.
+  const ogImage = profile.is_share_ready
+    ? aboutPage?.photo || profile.avatar || DEFAULT_OG_IMAGE
+    : DEFAULT_OG_IMAGE;
 
   return {
     title,
     description,
     alternates: { canonical },
+    ...(profile.is_share_ready
+      ? {}
+      : { robots: { index: false, follow: false } }),
     openGraph: {
       type: "profile",
       title,
       description,
       url: canonical,
       siteName: SITE_NAME,
-      ...(ogImage ? { images: [{ url: ogImage, alt: name }] } : {}),
+      images: [{ url: ogImage, alt: name }],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      ...(ogImage ? { images: [ogImage] } : {}),
+      images: [ogImage],
     },
   };
 }

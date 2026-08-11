@@ -34,6 +34,7 @@ import { RequestService } from 'src/common/services/request.service';
 import { QueryBuilder } from '@repo/database/queryBuilder';
 import { Query } from '@repo/database/facades';
 import { foldLatinDiacriticsForMatch } from '@repo/common-lib/utils/fold-latin-diacritics';
+import { isArtistShareReady } from '@repo/common-lib/utils/artist-share-ready';
 
 @Injectable()
 export class UserRepository extends BaseRepository {
@@ -271,7 +272,7 @@ export class UserRepository extends BaseRepository {
 
     if (!result || result.length === 0) return null;
 
-    return this.formatUserProfile(result);
+    return this.withShareReady(this.formatUserProfile(result));
   }
 
   async getUserProfileById(id: number): Promise<UserProfile | null> {
@@ -292,16 +293,52 @@ export class UserRepository extends BaseRepository {
 
     if (!result || result.length === 0) return null;
 
-    return this.formatUserProfile(result);
+    return this.withShareReady(this.formatUserProfile(result));
   }
 
-  /** Active non-banned artists with no SEO yet, or profile newer than last SEO generation. */
+  /**
+   * Resolve `is_share_ready` for a formatted profile: the identity fields come from the row we
+   * already have, the portfolio half needs one EXISTS check against the same predicate the sitemap
+   * uses, so a profile can never be share-ready while being excluded from discovery.
+   */
+  private async withShareReady(
+    profile: Omit<UserProfile, 'is_share_ready'>,
+  ): Promise<UserProfile> {
+    const result = await Query.raw(
+      `SELECT EXISTS(
+         SELECT 1 FROM ${TABLES_ENUM.PORTFOLIOS} pf
+         WHERE pf.user_id = $1 AND pf.blocked_at IS NULL
+           AND pf.is_active = true AND pf.is_indexable = true
+       ) AS has_public_portfolio`,
+      [profile.id],
+    );
+    const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];
+    const hasPublicPortfolio = Boolean(
+      (Array.isArray(rows) ? rows : [])[0]?.has_public_portfolio,
+    );
+
+    return {
+      ...profile,
+      is_share_ready: isArtistShareReady({
+        name: profile.name,
+        profession: profile.profession,
+        city: profile.address?.city,
+        state: profile.address?.state,
+        has_public_portfolio: hasPublicPortfolio,
+      }),
+    };
+  }
+
+  /**
+   * Active non-banned public profiles with no SEO yet, or profile newer than last SEO generation.
+   * Same role set as the sitemap, so anything enumerated there has generated SEO fields.
+   */
   async findDueForSeoGeneration(): Promise<{ id: number; user_id: number }[]> {
     const result = await Query.raw(
       `SELECT u.id, u.id AS user_id
        FROM ${TABLES_ENUM.USERS} u
        INNER JOIN ${TABLES_ENUM.ROLES} r ON r.id = u.role_id
-       WHERE r.name = 'ARTIST'
+       WHERE ${UserRepository.PUBLIC_PROFILE_ROLES}
          AND u.banned = false
          AND u.is_active = true
          AND (u.seo_generated_at IS NULL OR u.seo_generated_at < u.updated_at)
@@ -315,10 +352,37 @@ export class UserRepository extends BaseRepository {
   }
 
   /**
-   * Sitemap enumeration: active, non-banned ARTIST profiles that have at least one publicly
-   * indexable portfolio (quality gate — skip empty/thin profiles). `is_paid` (an active,
-   * non-free subscription) sorts first so paid artists land in the earliest sitemap shards
-   * (Google ignores `<priority>`, so shard order is the real crawl-priority lever).
+   * Roles whose profiles are published under `/artists/*`. `findAllArtists` (the public directory)
+   * filters on nothing but `banned`/`is_active`, so an ADMIN profile is already browsable and
+   * linkable — restricting the sitemap to ARTIST alone would omit a page the site links to.
+   */
+  private static readonly PUBLIC_PROFILE_ROLES = `r.name IN ('ARTIST', 'ADMIN')`;
+
+  /**
+   * SQL mirror of `isArtistShareReady`: an artist only enters the sitemap with published work AND
+   * the identity facts a listing needs (name, profession, locality). Shared by the enumeration and
+   * its count so the two can never drift.
+   */
+  private static readonly SITEMAP_ARTIST_PREDICATE = `
+    ${UserRepository.PUBLIC_PROFILE_ROLES} AND u.banned = false AND u.is_active = true
+    AND BTRIM(COALESCE(u.name, '')) <> ''
+    AND BTRIM(COALESCE(u.profession, '')) <> ''
+    AND EXISTS(
+      SELECT 1 FROM ${TABLES_ENUM.ADDRESSES} a
+      WHERE a.user_id = u.id
+        AND (BTRIM(COALESCE(a.city, '')) <> '' OR BTRIM(COALESCE(a.state, '')) <> '')
+    )
+    AND EXISTS(
+      SELECT 1 FROM ${TABLES_ENUM.PORTFOLIOS} pf
+      WHERE pf.user_id = u.id AND pf.blocked_at IS NULL
+        AND pf.is_active = true AND pf.is_indexable = true
+    )`;
+
+  /**
+   * Sitemap enumeration: active, non-banned public profiles that pass the share-ready quality gate
+   * (skip empty/thin profiles). `is_paid` (an active, non-free subscription) sorts first so paid
+   * artists land in the earliest sitemap shards (Google ignores `<priority>`, so shard order is the
+   * real crawl-priority lever).
    */
   async getSitemapArtists(
     limit: number,
@@ -336,12 +400,7 @@ export class UserRepository extends BaseRepository {
          ) AS is_paid
        FROM ${TABLES_ENUM.USERS} u
        INNER JOIN ${TABLES_ENUM.ROLES} r ON r.id = u.role_id
-       WHERE r.name = 'ARTIST' AND u.banned = false AND u.is_active = true
-         AND EXISTS(
-           SELECT 1 FROM ${TABLES_ENUM.PORTFOLIOS} pf
-           WHERE pf.user_id = u.id AND pf.blocked_at IS NULL
-             AND pf.is_active = true AND pf.is_indexable = true
-         )
+       WHERE ${UserRepository.SITEMAP_ARTIST_PREDICATE}
        ORDER BY is_paid DESC, u.updated_at DESC
        LIMIT $1 OFFSET $2`,
       [limit, offset],
@@ -364,12 +423,7 @@ export class UserRepository extends BaseRepository {
       `SELECT COUNT(*)::int AS count
        FROM ${TABLES_ENUM.USERS} u
        INNER JOIN ${TABLES_ENUM.ROLES} r ON r.id = u.role_id
-       WHERE r.name = 'ARTIST' AND u.banned = false AND u.is_active = true
-         AND EXISTS(
-           SELECT 1 FROM ${TABLES_ENUM.PORTFOLIOS} pf
-           WHERE pf.user_id = u.id AND pf.blocked_at IS NULL
-             AND pf.is_active = true AND pf.is_indexable = true
-         )`,
+       WHERE ${UserRepository.SITEMAP_ARTIST_PREDICATE}`,
     );
     const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];
     return Number((Array.isArray(rows) ? rows : [])[0]?.count ?? 0);
@@ -499,7 +553,8 @@ export class UserRepository extends BaseRepository {
     };
   }
 
-  private formatUserProfile(rows: UserProfileRow[]): UserProfile {
+  /** `is_share_ready` is resolved separately (needs a portfolio lookup) — see `withShareReady`. */
+  private formatUserProfile(rows: UserProfileRow[]): Omit<UserProfile, 'is_share_ready'> {
     const first = rows[0];
 
     const address: ProfileAddress | null = first.a_id != null

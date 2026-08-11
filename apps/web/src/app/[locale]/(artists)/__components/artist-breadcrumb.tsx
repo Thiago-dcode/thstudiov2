@@ -12,6 +12,7 @@ import { ArrowLeft, ChevronRight } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import * as React from "react";
 import { Link } from "@/i18n/navigation";
+import { getArtistShareReady } from "@/modules/users/get-artist-share-ready";
 
 export type BreadcrumbEntry = {
   url: string;
@@ -32,7 +33,12 @@ export const ArtistBreadcrumb = async ({
   backUrl,
   className,
 }: ArtistBreadcrumbProps) => {
-  const t = await getTranslations("artists");
+  const [t, shareReady] = await Promise.all([
+    getTranslations("artists"),
+    // Resolved here rather than threaded through all eight call sites; the lookup is cached per
+    // request, so this shares the artist layout's result.
+    getArtistShareReady(username),
+  ]);
   const allItems: BreadcrumbEntry[] = [
     {
       url: `/artists/${username}`,
@@ -85,7 +91,10 @@ export const ArtistBreadcrumb = async ({
           </React.Fragment>
         ))}
       </BreadcrumbList>
-      <ShareButton title={`@${username}`} ariaLabel={t("shareProfile")} />
+      {/* No share affordance until the profile is complete enough to represent the artist. */}
+      {shareReady && (
+        <ShareButton title={`@${username}`} ariaLabel={t("shareProfile")} />
+      )}
     </Breadcrumb>
   );
 };

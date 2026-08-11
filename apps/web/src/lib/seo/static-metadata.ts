@@ -27,7 +27,7 @@ type StaticPageMetaInput = {
   locale: string;
   /** OG/Twitter image URL (absolute, or root-relative — resolved via `metadataBase`). Defaults to the brand logo. */
   image?: string;
-  ogType?: "website" | "article";
+  ogType?: "website" | "article" | "profile";
   /** Override the default indexable behaviour (e.g. keep a page out of the index). */
   noindex?: boolean;
   /**

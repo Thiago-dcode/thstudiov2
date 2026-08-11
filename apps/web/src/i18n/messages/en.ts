@@ -1036,6 +1036,7 @@ const messages = {
         "{name}, based in {location}, showcases their portfolios, collections and services on A11STUDIO.",
       summaryFallback:
         "{name} showcases their portfolios, collections and services on A11STUDIO.",
+      metaIncomplete: "This artist profile is still being set up on A11STUDIO.",
     },
     editAria: {
       editPortfolio: "Edit portfolio",

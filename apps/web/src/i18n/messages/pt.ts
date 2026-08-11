@@ -1042,6 +1042,8 @@ const messages = {
         "{name}, com base em {location}, apresenta seus portfólios, coleções e serviços na A11STUDIO.",
       summaryFallback:
         "{name} apresenta seus portfólios, coleções e serviços na A11STUDIO.",
+      metaIncomplete:
+        "Este perfil de artista ainda está sendo configurado na A11STUDIO.",
     },
     editAria: {
       editPortfolio: "Editar portfólio",

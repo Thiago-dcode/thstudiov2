@@ -30,7 +30,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: `${name} — ${t("pageTitle")}`,
     description: t("metaDescription", { name }),
     locale,
-    image: profile.banner || profile.avatar || undefined,
+    // An incomplete profile stays out of the index and off rich share cards — same gate as the
+    // profile page and the sitemap, so the artist's surfaces can't disagree.
+    image: profile.is_share_ready
+      ? profile.banner || profile.avatar || undefined
+      : undefined,
+    noindex: !profile.is_share_ready,
   });
 }
 
