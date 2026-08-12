@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { getTranslations } from "next-intl/server";
-import { type FaqItem, faqAnswerClassName } from "@/lib/components/faqs";
+import {
+  type FaqItem,
+  faqAnswerClassName,
+  localizeFaqAnswer,
+} from "@/lib/components/faqs";
 import { buildFaqPageJsonLd, JsonLd } from "@/lib/seo/json-ld";
 import { buildStaticPageMetadata } from "@/lib/seo/static-metadata";
 
@@ -21,7 +25,12 @@ export async function generateMetadata({
   });
 }
 
-export default async function FaqsPage() {
+export default async function FaqsPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
   const t = await getTranslations("faqs");
   const items = t.raw("items") as FaqItem[];
 
@@ -68,7 +77,7 @@ export default async function FaqsPage() {
 
         <div className="min-w-0">
           {items.map((faq) => (
-            <FaqSection key={faq.id} faq={faq} />
+            <FaqSection key={faq.id} faq={faq} locale={locale} />
           ))}
 
           <div className="mt-10 border-t border-border pt-8 text-base tablet:text-lg">
@@ -92,7 +101,7 @@ export default async function FaqsPage() {
 }
 
 /** One question rendered as a titled section (no accordion) so all answers are visible + crawlable. */
-function FaqSection({ faq }: { faq: FaqItem }) {
+function FaqSection({ faq, locale }: { faq: FaqItem; locale: string }) {
   const headingId = `${faq.id}-heading`;
   return (
     <section
@@ -109,7 +118,9 @@ function FaqSection({ faq }: { faq: FaqItem }) {
       <div
         className={faqAnswerClassName}
         // biome-ignore lint/security/noDangerouslySetInnerHtml: answers are trusted, authored in our own translation files
-        dangerouslySetInnerHTML={{ __html: faq.answer }}
+        dangerouslySetInnerHTML={{
+          __html: localizeFaqAnswer(faq.answer, locale),
+        }}
       />
     </section>
   );

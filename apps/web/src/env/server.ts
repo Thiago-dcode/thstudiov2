@@ -5,7 +5,9 @@ const serverEnvSchema = z.object({
   ENCRYPTION_SECRET: z.string().min(1),
   APP_API_KEY: z.string().min(1),
   APP_TOKEN: z.string().min(1),
-  APP_URL: z.string().min(1),
+  // Must parse as a URL: `isIndexableEnv()` compares its host against the canonical production
+  // host, and an unparseable value there means "not indexable" — better to fail loudly at boot.
+  APP_URL: z.url(),
   API_V1_URL: z.string().min(1),
   GEOAPIFY_URL: z.string().min(1),
   GEOAPIFY_KEY: z.string().min(1),

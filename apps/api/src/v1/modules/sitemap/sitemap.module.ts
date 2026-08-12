@@ -4,6 +4,7 @@ import { SitemapService } from './sitemap.service';
 import { UserModule } from '../users/users.module';
 import { PortfolioModule } from '../portfolios/portfolio.module';
 import { CollectionModule } from '../collections/collection.module';
+import { MediaModule } from '../media/media.module';
 import { ServiceModule } from '../services/service.module';
 
 /**
@@ -12,7 +13,7 @@ import { ServiceModule } from '../services/service.module';
  * globally provided by the common ServicesModule.
  */
 @Module({
-  imports: [UserModule, PortfolioModule, CollectionModule, ServiceModule],
+  imports: [UserModule, PortfolioModule, CollectionModule, ServiceModule, MediaModule],
   controllers: [SitemapController],
   providers: [SitemapService],
 })

@@ -3,11 +3,13 @@ import {
   SitemapArtistItem,
   SitemapCounts,
   SitemapEntityItem,
+  SitemapMediaItem,
 } from '@repo/common-lib/types/sitemap';
 import { Helpers } from 'src/common/services/helpers.service';
 import { UserRepository } from '../users/users.repository';
 import { PortfolioRepository } from '../portfolios/portfolio.repository';
 import { CollectionRepository } from '../collections/collection.repository';
+import { MediaRepository } from '../media/media.repository';
 import { ServiceRepository } from '../services/service.repository';
 
 /** Upper bound on `per_page` so a single call can't ask for an unbounded page. */
@@ -20,6 +22,7 @@ export class SitemapService {
     private readonly portfolioRepository: PortfolioRepository,
     private readonly collectionRepository: CollectionRepository,
     private readonly serviceRepository: ServiceRepository,
+    private readonly mediaRepository: MediaRepository,
     private readonly helpers: Helpers,
   ) {}
 
@@ -37,13 +40,14 @@ export class SitemapService {
   }
 
   async counts(): Promise<SitemapCounts> {
-    const [artists, portfolios, collections, services] = await Promise.all([
+    const [artists, portfolios, collections, services, media] = await Promise.all([
       this.userRepository.countSitemapArtists(),
       this.portfolioRepository.countSitemapPortfolios(),
       this.collectionRepository.countSitemapCollections(),
       this.serviceRepository.countSitemapServices(),
+      this.mediaRepository.countSitemapMedia(),
     ]);
-    return { artists, portfolios, collections, services };
+    return { artists, portfolios, collections, services, media };
   }
 
   async artists(page?: number, perPage?: number): Promise<SitemapArtistItem[]> {
@@ -89,6 +93,23 @@ export class SitemapService {
         slug: row.slug,
         updated_at: row.updated_at,
         images: await this.signImages(row.image_paths),
+      })),
+    );
+  }
+
+  /**
+   * Media detail pages. They carry the richest structured data in the app (`ImageObject` /
+   * `VisualArtwork` with a licensable pair and keywords) and were previously in no sitemap at all.
+   */
+  async media(page?: number, perPage?: number): Promise<SitemapMediaItem[]> {
+    const { limit, offset } = this.normalize(page, perPage);
+    const rows = await this.mediaRepository.getSitemapMedia(limit, offset);
+    return Promise.all(
+      rows.map(async (row) => ({
+        username: row.username,
+        public_id: row.public_id,
+        updated_at: row.updated_at,
+        images: await this.signImages([row.thumbnail]),
       })),
     );
   }

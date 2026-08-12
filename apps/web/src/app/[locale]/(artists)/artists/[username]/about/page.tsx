@@ -5,25 +5,24 @@ import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { ArtistBreadcrumb } from "@/app/[locale]/(artists)/__components/artist-breadcrumb";
 import { ArtistContactDialog } from "@/app/[locale]/(artists)/__components/artist-contact.dialog";
-import { serverEnv } from "@/env/server";
 import { Link } from "@/i18n/navigation";
 import Web from "@/lib/components/web-page.component";
 import { DEFAULT_OG_IMAGE } from "@/lib/config";
+import { buildStaticPageMetadata } from "@/lib/seo/static-metadata";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import userAboutPageService from "@/modules/user-about-page/user-about-page.service";
 import usersService from "@/modules/users/users.service";
 
 type Props = {
-  params: Promise<{ username: string }>;
+  params: Promise<{ locale: string; username: string }>;
 };
 
-const SITE_NAME = "A11STUDIO";
-
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { username } = await params;
-  const [{ data: profile }, { data: aboutPage }] = await Promise.all([
+  const { locale, username } = await params;
+  const [{ data: profile }, { data: aboutPage }, t] = await Promise.all([
     usersService.getProfile(username),
     userAboutPageService.getByUsername(username),
+    getTranslations("artists.about"),
   ]);
 
   if (!profile) {
@@ -33,42 +32,30 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const name =
     [profile.name, profile.surname].filter(Boolean).join(" ") ||
     `@${profile.username}`;
-  const title = aboutPage?.title?.trim() || `About ${name}`;
+  const title = aboutPage?.title?.trim() || `${name} — ${t("pageTitle")}`;
   const description = aboutPage?.description?.trim()
     ? aboutPage.description.trim().slice(0, 160)
-    : `Learn more about ${name} on ${SITE_NAME}.`;
+    : t("metaDescription", { name });
 
-  // The about page is a supporting page about the same artist as /artists/{username}.
-  // Point its canonical at the profile so ranking signal consolidates there (no cannibalization).
-  const canonical = `${serverEnv.APP_URL}/artists/${username}`;
-  // Incomplete profiles get the brand card and stay unindexed, matching the profile page and the
-  // sitemap; complete ones fall back to the brand logo only so a share is never blank.
-  const ogImage = profile.is_share_ready
-    ? aboutPage?.photo || profile.avatar || DEFAULT_OG_IMAGE
-    : DEFAULT_OG_IMAGE;
-
-  return {
+  // The about page is a supporting page about the same artist as /artists/{username}, so `path` is
+  // the PROFILE path, not this page's: buildStaticPageMetadata then emits a canonical pointing at
+  // the profile (consolidating ranking signal — no cannibalization) with hreflang alternates that
+  // reference the same profile per locale. Both are per-locale, which the previous hand-rolled
+  // canonical was not: it pointed /es/artists/x/about at the *English* profile, collapsing the
+  // Spanish and Portuguese versions into the English one.
+  return buildStaticPageMetadata({
+    path: `/artists/${username}`,
     title,
     description,
-    alternates: { canonical },
-    ...(profile.is_share_ready
-      ? {}
-      : { robots: { index: false, follow: false } }),
-    openGraph: {
-      type: "profile",
-      title,
-      description,
-      url: canonical,
-      siteName: SITE_NAME,
-      images: [{ url: ogImage, alt: name }],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-      images: [ogImage],
-    },
-  };
+    locale,
+    ogType: "profile",
+    // Incomplete profiles get the brand card and stay unindexed, matching the profile page and the
+    // sitemap; complete ones fall back to the brand logo only so a share is never blank.
+    image: profile.is_share_ready
+      ? aboutPage?.photo || profile.avatar || DEFAULT_OG_IMAGE
+      : DEFAULT_OG_IMAGE,
+    noindex: !profile.is_share_ready,
+  });
 }
 
 export default async function AboutPage({ params }: Props) {

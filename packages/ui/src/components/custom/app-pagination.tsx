@@ -10,10 +10,23 @@ import {
 } from "../shadcn/pagination"
 import { cn } from "../../lib/utils"
 
+/**
+ * Localized pagination chrome. Defaults are English so existing call sites keep working, but the
+ * public directory pages pass translated strings — pagination is the only crawlable path to
+ * everything past page 1, so its anchor text should be in the page's language.
+ */
+export type PaginationLabels = {
+ previous: string
+ next: string
+ previousAria: string
+ nextAria: string
+}
+
 type AppPaginationProps = {
  pagination: PaginationType
  buildHref: (page: number) => string
  className?: string
+ labels?: Partial<PaginationLabels>
 }
 
 const SIBLINGS = 1
@@ -35,7 +48,7 @@ function getVisiblePages(current: number, last: number): (number | "ellipsis")[]
  return pages
 }
 
-export function AppPagination({ pagination, buildHref, className }: AppPaginationProps) {
+export function AppPagination({ pagination, buildHref, className, labels }: AppPaginationProps) {
  const { current_page, last_page, prev_page, next_page } = pagination
  if (last_page <= 1) return null
 
@@ -46,6 +59,8 @@ export function AppPagination({ pagination, buildHref, className }: AppPaginatio
  <PaginationContent>
  <PaginationItem>
  <PaginationPrevious
+ label={labels?.previous}
+ ariaLabel={labels?.previousAria}
  href={prev_page ? buildHref(prev_page) : undefined}
  aria-disabled={!prev_page}
  tabIndex={prev_page ? undefined : -1}
@@ -72,6 +87,8 @@ export function AppPagination({ pagination, buildHref, className }: AppPaginatio
 
  <PaginationItem>
  <PaginationNext
+ label={labels?.next}
+ ariaLabel={labels?.nextAria}
  href={next_page ? buildHref(next_page) : undefined}
  aria-disabled={!next_page}
  tabIndex={next_page ? undefined : -1}

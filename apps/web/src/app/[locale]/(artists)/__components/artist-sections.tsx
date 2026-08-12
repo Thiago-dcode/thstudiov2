@@ -46,9 +46,11 @@ const SectionHeader = ({
         className="h-px w-5 bg-text phone-lg:w-8 opacity-50"
         aria-hidden="true"
       />
-      <h3 className="text-lg! font-serif! font-normal! tracking-wider text-text uppercase">
+      {/* h2: these are the top-level sections of the artist profile, whose only other heading is
+          the h1 in the identity block. As h3 they skipped a level on the flagship entity page. */}
+      <h2 className="text-lg! font-serif! font-normal! tracking-wider text-text uppercase">
         {title}
-      </h3>
+      </h2>
       <span
         className="h-px w-5 bg-text phone-lg:w-8 opacity-50"
         aria-hidden="true"

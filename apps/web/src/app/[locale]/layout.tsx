@@ -11,9 +11,9 @@ import { body, brand } from "@/font";
 import { routing } from "@/i18n/routing";
 import { DEFAULT_OG_IMAGE } from "@/lib/config";
 import { AppStatusProvider } from "@/lib/providers/app-status.provider";
+import { isIndexableEnv } from "@/lib/seo/indexability";
 
 const appUrl = getServerEnv().APP_URL;
-const isProduction = process.env.NODE_ENV?.toLowerCase() === "production";
 
 const SITE_NAME = "A11STUDIO";
 /** Open Graph locale per app language for the site-wide default OG card. */
@@ -52,9 +52,20 @@ export async function generateMetadata({
       ],
       apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
     },
-    // Site-wide noindex OUTSIDE production; in production pages are indexable by default and each
-    // page's own metadata (e.g. a missing entity, or a noindex flag) can still opt out.
-    ...(isProduction ? {} : { robots: { index: false, follow: false } }),
+    // Site-wide noindex on every deployment that is not the canonical production origin (dev,
+    // local, preview). `nocache`/`noarchive` also keep a duplicate out of caches and snippets.
+    // On production, pages are indexable by default and each page's own metadata (a missing
+    // entity, a private route, an incomplete profile) can still opt out.
+    ...(isIndexableEnv()
+      ? {}
+      : {
+          robots: {
+            index: false,
+            follow: false,
+            nocache: true,
+            noarchive: true,
+          },
+        }),
     openGraph: {
       title,
       description,

@@ -16,6 +16,17 @@ const legalLinks = [
   { href: "/legal/cookies", key: "cookies" },
 ] as const;
 
+/**
+ * The two directory pages. Before this column existed, `/portfolios` had **zero** inbound links
+ * anywhere in the app and `/artists` had one — inside a landing section that renders `null` when no
+ * artist is featured. Both are indexable and in the sitemap, so they were effectively orphaned from
+ * the crawl graph. The footer renders on every public page, which makes them reachable at depth 1.
+ */
+const discoverLinks = [
+  { href: "/artists", key: "artists" },
+  { href: "/portfolios", key: "portfolios" },
+] as const;
+
 /** Icon + aria-label key for each {@link SOCIAL} entry, so adding a network only needs a row here. */
 const socialMeta: Record<
   SocialKey,
@@ -36,13 +47,34 @@ export const WebFooter = async () => {
   return (
     <footer className="w-full border-t border-fg-2 bg-bg">
       <div className="mx-auto max-w-(--screen-ultrawide) px-5 py-10 tablet:px-10 tablet:py-12">
-        <div className="grid grid-cols-1 gap-10 phone-lg:grid-cols-2 tablet:grid-cols-3 tablet:gap-8">
+        <div className="grid grid-cols-1 gap-10 phone-lg:grid-cols-2 tablet:grid-cols-4 tablet:gap-8">
           <div className="flex flex-col gap-3 phone-lg:col-span-2 tablet:col-span-1">
-            <BrandLogo />
+            {/* Wrapped in a link: the logo is the conventional way back to the home page, and it
+                gives `/` an inbound link from every page instead of none. */}
+            <Link href="/" aria-label={t("home")} className="w-fit">
+              <BrandLogo />
+            </Link>
             <p className="max-w-xs text-xs leading-relaxed tracking-wider text-text">
               {t("tagline")}
             </p>
             <RegistrationCtaButton size="sm" className="w-fit" />
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-text">
+              {t("discover.heading")}
+            </span>
+            <nav className="flex flex-col gap-2">
+              {discoverLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="w-fit text-sm tracking-wider text-text transition-colors hover:text-text"
+                >
+                  {t(`discover.${link.key}`)}
+                </Link>
+              ))}
+            </nav>
           </div>
 
           <div className="flex flex-col gap-3">

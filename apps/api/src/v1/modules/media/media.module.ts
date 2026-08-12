@@ -25,6 +25,8 @@ import { RequestService } from 'src/common/services/request.service';
     },
   ],
   imports: [UserExtraDataModule, UserModule, AiModule],
-  exports: [MediaService],
+  // MediaRepository is exported for SitemapModule, which reads the public-media predicate directly
+  // (same pattern as the other feature modules the sitemap depends on).
+  exports: [MediaService, MediaRepository],
 })
 export class MediaModule { }

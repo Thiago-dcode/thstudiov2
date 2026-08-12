@@ -5,7 +5,8 @@ import {
 import { Gallery } from "@repo/ui/components/custom/gallery/gallery";
 import { PortfolioGrid } from "@repo/ui/components/custom/gallery/gallery-grid";
 import { GalleryProvider } from "@repo/ui/providers/gallery.provider";
-import Link from "next/link";
+import { getGalleryLabels } from "@/lib/gallery-labels";
+import { Link } from "@/i18n/navigation";
 import { getTranslations } from "next-intl/server";
 import portfolioService from "@/modules/portfolios/portfolio.service";
 import { WebSection } from "./web-section";
@@ -37,15 +38,20 @@ export async function FeaturedPortfolioSection() {
               {/* <p className=" line-clamp-3 laptop:line-clamp-none">
                 {portfolio.description}
               </p> */}
-              <h4 className="text-end pb-1 mr-1">
-                A portfolio by:{" "}
+              {/* h3, not h4: the section heading above is an h2, and skipping a level breaks the
+                  document outline crawlers read. */}
+              <h3 className="text-end pb-1 mr-1">
+                {t("by")}:{" "}
                 <Link
-                  href={`artists/${portfolio.artist.username}`}
+                  href={`/artists/${portfolio.artist.username}`}
                   className="font-medium"
+                  aria-label={t("viewProfile", {
+                    username: portfolio.artist.username,
+                  })}
                 >
                   {portfolio.artist.username}
                 </Link>
-              </h4>
+              </h3>
             </div>
             {/* <div className="hidden laptop:flex items-center self-end">
               <WebSection.ActionLink
@@ -59,6 +65,7 @@ export async function FeaturedPortfolioSection() {
 
           <div className=" flex flex-col m-auto overflow-hidden size-full">
             <GalleryProvider
+              labels={await getGalleryLabels()}
               items={mediaItems.map((m) => ({
                 url: m.url ?? m.thumbnail,
                 alt: m.seo_alt ?? m.title ?? undefined,

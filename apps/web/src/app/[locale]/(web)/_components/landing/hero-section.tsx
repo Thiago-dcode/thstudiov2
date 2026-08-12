@@ -70,9 +70,11 @@ export async function HeroSection() {
             .
           </h1>
 
-          <h3 className="hero-stagger-2 font-light!  phone-lg:text-3xl! font-sans! text-text-muted text-lg! leading-relaxed max-w-4xl text-left">
+          {/* A hero subtitle is body copy, not a heading — as an <h3> straight after the <h1> it
+              skipped a level and put marketing text into the document outline. */}
+          <p className="hero-stagger-2 font-light!  phone-lg:text-3xl! font-sans! text-text-muted text-lg! leading-relaxed max-w-4xl text-left">
             {t("subtitle")}
-          </h3>
+          </p>
         </div>
 
         <div className="hero-stagger-4 flex w-full  pt-4 phone-xs:pt-12 desktop-lg:pt-24 ">

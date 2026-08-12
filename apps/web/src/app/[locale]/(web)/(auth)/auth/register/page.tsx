@@ -4,8 +4,18 @@ import { serverEnv } from "@/env/server";
 import { Link } from "@/i18n/navigation";
 import { redirect } from "@/i18n/redirect";
 import authComponent from "@/lib/components/page-component";
+import { buildPrivatePageMetadata } from "@/lib/seo/private-metadata";
 import invitationLinkService from "@/modules/invitation-links/invitation-link.service";
 import { RegisterForm } from "../__components/register-form";
+
+export async function generateMetadata() {
+  const t = await getTranslations("auth.register.metadata");
+  return buildPrivatePageMetadata({
+    title: t("title"),
+    description: t("description"),
+    follow: true,
+  });
+}
 
 export default async function RegisterPage({
   searchParams,

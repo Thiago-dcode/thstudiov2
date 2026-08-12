@@ -4,7 +4,16 @@ import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { redirect } from "@/i18n/redirect";
 import PageComponent from "@/lib/components/page-component";
+import { buildPrivatePageMetadata } from "@/lib/seo/private-metadata";
 import { getPasswordUpdatedCookie } from "@/modules/auth/server-actions/password-update.action";
+
+export async function generateMetadata() {
+  const t = await getTranslations("auth.passwordRecovery.metadataDone");
+  return buildPrivatePageMetadata({
+    title: t("title"),
+    description: t("description"),
+  });
+}
 
 export default async function PasswordUpdateSuccess() {
   const t = await getTranslations("auth.passwordRecovery");

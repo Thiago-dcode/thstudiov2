@@ -51,6 +51,15 @@ export class SitemapController {
   }
 
   @Public()
+  @Get('media')
+  async media(
+    @Query('page') page?: string,
+    @Query('per_page') perPage?: string,
+  ) {
+    return this.sitemapService.media(Number(page), Number(perPage));
+  }
+
+  @Public()
   @Get('services')
   async services(
     @Query('page') page?: string,

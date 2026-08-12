@@ -1,6 +1,6 @@
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
 import { ExternalLink } from "lucide-react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { getTranslations } from "next-intl/server";
 import type { ReactNode } from "react";
 

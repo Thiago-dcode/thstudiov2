@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import { AdminHeader } from "@/lib/components/admin-header";
@@ -16,6 +17,16 @@ import { UserBenefitModal } from "@/modules/user-benefit/components/user-benefit
 import { UserAccountBannedModal } from "@/modules/users/components/user-account-banned-modal";
 import { UserMetricsProvider } from "@/modules/users/providers/user-metrics.provider";
 import { FinishSetupDialog } from "../__components/finish-setup-dialog";
+
+/**
+ * The whole atelier is the signed-in workspace — never indexable. robots.txt already disallows
+ * `/atelier`, but `Disallow` alone does not stop Google indexing a URL it finds linked, so the
+ * directive is declared here too. Inherited by all 16 atelier routes, including the payment
+ * callbacks under `settings/subscription/[callback]`.
+ */
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 const AdminLayout = async ({ children }: { children: ReactNode }) => {
   const userAuth = await userSession();

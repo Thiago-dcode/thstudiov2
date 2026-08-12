@@ -1,9 +1,15 @@
+import Image from "next/image"
 import { cn } from "../../lib/utils"
 
 interface BrandLogoProps {
   collapsed?: boolean
   className?: string
 }
+
+/** Intrinsic size of both PNGs. Declared so the browser reserves the box and the logo — which is
+ *  in the header and footer of every page — cannot contribute layout shift (CLS). */
+const LOGO_WIDTH = 401
+const LOGO_HEIGHT = 366
 
 /**
  * A11 STUDIO logomark.
@@ -32,16 +38,22 @@ export const BrandLogo = ({ collapsed = false, className }: BrandLogoProps) => {
       )}
     >
       {/* Dark artwork for light theme */}
-      <img
+      <Image
         src="/logo/logo_black.png"
         alt="A11 STUDIO"
+        width={LOGO_WIDTH}
+        height={LOGO_HEIGHT}
+        priority
         className={cn(imgClass, "dark:hidden")}
       />
       {/* White artwork for dark theme */}
-      <img
+      <Image
         src="/logo/logo_white.png"
         alt=""
         aria-hidden
+        width={LOGO_WIDTH}
+        height={LOGO_HEIGHT}
+        priority
         className={cn(imgClass, "hidden dark:block")}
       />
     </span>

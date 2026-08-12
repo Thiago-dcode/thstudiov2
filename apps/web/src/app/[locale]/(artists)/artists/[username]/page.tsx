@@ -323,11 +323,15 @@ const ArtistHomePage = async ({ params }: Props) => {
                 <Phone className="size-4" aria-hidden="true" />
               </a>
             )}
+            {/* Artist-supplied outbound links are user-generated content: `nofollow ugc` so a
+                directory of artist profiles doesn't become a link farm, and so a spam profile
+                can't pass A11STUDIO's authority to an arbitrary site. `Person.sameAs` in the
+                JSON-LD still carries the raw URLs — that's entity identity, not a link vote. */}
             {profile.instagram_link && (
               <a
                 href={profile.instagram_link}
                 target="_blank"
-                rel="noreferrer noopener"
+                rel="noreferrer noopener nofollow ugc"
                 aria-label={t("instagramLabel", { name: heading })}
                 className="inline-flex size-11 items-center justify-center border border-border/50 text-text-muted transition-colors duration-300 hover:border-text/30 hover:text-text"
               >
@@ -338,7 +342,7 @@ const ArtistHomePage = async ({ params }: Props) => {
               <a
                 href={profile.facebook_link}
                 target="_blank"
-                rel="noreferrer noopener"
+                rel="noreferrer noopener nofollow ugc"
                 aria-label={t("facebookLabel", { name: heading })}
                 className="inline-flex size-11 items-center justify-center border border-border/50 text-text-muted transition-colors duration-300 hover:border-text/30 hover:text-text"
               >
@@ -349,7 +353,7 @@ const ArtistHomePage = async ({ params }: Props) => {
               <a
                 href={profile.youtube_link}
                 target="_blank"
-                rel="noreferrer noopener"
+                rel="noreferrer noopener nofollow ugc"
                 aria-label={t("youtubeLabel", { name: heading })}
                 className="inline-flex size-11 items-center justify-center border border-border/50 text-text-muted transition-colors duration-300 hover:border-text/30 hover:text-text"
               >
@@ -360,7 +364,7 @@ const ArtistHomePage = async ({ params }: Props) => {
               <a
                 href={profile.website_link}
                 target="_blank"
-                rel="noreferrer noopener"
+                rel="noreferrer noopener nofollow ugc"
                 aria-label={t("websiteLabel", { name: heading })}
                 className="inline-flex size-11 items-center justify-center border border-border/50 text-text-muted transition-colors duration-300 hover:border-text/30 hover:text-text"
               >

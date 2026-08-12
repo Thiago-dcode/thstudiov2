@@ -30,7 +30,9 @@ export const MediaPageComponent = async ({
   const allBreadcrumbs: BreadcrumbEntry[] = [
     ...breadcrumbs,
     {
-      url: `/artists/media/${media.public_id}`,
+      // The real route is /artists/{username}/media/{id} — the username-less form 404s. Harmless
+      // today because `isActive` renders it as a span, but it is the href the moment that changes.
+      url: `/artists/${user.username}/media/${media.public_id}`,
       title: media.title || untitled,
       isActive: true,
     },
@@ -61,8 +63,13 @@ export const MediaPageComponent = async ({
 
       <FullscreenMedia
         url={media.url}
-        alt={media.seo_alt || media.title || ""}
+        alt={
+          media.seo_alt ||
+          media.title ||
+          t("altFallback", { name: user.username })
+        }
         title={media.title || undefined}
+        aspectRatio={media.aspect_ratio}
       />
     </Web.Container>
   );

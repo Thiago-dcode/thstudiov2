@@ -3,7 +3,7 @@ import type { Service } from "@repo/common-lib/types/service";
 import { cn } from "@repo/ui/lib/utils";
 import { ArrowUpRight } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { CardDescription, CardTitle } from "@/lib/components/card-text";
 
 export type ServiceCardProps = {

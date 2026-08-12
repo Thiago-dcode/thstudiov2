@@ -4,8 +4,10 @@ import type {
   SitemapArtistItem,
   SitemapCounts,
   SitemapEntityItem,
+  SitemapMediaItem,
 } from "@repo/common-lib/types/sitemap";
 import { serverEnv } from "@/env/server";
+import { isIndexableEnv } from "@/lib/seo/indexability";
 
 /**
  * Child sitemaps are ISR-cached this long (seconds) instead of rebuilt per request. Kept short
@@ -19,6 +21,7 @@ const EMPTY_COUNTS: SitemapCounts = {
   portfolios: 0,
   collections: 0,
   services: 0,
+  media: 0,
 };
 
 /**
@@ -63,15 +66,23 @@ export const SITEMAP_SHARD_SIZE = {
   portfolios: 2000,
   collections: 2000,
   services: 5000,
+  media: 2000,
 } as const;
 
 export type SitemapKind = keyof typeof SITEMAP_SHARD_SIZE;
-// Artists first (paid users are ordered into the earliest artist shards by the API).
+/**
+ * Artists first (paid users are ordered into the earliest artist shards by the API).
+ *
+ * ⚠️ APPEND ONLY. A kind's shard-id block is derived from its position here, so inserting or
+ * reordering re-maps every later id — the §A.2a failure where a stale build-time prerender served
+ * one kind's content under another kind's URL. New kinds go at the end.
+ */
 export const SITEMAP_KIND_ORDER: SitemapKind[] = [
   "artists",
   "portfolios",
   "collections",
   "services",
+  "media",
 ];
 
 export type SitemapDescriptor =
@@ -115,6 +126,9 @@ function shardCount(counts: SitemapCounts, kind: SitemapKind): number {
 export async function resolveSitemapShard(
   id: number,
 ): Promise<SitemapDescriptor | null> {
+  // A non-canonical deployment publishes no sitemap at all: it would otherwise hand out a
+  // discovery map of URLs identical to production's.
+  if (!isIndexableEnv()) return null;
   if (!Number.isInteger(id) || id < 0) return null;
   if (id === 0) return { kind: "static" };
 
@@ -130,6 +144,9 @@ export async function resolveSitemapShard(
 
 /** Every shard id that currently has content, in crawl-priority order (static first). */
 export async function getSitemapShardIds(): Promise<number[]> {
+  // Mirrors resolveSitemapShard: nothing is advertised off the canonical origin, so
+  // generateSitemaps() prerenders no shards and robots.txt lists no Sitemap: lines.
+  if (!isIndexableEnv()) return [];
   const counts = await getSitemapCounts();
   const ids = [0];
   for (const kind of SITEMAP_KIND_ORDER) {
@@ -186,6 +203,16 @@ export function getSitemapServices(
 ): Promise<SitemapEntityItem[]> {
   return getData<SitemapEntityItem[]>(
     `/sitemap/services?page=${page}&per_page=${perPage}`,
+    [],
+  );
+}
+
+export function getSitemapMedia(
+  page: number,
+  perPage: number,
+): Promise<SitemapMediaItem[]> {
+  return getData<SitemapMediaItem[]>(
+    `/sitemap/media?page=${page}&per_page=${perPage}`,
     [],
   );
 }

@@ -3,10 +3,19 @@ import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { redirect } from "@/i18n/redirect";
 import PageComponent from "@/lib/components/page-component";
+import { buildPrivatePageMetadata } from "@/lib/seo/private-metadata";
 import authService from "@/modules/auth/auth.service";
 import { getPasswordRecoveryAttemptCookie } from "@/modules/auth/server-actions/password-recovery.action";
 import { ExpiresIn } from "../../__components/expiresIn";
 import { PasswordUpdateForm } from "../../__components/passwordUpdate-form";
+
+export async function generateMetadata() {
+  const t = await getTranslations("auth.passwordRecovery.metadataReset");
+  return buildPrivatePageMetadata({
+    title: t("title"),
+    description: t("description"),
+  });
+}
 
 export default async function PasswordRecoveryRecover({
   searchParams,

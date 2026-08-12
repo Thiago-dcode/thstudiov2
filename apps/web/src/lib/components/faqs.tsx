@@ -5,8 +5,8 @@ import {
   AccordionTrigger,
 } from "@repo/ui/components/shadcn/accordion";
 import { ArrowRight } from "lucide-react";
-import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
+import { useLocale, useTranslations } from "next-intl";
 
 export type FaqItem = { id: string; question: string; answer: string };
 
@@ -22,8 +22,27 @@ export const WAIT_LIST_FAQ_ID = "wait-list-how-it-works" as const;
 export const faqAnswerClassName =
   "w-full text-base! leading-[1.5] text-text-muted [&_a]:font-medium [&_a]:text-text [&_a]:underline [&_a]:underline-offset-4 [&_a]:transition-colors [&_a:hover]:text-text-muted [&_strong]:font-semibold [&_strong]:text-text [&_p]:mt-3 [&_ul]:mt-3 [&_ul]:list-disc [&_ul]:space-y-2 [&_ul]:pl-5 [&_li]:leading-[1.5]";
 
+/**
+ * Prefix the site-relative `<a href="/…">` links embedded in a translated FAQ answer with the
+ * active locale.
+ *
+ * The answers are raw HTML in the message files, so they bypass the i18n `Link` entirely: without
+ * this, the Spanish and Portuguese answers link to the *English* /about, /support and
+ * /auth/register — cross-language internal links that muddy the hreflang cluster and drop the
+ * reader out of their language. `localePrefix` is "as-needed", so `en` is left untouched.
+ * In-page anchors (`href="#…"`) and absolute URLs are not site-relative and are left alone.
+ */
+export function localizeFaqAnswer(answer: string, locale: string): string {
+  if (locale === "en") return answer;
+  return answer.replace(
+    /href=(["'])\/(?!\/)/g,
+    (_match, quote) => `href=${quote}/${locale}/`,
+  );
+}
+
 export function FaqsContent() {
   const t = useTranslations("faqs");
+  const locale = useLocale();
   const items = t.raw("items") as FaqItem[];
 
   return (
@@ -46,7 +65,11 @@ export function FaqsContent() {
               </AccordionTrigger>
               <AccordionContent className={faqAnswerClassName}>
                 {/* biome-ignore lint/security/noDangerouslySetInnerHtml: answers are trusted, authored in our own translation files */}
-                <div dangerouslySetInnerHTML={{ __html: faq.answer }} />
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: localizeFaqAnswer(faq.answer, locale),
+                  }}
+                />
               </AccordionContent>
             </AccordionItem>
           ))}

@@ -13,7 +13,7 @@ import {
 import { Input } from "@repo/ui/components/shadcn/input";
 import { cn } from "@repo/ui/lib/utils";
 import { toast } from "@repo/ui/sonner";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { WAIT_LIST_FAQ_ID } from "@/lib/components/faqs";

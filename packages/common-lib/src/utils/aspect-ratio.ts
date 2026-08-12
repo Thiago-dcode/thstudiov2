@@ -62,3 +62,20 @@ export function aspectRatioToCss(value: EnumType<'ASPECT_RATIO'>): string {
   const [w, h] = value.split(':');
   return `${w} / ${h}`;
 }
+
+/**
+ * Nominal pixel dimensions for an aspect ratio, scaled so the long edge is `longEdge`.
+ *
+ * `next/image` needs concrete `width`/`height` to reserve the layout box and build a srcset. We
+ * never store the real pixel size, but the ratio is enough: CSS still governs the rendered size,
+ * and the declared pair only has to have the correct proportions to prevent layout shift.
+ */
+export function aspectRatioToPixels(
+  value: EnumType<'ASPECT_RATIO'>,
+  longEdge = 1600,
+): { width: number; height: number } {
+  const ratio = ASPECT_RATIO_VALUES[value] ?? 1;
+  return ratio >= 1
+    ? { width: longEdge, height: Math.round(longEdge / ratio) }
+    : { width: Math.round(longEdge * ratio), height: longEdge };
+}

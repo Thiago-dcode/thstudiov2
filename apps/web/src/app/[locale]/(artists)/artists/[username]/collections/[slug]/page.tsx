@@ -1,6 +1,7 @@
 import { Gallery } from "@repo/ui/components/custom/gallery/gallery";
 import { GalleryGrid } from "@repo/ui/components/custom/gallery/gallery-grid";
 import { GalleryProvider } from "@repo/ui/providers/gallery.provider";
+import { getGalleryLabels } from "@/lib/gallery-labels";
 import { Pencil } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -8,7 +9,7 @@ import { getTranslations } from "next-intl/server";
 import { ArtistBreadcrumb } from "@/app/[locale]/(artists)/__components/artist-breadcrumb";
 import { ResourceNotFound } from "@/app/[locale]/(artists)/__components/resource-not-found";
 import { Link } from "@/i18n/navigation";
-import { urlLocaleToLanguageCode } from "@/i18n/routing";
+import { localePrefix, urlLocaleToLanguageCode } from "@/i18n/routing";
 import Web from "@/lib/components/web-page.component";
 import { config } from "@/lib/config";
 import { buildSeoMetadata } from "@/lib/seo/build-metadata";
@@ -136,14 +137,18 @@ export default async function Page({ params, searchParams }: Props) {
       <section className="relative">
         {collection.media && collection.media.length > 0 ? (
           <GalleryProvider
+            labels={await getGalleryLabels()}
             defaultCurrentItem={defaultCurrentItem}
             items={collection.media.map((m) => ({
               title: m.title,
               description: m.seo_description ?? undefined,
               url: m.url,
               alt: m.seo_alt ?? m.title ?? undefined,
-              href: `${config.app_url}/artists/${username}/collections/${slug}/media/${m.public_id}?cb=1`,
-              shared: `${config.app_url}/artists/${username}/collections/${slug}/media/${m.public_id}`,
+              // Root-relative and locale-prefixed: an absolute `${config.app_url}/…` href always
+              // pointed at the English URL, and the `?cb=1` cache-buster minted a second crawlable
+              // URL for every media page. `shared` stays absolute — it is pasted into messengers.
+              href: `${localePrefix(locale)}/artists/${username}/collections/${slug}/media/${m.public_id}`,
+              shared: `${config.app_url}${localePrefix(locale)}/artists/${username}/collections/${slug}/media/${m.public_id}`,
             }))}
           >
             <GalleryGrid

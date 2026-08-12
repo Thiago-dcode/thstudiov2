@@ -1,9 +1,19 @@
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import authComponent from "@/lib/components/page-component";
+import { buildPrivatePageMetadata } from "@/lib/seo/private-metadata";
 import { getRedirectTo } from "@/modules/auth/server-actions/redirect-to.action";
 import { getRememberMe } from "@/modules/auth/server-actions/user-session.action";
 import { LoginForm } from "../__components/login-form";
+
+export async function generateMetadata() {
+  const t = await getTranslations("auth.login.metadata");
+  return buildPrivatePageMetadata({
+    title: t("title"),
+    description: t("description"),
+    follow: true,
+  });
+}
 
 export default async function Login() {
   const t = await getTranslations("auth.login");
@@ -34,14 +44,14 @@ export default async function Login() {
           {t("agreePrefix")}{" "}
           <div>
             <Link
-              href="/terms"
+              href="/legal/terms"
               className="text-blue-600 hover:text-blue-500 underline"
             >
               {t("termsOfService")}
             </Link>{" "}
             {t("and")}{" "}
             <Link
-              href="/privacy"
+              href="/legal/privacy"
               className="text-blue-600 hover:text-blue-500 underline"
             >
               {t("privacyPolicy")}

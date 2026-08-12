@@ -6,6 +6,7 @@ import { Gallery } from "@repo/ui/components/custom/gallery/gallery";
 import { PortfolioGrid } from "@repo/ui/components/custom/gallery/gallery-grid";
 import { Badge } from "@repo/ui/components/shadcn/badge";
 import { GalleryProvider } from "@repo/ui/providers/gallery.provider";
+import { getGalleryLabels } from "@/lib/gallery-labels";
 import { Pencil } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -13,7 +14,7 @@ import { getTranslations } from "next-intl/server";
 import { ArtistBreadcrumb } from "@/app/[locale]/(artists)/__components/artist-breadcrumb";
 import { ResourceNotFound } from "@/app/[locale]/(artists)/__components/resource-not-found";
 import { Link } from "@/i18n/navigation";
-import { urlLocaleToLanguageCode } from "@/i18n/routing";
+import { localePrefix, urlLocaleToLanguageCode } from "@/i18n/routing";
 import Web from "@/lib/components/web-page.component";
 import { config } from "@/lib/config";
 import { buildSeoMetadata } from "@/lib/seo/build-metadata";
@@ -23,7 +24,7 @@ import userPortfolioService from "@/modules/user-portfolios/user-portfolio.servi
 import usersService from "@/modules/users/users.service";
 
 type Props = {
-  params: Promise<{ username: string; slug: string }>;
+  params: Promise<{ locale: string; username: string; slug: string }>;
   searchParams: Promise<{ ci?: string }>;
 };
 
@@ -47,7 +48,7 @@ export async function generateMetadata({
 }
 
 export default async function Page({ params, searchParams }: Props) {
-  const { username, slug } = await params;
+  const { locale, username, slug } = await params;
   const t = await getTranslations("artists.portfolios");
   const tNotFound = await getTranslations("artists.resourceNotFound");
   const tEdit = await getTranslations("artists.editAria");
@@ -138,14 +139,18 @@ export default async function Page({ params, searchParams }: Props) {
       <section className="relative m-auto">
         {portfolio.media.length > 0 ? (
           <GalleryProvider
+            labels={await getGalleryLabels()}
             defaultCurrentItem={defaultCurrentItem}
             items={mediaItems.map((m) => ({
               title: `${m.title ?? ""} ${m.fromCollection ? ` (Collection: ${m.fromCollection})` : ""}`,
               description: m.seo_description ?? undefined,
               url: m.url ?? m.thumbnail,
               alt: m.seo_alt ?? m.title ?? undefined,
-              href: `${config.app_url}/artists/${username}/portfolios/${slug}/media/${m.public_id}?cb=1`,
-              shared: `${config.app_url}/artists/${username}/portfolios/${slug}/media/${m.public_id}`,
+              // Root-relative and locale-prefixed: an absolute `${config.app_url}/…` href always
+              // pointed at the English URL, and the `?cb=1` cache-buster minted a second crawlable
+              // URL for every media page. `shared` stays absolute — it is pasted into messengers.
+              href: `${localePrefix(locale)}/artists/${username}/portfolios/${slug}/media/${m.public_id}`,
+              shared: `${config.app_url}${localePrefix(locale)}/artists/${username}/portfolios/${slug}/media/${m.public_id}`,
             }))}
           >
             <PortfolioGrid

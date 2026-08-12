@@ -10,7 +10,7 @@ import {
 } from "@repo/ui/components/shadcn/drawer";
 import { cn } from "@repo/ui/lib/utils";
 import { Menu, X } from "lucide-react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {

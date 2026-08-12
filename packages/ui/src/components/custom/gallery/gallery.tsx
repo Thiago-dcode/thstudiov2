@@ -47,7 +47,7 @@ const AdjacentSlide = ({ url, direction, offsetX, animate, fullscreen }: Adjacen
 
 export const Gallery = () => {
  const {
- items, next, prev, setCurrentItem, currentItem,
+ items, labels, next, prev, setCurrentItem, currentItem,
  share, shareActive, shareSupported,
  isOpen, currentItemData, currentUrl, copied,
  handleCopyLink, handleOpenChange,
@@ -197,10 +197,10 @@ export const Gallery = () => {
  <a
  href={currentItemData.href}
  className={ACTION_PILL}
- aria-label="Open media page"
+ aria-label={labels.openAria}
  >
  <ArrowUpRight className="size-3.5" strokeWidth={2} />
- <span>Open</span>
+ <span>{labels.open}</span>
  </a>
  )}
  {currentItemData.shared && (
@@ -210,11 +210,11 @@ export const Gallery = () => {
  : handleCopyLink
  }
  className={cn(ACTION_PILL, "cursor-pointer")}
- aria-label="Share"
+ aria-label={labels.shareAria}
  >
  {(shareActive || copied)
- ? <><Check className="size-3.5" strokeWidth={2} /><span>{copied ? "Copied" : "Shared"}</span></>
- : <><Share2 className="size-3.5" strokeWidth={2} /><span>Share</span></>
+ ? <><Check className="size-3.5" strokeWidth={2} /><span>{copied ? labels.copied : labels.shared}</span></>
+ : <><Share2 className="size-3.5" strokeWidth={2} /><span>{labels.share}</span></>
  }
  </button>
  )}

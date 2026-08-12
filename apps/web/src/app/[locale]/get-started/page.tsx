@@ -5,11 +5,20 @@ import dynamic from "next/dynamic";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import PageComponent from "@/lib/components/page-component";
+import { buildPrivatePageMetadata } from "@/lib/seo/private-metadata";
 import { SetSessionClient } from "@/modules/auth/components/SetSessionClient";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import { UserBenefitModal } from "@/modules/user-benefit/components/user-benefit.modal";
 import usersService from "@/modules/users/users.service";
 import { FunnelProvider } from "./_components/funnel.provider";
+
+export async function generateMetadata() {
+  const t = await getTranslations("getStarted.metadata");
+  return buildPrivatePageMetadata({
+    title: t("title"),
+    description: t("description"),
+  });
+}
 
 export default async function GetStartedLayout() {
   const t = await getTranslations("getStarted");

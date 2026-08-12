@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import portfolioService from "../portfolio.service";
 import { PortfolioCard } from "./portfolio-card";
 

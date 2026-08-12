@@ -11,9 +11,36 @@ export type GalleryItem = {
     shared?: string
 }
 
+/**
+ * Visible + assistive text for the gallery chrome. `packages/ui` has no access to the app's
+ * translation files, so the strings are passed in — otherwise every locale renders the English
+ * "Open"/"Share", including the anchor text of the only link to a media page.
+ */
+export type GalleryLabels = {
+    open: string
+    openAria: string
+    share: string
+    shared: string
+    copied: string
+    shareAria: string
+    /** Last-resort alt text for a media tile that has neither `seo_alt` nor a title. */
+    altFallback: string
+}
+
+const DEFAULT_LABELS: GalleryLabels = {
+    open: 'Open',
+    openAria: 'Open media page',
+    share: 'Share',
+    shared: 'Shared',
+    copied: 'Copied',
+    shareAria: 'Share',
+    altFallback: 'Artwork on A11STUDIO',
+}
+
 type GalleryContextType = {
     currentItem?: number
     items: GalleryItem[]
+    labels: GalleryLabels
     setCurrentItem: (item: number | undefined) => void
     removeCurrentItem: () => void
     next: () => void
@@ -22,6 +49,7 @@ type GalleryContextType = {
 
 const GalleryContext = createContext<GalleryContextType>({
     items: [],
+    labels: DEFAULT_LABELS,
     setCurrentItem: () => { },
     removeCurrentItem: () => { },
     next: () => { },
@@ -34,10 +62,12 @@ export const GalleryProvider = ({
     children,
     defaultCurrentItem,
     items: initialItems = [],
+    labels = DEFAULT_LABELS,
 }: {
     children: ReactNode
     defaultCurrentItem?:number,
     items?: GalleryItem[]
+    labels?: GalleryLabels
 }) => {
     const [items] = useState<GalleryItem[]>(initialItems)
     const [currentItem, setCurrentItem] = useState<number | undefined>(defaultCurrentItem);
@@ -68,6 +98,7 @@ export const GalleryProvider = ({
             value={{
                 currentItem,
                 items,
+                labels,
                 setCurrentItem,
                 removeCurrentItem,
                 next,

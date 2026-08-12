@@ -2,10 +2,19 @@ import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { redirect } from "@/i18n/redirect";
 import PageComponent from "@/lib/components/page-component";
+import { buildPrivatePageMetadata } from "@/lib/seo/private-metadata";
 import { getRedirectTo } from "@/modules/auth/server-actions/redirect-to.action";
 import { get2faCookieData } from "@/modules/auth/server-actions/twofa.action";
 import { ExpiresIn } from "../__components/expiresIn";
 import { TwoFaForm } from "../__components/twoFa-form";
+
+export async function generateMetadata() {
+  const t = await getTranslations("auth.twoFa.metadata");
+  return buildPrivatePageMetadata({
+    title: t("title"),
+    description: t("description"),
+  });
+}
 
 export default async function TwoFactorAuth() {
   const t = await getTranslations("auth.twoFa");

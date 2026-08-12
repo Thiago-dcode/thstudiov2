@@ -468,12 +468,18 @@ const messages = {
       terms: "Terms of Service",
       cookies: "Cookie Policy",
     },
+    discover: {
+      heading: "Discover",
+      artists: "Browse artists",
+      portfolios: "Browse portfolios",
+    },
     contact: {
       heading: "Contact",
       about: "About",
       faqs: "FAQs",
       support: "Support",
     },
+    home: "A11STUDIO home",
     social: {
       heading: "Social",
       instagram: "A11STUDIO on Instagram",
@@ -482,6 +488,12 @@ const messages = {
     copyright: "© {year} A11STUDIO. All rights reserved.",
   },
   search: {
+    pagination: {
+      previous: "Previous",
+      next: "Next",
+      previousAria: "Go to the previous page of results",
+      nextAria: "Go to the next page of results",
+    },
     segments: {
       artists: "Artists",
       portfolios: "Portfolios",
@@ -569,6 +581,11 @@ const messages = {
     },
   },
   support: {
+    metadata: {
+      title: "Support — A11STUDIO",
+      description:
+        "Contact A11STUDIO support for help with your account, billing, plans or any technical issue. Tell us what's happening and our team will get back to you by email.",
+    },
     contactLabel: "Contact Support",
     title: "Need help? Send us a message.",
     description:
@@ -662,8 +679,297 @@ const messages = {
       FOUNDER: "Founder",
     },
   },
+  legal: {
+    // ISO dates — formatted per locale at render time so /es and /pt don't show "March 16, 2026".
+    lastUpdated: "Last updated — {date}",
+    terms: {
+      metadata: {
+        title: "Terms of Service — A11STUDIO",
+        description:
+          "The terms and conditions for using the A11STUDIO portfolio platform — accounts, subscription plans, content ownership, acceptable use and moderation.",
+      },
+      updatedAt: "2026-03-16",
+      heading: "Terms of Service",
+      intro:
+        "These terms govern your use of the A11STUDIO platform. By creating an account or using our services, you agree to be bound by these terms.",
+      acceptance: {
+        title: "1. Acceptance of Terms",
+        body: 'By accessing or using A11STUDIO ("the Platform"), you agree to these Terms of Service. If you do not agree, you must not use the Platform. We may update these terms at any time — continued use after changes constitutes acceptance.',
+      },
+      account: {
+        title: "2. Account Registration",
+        body: "To use the Platform, you must create an account by providing a valid email address, a unique username, and a password. You are responsible for maintaining the confidentiality of your credentials.",
+        verified: "Your email must be verified before full access is granted.",
+        twoFa:
+          "Two-factor authentication (2FA) may be required during sign-in for additional security.",
+        username:
+          "Username changes are limited. Excessive resets may be restricted.",
+        age: "You must be at least 16 years old to create an account.",
+      },
+      plans: {
+        title: "3. Subscription Plans",
+        body: "A11STUDIO offers free and paid subscription plans. Each plan defines limits on storage, media uploads, portfolios, projects, clients, services, and AI credits.",
+        billing:
+          "Paid plans are billed through <strong>Stripe</strong> or <strong>PayPal</strong> on a recurring basis (monthly or annual).",
+        autoRenew:
+          "Subscriptions auto-renew unless cancelled before the next billing date.",
+        manage:
+          "You may manage or cancel your subscription from your account settings at any time.",
+        promos:
+          "Promotional offers and discounts may apply to specific plan prices and are subject to their own terms.",
+      },
+      ownership: {
+        title: "4. Content Ownership",
+        body1:
+          "You retain full ownership of any content you upload to the Platform, including images, media files, portfolio descriptions, and profile information. By uploading content, you grant A11STUDIO a limited, non-exclusive, worldwide license to display, distribute, and technically process your content solely for the purpose of operating the Platform and providing the service.",
+        body2:
+          "This license terminates when you delete your content or your account. Cached or archived copies may persist briefly after deletion due to technical requirements.",
+      },
+      acceptableUse: {
+        title: "5. Acceptable Use",
+        body: "You agree not to upload, publish, or transmit content that:",
+        law: "Violates any applicable law or regulation",
+        ip: "Infringes on intellectual property rights of others",
+        harmful:
+          "Contains illegal, harmful, threatening, or discriminatory material",
+        fraud: "Is fraudulent, deceptive, or misleading",
+        malware: "Contains malware, viruses, or harmful code",
+        body2:
+          "All uploaded media is subject to <strong>automated content moderation</strong>. Content that violates our policies may be blocked automatically. You are solely responsible for any content you upload to the Platform — A11STUDIO assumes no liability for harmful, illegal, or otherwise prohibited material uploaded by users.",
+      },
+      moderation: {
+        title: "6. Moderation & Account Strikes",
+        body: "A11STUDIO enforces a strike-based moderation system to maintain platform integrity:",
+        strikes:
+          "Policy violations result in <strong>account strikes</strong>. Accumulating strikes may lead to temporary suspension or permanent ban.",
+        temporary:
+          "Temporary bans have a defined start and end date. During a ban, your account and public profile are inaccessible.",
+        permanent:
+          "Permanent bans are issued for severe or repeated violations. A reason will be provided.",
+      },
+      illegal: {
+        title: "7. Illegal Content & Law Enforcement",
+        body1:
+          "A11STUDIO has a <strong>zero-tolerance policy</strong> toward illegal content, including but not limited to child sexual abuse material (CSAM), content depicting the exploitation or abuse of minors, and any other material that constitutes a criminal offense under applicable law.",
+        body2:
+          "If such content is detected — whether through automated moderation or manual review — we reserve the right to immediately and permanently terminate the offending account, preserve relevant evidence, and <strong>report the incident to the appropriate law enforcement authorities</strong>, including but not limited to local police, national agencies, and international organizations such as NCMEC or Interpol.",
+        body3:
+          "The uploading user bears full legal responsibility for any illegal content they introduce to the Platform.",
+      },
+      limits: {
+        title: "8. Service Limitations",
+        body: "Each subscription plan has defined limits:",
+        storage:
+          "<strong>Storage</strong> — maximum total media size and daily upload limits",
+        content:
+          "<strong>Content</strong> — maximum number of portfolios, projects, clients, and services",
+        aiCredits:
+          "<strong>AI credits</strong> — limited credits per billing cycle for AI-assisted features (SEO generation, content suggestions), which reset periodically",
+        compression:
+          "<strong>Media compression</strong> — availability depends on your plan tier",
+        body2:
+          "Exceeding these limits may restrict certain features until you upgrade your plan or the next billing cycle begins.",
+      },
+      ip: {
+        title: "9. Intellectual Property",
+        body1:
+          "The A11STUDIO platform — including its design, code, brand, and features — is the intellectual property of A11STUDIO. You may not copy, modify, distribute, or reverse-engineer any part of the Platform.",
+        body2:
+          "User-generated content remains the property of its creator as described in Section 4.",
+      },
+      termination: {
+        title: "10. Termination",
+        body1:
+          "You may delete your account at any time from your account settings. Upon deletion, your personal data, media, and content will be removed as described in our <doc>Privacy Policy</doc>.",
+        body2:
+          "We reserve the right to suspend or terminate accounts that violate these terms, abuse the platform, or engage in fraudulent activity.",
+      },
+      warranties: {
+        title: "11. Disclaimer of Warranties",
+        body: 'The Platform is provided "as is" and "as available" without warranties of any kind, whether express or implied, including but not limited to merchantability, fitness for a particular purpose, or non-infringement. We do not guarantee uninterrupted or error-free service.',
+      },
+      liability: {
+        title: "12. Limitation of Liability",
+        body: "To the maximum extent permitted by law, A11STUDIO shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the Platform, including loss of data, revenue, or profits.",
+      },
+      law: {
+        title: "13. Governing Law",
+        body: "These terms are governed by and construed in accordance with applicable law. Any disputes arising from these terms or your use of the Platform shall be resolved in the competent courts of the jurisdiction where A11STUDIO is established.",
+      },
+      contact: {
+        title: "14. Contact",
+        body: "For questions about these terms, contact us at <email/>.",
+      },
+    },
+    privacy: {
+      metadata: {
+        title: "Privacy Policy — A11STUDIO",
+        description:
+          "How A11STUDIO collects, uses, stores and protects your personal data — what we collect, who we share it with, how long we keep it, and the rights you have.",
+      },
+      updatedAt: "2026-03-16",
+      heading: "Privacy Policy",
+      intro:
+        "This policy describes how A11STUDIO collects, uses, stores, and protects your information when you use our platform. We are committed to transparency and to safeguarding your data.",
+      controller: {
+        title: "1. Data Controller",
+        body: 'A11STUDIO ("we", "us", "our") is the data controller responsible for your personal data. For any privacy-related inquiries, contact us at <email/>.',
+      },
+      collect: {
+        title: "2. Information We Collect",
+        body: "We collect different categories of information depending on how you use the platform:",
+        account:
+          "<strong>Account information</strong> — basic profile details you provide when registering and setting up your account, such as your name, email, and any optional profile content you choose to add",
+        location:
+          "<strong>Location data</strong> — if you choose to add an address to your profile, we store the information necessary to display your location publicly",
+        content:
+          "<strong>Content you create</strong> — media files, portfolios, services, projects, and any associated descriptions or metadata you provide through the platform",
+        business:
+          "<strong>Business data</strong> — if you use client and project management features, we store the relevant contact and project information you enter",
+        messages:
+          "<strong>Messages</strong> — when visitors contact an artist through the platform, we collect the information included in the contact form",
+        security:
+          "<strong>Security data</strong> — technical information related to sign-in activity and device identification, used to protect your account",
+      },
+      payments: {
+        title: "3. Payment Data",
+        body: "Subscription payments are processed entirely by third-party providers. We store only the references necessary to manage your subscription and billing history. We do <strong>not</strong> store credit card numbers, bank account details, or other raw payment credentials — these are handled by the payment processor under their own privacy policies.",
+      },
+      ai: {
+        title: "4. AI Processing",
+        body: "A11STUDIO uses artificial intelligence to power features such as content suggestions and automated content moderation. We track usage to manage your AI credit allocation. AI processing is performed by third-party providers, and only the minimum data necessary is sent for processing.",
+      },
+      usage: {
+        title: "5. How We Use Your Data",
+        operating: "Providing and operating the portfolio platform",
+        auth: "Authenticating your identity and securing your account",
+        billing: "Processing subscription payments and managing billing",
+        aiFeatures: "Delivering AI-assisted features",
+        moderation: "Enforcing content policies through automated moderation",
+        emails: "Sending transactional emails and notifications",
+        publicProfile: "Displaying your public artist profile and content",
+        contactForm:
+          "Delivering contact form messages between visitors and artists",
+      },
+      sharing: {
+        title: "6. Data Sharing",
+        body: "We do not sell your personal data. We share data only with the following third-party services as necessary to operate the platform:",
+        payments:
+          "<strong>Stripe & PayPal</strong> — for payment processing and subscription management",
+        ai: "<strong>AI / LLM service providers</strong> — for content generation and media moderation",
+        email:
+          "<strong>Email service provider</strong> — for transactional emails (verification, password recovery, notifications)",
+      },
+      retention: {
+        title: "7. Data Retention",
+        body: "We retain your personal data for as long as your account is active. Security logs are retained for account protection purposes, and payment records are retained as required by applicable regulations. When you delete your account, we remove your personal data and associated content within a reasonable timeframe, except where retention is required by law.",
+      },
+      rights: {
+        title: "8. Your Rights",
+        body: "Depending on your jurisdiction, you may have the following rights regarding your personal data:",
+        access:
+          "<strong>Access</strong> — request a copy of the data we hold about you",
+        rectification:
+          "<strong>Rectification</strong> — correct inaccurate or incomplete data",
+        erasure:
+          "<strong>Erasure</strong> — request deletion of your personal data",
+        portability:
+          "<strong>Data portability</strong> — receive your data in a structured, machine-readable format",
+        restriction:
+          "<strong>Restriction</strong> — request that we limit processing of your data",
+        objection:
+          "<strong>Objection</strong> — object to processing based on legitimate interests",
+        body2: "To exercise any of these rights, contact us at <email/>.",
+      },
+      security: {
+        title: "9. Security",
+        body: "We implement industry-standard security measures to protect your data, including encryption, secure authentication, and access controls. While no system is completely immune to breaches, we take reasonable steps to safeguard your information.",
+      },
+      cookies: {
+        title: "10. Cookies",
+        body: "We use cookies for essential platform functionality. For full details, see our <doc>Cookie Policy</doc>.",
+      },
+      changes: {
+        title: "11. Changes to This Policy",
+        body: "We may update this policy from time to time. Changes will be posted on this page with an updated revision date. Continued use of the platform after changes constitutes acceptance of the revised policy.",
+      },
+      contact: {
+        title: "12. Contact",
+        body: "For questions or concerns about this privacy policy or your personal data, contact us at <email/>.",
+      },
+    },
+    cookies: {
+      metadata: {
+        title: "Cookie Policy — A11STUDIO",
+        description:
+          "How A11STUDIO uses cookies and similar technologies. We only use first-party cookies that are necessary for the platform to work — no advertising or tracking cookies.",
+      },
+      updatedAt: "2026-03-16",
+      heading: "Cookie Policy",
+      intro:
+        "This policy explains what cookies the A11STUDIO platform uses, why we use them, and how they affect your experience. We only use cookies that are necessary for the platform to function.",
+      what: {
+        title: "1. What Are Cookies",
+        body: "Cookies are small text files stored on your device by your web browser. They allow the platform to remember your session, preferences, and security state between page visits. A11STUDIO uses only <strong>first-party, HTTP-only cookies</strong> — we do not use advertising or tracking cookies.",
+      },
+      essential: {
+        title: "2. Essential Cookies",
+        body: "These cookies are strictly necessary for the platform to function. They cannot be disabled without breaking core functionality. Essential cookies handle:",
+        auth: "<strong>Authentication</strong> — keeping you signed in and managing your session securely across pages",
+        security:
+          "<strong>Security</strong> — supporting account verification steps such as two-factor authentication",
+        preferences:
+          "<strong>Preferences</strong> — remembering your selected language so content displays in the correct locale",
+        body2:
+          "These cookies are short-lived and expire automatically when no longer needed — typically within a single session or up to a few days.",
+      },
+      functional: {
+        title: "3. Functional Cookies",
+        body: "These cookies enhance your experience by remembering choices you have made. They are set only in response to actions you take on the platform.",
+        sessions:
+          "<strong>Extended sessions</strong> — keeping you signed in for longer periods so you don't have to log in repeatedly",
+        checkout:
+          "<strong>Checkout state</strong> — temporarily maintaining context during subscription or payment flows",
+        recovery:
+          "<strong>Account recovery</strong> — preserving state during the password reset process",
+        body2:
+          "These cookies are temporary and expire shortly after the relevant action is completed.",
+      },
+      thirdParty: {
+        title: "4. Third-Party Cookies",
+        body: "When you interact with payment providers during checkout, <strong>Stripe</strong> and <strong>PayPal</strong> may set their own cookies on your device. These cookies are governed by the respective provider's cookie and privacy policies:",
+        stripe: "Stripe Privacy Policy",
+        paypal: "PayPal Privacy Policy",
+      },
+      notUsed: {
+        title: "5. What We Do Not Use",
+        body: "A11STUDIO does <strong>not</strong> use:",
+        analytics: "Analytics or tracking cookies",
+        advertising: "Advertising or retargeting cookies",
+        pixels: "Social media tracking pixels",
+        crossSite: "Cross-site tracking technologies",
+      },
+      managing: {
+        title: "6. Managing Cookies",
+        body: "You can manage or delete cookies through your browser settings. Disabling essential cookies will prevent you from signing in and using authenticated features of the platform. For more information on managing cookies, consult your browser's documentation.",
+      },
+      privacyRelation: {
+        title: "7. Relationship to Privacy Policy",
+        body: "This Cookie Policy is part of our broader <doc>Privacy Policy</doc>. For details on how we collect, use, and protect your personal data beyond cookies, please review it.",
+      },
+      contact: {
+        title: "8. Contact",
+        body: "If you have questions about our use of cookies, contact us at <email/>.",
+      },
+    },
+  },
   auth: {
     login: {
+      metadata: {
+        title: "Sign in",
+        description:
+          "Sign in to your A11STUDIO account to manage your portfolios, collections and services, and reach the clients looking for your work.",
+      },
       title: "Hello again",
       subtitle: "Sign in to access your account",
       problemWithLogin: "Problem with login?",
@@ -678,6 +984,11 @@ const messages = {
       submit: "Sign In",
     },
     register: {
+      metadata: {
+        title: "Create your account",
+        description:
+          "Join A11STUDIO free and build a professional portfolio that gets you discovered by the clients, collectors and collaborators looking for artists.",
+      },
       title: "Create your account",
       subtitle: "Start building your dream portfolio",
       alreadyHaveAccount: "Already have an account?",
@@ -690,6 +1001,11 @@ const messages = {
       submit: "Sign up",
     },
     twoFa: {
+      metadata: {
+        title: "Verify your identity",
+        description:
+          "Enter the verification code we sent you to finish signing in to your A11STUDIO account securely.",
+      },
       titleValidateEmail: "Validate your email",
       titleDeviceVerification: "Device verification",
       codeSentTo: "We've sent a verification code to",
@@ -698,6 +1014,26 @@ const messages = {
       codePlaceholder: "Enter 6-digit code",
     },
     passwordRecovery: {
+      metadata: {
+        title: "Recover your password",
+        description:
+          "Reset the password for your A11STUDIO account. Enter your email address and we'll send you a secure recovery link.",
+      },
+      metadataSent: {
+        title: "Check your email",
+        description:
+          "We've sent a password recovery link to your email address. Follow it to choose a new password for your A11STUDIO account.",
+      },
+      metadataReset: {
+        title: "Set a new password",
+        description:
+          "Choose a new, strong password for your A11STUDIO account and sign back in.",
+      },
+      metadataDone: {
+        title: "Password updated",
+        description:
+          "Your A11STUDIO password has been changed. You can now sign in with your new password.",
+      },
       title: "Password Recovery",
       subtitle: "Enter your email and we'll send you a recovery link",
       rememberPassword: "Remember your password?",
@@ -731,6 +1067,11 @@ const messages = {
     },
   },
   getStarted: {
+    metadata: {
+      title: "Set up your profile",
+      description:
+        "Finish setting up your A11STUDIO profile — add your details, photo and categories so the right clients can find you.",
+    },
     stepOf: "Step {current} of {total}",
     steps: {
       profile: {
@@ -1071,6 +1412,9 @@ const messages = {
       relatedPortfolio: "Related portfolio",
     },
     about: {
+      pageTitle: "About",
+      metaDescription:
+        "Learn more about {name} on A11STUDIO — their story, background and how to get in touch.",
       notShared: "This artist hasn't shared their story yet.",
       heading: "About",
       getInTouch: "Get in touch",
@@ -1078,10 +1422,23 @@ const messages = {
     media: {
       untitled: "Untitled",
       editAria: "Edit media",
+      // Last-resort alt text. The AI pipeline's sanitizeSeoText can null `seo_alt`, and media may
+      // be untitled — an empty alt on a content image is invisible to Google Images, which the
+      // whole CloudFront/image-sitemap effort exists to serve.
+      altFallback: "Artwork by {name} on A11STUDIO",
     },
     fullscreen: {
       enter: "View fullscreen",
       exit: "Exit fullscreen",
+    },
+    gallery: {
+      altFallback: "Artwork on A11STUDIO",
+      open: "Open",
+      openAria: "Open the full media page",
+      share: "Share",
+      shared: "Shared",
+      copied: "Copied",
+      shareAria: "Share this media",
     },
   },
   validation: {

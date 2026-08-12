@@ -3,6 +3,7 @@ import { serverEnv } from "@/env/server";
 import {
   getSitemapArtists,
   getSitemapCollections,
+  getSitemapMedia,
   getSitemapPortfolios,
   getSitemapServices,
   getSitemapShardIds,
@@ -10,11 +11,22 @@ import {
   SITEMAP_SHARD_SIZE as SHARD_SIZE,
 } from "@/lib/seo/sitemap-source";
 
-// Child sitemaps are ISR-cached (not rebuilt per request). Must be a numeric literal — Next cannot
-// statically analyze imported constants for segment config — so keep it in step with
-// SITEMAP_REVALIDATE. Short (1h) because shards are prerendered at build time against the
-// previously deployed API, so anything newer than the build is stale until this elapses.
-export const revalidate = 3600;
+/**
+ * Rendered per request, never prerendered into the image.
+ *
+ * Two reasons, both learned the hard way:
+ *   1. Indexability depends on the container's `APP_URL` (see `isIndexableEnv`). A shard baked at
+ *      build time carries the *build* environment's answer, so a dev deployment could serve a
+ *      sitemap of production-identical URLs.
+ *   2. `generateSitemaps()` runs at build against the *previously deployed* API, so a prerendered
+ *      shard body could describe stale counts — the §A.2a bug, where the served sitemap listed one
+ *      entity twice and omitted another entirely.
+ *
+ * The per-request cost is near zero: every API call in `sitemap-source` is a `fetch` with
+ * `next: { revalidate: SITEMAP_REVALIDATE }`, so the data behind the render is still cached for an
+ * hour — only the assembly is dynamic.
+ */
+export const dynamic = "force-dynamic";
 
 const SUPPORTED = ["en", "es", "pt"] as const;
 // localePrefix is "as-needed": en (default) is unprefixed; es/pt are prefixed.
@@ -116,6 +128,14 @@ export default async function sitemap(props: {
           r.updated_at,
           r.images,
         ),
+      );
+    }
+    case "media": {
+      const rows = await getSitemapMedia(desc.page, perPage);
+      // The PRIMARY media URL — the one the nested portfolio/collection media views canonicalize
+      // to — so the sitemap only ever advertises the canonical form.
+      return rows.map((r) =>
+        entry(`/artists/${r.username}/media/${r.public_id}`, r.updated_at, r.images),
       );
     }
   }

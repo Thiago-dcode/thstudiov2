@@ -1,19 +1,37 @@
 "use client";
 
+import type { EnumType } from "@repo/common-lib/constants/enums";
+import {
+  aspectRatioToPixels,
+  DEFAULT_ASPECT_RATIO,
+} from "@repo/common-lib/utils/aspect-ratio";
 import { useFullscreen } from "@repo/ui/hooks/useFullscreen";
 import { cn } from "@repo/ui/lib/utils";
 import { Maximize2, Minimize2, X } from "lucide-react";
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 
 interface FullscreenMediaProps {
   url: string;
   alt: string;
   title?: string;
+  aspectRatio?: EnumType<"ASPECT_RATIO">;
 }
 
-export const FullscreenMedia = ({ url, alt, title }: FullscreenMediaProps) => {
+export const FullscreenMedia = ({
+  url,
+  alt,
+  title,
+  aspectRatio,
+}: FullscreenMediaProps) => {
   const { ref, fullscreen, toggleFullscreen } = useFullscreen<HTMLElement>();
   const t = useTranslations("artists.fullscreen");
+  // This is the LCP element of the most numerous indexable page type in the app, so it goes
+  // through the image optimizer with `priority`. Dimensions come from the stored aspect ratio —
+  // CSS still governs the rendered size; they only need the right proportions to avoid CLS.
+  const { width, height } = aspectRatioToPixels(
+    aspectRatio ?? DEFAULT_ASPECT_RATIO,
+  );
 
   return (
     <figure
@@ -52,9 +70,13 @@ export const FullscreenMedia = ({ url, alt, title }: FullscreenMediaProps) => {
         </button>
       )}
 
-      <img
+      <Image
         src={url}
         alt={alt}
+        width={width}
+        height={height}
+        priority
+        sizes="(max-width: 768px) 100vw, 90vw"
         className={cn(
           "object-contain select-none",
           fullscreen

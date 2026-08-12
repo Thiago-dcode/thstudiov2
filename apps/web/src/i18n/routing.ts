@@ -28,6 +28,18 @@ export const urlLocaleToLanguageCode = (
   return LOCALE_TO_LANGUAGE_CODE[urlLocale as SupportedLocale] ?? "EN";
 };
 
+/**
+ * URL prefix for a locale under `localePrefix: "as-needed"` — empty for the default locale,
+ * `/{locale}` otherwise. Use whenever a locale-aware URL has to be built as a plain string rather
+ * than through the i18n `Link` (canonical/hreflang metadata, hrefs handed to `packages/ui`
+ * components, which cannot import app-level navigation).
+ */
+export const localePrefix = (locale: string): string =>
+  locale === routing.defaultLocale ||
+  !SUPPORTED_LOCALES.includes(locale as SupportedLocale)
+    ? ""
+    : `/${locale}`;
+
 export const localeLabels: Record<SupportedLocale, string> = {
   en: "English",
   es: "Español",

@@ -470,12 +470,18 @@ const messages = {
       terms: "Termos de Serviço",
       cookies: "Política de Cookies",
     },
+    discover: {
+      heading: "Descobrir",
+      artists: "Explorar artistas",
+      portfolios: "Explorar portfólios",
+    },
     contact: {
       heading: "Contato",
       about: "Sobre",
       faqs: "Perguntas frequentes",
       support: "Suporte",
     },
+    home: "Início do A11STUDIO",
     social: {
       heading: "Redes sociais",
       instagram: "A11STUDIO no Instagram",
@@ -484,6 +490,12 @@ const messages = {
     copyright: "© {year} A11STUDIO. Todos os direitos reservados.",
   },
   search: {
+    pagination: {
+      previous: "Anterior",
+      next: "Próxima",
+      previousAria: "Ir para a página anterior de resultados",
+      nextAria: "Ir para a próxima página de resultados",
+    },
     segments: {
       artists: "Artistas",
       portfolios: "Portfólios",
@@ -573,6 +585,11 @@ const messages = {
     },
   },
   support: {
+    metadata: {
+      title: "Suporte — A11STUDIO",
+      description:
+        "Fale com o suporte do A11STUDIO para resolver dúvidas sobre sua conta, cobrança, planos ou qualquer problema técnico. Conte o que está acontecendo e responderemos por e-mail.",
+    },
     contactLabel: "Contatar suporte",
     title: "Precisa de ajuda? Envie uma mensagem.",
     description:
@@ -667,8 +684,298 @@ const messages = {
       FOUNDER: "Fundador",
     },
   },
+  legal: {
+    lastUpdated: "Última atualização — {date}",
+    terms: {
+      metadata: {
+        title: "Termos de serviço — A11STUDIO",
+        description:
+          "Termos e condições de uso da plataforma de portfólios A11STUDIO — contas, planos de assinatura, propriedade do conteúdo, uso aceitável e moderação.",
+      },
+      updatedAt: "2026-03-16",
+      heading: "Termos de serviço",
+      intro:
+        "Estes termos regem o uso da plataforma A11STUDIO. Ao criar uma conta ou utilizar nossos serviços, você concorda em ficar vinculado a eles.",
+      acceptance: {
+        title: "1. Aceitação dos termos",
+        body: 'Ao acessar ou utilizar o A11STUDIO ("a Plataforma"), você concorda com estes Termos de serviço. Se não concordar, não deve usar a Plataforma. Podemos atualizar estes termos a qualquer momento — continuar usando após alterações significa aceitá-las.',
+      },
+      account: {
+        title: "2. Cadastro de conta",
+        body: "Para usar a Plataforma, você deve criar uma conta informando um e-mail válido, um nome de usuário único e uma senha. Você é responsável por manter a confidencialidade das suas credenciais.",
+        verified:
+          "Seu e-mail precisa ser verificado antes da liberação do acesso completo.",
+        twoFa:
+          "A autenticação em duas etapas (2FA) pode ser exigida no login como segurança adicional.",
+        username:
+          "As alterações de nome de usuário são limitadas. Trocas excessivas podem ser restringidas.",
+        age: "Você precisa ter pelo menos 16 anos para criar uma conta.",
+      },
+      plans: {
+        title: "3. Planos de assinatura",
+        body: "O A11STUDIO oferece planos gratuitos e pagos. Cada plano define limites de armazenamento, envio de arquivos, portfólios, projetos, clientes, serviços e créditos de IA.",
+        billing:
+          "Os planos pagos são cobrados via <strong>Stripe</strong> ou <strong>PayPal</strong> de forma recorrente (mensal ou anual).",
+        autoRenew:
+          "As assinaturas são renovadas automaticamente, a menos que sejam canceladas antes da próxima data de cobrança.",
+        manage:
+          "Você pode gerenciar ou cancelar sua assinatura nas configurações da conta a qualquer momento.",
+        promos:
+          "Ofertas promocionais e descontos podem se aplicar a determinados preços e estão sujeitos a condições próprias.",
+      },
+      ownership: {
+        title: "4. Propriedade do conteúdo",
+        body1:
+          "Você mantém a propriedade integral de todo o conteúdo que enviar à Plataforma, incluindo imagens, arquivos de mídia, descrições de portfólio e informações de perfil. Ao enviar conteúdo, você concede ao A11STUDIO uma licença limitada, não exclusiva e mundial para exibir, distribuir e processar tecnicamente seu conteúdo com a única finalidade de operar a Plataforma e prestar o serviço.",
+        body2:
+          "Essa licença termina quando você exclui seu conteúdo ou sua conta. Por exigências técnicas, cópias em cache ou arquivadas podem persistir brevemente após a exclusão.",
+      },
+      acceptableUse: {
+        title: "5. Uso aceitável",
+        body: "Você concorda em não enviar, publicar ou transmitir conteúdo que:",
+        law: "Viole qualquer lei ou regulamento aplicável",
+        ip: "Infrinja direitos de propriedade intelectual de terceiros",
+        harmful:
+          "Contenha material ilegal, nocivo, ameaçador ou discriminatório",
+        fraud: "Seja fraudulento, enganoso ou induza a erro",
+        malware: "Contenha malware, vírus ou código malicioso",
+        body2:
+          "Todo o material enviado passa por <strong>moderação automática de conteúdo</strong>. Conteúdo que viole nossas políticas pode ser bloqueado automaticamente. Você é o único responsável pelo conteúdo que enviar à Plataforma — o A11STUDIO não assume responsabilidade por material nocivo, ilegal ou proibido enviado por usuários.",
+      },
+      moderation: {
+        title: "6. Moderação e penalidades de conta",
+        body: "O A11STUDIO aplica um sistema de moderação baseado em penalidades para preservar a integridade da plataforma:",
+        strikes:
+          "Violações das políticas geram <strong>penalidades na conta</strong>. O acúmulo de penalidades pode levar à suspensão temporária ou ao banimento permanente.",
+        temporary:
+          "Os banimentos temporários têm data de início e de término definidas. Durante o banimento, sua conta e seu perfil público ficam inacessíveis.",
+        permanent:
+          "Banimentos permanentes são aplicados em casos graves ou reincidentes. O motivo sempre será informado.",
+      },
+      illegal: {
+        title: "7. Conteúdo ilegal e autoridades",
+        body1:
+          "O A11STUDIO mantém uma <strong>política de tolerância zero</strong> com conteúdo ilegal, incluindo — mas não se limitando a — material de abuso sexual infantil (CSAM), conteúdo que retrate a exploração ou o abuso de menores e qualquer outro material que constitua crime segundo a lei aplicável.",
+        body2:
+          "Se esse conteúdo for detectado — seja por moderação automática ou por revisão manual — reservamo-nos o direito de encerrar imediata e permanentemente a conta infratora, preservar as provas pertinentes e <strong>comunicar o caso às autoridades competentes</strong>, incluindo, entre outras, a polícia local, agências nacionais e organizações internacionais como NCMEC ou Interpol.",
+        body3:
+          "O usuário que enviou o conteúdo assume toda a responsabilidade legal por qualquer material ilegal que introduza na Plataforma.",
+      },
+      limits: {
+        title: "8. Limitações do serviço",
+        body: "Cada plano de assinatura tem limites definidos:",
+        storage:
+          "<strong>Armazenamento</strong> — tamanho total máximo de arquivos e limites diários de envio",
+        content:
+          "<strong>Conteúdo</strong> — número máximo de portfólios, projetos, clientes e serviços",
+        aiCredits:
+          "<strong>Créditos de IA</strong> — créditos limitados por ciclo de cobrança para os recursos com IA (geração de SEO, sugestões de conteúdo), renovados periodicamente",
+        compression:
+          "<strong>Compressão de mídia</strong> — a disponibilidade depende do nível do seu plano",
+        body2:
+          "Exceder esses limites pode restringir determinados recursos até que você faça upgrade do plano ou até o início do próximo ciclo de cobrança.",
+      },
+      ip: {
+        title: "9. Propriedade intelectual",
+        body1:
+          "A plataforma A11STUDIO — incluindo seu design, código, marca e funcionalidades — é propriedade intelectual do A11STUDIO. Você não pode copiar, modificar, distribuir nem fazer engenharia reversa de qualquer parte da Plataforma.",
+        body2:
+          "O conteúdo gerado por usuários continua sendo propriedade de seu criador, conforme descrito na seção 4.",
+      },
+      termination: {
+        title: "10. Encerramento",
+        body1:
+          "Você pode excluir sua conta a qualquer momento nas configurações. Após a exclusão, seus dados pessoais, arquivos e conteúdo serão removidos conforme descrito na nossa <doc>Política de privacidade</doc>.",
+        body2:
+          "Reservamo-nos o direito de suspender ou encerrar contas que violem estes termos, abusem da plataforma ou pratiquem atividades fraudulentas.",
+      },
+      warranties: {
+        title: "11. Isenção de garantias",
+        body: 'A Plataforma é fornecida "no estado em que se encontra" e "conforme disponível", sem garantias de qualquer natureza, expressas ou implícitas, incluindo — sem limitação — comerciabilidade, adequação a uma finalidade específica ou não violação. Não garantimos serviço ininterrupto ou livre de erros.',
+      },
+      liability: {
+        title: "12. Limitação de responsabilidade",
+        body: "Na máxima extensão permitida por lei, o A11STUDIO não será responsável por danos indiretos, incidentais, especiais, consequenciais ou punitivos decorrentes do uso da Plataforma, incluindo perda de dados, receita ou lucros.",
+      },
+      law: {
+        title: "13. Legislação aplicável",
+        body: "Estes termos são regidos e interpretados de acordo com a legislação aplicável. Qualquer disputa decorrente destes termos ou do uso da Plataforma será resolvida nos tribunais competentes da jurisdição em que o A11STUDIO estiver estabelecido.",
+      },
+      contact: {
+        title: "14. Contato",
+        body: "Em caso de dúvidas sobre estes termos, escreva para <email/>.",
+      },
+    },
+    privacy: {
+      metadata: {
+        title: "Política de privacidade — A11STUDIO",
+        description:
+          "Como o A11STUDIO coleta, usa, armazena e protege seus dados pessoais: o que coletamos, com quem compartilhamos, por quanto tempo guardamos e quais direitos você tem.",
+      },
+      updatedAt: "2026-03-16",
+      heading: "Política de privacidade",
+      intro:
+        "Esta política descreve como o A11STUDIO coleta, usa, armazena e protege suas informações quando você utiliza nossa plataforma. Temos compromisso com a transparência e com a proteção dos seus dados.",
+      controller: {
+        title: "1. Controlador de dados",
+        body: 'O A11STUDIO ("nós") é o controlador responsável pelos seus dados pessoais. Para qualquer questão sobre privacidade, escreva para <email/>.',
+      },
+      collect: {
+        title: "2. Informações que coletamos",
+        body: "Coletamos diferentes categorias de informação conforme o modo como você usa a plataforma:",
+        account:
+          "<strong>Dados da conta</strong> — as informações básicas de perfil que você fornece ao se cadastrar e configurar a conta, como nome, e-mail e qualquer conteúdo opcional que decida acrescentar",
+        location:
+          "<strong>Dados de localização</strong> — se você optar por adicionar um endereço ao seu perfil, armazenamos a informação necessária para exibir sua localização publicamente",
+        content:
+          "<strong>Conteúdo que você cria</strong> — arquivos de mídia, portfólios, serviços, projetos e quaisquer descrições ou metadados associados que você fornecer na plataforma",
+        business:
+          "<strong>Dados de negócio</strong> — se você usar os recursos de gestão de clientes e projetos, armazenamos as informações de contato e de projeto que inserir",
+        messages:
+          "<strong>Mensagens</strong> — quando visitantes entram em contato com um artista pela plataforma, coletamos as informações incluídas no formulário de contato",
+        security:
+          "<strong>Dados de segurança</strong> — informações técnicas sobre a atividade de login e a identificação do dispositivo, usadas para proteger sua conta",
+      },
+      payments: {
+        title: "3. Dados de pagamento",
+        body: "Os pagamentos das assinaturas são processados integralmente por provedores externos. Armazenamos apenas as referências necessárias para gerenciar sua assinatura e seu histórico de cobrança. <strong>Não</strong> armazenamos números de cartão, dados bancários nem outras credenciais de pagamento brutas — elas são tratadas pelo processador de pagamentos conforme as políticas de privacidade dele.",
+      },
+      ai: {
+        title: "4. Processamento com IA",
+        body: "O A11STUDIO usa inteligência artificial em recursos como sugestões de conteúdo e moderação automática. Registramos o uso para gerenciar sua alocação de créditos de IA. O processamento é feito por provedores externos e apenas o mínimo de dados necessário é enviado.",
+      },
+      usage: {
+        title: "5. Como usamos seus dados",
+        operating: "Fornecer e operar a plataforma de portfólios",
+        auth: "Autenticar sua identidade e proteger sua conta",
+        billing: "Processar os pagamentos de assinatura e gerenciar a cobrança",
+        aiFeatures: "Oferecer os recursos assistidos por IA",
+        moderation:
+          "Aplicar as políticas de conteúdo por meio de moderação automática",
+        emails: "Enviar e-mails transacionais e notificações",
+        publicProfile: "Exibir seu perfil público de artista e seu conteúdo",
+        contactForm:
+          "Entregar as mensagens do formulário de contato entre visitantes e artistas",
+      },
+      sharing: {
+        title: "6. Compartilhamento de dados",
+        body: "Não vendemos seus dados pessoais. Compartilhamos dados apenas com os seguintes serviços externos, na medida necessária para operar a plataforma:",
+        payments:
+          "<strong>Stripe e PayPal</strong> — para o processamento de pagamentos e a gestão de assinaturas",
+        ai: "<strong>Provedores de IA / LLM</strong> — para geração de conteúdo e moderação de mídia",
+        email:
+          "<strong>Provedor de e-mail</strong> — para os e-mails transacionais (verificação, recuperação de senha, notificações)",
+      },
+      retention: {
+        title: "7. Retenção de dados",
+        body: "Mantemos seus dados pessoais enquanto sua conta estiver ativa. Os registros de segurança são mantidos para proteção da conta, e os registros de pagamento pelo prazo exigido pela regulamentação aplicável. Quando você exclui sua conta, removemos seus dados pessoais e o conteúdo associado em um prazo razoável, salvo quando a lei exigir a retenção.",
+      },
+      rights: {
+        title: "8. Seus direitos",
+        body: "Dependendo da sua jurisdição, você pode ter os seguintes direitos sobre seus dados pessoais:",
+        access:
+          "<strong>Acesso</strong> — solicitar uma cópia dos dados que mantemos sobre você",
+        rectification:
+          "<strong>Retificação</strong> — corrigir dados incorretos ou incompletos",
+        erasure:
+          "<strong>Exclusão</strong> — solicitar a eliminação dos seus dados pessoais",
+        portability:
+          "<strong>Portabilidade</strong> — receber seus dados em formato estruturado e legível por máquina",
+        restriction:
+          "<strong>Limitação</strong> — pedir que restrinjamos o tratamento dos seus dados",
+        objection:
+          "<strong>Oposição</strong> — opor-se ao tratamento baseado em interesses legítimos",
+        body2: "Para exercer qualquer um desses direitos, escreva para <email/>.",
+      },
+      security: {
+        title: "9. Segurança",
+        body: "Adotamos medidas de segurança padrão do setor para proteger seus dados, incluindo criptografia, autenticação segura e controles de acesso. Embora nenhum sistema seja totalmente imune a violações, tomamos medidas razoáveis para resguardar suas informações.",
+      },
+      cookies: {
+        title: "10. Cookies",
+        body: "Usamos cookies para o funcionamento essencial da plataforma. Todos os detalhes estão na nossa <doc>Política de cookies</doc>.",
+      },
+      changes: {
+        title: "11. Alterações nesta política",
+        body: "Podemos atualizar esta política periodicamente. As alterações serão publicadas nesta página com uma data de revisão atualizada. Continuar usando a plataforma após as alterações significa aceitar a política revisada.",
+      },
+      contact: {
+        title: "12. Contato",
+        body: "Em caso de dúvidas ou preocupações sobre esta política de privacidade ou sobre seus dados pessoais, escreva para <email/>.",
+      },
+    },
+    cookies: {
+      metadata: {
+        title: "Política de cookies — A11STUDIO",
+        description:
+          "Como o A11STUDIO usa cookies e tecnologias semelhantes. Usamos apenas cookies próprios necessários para o funcionamento da plataforma — nenhum de publicidade ou rastreamento.",
+      },
+      updatedAt: "2026-03-16",
+      heading: "Política de cookies",
+      intro:
+        "Esta política explica quais cookies a plataforma A11STUDIO utiliza, por que os usamos e como eles afetam sua experiência. Usamos apenas cookies necessários para o funcionamento da plataforma.",
+      what: {
+        title: "1. O que são cookies",
+        body: "Cookies são pequenos arquivos de texto que seu navegador guarda no seu dispositivo. Eles permitem que a plataforma lembre sua sessão, suas preferências e seu estado de segurança entre as páginas. O A11STUDIO usa apenas <strong>cookies próprios e HTTP-only</strong> — não usamos cookies de publicidade nem de rastreamento.",
+      },
+      essential: {
+        title: "2. Cookies essenciais",
+        body: "Estes cookies são estritamente necessários para o funcionamento da plataforma. Não podem ser desativados sem quebrar funções básicas. Os cookies essenciais cuidam de:",
+        auth: "<strong>Autenticação</strong> — manter você conectado e gerenciar sua sessão com segurança entre as páginas",
+        security:
+          "<strong>Segurança</strong> — dar suporte às etapas de verificação da conta, como a autenticação em duas etapas",
+        preferences:
+          "<strong>Preferências</strong> — lembrar o idioma escolhido para exibir o conteúdo no idioma correto",
+        body2:
+          "Estes cookies têm vida curta e expiram automaticamente quando deixam de ser necessários — normalmente em uma única sessão ou em poucos dias.",
+      },
+      functional: {
+        title: "3. Cookies funcionais",
+        body: "Estes cookies melhoram sua experiência lembrando escolhas que você fez. Eles só são definidos em resposta a ações que você realiza na plataforma.",
+        sessions:
+          "<strong>Sessões prolongadas</strong> — manter você conectado por mais tempo para não precisar entrar repetidamente",
+        checkout:
+          "<strong>Estado do checkout</strong> — manter temporariamente o contexto durante os fluxos de assinatura ou pagamento",
+        recovery:
+          "<strong>Recuperação de conta</strong> — preservar o estado durante o processo de redefinição de senha",
+        body2:
+          "Estes cookies são temporários e expiram logo após a conclusão da ação correspondente.",
+      },
+      thirdParty: {
+        title: "4. Cookies de terceiros",
+        body: "Quando você interage com os provedores de pagamento durante o checkout, <strong>Stripe</strong> e <strong>PayPal</strong> podem definir seus próprios cookies no seu dispositivo. Eles são regidos pelas políticas de cookies e privacidade de cada provedor:",
+        stripe: "Política de privacidade da Stripe",
+        paypal: "Política de privacidade do PayPal",
+      },
+      notUsed: {
+        title: "5. O que não usamos",
+        body: "O A11STUDIO <strong>não</strong> utiliza:",
+        analytics: "Cookies de analytics ou rastreamento",
+        advertising: "Cookies de publicidade ou retargeting",
+        pixels: "Pixels de rastreamento de redes sociais",
+        crossSite: "Tecnologias de rastreamento entre sites",
+      },
+      managing: {
+        title: "6. Gerenciar cookies",
+        body: "Você pode gerenciar ou excluir cookies nas configurações do seu navegador. Desativar os cookies essenciais impedirá que você entre e use os recursos autenticados da plataforma. Para mais informações sobre como gerenciá-los, consulte a documentação do seu navegador.",
+      },
+      privacyRelation: {
+        title: "7. Relação com a política de privacidade",
+        body: "Esta Política de cookies faz parte da nossa <doc>Política de privacidade</doc>. Consulte-a para saber em detalhe como coletamos, usamos e protegemos seus dados pessoais além dos cookies.",
+      },
+      contact: {
+        title: "8. Contato",
+        body: "Se tiver dúvidas sobre nosso uso de cookies, escreva para <email/>.",
+      },
+    },
+  },
   auth: {
     login: {
+      metadata: {
+        title: "Entrar",
+        description:
+          "Entre na sua conta A11STUDIO para gerenciar seus portfólios, coleções e serviços, e alcançar os clientes que procuram o seu trabalho.",
+      },
       title: "Olá de novo",
       subtitle: "Entre para ter acesso à sua conta",
       problemWithLogin: "Problema para entrar?",
@@ -683,6 +990,11 @@ const messages = {
       submit: "Entrar",
     },
     register: {
+      metadata: {
+        title: "Crie sua conta",
+        description:
+          "Junte-se gratuitamente ao A11STUDIO e crie um portfólio profissional que faça você ser descoberto pelos clientes, colecionadores e colaboradores que procuram artistas.",
+      },
       title: "Crie sua conta",
       subtitle: "E comece a construir o portfólio dos seus sonhos",
       alreadyHaveAccount: "Já tem uma conta?",
@@ -695,6 +1007,11 @@ const messages = {
       submit: "Cadastrar",
     },
     twoFa: {
+      metadata: {
+        title: "Verifique sua identidade",
+        description:
+          "Digite o código de verificação que enviamos para concluir o acesso à sua conta A11STUDIO com segurança.",
+      },
       titleValidateEmail: "Valide seu e-mail",
       titleDeviceVerification: "Verificação do dispositivo",
       codeSentTo: "Enviamos um código de verificação para",
@@ -703,6 +1020,26 @@ const messages = {
       codePlaceholder: "Digite o código de 6 dígitos",
     },
     passwordRecovery: {
+      metadata: {
+        title: "Recupere sua senha",
+        description:
+          "Redefina a senha da sua conta A11STUDIO. Digite seu e-mail e enviaremos um link de recuperação seguro.",
+      },
+      metadataSent: {
+        title: "Confira seu e-mail",
+        description:
+          "Enviamos um link de recuperação para o seu e-mail. Acesse-o para escolher uma nova senha para sua conta A11STUDIO.",
+      },
+      metadataReset: {
+        title: "Defina uma nova senha",
+        description:
+          "Escolha uma senha nova e forte para sua conta A11STUDIO e entre novamente.",
+      },
+      metadataDone: {
+        title: "Senha atualizada",
+        description:
+          "Sua senha do A11STUDIO foi alterada. Agora você já pode entrar com a nova senha.",
+      },
       title: "Recuperação de senha",
       subtitle: "Digite seu e-mail e enviaremos um link de recuperação",
       rememberPassword: "Lembra da sua senha?",
@@ -736,6 +1073,11 @@ const messages = {
     },
   },
   getStarted: {
+    metadata: {
+      title: "Configure seu perfil",
+      description:
+        "Termine de configurar seu perfil no A11STUDIO — adicione seus dados, sua foto e suas categorias para que os clientes certos encontrem você.",
+    },
     stepOf: "Etapa {current} de {total}",
     steps: {
       profile: {
@@ -1079,17 +1421,30 @@ const messages = {
       relatedPortfolio: "Portfólio relacionado",
     },
     about: {
+      pageTitle: "Sobre",
+      metaDescription:
+        "Conheça melhor {name} no A11STUDIO — sua história, sua trajetória e como entrar em contato.",
       notShared: "Este artista ainda não compartilhou sua história.",
       heading: "Sobre",
       getInTouch: "Entrar em contato",
     },
     media: {
+      altFallback: "Obra de {name} no A11STUDIO",
       untitled: "Sem título",
       editAria: "Editar mídia",
     },
     fullscreen: {
       enter: "Ver em tela cheia",
       exit: "Sair da tela cheia",
+    },
+    gallery: {
+      altFallback: "Obra no A11STUDIO",
+      open: "Abrir",
+      openAria: "Abrir a página completa da obra",
+      share: "Compartilhar",
+      shared: "Compartilhado",
+      copied: "Copiado",
+      shareAria: "Compartilhar esta obra",
     },
   },
   validation: {

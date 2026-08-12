@@ -15,6 +15,9 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: { absolute: t("metadata.title") },
     description: t("metadata.description"),
+    // One-time token URL: never indexable. robots.txt disallows /wait-list too, but Disallow only
+    // stops the crawl — this is what actually keeps a shared link out of the index.
+    robots: { index: false, follow: false },
   };
 }
 

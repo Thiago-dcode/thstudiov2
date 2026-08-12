@@ -308,6 +308,77 @@ export class MediaRepository extends BaseRepository {
       .filter((n): n is string => !!n);
   }
 
+  /**
+   * Rows for `getSitemapMedia` / `countSitemapMedia`. One predicate, used by both, so the count
+   * that decides how many shards exist can never disagree with the rows the shards contain.
+   *
+   * A media item is only public if it is itself visible AND it is published inside at least one
+   * public portfolio or collection — the media table also holds atelier drafts, which are
+   * reachable by URL but must never be advertised.
+   */
+  private static readonly SITEMAP_MEDIA_FROM = `
+    FROM ${TABLES_ENUM.MEDIA} m
+    INNER JOIN ${TABLES_ENUM.USERS} u ON u.id = m.user_id
+    WHERE m.blocked_at IS NULL
+      AND m.is_active = true
+      AND (
+        EXISTS (
+          SELECT 1 FROM ${TABLES_ENUM.PORTFOLIO_MEDIA} pm
+          INNER JOIN ${TABLES_ENUM.PORTFOLIOS} p ON p.id = pm.portfolio_id
+          WHERE pm.media_id = m.id
+            AND p.blocked_at IS NULL AND p.is_active = true AND p.is_indexable = true
+        )
+        OR EXISTS (
+          SELECT 1 FROM ${TABLES_ENUM.COLLECTION_MEDIA} cm
+          INNER JOIN ${TABLES_ENUM.COLLECTIONS} c ON c.id = cm.collection_id
+          WHERE cm.media_id = m.id
+            AND c.blocked_at IS NULL AND c.is_active = true AND c.is_indexable = true
+        )
+      )`;
+
+  /**
+   * Public media for the sitemap, keyed by the PRIMARY media URL
+   * (`/artists/{username}/media/{public_id}`) — the URL the nested portfolio/collection views
+   * canonicalize to, so only the canonical form is ever submitted.
+   */
+  async getSitemapMedia(
+    limit: number,
+    offset: number,
+  ): Promise<
+    { username: string; public_id: string; updated_at: string; thumbnail: string | null }[]
+  > {
+    const result = await Query.raw(
+      `SELECT m.public_id, m.updated_at, m.thumbnail, u.username
+       ${MediaRepository.SITEMAP_MEDIA_FROM}
+       ORDER BY m.updated_at DESC
+       LIMIT $1 OFFSET $2`,
+      [limit, offset],
+    );
+    const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];
+    return (Array.isArray(rows) ? rows : []).map(
+      (row: {
+        username: string;
+        public_id: string;
+        updated_at: string;
+        thumbnail: string | null;
+      }) => ({
+        username: row.username,
+        public_id: row.public_id,
+        updated_at: row.updated_at,
+        thumbnail: row.thumbnail ?? null,
+      }),
+    );
+  }
+
+  /** Count for `getSitemapMedia` (same predicate). */
+  async countSitemapMedia(): Promise<number> {
+    const result = await Query.raw(
+      `SELECT COUNT(*)::int AS count ${MediaRepository.SITEMAP_MEDIA_FROM}`,
+    );
+    const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];
+    return Number((Array.isArray(rows) ? rows : [])[0]?.count ?? 0);
+  }
+
   /** Upsert per-locale SEO rows into media_translations (one row per app language). */
   async upsertSeoTranslations(mediaId: number, rows: MediaSeoTranslation[]): Promise<void> {
     for (const r of rows) {

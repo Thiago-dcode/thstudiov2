@@ -7,7 +7,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
 } from "lucide-react";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { useUserMetrics } from "@/modules/users/providers/user-metrics.provider";
 import { useMainNav } from "../providers/main-nav.provider";
@@ -53,7 +53,9 @@ export const TopNav = ({ username }: { username?: string }) => {
           </Link>
         )}
         {username && (
-          <a
+          // Internal URL, so it must use the i18n Link (a plain <a> would drop the /es|/pt prefix
+          // and force a full reload). Still opens in a new tab so the atelier stays put.
+          <Link
             href={`/artists/${username}`}
             target="_blank"
             rel="noopener noreferrer"
@@ -61,7 +63,7 @@ export const TopNav = ({ username }: { username?: string }) => {
           >
             <span className="hidden sm:inline">{t("viewProfile")}</span>
             <ExternalLink size={14} />
-          </a>
+          </Link>
         )}
       </div>
     </nav>

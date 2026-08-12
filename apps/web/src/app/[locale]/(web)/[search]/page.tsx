@@ -52,10 +52,19 @@ export async function generateMetadata({
   });
 }
 
+/**
+ * Always fetches, filters or not.
+ *
+ * `/artists` and `/portfolios` — the canonical, indexable, sitemap-listed directory URLs — used to
+ * short-circuit to an empty result whenever there was no query string, so the bare URLs served a
+ * 200 with zero results, zero pagination and zero links. They were indexable dead ends and the
+ * only crawlable entry point into the artist and portfolio pages, which meant the entire catalogue
+ * hung off links that were never rendered. Fetching the unfiltered first page turns both into real
+ * hub pages.
+ */
 async function fetchSearchResults(
   segment: SearchSegment,
   request: ArtistIndexRequest,
-  hasFilters: boolean,
 ): Promise<SearchResult> {
   const paginatedRequest = {
     ...request,
@@ -65,7 +74,6 @@ async function fetchSearchResults(
   };
 
   if (segment === "portfolios") {
-    if (!hasFilters) return { type: "portfolios", items: [], response: null };
     const portfolioRequest: PortfolioIndexRequest = {
       ...paginatedRequest,
       is_active: true,
@@ -76,7 +84,6 @@ async function fetchSearchResults(
     return { type: "portfolios", items, response };
   }
 
-  if (!hasFilters) return { type: "artists", items: [], response: null };
   const response = await usersService.findAll(paginatedRequest);
   const items =
     !response || response.error || !response.data ? [] : response.data;
@@ -100,13 +107,12 @@ export default async function SearchPage({
 
   const params = await searchParams;
   const sharedRequest = buildSearchRequest(params);
-  const hasFilters = Object.keys(sharedRequest).length > 0;
   const hasLocationFilter =
     sharedRequest.lat != null ||
     sharedRequest.lng != null ||
     sharedRequest.radius_km != null;
 
-  const result = await fetchSearchResults(search, sharedRequest, hasFilters);
+  const result = await fetchSearchResults(search, sharedRequest);
 
   const pagination: Pagination | undefined =
     result.response && !result.response.error
@@ -177,7 +183,9 @@ export default async function SearchPage({
                 aria-labelledby="search-results-heading"
                 className="flex w-full flex-col gap-4 pt-4"
               >
-                <h5
+                {/* h2, not h5: the page's only other headings are h1 (Web.Header) and the h2s in
+                    the sibling error/empty branches — an h5 here skipped three levels. */}
+                <h2
                   id="search-results-heading"
                   className="text-sm font-medium tracking-wide text-text-muted"
                 >
@@ -191,7 +199,7 @@ export default async function SearchPage({
                         count: totalCount,
                         suffix: resultsForSearchSuffix,
                       })}
-                </h5>
+                </h2>
                 <div className="flex flex-col gap-4">
                   {result.type === "artists" && (
                     <ArtistsGrid artists={result.items} />
@@ -203,14 +211,22 @@ export default async function SearchPage({
                     <AppPagination
                       pagination={pagination}
                       buildHref={buildPaginationHref}
+                      labels={{
+                        previous: t("pagination.previous"),
+                        next: t("pagination.next"),
+                        previousAria: t("pagination.previousAria"),
+                        nextAria: t("pagination.nextAria"),
+                      }}
                     />
                   )}
                 </div>
               </section>
             ) : (
               <section className="mx-auto flex w-full min-w-0 max-w-2xl flex-col items-center gap-4 pt-8 text-center tablet:max-w-3xl">
-                {hasFilters && (
-                  <div className="flex flex-col items-center gap-2">
+                {/* Shown unconditionally now: with the unfiltered fetch in place, an empty result
+                    means the catalogue really is empty, and a 200 with no text at all is exactly
+                    the thin page a crawler penalises. */}
+                <div className="flex flex-col items-center gap-2">
                     <h2 className="text-sm font-medium tracking-wide text-text">
                       {t("page.empty.heading", {
                         segment: segmentLabel,
@@ -225,8 +241,7 @@ export default async function SearchPage({
                           : ` ${t("page.empty.lookNear", { segment: segmentLabel })}`,
                       })}
                     </output>
-                  </div>
-                )}
+                </div>
                 {!hasLocationFilter && (
                   <SearchNearMeButton clearPreviousFilters />
                 )}

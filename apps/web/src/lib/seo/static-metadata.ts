@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import { serverEnv } from "@/env/server";
-import { SUPPORTED_LOCALES, type SupportedLocale } from "@/i18n/routing";
+import {
+  localePrefix,
+  SUPPORTED_LOCALES,
+  type SupportedLocale,
+} from "@/i18n/routing";
 import { DEFAULT_OG_IMAGE } from "@/lib/config";
 
 const SITE_NAME = "A11STUDIO";
-
-/** localePrefix is "as-needed": the default locale (en) has no prefix; es/pt are prefixed. */
-const localePrefix = (l: SupportedLocale) => (l === "en" ? "" : `/${l}`);
 
 /**
  * Open Graph locale per app language — read by WhatsApp / Facebook / LinkedIn / Telegram / Slack /

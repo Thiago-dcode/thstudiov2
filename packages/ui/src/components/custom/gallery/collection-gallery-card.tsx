@@ -11,15 +11,45 @@ export function CollectionGalleryCard({
   collection: Collection;
   index: number;
 }) {
-  const { setCurrentItem } = useGallery();
+  const { items, labels, setCurrentItem } = useGallery();
+  const href = items[index]?.href;
+
+  const className =
+    "cursor-pointer media-gallery-card group relative block h-full w-full overflow-hidden p-0! transition-all duration-500 ease-out hover:ring-1 hover:ring-text/20";
+  const content = (
+    <CollectionStackCard className="h-full w-full" collection={collection} />
+  );
+
+  // See MediaGalleryCard: a real anchor so the target page has a crawlable inbound link, with the
+  // lightbox preserved by intercepting plain left-clicks.
+  if (!href) {
+    return (
+      <button
+        type="button"
+        onClick={() => setCurrentItem(index)}
+        className={className}
+        data-ratio="square"
+      >
+        {content}
+      </button>
+    );
+  }
 
   return (
-    <button
-      onClick={() => setCurrentItem(index)}
-      className="cursor-pointer media-gallery-card group relative h-full w-full overflow-hidden p-0! transition-all duration-500 ease-out hover:ring-1 hover:ring-text/20"
+    <a
+      href={href}
+      aria-label={labels.openAria}
+      onClick={(e) => {
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) {
+          return;
+        }
+        e.preventDefault();
+        setCurrentItem(index);
+      }}
+      className={className}
       data-ratio="square"
     >
-      <CollectionStackCard className="h-full w-full" collection={collection} />
-    </button>
+      {content}
+    </a>
   );
 }

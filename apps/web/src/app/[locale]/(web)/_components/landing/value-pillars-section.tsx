@@ -25,15 +25,18 @@ export async function ValuePillarsSection() {
             <div className="flex justify-start flex-col tablet:flex-row gap-4">
               <MediaCarousel media={media} />
               <div className="order-first tablet:order-2 flex flex-col gap-4 max-w-lg ">
-                <h2 className="hidden tablet:flex text-4xl! tablet:text-6xl! desktop:text-7xl! desktop-lg:text-8xl! flex-col items-start justify-start gap-2">
-                  {" "}
-                  <span>LET'S</span> <span>MAKE</span> <span>ART</span>{" "}
-                  <span>GREAT</span> <span className="">AGAIN</span>
-                </h2>
-                <h2 className=" flex text-4xl!  flex-col items-start justify-start tablet:hidden">
-                  {" "}
-                  <span>LET'S MAKE ART GREAT AGAIN</span> <span></span>{" "}
-                  <span></span>
+                {/* One heading, two layouts. This used to be two <h2>s with the same text, one
+                    hidden per breakpoint — both were in the DOM, so every crawler read the
+                    headline twice. The word-per-line break is presentational, so it is done with
+                    a responsive span rather than a duplicated element. */}
+                <h2 className="flex text-4xl! tablet:text-6xl! desktop:text-7xl! desktop-lg:text-8xl! flex-col items-start justify-start tablet:gap-2">
+                  <span className="tablet:hidden">
+                    LET'S MAKE ART GREAT AGAIN
+                  </span>
+                  <span className="hidden tablet:contents">
+                    <span>LET'S</span> <span>MAKE</span> <span>ART</span>{" "}
+                    <span>GREAT</span> <span>AGAIN</span>
+                  </span>
                 </h2>
               </div>
             </div>

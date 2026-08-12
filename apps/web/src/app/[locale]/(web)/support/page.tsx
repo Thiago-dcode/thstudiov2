@@ -2,15 +2,28 @@ import { MailWarning } from "lucide-react";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { serverEnv } from "@/env/server";
+import { buildStaticPageMetadata } from "@/lib/seo/static-metadata";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import usersService from "@/modules/users/users.service";
 import { SupportForm } from "./_components/support-form";
 
-export const metadata: Metadata = {
-  title: { absolute: "Support - A11STUDIO" },
-  description:
-    "Contact A11STUDIO support for account, billing, or technical help.",
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  // Namespace is "support", not "support.metadata": `support.subjects` is an array, which stops
+  // next-intl's NestedKeyOf from recursing, so the deeper path is not a valid namespace key.
+  const t = await getTranslations("support");
+  return buildStaticPageMetadata({
+    path: "/support",
+    title: t("metadata.title"),
+    titleAbsolute: true,
+    description: t("metadata.description"),
+    locale,
+  });
+}
 
 export default async function SupportPage() {
   const session = await userSession();

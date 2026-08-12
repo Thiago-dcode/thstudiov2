@@ -5,7 +5,7 @@ import { useShare } from "./useShare"
 import { useGallery } from "../providers/gallery.provider"
 
 export const useGalleryDialog = () => {
-    const { items, next, prev, removeCurrentItem, setCurrentItem, currentItem } = useGallery()
+    const { items, labels, next, prev, removeCurrentItem, setCurrentItem, currentItem } = useGallery()
     const { share, active: shareActive, supported: shareSupported } = useShare()
     const [copiedIndex, setCopiedIndex] = useState<number>()
     const isOpen = typeof currentItem !== "undefined"
@@ -37,7 +37,7 @@ export const useGalleryDialog = () => {
     )
 
     return {
-        items, next, prev, setCurrentItem, currentItem,
+        items, labels, next, prev, setCurrentItem, currentItem,
         share, shareActive, shareSupported,
         isOpen, currentItemData, currentUrl, copied,
         handleCopyLink, handleOpenChange,

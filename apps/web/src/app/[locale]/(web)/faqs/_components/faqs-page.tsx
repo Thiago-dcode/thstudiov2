@@ -7,7 +7,7 @@ import {
   AccordionTrigger,
 } from "@repo/ui/components/shadcn/accordion";
 import { cn } from "@repo/ui/lib/utils";
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { type FaqItem, faqAnswerClassName } from "@/lib/components/faqs";
