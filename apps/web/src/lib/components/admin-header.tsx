@@ -2,10 +2,10 @@
 
 import { BrandLogo } from "@repo/ui/components/custom/brand-logo";
 import { X } from "lucide-react";
-import { Link } from "@/i18n/navigation";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEffect } from "react";
+import { Link } from "@/i18n/navigation";
 import { useMainNav } from "../providers/main-nav.provider";
 import { MainNav } from "./main-nav.component";
 

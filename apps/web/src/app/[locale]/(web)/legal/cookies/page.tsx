@@ -5,8 +5,8 @@ import { buildStaticPageMetadata } from "@/lib/seo/static-metadata";
 import {
   Bullets,
   docTag,
-  emailTag,
   ExternalLink,
+  emailTag,
   LegalHeader,
   P,
   Section,

@@ -227,20 +227,20 @@ export default async function SearchPage({
                     means the catalogue really is empty, and a 200 with no text at all is exactly
                     the thin page a crawler penalises. */}
                 <div className="flex flex-col items-center gap-2">
-                    <h2 className="text-sm font-medium tracking-wide text-text">
-                      {t("page.empty.heading", {
-                        segment: segmentLabel,
-                        suffix: resultsForSearchSuffix,
-                      })}
-                    </h2>
-                    <output className="text-sm text-text-muted">
-                      {t("page.empty.output", {
-                        segment: segmentLabel,
-                        end: hasLocationFilter
-                          ? "."
-                          : ` ${t("page.empty.lookNear", { segment: segmentLabel })}`,
-                      })}
-                    </output>
+                  <h2 className="text-sm font-medium tracking-wide text-text">
+                    {t("page.empty.heading", {
+                      segment: segmentLabel,
+                      suffix: resultsForSearchSuffix,
+                    })}
+                  </h2>
+                  <output className="text-sm text-text-muted">
+                    {t("page.empty.output", {
+                      segment: segmentLabel,
+                      end: hasLocationFilter
+                        ? "."
+                        : ` ${t("page.empty.lookNear", { segment: segmentLabel })}`,
+                    })}
+                  </output>
                 </div>
                 {!hasLocationFilter && (
                   <SearchNearMeButton clearPreviousFilters />

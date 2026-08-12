@@ -1,9 +1,9 @@
 "use client";
 
 import { ArrowRight, X } from "lucide-react";
-import { Link } from "@/i18n/navigation";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { Link } from "@/i18n/navigation";
 
 export function AlertButton({
   condition = true,

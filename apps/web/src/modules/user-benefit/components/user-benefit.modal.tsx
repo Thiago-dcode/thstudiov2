@@ -12,10 +12,10 @@ import {
   DialogTitle,
 } from "@repo/ui/components/shadcn/dialog";
 import { ArrowRight, Gift, Sparkles } from "lucide-react";
-import { Link } from "@/i18n/navigation";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
+import { Link } from "@/i18n/navigation";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { getUserBenefitAction } from "../server-actions/get-user-benefit.action";
 

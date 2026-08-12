@@ -12,9 +12,9 @@ import {
   User,
   XCircle,
 } from "lucide-react";
-import { Link } from "@/i18n/navigation";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
+import { Link } from "@/i18n/navigation";
 import { config } from "@/lib/config";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import { LoadCustomerSubscriptionPortal } from "@/modules/plans/components/load-customer-subscription-portal";

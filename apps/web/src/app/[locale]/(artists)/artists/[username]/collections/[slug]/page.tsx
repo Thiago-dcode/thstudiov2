@@ -1,7 +1,6 @@
 import { Gallery } from "@repo/ui/components/custom/gallery/gallery";
 import { GalleryGrid } from "@repo/ui/components/custom/gallery/gallery-grid";
 import { GalleryProvider } from "@repo/ui/providers/gallery.provider";
-import { getGalleryLabels } from "@/lib/gallery-labels";
 import { Pencil } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -12,6 +11,7 @@ import { Link } from "@/i18n/navigation";
 import { localePrefix, urlLocaleToLanguageCode } from "@/i18n/routing";
 import Web from "@/lib/components/web-page.component";
 import { config } from "@/lib/config";
+import { getGalleryLabels } from "@/lib/gallery-labels";
 import { buildSeoMetadata } from "@/lib/seo/build-metadata";
 import { buildCollectionJsonLd, JsonLd } from "@/lib/seo/json-ld";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";

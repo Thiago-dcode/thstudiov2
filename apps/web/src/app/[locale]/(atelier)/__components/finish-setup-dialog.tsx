@@ -8,7 +8,6 @@ import {
   DialogTitle,
 } from "@repo/ui/components/shadcn/dialog";
 import { ArrowRight } from "lucide-react";
-import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import {
@@ -16,6 +15,7 @@ import {
   ContainerFormFunnel,
   FunnelProvider,
 } from "@/app/[locale]/get-started/_components/funnel.provider";
+import { Link } from "@/i18n/navigation";
 import type { UserAuth } from "@/modules/auth/auth.types";
 
 export const FinishSetupDialog = ({ user }: { user: UserAuth }) => {

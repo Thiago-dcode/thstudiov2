@@ -135,7 +135,11 @@ export default async function sitemap(props: {
       // The PRIMARY media URL — the one the nested portfolio/collection media views canonicalize
       // to — so the sitemap only ever advertises the canonical form.
       return rows.map((r) =>
-        entry(`/artists/${r.username}/media/${r.public_id}`, r.updated_at, r.images),
+        entry(
+          `/artists/${r.username}/media/${r.public_id}`,
+          r.updated_at,
+          r.images,
+        ),
       );
     }
   }

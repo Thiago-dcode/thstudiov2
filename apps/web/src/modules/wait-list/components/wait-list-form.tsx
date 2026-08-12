@@ -13,9 +13,9 @@ import {
 import { Input } from "@repo/ui/components/shadcn/input";
 import { cn } from "@repo/ui/lib/utils";
 import { toast } from "@repo/ui/sonner";
-import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
+import { Link } from "@/i18n/navigation";
 import { WAIT_LIST_FAQ_ID } from "@/lib/components/faqs";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { createWaitListSchema } from "@/modules/wait-list/schemas/wait-list.schema";

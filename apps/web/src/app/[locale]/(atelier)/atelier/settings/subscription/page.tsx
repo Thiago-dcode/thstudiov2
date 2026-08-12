@@ -1,8 +1,8 @@
 import { Button } from "@repo/ui/components/shadcn/button";
 import { ArrowLeft } from "lucide-react";
-import { Link } from "@/i18n/navigation";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
+import { Link } from "@/i18n/navigation";
 import { config } from "@/lib/config";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import PlanSubscriptionList from "@/modules/plans/components/plan-list";

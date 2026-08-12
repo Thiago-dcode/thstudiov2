@@ -11,11 +11,11 @@ import {
   Settings,
   UserRoundPen,
 } from "lucide-react";
-import { Link } from "@/i18n/navigation";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { type ReactNode, useEffect, useState } from "react";
 import { LogoutDialog } from "@/app/[locale]/(atelier)/__components/logout-dialog";
+import { Link } from "@/i18n/navigation";
 import { useMainNav } from "../providers/main-nav.provider";
 
 const routes: {

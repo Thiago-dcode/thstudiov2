@@ -1,9 +1,9 @@
 "use client";
 
 import { ArrowLeft, RotateCcw } from "lucide-react";
-import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { useEffect } from "react";
+import { Link } from "@/i18n/navigation";
 
 export default function GlobalError({
   error,

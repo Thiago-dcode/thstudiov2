@@ -702,8 +702,7 @@ const messages = {
       account: {
         title: "2. Registro de cuenta",
         body: "Para usar la Plataforma debes crear una cuenta indicando una dirección de correo válida, un nombre de usuario único y una contraseña. Eres responsable de mantener la confidencialidad de tus credenciales.",
-        verified:
-          "Debes verificar tu correo antes de obtener acceso completo.",
+        verified: "Debes verificar tu correo antes de obtener acceso completo.",
         twoFa:
           "Puede requerirse la autenticación en dos pasos (2FA) al iniciar sesión como seguridad adicional.",
         username:

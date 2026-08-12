@@ -1,8 +1,8 @@
 import { TABLES_ENUM } from "@repo/common-lib/constants/enums";
 import { Library } from "lucide-react";
-import { Link } from "@/i18n/navigation";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
+import { Link } from "@/i18n/navigation";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import collectionService from "@/modules/collections/collection.service";
 import { CollectionCard } from "@/modules/collections/components/collection-card";

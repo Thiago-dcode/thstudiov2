@@ -5,9 +5,9 @@ import {
 import { Gallery } from "@repo/ui/components/custom/gallery/gallery";
 import { PortfolioGrid } from "@repo/ui/components/custom/gallery/gallery-grid";
 import { GalleryProvider } from "@repo/ui/providers/gallery.provider";
-import { getGalleryLabels } from "@/lib/gallery-labels";
-import { Link } from "@/i18n/navigation";
 import { getTranslations } from "next-intl/server";
+import { Link } from "@/i18n/navigation";
+import { getGalleryLabels } from "@/lib/gallery-labels";
 import portfolioService from "@/modules/portfolios/portfolio.service";
 import { WebSection } from "./web-section";
 

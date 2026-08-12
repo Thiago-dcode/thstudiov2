@@ -1,7 +1,7 @@
 import { Button } from "@repo/ui/components/shadcn/button";
-import { Link } from "@/i18n/navigation";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
+import { Link } from "@/i18n/navigation";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import { CallbackSubscriptionPage } from "@/modules/plan-subscriptions/components/callback-subscription-page";
 import { getInitiateSubscriptionCookie } from "@/modules/plan-subscriptions/server-actions/initiate-subscription.action";

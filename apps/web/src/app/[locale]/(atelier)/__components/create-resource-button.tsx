@@ -4,9 +4,9 @@ import type { TableName } from "@repo/common-lib/types/database";
 import { Button } from "@repo/ui/components/shadcn/button";
 import { toast } from "@repo/ui/sonner";
 import { Plus } from "lucide-react";
-import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { useRef } from "react";
+import { Link } from "@/i18n/navigation";
 import { useUserMetrics } from "@/modules/users/providers/user-metrics.provider";
 import { getResourceLimitInfo } from "./resource-limits";
 

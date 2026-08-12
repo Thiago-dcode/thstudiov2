@@ -1,8 +1,8 @@
 import { FUNNEL_LAST_STEP } from "@repo/common-lib/constants/constants";
 import { Button } from "@repo/ui/components/shadcn/button";
-import { Link } from "@/i18n/navigation";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
+import { Link } from "@/i18n/navigation";
 import { buildPrivatePageMetadata } from "@/lib/seo/private-metadata";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import { CallbackSubscriptionPage } from "@/modules/plan-subscriptions/components/callback-subscription-page";

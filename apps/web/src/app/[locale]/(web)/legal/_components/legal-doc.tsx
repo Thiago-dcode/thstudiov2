@@ -64,7 +64,6 @@ export function Bullets({ items }: { items: ReactNode[] }) {
     <ul className="list-disc list-inside space-y-2 text-sm leading-relaxed text-text-muted">
       {items.map((item, i) => (
         // Legal copy is a fixed, ordered list per document — index is a stable identity here.
-        // biome-ignore lint/suspicious/noArrayIndexKey: static ordered legal copy
         <li key={i}>{item}</li>
       ))}
     </ul>

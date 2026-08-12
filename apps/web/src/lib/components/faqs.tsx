@@ -5,8 +5,8 @@ import {
   AccordionTrigger,
 } from "@repo/ui/components/shadcn/accordion";
 import { ArrowRight } from "lucide-react";
-import { Link } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 
 export type FaqItem = { id: string; question: string; answer: string };
 
@@ -64,8 +64,8 @@ export function FaqsContent() {
                 {faq.question}
               </AccordionTrigger>
               <AccordionContent className={faqAnswerClassName}>
-                {/* biome-ignore lint/security/noDangerouslySetInnerHtml: answers are trusted, authored in our own translation files */}
                 <div
+                  // biome-ignore lint/security/noDangerouslySetInnerHtml: answers are trusted, authored in our own translation files
                   dangerouslySetInnerHTML={{
                     __html: localizeFaqAnswer(faq.answer, locale),
                   }}

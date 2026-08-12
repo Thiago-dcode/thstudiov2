@@ -885,7 +885,8 @@ const messages = {
           "<strong>Limitação</strong> — pedir que restrinjamos o tratamento dos seus dados",
         objection:
           "<strong>Oposição</strong> — opor-se ao tratamento baseado em interesses legítimos",
-        body2: "Para exercer qualquer um desses direitos, escreva para <email/>.",
+        body2:
+          "Para exercer qualquer um desses direitos, escreva para <email/>.",
       },
       security: {
         title: "9. Segurança",

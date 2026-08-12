@@ -7,9 +7,9 @@ import {
   AccordionTrigger,
 } from "@repo/ui/components/shadcn/accordion";
 import { cn } from "@repo/ui/lib/utils";
-import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
+import { Link } from "@/i18n/navigation";
 import { type FaqItem, faqAnswerClassName } from "@/lib/components/faqs";
 
 // Keeps anchored sections clear of the sticky web header when navigated to.

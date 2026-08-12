@@ -7,8 +7,8 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
 } from "lucide-react";
-import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { useUserMetrics } from "@/modules/users/providers/user-metrics.provider";
 import { useMainNav } from "../providers/main-nav.provider";
 
