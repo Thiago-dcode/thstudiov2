@@ -3,6 +3,13 @@
 import type { WaitListCreateResponse } from "@repo/common-lib/types/wait-list";
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
 import { Button } from "@repo/ui/components/shadcn/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@repo/ui/components/shadcn/dialog";
 import { Input } from "@repo/ui/components/shadcn/input";
 import { cn } from "@repo/ui/lib/utils";
 import { toast } from "@repo/ui/sonner";
@@ -83,58 +90,14 @@ export function WaitListForm({ className }: { className?: string } = {}) {
     if (!result?.data) return;
     setIsSuccess(true);
     setWaitListResultData(result.data);
+    if (emailInputRef.current) {
+      emailInputRef.current.value = "";
+    }
+    setIsEmailValid(false);
   }, [result]);
 
-  if (isSuccess) {
-    if (waitListResultData?.already_exists) {
-      const email = waitListResultData.email ?? "";
-
-      return (
-        <div aria-live="polite" className="flex w-full justify-center">
-          <div className="wait-list-success flex w-full max-w-md flex-col items-center gap-2 border border-border/40 bg-fg/50 px-5 py-6 text-center backdrop-blur-md">
-            <h3 className="text-lg font-semibold text-text">
-              {t.rich("waitList.alreadyExists", {
-                email,
-                supportLink: (chunks) => (
-                  <Link href="/support" className="text-text underline">
-                    {chunks}
-                  </Link>
-                ),
-              })}
-            </h3>
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div aria-live="polite" className="flex w-full justify-center">
-        <div className="wait-list-success flex w-full max-w-md flex-col items-center gap-2 border border-border/40 bg-fg/50 px-5 py-6 text-center backdrop-blur-md">
-          <h3 className="text-lg font-semibold text-text">
-            {t("waitList.successTitle")}
-          </h3>
-          <p className="text-sm text-text-muted">
-            {t("waitList.successMessage")}
-          </p>
-          <p className="text-sm text-text-muted">
-            {t("waitList.successReserveMessage")}
-          </p>
-
-          <style>{`
- @media (prefers-reduced-motion: no-preference) {
- .wait-list-success {
- animation: wait-list-pop 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
- }
- @keyframes wait-list-pop {
- from { opacity: 0; transform: scale(0.96) translateY(10px); }
- to { opacity: 1; transform: scale(1) translateY(0); }
- }
- }
- `}</style>
-        </div>
-      </div>
-    );
-  }
+  const alreadyExists = waitListResultData?.already_exists === true;
+  const email = waitListResultData?.email ?? "";
 
   return (
     <div className="w-full">
@@ -160,7 +123,7 @@ export function WaitListForm({ className }: { className?: string } = {}) {
             aria-describedby={
               inputErrors?.email ? "hero-wait-list-email-error" : undefined
             }
-            className="h-10 laptop:h-12 w-full px-4 text-base"
+            className="h-10 laptop:h-12 w-full px-4 text-sm!"
           />
 
           {inputErrors?.email ? (
@@ -183,6 +146,35 @@ export function WaitListForm({ className }: { className?: string } = {}) {
           {isPending ? t("waitList.buttonPending") : t("waitList.button")}
         </Button>
       </form>
+
+      <Dialog open={isSuccess} onOpenChange={setIsSuccess}>
+        <DialogContent className="max-w-md">
+          <DialogHeader className="text-center sm:text-center">
+            {alreadyExists ? (
+              <DialogTitle className="text-balance leading-snug">
+                {t.rich("waitList.alreadyExists", {
+                  email,
+                  supportLink: (chunks) => (
+                    <Link href="/support" className="text-text underline">
+                      {chunks}
+                    </Link>
+                  ),
+                })}
+              </DialogTitle>
+            ) : (
+              <>
+                <DialogTitle>{t("waitList.successTitle")}</DialogTitle>
+                <DialogDescription className="space-y-2">
+                  <span className="block">{t("waitList.successMessage")}</span>
+                  <span className="block">
+                    {t("waitList.successReserveMessage")}
+                  </span>
+                </DialogDescription>
+              </>
+            )}
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
 
       <style>{`
         .wait-list-fire-button:not(:disabled):hover {

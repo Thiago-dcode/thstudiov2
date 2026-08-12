@@ -4,7 +4,7 @@ const messages = {
   seo: {
     organizationDescription:
       "A11STUDIO es la plataforma de portafolios donde los artistas son descubiertos: muestra tu trabajo y conecta con clientes, coleccionistas y colaboradores.",
-    defaultTitle: "A11STUDIO — Donde los Artistas son Descubiertos",
+    defaultTitle: "A11STUDIO — Donde los artistas son descubiertos",
     defaultDescription:
       "Muestra tu trabajo, hazte descubrir y conecta con clientes, coleccionistas y colaboradores. A11STUDIO es la plataforma de portafolios diseñada exclusivamente para artistas.",
   },
@@ -25,7 +25,7 @@ const messages = {
         "encuentre",
         "descubra",
       ],
-      subtitle: "Sube tu mejor arte, del resto nos encargamos nosotros.",
+      subtitle: "Sube tu mejor arte. Del resto nos encargamos nosotros.",
       primaryCtaLoggedIn: "Acceder a Atelier",
       primaryCtaLoggedOut: "Empieza gratis ahora",
       secondaryCta: "Encuentra artistas",
@@ -35,7 +35,7 @@ const messages = {
         placeholder: "Introduce tu correo electrónico",
         button: "Unirme a la lista",
         buttonPending: "Uniéndote...",
-        hint: "Únete a la lista de espera y sé de los primeros en entrar a A11STUDIO.",
+        hint: "Únete a la lista de espera y sé uno de los primeros en entrar a A11STUDIO.",
         hintTooltip:
           "Únete a la lista de espera y forma parte de los primeros usuarios con acceso anticipado, que recibirán beneficios exclusivos. La lista es limitada: una vez alcanzado el cupo máximo, se cerrará. <learnMore>Cómo funciona</learnMore>",
         successToast: "Ya estás en la lista de espera. Te avisaremos pronto.",
@@ -96,12 +96,12 @@ const messages = {
         {
           title: "Calidad",
           description:
-            "Valoramos la {calidad} sobre la cantidad, tómate tu tiempo para subir tu mejor arte.",
+            "Valoramos la {calidad} sobre la cantidad: tómate tu tiempo para subir tu mejor arte.",
         },
         {
           title: "Clientes",
           description:
-            "Conectamos las necesidades de los clientes con los {artistas} indicados. Rápido, directo y de confianza.",
+            "Conectamos las necesidades de los clientes con los {artistas} adecuados. Rápido, directo y de confianza.",
         },
         {
           title: "Sin algoritmos",
@@ -136,7 +136,7 @@ const messages = {
         {
           title: "Credibilidad",
           description:
-            "Una presencia profesional, sin el lío técnico. Confianza desde la primera {visita}.",
+            "Una presencia profesional, sin el lío técnico. Genera confianza desde la primera {visita}.",
         },
         {
           title: "Elegancia",
@@ -213,7 +213,7 @@ const messages = {
         ai: {
           title: "La IA te posiciona",
           description:
-            "La IA genera tu biografía, descripciones y etiquetas. Optimiza tu portafolio para buscadores para que las personas adecuadas te encuentren.",
+            "La IA genera tu biografía, descripciones y etiquetas. Optimiza tu portafolio para buscadores, de modo que las personas adecuadas te encuentren.",
         },
         connect: {
           title: "Los clientes conectan",
@@ -275,7 +275,7 @@ const messages = {
         id: "position-profile",
         question: "¿Cómo puedo posicionar mi perfil?",
         answer:
-          "A11STUDIO ya hace por ti la parte difícil: <strong>el SEO, la indexación en buscadores y la optimización ocurren automáticamente</strong>, y nuestra IA escribe los títulos, descripciones, etiquetas y texto alternativo detrás de escena. Tu único trabajo es darle material real y rico con el que trabajar. Cuanto más completo y específico sea tu perfil, más probable será que los clientes correctos —y asistentes de IA como ChatGPT o las respuestas de IA de Google— muestren tu trabajo. Así puedes posicionarte bien:<ul><li><strong>Completa tu perfil y tu ubicación.</strong> Añade tu nombre, profesión y ciudad — la ubicación impulsa el descubrimiento local, para que los clientes que buscan un artista cerca te encuentren.</li><li><strong>Mantén tu perfil enfocado en una disciplina — o en unas pocas que vayan juntas.</strong> Posicionarse es tanto lo que dejas fuera como lo que pones. Un perfil construido en torno a un solo oficio —o a un puñado de oficios vecinos, como la fotografía y el cine— se lee como el de un especialista: los clientes saben exactamente para qué contratarte, y los buscadores y los asistentes de IA se forman una idea clara de aquello por lo que se te conoce. Si te repartes entre campos sin relación —tatuador, cineasta y fotógrafo con dron en el mismo perfil— esa idea se difumina: cada señal se diluye y no destacas en nada en concreto. Si de verdad trabajas en disciplinas lejanas, encabeza con aquella por la que más quieres que te contraten y deja el resto para otro perfil.</li><li><strong>Elige las categorías que corresponden a tu oficio.</strong> Selecciona tus disciplinas y estilos con honestidad; así filtran los clientes y así entienden los buscadores lo que haces.</li><li><strong>Sube tu mejor trabajo con títulos y descripciones reales.</strong> Dale a cada pieza un título claro y específico y una breve descripción — la IA los enriquece, pero necesita detalle genuino (tema, estilo, lugar) sobre el que construir.</li><li><strong>Añade un banner y miniaturas cuidadas.</strong> Son lo primero que ven los visitantes — y las tarjetas para compartir en redes; una imagen pulida hace que la gente se quede.</li><li><strong>Completa tus servicios.</strong> Indica qué ofreces y los detalles que un cliente necesita para contratarte — los servicios apuntan a búsquedas de alta intención, listas para comprar.</li><li><strong>Escribe tu página Acerca de.</strong> Tu historia y experiencia generan la confianza que convierte a un visitante en cliente.</li><li><strong>Organiza tus portafolios y colecciones.</strong> Mantén ordenados tus <a href='#what-is-a-portfolio'>portafolios</a> con lo mejor y tus <a href='#what-is-a-collection'>colecciones</a> por proyecto para que los visitantes entiendan al instante tu trabajo.</li></ul>Haz esto y A11STUDIO se encarga de todo lo técnico por encima — nunca tienes que aprender SEO. ¿Aún con dudas? <a href='/support'>Escríbenos</a>.",
+          "A11STUDIO ya hace por ti la parte difícil: <strong>el SEO, la indexación en buscadores y la optimización ocurren automáticamente</strong>, y nuestra IA escribe los títulos, descripciones, etiquetas y texto alternativo detrás de escena. Tu único trabajo es darle material real y rico con el que trabajar. Cuanto más completo y específico sea tu perfil, más probable será que los clientes correctos —y asistentes de IA como ChatGPT o las respuestas de IA de Google— muestren tu trabajo. Así puedes posicionarte bien:<ul><li><strong>Completa tu perfil y tu ubicación.</strong> Añade tu nombre, profesión y ciudad — la ubicación impulsa el descubrimiento local, para que los clientes que buscan un artista cerca de ellos te encuentren.</li><li><strong>Mantén tu perfil enfocado en una disciplina — o en unas pocas que vayan juntas.</strong> Posicionarse es tanto lo que dejas fuera como lo que pones. Un perfil construido en torno a un solo oficio —o a un puñado de oficios vecinos, como la fotografía y el cine— se lee como el de un especialista: los clientes saben exactamente para qué contratarte, y los buscadores y los asistentes de IA se forman una idea clara de aquello por lo que se te conoce. Si te repartes entre campos sin relación —tatuador, cineasta y fotógrafo con dron en el mismo perfil— esa idea se difumina: cada señal se diluye y no destacas en nada en concreto. Si de verdad trabajas en disciplinas lejanas, encabeza con aquella por la que más quieres que te contraten y deja el resto para otro perfil.</li><li><strong>Elige las categorías que corresponden a tu oficio.</strong> Selecciona tus disciplinas y estilos con honestidad; así es como los clientes filtran los resultados y como los buscadores entienden lo que haces.</li><li><strong>Sube tu mejor trabajo con títulos y descripciones reales.</strong> Dale a cada pieza un título claro y específico y una breve descripción — la IA los enriquece, pero necesita detalle genuino (tema, estilo, lugar) sobre el que construir.</li><li><strong>Añade un banner y miniaturas cuidadas.</strong> Son lo primero que ven los visitantes — y las tarjetas para compartir en redes; una imagen pulida hace que la gente se quede.</li><li><strong>Completa tus servicios.</strong> Indica qué ofreces y los detalles que un cliente necesita para contratarte — los servicios apuntan a búsquedas de alta intención, listas para comprar.</li><li><strong>Escribe tu página Acerca de.</strong> Tu historia y experiencia generan la confianza que convierte a un visitante en cliente.</li><li><strong>Organiza tus portafolios y colecciones.</strong> Mantén ordenados tus <a href='#what-is-a-portfolio'>portafolios</a> con lo mejor y tus <a href='#what-is-a-collection'>colecciones</a> por proyecto para que los visitantes entiendan al instante tu trabajo.</li></ul>Haz esto y A11STUDIO se encarga de todo lo técnico a partir de ahí — nunca tienes que aprender SEO. ¿Aún con dudas? <a href='/support'>Escríbenos</a>.",
       },
       {
         id: "get-clients",
@@ -287,7 +287,7 @@ const messages = {
         id: "upload-videos",
         question: "¿Puedo subir videos?",
         answer:
-          "Todavía no: por ahora A11STUDIO admite imágenes y está diseñado para mostrarlas de forma hermosa. El soporte de video está en nuestra hoja de ruta para una versión futura, de modo que cineastas, animadores y artistas del movimiento también podrán presentar su trabajo aquí. ¿Quieres que te avisemos cuando esté disponible? <a href='/support'>Contáctanos</a>.",
+          "Todavía no: por ahora A11STUDIO admite imágenes y está diseñado para mostrarlas de forma hermosa. El soporte de video está en nuestra hoja de ruta para una versión futura, de modo que cineastas, animadores y artistas de motion también podrán presentar su trabajo aquí. ¿Quieres que te avisemos cuando esté disponible? <a href='/support'>Contáctanos</a>.",
       },
       {
         id: "is-free",
@@ -456,7 +456,7 @@ const messages = {
   waitListDialog: {
     title: "El registro está cerrado por ahora",
     description:
-      "Únete a la lista de espera y sé de los primeros en entrar a A11STUDIO.",
+      "Únete a la lista de espera y sé uno de los primeros en entrar a A11STUDIO.",
   },
   footer: {
     tagline: "La plataforma de portafolios creada para artistas.",
@@ -512,7 +512,7 @@ const messages = {
       empty: {
         heading: "No se encontraron {segment}{suffix}",
         output:
-          "Tus filtros no coinciden con ningún {segment}. Prueba ampliar tu búsqueda{end}",
+          "Tus filtros no coinciden con ningún {segment}. Prueba a ampliar tu búsqueda{end}",
         lookNear: " o busca {segment} cerca de ti.",
       },
     },
@@ -603,7 +603,7 @@ const messages = {
   },
   waitListValidate: {
     metadata: {
-      title: "Validar correo - A11STUDIO",
+      title: "Validar correo — A11STUDIO",
       description:
         "Valida tu dirección de correo electrónico para confirmar tu lugar en la lista de espera.",
     },
@@ -813,8 +813,8 @@ const messages = {
   userBenefitModal: {
     title: "Tienes un regalo esperándote",
     description:
-      "Como <name>{label}</name> obtienes <free>{months, plural, one {# mes gratis} other {# meses gratis}}</free>.",
-    claimBelow: "Canjéalo justo abajo. Te guiaremos para obtener el beneficio",
+      "Como <name>{label}</name>, obtienes <free>{months, plural, one {# mes gratis} other {# meses gratis}}</free>.",
+    claimBelow: "Canjéalo justo abajo. Te guiaremos para obtener el beneficio.",
     claimAfterSetup:
       "Cuando termines la configuración de bienvenida te guiaremos para obtener el beneficio.",
     claimNow: "Canjear ahora",
@@ -825,12 +825,12 @@ const messages = {
     title: "Cuenta suspendida",
     description: "Tu cuenta ha sido suspendida por incumplir las políticas.",
     restrictionsLiftedOn: "Las restricciones se levantarán el {date}.",
-    contactSupport: "Contacta con soporte si crees que es un error",
+    contactSupport: "Contacta con soporte si crees que es un error.",
     logout: "Cerrar sesión",
   },
   emailPreferences: {
     metadata: {
-      title: "Preferencias de correo - A11STUDIO",
+      title: "Preferencias de correo — A11STUDIO",
       description:
         "Actualiza los tipos de correos que quieres recibir de A11STUDIO.",
     },
@@ -903,7 +903,7 @@ const messages = {
       updateDescription:
         "Actualiza tu información de dirección a continuación.",
       warningDescription:
-        "Advertencia: Actualizar tu dirección podría afectar tu descubrimiento y visibilidad en los resultados de búsqueda. Actualízala solo si realmente lo necesitas",
+        "Advertencia: actualizar tu dirección podría afectar a tu descubrimiento y visibilidad en los resultados de búsqueda. Actualízala solo si realmente lo necesitas.",
     },
     categories: {
       title: "Categorías",
@@ -922,15 +922,18 @@ const messages = {
       },
       instagram: {
         label: "Instagram",
-        placeholder: "https://instagram.com/tuusuario",
+        placeholder: "tuusuario",
+        hint: "Usuario o URL oficial de Instagram (instagram.com/…).",
       },
       facebook: {
         label: "Facebook",
-        placeholder: "https://facebook.com/tupagina",
+        placeholder: "tupagina",
+        hint: "Usuario/página o URL oficial de Facebook (facebook.com/…).",
       },
       youtube: {
         label: "YouTube",
-        placeholder: "https://youtube.com/@tucanal",
+        placeholder: "tucanal",
+        hint: "Identificador o URL oficial de YouTube (youtube.com/…).",
       },
       website: {
         label: "Sitio web",
@@ -1003,7 +1006,8 @@ const messages = {
       viewAllServices: "Ver todos los servicios",
       emptyState: {
         title: "{name} aún no ha publicado ningún trabajo.",
-        subtitle: "Vuelve pronto, o contáctanos para iniciar una conversación.",
+        subtitle:
+          "Vuelve pronto o ponte en contacto para iniciar una conversación.",
         cta: "Ponte en contacto",
       },
     },
@@ -1158,11 +1162,11 @@ const messages = {
     },
     url: {
       instagram:
-        "Introduce una URL de Instagram válida, p. ej. https://instagram.com/tuusuario",
+        "Introduce un usuario de Instagram o una URL oficial, p. ej. tuusuario o https://instagram.com/tuusuario",
       facebook:
-        "Introduce una URL de Facebook válida, p. ej. https://facebook.com/tupagina",
+        "Introduce un usuario/página de Facebook o una URL oficial, p. ej. tupagina o https://facebook.com/tupagina",
       youtube:
-        "Introduce una URL de YouTube válida, p. ej. https://youtube.com/@tucanal",
+        "Introduce un identificador de YouTube o una URL oficial, p. ej. tucanal o https://youtube.com/@tucanal",
       website: "Introduce una URL válida que empiece por https://",
     },
   },
@@ -1179,7 +1183,7 @@ const messages = {
     biography: "Biografía",
     shortBiography: "Biografía breve",
     currentPassword: "Contraseña actual",
-    newPassword: "Contraseña",
+    newPassword: "Nueva contraseña",
     thumbnail: "Miniatura",
     avatar: "Avatar",
     banner: "Banner",
@@ -1326,14 +1330,14 @@ const messages = {
           "Has alcanzado el límite de {limit} portafolios destacados en tu página de perfil.",
         active: "Activo",
         activeInfo:
-          "Cuando está desactivado, este portafolio se oculta de tu perfil público de artista y de los listados. Aún puedes editarlo en el atelier.",
+          "Cuando está desactivado, este portafolio se oculta de tu perfil público de artista y de los listados. Aún puedes editarlo en Atelier.",
       },
       items: {
         noItems: "Aún no se han añadido contenidos ni colecciones",
         itemsCountLabel: "{count} / {limit} elementos",
         dragToReorder: "· Arrastra para reordenar",
         countInfo:
-          "Este conteo incluye cada contenido que añades directamente, más cada elemento dentro de cualquier colección que agregues. Por ejemplo, una colección con 10 imágenes cuenta como 10 elementos del límite de {limit}.",
+          "Este conteo incluye cada contenido que añadas directamente, más cada elemento dentro de cualquier colección que añadas. Por ejemplo, una colección con 10 imágenes cuenta como 10 elementos del límite de {limit}.",
         removeItem: "Eliminar {label}",
         untitled: "Sin título",
       },
@@ -1341,7 +1345,7 @@ const messages = {
         label: "Diseño",
         info: "El diseño se adapta al tamaño de pantalla del visitante.",
         columnsInfo:
-          "Para el diseño en columnas, el número que elijas es el máximo usado en pantallas grandes. Los dispositivos más pequeños muestran menos columnas — hasta {mobile} en móvil y {tablet} en tablet — de modo que elegir {max} columnas igual muestra solo {mobile} en un teléfono.",
+          "Para el diseño en columnas, el número que elijas es el máximo usado en pantallas grandes. Los dispositivos más pequeños muestran menos columnas — hasta {mobile} en móvil y {tablet} en tablet — así que, aunque elijas {max} columnas, en un teléfono solo se mostrarán {mobile}.",
         ariaGroup: "Diseño del portafolio",
         previewAria: "Previsualizar diseño",
         editSettingsAria: "Editar ajustes de diseño",
@@ -1387,7 +1391,7 @@ const messages = {
         descriptionLabel: "Descripción",
         descriptionPlaceholder: "Describe tu servicio...",
         priceLabel: "Precio",
-        priceInfo: "El precio es opcional, déjalo en 0.",
+        priceInfo: "El precio es opcional; déjalo en 0.",
         showPrice: "Mostrar precio",
         active: "Activo",
         showOnProfile: "Mostrar en la página de perfil",
@@ -1465,7 +1469,7 @@ const messages = {
           "Has alcanzado el límite de {limit} colecciones destacadas en tu página de perfil.",
         active: "Activo",
         activeInfo:
-          "Cuando está desactivado, esta colección se oculta de tu perfil público de artista y de los listados. Aún puedes editarla en el atelier.",
+          "Cuando está desactivado, esta colección se oculta de tu perfil público de artista y de los listados. Aún puedes editarla en Atelier.",
       },
       media: {
         sectionLabel: "Contenido",
@@ -1487,7 +1491,7 @@ const messages = {
       },
       upload: {
         maxFilesError:
-          "Se permiten un máximo de {max} archivos. Puedes añadir {remaining} más.",
+          "Se permite un máximo de {max} archivos. Puedes añadir {remaining} más.",
         globalCompression: "Compresión global",
         compressionTooltipTitle: "Nivel de compresión",
         compressionTooltipBody:
@@ -1495,11 +1499,11 @@ const messages = {
         compressionTooltipHint:
           "Este ajuste se aplica a todos los archivos subidos. Puedes ajustar archivos individuales con los controles de abajo.",
         allFiles: "Todos los archivos",
-        upgradeRequired: "Actualiza para acceder a esta función",
+        upgradeRequired: "Mejora tu plan para acceder a esta función.",
         aiSeoGeneration: "Generar metadatos",
         aiSeoBadge: "Metadatos IA",
         aiSeoTooltipBody:
-          "El SEO (optimización para motores de búsqueda) ayuda a que tu trabajo se encuentre en Google y Google Imágenes. Usa IA para analizar la imagen y generar un título, una descripción, un texto alternativo y un nombre de archivo artísticos y ricos en palabras clave, y la etiqueta automáticamente con las categorías correspondientes.",
+          "El SEO (optimización para motores de búsqueda) ayuda a que tu trabajo se encuentre en Google y Google Imágenes. Usamos IA para analizar la imagen y generar un título, una descripción, un texto alternativo y un nombre de archivo artísticos y ricos en palabras clave, y para etiquetarla automáticamente con las categorías correspondientes.",
         aiSeoCreditsHint:
           "Cuesta 1 crédito de IA por imagen. <remaining>Te quedan {count} {count, plural, one {crédito} other {créditos}}.</remaining>",
         creditsLabel: "{count} {count, plural, one {crédito} other {créditos}}",
@@ -1554,7 +1558,7 @@ const messages = {
         noCreditsAvailable:
           "No hay créditos de IA disponibles. Necesitas al menos 1 crédito para generar metadatos. Mejora tu plan o espera a que se reinicien los créditos.",
         generateSeoTooltip:
-          "El SEO (optimización para motores de búsqueda) ayuda a que tu trabajo se encuentre en Google y Google Imágenes. Usa IA para analizar la imagen y generar un título, una descripción, un texto alternativo y un nombre de archivo artísticos y ricos en palabras clave, y la etiqueta automáticamente con las categorías correspondientes.",
+          "El SEO (optimización para motores de búsqueda) ayuda a que tu trabajo se encuentre en Google y Google Imágenes. Usamos IA para analizar la imagen y generar un título, una descripción, un texto alternativo y un nombre de archivo artísticos y ricos en palabras clave, y para etiquetarla automáticamente con las categorías correspondientes.",
         noCreditsSuffix: " (Sin créditos)",
         delete: "Eliminar",
         deleteConfirm: "¿Seguro que quieres eliminar este contenido?",
@@ -1583,7 +1587,7 @@ const messages = {
         selectMedia: "Seleccionar contenido",
         cancelSelection: "Cancelar selección",
         noMediaFiltered:
-          "No se encontró contenido, prueba otra combinación de filtros",
+          "No se encontró contenido. Prueba otra combinación de filtros.",
         noMediaEmpty:
           "Aún no has subido contenido. Empieza añadiendo tu primera imagen.",
         updateItems:
@@ -1611,23 +1615,23 @@ const messages = {
         itemsSelected:
           "{count, plural, one {# elemento seleccionado} other {# elementos seleccionados}}",
         itemsSelectedWithMax:
-          "{count} / {max} {count, plural, one {elemento} other {elementos}} seleccionados",
+          "{count} / {max} {count, plural, one {elemento seleccionado} other {elementos seleccionados}}",
       },
       uploadStatus: {
         uploadComplete: "Subida completa",
         uploadingFiles: "Subiendo archivos",
         remaining: "{count} restantes",
-        success: "correcto",
-        failed: "fallido",
+        success: "con éxito",
+        failed: "con error",
         allComplete: "Todo completo",
         queued: "En cola...",
         uploading: "Subiendo...",
         updating: "Actualizando...",
-        generatingSeo: "Generando SEO...",
+        generatingSeo: "Generando metadatos...",
         deleting: "Eliminando...",
         uploaded: "Subido",
         updated: "Actualizado",
-        seoGenerated: "SEO generado",
+        seoGenerated: "Metadatos generados",
         deleted: "Eliminado",
         failedFallback: "Fallido",
         preparingUpload: "Preparando subida...",
@@ -1716,7 +1720,7 @@ const messages = {
         backToSettings: "Volver a Ajustes",
         alreadyOnBest: "Ya tienes el plan más completo.",
         currentPlanIs:
-          "Tu plan actual es <strong>{planName}</strong> — no hay nada superior a lo que actualizar por ahora.",
+          "Tu plan actual es <strong>{planName}</strong> — no hay ningún plan superior al que cambiar por ahora.",
         currentPlanFallback: "tu plan actual",
         goBackToSettings: "Volver a Ajustes",
         cancel: "Cancelar",

@@ -56,7 +56,7 @@ export async function HeroSection() {
               interval={3000}
               fitWidth
               spinDuration={2500}
-              className="text-accent translate-y-[-0.11em]"
+              className="text-accent translate-y-[-0.09em]"
             />{" "}
             {t("titleConnector")}{" "}
             <SlotMachine
@@ -65,7 +65,7 @@ export async function HeroSection() {
               interval={3200}
               spinDuration={2500}
               fitWidth
-              className="translate-y-[-0.11em]"
+              className="translate-y-[-0.09em]"
             />
             .
           </h1>

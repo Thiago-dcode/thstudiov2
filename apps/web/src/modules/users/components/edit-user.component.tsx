@@ -200,7 +200,7 @@ export default function EditUserComponent() {
           <DialogTrigger className="absolute top-3 right-3 p-2 bg-fg hover:bg-fg-2 transition-opacity cursor-pointer">
             <Pen className="size-3" />
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-2xl w-screen">
             <DialogTitle>{t("profile.editTitle")}</DialogTitle>
             <FormComponent.Container>
               <FormComponent.Form
@@ -599,39 +599,42 @@ export const EditContactLinks = ({ user }: { user: ContactLinksUser }) => {
 
       <FormComponent.LabelInput
         label={t("contact.instagram.label")}
-        type="url"
-        inputMode="url"
+        type="text"
+        inputMode="text"
         id="instagram_link"
         name="instagram_link"
         defaultValue={user?.instagram_link || undefined}
         placeholder={t("contact.instagram.placeholder")}
-        autoComplete="url"
+        autoComplete="off"
+        extraInfo={t("contact.instagram.hint")}
         error={inputErrors?.instagram_link}
         onChange={() => deleteInputErrorProperty("instagram_link")}
       />
 
       <FormComponent.LabelInput
         label={t("contact.facebook.label")}
-        type="url"
-        inputMode="url"
+        type="text"
+        inputMode="text"
         id="facebook_link"
         name="facebook_link"
         defaultValue={user?.facebook_link || undefined}
         placeholder={t("contact.facebook.placeholder")}
-        autoComplete="url"
+        autoComplete="off"
+        extraInfo={t("contact.facebook.hint")}
         error={inputErrors?.facebook_link}
         onChange={() => deleteInputErrorProperty("facebook_link")}
       />
 
       <FormComponent.LabelInput
         label={t("contact.youtube.label")}
-        type="url"
-        inputMode="url"
+        type="text"
+        inputMode="text"
         id="youtube_link"
         name="youtube_link"
         defaultValue={user?.youtube_link || undefined}
         placeholder={t("contact.youtube.placeholder")}
-        autoComplete="url"
+        autoComplete="off"
+        extraInfo={t("contact.youtube.hint")}
         error={inputErrors?.youtube_link}
         onChange={() => deleteInputErrorProperty("youtube_link")}
       />

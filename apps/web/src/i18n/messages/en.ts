@@ -34,9 +34,9 @@ const messages = {
         placeholder: "Enter your email address",
         button: "Join waitlist",
         buttonPending: "Joining...",
-        hint: "Join the wait list and become one of the first to get into A11STUDIO.",
+        hint: "Join the waitlist and become one of the first to get into A11STUDIO.",
         hintTooltip:
-          "Join the wait list and become one of our early access members, unlocking exclusive benefits. Spots are limited, and once we reach capacity, the wait list will close. <learnMore>Learn how it works</learnMore>",
+          "Join the waitlist and become one of our early access members, unlocking exclusive benefits. Spots are limited, and once we reach capacity, the waitlist will close. <learnMore>Learn how it works</learnMore>",
         successToast: "You are on the waitlist. We will keep you posted.",
         successTitle: "Just one step more: confirm your email.",
         successMessage:
@@ -44,7 +44,7 @@ const messages = {
         successReserveMessage:
           "We’ll reserve your email after you validate it.",
         alreadyExists:
-          "{email} is already on the wait list. Check your email. If this looks wrong, <supportLink>contact support</supportLink>.",
+          "{email} is already on the waitlist. Check your email. If this looks wrong, <supportLink>contact support</supportLink>.",
       },
       disclaimer: "Free to start · No credit card required",
       scrollToNextSection: "Scroll to next section",
@@ -250,13 +250,13 @@ const messages = {
         id: "create-account",
         question: "How can I create an account?",
         answer:
-          "Getting started takes just a minute. Head to the <a href='/auth/register'>sign-up page</a>, create your free account, and set up your profile. You can build your first portfolio in minutes — no coding, hosting, or web design skills required. If registrations are temporarily closed, you can <a href='#wait-list-how-it-works'>join the wait list</a> and we'll let you know the moment your spot opens.",
+          "Getting started takes just a minute. Head to the <a href='/auth/register'>sign-up page</a>, create your free account, and set up your profile. You can build your first portfolio in minutes — no coding, hosting, or web design skills required. If registrations are temporarily closed, you can <a href='#wait-list-how-it-works'>join the waitlist</a> and we'll let you know the moment your spot opens.",
       },
       {
         id: "wait-list-how-it-works",
-        question: "How does the wait list work?",
+        question: "How does the waitlist work?",
         answer:
-          "When registration is closed, the wait list is how you get early access to A11STUDIO. Here is the flow:<ul><li><strong>Join with your email.</strong> Enter your address on the wait list form. We'll send a confirmation email right away.</li><li><strong>Confirm your email.</strong> Open the message and click the link. Your spot is only reserved after you validate — until then we do not lock a position for you.</li><li><strong>Get your place in line.</strong> Your position is assigned when you confirm, in the order people validate. Earlier confirmed spots unlock stronger early-access benefits.</li><li><strong>Wait for your invite.</strong> When it is your turn, we email a personal registration link. You have <strong>7 days</strong> to create your account before the invite expires; we also send reminders before the deadline.</li><li><strong>Register and redeem.</strong> Use the link to sign up. Your wait-list benefit (free months on our top plan) is ready to redeem after you join.</li></ul><p><strong>Conditions</strong></p><ul><li>Spots are limited. Once we reach capacity, the wait list closes.</li><li>Email confirmation is required. Unconfirmed emails do not hold a position.</li><li>Benefits depend on your validated position: the first 50 confirmed members become <strong>founding members</strong> (6 months free); later confirmed members become <strong>early access members</strong> (3 months free).</li><li>Each invite is single-use for the email on the list and expires after 7 days if unused.</li><li>If you are already confirmed on the wait list, submitting the same email again will not create a new entry — check your inbox, or <a href='/support'>contact support</a> if something looks wrong.</li></ul>",
+          "When registration is closed, the waitlist is how you get early access to A11STUDIO. Here is the flow:<ul><li><strong>Join with your email.</strong> Enter your address on the waitlist form. We'll send a confirmation email right away.</li><li><strong>Confirm your email.</strong> Open the message and click the link. Your spot is only reserved after you validate — until then we do not lock a position for you.</li><li><strong>Get your place in line.</strong> Your position is assigned when you confirm, in the order people validate. Earlier confirmed spots unlock stronger early-access benefits.</li><li><strong>Wait for your invite.</strong> When it is your turn, we email a personal registration link. You have <strong>7 days</strong> to create your account before the invite expires; we also send reminders before the deadline.</li><li><strong>Register and redeem.</strong> Use the link to sign up. Your waitlist benefit (free months on our top plan) is ready to redeem after you join.</li></ul><p><strong>Conditions</strong></p><ul><li>Spots are limited. Once we reach capacity, the waitlist closes.</li><li>Email confirmation is required. Unconfirmed emails do not hold a position.</li><li>Benefits depend on your validated position: the first 50 confirmed members become <strong>founding members</strong> (6 months free); later confirmed members become <strong>early access members</strong> (3 months free).</li><li>Each invite is single-use for the email on the list and expires after 7 days if unused.</li><li>If you are already confirmed on the waitlist, submitting the same email again will not create a new entry — check your inbox, or <a href='/support'>contact support</a> if something looks wrong.</li></ul>",
       },
       {
         id: "why-ai",
@@ -274,7 +274,7 @@ const messages = {
         id: "position-profile",
         question: "How can I position my profile?",
         answer:
-          "A11STUDIO already does the hard part for you — <strong>SEO, search-engine indexing, and optimization all run automatically</strong>, and our AI writes the titles, descriptions, tags and alt text behind the scenes. Your only job is to give it rich, real material to work with. The more complete and specific your profile, the more likely the right clients — and AI assistants like ChatGPT or Google's AI Overviews — are to surface your work. Here is how to position yourself well:<ul><li><strong>Complete your profile and location.</strong> Add your name, profession and city — location powers local discovery, so clients searching for an artist near them can find you.</li><li><strong>Keep your profile focused on one discipline — or a few that belong together.</strong> Positioning is as much about what you leave out as what you put in. A profile built around a single craft — or a handful of neighboring ones, like photography and filmmaking — reads as a specialist: clients know exactly what to hire you for, and search engines and AI assistants form a clear, confident picture of what you are known for. Spread yourself across unrelated fields — tattoo artist, filmmaker and drone photographer on the same profile — and that picture blurs: every signal is diluted and you stand out for nothing in particular. If you genuinely work across distant disciplines, lead with the one you most want to be hired for and keep the rest on a separate profile.</li><li><strong>Choose the categories that match your craft.</strong> Pick your disciplines and styles honestly; this is how clients filter results and how search engines understand what you do.</li><li><strong>Upload your strongest work with real titles and descriptions.</strong> Give each piece a clear, specific title and a short description — the AI enriches them, but it needs genuine detail (subject, style, place) to build on.</li><li><strong>Add a banner and clean thumbnails.</strong> They are the first thing visitors — and social share cards — see; a polished visual makes people stay.</li><li><strong>Fill in your services.</strong> List what you offer and the details clients need to hire you — services target high-intent, ready-to-buy searches.</li><li><strong>Write your About page.</strong> Your story and experience build the trust that turns a visitor into a client.</li><li><strong>Organize your portfolios and collections.</strong> Keep your best-of <a href='#what-is-a-portfolio'>portfolios</a> and per-project <a href='#what-is-a-collection'>collections</a> tidy so visitors instantly understand your work.</li></ul>Do these and A11STUDIO handles everything technical on top — you never have to learn SEO yourself. Still unsure? <a href='/support'>Reach out to us</a>.",
+          "A11STUDIO already does the hard part for you — <strong>SEO, search-engine indexing, and optimization all run automatically</strong>, and our AI writes the titles, descriptions, tags and alt text behind the scenes. Your only job is to give it rich, real material to work with. The more complete and specific your profile, the more likely the right clients — and AI assistants like ChatGPT or Google's AI Overviews — are to surface your work. Here is how to position yourself well:<ul><li><strong>Complete your profile and location.</strong> Add your name, profession and city — location powers local discovery, so clients searching for an artist near them can find you.</li><li><strong>Keep your profile focused on one discipline — or a few that belong together.</strong> Positioning is as much about what you leave out as what you put in. A profile built around a single craft — or a handful of neighboring ones, like photography and filmmaking — reads as a specialist: clients know exactly what to hire you for, and search engines and AI assistants form a clear, confident picture of what you are known for. Spread yourself across unrelated fields — tattoo artist, filmmaker and drone photographer on the same profile — and that picture blurs: every signal is diluted and you stand out for nothing in particular. If you genuinely work across distant disciplines, lead with the one you most want to be hired for and keep the rest on a separate profile.</li><li><strong>Choose the categories that match your craft.</strong> Pick your disciplines and styles honestly; this is how clients filter results and how search engines understand what you do.</li><li><strong>Upload your strongest work with real titles and descriptions.</strong> Give each piece a clear, specific title and a short description — the AI enriches them, but it needs genuine detail (subject, style, place) to build on.</li><li><strong>Add a banner and clean thumbnails.</strong> They are the first thing visitors — and social share cards — see; a polished visual makes people stay.</li><li><strong>Fill in your services.</strong> List what you offer and the details clients need to hire you — services target high-intent, ready-to-buy searches.</li><li><strong>Write your About page.</strong> Your story and experience build the trust that turns a visitor into a client.</li><li><strong>Organize your portfolios and collections.</strong> Keep your best-of <a href='#what-is-a-portfolio'>portfolios</a> and per-project <a href='#what-is-a-collection'>collections</a> tidy so visitors instantly understand your work.</li></ul>Do these, and A11STUDIO handles everything technical from there — you never have to learn SEO yourself. Still unsure? <a href='/support'>Reach out to us</a>.",
       },
       {
         id: "get-clients",
@@ -299,12 +299,12 @@ const messages = {
       metadata: {
         title: "FAQ — A11STUDIO",
         description:
-          "Answers to common questions about A11STUDIO — what it is, portfolios, creating an account, the wait list, AI, positioning your profile, and pricing.",
+          "Answers to common questions about A11STUDIO — what it is, portfolios, creating an account, the waitlist, AI, positioning your profile, and pricing.",
       },
       hero: {
         label: "FAQ",
         title: "Frequently asked questions",
-        lead: "Everything you need to know about A11STUDIO — what it is, how to get started, the wait list, and how it helps the right people discover your work.",
+        lead: "Everything you need to know about A11STUDIO — what it is, how to get started, the waitlist, and how it helps the right people discover your work.",
       },
       navLabel: "On this page",
     },
@@ -324,7 +324,7 @@ const messages = {
       title: "What is A11STUDIO?",
       paragraphs: [
         "Traditional websites give artists complete control over how they present their work. Social media makes publishing effortless and helps build community. A11STUDIO was created to bring these two worlds together.",
-        "Instead of forcing artists to choose between a beautiful portfolio or an easy-to-use platform, A11STUDIO offers both. We remove the technical barriers — you can build a professional portfolio in minutes while the platform handles SEO, optimization, and maintenance behind the scenes.",
+        "Instead of forcing artists to choose between a beautiful portfolio and an easy-to-use platform, A11STUDIO offers both. We remove the technical barriers — you can build a professional portfolio in minutes while the platform handles SEO, optimization, and maintenance behind the scenes.",
       ],
     },
     bridge: {
@@ -455,7 +455,7 @@ const messages = {
   waitListDialog: {
     title: "Registration is now closed",
     description:
-      "Join the wait list and become one of the first to get into A11STUDIO.",
+      "Join the waitlist and become one of the first to get into A11STUDIO.",
   },
   footer: {
     tagline: "The portfolio platform built for artists.",
@@ -600,12 +600,11 @@ const messages = {
   },
   waitListValidate: {
     metadata: {
-      title: "Validate Email - A11STUDIO",
-      description:
-        "Validate your email address to confirm your wait list spot.",
+      title: "Validate Email — A11STUDIO",
+      description: "Validate your email address to confirm your waitlist spot.",
     },
     page: {
-      label: "Wait list",
+      label: "Waitlist",
       title: "Email confirmed.",
       description:
         "Your spot on the waitlist is reserved. There’s nothing else to do — we’ll email you as soon as it’s your turn.",
@@ -666,7 +665,7 @@ const messages = {
   auth: {
     login: {
       title: "Hello again",
-      subtitle: "Sign in to have access to your account",
+      subtitle: "Sign in to access your account",
       problemWithLogin: "Problem with login?",
       agreePrefix: "By signing in, you agree to our",
       termsOfService: "Terms of Service",
@@ -680,7 +679,7 @@ const messages = {
     },
     register: {
       title: "Create your account",
-      subtitle: "And start building your dream portfolio",
+      subtitle: "Start building your dream portfolio",
       alreadyHaveAccount: "Already have an account?",
       emailLabel: "Email Address",
       emailPlaceholder: "you@example.com",
@@ -707,11 +706,11 @@ const messages = {
       emailLabel: "Email address",
       emailPlaceholder: "your@email.com",
       submit: "Send",
-      checkEmailTitle: "Check your Email",
+      checkEmailTitle: "Check your email",
       checkEmailSubtitle:
         "We've sent a password recovery link to your email address",
       didntReceiveEmail: "Didn't receive the email?",
-      rememberPasswordShort: "Remember password?",
+      rememberPasswordShort: "Remember your password?",
       tryAgain: "Try again",
       tryAgainIn: "Try again in",
       setNewPasswordTitle: "Set New Password",
@@ -805,12 +804,12 @@ const messages = {
     billed: "billed {billingType}",
     paymentMethod: "Payment Method",
     completePayment: "Complete Payment",
-    trustPaymentAlt: "trust payment",
+    trustPaymentAlt: "Secure payment",
   },
   userBenefitModal: {
     title: "You have a gift waiting",
     description:
-      "As a <name>{label}</name> you get <free>{months, plural, one {# month free} other {# months free}}</free>.",
+      "As a <name>{label}</name>, you get <free>{months, plural, one {# month free} other {# months free}}</free>.",
     claimBelow: "Claim it right below. We will guide you to get the benefit.",
     claimAfterSetup:
       "Once you finish your welcome setup we will guide you to get the benefit.",
@@ -827,7 +826,7 @@ const messages = {
   },
   emailPreferences: {
     metadata: {
-      title: "Email preferences - A11STUDIO",
+      title: "Email preferences — A11STUDIO",
       description:
         "Update the types of emails you want to receive from A11STUDIO.",
     },
@@ -916,15 +915,18 @@ const messages = {
       },
       instagram: {
         label: "Instagram",
-        placeholder: "https://instagram.com/yourhandle",
+        placeholder: "yourhandle",
+        hint: "Username or full Instagram URL (instagram.com/…).",
       },
       facebook: {
         label: "Facebook",
-        placeholder: "https://facebook.com/yourpage",
+        placeholder: "yourpage",
+        hint: "Username/page or full Facebook URL (facebook.com/…).",
       },
       youtube: {
         label: "YouTube",
-        placeholder: "https://youtube.com/@yourchannel",
+        placeholder: "yourchannel",
+        hint: "Handle or full YouTube URL (youtube.com/…).",
       },
       website: {
         label: "Website",
@@ -1097,7 +1099,7 @@ const messages = {
         "Slug must contain only lowercase letters, numbers, and hyphens",
     },
     avatarUrlInvalid: "Invalid avatar URL",
-    fallbackUrlInvalid: "Invalid fallback url",
+    fallbackUrlInvalid: "Invalid fallback URL",
     thumbnailRequired: "Thumbnail is required",
     maxCategories: "Portfolios can have up to {max} categories",
     maxPortfolioItems: "Portfolios can have up to {max} items",
@@ -1126,7 +1128,7 @@ const messages = {
         "Username can only contain letters, numbers, underscores, and hyphens",
       invalidCode: "Invalid code",
       codeLength: "Code must be {length} digits",
-      invalidFallbackUrl: "Invalid fallback url",
+      invalidFallbackUrl: "Invalid fallback URL",
     },
     subscription: {
       urlMustBeAppOrigin: "URL must be on the app's origin",
@@ -1149,11 +1151,11 @@ const messages = {
     },
     url: {
       instagram:
-        "Enter a valid Instagram URL, e.g. https://instagram.com/yourhandle",
+        "Enter an Instagram username or official URL, e.g. yourhandle or https://instagram.com/yourhandle",
       facebook:
-        "Enter a valid Facebook URL, e.g. https://facebook.com/yourpage",
+        "Enter a Facebook username/page or official URL, e.g. yourpage or https://facebook.com/yourpage",
       youtube:
-        "Enter a valid YouTube URL, e.g. https://youtube.com/@yourchannel",
+        "Enter a YouTube handle or official URL, e.g. yourchannel or https://youtube.com/@yourchannel",
       website: "Enter a valid URL starting with https://",
     },
   },
@@ -1170,7 +1172,7 @@ const messages = {
     biography: "Biography",
     shortBiography: "Short biography",
     currentPassword: "Current password",
-    newPassword: "Password",
+    newPassword: "New password",
     thumbnail: "Thumbnail",
     avatar: "Avatar",
     banner: "Banner",
@@ -1315,7 +1317,7 @@ const messages = {
           "You've reached the limit of {limit} highlighted portfolios on your profile page.",
         active: "Active",
         activeInfo:
-          "When disabled, this portfolio is hidden from your public artist profile and listings. You can still edit it in the atelier.",
+          "When disabled, this portfolio is hidden from your public artist profile and listings. You can still edit it in Atelier.",
       },
       items: {
         noItems: "No media or collections added yet",
@@ -1376,7 +1378,7 @@ const messages = {
         descriptionLabel: "Description",
         descriptionPlaceholder: "Describe your service...",
         priceLabel: "Price",
-        priceInfo: "Price is optional, leave it to 0.",
+        priceInfo: "Price is optional; leave it at 0.",
         showPrice: "Show price",
         active: "Active",
         showOnProfile: "Show on profile page",
@@ -1454,7 +1456,7 @@ const messages = {
           "You've reached the limit of {limit} highlighted collections on your profile page.",
         active: "Active",
         activeInfo:
-          "When disabled, this collection is hidden from your public artist profile and listings. You can still edit it in the atelier.",
+          "When disabled, this collection is hidden from your public artist profile and listings. You can still edit it in Atelier.",
       },
       media: {
         sectionLabel: "Media",
@@ -1500,7 +1502,7 @@ const messages = {
         filesCount: "{count}/{max} files",
         maxReached: "Maximum reached",
         compressionLabel: "Compression",
-        upgradeToAdjust: "Updgrade required",
+        upgradeToAdjust: "Upgrade required",
         previewAlt: "Preview {index}",
         createNewMedia: "Create New Media",
         uploadUpToImages: "Upload up to {max} images (JPEG, PNG, WebP)",
@@ -1570,7 +1572,7 @@ const messages = {
         cancel: "Cancel",
         selectMedia: "Select media",
         cancelSelection: "Cancel selection",
-        noMediaFiltered: "No media found, try other filter combination",
+        noMediaFiltered: "No media found. Try a different filter combination.",
         noMediaEmpty:
           "No media uploaded yet. Start by adding your first image.",
         updateItems: "Update {count} {count, plural, one {item} other {items}}",
@@ -1603,17 +1605,17 @@ const messages = {
         uploadComplete: "Upload complete",
         uploadingFiles: "Uploading files",
         remaining: "{count} remaining",
-        success: "success",
+        success: "successful",
         failed: "failed",
         allComplete: "All complete",
         queued: "Queued...",
         uploading: "Uploading...",
         updating: "Updating...",
-        generatingSeo: "Generating SEO...",
+        generatingSeo: "Generating metadata...",
         deleting: "Deleting...",
         uploaded: "Uploaded",
         updated: "Updated",
-        seoGenerated: "SEO generated",
+        seoGenerated: "Metadata generated",
         deleted: "Deleted",
         failedFallback: "Failed",
         preparingUpload: "Preparing upload...",

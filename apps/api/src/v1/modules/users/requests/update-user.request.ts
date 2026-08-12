@@ -15,7 +15,10 @@ import {
   FACEBOOK_URL_REGEX,
   YOUTUBE_URL_REGEX,
   WEBSITE_URL_REGEX,
+  normalizeFacebookLink,
+  normalizeInstagramLink,
   normalizePhone,
+  normalizeYoutubeLink,
 } from '@repo/common-lib/constants/validation';
 import { ToInt } from 'src/common/decorators/to-int.decorator';
 import { ModelArrayExist } from 'src/common/validators/model-array-exist.validtor';
@@ -32,6 +35,25 @@ const emptyToNull = ({ value }: { value: unknown }) => {
 const normalizePhoneOrNull = ({ value }: { value: unknown }) => {
   if (typeof value !== 'string') return value;
   const normalized = normalizePhone(value.trim());
+  return normalized === '' ? null : normalized;
+};
+
+/** Expand bare social handles to official URLs; empty → `null` to clear the column. */
+const normalizeInstagramOrNull = ({ value }: { value: unknown }) => {
+  if (typeof value !== 'string') return value;
+  const normalized = normalizeInstagramLink(value);
+  return normalized === '' ? null : normalized;
+};
+
+const normalizeFacebookOrNull = ({ value }: { value: unknown }) => {
+  if (typeof value !== 'string') return value;
+  const normalized = normalizeFacebookLink(value);
+  return normalized === '' ? null : normalized;
+};
+
+const normalizeYoutubeOrNull = ({ value }: { value: unknown }) => {
+  if (typeof value !== 'string') return value;
+  const normalized = normalizeYoutubeLink(value);
   return normalized === '' ? null : normalized;
 };
 
@@ -94,7 +116,7 @@ export class UpdateUserRequest {
   phone_number?: string | null;
 
   @IsOptional()
-  @Transform(emptyToNull)
+  @Transform(normalizeFacebookOrNull)
   @IsString()
   @MaxLength(LINK_MAX_LENGTH)
   @Matches(FACEBOOK_URL_REGEX, {
@@ -112,7 +134,7 @@ export class UpdateUserRequest {
   website_link?: string | null;
 
   @IsOptional()
-  @Transform(emptyToNull)
+  @Transform(normalizeInstagramOrNull)
   @IsString()
   @MaxLength(LINK_MAX_LENGTH)
   @Matches(INSTAGRAM_URL_REGEX, {
@@ -121,7 +143,7 @@ export class UpdateUserRequest {
   instagram_link?: string | null;
 
   @IsOptional()
-  @Transform(emptyToNull)
+  @Transform(normalizeYoutubeOrNull)
   @IsString()
   @MaxLength(LINK_MAX_LENGTH)
   @Matches(YOUTUBE_URL_REGEX, {

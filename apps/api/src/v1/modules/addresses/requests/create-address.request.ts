@@ -6,7 +6,6 @@ import {
 } from 'class-validator';
 import { IsUserAuth } from 'src/common/validators/is-user-auth.validtor';
 import { ModelExist } from 'src/common/validators/model-exist.validtor';
-import { ModelNotExist } from 'src/common/validators/model-not-exist.validtor';
 
 export class CreateAddressRequest {
   @IsString()
@@ -55,14 +54,12 @@ export class CreateAddressRequest {
   @IsOptional()
   @IsNumber()
   @ModelExist('users')
-  @ModelNotExist('addresses','user_id')
   @IsUserAuth()
   user_id?: number;
 
   @IsOptional()
   @IsNumber()
   @ModelExist('clients')
-  @ModelNotExist('addresses','client_id')
   client_id?: number;
 }
 

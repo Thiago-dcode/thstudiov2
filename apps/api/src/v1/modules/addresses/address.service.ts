@@ -30,6 +30,12 @@ export class AddressService {
     return await this.addressRepository.getFirstByClient(clientId);
   }
 
+  /**
+   * `addresses.user_id` / `addresses.client_id` are unique (one address per owner), and callers
+   * cannot always know whether a row already exists — the address editor is reachable from the
+   * onboarding funnel and the profile page, each rendering its own snapshot of the current address.
+   * So creating is an upsert: an existing row for the owner is patched instead of rejected.
+   */
   public async create(data: CreateAddressInput) {
     if (!data.user_id && !data.client_id) {
       throw new BadRequestException('User id or client id must be sent');
@@ -38,6 +44,18 @@ export class AddressService {
       await this.assertOwnsClient(data.client_id);
     }
     cleanObj(data);
+
+    const existing = data.user_id
+      ? await this.addressRepository.getFirstByUser(data.user_id)
+      : await this.addressRepository.getFirstByClient(data.client_id!);
+
+    if (existing) {
+      const patch: UpdateAddressInput = { ...data };
+      delete patch.user_id;
+      delete patch.client_id;
+      return await this.update(existing.id, patch);
+    }
+
     const result = await this.addressRepository.create(data);
     this.emitCreateOrUpdateLocationFromAddress(result);
     return result;

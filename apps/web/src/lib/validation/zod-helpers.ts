@@ -2,7 +2,10 @@ import {
   FACEBOOK_URL_REGEX,
   INSTAGRAM_URL_REGEX,
   LINK_MAX_LENGTH,
+  normalizeFacebookLink,
+  normalizeInstagramLink,
   normalizePhone,
+  normalizeYoutubeLink,
   PHONE_MAX_LENGTH,
   PHONE_REGEX,
   WEBSITE_URL_REGEX,
@@ -89,28 +92,40 @@ export const phoneField = (t: Translator) =>
       .optional(),
   );
 
-/** Instagram profile URL (empty allowed). */
+/** Instagram: bare handle or official URL (empty allowed). Normalized before validate. */
 export const instagramUrlField = (t: Translator) =>
-  optionalPatternField(
-    INSTAGRAM_URL_REGEX,
-    t("validation.url.instagram"),
-    tooLongMessage(t, t("fields.instagramLink")),
+  z.preprocess(
+    (value) =>
+      typeof value === "string" ? normalizeInstagramLink(value) : value,
+    optionalPatternField(
+      INSTAGRAM_URL_REGEX,
+      t("validation.url.instagram"),
+      tooLongMessage(t, t("fields.instagramLink")),
+    ),
   );
 
-/** Facebook profile/page URL (empty allowed). */
+/** Facebook: bare slug or official URL (empty allowed). Normalized before validate. */
 export const facebookUrlField = (t: Translator) =>
-  optionalPatternField(
-    FACEBOOK_URL_REGEX,
-    t("validation.url.facebook"),
-    tooLongMessage(t, t("fields.facebookLink")),
+  z.preprocess(
+    (value) =>
+      typeof value === "string" ? normalizeFacebookLink(value) : value,
+    optionalPatternField(
+      FACEBOOK_URL_REGEX,
+      t("validation.url.facebook"),
+      tooLongMessage(t, t("fields.facebookLink")),
+    ),
   );
 
-/** YouTube channel/handle URL (empty allowed). */
+/** YouTube: bare handle or official URL (empty allowed). Normalized before validate. */
 export const youtubeUrlField = (t: Translator) =>
-  optionalPatternField(
-    YOUTUBE_URL_REGEX,
-    t("validation.url.youtube"),
-    tooLongMessage(t, t("fields.youtubeLink")),
+  z.preprocess(
+    (value) =>
+      typeof value === "string" ? normalizeYoutubeLink(value) : value,
+    optionalPatternField(
+      YOUTUBE_URL_REGEX,
+      t("validation.url.youtube"),
+      tooLongMessage(t, t("fields.youtubeLink")),
+    ),
   );
 
 /** Generic website URL (empty allowed). */
