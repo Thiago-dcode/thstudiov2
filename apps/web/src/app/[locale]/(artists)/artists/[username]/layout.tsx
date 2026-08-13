@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { normalizeUsername } from "@repo/common-lib/utils/username";
 import { WebFooter } from "@/lib/components/web-footer";
 import { getArtistShareReady } from "@/modules/users/get-artist-share-ready";
 import { ArtistProvider } from "@/modules/users/providers/artist.provider";
@@ -11,7 +12,8 @@ export default async function Layout({
   children: ReactNode;
   params: Promise<{ username: string }>;
 }) {
-  const { username } = await params;
+  const { username: rawUsername } = await params;
+  const username = normalizeUsername(rawUsername);
   const shareReady = await getArtistShareReady(username);
 
   return (

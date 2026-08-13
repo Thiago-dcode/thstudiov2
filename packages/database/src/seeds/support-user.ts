@@ -18,10 +18,11 @@ import { LogService } from '@repo/backend-lib/services/log-service';
 import Logger from '@repo/backend-lib/utils/console';
 import { randomUUID } from 'node:crypto';
 import { requireEnv } from '@repo/common-lib/utils/require-env';
+import { normalizeUsername } from '@repo/common-lib/utils/username';
 import { Query } from '../lib/facades';
 
 const SUPPORT_EMAIL = requireEnv('SUPPORT_EMAIL');
-export const SUPPORT_USERNAME = requireEnv('SUPPORT_USERNAME');
+export const SUPPORT_USERNAME = normalizeUsername(requireEnv('SUPPORT_USERNAME'));
 const SUPPORT_PASSWORD = requireEnv('SUPPORT_PASSWORD');
 
 export const main = async () => {

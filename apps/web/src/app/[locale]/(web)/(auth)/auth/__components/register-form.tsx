@@ -3,6 +3,7 @@
 import { Errors } from "@repo/ui/components/custom/errors";
 import { Input } from "@repo/ui/components/shadcn/input";
 import { Label } from "@repo/ui/components/shadcn/label";
+import { normalizeUsername } from "@repo/common-lib/utils/username";
 import { Eye, EyeClosed } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { type ReactNode, useState } from "react";
@@ -10,6 +11,7 @@ import { useRouter } from "@/i18n/navigation";
 import FormComponent from "@/lib/components/form-component";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { registerServerAction } from "@/modules/auth/server-actions/register.action";
+
 export const RegisterForm = ({
   children,
   initialEmail,
@@ -59,8 +61,14 @@ export const RegisterForm = ({
           defaultValue={result?.inputs?.username}
           placeholder={t("usernamePlaceholder")}
           autoComplete="username"
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
           required
-          onChange={() => cleanErrors()}
+          onChange={(e) => {
+            e.target.value = normalizeUsername(e.target.value);
+            cleanErrors();
+          }}
         />
         {/* Password Field */}
         <FormComponent.Field>

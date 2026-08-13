@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
+import { normalizeUsername } from "@repo/common-lib/utils/username";
 import { ArtistBreadcrumb } from "@/app/[locale]/(artists)/__components/artist-breadcrumb";
 import Web from "@/lib/components/web-page.component";
 import { buildStaticPageMetadata } from "@/lib/seo/static-metadata";
@@ -13,7 +14,8 @@ type Props = {
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { locale, username } = await params;
+  const { locale, username: rawUsername } = await params;
+  const username = normalizeUsername(rawUsername);
   const [{ data: profile }, t] = await Promise.all([
     usersService.getProfile(username),
     getTranslations("artists.services"),
@@ -40,7 +42,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function Page({ params }: Props) {
-  const { username } = await params;
+  const { username: rawUsername } = await params;
+  const username = normalizeUsername(rawUsername);
   const t = await getTranslations("artists.services");
 
   const [userExist, response] = await Promise.all([

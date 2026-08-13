@@ -20,6 +20,7 @@ import {
   normalizePhone,
   normalizeYoutubeLink,
 } from '@repo/common-lib/constants/validation';
+import { normalizeUsername } from '@repo/common-lib/utils/username';
 import { ToInt } from 'src/common/decorators/to-int.decorator';
 import { ModelArrayExist } from 'src/common/validators/model-array-exist.validtor';
 import { ModelExist } from 'src/common/validators/model-exist.validtor';
@@ -74,10 +75,13 @@ export class UpdateUserRequest {
   profession?: string;
 
   @IsOptional()
+  @Transform(({ value }) =>
+    typeof value === 'string' ? normalizeUsername(value) : value,
+  )
   @IsString()
   @MinLength(3)
   @MaxLength(20)
-  @Matches(/^[a-zA-Z0-9]+$/, {
+  @Matches(/^[a-z0-9]+$/, {
     message: 'username must be alphanumeric with no spaces',
   })
   username?: string;

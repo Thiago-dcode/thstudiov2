@@ -15,6 +15,7 @@ import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { UserService } from './users.service';
 import { UpdateUserRequest } from './requests/update-user.request';
 import { ModelExistPipe } from 'src/pipes/model-exist.pipe';
+import { ToLowerCasePipe } from 'src/pipes/to-lowercase.pipe';
 import { Public } from 'src/common/decorators/public.decorator';
 import { UserExtraDataService } from '../user-extra-data/user-extra-data.service';
 import { IsUserAuthPipe } from 'src/pipes/is-user-auth.pipe';
@@ -43,19 +44,25 @@ export class UserController {
 
   @Public()
   @Get('profile/:username')
-  async getProfile(@Param('username', new ModelExistPipe('users', 'username')) username: string) {
+  async getProfile(
+    @Param('username', ToLowerCasePipe, new ModelExistPipe('users', 'username'))
+    username: string,
+  ) {
     return await this.userService.getProfileByUsername(username);
   }
 
   @Public()
   @Get('compact/:username')
-  async getCompacted(@Param('username', new ModelExistPipe('users', 'username')) username: string) {
+  async getCompacted(
+    @Param('username', ToLowerCasePipe, new ModelExistPipe('users', 'username'))
+    username: string,
+  ) {
     return await this.userService.getCompactedByUsername(username);
   }
 
   @Public()
   @Get('exists/:username')
-  async usernameExists(@Param('username') username: string) {
+  async usernameExists(@Param('username', ToLowerCasePipe) username: string) {
     return await this.userService.usernameExists(username);
   }
 

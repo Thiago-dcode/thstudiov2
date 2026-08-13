@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
+import { normalizeUsername } from "@repo/common-lib/utils/username";
 import { ArtistBreadcrumb } from "@/app/[locale]/(artists)/__components/artist-breadcrumb";
 import { ArtistContactDialog } from "@/app/[locale]/(artists)/__components/artist-contact.dialog";
 import { Link } from "@/i18n/navigation";
@@ -18,7 +19,8 @@ type Props = {
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { locale, username } = await params;
+  const { locale, username: rawUsername } = await params;
+  const username = normalizeUsername(rawUsername);
   const [{ data: profile }, { data: aboutPage }, t] = await Promise.all([
     usersService.getProfile(username),
     userAboutPageService.getByUsername(username),
@@ -59,7 +61,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function AboutPage({ params }: Props) {
-  const { username } = await params;
+  const { username: rawUsername } = await params;
+  const username = normalizeUsername(rawUsername);
   const t = await getTranslations("artists.about");
   const tEdit = await getTranslations("artists.editAria");
 

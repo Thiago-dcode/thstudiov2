@@ -45,7 +45,6 @@ export class ModelNotExistValidator extends BaseModelValidator {
         }
       }
 
-       
       const record = await queryBuilder.where(column, '=', value).exists();
       if (record) {
         this.message =
@@ -59,7 +58,6 @@ export class ModelNotExistValidator extends BaseModelValidator {
       }
       return true;
     } catch (error) {
-      console.log("MODEL NO EXIST",error)
       if (error instanceof DbException) {
         this.message = `Validation error: ${error.message}`;
       } else {

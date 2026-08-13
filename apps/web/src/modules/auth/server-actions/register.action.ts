@@ -2,6 +2,7 @@
 
 import type { ActionReturn } from "@repo/common-lib/types/response";
 import type { BaseUser } from "@repo/common-lib/types/user";
+import { normalizeUsername } from "@repo/common-lib/utils/username";
 import { getTranslations } from "next-intl/server";
 import authService from "../auth.service";
 import { getObjErrorFromZod } from "../helpers";
@@ -26,7 +27,7 @@ export const registerServerAction = async (
       ? (formData.get("email") as string)
       : undefined,
     username: formData.get("username")
-      ? (formData.get("username") as string)
+      ? normalizeUsername(formData.get("username") as string)
       : undefined,
     password: formData.get("password")
       ? (formData.get("password") as string)

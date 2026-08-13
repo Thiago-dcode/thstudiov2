@@ -1,4 +1,5 @@
 import * as z from "zod";
+import { normalizeUsername } from "@repo/common-lib/utils/username";
 import {
   emailField,
   facebookUrlField,
@@ -31,7 +32,8 @@ export const createUserSchema = (t: Translator) =>
       .string()
       .min(3, minLengthMessage(t, t("fields.username"), 3))
       .max(50, maxLengthMessage(t, t("fields.username"), 50))
-      .regex(/^[a-zA-Z0-9]+$/, t("validation.user.usernameAlphanumeric")),
+      .regex(/^[a-zA-Z0-9]+$/, t("validation.user.usernameAlphanumeric"))
+      .transform(normalizeUsername),
     password: z
       .string()
       .min(8, minLengthMessage(t, t("fields.password"), 8))
@@ -76,6 +78,7 @@ export const updateUserSchema = (t: Translator) =>
         .min(3, minLengthMessage(t, t("fields.username"), 3))
         .max(20, maxLengthMessage(t, t("fields.username"), 20))
         .regex(/^[a-zA-Z0-9]+$/, t("validation.user.usernameAlphanumeric"))
+        .transform(normalizeUsername)
         .optional(),
       password: z
         .string()

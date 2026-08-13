@@ -167,9 +167,7 @@ export class UserRepository extends BaseRepository {
   }
 
   async usernameExists(username: string): Promise<boolean> {
-
     return await this.query().where('username', '=', username).exists();
-
   }
 
   async findById(id: number): Promise<User> {

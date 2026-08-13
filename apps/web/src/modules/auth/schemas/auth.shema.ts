@@ -1,4 +1,5 @@
 import * as z from "zod";
+import { normalizeUsername } from "@repo/common-lib/utils/username";
 import {
   maxLengthMessage,
   minLengthMessage,
@@ -21,7 +22,8 @@ export const registerRequestSchema = (t: Translator) =>
       .string(t("validation.auth.invalidUsername"))
       .min(3, minLengthMessage(t, t("fields.username"), 3))
       .max(20, maxLengthMessage(t, t("fields.username"), 20))
-      .regex(/^[a-zA-Z0-9_-]+$/, t("validation.auth.usernameAllowedChars")),
+      .regex(/^[a-zA-Z0-9_-]+$/, t("validation.auth.usernameAllowedChars"))
+      .transform(normalizeUsername),
     password: z
       .string(t("validation.auth.invalidPassword"))
       .min(3, minLengthMessage(t, t("fields.password"), 3))

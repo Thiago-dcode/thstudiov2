@@ -2,6 +2,7 @@
 
 import { MAX_USERNAME_RESET } from "@repo/common-lib/constants/constants";
 import type { User } from "@repo/common-lib/types/user";
+import { normalizeUsername } from "@repo/common-lib/utils/username";
 import { Errors } from "@repo/ui/components/custom/errors";
 import { Button } from "@repo/ui/components/shadcn/button";
 import {
@@ -125,11 +126,15 @@ export const EditUserUsernameDialog = ({ user }: Props) => {
                 name="username"
                 type="text"
                 autoComplete="username"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
                 autoFocus
                 required
                 defaultValue={user.username ?? ""}
                 extraInfo={t("newUsernameInfo")}
                 onChange={(e) => {
+                  e.target.value = normalizeUsername(e.target.value);
                   setValue(e.target.value);
                   deleteInputErrorProperty("username");
                 }}

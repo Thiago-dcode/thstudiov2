@@ -8,6 +8,7 @@ import type {
   UpdateUserInputWithAssets,
 } from "@repo/common-lib/types/user";
 import { cleanObj, trimValues } from "@repo/common-lib/utils/cleanObj";
+import { normalizeUsername } from "@repo/common-lib/utils/username";
 import { revalidateTag } from "next/cache";
 import { getTranslations } from "next-intl/server";
 import {
@@ -40,7 +41,9 @@ export const updateUserAction = async (
     name: (formData.get("name") as string) ?? undefined,
     surname: (formData.get("surname") as string) ?? undefined,
     profession: (formData.get("profession") as string) ?? undefined,
-    username: (formData.get("username") as string) ?? undefined,
+    username: formData.get("username")
+      ? normalizeUsername(formData.get("username") as string)
+      : undefined,
     short_biography: (formData.get("short_biography") as string) ?? undefined,
     funnel_step: formData.get("funnel_step")
       ? parseInt(formData.get("funnel_step") as string, 10)

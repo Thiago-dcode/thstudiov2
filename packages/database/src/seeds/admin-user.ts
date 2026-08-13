@@ -24,11 +24,12 @@ import { LogService } from '@repo/backend-lib/services/log-service';
 import Logger from '@repo/backend-lib/utils/console';
 import { randomUUID } from 'node:crypto';
 import { requireEnv } from '@repo/common-lib/utils/require-env';
+import { normalizeUsername } from '@repo/common-lib/utils/username';
 import { Query } from '../lib/facades';
 
 const ADMIN_EMAIL = requireEnv('ADMIN_EMAIL');
 /** Same value used by `ADMIN_USERNAME`; exported for `main.ts` and other seeds that target the admin user. */
-export const ADMIN_USERNAME = requireEnv('ADMIN_USERNAME');
+export const ADMIN_USERNAME = normalizeUsername(requireEnv('ADMIN_USERNAME'));
 const ADMIN_PASSWORD = requireEnv('ADMIN_PASSWORD');
 
 export const main = async () => {

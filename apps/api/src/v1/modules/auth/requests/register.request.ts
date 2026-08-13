@@ -10,6 +10,7 @@ import {
   IsOptional,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
+import { normalizeUsername } from '@repo/common-lib/utils/username';
 
 const FORBIDDEN_USERNAMES = [
   'admin',
@@ -35,24 +36,19 @@ export class RegisterRequest {
   @ModelNotExist('users', 'email')
   email: string;
 
+  @Transform(({ value }) =>
+    typeof value === 'string' ? normalizeUsername(value) : value,
+  )
   @IsString()
   @IsNotEmpty()
   @MinLength(3)
   @MaxLength(20)
-  @Matches(/^[a-zA-Z0-9]+$/, {
-    message: 'username must be alphanumeric with no spaces',
-  })
-
-  @IsOptional()
-  @IsString()
-  @MinLength(3)
-  @MaxLength(20)
-  @Matches(/^[a-zA-Z0-9]+$/, {
+  @Matches(/^[a-z0-9]+$/, {
     message: 'username must be alphanumeric with no spaces',
   })
   @NotIn([...FORBIDDEN_USERNAMES], {
     message: 'username is not allowed',
-  }, false)
+  })
   @ModelNotExist('users', 'username')
   username: string;
 

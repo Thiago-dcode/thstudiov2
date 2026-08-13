@@ -1,6 +1,7 @@
 import { PLATFORM_CURRENCY } from "@repo/common-lib/constants/constants";
 import type { Service } from "@repo/common-lib/types/service";
 import type { UserProfile } from "@repo/common-lib/types/user";
+import { normalizeUsername } from "@repo/common-lib/utils/username";
 import { Badge } from "@repo/ui/components/shadcn/badge";
 import { ArrowRight, Globe, Mail, MapPin, Phone } from "lucide-react";
 import type { Metadata } from "next";
@@ -34,7 +35,8 @@ const canonicalUrl = (username: string) =>
   `${serverEnv.APP_URL}/artists/${username}`;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { locale, username } = await params;
+  const { locale, username: rawUsername } = await params;
+  const username = normalizeUsername(rawUsername);
   const [{ data: profile }, t] = await Promise.all([
     UserService.getProfile(username),
     getTranslations("artists.profile"),
@@ -153,7 +155,8 @@ const buildProfileJsonLd = (profile: UserProfile, services: Service[]) => {
 };
 
 const ArtistHomePage = async ({ params }: Props) => {
-  const { username } = await params;
+  const { username: rawUsername } = await params;
+  const username = normalizeUsername(rawUsername);
   const [{ data: profile }, { data: services }, t] = await Promise.all([
     UserService.getProfile(username),
     userServiceService.getAllByUsername(username, {
