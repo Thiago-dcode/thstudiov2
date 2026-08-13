@@ -1,14 +1,21 @@
 import { Injectable } from '@nestjs/common';
+import { FactoryLogService } from '@repo/backend-lib/services/log-service';
 import { AiService } from '../ai/ai.service';
 import { MediaService } from '../media/media.service';
 import { CategoriesService } from '../categories/categories.service';
+import { PortfolioRepository } from '../portfolios/portfolio.repository';
+import { CollectionRepository } from '../collections/collection.repository';
 
 @Injectable()
 export class AiMediaService {
+  private readonly logger = FactoryLogService.createLogService('file', { channel: 'ai' });
+
   constructor(
     private readonly aiService: AiService,
     private readonly mediaService: MediaService,
     private readonly categoriesService: CategoriesService,
+    private readonly portfolioRepository: PortfolioRepository,
+    private readonly collectionRepository: CollectionRepository,
   ) {}
 
   /**
@@ -48,6 +55,36 @@ export class AiMediaService {
     // Drop the cached SEO now that fresh per-locale translations are persisted.
     await this.mediaService.invalidateSeoCache(media.public_id);
 
+    await this.markParentSeoStale(request.media_id);
+
     return media;
+  }
+
+  /**
+   * Portfolio/collection SEO is written from the text of the media they display, so an image that
+   * only now received its own metadata leaves its parents describing content they can no longer see.
+   * Nothing else marks them stale — the pivot changes, not their `updated_at`.
+   *
+   * Only the stamp is moved, so the nightly `AiTask` sweep regenerates them ONCE — and no sooner
+   * than `SEO_REGENERATION_MIN_INTERVAL_DAYS` after their last rewrite. Generating here instead would
+   * fire a call per image: an artist running AI across a gallery would pay for the same portfolio a
+   * dozen times over and could exhaust their credits on intermediate results.
+   *
+   * Best-effort — a failure here must not fail the media generation the user paid for.
+   */
+  private async markParentSeoStale(mediaId: number): Promise<void> {
+    try {
+      await Promise.all([
+        this.portfolioRepository.markSeoStaleByMediaId(mediaId),
+        this.collectionRepository.markSeoStaleByMediaId(mediaId),
+      ]);
+    } catch (error) {
+      this.logger
+        .name('mark-parent-seo-stale')
+        .error(
+          `Failed to mark parent SEO stale for media [${mediaId}] - ${error instanceof Error ? error.message : 'Unknown error'}`,
+          error,
+        );
+    }
   }
 }

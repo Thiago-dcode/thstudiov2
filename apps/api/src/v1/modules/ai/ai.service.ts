@@ -14,6 +14,7 @@ import {
 } from '@repo/common-lib/types/ai';
 import { EnumType, MODERATION_SEVERITY } from '@repo/common-lib/constants/enums';
 import { FullPortfolio } from '@repo/common-lib/types/portfolio';
+import { MediaPortfolio } from '@repo/common-lib/types/media';
 import { FullCollection } from '@repo/common-lib/types/collection';
 import { FullService } from '@repo/common-lib/types/service';
 import { UserProfile } from '@repo/common-lib/types/user';
@@ -23,7 +24,7 @@ import { Helpers } from 'src/common/services/helpers.service';
 
 const ENTITY_SEO_TITLE_MAX = 70;
 const ENTITY_SEO_DESCRIPTION_MAX = 160;
-const ENTITY_MEDIA_CONTEXT_CAP = 12;
+const ENTITY_MEDIA_CONTEXT_CAP = 24;
 const MEDIA_SEO_TITLE_MAX = 60;
 const MEDIA_SEO_DESCRIPTION_MAX = 160;
 const MEDIA_SEO_ALT_MAX = 125;
@@ -40,21 +41,86 @@ type ArtistSeoContext = {
   region: string | null;
 };
 
+/**
+ * What the artist contributes to a portfolio/collection prompt: WHO they are, never WHERE they are.
+ * A portfolio is not the artist — a drone-shot series by a Madrid-based artist is not "in Madrid" —
+ * so the location is dropped from the payload entirely rather than merely discouraged in the prompt.
+ */
+type ArtistSeoIdentity = Pick<ArtistSeoContext, 'display_name' | 'profession'>;
+
+const artistIdentity = ({ display_name, profession }: ArtistSeoContext): ArtistSeoIdentity => ({
+  display_name,
+  profession,
+});
+
+/**
+ * The text signals one image contributes to its portfolio/collection prompt. `seo_alt` matters most:
+ * it is the plain literal description of what is actually in the frame, so it grounds the entity's
+ * SEO in real subject matter instead of leaving the model to guess a theme.
+ */
+const mediaSignals = (m: MediaPortfolio) => ({
+  title: m.title ?? null,
+  seo_title: m.seo_title ?? null,
+  seo_description: m.seo_description ?? null,
+  seo_alt: m.seo_alt ?? null,
+});
+
 /** Shared instruction block kept as a STABLE prefix so OpenAI prompt-caching can discount batch runs. */
 const SEO_SYSTEM_PROMPT =
   'You are an SEO copywriter for an online art marketplace. You write metadata that ranks in Google (and Google Images) and also reads like art-world writing. You write it in every requested language. Output valid JSON only. No extra text.';
 
-/** Quality rules shared by media + entity prompts (kept identical so caching stays effective). */
+/**
+ * Quality rules shared by media + entity prompts (kept identical so caching stays effective).
+ * Deliberately LOCATION-NEUTRAL: place handling differs per entity and is appended via
+ * `SEO_EXTRA_INFO`, so nothing here may nudge the model toward naming a city.
+ */
 const SEO_QUALITY_RULES = `Quality rules (apply to every language):
-        - FRONT-LOAD the primary keyword; art-catalog voice. Priority of signals: art style → discipline/medium → subject → city.
+        - FRONT-LOAD the primary keyword; art-catalog voice. Priority of signals: art style → discipline/medium → subject.
         - Real searchable terms first; evocative but NEVER keyword-stuffed. Write natural, human, art-world prose — never repeat the same word/phrase to try to rank; each word must earn its place.
         - NEVER include: the platform/brand name, the artist's username/handle/login, or filler words used as padding ("portfolio", "gallery", "collection", "photo").
-        - If provided title/description look like placeholder, lorem, or non-descriptive text, IGNORE them and build from the real signals (style, discipline, subject, city, categories).
+        - If provided title/description look like placeholder, lorem, or non-descriptive text, IGNORE them and build from the real signals (style, discipline, subject, categories).
         - The artist's real name may appear only at the end, and only if it is a real personal name (not a handle).
-        - Do NOT invent a city, style, medium, or subject that is not clearly present. When unsure, stay generic and honest — but ALWAYS return a real, descriptive phrase (never "untitled", "n/a", or a placeholder).
+        - Do NOT invent a style, medium, or subject that is not clearly present. When unsure, stay generic and honest — but ALWAYS return a real, descriptive phrase (never "untitled", "n/a", or a placeholder).
         - Every field is PLAIN TEXT: no quotes, JSON, HTML, markdown, or emoji inside the value.
         - No profanity, slurs, or offensive language — this text is public and indexed.
-        Good title examples: "Brutalist Architecture Photography — Madrid", "Fine-Art Wedding Photography in Tuscany", "Analog Portrait Photography · Lisbon", "Minimalist Logo & Brand Design".`;
+        Good title examples: "Minimalist Logo & Brand Design", "Analog Portrait Photography", "Brutalist Architecture Photography", "Fine-Art Wedding Photography".`;
+
+/**
+ * Per-entity instructions appended to the shared rules. A work's location and its AUTHOR's location
+ * are different facts: a portfolio/collection is about its own content, while a service and an artist
+ * profile are sold and searched locally ("wedding photographer in Madrid") — so only those two may
+ * use the artist's city.
+ */
+const SEO_EXTRA_INFO = {
+  portfolio: `Portfolio specifics:
+        - A portfolio is an artist's curated BEST-OF within ONE discipline or style, gathered from many different projects — a "Wedding Photography" portfolio holds the strongest shots from every wedding they ever shot. Clients read it to judge skill and decide whether to hire.
+        - So write a DISCIPLINE/STYLE page, not one shoot: read the media (titles, descriptions, alt) and the categories, and name the craft and style they have IN COMMON. Never describe a single image.
+        - LOCATION: never name a city, region or country unless it appears literally in this portfolio's own title or description. There is no location in CONTEXT and you must not infer one — not from the artist, the language, the style or the subject. Aerial, landscape or studio work is not "in" anywhere. No place at all is the correct, expected outcome.
+        - seo_title: start from the portfolio's own title when it is descriptive, then say what the work IS. Shape: "<title> — <medium/subject>", optionally "by <artist real name>" at the end. If the title is generic ("My Work", "Portfolio 1"), ignore it and build from the categories and media instead.
+        - seo_description: one or two sentences summarizing the body of work — recurring subject, medium/technique, and the mood a visitor will actually see. Concrete nouns over adjectives; no calls to action.
+        Good: "Above the Coast — Aerial Drone Photography by Jhon Doe" / "Analog portraits on 35mm film, close-framed and grain-heavy, lit by soft window light."
+        Bad: "Aerial Photography in Madrid — Minimalist Views" (invented a city that appears nowhere in CONTEXT).`,
+  collection: `Collection specifics:
+        - A collection is ONE project, event or session kept together — "Maria & João Wedding 2024" holds the photos delivered from that single shoot. The artist's portfolio is the curated best-of across many projects; this is the record of one of them.
+        - So stay SPECIFIC: keep the identity in its own title (client or event name, year) and describe THIS occasion. Do not generalize it into a discipline page — the portfolio already owns the broad term, and the two pages must not compete for the same search.
+        - Its SEO otherwise comes from the media: read their titles, descriptions and alt, and name the thread that ties them together.
+        - LOCATION: never name a city, region or country unless it appears literally in this collection's own title or description. Do not infer one. No place at all is the correct outcome.
+        - seo_title: keep the specific project identity, then what the set shows. If the title is generic, build from the media instead.
+        - seo_description: one or two sentences on the shared subject, medium and mood of this one project.`,
+  service: `Service specifics:
+        - This is something a client HIRES: write for commercial intent — what is delivered, for whom.
+        - LOCATION: artist.city / artist.region are REAL signals here (services are searched locally). Use them when present, placed naturally at the end. Never invent a place; omit it when both are empty.
+        Good: "Fine-Art Wedding Photography in Tuscany", "Brutalist Architecture Photography — Madrid".`,
+  user: `Artist profile specifics:
+        - This page IS the artist, so the shared rule about keeping the real name to the end does NOT apply: LEAD with their real name — it is the entity being searched for.
+        - LOCATION IS REQUIRED here. Artists are hired locally, so the title must ALWAYS end with artist.city (fall back to artist.region). Omit the place ONLY when both are empty — and never invent one.
+        - seo_title shape: "<Real Name> — <Discipline/Speciality> in <City>". Name the speciality the way a client would search for it, using profession + categories.
+        - If there is no real personal name, lead with the speciality instead and keep the city: "<Discipline/Speciality> in <City>".
+        - seo_description: one or two sentences — what they make, who they make it for, and where they work. Grounded in the biography and categories; never invented.
+        Good: "Jhon Doe — Motion Graphics Designer in Madrid", "Maria Silva — Analog Portrait Photographer in Lisbon".`,
+  media: `Image specifics:
+        - LOCATION: include a specific place ONLY when it is unmistakably identifiable in the image itself (a landmark you can actually name). Never infer one from anything else.`,
+} as const;
 
 /**
  * Junk only when it is the WHOLE value — matching these as substrings would wrongly reject legitimate
@@ -150,10 +216,12 @@ export class AiService {
 
         ${SEO_QUALITY_RULES}
 
+        ${SEO_EXTRA_INFO.media}
+
         CATEGORIES:
         ${JSON.stringify(categoriesForPrompt)}
 
-        Base everything on the image only. Ignore filename, metadata, and URL. Include a specific place/color/placement ONLY when clearly identifiable; never invent one.`,
+        Base everything on the image only. Ignore filename, metadata, and URL. Include a specific color/placement ONLY when clearly identifiable; never invent one.`,
               },
               { type: 'image_url' as const, image_url: { url: mediaUrl } },
             ],
@@ -222,64 +290,71 @@ export class AiService {
     }
   }
 
-  /** Generate SEO (all locales) for a portfolio from its text context. `artist` carries profession/city. */
+  /**
+   * Generate SEO (all locales) for a portfolio from its own text context: title, description,
+   * categories, media and collections. The artist's location is deliberately excluded — a portfolio
+   * is about its content, not about where its author happens to live.
+   */
   public async generatePortfolioMetadata(
     portfolio: FullPortfolio,
     artist: ArtistSeoContext,
     meta: { portfolio_id: number; user_id: number },
   ): Promise<GenerateEntityMetadataResponse> {
     const context = {
-      artist,
+      artist: artistIdentity(artist),
       title: portfolio.title,
       description: portfolio.description ?? null,
       categories: portfolio.categories.map((c) => ({
         name: c.name,
         type: c.type.toLowerCase(),
       })),
-      media: portfolio.media.slice(0, ENTITY_MEDIA_CONTEXT_CAP).map((m) => ({
-        title: m.title ?? null,
-        seo_title: m.seo_title ?? null,
-      })),
-      collections: portfolio.collections.map((c) => ({
-        title: c.title,
-      })),
+      // Direct media + the media inside its collections. Deduped by id: the same image can sit in
+      // both, and a repeat would burn one of the limited context slots for no extra signal.
+      media: [...portfolio.media, ...portfolio.collections.flatMap((c) => c.media)]
+        .filter((m, i, all) => all.findIndex((x) => x.id === m.id) === i)
+        .slice(0, ENTITY_MEDIA_CONTEXT_CAP)
+        .map(mediaSignals),
+
     };
 
     return this.generateEntityMetadata({
       entityLabel: 'portfolio',
       logName: 'generate-portfolio-metadata',
       usageType: 'GENERATE_PORTFOLIO_METADATA',
+      extraInfo: SEO_EXTRA_INFO.portfolio,
       context,
       meta: { user_id: meta.user_id, entity_id: meta.portfolio_id, entity_id_key: 'portfolio_id' },
     });
   }
 
-  /** Generate SEO (all locales) for a collection from its text context. */
+  /**
+   * Generate SEO (all locales) for a collection from its own text context: title, description and the
+   * media it holds. Like a portfolio, a collection carries no location of its own.
+   */
   public async generateCollectionMetadata(
     collection: FullCollection,
     artist: ArtistSeoContext,
     meta: { collection_id: number; user_id: number },
   ): Promise<GenerateEntityMetadataResponse> {
     const context = {
-      artist,
+      artist: artistIdentity(artist),
       title: collection.title,
       description: collection.description ?? null,
-      media: collection.media.slice(0, ENTITY_MEDIA_CONTEXT_CAP).map((m) => ({
-        title: m.title ?? null,
-        seo_title: m.seo_title ?? null,
-      })),
+      media: collection.media.slice(0, ENTITY_MEDIA_CONTEXT_CAP).map(mediaSignals),
     };
 
     return this.generateEntityMetadata({
       entityLabel: 'collection',
       logName: 'generate-collection-metadata',
       usageType: 'GENERATE_COLLECTION_METADATA',
+      extraInfo: SEO_EXTRA_INFO.collection,
       context,
       meta: { user_id: meta.user_id, entity_id: meta.collection_id, entity_id_key: 'collection_id' },
     });
   }
 
-  /** Generate SEO (all locales) for a service from its text context. */
+  /** Generate SEO (all locales) for a service from its text context. Services are searched locally,
+   * so `artist.city`/`region` stay in the payload as legitimate signals. */
   public async generateServiceMetadata(
     service: FullService,
     artist: ArtistSeoContext,
@@ -302,12 +377,14 @@ export class AiService {
       entityLabel: 'service',
       logName: 'generate-service-metadata',
       usageType: 'GENERATE_SERVICE_METADATA',
+      extraInfo: SEO_EXTRA_INFO.service,
       context,
       meta: { user_id: meta.user_id, entity_id: meta.service_id, entity_id_key: 'service_id' },
     });
   }
 
-  /** Generate SEO (all locales) for an artist profile from its own text context. */
+  /** Generate SEO (all locales) for an artist profile from its own text context. This IS the artist,
+   * so their city is a real signal here. */
   public async generateUserMetadata(
     profile: UserProfile,
     meta: { user_id: number },
@@ -332,6 +409,7 @@ export class AiService {
       entityLabel: 'artist profile',
       logName: 'generate-user-metadata',
       usageType: 'GENERATE_USER_METADATA',
+      extraInfo: SEO_EXTRA_INFO.user,
       context,
       meta: { user_id: meta.user_id, entity_id: meta.user_id, entity_id_key: 'user_id' },
     });
@@ -500,6 +578,8 @@ export class AiService {
     entityLabel: 'portfolio' | 'collection' | 'service' | 'artist profile';
     logName: string;
     usageType: EnumType<'LLM_USAGE_TYPE'>;
+    /** Entity-specific instructions appended after the shared rules — see `SEO_EXTRA_INFO`. */
+    extraInfo: string;
     context: Record<string, unknown>;
     meta: {
       user_id: number;
@@ -507,7 +587,7 @@ export class AiService {
       entity_id_key: 'portfolio_id' | 'collection_id' | 'service_id' | 'user_id';
     };
   }): Promise<GenerateEntityMetadataResponse> {
-    const { entityLabel, logName, usageType, context, meta } = params;
+    const { entityLabel, logName, usageType, extraInfo, context, meta } = params;
 
     try {
       await this.llmService.setup();
@@ -530,7 +610,9 @@ export class AiService {
 
         ${SEO_QUALITY_RULES}
 
-        Use ONLY the signals in CONTEXT (artist.profession, artist.city, categories, media subjects). Analyze once, then localize per language (search-optimized phrasing, not literal translation).
+        ${extraInfo}
+
+        Use ONLY the signals in CONTEXT. Analyze once, then localize per language (search-optimized phrasing, not literal translation).
 
         CONTEXT:
         ${JSON.stringify(context)}`,

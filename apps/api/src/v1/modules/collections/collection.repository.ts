@@ -24,7 +24,7 @@ import {
 } from '@repo/common-lib/types/collection';
 import { EntitySeoFields, SeoTranslation } from '@repo/common-lib/types/ai';
 import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
-import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/constants';
+import { DEFAULT_LANGUAGE, SEO_REGENERATION_MIN_INTERVAL_DAYS } from '@repo/common-lib/constants/constants';
 import { DbException } from '@repo/database/exceptions';
 import { RequestService } from 'src/common/services/request.service';
 
@@ -155,7 +155,27 @@ export class CollectionRepository extends BaseRepository {
     return this.formatFullCollection(Array.isArray(result) ? result : [result]);
   }
 
-  /** Collections with no SEO yet, or content newer than last SEO generation. */
+  /**
+   * Mark every collection displaying this media as needing fresh SEO — see `PortfolioRepository`'s
+   * counterpart for why the stamp is backdated rather than cleared. A collection's copy is built
+   * almost entirely from its media, so it goes stale when an image gains its own AI metadata; the
+   * nightly sweep then regenerates it once.
+   */
+  async markSeoStaleByMediaId(mediaId: number): Promise<void> {
+    await Query.raw(
+      `UPDATE ${TABLES_ENUM.COLLECTIONS}
+       SET seo_generated_at = seo_generated_at - INTERVAL '1 second'
+       WHERE id IN (
+         SELECT collection_id FROM ${TABLES_ENUM.COLLECTION_MEDIA} WHERE media_id = $1
+       )`,
+      [mediaId],
+    );
+  }
+
+  /**
+   * Collections with no SEO yet, or content newer than last SEO generation — throttled to one
+   * rewrite per `SEO_REGENERATION_MIN_INTERVAL_DAYS`; see `PortfolioRepository`'s counterpart.
+   */
   async findDueForSeoGeneration(): Promise<{ id: number; user_id: number }[]> {
     const result = await Query.raw(
       `SELECT id, user_id
@@ -163,7 +183,13 @@ export class CollectionRepository extends BaseRepository {
        WHERE blocked_at IS NULL
          AND is_active = true
          AND is_indexable = true
-         AND (seo_generated_at IS NULL OR seo_generated_at < updated_at)
+         AND (
+           seo_generated_at IS NULL
+           OR (
+             seo_generated_at < updated_at
+             AND seo_generated_at < NOW() - (INTERVAL '1 day' * ${SEO_REGENERATION_MIN_INTERVAL_DAYS})
+           )
+         )
        ORDER BY updated_at ASC`,
     );
     const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];

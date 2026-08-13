@@ -144,6 +144,11 @@ export type UserProfileRow = {
   uc_user_id?: number | null;
   category_id?: number | null;
 
+  // From user_translations (aliased: tr_) — SEO for the request language, falling back to the
+  // main-row EN values when that locale has no row yet.
+  tr_seo_title?: string | null;
+  tr_seo_description?: string | null;
+
   // From categories (aliased: c_)
   c_id?: number | null;
   c_name?: string | null;
@@ -162,6 +167,7 @@ const tablesUserProfile = [
   TABLES_ENUM.USER_CATEGORIES,
   TABLES_ENUM.CATEGORIES,
   TABLES_ENUM.CATEGORY_TRANSLATIONS,
+  TABLES_ENUM.USER_TRANSLATIONS,
 ] as const;
 
 export type UserProfileSelectColumn = TableColumn<typeof tablesUserProfile, UserProfileRow>;

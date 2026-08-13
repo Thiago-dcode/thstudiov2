@@ -29,7 +29,7 @@ import {
   PortfolioLayout,
 } from '@repo/common-lib/types/layout';
 import { EnumType, TABLES_ENUM } from '@repo/common-lib/constants/enums';
-import { DEFAULT_LANGUAGE, MIN_COLUMN_BASE_COLUMNS } from '@repo/common-lib/constants/constants';
+import { DEFAULT_LANGUAGE, MIN_COLUMN_BASE_COLUMNS, SEO_REGENERATION_MIN_INTERVAL_DAYS } from '@repo/common-lib/constants/constants';
 
 export function formatPortfolioLayout(
   row: Pick<PortfolioFullSchema, 'layout_id' | 'layout_name' | 'config'>,
@@ -154,7 +154,36 @@ export class PortfolioRepository extends BaseRepository {
     return this.formatFullPortfolio(Array.isArray(result) ? result : [result]);
   }
 
-  /** Portfolios with no SEO yet, or content newer than last SEO generation. */
+  /**
+   * Mark every portfolio displaying this media as needing fresh SEO. Its copy is written from the
+   * media's titles/descriptions/alt, and nothing else marks it stale — the pivot changes, not
+   * `portfolios.updated_at`.
+   *
+   * Marking it hands the work to the nightly `findDueForSeoGeneration` sweep rather than generating
+   * on the spot: an artist running AI over a whole gallery touches the same portfolio once per image,
+   * and one LLM call each would drain their tokens for a single final result.
+   *
+   * The stamp is nudged BACKWARDS rather than cleared. Both make the row stale, but backdating keeps
+   * the real generation time, so `SEO_REGENERATION_MIN_INTERVAL_DAYS` still applies — clearing it to
+   * NULL would take the never-generated branch and bypass the throttle entirely. A row that has never
+   * been generated stays NULL (NULL minus an interval is NULL) and is still written immediately.
+   */
+  async markSeoStaleByMediaId(mediaId: number): Promise<void> {
+    await Query.raw(
+      `UPDATE ${TABLES_ENUM.PORTFOLIOS}
+       SET seo_generated_at = seo_generated_at - INTERVAL '1 second'
+       WHERE id IN (
+         SELECT portfolio_id FROM ${TABLES_ENUM.PORTFOLIO_MEDIA} WHERE media_id = $1
+       )`,
+      [mediaId],
+    );
+  }
+
+  /**
+   * Portfolios with no SEO yet, or content newer than last SEO generation. A rewrite additionally
+   * waits out `SEO_REGENERATION_MIN_INTERVAL_DAYS`, so editing a portfolio five times in a day costs
+   * one regeneration, not five. Never-generated rows skip the wait and are written immediately.
+   */
   async findDueForSeoGeneration(): Promise<{ id: number; user_id: number }[]> {
     const result = await Query.raw(
       `SELECT id, user_id
@@ -162,7 +191,13 @@ export class PortfolioRepository extends BaseRepository {
        WHERE blocked_at IS NULL
          AND is_active = true
          AND is_indexable = true
-         AND (seo_generated_at IS NULL OR seo_generated_at < updated_at)
+         AND (
+           seo_generated_at IS NULL
+           OR (
+             seo_generated_at < updated_at
+             AND seo_generated_at < NOW() - (INTERVAL '1 day' * ${SEO_REGENERATION_MIN_INTERVAL_DAYS})
+           )
+         )
        ORDER BY updated_at ASC`,
     );
     const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];

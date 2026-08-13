@@ -21,6 +21,7 @@ import {
   CREATE_OR_UPDATE_EMAIL_PREFERENCE,
   SET_FREE_SUBSCRIPTION_EVENT,
   SET_INITIAL_USER_EXTRA_DATA_EVENT,
+  GENERATE_SINGLE_ENTITY_METADATA_EVENT,
 } from '@repo/common-lib/constants/constants';
 import { FindUserRequest } from './requests/find-user.request';
 import { Helpers } from 'src/common/services/helpers.service';
@@ -33,6 +34,7 @@ import { EnumType } from '@repo/common-lib/constants/enums';
 import { addMonths } from 'date-fns';
 import { IndexArtistsRequest } from './requests/index-artists.request';
 import { CreateOrUpdateEmailPreferenceEvent } from '../email-preferences/events/create-or-update-email-preference.event';
+import { GenerateSingleEntityMetadataEvent } from '../ai/events/generate-single-entity-metadata.event';
 
 @Injectable()
 export class UserService {
@@ -249,6 +251,7 @@ export class UserService {
         appended_language: true,
       });
     }
+
     const [userUpdated] = await Promise.all([
       this.userRepository.updateById(user.id, userUpdateData),
       editCategories
@@ -261,6 +264,15 @@ export class UserService {
         })
         : Promise.resolve(true),
     ]);
+
+    const shouldGenerateMetadata =user.name !=userUpdateData.name || user.surname != userUpdateData.surname || user.profession != userUpdateData.profession || user.short_biography != userUpdateData.profession;
+
+    if(shouldGenerateMetadata){
+      this.eventEmitter.emit(
+        GENERATE_SINGLE_ENTITY_METADATA_EVENT,
+        new GenerateSingleEntityMetadataEvent({ entity: 'user',id:user.id,user_id:user.id }),
+      );
+    }
     return userUpdated;
   }
 

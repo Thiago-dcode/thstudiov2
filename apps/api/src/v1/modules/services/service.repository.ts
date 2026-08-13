@@ -20,7 +20,7 @@ import {
 } from '@repo/common-lib/types/service';
 import { EntitySeoFields, SeoTranslation } from '@repo/common-lib/types/ai';
 import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
-import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/constants';
+import { DEFAULT_LANGUAGE, SEO_REGENERATION_MIN_INTERVAL_DAYS } from '@repo/common-lib/constants/constants';
 import { DbException } from '@repo/database/exceptions';
 import { RequestService } from 'src/common/services/request.service';
 
@@ -127,7 +127,13 @@ export class ServiceRepository extends BaseRepository {
        WHERE blocked_at IS NULL
          AND is_active = true
          AND is_indexable = true
-         AND (seo_generated_at IS NULL OR seo_generated_at < updated_at)
+         AND (
+           seo_generated_at IS NULL
+           OR (
+             seo_generated_at < updated_at
+             AND seo_generated_at < NOW() - (INTERVAL '1 day' * ${SEO_REGENERATION_MIN_INTERVAL_DAYS})
+           )
+         )
        ORDER BY updated_at ASC`,
     );
     const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];

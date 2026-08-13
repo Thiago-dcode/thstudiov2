@@ -169,6 +169,15 @@ export const CACHE_KEY_SERVICE_SEO = (userId: number, slug: string) => `seo_serv
 export const CACHE_KEY_MEDIA_SEO = (publicId: string) => `seo_media_${publicId}` as const;
 /** SEO metadata is served to crawlers and changes rarely — cache a full day. */
 export const SEO_METADATA_CACHE_TTL = 1000 * 60 * 60 * 24;
+/**
+ * Minimum days between AI SEO regenerations of the SAME entity. Content that has never been
+ * generated is exempt, so new work is still written immediately; this only throttles rewrites.
+ *
+ * Rewriting on every edit costs tokens for near-identical copy and — because the SEO write bumps
+ * `updated_at`, which the sitemap emits as `lastmod` — tells Google a page changed when it barely
+ * did. Google discounts `lastmod` it finds unreliable, so the churn erodes a signal we depend on.
+ */
+export const SEO_REGENERATION_MIN_INTERVAL_DAYS = 3;
 export const CACHE_KEY_CATEGORY_TRANSLATION = (
   categoryId: number | string,
   languageCode: string,

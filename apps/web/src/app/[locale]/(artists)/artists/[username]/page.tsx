@@ -74,10 +74,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     ? profile.short_biography.trim().slice(0, 160)
     : t("summaryProfessionLocation", { name, profession, location });
 
+  // The AI-generated copy is already resolved to this locale by the API (falling back to the EN
+  // row). It is only ever a replacement, never a gap: when generation has not run — or its output
+  // was rejected — these hand-built strings still carry the page.
   return buildStaticPageMetadata({
     path,
-    title: `${name} — ${profession}`,
-    description,
+    title: profile.seo_title?.trim() || `${name} — ${profession}`,
+    description: profile.seo_description?.trim() || description,
     locale,
     image: profile.banner || profile.avatar || DEFAULT_OG_IMAGE,
     ogType: "profile",

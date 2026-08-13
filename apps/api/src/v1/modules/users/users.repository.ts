@@ -26,7 +26,7 @@ import {
   ArtistSearchSelectColumn,
 } from '@repo/common-lib/schemas/user';
 import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
-import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/constants';
+import { DEFAULT_LANGUAGE, SEO_REGENERATION_MIN_INTERVAL_DAYS } from '@repo/common-lib/constants/constants';
 import { Join } from '@repo/common-lib/types/database';
 import { CategoryBase } from '@repo/common-lib/types/category';
 import { EntitySeoFields, SeoTranslation } from '@repo/common-lib/types/ai';
@@ -231,6 +231,10 @@ export class UserRepository extends BaseRepository {
     'users.seo_description',
     'users.seo_generated_at',
 
+    // SEO for the request language (main-row values are the EN fallback)
+    'user_translations.seo_title as tr_seo_title' as UserProfileSelectColumn,
+    'user_translations.seo_description as tr_seo_description' as UserProfileSelectColumn,
+
     // Address — minimal
     'addresses.id as a_id',
     'addresses.formated_address',
@@ -268,6 +272,13 @@ export class UserRepository extends BaseRepository {
         'LEFT',
         `AND category_translations.language_code = '${this.requestService.language ?? DEFAULT_LANGUAGE}'`,
       )
+      .join(
+        'id',
+        TABLES_ENUM.USER_TRANSLATIONS,
+        'user_id',
+        'LEFT',
+        `AND user_translations.language_code = '${this.requestService.language ?? DEFAULT_LANGUAGE}'`,
+      )
       .get<UserProfileRow[]>();
 
     if (!result || result.length === 0) return null;
@@ -288,6 +299,13 @@ export class UserRepository extends BaseRepository {
         'category_id',
         'LEFT',
         `AND category_translations.language_code = '${this.requestService.language ?? DEFAULT_LANGUAGE}'`,
+      )
+      .join(
+        'id',
+        TABLES_ENUM.USER_TRANSLATIONS,
+        'user_id',
+        'LEFT',
+        `AND user_translations.language_code = '${this.requestService.language ?? DEFAULT_LANGUAGE}'`,
       )
       .get<UserProfileRow[]>();
 
@@ -341,7 +359,13 @@ export class UserRepository extends BaseRepository {
        WHERE ${UserRepository.PUBLIC_PROFILE_ROLES}
          AND u.banned = false
          AND u.is_active = true
-         AND (u.seo_generated_at IS NULL OR u.seo_generated_at < u.updated_at)
+         AND (
+           u.seo_generated_at IS NULL
+           OR (
+             u.seo_generated_at < u.updated_at
+             AND u.seo_generated_at < NOW() - (INTERVAL '1 day' * ${SEO_REGENERATION_MIN_INTERVAL_DAYS})
+           )
+         )
        ORDER BY u.updated_at ASC`,
     );
     const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];
@@ -599,8 +623,9 @@ export class UserRepository extends BaseRepository {
       website_link: first.website_link ?? null,
       instagram_link: first.instagram_link ?? null,
       youtube_link: first.youtube_link ?? null,
-      seo_title: first.seo_title,
-      seo_description: first.seo_description,
+      // Request-language SEO when that locale has a row; the main-row (EN) values otherwise.
+      seo_title: first.tr_seo_title ?? first.seo_title,
+      seo_description: first.tr_seo_description ?? first.seo_description,
       seo_generated_at: first.seo_generated_at,
       address,
       categories: Array.from(categoriesMap.values()),

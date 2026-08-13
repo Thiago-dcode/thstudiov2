@@ -54,6 +54,12 @@ import { Helpers } from 'src/common/services/helpers.service';
 import { GlobalProcessor } from 'src/common/processors/global.processor';
 import { UserExtraDataService } from '../user-extra-data/user-extra-data.service';
 
+/**
+ * How long a single-entity SEO job waits before running. Acts as a debounce window: repeated triggers
+ * for the same entity within it collapse into one generation (see `handleGenerateSingleEntityMetadataEvent`).
+ */
+const SINGLE_ENTITY_METADATA_DEBOUNCE_MS = 60_000;
+
 @Processor(AI_QUEUE)
 export class AiProcessor extends GlobalProcessor {
   private readonly logger = FactoryLogService.createLogService('file', {
@@ -132,16 +138,27 @@ export class AiProcessor extends GlobalProcessor {
     );
   }
 
-  /** Listen for single-entity metadata events and enqueue them */
+  /**
+   * Listen for single-entity metadata events and enqueue them.
+   *
+   * The jobId is deterministic (no timestamp) and the job is delayed, so bursts targeting the same
+   * entity collapse into ONE generation: BullMQ drops an add whose id is already queued. This matters
+   * because a single user action fans out — running AI on ten images in a portfolio emits ten refresh
+   * events for that same portfolio, and each one would otherwise be a separate billed LLM call. The
+   * delay is the coalescing window; the job re-reads the entity when it finally runs, so it always
+   * sees the final state. `removeOnFail` keeps a permanently failing entity from wedging its own id.
+   */
   @OnEvent(GENERATE_SINGLE_ENTITY_METADATA_EVENT)
   async handleGenerateSingleEntityMetadataEvent(event: GenerateSingleEntityMetadataEvent) {
     await this.aiQueue.add(
       JOB_GENERATE_SINGLE_ENTITY_METADATA,
       event.payload,
       {
-        jobId: `single-entity-metadata-${event.payload.entity}-${event.payload.id}-${Date.now()}`,
+        jobId: `single-entity-metadata-${event.payload.entity}-${event.payload.id}`,
+        delay: SINGLE_ENTITY_METADATA_DEBOUNCE_MS,
         priority: 20,
         removeOnComplete: true,
+        removeOnFail: true,
         attempts: 3,
         backoff: { type: 'exponential', delay: 1000 },
       },
@@ -334,9 +351,12 @@ export class AiProcessor extends GlobalProcessor {
         JOB_GENERATE_SINGLE_ENTITY_METADATA,
         { entity: payload.entity, id: row.id, user_id: row.user_id },
         {
-          jobId: `single-entity-metadata-${payload.entity}-${row.id}-${Date.now()}`,
+          // Same deterministic id as the event path, so a nightly sweep never duplicates a refresh
+          // that a recent edit or media generation already queued for this entity.
+          jobId: `single-entity-metadata-${payload.entity}-${row.id}`,
           priority: 20,
           removeOnComplete: true,
+          removeOnFail: true,
           attempts: 3,
           backoff: { type: 'exponential', delay: 1000 },
         },
@@ -424,8 +444,8 @@ export class AiProcessor extends GlobalProcessor {
         }
         case 'user': {
           const profile = await this.userRepository.getUserProfileById(id);
-          if (!profile) {
-            log.warn(`User profile [${id}] not found, skipping`);
+          if (!profile || !profile.name  || !profile.profession || !profile.short_biography) {
+            log.warn(`User profile [${id}] not found or incomplete, skipping`);
             return { skipped: true };
           }
           const { translations } = await this.aiService.generateUserMetadata(profile, { user_id });
@@ -464,7 +484,10 @@ export class AiProcessor extends GlobalProcessor {
     return { seo_title: en?.seo_title ?? null, seo_description: en?.seo_description ?? null };
   }
 
-  /** Minimal artist signals (profession/city) injected so entity SEO can lead with discipline + place. */
+  /**
+   * Minimal artist signals passed to entity SEO generation. Whether the location is actually used is
+   * decided per entity inside `AiService` — services/profiles use it, portfolios/collections never do.
+   */
   private buildArtistContext(profile: UserProfile | null) {
     return {
       display_name: profile
