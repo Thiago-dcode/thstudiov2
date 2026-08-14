@@ -1,10 +1,10 @@
 import type { HighlightCount } from "@repo/common-lib/types/general";
 import type {
-  CreatePortfolioInputWithFile,
+  CreatePortfolioPayload,
   FullPortfolio,
   Portfolio,
   PortfolioIndexRequest,
-  UpdatePortfolioInputWithFile,
+  UpdatePortfolioPayload,
 } from "@repo/common-lib/types/portfolio";
 import type { ApiResponse } from "@repo/common-lib/types/response";
 import { queryParamBuilder } from "@repo/common-lib/utils/query-builder";
@@ -34,14 +34,12 @@ class PortfolioService extends BaseService {
       cacheOptions: landingCache("portfolio-featured"),
     });
   }
-  async create(
-    body: CreatePortfolioInputWithFile,
-  ): Promise<ApiResponse<Portfolio>> {
+  async create(body: CreatePortfolioPayload): Promise<ApiResponse<Portfolio>> {
     return await this.fetchApi.post({ body });
   }
   async update(
     id: number,
-    body: UpdatePortfolioInputWithFile,
+    body: UpdatePortfolioPayload,
   ): Promise<ApiResponse<Portfolio>> {
     return await this.fetchApi.patch({
       resource: `/${id}`,

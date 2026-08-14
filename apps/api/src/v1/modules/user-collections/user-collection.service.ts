@@ -85,12 +85,4 @@ export class UserCollectionService {
     );
   }
 
-  async slugExists(username: string, slug: string) {
-    const user = await this.userRepository.findByUsernameCompact(username);
-    if (!user) return { exists: false };
-
-    return {
-      exists: await this.collectionRepository.slugExists(slug, user.id)
-    };
-  }
 }

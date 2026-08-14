@@ -3,10 +3,6 @@ import {
   ALLOWED_IMAGE_FILE_TYPES,
   MAX_DISCIPLINES_PORTFOLIO,
 } from "@repo/common-lib/constants/constants";
-import {
-  generateValidSlug,
-  isAValidSlugFormat,
-} from "@repo/common-lib/utils/generate-valid-slug";
 import { isHighlightToggleDisabled } from "@repo/common-lib/utils/highlights";
 import { FileInput } from "@repo/ui/components/custom/file-input";
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
@@ -19,7 +15,6 @@ import {
 import { usePreviewUrls } from "@repo/ui/hooks/usePreviewUrls";
 import { cn } from "@repo/ui/lib/utils";
 import { useTranslations } from "next-intl";
-import { useRef } from "react";
 import FormComponent from "@/lib/components/form-component";
 import CategoryCombobox from "@/modules/categories/components/category-combobox";
 
@@ -97,6 +92,7 @@ const ThumbnailInput = () => {
 const FirstStepInputs = () => {
   const t = useTranslations("atelier.portfolios.form");
   const {
+    user,
     portfolioInput,
     handleSetFormData,
     inputErrors,
@@ -108,9 +104,6 @@ const FirstStepInputs = () => {
     highlightCount,
     highlightLimit,
     isLoadingHighlightCount,
-    isSlugFormatValid,
-    isCheckingSlugAvailability,
-    isSlugAvailable,
   } = usePortfolio();
 
   const categoriesSelected = portfolioInput.categories;
@@ -124,51 +117,9 @@ const FirstStepInputs = () => {
     originallyHighlighted,
   );
 
-  const manuallyChangedSlug = useRef(false);
-
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     deleteInputErrorProperty("title");
-    const newTitle = e.target.value;
-    handleSetFormData("title", newTitle);
-
-    // Only auto-generate slug if it's empty and wasn't manually changed
-    if (!manuallyChangedSlug.current) {
-      const generatedSlug = generateValidSlug(newTitle);
-      if (generatedSlug && isAValidSlugFormat(generatedSlug)) {
-        handleSetFormData("slug", generatedSlug);
-      } else if (!generatedSlug) {
-        handleSetFormData("slug", "");
-      }
-    }
-  };
-
-  const handleSlugChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Preserve trailing hyphen while typing to allow users to type hyphens
-    const newSlug = generateValidSlug(e.target.value, {
-      preserveTrailingHyphen: true,
-    });
-
-    deleteInputErrorProperty("slug");
-    handleSetFormData("slug", newSlug);
-    manuallyChangedSlug.current = !!newSlug;
-  };
-
-  // Get slug status message
-  const getSlugStatusMessage = () => {
-    if (isCheckingSlugAvailability) {
-      return <p className="text-sm text-text-muted">{t("slugChecking")}</p>;
-    }
-    if (
-      typeof isSlugAvailable === "boolean" &&
-      currentPortfolio?.slug !== portfolioInput.slug
-    ) {
-      if (isSlugAvailable) {
-        return <p className="text-sm text-green-600">{t("slugAvailable")}</p>;
-      } else {
-        return <p className="text-sm text-error">{t("slugTaken")}</p>;
-      }
-    }
-    return null;
+    handleSetFormData("title", e.target.value);
   };
 
   return (
@@ -180,43 +131,34 @@ const FirstStepInputs = () => {
       </div>
 
       <div className="flex-1 space-y-4 flex flex-col">
-        <FormComponent.LabelInput
-          value={portfolioInput.title || ""}
-          onChange={(e) => {
-            handleTitleChange(e);
-          }}
-          error={inputErrors?.title}
-          label={t("titleLabel")}
-          required
-          name="title"
-          id="title"
-          type="text"
-          placeholder={t("titlePlaceholder")}
-          disabled={isPending}
-        />
-
-        <div className="space-y-2">
+        <div className="space-y-1">
           <FormComponent.LabelInput
-            value={portfolioInput.slug || ""}
+            value={portfolioInput.title || ""}
             onChange={(e) => {
-              handleSlugChange(e);
+              handleTitleChange(e);
             }}
-            error={inputErrors?.slug}
-            label={t("slugLabel")}
+            error={inputErrors?.title}
+            label={t("titleLabel")}
             required
-            name="slug"
-            id="slug"
+            name="title"
+            id="title"
             type="text"
-            placeholder={t("slugPlaceholder")}
-            extraInfo={t("slugInfo")}
-            disabled={isCheckingSlugAvailability || isPending}
+            placeholder={t("titlePlaceholder")}
+            extraInfo={t("titleInfo")}
+            disabled={isPending}
           />
-          {isSlugFormatValid === false && (
-            <p className="text-sm text-error">{t("slugInvalidFormat")}</p>
+          {/* The title decides the permanent public address, so say so before they commit. */}
+          {!currentPortfolio && (
+            <p className="text-xs text-text-muted">{t("titleAddressHint")}</p>
           )}
-          {getSlugStatusMessage()}
-          {currentPortfolio?.id && (
-            <p className="text-sm text-amber-600">{t("slugChangeWarning")}</p>
+          {currentPortfolio?.slug && (
+            <p className="text-xs text-text-muted">
+              {t("permalinkLabel")}{" "}
+              <span className="font-mono">
+                /artists/{user.username}/portfolios/{currentPortfolio.slug}
+              </span>{" "}
+              — {t("permalinkFrozenNote")}
+            </p>
           )}
         </div>
 

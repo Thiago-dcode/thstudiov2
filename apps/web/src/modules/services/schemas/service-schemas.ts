@@ -1,9 +1,5 @@
 import * as z from "zod";
-import {
-  requiredString,
-  slugField,
-  type Translator,
-} from "@/lib/validation/zod-helpers";
+import { requiredString, type Translator } from "@/lib/validation/zod-helpers";
 
 const featureItemSchema = (t: Translator) =>
   z.object({
@@ -18,7 +14,6 @@ const termItemSchema = (t: Translator) =>
 export const createServiceSchema = (t: Translator) =>
   z.object({
     title: requiredString(t, t("fields.title")),
-    slug: slugField(t),
     description: z.string().optional(),
     price: z.number().optional(),
     is_active: z.boolean().optional(),
@@ -38,7 +33,6 @@ export type CreateServiceSchemaType = z.infer<
 export const updateServiceSchema = (t: Translator) =>
   z.object({
     title: requiredString(t, t("fields.title")).optional(),
-    slug: slugField(t).optional(),
     description: z.string().optional(),
     price: z.number().optional(),
     is_active: z.boolean().optional(),

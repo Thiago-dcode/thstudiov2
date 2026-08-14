@@ -12,13 +12,13 @@ import type { PortfolioLayoutInput } from "@repo/common-lib/types/layout";
 import type { MediaPortfolio } from "@repo/common-lib/types/media";
 import type {
   CreatePortfolioInputWithFile,
+  CreatePortfolioPayload,
   FullPortfolio,
   Portfolio,
   PortfolioInput,
   PortfolioItem,
 } from "@repo/common-lib/types/portfolio";
 import type { ActionReturn } from "@repo/common-lib/types/response";
-import { isAValidSlugFormat } from "@repo/common-lib/utils/generate-valid-slug";
 import {
   buildPortfolioItemsFromFullPortfolio,
   countPortfolioItemSlot,
@@ -44,7 +44,6 @@ import type { UserAuth } from "@/modules/auth/auth.types";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { createOrUpdatePortfolioAction } from "../server-actions/create-update-portfolio.action";
 import { getPortfolioHighlightCountAction } from "../server-actions/get-highlight-count.action";
-import { slugExistsAction } from "../server-actions/slug-exists.action";
 
 function categoryIdsEqual(a: CategoryBase[], b: CategoryBase[]) {
   const idsA = a
@@ -96,7 +95,6 @@ function buildPortfolioInput(
   return {
     user_id: portfolio.user_id,
     title: portfolio.title,
-    slug: portfolio.slug,
     description: portfolio.description ?? "",
     is_highlight: portfolio.is_highlight,
     is_active: portfolio.is_active,
@@ -140,11 +138,6 @@ type PortfolioContextType = {
   > | null;
   canSubmit: boolean;
   canGoNextStep: boolean;
-  /** `undefined` when the slug is empty, otherwise whether it matches the required slug format. */
-  isSlugFormatValid?: boolean;
-  /** `undefined` while unchecked/unresolved, otherwise whether the current slug is free to use. */
-  isSlugAvailable?: boolean;
-  isCheckingSlugAvailability: boolean;
   /**
    * `false` during SSR and the initial client render, `true` after mount.
    * Consumers gate hydration-sensitive UI (e.g. button `disabled` state that
@@ -198,7 +191,6 @@ type PortfolioProviderProps = {
 const MAX_STEPS = 2;
 const firstStepRequiredFields: (keyof PortfolioInput)[] = [
   "user_id",
-  "slug",
   "title",
   "thumbnail",
 ];
@@ -225,121 +217,13 @@ export const PortfolioProvider = ({
 
   const currentStep = portfolioInput.currentStep;
 
-  // --- Slug validity/availability ---
-  const idTimeOutSlug = useRef<NodeJS.Timeout>(null);
-  const previousSlugRef = useRef<string | undefined>(portfolioInput.slug);
-  const slugChecksMemo = useRef<
-    Record<string, ActionReturn<boolean | null, undefined>>
-  >({});
-
-  const {
-    handleAction: handleActionSlug,
-    result: resultSlugExist,
-    isPending: isCheckingSlugAvailability,
-    cleanResult: cleanSlugResult,
-    cleanErrors: cleanSlugErrors,
-  } = useHandleAction({
-    action: async () => {
-      const slugToCheck = portfolioInput.slug || "";
-      if (slugChecksMemo.current[slugToCheck]) {
-        return slugChecksMemo.current[slugToCheck];
-      }
-      return await slugExistsAction(user.username, slugToCheck);
-    },
-    afterAction: async (data) => {
-      slugChecksMemo.current[portfolioInput.slug || ""] = data;
-    },
-  });
-
-  const resetSlugCheck = useCallback(() => {
-    if (idTimeOutSlug.current) {
-      clearTimeout(idTimeOutSlug.current);
-      idTimeOutSlug.current = null;
-    }
-    slugChecksMemo.current = {};
-    cleanSlugResult();
-    cleanSlugErrors();
-  }, [cleanSlugResult, cleanSlugErrors]);
-
-  const checkSlugAvailability = useCallback(() => {
-    if (
-      !portfolioInput.slug ||
-      isCheckingSlugAvailability ||
-      portfolioInput.slug === currentPortfolio?.slug
-    )
-      return;
-    if (idTimeOutSlug.current) clearTimeout(idTimeOutSlug.current);
-    idTimeOutSlug.current = setTimeout(() => {
-      cleanSlugResult();
-      cleanSlugErrors();
-      handleActionSlug();
-      if (idTimeOutSlug.current) clearTimeout(idTimeOutSlug.current);
-    }, 1000);
-  }, [
-    portfolioInput.slug,
-    isCheckingSlugAvailability,
-    currentPortfolio?.slug,
-    cleanSlugResult,
-    cleanSlugErrors,
-    handleActionSlug,
-  ]);
-
-  useEffect(() => {
-    cleanSlugResult();
-    cleanSlugErrors();
-  }, [portfolioInput.slug, cleanSlugResult, cleanSlugErrors]);
-
-  useEffect(() => {
-    const currentSlug = portfolioInput.slug?.trim();
-    const previousSlug = previousSlugRef.current?.trim();
-    const slugChanged = currentSlug !== previousSlug;
-    previousSlugRef.current = portfolioInput.slug;
-
-    if (
-      currentSlug &&
-      slugChanged &&
-      isAValidSlugFormat(currentSlug) &&
-      !currentSlug.endsWith("-") &&
-      currentSlug !== currentPortfolio?.slug?.trim()
-    ) {
-      checkSlugAvailability();
-    }
-  }, [portfolioInput.slug, currentPortfolio?.slug, checkSlugAvailability]);
-
-  const isSlugFormatValid = useMemo(() => {
-    const slug = portfolioInput.slug?.trim();
-    if (!slug) return undefined;
-    return isAValidSlugFormat(slug);
-  }, [portfolioInput.slug]);
-
-  const isSlugAvailable =
-    typeof resultSlugExist?.data === "boolean"
-      ? !resultSlugExist.data
-      : undefined;
-
-  const slugIsUsable = useMemo(() => {
-    const slug = portfolioInput.slug?.trim();
-    if (!slug) return false;
-    if (currentPortfolio && slug === currentPortfolio.slug?.trim()) return true;
-    if (isSlugFormatValid === false) return false;
-    if (isCheckingSlugAvailability) return false;
-    return isSlugAvailable !== false;
-  }, [
-    portfolioInput.slug,
-    currentPortfolio,
-    isSlugFormatValid,
-    isCheckingSlugAvailability,
-    isSlugAvailable,
-  ]);
-
   const setPortfolio = useCallback(
     (portfolio: FullPortfolio) => {
       setCurrentPorfolio(portfolio);
       initialPortfolioInput.current = buildPortfolioInput(user, portfolio);
       setPortfolioInput(initialPortfolioInput.current);
-      resetSlugCheck();
     },
-    [user, resetSlugCheck],
+    [user],
   );
 
   const setCategorySelected = useCallback(
@@ -447,9 +331,8 @@ export const PortfolioProvider = ({
         }
       }
 
-      const payload: Partial<CreatePortfolioInputWithFile> = {
+      const payload: Partial<CreatePortfolioPayload> = {
         title: (portfolioInput.title ?? "") as string,
-        slug: (portfolioInput.slug ?? "") as string,
         description: (portfolioInput.description ?? "") as string,
         user_id: (portfolioInput.user_id ?? user.id) as number,
         is_highlight: portfolioInput.is_highlight ?? false,
@@ -566,14 +449,13 @@ export const PortfolioProvider = ({
     [],
   );
 
-  const firstStepIsCompleted =
-    !firstStepRequiredFields.some((field) => {
-      const hasField = portfolioInput[field];
-      if (hasField) return false;
+  const firstStepIsCompleted = !firstStepRequiredFields.some((field) => {
+    const hasField = portfolioInput[field];
+    if (hasField) return false;
 
-      if (field === "thumbnail" && currentPortfolio?.thumbnail) return false;
-      return true;
-    }) && slugIsUsable;
+    if (field === "thumbnail" && currentPortfolio?.thumbnail) return false;
+    return true;
+  });
 
   const hasFormChanged = useMemo(() => {
     if (!currentPortfolio) return false;
@@ -581,7 +463,6 @@ export const PortfolioProvider = ({
     const initial = initialPortfolioInput.current;
 
     if (portfolioInput.title !== currentPortfolio.title) return true;
-    if (portfolioInput.slug !== currentPortfolio.slug) return true;
     if (
       (portfolioInput.description ?? "") !==
       (currentPortfolio.description ?? "")
@@ -658,8 +539,7 @@ export const PortfolioProvider = ({
     setCurrentPorfolio(undefined);
     // Reset action state (errors/result)
     reset();
-    resetSlugCheck();
-  }, [user, reset, resetSlugCheck]);
+  }, [user, reset]);
 
   const contextValue: PortfolioContextType = {
     user,
@@ -677,9 +557,6 @@ export const PortfolioProvider = ({
     portfolioResult,
     canGoNextStep,
     canSubmit,
-    isSlugFormatValid,
-    isSlugAvailable,
-    isCheckingSlugAvailability,
     isHydrated,
     deleteInputErrorProperty,
     reset,

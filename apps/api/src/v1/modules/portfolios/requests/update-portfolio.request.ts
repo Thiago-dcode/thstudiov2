@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsOptional, IsString, IsArray, ValidateNested, MinLength, ArrayMaxSize } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsArray, ValidateNested, ArrayMaxSize } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 import { MAX_CATEGORIES_PORTFOLIO } from '@repo/common-lib/constants/constants';
 import { ModelExist } from 'src/common/validators/model-exist.validtor';
@@ -33,15 +33,12 @@ class PortfolioCollectionItem {
 }
 
 export class UpdatePortfolioRequest {
+  // Renaming never re-slugs: the slug is frozen at creation so public URLs stay stable
+  // (there is no redirect table). Deliberately no `slug` field here.
   @IsOptional()
   @IsString()
   @IsNotEmpty()
   title?: string;
-
-  @IsOptional()
-  @IsString()
-  @MinLength(3, { message: 'Slug must be at least 3 characters long' })
-  slug?: string;
 
   @IsOptional()
   @IsString()

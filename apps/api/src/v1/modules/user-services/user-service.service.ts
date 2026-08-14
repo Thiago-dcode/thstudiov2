@@ -97,15 +97,6 @@ export class UserServiceService {
     );
   }
 
-  async slugExists(username: string, slug: string) {
-    const user = await this.userRepository.findByUsernameCompact(username);
-    if (!user) return { exists: false };
-
-    return {
-      exists: await this.serviceRepository.slugExists(slug, user.id),
-    };
-  }
-
   private async resolveFullService(userId: number, slug: string): Promise<FullService> {
     const service = await this.serviceRepository.getBySlug(slug, userId);
     if (!service) return null;

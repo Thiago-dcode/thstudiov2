@@ -393,6 +393,22 @@ export class PortfolioRepository extends BaseRepository {
     return !!result;
   }
 
+  /**
+   * Titles are unique per user, never globally — two artists may both call a portfolio
+   * "Sketchbook 2026"; their public URLs differ by username. Matched case-insensitively and
+   * trimmed, so "My Work" and " my work " collide (they would otherwise produce near-identical
+   * entries with confusingly divergent slugs). Pass `excludeId` on update to skip the row itself.
+   */
+  async titleExists(title: string, userId: number, excludeId?: number): Promise<boolean> {
+    const query = this.query()
+      .where('LOWER(title)', '=', title.trim().toLowerCase())
+      .where('user_id', '=', userId);
+
+    if (excludeId != null) query.where('id', '!=', excludeId);
+
+    return !!(await query.exists());
+  }
+
   async countHighlights(userId: number): Promise<number> {
     return this.query()
       .where('user_id', '=', userId)

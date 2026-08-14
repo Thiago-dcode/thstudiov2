@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsOptional, IsString, IsArray, ValidateNested, MinLength } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsArray, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ModelExist } from 'src/common/validators/model-exist.validtor';
 import { ToBoolean } from 'src/common/decorators/to-boolean.decorator';
@@ -18,15 +18,12 @@ class ServiceTermItem {
 }
 
 export class UpdateServiceRequest {
+  // Renaming never re-slugs: the slug is frozen at creation so public URLs stay stable
+  // (there is no redirect table). Deliberately no `slug` field here.
   @IsOptional()
   @IsString()
   @IsNotEmpty()
   title?: string;
-
-  @IsOptional()
-  @IsString()
-  @MinLength(3, { message: 'Slug must be at least 3 characters long' })
-  slug?: string;
 
   @IsOptional()
   @IsString()

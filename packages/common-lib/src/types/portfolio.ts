@@ -75,9 +75,17 @@ export type CreatePortfolioInputWithFile = Omit<CreatePortfolioInput, 'thumbnail
   thumbnail: File;
 };
 
+/**
+ * What the client actually sends. The slug is derived from the title by the API and frozen
+ * at creation, so clients never supply one — `CreatePortfolioInput` keeps `slug` because it
+ * is also the repository's write shape. Use these payload types at the HTTP boundary so a
+ * stray `slug` is a type error rather than a value the API silently strips.
+ */
+export type CreatePortfolioPayload = Omit<CreatePortfolioInputWithFile, 'slug'>;
+
 /** Form state for create/update portfolio wizard (excludes nested media/collections arrays). */
 export type PortfolioFormData = Partial<
-  Omit<CreatePortfolioInputWithFile, 'media' | 'collections'>
+  Omit<CreatePortfolioPayload, 'media' | 'collections'>
 >;
 
 /** Discriminated union: use `row.item` to narrow to {@link MediaPortfolioItem} or {@link CollectionPortfolioItem}. */
@@ -100,7 +108,7 @@ export type FullPortfolioItem = (MediaPortfolioItem | FullCollectionPortfolioIte
 };
 
 export type PortfolioInput = Partial<
-  Omit<CreatePortfolioInputWithFile, 'media' | 'collections' | 'categories'>
+  Omit<CreatePortfolioPayload, 'media' | 'collections' | 'categories'>
 > & {
   portfolioItems: PortfolioItem[],
   categories:CategoryBase[]
@@ -127,3 +135,6 @@ export type UpdatePortfolioInput = Partial<
 export type UpdatePortfolioInputWithFile = Omit<UpdatePortfolioInput, 'thumbnail'> & {
   thumbnail?: File;
 };
+
+/** Update payload as sent by the client. Renaming never re-slugs, so `slug` is not sendable. */
+export type UpdatePortfolioPayload = Omit<UpdatePortfolioInputWithFile, 'slug'>;

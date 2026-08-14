@@ -6,10 +6,6 @@ import {
 } from "@repo/common-lib/constants/constants";
 import type { Portfolio } from "@repo/common-lib/types/portfolio";
 import type { FullService } from "@repo/common-lib/types/service";
-import {
-  generateValidSlug,
-  isAValidSlugFormat,
-} from "@repo/common-lib/utils/generate-valid-slug";
 import { FileInput } from "@repo/ui/components/custom/file-input";
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
 import { Checkbox } from "@repo/ui/components/shadcn/checkbox";
@@ -59,9 +55,8 @@ export const CreateOrUpdateService = ({
     readOnly,
     isUpdate,
     serviceInput,
-    slugInputRef,
+    user,
     notifyFormChange,
-    updateSlug,
     handleThumbnailChange,
     features,
     setFeatures,
@@ -71,9 +66,6 @@ export const CreateOrUpdateService = ({
     setSelectedPortfolioId,
     isHighlighted,
     setIsHighlighted,
-    isValidSlug,
-    isSlugAvailable,
-    isCheckingSlug,
     highlightLimit,
     highlightToggleDisabled,
     isLoadingHighlightCount,
@@ -102,22 +94,6 @@ export const CreateOrUpdateService = ({
     }
   }, [clear, router, success]);
 
-  const getSlugStatusMessage = () => {
-    if (isCheckingSlug) {
-      return <p className="text-sm text-text-muted">{t("slugChecking")}</p>;
-    }
-    if (
-      typeof isSlugAvailable === "boolean" &&
-      currentService?.slug !== serviceInput.current.slug
-    ) {
-      if (isSlugAvailable) {
-        return <p className="text-sm text-green-600">{t("slugAvailable")}</p>;
-      }
-      return <p className="text-sm text-error">{t("slugTaken")}</p>;
-    }
-    return null;
-  };
-
   return (
     <FormComponent.Container>
       {readOnly ? (
@@ -139,62 +115,36 @@ export const CreateOrUpdateService = ({
           className={`grid grid-cols-1 md:grid-cols-2 gap-6 ${readOnly ? "pointer-events-none select-none opacity-90" : ""}`}
         >
           <div className="space-y-4">
-            <FormComponent.LabelInput
-              onChange={(e) => {
-                const newTitle = e.target.value;
-                serviceInput.current.title = newTitle;
-                notifyFormChange();
-                deleteInputErrorProperty("title");
-
-                if (!serviceInput.current.manuallyChangedSlug) {
-                  const generatedSlug = generateValidSlug(newTitle);
-                  if (generatedSlug && isAValidSlugFormat(generatedSlug)) {
-                    updateSlug(generatedSlug);
-                  } else if (!generatedSlug) {
-                    updateSlug("");
-                  }
-                }
-              }}
-              defaultValue={serviceInput.current.title}
-              error={inputErrors?.title}
-              label={t("titleLabel")}
-              required={!isUpdate}
-              name="title"
-              id="title"
-              type="text"
-              placeholder={t("titlePlaceholder")}
-            />
-
-            <div className="space-y-2">
+            <div className="space-y-1">
               <FormComponent.LabelInput
-                ref={slugInputRef}
                 onChange={(e) => {
-                  const newSlug = generateValidSlug(e.target.value, {
-                    preserveTrailingHyphen: true,
-                  });
+                  serviceInput.current.title = e.target.value;
                   notifyFormChange();
-                  deleteInputErrorProperty("slug");
-                  serviceInput.current.manuallyChangedSlug = !!newSlug;
-                  updateSlug(newSlug);
+                  deleteInputErrorProperty("title");
                 }}
-                defaultValue={serviceInput.current.slug}
-                error={inputErrors?.slug}
-                label={t("slugLabel")}
+                defaultValue={serviceInput.current.title}
+                error={inputErrors?.title}
+                label={t("titleLabel")}
                 required={!isUpdate}
-                name="slug"
-                id="slug"
+                name="title"
+                id="title"
                 type="text"
-                placeholder={t("slugPlaceholder")}
-                extraInfo={t("slugInfo")}
-                disabled={isCheckingSlug || isPending}
+                placeholder={t("titlePlaceholder")}
+                extraInfo={t("titleInfo")}
               />
-              {isValidSlug === false && (
-                <p className="text-sm text-error">{t("slugInvalidFormat")}</p>
+              {/* The title decides the permanent public address, so say so before they commit. */}
+              {!isUpdate && (
+                <p className="text-xs text-text-muted">
+                  {t("titleAddressHint")}
+                </p>
               )}
-              {getSlugStatusMessage()}
-              {isUpdate && (
-                <p className="text-sm text-amber-600">
-                  {t("slugChangeWarning")}
+              {currentService?.slug && (
+                <p className="text-xs text-text-muted">
+                  {t("permalinkLabel")}{" "}
+                  <span className="font-mono">
+                    /artists/{user.username}/services/{currentService.slug}
+                  </span>{" "}
+                  — {t("permalinkFrozenNote")}
                 </p>
               )}
             </div>

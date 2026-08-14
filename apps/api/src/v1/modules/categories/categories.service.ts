@@ -14,6 +14,10 @@ import {
   generateValidSlug,
   isAValidSlugFormat,
 } from '@repo/common-lib/utils/generate-valid-slug';
+import {
+  allocateUniqueSlug,
+  SlugAllocationError,
+} from '@repo/common-lib/utils/unique-slug';
 import { cleanObj } from '@repo/common-lib/utils/object';
 import {
   CategoryBase,
@@ -265,20 +269,24 @@ export class CategoriesService {
     return `categories/${slug}/thumbnail.webp`;
   }
 
+  /**
+   * Categories are globally scoped (no owning user), so the predicate takes only `excludeId`.
+   * Contrast with portfolios/services/collections, whose predicates must filter on `user_id`.
+   */
   private async ensureUniqueSlug(
     base: string,
     excludeId?: number,
   ): Promise<string> {
-    let candidate = base;
-    let n = 2;
-    while (await this.categoryRepository.slugExists(candidate, excludeId)) {
-      candidate = `${base}-${n}`;
-      n += 1;
+    try {
+      return await allocateUniqueSlug(base, (candidate) =>
+        this.categoryRepository.slugExists(candidate, excludeId),
+      );
+    } catch (error) {
+      if (error instanceof SlugAllocationError) {
+        throw new BadRequestException('Could not allocate a unique slug.');
+      }
+      throw error;
     }
-    if (!isAValidSlugFormat(candidate)) {
-      throw new BadRequestException('Could not allocate a unique slug.');
-    }
-    return candidate;
   }
 
   private async withThumbnailUrl(base: CategoryBase): Promise<CategoryBase> {

@@ -80,6 +80,20 @@ export class ServiceRepository extends BaseRepository {
     return !!result;
   }
 
+  /**
+   * Titles are unique per user, never globally. Matched case-insensitively and trimmed.
+   * Pass `excludeId` on update to skip the row being edited.
+   */
+  async titleExists(title: string, userId: number, excludeId?: number): Promise<boolean> {
+    const query = this.query()
+      .where('LOWER(title)', '=', title.trim().toLowerCase())
+      .where('user_id', '=', userId);
+
+    if (excludeId != null) query.where('id', '!=', excludeId);
+
+    return !!(await query.exists());
+  }
+
   async countHighlights(userId: number): Promise<number> {
     return this.query()
       .where('user_id', '=', userId)

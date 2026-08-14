@@ -20,6 +20,7 @@ import { MediaModerationException } from "src/common/exceptions/media-moderation
 import { ApiException } from "src/common/exceptions/api-exception";
 import { Query } from "@repo/database/facades";
 import { LayoutService } from "../layouts/layout.service";
+import { insertWithUniqueSlug, resolveEntitySlug } from "src/common/utils/slug.util";
 
 const CACHE_TTL = 1000 * 60 * 60 * 24;
 
@@ -95,9 +96,24 @@ export class PortfolioService {
     );
   }
 
-  private async slugExists(slug: string, userId: number) {
-    return {
-      exists: await this.portfolioRepository.slugExists(slug, userId)
+  /**
+   * Derives the portfolio's permanent slug from its title, resolving collisions within
+   * this user's portfolios only (two artists may share a slug — their URLs differ by username).
+   * Must run before any slug-derived storage path is built.
+   */
+  private async resolveSlug(title: string, userId: number) {
+    return resolveEntitySlug({
+      title,
+      fallbackPrefix: 'portfolio',
+      exists: (candidate) => this.portfolioRepository.slugExists(candidate, userId),
+    });
+  }
+
+  private async assertTitleIsFree(title: string, userId: number, excludeId?: number) {
+    if (await this.portfolioRepository.titleExists(title, userId, excludeId)) {
+      throw ApiException.titleAlreadyExists(
+        'You already have a portfolio with this title. Please choose a different one.',
+      );
     }
   }
 
@@ -168,10 +184,11 @@ export class PortfolioService {
       request.media?.map((media) => media.id) ?? [],
     );
 
-    if ((await this.slugExists(request.slug, request.user_id)).exists) {
+    // Title first: it is the likeliest user error and the cheapest check, so it fails
+    // before any upload or limit accounting happens.
+    await this.assertTitleIsFree(request.title, request.user_id);
+    const slug = await this.resolveSlug(request.title, request.user_id);
 
-      throw new BadRequestException(`Slug ${request.slug} already exists`);
-    }
     await this.enforceHighlightLimit(request.user_id, request.is_highlight);
     await this.userExtraDataService.enforceUserLimits(request.user_id, {
       portfolios_count: 1,
@@ -184,7 +201,7 @@ export class PortfolioService {
 
     let thumbnailPath = undefined;
     if (request.thumbnail) {
-      thumbnailPath = `users/${this.requestService.user.public_id}/portfolio/${request.slug}/thumbnail.webp`;
+      thumbnailPath = `users/${this.requestService.user.public_id}/portfolio/${slug}/thumbnail.webp`;
       this.logger.info('Uploading thumbnail', { path: thumbnailPath });
       await this.helpers.setAsset({
         asset: request.thumbnail,
@@ -206,18 +223,23 @@ export class PortfolioService {
       }
     }
 
-    const portfolio = await this.portfolioRepository.create({
-      title: request.title,
-      slug: request.slug,
-      description: request.description,
-      user_id: request.user_id,
-      media: request.media,
-      collections: request.collections,
-      categories: request.categories,
-      thumbnail: thumbnailPath,
-      is_highlight: request.is_highlight ?? false,
-      is_active: request.is_active ?? true,
-    });
+    const portfolio = await insertWithUniqueSlug(
+      slug,
+      () => this.resolveSlug(request.title, request.user_id),
+      (resolvedSlug) =>
+        this.portfolioRepository.create({
+          title: request.title,
+          slug: resolvedSlug,
+          description: request.description,
+          user_id: request.user_id,
+          media: request.media,
+          collections: request.collections,
+          categories: request.categories,
+          thumbnail: thumbnailPath,
+          is_highlight: request.is_highlight ?? false,
+          is_active: request.is_active ?? true,
+        }),
+    );
     await this.layoutService.persistConfig(
       resolvedLayout.layout,
       portfolio.id,
@@ -264,11 +286,10 @@ export class PortfolioService {
       request.media?.map((media) => media.id) ?? [],
     );
 
-    // Validate slug uniqueness if slug is being changed
-    if (request.slug && request.slug !== portfolio.slug) {
-      if ((await this.slugExists(request.slug, portfolio.user_id)).exists) {
-        throw new BadRequestException(`Slug ${request.slug} already exists`);
-      }
+    // The slug is frozen at creation and never re-derived here, so only the title needs checking.
+    // `id` is excluded so re-saving an unchanged title is not rejected as a self-collision.
+    if (request.title) {
+      await this.assertTitleIsFree(request.title, portfolio.user_id, id);
     }
 
     const resolvedLayout = request.layout
@@ -281,8 +302,7 @@ export class PortfolioService {
     // Handle thumbnail upload if a new one is provided
     let thumbnailPath: string | undefined;
     if (request.thumbnail) {
-      const slug = request.slug ?? portfolio.slug;
-      thumbnailPath = `users/${this.requestService.user.public_id}/portfolio/${slug}/thumbnail.webp`;
+      thumbnailPath = `users/${this.requestService.user.public_id}/portfolio/${portfolio.slug}/thumbnail.webp`;
       this.logger.info('Uploading thumbnail', { path: thumbnailPath });
 
       // Delete old thumbnail if it exists
@@ -310,9 +330,10 @@ export class PortfolioService {
       }
     }
 
+    // Never write `slug` here. `updateById` builds its column list from Object.keys() without
+    // filtering undefined, so a present-but-undefined key would be bound and persisted as NULL.
     const updated = await this.portfolioRepository.updateById(id, {
       title: request.title,
-      slug: request.slug,
       description: request.description,
       is_highlight: request.is_highlight,
       is_active: request.is_active,
@@ -332,14 +353,12 @@ export class PortfolioService {
 
     await this.invalidateHighlightCountCache(portfolio.user_id);
 
-    // Content changed → drop cached SEO metadata (old + new slug, all locales).
-    for (const s of new Set(
-      [portfolio.slug, request.slug].filter(Boolean) as string[],
-    )) {
-      await this.helpers.deleteCached(CACHE_KEY_PORTFOLIO_SEO(portfolio.user_id, s), {
-        appended_language: true,
-      });
-    }
+    // Content changed → drop cached SEO metadata (all locales). The slug is immutable,
+    // so there is only ever one key to invalidate.
+    await this.helpers.deleteCached(
+      CACHE_KEY_PORTFOLIO_SEO(portfolio.user_id, portfolio.slug),
+      { appended_language: true },
+    );
 
     return updated;
   }

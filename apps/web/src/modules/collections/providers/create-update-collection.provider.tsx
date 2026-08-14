@@ -4,7 +4,7 @@ import { MAX_COLLECTION_ITEMS } from "@repo/common-lib/constants/constants";
 import { MAX_HIGHLIGHT_COLLECTIONS } from "@repo/common-lib/constants/highlights";
 import type {
   CollectionInput,
-  CreateCollectionInput,
+  CreateCollectionPayload,
   FullCollection,
   FullCollectionMedia,
 } from "@repo/common-lib/types/collection";
@@ -28,7 +28,6 @@ import type { UserAuth } from "@/modules/auth/auth.types";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { createOrUpdateCollectionAction } from "../server-actions/create-update-collection.action";
 import { getCollectionHighlightCountAction } from "../server-actions/get-highlight-count.action";
-import { slugExistsAction } from "../server-actions/slug-exists.action";
 
 /** Builds the single-source-of-truth input from an existing collection (edit) or an empty draft (create). */
 function buildCollectionInput(
@@ -45,7 +44,6 @@ function buildCollectionInput(
   return {
     user_id: collection.user_id,
     title: collection.title,
-    slug: collection.slug,
     description: collection.description ?? "",
     is_highlight: collection.is_highlight,
     is_active: collection.is_active,
@@ -59,7 +57,7 @@ type CollectionContextType = {
   /** Submits the collection without requiring a form submit event (e.g. from a confirmation dialog). */
   submitCollection: () => Promise<void>;
   handleSetFormData: (
-    key: keyof CreateCollectionInput,
+    key: keyof CreateCollectionPayload,
     value: string | number | boolean | FullCollectionMedia[],
   ) => void;
   /** Single source of truth for the whole create/update form. */
@@ -72,9 +70,6 @@ type CollectionContextType = {
   isPending: boolean;
   success: boolean;
   canSubmit: boolean;
-  isSlugAvailable?: boolean;
-  isCheckingSlugAvailability: boolean;
-  checkSlugAvailability: () => Promise<void>;
   deleteInputErrorProperty: (key: string) => void;
   reset: () => void;
   clear: () => void;
@@ -124,7 +119,6 @@ export const CollectionProvider = ({
     [user],
   );
 
-  const idTimeOut = useRef<NodeJS.Timeout>(null);
   const highlightCountMemo = useRef<ActionReturn<
     number | null,
     undefined
@@ -178,9 +172,8 @@ export const CollectionProvider = ({
         position: idx + 1,
       }));
 
-      const payload: Partial<CreateCollectionInput> = {
+      const payload: Partial<CreateCollectionPayload> = {
         title: (collectionInput.title ?? "") as string,
-        slug: (collectionInput.slug ?? "") as string,
         description: (collectionInput.description ?? "") as string,
         user_id: (collectionInput.user_id ?? user.id) as number,
         is_highlight: collectionInput.is_highlight ?? false,
@@ -220,63 +213,14 @@ export const CollectionProvider = ({
     await handleAction();
   }, [handleAction]);
 
-  const slugChecksMemo = useRef<
-    Record<string, ActionReturn<boolean | null, undefined>>
-  >({});
-  const {
-    handleAction: handleActionSlug,
-    result: resultSlugExist,
-    isPending: isPendingSlugExists,
-    cleanResult,
-    cleanErrors,
-  } = useHandleAction({
-    action: async () => {
-      const slugToCheck = collectionInput.slug || "";
-      if (slugChecksMemo.current[slugToCheck]) {
-        return slugChecksMemo.current[slugToCheck];
-      }
-      return await slugExistsAction(user.username, slugToCheck);
-    },
-    afterAction: async (data) => {
-      slugChecksMemo.current[collectionInput.slug || ""] = data;
-    },
-  });
-
-  const checkSlugAvailability = useCallback(async () => {
-    if (
-      !collectionInput.slug ||
-      isPendingSlugExists ||
-      collectionInput.slug === currentCollection?.slug
-    )
-      return;
-    if (idTimeOut.current) clearTimeout(idTimeOut.current);
-    idTimeOut.current = setTimeout(() => {
-      cleanResult();
-      cleanErrors();
-      handleActionSlug();
-      if (idTimeOut.current) clearTimeout(idTimeOut.current);
-    }, 1000);
-  }, [
-    collectionInput.slug,
-    isPendingSlugExists,
-    cleanResult,
-    cleanErrors,
-    handleActionSlug,
-    currentCollection?.slug,
-  ]);
-
   const handleSetFormData = useCallback(
-    (key: keyof CreateCollectionInput, value: any) => {
-      if (key === "slug") {
-        cleanResult();
-        cleanErrors();
-      }
+    (key: keyof CreateCollectionPayload, value: any) => {
       setCollectionInput((prev) => ({
         ...prev,
         [key]: value,
       }));
     },
-    [cleanErrors, cleanResult],
+    [],
   );
 
   const handlePushMediaSelected = useCallback((m: Media) => {
@@ -310,7 +254,6 @@ export const CollectionProvider = ({
   const hasFormChanged = useMemo(() => {
     if (!currentCollection) return false;
     if (collectionInput.title !== currentCollection.title) return true;
-    if (collectionInput.slug !== currentCollection.slug) return true;
     if (
       (collectionInput.description ?? "") !==
       (currentCollection.description ?? "")
@@ -338,9 +281,7 @@ export const CollectionProvider = ({
   }, [collectionInput, currentCollection]);
 
   const requiredFieldsPresent = !!(
-    collectionInput.title &&
-    collectionInput.slug &&
-    collectionInput.media.length
+    collectionInput.title && collectionInput.media.length
   );
 
   const canSubmit = useMemo(() => {
@@ -353,14 +294,7 @@ export const CollectionProvider = ({
     setCollectionInput(buildCollectionInput(user));
     setCurrentCollection(undefined);
     reset();
-    cleanErrors();
-    cleanResult();
-    slugChecksMemo.current = {};
-    if (idTimeOut.current) {
-      clearTimeout(idTimeOut.current);
-      idTimeOut.current = null;
-    }
-  }, [user, reset, cleanErrors, cleanResult]);
+  }, [user, reset]);
 
   const contextValue: CollectionContextType = {
     user,
@@ -376,12 +310,6 @@ export const CollectionProvider = ({
     isPending,
     success,
     canSubmit,
-    isSlugAvailable:
-      typeof resultSlugExist?.data === "boolean"
-        ? !resultSlugExist.data
-        : undefined,
-    isCheckingSlugAvailability: isPendingSlugExists,
-    checkSlugAvailability,
     deleteInputErrorProperty,
     reset,
     clear,

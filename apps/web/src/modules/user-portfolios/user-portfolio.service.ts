@@ -42,15 +42,6 @@ class UserPortfolioService extends BaseService {
       resource: queryParamBuilder(`/${username}/portfolios`, filters),
     });
   }
-
-  async slugExists(
-    username: string,
-    slug: string,
-  ): Promise<ApiResponse<{ exists: boolean }>> {
-    return await this.fetchApi.get({
-      resource: `/${username}/portfolios/slug-exist/${slug}`,
-    });
-  }
 }
 
 export default new UserPortfolioService();

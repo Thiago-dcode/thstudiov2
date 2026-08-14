@@ -1457,11 +1457,6 @@ const messages = {
     email: {
       invalid: "Invalid email address",
     },
-    slug: {
-      tooShort: "Slug must be at least 3 characters long",
-      invalidFormat:
-        "Slug must contain only lowercase letters, numbers, and hyphens",
-    },
     avatarUrlInvalid: "Invalid avatar URL",
     fallbackUrlInvalid: "Invalid fallback URL",
     thumbnailRequired: "Thumbnail is required",
@@ -1653,16 +1648,13 @@ const messages = {
         thumbnailAlt: "Thumbnail Preview",
         titleLabel: "Title",
         titlePlaceholder: "My Portfolio",
-        slugLabel: "Slug",
-        slugPlaceholder: "my-portfolio",
-        slugInfo:
-          "A slug is a URL-friendly version of your title (e.g., 'my-awesome-portfolio'). It should be unique as it's used in the portfolio's URL to identify it and makes it easier to find.",
-        slugChecking: "Checking availability...",
-        slugAvailable: "✓ This slug is available",
-        slugTaken: "✗ This slug is already taken",
-        slugInvalidFormat: "✗ Invalid slug format. Example: my-portfolio",
-        slugChangeWarning:
-          "It's best to keep the slug unchanged once it's set — changing it updates your public link, so any existing links to this page may stop working.",
+        titleInfo:
+          "Your title becomes the web address for this portfolio. Pick something clear and specific — you can rename it later, but the address will stay as it is.",
+        titleAddressHint:
+          "Choose carefully: your title becomes the link people use to find this portfolio, and that link won't change if you rename it later.",
+        permalinkLabel: "Link:",
+        permalinkFrozenNote:
+          "set when you created this portfolio, and it stays the same even if you change the title",
         descriptionLabel: "Description",
         descriptionPlaceholder: "Describe your portfolio...",
         categoriesLabel: "Categories",
@@ -1726,19 +1718,15 @@ const messages = {
       form: {
         blockedNotice:
           "This service has been blocked. You can review it here, but it cannot be edited until the block is lifted.",
-        slugChecking: "Checking availability...",
-        slugAvailable: "✓ This slug is available",
-        slugTaken: "✗ This slug is already taken",
         titleLabel: "Title",
         titlePlaceholder: "Portrait Photography",
-        slugLabel: "Slug",
-        slugPlaceholder: "portrait-photography",
-        slugInfo:
-          "URL-friendly identifier. Only lowercase letters, numbers and hyphens.",
-        slugInvalidFormat:
-          "✗ Invalid slug format. Example: portrait-photography",
-        slugChangeWarning:
-          "It's best to keep the slug unchanged once it's set — changing it updates your public link, so any existing links to this page may stop working.",
+        titleInfo:
+          "Your title becomes the web address for this service. Pick something clear and specific — you can rename it later, but the address will stay as it is.",
+        titleAddressHint:
+          "Choose carefully: your title becomes the link people use to find this service, and that link won't change if you rename it later.",
+        permalinkLabel: "Link:",
+        permalinkFrozenNote:
+          "set when you created this service, and it stays the same even if you change the title",
         descriptionLabel: "Description",
         descriptionPlaceholder: "Describe your service...",
         priceLabel: "Price",
@@ -1801,16 +1789,13 @@ const messages = {
           "This collection has been blocked. You can review it here, but it cannot be edited until the block is lifted.",
         titleLabel: "Title",
         titlePlaceholder: "My Collection",
-        slugLabel: "Slug",
-        slugPlaceholder: "my-collection",
-        slugInfo:
-          "A slug is a URL-friendly version of your title (e.g., 'my-awesome-collection'). It should be unique as it's used in the collection's URL.",
-        slugChecking: "Checking availability...",
-        slugAvailable: "✓ This slug is available",
-        slugTaken: "✗ This slug is already taken",
-        slugInvalidFormat: "✗ Invalid slug format. Example: my-collection",
-        slugChangeWarning:
-          "It's best to keep the slug unchanged once it's set — changing it updates your public link, so any existing links to this page may stop working.",
+        titleInfo:
+          "Your title becomes the web address for this collection. Pick something clear and specific — you can rename it later, but the address will stay as it is.",
+        titleAddressHint:
+          "Choose carefully: your title becomes the link people use to find this collection, and that link won't change if you rename it later.",
+        permalinkLabel: "Link:",
+        permalinkFrozenNote:
+          "set when you created this collection, and it stays the same even if you change the title",
         descriptionLabel: "Description",
         descriptionPlaceholder: "Describe your collection...",
         showOnProfile: "Show on profile page",
@@ -2109,7 +2094,7 @@ const messages = {
   },
   actions: {
     unauthorized: "Unauthorized",
-    slugAlreadyExists: "Slug already exists",
+    titleAlreadyExists: "You already have one with this title. Try another.",
     genericError: "Something went wrong. Please try again later.",
     formDataRequired: "Form data is required",
     passwordRecoveryCooldown:

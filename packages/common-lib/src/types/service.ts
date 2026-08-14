@@ -55,6 +55,13 @@ export type CreateServiceInputWithFile = Omit<CreateServiceInput, 'thumbnail'> &
   thumbnail?: File;
 };
 
+/**
+ * What the client actually sends. The slug is derived from the title by the API and frozen
+ * at creation, so clients never supply one — `CreateServiceInput` keeps `slug` because it is
+ * also the repository's write shape.
+ */
+export type CreateServicePayload = Omit<CreateServiceInputWithFile, 'slug'>;
+
 // What users can update
 export type UpdateServiceInput = Partial<Omit<ServiceSchema, InternalServiceFields>> & {
   features?: { id?: number; title: string }[];
@@ -65,3 +72,6 @@ export type UpdateServiceInput = Partial<Omit<ServiceSchema, InternalServiceFiel
 export type UpdateServiceInputWithFile = Omit<UpdateServiceInput, 'thumbnail'> & {
   thumbnail?: File;
 };
+
+/** Update payload as sent by the client. Renaming never re-slugs, so `slug` is not sendable. */
+export type UpdateServicePayload = Omit<UpdateServiceInputWithFile, 'slug'>;

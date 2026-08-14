@@ -1,10 +1,6 @@
 import { MAX_COLLECTION_ITEMS } from "@repo/common-lib/constants/constants";
 import * as z from "zod";
-import {
-  requiredString,
-  slugField,
-  type Translator,
-} from "@/lib/validation/zod-helpers";
+import { requiredString, type Translator } from "@/lib/validation/zod-helpers";
 
 const collectionMediaItemSchema = z.object({
   id: z.number(),
@@ -14,7 +10,6 @@ const collectionMediaItemSchema = z.object({
 export const createCollectionSchema = (t: Translator) =>
   z.object({
     title: requiredString(t, t("fields.title")),
-    slug: slugField(t),
     description: z.string().optional(),
     user_id: z.number(),
     is_highlight: z.boolean().optional(),
@@ -36,7 +31,6 @@ export type CreateCollectionSchemaType = z.infer<
 export const updateCollectionSchema = (t: Translator) =>
   z.object({
     title: requiredString(t, t("fields.title")).optional(),
-    slug: slugField(t).optional(),
     description: z.string().optional(),
     is_highlight: z.boolean().optional(),
     is_active: z.boolean().optional(),

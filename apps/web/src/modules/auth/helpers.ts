@@ -1,3 +1,4 @@
+import { API_ERRORS } from "@repo/common-lib/constants/api-errors";
 import { APP_API_KEY_HEADER } from "@repo/common-lib/constants/constants";
 import type {
   ActionReturn,
@@ -44,6 +45,33 @@ export const getFriendlyApiErrors = async (
     return [t("actions.genericError")];
   }
   return errors.error.errors;
+};
+
+/**
+ * Failure shape for a create/update action, from an API error response.
+ *
+ * Titles are unique per user, and the API rejects a duplicate with `TITLE_ALREADY_EXISTS`.
+ * That one renders inline under the title field — where the user can actually fix it —
+ * rather than as a toast. Everything else falls through to the generic error list.
+ * Shared by the portfolio, service and collection actions.
+ */
+export const getFailureFromApiError = async (
+  response: ErrorResponse,
+): Promise<{
+  data: null;
+  errors: string[];
+  inputErrors?: Record<string, string>;
+}> => {
+  if (response.error.api_error_code === API_ERRORS.TITLE_ALREADY_EXISTS) {
+    const t = await getTranslations();
+    return {
+      data: null,
+      errors: [],
+      inputErrors: { title: t("actions.titleAlreadyExists") },
+    };
+  }
+
+  return { data: null, errors: await getFriendlyApiErrors(response) };
 };
 
 export const getObjErrorFromZod = (error: ZodError): Record<string, string> => {

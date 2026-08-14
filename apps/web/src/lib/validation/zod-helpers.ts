@@ -29,15 +29,6 @@ export type Translator = (
 export const requiredString = (t: Translator, fieldLabel: string) =>
   z.string().min(1, t("validation.required", { field: fieldLabel }));
 
-const SLUG_REGEX = /^[a-z0-9-]+$/;
-
-/** Shared slug rule used by portfolios, services, and collections. */
-export const slugField = (t: Translator) =>
-  z
-    .string()
-    .min(3, t("validation.slug.tooShort"))
-    .regex(SLUG_REGEX, t("validation.slug.invalidFormat"));
-
 /** Shared email rule used across contact, user, and preference schemas. */
 export const emailField = (t: Translator) =>
   z.email(t("validation.email.invalid"));

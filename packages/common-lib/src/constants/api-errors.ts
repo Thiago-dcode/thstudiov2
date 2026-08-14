@@ -22,6 +22,9 @@ export const API_ERRORS = {
   // CONTENT MODERATION
   CONTENT_MODERATION_NOT_ALLOWED: 'CONTENT_MODERATION_NOT_ALLOWED',
   ACCOUNT_STRIKES_EXCEEDED: 'ACCOUNT_STRIKES_EXCEEDED',
+
+  // CONTENT - Uniqueness (always scoped to the owning user)
+  TITLE_ALREADY_EXISTS: 'TITLE_ALREADY_EXISTS',
 } as const;
 
 export type ApiErrorKey = keyof typeof API_ERRORS;

@@ -14,15 +14,6 @@ export class UserCollectionController {
   constructor(private readonly userCollectionService: UserCollectionService) { }
 
   @Public()
-  @Get(':username/collection/slug-exist/:slug')
-  async slugExists(
-    @Param('username') username: string,
-    @Param('slug') slug: string,
-  ) {
-    return await this.userCollectionService.slugExists(username, slug);
-  }
-
-  @Public()
   @Get(':user_id/collection/:slug')
   async getById(
     @Param('user_id', ParseIntPipe) userId: number,

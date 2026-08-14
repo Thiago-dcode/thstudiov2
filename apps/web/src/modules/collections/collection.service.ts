@@ -1,8 +1,8 @@
 import type {
   Collection,
   CollectionIndexRequest,
-  CreateCollectionInput,
-  UpdateCollectionInput,
+  CreateCollectionPayload,
+  UpdateCollectionPayload,
 } from "@repo/common-lib/types/collection";
 import type { HighlightCount } from "@repo/common-lib/types/general";
 import type { ApiResponse } from "@repo/common-lib/types/response";
@@ -24,12 +24,14 @@ class CollectionService extends BaseService {
   async getHighlightCount(): Promise<ApiResponse<HighlightCount>> {
     return await this.fetchApi.get({ resource: "/highlight-count" });
   }
-  async create(body: CreateCollectionInput): Promise<ApiResponse<Collection>> {
+  async create(
+    body: CreateCollectionPayload,
+  ): Promise<ApiResponse<Collection>> {
     return await this.fetchApi.post({ body });
   }
   async update(
     id: number,
-    body: UpdateCollectionInput,
+    body: UpdateCollectionPayload,
   ): Promise<ApiResponse<Collection>> {
     return await this.fetchApi.patch({
       resource: `/${id}`,

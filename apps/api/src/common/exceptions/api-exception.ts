@@ -63,4 +63,9 @@ export class ApiException extends HttpException {
   static accountStrikesExceeded(message: string) {
     return new ApiException(API_ERRORS.ACCOUNT_STRIKES_EXCEEDED, message, HttpStatus.FORBIDDEN);
   }
+
+  /** The user already owns another item of the same kind with this title. Scoped per user, never global. */
+  static titleAlreadyExists(message: string) {
+    return new ApiException(API_ERRORS.TITLE_ALREADY_EXISTS, message, HttpStatus.CONFLICT);
+  }
 }

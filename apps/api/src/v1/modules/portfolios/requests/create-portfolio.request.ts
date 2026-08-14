@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsOptional, IsString, IsArray, ValidateNested, MinLength, ArrayMaxSize } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsArray, ValidateNested, ArrayMaxSize } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 import { MAX_CATEGORIES_PORTFOLIO } from '@repo/common-lib/constants/constants';
 import { IsUserAuth } from 'src/common/validators/is-user-auth.validtor';
@@ -34,13 +34,11 @@ class PortfolioCollectionItem {
 }
 
 export class CreatePortfolioRequest {
+  // The slug is derived from this title by the service and frozen at creation — clients
+  // never send one (`whitelist: true` strips it if an older client still does).
   @IsString()
   @IsNotEmpty()
   title: string;
-
-  @IsString()
-  @MinLength(3, { message: 'Slug must be at least 3 characters long' })
-  slug: string;
 
   @IsString()
   @IsOptional()

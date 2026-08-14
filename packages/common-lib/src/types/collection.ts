@@ -60,10 +60,17 @@ export type CreateCollectionInput = Omit<CollectionSchema, InternalCollectionFie
 };
 
 /**
+ * What the client actually sends. The slug is derived from the title by the API and frozen
+ * at creation, so clients never supply one — `CreateCollectionInput` keeps `slug` because it
+ * is also the repository's write shape.
+ */
+export type CreateCollectionPayload = Omit<CreateCollectionInput, 'slug'>;
+
+/**
  * Single source of truth for the create/update collection form.
  * Media is kept as full objects (for the UI) instead of `{ id, position }`.
  */
-export type CollectionInput = Partial<Omit<CreateCollectionInput, 'media'>> & {
+export type CollectionInput = Partial<Omit<CreateCollectionPayload, 'media'>> & {
   media: FullCollectionMedia[];
 };
 
@@ -72,3 +79,6 @@ export type UpdateCollectionInput = Partial<
 > & {
   media: { id: number; position: number }[];
 };
+
+/** Update payload as sent by the client. Renaming never re-slugs, so `slug` is not sendable. */
+export type UpdateCollectionPayload = Omit<UpdateCollectionInput, 'slug'>;

@@ -19,7 +19,6 @@ export function AlertCollectionButton() {
     !!currentCollection ||
     !!(
       collectionInput.title ||
-      collectionInput.slug ||
       collectionInput.description ||
       mediaSelected.length
     );

@@ -12,10 +12,6 @@ import type {
   FullCollection,
   FullCollectionMedia,
 } from "@repo/common-lib/types/collection";
-import {
-  generateValidSlug,
-  isAValidSlugFormat,
-} from "@repo/common-lib/utils/generate-valid-slug";
 import { isHighlightToggleDisabled } from "@repo/common-lib/utils/highlights";
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
 import { Checkbox } from "@repo/ui/components/shadcn/checkbox";
@@ -25,7 +21,7 @@ import { cn } from "@repo/ui/lib/utils";
 import { Image, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useEffect, useMemo } from "react";
 import { StickyFormFooter } from "@/app/[locale]/(atelier)/__components/sticky-form-footer";
 import { SubmitCollectionButton } from "@/app/[locale]/(atelier)/__components/submit-collection-button";
 import FormComponent from "@/lib/components/form-component";
@@ -90,9 +86,6 @@ export const CreateOrUpdateCollection = ({
     collectionInput,
     handleSetFormData,
     deleteInputErrorProperty,
-    checkSlugAvailability,
-    isCheckingSlugAvailability,
-    isSlugAvailable,
     user,
     mediaSelected,
     handlePushMediaSelected,
@@ -145,71 +138,9 @@ export const CreateOrUpdateCollection = ({
     }
   }, [success, clear, router.push]);
 
-  // --- Slug logic ---
-  const manuallyChangedSlug = useRef(false);
-  const previousSlugRef = useRef<string | undefined>(collectionInput.slug);
-  const [isValidSlug, setIsValidSlug] = useState<boolean | undefined>(
-    undefined,
-  );
-
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     deleteInputErrorProperty("title");
-    const newTitle = e.target.value;
-    handleSetFormData("title", newTitle);
-    if (!manuallyChangedSlug.current) {
-      const generatedSlug = generateValidSlug(newTitle);
-      if (generatedSlug && isAValidSlugFormat(generatedSlug)) {
-        handleSetFormData("slug", generatedSlug);
-      } else if (!generatedSlug) {
-        handleSetFormData("slug", "");
-      }
-    }
-  };
-
-  const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newSlug = generateValidSlug(e.target.value, {
-      preserveTrailingHyphen: true,
-    });
-    deleteInputErrorProperty("slug");
-    handleSetFormData("slug", newSlug);
-    manuallyChangedSlug.current = !!newSlug;
-  };
-
-  useEffect(() => {
-    const currentSlug = collectionInput.slug?.trim();
-    const previousSlug = previousSlugRef.current?.trim();
-    const slugChanged = currentSlug !== previousSlug;
-
-    if (currentSlug) {
-      const isValid = isAValidSlugFormat(currentSlug);
-      setIsValidSlug(isValid);
-      if (slugChanged && isValid && !currentSlug.endsWith("-")) {
-        checkSlugAvailability();
-      }
-    } else {
-      setIsValidSlug(undefined);
-    }
-    previousSlugRef.current = collectionInput.slug;
-  }, [collectionInput.slug, checkSlugAvailability]);
-
-  const getSlugStatusMessage = () => {
-    if (isCheckingSlugAvailability) {
-      return (
-        <p className="text-sm text-text-muted">{t("form.slugChecking")}</p>
-      );
-    }
-    if (
-      typeof isSlugAvailable === "boolean" &&
-      currentCollection?.slug !== collectionInput.slug
-    ) {
-      if (isSlugAvailable) {
-        return (
-          <p className="text-sm text-green-600">{t("form.slugAvailable")}</p>
-        );
-      }
-      return <p className="text-sm text-error">{t("form.slugTaken")}</p>;
-    }
-    return null;
+    handleSetFormData("title", e.target.value);
   };
 
   const mediaSelectedRecord = useMemo(() => {
@@ -279,42 +210,33 @@ export const CreateOrUpdateCollection = ({
         <div
           className={`space-y-4 ${readOnly ? "pointer-events-none select-none opacity-90" : ""}`}
         >
-          <FormComponent.LabelInput
-            value={collectionInput.title || ""}
-            onChange={handleTitleChange}
-            error={inputErrors?.title}
-            label={t("form.titleLabel")}
-            required
-            name="title"
-            id="title"
-            type="text"
-            placeholder={t("form.titlePlaceholder")}
-            disabled={isPending}
-          />
-
-          <div className="space-y-2">
+          <div className="space-y-1">
             <FormComponent.LabelInput
-              value={collectionInput.slug || ""}
-              onChange={handleSlugChange}
-              error={inputErrors?.slug}
-              label={t("form.slugLabel")}
+              value={collectionInput.title || ""}
+              onChange={handleTitleChange}
+              error={inputErrors?.title}
+              label={t("form.titleLabel")}
               required
-              name="slug"
-              id="slug"
+              name="title"
+              id="title"
               type="text"
-              placeholder={t("form.slugPlaceholder")}
-              extraInfo={t("form.slugInfo")}
-              disabled={isCheckingSlugAvailability || isPending}
+              placeholder={t("form.titlePlaceholder")}
+              extraInfo={t("form.titleInfo")}
+              disabled={isPending}
             />
-            {isValidSlug === false && (
-              <p className="text-sm text-error">
-                {t("form.slugInvalidFormat")}
+            {/* The title decides the permanent public address, so say so before they commit. */}
+            {!defaultCollection && (
+              <p className="text-xs text-text-muted">
+                {t("form.titleAddressHint")}
               </p>
             )}
-            {getSlugStatusMessage()}
-            {defaultCollection && (
-              <p className="text-sm text-amber-600">
-                {t("form.slugChangeWarning")}
+            {defaultCollection?.slug && (
+              <p className="text-xs text-text-muted">
+                {t("form.permalinkLabel")}{" "}
+                <span className="font-mono">
+                  /artists/{user.username}/collections/{defaultCollection.slug}
+                </span>{" "}
+                — {t("form.permalinkFrozenNote")}
               </p>
             )}
           </div>

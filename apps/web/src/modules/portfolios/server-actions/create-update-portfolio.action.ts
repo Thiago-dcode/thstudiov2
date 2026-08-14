@@ -3,19 +3,18 @@
 import { ALLOWED_IMAGE_FILE_TYPES } from "@repo/common-lib/constants/constants";
 import type { MimeTypes } from "@repo/common-lib/types/general";
 import type {
-  CreatePortfolioInputWithFile,
+  CreatePortfolioPayload,
   Portfolio,
-  UpdatePortfolioInputWithFile,
+  UpdatePortfolioPayload,
 } from "@repo/common-lib/types/portfolio";
 import type { ActionReturn } from "@repo/common-lib/types/response";
 import { cleanObj, trimValues } from "@repo/common-lib/utils/cleanObj";
 import { getTranslations } from "next-intl/server";
 import {
-  getFriendlyApiErrors,
+  getFailureFromApiError,
   getObjErrorFromZod,
 } from "@/modules/auth/helpers";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
-import userPortfolioService from "@/modules/user-portfolios/user-portfolio.service";
 import portfolioService from "../portfolio.service";
 import {
   createPortfolioSchema,
@@ -24,8 +23,8 @@ import {
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
-type PortfolioActionInput = Partial<CreatePortfolioInputWithFile> &
-  Partial<UpdatePortfolioInputWithFile>;
+type PortfolioActionInput = Partial<CreatePortfolioPayload> &
+  Partial<UpdatePortfolioPayload>;
 
 export const createOrUpdatePortfolioAction = async (
   input: PortfolioActionInput,
@@ -102,40 +101,14 @@ export const createOrUpdatePortfolioAction = async (
 
   cleanObj(rawData);
 
-  // Check slug availability (skip if slug unchanged on update)
-  if (
-    rawData.slug &&
-    rawData.user_id &&
-    currentPortfolio?.slug !== rawData.slug
-  ) {
-    const slugExistsResponse = await userPortfolioService.slugExists(
-      userAuth.username,
-      rawData.slug,
-    );
-
-    if (slugExistsResponse.error) {
-      return {
-        data: null,
-        errors: await getFriendlyApiErrors(slugExistsResponse),
-      };
-    }
-
-    if (slugExistsResponse.data?.exists) {
-      return {
-        data: null,
-        errors: [],
-        inputErrors: { slug: t("actions.slugAlreadyExists") },
-      };
-    }
-  }
-
-  // Call create or update
+  // The API derives the slug from the title and enforces per-user title uniqueness,
+  // so there is nothing left to pre-check here.
   const portfolio = isUpdate
     ? await portfolioService.update(
         currentPortfolio.id,
-        rawData as UpdatePortfolioInputWithFile,
+        rawData as UpdatePortfolioPayload,
       )
-    : await portfolioService.create(rawData as CreatePortfolioInputWithFile);
+    : await portfolioService.create(rawData as CreatePortfolioPayload);
 
   if (portfolio.data) {
     return {
@@ -145,8 +118,5 @@ export const createOrUpdatePortfolioAction = async (
     };
   }
 
-  return {
-    data: null,
-    errors: await getFriendlyApiErrors(portfolio),
-  };
+  return getFailureFromApiError(portfolio);
 };

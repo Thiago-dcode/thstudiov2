@@ -10,6 +10,10 @@ import {
   ClientNotInitializedException,
   InvalidDatabaseClientException,
 } from './exceptions';
+import {
+  DbUniqueViolationException,
+  PG_UNIQUE_VIOLATION,
+} from '../exceptions';
 import { DEFAULT_DATABASE_SETTINGS } from '@repo/common-lib/constants/database';
 import { setDatabaseCliConfig } from '../scripts/utils/config';
 export abstract class Client<T> {
@@ -109,7 +113,20 @@ export class PostgresClient extends Client<PgPool> {
   }
 
   public async query(query: string, values?: any[]): Promise<any> {
-    return await this.client?.query(query, values);
+    try {
+      return await this.client?.query(query, values);
+    } catch (error) {
+      // Surface unique violations as a typed error so callers can recover (e.g. a slug
+      // allocator that lost a race), instead of the raw driver error becoming a 500.
+      const pgError = error as { code?: string; constraint?: string; message?: string };
+      if (pgError?.code === PG_UNIQUE_VIOLATION) {
+        throw new DbUniqueViolationException(
+          pgError.message ?? 'Unique constraint violated',
+          pgError.constraint,
+        );
+      }
+      throw error;
+    }
   }
 }
 

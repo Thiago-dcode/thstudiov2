@@ -17,6 +17,7 @@ import { MediaModerationException } from "src/common/exceptions/media-moderation
 import { ApiException } from "src/common/exceptions/api-exception";
 import { serviceCacheKeys } from "../user-services/user-service.service";
 import { cleanObj } from "@repo/common-lib/utils/object";
+import { insertWithUniqueSlug, resolveEntitySlug } from "src/common/utils/slug.util";
 
 const CACHE_TTL = 1000 * 60 * 60 * 24;
 
@@ -35,10 +36,25 @@ export class ServiceService {
     private readonly aiService: AiService,
   ) { }
 
-  private async slugExists(slug: string, userId: number) {
-    return {
-      exists: await this.serviceRepository.slugExists(slug, userId),
-    };
+  /**
+   * Derives the service's permanent slug from its title, resolving collisions within
+   * this user's services only (two artists may share a slug — their URLs differ by username).
+   * Must run before any slug-derived storage path is built.
+   */
+  private async resolveSlug(title: string, userId: number) {
+    return resolveEntitySlug({
+      title,
+      fallbackPrefix: 'service',
+      exists: (candidate) => this.serviceRepository.slugExists(candidate, userId),
+    });
+  }
+
+  private async assertTitleIsFree(title: string, userId: number, excludeId?: number) {
+    if (await this.serviceRepository.titleExists(title, userId, excludeId)) {
+      throw ApiException.titleAlreadyExists(
+        'You already have a service with this title. Please choose a different one.',
+      );
+    }
   }
 
   async countHighlights(): Promise<HighlightCount> {
@@ -77,9 +93,10 @@ export class ServiceService {
   }
 
   async create(request: CreateServiceRequest) {
-    if ((await this.slugExists(request.slug, request.user_id)).exists) {
-      throw new BadRequestException(`Slug ${request.slug} already exists`);
-    }
+    // Title first: it is the likeliest user error and the cheapest check, so it fails
+    // before any upload or limit accounting happens.
+    await this.assertTitleIsFree(request.title, request.user_id);
+    const slug = await this.resolveSlug(request.title, request.user_id);
 
     await this.enforceHighlightLimit(request.user_id, request.is_highlight);
 
@@ -89,7 +106,7 @@ export class ServiceService {
 
     let thumbnailPath: string | undefined;
     if (request.thumbnail) {
-      thumbnailPath = `users/${this.requestService.user.public_id}/services/${request.slug}/thumbnail.webp`;
+      thumbnailPath = `users/${this.requestService.user.public_id}/services/${slug}/thumbnail.webp`;
       this.logger.info('Uploading thumbnail', { path: thumbnailPath });
 
       await this.helpers.setAsset({
@@ -113,13 +130,19 @@ export class ServiceService {
     cleanObj(request)
     const { thumbnail, ...rest } = request;
 
-    const service = await this.serviceRepository.create({
-      ...rest,
-      is_active: rest.is_active ?? true,
-      show_price: rest.show_price ?? false,
-      is_highlight: rest.is_highlight ?? false,
-      thumbnail: thumbnailPath,
-    });
+    const service = await insertWithUniqueSlug(
+      slug,
+      () => this.resolveSlug(request.title, request.user_id),
+      (resolvedSlug) =>
+        this.serviceRepository.create({
+          ...rest,
+          slug: resolvedSlug,
+          is_active: rest.is_active ?? true,
+          show_price: rest.show_price ?? false,
+          is_highlight: rest.is_highlight ?? false,
+          thumbnail: thumbnailPath,
+        }),
+    );
 
     await this.helpers.deleteManyCached([
       serviceCacheKeys.allByUser(request.user_id),
@@ -159,16 +182,15 @@ export class ServiceService {
       service.is_highlight,
     );
 
-    if (request.slug && request.slug !== service.slug) {
-      if ((await this.slugExists(request.slug, service.user_id)).exists) {
-        throw new BadRequestException(`Slug ${request.slug} already exists`);
-      }
+    // The slug is frozen at creation and never re-derived here, so only the title needs checking.
+    // `id` is excluded so re-saving an unchanged title is not rejected as a self-collision.
+    if (request.title) {
+      await this.assertTitleIsFree(request.title, service.user_id, id);
     }
 
     let thumbnailPath: string | undefined;
     if (request.thumbnail) {
-      const slug = request.slug ?? service.slug;
-      thumbnailPath = `users/${this.requestService.user.public_id}/services/${slug}/thumbnail.webp`;
+      thumbnailPath = `users/${this.requestService.user.public_id}/services/${service.slug}/thumbnail.webp`;
       this.logger.info('Uploading thumbnail', { path: thumbnailPath });
 
       if (service.thumbnail) {
@@ -200,24 +222,18 @@ export class ServiceService {
       ...(thumbnailPath ? { thumbnail: thumbnailPath } : {}),
     });
 
-    const keysToInvalidate = [
+    // The slug is immutable, so there is only ever one slug-keyed entry to invalidate.
+    await this.helpers.deleteManyCached([
       serviceCacheKeys.bySlug(service.user_id, service.slug),
       serviceCacheKeys.allByUser(service.user_id),
       this.highlightCountCacheKey(service.user_id),
-    ];
-    if (request.slug && request.slug !== service.slug) {
-      keysToInvalidate.push(serviceCacheKeys.bySlug(service.user_id, request.slug));
-    }
-    await this.helpers.deleteManyCached(keysToInvalidate);
+    ]);
 
-    // Content changed → drop cached SEO metadata (old + new slug, all locales).
-    for (const s of new Set(
-      [service.slug, request.slug].filter(Boolean) as string[],
-    )) {
-      await this.helpers.deleteCached(CACHE_KEY_SERVICE_SEO(service.user_id, s), {
-        appended_language: true,
-      });
-    }
+    // Content changed → drop cached SEO metadata (all locales).
+    await this.helpers.deleteCached(
+      CACHE_KEY_SERVICE_SEO(service.user_id, service.slug),
+      { appended_language: true },
+    );
 
     return updated;
   }

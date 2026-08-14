@@ -53,15 +53,6 @@ class UserCollectionService extends BaseService {
       resource: queryParamBuilder(`/${username}/collections`, filters),
     });
   }
-
-  async slugExists(
-    username: string,
-    slug: string,
-  ): Promise<ApiResponse<{ exists: boolean }>> {
-    return await this.fetchApi.get({
-      resource: `/${username}/collection/slug-exist/${slug}`,
-    });
-  }
 }
 
 export default new UserCollectionService();

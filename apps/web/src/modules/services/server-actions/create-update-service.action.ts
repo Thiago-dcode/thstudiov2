@@ -4,18 +4,17 @@ import { ALLOWED_IMAGE_FILE_TYPES } from "@repo/common-lib/constants/constants";
 import type { MimeTypes } from "@repo/common-lib/types/general";
 import type { ActionReturn } from "@repo/common-lib/types/response";
 import type {
-  CreateServiceInputWithFile,
+  CreateServicePayload,
   Service,
-  UpdateServiceInputWithFile,
+  UpdateServicePayload,
 } from "@repo/common-lib/types/service";
 import { cleanObj, trimValues } from "@repo/common-lib/utils/cleanObj";
 import { getTranslations } from "next-intl/server";
 import {
-  getFriendlyApiErrors,
+  getFailureFromApiError,
   getObjErrorFromZod,
 } from "@/modules/auth/helpers";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
-import userServiceService from "@/modules/user-services/user-service.service";
 import {
   createServiceSchema,
   updateServiceSchema,
@@ -24,8 +23,8 @@ import serviceService from "../service.service";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
-type ServiceActionInput = Partial<CreateServiceInputWithFile> &
-  Partial<UpdateServiceInputWithFile>;
+type ServiceActionInput = Partial<CreateServicePayload> &
+  Partial<UpdateServicePayload>;
 
 export const createOrUpdateServiceAction = async (
   input: ServiceActionInput,
@@ -94,33 +93,14 @@ export const createOrUpdateServiceAction = async (
 
   cleanObj(rawData);
 
-  if (rawData.slug && currentService?.slug !== rawData.slug) {
-    const slugExistsResponse = await userServiceService.slugExists(
-      userAuth.username,
-      rawData.slug,
-    );
-
-    if (slugExistsResponse.error) {
-      return {
-        data: null,
-        errors: await getFriendlyApiErrors(slugExistsResponse),
-      };
-    }
-
-    if (slugExistsResponse.data?.exists) {
-      return {
-        data: null,
-        errors: [],
-        inputErrors: { slug: t("actions.slugAlreadyExists") },
-      };
-    }
-  }
+  // The API derives the slug from the title and enforces per-user title uniqueness,
+  // so there is nothing left to pre-check here.
   const service = isUpdate
     ? await serviceService.update(
         currentService.id,
-        rawData as UpdateServiceInputWithFile,
+        rawData as UpdateServicePayload,
       )
-    : await serviceService.create(rawData as CreateServiceInputWithFile);
+    : await serviceService.create(rawData as CreateServicePayload);
 
   if (service.data) {
     return {
@@ -130,8 +110,5 @@ export const createOrUpdateServiceAction = async (
     };
   }
 
-  return {
-    data: null,
-    errors: await getFriendlyApiErrors(service),
-  };
+  return getFailureFromApiError(service);
 };

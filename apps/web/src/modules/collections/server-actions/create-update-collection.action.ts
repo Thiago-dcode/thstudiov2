@@ -2,26 +2,25 @@
 
 import type {
   Collection,
-  CreateCollectionInput,
-  UpdateCollectionInput,
+  CreateCollectionPayload,
+  UpdateCollectionPayload,
 } from "@repo/common-lib/types/collection";
 import type { ActionReturn } from "@repo/common-lib/types/response";
 import { cleanObj, trimValues } from "@repo/common-lib/utils/cleanObj";
 import { getTranslations } from "next-intl/server";
 import {
-  getFriendlyApiErrors,
+  getFailureFromApiError,
   getObjErrorFromZod,
 } from "@/modules/auth/helpers";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
-import userCollectionService from "@/modules/user-collections/user-collection.service";
 import collectionService from "../collection.service";
 import {
   createCollectionSchema,
   updateCollectionSchema,
 } from "../schemas/collection-schemas";
 
-type CollectionActionInput = Partial<CreateCollectionInput> &
-  Partial<UpdateCollectionInput>;
+type CollectionActionInput = Partial<CreateCollectionPayload> &
+  Partial<UpdateCollectionPayload>;
 
 export const createOrUpdateCollectionAction = async (
   input: CollectionActionInput,
@@ -60,38 +59,14 @@ export const createOrUpdateCollectionAction = async (
 
   cleanObj(rawData);
 
-  if (
-    rawData.slug &&
-    rawData.user_id &&
-    currentCollection?.slug !== rawData.slug
-  ) {
-    const slugExistsResponse = await userCollectionService.slugExists(
-      userAuth.username,
-      rawData.slug,
-    );
-
-    if (slugExistsResponse.error) {
-      return {
-        data: null,
-        errors: await getFriendlyApiErrors(slugExistsResponse),
-      };
-    }
-
-    if (slugExistsResponse.data?.exists) {
-      return {
-        data: null,
-        errors: [],
-        inputErrors: { slug: t("actions.slugAlreadyExists") },
-      };
-    }
-  }
-
+  // The API derives the slug from the title and enforces per-user title uniqueness,
+  // so there is nothing left to pre-check here.
   const collection = isUpdate
     ? await collectionService.update(
         currentCollection.id,
-        rawData as UpdateCollectionInput,
+        rawData as UpdateCollectionPayload,
       )
-    : await collectionService.create(rawData as CreateCollectionInput);
+    : await collectionService.create(rawData as CreateCollectionPayload);
 
   if (collection.data) {
     return {
@@ -101,8 +76,5 @@ export const createOrUpdateCollectionAction = async (
     };
   }
 
-  return {
-    data: null,
-    errors: await getFriendlyApiErrors(collection),
-  };
+  return getFailureFromApiError(collection);
 };

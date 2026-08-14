@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsOptional, IsString, IsArray, ValidateNested, MinLength } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsArray, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { IsUserAuth } from 'src/common/validators/is-user-auth.validtor';
 import { ModelExist } from 'src/common/validators/model-exist.validtor';
@@ -19,13 +19,11 @@ class ServiceTermItem {
 }
 
 export class CreateServiceRequest {
+  // The slug is derived from this title by the service and frozen at creation — clients
+  // never send one (`whitelist: true` strips it if an older client still does).
   @IsString()
   @IsNotEmpty()
   title: string;
-
-  @IsString()
-  @MinLength(3, { message: 'Slug must be at least 3 characters long' })
-  slug: string;
 
   @IsString()
   @IsOptional()

@@ -14,7 +14,6 @@ export function AlertPortfolioButton() {
     !!currentPortfolio ||
     !!(
       portfolioInput.title ||
-      portfolioInput.slug ||
       portfolioInput.description ||
       portfolioInput.portfolioItems.length
     );

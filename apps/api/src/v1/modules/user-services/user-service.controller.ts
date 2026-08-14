@@ -14,15 +14,6 @@ export class UserServiceController {
   constructor(private readonly userServiceService: UserServiceService) {}
 
   @Public()
-  @Get(':username/service/slug-exist/:slug')
-  async slugExists(
-    @Param('username') username: string,
-    @Param('slug') slug: string,
-  ) {
-    return await this.userServiceService.slugExists(username, slug);
-  }
-
-  @Public()
   @Get(':user_id/service/:slug')
   async getById(
     @Param('user_id', ParseIntPipe) userId: number,

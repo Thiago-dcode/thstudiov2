@@ -1,10 +1,10 @@
 import type { HighlightCount } from "@repo/common-lib/types/general";
 import type { ApiResponse } from "@repo/common-lib/types/response";
 import type {
-  CreateServiceInputWithFile,
+  CreateServicePayload,
   Service,
   ServiceIndexRequest,
-  UpdateServiceInputWithFile,
+  UpdateServicePayload,
 } from "@repo/common-lib/types/service";
 import { queryParamBuilder } from "@repo/common-lib/utils/query-builder";
 import { fetchApi } from "@/lib/facade/fetchApi";
@@ -24,14 +24,12 @@ class ServiceService extends BaseService {
   async getHighlightCount(): Promise<ApiResponse<HighlightCount>> {
     return await this.fetchApi.get({ resource: "/highlight-count" });
   }
-  async create(
-    body: CreateServiceInputWithFile,
-  ): Promise<ApiResponse<Service>> {
+  async create(body: CreateServicePayload): Promise<ApiResponse<Service>> {
     return await this.fetchApi.post({ body });
   }
   async update(
     id: number,
-    body: UpdateServiceInputWithFile,
+    body: UpdateServicePayload,
   ): Promise<ApiResponse<Service>> {
     return await this.fetchApi.patch({
       resource: `/${id}`,

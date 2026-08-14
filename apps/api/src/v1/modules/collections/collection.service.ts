@@ -14,6 +14,7 @@ import { GenerateSingleEntityMetadataEvent } from "../ai/events/generate-single-
 import { Helpers } from "src/common/services/helpers.service";
 import { ApiException } from "src/common/exceptions/api-exception";
 import { FullPortfolioCollection } from "@repo/common-lib/types/collection";
+import { insertWithUniqueSlug, resolveEntitySlug } from "src/common/utils/slug.util";
 
 const CACHE_TTL = 1000 * 60 * 60 * 24;
 
@@ -66,10 +67,24 @@ export class CollectionService {
     );
   }
 
-  private async slugExists(slug: string, userId: number) {
-    return {
-      exists: await this.collectionRepository.slugExists(slug, userId)
-    };
+  /**
+   * Derives the collection's permanent slug from its title, resolving collisions within
+   * this user's collections only (two artists may share a slug — their URLs differ by username).
+   */
+  private async resolveSlug(title: string, userId: number) {
+    return resolveEntitySlug({
+      title,
+      fallbackPrefix: 'collection',
+      exists: (candidate) => this.collectionRepository.slugExists(candidate, userId),
+    });
+  }
+
+  private async assertTitleIsFree(title: string, userId: number, excludeId?: number) {
+    if (await this.collectionRepository.titleExists(title, userId, excludeId)) {
+      throw ApiException.titleAlreadyExists(
+        'You already have a collection with this title. Please choose a different one.',
+      );
+    }
   }
 
   async countHighlights(): Promise<HighlightCount> {
@@ -116,9 +131,9 @@ export class CollectionService {
       throw new BadRequestException(`Collections can have up to ${MAX_COLLECTION_ITEMS} media`);
     }
 
-    if ((await this.slugExists(request.slug, request.user_id)).exists) {
-      throw new BadRequestException(`Slug ${request.slug} already exists`);
-    }
+    // Title first: it is the likeliest user error and the cheapest check.
+    await this.assertTitleIsFree(request.title, request.user_id);
+    const slug = await this.resolveSlug(request.title, request.user_id);
 
     await this.enforceHighlightLimit(request.user_id, request.is_highlight);
 
@@ -126,15 +141,20 @@ export class CollectionService {
       collections_count: 1,
     });
 
-    const collection = await this.collectionRepository.create({
-      title: request.title,
-      slug: request.slug,
-      description: request.description,
-      user_id: request.user_id,
-      is_highlight: request.is_highlight ?? false,
-      is_active: request.is_active ?? true,
-      media: request.media,
-    });
+    const collection = await insertWithUniqueSlug(
+      slug,
+      () => this.resolveSlug(request.title, request.user_id),
+      (resolvedSlug) =>
+        this.collectionRepository.create({
+          title: request.title,
+          slug: resolvedSlug,
+          description: request.description,
+          user_id: request.user_id,
+          is_highlight: request.is_highlight ?? false,
+          is_active: request.is_active ?? true,
+          media: request.media,
+        }),
+    );
     await this.invalidateHighlightCountCache(request.user_id);
     this.eventEmitter.emit(UPDATE_USER_EXTRA_DATA_METRICS, new UpdateUserExtraDataMetricsEvent(request.user_id));
     this.eventEmitter.emit(
@@ -173,26 +193,26 @@ export class CollectionService {
       throw new BadRequestException(`Collections can have up to ${MAX_COLLECTION_ITEMS} media`);
     }
 
-    if (request.slug && request.slug !== collection.slug) {
-      if ((await this.slugExists(request.slug, collection.user_id)).exists) {
-        throw new BadRequestException(`Slug ${request.slug} already exists`);
-      }
+    // The slug is frozen at creation and never re-derived here, so only the title needs checking.
+    // `id` is excluded so re-saving an unchanged title is not rejected as a self-collision.
+    if (request.title) {
+      await this.assertTitleIsFree(request.title, collection.user_id, id);
     }
 
+    // `request` is spread wholesale, so `slug` must not be a field on the DTO — `updateById`
+    // builds its column list from Object.keys() and would persist a stray undefined as NULL.
     const updated = await this.collectionRepository.updateById(id, {
       ...request,
       media: request.media,
     });
     await this.invalidateHighlightCountCache(collection.user_id);
 
-    // Content changed → drop cached SEO metadata (old + new slug, all locales).
-    for (const s of new Set(
-      [collection.slug, request.slug].filter(Boolean) as string[],
-    )) {
-      await this.helper.deleteCached(CACHE_KEY_COLLECTION_SEO(collection.user_id, s), {
-        appended_language: true,
-      });
-    }
+    // Content changed → drop cached SEO metadata (all locales). The slug is immutable,
+    // so there is only ever one key to invalidate.
+    await this.helper.deleteCached(
+      CACHE_KEY_COLLECTION_SEO(collection.user_id, collection.slug),
+      { appended_language: true },
+    );
 
     return updated;
   }

@@ -85,7 +85,9 @@ export const GetCategoriesProvider = ({
     action: async () => getActiveCategoriesAction(),
     afterAction: async (result) => {
       if (result.data !== null && result.errors === null) {
-        loadedCategories.current = result.data;
+        loadedCategories.current = result.data.filter(
+          (cat) => cat.type !== "TAGS",
+        );
         handleOnChange();
       }
     },
