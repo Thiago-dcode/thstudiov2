@@ -53,13 +53,13 @@ export class CategoriesService {
   }
 
   /**
-   * All active categories (disciplines + art styles) with canonical English names — used to feed
-   * the AI media-tagging prompt (ids must be language-independent). Cached for 1 day.
+   * All active categories as {@link CategoryBase} without `thumbnail`. Canonical English names
+   * (ids/names stay language-independent). Cached for 1 day.
    */
-  async findAllActive() {
+  async findAllActive(): Promise<Omit<CategoryBase, 'thumbnail'>[]> {
     return this.helpers.cacheRemember(
       CACHE_KEY_ACTIVE_CATEGORIES,
-      this.categoryRepository.findActiveForTagging(),
+      this.categoryRepository.findAllActive(),
       { ttl: 1000 * 60 * 60 * 24 },
     );
   }

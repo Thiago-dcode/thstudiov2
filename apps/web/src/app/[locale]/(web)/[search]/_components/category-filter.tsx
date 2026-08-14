@@ -6,7 +6,7 @@ import { artistsFilterComboboxInputClassName } from "./artists-filter-combobox-i
 import { useFilters } from "./filters.provider";
 
 const CategoryFilter = () => {
-  const { categoriesSelected, pushCategory, removeCategory } = useFilters();
+  const { pushCategory, removeCategory } = useFilters();
 
   const handleRemove = useCallback(
     (cat: { slug: string }) => removeCategory(cat.slug),
@@ -15,9 +15,8 @@ const CategoryFilter = () => {
 
   return (
     <CategoryCombobox
-      categoriesSelected={categoriesSelected}
-      setCategorySelected={pushCategory}
-      removeCategorySelected={handleRemove}
+      selectCategory={pushCategory}
+      removeCategory={handleRemove}
       inputClassName={artistsFilterComboboxInputClassName}
     />
   );

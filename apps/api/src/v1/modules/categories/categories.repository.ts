@@ -14,7 +14,6 @@ import {
   UpdateCategoryInput,
 } from '@repo/common-lib/types/category';
 import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
-import { MediaMetadataPromptCategory } from '@repo/common-lib/types/ai';
 import { QueryBuilder } from '@repo/database/queryBuilder';
 
 @Injectable()
@@ -49,6 +48,17 @@ export class CategoriesRepository extends BaseRepository {
     'updated_at',
   ];
 
+  private readonly ACTIVE_COLUMNS: (keyof CategorySchema)[] = [
+    'id',
+    'name',
+    'slug',
+    'tags',
+    'is_featured',
+    'is_active',
+    'type',
+    'parent_id',
+  ];
+
   async findAll(filters: CategoryIndexRequest) {
     const query = await this.applyFilters(
       filters,
@@ -60,14 +70,16 @@ export class CategoriesRepository extends BaseRepository {
   }
 
   /**
-   * Active categories with their canonical (English) `name` and `type`, no translation join.
-   * Used to feed the AI media-tagging prompt where ids must be language-independent.
+   * All active categories (including TAGS) as {@link CategoryBase} without `thumbnail`.
+   * Canonical English `name` — no translation join — so ids/names stay language-independent.
    */
-  async findActiveForTagging(): Promise<MediaMetadataPromptCategory[]> {
-    return this.query()
-      .select(['id', 'name', 'type'])
+  async findAllActive(): Promise<Omit<CategoryBase, 'thumbnail'>[]> {
+    const rows = await this.query()
+      .select(this.ACTIVE_COLUMNS)
       .where('is_active', '=', true)
-      .get<MediaMetadataPromptCategory[]>();
+      .get<Omit<CategorySchema, 'created_at' | 'updated_at' | 'thumbnail'>[]>();
+
+    return rows.map((row) => this.formatActiveCategory(row));
   }
 
   async slugExists(slug: string, excludeId?: number): Promise<boolean> {
@@ -136,6 +148,21 @@ export class CategoriesRepository extends BaseRepository {
     }
 
     return category;
+  }
+
+  private formatActiveCategory(
+    row: Omit<CategorySchema, 'created_at' | 'updated_at' | 'thumbnail'>,
+  ): Omit<CategoryBase, 'thumbnail'> {
+    return {
+      id: row.id,
+      name: row.name,
+      slug: row.slug,
+      tags: row.tags ? row.tags.split(',') : [],
+      parent_id: row.parent_id,
+      is_featured: row.is_featured,
+      is_active: row.is_active,
+      type: row.type,
+    };
   }
 
   private formatOneCategoryRow(

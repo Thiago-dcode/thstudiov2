@@ -1,12 +1,11 @@
 "use client";
-import type { CategoryBase } from "@repo/common-lib/types/category";
+import { MAX_CATEGORIES_USER } from "@repo/common-lib/constants/constants";
+import { Label } from "@repo/ui/components/shadcn/label";
+import { cn } from "@repo/ui/lib/utils";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
-import { UserCategoriesComponent } from "@/modules/categories/components/user-categories.component";
-import {
-  UpdateCategoriesProvider,
-  useUpdateCategories,
-} from "@/modules/categories/providers/categories.provider";
+import { useEffect } from "react";
+import CategoryCombobox from "@/modules/categories/components/category-combobox";
+import { useGetCategories } from "@/modules/categories/providers/getCategories.provider";
 import {
   ButtonStepBackFunnel,
   ButtonSubmitFunnel,
@@ -14,71 +13,36 @@ import {
   useFunnelActions,
 } from "./funnel.provider";
 
-const MAX_DISCIPLINES = 5;
-const MAX_STYLES = 5;
-
-/**
- * Bridges a provider's internal selection out to the parent so both pickers
- * (rendered in separate providers) can be combined into one submitted value.
- */
-function SelectionReporter({
-  onChange,
-}: {
-  onChange: (categories: CategoryBase[]) => void;
-}) {
-  const { categoriesSelected } = useUpdateCategories();
-  useEffect(() => {
-    onChange(categoriesSelected);
-  }, [categoriesSelected, onChange]);
-  return null;
-}
-
-export function Step3Client({
-  disciplineCategories,
-  styleCategories,
-}: {
-  disciplineCategories: CategoryBase[];
-  styleCategories: CategoryBase[];
-}) {
+export function Step3Client() {
   const t = useTranslations("userCategories");
   const { setCanContinue } = useFunnelActions();
+  const { categoriesSelected } = useGetCategories();
 
-  const [disciplineSelected, setDisciplineSelected] =
-    useState<CategoryBase[]>(disciplineCategories);
-  const [styleSelected, setStyleSelected] =
-    useState<CategoryBase[]>(styleCategories);
-
-  const combinedIds = useMemo(
-    () => [...disciplineSelected, ...styleSelected].map((c) => c.id).join(","),
-    [disciplineSelected, styleSelected],
-  );
+  const selectedIds = Array.from(categoriesSelected.values())
+    .map((c) => c.id)
+    .join(",");
 
   useEffect(() => {
-    const hasSelection = combinedIds.length > 0;
+    const hasSelection = selectedIds.length > 0;
     setCanContinue((prev) => (prev === hasSelection ? prev : hasSelection));
-  }, [combinedIds, setCanContinue]);
+  }, [selectedIds, setCanContinue]);
 
   return (
     <div className="flex w-full flex-col gap-4">
-      <p className="text-sm text-text-muted">{t("visibilityHint")}</p>
-
-      <UpdateCategoriesProvider
-        userCategories={disciplineCategories}
-        initialRequest={{ type: "DISCIPLINE", exclude_parents: true }}
-        maxSelections={MAX_DISCIPLINES}
-      >
-        <SelectionReporter onChange={setDisciplineSelected} />
-        <UserCategoriesComponent title={t("disciplinesTitle")} compact />
-      </UpdateCategoriesProvider>
-
-      <UpdateCategoriesProvider
-        userCategories={styleCategories}
-        initialRequest={{ type: "ART_STYLE" }}
-        maxSelections={MAX_STYLES}
-      >
-        <SelectionReporter onChange={setStyleSelected} />
-        <UserCategoriesComponent title={t("artStylesTitle")} compact />
-      </UpdateCategoriesProvider>
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <Label className="text-sm font-medium">{t("title")}</Label>
+          <span
+            className={cn(
+              "text-xs text-text-muted tabular-nums",
+              categoriesSelected.size >= MAX_CATEGORIES_USER && "text-text",
+            )}
+          >
+            {categoriesSelected.size}/{MAX_CATEGORIES_USER}
+          </span>
+        </div>
+        <CategoryCombobox />
+      </div>
 
       <ContainerFormFunnel className="sticky bottom-0 bg-bg p-2">
         <input
@@ -86,7 +50,7 @@ export function Step3Client({
           name="categories"
           hidden
           readOnly
-          value={combinedIds}
+          value={selectedIds}
         />
         <ButtonSubmitFunnel />
         <ButtonStepBackFunnel />

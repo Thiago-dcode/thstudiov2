@@ -8,6 +8,12 @@ export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
   @Public()
+  @Get('active')
+  findAllActive() {
+    return this.categoriesService.findAllActive();
+  }
+
+  @Public()
   @Get()
   findAll(@Query() indexCategoriesRequest: IndexCategoriesRequest) {
     return this.categoriesService.findAll(indexCategoriesRequest);

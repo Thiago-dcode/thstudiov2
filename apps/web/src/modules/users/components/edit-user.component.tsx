@@ -1,5 +1,6 @@
 "use client";
 
+import { MAX_CATEGORIES_USER } from "@repo/common-lib/constants/constants";
 import type { CategoryBase } from "@repo/common-lib/types/category";
 import { Errors } from "@repo/ui/components/custom/errors";
 import { FileInput } from "@repo/ui/components/custom/file-input";
@@ -11,15 +12,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@repo/ui/components/shadcn/dialog";
+import { Label } from "@repo/ui/components/shadcn/label";
 import {
   FileInputProvider,
   useInputFile,
 } from "@repo/ui/contexts/file.provider";
 import { usePreviewUrls } from "@repo/ui/hooks/usePreviewUrls";
+import { cn } from "@repo/ui/lib/utils";
 import { Globe, Pen, Phone, X } from "lucide-react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import fallbackBanner from "@/assets/images/fallback-banner.jpg";
 import FormComponent from "@/lib/components/form-component";
 import {
@@ -28,15 +31,12 @@ import {
   YoutubeIcon,
 } from "@/lib/components/social-icons";
 import { CreateOrUpdateAddress } from "@/modules/addresses/components/create-or-update-address";
-import { UserCategoriesComponent } from "@/modules/categories/components/user-categories.component";
+import CategoryCombobox from "@/modules/categories/components/category-combobox";
 import {
-  UpdateCategoriesProvider,
-  useUpdateCategories,
-} from "@/modules/categories/providers/categories.provider";
+  GetCategoriesProvider,
+  useGetCategories,
+} from "@/modules/categories/providers/getCategories.provider";
 import { useEditUser } from "../providers/edit-user.provider";
-
-const MAX_DISCIPLINES = 5;
-const MAX_STYLES = 5;
 
 export default function EditUserComponent() {
   const t = useTranslations("editUser");
@@ -714,91 +714,46 @@ export const EditContactLinks = ({ user }: { user: ContactLinksUser }) => {
   );
 };
 
-/**
- * Bridges a provider's internal selection out to the parent so both pickers
- * (rendered in separate providers) can be combined into one submitted value.
- */
-function SelectionReporter({
-  onChange,
-}: {
-  onChange: (categories: CategoryBase[]) => void;
-}) {
-  const { categoriesSelected } = useUpdateCategories();
-  useEffect(() => {
-    onChange(categoriesSelected);
-  }, [categoriesSelected, onChange]);
-  return null;
-}
-
-export const EditCategories = ({
-  userCategories,
-}: {
-  userCategories: CategoryBase[];
-}) => {
+const EditCategoriesForm = () => {
   const t = useTranslations("editUser");
   const tCategories = useTranslations("userCategories");
   const { errors, isPending } = useEditUser();
+  const { categoriesSelected } = useGetCategories();
 
-  const disciplineCategories = useMemo(
-    () => userCategories.filter((c) => c.type === "DISCIPLINE"),
-    [userCategories],
-  );
-  const styleCategories = useMemo(
-    () => userCategories.filter((c) => c.type === "ART_STYLE"),
-    [userCategories],
-  );
-
-  const [disciplineSelected, setDisciplineSelected] =
-    useState<CategoryBase[]>(disciplineCategories);
-  const [styleSelected, setStyleSelected] =
-    useState<CategoryBase[]>(styleCategories);
-
-  const combinedIds = useMemo(
-    () => [...disciplineSelected, ...styleSelected].map((c) => c.id).join(","),
-    [disciplineSelected, styleSelected],
-  );
-
-  const totalSelected = disciplineSelected.length + styleSelected.length;
+  const selectedIds = Array.from(categoriesSelected.values())
+    .map((c) => c.id)
+    .join(",");
 
   return (
     <div className="w-full flex flex-col gap-4">
       <p className="text-sm text-text-muted">{tCategories("visibilityHint")}</p>
 
-      <UpdateCategoriesProvider
-        userCategories={disciplineCategories}
-        initialRequest={{ type: "DISCIPLINE", exclude_parents: true }}
-        maxSelections={MAX_DISCIPLINES}
-      >
-        <SelectionReporter onChange={setDisciplineSelected} />
-        <UserCategoriesComponent
-          title={tCategories("disciplinesTitle")}
-          compact
-        />
-      </UpdateCategoriesProvider>
-
-      <UpdateCategoriesProvider
-        userCategories={styleCategories}
-        initialRequest={{ type: "ART_STYLE" }}
-        maxSelections={MAX_STYLES}
-      >
-        <SelectionReporter onChange={setStyleSelected} />
-        <UserCategoriesComponent
-          title={tCategories("artStylesTitle")}
-          compact
-        />
-      </UpdateCategoriesProvider>
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <Label className="text-sm font-medium">{tCategories("title")}</Label>
+          <span
+            className={cn(
+              "text-xs text-text-muted tabular-nums",
+              categoriesSelected.size >= MAX_CATEGORIES_USER && "text-text",
+            )}
+          >
+            {categoriesSelected.size}/{MAX_CATEGORIES_USER}
+          </span>
+        </div>
+        <CategoryCombobox />
+      </div>
 
       <input
         type="text"
         name="categories"
         hidden
         readOnly
-        value={combinedIds}
+        value={selectedIds}
       />
       <FormComponent.SubmitButton
         className="sticky bottom-0"
         isPending={isPending}
-        disabled={totalSelected === 0 || isPending}
+        disabled={categoriesSelected.size === 0 || isPending}
       >
         {t("update")}
       </FormComponent.SubmitButton>
@@ -807,3 +762,16 @@ export const EditCategories = ({
     </div>
   );
 };
+
+export const EditCategories = ({
+  userCategories,
+}: {
+  userCategories: CategoryBase[];
+}) => (
+  <GetCategoriesProvider
+    initialCategories={userCategories}
+    maxSelections={MAX_CATEGORIES_USER}
+  >
+    <EditCategoriesForm />
+  </GetCategoriesProvider>
+);

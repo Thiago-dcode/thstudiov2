@@ -30,3 +30,20 @@ export const getAllCategoriesAction = async (
     errors: await getFriendlyApiErrors(result),
   };
 };
+
+export const getActiveCategoriesAction = async (): Promise<
+  ActionReturn<Omit<CategoryBase, "thumbnail">[], undefined>
+> => {
+  const result = await categoriesService.getAllActive();
+
+  if (result.data) {
+    return {
+      data: result.data,
+      errors: null,
+    };
+  }
+  return {
+    data: null,
+    errors: await getFriendlyApiErrors(result),
+  };
+};

@@ -569,6 +569,15 @@ const messages = {
     },
     combobox: {
       placeholder: "Buscar…",
+      groupLabel: "Categorias",
+      selectedLabel: "Categorias selecionadas",
+      remove: "Remover {label}",
+      typeFilterLabel: "Filtrar por tipo",
+      types: {
+        DISCIPLINE: "Disciplinas",
+        ART_STYLE: "Estilos de arte",
+        TAGS: "Tags",
+      },
       empty: {
         pending: "",
         noMatches: "Nenhuma correspondência.",
@@ -1090,8 +1099,9 @@ const messages = {
         subtitle: "Esta será a sua imagem para potenciais clientes",
       },
       categories: {
-        title: "Selecione até 5 categorias",
-        subtitle: "Essas categorias ajudarão seu perfil a ser descoberto",
+        title: "Selecione categorias",
+        subtitle:
+          "Escolher poucas categorias (recomendamos 1–3) melhora a sua visibilidade.",
       },
       location: {
         title: "Adicione sua localização",
@@ -1296,13 +1306,7 @@ const messages = {
     saving: "Salvando endereço…",
   },
   userCategories: {
-    searchLabel: "Buscar uma categoria",
-    searchPlaceholder: "design...",
-    clickHint: "Clique nas categorias que você quiser",
-    noResults: "Nenhum resultado",
-    loadMore: "mais",
-    disciplinesTitle: "Disciplinas",
-    artStylesTitle: "Estilos artísticos",
+    title: "Categorias",
     visibilityHint:
       "Escolher poucas categorias (recomendamos 1–3) melhora a sua visibilidade.",
   },

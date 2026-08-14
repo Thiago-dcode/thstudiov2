@@ -565,6 +565,15 @@ const messages = {
     },
     combobox: {
       placeholder: "Search…",
+      groupLabel: "Categories",
+      selectedLabel: "Selected categories",
+      remove: "Remove {label}",
+      typeFilterLabel: "Filter by type",
+      types: {
+        DISCIPLINE: "Disciplines",
+        ART_STYLE: "Art styles",
+        TAGS: "Tags",
+      },
       empty: {
         pending: "",
         noMatches: "No matches.",
@@ -1083,8 +1092,9 @@ const messages = {
         subtitle: "This will be your face for potential clients",
       },
       categories: {
-        title: "Select up to 5 categories",
-        subtitle: "These categories will help your profile be discovered",
+        title: "Select categories",
+        subtitle:
+          "Choosing a few categories (1–3 recommended) improves your visibility.",
       },
       location: {
         title: "Add Your Location",
@@ -1287,13 +1297,7 @@ const messages = {
     saving: "Saving address…",
   },
   userCategories: {
-    searchLabel: "Search for a category",
-    searchPlaceholder: "design...",
-    clickHint: "Click on the categories you want",
-    noResults: "No results",
-    loadMore: "more",
-    disciplinesTitle: "Disciplines",
-    artStylesTitle: "Art styles",
+    title: "Categories",
     visibilityHint:
       "Choosing a few categories (1–3 recommended) improves your visibility.",
   },

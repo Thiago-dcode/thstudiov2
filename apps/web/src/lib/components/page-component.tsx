@@ -49,7 +49,7 @@ const Header = ({ children }: { children?: ReactNode }) => {
   );
 };
 const Title = ({ title }: { title: string }) => {
-  return <h1 className="text-3xl font-bold text-text">{title}</h1>;
+  return <h1 className="text-2xl! font-bold text-text">{title}</h1>;
 };
 const SubTitle = ({
   subTitle,
@@ -66,7 +66,7 @@ const SubTitle = ({
 };
 const Footer = ({ children }: { children: ReactNode }) => {
   return (
-    <div className="mt-6 text-center text-xs text-text-muted">{children}</div>
+    <div className="mt-6 text-center text-xs! text-text-muted">{children}</div>
   );
 };
 export default {

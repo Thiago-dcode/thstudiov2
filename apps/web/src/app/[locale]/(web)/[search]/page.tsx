@@ -10,7 +10,7 @@ import { getTranslations } from "next-intl/server";
 import Web from "@/lib/components/web-page.component";
 import { buildStaticPageMetadata } from "@/lib/seo/static-metadata";
 import categoriesService from "@/modules/categories/categories.service";
-import { UpdateCategoriesProvider } from "@/modules/categories/providers/categories.provider";
+import { GetCategoriesProvider } from "@/modules/categories/providers/getCategories.provider";
 import portfolioService from "@/modules/portfolios/portfolio.service";
 import usersService from "@/modules/users/users.service";
 import { ArtistsGrid } from "./_components/artists-grid";
@@ -160,7 +160,7 @@ export default async function SearchPage({
         params={sharedRequest}
         defaultCategoriesSelected={categories}
       >
-        <UpdateCategoriesProvider userCategories={categories}>
+        <GetCategoriesProvider initialCategories={categories}>
           <div>
             <NearMeSessionCleaner />
             <FilterSearch />
@@ -248,7 +248,7 @@ export default async function SearchPage({
               </section>
             )}
           </div>
-        </UpdateCategoriesProvider>
+        </GetCategoriesProvider>
       </FiltersProvider>
     </Web.Container>
   );

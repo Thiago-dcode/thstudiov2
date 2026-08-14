@@ -57,6 +57,8 @@ export const MAX_DISCIPLINES_PORTFOLIO = 3;
 export const MAX_STYLES_PORTFOLIO = 3;
 export const MAX_CATEGORIES_PORTFOLIO =
   MAX_DISCIPLINES_PORTFOLIO + MAX_STYLES_PORTFOLIO;
+/** Categories a user can pick for their profile (disciplines and art styles share the budget). */
+export const MAX_CATEGORIES_USER = 3;
 /** Max LLM-assigned content TAGS per media (bounds the pivot + JSON-LD keywords array). */
 export const MAX_TAGS_MEDIA = 8;
 /**
@@ -159,8 +161,8 @@ export const CACHE_KEY_USER_EXTRA_DATA = (userId: number | string) => `user-extr
 
 // Categories
 export const CACHE_KEY_USER_CATEGORIES = (userId: number | string) => `user_categories_${userId}` as const;
-/** All active categories (canonical names) used to feed the AI media-tagging prompt. */
-export const CACHE_KEY_ACTIVE_CATEGORIES = 'active_categories_for_tagging' as const;
+/** All active categories as CategoryBase without thumbnail (canonical English names). */
+export const CACHE_KEY_ACTIVE_CATEGORIES = 'active_categories' as const;
 
 /** Per-entity SEO metadata cache (language is appended per request via `append_language`). */
 export const CACHE_KEY_PORTFOLIO_SEO = (userId: number, slug: string) => `seo_portfolio_${userId}_${slug}` as const;

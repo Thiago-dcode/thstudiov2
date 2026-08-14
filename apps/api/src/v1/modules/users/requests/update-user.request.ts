@@ -5,8 +5,10 @@ import {
   MinLength,
   Matches,
   IsArray,
+  ArrayMaxSize,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
+import { MAX_CATEGORIES_USER } from '@repo/common-lib/constants/constants';
 import {
   PHONE_REGEX,
   PHONE_MAX_LENGTH,
@@ -107,6 +109,9 @@ export class UpdateUserRequest {
 
   @IsOptional()
   @IsArray()
+  @ArrayMaxSize(MAX_CATEGORIES_USER, {
+    message: `Users can have up to ${MAX_CATEGORIES_USER} categories`,
+  })
   @Transform(({ value }) => value?.map((v: string) => parseInt(v, 10)))
   @ModelArrayExist('categories')
   categories?: number[];

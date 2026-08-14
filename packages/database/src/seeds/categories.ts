@@ -1358,7 +1358,7 @@ export const main = async () => {
         await createCategories(style, undefined, true, 'ART_STYLE');
     }
 
-    // Content TAGS: active (so findActiveForTagging feeds them to the LLM) but LLM-only — the
+    // Content TAGS: active (so findAllActive feeds them to the LLM) but LLM-only — the
     // user-facing pickers filter by type, so these never appear in the discipline/style selectors.
     for (const tag of contentTags) {
         await createCategories(tag, undefined, true, 'TAGS');
