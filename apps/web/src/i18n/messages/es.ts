@@ -571,6 +571,7 @@ const messages = {
       groupLabel: "Categorías",
       selectedLabel: "Categorías seleccionadas",
       remove: "Quitar {label}",
+      maxReached: "Límite alcanzado: quita una para añadir otra.",
       typeFilterLabel: "Filtrar por tipo",
       types: {
         DISCIPLINE: "Disciplinas",

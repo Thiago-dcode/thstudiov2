@@ -36,6 +36,8 @@ type GetCategoriesContextType = {
     type?: EnumType<"CATEGORY_TYPE">;
   }) => void;
   currentFilters: OnchangeFilter;
+  /** `handleSelectCategory` already ignores picks past the cap; this is that same state, for the UI. */
+  hasReachedMax: boolean;
   isLoading: boolean;
 };
 
@@ -163,6 +165,7 @@ export const GetCategoriesProvider = ({
     isSelected,
     handleOnChange,
     currentFilters: filterMemo.current,
+    hasReachedMax: categoriesSelected.size >= maxSelections,
     isLoading,
   };
 

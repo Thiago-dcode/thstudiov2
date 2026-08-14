@@ -42,6 +42,7 @@ const CategoryCombobox = ({
     handleOnChange,
     handleSelectCategory,
     isSelected,
+    hasReachedMax,
     isLoading,
   } = useGetCategories();
 
@@ -140,6 +141,15 @@ const CategoryCombobox = ({
             })}
           </div>
 
+          {hasReachedMax && (
+            <p
+              role="status"
+              className="border-b border-fg-2 px-2.5 py-1.5 text-[11px] text-text-muted"
+            >
+              {t("maxReached")}
+            </p>
+          )}
+
           <ComboboxEmpty className="px-3 py-4 text-xs">
             {isLoading && categoriesToDisplay.length === 0 ? (
               <Spinner className="mx-auto size-4" />
@@ -151,11 +161,15 @@ const CategoryCombobox = ({
           <ComboboxList>
             {categoriesToDisplay.map((cat) => {
               const selected = isSelected(cat);
+              // Picking past the cap is a no-op in the provider — dim the row instead of
+              // letting it look clickable.
+              const blocked = hasReachedMax && !selected;
 
               return (
                 <ComboboxItem
                   key={cat.id}
                   value={String(cat.id)}
+                  disabled={blocked}
                   className={cn(
                     "cursor-pointer p-0 pr-0",
                     selected && "bg-fg-2/60",
@@ -164,6 +178,7 @@ const CategoryCombobox = ({
                   <Button
                     type="button"
                     variant="ghost"
+                    disabled={blocked}
                     onClick={(e) => {
                       e.preventDefault();
 
