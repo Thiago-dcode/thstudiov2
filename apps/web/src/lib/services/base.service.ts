@@ -18,20 +18,34 @@ export class BaseService {
   ) {
     this.fetchApi.headers = {};
     this.fetchApi.baseUrl = `${fetchApi.baseUrl}/${this.module}`;
-    this.fetchApi.setRequestCallback(async () => {
-      const [session, language, headersList] = await Promise.all([
-        userSession(),
-        getLanguage(),
-        headers(),
-      ]);
-      fetchApi.headers = {
+    // Returns headers for this call instead of writing them onto `fetchApi`: the client is a
+    // module singleton shared by every concurrent SSR request, and this callback awaits, so
+    // mutating it here let one visitor's request go out with another's session token.
+    this.fetchApi.setRequestCallback(async ({ isPublic }) => {
+      const language = await getLanguage();
+      const baseHeaders = {
         Accept: "application/json",
         "Content-Type": "application/json",
         [LANGUAGE_HEADER]: language,
-        Authorization: `Bearer ${session?.token ?? ""}`,
         // Proves to the API that the forwarded user-agent/IP below come from our own
         // server and not from an arbitrary client (see RequestMiddleware).
         [APP_TOKEN_HEADER]: serverEnv.APP_TOKEN,
+      };
+
+      // A public endpoint ignores the caller's identity, so sending it buys nothing and costs
+      // caching: Next keys its fetch data cache on the request headers, so a per-visitor
+      // user-agent or IP would make every visitor a separate cache entry.
+      if (isPublic) {
+        return baseHeaders;
+      }
+
+      const [session, headersList] = await Promise.all([
+        userSession(),
+        headers(),
+      ]);
+      return {
+        ...baseHeaders,
+        Authorization: `Bearer ${session?.token ?? ""}`,
         [USER_AGENT_HEADER]: headersList.get("user-agent") ?? "",
         [IP_ADDRESS_HEADER]: headersList.get("x-forwarded-for") ?? "",
       };
@@ -39,12 +53,8 @@ export class BaseService {
 
     this.fetchApi.setResponseCallback<ApiResponse<any>>(async (_, response) => {
       if (response.error) {
-        console.log("FETCH API ERROR", response.error);
+        console.error("FETCH API ERROR", response.error);
       }
     });
-  }
-
-  set signal(signal: AbortSignal) {
-    this.fetchApi.signal = signal;
   }
 }

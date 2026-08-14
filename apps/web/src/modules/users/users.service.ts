@@ -21,6 +21,7 @@ import type {
 } from "@repo/common-lib/types/user";
 import type { UserExtraData } from "@repo/common-lib/types/user-extra-data";
 import { queryParamBuilder } from "@repo/common-lib/utils/query-builder";
+import type { CacheOptions } from "@repo/frontend-lib/fetch/http-client";
 import { fetchApi } from "@/lib/facade/fetchApi";
 import { BaseService } from "@/lib/services/base.service";
 
@@ -136,11 +137,18 @@ export class UserService extends BaseService {
     });
   }
 
+  /**
+   * `cacheOptions` is a parameter, not a hardcoded value: this also backs the paginated artist
+   * search, which must stay uncached. Only the landing page's fixed `is_featured` query opts in.
+   */
   async findAll(
     params: ArtistIndexRequest,
+    cacheOptions?: CacheOptions,
   ): Promise<ApiResponse<ArtistCard[]>> {
     return await this.fetchApi.get({
       resource: queryParamBuilder("", params),
+      isPublic: true,
+      cacheOptions,
     });
   }
 }

@@ -1,9 +1,9 @@
 "use client";
 
+import { normalizeUsername } from "@repo/common-lib/utils/username";
 import { Errors } from "@repo/ui/components/custom/errors";
 import { Input } from "@repo/ui/components/shadcn/input";
 import { Label } from "@repo/ui/components/shadcn/label";
-import { normalizeUsername } from "@repo/common-lib/utils/username";
 import { Eye, EyeClosed } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { type ReactNode, useState } from "react";

@@ -72,6 +72,7 @@ export type UpdateUserInputWithAssets = Omit<UpdateUserInput, 'avatar' | 'banner
   categories?: (string | number)[]
   avatar?: File,
   banner?: File
+  remove_banner?: boolean
 }
 
 

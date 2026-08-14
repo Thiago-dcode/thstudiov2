@@ -35,8 +35,6 @@ export const ArtistBreadcrumb = async ({
 }: ArtistBreadcrumbProps) => {
   const [t, shareReady] = await Promise.all([
     getTranslations("artists"),
-    // Resolved here rather than threaded through all eight call sites; the lookup is cached per
-    // request, so this shares the artist layout's result.
     getArtistShareReady(username),
   ]);
   const allItems: BreadcrumbEntry[] = [

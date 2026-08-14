@@ -22,31 +22,62 @@ type RequestParams = {
     body?: BodyParam;
     signal?: AbortSignal;
     cacheOptions?: CacheOptions;
+    /**
+     * Marks the endpoint as requiring no caller identity. The request callback uses this to send a
+     * stable, minimal header set (no session token, no per-visitor user-agent/IP).
+     *
+     * This matters for more than tidiness: Next.js derives its fetch data-cache key from the request
+     * headers, so a single per-visitor header makes every request a distinct cache entry and drops
+     * the hit rate to zero. Any request that sets `cacheOptions` on a public endpoint wants this too.
+     */
+    isPublic?: boolean;
 }
 type BodyParsed = string | FormData | undefined;
+
+/**
+ * One request's fully-resolved state.
+ *
+ * This exists because the client is long-lived and shared: services are module singletons, so a
+ * single `HttpClient` serves every concurrent SSR request. Holding per-request values (headers,
+ * body, cache options) as instance fields meant a request that suspended on `await` could resume
+ * to find another request's values in place — sending one visitor's call with another visitor's
+ * session token and language. Everything a single call needs travels in here instead.
+ */
+type ResolvedRequest = {
+    method: Method;
+    resource: string;
+    baseUrl: string;
+    headers: HeadersInit;
+    body: BodyParsed;
+    signal?: AbortSignal;
+    cacheOptions?: CacheOptions;
+    credentials?: RequestCredentials;
+    isPublic: boolean;
+}
+
 type FullRequestParams = Omit<RequestParams, 'body' | 'cacheOptions'> & {
     body: BodyParsed;
     baseUrl: string;
     signal?: AbortSignal;
     cacheOptions?: CacheOptions;
 }
-type RequestCallback = (RequestParams: FullRequestParams) => Promise<any>;
+/**
+ * Runs before each request. Return headers to merge over the client's defaults for this call only —
+ * do not mutate the client, which is shared across concurrent requests.
+ */
+type RequestCallback = (RequestParams: FullRequestParams) => Promise<HeadersInit | void>;
 type ResponseCallback<T> = (RequestParams: FullRequestParams, response: T) => Promise<any>;
 type RequestParamsWithoutMethod = Omit<RequestParams, 'method'>;
 
-export type { CacheOptions, RequestParamsWithoutMethod };
+export type { CacheOptions, RequestParamsWithoutMethod, ResolvedRequest };
 
 export abstract class HttpClient {
 
     protected _requestCallback: RequestCallback = () => Promise.resolve({});
     protected _responseCallback: ResponseCallback<any> = () => Promise.resolve({});
+    /** Baseline headers applied to every request. Never written per request — see `ResolvedRequest`. */
     protected _headers: HeadersInit = {};
-    protected _body: BodyParsed = undefined;
-    protected _method: Method = 'GET';
-    protected _resource: string = '';
     protected _baseUrl: string = '';
-    protected _signal?: AbortSignal;
-    protected _cacheOptions?: CacheOptions;
     protected _defaultCacheOptions?: CacheOptions;
     protected _credentials?: RequestCredentials;
     constructor(baseUrl: string, globalHeaders: HeadersInit = {}, defaultCacheOptions?: CacheOptions, credentials?: RequestCredentials) {
@@ -67,30 +98,6 @@ export abstract class HttpClient {
     public get baseUrl(): string {
         return this._baseUrl;
     }
-    protected set method(method: Method) {
-        this._method = method;
-    }
-    public get method(): Method {
-        return this._method;
-    }
-    protected set resource(resource: string) {
-        this._resource = resource;
-    }
-    public get resource(): string {
-        return this._resource;
-    }
-    public set signal(signal: AbortSignal | undefined) {
-        this._signal = signal;
-    }
-    public get signal(): AbortSignal | undefined {
-        return this._signal;
-    }
-    public set cacheOptions(cacheOptions: CacheOptions | undefined) {
-        this._cacheOptions = cacheOptions;
-    }
-    public get cacheOptions(): CacheOptions | undefined {
-        return this._cacheOptions ?? this._defaultCacheOptions;
-    }
     public set defaultCacheOptions(cacheOptions: CacheOptions | undefined) {
         this._defaultCacheOptions = cacheOptions;
     }
@@ -103,20 +110,18 @@ export abstract class HttpClient {
     public get credentials(): RequestCredentials | undefined {
         return this._credentials;
     }
-    protected set body(body: BodyParam) {
+    protected parseBody(body: BodyParam): BodyParsed {
         if (body === null || body === undefined) {
-            this._body = undefined;
+            return undefined;
         }
-        else if (body instanceof FormData) {
-            this._body = body;
+        if (body instanceof FormData) {
+            return body;
         }
-        else if (this.containsFile(body)) {
+        if (this.containsFile(body)) {
             // Convert to FormData if body contains File objects
-            this._body = this.objectToFormData(body);
+            return this.objectToFormData(body);
         }
-        else {
-            this._body = JSON.stringify(body);
-        }
+        return JSON.stringify(body);
     }
 
     private containsFile(obj: unknown): boolean {
@@ -167,19 +172,24 @@ export abstract class HttpClient {
         }
         return formData;
     }
-    protected abstract fetcher(): Promise<any>;
+    protected abstract fetcher(request: ResolvedRequest): Promise<any>;
 
-    protected async setupRequest({ resource = '', headers, body, method, signal, cacheOptions }: RequestParams): Promise<void> {
-        this.headers = headers || {};
-        this.method = method;
-        this.resource = resource.trim();
-        this.body = body;
-        this.signal = signal;
-        this.cacheOptions = cacheOptions;
+    /** Resolves one call's params against the client defaults. Pure: touches no instance state. */
+    protected buildRequest({ resource = '', headers, body, method, signal, cacheOptions, isPublic }: RequestParams): ResolvedRequest {
+        return {
+            method,
+            resource: resource.trim(),
+            baseUrl: this._baseUrl,
+            headers: { ...this._headers, ...headers },
+            body: this.parseBody(body),
+            signal,
+            cacheOptions: cacheOptions ?? this._defaultCacheOptions,
+            credentials: this._credentials,
+            isPublic: isPublic ?? false,
+        };
     }
     protected async callFetcher<T>(requestParams: RequestParams): Promise<T> {
-        this.setupRequest(requestParams);
-        return await this.fetcher();
+        return await this.fetcher(this.buildRequest(requestParams));
     }
     public async setRequestCallback(callback: RequestCallback) {
         this._requestCallback = callback;

@@ -1,7 +1,9 @@
 import { getTranslations } from "next-intl/server";
 import { RegistrationCtaButton } from "@/lib/components/registration-cta-button";
+import { landingCache } from "@/lib/config";
 import { MediaCarousel } from "@/modules/media/components/media-carousel";
 import mediaService from "@/modules/media/media.service";
+import { reportSectionError } from "./section-error";
 import { ValueCarousel } from "./values-carousel";
 import { WebSection } from "./web-section";
 
@@ -9,10 +11,12 @@ export async function ValuePillarsSection() {
   const t = await getTranslations("landing.valuePillars");
   const items = t.raw("items") as { title: string; description: string }[];
 
-  const valuePillarsMedia = await mediaService.findAllWithUser({
-    is_value_pillars: true,
-  });
+  const valuePillarsMedia = await mediaService.findAllWithUser(
+    { is_value_pillars: true },
+    landingCache("media-value-pillars"),
+  );
 
+  reportSectionError("value-pillars", valuePillarsMedia);
   const media = valuePillarsMedia.data;
 
   if (!media?.length) return null;

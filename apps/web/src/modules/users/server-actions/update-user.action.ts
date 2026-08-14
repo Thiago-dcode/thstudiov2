@@ -135,6 +135,8 @@ export const updateUserAction = async (
       };
     }
     cleanData.banner = bannerFile;
+  } else if (formData.get("remove_banner") === "true") {
+    cleanData.remove_banner = true;
   }
 
   const result = await usersService.update(id, cleanData);

@@ -16,7 +16,7 @@ import {
   useInputFile,
 } from "@repo/ui/contexts/file.provider";
 import { usePreviewUrls } from "@repo/ui/hooks/usePreviewUrls";
-import { Globe, Pen, Phone } from "lucide-react";
+import { Globe, Pen, Phone, X } from "lucide-react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
@@ -331,12 +331,19 @@ export default function EditUserComponent() {
     </section>
   );
 }
-export const EditAvatar = ({ defaultAvatar }: { defaultAvatar?: string }) => {
+export const EditAvatar = ({
+  defaultAvatar,
+}: {
+  defaultAvatar?: string | null;
+}) => {
   const t = useTranslations("editUser");
   const { errors, inputErrors, deleteInputErrorProperty, isPending } =
     useEditUser();
   const { files } = useInputFile();
-  const { previewUrls } = usePreviewUrls({ defaultUrl: defaultAvatar, files });
+  const { previewUrls } = usePreviewUrls({
+    defaultUrl: defaultAvatar ?? undefined,
+    files,
+  });
 
   return (
     <div className="w-full flex flex-col items-center gap-2">
@@ -373,31 +380,77 @@ export const EditAvatar = ({ defaultAvatar }: { defaultAvatar?: string }) => {
   );
 };
 
-export const EditBanner = ({ defaultBanner }: { defaultBanner?: string }) => {
+export const EditBanner = ({
+  defaultBanner,
+}: {
+  defaultBanner?: string | null;
+}) => {
   const t = useTranslations("editUser");
   const { errors, inputErrors, deleteInputErrorProperty, isPending } =
     useEditUser();
-  const { files } = useInputFile();
-  const { previewUrls } = usePreviewUrls({ defaultUrl: defaultBanner, files });
+  const { files, setFiles } = useInputFile();
+  const { previewUrls } = usePreviewUrls({
+    defaultUrl: defaultBanner ?? undefined,
+    files,
+  });
+  const [removed, setRemoved] = useState(false);
+
+  const displayUrl = removed ? undefined : previewUrls?.[0];
+  const canSubmit =
+    Boolean(files?.length) || (removed && Boolean(defaultBanner));
+
+  const handleRemove = () => {
+    setRemoved(true);
+    deleteInputErrorProperty("banner");
+    if (files?.length) {
+      setFiles(new DataTransfer().files);
+    }
+    const input = document.getElementById(
+      "banner-input",
+    ) as HTMLInputElement | null;
+    if (input) input.value = "";
+  };
 
   return (
     <div className="w-full flex flex-col items-center gap-2">
       <div className="w-full max-w-2xl mx-auto p-4">
-        {previewUrls?.length ? (
+        {displayUrl ? (
           <div className="mt-4 flex flex-col items-center gap-2">
             <h3 className="text-sm font-medium">{t("banner.preview")}</h3>
             <div className="relative w-full aspect-video overflow-hidden border-4 border-fg-2">
-              <img
-                src={previewUrls[0]}
-                alt={t("banner.previewAlt")}
-                className="w-full h-full object-cover"
-              />
+              <label
+                htmlFor="banner-input"
+                className="absolute inset-0 z-0 cursor-pointer"
+              >
+                <img
+                  src={displayUrl}
+                  alt={t("banner.previewAlt")}
+                  className="w-full h-full object-cover"
+                />
+                <span className="sr-only">{t("banner.change")}</span>
+              </label>
+              {(defaultBanner || files?.length) && !isPending ? (
+                <button
+                  type="button"
+                  onClick={handleRemove}
+                  className="absolute top-2 right-2 z-10 p-2 bg-fg hover:bg-fg-2 transition-colors cursor-pointer"
+                  aria-label={t("banner.remove")}
+                >
+                  <X className="size-3.5" aria-hidden />
+                </button>
+              ) : null}
             </div>
           </div>
         ) : null}
       </div>
+      {removed ? (
+        <input type="hidden" name="remove_banner" value="true" />
+      ) : null}
       <FileInput
-        onChange={() => deleteInputErrorProperty("banner")}
+        onChange={() => {
+          setRemoved(false);
+          deleteInputErrorProperty("banner");
+        }}
         name="banner"
         id="banner-input"
         error={inputErrors?.banner}
@@ -405,7 +458,7 @@ export const EditBanner = ({ defaultBanner }: { defaultBanner?: string }) => {
 
       <FormComponent.SubmitButton
         isPending={isPending}
-        disabled={!files?.length || isPending}
+        disabled={!canSubmit || isPending}
       >
         {t("update")}
       </FormComponent.SubmitButton>

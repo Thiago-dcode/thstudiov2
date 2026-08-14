@@ -1,41 +1,49 @@
 import { ApiResponse, ErrorResponse, SuccessResponse } from "@repo/common-lib/types/response";
-import { HttpClient } from "./http-client";
+import { HttpClient, ResolvedRequest } from "./http-client";
 
 class FetchApi extends HttpClient {
     constructor(baseUrl: string, globalHeaders: HeadersInit = {}) {
         super(baseUrl, globalHeaders);
     }
-    protected async fetcher<T>(): Promise<ApiResponse<T>> {
-        let url = `${this._baseUrl}`;
-        if (this._resource) {
-            const firstChar = this._resource.charAt(0);
+    /**
+     * Reads only from `request`, never from `this._*`: the client is shared across concurrent
+     * requests, and the request callback below awaits (cookies, headers, locale), so any instance
+     * field read after that await could belong to a different request by the time we resume.
+     */
+    protected async fetcher<T>(request: ResolvedRequest): Promise<ApiResponse<T>> {
+        let url = `${request.baseUrl}`;
+        if (request.resource) {
+            const firstChar = request.resource.charAt(0);
             const prepend = firstChar === '?' || firstChar === '/' ? '' : '/';
-            url += `${prepend}${this._resource}`;
+            url += `${prepend}${request.resource}`;
         }
+        const callbackParams = {
+            resource: request.resource,
+            headers: request.headers,
+            body: request.body,
+            method: request.method,
+            baseUrl: request.baseUrl,
+            signal: request.signal,
+            isPublic: request.isPublic,
+        };
         try {
-            await this._requestCallback({
-                resource: this._resource,
-                headers: this._headers,
-                body: this._body,
-                method: this._method,
-                baseUrl: this._baseUrl,
-                signal: this._signal,
-            });
+            const callbackHeaders = await this._requestCallback(callbackParams);
+            const resolvedHeaders = { ...request.headers, ...(callbackHeaders ?? {}) };
+            callbackParams.headers = resolvedHeaders;
 
             // If body is FormData, remove Content-Type header to let browser set it with boundary
-            const headers = this._body instanceof FormData
+            const headers = request.body instanceof FormData
                 ? Object.fromEntries(
-                    Object.entries(this._headers).filter(([key]) => key.toLowerCase() !== 'content-type')
+                    Object.entries(resolvedHeaders).filter(([key]) => key.toLowerCase() !== 'content-type')
                 )
-                : this._headers;
+                : resolvedHeaders;
             const response = await fetch(url.trim(), {
-                method: this._method,
+                method: request.method,
                 headers: headers,
-                body: this._body,
-                signal: this._signal,
-                credentials: this._credentials ?? 'include',
-                ...this.defaultCacheOptions,
-                ...this.cacheOptions
+                body: request.body,
+                signal: request.signal,
+                credentials: request.credentials ?? 'include',
+                ...request.cacheOptions
 
             });
 
@@ -77,14 +85,7 @@ class FetchApi extends HttpClient {
                         url
                     );
                 }
-                await this._responseCallback({
-                    resource: this._resource,
-                    headers: this._headers,
-                    body: this._body,
-                    method: this._method,
-                    baseUrl: this._baseUrl,
-                    signal: this._signal,
-                }, errorData);
+                await this._responseCallback(callbackParams, errorData);
                 return errorData;
             }
 
@@ -107,25 +108,11 @@ class FetchApi extends HttpClient {
                     ['The server returned an invalid response format'],
                     url
                 );
-                await this._responseCallback({
-                    resource: this._resource,
-                    headers: this._headers,
-                    body: this._body,
-                    method: this._method,
-                    baseUrl: this._baseUrl,
-                    signal: this._signal,
-                }, errorData);
+                await this._responseCallback(callbackParams, errorData);
                 return errorData;
             }
 
-            await this._responseCallback({
-                resource: this._resource,
-                headers: this._headers,
-                body: this._body,
-                method: this._method,
-                baseUrl: this._baseUrl,
-                signal: this._signal,
-            }, data);
+            await this._responseCallback(callbackParams, data);
             return data;
         } catch (error) {
             // Handle AbortError - rethrow so it can be handled upstream
@@ -142,14 +129,7 @@ class FetchApi extends HttpClient {
             );
 
             try {
-                await this._responseCallback({
-                    resource: this._resource,
-                    headers: this._headers,
-                    body: this._body,
-                    method: this._method,
-                    baseUrl: this._baseUrl,
-                    signal: this._signal,
-                }, errorData);
+                await this._responseCallback(callbackParams, errorData);
             } catch (callbackError) {
                 // Ignore callback errors to prevent masking the original error
             }

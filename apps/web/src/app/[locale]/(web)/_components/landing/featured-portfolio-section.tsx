@@ -9,11 +9,13 @@ import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { getGalleryLabels } from "@/lib/gallery-labels";
 import portfolioService from "@/modules/portfolios/portfolio.service";
+import { reportSectionError } from "./section-error";
 import { WebSection } from "./web-section";
 
 export async function FeaturedPortfolioSection() {
   const t = await getTranslations("landing.featuredPortfolio");
   const portfolioResponse = await portfolioService.getFeatured();
+  reportSectionError("featured-portfolio", portfolioResponse);
   const portfolio = portfolioResponse.data;
 
   if (!portfolio) return null;

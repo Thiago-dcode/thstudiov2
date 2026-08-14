@@ -29,6 +29,7 @@ import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { StickyFormFooter } from "@/app/[locale]/(atelier)/__components/sticky-form-footer";
 import { SubmitCollectionButton } from "@/app/[locale]/(atelier)/__components/submit-collection-button";
 import FormComponent from "@/lib/components/form-component";
+import { useMainNav } from "@/lib/providers/main-nav.provider";
 import { useCollection } from "@/modules/collections/providers/create-update-collection.provider";
 import { SelectMediaDrawer } from "@/modules/media/components/select-media-drawer";
 
@@ -104,6 +105,8 @@ export const CreateOrUpdateCollection = ({
     fetchHighlightCount,
   } = useCollection();
 
+  const { setShrinked } = useMainNav();
+
   const isCurrentlyHighlighted = collectionInput.is_highlight ?? false;
   const originallyHighlighted =
     (currentCollection ?? defaultCollection)?.is_highlight ?? false;
@@ -130,6 +133,10 @@ export const CreateOrUpdateCollection = ({
       clear();
     }
   }, [defaultCollection, setCollection, currentCollection, clear]);
+
+  useEffect(() => {
+    setShrinked(true);
+  }, [setShrinked]);
 
   useEffect(() => {
     if (success) {

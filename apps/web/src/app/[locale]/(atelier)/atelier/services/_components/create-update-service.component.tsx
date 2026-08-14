@@ -35,6 +35,7 @@ import { StickyFormFooter } from "@/app/[locale]/(atelier)/__components/sticky-f
 import { SubmitServiceButton } from "@/app/[locale]/(atelier)/__components/submit-service-button";
 import { DynamicListInput } from "@/lib/components/dynamic-list-input";
 import FormComponent from "@/lib/components/form-component";
+import { useMainNav } from "@/lib/providers/main-nav.provider";
 import { useCreateUpdateService } from "@/modules/services/providers/create-update-service.provider";
 
 export const CreateOrUpdateService = ({
@@ -78,6 +79,8 @@ export const CreateOrUpdateService = ({
     isLoadingHighlightCount,
   } = useCreateUpdateService();
 
+  const { setShrinked } = useMainNav();
+
   useEffect(() => {
     if (defaultService && currentService?.id !== defaultService.id) {
       setService(defaultService);
@@ -86,6 +89,10 @@ export const CreateOrUpdateService = ({
       clear();
     }
   }, [clear, currentService, defaultService, setService]);
+
+  useEffect(() => {
+    setShrinked(true);
+  }, [setShrinked]);
 
   useEffect(() => {
     if (success) {

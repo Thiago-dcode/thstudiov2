@@ -1203,6 +1203,8 @@ const messages = {
       editTitle: "Edit Banner",
       preview: "Banner Preview:",
       previewAlt: "Banner preview",
+      change: "Change banner image",
+      remove: "Remove banner",
     },
     avatar: {
       editTitle: "Edit Avatar",

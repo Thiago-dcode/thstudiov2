@@ -12,6 +12,8 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { Throttle } from '@nestjs/throttler';
+import { PUBLIC_READ_THROTTLE } from 'src/common/utils/constants';
 import { PortfolioService } from './portfolio.service';
 import { CreatePortfolioRequest } from './requests/create-portfolio.request';
 import { UpdatePortfolioRequest } from './requests/update-portfolio.request';
@@ -23,6 +25,9 @@ import { IsResourceBlockedPipe } from 'src/pipes/is-resource-blocked.pipe';
 export class PortfolioController {
   constructor(private readonly portfolioService: PortfolioService) { }
 
+  // Per-route rather than on the class: the write endpoints below keep the
+  // stricter global defaults.
+  @Throttle(PUBLIC_READ_THROTTLE)
   @Public()
   @Get()
   async findAll(@Query() indexPortfolioRequest: IndexPortfolioRequest) {
@@ -34,6 +39,7 @@ export class PortfolioController {
     return await this.portfolioService.countHighlights();
   }
 
+  @Throttle(PUBLIC_READ_THROTTLE)
   @Public()
   @Get('featured')
   async findFeatured() {

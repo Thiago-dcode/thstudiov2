@@ -111,7 +111,10 @@ export class AssetsService {
   async getOneBySlug(slug: string): Promise<Asset> {
     return this.helpers.cacheRemember(
       `asset:slug:${slug}`,
-      (async () => {
+      // Factory, not an invoked IIFE: the started promise ran the lookup on every call, cache hit
+      // or not, and the hit path returned without awaiting it — so the NotFoundException below
+      // escaped as an unhandled rejection rather than a 404.
+      async () => {
         const asset = await this.assetsRepository.findBySlug(slug);
         if (!asset) {
           throw new NotFoundException(`Asset not found with slug ${slug}`);
@@ -124,7 +127,7 @@ export class AssetsService {
             ? await this.helpers.getAsset(asset.thumbnail, { expireIn: ASSET_SIGNED_URL_EXPIRATION })
             : null,
         };
-      })(),
+      },
       { ttl: ASSET_SIGNED_URL_EXPIRATION * 950 },
     );
   }

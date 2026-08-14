@@ -1,5 +1,5 @@
-import * as z from "zod";
 import { normalizeUsername } from "@repo/common-lib/utils/username";
+import * as z from "zod";
 import {
   emailField,
   facebookUrlField,

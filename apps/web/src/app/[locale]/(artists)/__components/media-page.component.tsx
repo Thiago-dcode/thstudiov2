@@ -26,14 +26,13 @@ export const MediaPageComponent = async ({
   canEdit,
 }: MediaPageComponentProps) => {
   const t = await getTranslations("artists.media");
-  const untitled = t("untitled");
   const allBreadcrumbs: BreadcrumbEntry[] = [
     ...breadcrumbs,
     {
       // The real route is /artists/{username}/media/{id} — the username-less form 404s. Harmless
       // today because `isActive` renders it as a span, but it is the href the moment that changes.
       url: `/artists/${user.username}/media/${media.public_id}`,
-      title: media.title || untitled,
+      title: media.title || `${user.username} - media`,
       isActive: true,
     },
   ];
@@ -47,8 +46,8 @@ export const MediaPageComponent = async ({
         backUrl={backUrl}
       />
       <Web.Header
-        title={media.title || untitled}
-        description={media.description || media.seo_description || undefined}
+        title={media.title || ""}
+        description={media.description || ""}
       >
         {canEdit && (
           <Link

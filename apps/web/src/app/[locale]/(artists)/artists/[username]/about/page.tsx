@@ -1,9 +1,9 @@
+import { normalizeUsername } from "@repo/common-lib/utils/username";
 import { Mail, Pencil } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { normalizeUsername } from "@repo/common-lib/utils/username";
 import { ArtistBreadcrumb } from "@/app/[locale]/(artists)/__components/artist-breadcrumb";
 import { ArtistContactDialog } from "@/app/[locale]/(artists)/__components/artist-contact.dialog";
 import { Link } from "@/i18n/navigation";

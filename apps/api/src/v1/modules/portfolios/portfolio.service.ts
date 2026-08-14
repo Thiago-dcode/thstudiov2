@@ -23,9 +23,15 @@ import { LayoutService } from "../layouts/layout.service";
 
 const CACHE_TTL = 1000 * 60 * 60 * 24;
 
+/** Half an hour; see `findFeatured`. */
+const FEATURED_PORTFOLIO_CACHE_TTL = 1000 * 60 * 30;
+
 export const portfolioCacheKeys = {
   highlightCount: (userId: number) => `portfolio-highlight-count-${userId}`,
 };
+
+/** Not user-scoped: one featured portfolio is shown to everyone. */
+export const FEATURED_PORTFOLIO_CACHE_KEY = 'portfolio-featured';
 
 @Injectable()
 export class PortfolioService {
@@ -54,24 +60,39 @@ export class PortfolioService {
     );
   }
 
+  /**
+   * Rendered on every landing page view and identical for every visitor, but was re-querying the
+   * database and re-resolving every media URL each time.
+   *
+   * The TTL is the only invalidation: nothing in the API writes `portfolios.is_featured`, so there
+   * is no request to hang a `deleteCached` off — the flag is flipped directly in the database. Half
+   * an hour is the resulting worst-case delay before a newly featured portfolio appears; to publish
+   * sooner, drop the `portfolio-featured` key from Redis.
+   */
   async findFeatured(): Promise<FullPortfolio | null> {
-    const portfolio = await this.portfolioRepository.getFeatured();
-    if (!portfolio) return null;
+    return this.helpers.cacheRemember(
+      FEATURED_PORTFOLIO_CACHE_KEY,
+      async () => {
+        const portfolio = await this.portfolioRepository.getFeatured();
+        if (!portfolio) return null;
 
-    if (portfolio.thumbnail) {
-      portfolio.thumbnail = await this.helpers.getAsset(portfolio.thumbnail);
-    }
+        if (portfolio.thumbnail) {
+          portfolio.thumbnail = await this.helpers.getAsset(portfolio.thumbnail);
+        }
 
-    return {
-      ...portfolio,
-      media: portfolio.media.length
-        ? await Promise.all(portfolio.media.map(async (media) => ({
-          ...media,
-          thumbnail: media.thumbnail ? await this.helpers.getAsset(media.thumbnail) : undefined,
-          url: media.url ? await this.helpers.getAsset(media.url) : undefined,
-        })))
-        : portfolio.media,
-    };
+        return {
+          ...portfolio,
+          media: portfolio.media.length
+            ? await Promise.all(portfolio.media.map(async (media) => ({
+              ...media,
+              thumbnail: media.thumbnail ? await this.helpers.getAsset(media.thumbnail) : undefined,
+              url: media.url ? await this.helpers.getAsset(media.url) : undefined,
+            })))
+            : portfolio.media,
+        };
+      },
+      { ttl: FEATURED_PORTFOLIO_CACHE_TTL },
+    );
   }
 
   private async slugExists(slug: string, userId: number) {
@@ -84,7 +105,9 @@ export class PortfolioService {
     const userId = this.requestService.user.id;
     return this.helpers.cacheRemember(
       portfolioCacheKeys.highlightCount(userId),
-      this.resolveHighlightCount(userId),
+      // Factory, not a started promise: passing the promise ran the query even on a cache hit,
+      // and the hit path never awaited it — so a rejection surfaced as an unhandled rejection.
+      () => this.resolveHighlightCount(userId),
       { append_language: false, ttl: CACHE_TTL },
     );
   }

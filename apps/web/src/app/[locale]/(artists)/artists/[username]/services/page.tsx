@@ -1,7 +1,7 @@
+import { normalizeUsername } from "@repo/common-lib/utils/username";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
-import { normalizeUsername } from "@repo/common-lib/utils/username";
 import { ArtistBreadcrumb } from "@/app/[locale]/(artists)/__components/artist-breadcrumb";
 import Web from "@/lib/components/web-page.component";
 import { buildStaticPageMetadata } from "@/lib/seo/static-metadata";

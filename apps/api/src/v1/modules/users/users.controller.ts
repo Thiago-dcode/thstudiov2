@@ -12,6 +12,8 @@ import {
   Post,
 } from '@nestjs/common';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import { Throttle } from '@nestjs/throttler';
+import { PUBLIC_READ_THROTTLE } from 'src/common/utils/constants';
 import { UserService } from './users.service';
 import { UpdateUserRequest } from './requests/update-user.request';
 import { ModelExistPipe } from 'src/pipes/model-exist.pipe';
@@ -36,6 +38,9 @@ export class UserController {
     private readonly categoriesService: CategoriesService,
     private readonly addressService: AddressService,
   ) { }
+  // Per-route rather than on the class: the account endpoints below keep the
+  // stricter global defaults.
+  @Throttle(PUBLIC_READ_THROTTLE)
   @Public()
   @Get()
   async findAll(@Query() query: IndexArtistsRequest) {

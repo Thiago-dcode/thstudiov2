@@ -431,7 +431,7 @@ export class AiService {
         messages: [
           {
             role: 'system',
-            content: 'You are a strict, zero-tolerance content moderation and child-safety system. Your priorities: (1) detect CSAM and any exploitation of minors, (2) detect and severely penalize explicit sexual and pornographic content. You always err on the side of caution — if content is borderline, assign a HIGHER severity. Output valid JSON only. No extra text.'
+            content: 'You are the content moderation and child-safety system of an online ART marketplace. You are zero-tolerance on exactly two things: (1) CSAM and any sexualization or exploitation of minors, (2) hard pornographic content. Everything else is judged as art: nudity, the human body, and difficult subject matter are normal here and are NOT violations by themselves. Rate what is actually visible — do not invent a violation from what an image could hypothetically be. Output valid JSON only. No extra text.'
           },
           {
             role: 'user',
@@ -442,10 +442,10 @@ export class AiService {
         ${JSON.stringify(EXPECTED_JSON)}
         SEVERITY SCALE (0–10)
         0      – Safe. No issues.
-        1 – 2  – Minimal. Mild suggestive content, artistic nudity (paintings, sculptures).
-        3 – 4  – Low. Partial nudity (boudoir), mild violence in art/historical context.
+        1 – 2  – Minimal. Mild suggestive content, artistic nudity (paintings, sculptures, fine-art photography).
+        3 – 4  – Low. Partial or full non-sexual nudity (nude studies, boudoir), mild violence in art/historical context.
         5 – 6  – Moderate. Explicit but legal adult content, graphic artistic violence.
-        7 – 8  – High. Extreme explicit content, glorified realistic violence, hate promotion.
+        7 – 8  – High. Hardcore pornography, gratuitous glorified realistic violence, hate promotion.
         9      – Severe. Exploitation, abuse depiction, extreme illegal content.
         10     – Critical. CSAM detected — child sexual abuse material.
         ═══════════════════════════════════════════
@@ -455,13 +455,11 @@ export class AiService {
         ═══════════════════════════════════════════
         DECISION RULES
         ═══════════════════════════════════════════
-        - is_allowed = true ONLY when severity ≤ 6
-        - is_allowed = false when severity ≥ 7
-        - When in doubt about minors, ALWAYS escalate (higher severity)
-        - When in doubt about sexual/pornographic content, ALWAYS assign severity ≥ 7
-        - Explicit sexual activity with adults; nudity is visible always severity ≥ 7
-        - When in doubt about other content, assign a higher severity
-        - reason: ≤120 chars, neutral explanation in English user friendly
+        - is_allowed = true when severity ≤ 6; is_allowed = false when severity ≥ 7
+        - MINORS: escalate to ≥ 9 ONLY when the subject appears to be a minor AND the depiction is sexual or sexualized (sexual act, sexualized posing, focus on intimate areas). Apparent age alone is NEVER a violation: children and young-looking people in ordinary, clothed, non-sexual images are severity 0. Youthful features, small stature, stylized or anime-like art are not evidence of age — do not treat them as such.
+        - NUDITY is not pornography and is not blocked here: the nude is a core art subject. Nudity without explicit sexual activity stays ≤ 4, even when full-frontal. Reserve ≥ 7 for hardcore pornographic depictions (explicit sexual acts, penetration, graphic close-ups).
+        - Judge ONLY what is clearly visible. If you are unsure whether something prohibited is present, it is NOT present — return the lower severity. Never block on suspicion, ambiguity, or "could be".
+        - reason: ≤120 chars, neutral explanation in English user friendly. Leave it empty when severity ≤ 6.
 
         Base the decision ONLY on visible image content.
         Ignore filename, metadata, and URL.
@@ -498,9 +496,12 @@ export class AiService {
           ? Math.min(MODERATION_SEVERITY.CRITICAL, Math.max(MODERATION_SEVERITY.SAFE, Math.round(parsed.severity)))
           : MODERATION_SEVERITY.SAFE;
 
-        // Map and validate the fields
+        // Map and validate the fields. `is_allowed` is DERIVED from the severity threshold rather
+        // than trusted from the model: the two often disagree (a cautious model returns a low
+        // severity next to is_allowed=false), and a missing boolean would otherwise read as a
+        // rejection. Severity is the graded signal, so it decides.
         moderationData = {
-          is_allowed: parsed?.is_allowed,
+          is_allowed: rawSeverity < MODERATION_SEVERITY.HIGH,
           severity: rawSeverity as ContentModerationFields['severity'],
           content_type: parsed.content_type || 'unknown',
           reason: parsed.reason || '',

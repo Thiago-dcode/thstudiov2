@@ -176,9 +176,14 @@ export const SlotMachine = ({
                     ? `width ${spinDuration}ms ${easing}`
                     : "none",
             }}
-            aria-live="polite"
-            aria-label={texts[target]}
         >
+            {/* The reel is decorative: it re-renders every couple of seconds, and as a live region
+                (which this used to be) it re-announced its word forever — twice over in the hero,
+                which renders two reels inside the same <h1>. The current word is exposed once here
+                as ordinary text instead, so the surrounding heading still reads as a full sentence
+                and is announced only when the heading itself is read. */}
+            <span className="sr-only">{texts[target]}</span>
+
             {/* Hidden sizer used to measure each word for `fitWidth`. */}
             {fitWidth && (
                 <span
@@ -197,7 +202,11 @@ export const SlotMachine = ({
                 </span>
             )}
 
+            {/* Hidden wholesale: the visible strip holds several copies of every word, so exposing
+                it left the duplicates in the accessibility tree. The sr-only word above is the
+                single accessible copy. */}
             <span
+                aria-hidden="true"
                 className="flex flex-col will-change-transform"
                 style={{
                     transform: `translateY(calc(-${position} * ${rowSize}))`,
@@ -216,7 +225,6 @@ export const SlotMachine = ({
                             itemClassName,
                         )}
                         style={{ height: rowSize }}
-                        aria-hidden={i % len !== position % len}
                     >
                         {word}
                     </span>)

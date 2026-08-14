@@ -21,6 +21,7 @@ import {
   normalizeYoutubeLink,
 } from '@repo/common-lib/constants/validation';
 import { normalizeUsername } from '@repo/common-lib/utils/username';
+import { ToBoolean } from 'src/common/decorators/to-boolean.decorator';
 import { ToInt } from 'src/common/decorators/to-int.decorator';
 import { ModelArrayExist } from 'src/common/validators/model-array-exist.validtor';
 import { ModelExist } from 'src/common/validators/model-exist.validtor';
@@ -160,4 +161,9 @@ export class UpdateUserRequest {
 
   @IsOptional()
   banner?: Express.Multer.File;
+
+  /** When true and no new banner file is uploaded, clears the stored banner. */
+  @IsOptional()
+  @ToBoolean()
+  remove_banner?: boolean;
 }

@@ -16,8 +16,8 @@ export type UserSchema = {
   website_link?: string | null;
   instagram_link?: string | null;
   youtube_link?: string | null;
-  avatar?: string;
-  banner?: string;
+  avatar?: string | null;
+  banner?: string | null;
   is_featured: boolean;
   email_validated?: boolean;
   is_active?: boolean;
@@ -115,8 +115,8 @@ export type UserProfileRow = {
   banned?: boolean;
   banned_reason?: string | null;
   short_biography?: string | null;
-  avatar?: string;
-  banner?: string;
+  avatar?: string | null;
+  banner?: string | null;
   name?: string | null;
   surname?: string | null;
   biography?: string | null;

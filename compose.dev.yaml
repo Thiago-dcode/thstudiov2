@@ -156,12 +156,14 @@ services:
       api:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.status<500?0:1)).catch(()=>process.exit(1))\""]
+      # See compose.prod.yaml: probing `/` made every healthcheck render the full
+      # landing page (four API calls), which is what flooded the throttler.
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3000/robots.txt').then(r=>process.exit(r.status<500?0:1)).catch(()=>process.exit(1))\""]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 45s
-      start_interval: 3s
+      start_interval: 10s
     networks:
       - a11studio-dev
 

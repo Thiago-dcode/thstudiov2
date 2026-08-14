@@ -18,10 +18,11 @@ import { LanguageResolver } from './i18n/resolvers/language.resolver';
 import { InterceptorProviders } from './common/intecerceptors/interceptor.providers';
 import { filterProviders } from './common/filters/filter.providers';
 import { JwtModule } from '@nestjs/jwt';
+import { AppThrottlerGuard } from './common/guards/app-throttler.guard';
 import { AuthGuard } from './common/guards/auth.guard';
 import { UserStrikesGuard } from './common/guards/user-strikes.guard';
 import { UserSessionsModule } from './v1/modules/user-sessions/user-sessions.module';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { MediaModule } from './v1/modules/media/media.module';
 import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/constants';
 import { getConfigValue } from '@repo/common-lib/config/utils';
@@ -194,7 +195,7 @@ const ALL_APP_MODULES = [
   providers: [
     {
       provide: APP_GUARD,
-      useClass: ThrottlerGuard,
+      useClass: AppThrottlerGuard,
     },
     ...ValidatorProviders,
     ...InterceptorProviders,

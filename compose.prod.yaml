@@ -155,12 +155,18 @@ services:
       api:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.status<500?0:1)).catch(()=>process.exit(1))\""]
+      # Probe /robots.txt, NOT `/`. `/` redirects into /[locale] and fetch follows
+      # redirects, so every probe rendered the whole landing page — four API calls
+      # each, x2 replicas, every 30s, and every 3s during start_period. That alone
+      # was a large share of the 429s on /assets/* and /portfolios/featured.
+      # robots.txt exercises the same server but makes at most one API call per hour
+      # (its data is revalidate-cached and degrades to a fallback rather than throwing).
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3000/robots.txt').then(r=>process.exit(r.status<500?0:1)).catch(()=>process.exit(1))\""]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 45s
-      start_interval: 3s
+      start_interval: 10s
     networks:
       - a11studio-prod
 

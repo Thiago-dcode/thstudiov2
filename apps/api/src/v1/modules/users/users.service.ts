@@ -169,7 +169,7 @@ export class UserService {
 
   async update(
     id: number,
-    { avatar, banner, categories, ...rest }: UpdateUserRequest,
+    { avatar, banner, categories, remove_banner, ...rest }: UpdateUserRequest,
   ) {
     const user = await this.userRepository.findById(id);
     if (!user) {
@@ -197,8 +197,8 @@ export class UserService {
       }
     }
 
-    // Handle banner upload with content moderation
-    let bannerPath: string | undefined;
+    // Handle banner upload with content moderation, or explicit removal
+    let bannerPath: string | null | undefined;
     if (banner && banner.size > 0) {
       bannerPath = await this.helpers.setAsset({
         asset: banner,
@@ -213,6 +213,11 @@ export class UserService {
         await this.helpers.deleteAsset(bannerPath);
         throw new MediaModerationException(bannerModeration.reason);
       }
+    } else if (remove_banner) {
+      if (user.banner) {
+        await this.helpers.deleteAsset(user.banner);
+      }
+      bannerPath = null;
     }
 
     userUpdateData.avatar = avatarPath;

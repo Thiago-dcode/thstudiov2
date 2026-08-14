@@ -7,6 +7,7 @@ import {
   WaitListForm,
   WaitListHint,
 } from "@/modules/wait-list/components/wait-list-form";
+import { reportSectionError } from "./section-error";
 import { WebSection } from "./web-section";
 
 function HeroVideoFallback() {
@@ -20,6 +21,7 @@ function HeroVideoFallback() {
 
 async function HeroVideo() {
   const heroVideo = await assetService.getBySlug("hero-drone-video");
+  reportSectionError("hero-video", heroVideo);
   if (!heroVideo.data?.url) return <HeroVideoFallback />;
   return (
     <LazyVideo
