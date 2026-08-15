@@ -1,6 +1,10 @@
 "use server";
 
-import { ALLOWED_IMAGE_FILE_TYPES } from "@repo/common-lib/constants/constants";
+import {
+  ALLOWED_IMAGE_FILE_TYPES,
+  MAX_IMAGE_UPLOAD_BYTES,
+  MAX_IMAGE_UPLOAD_MB,
+} from "@repo/common-lib/constants/constants";
 import type { EnumType } from "@repo/common-lib/constants/enums";
 import type { MimeTypes } from "@repo/common-lib/types/general";
 import type {
@@ -17,8 +21,6 @@ import {
 } from "@/modules/auth/helpers";
 import mediaService from "../media.service";
 import { createMediaSchema } from "../schemas/media-shemas";
-
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 export const createMediaAction = async (
   input: CreateMediaInputWithFile,
@@ -37,13 +39,13 @@ export const createMediaAction = async (
     };
   }
 
-  if (input.file.size > MAX_FILE_SIZE) {
+  if (input.file.size > MAX_IMAGE_UPLOAD_BYTES) {
     return {
       errors: [],
       inputErrors: {
         file: t("validation.file.tooLarge", {
           field: t("fields.file"),
-          mb: 10,
+          mb: MAX_IMAGE_UPLOAD_MB,
         }),
       },
       data: null,

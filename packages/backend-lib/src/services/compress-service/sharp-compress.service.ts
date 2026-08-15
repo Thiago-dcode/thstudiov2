@@ -3,6 +3,17 @@ import { imageSize } from 'image-size';
 import sharp from 'sharp';
 import path from 'path';
 
+/**
+ * Longest edge kept after processing. Bounds the decoded raster so a large lossless upload
+ * (a 25MB PNG can carry hundreds of megapixels) cannot exhaust memory, and stays under WebP's
+ * hard 16383px per-side limit. Comfortably above any size the site actually displays.
+ */
+const MAX_IMAGE_EDGE_PX = 4000;
+
+/** Quality is clamped rather than rejected so callers can pass raw arithmetic results. */
+const clampQuality = (quality: number): number =>
+    quality > 100 ? 100 : quality < 10 ? 10 : quality;
+
 export class SharpCompressService extends CompressService {
 
     /**
@@ -24,51 +35,51 @@ export class SharpCompressService extends CompressService {
         const originalName = path.parse(file.originalname).name;
         const webpFilename = `${originalName}.webp`;
 
-        //avoid min of 100KB
-        const _targetSize = targetSize < 100 * 1024 ? 50 * 1024 : targetSize;
-        if (!file.mimetype.startsWith('image/') || file.size < _targetSize) {
+        // Non-images are never processed here — multer's fileFilter should have rejected them.
+        if (!file.mimetype.startsWith('image/')) {
           return {
             filename: file.originalname,
             size: file.buffer.length,
             buffer: file.buffer,
           };
         }
-    
-        const optimizeRecursively = async (
-          buffer: Buffer,
-          quality: number,
-          targetSize: number,
-          loops = 0,
-        ): Promise<Buffer> => {
+
+        //avoid min of 100KB
+        const _targetSize = targetSize < 100 * 1024 ? 50 * 1024 : targetSize;
+
+        // A single decode of the original, bounded and ALWAYS re-encoded to WebP — including when
+        // the source is already under the target. Callers store this under a `.webp` key whose
+        // ContentType is derived from the extension, so handing back the source bytes would serve
+        // e.g. PNG data labelled `image/webp`, which downstream consumers (the moderation vision
+        // model reads the stored thumbnail by URL) reject outright.
+        let buffer = await sharp(file.buffer)
+          .resize({
+            width: MAX_IMAGE_EDGE_PX,
+            height: MAX_IMAGE_EDGE_PX,
+            fit: 'inside',
+            withoutEnlargement: true,
+          })
+          .webp({ quality: clampQuality(quality) })
+          .toBuffer();
+
+        //reduce the image size by 10% each time, lowering quality alongside it
+        const reduce = 0.9;
+        let currentQuality = clampQuality(quality);
+        for (let loops = 0; buffer.length > _targetSize && loops < 5; loops++) {
           const { width, height } = imageSize(buffer);
-          //avoid quality out of range
-          const _quality = quality > 100 ? 100 : quality < 10 ? 10 : quality;
-          //reduce the image size by 10% each time
-          const reduce = 0.9;
-          const targetWidth = Math.floor(width * reduce);
-          const targetHeight = Math.floor(height * reduce);
-          const optimizedBuffer = await sharp(file.buffer)
+          if (!width || !height) break;
+          currentQuality = clampQuality(currentQuality - 5);
+          buffer = await sharp(buffer)
             .resize({
-              width: targetWidth,
-              height: targetHeight,
+              width: Math.floor(width * reduce),
+              height: Math.floor(height * reduce),
               fit: 'inside',
               withoutEnlargement: true,
             })
-            .webp({ quality: _quality })
+            .webp({ quality: currentQuality })
             .toBuffer();
-    
-          if (optimizedBuffer.length <= targetSize || loops >= 5)
-            return optimizedBuffer;
-          
-          return await optimizeRecursively(
-            optimizedBuffer,
-            _quality - 5,
-            targetSize,
-            loops + 1,
-          );
-        };
+        }
 
-        const buffer = await optimizeRecursively(file.buffer, quality, _targetSize);
         return {
           filename: webpFilename,
           size: buffer.length,

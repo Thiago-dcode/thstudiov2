@@ -10,21 +10,11 @@ import {
   LayoutConfig,
   LayoutIndexRequest,
 } from '@repo/common-lib/types/layout';
-import { SqlValue } from '@repo/common-lib/types/database';
 import { BaseRepository } from '@repo/database/repositories';
 import { DbException } from '@repo/database/exceptions';
 import { Query } from '@repo/database/facades';
 import { QueryBuilder } from '@repo/database/queryBuilder';
 import { RequestService } from 'src/common/services/request.service';
-
-function isUniqueViolation(error: unknown): boolean {
-  return (
-    typeof error === 'object' &&
-    error !== null &&
-    'code' in error &&
-    (error as { code: unknown }).code === '23505'
-  );
-}
 
 @Injectable()
 export class LayoutRepository extends BaseRepository {
@@ -88,32 +78,33 @@ export class LayoutRepository extends BaseRepository {
   }
 
   /**
-   * Upserts by portfolio_id (unique).
-   * Inserts first; on unique violation, falls back to update.
+   * Upserts by portfolio_id (unique via `UC_layout_config_portfolio`), so a portfolio always has
+   * exactly one config row — updating one just rewrites it.
+   *
+   * Done in a single `ON CONFLICT` statement rather than insert-then-catch-then-update: the
+   * conflict is the normal case on update, not an exception, and recovering from it required
+   * recognising the driver error. That recognition silently broke once the client started
+   * wrapping SQLSTATE 23505 in `DbUniqueViolationException` (the raw `code` no longer survives),
+   * which made every portfolio update fail. Letting Postgres resolve the conflict removes the
+   * dependency on how DB errors are typed, and closes the write-write window between the failed
+   * insert and the follow-up update.
+   *
+   * `config` is jsonb and bound as an untyped text parameter, hence the explicit `::jsonb` cast.
    */
   async upsertConfigForPortfolio(
     portfolioId: number,
     layoutId: number,
     config: LayoutConfig,
   ): Promise<LayoutConfigSchemaWithoutTimestamps> {
-    const configValue = (
-      config === null ? null : JSON.stringify(config)
-    ) as SqlValue;
+    const configValue = config === null ? null : JSON.stringify(config);
 
-    try {
-      await Query.table(TABLES_ENUM.LAYOUT_CONFIG).insert(
-        ['layout_id', 'portfolio_id', 'config'],
-        [layoutId, portfolioId, configValue],
-      );
-    } catch (error) {
-      if (!isUniqueViolation(error)) {
-        throw error;
-      }
-
-      await Query.table(TABLES_ENUM.LAYOUT_CONFIG)
-        .where('portfolio_id', portfolioId)
-        .update(['layout_id', 'config'], [layoutId, configValue]);
-    }
+    await Query.raw(
+      `INSERT INTO ${TABLES_ENUM.LAYOUT_CONFIG} (layout_id, portfolio_id, config)
+       VALUES ($1, $2, $3::jsonb)
+       ON CONFLICT (portfolio_id)
+       DO UPDATE SET layout_id = EXCLUDED.layout_id, config = EXCLUDED.config`,
+      [layoutId, portfolioId, configValue],
+    );
 
     const result = await this.findConfigByPortfolioId(portfolioId);
     if (!result) {

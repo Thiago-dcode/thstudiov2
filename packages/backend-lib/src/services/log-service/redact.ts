@@ -22,12 +22,15 @@ const SENSITIVE_KEY_SUBSTRINGS = [
 ];
 
 /**
- * Keys redacted only on an exact normalized match. `code` in particular must NOT be a
- * substring rule — `status_code`, `country_code`, `language_code` and `api_error_code`
- * are the fields that make an error log worth reading.
+ * Keys redacted only on an exact normalized match.
+ *
+ * A bare `code` is deliberately absent: in this codebase it is an error code
+ * (`ECONNREFUSED`, a Postgres SQLSTATE, a Stripe `decline_code`, a process exit code) and
+ * redacting it strips the single most diagnostic field from an error log. The secret-bearing
+ * code fields here are `twofa_code` and `invitation_code`, both already covered by
+ * SENSITIVE_KEY_SUBSTRINGS, so nothing is lost by letting `code` through.
  */
 const SENSITIVE_KEYS_EXACT = new Set([
-  'code',
   'card',
   'cvv',
   'cvc',
@@ -58,6 +61,24 @@ function isSensitiveKey(key: string): boolean {
 
 function isEmailKey(key: string): boolean {
   return normalizeKey(key).includes(EMAIL_KEY_SUBSTRING);
+}
+
+/**
+ * Whether a value under an email-ish key is actually an address.
+ *
+ * `email_type`, `emailTemplate` and friends match {@link isEmailKey} but hold enum/template
+ * names, not PII. Masking those unconditionally turned every mail log line into
+ * `"email_type":"[redacted]"`, so the value has to earn the masking. Loose on purpose — it
+ * only decides *whether* to mask; {@link maskEmail} still owns the output shape, and an
+ * already-masked `ab***@host.com` matches so masking stays idempotent.
+ */
+function looksLikeEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+$/.test(value);
+}
+
+/** Masks only address-shaped strings; anything else under an email-ish key is left intact. */
+function maskIfEmail(value: string): string {
+  return looksLikeEmail(value) ? maskEmail(value) : value;
 }
 
 /**
@@ -134,12 +155,12 @@ function redactValue(value: unknown, depth: number, seen: WeakSet<object>): unkn
     if (isSensitiveKey(key)) {
       result[key] = REDACTED;
     } else if (isEmailKey(key) && typeof entry === 'string') {
-      result[key] = maskEmail(entry);
+      result[key] = maskIfEmail(entry);
     } else if (isEmailKey(key) && Array.isArray(entry)) {
       // `emails: [...]` batch payloads. maskEmail is idempotent, so call sites that already
       // masked their own list are unaffected.
       result[key] = entry.map((item) =>
-        typeof item === 'string' ? maskEmail(item) : redactValue(item, depth + 1, seen),
+        typeof item === 'string' ? maskIfEmail(item) : redactValue(item, depth + 1, seen),
       );
     } else {
       result[key] = redactValue(entry, depth + 1, seen);

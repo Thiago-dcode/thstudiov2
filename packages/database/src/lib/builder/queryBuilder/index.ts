@@ -887,6 +887,13 @@ export class QueryBuilder extends BaseBuilder {
     if (!sanitazedColumn.length) {
       return '';
     }
+    // A parenthesis means this is a SQL expression (LOWER(title), unaccent(addresses.city),
+    // COUNT(*)), not an identifier. Prefixing it with the table name produces
+    // `portfolios.LOWER(title)`, which Postgres reads as a schema-qualified function call.
+    // Callers of the expression form qualify their own columns.
+    if (sanitazedColumn.includes('(')) {
+      return sanitazedColumn;
+    }
     const splitedColumn = sanitazedColumn.split('.');
     if (splitedColumn.length > 2) {
       throw new QueryBuilderWrongColumnException(

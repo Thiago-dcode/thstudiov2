@@ -1,4 +1,8 @@
-import { ALLOWED_IMAGE_FILE_TYPES } from "@repo/common-lib/constants/constants";
+import {
+  ALLOWED_IMAGE_FILE_TYPES,
+  MAX_IMAGE_UPLOAD_BYTES,
+  MAX_IMAGE_UPLOAD_MB,
+} from "@repo/common-lib/constants/constants";
 import type { MimeTypes } from "@repo/common-lib/types/general";
 import type { Media } from "@repo/common-lib/types/media";
 import { trimValues } from "@repo/common-lib/utils/cleanObj";
@@ -10,8 +14,6 @@ import { parseBackendResponse } from "@/app/api/_helpers/parse-backend-response"
 import { getObjErrorFromZod } from "@/modules/auth/helpers";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import { createMediaSchema } from "@/modules/media/schemas/media-shemas";
-
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 export async function POST(request: NextRequest) {
   const t = await getTranslations();
@@ -37,14 +39,14 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    if (file.size > MAX_FILE_SIZE) {
+    if (file.size > MAX_IMAGE_UPLOAD_BYTES) {
       return NextResponse.json({
         data: null,
         errors: [],
         inputErrors: {
           file: t("validation.file.tooLarge", {
             field: t("fields.file"),
-            mb: 10,
+            mb: MAX_IMAGE_UPLOAD_MB,
           }),
         },
       });
@@ -107,7 +109,14 @@ export async function POST(request: NextRequest) {
     const result = await parseBackendResponse<Media>(backendResponse);
 
     if (result.errors) {
-      return NextResponse.json({ data: null, errors: result.errors });
+      // Never forward an empty list: the client has nothing to render and falls back to a
+      // meaningless generic message (see `extractReturnError` in the media provider).
+      return NextResponse.json({
+        data: null,
+        errors: result.errors.length
+          ? result.errors
+          : [t("actions.genericError")],
+      });
     }
 
     revalidateTag(`user-${rest.user_id}`, "max");

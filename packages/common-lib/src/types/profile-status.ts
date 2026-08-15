@@ -10,6 +10,7 @@ export type CreateProfileStatusInput = {
   has_location?: boolean;
   has_categories?: boolean;
   has_portfolio?: boolean;
+  has_media?: boolean;
   has_about_page?: boolean;
 };
 

@@ -22,7 +22,6 @@ describe('redactLogOptions', () => {
         token: 'eyJhbGciOi',
         twofa_code: '123456',
         invitation_code: 'INV-abc',
-        code: '998877',
       }),
     ).toEqual({
       password: REDACTED,
@@ -31,16 +30,19 @@ describe('redactLogOptions', () => {
       token: REDACTED,
       twofa_code: REDACTED,
       invitation_code: REDACTED,
-      code: REDACTED,
     });
   });
 
-  it('preserves the *_code fields that make an error log readable', () => {
+  it('preserves the code fields that make an error log readable', () => {
     const input = {
       status_code: 401,
       country_code: 'BR',
       language_code: 'pt',
       api_error_code: 'AUTH_001',
+      // A bare `code` is an error code here, not a secret — redacting it made error logs useless.
+      code: 'ECONNREFUSED',
+      decline_code: 'insufficient_funds',
+      signal: null,
     };
 
     expect(redactLogOptions(input)).toEqual(input);
@@ -69,6 +71,22 @@ describe('redactLogOptions', () => {
       email: 'eu***@gmail.com',
       user_email: 'a***@b.co',
       emails: ['xy***@y.co'],
+    });
+  });
+
+  it('leaves email-ish keys that hold enum/template names alone', () => {
+    const input = {
+      email_type: 'WAITLIST_UPDATE',
+      emailTemplate: 'emails/wait-list/invite',
+      email_status: 'skipped',
+    };
+
+    expect(redactLogOptions(input)).toEqual(input);
+  });
+
+  it('masks only the address-shaped entries of a mixed email list', () => {
+    expect(redactLogOptions({ emails: ['xy@y.co', 'BOUNCED'] })).toEqual({
+      emails: ['xy***@y.co', 'BOUNCED'],
     });
   });
 

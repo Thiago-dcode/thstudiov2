@@ -1,6 +1,10 @@
 "use server";
 
-import { ALLOWED_IMAGE_FILE_TYPES } from "@repo/common-lib/constants/constants";
+import {
+  ALLOWED_IMAGE_FILE_TYPES,
+  MAX_IMAGE_UPLOAD_BYTES,
+  MAX_IMAGE_UPLOAD_MB,
+} from "@repo/common-lib/constants/constants";
 import type { MimeTypes } from "@repo/common-lib/types/general";
 import type {
   CreatePortfolioPayload,
@@ -20,8 +24,6 @@ import {
   createPortfolioSchema,
   updatePortfolioSchema,
 } from "../schemas/portfolio-schemas";
-
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 type PortfolioActionInput = Partial<CreatePortfolioPayload> &
   Partial<UpdatePortfolioPayload>;
@@ -53,13 +55,13 @@ export const createOrUpdatePortfolioAction = async (
   }
   // Validate thumbnail if provided (both create & update)
   if (thumbnailFile && thumbnailFile.size > 0) {
-    if (thumbnailFile.size > MAX_FILE_SIZE) {
+    if (thumbnailFile.size > MAX_IMAGE_UPLOAD_BYTES) {
       return {
         errors: [],
         inputErrors: {
           thumbnail: t("validation.file.tooLarge", {
             field: t("fields.thumbnail"),
-            mb: 10,
+            mb: MAX_IMAGE_UPLOAD_MB,
           }),
         },
         data: null,

@@ -401,7 +401,7 @@ export class PortfolioRepository extends BaseRepository {
    */
   async titleExists(title: string, userId: number, excludeId?: number): Promise<boolean> {
     const query = this.query()
-      .where('LOWER(title)', '=', title.trim().toLowerCase())
+      .where('LOWER(TRIM(portfolios.title))', '=', title.trim().toLowerCase())
       .where('user_id', '=', userId);
 
     if (excludeId != null) query.where('id', '!=', excludeId);

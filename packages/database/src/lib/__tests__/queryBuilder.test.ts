@@ -241,19 +241,32 @@ describe('QueryBuilder', () => {
       );
     });
 
-    it('should handle columns with SQL functions and aliases', () => {
+    it('should not prefix SQL function expressions', () => {
+      // Prefixing these would emit `test_table.COUNT(*)`, which Postgres reads as a
+      // schema-qualified function call. The caller qualifies its own columns.
       const functionColumns = [
         'COUNT(*)',
         'MAX(price)',
-        'id AS user_id',
-        'name AS user_name',
+        'LOWER(title)',
+        'unaccent(addresses.city)',
       ];
       // Act
       queryBuilder.select(functionColumns);
 
       // Assert
       expect(queryBuilder['_select']).toBe(
-        `${TABLE_NAME}.COUNT(*),${TABLE_NAME}.MAX(price),${TABLE_NAME}.id AS user_id,${TABLE_NAME}.name AS user_name`,
+        'COUNT(*),MAX(price),LOWER(title),unaccent(addresses.city)',
+      );
+    });
+
+    it('should prefix plain columns that carry an alias', () => {
+      const aliasedColumns = ['id AS user_id', 'name AS user_name'];
+      // Act
+      queryBuilder.select(aliasedColumns);
+
+      // Assert
+      expect(queryBuilder['_select']).toBe(
+        `${TABLE_NAME}.id AS user_id,${TABLE_NAME}.name AS user_name`,
       );
     });
 
@@ -802,6 +815,41 @@ describe('QueryBuilder', () => {
       expect(queryBuilder['buildWhereQuery'](where)).toBe(
         `users.id = $3`,
       );
+    });
+
+    it('should not table-prefix a SQL expression used as a column', async () => {
+      // Regression: `LOWER(TRIM(title))` used to render as
+      // `test_table.LOWER(TRIM(title))`, which Postgres parses as a schema-qualified
+      // function call and rejects with `schema "test_table" does not exist`.
+      await initClient(postgresConfig);
+      queryBuilder = new QueryBuilder(TABLE_NAME);
+      const where: WhereCondition = {
+        column: 'LOWER(TRIM(test_table.title))',
+        operator: '=',
+        position: 0,
+        type: 'where',
+        value: 'my work',
+      };
+
+      const result = queryBuilder['buildWhereQuery'](where);
+
+      expect(result).toBe('LOWER(TRIM(test_table.title)) = $1');
+      expect(result).not.toContain(`${TABLE_NAME}.LOWER`);
+    });
+
+    it('should build a case-insensitive uniqueness query without prefixing the expression', async () => {
+      await initClient(postgresConfig);
+      queryBuilder = new QueryBuilder(TABLE_NAME);
+
+      queryBuilder
+        .where('LOWER(TRIM(test_table.title))', '=', 'my work')
+        .where('user_id', '=', 1);
+      queryBuilder['buildSelectQuery']();
+
+      expect(queryBuilder['query'].replace(/\s+/g, ' ')).toContain(
+        'WHERE LOWER(TRIM(test_table.title)) = $1 AND test_table.user_id = $2',
+      );
+      expect(queryBuilder['query']).not.toContain(`${TABLE_NAME}.LOWER`);
     });
 
     it('should handle all operators correctly', async () => {

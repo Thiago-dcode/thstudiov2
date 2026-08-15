@@ -24,6 +24,7 @@ export class ProfileStatusRepository extends BaseRepository {
     `${TABLES_ENUM.PROFILE_STATUS}.has_location`,
     `${TABLES_ENUM.PROFILE_STATUS}.has_categories`,
     `${TABLES_ENUM.PROFILE_STATUS}.has_portfolio`,
+    `${TABLES_ENUM.PROFILE_STATUS}.has_media`,
     `${TABLES_ENUM.PROFILE_STATUS}.has_about_page`,
   ] as const;
 
@@ -66,7 +67,7 @@ export class ProfileStatusRepository extends BaseRepository {
 
   /**
    * Idempotent backfill: upsert one row per user from live users / addresses /
-   * categories / portfolios / about_page. Uses the unique (user_id) constraint.
+   * categories / portfolios / media / about_page. Uses the unique (user_id) constraint.
    */
   async backfillAllFromLiveData(): Promise<number> {
     const ps = TABLES_ENUM.PROFILE_STATUS;
@@ -74,6 +75,7 @@ export class ProfileStatusRepository extends BaseRepository {
     const addresses = TABLES_ENUM.ADDRESSES;
     const userCategories = TABLES_ENUM.USER_CATEGORIES;
     const portfolios = TABLES_ENUM.PORTFOLIOS;
+    const media = TABLES_ENUM.MEDIA;
     const aboutPage = TABLES_ENUM.ABOUT_PAGE;
 
     const result = await Query.raw(
@@ -85,6 +87,7 @@ export class ProfileStatusRepository extends BaseRepository {
          has_location,
          has_categories,
          has_portfolio,
+         has_media,
          has_about_page,
          created_at,
          updated_at
@@ -105,6 +108,7 @@ export class ProfileStatusRepository extends BaseRepository {
          ),
          EXISTS (SELECT 1 FROM ${userCategories} uc WHERE uc.user_id = u.id),
          EXISTS (SELECT 1 FROM ${portfolios} p WHERE p.user_id = u.id),
+         EXISTS (SELECT 1 FROM ${media} m WHERE m.user_id = u.id),
          EXISTS (SELECT 1 FROM ${aboutPage} ap WHERE ap.user_id = u.id),
          NOW(),
          NOW()
@@ -116,6 +120,7 @@ export class ProfileStatusRepository extends BaseRepository {
          has_location = EXCLUDED.has_location,
          has_categories = EXCLUDED.has_categories,
          has_portfolio = EXCLUDED.has_portfolio,
+         has_media = EXCLUDED.has_media,
          has_about_page = EXCLUDED.has_about_page,
          updated_at = NOW()`,
     );
@@ -137,6 +142,7 @@ export class ProfileStatusRepository extends BaseRepository {
       has_location: result.has_location,
       has_categories: result.has_categories,
       has_portfolio: result.has_portfolio,
+      has_media: result.has_media,
       has_about_page: result.has_about_page,
     };
   }

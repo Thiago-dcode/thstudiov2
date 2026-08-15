@@ -22,6 +22,7 @@ import { ApiException } from "src/common/exceptions/api-exception";
 import { Query } from "@repo/database/facades";
 import { LayoutService } from "../layouts/layout.service";
 import { insertWithUniqueSlug, resolveEntitySlug } from "src/common/utils/slug.util";
+import { versionedAssetPath } from "src/common/utils/asset-path.util";
 
 const CACHE_TTL = 1000 * 60 * 60 * 24;
 
@@ -202,7 +203,9 @@ export class PortfolioService {
 
     let thumbnailPath = undefined;
     if (request.thumbnail) {
-      thumbnailPath = `users/${this.requestService.user.public_id}/portfolio/${slug}/thumbnail.webp`;
+      thumbnailPath = versionedAssetPath(
+        `users/${this.requestService.user.public_id}/portfolio/${slug}/thumbnail.webp`,
+      );
       this.logger.info('Uploading thumbnail', { path: thumbnailPath });
       await this.helpers.setAsset({
         asset: request.thumbnail,
@@ -307,7 +310,11 @@ export class PortfolioService {
     // Handle thumbnail upload if a new one is provided
     let thumbnailPath: string | undefined;
     if (request.thumbnail) {
-      thumbnailPath = `users/${this.requestService.user.public_id}/portfolio/${portfolio.slug}/thumbnail.webp`;
+      // Each upload gets its own key so the CDN URL changes — overwriting in place left every
+      // cache serving the old image. The previous object must therefore be deleted explicitly.
+      thumbnailPath = versionedAssetPath(
+        `users/${this.requestService.user.public_id}/portfolio/${portfolio.slug}/thumbnail.webp`,
+      );
       this.logger.info('Uploading thumbnail', { path: thumbnailPath });
 
       // Delete old thumbnail if it exists

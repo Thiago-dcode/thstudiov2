@@ -9,6 +9,7 @@ import type {
   ActionReturn,
   ReturnError,
 } from "@repo/common-lib/types/response";
+import { useTranslations } from "next-intl";
 import {
   createContext,
   type ReactNode,
@@ -105,6 +106,7 @@ export const useMedia = () => {
 // ============================================================================
 
 export const MediaProvider = ({ children }: { children: ReactNode }) => {
+  const t = useTranslations();
   const [mediaUploads, setMediaUploads] = useState<UploadMedia[]>([]);
   const { refresh: refreshUserMetrics } = useUserMetrics();
 
@@ -135,14 +137,24 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
+  /**
+   * The upload status line renders `errors` only, so field-level rejections (oversize file,
+   * bad mime, failed schema) have to be promoted into it. Without this they collapse into a
+   * meaningless generic message while the real reason stays buried in `inputErrors`.
+   */
   const extractReturnError = (
     result: ActionReturn<unknown>,
   ): ReturnError<Record<string, string>> => {
+    const inputErrorMessages = Object.values(result.inputErrors ?? {}).filter(
+      (message): message is string => typeof message === "string" && !!message,
+    );
+
     return {
-      errors:
-        result.errors && result.errors.length > 0
-          ? result.errors
-          : ["Request failed"],
+      errors: result.errors?.length
+        ? result.errors
+        : inputErrorMessages.length
+          ? inputErrorMessages
+          : [t("actions.genericError")],
       inputErrors: result.inputErrors,
     };
   };

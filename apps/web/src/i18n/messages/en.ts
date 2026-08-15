@@ -1596,6 +1596,7 @@ const messages = {
           location: "Add your address",
           categories: "Add a category",
           portfolio: "Create your first portfolio",
+          media: "Upload your first media",
           aboutPage: "Set up your about page",
         },
       },
@@ -1853,6 +1854,7 @@ const messages = {
         allFiles: "All files",
         upgradeRequired: "Upgrade to access this feature.",
         aiSeoGeneration: "Generate metadata",
+        aiSeoHint: "Fills title, description, alt text, and tags.",
         aiSeoBadge: "AI metadata",
         aiSeoTooltipBody:
           "SEO (Search Engine Optimization) helps your work get found on Google and Google Images. This uses AI to analyze the image and generate an artistic, keyword-rich title, description, alt text and filename — and auto-tags it with matching categories.",

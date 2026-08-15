@@ -80,7 +80,7 @@ export class FileLogService extends LogService {
                 await fs.writeFile(logFile, '', { mode: 0o600 });
             }
             await fs.appendFile(logFile, this.beautifyLogMessage(level, message, options, id, channel));
-            await this.callCallback(level, message, options);
+            await this.callCallback(level, message, options, channel);
         } catch (error) {
             console.error("ERROR LOGGIN", error);
         }

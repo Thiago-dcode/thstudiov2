@@ -187,12 +187,12 @@ export const UserMetrics = async ({ userId }: { userId: number }) => {
                 styles.border,
               )}
             >
-              <p className="text-xs font-medium text-text-muted tracking-wide uppercase">
+              <p className="text-xs! font-medium text-text-muted tracking-wide uppercase">
                 {title}
               </p>
               <p
                 className={cn(
-                  "font-semibold text-base tabular-nums",
+                  "font-semibold text-base! tabular-nums",
                   styles.label,
                 )}
               >

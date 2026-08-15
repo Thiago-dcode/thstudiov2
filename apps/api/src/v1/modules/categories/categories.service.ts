@@ -27,6 +27,7 @@ import {
 } from '@repo/common-lib/types/category';
 import { EnumType } from '@repo/common-lib/constants/enums';
 import { CategoryTranslationsService } from './category-translations.service';
+import { versionedAssetPath } from 'src/common/utils/asset-path.util';
 
 @Injectable()
 export class CategoriesService {
@@ -265,8 +266,13 @@ export class CategoriesService {
     });
   }
 
+  /**
+   * Versioned per upload: the CDN serves a stable unsigned URL per key, so replacing a thumbnail
+   * at a fixed key left CloudFront and browsers serving the old image. `storeCategoryThumbnail`
+   * deletes the superseded object.
+   */
   private categoryThumbnailKey(slug: string): string {
-    return `categories/${slug}/thumbnail.webp`;
+    return versionedAssetPath(`categories/${slug}/thumbnail.webp`);
   }
 
   /**

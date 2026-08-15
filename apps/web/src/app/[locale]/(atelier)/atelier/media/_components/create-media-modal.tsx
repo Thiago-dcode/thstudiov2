@@ -34,8 +34,10 @@ import { useInputFile } from "@repo/ui/contexts/file.provider";
 import { usePreviewUrls } from "@repo/ui/hooks/usePreviewUrls";
 import { cn } from "@repo/ui/lib/utils";
 import { Plus, Sparkles, X } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "@/i18n/navigation";
 import { useSession } from "@/lib/hooks/useSession";
 import { useMedia } from "@/modules/media/providers/media.provider";
 import { useUserMetrics } from "@/modules/users/providers/user-metrics.provider";
@@ -154,6 +156,7 @@ function CompressionSliderWithUpgradeHint({
 
 function MediaUploadContent() {
   const t = useTranslations("atelier.media.upload");
+  const tRoot = useTranslations();
   const [error, setError] = useState<string>();
   const [globalCompressionLevel, setGlobalCompressionLevel] = useState<
     EnumType<"COMPRESSION_LEVEL">
@@ -167,6 +170,7 @@ function MediaUploadContent() {
     setMediaUploads,
   } = useMedia();
   const { metrics, aiCreditsInfo } = useUserMetrics();
+  const { errors: fileErrors, maxFileSizeBytes } = useInputFile();
   const allow_media_compression = metrics?.active_plan.allow_media_compression;
   const currentCount = mediaPendingToCreate?.length || 0;
   const isMaxReached = currentCount >= MAX_FILES;
@@ -201,6 +205,32 @@ function MediaUploadContent() {
 
     setError(undefined);
   };
+
+  // The provider rejects the whole selection when any file is invalid, so surface every reason
+  // here — otherwise nothing appears in the grid and the user has no idea why.
+  const messages = useMemo(() => {
+    const list = (fileErrors ?? []).map(({ code, fileName }) =>
+      code === "too_large"
+        ? tRoot("validation.file.tooLarge", {
+            field: fileName,
+            mb: Math.floor((maxFileSizeBytes ?? 0) / (1024 * 1024)),
+          })
+        : tRoot("validation.file.invalidType", { field: fileName }),
+    );
+    if (error) list.unshift(error);
+    return list;
+  }, [fileErrors, maxFileSizeBytes, error, tRoot]);
+
+  const errorList = messages.length ? (
+    <div className="mb-2 space-y-0.5">
+      {messages.map((message) => (
+        <p key={message} className="text-sm! text-red-500">
+          {message}
+        </p>
+      ))}
+    </div>
+  ) : null;
+
   return (
     <div className="h-full flex flex-col p-2">
       {mediaToShow && mediaToShow.length > 0 ? (
@@ -263,32 +293,64 @@ function MediaUploadContent() {
                 />
               </div>
             </div>
-            <div className="pt-2 border-t border-border/50 space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="generate-seo"
-                    disabled={!aiCreditsInfo.hasCredits}
-                    onCheckedChange={(checked) => {
-                      const value = checked === true;
-                      setMediaUploads(
-                        mediaPendingToCreate.map((mu, i) => {
-                          return {
-                            ...mu,
-                            generate_seo: !value
-                              ? false
-                              : i < aiCreditsInfo.remaining,
-                          };
-                        }),
-                      );
-                    }}
-                  />
-                  <label
-                    htmlFor="generate-seo"
-                    className="flex items-center gap-1.5 text-xs! font-medium text-text cursor-pointer select-none"
-                  >
+            <div className="pt-3 border-t border-border/50">
+              <div
+                className={cn(
+                  "flex items-start gap-3 border p-3 transition-colors",
+                  willGenerateMetadata > 0
+                    ? "border-border-em bg-fg-1"
+                    : "border-border bg-fg hover:border-border-em",
+                  !aiCreditsInfo.hasCredits && "opacity-60",
+                )}
+              >
+                <Checkbox
+                  id="generate-seo"
+                  className="mt-0.5 size-5"
+                  checked={willGenerateMetadata > 0}
+                  disabled={!aiCreditsInfo.hasCredits}
+                  onCheckedChange={(checked) => {
+                    const value = checked === true;
+                    setMediaUploads(
+                      mediaPendingToCreate.map((mu, i) => {
+                        return {
+                          ...mu,
+                          generate_seo: !value
+                            ? false
+                            : i < aiCreditsInfo.remaining,
+                        };
+                      }),
+                    );
+                  }}
+                />
+                <label
+                  htmlFor="generate-seo"
+                  className="flex min-w-0 flex-1 cursor-pointer select-none flex-col gap-0.5"
+                >
+                  <span className="flex items-center gap-1.5 text-sm font-medium text-text">
+                    <Sparkles className="size-4 shrink-0" />
                     {t("aiSeoGeneration")}
-                  </label>
+                  </span>
+                  <span className="text-xs text-text-muted">
+                    {t("aiSeoHint")}
+                  </span>
+                </label>
+                <div className="flex shrink-0 items-center gap-1 pt-0.5">
+                  <span
+                    className={cn(
+                      "text-xs",
+                      aiCreditsInfo.remaining - willGenerateMetadata <= 0
+                        ? "text-accent"
+                        : "text-text-muted",
+                    )}
+                  >
+                    {willGenerateMetadata > 0
+                      ? t("creditsUsageSummary", {
+                          used: willGenerateMetadata,
+                          remaining:
+                            aiCreditsInfo.remaining - willGenerateMetadata,
+                        })
+                      : t("creditsLabel", { count: aiCreditsInfo.remaining })}
+                  </span>
                   <InfoTooltip
                     content={
                       <div className="space-y-2">
@@ -315,22 +377,6 @@ function MediaUploadContent() {
                     }
                   />
                 </div>
-                <span
-                  className={cn(
-                    "text-xs",
-                    aiCreditsInfo.remaining - willGenerateMetadata <= 0
-                      ? "text-accent"
-                      : "text-text-muted",
-                  )}
-                >
-                  {willGenerateMetadata > 0
-                    ? t("creditsUsageSummary", {
-                        used: willGenerateMetadata,
-                        remaining:
-                          aiCreditsInfo.remaining - willGenerateMetadata,
-                      })
-                    : t("creditsLabel", { count: aiCreditsInfo.remaining })}
-                </span>
               </div>
             </div>
 
@@ -405,7 +451,7 @@ function MediaUploadContent() {
               })}
             </div>
           </div>
-          {error && <p className="text-sm! text-red-500 mb-2">{error}</p>}
+          {errorList}
           <div className="mt-auto">
             <FileInput
               multiple
@@ -425,7 +471,7 @@ function MediaUploadContent() {
               {t("filesCount", { count: currentCount, max: MAX_FILES })}
             </span>
           </div>
-          {error && <p className="text-sm! text-red-500 mb-2">{error}</p>}
+          {errorList}
           <div className="flex-1 min-h-0">
             <FileInput
               multiple
@@ -445,10 +491,16 @@ function MediaUploadContent() {
 
 export function CreateMediaDialog({
   onSuccess,
+  openFromQuery = false,
 }: {
   onSuccess?: (media: Media) => void;
+  /** When true, `?open=1` opens this dialog (and clears the query). */
+  openFromQuery?: boolean;
 }) {
   const t = useTranslations("atelier.media.upload");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const openParam = searchParams.get("open");
   const [open, setOpen] = useState(false);
   const {
     handleUploadInserts,
@@ -459,13 +511,19 @@ export function CreateMediaDialog({
   const { files } = useInputFile();
   const { previewUrls, cleanup } = usePreviewUrls({ files });
   const { session } = useSession();
-  const { metrics } = useUserMetrics();
+  const { metrics, refresh: refreshMetrics } = useUserMetrics();
 
   const storageUsed = metrics?.extra_data.storage_used_mb ?? 0;
   const storageLimit = metrics?.active_plan.storage_limit_mb ?? 0;
   const isStorageFull = storageLimit > 0 && storageUsed >= storageLimit;
 
   const addedFilesRef = useRef(new Set<File>());
+
+  useEffect(() => {
+    if (!openFromQuery || openParam !== "1") return;
+    setOpen(true);
+    router.replace("/atelier/media");
+  }, [openFromQuery, openParam, router]);
 
   useEffect(() => {
     if (
@@ -551,7 +609,10 @@ export function CreateMediaDialog({
             <Button
               onClick={async () => {
                 setOpen(false);
-                await handleUploadInserts(onSuccess);
+                await handleUploadInserts(async (media) => {
+                  await refreshMetrics();
+                  onSuccess?.(media);
+                });
               }}
               variant={"primary"}
               className="w-full"

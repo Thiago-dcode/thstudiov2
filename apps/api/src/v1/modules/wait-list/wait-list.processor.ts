@@ -17,6 +17,7 @@ import { getBenefitMonths, getWaitListBenefitType } from '@repo/common-lib/utils
 import { Job, Queue } from 'bullmq';
 import { addDays } from 'date-fns';
 import { getConfigValue } from '@repo/common-lib/config/utils';
+import { DbUniqueViolationException } from '@repo/database/exceptions';
 import { GlobalProcessor } from 'src/common/processors/global.processor';
 import { BenefitRepository } from '../benefits/benefit.repository';
 import { InvitationLinkService } from '../invitation-links/invitation-link.service';
@@ -471,12 +472,12 @@ export class WaitListProcessor extends GlobalProcessor {
     return email.trim().toLowerCase();
   }
 
+  /**
+   * The DB client normalizes SQLSTATE 23505 into `DbUniqueViolationException`, so the driver's
+   * raw `code` never reaches here — matching on it left this always false and turned a lost
+   * signup race into a thrown job instead of a recovery.
+   */
   private isUniqueEmailError(error: unknown) {
-    if (!error || typeof error !== 'object') {
-      return false;
-    }
-
-    const code = 'code' in error ? (error as { code?: string | number }).code : undefined;
-    return code === '23505' || code === 23505 || code === '1062' || code === 1062;
+    return error instanceof DbUniqueViolationException;
   }
 }

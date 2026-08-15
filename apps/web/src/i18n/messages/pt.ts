@@ -1606,6 +1606,7 @@ const messages = {
           location: "Adicione seu endereço",
           categories: "Adicione uma categoria",
           portfolio: "Crie seu primeiro portfólio",
+          media: "Envie sua primeira mídia",
           aboutPage: "Configure sua página sobre",
         },
       },
@@ -1864,6 +1865,7 @@ const messages = {
         allFiles: "Todos os arquivos",
         upgradeRequired: "Faça upgrade para acessar este recurso.",
         aiSeoGeneration: "Gerar metadados",
+        aiSeoHint: "Preenche título, descrição, texto alt e tags.",
         aiSeoBadge: "Metadados IA",
         aiSeoTooltipBody:
           "O SEO (otimização para mecanismos de busca) ajuda seu trabalho a ser encontrado no Google e no Google Imagens. Usamos IA para analisar a imagem e gerar um título, uma descrição, um texto alternativo e um nome de arquivo artísticos e ricos em palavras-chave, além de marcá-la automaticamente com as categorias correspondentes.",

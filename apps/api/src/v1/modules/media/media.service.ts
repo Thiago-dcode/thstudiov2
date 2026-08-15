@@ -18,8 +18,9 @@ import { CACHE_KEY_MEDIA_SEO, SEO_METADATA_CACHE_TTL } from '@repo/common-lib/co
 import { CreateUserStorageRequestEvent } from '../user-storage-requests/events/create-user-storage-request.event';
 import { IndexMediaRequest } from '../user-media/requests/index-media.request';
 import { Helpers } from 'src/common/services/helpers.service';
-import { UPDATE_USER_EXTRA_DATA_METRICS } from '@repo/common-lib/constants/constants';
+import { UPDATE_PROFILE_STATUS_EVENT, UPDATE_USER_EXTRA_DATA_METRICS } from '@repo/common-lib/constants/constants';
 import { UpdateUserExtraDataMetricsEvent } from '../user-extra-data/events/update-user-extra-data-metrics.event';
+import { UpdateProfileStatusEvent } from '../profile-status/events/update-profile-status.event';
 import { UpdateMediaRequest } from './requests/update-media.request';
 import { RequestService } from 'src/common/services/request.service';
 import { DEFAULT_COMPRESSION_LVL } from '@repo/common-lib/constants/enums';
@@ -227,6 +228,10 @@ export class MediaService {
 
       const result = await this.mediaRepository.create(mediaData);
       this.eventEmitter.emit(UPDATE_USER_EXTRA_DATA_METRICS, new UpdateUserExtraDataMetricsEvent(user.id));
+      this.eventEmitter.emit(
+        UPDATE_PROFILE_STATUS_EVENT,
+        new UpdateProfileStatusEvent(user.id, { has_media: true }),
+      );
       result.thumbnail = thumbnailUrl;
       return result;
     } catch (error) {
@@ -255,6 +260,15 @@ export class MediaService {
     this.eventEmitter.emit(
       UPDATE_USER_EXTRA_DATA_METRICS,
       new UpdateUserExtraDataMetricsEvent(media.user_id),
+    );
+    const stillHasMedia = await this.mediaRepository.exists({
+      user_id: media.user_id,
+    });
+    this.eventEmitter.emit(
+      UPDATE_PROFILE_STATUS_EVENT,
+      new UpdateProfileStatusEvent(media.user_id, {
+        has_media: stillHasMedia,
+      }),
     );
   }
 

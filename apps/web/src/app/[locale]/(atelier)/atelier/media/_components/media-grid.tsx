@@ -1,6 +1,9 @@
 "use client";
 
-import { ALLOWED_IMAGE_FILE_TYPES } from "@repo/common-lib/constants/constants";
+import {
+  ALLOWED_IMAGE_FILE_TYPES,
+  MAX_IMAGE_UPLOAD_BYTES,
+} from "@repo/common-lib/constants/constants";
 import type { Media } from "@repo/common-lib/types/media";
 import { Button } from "@repo/ui/components/shadcn/button";
 import {
@@ -90,8 +93,12 @@ export function MediaGrid({
     <>
       <div className="relative flex flex-col w-full h-full gap-2">
         <div className="self-end">
-          <FileInputProvider allowedMimeTypes={ALLOWED_IMAGE_FILE_TYPES}>
+          <FileInputProvider
+            allowedMimeTypes={ALLOWED_IMAGE_FILE_TYPES}
+            maxFileSizeBytes={MAX_IMAGE_UPLOAD_BYTES}
+          >
             <CreateMediaDialog
+              openFromQuery
               onSuccess={(media) => {
                 setCurrentMedia((prev) => [media, ...prev]);
               }}

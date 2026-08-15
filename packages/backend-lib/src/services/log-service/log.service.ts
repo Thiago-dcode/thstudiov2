@@ -16,10 +16,18 @@ export abstract class LogService {
     protected static type: LogServiceDriver;
     private static pendingLogs: (() => Promise<void>)[] = [];
 
+    protected readonly config: LogConfig;
+
     constructor(
-        protected readonly config: LogConfig,
+        config: LogConfig,
         protected readonly queue?: Queue,
     ) {
+        // Own the config. Callers pass the shared `logConfig.*` singletons, and the builder
+        // methods below mutate `this.config` — so without this copy, one `.channel()` call in
+        // ResponseExceptionFilter permanently rewrote the channel for every other logger built
+        // from the same object, sending ordinary logs to `api/errors/500` and firing the
+        // 500-alert callback on every subsequent line.
+        this.config = { ...config };
     }
 
     /**
@@ -122,8 +130,12 @@ export abstract class LogService {
         logMessage += `\n`;
         return logMessage;
     }
-    protected async callCallback(level: LogLevel, message: string, options?: LogOptions) {
-        if (this.config.callback && this.config.callback.channel === this.config.channel) {
+    protected async callCallback(level: LogLevel, message: string, options?: LogOptions, channel?: string) {
+        // Same snapshot rule as beautifyLogMessage: file writes run at flush time, so reading
+        // the channel live would fire the 500-alert callback for whichever channel happened to
+        // be set last rather than the one the caller logged to.
+        const logChannel = channel ?? this.config.channel;
+        if (this.config.callback && this.config.callback.channel === logChannel) {
             // Never let a log callback throw/reject: doing so escapes as an unhandledRejection
             // which, if logged back into the same channel, creates an infinite log loop.
             try {

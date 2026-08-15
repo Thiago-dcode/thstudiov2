@@ -1,6 +1,10 @@
 "use server";
 
-import { ALLOWED_IMAGE_FILE_TYPES } from "@repo/common-lib/constants/constants";
+import {
+  ALLOWED_IMAGE_FILE_TYPES,
+  MAX_IMAGE_UPLOAD_BYTES,
+  MAX_IMAGE_UPLOAD_MB,
+} from "@repo/common-lib/constants/constants";
 import type {
   AboutPage,
   CreateAboutPageInputWithFile,
@@ -22,7 +26,6 @@ import {
   updateAboutPageSchema,
 } from "../schemas/about-page.shemas";
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 export const createAboutPageAction = async (
   formData: FormData,
 ): Promise<
@@ -68,13 +71,13 @@ export const createAboutPageAction = async (
   const photoFile = formData.get("photo") as File | null;
   // Validate avatar file if provided
   if (photoFile && photoFile.size > 0) {
-    if (photoFile.size > MAX_FILE_SIZE) {
+    if (photoFile.size > MAX_IMAGE_UPLOAD_BYTES) {
       return {
         errors: [],
         inputErrors: {
           photo: t("validation.file.tooLarge", {
             field: t("fields.photo"),
-            mb: 10,
+            mb: MAX_IMAGE_UPLOAD_MB,
           }),
         },
         data: null,
@@ -153,13 +156,13 @@ export const updateAboutPageAction = async (
   const photoFile = formData.get("photo") as File | null;
   // Validate avatar file if provided
   if (photoFile && photoFile.size > 0) {
-    if (photoFile.size > MAX_FILE_SIZE) {
+    if (photoFile.size > MAX_IMAGE_UPLOAD_BYTES) {
       return {
         errors: [],
         inputErrors: {
           photo: t("validation.file.tooLarge", {
             field: t("fields.photo"),
-            mb: 10,
+            mb: MAX_IMAGE_UPLOAD_MB,
           }),
         },
         data: null,

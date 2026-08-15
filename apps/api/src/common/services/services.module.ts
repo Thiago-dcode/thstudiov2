@@ -99,8 +99,12 @@ import { RequestStore } from '@repo/common-lib/types/request';
     {
       provide: LogService,
       useFactory: (logQueue: Queue, requestService: RequestService) => {
-        logConfig.api.id = () => requestService.requestId;
-        return FactoryLogService.createLogService('file', logConfig.api, logQueue);
+        // Derive a config instead of assigning onto the shared `logConfig.api` singleton.
+        return FactoryLogService.createLogService(
+          'file',
+          { ...logConfig.api, id: () => requestService.requestId },
+          logQueue,
+        );
       },
       inject: [getQueueToken(LOG_QUEUE), RequestService],
     },

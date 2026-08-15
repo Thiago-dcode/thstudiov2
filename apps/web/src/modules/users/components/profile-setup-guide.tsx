@@ -14,6 +14,7 @@ const PROFILE_STATUS_FLAGS = [
   "has_avatar_field",
   "has_location",
   "has_categories",
+  "has_media",
   "has_portfolio",
   "has_about_page",
 ] as const satisfies ReadonlyArray<keyof ProfileStatus>;
@@ -26,6 +27,7 @@ const STEP_HREFS: Record<ProfileStatusFlag, string> = {
   has_avatar_field: "/atelier/home?tab=avatar",
   has_location: "/atelier/home?tab=address",
   has_categories: "/atelier/home?tab=categories",
+  has_media: "/atelier/media?open=1",
   has_portfolio: "/atelier/portfolios/create",
   has_about_page: "/atelier/about?open=1",
 };
@@ -37,6 +39,7 @@ const STEP_LABEL_KEYS: Record<
   | "avatar"
   | "location"
   | "categories"
+  | "media"
   | "portfolio"
   | "aboutPage"
 > = {
@@ -45,12 +48,14 @@ const STEP_LABEL_KEYS: Record<
   has_avatar_field: "avatar",
   has_location: "location",
   has_categories: "categories",
+  has_media: "media",
   has_portfolio: "portfolio",
   has_about_page: "aboutPage",
 };
 
+/** Bump when new required steps are added so prior "completed" dismissals reset. */
 const completedKey = (userId: number) =>
-  `profile-setup-guide-completed-${userId}`;
+  `profile-setup-guide-completed-v2-${userId}`;
 
 export const ProfileSetupGuide = ({ userId }: { userId: number }) => {
   const t = useTranslations("atelier.common.setupGuide");
@@ -112,8 +117,8 @@ export const ProfileSetupGuide = ({ userId }: { userId: number }) => {
           className="flex items-center gap-3 border border-border bg-fg px-4 py-3 shadow-lg text-left hover:bg-fg-1 transition-colors"
           aria-label={t("expand")}
         >
-          <span className="text-sm font-medium text-text">{t("title")}</span>
-          <span className="text-sm text-text-muted tabular-nums">
+          <span className="text-sm! font-medium text-text">{t("title")}</span>
+          <span className="text-xs! text-text-muted tabular-nums">
             {percent}%
           </span>
           <ChevronUp className="size-4 text-text-muted" aria-hidden />
@@ -129,8 +134,8 @@ export const ProfileSetupGuide = ({ userId }: { userId: number }) => {
     >
       <div className="flex items-start justify-between gap-2 px-4 pt-4 pb-2">
         <div className="min-w-0 flex-1">
-          <h2 className="text-sm font-semibold text-text">{t("title")}</h2>
-          <p className="mt-0.5 text-xs text-text-muted tabular-nums">
+          <h2 className="text-sm! font-semibold text-text">{t("title")}</h2>
+          <p className="mt-0.5 text-xs! text-text-muted tabular-nums">
             {t("progress", { percent })}
           </p>
         </div>
@@ -178,7 +183,7 @@ export const ProfileSetupGuide = ({ userId }: { userId: number }) => {
               <Link
                 href={STEP_HREFS[flag]}
                 className={cn(
-                  "flex items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-fg-1",
+                  "flex items-center gap-3 px-4 py-2.5 text-sm! transition-colors hover:bg-fg-1",
                   done ? "text-text-muted line-through" : "text-text",
                 )}
               >

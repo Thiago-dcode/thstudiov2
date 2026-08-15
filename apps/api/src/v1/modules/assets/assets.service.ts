@@ -6,6 +6,7 @@ import { generateValidSlug } from '@repo/common-lib/utils/generate-valid-slug';
 import { CreateAssetInput, Asset } from '@repo/common-lib/types/assets';
 import { ASSET_SIGNED_URL_EXPIRATION } from '@repo/common-lib/constants/constants';
 import path from 'path';
+import { versionedAssetPath } from 'src/common/utils/asset-path.util';
 
 const ALLOWED_IMAGE_MIMES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif'];
 const MAX_THUMBNAIL_SIZE = 2 * 1024 * 1024; // 2MB
@@ -49,9 +50,10 @@ export class AssetsService {
       throw new BadRequestException(`Slug "${slug}" already exists`);
     }
 
-    const storagePath = `assets/${slug}`;
-
-
+    // Versioned per upload. The slug is unique among live assets, but deleting an asset and
+    // recreating it under the same slug would otherwise reuse the key — and the CDN serves a
+    // stable unsigned URL per key, so the deleted asset's bytes would come back.
+    const storagePath = versionedAssetPath(`assets/${slug}`);
 
     // Store file to S3
     await this.storageService.write(file, storagePath);
@@ -59,7 +61,7 @@ export class AssetsService {
     // Store thumbnail to S3 if provided
     let thumbnailPath: string | null = null;
     if (thumbnailFile) {
-      thumbnailPath = `assets/${slug}-thumbnail`;
+      thumbnailPath = versionedAssetPath(`assets/${slug}-thumbnail`);
       await this.helpers.setAsset({ asset: thumbnailFile, path: thumbnailPath, targetSizeMb: 0.1 });
     }
 

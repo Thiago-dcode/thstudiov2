@@ -38,6 +38,15 @@ export const REDIRECT_TO_COOKIE_NAME = 'x-app-redirect-to' as const;
 // ==================== APP CONFIGURATION ====================
 export const FUNNEL_LAST_STEP = 5;
 export const ALLOWED_IMAGE_FILE_TYPES: MimeTypes[] = ['image/jpeg', 'image/png', 'image/webp'];
+/**
+ * Single source of truth for the image upload cap. Enforced at every layer that touches an
+ * upload (browser selection, the Next proxy routes/server actions and the API's multer config)
+ * so a rejection always carries the same number. Lossless PNG photos routinely land in the
+ * 15-25MB range, which is why this sits well above a typical JPEG.
+ * Stays under nginx's `client_max_body_size 50m` (see `dev.nginx`/`pro.nginx`).
+ */
+export const MAX_IMAGE_UPLOAD_MB = 25;
+export const MAX_IMAGE_UPLOAD_BYTES = MAX_IMAGE_UPLOAD_MB * 1024 * 1024;
 export const STRIKES_TO_BAN = 3;
 /**
  * LLM usage types that count against a user's AI credit quota. Only user-initiated

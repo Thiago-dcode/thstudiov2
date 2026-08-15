@@ -10,6 +10,7 @@ export type ProfileStatusSchema = {
   has_location: boolean;
   has_categories: boolean;
   has_portfolio: boolean;
+  has_media: boolean;
   has_about_page: boolean;
   created_at: Date;
   updated_at: Date;

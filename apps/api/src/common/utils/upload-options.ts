@@ -2,11 +2,12 @@ import { BadRequestException } from '@nestjs/common';
 import type { MulterOptions } from '@nestjs/platform-express/multer/interfaces/multer-options.interface';
 import {
   ALLOWED_IMAGE_FILE_TYPES,
+  MAX_IMAGE_UPLOAD_BYTES,
 } from '@repo/common-lib/constants/constants';
 import type { MimeTypes } from '@repo/common-lib/types/general';
 
-/** Mirrors the web proxy's limit (`apps/web/src/app/api/media/route.ts`). */
-export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10MB
+/** Shared with the web proxy and the browser via `MAX_IMAGE_UPLOAD_BYTES`. */
+export const MAX_UPLOAD_BYTES = MAX_IMAGE_UPLOAD_BYTES;
 
 /**
  * Multer options for image uploads.

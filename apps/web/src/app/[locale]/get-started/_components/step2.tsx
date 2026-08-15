@@ -25,9 +25,10 @@ export default function Container() {
 
 const Step2 = () => {
   const t = useTranslations("editUser.avatar");
+  const tRoot = useTranslations();
   const inputRef = useRef<HTMLInputElement>(null);
   const { user, setInputs, handleOnChange, setErrors } = useFunnelActions();
-  const { files, errors } = useInputFile();
+  const { files, errors, maxFileSizeBytes } = useInputFile();
   const [previewUrl, setPreviewUrl] = useState<string | undefined>(
     (user as any)?.avatar,
   );
@@ -48,8 +49,17 @@ const Step2 = () => {
   }, [files]);
   useEffect(() => {
     if (!errors?.length) return;
-    setErrors(errors);
-  }, [errors, setErrors]);
+    setErrors(
+      errors.map(({ code, fileName }) =>
+        code === "too_large"
+          ? tRoot("validation.file.tooLarge", {
+              field: fileName,
+              mb: Math.floor((maxFileSizeBytes ?? 0) / (1024 * 1024)),
+            })
+          : tRoot("validation.file.invalidType", { field: fileName }),
+      ),
+    );
+  }, [errors, setErrors, tRoot, maxFileSizeBytes]);
 
   useEffect(() => {
     setInputs(inputRef?.current);
