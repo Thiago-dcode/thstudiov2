@@ -1,6 +1,9 @@
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { CREATE_OR_UPDATE_LOCATION } from '@repo/common-lib/constants/constants';
+import {
+  CREATE_OR_UPDATE_LOCATION,
+  UPDATE_PROFILE_STATUS_EVENT,
+} from '@repo/common-lib/constants/constants';
 import type { CreateOrUpdateLocationPayload } from '@repo/common-lib/types/location';
 import { Query } from '@repo/database/facades';
 import type { ClientSchema } from '@repo/common-lib/schemas/client';
@@ -9,6 +12,7 @@ import type { Address, CreateAddressInput, UpdateAddressInput } from '@repo/comm
 import { cleanObj } from '@repo/common-lib/utils/object';
 import { RequestService } from 'src/common/services/request.service';
 import { CreateOrUpdateLocationEvent } from '../locations/events/create-or-update-location.event';
+import { UpdateProfileStatusEvent } from '../profile-status/events/update-profile-status.event';
 
 @Injectable()
 export class AddressService {
@@ -58,6 +62,7 @@ export class AddressService {
 
     const result = await this.addressRepository.create(data);
     this.emitCreateOrUpdateLocationFromAddress(result);
+    this.emitProfileStatusFromAddress(result);
     return result;
   }
 
@@ -82,6 +87,7 @@ export class AddressService {
     const result = await this.addressRepository.updateAndGet(id, patch);
     if (result) {
       this.emitCreateOrUpdateLocationFromAddress(result);
+      this.emitProfileStatusFromAddress(result);
     }
     return result;
   }
@@ -112,6 +118,21 @@ export class AddressService {
     }
 
     return patch;
+  }
+
+  private emitProfileStatusFromAddress(result: Address): void {
+    if (!result.user_id) return;
+    const hasLocation = Boolean(
+      result.country?.trim() ||
+        result.city?.trim() ||
+        result.formated_address?.trim(),
+    );
+    this.eventEmitter.emit(
+      UPDATE_PROFILE_STATUS_EVENT,
+      new UpdateProfileStatusEvent(result.user_id, {
+        has_location: hasLocation,
+      }),
+    );
   }
 
   private emitCreateOrUpdateLocationFromAddress(result: Address): void {

@@ -22,6 +22,7 @@ import {
   SET_FREE_SUBSCRIPTION_EVENT,
   SET_INITIAL_USER_EXTRA_DATA_EVENT,
   GENERATE_SINGLE_ENTITY_METADATA_EVENT,
+  UPDATE_PROFILE_STATUS_EVENT,
 } from '@repo/common-lib/constants/constants';
 import { FindUserRequest } from './requests/find-user.request';
 import { Helpers } from 'src/common/services/helpers.service';
@@ -35,6 +36,8 @@ import { addMonths } from 'date-fns';
 import { IndexArtistsRequest } from './requests/index-artists.request';
 import { CreateOrUpdateEmailPreferenceEvent } from '../email-preferences/events/create-or-update-email-preference.event';
 import { GenerateSingleEntityMetadataEvent } from '../ai/events/generate-single-entity-metadata.event';
+import { ProfileStatusService } from '../profile-status/profile-status.service';
+import { UpdateProfileStatusEvent } from '../profile-status/events/update-profile-status.event';
 
 @Injectable()
 export class UserService {
@@ -47,6 +50,7 @@ export class UserService {
     private readonly requestService: RequestService,
     private readonly notifyNewUserMail: NotifyNewUserMail,
     private readonly aiService: AiService,
+    private readonly profileStatusService: ProfileStatusService,
   ) { }
 
   /** No-op when `language` already matches; safe to call on every authenticated request. */
@@ -270,6 +274,37 @@ export class UserService {
         : Promise.resolve(true),
     ]);
 
+    const mergedName =
+      userUpdateData.name !== undefined ? userUpdateData.name : user.name;
+    const mergedSurname =
+      userUpdateData.surname !== undefined ? userUpdateData.surname : user.surname;
+    const mergedProfession =
+      userUpdateData.profession !== undefined
+        ? userUpdateData.profession
+        : user.profession;
+    const hasAvatar = Boolean(
+      avatarPath || (userUpdateData.avatar !== undefined ? userUpdateData.avatar : user.avatar),
+    );
+
+    this.eventEmitter.emit(
+      UPDATE_PROFILE_STATUS_EVENT,
+      new UpdateProfileStatusEvent(user.id, {
+        has_full_name_field: Boolean(
+          typeof mergedName === 'string' &&
+            mergedName.trim() &&
+            typeof mergedSurname === 'string' &&
+            mergedSurname.trim(),
+        ),
+        has_profession_field: Boolean(
+          typeof mergedProfession === 'string' && mergedProfession.trim(),
+        ),
+        has_avatar_field: hasAvatar,
+        ...(editCategories
+          ? { has_categories: categories.length > 0 }
+          : {}),
+      }),
+    );
+
     const shouldGenerateMetadata =user.name !=userUpdateData.name || user.surname != userUpdateData.surname || user.profession != userUpdateData.profession || user.short_biography != userUpdateData.profession;
 
     if(shouldGenerateMetadata){
@@ -361,6 +396,7 @@ export class UserService {
         SET_INITIAL_USER_EXTRA_DATA_EVENT,
         new SetInitialUserExtraDataEvent(event.user.id),
       );
+      await this.profileStatusService.create({ user_id: event.user.id });
       //Notify user
       await this.mailService.sendAsync(this.notifyNewUserMail.setUser(event.user, event.user.language), {
         delay: 3 * 60 * 1000

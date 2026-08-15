@@ -11,10 +11,11 @@ import { UserExtraDataService } from "../user-extra-data/user-extra-data.service
 import { RequestService } from "src/common/services/request.service";
 import { PortfolioRepository } from "./portfolio.repository";
 import { EventEmitter2 } from "@nestjs/event-emitter";
-import { CACHE_KEY_PORTFOLIO_SEO, GENERATE_SINGLE_ENTITY_METADATA_EVENT, MAX_PORTFOLIO_ITEMS, UPDATE_USER_EXTRA_DATA_METRICS } from "@repo/common-lib/constants/constants";
+import { CACHE_KEY_PORTFOLIO_SEO, GENERATE_SINGLE_ENTITY_METADATA_EVENT, MAX_PORTFOLIO_ITEMS, UPDATE_PROFILE_STATUS_EVENT, UPDATE_USER_EXTRA_DATA_METRICS } from "@repo/common-lib/constants/constants";
 import { TABLES_ENUM } from "@repo/common-lib/constants/enums";
 import { UpdateUserExtraDataMetricsEvent } from "../user-extra-data/events/update-user-extra-data-metrics.event";
 import { GenerateSingleEntityMetadataEvent } from "../ai/events/generate-single-entity-metadata.event";
+import { UpdateProfileStatusEvent } from "../profile-status/events/update-profile-status.event";
 import { AiService } from "../ai/ai.service";
 import { MediaModerationException } from "src/common/exceptions/media-moderation-exception";
 import { ApiException } from "src/common/exceptions/api-exception";
@@ -248,6 +249,10 @@ export class PortfolioService {
     await this.invalidateHighlightCountCache(request.user_id);
     this.eventEmitter.emit(UPDATE_USER_EXTRA_DATA_METRICS, new UpdateUserExtraDataMetricsEvent(request.user_id));
     this.eventEmitter.emit(
+      UPDATE_PROFILE_STATUS_EVENT,
+      new UpdateProfileStatusEvent(request.user_id, { has_portfolio: true }),
+    );
+    this.eventEmitter.emit(
       GENERATE_SINGLE_ENTITY_METADATA_EVENT,
       new GenerateSingleEntityMetadataEvent({
         entity: 'portfolio',
@@ -382,6 +387,15 @@ export class PortfolioService {
     ]);
     await this.invalidateHighlightCountCache(portfolio.user_id);
     this.eventEmitter.emit(UPDATE_USER_EXTRA_DATA_METRICS, new UpdateUserExtraDataMetricsEvent(portfolio.user_id));
+    const stillHasPortfolio = await this.portfolioRepository.exists({
+      user_id: portfolio.user_id,
+    });
+    this.eventEmitter.emit(
+      UPDATE_PROFILE_STATUS_EVENT,
+      new UpdateProfileStatusEvent(portfolio.user_id, {
+        has_portfolio: stillHasPortfolio,
+      }),
+    );
   }
 
 }

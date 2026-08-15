@@ -43,6 +43,7 @@ export default async function ServiceEdit({ params }: Props) {
       <AdminPageTitle
         title={t("editTitlePrefix", { title: service.title })}
         publicHref={publicHref}
+        info={t("pageInfo")}
       />
       <CreateOrUpdateService
         defaultService={service}

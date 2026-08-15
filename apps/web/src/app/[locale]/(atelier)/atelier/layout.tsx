@@ -14,6 +14,7 @@ import { PortfolioProvider } from "@/modules/portfolios/providers/create-update-
 import { AlertServiceButton } from "@/modules/services/components/alert-service.button";
 import { CreateUpdateServiceProvider } from "@/modules/services/providers/create-update-service.provider";
 import { UserBenefitModal } from "@/modules/user-benefit/components/user-benefit.modal";
+import { ProfileSetupGuide } from "@/modules/users/components/profile-setup-guide";
 import { UserAccountBannedModal } from "@/modules/users/components/user-account-banned-modal";
 import { UserMetricsProvider } from "@/modules/users/providers/user-metrics.provider";
 import { FinishSetupDialog } from "../__components/finish-setup-dialog";
@@ -48,6 +49,7 @@ const AdminLayout = async ({ children }: { children: ReactNode }) => {
                 <CreateUpdateServiceProvider user={userAuth}>
                   <UserAccountBannedModal />
                   <div className="fixed flex flex-col items-end bottom-6 right-6 z-100 gap-2 ">
+                    <ProfileSetupGuide userId={userAuth.id} />
                     <UploadMediaModal />
                     <AlertPortfolioButton />
                     <AlertCollectionButton />

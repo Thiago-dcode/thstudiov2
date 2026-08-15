@@ -42,6 +42,7 @@ import {
 import { toastErrorThrottled } from "@/lib/utils/throttled-toast";
 import type { UserAuth } from "@/modules/auth/auth.types";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
+import { useUserMetrics } from "@/modules/users/providers/user-metrics.provider";
 import { createOrUpdatePortfolioAction } from "../server-actions/create-update-portfolio.action";
 import { getPortfolioHighlightCountAction } from "../server-actions/get-highlight-count.action";
 
@@ -201,6 +202,7 @@ export const PortfolioProvider = ({
 }: PortfolioProviderProps) => {
   const router = useRouter();
   const t = useTranslations();
+  const { refresh: refreshMetrics } = useUserMetrics();
   const [isHydrated, setIsHydrated] = useState(false);
   useEffect(() => {
     setIsHydrated(true);
@@ -362,6 +364,7 @@ export const PortfolioProvider = ({
           router.refresh();
         } else {
           clear();
+          await refreshMetrics();
         }
         toast.success(
           currentPortfolio

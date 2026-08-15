@@ -14,6 +14,7 @@ import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { getOneUserAction } from "@/modules/users/server-actions/get-one-user.action";
 import { getUserCategoriesAction } from "@/modules/users/server-actions/get-user-categories.action";
 import { updateUserAction } from "@/modules/users/server-actions/update-user.action";
+import { useUserMetrics } from "./user-metrics.provider";
 
 // Context type
 type EditUserContextType = {
@@ -54,6 +55,7 @@ export const EditUserProvider = ({
   defaultAddress?: Address;
   defaultUserCategories: CategoryBase[];
 }) => {
+  const { refresh: refreshMetrics } = useUserMetrics();
   const [user, setUser] = useState(defaultUser);
   const [address, setAddress] = useState(defaultAddress);
   const [userCategories, setUserCategories] = useState(defaultUserCategories);
@@ -85,6 +87,7 @@ export const EditUserProvider = ({
         if (userResponse.data) {
           setUser(userResponse.data);
         }
+        await refreshMetrics();
       }
     },
     beforeAction: async () => {

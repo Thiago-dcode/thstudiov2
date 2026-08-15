@@ -44,6 +44,7 @@ export default async function PortfolioDetail({ params }: Props) {
       <AdminPageTitle
         title={t("editTitlePrefix", { title: portfolio.title })}
         publicHref={publicHref}
+        info={t("pageInfo")}
       >
         <DeletePortfolioDialog
           portfolioId={portfolio.id}

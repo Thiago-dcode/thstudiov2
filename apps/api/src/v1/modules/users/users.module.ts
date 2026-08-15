@@ -15,6 +15,7 @@ import { CategoriesModule } from '../categories/categories.module';
 import { AddressModule } from '../addresses/address.module';
 import { AiModule } from '../ai/ai.module';
 import { EmailPreferencesModule } from '../email-preferences/email-preferences.module';
+import { ProfileStatusModule } from '../profile-status/profile-status.module';
 
 @Module({
   controllers: [UserController],
@@ -31,6 +32,7 @@ import { EmailPreferencesModule } from '../email-preferences/email-preferences.m
   ],
   imports: [
     UserExtraDataModule,
+    ProfileStatusModule,
     UserAuthDevicesModule,
     PlansModule,
     CategoriesModule,

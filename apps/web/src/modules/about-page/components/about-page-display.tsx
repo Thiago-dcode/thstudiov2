@@ -9,7 +9,7 @@ export const AboutPageDisplay = async ({
   const t = await getTranslations("atelier.about.form");
 
   return (
-    <article className="w-full border border-fg-2 bg-fg p-6">
+    <article className="w-fit border border-fg-2 bg-fg p-6">
       <div className="flex flex-col md:flex-row gap-6">
         {aboutPage.photo && (
           <div className="shrink-0">

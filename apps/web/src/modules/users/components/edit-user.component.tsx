@@ -21,9 +21,11 @@ import { usePreviewUrls } from "@repo/ui/hooks/usePreviewUrls";
 import { cn } from "@repo/ui/lib/utils";
 import { Globe, Pen, Phone, X } from "lucide-react";
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import fallbackBanner from "@/assets/images/fallback-banner.jpg";
+import { useRouter } from "@/i18n/navigation";
 import FormComponent from "@/lib/components/form-component";
 import {
   FacebookIcon,
@@ -37,9 +39,22 @@ import {
   useGetCategories,
 } from "@/modules/categories/providers/getCategories.provider";
 import { useEditUser } from "../providers/edit-user.provider";
+import { useUserMetrics } from "../providers/user-metrics.provider";
+
+export type EditUserTab = "profile" | "avatar" | "categories" | "address";
+
+const isEditUserTab = (value: string | null): value is EditUserTab =>
+  value === "profile" ||
+  value === "avatar" ||
+  value === "categories" ||
+  value === "address";
 
 export default function EditUserComponent() {
   const t = useTranslations("editUser");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const { refresh: refreshMetrics } = useUserMetrics();
   const {
     user,
     address,
@@ -109,6 +124,13 @@ export default function EditUserComponent() {
   useEffect(() => {
     if (success) closeAllModals();
   }, [success, closeAllModals]);
+
+  // React to every `?tab=` change (including when already on /atelier/home).
+  useEffect(() => {
+    if (!isMounted || !isEditUserTab(tabParam)) return;
+    handleSetOpen(true, tabParam);
+    router.replace("/atelier/home");
+  }, [isMounted, tabParam, router]);
 
   if (!isMounted) {
     return <div className="w-full max-w-4xl h-96 animate-pulse bg-fg" />;
@@ -256,6 +278,7 @@ export default function EditUserComponent() {
                       defaultAddress={address}
                       onSuccess={(address) => {
                         setAddress(address);
+                        void refreshMetrics();
                       }}
                     />
                   ) : null}

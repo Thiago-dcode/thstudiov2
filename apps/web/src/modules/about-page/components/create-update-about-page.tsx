@@ -17,10 +17,13 @@ import {
 import { usePreviewUrls } from "@repo/ui/hooks/usePreviewUrls";
 import { cn } from "@repo/ui/lib/utils";
 import { Pencil, Plus } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "@/i18n/navigation";
 import FormComponent from "@/lib/components/form-component";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
+import { useUserMetrics } from "@/modules/users/providers/user-metrics.provider";
 import {
   createAboutPageAction,
   updateAboutPageAction,
@@ -29,6 +32,7 @@ import {
 export const CreateOrUpdateAboutPage = ({
   currentAboutPage,
   variant = "primary",
+  openFromQuery = false,
 }: {
   currentAboutPage?: AboutPage;
   variant?:
@@ -40,8 +44,14 @@ export const CreateOrUpdateAboutPage = ({
     | "link"
     | "base"
     | "destructive";
+  /** When true, `?open=1` opens this dialog (and clears the query). */
+  openFromQuery?: boolean;
 }) => {
   const t = useTranslations("atelier.about.form");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const openParam = searchParams.get("open");
+  const { refresh: refreshMetrics } = useUserMetrics();
   const [open, setOpen] = useState(false);
   const {
     handleSubmit,
@@ -61,12 +71,20 @@ export const CreateOrUpdateAboutPage = ({
     afterAction: async (result) => {
       if (result.data) {
         setOpen(false);
+        await refreshMetrics();
       }
     },
     beforeAction: async () => {
       reset();
     },
   });
+
+  useEffect(() => {
+    if (!openFromQuery || openParam !== "1") return;
+    setOpen(true);
+    router.replace("/atelier/about");
+  }, [openFromQuery, openParam, router]);
+
   return (
     <Dialog
       open={open}

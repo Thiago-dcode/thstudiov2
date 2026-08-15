@@ -1,4 +1,5 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Helpers } from 'src/common/services/helpers.service';
 import { AboutPageRepositoy } from './about-page.repository';
 import { CreateAboutPageRequest } from './requests/create-about-page.request';
@@ -12,6 +13,8 @@ import { UserService } from '../users/users.service';
 import { AiService } from '../ai/ai.service';
 import { MediaModerationException } from 'src/common/exceptions/media-moderation-exception';
 import { RequestService } from 'src/common/services/request.service';
+import { UPDATE_PROFILE_STATUS_EVENT } from '@repo/common-lib/constants/constants';
+import { UpdateProfileStatusEvent } from '../profile-status/events/update-profile-status.event';
 
 @Injectable()
 export class AboutPageService {
@@ -21,6 +24,7 @@ export class AboutPageService {
     private readonly helpers: Helpers,
     private readonly aiService: AiService,
     private readonly requestService: RequestService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   public async findOneByUser(id: number) {
@@ -57,7 +61,12 @@ export class AboutPageService {
       }
       data.photo = photoPath;
     }
-    return await this.aboutPageRepository.create(data);
+    const aboutPage = await this.aboutPageRepository.create(data);
+    this.eventEmitter.emit(
+      UPDATE_PROFILE_STATUS_EVENT,
+      new UpdateProfileStatusEvent(userId, { has_about_page: true }),
+    );
+    return aboutPage;
   }
 
   public async update(id: number, { photo, ...rest }: UpdateAboutPageRequest) {

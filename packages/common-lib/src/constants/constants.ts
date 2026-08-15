@@ -107,6 +107,7 @@ export const CREATE_USER_STORAGE_REQUEST = 'create.user-storage-request' as cons
 export const CREATE_USER_CONTACT = 'create.user-contact' as const;
 export const CREATE_OR_UPDATE_LOCATION = 'create-or-update.location' as const;
 export const SET_INITIAL_USER_EXTRA_DATA_EVENT = 'set-initial.user-extra-data' as const;
+export const UPDATE_PROFILE_STATUS_EVENT = 'update-profile-status.event' as const;
 export const SET_FREE_SUBSCRIPTION_EVENT = 'set-free.subscription' as const;
 export const CREATE_WAIT_LIST_ENTRY = 'create.wait-list-entry' as const;
 export const INVITE_WAIT_LIST_BATCH = 'invite.wait-list-batch' as const;
@@ -158,6 +159,10 @@ export const CACHE_KEY_ACTIVE_SUBSCRIPTION = (userId: number | string) => `activ
 
 // User extra data
 export const CACHE_KEY_USER_EXTRA_DATA = (userId: number | string) => `user-extra-data-${userId}` as const;
+
+// Profile status
+export const CACHE_KEY_PROFILE_STATUS = (userId: number | string) =>
+  `profile-status-${userId}` as const;
 
 // Categories
 export const CACHE_KEY_USER_CATEGORIES = (userId: number | string) => `user_categories_${userId}` as const;

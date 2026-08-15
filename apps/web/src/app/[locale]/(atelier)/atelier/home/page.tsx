@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import { Suspense } from "react";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import EditUserComponent from "@/modules/users/components/edit-user.component";
 import usersService from "@/modules/users/users.service";
@@ -29,7 +30,13 @@ export default async function AtelierHomePage() {
       defaultUserCategories={categoriesResponse.data || []}
     >
       <AdminPageContainer>
-        <EditUserComponent />
+        <Suspense
+          fallback={
+            <div className="w-full max-w-4xl h-96 animate-pulse bg-fg" />
+          }
+        >
+          <EditUserComponent />
+        </Suspense>
       </AdminPageContainer>
     </EditUserProvider>
   );

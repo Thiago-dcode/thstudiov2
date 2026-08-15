@@ -28,6 +28,7 @@ import { CategoriesService } from '../categories/categories.service';
 import { AddressService } from '../addresses/address.service';
 import { UpdateUserPasswordRequest } from './requests/update-user-password.request';
 import { IndexArtistsRequest } from './requests/index-artists.request';
+import { ProfileStatusService } from '../profile-status/profile-status.service';
 
 @Controller('users')
 export class UserController {
@@ -37,6 +38,7 @@ export class UserController {
     private readonly planService: PlansService,
     private readonly categoriesService: CategoriesService,
     private readonly addressService: AddressService,
+    private readonly profileStatusService: ProfileStatusService,
   ) { }
   // Per-route rather than on the class: the account endpoints below keep the
   // stricter global defaults.
@@ -115,9 +117,10 @@ export class UserController {
     @Param('id', ParseIntPipe, new ModelExistPipe('users'), IsUserAuthPipe)
     id: number,
   ) {
-    const [extra_data, userActivePlan] = await Promise.all([
+    const [extra_data, userActivePlan, profile_status] = await Promise.all([
       this.userExtraDataService.findOneByUserId(id),
       this.planService.findUserActivePlan(id),
+      this.profileStatusService.findOneByUserId(id),
     ]);
 
     const active_plan = userActivePlan ?? (await this.planService.findFreePlan());
@@ -125,6 +128,7 @@ export class UserController {
     return {
       extra_data,
       active_plan,
+      profile_status,
     };
   }
 

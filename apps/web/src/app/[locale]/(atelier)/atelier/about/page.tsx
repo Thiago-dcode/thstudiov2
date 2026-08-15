@@ -1,6 +1,7 @@
 import { BookUser } from "lucide-react";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
+import { Suspense } from "react";
 import { AboutPageDisplay } from "@/modules/about-page/components/about-page-display";
 import { CreateOrUpdateAboutPage } from "@/modules/about-page/components/create-update-about-page";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
@@ -31,10 +32,13 @@ export default async function AboutPage() {
         info={t("pageInfo")}
         publicHref={publicHref}
       >
-        <CreateOrUpdateAboutPage
-          variant="default"
-          currentAboutPage={aboutPage || undefined}
-        />
+        <Suspense fallback={null}>
+          <CreateOrUpdateAboutPage
+            variant="default"
+            currentAboutPage={aboutPage || undefined}
+            openFromQuery
+          />
+        </Suspense>
       </AdminPageTitle>
       {aboutPage ? (
         <AboutPageDisplay aboutPage={aboutPage} />

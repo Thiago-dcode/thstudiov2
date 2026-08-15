@@ -31,7 +31,7 @@ export default async function ServiceCreate() {
   if (limitInfo?.isAtLimit) {
     return (
       <AdminPageContainer>
-        <AdminPageTitle title={t("createTitle")} />
+        <AdminPageTitle title={t("createTitle")} info={t("pageInfo")} />
         <ResourceLimitReached
           label={limitInfo.label}
           backHref="/atelier/services"
@@ -44,7 +44,7 @@ export default async function ServiceCreate() {
 
   return (
     <AdminPageContainer>
-      <AdminPageTitle title={t("createTitle")} />
+      <AdminPageTitle title={t("createTitle")} info={t("pageInfo")} />
       <CreateOrUpdateService portfolios={portfolios?.data || []} />
     </AdminPageContainer>
   );

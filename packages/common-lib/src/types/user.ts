@@ -4,6 +4,7 @@ import { Role } from "./role";
 import { FullPlan } from "./plan";
 import { OffsetPaginationRequest } from "./request";
 import { UserExtraData } from "./user-extra-data";
+import { ProfileStatus } from "./profile-status";
 import { Benefit } from "./benefit";
 
 // Core user fields (no password/secrets, no profile display fields, no flat FK role_id).
@@ -83,7 +84,8 @@ export type UpdateUserPasswordInput = {
 
 export type UserMetrics = {
   extra_data: UserExtraData,
-  active_plan: FullPlan
+  active_plan: FullPlan,
+  profile_status: ProfileStatus,
 }
 
 /** Query for listing artists; the API always applies offset pagination (paginated is forced server-side). */

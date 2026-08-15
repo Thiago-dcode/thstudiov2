@@ -1592,6 +1592,22 @@ const messages = {
         "Ya casi está. Completa la configuración de tu perfil para desbloquear todas las funciones y tener la mejor experiencia.",
       continueSettingUp: "Continuar configuración",
       skipForNow: "Omitir por ahora",
+      setupGuide: {
+        title: "Guía de configuración",
+        progress: "{percent}% completado",
+        shrink: "Minimizar guía de configuración",
+        expand: "Expandir guía de configuración",
+        close: "Cerrar guía de configuración",
+        steps: {
+          fullName: "Añade tu nombre y apellido",
+          profession: "Añade tu profesión",
+          avatar: "Sube un avatar",
+          location: "Añade tu dirección",
+          categories: "Añade una categoría",
+          portfolio: "Crea tu primer portafolio",
+          aboutPage: "Configura tu página sobre mí",
+        },
+      },
       metrics: {
         noDataAvailable: "No hay datos disponibles",
         media: "Contenido",

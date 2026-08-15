@@ -1583,6 +1583,22 @@ const messages = {
         "You're almost there. Complete your profile setup to unlock all features and get the best experience.",
       continueSettingUp: "Continue Setting Up",
       skipForNow: "Skip for now",
+      setupGuide: {
+        title: "Setup guide",
+        progress: "{percent}% complete",
+        shrink: "Shrink setup guide",
+        expand: "Expand setup guide",
+        close: "Close setup guide",
+        steps: {
+          fullName: "Add your name and surname",
+          profession: "Add your profession",
+          avatar: "Upload an avatar",
+          location: "Add your address",
+          categories: "Add a category",
+          portfolio: "Create your first portfolio",
+          aboutPage: "Set up your about page",
+        },
+      },
       metrics: {
         noDataAvailable: "No data available",
         media: "Media",

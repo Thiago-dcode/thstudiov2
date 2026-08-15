@@ -132,6 +132,24 @@ export const PlanFeatures = ({ plan }: { plan: BasePlan }) => {
         not_available: plan.ai_credits === 0,
         extraInfo: t("aiCreditsTooltip"),
       },
+      {
+        key: "watermark",
+        content: plan.allow_media_compression ? (
+          <span
+            className={cn(
+              "inline-flex items-center gap-1.5  py-0.5 text-sm font-medium",
+              "bg-fg text-text",
+            )}
+          >
+            <Zap className="size-3.5 shrink-0 text-accent" aria-hidden />
+            {t("mediaCompression")}
+          </span>
+        ) : (
+          <span className="text-text">{t("mediaCompression")}</span>
+        ),
+        not_available: plan.is_free,
+        extraInfo: t("mediaCompressionTooltip"),
+      },
     ],
     [plan, t],
   );

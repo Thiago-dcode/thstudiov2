@@ -44,6 +44,7 @@ export default async function CollectionEdit({ params }: Props) {
       <AdminPageTitle
         title={t("editTitlePrefix", { title: collection.title })}
         publicHref={publicHref}
+        info={t("pageInfo")}
       >
         <DeleteCollectionDialog
           collectionId={collection.id}

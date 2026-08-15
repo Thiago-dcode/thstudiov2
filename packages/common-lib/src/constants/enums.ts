@@ -76,6 +76,7 @@ export const TABLES_ENUM = {
   PLAN_TRANSLATIONS: 'plan_translations',
   PLAN_OFFERS: 'plan_offers',
   USER_EXTRA_DATA: 'user_extra_data',
+  PROFILE_STATUS: 'profile_status',
   USER_CONTACTS: 'user_contacts',
   USER_NOTIFICATIONS: 'user_notifications',
   ADMIN_USERS: 'admin_users',

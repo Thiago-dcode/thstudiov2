@@ -182,20 +182,6 @@ const ArtistHomePage = async ({ params }: Props) => {
   // Built from profession + locality — deliberately NOT the short bio, which is already shown below
   // as an editorial pull-quote; this complements it rather than duplicating it.
   const profession = profile.profession?.trim();
-  const locality =
-    profile.address?.city?.trim() || profile.address?.state?.trim();
-  const summary =
-    profession && locality
-      ? t("summaryProfessionLocation", {
-          name: heading,
-          profession,
-          location: locality,
-        })
-      : profession
-        ? t("summaryProfession", { name: heading, profession })
-        : locality
-          ? t("summaryLocation", { name: heading, location: locality })
-          : t("summaryFallback", { name: heading });
 
   return (
     <div className="min-h-screen w-full animate-in fade-in duration-1000">
@@ -252,19 +238,19 @@ const ArtistHomePage = async ({ params }: Props) => {
           <h1 className="font-serif  tracking-tight tablet:text-4xl laptop:text-5xl">
             {heading}
           </h1>
-          {profile.profession && (
+          {profession && (
             <p className="text-sm tracking-wide text-text-muted tablet:text-base">
-              {profile.profession}
+              {profession}
             </p>
           )}
           {fullName && <p className=" text-text">@{profile.username}</p>}
         </div>
 
-        {summary && (
+        {/* {summary && (
           <p className="max-w-xl text-sm leading-relaxed text-text-muted tablet:text-base">
             {summary}
           </p>
-        )}
+        )} */}
 
         {profile.address?.formated_address && (
           <p className="flex items-center gap-1.5 text-sm text-text-muted/80">

@@ -26,7 +26,7 @@ export default async function PortfolioCreate() {
   if (limitInfo?.isAtLimit) {
     return (
       <AdminPageContainer>
-        <AdminPageTitle title={t("createTitle")} />
+        <AdminPageTitle title={t("createTitle")} info={t("pageInfo")} />
         <ResourceLimitReached
           label={limitInfo.label}
           backHref="/atelier/portfolios"
@@ -39,7 +39,7 @@ export default async function PortfolioCreate() {
 
   return (
     <AdminPageContainer>
-      <AdminPageTitle title={t("createTitle")} />
+      <AdminPageTitle title={t("createTitle")} info={t("pageInfo")} />
       <CreateOrUpdatePortfolio />
     </AdminPageContainer>
   );

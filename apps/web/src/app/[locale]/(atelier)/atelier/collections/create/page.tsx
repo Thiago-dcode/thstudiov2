@@ -26,7 +26,7 @@ export default async function CollectionCreate() {
   if (limitInfo?.isAtLimit) {
     return (
       <AdminPageContainer>
-        <AdminPageTitle title={t("createTitle")} />
+        <AdminPageTitle title={t("createTitle")} info={t("pageInfo")} />
         <ResourceLimitReached
           label={limitInfo.label}
           backHref="/atelier/collections"
@@ -39,7 +39,7 @@ export default async function CollectionCreate() {
 
   return (
     <AdminPageContainer>
-      <AdminPageTitle title={t("createTitle")} />
+      <AdminPageTitle title={t("createTitle")} info={t("pageInfo")} />
       <CreateOrUpdateCollection />
     </AdminPageContainer>
   );
