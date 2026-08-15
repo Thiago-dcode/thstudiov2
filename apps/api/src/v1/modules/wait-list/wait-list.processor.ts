@@ -1,7 +1,7 @@
 import { InjectQueue, Processor } from '@nestjs/bullmq';
 import { OnEvent } from '@nestjs/event-emitter';
 import { MailService } from '@repo/backend-lib/services/mail-service';
-import { LogService } from '@repo/backend-lib/services/log-service';
+import { LogService, maskEmail } from '@repo/backend-lib/services/log-service';
 import {
   CREATE_WAIT_LIST_ENTRY,
   INVITE_WAIT_LIST_BATCH,
@@ -54,7 +54,7 @@ export class WaitListProcessor extends GlobalProcessor {
 
   @OnEvent(CREATE_WAIT_LIST_ENTRY)
   async handleCreateWaitListEvent(event: CreateWaitListEvent) {
-    const emailLog = this.redactEmail(event.data.email);
+    const emailLog = maskEmail(event.data.email);
 
     try {
       await this.waitListQueue.add(
@@ -136,7 +136,7 @@ export class WaitListProcessor extends GlobalProcessor {
 
   private async createWaitListEntry(data: CreateWaitListJobInput) {
     const normalizedEmail = this.normalizeEmail(data.email);
-    const emailLog = this.redactEmail(normalizedEmail);
+    const emailLog = maskEmail(normalizedEmail);
 
     try {
       let waitList = await this.waitListRepository.findByEmail(normalizedEmail);
@@ -235,7 +235,7 @@ export class WaitListProcessor extends GlobalProcessor {
 
       this.logger.info(`Claimed ${entries.length} wait list entries for batch invite.`, {
         entry_ids: entries.map((entry) => entry.id),
-        emails: entries.map((entry) => this.redactEmail(entry.email)),
+        emails: entries.map((entry) => maskEmail(entry.email)),
         positions: entries.map((entry) => entry.position),
       });
 
@@ -299,7 +299,7 @@ export class WaitListProcessor extends GlobalProcessor {
 
       this.logger.info(`Queuing welcome emails for ${preparedInvites.length} wait list entries`, {
         entry_ids: preparedInvites.map((invite) => invite.entry.id),
-        emails: preparedInvites.map((invite) => this.redactEmail(invite.entry.email)),
+        emails: preparedInvites.map((invite) => maskEmail(invite.entry.email)),
         invitation_link_ids: preparedInvites.map((invite) => invite.invitationLink.id),
         invitation_codes: preparedInvites.map((invite) => invite.invitationLink.code),
       });
@@ -314,7 +314,7 @@ export class WaitListProcessor extends GlobalProcessor {
             `Wait list batch mail was not queued (empty content / preferences blocked). Reverting ${preparedInvites.length} entries to WAITING`,
             {
               entry_ids: preparedInvites.map((invite) => invite.entry.id),
-              emails: preparedInvites.map((invite) => this.redactEmail(invite.entry.email)),
+              emails: preparedInvites.map((invite) => maskEmail(invite.entry.email)),
             },
           );
 
@@ -376,7 +376,7 @@ export class WaitListProcessor extends GlobalProcessor {
 
       this.logger.info(`Wait list batch invitations marked INVITED (mail queued, not yet confirmed delivered): ${invited}/${entries.length}`, {
         entry_ids: preparedInvites.map((invite) => invite.entry.id),
-        emails: preparedInvites.map((invite) => this.redactEmail(invite.entry.email)),
+        emails: preparedInvites.map((invite) => maskEmail(invite.entry.email)),
       });
 
       return { invited };
@@ -395,7 +395,7 @@ export class WaitListProcessor extends GlobalProcessor {
     benefitByType: Map<EnumType<'BENEFIT_TYPE'>, Awaited<ReturnType<BenefitRepository['findByType']>>>,
     planName: string,
   ): Promise<PreparedWaitListInvite | null> {
-    const emailLog = this.redactEmail(entry.email);
+    const emailLog = maskEmail(entry.email);
 
     try {
       this.logger.info(`Preparing wait list invite: ${emailLog}`, {
@@ -469,15 +469,6 @@ export class WaitListProcessor extends GlobalProcessor {
 
   private normalizeEmail(email: string) {
     return email.trim().toLowerCase();
-  }
-
-  private redactEmail(email: string) {
-    const [localPart, domain] = email.split('@');
-    if (!localPart || !domain) {
-      return '[redacted]';
-    }
-
-    return `${localPart.slice(0, 2)}***@${domain}`;
   }
 
   private isUniqueEmailError(error: unknown) {

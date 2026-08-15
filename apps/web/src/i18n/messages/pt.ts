@@ -1211,7 +1211,7 @@ const messages = {
     },
   },
   webHeader: {
-    accessProfile: "Acessar perfil",
+    accessProfile: "Perfil público",
     goToAtelier: "Ir para o Atelier",
     signIn: "Entrar",
     openAtelier: "Abrir Atelier",

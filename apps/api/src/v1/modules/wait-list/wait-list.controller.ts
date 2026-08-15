@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
-import { LogService } from '@repo/backend-lib/services/log-service';
+import { LogService, maskEmail } from '@repo/backend-lib/services/log-service';
 import { Public } from 'src/common/decorators/public.decorator';
 import { AdminGuard } from 'src/common/guards/admin.guard';
 import { CreateWaitListRequest } from './requests/create-wait-list.request';
@@ -17,7 +17,7 @@ export class WaitListController {
   @Public()
   @Post()
   async create(@Body() body: CreateWaitListRequest) {
-    const emailLog = this.redactEmail(body.email);
+    const emailLog = maskEmail(body.email);
 
     try {
       this.logger.info(`Creating wait list entry: ${emailLog}`);
@@ -95,14 +95,5 @@ export class WaitListController {
       );
       throw error;
     }
-  }
-
-  private redactEmail(email: string) {
-    const [localPart, domain] = email.split('@');
-    if (!localPart || !domain) {
-      return '[redacted]';
-    }
-
-    return `${localPart.slice(0, 2)}***@${domain}`;
   }
 }

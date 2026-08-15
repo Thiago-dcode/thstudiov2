@@ -53,7 +53,7 @@ export class FileLogService extends LogService {
         name?: string,
         channel?: string,
     ): Promise<void> {
-        await this.writeLog(await this.getLogFile(name, channel), level, message, options, id);
+        await this.writeLog(await this.getLogFile(name, channel), level, message, options, id, channel);
     }
 
     private async getLogFile(name = this.config.name, channel = this.config.channel) {
@@ -67,17 +67,19 @@ export class FileLogService extends LogService {
         }
         const logFolder = path.join(this.config.logFolder as string, channel);
         if (!(await checkFileExistsAsync(logFolder))) {
-            await fs.mkdir(logFolder, { recursive: true });
+            // Owner-only: logs carry request context and must not be world-readable on the host.
+            // Only applies to directories created here; pre-existing ones keep their mode.
+            await fs.mkdir(logFolder, { recursive: true, mode: 0o700 });
         }
         return path.join(logFolder, `${today}${name ? `.${name}` : ''}.log`);
     }
 
-    private async writeLog(logFile: string, level: LogLevel, message: string, options?: LogOptions, id?: string | null) {
+    private async writeLog(logFile: string, level: LogLevel, message: string, options?: LogOptions, id?: string | null, channel?: string) {
         try {
             if (!(await checkFileExistsAsync(logFile))) {
-                await fs.writeFile(logFile, '');
+                await fs.writeFile(logFile, '', { mode: 0o600 });
             }
-            await fs.appendFile(logFile, this.beautifyLogMessage(level, message, options, id));
+            await fs.appendFile(logFile, this.beautifyLogMessage(level, message, options, id, channel));
             await this.callCallback(level, message, options);
         } catch (error) {
             console.error("ERROR LOGGIN", error);

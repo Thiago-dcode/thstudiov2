@@ -1209,7 +1209,7 @@ const messages = {
     },
   },
   webHeader: {
-    accessProfile: "Acceder al perfil",
+    accessProfile: "Perfil público",
     goToAtelier: "Ir a Atelier",
     signIn: "Iniciar sesión",
     openAtelier: "Abrir Atelier",

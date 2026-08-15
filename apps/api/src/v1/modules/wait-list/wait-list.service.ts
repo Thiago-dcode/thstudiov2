@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { LogService } from '@repo/backend-lib/services/log-service';
+import { LogService, maskEmail } from '@repo/backend-lib/services/log-service';
 import {
   CREATE_WAIT_LIST_ENTRY,
   INVITE_WAIT_LIST_BATCH,
@@ -53,7 +53,7 @@ export class WaitListService {
       }
 
       this.logger.info(`Email resolved for invitation code: ${code.slice(0, 4)}***`, {
-        email: this.redactEmail(email),
+        email: maskEmail(email),
       });
       return { email };
     } catch (error) {
@@ -110,7 +110,7 @@ export class WaitListService {
 
   async create({ email }: PublicCreateWaitListInput): Promise<WaitListCreateResponse> {
     const normalizedEmail = this.normalizeEmail(email);
-    const emailLog = this.redactEmail(normalizedEmail);
+    const emailLog = maskEmail(normalizedEmail);
     const language = this.requestService.language ?? DEFAULT_LANGUAGE;
 
     try {
@@ -189,14 +189,5 @@ export class WaitListService {
 
   private normalizeEmail(email: string) {
     return email.trim().toLowerCase();
-  }
-
-  private redactEmail(email: string) {
-    const [localPart, domain] = email.split('@');
-    if (!localPart || !domain) {
-      return '[redacted]';
-    }
-
-    return `${localPart.slice(0, 2)}***@${domain}`;
   }
 }

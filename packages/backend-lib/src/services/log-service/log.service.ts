@@ -2,6 +2,7 @@ import { format } from "date-fns";
 import { Queue, JobsOptions } from "bullmq";
 import { JOB_FLUSH_LOGS } from "@repo/common-lib/constants/constants";
 import { LogConfig, LogLevel, LogOptions, LogServiceDriver } from "./types";
+import { redactLogOptions } from "./redact";
 
 const DEFAULT_LOG_JOB_OPTIONS: JobsOptions = {
     priority: 10,
@@ -103,16 +104,20 @@ export abstract class LogService {
         return typeof this.config.id === 'function' ? this.config.id() : (this.config.id || null);
     }
 
-    protected beautifyLogMessage(level: LogLevel, message: string, options?: LogOptions, id?: string | null) {
+    protected beautifyLogMessage(level: LogLevel, message: string, options?: LogOptions, id?: string | null, channel?: string) {
         const logId = id !== undefined ? id : this.getLogId();
-        let logMessage = `[${format(new Date(), 'yyyy-MM-dd HH:mm:ss')}][${this.config.channel}] - ${level.toUpperCase()} -${logId ? `[${logId}]` : ''} ${message}`;
+        // Take the caller's snapshotted channel when there is one: `.channel()` mutates shared
+        // config and file writes flush later, so reading it live mislabels concurrent requests.
+        const logChannel = channel ?? this.config.channel;
+        let logMessage = `[${format(new Date(), 'yyyy-MM-dd HH:mm:ss')}][${logChannel}] - ${level.toUpperCase()} -${logId ? `[${logId}]` : ''} ${message}`;
         if (options) {
             // Error instances stringify to "{}" (their fields are non-enumerable); extract them
             // explicitly so stacks are preserved in the log instead of being silently dropped.
             const serializable = options instanceof Error
                 ? { name: options.name, message: options.message, stack: options.stack }
                 : options;
-            logMessage += ` - ${JSON.stringify(serializable)}`;
+            // Callers hand us raw request bodies; redact here so no call site can leak a secret.
+            logMessage += ` - ${JSON.stringify(redactLogOptions(serializable))}`;
         }
         logMessage += `\n`;
         return logMessage;
@@ -122,7 +127,9 @@ export abstract class LogService {
             // Never let a log callback throw/reject: doing so escapes as an unhandledRejection
             // which, if logged back into the same channel, creates an infinite log loop.
             try {
-                await this.config.callback.callback(level, message, options);
+                // The 500-alert callback re-serializes this into an admin email, so it needs
+                // the same redaction the log file gets.
+                await this.config.callback.callback(level, message, redactLogOptions(options));
             } catch (error) {
                 console.error('LogService: log callback failed (suppressed to avoid log loop)', error);
             }
