@@ -119,7 +119,7 @@ export const SelectMediaDrawer = ({
           disabled={addButtonDisabled || isSelectionLimitReached}
         >
           <Image className="size-3.5" />
-          {t("addMedia")}
+          {t("upload")}
         </Button>
       </DrawerTrigger>
       <DrawerContent className="h-full w-[600px] max-w-[90vw] right-0 left-auto flex flex-col">

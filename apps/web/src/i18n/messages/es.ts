@@ -1561,6 +1561,7 @@ const messages = {
   atelier: {
     common: {
       viewPublicPage: "Ver página pública",
+      viewOnline: "Ver en línea",
       cancel: "Cancelar",
       save: "Guardar",
       update: "Actualizar",
@@ -1886,7 +1887,7 @@ const messages = {
         uploadButton: "Subir",
         close: "Cerrar",
         createMedia: "Crear contenido",
-        addMedia: "Añadir contenido",
+        upload: "Añadir contenido",
         storageFullTitle: "Almacenamiento lleno: {used} / {limit} GB usados",
         uploadInProgress: "Subida en curso...",
       },
@@ -1966,7 +1967,7 @@ const messages = {
         all: "Todos",
       },
       drawer: {
-        addMedia: "Añadir contenido",
+        upload: "Subir contenido",
         title: "Añadir contenido",
         refreshAria: "Actualizar contenido",
         filterAll: "Todos",
@@ -2023,7 +2024,7 @@ const messages = {
       expandSidebarAria: "Expandir barra lateral",
       collapseSidebarAria: "Contraer barra lateral",
       upgrade: "Mejorar plan",
-      viewProfile: "Ver perfil",
+      viewProfile: "Ver perfil público",
     },
     about: {
       pageTitle: "Página Sobre mí",

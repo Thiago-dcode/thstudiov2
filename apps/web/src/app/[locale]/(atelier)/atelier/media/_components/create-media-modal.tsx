@@ -591,7 +591,7 @@ export function CreateMediaDialog({
           title={isLoading ? t("uploadInProgress") : undefined}
         >
           <Plus className="h-4 w-4" />
-          {t("addMedia")}
+          {t("upload")}
         </Button>
       </DialogTrigger>
       <DialogContent className="w-full max-w-[100vw] sm:max-w-2xl md:max-w-3xl lg:max-w-5xl max-h-[98vh] h-full  flex flex-col justify-between [&>button]:hidden p-0 z-100">

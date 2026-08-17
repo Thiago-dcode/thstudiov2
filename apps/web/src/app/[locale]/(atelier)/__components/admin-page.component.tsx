@@ -32,21 +32,24 @@ export const AdminPageTitle = async ({
   const t = await getTranslations("atelier.common");
   return (
     <div className="flex  flex-col tablet:flex-row items-start justify-between gap-3">
-      <div className="flex items-center  gap-2 min-w-0">
-        <h1 className="self-start text-xl! sm:text-2xl! font-semibold truncate">
-          {title}
-        </h1>
+      <div className="flex flex-col gap-2 w-full">
         {publicHref && (
           <Link
             href={publicHref}
             rel="noopener noreferrer"
             aria-label={t("viewPublicPage")}
-            className="shrink-0 text-text-muted hover:text-text transition-colors"
+            className="shrink-0 text-text-muted hover:text-text transition-colors flex items-center gap-2"
           >
-            <ExternalLink className="size-4" />
+            {t("viewOnline")} <ExternalLink className="size-4" />
           </Link>
         )}
-        {info && <InfoTooltip content={info} />}
+        <div className="flex items-center  gap-4 min-w-0">
+          <h1 className="self-start text-xl! sm:text-2xl! font-semibold line-clamp-2">
+            {title}
+          </h1>
+
+          {info && <InfoTooltip content={info} />}
+        </div>
       </div>
       {children && (
         <div className="flex shrink-0 items-center gap-1 w-full tablet:w-auto">

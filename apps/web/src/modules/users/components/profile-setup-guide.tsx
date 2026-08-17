@@ -87,10 +87,7 @@ export const ProfileSetupGuide = ({ userId }: { userId: number }) => {
   };
   useEffect(() => {
     if (isLoading || !status) return;
-    console.log("ALLDONE", allDone);
     if (!allDone) {
-      console.log("ALLDONEremoving");
-
       localStorage.removeItem(completedKey(userId));
       setDismissed(false);
     }
@@ -174,7 +171,7 @@ export const ProfileSetupGuide = ({ userId }: { userId: number }) => {
         </div>
       </div>
 
-      <ul className="flex flex-col border-t border-border max-h-72 overflow-y-auto">
+      <ul className="flex flex-col border-t border-border max-h-80 overflow-y-auto">
         {PROFILE_STATUS_FLAGS.map((flag) => {
           const done = status[flag] === true;
           const label = t(`steps.${STEP_LABEL_KEYS[flag]}`);
