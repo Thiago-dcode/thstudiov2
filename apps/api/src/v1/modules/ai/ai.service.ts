@@ -7,7 +7,6 @@ import { QueueHelper } from '@repo/backend-lib/utils';
 import { openAiLLMConfig } from 'src/config/llm';
 import { FactoryLogService } from '@repo/backend-lib/services/log-service';
 import {
-  ContentModerationFields,
   GenerateEntityMetadataResponse,
   GenerateMediaMetadataResponse,
   MediaMetadataPromptCategory,
@@ -417,113 +416,23 @@ export class AiService {
   /** Moderate media content to determine if it is allowed */
   public async moderateContent(url: string, meta: { user_id: number }) {
     try {
+      const { moderation, matchesExpectedResponse, usage, text, parseError } =
+        await this.llmService.moderateContent(url);
 
-      const EXPECTED_JSON: ContentModerationFields = {
-        is_allowed: true,
-        severity: MODERATION_SEVERITY.SAFE,
-        content_type: 'unknown',
-        reason: '',
-      };
-
-      const result = await this.llmService.complete({
-        messages: [
-          {
-            role: 'system',
-            content: 'You are the content moderation and child-safety system of an online ART marketplace. You are zero-tolerance on exactly two things: (1) CSAM and any sexualization or exploitation of minors, (2) hard pornographic content. Everything else is judged as art: nudity, the human body, and difficult subject matter are normal here and are NOT violations by themselves. Rate what is actually visible — do not invent a violation from what an image could hypothetically be. Output valid JSON only. No extra text.'
-          },
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'text' as const,
-                text: `Analyze the image and return valid JSON with exactly these fields:
-        ${JSON.stringify(EXPECTED_JSON)}
-        SEVERITY SCALE (0–10)
-        0      – Safe. No issues.
-        1 – 2  – Minimal. Mild suggestive content, artistic nudity (paintings, sculptures, fine-art photography).
-        3 – 4  – Low. Partial or full non-sexual nudity (nude studies, boudoir), mild violence in art/historical context.
-        5 – 6  – Moderate. Explicit but legal adult content, graphic artistic violence.
-        7 – 8  – High. Hardcore pornography, gratuitous glorified realistic violence, hate promotion.
-        9      – Severe. Exploitation, abuse depiction, extreme illegal content.
-        10     – Critical. CSAM detected — child sexual abuse material.
-        ═══════════════════════════════════════════
-        content_type (one of)
-        ═══════════════════════════════════════════
-        "photograph" | "painting" | "illustration" | "digital_art" | "mixed_media" | "unknown"
-        ═══════════════════════════════════════════
-        DECISION RULES
-        ═══════════════════════════════════════════
-        - is_allowed = true when severity ≤ 6; is_allowed = false when severity ≥ 7
-        - MINORS: escalate to ≥ 9 ONLY when the subject appears to be a minor AND the depiction is sexual or sexualized (sexual act, sexualized posing, focus on intimate areas). Apparent age alone is NEVER a violation: children and young-looking people in ordinary, clothed, non-sexual images are severity 0. Youthful features, small stature, stylized or anime-like art are not evidence of age — do not treat them as such.
-        - NUDITY is not pornography and is not blocked here: the nude is a core art subject. Nudity without explicit sexual activity stays ≤ 4, even when full-frontal. Reserve ≥ 7 for hardcore pornographic depictions (explicit sexual acts, penetration, graphic close-ups).
-        - Judge ONLY what is clearly visible. If you are unsure whether something prohibited is present, it is NOT present — return the lower severity. Never block on suspicion, ambiguity, or "could be".
-        - reason: ≤120 chars, neutral explanation in English user friendly. Leave it empty when severity ≤ 6.
-
-        Base the decision ONLY on visible image content.
-        Ignore filename, metadata, and URL.
-        Return valid JSON only.`
-              },
-              {
-                type: 'image_url' as const,
-                image_url: { url }
-              }
-            ]
-          }
-        ],
-        temperature: 0.1
-      });
-
-      // Parse JSON response, handling markdown code blocks if present
-      let moderationData: Partial<ContentModerationFields> = {};
-      let matchesExpectedResponse = false;
-
-      try {
-        // Extract JSON from markdown code blocks if present
-        let jsonText = result.text.trim();
-
-        // Remove markdown code block syntax if present
-        if (jsonText.startsWith('```')) {
-          jsonText = jsonText.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
-        }
-
-        // Parse the JSON
-        const parsed = JSON.parse(jsonText);
-
-        // Clamp severity to integer 0–10
-        const rawSeverity = typeof parsed.severity === 'number'
-          ? Math.min(MODERATION_SEVERITY.CRITICAL, Math.max(MODERATION_SEVERITY.SAFE, Math.round(parsed.severity)))
-          : MODERATION_SEVERITY.SAFE;
-
-        // Map and validate the fields. `is_allowed` is DERIVED from the severity threshold rather
-        // than trusted from the model: the two often disagree (a cautious model returns a low
-        // severity next to is_allowed=false), and a missing boolean would otherwise read as a
-        // rejection. Severity is the graded signal, so it decides.
-        moderationData = {
-          is_allowed: rawSeverity < MODERATION_SEVERITY.HIGH,
-          severity: rawSeverity as ContentModerationFields['severity'],
-          content_type: parsed.content_type || 'unknown',
-          reason: parsed.reason || '',
-        };
-
-        // Check if response matches expected format
-        matchesExpectedResponse = typeof parsed.is_allowed === 'boolean'
-          && typeof parsed.severity === 'number'
-      } catch (err) {
+      if (parseError) {
         this.logger
           .name('moderate-content')
           .warn('AI returned invalid JSON', {
             user_id: meta.user_id,
-            response_text: result.text,
-            error: err instanceof Error ? err.message : 'Unknown error'
+            response_text: text,
+            error: parseError,
           });
-        // Default to allowed if parsing fails
-        moderationData = { ...EXPECTED_JSON };
       }
 
       // Enqueue LLM tokens usage
-      if (result.usage?.totalTokens) {
+      if (usage?.totalTokens) {
         await QueueHelper.createLlmUsageJob(this.aiQueue, {
-          tokens: result.usage.totalTokens,
+          tokens: usage.totalTokens,
           model: openAiLLMConfig.model,
           user_id: meta.user_id,
           usage_type: 'MODERATE_MEDIA_CONTENT',
@@ -535,24 +444,24 @@ export class AiService {
         .name('moderate-content')
         .info('Successfully moderated content', {
           user_id: meta.user_id,
-          is_allowed: moderationData.is_allowed,
-          severity: moderationData.severity,
-          content_type: moderationData.content_type,
+          is_allowed: moderation.is_allowed,
+          severity: moderation.severity,
+          content_type: moderation.content_type,
           matches_expected_response: matchesExpectedResponse,
-          tokens_used: result.usage?.totalTokens,
+          tokens_used: usage?.totalTokens,
         });
 
       await QueueHelper.createMediaModerationJob(this.aiQueue, {
-        is_allowed: moderationData.is_allowed ?? true,
-        severity: moderationData.severity ?? MODERATION_SEVERITY.SAFE,
-        content_type: moderationData.content_type ?? 'unknown',
-        reason: moderationData.reason ?? null,
+        is_allowed: moderation.is_allowed ?? true,
+        severity: moderation.severity ?? MODERATION_SEVERITY.SAFE,
+        content_type: moderation.content_type ?? 'unknown',
+        reason: moderation.reason ?? null,
         user_id: meta.user_id,
       });
 
       return {
-        moderation: moderationData as ContentModerationFields,
-        usage: result.usage,
+        moderation,
+        usage,
       };
     } catch (error) {
       this.logger
