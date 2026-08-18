@@ -1,13 +1,9 @@
 import { Processor } from '@nestjs/bullmq';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Job, Queue } from 'bullmq';
-import { OnEvent } from '@nestjs/event-emitter';
+import { Job } from 'bullmq';
 import { UserContactsRepository } from './user-contacts.repository';
-import { CreateUserContactEvent } from './events/create-user-contact.event';
 import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
 import { CreateUserContactInput } from '@repo/common-lib/types/user-contact';
 import {
-  CREATE_USER_CONTACT,
   USER_CONTACTS_QUEUE,
   JOB_CREATE_USER_CONTACT,
 } from '@repo/common-lib/constants/constants';
@@ -27,28 +23,9 @@ export class UserContactProcessor extends GlobalProcessor {
     private readonly userService: UserService,
     private readonly mailService: MailService,
     private readonly newContactMail: NewContactMail,
-    @InjectQueue(USER_CONTACTS_QUEUE) private readonly contactQueue: Queue,
     private readonly appLogService: LogService,
   ) {
     super();
-  }
-
-  // ==================== EVENT LISTENERS ====================
-
-  /** Listen for user contact events and enqueue them */
-  @OnEvent(CREATE_USER_CONTACT)
-  async handleCreateUserContactEvent(event: CreateUserContactEvent) {
-    await this.contactQueue.add(
-      JOB_CREATE_USER_CONTACT,
-      event.contactRequest,
-      {
-        jobId: `contact-${event.contactRequest.user_id}-${Date.now()}`,
-        priority: 10,
-        removeOnComplete: true,
-        attempts: 3,
-        backoff: { type: 'exponential', delay: 1000 },
-      },
-    );
   }
 
   // ==================== JOB PROCESSOR ====================

@@ -1,18 +1,12 @@
 import { Processor } from '@nestjs/bullmq';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Job, Queue } from 'bullmq';
-import { OnEvent } from '@nestjs/event-emitter';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { LlmTokensUsageRepository } from './llm-tokens-usage.repository';
 import { MediaModerationRepository } from './media-moderation.repository';
-import { LlmTokensUsageEvent } from './events/llm-tokens-usage.event';
-import { MediaModerationEvent } from './events/media-moderation.event';
-import { GenerateEntityMetadataEvent } from './events/generate-entity-metadata.event';
-import { GenerateSingleEntityMetadataEvent } from './events/generate-single-entity-metadata.event';
 import { AiService } from './ai.service';
 import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
 import { MailService } from '@repo/backend-lib/services/mail-service';
-import { UpdateUserExtraDataMetricsEvent } from '../user-extra-data/events/update-user-extra-data-metrics.event';
+import { QueueHelper } from '@repo/backend-lib/utils';
 import { UserAiCreditsEndedMail } from '../user-extra-data/mails/user-metrics-ended';
 import { UserAccountBannedMail } from '../users/mails/user-account-banned.mail';
 import { UserService } from '../users/users.service';
@@ -37,14 +31,10 @@ import {
   JOB_RECORD_MEDIA_MODERATION,
   JOB_GENERATE_ENTITY_METADATA,
   JOB_GENERATE_SINGLE_ENTITY_METADATA,
-  LLM_TOKENS_USAGE_EVENT,
   STRIKES_TO_BAN,
   BAN_DURATION_DAYS,
   PERMANENT_BAN_THRESHOLD,
-  MEDIA_MODERATION_EVENT,
-  GENERATE_ENTITY_METADATA_EVENT,
-  GENERATE_SINGLE_ENTITY_METADATA_EVENT,
-  UPDATE_USER_EXTRA_DATA_METRICS,
+  USER_METRICS_QUEUE,
   CREDIT_CONSUMING_LLM_USAGE_TYPES,
   CACHE_KEY_PORTFOLIO_SEO,
   CACHE_KEY_COLLECTION_SEO,
@@ -53,12 +43,6 @@ import {
 import { Helpers } from 'src/common/services/helpers.service';
 import { GlobalProcessor } from 'src/common/processors/global.processor';
 import { UserExtraDataService } from '../user-extra-data/user-extra-data.service';
-
-/**
- * How long a single-entity SEO job waits before running. Acts as a debounce window: repeated triggers
- * for the same entity within it collapse into one generation (see `handleGenerateSingleEntityMetadataEvent`).
- */
-const SINGLE_ENTITY_METADATA_DEBOUNCE_MS = 60_000;
 
 @Processor(AI_QUEUE)
 export class AiProcessor extends GlobalProcessor {
@@ -75,7 +59,6 @@ export class AiProcessor extends GlobalProcessor {
     private readonly userAccountBannedMail: UserAccountBannedMail,
     private readonly userService: UserService,
     private readonly planSubscriptionsService: PlanSubscriptionsService,
-    private readonly eventEmitter: EventEmitter2,
     private readonly aiService: AiService,
     private readonly helpers: Helpers,
     private readonly portfolioRepository: PortfolioRepository,
@@ -83,86 +66,10 @@ export class AiProcessor extends GlobalProcessor {
     private readonly serviceRepository: ServiceRepository,
     private readonly userRepository: UserRepository,
     @InjectQueue(AI_QUEUE) private readonly aiQueue: Queue,
+    @InjectQueue(USER_METRICS_QUEUE) private readonly metricsQueue: Queue,
     private readonly appLogService: LogService,
   ) {
     super();
-  }
-
-  // ==================== EVENT LISTENERS ====================
-
-  /** Listen for LLM usage events and enqueue them */
-  @OnEvent(LLM_TOKENS_USAGE_EVENT)
-  async handleLlmTokensUsageEvent(event: LlmTokensUsageEvent) {
-    await this.aiQueue.add(
-      JOB_RECORD_LLM_USAGE,
-      event.usage,
-      {
-        jobId: `llm-usage-${event.usage.user_id}-${Date.now()}`,
-        priority: 10,
-        removeOnComplete: true,
-        attempts: 3,
-        backoff: { type: 'exponential', delay: 1000 },
-      },
-    );
-  }
-
-  /** Listen for media moderation events and enqueue them */
-  @OnEvent(MEDIA_MODERATION_EVENT)
-  async handleMediaModerationEvent(event: MediaModerationEvent) {
-    await this.aiQueue.add(
-      JOB_RECORD_MEDIA_MODERATION,
-      event.moderation,
-      {
-        jobId: `moderation-${event.moderation.user_id}-${Date.now()}`,
-        priority: 10,
-        removeOnComplete: true,
-        attempts: 3,
-        backoff: { type: 'exponential', delay: 1000 },
-      },
-    );
-  }
-
-  /** Listen for entity metadata generation cron events and enqueue them */
-  @OnEvent(GENERATE_ENTITY_METADATA_EVENT)
-  async handleGenerateEntityMetadataEvent(event: GenerateEntityMetadataEvent) {
-    await this.aiQueue.add(
-      JOB_GENERATE_ENTITY_METADATA,
-      event.payload,
-      {
-        jobId: `entity-metadata-${event.payload.entity}-${Date.now()}`,
-        priority: 20,
-        removeOnComplete: true,
-        attempts: 3,
-        backoff: { type: 'exponential', delay: 1000 },
-      },
-    );
-  }
-
-  /**
-   * Listen for single-entity metadata events and enqueue them.
-   *
-   * The jobId is deterministic (no timestamp) and the job is delayed, so bursts targeting the same
-   * entity collapse into ONE generation: BullMQ drops an add whose id is already queued. This matters
-   * because a single user action fans out — running AI on ten images in a portfolio emits ten refresh
-   * events for that same portfolio, and each one would otherwise be a separate billed LLM call. The
-   * delay is the coalescing window; the job re-reads the entity when it finally runs, so it always
-   * sees the final state. `removeOnFail` keeps a permanently failing entity from wedging its own id.
-   */
-  @OnEvent(GENERATE_SINGLE_ENTITY_METADATA_EVENT)
-  async handleGenerateSingleEntityMetadataEvent(event: GenerateSingleEntityMetadataEvent) {
-    await this.aiQueue.add(
-      JOB_GENERATE_SINGLE_ENTITY_METADATA,
-      event.payload,
-      {
-        jobId: `single-entity-metadata-${event.payload.entity}-${event.payload.id}`,
-        delay: SINGLE_ENTITY_METADATA_DEBOUNCE_MS,
-        priority: 20,
-        removeOnComplete: true,
-        removeOnFail: true,
-        attempts: 3,
-        backoff: { type: 'exponential', delay: 1000 },
-      },
-    );
   }
 
   // ==================== JOB PROCESSOR ====================
@@ -222,10 +129,7 @@ export class AiProcessor extends GlobalProcessor {
         }
       }
 
-      this.eventEmitter.emit(
-        UPDATE_USER_EXTRA_DATA_METRICS,
-        new UpdateUserExtraDataMetricsEvent(usageData.user_id),
-      );
+      await QueueHelper.createComputeUserMetricsJob(this.metricsQueue, usageData.user_id);
 
       return usage;
     } catch (error) {
@@ -295,10 +199,7 @@ export class AiProcessor extends GlobalProcessor {
           }
         }
 
-        this.eventEmitter.emit(
-          UPDATE_USER_EXTRA_DATA_METRICS,
-          new UpdateUserExtraDataMetricsEvent(moderationData.user_id),
-        );
+        await QueueHelper.createComputeUserMetricsJob(this.metricsQueue, moderationData.user_id);
       }
 
 
@@ -346,20 +247,12 @@ export class AiProcessor extends GlobalProcessor {
 
     // Fan out: enqueue one job per due row so each entity is retried/backed-off independently
     // instead of processing the whole table sequentially inside this single (potentially hours-long) job.
+    // Same deterministic id as the create/update path, so a nightly sweep never duplicates a refresh
+    // that a recent edit already queued for this entity. No delay — due rows run immediately.
     for (const row of dueRows) {
-      await this.aiQueue.add(
-        JOB_GENERATE_SINGLE_ENTITY_METADATA,
+      await QueueHelper.createGenerateSingleEntityMetadataJob(
+        this.aiQueue,
         { entity: payload.entity, id: row.id, user_id: row.user_id },
-        {
-          // Same deterministic id as the event path, so a nightly sweep never duplicates a refresh
-          // that a recent edit or media generation already queued for this entity.
-          jobId: `single-entity-metadata-${payload.entity}-${row.id}`,
-          priority: 20,
-          removeOnComplete: true,
-          removeOnFail: true,
-          attempts: 3,
-          backoff: { type: 'exponential', delay: 1000 },
-        },
       );
     }
 
@@ -444,7 +337,7 @@ export class AiProcessor extends GlobalProcessor {
         }
         case 'user': {
           const profile = await this.userRepository.getUserProfileById(id);
-          if (!profile || !profile.name  || !profile.profession || !profile.short_biography) {
+          if (!profile || !profile.name || !profile.profession || !profile.short_biography) {
             log.warn(`User profile [${id}] not found or incomplete, skipping`);
             return { skipped: true };
           }

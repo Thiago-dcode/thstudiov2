@@ -7,10 +7,10 @@ import { IndexCollectionRequest } from "./requests/index-collection.request";
 import { UserExtraDataService } from "../user-extra-data/user-extra-data.service";
 import { RequestService } from "src/common/services/request.service";
 import { CollectionRepository } from "./collection.repository";
-import { EventEmitter2 } from "@nestjs/event-emitter";
-import { CACHE_KEY_COLLECTION_SEO, GENERATE_SINGLE_ENTITY_METADATA_EVENT, MAX_COLLECTION_ITEMS, UPDATE_USER_EXTRA_DATA_METRICS } from "@repo/common-lib/constants/constants";
-import { UpdateUserExtraDataMetricsEvent } from "../user-extra-data/events/update-user-extra-data-metrics.event";
-import { GenerateSingleEntityMetadataEvent } from "../ai/events/generate-single-entity-metadata.event";
+import { InjectQueue } from "@nestjs/bullmq";
+import { Queue } from "bullmq";
+import { AI_QUEUE, CACHE_KEY_COLLECTION_SEO, MAX_COLLECTION_ITEMS, USER_METRICS_QUEUE } from "@repo/common-lib/constants/constants";
+import { QueueHelper, SINGLE_ENTITY_METADATA_DEBOUNCE_MS } from "@repo/backend-lib/utils";
 import { Helpers } from "src/common/services/helpers.service";
 import { ApiException } from "src/common/exceptions/api-exception";
 import { FullPortfolioCollection } from "@repo/common-lib/types/collection";
@@ -29,7 +29,8 @@ export class CollectionService {
     private readonly requestService: RequestService,
     private readonly userExtraDataService: UserExtraDataService,
     private readonly helper: Helpers,
-    private readonly eventEmitter: EventEmitter2,
+    @InjectQueue(AI_QUEUE) private readonly aiQueue: Queue,
+    @InjectQueue(USER_METRICS_QUEUE) private readonly metricsQueue: Queue,
   ) { }
 
   async findAll(data: IndexCollectionRequest) {
@@ -156,14 +157,15 @@ export class CollectionService {
         }),
     );
     await this.invalidateHighlightCountCache(request.user_id);
-    this.eventEmitter.emit(UPDATE_USER_EXTRA_DATA_METRICS, new UpdateUserExtraDataMetricsEvent(request.user_id));
-    this.eventEmitter.emit(
-      GENERATE_SINGLE_ENTITY_METADATA_EVENT,
-      new GenerateSingleEntityMetadataEvent({
+    await QueueHelper.createComputeUserMetricsJob(this.metricsQueue, request.user_id);
+    await QueueHelper.createGenerateSingleEntityMetadataJob(
+      this.aiQueue,
+      {
         entity: 'collection',
         id: collection.id,
         user_id: collection.user_id,
-      }),
+      },
+      { delay: SINGLE_ENTITY_METADATA_DEBOUNCE_MS },
     );
     return collection;
   }
@@ -230,6 +232,6 @@ export class CollectionService {
 
     await this.collectionRepository.delete(id);
     await this.invalidateHighlightCountCache(collection.user_id);
-    this.eventEmitter.emit(UPDATE_USER_EXTRA_DATA_METRICS, new UpdateUserExtraDataMetricsEvent(collection.user_id));
+    await QueueHelper.createComputeUserMetricsJob(this.metricsQueue, collection.user_id);
   }
 }

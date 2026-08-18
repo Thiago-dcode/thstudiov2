@@ -1,36 +1,30 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import { UserContactsRepository } from './user-contacts.repository';
 import { CreateUserContactRequest } from './requests/create-user-contact.request';
 import { UpdateUserContactRequest } from './requests/update-user-contact.request';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
-  CREATE_OR_UPDATE_EMAIL_PREFERENCE,
-  CREATE_USER_CONTACT,
+  EMAIL_PREFERENCES_QUEUE,
+  USER_CONTACTS_QUEUE,
 } from '@repo/common-lib/constants/constants';
-import { CreateUserContactEvent } from './events/create-user-contact.event';
-import { CreateOrUpdateEmailPreferenceEvent } from '../email-preferences/events/create-or-update-email-preference.event';
+import { QueueHelper } from '@repo/backend-lib/utils';
 
 @Injectable()
 export class UserContactsService {
   constructor(
     private readonly userContactsRepository: UserContactsRepository,
-    private readonly eventEmitter: EventEmitter2,
+    @InjectQueue(EMAIL_PREFERENCES_QUEUE) private readonly emailPreferencesQueue: Queue,
+    @InjectQueue(USER_CONTACTS_QUEUE) private readonly contactQueue: Queue,
   ) {}
 
   async create(data: CreateUserContactRequest) {
-    // Priority: enqueue email preference upsert immediately
-    this.eventEmitter.emit(
-      CREATE_OR_UPDATE_EMAIL_PREFERENCE,
-      new CreateOrUpdateEmailPreferenceEvent({
-        email: data.contact_email,
-        user_id: data.user_id,
-      }),
-    );
+    await QueueHelper.createOrUpdateEmailPreferenceJob(this.emailPreferencesQueue, {
+      email: data.contact_email,
+      user_id: data.user_id,
+    });
 
-    this.eventEmitter.emit(
-      CREATE_USER_CONTACT,
-      new CreateUserContactEvent(data),
-    );
+    await QueueHelper.createUserContactJob(this.contactQueue, data);
     return {
       id: 0,
       created_at: new Date(),

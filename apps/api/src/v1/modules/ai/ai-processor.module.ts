@@ -17,12 +17,12 @@ import { PortfolioModule } from '../portfolios/portfolio.module';
 import { CollectionModule } from '../collections/collection.module';
 import { ServiceModule } from '../services/service.module';
 import { AddressModule } from '../addresses/address.module';
-import { AI_QUEUE, LOG_QUEUE } from '@repo/common-lib/constants/constants';
+import { AI_QUEUE, LOG_QUEUE, USER_METRICS_QUEUE } from '@repo/common-lib/constants/constants';
 import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
 
 @Module({
   imports: [
-    BullModule.registerQueue({ name: AI_QUEUE }, { name: LOG_QUEUE }),
+    BullModule.registerQueue({ name: AI_QUEUE }, { name: USER_METRICS_QUEUE }, { name: LOG_QUEUE }),
     UserExtraDataModule,
     PlansModule,
     UserModule,

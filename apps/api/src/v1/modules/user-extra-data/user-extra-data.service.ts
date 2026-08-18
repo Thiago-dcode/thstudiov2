@@ -4,18 +4,12 @@ import { UserExtraDataRepository } from './user-extra-data.repository';
 import { OnEvent } from '@nestjs/event-emitter';
 import {
   CACHE_KEY_USER_EXTRA_DATA,
-  UPDATE_USER_EXTRA_DATA_METRICS,
-  USER_METRICS_QUEUE,
-  JOB_COMPUTE_USER_METRICS,
   SET_INITIAL_USER_EXTRA_DATA_EVENT,
 } from '@repo/common-lib/constants/constants';
-import { UpdateUserExtraDataMetricsEvent } from './events/update-user-extra-data-metrics.event';
 import { SetInitialUserExtraDataEvent } from './events/set-initial-user-extra-data.event';
 import { Helpers } from 'src/common/services/helpers.service';
 import { PlansService } from '../plans/plans.service';
 import { UserStorageRequestService } from '../user-storage-requests/user-storage-request.service';
-import { Queue } from 'bullmq';
-import { InjectQueue } from '@nestjs/bullmq';
 import { FactoryLogService } from '@repo/backend-lib/services/log-service';
 import { UpdateOrCreateUserExtraDataInput } from '@repo/common-lib/types/user-extra-data';
 
@@ -30,7 +24,6 @@ export class UserExtraDataService {
     private readonly userRequestService: UserStorageRequestService,
     private readonly planService: PlansService,
     private readonly helpers: Helpers,
-    @InjectQueue(USER_METRICS_QUEUE) private metricsQueue: Queue
   ) { }
   create() {
     return 'This action adds a new userExtraDatum';
@@ -181,23 +174,6 @@ export class UserExtraDataService {
       }
     }
   }
-  @OnEvent(UPDATE_USER_EXTRA_DATA_METRICS)
-  async handleUpdateUserExtraData(data: UpdateUserExtraDataMetricsEvent) {
-
-    await this.metricsQueue.add(
-      JOB_COMPUTE_USER_METRICS,
-      { userId: data.userId },
-      {
-        jobId: `metrics-${data.userId}-${Date.now()}`,
-        priority: 10,
-        removeOnComplete: true,
-        attempts: 3,
-        backoff: { type: 'exponential', delay: 1000 },
-      },
-    );
-
-  }
-
   @OnEvent(SET_INITIAL_USER_EXTRA_DATA_EVENT)
   async handleSetInitialUserExtraData(event: SetInitialUserExtraDataEvent) {
     const nextMonth = new Date();

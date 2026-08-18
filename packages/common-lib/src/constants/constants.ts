@@ -107,22 +107,9 @@ export const PERMANENT_BAN_THRESHOLD = 5;
 // ==================== EVENTS ====================
 export const NEW_USER_EVENT = 'new.user' as const;
 export const WEBHOOK_STRIPE_EVENT = 'webhook.stripe.event' as const;
-export const UPDATE_USER_EXTRA_DATA_METRICS = 'update-user-extra-data-metrics.event' as const;
-export const LLM_TOKENS_USAGE_EVENT = 'llm.tokens.usage' as const;
-export const MEDIA_MODERATION_EVENT = 'media.moderation' as const;
-export const GENERATE_ENTITY_METADATA_EVENT = 'generate.entity.metadata' as const;
-export const GENERATE_SINGLE_ENTITY_METADATA_EVENT = 'generate.single.entity.metadata' as const;
-export const CREATE_USER_STORAGE_REQUEST = 'create.user-storage-request' as const;
-export const CREATE_USER_CONTACT = 'create.user-contact' as const;
-export const CREATE_OR_UPDATE_LOCATION = 'create-or-update.location' as const;
 export const SET_INITIAL_USER_EXTRA_DATA_EVENT = 'set-initial.user-extra-data' as const;
 export const UPDATE_PROFILE_STATUS_EVENT = 'update-profile-status.event' as const;
 export const SET_FREE_SUBSCRIPTION_EVENT = 'set-free.subscription' as const;
-export const CREATE_WAIT_LIST_ENTRY = 'create.wait-list-entry' as const;
-export const INVITE_WAIT_LIST_BATCH = 'invite.wait-list-batch' as const;
-
-// Email preferences
-export const CREATE_OR_UPDATE_EMAIL_PREFERENCE = 'create-or-update.email-preference' as const;
 
 // ==================== QUEUES (BullMQ) ====================
 export const USER_METRICS_QUEUE = 'user-metrics' as const;

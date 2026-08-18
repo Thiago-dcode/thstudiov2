@@ -8,10 +8,10 @@ import { UpdateServiceRequest } from "./requests/update-service.request";
 import { UserExtraDataService } from "../user-extra-data/user-extra-data.service";
 import { RequestService } from "src/common/services/request.service";
 import { ServiceRepository } from "./service.repository";
-import { EventEmitter2 } from "@nestjs/event-emitter";
-import { CACHE_KEY_SERVICE_SEO, GENERATE_SINGLE_ENTITY_METADATA_EVENT, UPDATE_USER_EXTRA_DATA_METRICS } from "@repo/common-lib/constants/constants";
-import { UpdateUserExtraDataMetricsEvent } from "../user-extra-data/events/update-user-extra-data-metrics.event";
-import { GenerateSingleEntityMetadataEvent } from "../ai/events/generate-single-entity-metadata.event";
+import { InjectQueue } from "@nestjs/bullmq";
+import { Queue } from "bullmq";
+import { AI_QUEUE, CACHE_KEY_SERVICE_SEO, USER_METRICS_QUEUE } from "@repo/common-lib/constants/constants";
+import { QueueHelper, SINGLE_ENTITY_METADATA_DEBOUNCE_MS } from "@repo/backend-lib/utils";
 import { AiService } from "../ai/ai.service";
 import { MediaModerationException } from "src/common/exceptions/media-moderation-exception";
 import { ApiException } from "src/common/exceptions/api-exception";
@@ -32,9 +32,10 @@ export class ServiceService {
     private readonly serviceRepository: ServiceRepository,
     private readonly requestService: RequestService,
     private readonly userExtraDataService: UserExtraDataService,
-    private readonly eventEmitter: EventEmitter2,
     private readonly helpers: Helpers,
     private readonly aiService: AiService,
+    @InjectQueue(AI_QUEUE) private readonly aiQueue: Queue,
+    @InjectQueue(USER_METRICS_QUEUE) private readonly metricsQueue: Queue,
   ) { }
 
   /**
@@ -152,17 +153,15 @@ export class ServiceService {
       this.highlightCountCacheKey(request.user_id),
     ]);
 
-    this.eventEmitter.emit(
-      UPDATE_USER_EXTRA_DATA_METRICS,
-      new UpdateUserExtraDataMetricsEvent(request.user_id),
-    );
-    this.eventEmitter.emit(
-      GENERATE_SINGLE_ENTITY_METADATA_EVENT,
-      new GenerateSingleEntityMetadataEvent({
+    await QueueHelper.createComputeUserMetricsJob(this.metricsQueue, request.user_id);
+    await QueueHelper.createGenerateSingleEntityMetadataJob(
+      this.aiQueue,
+      {
         entity: 'service',
         id: service.id,
         user_id: service.user_id,
-      }),
+      },
+      { delay: SINGLE_ENTITY_METADATA_DEBOUNCE_MS },
     );
 
     return service;

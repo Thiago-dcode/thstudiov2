@@ -2,6 +2,8 @@ import { BadRequestException, HttpException, Injectable, UnauthorizedException }
 import { UpdateUserRequest } from './requests/update-user.request';
 import { NewUserEvent } from './events/new-user.event';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import { UserRepository } from './users.repository';
 import { cleanObj } from '@repo/common-lib/utils/object';
 import { LogService } from '@repo/backend-lib/services/log-service';
@@ -18,10 +20,10 @@ import {
   MAX_PASSWORD_RESET,
   MAX_USERNAME_RESET,
   NEW_USER_EVENT,
-  CREATE_OR_UPDATE_EMAIL_PREFERENCE,
   SET_FREE_SUBSCRIPTION_EVENT,
   SET_INITIAL_USER_EXTRA_DATA_EVENT,
-  GENERATE_SINGLE_ENTITY_METADATA_EVENT,
+  AI_QUEUE,
+  EMAIL_PREFERENCES_QUEUE,
   UPDATE_PROFILE_STATUS_EVENT,
 } from '@repo/common-lib/constants/constants';
 import { FindUserRequest } from './requests/find-user.request';
@@ -35,8 +37,7 @@ import { ArtistCard, UpdateUserInput } from '@repo/common-lib/types/user';
 import { EnumType } from '@repo/common-lib/constants/enums';
 import { addMonths } from 'date-fns';
 import { IndexArtistsRequest } from './requests/index-artists.request';
-import { CreateOrUpdateEmailPreferenceEvent } from '../email-preferences/events/create-or-update-email-preference.event';
-import { GenerateSingleEntityMetadataEvent } from '../ai/events/generate-single-entity-metadata.event';
+import { QueueHelper, SINGLE_ENTITY_METADATA_DEBOUNCE_MS } from '@repo/backend-lib/utils';
 import { ProfileStatusService } from '../profile-status/profile-status.service';
 import { UpdateProfileStatusEvent } from '../profile-status/events/update-profile-status.event';
 
@@ -52,6 +53,8 @@ export class UserService {
     private readonly notifyNewUserMail: NotifyNewUserMail,
     private readonly aiService: AiService,
     private readonly profileStatusService: ProfileStatusService,
+    @InjectQueue(AI_QUEUE) private readonly aiQueue: Queue,
+    @InjectQueue(EMAIL_PREFERENCES_QUEUE) private readonly emailPreferencesQueue: Queue,
   ) { }
 
   /** No-op when `language` already matches; safe to call on every authenticated request. */
@@ -318,9 +321,10 @@ export class UserService {
     const shouldGenerateMetadata =user.name !=userUpdateData.name || user.surname != userUpdateData.surname || user.profession != userUpdateData.profession || user.short_biography != userUpdateData.profession;
 
     if(shouldGenerateMetadata){
-      this.eventEmitter.emit(
-        GENERATE_SINGLE_ENTITY_METADATA_EVENT,
-        new GenerateSingleEntityMetadataEvent({ entity: 'user',id:user.id,user_id:user.id }),
+      await QueueHelper.createGenerateSingleEntityMetadataJob(
+        this.aiQueue,
+        { entity: 'user', id: user.id, user_id: user.id },
+        { delay: SINGLE_ENTITY_METADATA_DEBOUNCE_MS },
       );
     }
     return userUpdated;
@@ -371,13 +375,10 @@ export class UserService {
   async handleNewUserEvent(event: NewUserEvent) {
     try {
       // Priority: enqueue email preference upsert immediately
-      this.eventEmitter.emit(
-        CREATE_OR_UPDATE_EMAIL_PREFERENCE,
-        new CreateOrUpdateEmailPreferenceEvent({
-          email: event.user.email,
-          user_id: event.user.id,
-        }),
-      );
+      await QueueHelper.createOrUpdateEmailPreferenceJob(this.emailPreferencesQueue, {
+        email: event.user.email,
+        user_id: event.user.id,
+      });
 
       //Create stripe customer
       const stripeCustomer = await stripe.customers.create({

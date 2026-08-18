@@ -1,10 +1,7 @@
 import { Processor } from '@nestjs/bullmq';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Job, Queue } from 'bullmq';
-import { OnEvent } from '@nestjs/event-emitter';
+import { Job } from 'bullmq';
 import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
 import {
-  CREATE_OR_UPDATE_LOCATION,
   JOB_CREATE_OR_UPDATE_LOCATION,
   LOCATION_QUEUE,
 } from '@repo/common-lib/constants/constants';
@@ -17,7 +14,6 @@ import type {
 import { CountryRepository } from './country.repository';
 import { StateRepository } from './state.repository';
 import { CityRepository } from './city.repository';
-import { CreateOrUpdateLocationEvent } from './events/create-or-update-location.event';
 import { GlobalProcessor } from 'src/common/processors/global.processor';
 
 @Processor(LOCATION_QUEUE)
@@ -30,25 +26,9 @@ export class LocationProcessor extends GlobalProcessor {
     private readonly countryRepository: CountryRepository,
     private readonly stateRepository: StateRepository,
     private readonly cityRepository: CityRepository,
-    @InjectQueue(LOCATION_QUEUE) private readonly locationQueue: Queue,
     private readonly appLogService: LogService,
   ) {
     super();
-  }
-
-  @OnEvent(CREATE_OR_UPDATE_LOCATION)
-  async handleCreateOrUpdateLocationEvent(event: CreateOrUpdateLocationEvent) {
-    await this.locationQueue.add(
-      JOB_CREATE_OR_UPDATE_LOCATION,
-      event.payload,
-      {
-        jobId: `location-${Date.now()}`,
-        priority: 10,
-        removeOnComplete: true,
-        attempts: 3,
-        backoff: { type: 'exponential', delay: 1000 },
-      },
-    );
   }
 
   async process(job: Job): Promise<unknown> {

@@ -1,5 +1,7 @@
 import { BadRequestException, HttpException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import { MediaRepository } from './media.repository';
 import { CreateMediaRequest } from './requests/create-media.request';
 import { UserExtraDataService } from '../user-extra-data/user-extra-data.service';
@@ -10,16 +12,13 @@ import { AiService } from '../ai/ai.service';
 import { generateUUID } from '@repo/common-lib/utils/generate-uuid';
 import { bytesToMB, mbToBytes } from '@repo/common-lib/utils/bytes';
 import { FactoryLogService } from '@repo/backend-lib/services/log-service';
+import { QueueHelper } from '@repo/backend-lib/utils';
 import { CreateMediaInput, MediaWithUser, UpdateMediaInternalInput } from '@repo/common-lib/types/media';
 import { EntitySeoMetadata, MediaSeoTranslation } from '@repo/common-lib/types/ai';
 import { cleanObj } from '@repo/common-lib/utils/object';
-import { CREATE_USER_STORAGE_REQUEST } from '@repo/common-lib/constants/constants';
-import { CACHE_KEY_MEDIA_SEO, SEO_METADATA_CACHE_TTL } from '@repo/common-lib/constants/constants';
-import { CreateUserStorageRequestEvent } from '../user-storage-requests/events/create-user-storage-request.event';
+import { CACHE_KEY_MEDIA_SEO, SEO_METADATA_CACHE_TTL, STORAGE_REQUESTS_QUEUE, UPDATE_PROFILE_STATUS_EVENT, USER_METRICS_QUEUE } from '@repo/common-lib/constants/constants';
 import { IndexMediaRequest } from '../user-media/requests/index-media.request';
 import { Helpers } from 'src/common/services/helpers.service';
-import { UPDATE_PROFILE_STATUS_EVENT, UPDATE_USER_EXTRA_DATA_METRICS } from '@repo/common-lib/constants/constants';
-import { UpdateUserExtraDataMetricsEvent } from '../user-extra-data/events/update-user-extra-data-metrics.event';
 import { UpdateProfileStatusEvent } from '../profile-status/events/update-profile-status.event';
 import { UpdateMediaRequest } from './requests/update-media.request';
 import { RequestService } from 'src/common/services/request.service';
@@ -41,6 +40,8 @@ export class MediaService {
     private readonly aiService: AiService,
     private readonly helpers: Helpers,
     private readonly eventEmitter: EventEmitter2,
+    @InjectQueue(STORAGE_REQUESTS_QUEUE) private readonly storageQueue: Queue,
+    @InjectQueue(USER_METRICS_QUEUE) private readonly metricsQueue: Queue,
   ) { }
   public async findAll(data: IndexMediaRequest) {
     const result = await this.mediaRepository.getAll(data);
@@ -183,23 +184,17 @@ export class MediaService {
       const mediaFile = { ...media, ...mediaCompressed };
       await this.storageService.write(mediaFile, mediaPath);
 
-      // 9. Emit storage request events for each file
-      this.eventEmitter.emit(
-        CREATE_USER_STORAGE_REQUEST,
-        new CreateUserStorageRequestEvent({
-          path: mediaPath,
-          bytes: mediaCompressed.size,
-          user_id: data.user_id,
-        }),
-      );
-      this.eventEmitter.emit(
-        CREATE_USER_STORAGE_REQUEST,
-        new CreateUserStorageRequestEvent({
-          path: thumbnailPath,
-          bytes: thumbnail.size,
-          user_id: data.user_id,
-        }),
-      );
+      // 9. Enqueue storage request jobs for each file
+      await QueueHelper.createStorageRequestJob(this.storageQueue, {
+        path: mediaPath,
+        bytes: mediaCompressed.size,
+        user_id: data.user_id,
+      });
+      await QueueHelper.createStorageRequestJob(this.storageQueue, {
+        path: thumbnailPath,
+        bytes: thumbnail.size,
+        user_id: data.user_id,
+      });
 
       // 10. Create media record
       const defaultSeoText = `${user.username} photo`;
@@ -227,7 +222,7 @@ export class MediaService {
       cleanObj(mediaData);
 
       const result = await this.mediaRepository.create(mediaData);
-      this.eventEmitter.emit(UPDATE_USER_EXTRA_DATA_METRICS, new UpdateUserExtraDataMetricsEvent(user.id));
+      await QueueHelper.createComputeUserMetricsJob(this.metricsQueue, user.id);
       this.eventEmitter.emit(
         UPDATE_PROFILE_STATUS_EVENT,
         new UpdateProfileStatusEvent(user.id, { has_media: true }),
@@ -257,10 +252,7 @@ export class MediaService {
       this.mediaRepository.deleteById(id)
     ])
 
-    this.eventEmitter.emit(
-      UPDATE_USER_EXTRA_DATA_METRICS,
-      new UpdateUserExtraDataMetricsEvent(media.user_id),
-    );
+    await QueueHelper.createComputeUserMetricsJob(this.metricsQueue, media.user_id);
     const stillHasMedia = await this.mediaRepository.exists({
       user_id: media.user_id,
     });

@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { EventEmitter2 } from '@nestjs/event-emitter';
+import { getQueueToken } from '@nestjs/bullmq';
+import { AI_QUEUE, USER_METRICS_QUEUE } from '@repo/common-lib/constants/constants';
 import { API_ERRORS } from '@repo/common-lib/constants/api-errors';
 import { ApiException } from 'src/common/exceptions/api-exception';
 import { Helpers } from 'src/common/services/helpers.service';
@@ -54,7 +55,8 @@ describe('CollectionService slug derivation', () => {
             cacheRemember: jest.fn(),
           },
         },
-        { provide: EventEmitter2, useValue: { emit: jest.fn() } },
+        { provide: getQueueToken(AI_QUEUE), useValue: { add: jest.fn() } },
+        { provide: getQueueToken(USER_METRICS_QUEUE), useValue: { add: jest.fn() } },
       ],
     }).compile();
 

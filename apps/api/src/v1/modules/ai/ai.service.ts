@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import { LLMService } from '@repo/backend-lib/services/llm-service/base';
-import { LLM_TOKENS_USAGE_EVENT, MAX_TAGS_MEDIA, MEDIA_MODERATION_EVENT } from '@repo/common-lib/constants/constants';
+import { AI_QUEUE, MAX_TAGS_MEDIA } from '@repo/common-lib/constants/constants';
+import { QueueHelper } from '@repo/backend-lib/utils';
 import { openAiLLMConfig } from 'src/config/llm';
 import { FactoryLogService } from '@repo/backend-lib/services/log-service';
 import {
@@ -18,8 +20,6 @@ import { MediaPortfolio } from '@repo/common-lib/types/media';
 import { FullCollection } from '@repo/common-lib/types/collection';
 import { FullService } from '@repo/common-lib/types/service';
 import { UserProfile } from '@repo/common-lib/types/user';
-import { LlmTokensUsageEvent } from './events/llm-tokens-usage.event';
-import { MediaModerationEvent } from './events/media-moderation.event';
 import { Helpers } from 'src/common/services/helpers.service';
 
 const ENTITY_SEO_TITLE_MAX = 70;
@@ -165,7 +165,7 @@ export class AiService {
 
   constructor(
     private readonly llmService: LLMService,
-    private readonly eventEmitter: EventEmitter2,
+    @InjectQueue(AI_QUEUE) private readonly aiQueue: Queue,
   ) { }
 
   /**
@@ -180,7 +180,6 @@ export class AiService {
     meta: { media_id: number; user_id: number },
   ): Promise<GenerateMediaMetadataResponse> {
     try {
-      await this.llmService.setup();
 
       const categoriesForPrompt = categories.map((c) => ({
         id: c.id,
@@ -266,7 +265,7 @@ export class AiService {
         });
       }
 
-      this.emitUsage({
+      await this.emitUsage({
         tokens: result.usage?.totalTokens,
         user_id: meta.user_id,
         usage_type: 'GENERATE_MEDIA_METADATA',
@@ -416,9 +415,8 @@ export class AiService {
   }
 
   /** Moderate media content to determine if it is allowed */
-  public async moderateContent(mediaUrl: string, meta: { user_id: number }) {
+  public async moderateContent(url: string, meta: { user_id: number }) {
     try {
-      await this.llmService.setup();
 
       const EXPECTED_JSON: ContentModerationFields = {
         is_allowed: true,
@@ -467,7 +465,7 @@ export class AiService {
               },
               {
                 type: 'image_url' as const,
-                image_url: { url: mediaUrl }
+                image_url: { url }
               }
             ]
           }
@@ -522,18 +520,15 @@ export class AiService {
         moderationData = { ...EXPECTED_JSON };
       }
 
-      // Emit event to track LLM tokens usage
+      // Enqueue LLM tokens usage
       if (result.usage?.totalTokens) {
-        this.eventEmitter.emit(
-          LLM_TOKENS_USAGE_EVENT,
-          new LlmTokensUsageEvent({
-            tokens: result.usage.totalTokens,
-            model: openAiLLMConfig.model,
-            user_id: meta.user_id,
-            usage_type: 'MODERATE_MEDIA_CONTENT',
-            matches_expected_response: matchesExpectedResponse,
-          }),
-        );
+        await QueueHelper.createLlmUsageJob(this.aiQueue, {
+          tokens: result.usage.totalTokens,
+          model: openAiLLMConfig.model,
+          user_id: meta.user_id,
+          usage_type: 'MODERATE_MEDIA_CONTENT',
+          matches_expected_response: matchesExpectedResponse,
+        });
       }
 
       this.logger
@@ -547,17 +542,13 @@ export class AiService {
           tokens_used: result.usage?.totalTokens,
         });
 
-      // Emit event to record moderation result
-      this.eventEmitter.emit(
-        MEDIA_MODERATION_EVENT,
-        new MediaModerationEvent({
-          is_allowed: moderationData.is_allowed ?? true,
-          severity: moderationData.severity ?? MODERATION_SEVERITY.SAFE,
-          content_type: moderationData.content_type ?? 'unknown',
-          reason: moderationData.reason ?? null,
-          user_id: meta.user_id,
-        }),
-      );
+      await QueueHelper.createMediaModerationJob(this.aiQueue, {
+        is_allowed: moderationData.is_allowed ?? true,
+        severity: moderationData.severity ?? MODERATION_SEVERITY.SAFE,
+        content_type: moderationData.content_type ?? 'unknown',
+        reason: moderationData.reason ?? null,
+        user_id: meta.user_id,
+      });
 
       return {
         moderation: moderationData as ContentModerationFields,
@@ -591,7 +582,6 @@ export class AiService {
     const { entityLabel, logName, usageType, extraInfo, context, meta } = params;
 
     try {
-      await this.llmService.setup();
 
       const localesShape = SEO_LOCALES.map(
         (l) => `"${l}": { "seo_title": "", "seo_description": "" }`,
@@ -638,7 +628,7 @@ export class AiService {
         });
       }
 
-      this.emitUsage({
+      await this.emitUsage({
         tokens: result.usage?.totalTokens,
         user_id: meta.user_id,
         usage_type: usageType,
@@ -720,23 +710,20 @@ export class AiService {
     return JSON.parse(jsonText) as Record<string, unknown>;
   }
 
-  private emitUsage(params: {
+  private async emitUsage(params: {
     tokens?: number;
     user_id: number;
     usage_type: EnumType<'LLM_USAGE_TYPE'>;
     matches_expected_response: boolean;
-  }): void {
+  }): Promise<void> {
     if (!params.tokens) return;
-    this.eventEmitter.emit(
-      LLM_TOKENS_USAGE_EVENT,
-      new LlmTokensUsageEvent({
-        tokens: params.tokens,
-        model: openAiLLMConfig.model,
-        user_id: params.user_id,
-        usage_type: params.usage_type,
-        matches_expected_response: params.matches_expected_response,
-      }),
-    );
+    await QueueHelper.createLlmUsageJob(this.aiQueue, {
+      tokens: params.tokens,
+      model: openAiLLMConfig.model,
+      user_id: params.user_id,
+      usage_type: params.usage_type,
+      matches_expected_response: params.matches_expected_response,
+    });
   }
 
   /** Read one locale's object from the model's `translations` map (case-insensitive key). */

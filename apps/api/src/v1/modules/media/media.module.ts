@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { BullModule } from '@nestjs/bullmq';
 import { MediaController } from './media.controller';
 import { MediaService } from './media.service';
 import { MediaRepository } from './media.repository';
@@ -7,6 +8,7 @@ import { UserModule } from '../users/users.module';
 import { AiModule } from '../ai/ai.module';
 import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
 import { RequestService } from 'src/common/services/request.service';
+import { STORAGE_REQUESTS_QUEUE, USER_METRICS_QUEUE } from '@repo/common-lib/constants/constants';
 
 @Module({
   controllers: [MediaController],
@@ -24,7 +26,12 @@ import { RequestService } from 'src/common/services/request.service';
       inject: [RequestService],
     },
   ],
-  imports: [UserExtraDataModule, UserModule, AiModule],
+  imports: [
+    BullModule.registerQueue({ name: STORAGE_REQUESTS_QUEUE }, { name: USER_METRICS_QUEUE }),
+    UserExtraDataModule,
+    UserModule,
+    AiModule,
+  ],
   // MediaRepository is exported for SitemapModule, which reads the public-media predicate directly
   // (same pattern as the other feature modules the sitemap depends on).
   exports: [MediaService, MediaRepository],

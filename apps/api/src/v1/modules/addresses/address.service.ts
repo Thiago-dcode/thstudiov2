@@ -1,9 +1,12 @@
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import {
-  CREATE_OR_UPDATE_LOCATION,
+  LOCATION_QUEUE,
   UPDATE_PROFILE_STATUS_EVENT,
 } from '@repo/common-lib/constants/constants';
+import { QueueHelper } from '@repo/backend-lib/utils';
 import type { CreateOrUpdateLocationPayload } from '@repo/common-lib/types/location';
 import { Query } from '@repo/database/facades';
 import type { ClientSchema } from '@repo/common-lib/schemas/client';
@@ -11,7 +14,6 @@ import { AddressRepository } from './address.repository';
 import type { Address, CreateAddressInput, UpdateAddressInput } from '@repo/common-lib/types/address';
 import { cleanObj } from '@repo/common-lib/utils/object';
 import { RequestService } from 'src/common/services/request.service';
-import { CreateOrUpdateLocationEvent } from '../locations/events/create-or-update-location.event';
 import { UpdateProfileStatusEvent } from '../profile-status/events/update-profile-status.event';
 
 @Injectable()
@@ -20,6 +22,7 @@ export class AddressService {
     private readonly addressRepository: AddressRepository,
     private readonly requestService: RequestService,
     private readonly eventEmitter: EventEmitter2,
+    @InjectQueue(LOCATION_QUEUE) private readonly locationQueue: Queue,
   ) { }
 
   public async findOneById(id: number) {
@@ -61,7 +64,7 @@ export class AddressService {
     }
 
     const result = await this.addressRepository.create(data);
-    this.emitCreateOrUpdateLocationFromAddress(result);
+    await this.enqueueCreateOrUpdateLocationFromAddress(result);
     this.emitProfileStatusFromAddress(result);
     return result;
   }
@@ -86,7 +89,7 @@ export class AddressService {
 
     const result = await this.addressRepository.updateAndGet(id, patch);
     if (result) {
-      this.emitCreateOrUpdateLocationFromAddress(result);
+      await this.enqueueCreateOrUpdateLocationFromAddress(result);
       this.emitProfileStatusFromAddress(result);
     }
     return result;
@@ -135,7 +138,7 @@ export class AddressService {
     );
   }
 
-  private emitCreateOrUpdateLocationFromAddress(result: Address): void {
+  private async enqueueCreateOrUpdateLocationFromAddress(result: Address): Promise<void> {
     const country = result.country?.trim() ?? '';
     const country_code = result.country_code?.trim() ?? '';
     if (!country || !country_code) {
@@ -149,9 +152,6 @@ export class AddressService {
     const city = result.city?.trim();
     if (state) payload.state = state;
     if (city) payload.city = city;
-    this.eventEmitter.emit(
-      CREATE_OR_UPDATE_LOCATION,
-      new CreateOrUpdateLocationEvent(payload),
-    );
+    await QueueHelper.createOrUpdateLocationJob(this.locationQueue, payload);
   }
 }

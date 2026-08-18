@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { BullModule } from '@nestjs/bullmq';
 import { PortfolioController } from './portfolio.controller';
 import { PortfolioService } from './portfolio.service';
 import { PortfolioRepository } from './portfolio.repository';
@@ -8,6 +9,7 @@ import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-se
 import { RequestService } from 'src/common/services/request.service';
 import { CollectionModule } from '../collections/collection.module';
 import { LayoutModule } from '../layouts/layout.module';
+import { AI_QUEUE, USER_METRICS_QUEUE } from '@repo/common-lib/constants/constants';
 
 @Module({
   controllers: [PortfolioController],
@@ -25,7 +27,13 @@ import { LayoutModule } from '../layouts/layout.module';
       inject: [RequestService],
     },
   ],
-  imports: [UserExtraDataModule, AiModule, CollectionModule, LayoutModule],
+  imports: [
+    BullModule.registerQueue({ name: AI_QUEUE }, { name: USER_METRICS_QUEUE }),
+    UserExtraDataModule,
+    AiModule,
+    CollectionModule,
+    LayoutModule,
+  ],
   exports: [PortfolioService, PortfolioRepository],
 })
 export class PortfolioModule {}

@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { EventEmitter2 } from '@nestjs/event-emitter';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
-import { GENERATE_ENTITY_METADATA_EVENT } from '@repo/common-lib/constants/constants';
+import { QueueHelper } from '@repo/backend-lib/utils';
+import { AI_QUEUE } from '@repo/common-lib/constants/constants';
 import { UserExtraDataRepository } from '../user-extra-data/user-extra-data.repository';
-import { GenerateEntityMetadataEvent } from './events/generate-entity-metadata.event';
 
 @Injectable()
 export class AiTask {
@@ -14,7 +15,7 @@ export class AiTask {
 
   constructor(
     private readonly userExtraDataRepository: UserExtraDataRepository,
-    private readonly eventEmitter: EventEmitter2,
+    @InjectQueue(AI_QUEUE) private readonly aiQueue: Queue,
   ) {}
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT, {
@@ -71,10 +72,7 @@ export class AiTask {
     timeZone: 'UTC',
   })
   async handlePortfolioTask() {
-    this.eventEmitter.emit(
-      GENERATE_ENTITY_METADATA_EVENT,
-      new GenerateEntityMetadataEvent({ entity: 'portfolio' }),
-    );
+    await QueueHelper.createGenerateEntityMetadataJob(this.aiQueue, { entity: 'portfolio' });
   }
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT, {
@@ -82,10 +80,7 @@ export class AiTask {
     timeZone: 'UTC',
   })
   async handleCollectionTask() {
-    this.eventEmitter.emit(
-      GENERATE_ENTITY_METADATA_EVENT,
-      new GenerateEntityMetadataEvent({ entity: 'collection' }),
-    );
+    await QueueHelper.createGenerateEntityMetadataJob(this.aiQueue, { entity: 'collection' });
   }
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT, {
@@ -93,10 +88,7 @@ export class AiTask {
     timeZone: 'UTC',
   })
   async handleServiceTask() {
-    this.eventEmitter.emit(
-      GENERATE_ENTITY_METADATA_EVENT,
-      new GenerateEntityMetadataEvent({ entity: 'service' }),
-    );
+    await QueueHelper.createGenerateEntityMetadataJob(this.aiQueue, { entity: 'service' });
   }
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT, {
@@ -104,9 +96,6 @@ export class AiTask {
     timeZone: 'UTC',
   })
   async handleUserTask() {
-    this.eventEmitter.emit(
-      GENERATE_ENTITY_METADATA_EVENT,
-      new GenerateEntityMetadataEvent({ entity: 'user' }),
-    );
+    await QueueHelper.createGenerateEntityMetadataJob(this.aiQueue, { entity: 'user' });
   }
 }

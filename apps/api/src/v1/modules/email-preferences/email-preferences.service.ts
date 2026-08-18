@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { EmailPreferencesRepository } from './email-preferences.repository';
-import type { EmailPreference } from '@repo/common-lib/types/email-preferences';
-import type { CreateOrUpdateEmailPreferencePayload } from './events/create-or-update-email-preference.event';
+import type { EmailPreference, CreateOrUpdateEmailPreferencePayload } from '@repo/common-lib/types/email-preferences';
 import { cleanObj } from '@repo/common-lib/utils/object';
 import { getConfigValue } from '@repo/common-lib/config/utils';
 import type { EnumType } from '@repo/common-lib/constants/enums';

@@ -1,10 +1,7 @@
-import { InjectQueue, Processor } from '@nestjs/bullmq';
-import { OnEvent } from '@nestjs/event-emitter';
+import { Processor } from '@nestjs/bullmq';
 import { MailService } from '@repo/backend-lib/services/mail-service';
 import { LogService, maskEmail } from '@repo/backend-lib/services/log-service';
 import {
-  CREATE_WAIT_LIST_ENTRY,
-  INVITE_WAIT_LIST_BATCH,
   JOB_CREATE_WAIT_LIST_ENTRY,
   JOB_INVITE_WAIT_LIST_BATCH,
   WAIT_LIST_QUEUE,
@@ -14,7 +11,7 @@ import type { InvitationLink } from '@repo/common-lib/types/invitation-link';
 import { CreateWaitListJobInput } from '@repo/common-lib/types/wait-list';
 import { generateUUID } from '@repo/common-lib/utils/generate-uuid';
 import { getBenefitMonths, getWaitListBenefitType } from '@repo/common-lib/utils/wait-list';
-import { Job, Queue } from 'bullmq';
+import { Job } from 'bullmq';
 import { addDays } from 'date-fns';
 import { getConfigValue } from '@repo/common-lib/config/utils';
 import { DbUniqueViolationException } from '@repo/database/exceptions';
@@ -22,8 +19,6 @@ import { GlobalProcessor } from 'src/common/processors/global.processor';
 import { BenefitRepository } from '../benefits/benefit.repository';
 import { InvitationLinkService } from '../invitation-links/invitation-link.service';
 import { PlansService } from '../plans/plans.service';
-import { CreateWaitListEvent } from './events/create-wait-list.event';
-import { InviteWaitListBatchEvent } from './events/invite-wait-list-batch.event';
 import { WaitListInviteMail } from './mails/wait-list-invite.mail';
 import { WaitListWelcomeMail } from './mails/wait-list-welcome.mail';
 import { WaitListRepository } from './wait-list.repository';
@@ -47,66 +42,9 @@ export class WaitListProcessor extends GlobalProcessor {
     private readonly mailService: MailService,
     private readonly waitListInviteMail: WaitListInviteMail,
     private readonly waitListWelcomeMail: WaitListWelcomeMail,
-    @InjectQueue(WAIT_LIST_QUEUE) private readonly waitListQueue: Queue,
     private readonly logger: LogService,
   ) {
     super();
-  }
-
-  @OnEvent(CREATE_WAIT_LIST_ENTRY)
-  async handleCreateWaitListEvent(event: CreateWaitListEvent) {
-    const emailLog = maskEmail(event.data.email);
-
-    try {
-      await this.waitListQueue.add(
-        JOB_CREATE_WAIT_LIST_ENTRY,
-        event.data,
-        {
-          jobId: `wait-list-create-${encodeURIComponent(this.normalizeEmail(event.data.email))}`,
-          priority: 10,
-          removeOnComplete: true,
-          attempts: 3,
-          backoff: { type: 'exponential', delay: 1000 },
-        },
-      );
-      this.logger.info(`Wait list create job enqueued: ${emailLog}`);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      const lower = message.toLowerCase();
-      if (lower.includes('job') && (lower.includes('already') || lower.includes('exists') || lower.includes('exist'))) {
-        this.logger.info(`Wait list create job already queued (skipped): ${emailLog}`);
-        return;
-      }
-
-      this.logger.error(
-        `Failed to enqueue wait list create job: ${emailLog} - ${message}`,
-        error,
-      );
-      throw error;
-    }
-  }
-
-  @OnEvent(INVITE_WAIT_LIST_BATCH)
-  async handleInviteWaitListBatchEvent(event: InviteWaitListBatchEvent) {
-    try {
-      await this.waitListQueue.add(
-        JOB_INVITE_WAIT_LIST_BATCH,
-        { count: event.count },
-        {
-          priority: 10,
-          removeOnComplete: true,
-          attempts: 3,
-          backoff: { type: 'exponential', delay: 1000 },
-        },
-      );
-      this.logger.info(`Wait list batch invite job enqueued: count=${event.count}`);
-    } catch (error) {
-      this.logger.error(
-        `Failed to enqueue wait list batch invite job - ${error instanceof Error ? error.message : 'Unknown error'}`,
-        error,
-      );
-      throw error;
-    }
   }
 
   async process(job: Job): Promise<unknown> {

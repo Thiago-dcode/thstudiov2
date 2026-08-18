@@ -1,11 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import { LogService, maskEmail } from '@repo/backend-lib/services/log-service';
+import { QueueHelper } from '@repo/backend-lib/utils';
 import {
-  CREATE_WAIT_LIST_ENTRY,
-  INVITE_WAIT_LIST_BATCH,
-  CREATE_OR_UPDATE_EMAIL_PREFERENCE,
   DEFAULT_LANGUAGE,
+  EMAIL_PREFERENCES_QUEUE,
+  WAIT_LIST_QUEUE,
 } from '@repo/common-lib/constants/constants';
 import type {
   PublicCreateWaitListInput,
@@ -16,20 +17,18 @@ import type {
 import { getWaitListBenefitType } from '@repo/common-lib/utils/wait-list';
 import { RequestService } from 'src/common/services/request.service';
 import { BenefitRepository } from '../benefits/benefit.repository';
-import { CreateWaitListEvent } from './events/create-wait-list.event';
-import { InviteWaitListBatchEvent } from './events/invite-wait-list-batch.event';
 import { IndexWaitListRequest } from './requests/index-wait-list.request';
 import { WaitListRepository } from './wait-list.repository';
-import { CreateOrUpdateEmailPreferenceEvent } from '../email-preferences/events/create-or-update-email-preference.event';
 
 @Injectable()
 export class WaitListService {
   constructor(
     private readonly waitListRepository: WaitListRepository,
     private readonly benefitRepository: BenefitRepository,
-    private readonly eventEmitter: EventEmitter2,
     private readonly logger: LogService,
     private readonly requestService: RequestService,
+    @InjectQueue(WAIT_LIST_QUEUE) private readonly waitListQueue: Queue,
+    @InjectQueue(EMAIL_PREFERENCES_QUEUE) private readonly emailPreferencesQueue: Queue,
   ) { }
 
   async findAll(filters: IndexWaitListRequest) {
@@ -124,19 +123,27 @@ export class WaitListService {
         };
       }
 
-      this.logger.info(`Emitting wait list create events: ${emailLog}`, { language });
+      this.logger.info(`Enqueuing wait list create jobs: ${emailLog}`, { language });
 
-      this.eventEmitter.emit(
-        CREATE_OR_UPDATE_EMAIL_PREFERENCE,
-        new CreateOrUpdateEmailPreferenceEvent({
+      await QueueHelper.createOrUpdateEmailPreferenceJob(this.emailPreferencesQueue, {
+        email: normalizedEmail,
+      });
+
+      try {
+        await QueueHelper.createWaitListEntryJob(this.waitListQueue, {
           email: normalizedEmail,
-        }),
-      );
-
-      this.eventEmitter.emit(
-        CREATE_WAIT_LIST_ENTRY,
-        new CreateWaitListEvent({ email: normalizedEmail, language }),
-      );
+          language,
+        });
+        this.logger.info(`Wait list create job enqueued: ${emailLog}`);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        const lower = message.toLowerCase();
+        if (lower.includes('job') && (lower.includes('already') || lower.includes('exists') || lower.includes('exist'))) {
+          this.logger.info(`Wait list create job already queued (skipped): ${emailLog}`);
+        } else {
+          throw error;
+        }
+      }
 
       return {
         email: normalizedEmail,
@@ -153,17 +160,13 @@ export class WaitListService {
 
   async inviteBatch(count: number) {
     try {
-      console.log('EMITING')
       if (!Number.isFinite(count) || count <= 0) {
         this.logger.warn(`Invalid wait list batch invite count: ${count}`);
       }
 
-      this.logger.info(`Emitting wait list batch invite event: count=${count}`);
+      this.logger.info(`Enqueuing wait list batch invite job: count=${count}`);
 
-      this.eventEmitter.emit(
-        INVITE_WAIT_LIST_BATCH,
-        new InviteWaitListBatchEvent(count),
-      );
+      await QueueHelper.createInviteWaitListBatchJob(this.waitListQueue, { count });
 
       return {
         count,
