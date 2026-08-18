@@ -24,11 +24,8 @@ export const AdminHeader = () => {
       <header
         className={`hidden md:flex h-full flex-col items-center justify-start gap-10 border-r border-r-fg-2 bg-fg shrink-0 overflow-hidden transition-[width] duration-300 ease-in-out ${shrinked ? "w-16" : "w-56"}`}
       >
-        <div className="border-b border-b-fg-2 w-full h-16 shrink-0 flex items-center justify-center px-2">
-          <Link
-            href="/"
-            className="text-center whitespace-nowrap overflow-hidden hover:opacity-80 transition-opacity"
-          >
+        <div className="border-b border-b-fg-2 h-16  w-full shrink-0 flex items-center justify-center">
+          <Link href="/" className="hover:opacity-80 transition-opacity ">
             <BrandLogo collapsed={shrinked} />
           </Link>
         </div>

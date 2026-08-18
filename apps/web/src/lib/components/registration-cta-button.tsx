@@ -46,7 +46,7 @@ export function RegistrationCtaButton({
 
   if (session) {
     return (
-      <Button asChild variant="accent" size={size} className={cn(className)}>
+      <Button asChild size={size} className={cn(className)}>
         <Link href="/atelier" onClick={onClick}>
           {tWebHeader("goToAtelier")}
           <ArrowRight className={iconClassName} />

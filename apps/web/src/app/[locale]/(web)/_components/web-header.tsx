@@ -47,7 +47,7 @@ export const WebHeader = ({ session }: WebHeaderProps) => {
                   {t("accessProfile")}
                 </Link>
               )}
-              <Button asChild variant="accent" size="sm">
+              <Button asChild variant="default" size="sm">
                 <Link href="/atelier">
                   {t("goToAtelier")}
                   <ArrowRight className="size-3.5" />

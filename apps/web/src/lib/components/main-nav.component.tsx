@@ -93,7 +93,7 @@ export const MainNav = ({
 
   return (
     <div className="flex flex-col items-start w-full justify-between h-full">
-      <nav className="flex flex-col gap-2 w-full px-2">
+      <nav className="flex flex-col gap-2 w-full items-start h-full justify-start  px-2">
         {routes.map((route) => {
           const name = t(route.nameKey);
           const url = `/atelier${!route.url ? "" : "/"}${route.url}`;

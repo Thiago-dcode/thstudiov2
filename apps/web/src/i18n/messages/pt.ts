@@ -1888,7 +1888,7 @@ const messages = {
         uploadButton: "Enviar",
         close: "Fechar",
         createMedia: "Criar mídia",
-        upload: "Adicionar mídia",
+        upload: "Subir mídia",
         storageFullTitle: "Armazenamento cheio: {used} / {limit} GB utilizados",
         uploadInProgress: "Envio em andamento...",
       },
@@ -1967,7 +1967,6 @@ const messages = {
         all: "Todos",
       },
       drawer: {
-        upload: "Subir mídia",
         title: "Adicionar mídia",
         refreshAria: "Atualizar mídia",
         filterAll: "Todos",
@@ -2024,7 +2023,7 @@ const messages = {
       expandSidebarAria: "Expandir barra lateral",
       collapseSidebarAria: "Recolher barra lateral",
       upgrade: "Fazer upgrade",
-      viewProfile: "Ver perfil público",
+      viewProfile: "Perfil público",
     },
     about: {
       pageTitle: "Página Sobre",

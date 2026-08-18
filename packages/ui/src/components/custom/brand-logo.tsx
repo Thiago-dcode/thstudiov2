@@ -27,13 +27,13 @@ const LOGO_HEIGHT = 366
  */
 export const BrandLogo = ({ collapsed = false, className }: BrandLogoProps) => {
   const imgClass = collapsed
-    ? "h-[156%] w-auto max-w-none object-top"
+    ? "h-full w-auto"
     : "h-full w-auto"
 
   return (
     <span
       className={cn(
-        "inline-flex h-8 tablet:h-10 w-auto items-start overflow-hidden select-none",
+        "inline-flex h-8 tablet:h-10 w-auto items-center overflow-hidden select-none",
         className
       )}
     >

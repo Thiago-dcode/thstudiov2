@@ -125,7 +125,7 @@ export class MediaService {
     try {
 
       // 1. Generate thumbnail first (for moderation check)
-      const thumbnail = await this.compressService.optimizeImageToWebp(media, 100 * 1024, 80);
+      const thumbnail = await this.compressService.optimizeImageToWebp(media, 200 * 1024, 90);
 
       // 2. Resolve user & paths so we can store the thumbnail
       const [user, mediaPublicId] = await Promise.all([

@@ -1877,7 +1877,7 @@ const messages = {
         uploadButton: "Upload",
         close: "Close",
         createMedia: "Create media",
-        upload: "Add media",
+        upload: "Upload media",
         storageFullTitle: "Storage full: {used} / {limit} GB used",
         uploadInProgress: "Upload in progress...",
       },
@@ -1954,7 +1954,6 @@ const messages = {
         all: "All",
       },
       drawer: {
-        upload: "Upload media",
         title: "Add media",
         refreshAria: "Refresh media",
         filterAll: "All",
@@ -2011,7 +2010,7 @@ const messages = {
       expandSidebarAria: "Expand sidebar",
       collapseSidebarAria: "Collapse sidebar",
       upgrade: "Upgrade",
-      viewProfile: "View public profile",
+      viewProfile: "Public profile",
     },
     about: {
       pageTitle: "About Page",

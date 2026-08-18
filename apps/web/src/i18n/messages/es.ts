@@ -1887,7 +1887,7 @@ const messages = {
         uploadButton: "Subir",
         close: "Cerrar",
         createMedia: "Crear contenido",
-        upload: "Añadir contenido",
+        upload: "Subir contenido",
         storageFullTitle: "Almacenamiento lleno: {used} / {limit} GB usados",
         uploadInProgress: "Subida en curso...",
       },
@@ -1967,7 +1967,6 @@ const messages = {
         all: "Todos",
       },
       drawer: {
-        upload: "Subir contenido",
         title: "Añadir contenido",
         refreshAria: "Actualizar contenido",
         filterAll: "Todos",
@@ -2024,7 +2023,7 @@ const messages = {
       expandSidebarAria: "Expandir barra lateral",
       collapseSidebarAria: "Contraer barra lateral",
       upgrade: "Mejorar plan",
-      viewProfile: "Ver perfil público",
+      viewProfile: "Perfil público",
     },
     about: {
       pageTitle: "Página Sobre mí",

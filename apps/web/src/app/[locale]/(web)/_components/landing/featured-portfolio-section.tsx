@@ -33,25 +33,25 @@ export async function FeaturedPortfolioSection() {
       <WebSection.Container className="pt-24">
         <div className="flex w-full flex-col  gap-2">
           <div className="flex flex-col   w-full">
-            <div className="flex flex-col items-start justify-start gap-2">
-              <h2 className="line-clamp-2 laptop:line-clamp-1">
+            <div className="flex flex-col items-start justify-start ">
+              <h2 className="line-clamp-2 laptop:line-clamp-1 text-xl!">
                 {portfolio.title}
               </h2>
-              {/* <p className=" line-clamp-3 laptop:line-clamp-none">
+              {/* <p className=" line-clamp-3 text-text-muted max-w-5xl text-base!">
                 {portfolio.description}
               </p> */}
               {/* h3, not h4: the section heading above is an h2, and skipping a level breaks the
                   document outline crawlers read. */}
-              <h3 className="text-end pb-1 mr-1">
+              <h3 className="text-end pt-2 text-text text-sm!">
                 {t("by")}:{" "}
                 <Link
                   href={`/artists/${portfolio.artist.username}`}
-                  className="font-medium"
+                  className="font-medium hover:text-text text-text-muted "
                   aria-label={t("viewProfile", {
                     username: portfolio.artist.username,
                   })}
                 >
-                  {portfolio.artist.username}
+                  @{portfolio.artist.username}
                 </Link>
               </h3>
             </div>

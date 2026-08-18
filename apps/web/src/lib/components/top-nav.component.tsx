@@ -61,7 +61,7 @@ export const TopNav = ({ username }: { username?: string }) => {
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 text-sm text-text-muted hover:text-text transition-colors"
           >
-            <span className="hidden sm:inline">{t("viewProfile")}</span>
+            <span className="">{t("viewProfile")}</span>
             <ExternalLink size={14} />
           </Link>
         )}
