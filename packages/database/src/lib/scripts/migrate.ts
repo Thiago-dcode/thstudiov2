@@ -1,5 +1,6 @@
 import SchemaBuilder from '../builder/schemaBuilder';
 import { connectDb, handleMigration } from './utils';
+import { databaseCliConfig } from './utils/config';
 import Logger from '@repo/backend-lib/utils/console';
 import { killClient } from '../client';
 import { QueryBuilder } from '../builder/queryBuilder';
@@ -51,8 +52,11 @@ export const migrate = async (options: MigrationScriptOptions = {}) => {
   try {
     const start = Date.now();
     Logger.info('🔄 Initializing migration process');
+    Logger.info(
+      `🗂️  Running compiled migrations from ${databaseCliConfig.migrationsDirectory}`,
+    );
     await connectDb();
-     Logger.info('🔄 Db connected');
+    Logger.info('🔄 Db connected');
     await SchemaBuilder.table(MIGRATION_TABLE_NAME).createIfNotExists([
       'id SERIAL PRIMARY KEY',
       'name VARCHAR(255) NOT NULL UNIQUE',
@@ -61,20 +65,26 @@ export const migrate = async (options: MigrationScriptOptions = {}) => {
     const queryBuilder = QueryBuilder.table(MIGRATION_TABLE_NAME);
     await normalizeMigrationLedger(queryBuilder);
     let migrationCount = 0;
-    await handleMigration(async (migration, migrationName) => {
+    await handleMigration(async (loadMigration, migrationName) => {
       const migrationExists = await queryBuilder
         .where('name', '=', migrationName)
         .exists();
-      if (!migrationExists) {
-        Logger.info(`🔄 Migrating ${migrationName}`);
-        await migration.up();
-        await queryBuilder.insert(
-          ['name', 'created_at'],
-          [migrationName, new Date()],
-        );
-        migrationCount++;
-        Logger.success(`✅ migrated ${migrationName}`);
+      if (migrationExists) return;
+
+      // The list comes from reading the compiled directory, so the file is always
+      // there — but load defensively rather than assuming.
+      const migration = await loadMigration();
+      if (!migration) {
+        throw new Error(`Migration file not found: ${migrationName}`);
       }
+      Logger.info(`🔄 Migrating ${migrationName}`);
+      await migration.up();
+      await queryBuilder.insert(
+        ['name', 'created_at'],
+        [migrationName, new Date()],
+      );
+      migrationCount++;
+      Logger.success(`✅ migrated ${migrationName}`);
     });
     if (migrationCount > 0)
       Logger.success(

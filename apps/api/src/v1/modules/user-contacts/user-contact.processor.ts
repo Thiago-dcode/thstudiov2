@@ -1,11 +1,16 @@
-import { Processor } from '@nestjs/bullmq';
-import { Job } from 'bullmq';
+import { InjectQueue, Processor } from '@nestjs/bullmq';
+import { Job, Queue } from 'bullmq';
 import { UserContactsRepository } from './user-contacts.repository';
-import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
+import {
+  FactoryLogService,
+  LogService,
+} from '@repo/backend-lib/services/log-service';
+import { QueueHelper } from '@repo/backend-lib/utils';
 import { CreateUserContactInput } from '@repo/common-lib/types/user-contact';
 import {
-  USER_CONTACTS_QUEUE,
   JOB_CREATE_USER_CONTACT,
+  USER_CONTACTS_QUEUE,
+  USER_NOTIFICATIONS_QUEUE,
 } from '@repo/common-lib/constants/constants';
 import { UserService } from '../users/users.service';
 import { MailService } from '@repo/backend-lib/services/mail-service';
@@ -24,6 +29,8 @@ export class UserContactProcessor extends GlobalProcessor {
     private readonly mailService: MailService,
     private readonly newContactMail: NewContactMail,
     private readonly appLogService: LogService,
+    @InjectQueue(USER_NOTIFICATIONS_QUEUE)
+    private readonly userNotificationsQueue: Queue,
   ) {
     super();
   }
@@ -49,22 +56,27 @@ export class UserContactProcessor extends GlobalProcessor {
   private async createUserContact(data: CreateUserContactInput) {
     const log = this.logger.name('create-user-contact');
     try {
+
+      log.info(`Creating user contact: ${data.contact_email} -> ${data.user_id}`,);
       // 1. Create contact in DB
       const contact = await this.userContactsRepository.create(data);
 
-      // TODO:
-      // await this.userNotificationsRepository.create({
-      //   notification_type: 'NEW_CONTACT',
-      //   user_id: data.user_id,
-      //   payload: contact,
-      // });
-
-      // 3. Fetch artist user data
       const artist = await this.userService.findOneCompacted(data.user_id);
       if (artist) {
-        // 4. Send email
         await this.mailService.sendAsync(
-          this.newContactMail.setData(artist, data, artist.language)
+          this.newContactMail.setData(artist, data, artist.language),
+        );
+
+        log.info(`Enqueing user notification`);
+
+        await QueueHelper.createOrUpdateUserNotificationJob(
+          this.userNotificationsQueue,
+          {
+            type: 'NEW_CONTACT',
+            user_id: contact.user_id,
+            entity_id: contact.id,
+            read_at: null,
+          },
         );
       } else {
         log.warn(`Artist with ID ${data.user_id} not found, skipping email.`);

@@ -1,7 +1,7 @@
 import path from 'node:path';
 import fs from 'node:fs';
 import Logger from '@repo/backend-lib/utils/console';
-import { databaseCliConfig } from './utils/config';
+import { sourceSeedsDirectory } from './utils/paths';
 import { utilsPath } from './utils';
 
 export const createSeeder = async (
@@ -32,7 +32,8 @@ export const createSeeder = async (
   }
 };
 const getSeedFilePath = (seedName: string) => {
-  const seedDirectory = databaseCliConfig.seedDirectory;
+  // Same split as migrations: scaffold `.ts` into source, run compiled `.js` from dist.
+  const seedDirectory = sourceSeedsDirectory;
   if (!fs.existsSync(seedDirectory)) {
     fs.mkdirSync(seedDirectory, { recursive: true });
   }

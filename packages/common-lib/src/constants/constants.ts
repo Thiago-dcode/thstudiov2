@@ -123,6 +123,7 @@ export const LOG_QUEUE = 'log' as const;
 export const PLAN_SUBSCRIPTIONS_QUEUE = 'plan-subscriptions' as const;
 export const WAIT_LIST_QUEUE = 'wait-list' as const;
 export const EMAIL_PREFERENCES_QUEUE = 'email-preferences' as const;
+export const USER_NOTIFICATIONS_QUEUE = 'user-notifications' as const;
 
 // ==================== JOBS (BullMQ) ====================
 export const JOB_COMPUTE_USER_METRICS = 'compute-user-metrics' as const;
@@ -134,6 +135,7 @@ export const JOB_GENERATE_SINGLE_ENTITY_METADATA = 'generate-single-entity-metad
 export const JOB_CREATE_STORAGE_REQUEST = 'create-storage-request' as const;
 export const JOB_CREATE_USER_CONTACT = 'create-user-contact' as const;
 export const JOB_CREATE_OR_UPDATE_LOCATION = 'create-or-update-location' as const;
+export const JOB_CREATE_OR_UPDATE_USER_NOTIFICATION = 'create-or-update-user-notification' as const;
 export const JOB_SEND_MAIL = 'send-mail' as const;
 export const JOB_SEND_BATCH_EMAIL = 'send-batch-email' as const;
 export const JOB_FLUSH_LOGS = 'flush-logs' as const;

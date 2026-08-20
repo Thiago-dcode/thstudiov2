@@ -1,6 +1,7 @@
 import {
     JOB_COMPUTE_USER_METRICS,
     JOB_CREATE_OR_UPDATE_LOCATION,
+    JOB_CREATE_OR_UPDATE_USER_NOTIFICATION,
     JOB_CREATE_STORAGE_REQUEST,
     JOB_CREATE_USER_CONTACT,
     JOB_CREATE_WAIT_LIST_ENTRY,
@@ -19,6 +20,7 @@ import { CreateWaitListJobInput } from '@repo/common-lib/types/wait-list';
 import { CreateOrUpdateLocationPayload } from '@repo/common-lib/types/location';
 import { CreateUserStorageRequestInput } from '@repo/common-lib/types/user-storage-request';
 import { CreateOrUpdateEmailPreferencePayload } from '@repo/common-lib/types/email-preferences';
+import { CreateUserNotificationInput } from '@repo/common-lib/types/user-notification';
 import { JobsOptions, Queue } from "bullmq";
 
 /**
@@ -131,6 +133,21 @@ export class QueueHelper {
             {
                 priority: 10,
                 removeOnComplete: true,
+                attempts: 3,
+                backoff: { type: 'exponential', delay: 1000 },
+            },
+        );
+    }
+
+    static async createOrUpdateUserNotificationJob(queue: Queue, dto: CreateUserNotificationInput) {
+        await queue.add(
+            JOB_CREATE_OR_UPDATE_USER_NOTIFICATION,
+            dto,
+            {
+                jobId: `user-notification-${dto.type}-${dto.entity_id}`,
+                priority: 10,
+                removeOnComplete: true,
+                removeOnFail: true,
                 attempts: 3,
                 backoff: { type: 'exponential', delay: 1000 },
             },

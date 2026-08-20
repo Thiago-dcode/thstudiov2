@@ -1,7 +1,5 @@
 #!/usr/bin/env ts-node
 
-import path from 'node:path';
-import fs from 'node:fs';
 import { Command } from 'commander';
 import { migrate } from '../lib/scripts/migrate';
 import { createMigration } from '../lib/scripts/create-migration';
@@ -19,24 +17,9 @@ import {
   DESTRUCTIVE_PASSWORD_ENV,
   verifyDestructivePassword,
 } from '../lib/scripts/utils/destructive-password';
-import {
-  databaseCliConfig,
-  setDatabaseCliConfig,
-} from '../lib/scripts/utils/config';
 
-// When running the compiled CLI (`node dist/src/bin/cli.js`), load migrations from
-// dist so Docker/production images do not need tsx or TypeScript sources.
-const distMigrationsDir = path.join(process.cwd(), 'dist', 'src', 'migrations');
-if (fs.existsSync(distMigrationsDir)) {
-  const distSeedsDir = path.join(process.cwd(), 'dist', 'src', 'seeds');
-  setDatabaseCliConfig({
-    ...databaseCliConfig,
-    migrationsDirectory: distMigrationsDir,
-    seedDirectory: fs.existsSync(distSeedsDir)
-      ? distSeedsDir
-      : databaseCliConfig.seedDirectory,
-  });
-}
+// Migration/seed directories are resolved in `lib/scripts/utils/paths`:
+// scaffolding writes `.ts` to `src/**`, execution loads `.js` from `dist/src/**`.
 
 const program = new Command();
 

@@ -117,21 +117,38 @@ export class ColumnBuilder {
     foreignTableColumnName: string = 'id',
     options?: ColumnAttributesWithForeignKey,
   ) {
-    // If onDelete is SET NULL, the column must be nullable
+    // A `SET NULL` referential action needs a nullable column, so it overrides an explicit
+    // `nullable: false`. Every other action (CASCADE, RESTRICT, …) must leave the caller's
+    // choice alone: this used to blank `nullable` for *any* onDelete/onUpdate, which is why
+    // FKs declared `nullable: false` — e.g. `user_notifications.user_id` — came out nullable.
+    const forcesNull =
+      options?.onDelete === 'SET NULL' || options?.onUpdate === 'SET NULL';
     const _options = {
       type: 'INTEGER',
       ...options,
       unique: false,
-      nullable:
-        options?.onDelete || options?.onUpdate ? undefined : options?.nullable,
+      nullable: forcesNull ? true : options?.nullable,
     };
-    return `${this.validateString(columnName)} ${_options.type} ${_options.constraintName ? `CONSTRAINT ${_options.constraintName} ` : ''}REFERENCES ${this.validateString(foreignTableName)} (${this.validateString(foreignTableColumnName)})${!_options.onDelete && !_options.onUpdate ? ' ' + this.buildOptions(_options) : ''}${
-      _options.onDelete || _options.onUpdate
+    const hasReferentialActions = Boolean(
+      _options.onDelete || _options.onUpdate,
+    );
+    // Postgres accepts column constraints on either side of the REFERENCES clause, so the
+    // no-action path keeps emitting the full option string where it always did. With actions
+    // present only nullability is meaningful, and it trails them: `... ON DELETE CASCADE NOT NULL`.
+    // `undefined` still means "say nothing", so existing FKs that never passed `nullable`
+    // keep the database default instead of silently becoming NOT NULL.
+    const nullability =
+      _options.nullable === undefined
+        ? ''
+        : ` ${_options.nullable ? 'NULL' : 'NOT NULL'}`;
+    return `${this.validateString(columnName)} ${_options.type} ${_options.constraintName ? `CONSTRAINT ${_options.constraintName} ` : ''}REFERENCES ${this.validateString(foreignTableName)} (${this.validateString(foreignTableColumnName)})${!hasReferentialActions ? ' ' + this.buildOptions(_options) : ''}${
+      hasReferentialActions
         ? ' ' +
           this.buildForeignKeyOptions({
             onDelete: _options.onDelete,
             onUpdate: _options.onUpdate,
-          })
+          }) +
+          nullability
         : ''
     }`;
   }

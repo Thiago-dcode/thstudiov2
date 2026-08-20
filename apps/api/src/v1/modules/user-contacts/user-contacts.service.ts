@@ -9,6 +9,7 @@ import {
   USER_CONTACTS_QUEUE,
 } from '@repo/common-lib/constants/constants';
 import { QueueHelper } from '@repo/backend-lib/utils';
+import { LogService } from '@repo/backend-lib/services/log-service';
 
 @Injectable()
 export class UserContactsService {
@@ -16,9 +17,11 @@ export class UserContactsService {
     private readonly userContactsRepository: UserContactsRepository,
     @InjectQueue(EMAIL_PREFERENCES_QUEUE) private readonly emailPreferencesQueue: Queue,
     @InjectQueue(USER_CONTACTS_QUEUE) private readonly contactQueue: Queue,
+    private readonly logger: LogService,
   ) {}
 
   async create(data: CreateUserContactRequest) {
+    this.logger.info("Creating new contact",data);
     await QueueHelper.createOrUpdateEmailPreferenceJob(this.emailPreferencesQueue, {
       email: data.contact_email,
       user_id: data.user_id,

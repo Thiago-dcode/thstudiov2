@@ -1,7 +1,7 @@
 import path from 'node:path';
 import fs from 'node:fs';
 import Logger from '@repo/backend-lib/utils/console';
-import { databaseCliConfig } from './utils/config';
+import { sourceMigrationsDirectory } from './utils/paths';
 import { utilsPath } from './utils';
 
 export const createMigration = async (
@@ -25,6 +25,9 @@ export const createMigration = async (
     fs.writeFileSync(migrationFilePath, templateContent);
 
     Logger.success('Migration file created', migrationFilePath);
+    Logger.info(
+      'Write your `up`/`down`, then build the package so `dbcli migrate` can run the compiled file.',
+    );
     process.exit(0);
   } catch (error) {
     Logger.error('Error creating migration:', error);
@@ -32,7 +35,10 @@ export const createMigration = async (
   }
 };
 const getMigrationFilePathRec = (migrationName: string, tries = 1) => {
-  const migrationDirectory = databaseCliConfig.migrationsDirectory;
+  // Scaffolding always targets the TypeScript source tree. `migrate`/`rollback`
+  // read from `dist/src/migrations` instead, so a migration only becomes runnable
+  // once the package is rebuilt.
+  const migrationDirectory = sourceMigrationsDirectory;
   if (!fs.existsSync(migrationDirectory)) {
     fs.mkdirSync(migrationDirectory, { recursive: true });
   }

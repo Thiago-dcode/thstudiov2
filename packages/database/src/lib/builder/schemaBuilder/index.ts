@@ -135,6 +135,7 @@ class SchemaBuilder extends BaseBuilder {
   }
   public static async createEnum(enumName:  AvailableEnums) {
     const enumValues = ENUMS[enumName].map((value) => `'${value}'`).join(',');
+    console.log("CREATING ENUM",enumValues)
     return await getClient().query(
       `CREATE TYPE ${enumName} AS ENUM (${enumValues});`,
     );
