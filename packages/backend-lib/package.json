@@ -4,9 +4,9 @@
   "private": true,
   "license": "MIT",
   "scripts": {
-    "dev": "tsc --watch",
-    "dev:backend": "tsc --watch",
-    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc -p tsconfig.build.json --watch",
+    "dev:backend": "tsc -p tsconfig.build.json --watch",
+    "build": "tsc -p tsconfig.build.json --incremental false",
     "test": "jest  --passWithNoTests --config ./jest.config.ts",
     "test:watch": "jest  --passWithNoTests --config ./jest.config.ts  --watch",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",

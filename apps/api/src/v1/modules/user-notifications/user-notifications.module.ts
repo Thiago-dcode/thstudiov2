@@ -10,9 +10,12 @@ import { UserNotificationsController } from './user-notifications.controller';
 import { UserNotificationsProcessor } from './user-notifications.processor';
 import { UserNotificationsRepository } from './user-notifications.repository';
 import { UserNotificationsService } from './user-notifications.service';
+import { UserNotificationsGateway } from './user-notifications.gateway';
+import { AuthCoreModule } from '../auth/auth-core.module';
 
 @Module({
   imports: [
+    AuthCoreModule,
     BullModule.registerQueue(
       { name: USER_NOTIFICATIONS_QUEUE },
       { name: LOG_QUEUE },
@@ -23,6 +26,7 @@ import { UserNotificationsService } from './user-notifications.service';
     UserNotificationsRepository,
     UserNotificationsService,
     UserNotificationsProcessor,
+    UserNotificationsGateway,
     {
       provide: LogService,
       useFactory: (logQueue: Queue) => {
@@ -35,4 +39,4 @@ import { UserNotificationsService } from './user-notifications.service';
   ],
   exports: [UserNotificationsService],
 })
-export class UserNotificationsModule {}
+export class UserNotificationsModule { }

@@ -13,10 +13,12 @@ export class RequestService {
   constructor(protected readonly storage: AsyncLocalStorage<RequestStore>) { }
 
   /** Called once per request in the middleware to establish an isolated store. */
-  async run(callback: () => void): Promise<void> {
+  async run(callback: (self: RequestService) => void): Promise<void> {
     this.storage.run(
       { requestId: await generateUUID(), user: null, language: null, user_agent: null, ip_address: null, path: null, pagination: null },
-      callback,
+      () => {
+        callback(this)
+      },
     );
   }
 

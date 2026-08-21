@@ -39,7 +39,7 @@ import { RequestStore } from '@repo/common-lib/types/request';
     StorageService,
     CompressService,
     Helpers,
-    AsyncLocalStorage
+    AsyncLocalStorage,
   ],
   providers: [
     RequestService,
@@ -48,7 +48,7 @@ import { RequestStore } from '@repo/common-lib/types/request';
     LogProcessor,
     LogRetentionTask,
     {
-      provide:AsyncLocalStorage,
+      provide: AsyncLocalStorage,
       useValue: new AsyncLocalStorage<RequestStore>()
     },
     {

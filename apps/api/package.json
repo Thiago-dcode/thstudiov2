@@ -26,8 +26,10 @@
     "@nestjs/jwt": "^11.0.2",
     "@nestjs/mapped-types": "^2.1.1",
     "@nestjs/platform-express": "^11.1.28",
+    "@nestjs/platform-socket.io": "^11.2.1",
     "@nestjs/schedule": "^6.1.3",
     "@nestjs/throttler": "^6.5.0",
+    "@nestjs/websockets": "^11.2.1",
     "@repo/backend-lib": "workspace:*",
     "@repo/common-lib": "workspace:*",
     "@repo/database": "workspace:*",
@@ -39,6 +41,7 @@
     "nestjs-i18n": "^10.8.5",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
+    "socket.io": "4.8.3",
     "stripe": "^22.4.0"
   },
   "devDependencies": {

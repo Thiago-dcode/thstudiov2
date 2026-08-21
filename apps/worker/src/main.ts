@@ -1,76 +1,76 @@
-import { config } from '@repo/common-lib/config';
-import express from 'express';
-// import { Job } from 'bullmq';
-const appConfig = config();
-const WORKER_PORT = process.env.WORKER_PORT || 8081;
+// import { config } from '@repo/common-lib/config';
+// import express from 'express';
+// // import { Job } from 'bullmq';
+// const appConfig = config();
+// const WORKER_PORT = process.env.WORKER_PORT || 8081;
 
-const app = express();
+// const app = express();
 
-app.get('/', (_req, res) => {
-  res.json({ status: 'ok', service: 'worker' });
-});
-
-// TODO: Register workers here
-// // Example:
-// new Worker('queue-name', async (job: Job) => {
-
-//   JobStrategyFactory.resolve(job)
-
+// app.get('/', (_req, res) => {
+//   res.json({ status: 'ok', service: 'worker' });
 // });
 
-const server = app.listen(WORKER_PORT, () => {
-  console.log(`[worker] listening on port ${WORKER_PORT}`);
-  console.log(`[worker] redis: ${appConfig.redis.url}`);
-});
+// // TODO: Register workers here
+// // // Example:
+// // new Worker('queue-name', async (job: Job) => {
 
-async function shutdown() {
-  console.log('[worker] shutting down...');
-  server.close();
-  // TODO: close all registered workers here
-  process.exit(0);
-}
+// //   JobStrategyFactory.resolve(job)
 
-process.on('SIGTERM', shutdown);
-process.on('SIGINT', shutdown);
+// // });
 
+// const server = app.listen(WORKER_PORT, () => {
+//   console.log(`[worker] listening on port ${WORKER_PORT}`);
+//   console.log(`[worker] redis: ${appConfig.redis.url}`);
+// });
 
-
-// abstract class JobStrategy {
-
-//   constructor(public readonly job: Job) { }
-
-//   abstract handle(): Promise<any>
-
+// async function shutdown() {
+//   console.log('[worker] shutting down...');
+//   server.close();
+//   // TODO: close all registered workers here
+//   process.exit(0);
 // }
 
-
-// class VideoProcessStrategy extends JobStrategy {
-
-
-
-//   async handle() {
-
-//   }
-// }
-
-
-// class JobStrategyFactory {
+// process.on('SIGTERM', shutdown);
+// process.on('SIGINT', shutdown);
 
 
 
-//   static async resolve(job: Job) {
+// // abstract class JobStrategy {
+
+// //   constructor(public readonly job: Job) { }
+
+// //   abstract handle(): Promise<any>
+
+// // }
+
+
+// // class VideoProcessStrategy extends JobStrategy {
 
 
 
-//     switch (job.name) {
-//       case 'video':
+// //   async handle() {
 
-//         return (new VideoProcessStrategy(job)).handle()
-
-//       default:
-//     }
+// //   }
+// // }
 
 
-//   }
-// }
+// // class JobStrategyFactory {
+
+
+
+// //   static async resolve(job: Job) {
+
+
+
+// //     switch (job.name) {
+// //       case 'video':
+
+// //         return (new VideoProcessStrategy(job)).handle()
+
+// //       default:
+// //     }
+
+
+// //   }
+// // }
 
