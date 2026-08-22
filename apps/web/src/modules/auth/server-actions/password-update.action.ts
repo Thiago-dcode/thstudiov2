@@ -1,6 +1,6 @@
 "use server";
 
-import { PASSWORD_UPDATED_COOKIE_NAME } from "@repo/common-lib/constants/constants";
+import { PASSWORD_UPDATED_COOKIE_NAME } from "@repo/common-lib/constants/cookies";
 import type { ActionReturn } from "@repo/common-lib/types/response";
 import type { User } from "@repo/common-lib/types/user";
 import { decrypt, encrypt } from "@repo/common-lib/utils/encrypt";

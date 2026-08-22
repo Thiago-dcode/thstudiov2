@@ -11,7 +11,7 @@ import {
   JOB_CREATE_USER_CONTACT,
   USER_CONTACTS_QUEUE,
   USER_NOTIFICATIONS_QUEUE,
-} from '@repo/common-lib/constants/constants';
+} from '@repo/common-lib/constants/queues';
 import { UserService } from '../users/users.service';
 import { MailService } from '@repo/backend-lib/services/mail-service';
 import { NewContactMail } from './mails/new-contact.mail';
@@ -60,6 +60,9 @@ export class UserContactProcessor extends GlobalProcessor {
       log.info(`Creating user contact: ${data.contact_email} -> ${data.user_id}`,);
       // 1. Create contact in DB
       const contact = await this.userContactsRepository.create(data);
+
+      log.info(`User contact created`,contact);
+
 
       const artist = await this.userService.findOneCompacted(data.user_id);
       if (artist) {

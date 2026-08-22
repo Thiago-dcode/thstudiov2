@@ -7,7 +7,7 @@ import { UpdateUserContactRequest } from './requests/update-user-contact.request
 import {
   EMAIL_PREFERENCES_QUEUE,
   USER_CONTACTS_QUEUE,
-} from '@repo/common-lib/constants/constants';
+} from '@repo/common-lib/constants/queues';
 import { QueueHelper } from '@repo/backend-lib/utils';
 import { LogService } from '@repo/backend-lib/services/log-service';
 

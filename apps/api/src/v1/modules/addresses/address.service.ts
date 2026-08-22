@@ -2,10 +2,8 @@ import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
-import {
-  LOCATION_QUEUE,
-  UPDATE_PROFILE_STATUS_EVENT,
-} from '@repo/common-lib/constants/constants';
+import { UPDATE_PROFILE_STATUS_EVENT } from '@repo/common-lib/constants/events';
+import { LOCATION_QUEUE } from '@repo/common-lib/constants/queues';
 import { QueueHelper } from '@repo/backend-lib/utils';
 import type { CreateOrUpdateLocationPayload } from '@repo/common-lib/types/location';
 import { Query } from '@repo/database/facades';

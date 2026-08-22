@@ -1,6 +1,6 @@
 "use client";
 
-import { MAX_COLLECTION_ITEMS } from "@repo/common-lib/constants/constants";
+import { MAX_COLLECTION_ITEMS } from "@repo/common-lib/constants/limits";
 import { MAX_HIGHLIGHT_COLLECTIONS } from "@repo/common-lib/constants/highlights";
 import type {
   CollectionInput,

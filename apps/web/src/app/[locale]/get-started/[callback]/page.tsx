@@ -1,4 +1,4 @@
-import { FUNNEL_LAST_STEP } from "@repo/common-lib/constants/constants";
+import { FUNNEL_LAST_STEP } from "@repo/common-lib/constants/limits";
 import { Button } from "@repo/ui/components/shadcn/button";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";

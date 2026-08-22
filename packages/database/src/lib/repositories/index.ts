@@ -30,7 +30,7 @@ const DEFAULT_OPTIONS: BaseRepositoryOptions = {
 export abstract class BaseRepository {
 
   protected options: BaseRepositoryOptions;
-  
+
   constructor(protected readonly tableName: TableName, protected readonly logService: LogService, options?: BaseRepositoryOptions) {
     this.options = { ...DEFAULT_OPTIONS, ...options };
   }
@@ -40,7 +40,7 @@ export abstract class BaseRepository {
    * Use this for isolated queries that shouldn't share state with `this.query`.
    */
   protected query(): QueryBuilder {
-    return new QueryBuilder(this.tableName, this.options.softDelete, this.options.softDeleteCol);
+    return new QueryBuilder(this.tableName, this.options.softDelete, this.options.softDeleteCol, this.options.primaryKey);
   }
 
   protected async applyFilters(filters: any, query: QueryBuilder): Promise<QueryBuilder> {
@@ -158,7 +158,8 @@ export abstract class BaseRepository {
   protected async _create<T = any>(data: Record<string, SqlValue>, options?: { select?: string[] | string, join?: Join[] }): Promise<T> {
     const columns = Object.keys(data);
     const values = Object.values(data);
-    return await this.query().insertAndGet<T>(columns, values, options?.select, options?.join);
+    const query = this.query();
+    return await query.insertAndGet<T>(columns, values, options?.select, options?.join);
   }
 
 

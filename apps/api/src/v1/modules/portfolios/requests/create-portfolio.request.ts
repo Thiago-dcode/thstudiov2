@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsOptional, IsString, IsArray, ValidateNested, ArrayMaxSize } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
-import { MAX_CATEGORIES_PORTFOLIO } from '@repo/common-lib/constants/constants';
+import { MAX_CATEGORIES_PORTFOLIO } from '@repo/common-lib/constants/limits';
 import { IsUserAuth } from 'src/common/validators/is-user-auth.validtor';
 import { ModelExist } from 'src/common/validators/model-exist.validtor';
 import { ModelArrayExist } from 'src/common/validators/model-array-exist.validtor';

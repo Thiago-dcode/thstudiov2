@@ -13,7 +13,13 @@ import { PortfolioRepository } from "./portfolio.repository";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { InjectQueue } from "@nestjs/bullmq";
 import { Queue } from "bullmq";
-import { AI_QUEUE, CACHE_KEY_PORTFOLIO_SEO, MAX_PORTFOLIO_ITEMS, UPDATE_PROFILE_STATUS_EVENT, USER_METRICS_QUEUE } from "@repo/common-lib/constants/constants";
+import { MAX_PORTFOLIO_ITEMS } from "@repo/common-lib/constants/limits";
+import { UPDATE_PROFILE_STATUS_EVENT } from "@repo/common-lib/constants/events";
+import {
+  AI_QUEUE,
+  USER_METRICS_QUEUE,
+} from "@repo/common-lib/constants/queues";
+import { CACHE_KEY_PORTFOLIO_SEO } from "@repo/common-lib/constants/cache";
 import { QueueHelper, SINGLE_ENTITY_METADATA_DEBOUNCE_MS } from "@repo/backend-lib/utils";
 import { TABLES_ENUM } from "@repo/common-lib/constants/enums";
 import { UpdateProfileStatusEvent } from "../profile-status/events/update-profile-status.event";

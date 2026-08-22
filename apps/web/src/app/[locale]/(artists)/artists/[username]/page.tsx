@@ -1,4 +1,4 @@
-import { PLATFORM_CURRENCY } from "@repo/common-lib/constants/constants";
+import { PLATFORM_CURRENCY } from "@repo/common-lib/constants/limits";
 import type { Service } from "@repo/common-lib/types/service";
 import type { UserProfile } from "@repo/common-lib/types/user";
 import { normalizeUsername } from "@repo/common-lib/utils/username";

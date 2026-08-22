@@ -1,4 +1,4 @@
-import { FUNNEL_LAST_STEP } from "@repo/common-lib/constants/constants";
+import { FUNNEL_LAST_STEP } from "@repo/common-lib/constants/limits";
 import { redirect } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { config } from "@/lib/config";

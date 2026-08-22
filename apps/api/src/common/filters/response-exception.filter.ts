@@ -1,11 +1,11 @@
 import { Catch, ExceptionFilter, ArgumentsHost } from '@nestjs/common';
+import { LANGUAGE_HEADER } from '@repo/common-lib/constants/language';
 import {
   IP_ADDRESS_HEADER,
-  LANGUAGE_HEADER,
   REQUEST_START_TIME,
   USER_AGENT_HEADER,
   USER_ID_HEADER,
-} from '@repo/common-lib/constants/constants';
+} from '@repo/common-lib/constants/headers';
 import {
   FactoryLogService,
   LogService,

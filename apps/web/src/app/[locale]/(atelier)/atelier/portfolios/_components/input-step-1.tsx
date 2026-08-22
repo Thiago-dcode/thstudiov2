@@ -2,7 +2,7 @@
 import {
   ALLOWED_IMAGE_FILE_TYPES,
   MAX_DISCIPLINES_PORTFOLIO,
-} from "@repo/common-lib/constants/constants";
+} from "@repo/common-lib/constants/limits";
 import { isHighlightToggleDisabled } from "@repo/common-lib/utils/highlights";
 import { FileInput } from "@repo/ui/components/custom/file-input";
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";

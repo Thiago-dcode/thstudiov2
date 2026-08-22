@@ -1,51 +1,59 @@
 import { WebSocketGateway, SubscribeMessage, MessageBody, ConnectedSocket, WebSocketServer } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { AuthHelper } from '../auth/auth-helper.service';
-import { RequestService } from 'src/common/services/request.service';
 import { extractToken } from 'src/common/utils/websockets.util';
-import { UnauthorizedException } from '@nestjs/common';
+import { UserNotification } from '@repo/common-lib/types/user-notification';
 // import { RequestService } from 'src/common/services/request.service';
 
 @WebSocketGateway({ namespace: 'notifications', cors: true })
 export class UserNotificationsGateway {
 
-    constructor(private readonly authHelper: AuthHelper, private readonly requestService: RequestService) {
+    constructor(private readonly authHelper: AuthHelper) {
 
     }
 
     @WebSocketServer() server: Server;
-    @SubscribeMessage('another')
-    handleMessage(@MessageBody() data: string, @ConnectedSocket() client: Socket) {
+    @SubscribeMessage('update')
+    handleMessage(@MessageBody() _: string, @ConnectedSocket() client: Socket) {
 
         setTimeout(() => {
-            client.emit('another', { text: data });
+            client.emit('notification', "Hello: " + client.data.user.username);
         }, 2000)
 
 
     }
 
     async handleConnection(client: Socket) {
+        const user = client.data.user
+        const room = this.getUserRoom(user.id)
+        await client.join(room)
+        console.log("ROOM", room)
+        this.server.to(room).emit('connected', "You are connected")
+    }
 
-        const token = extractToken(client);
-        if (!token) {
-            throw new UnauthorizedException();
-        }
+    afterInit(server: Server) {
 
-        await this.requestService.run(async (self) => {
-
-            self.user = await this.authHelper.resolveUserAuth(token)
-
-        });
-
-        const room = this.getUserRoom(this.requestService.user.id);
-        client.join(room);
-
-        client.to(room).emit('notification', { text: 'you are connected', id: client.id });
+        server.use(async (socket, next) => {
+            try {
+                const token = extractToken(socket);
+                if (!token) return next(new Error('Not authorized'))
+                socket.data.user = await this.authHelper.resolveUserAuth(token)
+                next()
+            } catch {
+                next(new Error('Not authorized'))
+            }
+        })
     }
 
     private getUserRoom(id: number) {
 
         return `user_notification-${id}`
+    }
+
+
+    async notifyUser(notification: UserNotification) {
+        console.log("NOTIFYING USER",notification);
+        this.server.to(this.getUserRoom(notification.user_id)).emit('notification', notification);
     }
 
 

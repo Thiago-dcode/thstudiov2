@@ -5,7 +5,7 @@ import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-se
 import { ViewService } from '@repo/backend-lib/services/view-service/base';
 import { ViewData } from '@repo/backend-lib/services/view-service/types';
 import { EnumType } from '@repo/common-lib/constants/enums';
-import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/constants';
+import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/language';
 import { getConfigValue } from '@repo/common-lib/config/utils';
 import { EmailPreferencesService } from 'src/v1/modules/email-preferences/email-preferences.service';
 

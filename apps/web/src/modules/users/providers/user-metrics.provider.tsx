@@ -1,6 +1,6 @@
 "use client";
 
-import { STRIKES_TO_BAN } from "@repo/common-lib/constants/constants";
+import { STRIKES_TO_BAN } from "@repo/common-lib/constants/limits";
 import type { UserMetrics } from "@repo/common-lib/types/user";
 import {
   createContext,

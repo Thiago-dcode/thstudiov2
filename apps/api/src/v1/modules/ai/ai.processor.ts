@@ -26,20 +26,24 @@ import {
 } from '@repo/common-lib/types/ai';
 import { UserProfile } from '@repo/common-lib/types/user';
 import {
+  STRIKES_TO_BAN,
+  BAN_DURATION_DAYS,
+  PERMANENT_BAN_THRESHOLD,
+  CREDIT_CONSUMING_LLM_USAGE_TYPES,
+} from '@repo/common-lib/constants/limits';
+import {
   AI_QUEUE,
   JOB_RECORD_LLM_USAGE,
   JOB_RECORD_MEDIA_MODERATION,
   JOB_GENERATE_ENTITY_METADATA,
   JOB_GENERATE_SINGLE_ENTITY_METADATA,
-  STRIKES_TO_BAN,
-  BAN_DURATION_DAYS,
-  PERMANENT_BAN_THRESHOLD,
   USER_METRICS_QUEUE,
-  CREDIT_CONSUMING_LLM_USAGE_TYPES,
+} from '@repo/common-lib/constants/queues';
+import {
   CACHE_KEY_PORTFOLIO_SEO,
   CACHE_KEY_COLLECTION_SEO,
   CACHE_KEY_SERVICE_SEO,
-} from '@repo/common-lib/constants/constants';
+} from '@repo/common-lib/constants/cache';
 import { Helpers } from 'src/common/services/helpers.service';
 import { GlobalProcessor } from 'src/common/processors/global.processor';
 import { UserExtraDataService } from '../user-extra-data/user-extra-data.service';

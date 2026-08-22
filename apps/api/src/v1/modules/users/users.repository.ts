@@ -26,7 +26,8 @@ import {
   ArtistSearchSelectColumn,
 } from '@repo/common-lib/schemas/user';
 import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
-import { DEFAULT_LANGUAGE, SEO_REGENERATION_MIN_INTERVAL_DAYS } from '@repo/common-lib/constants/constants';
+import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/language';
+import { SEO_REGENERATION_MIN_INTERVAL_DAYS } from '@repo/common-lib/constants/cache';
 import { Join } from '@repo/common-lib/types/database';
 import { CategoryBase } from '@repo/common-lib/types/category';
 import { EntitySeoFields, SeoTranslation } from '@repo/common-lib/types/ai';

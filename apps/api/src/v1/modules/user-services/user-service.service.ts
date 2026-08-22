@@ -2,7 +2,10 @@ import { Injectable } from "@nestjs/common";
 import { Helpers } from "src/common/services/helpers.service";
 import { FullService, Service, ServiceIndexRequest } from "@repo/common-lib/types/service";
 import { EntitySeoMetadata } from "@repo/common-lib/types/ai";
-import { CACHE_KEY_SERVICE_SEO, SEO_METADATA_CACHE_TTL } from "@repo/common-lib/constants/constants";
+import {
+  CACHE_KEY_SERVICE_SEO,
+  SEO_METADATA_CACHE_TTL,
+} from "@repo/common-lib/constants/cache";
 import { UserRepository } from "../users/users.repository";
 import { ServiceRepository } from "../services/service.repository";
 

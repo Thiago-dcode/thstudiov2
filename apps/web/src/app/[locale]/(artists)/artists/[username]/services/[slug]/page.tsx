@@ -1,4 +1,4 @@
-import { PLATFORM_CURRENCY_SYMBOL } from "@repo/common-lib/constants/constants";
+import { PLATFORM_CURRENCY_SYMBOL } from "@repo/common-lib/constants/limits";
 import { ArrowRight, Check, Circle, Pencil } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";

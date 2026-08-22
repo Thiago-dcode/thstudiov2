@@ -1,5 +1,5 @@
 import { API_ERRORS } from "@repo/common-lib/constants/api-errors";
-import { APP_API_KEY_HEADER } from "@repo/common-lib/constants/constants";
+import { APP_API_KEY_HEADER } from "@repo/common-lib/constants/headers";
 import type {
   ActionReturn,
   ErrorResponse,

@@ -1,5 +1,5 @@
 import { getConfigValue } from "@repo/common-lib/config/utils";
-import { APP_API_KEY_HEADER } from "@repo/common-lib/constants/constants";
+import { APP_API_KEY_HEADER } from "@repo/common-lib/constants/headers";
 import { type NextRequest, NextResponse } from "next/server";
 import type { UserAuth } from "@/modules/auth/auth.types";
 import {

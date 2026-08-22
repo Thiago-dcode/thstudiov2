@@ -3,7 +3,12 @@ import { QueryBuilder } from '@repo/database/queryBuilder';
 import { PlansRepository } from './plans.repository';
 import { IndexPlanRequest } from './requests/index-plan.request';
 import { Helpers } from 'src/common/services/helpers.service';
-import { CACHE_KEY_PLANS, CACHE_KEY_FREE_PLAN, CACHE_KEY_ACTIVE_PLAN, CACHE_KEY_ACTIVE_PLANS_BASE } from '@repo/common-lib/constants/constants';
+import {
+  CACHE_KEY_PLANS,
+  CACHE_KEY_FREE_PLAN,
+  CACHE_KEY_ACTIVE_PLAN,
+  CACHE_KEY_ACTIVE_PLANS_BASE,
+} from '@repo/common-lib/constants/cache';
 
 @Injectable()
 export class PlansService {

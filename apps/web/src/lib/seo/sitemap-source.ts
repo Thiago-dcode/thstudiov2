@@ -1,5 +1,5 @@
 import "server-only";
-import { APP_TOKEN_HEADER } from "@repo/common-lib/constants/constants";
+import { APP_TOKEN_HEADER } from "@repo/common-lib/constants/headers";
 import type {
   SitemapArtistItem,
   SitemapCounts,

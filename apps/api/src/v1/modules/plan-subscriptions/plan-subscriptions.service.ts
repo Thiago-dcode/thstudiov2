@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { SetFreeSubscriptionEvent } from './events/set-free-subscription.event';
-import { SET_FREE_SUBSCRIPTION_EVENT } from '@repo/common-lib/constants/constants';
+import { SET_FREE_SUBSCRIPTION_EVENT } from '@repo/common-lib/constants/events';
 import { PlanSubscriptionsRepository } from './plan-subscriptions.repository';
 import { InitiatePlanSubscriptionRequest } from './requests/initiate-plan-subscription.request';
 import { PlanPricesService } from '../plan-prices/plan-prices.service';
@@ -23,7 +23,10 @@ import { StripeService } from 'src/common/services/stripe.service';
 import { LogService } from '@repo/backend-lib/services/log-service';
 import { paypal } from '@repo/backend-lib/services/payment-service/paypal';
 import { PaymentMethodsService } from '../utils/payment-methods.service';
-import { CACHE_KEY_ACTIVE_SUBSCRIPTION, CACHE_KEY_ACTIVE_PLAN } from '@repo/common-lib/constants/constants';
+import {
+  CACHE_KEY_ACTIVE_SUBSCRIPTION,
+  CACHE_KEY_ACTIVE_PLAN,
+} from '@repo/common-lib/constants/cache';
 import { cleanObj } from '@repo/common-lib/utils/object';
 import { CustomerPortalRequest } from './requests/customer-portal.request';
 import { Benefit } from '@repo/common-lib/types/benefit';

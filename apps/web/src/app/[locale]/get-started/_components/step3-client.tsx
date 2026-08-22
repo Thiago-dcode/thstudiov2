@@ -1,5 +1,5 @@
 "use client";
-import { MAX_CATEGORIES_USER } from "@repo/common-lib/constants/constants";
+import { MAX_CATEGORIES_USER } from "@repo/common-lib/constants/limits";
 import { Label } from "@repo/ui/components/shadcn/label";
 import { cn } from "@repo/ui/lib/utils";
 import { useTranslations } from "next-intl";

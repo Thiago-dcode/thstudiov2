@@ -1,6 +1,6 @@
 "use server";
 
-import { INITIATE_SUBCRIPTION_COOKIE } from "@repo/common-lib/constants/constants";
+import { INITIATE_SUBCRIPTION_COOKIE } from "@repo/common-lib/constants/cookies";
 import type {
   HandleSubscriptionProcessResponse,
   InitiateSubscriptionRequest,

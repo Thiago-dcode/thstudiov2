@@ -1,17 +1,17 @@
 import {
-    JOB_COMPUTE_USER_METRICS,
-    JOB_CREATE_OR_UPDATE_LOCATION,
-    JOB_CREATE_OR_UPDATE_USER_NOTIFICATION,
-    JOB_CREATE_STORAGE_REQUEST,
-    JOB_CREATE_USER_CONTACT,
-    JOB_CREATE_WAIT_LIST_ENTRY,
-    JOB_GENERATE_ENTITY_METADATA,
-    JOB_GENERATE_SINGLE_ENTITY_METADATA,
-    JOB_INVITE_WAIT_LIST_BATCH,
-    JOB_RECORD_LLM_USAGE,
-    JOB_RECORD_MEDIA_MODERATION,
-    JOB_UPSERT_EMAIL_PREFERENCE_BY_EMAIL,
-} from '@repo/common-lib/constants/constants';
+  JOB_COMPUTE_USER_METRICS,
+  JOB_CREATE_OR_UPDATE_LOCATION,
+  JOB_CREATE_OR_UPDATE_USER_NOTIFICATION,
+  JOB_CREATE_STORAGE_REQUEST,
+  JOB_CREATE_USER_CONTACT,
+  JOB_CREATE_WAIT_LIST_ENTRY,
+  JOB_GENERATE_ENTITY_METADATA,
+  JOB_GENERATE_SINGLE_ENTITY_METADATA,
+  JOB_INVITE_WAIT_LIST_BATCH,
+  JOB_RECORD_LLM_USAGE,
+  JOB_RECORD_MEDIA_MODERATION,
+  JOB_UPSERT_EMAIL_PREFERENCE_BY_EMAIL,
+} from '@repo/common-lib/constants/queues';
 import { CreateMediaModerationInput } from '@repo/common-lib/types/media-moderation';
 import { GenerateEntityMetadataPayload, GenerateSingleEntityMetadataPayload } from '@repo/common-lib/types/ai';
 import { CreateLlmTokensUsageInput } from '@repo/common-lib/types/llm-tokens-usage';

@@ -3,7 +3,7 @@ import { EnumType } from '@repo/common-lib/constants/enums';
 import {
   CACHE_KEY_ROLES_ALL,
   CACHE_KEY_ROLE_BY_NAME,
-} from '@repo/common-lib/constants/constants';
+} from '@repo/common-lib/constants/cache';
 import { Role } from '@repo/common-lib/types/role';
 import { Helpers } from 'src/common/services/helpers.service';
 import { RoleRepository } from './roles.repository';

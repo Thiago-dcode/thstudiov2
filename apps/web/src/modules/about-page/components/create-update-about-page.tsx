@@ -1,6 +1,6 @@
 "use client";
 
-import { ALLOWED_IMAGE_FILE_TYPES } from "@repo/common-lib/constants/constants";
+import { ALLOWED_IMAGE_FILE_TYPES } from "@repo/common-lib/constants/limits";
 import type { AboutPage } from "@repo/common-lib/types/about-page";
 import { FileInput } from "@repo/ui/components/custom/file-input";
 import { Button } from "@repo/ui/components/shadcn/button";

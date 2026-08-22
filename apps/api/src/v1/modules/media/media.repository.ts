@@ -4,7 +4,7 @@ import { BaseRepository } from '@repo/database/repositories';
 import { QueryBuilder } from '@repo/database/queryBuilder';
 import { Query } from '@repo/database/facades';
 import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
-import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/constants';
+import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/language';
 import { MediaSeoTranslation } from '@repo/common-lib/types/ai';
 import {
   MediaSchema,

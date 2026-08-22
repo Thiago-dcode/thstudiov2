@@ -13,7 +13,7 @@ import { UserService } from '../users/users.service';
 import { AiService } from '../ai/ai.service';
 import { MediaModerationException } from 'src/common/exceptions/media-moderation-exception';
 import { RequestService } from 'src/common/services/request.service';
-import { UPDATE_PROFILE_STATUS_EVENT } from '@repo/common-lib/constants/constants';
+import { UPDATE_PROFILE_STATUS_EVENT } from '@repo/common-lib/constants/events';
 import { UpdateProfileStatusEvent } from '../profile-status/events/update-profile-status.event';
 
 @Injectable()

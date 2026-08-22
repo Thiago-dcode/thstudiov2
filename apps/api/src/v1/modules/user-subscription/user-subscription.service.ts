@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Helpers } from 'src/common/services/helpers.service';
 import { PlanSubscriptionsRepository } from '../plan-subscriptions/plan-subscriptions.repository';
-import { CACHE_KEY_ACTIVE_SUBSCRIPTION } from '@repo/common-lib/constants/constants';
+import { CACHE_KEY_ACTIVE_SUBSCRIPTION } from '@repo/common-lib/constants/cache';
 
 const CACHE_TTL = 1000 * 60 * 60 * 24;
 

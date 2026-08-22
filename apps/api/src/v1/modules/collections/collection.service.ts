@@ -9,7 +9,12 @@ import { RequestService } from "src/common/services/request.service";
 import { CollectionRepository } from "./collection.repository";
 import { InjectQueue } from "@nestjs/bullmq";
 import { Queue } from "bullmq";
-import { AI_QUEUE, CACHE_KEY_COLLECTION_SEO, MAX_COLLECTION_ITEMS, USER_METRICS_QUEUE } from "@repo/common-lib/constants/constants";
+import { MAX_COLLECTION_ITEMS } from "@repo/common-lib/constants/limits";
+import {
+  AI_QUEUE,
+  USER_METRICS_QUEUE,
+} from "@repo/common-lib/constants/queues";
+import { CACHE_KEY_COLLECTION_SEO } from "@repo/common-lib/constants/cache";
 import { QueueHelper, SINGLE_ENTITY_METADATA_DEBOUNCE_MS } from "@repo/backend-lib/utils";
 import { Helpers } from "src/common/services/helpers.service";
 import { ApiException } from "src/common/exceptions/api-exception";

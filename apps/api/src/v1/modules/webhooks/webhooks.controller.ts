@@ -16,7 +16,7 @@ import { Queue } from 'bullmq';
 import {
   STRIPE_WEBHOOKS_QUEUE,
   JOB_STRIPE_WEBHOOK,
-} from '@repo/common-lib/constants/constants';
+} from '@repo/common-lib/constants/queues';
 import { Throttle } from '@nestjs/throttler';
 
 @Throttle({

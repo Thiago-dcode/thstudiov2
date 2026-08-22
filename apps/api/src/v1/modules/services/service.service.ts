@@ -10,7 +10,11 @@ import { RequestService } from "src/common/services/request.service";
 import { ServiceRepository } from "./service.repository";
 import { InjectQueue } from "@nestjs/bullmq";
 import { Queue } from "bullmq";
-import { AI_QUEUE, CACHE_KEY_SERVICE_SEO, USER_METRICS_QUEUE } from "@repo/common-lib/constants/constants";
+import {
+  AI_QUEUE,
+  USER_METRICS_QUEUE,
+} from "@repo/common-lib/constants/queues";
+import { CACHE_KEY_SERVICE_SEO } from "@repo/common-lib/constants/cache";
 import { QueueHelper, SINGLE_ENTITY_METADATA_DEBOUNCE_MS } from "@repo/backend-lib/utils";
 import { AiService } from "../ai/ai.service";
 import { MediaModerationException } from "src/common/exceptions/media-moderation-exception";

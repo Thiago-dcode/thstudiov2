@@ -4,7 +4,10 @@ import { Queue } from 'bullmq';
 import { UserStorageRequestService } from './user-storage-request.service';
 import { UserStorageRequestRepository } from './user-storage-request.repository';
 import { StorageRequestProcessor } from './storage-request.processor';
-import { STORAGE_REQUESTS_QUEUE, LOG_QUEUE } from '@repo/common-lib/constants/constants';
+import {
+  STORAGE_REQUESTS_QUEUE,
+  LOG_QUEUE,
+} from '@repo/common-lib/constants/queues';
 import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
 
 @Module({

@@ -2,7 +2,7 @@ import {
   COLUMN_BASE_RESPONSIVE_CAPS,
   MAX_COLUMN_BASE_COLUMNS,
   MIN_COLUMN_BASE_COLUMNS,
-} from "@repo/common-lib/constants/constants";
+} from "@repo/common-lib/constants/limits";
 import type { PortfolioLayout } from "@repo/common-lib/types/layout";
 import type { CSSProperties } from "react";
 

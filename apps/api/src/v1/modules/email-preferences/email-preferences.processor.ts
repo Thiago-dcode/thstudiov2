@@ -5,7 +5,7 @@ import { LogService } from '@repo/backend-lib/services/log-service';
 import {
   EMAIL_PREFERENCES_QUEUE,
   JOB_UPSERT_EMAIL_PREFERENCE_BY_EMAIL,
-} from '@repo/common-lib/constants/constants';
+} from '@repo/common-lib/constants/queues';
 import { EmailPreferencesService } from './email-preferences.service';
 
 @Processor(EMAIL_PREFERENCES_QUEUE)

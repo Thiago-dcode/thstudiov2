@@ -20,7 +20,8 @@ import {
 } from '@repo/common-lib/types/service';
 import { EntitySeoFields, SeoTranslation } from '@repo/common-lib/types/ai';
 import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
-import { DEFAULT_LANGUAGE, SEO_REGENERATION_MIN_INTERVAL_DAYS } from '@repo/common-lib/constants/constants';
+import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/language';
+import { SEO_REGENERATION_MIN_INTERVAL_DAYS } from '@repo/common-lib/constants/cache';
 import { DbException } from '@repo/database/exceptions';
 import { RequestService } from 'src/common/services/request.service';
 

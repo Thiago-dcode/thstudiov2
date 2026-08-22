@@ -16,7 +16,15 @@ import { QueueHelper } from '@repo/backend-lib/utils';
 import { CreateMediaInput, MediaWithUser, UpdateMediaInternalInput } from '@repo/common-lib/types/media';
 import { EntitySeoMetadata, MediaSeoTranslation } from '@repo/common-lib/types/ai';
 import { cleanObj } from '@repo/common-lib/utils/object';
-import { CACHE_KEY_MEDIA_SEO, SEO_METADATA_CACHE_TTL, STORAGE_REQUESTS_QUEUE, UPDATE_PROFILE_STATUS_EVENT, USER_METRICS_QUEUE } from '@repo/common-lib/constants/constants';
+import { UPDATE_PROFILE_STATUS_EVENT } from '@repo/common-lib/constants/events';
+import {
+  STORAGE_REQUESTS_QUEUE,
+  USER_METRICS_QUEUE,
+} from '@repo/common-lib/constants/queues';
+import {
+  CACHE_KEY_MEDIA_SEO,
+  SEO_METADATA_CACHE_TTL,
+} from '@repo/common-lib/constants/cache';
 import { IndexMediaRequest } from '../user-media/requests/index-media.request';
 import { Helpers } from 'src/common/services/helpers.service';
 import { UpdateProfileStatusEvent } from '../profile-status/events/update-profile-status.event';

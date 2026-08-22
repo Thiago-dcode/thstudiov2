@@ -1,6 +1,6 @@
 "use client";
 
-import { MAX_PASSWORD_RESET } from "@repo/common-lib/constants/constants";
+import { MAX_PASSWORD_RESET } from "@repo/common-lib/constants/limits";
 import type { User } from "@repo/common-lib/types/user";
 import { Errors } from "@repo/ui/components/custom/errors";
 import { Button } from "@repo/ui/components/shadcn/button";

@@ -1,6 +1,6 @@
 "use client";
 
-import { MAX_CATEGORIES_USER } from "@repo/common-lib/constants/constants";
+import { MAX_CATEGORIES_USER } from "@repo/common-lib/constants/limits";
 import type { EnumType } from "@repo/common-lib/constants/enums";
 import type { CategoryBase } from "@repo/common-lib/types/category";
 import type { Pagination } from "@repo/common-lib/types/response";

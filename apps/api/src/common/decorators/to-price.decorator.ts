@@ -1,7 +1,7 @@
 import { applyDecorators } from '@nestjs/common';
 import { Transform } from 'class-transformer';
 import { IsNumber, Max, Min, ValidationOptions } from 'class-validator';
-import { MAX_SERVICE_PRICE } from '@repo/common-lib/constants/constants';
+import { MAX_SERVICE_PRICE } from '@repo/common-lib/constants/limits';
 
 /**
  * Coerces price input to a number rounded to 2 decimal places, then validates

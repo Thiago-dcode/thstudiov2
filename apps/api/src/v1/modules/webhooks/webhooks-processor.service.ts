@@ -17,11 +17,13 @@ import { PlanSubscription } from '@repo/common-lib/types/plan-subscription';
 import {
   STRIPE_WEBHOOKS_QUEUE,
   JOB_STRIPE_WEBHOOK,
-  CACHE_KEY_ACTIVE_SUBSCRIPTION,
-  CACHE_KEY_ACTIVE_PLAN,
   PLAN_SUBSCRIPTIONS_QUEUE,
   JOB_ON_SUBSCRIPTION_CHANGES,
-} from '@repo/common-lib/constants/constants';
+} from '@repo/common-lib/constants/queues';
+import {
+  CACHE_KEY_ACTIVE_SUBSCRIPTION,
+  CACHE_KEY_ACTIVE_PLAN,
+} from '@repo/common-lib/constants/cache';
 import { GlobalProcessor } from 'src/common/processors/global.processor';
 import { UserBenefitService } from '../user-benefit/user-benefit.service';
 

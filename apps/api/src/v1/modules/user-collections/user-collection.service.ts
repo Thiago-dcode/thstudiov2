@@ -2,7 +2,10 @@ import { Injectable } from "@nestjs/common";
 import { Helpers } from "src/common/services/helpers.service";
 import { FullCollection, Collection, CollectionIndexRequest } from "@repo/common-lib/types/collection";
 import { EntitySeoMetadata } from "@repo/common-lib/types/ai";
-import { CACHE_KEY_COLLECTION_SEO, SEO_METADATA_CACHE_TTL } from "@repo/common-lib/constants/constants";
+import {
+  CACHE_KEY_COLLECTION_SEO,
+  SEO_METADATA_CACHE_TTL,
+} from "@repo/common-lib/constants/cache";
 import { UserRepository } from "../users/users.repository";
 import { CollectionRepository } from "../collections/collection.repository";
 

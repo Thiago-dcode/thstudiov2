@@ -20,7 +20,10 @@ import { compressConfig, s3StorageConfig } from 'src/config/storage';
 import { CompressService } from '@repo/backend-lib/services/compress-service/base';
 import { FactoryCompressService } from '@repo/backend-lib/services/compress-service/factory';
 import { BullModule, getQueueToken } from '@nestjs/bullmq';
-import { MAIL_QUEUE, LOG_QUEUE } from '@repo/common-lib/constants/constants';
+import {
+  MAIL_QUEUE,
+  LOG_QUEUE,
+} from '@repo/common-lib/constants/queues';
 import { Queue } from 'bullmq';
 import { MailProcessor } from './mail.processor';
 import { LogProcessor } from './log.processor';

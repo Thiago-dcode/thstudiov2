@@ -1,7 +1,11 @@
 import { BullModule, getQueueToken } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
-import { LOG_QUEUE, WAIT_LIST_QUEUE, EMAIL_PREFERENCES_QUEUE } from '@repo/common-lib/constants/constants';
+import {
+  LOG_QUEUE,
+  WAIT_LIST_QUEUE,
+  EMAIL_PREFERENCES_QUEUE,
+} from '@repo/common-lib/constants/queues';
 import { Queue } from 'bullmq';
 import { BenefitsModule } from '../benefits/benefits.module';
 import { InvitationLinkModule } from '../invitation-links/invitation-link.module';

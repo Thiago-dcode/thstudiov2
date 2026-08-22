@@ -4,7 +4,7 @@ import { StorageService } from '@repo/backend-lib/services/storage-service/base'
 import { Helpers } from 'src/common/services/helpers.service';
 import { generateValidSlug } from '@repo/common-lib/utils/generate-valid-slug';
 import { CreateAssetInput, Asset } from '@repo/common-lib/types/assets';
-import { ASSET_SIGNED_URL_EXPIRATION } from '@repo/common-lib/constants/constants';
+import { ASSET_SIGNED_URL_EXPIRATION } from '@repo/common-lib/constants/assets';
 import path from 'path';
 import { versionedAssetPath } from 'src/common/utils/asset-path.util';
 

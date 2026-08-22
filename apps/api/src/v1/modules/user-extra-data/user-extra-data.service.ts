@@ -2,10 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { ApiException } from 'src/common/exceptions/api-exception';
 import { UserExtraDataRepository } from './user-extra-data.repository';
 import { OnEvent } from '@nestjs/event-emitter';
-import {
-  CACHE_KEY_USER_EXTRA_DATA,
-  SET_INITIAL_USER_EXTRA_DATA_EVENT,
-} from '@repo/common-lib/constants/constants';
+import { SET_INITIAL_USER_EXTRA_DATA_EVENT } from '@repo/common-lib/constants/events';
+import { CACHE_KEY_USER_EXTRA_DATA } from '@repo/common-lib/constants/cache';
 import { SetInitialUserExtraDataEvent } from './events/set-initial-user-extra-data.event';
 import { Helpers } from 'src/common/services/helpers.service';
 import { PlansService } from '../plans/plans.service';

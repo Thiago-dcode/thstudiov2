@@ -1,6 +1,6 @@
 "use client";
 
-import { ALLOWED_IMAGE_FILE_TYPES } from "@repo/common-lib/constants/constants";
+import { ALLOWED_IMAGE_FILE_TYPES } from "@repo/common-lib/constants/limits";
 import {
   DEFAULT_COMPRESSION_LVL,
   ENUMS,

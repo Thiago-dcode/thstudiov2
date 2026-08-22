@@ -29,7 +29,9 @@ import {
   PortfolioLayout,
 } from '@repo/common-lib/types/layout';
 import { EnumType, TABLES_ENUM } from '@repo/common-lib/constants/enums';
-import { DEFAULT_LANGUAGE, MIN_COLUMN_BASE_COLUMNS, SEO_REGENERATION_MIN_INTERVAL_DAYS } from '@repo/common-lib/constants/constants';
+import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/language';
+import { MIN_COLUMN_BASE_COLUMNS } from '@repo/common-lib/constants/limits';
+import { SEO_REGENERATION_MIN_INTERVAL_DAYS } from '@repo/common-lib/constants/cache';
 
 export function formatPortfolioLayout(
   row: Pick<PortfolioFullSchema, 'layout_id' | 'layout_name' | 'config'>,

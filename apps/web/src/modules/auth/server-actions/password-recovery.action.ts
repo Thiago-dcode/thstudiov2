@@ -1,6 +1,6 @@
 "use server";
 
-import { PASSWORD_RECOVERY_ATTEMPT_COOKIE_NAME } from "@repo/common-lib/constants/constants";
+import { PASSWORD_RECOVERY_ATTEMPT_COOKIE_NAME } from "@repo/common-lib/constants/cookies";
 import type { ActionReturn } from "@repo/common-lib/types/response";
 import { cookies } from "next/headers";
 import { getTranslations } from "next-intl/server";

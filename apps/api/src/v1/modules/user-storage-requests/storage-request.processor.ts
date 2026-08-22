@@ -6,7 +6,7 @@ import { CreateUserStorageRequestInput } from '@repo/common-lib/types/user-stora
 import {
   STORAGE_REQUESTS_QUEUE,
   JOB_CREATE_STORAGE_REQUEST,
-} from '@repo/common-lib/constants/constants';
+} from '@repo/common-lib/constants/queues';
 import { GlobalProcessor } from 'src/common/processors/global.processor';
 
 @Processor(STORAGE_REQUESTS_QUEUE)

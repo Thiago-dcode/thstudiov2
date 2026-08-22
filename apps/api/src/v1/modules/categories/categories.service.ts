@@ -6,7 +6,10 @@ import {
 import { IndexCategoriesRequest } from './requests/index-categories.request';
 import { CategoriesRepository } from './categories.repository';
 import { Helpers } from 'src/common/services/helpers.service';
-import { CACHE_KEY_ACTIVE_CATEGORIES, CACHE_KEY_USER_CATEGORIES } from '@repo/common-lib/constants/constants';
+import {
+  CACHE_KEY_ACTIVE_CATEGORIES,
+  CACHE_KEY_USER_CATEGORIES,
+} from '@repo/common-lib/constants/cache';
 import { CreateCategoryRequest } from './requests/create-category.request';
 import { UpdateCategoryRequest } from './requests/update-category.request';
 import { RequestService } from 'src/common/services/request.service';

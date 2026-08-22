@@ -8,7 +8,10 @@ import { UserModule } from '../users/users.module';
 import { AiModule } from '../ai/ai.module';
 import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
 import { RequestService } from 'src/common/services/request.service';
-import { STORAGE_REQUESTS_QUEUE, USER_METRICS_QUEUE } from '@repo/common-lib/constants/constants';
+import {
+  STORAGE_REQUESTS_QUEUE,
+  USER_METRICS_QUEUE,
+} from '@repo/common-lib/constants/queues';
 
 @Module({
   controllers: [MediaController],

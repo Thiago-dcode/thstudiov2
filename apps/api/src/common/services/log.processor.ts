@@ -4,7 +4,7 @@ import { LogService } from '@repo/backend-lib/services/log-service';
 import {
   LOG_QUEUE,
   JOB_FLUSH_LOGS,
-} from '@repo/common-lib/constants/constants';
+} from '@repo/common-lib/constants/queues';
 import { GlobalProcessor } from 'src/common/processors/global.processor';
 
 @Processor(LOG_QUEUE)

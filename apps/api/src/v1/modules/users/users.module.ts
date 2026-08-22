@@ -17,7 +17,10 @@ import { AddressModule } from '../addresses/address.module';
 import { AiModule } from '../ai/ai.module';
 import { EmailPreferencesModule } from '../email-preferences/email-preferences.module';
 import { ProfileStatusModule } from '../profile-status/profile-status.module';
-import { AI_QUEUE, EMAIL_PREFERENCES_QUEUE } from '@repo/common-lib/constants/constants';
+import {
+  AI_QUEUE,
+  EMAIL_PREFERENCES_QUEUE,
+} from '@repo/common-lib/constants/queues';
 
 @Module({
   controllers: [UserController],

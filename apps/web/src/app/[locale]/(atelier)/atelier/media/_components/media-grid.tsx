@@ -3,7 +3,7 @@
 import {
   ALLOWED_IMAGE_FILE_TYPES,
   MAX_IMAGE_UPLOAD_BYTES,
-} from "@repo/common-lib/constants/constants";
+} from "@repo/common-lib/constants/limits";
 import type { Media } from "@repo/common-lib/types/media";
 import { Button } from "@repo/ui/components/shadcn/button";
 import {

@@ -8,7 +8,7 @@ import { Reflector } from '@nestjs/core';
 import { Audit, SuccessResponse } from '@repo/common-lib/types/response';
 import { map } from 'rxjs';
 import { RequestService } from '../services/request.service';
-import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/constants';
+import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/language';
 import { SKIP_RESPONSE_TRANSFORM_KEY } from '../decorators/skip-response-transform.decorator';
 
 @Injectable()

@@ -4,7 +4,7 @@ import {
   ALLOWED_IMAGE_FILE_TYPES,
   MAX_IMAGE_UPLOAD_BYTES,
   MAX_IMAGE_UPLOAD_MB,
-} from "@repo/common-lib/constants/constants";
+} from "@repo/common-lib/constants/limits";
 import type { MimeTypes } from "@repo/common-lib/types/general";
 import type { ActionReturn } from "@repo/common-lib/types/response";
 import type {

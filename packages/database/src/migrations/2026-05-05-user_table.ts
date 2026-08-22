@@ -1,5 +1,5 @@
 import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
-import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/constants';
+import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/language';
 import { ColumnBuilder } from '../lib/builder/columnBuilder';
 import SchemaBuilder from '../lib/builder/schemaBuilder';
 

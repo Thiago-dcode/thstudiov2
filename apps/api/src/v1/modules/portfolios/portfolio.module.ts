@@ -9,7 +9,10 @@ import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-se
 import { RequestService } from 'src/common/services/request.service';
 import { CollectionModule } from '../collections/collection.module';
 import { LayoutModule } from '../layouts/layout.module';
-import { AI_QUEUE, USER_METRICS_QUEUE } from '@repo/common-lib/constants/constants';
+import {
+  AI_QUEUE,
+  USER_METRICS_QUEUE,
+} from '@repo/common-lib/constants/queues';
 
 @Module({
   controllers: [PortfolioController],

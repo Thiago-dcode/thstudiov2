@@ -5,7 +5,7 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { APP_TOKEN_HEADER } from '@repo/common-lib/constants/constants';
+import { APP_TOKEN_HEADER } from '@repo/common-lib/constants/headers';
 import { Request } from 'express';
 
 /**

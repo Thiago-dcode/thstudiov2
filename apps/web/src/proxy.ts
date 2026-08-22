@@ -1,7 +1,7 @@
 import {
   LANGUAGE_COOKIE_NAME,
   LANGUAGE_HEADER,
-} from "@repo/common-lib/constants/constants";
+} from "@repo/common-lib/constants/language";
 import type { EnumType } from "@repo/common-lib/constants/enums";
 import {
   isRedirectToKey,

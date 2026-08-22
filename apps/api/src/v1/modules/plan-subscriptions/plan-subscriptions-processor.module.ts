@@ -1,7 +1,10 @@
 import { Module } from '@nestjs/common';
 import { BullModule, getQueueToken } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
-import { PLAN_SUBSCRIPTIONS_QUEUE, LOG_QUEUE } from '@repo/common-lib/constants/constants';
+import {
+  PLAN_SUBSCRIPTIONS_QUEUE,
+  LOG_QUEUE,
+} from '@repo/common-lib/constants/queues';
 import { PlanSubscriptionProcessor } from './plan-subscription.processor';
 import { UserExtraDataModule } from '../user-extra-data/user-extra-data.module';
 import { PlansModule } from '../plans/plans.module';

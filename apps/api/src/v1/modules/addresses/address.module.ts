@@ -5,7 +5,7 @@ import { AddressRepository } from "./address.repository";
 import { AddressService } from "./address.service";
 import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
 import { RequestService } from 'src/common/services/request.service';
-import { LOCATION_QUEUE } from '@repo/common-lib/constants/constants';
+import { LOCATION_QUEUE } from '@repo/common-lib/constants/queues';
 
 @Module({
   controllers: [AddressController],

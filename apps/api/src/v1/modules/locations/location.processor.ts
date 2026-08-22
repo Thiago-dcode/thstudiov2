@@ -4,7 +4,7 @@ import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-se
 import {
   JOB_CREATE_OR_UPDATE_LOCATION,
   LOCATION_QUEUE,
-} from '@repo/common-lib/constants/constants';
+} from '@repo/common-lib/constants/queues';
 import type {
   City,
   Country,

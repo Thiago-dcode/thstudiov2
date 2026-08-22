@@ -1,6 +1,6 @@
 "use client";
 
-import { MAX_USERNAME_RESET } from "@repo/common-lib/constants/constants";
+import { MAX_USERNAME_RESET } from "@repo/common-lib/constants/limits";
 import type { User } from "@repo/common-lib/types/user";
 import { normalizeUsername } from "@repo/common-lib/utils/username";
 import { Errors } from "@repo/ui/components/custom/errors";

@@ -14,18 +14,24 @@ import { SetInitialUserExtraDataEvent } from '../user-extra-data/events/set-init
 import { stripe } from '@repo/backend-lib/services/payment-service/stripe';
 import { RequestService } from 'src/common/services/request.service';
 import {
-  CACHE_KEY_USER_CATEGORIES,
-  CACHE_KEY_USER_PUBLIC_ID,
-  CACHE_KEY_USERNAME_EXISTS,
   MAX_PASSWORD_RESET,
   MAX_USERNAME_RESET,
+} from '@repo/common-lib/constants/limits';
+import {
   NEW_USER_EVENT,
   SET_FREE_SUBSCRIPTION_EVENT,
   SET_INITIAL_USER_EXTRA_DATA_EVENT,
+  UPDATE_PROFILE_STATUS_EVENT,
+} from '@repo/common-lib/constants/events';
+import {
   AI_QUEUE,
   EMAIL_PREFERENCES_QUEUE,
-  UPDATE_PROFILE_STATUS_EVENT,
-} from '@repo/common-lib/constants/constants';
+} from '@repo/common-lib/constants/queues';
+import {
+  CACHE_KEY_USER_CATEGORIES,
+  CACHE_KEY_USER_PUBLIC_ID,
+  CACHE_KEY_USERNAME_EXISTS,
+} from '@repo/common-lib/constants/cache';
 import { FindUserRequest } from './requests/find-user.request';
 import { Helpers } from 'src/common/services/helpers.service';
 import { UpdateUserPasswordRequest } from './requests/update-user-password.request';

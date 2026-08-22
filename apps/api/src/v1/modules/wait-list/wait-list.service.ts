@@ -3,11 +3,11 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { LogService, maskEmail } from '@repo/backend-lib/services/log-service';
 import { QueueHelper } from '@repo/backend-lib/utils';
+import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/language';
 import {
-  DEFAULT_LANGUAGE,
   EMAIL_PREFERENCES_QUEUE,
   WAIT_LIST_QUEUE,
-} from '@repo/common-lib/constants/constants';
+} from '@repo/common-lib/constants/queues';
 import type {
   PublicCreateWaitListInput,
   WaitListCreateResponse,

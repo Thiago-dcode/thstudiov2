@@ -5,7 +5,7 @@ import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-se
 import {
   LOG_QUEUE,
   USER_NOTIFICATIONS_QUEUE,
-} from '@repo/common-lib/constants/constants';
+} from '@repo/common-lib/constants/queues';
 import { UserNotificationsController } from './user-notifications.controller';
 import { UserNotificationsProcessor } from './user-notifications.processor';
 import { UserNotificationsRepository } from './user-notifications.repository';

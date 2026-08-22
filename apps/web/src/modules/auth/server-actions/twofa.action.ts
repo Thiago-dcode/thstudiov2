@@ -1,5 +1,5 @@
 "use server";
-import { TWO_FA_COOKIE_NAME } from "@repo/common-lib/constants/constants";
+import { TWO_FA_COOKIE_NAME } from "@repo/common-lib/constants/cookies";
 import type { ActionReturn } from "@repo/common-lib/types/response";
 import { cookies } from "next/headers";
 import { getTranslations } from "next-intl/server";

@@ -1,7 +1,10 @@
 import { Module } from '@nestjs/common';
 import { BullModule, getQueueToken } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
-import { LOG_QUEUE, EMAIL_PREFERENCES_QUEUE } from '@repo/common-lib/constants/constants';
+import {
+  LOG_QUEUE,
+  EMAIL_PREFERENCES_QUEUE,
+} from '@repo/common-lib/constants/queues';
 import { EmailPreferencesRepository } from './email-preferences.repository';
 import { EmailPreferencesService } from './email-preferences.service';
 import { EmailPreferencesProcessor } from './email-preferences.processor';

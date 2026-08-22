@@ -1,4 +1,4 @@
-import { PLATFORM_CURRENCY } from "@repo/common-lib/constants/constants";
+import { PLATFORM_CURRENCY } from "@repo/common-lib/constants/limits";
 import type { FullCollection } from "@repo/common-lib/types/collection";
 import type { MediaWithUser } from "@repo/common-lib/types/media";
 import type { FullPortfolio } from "@repo/common-lib/types/portfolio";

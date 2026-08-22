@@ -8,7 +8,7 @@ import {
   ArrayMaxSize,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { MAX_CATEGORIES_USER } from '@repo/common-lib/constants/constants';
+import { MAX_CATEGORIES_USER } from '@repo/common-lib/constants/limits';
 import {
   PHONE_REGEX,
   PHONE_MAX_LENGTH,

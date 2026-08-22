@@ -1,4 +1,4 @@
-import { REDIRECT_TO_COOKIE_NAME } from "@repo/common-lib/constants/constants";
+import { REDIRECT_TO_COOKIE_NAME } from "@repo/common-lib/constants/cookies";
 import {
   isRedirectToKey,
   type RedirectToKey,

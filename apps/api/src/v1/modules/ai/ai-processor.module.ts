@@ -17,7 +17,11 @@ import { PortfolioModule } from '../portfolios/portfolio.module';
 import { CollectionModule } from '../collections/collection.module';
 import { ServiceModule } from '../services/service.module';
 import { AddressModule } from '../addresses/address.module';
-import { AI_QUEUE, LOG_QUEUE, USER_METRICS_QUEUE } from '@repo/common-lib/constants/constants';
+import {
+  AI_QUEUE,
+  LOG_QUEUE,
+  USER_METRICS_QUEUE,
+} from '@repo/common-lib/constants/queues';
 import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
 
 @Module({

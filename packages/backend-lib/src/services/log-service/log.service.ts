@@ -1,6 +1,6 @@
 import { format } from "date-fns";
 import { Queue, JobsOptions } from "bullmq";
-import { JOB_FLUSH_LOGS } from "@repo/common-lib/constants/constants";
+import { JOB_FLUSH_LOGS } from "@repo/common-lib/constants/queues";
 import { LogConfig, LogLevel, LogOptions, LogServiceDriver } from "./types";
 import { redactLogOptions } from "./redact";
 

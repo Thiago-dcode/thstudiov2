@@ -5,7 +5,12 @@ import { UserContactsRepository } from './user-contacts.repository';
 import { UserSessionsModule } from '../user-sessions/user-sessions.module';
 import { BullModule, getQueueToken } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
-import { USER_CONTACTS_QUEUE, LOG_QUEUE, EMAIL_PREFERENCES_QUEUE, USER_NOTIFICATIONS_QUEUE } from '@repo/common-lib/constants/constants';
+import {
+  USER_CONTACTS_QUEUE,
+  LOG_QUEUE,
+  EMAIL_PREFERENCES_QUEUE,
+  USER_NOTIFICATIONS_QUEUE,
+} from '@repo/common-lib/constants/queues';
 import { UserContactProcessor } from './user-contact.processor';
 import { NewContactMail } from './mails/new-contact.mail';
 import { UserModule } from '../users/users.module';

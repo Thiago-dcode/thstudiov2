@@ -1,4 +1,4 @@
-import { CACHE_KEY_ACTIVE_CATEGORIES } from "@repo/common-lib/constants/constants";
+import { CACHE_KEY_ACTIVE_CATEGORIES } from "@repo/common-lib/constants/cache";
 import type {
   CategoryBase,
   CategoryIndexRequest,

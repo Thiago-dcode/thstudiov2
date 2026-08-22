@@ -1,4 +1,4 @@
-import { MAX_CATEGORIES_PORTFOLIO } from "@repo/common-lib/constants/constants";
+import { MAX_CATEGORIES_PORTFOLIO } from "@repo/common-lib/constants/limits";
 import * as z from "zod";
 import { requiredString, type Translator } from "@/lib/validation/zod-helpers";
 

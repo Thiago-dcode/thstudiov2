@@ -1,7 +1,7 @@
 import {
   MAX_COLUMN_BASE_COLUMNS,
   MIN_COLUMN_BASE_COLUMNS,
-} from "@repo/common-lib/constants/constants";
+} from "@repo/common-lib/constants/limits";
 import type { EnumType } from "@repo/common-lib/constants/enums";
 import type {
   ColumBaseLayoutConfig,

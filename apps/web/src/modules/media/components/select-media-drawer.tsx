@@ -1,4 +1,4 @@
-import { ALLOWED_IMAGE_FILE_TYPES } from "@repo/common-lib/constants/constants";
+import { ALLOWED_IMAGE_FILE_TYPES } from "@repo/common-lib/constants/limits";
 import type { EnumType } from "@repo/common-lib/constants/enums";
 import { ENUMS } from "@repo/common-lib/constants/enums";
 import type { Media } from "@repo/common-lib/types/media";

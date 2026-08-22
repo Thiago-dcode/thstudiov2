@@ -4,7 +4,7 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
 import { QueueHelper } from '@repo/backend-lib/utils';
-import { AI_QUEUE } from '@repo/common-lib/constants/constants';
+import { AI_QUEUE } from '@repo/common-lib/constants/queues';
 import { UserExtraDataRepository } from '../user-extra-data/user-extra-data.repository';
 
 @Injectable()

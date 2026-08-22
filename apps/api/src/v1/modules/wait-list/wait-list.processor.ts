@@ -5,7 +5,7 @@ import {
   JOB_CREATE_WAIT_LIST_ENTRY,
   JOB_INVITE_WAIT_LIST_BATCH,
   WAIT_LIST_QUEUE,
-} from '@repo/common-lib/constants/constants';
+} from '@repo/common-lib/constants/queues';
 import { EnumType } from '@repo/common-lib/constants/enums';
 import type { InvitationLink } from '@repo/common-lib/types/invitation-link';
 import { CreateWaitListJobInput } from '@repo/common-lib/types/wait-list';

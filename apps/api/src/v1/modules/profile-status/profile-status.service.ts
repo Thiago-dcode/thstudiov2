@@ -1,9 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import {
-  CACHE_KEY_PROFILE_STATUS,
-  UPDATE_PROFILE_STATUS_EVENT,
-} from '@repo/common-lib/constants/constants';
+import { UPDATE_PROFILE_STATUS_EVENT } from '@repo/common-lib/constants/events';
+import { CACHE_KEY_PROFILE_STATUS } from '@repo/common-lib/constants/cache';
 import type {
   CreateProfileStatusInput,
   ProfileStatus,

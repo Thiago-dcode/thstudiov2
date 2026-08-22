@@ -1,6 +1,6 @@
 "use client";
 
-import { COLUMN_BASE_RESPONSIVE_CAPS } from "@repo/common-lib/constants/constants";
+import { COLUMN_BASE_RESPONSIVE_CAPS } from "@repo/common-lib/constants/limits";
 import { PortfolioGrid } from "@repo/ui/components/custom/gallery/gallery-grid";
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
 import { Button } from "@repo/ui/components/shadcn/button";

@@ -1,6 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getQueueToken } from '@nestjs/bullmq';
-import { AI_QUEUE, USER_METRICS_QUEUE } from '@repo/common-lib/constants/constants';
+import {
+  AI_QUEUE,
+  USER_METRICS_QUEUE,
+} from '@repo/common-lib/constants/queues';
 import { API_ERRORS } from '@repo/common-lib/constants/api-errors';
 import { ApiException } from 'src/common/exceptions/api-exception';
 import { Helpers } from 'src/common/services/helpers.service';

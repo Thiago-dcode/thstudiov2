@@ -1,4 +1,4 @@
-import { FUNNEL_LAST_STEP } from "@repo/common-lib/constants/constants";
+import { FUNNEL_LAST_STEP } from "@repo/common-lib/constants/limits";
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { cn } from "@repo/ui/lib/utils";
 import dynamic from "next/dynamic";

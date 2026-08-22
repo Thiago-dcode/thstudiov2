@@ -3,7 +3,7 @@
 import {
   ALLOWED_IMAGE_FILE_TYPES,
   MAX_SERVICE_PRICE,
-} from "@repo/common-lib/constants/constants";
+} from "@repo/common-lib/constants/limits";
 import type { Portfolio } from "@repo/common-lib/types/portfolio";
 import type { FullService } from "@repo/common-lib/types/service";
 import { FileInput } from "@repo/ui/components/custom/file-input";

@@ -4,10 +4,11 @@ import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-se
 import {
   JOB_CREATE_OR_UPDATE_USER_NOTIFICATION,
   USER_NOTIFICATIONS_QUEUE,
-} from '@repo/common-lib/constants/constants';
+} from '@repo/common-lib/constants/queues';
 import type { CreateUserNotificationInput } from '@repo/common-lib/types/user-notification';
 import { GlobalProcessor } from 'src/common/processors/global.processor';
 import { UserNotificationsRepository } from './user-notifications.repository';
+import { UserNotificationsGateway } from './user-notifications.gateway';
 
 @Processor(USER_NOTIFICATIONS_QUEUE)
 export class UserNotificationsProcessor extends GlobalProcessor {
@@ -18,6 +19,7 @@ export class UserNotificationsProcessor extends GlobalProcessor {
   constructor(
     private readonly userNotificationsRepository: UserNotificationsRepository,
     private readonly appLogService: LogService,
+    private readonly userNotificationGateway: UserNotificationsGateway
   ) {
     super();
   }
@@ -39,14 +41,14 @@ export class UserNotificationsProcessor extends GlobalProcessor {
   private async createOrUpdateUserNotification(data: CreateUserNotificationInput) {
     const log = this.logger.name(JOB_CREATE_OR_UPDATE_USER_NOTIFICATION);
     try {
-      const existing = await this.userNotificationsRepository.findByTypeAndEntityId(
+      let userNotification = await this.userNotificationsRepository.findByTypeAndEntityId(
         data.type,
         data.entity_id,
       );
 
-      if (existing) {
-        const updated = await this.userNotificationsRepository.updateById(
-          existing.id,
+      if (userNotification) {
+        userNotification = await this.userNotificationsRepository.updateById(
+          userNotification.id,
           {
             user_id: data.user_id,
             read_at: data.read_at,
@@ -55,26 +57,27 @@ export class UserNotificationsProcessor extends GlobalProcessor {
         log.info(
           `User notification updated: type=${data.type} entity_id=${data.entity_id}`,
           {
-            id: updated.id,
+            id: userNotification.id,
             user_id: data.user_id,
             type: data.type,
             entity_id: data.entity_id,
           },
         );
-        return updated;
       }
 
-      const created = await this.userNotificationsRepository.create(data);
+      userNotification = await this.userNotificationsRepository.create(data);
       log.info(
         `User notification created: type=${data.type} entity_id=${data.entity_id}`,
         {
-          id: created.id,
+          id: userNotification.id,
           user_id: data.user_id,
           type: data.type,
           entity_id: data.entity_id,
         },
       );
-      return created;
+      await this.userNotificationGateway.notifyUser(userNotification);
+      return userNotification;
+
     } catch (error) {
       log.error(
         `Failed to create or update user notification: type=${data.type} entity_id=${data.entity_id} - ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -82,5 +85,6 @@ export class UserNotificationsProcessor extends GlobalProcessor {
       );
       throw error;
     }
+
   }
 }

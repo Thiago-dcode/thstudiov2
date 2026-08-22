@@ -1,4 +1,4 @@
-import { PLATFORM_CURRENCY_SYMBOL } from "@repo/common-lib/constants/constants";
+import { PLATFORM_CURRENCY_SYMBOL } from "@repo/common-lib/constants/limits";
 import type { Service } from "@repo/common-lib/types/service";
 import { cn } from "@repo/ui/lib/utils";
 import { ArrowUpRight } from "lucide-react";

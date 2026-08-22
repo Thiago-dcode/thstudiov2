@@ -4,7 +4,7 @@ import {
   REMEMBER_ME_COOKIE_NAME,
   USER_AUTH_COOKIE_EXPIRATION_DATE,
   USER_AUTH_COOKIE_NAME,
-} from "@repo/common-lib/constants/constants";
+} from "@repo/common-lib/constants/cookies";
 import { decrypt, encrypt } from "@repo/common-lib/utils/encrypt";
 import { addDays, addMonths } from "date-fns";
 import type {

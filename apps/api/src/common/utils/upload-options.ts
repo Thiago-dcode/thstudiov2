@@ -3,7 +3,7 @@ import type { MulterOptions } from '@nestjs/platform-express/multer/interfaces/m
 import {
   ALLOWED_IMAGE_FILE_TYPES,
   MAX_IMAGE_UPLOAD_BYTES,
-} from '@repo/common-lib/constants/constants';
+} from '@repo/common-lib/constants/limits';
 import type { MimeTypes } from '@repo/common-lib/types/general';
 
 /** Shared with the web proxy and the browser via `MAX_IMAGE_UPLOAD_BYTES`. */

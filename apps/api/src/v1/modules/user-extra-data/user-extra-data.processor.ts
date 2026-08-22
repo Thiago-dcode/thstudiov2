@@ -3,15 +3,15 @@ import { Inject } from '@nestjs/common';
 import { Job } from 'bullmq';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { UserExtraDataRepository } from './user-extra-data.repository';
-import { CACHE_KEY_USER_EXTRA_DATA } from '@repo/common-lib/constants/constants';
+import { CACHE_KEY_USER_EXTRA_DATA } from '@repo/common-lib/constants/cache';
 import { Query } from '@repo/database/facades';
 import { Media } from '@repo/common-lib/types/media';
 import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
+import { CREDIT_CONSUMING_LLM_USAGE_TYPES } from '@repo/common-lib/constants/limits';
 import {
   USER_METRICS_QUEUE,
   JOB_COMPUTE_USER_METRICS,
-  CREDIT_CONSUMING_LLM_USAGE_TYPES,
-} from '@repo/common-lib/constants/constants';
+} from '@repo/common-lib/constants/queues';
 import { GlobalProcessor } from 'src/common/processors/global.processor';
 
 @Processor(USER_METRICS_QUEUE)

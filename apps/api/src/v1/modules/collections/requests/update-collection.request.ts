@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsNumber, IsOptional, IsString, IsArray, ValidateNested, ArrayMaxSize } from 'class-validator';
 import { Type } from 'class-transformer';
-import { MAX_COLLECTION_ITEMS } from '@repo/common-lib/constants/constants';
+import { MAX_COLLECTION_ITEMS } from '@repo/common-lib/constants/limits';
 import { ModelExist } from 'src/common/validators/model-exist.validtor';
 import { ToBoolean } from 'src/common/decorators/to-boolean.decorator';
 

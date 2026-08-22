@@ -1,6 +1,6 @@
 
 import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
-import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/constants';
+import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/language';
 import { Column, Schema } from '../lib/facades';
 
 const WAIT_LIST = TABLES_ENUM.WAIT_LIST;

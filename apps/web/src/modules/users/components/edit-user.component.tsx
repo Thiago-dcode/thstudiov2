@@ -1,6 +1,6 @@
 "use client";
 
-import { MAX_CATEGORIES_USER } from "@repo/common-lib/constants/constants";
+import { MAX_CATEGORIES_USER } from "@repo/common-lib/constants/limits";
 import type { CategoryBase } from "@repo/common-lib/types/category";
 import { Errors } from "@repo/ui/components/custom/errors";
 import { FileInput } from "@repo/ui/components/custom/file-input";

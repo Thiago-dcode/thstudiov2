@@ -1,6 +1,6 @@
 "use client";
 
-import { FUNNEL_LAST_STEP } from "@repo/common-lib/constants/constants";
+import { FUNNEL_LAST_STEP } from "@repo/common-lib/constants/limits";
 import { Button } from "@repo/ui/components/shadcn/button";
 import {
   Dialog,

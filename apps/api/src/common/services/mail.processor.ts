@@ -6,7 +6,7 @@ import {
   MAIL_QUEUE,
   JOB_SEND_MAIL,
   JOB_SEND_BATCH_EMAIL,
-} from '@repo/common-lib/constants/constants';
+} from '@repo/common-lib/constants/queues';
 import { GlobalProcessor } from 'src/common/processors/global.processor';
 import { Helpers } from './helpers.service';
 

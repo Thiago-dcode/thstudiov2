@@ -1,4 +1,4 @@
-import { INITIATE_SUBCRIPTION_COOKIE } from "@repo/common-lib/constants/constants";
+import { INITIATE_SUBCRIPTION_COOKIE } from "@repo/common-lib/constants/cookies";
 import { cookies } from "next/headers";
 
 export async function deleteInitiateSubscriptionCookie() {

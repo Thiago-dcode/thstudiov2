@@ -1,7 +1,10 @@
 import { Module } from '@nestjs/common';
 import { BullModule, getQueueToken } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
-import { LOCATION_QUEUE, LOG_QUEUE } from '@repo/common-lib/constants/constants';
+import {
+  LOCATION_QUEUE,
+  LOG_QUEUE,
+} from '@repo/common-lib/constants/queues';
 import { LocationController } from './location.controller';
 import { LocationService } from './location.service';
 import { LocationProcessor } from './location.processor';

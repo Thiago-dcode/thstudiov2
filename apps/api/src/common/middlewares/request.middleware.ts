@@ -7,12 +7,14 @@ import { EnumType } from '@repo/common-lib/constants/enums';
 import { getAcceptLanguage } from '@repo/common-lib/utils/get-accept-language';
 import {
   LANGUAGE_HEADER,
-  REQUEST_START_TIME,
   DEFAULT_LANGUAGE,
+} from '@repo/common-lib/constants/language';
+import {
+  REQUEST_START_TIME,
   USER_AGENT_HEADER,
   IP_ADDRESS_HEADER,
   APP_TOKEN_HEADER,
-} from '@repo/common-lib/constants/constants';
+} from '@repo/common-lib/constants/headers';
 const AVAILABLE_LANGUAGES = ENUMS.LANGUAGE_CODE;
 
 @Injectable()

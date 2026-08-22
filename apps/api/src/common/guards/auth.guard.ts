@@ -8,7 +8,7 @@ import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
 import { IS_PUBLIC_KEY } from 'src/common/decorators/public.decorator';
 import { RequestService } from 'src/common/services/request.service';
-import { USER_ID_HEADER } from '@repo/common-lib/constants/constants';
+import { USER_ID_HEADER } from '@repo/common-lib/constants/headers';
 import { UserService } from 'src/v1/modules/users/users.service';
 import { AuthHelper } from 'src/v1/modules/auth/auth-helper.service';
 

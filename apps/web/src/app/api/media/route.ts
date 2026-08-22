@@ -2,7 +2,7 @@ import {
   ALLOWED_IMAGE_FILE_TYPES,
   MAX_IMAGE_UPLOAD_BYTES,
   MAX_IMAGE_UPLOAD_MB,
-} from "@repo/common-lib/constants/constants";
+} from "@repo/common-lib/constants/limits";
 import type { MimeTypes } from "@repo/common-lib/types/general";
 import type { Media } from "@repo/common-lib/types/media";
 import { trimValues } from "@repo/common-lib/utils/cleanObj";

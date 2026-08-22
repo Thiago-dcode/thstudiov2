@@ -3,12 +3,14 @@ import { Job } from 'bullmq';
 import { LogService } from '@repo/backend-lib/services/log-service';
 import { MailService } from '@repo/backend-lib/services/mail-service';
 import {
+  JOB_ON_SUBSCRIPTION_CHANGES,
+  PLAN_SUBSCRIPTIONS_QUEUE,
+} from '@repo/common-lib/constants/queues';
+import {
   CACHE_KEY_ACTIVE_PLAN,
   CACHE_KEY_ACTIVE_SUBSCRIPTION,
   CACHE_KEY_USER_EXTRA_DATA,
-  JOB_ON_SUBSCRIPTION_CHANGES,
-  PLAN_SUBSCRIPTIONS_QUEUE,
-} from '@repo/common-lib/constants/constants';
+} from '@repo/common-lib/constants/cache';
 import { GlobalProcessor } from 'src/common/processors/global.processor';
 import { BaseUser } from '@repo/common-lib/types/user';
 import { Media } from '@repo/common-lib/types/media';

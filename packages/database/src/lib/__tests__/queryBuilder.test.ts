@@ -1964,9 +1964,10 @@ describe('QueryBuilder', () => {
     });
   });
 
-  describe('handleBuildGet', () => {
+  describe('insertAndGet', () => {
     let queryBuilder: QueryBuilder;
     let postgresConfig: DatabaseConfig;
+    let mysqlConfig: DatabaseConfig;
 
     beforeEach(async () => {
       postgresConfig = {
@@ -1977,75 +1978,201 @@ describe('QueryBuilder', () => {
         database: 'testdb',
         client: 'postgres',
       };
+      mysqlConfig = { ...postgresConfig, port: 3306, client: 'mysql' };
       await initClient(postgresConfig);
       queryBuilder = new QueryBuilder(TABLE_NAME);
     });
 
-    it('should build SELECT query with WHERE conditions from columns and values', () => {
+    it('should return the inserted row from a single RETURNING statement when there are no joins', async () => {
       // Arrange
-      const columns = ['id', 'name', 'email'];
-      const values = [1, 'John', 'john@example.com'];
-      const select = ['id', 'name', 'email'];
+      const { getClient } = require('../client');
+      const insertedRow = { id: 42, name: 'John', email: 'john@example.com' };
+      getClient().query.mockResolvedValue({ rows: [insertedRow] });
 
       // Act
-      queryBuilder['handleBuildGet'](columns, values, select);
-      queryBuilder['buildSelectQuery']();
-
-      // Assert
-      expect(queryBuilder['query']).toBe(
-        `SELECT ${TABLE_NAME}.id,${TABLE_NAME}.name,${TABLE_NAME}.email FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.id = $1 \nAND ${TABLE_NAME}.name = $2 \nAND ${TABLE_NAME}.email = $3`,
+      const result = await queryBuilder.insertAndGet(
+        ['name', 'email'],
+        ['John', 'john@example.com'],
+        ['id', 'name', 'email'],
       );
-      expect(queryBuilder['values']).toEqual([1, 'John', 'john@example.com']);
+
+      // Assert: the read-back must not be a second query — nothing may interleave
+      // between writing the row and reading it back.
+      expect(getClient().query).toHaveBeenCalledTimes(1);
+      const [sql, params] = getClient().query.mock.calls[0];
+      expect(sql).toBe(
+        `INSERT INTO ${TABLE_NAME} (name,email) VALUES ($1,$2) RETURNING ${TABLE_NAME}.id,${TABLE_NAME}.name,${TABLE_NAME}.email`,
+      );
+      expect(params).toEqual(['John', 'john@example.com']);
+      expect(result).toBe(insertedRow);
     });
 
-    it('should use default select (*) when no select provided', () => {
+    it('should RETURNING the whole row when no select is provided', async () => {
       // Arrange
-      const columns = ['status'];
-      const values = ['active'];
+      const { getClient } = require('../client');
+      getClient().query.mockResolvedValue({ rows: [{ id: 1 }] });
 
       // Act
-      queryBuilder['handleBuildGet'](columns, values);
-      queryBuilder['buildSelectQuery']();
+      await queryBuilder.insertAndGet(['status'], ['active']);
 
       // Assert
-      expect(queryBuilder['query']).toBe(
-        `SELECT ${TABLE_NAME}.* FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.status = $1`,
+      const [sql] = getClient().query.mock.calls[0];
+      expect(sql).toBe(
+        `INSERT INTO ${TABLE_NAME} (status) VALUES ($1) RETURNING ${TABLE_NAME}.*`,
       );
-      expect(queryBuilder['values']).toEqual(['active']);
     });
 
-    it('should handle single column and value', () => {
+    it('should inline NULLs and keep them out of the bound params', async () => {
       // Arrange
-      const columns = ['id'];
-      const values = [123];
-      const select = ['id'];
+      const { getClient } = require('../client');
+      getClient().query.mockResolvedValue({ rows: [{ id: 1 }] });
 
       // Act
-      queryBuilder['handleBuildGet'](columns, values, select);
-      queryBuilder['buildSelectQuery']();
+      await queryBuilder.insertAndGet(
+        ['name', 'deleted_at', 'email'],
+        ['John', null, 'john@example.com'],
+        ['id'],
+      );
 
       // Assert
-      expect(queryBuilder['query']).toBe(
-        `SELECT ${TABLE_NAME}.id FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.id = $1`,
+      const [sql, params] = getClient().query.mock.calls[0];
+      expect(sql).toBe(
+        `INSERT INTO ${TABLE_NAME} (name,deleted_at,email) VALUES ($1,NULL,$2) RETURNING ${TABLE_NAME}.id`,
       );
-      expect(queryBuilder['values']).toEqual([123]);
+      expect(params).toEqual(['John', 'john@example.com']);
     });
 
-    it('should handle complex scenario with multiple columns and various data types', () => {
+    it('should re-select by the primary key RETURNING gave back when joins are requested', async () => {
       // Arrange
-      const columns = ['id', 'name', 'email', 'age', 'active', 'deleted_at', 'score', 'created_at'];
-      const values = [1, 'John Doe', 'john@example.com', 25, true, null, 85.5, new Date('2023-01-01')];
-      const select = ['id', 'name', 'email', 'age', 'active', 'score'];
+      const { getClient } = require('../client');
+      const joinedRow = { id: 42, name: 'John', 'users.email': 'john@example.com' };
+      getClient()
+        .query.mockResolvedValueOnce({ rows: [{ id: 42 }] })
+        .mockResolvedValueOnce({ rows: [joinedRow] });
 
       // Act
-      queryBuilder['handleBuildGet'](columns, values, select);
-      queryBuilder['buildSelectQuery']();
+      const result = await queryBuilder.insertAndGet(
+        ['name', 'user_id'],
+        ['John', 7],
+        ['id', 'name', 'users.email'],
+        [{ localColumn: 'user_id', foreignTable: 'users', foreignColumn: 'id', type: 'INNER' } as any],
+      );
 
       // Assert
-      expect(queryBuilder['query']).toBe(
-        `SELECT ${TABLE_NAME}.id,${TABLE_NAME}.name,${TABLE_NAME}.email,${TABLE_NAME}.age,${TABLE_NAME}.active,${TABLE_NAME}.score FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.id = $1 \nAND ${TABLE_NAME}.name = $2 \nAND ${TABLE_NAME}.email = $3 \nAND ${TABLE_NAME}.age = $4 \nAND ${TABLE_NAME}.active = $5 \nAND ${TABLE_NAME}.deleted_at IS NULL \nAND ${TABLE_NAME}.score = $6 \nAND ${TABLE_NAME}.created_at = $7`,
+      expect(getClient().query).toHaveBeenCalledTimes(2);
+      const [insertSql, insertParams] = getClient().query.mock.calls[0];
+      expect(insertSql).toBe(
+        `INSERT INTO ${TABLE_NAME} (name,user_id) VALUES ($1,$2) RETURNING ${TABLE_NAME}.id`,
       );
-      expect(queryBuilder['values']).toEqual([1, 'John Doe', 'john@example.com', 25, true, 85.5, new Date('2023-01-01')]);
+      expect(insertParams).toEqual(['John', 7]);
+
+      // The read-back is keyed on the primary key, never on the payload — an identical
+      // payload inserted concurrently cannot satisfy this WHERE.
+      const [selectSql, selectParams] = getClient().query.mock.calls[1];
+      expect(selectSql).toBe(
+        `SELECT ${TABLE_NAME}.id,${TABLE_NAME}.name,users.email FROM ${TABLE_NAME} \nINNER JOIN users ON users.id = ${TABLE_NAME}.user_id \nWHERE ${TABLE_NAME}.id = $1 \nLIMIT 1`,
+      );
+      expect(selectParams).toEqual([42]);
+      expect(result).toBe(joinedRow);
+    });
+
+    it('should honour a custom primary key when re-selecting', async () => {
+      // Arrange
+      const { getClient } = require('../client');
+      queryBuilder = new QueryBuilder(TABLE_NAME, false, 'deleted_at', 'uuid');
+      getClient()
+        .query.mockResolvedValueOnce({ rows: [{ uuid: 'abc-123' }] })
+        .mockResolvedValueOnce({ rows: [{ uuid: 'abc-123' }] });
+
+      // Act
+      await queryBuilder.insertAndGet(
+        ['name'],
+        ['John'],
+        ['uuid'],
+        [{ localColumn: 'user_id', foreignTable: 'users', foreignColumn: 'id', type: 'INNER' } as any],
+      );
+
+      // Assert
+      const [insertSql] = getClient().query.mock.calls[0];
+      expect(insertSql).toBe(
+        `INSERT INTO ${TABLE_NAME} (name) VALUES ($1) RETURNING ${TABLE_NAME}.uuid`,
+      );
+      const [selectSql, selectParams] = getClient().query.mock.calls[1];
+      expect(selectSql).toContain(`WHERE ${TABLE_NAME}.uuid = $1`);
+      expect(selectParams).toEqual(['abc-123']);
+    });
+
+    it('should re-select by insertId on MySQL, which has no RETURNING', async () => {
+      // Arrange
+      const { initClient: init, getClient } = require('../client');
+      await init(mysqlConfig);
+      queryBuilder = new QueryBuilder(TABLE_NAME);
+      getClient()
+        .query.mockResolvedValueOnce([{ insertId: 99 }, []])
+        .mockResolvedValueOnce({ rows: [{ id: 99 }] });
+
+      // Act
+      await queryBuilder.insertAndGet(['name'], ['John'], ['id']);
+
+      // Assert
+      expect(getClient().query).toHaveBeenCalledTimes(2);
+      const [insertSql] = getClient().query.mock.calls[0];
+      expect(insertSql).toBe(`INSERT INTO ${TABLE_NAME} (name) VALUES (?)`);
+      const [selectSql, selectParams] = getClient().query.mock.calls[1];
+      expect(selectSql).toBe(
+        `SELECT ${TABLE_NAME}.id FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.id = ? \nLIMIT 1`,
+      );
+      expect(selectParams).toEqual([99]);
+    });
+  });
+
+  describe('first', () => {
+    let queryBuilder: QueryBuilder;
+
+    beforeEach(async () => {
+      const { initClient: init } = require('../client');
+      await init(testConfig);
+      queryBuilder = new QueryBuilder(TABLE_NAME);
+    });
+
+    it('should limit the query to a single row', async () => {
+      // Arrange
+      const { getClient } = require('../client');
+      getClient().query.mockResolvedValue({ rows: [{ id: 1 }] });
+
+      // Act
+      await queryBuilder.where('status', '=', 'active').first();
+
+      // Assert
+      const [sql] = getClient().query.mock.calls[0];
+      expect(sql).toBe(
+        `SELECT * FROM ${TABLE_NAME} \nWHERE ${TABLE_NAME}.status = $1 \nLIMIT 1`,
+      );
+    });
+
+    it('should not override an explicit limit', async () => {
+      // Arrange
+      const { getClient } = require('../client');
+      getClient().query.mockResolvedValue({ rows: [{ id: 1 }] });
+
+      // Act
+      await queryBuilder.limit(5).first();
+
+      // Assert
+      const [sql] = getClient().query.mock.calls[0];
+      expect(sql).toBe(`SELECT * FROM ${TABLE_NAME} \nLIMIT 5`);
+    });
+
+    it('should return null when nothing matches', async () => {
+      // Arrange
+      const { getClient } = require('../client');
+      getClient().query.mockResolvedValue({ rows: [] });
+
+      // Act
+      const result = await queryBuilder.where('id', '=', 1).first();
+
+      // Assert
+      expect(result).toBeNull();
     });
   });
 

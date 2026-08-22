@@ -1,9 +1,9 @@
+import { LANGUAGE_HEADER } from "@repo/common-lib/constants/language";
 import {
   APP_TOKEN_HEADER,
   IP_ADDRESS_HEADER,
-  LANGUAGE_HEADER,
   USER_AGENT_HEADER,
-} from "@repo/common-lib/constants/constants";
+} from "@repo/common-lib/constants/headers";
 import { headers } from "next/headers";
 import { serverEnv } from "@/env/server";
 import { getLanguage } from "@/lib/server-actions/get-language.server.action";

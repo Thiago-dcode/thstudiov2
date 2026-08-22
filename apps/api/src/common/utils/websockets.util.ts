@@ -8,6 +8,5 @@ export const extractToken = (client: Socket): string | undefined => {
         const [type, token] = header.split(' ');
         if (type === 'Bearer') return token;
     }
-    const fromQuery = client.handshake.query?.token;
-    return typeof fromQuery === 'string' ? fromQuery : undefined;
+    return undefined;
 }

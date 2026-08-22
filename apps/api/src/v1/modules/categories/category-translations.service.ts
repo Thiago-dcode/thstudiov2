@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { CACHE_KEY_CATEGORY_TRANSLATION } from '@repo/common-lib/constants/constants';
+import { CACHE_KEY_CATEGORY_TRANSLATION } from '@repo/common-lib/constants/cache';
 import {
   CategoryTranslation,
   CategoryTranslationCreatePayload,

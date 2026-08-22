@@ -1,4 +1,4 @@
-import { MAX_CATEGORIES_USER } from "@repo/common-lib/constants/constants";
+import { MAX_CATEGORIES_USER } from "@repo/common-lib/constants/limits";
 import type { CategoryBase } from "@repo/common-lib/types/category";
 import { redirect } from "next/navigation";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";

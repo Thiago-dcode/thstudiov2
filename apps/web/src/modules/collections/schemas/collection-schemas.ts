@@ -1,4 +1,4 @@
-import { MAX_COLLECTION_ITEMS } from "@repo/common-lib/constants/constants";
+import { MAX_COLLECTION_ITEMS } from "@repo/common-lib/constants/limits";
 import * as z from "zod";
 import { requiredString, type Translator } from "@/lib/validation/zod-helpers";
 

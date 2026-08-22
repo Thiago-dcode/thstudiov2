@@ -6,7 +6,10 @@ import { UserExtraDataRepository } from './user-extra-data.repository';
 import { UserExtraDataProcessor } from './user-extra-data.processor';
 import { PlansModule } from '../plans/plans.module';
 import { UserStorageRequestModule } from '../user-storage-requests/user-storage-request.module';
-import { USER_METRICS_QUEUE, LOG_QUEUE } from '@repo/common-lib/constants/constants';
+import {
+  USER_METRICS_QUEUE,
+  LOG_QUEUE,
+} from '@repo/common-lib/constants/queues';
 import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
 
 @Module({

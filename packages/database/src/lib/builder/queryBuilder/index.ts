@@ -106,7 +106,7 @@ export class QueryBuilder extends BaseBuilder {
   // CONSTRUCTOR
   // ============================================================================
 
-  constructor(protected readonly tableName: TableName, protected _softDeletes = false, protected _softDeleteCol = 'deleted_at') {
+  constructor(protected readonly tableName: TableName, protected _softDeletes = false, protected _softDeleteCol = 'deleted_at', protected _primaryKey = 'id') {
     super(tableName);
   }
 
@@ -151,6 +151,9 @@ export class QueryBuilder extends BaseBuilder {
   }
 
   public async first<T = any>(): Promise<T> {
+    // Only one row is ever returned, so say so in SQL instead of letting the database
+    // materialise every match and discarding all but the first in JS.
+    if (!this._limit) this._limit = 1;
     this.buildSelectQuery();
     const result = await getClient().query(this.query, this.values);
     this.reset();
@@ -192,31 +195,56 @@ export class QueryBuilder extends BaseBuilder {
     this.reset();
     return result;
   }
+  /**
+   * Execute an INSERT and return the row that was just written.
+   *
+   * The row is identified by `RETURNING`, never by matching the payload back: two
+   * concurrent inserts of an identical payload are indistinguishable by their columns,
+   * and the INSERT and any follow-up SELECT run on different pooled connections with no
+   * transaction between them, so a payload-equality read-back can hand back another
+   * request's row.
+   */
   public async insertAndGet<T = any>(
     columns: string[],
     values: SqlValue[],
     select: string[] | string = '*',
     join: Join[] = [],
   ): Promise<T> {
-    this.buildInsertQuery(columns, values);
-    await getClient().query(this.query, values.filter((value) => value !== null));
-    this.handleBuildGet(columns, values, select, join);
-    const result = await this.first();
-    return result;
-  }
-  private handleBuildGet(columns: string[], values: SqlValue[], select: string[] | string = '*', join: Join[] = []) {
-    this.reset();
-    for (let index = 0; index < columns.length; index++) {
-      const column = columns[index];
-      const value = values[index];
-      if (value === undefined) {
-        continue;
+    const params = values.filter((value) => value !== null);
+
+    if (getClient().config.client === 'postgres') {
+      // Without joins the inserted row already answers the query, so RETURNING makes
+      // this a single statement — nothing can interleave between write and read.
+      if (!join.length) {
+        this.buildInsertQuery(columns, values, this.sanitizeSelect(select));
+        const result = await getClient().query(this.query, params);
+        this.reset();
+        return result.rows[0] ?? null;
       }
 
-      this.where(column, '=', value);
+      // Joins can't be expressed in RETURNING, so fall back to a second query — but key
+      // it on the primary key RETURNING just gave us rather than on the payload.
+      this.buildInsertQuery(columns, values, this.buildColumn(this._primaryKey));
+      const inserted = await getClient().query(this.query, params);
+      const id = inserted.rows[0]?.[this._primaryKey];
+      this.reset();
+      return await this.selectByPrimaryKey<T>(id, select, join);
     }
+
+    // MySQL has no RETURNING; the ResultSetHeader's insertId identifies the row instead.
+    this.buildInsertQuery(columns, values);
+    const result = await getClient().query(this.query, params);
+    const id = Array.isArray(result) ? result[0]?.insertId : result?.insertId;
+    this.reset();
+    return await this.selectByPrimaryKey<T>(id, select, join);
+  }
+
+  private async selectByPrimaryKey<T = any>(id: SqlValue, select: string[] | string = '*', join: Join[] = []): Promise<T> {
+    this.reset();
+    this.where(this._primaryKey, '=', id);
     this.select(select);
     this.joins.push(...join);
+    return await this.first<T>();
   }
   /**
    * Execute an UPDATE query
@@ -287,6 +315,16 @@ export class QueryBuilder extends BaseBuilder {
   public select(columns: string[] | string = []) {
     this.throwIfInIncompatibleOperations(['select'], 'select');
     this.operationsChain.push('select');
+    this._select = this.sanitizeSelect(columns);
+    return this;
+  }
+
+  /**
+   * Normalise a column list into a SELECT/RETURNING clause without touching builder state.
+   * `select()` records an operation in the chain, which `buildInsertQuery` rejects, so the
+   * INSERT ... RETURNING path needs the sanitising without the bookkeeping.
+   */
+  private sanitizeSelect(columns: string[] | string = []) {
     const columnsToArray = Array.isArray(columns)
       ? columns
       : columns.split(',');
@@ -300,8 +338,7 @@ export class QueryBuilder extends BaseBuilder {
       }
       return acc;
     }, [] as string[]);
-    this._select = cleanedColumns.length ? cleanedColumns.join(',') : '*';
-    return this;
+    return cleanedColumns.length ? cleanedColumns.join(',') : '*';
   }
   public rawSelect(select: string) {
     this.throwIfInIncompatibleOperations(['select'], 'rawSelect');
@@ -675,9 +712,10 @@ export class QueryBuilder extends BaseBuilder {
    * Build the INSERT query string
    * @param columns - Array of column names
    * @param values - Array of values
+   * @param returning - Columns to append as a RETURNING clause (Postgres only; MySQL has no RETURNING)
    * @protected
    */
-  protected buildInsertQuery(columns: string[], values: SqlValue[]) {
+  protected buildInsertQuery(columns: string[], values: SqlValue[], returning?: string) {
     this.throwIfColumnsAndValuesLengthMismatch(columns, values);
     this.throwIfNotInCompatibleOperations([], 'insert');
     let offset = 0;
@@ -696,6 +734,9 @@ export class QueryBuilder extends BaseBuilder {
       }
     }).join(',')})`;
 
+    if (returning && getClient().config.client === 'postgres') {
+      this.query += ` RETURNING ${returning}`;
+    }
   }
 
   /**

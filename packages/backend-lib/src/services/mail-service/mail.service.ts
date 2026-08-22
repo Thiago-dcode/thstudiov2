@@ -1,5 +1,8 @@
 import { Queue, JobsOptions } from "bullmq";
-import { JOB_SEND_MAIL, JOB_SEND_BATCH_EMAIL } from "@repo/common-lib/constants/constants";
+import {
+  JOB_SEND_MAIL,
+  JOB_SEND_BATCH_EMAIL,
+} from "@repo/common-lib/constants/queues";
 import { EmailDriver } from "./email-drivers/email-driver";
 import { Content, EmailDriverOptions, Envelop } from "./types";
 

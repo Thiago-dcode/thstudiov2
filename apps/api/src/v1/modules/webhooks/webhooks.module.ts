@@ -7,7 +7,11 @@ import { PlanSubscriptionsModule } from '../plan-subscriptions/plan-subscription
 import { UserModule } from '../users/users.module';
 import { PlanPricesModule } from '../plan-prices/plan-prices.module';
 import { UserBenefitModule } from '../user-benefit/user-benefit.module';
-import { PLAN_SUBSCRIPTIONS_QUEUE, STRIPE_WEBHOOKS_QUEUE, LOG_QUEUE } from '@repo/common-lib/constants/constants';
+import {
+  PLAN_SUBSCRIPTIONS_QUEUE,
+  STRIPE_WEBHOOKS_QUEUE,
+  LOG_QUEUE,
+} from '@repo/common-lib/constants/queues';
 import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
 import { Helpers } from 'src/common/services/helpers.service';
 

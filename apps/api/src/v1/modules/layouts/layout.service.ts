@@ -5,11 +5,13 @@ import {
 } from '@nestjs/common';
 import { EnumType } from '@repo/common-lib/constants/enums';
 import {
-  CACHE_KEY_LAYOUT_BY_NAME,
-  CACHE_KEY_LAYOUTS_ALL,
   MAX_COLUMN_BASE_COLUMNS,
   MIN_COLUMN_BASE_COLUMNS,
-} from '@repo/common-lib/constants/constants';
+} from '@repo/common-lib/constants/limits';
+import {
+  CACHE_KEY_LAYOUT_BY_NAME,
+  CACHE_KEY_LAYOUTS_ALL,
+} from '@repo/common-lib/constants/cache';
 import {
   ColumBaseLayoutConfig,
   Layout,

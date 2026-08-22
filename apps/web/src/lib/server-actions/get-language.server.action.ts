@@ -3,7 +3,7 @@
 import {
   DEFAULT_LANGUAGE,
   LANGUAGE_COOKIE_NAME,
-} from "@repo/common-lib/constants/constants";
+} from "@repo/common-lib/constants/language";
 import { ENUMS, type EnumType } from "@repo/common-lib/constants/enums";
 import { getAcceptLanguage } from "@repo/common-lib/utils/get-accept-language";
 import { cookies, headers } from "next/headers";
