@@ -14,11 +14,11 @@ Implement the backend spec exactly — nothing more, nothing less.
 
 | When | SKILL |
 |------|-------|
-| Always | `.agents/skills/full-api-module/SKILL.md` — canonical step order, migration CLI, schema patterns, no auto-CRUD |
+| Always | `.agents/skills/full-api-module/SKILL.md` — pick only the requested recipes (migration, repo, HTTP, processor, …); no auto-CRUD |
 | Any JOIN / `*_COLUMNS` / formatter | `.agents/skills/collision-prevention/SKILL.md` — prefix rules, no `&` intersections, `Pick<>` alignment |
 
 ## Hard rules
-- Follow the SKILL's order: migration → enums → common-lib schema/types → module files → register
+- Follow the SKILL as a menu: implement only the recipes the spec asks for (and their real dependencies). Do not scaffold a full module.
 - Only implement methods listed in the spec — stop and ask if none are listed
 - No TypeORM entities — DB shapes in `packages/common-lib/src/schemas/`
 - Controller responses always `ApiResponse<T>` from `@repo/common-lib/types/response`
