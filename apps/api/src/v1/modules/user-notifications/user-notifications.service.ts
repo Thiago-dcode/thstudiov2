@@ -82,6 +82,23 @@ export class UserNotificationsService {
   }
 
   /**
+   * Stamps `read_at` at the moment the notification is opened. Idempotent: one that is already
+   * read comes back untouched, because every write bumps `updated_at` - the timestamp the card
+   * shows - so re-opening a notification must not keep moving it.
+   */
+  async markAsRead(id: number, userId: number): Promise<UserNotification> {
+    // Also the ownership check: `getOne` throws for a notification that is not this user's.
+    const notification = await this.getOne(id, userId);
+    if (notification.read_at) return notification;
+
+    const row = await this.userNotificationsRepository.updateById(id, {
+      read_at: new Date(),
+    });
+    // The payload describes the entity, which reading did not touch, so the cache still holds.
+    return Object.assign(notification, row);
+  }
+
+  /**
    * Attaches each row's entity payload, cached per notification for
    * `USER_NOTIFICATION_PAYLOAD_CACHE_TTL` and dropped by `invalidatePayload` whenever the
    * notification is rewritten. Entities missing from the cache are resolved in one query per

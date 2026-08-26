@@ -32,6 +32,16 @@ export class UserNotificationsService extends BaseService {
       resource: `${user_id}/notifications/${id}`,
     });
   }
+
+  /** No body: the API stamps `read_at` itself and returns the notification as it now stands. */
+  async markAsRead(
+    id: number,
+    user_id: number,
+  ): Promise<ApiResponse<UserNotification>> {
+    return await this.fetchApi.patch({
+      resource: `${user_id}/notifications/${id}/read`,
+    });
+  }
 }
 
 let UserNotificationsServiceInstance: UserNotificationsService | null = null;

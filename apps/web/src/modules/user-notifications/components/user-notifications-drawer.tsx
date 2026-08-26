@@ -11,18 +11,27 @@ import {
 } from "@repo/ui/components/shadcn/drawer";
 import { ArrowRight, Bell } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "@/i18n/navigation";
 import { useUserNotifications } from "../contexts/user-notifications.provider";
 import { UserNotificationCard } from "./user-notification-card";
 
 export const UserNotificationsDrawer = () => {
   const t = useTranslations("atelier.topNav");
-  const { notifications, hasPendingToRead } = useUserNotifications();
+  const { notifications, hasPendingToRead, setAddNotificationCallback } =
+    useUserNotifications();
   const [open, setOpen] = useState(false);
   // The drawer is client-side state, so anything that navigates has to close it first - otherwise
   // it stays open on top of the destination page.
   const closeDrawer = useCallback(() => setOpen(false), []);
+
+  useEffect(() => {
+    setAddNotificationCallback((notification) => {
+      if (!notification.read_at) {
+        setOpen(true);
+      }
+    });
+  }, [setAddNotificationCallback]);
 
   return (
     <Drawer open={open} onOpenChange={setOpen} direction="left">

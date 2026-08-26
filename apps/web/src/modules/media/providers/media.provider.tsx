@@ -60,10 +60,8 @@ type MediaContextType = {
   addMediaUploads: (
     mediaInput: (CreateMediaInputWithFile & { previewUrl?: string })[],
   ) => void;
-  pushMediaUpload: (mediaUpload: UploadMedia) => void;
   setMediaUploads: (mediaUploads: UploadMedia[]) => void;
   handleRemoveCompleted: () => void;
-  handleUpload: () => Promise<void>;
   handleUploadUpdates: () => Promise<void>;
   handleUploadInserts: (onSuccess?: (media: Media) => void) => Promise<void>;
   upsertMediaUpload: (mediaUpload: UploadMedia) => void;
@@ -80,10 +78,8 @@ type MediaContextType = {
   ) => Promise<Awaited<ReturnType<typeof deleteMediaAction>>>;
   isLoading: boolean;
   isCompleted: boolean;
-  completed: UploadMedia[];
   mediaPendingToUpdate: UploadMedia[];
   mediaPendingToCreate: UploadMedia[];
-  isMediaCompleted: (m: UploadMedia) => boolean;
   generateUniqueMediaId: () => number;
 };
 
@@ -220,13 +216,6 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
     [generateUniqueMediaId],
   );
 
-  const pushMediaUpload = useCallback((mediaUpload: UploadMedia) => {
-    setMediaUploads((prev) => {
-      const exists = prev.some((m) => m.unique_id === mediaUpload.unique_id);
-      if (exists) return prev;
-      return [...prev, mediaUpload];
-    });
-  }, []);
 
   const setMediaUploadsDirect = useCallback((mediaUploads: UploadMedia[]) => {
     setMediaUploads(mediaUploads);
@@ -252,10 +241,6 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
   const isLoading = useMemo(
     () => mediaUploads.some((m) => m.pending),
     [mediaUploads],
-  );
-  const completed: UploadMedia[] = useMemo(
-    () => mediaUploads.filter((m) => isMediaCompleted(m)),
-    [mediaUploads, isMediaCompleted],
   );
   const isCompleted = useMemo(
     () => !mediaUploads.some((m) => !isMediaCompleted(m)),
@@ -377,24 +362,24 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
 
     const baseUpload: UploadMedia = currentMediaUpload
       ? {
-          ...currentMediaUpload,
-          unique_id: currentMediaUpload.unique_id ?? generateUniqueMediaId(),
-        }
+        ...currentMediaUpload,
+        unique_id: currentMediaUpload.unique_id ?? generateUniqueMediaId(),
+      }
       : {
-          input: {
-            user_id: media.user_id,
-            title: media.title ?? "",
-            description: media.description ?? "",
-            seo_title: media.seo_title ?? "",
-            seo_description: media.seo_description ?? "",
-            seo_alt: media.seo_alt ?? "",
-          },
-          action: "seo",
-          previewUrl: media.thumbnail || undefined,
-          id: media.id,
-          pending: false,
-          unique_id: generateUniqueMediaId(),
-        };
+        input: {
+          user_id: media.user_id,
+          title: media.title ?? "",
+          description: media.description ?? "",
+          seo_title: media.seo_title ?? "",
+          seo_description: media.seo_description ?? "",
+          seo_alt: media.seo_alt ?? "",
+        },
+        action: "seo",
+        previewUrl: media.thumbnail || undefined,
+        id: media.id,
+        pending: false,
+        unique_id: generateUniqueMediaId(),
+      };
 
     upsertMediaUpload({
       ...baseUpload,
@@ -483,24 +468,24 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
 
     const baseUpload: UploadMedia = currentMediaUpload
       ? {
-          ...currentMediaUpload,
-          unique_id: currentMediaUpload.unique_id ?? generateUniqueMediaId(),
-        }
+        ...currentMediaUpload,
+        unique_id: currentMediaUpload.unique_id ?? generateUniqueMediaId(),
+      }
       : {
-          input: {
-            user_id: media.user_id,
-            title: media.title ?? "",
-            description: media.description ?? "",
-            seo_title: media.seo_title ?? "",
-            seo_description: media.seo_description ?? "",
-            seo_alt: media.seo_alt ?? "",
-          },
-          action: "delete",
-          previewUrl: media.thumbnail || undefined,
-          id: media.id,
-          pending: false,
-          unique_id: generateUniqueMediaId(),
-        };
+        input: {
+          user_id: media.user_id,
+          title: media.title ?? "",
+          description: media.description ?? "",
+          seo_title: media.seo_title ?? "",
+          seo_description: media.seo_description ?? "",
+          seo_alt: media.seo_alt ?? "",
+        },
+        action: "delete",
+        previewUrl: media.thumbnail || undefined,
+        id: media.id,
+        pending: false,
+        unique_id: generateUniqueMediaId(),
+      };
 
     upsertMediaUpload({
       ...baseUpload,
@@ -581,14 +566,6 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
   // Batch Operations
   // ============================================================================
 
-  const handleUpload = async () => {
-    if (!mediaUploads.length || isLoading) return Promise.resolve();
-
-    await runWithConcurrency(mediaUploads, MEDIA_UPLOAD_CONCURRENCY, (m) =>
-      uploadSingleMedia(m.unique_id),
-    );
-  };
-
   const generateManySeoMedia = async (media: Media[]) => {
     // Pre-register every selected media as a queued "seo" upload so the modal
     // reflects the whole batch, not just the few requests currently in-flight
@@ -651,7 +628,6 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
   const value: MediaContextType = {
     mediaUploads,
     addMediaUploads,
-    pushMediaUpload,
     setMediaUploads: setMediaUploadsDirect,
     handleRemoveCompleted,
     upsertMediaUpload,
@@ -662,11 +638,8 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
     deleteSingleMedia,
     isLoading,
     isCompleted,
-    completed,
     mediaPendingToUpdate,
     mediaPendingToCreate,
-    isMediaCompleted,
-    handleUpload,
     handleUploadUpdates,
     handleUploadInserts,
     generateUniqueMediaId,

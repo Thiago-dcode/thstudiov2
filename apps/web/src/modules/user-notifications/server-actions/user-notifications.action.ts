@@ -41,3 +41,22 @@ export const getAllUserNotificationsAction = async (
     errors: await getFriendlyApiErrors(result),
   };
 };
+
+export const markUserNotificationAsReadAction = async (
+  id: number,
+): Promise<ActionReturn<UserNotification>> => {
+  const session = await requireSession();
+  if (!session) {
+    return await unauthorizedActionReturn<UserNotification>();
+  }
+
+  const result = await userNotificationsService.markAsRead(id, session.id);
+
+  if (result.data) {
+    return { data: result.data, errors: null };
+  }
+  return {
+    data: null,
+    errors: await getFriendlyApiErrors(result),
+  };
+};

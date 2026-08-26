@@ -24,6 +24,8 @@ type UserNotificationsContextType = {
   isLoading: boolean;
   unreadCount: number;
   hasPendingToRead: boolean;
+  /** Writes a notification the caller already has in hand, e.g. the one an action just read. */
+  updateUserNotification: (notification: UserNotification) => void;
   setAddNotificationCallback: (
     callback: (notification: UserNotification) => Promise<void> | void,
   ) => Promise<void> | void;
@@ -90,20 +92,27 @@ export const UserNotificationsProvider = ({
     [userNotificationsArr],
   );
 
+  const updateUserNotification = useCallback(
+    (notification: UserNotification) => {
+      setUserNotifications((prev) =>
+        new Map(prev).set(notification.id, notification),
+      );
+    },
+    [],
+  );
+
+  // Arriving is more than being written: only a notification that came in over the socket runs
+  // the subscriber callbacks.
   const addUserNotification = useCallback(
     async (notification: UserNotification) => {
-      setUserNotifications((prev) => {
-        const next = new Map(prev);
-        next.set(notification.id, notification);
-        return next;
-      });
+      updateUserNotification(notification);
       await Promise.all(
         addNotificationCallbacks.current.map(
           async (cb) => await cb(notification),
         ),
       );
     },
-    [],
+    [updateUserNotification],
   );
 
   const { handleAction, isPending } = useHandleAction({
@@ -157,6 +166,7 @@ export const UserNotificationsProvider = ({
       isLoading,
       unreadCount,
       hasPendingToRead,
+      updateUserNotification,
       setAddNotificationCallback,
     }),
     [
@@ -164,6 +174,7 @@ export const UserNotificationsProvider = ({
       isLoading,
       unreadCount,
       hasPendingToRead,
+      updateUserNotification,
       setAddNotificationCallback,
     ],
   );

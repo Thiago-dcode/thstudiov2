@@ -225,6 +225,7 @@ export class MediaService {
         seo_title: data.seo_title || data.title || defaultSeoText,
         seo_alt: data.seo_alt || data.title || defaultSeoText,
         compression_level: compressionLevel,
+        completed_at: new Date(),
         seo_description: data.seo_description || data.description,
       };
       cleanObj(mediaData);

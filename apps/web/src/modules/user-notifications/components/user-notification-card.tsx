@@ -31,6 +31,9 @@ import { useTranslations } from "next-intl";
 import type { ReactElement, ReactNode } from "react";
 import { Link } from "@/i18n/navigation";
 import { useDateTimeFormat } from "@/lib/hooks/useDateTimeFormat";
+import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
+import { useUserNotifications } from "../contexts/user-notifications.provider";
+import { markUserNotificationAsReadAction } from "../server-actions/user-notifications.action";
 
 /** What each media notification is about, in one glyph. */
 const MEDIA_TYPE_ICONS: Record<MediaNotification["type"], LucideIcon> = {
@@ -342,12 +345,28 @@ export const UserNotificationCard = ({
 }) => {
   const t = useCardTranslations();
   const formatDateTime = useDateTimeFormat();
+  const { updateUserNotification } = useUserNotifications();
   const { preview, details } = resolveViews(userNotification, onNavigate);
   const typeLabel = t(`types.${userNotification.type}`);
   const unread = !userNotification.read_at;
 
+  // Opening the modal is what counts as reading it. The result goes back into the provider so the
+  // card, the list order and the bell's unread dot all settle without a refetch; nothing renders
+  // `isPending`, because a read stamp the user did not ask for should not be something they wait
+  // on - and a failure leaves the notification unread, which is the honest outcome.
+  const { handleAction } = useHandleAction({
+    action: () => markUserNotificationAsReadAction(userNotification.id),
+    afterAction: async ({ data }) => {
+      if (data) updateUserNotification(data);
+    },
+  });
+
+  const handleOpenChange = (open: boolean) => {
+    if (open && unread) void handleAction();
+  };
+
   return (
-    <Dialog>
+    <Dialog onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <button
           type="button"
@@ -360,9 +379,21 @@ export const UserNotificationCard = ({
           )}
         >
           {preview}
-          <span className="text-xs text-text-muted font-normal">
-            {formatDateTime(userNotification.updated_at)}
-          </span>
+          {/* Reading is the one thing the card can still be waiting on, so an unread one says so
+              outright instead of showing a date that means nothing yet. Flips to the stamp as
+              soon as opening the modal marks it read. */}
+          {unread ? (
+            <span className="flex items-center gap-1.5 text-xs text-error font-normal">
+              <TriangleAlert className="size-3 shrink-0" aria-hidden />
+              {t("status.unread")}
+            </span>
+          ) : (
+            <span className="text-xs text-text-muted font-normal">
+              {t("dialog.readAt", {
+                date: formatDateTime(userNotification.read_at) ?? "",
+              })}
+            </span>
+          )}
         </button>
       </DialogTrigger>
 
@@ -376,16 +407,7 @@ export const UserNotificationCard = ({
           </DialogDescription>
         </DialogHeader>
 
-        <dl className="flex flex-col gap-3 text-sm">
-          {details}
-          <Field label={t("dialog.status")}>
-            {userNotification.read_at
-              ? t("dialog.readAt", {
-                  date: formatDateTime(userNotification.read_at) ?? "",
-                })
-              : t("status.unread")}
-          </Field>
-        </dl>
+        <dl className="flex flex-col gap-3 text-sm">{details}</dl>
       </DialogContent>
     </Dialog>
   );
