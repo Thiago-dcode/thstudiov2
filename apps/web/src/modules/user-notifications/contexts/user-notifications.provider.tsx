@@ -51,26 +51,13 @@ export const UserNotificationsProvider = ({
 }) => {
   const currentPage = useRef(1);
   const hasLoadedRef = useRef(false);
-  const [userNotifications, setUserNotifications] = useState<
-    Map<number, UserNotification>
-  >(new Map());
+  const [userNotifications, setUserNotifications] = useState<UserNotification[]>([]);
   // A ref, not state: subscribing is not something anything renders, and holding the list in
   // state let `addUserNotification` capture an empty array on its first render and keep calling
   // that one forever.
   const addNotificationCallbacks = useRef<
     ((notification: UserNotification) => Promise<void> | void)[]
   >([]);
-
-  const userNotificationsArr = useMemo(
-    () =>
-      [...userNotifications.values()].sort((a, b) => {
-        // unread (no read_at) first, then newest id
-        const unreadDiff = Number(!!a.read_at) - Number(!!b.read_at);
-        if (unreadDiff !== 0) return unreadDiff;
-        return b.id - a.id;
-      }),
-    [userNotifications],
-  );
 
   const setAddNotificationCallback = useCallback(
     (callback: (notification: UserNotification) => Promise<void> | void) => {
@@ -83,20 +70,26 @@ export const UserNotificationsProvider = ({
   );
 
   const unreadCount = useMemo(
-    () => userNotificationsArr.filter((n) => !n.read_at).length,
-    [userNotificationsArr],
+    () => userNotifications.filter((n) => !n.read_at).length,
+    [userNotifications],
   );
 
   const hasPendingToRead = useMemo(
-    () => userNotificationsArr.some((n) => !n.read_at),
-    [userNotificationsArr],
+    () => userNotifications.some((n) => !n.read_at),
+    [userNotifications],
   );
 
   const updateUserNotification = useCallback(
     (notification: UserNotification) => {
-      setUserNotifications((prev) =>
-        new Map(prev).set(notification.id, notification),
-      );
+      setUserNotifications((prev) => {
+        const existIndex = prev.findIndex((n) => n.id === notification.id);
+        if (existIndex === -1) {
+          return [notification, ...prev];
+        }
+        const next = [...prev];
+        next[existIndex] = notification;
+        return next;
+      });
     },
     [],
   );
@@ -124,13 +117,14 @@ export const UserNotificationsProvider = ({
       });
     },
     afterAction: async (result) => {
-      if (!result.data) return;
+      const incoming = result.data;
+      if (!incoming) return;
       setUserNotifications((prev) => {
-        const next = new Map(prev);
-        for (const userNot of result.data ?? []) {
-          next.set(userNot.id, userNot);
+        const byId = new Map(prev.map((n) => [n.id, n]));
+        for (const notification of incoming) {
+          byId.set(notification.id, notification);
         }
-        return next;
+        return [...byId.values()];
       });
     },
   });
@@ -156,13 +150,13 @@ export const UserNotificationsProvider = ({
     void handleAction();
   }, [handleAction]);
 
-  const isLoading = userNotifications.size === 0 && isPending;
+  const isLoading = userNotifications.length === 0 && isPending;
 
   // Memoised so consumers only re-render when the notifications themselves change, not on every
   // render of this provider.
   const value = useMemo(
     () => ({
-      notifications: userNotificationsArr,
+      notifications: userNotifications,
       isLoading,
       unreadCount,
       hasPendingToRead,
@@ -170,7 +164,7 @@ export const UserNotificationsProvider = ({
       setAddNotificationCallback,
     }),
     [
-      userNotificationsArr,
+      userNotifications,
       isLoading,
       unreadCount,
       hasPendingToRead,
