@@ -363,7 +363,7 @@ describe('ColumnBuilder', () => {
 
         // Assert
         expect(result).toBe(
-          'user_id INTEGER REFERENCES users (id) ON DELETE CASCADE ON UPDATE RESTRICT',
+          'user_id INTEGER REFERENCES users (id) ON DELETE CASCADE ON UPDATE RESTRICT NULL',
         );
       });
 
@@ -404,7 +404,7 @@ describe('ColumnBuilder', () => {
 
         // Assert
         expect(result).toBe(
-          'order_user_id INTEGER REFERENCES user_profiles (profile_id) ON DELETE CASCADE',
+          'order_user_id INTEGER REFERENCES user_profiles (profile_id) ON DELETE CASCADE NULL',
         );
       });
 
