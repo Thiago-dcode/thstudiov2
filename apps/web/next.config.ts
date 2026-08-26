@@ -50,6 +50,8 @@ const nextConfig: NextConfig = {
       process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || "",
     NEXT_PUBLIC_API_URL:
       process.env.NEXT_PUBLIC_API_URL || process.env.API_V1_URL || "",
+    // No server-side twin: the socket.io origin is only ever consumed by the browser.
+    NEXT_PUBLIC_WS_URL: process.env.NEXT_PUBLIC_WS_URL || "",
     NEXT_PUBLIC_GEOAPIFY_URL:
       process.env.NEXT_PUBLIC_GEOAPIFY_URL || process.env.GEOAPIFY_URL || "",
     NEXT_PUBLIC_GEOAPIFY_KEY:

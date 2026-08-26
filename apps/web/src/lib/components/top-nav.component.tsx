@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
+import { UserNotificationsDrawer } from "@/modules/user-notifications/components/user-notifications-drawer";
 import { useUserMetrics } from "@/modules/users/providers/user-metrics.provider";
 import { useMainNav } from "../providers/main-nav.provider";
 
@@ -19,7 +20,7 @@ export const TopNav = ({ username }: { username?: string }) => {
 
   return (
     <nav className="border-b border-b-fg-2 w-full h-16 shrink-0 flex items-center justify-between px-4">
-      <div className="flex items-center">
+      <div className="flex items-center gap-1">
         <button
           type="button"
           onClick={toggleMobile}
@@ -42,6 +43,8 @@ export const TopNav = ({ username }: { username?: string }) => {
             <PanelLeftClose size={18} />
           )}
         </button>
+
+        <UserNotificationsDrawer />
       </div>
 
       <div className="flex items-center justify-center gap-4">

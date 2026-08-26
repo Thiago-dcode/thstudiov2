@@ -14,6 +14,7 @@ import { PortfolioProvider } from "@/modules/portfolios/providers/create-update-
 import { AlertServiceButton } from "@/modules/services/components/alert-service.button";
 import { CreateUpdateServiceProvider } from "@/modules/services/providers/create-update-service.provider";
 import { UserBenefitModal } from "@/modules/user-benefit/components/user-benefit.modal";
+import { UserNotificationsProvider } from "@/modules/user-notifications/contexts/user-notifications.provider";
 import { ProfileSetupGuide } from "@/modules/users/components/profile-setup-guide";
 import { UserAccountBannedModal } from "@/modules/users/components/user-account-banned-modal";
 import { UserMetricsProvider } from "@/modules/users/providers/user-metrics.provider";
@@ -43,32 +44,34 @@ const AdminLayout = async ({ children }: { children: ReactNode }) => {
       />
       <MainNavProvider defaultShrinked>
         <UserMetricsProvider userId={userAuth.id}>
-          <MediaProvider>
-            <PortfolioProvider user={userAuth}>
-              <CollectionProvider user={userAuth}>
-                <CreateUpdateServiceProvider user={userAuth}>
-                  <UserAccountBannedModal />
-                  <div className="fixed flex flex-col items-end bottom-6 right-6 z-100 gap-2 ">
-                    <ProfileSetupGuide userId={userAuth.id} />
-                    <UploadMediaModal />
-                    <AlertPortfolioButton />
-                    <AlertCollectionButton />
-                    <AlertServiceButton />
-                  </div>
-                  <div className="flex size-full items-center justify-start">
-                    <AdminHeader />
-                    <main className="size-full flex flex-col items-start justify-start ">
-                      <TopNav username={userAuth.username} />
-                      <div className="flex w-full justify-start h-full overflow-y-scroll">
-                        {" "}
-                        {children}
-                      </div>
-                    </main>
-                  </div>
-                </CreateUpdateServiceProvider>
-              </CollectionProvider>
-            </PortfolioProvider>
-          </MediaProvider>
+          <UserNotificationsProvider>
+            <MediaProvider>
+              <PortfolioProvider user={userAuth}>
+                <CollectionProvider user={userAuth}>
+                  <CreateUpdateServiceProvider user={userAuth}>
+                    <UserAccountBannedModal />
+                    <div className="fixed flex flex-col items-end bottom-6 right-6 z-100 gap-2 ">
+                      <ProfileSetupGuide userId={userAuth.id} />
+                      <UploadMediaModal />
+                      <AlertPortfolioButton />
+                      <AlertCollectionButton />
+                      <AlertServiceButton />
+                    </div>
+                    <div className="flex size-full items-center justify-start">
+                      <AdminHeader />
+                      <main className="size-full flex flex-col items-start justify-start ">
+                        <TopNav username={userAuth.username} />
+                        <div className="flex w-full justify-start h-full overflow-y-scroll">
+                          {" "}
+                          {children}
+                        </div>
+                      </main>
+                    </div>
+                  </CreateUpdateServiceProvider>
+                </CollectionProvider>
+              </PortfolioProvider>
+            </MediaProvider>
+          </UserNotificationsProvider>
         </UserMetricsProvider>
       </MainNavProvider>
     </>

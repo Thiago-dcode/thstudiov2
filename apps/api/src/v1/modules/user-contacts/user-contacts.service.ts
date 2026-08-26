@@ -4,6 +4,7 @@ import { Queue } from 'bullmq';
 import { UserContactsRepository } from './user-contacts.repository';
 import { CreateUserContactRequest } from './requests/create-user-contact.request';
 import { UpdateUserContactRequest } from './requests/update-user-contact.request';
+import { IndexUserContactRequest } from './requests/index-user-contact.request';
 import {
   EMAIL_PREFERENCES_QUEUE,
   USER_CONTACTS_QUEUE,
@@ -36,8 +37,8 @@ export class UserContactsService {
     };
   }
 
-  async findAll(userId: number) {
-    return await this.userContactsRepository.findAll(userId);
+  async findAll(userId: number, filters: IndexUserContactRequest) {
+    return await this.userContactsRepository.findAll(userId, filters);
   }
 
   async findOne(id: number, userId: number) {

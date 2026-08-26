@@ -3,6 +3,7 @@ import * as z from "zod";
 const clientEnvSchema = z.object({
   NEXT_PUBLIC_APP_URL: z.string().min(1),
   NEXT_PUBLIC_API_URL: z.string().min(1),
+  NEXT_PUBLIC_WS_URL: z.string().min(1),
   NEXT_PUBLIC_GEOAPIFY_URL: z.string().min(1),
   NEXT_PUBLIC_GEOAPIFY_KEY: z.string().min(1),
 });
@@ -10,6 +11,7 @@ const clientEnvSchema = z.object({
 const parsed = clientEnvSchema.safeParse({
   NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
   NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+  NEXT_PUBLIC_WS_URL: process.env.NEXT_PUBLIC_WS_URL,
   NEXT_PUBLIC_GEOAPIFY_URL: process.env.NEXT_PUBLIC_GEOAPIFY_URL,
   NEXT_PUBLIC_GEOAPIFY_KEY: process.env.NEXT_PUBLIC_GEOAPIFY_KEY,
 });

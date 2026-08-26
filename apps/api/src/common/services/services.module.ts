@@ -43,6 +43,7 @@ import { RequestStore } from '@repo/common-lib/types/request';
     CompressService,
     Helpers,
     AsyncLocalStorage,
+    BullModule,
   ],
   providers: [
     RequestService,

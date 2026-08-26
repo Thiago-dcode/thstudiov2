@@ -62,6 +62,7 @@ export const SelectMediaDrawer = ({
         page: currentPage.current,
         paginated: true,
         shape: shapeRef.current,
+        completed: true,
         blocked: false,
         is_active: true,
       });
@@ -295,9 +296,9 @@ export const SelectMediaDrawer = ({
             <p className="text-xs text-text-muted tabular-nums">
               {maxSelection !== undefined
                 ? t("itemsSelectedWithMax", {
-                    count: mediaSelectedLength,
-                    max: maxSelection,
-                  })
+                  count: mediaSelectedLength,
+                  max: maxSelection,
+                })
                 : t("itemsSelected", { count: mediaSelectedLength })}
             </p>
           ) : (

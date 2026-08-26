@@ -8,9 +8,11 @@ import {
 import {
   CreateUserNotificationInput,
   UpdateUserNotificationInput,
-  UserNotification,
+  UserNotificationRow,
 } from '@repo/common-lib/types/user-notification';
+import { DEFAULT_USER_NOTIFICATION_ORDER_BY } from '@repo/common-lib/constants/user-notification';
 import { DbException } from '@repo/database/exceptions';
+import { QueryBuilder } from '@repo/database/queryBuilder';
 import { BaseRepository } from '@repo/database/repositories';
 import { RequestService } from 'src/common/services/request.service';
 import { IndexUserNotificationRequest } from './requests/index-user-notification.request';
@@ -23,6 +25,7 @@ export class UserNotificationsRepository extends BaseRepository {
     `${TABLES_ENUM.USER_NOTIFICATIONS}.user_id`,
     `${TABLES_ENUM.USER_NOTIFICATIONS}.entity_id`,
     `${TABLES_ENUM.USER_NOTIFICATIONS}.read_at`,
+    `${TABLES_ENUM.USER_NOTIFICATIONS}.updated_at`,
   ] as const;
 
   constructor(
@@ -32,7 +35,7 @@ export class UserNotificationsRepository extends BaseRepository {
     super(TABLES_ENUM.USER_NOTIFICATIONS, logService);
   }
 
-  async create(data: CreateUserNotificationInput): Promise<UserNotification> {
+  async create(data: CreateUserNotificationInput): Promise<UserNotificationRow> {
     const result = await super._create<UserNotificationSchemaWithoutTimestamps>(
       data,
       { select: this.COLUMNS },
@@ -46,9 +49,31 @@ export class UserNotificationsRepository extends BaseRepository {
   async getAll(
     userId: number,
     filters: IndexUserNotificationRequest,
-  ): Promise<UserNotification[]> {
+  ): Promise<UserNotificationRow[]> {
     const query = this.query().select(this.COLUMNS).where('user_id', '=', userId);
 
+    this.applyWhereFilters(query, filters);
+
+    // Before `handleOffsetPagination`, which appends the primary key as a tiebreaker so rows with
+    // an identical sort value keep a stable order across pages.
+    query.orderBy(
+      filters.order_by || DEFAULT_USER_NOTIFICATION_ORDER_BY,
+      filters.order || 'DESC',
+    );
+
+    this.requestService.pagination = await this.handleOffsetPagination(
+      query,
+      filters,
+    );
+
+    const results = await query.get<UserNotificationSchemaWithoutTimestamps[]>();
+    return (results ?? []).map((result) => this.format(result));
+  }
+
+  private applyWhereFilters(
+    query: QueryBuilder,
+    filters: IndexUserNotificationRequest,
+  ): void {
     if (filters.type) {
       query.where('type', '=', filters.type);
     }
@@ -61,18 +86,24 @@ export class UserNotificationsRepository extends BaseRepository {
       query.where('read_at', 'IS', null);
     }
 
-    query.orderBy('created_at', 'DESC');
+    if (filters.created_from) {
+      query.where(
+        `${TABLES_ENUM.USER_NOTIFICATIONS}.created_at`,
+        '>=',
+        filters.created_from,
+      );
+    }
 
-    this.requestService.pagination = await this.handleOffsetPagination(
-      query,
-      filters,
-    );
-
-    const results = await query.get<UserNotificationSchemaWithoutTimestamps[]>();
-    return (results ?? []).map((result) => this.format(result));
+    if (filters.created_to) {
+      query.where(
+        `${TABLES_ENUM.USER_NOTIFICATIONS}.created_at`,
+        '<=',
+        filters.created_to,
+      );
+    }
   }
 
-  async getOne(id: number): Promise<UserNotification | null> {
+  async getOne(id: number): Promise<UserNotificationRow | null> {
     const result = await this.query()
       .select(this.COLUMNS)
       .where('id', '=', id)
@@ -84,7 +115,7 @@ export class UserNotificationsRepository extends BaseRepository {
   async findByTypeAndEntityId(
     type: EnumType<'NOTIFICATION_TYPE'>,
     entityId: number,
-  ): Promise<UserNotification | null> {
+  ): Promise<UserNotificationRow | null> {
     const result = await this.query()
       .select(this.COLUMNS)
       .where('type', '=', type)
@@ -97,7 +128,7 @@ export class UserNotificationsRepository extends BaseRepository {
   async updateById(
     id: number,
     data: UpdateUserNotificationInput,
-  ): Promise<UserNotification> {
+  ): Promise<UserNotificationRow> {
     const columns = Object.keys(data);
     const values = Object.values(data);
 
@@ -114,13 +145,14 @@ export class UserNotificationsRepository extends BaseRepository {
 
   private format(
     result: UserNotificationSchemaWithoutTimestamps,
-  ): UserNotification {
+  ): UserNotificationRow {
     return {
       id: result.id,
       type: result.type,
       user_id: result.user_id,
       entity_id: result.entity_id,
       read_at: result.read_at,
+      updated_at: result.updated_at,
     };
   }
 }

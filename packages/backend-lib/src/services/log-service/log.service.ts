@@ -48,15 +48,13 @@ export abstract class LogService {
     }
 
     /**
-     * Queues a flush job via BullMQ for async processing.
-     * Requires a Queue instance passed in the constructor.
+     * Queues a flush job via BullMQ. No-op when there is nothing pending.
+     * Prefer this from HTTP interceptors so they do not depend on whichever
+     * feature-module `LogService` Nest resolved for the request.
      */
-    public async flushAsync(jobOptions?: JobsOptions): Promise<void> {
-        if (!this.queue) {
-            throw new Error('LogService: a BullMQ Queue is required for flushAsync. Pass it in the constructor.');
-        }
+    public static async enqueueFlush(queue: Queue, jobOptions?: JobsOptions): Promise<void> {
         if (!LogService.pendingLogs.length) return;
-        await this.queue.add(
+        await queue.add(
             JOB_FLUSH_LOGS,
             {},
             {
@@ -65,6 +63,19 @@ export abstract class LogService {
                 ...jobOptions,
             },
         );
+    }
+
+    /**
+     * Queues a flush job via BullMQ when this instance has a Queue.
+     * Falls back to an in-process flush so logs are not dropped when a
+     * feature module constructed LogService without one.
+     */
+    public async flushAsync(jobOptions?: JobsOptions): Promise<void> {
+        if (!this.queue) {
+            await LogService.flush();
+            return;
+        }
+        await LogService.enqueueFlush(this.queue, jobOptions);
     }
 
     public channel(channel: string) {

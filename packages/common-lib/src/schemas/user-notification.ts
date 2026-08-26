@@ -13,7 +13,7 @@ export type UserNotificationSchema = {
 
 export type UserNotificationSchemaWithoutTimestamps = Omit<
   UserNotificationSchema,
-  'created_at' | 'updated_at'
+  'created_at'
 >;
 
 const tablesUserNotification = [TABLES_ENUM.USER_NOTIFICATIONS] as const;

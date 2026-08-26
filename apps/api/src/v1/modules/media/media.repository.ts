@@ -41,6 +41,9 @@ export class MediaRepository extends BaseRepository {
     'media.compression_level',
     'media.extension',
     'media.is_active',
+    'media.status',
+    'media.completed_at',
+    'media.failed_reason',
     'media.seo_alt',
     'media.seo_title',
     'media.seo_description',
@@ -98,6 +101,15 @@ export class MediaRepository extends BaseRepository {
     const results = await this.query()
       .select(this.COLUMNS)
       .where('user_id', '=', userId)
+      .get<MediaSchema[]>();
+    return results.map((result) => this.formatMedia(result));
+  }
+
+  async findManyByIds(ids: number[]): Promise<Media[]> {
+    if (!ids.length) return [];
+    const results = await this.query()
+      .select(this.COLUMNS)
+      .whereIn('media.id', ids)
       .get<MediaSchema[]>();
     return results.map((result) => this.formatMedia(result));
   }
@@ -190,6 +202,15 @@ export class MediaRepository extends BaseRepository {
         query.where('blocked_at', 'IS', null);
       }
     }
+
+    // `completed` maps to `status`: only COMPLETED rows when true, anything else when false.
+    if (typeof filters.completed === 'boolean') {
+      if (filters.completed) {
+        query.where('completed_at', '!=', null);
+      } else {
+        query.where('completed_at', '=', null);
+      }
+    }
     this.requestService.pagination =
       await this.handleOffsetPagination(query, filters);
     query.orderBy('created_at', 'DESC')
@@ -227,6 +248,9 @@ export class MediaRepository extends BaseRepository {
       compression_level: result.compression_level,
       extension: result.extension,
       is_active: result.is_active,
+      status: result.status,
+      completed_at: result.completed_at,
+      failed_reason: result.failed_reason,
       seo_alt: result.seo_alt,
       seo_title: result.seo_title,
       seo_description: result.seo_description,
@@ -266,13 +290,13 @@ export class MediaRepository extends BaseRepository {
     const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];
     const row = (Array.isArray(rows) ? rows : [])[0] as
       | {
-          seo_title: string | null;
-          seo_description: string | null;
-          thumbnail: string | null;
-          username: string;
-          is_active: boolean;
-          blocked: boolean;
-        }
+        seo_title: string | null;
+        seo_description: string | null;
+        thumbnail: string | null;
+        username: string;
+        is_active: boolean;
+        blocked: boolean;
+      }
       | undefined;
     if (!row) return null;
     return {

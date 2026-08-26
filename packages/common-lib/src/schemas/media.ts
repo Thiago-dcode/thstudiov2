@@ -20,6 +20,9 @@ export type MediaSchema = {
   compression_level?: EnumType<'COMPRESSION_LEVEL'>;
   extension: string;
   is_active: boolean;
+  status: EnumType<'MEDIA_STATUS'>;
+  completed_at?: Date | null;
+  failed_reason?: string | null;
   seo_alt?: string;
   seo_title?: string;
   seo_description?: string;

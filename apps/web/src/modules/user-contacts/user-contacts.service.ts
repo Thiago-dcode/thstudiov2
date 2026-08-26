@@ -3,7 +3,9 @@ import type {
   CreateUserContactInput,
   UpdateUserContactInput,
   UserContact,
+  UserContactIndexRequest,
 } from "@repo/common-lib/types/user-contact";
+import { queryParamBuilder } from "@repo/common-lib/utils/query-builder";
 import { fetchApi } from "@/lib/facade/fetchApi";
 import { BaseService } from "@/lib/services/base.service";
 
@@ -32,9 +34,12 @@ export class UserContactsService extends BaseService {
     });
   }
 
-  async getAll(user_id: number): Promise<ApiResponse<UserContact[]>> {
+  async getAll(
+    user_id: number,
+    filters?: UserContactIndexRequest,
+  ): Promise<ApiResponse<UserContact[]>> {
     return await this.fetchApi.get({
-      resource: `${user_id}/contacts`,
+      resource: queryParamBuilder(`${user_id}/contacts`, filters),
       cacheOptions: {
         cache: "no-store",
       },

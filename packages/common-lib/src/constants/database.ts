@@ -43,6 +43,9 @@ export const SQL_CLAUSES = {
   'IS NOT': 'IS NOT',
 } as const;
 
+// ORDERING
+export const SQL_ORDER_DIRECTIONS = ['ASC', 'DESC'] as const;
+
 // MIGRATIONS
 export const MIGRATION_TABLE_NAME = 'migrations';
 

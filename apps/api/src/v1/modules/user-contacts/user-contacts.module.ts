@@ -45,6 +45,8 @@ import { EmailPreferencesModule } from '../email-preferences/email-preferences.m
       inject: [getQueueToken(LOG_QUEUE)],
     },
   ],
-  exports: [UserContactsService, NewContactMail],
+  // UserContactsRepository is exported for UserNotificationsModule, which reads contact previews
+  // for NEW_CONTACT payloads (same pattern MediaModule uses for SitemapModule).
+  exports: [UserContactsService, UserContactsRepository, NewContactMail],
 })
 export class UserContactsModule {}

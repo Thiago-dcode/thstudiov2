@@ -5,9 +5,13 @@ import {
   JOB_CREATE_OR_UPDATE_USER_NOTIFICATION,
   USER_NOTIFICATIONS_QUEUE,
 } from '@repo/common-lib/constants/queues';
-import type { CreateUserNotificationInput } from '@repo/common-lib/types/user-notification';
+import type {
+  CreateUserNotificationInput,
+  UserNotificationRow,
+} from '@repo/common-lib/types/user-notification';
 import { GlobalProcessor } from 'src/common/processors/global.processor';
 import { UserNotificationsRepository } from './user-notifications.repository';
+import { UserNotificationsService } from './user-notifications.service';
 import { UserNotificationsGateway } from './user-notifications.gateway';
 
 @Processor(USER_NOTIFICATIONS_QUEUE)
@@ -18,6 +22,7 @@ export class UserNotificationsProcessor extends GlobalProcessor {
 
   constructor(
     private readonly userNotificationsRepository: UserNotificationsRepository,
+    private readonly userNotificationsService: UserNotificationsService,
     private readonly appLogService: LogService,
     private readonly userNotificationGateway: UserNotificationsGateway
   ) {
@@ -54,6 +59,10 @@ export class UserNotificationsProcessor extends GlobalProcessor {
             read_at: data.read_at,
           },
         );
+        // The entity is what triggered this rewrite, so its cached preview is now stale.
+        await this.userNotificationsService.invalidatePayload(
+          userNotification.id,
+        );
         log.info(
           `User notification updated: type=${data.type} entity_id=${data.entity_id}`,
           {
@@ -63,6 +72,8 @@ export class UserNotificationsProcessor extends GlobalProcessor {
             entity_id: data.entity_id,
           },
         );
+        await this.notifyUser(userNotification);
+        return userNotification;
       }
 
       userNotification = await this.userNotificationsRepository.create(data);
@@ -75,7 +86,7 @@ export class UserNotificationsProcessor extends GlobalProcessor {
           entity_id: data.entity_id,
         },
       );
-      await this.userNotificationGateway.notifyUser(userNotification);
+      await this.notifyUser(userNotification);
       return userNotification;
 
     } catch (error) {
@@ -86,5 +97,16 @@ export class UserNotificationsProcessor extends GlobalProcessor {
       throw error;
     }
 
+  }
+
+  /**
+   * Pushes the notification with its entity payload attached, so a live card renders the same
+   * content it would after a reload instead of waiting for a refetch.
+   */
+  private async notifyUser(row: UserNotificationRow): Promise<void> {
+    const [userNotification] = await this.userNotificationsService.getPayload([
+      row,
+    ]);
+    await this.userNotificationGateway.notifyUser(userNotification);
   }
 }

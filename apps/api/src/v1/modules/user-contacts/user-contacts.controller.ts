@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Body, Patch, Param, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, ParseIntPipe, Query } from '@nestjs/common';
 import { UserContactsService } from './user-contacts.service';
 import { CreateUserContactRequest } from './requests/create-user-contact.request';
 import { UpdateUserContactRequest } from './requests/update-user-contact.request';
+import { IndexUserContactRequest } from './requests/index-user-contact.request';
 import { Public } from 'src/common/decorators/public.decorator';
 import { ModelExistPipe } from 'src/pipes/model-exist.pipe';
 import { IsUserAuthPipe } from 'src/pipes/is-user-auth.pipe';
@@ -22,9 +23,10 @@ export class UserContactsController {
 
   @Get()
   findAll(
-    @Param('user_id', ParseIntPipe, new ModelExistPipe('users'), IsUserAuthPipe) user_id: number
+    @Param('user_id', ParseIntPipe, new ModelExistPipe('users'), IsUserAuthPipe) user_id: number,
+    @Query() filters: IndexUserContactRequest
   ) {
-    return this.userContactsService.findAll(user_id);
+    return this.userContactsService.findAll(user_id, filters);
   }
 
   @Get(':id')

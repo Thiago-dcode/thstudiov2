@@ -12,10 +12,15 @@ import { UserNotificationsRepository } from './user-notifications.repository';
 import { UserNotificationsService } from './user-notifications.service';
 import { UserNotificationsGateway } from './user-notifications.gateway';
 import { AuthCoreModule } from '../auth/auth-core.module';
+import { MediaModule } from '../media/media.module';
+import { UserContactsModule } from '../user-contacts/user-contacts.module';
 
 @Module({
   imports: [
     AuthCoreModule,
+    // The entities notifications point at: their repositories back the card payloads.
+    MediaModule,
+    UserContactsModule,
     BullModule.registerQueue(
       { name: USER_NOTIFICATIONS_QUEUE },
       { name: LOG_QUEUE },

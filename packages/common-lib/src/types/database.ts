@@ -1,4 +1,4 @@
-import { SQL_CLAUSES, SQL_FUNCTIONS } from '../constants/database';
+import { SQL_CLAUSES, SQL_FUNCTIONS, SQL_ORDER_DIRECTIONS } from '../constants/database';
 import { AvailableEnums, EnumType ,TABLES_ENUM} from '../constants/enums';
 
 export type DatabaseClient = 'postgres' | 'mysql' | 'sqlite' | 'mongodb';
@@ -32,7 +32,10 @@ export type SqlValue =
   | EnumType<AvailableEnums>;
 export type SqlClause =
   (typeof SQL_CLAUSES)[keyof typeof SQL_CLAUSES];
-  
+
+export type SqlOrderDirection = (typeof SQL_ORDER_DIRECTIONS)[number];
+
+
 export type SqlOperation =
   | 'where'
   | 'join'

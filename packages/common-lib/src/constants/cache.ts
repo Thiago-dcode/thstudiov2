@@ -43,6 +43,21 @@ export const CACHE_KEY_CATEGORY_TRANSLATION = (
 export const CACHE_KEY_USER_PUBLIC_ID = (userId: number | string) => `user_public_id_${userId}` as const;
 export const CACHE_KEY_USERNAME_EXISTS = (username: string) => `username_exists_${username}` as const;
 
+// User notifications
+/**
+ * The entity preview attached to a notification. Keyed per notification rather than per entity:
+ * a notification is rewritten (and this key dropped) every time its entity changes in a way that
+ * warrants notifying again, so the preview it shows is refreshed on the same beat.
+ */
+export const CACHE_KEY_USER_NOTIFICATION_PAYLOAD = (
+  notificationId: number | string,
+) => `user_notification_payload_${notificationId}` as const;
+/**
+ * Ceiling for a payload whose notification is not rewritten again - a `NEW_CONTACT`, for instance,
+ * is written once, so nothing but this TTL will pick up a later change to the contact.
+ */
+export const USER_NOTIFICATION_PAYLOAD_CACHE_TTL = 1000 * 60 * 60 * 24 * 7;
+
 // Roles
 export const CACHE_KEY_ROLES_ALL = 'roles_all' as const;
 export const CACHE_KEY_ROLE_BY_NAME = (name: string) =>

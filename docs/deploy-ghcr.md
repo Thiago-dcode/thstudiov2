@@ -64,6 +64,7 @@ These are baked into the Next.js image at build time in CI:
 |--------|---------------------------|
 | `NEXT_PUBLIC_APP_URL` | yes |
 | `NEXT_PUBLIC_API_URL` | yes |
+| `NEXT_PUBLIC_WS_URL` | yes |
 | `NEXT_PUBLIC_GEOAPIFY_URL` | yes |
 | `NEXT_PUBLIC_GEOAPIFY_KEY` | yes |
 | `APP_URL` | yes |
