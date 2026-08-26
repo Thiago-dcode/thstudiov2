@@ -1,11 +1,11 @@
 "use server";
 
+import type { EnumType } from "@repo/common-lib/constants/enums";
 import {
   ALLOWED_IMAGE_FILE_TYPES,
   MAX_IMAGE_UPLOAD_BYTES,
   MAX_IMAGE_UPLOAD_MB,
 } from "@repo/common-lib/constants/limits";
-import type { EnumType } from "@repo/common-lib/constants/enums";
 import type { MimeTypes } from "@repo/common-lib/types/general";
 import type {
   CreateMediaInputWithFile,

@@ -1,6 +1,6 @@
-import { ALLOWED_IMAGE_FILE_TYPES } from "@repo/common-lib/constants/limits";
 import type { EnumType } from "@repo/common-lib/constants/enums";
 import { ENUMS } from "@repo/common-lib/constants/enums";
+import { ALLOWED_IMAGE_FILE_TYPES } from "@repo/common-lib/constants/limits";
 import type { Media } from "@repo/common-lib/types/media";
 import { Button } from "@repo/ui/components/shadcn/button";
 import {
@@ -296,9 +296,9 @@ export const SelectMediaDrawer = ({
             <p className="text-xs text-text-muted tabular-nums">
               {maxSelection !== undefined
                 ? t("itemsSelectedWithMax", {
-                  count: mediaSelectedLength,
-                  max: maxSelection,
-                })
+                    count: mediaSelectedLength,
+                    max: maxSelection,
+                  })
                 : t("itemsSelected", { count: mediaSelectedLength })}
             </p>
           ) : (

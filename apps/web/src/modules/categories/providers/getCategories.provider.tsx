@@ -1,7 +1,7 @@
 "use client";
 
-import { MAX_CATEGORIES_USER } from "@repo/common-lib/constants/limits";
 import type { EnumType } from "@repo/common-lib/constants/enums";
+import { MAX_CATEGORIES_USER } from "@repo/common-lib/constants/limits";
 import type { CategoryBase } from "@repo/common-lib/types/category";
 import type { Pagination } from "@repo/common-lib/types/response";
 import { Search } from "lucide-react";

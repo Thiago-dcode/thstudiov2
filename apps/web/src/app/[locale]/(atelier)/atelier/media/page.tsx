@@ -64,7 +64,7 @@ export default async function MediaAtelierPage({
   const mediaResponse = await usersService.getAllMedia(userAuth.id, {
     page,
     per_page: perPage,
-    completed:true,
+    completed: true,
     paginated: true,
     ...(search && { search }),
     ...(shape && { shape }),
@@ -89,7 +89,7 @@ export default async function MediaAtelierPage({
     <AdminPageContainer>
       <AdminPageTitle title={t("pageTitle")}>
         {(pagination?.total_count && pagination.total_count > 0) ||
-          hasActiveFilters ? (
+        hasActiveFilters ? (
           <Suspense>
             <MediaSearch />
           </Suspense>

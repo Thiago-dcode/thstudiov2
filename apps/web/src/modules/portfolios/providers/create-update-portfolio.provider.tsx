@@ -1,11 +1,11 @@
 "use client";
 
+import { MAX_HIGHLIGHT_PORTFOLIOS } from "@repo/common-lib/constants/highlights";
 import {
   MAX_DISCIPLINES_PORTFOLIO,
   MAX_PORTFOLIO_ITEMS,
   MAX_STYLES_PORTFOLIO,
 } from "@repo/common-lib/constants/limits";
-import { MAX_HIGHLIGHT_PORTFOLIOS } from "@repo/common-lib/constants/highlights";
 import type { CategoryBase } from "@repo/common-lib/types/category";
 import type { CollectionPortfolio } from "@repo/common-lib/types/collection";
 import type { PortfolioLayoutInput } from "@repo/common-lib/types/layout";

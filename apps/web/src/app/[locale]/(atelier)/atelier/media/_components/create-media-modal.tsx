@@ -1,11 +1,11 @@
 "use client";
 
-import { ALLOWED_IMAGE_FILE_TYPES } from "@repo/common-lib/constants/limits";
 import {
   DEFAULT_COMPRESSION_LVL,
   ENUMS,
   type EnumType,
 } from "@repo/common-lib/constants/enums";
+import { ALLOWED_IMAGE_FILE_TYPES } from "@repo/common-lib/constants/limits";
 import type {
   CreateMediaInputWithFile,
   Media,

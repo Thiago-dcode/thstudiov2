@@ -216,7 +216,6 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
     [generateUniqueMediaId],
   );
 
-
   const setMediaUploadsDirect = useCallback((mediaUploads: UploadMedia[]) => {
     setMediaUploads(mediaUploads);
   }, []);
@@ -362,24 +361,24 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
 
     const baseUpload: UploadMedia = currentMediaUpload
       ? {
-        ...currentMediaUpload,
-        unique_id: currentMediaUpload.unique_id ?? generateUniqueMediaId(),
-      }
+          ...currentMediaUpload,
+          unique_id: currentMediaUpload.unique_id ?? generateUniqueMediaId(),
+        }
       : {
-        input: {
-          user_id: media.user_id,
-          title: media.title ?? "",
-          description: media.description ?? "",
-          seo_title: media.seo_title ?? "",
-          seo_description: media.seo_description ?? "",
-          seo_alt: media.seo_alt ?? "",
-        },
-        action: "seo",
-        previewUrl: media.thumbnail || undefined,
-        id: media.id,
-        pending: false,
-        unique_id: generateUniqueMediaId(),
-      };
+          input: {
+            user_id: media.user_id,
+            title: media.title ?? "",
+            description: media.description ?? "",
+            seo_title: media.seo_title ?? "",
+            seo_description: media.seo_description ?? "",
+            seo_alt: media.seo_alt ?? "",
+          },
+          action: "seo",
+          previewUrl: media.thumbnail || undefined,
+          id: media.id,
+          pending: false,
+          unique_id: generateUniqueMediaId(),
+        };
 
     upsertMediaUpload({
       ...baseUpload,
@@ -468,24 +467,24 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
 
     const baseUpload: UploadMedia = currentMediaUpload
       ? {
-        ...currentMediaUpload,
-        unique_id: currentMediaUpload.unique_id ?? generateUniqueMediaId(),
-      }
+          ...currentMediaUpload,
+          unique_id: currentMediaUpload.unique_id ?? generateUniqueMediaId(),
+        }
       : {
-        input: {
-          user_id: media.user_id,
-          title: media.title ?? "",
-          description: media.description ?? "",
-          seo_title: media.seo_title ?? "",
-          seo_description: media.seo_description ?? "",
-          seo_alt: media.seo_alt ?? "",
-        },
-        action: "delete",
-        previewUrl: media.thumbnail || undefined,
-        id: media.id,
-        pending: false,
-        unique_id: generateUniqueMediaId(),
-      };
+          input: {
+            user_id: media.user_id,
+            title: media.title ?? "",
+            description: media.description ?? "",
+            seo_title: media.seo_title ?? "",
+            seo_description: media.seo_description ?? "",
+            seo_alt: media.seo_alt ?? "",
+          },
+          action: "delete",
+          previewUrl: media.thumbnail || undefined,
+          id: media.id,
+          pending: false,
+          unique_id: generateUniqueMediaId(),
+        };
 
     upsertMediaUpload({
       ...baseUpload,

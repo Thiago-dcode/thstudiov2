@@ -79,7 +79,12 @@ export default async function MediaPage({ params, searchParams }: Props) {
         c.media.some((m) => m.public_id === media.public_id),
       ));
 
-  if (!media || media.blocked_at || !media.completed_at || !belongsToPortfolio) {
+  if (
+    !media ||
+    media.blocked_at ||
+    !media.completed_at ||
+    !belongsToPortfolio
+  ) {
     return (
       <Web.Container>
         <ResourceNotFound username={username} message={tNotFound("media")} />
