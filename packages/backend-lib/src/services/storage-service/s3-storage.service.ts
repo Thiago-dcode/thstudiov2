@@ -9,7 +9,7 @@ import {
     PutObjectCommand,
     S3Client,
 } from '@aws-sdk/client-s3';
-import { S3StorageConfig } from "./types";
+import { S3StorageConfig, StorageWriteInput } from "./types";
 
 /** Extension → Content-Type for objects we serve. Anything unknown is sent as a
  * non-renderable download rather than being guessed, so an unexpected extension can
@@ -29,6 +29,16 @@ const resolveContentType = (path: string): string => {
     return CONTENT_TYPE_BY_EXTENSION[extension] ?? 'application/octet-stream';
 };
 
+const resolveWriteBody = (body: StorageWriteInput): Buffer => {
+    if (Buffer.isBuffer(body)) return body;
+    if (!body.buffer) {
+        throw new Error(
+            'File buffer is required for storage write. Ensure multer is using memory storage.',
+        );
+    }
+    return body.buffer;
+};
+
 export class S3StorageService extends StorageService {
     private s3Client: S3Client;
     constructor(protected readonly config: S3StorageConfig) {
@@ -44,11 +54,11 @@ export class S3StorageService extends StorageService {
     public async setup(): Promise<void> {
         return Promise.resolve();
     }
-    public async write(file: Express.Multer.File, path: string): Promise<boolean> {
+    public async write(body: StorageWriteInput, path: string): Promise<boolean> {
         const command = new PutObjectCommand({
             Bucket: this.config.bucket,
             Key: path,
-            Body: file.buffer,
+            Body: resolveWriteBody(body),
             // Derived from the stored key, never from the client-supplied `file.mimetype`.
             // Objects are served from the CDN domain, so echoing back an attacker's
             // Content-Type (e.g. `text/html`) would turn an upload into stored XSS.
@@ -60,8 +70,8 @@ export class S3StorageService extends StorageService {
         return !!result;
 
     }
-    public async writeAnGet(file: Express.Multer.File, path: string) {
-        const result = await this.write(file, path);
+    public async writeAnGet(body: StorageWriteInput, path: string) {
+        const result = await this.write(body, path);
         if (!result) return null;
 
         return await this.getUrl(path);
@@ -83,6 +93,18 @@ export class S3StorageService extends StorageService {
             expiresIn: config?.expireIn ?? this.config.signedUrlExpiration,
         });
         return url;
+    }
+    public async getBuffer(path: string): Promise<Buffer> {
+        const command = new GetObjectCommand({
+            Bucket: this.config.bucket,
+            Key: path,
+        });
+        const result = await this.s3Client.send(command);
+        const bytes = await result.Body?.transformToByteArray();
+        if (!bytes) {
+            throw new Error(`Could not read object at ${path}`);
+        }
+        return Buffer.from(bytes);
     }
     public async read(path: string): Promise<File> {
 

@@ -1,6 +1,6 @@
 import { EnumType } from "@repo/common-lib/constants/enums";
 import { resolveAspectRatio } from "@repo/common-lib/utils/aspect-ratio";
-import { CompressConfig } from "./types";
+import { CompressConfig, GetSizeCompressedInput } from "./types";
 import { imageSize } from 'image-size'
 export abstract class CompressService {
     public readonly config:CompressConfig;
@@ -8,25 +8,37 @@ export abstract class CompressService {
         this.config = config;
     }
    /**
-    * Calculates the expected file size after compression based on the compression level.
-    * @param size - Original file size in bytes
-    * @param compressLevel - Compression level (VERY_LOW: 10%, LOW: 20%, NORMAL: 40%, HIGH: 60%, VERY_HIGH: 80%)
-    * @returns Expected file size in bytes after compression
+    * Calculates the target file size after compression based on the compression level.
+    * When `minSize` is set and the original is at or below it, returns the original size unchanged.
+    * When `maxSize` is set, caps the compressed target at that value.
     */
-   public getSizeCompressed(size:number,compressLevel:EnumType<'COMPRESSION_LEVEL'>, minSize?:number): number {
-    if(typeof minSize !=='undefined'  && size <= minSize) return size;
+   public getSizeCompressed(data: GetSizeCompressedInput): number {
+    const { size, compressLevel, minSize, maxSize } = data;
+    if (typeof minSize !== 'undefined' && size <= minSize) return size;
+
+    let compressed: number;
     switch (compressLevel) {
       case 'VERY_LOW':
-        return size * 0.95;  // 5%
+        compressed = size * 0.95;
+        break;
       case 'LOW':
-        return size * 0.85;  // 15%
+        compressed = size * 0.85;
+        break;
       case 'NORMAL':
-        return size * 0.7;   // 30%
+        compressed = size * 0.7;
+        break;
       case 'HIGH':
-        return size * 0.55;  // 45%
+        compressed = size * 0.55;
+        break;
       case 'VERY_HIGH':
-        return size * 0.4;   // 60%
+        compressed = size * 0.4;
+        break;
     }
+
+    if (typeof maxSize !== 'undefined') {
+      compressed = Math.min(compressed, maxSize);
+    }
+    return Math.round(compressed);
    }
    public async getImageSize(buffer:Buffer):Promise<{
     width:number,
@@ -59,14 +71,11 @@ export abstract class CompressService {
     return resolveAspectRatio(width, height);
    }
     /**
-     * Optimizes an image file to WebP format with specified quality and size constraints.
-     * @param file - The uploaded image file to optimize
-     * @param targetSize - Target file size in bytes
-     * @param quality - Quality level for the WebP output (0-100)
-     * @returns The optimized image with filename, size (in bytes), and buffer
+     * Optimizes an image to WebP with specified quality and size constraints.
+     * Accepts a Multer upload (API) or a raw Buffer (worker / S3 download).
      */
     abstract  optimizeImageToWebp(
-        file: Express.Multer.File,
+        file: Express.Multer.File | Buffer,
         targetSize: number,
         quality: number,
       ): Promise<{

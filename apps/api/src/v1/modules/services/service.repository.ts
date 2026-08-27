@@ -1,4 +1,3 @@
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { Injectable } from '@nestjs/common';
 import { BaseRepository } from '@repo/database/repositories';
 import { QueryBuilder } from '@repo/database/queryBuilder';
@@ -62,8 +61,8 @@ export class ServiceRepository extends BaseRepository {
     'portfolios.is_highlight as p_is_highlight',
   ];
 
-  constructor(private readonly requestService: RequestService, protected readonly logService: LogService) {
-    super('services', logService);
+  constructor(private readonly requestService: RequestService) {
+    super('services');
   }
 
   async getAll(filters: ServiceIndexRequest): Promise<Service[]> {

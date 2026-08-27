@@ -1,4 +1,3 @@
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { Injectable } from '@nestjs/common';
 import { BaseRepository } from '@repo/database/repositories';
 import { QueryBuilder } from '@repo/database/queryBuilder';
@@ -125,8 +124,8 @@ export class PortfolioRepository extends BaseRepository {
     'layouts.name as layout_name',
   ];
 
-  constructor(private readonly requestService: RequestService, protected readonly logService: LogService) {
-    super('portfolios', logService);
+  constructor(private readonly requestService: RequestService) {
+    super('portfolios');
   }
 
   async getAll(filters: PortfolioIndexRequest): Promise<Portfolio[]> {

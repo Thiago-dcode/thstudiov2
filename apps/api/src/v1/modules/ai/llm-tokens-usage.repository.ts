@@ -1,4 +1,3 @@
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { BaseRepository } from '@repo/database/repositories';
 import { QueryBuilder } from '@repo/database/queryBuilder';
@@ -26,8 +25,8 @@ export class LlmTokensUsageRepository extends BaseRepository {
     'llm_tokens_usage.updated_at',
   ] as const;
 
-  constructor(protected readonly logService: LogService) {
-    super('llm_tokens_usage', logService);
+  constructor() {
+    super('llm_tokens_usage');
   }
 
   async findById(id: number): Promise<LlmTokensUsage> {

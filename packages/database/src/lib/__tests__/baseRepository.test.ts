@@ -1,7 +1,6 @@
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { DatabaseConfig, FullDatabaseConfig, Join } from '@repo/common-lib/types/database';
 import { DEFAULT_DATABASE_SETTINGS } from '@repo/common-lib/constants/database';
-import { BaseRepository } from '../repositories';
+import { BaseRepository } from '../repositories/base.repository';
 
 // Mock the client module (PostgreSQL only)
 jest.mock('../client', () => {
@@ -54,8 +53,8 @@ jest.mock('../client', () => {
 
 // Concrete implementation of BaseRepository for testing
 class TestRepository extends BaseRepository {
-  constructor(tableName: any, protected readonly logService: LogService, options?: any) {
-    super(tableName, logService, options);
+  constructor(tableName: any, options?: any) {
+    super(tableName, options);
   }
 
   // Expose queryBuilder for inspection
@@ -102,7 +101,7 @@ describe('BaseRepository - buildQuery', () => {
 
     const { initClient } = require('../client');
     await initClient(testConfig);
-    repository = new TestRepository(TABLE_NAME, null as any);
+    repository = new TestRepository(TABLE_NAME);
   });
 
   afterEach(async () => {

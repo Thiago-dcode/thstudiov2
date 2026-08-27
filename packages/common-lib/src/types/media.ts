@@ -70,7 +70,20 @@ export type UpdateMediaInput = Partial<Omit<MediaSchema, InternalMediaFields>>;
 
 // What the internal service can update (public fields + system-only SEO filename/timestamp + storage keys)
 export type UpdateMediaInternalInput = UpdateMediaInput &
-  Partial<Pick<MediaSchema, 'seo_filename' | 'seo_generated_at' | 'url' | 'thumbnail' | 'status' | 'completed_at' | 'failed_reason'>>;
+  Partial<Pick<
+    MediaSchema,
+    | 'seo_filename'
+    | 'seo_generated_at'
+    | 'url'
+    | 'thumbnail'
+    | 'status'
+    | 'completed_at'
+    | 'failed_reason'
+    | 'bytes'
+    | 'thumbnail_bytes'
+    | 'shape'
+    | 'aspect_ratio'
+  >>;
 
 // ==================== MEDIA TRANSLATION TYPES ====================
 

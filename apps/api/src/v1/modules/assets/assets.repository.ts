@@ -1,4 +1,3 @@
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { Injectable } from '@nestjs/common';
 import { BaseRepository } from '@repo/database/repositories';
 import {
@@ -24,10 +23,8 @@ export class AssetsRepository extends BaseRepository {
     'assets.updated_at',
   ] as const;
 
-  constructor(
-    protected readonly logService: LogService,
-  ) {
-    super('assets', logService);
+  constructor() {
+    super('assets');
   }
 
   async findById(id: number): Promise<Asset | null> {

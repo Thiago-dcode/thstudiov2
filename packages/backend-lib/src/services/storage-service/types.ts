@@ -16,3 +16,6 @@ export type FileStorageConfig = {
 }
 
 export type StorageConfig = S3StorageConfig | FileStorageConfig;
+
+/** Raw bytes (worker) or a Multer memory upload (API). */
+export type StorageWriteInput = Buffer | Express.Multer.File;

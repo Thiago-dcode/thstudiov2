@@ -10,14 +10,12 @@ import {
   Post,
   Query,
   UploadedFile,
-  UploadedFiles,
   UseInterceptors,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { CreateMediaRequest } from './requests/create-media.request';
 import { UpdateMediaRequest } from './requests/update-media.request';
-import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
-import { ParseJsonArrayPipe } from 'src/common/pipes/parse-json-array.pipe';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { MediaService } from './media.service';
 import { ModelExistPipe } from 'src/pipes/model-exist.pipe';
 import { IsResourceBlockedPipe } from 'src/pipes/is-resource-blocked.pipe';
@@ -55,23 +53,6 @@ export class MediaController {
 
   }
 
-  @Post('bulk')
-  @UseInterceptors(FilesInterceptor('files', undefined, imageUploadOptions))
-  async createBulk(
-    @Body('items', new ParseJsonArrayPipe(CreateMediaRequest))
-    createMediaItemsRequest: CreateMediaRequest[],
-    @UploadedFiles() files: Express.Multer.File[],
-  ) {
-
-    if (createMediaItemsRequest.length !== files.length) {
-      throw new BadRequestException('Items and files does not match')
-    }
-    const data = createMediaItemsRequest.map((item, i) => {
-      item.media = files[i];
-      return item;
-    });
-    return data;
-  }
   @Post()
   @UseInterceptors(FileInterceptor('file', imageUploadOptions))
   async create(
@@ -84,6 +65,19 @@ export class MediaController {
 
     createMediaRequest.media = file;
     return await this.mediaService.create(createMediaRequest);
+  }
+  @Post('async')
+  @UseInterceptors(FileInterceptor('file', imageUploadOptions))
+  async createAsync(
+    @Body() createMediaRequest: CreateMediaRequest,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) {
+      throw new BadRequestException('File is required');
+    }
+
+    createMediaRequest.media = file;
+    return await this.mediaService.createAsync(createMediaRequest);
   }
   @Patch(':id')
   async update(

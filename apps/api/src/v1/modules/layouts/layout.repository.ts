@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { EnumType, TABLES_ENUM } from '@repo/common-lib/constants/enums';
 import {
   LayoutConfigSchemaWithoutTimestamps,
@@ -25,10 +24,9 @@ export class LayoutRepository extends BaseRepository {
   ] as const;
 
   constructor(
-    private readonly requestService: RequestService,
-    protected readonly logService: LogService,
+    private readonly requestService: RequestService
   ) {
-    super(TABLES_ENUM.LAYOUTS, logService);
+    super(TABLES_ENUM.LAYOUTS);
   }
 
   async findAll(filters: LayoutIndexRequest): Promise<Layout[]> {

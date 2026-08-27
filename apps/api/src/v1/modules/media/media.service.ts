@@ -143,17 +143,12 @@ export class MediaService {
       }
 
       const compressionLevel = data.compression_level || DEFAULT_COMPRESSION_LVL;
-      // 6. Compress full media
-      const targetSize = Math.round(
-        Math.min(
-          this.compressService.getSizeCompressed(
-            media.size,
-            compressionLevel,
-            300 * 1024,
-          ),
-          mbToBytes(5),
-        ),
-      );
+      const targetSize = this.compressService.getSizeCompressed({
+        size: media.size,
+        compressLevel: compressionLevel,
+        minSize: 300 * 1024,
+        maxSize: mbToBytes(5),
+      });
       const mediaCompressed = await this.compressService.optimizeImageToWebp(media, targetSize, 100);
 
       // 7. Enforce user limits (thumbnail + media)
@@ -225,7 +220,8 @@ export class MediaService {
   }
 
   public async createAsync({ media: mediaFile, ...data }: CreateMediaRequest) {
-    const log = this.logger.name('create-async');
+    //TODO: Pending to handle video case
+    const log = this.logger.name('create');
     log.info('Starting async media create', {
       user_id: data.user_id,
       original_name: mediaFile.originalname,
@@ -262,7 +258,6 @@ export class MediaService {
       thumbnail_bytes: 0,
       extension: 'webp',
       url: mediaPath,
-      thumbnail: thumbnailPath,
       seo_filename: filename,
       blocked_at: null,
       is_featured: false,
@@ -339,7 +334,21 @@ export class MediaService {
       return mediaModel;
     }
 
-    await QueueHelper.createProcessMediaJob(mediaModel);
+    mediaModel = await this.mediaRepository.updateById(mediaModel.id, {
+      ...mediaModel,
+      url: mediaPath
+    });
+    await Promise.all([
+      QueueHelper.createOrUpdateUserNotificationJob({
+        type: 'CREATE_UPDATE_MEDIA',
+        user_id: mediaModel.user_id,
+        entity_id: mediaModel.id,
+        read_at: null,
+      }),
+
+      QueueHelper.createProcessMediaJob(mediaModel)
+
+    ]);
     log.info('Enqueued process-media job', {
       media_id: mediaModel.id,
       public_id: mediaModel.public_id,

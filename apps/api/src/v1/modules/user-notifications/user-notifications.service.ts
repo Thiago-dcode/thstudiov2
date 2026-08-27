@@ -131,9 +131,37 @@ export class UserNotificationsService {
         // the row we just read, which also repairs the `Date`s that JSON round-tripping flattened
         // into strings. A media payload keeps its own dates as strings, which is what a client
         // would have received anyway - responses and socket frames are JSON either way.
-        return Object.assign(cached, row);
+        // Storage keys stay in the cache (signed URLs expire in ~1h; this key lives 7 days);
+        // thumbnail/url are signed on the way out, the same way `MediaService.getSeoMetadata` does.
+        const notification = Object.assign(cached, row);
+        await this.attachMediaAssets(notification);
+        return notification;
       }),
     );
+  }
+
+  /**
+   * Turns a media payload's storage keys into signed URLs. Cached payloads keep the keys so a
+   * week-old card does not serve an hour-old signature; a contact payload is left untouched.
+   */
+  private async attachMediaAssets(
+    notification: UserNotification,
+  ): Promise<void> {
+    if (
+      notification.type !== 'CREATE_UPDATE_MEDIA' &&
+      notification.type !== 'GENERATE_MEDIA_METADATA'
+    ) {
+      return;
+    }
+    const { payload } = notification;
+    if (!payload) return;
+
+    const [thumbnail, url] = await Promise.all([
+      this.helpers.getAsset(payload.thumbnail),
+      this.helpers.getAsset(payload.url),
+    ]);
+    payload.thumbnail = thumbnail;
+    payload.url = url;
   }
 
   /** Drops a notification's cached payload so the next read rebuilds it from its entity. */

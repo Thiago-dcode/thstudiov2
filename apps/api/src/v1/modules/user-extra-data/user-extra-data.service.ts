@@ -10,6 +10,7 @@ import { PlansService } from '../plans/plans.service';
 import { UserStorageRequestService } from '../user-storage-requests/user-storage-request.service';
 import { FactoryLogService } from '@repo/backend-lib/services/log-service';
 import { UpdateOrCreateUserExtraDataInput } from '@repo/common-lib/types/user-extra-data';
+import { UserLimits } from '@repo/common-lib/utils/user-limits';
 
 @Injectable()
 export class UserExtraDataService {
@@ -56,17 +57,6 @@ export class UserExtraDataService {
     return extraData.ai_credits_consumed < totalAiCredits && newConsumed >= totalAiCredits;
   }
 
-  /**
-   * Throws if the user is currently banned (ban_lift in the future).
-   */
-  async enforceUserStrikes(userId: number) {
-    const extraData = await this.findOneByUserId(userId);
-    if (extraData.ban_lift && new Date(extraData.ban_lift) > new Date()) {
-      throw ApiException.accountStrikesExceeded(
-        `Account banned until ${new Date(extraData.ban_lift).toISOString()}. Strikes: ${extraData.account_strikes}`,
-      );
-    }
-  }
 
   /**
    * Checks if user constraints are within their plan limits.
@@ -97,79 +87,106 @@ export class UserExtraDataService {
 
     const { size, portfolios_count, collections_count, services_count, projects_count, enforceCompressionLevel, storageRequests, enforceAiCredits, enforceUserStrikes } =
       toEnforce;
-    if (enforceUserStrikes && userExtraData.ban_lift && new Date(userExtraData.ban_lift) > new Date()) {
+    if (
+      enforceUserStrikes &&
+      !UserLimits.accountStrikes({ userExtraData })
+    ) {
       throw ApiException.accountStrikesExceeded(
         `Account banned until ${new Date(userExtraData.ban_lift).toISOString()}. Strikes: ${userExtraData.account_strikes}`,
       );
     }
-    if (size && currentPlan.storage_limit_mb !== -1) {
-      const newSize = userExtraData.storage_used_mb + size;
-      if (newSize > currentPlan.storage_limit_mb) {
-        throw ApiException.mediaSize(
-          `Media size limit exceeded. Current: ${userExtraData.storage_used_mb}MB, Adding: ${size}MB, Max allowed: ${currentPlan.storage_limit_mb}MB`,
-        );
-      }
+    if (
+      size &&
+      !UserLimits.storageSize({
+        userExtraData,
+        userPlan: currentPlan,
+        incomingSize: size,
+      })
+    ) {
+      throw ApiException.mediaSize(
+        `Media size limit exceeded. Current: ${userExtraData.storage_used_mb}MB, Adding: ${size}MB, Max allowed: ${currentPlan.storage_limit_mb}MB`,
+      );
     }
 
-    if (enforceCompressionLevel) {
-      if (!currentPlan.allow_media_compression) {
-        throw ApiException.compressionNotAllowed(
-          `Media compression not allowed with plan: ${currentPlan.name}`,
-        );
-      }
+    if (
+      enforceCompressionLevel &&
+      !UserLimits.mediaCompression({ userPlan: currentPlan })
+    ) {
+      throw ApiException.compressionNotAllowed(
+        `Media compression not allowed with plan: ${currentPlan.name}`,
+      );
     }
-    if (enforceAiCredits) {
+    if (
+      enforceAiCredits &&
+      !UserLimits.aiCredits({ userExtraData, userPlan: currentPlan })
+    ) {
       const userAiCredits = userExtraData.ai_credits + currentPlan.ai_credits;
-      if (userExtraData.ai_credits_consumed >= userAiCredits) {
-        throw ApiException.aiCredits(`User consumed all ai credits, consumed:${userExtraData.ai_credits_consumed} of ${userAiCredits}`)
-      }
-
+      throw ApiException.aiCredits(
+        `User consumed all ai credits, consumed:${userExtraData.ai_credits_consumed} of ${userAiCredits}`,
+      );
     }
-    if (storageRequests && currentPlan.limit_write_storage_per_day !== -1) {
+    if (storageRequests) {
       const currentRequests =
         await this.userRequestService.getTodaysRequestCount(userId);
-      const newStorageRequests = currentRequests + storageRequests;
-
-      if (newStorageRequests > currentPlan.limit_write_storage_per_day) {
+      if (
+        !UserLimits.dailyStorageRequests({
+          userPlan: currentPlan,
+          currentRequests,
+          incomingRequests: storageRequests,
+        })
+      ) {
         throw ApiException.dailyStorageRequests(
           `Daily storage requests limit exceeded. Current: ${currentRequests}, Adding: ${storageRequests}, Max allowed: ${currentPlan.limit_write_storage_per_day}`,
         );
       }
     }
-    if (portfolios_count && currentPlan.max_portfolios !== -1) {
-
-      const newProjectsCount = userExtraData.portfolios_count + portfolios_count;
-      console.log("ENFORCING PORTFOLIO_COUNT", newProjectsCount, currentPlan.max_portfolios)
-      if (newProjectsCount > currentPlan.max_portfolios) {
-        throw ApiException.maxProjects(
-          `Projects limit exceeded. Current: ${userExtraData.portfolios_count}, Adding: ${portfolios_count}, Max allowed: ${currentPlan.max_portfolios}`,
-        );
-      }
+    if (
+      portfolios_count &&
+      !UserLimits.entityCount({
+        currentCount: userExtraData.portfolios_count,
+        incomingCount: portfolios_count,
+        maxAllowed: currentPlan.max_portfolios,
+      })
+    ) {
+      throw ApiException.maxProjects(
+        `Projects limit exceeded. Current: ${userExtraData.portfolios_count}, Adding: ${portfolios_count}, Max allowed: ${currentPlan.max_portfolios}`,
+      );
     }
-    if (collections_count && currentPlan.max_collections !== -1) {
-      const newCollectionsCount = userExtraData.collections_count + collections_count;
-      if (newCollectionsCount > currentPlan.max_collections) {
-        throw ApiException.maxProjects(
-          `Collections limit exceeded. Current: ${userExtraData.collections_count}, Adding: ${collections_count}, Max allowed: ${currentPlan.max_collections}`,
-        );
-      }
+    if (
+      collections_count &&
+      !UserLimits.entityCount({
+        currentCount: userExtraData.collections_count,
+        incomingCount: collections_count,
+        maxAllowed: currentPlan.max_collections,
+      })
+    ) {
+      throw ApiException.maxProjects(
+        `Collections limit exceeded. Current: ${userExtraData.collections_count}, Adding: ${collections_count}, Max allowed: ${currentPlan.max_collections}`,
+      );
     }
-    if (services_count && currentPlan.max_services !== -1) {
-      const newServicesCount = userExtraData.services_count + services_count;
-      if (newServicesCount > currentPlan.max_services) {
-        throw ApiException.maxServices(
-          `Services limit exceeded. Current: ${userExtraData.services_count}, Adding: ${services_count}, Max allowed: ${currentPlan.max_services}`,
-        );
-      }
+    if (
+      services_count &&
+      !UserLimits.entityCount({
+        currentCount: userExtraData.services_count,
+        incomingCount: services_count,
+        maxAllowed: currentPlan.max_services,
+      })
+    ) {
+      throw ApiException.maxServices(
+        `Services limit exceeded. Current: ${userExtraData.services_count}, Adding: ${services_count}, Max allowed: ${currentPlan.max_services}`,
+      );
     }
-    // -1 means no limits
-    if (projects_count && currentPlan.max_projects !== -1) {
-      const newProjectsCount = userExtraData.projects_count + projects_count;
-      if (newProjectsCount > currentPlan.max_projects) {
-        throw ApiException.maxProjects(
-          `Projects limit exceeded. Current: ${userExtraData.projects_count}, Adding: ${projects_count}, Max allowed: ${currentPlan.max_projects}`,
-        );
-      }
+    if (
+      projects_count &&
+      !UserLimits.entityCount({
+        currentCount: userExtraData.projects_count,
+        incomingCount: projects_count,
+        maxAllowed: currentPlan.max_projects,
+      })
+    ) {
+      throw ApiException.maxProjects(
+        `Projects limit exceeded. Current: ${userExtraData.projects_count}, Adding: ${projects_count}, Max allowed: ${currentPlan.max_projects}`,
+      );
     }
   }
   @OnEvent(SET_INITIAL_USER_EXTRA_DATA_EVENT)

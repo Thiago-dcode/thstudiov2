@@ -1,4 +1,3 @@
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { Injectable } from '@nestjs/common';
 import { BaseRepository } from '@repo/database/repositories';
 import { RequestService } from 'src/common/services/request.service';
@@ -18,8 +17,8 @@ import { QueryBuilder } from '@repo/database/queryBuilder';
 
 @Injectable()
 export class CategoriesRepository extends BaseRepository {
-  constructor(private readonly requestService: RequestService, protected readonly logService: LogService) {
-    super('categories', logService);
+  constructor(private readonly requestService: RequestService) {
+    super('categories');
   }
   private readonly BASE_COLUMNS: CategoryWithTranslationSchemaColumns[] = [
     'categories.id',

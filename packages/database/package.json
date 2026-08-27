@@ -18,7 +18,10 @@
     "./columnBuilder": "./dist/src/lib/builder/columnBuilder/index.js",
     "./facades": "./dist/src/lib/facades/index.js",
     "./exceptions": "./dist/src/lib/exceptions/index.js",
-    "./repositories": "./dist/src/lib/repositories/index.js"
+    "./repositories": "./dist/src/lib/repositories/base.repository.js",
+    "./repositories/media": "./dist/src/lib/repositories/media.repository.js",
+    "./repositories/user-extra-data": "./dist/src/lib/repositories/user-extra-data.repository.js",
+    "./repositories/plans": "./dist/src/lib/repositories/plans.repository.js"
   },
   "bin": {
     "dbcli": "./dist/src/bin/cli.js"

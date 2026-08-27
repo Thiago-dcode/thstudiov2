@@ -1,4 +1,3 @@
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { Injectable } from '@nestjs/common';
 import { BaseRepository } from '@repo/database/repositories';
 import { QueryBuilder } from '@repo/database/queryBuilder';
@@ -74,8 +73,8 @@ export class CollectionRepository extends BaseRepository {
     'media.seo_description as m_seo_description',
   ];
 
-  constructor(private readonly requestService: RequestService, protected readonly logService: LogService) {
-    super('collections', logService);
+  constructor(private readonly requestService: RequestService) {
+    super('collections');
   }
 
   async getAll(filters: CollectionIndexRequest): Promise<Collection[]> {

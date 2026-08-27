@@ -1,4 +1,3 @@
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { BaseRepository } from '@repo/database/repositories';
 import { QueryBuilder } from '@repo/database/queryBuilder';
@@ -22,10 +21,9 @@ export class UserContactsRepository extends BaseRepository {
   ];
 
   constructor(
-    private readonly requestService: RequestService,
-    protected readonly logService: LogService,
+    private readonly requestService: RequestService
   ) {
-    super(TABLES_ENUM.USER_CONTACTS, logService);
+    super(TABLES_ENUM.USER_CONTACTS);
   }
 
   async findAll(

@@ -1,50 +1,21 @@
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { Injectable } from '@nestjs/common';
 import { QueryBuilder } from '@repo/database/queryBuilder';
-import { IndexPlanRequest } from './requests/index-plan.request';
-import { BaseRepository } from '@repo/database/repositories';
+import { PlansRepository as BasePlansRepository } from '@repo/database/repositories/plans';
 import {
-  PlanSchema,
-  CreatePlanInput,
   FullPlanColumns,
   FullPlanSchema,
-  PlanWithPricesColumns,
   PlanWithPricesSchema,
 } from '@repo/common-lib/schemas/plan';
-import { } from '@repo/common-lib/schemas/plan-price';
-import { RequestService } from 'src/common/services/request.service';
 import { FullPlan, PlanPrice } from '@repo/common-lib/types/plan';
+import { RequestService } from 'src/common/services/request.service';
+import { IndexPlanRequest } from './requests/index-plan.request';
 
+/**
+ * HTTP-facing plans repository: language-filtered listing + translated formatting.
+ * Limit-check / worker methods live on the database base class.
+ */
 @Injectable()
-export class PlansRepository extends BaseRepository {
-  readonly BASE_COLUMNS: PlanWithPricesColumns[] = [
-    'plans.id',
-    'plans.base_price',
-    'plans.name',
-    'plans.short_description',
-    'plans.description',
-    'plans.is_free',
-    'plans.stripe_id',
-    'plans.paypal_id',
-    'plans.is_popular',
-    'plans.max_clients',
-    'plans.max_projects',
-    'plans.max_portfolios',
-    'plans.max_collections',
-    'plans.max_services',
-    'plans.storage_limit_mb',
-    'plans.limit_write_storage_per_day',
-    'plans.ai_credits',
-    'plans.is_active',
-    'plans.top_tier',
-    'plan_prices.price',
-    'plan_prices.plan_id',
-    'plan_prices.paypal_id as pp_paypal_id',
-    'plan_prices.stripe_id as pp_stripe_id',
-    'plan_prices.id as pp_id',
-    'plan_prices.billing_type',
-    'plans.allow_media_compression',
-  ];
+export class PlansRepository extends BasePlansRepository {
   readonly COLUMNS: FullPlanColumns[] = [
     ...this.BASE_COLUMNS,
     'plan_translations.id as pt_id',
@@ -55,11 +26,10 @@ export class PlansRepository extends BaseRepository {
     'plan_translations.description as pt_description',
   ];
 
-  constructor(private readonly requestService: RequestService, protected readonly logService: LogService) {
-    super('plans', logService, {
-      softDelete: true,
-    });
+  constructor(private readonly requestService: RequestService) {
+    super();
   }
+
   private initQuery() {
     const query = this.query().select(this.COLUMNS);
     query.join('id', 'plan_prices', 'plan_id', 'INNER');
@@ -72,12 +42,14 @@ export class PlansRepository extends BaseRepository {
 
     return query;
   }
+
   async findAll(filters: IndexPlanRequest) {
     const query = this.initQuery();
     await this.applyFilters(filters, query);
     const result = await query.get<FullPlanSchema[]>();
     return this.formatPlans(result);
   }
+
   private formatPlans(
     fullPlanSchema: PlanWithPricesSchema[] | FullPlanSchema[],
   ): FullPlan[] {
@@ -155,60 +127,11 @@ export class PlansRepository extends BaseRepository {
 
     return Object.values(_plans);
   }
+
   protected async applyFilters(filters: IndexPlanRequest, query: QueryBuilder) {
     if (filters.is_active !== undefined) {
       query.where('is_active', '=', filters.is_active);
     }
     return query;
   }
-
-  async findOne(id: number) {
-    const result = await QueryBuilder.table('plans')
-      .where('id', '=', id)
-      .first();
-    //TODO: create a response dto
-    return result;
-  }
-  /** Base plan rows only — no translation join, so it's safe to call outside a request context (e.g. queue processors). */
-  async findActivePlans(): Promise<PlanSchema[]> {
-    return await QueryBuilder.table('plans')
-      .where('is_active', '=', true)
-      .get<PlanSchema[]>();
-  }
-
-  async findFreePlan(): Promise<Omit<FullPlan, 'translation'>> {
-    const result = await QueryBuilder.table('plans')
-      .select(this.BASE_COLUMNS)
-      .where('is_free', '=', true)
-      .where('is_active', '=', true)
-      .join('id', 'plan_prices', 'plan_id')
-      .get<PlanWithPricesSchema[]>();
-    return this.formatPlans(result)[0];
-  }
-
-  async findUserActivePlan(userId: number) {
-    const result = await this.query()
-      .select(this.BASE_COLUMNS)
-      .join('id', 'plan_prices', 'plan_id')
-      .join('id', 'plan_translations', 'plan_id')
-      .join('plan_prices.id', 'plan_subscriptions', 'plan_price_id')
-      .where('plan_subscriptions.user_id', '=', userId)
-      .where('plan_subscriptions.is_active', '=', true)
-      .get();
-    return this.formatPlans(result)[0];
-  }
-  async create(plan: CreatePlanInput) {
-    const columns = Object.keys(plan);
-    const values = Object.values(plan);
-    return await this.query().insertAndGet<PlanSchema>(columns, values);
-    //TODO: create a response dto
-  }
-
-  // update(id: number, updatePlanDto: UpdatePlanDto) {
-  //   return `This action updates a #${id} plan`;
-  // }
-
-  // remove(id: number) {
-  //   return `This action removes a #${id} plan`;
-  // }
 }

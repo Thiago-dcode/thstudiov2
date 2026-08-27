@@ -1,4 +1,3 @@
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { BaseRepository } from '@repo/database/repositories';
 import { QueryBuilder } from '@repo/database/queryBuilder';
@@ -26,8 +25,8 @@ export class MediaModerationRepository extends BaseRepository {
     'media_moderations.updated_at',
   ] as const;
 
-  constructor(protected readonly logService: LogService) {
-    super('media_moderations', logService);
+  constructor() {
+    super('media_moderations');
   }
 
   async findById(id: number): Promise<MediaModeration> {

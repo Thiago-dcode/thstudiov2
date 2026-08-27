@@ -1,4 +1,3 @@
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { Injectable } from '@nestjs/common';
 import { BaseRepository } from '@repo/database/repositories';
 import {
@@ -41,8 +40,8 @@ export class InvitationLinkRepository extends BaseRepository {
     'benefits.active as b_active',
   ] as const;
 
-  constructor(private readonly requestService: RequestService, protected readonly logService: LogService) {
-    super('invitation_links', logService);
+  constructor(private readonly requestService: RequestService) {
+    super('invitation_links');
   }
 
   async getAll(filters: IndexInvitationLinkRequest): Promise<FullInvitationLink[]> {

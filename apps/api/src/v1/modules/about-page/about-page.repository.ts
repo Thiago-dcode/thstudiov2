@@ -1,4 +1,3 @@
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { Injectable } from '@nestjs/common';
 import { BaseRepository } from '@repo/database/repositories';
 import { AboutPageSchemaColumns } from '@repo/common-lib/schemas/about-page';
@@ -16,8 +15,8 @@ export class AboutPageRepositoy extends BaseRepository {
     'about_page.photo',
     'about_page.description',
   ];
-  constructor(protected readonly logService: LogService) {
-    super('about_page', logService, {
+  constructor() {
+    super('about_page', {
       softDelete: false,
     });
   }

@@ -1,76 +1,68 @@
-// import { config } from '@repo/common-lib/config';
-// import express from 'express';
-// // import { Job } from 'bullmq';
-// const appConfig = config();
-// const WORKER_PORT = process.env.WORKER_PORT || 8081;
+import { config } from '@repo/common-lib/config';
+import { JOB_PROCESS_MEDIA, MEDIA_QUEUE } from '@repo/common-lib/constants/queues';
+import { DatabaseConfig } from '@repo/common-lib/types/database';
+import { init, killClient } from '@repo/database';
+import { Job, Worker } from 'bullmq';
+import express from 'express';
+import { MediaProcessor } from './processors/media.processor';
 
-// const app = express();
+async function bootstrap() {
+    const appConfig = config();
+    const WORKER_PORT = process.env.WORKER_PORT || 8081;
+    const redisUrl = appConfig.redis.url;
 
-// app.get('/', (_req, res) => {
-//   res.json({ status: 'ok', service: 'worker' });
-// });
+    if (!redisUrl) {
+        throw new Error('REDIS_URL is required to start the worker');
+    }
 
-// // TODO: Register workers here
-// // // Example:
-// // new Worker('queue-name', async (job: Job) => {
+    await init(appConfig.database as DatabaseConfig);
 
-// //   JobStrategyFactory.resolve(job)
+    const connection = { url: redisUrl };
+    const app = express();
 
-// // });
+    app.get('/health', (_req, res) => {
+        res.json({ status: 'ok', service: 'worker' });
+    });
 
-// const server = app.listen(WORKER_PORT, () => {
-//   console.log(`[worker] listening on port ${WORKER_PORT}`);
-//   console.log(`[worker] redis: ${appConfig.redis.url}`);
-// });
+    const jobResolver: {
+        [queue: string]: {
+            [job: string]: (job: Job) => Promise<void>
+        }
+    } = {
+        [MEDIA_QUEUE]: {
+            [JOB_PROCESS_MEDIA]: (job) => MediaProcessor.handle(job),
+        },
+    };
 
-// async function shutdown() {
-//   console.log('[worker] shutting down...');
-//   server.close();
-//   // TODO: close all registered workers here
-//   process.exit(0);
-// }
+    const workers = Object.keys(jobResolver).map((queue) =>
+        new Worker(
+            queue,
+            async (job) => {
+                const handler = jobResolver[queue]?.[job.name];
+                if (typeof handler !== 'function') {
+                    throw new Error(`Job name "${job.name}" not recognized for queue "${queue}"`);
+                }
+                await handler(job);
+            },
+            { connection },
+        ),
+    );
 
-// process.on('SIGTERM', shutdown);
-// process.on('SIGINT', shutdown);
+    const server = app.listen(WORKER_PORT, () => {
+        console.log(`[worker] listening on port ${WORKER_PORT}`);
+        console.log(`[worker] redis: ${redisUrl}`);
+    });
 
+    async function shutdown() {
+        console.log('[worker] shutting down...');
+        await Promise.all(workers.map((worker) => worker.close()));
+        await killClient();
+        server.close();
+        process.exit(0);
+    }
 
+    process.on('SIGTERM', shutdown);
+    process.on('SIGINT', shutdown);
+}
 
-// // abstract class JobStrategy {
-
-// //   constructor(public readonly job: Job) { }
-
-// //   abstract handle(): Promise<any>
-
-// // }
-
-
-// // class VideoProcessStrategy extends JobStrategy {
-
-
-
-// //   async handle() {
-
-// //   }
-// // }
-
-
-// // class JobStrategyFactory {
-
-
-
-// //   static async resolve(job: Job) {
-
-
-
-// //     switch (job.name) {
-// //       case 'video':
-
-// //         return (new VideoProcessStrategy(job)).handle()
-
-// //       default:
-// //     }
-
-
-// //   }
-// // }
-
+void bootstrap();

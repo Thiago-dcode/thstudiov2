@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { Query } from '@repo/database/facades';
 import { WaitListSchema, WaitListSchemaColumns } from '@repo/common-lib/schemas/wait-list';
 import { CreateWaitListInput, UpdateWaitListInput, WaitList } from '@repo/common-lib/types/wait-list';
@@ -47,10 +46,9 @@ export class WaitListRepository extends BaseRepository {
   ] as const;
 
   constructor(
-    private readonly requestService: RequestService,
-    protected readonly logService: LogService,
+    private readonly requestService: RequestService
   ) {
-    super('wait_list', logService);
+    super('wait_list');
   }
 
   async getAll(filters: IndexWaitListRequest): Promise<WaitList[]> {

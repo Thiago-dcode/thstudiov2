@@ -17,30 +17,32 @@ const clampQuality = (quality: number): number =>
 export class SharpCompressService extends CompressService {
 
     /**
-     * Optimizes an image file to WebP format with specified quality and size constraints.
-     * @param file - The uploaded image file to optimize
+     * Optimizes an image to WebP with specified quality and size constraints.
+     * @param file - Multer upload or raw image bytes
      * @param targetSize - Target file size in bytes. Minimum enforced is 50KB.
      * @param quality - Quality level for the WebP output (0-100), defaults to 90
-     * @returns The optimized image with filename, size (in bytes), and buffer
      */
     public async optimizeImageToWebp(
-        file: Express.Multer.File,
+        file: Express.Multer.File | Buffer,
         targetSize: number,
         quality: number = 90,
       ): Promise<{ filename: string; size: number; buffer: Buffer }> {
-        if (!file.buffer) {
+        const isBuffer = Buffer.isBuffer(file);
+        const source = isBuffer ? file : file.buffer;
+        if (!source) {
           throw new Error('File buffer is required for image processing. Ensure multer is using memory storage.');
         }
 
-        const originalName = path.parse(file.originalname).name;
+        const originalName = isBuffer ? 'image' : path.parse(file.originalname).name;
         const webpFilename = `${originalName}.webp`;
 
         // Non-images are never processed here — multer's fileFilter should have rejected them.
-        if (!file.mimetype.startsWith('image/')) {
+        // A raw Buffer has no mimetype; the worker already moderated it as an image.
+        if (!isBuffer && !file.mimetype.startsWith('image/')) {
           return {
             filename: file.originalname,
-            size: file.buffer.length,
-            buffer: file.buffer,
+            size: source.length,
+            buffer: source,
           };
         }
 
@@ -52,7 +54,7 @@ export class SharpCompressService extends CompressService {
         // ContentType is derived from the extension, so handing back the source bytes would serve
         // e.g. PNG data labelled `image/webp`, which downstream consumers (the moderation vision
         // model reads the stored thumbnail by URL) reject outright.
-        let buffer = await sharp(file.buffer)
+        let buffer = await sharp(source)
           .resize({
             width: MAX_IMAGE_EDGE_PX,
             height: MAX_IMAGE_EDGE_PX,

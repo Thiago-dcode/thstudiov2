@@ -1,4 +1,3 @@
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { Injectable } from '@nestjs/common';
 import { BaseRepository } from '@repo/database/repositories';
 import { UserStorageRequestSchemaColumns } from '@repo/common-lib/schemas/user-storage-request';
@@ -14,8 +13,8 @@ export class UserStorageRequestRepository extends BaseRepository {
     'user_storage_requests.user_id',
   ] as const;
 
-  constructor(protected readonly logService: LogService) {
-    super('user_storage_requests', logService);
+  constructor() {
+    super('user_storage_requests');
   }
 
   async create(data: CreateUserStorageRequestInput) {

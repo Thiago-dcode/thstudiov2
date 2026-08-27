@@ -5,7 +5,6 @@ import {
 } from '@repo/common-lib/schemas/email-preferences';
 import { BaseRepository } from '@repo/database/repositories';
 import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { generateUUID } from '@repo/common-lib/utils/generate-uuid';
 import { DbException } from '@repo/database/exceptions';
 
@@ -31,8 +30,8 @@ export class EmailPreferencesRepository extends BaseRepository {
     `${TABLES_ENUM.EMAIL_PREFERENCES}.waitlist_updates`,
   ] as const;
 
-  constructor(protected readonly logService: LogService) {
-    super(TABLES_ENUM.EMAIL_PREFERENCES, logService);
+  constructor() {
+    super(TABLES_ENUM.EMAIL_PREFERENCES);
   }
 
   async findByColumn(

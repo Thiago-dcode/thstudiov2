@@ -1,4 +1,3 @@
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { Injectable } from '@nestjs/common';
 import { BaseRepository } from '@repo/database/repositories';
 import { AddressSchemaColumns } from '@repo/common-lib/schemas/address';
@@ -26,8 +25,8 @@ export class AddressRepository extends BaseRepository {
     'addresses.created_at',
     'addresses.updated_at',
   ];
-  constructor(protected readonly logService: LogService) {
-    super('addresses', logService, {
+  constructor() {
+    super('addresses', {
       softDelete: false,
     });
   }

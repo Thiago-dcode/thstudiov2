@@ -1,4 +1,3 @@
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { BaseRepository } from '@repo/database/repositories';
 import {
@@ -127,8 +126,8 @@ export class UserRepository extends BaseRepository {
     'addresses.country',
   ];
 
-  constructor(private readonly requestService: RequestService, protected readonly logService: LogService) {
-    super('users', logService);
+  constructor(private readonly requestService: RequestService) {
+    super('users');
   }
 
   private joinUserRole(q: QueryBuilder): QueryBuilder {

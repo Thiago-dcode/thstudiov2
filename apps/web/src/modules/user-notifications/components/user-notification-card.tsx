@@ -73,7 +73,7 @@ const MediaThumbnail = ({
 }) => {
   const t = useCardTranslations();
 
-  if (!payload.thumbnail) {
+  if (!payload.thumbnail && !payload.url) {
     // A media still being processed has no thumbnail *yet*, which is a different message from one
     // that will never have a preview at all. Rendered as a span: the preview sits inside the
     // card's button, whose content model only allows phrasing elements.
@@ -100,7 +100,7 @@ const MediaThumbnail = ({
 
   return (
     <img
-      src={payload.thumbnail}
+      src={payload.thumbnail || payload.url}
       alt={t("card.thumbnailAlt", {
         title: payload.title || payload.public_id,
       })}

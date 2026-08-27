@@ -1,4 +1,3 @@
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { Injectable } from '@nestjs/common';
 import { BaseRepository } from '@repo/database/repositories';
 import { QueryBuilder } from '@repo/database/queryBuilder';
@@ -23,8 +22,8 @@ export class StateRepository extends BaseRepository {
     'states.updated_at',
   ] as const;
 
-  constructor(protected readonly logService: LogService) {
-    super(TABLES_ENUM.STATES, logService);
+  constructor() {
+    super(TABLES_ENUM.STATES);
   }
 
   async getAll(filters: StateIndexRequest): Promise<State[]> {

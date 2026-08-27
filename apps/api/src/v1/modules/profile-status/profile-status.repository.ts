@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
 import {
   ProfileStatusSchemaColumns,
@@ -28,8 +27,8 @@ export class ProfileStatusRepository extends BaseRepository {
     `${TABLES_ENUM.PROFILE_STATUS}.has_about_page`,
   ] as const;
 
-  constructor(protected readonly logService: LogService) {
-    super(TABLES_ENUM.PROFILE_STATUS, logService);
+  constructor() {
+    super(TABLES_ENUM.PROFILE_STATUS);
   }
 
   async findByUserId(userId: number): Promise<ProfileStatus | null> {

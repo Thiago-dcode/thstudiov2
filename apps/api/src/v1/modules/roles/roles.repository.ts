@@ -1,4 +1,3 @@
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { BaseRepository } from '@repo/database/repositories';
 import { EnumType, TABLES_ENUM } from '@repo/common-lib/constants/enums';
@@ -7,8 +6,8 @@ import { Role } from '@repo/common-lib/types/role';
 @Injectable()
 export class RoleRepository extends BaseRepository {
 
-  constructor(protected readonly logService: LogService) {
-    super(TABLES_ENUM.ROLES, logService);
+  constructor() {
+    super(TABLES_ENUM.ROLES);
   }
 
   async findAll(): Promise<Role[]> {

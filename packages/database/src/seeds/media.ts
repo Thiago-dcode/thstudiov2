@@ -172,16 +172,12 @@ async function seedMediaAssetsForUser(user: MediaSeedTargetUser): Promise<void> 
     );
 
     const compressionLevel = DEFAULT_COMPRESSION_LVL;
-    const targetSize = Math.round(
-      Math.min(
-        compressService.getSizeCompressed(
-          sourceFile.size,
-          compressionLevel,
-          300 * 1024,
-        ),
-        mbToBytes(5),
-      ),
-    );
+    const targetSize = compressService.getSizeCompressed({
+      size: sourceFile.size,
+      compressLevel: compressionLevel,
+      minSize: 300 * 1024,
+      maxSize: mbToBytes(5),
+    });
     const mediaCompressed = await compressService.optimizeImageToWebp(
       sourceFile as Parameters<
         typeof compressService.optimizeImageToWebp

@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { LogService } from '@repo/backend-lib/services/log-service';
 import { EnumType, TABLES_ENUM } from '@repo/common-lib/constants/enums';
 import {
   UserNotificationSchemaColumns,
@@ -29,10 +28,9 @@ export class UserNotificationsRepository extends BaseRepository {
   ] as const;
 
   constructor(
-    private readonly requestService: RequestService,
-    protected readonly logService: LogService,
+    private readonly requestService: RequestService
   ) {
-    super(TABLES_ENUM.USER_NOTIFICATIONS, logService);
+    super(TABLES_ENUM.USER_NOTIFICATIONS);
   }
 
   async create(data: CreateUserNotificationInput): Promise<UserNotificationRow> {
