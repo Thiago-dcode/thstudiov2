@@ -3,7 +3,7 @@ import { ViewService } from '@repo/backend-lib/services/view-service/base';
 import { EnumType } from '@repo/common-lib/constants/enums';
 import { I18nService } from 'nestjs-i18n';
 import { ConfigService } from '@nestjs/config';
-import { mailingNoreplyEmail } from 'src/config/mailling';
+import { mailingNoreplyEmail } from '@repo/backend-lib/config/mailling';
 import { ApiMailService } from 'src/common/mails/api-mail-service';
 import { EmailPreferencesService } from 'src/v1/modules/email-preferences/email-preferences.service';
 

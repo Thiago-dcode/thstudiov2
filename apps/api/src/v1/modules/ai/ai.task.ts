@@ -1,10 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
 import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
 import { QueueHelper } from '@repo/backend-lib/utils';
-import { AI_QUEUE } from '@repo/common-lib/constants/queues';
 import { UserExtraDataRepository } from '../user-extra-data/user-extra-data.repository';
 
 @Injectable()
@@ -15,7 +12,6 @@ export class AiTask {
 
   constructor(
     private readonly userExtraDataRepository: UserExtraDataRepository,
-    @InjectQueue(AI_QUEUE) private readonly aiQueue: Queue,
   ) {}
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT, {
@@ -72,7 +68,7 @@ export class AiTask {
     timeZone: 'UTC',
   })
   async handlePortfolioTask() {
-    await QueueHelper.createGenerateEntityMetadataJob(this.aiQueue, { entity: 'portfolio' });
+    await QueueHelper.createGenerateEntityMetadataJob({ entity: 'portfolio' });
   }
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT, {
@@ -80,7 +76,7 @@ export class AiTask {
     timeZone: 'UTC',
   })
   async handleCollectionTask() {
-    await QueueHelper.createGenerateEntityMetadataJob(this.aiQueue, { entity: 'collection' });
+    await QueueHelper.createGenerateEntityMetadataJob({ entity: 'collection' });
   }
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT, {
@@ -88,7 +84,7 @@ export class AiTask {
     timeZone: 'UTC',
   })
   async handleServiceTask() {
-    await QueueHelper.createGenerateEntityMetadataJob(this.aiQueue, { entity: 'service' });
+    await QueueHelper.createGenerateEntityMetadataJob({ entity: 'service' });
   }
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT, {
@@ -96,6 +92,6 @@ export class AiTask {
     timeZone: 'UTC',
   })
   async handleUserTask() {
-    await QueueHelper.createGenerateEntityMetadataJob(this.aiQueue, { entity: 'user' });
+    await QueueHelper.createGenerateEntityMetadataJob({ entity: 'user' });
   }
 }

@@ -11,7 +11,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { mailingContactEmail, mailingSupportEmail } from 'src/config/mailling';
+import { mailingContactEmail, mailingSupportEmail } from '@repo/backend-lib/config/mailling';
 import { MailService } from '@repo/backend-lib/services/mail-service';
 import { ViewService } from '@repo/backend-lib/services/view-service/base';
 import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/language';

@@ -2,8 +2,6 @@ import { BadRequestException, HttpException, Injectable, UnauthorizedException }
 import { UpdateUserRequest } from './requests/update-user.request';
 import { NewUserEvent } from './events/new-user.event';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
 import { UserRepository } from './users.repository';
 import { cleanObj } from '@repo/common-lib/utils/object';
 import { LogService } from '@repo/backend-lib/services/log-service';
@@ -23,10 +21,6 @@ import {
   SET_INITIAL_USER_EXTRA_DATA_EVENT,
   UPDATE_PROFILE_STATUS_EVENT,
 } from '@repo/common-lib/constants/events';
-import {
-  AI_QUEUE,
-  EMAIL_PREFERENCES_QUEUE,
-} from '@repo/common-lib/constants/queues';
 import {
   CACHE_KEY_USER_CATEGORIES,
   CACHE_KEY_USER_PUBLIC_ID,
@@ -59,8 +53,6 @@ export class UserService {
     private readonly notifyNewUserMail: NotifyNewUserMail,
     private readonly aiService: AiService,
     private readonly profileStatusService: ProfileStatusService,
-    @InjectQueue(AI_QUEUE) private readonly aiQueue: Queue,
-    @InjectQueue(EMAIL_PREFERENCES_QUEUE) private readonly emailPreferencesQueue: Queue,
   ) { }
 
   /** No-op when `language` already matches; safe to call on every authenticated request. */
@@ -328,7 +320,6 @@ export class UserService {
 
     if(shouldGenerateMetadata){
       await QueueHelper.createGenerateSingleEntityMetadataJob(
-        this.aiQueue,
         { entity: 'user', id: user.id, user_id: user.id },
         { delay: SINGLE_ENTITY_METADATA_DEBOUNCE_MS },
       );
@@ -381,7 +372,7 @@ export class UserService {
   async handleNewUserEvent(event: NewUserEvent) {
     try {
       // Priority: enqueue email preference upsert immediately
-      await QueueHelper.createOrUpdateEmailPreferenceJob(this.emailPreferencesQueue, {
+      await QueueHelper.createOrUpdateEmailPreferenceJob({
         email: event.user.email,
         user_id: event.user.id,
       });

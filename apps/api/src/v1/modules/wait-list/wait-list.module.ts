@@ -4,7 +4,6 @@ import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-se
 import {
   LOG_QUEUE,
   WAIT_LIST_QUEUE,
-  EMAIL_PREFERENCES_QUEUE,
 } from '@repo/common-lib/constants/queues';
 import { Queue } from 'bullmq';
 import { BenefitsModule } from '../benefits/benefits.module';
@@ -26,7 +25,7 @@ import { EmailPreferencesModule } from '../email-preferences/email-preferences.m
     InvitationLinkModule,
     BenefitsModule,
     PlansModule,
-    BullModule.registerQueue({ name: WAIT_LIST_QUEUE }, { name: EMAIL_PREFERENCES_QUEUE }, { name: LOG_QUEUE }),
+    BullModule.registerQueue({ name: WAIT_LIST_QUEUE }, { name: LOG_QUEUE }),
   ],
   controllers: [WaitListController],
   providers: [

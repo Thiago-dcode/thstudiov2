@@ -1,9 +1,6 @@
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
 import { UPDATE_PROFILE_STATUS_EVENT } from '@repo/common-lib/constants/events';
-import { LOCATION_QUEUE } from '@repo/common-lib/constants/queues';
 import { QueueHelper } from '@repo/backend-lib/utils';
 import type { CreateOrUpdateLocationPayload } from '@repo/common-lib/types/location';
 import { Query } from '@repo/database/facades';
@@ -20,7 +17,6 @@ export class AddressService {
     private readonly addressRepository: AddressRepository,
     private readonly requestService: RequestService,
     private readonly eventEmitter: EventEmitter2,
-    @InjectQueue(LOCATION_QUEUE) private readonly locationQueue: Queue,
   ) { }
 
   public async findOneById(id: number) {
@@ -150,6 +146,6 @@ export class AddressService {
     const city = result.city?.trim();
     if (state) payload.state = state;
     if (city) payload.city = city;
-    await QueueHelper.createOrUpdateLocationJob(this.locationQueue, payload);
+    await QueueHelper.createOrUpdateLocationJob(payload);
   }
 }

@@ -1,6 +1,6 @@
 import { BaseUser, User } from '@repo/common-lib/types/user';
 import { buildRedirectToUrl } from '@repo/common-lib/constants/redirect-to';
-import { mailingNoreplyEmail } from 'src/config/mailling';
+import { mailingNoreplyEmail } from '@repo/backend-lib/config/mailling';
 import { ViewService } from '@repo/backend-lib/services/view-service/base';
 import { Injectable } from '@nestjs/common';
 import { I18nService } from 'nestjs-i18n';

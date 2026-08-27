@@ -57,7 +57,7 @@ function buildS3Config(): S3StorageConfig {
     !STORAGE_CONFIG.secretAccessKey
   ) {
     throw new Error(
-      'S3 storage is not configured. Set STORAGE_BUCKET, STORAGE_REGION, STORAGE_ACCESS_KEY, STORAGE_SECRET_ACCESS_KEY (see apps/api/src/config/storage.ts).',
+      'S3 storage is not configured. Set STORAGE_BUCKET, STORAGE_REGION, STORAGE_ACCESS_KEY, STORAGE_SECRET_ACCESS_KEY (see packages/backend-lib/src/config/storage.ts).',
     );
   }
   return {

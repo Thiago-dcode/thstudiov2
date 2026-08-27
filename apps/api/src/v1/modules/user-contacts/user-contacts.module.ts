@@ -8,8 +8,6 @@ import { Queue } from 'bullmq';
 import {
   USER_CONTACTS_QUEUE,
   LOG_QUEUE,
-  EMAIL_PREFERENCES_QUEUE,
-  USER_NOTIFICATIONS_QUEUE,
 } from '@repo/common-lib/constants/queues';
 import { UserContactProcessor } from './user-contact.processor';
 import { NewContactMail } from './mails/new-contact.mail';
@@ -24,8 +22,6 @@ import { EmailPreferencesModule } from '../email-preferences/email-preferences.m
     UserModule,
     BullModule.registerQueue(
       { name: USER_CONTACTS_QUEUE },
-      { name: EMAIL_PREFERENCES_QUEUE },
-      { name: USER_NOTIFICATIONS_QUEUE },
       { name: LOG_QUEUE },
     ),
   ],

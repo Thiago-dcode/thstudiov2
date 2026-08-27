@@ -1,17 +1,29 @@
 import {
-  JOB_COMPUTE_USER_METRICS,
-  JOB_CREATE_OR_UPDATE_LOCATION,
-  JOB_CREATE_OR_UPDATE_USER_NOTIFICATION,
-  JOB_CREATE_STORAGE_REQUEST,
-  JOB_CREATE_USER_CONTACT,
-  JOB_CREATE_WAIT_LIST_ENTRY,
-  JOB_GENERATE_ENTITY_METADATA,
-  JOB_GENERATE_SINGLE_ENTITY_METADATA,
-  JOB_INVITE_WAIT_LIST_BATCH,
-  JOB_RECORD_LLM_USAGE,
-  JOB_RECORD_MEDIA_MODERATION,
-  JOB_UPSERT_EMAIL_PREFERENCE_BY_EMAIL,
+    AI_QUEUE,
+    EMAIL_PREFERENCES_QUEUE,
+    JOB_COMPUTE_USER_METRICS,
+    JOB_CREATE_OR_UPDATE_LOCATION,
+    JOB_CREATE_OR_UPDATE_USER_NOTIFICATION,
+    JOB_CREATE_STORAGE_REQUEST,
+    JOB_CREATE_USER_CONTACT,
+    JOB_CREATE_WAIT_LIST_ENTRY,
+    JOB_GENERATE_ENTITY_METADATA,
+    JOB_GENERATE_SINGLE_ENTITY_METADATA,
+    JOB_INVITE_WAIT_LIST_BATCH,
+    JOB_PROCESS_MEDIA,
+    JOB_RECORD_LLM_USAGE,
+    JOB_RECORD_MEDIA_MODERATION,
+    JOB_UPSERT_EMAIL_PREFERENCE_BY_EMAIL,
+    LOCATION_QUEUE,
+    MAIL_QUEUE,
+    MEDIA_QUEUE,
+    STORAGE_REQUESTS_QUEUE,
+    USER_CONTACTS_QUEUE,
+    USER_METRICS_QUEUE,
+    USER_NOTIFICATIONS_QUEUE,
+    WAIT_LIST_QUEUE,
 } from '@repo/common-lib/constants/queues';
+import { config } from '@repo/common-lib/config';
 import { CreateMediaModerationInput } from '@repo/common-lib/types/media-moderation';
 import { GenerateEntityMetadataPayload, GenerateSingleEntityMetadataPayload } from '@repo/common-lib/types/ai';
 import { CreateLlmTokensUsageInput } from '@repo/common-lib/types/llm-tokens-usage';
@@ -21,6 +33,8 @@ import { CreateOrUpdateLocationPayload } from '@repo/common-lib/types/location';
 import { CreateUserStorageRequestInput } from '@repo/common-lib/types/user-storage-request';
 import { CreateOrUpdateEmailPreferencePayload } from '@repo/common-lib/types/email-preferences';
 import { CreateUserNotificationInput } from '@repo/common-lib/types/user-notification';
+import { MailJob } from '@repo/common-lib/types/mail';
+import { Media } from '@repo/common-lib/types/media';
 import { JobsOptions, Queue } from "bullmq";
 
 /**
@@ -31,8 +45,27 @@ export const SINGLE_ENTITY_METADATA_DEBOUNCE_MS = 60_000;
 
 export class QueueHelper {
 
-    static async createLlmUsageJob(queue: Queue, dto: CreateLlmTokensUsageInput) {
-        await queue.add(
+    /** Outside Nest DI: same Redis URL shape as `BullModule.forRootAsync`. */
+    static createQueue(name: string): Queue {
+        return new Queue(name, { connection: { url: config().redis.url } });
+    }
+
+    static async createMailJob(dto: MailJob) {
+        await QueueHelper.createQueue(MAIL_QUEUE).add(
+            dto.name,
+            dto.payload,
+            {
+                jobId: `mail-${dto.name}-${Date.now()}`,
+                priority: 10,
+                removeOnComplete: true,
+                attempts: 3,
+                backoff: { type: 'exponential', delay: 1000 },
+            },
+        );
+    }
+
+    static async createLlmUsageJob(dto: CreateLlmTokensUsageInput) {
+        await QueueHelper.createQueue(AI_QUEUE).add(
             JOB_RECORD_LLM_USAGE,
             dto,
             {
@@ -45,8 +78,8 @@ export class QueueHelper {
         );
     }
 
-    static async createMediaModerationJob(queue: Queue, dto: CreateMediaModerationInput) {
-        await queue.add(
+    static async createMediaModerationJob(dto: CreateMediaModerationInput) {
+        await QueueHelper.createQueue(AI_QUEUE).add(
             JOB_RECORD_MEDIA_MODERATION,
             dto,
             {
@@ -59,8 +92,8 @@ export class QueueHelper {
         );
     }
 
-    static async createGenerateEntityMetadataJob(queue: Queue, dto: GenerateEntityMetadataPayload) {
-        await queue.add(
+    static async createGenerateEntityMetadataJob(dto: GenerateEntityMetadataPayload) {
+        await QueueHelper.createQueue(AI_QUEUE).add(
             JOB_GENERATE_ENTITY_METADATA,
             dto,
             {
@@ -79,11 +112,10 @@ export class QueueHelper {
      * already queued. Pass `{ delay }` for the event debounce window; omit it for the nightly sweep.
      */
     static async createGenerateSingleEntityMetadataJob(
-        queue: Queue,
         dto: GenerateSingleEntityMetadataPayload,
         jobOptions?: JobsOptions,
     ) {
-        await queue.add(
+        await QueueHelper.createQueue(AI_QUEUE).add(
             JOB_GENERATE_SINGLE_ENTITY_METADATA,
             dto,
             {
@@ -98,8 +130,8 @@ export class QueueHelper {
         );
     }
 
-    static async createUserContactJob(queue: Queue, dto: CreateUserContactInput) {
-        await queue.add(
+    static async createUserContactJob(dto: CreateUserContactInput) {
+        await QueueHelper.createQueue(USER_CONTACTS_QUEUE).add(
             JOB_CREATE_USER_CONTACT,
             dto,
             {
@@ -112,8 +144,8 @@ export class QueueHelper {
         );
     }
 
-    static async createWaitListEntryJob(queue: Queue, dto: CreateWaitListJobInput) {
-        await queue.add(
+    static async createWaitListEntryJob(dto: CreateWaitListJobInput) {
+        await QueueHelper.createQueue(WAIT_LIST_QUEUE).add(
             JOB_CREATE_WAIT_LIST_ENTRY,
             dto,
             {
@@ -126,8 +158,8 @@ export class QueueHelper {
         );
     }
 
-    static async createInviteWaitListBatchJob(queue: Queue, dto: { count: number }) {
-        await queue.add(
+    static async createInviteWaitListBatchJob(dto: { count: number }) {
+        await QueueHelper.createQueue(WAIT_LIST_QUEUE).add(
             JOB_INVITE_WAIT_LIST_BATCH,
             dto,
             {
@@ -139,8 +171,8 @@ export class QueueHelper {
         );
     }
 
-    static async createOrUpdateUserNotificationJob(queue: Queue, dto: CreateUserNotificationInput) {
-        await queue.add(
+    static async createOrUpdateUserNotificationJob(dto: CreateUserNotificationInput) {
+        await QueueHelper.createQueue(USER_NOTIFICATIONS_QUEUE).add(
             JOB_CREATE_OR_UPDATE_USER_NOTIFICATION,
             dto,
             {
@@ -154,8 +186,8 @@ export class QueueHelper {
         );
     }
 
-    static async createOrUpdateLocationJob(queue: Queue, dto: CreateOrUpdateLocationPayload) {
-        await queue.add(
+    static async createOrUpdateLocationJob(dto: CreateOrUpdateLocationPayload) {
+        await QueueHelper.createQueue(LOCATION_QUEUE).add(
             JOB_CREATE_OR_UPDATE_LOCATION,
             dto,
             {
@@ -168,8 +200,8 @@ export class QueueHelper {
         );
     }
 
-    static async createStorageRequestJob(queue: Queue, dto: CreateUserStorageRequestInput) {
-        await queue.add(
+    static async createStorageRequestJob(dto: CreateUserStorageRequestInput) {
+        await QueueHelper.createQueue(STORAGE_REQUESTS_QUEUE).add(
             JOB_CREATE_STORAGE_REQUEST,
             dto,
             {
@@ -182,8 +214,8 @@ export class QueueHelper {
         );
     }
 
-    static async createOrUpdateEmailPreferenceJob(queue: Queue, dto: CreateOrUpdateEmailPreferencePayload) {
-        await queue.add(
+    static async createOrUpdateEmailPreferenceJob(dto: CreateOrUpdateEmailPreferencePayload) {
+        await QueueHelper.createQueue(EMAIL_PREFERENCES_QUEUE).add(
             JOB_UPSERT_EMAIL_PREFERENCE_BY_EMAIL,
             dto,
             {
@@ -196,12 +228,26 @@ export class QueueHelper {
         );
     }
 
-    static async createComputeUserMetricsJob(queue: Queue, userId: number) {
-        await queue.add(
+    static async createComputeUserMetricsJob(userId: number) {
+        await QueueHelper.createQueue(USER_METRICS_QUEUE).add(
             JOB_COMPUTE_USER_METRICS,
             { userId },
             {
                 jobId: `metrics-${userId}-${Date.now()}`,
+                priority: 10,
+                removeOnComplete: true,
+                attempts: 3,
+                backoff: { type: 'exponential', delay: 1000 },
+            },
+        );
+    }
+
+    static async createProcessMediaJob(dto: Media) {
+        await QueueHelper.createQueue(MEDIA_QUEUE).add(
+            JOB_PROCESS_MEDIA,
+            dto,
+            {
+                jobId: `process-media-${dto.id}`,
                 priority: 10,
                 removeOnComplete: true,
                 attempts: 3,

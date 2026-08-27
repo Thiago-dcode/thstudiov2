@@ -11,6 +11,7 @@ export const PLAN_SUBSCRIPTIONS_QUEUE = 'plan-subscriptions' as const;
 export const WAIT_LIST_QUEUE = 'wait-list' as const;
 export const EMAIL_PREFERENCES_QUEUE = 'email-preferences' as const;
 export const USER_NOTIFICATIONS_QUEUE = 'user-notifications' as const;
+export const MEDIA_QUEUE = 'media' as const;
 
 // ==================== JOBS (BullMQ) ====================
 export const JOB_COMPUTE_USER_METRICS = 'compute-user-metrics' as const;
@@ -25,9 +26,11 @@ export const JOB_CREATE_OR_UPDATE_LOCATION = 'create-or-update-location' as cons
 export const JOB_CREATE_OR_UPDATE_USER_NOTIFICATION = 'create-or-update-user-notification' as const;
 export const JOB_SEND_MAIL = 'send-mail' as const;
 export const JOB_SEND_BATCH_EMAIL = 'send-batch-email' as const;
+export const JOB_ERROR_500_MAIL = 'ERROR500MAIL' as const;
 export const JOB_FLUSH_LOGS = 'flush-logs' as const;
 export const JOB_ON_SUBSCRIPTION_CHANGES = 'on-subscription-changes' as const;
 export const JOB_CREATE_WAIT_LIST_ENTRY = 'create-wait-list-entry' as const;
 export const JOB_INVITE_WAIT_LIST_BATCH = 'invite-wait-list-batch' as const;
 
 export const JOB_UPSERT_EMAIL_PREFERENCE_BY_EMAIL = 'upsert-email-preference-by-email' as const;
+export const JOB_PROCESS_MEDIA = 'process-media' as const;

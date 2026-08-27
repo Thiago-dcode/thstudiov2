@@ -1,4 +1,4 @@
-import { mailingAdmins, mailingNoreplyEmail } from 'src/config/mailling';
+import { mailingAdmins, mailingNoreplyEmail } from '@repo/backend-lib/config/mailling';
 import { ViewService } from '@repo/backend-lib/services/view-service/base';
 import { Injectable } from '@nestjs/common';
 import type { LogOptions } from '@repo/backend-lib/services/log-service/types';
@@ -10,15 +10,15 @@ export class Error500Mail extends ApiMailService {
   constructor(
     viewService: ViewService,
     message: string,
-    options: LogOptions,
-    // Manually constructed in a static helper; email preferences are optional.
+    options?: LogOptions,
+    // Manually constructed outside DI; email preferences are optional.
     emailPreferencesService?: EmailPreferencesService,
   ) {
     const optionsFormatted =
       options && typeof options === 'object'
         ? Object.keys(options).map((key) => {
-            return `${key}: ${typeof (options as any)[key] === 'object' ? JSON.stringify((options as any)[key]) : (options as any)[key]}`;
-          })
+          return `${key}: ${typeof (options as any)[key] === 'object' ? JSON.stringify((options as any)[key]) : (options as any)[key]}`;
+        })
         : [];
 
     super(viewService, emailPreferencesService, {

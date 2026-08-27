@@ -1,15 +1,10 @@
 import { Module } from '@nestjs/common';
-import { BullModule } from '@nestjs/bullmq';
 import { CollectionController } from './collection.controller';
 import { CollectionService } from './collection.service';
 import { CollectionRepository } from './collection.repository';
 import { UserExtraDataModule } from '../user-extra-data/user-extra-data.module';
 import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
 import { RequestService } from 'src/common/services/request.service';
-import {
-  AI_QUEUE,
-  USER_METRICS_QUEUE,
-} from '@repo/common-lib/constants/queues';
 
 @Module({
   controllers: [CollectionController],
@@ -27,7 +22,7 @@ import {
       inject: [RequestService],
     },
   ],
-  imports: [BullModule.registerQueue({ name: AI_QUEUE }, { name: USER_METRICS_QUEUE }), UserExtraDataModule],
+  imports: [UserExtraDataModule],
   exports: [CollectionService, CollectionRepository],
 })
 export class CollectionModule {}

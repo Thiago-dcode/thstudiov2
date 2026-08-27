@@ -13,7 +13,7 @@ import {
   LOG_QUEUE,
 } from '@repo/common-lib/constants/queues';
 import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
-import { Helpers } from 'src/common/services/helpers.service';
+import { callback500ErrorMail } from '@repo/backend-lib/utils';
 
 @Module({
   imports: [
@@ -37,7 +37,7 @@ import { Helpers } from 'src/common/services/helpers.service';
           channel: 'webhook',
           callback: {
             channel: 'webhook/error',
-            callback: Helpers.callback500ErrorMail,
+            callback: callback500ErrorMail,
           },
         }, logQueue);
       },

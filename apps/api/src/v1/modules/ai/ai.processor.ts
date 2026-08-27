@@ -1,6 +1,5 @@
 import { Processor } from '@nestjs/bullmq';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Job, Queue } from 'bullmq';
+import { Job } from 'bullmq';
 import { LlmTokensUsageRepository } from './llm-tokens-usage.repository';
 import { MediaModerationRepository } from './media-moderation.repository';
 import { AiService } from './ai.service';
@@ -37,7 +36,6 @@ import {
   JOB_RECORD_MEDIA_MODERATION,
   JOB_GENERATE_ENTITY_METADATA,
   JOB_GENERATE_SINGLE_ENTITY_METADATA,
-  USER_METRICS_QUEUE,
 } from '@repo/common-lib/constants/queues';
 import {
   CACHE_KEY_PORTFOLIO_SEO,
@@ -69,8 +67,6 @@ export class AiProcessor extends GlobalProcessor {
     private readonly collectionRepository: CollectionRepository,
     private readonly serviceRepository: ServiceRepository,
     private readonly userRepository: UserRepository,
-    @InjectQueue(AI_QUEUE) private readonly aiQueue: Queue,
-    @InjectQueue(USER_METRICS_QUEUE) private readonly metricsQueue: Queue,
     private readonly appLogService: LogService,
   ) {
     super();
@@ -133,7 +129,7 @@ export class AiProcessor extends GlobalProcessor {
         }
       }
 
-      await QueueHelper.createComputeUserMetricsJob(this.metricsQueue, usageData.user_id);
+      await QueueHelper.createComputeUserMetricsJob(usageData.user_id);
 
       return usage;
     } catch (error) {
@@ -203,7 +199,7 @@ export class AiProcessor extends GlobalProcessor {
           }
         }
 
-        await QueueHelper.createComputeUserMetricsJob(this.metricsQueue, moderationData.user_id);
+        await QueueHelper.createComputeUserMetricsJob(moderationData.user_id);
       }
 
 
@@ -255,7 +251,6 @@ export class AiProcessor extends GlobalProcessor {
     // that a recent edit already queued for this entity. No delay — due rows run immediately.
     for (const row of dueRows) {
       await QueueHelper.createGenerateSingleEntityMetadataJob(
-        this.aiQueue,
         { entity: payload.entity, id: row.id, user_id: row.user_id },
       );
     }

@@ -1,13 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
 import { LogService, maskEmail } from '@repo/backend-lib/services/log-service';
 import { QueueHelper } from '@repo/backend-lib/utils';
 import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/language';
-import {
-  EMAIL_PREFERENCES_QUEUE,
-  WAIT_LIST_QUEUE,
-} from '@repo/common-lib/constants/queues';
 import type {
   PublicCreateWaitListInput,
   WaitListCreateResponse,
@@ -27,8 +21,6 @@ export class WaitListService {
     private readonly benefitRepository: BenefitRepository,
     private readonly logger: LogService,
     private readonly requestService: RequestService,
-    @InjectQueue(WAIT_LIST_QUEUE) private readonly waitListQueue: Queue,
-    @InjectQueue(EMAIL_PREFERENCES_QUEUE) private readonly emailPreferencesQueue: Queue,
   ) { }
 
   async findAll(filters: IndexWaitListRequest) {
@@ -125,12 +117,12 @@ export class WaitListService {
 
       this.logger.info(`Enqueuing wait list create jobs: ${emailLog}`, { language });
 
-      await QueueHelper.createOrUpdateEmailPreferenceJob(this.emailPreferencesQueue, {
+      await QueueHelper.createOrUpdateEmailPreferenceJob({
         email: normalizedEmail,
       });
 
       try {
-        await QueueHelper.createWaitListEntryJob(this.waitListQueue, {
+        await QueueHelper.createWaitListEntryJob({
           email: normalizedEmail,
           language,
         });
@@ -166,7 +158,7 @@ export class WaitListService {
 
       this.logger.info(`Enqueuing wait list batch invite job: count=${count}`);
 
-      await QueueHelper.createInviteWaitListBatchJob(this.waitListQueue, { count });
+      await QueueHelper.createInviteWaitListBatchJob({ count });
 
       return {
         count,

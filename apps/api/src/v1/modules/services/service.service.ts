@@ -8,12 +8,6 @@ import { UpdateServiceRequest } from "./requests/update-service.request";
 import { UserExtraDataService } from "../user-extra-data/user-extra-data.service";
 import { RequestService } from "src/common/services/request.service";
 import { ServiceRepository } from "./service.repository";
-import { InjectQueue } from "@nestjs/bullmq";
-import { Queue } from "bullmq";
-import {
-  AI_QUEUE,
-  USER_METRICS_QUEUE,
-} from "@repo/common-lib/constants/queues";
 import { CACHE_KEY_SERVICE_SEO } from "@repo/common-lib/constants/cache";
 import { QueueHelper, SINGLE_ENTITY_METADATA_DEBOUNCE_MS } from "@repo/backend-lib/utils";
 import { AiService } from "../ai/ai.service";
@@ -38,8 +32,6 @@ export class ServiceService {
     private readonly userExtraDataService: UserExtraDataService,
     private readonly helpers: Helpers,
     private readonly aiService: AiService,
-    @InjectQueue(AI_QUEUE) private readonly aiQueue: Queue,
-    @InjectQueue(USER_METRICS_QUEUE) private readonly metricsQueue: Queue,
   ) { }
 
   /**
@@ -157,9 +149,8 @@ export class ServiceService {
       this.highlightCountCacheKey(request.user_id),
     ]);
 
-    await QueueHelper.createComputeUserMetricsJob(this.metricsQueue, request.user_id);
+    await QueueHelper.createComputeUserMetricsJob(request.user_id);
     await QueueHelper.createGenerateSingleEntityMetadataJob(
-      this.aiQueue,
       {
         entity: 'service',
         id: service.id,

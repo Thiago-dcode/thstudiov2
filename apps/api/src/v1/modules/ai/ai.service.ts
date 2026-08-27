@@ -1,11 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
 import { LLMService } from '@repo/backend-lib/services/llm-service/base';
 import { MAX_TAGS_MEDIA } from '@repo/common-lib/constants/limits';
-import { AI_QUEUE } from '@repo/common-lib/constants/queues';
-import { QueueHelper } from '@repo/backend-lib/utils';
-import { openAiLLMConfig } from 'src/config/llm';
+import { QueueHelper, callback500ErrorMail } from '@repo/backend-lib/utils';
+import { openAiLLMConfig } from '@repo/backend-lib/config/llm';
 import { FactoryLogService } from '@repo/backend-lib/services/log-service';
 import {
   GenerateEntityMetadataResponse,
@@ -20,7 +17,6 @@ import { MediaPortfolio } from '@repo/common-lib/types/media';
 import { FullCollection } from '@repo/common-lib/types/collection';
 import { FullService } from '@repo/common-lib/types/service';
 import { UserProfile } from '@repo/common-lib/types/user';
-import { Helpers } from 'src/common/services/helpers.service';
 
 const ENTITY_SEO_TITLE_MAX = 70;
 const ENTITY_SEO_DESCRIPTION_MAX = 160;
@@ -159,13 +155,12 @@ export class AiService {
     name: 'ai',
     callback: {
       channel: 'ai/error',
-      callback: Helpers.callback500ErrorMail,
+      callback: callback500ErrorMail,
     },
   });
 
   constructor(
     private readonly llmService: LLMService,
-    @InjectQueue(AI_QUEUE) private readonly aiQueue: Queue,
   ) { }
 
   /**
@@ -432,7 +427,7 @@ export class AiService {
 
       // Enqueue LLM tokens usage
       if (usage?.totalTokens) {
-        await QueueHelper.createLlmUsageJob(this.aiQueue, {
+        await QueueHelper.createLlmUsageJob({
           tokens: usage.totalTokens,
           model: openAiLLMConfig.model,
           user_id: meta.user_id,
@@ -452,7 +447,7 @@ export class AiService {
           tokens_used: usage?.totalTokens,
         });
 
-      await QueueHelper.createMediaModerationJob(this.aiQueue, {
+      await QueueHelper.createMediaModerationJob({
         is_allowed: moderation.is_allowed ?? true,
         severity: moderation.severity ?? MODERATION_SEVERITY.SAFE,
         content_type: moderation.content_type ?? 'unknown',
@@ -627,7 +622,7 @@ export class AiService {
     matches_expected_response: boolean;
   }): Promise<void> {
     if (!params.tokens) return;
-    await QueueHelper.createLlmUsageJob(this.aiQueue, {
+    await QueueHelper.createLlmUsageJob({
       tokens: params.tokens,
       model: openAiLLMConfig.model,
       user_id: params.user_id,

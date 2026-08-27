@@ -6,7 +6,7 @@ import {
   pruneDailyLogFiles,
   resolveDefaultLogFolder,
 } from '@repo/backend-lib/services/log-service';
-import { getLogRetentionDays } from 'src/config/logging';
+import { getLogRetentionDays } from '@repo/backend-lib/config/logging';
 
 @Injectable()
 export class LogRetentionTask {

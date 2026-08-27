@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ViewService } from '@repo/backend-lib/services/view-service/base';
 import { I18nService } from 'nestjs-i18n';
-import { mailingNoreplyEmail } from 'src/config/mailling';
+import { mailingNoreplyEmail } from '@repo/backend-lib/config/mailling';
 import { ApiMailService } from 'src/common/mails/api-mail-service';
 import { EmailPreferencesService } from 'src/v1/modules/email-preferences/email-preferences.service';
 

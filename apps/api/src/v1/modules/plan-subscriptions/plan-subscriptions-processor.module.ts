@@ -10,7 +10,7 @@ import { UserExtraDataModule } from '../user-extra-data/user-extra-data.module';
 import { PlansModule } from '../plans/plans.module';
 import { EmailPreferencesModule } from '../email-preferences/email-preferences.module';
 import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
-import { Helpers } from 'src/common/services/helpers.service';
+import { callback500ErrorMail } from '@repo/backend-lib/utils';
 import { SubscriptionChangedMail } from './mails/subscription-changed.mail';
 
 @Module({
@@ -30,7 +30,7 @@ import { SubscriptionChangedMail } from './mails/subscription-changed.mail';
           channel: 'subscriptions',
           callback: {
             channel: 'subscriptions/error',
-            callback: Helpers.callback500ErrorMail,
+            callback: callback500ErrorMail,
           },
         }, logQueue);
       },

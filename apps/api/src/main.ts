@@ -6,7 +6,7 @@ import { init } from '@repo/database';
 import { useContainer } from 'class-validator';
 import { spawn } from 'child_process';
 import { FactoryLogService } from '@repo/backend-lib/services/log-service';
-import { API_ERRORS_CHANNEL, logConfig } from './config/logging';
+import { API_ERRORS_CHANNEL, logConfig } from '@repo/backend-lib/config/logging';
 
 const bootstrapLogger = FactoryLogService.createLogService('file', {
   channel: 'api/bootstrap',

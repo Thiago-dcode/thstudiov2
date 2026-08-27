@@ -1,10 +1,9 @@
 import { Module } from '@nestjs/common';
-import { BullModule } from '@nestjs/bullmq';
 import { UserService } from './users.service';
 import { UserController } from './users.controller';
 import { UserRepository } from './users.repository';
 import { UserExtraDataModule } from '../user-extra-data/user-extra-data.module';
-import { logConfig } from 'src/config/logging';
+import { logConfig } from '@repo/backend-lib/config/logging';
 import {
   FactoryLogService,
   LogService,
@@ -17,10 +16,6 @@ import { AddressModule } from '../addresses/address.module';
 import { AiModule } from '../ai/ai.module';
 import { EmailPreferencesModule } from '../email-preferences/email-preferences.module';
 import { ProfileStatusModule } from '../profile-status/profile-status.module';
-import {
-  AI_QUEUE,
-  EMAIL_PREFERENCES_QUEUE,
-} from '@repo/common-lib/constants/queues';
 
 @Module({
   controllers: [UserController],
@@ -36,7 +31,6 @@ import {
     },
   ],
   imports: [
-    BullModule.registerQueue({ name: AI_QUEUE }, { name: EMAIL_PREFERENCES_QUEUE }),
     UserExtraDataModule,
     ProfileStatusModule,
     UserAuthDevicesModule,

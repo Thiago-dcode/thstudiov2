@@ -1,5 +1,5 @@
-import { InjectQueue, Processor } from '@nestjs/bullmq';
-import { Job, Queue } from 'bullmq';
+import { Processor } from '@nestjs/bullmq';
+import { Job } from 'bullmq';
 import { UserContactsRepository } from './user-contacts.repository';
 import {
   FactoryLogService,
@@ -10,7 +10,6 @@ import { CreateUserContactInput } from '@repo/common-lib/types/user-contact';
 import {
   JOB_CREATE_USER_CONTACT,
   USER_CONTACTS_QUEUE,
-  USER_NOTIFICATIONS_QUEUE,
 } from '@repo/common-lib/constants/queues';
 import { UserService } from '../users/users.service';
 import { MailService } from '@repo/backend-lib/services/mail-service';
@@ -29,8 +28,6 @@ export class UserContactProcessor extends GlobalProcessor {
     private readonly mailService: MailService,
     private readonly newContactMail: NewContactMail,
     private readonly appLogService: LogService,
-    @InjectQueue(USER_NOTIFICATIONS_QUEUE)
-    private readonly userNotificationsQueue: Queue,
   ) {
     super();
   }
@@ -72,15 +69,12 @@ export class UserContactProcessor extends GlobalProcessor {
 
         log.info(`Enqueing user notification`);
 
-        await QueueHelper.createOrUpdateUserNotificationJob(
-          this.userNotificationsQueue,
-          {
-            type: 'NEW_CONTACT',
-            user_id: contact.user_id,
-            entity_id: contact.id,
-            read_at: null,
-          },
-        );
+        await QueueHelper.createOrUpdateUserNotificationJob({
+          type: 'NEW_CONTACT',
+          user_id: contact.user_id,
+          entity_id: contact.id,
+          read_at: null,
+        });
       } else {
         log.warn(`Artist with ID ${data.user_id} not found, skipping email.`);
       }

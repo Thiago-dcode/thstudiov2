@@ -1,7 +1,5 @@
 import { BadRequestException, HttpException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
 import { MediaRepository } from './media.repository';
 import { CreateMediaRequest } from './requests/create-media.request';
 import { UserExtraDataService } from '../user-extra-data/user-extra-data.service';
@@ -17,10 +15,6 @@ import { CreateMediaInput, MediaWithUser, UpdateMediaInternalInput } from '@repo
 import { EntitySeoMetadata, MediaSeoTranslation } from '@repo/common-lib/types/ai';
 import { cleanObj } from '@repo/common-lib/utils/object';
 import { UPDATE_PROFILE_STATUS_EVENT } from '@repo/common-lib/constants/events';
-import {
-  STORAGE_REQUESTS_QUEUE,
-  USER_METRICS_QUEUE,
-} from '@repo/common-lib/constants/queues';
 import {
   CACHE_KEY_MEDIA_SEO,
   SEO_METADATA_CACHE_TTL,
@@ -48,8 +42,6 @@ export class MediaService {
     private readonly aiService: AiService,
     private readonly helpers: Helpers,
     private readonly eventEmitter: EventEmitter2,
-    @InjectQueue(STORAGE_REQUESTS_QUEUE) private readonly storageQueue: Queue,
-    @InjectQueue(USER_METRICS_QUEUE) private readonly metricsQueue: Queue,
   ) { }
   public async findAll(data: IndexMediaRequest) {
     const result = await this.mediaRepository.getAll(data);
@@ -130,6 +122,26 @@ export class MediaService {
     return name.replace(/\.[^./\\]+$/, '');
   }
 
+  /**
+   * Storage keys for a media upload. Filename is derived from the upload only
+   * (clients cannot set seo_filename; AI may overwrite it later).
+   * The per-media `mediaPublicId` folder isolates each media so two uploads (or an AI
+   * rename) that resolve to the same filename never collide within the same user.
+   */
+  private buildMediaStoragePaths(
+    userPublicId: string,
+    mediaPublicId: string,
+    originalName: string,
+  ) {
+    const filename = this.stripExtension(originalName);
+    const basePath = `users/${userPublicId}/media/${mediaPublicId}/${filename}`;
+    return {
+      filename,
+      mediaPath: `${basePath}.webp`,
+      thumbnailPath: `${basePath}-thumbnail.webp`,
+    };
+  }
+
   public async create({ media, ...data }: CreateMediaRequest) {
     try {
 
@@ -141,14 +153,11 @@ export class MediaService {
         this.userService.findOne(data.user_id),
         generateUUID(),
       ]);
-      // Strip any trailing extension so we don't end up with keys like
-      // `.../lanzarote-3.jpg.webp`. Filename is derived from the upload only
-      // (clients cannot set seo_filename; AI may overwrite it later).
-      // The per-media `mediaPublicId` folder isolates each media so two uploads (or an AI
-      // rename) that resolve to the same filename never collide within the same user.
-      const filename = this.stripExtension(media.originalname);
-      const basePath = `users/${user.public_id}/media/${mediaPublicId}/${filename}`;
-      const thumbnailPath = `${basePath}-thumbnail.webp`;
+      const { filename, mediaPath, thumbnailPath } = this.buildMediaStoragePaths(
+        user.public_id,
+        mediaPublicId,
+        media.originalname,
+      );
 
       // 3. Store thumbnail
       const thumbnailFile = { ...media, ...thumbnail };
@@ -188,17 +197,16 @@ export class MediaService {
       });
 
       // 8. Store full media
-      const mediaPath = `${basePath}.webp`;
       const mediaFile = { ...media, ...mediaCompressed };
       await this.storageService.write(mediaFile, mediaPath);
 
       // 9. Enqueue storage request jobs for each file
-      await QueueHelper.createStorageRequestJob(this.storageQueue, {
+      await QueueHelper.createStorageRequestJob({
         path: mediaPath,
         bytes: mediaCompressed.size,
         user_id: data.user_id,
       });
-      await QueueHelper.createStorageRequestJob(this.storageQueue, {
+      await QueueHelper.createStorageRequestJob({
         path: thumbnailPath,
         bytes: thumbnail.size,
         user_id: data.user_id,
@@ -231,7 +239,7 @@ export class MediaService {
       cleanObj(mediaData);
 
       const result = await this.mediaRepository.create(mediaData);
-      await QueueHelper.createComputeUserMetricsJob(this.metricsQueue, user.id);
+      await QueueHelper.createComputeUserMetricsJob(user.id);
       this.eventEmitter.emit(
         UPDATE_PROFILE_STATUS_EVENT,
         new UpdateProfileStatusEvent(user.id, { has_media: true }),
@@ -249,6 +257,130 @@ export class MediaService {
     }
   }
 
+  public async createAsync({ media: mediaFile, ...data }: CreateMediaRequest) {
+    const log = this.logger.name('create-async');
+    log.info('Starting async media create', {
+      user_id: data.user_id,
+      original_name: mediaFile.originalname,
+      size: mediaFile.size,
+      mimetype: mediaFile.mimetype,
+    });
+
+    const [user, mediaPublicId] = await Promise.all([
+      this.userService.findOne(data.user_id),
+      generateUUID(),
+    ]);
+
+    const { filename, mediaPath, thumbnailPath } = this.buildMediaStoragePaths(
+      user.public_id,
+      mediaPublicId,
+      mediaFile.originalname,
+    );
+    log.info('Resolved storage paths', {
+      user_id: user.id,
+      public_id: mediaPublicId,
+      media_path: mediaPath,
+      thumbnail_path: thumbnailPath,
+    });
+
+    const defaultSeoText = `${user.username} photo`;
+    const compressionLevel = data.compression_level || DEFAULT_COMPRESSION_LVL;
+
+    // Placeholder row: files are not stored yet. Required columns get defaults;
+    // shape / bytes / aspect_ratio are filled in when processing completes.
+    const baseMedia: CreateMediaInput = {
+      ...data,
+      public_id: mediaPublicId,
+      bytes: 0,
+      thumbnail_bytes: 0,
+      extension: 'webp',
+      url: mediaPath,
+      thumbnail: thumbnailPath,
+      seo_filename: filename,
+      blocked_at: null,
+      is_featured: false,
+      is_value_pillars: false,
+      is_highlight: false,
+      aspect_ratio: '1:1',
+      is_active: true,
+      seo_title: data.seo_title || data.title || defaultSeoText,
+      seo_alt: data.seo_alt || data.title || defaultSeoText,
+      compression_level: compressionLevel,
+      seo_description: data.seo_description || data.description,
+      status: 'UPLOADING',
+      completed_at: null,
+      failed_reason: null,
+    };
+    cleanObj(baseMedia);
+
+    let mediaModel = await this.mediaRepository.create(baseMedia);
+    log.info('Created placeholder media row', {
+      media_id: mediaModel.id,
+      public_id: mediaModel.public_id,
+      status: mediaModel.status,
+    });
+
+    await QueueHelper.createOrUpdateUserNotificationJob({
+      type: 'CREATE_UPDATE_MEDIA',
+      user_id: mediaModel.user_id,
+      entity_id: mediaModel.id,
+      read_at: null,
+    });
+    log.info('Enqueued CREATE_UPDATE_MEDIA notification', {
+      media_id: mediaModel.id,
+      user_id: mediaModel.user_id,
+    });
+
+    let writeOk = false;
+    try {
+      log.info('Writing original file to storage', {
+        media_id: mediaModel.id,
+        path: mediaPath,
+        size: mediaFile.size,
+      });
+      writeOk = await this.storageService.write(mediaFile, mediaPath);
+      if (!writeOk) {
+        log.error('Storage write returned false', {
+          media_id: mediaModel.id,
+          path: mediaPath,
+        });
+      }
+    } catch (error) {
+      log.error(
+        `Storage write threw: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        error,
+      );
+    }
+
+    if (!writeOk) {
+      mediaModel = await this.mediaRepository.updateById(mediaModel.id, {
+        ...mediaModel,
+        status: 'FAILED',
+        failed_reason: 'Storage write could not complete',
+      });
+      log.error('Marked media as FAILED after storage write', {
+        media_id: mediaModel.id,
+        public_id: mediaModel.public_id,
+        failed_reason: mediaModel.failed_reason,
+      });
+      await QueueHelper.createOrUpdateUserNotificationJob({
+        type: 'CREATE_UPDATE_MEDIA',
+        user_id: mediaModel.user_id,
+        entity_id: mediaModel.id,
+        read_at: null,
+      });
+      return mediaModel;
+    }
+
+    await QueueHelper.createProcessMediaJob(mediaModel);
+    log.info('Enqueued process-media job', {
+      media_id: mediaModel.id,
+      public_id: mediaModel.public_id,
+      path: mediaPath,
+    });
+    return mediaModel;
+  }
+
   public async delete(id: number): Promise<void> {
     const media = await this.mediaRepository.findById(id);
     if (media.user_id !== this.requestService.user.id) {
@@ -261,7 +393,7 @@ export class MediaService {
       this.mediaRepository.deleteById(id)
     ])
 
-    await QueueHelper.createComputeUserMetricsJob(this.metricsQueue, media.user_id);
+    await QueueHelper.createComputeUserMetricsJob(media.user_id);
     const stillHasMedia = await this.mediaRepository.exists({
       user_id: media.user_id,
     });

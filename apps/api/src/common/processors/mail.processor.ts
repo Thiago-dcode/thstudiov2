@@ -2,13 +2,17 @@ import { Processor } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { MailService, EmailDriverOptions } from '@repo/backend-lib/services/mail-service';
 import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
+import { ViewService } from '@repo/backend-lib/services/view-service/base';
+import { callback500ErrorMail } from '@repo/backend-lib/utils';
 import {
   MAIL_QUEUE,
   JOB_SEND_MAIL,
   JOB_SEND_BATCH_EMAIL,
+  JOB_ERROR_500_MAIL,
 } from '@repo/common-lib/constants/queues';
+import type { Error500MailPayload } from '@repo/common-lib/types/mail';
 import { GlobalProcessor } from 'src/common/processors/global.processor';
-import { Helpers } from './helpers.service';
+import { Error500Mail } from 'src/common/mails/error-500.mail';
 
 @Processor(MAIL_QUEUE)
 export class MailProcessor extends GlobalProcessor {
@@ -16,12 +20,13 @@ export class MailProcessor extends GlobalProcessor {
     channel: 'mail',
     callback: {
       channel: 'mail/error',
-      callback: Helpers.callback500ErrorMail
+      callback: callback500ErrorMail
     }
   });
 
   constructor(
     private readonly mailService: MailService,
+    private readonly viewService: ViewService,
     private readonly logService: LogService,
   ) {
     super();
@@ -36,11 +41,36 @@ export class MailProcessor extends GlobalProcessor {
         case JOB_SEND_BATCH_EMAIL:
           return await this.sendBatchMail(job.data);
 
+        case JOB_ERROR_500_MAIL:
+          return await this.sendError500Mail(job.data);
+
         default:
           throw new Error(`Job name "${job.name}" not recognized`);
       }
     } finally {
       await this.logService.flushAsync();
+    }
+  }
+
+  private async sendError500Mail(data: Error500MailPayload) {
+    const log = this.logger.name('error-500-mail');
+    try {
+      log.info(`Sending 500 alert mail`, {
+        message: data.message,
+      });
+      const result = await this.mailService.send(
+        new Error500Mail(this.viewService, data.message, data.options),
+      );
+      log.info(`500 alert mail sent`, {
+        provider_response: result ?? null,
+      });
+      return result;
+    } catch (error) {
+      log.channel('mail/error').error(
+        `Failed to send 500 alert mail: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        error,
+      );
+      throw error;
     }
   }
 

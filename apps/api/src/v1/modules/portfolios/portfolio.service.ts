@@ -11,14 +11,8 @@ import { UserExtraDataService } from "../user-extra-data/user-extra-data.service
 import { RequestService } from "src/common/services/request.service";
 import { PortfolioRepository } from "./portfolio.repository";
 import { EventEmitter2 } from "@nestjs/event-emitter";
-import { InjectQueue } from "@nestjs/bullmq";
-import { Queue } from "bullmq";
 import { MAX_PORTFOLIO_ITEMS } from "@repo/common-lib/constants/limits";
 import { UPDATE_PROFILE_STATUS_EVENT } from "@repo/common-lib/constants/events";
-import {
-  AI_QUEUE,
-  USER_METRICS_QUEUE,
-} from "@repo/common-lib/constants/queues";
 import { CACHE_KEY_PORTFOLIO_SEO } from "@repo/common-lib/constants/cache";
 import { QueueHelper, SINGLE_ENTITY_METADATA_DEBOUNCE_MS } from "@repo/backend-lib/utils";
 import { TABLES_ENUM } from "@repo/common-lib/constants/enums";
@@ -56,8 +50,6 @@ export class PortfolioService {
     private readonly helpers: Helpers,
     private readonly aiService: AiService,
     private readonly layoutService: LayoutService,
-    @InjectQueue(AI_QUEUE) private readonly aiQueue: Queue,
-    @InjectQueue(USER_METRICS_QUEUE) private readonly metricsQueue: Queue,
   ) { }
 
   async findAll(data: IndexPortfolioRequest) {
@@ -259,13 +251,12 @@ export class PortfolioService {
       resolvedLayout.config,
     );
     await this.invalidateHighlightCountCache(request.user_id);
-    await QueueHelper.createComputeUserMetricsJob(this.metricsQueue, request.user_id);
+    await QueueHelper.createComputeUserMetricsJob(request.user_id);
     this.eventEmitter.emit(
       UPDATE_PROFILE_STATUS_EVENT,
       new UpdateProfileStatusEvent(request.user_id, { has_portfolio: true }),
     );
     await QueueHelper.createGenerateSingleEntityMetadataJob(
-      this.aiQueue,
       {
         entity: 'portfolio',
         id: portfolio.id,
@@ -403,7 +394,7 @@ export class PortfolioService {
       this.portfolioRepository.delete(id),
     ]);
     await this.invalidateHighlightCountCache(portfolio.user_id);
-    await QueueHelper.createComputeUserMetricsJob(this.metricsQueue, portfolio.user_id);
+    await QueueHelper.createComputeUserMetricsJob(portfolio.user_id);
     const stillHasPortfolio = await this.portfolioRepository.exists({
       user_id: portfolio.user_id,
     });

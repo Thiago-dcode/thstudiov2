@@ -10,7 +10,7 @@ import {
   FactoryLogService,
   LogService,
 } from '@repo/backend-lib/services/log-service';
-import { API_ERRORS_CHANNEL, logConfig } from 'src/config/logging';
+import { API_ERRORS_CHANNEL, logConfig } from '@repo/backend-lib/config/logging';
 import { format } from 'date-fns/format';
 import { VALIDATION_ERROR_STATUS } from '../utils/constants';
 import { Error as ApiError, ErrorResponse } from '@repo/common-lib/types/response';

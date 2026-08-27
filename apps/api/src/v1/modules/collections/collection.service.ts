@@ -7,13 +7,7 @@ import { IndexCollectionRequest } from "./requests/index-collection.request";
 import { UserExtraDataService } from "../user-extra-data/user-extra-data.service";
 import { RequestService } from "src/common/services/request.service";
 import { CollectionRepository } from "./collection.repository";
-import { InjectQueue } from "@nestjs/bullmq";
-import { Queue } from "bullmq";
 import { MAX_COLLECTION_ITEMS } from "@repo/common-lib/constants/limits";
-import {
-  AI_QUEUE,
-  USER_METRICS_QUEUE,
-} from "@repo/common-lib/constants/queues";
 import { CACHE_KEY_COLLECTION_SEO } from "@repo/common-lib/constants/cache";
 import { QueueHelper, SINGLE_ENTITY_METADATA_DEBOUNCE_MS } from "@repo/backend-lib/utils";
 import { Helpers } from "src/common/services/helpers.service";
@@ -34,8 +28,6 @@ export class CollectionService {
     private readonly requestService: RequestService,
     private readonly userExtraDataService: UserExtraDataService,
     private readonly helper: Helpers,
-    @InjectQueue(AI_QUEUE) private readonly aiQueue: Queue,
-    @InjectQueue(USER_METRICS_QUEUE) private readonly metricsQueue: Queue,
   ) { }
 
   async findAll(data: IndexCollectionRequest) {
@@ -162,9 +154,8 @@ export class CollectionService {
         }),
     );
     await this.invalidateHighlightCountCache(request.user_id);
-    await QueueHelper.createComputeUserMetricsJob(this.metricsQueue, request.user_id);
+    await QueueHelper.createComputeUserMetricsJob(request.user_id);
     await QueueHelper.createGenerateSingleEntityMetadataJob(
-      this.aiQueue,
       {
         entity: 'collection',
         id: collection.id,
@@ -237,6 +228,6 @@ export class CollectionService {
 
     await this.collectionRepository.delete(id);
     await this.invalidateHighlightCountCache(collection.user_id);
-    await QueueHelper.createComputeUserMetricsJob(this.metricsQueue, collection.user_id);
+    await QueueHelper.createComputeUserMetricsJob(collection.user_id);
   }
 }

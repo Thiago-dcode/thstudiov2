@@ -18,6 +18,7 @@ import {
   HandleSubscriptionProcessResponse,
 } from '@repo/common-lib/types/plan-subscription';
 import { Helpers } from 'src/common/services/helpers.service';
+import { callback500ErrorMail } from '@repo/backend-lib/utils';
 import { stripe } from '@repo/backend-lib/services/payment-service/stripe';
 import { StripeService } from 'src/common/services/stripe.service';
 import { LogService } from '@repo/backend-lib/services/log-service';
@@ -348,7 +349,7 @@ export class PlanSubscriptionsService {
         error: stripeError || error,
       });
       if (!stripeError || stripeError.statusCode >= 500) {
-        Helpers.callback500ErrorMail(
+        callback500ErrorMail(
           'error',
           errorMessage,
           stripeError || error,

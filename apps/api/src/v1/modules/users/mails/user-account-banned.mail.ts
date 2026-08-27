@@ -1,4 +1,4 @@
-import { mailingContactEmail, mailingNoreplyEmail } from 'src/config/mailling';
+import { mailingContactEmail, mailingNoreplyEmail } from '@repo/backend-lib/config/mailling';
 import { ViewService } from '@repo/backend-lib/services/view-service/base';
 import { Injectable } from '@nestjs/common';
 import { I18nService } from 'nestjs-i18n';
