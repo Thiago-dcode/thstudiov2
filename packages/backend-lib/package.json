@@ -20,6 +20,7 @@
     "./config/llm": "./dist/src/config/llm.js",
     "./config/storage": "./dist/src/config/storage.js",
     "./config/mailling": "./dist/src/config/mailling.js",
+    "./services/ai-service": "./dist/src/services/ai-service/ai.service.js",
     "./services/log-service": "./dist/src/services/log-service/index.js",
     "./services/log-service/types": "./dist/src/services/log-service/types.js",
     "./services/log-service/base": "./dist/src/services/log-service/log.service.js",

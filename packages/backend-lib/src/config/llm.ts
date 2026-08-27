@@ -6,6 +6,6 @@ const LLM_CONFIG = getConfigValue('llm');
 export const openAiLLMConfig: OpenAILLMConfig = {
   driver: 'openai',
   apiKey: LLM_CONFIG.apiKey,
-  model: LLM_CONFIG.model,
+  model: LLM_CONFIG.model || '',
   organization: LLM_CONFIG.organization,
 };

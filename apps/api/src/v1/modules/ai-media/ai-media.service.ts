@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { FactoryLogService } from '@repo/backend-lib/services/log-service';
-import { AiService } from '../ai/ai.service';
+import { AiService } from '@repo/backend-lib/services/ai-service';
 import { MediaService } from '../media/media.service';
 import { CategoriesService } from '../categories/categories.service';
 import { PortfolioRepository } from '../portfolios/portfolio.repository';

@@ -3,7 +3,7 @@ export type LLMServiceDriverType = 'openai';
 export type OpenAILLMConfig = {
   driver: 'openai';
   apiKey: string;
-  model?: string;
+  model: string;
   organization?: string;
 };
 

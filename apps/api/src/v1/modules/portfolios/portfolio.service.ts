@@ -17,7 +17,7 @@ import { CACHE_KEY_PORTFOLIO_SEO } from "@repo/common-lib/constants/cache";
 import { QueueHelper, SINGLE_ENTITY_METADATA_DEBOUNCE_MS } from "@repo/backend-lib/utils";
 import { TABLES_ENUM } from "@repo/common-lib/constants/enums";
 import { UpdateProfileStatusEvent } from "../profile-status/events/update-profile-status.event";
-import { AiService } from "../ai/ai.service";
+import { AiService } from "@repo/backend-lib/services/ai-service";
 import { MediaModerationException } from "src/common/exceptions/media-moderation-exception";
 import { ApiException } from "src/common/exceptions/api-exception";
 import { Query } from "@repo/database/facades";

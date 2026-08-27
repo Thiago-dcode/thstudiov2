@@ -2,7 +2,7 @@ import { Processor } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { LlmTokensUsageRepository } from './llm-tokens-usage.repository';
 import { MediaModerationRepository } from './media-moderation.repository';
-import { AiService } from './ai.service';
+import { AiService } from '@repo/backend-lib/services/ai-service';
 import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
 import { MailService } from '@repo/backend-lib/services/mail-service';
 import { QueueHelper } from '@repo/backend-lib/utils';

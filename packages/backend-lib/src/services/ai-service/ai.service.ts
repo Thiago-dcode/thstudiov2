@@ -1,4 +1,3 @@
-import { Injectable } from '@nestjs/common';
 import { LLMService } from '@repo/backend-lib/services/llm-service/base';
 import { MAX_TAGS_MEDIA } from '@repo/common-lib/constants/limits';
 import { QueueHelper, callback500ErrorMail } from '@repo/backend-lib/utils';
@@ -148,7 +147,6 @@ const SEO_STOPWORDS = new Set([
   'dos', 'das', 'uma', 'com', 'and', 'the', 'for',
 ]);
 
-@Injectable()
 export class AiService {
   private readonly logger = FactoryLogService.createLogService('file', {
     channel: 'ai',
@@ -162,6 +160,12 @@ export class AiService {
   constructor(
     private readonly llmService: LLMService,
   ) { }
+
+
+  static  instance(llmService: LLMService) {
+
+    return new AiService(llmService);
+  }
 
   /**
    * Generate SEO metadata for a media image in ALL app languages (EN/ES/PT) plus category tags,
@@ -278,7 +282,7 @@ export class AiService {
         .name('generate-media-metadata')
         .error(
           `Failed to generate media metadata for media_id [${meta.media_id}] and user [${meta.user_id}] - ${error instanceof Error ? error.message : 'Unknown error'}`,
-          error,
+          error instanceof Error ? error : undefined,
         );
       throw error;
     }
@@ -465,7 +469,7 @@ export class AiService {
         .name('moderate-content')
         .error(
           `Failed to moderate content for user [${meta.user_id}] - ${error instanceof Error ? error.message : 'Unknown error'}`,
-          error,
+          error instanceof Error ? error : undefined,
         );
       throw error;
     }
@@ -551,7 +555,7 @@ export class AiService {
         .name(logName)
         .error(
           `Failed to generate ${entityLabel} metadata for ${meta.entity_id_key} [${meta.entity_id}] and user [${meta.user_id}] - ${error instanceof Error ? error.message : 'Unknown error'}`,
-          error,
+          error instanceof Error ? error : undefined,
         );
       throw error;
     }

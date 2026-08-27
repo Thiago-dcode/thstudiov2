@@ -30,7 +30,7 @@ import { FindUserRequest } from './requests/find-user.request';
 import { Helpers } from 'src/common/services/helpers.service';
 import { UpdateUserPasswordRequest } from './requests/update-user-password.request';
 import { compare, hash } from '@repo/common-lib/utils/hash';
-import { AiService } from '../ai/ai.service';
+import { AiService } from '@repo/backend-lib/services/ai-service';
 import { MediaModerationException } from 'src/common/exceptions/media-moderation-exception';
 import { versionedAssetPath } from 'src/common/utils/asset-path.util';
 import { ArtistCard, UpdateUserInput } from '@repo/common-lib/types/user';

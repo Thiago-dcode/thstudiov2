@@ -1,4 +1,4 @@
-import { BadRequestException, HttpException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { MediaRepository } from './media.repository';
 import { CreateMediaRequest } from './requests/create-media.request';
@@ -6,7 +6,7 @@ import { UserExtraDataService } from '../user-extra-data/user-extra-data.service
 import { CompressService } from '@repo/backend-lib/services/compress-service/base';
 import { StorageService } from '@repo/backend-lib/services/storage-service/base';
 import { UserService } from '../users/users.service';
-import { AiService } from '../ai/ai.service';
+import { AiService } from '@repo/backend-lib/services/ai-service';
 import { generateUUID } from '@repo/common-lib/utils/generate-uuid';
 import { bytesToMB, mbToBytes } from '@repo/common-lib/utils/bytes';
 import { FactoryLogService } from '@repo/backend-lib/services/log-service';
@@ -83,39 +83,6 @@ export class MediaService {
     if (!media) return null;
     return await this.helpers.getAsset(media.thumbnail)
   }
-  public async bulkCreate(data: CreateMediaRequest[]) {
-    throw new HttpException('method not implemented yet', 403);
-
-    if (!data.length) throw new BadRequestException('Empty data given');
-    const userId = data[0].user_id;
-    let totalMediaSize = 0;
-    const compressedMedia: {
-      filename: string;
-      size: number;
-      buffer: Buffer;
-    }[] = [];
-
-    for (const item of data) {
-      if (item.user_id !== userId) {
-        throw new BadRequestException('Users must be the same');
-      }
-      const targetSize = Math.min(item.media.size / 3, mbToBytes(3));
-      const mediaCompressed = await this.compressService.optimizeImageToWebp(
-        item.media,
-        targetSize,
-        90,
-      );
-      totalMediaSize += mediaCompressed.size;
-      compressedMedia.push(mediaCompressed);
-    }
-
-    await this.userExtraDataService.enforceUserLimits(userId, {
-      size: Math.round(bytesToMB(totalMediaSize) * 100) / 100,
-      storageRequests: data.length,
-    });
-  }
-
-
 
   /** Remove a single trailing file extension while keeping any forward-slash S3 dirs intact. */
   private stripExtension(name: string): string {
