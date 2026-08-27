@@ -51,7 +51,9 @@ export const UserNotificationsProvider = ({
 }) => {
   const currentPage = useRef(1);
   const hasLoadedRef = useRef(false);
-  const [userNotifications, setUserNotifications] = useState<UserNotification[]>([]);
+  const [userNotifications, setUserNotifications] = useState<
+    UserNotification[]
+  >([]);
   // A ref, not state: subscribing is not something anything renders, and holding the list in
   // state let `addUserNotification` capture an empty array on its first render and keep calling
   // that one forever.
