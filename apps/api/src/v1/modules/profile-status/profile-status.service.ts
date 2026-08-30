@@ -17,7 +17,7 @@ export class ProfileStatusService {
   constructor(
     private readonly profileStatusRepository: ProfileStatusRepository,
     private readonly helpers: Helpers,
-  ) {}
+  ) { }
 
   async findOneByUserId(userId: number): Promise<ProfileStatus> {
     return this.helpers.cacheRemember(
@@ -57,17 +57,24 @@ export class ProfileStatusService {
     return result;
   }
 
-  @OnEvent(UPDATE_PROFILE_STATUS_EVENT)
-  async handleUpdate(event: UpdateProfileStatusEvent): Promise<void> {
+  async applyUpdate(
+    userId: number,
+    fields: UpdateProfileStatusInput,
+  ): Promise<void> {
     const patch: UpdateProfileStatusInput = {};
-    for (const [key, value] of Object.entries(event.fields)) {
+    for (const [key, value] of Object.entries(fields)) {
       if (typeof value === 'boolean') {
         patch[key as keyof UpdateProfileStatusInput] = value;
       }
     }
     if (!Object.keys(patch).length) return;
-    await this.findOneByUserId(event.userId);
-    await this.update(event.userId, patch);
+    await this.findOneByUserId(userId);
+    await this.update(userId, patch);
+  }
+
+  @OnEvent(UPDATE_PROFILE_STATUS_EVENT)
+  async handleUpdate(event: UpdateProfileStatusEvent): Promise<void> {
+    await this.applyUpdate(event.userId, event.fields);
   }
 
   /** Idempotent sync of all users' flags from live related data. */

@@ -5,6 +5,7 @@ import type { UserMetrics } from "@repo/common-lib/types/user";
 import {
   createContext,
   type ReactNode,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -80,11 +81,17 @@ export const UserMetricsProvider = ({
       cleanErrors();
       cleanResult();
     },
+    // A batch upload fires one refresh per notification. `executeAction` drops a call outright
+    // while one is in flight and only queues a *trailing* retry when a cooldown is configured —
+    // without this, the metrics that changed most (storage used, AI credits) settle on an early
+    // snapshot instead of the final total.
+    settings: { rateLimit: 2 },
   });
 
-  const refresh = async () => {
+  // Stable identity: consumers put this in effect/callback dependency arrays.
+  const refresh = useCallback(async () => {
     await handleAction();
-  };
+  }, [handleAction]);
 
   // Initial load if no default metrics provided
   useEffect(() => {

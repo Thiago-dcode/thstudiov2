@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const { compression_level, ...rest } = validated.data;
+    const { compression_level, generate_metadata, ...rest } = validated.data;
 
     const backendFormData = new FormData();
     backendFormData.append("file", file);
@@ -97,14 +97,20 @@ export async function POST(request: NextRequest) {
       backendFormData.append("seo_description", rest.seo_description);
     if (compression_level)
       backendFormData.append("compression_level", compression_level);
+    // Only sent when explicitly requested: the backend's `@IsOptional()` treats an absent field as
+    // "no AI generation", so forwarding `"false"` would be equivalent but noisier.
+    if (generate_metadata) backendFormData.append("generate_metadata", "true");
 
     const backendHeaders = await getBackendHeaders(session.token);
 
-    const backendResponse = await fetch(`${backendHeaders.baseUrl}/media`, {
-      method: "POST",
-      headers: backendHeaders.headers,
-      body: backendFormData,
-    });
+    const backendResponse = await fetch(
+      `${backendHeaders.baseUrl}/media/async`,
+      {
+        method: "POST",
+        headers: backendHeaders.headers,
+        body: backendFormData,
+      },
+    );
 
     const result = await parseBackendResponse<Media>(backendResponse);
 

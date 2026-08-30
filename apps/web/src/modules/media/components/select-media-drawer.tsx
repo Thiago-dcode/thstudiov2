@@ -2,6 +2,7 @@ import type { EnumType } from "@repo/common-lib/constants/enums";
 import { ENUMS } from "@repo/common-lib/constants/enums";
 import { ALLOWED_IMAGE_FILE_TYPES } from "@repo/common-lib/constants/limits";
 import type { Media } from "@repo/common-lib/types/media";
+import { MediaHelper } from "@repo/common-lib/utils/media";
 import { Button } from "@repo/ui/components/shadcn/button";
 import {
   Drawer,
@@ -19,7 +20,9 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CreateMediaDialog } from "@/app/[locale]/(atelier)/atelier/media/_components/create-media-modal";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
+import { FailedMediaOverlay } from "@/modules/media/components/failed-media-overlay";
 import { getAllUserMediaAction } from "@/modules/media/server-actions/get-all-user-media.action";
+import { useSubscribeToUserNotification } from "@/modules/user-notifications/hooks/useSubscribeToUserNotification";
 
 const SHAPE_OPTIONS = ENUMS.MEDIA_SHAPE;
 type ShapeFilter = EnumType<"MEDIA_SHAPE"> | undefined;
@@ -110,6 +113,31 @@ export const SelectMediaDrawer = ({
     }
   }, [open, handleAction]);
 
+  const upsertDrawerMedia = (payload: Media) => {
+    mediaMap.current.set(payload.id, payload);
+    setMedia((prev) => {
+      const existIndex = prev.findIndex((m) => m.id === payload.id);
+      if (existIndex === -1) {
+        return [payload, ...prev];
+      }
+      const next = [...prev];
+      next[existIndex] = payload;
+      return next;
+    });
+  };
+
+  const removeDrawerMedia = useCallback((id: number) => {
+    mediaMap.current.delete(id);
+    setMedia((prev) => prev.filter((m) => m.id !== id));
+  }, []);
+
+  useSubscribeToUserNotification({
+    callbackId: "select-media-drawer",
+    createUpdateMediaCallback: upsertDrawerMedia,
+    generateMetadataMediaCallback: upsertDrawerMedia,
+    onDeleteMediaCallback: ({ id }) => removeDrawerMedia(id),
+  });
+
   return (
     <Drawer open={open} onOpenChange={setOpen} direction="right">
       <DrawerTrigger asChild>
@@ -153,14 +181,7 @@ export const SelectMediaDrawer = ({
               </Button>
             </div>
             <FileInputProvider allowedMimeTypes={ALLOWED_IMAGE_FILE_TYPES}>
-              <CreateMediaDialog
-                onSuccess={(newMedia) => {
-                  if (!mediaMap.current.has(newMedia.id)) {
-                    mediaMap.current.set(newMedia.id, newMedia);
-                    setMedia((prev) => [newMedia, ...prev]);
-                  }
-                }}
-              />
+              <CreateMediaDialog />
             </FileInputProvider>
           </div>
         </DrawerHeader>
@@ -215,21 +236,47 @@ export const SelectMediaDrawer = ({
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {media.map((m) => {
                   const isSelected = mediaSelected[m.id];
+                  const isLoading = MediaHelper.isLoading(m);
+                  if (m.status === "FAILED") {
+                    return (
+                      <div
+                        key={m.id}
+                        className="relative aspect-square w-full overflow-hidden border border-error/40 bg-fg-2"
+                        role="img"
+                        aria-label={m.failed_reason || t("failedAria")}
+                      >
+                        {m.thumbnail ? (
+                          <div
+                            className="absolute inset-0 opacity-40"
+                            style={{
+                              backgroundImage: `url(${m.thumbnail})`,
+                              backgroundSize: "cover",
+                              backgroundPosition: "center",
+                            }}
+                          />
+                        ) : null}
+                        <FailedMediaOverlay reason={m.failed_reason} />
+                      </div>
+                    );
+                  }
                   return (
                     <button
+                      disabled={isLoading}
                       key={m.id}
                       type="button"
                       onClick={() =>
-                        !isSelected && !isSelectionLimitReached
+                        !isSelected && !isSelectionLimitReached && !isLoading
                           ? onSelect(m)
                           : null
                       }
                       aria-pressed={!!isSelected}
+                      aria-busy={isLoading}
                       className={cn(
                         "group relative aspect-square w-full overflow-hidden border border-border bg-fg-2",
                         "transition-all duration-200 ease-out",
                         "hover:shadow-md hover:-translate-y-0.5",
                         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
+                        isLoading && "cursor-not-allowed",
                         isSelected ? "opacity-60 scale-95" : "opacity-100",
                       )}
                       style={{
@@ -240,16 +287,27 @@ export const SelectMediaDrawer = ({
                         backgroundPosition: "center",
                       }}
                       title={
-                        isSelected ? t("alreadyAdded") : t("addToPortfolio")
+                        isLoading
+                          ? tCommon("loading")
+                          : isSelected
+                            ? t("alreadyAdded")
+                            : t("addToPortfolio")
                       }
                     >
                       {/* Hover overlay */}
-                      <div className="absolute inset-0 bg-black/0 transition-colors duration-200 group-hover:bg-black/20" />
+                      <div className="absolute inset-0 bg-black/0 transition-colors duration-200 group-hover:bg-black/20 group-disabled:group-hover:bg-black/0" />
 
                       {/* Shape badge */}
                       {m.shape ? (
                         <div className="absolute top-2 right-2 bg-black/40 px-2 py-1 text-[10px] font-medium text-white/90 backdrop-blur-sm">
                           {m.shape}
+                        </div>
+                      ) : null}
+
+                      {/* Loading overlay */}
+                      {isLoading ? (
+                        <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/50">
+                          <Spinner className="size-8 text-white" />
                         </div>
                       ) : null}
 

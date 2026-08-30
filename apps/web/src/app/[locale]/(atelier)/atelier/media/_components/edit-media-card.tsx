@@ -2,6 +2,7 @@
 
 import type { Media, UpdateMediaInput } from "@repo/common-lib/types/media";
 import { bytesToMB } from "@repo/common-lib/utils/bytes";
+import { MediaHelper } from "@repo/common-lib/utils/media";
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
 import { Button } from "@repo/ui/components/shadcn/button";
 import {
@@ -35,6 +36,7 @@ import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import FormComponent from "@/lib/components/form-component";
+import { FailedMediaOverlay } from "@/modules/media/components/failed-media-overlay";
 import {
   type UploadMedia,
   useMedia,
@@ -45,11 +47,10 @@ import { MediaDrawerFooter, MediaTab, type MediaTabs } from "./media-tab";
 type MediaCardProps = {
   media: Media;
   username: string;
-  onDeleted?: (mediaId: number) => void;
 };
 type Tabs = MediaTabs;
 
-export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
+export function EditMediaCard({ media, username }: MediaCardProps) {
   const t = useTranslations("atelier.media.card");
   const [currentMedia, setCurrentMedia] = useState(media);
   const [isEditing, setIsEditing] = useState(false);
@@ -59,7 +60,7 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
   const seoTitleRef = useRef<HTMLInputElement>(null);
   const seoDescriptionRef = useRef<HTMLTextAreaElement>(null);
   const seoAltRef = useRef<HTMLInputElement>(null);
-  const { refresh, aiCreditsInfo } = useUserMetrics();
+  const { aiCreditsInfo } = useUserMetrics();
   const {
     upsertMediaUpload,
     removeMediaUpload,
@@ -105,7 +106,11 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
     await generateSeoSingleMedia(currentMedia);
   }, [currentMedia, generateSeoSingleMedia, hasEnoughCredits]);
 
-  const isPending = currentMediaUpload?.pending;
+  const isPending =
+    currentMediaUpload?.pending ||
+    (currentMediaUpload?.data
+      ? MediaHelper.isLoading(currentMediaUpload.data)
+      : false);
   // Format date - use updated_at if available, otherwise fallback to created_at
   const formattedDate = useMemo(() => {
     const dateValue = currentMedia.updated_at || currentMedia.created_at;
@@ -173,16 +178,12 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
       data: undefined,
       error: undefined,
       pending: false,
-      onSuccess: async () => {
-        setIsEditing(false);
-      },
       previewUrl: currentMedia.thumbnail || undefined,
       input: {
         ...existingUpload.input,
         [key]: value,
       },
     };
-
     // Check if nothing has changed by comparing input fields with currentMedia
     const inputFields: (keyof UpdateMediaInput)[] = [
       "title",
@@ -221,8 +222,6 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
     if (result.data) {
       setDeletePopoverOpen(false);
       setIsDrawerOpen(false);
-      onDeleted?.(currentMedia.id);
-      await refresh();
     } else {
       toast.error(result.errors?.[0] ?? t("deleteFailed"));
     }
@@ -426,7 +425,14 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
       open={isDrawerOpen}
       onOpenChange={setIsDrawerOpen}
     >
-      <div className="relative border border-black/10">
+      <div
+        className={cn(
+          "relative border",
+          currentMedia.status === "FAILED"
+            ? "border-error/40"
+            : "border-black/10",
+        )}
+      >
         {currentMediaUpload &&
         !currentMediaUpload.deleted &&
         !isPending &&
@@ -451,6 +457,11 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
               "group flex flex-col p-2",
               isPending ? "cursor-not-allowed opacity-60" : "cursor-pointer",
             )}
+            aria-label={
+              currentMedia.status === "FAILED"
+                ? currentMedia.failed_reason || t("failedAria")
+                : undefined
+            }
             onClick={(e) => {
               if (isPending) {
                 e.preventDefault();
@@ -468,12 +479,18 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
                     currentMedia.title ||
                     t("altFallback", { username })
                   }
-                  className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-200"
+                  className={cn(
+                    "w-full h-full object-contain group-hover:scale-105 transition-transform duration-200",
+                    currentMedia.status === "FAILED" && "opacity-40",
+                  )}
                 />
               ) : (
                 <div className="flex items-center justify-center text-text-muted text-xs bg-fg-2 w-full h-full">
                   {t("noPreview")}
                 </div>
+              )}
+              {currentMedia.status === "FAILED" && (
+                <FailedMediaOverlay reason={currentMedia.failed_reason} />
               )}
               {/* Loading Overlay */}
               {isPending && (
@@ -490,9 +507,11 @@ export function EditMediaCard({ media, username, onDeleted }: MediaCardProps) {
                   currentMedia.seo_filename ||
                   t("untitled")}
               </h3>
-              {formattedDate && (
+              {currentMedia.status === "FAILED" ? (
+                <p className="text-[10px]! text-error">{t("failed")}</p>
+              ) : formattedDate ? (
                 <p className="text-[10px]! text-text-muted">{formattedDate}</p>
-              )}
+              ) : null}
             </div>
           </article>
         </DrawerTrigger>

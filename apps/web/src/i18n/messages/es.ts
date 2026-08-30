@@ -1884,7 +1884,10 @@ const messages = {
         previewAlt: "Vista previa {index}",
         createNewMedia: "Crear nuevo contenido",
         uploadUpToImages: "Sube hasta {max} imágenes (JPEG, PNG, WebP)",
-        uploadButton: "Subir",
+        uploadButton:
+          "Subir {count, plural, one {# archivo} other {# archivos}}",
+        uploadingInBackground:
+          "{count, plural, one {# subiendo} other {# subiendo}}",
         close: "Cerrar",
         createMedia: "Crear contenido",
         upload: "Subir contenido",
@@ -1936,6 +1939,8 @@ const messages = {
         saveChanges: "Guardar cambios",
         edit: "Editar",
         close: "Cerrar",
+        failed: "Error",
+        failedAria: "Este contenido no se pudo procesar",
       },
       grid: {
         generateSeoCount: "Generar metadatos ({count})",
@@ -1980,6 +1985,7 @@ const messages = {
           "{count, plural, one {# elemento seleccionado} other {# elementos seleccionados}}",
         itemsSelectedWithMax:
           "{count} / {max} {count, plural, one {elemento seleccionado} other {elementos seleccionados}}",
+        failedAria: "Este contenido no se pudo procesar",
       },
       uploadStatus: {
         uploadComplete: "Subida completa",
@@ -2002,6 +2008,9 @@ const messages = {
         previewAlt: "Vista previa",
         noPreview: "Sin vista previa",
         unknownFile: "Archivo desconocido",
+        requestFailed: "Error en la solicitud",
+        requestFailedCount:
+          "{count, plural, one {# elemento no se pudo enviar} other {# elementos no se pudieron enviar}}",
       },
     },
     contacts: {
@@ -2050,6 +2059,9 @@ const messages = {
         NEW_CONTACT: "Nuevo mensaje de contacto",
         CREATE_UPDATE_MEDIA: "Contenido creado o actualizado",
         GENERATE_MEDIA_METADATA: "Metadatos de contenido generados",
+        FAILED_GENERATE_MEDIA_METADATA:
+          "Error al generar metadatos del contenido",
+        DELETE_MEDIA: "Contenido eliminado",
       },
       status: {
         read: "Leída",
@@ -2091,6 +2103,7 @@ const messages = {
         title: "Título",
         publicId: "ID del archivo",
         untitledMedia: "Archivo sin título",
+        deletedMedia: "Este contenido fue eliminado",
         thumbnailAlt: "Vista previa de {title}",
         noThumbnail: "Sin vista previa disponible",
         seoTitle: "Título generado",
@@ -2100,6 +2113,7 @@ const messages = {
         status: {
           UPLOADING: "Subiendo…",
           UPDATING: "Actualizando…",
+          GENERATING_METADATA: "Generando metadatos…",
           COMPLETED: "Lista",
           FAILED: "Error al procesar",
         },
@@ -2129,7 +2143,17 @@ const messages = {
       notificationsAria: "Notificaciones",
       notificationsTitle: "Notificaciones",
       notificationsEmpty: "Aún no hay notificaciones.",
+      notificationsEmptyHint:
+        "Aquí aparecerán las subidas, las generaciones con IA y los mensajes nuevos.",
+      notificationsUnreadAria:
+        "Notificaciones, {count, plural, one {# sin leer} other {# sin leer}}",
       notificationsViewAll: "Ver todas",
+      notificationsMarkAllRead: "Marcar todas como leídas",
+      notificationsMarkAllReadTitle: "¿Marcar las notificaciones como leídas?",
+      notificationsMarkAllReadBody:
+        "Se marcarán como leídas {count, plural, one {# notificación sin leer} other {# notificaciones sin leer}} de esta lista. Lo que llegue después seguirá sin leer.",
+      notificationsMarkAllReadConfirm: "Marcar como leídas",
+      notificationsMarkAllReadCancel: "Cancelar",
       upgrade: "Mejorar plan",
       viewProfile: "Perfil público",
     },

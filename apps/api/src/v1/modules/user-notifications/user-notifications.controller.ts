@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Get,
   Param,
@@ -9,6 +10,7 @@ import {
 import { ModelExistPipe } from 'src/pipes/model-exist.pipe';
 import { IsUserAuthPipe } from 'src/pipes/is-user-auth.pipe';
 import { IndexUserNotificationRequest } from './requests/index-user-notification.request';
+import { MarkUserNotificationsAsReadRequest } from './requests/mark-as-read.request';
 import { UserNotificationsService } from './user-notifications.service';
 
 @Controller('users/:user_id/notifications')
@@ -33,6 +35,22 @@ export class UserNotificationsController {
     @Param('id', ParseIntPipe) id: number,
   ) {
     return this.userNotificationsService.getOne(id, user_id);
+  }
+
+  /**
+   * Batch counterpart to `:id/read`, for a client marking a whole rendered list at once. Declared
+   * before it so `read` is matched as a literal segment rather than captured as an `:id`.
+   *
+   * The ids are explicit — there is no "mark everything" route — and the write is scoped to the
+   * authenticated user, so ids outside their own simply match no row.
+   */
+  @Patch('read')
+  markManyAsRead(
+    @Param('user_id', ParseIntPipe, new ModelExistPipe('users'), IsUserAuthPipe)
+    user_id: number,
+    @Body() { ids }: MarkUserNotificationsAsReadRequest,
+  ) {
+    return this.userNotificationsService.markManyAsRead(ids, user_id);
   }
 
   /**

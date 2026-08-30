@@ -132,6 +132,48 @@ describe('SchemaBuilder', () => {
     });
   });
 
+  describe('addEnumValue', () => {
+    it('should add a value to an existing enum with IF NOT EXISTS', async () => {
+      mockClient.query.mockResolvedValueOnce([{ result: 'success' }]);
+
+      const result = await SchemaBuilder.addEnumValue(
+        'NOTIFICATION_TYPE',
+        'DELETE_MEDIA',
+      );
+
+      expect(mockClient.query).toHaveBeenCalledWith(
+        `ALTER TYPE NOTIFICATION_TYPE ADD VALUE IF NOT EXISTS 'DELETE_MEDIA';`,
+      );
+      expect(result).toEqual([{ result: 'success' }]);
+    });
+
+    it('should add a value to a different enum', async () => {
+      await SchemaBuilder.addEnumValue('MEDIA_STATUS', 'FAILED');
+
+      expect(mockClient.query).toHaveBeenCalledWith(
+        `ALTER TYPE MEDIA_STATUS ADD VALUE IF NOT EXISTS 'FAILED';`,
+      );
+    });
+
+    it('should add an enum value that contains special characters', async () => {
+      await SchemaBuilder.addEnumValue('ASPECT_RATIO', '16:9');
+
+      expect(mockClient.query).toHaveBeenCalledWith(
+        `ALTER TYPE ASPECT_RATIO ADD VALUE IF NOT EXISTS '16:9';`,
+      );
+    });
+
+    it('should propagate database errors', async () => {
+      mockClient.query.mockRejectedValueOnce(
+        new Error('type "NOTIFICATION_TYPE" does not exist'),
+      );
+
+      await expect(
+        SchemaBuilder.addEnumValue('NOTIFICATION_TYPE', 'NEW_CONTACT'),
+      ).rejects.toThrow('type "NOTIFICATION_TYPE" does not exist');
+    });
+  });
+
   describe('Constructor and Initialization', () => {
     it('should initialize with a valid client and call connect', () => {
       // Act & Assert

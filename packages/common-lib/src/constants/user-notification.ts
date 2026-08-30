@@ -15,6 +15,13 @@ export const USER_NOTIFICATION_ORDER_BY_COLUMNS = [
 export const DEFAULT_USER_NOTIFICATION_ORDER_BY = 'created_at' as const;
 
 /**
+ * Upper bound on one `mark as read` batch. The endpoint takes explicit ids rather than a
+ * "read everything" flag, so the list is naturally bounded by what a client has on screen —
+ * this only stops an oversized `IN (...)` from being built out of a hand-rolled request.
+ */
+export const MAX_USER_NOTIFICATIONS_READ_BATCH = 100;
+
+/**
  * Media statuses a notification payload may be cached at - the settled ones. An allow-list rather
  * than a deny-list on the in-flight statuses (`UPLOADING`, `UPDATING`): a future transient status
  * fails safe (uncached) instead of being frozen for a whole TTL on a card that never stops

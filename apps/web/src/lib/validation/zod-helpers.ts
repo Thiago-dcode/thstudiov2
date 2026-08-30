@@ -52,6 +52,23 @@ export const tooLongMessage = (t: Translator, fieldLabel: string) =>
   t("validation.tooLong", { field: fieldLabel });
 
 /**
+ * Optional boolean that survives a `FormData` round trip. Every multipart field arrives as a
+ * string, so `"false"` — which `z.coerce.boolean()` reads as `true`, being a non-empty string —
+ * has to be handled explicitly. Absent/blank stays `undefined` so `.optional()` still means
+ * "not provided" rather than "provided as false".
+ *
+ * Mirrors the API's `ToBoolean` decorator (`apps/api/src/common/decorators/to-boolean.decorator.ts`)
+ * so both ends of a multipart request agree on what counts as true.
+ */
+export const formDataBoolean = () =>
+  z.preprocess((value) => {
+    if (value === undefined || value === null || value === "") return undefined;
+    if (value === true || value === "true" || value === "1") return true;
+    if (value === false || value === "false" || value === "0") return false;
+    return undefined;
+  }, z.boolean().optional());
+
+/**
  * Optional free-text field constrained to `regex`. An empty string is allowed and
  * means "clear this field" (the API converts it to `null`); any other value must match.
  * Shared by all social/website link fields so the rule lives in one place.

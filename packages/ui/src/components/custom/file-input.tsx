@@ -20,15 +20,17 @@ const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
  const isLimitReached = hasMaxFiles && existingFilesCount >= maxFiles
 
  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
- let files = e.target.files
- if (hasMaxFiles && files) {
+ const selected = e.target.files
+ let accepted = selected
+
+ if (hasMaxFiles && selected) {
  const remainingSlots = maxFiles - existingFilesCount
  if (remainingSlots <= 0) {
  e.target.value = ""
  return
  }
 
- if (files.length > remainingSlots) {
+ if (selected.length > remainingSlots) {
  if (typeof DataTransfer === "undefined") {
  e.target.value = ""
  return
@@ -36,22 +38,30 @@ const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
 
  const dataTransfer = new DataTransfer()
  for (let index = 0; index < remainingSlots; index++) {
- const file = files.item(index)
+ const file = selected.item(index)
  if (file) dataTransfer.items.add(file)
  }
 
- files = dataTransfer.files
- ;(e.target as HTMLInputElement).files = files
+ accepted = dataTransfer.files
  }
  }
- // Update context if available
- if (context && files) {
- context.setFiles(files)
+
+ // Only what fits reaches the context.
+ if (context && accepted) {
+ context.setFiles(accepted)
  }
- // Call the original onChange if provided
+
+ // Called while `e.target.files` still holds the *full* selection, so a consumer can compare it
+ // against its own remaining-slot count and say what was left out. This used to overwrite
+ // `e.target.files` with the truncated list first, which made every such check unreachable.
  if (onChange) {
  onChange(e)
  }
+
+ // Last, and unconditionally. An unchanged `value` fires no `change` event, so re-picking a file
+ // the user had just removed did nothing at all and read as a broken input. Clearing it only
+ // detaches the FileList from the element — the reference handed to the context stays valid.
+ e.target.value = ""
  }
 
  const fileCount = context?.files?.length || 0

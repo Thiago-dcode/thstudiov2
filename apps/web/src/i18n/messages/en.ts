@@ -1874,7 +1874,9 @@ const messages = {
         previewAlt: "Preview {index}",
         createNewMedia: "Create New Media",
         uploadUpToImages: "Upload up to {max} images (JPEG, PNG, WebP)",
-        uploadButton: "Upload",
+        uploadButton: "Upload {count, plural, one {# file} other {# files}}",
+        uploadingInBackground:
+          "{count, plural, one {# uploading} other {# uploading}}",
         close: "Close",
         createMedia: "Create media",
         upload: "Upload media",
@@ -1926,6 +1928,8 @@ const messages = {
         saveChanges: "Save Changes",
         edit: "Edit",
         close: "Close",
+        failed: "Failed",
+        failedAria: "This media failed to process",
       },
       grid: {
         generateSeoCount: "Generate media metadata ({count})",
@@ -1967,6 +1971,7 @@ const messages = {
           "{count, plural, one {# item selected} other {# items selected}}",
         itemsSelectedWithMax:
           "{count} / {max} {count, plural, one {item} other {items}} selected",
+        failedAria: "This media failed to process",
       },
       uploadStatus: {
         uploadComplete: "Upload complete",
@@ -1989,6 +1994,9 @@ const messages = {
         previewAlt: "Preview",
         noPreview: "No preview",
         unknownFile: "Unknown file",
+        requestFailed: "Request failed",
+        requestFailedCount:
+          "{count, plural, one {# item could not be sent} other {# items could not be sent}}",
       },
     },
     contacts: {
@@ -2037,6 +2045,8 @@ const messages = {
         NEW_CONTACT: "New contact message",
         CREATE_UPDATE_MEDIA: "Media created or updated",
         GENERATE_MEDIA_METADATA: "Media metadata generated",
+        FAILED_GENERATE_MEDIA_METADATA: "Media metadata generation failed",
+        DELETE_MEDIA: "Media deleted",
       },
       status: {
         read: "Read",
@@ -2078,6 +2088,7 @@ const messages = {
         title: "Title",
         publicId: "Media ID",
         untitledMedia: "Untitled media",
+        deletedMedia: "This media was deleted",
         thumbnailAlt: "{title} preview",
         noThumbnail: "No preview available",
         seoTitle: "Generated title",
@@ -2087,6 +2098,7 @@ const messages = {
         status: {
           UPLOADING: "Uploading…",
           UPDATING: "Updating…",
+          GENERATING_METADATA: "Generating metadata…",
           COMPLETED: "Ready",
           FAILED: "Processing failed",
         },
@@ -2116,7 +2128,17 @@ const messages = {
       notificationsAria: "Notifications",
       notificationsTitle: "Notifications",
       notificationsEmpty: "No notifications yet.",
+      notificationsEmptyHint:
+        "Uploads, AI generations and new messages will show up here.",
+      notificationsUnreadAria:
+        "Notifications, {count, plural, one {# unread} other {# unread}}",
       notificationsViewAll: "View all",
+      notificationsMarkAllRead: "Mark all as read",
+      notificationsMarkAllReadTitle: "Mark notifications as read?",
+      notificationsMarkAllReadBody:
+        "This marks the {count, plural, one {# unread notification} other {# unread notifications}} in this list as read. Anything that arrives afterwards stays unread.",
+      notificationsMarkAllReadConfirm: "Mark as read",
+      notificationsMarkAllReadCancel: "Cancel",
       upgrade: "Upgrade",
       viewProfile: "Public profile",
     },

@@ -60,6 +60,23 @@ export type GenerateMediaMetadataNotification = UserNotificationOf<
   'GENERATE_MEDIA_METADATA',
   Media
 >;
+export type FailedGenerateMediaMetadataNotification = UserNotificationOf<
+  'FAILED_GENERATE_MEDIA_METADATA',
+  Media
+>;
+
+/**
+ * `entity_id` -> the deleted `media.id`. The media row is gone, so the payload is only that id.
+ * Never null: it is copied from the notification row itself.
+ */
+export type DeleteMediaNotificationPayload = {
+  id: number;
+};
+
+export type DeleteMediaNotification = UserNotificationBase & {
+  type: 'DELETE_MEDIA';
+  payload: DeleteMediaNotificationPayload;
+};
 
 /**
  * Discriminated on `type`: narrowing a `UserNotification` by its type also narrows `payload`,
@@ -68,7 +85,9 @@ export type GenerateMediaMetadataNotification = UserNotificationOf<
 export type UserNotification =
   | NewContactNotification
   | CreateUpdateMediaNotification
-  | GenerateMediaMetadataNotification;
+  | GenerateMediaMetadataNotification
+  | FailedGenerateMediaMetadataNotification
+  | DeleteMediaNotification;
 
 /** Picks the member(s) of the union for the given type(s), e.g. for component/handler props. */
 export type UserNotificationOfType<T extends UserNotification['type']> =
@@ -76,7 +95,7 @@ export type UserNotificationOfType<T extends UserNotification['type']> =
 
 /** The notifications whose `entity_id` points at a media record. */
 export type MediaNotification = UserNotificationOfType<
-  'CREATE_UPDATE_MEDIA' | 'GENERATE_MEDIA_METADATA'
+  'CREATE_UPDATE_MEDIA' | 'GENERATE_MEDIA_METADATA' | 'FAILED_GENERATE_MEDIA_METADATA'
 >;
 
 export type UserNotificationOrderBy =

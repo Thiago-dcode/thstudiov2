@@ -1,6 +1,6 @@
 import BaseBuilder from '..';
 import { TableName } from '@repo/common-lib/types/database';
-import { AvailableEnums, ENUMS } from '@repo/common-lib/constants/enums';
+import { AvailableEnums, ENUMS, EnumType } from '@repo/common-lib/constants/enums';
 import { getClient } from '../../client';
 import { SchemaBuilderOperationNotAllowedException } from './exceptions';
 import { createTimeStampsTrigger } from '../../scripts/utils/triggers';
@@ -147,6 +147,14 @@ class SchemaBuilder extends BaseBuilder {
 EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;`);
+  }
+  public static async addEnumValue<T extends AvailableEnums>(
+    enumName: T,
+    value: EnumType<T>,
+  ) {
+    return await getClient().query(
+      `ALTER TYPE ${enumName} ADD VALUE IF NOT EXISTS '${value}';`,
+    );
   }
   public async drop() {
     if (!this.getDb()?.config.settings.allowDrop) {

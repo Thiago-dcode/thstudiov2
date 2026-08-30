@@ -3,6 +3,7 @@ import type { EnumType } from '@repo/common-lib/constants/enums';
 import { IsAvailableEnum } from 'src/common/validators/is-enum.validator';
 import { IsUserAuth } from 'src/common/validators/is-user-auth.validtor';
 import { ModelExist } from 'src/common/validators/model-exist.validtor';
+import { ToBoolean } from 'src/common/decorators/to-boolean.decorator';
 import { ToInt } from 'src/common/decorators/to-int.decorator';
 
 export class CreateMediaRequest {
@@ -31,6 +32,12 @@ export class CreateMediaRequest {
   @IsString()
   @IsOptional()
   seo_description?: string;
+
+  // This endpoint is multipart, so the flag arrives as the string `"true"` — a bare `@IsBoolean()`
+  // rejects it.
+  @IsOptional()
+  @ToBoolean()
+  generate_metadata?: boolean;
 
   @IsOptional()
   @IsAvailableEnum('COMPRESSION_LEVEL')

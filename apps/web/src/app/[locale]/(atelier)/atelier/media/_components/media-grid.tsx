@@ -15,7 +15,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@repo/ui/components/shadcn/dialog";
-import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { FileInputProvider } from "@repo/ui/contexts/file.provider";
 import { cn } from "@repo/ui/lib/utils";
 import { Brain, ImageOff, Upload } from "lucide-react";
@@ -26,6 +25,7 @@ import {
   SelectableMedia,
   useSelectMedia,
 } from "@/modules/media/providers/select-media.provider";
+import { useSubscribeToUserNotification } from "@/modules/user-notifications/hooks/useSubscribeToUserNotification";
 import { useUserMetrics } from "@/modules/users/providers/user-metrics.provider";
 import { CreateMediaDialog } from "./create-media-modal";
 import { EditMediaCard } from "./edit-media-card";
@@ -48,6 +48,7 @@ export function MediaGrid({
     handleUploadUpdates,
     isLoading,
     generateManySeoMedia,
+    isMediaLoading,
   } = useMedia();
 
   useEffect(() => {
@@ -63,9 +64,7 @@ export function MediaGrid({
   const { aiCreditsInfo } = useUserMetrics();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isGenerateSeoDialogOpen, setIsGenerateSeoDialogOpen] = useState(false);
-
   const MAX_AI_GENERATE = 10;
-
   const creditsAvailable = aiCreditsInfo.remaining;
   const creditsNeeded = selectionCount;
   const hasEnoughCredits = creditsAvailable >= creditsNeeded;
@@ -78,14 +77,33 @@ export function MediaGrid({
 
   const handleGenerateSeo = async () => {
     setIsGenerateSeoDialogOpen(false);
-    setCanSelect(false);
     clearSelection();
+    setCanSelect(false);
     await generateManySeoMedia(Object.values(selectedMedia));
   };
 
   const handleRemoveCurrentMedia = (mediaId: number) => {
     setCurrentMedia((prev) => prev.filter((m) => m.id !== mediaId));
   };
+
+  const upsertCurrentMedia = (payload: Media) => {
+    setCurrentMedia((prev) => {
+      const existIndex = prev.findIndex((m) => m.id === payload.id);
+      if (existIndex === -1) {
+        return [payload, ...prev];
+      }
+      const next = [...prev];
+      next[existIndex] = payload;
+      return next;
+    });
+  };
+
+  useSubscribeToUserNotification({
+    callbackId: "media-grid",
+    createUpdateMediaCallback: upsertCurrentMedia,
+    generateMetadataMediaCallback: upsertCurrentMedia,
+    onDeleteMediaCallback: ({ id }) => handleRemoveCurrentMedia(id),
+  });
 
   const pendingCount = mediaPendingToUpdate.length;
 
@@ -97,12 +115,7 @@ export function MediaGrid({
             allowedMimeTypes={ALLOWED_IMAGE_FILE_TYPES}
             maxFileSizeBytes={MAX_IMAGE_UPLOAD_BYTES}
           >
-            <CreateMediaDialog
-              openFromQuery
-              onSuccess={(media) => {
-                setCurrentMedia((prev) => [media, ...prev]);
-              }}
-            />
+            <CreateMediaDialog openFromQuery />
           </FileInputProvider>
         </div>
         {currentMedia.length > 0 ? (
@@ -122,19 +135,15 @@ export function MediaGrid({
                     type="button"
                     variant="default"
                     size="sm"
-                    disabled={!selectionCount || isLoading}
+                    disabled={!selectionCount}
                     className="shrink-0 transition-colors duration-200"
                   >
                     <Brain className="h-3.5 w-3.5 shrink-0" />
-                    {!isLoading ? (
-                      <span className="text-xs! font-medium whitespace-nowrap">
-                        {selectionCount
-                          ? t("generateSeoCount", { count: selectionCount })
-                          : t("generateSeoTitle")}
-                      </span>
-                    ) : (
-                      <Spinner />
-                    )}
+                    <span className="text-xs! font-medium whitespace-nowrap">
+                      {selectionCount
+                        ? t("generateSeoCount", { count: selectionCount })
+                        : t("generateSeoTitle")}
+                    </span>
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-md z-100">
@@ -193,7 +202,7 @@ export function MediaGrid({
                     <Button
                       size="sm"
                       variant="primary"
-                      disabled={!hasEnoughCredits || isOverAiLimit || isLoading}
+                      disabled={!hasEnoughCredits || isOverAiLimit}
                       onClick={async () => {
                         await handleGenerateSeo();
                       }}
@@ -207,7 +216,6 @@ export function MediaGrid({
               <Button
                 variant="default"
                 size="sm"
-                disabled={isLoading}
                 className="shrink-0 whitespace-nowrap"
                 onClick={() => setCanSelect(true)}
               >
@@ -240,23 +248,25 @@ export function MediaGrid({
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 justify-items-start w-full">
           {currentMedia.map((item) => {
-            if (!canSelect)
+            if (
+              !canSelect ||
+              item.status !== "COMPLETED" ||
+              isMediaLoading(item)
+            ) {
               return (
                 <EditMediaCard
                   key={`media-card-${item.id}`}
                   media={item}
                   username={username}
-                  onDeleted={handleRemoveCurrentMedia}
                 />
               );
-
+            }
             return (
               <SelectableMedia key={`media-selectable-${item.id}`} media={item}>
                 <EditMediaCard
                   key={item.id}
                   media={item}
                   username={username}
-                  onDeleted={handleRemoveCurrentMedia}
                 />{" "}
               </SelectableMedia>
             );

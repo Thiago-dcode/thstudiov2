@@ -87,6 +87,14 @@ export class MediaController {
     return await this.mediaService.update(id, updateMediaRequest);
   }
 
+  @Patch(':id/async')
+  async updateAsync(
+    @Param('id', ParseIntPipe, new IsResourceBlockedPipe('media')) id: number,
+    @Body() updateMediaRequest: UpdateMediaRequest,
+  ) {
+    return await this.mediaService.updateAsync(id, updateMediaRequest);
+  }
+
   @Delete(':id')
   async delete(@Param('id', ParseIntPipe) id: number) {
     await this.mediaService.delete(id);

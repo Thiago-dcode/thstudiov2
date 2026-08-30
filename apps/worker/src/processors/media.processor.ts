@@ -9,7 +9,7 @@ import { openAiLLMConfig } from "@repo/backend-lib/config/llm";
 import { FactoryLogService, LogService } from "@repo/backend-lib/services/log-service";
 import { CompressService } from '@repo/backend-lib/services/compress-service/base';
 import { FactoryCompressService } from '@repo/backend-lib/services/compress-service/factory';
-import { Media } from "@repo/common-lib/types/media";
+import { Media, MediaJobDto } from "@repo/common-lib/types/media";
 import { MediaRepository } from "@repo/database/repositories/media";
 import { UserExtraDataRepository } from "@repo/database/repositories/user-extra-data";
 import { PlansRepository } from "@repo/database/repositories/plans";
@@ -18,6 +18,7 @@ import { bytesToMB, mbToBytes } from "@repo/common-lib/utils/bytes";
 import { DEFAULT_COMPRESSION_LVL } from "@repo/common-lib/constants/enums";
 import { UserLimits } from "@repo/common-lib/utils/user-limits";
 import { BasePlan } from "@repo/common-lib/types/plan";
+import { MediaHelper } from "@repo/common-lib/utils/media";
 
 export class MediaProcessor {
     constructor(
@@ -134,50 +135,50 @@ export class MediaProcessor {
 
     async processMedia() {
         const log = this.logger.name('create');
-        const data: Media = this.job.data;
+        const { media, generate_metadata }: MediaJobDto = this.job.data;
 
         try {
             log.info('Process media job', {
-                media_id: data.id,
-                public_id: data.public_id,
-                user_id: data.user_id,
-                status: data.status,
+                media_id: media.id,
+                public_id: media.public_id,
+                user_id: media.user_id,
+                status: media.status,
             });
 
-            const url = await this.storageService.getUrl(data.url);
+            const url = await this.storageService.getUrl(media.url);
             const { moderation } = await this.aiService.moderateContent(url, {
-                user_id: data.user_id,
+                user_id: media.user_id,
             });
 
             log.info('Moderation result', {
-                media_id: data.id,
-                public_id: data.public_id,
+                media_id: media.id,
+                public_id: media.public_id,
                 is_allowed: moderation.is_allowed,
                 severity: moderation.severity,
             });
 
             if (!moderation.is_allowed) {
-                await this.markFailed(data, moderation.reason, log, {
-                    deletePaths: [data.url],
+                await this.markFailed(media, moderation.reason, log, {
+                    deletePaths: [media.url],
                 });
                 return;
             }
 
             log.info('Starting compression', {
-                media_id: data.id,
-                compression_level: data.compression_level,
+                media_id: media.id,
+                compression_level: media.compression_level,
                 driver: this.compressService.config.driver,
             });
 
-            const buffer = await this.storageService.getBuffer(data.url);
-            const thumbnailPath = this.resolveThumbnailPath(data.url);
+            const buffer = await this.storageService.getBuffer(media.url);
+            const thumbnailPath = this.resolveThumbnailPath(media.url);
             const thumbnail = await this.compressService.optimizeImageToWebp(buffer, 200 * 1024, 90);
             log.info('Thumbnail compressed', {
-                media_id: data.id,
+                media_id: media.id,
                 thumbnail_bytes: thumbnail.size,
             });
 
-            const compressionLevel = data.compression_level || DEFAULT_COMPRESSION_LVL;
+            const compressionLevel = media.compression_level || DEFAULT_COMPRESSION_LVL;
             const targetSize = this.compressService.getSizeCompressed({
                 size: buffer.length,
                 compressLevel: compressionLevel,
@@ -186,32 +187,32 @@ export class MediaProcessor {
             });
             const mediaCompressed = await this.compressService.optimizeImageToWebp(buffer, targetSize, 100);
             log.info('Media compressed', {
-                media_id: data.id,
+                media_id: media.id,
                 media_bytes: mediaCompressed.size,
                 target_size: targetSize,
             });
 
             const totalSize = mediaCompressed.size + thumbnail.size;
             const limitReason = await this.checkUserLimits(
-                data.user_id,
+                media.user_id,
                 totalSize,
                 false,
             );
             if (limitReason) {
-                await this.markFailed(data, limitReason, log, {
-                    deletePaths: [data.url],
+                await this.markFailed(media, limitReason, log, {
+                    deletePaths: [media.url],
                 });
                 return;
             }
 
             const [thumbnailWriteOk, mediaWriteOk] = await Promise.all([
                 this.storageService.write(thumbnail.buffer, thumbnailPath),
-                this.storageService.write(mediaCompressed.buffer, data.url),
+                this.storageService.write(mediaCompressed.buffer, media.url),
             ]);
 
             if (!thumbnailWriteOk || !mediaWriteOk) {
-                await this.markFailed(data, 'Storage write could not complete', log, {
-                    deletePaths: [data.url, thumbnailPath],
+                await this.markFailed(media, 'Storage write could not complete', log, {
+                    deletePaths: [media.url, thumbnailPath],
                 });
                 return;
             }
@@ -221,7 +222,10 @@ export class MediaProcessor {
                 this.compressService.getImageAspectRatio(mediaCompressed.buffer),
             ]);
 
-            await this.mediaRepository.updateById(data.id, {
+            // Kept: `media` is the snapshot the job was queued with (still `UPLOADING`,
+            // `completed_at: null`), so anything asking "is this media done?" has to read the row
+            // this write returns, not the payload.
+            const completedMedia = await this.mediaRepository.updateById(media.id, {
                 bytes: mediaCompressed.size,
                 thumbnail_bytes: thumbnail.size,
                 thumbnail: thumbnailPath,
@@ -232,33 +236,64 @@ export class MediaProcessor {
                 failed_reason: null,
             });
 
-            await QueueHelper.createStorageRequestJob({
-                path: data.url,
-                bytes: mediaCompressed.size,
-                user_id: data.user_id,
-            });
-            await QueueHelper.createStorageRequestJob({
-                path: thumbnailPath,
-                bytes: thumbnail.size,
-                user_id: data.user_id,
-            });
-            await QueueHelper.createComputeUserMetricsJob(data.user_id);
-            await this.notifyMediaUpdate(data);
+            await Promise.all([
+                QueueHelper.createStorageRequestJob({
+                    path: media.url,
+                    bytes: mediaCompressed.size,
+                    user_id: media.user_id,
+                }),
+                QueueHelper.createStorageRequestJob({
+                    path: thumbnailPath,
+                    bytes: thumbnail.size,
+                    user_id: media.user_id,
+                }),
+                QueueHelper.createComputeUserMetricsJob(media.user_id),
+                QueueHelper.createUpdateProfileStatusJob({
+                    user_id: media.user_id,
+                    fields: { has_media: true },
+                }),
+                this.notifyMediaUpdate(media),
+            ]);
 
             log.info('Media processing completed', {
-                media_id: data.id,
-                public_id: data.public_id,
+                media_id: media.id,
+                public_id: media.public_id,
                 bytes: mediaCompressed.size,
                 thumbnail_bytes: thumbnail.size,
                 thumbnail_path: thumbnailPath,
             });
+
+            if (generate_metadata) {
+
+                log.info('Generating metadata after media process', {
+                    media_id: media.id,
+                    user_id: media.user_id,
+                });
+                if (!MediaHelper.isCompleted(completedMedia)) {
+                    log.info(
+                        `Skipping generate media metadata: media [${media.id}] not eligible`,
+                        {
+                            media_id: media.id,
+                            status: completedMedia?.status,
+                            completed_at: completedMedia?.completed_at,
+                            blocked_at: completedMedia?.blocked_at,
+                        },
+                    );
+
+                } else {
+                    await QueueHelper.createGenerateMediaMetadataAndNotifyJob({
+                        media_id: media.id,
+                        user_id: media.user_id
+                    })
+                }
+            }
         } catch (error) {
             const message =
                 error instanceof Error ? error.message : 'Media processing failed';
             log.error(message, error);
-            const thumbnailPath = this.resolveThumbnailPath(data.url);
-            await this.markFailed(data, message, log, {
-                deletePaths: [data.url, thumbnailPath],
+            const thumbnailPath = this.resolveThumbnailPath(media.url);
+            await this.markFailed(media, message, log, {
+                deletePaths: [media.url, thumbnailPath],
             });
         }
     }

@@ -48,7 +48,7 @@ export class UserExtraDataProcessor extends GlobalProcessor {
       log.info(`Starting metrics update for user ${userId}`);
 
       const [extraData, [media]] = await Promise.all([
-        this.userExtraDataRepository.findByUserId(userId),
+        this.userExtraDataRepository.findOrCreateByUserId(userId),
         Promise.all([
           Query.table('media')
             .select(['id', 'bytes', 'thumbnail_bytes'])

@@ -56,6 +56,27 @@ export class UserExtraDataRepository extends BaseRepository {
     return this.formatUserExtraData(result);
   }
 
+  /**
+   * Returns extra data for the user, creating a default row when signup
+   * never persisted one (legacy users, failed initial event).
+   */
+  async findOrCreateByUserId(userId: number): Promise<UserExtraData> {
+    const existing = await this.query()
+      .select(this.COLUMNS)
+      .where('user_id', '=', userId)
+      .first<UserExtraDataSchemaWithoutTimestamps>();
+    if (existing) {
+      return this.formatUserExtraData(existing);
+    }
+
+    const nextMonth = new Date();
+    nextMonth.setMonth(nextMonth.getMonth() + 1);
+    return this.create({
+      user_id: userId,
+      next_ai_credits_reset: nextMonth,
+    });
+  }
+
   async findById(id: number): Promise<UserExtraData> {
     const result = await this.query()
       .select(this.COLUMNS)

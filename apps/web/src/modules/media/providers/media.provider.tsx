@@ -9,6 +9,7 @@ import type {
   ActionReturn,
   ReturnError,
 } from "@repo/common-lib/types/response";
+import { MediaHelper } from "@repo/common-lib/utils/media";
 import { useTranslations } from "next-intl";
 import {
   createContext,
@@ -19,7 +20,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { useUserMetrics } from "@/modules/users/providers/user-metrics.provider";
+import { useSubscribeToUserNotification } from "@/modules/user-notifications/hooks/useSubscribeToUserNotification";
 import {
   createMediaApi,
   generateMediaMetadataApi,
@@ -27,12 +28,8 @@ import {
 } from "../api/media-api.client";
 import { deleteMediaAction } from "../server-actions/delete-media.action";
 import {
-  isTransientMediaUploadError,
   MEDIA_UPLOAD_CONCURRENCY,
-  MEDIA_UPLOAD_MAX_RETRIES,
-  MEDIA_UPLOAD_RETRY_BASE_DELAY_MS,
   runWithConcurrency,
-  sleep,
 } from "../utils/media-upload-concurrency";
 
 // ============================================================================
@@ -50,9 +47,7 @@ export type UploadMedia = {
   data?: Media;
   deleted?: boolean;
   unique_id: number;
-  onSuccess?: (media: Media) => Promise<void>;
   error?: ReturnError<Record<string, string>>;
-  generate_seo?: boolean;
 };
 
 type MediaContextType = {
@@ -60,26 +55,29 @@ type MediaContextType = {
   addMediaUploads: (
     mediaInput: (CreateMediaInputWithFile & { previewUrl?: string })[],
   ) => void;
-  setMediaUploads: (mediaUploads: UploadMedia[]) => void;
   handleRemoveCompleted: () => void;
   handleUploadUpdates: () => Promise<void>;
-  handleUploadInserts: (onSuccess?: (media: Media) => void) => Promise<void>;
+  handleUploadInserts: () => Promise<void>;
   upsertMediaUpload: (mediaUpload: UploadMedia) => void;
   removeMediaUpload: (uniqueId: number) => void;
-  uploadSingleMedia: (
-    uniqueId: number,
-    onSuccess?: (media: Media) => void,
-  ) => Promise<void>;
+  uploadSingleMedia: (uniqueId: number) => Promise<void>;
   generateSeoSingleMedia: (media: Media) => Promise<ActionReturn<Media>>;
   generateManySeoMedia: (media: Media[]) => Promise<void>;
   deleteSingleMedia: (
     media: Media,
-    onSuccess?: (media: Media) => Promise<void>,
   ) => Promise<Awaited<ReturnType<typeof deleteMediaAction>>>;
   isLoading: boolean;
-  isCompleted: boolean;
+  isMediaLoading: (media: Media) => boolean;
   mediaPendingToUpdate: UploadMedia[];
   mediaPendingToCreate: UploadMedia[];
+  mediaStagedToCreate: UploadMedia[];
+  updateStagedCreateInputs: (
+    patch: (
+      upload: UploadMedia,
+      index: number,
+    ) => Partial<CreateMediaInputWithFile>,
+  ) => void;
+  mediaRequestFailed: UploadMedia[];
   generateUniqueMediaId: () => number;
 };
 
@@ -104,25 +102,49 @@ export const useMedia = () => {
 export const MediaProvider = ({ children }: { children: ReactNode }) => {
   const t = useTranslations();
   const [mediaUploads, setMediaUploads] = useState<UploadMedia[]>([]);
-  const { refresh: refreshUserMetrics } = useUserMetrics();
-
+  // Mirrors the latest list so async work reads current state instead of the snapshot its closure
+  // captured. Batches are allowed to overlap, so by the time a queued upload actually runs its
+  // render-time copy can be several updates old.
+  const mediaUploadsRef = useRef(mediaUploads);
+  mediaUploadsRef.current = mediaUploads;
   const nextUniqueId = useRef(Date.now());
   const generateUniqueMediaId = useCallback(() => {
     nextUniqueId.current += 1;
     return nextUniqueId.current;
   }, []);
-
   const inFlightUploads = useRef(new Set<number>());
 
   // ============================================================================
   // Helper Functions
   // ============================================================================
-  const isMediaCompleted = (m: UploadMedia): boolean =>
+  const isMediaProcessed = (m: UploadMedia): boolean =>
     !m.pending && !!(m.data || m.error || m.deleted);
 
+  const isMediaLoading = useCallback(
+    (media: Media) => {
+      const exists = mediaUploads.find(
+        (m) => m.id === media.id || m.data?.id === media.id,
+      );
+      return exists?.pending || MediaHelper.isLoading(media);
+    },
+    [mediaUploads],
+  );
+
+  const updateUploadById = (
+    id: number,
+    updates: Partial<Pick<UploadMedia, "pending" | "data" | "error">>,
+  ) => {
+    setMediaUploads((prev) => {
+      const target = prev.find((m) => m.id === id);
+      if (!target) return prev;
+      return prev.map((upload) =>
+        upload.id === id ? { ...upload, ...updates } : upload,
+      );
+    });
+  };
   const updateUploadByUniqueId = (
     uniqueId: number,
-    updates: Partial<Pick<UploadMedia, "pending" | "data" | "error">>,
+    updates: Partial<Pick<UploadMedia, "pending" | "data" | "error" | "id">>,
   ) => {
     setMediaUploads((prev) => {
       const target = prev.find((m) => m.unique_id === uniqueId);
@@ -169,7 +191,6 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
           (m) => m.id === mediaUpload.id || m.data?.id === mediaUpload.id,
         );
       }
-
       if (idx !== -1) {
         const existing = prev[idx];
         if (
@@ -216,10 +237,6 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
     [generateUniqueMediaId],
   );
 
-  const setMediaUploadsDirect = useCallback((mediaUploads: UploadMedia[]) => {
-    setMediaUploads(mediaUploads);
-  }, []);
-
   const handleRemoveCompleted = () => {
     setMediaUploads((prev) => {
       return prev.filter((upload) => {
@@ -241,50 +258,77 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
     () => mediaUploads.some((m) => m.pending),
     [mediaUploads],
   );
-  const isCompleted = useMemo(
-    () => !mediaUploads.some((m) => !isMediaCompleted(m)),
-    [mediaUploads, isMediaCompleted],
-  );
   const mediaPendingToUpdate = useMemo(
-    () => mediaUploads.filter((m) => !!m.id && !isMediaCompleted(m)),
-    [mediaUploads, isMediaCompleted],
+    () => mediaUploads.filter((m) => !!m.id && !isMediaProcessed(m)),
+    [mediaUploads, isMediaProcessed],
   );
   const mediaPendingToCreate = useMemo(
-    () => mediaUploads.filter((m) => !m.id && !isMediaCompleted(m)),
-    [mediaUploads, isMediaCompleted],
+    () => mediaUploads.filter((m) => !m.id && !isMediaProcessed(m)),
+    [mediaUploads, isMediaProcessed],
   );
 
-  // ============================================================================
-  // Action Handlers
-  // ============================================================================
+  /**
+   * Selected but not yet sent — the subset the create dialog still lets you configure.
+   * `mediaPendingToCreate` also contains creates that are already in flight, which is why the two
+   * are not interchangeable: a dialog rendering the latter shows cards for files it can no longer
+   * change, and counts them against the per-selection limit.
+   */
+  const mediaStagedToCreate = useMemo(
+    () =>
+      mediaUploads.filter((m) => !m.id && !m.pending && !m.data && !m.error),
+    [mediaUploads],
+  );
 
-  const uploadSingleMedia = async (
-    uniqueId: number,
-    onSuccess?: (media: Media) => void,
-  ) => {
+  /**
+   * Applies a patch to every staged create — what the dialog's bulk controls (global compression,
+   * the AI toggle) need. `index` is the position among staged items, for per-item budgeting like
+   * AI credits.
+   *
+   * Maps over the whole list rather than replacing it with the staged subset: the callers used to
+   * do `setMediaUploads(mediaPendingToCreate.map(...))`, which dropped every other entry — media
+   * edits in flight, and the failed uploads the error modal renders.
+   */
+  const updateStagedCreateInputs = useCallback(
+    (
+      patch: (
+        upload: UploadMedia,
+        index: number,
+      ) => Partial<CreateMediaInputWithFile>,
+    ) => {
+      setMediaUploads((prev) => {
+        let stagedIndex = 0;
+        return prev.map((upload) => {
+          if (upload.id || upload.pending || upload.data || upload.error) {
+            return upload;
+          }
+          const next = {
+            ...upload,
+            input: { ...upload.input, ...patch(upload, stagedIndex) },
+          };
+          stagedIndex += 1;
+          return next;
+        });
+      });
+    },
+    [],
+  );
+
+  const mediaRequestFailed = useMemo(
+    () => mediaUploads.filter((m) => !m.data && !m.pending && !!m.error),
+    [mediaUploads],
+  );
+
+  const uploadSingleMedia = async (uniqueId: number) => {
     if (inFlightUploads.current.has(uniqueId)) return;
 
-    const media = mediaUploads.find((m) => m.unique_id === uniqueId);
-    if (!media) return;
+    // Decided against current state, and *before* the request: the eligibility check used to live
+    // inside the `setMediaUploads` updater, which could only skip the state write — the call went
+    // out regardless, so an entry that had already succeeded could be uploaded twice.
+    const media = mediaUploadsRef.current.find((m) => m.unique_id === uniqueId);
+    if (!media || media.pending || media.data || media.error) return;
 
     inFlightUploads.current.add(uniqueId);
-
-    setMediaUploads((prev) => {
-      const currentMedia = prev.find((m) => m.unique_id === uniqueId);
-      if (
-        !currentMedia ||
-        currentMedia.pending ||
-        currentMedia.error ||
-        currentMedia.data
-      ) {
-        return prev;
-      }
-      return prev.map((upload) =>
-        upload.unique_id === uniqueId
-          ? { ...upload, pending: true, error: undefined }
-          : upload,
-      );
-    });
+    updateUploadByUniqueId(uniqueId, { pending: true, error: undefined });
 
     try {
       let result: ActionReturn<Media>;
@@ -297,41 +341,18 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
         );
       } else {
         result = await createMediaApi(media.input);
-
-        for (
-          let attempt = 1;
-          attempt < MEDIA_UPLOAD_MAX_RETRIES &&
-          !result.data &&
-          isTransientMediaUploadError(result.errors ?? []);
-          attempt += 1
-        ) {
-          await sleep(MEDIA_UPLOAD_RETRY_BASE_DELAY_MS * attempt);
-          result = await createMediaApi(media.input);
+        if (result.data) {
+          updateUploadByUniqueId(uniqueId, {
+            id: result.data.id,
+          });
         }
       }
-
-      if (result.data) {
-        if (media.onSuccess) {
-          await media.onSuccess(result.data);
-        }
-        if (onSuccess) {
-          onSuccess(result.data);
-        }
-        updateUploadByUniqueId(uniqueId, {
-          pending: false,
-          data: result.data,
-          error: undefined,
-        });
-
-        if (media.generate_seo && result.data.id) {
-          generateSeoSingleMedia(result.data);
-        }
-      } else {
-        const returnError = extractReturnError(result);
+      if (!result.data) {
+        //request failed, maybe validation...
         updateUploadByUniqueId(uniqueId, {
           pending: false,
           data: undefined,
-          error: returnError,
+          error: extractReturnError(result),
         });
       }
     } catch (error) {
@@ -351,10 +372,7 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const generateSeoSingleMedia = async (
-    media: Media,
-    onSuccess?: (result: ActionReturn<Media>, media: Media) => Promise<void>,
-  ) => {
+  const generateSeoSingleMedia = async (media: Media) => {
     const currentMediaUpload = mediaUploads.find(
       (m) => m.id === media.id || m.data?.id === media.id,
     );
@@ -393,51 +411,18 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
         media_id: media.id,
         user_id: media.user_id,
       });
-
+      //request failed, maybe validation...
       if (!result.data) {
-        const error = {
-          errors:
-            result.errors && result.errors.length > 0
-              ? result.errors
-              : ["Failed to generate SEO"],
-          inputErrors: result.inputErrors,
-        };
-
-        upsertMediaUpload({
-          ...baseUpload,
+        updateUploadByUniqueId(baseUpload.unique_id, {
           pending: false,
           data: undefined,
-          error,
-          previewUrl: media.thumbnail || undefined,
+          error: extractReturnError(result),
         });
-
-        return result;
       }
-
-      const updatedUpload: UploadMedia = {
-        ...baseUpload,
-        pending: false,
-        error: undefined,
-        data: result.data,
-        previewUrl: media.thumbnail || undefined,
-        input: {
-          ...baseUpload.input,
-          ...result.data,
-        },
-      };
-
-      upsertMediaUpload(updatedUpload);
-      await refreshUserMetrics();
-
-      if (onSuccess) {
-        await onSuccess(result, media);
-      }
-
       return result;
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "An unexpected error occurred";
-
       upsertMediaUpload({
         ...baseUpload,
         pending: false,
@@ -448,7 +433,6 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
         },
         previewUrl: media.thumbnail || undefined,
       });
-
       return {
         data: null,
         errors: [message],
@@ -457,102 +441,13 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const deleteSingleMedia = async (
-    media: Media,
-    onSuccess?: (media: Media) => Promise<void>,
-  ) => {
-    const currentMediaUpload = mediaUploads.find(
-      (m) => m.id === media.id || m.data?.id === media.id,
-    );
-
-    const baseUpload: UploadMedia = currentMediaUpload
-      ? {
-          ...currentMediaUpload,
-          unique_id: currentMediaUpload.unique_id ?? generateUniqueMediaId(),
-        }
-      : {
-          input: {
-            user_id: media.user_id,
-            title: media.title ?? "",
-            description: media.description ?? "",
-            seo_title: media.seo_title ?? "",
-            seo_description: media.seo_description ?? "",
-            seo_alt: media.seo_alt ?? "",
-          },
-          action: "delete",
-          previewUrl: media.thumbnail || undefined,
-          id: media.id,
-          pending: false,
-          unique_id: generateUniqueMediaId(),
-        };
-
-    upsertMediaUpload({
-      ...baseUpload,
-      action: "delete",
-      pending: true,
-      error: undefined,
-      data: undefined,
-      deleted: undefined,
-      previewUrl: media.thumbnail || undefined,
-    });
-
+  const deleteSingleMedia = async (media: Media) => {
     try {
       const result = await deleteMediaAction(media.id);
-
-      if (!result.data) {
-        const error = {
-          errors:
-            result.errors && result.errors.length > 0
-              ? result.errors
-              : ["Failed to delete media"],
-          inputErrors: result.inputErrors,
-        };
-
-        upsertMediaUpload({
-          ...baseUpload,
-          action: "delete",
-          pending: false,
-          data: undefined,
-          deleted: undefined,
-          error,
-          previewUrl: media.thumbnail || undefined,
-        });
-
-        return result;
-      }
-
-      upsertMediaUpload({
-        ...baseUpload,
-        action: "delete",
-        pending: false,
-        error: undefined,
-        data: undefined,
-        deleted: true,
-        previewUrl: media.thumbnail || undefined,
-      });
-
-      if (onSuccess) {
-        await onSuccess(media);
-      }
-
       return result;
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "An unexpected error occurred";
-
-      upsertMediaUpload({
-        ...baseUpload,
-        action: "delete",
-        pending: false,
-        data: undefined,
-        deleted: undefined,
-        error: {
-          errors: [message],
-          inputErrors: undefined,
-        },
-        previewUrl: media.thumbnail || undefined,
-      });
-
       return {
         data: null,
         errors: [message],
@@ -566,10 +461,6 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
   // ============================================================================
 
   const generateManySeoMedia = async (media: Media[]) => {
-    // Pre-register every selected media as a queued "seo" upload so the modal
-    // reflects the whole batch, not just the few requests currently in-flight
-    // (limited by MEDIA_UPLOAD_CONCURRENCY). generateSeoSingleMedia matches
-    // these by id and flips them to pending as workers pick them up.
     for (const m of media) {
       upsertMediaUpload({
         input: {
@@ -596,29 +487,69 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
     );
   };
 
+  /**
+   * Both batch handlers deliberately have no "is anything else in flight?" guard.
+   *
+   * They used to bail on `isLoading`, which is true while *any* upload is pending — and a create
+   * stays pending from the moment it is sent until its websocket notification lands, i.e. for the
+   * whole of moderation and compression. So queueing a second batch while the first was still
+   * processing silently did nothing at all. Per-item filtering below plus the `inFlightUploads`
+   * guard in `uploadSingleMedia` already make overlapping batches safe.
+   */
   const handleUploadUpdates = async () => {
-    if (!mediaUploads.length || isLoading) return Promise.resolve();
-
-    const uploadsToUpdate = mediaUploads.filter(
+    const uploadsToUpdate = mediaUploadsRef.current.filter(
       (m) => !!m.id && !m.pending && !m.data && !m.error,
     );
+    if (!uploadsToUpdate.length) return;
 
     await runWithConcurrency(uploadsToUpdate, MEDIA_UPLOAD_CONCURRENCY, (m) =>
       uploadSingleMedia(m.unique_id),
     );
   };
 
-  const handleUploadInserts = async (onSuccess?: (media: Media) => void) => {
-    if (!mediaUploads.length || isLoading) return Promise.resolve();
-
-    const uploadsToInsert = mediaUploads.filter(
+  const handleUploadInserts = async () => {
+    const uploadsToInsert = mediaUploadsRef.current.filter(
       (m) => !m.id && !m.pending && !m.data && !m.error,
     );
+    if (!uploadsToInsert.length) return;
 
     await runWithConcurrency(uploadsToInsert, MEDIA_UPLOAD_CONCURRENCY, (m) =>
-      uploadSingleMedia(m.unique_id, onSuccess),
+      uploadSingleMedia(m.unique_id),
     );
   };
+
+  const syncUploadFromMedia = (payload: Media) => {
+    updateUploadById(payload.id, {
+      pending: MediaHelper.isLoading(payload),
+      data: payload,
+    });
+  };
+
+  useSubscribeToUserNotification({
+    callbackId: "media-provider",
+    createUpdateMediaCallback: syncUploadFromMedia,
+    generateMetadataMediaCallback: syncUploadFromMedia,
+    failedGenerateMediaMetadataCallback: (payload) => {
+      updateUploadById(payload.id, {
+        pending: false,
+        data: undefined,
+        error: {
+          errors: [payload.failed_reason || t("actions.genericError")],
+          inputErrors: undefined,
+        },
+      });
+    },
+    onDeleteMediaCallback: ({ id }) => {
+      setMediaUploads((prev) => {
+        if (!prev.some((m) => m.id === id)) return prev;
+        return prev.map((upload) =>
+          upload.id === id
+            ? { ...upload, pending: false, deleted: true, data: undefined }
+            : upload,
+        );
+      });
+    },
+  });
 
   // ============================================================================
   // Context Value
@@ -627,7 +558,6 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
   const value: MediaContextType = {
     mediaUploads,
     addMediaUploads,
-    setMediaUploads: setMediaUploadsDirect,
     handleRemoveCompleted,
     upsertMediaUpload,
     removeMediaUpload,
@@ -636,9 +566,12 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
     generateManySeoMedia,
     deleteSingleMedia,
     isLoading,
-    isCompleted,
+    isMediaLoading,
     mediaPendingToUpdate,
     mediaPendingToCreate,
+    mediaStagedToCreate,
+    updateStagedCreateInputs,
+    mediaRequestFailed,
     handleUploadUpdates,
     handleUploadInserts,
     generateUniqueMediaId,

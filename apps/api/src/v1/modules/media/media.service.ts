@@ -11,7 +11,7 @@ import { generateUUID } from '@repo/common-lib/utils/generate-uuid';
 import { bytesToMB, mbToBytes } from '@repo/common-lib/utils/bytes';
 import { FactoryLogService } from '@repo/backend-lib/services/log-service';
 import { QueueHelper } from '@repo/backend-lib/utils';
-import { CreateMediaInput, MediaWithUser, UpdateMediaInternalInput } from '@repo/common-lib/types/media';
+import { CreateMediaInput, Media, MediaWithUser, UpdateMediaInternalInput } from '@repo/common-lib/types/media';
 import { EntitySeoMetadata, MediaSeoTranslation } from '@repo/common-lib/types/ai';
 import { cleanObj } from '@repo/common-lib/utils/object';
 import { UPDATE_PROFILE_STATUS_EVENT } from '@repo/common-lib/constants/events';
@@ -107,6 +107,87 @@ export class MediaService {
       mediaPath: `${basePath}.webp`,
       thumbnailPath: `${basePath}-thumbnail.webp`,
     };
+  }
+
+  private async notifyMediaUpdate(media: Pick<Media, 'id' | 'user_id'>): Promise<void> {
+    await QueueHelper.createOrUpdateUserNotificationJob({
+      type: 'CREATE_UPDATE_MEDIA',
+      user_id: media.user_id,
+      entity_id: media.id,
+      read_at: null,
+    });
+  }
+
+  /** Never throws — safe to call from fire-and-forget work. */
+  private async markCreateFailed(
+    media: Pick<Media, 'id' | 'user_id' | 'public_id'>,
+    reason: string,
+  ): Promise<void> {
+    const log = this.logger.name('create');
+    try {
+      await this.mediaRepository.updateById(media.id, {
+        status: 'FAILED',
+        failed_reason: reason,
+      });
+      await this.notifyMediaUpdate(media);
+      log.error('Marked media as FAILED after storage write', {
+        media_id: media.id,
+        public_id: media.public_id,
+        failed_reason: reason,
+      });
+    } catch (error) {
+      log.error(
+        `Could not mark media as FAILED: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        error,
+      );
+    }
+  }
+
+  /** Storage write + process-media enqueue. Do not await from createAsync. */
+  private async writeOriginalAndEnqueue({
+    media,
+    file,
+    mediaPath,
+    generate_metadata,
+  }: {
+    media: Media;
+    file: Express.Multer.File;
+    mediaPath: string;
+    generate_metadata?: boolean;
+  }): Promise<void> {
+    const log = this.logger.name('create');
+    try {
+      log.info('Writing original file to storage', {
+        media_id: media.id,
+        path: mediaPath,
+        size: file.size,
+      });
+      const writeOk = await this.storageService.write(file, mediaPath);
+      if (!writeOk) {
+        log.error('Storage write returned false', {
+          media_id: media.id,
+          path: mediaPath,
+        });
+        await this.markCreateFailed(media, 'Storage write could not complete');
+        return;
+      }
+
+      await QueueHelper.createProcessMediaJob({
+        media,
+        generate_metadata,
+      });
+      log.info('Enqueued process-media job', {
+        media_id: media.id,
+        public_id: media.public_id,
+        path: mediaPath,
+      });
+    } catch (error) {
+      log.error(
+        `Storage write threw: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        error,
+      );
+      await this.markCreateFailed(media, 'Something went wrong during creation');
+    }
   }
 
   public async create({ media, ...data }: CreateMediaRequest) {
@@ -219,7 +300,7 @@ export class MediaService {
     }
   }
 
-  public async createAsync({ media: mediaFile, ...data }: CreateMediaRequest) {
+  public async createAsync({ media: mediaFile, generate_metadata, ...data }: CreateMediaRequest) {
     //TODO: Pending to handle video case
     const log = this.logger.name('create');
     log.info('Starting async media create', {
@@ -275,84 +356,24 @@ export class MediaService {
     };
     cleanObj(baseMedia);
 
-    let mediaModel = await this.mediaRepository.create(baseMedia);
+    const mediaModel = await this.mediaRepository.create(baseMedia);
     log.info('Created placeholder media row', {
       media_id: mediaModel.id,
       public_id: mediaModel.public_id,
       status: mediaModel.status,
     });
 
-    await QueueHelper.createOrUpdateUserNotificationJob({
-      type: 'CREATE_UPDATE_MEDIA',
-      user_id: mediaModel.user_id,
-      entity_id: mediaModel.id,
-      read_at: null,
-    });
+    await this.notifyMediaUpdate(mediaModel);
     log.info('Enqueued CREATE_UPDATE_MEDIA notification', {
       media_id: mediaModel.id,
       user_id: mediaModel.user_id,
     });
 
-    let writeOk = false;
-    try {
-      log.info('Writing original file to storage', {
-        media_id: mediaModel.id,
-        path: mediaPath,
-        size: mediaFile.size,
-      });
-      writeOk = await this.storageService.write(mediaFile, mediaPath);
-      if (!writeOk) {
-        log.error('Storage write returned false', {
-          media_id: mediaModel.id,
-          path: mediaPath,
-        });
-      }
-    } catch (error) {
-      log.error(
-        `Storage write threw: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        error,
-      );
-    }
-
-    if (!writeOk) {
-      mediaModel = await this.mediaRepository.updateById(mediaModel.id, {
-        ...mediaModel,
-        status: 'FAILED',
-        failed_reason: 'Storage write could not complete',
-      });
-      log.error('Marked media as FAILED after storage write', {
-        media_id: mediaModel.id,
-        public_id: mediaModel.public_id,
-        failed_reason: mediaModel.failed_reason,
-      });
-      await QueueHelper.createOrUpdateUserNotificationJob({
-        type: 'CREATE_UPDATE_MEDIA',
-        user_id: mediaModel.user_id,
-        entity_id: mediaModel.id,
-        read_at: null,
-      });
-      return mediaModel;
-    }
-
-    mediaModel = await this.mediaRepository.updateById(mediaModel.id, {
-      ...mediaModel,
-      url: mediaPath
-    });
-    await Promise.all([
-      QueueHelper.createOrUpdateUserNotificationJob({
-        type: 'CREATE_UPDATE_MEDIA',
-        user_id: mediaModel.user_id,
-        entity_id: mediaModel.id,
-        read_at: null,
-      }),
-
-      QueueHelper.createProcessMediaJob(mediaModel)
-
-    ]);
-    log.info('Enqueued process-media job', {
-      media_id: mediaModel.id,
-      public_id: mediaModel.public_id,
-      path: mediaPath,
+    void this.writeOriginalAndEnqueue({
+      media: mediaModel,
+      file: mediaFile,
+      mediaPath,
+      generate_metadata,
     });
     return mediaModel;
   }
@@ -368,6 +389,13 @@ export class MediaService {
       this.helpers.deleteAsset(media.url),
       this.mediaRepository.deleteById(id)
     ])
+
+    await QueueHelper.createOrUpdateUserNotificationJob({
+      type: 'DELETE_MEDIA',
+      user_id: media.user_id,
+      entity_id: media.id,
+      read_at: null,
+    });
 
     await QueueHelper.createComputeUserMetricsJob(media.user_id);
     const stillHasMedia = await this.mediaRepository.exists({
@@ -385,10 +413,18 @@ export class MediaService {
     id: number,
     data: UpdateMediaRequest & Pick<UpdateMediaInternalInput, 'seo_filename' | 'seo_generated_at'>,
   ) {
+    return this.updateForUser(id, this.requestService.user.id, data);
+  }
+
+  public async updateForUser(
+    id: number,
+    userId: number,
+    data: UpdateMediaRequest & Pick<UpdateMediaInternalInput, 'seo_filename' | 'seo_generated_at'>,
+  ) {
     cleanObj(data);
 
     const media = await this.mediaRepository.findById(id);
-    if (media.user_id !== this.requestService.user.id) {
+    if (media.user_id !== userId) {
       throw new UnauthorizedException();
     }
 
@@ -446,6 +482,46 @@ export class MediaService {
     return result;
   }
 
+  public async updateAsync(id: number, data: UpdateMediaRequest) {
+    const userId = this.requestService.user.id;
+    const media = await this.mediaRepository.findById(id);
+
+    if (!media || media.user_id !== userId) {
+      throw new UnauthorizedException();
+    }
+
+    await this.mediaRepository.updateById(id, { status: 'UPDATING' });
+
+    const updatingMedia: Media = { ...media, status: 'UPDATING' };
+    await this.notifyMediaUpdate(updatingMedia);
+
+    try {
+      await QueueHelper.createUpdateMediaJob({
+        media_id: id,
+        user_id: userId,
+        data,
+      });
+
+      this.logger.info(`Update media job enqueued: media [${id}]`, {
+        media_id: id,
+        user_id: userId,
+      });
+
+      return updatingMedia;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      const lower = message.toLowerCase();
+      if (
+        lower.includes('job') &&
+        (lower.includes('already') || lower.includes('exists') || lower.includes('exist'))
+      ) {
+        this.logger.info(`Update media job already queued (skipped): media [${id}]`);
+        return updatingMedia;
+      }
+      throw error;
+    }
+  }
+
   /** Clear the cached SEO metadata for a media (all locales). */
   public async invalidateSeoCache(publicId: string) {
     await this.helpers.deleteCached(CACHE_KEY_MEDIA_SEO(publicId), {
@@ -459,10 +535,18 @@ export class MediaService {
    * empty AI result does not wipe existing tags.
    */
   public async attachCategories(id: number, categoryIds: number[]) {
+    return this.attachCategoriesForUser(id, this.requestService.user.id, categoryIds);
+  }
+
+  public async attachCategoriesForUser(
+    id: number,
+    userId: number,
+    categoryIds: number[],
+  ) {
     if (!categoryIds.length) return;
 
     const media = await this.mediaRepository.findById(id);
-    if (media.user_id !== this.requestService.user.id) {
+    if (media.user_id !== userId) {
       throw new UnauthorizedException();
     }
 

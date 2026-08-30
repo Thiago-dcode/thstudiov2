@@ -2,10 +2,12 @@
 
 import type { Media } from "@repo/common-lib/types/media";
 import type {
+  DeleteMediaNotificationPayload,
   MediaNotification,
   NewContactNotificationPayload,
   UserNotification,
 } from "@repo/common-lib/types/user-notification";
+import { MediaHelper } from "@repo/common-lib/utils/media";
 import { Button } from "@repo/ui/components/shadcn/button";
 import {
   Dialog,
@@ -18,12 +20,14 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 import {
   ArrowRight,
+  ChevronRight,
   CircleCheck,
   ImageOff,
   Loader2,
   type LucideIcon,
   Mail,
   Sparkles,
+  Trash2,
   TriangleAlert,
   Upload,
 } from "lucide-react";
@@ -31,19 +35,22 @@ import { useTranslations } from "next-intl";
 import type { ReactElement, ReactNode } from "react";
 import { Link } from "@/i18n/navigation";
 import { useDateTimeFormat } from "@/lib/hooks/useDateTimeFormat";
+import { useRelativeTimeFormat } from "@/lib/hooks/useRelativeTimeFormat";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { useUserNotifications } from "../contexts/user-notifications.provider";
 import { markUserNotificationAsReadAction } from "../server-actions/user-notifications.action";
 
-/** What each media notification is about, in one glyph. */
-const MEDIA_TYPE_ICONS: Record<MediaNotification["type"], LucideIcon> = {
+/** What each notification is about, in one glyph. Exhaustive over `NOTIFICATION_TYPE`. */
+const TYPE_ICONS: Record<UserNotification["type"], LucideIcon> = {
+  NEW_CONTACT: Mail,
   CREATE_UPDATE_MEDIA: Upload,
   GENERATE_MEDIA_METADATA: Sparkles,
+  FAILED_GENERATE_MEDIA_METADATA: TriangleAlert,
+  DELETE_MEDIA: Trash2,
 };
 
-/** The statuses a media is still moving through, so the card animates instead of concluding. */
 const isInFlight = (status: Media["status"]) =>
-  status === "UPLOADING" || status === "UPDATING";
+  MediaHelper.isLoading({ status });
 
 const useCardTranslations = () => useTranslations("atelier.notifications");
 
@@ -58,8 +65,10 @@ const Unavailable = () => {
 };
 
 const Field = ({ label, children }: { label: string; children: ReactNode }) => (
-  <div className="flex flex-col gap-0.5">
-    <dt className="text-xs uppercase tracking-wide text-text-muted">{label}</dt>
+  <div className="flex flex-col gap-1 border-l-2 border-fg-2 pl-3">
+    <dt className="text-[11px] uppercase tracking-[0.08em] text-text-muted">
+      {label}
+    </dt>
     <dd className="break-words">{children}</dd>
   </div>
 );
@@ -81,7 +90,7 @@ const MediaThumbnail = ({
     return (
       <span
         className={cn(
-          "flex items-center justify-center bg-fg-2 text-text-muted shrink-0",
+          "flex items-center justify-center bg-fg-1 text-text-muted shrink-0 border border-border",
           className,
         )}
         role="img"
@@ -104,15 +113,16 @@ const MediaThumbnail = ({
       alt={t("card.thumbnailAlt", {
         title: payload.title || payload.public_id,
       })}
-      className={cn("object-cover shrink-0", className)}
+      className={cn("object-cover shrink-0 border border-border", className)}
     />
   );
 };
 
 /**
- * Where the media stands. The in-flight statuses are the ones that animate; `FAILED` carries the
- * reason inline because that is the whole point of the notification. Exhaustive over
- * `MEDIA_STATUS`, so a new status has to be given a line here (TS2366) before this compiles.
+ * Where the media stands, as a status dot plus a label — the same vocabulary the atelier lists
+ * use. The in-flight statuses are the ones that animate; `FAILED` carries the reason inline
+ * because that is the whole point of the notification. Exhaustive over `MEDIA_STATUS`, so a new
+ * status has to be given a line here (TS2366) before this compiles.
  */
 const MediaStatusLine = ({ payload }: { payload: Media }): ReactElement => {
   const t = useCardTranslations();
@@ -120,6 +130,7 @@ const MediaStatusLine = ({ payload }: { payload: Media }): ReactElement => {
   switch (payload.status) {
     case "UPLOADING":
     case "UPDATING":
+    case "GENERATING_METADATA":
       return (
         <span className="flex items-center gap-1.5 text-xs text-text-muted font-normal">
           <Loader2 className="size-3 animate-spin shrink-0" aria-hidden />
@@ -154,14 +165,11 @@ const MediaPreview = ({
   const { payload } = notification;
   if (!payload) return <Unavailable />;
 
-  const Icon = MEDIA_TYPE_ICONS[notification.type];
-
   return (
-    <span className="flex items-center gap-2 min-w-0">
-      <MediaThumbnail payload={payload} className="size-9" />
-      <span className="flex flex-col min-w-0">
-        <Icon className="size-3 text-text-muted" aria-hidden />
-        <span className="truncate">
+    <span className="flex items-center gap-3 min-w-0">
+      <MediaThumbnail payload={payload} className="size-11" />
+      <span className="flex flex-col gap-1 min-w-0">
+        <span className="truncate leading-tight">
           {payload.title || t("card.untitledMedia")}
         </span>
         <MediaStatusLine payload={payload} />
@@ -205,9 +213,11 @@ const MediaDetails = ({
       <Field label={t("card.title")}>
         {payload.title || t("card.untitledMedia")}
       </Field>
-      <Field label={t("card.publicId")}>{payload.public_id}</Field>
+      <Field label={t("card.publicId")}>
+        <span className="font-mono text-xs">{payload.public_id}</span>
+      </Field>
       {payload.status === "FAILED" && (
-        <div className="text-sm text-error">
+        <div className="border-l-2 border-error bg-error/5 px-3 py-2 text-sm text-error">
           {payload.failed_reason || t("card.failedFallback")}
         </div>
       )}
@@ -260,15 +270,61 @@ const ContactPreview = ({
   if (!payload) return <Unavailable />;
 
   return (
-    <span className="flex items-start gap-2 min-w-0">
-      <Mail className="size-4 mt-0.5 text-text-muted shrink-0" aria-hidden />
-      <span className="flex flex-col min-w-0">
-        <span className="truncate">{payload.subject}</span>
+    <span className="flex items-center gap-3 min-w-0">
+      <span
+        className="flex size-11 items-center justify-center border border-border bg-fg-1 text-text-muted shrink-0"
+        aria-hidden
+      >
+        <Mail className="size-4" />
+      </span>
+      <span className="flex flex-col gap-1 min-w-0">
+        <span className="truncate leading-tight">{payload.subject}</span>
         <span className="text-xs text-text-muted font-normal truncate">
           {t("card.contactFrom", { name: payload.contact_name })}
         </span>
       </span>
     </span>
+  );
+};
+
+const DeleteMediaPreview = ({
+  payload,
+}: {
+  payload: DeleteMediaNotificationPayload;
+}) => {
+  const t = useCardTranslations();
+
+  return (
+    <span className="flex items-center gap-3 min-w-0">
+      <span
+        className="flex size-11 items-center justify-center border border-border bg-fg-1 text-text-muted shrink-0"
+        aria-hidden
+      >
+        <Trash2 className="size-4" />
+      </span>
+      <span className="flex flex-col gap-1 min-w-0">
+        <span className="truncate leading-tight">{t("card.deletedMedia")}</span>
+        <span className="text-xs text-text-muted font-normal truncate font-mono">
+          {t("referenceValue", { id: String(payload.id) })}
+        </span>
+      </span>
+    </span>
+  );
+};
+
+const DeleteMediaDetails = ({
+  payload,
+}: {
+  payload: DeleteMediaNotificationPayload;
+}) => {
+  const t = useCardTranslations();
+
+  return (
+    <Field label={t("dialog.reference")}>
+      <span className="font-mono text-xs">
+        {t("referenceValue", { id: String(payload.id) })}
+      </span>
+    </Field>
   );
 };
 
@@ -332,6 +388,21 @@ const resolveViews = (
           />
         ),
       };
+    case "FAILED_GENERATE_MEDIA_METADATA":
+      return {
+        preview: <MediaPreview notification={notification} />,
+        details: (
+          <MediaMetadataDetails
+            payload={notification.payload}
+            onNavigate={onNavigate}
+          />
+        ),
+      };
+    case "DELETE_MEDIA":
+      return {
+        preview: <DeleteMediaPreview payload={notification.payload} />,
+        details: <DeleteMediaDetails payload={notification.payload} />,
+      };
   }
 };
 
@@ -345,9 +416,11 @@ export const UserNotificationCard = ({
 }) => {
   const t = useCardTranslations();
   const formatDateTime = useDateTimeFormat();
+  const formatRelative = useRelativeTimeFormat();
   const { updateUserNotification } = useUserNotifications();
   const { preview, details } = resolveViews(userNotification, onNavigate);
   const typeLabel = t(`types.${userNotification.type}`);
+  const TypeIcon = TYPE_ICONS[userNotification.type];
   const unread = !userNotification.read_at;
 
   // Opening the modal is what counts as reading it. The result goes back into the provider so the
@@ -371,35 +444,57 @@ export const UserNotificationCard = ({
         <button
           type="button"
           aria-label={t("openAria", { type: typeLabel })}
+          // The accent edge is the whole unread signal: with square corners a left rule reads
+          // faster than a badge, and it keeps the card body free for content.
           className={cn(
-            "w-full border px-3 py-2 text-sm text-left flex flex-col gap-1 transition-colors hover:bg-fg-2",
+            "group w-full border border-l-2 px-3 py-2.5 text-left text-sm",
+            "flex flex-col gap-2 transition-colors duration-150",
             unread
-              ? "bg-fg-1 text-text font-medium border-border-em"
-              : "bg-fg text-text-muted border-fg-2",
+              ? "border-border border-l-accent bg-fg text-text hover:bg-fg-1"
+              : "border-border border-l-border bg-fg/60 text-text-muted hover:bg-fg-1 hover:text-text",
           )}
         >
-          {preview}
-          {/* Reading is the one thing the card can still be waiting on, so an unread one says so
-              outright instead of showing a date that means nothing yet. Flips to the stamp as
-              soon as opening the modal marks it read. */}
-          {unread ? (
-            <span className="flex items-center gap-1.5 text-xs text-error font-normal">
-              <TriangleAlert className="size-3 shrink-0" aria-hidden />
-              {t("status.unread")}
+          {/* Type + age: what happened and when, before the eye reaches the payload. */}
+          <span className="flex items-center gap-2 w-full min-w-0">
+            <TypeIcon
+              className={cn(
+                "size-3.5 shrink-0",
+                unread ? "text-accent" : "text-text-muted",
+              )}
+              aria-hidden
+            />
+            <span
+              className={cn(
+                "text-[11px] uppercase tracking-[0.08em] truncate",
+                unread ? "font-medium text-text" : "text-text-muted",
+              )}
+            >
+              {typeLabel}
             </span>
-          ) : (
-            <span className="text-xs text-text-muted font-normal">
-              {t("dialog.readAt", {
-                date: formatDateTime(userNotification.read_at) ?? "",
-              })}
+            <span
+              className="ml-auto shrink-0 text-[11px] text-text-muted tabular-nums"
+              title={formatDateTime(userNotification.updated_at) ?? undefined}
+            >
+              {formatRelative(userNotification.updated_at)}
             </span>
-          )}
+            <ChevronRight
+              className="size-3.5 shrink-0 text-text-muted opacity-0 transition-opacity group-hover:opacity-100"
+              aria-hidden
+            />
+          </span>
+
+          <span className={cn("min-w-0", unread && "font-medium")}>
+            {preview}
+          </span>
         </button>
       </DialogTrigger>
 
       <DialogContent className="max-w-lg w-screen">
         <DialogHeader>
-          <DialogTitle className="text-base pr-6">{typeLabel}</DialogTitle>
+          <DialogTitle className="flex items-center gap-2 text-base pr-6">
+            <TypeIcon className="size-4 shrink-0 text-text-muted" aria-hidden />
+            {typeLabel}
+          </DialogTitle>
           <DialogDescription>
             {t("dialog.description", {
               date: formatDateTime(userNotification.updated_at) ?? "",
@@ -407,7 +502,7 @@ export const UserNotificationCard = ({
           </DialogDescription>
         </DialogHeader>
 
-        <dl className="flex flex-col gap-3 text-sm">{details}</dl>
+        <dl className="flex flex-col gap-4 text-sm">{details}</dl>
       </DialogContent>
     </Dialog>
   );

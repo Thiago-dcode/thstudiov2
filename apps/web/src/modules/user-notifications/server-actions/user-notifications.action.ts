@@ -60,3 +60,32 @@ export const markUserNotificationAsReadAction = async (
     errors: await getFriendlyApiErrors(result),
   };
 };
+
+/**
+ * Marks the given notifications as read for the session user. The ids come from what the client
+ * has rendered, never a "mark everything" flag, and the API scopes the write to this user — so a
+ * foreign id is a no-op rather than an error.
+ */
+export const markUserNotificationsAsReadAction = async (
+  ids: number[],
+): Promise<ActionReturn<UserNotification[]>> => {
+  const session = await requireSession();
+  if (!session) {
+    return await unauthorizedActionReturn<UserNotification[]>();
+  }
+
+  // Nothing to mark is a success with nothing written, not a round trip the API has to reject.
+  if (!ids.length) {
+    return { data: [], errors: null };
+  }
+
+  const result = await userNotificationsService.markManyAsRead(ids, session.id);
+
+  if (result.data) {
+    return { data: result.data, errors: null };
+  }
+  return {
+    data: null,
+    errors: await getFriendlyApiErrors(result),
+  };
+};

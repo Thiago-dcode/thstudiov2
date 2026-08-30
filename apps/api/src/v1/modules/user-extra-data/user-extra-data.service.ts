@@ -191,12 +191,9 @@ export class UserExtraDataService {
   }
   @OnEvent(SET_INITIAL_USER_EXTRA_DATA_EVENT)
   async handleSetInitialUserExtraData(event: SetInitialUserExtraDataEvent) {
-    const nextMonth = new Date();
-    nextMonth.setMonth(nextMonth.getMonth() + 1);
-    const extraData = await this.userExtraDataRepository.create({
-      user_id: event.userId,
-      next_ai_credits_reset: nextMonth,
-    });
+    const extraData = await this.userExtraDataRepository.findOrCreateByUserId(
+      event.userId,
+    );
     this.logger
       .name('new-user')
       .info(`${SET_INITIAL_USER_EXTRA_DATA_EVENT} user [${event.userId}] extra data`, {

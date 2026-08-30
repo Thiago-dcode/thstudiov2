@@ -11,7 +11,7 @@ import { EnumType } from "../constants/enums";
 export type Media = MediaSchema;
 // Media translation without id
 
-export type MediaPortfolio = Pick<Media, 'id' | 'public_id' | 'title' | 'thumbnail' | 'url'| 'seo_alt' | 'seo_description' | 'seo_filename' | 'seo_title' | 'shape' | 'aspect_ratio' | 'is_highlight'> & {
+export type MediaPortfolio = Pick<Media, 'id' | 'public_id' | 'title' | 'thumbnail' | 'url' | 'seo_alt' | 'seo_description' | 'seo_filename' | 'seo_title' | 'shape' | 'aspect_ratio' | 'is_highlight'> & {
   position: number
 };
 export type MediaTranslation = MediaTranslationSchema;
@@ -33,7 +33,7 @@ export type FullMedia = Media & {
   translations: MediaTranslation[]
 }
 export type MediaIndexRequest = OffsetPaginationRequest & {
-  search?:string;
+  search?: string;
   user_id?: number;
   shape?: EnumType<'MEDIA_SHAPE'>;
   is_active?: boolean;
@@ -55,6 +55,7 @@ type InternalMediaFields = 'id' | 'public_id' | 'bytes' | 'url' | 'thumbnail' | 
 // What users can provide when creating media (public API input)
 export type PublicCreateMediaInput = Omit<MediaSchema, InternalMediaFields>;
 export type CreateMediaInputWithFile = PublicCreateMediaInput & {
+  generate_metadata?: boolean;
   file?: File;
 };
 
@@ -93,5 +94,18 @@ export type CreateMediaTranslationInput = Omit<MediaTranslationSchema, 'id'>;
 
 export type UpdateMediaTranslationInput = Partial<Omit<MediaTranslationSchema, 'id' | 'media_id'>>;
 
+/** Payload for the async media update worker (`JOB_UPDATE_MEDIA`). */
+export type UpdateMediaJobInput = {
+  media_id: number;
+  user_id: number;
+  data: UpdateMediaInput;
+};
+
 export type MediaSeoFields = Pick<Media, 'seo_title' | 'seo_description' | 'seo_alt' | 'seo_filename'>
+
+
+export type MediaJobDto = {
+  media: Media,
+  generate_metadata?: boolean
+}
 

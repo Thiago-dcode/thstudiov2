@@ -1,5 +1,6 @@
 import { ENUMS } from "@repo/common-lib/constants/enums";
 import * as z from "zod";
+import { formDataBoolean } from "@/lib/validation/zod-helpers";
 
 export const createMediaSchema = z.object({
   title: z.string().max(255).nullable().optional(),
@@ -11,6 +12,9 @@ export const createMediaSchema = z.object({
   seo_alt: z.string().max(255).nullable().optional(),
   seo_title: z.string().max(255).nullable().optional(),
   seo_description: z.string().max(255).nullable().optional(),
+  // Must be declared, not just forwarded: zod strips unknown keys, so an undeclared field is
+  // silently dropped before the route ever sees it.
+  generate_metadata: formDataBoolean(),
   user_id: z.number().int().positive(),
 });
 

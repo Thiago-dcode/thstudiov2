@@ -17,3 +17,9 @@ export type CreateProfileStatusInput = {
 export type UpdateProfileStatusInput = Partial<
   Omit<ProfileStatus, 'id' | 'user_id'>
 >;
+
+/** Payload for the async profile-status worker (`JOB_UPDATE_PROFILE_STATUS`). */
+export type UpdateProfileStatusJobInput = {
+  user_id: number;
+  fields: UpdateProfileStatusInput;
+};

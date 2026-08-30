@@ -1,4 +1,5 @@
 import {
+    AI_MEDIA_QUEUE,
     AI_QUEUE,
     EMAIL_PREFERENCES_QUEUE,
     JOB_COMPUTE_USER_METRICS,
@@ -8,24 +9,34 @@ import {
     JOB_CREATE_USER_CONTACT,
     JOB_CREATE_WAIT_LIST_ENTRY,
     JOB_GENERATE_ENTITY_METADATA,
+    JOB_GENERATE_MEDIA_METADATA,
+    JOB_GENERATE_MEDIA_METADATA_AND_NOTIFY,
     JOB_GENERATE_SINGLE_ENTITY_METADATA,
     JOB_INVITE_WAIT_LIST_BATCH,
     JOB_PROCESS_MEDIA,
+    JOB_UPDATE_MEDIA,
+    JOB_UPDATE_PROFILE_STATUS,
     JOB_RECORD_LLM_USAGE,
     JOB_RECORD_MEDIA_MODERATION,
     JOB_UPSERT_EMAIL_PREFERENCE_BY_EMAIL,
     LOCATION_QUEUE,
     MAIL_QUEUE,
     MEDIA_QUEUE,
+    MEDIA_UPDATE_QUEUE,
     STORAGE_REQUESTS_QUEUE,
     USER_CONTACTS_QUEUE,
     USER_METRICS_QUEUE,
     USER_NOTIFICATIONS_QUEUE,
+    PROFILE_STATUS_QUEUE,
     WAIT_LIST_QUEUE,
 } from '@repo/common-lib/constants/queues';
 import { config } from '@repo/common-lib/config';
 import { CreateMediaModerationInput } from '@repo/common-lib/types/media-moderation';
-import { GenerateEntityMetadataPayload, GenerateSingleEntityMetadataPayload } from '@repo/common-lib/types/ai';
+import {
+    GenerateEntityMetadataPayload,
+    GenerateMediaMetadataInput,
+    GenerateSingleEntityMetadataPayload,
+} from '@repo/common-lib/types/ai';
 import { CreateLlmTokensUsageInput } from '@repo/common-lib/types/llm-tokens-usage';
 import { CreateUserContactInput } from '@repo/common-lib/types/user-contact';
 import { CreateWaitListJobInput } from '@repo/common-lib/types/wait-list';
@@ -33,8 +44,9 @@ import { CreateOrUpdateLocationPayload } from '@repo/common-lib/types/location';
 import { CreateUserStorageRequestInput } from '@repo/common-lib/types/user-storage-request';
 import { CreateOrUpdateEmailPreferencePayload } from '@repo/common-lib/types/email-preferences';
 import { CreateUserNotificationInput } from '@repo/common-lib/types/user-notification';
+import { UpdateProfileStatusJobInput } from '@repo/common-lib/types/profile-status';
 import { MailJob } from '@repo/common-lib/types/mail';
-import { Media } from '@repo/common-lib/types/media';
+import { MediaJobDto, UpdateMediaJobInput } from '@repo/common-lib/types/media';
 import { JobsOptions, Queue } from "bullmq";
 
 /**
@@ -130,6 +142,45 @@ export class QueueHelper {
         );
     }
 
+    /**
+     * Enqueue SEO generation for one media. The jobId is deterministic (no timestamp) so
+     * double-clicks collapse into one generation. removeOnFail so a failed job does not
+     * block a later retry.
+     */
+    static async createGenerateMediaMetadataJob(dto: GenerateMediaMetadataInput) {
+        await QueueHelper.createQueue(AI_MEDIA_QUEUE).add(
+            JOB_GENERATE_MEDIA_METADATA,
+            dto,
+            {
+                jobId: `generate-media-metadata-${dto.media_id}`,
+                priority: 10,
+                removeOnComplete: true,
+                removeOnFail: true,
+                attempts: 3,
+                backoff: { type: 'exponential', delay: 1000 },
+            },
+        );
+    }
+
+    /**
+     * Enqueue status update + notification + generate-media-metadata job. Deterministic jobId so
+     * double-clicks collapse. removeOnFail so a failed job does not block a later retry.
+     */
+    static async createGenerateMediaMetadataAndNotifyJob(dto: GenerateMediaMetadataInput) {
+        await QueueHelper.createQueue(AI_MEDIA_QUEUE).add(
+            JOB_GENERATE_MEDIA_METADATA_AND_NOTIFY,
+            dto,
+            {
+                jobId: `generate-media-metadata-and-notify-${dto.media_id}`,
+                priority: 10,
+                removeOnComplete: true,
+                removeOnFail: true,
+                attempts: 3,
+                backoff: { type: 'exponential', delay: 1000 },
+            },
+        );
+    }
+
     static async createUserContactJob(dto: CreateUserContactInput) {
         await QueueHelper.createQueue(USER_CONTACTS_QUEUE).add(
             JOB_CREATE_USER_CONTACT,
@@ -171,12 +222,22 @@ export class QueueHelper {
         );
     }
 
+    /**
+     * Deliberately NOT deduplicated by `{type}-{entity_id}`: an entity's lifecycle emits the same
+     * pair twice in quick succession (`updateAsync` queues `UPDATING`, then the update processor
+     * queues `COMPLETED` milliseconds later), and BullMQ silently drops an `add` whose jobId is
+     * already waiting or active. Losing the second one strands the card mid-flight forever — the
+     * client has no polling or timeout to fall back on.
+     *
+     * Duplicates are harmless in return: the processor upserts the row by `(type, entity_id)` and
+     * `getPayload` re-reads the entity, so each run emits current state.
+     */
     static async createOrUpdateUserNotificationJob(dto: CreateUserNotificationInput) {
         await QueueHelper.createQueue(USER_NOTIFICATIONS_QUEUE).add(
             JOB_CREATE_OR_UPDATE_USER_NOTIFICATION,
             dto,
             {
-                jobId: `user-notification-${dto.type}-${dto.entity_id}`,
+                jobId: `user-notification-${dto.type}-${dto.entity_id}-${Date.now()}`,
                 priority: 10,
                 removeOnComplete: true,
                 removeOnFail: true,
@@ -242,14 +303,45 @@ export class QueueHelper {
         );
     }
 
-    static async createProcessMediaJob(dto: Media) {
+    static async createProcessMediaJob(dto:MediaJobDto) {
         await QueueHelper.createQueue(MEDIA_QUEUE).add(
             JOB_PROCESS_MEDIA,
             dto,
             {
-                jobId: `process-media-${dto.id}`,
+                jobId: `process-media-${dto.media.id}`,
                 priority: 10,
                 removeOnComplete: true,
+                attempts: 3,
+                backoff: { type: 'exponential', delay: 1000 },
+            },
+        );
+    }
+
+    static async createUpdateMediaJob(dto: UpdateMediaJobInput) {
+        await QueueHelper.createQueue(MEDIA_UPDATE_QUEUE).add(
+            JOB_UPDATE_MEDIA,
+            dto,
+            {
+                jobId: `update-media-${dto.media_id}`,
+                priority: 10,
+                removeOnComplete: true,
+                removeOnFail: true,
+                attempts: 3,
+                backoff: { type: 'exponential', delay: 1000 },
+            },
+        );
+    }
+
+    static async createUpdateProfileStatusJob(dto: UpdateProfileStatusJobInput) {
+        const fieldKeys = Object.keys(dto.fields).sort().join('-');
+        await QueueHelper.createQueue(PROFILE_STATUS_QUEUE).add(
+            JOB_UPDATE_PROFILE_STATUS,
+            dto,
+            {
+                jobId: `profile-status-${dto.user_id}-${fieldKeys}`,
+                priority: 10,
+                removeOnComplete: true,
+                removeOnFail: true,
                 attempts: 3,
                 backoff: { type: 'exponential', delay: 1000 },
             },

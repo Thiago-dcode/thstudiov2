@@ -7,7 +7,7 @@ import { MainNavProvider } from "@/lib/providers/main-nav.provider";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import { AlertCollectionButton } from "@/modules/collections/components/alert-collection.button";
 import { CollectionProvider } from "@/modules/collections/providers/create-update-collection.provider";
-import { UploadMediaModal } from "@/modules/media/components/upload-media-modal";
+import { ErrorUploadMediaModal } from "@/modules/media/components/error-upload-media-modal";
 import MediaProvider from "@/modules/media/providers/media.provider";
 import { AlertPortfolioButton } from "@/modules/portfolios/components/alert-portfolio.button";
 import { PortfolioProvider } from "@/modules/portfolios/providers/create-update-portfolio.provider";
@@ -52,7 +52,7 @@ const AdminLayout = async ({ children }: { children: ReactNode }) => {
                     <UserAccountBannedModal />
                     <div className="fixed flex flex-col items-end bottom-6 right-6 z-100 gap-2 ">
                       <ProfileSetupGuide userId={userAuth.id} />
-                      <UploadMediaModal />
+                      <ErrorUploadMediaModal />
                       <AlertPortfolioButton />
                       <AlertCollectionButton />
                       <AlertServiceButton />

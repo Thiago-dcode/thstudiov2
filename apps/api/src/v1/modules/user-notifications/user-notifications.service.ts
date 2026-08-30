@@ -31,11 +31,13 @@ type PayloadSources = {
  */
 const ENTITY_SOURCE: Record<
   EnumType<'NOTIFICATION_TYPE'>,
-  keyof PayloadSources
+  keyof PayloadSources | null
 > = {
   NEW_CONTACT: 'contacts',
   CREATE_UPDATE_MEDIA: 'media',
   GENERATE_MEDIA_METADATA: 'media',
+  FAILED_GENERATE_MEDIA_METADATA: 'media',
+  DELETE_MEDIA: null,
 };
 
 /**
@@ -99,6 +101,34 @@ export class UserNotificationsService {
   }
 
   /**
+   * Marks a caller-supplied list as read in one statement, and returns those notifications with
+   * their payloads attached so the client can write them straight back into its list.
+   *
+   * Deliberately not a "mark everything" operation: the ids come from what the user was actually
+   * shown, so a notification that arrived between render and click stays unread.
+   *
+   * No `NotFoundException` for unknown or foreign ids — the write is scoped to `userId` in SQL, so
+   * they match nothing and are absent from the result. Reporting them would confirm that an id
+   * exists for another user.
+   */
+  async markManyAsRead(
+    ids: number[],
+    userId: number,
+  ): Promise<UserNotification[]> {
+    const uniqueIds = [...new Set(ids)];
+    if (!uniqueIds.length) return [];
+
+    const rows = await this.userNotificationsRepository.markManyAsRead(
+      uniqueIds,
+      userId,
+      new Date(),
+    );
+    // Reading did not touch the entities, so the cached payloads still hold; `getPayload`
+    // overwrites `read_at`/`updated_at` from the rows we just wrote.
+    return this.getPayload(rows);
+  }
+
+  /**
    * Attaches each row's entity payload, cached per notification for
    * `USER_NOTIFICATION_PAYLOAD_CACHE_TTL` and dropped by `invalidatePayload` whenever the
    * notification is rewritten. Entities missing from the cache are resolved in one query per
@@ -149,7 +179,8 @@ export class UserNotificationsService {
   ): Promise<void> {
     if (
       notification.type !== 'CREATE_UPDATE_MEDIA' &&
-      notification.type !== 'GENERATE_MEDIA_METADATA'
+      notification.type !== 'GENERATE_MEDIA_METADATA' &&
+      notification.type !== 'FAILED_GENERATE_MEDIA_METADATA'
     ) {
       return;
     }
@@ -187,10 +218,17 @@ export class UserNotificationsService {
       }
       case 'CREATE_UPDATE_MEDIA':
       case 'GENERATE_MEDIA_METADATA':
+      case 'FAILED_GENERATE_MEDIA_METADATA':
         return {
           ...row,
           type: row.type,
           payload: media.get(row.entity_id) ?? null,
+        };
+      case 'DELETE_MEDIA':
+        return {
+          ...row,
+          type: row.type,
+          payload: { id: row.entity_id },
         };
       default: {
         // Exhaustive: a new `NOTIFICATION_TYPE` has to be given a payload above before it compiles.
@@ -210,7 +248,8 @@ export class UserNotificationsService {
       media: new Set(),
     };
     for (const row of rows) {
-      ids[ENTITY_SOURCE[row.type]].add(row.entity_id);
+      const source = ENTITY_SOURCE[row.type];
+      if (source) ids[source].add(row.entity_id);
     }
 
     // `findManyByIds` short-circuits on an empty list, so a page of one kind hits one table.

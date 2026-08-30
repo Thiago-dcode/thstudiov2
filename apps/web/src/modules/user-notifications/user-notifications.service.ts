@@ -42,6 +42,20 @@ export class UserNotificationsService extends BaseService {
       resource: `${user_id}/notifications/${id}/read`,
     });
   }
+
+  /**
+   * Marks an explicit list as read in one round trip. Returns those notifications as they now
+   * stand, so the caller can write them back without a refetch.
+   */
+  async markManyAsRead(
+    ids: number[],
+    user_id: number,
+  ): Promise<ApiResponse<UserNotification[]>> {
+    return await this.fetchApi.patch({
+      resource: `${user_id}/notifications/read`,
+      body: { ids },
+    });
+  }
 }
 
 let UserNotificationsServiceInstance: UserNotificationsService | null = null;

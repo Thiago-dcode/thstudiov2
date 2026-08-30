@@ -54,7 +54,7 @@ export async function updateMediaApi(
   input: UpdateMediaInput,
 ): Promise<ActionReturn<Media, UpdateMediaInput>> {
   try {
-    const response = await fetch(`/api/media/${id}`, {
+    const response = await fetch(`/api/media/${id}/async`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(input),

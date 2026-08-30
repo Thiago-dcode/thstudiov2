@@ -110,6 +110,46 @@ export class UserNotificationsRepository extends BaseRepository {
     return result ? this.format(result) : null;
   }
 
+  /** Scoped by `userId`: an id belonging to another user matches nothing rather than leaking. */
+  async findManyByIdsForUser(
+    ids: number[],
+    userId: number,
+  ): Promise<UserNotificationRow[]> {
+    if (!ids.length) return [];
+
+    const results = await this.query()
+      .select(this.COLUMNS)
+      .whereIn('id', ids)
+      .where('user_id', '=', userId)
+      .get<UserNotificationSchemaWithoutTimestamps[]>();
+
+    return (results ?? []).map((result) => this.format(result));
+  }
+
+  /**
+   * Stamps `read_at` on every unread notification among `ids` that belongs to `userId`, in one
+   * statement. The `read_at IS NULL` guard is what makes this idempotent: re-marking an already
+   * read notification would otherwise bump `updated_at`, the timestamp its card displays.
+   *
+   * Returns the full set of rows for `ids` (not just the ones written), so a caller that marks a
+   * list containing already-read entries still gets back the current state of all of them.
+   */
+  async markManyAsRead(
+    ids: number[],
+    userId: number,
+    readAt: Date,
+  ): Promise<UserNotificationRow[]> {
+    if (!ids.length) return [];
+
+    await this.query()
+      .whereIn('id', ids)
+      .where('user_id', '=', userId)
+      .where('read_at', 'IS', null)
+      .update(['read_at'], [readAt]);
+
+    return this.findManyByIdsForUser(ids, userId);
+  }
+
   async findByTypeAndEntityId(
     type: EnumType<'NOTIFICATION_TYPE'>,
     entityId: number,

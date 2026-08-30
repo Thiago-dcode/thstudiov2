@@ -17,7 +17,12 @@ import {
 } from "react";
 import { useWebsocket } from "@/lib/hooks/useWebsocket";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
+import { useUserMetrics } from "@/modules/users/providers/user-metrics.provider";
 import { getAllUserNotificationsAction } from "../server-actions/user-notifications.action";
+
+type UserNotificationCallback = (
+  notification: UserNotification,
+) => Promise<void> | void;
 
 type UserNotificationsContextType = {
   notifications: UserNotification[];
@@ -26,9 +31,13 @@ type UserNotificationsContextType = {
   hasPendingToRead: boolean;
   /** Writes a notification the caller already has in hand, e.g. the one an action just read. */
   updateUserNotification: (notification: UserNotification) => void;
-  setAddNotificationCallback: (
-    callback: (notification: UserNotification) => Promise<void> | void,
-  ) => Promise<void> | void;
+  /** Bulk form of {@link updateUserNotification} — one state write for a whole batch. */
+  updateUserNotifications: (notifications: UserNotification[]) => void;
+  subscribeToUserNotification: (
+    id: string,
+    callback: UserNotificationCallback,
+  ) => void;
+  unsubscribeToUserNotification: (id: string) => void;
 };
 
 const UserNotificationsContext =
@@ -49,6 +58,7 @@ export const UserNotificationsProvider = ({
 }: {
   children: ReactNode;
 }) => {
+  const { refresh } = useUserMetrics();
   const currentPage = useRef(1);
   const hasLoadedRef = useRef(false);
   const [userNotifications, setUserNotifications] = useState<
@@ -58,18 +68,19 @@ export const UserNotificationsProvider = ({
   // state let `addUserNotification` capture an empty array on its first render and keep calling
   // that one forever.
   const addNotificationCallbacks = useRef<
-    ((notification: UserNotification) => Promise<void> | void)[]
-  >([]);
+    Map<string, UserNotificationCallback>
+  >(new Map());
 
-  const setAddNotificationCallback = useCallback(
-    (callback: (notification: UserNotification) => Promise<void> | void) => {
-      addNotificationCallbacks.current = [
-        ...addNotificationCallbacks.current,
-        callback,
-      ];
+  const subscribeToUserNotification = useCallback(
+    (id: string, callback: UserNotificationCallback) => {
+      addNotificationCallbacks.current.set(id, callback);
     },
     [],
   );
+
+  const unsubscribeToUserNotification = useCallback((id: string) => {
+    addNotificationCallbacks.current.delete(id);
+  }, []);
 
   const unreadCount = useMemo(
     () => userNotifications.filter((n) => !n.read_at).length,
@@ -81,19 +92,33 @@ export const UserNotificationsProvider = ({
     [userNotifications],
   );
 
-  const updateUserNotification = useCallback(
-    (notification: UserNotification) => {
+  // Known ones are replaced in place so the list does not reshuffle under the user; unknown ones
+  // are prepended, newest first.
+  const updateUserNotifications = useCallback(
+    (notifications: UserNotification[]) => {
+      if (!notifications.length) return;
       setUserNotifications((prev) => {
-        const existIndex = prev.findIndex((n) => n.id === notification.id);
-        if (existIndex === -1) {
-          return [notification, ...prev];
-        }
         const next = [...prev];
-        next[existIndex] = notification;
-        return next;
+        const incoming: UserNotification[] = [];
+        for (const notification of notifications) {
+          const existIndex = next.findIndex((n) => n.id === notification.id);
+          if (existIndex === -1) {
+            incoming.unshift(notification);
+            continue;
+          }
+          next[existIndex] = notification;
+        }
+        return incoming.length ? [...incoming, ...next] : next;
       });
     },
     [],
+  );
+
+  const updateUserNotification = useCallback(
+    (notification: UserNotification) => {
+      updateUserNotifications([notification]);
+    },
+    [updateUserNotifications],
   );
 
   // Arriving is more than being written: only a notification that came in over the socket runs
@@ -101,20 +126,25 @@ export const UserNotificationsProvider = ({
   const addUserNotification = useCallback(
     async (notification: UserNotification) => {
       updateUserNotification(notification);
-      await Promise.all(
-        addNotificationCallbacks.current.map(
-          async (cb) => await cb(notification),
-        ),
-      );
+      // `Array.from`, not `.values().toArray()`: the latter is an ES2025 iterator helper that
+      // throws on browsers this app still targets, and a throw here kills every subscriber at once.
+      const promises = Array.from(
+        addNotificationCallbacks.current.values(),
+      ).map(async (cb) => await cb(notification));
+      promises.push(refresh());
+      // Settled, not all: one subscriber throwing must not cancel the others or the metrics
+      // refresh, and must not reject into the socket handler that only `void`s this.
+      await Promise.allSettled(promises);
     },
-    [updateUserNotification],
+    [updateUserNotification, refresh],
   );
 
   const { handleAction, isPending } = useHandleAction({
     action: async () => {
       return getAllUserNotificationsAction({
         paginated: true,
-        per_page: 10,
+        per_page: 15,
+        unread: true,
         page: currentPage.current,
       });
     },
@@ -136,6 +166,13 @@ export const UserNotificationsProvider = ({
       [WS_NOTIFICATION_EVENT]: async (data) => {
         await addUserNotification(data as UserNotification);
       },
+    },
+    // Fires on every (re)connect, not just the first. Anything emitted while the socket was down
+    // is gone otherwise — nothing else refetches, so a media whose completion notification fell
+    // into that gap would spin until a reload. The merge above is keyed by id, so replaying
+    // notifications already held is a no-op.
+    onConnect: () => {
+      void handleAction();
     },
   });
 
@@ -163,7 +200,9 @@ export const UserNotificationsProvider = ({
       unreadCount,
       hasPendingToRead,
       updateUserNotification,
-      setAddNotificationCallback,
+      updateUserNotifications,
+      subscribeToUserNotification,
+      unsubscribeToUserNotification,
     }),
     [
       userNotifications,
@@ -171,7 +210,9 @@ export const UserNotificationsProvider = ({
       unreadCount,
       hasPendingToRead,
       updateUserNotification,
-      setAddNotificationCallback,
+      updateUserNotifications,
+      subscribeToUserNotification,
+      unsubscribeToUserNotification,
     ],
   );
 

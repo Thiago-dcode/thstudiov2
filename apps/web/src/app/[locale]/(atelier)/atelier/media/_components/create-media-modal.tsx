@@ -6,10 +6,7 @@ import {
   type EnumType,
 } from "@repo/common-lib/constants/enums";
 import { ALLOWED_IMAGE_FILE_TYPES } from "@repo/common-lib/constants/limits";
-import type {
-  CreateMediaInputWithFile,
-  Media,
-} from "@repo/common-lib/types/media";
+import type { CreateMediaInputWithFile } from "@repo/common-lib/types/media";
 import { FileInput } from "@repo/ui/components/custom/file-input";
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
 import { Button } from "@repo/ui/components/shadcn/button";
@@ -31,9 +28,8 @@ import {
 } from "@repo/ui/components/shadcn/popover";
 import { Slider } from "@repo/ui/components/shadcn/slider";
 import { useInputFile } from "@repo/ui/contexts/file.provider";
-import { usePreviewUrls } from "@repo/ui/hooks/usePreviewUrls";
 import { cn } from "@repo/ui/lib/utils";
-import { Plus, Sparkles, X } from "lucide-react";
+import { Loader2, Plus, Sparkles, X } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -154,6 +150,22 @@ function CompressionSliderWithUpgradeHint({
   );
 }
 
+/**
+ * Files already sent leave the staging grid, so without this the dialog looks like nothing
+ * happened — the same silence that made a second upload feel broken.
+ */
+function UploadingIndicator({ count }: { count: number }) {
+  const t = useTranslations("atelier.media.upload");
+  if (count <= 0) return null;
+
+  return (
+    <span className="flex items-center gap-1.5 text-xs! text-text-muted">
+      <Loader2 className="size-3 animate-spin shrink-0" aria-hidden />
+      {t("uploadingInBackground", { count })}
+    </span>
+  );
+}
+
 function MediaUploadContent() {
   const t = useTranslations("atelier.media.upload");
   const tRoot = useTranslations();
@@ -165,26 +177,29 @@ function MediaUploadContent() {
     useState<EnumType<"COMPRESSION_LEVEL"> | null>(null);
   const {
     mediaPendingToCreate,
+    mediaStagedToCreate,
+    updateStagedCreateInputs,
     upsertMediaUpload,
     removeMediaUpload,
-    setMediaUploads,
   } = useMedia();
   const { metrics, aiCreditsInfo } = useUserMetrics();
   const { errors: fileErrors, maxFileSizeBytes } = useInputFile();
   const allow_media_compression = metrics?.active_plan.allow_media_compression;
-  const currentCount = mediaPendingToCreate?.length || 0;
+  // The limit applies to what is still being staged. Files already sent have left this dialog's
+  // hands, so counting them here would lock the picker for the length of a background upload.
+  const currentCount = mediaStagedToCreate.length;
   const isMaxReached = currentCount >= MAX_FILES;
-  const mediaToShow = useMemo(
-    () => mediaPendingToCreate.filter((m) => !m.pending && !m.data && !m.error),
+  const uploadingCount = useMemo(
+    () => mediaPendingToCreate.filter((m) => m.pending).length,
     [mediaPendingToCreate],
   );
   const willGenerateMetadata = useMemo(
     () =>
-      mediaToShow.reduce(
-        (prev, curr) => (curr.generate_seo ? prev + 1 : prev),
+      mediaStagedToCreate.reduce(
+        (prev, curr) => (curr.input.generate_metadata ? prev + 1 : prev),
         0,
       ),
-    [mediaToShow],
+    [mediaStagedToCreate],
   );
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -194,12 +209,13 @@ function MediaUploadContent() {
       return;
     }
 
+    // `FileInput` truncates the selection to what fits and hands us the untruncated one, so this
+    // explains what was left out rather than rejecting anything — the files that fit are already in.
     const remainingSlots = MAX_FILES - currentCount;
     if (selectedFiles.length > remainingSlots) {
       setError(
         t("maxFilesError", { max: MAX_FILES, remaining: remainingSlots }),
       );
-      e.target.value = "";
       return;
     }
 
@@ -233,7 +249,7 @@ function MediaUploadContent() {
 
   return (
     <div className="h-full flex flex-col p-2">
-      {mediaToShow && mediaToShow.length > 0 ? (
+      {mediaStagedToCreate.length > 0 ? (
         <>
           <div className="mb-4 space-y-3 p-1 border border-border bg-fg/50">
             <div className="flex items-center justify-between gap-3">
@@ -280,15 +296,9 @@ function MediaUploadContent() {
                   onCompressionLevelChange={(compressionLvlSelected) => {
                     setGlobalCompressionPreview(null);
                     setGlobalCompressionLevel(compressionLvlSelected);
-                    setMediaUploads(
-                      mediaPendingToCreate.map((mu) => ({
-                        ...mu,
-                        input: {
-                          ...mu.input,
-                          compression_level: compressionLvlSelected,
-                        },
-                      })),
-                    );
+                    updateStagedCreateInputs(() => ({
+                      compression_level: compressionLvlSelected,
+                    }));
                   }}
                 />
               </div>
@@ -310,16 +320,9 @@ function MediaUploadContent() {
                   disabled={!aiCreditsInfo.hasCredits}
                   onCheckedChange={(checked) => {
                     const value = checked === true;
-                    setMediaUploads(
-                      mediaPendingToCreate.map((mu, i) => {
-                        return {
-                          ...mu,
-                          generate_seo: !value
-                            ? false
-                            : i < aiCreditsInfo.remaining,
-                        };
-                      }),
-                    );
+                    updateStagedCreateInputs((_, i) => ({
+                      generate_metadata: value && i < aiCreditsInfo.remaining,
+                    }));
                   }}
                 />
                 <label
@@ -380,20 +383,23 @@ function MediaUploadContent() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between pt-2 border-t border-border/50">
+            <div className="flex items-center justify-between gap-2 pt-2 border-t border-border/50">
               <span className="text-sm! text-text-muted">
                 {t("filesCount", { count: currentCount, max: MAX_FILES })}
               </span>
-              {isMaxReached && (
-                <span className="text-xs text-amber-600">
-                  {t("maxReached")}
-                </span>
-              )}
+              <span className="flex items-center gap-3">
+                <UploadingIndicator count={uploadingCount} />
+                {isMaxReached && (
+                  <span className="text-xs text-amber-600">
+                    {t("maxReached")}
+                  </span>
+                )}
+              </span>
             </div>
           </div>
           <div className="mb-4 overflow-y-auto flex-1 min-h-0">
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-              {mediaPendingToCreate.map((media, index) => {
+              {mediaStagedToCreate.map((media, index) => {
                 const currentCompressionLvl =
                   media.input.compression_level || DEFAULT_COMPRESSION_LVL;
 
@@ -403,7 +409,7 @@ function MediaUploadContent() {
                     className="flex flex-col gap-3"
                   >
                     <div className="relative aspect-square flex flex-col items-center justify-center overflow-hidden border border-border bg-fg-2 shadow-md min-h-[200px]">
-                      {media.generate_seo && (
+                      {media.input.generate_metadata && (
                         <div className="absolute top-1.5 left-1.5 z-10 flex items-center gap-1 bg-black/60 text-white px-1.5 py-0.5 text-[10px] font-medium">
                           <Sparkles className="h-3 w-3" />
                           {t("aiSeoBadge")}
@@ -466,10 +472,11 @@ function MediaUploadContent() {
         </>
       ) : (
         <div className="h-full flex flex-col">
-          <div className="mb-2 flex items-center justify-between">
+          <div className="mb-2 flex items-center justify-between gap-2">
             <span className="text-sm! text-text-muted">
               {t("filesCount", { count: currentCount, max: MAX_FILES })}
             </span>
+            <UploadingIndicator count={uploadingCount} />
           </div>
           {errorList}
           <div className="flex-1 min-h-0">
@@ -490,10 +497,8 @@ function MediaUploadContent() {
 }
 
 export function CreateMediaDialog({
-  onSuccess,
   openFromQuery = false,
 }: {
-  onSuccess?: (media: Media) => void;
   /** When true, `?open=1` opens this dialog (and clears the query). */
   openFromQuery?: boolean;
 }) {
@@ -504,14 +509,13 @@ export function CreateMediaDialog({
   const [open, setOpen] = useState(false);
   const {
     handleUploadInserts,
-    isLoading,
     handleRemoveCompleted,
     addMediaUploads,
+    mediaStagedToCreate,
   } = useMedia();
   const { files } = useInputFile();
-  const { previewUrls, cleanup } = usePreviewUrls({ files });
   const { session } = useSession();
-  const { metrics, refresh: refreshMetrics } = useUserMetrics();
+  const { metrics } = useUserMetrics();
 
   const storageUsed = metrics?.extra_data.storage_used_mb ?? 0;
   const storageLimit = metrics?.active_plan.storage_limit_mb ?? 0;
@@ -525,27 +529,24 @@ export function CreateMediaDialog({
     router.replace("/atelier/media");
   }, [openFromQuery, openParam, router]);
 
+  // Previews are minted here rather than taken from `usePreviewUrls`, because a preview outlives
+  // the selection that produced it: once a file is handed to the provider its card stays on screen
+  // while it uploads, and picking a second batch replaces `files` — which had `usePreviewUrls`
+  // revoke the first batch's URLs out from under the cards still rendering them. The provider is
+  // now the sole owner and revokes in `removeMediaUpload` / `handleRemoveCompleted`.
   useEffect(() => {
-    if (
-      !previewUrls?.length ||
-      !files?.length ||
-      !session ||
-      files.length !== previewUrls.length
-    )
-      return;
+    if (!files?.length || !session) return;
 
     const newMediaUploads: (CreateMediaInputWithFile & {
       previewUrl?: string;
     })[] = [];
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
+    for (const file of Array.from(files)) {
       if (addedFilesRef.current.has(file)) continue;
       addedFilesRef.current.add(file);
-      const previewUrl = previewUrls[i];
       newMediaUploads.push({
         file,
-        previewUrl,
+        previewUrl: URL.createObjectURL(file),
         user_id: session.id,
       });
     }
@@ -553,13 +554,8 @@ export function CreateMediaDialog({
     if (newMediaUploads.length > 0) {
       addMediaUploads(newMediaUploads);
     }
-  }, [previewUrls, files, session, addMediaUploads]);
+  }, [files, session, addMediaUploads]);
 
-  useEffect(() => {
-    if (!isLoading) return;
-
-    setOpen(false);
-  }, [isLoading]);
   if (!session) return null;
 
   if (isStorageFull) {
@@ -581,15 +577,9 @@ export function CreateMediaDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={(next) => !isLoading && setOpen(next)}>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button
-          className="text-xs! "
-          variant="default"
-          size="sm"
-          disabled={isLoading}
-          title={isLoading ? t("uploadInProgress") : undefined}
-        >
+        <Button className="text-xs! " variant="default" size="sm">
           <Plus className="h-4 w-4" />
           {t("upload")}
         </Button>
@@ -605,26 +595,25 @@ export function CreateMediaDialog({
           <MediaUploadContent />
         </div>
         <DialogFooter className="border-t p-2 full flex flex-row gap-2">
-          {files?.length ? (
+          {/* Driven by what is actually stageable, not by `files` — that only tracks the last
+              selection, so the button lingered after every card had been removed or sent and did
+              nothing when clicked. */}
+          {mediaStagedToCreate.length > 0 ? (
             <Button
               onClick={async () => {
                 setOpen(false);
-                await handleUploadInserts(async (media) => {
-                  await refreshMetrics();
-                  onSuccess?.(media);
-                });
+                await handleUploadInserts();
               }}
               variant={"primary"}
               className="w-full"
             >
-              {t("uploadButton")}
+              {t("uploadButton", { count: mediaStagedToCreate.length })}
             </Button>
           ) : null}
           <DialogClose asChild>
             <Button
               onClick={() => {
                 handleRemoveCompleted();
-                cleanup();
                 setOpen(false);
               }}
               variant="destructive"
