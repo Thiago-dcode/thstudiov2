@@ -5,7 +5,7 @@ import {
   ENUMS,
   type EnumType,
 } from "@repo/common-lib/constants/enums";
-import { ALLOWED_IMAGE_FILE_TYPES } from "@repo/common-lib/constants/limits";
+import { ALLOWED_FILE_TYPES } from "@repo/common-lib/constants/limits";
 import type { CreateMediaInputWithFile } from "@repo/common-lib/types/media";
 import { FileInput } from "@repo/ui/components/custom/file-input";
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
@@ -462,7 +462,7 @@ function MediaUploadContent() {
             <FileInput
               multiple
               onChange={handleFileChange}
-              accept={ALLOWED_IMAGE_FILE_TYPES.join(",")}
+              accept={ALLOWED_FILE_TYPES.join(",")}
               disabled={isMaxReached}
               currentFiles={currentCount}
               maxFiles={MAX_FILES}

@@ -1,4 +1,4 @@
-type MimeTypes = 
+type MimeTypes =
   // Images
   | 'image/jpeg'
   | 'image/jpg'

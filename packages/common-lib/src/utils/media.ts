@@ -16,4 +16,5 @@ export class MediaHelper {
       !!media.completed_at &&
       !media.blocked_at)
   }
+
 }

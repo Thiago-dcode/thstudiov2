@@ -3,7 +3,10 @@ import { EnumType } from "./enums";
 
 // ==================== APP CONFIGURATION ====================
 export const FUNNEL_LAST_STEP = 5;
-export const ALLOWED_IMAGE_FILE_TYPES: MimeTypes[] = ['image/jpeg', 'image/png', 'image/webp'];
+export const ALLOWED_IMAGE_FILE_TYPES: MimeTypes[] = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+export const ALLOWED_VIDEO_FILE_TYPES: MimeTypes[] = ['video/mp4', 'video/quicktime', 'video/mpeg'];
+export const ALLOWED_FILE_TYPES = [...ALLOWED_IMAGE_FILE_TYPES, ...ALLOWED_VIDEO_FILE_TYPES];
+
 /**
  * Single source of truth for the image upload cap. Enforced at every layer that touches an
  * upload (browser selection, the Next proxy routes/server actions and the API's multer config)
@@ -25,8 +28,8 @@ export const CREDIT_CONSUMING_LLM_USAGE_TYPES: EnumType<'LLM_USAGE_TYPE'>[] = [
 ];
 export const MAX_USERNAME_RESET = 3;
 export const MAX_PASSWORD_RESET = 3;
-export const MAX_COLLECTION_ITEMS =30;
-export const MAX_PORTFOLIO_ITEMS=100;
+export const MAX_COLLECTION_ITEMS = 30;
+export const MAX_PORTFOLIO_ITEMS = 100;
 /** Per-type category caps for a portfolio; the combined total is their sum. */
 export const MAX_DISCIPLINES_PORTFOLIO = 3;
 export const MAX_STYLES_PORTFOLIO = 3;

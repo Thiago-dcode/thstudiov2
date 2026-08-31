@@ -5,7 +5,7 @@ export const ENUMS = {
   USER_EDITORS_ROLES: ['ADMIN', 'EDITOR'] as const,
   USER_ROLE: ['ADMIN', 'SUPPORT', 'CLIENT', 'ARTIST'] as const,
   LANGUAGE_CODE: ['EN', 'ES', 'PT'] as const,
-  MEDIA_TYPE: ['IMAGE', 'VIDEO'] as const,
+  MEDIA_TYPE: ['IMAGE', 'VIDEO', 'GIF'] as const,
   MEDIA_STATUS: ['UPLOADING', 'UPDATING', 'GENERATING_METADATA', 'COMPLETED', 'FAILED'] as const,
   MEDIA_SHAPE: ['SQUARE', 'LANDSCAPE', 'PORTRAIT'] as const,
   ASPECT_RATIO: [
