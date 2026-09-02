@@ -41,20 +41,46 @@ export class RedisIoAdapter extends IoAdapter {
     this.pubClient = createClient({ url: this.redisUrl });
     this.subClient = this.pubClient.duplicate();
 
+    // Mandatory, not defensive. A node-redis client is an EventEmitter, and an 'error'
+    // event with no listener is re-thrown as an uncaught exception. The client emits one
+    // every time the connection drops — which includes every deploy, since the redis
+    // container restarts alongside the api. Without these handlers a routine Redis blip
+    // surfaces as a fatal error (and, via the uncaughtException hook in main.ts, an
+    // error-500 log entry) instead of the reconnect it actually is. node-redis reconnects
+    // on its own; these listeners only stop the noise from being fatal.
+    this.pubClient.on('error', (err: Error) =>
+      console.error('[socket.io redis adapter] pub client error:', err.message),
+    );
+    this.subClient.on('error', (err: Error) =>
+      console.error('[socket.io redis adapter] sub client error:', err.message),
+    );
+
     await Promise.all([this.pubClient.connect(), this.subClient.connect()]);
 
     this.adapterConstructor = createAdapter(this.pubClient, this.subClient);
   }
 
   async disconnectFromRedis(): Promise<void> {
-    await Promise.all([
-      this.pubClient?.quit().catch(() => undefined),
-      this.subClient?.quit().catch(() => undefined),
+    // Bounded: `quit()` waits for a reply, so an unreachable Redis would hang shutdown
+    // forever and leave the container to be SIGKILLed.
+    await Promise.race([
+      Promise.all([
+        this.pubClient?.quit().catch(() => undefined),
+        this.subClient?.quit().catch(() => undefined),
+      ]),
+      new Promise((resolve) => setTimeout(resolve, 2000).unref()),
     ]);
   }
 
   createIOServer(port: number, options?: ServerOptions) {
     const server = super.createIOServer(port, options);
+    if (!this.adapterConstructor) {
+      // Would otherwise fail as an opaque socket.io error at first connection. Reaching
+      // here means connectToRedis() was not awaited before app.listen().
+      throw new Error(
+        'RedisIoAdapter: connectToRedis() must be awaited before the server starts',
+      );
+    }
     server.adapter(this.adapterConstructor);
     return server;
   }

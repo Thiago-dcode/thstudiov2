@@ -94,8 +94,18 @@ async function bootstrap() {
     // onModuleDestroy / onApplicationShutdown starts firing on signals, which would
     // alter how the BullMQ processors in this app shut down). A targeted handler keeps
     // the blast radius to this adapter.
+    //
+    // The explicit process.exit() is required, not tidiness: installing a SIGTERM or
+    // SIGINT listener REMOVES Node's default termination behaviour, so without it the
+    // process would run the cleanup and then sit there ignoring the signal until Docker
+    // gave up on the stop grace period and SIGKILLed it — turning every deploy into a
+    // forced kill of both API replicas. This was verified on linux/node:22.
     for (const signal of ['SIGTERM', 'SIGINT'] as const) {
-      process.once(signal, () => void redisIoAdapter.disconnectFromRedis());
+      process.once(signal, () => {
+        void redisIoAdapter
+          .disconnectFromRedis()
+          .finally(() => process.exit(0));
+      });
     }
 
     bootstrapLogger.info('WebSocket Redis adapter: enabled');
