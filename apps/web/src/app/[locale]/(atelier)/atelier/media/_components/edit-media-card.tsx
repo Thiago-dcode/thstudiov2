@@ -738,10 +738,13 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
           presigned S3 URLs whose host is not in `images.remotePatterns`, so the optimizer
           would reject it — and there is nothing to optimize for a one-off modal anyway. */}
       <Dialog open={isExpandedOpen} onOpenChange={setIsExpandedOpen}>
-        {/* `pt-10` reserves a strip for DialogContent's built-in close X (absolute right-4
-            top-4). Without it the X lands on the artwork itself, where it is unreadable
-            against a light image. */}
-        <DialogContent className="max-w-[95vw] w-fit p-2 pt-10 sm:p-3 sm:pt-10 z-100">
+        {/* Sized to the media, not the viewport. `sm:w-fit` is required as well as `w-fit`:
+            DialogContent's base classes carry `sm:w-full`, and tailwind-merge treats a
+            variant-prefixed class as its own group, so an unprefixed `w-fit` does not
+            override it — the dialog stretched full-width on every screen >= 640px.
+            `pt-10` reserves a strip for the built-in close X (absolute right-4 top-4),
+            which would otherwise sit on the artwork and be unreadable on a light image. */}
+        <DialogContent className="w-fit sm:w-fit max-w-[95vw] p-2 pt-10 sm:p-3 sm:pt-10 z-100">
           <DialogHeader className="sr-only">
             <DialogTitle>
               {currentMedia.title ||
@@ -766,7 +769,7 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
                   currentMedia.title ||
                   t("altFallback", { username })
                 }
-                className="max-h-[80vh] max-w-full w-auto h-auto object-contain"
+                className="block max-h-[80vh] max-w-[calc(95vw-1.5rem)] w-auto h-auto object-contain"
               />
             ) : (
               <img
@@ -776,7 +779,7 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
                   currentMedia.title ||
                   t("altFallback", { username })
                 }
-                className="max-h-[80vh] max-w-full w-auto h-auto object-contain"
+                className="block max-h-[80vh] max-w-[calc(95vw-1.5rem)] w-auto h-auto object-contain"
               />
             ))}
         </DialogContent>
