@@ -1913,6 +1913,7 @@ const messages = {
         mediaPreview: "Media Preview",
         generateSeo: "Generate media metadata",
         noCreditsAvailable:
+        expand: "View full size",
           "No AI credits available. You need at least 1 credit to generate media metadata. Please upgrade your plan or wait for credits to reset.",
         generateSeoTooltip:
           "SEO (Search Engine Optimization) helps your work get found on Google and Google Images. This uses AI to analyze the image and generate an artistic, keyword-rich title, description, alt text and filename — and auto-tags it with matching categories.",
