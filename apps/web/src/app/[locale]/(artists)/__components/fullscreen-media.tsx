@@ -12,7 +12,13 @@ import Image from "next/image";
 import { useTranslations } from "next-intl";
 
 interface FullscreenMediaProps {
-  url: string;
+  /**
+   * Nullable: `media.url` is only populated once the worker finishes processing an upload.
+   * The three media routes reject an unprocessed media before reaching this component, so a
+   * missing url here means a caller skipped that guard — render nothing rather than handing
+   * next/image an empty src (which throws) or a broken one.
+   */
+  url?: string | null;
   alt: string;
   title?: string;
   aspectRatio?: EnumType<"ASPECT_RATIO">;
@@ -34,6 +40,9 @@ export const FullscreenMedia = ({
   const { width, height } = aspectRatioToPixels(
     aspectRatio ?? DEFAULT_ASPECT_RATIO,
   );
+
+  // After the hooks, never before — hooks must run on every render.
+  if (!url) return null;
 
   return (
     <figure

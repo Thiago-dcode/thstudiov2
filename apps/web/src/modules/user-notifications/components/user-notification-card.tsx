@@ -87,7 +87,12 @@ const MediaThumbnail = ({
 }) => {
   const t = useCardTranslations();
 
-  if (!payload.thumbnail && !payload.url) {
+  // Resolved before the guard so the narrowing carries into the <img> below: TypeScript
+  // cannot infer from `!thumbnail && !url` that the *expression* `thumbnail || url` is
+  // non-null afterwards, but it does track a single local.
+  const src = payload.thumbnail || payload.url;
+
+  if (!src) {
     // A media still being processed has no thumbnail *yet*, which is a different message from one
     // that will never have a preview at all. Rendered as a span: the preview sits inside the
     // card's button, whose content model only allows phrasing elements.
@@ -123,7 +128,7 @@ const MediaThumbnail = ({
 
   return (
     <img
-      src={payload.thumbnail || payload.url}
+      src={src}
       alt={t("card.thumbnailAlt", {
         title: payload.title || payload.public_id,
       })}

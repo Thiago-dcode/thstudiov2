@@ -46,7 +46,10 @@ export default async function MediaPage({ params }: Props) {
     notFound();
   }
 
-  if (!media || media.blocked_at) {
+  // `!media.url` covers a media whose processing has not finished (or failed): there is no
+  // asset to show, and serving a 200 with an empty media page would publish a thin,
+  // indexable URL carrying ImageObject JSON-LD for an image that does not exist yet.
+  if (!media || media.blocked_at || !media.url) {
     return (
       <Web.Container>
         <ResourceNotFound username={username} message={tNotFound("media")} />

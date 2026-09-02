@@ -75,7 +75,10 @@ export default async function MediaPage({ params, searchParams }: Props) {
   const belongsToCollection =
     !!media && collection.media.some((m) => m.public_id === media.public_id);
 
-  if (!media || media.blocked_at || !belongsToCollection) {
+  // `!media.url` matches the completeness gate the portfolio route already applies via
+  // `completed_at`: an unprocessed media has no asset, so serving it would publish a thin
+  // indexable page with ImageObject JSON-LD for an image that does not exist yet.
+  if (!media || media.blocked_at || !media.url || !belongsToCollection) {
     return (
       <Web.Container>
         <ResourceNotFound username={username} message={tNotFound("media")} />

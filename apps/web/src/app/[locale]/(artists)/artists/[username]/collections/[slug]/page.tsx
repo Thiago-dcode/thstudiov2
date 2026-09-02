@@ -142,7 +142,10 @@ export default async function Page({ params, searchParams }: Props) {
             items={collection.media.map((m) => ({
               title: m.title,
               description: m.seo_description ?? undefined,
-              url: m.url,
+              // `url` is nullable while a media is still processing; the gallery already
+              // renders a placeholder for a missing one, so normalise null to undefined
+              // rather than dropping the item and shifting every index.
+              url: m.url ?? undefined,
               alt: m.seo_alt ?? m.title ?? undefined,
               // Root-relative and locale-prefixed: an absolute `${config.app_url}/…` href always
               // pointed at the English URL, and the `?cb=1` cache-buster minted a second crawlable
