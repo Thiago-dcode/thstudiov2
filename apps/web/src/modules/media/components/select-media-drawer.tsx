@@ -21,6 +21,7 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CreateMediaDialog } from "@/app/[locale]/(atelier)/atelier/media/_components/create-media-modal";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
+import { ExpandMediaDialog } from "@/modules/media/components/expand-media-dialog";
 import { FailedMediaOverlay } from "@/modules/media/components/failed-media-overlay";
 import { getAllUserMediaAction } from "@/modules/media/server-actions/get-all-user-media.action";
 import { useSubscribeToUserNotification } from "@/modules/user-notifications/hooks/useSubscribeToUserNotification";
@@ -259,75 +260,92 @@ export const SelectMediaDrawer = ({
                     );
                   }
                   return (
-                    <button
-                      disabled={isLoading}
+                    // The tile is a <button>, so the expand control cannot live inside it —
+                    // nested buttons are invalid HTML and the inner one would not be
+                    // focusable. It sits as a sibling in this wrapper instead, which also
+                    // carries the hover lift so both move together.
+                    <div
                       key={m.id}
-                      type="button"
-                      onClick={() =>
-                        !isSelected && !isSelectionLimitReached && !isLoading
-                          ? onSelect(m)
-                          : null
-                      }
-                      aria-pressed={!!isSelected}
-                      aria-busy={isLoading}
-                      className={cn(
-                        "group relative aspect-square w-full overflow-hidden border border-border bg-fg-2",
-                        "transition-all duration-200 ease-out",
-                        "hover:shadow-md hover:-translate-y-0.5",
-                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
-                        isLoading && "cursor-not-allowed",
-                        isSelected ? "opacity-60 scale-95" : "opacity-100",
-                      )}
-                      title={
-                        isLoading
-                          ? tCommon("loading")
-                          : isSelected
-                            ? t("alreadyAdded")
-                            : t("addToPortfolio")
-                      }
+                      className="relative transition-transform duration-200 ease-out hover:-translate-y-0.5"
                     >
-                      {/* An <img>, not a CSS `background-image`. Storage keys can contain
+                      <button
+                        disabled={isLoading}
+                        type="button"
+                        onClick={() =>
+                          !isSelected && !isSelectionLimitReached && !isLoading
+                            ? onSelect(m)
+                            : null
+                        }
+                        aria-pressed={!!isSelected}
+                        aria-busy={isLoading}
+                        className={cn(
+                          "group relative aspect-square w-full overflow-hidden border border-border bg-fg-2",
+                          "transition-all duration-200 ease-out",
+                          "hover:shadow-md",
+                          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
+                          isLoading && "cursor-not-allowed",
+                          isSelected ? "opacity-60 scale-95" : "opacity-100",
+                        )}
+                        title={
+                          isLoading
+                            ? tCommon("loading")
+                            : isSelected
+                              ? t("alreadyAdded")
+                              : t("addToPortfolio")
+                        }
+                      >
+                        {/* An <img>, not a CSS `background-image`. Storage keys can contain
                           characters (spaces, parentheses) that are legal in a `src` but are an
                           invalid token inside `url(...)`, where they take the whole declaration
                           down and leave the tile blank. */}
-                      {m.thumbnail ? (
-                        <img
-                          src={m.thumbnail}
-                          alt=""
-                          aria-hidden
-                          className="absolute inset-0 size-full object-cover"
-                        />
-                      ) : null}
+                        {m.thumbnail ? (
+                          <img
+                            src={m.thumbnail}
+                            alt=""
+                            aria-hidden
+                            className="absolute inset-0 size-full object-cover"
+                          />
+                        ) : null}
 
-                      {/* Hover overlay */}
-                      <div className="absolute inset-0 bg-black/0 transition-colors duration-200 group-hover:bg-black/20 group-disabled:group-hover:bg-black/0" />
+                        {/* Hover overlay */}
+                        <div className="absolute inset-0 bg-black/0 transition-colors duration-200 group-hover:bg-black/20 group-disabled:group-hover:bg-black/0" />
 
-                      {/* Shape badge */}
-                      {m.shape ? (
-                        <div className="absolute top-2 right-2 bg-black/40 px-2 py-1 text-[10px] font-medium text-white/90 backdrop-blur-sm">
-                          {m.shape}
-                        </div>
-                      ) : null}
-
-                      {/* Animated media badge — the tile itself shows the static poster */}
-                      <MediaTypeBadge mediaType={m.media_type} />
-
-                      {/* Loading overlay */}
-                      {isLoading ? (
-                        <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/50">
-                          <Spinner className="size-8 text-white" />
-                        </div>
-                      ) : null}
-
-                      {/* Selected check */}
-                      {isSelected ? (
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="flex items-center justify-center size-10 bg-text text-fg">
-                            <Check className="size-5" />
+                        {/* Shape badge */}
+                        {m.shape ? (
+                          <div className="absolute top-2 right-2 bg-black/40 px-2 py-1 text-[10px] font-medium text-white/90 backdrop-blur-sm">
+                            {m.shape}
                           </div>
-                        </div>
-                      ) : null}
-                    </button>
+                        ) : null}
+
+                        {/* Animated media badge — the tile itself shows the static poster */}
+                        <MediaTypeBadge mediaType={m.media_type} />
+
+                        {/* Loading overlay */}
+                        {isLoading ? (
+                          <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/50">
+                            <Spinner className="size-8 text-white" />
+                          </div>
+                        ) : null}
+
+                        {/* Selected check */}
+                        {isSelected ? (
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <div className="flex items-center justify-center size-10 bg-text text-fg">
+                              <Check className="size-5" />
+                            </div>
+                          </div>
+                        ) : null}
+                      </button>
+
+                      {/* Top-left: the shape badge holds top-right and the media-type badge
+                          bottom-left. Hidden while loading, where the overlay owns the tile. */}
+                      {!isLoading && (
+                        <ExpandMediaDialog
+                          media={m}
+                          className="absolute top-2 left-2 z-20"
+                        />
+                      )}
+                    </div>
                   );
                 })}
               </div>

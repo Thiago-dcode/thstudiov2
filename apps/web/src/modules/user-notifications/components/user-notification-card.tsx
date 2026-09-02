@@ -37,6 +37,7 @@ import { Link } from "@/i18n/navigation";
 import { useDateTimeFormat } from "@/lib/hooks/useDateTimeFormat";
 import { useRelativeTimeFormat } from "@/lib/hooks/useRelativeTimeFormat";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
+import { ExpandMediaDialog } from "@/modules/media/components/expand-media-dialog";
 import { useUserNotifications } from "../contexts/user-notifications.provider";
 import { markUserNotificationAsReadAction } from "../server-actions/user-notifications.action";
 
@@ -244,10 +245,25 @@ const MediaDetails = ({
   return (
     <>
       <div className="flex flex-col gap-2">
-        <MediaThumbnail
-          payload={payload}
-          className={getShapeClass(payload.shape)}
-        />
+        {/* `w-fit` so the expand control pins to the poster's own edge rather than the
+            column's. Only once processing has COMPLETED: before that `url` is null and the
+            poster is all there is. This opens a dialog on top of the notification dialog,
+            which is why ExpandMediaDialog carries a higher z-index than the default. */}
+        <div className="relative w-fit">
+          <MediaThumbnail
+            payload={payload}
+            className={getShapeClass(payload.shape)}
+          />
+          {payload.status === "COMPLETED" && (
+            <ExpandMediaDialog
+              media={payload}
+              alt={t("card.thumbnailAlt", {
+                title: payload.title || payload.public_id,
+              })}
+              className="absolute top-2 right-2 z-20"
+            />
+          )}
+        </div>
         <MediaStatusLine payload={payload} />
       </div>
       <Field label={t("card.title")}>

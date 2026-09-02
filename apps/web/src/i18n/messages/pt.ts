@@ -1571,6 +1571,7 @@ const messages = {
       add: "Adicionar",
       loading: "Carregando...",
       loadMore: "Carregar mais",
+      expandMedia: "Ver em tamanho real",
       blocked: "Bloqueado",
       editingCollection: "Editando coleção",
       creatingCollection: "Criando coleção",
@@ -1925,7 +1926,6 @@ const messages = {
         mediaPreview: "Prévia da mídia",
         generateSeo: "Gerar metadados",
         noCreditsAvailable:
-        expand: "Ver em tamanho real",
           "Nenhum crédito de IA disponível. Você precisa de pelo menos 1 crédito para gerar metadados. Faça upgrade do seu plano ou aguarde a renovação dos créditos.",
         generateSeoTooltip:
           "O SEO (otimização para mecanismos de busca) ajuda seu trabalho a ser encontrado no Google e no Google Imagens. Usamos IA para analisar a imagem e gerar um título, uma descrição, um texto alternativo e um nome de arquivo artísticos e ricos em palavras-chave, além de marcá-la automaticamente com as categorias correspondentes.",

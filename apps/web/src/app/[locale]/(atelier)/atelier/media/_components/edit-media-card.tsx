@@ -32,11 +32,12 @@ import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { cn } from "@repo/ui/lib/utils";
 import { toast } from "@repo/ui/sonner";
 import { format } from "date-fns";
-import { Expand, Eye, Sparkles, Trash2, Upload } from "lucide-react";
+import { Eye, Sparkles, Trash2, Upload } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import FormComponent from "@/lib/components/form-component";
+import { ExpandMediaDialog } from "@/modules/media/components/expand-media-dialog";
 import { FailedMediaOverlay } from "@/modules/media/components/failed-media-overlay";
 import {
   type UploadMedia,
@@ -74,7 +75,6 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
     generateUniqueMediaId,
   } = useMedia();
   const [deletePopoverOpen, setDeletePopoverOpen] = useState(false);
-  const [isExpandedOpen, setIsExpandedOpen] = useState(false);
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -115,9 +115,6 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
     (currentMediaUpload?.data
       ? MediaHelper.isLoading(currentMediaUpload.data)
       : false);
-  // The tile only ever shows the small WebP poster, so "expand" is only meaningful once the
-  // full asset exists — `url` is null until the worker finishes processing.
-  const canExpand = !isPending && !!currentMedia.url;
 
   // Format date - use updated_at if available, otherwise fallback to created_at
   const formattedDate = useMemo(() => {
@@ -511,25 +508,18 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
                 }
                 showForAllTypes
               />
-              {/* Expand: opens the full asset instead of the poster. The whole tile is the
-                  drawer trigger, so both the click and the pointerdown Radix listens to have
-                  to be stopped here, or expanding would also open the edit drawer behind it. */}
-              {canExpand && (
-                <button
-                  type="button"
-                  aria-label={t("expand")}
-                  onPointerDown={(e) => e.stopPropagation()}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setIsExpandedOpen(true);
-                  }}
-                  // Always visible rather than revealed on group-hover: a hover-only control is
-                  // unreachable on touch, and the atelier grid is used on tablets.
-                  className="absolute top-2 right-2 z-20 flex items-center justify-center bg-black/50 p-1.5 text-white transition-colors duration-200 hover:bg-black/70 focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:outline-none"
-                >
-                  <Expand className="size-3.5" />
-                </button>
+              {/* Top-right: the badge sits bottom-left and the pending-upload button top-left.
+                  Hidden while an upload is in flight — the poster on screen is the old asset. */}
+              {!isPending && (
+                <ExpandMediaDialog
+                  media={currentMedia}
+                  alt={
+                    currentMedia.seo_alt ||
+                    currentMedia.title ||
+                    t("altFallback", { username })
+                  }
+                  className="absolute top-2 right-2 z-20"
+                />
               )}
               {/* Loading Overlay */}
               {isPending && (
@@ -734,56 +724,6 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
           </>
         )}
       </DrawerContent>
-      {/* Full-asset preview. Deliberately NOT next/image: atelier media is served through
-          presigned S3 URLs whose host is not in `images.remotePatterns`, so the optimizer
-          would reject it — and there is nothing to optimize for a one-off modal anyway. */}
-      <Dialog open={isExpandedOpen} onOpenChange={setIsExpandedOpen}>
-        {/* Sized to the media, not the viewport. `sm:w-fit` is required as well as `w-fit`:
-            DialogContent's base classes carry `sm:w-full`, and tailwind-merge treats a
-            variant-prefixed class as its own group, so an unprefixed `w-fit` does not
-            override it — the dialog stretched full-width on every screen >= 640px.
-            `pt-10` reserves a strip for the built-in close X (absolute right-4 top-4),
-            which would otherwise sit on the artwork and be unreadable on a light image. */}
-        <DialogContent className="w-fit sm:w-fit max-w-[95vw] p-2 pt-10 sm:p-3 sm:pt-10 z-100">
-          <DialogHeader className="sr-only">
-            <DialogTitle>
-              {currentMedia.title ||
-                currentMedia.seo_filename ||
-                t("mediaPreview")}
-            </DialogTitle>
-            <DialogDescription>{t("expand")}</DialogDescription>
-          </DialogHeader>
-          {currentMedia.url &&
-            (currentMedia.media_type === "VIDEO" ? (
-              // No caption track: media is artist-uploaded artwork and the platform stores
-              // no subtitles, so an empty <track> would assert accessibility we don't have.
-              // biome-ignore lint/a11y/useMediaCaption: no caption source exists for uploaded media
-              <video
-                src={currentMedia.url}
-                poster={currentMedia.thumbnail ?? undefined}
-                controls
-                playsInline
-                preload="metadata"
-                aria-label={
-                  currentMedia.seo_alt ||
-                  currentMedia.title ||
-                  t("altFallback", { username })
-                }
-                className="block max-h-[80vh] max-w-[calc(95vw-1.5rem)] w-auto h-auto object-contain"
-              />
-            ) : (
-              <img
-                src={currentMedia.url}
-                alt={
-                  currentMedia.seo_alt ||
-                  currentMedia.title ||
-                  t("altFallback", { username })
-                }
-                className="block max-h-[80vh] max-w-[calc(95vw-1.5rem)] w-auto h-auto object-contain"
-              />
-            ))}
-        </DialogContent>
-      </Dialog>
 
       <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
         <DialogContent className="max-w-md max-h-[300px] z-100">
