@@ -483,7 +483,7 @@ function MediaUploadContent() {
             <FileInput
               multiple
               onChange={handleFileChange}
-              accept={ALLOWED_IMAGE_FILE_TYPES.join(",")}
+              accept={ALLOWED_FILE_TYPES.join(",")}
               className="h-full [&>div]:h-full [&_label]:h-full [&_label]:min-h-0"
               disabled={isMaxReached}
               currentFiles={currentCount}

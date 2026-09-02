@@ -66,6 +66,7 @@ export class CollectionRepository extends BaseRepository {
     'media.url',
     'media.shape',
     'media.aspect_ratio',
+    'media.media_type',
     'media.title as m_title',
     'media.seo_title as m_seo_title',
     'media.seo_alt',
@@ -509,6 +510,7 @@ export class CollectionRepository extends BaseRepository {
           seo_description: row.m_seo_description,
           shape: row.shape,
           aspect_ratio: row.aspect_ratio ?? '1:1',
+          media_type: row.media_type ?? 'IMAGE',
           is_highlight: row.is_highlight
         });
       }
@@ -616,6 +618,7 @@ export class CollectionRepository extends BaseRepository {
         seo_description: row.m_seo_description,
         shape: row.shape,
         aspect_ratio: row.aspect_ratio ?? '1:1',
+        media_type: row.media_type ?? 'IMAGE',
         is_highlight: row.is_highlight
       });
     }

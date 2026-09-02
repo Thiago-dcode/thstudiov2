@@ -9,7 +9,7 @@ export type MediaSchema = {
   description?: string;
   bytes: number;
   thumbnail_bytes:number;
-  url: string;
+  url?: string | null;
   thumbnail?: string;
   is_featured: boolean;
   is_value_pillars: boolean;
@@ -18,7 +18,8 @@ export type MediaSchema = {
   shape?: EnumType<'MEDIA_SHAPE'>;
   aspect_ratio: EnumType<'ASPECT_RATIO'>;
   compression_level?: EnumType<'COMPRESSION_LEVEL'>;
-  extension: string;
+  media_type?: EnumType<'MEDIA_TYPE'> | null;
+  extension?: string | null;
   is_active: boolean;
   status: EnumType<'MEDIA_STATUS'>;
   completed_at?: Date | null;

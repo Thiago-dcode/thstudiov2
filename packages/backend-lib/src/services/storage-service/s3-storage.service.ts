@@ -82,8 +82,12 @@ export class S3StorageService extends StorageService {
     public async getUrl(path: string, config?: { expireIn?: number }): Promise<string> {
         //Resolve CDN
         if (this.config.cdnUrl) {
-
-            return `${this.config.cdnUrl}/${path}`
+            // Percent-encode each segment (never the `/` separators). Keys built before filenames
+            // were slugified can still contain spaces, parentheses or `#`, and interpolating those
+            // raw produced a URL that `<img src>` tolerates but a CSS `url(...)` rejects outright —
+            // taking the whole declaration with it. The presigned branch below already encodes.
+            const encodedPath = path.split('/').map(encodeURIComponent).join('/');
+            return `${this.config.cdnUrl}/${encodedPath}`
         }
         const command = new GetObjectCommand({
             Bucket: this.config.bucket,

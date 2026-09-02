@@ -1,6 +1,7 @@
 "use client";
 
 import type { MediaWithUser } from "@repo/common-lib/types/media";
+import { MediaTypeBadge } from "@repo/ui/components/custom/media-type-badge";
 import { cn } from "@repo/ui/lib/utils";
 import useEmblaCarousel from "embla-carousel-react";
 import NextImage from "next/image";
@@ -59,9 +60,12 @@ export const MediaCarousel = ({ media }: { media: MediaWithUser[] }) => {
                       alt={item.seo_alt || item.title || ""}
                       fill
                       className="object-cover"
-                      sizes="(min-width: 768px)"
+                      // Was `(min-width: 768px)` — a media condition with no length, which is not
+                      // a valid `sizes` entry, so the browser fell back to 100vw everywhere.
+                      sizes="(min-width: 768px) 672px, 100vw"
                     />
                   ) : null}
+                  <MediaTypeBadge mediaType={item.media_type} />
                 </div>
               </div>
             );

@@ -3,7 +3,11 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { MediaRepository } from './media.repository';
 import { CreateMediaRequest } from './requests/create-media.request';
 import { UserExtraDataService } from '../user-extra-data/user-extra-data.service';
-import { CompressService } from '@repo/backend-lib/services/compress-service/base';
+import {
+  CompressService,
+  THUMBNAIL_MAX_EDGE_PX,
+  THUMBNAIL_TARGET_BYTES,
+} from '@repo/backend-lib/services/compress-service/base';
 import { StorageService } from '@repo/backend-lib/services/storage-service/base';
 import { UserService } from '../users/users.service';
 import { AiService } from '@repo/backend-lib/services/ai-service';
@@ -25,6 +29,7 @@ import { UpdateProfileStatusEvent } from '../profile-status/events/update-profil
 import { UpdateMediaRequest } from './requests/update-media.request';
 import { RequestService } from 'src/common/services/request.service';
 import { DEFAULT_COMPRESSION_LVL } from '@repo/common-lib/constants/enums';
+import { MediaHelper } from '@repo/common-lib/utils/media';
 import { MediaModerationException } from 'src/common/exceptions/media-moderation-exception';
 
 @Injectable()
@@ -81,7 +86,11 @@ export class MediaService {
 
     const media = await this.mediaRepository.findById(id);
     if (!media) return null;
-    return await this.helpers.getAsset(media.thumbnail)
+    const [thumbnail, url] = await Promise.all([this.helpers.getAsset(media.thumbnail), this.helpers.getAsset(media.url)])
+    return {
+      thumbnail,
+      url
+    }
   }
 
   /** Remove a single trailing file extension while keeping any forward-slash S3 dirs intact. */
@@ -91,22 +100,43 @@ export class MediaService {
 
   /**
    * Storage keys for a media upload. Filename is derived from the upload only
-   * (clients cannot set seo_filename; AI may overwrite it later).
+   * (clients cannot set seo_filename; AI may overwrite it later) and is slugified, because the
+   * key is interpolated straight into a CDN URL.
    * The per-media `mediaPublicId` folder isolates each media so two uploads (or an AI
    * rename) that resolve to the same filename never collide within the same user.
+   * GIFs keep `.gif` so S3 ContentType matches the bytes; still images are stored as WebP.
+   * The thumbnail is always WebP whatever the media is — see {@link MediaHelper.thumbnailPath}.
    */
   private buildMediaStoragePaths(
     userPublicId: string,
     mediaPublicId: string,
     originalName: string,
+    mediaType: Media['media_type'],
   ) {
-    const filename = this.stripExtension(originalName);
-    const basePath = `users/${userPublicId}/media/${mediaPublicId}/${filename}`;
+    const filename = MediaHelper.storageFilename(
+      this.stripExtension(originalName),
+      mediaPublicId,
+    );
+    const extension = MediaHelper.outputExtension(mediaType);
+    const mediaPath = `users/${userPublicId}/media/${mediaPublicId}/${filename}.${extension}`;
     return {
       filename,
-      mediaPath: `${basePath}.webp`,
-      thumbnailPath: `${basePath}-thumbnail.webp`,
+      extension,
+      mediaPath,
+      thumbnailPath: MediaHelper.thumbnailPath(mediaPath),
     };
+  }
+
+  private optimizeUpload(
+    file: Express.Multer.File,
+    targetSize: number,
+    quality: number,
+    mediaType: Media['media_type'],
+  ) {
+    if (mediaType === 'GIF') {
+      return this.compressService.optimizeGif(file, targetSize, quality);
+    }
+    return this.compressService.optimizeImageToWebp(file, targetSize, quality);
   }
 
   private async notifyMediaUpdate(media: Pick<Media, 'id' | 'user_id'>): Promise<void> {
@@ -147,16 +177,26 @@ export class MediaService {
   private async writeOriginalAndEnqueue({
     media,
     file,
-    mediaPath,
+    userPublicId,
     generate_metadata,
   }: {
     media: Media;
     file: Express.Multer.File;
-    mediaPath: string;
+    userPublicId: string;
     generate_metadata?: boolean;
   }): Promise<void> {
     const log = this.logger.name('create');
     try {
+      const mediaType =
+        media.media_type ??
+        MediaHelper.getMediaTypeFromMimeType(file.mimetype) ??
+        'IMAGE';
+      const { extension, mediaPath } = this.buildMediaStoragePaths(
+        userPublicId,
+        media.public_id,
+        file.originalname,
+        mediaType,
+      );
       log.info('Writing original file to storage', {
         media_id: media.id,
         path: mediaPath,
@@ -172,8 +212,15 @@ export class MediaService {
         return;
       }
 
+      // Persist the storage key only after the object exists. Do not spread the
+      // placeholder row: `extension` is varchar(5), and the job must see `url`.
+      const stored = await this.mediaRepository.updateById(media.id, {
+        url: mediaPath,
+        extension,
+      });
+      await this.notifyMediaUpdate(stored);
       await QueueHelper.createProcessMediaJob({
-        media,
+        media: stored,
         generate_metadata,
       });
       log.info('Enqueued process-media job', {
@@ -192,19 +239,27 @@ export class MediaService {
 
   public async create({ media, ...data }: CreateMediaRequest) {
     try {
+      const mediaType = MediaHelper.getMediaTypeFromMimeType(media.mimetype) ?? 'IMAGE';
 
-      // 1. Generate thumbnail first (for moderation check)
-      const thumbnail = await this.compressService.optimizeImageToWebp(media, 200 * 1024, 90);
+      // 1. Generate thumbnail first (for moderation check). Always WebP, and always the
+      // listing-sized raster — for a GIF this is the static poster frame.
+      const thumbnail = await this.compressService.optimizeImageToWebp(
+        media,
+        THUMBNAIL_TARGET_BYTES,
+        80,
+        THUMBNAIL_MAX_EDGE_PX,
+      );
 
       // 2. Resolve user & paths so we can store the thumbnail
       const [user, mediaPublicId] = await Promise.all([
         this.userService.findOne(data.user_id),
         generateUUID(),
       ]);
-      const { filename, mediaPath, thumbnailPath } = this.buildMediaStoragePaths(
+      const { filename, extension, mediaPath, thumbnailPath } = this.buildMediaStoragePaths(
         user.public_id,
         mediaPublicId,
         media.originalname,
+        mediaType,
       );
 
       // 3. Store thumbnail
@@ -230,7 +285,7 @@ export class MediaService {
         minSize: 300 * 1024,
         maxSize: mbToBytes(5),
       });
-      const mediaCompressed = await this.compressService.optimizeImageToWebp(media, targetSize, 100);
+      const mediaCompressed = await this.optimizeUpload(media, targetSize, 100, mediaType);
 
       // 7. Enforce user limits (thumbnail + media)
       const totalSize = mediaCompressed.size + thumbnail.size;
@@ -262,7 +317,7 @@ export class MediaService {
         public_id: mediaPublicId,
         bytes: mediaFile.size,
         thumbnail_bytes: thumbnailFile.size,
-        extension: 'webp',
+        extension,
         url: mediaPath,
         thumbnail: thumbnailPath,
         seo_filename: filename,
@@ -272,6 +327,7 @@ export class MediaService {
         is_highlight: false,
         shape: await this.compressService.getImageShape(mediaFile.buffer),
         aspect_ratio: await this.compressService.getImageAspectRatio(mediaFile.buffer),
+        media_type: mediaType,
         is_active: true,
         seo_title: data.seo_title || data.title || defaultSeoText,
         seo_alt: data.seo_alt || data.title || defaultSeoText,
@@ -315,18 +371,12 @@ export class MediaService {
       generateUUID(),
     ]);
 
-    const { filename, mediaPath, thumbnailPath } = this.buildMediaStoragePaths(
-      user.public_id,
+    const mediaType = MediaHelper.getMediaTypeFromMimeType(mediaFile.mimetype) ?? 'IMAGE';
+    // Same slug the storage key will use, so `seo_filename` and the stored object stay aligned.
+    const filename = MediaHelper.storageFilename(
+      this.stripExtension(mediaFile.originalname),
       mediaPublicId,
-      mediaFile.originalname,
     );
-    log.info('Resolved storage paths', {
-      user_id: user.id,
-      public_id: mediaPublicId,
-      media_path: mediaPath,
-      thumbnail_path: thumbnailPath,
-    });
-
     const defaultSeoText = `${user.username} photo`;
     const compressionLevel = data.compression_level || DEFAULT_COMPRESSION_LVL;
 
@@ -337,14 +387,15 @@ export class MediaService {
       public_id: mediaPublicId,
       bytes: 0,
       thumbnail_bytes: 0,
-      extension: 'webp',
-      url: mediaPath,
+      extension: null,
+      url: null,
       seo_filename: filename,
       blocked_at: null,
       is_featured: false,
       is_value_pillars: false,
       is_highlight: false,
       aspect_ratio: '1:1',
+      media_type: mediaType,
       is_active: true,
       seo_title: data.seo_title || data.title || defaultSeoText,
       seo_alt: data.seo_alt || data.title || defaultSeoText,
@@ -372,7 +423,7 @@ export class MediaService {
     void this.writeOriginalAndEnqueue({
       media: mediaModel,
       file: mediaFile,
-      mediaPath,
+      userPublicId: user.public_id,
       generate_metadata,
     });
     return mediaModel;
@@ -433,12 +484,26 @@ export class MediaService {
     // On the FIRST SEO generation, rename the stored objects so their S3 keys become keyword-rich.
     // Both the media file and its thumbnail are moved so they stay aligned (as `create` produces them).
     if (data.seo_filename && !media.seo_generated_at && media.url) {
-      const newFilename = this.stripExtension(data.seo_filename);
+      // Slugified like an upload: the prompt asks the model for a URL-safe filename but nothing
+      // makes it comply, and this value goes straight into an S3 key.
+      const newFilename = MediaHelper.storageFilename(
+        this.stripExtension(data.seo_filename),
+        media.public_id,
+      );
       const dir = media.url.slice(0, media.url.lastIndexOf('/'));
       const currentFilename = this.stripExtension(media.url.slice(dir.length + 1));
       if (newFilename && newFilename !== currentFilename) {
-        const newUrl = `${dir}/${newFilename}.webp`;
-        const newThumbnail = media.thumbnail ? `${dir}/${newFilename}-thumbnail.webp` : media.thumbnail;
+        const extension = media.extension || MediaHelper.outputExtension(media.media_type);
+        const newUrl = `${dir}/${newFilename}.${extension}`;
+        // Rename only — the object is moved, not re-encoded, so it keeps whatever format it was
+        // written in. Rows created before thumbnails were standardised on WebP may still hold a
+        // `.gif` thumbnail, and moving that under a `.webp` key would mislabel its ContentType.
+        const newThumbnail = media.thumbnail
+          ? MediaHelper.withExtension(
+            MediaHelper.thumbnailPath(newUrl),
+            media.thumbnail.split('.').pop() || 'webp',
+          )
+          : media.thumbnail;
         await Promise.all([
           this.helpers.moveAsset(media.url, newUrl),
           media.thumbnail && newThumbnail

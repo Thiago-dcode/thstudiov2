@@ -42,6 +42,7 @@ export type CollectionFullSchema = CollectionCompactSchema & {
   public_id: string;
   shape?: EnumType<'MEDIA_SHAPE'> | null;
   aspect_ratio?: EnumType<'ASPECT_RATIO'> | null;
+  media_type?: EnumType<'MEDIA_TYPE'> | null;
   m_seo_title?: string | null;            // COLLISION: collections.seo_title
   m_seo_description?: string | null;      // COLLISION: collections.seo_description
   seo_alt?: string | null;                // media only — no collision

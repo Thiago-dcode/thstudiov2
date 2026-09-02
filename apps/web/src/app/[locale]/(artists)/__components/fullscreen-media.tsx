@@ -16,6 +16,7 @@ interface FullscreenMediaProps {
   alt: string;
   title?: string;
   aspectRatio?: EnumType<"ASPECT_RATIO">;
+  mediaType?: EnumType<"MEDIA_TYPE"> | null;
 }
 
 export const FullscreenMedia = ({
@@ -23,6 +24,7 @@ export const FullscreenMedia = ({
   alt,
   title,
   aspectRatio,
+  mediaType,
 }: FullscreenMediaProps) => {
   const { ref, fullscreen, toggleFullscreen } = useFullscreen<HTMLElement>();
   const t = useTranslations("artists.fullscreen");
@@ -76,6 +78,11 @@ export const FullscreenMedia = ({
         width={width}
         height={height}
         priority
+        // This is the one page whose whole point is the media, so an animation has to play here.
+        // The optimizer cannot resize an animation, and streaming a multi-megabyte GIF through it
+        // buys nothing while occupying the server; going straight to the CDN skips both problems.
+        // `unoptimized` changes only the URL — `width`/`height` still hold the layout, so no CLS.
+        unoptimized={mediaType === "GIF"}
         sizes="(max-width: 768px) 100vw, 90vw"
         className={cn(
           "object-contain select-none",

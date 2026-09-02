@@ -1970,6 +1970,13 @@ const messages = {
       search: {
         placeholder: "Buscar contenido…",
         all: "Todos",
+        shapeGroupLabel: "Formato",
+        typeGroupLabel: "Tipo",
+      },
+      mediaType: {
+        IMAGE: "Foto",
+        GIF: "GIF",
+        VIDEO: "Vídeo",
       },
       drawer: {
         title: "Añadir contenido",
@@ -2110,6 +2117,13 @@ const messages = {
         seoDescription: "Descripción generada",
         viewMedia: "Ver en archivos",
         failedFallback: "Falló sin motivo informado.",
+        mediaTypeLabel: "Tipo",
+        mediaType: {
+          IMAGE: "Foto",
+          GIF: "GIF",
+          VIDEO: "Vídeo",
+        },
+        statusWithType: "{status} · {type}",
         status: {
           UPLOADING: "Subiendo…",
           UPDATING: "Actualizando…",

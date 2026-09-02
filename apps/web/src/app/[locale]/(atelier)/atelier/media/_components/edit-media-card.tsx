@@ -4,6 +4,7 @@ import type { Media, UpdateMediaInput } from "@repo/common-lib/types/media";
 import { bytesToMB } from "@repo/common-lib/utils/bytes";
 import { MediaHelper } from "@repo/common-lib/utils/media";
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
+import { MediaTypeBadge } from "@repo/ui/components/custom/media-type-badge";
 import { Button } from "@repo/ui/components/shadcn/button";
 import {
   Dialog,
@@ -52,6 +53,8 @@ type Tabs = MediaTabs;
 
 export function EditMediaCard({ media, username }: MediaCardProps) {
   const t = useTranslations("atelier.media.card");
+  // One block shared with the search filter, so a card and its filter chip always read the same.
+  const tMedia = useTranslations("atelier.media");
   const [currentMedia, setCurrentMedia] = useState(media);
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState<MediaTabs>("overall");
@@ -492,6 +495,17 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
               {currentMedia.status === "FAILED" && (
                 <FailedMediaOverlay reason={currentMedia.failed_reason} />
               )}
+              {/* Stated on every card, not just animations: the atelier is where a mixed
+                  library gets managed, and the tile itself only ever shows a still poster. */}
+              <MediaTypeBadge
+                mediaType={currentMedia.media_type}
+                label={
+                  currentMedia.media_type
+                    ? tMedia(`mediaType.${currentMedia.media_type}`)
+                    : undefined
+                }
+                showForAllTypes
+              />
               {/* Loading Overlay */}
               {isPending && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">

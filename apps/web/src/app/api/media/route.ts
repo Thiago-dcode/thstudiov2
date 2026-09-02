@@ -1,11 +1,11 @@
 import {
   ALLOWED_IMAGE_FILE_TYPES,
-  MAX_IMAGE_UPLOAD_BYTES,
   MAX_IMAGE_UPLOAD_MB,
 } from "@repo/common-lib/constants/limits";
 import type { MimeTypes } from "@repo/common-lib/types/general";
 import type { Media } from "@repo/common-lib/types/media";
 import { trimValues } from "@repo/common-lib/utils/cleanObj";
+import { MediaHelper } from "@repo/common-lib/utils/media";
 import { revalidateTag } from "next/cache";
 import { type NextRequest, NextResponse } from "next/server";
 import { getTranslations } from "next-intl/server";
@@ -39,7 +39,29 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    if (file.size > MAX_IMAGE_UPLOAD_BYTES) {
+    if (!MediaHelper.getMediaTypeFromMimeType(file.type)) {
+      return NextResponse.json({
+        data: null,
+        errors: [],
+        inputErrors: {
+          file: t("validation.file.invalidType", { field: t("fields.file") }),
+        },
+      });
+    }
+
+    if (
+      !ALLOWED_IMAGE_FILE_TYPES.includes(file.type.toLowerCase() as MimeTypes)
+    ) {
+      return NextResponse.json({
+        data: null,
+        errors: [],
+        inputErrors: {
+          file: t("validation.file.invalidType", { field: t("fields.file") }),
+        },
+      });
+    }
+
+    if (!MediaHelper.allowedFileSize(file)) {
       return NextResponse.json({
         data: null,
         errors: [],
@@ -48,16 +70,6 @@ export async function POST(request: NextRequest) {
             field: t("fields.file"),
             mb: MAX_IMAGE_UPLOAD_MB,
           }),
-        },
-      });
-    }
-
-    if (!ALLOWED_IMAGE_FILE_TYPES.includes(file.type as MimeTypes)) {
-      return NextResponse.json({
-        data: null,
-        errors: [],
-        inputErrors: {
-          file: t("validation.file.invalidType", { field: t("fields.file") }),
         },
       });
     }

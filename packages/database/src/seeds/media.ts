@@ -16,6 +16,10 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import {
+  THUMBNAIL_MAX_EDGE_PX,
+  THUMBNAIL_TARGET_BYTES,
+} from '@repo/backend-lib/services/compress-service/base';
 import { FactoryCompressService } from '@repo/backend-lib/services/compress-service/factory';
 import { FactoryStorageService } from '@repo/backend-lib/services/storage-service/factory';
 import type { S3StorageConfig } from '@repo/backend-lib/services/storage-service/types';
@@ -30,6 +34,7 @@ import { generateUUID } from '@repo/common-lib/utils/generate-uuid';
 import { mbToBytes } from '@repo/common-lib/utils/bytes';
 import { cleanObj } from '@repo/common-lib/utils/cleanObj';
 import type { CreateMediaInput } from '@repo/common-lib/types/media';
+import { MediaHelper } from '@repo/common-lib/utils/media';
 import { Query } from '../lib/facades';
 
 const IMAGE_EXT = new Set(['.jpg', '.jpeg', '.png', '.webp', '.gif']);
@@ -150,16 +155,24 @@ async function seedMediaAssetsForUser(user: MediaSeedTargetUser): Promise<void> 
     const sourceFile = multerLike(buffer, name, sourceMime);
 
     const mediaPublicId = await generateUUID();
-    const baseName = path.parse(name).name;
-    const basePath = `users/${user.public_id}/media/${mediaPublicId}/${baseName}`;
-    const thumbnailPath = `${basePath}-thumbnail.webp`;
+    const mediaType = MediaHelper.getMediaTypeFromMimeType(sourceMime) ?? 'IMAGE';
+    const baseName = MediaHelper.storageFilename(
+      path.parse(name).name,
+      mediaPublicId,
+    );
+    // Mirrors the API/worker layout: the media keeps its own format, the thumbnail is always
+    // a static WebP poster.
+    const extension = MediaHelper.outputExtension(mediaType);
+    const mediaPath = `users/${user.public_id}/media/${mediaPublicId}/${baseName}.${extension}`;
+    const thumbnailPath = MediaHelper.thumbnailPath(mediaPath);
 
     const thumbnail = await compressService.optimizeImageToWebp(
       sourceFile as Parameters<
         typeof compressService.optimizeImageToWebp
       >[0],
-      100 * 1024,
+      THUMBNAIL_TARGET_BYTES,
       80,
+      THUMBNAIL_MAX_EDGE_PX,
     );
     const thumbnailFile = multerLike(
       thumbnail.buffer,
@@ -178,18 +191,22 @@ async function seedMediaAssetsForUser(user: MediaSeedTargetUser): Promise<void> 
       minSize: 300 * 1024,
       maxSize: mbToBytes(5),
     });
-    const mediaCompressed = await compressService.optimizeImageToWebp(
+    // A GIF fixture has to stay a GIF: seeding it as WebP produced a row claiming
+    // `media_type: 'GIF'` whose stored object was a single static frame.
+    const optimizeMedia = mediaType === 'GIF'
+      ? compressService.optimizeGif.bind(compressService)
+      : compressService.optimizeImageToWebp.bind(compressService);
+    const mediaCompressed = await optimizeMedia(
       sourceFile as Parameters<
         typeof compressService.optimizeImageToWebp
       >[0],
       targetSize,
       100,
     );
-    const mediaPath = `${basePath}.webp`;
     const mediaFile = multerLike(
       mediaCompressed.buffer,
       mediaCompressed.filename,
-      'image/webp',
+      mediaType === 'GIF' ? 'image/gif' : 'image/webp',
     );
     await storageService.write(
       mediaFile as Parameters<typeof storageService.write>[0],
@@ -202,7 +219,7 @@ async function seedMediaAssetsForUser(user: MediaSeedTargetUser): Promise<void> 
       public_id: mediaPublicId,
       bytes: mediaFile.size,
       thumbnail_bytes: thumbnailFile.size,
-      extension: 'webp',
+      extension,
       url: mediaPath,
       thumbnail: thumbnailPath,
       seo_filename: baseName,
@@ -212,6 +229,7 @@ async function seedMediaAssetsForUser(user: MediaSeedTargetUser): Promise<void> 
       is_highlight: false,
       shape: await compressService.getImageShape(mediaFile.buffer),
       aspect_ratio: await compressService.getImageAspectRatio(mediaFile.buffer),
+      media_type: mediaType,
       is_active: true,
       seo_title: defaultSeoText,
       seo_alt: defaultSeoText,

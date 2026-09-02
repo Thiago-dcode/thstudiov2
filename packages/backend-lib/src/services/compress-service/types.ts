@@ -13,3 +13,9 @@ export type GetSizeCompressedInput = {
     maxSize?: number;
 };
 
+export type CompressionOutput = {
+    filename: string,
+    size: number,
+    buffer: Buffer
+}
+

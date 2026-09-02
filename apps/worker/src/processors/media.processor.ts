@@ -7,7 +7,11 @@ import { AiService } from "@repo/backend-lib/services/ai-service";
 import { FactoryLLMService } from "@repo/backend-lib/services/llm-service/factory";
 import { openAiLLMConfig } from "@repo/backend-lib/config/llm";
 import { FactoryLogService, LogService } from "@repo/backend-lib/services/log-service";
-import { CompressService } from '@repo/backend-lib/services/compress-service/base';
+import {
+    CompressService,
+    THUMBNAIL_MAX_EDGE_PX,
+    THUMBNAIL_TARGET_BYTES,
+} from '@repo/backend-lib/services/compress-service/base';
 import { FactoryCompressService } from '@repo/backend-lib/services/compress-service/factory';
 import { Media, MediaJobDto } from "@repo/common-lib/types/media";
 import { MediaRepository } from "@repo/database/repositories/media";
@@ -128,14 +132,30 @@ export class MediaProcessor {
         return null;
     }
 
-    /** `{base}.webp` → `{base}-thumbnail.webp` — aligned with MediaService.buildMediaStoragePaths. */
-    private resolveThumbnailPath(mediaUrl: string): string {
-        return mediaUrl.replace(/\.webp$/, '-thumbnail.webp');
+    private optimize(
+        mediaType: Media['media_type'],
+        buffer: Buffer,
+        targetSize: number,
+        quality: number,
+    ) {
+        if (mediaType === 'GIF') {
+            return this.compressService.optimizeGif(buffer, targetSize, quality);
+        }
+        return this.compressService.optimizeImageToWebp(buffer, targetSize, quality);
     }
 
     async processMedia() {
         const log = this.logger.name('create');
         const { media, generate_metadata }: MediaJobDto = this.job.data;
+        const extension = MediaHelper.outputExtension(media.media_type);
+        const sourcePath = media.url;
+        if (!sourcePath) {
+            await this.markFailed(media, 'Media has no storage path', log);
+            return;
+        }
+        const mediaPath = MediaHelper.withExtension(sourcePath, extension);
+        const thumbnailPath = MediaHelper.thumbnailPath(mediaPath);
+        const deletePaths = [...new Set([sourcePath, mediaPath, thumbnailPath])];
 
         try {
             log.info('Process media job', {
@@ -167,12 +187,20 @@ export class MediaProcessor {
             log.info('Starting compression', {
                 media_id: media.id,
                 compression_level: media.compression_level,
+                media_type: media.media_type,
                 driver: this.compressService.config.driver,
             });
 
-            const buffer = await this.storageService.getBuffer(media.url);
-            const thumbnailPath = this.resolveThumbnailPath(media.url);
-            const thumbnail = await this.compressService.optimizeImageToWebp(buffer, 200 * 1024, 90);
+            const buffer = await this.storageService.getBuffer(sourcePath);
+
+            // Always a static WebP, whatever the media is. A GIF thumbnail would be a second
+            // animated GIF — megabytes per grid tile, for a poster frame that costs ~20KB here.
+            const thumbnail = await this.compressService.optimizeImageToWebp(
+                buffer,
+                THUMBNAIL_TARGET_BYTES,
+                80,
+                THUMBNAIL_MAX_EDGE_PX,
+            );
             log.info('Thumbnail compressed', {
                 media_id: media.id,
                 thumbnail_bytes: thumbnail.size,
@@ -185,12 +213,22 @@ export class MediaProcessor {
                 minSize: 300 * 1024,
                 maxSize: mbToBytes(5),
             });
-            const mediaCompressed = await this.compressService.optimizeImageToWebp(buffer, targetSize, 100);
+            const mediaCompressed = await this.optimize(media.media_type, buffer, targetSize, 100);
             log.info('Media compressed', {
                 media_id: media.id,
                 media_bytes: mediaCompressed.size,
                 target_size: targetSize,
             });
+            if (mediaCompressed.size > targetSize) {
+                // Not a failure — the encoder gave what it could. Worth surfacing because the
+                // difference is charged against the user's storage quota below.
+                log.warn('Compressed media is still above its target size', {
+                    media_id: media.id,
+                    media_type: media.media_type,
+                    media_bytes: mediaCompressed.size,
+                    target_size: targetSize,
+                });
+            }
 
             const totalSize = mediaCompressed.size + thumbnail.size;
             const limitReason = await this.checkUserLimits(
@@ -200,21 +238,25 @@ export class MediaProcessor {
             );
             if (limitReason) {
                 await this.markFailed(media, limitReason, log, {
-                    deletePaths: [media.url],
+                    deletePaths: [sourcePath],
                 });
                 return;
             }
 
             const [thumbnailWriteOk, mediaWriteOk] = await Promise.all([
                 this.storageService.write(thumbnail.buffer, thumbnailPath),
-                this.storageService.write(mediaCompressed.buffer, media.url),
+                this.storageService.write(mediaCompressed.buffer, mediaPath),
             ]);
 
             if (!thumbnailWriteOk || !mediaWriteOk) {
                 await this.markFailed(media, 'Storage write could not complete', log, {
-                    deletePaths: [media.url, thumbnailPath],
+                    deletePaths,
                 });
                 return;
+            }
+
+            if (sourcePath !== mediaPath) {
+                await this.storageService.delete(sourcePath);
             }
 
             const [shape, aspect_ratio] = await Promise.all([
@@ -229,6 +271,8 @@ export class MediaProcessor {
                 bytes: mediaCompressed.size,
                 thumbnail_bytes: thumbnail.size,
                 thumbnail: thumbnailPath,
+                url: mediaPath,
+                extension,
                 shape,
                 aspect_ratio,
                 status: 'COMPLETED',
@@ -238,7 +282,7 @@ export class MediaProcessor {
 
             await Promise.all([
                 QueueHelper.createStorageRequestJob({
-                    path: media.url,
+                    path: mediaPath,
                     bytes: mediaCompressed.size,
                     user_id: media.user_id,
                 }),
@@ -261,6 +305,7 @@ export class MediaProcessor {
                 bytes: mediaCompressed.size,
                 thumbnail_bytes: thumbnail.size,
                 thumbnail_path: thumbnailPath,
+                media_path: mediaPath,
             });
 
             if (generate_metadata) {
@@ -291,9 +336,8 @@ export class MediaProcessor {
             const message =
                 error instanceof Error ? error.message : 'Media processing failed';
             log.error(message, error);
-            const thumbnailPath = this.resolveThumbnailPath(media.url);
             await this.markFailed(media, message, log, {
-                deletePaths: [media.url, thumbnailPath],
+                deletePaths,
             });
         }
     }

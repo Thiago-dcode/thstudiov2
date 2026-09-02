@@ -1970,6 +1970,13 @@ const messages = {
       search: {
         placeholder: "Buscar mídia…",
         all: "Todos",
+        shapeGroupLabel: "Formato",
+        typeGroupLabel: "Tipo",
+      },
+      mediaType: {
+        IMAGE: "Foto",
+        GIF: "GIF",
+        VIDEO: "Vídeo",
       },
       drawer: {
         title: "Adicionar mídia",
@@ -2109,6 +2116,13 @@ const messages = {
         seoDescription: "Descrição gerada",
         viewMedia: "Ver nos arquivos",
         failedFallback: "Falhou sem motivo informado.",
+        mediaTypeLabel: "Tipo",
+        mediaType: {
+          IMAGE: "Foto",
+          GIF: "GIF",
+          VIDEO: "Vídeo",
+        },
+        statusWithType: "{status} · {type}",
         status: {
           UPLOADING: "Enviando…",
           UPDATING: "Atualizando…",

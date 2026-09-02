@@ -1956,6 +1956,14 @@ const messages = {
       search: {
         placeholder: "Search media…",
         all: "All",
+        shapeGroupLabel: "Shape",
+        typeGroupLabel: "Type",
+      },
+      /** Shared by the card badge and the type filter so both read the same. */
+      mediaType: {
+        IMAGE: "Photo",
+        GIF: "GIF",
+        VIDEO: "Video",
       },
       drawer: {
         title: "Add media",
@@ -2095,6 +2103,13 @@ const messages = {
         seoDescription: "Generated description",
         viewMedia: "View in media",
         failedFallback: "It failed without a reported reason.",
+        mediaTypeLabel: "Type",
+        mediaType: {
+          IMAGE: "Photo",
+          GIF: "GIF",
+          VIDEO: "Video",
+        },
+        statusWithType: "{status} · {type}",
         status: {
           UPLOADING: "Uploading…",
           UPDATING: "Updating…",

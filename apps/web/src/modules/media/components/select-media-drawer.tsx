@@ -3,6 +3,7 @@ import { ENUMS } from "@repo/common-lib/constants/enums";
 import { ALLOWED_IMAGE_FILE_TYPES } from "@repo/common-lib/constants/limits";
 import type { Media } from "@repo/common-lib/types/media";
 import { MediaHelper } from "@repo/common-lib/utils/media";
+import { MediaTypeBadge } from "@repo/ui/components/custom/media-type-badge";
 import { Button } from "@repo/ui/components/shadcn/button";
 import {
   Drawer,
@@ -246,13 +247,11 @@ export const SelectMediaDrawer = ({
                         aria-label={m.failed_reason || t("failedAria")}
                       >
                         {m.thumbnail ? (
-                          <div
-                            className="absolute inset-0 opacity-40"
-                            style={{
-                              backgroundImage: `url(${m.thumbnail})`,
-                              backgroundSize: "cover",
-                              backgroundPosition: "center",
-                            }}
+                          <img
+                            src={m.thumbnail}
+                            alt=""
+                            aria-hidden
+                            className="absolute inset-0 size-full object-cover opacity-40"
                           />
                         ) : null}
                         <FailedMediaOverlay reason={m.failed_reason} />
@@ -279,13 +278,6 @@ export const SelectMediaDrawer = ({
                         isLoading && "cursor-not-allowed",
                         isSelected ? "opacity-60 scale-95" : "opacity-100",
                       )}
-                      style={{
-                        backgroundImage: m.thumbnail
-                          ? `url(${m.thumbnail})`
-                          : undefined,
-                        backgroundSize: "cover",
-                        backgroundPosition: "center",
-                      }}
                       title={
                         isLoading
                           ? tCommon("loading")
@@ -294,6 +286,19 @@ export const SelectMediaDrawer = ({
                             : t("addToPortfolio")
                       }
                     >
+                      {/* An <img>, not a CSS `background-image`. Storage keys can contain
+                          characters (spaces, parentheses) that are legal in a `src` but are an
+                          invalid token inside `url(...)`, where they take the whole declaration
+                          down and leave the tile blank. */}
+                      {m.thumbnail ? (
+                        <img
+                          src={m.thumbnail}
+                          alt=""
+                          aria-hidden
+                          className="absolute inset-0 size-full object-cover"
+                        />
+                      ) : null}
+
                       {/* Hover overlay */}
                       <div className="absolute inset-0 bg-black/0 transition-colors duration-200 group-hover:bg-black/20 group-disabled:group-hover:bg-black/0" />
 
@@ -303,6 +308,9 @@ export const SelectMediaDrawer = ({
                           {m.shape}
                         </div>
                       ) : null}
+
+                      {/* Animated media badge — the tile itself shows the static poster */}
+                      <MediaTypeBadge mediaType={m.media_type} />
 
                       {/* Loading overlay */}
                       {isLoading ? (

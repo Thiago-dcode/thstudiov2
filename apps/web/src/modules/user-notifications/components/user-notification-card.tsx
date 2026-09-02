@@ -54,6 +54,11 @@ const isInFlight = (status: Media["status"]) =>
 
 const useCardTranslations = () => useTranslations("atelier.notifications");
 
+const mediaTypeCopy = (
+  t: ReturnType<typeof useCardTranslations>,
+  mediaType: Media["media_type"],
+) => (mediaType ? t(`card.mediaType.${mediaType}`) : null);
+
 /** Shown in place of a payload whose entity was deleted after the notification was written. */
 const Unavailable = () => {
   const t = useCardTranslations();
@@ -87,6 +92,8 @@ const MediaThumbnail = ({
     // that will never have a preview at all. Rendered as a span: the preview sits inside the
     // card's button, whose content model only allows phrasing elements.
     const inFlight = isInFlight(payload.status);
+    const typeLabel = mediaTypeCopy(t, payload.media_type);
+    const statusLabel = t(`card.status.${payload.status}`);
     return (
       <span
         className={cn(
@@ -95,7 +102,14 @@ const MediaThumbnail = ({
         )}
         role="img"
         aria-label={
-          inFlight ? t(`card.status.${payload.status}`) : t("card.noThumbnail")
+          inFlight
+            ? typeLabel
+              ? t("card.statusWithType", {
+                  status: statusLabel,
+                  type: typeLabel,
+                })
+              : statusLabel
+            : t("card.noThumbnail")
         }
       >
         {inFlight ? (
@@ -124,17 +138,36 @@ const MediaThumbnail = ({
  * because that is the whole point of the notification. Exhaustive over `MEDIA_STATUS`, so a new
  * status has to be given a line here (TS2366) before this compiles.
  */
+const MediaTypeHint = ({ mediaType }: { mediaType: Media["media_type"] }) => {
+  const t = useCardTranslations();
+  const typeLabel = mediaTypeCopy(t, mediaType);
+  if (!typeLabel) return null;
+
+  return (
+    <>
+      <span className="text-text-muted" aria-hidden>
+        ·
+      </span>
+      <span className="uppercase tracking-[0.08em] shrink-0 text-text-muted">
+        {typeLabel}
+      </span>
+    </>
+  );
+};
+
 const MediaStatusLine = ({ payload }: { payload: Media }): ReactElement => {
   const t = useCardTranslations();
+  const typeHint = <MediaTypeHint mediaType={payload.media_type} />;
 
   switch (payload.status) {
     case "UPLOADING":
     case "UPDATING":
     case "GENERATING_METADATA":
       return (
-        <span className="flex items-center gap-1.5 text-xs text-text-muted font-normal">
+        <span className="flex items-center gap-1.5 text-xs text-text-muted font-normal min-w-0">
           <Loader2 className="size-3 animate-spin shrink-0" aria-hidden />
           {t(`card.status.${payload.status}`)}
+          {typeHint}
         </span>
       );
     case "FAILED":
@@ -144,13 +177,15 @@ const MediaStatusLine = ({ payload }: { payload: Media }): ReactElement => {
           <span className="truncate">
             {payload.failed_reason || t("card.status.FAILED")}
           </span>
+          {typeHint}
         </span>
       );
     case "COMPLETED":
       return (
-        <span className="flex items-center gap-1.5 text-xs text-success font-normal">
+        <span className="flex items-center gap-1.5 text-xs text-success font-normal min-w-0">
           <CircleCheck className="size-3 shrink-0" aria-hidden />
           {t("card.status.COMPLETED")}
+          {typeHint}
         </span>
       );
   }
@@ -213,6 +248,11 @@ const MediaDetails = ({
       <Field label={t("card.title")}>
         {payload.title || t("card.untitledMedia")}
       </Field>
+      {payload.media_type && (
+        <Field label={t("card.mediaTypeLabel")}>
+          {mediaTypeCopy(t, payload.media_type)}
+        </Field>
+      )}
       <Field label={t("card.publicId")}>
         <span className="font-mono text-xs">{payload.public_id}</span>
       </Field>

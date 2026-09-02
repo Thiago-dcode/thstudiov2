@@ -1,7 +1,17 @@
 import { EnumType } from "@repo/common-lib/constants/enums";
 import { resolveAspectRatio } from "@repo/common-lib/utils/aspect-ratio";
-import { CompressConfig, GetSizeCompressedInput } from "./types";
+import { CompressConfig, CompressionOutput, GetSizeCompressedInput } from "./types";
 import { imageSize } from 'image-size'
+
+/**
+ * Thumbnails are listing-sized, not display-sized. They used to be produced at the same
+ * `MAX_IMAGE_EDGE_PX` as the full media and merely squeezed toward a byte target, so a
+ * "thumbnail" could be a 4000px asset. Nothing in the app renders a thumbnail wider than a
+ * grid column.
+ */
+export const THUMBNAIL_MAX_EDGE_PX = 800;
+export const THUMBNAIL_TARGET_BYTES = 120 * 1024;
+
 export abstract class CompressService {
   public readonly config: CompressConfig;
   constructor(config: CompressConfig) {
@@ -73,14 +83,26 @@ export abstract class CompressService {
   /**
    * Optimizes an image to WebP with specified quality and size constraints.
    * Accepts a Multer upload (API) or a raw Buffer (worker / S3 download).
+   *
+   * Decodes a single frame, so passing an animated GIF here yields the static poster frame —
+   * which is exactly how media thumbnails are produced.
+   *
+   * @param maxEdgePx longest edge kept, defaulting to the full-media cap. Pass
+   * {@link THUMBNAIL_MAX_EDGE_PX} for thumbnails.
    */
   abstract optimizeImageToWebp(
     file: Express.Multer.File | Buffer,
     targetSize: number,
     quality: number,
-  ): Promise<{
-    filename: string,
-    size: number,
-    buffer: Buffer
-  }>
+    maxEdgePx?: number,
+  ): Promise<CompressionOutput>
+
+  /** Re-encodes as GIF, preserving every frame. @param maxEdgePx longest edge kept. */
+  abstract optimizeGif(
+    file: Express.Multer.File | Buffer,
+    targetSize: number,
+    quality: number,
+    maxEdgePx?: number,
+  ): Promise<CompressionOutput>
+
 }

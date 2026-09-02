@@ -107,6 +107,7 @@ export class PortfolioRepository extends BaseRepository {
     'media.url',
     'media.shape',
     'media.aspect_ratio',
+    'media.media_type',
     'media.title as m_title',
     'media.seo_alt',
     'media.seo_filename',
@@ -734,6 +735,7 @@ export class PortfolioRepository extends BaseRepository {
           seo_title: row.m_seo_title,
           shape: row.shape,
           aspect_ratio: row.aspect_ratio ?? '1:1',
+          media_type: row.media_type ?? 'IMAGE',
           is_highlight: row.m_is_highlight ?? false,
         });
       }

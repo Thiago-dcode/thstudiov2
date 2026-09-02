@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -10,18 +9,20 @@ import {
   Post,
   Query,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import { CreateMediaRequest } from './requests/create-media.request';
-import { UpdateMediaRequest } from './requests/update-media.request';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { MediaService } from './media.service';
-import { ModelExistPipe } from 'src/pipes/model-exist.pipe';
-import { IsResourceBlockedPipe } from 'src/pipes/is-resource-blocked.pipe';
+import { MediaTypeGuard } from 'src/common/guards/media-type.guard';
 import { Public } from 'src/common/decorators/public.decorator';
 import { imageUploadOptions } from 'src/common/utils/upload-options';
+import { IsResourceBlockedPipe } from 'src/pipes/is-resource-blocked.pipe';
+import { ModelExistPipe } from 'src/pipes/model-exist.pipe';
 import { IndexMediaRequest } from '../user-media/requests/index-media.request';
+import { MediaService } from './media.service';
+import { CreateMediaRequest } from './requests/create-media.request';
+import { UpdateMediaRequest } from './requests/update-media.request';
 
 @Throttle({
   short: { limit: 50, ttl: 1000 },
@@ -54,28 +55,22 @@ export class MediaController {
   }
 
   @Post()
-  @UseInterceptors(FileInterceptor('file', imageUploadOptions))
+  @UseGuards(MediaTypeGuard)
+  @UseInterceptors(FileInterceptor('file', imageUploadOptions), MediaTypeGuard)
   async create(
     @Body() createMediaRequest: CreateMediaRequest,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    if (!file) {
-      throw new BadRequestException('File is required');
-    }
-
     createMediaRequest.media = file;
     return await this.mediaService.create(createMediaRequest);
   }
   @Post('async')
-  @UseInterceptors(FileInterceptor('file', imageUploadOptions))
+  @UseGuards(MediaTypeGuard)
+  @UseInterceptors(FileInterceptor('file', imageUploadOptions), MediaTypeGuard)
   async createAsync(
     @Body() createMediaRequest: CreateMediaRequest,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    if (!file) {
-      throw new BadRequestException('File is required');
-    }
-
     createMediaRequest.media = file;
     return await this.mediaService.createAsync(createMediaRequest);
   }

@@ -69,6 +69,7 @@ export const MediaPageComponent = async ({
         }
         title={media.title || undefined}
         aspectRatio={media.aspect_ratio}
+        mediaType={media.media_type}
       />
     </Web.Container>
   );

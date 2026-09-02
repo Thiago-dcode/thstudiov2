@@ -65,6 +65,10 @@ export class MediaRepository extends BaseMediaRepository {
       query.where('shape', filters.shape);
     }
 
+    if (filters.media_type) {
+      query.where('media_type', filters.media_type);
+    }
+
     if (typeof filters.is_active === 'boolean') {
       query.where('is_active', filters.is_active);
     }

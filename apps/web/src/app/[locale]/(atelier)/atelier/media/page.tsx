@@ -44,6 +44,17 @@ function parseOptionalShape(
     : undefined;
 }
 
+/** VIDEO is rejected here too — nothing can produce one yet, so it is not a valid filter. */
+function parseOptionalMediaType(
+  value: string | string[] | undefined,
+): EnumType<"MEDIA_TYPE"> | undefined {
+  const s = parseOptionalString(value);
+  if (!s || s === "VIDEO") return undefined;
+  return ENUMS.MEDIA_TYPE.includes(s as EnumType<"MEDIA_TYPE">)
+    ? (s as EnumType<"MEDIA_TYPE">)
+    : undefined;
+}
+
 export default async function MediaAtelierPage({
   searchParams,
 }: {
@@ -60,6 +71,7 @@ export default async function MediaAtelierPage({
   const perPage = Math.min(parseOptionalInt(params.per_page) ?? 25, 50);
   const search = parseOptionalString(params.search);
   const shape = parseOptionalShape(params.shape);
+  const mediaType = parseOptionalMediaType(params.media_type);
 
   const mediaResponse = await usersService.getAllMedia(userAuth.id, {
     page,
@@ -68,6 +80,7 @@ export default async function MediaAtelierPage({
     paginated: true,
     ...(search && { search }),
     ...(shape && { shape }),
+    ...(mediaType && { media_type: mediaType }),
   });
 
   const media = mediaResponse.data || [];
@@ -80,10 +93,11 @@ export default async function MediaAtelierPage({
     if (perPage !== 15) query.per_page = perPage;
     if (search) query.search = search;
     if (shape) query.shape = shape;
+    if (mediaType) query.media_type = mediaType;
     return queryParamBuilder("/atelier/media", query);
   };
 
-  const hasActiveFilters = Boolean(search || shape);
+  const hasActiveFilters = Boolean(search || shape || mediaType);
 
   return (
     <AdminPageContainer>

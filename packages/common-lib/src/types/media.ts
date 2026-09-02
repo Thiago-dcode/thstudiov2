@@ -11,7 +11,7 @@ import { EnumType } from "../constants/enums";
 export type Media = MediaSchema;
 // Media translation without id
 
-export type MediaPortfolio = Pick<Media, 'id' | 'public_id' | 'title' | 'thumbnail' | 'url' | 'seo_alt' | 'seo_description' | 'seo_filename' | 'seo_title' | 'shape' | 'aspect_ratio' | 'is_highlight'> & {
+export type MediaPortfolio = Pick<Media, 'id' | 'public_id' | 'title' | 'thumbnail' | 'url' | 'seo_alt' | 'seo_description' | 'seo_filename' | 'seo_title' | 'shape' | 'aspect_ratio' | 'is_highlight' | 'media_type'> & {
   position: number
 };
 export type MediaTranslation = MediaTranslationSchema;
@@ -36,6 +36,7 @@ export type MediaIndexRequest = OffsetPaginationRequest & {
   search?: string;
   user_id?: number;
   shape?: EnumType<'MEDIA_SHAPE'>;
+  media_type?: EnumType<'MEDIA_TYPE'>;
   is_active?: boolean;
   blocked?: boolean;
   is_featured?: boolean;
@@ -50,7 +51,7 @@ export type MediaIndexRequest = OffsetPaginationRequest & {
 export type GetAllUserMediaQueryParams = Omit<MediaIndexRequest, 'user_id'>;
 
 // Fields generated internally by the system (user cannot set these)
-type InternalMediaFields = 'id' | 'public_id' | 'bytes' | 'url' | 'thumbnail' | 'thumbnail_bytes' | 'shape' | 'aspect_ratio' | 'extension' | 'blocked_at' | 'is_active' | 'is_featured' | 'is_value_pillars' | 'is_highlight' | 'status' | 'completed_at' | 'failed_reason' | 'seo_filename' | 'seo_generated_at' | 'created_at' | 'updated_at';
+type InternalMediaFields = 'id' | 'public_id' | 'bytes' | 'url' | 'thumbnail' | 'thumbnail_bytes' | 'shape' | 'aspect_ratio' | 'extension' | 'media_type' | 'blocked_at' | 'is_active' | 'is_featured' | 'is_value_pillars' | 'is_highlight' | 'status' | 'completed_at' | 'failed_reason' | 'seo_filename' | 'seo_generated_at' | 'created_at' | 'updated_at';
 
 // What users can provide when creating media (public API input)
 export type PublicCreateMediaInput = Omit<MediaSchema, InternalMediaFields>;
@@ -84,6 +85,7 @@ export type UpdateMediaInternalInput = UpdateMediaInput &
     | 'thumbnail_bytes'
     | 'shape'
     | 'aspect_ratio'
+    | 'extension'
   >>;
 
 // ==================== MEDIA TRANSLATION TYPES ====================

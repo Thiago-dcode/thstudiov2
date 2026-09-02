@@ -7,6 +7,7 @@ import {
 } from "@repo/common-lib/utils/aspect-ratio";
 import { useGallery } from "@repo/ui/providers/gallery.provider";
 import Image from "next/image";
+import { MediaTypeBadge } from "../media-type-badge";
 import type { GalleryGridMedia } from "./gallery-grid";
 import {
   getGalleryImageClassName,
@@ -56,6 +57,9 @@ export function MediaGalleryCard({
         className={imageClassName}
         sizes="(max-width: 768px) 50vw, (max-width: 1280px) 33vw, 25vw"
       />
+      {/* The thumbnail is a static poster even for an animated media; the badge says so, and
+          the lightbox plays the real thing. */}
+      <MediaTypeBadge mediaType={media.media_type} />
     </div>
   ) : (
     <div className="media-gallery-card__frame media-gallery-card__placeholder w-full h-full aspect-square flex items-center justify-center bg-fg text-xs text-text-muted ">

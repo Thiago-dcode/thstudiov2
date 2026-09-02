@@ -16,6 +16,8 @@ export const ALLOWED_FILE_TYPES = [...ALLOWED_IMAGE_FILE_TYPES, ...ALLOWED_VIDEO
  */
 export const MAX_IMAGE_UPLOAD_MB = 25;
 export const MAX_IMAGE_UPLOAD_BYTES = MAX_IMAGE_UPLOAD_MB * 1024 * 1024;
+export const MAX_VIDEO_UPLOAD_MB = 300;
+export const MAX_VIDEO_UPLOAD_BYTES = MAX_VIDEO_UPLOAD_MB * 1024 * 1024;
 export const STRIKES_TO_BAN = 3;
 /**
  * LLM usage types that count against a user's AI credit quota. Only user-initiated

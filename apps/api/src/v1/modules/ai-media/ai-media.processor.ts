@@ -60,12 +60,12 @@ export class AiMediaProcessor extends GlobalProcessor {
     const log = this.logger.name('generate-media-metadata');
 
     try {
-      const [imageUrl, categories] = await Promise.all([
+      const [{ url }, categories] = await Promise.all([
         this.mediaService.getAsset(request.media_id),
         this.categoriesService.findAllActive(),
       ]);
 
-      const metadata = await this.aiService.generateMediaMetadata(imageUrl, categories, {
+      const metadata = await this.aiService.generateMediaMetadata(url, categories, {
         media_id: request.media_id,
         user_id: request.user_id,
       });
