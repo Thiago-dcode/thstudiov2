@@ -39,6 +39,14 @@ export const useWebsocket = (
     if (socketRef.current?.connected) return;
 
     const socket = io(`${clientEnv.NEXT_PUBLIC_WS_URL}/${namespace}`, {
+      // WebSocket only — do NOT fall back to Socket.IO's default ["polling", "websocket"].
+      // Polling spreads the handshake over several HTTP requests, and nginx load-balances
+      // each one independently across the API replicas (no sticky sessions: the upstream is
+      // resolved per request through Docker DNS). The second request lands on a replica that
+      // never saw the session and answers 400 "Session ID unknown", producing intermittent
+      // connect failures and reconnect loops. A WebSocket upgrade is a single request, so the
+      // connection is pinned to one replica from the start.
+      transports: ["websocket"],
       reconnectionDelayMax: 10000,
       auth: {
         token: session.token,

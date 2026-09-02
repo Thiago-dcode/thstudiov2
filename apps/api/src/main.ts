@@ -7,6 +7,7 @@ import { useContainer } from 'class-validator';
 import { spawn } from 'child_process';
 import { FactoryLogService } from '@repo/backend-lib/services/log-service';
 import { API_ERRORS_CHANNEL, logConfig } from '@repo/backend-lib/config/logging';
+import { RedisIoAdapter } from './common/adapters/redis-io.adapter';
 
 const bootstrapLogger = FactoryLogService.createLogService('file', {
   channel: 'api/bootstrap',
@@ -78,6 +79,33 @@ async function bootstrap() {
     password: configService.get('database.password'),
     database: configService.get('database.database'),
   });
+  // WebSocket pub/sub backplane. Required whenever more than one API replica runs:
+  // a socket lives in one replica's memory, but the notification job that triggers an
+  // emit is consumed by whichever replica BullMQ hands it to. Without this, emits from
+  // the "wrong" replica are silently dropped. See common/adapters/redis-io.adapter.ts.
+  const redisUrl = configService.get<string>('redis.url');
+  if (redisUrl) {
+    const redisIoAdapter = new RedisIoAdapter(app, redisUrl);
+    await redisIoAdapter.connectToRedis();
+    app.useWebSocketAdapter(redisIoAdapter);
+
+    // Close the two Redis connections on container stop. Deliberately NOT using
+    // app.enableShutdownHooks(): that changes Nest's lifecycle globally (every
+    // onModuleDestroy / onApplicationShutdown starts firing on signals, which would
+    // alter how the BullMQ processors in this app shut down). A targeted handler keeps
+    // the blast radius to this adapter.
+    for (const signal of ['SIGTERM', 'SIGINT'] as const) {
+      process.once(signal, () => void redisIoAdapter.disconnectFromRedis());
+    }
+
+    bootstrapLogger.info('WebSocket Redis adapter: enabled');
+  } else {
+    // Single-process local runs still work on the default in-memory adapter.
+    bootstrapLogger.warn(
+      'WebSocket Redis adapter: DISABLED (REDIS_URL unset) — safe only with a single API instance',
+    );
+  }
+
   //CORS
   app.enableCors({
     origin: configService.get('app.allowedOrigins'),
