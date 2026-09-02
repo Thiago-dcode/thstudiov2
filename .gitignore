@@ -93,7 +93,7 @@ id_ed25519*
 # Local Claude Code tool-permission config — machine-specific, not for the repo.
 .claude/settings.local.json
 *.bak
-
+cv-thiago-ferreira-2026*
 # Database seed assets (large binaries; not committed — keep locally for `db:seed -n media` / `db:seed -n assets`)
 packages/database/src/seeds/media-images/
 packages/database/src/seeds/assets/
