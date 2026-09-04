@@ -7,6 +7,10 @@ allowBuilds:
   "@swc/core": true
   bcrypt: true
   esbuild: true
+  # Its postinstall downloads the platform's ffmpeg binary from GitHub releases. Without this
+  # the package installs empty and `ffmpeg-static` resolves to null at runtime, which
+  # `compress-service/ffmpeg.ts` turns into a hard throw at module load.
+  ffmpeg-static: true
   msgpackr-extract: true
   sharp: true
   unrs-resolver: true

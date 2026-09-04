@@ -33,17 +33,23 @@ export class AiTask {
       log.info(`Found ${dueRows.length} user(s) due for AI credits reset`);
 
       let successCount = 0;
+      let skippedCount = 0;
       for (const row of dueRows) {
         try {
           const nextReset = new Date(row.next_ai_credits_reset);
           nextReset.setMonth(nextReset.getMonth() + 1);
 
-          await this.userExtraDataRepository.updateById(row.id, {
-            last_ai_credits_reset: row.next_ai_credits_reset,
-            next_ai_credits_reset: nextReset,
-            ai_credits_consumed: 0,
-          });
-          successCount++;
+          // Re-checks the due condition in the UPDATE, so the copy of this cron running on the
+          // other API replica no-ops instead of re-zeroing credits spent since the first write.
+          const applied = await this.userExtraDataRepository.resetAiCreditsIfDue(
+            row.id,
+            today,
+            row.next_ai_credits_reset,
+            nextReset,
+          );
+
+          if (applied) successCount++;
+          else skippedCount++;
         } catch (error) {
           log.error(
             `Failed to reset AI credits for user_extra_data [${row.id}] (user ${row.user_id}) - ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -52,7 +58,10 @@ export class AiTask {
         }
       }
 
-      log.info(`AI credits reset complete: ${successCount}/${dueRows.length} succeeded`);
+      log.info(
+        `AI credits reset complete: ${successCount}/${dueRows.length} succeeded` +
+          (skippedCount ? ` (${skippedCount} already reset by another replica)` : ''),
+      );
     } catch (error) {
       log.error(
         `AI credits reset cron failed - ${error instanceof Error ? error.message : 'Unknown error'}`,

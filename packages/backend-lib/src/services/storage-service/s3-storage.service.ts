@@ -22,6 +22,15 @@ const CONTENT_TYPE_BY_EXTENSION: Record<string, string> = {
     avif: 'image/avif',
     gif: 'image/gif',
     svg: 'application/octet-stream', // never image/svg+xml: SVG executes script
+    // Video. `mp4` is the only one the worker ever writes as a finished asset; the rest are
+    // upload source keys (`.source.mov`), which are deleted once the transcode lands but must
+    // still be labelled correctly while they exist. Without these entries a stored video is
+    // served as `application/octet-stream` and `<video>` refuses to play it.
+    mp4: 'video/mp4',
+    mov: 'video/quicktime',
+    mpeg: 'video/mpeg',
+    mpg: 'video/mpeg',
+    webm: 'video/webm',
 };
 
 const resolveContentType = (path: string): string => {

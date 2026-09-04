@@ -148,6 +148,39 @@ export class UserExtraDataRepository extends BaseRepository {
     return results.map((r) => this.formatUserExtraData(r));
   }
 
+  /**
+   * Reset one row's AI credits, but only while it is *still* due as of `dueAsOf`. Returns whether
+   * the write landed.
+   *
+   * Every API replica runs the nightly `ai-credits-reset` cron (`ScheduleModule` is registered
+   * unconditionally and the service runs at >1 replica), so they read the same due rows and both
+   * try to reset them. The month advance is safe either way — both derive `nextReset` from the
+   * same value they read — but an unguarded update also re-zeroes `ai_credits_consumed`, throwing
+   * away anything the user spent between the two writes. Repeating the caller's due condition in
+   * the WHERE makes the second writer a no-op: by then `next_ai_credits_reset` sits a month ahead.
+   *
+   * The guard is a range check rather than a compare-and-set on the exact value read, because
+   * `next_ai_credits_reset` defaults to `NOW()` — a row created through that default carries
+   * microsecond precision that a JS `Date` round-trip truncates, so `=` could silently match
+   * nothing and leave those users never reset.
+   */
+  async resetAiCreditsIfDue(
+    id: number,
+    dueAsOf: Date,
+    lastReset: Date,
+    nextReset: Date,
+  ): Promise<boolean> {
+    const result = await this.query()
+      .where('id', '=', id)
+      .where('next_ai_credits_reset', '<=', dueAsOf)
+      .update(
+        ['last_ai_credits_reset', 'next_ai_credits_reset', 'ai_credits_consumed'],
+        [lastReset, nextReset, 0],
+      );
+
+    return (result?.rowCount ?? 0) > 0;
+  }
+
   protected formatUserExtraData(
     result: UserExtraDataSchemaWithoutTimestamps,
   ): UserExtraData {

@@ -14,13 +14,7 @@ import { useEffect, useState, useTransition } from "react";
 const SHAPE_OPTIONS = ENUMS.MEDIA_SHAPE;
 type ShapeFilter = EnumType<"MEDIA_SHAPE"> | undefined;
 
-/**
- * VIDEO is deliberately absent: the enum carries it, but nothing in the upload flow can produce
- * one yet, so offering the filter would only ever return an empty grid.
- */
-const MEDIA_TYPE_OPTIONS = ENUMS.MEDIA_TYPE.filter(
-  (type): type is Exclude<EnumType<"MEDIA_TYPE">, "VIDEO"> => type !== "VIDEO",
-);
+const MEDIA_TYPE_OPTIONS = ENUMS.MEDIA_TYPE;
 type MediaTypeFilter = EnumType<"MEDIA_TYPE"> | undefined;
 
 function parseShapeParam(value: string | null): ShapeFilter {
@@ -32,9 +26,7 @@ function parseShapeParam(value: string | null): ShapeFilter {
 
 function parseMediaTypeParam(value: string | null): MediaTypeFilter {
   if (!value) return undefined;
-  return MEDIA_TYPE_OPTIONS.includes(
-    value as Exclude<EnumType<"MEDIA_TYPE">, "VIDEO">,
-  )
+  return MEDIA_TYPE_OPTIONS.includes(value as EnumType<"MEDIA_TYPE">)
     ? (value as EnumType<"MEDIA_TYPE">)
     : undefined;
 }

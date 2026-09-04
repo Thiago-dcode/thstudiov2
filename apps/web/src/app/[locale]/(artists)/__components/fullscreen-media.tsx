@@ -23,6 +23,8 @@ interface FullscreenMediaProps {
   title?: string;
   aspectRatio?: EnumType<"ASPECT_RATIO">;
   mediaType?: EnumType<"MEDIA_TYPE"> | null;
+  /** Static WebP poster. Only used for video, where it is the frame shown before playback. */
+  thumbnail?: string | null;
 }
 
 export const FullscreenMedia = ({
@@ -31,6 +33,7 @@ export const FullscreenMedia = ({
   title,
   aspectRatio,
   mediaType,
+  thumbnail,
 }: FullscreenMediaProps) => {
   const { ref, fullscreen, toggleFullscreen } = useFullscreen<HTMLElement>();
   const t = useTranslations("artists.fullscreen");
@@ -81,26 +84,55 @@ export const FullscreenMedia = ({
         </button>
       )}
 
-      <Image
-        src={url}
-        alt={alt}
-        width={width}
-        height={height}
-        priority
-        // This is the one page whose whole point is the media, so an animation has to play here.
-        // The optimizer cannot resize an animation, and streaming a multi-megabyte GIF through it
-        // buys nothing while occupying the server; going straight to the CDN skips both problems.
-        // `unoptimized` changes only the URL — `width`/`height` still hold the layout, so no CLS.
-        unoptimized={mediaType === "GIF"}
-        sizes="(max-width: 768px) 100vw, 90vw"
-        className={cn(
-          "object-contain select-none",
-          fullscreen
-            ? "max-w-[95vw] max-h-[90vh]"
-            : "max-w-full max-h-[75vh] w-auto h-auto",
-        )}
-        draggable={false}
-      />
+      {mediaType === "VIDEO" ? (
+        // `next/image` cannot render an MP4 at all. `controls` because this is the page whose
+        // entire point is the media — the visitor came here to watch it — and
+        // `preload="metadata"` fetches only the header, so the poster paints immediately and
+        // the (potentially tens of megabytes) video only downloads once someone presses play.
+        // The aspect-derived dimensions still hold the layout, so there is no CLS either way.
+        //
+        // There is no caption to provide: media is an artist's uploaded artwork, the platform
+        // stores no caption/subtitle track and offers no way to author one, so an empty
+        // <track> would assert accessibility we do not actually have.
+        // biome-ignore lint/a11y/useMediaCaption: no caption source exists for uploaded media
+        <video
+          src={url}
+          poster={thumbnail ?? undefined}
+          controls
+          playsInline
+          preload="metadata"
+          width={width}
+          height={height}
+          aria-label={alt}
+          className={cn(
+            "object-contain select-none",
+            fullscreen
+              ? "max-w-[95vw] max-h-[90vh]"
+              : "max-w-full max-h-[75vh] w-auto h-auto",
+          )}
+        />
+      ) : (
+        <Image
+          src={url}
+          alt={alt}
+          width={width}
+          height={height}
+          priority
+          // This is the one page whose whole point is the media, so an animation has to play here.
+          // The optimizer cannot resize an animation, and streaming a multi-megabyte GIF through it
+          // buys nothing while occupying the server; going straight to the CDN skips both problems.
+          // `unoptimized` changes only the URL — `width`/`height` still hold the layout, so no CLS.
+          unoptimized={mediaType === "GIF"}
+          sizes="(max-width: 768px) 100vw, 90vw"
+          className={cn(
+            "object-contain select-none",
+            fullscreen
+              ? "max-w-[95vw] max-h-[90vh]"
+              : "max-w-full max-h-[75vh] w-auto h-auto",
+          )}
+          draggable={false}
+        />
+      )}
 
       {fullscreen && title && (
         <p className="absolute bottom-6 left-1/2 -translate-x-1/2 text-sm text-white/60 font-medium tracking-wide max-w-[80vw] truncate">

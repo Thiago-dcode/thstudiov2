@@ -8,10 +8,16 @@ import { FactoryLLMService } from "@repo/backend-lib/services/llm-service/factor
 import { openAiLLMConfig } from "@repo/backend-lib/config/llm";
 import { FactoryLogService, LogService } from "@repo/backend-lib/services/log-service";
 import {
+    compressionLevelToQuality,
     CompressService,
     THUMBNAIL_MAX_EDGE_PX,
     THUMBNAIL_TARGET_BYTES,
 } from '@repo/backend-lib/services/compress-service/base';
+import {
+    CompressionOutput,
+    VideoCompressionOutput,
+} from '@repo/backend-lib/services/compress-service/types';
+import { ContentModerationFields } from '@repo/common-lib/types/ai';
 import { FactoryCompressService } from '@repo/backend-lib/services/compress-service/factory';
 import { Media, MediaJobDto } from "@repo/common-lib/types/media";
 import { MediaRepository } from "@repo/database/repositories/media";
@@ -136,12 +142,108 @@ export class MediaProcessor {
         mediaType: Media['media_type'],
         buffer: Buffer,
         targetSize: number,
-        quality: number,
-    ) {
-        if (mediaType === 'GIF') {
-            return this.compressService.optimizeGif(buffer, targetSize, quality);
+        compressLevel: NonNullable<Media['compression_level']>,
+    ): Promise<CompressionOutput | VideoCompressionOutput> {
+        if (mediaType === 'VIDEO') {
+            // The only branch that gets a real quality argument. Sharp's loops express the
+            // compression level purely as a byte target and refine toward it in five cheap
+            // passes; a video encode costs minutes, so the level has to reach libx264 as its
+            // actual quality knob (CRF) on the first attempt.
+            return this.compressService.optimizeVideo(
+                buffer,
+                targetSize,
+                compressionLevelToQuality(compressLevel),
+            );
         }
-        return this.compressService.optimizeImageToWebp(buffer, targetSize, quality);
+        if (mediaType === 'GIF') {
+            return this.compressService.optimizeGif(buffer, targetSize, 100);
+        }
+        return this.compressService.optimizeImageToWebp(buffer, targetSize, 100);
+    }
+
+    /**
+     * Byte target for the compressor.
+     *
+     * Video gets no `maxSize`: `mbToBytes(5)` is a display-asset cap and is roughly twenty
+     * seconds of 1080p, so every real upload blows past it and a refine loop chasing it would
+     * grind good footage into mush. A video's budget is bitrate × duration, which
+     * `optimizeVideo` derives internally from the source resolution. The floor rises to 2MB
+     * for the same reason — under that an MP4 is either very short or already squeezed.
+     */
+    private resolveTargetSize(
+        mediaType: Media['media_type'],
+        size: number,
+        compressLevel: NonNullable<Media['compression_level']>,
+    ): number {
+        if (mediaType === 'VIDEO') {
+            return this.compressService.getSizeCompressed({
+                size,
+                compressLevel,
+                minSize: mbToBytes(2),
+            });
+        }
+        return this.compressService.getSizeCompressed({
+            size,
+            compressLevel,
+            minSize: 300 * 1024,
+            maxSize: mbToBytes(5),
+        });
+    }
+
+    /**
+     * Produces the thumbnail and the moderation verdict in the order the media type requires.
+     *
+     * For video the poster has to be extracted AND uploaded first: moderation is a vision call
+     * over a URL (`image_url`) and cannot read an MP4, so the poster is what gets judged.
+     * Judging before the transcode is also what makes a rejection cheap — banned content never
+     * reaches ffmpeg. The trade is that a rejected video leaves a poster in the bucket, which
+     * is why the caller deletes it alongside the source.
+     *
+     * Images and GIFs keep the original order: the stored upload is already something the
+     * vision model can read, so there is nothing to gain from writing the thumbnail first.
+     */
+    private async buildThumbnailAndModerate(
+        media: Media,
+        buffer: Buffer,
+        sourcePath: string,
+        thumbnailPath: string,
+    ): Promise<{
+        thumbnail: CompressionOutput;
+        moderation: ContentModerationFields;
+        /** True when the thumbnail is already in storage, so the caller must not rewrite it. */
+        thumbnailWritten: boolean;
+    } | null> {
+        if (media.media_type === 'VIDEO') {
+            const thumbnail = await this.compressService.optimizeVideoFrameToWebp(
+                buffer,
+                THUMBNAIL_TARGET_BYTES,
+                80,
+                THUMBNAIL_MAX_EDGE_PX,
+            );
+            if (!(await this.storageService.write(thumbnail.buffer, thumbnailPath))) {
+                return null;
+            }
+            const { moderation } = await this.aiService.moderateContent(
+                await this.storageService.getUrl(thumbnailPath),
+                { user_id: media.user_id },
+            );
+            return { thumbnail, moderation, thumbnailWritten: true };
+        }
+
+        const { moderation } = await this.aiService.moderateContent(
+            await this.storageService.getUrl(sourcePath),
+            { user_id: media.user_id },
+        );
+
+        // Always a static WebP, whatever the media is. A GIF thumbnail would be a second
+        // animated GIF — megabytes per grid tile, for a poster frame that costs ~20KB here.
+        const thumbnail = await this.compressService.optimizeImageToWebp(
+            buffer,
+            THUMBNAIL_TARGET_BYTES,
+            80,
+            THUMBNAIL_MAX_EDGE_PX,
+        );
+        return { thumbnail, moderation, thumbnailWritten: false };
     }
 
     async processMedia() {
@@ -153,7 +255,7 @@ export class MediaProcessor {
             await this.markFailed(media, 'Media has no storage path', log);
             return;
         }
-        const mediaPath = MediaHelper.withExtension(sourcePath, extension);
+        const mediaPath = MediaHelper.outputPath(sourcePath, extension);
         const thumbnailPath = MediaHelper.thumbnailPath(mediaPath);
         const deletePaths = [...new Set([sourcePath, mediaPath, thumbnailPath])];
 
@@ -163,26 +265,49 @@ export class MediaProcessor {
                 public_id: media.public_id,
                 user_id: media.user_id,
                 status: media.status,
+                media_type: media.media_type,
             });
 
-            const url = await this.storageService.getUrl(media.url);
-            const { moderation } = await this.aiService.moderateContent(url, {
-                user_id: media.user_id,
-            });
+            const buffer = await this.storageService.getBuffer(sourcePath);
+
+            const prepared = await this.buildThumbnailAndModerate(
+                media,
+                buffer,
+                sourcePath,
+                thumbnailPath,
+            );
+            if (!prepared) {
+                await this.markFailed(media, 'Storage write could not complete', log, {
+                    deletePaths,
+                });
+                return;
+            }
+            const { thumbnail, moderation, thumbnailWritten } = prepared;
 
             log.info('Moderation result', {
                 media_id: media.id,
                 public_id: media.public_id,
                 is_allowed: moderation.is_allowed,
                 severity: moderation.severity,
+                // Video is judged on its poster frame, not on the video itself.
+                moderated_path: thumbnailWritten ? thumbnailPath : sourcePath,
             });
 
             if (!moderation.is_allowed) {
                 await this.markFailed(media, moderation.reason, log, {
-                    deletePaths: [media.url],
+                    // The poster is already in the bucket for video, so it has to go too —
+                    // otherwise a rejected upload leaves an orphan nothing will ever clean up.
+                    deletePaths: thumbnailWritten
+                        ? [sourcePath, thumbnailPath]
+                        : [sourcePath],
                 });
                 return;
             }
+
+            log.info('Thumbnail compressed', {
+                media_id: media.id,
+                thumbnail_bytes: thumbnail.size,
+            });
 
             log.info('Starting compression', {
                 media_id: media.id,
@@ -191,33 +316,33 @@ export class MediaProcessor {
                 driver: this.compressService.config.driver,
             });
 
-            const buffer = await this.storageService.getBuffer(sourcePath);
-
-            // Always a static WebP, whatever the media is. A GIF thumbnail would be a second
-            // animated GIF — megabytes per grid tile, for a poster frame that costs ~20KB here.
-            const thumbnail = await this.compressService.optimizeImageToWebp(
-                buffer,
-                THUMBNAIL_TARGET_BYTES,
-                80,
-                THUMBNAIL_MAX_EDGE_PX,
-            );
-            log.info('Thumbnail compressed', {
-                media_id: media.id,
-                thumbnail_bytes: thumbnail.size,
-            });
-
             const compressionLevel = media.compression_level || DEFAULT_COMPRESSION_LVL;
-            const targetSize = this.compressService.getSizeCompressed({
-                size: buffer.length,
-                compressLevel: compressionLevel,
-                minSize: 300 * 1024,
-                maxSize: mbToBytes(5),
-            });
-            const mediaCompressed = await this.optimize(media.media_type, buffer, targetSize, 100);
+            const targetSize = this.resolveTargetSize(
+                media.media_type,
+                buffer.length,
+                compressionLevel,
+            );
+            const mediaCompressed = await this.optimize(
+                media.media_type,
+                buffer,
+                targetSize,
+                compressionLevel,
+            );
             log.info('Media compressed', {
                 media_id: media.id,
                 media_bytes: mediaCompressed.size,
                 target_size: targetSize,
+                // Only meaningful for video. `reencoded: false` means the skip heuristic fired
+                // and the user's already-compressed file was passed through — without this in
+                // the log there is no way to tell whether that is working in production.
+                ...('reencoded' in mediaCompressed
+                    ? {
+                        reencoded: mediaCompressed.reencoded,
+                        duration_seconds: Math.round(mediaCompressed.durationSeconds),
+                        bit_rate: mediaCompressed.bitRate,
+                        source_bytes: buffer.length,
+                    }
+                    : {}),
             });
             if (mediaCompressed.size > targetSize) {
                 // Not a failure — the encoder gave what it could. Worth surfacing because the
@@ -238,13 +363,19 @@ export class MediaProcessor {
             );
             if (limitReason) {
                 await this.markFailed(media, limitReason, log, {
-                    deletePaths: [sourcePath],
+                    deletePaths: thumbnailWritten
+                        ? [sourcePath, thumbnailPath]
+                        : [sourcePath],
                 });
                 return;
             }
 
             const [thumbnailWriteOk, mediaWriteOk] = await Promise.all([
-                this.storageService.write(thumbnail.buffer, thumbnailPath),
+                // Video's poster went up before moderation so the vision model could read it;
+                // re-uploading identical bytes would just be a second PUT.
+                thumbnailWritten
+                    ? Promise.resolve(true)
+                    : this.storageService.write(thumbnail.buffer, thumbnailPath),
                 this.storageService.write(mediaCompressed.buffer, mediaPath),
             ]);
 
@@ -259,9 +390,14 @@ export class MediaProcessor {
                 await this.storageService.delete(sourcePath);
             }
 
+            // Derived from the THUMBNAIL rather than the media itself. For video that is the
+            // only option — `image-size` cannot read an MP4 — and for images it is equivalent:
+            // the thumbnail is produced with `fit: 'inside'`, whose aspect error at 800px is
+            // under 0.2%, while `resolveAspectRatio` buckets are ~22% apart at their closest.
+            // One code path beats a media-type branch that can only ever agree with itself.
             const [shape, aspect_ratio] = await Promise.all([
-                this.compressService.getImageShape(mediaCompressed.buffer),
-                this.compressService.getImageAspectRatio(mediaCompressed.buffer),
+                this.compressService.getImageShape(thumbnail.buffer),
+                this.compressService.getImageAspectRatio(thumbnail.buffer),
             ]);
 
             // Kept: `media` is the snapshot the job was queued with (still `UPLOADING`,

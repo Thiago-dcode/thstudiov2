@@ -1,3 +1,4 @@
+import type { EnumType } from "@repo/common-lib/constants/enums";
 import { PLATFORM_CURRENCY } from "@repo/common-lib/constants/limits";
 import type { FullCollection } from "@repo/common-lib/types/collection";
 import type { MediaWithUser } from "@repo/common-lib/types/media";
@@ -59,12 +60,17 @@ type ImageLike = {
   title?: string | null;
   seo_alt?: string | null;
   seo_title?: string | null;
+  media_type?: EnumType<"MEDIA_TYPE"> | null;
 };
 
 const imageNode = (m: ImageLike): Record<string, unknown> | null => {
   if (!m.url && !m.thumbnail) return null;
   const node: Record<string, unknown> = { "@type": "ImageObject" };
-  if (m.url) node.contentUrl = m.url;
+  // An `ImageGallery` member must actually be an image, so a video contributes its poster
+  // frame rather than the MP4 — `contentUrl` pointing at a video inside an `ImageObject` is
+  // invalid structured data and Google drops the whole node.
+  const contentUrl = m.media_type === "VIDEO" ? m.thumbnail : m.url;
+  if (contentUrl) node.contentUrl = contentUrl;
   if (m.thumbnail) node.thumbnailUrl = m.thumbnail;
   const name = m.title || m.seo_title;
   if (name) node.name = name;
@@ -172,6 +178,9 @@ export function buildFaqPageJsonLd(
  * primary type so Google Images / the Licensable badge still apply. The **licensable pair** is
  * `acquireLicensePage` (where to license) + `license` (the usage terms) — both required for the
  * "Licensable" badge — reinforced by `creator`/`creditText`/`copyrightHolder`.
+ *
+ * Video swaps the primary type to `VideoObject`, which is what Google's video indexing reads;
+ * `ImageObject` with an MP4 `contentUrl` is invalid and would be dropped entirely.
  */
 export function buildMediaJsonLd(media: MediaWithUser, username: string) {
   // `media.user` is not guaranteed populated by every fetch path; fall back to the route username.
@@ -183,11 +192,13 @@ export function buildMediaJsonLd(media: MediaWithUser, username: string) {
   );
   const path = `/artists/${username}/media/${media.public_id}`;
   const creator = personRef(artistUsername, artist);
+  const isVideo = media.media_type === "VIDEO";
   const image: Record<string, unknown> = {
-    "@type": "ImageObject",
+    "@type": isVideo ? "VideoObject" : "ImageObject",
     additionalType: "https://schema.org/VisualArtwork",
     url: abs(path),
-    representativeOfPage: true,
+    // An ImageObject-only property: it tells Google Images which image the page is about.
+    ...(isVideo ? {} : { representativeOfPage: true }),
     creator,
     creditText: artist,
     copyrightHolder: creator,

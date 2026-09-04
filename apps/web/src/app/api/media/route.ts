@@ -1,6 +1,7 @@
 import {
-  ALLOWED_IMAGE_FILE_TYPES,
+  ALLOWED_FILE_TYPES,
   MAX_IMAGE_UPLOAD_MB,
+  MAX_VIDEO_UPLOAD_MB,
 } from "@repo/common-lib/constants/limits";
 import type { MimeTypes } from "@repo/common-lib/types/general";
 import type { Media } from "@repo/common-lib/types/media";
@@ -49,9 +50,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    if (
-      !ALLOWED_IMAGE_FILE_TYPES.includes(file.type.toLowerCase() as MimeTypes)
-    ) {
+    if (!ALLOWED_FILE_TYPES.includes(file.type.toLowerCase() as MimeTypes)) {
       return NextResponse.json({
         data: null,
         errors: [],
@@ -68,7 +67,13 @@ export async function POST(request: NextRequest) {
         inputErrors: {
           file: t("validation.file.tooLarge", {
             field: t("fields.file"),
-            mb: MAX_IMAGE_UPLOAD_MB,
+            // `allowedFileSize` above applies a per-type cap, so the message has to quote the
+            // one that actually rejected this file — telling someone their 30MB video exceeds
+            // 25MB when the video limit is 300MB just sends them in circles.
+            mb:
+              MediaHelper.getMediaTypeFromMimeType(file.type) === "VIDEO"
+                ? MAX_VIDEO_UPLOAD_MB
+                : MAX_IMAGE_UPLOAD_MB,
           }),
         },
       });

@@ -1471,7 +1471,8 @@ const messages = {
     maxCollectionMedia: "Las colecciones pueden tener hasta {max} archivos",
     file: {
       tooLarge: "{field} debe pesar menos de {mb}MB",
-      invalidType: "{field} debe ser una imagen (JPEG, PNG o WebP)",
+      invalidType:
+        "{field} debe ser una imagen (JPEG, PNG, WebP, GIF) o un vídeo (MP4, MOV, MPEG)",
     },
     aboutPage: {
       titleType: "El título debe ser una cadena de texto válida",
@@ -1569,8 +1570,8 @@ const messages = {
       close: "Cerrar",
       add: "Añadir",
       loading: "Cargando...",
-      loadMore: "Cargar más",
       expandMedia: "Ver a tamaño completo",
+      loadMore: "Cargar más",
       blocked: "Bloqueado",
       editingCollection: "Editando colección",
       creatingCollection: "Creando colección",
@@ -1860,7 +1861,7 @@ const messages = {
         globalCompression: "Compresión global",
         compressionTooltipTitle: "Nivel de compresión",
         compressionTooltipBody:
-          "Controla el equilibrio entre la calidad de imagen y el tamaño de archivo. Una compresión menor (VERY_LOW, LOW) conserva más detalle pero genera archivos más grandes. Una compresión mayor (HIGH, VERY_HIGH) reduce el tamaño pero puede reducir ligeramente la calidad.",
+          "Controla el equilibrio entre la calidad y el tamaño de archivo. Una compresión menor (VERY_LOW, LOW) conserva más detalle pero genera archivos más grandes. Una compresión mayor (HIGH, VERY_HIGH) reduce el tamaño pero puede reducir ligeramente la calidad. Los vídeos ya comprimidos se guardan tal cual.",
         compressionTooltipHint:
           "Este ajuste se aplica a todos los archivos subidos. Puedes ajustar archivos individuales con los controles de abajo.",
         allFiles: "Todos los archivos",
@@ -1884,7 +1885,8 @@ const messages = {
         upgradeToAdjust: "Mejora tu plan para ajustar",
         previewAlt: "Vista previa {index}",
         createNewMedia: "Crear nuevo contenido",
-        uploadUpToImages: "Sube hasta {max} imágenes (JPEG, PNG, WebP)",
+        uploadUpToImages:
+          "Sube hasta {max} archivos: imágenes (JPEG, PNG, WebP, GIF) o vídeos (MP4, MOV, MPEG)",
         uploadButton:
           "Subir {count, plural, one {# archivo} other {# archivos}}",
         uploadingInBackground:

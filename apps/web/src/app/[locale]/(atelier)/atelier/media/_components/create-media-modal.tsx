@@ -225,11 +225,15 @@ function MediaUploadContent() {
   // The provider rejects the whole selection when any file is invalid, so surface every reason
   // here — otherwise nothing appears in the grid and the user has no idea why.
   const messages = useMemo(() => {
-    const list = (fileErrors ?? []).map(({ code, fileName }) =>
+    const list = (fileErrors ?? []).map(({ code, fileName, limitBytes }) =>
       code === "too_large"
         ? tRoot("validation.file.tooLarge", {
             field: fileName,
-            mb: Math.floor((maxFileSizeBytes ?? 0) / (1024 * 1024)),
+            // The cap is per-file (video is allowed far more than an image), so it comes off
+            // the error rather than off a single provider-level number.
+            mb: Math.floor(
+              (limitBytes ?? maxFileSizeBytes ?? 0) / (1024 * 1024),
+            ),
           })
         : tRoot("validation.file.invalidType", { field: fileName }),
     );
@@ -422,11 +426,26 @@ function MediaUploadContent() {
                       >
                         <X className="h-3.5 w-3.5" />
                       </button>
-                      <img
-                        src={media.previewUrl}
-                        alt={t("previewAlt", { index: index + 1 })}
-                        className="max-h-full max-w-full object-contain"
-                      />
+                      {/* A video blob in an <img> renders as a broken image. `muted` + no
+                          controls keeps this a still preview of a file that has not been
+                          uploaded yet — `preload="metadata"` fetches only enough of the local
+                          blob to paint the first frame. */}
+                      {media.input.file?.type.startsWith("video/") ? (
+                        <video
+                          src={media.previewUrl}
+                          muted
+                          playsInline
+                          preload="metadata"
+                          aria-label={t("previewAlt", { index: index + 1 })}
+                          className="max-h-full max-w-full object-contain"
+                        />
+                      ) : (
+                        <img
+                          src={media.previewUrl}
+                          alt={t("previewAlt", { index: index + 1 })}
+                          className="max-h-full max-w-full object-contain"
+                        />
+                      )}
                     </div>
                     <div className="flex flex-col  px-1 gap-2">
                       <div className="flex items-start justify-start gap-1">

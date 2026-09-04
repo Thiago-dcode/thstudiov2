@@ -60,10 +60,18 @@ export class AiMediaProcessor extends GlobalProcessor {
     const log = this.logger.name('generate-media-metadata');
 
     try {
-      const [{ url }, categories] = await Promise.all([
+      const [asset, categories] = await Promise.all([
         this.mediaService.getAsset(request.media_id),
         this.categoriesService.findAllActive(),
       ]);
+
+      if (!asset) {
+        throw new Error(`Media [${request.media_id}] not found`);
+      }
+
+      // Like moderation, this is an `image_url` vision call: it cannot read an MP4. A video is
+      // described from its stored poster frame, which is a real WebP of the same content.
+      const url = asset.media_type === 'VIDEO' ? asset.thumbnail : asset.url;
 
       const metadata = await this.aiService.generateMediaMetadata(url, categories, {
         media_id: request.media_id,

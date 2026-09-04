@@ -37,23 +37,37 @@ export class MediaHelper {
     return null;
   }
 
-  static allowedFileSize(file: Pick<File, 'type' | 'size'>): boolean {
-    const mediaType = MediaHelper.getMediaTypeFromMimeType(file.type);
+  /**
+   * Upload ceiling for a mime type, in bytes. `0` for anything that is not media at all, so a
+   * size check against it always fails.
+   *
+   * Video is allowed to be an order of magnitude larger than an image — a raw phone clip runs
+   * 10-20 Mbps, and the worker transcodes it down to a delivery bitrate afterwards.
+   */
+  static maxUploadBytes(mimeType: string): number {
+    const mediaType = MediaHelper.getMediaTypeFromMimeType(mimeType);
 
-    if (mediaType === 'VIDEO') {
-      return file.size <= MAX_VIDEO_UPLOAD_BYTES;
-    }
+    if (mediaType === 'VIDEO') return MAX_VIDEO_UPLOAD_BYTES;
+    if (mediaType === 'IMAGE' || mediaType === 'GIF') return MAX_IMAGE_UPLOAD_BYTES;
 
-    if (mediaType === 'IMAGE' || mediaType === 'GIF') {
-      return file.size <= MAX_IMAGE_UPLOAD_BYTES;
-    }
-
-    return false;
+    return 0;
   }
 
-  /** Stored object extension after processing. GIFs stay GIF; everything else is WebP. */
-  static outputExtension(mediaType: EnumType<'MEDIA_TYPE'> | null | undefined): 'gif' | 'webp' {
-    return mediaType === 'GIF' ? 'gif' : 'webp';
+  static allowedFileSize(file: Pick<File, 'type' | 'size'>): boolean {
+    const limit = MediaHelper.maxUploadBytes(file.type);
+    return limit > 0 && file.size <= limit;
+  }
+
+  /**
+   * Stored object extension after processing. GIFs stay GIF, videos become MP4, everything
+   * else is WebP.
+   */
+  static outputExtension(
+    mediaType: EnumType<'MEDIA_TYPE'> | null | undefined,
+  ): 'gif' | 'webp' | 'mp4' {
+    if (mediaType === 'GIF') return 'gif';
+    if (mediaType === 'VIDEO') return 'mp4';
+    return 'webp';
   }
 
   /**
@@ -86,6 +100,33 @@ export class MediaHelper {
       return `${path}.${extension}`;
     }
     return path.replace(/\.[^./\\]+$/, `.${extension}`);
+  }
+
+  /**
+   * Key for the untouched upload, parked beside the eventual output.
+   *
+   * The async flow writes the original before the worker has processed anything, and the
+   * output key's extension is decided by the media TYPE, not by what was uploaded. For an
+   * image that mismatch is harmless — a JPEG briefly sits under a `.webp` key that the worker
+   * overwrites seconds later. For video it is not: an uploaded `.mov` under a `.mp4` key is
+   * served as `video/mp4` (S3 ContentType is derived from the key), and the transcode output
+   * needs somewhere else to land so the two never race.
+   *
+   * `.source.` is unambiguous as a marker because {@link storageFilename} strips every
+   * non-alphanumeric character, so a slug can never itself contain a dot.
+   */
+  static sourcePath(mediaPath: string, sourceExtension: string): string {
+    const base = mediaPath.replace(/\.[^./\\]+$/, '');
+    return `${base}.source.${sourceExtension.replace(/^\./, '').toLowerCase()}`;
+  }
+
+  /**
+   * Inverse of {@link sourcePath}: the processed key for a stored source. A no-op round trip
+   * for media whose source and output share a key, so callers need no media-type branch.
+   */
+  static outputPath(sourcePath: string, outputExtension: string): string {
+    const base = sourcePath.replace(/(?:\.source)?\.[^./\\]+$/, '');
+    return `${base}.${outputExtension}`;
   }
 
   /**

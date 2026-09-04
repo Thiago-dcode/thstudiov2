@@ -70,6 +70,9 @@ export const MediaPageComponent = async ({
         title={media.title || undefined}
         aspectRatio={media.aspect_ratio}
         mediaType={media.media_type}
+        // The video poster: shown while the first frame loads, and the only thing a browser
+        // that refuses to autoplay ever paints.
+        thumbnail={media.thumbnail}
       />
     </Web.Container>
   );

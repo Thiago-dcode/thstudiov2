@@ -1,10 +1,8 @@
 "use client";
 
-import {
-  ALLOWED_IMAGE_FILE_TYPES,
-  MAX_IMAGE_UPLOAD_BYTES,
-} from "@repo/common-lib/constants/limits";
+import { ALLOWED_FILE_TYPES } from "@repo/common-lib/constants/limits";
 import type { Media } from "@repo/common-lib/types/media";
+import { MediaHelper } from "@repo/common-lib/utils/media";
 import { Button } from "@repo/ui/components/shadcn/button";
 import {
   Dialog,
@@ -112,8 +110,12 @@ export function MediaGrid({
       <div className="relative flex flex-col w-full h-full gap-2">
         <div className="self-end">
           <FileInputProvider
-            allowedMimeTypes={ALLOWED_IMAGE_FILE_TYPES}
-            maxFileSizeBytes={MAX_IMAGE_UPLOAD_BYTES}
+            allowedMimeTypes={ALLOWED_FILE_TYPES}
+            // Per-type: a video may be 300MB where an image may not, and one flat number
+            // would either reject legitimate video or wave through an enormous PNG.
+            maxFileSizeBytesFor={(file) =>
+              MediaHelper.maxUploadBytes(file.type)
+            }
           >
             <CreateMediaDialog openFromQuery />
           </FileInputProvider>

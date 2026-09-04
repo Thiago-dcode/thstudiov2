@@ -9,6 +9,14 @@ export type GalleryItem = {
     alt?: string
     href?:string,
     shared?: string
+    /**
+     * Set for video items. The lightbox renders a `<video>` for the slide in view and the
+     * static poster for the neighbours — three simultaneous decoding videos on a swipe is a
+     * lot of work for two frames nobody looks at.
+     */
+    mediaType?: 'IMAGE' | 'VIDEO' | 'GIF' | null
+    /** Static WebP poster. Used as the `<video poster>` and for the adjacent slides. */
+    poster?: string | null
 }
 
 /**

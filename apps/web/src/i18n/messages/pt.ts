@@ -1473,7 +1473,8 @@ const messages = {
     maxCollectionMedia: "Coleções podem ter até {max} mídias",
     file: {
       tooLarge: "{field} deve ter menos de {mb}MB",
-      invalidType: "{field} deve ser uma imagem (JPEG, PNG ou WebP)",
+      invalidType:
+        "{field} deve ser uma imagem (JPEG, PNG, WebP, GIF) ou um vídeo (MP4, MOV, MPEG)",
     },
     aboutPage: {
       titleType: "O título deve ser um texto válido",
@@ -1570,8 +1571,8 @@ const messages = {
       close: "Fechar",
       add: "Adicionar",
       loading: "Carregando...",
-      loadMore: "Carregar mais",
       expandMedia: "Ver em tamanho real",
+      loadMore: "Carregar mais",
       blocked: "Bloqueado",
       editingCollection: "Editando coleção",
       creatingCollection: "Criando coleção",
@@ -1861,7 +1862,7 @@ const messages = {
         globalCompression: "Compressão global",
         compressionTooltipTitle: "Nível de compressão",
         compressionTooltipBody:
-          "Controla o equilíbrio entre qualidade de imagem e tamanho do arquivo. Compressão menor (VERY_LOW, LOW) preserva mais detalhes, mas cria arquivos maiores. Compressão maior (HIGH, VERY_HIGH) reduz o tamanho, mas pode reduzir levemente a qualidade.",
+          "Controla o equilíbrio entre qualidade e tamanho do arquivo. Compressão menor (VERY_LOW, LOW) preserva mais detalhes, mas cria arquivos maiores. Compressão maior (HIGH, VERY_HIGH) reduz o tamanho, mas pode reduzir levemente a qualidade. Vídeos já comprimidos são guardados como estão.",
         compressionTooltipHint:
           "Essa configuração se aplica a todos os arquivos enviados. Você pode ajustar arquivos individuais usando os controles abaixo.",
         allFiles: "Todos os arquivos",
@@ -1885,7 +1886,8 @@ const messages = {
         upgradeToAdjust: "Faça upgrade do plano para ajustar",
         previewAlt: "Prévia {index}",
         createNewMedia: "Criar nova mídia",
-        uploadUpToImages: "Envie até {max} imagens (JPEG, PNG, WebP)",
+        uploadUpToImages:
+          "Envie até {max} ficheiros: imagens (JPEG, PNG, WebP, GIF) ou vídeos (MP4, MOV, MPEG)",
         uploadButton:
           "Enviar {count, plural, one {# ficheiro} other {# ficheiros}}",
         uploadingInBackground:

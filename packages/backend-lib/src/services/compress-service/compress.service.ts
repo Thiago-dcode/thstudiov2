@@ -1,6 +1,11 @@
 import { EnumType } from "@repo/common-lib/constants/enums";
 import { resolveAspectRatio } from "@repo/common-lib/utils/aspect-ratio";
-import { CompressConfig, CompressionOutput, GetSizeCompressedInput } from "./types";
+import {
+  CompressConfig,
+  CompressionOutput,
+  GetSizeCompressedInput,
+  VideoCompressionOutput,
+} from "./types";
 import { imageSize } from 'image-size'
 
 /**
@@ -11,6 +16,24 @@ import { imageSize } from 'image-size'
  */
 export const THUMBNAIL_MAX_EDGE_PX = 800;
 export const THUMBNAIL_TARGET_BYTES = 120 * 1024;
+
+/**
+ * The media's compression level expressed as a 0-100 quality, for the encoders that take one.
+ *
+ * These are the same coefficients {@link CompressService.getSizeCompressed} already applies to
+ * bytes, so there is one table rather than two drifting apart. Note the inversion this
+ * preserves: VERY_HIGH *compression* is the lowest quality and the smallest file.
+ */
+export const compressionLevelToQuality = (
+  level: EnumType<'COMPRESSION_LEVEL'>,
+): number =>
+({
+  VERY_LOW: 95,
+  LOW: 85,
+  NORMAL: 70,
+  HIGH: 55,
+  VERY_HIGH: 40,
+}[level]);
 
 export abstract class CompressService {
   public readonly config: CompressConfig;
@@ -104,5 +127,43 @@ export abstract class CompressService {
     quality: number,
     maxEdgePx?: number,
   ): Promise<CompressionOutput>
+
+  /**
+   * Extracts one representative frame from a video and runs it through
+   * {@link optimizeImageToWebp}, so a video poster travels the exact same path as every other
+   * thumbnail: same encoder, same byte target, same `.webp` key, same ContentType.
+   *
+   * **Call this BEFORE {@link optimizeVideo}.** Moderation is a vision call over a URL and
+   * cannot read an MP4, so the poster is what gets moderated — and doing it first means a
+   * rejected video costs zero minutes of transcode instead of being encoded and thrown away.
+   *
+   * @param maxEdgePx longest edge kept, defaulting to the full-media cap. Pass
+   * {@link THUMBNAIL_MAX_EDGE_PX} for thumbnails.
+   */
+  abstract optimizeVideoFrameToWebp(
+    file: Express.Multer.File | Buffer,
+    targetSize: number,
+    quality?: number,
+    maxEdgePx?: number,
+  ): Promise<CompressionOutput>
+
+  /**
+   * Re-encodes to a web-deliverable MP4 (H.264 + AAC, faststart), or hands the source back
+   * untouched when it already is one.
+   *
+   * @param targetSize ADVISORY. Video's real budget is bitrate × duration, so a byte target is
+   * raised internally to what the source's resolution tier is worth — a fixed cap cannot be met
+   * by a long clip at any quality worth shipping. Pass no `maxSize` to `getSizeCompressed` when
+   * computing it.
+   * @param quality 10-100, mapped onto H.264 CRF. Derive it from the media's compression level
+   * with {@link compressionLevelToQuality} rather than passing a flat number.
+   * @param maxEdgePx longest edge kept.
+   */
+  abstract optimizeVideo(
+    file: Express.Multer.File | Buffer,
+    targetSize: number,
+    quality?: number,
+    maxEdgePx?: number,
+  ): Promise<VideoCompressionOutput>
 
 }

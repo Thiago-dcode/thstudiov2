@@ -1466,7 +1466,8 @@ const messages = {
     maxCollectionMedia: "Collections can have up to {max} media",
     file: {
       tooLarge: "{field} file size must be less than {mb}MB",
-      invalidType: "{field} must be an image (JPEG, PNG or WebP)",
+      invalidType:
+        "{field} must be an image (JPEG, PNG, WebP, GIF) or a video (MP4, MOV, MPEG)",
     },
     aboutPage: {
       titleType: "Title must be a valid string",
@@ -1560,8 +1561,8 @@ const messages = {
       close: "Close",
       add: "Add",
       loading: "Loading...",
-      loadMore: "Load more",
       expandMedia: "View full size",
+      loadMore: "Load more",
       blocked: "Blocked",
       editingCollection: "Editing collection",
       creatingCollection: "Creating collection",
@@ -1850,7 +1851,7 @@ const messages = {
         globalCompression: "Global Compression",
         compressionTooltipTitle: "Compression Level",
         compressionTooltipBody:
-          "Controls the balance between image quality and file size. Lower compression (VERY_LOW, LOW) preserves more detail but creates larger files. Higher compression (HIGH, VERY_HIGH) reduces file size but may slightly reduce image quality.",
+          "Controls the balance between quality and file size. Lower compression (VERY_LOW, LOW) preserves more detail but creates larger files. Higher compression (HIGH, VERY_HIGH) reduces file size but may slightly reduce quality. Videos that are already compressed are stored as they are.",
         compressionTooltipHint:
           "This setting applies to all uploaded files. You can adjust individual files using the sliders below.",
         allFiles: "All files",
@@ -1874,7 +1875,8 @@ const messages = {
         upgradeToAdjust: "Upgrade required",
         previewAlt: "Preview {index}",
         createNewMedia: "Create New Media",
-        uploadUpToImages: "Upload up to {max} images (JPEG, PNG, WebP)",
+        uploadUpToImages:
+          "Upload up to {max} files — images (JPEG, PNG, WebP, GIF) or videos (MP4, MOV, MPEG)",
         uploadButton: "Upload {count, plural, one {# file} other {# files}}",
         uploadingInBackground:
           "{count, plural, one {# uploading} other {# uploading}}",

@@ -89,7 +89,8 @@ export class MediaService {
     const [thumbnail, url] = await Promise.all([this.helpers.getAsset(media.thumbnail), this.helpers.getAsset(media.url)])
     return {
       thumbnail,
-      url
+      url,
+      media_type: media.media_type,
     }
   }
 
@@ -104,8 +105,14 @@ export class MediaService {
    * key is interpolated straight into a CDN URL.
    * The per-media `mediaPublicId` folder isolates each media so two uploads (or an AI
    * rename) that resolve to the same filename never collide within the same user.
-   * GIFs keep `.gif` so S3 ContentType matches the bytes; still images are stored as WebP.
+   * GIFs keep `.gif` so S3 ContentType matches the bytes; still images are stored as WebP;
+   * videos are transcoded to `.mp4`.
    * The thumbnail is always WebP whatever the media is — see {@link MediaHelper.thumbnailPath}.
+   *
+   * `sourcePath` is where the untouched upload goes. It equals `mediaPath` for images and GIFs
+   * (the worker overwrites it in place seconds later), but a video needs its own key: the
+   * upload is a `.mov`/`.mpeg` while the output is `.mp4`, and S3 derives ContentType from the
+   * key — so storing one under the other's extension would serve a lie.
    */
   private buildMediaStoragePaths(
     userPublicId: string,
@@ -119,12 +126,22 @@ export class MediaService {
     );
     const extension = MediaHelper.outputExtension(mediaType);
     const mediaPath = `users/${userPublicId}/media/${mediaPublicId}/${filename}.${extension}`;
+    const sourceExtension = this.extractExtension(originalName);
     return {
       filename,
       extension,
       mediaPath,
+      sourcePath:
+        mediaType === 'VIDEO' && sourceExtension
+          ? MediaHelper.sourcePath(mediaPath, sourceExtension)
+          : mediaPath,
       thumbnailPath: MediaHelper.thumbnailPath(mediaPath),
     };
+  }
+
+  /** Counterpart to {@link stripExtension}: the extension alone, lowercased, without the dot. */
+  private extractExtension(name: string): string {
+    return name.match(/\.([^./\\]+)$/)?.[1]?.toLowerCase() ?? '';
   }
 
   private optimizeUpload(
@@ -133,10 +150,38 @@ export class MediaService {
     quality: number,
     mediaType: Media['media_type'],
   ) {
+    if (mediaType === 'VIDEO') {
+      return this.compressService.optimizeVideo(file, targetSize, quality);
+    }
     if (mediaType === 'GIF') {
       return this.compressService.optimizeGif(file, targetSize, quality);
     }
     return this.compressService.optimizeImageToWebp(file, targetSize, quality);
+  }
+
+  /**
+   * The listing-sized static WebP for an upload. Video needs ffmpeg to reach a decodable frame
+   * at all — `optimizeImageToWebp` would hand a non-`image/*` multer file straight back
+   * unmodified, i.e. store the raw MP4 under the thumbnail's `.webp` key.
+   */
+  private buildThumbnail(
+    file: Express.Multer.File,
+    mediaType: Media['media_type'],
+  ) {
+    if (mediaType === 'VIDEO') {
+      return this.compressService.optimizeVideoFrameToWebp(
+        file,
+        THUMBNAIL_TARGET_BYTES,
+        80,
+        THUMBNAIL_MAX_EDGE_PX,
+      );
+    }
+    return this.compressService.optimizeImageToWebp(
+      file,
+      THUMBNAIL_TARGET_BYTES,
+      80,
+      THUMBNAIL_MAX_EDGE_PX,
+    );
   }
 
   private async notifyMediaUpdate(media: Pick<Media, 'id' | 'user_id'>): Promise<void> {
@@ -191,7 +236,7 @@ export class MediaService {
         media.media_type ??
         MediaHelper.getMediaTypeFromMimeType(file.mimetype) ??
         'IMAGE';
-      const { extension, mediaPath } = this.buildMediaStoragePaths(
+      const { extension, sourcePath } = this.buildMediaStoragePaths(
         userPublicId,
         media.public_id,
         file.originalname,
@@ -199,14 +244,14 @@ export class MediaService {
       );
       log.info('Writing original file to storage', {
         media_id: media.id,
-        path: mediaPath,
+        path: sourcePath,
         size: file.size,
       });
-      const writeOk = await this.storageService.write(file, mediaPath);
+      const writeOk = await this.storageService.write(file, sourcePath);
       if (!writeOk) {
         log.error('Storage write returned false', {
           media_id: media.id,
-          path: mediaPath,
+          path: sourcePath,
         });
         await this.markCreateFailed(media, 'Storage write could not complete');
         return;
@@ -214,8 +259,12 @@ export class MediaService {
 
       // Persist the storage key only after the object exists. Do not spread the
       // placeholder row: `extension` is varchar(5), and the job must see `url`.
+      //
+      // `url` is the SOURCE key at this point, not the final one — for video the two differ,
+      // and the worker rewrites the row with the processed key once the transcode lands. The
+      // media is still `UPLOADING`, so nothing renders it in the meantime.
       const stored = await this.mediaRepository.updateById(media.id, {
-        url: mediaPath,
+        url: sourcePath,
         extension,
       });
       await this.notifyMediaUpdate(stored);
@@ -226,7 +275,7 @@ export class MediaService {
       log.info('Enqueued process-media job', {
         media_id: media.id,
         public_id: media.public_id,
-        path: mediaPath,
+        path: sourcePath,
       });
     } catch (error) {
       log.error(
@@ -242,13 +291,9 @@ export class MediaService {
       const mediaType = MediaHelper.getMediaTypeFromMimeType(media.mimetype) ?? 'IMAGE';
 
       // 1. Generate thumbnail first (for moderation check). Always WebP, and always the
-      // listing-sized raster — for a GIF this is the static poster frame.
-      const thumbnail = await this.compressService.optimizeImageToWebp(
-        media,
-        THUMBNAIL_TARGET_BYTES,
-        80,
-        THUMBNAIL_MAX_EDGE_PX,
-      );
+      // listing-sized raster — for a GIF this is the static poster frame, and for a video the
+      // extracted poster frame, which is also the only thing the vision model can moderate.
+      const thumbnail = await this.buildThumbnail(media, mediaType);
 
       // 2. Resolve user & paths so we can store the thumbnail
       const [user, mediaPublicId] = await Promise.all([
@@ -325,8 +370,11 @@ export class MediaService {
         is_featured: false,
         is_value_pillars: false,
         is_highlight: false,
-        shape: await this.compressService.getImageShape(mediaFile.buffer),
-        aspect_ratio: await this.compressService.getImageAspectRatio(mediaFile.buffer),
+        // Derived from the thumbnail, not the media: for video the stored asset is an MP4 that
+        // `image-size` cannot read, and for images the two agree to well within one aspect
+        // bucket (the thumbnail is a `fit: 'inside'` downscale of the same frame).
+        shape: await this.compressService.getImageShape(thumbnailFile.buffer),
+        aspect_ratio: await this.compressService.getImageAspectRatio(thumbnailFile.buffer),
         media_type: mediaType,
         is_active: true,
         seo_title: data.seo_title || data.title || defaultSeoText,
@@ -357,7 +405,6 @@ export class MediaService {
   }
 
   public async createAsync({ media: mediaFile, generate_metadata, ...data }: CreateMediaRequest) {
-    //TODO: Pending to handle video case
     const log = this.logger.name('create');
     log.info('Starting async media create', {
       user_id: data.user_id,

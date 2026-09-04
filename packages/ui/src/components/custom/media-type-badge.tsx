@@ -7,8 +7,10 @@ import { cn } from "../../lib/utils";
  * apart from a still.
  *
  * Public listings pass no `showForAllTypes`: badging every tile "Photo" is noise when almost
- * everything is one. The atelier is the opposite — the artist is managing a mixed library and
- * wants the type stated on every card.
+ * everything is one. `GIF` and `VIDEO` still badge there, because both render as a static
+ * poster in a listing and there is otherwise nothing to tell them apart from a still.
+ * The atelier is the opposite — the artist is managing a mixed library and wants the type
+ * stated on every card.
  *
  * `label` carries the localized name. It falls back to the raw enum, which is already the right
  * word for `GIF` — the case that matters in `packages/ui`, where there is no translator.
@@ -25,7 +27,9 @@ export function MediaTypeBadge({
   className?: string;
 }) {
   if (!mediaType) return null;
-  if (!showForAllTypes && mediaType !== "GIF") return null;
+  if (!showForAllTypes && mediaType !== "GIF" && mediaType !== "VIDEO") {
+    return null;
+  }
 
   return (
     <span

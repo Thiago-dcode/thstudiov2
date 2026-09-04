@@ -16,7 +16,7 @@ import { Throttle } from '@nestjs/throttler';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { MediaTypeGuard } from 'src/common/guards/media-type.guard';
 import { Public } from 'src/common/decorators/public.decorator';
-import { imageUploadOptions } from 'src/common/utils/upload-options';
+import { mediaUploadOptions } from 'src/common/utils/upload-options';
 import { IsResourceBlockedPipe } from 'src/pipes/is-resource-blocked.pipe';
 import { ModelExistPipe } from 'src/pipes/model-exist.pipe';
 import { IndexMediaRequest } from '../user-media/requests/index-media.request';
@@ -56,7 +56,7 @@ export class MediaController {
 
   @Post()
   @UseGuards(MediaTypeGuard)
-  @UseInterceptors(FileInterceptor('file', imageUploadOptions), MediaTypeGuard)
+  @UseInterceptors(FileInterceptor('file', mediaUploadOptions), MediaTypeGuard)
   async create(
     @Body() createMediaRequest: CreateMediaRequest,
     @UploadedFile() file: Express.Multer.File,
@@ -66,7 +66,7 @@ export class MediaController {
   }
   @Post('async')
   @UseGuards(MediaTypeGuard)
-  @UseInterceptors(FileInterceptor('file', imageUploadOptions), MediaTypeGuard)
+  @UseInterceptors(FileInterceptor('file', mediaUploadOptions), MediaTypeGuard)
   async createAsync(
     @Body() createMediaRequest: CreateMediaRequest,
     @UploadedFile() file: Express.Multer.File,

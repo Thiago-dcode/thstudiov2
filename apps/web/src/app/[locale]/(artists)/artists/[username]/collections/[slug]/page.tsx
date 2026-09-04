@@ -147,6 +147,10 @@ export default async function Page({ params, searchParams }: Props) {
               // rather than dropping the item and shifting every index.
               url: m.url ?? undefined,
               alt: m.seo_alt ?? m.title ?? undefined,
+              // The lightbox needs both to play a video: the type to pick <video> over
+              // <img>, and the poster for the frame shown before playback starts.
+              mediaType: m.media_type,
+              poster: m.thumbnail,
               // Root-relative and locale-prefixed: an absolute `${config.app_url}/…` href always
               // pointed at the English URL, and the `?cb=1` cache-buster minted a second crawlable
               // URL for every media page. `shared` stays absolute — it is pasted into messengers.

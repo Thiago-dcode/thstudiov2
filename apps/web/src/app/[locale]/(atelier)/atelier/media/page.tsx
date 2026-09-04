@@ -44,12 +44,11 @@ function parseOptionalShape(
     : undefined;
 }
 
-/** VIDEO is rejected here too — nothing can produce one yet, so it is not a valid filter. */
 function parseOptionalMediaType(
   value: string | string[] | undefined,
 ): EnumType<"MEDIA_TYPE"> | undefined {
   const s = parseOptionalString(value);
-  if (!s || s === "VIDEO") return undefined;
+  if (!s) return undefined;
   return ENUMS.MEDIA_TYPE.includes(s as EnumType<"MEDIA_TYPE">)
     ? (s as EnumType<"MEDIA_TYPE">)
     : undefined;

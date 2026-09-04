@@ -6,6 +6,7 @@ import Image from "next/image"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useFullscreen } from "../../../hooks/useFullscreen"
 import { useGalleryDialog } from "../../../hooks/useGalleryDialog"
+import type { GalleryItem } from "../../../providers/gallery.provider"
 import { cn } from "../../../lib/utils"
 import { GalleryArrow } from "./gallery-arrow"
 import { useSwipe } from "./use-swipe"
@@ -80,7 +81,11 @@ export const Gallery = () => {
  if (currentItem == null || items.length <= 1) return { prevUrl: null, nextUrl: null }
  const pi = (currentItem - 1 + items.length) % items.length
  const ni = (currentItem + 1) % items.length
- return { prevUrl: items[pi]?.url ?? null, nextUrl: items[ni]?.url ?? null }
+ // A video neighbour shows its poster, never a second <video>: these two slides exist only to
+ // peek in during a swipe, and decoding three streams at once for that is not worth it.
+ const preview = (item?: GalleryItem) =>
+ (item?.mediaType === "VIDEO" ? item.poster : item?.url) ?? null
+ return { prevUrl: preview(items[pi]), nextUrl: preview(items[ni]) }
  }, [currentItem, items])
 
  useEffect(() => {
@@ -174,6 +179,23 @@ export const Gallery = () => {
  {currentItemData?.title ? (
  <p className="absolute -top-6 left-0 font-medium text-xs laptop:text-sm line-clamp-1">{currentItemData.title}</p>
  ) : null}
+ {currentItemData?.mediaType === "VIDEO" ? (
+ // `controls` rather than autoplay: the lightbox is opened deliberately, and an
+ // autoplaying video would start downloading megabytes the moment someone swipes
+ // past. `preload="metadata"` keeps that to the header until they press play.
+ // The click-to-toggle-chrome handler is dropped here — it would fight the
+ // player's own controls for the same clicks.
+ <video
+ src={currentUrl}
+ poster={currentItemData.poster ?? undefined}
+ controls
+ playsInline
+ preload="metadata"
+ aria-label={currentItemData?.alt || currentItemData?.title || ""}
+ className="block h-full object-contain"
+ onPointerDown={e => e.stopPropagation()}
+ />
+ ) : (
  <img
  src={currentUrl}
  alt={currentItemData?.alt || currentItemData?.title || ""}
@@ -181,6 +203,7 @@ export const Gallery = () => {
  draggable={false}
  onClick={fullscreen ? () => setFsControls(v => !v) : undefined}
  />
+ )}
  </div>
 
  {(currentItemData?.href || currentItemData?.shared) && (

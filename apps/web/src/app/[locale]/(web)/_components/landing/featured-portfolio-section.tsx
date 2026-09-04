@@ -71,6 +71,10 @@ export async function FeaturedPortfolioSection() {
               items={mediaItems.map((m) => ({
                 url: m.url ?? m.thumbnail,
                 alt: m.seo_alt ?? m.title ?? undefined,
+                // The lightbox needs both to play a video: the type to pick <video> over
+                // <img>, and the poster for the frame shown before playback starts.
+                mediaType: m.media_type,
+                poster: m.thumbnail,
               }))}
             >
               <Gallery />

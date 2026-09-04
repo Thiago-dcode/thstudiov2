@@ -98,12 +98,59 @@ describe('MediaHelper.allowedFileSize', () => {
 });
 
 describe('MediaHelper.outputExtension', () => {
-  it('keeps GIFs as gif and maps still images to webp', () => {
+  it('keeps GIFs as gif, transcodes video to mp4 and maps still images to webp', () => {
     expect(MediaHelper.outputExtension('GIF')).toBe('gif');
     expect(MediaHelper.outputExtension('IMAGE')).toBe('webp');
-    expect(MediaHelper.outputExtension('VIDEO')).toBe('webp');
+    expect(MediaHelper.outputExtension('VIDEO')).toBe('mp4');
     expect(MediaHelper.outputExtension(null)).toBe('webp');
     expect(MediaHelper.outputExtension(undefined)).toBe('webp');
+  });
+});
+
+describe('MediaHelper.sourcePath / outputPath', () => {
+  const mp4 = 'users/u1/media/m1/clip.mp4';
+
+  it('parks the untouched upload beside the eventual output', () => {
+    expect(MediaHelper.sourcePath(mp4, 'mov')).toBe('users/u1/media/m1/clip.source.mov');
+    // Callers pass either form of the extension.
+    expect(MediaHelper.sourcePath(mp4, '.MOV')).toBe('users/u1/media/m1/clip.source.mov');
+  });
+
+  it('round-trips back to the output key', () => {
+    expect(MediaHelper.outputPath(MediaHelper.sourcePath(mp4, 'mov'), 'mp4')).toBe(mp4);
+  });
+
+  it('is a plain extension swap when source and output share a key', () => {
+    // Images and GIFs never get a `.source.` marker, so the worker needs no media-type branch.
+    expect(MediaHelper.outputPath('users/u1/media/m1/photo.webp', 'webp')).toBe(
+      'users/u1/media/m1/photo.webp',
+    );
+    expect(MediaHelper.outputPath('users/u1/media/m1/anim.gif', 'gif')).toBe(
+      'users/u1/media/m1/anim.gif',
+    );
+  });
+
+  it('does not leak the source marker into the thumbnail key', () => {
+    const source = MediaHelper.sourcePath(mp4, 'mov');
+    expect(MediaHelper.thumbnailPath(MediaHelper.outputPath(source, 'mp4'))).toBe(
+      'users/u1/media/m1/clip-thumbnail.webp',
+    );
+  });
+});
+
+describe('MediaHelper.maxUploadBytes', () => {
+  it('gives video its own, much larger ceiling', () => {
+    expect(MediaHelper.maxUploadBytes('video/mp4')).toBeGreaterThan(
+      MediaHelper.maxUploadBytes('image/png'),
+    );
+    expect(MediaHelper.maxUploadBytes('image/gif')).toBe(
+      MediaHelper.maxUploadBytes('image/jpeg'),
+    );
+  });
+
+  it('returns 0 for anything that is not media, so a size check always fails', () => {
+    expect(MediaHelper.maxUploadBytes('application/pdf')).toBe(0);
+    expect(MediaHelper.maxUploadBytes('')).toBe(0);
   });
 });
 
