@@ -1,9 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { getQueueToken } from '@nestjs/bullmq';
-import {
-  AI_QUEUE,
-  USER_METRICS_QUEUE,
-} from '@repo/common-lib/constants/queues';
+import { QueueHelper } from '@repo/backend-lib/utils';
 import { API_ERRORS } from '@repo/common-lib/constants/api-errors';
 import { ApiException } from 'src/common/exceptions/api-exception';
 import { Helpers } from 'src/common/services/helpers.service';
@@ -32,6 +28,11 @@ describe('CollectionService slug derivation', () => {
   const media = [{ id: 1, position: 1 }];
 
   beforeEach(async () => {
+    jest.spyOn(QueueHelper, 'createComputeUserMetricsJob').mockResolvedValue(undefined);
+    jest
+      .spyOn(QueueHelper, 'createGenerateSingleEntityMetadataJob')
+      .mockResolvedValue(undefined);
+
     collectionRepository = {
       slugExists: jest.fn().mockResolvedValue(false),
       titleExists: jest.fn().mockResolvedValue(false),
@@ -58,12 +59,14 @@ describe('CollectionService slug derivation', () => {
             cacheRemember: jest.fn(),
           },
         },
-        { provide: getQueueToken(AI_QUEUE), useValue: { add: jest.fn() } },
-        { provide: getQueueToken(USER_METRICS_QUEUE), useValue: { add: jest.fn() } },
       ],
     }).compile();
 
     service = module.get(CollectionService);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   describe('create', () => {
