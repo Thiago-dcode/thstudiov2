@@ -7,7 +7,9 @@
     "build": "tsc --incremental false",
     "start": "node dist/main.js",
     "deploy": "echo 'deployed'",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "test": "jest --passWithNoTests --config ./jest.config.ts",
+    "test:watch": "jest --passWithNoTests --config ./jest.config.ts --watch"
   },
   "dependencies": {
     "@repo/backend-lib": "workspace:*",
@@ -17,10 +19,14 @@
     "express": "^5.2.1"
   },
   "devDependencies": {
+    "@repo/jest-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/express": "^5.0.6",
+    "@types/jest": "30.0.0",
     "@types/node": "^26.1.2",
+    "jest": "30.4.2",
+    "ts-jest": "29.4.12",
     "tsx": "^4.23.1",
-    "typescript": "7.0.2"
+    "typescript": "6.0.3"
   }
 }
