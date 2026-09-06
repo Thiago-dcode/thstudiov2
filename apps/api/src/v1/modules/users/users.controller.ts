@@ -40,8 +40,11 @@ export class UserController {
     private readonly addressService: AddressService,
     private readonly profileStatusService: ProfileStatusService,
   ) { }
-  // Per-route rather than on the class: the account endpoints below keep the
-  // stricter global defaults.
+  // Per-route rather than on the class: the public artist reads below all share
+  // the wider budget, and the account endpoints after them keep the stricter
+  // global defaults. Every artist sub-page renders `profile` (in
+  // `generateMetadata`) plus `exists`, so a visitor clicking two tabs spent the
+  // global 10/s on reads that are Redis-cached and cost us nothing.
   @Throttle(PUBLIC_READ_THROTTLE)
   @Public()
   @Get()
@@ -49,6 +52,7 @@ export class UserController {
     return this.userService.findAll(query);
   }
 
+  @Throttle(PUBLIC_READ_THROTTLE)
   @Public()
   @Get('profile/:username')
   async getProfile(
@@ -58,6 +62,7 @@ export class UserController {
     return await this.userService.getProfileByUsername(username);
   }
 
+  @Throttle(PUBLIC_READ_THROTTLE)
   @Public()
   @Get('compact/:username')
   async getCompacted(
@@ -67,6 +72,7 @@ export class UserController {
     return await this.userService.getCompactedByUsername(username);
   }
 
+  @Throttle(PUBLIC_READ_THROTTLE)
   @Public()
   @Get('exists/:username')
   async usernameExists(@Param('username', ToLowerCasePipe) username: string) {

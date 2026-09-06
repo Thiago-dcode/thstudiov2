@@ -22,6 +22,7 @@ import type {
 import type { UserExtraData } from "@repo/common-lib/types/user-extra-data";
 import { queryParamBuilder } from "@repo/common-lib/utils/query-builder";
 import type { CacheOptions } from "@repo/frontend-lib/fetch/http-client";
+import { landingCache } from "@/lib/config";
 import { fetchApi } from "@/lib/facade/fetchApi";
 import { BaseService } from "@/lib/services/base.service";
 
@@ -119,9 +120,21 @@ export class UserService extends BaseService {
     });
   }
 
+  /**
+   * Public + cached deliberately. Every artist sub-page calls this to decide whether to
+   * `notFound()`, and without `isPublic` the per-visitor `Authorization`/IP headers make
+   * each visitor a separate Next data-cache entry — so every page view was a fresh origin
+   * request for a boolean the API already caches for 7 days, and the API's throttle, not
+   * its load, is what visitors hit first.
+   *
+   * The 30-minute window is strictly fresher than that 7-day server-side cache, so this
+   * cannot serve anything staler than the uncached call already did.
+   */
   async usernameExists(username: string): Promise<ApiResponse<boolean>> {
     return await this.fetchApi.get({
       resource: `exists/${username}`,
+      isPublic: true,
+      cacheOptions: landingCache(`user-exists-${username}`),
     });
   }
 
