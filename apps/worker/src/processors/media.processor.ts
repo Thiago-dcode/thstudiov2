@@ -258,6 +258,9 @@ export class MediaProcessor {
         const mediaPath = MediaHelper.outputPath(sourcePath, extension);
         const thumbnailPath = MediaHelper.thumbnailPath(mediaPath);
         const deletePaths = [...new Set([sourcePath, mediaPath, thumbnailPath])];
+        // Gates the catch below: once the row is COMPLETED the output is real, and a later error
+        // must not be allowed to revert it or delete it.
+        let completed = false;
 
         try {
             log.info('Process media job', {
@@ -267,6 +270,31 @@ export class MediaProcessor {
                 status: media.status,
                 media_type: media.media_type,
             });
+
+            // BullMQ redelivers a job whose lock it lost, and `media` is the snapshot taken when
+            // the job was queued (still UPLOADING), so the only way to notice that an earlier
+            // attempt already finished is to read the row back.
+            //
+            // Without this guard a redelivery re-ran the whole pipeline against storage that the
+            // first attempt had already rewritten: video died on a source its own first attempt
+            // had deleted and then deleted the finished output on the way out, while images
+            // silently re-compressed the first attempt's output once per attempt.
+            const current = await this.mediaRepository.findOneByColumn('id', media.id);
+            if (!current) {
+                log.info('Skipping media processing: media no longer exists', {
+                    media_id: media.id,
+                    public_id: media.public_id,
+                });
+                return;
+            }
+            if (MediaHelper.isCompleted(current)) {
+                log.info('Skipping media processing: already completed by an earlier attempt', {
+                    media_id: media.id,
+                    public_id: media.public_id,
+                    completed_at: current.completed_at,
+                });
+                return;
+            }
 
             const buffer = await this.storageService.getBuffer(sourcePath);
 
@@ -386,10 +414,6 @@ export class MediaProcessor {
                 return;
             }
 
-            if (sourcePath !== mediaPath) {
-                await this.storageService.delete(sourcePath);
-            }
-
             // Derived from the THUMBNAIL rather than the media itself. For video that is the
             // only option — `image-size` cannot read an MP4 — and for images it is equivalent:
             // the thumbnail is produced with `fit: 'inside'`, whose aspect error at 800px is
@@ -415,6 +439,15 @@ export class MediaProcessor {
                 completed_at: new Date(),
                 failed_reason: null,
             });
+            completed = true;
+
+            // Deliberately after the commit, not before it. Deleting the source earlier left a
+            // window where a crash between the delete and the commit stranded the media for good:
+            // the retry found neither a finished row to skip nor the source it needed to redo the
+            // work. Now every step up to the commit can be repeated safely.
+            if (sourcePath !== mediaPath) {
+                await this.storageService.delete(sourcePath);
+            }
 
             await Promise.all([
                 QueueHelper.createStorageRequestJob({
@@ -472,6 +505,20 @@ export class MediaProcessor {
             const message =
                 error instanceof Error ? error.message : 'Media processing failed';
             log.error(message, error);
+
+            // This catch covers everything after the COMPLETED commit too - the follow-up queue
+            // jobs and the metadata hand-off. Marking FAILED there would revert a good row, and
+            // `deletePaths` would delete the media and thumbnail that are already serving.
+            // Whatever broke here is bookkeeping; the upload itself succeeded.
+            if (completed) {
+                log.error('Media processing failed after completion; leaving the media intact', {
+                    media_id: media.id,
+                    public_id: media.public_id,
+                    failed_reason: message,
+                });
+                return;
+            }
+
             await this.markFailed(media, message, log, {
                 deletePaths,
             });

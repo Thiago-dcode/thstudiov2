@@ -188,6 +188,10 @@ services:
       DB_PORT: 5432
       REDIS_URL: redis://redis:6379
       WORKER_PORT: 8081
+    # The worker logs to files like every other service; without this mount they are written
+    # inside the container and lost on recreate, which left a media failure undiagnosable.
+    volumes:
+      - ./storage/logs:/workspace/storage/logs
     # Bind the worker health port to localhost only - not exposed publicly.
     ports:
       - "127.0.0.1:${WORKER_HOST_PORT:-8081}:8081"
@@ -197,7 +201,9 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:8081/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      # `/health` - the worker serves that route and nothing at `/`, so probing `/` reported the
+      # container unhealthy for its whole lifetime.
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:8081/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -255,11 +261,16 @@ services:
       - "127.0.0.1:${REDIS_HOST_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
+    # `noeviction`, not `allkeys-lru`: this instance is the BullMQ broker as well as the cache,
+    # and under an eviction policy Redis is free to drop a job's lock key. BullMQ then sees the
+    # job as stalled and redelivers it while the first attempt is still running - it warns about
+    # exactly this on every connect. Cache entries all carry TTLs, so they still expire on their
+    # own; usage peaks around 4MB of the 256MB cap, so there is ample room to refuse evictions.
     command: >
       redis-server
       --appendonly yes
       --maxmemory 256mb
-      --maxmemory-policy allkeys-lru
+      --maxmemory-policy noeviction
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 30s

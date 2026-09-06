@@ -6,6 +6,15 @@ import { Job, Worker } from 'bullmq';
 import express from 'express';
 import { MediaProcessor } from './processors/media.processor';
 
+/**
+ * How long a worker may hold a job before BullMQ assumes it died.
+ *
+ * Sized for the slowest thing on the queue - a full-length video transcode - not for the
+ * average job, because the cost of being too low is a duplicate run of work that is not
+ * safely repeatable, while the cost of being too high is only a delayed retry after a crash.
+ */
+const MEDIA_JOB_LOCK_MS = 10 * 60 * 1000;
+
 async function bootstrap() {
     const appConfig = config();
     const WORKER_PORT = process.env.WORKER_PORT || 8081;
@@ -44,7 +53,17 @@ async function bootstrap() {
                 }
                 await handler(job);
             },
-            { connection },
+            {
+                connection,
+                // BullMQ's default lock is 30s, renewed on a timer. Media jobs run far longer than
+                // that - a 27MB upload took ~80s - and the renewal timer competes with sharp and
+                // ffmpeg for the event loop, so the lock lapsed, the job was treated as stalled and
+                // redelivered while the first attempt was still working. A lock that outlives a
+                // realistic transcode removes that race; a genuinely dead worker still releases its
+                // jobs, just after this window rather than after 30s.
+                lockDuration: MEDIA_JOB_LOCK_MS,
+                stalledInterval: MEDIA_JOB_LOCK_MS,
+            },
         ),
     );
 
