@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import type { EnumType } from '@repo/common-lib/constants/enums';
 import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
 import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/language';
 import {
@@ -14,6 +15,12 @@ import { QueryBuilder } from '@repo/database/queryBuilder';
 import { Query } from '@repo/database/facades';
 import { MediaRepository as BaseMediaRepository } from '@repo/database/repositories/media';
 import { RequestService } from 'src/common/services/request.service';
+
+/**
+ * The one `MEDIA_STATUS` that means processing gave up and the row will never be usable.
+ * Typed against the enum so renaming or dropping the value breaks the build here.
+ */
+const MEDIA_FAILED_STATUS: EnumType<'MEDIA_STATUS'> = 'FAILED';
 
 /**
  * HTTP-facing media repository: pagination + locale-aware SEO/tag reads.
@@ -94,12 +101,23 @@ export class MediaRepository extends BaseMediaRepository {
       }
     }
 
-    // `completed` maps to `status`: only COMPLETED rows when true, anything else when false.
+    // `completed` excludes FAILED rows - it is not `status = COMPLETED`.
+    //
+    // The atelier deliberately shows media that is still being processed: the grid renders an
+    // unselectable card with a spinner for anything `MediaHelper.isLoading` matches
+    // (UPLOADING, UPDATING, GENERATING_METADATA), so narrowing to COMPLETED would make an
+    // upload vanish until its job finished. FAILED is the only status that can never become
+    // usable, so it is the only one worth filtering out.
+    //
+    // It used to test `completed_at`, which was wrong in both directions: a FAILED row keeps
+    // whatever `completed_at` an earlier attempt wrote, so failures still surfaced, and rows
+    // written before that column existed have a null one and were hidden despite being fine.
+    // On dev that was 17 of 20 rows missing while the one FAILED row showed.
     if (typeof filters.completed === 'boolean') {
       if (filters.completed) {
-        query.where('completed_at', '!=', null);
+        query.where('status', '!=', MEDIA_FAILED_STATUS);
       } else {
-        query.where('completed_at', '=', null);
+        query.where('status', '=', MEDIA_FAILED_STATUS);
       }
     }
     this.requestService.pagination =
