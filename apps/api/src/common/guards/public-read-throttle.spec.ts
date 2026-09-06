@@ -1,3 +1,13 @@
+// Importing the controllers to read their metadata pulls in `users.service`, which imports the
+// stripe singleton, which builds a real `Stripe` client at module load. That throws
+// "Neither apiKey nor config.authenticator provided" wherever STRIPE_SECRET_KEY is unset - CI
+// has no such key, so the suite failed to load there while passing locally. Same mock as
+// `auth.service.spec.ts`, for the same reason.
+jest.mock('@repo/backend-lib/services/payment-service/stripe', () => ({
+  stripe: {},
+  stripeWebhookSecret: '',
+}));
+
 import { Reflector } from '@nestjs/core';
 import { THROTTLER_LIMIT } from '@nestjs/throttler/dist/throttler.constants';
 import { PUBLIC_READ_THROTTLE } from 'src/common/utils/constants';
