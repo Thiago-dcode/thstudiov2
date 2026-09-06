@@ -85,6 +85,10 @@ export class MediaProcessor {
         await this.mediaRepository.updateById(data.id, {
             status: 'FAILED',
             failed_reason: reason,
+            // Cleared, never merely left alone: a retry that fails after an earlier attempt
+            // committed would otherwise leave FAILED sitting on a stale `completed_at`, and
+            // anything reading that column as "this media is done" believes it.
+            completed_at: null,
         });
         if (options?.deletePaths?.length) {
             await Promise.all(

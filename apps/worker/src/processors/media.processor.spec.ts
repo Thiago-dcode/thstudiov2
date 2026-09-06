@@ -122,6 +122,12 @@ describe('MediaProcessor.processMedia', () => {
             expect.objectContaining({
                 status: 'FAILED',
                 failed_reason: 'The specified key does not exist.',
+                // FAILED and completed_at must never coexist. A retry failing after an earlier
+                // attempt committed would otherwise leave the timestamp behind, and every reader
+                // treating it as "this media is done" believes it - which is how a failed upload
+                // reached the atelier grid. The media table has a CHECK constraint for the same
+                // invariant, so leaving this out would now fail the write outright.
+                completed_at: null,
             }),
         );
         expect(storageService.delete).toHaveBeenCalled();

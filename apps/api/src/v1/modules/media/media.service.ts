@@ -203,6 +203,8 @@ export class MediaService {
       await this.mediaRepository.updateById(media.id, {
         status: 'FAILED',
         failed_reason: reason,
+        // FAILED and `completed_at` must never coexist - see the CHECK constraint on `media`.
+        completed_at: null,
       });
       await this.notifyMediaUpdate(media);
       log.error('Marked media as FAILED after storage write', {
