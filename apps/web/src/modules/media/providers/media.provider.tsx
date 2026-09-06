@@ -44,6 +44,14 @@ export type UploadMedia = {
   id?: number;
   previewUrl?: string;
   pending: boolean;
+  /**
+   * Handed to a batch handler but still waiting for a concurrency slot.
+   *
+   * Distinct from `pending`, which only covers uploads with a slot: `MEDIA_UPLOAD_CONCURRENCY`
+   * is 3, so selecting ten files leaves seven that are committed to upload yet otherwise
+   * indistinguishable from files still staged in the dialog.
+   */
+  enqueued?: boolean;
   data?: Media;
   deleted?: boolean;
   unique_id: number;
@@ -78,6 +86,7 @@ type MediaContextType = {
     ) => Partial<CreateMediaInputWithFile>,
   ) => void;
   mediaRequestFailed: UploadMedia[];
+  mediaInProgress: UploadMedia[];
   generateUniqueMediaId: () => number;
 };
 
@@ -318,6 +327,22 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
     [mediaUploads],
   );
 
+  /**
+   * Everything the user has committed to and is still waiting on — in flight or queued behind
+   * the concurrency limit.
+   *
+   * Exists because the create dialog closes the moment it hands off (`setOpen(false)` then
+   * `handleUploadInserts()`), and nothing else renders until the media's websocket notification
+   * arrives. That left a window with no sign an upload was happening at all.
+   */
+  const mediaInProgress = useMemo(
+    () =>
+      mediaUploads.filter(
+        (m) => !isMediaProcessed(m) && (m.pending || m.enqueued),
+      ),
+    [mediaUploads],
+  );
+
   const uploadSingleMedia = async (uniqueId: number) => {
     if (inFlightUploads.current.has(uniqueId)) return;
 
@@ -496,11 +521,26 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
    * processing silently did nothing at all. Per-item filtering below plus the `inFlightUploads`
    * guard in `uploadSingleMedia` already make overlapping batches safe.
    */
+  /**
+   * Marks a whole batch as committed before the first request leaves, so the status panel can
+   * show every file straight away instead of revealing them three at a time as slots free up.
+   */
+  const markEnqueued = (uploads: UploadMedia[]) => {
+    const queued = new Set(uploads.map((m) => m.unique_id));
+    setMediaUploads((prev) =>
+      prev.map((upload) =>
+        queued.has(upload.unique_id) ? { ...upload, enqueued: true } : upload,
+      ),
+    );
+  };
+
   const handleUploadUpdates = async () => {
     const uploadsToUpdate = mediaUploadsRef.current.filter(
       (m) => !!m.id && !m.pending && !m.data && !m.error,
     );
     if (!uploadsToUpdate.length) return;
+
+    markEnqueued(uploadsToUpdate);
 
     await runWithConcurrency(uploadsToUpdate, MEDIA_UPLOAD_CONCURRENCY, (m) =>
       uploadSingleMedia(m.unique_id),
@@ -512,6 +552,8 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
       (m) => !m.id && !m.pending && !m.data && !m.error,
     );
     if (!uploadsToInsert.length) return;
+
+    markEnqueued(uploadsToInsert);
 
     await runWithConcurrency(uploadsToInsert, MEDIA_UPLOAD_CONCURRENCY, (m) =>
       uploadSingleMedia(m.unique_id),
@@ -572,6 +614,7 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
     mediaStagedToCreate,
     updateStagedCreateInputs,
     mediaRequestFailed,
+    mediaInProgress,
     handleUploadUpdates,
     handleUploadInserts,
     generateUniqueMediaId,
