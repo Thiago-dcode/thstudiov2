@@ -7,6 +7,8 @@ const DAILY_LOG_FILE_PATTERN = /^(\d{4}-\d{2}-\d{2})(?:\.(.+))?\.log$/;
 
 export type PruneDailyLogFilesResult = {
   deleted: string[];
+  /** Files that vanished between the `readdir` and the `unlink` - see the ENOENT note below. */
+  alreadyGone: string[];
   skipped: string[];
   failed: { file: string; error: string }[];
 };
@@ -18,6 +20,7 @@ export async function pruneDailyLogFiles(
 ): Promise<PruneDailyLogFilesResult> {
   const result: PruneDailyLogFilesResult = {
     deleted: [],
+    alreadyGone: [],
     skipped: [],
     failed: [],
   };
@@ -70,6 +73,16 @@ export async function pruneDailyLogFiles(
         await fs.unlink(fullPath);
         result.deleted.push(fullPath);
       } catch (error) {
+        // Same reasoning as the `readdir` guard above: ENOENT means the goal - the file
+        // is gone - is already met, so it is not a failure. Every API replica bind-mounts
+        // the same host log directory and runs its own copy of the retention cron, so on
+        // a shared volume the replicas race and the loser's unlink lands here. Reporting
+        // that as an error made a successful prune look broken every night.
+        if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+          result.alreadyGone.push(fullPath);
+          continue;
+        }
+
         result.failed.push({
           file: fullPath,
           error: error instanceof Error ? error.message : String(error),

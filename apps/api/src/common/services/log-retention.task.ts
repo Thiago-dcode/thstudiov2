@@ -39,6 +39,12 @@ export class LogRetentionTask {
         log.info(`No log files older than ${retentionDays} day(s) to delete`);
       }
 
+      if (result.alreadyGone.length) {
+        log.info(
+          `${result.alreadyGone.length} log file(s) were already removed by another replica`,
+        );
+      }
+
       for (const failure of result.failed) {
         log.error(`Failed to delete log file ${failure.file}: ${failure.error}`);
       }

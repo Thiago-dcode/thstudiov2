@@ -41,6 +41,56 @@ describe('pruneDailyLogFiles', () => {
     expect(result.skipped).toEqual([otherFile]);
   });
 
+  it('reports a file another replica already deleted as alreadyGone, not failed', async () => {
+    const channelDir = path.join(tempDir, 'api');
+    await fs.mkdir(channelDir, { recursive: true });
+    const racedFile = path.join(channelDir, '2026-05-01.log');
+    const ownFile = path.join(channelDir, '2026-05-02.log');
+    await fs.writeFile(racedFile, 'old');
+    await fs.writeFile(ownFile, 'old');
+
+    // Stands in for the other API replica unlinking the file between our readdir and
+    // our unlink - both replicas bind-mount the same host log directory.
+    const enoent: NodeJS.ErrnoException = Object.assign(
+      new Error(`ENOENT: no such file or directory, unlink '${racedFile}'`),
+      { code: 'ENOENT' },
+    );
+    const unlink = jest
+      .spyOn(fs, 'unlink')
+      .mockImplementationOnce(() => Promise.reject(enoent));
+
+    const result = await pruneDailyLogFiles(tempDir, 30, new Date('2026-06-27T12:00:00Z'));
+
+    expect(result.alreadyGone).toEqual([racedFile]);
+    expect(result.deleted).toEqual([ownFile]);
+    expect(result.failed).toEqual([]);
+
+    unlink.mockRestore();
+  });
+
+  it('still reports a non-ENOENT unlink error as failed', async () => {
+    const channelDir = path.join(tempDir, 'api');
+    await fs.mkdir(channelDir, { recursive: true });
+    const oldFile = path.join(channelDir, '2026-05-01.log');
+    await fs.writeFile(oldFile, 'old');
+
+    const eacces: NodeJS.ErrnoException = Object.assign(
+      new Error(`EACCES: permission denied, unlink '${oldFile}'`),
+      { code: 'EACCES' },
+    );
+    const unlink = jest
+      .spyOn(fs, 'unlink')
+      .mockImplementationOnce(() => Promise.reject(eacces));
+
+    const result = await pruneDailyLogFiles(tempDir, 30, new Date('2026-06-27T12:00:00Z'));
+
+    expect(result.alreadyGone).toEqual([]);
+    expect(result.deleted).toEqual([]);
+    expect(result.failed).toEqual([{ file: oldFile, error: eacces.message }]);
+
+    unlink.mockRestore();
+  });
+
   it('does nothing when retentionDays is below 1', async () => {
     const channelDir = path.join(tempDir, 'api');
     await fs.mkdir(channelDir, { recursive: true });
