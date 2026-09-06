@@ -92,6 +92,11 @@ id_ed25519*
 
 # Local Claude Code tool-permission config — machine-specific, not for the repo.
 .claude/settings.local.json
+
+# Link, not a directory: `.claude/skills` points at `.agents/skills`, which is the tracked
+# copy. Git resolves the link and would otherwise commit all 23 files a second time, and the
+# two copies would then drift. Recreate it with `pnpm skills:link` after cloning.
+.claude/skills/
 *.bak
 cv-thiago-ferreira-2026*
 # Database seed assets (large binaries; not committed — keep locally for `db:seed -n media` / `db:seed -n assets`)

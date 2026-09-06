@@ -17,6 +17,7 @@
     "clean": "rimraf --glob \"apps/*/dist\" \"apps/*/.next\" \"packages/*/dist\"",
     "redis:flush": "docker exec a11studio-redis redis-cli FLUSHALL",
     "sync:asset": "bash scripts/sync-seed-assets.sh",
+    "skills:link": "node scripts/link-skills.mjs",
     "fresh": "pnpm clean && pnpm build",
     "deploy": "pnpm lint && pnpm test && pnpm build"
   },
