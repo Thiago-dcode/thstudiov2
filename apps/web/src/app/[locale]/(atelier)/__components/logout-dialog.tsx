@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { type FormEvent, useCallback, useState } from "react";
 import { useMainNav } from "@/lib/providers/main-nav.provider";
+import { clearClientAuthToken } from "@/lib/services/client-session-token";
 import { logoutServerAction } from "@/modules/auth/server-actions/logout.action";
 
 export const LogoutDialog = () => {
@@ -43,6 +44,9 @@ export const LogoutDialog = () => {
       setLoading(false);
       return;
     }
+    // `router.push` below is a client-side navigation, so the memoized bearer token would
+    // otherwise outlive the session it belongs to and be sent on behalf of whoever signs in next.
+    clearClientAuthToken();
     router.push("/auth/login");
   };
 

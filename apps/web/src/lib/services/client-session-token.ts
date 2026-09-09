@@ -11,14 +11,32 @@ import { userSession } from "@/modules/auth/server-actions/user-session.action";
  * The result is memoized because that action is a network round trip and would otherwise run
  * once per API call. The memo is a *promise*, so concurrent callers share a single in-flight
  * request rather than racing several.
+ *
+ * The memo outlives the session it describes, which is what makes the clearing below load
+ * bearing. Sign-in and sign-out both navigate with `router.push`, so the module instance — and
+ * this variable — survives the transition; only a hard reload would drop it. Left uncleared,
+ * the *previous* account's bearer token keeps being sent while `useSession` (which re-reads
+ * the cookie on every mount) already reports the *new* account's id. Every caller of
+ * `clearClientAuthToken` exists to close that window; do not remove them.
  */
 let pending: Promise<UserAuth | null> | null = null;
 
+/**
+ * When the memo was populated. Same-tab transitions clear it explicitly, but a sign-in in
+ * *another* tab swaps the cookie with no signal this one can observe (it is httpOnly, so there
+ * is nothing to read and no `storage` event to listen for). Without an upper bound that tab
+ * would keep authenticating as the previous account indefinitely; with one it self-corrects on
+ * the next call past the window, at a cost of one server action per tab per minute.
+ */
+let resolvedAt = 0;
+const MEMO_TTL_MS = 60_000;
+
 const resolveSession = (): Promise<UserAuth | null> => {
-  if (pending) return pending;
+  if (pending && Date.now() - resolvedAt < MEMO_TTL_MS) return pending;
 
   const attempt = userSession().catch(() => null);
   pending = attempt;
+  resolvedAt = Date.now();
 
   // A `null` result is never kept: it means either "signed out" or a transient failure of the
   // server action, and caching the latter would pin every later request to an empty
