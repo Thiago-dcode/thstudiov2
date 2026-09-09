@@ -200,4 +200,21 @@ export class MediaHelper {
   static readonly storageBytesSql =
     'media.bytes + COALESCE(media.previews_bytes, media.thumbnail_bytes) + COALESCE(media.video_preview_bytes, 0)';
 
+  /** `users/{userPublicId}/__TEMP__` — where presigned uploads land before they are claimed. */
+  static tempUploadPrefix(userPublicId: string): string {
+    return `users/${userPublicId}/__TEMP__`;
+  }
+
+  /**
+   * `users/{userPublicId}/__TEMP__/{uploadId}` — the key for one presigned upload.
+   *
+   * Deliberately extensionless: the client is handed only `uploadId`, so the API must be able
+   * to rebuild this from the authenticated user alone. Nothing is ever served from here, and
+   * the stored `ContentType` is re-derived from the destination key when the object is claimed
+   * (see `S3StorageService.move`).
+   */
+  static tempUploadPath(userPublicId: string, uploadId: string): string {
+    return `${MediaHelper.tempUploadPrefix(userPublicId)}/${uploadId}`;
+  }
+
 }

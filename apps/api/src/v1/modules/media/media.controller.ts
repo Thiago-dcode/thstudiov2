@@ -22,6 +22,8 @@ import { ModelExistPipe } from 'src/pipes/model-exist.pipe';
 import { IndexMediaRequest } from '../user-media/requests/index-media.request';
 import { MediaService } from './media.service';
 import { CreateMediaRequest } from './requests/create-media.request';
+import { CreateMediaAsyncRequest } from './requests/create-media-async.request';
+import { CreateMediaUploadUrlRequest } from './requests/create-media-upload-url.request';
 import { UpdateMediaRequest } from './requests/update-media.request';
 
 @Throttle({
@@ -64,15 +66,18 @@ export class MediaController {
     createMediaRequest.media = file;
     return await this.mediaService.create(createMediaRequest);
   }
+  // No FileInterceptor / MediaTypeGuard here: the browser has already PUT the bytes straight to
+  // S3 via a presigned URL from `upload-url` below, so this body is plain JSON and carries no
+  // file for either to inspect.
   @Post('async')
-  @UseGuards(MediaTypeGuard)
-  @UseInterceptors(FileInterceptor('file', mediaUploadOptions), MediaTypeGuard)
-  async createAsync(
-    @Body() createMediaRequest: CreateMediaRequest,
-    @UploadedFile() file: Express.Multer.File,
-  ) {
-    createMediaRequest.media = file;
+  async createAsync(@Body() createMediaRequest: CreateMediaAsyncRequest) {
     return await this.mediaService.createAsync(createMediaRequest);
+  }
+
+  // Issues the presigned PUT the browser uploads directly to, ahead of the `async` call above.
+  @Post('upload-url')
+  async createUploadUrl(@Body() createUploadUrlRequest: CreateMediaUploadUrlRequest) {
+    return await this.mediaService.createUploadUrl(createUploadUrlRequest);
   }
   @Patch(':id')
   async update(

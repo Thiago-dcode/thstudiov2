@@ -5,11 +5,20 @@ import {
     DeleteObjectCommand,
     DeleteObjectsCommand,
     GetObjectCommand,
+    HeadObjectCommand,
     ListObjectsV2Command,
     PutObjectCommand,
     S3Client,
 } from '@aws-sdk/client-s3';
 import { S3StorageConfig, StorageWriteInput } from "./types";
+
+/**
+ * Signed onto every presigned upload URL this service issues. A bucket lifecycle rule filtered
+ * on this tag expires abandoned `__TEMP__` objects without needing a prefix rule — S3 lifecycle
+ * prefix filters are literal strings with no wildcard support, and the temp key is nested per
+ * user (`users/{publicId}/__TEMP__/{uploadId}`), so no single prefix rule could cover it.
+ */
+const TEMP_UPLOAD_TAG = 'temp=true';
 
 /** Extension → Content-Type for objects we serve. Anything unknown is sent as a
  * non-renderable download rather than being guessed, so an unexpected extension can
@@ -84,6 +93,36 @@ export class S3StorageService extends StorageService {
         if (!result) return null;
 
         return await this.getUrl(path);
+    }
+    /**
+     * @see {@link StorageService.getUploadUrl}. `ContentType` is fixed rather than taken from
+     * the caller — a presigned PUT lets the browser send whatever bytes it likes regardless of
+     * what we sign, but signing a fixed value at least keeps the *header* honest, and the
+     * object's real served `ContentType` is re-derived from its final key by {@link move}, never
+     * from anything set here.
+     */
+    public async getUploadUrl(
+        path: string,
+        config: { contentLength: number; expireIn: number },
+    ): Promise<string> {
+        const command = new PutObjectCommand({
+            Bucket: this.config.bucket,
+            Key: path,
+            ContentType: 'application/octet-stream',
+            ContentLength: config.contentLength,
+            Tagging: TEMP_UPLOAD_TAG,
+        });
+        return await getSignedUrl(this.s3Client, command, {
+            expiresIn: config.expireIn,
+            // `getSignedUrl` otherwise "hoists" every header into the URL's query string so the
+            // caller does not have to send it back at all — for most headers that's the point of
+            // a presigned URL. `x-amz-tagging` is the documented exception (AWS SDK v3 issue
+            // aws/aws-sdk-js-v3#3906): S3 requires it to arrive as a real request header, not a
+            // query param, so it has to be pinned into `X-Amz-SignedHeaders` here and sent back
+            // as a header by `uploadFileToStorage` — which is exactly what it already does.
+            // Omitting this produces "AccessDenied: HeadersNotSigned: x-amz-tagging".
+            unhoistableHeaders: new Set(['x-amz-tagging']),
+        });
     }
     /**
      * @param config.expireIn - Custom expiration in **seconds**. Falls back to `S3StorageConfig.signedUrlExpiration`.
@@ -176,16 +215,56 @@ export class S3StorageService extends StorageService {
     public async list(path: string): Promise<File[]> {
         throw new Error('Not implemented ' + path);
     }
+    /** Backed by {@link head} — a 404 there is "does not exist", anything else is a real error. */
     public async exists(path: string): Promise<boolean> {
-        throw new Error('Not implemented ' + path);
+        return (await this.head(path)) !== null;
+    }
+    public async head(path: string): Promise<{ size: number } | null> {
+        try {
+            const command = new HeadObjectCommand({
+                Bucket: this.config.bucket,
+                Key: path,
+            });
+            const result = await this.s3Client.send(command);
+            return { size: result.ContentLength ?? 0 };
+        } catch (error) {
+            // S3 has no typed "not found" error class for HeadObject (unlike GetObject's
+            // `NoSuchKey`) — a missing key surfaces as a plain 404, distinguishable only by
+            // status code or the `NotFound` name the SDK assigns it.
+            const httpStatusCode = (error as { $metadata?: { httpStatusCode?: number } })
+                ?.$metadata?.httpStatusCode;
+            const name = (error as { name?: string })?.name;
+            if (httpStatusCode === 404 || name === 'NotFound') return null;
+            throw error;
+        }
     }
     public async move(fromPath: string, toPath: string): Promise<boolean> {
         try {
-            // Copy to new location
+            // Copy to new location. `MetadataDirective: 'REPLACE'` + a fresh `ContentType`
+            // derived from `toPath` (never copied from the source) matters most for the presigned
+            // upload flow: the temp object was written with `Content-Type: application/octet-stream`
+            // by the client, and this is the point where the real, key-derived type is applied —
+            // objects are served from the CDN domain, so trusting a client-supplied type here would
+            // be stored XSS. Also fixes the pre-existing SEO-rename caller, which relied on
+            // `COPY` (the implicit default) and so silently carried the old key's Content-Type
+            // whenever a rename changed extension-implying content (it doesn't today, but nothing
+            // enforced that).
+            //
+            // `TaggingDirective: 'REPLACE'` with no `Tagging` value strips tags on copy rather
+            // than the default `COPY`, for two reasons. Correctness: every presigned upload this
+            // moves out of `__TEMP__` was written with `temp=true` (so the lifecycle rule can
+            // find it) — without this, the PERMANENT object inherits that tag and the same rule
+            // deletes real media a day later. Permissions: the default `COPY` directive also
+            // requires `s3:GetObjectTagging` on the source, which callers of this service are not
+            // guaranteed to have; `REPLACE` sidesteps that requirement entirely.
             const copyCommand = new CopyObjectCommand({
                 Bucket: this.config.bucket,
                 CopySource: `${this.config.bucket}/${fromPath}`,
                 Key: toPath,
+                MetadataDirective: 'REPLACE',
+                ContentType: resolveContentType(toPath),
+                Metadata: { 'x-content-type-options': 'nosniff' },
+                TaggingDirective: 'REPLACE',
             });
             await this.s3Client.send(copyCommand);
 
@@ -197,7 +276,12 @@ export class S3StorageService extends StorageService {
             await this.s3Client.send(deleteCommand);
 
             return true;
-        } catch {
+        } catch (error) {
+            // Swallowed by design — callers treat `false` as "could not move" and decide what to
+            // do next (e.g. `writeOriginalAndEnqueue` marks the media FAILED). But a bare `false`
+            // gave no way to tell an IAM denial from a missing source from a transient network
+            // error, which is exactly what made this failure opaque in practice.
+            console.error(`S3StorageService.move failed: ${fromPath} -> ${toPath}`, error);
             return false;
         }
     }

@@ -58,6 +58,30 @@ export type PublicCreateMediaInput = Omit<MediaSchema, InternalMediaFields>;
 export type CreateMediaInputWithFile = PublicCreateMediaInput & {
   generate_metadata?: boolean;
   file?: File;
+  /**
+   * Set by `createMediaApi` once the file has been presigned and PUT directly to S3 — the
+   * dialog itself never populates these. `upload_id` is the uuid `createUploadUrl` returned;
+   * the API rebuilds the full temp key from it plus the authenticated user, so the browser
+   * never has to (or gets to) express a storage path itself.
+   */
+  upload_id?: string;
+  original_name?: string;
+  content_type?: string;
+};
+
+/** Input to `POST /media/upload-url` — what is being uploaded, before any bytes move. */
+export type CreateMediaUploadUrlInput = {
+  user_id: number;
+  filename: string;
+  content_type: string;
+  size: number;
+};
+
+/** Response from `POST /media/upload-url`. Only `upload_id` — never a path — travels back. */
+export type CreateMediaUploadUrl = {
+  upload_url: string;
+  upload_id: string;
+  expires_in: number;
 };
 
 // What the internal service uses to create media (includes system-generated fields)

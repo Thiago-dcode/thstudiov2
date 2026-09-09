@@ -1,7 +1,9 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { MediaRepository } from './media.repository';
 import { CreateMediaRequest } from './requests/create-media.request';
+import { CreateMediaAsyncRequest } from './requests/create-media-async.request';
+import { CreateMediaUploadUrlRequest } from './requests/create-media-upload-url.request';
 import { UserExtraDataService } from '../user-extra-data/user-extra-data.service';
 import {
   CompressService,
@@ -15,7 +17,7 @@ import { generateUUID } from '@repo/common-lib/utils/generate-uuid';
 import { bytesToMB, mbToBytes } from '@repo/common-lib/utils/bytes';
 import { FactoryLogService } from '@repo/backend-lib/services/log-service';
 import { QueueHelper } from '@repo/backend-lib/utils';
-import { CreateMediaInput, Media, MediaWithUser, UpdateMediaInternalInput } from '@repo/common-lib/types/media';
+import { CreateMediaInput, CreateMediaUploadUrl, Media, MediaWithUser, UpdateMediaInternalInput } from '@repo/common-lib/types/media';
 import { EntitySeoMetadata, MediaSeoTranslation } from '@repo/common-lib/types/ai';
 import { cleanObj } from '@repo/common-lib/utils/object';
 import { UPDATE_PROFILE_STATUS_EVENT } from '@repo/common-lib/constants/events';
@@ -31,6 +33,14 @@ import { RequestService } from 'src/common/services/request.service';
 import { DEFAULT_COMPRESSION_LVL } from '@repo/common-lib/constants/enums';
 import { MediaHelper } from '@repo/common-lib/utils/media';
 import { MediaModerationException } from 'src/common/exceptions/media-moderation-exception';
+
+/**
+ * Expiry for a presigned upload URL from {@link MediaService.createUploadUrl}. Deliberately
+ * short and independent of `S3StorageConfig.signedUrlExpiration` (1h, used for asset display
+ * links): this URL is a one-shot write, not a link a page keeps around, and a shorter window
+ * shrinks how long a leaked URL stays useful.
+ */
+const UPLOAD_URL_EXPIRATION_SECONDS = 15 * 60;
 
 @Injectable()
 export class MediaService {
@@ -222,10 +232,17 @@ export class MediaService {
     });
   }
 
-  /** Never throws — safe to call from fire-and-forget work. */
+  /**
+   * Never throws — safe to call from fire-and-forget work.
+   *
+   * @param options.deletePaths - Storage keys to clean up alongside the row, e.g. the presigned
+   * temp upload a rejected claim never got to `move()` out of `__TEMP__`. Best-effort: the
+   * lifecycle rule on that prefix is the backstop, so a delete failure here is not retried.
+   */
   private async markCreateFailed(
     media: Pick<Media, 'id' | 'user_id' | 'public_id'>,
     reason: string,
+    options?: { deletePaths?: string[] },
   ): Promise<void> {
     const log = this.logger.name('create');
     try {
@@ -235,6 +252,11 @@ export class MediaService {
         // FAILED and `completed_at` must never coexist - see the CHECK constraint on `media`.
         completed_at: null,
       });
+      if (options?.deletePaths?.length) {
+        await Promise.all(
+          options.deletePaths.map((path) => this.storageService.delete(path)),
+        );
+      }
       await this.notifyMediaUpdate(media);
       log.error('Marked media as FAILED after storage write', {
         media_id: media.id,
@@ -249,41 +271,101 @@ export class MediaService {
     }
   }
 
-  /** Storage write + process-media enqueue. Do not await from createAsync. */
+  /**
+   * Claims the presigned upload + process-media enqueue. Do not await from createAsync.
+   *
+   * "Claim" means `head()` the temp object the browser PUT to directly, then `move()` it onto
+   * the row's real `sourcePath` — a copy + delete, not a fresh write. This is the one place
+   * this method differs from before the presigned-upload change: it used to receive the whole
+   * file in memory (`Express.Multer.File`) and `write()` it; now the bytes never pass through
+   * this process at all, and everything from `sourcePath` onward — the `updateById`, the
+   * notification, `createProcessMediaJob` — is byte-for-byte the same as before, so the worker
+   * sees an identical job against an identical key.
+   */
   private async writeOriginalAndEnqueue({
     media,
-    file,
+    uploadId,
+    originalName,
+    contentType,
     userPublicId,
     generate_metadata,
   }: {
     media: Media;
-    file: Express.Multer.File;
+    uploadId: string;
+    originalName: string;
+    contentType: string;
     userPublicId: string;
     generate_metadata?: boolean;
   }): Promise<void> {
     const log = this.logger.name('create');
+    // Rebuilt here rather than trusted from the client: the DTO only ever carried the bare
+    // uuid, so this is the sole place the full key exists, and it can only ever resolve under
+    // THIS user's own prefix — a uuid stolen from another session has nothing to claim here.
+    const tempPath = MediaHelper.tempUploadPath(userPublicId, uploadId);
     try {
       const mediaType =
         media.media_type ??
-        MediaHelper.getMediaTypeFromMimeType(file.mimetype) ??
+        MediaHelper.getMediaTypeFromMimeType(contentType) ??
         'IMAGE';
       const { extension, sourcePath } = this.buildMediaStoragePaths(
         userPublicId,
         media.public_id,
-        file.originalname,
+        originalName,
         mediaType,
       );
-      log.info('Writing original file to storage', {
+
+      const head = await this.storageService.head(tempPath);
+      if (!head) {
+        log.error('Presigned upload not found', {
+          media_id: media.id,
+          path: tempPath,
+        });
+        await this.markCreateFailed(media, 'Upload could not be found');
+        return;
+      }
+      if (head.size === 0) {
+        log.error('Presigned upload is empty', {
+          media_id: media.id,
+          path: tempPath,
+        });
+        await this.markCreateFailed(media, 'Uploaded file is empty', {
+          deletePaths: [tempPath],
+        });
+        return;
+      }
+      // Belt and braces on top of the `ContentLength` pinned into the presigned URL: that binds
+      // the SIGNATURE, but nothing stops a client from PUTting a different tool or a raw curl
+      // request against the same URL with a different body. This is the real check against the
+      // per-type cap (`MediaHelper.maxUploadBytes`) — `createUploadUrl` only ever validated the
+      // SIZE THE CLIENT DECLARED before any bytes existed.
+      const maxBytes = MediaHelper.maxUploadBytes(contentType);
+      if (!maxBytes || head.size > maxBytes) {
+        log.error('Presigned upload exceeds the allowed size', {
+          media_id: media.id,
+          path: tempPath,
+          size: head.size,
+          max_bytes: maxBytes,
+        });
+        await this.markCreateFailed(media, 'File exceeds the allowed size limit', {
+          deletePaths: [tempPath],
+        });
+        return;
+      }
+
+      log.info('Claiming presigned upload into storage', {
         media_id: media.id,
         path: sourcePath,
-        size: file.size,
+        size: head.size,
       });
-      const writeOk = await this.storageService.write(file, sourcePath);
+      const writeOk = await this.storageService.move(tempPath, sourcePath);
       if (!writeOk) {
-        log.error('Storage write returned false', {
+        log.error('Storage move returned false', {
           media_id: media.id,
           path: sourcePath,
         });
+        // No `deletePaths` here: `move()` may have failed after its copy already landed at
+        // `sourcePath`, and passing `tempPath` in a failure this ambiguous risks deleting the
+        // only remaining copy of the upload before it is clear which side has it.
         await this.markCreateFailed(media, 'Storage write could not complete');
         return;
       }
@@ -313,7 +395,9 @@ export class MediaService {
         `Storage write threw: ${error instanceof Error ? error.message : 'Unknown error'}`,
         error,
       );
-      await this.markCreateFailed(media, 'Something went wrong during creation');
+      await this.markCreateFailed(media, 'Something went wrong during creation', {
+        deletePaths: [tempPath],
+      });
     }
   }
 
@@ -435,13 +519,19 @@ export class MediaService {
     }
   }
 
-  public async createAsync({ media: mediaFile, generate_metadata, ...data }: CreateMediaRequest) {
+  public async createAsync({
+    upload_id,
+    original_name,
+    content_type,
+    generate_metadata,
+    ...data
+  }: CreateMediaAsyncRequest) {
     const log = this.logger.name('create');
     log.info('Starting async media create', {
       user_id: data.user_id,
-      original_name: mediaFile.originalname,
-      size: mediaFile.size,
-      mimetype: mediaFile.mimetype,
+      original_name,
+      upload_id,
+      content_type,
     });
 
     const [user, mediaPublicId] = await Promise.all([
@@ -449,10 +539,10 @@ export class MediaService {
       generateUUID(),
     ]);
 
-    const mediaType = MediaHelper.getMediaTypeFromMimeType(mediaFile.mimetype) ?? 'IMAGE';
+    const mediaType = MediaHelper.getMediaTypeFromMimeType(content_type) ?? 'IMAGE';
     // Same slug the storage key will use, so `seo_filename` and the stored object stay aligned.
     const filename = MediaHelper.storageFilename(
-      this.stripExtension(mediaFile.originalname),
+      this.stripExtension(original_name),
       mediaPublicId,
     );
     const defaultSeoText = `${user.username} photo`;
@@ -500,11 +590,54 @@ export class MediaService {
 
     void this.writeOriginalAndEnqueue({
       media: mediaModel,
-      file: mediaFile,
+      uploadId: upload_id,
+      originalName: original_name,
+      contentType: content_type,
       userPublicId: user.public_id,
       generate_metadata,
     });
     return mediaModel;
+  }
+
+  /**
+   * Issues a presigned PUT URL the browser uploads straight to, ahead of `createAsync`.
+   *
+   * This is the first point the per-type cap (`MediaHelper.maxUploadBytes`) is enforced against
+   * anything the SERVER can act on — everywhere else it was (and, for the sync `POST /media`
+   * multipart path, still is) only a browser-side check the client can trivially skip. It is
+   * enforced again, against the object's REAL size, once the upload lands (see
+   * `writeOriginalAndEnqueue`'s `head()` check) — this one only bounds what gets signed.
+   */
+  public async createUploadUrl(data: CreateMediaUploadUrlRequest): Promise<CreateMediaUploadUrl> {
+    const maxBytes = MediaHelper.maxUploadBytes(data.content_type);
+    if (!maxBytes || data.size > maxBytes) {
+      throw new BadRequestException(
+        `File size ${data.size} bytes exceeds the allowed maximum of ${maxBytes} bytes for "${data.content_type}"`,
+      );
+    }
+
+    const [publicIdRow, uploadId] = await Promise.all([
+      this.userService.getPublicId(data.user_id),
+      generateUUID(),
+    ]);
+    // `@ModelExist('users')` on the DTO only checks the row exists, not the `banned = false`
+    // condition `getPublicId`'s query carries — so a banned user can pass validation and still
+    // resolve to no public id here.
+    if (!publicIdRow) {
+      throw new UnauthorizedException();
+    }
+
+    const path = MediaHelper.tempUploadPath(publicIdRow.public_id, uploadId);
+    const uploadUrl = await this.storageService.getUploadUrl(path, {
+      contentLength: data.size,
+      expireIn: UPLOAD_URL_EXPIRATION_SECONDS,
+    });
+
+    return {
+      upload_url: uploadUrl,
+      upload_id: uploadId,
+      expires_in: UPLOAD_URL_EXPIRATION_SECONDS,
+    };
   }
 
   public async delete(id: number): Promise<void> {

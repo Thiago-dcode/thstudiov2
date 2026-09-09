@@ -18,9 +18,14 @@ import aiClientService from "@/modules/ai/ai.client.service";
 import mediaClientService, {
   type CreateMediaBody,
 } from "../media.client.service";
-import { createMediaSchema, updateMediaSchema } from "../schemas/media-shemas";
+import {
+  type CreateMediaSchemaType,
+  createMediaSchema,
+  updateMediaSchema,
+} from "../schemas/media-shemas";
 import { revalidateUserMediaAction } from "../server-actions/revalidate-user-media.action";
 import { validateMediaFile } from "../validation/media-file.validation";
+import { uploadFileToStorage } from "./storage-upload.client";
 
 /**
  * These calls go from the browser straight to the API. They used to hop through a Next route
@@ -102,6 +107,22 @@ export async function createMediaApi(
   // Cloned before trimming: `trimValues` mutates in place, and `input` is React state owned by
   // the media provider.
   const { file, ...fields } = input;
+
+  // `validateMediaFile` only runs its own `!file` check when a translator is registered (see
+  // its doc comment). This is the same guard for when one is not — practically unreachable,
+  // since `MediaProvider` always registers one — but unlike that one, it narrows `file` to
+  // `File` for TypeScript for the presign + upload calls below.
+  if (!file) {
+    return inputErrorsReturn<Media, CreateMediaInputWithFile>(
+      {
+        file: t
+          ? t("validation.required", { field: t("fields.file") })
+          : "File is required",
+      },
+      input,
+    );
+  }
+
   const candidate = trimValues({ ...fields }, { deep: true });
 
   const { data, inputErrors } = validateWith(createMediaSchema, t, candidate);
@@ -112,12 +133,38 @@ export async function createMediaApi(
     );
   }
 
-  const validated = (data ?? candidate) as CreateMediaBody;
+  const validated = (data ?? candidate) as CreateMediaSchemaType;
   const { generate_metadata, ...rest } = validated;
+
+  // The file's bytes never reach this process, or even the API: a presigned PUT sends them
+  // straight to S3 (bypassing Cloudflare's per-plan upload cap), and only the resulting
+  // `upload_id` — never a path — travels in the `createAsync` call below. See
+  // `mediaClientService.createUploadUrl` / `uploadFileToStorage`.
+  const presigned = await mediaClientService.createUploadUrl({
+    user_id: rest.user_id,
+    filename: file.name,
+    content_type: file.type,
+    size: file.size,
+  });
+  if (presigned.error) {
+    return toActionReturn<Media, CreateMediaInputWithFile>(presigned, input);
+  }
+
+  const uploaded = await uploadFileToStorage(presigned.data.upload_url, file);
+  if (!uploaded.ok) {
+    return {
+      data: null,
+      errors: [uploaded.error],
+      inputErrors: undefined,
+      inputs: input,
+    };
+  }
 
   const body = cleanObj({
     ...rest,
-    file,
+    upload_id: presigned.data.upload_id,
+    original_name: file.name,
+    content_type: file.type,
     // Only sent when explicitly requested: the API treats an absent field as "no AI
     // generation", so forwarding `false` would be equivalent but noisier.
     generate_metadata: generate_metadata || undefined,
