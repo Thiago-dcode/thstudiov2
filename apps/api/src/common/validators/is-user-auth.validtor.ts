@@ -17,10 +17,14 @@ export class IsUserAuthValidator implements ValidatorConstraintInterface {
   async validate(value: any) {
 
     const user = this.requestService.user;
-    if(!user || user.id != value){
-      this.message = 'User with id: ' + user.id + ' is not authorized to use the user id: '+ value;
+    if (!user || user.id != value) {
+      // `user` is null for an unauthenticated request, so it cannot be dereferenced here:
+      // doing so threw a TypeError and surfaced as a 500 instead of this 400.
+      this.message = user
+        ? `User with id: ${user.id} is not authorized to use the user id: ${value}`
+        : `No authenticated user to authorize the user id: ${value}`;
       return false;
-    };
+    }
 
 
     return true;
