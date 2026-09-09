@@ -511,6 +511,18 @@ function MediaUploadContent() {
               currentFiles={currentCount}
               maxFiles={MAX_FILES}
               className="py-2 gap-1 min-h-0 [&_svg]:h-5 [&_svg]:w-5"
+              labelContent={
+                <>
+                  <p className="text-sm font-medium text-text">
+                    {t("dropzoneAddMore")}
+                  </p>
+                  <p className="text-xs text-text-muted mt-1">
+                    {t("dropzoneRemaining", {
+                      remaining: MAX_FILES - currentCount,
+                    })}
+                  </p>
+                </>
+              }
             />
           </div>
         </>
@@ -532,6 +544,16 @@ function MediaUploadContent() {
               disabled={isMaxReached}
               currentFiles={currentCount}
               maxFiles={MAX_FILES}
+              labelContent={
+                <>
+                  <p className="text-sm font-medium text-text">
+                    {t("dropzoneTitle")}
+                  </p>
+                  <p className="text-xs text-text-muted mt-1">
+                    {t("dropzoneHint")}
+                  </p>
+                </>
+              }
             />
           </div>
         </div>
@@ -559,7 +581,7 @@ export function CreateMediaDialog({
   } = useMedia();
   const { files } = useInputFile();
   const { session } = useSession();
-  const { metrics } = useUserMetrics();
+  const { metrics, aiCreditsInfo } = useUserMetrics();
 
   const storageUsed = metrics?.extra_data.storage_used_mb ?? 0;
   const storageLimit = metrics?.active_plan.storage_limit_mb ?? 0;
@@ -585,20 +607,52 @@ export function CreateMediaDialog({
       previewUrl?: string;
     })[] = [];
 
+    // The AI SEO checkbox only patches files that already exist. When "add more" appends a
+    // second batch, inherit the same on/off intent (and the same credit budget) so new cards
+    // are not silently excluded from metadata generation.
+    const metadataEnabled = mediaStagedToCreate.some(
+      (m) => m.input.generate_metadata,
+    );
+    let spent = mediaStagedToCreate.reduce(
+      (prev, curr) =>
+        curr.input.generate_metadata
+          ? prev +
+            aiCreditsInfo.costFor(
+              MediaHelper.getMediaTypeFromMimeType(
+                curr.input.file?.type ?? "",
+              ),
+            )
+          : prev,
+      0,
+    );
+
     for (const file of Array.from(files)) {
       if (addedFilesRef.current.has(file)) continue;
       addedFilesRef.current.add(file);
+
+      let generate_metadata = false;
+      if (metadataEnabled && aiCreditsInfo.hasCredits) {
+        const cost = aiCreditsInfo.costFor(
+          MediaHelper.getMediaTypeFromMimeType(file.type),
+        );
+        if (spent + cost <= aiCreditsInfo.remaining) {
+          spent += cost;
+          generate_metadata = true;
+        }
+      }
+
       newMediaUploads.push({
         file,
         previewUrl: URL.createObjectURL(file),
         user_id: session.id,
+        generate_metadata,
       });
     }
 
     if (newMediaUploads.length > 0) {
       addMediaUploads(newMediaUploads);
     }
-  }, [files, session, addMediaUploads]);
+  }, [files, session, addMediaUploads, mediaStagedToCreate, aiCreditsInfo]);
 
   if (!session) return null;
 

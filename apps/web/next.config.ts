@@ -50,8 +50,11 @@ const nextConfig: NextConfig = {
   env: {
     NEXT_PUBLIC_APP_URL:
       process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || "",
-    NEXT_PUBLIC_API_URL:
-      process.env.NEXT_PUBLIC_API_URL || process.env.API_V1_URL || "",
+    // No `API_V1_URL` fallback: that is the in-cluster address (`http://api:8080/api/v1`), and
+    // the browser now calls the API directly. Falling back would ship an unresolvable hostname
+    // to the client bundle, and `clientEnv`'s non-empty check would pass it happily — a silent,
+    // production-only failure. Missing here should break the build instead.
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || "",
     // No server-side twin: the socket.io origin is only ever consumed by the browser.
     NEXT_PUBLIC_WS_URL: process.env.NEXT_PUBLIC_WS_URL || "",
     NEXT_PUBLIC_GEOAPIFY_URL:

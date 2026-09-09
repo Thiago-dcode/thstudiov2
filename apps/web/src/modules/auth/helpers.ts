@@ -6,9 +6,9 @@ import type {
 } from "@repo/common-lib/types/response";
 import { cookies } from "next/headers";
 import { getTranslations } from "next-intl/server";
-import type { ZodError } from "zod";
 import { serverEnv } from "@/env/server";
 import { fetchFrontApi } from "@/lib/facade/fetchApi";
+import { getObjErrorFromZod } from "@/lib/validation/zod-helpers";
 import type { UserAuth } from "./auth.types";
 import { userSession } from "./server-actions/user-session.action";
 
@@ -74,16 +74,12 @@ export const getFailureFromApiError = async (
   return { data: null, errors: await getFriendlyApiErrors(response) };
 };
 
-export const getObjErrorFromZod = (error: ZodError): Record<string, string> => {
-  return error.issues.reduce(
-    (acc, issue) => {
-      const field = issue.path.join(".");
-      if (field) acc[field] = issue.message;
-      return acc;
-    },
-    {} as Record<string, string>,
-  );
-};
+/**
+ * Re-exported so the server actions that already import it from here keep working. It now
+ * lives in `lib/validation/zod-helpers`, which is client-safe — this module is not, and the
+ * browser-side validation needs the same function.
+ */
+export { getObjErrorFromZod };
 
 /**
  * Loads the current session. Used as defense-in-depth in server actions

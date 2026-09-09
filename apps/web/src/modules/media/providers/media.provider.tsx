@@ -16,10 +16,12 @@ import {
   type ReactNode,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
+import { setClientTranslator } from "@/lib/i18n/client-translator";
 import { useSubscribeToUserNotification } from "@/modules/user-notifications/hooks/useSubscribeToUserNotification";
 import {
   createMediaApi,
@@ -122,6 +124,12 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
     return nextUniqueId.current;
   }, []);
   const inFlightUploads = useRef(new Set<number>());
+
+  // `media-api.client.ts` validates uploads before sending them, but its signatures are fixed
+  // by this provider and it cannot call a hook — so it reads the translator from here.
+  useEffect(() => {
+    setClientTranslator(t);
+  }, [t]);
 
   // ============================================================================
   // Helper Functions

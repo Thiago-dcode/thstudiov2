@@ -1,4 +1,4 @@
-import { useId, forwardRef } from "react"
+import { useId, forwardRef, type ReactNode } from "react"
 
 import { cn } from "../../lib/utils"
 import { useInputFile } from "../../contexts/file.provider"
@@ -7,11 +7,17 @@ type FileInputProps = Omit<React.ComponentProps<"input">, "type"> & {
  error?: string;
  currentFiles?: number;
  maxFiles?: number;
+ /**
+  * Replaces the copy inside the dropzone. The default only knows about picking a single file,
+  * which reads wrong wherever the input appends to an existing selection — those consumers pass
+  * their own (translated) wording here.
+  */
+ labelContent?: ReactNode;
 }
 
 
 const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
- ({ className, onChange, error, currentFiles, maxFiles, disabled, ...props }, ref) => {
+ ({ className, onChange, error, currentFiles, maxFiles, disabled, labelContent, ...props }, ref) => {
  const context = useInputFile();
  const fileInputId = useId()
  const inputId = props.id || fileInputId
@@ -102,7 +108,7 @@ const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
  />
  </svg>
  <div className="text-center">
- {fileName ? (
+ {labelContent ?? (fileName ? (
  <>
  <p className="text-sm font-medium text-text">{fileName}</p>
  <p className="text-xs text-text-muted mt-1">Click to change file</p>
@@ -116,7 +122,7 @@ const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
  or drag and drop
  </p>
  </>
- )}
+ ))}
  </div>
  </label>
  {error && (

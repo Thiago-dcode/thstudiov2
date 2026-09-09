@@ -1,32 +1,79 @@
 import { ENUMS } from "@repo/common-lib/constants/enums";
 import * as z from "zod";
-import { formDataBoolean } from "@/lib/validation/zod-helpers";
+import {
+  formDataBoolean,
+  tooLongMessage,
+  type Translator,
+} from "@/lib/validation/zod-helpers";
 
-export const createMediaSchema = z.object({
-  title: z.string().max(255).nullable().optional(),
-  description: z.string().nullable().optional(),
-  compression_level: z
-    .enum([...ENUMS.COMPRESSION_LEVEL] as [string, ...string[]])
-    .nullable()
-    .optional(),
-  seo_alt: z.string().max(255).nullable().optional(),
-  seo_title: z.string().max(255).nullable().optional(),
-  seo_description: z.string().max(255).nullable().optional(),
-  // Must be declared, not just forwarded: zod strips unknown keys, so an undeclared field is
-  // silently dropped before the route ever sees it.
-  generate_metadata: formDataBoolean(),
-  user_id: z.number().int().positive(),
-});
+const TITLE_MAX = 255;
+const SEO_MAX = 255;
 
-export const updateMediaSchema = z
-  .object({
-    title: z.string().max(255).nullable().optional(),
+export const createMediaSchema = (t: Translator) =>
+  z.object({
+    title: z
+      .string()
+      .max(TITLE_MAX, tooLongMessage(t, t("fields.title")))
+      .nullable()
+      .optional(),
     description: z.string().nullable().optional(),
-    seo_alt: z.string().max(255).nullable().optional(),
-    seo_title: z.string().max(255).nullable().optional(),
-    seo_description: z.string().max(255).nullable().optional(),
-  })
-  .partial();
+    compression_level: z
+      .enum([...ENUMS.COMPRESSION_LEVEL] as [string, ...string[]], {
+        message: t("validation.invalid", { field: t("fields.file") }),
+      })
+      .nullable()
+      .optional(),
+    seo_alt: z
+      .string()
+      .max(SEO_MAX, tooLongMessage(t, t("fields.seoAlt")))
+      .nullable()
+      .optional(),
+    seo_title: z
+      .string()
+      .max(SEO_MAX, tooLongMessage(t, t("fields.seoTitle")))
+      .nullable()
+      .optional(),
+    seo_description: z
+      .string()
+      .max(SEO_MAX, tooLongMessage(t, t("fields.seoDescription")))
+      .nullable()
+      .optional(),
+    // Must be declared, not just forwarded: zod strips unknown keys, so an undeclared field is
+    // silently dropped before the request is ever built.
+    generate_metadata: formDataBoolean(),
+    user_id: z.number().int().positive(),
+  });
 
-export type CreateMediaSchemaType = z.infer<typeof createMediaSchema>;
-export type UpdateMediaSchemaType = z.infer<typeof updateMediaSchema>;
+export const updateMediaSchema = (t: Translator) =>
+  z
+    .object({
+      title: z
+        .string()
+        .max(TITLE_MAX, tooLongMessage(t, t("fields.title")))
+        .nullable()
+        .optional(),
+      description: z.string().nullable().optional(),
+      seo_alt: z
+        .string()
+        .max(SEO_MAX, tooLongMessage(t, t("fields.seoAlt")))
+        .nullable()
+        .optional(),
+      seo_title: z
+        .string()
+        .max(SEO_MAX, tooLongMessage(t, t("fields.seoTitle")))
+        .nullable()
+        .optional(),
+      seo_description: z
+        .string()
+        .max(SEO_MAX, tooLongMessage(t, t("fields.seoDescription")))
+        .nullable()
+        .optional(),
+    })
+    .partial();
+
+export type CreateMediaSchemaType = z.infer<
+  ReturnType<typeof createMediaSchema>
+>;
+export type UpdateMediaSchemaType = z.infer<
+  ReturnType<typeof updateMediaSchema>
+>;

@@ -12,6 +12,7 @@ import {
   YOUTUBE_URL_REGEX,
 } from "@repo/common-lib/constants/validation";
 import * as z from "zod";
+import type { ZodError } from "zod";
 
 /**
  * Matches the shape of both `useTranslations()` and the awaited `getTranslations()`.
@@ -24,6 +25,23 @@ export type Translator = (
   key: any,
   values?: Record<string, string | number>,
 ) => string;
+
+/**
+ * Flattens a `ZodError` into the field -> message map `ActionReturn.inputErrors` expects.
+ *
+ * Lives here rather than alongside the other action helpers because it is pure: those helpers
+ * import `next/headers`, which makes the whole module server-only and unusable from the client
+ * validation that now runs before a browser-direct API call.
+ */
+export const getObjErrorFromZod = (error: ZodError): Record<string, string> =>
+  error.issues.reduce(
+    (acc, issue) => {
+      const field = issue.path.join(".");
+      if (field) acc[field] = issue.message;
+      return acc;
+    },
+    {} as Record<string, string>,
+  );
 
 /** `{field} is required` — the most common validation message across schemas. */
 export const requiredString = (t: Translator, fieldLabel: string) =>
