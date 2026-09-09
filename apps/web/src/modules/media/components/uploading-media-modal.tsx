@@ -22,7 +22,7 @@ import { type UploadMedia, useMedia } from "../providers/media.provider";
 type UploadStatusKey =
   | "queued"
   | "preparingUpload"
-  | "uploading"
+  | "processingNotify"
   | "updating"
   | "generatingSeo"
   | "deleting";
@@ -39,8 +39,11 @@ const statusKey = (mediaUpload: UploadMedia): UploadStatusKey => {
     case "delete":
       return "deleting";
     default:
-      // A create has no id until the API answers; before that nothing has been sent yet.
-      return mediaUpload.id ? "uploading" : "preparingUpload";
+      // `id` is only assigned after `createAsync` returns — i.e. after the S3 PUT finished AND
+      // the server has already taken over (`writeOriginalAndEnqueue` is running). Before that,
+      // `preparingUpload`/the progress bar own the label; from that point on there is nothing
+      // left for a byte-transfer status to describe, so it switches to the notify message.
+      return mediaUpload.id ? "processingNotify" : "preparingUpload";
   }
 };
 
@@ -50,6 +53,18 @@ const UploadingRow = ({ mediaUpload }: { mediaUpload: UploadMedia }) => {
     mediaUpload.input.file?.name ||
     mediaUpload.input.seo_title ||
     t("unknownFile");
+
+  // Bytes still going out over this tab's connection — the window `progress` and the
+  // do-not-close warning apply to. Once `id` lands the server already has everything it needs,
+  // and `statusKey` below already switches the main label to the notify copy on its own.
+  const isTransferring =
+    mediaUpload.action === "create" && mediaUpload.pending && !mediaUpload.id;
+  const progress = isTransferring ? mediaUpload.progress : undefined;
+  const hasProgress = typeof progress === "number";
+
+  const label = hasProgress
+    ? t("uploadingPercent", { percent: progress })
+    : t(statusKey(mediaUpload));
 
   return (
     <div className="flex items-center gap-3 p-2">
@@ -73,7 +88,18 @@ const UploadingRow = ({ mediaUpload }: { mediaUpload: UploadMedia }) => {
       </div>
       <div className="min-w-0 flex-1 space-y-1">
         <p className="text-sm font-medium truncate">{title}</p>
-        <p className="text-xs text-text-muted">{t(statusKey(mediaUpload))}</p>
+        <p className="text-xs text-text-muted">{label}</p>
+        {hasProgress && (
+          <div className="h-1 w-full overflow-hidden bg-fg-2">
+            <div
+              className="h-full bg-primary transition-all"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        )}
+        {isTransferring && (
+          <p className="text-[11px] text-warning">{t("doNotCloseWarning")}</p>
+        )}
       </div>
     </div>
   );

@@ -32,9 +32,16 @@ export const uploadFileToStorage = (
     xhr.setRequestHeader("x-amz-tagging", "temp=true");
 
     if (onProgress) {
+      // `onprogress` fires far more often than the rounded percent actually changes, and each
+      // call is a React state write one layer up (`MediaProvider`). Tracking the last emitted
+      // value caps a whole upload at 100 updates instead of one per network chunk.
+      let lastPercent = -1;
       xhr.upload.onprogress = (event) => {
         if (!event.lengthComputable) return;
-        onProgress(Math.round((event.loaded / event.total) * 100));
+        const percent = Math.round((event.loaded / event.total) * 100);
+        if (percent === lastPercent) return;
+        lastPercent = percent;
+        onProgress(percent);
       };
     }
 

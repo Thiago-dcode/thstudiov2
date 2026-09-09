@@ -2019,7 +2019,10 @@ const messages = {
         failed: "con error",
         allComplete: "Todo completo",
         queued: "En cola...",
-        uploading: "Subiendo...",
+        uploadingPercent: "Subiendo... {percent}%",
+        doNotCloseWarning:
+          "Manten esta pagina abierta hasta que termine la subida",
+        processingNotify: "Archivo subido, te avisaremos cuando este listo",
         updating: "Actualizando...",
         generatingSeo: "Generando metadatos...",
         deleting: "Eliminando...",

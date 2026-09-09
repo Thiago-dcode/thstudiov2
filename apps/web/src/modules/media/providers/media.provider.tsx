@@ -58,6 +58,12 @@ export type UploadMedia = {
   deleted?: boolean;
   unique_id: number;
   error?: ReturnError<Record<string, string>>;
+  /**
+   * 0-100 while a create's bytes are being PUT directly to S3. Unset before the transfer starts
+   * and cleared the moment `id` is assigned — from then on the server owns the rest of the work,
+   * so there is nothing left for a byte-transfer percentage to describe.
+   */
+  progress?: number;
 };
 
 type MediaContextType = {
@@ -131,6 +137,23 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
     setClientTranslator(t);
   }, [t]);
 
+  // Native "leave site?" confirmation while a create's bytes are still going out over this
+  // tab's own connection (no `id` yet). Once `id` lands, `createAsync` already returned and
+  // `writeOriginalAndEnqueue` is running server-side — closing the tab from that point on loses
+  // nothing, so the guard has to come off, not just show a text warning that is easy to ignore.
+  useEffect(() => {
+    const isTransferring = mediaUploads.some(
+      (m) => m.action === "create" && m.pending && !m.id,
+    );
+    if (!isTransferring) return;
+
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [mediaUploads]);
+
   // ============================================================================
   // Helper Functions
   // ============================================================================
@@ -161,7 +184,9 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
   };
   const updateUploadByUniqueId = (
     uniqueId: number,
-    updates: Partial<Pick<UploadMedia, "pending" | "data" | "error" | "id">>,
+    updates: Partial<
+      Pick<UploadMedia, "pending" | "data" | "error" | "id" | "progress">
+    >,
   ) => {
     setMediaUploads((prev) => {
       const target = prev.find((m) => m.unique_id === uniqueId);
@@ -373,10 +398,18 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
           updateInput as UpdateMediaInput,
         );
       } else {
-        result = await createMediaApi(media.input);
+        result = await createMediaApi(media.input, (percent) => {
+          updateUploadByUniqueId(uniqueId, { progress: percent });
+        });
         if (result.data) {
+          // `id` is the handoff signal `statusKey` and `mediaInProgress` key off: once it is
+          // set, the bytes are already in S3 and `createAsync` already returned, so nothing
+          // further depends on this tab. Clearing `progress` here (rather than leaving the
+          // last percent behind) is what flips the row from the transfer bar to the
+          // "we'll notify you" message.
           updateUploadByUniqueId(uniqueId, {
             id: result.data.id,
+            progress: undefined,
           });
         }
       }
@@ -386,6 +419,7 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
           pending: false,
           data: undefined,
           error: extractReturnError(result),
+          progress: undefined,
         });
       }
     } catch (error) {
@@ -395,6 +429,7 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
       updateUploadByUniqueId(uniqueId, {
         pending: false,
         data: undefined,
+        progress: undefined,
         error: {
           errors: [errorMessage],
           inputErrors: undefined,

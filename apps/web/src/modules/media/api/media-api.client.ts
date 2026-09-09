@@ -96,6 +96,7 @@ const validateWith = <S extends { safeParse: (v: unknown) => any }>(
 
 export async function createMediaApi(
   input: CreateMediaInputWithFile,
+  onProgress?: (percent: number) => void,
 ): Promise<ActionReturn<Media, CreateMediaInputWithFile>> {
   const t = clientTranslator();
 
@@ -150,7 +151,11 @@ export async function createMediaApi(
     return toActionReturn<Media, CreateMediaInputWithFile>(presigned, input);
   }
 
-  const uploaded = await uploadFileToStorage(presigned.data.upload_url, file);
+  const uploaded = await uploadFileToStorage(
+    presigned.data.upload_url,
+    file,
+    onProgress,
+  );
   if (!uploaded.ok) {
     return {
       data: null,

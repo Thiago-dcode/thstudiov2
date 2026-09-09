@@ -695,6 +695,35 @@ export class MediaProcessor {
                 return;
             }
 
+            // `createProcessMediaJob` configures `attempts: 3` with an exponential backoff —
+            // but that config does nothing unless BullMQ is told this attempt failed. Every
+            // path above returns normally, which the Worker reads as SUCCESS, so a plain
+            // `return` here would too: it resolves `processMedia()`'s promise, BullMQ marks the
+            // job COMPLETED, and the other two configured attempts never run. That is exactly
+            // what happened to a video whose transcode overran its timeout — a single slow
+            // encode became a permanent failure with zero retries, because nothing ever told
+            // the queue to retry it.
+            //
+            // Rethrowing is what actually engages `attempts`/`backoff`, and mirrors the exact
+            // arithmetic `Job.shouldRetryJob` uses internally: `attemptsMade` counts attempts
+            // already CONSUMED before this one, so this is the last one precisely when
+            // `attemptsMade + 1 >= attempts`. On every earlier attempt the row is left as-is
+            // (still its pre-job status, e.g. UPLOADING) rather than flapping to FAILED and
+            // back if the retry succeeds, and nothing in `deletePaths` — the source above all —
+            // is deleted, since the next attempt reads that same source back from storage.
+            const maxAttempts = this.job.opts.attempts ?? 1;
+            const isFinalAttempt = this.job.attemptsMade + 1 >= maxAttempts;
+            if (!isFinalAttempt) {
+                log.warn('Media processing attempt failed; will retry', {
+                    media_id: media.id,
+                    public_id: media.public_id,
+                    attempt: this.job.attemptsMade + 1,
+                    max_attempts: maxAttempts,
+                    failed_reason: message,
+                });
+                throw error;
+            }
+
             await this.markFailed(media, message, log, {
                 deletePaths: [...deletePaths],
             });
