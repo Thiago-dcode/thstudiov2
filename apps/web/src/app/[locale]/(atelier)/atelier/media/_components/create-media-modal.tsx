@@ -618,9 +618,7 @@ export function CreateMediaDialog({
         curr.input.generate_metadata
           ? prev +
             aiCreditsInfo.costFor(
-              MediaHelper.getMediaTypeFromMimeType(
-                curr.input.file?.type ?? "",
-              ),
+              MediaHelper.getMediaTypeFromMimeType(curr.input.file?.type ?? ""),
             )
           : prev,
       0,

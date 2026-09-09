@@ -11,8 +11,8 @@ import {
   WEBSITE_URL_REGEX,
   YOUTUBE_URL_REGEX,
 } from "@repo/common-lib/constants/validation";
-import * as z from "zod";
 import type { ZodError } from "zod";
+import * as z from "zod";
 
 /**
  * Matches the shape of both `useTranslations()` and the awaited `getTranslations()`.

@@ -35,7 +35,9 @@ export const validateMediaFile = (
     !mediaType ||
     !ALLOWED_FILE_TYPES.includes(file.type.toLowerCase() as MimeTypes)
   ) {
-    return { file: t("validation.file.invalidType", { field: t("fields.file") }) };
+    return {
+      file: t("validation.file.invalidType", { field: t("fields.file") }),
+    };
   }
 
   if (!MediaHelper.allowedFileSize(file)) {
