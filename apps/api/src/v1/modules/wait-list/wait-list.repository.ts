@@ -123,7 +123,36 @@ export class WaitListRepository extends BaseRepository {
     return results.map((result) => this.format(result));
   }
 
-  async claimWaitingBatch(limit: number): Promise<WaitList[]> {
+  /**
+   * WAITING + validated entries that have been waiting at least as long as `validatedBefore`.
+   *
+   * Sizes the batch for the scheduled invite run. Counting here rather than in the task keeps the
+   * cutoff expressed once, in the same terms the claim below uses — a count taken under a
+   * different rule than the claim would hand the job a limit that selects the wrong rows.
+   */
+  async countWaitingValidatedBefore(validatedBefore: Date): Promise<number> {
+    const result = await Query.raw(
+      `SELECT COUNT(*)::int AS due_count
+       FROM wait_list
+       WHERE status = 'WAITING'
+         AND validated_at IS NOT NULL
+         AND validated_at <= $1::timestamptz;`,
+      [validatedBefore.toISOString()],
+    );
+
+    const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];
+    return Number(rows?.[0]?.due_count ?? 0);
+  }
+
+  /**
+   * `validatedBefore` is enforced here rather than only where the batch is sized, because the
+   * claim is what actually decides who gets invited. Ordering is by position, and position is
+   * only *approximately* validation order — `getValidatedCount` shrinks as INVITED entries
+   * expire, so a later validator can be assigned a position at or below an earlier one. Without
+   * this predicate a run sized by the 2-day rule could still claim somebody who validated an
+   * hour ago. Omitted (admin batch invite) means "no age requirement", the original behaviour.
+   */
+  async claimWaitingBatch(limit: number, validatedBefore?: Date): Promise<WaitList[]> {
     if (limit <= 0) {
       return [];
     }
@@ -134,6 +163,7 @@ export class WaitListRepository extends BaseRepository {
         FROM wait_list
         WHERE status = 'WAITING'
           AND validated_at IS NOT NULL
+          AND ($2::timestamptz IS NULL OR validated_at <= $2::timestamptz)
         ORDER BY position ASC NULLS LAST, id ASC
         LIMIT $1
         FOR UPDATE SKIP LOCKED
@@ -143,7 +173,7 @@ export class WaitListRepository extends BaseRepository {
       WHERE id IN (SELECT id FROM claimed)
         RETURNING id, email, token, position, status, redeemed_at, expires_at, validated_at, invitation_link_id,
                   invitation_email_sent_at, welcome_email_sent_at, last_reminder_email_sent_at, reminder_count, language;`,
-      [limit],
+      [limit, validatedBefore?.toISOString() ?? null],
     );
 
     const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];

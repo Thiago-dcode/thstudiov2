@@ -8,7 +8,7 @@ import {
 } from '@repo/common-lib/constants/queues';
 import { EnumType } from '@repo/common-lib/constants/enums';
 import type { InvitationLink } from '@repo/common-lib/types/invitation-link';
-import { CreateWaitListJobInput } from '@repo/common-lib/types/wait-list';
+import { CreateWaitListJobInput, InviteWaitListBatchJobInput } from '@repo/common-lib/types/wait-list';
 import { generateUUID } from '@repo/common-lib/utils/generate-uuid';
 import { getBenefitMonths, getWaitListBenefitType } from '@repo/common-lib/utils/wait-list';
 import { Job } from 'bullmq';
@@ -154,7 +154,7 @@ export class WaitListProcessor extends GlobalProcessor {
     }
   }
 
-  private async inviteWaitListBatch(data: { count: number }) {
+  private async inviteWaitListBatch(data: InviteWaitListBatchJobInput) {
     const count = Math.floor(Number(data.count));
 
     if (!Number.isFinite(count) || count <= 0) {
@@ -162,10 +162,20 @@ export class WaitListProcessor extends GlobalProcessor {
       return { invited: 0 };
     }
 
-    this.logger.info(`Starting wait list batch invite: requested_count=${count}`);
+    // Absent for an admin batch invite (no age requirement). An unparseable value is treated as
+    // absent rather than silently becoming an Invalid Date, which Postgres would reject.
+    const validatedBefore = data.validated_before ? new Date(data.validated_before) : undefined;
+    if (validatedBefore && Number.isNaN(validatedBefore.getTime())) {
+      this.logger.warn(`Ignoring unparseable validated_before: ${data.validated_before}`);
+    }
+    const cutoff = validatedBefore && !Number.isNaN(validatedBefore.getTime()) ? validatedBefore : undefined;
+
+    this.logger.info(`Starting wait list batch invite: requested_count=${count}`, {
+      validated_before: cutoff?.toISOString() ?? null,
+    });
 
     try {
-      const entries = await this.waitListRepository.claimWaitingBatch(count);
+      const entries = await this.waitListRepository.claimWaitingBatch(count, cutoff);
 
       if (!entries.length) {
         this.logger.info('No waiting wait list entries found for batch invite.');

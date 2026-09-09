@@ -19,6 +19,20 @@ export type CreateWaitListJobInput = PublicCreateWaitListInput & {
   language: EnumType<'LANGUAGE_CODE'>;
 };
 
+/**
+ * Job payload for a batch invite.
+ *
+ * `validated_before` is an ISO timestamp, not a Date: the payload is JSON-serialized into Redis,
+ * so a Date would arrive at the processor as a string anyway — making that explicit keeps the
+ * boundary honest. Omitted by the admin endpoint, which invites the head of the queue regardless
+ * of how recently those people validated; set by the scheduled task, which only invites entries
+ * that validated before the cutoff.
+ */
+export type InviteWaitListBatchJobInput = {
+  count: number;
+  validated_before?: string;
+};
+
 export type WaitListCreateResponse = {
   email: string;
   message: string;

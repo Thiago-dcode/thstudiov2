@@ -39,7 +39,7 @@ import {
 } from '@repo/common-lib/types/ai';
 import { CreateLlmTokensUsageInput } from '@repo/common-lib/types/llm-tokens-usage';
 import { CreateUserContactInput } from '@repo/common-lib/types/user-contact';
-import { CreateWaitListJobInput } from '@repo/common-lib/types/wait-list';
+import { CreateWaitListJobInput, InviteWaitListBatchJobInput } from '@repo/common-lib/types/wait-list';
 import { CreateOrUpdateLocationPayload } from '@repo/common-lib/types/location';
 import { CreateUserStorageRequestInput } from '@repo/common-lib/types/user-storage-request';
 import { CreateOrUpdateEmailPreferencePayload } from '@repo/common-lib/types/email-preferences';
@@ -209,7 +209,7 @@ export class QueueHelper {
         );
     }
 
-    static async createInviteWaitListBatchJob(dto: { count: number }) {
+    static async createInviteWaitListBatchJob(dto: InviteWaitListBatchJobInput) {
         await QueueHelper.createQueue(WAIT_LIST_QUEUE).add(
             JOB_INVITE_WAIT_LIST_BATCH,
             dto,

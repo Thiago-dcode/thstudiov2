@@ -150,15 +150,25 @@ export class WaitListService {
     }
   }
 
-  async inviteBatch(count: number) {
+  /**
+   * `validatedBefore` restricts the batch to entries that validated at or before that moment —
+   * how the scheduled task expresses "invite people 2 days after they validated". The admin
+   * endpoint omits it and keeps inviting the head of the queue regardless of age.
+   */
+  async inviteBatch(count: number, validatedBefore?: Date) {
     try {
       if (!Number.isFinite(count) || count <= 0) {
         this.logger.warn(`Invalid wait list batch invite count: ${count}`);
       }
 
-      this.logger.info(`Enqueuing wait list batch invite job: count=${count}`);
+      this.logger.info(`Enqueuing wait list batch invite job: count=${count}`, {
+        validated_before: validatedBefore?.toISOString() ?? null,
+      });
 
-      await QueueHelper.createInviteWaitListBatchJob({ count });
+      await QueueHelper.createInviteWaitListBatchJob({
+        count,
+        validated_before: validatedBefore?.toISOString(),
+      });
 
       return {
         count,
