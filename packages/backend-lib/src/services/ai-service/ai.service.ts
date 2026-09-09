@@ -4,6 +4,7 @@ import { QueueHelper, callback500ErrorMail } from '@repo/backend-lib/utils';
 import { openAiLLMConfig } from '@repo/backend-lib/config/llm';
 import { FactoryLogService } from '@repo/backend-lib/services/log-service';
 import {
+  ContentModerationFields,
   GenerateEntityMetadataResponse,
   GenerateMediaMetadataResponse,
   MediaMetadataPromptCategory,
@@ -11,6 +12,7 @@ import {
   SeoTranslation,
 } from '@repo/common-lib/types/ai';
 import { EnumType, MODERATION_SEVERITY } from '@repo/common-lib/constants/enums';
+import { AiCreditsHelper } from '@repo/common-lib/utils/ai-credits';
 import { FullPortfolio } from '@repo/common-lib/types/portfolio';
 import { MediaPortfolio } from '@repo/common-lib/types/media';
 import { FullCollection } from '@repo/common-lib/types/collection';
@@ -118,6 +120,31 @@ const SEO_EXTRA_INFO = {
 } as const;
 
 /**
+ * Appended to {@link SEO_EXTRA_INFO.media} for every VIDEO, whatever the frame count — the medium
+ * is decided by `media_type`, not by how many images were sampled, so a legacy video that falls
+ * back to its single poster frame is still described as a video.
+ *
+ * The model only ever sees stills, so left to itself it writes photography copy: the stored
+ * `.mp4` came back as `…-desert-horizon-photography`. The shared `SEO_QUALITY_RULES` examples are
+ * all photography ones and pull in the same direction, hence the explicit override here.
+ *
+ * Kept as an addition rather than a rewrite of the image block so the shared prefix — and
+ * OpenAI's prompt-caching discount on it — stays identical between image and video calls.
+ */
+const VIDEO_EXTRA_INFO = `
+
+        Video specifics:
+        - THE MEDIUM IS VIDEO: what you are describing is a moving-image piece stored as an .mp4, never a photo. Write it as video — "video", "film", "footage", "cinematography", "motion", "reel" — and NEVER use "photography", "photo", "photograph", "picture", "still" or "shot" as the medium, in any field or language. The title examples above are photography ones: copy their SHAPE, not their medium.
+        - seo_filename must say it is video: end it with a moving-image word ("-video", "-footage", "-cinematography"), never with "-photography".
+        - category_ids: when a discipline exists for both media, pick the film/video/motion one over its photography equivalent.`;
+
+/** Appended after {@link VIDEO_EXTRA_INFO} when a video was sampled into SEVERAL frames. */
+const VIDEO_FRAMES_EXTRA_INFO = `
+        - The images are frames sampled in chronological order from ONE video, not separate works. Describe the video as a single piece.
+        - NEVER mention "frames", "screenshots", "stills", or differences between the images — write as if you watched the video itself.
+        - Only tag (categories, subject, mood) what is consistently visible across the frames. If the frames disagree, prefer what is common to more of them.`;
+
+/**
  * Junk only when it is the WHOLE value — matching these as substrings would wrongly reject legitimate
  * text (art literally titled "Untitled …", Spanish/Portuguese "todo", "for example" in prose).
  */
@@ -162,23 +189,45 @@ export class AiService {
   ) { }
 
 
-  static  instance(llmService: LLMService) {
+  static instance(llmService: LLMService) {
 
     return new AiService(llmService);
   }
 
   /**
-   * Generate SEO metadata for a media image in ALL app languages (EN/ES/PT) plus category tags,
-   * in ONE multilingual call. The image is analyzed once (billed once) and rendered per locale, so
-   * covering 3 languages costs ~1.1–1.3× a single language instead of 3×.
-   * `seo_filename` is language-neutral (one physical file); `category_ids` are language-independent.
+   * Generate SEO metadata for a media image (or the frames sampled from a video) in ALL app
+   * languages (EN/ES/PT) plus category tags, in ONE multilingual call. The image is analyzed once
+   * (billed once) and rendered per locale, so covering 3 languages costs ~1.1–1.3× a single
+   * language instead of 3×. `seo_filename` is language-neutral (one physical file); `category_ids`
+   * are language-independent.
+   *
+   * `meta.media_type` decides the usage type billed — NOT how many URLs were passed — so a legacy
+   * video falling back to its single poster frame still bills as a video.
    */
   public async generateMediaMetadata(
-    mediaUrl: string,
+    mediaUrl: string | string[],
     categories: MediaMetadataPromptCategory[],
-    meta: { media_id: number; user_id: number },
+    meta: { media_id: number; user_id: number; media_type: EnumType<'MEDIA_TYPE'> | null | undefined },
   ): Promise<GenerateMediaMetadataResponse> {
     try {
+      this.logger.name('generate-media-metadata').warn('Starting to generate metadata', {
+        mediaUrl,
+        categories,
+        meta
+      });
+      const urls = (Array.isArray(mediaUrl) ? mediaUrl : [mediaUrl]).filter(Boolean);
+      if (!urls.length) {
+        throw new Error('Media metadata generation needs at least one image URL');
+      }
+      const isMultiFrame = urls.length > 1;
+      // The medium comes from the row, not from the frame count: a legacy video sampled into a
+      // single poster frame is still a video and must not be written up as a photograph.
+      const isVideo = meta.media_type === 'VIDEO';
+      const subject = isVideo
+        ? isMultiFrame
+          ? `${urls.length} images (frames sampled from ONE video)`
+          : 'image (one frame from ONE video)'
+        : 'image';
 
       const categoriesForPrompt = categories.map((c) => ({
         id: c.id,
@@ -198,7 +247,7 @@ export class AiService {
             content: [
               {
                 type: 'text' as const,
-                text: `Analyze the image ONCE, then return valid JSON with EXACTLY this shape:
+                text: `Analyze the ${subject} ONCE, then return valid JSON with EXACTLY this shape:
         { "seo_filename": "", "category_ids": [], "translations": { ${localesShape} } }
 
         Field rules:
@@ -214,14 +263,14 @@ export class AiService {
 
         ${SEO_QUALITY_RULES}
 
-        ${SEO_EXTRA_INFO.media}
+        ${SEO_EXTRA_INFO.media}${isVideo ? VIDEO_EXTRA_INFO : ''}${isVideo && isMultiFrame ? VIDEO_FRAMES_EXTRA_INFO : ''}
 
         CATEGORIES:
         ${JSON.stringify(categoriesForPrompt)}
 
-        Base everything on the image only. Ignore filename, metadata, and URL. Include a specific color/placement ONLY when clearly identifiable; never invent one.`,
+        Base everything on the ${subject} only. Ignore filename, metadata, and URL. Include a specific color/placement ONLY when clearly identifiable; never invent one.`,
               },
-              { type: 'image_url' as const, image_url: { url: mediaUrl } },
+              ...urls.map((url) => ({ type: 'image_url' as const, image_url: { url } })),
             ],
           },
         ],
@@ -267,15 +316,16 @@ export class AiService {
       await this.emitUsage({
         tokens: result.usage?.totalTokens,
         user_id: meta.user_id,
-        usage_type: 'GENERATE_MEDIA_METADATA',
+        usage_type: AiCreditsHelper.metadataUsageType(meta.media_type),
         matches_expected_response: matchesExpectedResponse,
       });
 
+      const response = { seo_filename: seoFilename, category_ids: categoryIds, translations, usage: result.usage };
       this.logger
         .name('generate-media-metadata')
-        .info('Successfully generated media metadata for user ' + meta.user_id);
+        .info('Successfully generated media metadata for user ' + meta.user_id, { response });
 
-      return { seo_filename: seoFilename, category_ids: categoryIds, translations, usage: result.usage };
+      return response;
     } catch (error) {
       this.logger
         .channel('ai/error')
@@ -413,11 +463,20 @@ export class AiService {
     });
   }
 
-  /** Moderate media content to determine if it is allowed */
-  public async moderateContent(url: string, meta: { user_id: number }) {
+  /**
+   * Moderate media content to determine if it is allowed.
+   *
+   * @param url one image, or the frames sampled from one video — several frames still produce a
+   * single verdict, a single usage record and a single moderation job.
+   */
+  public async moderateContent(url: string | string[], meta: { user_id: number }) {
     try {
+      this.logger.name('moderate-content').warn('Starting to moderate content', {
+        url,
+        meta
+      });
       const { moderation, matchesExpectedResponse, usage, text, parseError } =
-        await this.llmService.moderateContent(url);
+        await this._moderateContent(url);
 
       if (parseError) {
         this.logger
@@ -473,6 +532,128 @@ export class AiService {
         );
       throw error;
     }
+  }
+
+  /**
+   * One verdict over one or more images.
+   *
+   * A still is moderated as itself; a video is moderated as the frames sampled across it, since
+   * a vision model cannot read an MP4. Both arrive here, which is why a single URL and an array
+   * of them are equally valid input — every existing caller of {@link moderateContent} passes a
+   * bare string and needs no change. Chat Completions accepts many images in one message, so the
+   * frames of a video cost one request rather than one per frame.
+   */
+  private async _moderateContent(url: string | string[]) {
+    const urls = (Array.isArray(url) ? url : [url]).filter(Boolean);
+    if (!urls.length) {
+      throw new Error('Content moderation needs at least one image URL');
+    }
+    const isMultiFrame = urls.length > 1;
+
+    const EXPECTED_JSON: ContentModerationFields = {
+      is_allowed: true,
+      severity: MODERATION_SEVERITY.SAFE,
+      content_type: 'unknown',
+      reason: '',
+    };
+
+    // Several images mean frames of one video, and the model has to be told so. Left to itself
+    // it either returns a verdict per image — of which only the first would ever be read — or
+    // reconciles them into an average, which is precisely how one violating frame in an
+    // otherwise innocuous clip gets waved through.
+    const multiFrameRules = isMultiFrame
+      ? `
+        - The ${urls.length} images are frames sampled in chronological order from ONE video, not separate works. Return exactly ONE verdict, for the video as a whole.
+        - That verdict is the WORST frame's: severity is the highest any single frame reaches, and one violating frame fails the whole video however safe the others are. Never average across frames.
+        - Judge only what is visible IN the frames. What might happen between them is not evidence of anything.
+        - content_type describes the video; take it from whichever frame shows the work most clearly.`
+      : '';
+
+    const result = await this.llmService.complete({
+      messages: [
+        {
+          role: 'system',
+          content: 'You are the content moderation and child-safety system of an online ART marketplace. You are zero-tolerance on exactly two things: (1) CSAM and any sexualization or exploitation of minors, (2) hard pornographic content. Everything else is judged as art: nudity, the human body, and difficult subject matter are normal here and are NOT violations by themselves. Rate what is actually visible — do not invent a violation from what an image could hypothetically be. Output valid JSON only. No extra text.',
+        },
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'text' as const,
+              text: `Analyze the ${isMultiFrame ? `${urls.length} images` : 'image'} and return valid JSON with exactly these fields:
+        ${JSON.stringify(EXPECTED_JSON)}
+        SEVERITY SCALE (0–10)
+        0      – Safe. No issues.
+        1 – 2  – Minimal. Mild suggestive content, artistic nudity (paintings, sculptures, fine-art photography).
+        3 – 4  – Low. Partial or full non-sexual nudity (nude studies, boudoir), mild violence in art/historical context.
+        5 – 6  – Moderate. Explicit but legal adult content, graphic artistic violence.
+        7 – 8  – High. Hardcore pornography, gratuitous glorified realistic violence, hate promotion.
+        9      – Severe. Exploitation, abuse depiction, extreme illegal content.
+        10     – Critical. CSAM detected — child sexual abuse material.
+        ═══════════════════════════════════════════
+        content_type (one of)
+        ═══════════════════════════════════════════
+        "photograph" | "painting" | "illustration" | "digital_art" | "mixed_media" | "unknown"
+        ═══════════════════════════════════════════
+        DECISION RULES
+        ═══════════════════════════════════════════
+        - is_allowed = true when severity ≤ 6; is_allowed = false when severity ≥ 7
+        - MINORS: escalate to ≥ 9 ONLY when the subject appears to be a minor AND the depiction is sexual or sexualized (sexual act, sexualized posing, focus on intimate areas). Apparent age alone is NEVER a violation: children and young-looking people in ordinary, clothed, non-sexual images are severity 0. Youthful features, small stature, stylized or anime-like art are not evidence of age — do not treat them as such.
+        - NUDITY is not pornography and is not blocked here: the nude is a core art subject. Nudity without explicit sexual activity stays ≤ 4, even when full-frontal. Reserve ≥ 7 for hardcore pornographic depictions (explicit sexual acts, penetration, graphic close-ups).
+        - Judge ONLY what is clearly visible. If you are unsure whether something prohibited is present, it is NOT present — return the lower severity. Never block on suspicion, ambiguity, or "could be".
+        - reason: ≤120 chars, neutral explanation in English user friendly. Leave it empty when severity ≤ 6.${multiFrameRules}
+
+        Base the decision ONLY on visible image content.
+        Ignore filename, metadata, and URL.
+        Return valid JSON only.`,
+            },
+            ...urls.map((imageUrl) => ({
+              type: 'image_url' as const,
+              image_url: { url: imageUrl },
+            })),
+          ],
+        },
+      ],
+      temperature: 0.1,
+    });
+
+    let moderationData: Partial<ContentModerationFields> = {};
+    let matchesExpectedResponse = false;
+    let parseError: string | undefined;
+
+    try {
+      const parsed = this.parseLlmJson(result.text);
+
+      // Clamp severity to integer 0–10
+      const rawSeverity = typeof parsed.severity === 'number'
+        ? Math.min(MODERATION_SEVERITY.CRITICAL, Math.max(MODERATION_SEVERITY.SAFE, Math.round(parsed.severity)))
+        : MODERATION_SEVERITY.SAFE;
+
+      // Map and validate the fields. `is_allowed` is DERIVED from the severity threshold rather
+      // than trusted from the model: the two often disagree (a cautious model returns a low
+      // severity next to is_allowed=false), and a missing boolean would otherwise read as a
+      // rejection. Severity is the graded signal, so it decides.
+      moderationData = {
+        is_allowed: rawSeverity < MODERATION_SEVERITY.HIGH,
+        severity: rawSeverity as ContentModerationFields['severity'],
+        content_type: (parsed.content_type as ContentModerationFields['content_type']) || 'unknown',
+        reason: typeof parsed.reason === 'string' ? parsed.reason : '',
+      };
+
+      matchesExpectedResponse = typeof parsed.is_allowed === 'boolean'
+        && typeof parsed.severity === 'number';
+    } catch (err) {
+      parseError = err instanceof Error ? err.message : 'Unknown error';
+      moderationData = { ...EXPECTED_JSON };
+    }
+
+    return {
+      moderation: moderationData as ContentModerationFields,
+      matchesExpectedResponse,
+      usage: result.usage,
+      text: result.text,
+      parseError,
+    };
   }
 
   private async generateEntityMetadata(params: {
@@ -546,7 +727,7 @@ export class AiService {
 
       this.logger
         .name(logName)
-        .info(`Successfully generated ${entityLabel} metadata for user ${meta.user_id}`);
+        .info(`Successfully generated ${entityLabel} metadata for user ${meta.user_id}`, { translations, result });
 
       return { translations, usage: result.usage };
     } catch (error) {

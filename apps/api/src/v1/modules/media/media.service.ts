@@ -48,6 +48,27 @@ export class MediaService {
     private readonly helpers: Helpers,
     private readonly eventEmitter: EventEmitter2,
   ) { }
+  /**
+   * Signs the video-only asset keys in place, leaving them untouched when the row has none.
+   *
+   * `previews[0]` is always the thumbnail's key and `video_preview` is the media's own key
+   * whenever the source was short enough to be its own preview, so the same path gets signed
+   * more than once per row. {@link Helpers.getAsset} caches by path, so that is a cache hit
+   * rather than a second signature.
+   */
+  private async signVideoAssets(media: Media): Promise<void> {
+    const [previews, videoPreview] = await Promise.all([
+      media.previews?.length
+        ? Promise.all(media.previews.map((path) => this.helpers.getAsset(path)))
+        : Promise.resolve(media.previews),
+      media.video_preview
+        ? this.helpers.getAsset(media.video_preview)
+        : Promise.resolve(media.video_preview),
+    ]);
+    media.previews = previews;
+    media.video_preview = videoPreview;
+  }
+
   public async findAll(data: IndexMediaRequest) {
     const result = await this.mediaRepository.getAll(data);
     return await Promise.all(
@@ -58,6 +79,7 @@ export class MediaService {
         if (media.url) {
           media.url = await this.helpers.getAsset(media.url);
         }
+        await this.signVideoAssets(media);
         return media;
       }),
     );
@@ -73,6 +95,7 @@ export class MediaService {
       this.helpers.getAsset(media.thumbnail),
       this.helpers.getAsset(media.url),
       this.mediaRepository.getTagsByMediaId(media.id),
+      this.signVideoAssets(media),
     ]);
 
     media.thumbnail = thumbnail;
@@ -86,10 +109,16 @@ export class MediaService {
 
     const media = await this.mediaRepository.findById(id);
     if (!media) return null;
-    const [thumbnail, url] = await Promise.all([this.helpers.getAsset(media.thumbnail), this.helpers.getAsset(media.url)])
+    const [thumbnail, url] = await Promise.all([
+      this.helpers.getAsset(media.thumbnail),
+      this.helpers.getAsset(media.url),
+      this.signVideoAssets(media),
+    ]);
     return {
       thumbnail,
       url,
+      // Signed by `signVideoAssets` above; drop any that failed to resolve to a URL.
+      previews: media.previews?.filter(Boolean) ?? null,
       media_type: media.media_type,
     }
   }
@@ -485,9 +514,12 @@ export class MediaService {
     }
 
     await Promise.all([
-      this.helpers.deleteAsset(media.thumbnail),
-      this.helpers.deleteAsset(media.url),
-      this.mediaRepository.deleteById(id)
+      this.storageService.deleteDirectory(`users/${this.requestService.user.public_id}/media/${media.public_id}`),
+      this.mediaRepository.deleteById(id),
+      // Otherwise the public media page keeps serving a deleted media's title/description/og_image
+      // for up to SEO_METADATA_CACHE_TTL (1 day) — `getSeoMetadata`'s own doc comment says this is
+      // "invalidated on media update", which delete forgot to do too.
+      this.invalidateSeoCache(media.public_id),
     ])
 
     await QueueHelper.createOrUpdateUserNotificationJob({
@@ -531,7 +563,8 @@ export class MediaService {
     const internalData: UpdateMediaInternalInput = { ...data };
 
     // On the FIRST SEO generation, rename the stored objects so their S3 keys become keyword-rich.
-    // Both the media file and its thumbnail are moved so they stay aligned (as `create` produces them).
+    // Every asset the media owns is moved so they stay aligned (as the processor produces them):
+    // the media file, its thumbnail, a video's sampled frames, and its preview clip.
     if (data.seo_filename && !media.seo_generated_at && media.url) {
       // Slugified like an upload: the prompt asks the model for a URL-safe filename but nothing
       // makes it comply, and this value goes straight into an S3 key.
@@ -547,24 +580,68 @@ export class MediaService {
         // Rename only — the object is moved, not re-encoded, so it keeps whatever format it was
         // written in. Rows created before thumbnails were standardised on WebP may still hold a
         // `.gif` thumbnail, and moving that under a `.webp` key would mislabel its ContentType.
-        const newThumbnail = media.thumbnail
-          ? MediaHelper.withExtension(
-            MediaHelper.thumbnailPath(newUrl),
-            media.thumbnail.split('.').pop() || 'webp',
+        const keepExtension = (current: string, target: string) =>
+          MediaHelper.withExtension(target, current.split('.').pop() || 'webp');
+
+        const newPreviews = media.previews?.length
+          ? media.previews.map((path, index) =>
+            keepExtension(path, MediaHelper.previewScreenshotPath(newUrl, index)),
           )
-          : media.thumbnail;
-        await Promise.all([
-          this.helpers.moveAsset(media.url, newUrl),
-          media.thumbnail && newThumbnail
-            ? this.helpers.moveAsset(media.thumbnail, newThumbnail)
-            : Promise.resolve(),
-        ]);
+          : media.previews;
+
+        // A video's thumbnail IS `previews[0]`, and that has to survive the rename: giving it a
+        // `-thumbnail.webp` key of its own would move the object out from under `previews[0]`,
+        // leaving a dangling reference nothing would ever repair.
+        const thumbnailIsFirstPreview =
+          !!newPreviews?.length && media.thumbnail === media.previews?.[0];
+        const newThumbnail = !media.thumbnail
+          ? media.thumbnail
+          : thumbnailIsFirstPreview
+            ? newPreviews![0]
+            : keepExtension(media.thumbnail, MediaHelper.thumbnailPath(newUrl));
+
+        // `video_preview` equal to `url` means the video is its own preview: it needs the new
+        // key, but the move of the media itself is the only move there is.
+        const videoPreviewIsMedia = media.video_preview === media.url;
+        const newVideoPreview = !media.video_preview
+          ? media.video_preview
+          : videoPreviewIsMedia
+            ? newUrl
+            : keepExtension(media.video_preview, MediaHelper.videoPreviewPath(newUrl));
+
+        // Keyed by source so each object moves exactly once — the aliases above mean the same
+        // key can be reached from two columns, and the second move would fail with the source
+        // already gone.
+        const moves = new Map<string, string>([[media.url, newUrl]]);
+        media.previews?.forEach((path, index) => {
+          const target = newPreviews?.[index];
+          if (target) moves.set(path, target);
+        });
+        if (media.thumbnail && newThumbnail) {
+          moves.set(media.thumbnail, newThumbnail);
+        }
+        if (media.video_preview && newVideoPreview && !videoPreviewIsMedia) {
+          moves.set(media.video_preview, newVideoPreview);
+        }
+
+        await Promise.all(
+          [...moves].map(([from, to]) => this.helpers.moveAsset(from, to)),
+        );
+
         media.url = newUrl;
         internalData.url = newUrl;
         internalData.seo_filename = newFilename;
         if (media.thumbnail && newThumbnail) {
           media.thumbnail = newThumbnail;
           internalData.thumbnail = newThumbnail;
+        }
+        if (newPreviews?.length) {
+          media.previews = newPreviews;
+          internalData.previews = newPreviews;
+        }
+        if (media.video_preview && newVideoPreview) {
+          media.video_preview = newVideoPreview;
+          internalData.video_preview = newVideoPreview;
         }
       }
     }

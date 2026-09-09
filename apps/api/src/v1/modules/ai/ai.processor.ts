@@ -30,6 +30,7 @@ import {
   PERMANENT_BAN_THRESHOLD,
   CREDIT_CONSUMING_LLM_USAGE_TYPES,
 } from '@repo/common-lib/constants/limits';
+import { AiCreditsHelper } from '@repo/common-lib/utils/ai-credits';
 import {
   AI_QUEUE,
   JOB_RECORD_LLM_USAGE,
@@ -108,9 +109,12 @@ export class AiProcessor extends GlobalProcessor {
       // Platform-driven background SEO (portfolio/collection/service/user metadata) is excluded,
       // otherwise a user sitting one credit below their limit would be emailed every cron run.
       const isCreditConsuming = CREDIT_CONSUMING_LLM_USAGE_TYPES.includes(usageData.usage_type);
+      // Weighted by usage_type so a video metadata call (3 credits) can cross the threshold in
+      // one request instead of always assuming a 1-credit step.
+      const creditCost = AiCreditsHelper.creditCost(usageData.usage_type);
       const creditsExhausted =
         isCreditConsuming &&
-        (await this.userExtraDataService.checkAiCreditsExhausted(usageData.user_id, 1));
+        (await this.userExtraDataService.checkAiCreditsExhausted(usageData.user_id, creditCost));
 
       if (creditsExhausted) {
         try {

@@ -70,12 +70,19 @@ export class AiMediaProcessor extends GlobalProcessor {
       }
 
       // Like moderation, this is an `image_url` vision call: it cannot read an MP4. A video is
-      // described from its stored poster frame, which is a real WebP of the same content.
-      const url = asset.media_type === 'VIDEO' ? asset.thumbnail : asset.url;
+      // described from the frames sampled across it — the same real WebPs moderation judged —
+      // falling back to the single poster frame for a video processed before previews existed.
+      const urls =
+        asset.media_type === 'VIDEO'
+          ? asset.previews?.length
+            ? asset.previews
+            : [asset.thumbnail]
+          : [asset.url];
 
-      const metadata = await this.aiService.generateMediaMetadata(url, categories, {
+      const metadata = await this.aiService.generateMediaMetadata(urls, categories, {
         media_id: request.media_id,
         user_id: request.user_id,
+        media_type: asset.media_type,
       });
 
       // EN row (fallback to first) → the main-row SEO columns; filename is shared across locales.

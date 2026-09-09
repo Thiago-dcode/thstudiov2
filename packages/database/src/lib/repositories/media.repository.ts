@@ -12,6 +12,7 @@ import {
   Media,
   MediaWithUser,
 } from '@repo/common-lib/types/media';
+import { SqlValue } from '@repo/common-lib/types/database';
 import { DbException } from '../exceptions';
 import { Query } from '../facades';
 import { BaseRepository } from './base.repository';
@@ -29,6 +30,10 @@ export class MediaRepository extends BaseRepository {
     'media.bytes',
     'media.thumbnail_bytes',
     'media.thumbnail',
+    'media.previews',
+    'media.previews_bytes',
+    'media.video_preview',
+    'media.video_preview_bytes',
     'media.url',
     'media.is_featured',
     'media.is_value_pillars',
@@ -111,16 +116,39 @@ export class MediaRepository extends BaseRepository {
     return this.formatMediaWithUser(result);
   }
 
+  /**
+   * Column values as the driver can bind them.
+   *
+   * `previews` is the one column that cannot go over the wire as-is: it is `jsonb`, and
+   * node-postgres binds a JS array as a Postgres ARRAY literal (`{a,b}`), which jsonb rejects.
+   * So it travels as JSON text, exactly as `layout_config.config` does. No `::jsonb` cast is
+   * needed on an INSERT or UPDATE — Postgres infers the parameter's type from the target
+   * column — which is why the cast only appears on that repository's `VALUES`/`EXCLUDED` write.
+   *
+   * Public so the seeds can write media rows through the same conversion.
+   */
+  static toRow(data: Partial<MediaSchema>): Record<string, SqlValue> {
+    const row: Record<string, SqlValue> = {};
+    for (const [column, value] of Object.entries(data)) {
+      row[column] =
+        column === 'previews' && Array.isArray(value)
+          ? JSON.stringify(value)
+          : (value as SqlValue);
+    }
+    return row;
+  }
+
   async create(data: CreateMediaInput): Promise<Media> {
-    const result = await super._create<MediaSchema>(data, {
+    const result = await super._create<MediaSchema>(MediaRepository.toRow(data), {
       select: this.COLUMNS,
     });
     return this.formatMedia(result);
   }
 
   async updateById(id: number, data: UpdateMediaInternalInput): Promise<Media> {
-    const columns = Object.keys(data);
-    const values = Object.values(data);
+    const row = MediaRepository.toRow(data);
+    const columns = Object.keys(row);
+    const values = Object.values(row);
     await this.query().where('id', '=', id).update(columns, values);
     const result = await this.query()
       .select(this.COLUMNS)
@@ -145,6 +173,25 @@ export class MediaRepository extends BaseRepository {
     };
   }
 
+  /**
+   * The inverse of {@link MediaRepository.toRow}'s one special case.
+   *
+   * `pg`'s type parsers already hand back parsed jsonb, so this is normally the identity — but
+   * a raw text read or an overridden parser yields the string instead, and `layout_config`
+   * guards the same way. Anything that is not an array of keys reads as "no previews" rather
+   * than propagating a shape no consumer can use.
+   */
+  protected static parsePreviews(value: MediaSchema['previews']): string[] | null {
+    if (!value) return null;
+    if (Array.isArray(value)) return value;
+    try {
+      const parsed: unknown = JSON.parse(value as unknown as string);
+      return Array.isArray(parsed) ? (parsed as string[]) : null;
+    } catch {
+      return null;
+    }
+  }
+
   protected formatMedia(result: MediaSchema): Media {
     return {
       id: result.id,
@@ -155,6 +202,10 @@ export class MediaRepository extends BaseRepository {
       thumbnail_bytes: result.thumbnail_bytes,
       url: result.url,
       thumbnail: result.thumbnail,
+      previews: MediaRepository.parsePreviews(result.previews),
+      previews_bytes: result.previews_bytes,
+      video_preview: result.video_preview,
+      video_preview_bytes: result.video_preview_bytes,
       is_featured: result.is_featured,
       is_value_pillars: result.is_value_pillars,
       is_highlight: result.is_highlight,

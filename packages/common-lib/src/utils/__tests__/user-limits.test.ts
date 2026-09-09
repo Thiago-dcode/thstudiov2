@@ -157,6 +157,28 @@ describe('UserLimits.aiCredits', () => {
       }),
     ).toBe(false);
   });
+
+  it('denies a weighted cost that would push consumed over the total', () => {
+    // total = 60, consumed 58 + cost 3 = 61 > 60
+    expect(
+      UserLimits.aiCredits({
+        userExtraData: baseExtraData({ ai_credits: 10, ai_credits_consumed: 58 }),
+        userPlan: basePlan({ ai_credits: 50 }),
+        cost: 3,
+      }),
+    ).toBe(false);
+  });
+
+  it('allows a weighted cost that exactly fits under the total', () => {
+    // total = 60, consumed 57 + cost 3 = 60 <= 60
+    expect(
+      UserLimits.aiCredits({
+        userExtraData: baseExtraData({ ai_credits: 10, ai_credits_consumed: 57 }),
+        userPlan: basePlan({ ai_credits: 50 }),
+        cost: 3,
+      }),
+    ).toBe(true);
+  });
 });
 
 describe('UserLimits.dailyStorageRequests', () => {

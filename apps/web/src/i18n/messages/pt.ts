@@ -1871,9 +1871,9 @@ const messages = {
         aiSeoHint: "Preenche título, descrição, texto alt e tags.",
         aiSeoBadge: "Metadados IA",
         aiSeoTooltipBody:
-          "O SEO (otimização para mecanismos de busca) ajuda seu trabalho a ser encontrado no Google e no Google Imagens. Usamos IA para analisar a imagem e gerar um título, uma descrição, um texto alternativo e um nome de arquivo artísticos e ricos em palavras-chave, além de marcá-la automaticamente com as categorias correspondentes.",
+          "O SEO (otimização para mecanismos de busca) ajuda seu trabalho a ser encontrado no Google e no Google Imagens. Usamos IA para analisar a imagem ou o vídeo e gerar um título, uma descrição, um texto alternativo e um nome de arquivo artísticos e ricos em palavras-chave, além de marcá-la automaticamente com as categorias correspondentes.",
         aiSeoCreditsHint:
-          "Custa 1 crédito de IA por imagem. <remaining>Você tem {count} {count, plural, one {crédito} other {créditos}} restantes.</remaining>",
+          "Custa {imageCost} {imageCost, plural, one {crédito} other {créditos}} de IA por imagem/GIF, {videoCost} por vídeo. <remaining>Você tem {count} {count, plural, one {crédito} other {créditos}} restantes.</remaining>",
         creditsLabel: "{count} {count, plural, one {crédito} other {créditos}}",
         creditsUsageSummary:
           "{used} {used, plural, one {crédito} other {créditos}} usados · restam {remaining}",
@@ -1928,12 +1928,17 @@ const messages = {
         mediaPreview: "Prévia da mídia",
         generateSeo: "Gerar metadados",
         noCreditsAvailable:
-          "Nenhum crédito de IA disponível. Você precisa de pelo menos 1 crédito para gerar metadados. Faça upgrade do seu plano ou aguarde a renovação dos créditos.",
+          "Nenhum crédito de IA disponível. Você precisa de pelo menos {imageCost} crédito para gerar metadados de uma imagem/GIF, ou {videoCost} para um vídeo. Faça upgrade do seu plano ou aguarde a renovação dos créditos.",
         generateSeoTooltip:
-          "O SEO (otimização para mecanismos de busca) ajuda seu trabalho a ser encontrado no Google e no Google Imagens. Usamos IA para analisar a imagem e gerar um título, uma descrição, um texto alternativo e um nome de arquivo artísticos e ricos em palavras-chave, além de marcá-la automaticamente com as categorias correspondentes.",
+          "O SEO (otimização para mecanismos de busca) ajuda seu trabalho a ser encontrado no Google e no Google Imagens. Usamos IA para analisar a imagem ou o vídeo e gerar um título, uma descrição, um texto alternativo e um nome de arquivo artísticos e ricos em palavras-chave, além de marcá-la automaticamente com as categorias correspondentes.",
         noCreditsSuffix: " (Sem créditos)",
         delete: "Excluir",
-        deleteConfirm: "Tem certeza de que deseja excluir esta mídia?",
+        deleteTitle: "Excluir esta mídia?",
+        deleteConfirm: "Isso não pode ser desfeito.",
+        deleteWarningMetadata:
+          "Todos os metadados gerados — títulos, descrições, textos de SEO e tags — serão perdidos permanentemente.",
+        deleteWarningUsage:
+          "Se esta mídia fizer parte de um portfólio ou coleção, ela desaparecerá de lá.",
         cancel: "Cancelar",
         discardTitle: "Descartar alterações?",
         discardBody:

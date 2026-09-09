@@ -11,3 +11,4 @@ export * from './artist-share-ready';
 export * from './username';
 export * from './user-limits';
 export * from './media';
+export * from './ai-credits';

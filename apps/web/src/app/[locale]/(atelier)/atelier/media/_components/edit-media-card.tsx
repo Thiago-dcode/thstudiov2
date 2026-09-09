@@ -23,11 +23,6 @@ import {
   DrawerTrigger,
 } from "@repo/ui/components/shadcn/drawer";
 import { Label } from "@repo/ui/components/shadcn/label";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@repo/ui/components/shadcn/popover";
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { cn } from "@repo/ui/lib/utils";
 import { toast } from "@repo/ui/sonner";
@@ -74,7 +69,9 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
     deleteSingleMedia,
     generateUniqueMediaId,
   } = useMedia();
-  const [deletePopoverOpen, setDeletePopoverOpen] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  // Closing the expand preview can ghost-click the card (DrawerTrigger) underneath the overlay.
+  const suppressDrawerOpenRef = useRef(false);
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -95,8 +92,9 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
   // Helper variables for cleaner access
   const inputErrors = currentMediaUpload?.error?.inputErrors;
 
-  // AI Credits calculation
-  const hasEnoughCredits = aiCreditsInfo.hasCredits;
+  // AI Credits calculation — weighted by this media's type, so a video (cost 3) is correctly
+  // blocked when only 1-2 credits remain even though `hasCredits` alone would say yes.
+  const hasEnoughCredits = aiCreditsInfo.canAfford(currentMedia.media_type);
 
   const handleGenerateSeo = useCallback(async () => {
     if (!currentMedia.user_id || !currentMedia.id) {
@@ -225,7 +223,7 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
   const handleDelete = async () => {
     const result = await deleteSingleMedia(currentMedia);
     if (result.data) {
-      setDeletePopoverOpen(false);
+      setShowDeleteDialog(false);
       setIsDrawerOpen(false);
     } else {
       toast.error(result.errors?.[0] ?? t("deleteFailed"));
@@ -424,11 +422,27 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
     }));
   }, [currentMediaUpload]);
 
+  const handleDrawerOpenChange = (open: boolean) => {
+    if (open && suppressDrawerOpenRef.current) {
+      return;
+    }
+    setIsDrawerOpen(open);
+  };
+
+  const handleExpandOpenChange = (open: boolean) => {
+    if (open) return;
+    // Dismissing the preview overlay can deliver a click to the DrawerTrigger underneath.
+    suppressDrawerOpenRef.current = true;
+    window.setTimeout(() => {
+      suppressDrawerOpenRef.current = false;
+    }, 100);
+  };
+
   return (
     <Drawer
       direction="right"
       open={isDrawerOpen}
-      onOpenChange={setIsDrawerOpen}
+      onOpenChange={handleDrawerOpenChange}
     >
       <div
         className={cn(
@@ -508,19 +522,6 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
                 }
                 showForAllTypes
               />
-              {/* Top-right: the badge sits bottom-left and the pending-upload button top-left.
-                  Hidden while an upload is in flight — the poster on screen is the old asset. */}
-              {!isPending && (
-                <ExpandMediaDialog
-                  media={currentMedia}
-                  alt={
-                    currentMedia.seo_alt ||
-                    currentMedia.title ||
-                    t("altFallback", { username })
-                  }
-                  className="absolute top-2 right-2 z-20"
-                />
-              )}
               {/* Loading Overlay */}
               {isPending && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
@@ -544,6 +545,20 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
             </div>
           </article>
         </DrawerTrigger>
+        {/* Sibling of DrawerTrigger (not a child): nesting made dismiss clicks open the drawer.
+            `top-4 right-4` matches the former image-inset spot (article `p-2` + prior `top-2`). */}
+        {!isPending && (
+          <ExpandMediaDialog
+            media={currentMedia}
+            alt={
+              currentMedia.seo_alt ||
+              currentMedia.title ||
+              t("altFallback", { username })
+            }
+            className="absolute top-4 right-4 z-20"
+            onOpenChange={handleExpandOpenChange}
+          />
+        )}
       </div>
       <DrawerContent className="h-full w-150 max-w-[90vw] right-0 left-auto opacity-90 ">
         <DrawerHeader className="border-b p-2">
@@ -600,7 +615,10 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
                     <InfoTooltip
                       content={
                         !hasEnoughCredits
-                          ? t("noCreditsAvailable")
+                          ? t("noCreditsAvailable", {
+                              imageCost: aiCreditsInfo.costFor("IMAGE"),
+                              videoCost: aiCreditsInfo.costFor("VIDEO"),
+                            })
                           : t("generateSeoTooltip")
                       }
                       openDelay={200}
@@ -620,45 +638,15 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
                   </div>
                 </div>
               ) : (
-                <Popover
-                  open={deletePopoverOpen}
-                  onOpenChange={setDeletePopoverOpen}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-error hover:text-error hover:bg-error/10 h-8 px-2.5"
+                  onClick={() => setShowDeleteDialog(true)}
                 >
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-error hover:text-error hover:bg-error/10 h-8 px-2.5"
-                    >
-                      <Trash2 className="h-3.5 w-3.5 mr-1" />
-                      <span className="text-xs font-medium">{t("delete")}</span>
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-56 p-3" align="end">
-                    <p className="text-sm text-text-muted mb-3">
-                      {t("deleteConfirm")}
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex-1"
-                        onClick={() => setDeletePopoverOpen(false)}
-                      >
-                        {t("cancel")}
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        className="flex-1"
-                        disabled={isPending}
-                        onClick={handleDelete}
-                      >
-                        {isPending ? <Spinner /> : t("delete")}
-                      </Button>
-                    </div>
-                  </PopoverContent>
-                </Popover>
+                  <Trash2 className="h-3.5 w-3.5 mr-1" />
+                  <span className="text-xs font-medium">{t("delete")}</span>
+                </Button>
               )}
             </div>
           </div>
@@ -737,6 +725,39 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
             </Button>
             <Button variant="default" onClick={confirmCancel}>
               {t("discardChanges")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent className="max-w-md z-100">
+          <DialogHeader>
+            <DialogTitle>{t("deleteTitle")}</DialogTitle>
+            <DialogDescription asChild>
+              <div className="space-y-3">
+                <p>{t("deleteConfirm")}</p>
+                <ul className="space-y-2 list-disc pl-4">
+                  <li>{t("deleteWarningMetadata")}</li>
+                  <li>{t("deleteWarningUsage")}</li>
+                </ul>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="base"
+              onClick={() => setShowDeleteDialog(false)}
+              disabled={isPending}
+            >
+              {t("cancel")}
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={isPending}
+              onClick={handleDelete}
+            >
+              {isPending ? <Spinner /> : t("delete")}
             </Button>
           </DialogFooter>
         </DialogContent>

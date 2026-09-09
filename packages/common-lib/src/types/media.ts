@@ -51,7 +51,7 @@ export type MediaIndexRequest = OffsetPaginationRequest & {
 export type GetAllUserMediaQueryParams = Omit<MediaIndexRequest, 'user_id'>;
 
 // Fields generated internally by the system (user cannot set these)
-type InternalMediaFields = 'id' | 'public_id' | 'bytes' | 'url' | 'thumbnail' | 'thumbnail_bytes' | 'shape' | 'aspect_ratio' | 'extension' | 'media_type' | 'blocked_at' | 'is_active' | 'is_featured' | 'is_value_pillars' | 'is_highlight' | 'status' | 'completed_at' | 'failed_reason' | 'seo_filename' | 'seo_generated_at' | 'created_at' | 'updated_at';
+type InternalMediaFields = 'id' | 'public_id' | 'bytes' | 'url' | 'thumbnail' | 'thumbnail_bytes' | 'previews' | 'previews_bytes' | 'video_preview' | 'video_preview_bytes' | 'shape' | 'aspect_ratio' | 'extension' | 'media_type' | 'blocked_at' | 'is_active' | 'is_featured' | 'is_value_pillars' | 'is_highlight' | 'status' | 'completed_at' | 'failed_reason' | 'seo_filename' | 'seo_generated_at' | 'created_at' | 'updated_at';
 
 // What users can provide when creating media (public API input)
 export type PublicCreateMediaInput = Omit<MediaSchema, InternalMediaFields>;
@@ -78,6 +78,10 @@ export type UpdateMediaInternalInput = UpdateMediaInput &
     | 'seo_generated_at'
     | 'url'
     | 'thumbnail'
+    | 'previews'
+    | 'previews_bytes'
+    | 'video_preview'
+    | 'video_preview_bytes'
     | 'status'
     | 'completed_at'
     | 'failed_reason'

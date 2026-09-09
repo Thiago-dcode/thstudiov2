@@ -36,6 +36,7 @@ import { cleanObj } from '@repo/common-lib/utils/cleanObj';
 import type { CreateMediaInput } from '@repo/common-lib/types/media';
 import { MediaHelper } from '@repo/common-lib/utils/media';
 import { Query } from '../lib/facades';
+import { MediaRepository } from '../lib/repositories/media.repository';
 
 const IMAGE_EXT = new Set(['.jpg', '.jpeg', '.png', '.webp', '.gif']);
 
@@ -237,9 +238,14 @@ async function seedMediaAssetsForUser(user: MediaSeedTargetUser): Promise<void> 
     };
     cleanObj(mediaData);
 
-    const columns = Object.keys(mediaData);
-    const values = Object.values(mediaData);
-    await Query.table(TABLES_ENUM.MEDIA).insert(columns, values);
+    // Through the repository's conversion rather than straight from the object: `previews` is
+    // jsonb and cannot be bound as a JS array. Seeds never set it, but the shared path is the
+    // one that stays correct if they ever do.
+    const row = MediaRepository.toRow(mediaData);
+    await Query.table(TABLES_ENUM.MEDIA).insert(
+      Object.keys(row),
+      Object.values(row),
+    );
     created += 1;
   }
 

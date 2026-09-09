@@ -1860,9 +1860,9 @@ const messages = {
         aiSeoHint: "Fills title, description, alt text, and tags.",
         aiSeoBadge: "AI metadata",
         aiSeoTooltipBody:
-          "SEO (Search Engine Optimization) helps your work get found on Google and Google Images. This uses AI to analyze the image and generate an artistic, keyword-rich title, description, alt text and filename — and auto-tags it with matching categories.",
+          "SEO (Search Engine Optimization) helps your work get found on Google and Google Images. This uses AI to analyze the image or video and generate an artistic, keyword-rich title, description, alt text and filename — and auto-tags it with matching categories.",
         aiSeoCreditsHint:
-          "Costs 1 AI credit per image. <remaining>You have {count} {count, plural, one {credit} other {credits}} remaining.</remaining>",
+          "Costs {imageCost} AI {imageCost, plural, one {credit} other {credits}} per image/GIF, {videoCost} per video. <remaining>You have {count} {count, plural, one {credit} other {credits}} remaining.</remaining>",
         creditsLabel: "{count} {count, plural, one {credit} other {credits}}",
         creditsUsageSummary:
           "{used} {used, plural, one {credit} other {credits}} used · {remaining} left",
@@ -1916,12 +1916,17 @@ const messages = {
         mediaPreview: "Media Preview",
         generateSeo: "Generate media metadata",
         noCreditsAvailable:
-          "No AI credits available. You need at least 1 credit to generate media metadata. Please upgrade your plan or wait for credits to reset.",
+          "No AI credits available. You need at least {imageCost} credit to generate metadata for an image/GIF, or {videoCost} for a video. Please upgrade your plan or wait for credits to reset.",
         generateSeoTooltip:
-          "SEO (Search Engine Optimization) helps your work get found on Google and Google Images. This uses AI to analyze the image and generate an artistic, keyword-rich title, description, alt text and filename — and auto-tags it with matching categories.",
+          "SEO (Search Engine Optimization) helps your work get found on Google and Google Images. This uses AI to analyze the image or video and generate an artistic, keyword-rich title, description, alt text and filename — and auto-tags it with matching categories.",
         noCreditsSuffix: " (No credits)",
         delete: "Delete",
-        deleteConfirm: "Are you sure you want to delete this media?",
+        deleteTitle: "Delete this media?",
+        deleteConfirm: "This cannot be undone.",
+        deleteWarningMetadata:
+          "All generated metadata — titles, descriptions, SEO text, and tags — will be permanently lost.",
+        deleteWarningUsage:
+          "If this media is used in a portfolio or collection, it will disappear from there.",
         cancel: "Cancel",
         discardTitle: "Discard Changes?",
         discardBody:

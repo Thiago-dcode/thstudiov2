@@ -386,6 +386,12 @@ export type TranscodeOptions = {
     maxrateBps: number;
     audio: TranscodeAudioPlan;
     timeoutMs: number;
+    /**
+     * Stop after this many seconds of output. Omitted for the media's own encode, set for the
+     * short preview clip. It is an OUTPUT limit, so ffmpeg stops decoding once it is reached —
+     * a 10s preview of a 10-minute source costs 10 seconds of work, not ten minutes.
+     */
+    durationSeconds?: number;
 };
 
 export async function transcodeToMp4(
@@ -437,6 +443,7 @@ export async function transcodeToMp4(
         // `-threads 0` reads the HOST core count and oversubscribes inside a cgroup-limited
         // container, which makes it slower rather than faster.
         '-threads', String(Math.min(4, os.cpus().length || 1)),
+        ...(options.durationSeconds ? ['-t', String(options.durationSeconds)] : []),
         '-f', 'mp4',
     ];
 

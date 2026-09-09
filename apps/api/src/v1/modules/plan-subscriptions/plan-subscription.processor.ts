@@ -14,6 +14,7 @@ import {
 import { GlobalProcessor } from 'src/common/processors/global.processor';
 import { BaseUser } from '@repo/common-lib/types/user';
 import { Media } from '@repo/common-lib/types/media';
+import { MediaHelper } from '@repo/common-lib/utils/media';
 import { UserExtraDataService } from '../user-extra-data/user-extra-data.service';
 import { PlansService } from '../plans/plans.service';
 import { Query } from '@repo/database/facades';
@@ -27,6 +28,17 @@ export type SubscriptionChangesJobData = BaseUser & {
   prevPlanName: string | null;
   prevPlanBasePrice: number | null;
 };
+
+/** Everything {@link MediaHelper.storageBytes} needs, and nothing else, per media row. */
+const MEDIA_STORAGE_COLUMNS = [
+  'id',
+  'bytes',
+  'thumbnail_bytes',
+  'previews_bytes',
+  'video_preview_bytes',
+] satisfies (keyof Media)[];
+
+type MediaStorageRow = Pick<Media, (typeof MEDIA_STORAGE_COLUMNS)[number]>;
 
 @Processor(PLAN_SUBSCRIPTIONS_QUEUE)
 export class PlanSubscriptionProcessor extends GlobalProcessor {
@@ -85,7 +97,7 @@ export class PlanSubscriptionProcessor extends GlobalProcessor {
       this.logger.info(`Storage diff: ${overLimitMb}MB over limit (limit: ${currentPlan.storage_limit_mb}MB, used: ${userExtraData.storage_used_mb}MB)`);
 
       const blockedMediaResult = await Query.table('media')
-        .rawSelect('COALESCE(SUM(media.bytes + media.thumbnail_bytes), 0) as blocked_bytes')
+        .rawSelect(`COALESCE(SUM(${MediaHelper.storageBytesSql}), 0) as blocked_bytes`)
         .where('blocked_at', '!=', null)
         .where('user_id', '=', userId)
         .first<{ blocked_bytes: string }>();
@@ -107,17 +119,17 @@ export class PlanSubscriptionProcessor extends GlobalProcessor {
       } else if (diffBlockedMb > 0) {
         let remainingToBlockMb = diffBlockedMb;
         const unblocked = await Query.table('media')
-          .select(['id', 'bytes', 'thumbnail_bytes'])
+          .select(MEDIA_STORAGE_COLUMNS)
           .where('blocked_at', null)
           .where('user_id', '=', userId)
           .orderBy('is_active', 'ASC')
           .orderBy('updated_at', 'ASC')
-          .get<Pick<Media, 'id' | 'bytes' | 'thumbnail_bytes'>[]>();
+          .get<MediaStorageRow[]>();
 
         const mediaIdsToBlock: number[] = [];
         for (const item of unblocked) {
           if (remainingToBlockMb <= 0) break;
-          const itemMb = (item.bytes + item.thumbnail_bytes) / (1024 * 1024);
+          const itemMb = MediaHelper.storageBytes(item) / (1024 * 1024);
           remainingToBlockMb -= itemMb;
           mediaIdsToBlock.push(item.id);
         }
@@ -131,16 +143,16 @@ export class PlanSubscriptionProcessor extends GlobalProcessor {
       } else if (diffBlockedMb < 0) {
         let remainingToUnblockMb = Math.abs(diffBlockedMb);
         const blocked = await Query.table('media')
-          .select(['id', 'bytes', 'thumbnail_bytes'])
+          .select(MEDIA_STORAGE_COLUMNS)
           .where('blocked_at', '!=', null)
           .where('user_id', '=', userId)
           .orderBy('is_active', 'DESC')
           .orderBy('updated_at', 'DESC')
-          .get<Pick<Media, 'id' | 'bytes' | 'thumbnail_bytes'>[]>();
+          .get<MediaStorageRow[]>();
 
         const mediaIdsToUnblock: number[] = [];
         for (const item of blocked) {
-          const itemMb = (item.bytes + item.thumbnail_bytes) / (1024 * 1024);
+          const itemMb = MediaHelper.storageBytes(item) / (1024 * 1024);
           if (itemMb <= remainingToUnblockMb) {
             remainingToUnblockMb -= itemMb;
             mediaIdsToUnblock.push(item.id);

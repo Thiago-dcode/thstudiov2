@@ -20,6 +20,29 @@ export type CompressionOutput = {
 }
 
 /**
+ * Input for `extractVideoFrames`. Named rather than positional because everything after the
+ * source is a bare number or array of them: `(file, 122880, 80)` and `(file, 80, 122880)` both
+ * compile, and only one of them is a thumbnail.
+ */
+export type ExtractVideoFramesInput = {
+    /** Multer upload or raw video bytes. */
+    file: Express.Multer.File | Buffer;
+    /** Target file size in bytes for EACH frame produced. */
+    targetSize: number;
+    /**
+     * Where to sample, as percentages of the video: 0 is the first frame, 100 the last, 50 the
+     * middle. One WebP comes back per entry, in the order given — pass 10 percentages and 10
+     * frames are extracted. Defaults to `VIDEO_PREVIEW_FRAME_PERCENTAGES`, whose length is the
+     * configured preview count.
+     */
+    percentages?: readonly number[];
+    /** WebP quality, 0-100. Defaults to 80. */
+    quality?: number;
+    /** Longest edge kept. Defaults to `THUMBNAIL_MAX_EDGE_PX`. */
+    maxEdgePx?: number;
+};
+
+/**
  * ffprobe output, normalised. Internal to the ffmpeg driver — no abstract exposes it.
  *
  * `video.width`/`height` are DISPLAY dimensions: the rotation matrix and sample aspect ratio

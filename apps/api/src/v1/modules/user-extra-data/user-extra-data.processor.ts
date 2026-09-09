@@ -6,13 +6,22 @@ import { UserExtraDataRepository } from './user-extra-data.repository';
 import { CACHE_KEY_USER_EXTRA_DATA } from '@repo/common-lib/constants/cache';
 import { Query } from '@repo/database/facades';
 import { Media } from '@repo/common-lib/types/media';
+import { MediaHelper } from '@repo/common-lib/utils/media';
 import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
 import { CREDIT_CONSUMING_LLM_USAGE_TYPES } from '@repo/common-lib/constants/limits';
+import { AiCreditsHelper } from '@repo/common-lib/utils/ai-credits';
+import { LlmTokensUsageSchema } from '@repo/common-lib/schemas/llm-tokens-usage';
 import {
   USER_METRICS_QUEUE,
   JOB_COMPUTE_USER_METRICS,
 } from '@repo/common-lib/constants/queues';
 import { GlobalProcessor } from 'src/common/processors/global.processor';
+
+/** Everything {@link MediaHelper.storageBytes} needs, and nothing else, per media row. */
+type MediaStorageRow = Pick<
+  Media,
+  'id' | 'bytes' | 'thumbnail_bytes' | 'previews_bytes' | 'video_preview_bytes'
+>;
 
 @Processor(USER_METRICS_QUEUE)
 export class UserExtraDataProcessor extends GlobalProcessor {
@@ -51,16 +60,22 @@ export class UserExtraDataProcessor extends GlobalProcessor {
         this.userExtraDataRepository.findOrCreateByUserId(userId),
         Promise.all([
           Query.table('media')
-            .select(['id', 'bytes', 'thumbnail_bytes'])
+            .select([
+              'id',
+              'bytes',
+              'thumbnail_bytes',
+              'previews_bytes',
+              'video_preview_bytes',
+            ])
             .where('user_id', userId)
             .softDeletes(true)
-            .get<Pick<Media, 'id' | 'bytes' | 'thumbnail_bytes'>[]>(),
+            .get<MediaStorageRow[]>(),
           this.cacheManager.del(CACHE_KEY_USER_EXTRA_DATA(userId)),
         ]),
       ]);
 
       const totalBytes = media.reduce(
-        (prev, curr) => prev + curr.bytes + curr.thumbnail_bytes,
+        (prev, curr) => prev + MediaHelper.storageBytes(curr),
         0,
       );
       const storage_used_mb =
@@ -69,7 +84,7 @@ export class UserExtraDataProcessor extends GlobalProcessor {
           : 0;
       const media_count = media.length;
 
-      const [projects_count, portfolios_count, collections_count, services_count, clients_count, ai_credits_consumed, account_strikes] =
+      const [projects_count, portfolios_count, collections_count, services_count, clients_count, creditConsumingUsageRows, account_strikes] =
         await Promise.all([
           Query.table('projects')
             .softDeletes(true)
@@ -90,13 +105,15 @@ export class UserExtraDataProcessor extends GlobalProcessor {
             .softDeletes(true)
             .where('user_id', userId)
             .count(),
-          // Count successful AI requests (1 credit = 1 successful request)
+          // Successful AI requests since the last reset. Credits are weighted per usage_type
+          // (a video metadata call costs more than an image one) via AiCreditsHelper below.
           Query.table('llm_tokens_usage')
+            .select(['usage_type'])
             .where('user_id', userId)
             .where('created_at', '>', extraData.last_ai_credits_reset)
             .where('matches_expected_response', true)
             .whereIn('usage_type', CREDIT_CONSUMING_LLM_USAGE_TYPES)
-            .count(),
+            .get<Pick<LlmTokensUsageSchema, 'usage_type'>[]>(),
           // Count moderation violations since last strike reset
           Query.table('media_moderations')
             .where('user_id', userId)
@@ -104,6 +121,10 @@ export class UserExtraDataProcessor extends GlobalProcessor {
             .where('created_at', '>', extraData.ban_start)
             .count(),
         ]);
+
+      const ai_credits_consumed = AiCreditsHelper.consumedFromUsageRows(
+        creditConsumingUsageRows,
+      );
 
       const metrics = {
         storage_used_mb,

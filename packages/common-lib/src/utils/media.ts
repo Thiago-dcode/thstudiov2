@@ -142,4 +142,62 @@ export class MediaHelper {
     return `${base}-thumbnail.webp`;
   }
 
+  /**
+   * `{base}.{anything}` → `{base}-preview-{index}.webp`, the key for one of the frames sampled
+   * across a video.
+   *
+   * These are what moderation judges, so they exist for every video even though only the first
+   * doubles as the thumbnail. Deliberately NOT reusing {@link thumbnailPath} for index 0: the
+   * two names would then be interchangeable and a later change to either would silently
+   * repoint the other.
+   */
+  static previewScreenshotPath(mediaUrl: string, index: number): string {
+    const base = mediaUrl.replace(/\.[^./\\]+$/, '');
+    return `${base}-preview-${index}.webp`;
+  }
+
+  /**
+   * `{base}.{anything}` → `{base}-preview.mp4`, the key for a video's short playable clip.
+   *
+   * Only used when the source is longer than the preview window; a video already shorter than
+   * that is its own preview and keeps pointing at its own key instead.
+   */
+  static videoPreviewPath(mediaUrl: string): string {
+    const base = mediaUrl.replace(/\.[^./\\]+$/, '');
+    return `${base}-preview.mp4`;
+  }
+
+  /**
+   * Bytes a media row actually occupies in storage — the number every quota and every billing
+   * decision has to be made against.
+   *
+   * Not `bytes + thumbnail_bytes`: a video also stores the frames sampled for moderation and,
+   * when it runs long enough to need one, a preview clip. What makes this worth a function is
+   * that those assets deliberately ALIAS each other, so the naive sum over-counts:
+   *
+   *   - `thumbnail` IS `previews[0]`, one object under one key, so its bytes are already inside
+   *     `previews_bytes` — which is why this takes one or the other and never both.
+   *   - an aliased `video_preview` (the media being its own preview) has no bytes of its own,
+   *     which is exactly why the worker leaves `video_preview_bytes` null in that case rather
+   *     than repeating `bytes` there.
+   *
+   * Keep {@link MediaHelper.storageBytesSql} in step with this.
+   */
+  static storageBytes(
+    media: Pick<
+      Media,
+      'bytes' | 'thumbnail_bytes' | 'previews_bytes' | 'video_preview_bytes'
+    >,
+  ): number {
+    return (
+      media.bytes +
+      (media.previews_bytes ?? media.thumbnail_bytes) +
+      (media.video_preview_bytes ?? 0)
+    );
+  }
+
+  /** {@link MediaHelper.storageBytes} as SQL, for aggregates that cannot pull whole rows. */
+  static readonly storageBytesSql =
+    'media.bytes + COALESCE(media.previews_bytes, media.thumbnail_bytes) + COALESCE(media.video_preview_bytes, 0)';
+
 }

@@ -3,6 +3,7 @@ import { resolveAspectRatio } from "@repo/common-lib/utils/aspect-ratio";
 import {
   CompressConfig,
   CompressionOutput,
+  ExtractVideoFramesInput,
   GetSizeCompressedInput,
   VideoCompressionOutput,
 } from "./types";
@@ -16,6 +17,22 @@ import { imageSize } from 'image-size'
  */
 export const THUMBNAIL_MAX_EDGE_PX = 800;
 export const THUMBNAIL_TARGET_BYTES = 120 * 1024;
+
+/**
+ * The preview clip is a hover-sized teaser, not a viewing copy: it plays inline at grid scale
+ * while the media's own full-resolution encode stays available for anyone who opens it. 720
+ * halves the pixel cost of the extra encode against a 1080p source and still covers a
+ * full-width card on a retina display.
+ */
+export const PREVIEW_MAX_EDGE_PX = 720;
+
+/**
+ * Advisory, like every video byte target: the real budget is bitrate × duration, and the
+ * preview's duration is bounded by `PREVIEW_MAX_DURATION_SECONDS`. 720p at ~2.5 Mbps for ten
+ * seconds lands near 3MB, so this is the figure the encode is aimed at rather than a cap it is
+ * squeezed under.
+ */
+export const PREVIEW_TARGET_BYTES = 3 * 1024 * 1024;
 
 /**
  * The media's compression level expressed as a 0-100 quality, for the encoders that take one.
@@ -148,6 +165,27 @@ export abstract class CompressService {
   ): Promise<CompressionOutput>
 
   /**
+   * Samples frames across a video from a single probe, each one a WebP produced exactly like
+   * {@link optimizeVideoFrameToWebp}'s.
+   *
+   * This exists for moderation. A vision model cannot read an MP4, so what it judges is the
+   * frames we hand it, and one frame from the first second can only ever vouch for the first
+   * second. Sampling across the clip is what makes "this video is fine" mean the video rather
+   * than its opening. Frame 0 doubles as the poster, so this costs no extra object beyond the
+   * additional stills.
+   *
+   * **Call this BEFORE {@link optimizeVideo}**, for the same reason: a rejected video should
+   * cost zero minutes of transcode.
+   *
+   * Pass {@link THUMBNAIL_MAX_EDGE_PX} as `maxEdgePx` — frame 0 becomes the thumbnail.
+   *
+   * @returns one frame per percentage, in the order requested, never empty.
+   */
+  abstract extractVideoFrames(
+    input: ExtractVideoFramesInput,
+  ): Promise<CompressionOutput[]>
+
+  /**
    * Re-encodes to a web-deliverable MP4 (H.264 + AAC, faststart), or hands the source back
    * untouched when it already is one.
    *
@@ -164,6 +202,32 @@ export abstract class CompressService {
     targetSize: number,
     quality?: number,
     maxEdgePx?: number,
+  ): Promise<VideoCompressionOutput>
+
+  /**
+   * Encodes the opening seconds of a video as a small, silent, inline-playable MP4.
+   *
+   * Only worth calling when the source runs longer than `maxDurationSeconds`: a video already
+   * shorter than the preview window IS its own preview, and callers should point at the media's
+   * own key instead of paying for a near-duplicate object. `optimizeVideo`'s result carries the
+   * `durationSeconds` needed to make that call for free.
+   *
+   * Unlike {@link optimizeVideo} this never short-circuits on an already-web-ready source — the
+   * point is a trimmed, downscaled, audio-stripped derivative, which no source can already be —
+   * and it never refines: the output is bounded by construction, so a second pass could only
+   * cost time.
+   *
+   * @param targetSize ADVISORY, as in {@link optimizeVideo}. Pass {@link PREVIEW_TARGET_BYTES}.
+   * @param quality 10-100, mapped onto H.264 CRF.
+   * @param maxEdgePx longest edge kept. Pass {@link PREVIEW_MAX_EDGE_PX}.
+   * @param maxDurationSeconds clip length, defaulting to `PREVIEW_MAX_DURATION_SECONDS`.
+   */
+  abstract optimizeVideoPreview(
+    file: Express.Multer.File | Buffer,
+    targetSize: number,
+    quality?: number,
+    maxEdgePx?: number,
+    maxDurationSeconds?: number,
   ): Promise<VideoCompressionOutput>
 
 }

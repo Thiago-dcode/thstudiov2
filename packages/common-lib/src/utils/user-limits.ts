@@ -34,14 +34,18 @@ export class UserLimits {
     return data.userPlan.allow_media_compression;
   }
 
-  /** Whether the user still has AI credits available. */
+  /**
+   * Whether the user has enough AI credits left to cover `cost` more (default `1`, so an
+   * unweighted call behaves exactly as before: `consumed < total`).
+   */
   static aiCredits(data: {
     userExtraData: UserExtraData;
     userPlan: BasePlan;
+    cost?: number;
   }): boolean {
-    const { userExtraData, userPlan } = data;
+    const { userExtraData, userPlan, cost = 1 } = data;
     const totalCredits = userExtraData.ai_credits + userPlan.ai_credits;
-    return userExtraData.ai_credits_consumed < totalCredits;
+    return userExtraData.ai_credits_consumed + cost <= totalCredits;
   }
 
   /**

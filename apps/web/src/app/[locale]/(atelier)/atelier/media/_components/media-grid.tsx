@@ -62,9 +62,15 @@ export function MediaGrid({
   const { aiCreditsInfo } = useUserMetrics();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isGenerateSeoDialogOpen, setIsGenerateSeoDialogOpen] = useState(false);
+  // A batch of 10 items is still a cap of 10 items (MAX_AI_GENERATE), but the credits it costs
+  // depend on the mix of images and videos in the selection, so this sums weighted cost rather
+  // than counting items.
   const MAX_AI_GENERATE = 10;
   const creditsAvailable = aiCreditsInfo.remaining;
-  const creditsNeeded = selectionCount;
+  const creditsNeeded = Object.values(selectedMedia).reduce(
+    (sum, m) => sum + aiCreditsInfo.costFor(m.media_type),
+    0,
+  );
   const hasEnoughCredits = creditsAvailable >= creditsNeeded;
   const isOverAiLimit = selectionCount > MAX_AI_GENERATE;
 

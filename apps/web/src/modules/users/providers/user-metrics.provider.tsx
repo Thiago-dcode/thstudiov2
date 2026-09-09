@@ -1,7 +1,9 @@
 "use client";
 
+import type { EnumType } from "@repo/common-lib/constants/enums";
 import { STRIKES_TO_BAN } from "@repo/common-lib/constants/limits";
 import type { UserMetrics } from "@repo/common-lib/types/user";
+import { AiCreditsHelper } from "@repo/common-lib/utils/ai-credits";
 import {
   createContext,
   type ReactNode,
@@ -20,6 +22,10 @@ type AiCreditsInfo = {
   total: number;
   remaining: number;
   hasCredits: boolean;
+  /** AI credit cost of generating metadata for a given media type (video costs more). */
+  costFor: (mediaType: EnumType<"MEDIA_TYPE"> | null | undefined) => number;
+  /** Whether `remaining` covers the cost of generating metadata for a given media type. */
+  canAfford: (mediaType: EnumType<"MEDIA_TYPE"> | null | undefined) => boolean;
 };
 // Context type
 type UserMetricsContextType = {
@@ -112,17 +118,28 @@ export const UserMetricsProvider = ({
 
   // Calculate AI credits
   const aiCreditsInfo: AiCreditsInfo = useMemo(() => {
+    const costFor = AiCreditsHelper.metadataCreditCost;
     if (!metrics?.extra_data || !metrics?.active_plan)
-      return { consumed: 0, hasCredits: false, total: 0, remaining: 0 };
+      return {
+        consumed: 0,
+        hasCredits: false,
+        total: 0,
+        remaining: 0,
+        costFor,
+        canAfford: () => false,
+      };
     const consumed = metrics.extra_data.ai_credits_consumed || 0;
     const total =
       (metrics.extra_data.ai_credits || 0) +
       (metrics.active_plan.ai_credits || 0);
+    const remaining = total - consumed;
     return {
       consumed,
       total,
-      remaining: total - consumed,
+      remaining,
       hasCredits: consumed < total,
+      costFor,
+      canAfford: (mediaType) => remaining >= costFor(mediaType),
     };
   }, [metrics]);
 

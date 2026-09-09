@@ -10,6 +10,7 @@ import { FactoryLogService, LogService } from "@repo/backend-lib/services/log-se
 import {
     compressionLevelToQuality,
     CompressService,
+    PREVIEW_TARGET_BYTES,
     THUMBNAIL_MAX_EDGE_PX,
     THUMBNAIL_TARGET_BYTES,
 } from '@repo/backend-lib/services/compress-service/base';
@@ -26,6 +27,10 @@ import { PlansRepository } from "@repo/database/repositories/plans";
 import { QueueHelper } from "@repo/backend-lib/utils";
 import { bytesToMB, mbToBytes } from "@repo/common-lib/utils/bytes";
 import { DEFAULT_COMPRESSION_LVL } from "@repo/common-lib/constants/enums";
+import {
+    PREVIEW_MAX_DURATION_SECONDS,
+    VIDEO_PREVIEW_FRAME_PERCENTAGES,
+} from "@repo/common-lib/constants/limits";
 import { UserLimits } from "@repo/common-lib/utils/user-limits";
 import { BasePlan } from "@repo/common-lib/types/plan";
 import { MediaHelper } from "@repo/common-lib/utils/media";
@@ -197,11 +202,11 @@ export class MediaProcessor {
     /**
      * Produces the thumbnail and the moderation verdict in the order the media type requires.
      *
-     * For video the poster has to be extracted AND uploaded first: moderation is a vision call
-     * over a URL (`image_url`) and cannot read an MP4, so the poster is what gets judged.
+     * For video the frames have to be extracted AND uploaded first: moderation is a vision call
+     * over URLs (`image_url`) and cannot read an MP4, so those frames are what gets judged.
      * Judging before the transcode is also what makes a rejection cheap — banned content never
-     * reaches ffmpeg. The trade is that a rejected video leaves a poster in the bucket, which
-     * is why the caller deletes it alongside the source.
+     * reaches ffmpeg. The trade is that a rejected video leaves its frames in the bucket, which
+     * is why the caller deletes them alongside the source.
      *
      * Images and GIFs keep the original order: the stored upload is already something the
      * vision model can read, so there is nothing to gain from writing the thumbnail first.
@@ -210,28 +215,75 @@ export class MediaProcessor {
         media: Media,
         buffer: Buffer,
         sourcePath: string,
+        mediaPath: string,
         thumbnailPath: string,
+        /**
+         * Keys this job may have to clean up. The video branch registers its frames the moment
+         * it knows their names, so a failure part-way through those uploads still leaves nothing
+         * behind in the bucket.
+         */
+        deletePaths: Set<string>,
     ): Promise<{
         thumbnail: CompressionOutput;
+        /** Where the thumbnail lives: `previews[0]`'s key for video, the poster key otherwise. */
+        thumbnailPath: string;
+        /** Video only. The frames moderation judged, `previews[0]` being the thumbnail itself. */
+        previews: CompressionOutput[] | null;
+        previewPaths: string[] | null;
         moderation: ContentModerationFields;
-        /** True when the thumbnail is already in storage, so the caller must not rewrite it. */
-        thumbnailWritten: boolean;
+        /** Keys already in storage, which the caller must not rewrite. */
+        writtenPaths: string[];
     } | null> {
         if (media.media_type === 'VIDEO') {
-            const thumbnail = await this.compressService.optimizeVideoFrameToWebp(
-                buffer,
-                THUMBNAIL_TARGET_BYTES,
-                80,
-                THUMBNAIL_MAX_EDGE_PX,
-            );
-            if (!(await this.storageService.write(thumbnail.buffer, thumbnailPath))) {
-                return null;
+            // Several frames rather than one poster: a verdict drawn from the opening second
+            // can only ever vouch for the opening second. See `extractVideoFrames`.
+            const previews = await this.compressService.extractVideoFrames({
+                file: buffer,
+                targetSize: THUMBNAIL_TARGET_BYTES,
+                percentages: VIDEO_PREVIEW_FRAME_PERCENTAGES,
+                quality: 80,
+                maxEdgePx: THUMBNAIL_MAX_EDGE_PX,
+            });
+            const [poster] = previews;
+            if (!poster) {
+                throw new Error('No frames could be extracted from the video');
             }
+
+            const previewPaths = previews.map((_, index) =>
+                MediaHelper.previewScreenshotPath(mediaPath, index),
+            );
+            previewPaths.forEach((path) => deletePaths.add(path));
+
+            const writes = await Promise.all(
+                previews.map((preview, index) =>
+                    this.storageService.write(preview.buffer, previewPaths[index]!),
+                ),
+            );
+            if (!writes.every(Boolean)) return null;
+
+            // Every frame in ONE call. The image tokens cost the same either way, but a single
+            // request yields a single verdict, a single usage record and a single moderation
+            // job — three calls would have to be reconciled into one decision here, and any
+            // rule for doing that is a rule for letting a bad frame through.
             const { moderation } = await this.aiService.moderateContent(
-                await this.storageService.getUrl(thumbnailPath),
+                await Promise.all(
+                    previewPaths.map((path) => this.storageService.getUrl(path)),
+                ),
                 { user_id: media.user_id },
             );
-            return { thumbnail, moderation, thumbnailWritten: true };
+
+            return {
+                // The thumbnail IS `previews[0]`: one object, one key, two columns. That is what
+                // keeps every existing thumbnail consumer — grid tiles, video poster, OG and
+                // sitemap images, AI SEO metadata — working unchanged for video, and it means
+                // the frame is never written, billed or deleted twice.
+                thumbnail: poster,
+                thumbnailPath: previewPaths[0]!,
+                previews,
+                previewPaths,
+                moderation,
+                writtenPaths: previewPaths,
+            };
         }
 
         const { moderation } = await this.aiService.moderateContent(
@@ -247,7 +299,48 @@ export class MediaProcessor {
             80,
             THUMBNAIL_MAX_EDGE_PX,
         );
-        return { thumbnail, moderation, thumbnailWritten: false };
+        return {
+            thumbnail,
+            thumbnailPath,
+            previews: null,
+            previewPaths: null,
+            moderation,
+            writtenPaths: [],
+        };
+    }
+
+    /**
+     * Resolves the video's preview clip, encoding one only when the source needs it.
+     *
+     * `optimizeVideo` has already probed the source, so asking "is this shorter than the preview
+     * window?" costs nothing. When it is, the media IS its own preview and the column points at
+     * `mediaPath`: no encode, no second object, no extra PUT, nothing charged against the user's
+     * quota. Callers therefore cannot assume the two keys differ — the API's delete and its
+     * SEO-rename both account for that.
+     *
+     * @returns the key to persist plus the clip to upload, or `null` for non-video.
+     */
+    private async resolveVideoPreview(
+        mediaCompressed: CompressionOutput | VideoCompressionOutput,
+        buffer: Buffer,
+        mediaPath: string,
+        compressLevel: NonNullable<Media['compression_level']>,
+    ): Promise<{ path: string; clip: VideoCompressionOutput | null } | null> {
+        if (!('durationSeconds' in mediaCompressed)) return null;
+
+        if (mediaCompressed.durationSeconds <= PREVIEW_MAX_DURATION_SECONDS) {
+            return { path: mediaPath, clip: null };
+        }
+
+        // From the ORIGINAL source, not from the compressed output: chaining lossy H.264 makes
+        // the second encoder spend its bits faithfully reproducing the first one's blocking.
+        // `-t` bounds the cost either way — only the clip's own seconds are ever decoded.
+        const clip = await this.compressService.optimizeVideoPreview(
+            buffer,
+            PREVIEW_TARGET_BYTES,
+            compressionLevelToQuality(compressLevel),
+        );
+        return { path: MediaHelper.videoPreviewPath(mediaPath), clip };
     }
 
     async processMedia() {
@@ -261,7 +354,11 @@ export class MediaProcessor {
         }
         const mediaPath = MediaHelper.outputPath(sourcePath, extension);
         const thumbnailPath = MediaHelper.thumbnailPath(mediaPath);
-        const deletePaths = [...new Set([sourcePath, mediaPath, thumbnailPath])];
+        // Grows as the job commits to each key. A video's frames and its preview clip cannot be
+        // named up front — the frame count comes from the extractor and the clip's key depends
+        // on whether one is needed at all — and every key that gets written has to be reachable
+        // from the failure branches below, or a rejected upload leaves orphans behind.
+        const deletePaths = new Set([sourcePath, mediaPath, thumbnailPath]);
         // Gates the catch below: once the row is COMPLETED the output is real, and a later error
         // must not be allowed to revert it or delete it.
         let completed = false;
@@ -306,32 +403,41 @@ export class MediaProcessor {
                 media,
                 buffer,
                 sourcePath,
+                mediaPath,
                 thumbnailPath,
+                deletePaths,
             );
             if (!prepared) {
                 await this.markFailed(media, 'Storage write could not complete', log, {
-                    deletePaths,
+                    deletePaths: [...deletePaths],
                 });
                 return;
             }
-            const { thumbnail, moderation, thumbnailWritten } = prepared;
+            const { thumbnail, previews, previewPaths, moderation, writtenPaths } = prepared;
+            // For video this is `previews[0]`'s key, not the `-thumbnail.webp` one: the same
+            // object serves both columns.
+            const resolvedThumbnailPath = prepared.thumbnailPath;
+            // Frame 0's bytes are in here too, since it IS the thumbnail. Null for everything
+            // that has no frames, which is what keeps `MediaHelper.storageBytes` honest.
+            const previewsBytes = previews
+                ? previews.reduce((total, preview) => total + preview.size, 0)
+                : null;
 
             log.info('Moderation result', {
                 media_id: media.id,
                 public_id: media.public_id,
                 is_allowed: moderation.is_allowed,
                 severity: moderation.severity,
-                // Video is judged on its poster frame, not on the video itself.
-                moderated_path: thumbnailWritten ? thumbnailPath : sourcePath,
+                // Video is judged on the frames sampled from it, not on the video itself.
+                moderated_paths: writtenPaths.length ? writtenPaths : [sourcePath],
             });
 
             if (!moderation.is_allowed) {
                 await this.markFailed(media, moderation.reason, log, {
-                    // The poster is already in the bucket for video, so it has to go too —
-                    // otherwise a rejected upload leaves an orphan nothing will ever clean up.
-                    deletePaths: thumbnailWritten
-                        ? [sourcePath, thumbnailPath]
-                        : [sourcePath],
+                    // A video's frames are already in the bucket — they had to be, for the
+                    // vision model to read them — so they go too, or a rejected upload leaves
+                    // orphans nothing will ever clean up.
+                    deletePaths: [sourcePath, ...writtenPaths],
                 });
                 return;
             }
@@ -339,6 +445,9 @@ export class MediaProcessor {
             log.info('Thumbnail compressed', {
                 media_id: media.id,
                 thumbnail_bytes: thumbnail.size,
+                ...(previews
+                    ? { previews_count: previews.length, previews_bytes: previewsBytes }
+                    : {}),
             });
 
             log.info('Starting compression', {
@@ -387,7 +496,39 @@ export class MediaProcessor {
                 });
             }
 
-            const totalSize = mediaCompressed.size + thumbnail.size;
+            const videoPreview = await this.resolveVideoPreview(
+                mediaCompressed,
+                buffer,
+                mediaPath,
+                compressionLevel,
+            );
+            if (videoPreview?.clip) {
+                deletePaths.add(videoPreview.path);
+                log.info('Video preview clip encoded', {
+                    media_id: media.id,
+                    video_preview_bytes: videoPreview.clip.size,
+                    duration_seconds: videoPreview.clip.durationSeconds,
+                    bit_rate: videoPreview.clip.bitRate,
+                });
+            } else if (videoPreview) {
+                log.info('Video is its own preview; no clip encoded', {
+                    media_id: media.id,
+                    duration_seconds:
+                        'durationSeconds' in mediaCompressed
+                            ? Math.round(mediaCompressed.durationSeconds)
+                            : null,
+                });
+            }
+
+            // The same arithmetic the row will be stored with, so the quota gate and the
+            // recomputed metric can never disagree: an aliased asset contributes nothing, and
+            // `thumbnail` is inside `previewsBytes` rather than added on top of it.
+            const totalSize = MediaHelper.storageBytes({
+                bytes: mediaCompressed.size,
+                thumbnail_bytes: thumbnail.size,
+                previews_bytes: previewsBytes,
+                video_preview_bytes: videoPreview?.clip?.size ?? null,
+            });
             const limitReason = await this.checkUserLimits(
                 media.user_id,
                 totalSize,
@@ -395,25 +536,27 @@ export class MediaProcessor {
             );
             if (limitReason) {
                 await this.markFailed(media, limitReason, log, {
-                    deletePaths: thumbnailWritten
-                        ? [sourcePath, thumbnailPath]
-                        : [sourcePath],
+                    deletePaths: [sourcePath, ...writtenPaths],
                 });
                 return;
             }
 
-            const [thumbnailWriteOk, mediaWriteOk] = await Promise.all([
-                // Video's poster went up before moderation so the vision model could read it;
-                // re-uploading identical bytes would just be a second PUT.
-                thumbnailWritten
+            const [thumbnailWriteOk, mediaWriteOk, videoPreviewWriteOk] = await Promise.all([
+                // A video's frames went up before moderation so the vision model could read
+                // them; re-uploading identical bytes would just be a second PUT.
+                writtenPaths.includes(resolvedThumbnailPath)
                     ? Promise.resolve(true)
-                    : this.storageService.write(thumbnail.buffer, thumbnailPath),
+                    : this.storageService.write(thumbnail.buffer, resolvedThumbnailPath),
                 this.storageService.write(mediaCompressed.buffer, mediaPath),
+                // Nothing to write when the media is its own preview.
+                videoPreview?.clip
+                    ? this.storageService.write(videoPreview.clip.buffer, videoPreview.path)
+                    : Promise.resolve(true),
             ]);
 
-            if (!thumbnailWriteOk || !mediaWriteOk) {
+            if (!thumbnailWriteOk || !mediaWriteOk || !videoPreviewWriteOk) {
                 await this.markFailed(media, 'Storage write could not complete', log, {
-                    deletePaths,
+                    deletePaths: [...deletePaths],
                 });
                 return;
             }
@@ -434,7 +577,13 @@ export class MediaProcessor {
             const completedMedia = await this.mediaRepository.updateById(media.id, {
                 bytes: mediaCompressed.size,
                 thumbnail_bytes: thumbnail.size,
-                thumbnail: thumbnailPath,
+                thumbnail: resolvedThumbnailPath,
+                previews: previewPaths,
+                previews_bytes: previewsBytes,
+                video_preview: videoPreview?.path ?? null,
+                // Null when the clip is the media itself: those bytes are already `bytes`, and
+                // repeating them here would double-charge the user's storage.
+                video_preview_bytes: videoPreview?.clip?.size ?? null,
                 url: mediaPath,
                 extension,
                 shape,
@@ -453,17 +602,30 @@ export class MediaProcessor {
                 await this.storageService.delete(sourcePath);
             }
 
+            // One job per DISTINCT object. `thumbnail` is `previews[0]` and an aliased
+            // `video_preview` is `mediaPath`, so billing either separately would charge the
+            // same stored bytes twice.
+            const billedObjects: { path: string; bytes: number }[] = [
+                { path: mediaPath, bytes: mediaCompressed.size },
+                ...(previews && previewPaths
+                    ? previews.map((preview, index) => ({
+                        path: previewPaths[index]!,
+                        bytes: preview.size,
+                    }))
+                    : [{ path: resolvedThumbnailPath, bytes: thumbnail.size }]),
+                ...(videoPreview?.clip
+                    ? [{ path: videoPreview.path, bytes: videoPreview.clip.size }]
+                    : []),
+            ];
+
             await Promise.all([
-                QueueHelper.createStorageRequestJob({
-                    path: mediaPath,
-                    bytes: mediaCompressed.size,
-                    user_id: media.user_id,
-                }),
-                QueueHelper.createStorageRequestJob({
-                    path: thumbnailPath,
-                    bytes: thumbnail.size,
-                    user_id: media.user_id,
-                }),
+                ...billedObjects.map((object) =>
+                    QueueHelper.createStorageRequestJob({
+                        path: object.path,
+                        bytes: object.bytes,
+                        user_id: media.user_id,
+                    }),
+                ),
                 QueueHelper.createComputeUserMetricsJob(media.user_id),
                 QueueHelper.createUpdateProfileStatusJob({
                     user_id: media.user_id,
@@ -477,8 +639,18 @@ export class MediaProcessor {
                 public_id: media.public_id,
                 bytes: mediaCompressed.size,
                 thumbnail_bytes: thumbnail.size,
-                thumbnail_path: thumbnailPath,
+                thumbnail_path: resolvedThumbnailPath,
                 media_path: mediaPath,
+                storage_bytes: totalSize,
+                ...(previewPaths ? { preview_paths: previewPaths } : {}),
+                ...(videoPreview
+                    ? {
+                        video_preview_path: videoPreview.path,
+                        // False means the media is its own preview — worth having in the log,
+                        // since it is the difference between one stored object and two.
+                        video_preview_encoded: !!videoPreview.clip,
+                    }
+                    : {}),
             });
 
             if (generate_metadata) {
@@ -524,7 +696,7 @@ export class MediaProcessor {
             }
 
             await this.markFailed(media, message, log, {
-                deletePaths,
+                deletePaths: [...deletePaths],
             });
         }
     }

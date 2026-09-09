@@ -33,16 +33,58 @@ export const MAX_VIDEO_UPLOAD_BYTES = MAX_VIDEO_UPLOAD_MB * 1024 * 1024;
  * ~4 Mbps, so anything reaching this limit is low-bitrate long-form rather than portfolio work.
  */
 export const MAX_VIDEO_DURATION_SECONDS = 600;
+/**
+ * How much of a video its preview clip covers. A source already this short is its own preview,
+ * so no second object is encoded or stored for it.
+ *
+ * Ten seconds is long enough to show what a piece is without becoming a substitute for opening
+ * it, and it bounds the extra encode: the clip costs ten seconds of libx264 whether the source
+ * runs fifteen seconds or the full {@link MAX_VIDEO_DURATION_SECONDS}.
+ */
+export const PREVIEW_MAX_DURATION_SECONDS = 10;
+/**
+ * How many stills are sampled from a video. Each one is BOTH a stored object and an image in the
+ * vision request, so this is the single knob that prices video moderation and video SEO — raising
+ * it costs storage and tokens on every upload, and the marginal frame buys progressively less
+ * coverage than the one before it.
+ *
+ * Frame 0 doubles as the media's thumbnail, so the count is stills, not extra objects.
+ */
+export const VIDEO_PREVIEW_FRAMES = 10;
+/**
+ * Where those frames are taken from, as percentages of the video: 0 is the first frame, 100 the
+ * last. Spread evenly from the start, so the count alone decides the spacing — 3 frames sample
+ * 0/33/67, 5 sample 0/20/40/60/80.
+ */
+export const VIDEO_PREVIEW_FRAME_PERCENTAGES = Array.from(
+  { length: VIDEO_PREVIEW_FRAMES },
+  (_, index) => (index * 100) / VIDEO_PREVIEW_FRAMES,
+);
 export const STRIKES_TO_BAN = 3;
 /**
- * LLM usage types that count against a user's AI credit quota. Only user-initiated
- * generation counts; platform-driven background SEO (portfolio/collection/service/user
- * metadata crons) is billed to the platform, not the artist. Keep this in sync wherever
- * AI credits are counted or the "credits exhausted" email is triggered.
+ * A video's metadata call analyzes {@link PREVIEW_MAX_DURATION_SECONDS} worth of frames instead
+ * of one still, so it costs more AI credits than an image/GIF generation.
  */
-export const CREDIT_CONSUMING_LLM_USAGE_TYPES: EnumType<'LLM_USAGE_TYPE'>[] = [
-  'GENERATE_MEDIA_METADATA',
-];
+export const VIDEO_METADATA_AI_CREDITS = 3;
+export const IMAGE_METADATA_AI_CREDITS = 1;
+/**
+ * AI credit weight per LLM usage type. Only user-initiated generation is here; platform-driven
+ * background SEO (portfolio/collection/service/user metadata crons) is billed to the platform,
+ * not the artist, so it is intentionally absent instead of weighted at 0.
+ *
+ * {@link CREDIT_CONSUMING_LLM_USAGE_TYPES} is derived from these keys, so the two can never drift.
+ */
+export const AI_CREDIT_COST_BY_LLM_USAGE_TYPE = {
+  GENERATE_MEDIA_METADATA: IMAGE_METADATA_AI_CREDITS,
+  GENERATE_MEDIA_METADATA_VIDEO: VIDEO_METADATA_AI_CREDITS,
+} satisfies Partial<Record<EnumType<'LLM_USAGE_TYPE'>, number>>;
+/**
+ * LLM usage types that count against a user's AI credit quota. See
+ * {@link AI_CREDIT_COST_BY_LLM_USAGE_TYPE} for the per-type weight.
+ */
+export const CREDIT_CONSUMING_LLM_USAGE_TYPES = Object.keys(
+  AI_CREDIT_COST_BY_LLM_USAGE_TYPE,
+) as EnumType<'LLM_USAGE_TYPE'>[];
 export const MAX_USERNAME_RESET = 3;
 export const MAX_PASSWORD_RESET = 3;
 export const MAX_COLLECTION_ITEMS = 30;

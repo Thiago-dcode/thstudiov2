@@ -7,6 +7,7 @@ import {
 } from "@repo/common-lib/constants/enums";
 import { ALLOWED_FILE_TYPES } from "@repo/common-lib/constants/limits";
 import type { CreateMediaInputWithFile } from "@repo/common-lib/types/media";
+import { MediaHelper } from "@repo/common-lib/utils/media";
 import { FileInput } from "@repo/ui/components/custom/file-input";
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
 import { Button } from "@repo/ui/components/shadcn/button";
@@ -193,13 +194,23 @@ function MediaUploadContent() {
     () => mediaPendingToCreate.filter((m) => m.pending).length,
     [mediaPendingToCreate],
   );
+  // AI credit COST of everything currently toggled on, not a plain item count — a video costs
+  // more than an image, so the badge/summary below has to sum weighted cost to stay accurate.
   const willGenerateMetadata = useMemo(
     () =>
       mediaStagedToCreate.reduce(
-        (prev, curr) => (curr.input.generate_metadata ? prev + 1 : prev),
+        (prev, curr) =>
+          curr.input.generate_metadata
+            ? prev +
+              aiCreditsInfo.costFor(
+                MediaHelper.getMediaTypeFromMimeType(
+                  curr.input.file?.type ?? "",
+                ),
+              )
+            : prev,
         0,
       ),
-    [mediaStagedToCreate],
+    [mediaStagedToCreate, aiCreditsInfo],
   );
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -324,9 +335,21 @@ function MediaUploadContent() {
                   disabled={!aiCreditsInfo.hasCredits}
                   onCheckedChange={(checked) => {
                     const value = checked === true;
-                    updateStagedCreateInputs((_, i) => ({
-                      generate_metadata: value && i < aiCreditsInfo.remaining,
-                    }));
+                    // Running-total budget: each staged file only gets enabled while its own
+                    // cost still fits in what is left, so a video (cost 3) can leave later
+                    // images unaffordable even though the item count alone would not.
+                    let spent = 0;
+                    updateStagedCreateInputs((upload) => {
+                      if (!value) return { generate_metadata: false };
+                      const cost = aiCreditsInfo.costFor(
+                        MediaHelper.getMediaTypeFromMimeType(
+                          upload.input.file?.type ?? "",
+                        ),
+                      );
+                      const fits = spent + cost <= aiCreditsInfo.remaining;
+                      if (fits) spent += cost;
+                      return { generate_metadata: fits };
+                    });
                   }}
                 />
                 <label
@@ -373,6 +396,8 @@ function MediaUploadContent() {
                         <p className="text-xs! text-text-muted">
                           {t.rich("aiSeoCreditsHint", {
                             count: aiCreditsInfo.remaining,
+                            imageCost: aiCreditsInfo.costFor("IMAGE"),
+                            videoCost: aiCreditsInfo.costFor("VIDEO"),
                             remaining: (chunks) => (
                               <span className="font-semibold text-text">
                                 {chunks}

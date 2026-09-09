@@ -1,4 +1,8 @@
-import { CompressService, THUMBNAIL_MAX_EDGE_PX } from "./compress.service";
+import {
+    CompressService,
+    PREVIEW_MAX_EDGE_PX,
+    THUMBNAIL_MAX_EDGE_PX,
+} from "./compress.service";
 import { imageSize } from 'image-size';
 import sharp from 'sharp';
 import fs from 'fs/promises';
@@ -16,8 +20,17 @@ import {
     writeTempFile,
     type TranscodeAudioPlan,
 } from './ffmpeg';
-import { CompressionOutput, VideoCompressionOutput, VideoProbe } from './types';
-import { MAX_VIDEO_DURATION_SECONDS } from '@repo/common-lib/constants/limits';
+import {
+    CompressionOutput,
+    ExtractVideoFramesInput,
+    VideoCompressionOutput,
+    VideoProbe,
+} from './types';
+import {
+    MAX_VIDEO_DURATION_SECONDS,
+    PREVIEW_MAX_DURATION_SECONDS,
+    VIDEO_PREVIEW_FRAME_PERCENTAGES,
+} from '@repo/common-lib/constants/limits';
 
 /**
  * Longest edge kept after processing. Bounds the decoded raster so a large lossless upload
@@ -95,6 +108,22 @@ const VIDEO_TARGET_TOLERANCE = 1.15;
 
 /** Extracted at 2x the thumbnail box so Sharp's Lanczos downscale has an oversample. */
 const POSTER_EXTRACT_EDGE_PX = THUMBNAIL_MAX_EDGE_PX * 2;
+
+/**
+ * A percentage of the video as a seek point in seconds: 0 is its first frame, 100 its last.
+ *
+ * Both ends are inset by `edgeOffset`, so "first" is not literally frame zero and "last" is not
+ * literally `duration`. A large share of real uploads open on black or a fade-in, and frame 0 is
+ * both the grid poster and what the moderation model looks at — a black frame is a bad tile and
+ * a useless verdict. The tail is mirrored so a fade-out is skipped the same way, and because
+ * seeking to exactly `duration` decodes no frame at all: ffmpeg would return an empty file.
+ */
+const seekSecondsAt = (percentage: number, durationSeconds: number): number => {
+    const edgeOffset = Math.min(1, durationSeconds / 10);
+    const usableSpan = Math.max(0, durationSeconds - edgeOffset * 2);
+    const clamped = Math.min(100, Math.max(0, percentage));
+    return edgeOffset + (usableSpan * clamped) / 100;
+};
 
 /**
  * Delivery-reference bitrates, tiered by PIXEL COUNT rather than height so orientation and odd
@@ -406,34 +435,102 @@ export class SharpCompressService extends CompressService {
 
         return withTempDir(async (dir) => {
             const inputPath = await writeTempFile(dir, 'source', source);
-            const posterPath = path.join(dir, 'poster.png');
             const probe = await probeVideo(inputPath);
             assertDurationWithinLimit(probe);
 
-            await extractPosterFrame(inputPath, posterPath, {
-                // Not frame zero: a large share of real uploads open on black or a fade-in, and
-                // a black poster is not only a bad grid tile — it is also what the moderation
-                // vision model sees, so it would poison that decision too.
-                seekSeconds: Math.min(1, probe.durationSeconds / 10),
-                scale: fitInside(
-                    probe.video.width,
-                    probe.video.height,
-                    POSTER_EXTRACT_EDGE_PX,
-                ),
-            });
-
-            const poster = await fs.readFile(posterPath);
-            const optimized = await this.optimizeImageToWebp(
-                poster,
+            const optimized = await this.extractFrameAsWebp(inputPath, dir, probe, {
+                seekSeconds: seekSecondsAt(0, probe.durationSeconds),
+                label: 'poster',
                 targetSize,
                 quality,
                 maxEdgePx,
-            );
+            });
             return {
                 ...optimized,
                 filename: `${resolveOriginalName(file, 'video')}.webp`,
             };
         });
+    }
+
+    /**
+     * One WebP per requested percentage of the video, off a single probe and a single temp copy
+     * of the source. See {@link ExtractVideoFramesInput} for the arguments and
+     * {@link seekSecondsAt} for what a percentage points at.
+     */
+    public async extractVideoFrames({
+        file,
+        targetSize,
+        percentages = VIDEO_PREVIEW_FRAME_PERCENTAGES,
+        quality = 80,
+        maxEdgePx = THUMBNAIL_MAX_EDGE_PX,
+    }: ExtractVideoFramesInput): Promise<CompressionOutput[]> {
+        if (!percentages.length) {
+            throw new Error('Video frame extraction needs at least one percentage');
+        }
+        const source = resolveSourceBuffer(file);
+        const originalName = resolveOriginalName(file, 'video');
+
+        return withTempDir(async (dir) => {
+            const inputPath = await writeTempFile(dir, 'source', source);
+            const probe = await probeVideo(inputPath);
+            assertDurationWithinLimit(probe);
+
+            const frames: CompressionOutput[] = [];
+            // Sequential on purpose. Each seek is its own ffmpeg process plus a Sharp encode,
+            // and the media worker has one slot: running them all at once would contend for the
+            // same cores and the same temp disk to finish at the same wall-clock moment.
+            for (const [index, percentage] of percentages.entries()) {
+                const optimized = await this.extractFrameAsWebp(inputPath, dir, probe, {
+                    seekSeconds: seekSecondsAt(percentage, probe.durationSeconds),
+                    label: `frame-${index}`,
+                    targetSize,
+                    quality,
+                    maxEdgePx,
+                });
+                frames.push({
+                    ...optimized,
+                    filename: `${originalName}-preview-${index}.webp`,
+                });
+            }
+            return frames;
+        });
+    }
+
+    /**
+     * One `-ss` seek to a lossless PNG, then Sharp's WebP encoder — the shared body of the
+     * poster and multi-frame paths, so a sampled frame is the same kind of asset as the
+     * thumbnail has always been.
+     */
+    private async extractFrameAsWebp(
+        inputPath: string,
+        dir: string,
+        probe: VideoProbe,
+        options: {
+            seekSeconds: number;
+            /** Temp filename stem; must be unique within `dir`. */
+            label: string;
+            targetSize: number;
+            quality: number;
+            maxEdgePx: number;
+        },
+    ): Promise<CompressionOutput> {
+        const framePath = path.join(dir, `${options.label}.png`);
+        await extractPosterFrame(inputPath, framePath, {
+            seekSeconds: options.seekSeconds,
+            scale: fitInside(
+                probe.video.width,
+                probe.video.height,
+                POSTER_EXTRACT_EDGE_PX,
+            ),
+        });
+
+        const frame = await fs.readFile(framePath);
+        return this.optimizeImageToWebp(
+            frame,
+            options.targetSize,
+            options.quality,
+            options.maxEdgePx,
+        );
     }
 
     /**
@@ -580,6 +677,91 @@ export class SharpCompressService extends CompressService {
                 bitRate: Math.round((encoded.length * 8) / probe.durationSeconds),
                 reencoded: true,
             });
+        });
+    }
+
+    /**
+     * Encodes the opening `maxDurationSeconds` as a small silent MP4.
+     *
+     * @param file - Multer upload or raw video bytes
+     * @param targetSize - Byte budget for the clip; sizes the VBV cap, see below
+     * @param quality - Quality level mapped to H.264 CRF (10-100), defaults to 55 (`HIGH`)
+     * @param maxEdgePx - Longest edge kept, defaults to {@link PREVIEW_MAX_EDGE_PX}
+     * @param maxDurationSeconds - Clip length, defaults to {@link PREVIEW_MAX_DURATION_SECONDS}
+     */
+    public async optimizeVideoPreview(
+        file: Express.Multer.File | Buffer,
+        targetSize: number,
+        quality: number = 55,
+        maxEdgePx: number = PREVIEW_MAX_EDGE_PX,
+        maxDurationSeconds: number = PREVIEW_MAX_DURATION_SECONDS,
+    ): Promise<VideoCompressionOutput> {
+        const source = resolveSourceBuffer(file);
+        const filename = `${resolveOriginalName(file, 'video')}-preview.mp4`;
+
+        return withTempDir(async (dir) => {
+            const inputPath = await writeTempFile(dir, 'source', source);
+            const probe = await probeVideo(inputPath);
+            assertDurationWithinLimit(probe);
+
+            const durationSeconds = Math.min(probe.durationSeconds, maxDurationSeconds);
+
+            // Tier from the OUTPUT resolution, not the source's. `optimizeVideo` can read it
+            // off the source because it encodes at the full cap, but a preview downscales: a
+            // 1080p source would otherwise be handed 1080p's 6.5 Mbps VBV ceiling to spend on
+            // 720p of picture.
+            const fitted = fitInside(probe.video.width, probe.video.height, maxEdgePx);
+            const tier = tierFor(fitted.width * fitted.height);
+            const plan = this.buildTranscodePlan(
+                probe,
+                tier,
+                qualityToCrf(quality),
+                maxEdgePx,
+            );
+
+            // What gives `targetSize` teeth without a second pass. Capped CRF already carries a
+            // VBV, so sizing that ceiling to the byte budget over the clip's own duration lands
+            // near the target in ONE encode — which is the whole point of this method, since an
+            // unbounded refine loop on a derivative asset is time the queue does not have.
+            // Never raised above the tier (a generous budget must not buy more bitrate than
+            // 720p is worth) and never lowered past the bottom of the ladder (a stingy one must
+            // not buy mush).
+            const maxrateBps = Math.min(
+                tier.maxrateBps,
+                Math.max(
+                    VIDEO_BITRATE_LADDER[0]!.maxrateBps,
+                    Math.round((targetSize * 8) / durationSeconds),
+                ),
+            );
+
+            const outputPath = path.join(dir, 'preview.mp4');
+            await transcodeToMp4(inputPath, outputPath, {
+                crf: plan.crf,
+                preset: VIDEO_PRESET,
+                scale: plan.scale,
+                fps: plan.fps,
+                sourceFps: probe.video.frameRate,
+                maxrateBps,
+                // Silent by design. Browsers only autoplay muted, which is the only context a
+                // preview plays in, so an audio track would be bytes nobody can hear.
+                audio: { mode: 'none' },
+                // Priced on the CLIP, not the source: this encode stops at `-t`, so a ten-second
+                // preview of a ten-minute video gets a ten-second budget.
+                timeoutMs: encodeTimeoutMs(durationSeconds),
+                durationSeconds,
+            });
+
+            const encoded = await fs.readFile(outputPath);
+            return {
+                filename,
+                size: encoded.length,
+                buffer: encoded,
+                width: plan.outputWidth,
+                height: plan.outputHeight,
+                durationSeconds,
+                bitRate: Math.round((encoded.length * 8) / durationSeconds),
+                reencoded: true,
+            };
         });
     }
 

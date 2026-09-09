@@ -57,6 +57,19 @@ export class UserExtraDataService {
     return extraData.ai_credits_consumed < totalAiCredits && newConsumed >= totalAiCredits;
   }
 
+  /**
+   * Non-throwing check for whether a user can afford `cost` more AI credits right now. For a
+   * caller (like the worker's upload path) that must skip the work quietly instead of failing a
+   * job that can never succeed on retry.
+   */
+  async hasAiCreditsFor(userId: number, cost = 1): Promise<boolean> {
+    const [userExtraData, currentPlan] = await Promise.all([
+      this.findOneByUserId(userId),
+      this.planService.findUserActivePlan(userId),
+    ]);
+    return UserLimits.aiCredits({ userExtraData, userPlan: currentPlan, cost });
+  }
+
 
   /**
    * Checks if user constraints are within their plan limits.
@@ -77,6 +90,8 @@ export class UserExtraDataService {
       collections_count?: number;
       services_count?: number;
       enforceAiCredits?: boolean;
+      /** AI credit cost of the action being gated. Defaults to `1` (a plain image generation). */
+      aiCreditsCost?: number;
       enforceUserStrikes?: boolean;
     },
   ) {
@@ -85,7 +100,7 @@ export class UserExtraDataService {
       this.planService.findUserActivePlan(userId),
     ]);
 
-    const { size, portfolios_count, collections_count, services_count, projects_count, enforceCompressionLevel, storageRequests, enforceAiCredits, enforceUserStrikes } =
+    const { size, portfolios_count, collections_count, services_count, projects_count, enforceCompressionLevel, storageRequests, enforceAiCredits, aiCreditsCost = 1, enforceUserStrikes } =
       toEnforce;
     if (
       enforceUserStrikes &&
@@ -118,11 +133,11 @@ export class UserExtraDataService {
     }
     if (
       enforceAiCredits &&
-      !UserLimits.aiCredits({ userExtraData, userPlan: currentPlan })
+      !UserLimits.aiCredits({ userExtraData, userPlan: currentPlan, cost: aiCreditsCost })
     ) {
       const userAiCredits = userExtraData.ai_credits + currentPlan.ai_credits;
       throw ApiException.aiCredits(
-        `User consumed all ai credits, consumed:${userExtraData.ai_credits_consumed} of ${userAiCredits}`,
+        `User does not have enough ai credits, consumed:${userExtraData.ai_credits_consumed}, needs:${aiCreditsCost}, of ${userAiCredits}`,
       );
     }
     if (storageRequests) {

@@ -11,6 +11,20 @@ export type MediaSchema = {
   thumbnail_bytes:number;
   url?: string | null;
   thumbnail?: string;
+  /**
+   * VIDEO only: ordered storage keys of the frames sampled across the clip (near-start, middle,
+   * near-end). `thumbnail` points at `previews[0]` — the same object, not a copy — so every
+   * consumer that already reads a thumbnail keeps reading a real static WebP.
+   */
+  previews?: string[] | null;
+  /** Total bytes of every key in {@link previews}, `thumbnail`'s own included. */
+  previews_bytes?: number | null;
+  /**
+   * VIDEO only: the short playable clip. Equals `url` when the source was already short enough
+   * to be its own preview, so callers must not assume it is a distinct object.
+   */
+  video_preview?: string | null;
+  video_preview_bytes?: number | null;
   is_featured: boolean;
   is_value_pillars: boolean;
   is_highlight: boolean;

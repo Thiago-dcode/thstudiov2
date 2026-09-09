@@ -1870,9 +1870,9 @@ const messages = {
         aiSeoHint: "Rellena título, descripción, texto alt y etiquetas.",
         aiSeoBadge: "Metadatos IA",
         aiSeoTooltipBody:
-          "El SEO (optimización para motores de búsqueda) ayuda a que tu trabajo se encuentre en Google y Google Imágenes. Usamos IA para analizar la imagen y generar un título, una descripción, un texto alternativo y un nombre de archivo artísticos y ricos en palabras clave, y para etiquetarla automáticamente con las categorías correspondientes.",
+          "El SEO (optimización para motores de búsqueda) ayuda a que tu trabajo se encuentre en Google y Google Imágenes. Usamos IA para analizar la imagen o el video y generar un título, una descripción, un texto alternativo y un nombre de archivo artísticos y ricos en palabras clave, y para etiquetarla automáticamente con las categorías correspondientes.",
         aiSeoCreditsHint:
-          "Cuesta 1 crédito de IA por imagen. <remaining>Te quedan {count} {count, plural, one {crédito} other {créditos}}.</remaining>",
+          "Cuesta {imageCost} {imageCost, plural, one {crédito} other {créditos}} de IA por imagen/GIF, {videoCost} por video. <remaining>Te quedan {count} {count, plural, one {crédito} other {créditos}}.</remaining>",
         creditsLabel: "{count} {count, plural, one {crédito} other {créditos}}",
         creditsUsageSummary:
           "{used} {used, plural, one {crédito} other {créditos}} usados · quedan {remaining}",
@@ -1927,12 +1927,17 @@ const messages = {
         mediaPreview: "Vista previa del contenido",
         generateSeo: "Generar metadatos",
         noCreditsAvailable:
-          "No hay créditos de IA disponibles. Necesitas al menos 1 crédito para generar metadatos. Mejora tu plan o espera a que se reinicien los créditos.",
+          "No hay créditos de IA disponibles. Necesitas al menos {imageCost} crédito para generar metadatos de una imagen/GIF, o {videoCost} para un video. Mejora tu plan o espera a que se reinicien los créditos.",
         generateSeoTooltip:
-          "El SEO (optimización para motores de búsqueda) ayuda a que tu trabajo se encuentre en Google y Google Imágenes. Usamos IA para analizar la imagen y generar un título, una descripción, un texto alternativo y un nombre de archivo artísticos y ricos en palabras clave, y para etiquetarla automáticamente con las categorías correspondientes.",
+          "El SEO (optimización para motores de búsqueda) ayuda a que tu trabajo se encuentre en Google y Google Imágenes. Usamos IA para analizar la imagen o el video y generar un título, una descripción, un texto alternativo y un nombre de archivo artísticos y ricos en palabras clave, y para etiquetarla automáticamente con las categorías correspondientes.",
         noCreditsSuffix: " (Sin créditos)",
         delete: "Eliminar",
-        deleteConfirm: "¿Seguro que quieres eliminar este contenido?",
+        deleteTitle: "¿Eliminar este contenido?",
+        deleteConfirm: "Esta acción no se puede deshacer.",
+        deleteWarningMetadata:
+          "Se perderán de forma permanente todos los metadatos generados: títulos, descripciones, textos SEO y etiquetas.",
+        deleteWarningUsage:
+          "Si este contenido forma parte de un portafolio o una colección, desaparecerá de ellos.",
         cancel: "Cancelar",
         discardTitle: "¿Descartar cambios?",
         discardBody:

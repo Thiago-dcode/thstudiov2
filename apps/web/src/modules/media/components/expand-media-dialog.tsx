@@ -25,6 +25,12 @@ type Props = {
   alt?: string;
   /** Positioning and look of the trigger. It is absolutely positioned by every caller so far. */
   className?: string;
+  /**
+   * Fires when the preview opens or closes. Parents that wrap a drawer/dialog trigger under
+   * this tile should treat close as a signal to ignore the next synthetic click — dismissing
+   * the overlay can fall through onto the card and open the edit drawer.
+   */
+  onOpenChange?: (open: boolean) => void;
 };
 
 /**
@@ -37,10 +43,19 @@ type Props = {
  * element (a drawer trigger, a selectable tile), and Radix listens on `pointerdown`, so stopping
  * `click` alone still activates the parent.
  *
+ * Prefer rendering this as a sibling of that parent trigger (not a descendant). Nesting still
+ * works when open is stopped, but close can ghost-click the ancestor. Callers that keep a
+ * drawer trigger under the same tile should listen via `onOpenChange` and ignore that click.
+ *
  * The caller owns placement via `className`. Check what already occupies the corners of the
  * host tile — badges and per-card actions differ between the atelier grid and the media picker.
  */
-export function ExpandMediaDialog({ media, alt, className }: Props) {
+export function ExpandMediaDialog({
+  media,
+  alt,
+  className,
+  onOpenChange,
+}: Props) {
   const t = useTranslations("atelier.common");
   const [open, setOpen] = useState(false);
 
@@ -49,6 +64,11 @@ export function ExpandMediaDialog({ media, alt, className }: Props) {
   if (!media.url) return null;
 
   const label = alt || media.seo_alt || media.title || media.seo_filename || "";
+
+  const setExpandOpen = (next: boolean) => {
+    setOpen(next);
+    onOpenChange?.(next);
+  };
 
   return (
     <>
@@ -61,19 +81,19 @@ export function ExpandMediaDialog({ media, alt, className }: Props) {
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          setOpen(true);
+          setExpandOpen(true);
         }}
         className={cn(
           // Always visible rather than revealed on group-hover: a hover-only control is
           // unreachable on touch, and these grids are used on tablets.
-          "flex items-center justify-center bg-black/50 p-1.5 text-white transition-colors duration-200 hover:bg-black/70 focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:outline-none",
+          "flex cursor-pointer items-center justify-center bg-black/50 p-1.5 text-white transition-colors duration-200 hover:bg-black/70 focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:outline-none",
           className,
         )}
       >
         <Expand className="size-3.5" />
       </button>
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={setExpandOpen}>
         {/* Sized to the media, not the viewport. `sm:w-fit` is required as well as `w-fit`:
             DialogContent's base classes carry `sm:w-full`, and tailwind-merge treats a
             variant-prefixed class as its own conflict group, so an unprefixed `w-fit` does
@@ -81,7 +101,12 @@ export function ExpandMediaDialog({ media, alt, className }: Props) {
             `pt-10` reserves a strip for the built-in close X (absolute right-4 top-4), which
             would otherwise sit on the artwork and be unreadable against a light image.
             `z-100` so it clears a host drawer or dialog it was opened from. */}
-        <DialogContent className="w-fit sm:w-fit max-w-[95vw] p-2 pt-10 sm:p-3 sm:pt-10 z-100">
+        <DialogContent
+          className="w-fit sm:w-fit max-w-[95vw] p-2 pt-10 sm:p-3 sm:pt-10 z-100"
+          // Returning focus to the expand button (inside/near a drawer trigger) can activate
+          // that parent after dismiss; keep focus where it is.
+          onCloseAutoFocus={(e) => e.preventDefault()}
+        >
           <DialogHeader className="sr-only">
             <DialogTitle>
               {media.title || media.seo_filename || t("expandMedia")}
