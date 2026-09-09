@@ -46,7 +46,10 @@ describe('MediaProcessor.processMedia', () => {
     /** Only the collaborators these two paths actually reach need to behave. */
     const build = (
         currentRow: Record<string, unknown> | null,
-        overrides: { storage?: Record<string, unknown> } = {},
+        overrides: {
+            storage?: Record<string, unknown>;
+            job?: { attempts?: number; attemptsMade?: number };
+        } = {},
     ) => {
         const { logger, log } = buildLogger();
         const storageService = {
@@ -60,7 +63,14 @@ describe('MediaProcessor.processMedia', () => {
             findOneByColumn: jest.fn().mockResolvedValue(currentRow),
             updateById: jest.fn().mockResolvedValue({ ...media, status: 'FAILED' }),
         };
-        const job = { data: { media, generate_metadata: false } } as unknown as Job;
+        // `opts.attempts` / `attemptsMade` drive the catch-path retry gate: without them a
+        // rethrown failure never engages BullMQ's backoff, and without them in the mock the
+        // final-attempt FAILED path would crash reading `job.opts.attempts`.
+        const job = {
+            data: { media, generate_metadata: false },
+            opts: { attempts: overrides.job?.attempts ?? 1 },
+            attemptsMade: overrides.job?.attemptsMade ?? 0,
+        } as unknown as Job;
 
         const processor = new MediaProcessor(
             job,
@@ -131,5 +141,33 @@ describe('MediaProcessor.processMedia', () => {
             }),
         );
         expect(storageService.delete).toHaveBeenCalled();
+    });
+
+    it('rethrows on a non-final attempt so BullMQ can retry instead of marking FAILED', async () => {
+        const notFound = Object.assign(new Error('The specified key does not exist.'), {
+            name: 'NoSuchKey',
+        });
+        const { processor, storageService, mediaRepository, log } = build(
+            { ...media, status: 'UPLOADING', completed_at: null, blocked_at: null },
+            {
+                storage: { getBuffer: jest.fn().mockRejectedValue(notFound) },
+                // attempts: 3, attemptsMade: 0 → this is attempt 1 of 3, not the last one.
+                job: { attempts: 3, attemptsMade: 0 },
+            },
+        );
+
+        await expect(processor.processMedia()).rejects.toBe(notFound);
+
+        // Leave the row and its files alone for the next attempt.
+        expect(mediaRepository.updateById).not.toHaveBeenCalled();
+        expect(storageService.delete).not.toHaveBeenCalled();
+        expect(log.warn).toHaveBeenCalledWith(
+            'Media processing attempt failed; will retry',
+            expect.objectContaining({
+                media_id: media.id,
+                attempt: 1,
+                max_attempts: 3,
+            }),
+        );
     });
 });

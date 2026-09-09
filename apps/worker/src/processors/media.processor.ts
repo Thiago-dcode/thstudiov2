@@ -711,13 +711,14 @@ export class MediaProcessor {
             // (still its pre-job status, e.g. UPLOADING) rather than flapping to FAILED and
             // back if the retry succeeds, and nothing in `deletePaths` — the source above all —
             // is deleted, since the next attempt reads that same source back from storage.
-            const maxAttempts = this.job.opts.attempts ?? 1;
-            const isFinalAttempt = this.job.attemptsMade + 1 >= maxAttempts;
+            const maxAttempts = this.job.opts?.attempts ?? 1;
+            const attempt = (this.job.attemptsMade ?? 0) + 1;
+            const isFinalAttempt = attempt >= maxAttempts;
             if (!isFinalAttempt) {
                 log.warn('Media processing attempt failed; will retry', {
                     media_id: media.id,
                     public_id: media.public_id,
-                    attempt: this.job.attemptsMade + 1,
+                    attempt,
                     max_attempts: maxAttempts,
                     failed_reason: message,
                 });
