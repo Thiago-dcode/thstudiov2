@@ -15,10 +15,12 @@ import { Job } from 'bullmq';
 import { addDays } from 'date-fns';
 import { getConfigValue } from '@repo/common-lib/config/utils';
 import { DbUniqueViolationException } from '@repo/database/exceptions';
+import { mailingAdmins } from '@repo/backend-lib/config/mailling';
 import { GlobalProcessor } from 'src/common/processors/global.processor';
 import { BenefitRepository } from '../benefits/benefit.repository';
 import { InvitationLinkService } from '../invitation-links/invitation-link.service';
 import { PlansService } from '../plans/plans.service';
+import { WaitListAdminNotificationMail } from './mails/wait-list-admin-notification.mail';
 import { WaitListInviteMail } from './mails/wait-list-invite.mail';
 import { WaitListWelcomeMail } from './mails/wait-list-welcome.mail';
 import { WaitListRepository } from './wait-list.repository';
@@ -42,6 +44,7 @@ export class WaitListProcessor extends GlobalProcessor {
     private readonly mailService: MailService,
     private readonly waitListInviteMail: WaitListInviteMail,
     private readonly waitListWelcomeMail: WaitListWelcomeMail,
+    private readonly waitListAdminNotificationMail: WaitListAdminNotificationMail,
     private readonly logger: LogService,
   ) {
     super();
@@ -144,6 +147,8 @@ export class WaitListProcessor extends GlobalProcessor {
 
       this.logger.info(`Wait list validation email queued: ${emailLog}`, { entry_id: waitList.id });
 
+      await this.notifyAdminsOfSignup(waitList);
+
       return waitList;
     } catch (error) {
       this.logger.error(
@@ -151,6 +156,48 @@ export class WaitListProcessor extends GlobalProcessor {
         error,
       );
       throw error;
+    }
+  }
+
+  /**
+   * Mirrors the user's validation email with an internal alert to `ADMIN_EMAILS`.
+   *
+   * Never allowed to fail the job: the subscriber's email is already queued by this point,
+   * so a broken admin notification must not trigger a retry that re-sends it to them.
+   */
+  private async notifyAdminsOfSignup(waitList: WaitList) {
+    const emailLog = maskEmail(waitList.email);
+
+    if (!mailingAdmins.length) {
+      this.logger.warn(`Skipping wait-list admin notification: ADMIN_EMAILS is empty`, {
+        entry_id: waitList.id,
+      });
+      return;
+    }
+
+    try {
+      await this.mailService.sendAsync(
+        this.waitListAdminNotificationMail.setData({
+          email: waitList.email,
+          entryId: waitList.id,
+          language: waitList.language,
+        }),
+        {
+          // Same stable-id scheme as the invite mail above: collapses concurrent duplicates,
+          // while the 1h resend throttle keeps repeat signups from flooding the admin inbox.
+          jobId: `wait-list-admin-notify-${waitList.id}`,
+        },
+      );
+
+      this.logger.info(`Wait list admin notification queued: ${emailLog}`, {
+        entry_id: waitList.id,
+        recipients: mailingAdmins.length,
+      });
+    } catch (error) {
+      this.logger.error(
+        `Failed to queue wait list admin notification: ${emailLog} - ${error instanceof Error ? error.message : 'Unknown error'}`,
+        error,
+      );
     }
   }
 

@@ -9,6 +9,7 @@ import { Queue } from 'bullmq';
 import { BenefitsModule } from '../benefits/benefits.module';
 import { InvitationLinkModule } from '../invitation-links/invitation-link.module';
 import { PlansModule } from '../plans/plans.module';
+import { WaitListAdminNotificationMail } from './mails/wait-list-admin-notification.mail';
 import { WaitListInviteMail } from './mails/wait-list-invite.mail';
 import { WaitListWelcomeMail } from './mails/wait-list-welcome.mail';
 import { WaitListReminderMail } from './mails/wait-list-reminder.mail';
@@ -35,6 +36,7 @@ import { EmailPreferencesModule } from '../email-preferences/email-preferences.m
     WaitListWelcomeMail,
     WaitListInviteMail,
     WaitListReminderMail,
+    WaitListAdminNotificationMail,
     WaitListTask,
     {
       provide: LogService,

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <meta name="supported-color-schemes" content="light dark">
+    <title>New wait-list signup</title>
+    <!--[if mso]>
+    <noscript>
+        <xml>
+            <o:OfficeDocumentSettings>
+                <o:PixelsPerInch>96</o:PixelsPerInch>
+            </o:OfficeDocumentSettings>
+        </xml>
+    </noscript>
+    <style type="text/css">
+        body, table, td, a { font-family: Arial, Helvetica, sans-serif !important; }
+        h1, h2, h3 { font-family: Arial, Helvetica, sans-serif !important; }
+        table { border-collapse: collapse !important; }
+        table, td { mso-table-lspace:0pt; mso-table-rspace:0pt; }
+    </style>
+    <![endif]-->
+    <style type="text/css">
+        @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=Jost:wght@300;400&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body, table, td, th, p, a, span, div {
+            font-family: Jost, Arial, Helvetica, sans-serif;
+        }
+        h1, h2, h3, .brand, .brand span {
+            font-family: Archivo, Arial, Helvetica, sans-serif;
+        }
+        body {
+            margin: 0; padding: 0; width: 100%;
+            background-color: #FAFAF9;
+            color: #000000;
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+        }
+        img { border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
+
+        .e-bg { background-color: #fafaf9 !important; }
+        .e-card { background-color: #ffffff !important; }
+        .e-subtle { background-color: #efede6 !important; }
+        .e-border { background-color: #e4e1d9 !important; }
+        .e-border-em { border-color: #c9c6bb !important; }
+        .e-text { color: #000000 !important; }
+        .e-text-muted { color: #46443f !important; }
+        .e-accent { color: #ed2100 !important; }
+
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #1c1b19 !important;
+                color: #ffffff !important;
+            }
+            .e-bg { background-color: #1c1b19 !important; }
+            .e-card { background-color: #242220 !important; }
+            .e-subtle { background-color: #322f2a !important; }
+            .e-border { background-color: #38362f !important; }
+            .e-border-em { border-color: #4a473f !important; }
+            .e-text { color: #ffffff !important; }
+            .e-text-muted { color: #c6c4c0 !important; }
+            .e-accent { color: #ff5c3d !important; }
+        }
+    </style>
+</head>
+
+<body class="e-bg" style="width:100%; margin:0; padding:0; background-color:#FAFAF9;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" class="e-bg" style="background-color:#FAFAF9;">
+        <tr>
+            <td align="center" style="padding:20px 0;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600"
+                    class="e-bg" style="max-width:600px; width:100%; background-color:#FAFAF9;">
+
+                    <!-- Header -->
+                    <tr>
+                        <td class="e-subtle" style="padding:32px 0; text-align:center; background-color:#EFEDE6;">
+                            <p class="e-accent" style="margin:0; font-size:11px; letter-spacing:3px; text-transform:uppercase; color:#ED2100;">
+                                WAIT LIST
+                            </p>
+                            <table role="presentation" width="40" cellpadding="0" cellspacing="0" border="0" style="margin:14px auto 0 auto;">
+                                <tr>
+                                    <td style="height:1px; background-color:#ED2100; font-size:1px; line-height:1px;">&nbsp;</td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Title -->
+                    <tr>
+                        <td style="padding:36px 40px 24px 40px; text-align:center;">
+                            <h1 class="e-text" style="font-size:26px; font-weight:normal; color:#000000; margin:0 0 8px 0; letter-spacing:1px;">
+                                New wait-list signup
+                            </h1>
+                            <p class="e-text-muted" style="font-size:14px; color:#46443F; margin:0;">
+                                The validation email was queued to this address.
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Details -->
+                    <tr>
+                        <td style="padding:0 40px 32px 40px;">
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                                class="e-card e-border-em" style="border:1.5px solid #C9C6BB; background-color:#FFFFFF;">
+                                <% signup.forEach(function(row, index) { %>
+                                <% if (index > 0) { %>
+                                <tr>
+                                    <td style="padding:0;">
+                                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                                            <tr><td class="e-border" style="height:1px; background-color:#E4E1D9; font-size:1px; line-height:1px;">&nbsp;</td></tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                <% } %>
+                                <tr>
+                                    <td style="padding:20px 24px;">
+                                        <p class="e-text-muted" style="font-size:11px; color:#46443F; letter-spacing:1px; text-transform:uppercase; margin:0 0 6px 0;">
+                                            <%= row.label %>
+                                        </p>
+                                        <p class="e-text" style="font-family:'Courier New', Courier, monospace; font-size:13px; color:#000000; margin:0; line-height:1.5; word-break:break-all;">
+                                            <%= row.value %>
+                                        </p>
+                                    </td>
+                                </tr>
+                                <% }) %>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td style="padding:0 40px;">
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                                <tr>
+                                    <td class="e-border" style="height:1px; background-color:#E4E1D9; font-size:1px; line-height:1px;">&nbsp;</td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:20px 40px 28px 40px; text-align:center;">
+                            <p class="e-text-muted" style="font-size:11px; color:#46443F; margin:0;">
+                                Automated internal notification. The signup is not confirmed until the user validates their email.
+                            </p>
+                        </td>
+                    </tr>
+
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+
+</html>
