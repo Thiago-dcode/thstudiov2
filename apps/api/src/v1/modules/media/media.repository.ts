@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import type { EnumType } from '@repo/common-lib/constants/enums';
 import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
 import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/language';
 import {
@@ -15,12 +14,6 @@ import { QueryBuilder } from '@repo/database/queryBuilder';
 import { Query } from '@repo/database/facades';
 import { MediaRepository as BaseMediaRepository } from '@repo/database/repositories/media';
 import { RequestService } from 'src/common/services/request.service';
-
-/**
- * The one `MEDIA_STATUS` that means processing gave up and the row will never be usable.
- * Typed against the enum so renaming or dropping the value breaks the build here.
- */
-const MEDIA_FAILED_STATUS: EnumType<'MEDIA_STATUS'> = 'FAILED';
 
 /**
  * HTTP-facing media repository: pagination + locale-aware SEO/tag reads.
@@ -101,23 +94,30 @@ export class MediaRepository extends BaseMediaRepository {
       }
     }
 
-    // `completed` excludes FAILED rows - it is not `status = COMPLETED`.
+    // `completed` asks one question - "does this media have an asset it is safe to show?" - and
+    // `completed_at` is the single column that answers it. Nothing else is consulted here on
+    // purpose.
     //
-    // The atelier deliberately shows media that is still being processed: the grid renders an
-    // unselectable card with a spinner for anything `MediaHelper.isLoading` matches
-    // (UPLOADING, UPDATING, GENERATING_METADATA), so narrowing to COMPLETED would make an
-    // upload vanish until its job finished. FAILED is the only status that can never become
-    // usable, so it is the only one worth filtering out.
+    // What makes that column trustworthy is that exactly one writer sets it: the media
+    // processor's success commit, in the same UPDATE as the compressed bytes. Every failure path
+    // clears it, a job that will be retried leaves it alone, and the jobs that merely park a row
+    // in UPDATING / GENERATING_METADATA never touch it - so an edit or a metadata run on a
+    // finished media keeps its timestamp and keeps showing, mid-flight and all.
     //
-    // It used to test `completed_at`, which was wrong in both directions: a FAILED row keeps
-    // whatever `completed_at` an earlier attempt wrote, so failures still surfaced, and rows
-    // written before that column existed have a null one and were hidden despite being fine.
-    // On dev that was 17 of 20 rows missing while the one FAILED row showed.
+    // `status` cannot answer it. It is a lifecycle position, not a verdict: it defaulted to
+    // COMPLETED for every row predating the column, and a job unrelated to the upload could hand
+    // a row back as COMPLETED without knowing whether an asset was ever produced. Both holes are
+    // closed now (see `restoreStatus` and the `media_completed_has_completed_at` constraint),
+    // which is what makes the timestamp safe to filter on directly.
+    //
+    // The trade is deliberate: a FIRST upload still in flight has no timestamp yet and does not
+    // come back here. It has no asset to render either - the client shows those from its own
+    // in-progress upload state, and the row appears the moment the processor commits.
     if (typeof filters.completed === 'boolean') {
       if (filters.completed) {
-        query.where('status', '!=', MEDIA_FAILED_STATUS);
+        query.where('completed_at', 'IS NOT', null);
       } else {
-        query.where('status', '=', MEDIA_FAILED_STATUS);
+        query.where('completed_at', 'IS', null);
       }
     }
     this.requestService.pagination =

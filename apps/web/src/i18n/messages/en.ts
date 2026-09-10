@@ -1918,6 +1918,13 @@ const messages = {
         filenameInfo:
           "SEO filename set automatically from the upload or when AI generates metadata. Not editable.",
         lastUpdated: "Last Updated",
+        typeLabel: "Type",
+        compressionLabel: "Compression",
+        sizeLabel: "Size",
+        urlLabel: "URL",
+        copyUrl: "Copy URL",
+        urlCopied: "URL copied",
+        urlCopyFailed: "Could not copy URL",
         noPreview: "No preview",
         altFallback: "{username} media",
         untitled: "Untitled",
@@ -1981,6 +1988,13 @@ const messages = {
         IMAGE: "Photo",
         GIF: "GIF",
         VIDEO: "Video",
+      },
+      compressionLevel: {
+        VERY_LOW: "Very low",
+        LOW: "Low",
+        NORMAL: "Normal",
+        HIGH: "High",
+        VERY_HIGH: "Very high",
       },
       drawer: {
         title: "Add media",

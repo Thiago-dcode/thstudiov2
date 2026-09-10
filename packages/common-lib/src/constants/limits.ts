@@ -16,6 +16,20 @@ export const ALLOWED_FILE_TYPES = [...ALLOWED_IMAGE_FILE_TYPES, ...ALLOWED_VIDEO
 export const MAX_IMAGE_UPLOAD_MB = 25;
 export const MAX_IMAGE_UPLOAD_BYTES = MAX_IMAGE_UPLOAD_MB * 1024 * 1024;
 /**
+ * Ceiling on a STORED image or GIF, whatever compression level was asked for. The level decides
+ * how far under this an upload lands; this only bounds the worst case, so a 25MB lossless PNG
+ * cannot be stored at near its upload size just because the user picked VERY_LOW.
+ *
+ * It is a bound on the size the ratio is measured against, not on the ratio's result — see
+ * `CompressService.getSizeCompressed`. Applied the other way round it silently flattens the whole
+ * level ladder: every source above `cap / 0.95` produced the identical target at all five levels,
+ * so the same 18MB GIF came out byte-for-byte identical at VERY_LOW and at HIGH.
+ *
+ * Video has no equivalent — its budget is bitrate x duration, derived inside `optimizeVideo`.
+ */
+export const MAX_COMPRESSED_IMAGE_MB = 10;
+export const MAX_COMPRESSED_IMAGE_BYTES = MAX_COMPRESSED_IMAGE_MB * 1024 * 1024;
+/**
  * The video cap is what sets nginx's `client_max_body_size` (320m, leaving headroom for the
  * multipart envelope) and Next's server-action `bodySizeLimit` — keep all three in sync, in
  * `dev.nginx`/`pro.nginx` and `apps/web/next.config.ts`. A raw phone clip is 10-20 Mbps, so
@@ -48,7 +62,10 @@ export const PREVIEW_MAX_DURATION_SECONDS = 10;
  * it costs storage and tokens on every upload, and the marginal frame buys progressively less
  * coverage than the one before it.
  *
- * Frame 0 doubles as the media's thumbnail, so the count is stills, not extra objects.
+ * Frame 0 doubles as the media's thumbnail, so the count is stills, not extra objects. It is also
+ * the only one of them encoded for human eyes: frames 1..N are model input, and are stored at
+ * `VIDEO_SAMPLE_FRAME_TARGET_BYTES` rather than a thumbnail's budget. That is what keeps this
+ * number cheap enough to raise.
  */
 export const VIDEO_PREVIEW_FRAMES = 10;
 /**

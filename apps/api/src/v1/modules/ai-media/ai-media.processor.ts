@@ -107,8 +107,10 @@ export class AiMediaProcessor extends GlobalProcessor {
         this.mediaService.upsertSeoTranslations(request.media_id, metadata.translations),
         this.mediaService.invalidateSeoCache(media.public_id),
         this.markParentSeoStale(request.media_id),
-        this.mediaRepository.updateById(request.media_id, { status: 'COMPLETED' })
-
+        // Back to the status `completed_at` says the media earned, not a flat COMPLETED: this
+        // job only parked the row in GENERATING_METADATA, and generating SEO text is not what
+        // makes a media usable. `completed_at` is left untouched either way.
+        this.mediaRepository.restoreStatus(request.media_id),
       ]);
 
       await QueueHelper.createOrUpdateUserNotificationJob({
@@ -120,7 +122,9 @@ export class AiMediaProcessor extends GlobalProcessor {
 
       return media;
     } catch (error) {
-      await this.mediaRepository.updateById(request.media_id, { status: 'COMPLETED' });
+      // A metadata failure must not drag the media down with it - the asset is still there and
+      // still serving - so the row is released to its earned status rather than marked FAILED.
+      await this.mediaRepository.restoreStatus(request.media_id);
 
       await QueueHelper.createOrUpdateUserNotificationJob({
         type: 'FAILED_GENERATE_MEDIA_METADATA',

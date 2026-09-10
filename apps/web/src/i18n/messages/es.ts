@@ -1929,6 +1929,13 @@ const messages = {
         filenameInfo:
           "Nombre de archivo SEO definido automáticamente al subir o al generar metadatos con IA. No se puede editar.",
         lastUpdated: "Última actualización",
+        typeLabel: "Tipo",
+        compressionLabel: "Compresión",
+        sizeLabel: "Tamaño",
+        urlLabel: "URL",
+        copyUrl: "Copiar URL",
+        urlCopied: "URL copiada",
+        urlCopyFailed: "No se pudo copiar la URL",
         noPreview: "Sin vista previa",
         altFallback: "Contenido de {username}",
         untitled: "Sin título",
@@ -1994,6 +2001,13 @@ const messages = {
         IMAGE: "Foto",
         GIF: "GIF",
         VIDEO: "Vídeo",
+      },
+      compressionLevel: {
+        VERY_LOW: "Muy baja",
+        LOW: "Baja",
+        NORMAL: "Normal",
+        HIGH: "Alta",
+        VERY_HIGH: "Muy alta",
       },
       drawer: {
         title: "Añadir contenido",

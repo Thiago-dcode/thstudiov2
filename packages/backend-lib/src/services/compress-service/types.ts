@@ -16,19 +16,40 @@ export type GetSizeCompressedInput = {
 export type CompressionOutput = {
     filename: string,
     size: number,
-    buffer: Buffer
+    buffer: Buffer,
+    /**
+     * False when the source bytes were handed straight back rather than encoded. Optional because
+     * only the paths that CAN pass a source through report it — {@link VideoCompressionOutput}
+     * makes it required.
+     *
+     * Log it. Without it "compressed to 1.5MB" and "gave you back the 1.5MB you uploaded" are the
+     * same line, and telling those two apart is the whole of diagnosing a compression level that
+     * does nothing.
+     */
+    reencoded?: boolean,
 }
+
+/** How one extracted frame is encoded. */
+export type VideoFrameEncodeOptions = {
+    /** Target file size in bytes. */
+    targetSize: number;
+    /** WebP quality, 0-100. */
+    quality: number;
+    /** Longest edge kept. */
+    maxEdgePx: number;
+};
 
 /**
  * Input for `extractVideoFrames`. Named rather than positional because everything after the
  * source is a bare number or array of them: `(file, 122880, 80)` and `(file, 80, 122880)` both
  * compile, and only one of them is a thumbnail.
+ *
+ * `poster` and `sample` are separate for the same reason they are named: the two kinds of frame
+ * are not the same asset and must not be encoded as if they were. See each field.
  */
 export type ExtractVideoFramesInput = {
     /** Multer upload or raw video bytes. */
     file: Express.Multer.File | Buffer;
-    /** Target file size in bytes for EACH frame produced. */
-    targetSize: number;
     /**
      * Where to sample, as percentages of the video: 0 is the first frame, 100 the last, 50 the
      * middle. One WebP comes back per entry, in the order given — pass 10 percentages and 10
@@ -36,10 +57,16 @@ export type ExtractVideoFramesInput = {
      * configured preview count.
      */
     percentages?: readonly number[];
-    /** WebP quality, 0-100. Defaults to 80. */
-    quality?: number;
-    /** Longest edge kept. Defaults to `THUMBNAIL_MAX_EDGE_PX`. */
-    maxEdgePx?: number;
+    /**
+     * Frame 0 only, and it is the media's THUMBNAIL: the grid tile, the `og:image`, the sitemap
+     * image. Give it the same budget a still image's thumbnail gets — a person looks at this one.
+     */
+    poster: VideoFrameEncodeOptions;
+    /**
+     * Frames 1..N. These are model input and nothing else — the moderation verdict and the SEO
+     * description are drawn from them, and no page ever renders one. Compress them hard.
+     */
+    sample: VideoFrameEncodeOptions;
 };
 
 /**

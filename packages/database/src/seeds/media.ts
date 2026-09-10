@@ -17,6 +17,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {
+  compressionLevelToQuality,
   THUMBNAIL_MAX_EDGE_PX,
   THUMBNAIL_TARGET_BYTES,
 } from '@repo/backend-lib/services/compress-service/base';
@@ -31,7 +32,7 @@ import {
 } from '@repo/common-lib/constants/enums';
 import { getConfigValue } from '@repo/common-lib/config/utils';
 import { generateUUID } from '@repo/common-lib/utils/generate-uuid';
-import { mbToBytes } from '@repo/common-lib/utils/bytes';
+import { MAX_COMPRESSED_IMAGE_BYTES } from '@repo/common-lib/constants/limits';
 import { cleanObj } from '@repo/common-lib/utils/cleanObj';
 import type { CreateMediaInput } from '@repo/common-lib/types/media';
 import { MediaHelper } from '@repo/common-lib/utils/media';
@@ -167,12 +168,14 @@ async function seedMediaAssetsForUser(user: MediaSeedTargetUser): Promise<void> 
     const mediaPath = `users/${user.public_id}/media/${mediaPublicId}/${baseName}.${extension}`;
     const thumbnailPath = MediaHelper.thumbnailPath(mediaPath);
 
+    // Same level as the media itself, exactly as the worker does it.
+    const compressionLevel = DEFAULT_COMPRESSION_LVL;
     const thumbnail = await compressService.optimizeImageToWebp(
       sourceFile as Parameters<
         typeof compressService.optimizeImageToWebp
       >[0],
       THUMBNAIL_TARGET_BYTES,
-      80,
+      compressionLevelToQuality(compressionLevel),
       THUMBNAIL_MAX_EDGE_PX,
     );
     const thumbnailFile = multerLike(
@@ -185,12 +188,11 @@ async function seedMediaAssetsForUser(user: MediaSeedTargetUser): Promise<void> 
       thumbnailPath,
     );
 
-    const compressionLevel = DEFAULT_COMPRESSION_LVL;
     const targetSize = compressService.getSizeCompressed({
       size: sourceFile.size,
       compressLevel: compressionLevel,
       minSize: 300 * 1024,
-      maxSize: mbToBytes(5),
+      maxSize: MAX_COMPRESSED_IMAGE_BYTES,
     });
     // A GIF fixture has to stay a GIF: seeding it as WebP produced a row claiming
     // `media_type: 'GIF'` whose stored object was a single static frame.
@@ -202,7 +204,7 @@ async function seedMediaAssetsForUser(user: MediaSeedTargetUser): Promise<void> 
         typeof compressService.optimizeImageToWebp
       >[0],
       targetSize,
-      100,
+      compressionLevelToQuality(compressionLevel),
     );
     const mediaFile = multerLike(
       mediaCompressed.buffer,

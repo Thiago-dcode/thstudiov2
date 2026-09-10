@@ -27,10 +27,11 @@ import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { cn } from "@repo/ui/lib/utils";
 import { toast } from "@repo/ui/sonner";
 import { format } from "date-fns";
-import { Eye, Pencil, Sparkles, Trash2, Upload } from "lucide-react";
+import { Check, Copy, Eye, Pencil, Sparkles, Trash2, Upload } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { clientEnv } from "@/env/client";
 import FormComponent from "@/lib/components/form-component";
 import {
   canExpandMedia,
@@ -75,6 +76,7 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
     generateUniqueMediaId,
   } = useMedia();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [urlCopied, setUrlCopied] = useState(false);
   // Closing the expand preview can ghost-click whatever sits under the overlay — the tile
   // itself (re-opening the preview) or the pen (opening the editor).
   const suppressTileClickRef = useRef(false);
@@ -130,6 +132,26 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
       return null;
     }
   }, [currentMedia.updated_at, currentMedia.created_at]);
+
+  const mediaPublicUrl = useMemo(() => {
+    if (!currentMedia.public_id || !username) return null;
+    return new URL(
+      `/artists/${username}/media/${currentMedia.public_id}`,
+      clientEnv.NEXT_PUBLIC_APP_URL,
+    ).href;
+  }, [currentMedia.public_id, username]);
+
+  const handleCopyUrl = useCallback(async () => {
+    if (!mediaPublicUrl) return;
+    try {
+      await navigator.clipboard.writeText(mediaPublicUrl);
+      setUrlCopied(true);
+      toast.success(t("urlCopied"));
+      window.setTimeout(() => setUrlCopied(false), 2000);
+    } catch {
+      toast.error(t("urlCopyFailed"));
+    }
+  }, [mediaPublicUrl, t]);
 
   const handleCancel = () => {
     setShowCancelDialog(true);
@@ -361,6 +383,65 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
                 <p className="text-sm text-text leading-relaxed whitespace-pre-wrap">
                   {currentMedia.description}
                 </p>
+              </div>
+            )}
+            {currentMedia.media_type && (
+              <div className="space-y-2">
+                <Label className="text-xs text-text-muted font-semibold uppercase tracking-wide">
+                  {t("typeLabel")}
+                </Label>
+                <p className="text-sm text-text">
+                  {tMedia(`mediaType.${currentMedia.media_type}`)}
+                </p>
+              </div>
+            )}
+            {currentMedia.compression_level && (
+              <div className="space-y-2">
+                <Label className="text-xs text-text-muted font-semibold uppercase tracking-wide">
+                  {t("compressionLabel")}
+                </Label>
+                <p className="text-sm text-text">
+                  {tMedia(`compressionLevel.${currentMedia.compression_level}`)}
+                </p>
+              </div>
+            )}
+            {currentMedia.bytes != null && currentMedia.bytes > 0 && (
+              <div className="space-y-2">
+                <Label className="text-xs text-text-muted font-semibold uppercase tracking-wide">
+                  {t("sizeLabel")}
+                </Label>
+                <p className="text-sm text-text">
+                  {bytesToMB(currentMedia.bytes).toFixed(2)} MB
+                </p>
+              </div>
+            )}
+            {mediaPublicUrl && (
+              <div className="space-y-2">
+                <Label className="text-xs text-text-muted font-semibold uppercase tracking-wide">
+                  {t("urlLabel")}
+                </Label>
+                <div className="flex items-center bg-fg-2">
+                  <p
+                    className="min-w-0 flex-1 truncate px-3 py-2 text-xs font-mono text-text"
+                    title={mediaPublicUrl}
+                  >
+                    {mediaPublicUrl}
+                  </p>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="shrink-0 focus-visible:ring-2 focus-visible:ring-border-em focus-visible:outline-none"
+                    onClick={handleCopyUrl}
+                    aria-label={urlCopied ? t("urlCopied") : t("copyUrl")}
+                  >
+                    {urlCopied ? (
+                      <Check className="size-3.5" />
+                    ) : (
+                      <Copy className="size-3.5" />
+                    )}
+                  </Button>
+                </div>
               </div>
             )}
             {formattedDate && (
@@ -596,35 +677,26 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
       <DrawerContent className="h-full w-150 max-w-[90vw] right-0 left-auto opacity-90 ">
         <DrawerHeader className="border-b p-2">
           <div className="flex items-start justify-between gap-3 min-w-0">
-            <div className="flex min-w-0 flex-1 items-end justify-start gap-2">
-              <DrawerTitle className="font-semibold flex min-w-0 items-center gap-1.5">
-                <span className="truncate">
-                  {isEditing
-                    ? t("editMedia")
-                    : currentMedia.title ||
-                      currentMedia.seo_filename ||
-                      t("mediaPreview")}
-                </span>
-                {!isEditing && currentMedia.public_id && (
-                  <a
-                    href={`/artists/${username}/media/${currentMedia.public_id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-text-muted hover:text-text transition-colors"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <Eye className="size-3.5" />
-                  </a>
-                )}
-              </DrawerTitle>
-              {currentMedia.bytes != null &&
-              currentMedia.bytes > 0 &&
-              !isEditing ? (
-                <p className="text-xs! text-text-muted shrink-0 whitespace-nowrap">
-                  ({bytesToMB(currentMedia.bytes).toFixed(2)} MB)
-                </p>
-              ) : null}
-            </div>
+            <DrawerTitle className="font-semibold flex min-w-0 flex-1 items-center gap-1.5">
+              <span className="truncate">
+                {isEditing
+                  ? t("editMedia")
+                  : currentMedia.title ||
+                    currentMedia.seo_filename ||
+                    t("mediaPreview")}
+              </span>
+              {!isEditing && currentMedia.public_id && (
+                <a
+                  href={`/artists/${username}/media/${currentMedia.public_id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-text-muted hover:text-text transition-colors"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Eye className="size-3.5" />
+                </a>
+              )}
+            </DrawerTitle>
             <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
               {isEditing ? (
                 <div className="flex flex-wrap items-center justify-end gap-1">

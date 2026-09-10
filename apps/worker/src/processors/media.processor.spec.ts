@@ -1,6 +1,16 @@
 import { Job } from 'bullmq';
 import { QueueHelper } from '@repo/backend-lib/utils';
-import { MediaInputError } from '@repo/backend-lib/services/compress-service/base';
+import {
+    compressionLevelToQuality,
+    MediaInputError,
+    THUMBNAIL_MAX_EDGE_PX,
+    THUMBNAIL_TARGET_BYTES,
+    VIDEO_SAMPLE_FRAME_MAX_EDGE_PX,
+    VIDEO_SAMPLE_FRAME_TARGET_BYTES,
+} from '@repo/backend-lib/services/compress-service/base';
+import { FactoryCompressService } from '@repo/backend-lib/services/compress-service/factory';
+import { EnumType } from '@repo/common-lib/constants/enums';
+import { UserLimits } from '@repo/common-lib/utils/user-limits';
 import { MediaProcessor } from './media.processor';
 
 /**
@@ -238,6 +248,266 @@ describe('MediaProcessor.processMedia', () => {
 
             expect(mediaRepository.updateById).not.toHaveBeenCalled();
             expect(storageService.delete).not.toHaveBeenCalled();
+        });
+    });
+
+    /**
+     * The compression level used to reach the image and GIF encoders as nothing at all: `optimize`
+     * hardcoded a quality of 100 and let `targetSize` carry the level on its own. But the target
+     * is a CEILING that a refine loop chases only on overshoot, and a GIF routinely lands far
+     * under it - so the level changed nothing, and the same 18,488,331-byte upload came back as
+     * 1,549,897 bytes at both VERY_LOW and HIGH.
+     */
+    describe('the compression level reaching the encoder', () => {
+        const SOURCE_BYTES = 18_488_331;
+
+        const buildGif = (level: EnumType<'COMPRESSION_LEVEL'>) => {
+            const { logger } = buildLogger();
+            const gifMedia = {
+                ...media,
+                media_type: 'GIF' as const,
+                compression_level: level,
+                url: 'users/u/media/m/jigglypuff-ball.gif',
+            };
+            const compressed = {
+                filename: 'jigglypuff-ball.gif',
+                size: 1_549_897,
+                buffer: Buffer.alloc(8),
+                reencoded: true,
+            };
+            // The REAL `getSizeCompressed`, so this covers the target arithmetic and the quality
+            // argument in one pass - the two halves of the bug were independent, and either one
+            // alone was enough to make both levels produce the same file.
+            const real = FactoryCompressService.create({ driver: 'sharp' });
+            const compressService = {
+                config: { driver: 'sharp' },
+                getSizeCompressed: real.getSizeCompressed.bind(real),
+                optimizeGif: jest.fn().mockResolvedValue(compressed),
+                optimizeImageToWebp: jest.fn().mockResolvedValue({
+                    filename: 'jigglypuff-ball-thumbnail.webp',
+                    size: 5_584,
+                    buffer: Buffer.alloc(4),
+                    reencoded: true,
+                }),
+                getImageShape: jest.fn().mockResolvedValue('LANDSCAPE'),
+                getImageAspectRatio: jest.fn().mockResolvedValue('16:9'),
+            };
+            const storageService = {
+                getBuffer: jest.fn().mockResolvedValue(Buffer.alloc(SOURCE_BYTES)),
+                write: jest.fn().mockResolvedValue(true),
+                delete: jest.fn().mockResolvedValue(true),
+                getUrl: jest.fn().mockResolvedValue('https://cdn.test/x'),
+            };
+            const aiService = {
+                moderateContent: jest.fn().mockResolvedValue({
+                    moderation: { is_allowed: true, severity: 0, reason: null },
+                }),
+            };
+            const mediaRepository = {
+                findOneByColumn: jest.fn().mockResolvedValue({
+                    ...gifMedia,
+                    completed_at: null,
+                    blocked_at: null,
+                }),
+                updateById: jest.fn().mockResolvedValue({
+                    ...gifMedia,
+                    status: 'COMPLETED',
+                    completed_at: new Date(),
+                    blocked_at: null,
+                }),
+            };
+            const job = {
+                data: { media: gifMedia, generate_metadata: false },
+                opts: { attempts: 3 },
+                attemptsMade: 0,
+            } as unknown as Job;
+
+            const processor = new MediaProcessor(
+                job,
+                storageService as any,
+                compressService as any,
+                aiService as any,
+                mediaRepository as any,
+                { findByUserId: jest.fn().mockResolvedValue({ storage_used_mb: 0 }) } as any,
+                {
+                    findUserActivePlan: jest.fn().mockResolvedValue(null),
+                    findFreePlan: jest.fn().mockResolvedValue({ name: 'Free' }),
+                } as any,
+                logger,
+            );
+
+            return { processor, compressService };
+        };
+
+        beforeEach(() => {
+            jest.spyOn(UserLimits, 'storageSize').mockReturnValue(true);
+            jest
+                .spyOn(QueueHelper, 'createStorageRequestJob')
+                .mockResolvedValue(undefined as never);
+            jest
+                .spyOn(QueueHelper, 'createComputeUserMetricsJob')
+                .mockResolvedValue(undefined as never);
+            jest
+                .spyOn(QueueHelper, 'createUpdateProfileStatusJob')
+                .mockResolvedValue(undefined as never);
+        });
+
+        afterEach(() => {
+            jest.restoreAllMocks();
+        });
+
+        it('passes the level as a real quality argument, not a hardcoded 100', async () => {
+            const { processor, compressService } = buildGif('HIGH');
+
+            await processor.processMedia();
+
+            expect(compressService.optimizeGif).toHaveBeenCalledWith(
+                expect.any(Buffer),
+                expect.any(Number),
+                compressionLevelToQuality('HIGH'),
+            );
+        });
+
+        it('encodes the thumbnail at the media\'s own level, not a fixed quality', async () => {
+            const { processor, compressService } = buildGif('VERY_HIGH');
+
+            await processor.processMedia();
+
+            // A tile that stays pristine while the media it stands for is squeezed shows the
+            // user something their media no longer looks like.
+            expect(compressService.optimizeImageToWebp).toHaveBeenCalledWith(
+                expect.any(Buffer),
+                THUMBNAIL_TARGET_BYTES,
+                compressionLevelToQuality('VERY_HIGH'),
+                THUMBNAIL_MAX_EDGE_PX,
+            );
+        });
+
+        it('gives two levels two different targets and two different qualities', async () => {
+            const loose = buildGif('VERY_LOW');
+            const tight = buildGif('HIGH');
+
+            await loose.processor.processMedia();
+            await tight.processor.processMedia();
+
+            const [, looseTarget, looseQuality] =
+                loose.compressService.optimizeGif.mock.calls[0]!;
+            const [, tightTarget, tightQuality] =
+                tight.compressService.optimizeGif.mock.calls[0]!;
+
+            // Both used to be equal: the target saturated a 5MB cap applied AFTER the ratio, and
+            // the quality was the same literal either way.
+            expect(tightTarget).toBeLessThan(looseTarget);
+            expect(tightQuality).toBeLessThan(looseQuality);
+        });
+    });
+
+    /**
+     * A video stores `VIDEO_PREVIEW_FRAMES` stills and each is billed separately, so the frames
+     * outweigh every other object the media owns put together. Only frame 0 is ever displayed -
+     * it IS the thumbnail. The rest exist to be read by the moderation and SEO models, which is
+     * why they must not be encoded as if a person were going to look at them.
+     */
+    describe('video frames', () => {
+        /** Runs a video through the processor and returns what `extractVideoFrames` was asked for. */
+        const captureFrameInput = async (level: EnumType<'COMPRESSION_LEVEL'>) => {
+            const { logger } = buildLogger();
+            const videoMedia = { ...media, compression_level: level };
+            const frame = (size: number) => ({
+                filename: 'f.webp',
+                size,
+                buffer: Buffer.alloc(4),
+                reencoded: true,
+            });
+            const compressService = {
+                config: { driver: 'sharp' },
+                getSizeCompressed: jest.fn().mockReturnValue(20_000_000),
+                extractVideoFrames: jest
+                    .fn()
+                    .mockResolvedValue([frame(90_000), frame(9_000), frame(9_000)]),
+                optimizeVideo: jest.fn().mockResolvedValue({
+                    filename: 'hero.mp4',
+                    size: 8_000_000,
+                    buffer: Buffer.alloc(8),
+                    width: 1920,
+                    height: 1080,
+                    durationSeconds: 4,
+                    bitRate: 3_000_000,
+                    reencoded: true,
+                }),
+                getImageShape: jest.fn().mockResolvedValue('LANDSCAPE'),
+                getImageAspectRatio: jest.fn().mockResolvedValue('16:9'),
+            };
+            const processor = new MediaProcessor(
+                {
+                    data: { media: videoMedia, generate_metadata: false },
+                    opts: { attempts: 3 },
+                    attemptsMade: 0,
+                } as unknown as Job,
+                {
+                    getBuffer: jest.fn().mockResolvedValue(Buffer.alloc(64)),
+                    write: jest.fn().mockResolvedValue(true),
+                    delete: jest.fn().mockResolvedValue(true),
+                    getUrl: jest.fn().mockResolvedValue('https://cdn.test/x'),
+                } as any,
+                compressService as any,
+                {
+                    moderateContent: jest.fn().mockResolvedValue({
+                        moderation: { is_allowed: true, severity: 0, reason: null },
+                    }),
+                } as any,
+                {
+                    findOneByColumn: jest
+                        .fn()
+                        .mockResolvedValue({ ...videoMedia, completed_at: null, blocked_at: null }),
+                    updateById: jest.fn().mockResolvedValue({
+                        ...videoMedia,
+                        status: 'COMPLETED',
+                        completed_at: new Date(),
+                        blocked_at: null,
+                    }),
+                } as any,
+                { findByUserId: jest.fn().mockResolvedValue({ storage_used_mb: 0 }) } as any,
+                {
+                    findUserActivePlan: jest.fn().mockResolvedValue(null),
+                    findFreePlan: jest.fn().mockResolvedValue({ name: 'Free' }),
+                } as any,
+                logger,
+            );
+
+            await processor.processMedia();
+
+            const [input] = compressService.extractVideoFrames.mock.calls[0]!;
+            return input as {
+                poster: { targetSize: number; quality: number; maxEdgePx: number };
+                sample: { targetSize: number; quality: number; maxEdgePx: number };
+            };
+        };
+
+        it('spends thumbnail bytes on the poster and a fraction of them on the samples', async () => {
+            const input = await captureFrameInput('HIGH');
+
+            // Frame 0 is the grid tile, the og:image and the sitemap image.
+            expect(input.poster).toEqual({
+                targetSize: THUMBNAIL_TARGET_BYTES,
+                quality: compressionLevelToQuality('HIGH'),
+                maxEdgePx: THUMBNAIL_MAX_EDGE_PX,
+            });
+            // Frames 1..N are never rendered anywhere.
+            expect(input.sample.targetSize).toBe(VIDEO_SAMPLE_FRAME_TARGET_BYTES);
+            expect(input.sample.maxEdgePx).toBe(VIDEO_SAMPLE_FRAME_MAX_EDGE_PX);
+            // The decisive relation, whatever the numbers are tuned to later.
+            expect(input.sample.targetSize).toBeLessThan(input.poster.targetSize);
+            expect(input.sample.maxEdgePx).toBeLessThan(input.poster.maxEdgePx);
+            expect(input.sample.quality).toBeLessThan(input.poster.quality);
+        });
+
+        it('never encodes a sample frame better than the poster it sits beside', async () => {
+            // VERY_HIGH puts the media's own quality (40) UNDER the sample constant (45), so the
+            // throwaway frames would otherwise come out sharper than the tile people see.
+            const input = await captureFrameInput('VERY_HIGH');
+
+            expect(input.sample.quality).toBeLessThanOrEqual(input.poster.quality);
         });
     });
 });

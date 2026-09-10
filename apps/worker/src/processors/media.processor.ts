@@ -14,6 +14,9 @@ import {
     PREVIEW_TARGET_BYTES,
     THUMBNAIL_MAX_EDGE_PX,
     THUMBNAIL_TARGET_BYTES,
+    VIDEO_SAMPLE_FRAME_MAX_EDGE_PX,
+    VIDEO_SAMPLE_FRAME_QUALITY,
+    VIDEO_SAMPLE_FRAME_TARGET_BYTES,
 } from '@repo/backend-lib/services/compress-service/base';
 import {
     CompressionOutput,
@@ -29,6 +32,7 @@ import { QueueHelper } from "@repo/backend-lib/utils";
 import { bytesToMB, mbToBytes } from "@repo/common-lib/utils/bytes";
 import { DEFAULT_COMPRESSION_LVL } from "@repo/common-lib/constants/enums";
 import {
+    MAX_COMPRESSED_IMAGE_BYTES,
     PREVIEW_MAX_DURATION_SECONDS,
     VIDEO_PREVIEW_FRAME_PERCENTAGES,
 } from "@repo/common-lib/constants/limits";
@@ -148,35 +152,38 @@ export class MediaProcessor {
         return null;
     }
 
+    /**
+     * Every branch gets the level as a real quality argument, because for none of them is the byte
+     * target enough on its own.
+     *
+     * `targetSize` is a CEILING that a refine loop chases only when the first encode overshoots
+     * it, and images and GIFs routinely land far underneath — an 18MB GIF compressed to 1.5MB
+     * against a 5MB target, so the loop ran zero passes and the two ends of the ladder produced
+     * byte-identical files. Video never had that problem for a different reason: an encode costs
+     * minutes, so the level always had to reach libx264 as CRF on the first attempt.
+     */
     private optimize(
         mediaType: Media['media_type'],
         buffer: Buffer,
         targetSize: number,
         compressLevel: NonNullable<Media['compression_level']>,
     ): Promise<CompressionOutput | VideoCompressionOutput> {
+        const quality = compressionLevelToQuality(compressLevel);
         if (mediaType === 'VIDEO') {
-            // The only branch that gets a real quality argument. Sharp's loops express the
-            // compression level purely as a byte target and refine toward it in five cheap
-            // passes; a video encode costs minutes, so the level has to reach libx264 as its
-            // actual quality knob (CRF) on the first attempt.
-            return this.compressService.optimizeVideo(
-                buffer,
-                targetSize,
-                compressionLevelToQuality(compressLevel),
-            );
+            return this.compressService.optimizeVideo(buffer, targetSize, quality);
         }
         if (mediaType === 'GIF') {
-            return this.compressService.optimizeGif(buffer, targetSize, 100);
+            return this.compressService.optimizeGif(buffer, targetSize, quality);
         }
-        return this.compressService.optimizeImageToWebp(buffer, targetSize, 100);
+        return this.compressService.optimizeImageToWebp(buffer, targetSize, quality);
     }
 
     /**
      * Byte target for the compressor.
      *
-     * Video gets no `maxSize`: `mbToBytes(5)` is a display-asset cap and is roughly twenty
-     * seconds of 1080p, so every real upload blows past it and a refine loop chasing it would
-     * grind good footage into mush. A video's budget is bitrate × duration, which
+     * Video gets no `maxSize`: {@link MAX_COMPRESSED_IMAGE_BYTES} is a display-asset cap and is
+     * well under a minute of 1080p, so every real upload blows past it and a refine loop chasing
+     * it would grind good footage into mush. A video's budget is bitrate × duration, which
      * `optimizeVideo` derives internally from the source resolution. The floor rises to 2MB
      * for the same reason — under that an MP4 is either very short or already squeezed.
      */
@@ -196,7 +203,7 @@ export class MediaProcessor {
             size,
             compressLevel,
             minSize: 300 * 1024,
-            maxSize: mbToBytes(5),
+            maxSize: MAX_COMPRESSED_IMAGE_BYTES,
         });
     }
 
@@ -224,6 +231,11 @@ export class MediaProcessor {
          * behind in the bucket.
          */
         deletePaths: Set<string>,
+        /**
+         * The media's own level, which the thumbnail is encoded at too. A tile that stays
+         * pristine while the media it stands for is squeezed misrepresents that media.
+         */
+        compressLevel: NonNullable<Media['compression_level']>,
     ): Promise<{
         thumbnail: CompressionOutput;
         /** Where the thumbnail lives: `previews[0]`'s key for video, the poster key otherwise. */
@@ -240,10 +252,26 @@ export class MediaProcessor {
             // can only ever vouch for the opening second. See `extractVideoFrames`.
             const previews = await this.compressService.extractVideoFrames({
                 file: buffer,
-                targetSize: THUMBNAIL_TARGET_BYTES,
                 percentages: VIDEO_PREVIEW_FRAME_PERCENTAGES,
-                quality: 80,
-                maxEdgePx: THUMBNAIL_MAX_EDGE_PX,
+                // Frame 0 is the thumbnail, so it gets a thumbnail's budget. Frames 1..N are
+                // read by the moderation and SEO models and by nothing else, and there are nine
+                // of them billed against the user's quota — they get a fraction of it.
+                poster: {
+                    targetSize: THUMBNAIL_TARGET_BYTES,
+                    quality: compressionLevelToQuality(compressLevel),
+                    maxEdgePx: THUMBNAIL_MAX_EDGE_PX,
+                },
+                sample: {
+                    targetSize: VIDEO_SAMPLE_FRAME_TARGET_BYTES,
+                    // Never above the poster's. At VERY_HIGH the media's own quality (40) drops
+                    // under the sample constant, and a throwaway frame encoded better than the
+                    // tile it sits next to is not a trade anyone asked for.
+                    quality: Math.min(
+                        VIDEO_SAMPLE_FRAME_QUALITY,
+                        compressionLevelToQuality(compressLevel),
+                    ),
+                    maxEdgePx: VIDEO_SAMPLE_FRAME_MAX_EDGE_PX,
+                },
             });
             const [poster] = previews;
             if (!poster) {
@@ -297,7 +325,7 @@ export class MediaProcessor {
         const thumbnail = await this.compressService.optimizeImageToWebp(
             buffer,
             THUMBNAIL_TARGET_BYTES,
-            80,
+            compressionLevelToQuality(compressLevel),
             THUMBNAIL_MAX_EDGE_PX,
         );
         return {
@@ -400,6 +428,10 @@ export class MediaProcessor {
 
             const buffer = await this.storageService.getBuffer(sourcePath);
 
+            // Resolved up here rather than beside the compression call below: the thumbnail is
+            // encoded at the media's own level too, and it is produced first.
+            const compressionLevel = media.compression_level || DEFAULT_COMPRESSION_LVL;
+
             const prepared = await this.buildThumbnailAndModerate(
                 media,
                 buffer,
@@ -407,6 +439,7 @@ export class MediaProcessor {
                 mediaPath,
                 thumbnailPath,
                 deletePaths,
+                compressionLevel,
             );
             if (!prepared) {
                 await this.markFailed(media, 'Storage write could not complete', log, {
@@ -458,7 +491,6 @@ export class MediaProcessor {
                 driver: this.compressService.config.driver,
             });
 
-            const compressionLevel = media.compression_level || DEFAULT_COMPRESSION_LVL;
             const targetSize = this.resolveTargetSize(
                 media.media_type,
                 buffer.length,
@@ -472,17 +504,21 @@ export class MediaProcessor {
             );
             log.info('Media compressed', {
                 media_id: media.id,
+                compression_level: compressionLevel,
                 media_bytes: mediaCompressed.size,
                 target_size: targetSize,
-                // Only meaningful for video. `reencoded: false` means the skip heuristic fired
-                // and the user's already-compressed file was passed through — without this in
-                // the log there is no way to tell whether that is working in production.
-                ...('reencoded' in mediaCompressed
+                // `source_bytes` and `reencoded` for EVERY media type, not just video. Without
+                // them the log cannot distinguish "compressed to 1.5MB" from "handed back the
+                // 1.5MB it was given", and that distinction is the whole of diagnosing a
+                // compression level that does nothing.
+                source_bytes: buffer.length,
+                reencoded: mediaCompressed.reencoded ?? true,
+                // Discriminated on `durationSeconds`, as `resolveVideoPreview` does: `reencoded`
+                // stopped being video-only the moment images and GIFs started reporting it.
+                ...('durationSeconds' in mediaCompressed
                     ? {
-                        reencoded: mediaCompressed.reencoded,
                         duration_seconds: Math.round(mediaCompressed.durationSeconds),
                         bit_rate: mediaCompressed.bitRate,
-                        source_bytes: buffer.length,
                     }
                     : {}),
             });

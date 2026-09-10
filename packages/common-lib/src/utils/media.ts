@@ -19,6 +19,28 @@ export class MediaHelper {
       !media.blocked_at)
   }
 
+  /**
+   * The status a row settles back into once a job that is NOT the upload — an update, a metadata
+   * generation — releases it.
+   *
+   * Those jobs park the row in UPDATING / GENERATING_METADATA and have to hand it back
+   * afterwards, and both used to hand it back as a flat `COMPLETED` regardless of what it had
+   * been. That invents a completion the upload never earned: run an update against a media whose
+   * processing failed, or whose processing is still running, and it comes out the far side
+   * claiming COMPLETED with no asset behind it.
+   *
+   * `completed_at` is the only column that says an asset exists — the media processor writes it
+   * on its success commit and nowhere else — so it, and not the status, decides here. Without one
+   * the row goes back to being what it was: FAILED if a reason was recorded, otherwise still
+   * UPLOADING and waiting on the processor that will set both columns together.
+   */
+  static restingStatus(
+    media: Pick<Media, 'completed_at' | 'failed_reason'> | null | undefined,
+  ): EnumType<'MEDIA_STATUS'> {
+    if (media?.completed_at) return 'COMPLETED';
+    return media?.failed_reason ? 'FAILED' : 'UPLOADING';
+  }
+
   static getMediaTypeFromMimeType(mimeType: string): EnumType<'MEDIA_TYPE'> | null {
     const mime = mimeType.toLowerCase();
 

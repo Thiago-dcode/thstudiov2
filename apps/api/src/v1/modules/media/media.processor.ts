@@ -44,7 +44,13 @@ export class MediaProcessor extends GlobalProcessor {
         input.data,
       );
 
-      await this.mediaRepository.updateById(input.media_id, { status: 'COMPLETED' });
+      // Never a flat `status: 'COMPLETED'`. This job edits metadata; it does not upload
+      // anything, so it has no business minting a completion. `restoreStatus` hands the row back
+      // to whatever `completed_at` says it had already earned - which for the ordinary case (an
+      // edit on a finished media) is COMPLETED, and for an edit on a failed or still-processing
+      // one is the FAILED / UPLOADING it was before. `completed_at` itself is never touched on
+      // this path, so an edit mid-processing leaves the upload's own verdict alone.
+      await this.mediaRepository.restoreStatus(input.media_id);
 
       await QueueHelper.createOrUpdateUserNotificationJob({
         type: 'CREATE_UPDATE_MEDIA',
@@ -55,7 +61,10 @@ export class MediaProcessor extends GlobalProcessor {
 
       return result;
     } catch (error) {
-      await this.mediaRepository.updateById(input.media_id, { status: 'COMPLETED' });
+      // Same restore as the success path: the edit failing says nothing about whether the media
+      // behind it is usable, so the row goes back exactly where it was rather than being
+      // promoted to COMPLETED or demoted to FAILED by an unrelated job.
+      await this.mediaRepository.restoreStatus(input.media_id);
 
       await QueueHelper.createOrUpdateUserNotificationJob({
         type: 'CREATE_UPDATE_MEDIA',

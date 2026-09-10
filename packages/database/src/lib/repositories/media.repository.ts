@@ -13,6 +13,7 @@ import {
   MediaWithUser,
 } from '@repo/common-lib/types/media';
 import { SqlValue } from '@repo/common-lib/types/database';
+import { MediaHelper } from '@repo/common-lib/utils/media';
 import { DbException } from '../exceptions';
 import { Query } from '../facades';
 import { BaseRepository } from './base.repository';
@@ -155,6 +156,21 @@ export class MediaRepository extends BaseRepository {
       .where('id', '=', id)
       .first<MediaSchema>();
     return this.formatMedia(result);
+  }
+
+  /**
+   * Releases a row that an update or metadata job parked in UPDATING / GENERATING_METADATA,
+   * handing it back to the status {@link MediaHelper.restingStatus} says it has earned.
+   *
+   * The row is read here rather than taken from the caller on purpose: those jobs run for
+   * seconds to minutes, and the media processor may have committed (or failed) the upload in the
+   * meantime. Restoring from the snapshot the job started with would overwrite that with stale
+   * news. Returns null when the media was deleted while the job ran.
+   */
+  async restoreStatus(id: number): Promise<Media | null> {
+    const current = await this.findOneByColumn('id', id);
+    if (!current) return null;
+    return this.updateById(id, { status: MediaHelper.restingStatus(current) });
   }
 
   async deleteById(id: number): Promise<void> {

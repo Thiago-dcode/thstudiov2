@@ -3,6 +3,7 @@ import {
     MediaInputError,
     PREVIEW_MAX_EDGE_PX,
     THUMBNAIL_MAX_EDGE_PX,
+    VIDEO_SAMPLE_FRAME_MAX_EDGE_PX,
 } from "./compress.service";
 import { imageSize } from 'image-size';
 import sharp from 'sharp';
@@ -25,6 +26,7 @@ import {
     CompressionOutput,
     ExtractVideoFramesInput,
     VideoCompressionOutput,
+    VideoFrameEncodeOptions,
     VideoProbe,
 } from './types';
 import {
@@ -110,10 +112,43 @@ const GIF_DITHER = 0;
 
 /**
  * Higher tolerance lets more of each frame be encoded as "unchanged since the last one". The one
- * knob here with a genuine continuous range, and so the only one quality maps onto.
+ * ENCODER knob here with a genuine continuous range.
  */
 const qualityToInterFrameMaxError = (quality: number): number =>
     Math.round(8 + ((100 - clampQuality(quality)) / 90) * 24);
+
+/**
+ * How much of {@link MAX_GIF_EDGE_PX} a given quality is allowed, at the smallest.
+ *
+ * Resize is the only lever on a GIF strong enough to move the file size by a visible fraction —
+ * inter-frame tolerance nudges it, the palette cannot be spent (see {@link GIF_COLOURS}) — so
+ * this is what makes a compression level mean something. 0.65 is the floor rather than something
+ * more aggressive because a GIF is already the format people pick when they want the thing to
+ * look like the thing.
+ */
+const GIF_MIN_EDGE_SCALE = 0.65;
+
+/**
+ * The bounding box a frame is fitted to, as a fraction of the cap, for a given quality.
+ *
+ * Linear across the range the compression levels actually occupy — VERY_LOW's 95 gets the full
+ * cap, VERY_HIGH's 40 gets {@link GIF_MIN_EDGE_SCALE} — so at 1200px the five levels land on
+ * 1200 / 1123 / 1009 / 894 / 780.
+ *
+ * This is applied to the FIRST encode, which is what the whole thing turns on. The refine loop
+ * below only runs when an encode overshoots `targetSize`, and a GIF routinely lands far under it:
+ * the 18MB upload that exposed this compressed to 1.5MB against a 5MB target, so the loop ran
+ * zero passes and every level produced the identical file. A knob that only exists inside a loop
+ * that usually does not run is not a knob.
+ */
+const qualityToEdgeScale = (quality: number): number => {
+    const scale =
+        GIF_MIN_EDGE_SCALE +
+        ((clampQuality(quality) - 40) / 55) * (1 - GIF_MIN_EDGE_SCALE);
+    // The band is 40-95, not 10-100: outside it the line would promise an upscale at one end and
+    // break its own floor at the other.
+    return Math.min(1, Math.max(GIF_MIN_EDGE_SCALE, scale));
+};
 
 /** GIF87a/GIF89a magic. Lets us leave an already-good source alone rather than re-encoding it. */
 const isGifBuffer = (buffer: Buffer): boolean =>
@@ -148,8 +183,14 @@ const VIDEO_CRF_MAX = 32;
 /** Don't spend a whole second encode to shave off less than this. */
 const VIDEO_TARGET_TOLERANCE = 1.15;
 
-/** Extracted at 2x the thumbnail box so Sharp's Lanczos downscale has an oversample. */
-const POSTER_EXTRACT_EDGE_PX = THUMBNAIL_MAX_EDGE_PX * 2;
+/**
+ * Extracted at 2x the frame's OWN box so Sharp's Lanczos downscale has an oversample.
+ *
+ * Derived per frame rather than fixed at the thumbnail's 2x: a sampled frame is bound for
+ * {@link VIDEO_SAMPLE_FRAME_MAX_EDGE_PX}, and pulling it out of ffmpeg at 2400px to throw 93% of
+ * the pixels away is a decode and a PNG write nobody asked for, nine times per video.
+ */
+const extractEdgeFor = (maxEdgePx: number): number => maxEdgePx * 2;
 
 /**
  * A percentage of the video as a seek point in seconds: 0 is its first frame, 100 its last.
@@ -302,7 +343,7 @@ export class SharpCompressService extends CompressService {
         targetSize: number,
         quality: number = 90,
         maxEdgePx: number = MAX_IMAGE_EDGE_PX,
-      ): Promise<{ filename: string; size: number; buffer: Buffer }> {
+      ): Promise<CompressionOutput> {
         const isBuffer = Buffer.isBuffer(file);
         const source = isBuffer ? file : file.buffer;
         if (!source) {
@@ -319,6 +360,7 @@ export class SharpCompressService extends CompressService {
             filename: file.originalname,
             size: source.length,
             buffer: source,
+            reencoded: false,
           };
         }
 
@@ -365,23 +407,30 @@ export class SharpCompressService extends CompressService {
           filename: webpFilename,
           size: buffer.length,
           buffer,
+          reencoded: true,
         };
       }
 
     /**
      * Optimizes an (animated) GIF with specified quality and size constraints.
-     * Quality is mapped onto GIF palette size and dithering; animation frames are preserved.
+     *
+     * Quality is spent on the two things a GIF will actually give up: the box each frame is fitted
+     * to ({@link qualityToEdgeScale}) and how much drift counts as "unchanged since the last
+     * frame" ({@link qualityToInterFrameMaxError}). It is NOT spent on the palette — see
+     * {@link GIF_COLOURS} for why that knob is a cliff rather than a slope. Animation frames are
+     * always preserved.
+     *
      * @param file - Multer upload or raw image bytes
      * @param targetSize - Target file size in bytes. Minimum enforced is 50KB.
-     * @param quality - Quality level mapped to palette size (0-100), defaults to 90
-     * @param maxEdgePx - Longest edge kept, defaults to {@link MAX_GIF_EDGE_PX}
+     * @param quality - Quality level (0-100), defaults to 90
+     * @param maxEdgePx - Longest edge kept at full quality, defaults to {@link MAX_GIF_EDGE_PX}
      */
     public async optimizeGif(
         file: Express.Multer.File | Buffer,
         targetSize: number,
         quality: number = 90,
         maxEdgePx: number = MAX_GIF_EDGE_PX,
-      ): Promise<{ filename: string; size: number; buffer: Buffer }> {
+      ): Promise<CompressionOutput> {
         const isBuffer = Buffer.isBuffer(file);
         const source = isBuffer ? file : file.buffer;
         if (!source) {
@@ -398,6 +447,7 @@ export class SharpCompressService extends CompressService {
             filename: file.originalname,
             size: source.length,
             buffer: source,
+            reencoded: false,
           };
         }
 
@@ -418,18 +468,43 @@ export class SharpCompressService extends CompressService {
         const oversized = frameWidth > maxEdgePx || frameHeight > maxEdgePx;
         const sourceIsGif = isGifBuffer(source);
 
+        let currentQuality = clampQuality(quality);
+        // What THIS compression level asks the frames to fit in, which is the only reason two
+        // levels produce two different files. `oversized` above stays measured against the
+        // unscaled cap: it is what the passthrough guards mean by "we would be resizing anyway",
+        // and it must not start depending on the level.
+        const scaledEdge = Math.max(
+          1,
+          Math.round(maxEdgePx * qualityToEdgeScale(currentQuality)),
+        );
+        const fitsScaledEdge =
+          frameWidth <= scaledEdge && frameHeight <= scaledEdge;
+
         // Unlike the WebP path there is no format mismatch to correct here — a GIF source under
         // a `.gif` key is already exactly what the ContentType claims. Re-encoding it would only
         // burn several seconds of worker CPU to make the file bigger.
-        if (sourceIsGif && !oversized && source.length <= _targetSize) {
-          return { filename: gifFilename, size: source.length, buffer: source };
+        //
+        // `fitsScaledEdge` and not just `!oversized`: a 1100px GIF under its byte target still has
+        // to shrink if the level asked for 894px, or picking VERY_HIGH would be a no-op on exactly
+        // the uploads that are already close to the line.
+        if (
+          sourceIsGif &&
+          !oversized &&
+          fitsScaledEdge &&
+          source.length <= _targetSize
+        ) {
+          return {
+            filename: gifFilename,
+            size: source.length,
+            buffer: source,
+            reencoded: false,
+          };
         }
 
         // `animated: true` keeps every frame — without it Sharp flattens to the first frame only.
         // `fit: 'inside'` is measured against a single page, so the cap means what it says.
-        let currentQuality = clampQuality(quality);
-        let width = oversized ? maxEdgePx : frameWidth || maxEdgePx;
-        let height = oversized ? maxEdgePx : frameHeight || maxEdgePx;
+        let width = Math.min(frameWidth || scaledEdge, scaledEdge);
+        let height = Math.min(frameHeight || scaledEdge, scaledEdge);
         let buffer = await this.encodeGif(source, currentQuality, { width, height });
 
         // Resizing is by far the strongest lever (and each pass gets cheaper as the raster
@@ -459,13 +534,19 @@ export class SharpCompressService extends CompressService {
 
         // Never hand back something bigger than what we were given.
         if (sourceIsGif && !oversized && buffer.length >= source.length) {
-          return { filename: gifFilename, size: source.length, buffer: source };
+          return {
+            filename: gifFilename,
+            size: source.length,
+            buffer: source,
+            reencoded: false,
+          };
         }
 
         return {
           filename: gifFilename,
           size: buffer.length,
           buffer,
+          reencoded: true,
         };
       }
 
@@ -475,13 +556,13 @@ export class SharpCompressService extends CompressService {
      *
      * @param file - Multer upload or raw video bytes
      * @param targetSize - Target file size in bytes for the resulting WebP
-     * @param quality - Quality level for the WebP output (0-100), defaults to 80
+     * @param quality - Quality level for the WebP output (0-100), defaults to 90
      * @param maxEdgePx - Longest edge kept, defaults to {@link THUMBNAIL_MAX_EDGE_PX}
      */
     public async optimizeVideoFrameToWebp(
         file: Express.Multer.File | Buffer,
         targetSize: number,
-        quality: number = 80,
+        quality: number = 90,
         maxEdgePx: number = THUMBNAIL_MAX_EDGE_PX,
     ): Promise<CompressionOutput> {
         const source = resolveSourceBuffer(file);
@@ -512,10 +593,9 @@ export class SharpCompressService extends CompressService {
      */
     public async extractVideoFrames({
         file,
-        targetSize,
         percentages = VIDEO_PREVIEW_FRAME_PERCENTAGES,
-        quality = 80,
-        maxEdgePx = THUMBNAIL_MAX_EDGE_PX,
+        poster,
+        sample,
     }: ExtractVideoFramesInput): Promise<CompressionOutput[]> {
         if (!percentages.length) {
             throw new Error('Video frame extraction needs at least one percentage');
@@ -533,12 +613,12 @@ export class SharpCompressService extends CompressService {
             // and the media worker has one slot: running them all at once would contend for the
             // same cores and the same temp disk to finish at the same wall-clock moment.
             for (const [index, percentage] of percentages.entries()) {
+                // Index 0 is the thumbnail — one object serving two columns — so it is the one
+                // frame here that a person ever looks at, and the only one worth thumbnail bytes.
                 const optimized = await this.extractFrameAsWebp(inputPath, dir, probe, {
                     seekSeconds: seekSecondsAt(percentage, probe.durationSeconds),
                     label: `frame-${index}`,
-                    targetSize,
-                    quality,
-                    maxEdgePx,
+                    ...(index === 0 ? poster : sample),
                 });
                 frames.push({
                     ...optimized,
@@ -558,13 +638,10 @@ export class SharpCompressService extends CompressService {
         inputPath: string,
         dir: string,
         probe: VideoProbe,
-        options: {
+        options: VideoFrameEncodeOptions & {
             seekSeconds: number;
             /** Temp filename stem; must be unique within `dir`. */
             label: string;
-            targetSize: number;
-            quality: number;
-            maxEdgePx: number;
         },
     ): Promise<CompressionOutput> {
         const framePath = path.join(dir, `${options.label}.png`);
@@ -573,7 +650,7 @@ export class SharpCompressService extends CompressService {
             scale: fitInside(
                 probe.video.width,
                 probe.video.height,
-                POSTER_EXTRACT_EDGE_PX,
+                extractEdgeFor(options.maxEdgePx),
             ),
         });
 

@@ -1,6 +1,11 @@
+import { MAX_COMPRESSED_IMAGE_BYTES } from '@repo/common-lib/constants/limits';
 import { mbToBytes } from '@repo/common-lib/utils/bytes';
 import sharp from 'sharp';
-import { isPermanentMediaError, MediaInputError } from './compress.service';
+import {
+  compressionLevelToQuality,
+  isPermanentMediaError,
+  MediaInputError,
+} from './compress.service';
 import { FactoryCompressService } from './factory-compress.service';
 
 const compressService = FactoryCompressService.create({ driver: 'sharp' });
@@ -28,14 +33,50 @@ describe('CompressService.getSizeCompressed', () => {
     ).toBe(Math.round(10 * MB * 0.7));
   });
 
-  it('caps the result at maxSize', () => {
+  it('measures the ratio against maxSize rather than capping the result with it', () => {
     expect(
       compressService.getSizeCompressed({
         size: 10 * MB,
         compressLevel: 'NORMAL',
         maxSize: mbToBytes(5),
       }),
-    ).toBe(mbToBytes(5));
+    ).toBe(Math.round(mbToBytes(5) * 0.7));
+  });
+
+  it('never returns a target above maxSize', () => {
+    // The loosest level against a source far past the cap: the ceiling still holds.
+    expect(
+      compressService.getSizeCompressed({
+        size: 500 * MB,
+        compressLevel: 'VERY_LOW',
+        maxSize: mbToBytes(5),
+      }),
+    ).toBeLessThanOrEqual(mbToBytes(5));
+  });
+
+  /**
+   * The regression. `min(size * ratio, maxSize)` saturates for every source above
+   * `maxSize / 0.95`, so all five levels collapsed onto one target: the same 18,488,331-byte GIF
+   * uploaded at VERY_LOW and at HIGH was handed an identical 5,242,880 and came back
+   * byte-for-byte identical, 1,549,897 both times.
+   */
+  it('keeps the levels distinct for a source far above maxSize', () => {
+    const targets = (
+      ['VERY_LOW', 'LOW', 'NORMAL', 'HIGH', 'VERY_HIGH'] as const
+    ).map((compressLevel) =>
+      compressService.getSizeCompressed({
+        size: 18_488_331,
+        compressLevel,
+        minSize: 300 * 1024,
+        maxSize: MAX_COMPRESSED_IMAGE_BYTES,
+      }),
+    );
+
+    expect(new Set(targets).size).toBe(targets.length);
+    for (let i = 1; i < targets.length; i++) {
+      expect(targets[i]!).toBeLessThan(targets[i - 1]!);
+    }
+    expect(Math.max(...targets)).toBeLessThanOrEqual(MAX_COMPRESSED_IMAGE_BYTES);
   });
 
   it('skips compression and max cap when size is at or below minSize', () => {
@@ -110,6 +151,32 @@ const makeAnimatedGif = async (width = 64, height = 40, frames = 6) => {
     .toBuffer();
 };
 
+/**
+ * An animation with actual detail in it, for the tests that measure BYTES.
+ *
+ * `makeAnimatedGif` paints flat frames, which LZW crushes to almost nothing: the output barely
+ * responds to resizing, and consecutive frames sit close enough together that a generous
+ * `interFrameMaxError` merges them outright — so its size says more about frame de-duplication
+ * than about the compression level. A per-pixel ramp plus a wide per-frame step gives both a
+ * payload worth resizing and frames no tolerance will fold together.
+ */
+const makeDetailedAnimatedGif = async (width = 400, height = 300, frames = 4) => {
+  const raw = Buffer.alloc(width * height * frames * 3);
+  for (let page = 0; page < frames; page++) {
+    for (let pixel = 0; pixel < width * height; pixel++) {
+      const offset = (page * width * height + pixel) * 3;
+      raw[offset] = (pixel % width) % 256;
+      raw[offset + 1] = (Math.floor(pixel / width) * 3 + page * 60) % 256;
+      raw[offset + 2] = (pixel % 251) + page * 60;
+    }
+  }
+  return sharp(raw, {
+    raw: { width, height: height * frames, channels: 3, pageHeight: height },
+  })
+    .gif({ colours: 256, dither: 0 })
+    .toBuffer();
+};
+
 const framesOf = async (buffer: Buffer) =>
   (await sharp(buffer, { animated: true }).metadata()).pages ?? 1;
 
@@ -147,8 +214,12 @@ describe('SharpCompressService.optimizeGif', () => {
   it('bounds the longest edge of each frame, not of the page strip', async () => {
     // 6 stacked 40px frames make a 240px strip: measuring the cap against that would shrink
     // every frame by a further 1/6.
+    //
+    // Full quality so the cap is the ONLY thing bounding the frame — anything lower also spends
+    // a slice of it on the compression level (see `qualityToEdgeScale`), which is a different
+    // property and has its own test.
     const source = await makeAnimatedGif(64, 40, 6);
-    const result = await compressService.optimizeGif(source, 50 * 1024, 90, 32);
+    const result = await compressService.optimizeGif(source, 50 * 1024, 100, 32);
 
     const metadata = await sharp(result.buffer, { animated: true }).metadata();
     expect(metadata.width).toBe(32);
@@ -170,6 +241,84 @@ describe('SharpCompressService.optimizeGif', () => {
     expect(result.size).toBeLessThanOrEqual(source.length);
   });
 
+  /**
+   * The regression, at the encoder rather than at the target. `targetSize` is a ceiling a refine
+   * loop chases only when the first encode overshoots it, and a GIF routinely lands far under:
+   * an 18MB upload compressed to 1.5MB against a 5MB target, so the loop ran zero passes and the
+   * compression level — which reached this method as nothing but that target — changed nothing.
+   * Both ends of the ladder produced the same 1,549,897 bytes.
+   *
+   * The target here is deliberately unreachable-by-overshoot for the same reason: if the loop
+   * fires, it is the loop being tested and not the level.
+   */
+  describe('compression level', () => {
+    const generouslyAbove = 5 * 1024 * 1024;
+
+    it('produces a smaller file at VERY_HIGH than at VERY_LOW', async () => {
+      // A 400px frame against a 300px cap, so BOTH levels reach the encoder: a source already
+      // inside the box its level asks for is handed straight back, which is the passthrough's
+      // job and not this test's subject.
+      const source = await makeDetailedAnimatedGif();
+
+      const [loose, tight] = await Promise.all([
+        compressService.optimizeGif(
+          source,
+          generouslyAbove,
+          compressionLevelToQuality('VERY_LOW'),
+          300,
+        ),
+        compressService.optimizeGif(
+          source,
+          generouslyAbove,
+          compressionLevelToQuality('VERY_HIGH'),
+          300,
+        ),
+      ]);
+
+      expect(loose!.reencoded).toBe(true);
+      expect(tight!.reencoded).toBe(true);
+      expect(tight!.size).toBeLessThan(loose!.size);
+    });
+
+    it('narrows the frame as the level rises', async () => {
+      const source = await makeDetailedAnimatedGif();
+
+      const widths: number[] = [];
+      for (const level of ['VERY_LOW', 'NORMAL', 'VERY_HIGH'] as const) {
+        const result = await compressService.optimizeGif(
+          source,
+          generouslyAbove,
+          compressionLevelToQuality(level),
+          400,
+        );
+        const metadata = await sharp(result.buffer, { animated: true }).metadata();
+        widths.push(metadata.width ?? 0);
+      }
+
+      expect(widths[0]).toBe(400);
+      expect(widths[0]).toBeGreaterThan(widths[1]!);
+      expect(widths[1]).toBeGreaterThan(widths[2]!);
+    });
+
+    it('re-encodes a source that fits its byte target but not the level it was given', async () => {
+      // Under the byte target and under the unscaled cap, so the passthrough would fire on
+      // `!oversized` alone — and picking VERY_HIGH would be a no-op on exactly the uploads that
+      // are already close to the line.
+      const source = await makeDetailedAnimatedGif(390, 300, 4);
+
+      const result = await compressService.optimizeGif(
+        source,
+        generouslyAbove,
+        compressionLevelToQuality('VERY_HIGH'),
+        400,
+      );
+
+      expect(result.reencoded).toBe(true);
+      const metadata = await sharp(result.buffer, { animated: true }).metadata();
+      expect(metadata.width).toBeLessThan(390);
+    });
+  });
+
   it('returns the original bytes for a non-image multer file', async () => {
     const original = Buffer.from('not-an-image');
     const file = {
@@ -184,6 +333,7 @@ describe('SharpCompressService.optimizeGif', () => {
       filename: 'notes.txt',
       size: original.length,
       buffer: original,
+      reencoded: false,
     });
   });
 
@@ -200,7 +350,7 @@ describe('SharpCompressService.optimizeGif', () => {
       // The strip is 6 x 40 = 240px tall. If the cap were measured against that rather than a
       // single 40px frame, this 64x40 animation would look 240px tall and be shrunk to fit.
       const source = await makeAnimatedGif(64, 40, 6);
-      const result = await compressService.optimizeGif(source, 1024, 90, 64);
+      const result = await compressService.optimizeGif(source, 1024, 100, 64);
 
       const metadata = await sharp(result.buffer, { animated: true }).metadata();
       expect(metadata.width).toBe(64);
