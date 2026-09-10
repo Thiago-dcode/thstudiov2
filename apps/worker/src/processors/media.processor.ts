@@ -10,6 +10,7 @@ import { FactoryLogService, LogService } from "@repo/backend-lib/services/log-se
 import {
     compressionLevelToQuality,
     CompressService,
+    isPermanentMediaError,
     PREVIEW_TARGET_BYTES,
     THUMBNAIL_MAX_EDGE_PX,
     THUMBNAIL_TARGET_BYTES,
@@ -691,6 +692,30 @@ export class MediaProcessor {
                     media_id: media.id,
                     public_id: media.public_id,
                     failed_reason: message,
+                });
+                return;
+            }
+
+            // Some failures are decided by the upload itself: a 400-megapixel animation, a
+            // 12-minute video, a file with no video stream in it. Retrying those is not merely
+            // pointless, it is expensive and slow in a way the user feels. Every attempt re-runs
+            // the whole pipeline ahead of the error — re-downloading the source, and paying
+            // OpenAI for another moderation verdict that is billed to this user's token usage —
+            // only to arrive at the identical message. A 18MB GIF over the pixel budget cost
+            // three downloads and three vision calls to reach a conclusion the first probe had.
+            //
+            // So this one is settled now: FAILED, with the reason, and storage cleaned up. The
+            // user gets an answer in seconds instead of after two backoffs, and `deletePaths` is
+            // safe to act on precisely because no later attempt is coming for that source.
+            if (isPermanentMediaError(error)) {
+                log.warn('Media input cannot be processed; failing without a retry', {
+                    media_id: media.id,
+                    public_id: media.public_id,
+                    attempt: (this.job.attemptsMade ?? 0) + 1,
+                    failed_reason: message,
+                });
+                await this.markFailed(media, message, log, {
+                    deletePaths: [...deletePaths],
                 });
                 return;
             }

@@ -1,5 +1,6 @@
 import { mbToBytes } from '@repo/common-lib/utils/bytes';
 import sharp from 'sharp';
+import { isPermanentMediaError, MediaInputError } from './compress.service';
 import { FactoryCompressService } from './factory-compress.service';
 
 const compressService = FactoryCompressService.create({ driver: 'sharp' });
@@ -81,6 +82,10 @@ const makeGif = (width = 32, height = 32) =>
 /**
  * An animation is a vertical strip of `frames` pages; `raw.pageHeight` is what tells Sharp where
  * one frame ends. Each frame gets a different colour so the encoder cannot collapse them.
+ *
+ * The channels step by coprime amounts and wrap, rather than running off the end of the 0-255
+ * range: `r: i * 40` saturated at frame 7, so every later frame was the same white and the
+ * encoder folded them into one. Any fixture asking for more than eight frames silently got eight.
  */
 const makeAnimatedGif = async (width = 64, height = 40, frames = 6) => {
   const pages: Buffer[] = [];
@@ -91,7 +96,7 @@ const makeAnimatedGif = async (width = 64, height = 40, frames = 6) => {
           width,
           height,
           channels: 3,
-          background: { r: i * 40, g: 20, b: 200 - i * 30 },
+          background: { r: (i * 6) % 256, g: (i * 11) % 256, b: (i * 17) % 256 },
         },
       })
         .raw()
@@ -168,6 +173,78 @@ describe('SharpCompressService.optimizeGif', () => {
       size: original.length,
       buffer: original,
     });
+  });
+
+  /**
+   * A production upload — a 201-frame 1920x1080 animation, 14MB and well inside the image upload
+   * cap — failed with Sharp's native "Input image exceeds pixel limit", thrown from `metadata()`
+   * before any decision had been made about the file. That limit is measured against the whole
+   * page strip on an animated read, so it fires on FRAME COUNT: the frames are ordinary, there
+   * are simply many of them. Nothing here may cap an animation on total pixels; its byte size is
+   * what bounds it.
+   */
+  describe('frame count', () => {
+    it('reads the frame size from one frame, not from the page strip', async () => {
+      // The strip is 6 x 40 = 240px tall. If the cap were measured against that rather than a
+      // single 40px frame, this 64x40 animation would look 240px tall and be shrunk to fit.
+      const source = await makeAnimatedGif(64, 40, 6);
+      const result = await compressService.optimizeGif(source, 1024, 90, 64);
+
+      const metadata = await sharp(result.buffer, { animated: true }).metadata();
+      expect(metadata.width).toBe(64);
+      expect(metadata.pageHeight).toBe(40);
+    });
+
+    it('keeps every frame of a long animation rather than capping the count', async () => {
+      // Building a genuinely 268-megapixel fixture would cost a minute of decode, so this holds
+      // the service to the property underneath: frames are carried through, and how many there
+      // are is never itself a reason to fail. The production measurements behind that decision
+      // are recorded on `GIF_INPUT_PIXEL_LIMIT`.
+      const source = await makeAnimatedGif(64, 40, 40);
+      expect(await framesOf(source)).toBe(40);
+
+      const result = await compressService.optimizeGif(source, 50 * 1024, 90, 32);
+
+      expect(await framesOf(result.buffer)).toBe(40);
+    });
+  });
+});
+
+describe('isPermanentMediaError', () => {
+  it('is true for an input rejection we raised ourselves', () => {
+    expect(isPermanentMediaError(new MediaInputError('Video is too long: 900s'))).toBe(true);
+  });
+
+  it('is true for a MediaInputError from another copy of this package', () => {
+    // `instanceof` is not enough on its own: a duplicated install, or the CJS build meeting an
+    // error thrown from the ESM one, breaks class identity and would silently start retrying.
+    const foreign = Object.assign(new Error('No video stream found in the uploaded file'), {
+      name: 'MediaInputError',
+    });
+
+    expect(isPermanentMediaError(foreign)).toBe(true);
+  });
+
+  it.each([
+    'Input image exceeds pixel limit',
+    'Input buffer contains unsupported image format',
+    'Input file has corrupt header: bad magic',
+  ])('is true for Sharp\'s own input rejection: %s', (message) => {
+    // These arrive from native code as plain Errors, so the message is the only handle.
+    expect(isPermanentMediaError(new Error(message))).toBe(true);
+  });
+
+  it.each([
+    'The specified key does not exist.',
+    'transcode timed out after 600s',
+    'socket hang up',
+  ])('is false for the transient failure: %s', (message) => {
+    // The whole point of the distinction: these are exactly the errors a retry exists for.
+    expect(isPermanentMediaError(new Error(message))).toBe(false);
+  });
+
+  it('is false for a non-Error', () => {
+    expect(isPermanentMediaError('Input image exceeds pixel limit')).toBe(false);
   });
 });
 

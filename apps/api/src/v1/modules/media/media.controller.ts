@@ -8,20 +8,13 @@ import {
   Patch,
   Post,
   Query,
-  UploadedFile,
-  UseGuards,
-  UseInterceptors,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { MediaTypeGuard } from 'src/common/guards/media-type.guard';
 import { Public } from 'src/common/decorators/public.decorator';
-import { mediaUploadOptions } from 'src/common/utils/upload-options';
 import { IsResourceBlockedPipe } from 'src/pipes/is-resource-blocked.pipe';
 import { ModelExistPipe } from 'src/pipes/model-exist.pipe';
 import { IndexMediaRequest } from '../user-media/requests/index-media.request';
 import { MediaService } from './media.service';
-import { CreateMediaRequest } from './requests/create-media.request';
 import { CreateMediaAsyncRequest } from './requests/create-media-async.request';
 import { CreateMediaUploadUrlRequest } from './requests/create-media-upload-url.request';
 import { UpdateMediaRequest } from './requests/update-media.request';
@@ -56,19 +49,14 @@ export class MediaController {
 
   }
 
-  @Post()
-  @UseGuards(MediaTypeGuard)
-  @UseInterceptors(FileInterceptor('file', mediaUploadOptions), MediaTypeGuard)
-  async create(
-    @Body() createMediaRequest: CreateMediaRequest,
-    @UploadedFile() file: Express.Multer.File,
-  ) {
-    createMediaRequest.media = file;
-    return await this.mediaService.create(createMediaRequest);
-  }
-  // No FileInterceptor / MediaTypeGuard here: the browser has already PUT the bytes straight to
-  // S3 via a presigned URL from `upload-url` below, so this body is plain JSON and carries no
-  // file for either to inspect.
+  // There is deliberately no multipart `POST /media`, and no file ever reaches this process.
+  // That route accepted the upload itself and ran the thumbnail, the moderation call and the
+  // FULL compression inline in the request — a 201-frame 1080p GIF is ~12s of libvips on the
+  // process serving every other route. It had no callers left once the browser started PUTting
+  // to S3 directly, so it was pure exposure.
+  //
+  // The MIME allowlist that multer's `fileFilter` and `MediaTypeGuard` used to apply lives on
+  // the DTOs now: both this body and `upload-url`'s carry `@IsIn(ALLOWED_FILE_TYPES)`.
   @Post('async')
   async createAsync(@Body() createMediaRequest: CreateMediaAsyncRequest) {
     return await this.mediaService.createAsync(createMediaRequest);

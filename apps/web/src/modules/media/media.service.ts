@@ -1,6 +1,5 @@
 import type { EntitySeoMetadata } from "@repo/common-lib/types/ai";
 import type {
-  CreateMediaInputWithFile,
   Media,
   MediaIndexRequest,
   MediaWithUser,
@@ -53,9 +52,6 @@ class MediaService extends BaseService {
     return await this.fetchApi.get({
       resource: `/${publicId}/metadata?lan=${lang}`,
     });
-  }
-  async create(body: CreateMediaInputWithFile): Promise<ApiResponse<Media>> {
-    return await this.fetchApi.post({ body });
   }
   async update(
     id: number,

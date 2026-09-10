@@ -27,12 +27,15 @@ import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { cn } from "@repo/ui/lib/utils";
 import { toast } from "@repo/ui/sonner";
 import { format } from "date-fns";
-import { Eye, Sparkles, Trash2, Upload } from "lucide-react";
+import { Eye, Pencil, Sparkles, Trash2, Upload } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import FormComponent from "@/lib/components/form-component";
-import { ExpandMediaDialog } from "@/modules/media/components/expand-media-dialog";
+import {
+  canExpandMedia,
+  ExpandMediaDialog,
+} from "@/modules/media/components/expand-media-dialog";
 import { FailedMediaOverlay } from "@/modules/media/components/failed-media-overlay";
 import {
   type UploadMedia,
@@ -51,10 +54,12 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
   const t = useTranslations("atelier.media.card");
   // One block shared with the search filter, so a card and its filter chip always read the same.
   const tMedia = useTranslations("atelier.media");
+  const tCommon = useTranslations("atelier.common");
   const [currentMedia, setCurrentMedia] = useState(media);
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState<MediaTabs>("overall");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isExpandOpen, setIsExpandOpen] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const seoTitleRef = useRef<HTMLInputElement>(null);
   const seoDescriptionRef = useRef<HTMLTextAreaElement>(null);
@@ -70,8 +75,9 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
     generateUniqueMediaId,
   } = useMedia();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  // Closing the expand preview can ghost-click the card (DrawerTrigger) underneath the overlay.
-  const suppressDrawerOpenRef = useRef(false);
+  // Closing the expand preview can ghost-click whatever sits under the overlay — the tile
+  // itself (re-opening the preview) or the pen (opening the editor).
+  const suppressTileClickRef = useRef(false);
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -423,19 +429,33 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
   }, [currentMediaUpload]);
 
   const handleDrawerOpenChange = (open: boolean) => {
-    if (open && suppressDrawerOpenRef.current) {
+    if (open && suppressTileClickRef.current) {
       return;
     }
     setIsDrawerOpen(open);
   };
 
   const handleExpandOpenChange = (open: boolean) => {
+    setIsExpandOpen(open);
     if (open) return;
-    // Dismissing the preview overlay can deliver a click to the DrawerTrigger underneath.
-    suppressDrawerOpenRef.current = true;
+    // Dismissing the preview overlay can deliver a click to the tile underneath.
+    suppressTileClickRef.current = true;
     window.setTimeout(() => {
-      suppressDrawerOpenRef.current = false;
+      suppressTileClickRef.current = false;
     }, 100);
+  };
+
+  const canExpand = canExpandMedia(currentMedia);
+
+  const handleTileClick = () => {
+    if (isPending || suppressTileClickRef.current) return;
+    if (canExpand) {
+      setIsExpandOpen(true);
+      return;
+    }
+    // Media that never produced an asset (still processing, or FAILED) has nothing to preview.
+    // Fall back to the drawer so the tile is never a dead click.
+    setIsDrawerOpen(true);
   };
 
   return (
@@ -470,95 +490,108 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
             <Upload className="h-4 w-4" />
           </Button>
         ) : null}
-        <DrawerTrigger asChild disabled={isPending}>
-          <article
-            className={cn(
-              "group flex flex-col p-2",
-              isPending ? "cursor-not-allowed opacity-60" : "cursor-pointer",
-            )}
-            aria-label={
-              currentMedia.status === "FAILED"
-                ? currentMedia.failed_reason || t("failedAria")
-                : undefined
-            }
-            onClick={(e) => {
-              if (isPending) {
-                e.preventDefault();
-                e.stopPropagation();
-              }
-            }}
-          >
-            {/* Image Section - Floating */}
-            <div className="relative aspect-square flex items-center justify-center overflow-hidden mb-2">
-              {currentMedia.thumbnail ? (
-                <img
-                  src={currentMedia.thumbnail}
-                  alt={
-                    currentMedia.seo_alt ||
-                    currentMedia.title ||
-                    t("altFallback", { username })
-                  }
-                  className={cn(
-                    "w-full h-full object-contain group-hover:scale-105 transition-transform duration-200",
-                    currentMedia.status === "FAILED" && "opacity-40",
-                  )}
-                />
-              ) : (
-                <div className="flex items-center justify-center text-text-muted text-xs bg-fg-2 w-full h-full">
-                  {t("noPreview")}
-                </div>
-              )}
-              {currentMedia.status === "FAILED" && (
-                <FailedMediaOverlay reason={currentMedia.failed_reason} />
-              )}
-              {/* Stated on every card, not just animations: the atelier is where a mixed
-                  library gets managed, and the tile itself only ever shows a still poster. */}
-              <MediaTypeBadge
-                mediaType={currentMedia.media_type}
-                label={
-                  currentMedia.media_type
-                    ? tMedia(`mediaType.${currentMedia.media_type}`)
-                    : undefined
+        {/* The tile opens the full-size preview; the pen in the corner opens the editor.
+            A div rather than an <article>: the whole tile is now one button, and an
+            interactive role on a non-interactive element is neither valid nor lintable. */}
+        <div
+          className={cn(
+            "group flex flex-col p-2",
+            isPending ? "cursor-not-allowed opacity-60" : "cursor-pointer",
+          )}
+          role="button"
+          tabIndex={isPending ? -1 : 0}
+          aria-label={
+            currentMedia.status === "FAILED"
+              ? currentMedia.failed_reason || t("failedAria")
+              : canExpand
+                ? tCommon("expandMedia")
+                : t("editMedia")
+          }
+          onClick={handleTileClick}
+          onKeyDown={(e) => {
+            if (e.key !== "Enter" && e.key !== " ") return;
+            e.preventDefault();
+            handleTileClick();
+          }}
+        >
+          {/* Image Section - Floating */}
+          <div className="relative aspect-square flex items-center justify-center overflow-hidden mb-2">
+            {currentMedia.thumbnail ? (
+              <img
+                src={currentMedia.thumbnail}
+                alt={
+                  currentMedia.seo_alt ||
+                  currentMedia.title ||
+                  t("altFallback", { username })
                 }
-                showForAllTypes
+                className={cn(
+                  "w-full h-full object-contain group-hover:scale-105 transition-transform duration-200",
+                  currentMedia.status === "FAILED" && "opacity-40",
+                )}
               />
-              {/* Loading Overlay */}
-              {isPending && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
-                  <Spinner className="size-12 text-white" />
-                </div>
-              )}
-            </div>
+            ) : (
+              <div className="flex items-center justify-center text-text-muted text-xs bg-fg-2 w-full h-full">
+                {t("noPreview")}
+              </div>
+            )}
+            {currentMedia.status === "FAILED" && (
+              <FailedMediaOverlay reason={currentMedia.failed_reason} />
+            )}
+            {/* Stated on every card, not just animations: the atelier is where a mixed
+                  library gets managed, and the tile itself only ever shows a still poster. */}
+            <MediaTypeBadge
+              mediaType={currentMedia.media_type}
+              label={
+                currentMedia.media_type
+                  ? tMedia(`mediaType.${currentMedia.media_type}`)
+                  : undefined
+              }
+              showForAllTypes
+            />
+            {/* Loading Overlay */}
+            {isPending && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
+                <Spinner className="size-12 text-white" />
+              </div>
+            )}
+          </div>
 
-            {/* Title and Date - Stacked at Bottom */}
-            <div className="flex flex-col">
-              <h3 className="text-sm! font-medium text-text line-clamp-1">
-                {currentMedia.title ||
-                  currentMedia.seo_filename ||
-                  t("untitled")}
-              </h3>
-              {currentMedia.status === "FAILED" ? (
-                <p className="text-[10px]! text-error">{t("failed")}</p>
-              ) : formattedDate ? (
-                <p className="text-[10px]! text-text-muted">{formattedDate}</p>
-              ) : null}
-            </div>
-          </article>
-        </DrawerTrigger>
-        {/* Sibling of DrawerTrigger (not a child): nesting made dismiss clicks open the drawer.
-            `top-4 right-4` matches the former image-inset spot (article `p-2` + prior `top-2`). */}
+          {/* Title and Date - Stacked at Bottom */}
+          <div className="flex flex-col">
+            <h3 className="text-sm! font-medium text-text line-clamp-1">
+              {currentMedia.title || currentMedia.seo_filename || t("untitled")}
+            </h3>
+            {currentMedia.status === "FAILED" ? (
+              <p className="text-[10px]! text-error">{t("failed")}</p>
+            ) : formattedDate ? (
+              <p className="text-[10px]! text-text-muted">{formattedDate}</p>
+            ) : null}
+          </div>
+        </div>
+        {/* Sibling of the tile, not a child: nested, one click would fire both the preview and
+            the drawer. `top-4 right-4` keeps it inset from the image (tile `p-2`). */}
         {!isPending && (
-          <ExpandMediaDialog
-            media={currentMedia}
-            alt={
-              currentMedia.seo_alt ||
-              currentMedia.title ||
-              t("altFallback", { username })
-            }
-            className="absolute top-4 right-4 z-20"
-            onOpenChange={handleExpandOpenChange}
-          />
+          <DrawerTrigger asChild>
+            <button
+              type="button"
+              aria-label={t("editMedia")}
+              className="absolute top-4 right-4 z-20 flex cursor-pointer items-center justify-center bg-black/50 p-1.5 text-white transition-colors duration-200 hover:bg-black/70 focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:outline-none"
+            >
+              <Pencil className="size-3.5" />
+            </button>
+          </DrawerTrigger>
         )}
+        {/* Triggerless: the tile owns the click, so there is no corner button to render. */}
+        <ExpandMediaDialog
+          media={currentMedia}
+          alt={
+            currentMedia.seo_alt ||
+            currentMedia.title ||
+            t("altFallback", { username })
+          }
+          open={isExpandOpen}
+          onOpenChange={handleExpandOpenChange}
+        />
       </div>
       <DrawerContent className="h-full w-150 max-w-[90vw] right-0 left-auto opacity-90 ">
         <DrawerHeader className="border-b p-2">

@@ -52,6 +52,52 @@ export const compressionLevelToQuality = (
   VERY_HIGH: 40,
 }[level]);
 
+/**
+ * Thrown when the INPUT is what makes the work impossible: too many pixels, too long, no video
+ * stream in it at all. What separates it from every other failure here is that the outcome is
+ * FIXED — the same bytes through the same encoder fail identically every time — so a caller that
+ * retries only pays for the same failure again. See {@link isPermanentMediaError}.
+ *
+ * The media processor surfaces `message` to the user verbatim as `failed_reason`, so write it for
+ * them: name the limit and the number that broke it, never a temp path or a library's internals.
+ */
+export class MediaInputError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'MediaInputError';
+  }
+}
+
+/**
+ * Sharp's rejections of exactly the same kind. These surface from native code as plain `Error`s,
+ * so there is no throw site to wrap — matching the message is the only handle there is. All five
+ * are fixed string literals in `common.cc` rather than anything locale- or input-dependent.
+ */
+const PERMANENT_INPUT_MESSAGES = [
+  'Input image exceeds pixel limit',
+  'Input buffer contains unsupported image format',
+  'Input file contains unsupported image format',
+  'Input buffer has corrupt header',
+  'Input file has corrupt header',
+];
+
+/**
+ * Whether retrying this error could ever produce a different result.
+ *
+ * The distinction that matters to a queue: a timed-out encode or a dropped S3 connection is worth
+ * another attempt, and a 400-megapixel GIF is not. Retrying the second kind is not merely
+ * pointless — each attempt re-downloads the source and pays for another moderation vision call
+ * before arriving at the identical error.
+ */
+export const isPermanentMediaError = (error: unknown): boolean => {
+  if (!(error instanceof Error)) return false;
+  // `name` as well as `instanceof`: a caller resolving a second copy of this package (or reaching
+  // it through the CJS build while it was thrown from the ESM one) gets a class identity that no
+  // longer matches, and silently falls back to retrying what it should not.
+  if (error instanceof MediaInputError || error.name === 'MediaInputError') return true;
+  return PERMANENT_INPUT_MESSAGES.some((message) => error.message.includes(message));
+};
+
 export abstract class CompressService {
   public readonly config: CompressConfig;
   constructor(config: CompressConfig) {
@@ -137,7 +183,13 @@ export abstract class CompressService {
     maxEdgePx?: number,
   ): Promise<CompressionOutput>
 
-  /** Re-encodes as GIF, preserving every frame. @param maxEdgePx longest edge kept. */
+  /**
+   * Re-encodes as GIF, preserving every frame.
+   *
+   * @param maxEdgePx longest edge kept, measured against ONE frame rather than the page strip.
+   * How many frames sit behind it is not capped: an animation is bounded by the upload's byte
+   * limit, and nothing here rejects one for the pixels those bytes expand to.
+   */
   abstract optimizeGif(
     file: Express.Multer.File | Buffer,
     targetSize: number,

@@ -9,10 +9,12 @@ import { ToBoolean } from 'src/common/decorators/to-boolean.decorator';
 import { ToInt } from 'src/common/decorators/to-int.decorator';
 
 /**
- * Body for `POST /media/async`. A sibling of `CreateMediaRequest`, not a variant of it: that
- * DTO carries a multer `media: Express.Multer.File` for the still-multipart sync `POST /media`,
- * and this endpoint no longer accepts a file at all — the browser has already PUT the bytes
- * straight to S3 via a presigned URL from `POST /media/upload-url`. This body is plain JSON.
+ * Body for `POST /media/async`, the only way to create a media. It carries no file: the browser
+ * has already PUT the bytes straight to S3 via a presigned URL from `POST /media/upload-url`,
+ * so this is plain JSON and nothing multipart reaches the API at all.
+ *
+ * There used to be a sibling `CreateMediaRequest` behind a multipart `POST /media` that took the
+ * upload and compressed it inside the request. It is gone — see the note on the controller.
  */
 export class CreateMediaAsyncRequest {
   @IsString()

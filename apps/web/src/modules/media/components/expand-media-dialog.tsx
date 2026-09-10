@@ -31,7 +31,23 @@ type Props = {
    * the overlay can fall through onto the card and open the edit drawer.
    */
   onOpenChange?: (open: boolean) => void;
+  /**
+   * Passing this switches the component to controlled mode and it renders no trigger of its
+   * own — for hosts where the whole tile opens the preview and the corner is spent on another
+   * action. Such hosts should gate the tile on `canExpandMedia` so the click is never dead.
+   */
+  open?: boolean;
 };
+
+/**
+ * Whether there is anything to expand. `url` is null until the worker finishes processing,
+ * and the poster is all that exists before then.
+ */
+export function canExpandMedia<T extends Pick<ExpandableMedia, "url">>(
+  media: T,
+): media is T & { url: string } {
+  return Boolean(media.url);
+}
 
 /**
  * Opens a media's full asset (`url`) in a dialog, next to wherever its small poster is shown.
@@ -55,45 +71,48 @@ export function ExpandMediaDialog({
   alt,
   className,
   onOpenChange,
+  open: controlledOpen,
 }: Props) {
   const t = useTranslations("atelier.common");
   const [open, setOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
 
-  // `url` is null until the worker finishes processing, and the poster is all that exists
-  // before then — nothing to expand, so no affordance.
-  if (!media.url) return null;
+  // Nothing to expand before the worker produces the real asset, so no affordance.
+  if (!canExpandMedia(media)) return null;
 
   const label = alt || media.seo_alt || media.title || media.seo_filename || "";
 
   const setExpandOpen = (next: boolean) => {
-    setOpen(next);
+    if (!isControlled) setOpen(next);
     onOpenChange?.(next);
   };
 
   return (
     <>
-      <button
-        type="button"
-        aria-label={t("expandMedia")}
-        // Both handlers: a parent Radix trigger (drawer, dialog) activates on pointerdown, so
-        // stopping click alone would still open it behind this dialog.
-        onPointerDown={(e) => e.stopPropagation()}
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          setExpandOpen(true);
-        }}
-        className={cn(
-          // Always visible rather than revealed on group-hover: a hover-only control is
-          // unreachable on touch, and these grids are used on tablets.
-          "flex cursor-pointer items-center justify-center bg-black/50 p-1.5 text-white transition-colors duration-200 hover:bg-black/70 focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:outline-none",
-          className,
-        )}
-      >
-        <Expand className="size-3.5" />
-      </button>
+      {!isControlled && (
+        <button
+          type="button"
+          aria-label={t("expandMedia")}
+          // Both handlers: a parent Radix trigger (drawer, dialog) activates on pointerdown, so
+          // stopping click alone would still open it behind this dialog.
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setExpandOpen(true);
+          }}
+          className={cn(
+            // Always visible rather than revealed on group-hover: a hover-only control is
+            // unreachable on touch, and these grids are used on tablets.
+            "flex cursor-pointer items-center justify-center bg-black/50 p-1.5 text-white transition-colors duration-200 hover:bg-black/70 focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:outline-none",
+            className,
+          )}
+        >
+          <Expand className="size-3.5" />
+        </button>
+      )}
 
-      <Dialog open={open} onOpenChange={setExpandOpen}>
+      <Dialog open={controlledOpen ?? open} onOpenChange={setExpandOpen}>
         {/* Sized to the media, not the viewport. `sm:w-fit` is required as well as `w-fit`:
             DialogContent's base classes carry `sm:w-full`, and tailwind-merge treats a
             variant-prefixed class as its own conflict group, so an unprefixed `w-fit` does

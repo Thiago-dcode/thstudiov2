@@ -7,7 +7,7 @@ export class GenerateMediaMetadataRequest {
     @ModelExist('media')
     media_id: number
 
-    // `@IsUserAuth()` was missing here (unlike CreateMediaRequest): `user_id` came
+    // `@IsUserAuth()` was missing here (unlike the other media DTOs): `user_id` came
     // straight from the body, so any authenticated user could spend another user's AI
     // credits — and the LLM call fires before the ownership check inside
     // `MediaService.update`, so the platform paid for the OpenAI request regardless.

@@ -1,5 +1,6 @@
 import {
     CompressService,
+    MediaInputError,
     PREVIEW_MAX_EDGE_PX,
     THUMBNAIL_MAX_EDGE_PX,
 } from "./compress.service";
@@ -45,6 +46,28 @@ const MAX_IMAGE_EDGE_PX = 4000;
  * app displays a GIF wider than a content column.
  */
 const MAX_GIF_EDGE_PX = 1200;
+
+/**
+ * An animation is bounded by its FILE SIZE and nothing else. `MAX_IMAGE_UPLOAD_BYTES` already
+ * decides what may be uploaded, and a second, invisible ceiling on total pixels only rejects
+ * files that limit had allowed — a 201-frame 1920x1080 GIF is 417 megapixels and a perfectly
+ * ordinary 14MB upload.
+ *
+ * Sharp's `limitInputPixels` default (0x3FFF squared, 268 megapixels) is measured against the
+ * whole page strip on an animated read, so it fires on frame COUNT and reads as if the image
+ * were oversized. It exists to stop a decode from exhausting memory, which for an animated GIF
+ * it does not: libvips runs the pages through a demand-driven pipeline instead of materialising
+ * the strip. Measured on this exact path, resizing to {@link MAX_GIF_EDGE_PX} and re-encoding:
+ *
+ *   14MB, 201 frames of 1920x1080 =  417 MP (a 1.67GB strip)  →  0.17GB peak RSS, 53s
+ *   29MB, 600 frames of 1920x1080 = 1244 MP (a 4.98GB strip)  →  0.20GB peak RSS, 84s
+ *
+ * Peak memory is flat in the pixel count and an order of magnitude under what the strip implies.
+ * What DOES scale is wall-clock, and the media worker runs one job at a time — so the cost of a
+ * huge animation is the queue behind it, which is a throughput question and not a reason to
+ * refuse the upload.
+ */
+const GIF_INPUT_PIXEL_LIMIT = false as const;
 
 /** Quality is clamped rather than rejected so callers can pass raw arithmetic results. */
 const clampQuality = (quality: number): number =>
@@ -220,10 +243,14 @@ function resolveAudioPlan(probe: VideoProbe): TranscodeAudioPlan {
 /**
  * Rejects rather than trims. Silently cutting a user's video is data loss they never asked for,
  * and this message reaches them verbatim as the media's `failed_reason`.
+ *
+ * A {@link MediaInputError} because no number of retries shortens a video: the queue has to be
+ * told this one is settled, or the user waits through three attempts for the answer it had after
+ * the first probe.
  */
 function assertDurationWithinLimit(probe: VideoProbe): void {
     if (probe.durationSeconds > MAX_VIDEO_DURATION_SECONDS) {
-        throw new Error(
+        throw new MediaInputError(
             `Video is too long: ${Math.round(probe.durationSeconds)}s, maximum is ${MAX_VIDEO_DURATION_SECONDS}s`,
         );
     }
@@ -358,10 +385,17 @@ export class SharpCompressService extends CompressService {
         //avoid min of 100KB
         const _targetSize = targetSize < 100 * 1024 ? 50 * 1024 : targetSize;
 
-        // Sharp represents an animation as a vertical strip of pages; `pageHeight` is one frame.
-        const metadata = await sharp(source, { animated: true }).metadata();
+        // Probed WITHOUT `animated: true`, which is the whole reason this read is safe. An
+        // animated read materialises the page strip, making the reported height `pageHeight x
+        // pages` — so Sharp measured its pixel limit against every frame at once and a large
+        // animation died right here, inside `metadata()`, before a single decision had been made
+        // about it. A plain read decodes one frame and reports that frame's own `width`/`height`,
+        // which is all this needs: the cap below is a per-frame one.
+        const metadata = await sharp(source, {
+            limitInputPixels: GIF_INPUT_PIXEL_LIMIT,
+        }).metadata();
         const frameWidth = metadata.width ?? 0;
-        const frameHeight = metadata.pageHeight ?? metadata.height ?? 0;
+        const frameHeight = metadata.height ?? 0;
         const oversized = frameWidth > maxEdgePx || frameHeight > maxEdgePx;
         const sourceIsGif = isGifBuffer(source);
 
@@ -842,7 +876,10 @@ export class SharpCompressService extends CompressService {
       quality: number,
       size: { width: number; height: number },
     ): Promise<Buffer> {
-      return sharp(source, { animated: true })
+      // The one read that genuinely needs every frame, and so the one Sharp's default pixel limit
+      // would reject on frame count alone. See {@link GIF_INPUT_PIXEL_LIMIT}: what bounds an
+      // animation here is the upload's byte cap.
+      return sharp(source, { animated: true, limitInputPixels: GIF_INPUT_PIXEL_LIMIT })
         .resize({
           width: size.width,
           height: size.height,

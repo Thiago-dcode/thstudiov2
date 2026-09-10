@@ -1,5 +1,6 @@
 import { Job } from 'bullmq';
 import { QueueHelper } from '@repo/backend-lib/utils';
+import { MediaInputError } from '@repo/backend-lib/services/compress-service/base';
 import { MediaProcessor } from './media.processor';
 
 /**
@@ -169,5 +170,74 @@ describe('MediaProcessor.processMedia', () => {
                 max_attempts: 3,
             }),
         );
+    });
+
+    /**
+     * A media that could not be processed was retried the full three times. Each attempt
+     * re-downloaded the source and paid OpenAI for another moderation verdict - billed to the
+     * user's token usage - before reaching the identical error, so one unprocessable upload cost
+     * three downloads and three vision calls to conclude what the first probe already knew.
+     */
+    describe('a failure the input itself decides', () => {
+        const tooLong = new MediaInputError(
+            'Video is too long: 903s, maximum is 600s',
+        );
+
+        const buildPermanent = () =>
+            build(
+                { ...media, status: 'UPLOADING', completed_at: null, blocked_at: null },
+                {
+                    storage: { getBuffer: jest.fn().mockRejectedValue(tooLong) },
+                    // Attempt 1 of 3: the retry gate would normally rethrow here.
+                    job: { attempts: 3, attemptsMade: 0 },
+                },
+            );
+
+        it('fails the media immediately instead of spending the other two attempts', async () => {
+            const { processor, mediaRepository, log } = buildPermanent();
+
+            // Resolving rather than throwing is what tells BullMQ there is nothing to retry.
+            await expect(processor.processMedia()).resolves.toBeUndefined();
+
+            expect(mediaRepository.updateById).toHaveBeenCalledWith(
+                media.id,
+                expect.objectContaining({
+                    status: 'FAILED',
+                    // Verbatim: this is what the user reads, and it names the limit they hit.
+                    failed_reason: tooLong.message,
+                    completed_at: null,
+                }),
+            );
+            expect(log.warn).not.toHaveBeenCalledWith(
+                'Media processing attempt failed; will retry',
+                expect.anything(),
+            );
+        });
+
+        it('cleans the upload out of storage, since no later attempt needs it', async () => {
+            const { processor, storageService } = buildPermanent();
+
+            await processor.processMedia();
+
+            expect(storageService.delete).toHaveBeenCalledWith(media.url);
+        });
+
+        it('still retries a transient failure carrying a permanent-looking message', async () => {
+            // The guard keys on the error, not on the media: an S3 read that happens to fail
+            // while the file is large is still worth another attempt.
+            const transient = new Error('socket hang up');
+            const { processor, storageService, mediaRepository } = build(
+                { ...media, status: 'UPLOADING', completed_at: null, blocked_at: null },
+                {
+                    storage: { getBuffer: jest.fn().mockRejectedValue(transient) },
+                    job: { attempts: 3, attemptsMade: 0 },
+                },
+            );
+
+            await expect(processor.processMedia()).rejects.toBe(transient);
+
+            expect(mediaRepository.updateById).not.toHaveBeenCalled();
+            expect(storageService.delete).not.toHaveBeenCalled();
+        });
     });
 });

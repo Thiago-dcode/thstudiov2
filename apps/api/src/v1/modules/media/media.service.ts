@@ -1,7 +1,6 @@
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { MediaRepository } from './media.repository';
-import { CreateMediaRequest } from './requests/create-media.request';
 import { CreateMediaAsyncRequest } from './requests/create-media-async.request';
 import { CreateMediaUploadUrlRequest } from './requests/create-media-upload-url.request';
 import { UserExtraDataService } from '../user-extra-data/user-extra-data.service';
@@ -183,46 +182,6 @@ export class MediaService {
     return name.match(/\.([^./\\]+)$/)?.[1]?.toLowerCase() ?? '';
   }
 
-  private optimizeUpload(
-    file: Express.Multer.File,
-    targetSize: number,
-    quality: number,
-    mediaType: Media['media_type'],
-  ) {
-    if (mediaType === 'VIDEO') {
-      return this.compressService.optimizeVideo(file, targetSize, quality);
-    }
-    if (mediaType === 'GIF') {
-      return this.compressService.optimizeGif(file, targetSize, quality);
-    }
-    return this.compressService.optimizeImageToWebp(file, targetSize, quality);
-  }
-
-  /**
-   * The listing-sized static WebP for an upload. Video needs ffmpeg to reach a decodable frame
-   * at all — `optimizeImageToWebp` would hand a non-`image/*` multer file straight back
-   * unmodified, i.e. store the raw MP4 under the thumbnail's `.webp` key.
-   */
-  private buildThumbnail(
-    file: Express.Multer.File,
-    mediaType: Media['media_type'],
-  ) {
-    if (mediaType === 'VIDEO') {
-      return this.compressService.optimizeVideoFrameToWebp(
-        file,
-        THUMBNAIL_TARGET_BYTES,
-        80,
-        THUMBNAIL_MAX_EDGE_PX,
-      );
-    }
-    return this.compressService.optimizeImageToWebp(
-      file,
-      THUMBNAIL_TARGET_BYTES,
-      80,
-      THUMBNAIL_MAX_EDGE_PX,
-    );
-  }
-
   private async notifyMediaUpdate(media: Pick<Media, 'id' | 'user_id'>): Promise<void> {
     await QueueHelper.createOrUpdateUserNotificationJob({
       type: 'CREATE_UPDATE_MEDIA',
@@ -398,124 +357,6 @@ export class MediaService {
       await this.markCreateFailed(media, 'Something went wrong during creation', {
         deletePaths: [tempPath],
       });
-    }
-  }
-
-  public async create({ media, ...data }: CreateMediaRequest) {
-    try {
-      const mediaType = MediaHelper.getMediaTypeFromMimeType(media.mimetype) ?? 'IMAGE';
-
-      // 1. Generate thumbnail first (for moderation check). Always WebP, and always the
-      // listing-sized raster — for a GIF this is the static poster frame, and for a video the
-      // extracted poster frame, which is also the only thing the vision model can moderate.
-      const thumbnail = await this.buildThumbnail(media, mediaType);
-
-      // 2. Resolve user & paths so we can store the thumbnail
-      const [user, mediaPublicId] = await Promise.all([
-        this.userService.findOne(data.user_id),
-        generateUUID(),
-      ]);
-      const { filename, extension, mediaPath, thumbnailPath } = this.buildMediaStoragePaths(
-        user.public_id,
-        mediaPublicId,
-        media.originalname,
-        mediaType,
-      );
-
-      // 3. Store thumbnail
-      const thumbnailFile = { ...media, ...thumbnail };
-      await this.storageService.write(thumbnailFile, thumbnailPath);
-
-      // 4. Moderate content using the stored thumbnail
-      const thumbnailUrl = await this.helpers.getAsset(thumbnailPath);
-      const { moderation } = await this.aiService.moderateContent(thumbnailUrl, {
-        user_id: data.user_id,
-      });
-
-      // 5. If not allowed → delete thumbnail and throw
-      if (!moderation.is_allowed) {
-        await this.helpers.deleteAsset(thumbnailPath);
-        throw new MediaModerationException(moderation.reason);
-      }
-
-      const compressionLevel = data.compression_level || DEFAULT_COMPRESSION_LVL;
-      const targetSize = this.compressService.getSizeCompressed({
-        size: media.size,
-        compressLevel: compressionLevel,
-        minSize: 300 * 1024,
-        maxSize: mbToBytes(5),
-      });
-      const mediaCompressed = await this.optimizeUpload(media, targetSize, 100, mediaType);
-
-      // 7. Enforce user limits (thumbnail + media)
-      const totalSize = mediaCompressed.size + thumbnail.size;
-      await this.userExtraDataService.enforceUserLimits(data.user_id, {
-        size: Math.round(bytesToMB(totalSize) * 100) / 100,
-        enforceCompressionLevel: !!data.compression_level,
-      });
-
-      // 8. Store full media
-      const mediaFile = { ...media, ...mediaCompressed };
-      await this.storageService.write(mediaFile, mediaPath);
-
-      // 9. Enqueue storage request jobs for each file
-      await QueueHelper.createStorageRequestJob({
-        path: mediaPath,
-        bytes: mediaCompressed.size,
-        user_id: data.user_id,
-      });
-      await QueueHelper.createStorageRequestJob({
-        path: thumbnailPath,
-        bytes: thumbnail.size,
-        user_id: data.user_id,
-      });
-
-      // 10. Create media record
-      const defaultSeoText = `${user.username} photo`;
-      const mediaData: CreateMediaInput = {
-        ...data,
-        public_id: mediaPublicId,
-        bytes: mediaFile.size,
-        thumbnail_bytes: thumbnailFile.size,
-        extension,
-        url: mediaPath,
-        thumbnail: thumbnailPath,
-        seo_filename: filename,
-        blocked_at: null,
-        is_featured: false,
-        is_value_pillars: false,
-        is_highlight: false,
-        // Derived from the thumbnail, not the media: for video the stored asset is an MP4 that
-        // `image-size` cannot read, and for images the two agree to well within one aspect
-        // bucket (the thumbnail is a `fit: 'inside'` downscale of the same frame).
-        shape: await this.compressService.getImageShape(thumbnailFile.buffer),
-        aspect_ratio: await this.compressService.getImageAspectRatio(thumbnailFile.buffer),
-        media_type: mediaType,
-        is_active: true,
-        seo_title: data.seo_title || data.title || defaultSeoText,
-        seo_alt: data.seo_alt || data.title || defaultSeoText,
-        compression_level: compressionLevel,
-        completed_at: new Date(),
-        seo_description: data.seo_description || data.description,
-      };
-      cleanObj(mediaData);
-
-      const result = await this.mediaRepository.create(mediaData);
-      await QueueHelper.createComputeUserMetricsJob(user.id);
-      this.eventEmitter.emit(
-        UPDATE_PROFILE_STATUS_EVENT,
-        new UpdateProfileStatusEvent(user.id, { has_media: true }),
-      );
-      result.thumbnail = thumbnailUrl;
-      return result;
-    } catch (error) {
-      this.logger.error(
-        error instanceof Error
-          ? error.message
-          : 'Something went wrong creating media',
-        error,
-      );
-      throw error;
     }
   }
 

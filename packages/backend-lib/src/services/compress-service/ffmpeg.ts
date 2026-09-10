@@ -6,6 +6,7 @@ import fs from 'fs/promises';
 import os from 'os';
 import path from 'path';
 import { promisify } from 'util';
+import { MediaInputError } from './compress.service';
 import { VideoProbe } from './types';
 
 const execFileAsync = promisify(execFile);
@@ -192,7 +193,8 @@ export async function probeVideo(filePath: string): Promise<VideoProbe> {
     const streams = parsed.streams ?? [];
     const videoStream = streams.find((stream) => stream.codec_type === 'video');
     if (!videoStream) {
-        throw new Error('No video stream found in the uploaded file');
+        // Settled by the file itself, not by anything a second attempt could change.
+        throw new MediaInputError('No video stream found in the uploaded file');
     }
     const audioStream = streams.find((stream) => stream.codec_type === 'audio');
 
@@ -200,8 +202,9 @@ export async function probeVideo(filePath: string): Promise<VideoProbe> {
         Number(parsed.format?.duration) || Number(videoStream.duration) || 0;
     if (!durationSeconds) {
         // Everything downstream — the bitrate budget, the encode timeout, the poster seek — is
-        // priced per second, so there is nothing sensible to do without a duration.
-        throw new Error('Could not determine the video duration');
+        // priced per second, so there is nothing sensible to do without a duration. ffprobe read
+        // the container fine and it simply does not carry one, which re-probing will not fix.
+        throw new MediaInputError('Could not determine the video duration');
     }
 
     const sizeBytes = Number(parsed.format?.size) || 0;
