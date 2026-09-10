@@ -70,7 +70,7 @@ export const TwoFaForm = ({
             maxLength={6}
             value={twafaCode}
             autoComplete="one-time-code"
-            inputMode="numeric"
+            inputMode="text"
             placeholder={t("codePlaceholder")}
             required
             autoFocus
