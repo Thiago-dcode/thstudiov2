@@ -3,8 +3,6 @@ import { Module } from '@nestjs/common';
 import { Queue } from 'bullmq';
 import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
 import { LOG_QUEUE, MEDIA_UPDATE_QUEUE } from '@repo/common-lib/constants/queues';
-import { AiModule } from '../ai/ai.module';
-import { UserExtraDataModule } from '../user-extra-data/user-extra-data.module';
 import { UserModule } from '../users/users.module';
 import { MediaController } from './media.controller';
 import { MediaProcessor } from './media.processor';
@@ -27,10 +25,11 @@ import { MediaService } from './media.service';
       inject: [getQueueToken(LOG_QUEUE)],
     },
   ],
+  // No AiModule / UserExtraDataModule: moderation and the storage-quota check both belonged to
+  // the multipart `POST /media`, which compressed uploads inline. They now run in the worker,
+  // against the file it pulls from S3, so nothing in this module injects either service.
   imports: [
-    UserExtraDataModule,
     UserModule,
-    AiModule,
     BullModule.registerQueue({ name: MEDIA_UPDATE_QUEUE }, { name: LOG_QUEUE }),
   ],
   // MediaRepository is exported for SitemapModule, which reads the public-media predicate directly

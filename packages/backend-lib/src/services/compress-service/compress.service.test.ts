@@ -113,6 +113,18 @@ const makeAnimatedGif = async (width = 64, height = 40, frames = 6) => {
 const framesOf = async (buffer: Buffer) =>
   (await sharp(buffer, { animated: true }).metadata()).pages ?? 1;
 
+/** Distinct RGB values in the first frame — what a palette cut actually costs. */
+const distinctColours = async (buffer: Buffer) => {
+  const { data, info } = await sharp(buffer)
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const seen = new Set<number>();
+  for (let i = 0; i < data.length; i += info.channels) {
+    seen.add((data[i]! << 16) | (data[i + 1]! << 8) | data[i + 2]!);
+  }
+  return seen.size;
+};
+
 describe('SharpCompressService.optimizeGif', () => {
   it('re-encodes a GIF and returns a .gif filename', async () => {
     const source = await makeGif();
@@ -193,6 +205,44 @@ describe('SharpCompressService.optimizeGif', () => {
       const metadata = await sharp(result.buffer, { animated: true }).metadata();
       expect(metadata.width).toBe(64);
       expect(metadata.pageHeight).toBe(40);
+    });
+
+    /**
+     * `colours` reads like a continuous knob but Sharp turns it into a GIF bitdepth of 1/2/4/8,
+     * so 17 through 128 all mean 16 colours. The old quality curve returned 16-128, which meant
+     * every GIF at every compression level was quantised to 16 - a 201-frame upload whose source
+     * frame held 89 colours came out holding 15. Nothing about that was visible from the call
+     * site, so it is pinned here.
+     */
+    it('keeps the source palette instead of quantising it away', async () => {
+      // Frames carrying many colours EACH - the shared helper paints solid frames, whose first
+      // page has exactly one colour and so cannot show a palette cut at all.
+      const width = 128;
+      const height = 80;
+      const frames = 4;
+      const raw = Buffer.alloc(width * height * frames * 3);
+      for (let page = 0; page < frames; page++) {
+        for (let pixel = 0; pixel < width * height; pixel++) {
+          const offset = (page * width * height + pixel) * 3;
+          // A horizontal ramp: 128 distinct reds per row, far past the 16 a bitdepth of 4 fits.
+          raw[offset] = (pixel % width) * 2;
+          raw[offset + 1] = 40 + page * 20;
+          raw[offset + 2] = 200 - page * 20;
+        }
+      }
+      const source = await sharp(raw, {
+        raw: { width, height: height * frames, channels: 3, pageHeight: height },
+      })
+        .gif({ colours: 256, dither: 0 })
+        .toBuffer();
+      expect(await distinctColours(source)).toBeGreaterThan(16);
+
+      // `maxEdgePx` under the frame width on purpose. A source that is already small enough is
+      // handed straight back untouched, which would exercise no encoder at all and pass whatever
+      // the palette setting happened to be.
+      const result = await compressService.optimizeGif(source, 50 * 1024, 100, 64);
+
+      expect(await distinctColours(result.buffer)).toBeGreaterThan(16);
     });
 
     it('keeps every frame of a long animation rather than capping the count', async () => {

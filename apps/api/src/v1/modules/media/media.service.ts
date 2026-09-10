@@ -3,17 +3,9 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { MediaRepository } from './media.repository';
 import { CreateMediaAsyncRequest } from './requests/create-media-async.request';
 import { CreateMediaUploadUrlRequest } from './requests/create-media-upload-url.request';
-import { UserExtraDataService } from '../user-extra-data/user-extra-data.service';
-import {
-  CompressService,
-  THUMBNAIL_MAX_EDGE_PX,
-  THUMBNAIL_TARGET_BYTES,
-} from '@repo/backend-lib/services/compress-service/base';
 import { StorageService } from '@repo/backend-lib/services/storage-service/base';
 import { UserService } from '../users/users.service';
-import { AiService } from '@repo/backend-lib/services/ai-service';
 import { generateUUID } from '@repo/common-lib/utils/generate-uuid';
-import { bytesToMB, mbToBytes } from '@repo/common-lib/utils/bytes';
 import { FactoryLogService } from '@repo/backend-lib/services/log-service';
 import { QueueHelper } from '@repo/backend-lib/utils';
 import { CreateMediaInput, CreateMediaUploadUrl, Media, MediaWithUser, UpdateMediaInternalInput } from '@repo/common-lib/types/media';
@@ -31,7 +23,6 @@ import { UpdateMediaRequest } from './requests/update-media.request';
 import { RequestService } from 'src/common/services/request.service';
 import { DEFAULT_COMPRESSION_LVL } from '@repo/common-lib/constants/enums';
 import { MediaHelper } from '@repo/common-lib/utils/media';
-import { MediaModerationException } from 'src/common/exceptions/media-moderation-exception';
 
 /**
  * Expiry for a presigned upload URL from {@link MediaService.createUploadUrl}. Deliberately
@@ -50,10 +41,7 @@ export class MediaService {
     private readonly mediaRepository: MediaRepository,
     private readonly userService: UserService,
     private readonly requestService: RequestService,
-    private readonly userExtraDataService: UserExtraDataService,
-    private readonly compressService: CompressService,
     private readonly storageService: StorageService,
-    private readonly aiService: AiService,
     private readonly helpers: Helpers,
     private readonly eventEmitter: EventEmitter2,
   ) { }

@@ -74,25 +74,44 @@ const clampQuality = (quality: number): number =>
     quality > 100 ? 100 : quality < 10 ? 10 : quality;
 
 /**
- * GIF has no single quality knob, and re-encoding one is not a free win: a source GIF already
- * carries inter-frame optimisation, so a naive full-palette re-encode reliably comes out *larger*
- * than the input. Measured on a 480px/96-frame 7.6MB GIF:
+ * The full palette, always.
  *
- *   colours 256, dither 1.0, interFrameMaxError 0  →  12.0 MB   (the previous settings)
- *   colours 128, dither 0.5, interFrameMaxError 8  →   5.3 MB
- *   colours  66, dither 0.2, interFrameMaxError 21 →   2.7 MB
+ * `colours` looks like a continuous knob and is not one. Sharp turns it into a GIF BITDEPTH
+ * (`bitdepthFromColourCount`), which can only be 1, 2, 4 or 8 — so the only palettes it can
+ * express are 2, 4, 16 and 256, and everything from 17 to 128 collapses to 16. The curve that
+ * used to live here returned 16-128 across the whole quality range, so every GIF at every
+ * compression level came out at 16 colours: measured on a 201-frame 1080p upload whose source
+ * frame holds 89 distinct colours, the output held 15.
  *
- * So the three knobs move together off one `quality`, and the top of the range is deliberately
- * capped well below 256 colours / full dithering. Error diffusion is the most expensive of the
- * three: it injects high-frequency noise that GIF's LZW cannot compress at all.
+ * 256 is therefore not a "maximum quality" choice, it is the only faithful one available — the
+ * single alternative is a 6x palette cut that mangles any gradient. Bytes are pursued with the
+ * two knobs that do have real ranges: {@link qualityToInterFrameMaxError} and, far more
+ * powerfully, the resize loop in {@link SharpCompressService.optimizeGif}.
  */
-const qualityToColours = (quality: number): number =>
-    Math.max(8, Math.round(16 + ((clampQuality(quality) - 10) / 90) * 112));
+const GIF_COLOURS = 256;
 
-const qualityToDither = (quality: number): number =>
-    Math.round(((clampQuality(quality) - 10) / 90) * 0.5 * 100) / 100;
+/**
+ * No error diffusion, ever.
+ *
+ * Dithering trades banding for high-frequency noise, and that trade is a bad one here twice
+ * over: LZW cannot compress the noise, so the file grows, and the diffusion pass itself is
+ * roughly half the encode. Measured on the same 201-frame 1080p upload, resized to
+ * {@link MAX_GIF_EDGE_PX}, best of three interleaved runs:
+ *
+ *   16 col, dither 0.5, ifme 8   →  12.2s, 1.48 MB, 15 colours   (the previous settings)
+ *   16 col, dither 0,   ifme 8   →   5.5s, 1.24 MB, 15 colours
+ *  256 col, dither 0,   ifme 20  →   6.5s, 1.75 MB, 89 colours   (now)
+ *
+ * Dithering only ever earned its place by papering over the starved palette above. With the
+ * full palette restored there is nothing left for it to hide, so it is pure cost: half the
+ * wall-clock of a job that holds the only media worker slot there is.
+ */
+const GIF_DITHER = 0;
 
-/** Higher tolerance lets more of each frame be encoded as "unchanged since the last one". */
+/**
+ * Higher tolerance lets more of each frame be encoded as "unchanged since the last one". The one
+ * knob here with a genuine continuous range, and so the only one quality maps onto.
+ */
 const qualityToInterFrameMaxError = (quality: number): number =>
     Math.round(8 + ((100 - clampQuality(quality)) / 90) * 24);
 
@@ -887,8 +906,8 @@ export class SharpCompressService extends CompressService {
           withoutEnlargement: true,
         })
         .gif({
-          colours: qualityToColours(quality),
-          dither: qualityToDither(quality),
+          colours: GIF_COLOURS,
+          dither: GIF_DITHER,
           interFrameMaxError: qualityToInterFrameMaxError(quality),
         })
         .toBuffer();
