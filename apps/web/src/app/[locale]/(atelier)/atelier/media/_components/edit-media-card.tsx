@@ -27,7 +27,15 @@ import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { cn } from "@repo/ui/lib/utils";
 import { toast } from "@repo/ui/sonner";
 import { format } from "date-fns";
-import { Check, Copy, Eye, Pencil, Sparkles, Trash2, Upload } from "lucide-react";
+import {
+  Check,
+  Copy,
+  Eye,
+  Pencil,
+  Sparkles,
+  Trash2,
+  Upload,
+} from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
