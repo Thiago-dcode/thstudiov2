@@ -145,6 +145,21 @@ const VIDEO_FRAMES_EXTRA_INFO = `
         - Only tag (categories, subject, mood) what is consistently visible across the frames. If the frames disagree, prefer what is common to more of them.`;
 
 /**
+ * Appended to {@link SEO_EXTRA_INFO.media} for every GIF. Same reason as {@link VIDEO_EXTRA_INFO}:
+ * the model is looking at a still (or a GIF the vision API may flatten to one frame) and, left
+ * alone, writes photography copy for a file stored as `.gif`.
+ *
+ * Kept as an addition so the shared prefix — and OpenAI's prompt-caching discount on it — stays
+ * identical between image, video, and GIF calls.
+ */
+const GIF_EXTRA_INFO = `
+
+        GIF specifics:
+        - THE MEDIUM IS GIF: what you are describing is an animated GIF, never a photo. Write it as animation — "gif", "animation", "animated", "loop", "motion" — and NEVER use "photography", "photo", "photograph", "picture", "still" or "shot" as the medium, in any field or language. The title examples above are photography ones: copy their SHAPE, not their medium.
+        - seo_filename must say it is a gif: end it with an animation word ("-gif", "-animation", "-animated"), never with "-photography".
+        - category_ids: when a discipline exists for both media, pick the animation/motion one over its photography equivalent.`;
+
+/**
  * Junk only when it is the WHOLE value — matching these as substrings would wrongly reject legitimate
  * text (art literally titled "Untitled …", Spanish/Portuguese "todo", "for example" in prose).
  */
@@ -223,11 +238,14 @@ export class AiService {
       // The medium comes from the row, not from the frame count: a legacy video sampled into a
       // single poster frame is still a video and must not be written up as a photograph.
       const isVideo = meta.media_type === 'VIDEO';
+      const isGif = meta.media_type === 'GIF';
       const subject = isVideo
         ? isMultiFrame
           ? `${urls.length} images (frames sampled from ONE video)`
           : 'image (one frame from ONE video)'
-        : 'image';
+        : isGif
+          ? 'image (an animated GIF)'
+          : 'image';
 
       const categoriesForPrompt = categories.map((c) => ({
         id: c.id,
@@ -263,7 +281,7 @@ export class AiService {
 
         ${SEO_QUALITY_RULES}
 
-        ${SEO_EXTRA_INFO.media}${isVideo ? VIDEO_EXTRA_INFO : ''}${isVideo && isMultiFrame ? VIDEO_FRAMES_EXTRA_INFO : ''}
+        ${SEO_EXTRA_INFO.media}${isVideo ? VIDEO_EXTRA_INFO : ''}${isGif ? GIF_EXTRA_INFO : ''}${isVideo && isMultiFrame ? VIDEO_FRAMES_EXTRA_INFO : ''}
 
         CATEGORIES:
         ${JSON.stringify(categoriesForPrompt)}
