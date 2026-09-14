@@ -12,6 +12,7 @@ import {
 import {
   REQUEST_START_TIME,
   USER_AGENT_HEADER,
+  USER_AGENT_MAX_LENGTH,
   IP_ADDRESS_HEADER,
   APP_TOKEN_HEADER,
 } from '@repo/common-lib/constants/headers';
@@ -66,10 +67,11 @@ export class RequestMiddleware implements NestMiddleware {
       const isTrustedCaller =
         !!expectedAppToken && appToken === expectedAppToken;
 
-      this.requestService.user_agent =
+      this.requestService.user_agent = (
         (isTrustedCaller ? req.get(USER_AGENT_HEADER) : undefined) ||
         req.get('user-agent') ||
-        '-';
+        '-'
+      ).slice(0, USER_AGENT_MAX_LENGTH);
       // `req.ip` already resolves X-Forwarded-For correctly via `trust proxy` (main.ts).
       this.requestService.ip_address =
         (isTrustedCaller ? req.get(IP_ADDRESS_HEADER) : undefined) ||
