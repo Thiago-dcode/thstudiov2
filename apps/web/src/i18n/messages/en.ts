@@ -1298,6 +1298,7 @@ const messages = {
     label: "Address",
     searchPlaceholder: "Search for your address…",
     saving: "Saving address…",
+    confirm: "Save address",
   },
   userCategories: {
     title: "Categories",

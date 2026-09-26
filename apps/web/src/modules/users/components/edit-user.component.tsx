@@ -276,8 +276,10 @@ export default function EditUserComponent() {
                     <CreateOrUpdateAddress
                       userId={user.id}
                       defaultAddress={address}
+                      requireConfirm
                       onSuccess={(address) => {
                         setAddress(address);
+                        setOpenAddress(false);
                         void refreshMetrics();
                       }}
                     />

@@ -1306,6 +1306,7 @@ const messages = {
     label: "Dirección",
     searchPlaceholder: "Busca tu dirección…",
     saving: "Guardando dirección…",
+    confirm: "Guardar dirección",
   },
   userCategories: {
     title: "Categorías",
