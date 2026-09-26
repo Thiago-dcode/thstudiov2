@@ -130,6 +130,18 @@ export class MediaRepository extends BaseMediaRepository {
   }
 
   /**
+   * Media types of the owner's rows waiting on a metadata job. Their credits are only counted as
+   * consumed once the job has written its usage row, so until then they must be reserved.
+   */
+  async findGeneratingMetadataTypes(userId: number): Promise<Pick<MediaSchema, 'media_type'>[]> {
+    return await this.query()
+      .select(['media_type'])
+      .where('user_id', '=', userId)
+      .where('status', '=', 'GENERATING_METADATA')
+      .get<Pick<MediaSchema, 'media_type'>[]>();
+  }
+
+  /**
    * Sets `location_id` on the owner's rows in one write. Ids that are not theirs match nothing,
    * so a caller that already checked ownership cannot spill the place onto someone else's media.
    */

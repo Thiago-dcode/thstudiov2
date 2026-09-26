@@ -71,7 +71,7 @@ export class AiMediaService {
       );
       await this.userExtraDataService.enforceUserLimits(userId, {
         enforceAiCredits: true,
-        aiCreditsCost: cost,
+        aiCreditsCost: cost + (await this.reservedMetadataCredits(userId)),
       });
     }
 
@@ -112,6 +112,19 @@ export class AiMediaService {
     return { media, errors };
   }
 
+  /**
+   * Credits held by metadata jobs that have not finished. `ai_credits_consumed` is recomputed
+   * from usage rows only after a job completes, so without this a user could queue far more
+   * generations than they can pay for before the first one lands.
+   */
+  private async reservedMetadataCredits(userId: number): Promise<number> {
+    const rows = await this.mediaRepository.findGeneratingMetadataTypes(userId);
+    return rows.reduce(
+      (sum, row) => sum + AiCreditsHelper.metadataCreditCost(row.media_type),
+      0,
+    );
+  }
+
   private errorMessage(error: unknown): string {
     if (error instanceof HttpException) {
       const response = error.getResponse();
@@ -146,7 +159,9 @@ export class AiMediaService {
     // upstream is not enough here — this is the first point that knows the media's type.
     await this.userExtraDataService.enforceUserLimits(media.user_id, {
       enforceAiCredits: true,
-      aiCreditsCost: AiCreditsHelper.metadataCreditCost(media.media_type),
+      aiCreditsCost:
+        AiCreditsHelper.metadataCreditCost(media.media_type) +
+        (await this.reservedMetadataCredits(media.user_id)),
     });
 
     void this.generateMediaMetadataAndNotify({
@@ -165,8 +180,15 @@ export class AiMediaService {
       // `AiConsumptionGuard` and the check above — this is the only gate it ever passes through.
       // A throw here would make BullMQ retry a job that can never succeed, so this skips quietly.
       const media = await this.mediaRepository.findById(request.media_id);
+      // Reserved credits include this row when it is already queued, so it is left out of the
+      // sum rather than charged twice.
       const cost = AiCreditsHelper.metadataCreditCost(media?.media_type);
-      if (!(await this.userExtraDataService.hasAiCreditsFor(request.user_id, cost))) {
+      const reserved =
+        (await this.reservedMetadataCredits(request.user_id)) -
+        (media?.status === 'GENERATING_METADATA' ? cost : 0);
+      if (
+        !(await this.userExtraDataService.hasAiCreditsFor(request.user_id, cost + reserved))
+      ) {
         this.logger.info(
           `Skipping generate media metadata: user [${request.user_id}] lacks AI credits (needs ${cost})`,
           { media_id: request.media_id, user_id: request.user_id, cost },
