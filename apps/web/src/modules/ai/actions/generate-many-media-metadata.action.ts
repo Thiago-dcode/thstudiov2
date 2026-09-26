@@ -3,6 +3,7 @@
 import { MAX_MEDIA_METADATA_BATCH } from "@repo/common-lib/constants/limits";
 import type { GenerateManyMediaMetadataResult } from "@repo/common-lib/types/ai";
 import type { ActionReturn } from "@repo/common-lib/types/response";
+import { revalidateTag } from "next/cache";
 import { getTranslations } from "next-intl/server";
 import * as z from "zod";
 import {
@@ -59,6 +60,9 @@ export const generateManyMediaMetadataAction = async (
       inputs,
     };
   }
+
+  // Queued items spend AI credits, so the cached credit budget has to be refreshed too.
+  if (result.data.media.length) revalidateTag(`user-${session.id}`, "max");
 
   return {
     data: result.data,
