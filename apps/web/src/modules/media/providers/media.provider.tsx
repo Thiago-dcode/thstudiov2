@@ -531,6 +531,9 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
   const updateMediaLocationsRef = useRef<UpdateMediaLocationsInput | null>(
     null,
   );
+  // Rows that held an unsaved edit when the batch started. The card treats `data` as "saved,
+  // no draft", so writing the batch result there would silently throw the artist's edits away.
+  const updateMediaLocationsDraftIdsRef = useRef<Set<number>>(new Set());
   const { handleAction: updateMediaLocations } = useHandleAction<
     UpdateMediaLocationsInput,
     Media[]
@@ -552,7 +555,9 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
       const requestedIds = new Set(
         updateMediaLocationsRef.current?.media ?? [],
       );
+      const draftIds = updateMediaLocationsDraftIdsRef.current;
       updateMediaLocationsRef.current = null;
+      updateMediaLocationsDraftIdsRef.current = new Set();
       if (requestedIds.size === 0) return;
 
       if (result.data) {
@@ -560,6 +565,10 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
         setMediaUploads((prev) =>
           prev.map((upload) => {
             if (!upload.id || !requestedIds.has(upload.id)) return upload;
+            // The saved place reaches the card through the revalidated page instead.
+            if (draftIds.has(upload.id)) {
+              return { ...upload, pending: false, error: undefined };
+            }
             const media = byId.get(upload.id);
             if (!media) {
               return {
@@ -587,7 +596,9 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
       setMediaUploads((prev) =>
         prev.map((upload) =>
           upload.id && requestedIds.has(upload.id)
-            ? { ...upload, pending: false, data: undefined, error }
+            ? draftIds.has(upload.id)
+              ? { ...upload, pending: false }
+              : { ...upload, pending: false, data: undefined, error }
             : upload,
         ),
       );
@@ -623,6 +634,19 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
       location: input.location,
       media: media.map((item) => item.id),
     };
+    updateMediaLocationsDraftIdsRef.current = new Set(
+      current
+        .filter(
+          (upload) =>
+            upload.id &&
+            upload.action === "edit" &&
+            !upload.data &&
+            !upload.deleted &&
+            !upload.pending &&
+            mediaById.has(upload.id),
+        )
+        .map((upload) => upload.id as number),
+    );
     setMediaUploads((prev) => {
       const next = [...prev];
       for (const item of media) {
@@ -646,12 +670,21 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
           });
           continue;
         }
+        const upload = next[index];
+        // A draft keeps its own input: the batch place is saved, not staged into the edit.
+        if (
+          upload.id &&
+          updateMediaLocationsDraftIdsRef.current.has(upload.id)
+        ) {
+          next[index] = { ...upload, pending: true, error: undefined };
+          continue;
+        }
         next[index] = {
-          ...next[index],
+          ...upload,
           action: "edit",
           pending: true,
           error: undefined,
-          input: { ...next[index].input, location: input.location },
+          input: { ...upload.input, location: input.location },
         };
       }
       return next;

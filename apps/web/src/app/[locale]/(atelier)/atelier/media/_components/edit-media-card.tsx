@@ -166,6 +166,11 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
     [mediaUploads, savedMedia.id],
   );
 
+  // The page re-rendered with the server's row (e.g. after a batch edit that left a draft alone).
+  useEffect(() => {
+    setSavedMedia((prev) => (prev === media ? prev : { ...prev, ...media }));
+  }, [media]);
+
   // A save or AI run landed: that is the new saved state.
   const landedMedia = currentMediaUpload?.data;
   useEffect(() => {
