@@ -1993,6 +1993,7 @@ const messages = {
         untitled: "Sem título",
         editMedia: "Editar mídia",
         mediaPreview: "Prévia da mídia",
+        viewPublicPage: "Ver página pública",
         generateSeo: "Gerar metadados",
         noCreditsAvailable:
           "Nenhum crédito de IA disponível. Você precisa de pelo menos {imageCost} crédito para gerar metadados de uma imagem/GIF, ou {videoCost} para um vídeo. Faça upgrade do seu plano ou aguarde a renovação dos créditos.",

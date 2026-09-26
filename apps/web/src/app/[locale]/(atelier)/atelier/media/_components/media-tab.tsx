@@ -82,34 +82,38 @@ export function MediaTab({
   renderTabContent,
   disabled = false,
 }: MediaTabProps) {
+  // Only the fields scroll: the tab bar stays above them and the footer below, so the drawer's
+  // actions stay reachable however long the form gets.
   return (
-    <div className="flex-1 overflow-y-auto">
-      <TabsRoot
-        value={activeTab}
-        onValueChange={disabled ? undefined : onTabChange}
-        className="h-full flex flex-col"
-      >
-        <div className="px-6 pt-6">
-          <TabsList className="w-full grid grid-cols-2 h-10 bg-transparent p-0 gap-1">
-            {MEDIA_TABS.map((tab) => (
-              <MediaTabTrigger
-                key={tab}
-                tab={tab}
-                selected={activeTab === tab}
-                disabled={disabled}
-              />
-            ))}
-          </TabsList>
-        </div>
-        <div className="flex-1 overflow-y-auto px-6 py-6">
+    <TabsRoot
+      value={activeTab}
+      onValueChange={disabled ? undefined : onTabChange}
+      className="flex min-h-0 flex-1 flex-col gap-0"
+    >
+      <div className="shrink-0 px-4 pt-4 sm:px-6">
+        <TabsList className="w-full grid grid-cols-2 h-10 bg-transparent p-0 gap-1">
           {MEDIA_TABS.map((tab) => (
-            <TabsContent key={tab} value={tab} className="space-y-6 mt-0">
-              {renderTabContent(tab)}
-            </TabsContent>
+            <MediaTabTrigger
+              key={tab}
+              tab={tab}
+              selected={activeTab === tab}
+              disabled={disabled}
+            />
           ))}
-        </div>
-      </TabsRoot>
-    </div>
+        </TabsList>
+      </div>
+      {/* `data-vaul-no-drag`: scrolling or selecting text must never start a drawer swipe. */}
+      <div
+        data-vaul-no-drag
+        className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-5 sm:px-6"
+      >
+        {MEDIA_TABS.map((tab) => (
+          <TabsContent key={tab} value={tab} className="space-y-6 mt-0">
+            {renderTabContent(tab)}
+          </TabsContent>
+        ))}
+      </div>
+    </TabsRoot>
   );
 }
 
@@ -118,9 +122,11 @@ type MediaDrawerFooterProps = {
 };
 
 export function MediaDrawerFooter({ children }: MediaDrawerFooterProps) {
+  // `shrink-0` pins it under the scrolling fields; the bottom padding clears the home indicator
+  // on notched phones.
   return (
-    <DrawerFooter className="border-t px-6 py-4 bg-fg/60">
-      <div className="flex gap-3 w-full">{children}</div>
+    <DrawerFooter className="mt-0 shrink-0 border-t bg-bg px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6 sm:pb-4">
+      <div className="flex w-full gap-3">{children}</div>
     </DrawerFooter>
   );
 }

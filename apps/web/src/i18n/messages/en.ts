@@ -1980,6 +1980,7 @@ const messages = {
         untitled: "Untitled",
         editMedia: "Edit Media",
         mediaPreview: "Media Preview",
+        viewPublicPage: "View public page",
         generateSeo: "Generate media metadata",
         noCreditsAvailable:
           "No AI credits available. You need at least {imageCost} credit to generate metadata for an image/GIF, or {videoCost} for a video. Please upgrade your plan or wait for credits to reset.",

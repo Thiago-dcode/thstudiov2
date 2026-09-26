@@ -31,7 +31,7 @@ import { format } from "date-fns";
 import {
   Check,
   Copy,
-  Eye,
+  ExternalLink,
   Pencil,
   Sparkles,
   Trash2,
@@ -39,7 +39,14 @@ import {
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { clientEnv } from "@/env/client";
 import FormComponent from "@/lib/components/form-component";
 import { LocationAutocomplete } from "@/modules/locations/components/location-autocomplete";
@@ -49,10 +56,7 @@ import {
   ExpandMediaDialog,
 } from "@/modules/media/components/expand-media-dialog";
 import { FailedMediaOverlay } from "@/modules/media/components/failed-media-overlay";
-import {
-  type UploadMedia,
-  useMedia,
-} from "@/modules/media/providers/media.provider";
+import { useMedia } from "@/modules/media/providers/media.provider";
 import { useUserMetrics } from "@/modules/users/providers/user-metrics.provider";
 import { MediaDrawerFooter, MediaTab, type MediaTabs } from "./media-tab";
 
@@ -60,22 +64,78 @@ type MediaCardProps = {
   media: Media;
   username: string;
 };
-type Tabs = MediaTabs;
+
+const EDITABLE_TEXT_FIELDS = [
+  "title",
+  "description",
+  "seo_title",
+  "seo_description",
+  "seo_alt",
+] as const;
+type EditableTextField = (typeof EDITABLE_TEXT_FIELDS)[number];
+
+/** A fresh draft seeded from the saved media. `location` is left out on purpose: absent means "keep the saved place". */
+function draftFromMedia(media: Media): UpdateMediaInput & { user_id: number } {
+  return {
+    user_id: media.user_id,
+    title: media.title ?? "",
+    description: media.description ?? "",
+    seo_title: media.seo_title ?? "",
+    seo_description: media.seo_description ?? "",
+    seo_alt: media.seo_alt ?? "",
+  };
+}
+
+/**
+ * Whether a draft would change anything if saved. Always compared against the *saved* media —
+ * never against a copy the draft has been merged into, or reverting a field would still read as
+ * a change.
+ */
+function draftDiffersFromSaved(draft: UpdateMediaInput, saved: Media): boolean {
+  // The place is compared by label: the client never holds the saved row's geocoder id.
+  if (
+    "location" in draft &&
+    (draft.location?.formatted ?? null) !== (saved.location?.formatted ?? null)
+  ) {
+    return true;
+  }
+  return EDITABLE_TEXT_FIELDS.some(
+    (key) => (draft[key] ?? "") !== (saved[key] ?? ""),
+  );
+}
+
+function DetailField({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-xs text-text-muted font-semibold uppercase tracking-wide">
+        {label}
+      </Label>
+      {children}
+    </div>
+  );
+}
 
 export function EditMediaCard({ media, username }: MediaCardProps) {
   const t = useTranslations("atelier.media.card");
   // One block shared with the search filter, so a card and its filter chip always read the same.
   const tMedia = useTranslations("atelier.media");
   const tCommon = useTranslations("atelier.common");
-  const [currentMedia, setCurrentMedia] = useState(media);
+  // What the server has — updated only when a save or AI run lands. Unsaved edits live in the
+  // provider's upload entry (the draft), never in here.
+  const [savedMedia, setSavedMedia] = useState(media);
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState<MediaTabs>("overall");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isExpandOpen, setIsExpandOpen] = useState(false);
-  const [showCancelDialog, setShowCancelDialog] = useState(false);
-  const seoTitleRef = useRef<HTMLInputElement>(null);
-  const seoDescriptionRef = useRef<HTMLTextAreaElement>(null);
-  const seoAltRef = useRef<HTMLInputElement>(null);
+  const [showDiscardDialog, setShowDiscardDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [urlCopied, setUrlCopied] = useState(false);
   const { aiCreditsInfo } = useUserMetrics();
   const {
     upsertMediaUpload,
@@ -86,8 +146,6 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
     deleteSingleMedia,
     generateUniqueMediaId,
   } = useMedia();
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [urlCopied, setUrlCopied] = useState(false);
   // Closing the expand preview can ghost-click whatever sits under the overlay — the tile
   // itself (re-opening the preview) or the pen (opening the editor).
   const suppressTileClickRef = useRef(false);
@@ -103,29 +161,27 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
   const currentMediaUpload = useMemo(
     () =>
       mediaUploads.find(
-        (m) => m.id === currentMedia.id || m.data?.id === currentMedia.id,
+        (m) => m.id === savedMedia.id || m.data?.id === savedMedia.id,
       ),
-    [mediaUploads, currentMedia.id],
+    [mediaUploads, savedMedia.id],
   );
 
-  // Helper variables for cleaner access
+  // A save or AI run landed: that is the new saved state.
+  const landedMedia = currentMediaUpload?.data;
+  useEffect(() => {
+    if (landedMedia) setSavedMedia((prev) => ({ ...prev, ...landedMedia }));
+  }, [landedMedia]);
+
+  // Once `data` lands the entry is a record of what was saved, not a draft: its input is stale.
+  const draft =
+    currentMediaUpload &&
+    !currentMediaUpload.data &&
+    !currentMediaUpload.deleted
+      ? currentMediaUpload.input
+      : null;
+  const hasUnsavedChanges = !!draft && draftDiffersFromSaved(draft, savedMedia);
+
   const inputErrors = currentMediaUpload?.error?.inputErrors;
-
-  // AI Credits calculation — weighted by this media's type, so a video (cost 3) is correctly
-  // blocked when only 1-2 credits remain even though `hasCredits` alone would say yes.
-  const hasEnoughCredits = aiCreditsInfo.canAfford(currentMedia.media_type);
-
-  const handleGenerateSeo = useCallback(async () => {
-    if (!currentMedia.user_id || !currentMedia.id) {
-      return;
-    }
-    if (!hasEnoughCredits) {
-      return;
-    }
-    // Always show the SEO tab when generating
-    setActiveTab("seo");
-    await generateSeoSingleMedia(currentMedia);
-  }, [currentMedia, generateSeoSingleMedia, hasEnoughCredits]);
 
   const isPending =
     currentMediaUpload?.pending ||
@@ -133,24 +189,35 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
       ? MediaHelper.isLoading(currentMediaUpload.data)
       : false);
 
+  // AI Credits calculation — weighted by this media's type, so a video (cost 3) is correctly
+  // blocked when only 1-2 credits remain even though `hasCredits` alone would say yes.
+  const hasEnoughCredits = aiCreditsInfo.canAfford(savedMedia.media_type);
+
+  const handleGenerateSeo = useCallback(async () => {
+    if (!savedMedia.user_id || !savedMedia.id || !hasEnoughCredits) return;
+    // Always show the SEO tab when generating
+    setActiveTab("seo");
+    await generateSeoSingleMedia(savedMedia);
+  }, [savedMedia, generateSeoSingleMedia, hasEnoughCredits]);
+
   // Format date - use updated_at if available, otherwise fallback to created_at
   const formattedDate = useMemo(() => {
-    const dateValue = currentMedia.updated_at || currentMedia.created_at;
+    const dateValue = savedMedia.updated_at || savedMedia.created_at;
     if (!dateValue) return null;
     try {
       return format(new Date(dateValue), "MMM d, yyyy");
     } catch {
       return null;
     }
-  }, [currentMedia.updated_at, currentMedia.created_at]);
+  }, [savedMedia.updated_at, savedMedia.created_at]);
 
+  const mediaPublicPath = savedMedia.public_id
+    ? `/artists/${username}/media/${savedMedia.public_id}`
+    : null;
   const mediaPublicUrl = useMemo(() => {
-    if (!currentMedia.public_id || !username) return null;
-    return new URL(
-      `/artists/${username}/media/${currentMedia.public_id}`,
-      clientEnv.NEXT_PUBLIC_APP_URL,
-    ).href;
-  }, [currentMedia.public_id, username]);
+    if (!mediaPublicPath || !username) return null;
+    return new URL(mediaPublicPath, clientEnv.NEXT_PUBLIC_APP_URL).href;
+  }, [mediaPublicPath, username]);
 
   const handleCopyUrl = useCallback(async () => {
     if (!mediaPublicUrl) return;
@@ -164,126 +231,79 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
     }
   }, [mediaPublicUrl, t]);
 
-  const handleCancel = () => {
-    setShowCancelDialog(true);
-  };
-
-  const confirmCancel = () => {
-    setCurrentMedia(media);
-    if (currentMediaUpload) {
+  const discardDraft = () => {
+    if (draft && currentMediaUpload) {
       removeMediaUpload(currentMediaUpload.unique_id);
     }
     setIsEditing(false);
-    setShowCancelDialog(false);
+    setShowDiscardDialog(false);
+  };
+
+  // Only ask when there is something to lose — after a save, or with no edits, just leave.
+  const handleCancel = () => {
+    if (hasUnsavedChanges) {
+      setShowDiscardDialog(true);
+      return;
+    }
+    discardDraft();
   };
 
   const handleUpdate = async () => {
-    if (!currentMediaUpload || !currentMedia.id) {
-      return;
-    }
+    if (!currentMediaUpload || !hasUnsavedChanges) return;
     await uploadSingleMedia(currentMediaUpload.unique_id);
   };
 
-  // Handle form submission - upload the media using the provider
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     await handleUpdate();
   };
 
-  const handleInputChange = (
-    key: Exclude<keyof UpdateMediaInput, "location">,
-    value: string,
-  ) => {
-    if (
-      (currentMediaUpload?.input[key] ?? currentMedia[key as keyof Media]) ===
-      value
-    )
-      return;
-    patchEditInput({ [key]: value });
-  };
+  const patchDraft = (patch: UpdateMediaInput) => {
+    if (!savedMedia.id || !savedMedia.user_id || isPending) return;
 
-  /** The place the edit would save: the staged pick when there is one, else the saved place. */
-  const stagedLocation = (): { formatted: string } | null => {
-    if (currentMediaUpload?.input && "location" in currentMediaUpload.input) {
-      return currentMediaUpload.input.location ?? null;
-    }
-    return currentMedia.location ?? null;
-  };
+    const nextInput = { ...(draft ?? draftFromMedia(savedMedia)), ...patch };
 
-  const handleLocationChange = (location: LocationInput | null) => {
-    patchEditInput({ location });
-  };
-
-  const patchEditInput = (patch: Partial<UpdateMediaInput>) => {
-    if (!currentMedia.id || !currentMedia.user_id || isPending) return;
-
-    // Get existing media upload or create a new one with all required fields
-    const existingUpload = currentMediaUpload || {
-      input: {
-        user_id: currentMedia.user_id,
-        title: currentMedia.title ?? "",
-        description: currentMedia.description ?? "",
-        seo_title: currentMedia.seo_title ?? "",
-        seo_description: currentMedia.seo_description ?? "",
-        seo_alt: currentMedia.seo_alt ?? "",
-      },
-      id: currentMedia.id,
-      pending: false,
-      action: "edit" as const,
-      unique_id: generateUniqueMediaId(),
-    };
-
-    const updatedUpload: UploadMedia = {
-      ...existingUpload,
-      action: "edit",
-      data: undefined,
-      error: undefined,
-      pending: false,
-      previewUrl: currentMedia.thumbnail || undefined,
-      input: {
-        ...existingUpload.input,
-        ...patch,
-      },
-    };
-    // Check if nothing has changed by comparing input fields with currentMedia
-    const inputFields: (keyof UpdateMediaInput)[] = [
-      "title",
-      "description",
-      "seo_title",
-      "seo_description",
-      "seo_alt",
-    ];
-    // The place is compared by label: the client never holds the saved row's geocoder id.
-    let hasChanged =
-      "location" in updatedUpload.input &&
-      (updatedUpload.input.location?.formatted ?? null) !==
-        (currentMedia.location?.formatted ?? null);
-
-    for (const key of inputFields) {
-      const updatedValue = updatedUpload.input[key];
-      const currentValue = currentMedia[key as keyof Media];
-
-      // Normalize undefined/null/empty string for comparison
-      const normalizedUpdated = updatedValue ?? "";
-      const normalizedCurrent = currentValue ?? "";
-
-      if (normalizedUpdated !== normalizedCurrent) {
-        hasChanged = true;
-        break;
-      }
-    }
-
-    if (!hasChanged) {
-      if (currentMediaUpload) {
+    // Edited back to what is saved: drop the draft, so nothing reads as pending.
+    if (!draftDiffersFromSaved(nextInput, savedMedia)) {
+      if (draft && currentMediaUpload) {
         removeMediaUpload(currentMediaUpload.unique_id);
       }
       return;
     }
 
-    upsertMediaUpload(updatedUpload);
+    upsertMediaUpload({
+      input: nextInput,
+      id: savedMedia.id,
+      action: "edit",
+      pending: false,
+      data: undefined,
+      error: undefined,
+      previewUrl: savedMedia.thumbnail || undefined,
+      unique_id: currentMediaUpload?.unique_id ?? generateUniqueMediaId(),
+    });
   };
+
+  // The draft's value when there is one, otherwise the saved one.
+  const getFieldValue = (key: EditableTextField): string =>
+    String((draft ? draft[key] : savedMedia[key]) ?? "");
+
+  const handleInputChange = (key: EditableTextField, value: string) => {
+    if (getFieldValue(key) === value) return;
+    patchDraft({ [key]: value });
+  };
+
+  /** The place the edit would save: the staged pick when there is one, else the saved place. */
+  const stagedLocation =
+    draft && "location" in draft
+      ? (draft.location ?? null)
+      : (savedMedia.location ?? null);
+
+  const handleLocationChange = (location: LocationInput | null) => {
+    patchDraft({ location });
+  };
+
   const handleDelete = async () => {
-    const result = await deleteSingleMedia(currentMedia);
+    const result = await deleteSingleMedia(savedMedia);
     if (result.data) {
       setShowDeleteDialog(false);
       setIsDrawerOpen(false);
@@ -294,17 +314,7 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
 
   const handleTabChange = (value: string) => {
     if (isPending) return;
-    setActiveTab(value as Tabs);
-  };
-
-  // Get the current value for a field (from upload if exists, otherwise from currentMedia)
-  const getFieldValue = (
-    key: Exclude<keyof UpdateMediaInput, "location">,
-  ): string => {
-    if (currentMediaUpload?.input && key in currentMediaUpload.input) {
-      return String(currentMediaUpload.input[key] ?? "");
-    }
-    return String(currentMedia[key] || "");
+    setActiveTab(value as MediaTabs);
   };
 
   const renderEditTabContent = (tab: MediaTabs) => {
@@ -341,7 +351,7 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
                 label={t("locationLabel")}
                 labelClassName="text-sm font-medium text-text"
                 placeholder={t("locationPlaceholder")}
-                selectedLabel={stagedLocation()?.formatted}
+                selectedLabel={stagedLocation?.formatted}
                 onSelect={(feature) => {
                   // An unusable pick is ignored — it must never read as "clear".
                   const location = featureToLocationInput(feature);
@@ -360,7 +370,6 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
         return (
           <>
             <FormComponent.LabelInput
-              ref={seoTitleRef}
               id="seo_title"
               name="seo_title"
               label={t("seoTitleLabel")}
@@ -373,7 +382,6 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
               disabled={isPending}
             />
             <FormComponent.LabelTextarea
-              ref={seoDescriptionRef}
               id="seo_description"
               name="seo_description"
               label={t("seoDescriptionLabel")}
@@ -389,7 +397,6 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
               disabled={isPending}
             />
             <FormComponent.LabelInput
-              ref={seoAltRef}
               id="seo_alt"
               name="seo_alt"
               label={t("altTextLabel")}
@@ -405,8 +412,8 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
               <Label className="text-sm font-medium text-text">
                 {t("filenameLabel")}
               </Label>
-              <p className="text-xs font-mono text-text bg-fg-2 px-3 py-2">
-                {currentMedia.seo_filename}
+              <p className="text-xs font-mono text-text bg-fg-2 px-3 py-2 break-all">
+                {savedMedia.seo_filename}
               </p>
               <p className="text-xs text-text-muted">{t("filenameInfo")}</p>
             </div>
@@ -420,71 +427,58 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
       case "overall":
         return (
           <>
-            {currentMedia.title && (
-              <div className="space-y-2">
-                <Label className="text-xs text-text-muted font-semibold uppercase tracking-wide">
-                  {t("titleLabel")}
-                </Label>
+            {savedMedia.title && (
+              <DetailField label={t("titleLabel")}>
                 <p className="text-sm text-text leading-relaxed">
-                  {currentMedia.title}
+                  {savedMedia.title}
                 </p>
-              </div>
+              </DetailField>
             )}
-            {currentMedia.description && (
-              <div className="space-y-2">
-                <Label className="text-xs text-text-muted font-semibold uppercase tracking-wide">
-                  {t("descriptionLabel")}
-                </Label>
+            {savedMedia.description && (
+              <DetailField label={t("descriptionLabel")}>
                 <p className="text-sm text-text leading-relaxed whitespace-pre-wrap">
-                  {currentMedia.description}
+                  {savedMedia.description}
                 </p>
-              </div>
+              </DetailField>
             )}
-            {currentMedia.location && (
-              <div className="space-y-2">
-                <Label className="text-xs text-text-muted font-semibold uppercase tracking-wide">
-                  {t("locationLabel")}
-                </Label>
+            {savedMedia.location && (
+              <DetailField label={t("locationLabel")}>
                 <p className="text-sm text-text">
-                  {currentMedia.location.formatted}
+                  {savedMedia.location.formatted}
                 </p>
-              </div>
+              </DetailField>
             )}
-            {currentMedia.media_type && (
-              <div className="space-y-2">
-                <Label className="text-xs text-text-muted font-semibold uppercase tracking-wide">
-                  {t("typeLabel")}
-                </Label>
-                <p className="text-sm text-text">
-                  {tMedia(`mediaType.${currentMedia.media_type}`)}
-                </p>
-              </div>
-            )}
-            {currentMedia.compression_level && (
-              <div className="space-y-2">
-                <Label className="text-xs text-text-muted font-semibold uppercase tracking-wide">
-                  {t("compressionLabel")}
-                </Label>
-                <p className="text-sm text-text">
-                  {tMedia(`compressionLevel.${currentMedia.compression_level}`)}
-                </p>
-              </div>
-            )}
-            {currentMedia.bytes != null && currentMedia.bytes > 0 && (
-              <div className="space-y-2">
-                <Label className="text-xs text-text-muted font-semibold uppercase tracking-wide">
-                  {t("sizeLabel")}
-                </Label>
-                <p className="text-sm text-text">
-                  {bytesToMB(currentMedia.bytes).toFixed(2)} MB
-                </p>
-              </div>
-            )}
+            {/* Short facts pair up so the panel isn't one long column on a phone. */}
+            <div className="grid grid-cols-2 gap-x-4 gap-y-6">
+              {savedMedia.media_type && (
+                <DetailField label={t("typeLabel")}>
+                  <p className="text-sm text-text">
+                    {tMedia(`mediaType.${savedMedia.media_type}`)}
+                  </p>
+                </DetailField>
+              )}
+              {savedMedia.compression_level && (
+                <DetailField label={t("compressionLabel")}>
+                  <p className="text-sm text-text">
+                    {tMedia(`compressionLevel.${savedMedia.compression_level}`)}
+                  </p>
+                </DetailField>
+              )}
+              {savedMedia.bytes != null && savedMedia.bytes > 0 && (
+                <DetailField label={t("sizeLabel")}>
+                  <p className="text-sm text-text">
+                    {bytesToMB(savedMedia.bytes).toFixed(2)} MB
+                  </p>
+                </DetailField>
+              )}
+              {formattedDate && (
+                <DetailField label={t("lastUpdated")}>
+                  <p className="text-sm text-text">{formattedDate}</p>
+                </DetailField>
+              )}
+            </div>
             {mediaPublicUrl && (
-              <div className="space-y-2">
-                <Label className="text-xs text-text-muted font-semibold uppercase tracking-wide">
-                  {t("urlLabel")}
-                </Label>
+              <DetailField label={t("urlLabel")}>
                 <div className="flex items-center bg-fg-2">
                   <p
                     className="min-w-0 flex-1 truncate px-3 py-2 text-xs font-mono text-text"
@@ -507,75 +501,43 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
                     )}
                   </Button>
                 </div>
-              </div>
-            )}
-            {formattedDate && (
-              <div className="space-y-2 pt-4">
-                <Label className="text-xs text-text-muted font-semibold uppercase tracking-wide">
-                  {t("lastUpdated")}
-                </Label>
-                <p className="text-sm text-text">{formattedDate}</p>
-              </div>
+              </DetailField>
             )}
           </>
         );
       case "seo":
         return (
           <>
-            {currentMedia.seo_title && (
-              <div className="space-y-2">
-                <Label className="text-xs text-text-muted font-semibold uppercase tracking-wide">
-                  {t("seoTitleLabel")}
-                </Label>
+            {savedMedia.seo_title && (
+              <DetailField label={t("seoTitleLabel")}>
                 <p className="text-sm text-text leading-relaxed">
-                  {currentMedia.seo_title}
+                  {savedMedia.seo_title}
                 </p>
-              </div>
+              </DetailField>
             )}
-            {currentMedia.seo_description && (
-              <div className="space-y-2">
-                <Label className="text-xs text-text-muted font-semibold uppercase tracking-wide">
-                  {t("seoDescriptionLabel")}
-                </Label>
+            {savedMedia.seo_description && (
+              <DetailField label={t("seoDescriptionLabel")}>
                 <p className="text-sm text-text leading-relaxed whitespace-pre-wrap">
-                  {currentMedia.seo_description}
+                  {savedMedia.seo_description}
                 </p>
-              </div>
+              </DetailField>
             )}
-            {currentMedia.seo_alt && (
-              <div className="space-y-2">
-                <Label className="text-xs text-text-muted font-semibold uppercase tracking-wide">
-                  {t("altTextLabel")}
-                </Label>
+            {savedMedia.seo_alt && (
+              <DetailField label={t("altTextLabel")}>
                 <p className="text-sm text-text leading-relaxed">
-                  {currentMedia.seo_alt}
+                  {savedMedia.seo_alt}
                 </p>
-              </div>
+              </DetailField>
             )}
-            <div className="space-y-2">
-              <Label className="text-xs text-text-muted font-semibold uppercase tracking-wide">
-                {t("filenameLabel")}
-              </Label>
-              <p className="text-xs font-mono text-text bg-fg-2 px-3 py-2">
-                {currentMedia.seo_filename}
+            <DetailField label={t("filenameLabel")}>
+              <p className="text-xs font-mono text-text bg-fg-2 px-3 py-2 break-all">
+                {savedMedia.seo_filename}
               </p>
-            </div>
+            </DetailField>
           </>
         );
     }
   };
-
-  useEffect(() => {
-    if (!currentMediaUpload) return;
-    // A staged place is a geocoder pick, not the saved row's shape; the field reads it from the
-    // upload directly, and the saved place arrives with the server's copy in `data`.
-    const { location: _stagedLocation, ...input } = currentMediaUpload.input;
-    setCurrentMedia((prev) => ({
-      ...prev,
-      ...input,
-      ...currentMediaUpload.data,
-    }));
-  }, [currentMediaUpload]);
 
   const handleDrawerOpenChange = (open: boolean) => {
     if (open && suppressTileClickRef.current) {
@@ -594,7 +556,7 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
     }, 100);
   };
 
-  const canExpand = canExpandMedia(currentMedia);
+  const canExpand = canExpandMedia(savedMedia);
 
   const handleTileClick = () => {
     if (isPending || suppressTileClickRef.current) return;
@@ -607,6 +569,9 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
     setIsDrawerOpen(true);
   };
 
+  const mediaAlt =
+    savedMedia.seo_alt || savedMedia.title || t("altFallback", { username });
+
   return (
     <Drawer
       direction="right"
@@ -616,16 +581,13 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
       <div
         className={cn(
           "relative border",
-          currentMedia.status === "FAILED"
+          savedMedia.status === "FAILED"
             ? "border-error/40"
             : "border-black/10",
         )}
       >
-        {currentMediaUpload &&
-        !currentMediaUpload.deleted &&
-        !isPending &&
-        !currentMediaUpload.data &&
-        !currentMediaUpload.error ? (
+        {/* A draft left behind when the drawer was closed can be saved straight from the tile. */}
+        {hasUnsavedChanges && !isPending && !currentMediaUpload?.error ? (
           <Button
             onClick={(e) => {
               e.stopPropagation();
@@ -633,7 +595,7 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
             }}
             variant="secondary"
             size="icon"
-            disabled={isPending}
+            aria-label={t("saveChanges")}
             className="absolute top-2 left-2 z-20 shadow-md"
           >
             <Upload className="h-4 w-4" />
@@ -650,8 +612,8 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
           role="button"
           tabIndex={isPending ? -1 : 0}
           aria-label={
-            currentMedia.status === "FAILED"
-              ? currentMedia.failed_reason || t("failedAria")
+            savedMedia.status === "FAILED"
+              ? savedMedia.failed_reason || t("failedAria")
               : canExpand
                 ? tCommon("expandMedia")
                 : t("editMedia")
@@ -665,17 +627,13 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
         >
           {/* Image Section - Floating */}
           <div className="relative aspect-square flex items-center justify-center overflow-hidden mb-2">
-            {currentMedia.thumbnail ? (
+            {savedMedia.thumbnail ? (
               <img
-                src={currentMedia.thumbnail}
-                alt={
-                  currentMedia.seo_alt ||
-                  currentMedia.title ||
-                  t("altFallback", { username })
-                }
+                src={savedMedia.thumbnail}
+                alt={mediaAlt}
                 className={cn(
                   "w-full h-full object-contain group-hover:scale-105 transition-transform duration-200",
-                  currentMedia.status === "FAILED" && "opacity-40",
+                  savedMedia.status === "FAILED" && "opacity-40",
                 )}
               />
             ) : (
@@ -683,16 +641,16 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
                 {t("noPreview")}
               </div>
             )}
-            {currentMedia.status === "FAILED" && (
-              <FailedMediaOverlay reason={currentMedia.failed_reason} />
+            {savedMedia.status === "FAILED" && (
+              <FailedMediaOverlay reason={savedMedia.failed_reason} />
             )}
             {/* Stated on every card, not just animations: the atelier is where a mixed
                   library gets managed, and the tile itself only ever shows a still poster. */}
             <MediaTypeBadge
-              mediaType={currentMedia.media_type}
+              mediaType={savedMedia.media_type}
               label={
-                currentMedia.media_type
-                  ? tMedia(`mediaType.${currentMedia.media_type}`)
+                savedMedia.media_type
+                  ? tMedia(`mediaType.${savedMedia.media_type}`)
                   : undefined
               }
               showForAllTypes
@@ -708,9 +666,9 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
           {/* Title and Date - Stacked at Bottom */}
           <div className="flex flex-col">
             <h3 className="text-sm! font-medium text-text line-clamp-1">
-              {currentMedia.title || currentMedia.seo_filename || t("untitled")}
+              {savedMedia.title || savedMedia.seo_filename || t("untitled")}
             </h3>
-            {currentMedia.status === "FAILED" ? (
+            {savedMedia.status === "FAILED" ? (
               <p className="text-[10px]! text-error">{t("failed")}</p>
             ) : formattedDate ? (
               <p className="text-[10px]! text-text-muted">{formattedDate}</p>
@@ -732,103 +690,107 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
         )}
         {/* Triggerless: the tile owns the click, so there is no corner button to render. */}
         <ExpandMediaDialog
-          media={currentMedia}
-          alt={
-            currentMedia.seo_alt ||
-            currentMedia.title ||
-            t("altFallback", { username })
-          }
+          media={savedMedia}
+          alt={mediaAlt}
           open={isExpandOpen}
           onOpenChange={handleExpandOpenChange}
         />
       </div>
-      <DrawerContent className="h-full w-150 max-w-[90vw] right-0 left-auto opacity-90 ">
-        <DrawerHeader className="border-b p-2">
-          <div className="flex items-start justify-between gap-3 min-w-0">
-            <DrawerTitle className="font-semibold flex min-w-0 flex-1 items-center gap-1.5">
+      {/* Full-screen on phones, a side panel from `sm`. `h-dvh` tracks the mobile browser's
+          collapsing toolbars; the shared drawer's drag handle is meant for bottom sheets, so it
+          is hidden on this side panel. */}
+      <DrawerContent className="inset-y-0 right-0 left-auto mt-0 h-dvh w-full sm:w-150 sm:max-w-[90vw] [&>div:first-child]:hidden">
+        <DrawerHeader className="shrink-0 gap-3 border-b px-4 py-3 text-left sm:px-6">
+          <div className="flex min-w-0 items-center justify-between gap-3">
+            <DrawerTitle className="flex min-w-0 flex-1 items-center gap-2 text-base!">
               <span className="truncate">
                 {isEditing
                   ? t("editMedia")
-                  : currentMedia.title ||
-                    currentMedia.seo_filename ||
+                  : savedMedia.title ||
+                    savedMedia.seo_filename ||
                     t("mediaPreview")}
               </span>
-              {!isEditing && currentMedia.public_id && (
+              {!isEditing && mediaPublicPath && (
                 <a
-                  href={`/artists/${username}/media/${currentMedia.public_id}`}
+                  href={mediaPublicPath}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-text-muted hover:text-text transition-colors"
+                  aria-label={t("viewPublicPage")}
+                  title={t("viewPublicPage")}
+                  className="-m-1.5 shrink-0 p-1.5 text-text-muted transition-colors hover:text-text"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <Eye className="size-3.5" />
+                  <ExternalLink className="size-4" />
                 </a>
               )}
             </DrawerTitle>
-            <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
-              {isEditing ? (
-                <div className="flex flex-wrap items-center justify-end gap-1">
-                  <Button
-                    type="button"
-                    variant="primary"
-                    size="sm"
-                    className={cn(
-                      "h-8 shrink-0 px-2.5 transition-colors duration-200",
-                      !hasEnoughCredits && "opacity-50 cursor-not-allowed",
-                    )}
-                    onClick={handleGenerateSeo}
-                    disabled={isPending || !hasEnoughCredits}
-                  >
-                    <Sparkles className="h-3.5 w-3.5 shrink-0" />
-                    <span className="text-xs font-medium whitespace-nowrap">
-                      {isPending ? <Spinner /> : t("generateSeo")}
-                    </span>
-                  </Button>
-                  <div className="flex shrink-0 items-center gap-0.5">
-                    <InfoTooltip
-                      content={
-                        !hasEnoughCredits
-                          ? t("noCreditsAvailable", {
-                              imageCost: aiCreditsInfo.costFor("IMAGE"),
-                              videoCost: aiCreditsInfo.costFor("VIDEO"),
-                            })
-                          : t("generateSeoTooltip")
-                      }
-                      openDelay={200}
-                      iconClassName="w-3 h-3"
-                    />
-                    <span
-                      className={cn(
-                        "text-[10px] ml-0.5",
-                        !hasEnoughCredits
-                          ? "text-error font-medium"
-                          : "text-text-muted",
-                      )}
-                    >
-                      {aiCreditsInfo.consumed}/{aiCreditsInfo.total}
-                      {!hasEnoughCredits && t("noCreditsSuffix")}
-                    </span>
-                  </div>
-                </div>
-              ) : (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-error hover:text-error hover:bg-error/10 h-8 px-2.5"
-                  onClick={() => setShowDeleteDialog(true)}
-                >
-                  <Trash2 className="h-3.5 w-3.5 mr-1" />
-                  <span className="text-xs font-medium">{t("delete")}</span>
-                </Button>
-              )}
-            </div>
+            {!isEditing && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-9 shrink-0 px-2.5 text-error hover:bg-error/10 hover:text-error"
+                onClick={() => setShowDeleteDialog(true)}
+                aria-label={t("delete")}
+              >
+                <Trash2 className="size-4" />
+                <span className="hidden text-xs font-medium sm:inline">
+                  {t("delete")}
+                </span>
+              </Button>
+            )}
           </div>
+          {isEditing && (
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <Button
+                type="button"
+                variant="primary"
+                size="sm"
+                className="h-9 px-3"
+                onClick={handleGenerateSeo}
+                disabled={isPending || !hasEnoughCredits}
+              >
+                {isPending ? (
+                  <Spinner />
+                ) : (
+                  <Sparkles className="size-3.5 shrink-0" />
+                )}
+                <span className="text-xs font-medium whitespace-nowrap">
+                  {t("generateSeo")}
+                </span>
+              </Button>
+              <div className="flex items-center gap-1">
+                <span
+                  className={cn(
+                    "text-xs",
+                    hasEnoughCredits
+                      ? "text-text-muted"
+                      : "text-error font-medium",
+                  )}
+                >
+                  {aiCreditsInfo.consumed}/{aiCreditsInfo.total}
+                  {!hasEnoughCredits && t("noCreditsSuffix")}
+                </span>
+                <InfoTooltip
+                  content={
+                    hasEnoughCredits
+                      ? t("generateSeoTooltip")
+                      : t("noCreditsAvailable", {
+                          imageCost: aiCreditsInfo.costFor("IMAGE"),
+                          videoCost: aiCreditsInfo.costFor("VIDEO"),
+                        })
+                  }
+                  openDelay={200}
+                  iconClassName="w-3.5 h-3.5"
+                />
+              </div>
+            </div>
+          )}
         </DrawerHeader>
         {isEditing ? (
           <FormComponent.Form
-            key={currentMedia.id}
+            key={savedMedia.id}
             onSubmit={handleSubmit}
-            className=""
+            className="h-auto min-h-0 flex-1 gap-0"
           >
             <MediaTab
               activeTab={activeTab}
@@ -841,7 +803,7 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
                 type="button"
                 onClick={handleCancel}
                 variant="outline"
-                className="flex-1 hover:bg-fg-2 hover:text-text"
+                className="h-11 flex-1 hover:bg-fg-2 hover:text-text sm:h-10"
                 disabled={isPending}
               >
                 {t("cancel")}
@@ -849,8 +811,8 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
               <Button
                 type="submit"
                 variant="secondary"
-                className="flex-1"
-                disabled={isPending || !currentMediaUpload || !currentMedia}
+                className="h-11 flex-1 sm:h-10"
+                disabled={isPending || !hasUnsavedChanges}
               >
                 {isPending ? <Spinner /> : t("saveChanges")}
               </Button>
@@ -864,39 +826,38 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
               renderTabContent={renderPreviewTabContent}
             />
             <MediaDrawerFooter>
-              <div className="flex gap-3 w-full">
+              <DrawerClose asChild>
                 <Button
-                  onClick={() => setIsEditing(true)}
-                  variant="default"
-                  className="flex-1"
+                  variant="outline"
+                  className="h-11 flex-1 hover:bg-fg-2 hover:text-text sm:h-10"
                 >
-                  {t("edit")}
+                  {t("close")}
                 </Button>
-                <DrawerClose asChild>
-                  <Button
-                    variant="outline"
-                    className="flex-1 hover:bg-fg-2 hover:text-text"
-                  >
-                    {t("close")}
-                  </Button>
-                </DrawerClose>
-              </div>
+              </DrawerClose>
+              <Button
+                onClick={() => setIsEditing(true)}
+                variant="default"
+                className="h-11 flex-1 sm:h-10"
+              >
+                <Pencil className="size-3.5" />
+                {t("edit")}
+              </Button>
             </MediaDrawerFooter>
           </>
         )}
       </DrawerContent>
 
-      <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
-        <DialogContent className="max-w-md max-h-[300px] z-100">
+      <Dialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
+        <DialogContent className="max-w-md z-100">
           <DialogHeader>
             <DialogTitle>{t("discardTitle")}</DialogTitle>
             <DialogDescription>{t("discardBody")}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="base" onClick={() => setShowCancelDialog(false)}>
+            <Button variant="base" onClick={() => setShowDiscardDialog(false)}>
               {t("keepEditing")}
             </Button>
-            <Button variant="default" onClick={confirmCancel}>
+            <Button variant="default" onClick={discardDraft}>
               {t("discardChanges")}
             </Button>
           </DialogFooter>
