@@ -23,6 +23,8 @@ import { UpdateMediaRequest } from './requests/update-media.request';
 import { RequestService } from 'src/common/services/request.service';
 import { DEFAULT_COMPRESSION_LVL } from '@repo/common-lib/constants/enums';
 import { MediaHelper } from '@repo/common-lib/utils/media';
+import type { LocationInput } from '@repo/common-lib/types/location';
+import { LocationService } from '../locations/location.service';
 
 /**
  * Expiry for a presigned upload URL from {@link MediaService.createUploadUrl}. Deliberately
@@ -44,7 +46,32 @@ export class MediaService {
     private readonly storageService: StorageService,
     private readonly helpers: Helpers,
     private readonly eventEmitter: EventEmitter2,
+    private readonly locationService: LocationService,
   ) { }
+
+  /**
+   * The column value for a picked place: `undefined` leaves `location_id` untouched, `null`
+   * clears it, and a place resolves (find-or-create) into its `locations` row.
+   *
+   * A place that cannot be resolved is logged and skipped (`undefined`), never thrown: it is
+   * optional context, and by the time a create gets here the file is already in storage — losing
+   * the upload over its location would be the worse outcome.
+   */
+  private async resolveLocationId(
+    location: LocationInput | null | undefined,
+  ): Promise<number | null | undefined> {
+    if (location === undefined) return undefined;
+    if (location === null) return null;
+    try {
+      return (await this.locationService.resolve(location)).id;
+    } catch (error) {
+      this.logger.name('location').error(
+        `Could not resolve location "${location.place_id}": ${error instanceof Error ? error.message : 'Unknown error'}`,
+        error,
+      );
+      return undefined;
+    }
+  }
   /**
    * Signs the video-only asset keys in place, leaving them untouched when the row has none.
    *
@@ -120,6 +147,7 @@ export class MediaService {
       // What the artist wrote on upload: context for metadata generation.
       title: media.title,
       description: media.description,
+      location_id: media.location_id ?? null,
     }
   }
 
@@ -356,6 +384,7 @@ export class MediaService {
     original_name,
     content_type,
     generate_metadata,
+    location,
     ...data
   }: CreateMediaAsyncRequest) {
     const log = this.logger.name('create');
@@ -366,9 +395,10 @@ export class MediaService {
       content_type,
     });
 
-    const [user, mediaPublicId] = await Promise.all([
+    const [user, mediaPublicId, locationId] = await Promise.all([
       this.userService.findOne(data.user_id),
       generateUUID(),
+      this.resolveLocationId(location),
     ]);
 
     const mediaType = MediaHelper.getMediaTypeFromMimeType(content_type) ?? 'IMAGE';
@@ -404,6 +434,7 @@ export class MediaService {
       status: 'UPLOADING',
       completed_at: null,
       failed_reason: null,
+      location_id: locationId,
     };
     cleanObj(baseMedia);
 
@@ -525,7 +556,10 @@ export class MediaService {
       throw new UnauthorizedException();
     }
 
-    const internalData: UpdateMediaInternalInput = { ...data };
+    const { location, ...fields } = data;
+    const internalData: UpdateMediaInternalInput = { ...fields };
+    const locationId = await this.resolveLocationId(location);
+    if (locationId !== undefined) internalData.location_id = locationId;
 
     // On the FIRST SEO generation, rename the stored objects so their S3 keys become keyword-rich.
     // Every asset the media owns is moved so they stay aligned (as the processor produces them):

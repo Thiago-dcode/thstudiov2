@@ -11,6 +11,7 @@ import { LocationProcessor } from './location.processor';
 import { CountryRepository } from './country.repository';
 import { StateRepository } from './state.repository';
 import { CityRepository } from './city.repository';
+import { LocationRepository } from './location.repository';
 import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
 
 @Module({
@@ -24,6 +25,7 @@ import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-se
     CountryRepository,
     StateRepository,
     CityRepository,
+    LocationRepository,
     {
       provide: LogService,
       useFactory: (logQueue: Queue) => {

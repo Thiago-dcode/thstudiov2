@@ -1,4 +1,5 @@
-import { IsIn, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsIn, IsNotEmpty, IsOptional, IsString, IsUUID, ValidateNested } from 'class-validator';
 import type { EnumType } from '@repo/common-lib/constants/enums';
 import { ALLOWED_FILE_TYPES } from '@repo/common-lib/constants/limits';
 import type { MimeTypes } from '@repo/common-lib/types/general';
@@ -7,6 +8,7 @@ import { IsUserAuth } from 'src/common/validators/is-user-auth.validtor';
 import { ModelExist } from 'src/common/validators/model-exist.validtor';
 import { ToBoolean } from 'src/common/decorators/to-boolean.decorator';
 import { ToInt } from 'src/common/decorators/to-int.decorator';
+import { LocationInputRequest } from '../../locations/requests/location-input.request';
 
 /**
  * Body for `POST /media/async`, the only way to create a media. It carries no file: the browser
@@ -24,6 +26,12 @@ export class CreateMediaAsyncRequest {
   @IsString()
   @IsOptional()
   description?: string;
+
+  /** The place the work was made — resolved into a `locations` row, stored as `location_id`. */
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => LocationInputRequest)
+  location?: LocationInputRequest;
 
   @ModelExist('users')
   @IsUserAuth()

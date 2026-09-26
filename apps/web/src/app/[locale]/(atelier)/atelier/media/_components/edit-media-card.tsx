@@ -1,5 +1,6 @@
 "use client";
 
+import type { LocationInput } from "@repo/common-lib/types/location";
 import type { Media, UpdateMediaInput } from "@repo/common-lib/types/media";
 import { bytesToMB } from "@repo/common-lib/utils/bytes";
 import { MediaHelper } from "@repo/common-lib/utils/media";
@@ -41,6 +42,8 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { clientEnv } from "@/env/client";
 import FormComponent from "@/lib/components/form-component";
+import { LocationAutocomplete } from "@/modules/locations/components/location-autocomplete";
+import { featureToLocationInput } from "@/modules/locations/location-input";
 import {
   canExpandMedia,
   ExpandMediaDialog,
@@ -187,13 +190,32 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
     await handleUpdate();
   };
 
-  const handleInputChange = (key: keyof UpdateMediaInput, value: string) => {
-    if (!currentMedia.id || !currentMedia.user_id || isPending) return;
+  const handleInputChange = (
+    key: Exclude<keyof UpdateMediaInput, "location">,
+    value: string,
+  ) => {
     if (
       (currentMediaUpload?.input[key] ?? currentMedia[key as keyof Media]) ===
       value
     )
       return;
+    patchEditInput({ [key]: value });
+  };
+
+  /** The place the edit would save: the staged pick when there is one, else the saved place. */
+  const stagedLocation = (): { formatted: string } | null => {
+    if (currentMediaUpload?.input && "location" in currentMediaUpload.input) {
+      return currentMediaUpload.input.location ?? null;
+    }
+    return currentMedia.location ?? null;
+  };
+
+  const handleLocationChange = (location: LocationInput | null) => {
+    patchEditInput({ location });
+  };
+
+  const patchEditInput = (patch: Partial<UpdateMediaInput>) => {
+    if (!currentMedia.id || !currentMedia.user_id || isPending) return;
 
     // Get existing media upload or create a new one with all required fields
     const existingUpload = currentMediaUpload || {
@@ -220,7 +242,7 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
       previewUrl: currentMedia.thumbnail || undefined,
       input: {
         ...existingUpload.input,
-        [key]: value,
+        ...patch,
       },
     };
     // Check if nothing has changed by comparing input fields with currentMedia
@@ -231,7 +253,11 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
       "seo_description",
       "seo_alt",
     ];
-    let hasChanged = false;
+    // The place is compared by label: the client never holds the saved row's geocoder id.
+    let hasChanged =
+      "location" in updatedUpload.input &&
+      (updatedUpload.input.location?.formatted ?? null) !==
+        (currentMedia.location?.formatted ?? null);
 
     for (const key of inputFields) {
       const updatedValue = updatedUpload.input[key];
@@ -272,7 +298,9 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
   };
 
   // Get the current value for a field (from upload if exists, otherwise from currentMedia)
-  const getFieldValue = (key: keyof UpdateMediaInput): string => {
+  const getFieldValue = (
+    key: Exclude<keyof UpdateMediaInput, "location">,
+  ): string => {
     if (currentMediaUpload?.input && key in currentMediaUpload.input) {
       return String(currentMediaUpload.input[key] ?? "");
     }
@@ -307,6 +335,25 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
               error={inputErrors?.description}
               disabled={isPending}
             />
+            <div className="space-y-2">
+              <LocationAutocomplete
+                id="location"
+                label={t("locationLabel")}
+                labelClassName="text-sm font-medium text-text"
+                placeholder={t("locationPlaceholder")}
+                selectedLabel={stagedLocation()?.formatted}
+                onSelect={(feature) => {
+                  // An unusable pick is ignored — it must never read as "clear".
+                  const location = featureToLocationInput(feature);
+                  if (location) handleLocationChange(location);
+                }}
+                onClear={() => handleLocationChange(null)}
+                disabled={isPending}
+              />
+              <span className="block text-xs text-text-muted">
+                {t("locationInfo")}
+              </span>
+            </div>
           </>
         );
       case "seo":
@@ -390,6 +437,16 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
                 </Label>
                 <p className="text-sm text-text leading-relaxed whitespace-pre-wrap">
                   {currentMedia.description}
+                </p>
+              </div>
+            )}
+            {currentMedia.location && (
+              <div className="space-y-2">
+                <Label className="text-xs text-text-muted font-semibold uppercase tracking-wide">
+                  {t("locationLabel")}
+                </Label>
+                <p className="text-sm text-text">
+                  {currentMedia.location.formatted}
                 </p>
               </div>
             )}
@@ -510,9 +567,12 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
 
   useEffect(() => {
     if (!currentMediaUpload) return;
+    // A staged place is a geocoder pick, not the saved row's shape; the field reads it from the
+    // upload directly, and the saved place arrives with the server's copy in `data`.
+    const { location: _stagedLocation, ...input } = currentMediaUpload.input;
     setCurrentMedia((prev) => ({
       ...prev,
-      ...currentMediaUpload.input,
+      ...input,
       ...currentMediaUpload.data,
     }));
   }, [currentMediaUpload]);

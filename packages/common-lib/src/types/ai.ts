@@ -1,5 +1,6 @@
 import { EnumType, MODERATION_SEVERITY } from "../constants/enums"
 import type { Media } from "./media"
+import type { LocationSummary } from "./location"
 
 export type GenerateMediaMetadataInput = {
     user_id: number;
@@ -17,7 +18,10 @@ export type MediaMetadataPromptCategory = {
  * What the artist wrote about a media when uploading it — context the pixels alone cannot carry
  * (who or what the subject is, the project, where it was made). Optional input to generation.
  */
-export type MediaArtistNotes = Partial<Pick<Media, 'title' | 'description'>>;
+export type MediaArtistNotes = Partial<Pick<Media, 'title' | 'description'>> & {
+    /** The place the artist tagged — stated fact, so usable even when nothing in frame shows it. */
+    location?: Pick<LocationSummary, 'formatted' | 'name' | 'city' | 'state' | 'country'> | null;
+};
 
 export type LLMUsage = {
     promptTokens?: number;

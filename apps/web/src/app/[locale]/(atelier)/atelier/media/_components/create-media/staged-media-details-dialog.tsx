@@ -16,6 +16,8 @@ import { cn } from "@repo/ui/lib/utils";
 import { Sparkles, TriangleAlert } from "lucide-react";
 import { useTranslations } from "next-intl";
 import FormComponent from "@/lib/components/form-component";
+import { LocationAutocomplete } from "@/modules/locations/components/location-autocomplete";
+import { featureToLocationInput } from "@/modules/locations/location-input";
 import {
   type UploadMedia,
   useMedia,
@@ -33,8 +35,8 @@ import { StagedMediaPreview } from "./staged-media-preview";
 /**
  * Per-file settings for one staged upload, opened by clicking its card.
  *
- * Title and description go out with the create request and are stored on the media; the AI
- * metadata job also reads them as context. Compression and the AI toggle override the bulk
+ * Title, description and location go out with the create request and are stored on the media;
+ * the AI metadata job also reads them as context. Compression and the AI toggle override the bulk
  * settings for this file alone. Every field writes straight into the staged input via
  * `patchInput`, so there is no draft to lose however the dialog is closed.
  */
@@ -162,6 +164,26 @@ export function StagedMediaDetailsDialog({
                   placeholder={t("descriptionPlaceholder")}
                   rows={4}
                 />
+                <div className="space-y-1">
+                  <LocationAutocomplete
+                    id={`staged-location-${media?.unique_id ?? "none"}`}
+                    label={t("locationLabel")}
+                    labelClassName="text-xs font-medium text-text"
+                    placeholder={t("locationPlaceholder")}
+                    selectedLabel={media?.input.location?.formatted}
+                    onSelect={(feature) => {
+                      // An unusable pick is ignored — it must never read as "clear".
+                      const location = featureToLocationInput(feature);
+                      if (location) patchInput({ location });
+                    }}
+                    onClear={() => patchInput({ location: null })}
+                    // Above this dialog's z-[110], or the suggestions open behind it.
+                    positionerClassName="z-[120]"
+                  />
+                  <span className="block text-xs text-text-muted">
+                    {t("locationHint")}
+                  </span>
+                </div>
               </section>
 
               <section className="space-y-3">

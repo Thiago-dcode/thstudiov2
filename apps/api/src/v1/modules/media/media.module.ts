@@ -4,6 +4,7 @@ import { Queue } from 'bullmq';
 import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
 import { LOG_QUEUE, MEDIA_UPDATE_QUEUE } from '@repo/common-lib/constants/queues';
 import { UserModule } from '../users/users.module';
+import { LocationModule } from '../locations/location.module';
 import { MediaController } from './media.controller';
 import { MediaProcessor } from './media.processor';
 import { MediaRepository } from './media.repository';
@@ -30,6 +31,7 @@ import { MediaService } from './media.service';
   // against the file it pulls from S3, so nothing in this module injects either service.
   imports: [
     UserModule,
+    LocationModule,
     BullModule.registerQueue({ name: MEDIA_UPDATE_QUEUE }, { name: LOG_QUEUE }),
   ],
   // MediaRepository is exported for SitemapModule, which reads the public-media predicate directly

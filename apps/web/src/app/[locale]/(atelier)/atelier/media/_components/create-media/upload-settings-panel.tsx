@@ -13,9 +13,11 @@ import {
 } from "@repo/ui/components/shadcn/accordion";
 import { Checkbox } from "@repo/ui/components/shadcn/checkbox";
 import { cn } from "@repo/ui/lib/utils";
-import { Gauge, Sparkles } from "lucide-react";
+import { Gauge, MapPin, MousePointerClick, Sparkles } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { type ReactNode, useMemo, useState } from "react";
+import { LocationAutocomplete } from "@/modules/locations/components/location-autocomplete";
+import { featureToLocationInput } from "@/modules/locations/location-input";
 import { useMedia } from "@/modules/media/providers/media.provider";
 import { useUserMetrics } from "@/modules/users/providers/user-metrics.provider";
 import { CompressionSliderWithUpgradeHint } from "./compression-slider";
@@ -85,6 +87,22 @@ export function UploadSettingsPanel() {
     [mediaStagedToCreate, aiCreditsInfo],
   );
 
+  // Derived, not stored: the field shows a place only while EVERY staged file has that same
+  // place, so a file added afterwards (or changed in its own dialog) empties it instead of the
+  // panel claiming a location the file does not have.
+  const { sharedLocation, locatedCount } = useMemo(() => {
+    const places = mediaStagedToCreate.map((m) => m.input.location ?? null);
+    const located = places.filter((place) => place !== null);
+    const first = located[0];
+    const shared =
+      first &&
+      located.length === places.length &&
+      located.every((place) => place.place_id === first.place_id)
+        ? first
+        : null;
+    return { sharedLocation: shared, locatedCount: located.length };
+  }, [mediaStagedToCreate]);
+
   const currentCount = mediaStagedToCreate.length;
   const isMaxReached = currentCount >= MAX_FILES;
   const uploadingCount = useMemo(
@@ -114,6 +132,22 @@ export function UploadSettingsPanel() {
                     ? t("settingsAiOn", { used: spentCredits })
                     : t("settingsAiOff")}
                 </SummaryChip>
+                {locatedCount > 0 && (
+                  <SummaryChip
+                    icon={MapPin}
+                    label={t("locationLabel")}
+                    emphasized
+                  >
+                    <span className="max-w-32 truncate">
+                      {sharedLocation
+                        ? sharedLocation.name
+                        : t("settingsLocationSome", {
+                            count: locatedCount,
+                            total: currentCount,
+                          })}
+                    </span>
+                  </SummaryChip>
+                )}
               </span>
             </span>
           </AccordionTrigger>
@@ -168,6 +202,50 @@ export function UploadSettingsPanel() {
               <span className="block text-xs leading-relaxed text-text-muted">
                 {t("compressionTooltipHint")}
               </span>
+            </section>
+
+            <section className="space-y-2">
+              <LocationAutocomplete
+                id="global-location"
+                label={t("globalLocationLabel")}
+                labelClassName="text-xs! font-medium text-text"
+                placeholder={t("locationPlaceholder")}
+                selectedLabel={sharedLocation?.formatted}
+                onSelect={(feature) => {
+                  const location = featureToLocationInput(feature);
+                  // An unusable pick is ignored — it must never read as "clear".
+                  if (location) updateStagedCreateInputs(() => ({ location }));
+                }}
+                onClear={() =>
+                  updateStagedCreateInputs(() => ({ location: null }))
+                }
+                // Above the create dialog's z-100, or the suggestions open behind it.
+                positionerClassName="z-[110]"
+              />
+              <span className="block text-xs leading-relaxed text-text-muted">
+                {!sharedLocation && locatedCount > 0
+                  ? t("globalLocationMixed")
+                  : t("globalLocationHint")}
+              </span>
+              {/* Always shown, mixed or not: the bulk field is a shortcut, never the only way. */}
+              <span className="flex items-start gap-1.5 text-xs leading-relaxed text-text-muted">
+                <MousePointerClick
+                  className="mt-0.5 size-3.5 shrink-0"
+                  aria-hidden
+                />
+                {t("globalLocationPerFileHint")}
+              </span>
+              {!sharedLocation && locatedCount > 0 && (
+                <button
+                  type="button"
+                  className="text-xs font-medium text-text underline underline-offset-2 hover:text-text-muted"
+                  onClick={() =>
+                    updateStagedCreateInputs(() => ({ location: null }))
+                  }
+                >
+                  {t("globalLocationClear")}
+                </button>
+              )}
             </section>
 
             <section

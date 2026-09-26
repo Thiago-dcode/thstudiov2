@@ -11,12 +11,15 @@ import {
 import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
 import { DbException } from '@repo/database/exceptions';
 import type { SqlValue } from '@repo/common-lib/types/database';
+import { toPlaceSlug } from '@repo/common-lib/utils/place-slug';
+import { upsertReturning } from './upsert-returning';
 
 @Injectable()
 export class StateRepository extends BaseRepository {
   private readonly COLUMNS: StateSchemaColumns[] = [
     'states.id',
     'states.name',
+    'states.slug',
     'states.country_id',
     'states.created_at',
     'states.updated_at',
@@ -38,28 +41,17 @@ export class StateRepository extends BaseRepository {
       .first<State>();
   }
 
-  async findByCountryIdAndName(
-    countryId: number,
-    name: string,
-  ): Promise<State | null> {
-    return this.query()
-      .select(this.COLUMNS)
-      .where('country_id', '=', countryId)
-      .where('name', '=', name)
-      .first<State>();
-  }
-
+  /** Find-or-create by slug within the country, so spellings that differ only in accents/case share a row. */
   async upsertState(input: { country_id: number; name: string }): Promise<State> {
-    const existing = await this.findByCountryIdAndName(
-      input.country_id,
-      input.name,
-    );
-    if (existing) {
-      return this.updateById(existing.id, { name: input.name });
-    }
-    return this.create({
-      country_id: input.country_id,
-      name: input.name,
+    return upsertReturning<State>({
+      table: TABLES_ENUM.STATES,
+      row: {
+        country_id: input.country_id,
+        name: input.name,
+        slug: toPlaceSlug(input.name),
+      },
+      conflict: ['country_id', 'slug'],
+      returning: this.COLUMNS,
     });
   }
 

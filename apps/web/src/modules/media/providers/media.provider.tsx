@@ -323,7 +323,7 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
 
   /**
    * Applies a patch to every staged create — what the dialog's bulk controls (global compression,
-   * the AI toggle) need. `index` is the position among staged items, for per-item budgeting like
+   * location, the AI toggle) need. `index` is the position among staged items, for per-item budgeting like
    * AI credits.
    *
    * Maps over the whole list rather than replacing it with the staged subset: the callers used to

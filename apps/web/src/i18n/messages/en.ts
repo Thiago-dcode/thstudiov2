@@ -1289,12 +1289,14 @@ const messages = {
     },
     update: "Update",
   },
-  addressForm: {
-    label: "Address",
-    searchPlaceholder: "Search for your address…",
+  locationSearch: {
     searching: "Searching locations…",
     noLocations: "No locations found.",
     minCharsHint: "Type at least 3 characters to search.",
+  },
+  addressForm: {
+    label: "Address",
+    searchPlaceholder: "Search for your address…",
     saving: "Saving address…",
   },
   userCategories: {
@@ -1907,10 +1909,21 @@ const messages = {
         titleLabel: "Title",
         titlePlaceholder: "e.g. Sunset over Lisbon",
         descriptionLabel: "Description",
-        descriptionPlaceholder:
-          "What it shows, where it was made, the story behind it",
+        descriptionPlaceholder: "What it shows, the story behind it",
+        locationLabel: "Location",
+        locationPlaceholder: "Search a city or place…",
+        locationHint:
+          "Where it was made or shot. Helps people find your work by place.",
+        settingsLocationSome: "{count}/{total} files",
+        globalLocationLabel: "Location for all files",
+        globalLocationHint: "Sets the same place on every file.",
+        globalLocationPerFileHint:
+          "Need a different place for one file? Click it in the list to set its own location.",
+        globalLocationMixed:
+          "Your files have different locations. Picking one here replaces them all.",
+        globalLocationClear: "Remove location from all files",
         aiNotesTip:
-          "Tip: give each file a title and description first. AI reads them as context, so the SEO it writes is more accurate. Click a file to add them.",
+          "Tip: give each file a title, description and location first. AI reads them as context, so the SEO it writes is more accurate. Click a file to add them.",
         duplicateSummary:
           "{count, plural, one {# file has} other {# files have}} the same name and size as another file in this upload — check for duplicates.",
         duplicateCardHint:
@@ -1935,6 +1948,9 @@ const messages = {
         titlePlaceholder: "Enter title",
         descriptionLabel: "Description",
         descriptionPlaceholder: "Enter description",
+        locationLabel: "Location",
+        locationPlaceholder: "Search a city or place…",
+        locationInfo: "Where it was made or shot. AI uses it when writing SEO.",
         seoTitleLabel: "SEO Title",
         seoTitlePlaceholder: "Enter SEO title",
         seoTitleInfo:
@@ -2070,6 +2086,8 @@ const messages = {
         noPreview: "No preview",
         unknownFile: "Unknown file",
         requestFailed: "Request failed",
+        minimize: "Minimize",
+        expand: "Expand",
         requestFailedCount:
           "{count, plural, one {# item could not be sent} other {# items could not be sent}}",
       },

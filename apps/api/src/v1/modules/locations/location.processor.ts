@@ -11,9 +11,7 @@ import type {
   CreateOrUpdateLocationPayload,
   State,
 } from '@repo/common-lib/types/location';
-import { CountryRepository } from './country.repository';
-import { StateRepository } from './state.repository';
-import { CityRepository } from './city.repository';
+import { LocationService } from './location.service';
 import { GlobalProcessor } from 'src/common/processors/global.processor';
 
 @Processor(LOCATION_QUEUE)
@@ -23,9 +21,7 @@ export class LocationProcessor extends GlobalProcessor {
   });
 
   constructor(
-    private readonly countryRepository: CountryRepository,
-    private readonly stateRepository: StateRepository,
-    private readonly cityRepository: CityRepository,
+    private readonly locationService: LocationService,
     private readonly appLogService: LogService,
   ) {
     super();
@@ -53,53 +49,16 @@ export class LocationProcessor extends GlobalProcessor {
     const log = this.logger.name(JOB_CREATE_OR_UPDATE_LOCATION);
     log.info('Create or update location payload', { payload: data });
 
-    const country = (data.country ?? '').trim();
-    const countryCode = (data.country_code ?? '').trim();
-    const stateName = data.state?.trim();
-    const cityName = data.city?.trim();
-
-    if (!country) {
-      const err = new Error(
-        'CreateOrUpdateLocationPayload requires non-empty country',
-      );
-      log.error(err.message, err);
-      throw err;
-    }
-
     try {
-      const countryRow = await this.countryRepository.upsertCountry({
-        name: country,
-        country_code: (countryCode || country).slice(0, 5),
-      });
-
-      let stateRow: State | undefined;
-      if (stateName) {
-        stateRow = await this.stateRepository.upsertState({
-          country_id: countryRow.id,
-          name: stateName,
-        });
-      }
-
-      let cityRow: City | undefined;
-      if (cityName && stateRow) {
-        cityRow = await this.cityRepository.upsertCity({
-          country_id: countryRow.id,
-          state_id: stateRow.id,
-          name: cityName,
-        });
-      }
+      const { country, state, city } = await this.locationService.upsertHierarchy(data);
 
       log.info('Location upsert completed', {
-        country_id: countryRow.id,
-        state_id: stateRow?.id,
-        city_id: cityRow?.id,
+        country_id: country.id,
+        state_id: state?.id,
+        city_id: city?.id,
       });
 
-      return {
-        country: countryRow,
-        state: stateRow,
-        city: cityRow,
-      };
+      return { country, state, city };
     } catch (error) {
       log.error(
         `Failed to create or update location: ${error instanceof Error ? error.message : 'Unknown error'}`,

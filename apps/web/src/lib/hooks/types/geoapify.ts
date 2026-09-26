@@ -1,4 +1,8 @@
 export type GeoapifyFeatureProperties = {
+  /** Geoapify's stable id for the feature — what `locations.place_id` dedupes on. */
+  place_id: string;
+  /** The feature's own name (a venue, city, region…); absent for plain street addresses. */
+  name?: string;
   country: string;
   country_code: string;
   state?: string;

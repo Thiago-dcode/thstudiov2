@@ -38,6 +38,9 @@ export const UserNotificationsDrawer = () => {
   } = useUserNotifications();
   const [open, setOpen] = useState(false);
   const [showMarkAllDialog, setShowMarkAllDialog] = useState(false);
+  // Bumped on every unread arrival; used as the icon's key so each bump remounts it and replays
+  // the ring animation, even when a second notification lands mid-swing.
+  const [ringCount, setRingCount] = useState(0);
   const closeDrawer = useCallback(() => setOpen(false), []);
 
   // Only what is on screen. A notification that arrives between opening this dialog and
@@ -63,7 +66,7 @@ export const UserNotificationsDrawer = () => {
     const callbackId = "user-notifications-drawer";
     subscribeToUserNotification(callbackId, (notification) => {
       if (!notification.read_at) {
-        setOpen(true);
+        setRingCount((n) => n + 1);
       }
     });
     return () => {
@@ -92,7 +95,11 @@ export const UserNotificationsDrawer = () => {
               : t("notificationsAria")
           }
         >
-          <Bell size={18} />
+          <Bell
+            key={ringCount}
+            size={18}
+            className={cn(ringCount > 0 && "animate-bell-ring")}
+          />
           {hasPendingToRead && (
             <span
               className="absolute top-1 right-1 size-2 bg-accent"

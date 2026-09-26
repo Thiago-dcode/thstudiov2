@@ -8,6 +8,7 @@ import { AddressModule } from '../addresses/address.module';
 import { AiModule } from '../ai/ai.module';
 import { CategoriesModule } from '../categories/categories.module';
 import { CollectionModule } from '../collections/collection.module';
+import { LocationModule } from '../locations/location.module';
 import { MediaModule } from '../media/media.module';
 import { PortfolioModule } from '../portfolios/portfolio.module';
 import { UserExtraDataModule } from '../user-extra-data/user-extra-data.module';
@@ -42,6 +43,7 @@ import { AiMediaService } from './ai-media.service';
     CategoriesModule,
     PortfolioModule,
     CollectionModule,
+    LocationModule,
     BullModule.registerQueue({ name: AI_MEDIA_QUEUE }, { name: LOG_QUEUE }),
   ],
 })

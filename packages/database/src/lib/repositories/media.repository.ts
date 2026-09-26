@@ -1,6 +1,8 @@
 import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
 import { MediaSeoTranslation } from '@repo/common-lib/types/ai';
 import {
+  MediaLocationJoinColumns,
+  MediaLocationJoinSchema,
   MediaSchema,
   MediaSchemaColumns,
   MediaWithUserSchema,
@@ -10,13 +12,15 @@ import {
   CreateMediaInput,
   UpdateMediaInternalInput,
   Media,
+  MediaLocation,
   MediaWithUser,
 } from '@repo/common-lib/types/media';
-import { SqlValue } from '@repo/common-lib/types/database';
+import { Join, SqlValue } from '@repo/common-lib/types/database';
 import { MediaHelper } from '@repo/common-lib/utils/media';
 import { DbException } from '../exceptions';
 import { Query } from '../facades';
 import { BaseRepository } from './base.repository';
+import { QueryBuilder } from '../builder/queryBuilder';
 
 /**
  * Nest-free media repository for API subclasses and workers.
@@ -54,6 +58,7 @@ export class MediaRepository extends BaseRepository {
     'media.seo_description',
     'media.seo_filename',
     'media.seo_generated_at',
+    'media.location_id',
     'media.user_id',
     'media.created_at',
     'media.updated_at',
@@ -67,6 +72,28 @@ export class MediaRepository extends BaseRepository {
     'users.surname',
   ];
 
+  /** Selected alongside {@link LOCATION_JOIN}; {@link formatMedia} folds them into `location`. */
+  protected readonly LOCATION_COLUMNS: MediaLocationJoinColumns[] = [
+    'locations.id as l_id',
+    'locations.formatted as l_formatted',
+    'locations.name as l_name',
+  ];
+
+  /** LEFT: most media have no location, and they must still come back. */
+  protected static readonly LOCATION_JOIN: Join = {
+    type: 'LEFT',
+    localColumn: 'location_id',
+    foreignTable: TABLES_ENUM.LOCATIONS,
+    foreignColumn: 'id',
+  };
+
+  /** Adds the place to a media read. Pair with {@link LOCATION_COLUMNS} in the select. */
+  protected withLocation(query: QueryBuilder): QueryBuilder {
+    const { localColumn, foreignTable, foreignColumn, type } = MediaRepository.LOCATION_JOIN;
+    query.join(localColumn, foreignTable, foreignColumn, type);
+    return query;
+  }
+
   constructor() {
     super('media');
   }
@@ -76,11 +103,12 @@ export class MediaRepository extends BaseRepository {
   }
 
   async findById(id: number): Promise<MediaWithUser> {
-    const result = await this.query()
-      .select(this.COLUMNS_WITH_USER)
-      .where('media.id', '=', id)
-      .join('user_id', 'users', 'id')
-      .first<MediaWithUserSchema>();
+    const result = await this.withLocation(
+      this.query()
+        .select([...this.COLUMNS_WITH_USER, ...this.LOCATION_COLUMNS])
+        .where('media.id', '=', id)
+        .join('user_id', 'users', 'id'),
+    ).first<MediaWithUserSchema & MediaLocationJoinSchema>();
     if (!result) {
       throw new DbException('Media not found with id ' + id, 404);
     }
@@ -88,19 +116,23 @@ export class MediaRepository extends BaseRepository {
   }
 
   async findByUserId(userId: number): Promise<Media[]> {
-    const results = await this.query()
-      .select(this.COLUMNS)
-      .where('user_id', '=', userId)
-      .get<MediaSchema[]>();
+    const results = await this.withLocation(
+      this.query()
+        .select([...this.COLUMNS, ...this.LOCATION_COLUMNS])
+        .where('media.user_id', '=', userId),
+    ).get<(MediaSchema & MediaLocationJoinSchema)[]>();
     return results.map((result) => this.formatMedia(result));
   }
 
   async findManyByIds(ids: number[]): Promise<Media[]> {
     if (!ids.length) return [];
-    const results = await this.query()
-      .select(this.COLUMNS)
-      .whereIn('media.id', ids)
-      .get<MediaSchema[]>();
+    // With the place: update notifications carry these rows, and a payload without `location`
+    // would leave the client showing the place from before the edit.
+    const results = await this.withLocation(
+      this.query()
+        .select([...this.COLUMNS, ...this.LOCATION_COLUMNS])
+        .whereIn('media.id', ids),
+    ).get<(MediaSchema & MediaLocationJoinSchema)[]>();
     return results.map((result) => this.formatMedia(result));
   }
 
@@ -108,11 +140,12 @@ export class MediaRepository extends BaseRepository {
     column: keyof MediaSchema,
     value: any,
   ): Promise<MediaWithUser | null> {
-    const result = await this.query()
-      .select(this.COLUMNS_WITH_USER)
-      .where(column, '=', value)
-      .join('user_id', 'users', 'id')
-      .first<MediaWithUserSchema>();
+    const result = await this.withLocation(
+      this.query()
+        .select([...this.COLUMNS_WITH_USER, ...this.LOCATION_COLUMNS])
+        .where(column, '=', value)
+        .join('user_id', 'users', 'id'),
+    ).first<MediaWithUserSchema & MediaLocationJoinSchema>();
     if (!result) return null;
     return this.formatMediaWithUser(result);
   }
@@ -140,9 +173,13 @@ export class MediaRepository extends BaseRepository {
   }
 
   async create(data: CreateMediaInput): Promise<Media> {
-    const result = await super._create<MediaSchema>(MediaRepository.toRow(data), {
-      select: this.COLUMNS,
-    });
+    const result = await super._create<MediaSchema & MediaLocationJoinSchema>(
+      MediaRepository.toRow(data),
+      {
+        select: [...this.COLUMNS, ...this.LOCATION_COLUMNS],
+        join: [MediaRepository.LOCATION_JOIN],
+      },
+    );
     return this.formatMedia(result);
   }
 
@@ -151,10 +188,12 @@ export class MediaRepository extends BaseRepository {
     const columns = Object.keys(row);
     const values = Object.values(row);
     await this.query().where('id', '=', id).update(columns, values);
-    const result = await this.query()
-      .select(this.COLUMNS)
-      .where('id', '=', id)
-      .first<MediaSchema>();
+    // Read back with the place joined: an edit that changed the location must return the new one.
+    const result = await this.withLocation(
+      this.query()
+        .select([...this.COLUMNS, ...this.LOCATION_COLUMNS])
+        .where('media.id', '=', id),
+    ).first<MediaSchema & MediaLocationJoinSchema>();
     return this.formatMedia(result);
   }
 
@@ -177,7 +216,25 @@ export class MediaRepository extends BaseRepository {
     await this.query().where('id', '=', id).delete();
   }
 
-  protected formatMediaWithUser(result: MediaWithUserSchema): MediaWithUser {
+  /**
+   * `undefined` when the read did not join locations (the key is absent), `null` when it did
+   * and the media has no place — so a compact read never claims "no location" it did not check.
+   */
+  protected static formatLocation(
+    result: Partial<MediaLocationJoinSchema>,
+  ): MediaLocation | null | undefined {
+    if (!('l_id' in result)) return undefined;
+    if (result.l_id == null) return null;
+    return {
+      id: result.l_id,
+      formatted: result.l_formatted ?? '',
+      name: result.l_name ?? '',
+    };
+  }
+
+  protected formatMediaWithUser(
+    result: MediaWithUserSchema & Partial<MediaLocationJoinSchema>,
+  ): MediaWithUser {
     return {
       ...this.formatMedia(result),
       user: {
@@ -208,7 +265,7 @@ export class MediaRepository extends BaseRepository {
     }
   }
 
-  protected formatMedia(result: MediaSchema): Media {
+  protected formatMedia(result: MediaSchema & Partial<MediaLocationJoinSchema>): Media {
     return {
       id: result.id,
       public_id: result.public_id,
@@ -240,6 +297,8 @@ export class MediaRepository extends BaseRepository {
       seo_description: result.seo_description,
       seo_filename: result.seo_filename,
       seo_generated_at: result.seo_generated_at,
+      location_id: result.location_id ?? null,
+      location: MediaRepository.formatLocation(result),
       user_id: result.user_id,
       created_at: result.created_at,
       updated_at: result.updated_at,

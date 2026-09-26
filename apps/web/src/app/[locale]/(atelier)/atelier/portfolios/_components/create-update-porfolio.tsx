@@ -77,7 +77,7 @@ export const CreateOrUpdatePortfolio = ({
     router.push(`/atelier/portfolios/edit/${slug}`);
   }, [success, portfolioResult, router]);
   return (
-    <FormComponent.Container>
+    <FormComponent.Container className="flex-1">
       {readOnly ? (
         <div
           role="status"
@@ -94,7 +94,7 @@ export const CreateOrUpdatePortfolio = ({
           }
           await handleSubmit(e);
         }}
-        className="relative"
+        className="relative flex-1"
       >
         {isPending && (
           <div className="absolute inset-0 z-10 flex items-center justify-center bg-bg/70 backdrop-blur-[2px]">
@@ -125,8 +125,12 @@ export const CreateOrUpdatePortfolio = ({
           </div>
         )}
 
+        {/* Soaks up the leftover height so a short step still pins the footer to the bottom. */}
+        <div aria-hidden="true" className="min-h-3 flex-1 sm:min-h-7" />
+
         {/* Step progress + navigation */}
         <StickyFormFooter
+          className="mt-0 sm:mt-0"
           top={
             <div className="flex items-center gap-1.5">
               {Array.from({ length: MAX_STEPS }, (_, i) => (

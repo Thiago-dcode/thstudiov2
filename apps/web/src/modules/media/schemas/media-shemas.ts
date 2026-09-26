@@ -5,6 +5,7 @@ import {
   type Translator,
   tooLongMessage,
 } from "@/lib/validation/zod-helpers";
+import { locationInputSchema } from "@/modules/locations/schemas/location-input.schema";
 
 /** Mirrors the `media.title` VARCHAR(255) column; inputs use it as `maxLength` too. */
 export const MEDIA_TITLE_MAX = 255;
@@ -18,6 +19,7 @@ export const createMediaSchema = (t: Translator) =>
       .nullable()
       .optional(),
     description: z.string().nullable().optional(),
+    location: locationInputSchema.nullable().optional(),
     compression_level: z
       .enum([...ENUMS.COMPRESSION_LEVEL] as [string, ...string[]], {
         message: t("validation.invalid", { field: t("fields.file") }),
@@ -54,6 +56,8 @@ export const updateMediaSchema = (t: Translator) =>
         .nullable()
         .optional(),
       description: z.string().nullable().optional(),
+      // `null` clears the place; absent leaves it as it is.
+      location: locationInputSchema.nullable().optional(),
       seo_alt: z
         .string()
         .max(SEO_MAX, tooLongMessage(t, t("fields.seoAlt")))

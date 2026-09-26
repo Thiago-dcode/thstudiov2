@@ -1,5 +1,6 @@
 import { TABLES_ENUM, EnumType } from "../constants/enums";
 import { TableColumn } from "../types/database";
+import type { LocationSchema } from "./location";
 
 // ==================== MEDIA SCHEMA ====================
 export type MediaSchema = {
@@ -44,6 +45,8 @@ export type MediaSchema = {
   seo_filename: string;
   /** Internal: when AI SEO was last generated. Never returned in API responses. */
   seo_generated_at?: Date | null;
+  /** Where the work was made or shot — a `locations` row. Set from a picked place, never directly. */
+  location_id?: number | null;
   user_id: number;
   created_at: Date;
   updated_at: Date;
@@ -64,6 +67,20 @@ export type MediaWithUserSchema = MediaSchema & {
 
 const tablesMediaWithUser = [TABLES_ENUM.MEDIA, TABLES_ENUM.USERS] as const;
 export type MediaWithUserSchemaColumns = TableColumn<typeof tablesMediaWithUser, MediaWithUserSchema>;
+
+// ==================== MEDIA LOCATION JOIN ====================
+/** The `locations` columns a media read LEFT JOINs, aliased `l_*` so `id`/`name` never collide. */
+export type MediaLocationJoinSchema = {
+  l_id: number | null;         // COLLISION: id
+  l_formatted: string | null;
+  l_name: string | null;       // COLLISION: users.name
+};
+
+const tablesMediaLocation = [TABLES_ENUM.LOCATIONS] as const;
+export type MediaLocationJoinColumns = TableColumn<
+  typeof tablesMediaLocation,
+  Pick<LocationSchema, 'id' | 'formatted' | 'name'> & MediaLocationJoinSchema
+>;
 
 // ==================== MEDIA WITH TRANSLATIONS SCHEMA ====================
 export type MediaWithTranslationsSchema = MediaSchema & {

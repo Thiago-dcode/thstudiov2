@@ -12,6 +12,7 @@ import { GenerateMediaMetadataInput } from '@repo/common-lib/types/ai';
 import { GlobalProcessor } from 'src/common/processors/global.processor';
 import { CategoriesService } from '../categories/categories.service';
 import { CollectionRepository } from '../collections/collection.repository';
+import { LocationService } from '../locations/location.service';
 import { MediaRepository } from '../media/media.repository';
 import { MediaService } from '../media/media.service';
 import { PortfolioRepository } from '../portfolios/portfolio.repository';
@@ -27,6 +28,7 @@ export class AiMediaProcessor extends GlobalProcessor {
     private readonly categoriesService: CategoriesService,
     private readonly portfolioRepository: PortfolioRepository,
     private readonly collectionRepository: CollectionRepository,
+    private readonly locationService: LocationService,
     private readonly logger: LogService,
   ) {
     super();
@@ -69,6 +71,10 @@ export class AiMediaProcessor extends GlobalProcessor {
         throw new Error(`Media [${request.media_id}] not found`);
       }
 
+      const location = asset.location_id
+        ? await this.locationService.getSummaryById(asset.location_id)
+        : null;
+
       // Like moderation, this is an `image_url` vision call: it cannot read an MP4. A video is
       // described from the frames sampled across it — the same real WebPs moderation judged —
       // falling back to the single poster frame for a video processed before previews existed.
@@ -87,9 +93,9 @@ export class AiMediaProcessor extends GlobalProcessor {
           user_id: request.user_id,
           media_type: asset.media_type,
         },
-        // The artist's own title/description — set at upload or edited later — so the model can
-        // name what the pixels cannot (subject, project, place).
-        { title: asset.title, description: asset.description },
+        // The artist's own title/description/place — set at upload or edited later — so the model
+        // can name what the pixels cannot (subject, project, where it was made).
+        { title: asset.title, description: asset.description, location },
       );
 
       // EN row (fallback to first) → the main-row SEO columns; filename is shared across locales.

@@ -11,6 +11,8 @@ import {
 import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
 import { DbException } from '@repo/database/exceptions';
 import type { SqlValue } from '@repo/common-lib/types/database';
+import { toPlaceSlug } from '@repo/common-lib/utils/place-slug';
+import { upsertReturning } from './upsert-returning';
 
 @Injectable()
 export class CountryRepository extends BaseRepository {
@@ -18,6 +20,7 @@ export class CountryRepository extends BaseRepository {
         'countries.id',
         'countries.country_code',
         'countries.name',
+        'countries.slug',
         'countries.created_at',
         'countries.updated_at',
     ] as const;
@@ -38,46 +41,24 @@ export class CountryRepository extends BaseRepository {
             .first<Country>();
     }
 
-    async findByCountryCode(countryCode: string): Promise<Country | null> {
-        return this.query()
-            .select(this.COLUMNS)
-            .where('country_code', '=', countryCode)
-            .first<Country>();
-    }
-
-    async findByName(name: string): Promise<Country | null> {
-        return this.query()
-            .select(this.COLUMNS)
-            .where('name', '=', name)
-            .first<Country>();
-    }
-
-    async findByCountryCodeOrName(
-        countryCode: string,
-        name: string,
-    ): Promise<Country | null> {
-        const byCode = await this.findByCountryCode(countryCode);
-        if (byCode) return byCode;
-        return this.findByName(name);
-    }
-
+    /**
+     * Find-or-create by ISO code — the one key that does not depend on the geocoder's spelling.
+     * The first writer's name and slug stand: renaming on conflict could collide with another
+     * country's slug and would move the country's public URL under existing links.
+     */
     async upsertCountry(input: {
         name: string;
         country_code: string;
     }): Promise<Country> {
-        const existing = await this.findByCountryCodeOrName(
-            input.country_code,
-            input.name,
-        );
-        if (existing) {
-            return this.updateById(existing.id, {
+        return upsertReturning<Country>({
+            table: TABLES_ENUM.COUNTRIES,
+            row: {
                 name: input.name,
                 country_code: input.country_code,
-            });
-        }
-        return this.create({
-            name: input.name,
-            country_code: input.country_code,
+                slug: toPlaceSlug(input.name),
+            },
+            conflict: ['country_code'],
+            returning: this.COLUMNS,
         });
     }
 

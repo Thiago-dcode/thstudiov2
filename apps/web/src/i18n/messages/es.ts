@@ -1297,12 +1297,14 @@ const messages = {
     },
     update: "Actualizar",
   },
-  addressForm: {
-    label: "Dirección",
-    searchPlaceholder: "Busca tu dirección…",
+  locationSearch: {
     searching: "Buscando ubicaciones…",
     noLocations: "No se encontraron ubicaciones.",
     minCharsHint: "Escribe al menos 3 caracteres para buscar.",
+  },
+  addressForm: {
+    label: "Dirección",
+    searchPlaceholder: "Busca tu dirección…",
     saving: "Guardando dirección…",
   },
   userCategories: {
@@ -1918,10 +1920,21 @@ const messages = {
         titleLabel: "Título",
         titlePlaceholder: "p. ej. Atardecer sobre Lisboa",
         descriptionLabel: "Descripción",
-        descriptionPlaceholder:
-          "Qué muestra, dónde se hizo, la historia detrás",
+        descriptionPlaceholder: "Qué muestra y la historia detrás",
+        locationLabel: "Ubicación",
+        locationPlaceholder: "Busca una ciudad o lugar…",
+        locationHint:
+          "Dónde se hizo o se fotografió. Ayuda a que encuentren tu obra por lugar.",
+        settingsLocationSome: "{count}/{total} archivos",
+        globalLocationLabel: "Ubicación para todos los archivos",
+        globalLocationHint: "Pone el mismo lugar en todos los archivos.",
+        globalLocationPerFileHint:
+          "¿Un archivo es de otro lugar? Haz clic en él en la lista para ponerle su propia ubicación.",
+        globalLocationMixed:
+          "Tus archivos tienen ubicaciones distintas. Si eliges una aquí, se reemplazan todas.",
+        globalLocationClear: "Quitar la ubicación de todos los archivos",
         aiNotesTip:
-          "Consejo: pon primero un título y una descripción a cada archivo. La IA los usa como contexto, así el SEO que escribe es más preciso. Haz clic en un archivo para añadirlos.",
+          "Consejo: pon primero un título, una descripción y una ubicación a cada archivo. La IA los usa como contexto, así el SEO que escribe es más preciso. Haz clic en un archivo para añadirlos.",
         duplicateSummary:
           "{count, plural, one {# archivo tiene} other {# archivos tienen}} el mismo nombre y tamaño que otro archivo de esta subida: revisa si hay duplicados.",
         duplicateCardHint:
@@ -1947,6 +1960,10 @@ const messages = {
         titlePlaceholder: "Introduce el título",
         descriptionLabel: "Descripción",
         descriptionPlaceholder: "Introduce la descripción",
+        locationLabel: "Ubicación",
+        locationPlaceholder: "Busca una ciudad o lugar…",
+        locationInfo:
+          "Dónde se hizo o se fotografió. La IA lo usa al escribir el SEO.",
         seoTitleLabel: "Título SEO",
         seoTitlePlaceholder: "Introduce el título SEO",
         seoTitleInfo:
@@ -2085,6 +2102,8 @@ const messages = {
         noPreview: "Sin vista previa",
         unknownFile: "Archivo desconocido",
         requestFailed: "Error en la solicitud",
+        minimize: "Minimizar",
+        expand: "Expandir",
         requestFailedCount:
           "{count, plural, one {# elemento no se pudo enviar} other {# elementos no se pudieron enviar}}",
       },

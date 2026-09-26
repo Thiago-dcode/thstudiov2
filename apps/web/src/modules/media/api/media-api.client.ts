@@ -124,12 +124,18 @@ export async function createMediaApi(
     );
   }
 
-  const candidate = trimValues({ ...fields }, { deep: true });
+  // `location` is a nested object from that same state; a shallow spread would share it.
+  const candidate = trimValues(
+    { ...fields, location: fields.location && { ...fields.location } },
+    { deep: true },
+  );
   // A field the artist cleared (or filled with spaces) trims to "". Omitted, the API stores NULL
   // and seeds the SEO columns from its own defaults instead of from an empty string.
   for (const key of ["title", "description"] as const) {
     if (candidate[key] === "") delete candidate[key];
   }
+  // A new media has no place to clear, so an unset one is simply not sent.
+  if (!candidate.location) delete candidate.location;
 
   const { data, inputErrors } = validateWith(createMediaSchema, t, candidate);
   if (inputErrors) {
@@ -194,7 +200,11 @@ export async function updateMediaApi(
 ): Promise<ActionReturn<Media, UpdateMediaInput>> {
   const t = clientTranslator();
 
-  const candidate = trimValues({ ...input }, { deep: true });
+  // Nested `location` copied too: `trimValues` mutates in place and `input` is provider state.
+  const candidate = trimValues(
+    { ...input, location: input.location && { ...input.location } },
+    { deep: true },
+  );
 
   const { data, inputErrors } = validateWith(updateMediaSchema, t, candidate);
   if (inputErrors) {
@@ -208,6 +218,8 @@ export async function updateMediaApi(
       cleaned[key as keyof UpdateMediaInput] = value as never;
     }
   }
+  // The one field where `null` means something: it clears the place.
+  if (validated.location === null) cleaned.location = null;
   cleanObj(cleaned);
 
   // The API's update fields are all optional and its validation pipe whitelists unknown keys

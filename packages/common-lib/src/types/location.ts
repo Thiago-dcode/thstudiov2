@@ -1,6 +1,7 @@
 import {
   CitySchema,
   CountrySchema,
+  LocationSchema,
   StateSchema,
 } from "../schemas/location";
 
@@ -9,14 +10,34 @@ import {
 export type Country = CountrySchema;
 export type State = StateSchema;
 export type City = CitySchema;
+export type Location = LocationSchema;
+
+// ==================== PICKED PLACE ====================
+
+/**
+ * A place as the client sends it: one geocoder feature, flattened. The API resolves it into a
+ * `locations` row (creating the hierarchy rows it names) and stores only the id.
+ */
+export type LocationInput = Pick<
+  LocationSchema,
+  "place_id" | "formatted" | "name" | "result_type" | "latitude" | "longitude"
+> &
+  CreateOrUpdateLocationPayload;
+
+/** A resolved place with its hierarchy names — what the AI prompt receives. */
+export type LocationSummary = Pick<LocationSchema, "id" | "formatted" | "name"> & {
+  city: string | null;
+  state: string | null;
+  country: string | null;
+};
 
 // ==================== QUEUE / PROCESSOR PAYLOAD ====================
 
 export type CreateOrUpdateLocationPayload = {
   country: string;
   country_code: string;
-  state?: string;
-  city?: string;
+  state?: string | null;
+  city?: string | null;
 };
 
 // ==================== LIST / FILTER REQUESTS ====================
@@ -39,6 +60,7 @@ export type CityIndexRequest = {
 type InternalCountryFields = "id" | "created_at" | "updated_at";
 type InternalStateFields = "id" | "created_at" | "updated_at";
 type InternalCityFields = "id" | "created_at" | "updated_at";
+type InternalLocationFields = "id" | "created_at" | "updated_at";
 
 // ==================== COUNTRY INPUT ====================
 
@@ -56,3 +78,7 @@ export type UpdateStateInput = Partial<Omit<StateSchema, InternalStateFields>>;
 
 export type CreateCityInput = Omit<CitySchema, InternalCityFields>;
 export type UpdateCityInput = Partial<Omit<CitySchema, InternalCityFields>>;
+
+// ==================== LOCATION INPUT ====================
+
+export type CreateLocationInput = Omit<LocationSchema, InternalLocationFields>;

@@ -27,9 +27,9 @@ export class MediaRepository extends BaseMediaRepository {
 
   async getAll(filters: MediaIndexRequest = {}): Promise<Media[] | MediaWithUser[]> {
     const compact = filters.compact !== false;
-    const baseQuery = compact
-      ? this.query()
-      : this.query().join('user_id', 'users', 'id');
+    const baseQuery = this.withLocation(
+      compact ? this.query() : this.query().join('user_id', 'users', 'id'),
+    );
     const query = await this.applyFilters(filters, baseQuery, compact);
 
     if (compact) {
@@ -59,7 +59,10 @@ export class MediaRepository extends BaseMediaRepository {
     if (filters.user_id) {
       query.where('user_id', filters.user_id);
     }
-    query.select(compact ? this.COLUMNS : this.COLUMNS_WITH_USER);
+    query.select([
+      ...(compact ? this.COLUMNS : this.COLUMNS_WITH_USER),
+      ...this.LOCATION_COLUMNS,
+    ]);
 
     if (filters.shape) {
       query.where('shape', filters.shape);

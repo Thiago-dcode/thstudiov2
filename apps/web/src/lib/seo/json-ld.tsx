@@ -212,6 +212,13 @@ export function buildMediaJsonLd(media: MediaWithUser, username: string) {
   const description = media.description || media.seo_description;
   if (description) image.description = description;
   if (media.seo_alt) image.caption = media.seo_alt;
+  // Where the artist says it was made — the place a "photography in Madrid" search matches on.
+  if (media.location?.formatted) {
+    image.contentLocation = {
+      "@type": "Place",
+      name: media.location.formatted,
+    };
+  }
   // LLM-assigned content tags (localized) → keywords for Google Images / entity understanding.
   if (media.tags?.length) image.keywords = media.tags.join(", ");
   if (media.created_at) {

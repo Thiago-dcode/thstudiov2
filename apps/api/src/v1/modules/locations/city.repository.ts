@@ -11,12 +11,15 @@ import {
 import { DbException } from '@repo/database/exceptions';
 import type { SqlValue } from '@repo/common-lib/types/database';
 import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
+import { toPlaceSlug } from '@repo/common-lib/utils/place-slug';
+import { upsertReturning } from './upsert-returning';
 
 @Injectable()
 export class CityRepository extends BaseRepository {
   private readonly COLUMNS: CitySchemaColumns[] = [
     'cities.id',
     'cities.name',
+    'cities.slug',
     'cities.state_id',
     'cities.country_id',
     'cities.created_at',
@@ -39,36 +42,25 @@ export class CityRepository extends BaseRepository {
       .first<City>();
   }
 
-  async findByStateCountryAndName(
-    stateId: number,
-    countryId: number,
-    name: string,
-  ): Promise<City | null> {
-    return this.query()
-      .select(this.COLUMNS)
-      .where('state_id', '=', stateId)
-      .where('country_id', '=', countryId)
-      .where('name', '=', name)
-      .first<City>();
-  }
-
+  /**
+   * Find-or-create by slug within (country, state). `state_id` may be null — the unique index is
+   * NULLS NOT DISTINCT, so a stateless city still resolves to a single row.
+   */
   async upsertCity(input: {
     country_id: number;
-    state_id: number;
+    state_id: number | null;
     name: string;
   }): Promise<City> {
-    const existing = await this.findByStateCountryAndName(
-      input.state_id,
-      input.country_id,
-      input.name,
-    );
-    if (existing) {
-      return await this.updateById(existing.id, { name: input.name });
-    }
-    return await this.create({
-      country_id: input.country_id,
-      state_id: input.state_id,
-      name: input.name,
+    return upsertReturning<City>({
+      table: TABLES_ENUM.CITIES,
+      row: {
+        country_id: input.country_id,
+        state_id: input.state_id,
+        name: input.name,
+        slug: toPlaceSlug(input.name),
+      },
+      conflict: ['country_id', 'state_id', 'slug'],
+      returning: this.COLUMNS,
     });
   }
 

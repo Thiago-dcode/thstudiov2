@@ -119,6 +119,7 @@ export const TABLES_ENUM = {
   COUNTRIES: 'countries',
   STATES: 'states',
   CITIES: 'cities',
+  LOCATIONS: 'locations',
   USER_AUTH_DEVICES: 'user_auth_devices',
   USER_SESSIONS: 'user_sessions',
   PASSWORD_RECOVERY_ATTEMPTS: 'password_recovery_attempts',

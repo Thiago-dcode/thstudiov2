@@ -4,11 +4,18 @@ import {
 } from "../schemas/media";
 import { OffsetPaginationRequest } from "./request";
 import { EnumType } from "../constants/enums";
+import type { LocationInput, LocationSummary } from "./location";
 
 // ==================== MEDIA TYPES ====================
 
+/** The place a media was made, as media responses carry it (a slice of the `locations` row). */
+export type MediaLocation = Pick<LocationSummary, 'id' | 'formatted' | 'name'>;
+
 // Media with timestamps
-export type Media = MediaSchema;
+export type Media = MediaSchema & {
+  /** Present when the row was read with its location joined; null when none is set. */
+  location?: MediaLocation | null;
+};
 // Media translation without id
 
 export type MediaPortfolio = Pick<Media, 'id' | 'public_id' | 'title' | 'thumbnail' | 'url' | 'seo_alt' | 'seo_description' | 'seo_filename' | 'seo_title' | 'shape' | 'aspect_ratio' | 'is_highlight' | 'media_type'> & {
@@ -51,10 +58,16 @@ export type MediaIndexRequest = OffsetPaginationRequest & {
 export type GetAllUserMediaQueryParams = Omit<MediaIndexRequest, 'user_id'>;
 
 // Fields generated internally by the system (user cannot set these)
-type InternalMediaFields = 'id' | 'public_id' | 'bytes' | 'url' | 'thumbnail' | 'thumbnail_bytes' | 'previews' | 'previews_bytes' | 'video_preview' | 'video_preview_bytes' | 'shape' | 'aspect_ratio' | 'extension' | 'media_type' | 'blocked_at' | 'is_active' | 'is_featured' | 'is_value_pillars' | 'is_highlight' | 'status' | 'completed_at' | 'failed_reason' | 'seo_filename' | 'seo_generated_at' | 'created_at' | 'updated_at';
+type InternalMediaFields = 'id' | 'public_id' | 'bytes' | 'url' | 'thumbnail' | 'thumbnail_bytes' | 'previews' | 'previews_bytes' | 'video_preview' | 'video_preview_bytes' | 'shape' | 'aspect_ratio' | 'extension' | 'media_type' | 'blocked_at' | 'is_active' | 'is_featured' | 'is_value_pillars' | 'is_highlight' | 'status' | 'completed_at' | 'failed_reason' | 'seo_filename' | 'seo_generated_at' | 'location_id' | 'created_at' | 'updated_at';
+
+/**
+ * Users never send `location_id`: they send the place they picked, which the API resolves into
+ * a `locations` row. `null` on update clears it.
+ */
+type MediaLocationPayload = { location?: LocationInput | null };
 
 // What users can provide when creating media (public API input)
-export type PublicCreateMediaInput = Omit<MediaSchema, InternalMediaFields>;
+export type PublicCreateMediaInput = Omit<MediaSchema, InternalMediaFields> & MediaLocationPayload;
 export type CreateMediaInputWithFile = PublicCreateMediaInput & {
   generate_metadata?: boolean;
   file?: File;
@@ -92,12 +105,14 @@ export type CreateMediaInput = Omit<
   Partial<Pick<MediaSchema, 'status' | 'completed_at' | 'failed_reason'>>;
 
 // What users can update
-export type UpdateMediaInput = Partial<Omit<MediaSchema, InternalMediaFields>>;
+export type UpdateMediaInput = Partial<Omit<MediaSchema, InternalMediaFields>> & MediaLocationPayload;
 
-// What the internal service can update (public fields + system-only SEO filename/timestamp + storage keys)
-export type UpdateMediaInternalInput = UpdateMediaInput &
+// What the internal service can update (public fields + system-only SEO filename/timestamp + storage keys).
+// Column-shaped: the picked place has already been resolved to `location_id`.
+export type UpdateMediaInternalInput = Partial<Omit<MediaSchema, InternalMediaFields>> &
   Partial<Pick<
     MediaSchema,
+    | 'location_id'
     | 'seo_filename'
     | 'seo_generated_at'
     | 'url'
