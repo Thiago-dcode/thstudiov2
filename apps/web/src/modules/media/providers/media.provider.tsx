@@ -1,9 +1,12 @@
 "use client";
 
+import type { GenerateManyMediaMetadataResult } from "@repo/common-lib/types/ai";
+import type { LocationInput } from "@repo/common-lib/types/location";
 import type {
   CreateMediaInputWithFile,
   Media,
   UpdateMediaInput,
+  UpdateMediaLocationsInput,
 } from "@repo/common-lib/types/media";
 import type {
   ActionReturn,
@@ -22,13 +25,13 @@ import {
   useState,
 } from "react";
 import { setClientTranslator } from "@/lib/i18n/client-translator";
+import { generateManyMediaMetadataAction } from "@/modules/ai/actions/generate-many-media-metadata.action";
+import { generateMediaMetadataAction } from "@/modules/ai/actions/generate-media-metadata.action";
+import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { useSubscribeToUserNotification } from "@/modules/user-notifications/hooks/useSubscribeToUserNotification";
-import {
-  createMediaApi,
-  generateMediaMetadataApi,
-  updateMediaApi,
-} from "../api/media-api.client";
+import { createMediaApi, updateMediaApi } from "../api/media-api.client";
 import { deleteMediaAction } from "../server-actions/delete-media.action";
+import { updateMediaLocationsAction } from "../server-actions/update-media-locations.action";
 import {
   MEDIA_UPLOAD_CONCURRENCY,
   runWithConcurrency,
@@ -79,6 +82,10 @@ type MediaContextType = {
   uploadSingleMedia: (uniqueId: number) => Promise<void>;
   generateSeoSingleMedia: (media: Media) => Promise<ActionReturn<Media>>;
   generateManySeoMedia: (media: Media[]) => Promise<void>;
+  updateManyMediaLocation: (input: {
+    location: LocationInput;
+    media: Media[];
+  }) => Promise<void>;
   deleteSingleMedia: (
     media: Media,
   ) => Promise<Awaited<ReturnType<typeof deleteMediaAction>>>;
@@ -475,10 +482,7 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
     });
 
     try {
-      const result = await generateMediaMetadataApi({
-        media_id: media.id,
-        user_id: media.user_id,
-      });
+      const result = await generateMediaMetadataAction(media.id);
       //request failed, maybe validation...
       if (!result.data) {
         updateUploadByUniqueId(baseUpload.unique_id, {
@@ -524,35 +528,259 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const updateMediaLocationsRef = useRef<UpdateMediaLocationsInput | null>(
+    null,
+  );
+  const { handleAction: updateMediaLocations } = useHandleAction<
+    UpdateMediaLocationsInput,
+    Media[]
+  >({
+    action: async () => {
+      const input = updateMediaLocationsRef.current;
+      if (!input) {
+        return { data: null, errors: [t("actions.genericError")] };
+      }
+      try {
+        return await updateMediaLocationsAction(input);
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : t("actions.genericError");
+        return { data: null, errors: [message] };
+      }
+    },
+    afterAction: async (result) => {
+      const requestedIds = new Set(
+        updateMediaLocationsRef.current?.media ?? [],
+      );
+      updateMediaLocationsRef.current = null;
+      if (requestedIds.size === 0) return;
+
+      if (result.data) {
+        const byId = new Map(result.data.map((media) => [media.id, media]));
+        setMediaUploads((prev) =>
+          prev.map((upload) => {
+            if (!upload.id || !requestedIds.has(upload.id)) return upload;
+            const media = byId.get(upload.id);
+            if (!media) {
+              return {
+                ...upload,
+                pending: false,
+                data: undefined,
+                error: {
+                  errors: [t("actions.genericError")],
+                  inputErrors: undefined,
+                },
+              };
+            }
+            return {
+              ...upload,
+              data: media,
+              pending: false,
+              error: undefined,
+            };
+          }),
+        );
+        return;
+      }
+
+      const error = extractReturnError(result);
+      setMediaUploads((prev) =>
+        prev.map((upload) =>
+          upload.id && requestedIds.has(upload.id)
+            ? { ...upload, pending: false, data: undefined, error }
+            : upload,
+        ),
+      );
+    },
+  });
+
   // ============================================================================
   // Batch Operations
   // ============================================================================
 
-  const generateManySeoMedia = async (media: Media[]) => {
-    for (const m of media) {
-      upsertMediaUpload({
-        input: {
-          user_id: m.user_id,
-          title: m.title ?? "",
-          description: m.description ?? "",
-          seo_title: m.seo_title ?? "",
-          seo_description: m.seo_description ?? "",
-          seo_alt: m.seo_alt ?? "",
-        },
-        action: "seo",
-        previewUrl: m.thumbnail || undefined,
-        id: m.id,
-        pending: false,
-        data: undefined,
-        error: undefined,
-        deleted: undefined,
-        unique_id: generateUniqueMediaId(),
-      });
-    }
+  const updateManyMediaLocation = async (input: {
+    location: LocationInput;
+    media: Media[];
+  }) => {
+    if (!input.media.length || updateMediaLocationsRef.current) return;
 
-    await runWithConcurrency(media, MEDIA_UPLOAD_CONCURRENCY, (m) =>
-      generateSeoSingleMedia(m),
-    );
+    const mediaById = new Map(input.media.map((item) => [item.id, item]));
+    const media = [...mediaById.values()];
+    const current = mediaUploadsRef.current;
+    const created = media
+      .filter(
+        (item) =>
+          !current.some(
+            (upload) => upload.id === item.id || upload.data?.id === item.id,
+          ),
+      )
+      .map((item) => ({
+        item,
+        unique_id: generateUniqueMediaId(),
+      }));
+
+    updateMediaLocationsRef.current = {
+      location: input.location,
+      media: media.map((item) => item.id),
+    };
+    setMediaUploads((prev) => {
+      const next = [...prev];
+      for (const item of media) {
+        const index = next.findIndex(
+          (upload) => upload.id === item.id || upload.data?.id === item.id,
+        );
+        if (index === -1) {
+          const row = created.find((entry) => entry.item.id === item.id);
+          if (!row) continue;
+          next.push({
+            input: {
+              user_id: item.user_id,
+              location: input.location,
+            },
+            action: "edit",
+            previewUrl: item.thumbnail || undefined,
+            id: item.id,
+            pending: true,
+            error: undefined,
+            unique_id: row.unique_id,
+          });
+          continue;
+        }
+        next[index] = {
+          ...next[index],
+          action: "edit",
+          pending: true,
+          error: undefined,
+          input: { ...next[index].input, location: input.location },
+        };
+      }
+      return next;
+    });
+
+    await updateMediaLocations();
+  };
+
+  const generateManySeoRef = useRef<number[] | null>(null);
+  const { handleAction: generateManySeo } = useHandleAction<
+    { media: number[] },
+    GenerateManyMediaMetadataResult
+  >({
+    action: async () => {
+      const mediaIds = generateManySeoRef.current;
+      if (!mediaIds) {
+        return { data: null, errors: [t("actions.genericError")] };
+      }
+      try {
+        return await generateManyMediaMetadataAction(mediaIds);
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : t("actions.genericError");
+        return { data: null, errors: [message] };
+      }
+    },
+    afterAction: async (result) => {
+      const requestedIds = new Set(generateManySeoRef.current ?? []);
+      generateManySeoRef.current = null;
+      if (requestedIds.size === 0) return;
+
+      if (!result.data) {
+        const error = extractReturnError(result);
+        setMediaUploads((prev) =>
+          prev.map((upload) =>
+            upload.id && requestedIds.has(upload.id)
+              ? { ...upload, pending: false, data: undefined, error }
+              : upload,
+          ),
+        );
+        return;
+      }
+
+      const failed = new Map(
+        result.data.errors.map((item) => [item.media_id, item.message]),
+      );
+      const queued = new Set(result.data.media.map((item) => item.id));
+      setMediaUploads((prev) =>
+        prev.map((upload) => {
+          if (!upload.id || !requestedIds.has(upload.id)) return upload;
+          const message = failed.get(upload.id);
+          if (message) {
+            return {
+              ...upload,
+              pending: false,
+              data: undefined,
+              error: { errors: [message], inputErrors: undefined },
+            };
+          }
+          if (queued.has(upload.id)) {
+            // Stay pending until the metadata notification lands. The row returned here
+            // is still COMPLETED — the worker has not started.
+            return { ...upload, pending: true, error: undefined };
+          }
+          return {
+            ...upload,
+            pending: false,
+            data: undefined,
+            error: {
+              errors: [t("actions.genericError")],
+              inputErrors: undefined,
+            },
+          };
+        }),
+      );
+    },
+  });
+
+  const generateManySeoMedia = async (media: Media[]) => {
+    if (!media.length || generateManySeoRef.current) return;
+
+    const mediaById = new Map(media.map((item) => [item.id, item]));
+    const items = [...mediaById.values()];
+    const current = mediaUploadsRef.current;
+    const created = items
+      .filter(
+        (item) =>
+          !current.some(
+            (upload) => upload.id === item.id || upload.data?.id === item.id,
+          ),
+      )
+      .map((item) => ({
+        item,
+        unique_id: generateUniqueMediaId(),
+      }));
+
+    generateManySeoRef.current = items.map((item) => item.id);
+    setMediaUploads((prev) => {
+      const next = [...prev];
+      for (const item of items) {
+        const index = next.findIndex(
+          (upload) => upload.id === item.id || upload.data?.id === item.id,
+        );
+        if (index === -1) {
+          const row = created.find((entry) => entry.item.id === item.id);
+          if (!row) continue;
+          next.push({
+            input: { user_id: item.user_id },
+            action: "seo",
+            previewUrl: item.thumbnail || undefined,
+            id: item.id,
+            pending: true,
+            error: undefined,
+            unique_id: row.unique_id,
+          });
+          continue;
+        }
+        next[index] = {
+          ...next[index],
+          action: "seo",
+          pending: true,
+          error: undefined,
+          data: undefined,
+        };
+      }
+      return next;
+    });
+
+    await generateManySeo();
   };
 
   /**
@@ -649,6 +877,7 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
     uploadSingleMedia,
     generateSeoSingleMedia,
     generateManySeoMedia,
+    updateManyMediaLocation,
     deleteSingleMedia,
     isLoading,
     isMediaLoading,

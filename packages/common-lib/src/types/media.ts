@@ -107,6 +107,12 @@ export type CreateMediaInput = Omit<
 // What users can update
 export type UpdateMediaInput = Partial<Omit<MediaSchema, InternalMediaFields>> & MediaLocationPayload;
 
+/** Body of `PATCH /media/locations`: one picked place applied to many media. */
+export type UpdateMediaLocationsInput = {
+  location: LocationInput;
+  media: number[];
+};
+
 // What the internal service can update (public fields + system-only SEO filename/timestamp + storage keys).
 // Column-shaped: the picked place has already been resolved to `location_id`.
 export type UpdateMediaInternalInput = Partial<Omit<MediaSchema, InternalMediaFields>> &

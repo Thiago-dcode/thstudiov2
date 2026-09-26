@@ -116,6 +116,16 @@ export const MAX_CATEGORIES_USER = 3;
 /** Max LLM-assigned content TAGS per media (bounds the pivot + JSON-LD keywords array). */
 export const MAX_TAGS_MEDIA = 8;
 /**
+ * Upper bound on one `PATCH /media/locations` batch. The list is the media the artist picked,
+ * so this only stops an oversized `IN (...)` from a hand-rolled request.
+ */
+export const MAX_MEDIA_LOCATION_BATCH = 100;
+/**
+ * Upper bound on one `POST /ai/media/metadata` batch. Metadata spends credits per item, so the
+ * list stays smaller than a location batch.
+ */
+export const MAX_MEDIA_METADATA_BATCH = 10;
+/**
  * Platform-wide currency for service prices. Services have no per-listing currency column, so the
  * visible price symbol AND the JSON-LD `Offer.priceCurrency` both derive from here — keep them in
  * sync (Google penalizes a structured-data price that doesn't match the visible one).

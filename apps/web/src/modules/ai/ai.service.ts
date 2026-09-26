@@ -1,4 +1,4 @@
-import type { GenerateMediaMetadataInput } from "@repo/common-lib/types/ai";
+import type { GenerateManyMediaMetadataResult } from "@repo/common-lib/types/ai";
 import type { Media } from "@repo/common-lib/types/media";
 import type { ApiResponse } from "@repo/common-lib/types/response";
 import { fetchApi } from "@/lib/facade/fetchApi";
@@ -9,12 +9,18 @@ class AiService extends BaseService {
     super(fetchApi(), "ai");
   }
 
-  async generateMediaMetadata(
-    body?: GenerateMediaMetadataInput,
-  ): Promise<ApiResponse<Media>> {
+  async generateMediaMetadata(mediaId: number): Promise<ApiResponse<Media>> {
+    return await this.fetchApi.post({
+      resource: `media/${mediaId}/metadata`,
+    });
+  }
+
+  async generateManyMediaMetadata(
+    mediaIds: number[],
+  ): Promise<ApiResponse<GenerateManyMediaMetadataResult>> {
     return await this.fetchApi.post({
       resource: "media/metadata",
-      body,
+      body: { media: mediaIds },
     });
   }
 }

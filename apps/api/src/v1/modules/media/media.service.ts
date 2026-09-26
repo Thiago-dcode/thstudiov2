@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { MediaRepository } from './media.repository';
 import { CreateMediaAsyncRequest } from './requests/create-media-async.request';
@@ -19,6 +19,7 @@ import {
 import { IndexMediaRequest } from '../user-media/requests/index-media.request';
 import { Helpers } from 'src/common/services/helpers.service';
 import { UpdateProfileStatusEvent } from '../profile-status/events/update-profile-status.event';
+import { UpdateMediaLocationsRequest } from './requests/update-media-locations.request';
 import { UpdateMediaRequest } from './requests/update-media.request';
 import { RequestService } from 'src/common/services/request.service';
 import { DEFAULT_COMPRESSION_LVL } from '@repo/common-lib/constants/enums';
@@ -542,6 +543,56 @@ export class MediaService {
     data: UpdateMediaRequest & Pick<UpdateMediaInternalInput, 'seo_filename' | 'seo_generated_at'>,
   ) {
     return this.updateForUser(id, this.requestService.user.id, data);
+  }
+
+  /**
+   * The batch form of a location edit: the place is resolved once (the same find-or-create
+   * {@link resolveLocationId} uses for a single update), then written onto every listed media.
+   * Ownership and the blocked check match the single-item route; a place that cannot be resolved
+   * fails the request, because the location is the only thing this call is for.
+   */
+  public async updateLocations(data: UpdateMediaLocationsRequest): Promise<Media[]> {
+    const userId = this.requestService.user.id;
+    const ids = [...new Set(data.media)];
+
+    const existing = await this.mediaRepository.findManyByIds(ids);
+    if (existing.length !== ids.length) {
+      throw new NotFoundException('One or more media were not found');
+    }
+    if (existing.some((media) => media.user_id !== userId)) {
+      throw new UnauthorizedException();
+    }
+    if (existing.some((media) => media.blocked_at)) {
+      throw new UnauthorizedException('This content is blocked media');
+    }
+
+    const locationId = await this.resolveLocationId(data.location);
+    if (typeof locationId !== 'number') {
+      throw new InternalServerErrorException('Could not resolve location');
+    }
+
+    await this.mediaRepository.updateLocationByIds(ids, userId, locationId);
+    await Promise.all(existing.map((media) => this.invalidateSeoCache(media.public_id)));
+
+    const updated = await this.mediaRepository.findManyByIds(ids);
+    const byId = new Map(updated.map((media) => [media.id, media]));
+
+    return Promise.all(
+      ids.map(async (id) => {
+        const media = byId.get(id);
+        if (!media) {
+          throw new NotFoundException('One or more media were not found');
+        }
+        if (media.thumbnail) {
+          media.thumbnail = await this.helpers.getAsset(media.thumbnail);
+        }
+        if (media.url) {
+          media.url = await this.helpers.getAsset(media.url);
+        }
+        await this.signVideoAssets(media);
+        return media;
+      }),
+    );
   }
 
   public async updateForUser(

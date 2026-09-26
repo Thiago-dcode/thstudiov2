@@ -2028,6 +2028,14 @@ const messages = {
         overAiLimit: "Limite: selecione até {max} itens (remova {excess}).",
         insufficientCredits:
           "Créditos insuficientes. Você precisa de mais {needed} créditos.",
+        updateLocationCount: "Definir localização ({count})",
+        updateLocationTitle: "Definir localização",
+        updateLocationDescription:
+          "Salvar um lugar em {count} {count, plural, one {mídia selecionada} other {mídias selecionadas}}.",
+        updateLocationHint: "É onde a obra foi feita.",
+        overLocationLimit:
+          "Limite: selecione até {max} itens (remova {excess}).",
+        locationPlaceholder: "Busque uma cidade ou lugar…",
         cancel: "Cancelar",
         selectMedia: "Selecionar mídia",
         cancelSelection: "Cancelar seleção",

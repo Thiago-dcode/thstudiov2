@@ -2029,6 +2029,14 @@ const messages = {
           "Límite: selecciona hasta {max} elementos (quita {excess}).",
         insufficientCredits:
           "Créditos insuficientes. Necesitas {needed} créditos más.",
+        updateLocationCount: "Definir ubicación ({count})",
+        updateLocationTitle: "Definir ubicación",
+        updateLocationDescription:
+          "Guardar un lugar en {count} {count, plural, one {contenido seleccionado} other {contenidos seleccionados}}.",
+        updateLocationHint: "Es donde se hizo la obra.",
+        overLocationLimit:
+          "Límite: selecciona hasta {max} elementos (quita {excess}).",
+        locationPlaceholder: "Busca una ciudad o lugar…",
         cancel: "Cancelar",
         selectMedia: "Seleccionar contenido",
         cancelSelection: "Cancelar selección",

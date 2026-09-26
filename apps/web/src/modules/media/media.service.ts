@@ -4,6 +4,7 @@ import type {
   MediaIndexRequest,
   MediaWithUser,
   UpdateMediaInput,
+  UpdateMediaLocationsInput,
 } from "@repo/common-lib/types/media";
 import type { ApiResponse } from "@repo/common-lib/types/response";
 import { queryParamBuilder } from "@repo/common-lib/utils/query-builder";
@@ -59,6 +60,16 @@ class MediaService extends BaseService {
   ): Promise<ApiResponse<Media>> {
     return await this.fetchApi.patch({
       resource: `/${id}`,
+      body,
+    });
+  }
+
+  /** `PATCH /media/locations` — one place applied to many media. */
+  async updateLocations(
+    body: UpdateMediaLocationsInput,
+  ): Promise<ApiResponse<Media[]>> {
+    return await this.fetchApi.patch({
+      resource: "/locations",
       body,
     });
   }

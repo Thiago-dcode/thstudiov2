@@ -1,4 +1,5 @@
 import { ENUMS } from "@repo/common-lib/constants/enums";
+import { MAX_MEDIA_LOCATION_BATCH } from "@repo/common-lib/constants/limits";
 import * as z from "zod";
 import {
   formDataBoolean,
@@ -75,6 +76,15 @@ export const updateMediaSchema = (t: Translator) =>
         .optional(),
     })
     .partial();
+
+/** Body of `PATCH /media/locations`. The place comes from the geocoder, so it reuses that schema. */
+export const updateMediaLocationsSchema = z.object({
+  location: locationInputSchema,
+  media: z
+    .array(z.number().int().positive())
+    .min(1)
+    .max(MAX_MEDIA_LOCATION_BATCH),
+});
 
 export type CreateMediaSchemaType = z.infer<
   ReturnType<typeof createMediaSchema>

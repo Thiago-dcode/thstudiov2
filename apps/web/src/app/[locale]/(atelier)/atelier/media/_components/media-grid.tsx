@@ -1,6 +1,11 @@
 "use client";
 
-import { ALLOWED_FILE_TYPES } from "@repo/common-lib/constants/limits";
+import {
+  ALLOWED_FILE_TYPES,
+  MAX_MEDIA_LOCATION_BATCH,
+  MAX_MEDIA_METADATA_BATCH,
+} from "@repo/common-lib/constants/limits";
+import type { LocationInput } from "@repo/common-lib/types/location";
 import type { Media } from "@repo/common-lib/types/media";
 import { MediaHelper } from "@repo/common-lib/utils/media";
 import { Button } from "@repo/ui/components/shadcn/button";
@@ -15,9 +20,11 @@ import {
 } from "@repo/ui/components/shadcn/dialog";
 import { FileInputProvider } from "@repo/ui/contexts/file.provider";
 import { cn } from "@repo/ui/lib/utils";
-import { Brain, ImageOff, Upload } from "lucide-react";
+import { Brain, ImageOff, MapPin, Upload } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
+import { LocationAutocomplete } from "@/modules/locations/components/location-autocomplete";
+import { featureToLocationInput } from "@/modules/locations/location-input";
 import { useMedia } from "@/modules/media/providers/media.provider";
 import {
   SelectableMedia,
@@ -34,6 +41,211 @@ type MediaGridProps = {
   hasActiveFilters: boolean;
 };
 
+function GenerateManyMediaMetadataDialog() {
+  const t = useTranslations("atelier.media.grid");
+  const { generateManySeoMedia } = useMedia();
+  const { selectedMedia, selectionCount, setCanSelect, clearSelection } =
+    useSelectMedia();
+  const { aiCreditsInfo } = useUserMetrics();
+  const [isGenerateSeoDialogOpen, setIsGenerateSeoDialogOpen] = useState(false);
+  // A batch is still capped at MAX_MEDIA_METADATA_BATCH items, but the credits it costs
+  // depend on the mix of images and videos in the selection, so this sums weighted
+  // cost rather than counting items.
+  const creditsAvailable = aiCreditsInfo.remaining;
+  const creditsNeeded = Object.values(selectedMedia).reduce(
+    (sum, media) => sum + aiCreditsInfo.costFor(media.media_type),
+    0,
+  );
+  const hasEnoughCredits = creditsAvailable >= creditsNeeded;
+  const isOverAiLimit = selectionCount > MAX_MEDIA_METADATA_BATCH;
+
+  const handleGenerateSeo = async () => {
+    const media = Object.values(selectedMedia);
+    setIsGenerateSeoDialogOpen(false);
+    clearSelection();
+    setCanSelect(false);
+    await generateManySeoMedia(media);
+  };
+
+  return (
+    <Dialog
+      open={isGenerateSeoDialogOpen}
+      onOpenChange={setIsGenerateSeoDialogOpen}
+    >
+      <DialogTrigger asChild>
+        <Button
+          type="button"
+          variant="default"
+          size="sm"
+          disabled={!selectionCount}
+          className="shrink-0 transition-colors duration-200"
+        >
+          <Brain className="h-3.5 w-3.5 shrink-0" />
+          <span className="text-xs! font-medium whitespace-nowrap">
+            {selectionCount
+              ? t("generateSeoCount", { count: selectionCount })
+              : t("generateSeoTitle")}
+          </span>
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-md z-100">
+        <DialogHeader>
+          <DialogTitle className="text-lg!">
+            {t("generateSeoTitle")}
+          </DialogTitle>
+          <DialogDescription className="text-sm!">
+            {t("generateSeoDescription", { count: selectionCount })}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="px-6 py-3 bg-fg-2/50 space-y-1">
+          <div className="flex items-center justify-between text-sm!">
+            <span className="text-text-muted">{t("creditsAvailable")}</span>
+            <span className="font-medium">{creditsAvailable}</span>
+          </div>
+          <div className="flex items-center justify-between text-sm!">
+            <span className="text-text-muted">{t("creditsNeeded")}</span>
+            <span
+              className={cn("font-medium", !hasEnoughCredits && "text-error")}
+            >
+              {creditsNeeded}
+            </span>
+          </div>
+          {isOverAiLimit && (
+            <p className="text-xs! text-error mt-2">
+              {t("overAiLimit", {
+                max: MAX_MEDIA_METADATA_BATCH,
+                excess: selectionCount - MAX_MEDIA_METADATA_BATCH,
+              })}
+            </p>
+          )}
+          {!hasEnoughCredits && (
+            <p className="text-xs! text-error mt-2">
+              {t("insufficientCredits", {
+                needed: creditsNeeded - creditsAvailable,
+              })}
+            </p>
+          )}
+        </div>
+        <DialogFooter className="gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsGenerateSeoDialogOpen(false)}
+          >
+            {t("cancel")}
+          </Button>
+          <Button
+            size="sm"
+            variant="primary"
+            disabled={!hasEnoughCredits || isOverAiLimit}
+            onClick={handleGenerateSeo}
+          >
+            {t("generateSeoTitle")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function UpdateManyMediaLocationsDialog() {
+  const t = useTranslations("atelier.media.grid");
+  const { updateManyMediaLocation } = useMedia();
+  const { selectedMedia, selectionCount, setCanSelect, clearSelection } =
+    useSelectMedia();
+  const [open, setOpen] = useState(false);
+  const [location, setLocation] = useState<LocationInput | null>(null);
+  const isOverLimit = selectionCount > MAX_MEDIA_LOCATION_BATCH;
+
+  const handleOpenChange = (next: boolean) => {
+    setOpen(next);
+    if (!next) setLocation(null);
+  };
+
+  const handleApply = async () => {
+    if (!location || isOverLimit) return;
+    const media = Object.values(selectedMedia);
+    handleOpenChange(false);
+    clearSelection();
+    setCanSelect(false);
+    await updateManyMediaLocation({ location, media });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild>
+        <Button
+          type="button"
+          variant="default"
+          size="sm"
+          disabled={!selectionCount}
+          className="shrink-0 transition-colors duration-200"
+        >
+          <MapPin className="h-3.5 w-3.5 shrink-0" />
+          <span className="text-xs! font-medium whitespace-nowrap">
+            {selectionCount
+              ? t("updateLocationCount", { count: selectionCount })
+              : t("updateLocationTitle")}
+          </span>
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-md z-100">
+        <DialogHeader>
+          <DialogTitle className="text-lg!">
+            {t("updateLocationTitle")}
+          </DialogTitle>
+          <DialogDescription className="text-sm!">
+            {t("updateLocationDescription", { count: selectionCount })}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3 px-6 py-3">
+          <LocationAutocomplete
+            id="batch-media-location"
+            label={t("updateLocationTitle")}
+            labelClassName="text-sm font-medium text-text"
+            placeholder={t("locationPlaceholder")}
+            selectedLabel={location?.formatted}
+            onSelect={(feature) => {
+              const picked = featureToLocationInput(feature);
+              if (picked) setLocation(picked);
+            }}
+            onClear={() => setLocation(null)}
+            positionerClassName="z-[110]"
+          />
+          <span className="block text-xs leading-relaxed text-text-muted">
+            {t("updateLocationHint")}
+          </span>
+          {isOverLimit && (
+            <p className="text-xs! text-error">
+              {t("overLocationLimit", {
+                max: MAX_MEDIA_LOCATION_BATCH,
+                excess: selectionCount - MAX_MEDIA_LOCATION_BATCH,
+              })}
+            </p>
+          )}
+        </div>
+        <DialogFooter className="gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleOpenChange(false)}
+          >
+            {t("cancel")}
+          </Button>
+          <Button
+            size="sm"
+            variant="primary"
+            disabled={!location || isOverLimit}
+            onClick={handleApply}
+          >
+            {t("updateLocationTitle")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export function MediaGrid({
   media,
   username,
@@ -45,45 +257,18 @@ export function MediaGrid({
     mediaPendingToUpdate,
     handleUploadUpdates,
     isLoading,
-    generateManySeoMedia,
     isMediaLoading,
   } = useMedia();
 
   useEffect(() => {
     setCurrentMedia(media);
   }, [media]);
-  const {
-    canSelect,
-    selectedMedia,
-    selectionCount,
-    setCanSelect,
-    clearSelection,
-  } = useSelectMedia();
-  const { aiCreditsInfo } = useUserMetrics();
+  const { canSelect, setCanSelect, clearSelection } = useSelectMedia();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isGenerateSeoDialogOpen, setIsGenerateSeoDialogOpen] = useState(false);
-  // A batch of 10 items is still a cap of 10 items (MAX_AI_GENERATE), but the credits it costs
-  // depend on the mix of images and videos in the selection, so this sums weighted cost rather
-  // than counting items.
-  const MAX_AI_GENERATE = 10;
-  const creditsAvailable = aiCreditsInfo.remaining;
-  const creditsNeeded = Object.values(selectedMedia).reduce(
-    (sum, m) => sum + aiCreditsInfo.costFor(m.media_type),
-    0,
-  );
-  const hasEnoughCredits = creditsAvailable >= creditsNeeded;
-  const isOverAiLimit = selectionCount > MAX_AI_GENERATE;
 
   const handleConfirmUpdate = async () => {
     setIsDialogOpen(false);
     await handleUploadUpdates();
-  };
-
-  const handleGenerateSeo = async () => {
-    setIsGenerateSeoDialogOpen(false);
-    clearSelection();
-    setCanSelect(false);
-    await generateManySeoMedia(Object.values(selectedMedia));
   };
 
   const handleRemoveCurrentMedia = (mediaId: number) => {
@@ -134,92 +319,10 @@ export function MediaGrid({
             )}
           >
             {canSelect ? (
-              <Dialog
-                open={isGenerateSeoDialogOpen}
-                onOpenChange={setIsGenerateSeoDialogOpen}
-              >
-                <DialogTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="default"
-                    size="sm"
-                    disabled={!selectionCount}
-                    className="shrink-0 transition-colors duration-200"
-                  >
-                    <Brain className="h-3.5 w-3.5 shrink-0" />
-                    <span className="text-xs! font-medium whitespace-nowrap">
-                      {selectionCount
-                        ? t("generateSeoCount", { count: selectionCount })
-                        : t("generateSeoTitle")}
-                    </span>
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-md z-100">
-                  <DialogHeader>
-                    <DialogTitle className="text-lg!">
-                      {t("generateSeoTitle")}
-                    </DialogTitle>
-                    <DialogDescription className="text-sm!">
-                      {t("generateSeoDescription", { count: selectionCount })}
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="px-6 py-3 bg-fg-2/50 space-y-1">
-                    <div className="flex items-center justify-between text-sm!">
-                      <span className="text-text-muted">
-                        {t("creditsAvailable")}
-                      </span>
-                      <span className="font-medium">{creditsAvailable}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-sm!">
-                      <span className="text-text-muted">
-                        {t("creditsNeeded")}
-                      </span>
-                      <span
-                        className={cn(
-                          "font-medium",
-                          !hasEnoughCredits && "text-error",
-                        )}
-                      >
-                        {creditsNeeded}
-                      </span>
-                    </div>
-                    {isOverAiLimit && (
-                      <p className="text-xs! text-error mt-2">
-                        {t("overAiLimit", {
-                          max: MAX_AI_GENERATE,
-                          excess: selectionCount - MAX_AI_GENERATE,
-                        })}
-                      </p>
-                    )}
-                    {!hasEnoughCredits && (
-                      <p className="text-xs! text-error mt-2">
-                        {t("insufficientCredits", {
-                          needed: creditsNeeded - creditsAvailable,
-                        })}
-                      </p>
-                    )}
-                  </div>
-                  <DialogFooter className="gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setIsGenerateSeoDialogOpen(false)}
-                    >
-                      {t("cancel")}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="primary"
-                      disabled={!hasEnoughCredits || isOverAiLimit}
-                      onClick={async () => {
-                        await handleGenerateSeo();
-                      }}
-                    >
-                      {t("generateSeoTitle")}
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
+              <div className="flex flex-wrap items-center gap-2">
+                <GenerateManyMediaMetadataDialog />
+                <UpdateManyMediaLocationsDialog />
+              </div>
             ) : (
               <Button
                 variant="default"

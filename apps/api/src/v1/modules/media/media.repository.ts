@@ -130,6 +130,22 @@ export class MediaRepository extends BaseMediaRepository {
   }
 
   /**
+   * Sets `location_id` on the owner's rows in one write. Ids that are not theirs match nothing,
+   * so a caller that already checked ownership cannot spill the place onto someone else's media.
+   */
+  async updateLocationByIds(
+    ids: number[],
+    userId: number,
+    locationId: number,
+  ): Promise<void> {
+    if (!ids.length) return;
+    await this.query()
+      .whereIn('id', ids)
+      .where('user_id', '=', userId)
+      .update(['location_id'], [locationId]);
+  }
+
+  /**
    * Lean SEO-only read for `generateMetadata`: media SEO localized to the request language
    * (COALESCE translation → main-row EN fallback) + owner username + thumbnail + visibility flags.
    */

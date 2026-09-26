@@ -1,6 +1,5 @@
 "use client";
 
-import type { GenerateMediaMetadataInput } from "@repo/common-lib/types/ai";
 import type {
   CreateMediaInputWithFile,
   Media,
@@ -14,7 +13,6 @@ import {
   getObjErrorFromZod,
   type Translator,
 } from "@/lib/validation/zod-helpers";
-import aiClientService from "@/modules/ai/ai.client.service";
 import mediaClientService, {
   type CreateMediaBody,
 } from "../media.client.service";
@@ -33,9 +31,9 @@ import { uploadFileToStorage } from "./storage-upload.client";
  * multipart body, once to re-encode it for the API — for no benefit: the API does not require
  * the app token, and it authenticates the same bearer token either way.
  *
- * The three exported signatures are unchanged, so `media.provider.tsx` consumes them exactly as
- * before. What the route handler did beyond proxying — zod validation, the per-type file caps,
- * and the cache-tag revalidation — moved here rather than being dropped.
+ * Create and update are what `media.provider.tsx` calls from the browser. What the route handler
+ * did beyond proxying — zod validation, the per-type file caps, and the cache-tag revalidation —
+ * moved here rather than being dropped.
  *
  * Every one of those extras needs translated copy, and `clientTranslator()` is null until a
  * client component has registered one (`MediaProvider` does). When it is, each check is skipped
@@ -239,38 +237,5 @@ export async function updateMediaApi(
   );
   // `UpdateMediaInput` carries no `user_id`, so the owner comes off the updated row.
   if (result.data) scheduleUserMediaRevalidation(result.data.user_id);
-  return result;
-}
-
-export async function generateMediaMetadataApi(
-  input: GenerateMediaMetadataInput,
-): Promise<ActionReturn<Media, GenerateMediaMetadataInput>> {
-  const t = clientTranslator();
-
-  // Cheap pre-check: the API rejects these too, but not before spending the round trip.
-  if (t && (!input.user_id || !input.media_id)) {
-    const inputErrors: Record<string, string> = {};
-    if (!input.user_id) {
-      inputErrors.user_id = t("validation.required", {
-        field: t("fields.userId"),
-      });
-    }
-    if (!input.media_id) {
-      inputErrors.media_id = t("validation.required", {
-        field: t("fields.mediaId"),
-      });
-    }
-    return inputErrorsReturn<Media, GenerateMediaMetadataInput>(
-      inputErrors,
-      input,
-    );
-  }
-
-  const result = toActionReturn<Media, GenerateMediaMetadataInput>(
-    await aiClientService.generateMediaMetadata(input),
-    input,
-  );
-  // Generation spends AI credits, so the cached credit budget has to be refreshed too.
-  if (result.data) scheduleUserMediaRevalidation(input.user_id);
   return result;
 }

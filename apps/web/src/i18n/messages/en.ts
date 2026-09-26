@@ -2015,6 +2015,13 @@ const messages = {
         overAiLimit: "Limit: select up to {max} items (remove {excess}).",
         insufficientCredits:
           "Insufficient credits. You need {needed} more credits.",
+        updateLocationCount: "Set location ({count})",
+        updateLocationTitle: "Set location",
+        updateLocationDescription:
+          "Save one place on {count} selected {count, plural, one {media item} other {media items}}.",
+        updateLocationHint: "This is where the work was made.",
+        overLocationLimit: "Limit: select up to {max} items (remove {excess}).",
+        locationPlaceholder: "Search a city or place…",
         cancel: "Cancel",
         selectMedia: "Select media",
         cancelSelection: "Cancel selection",

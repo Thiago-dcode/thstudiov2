@@ -7,6 +7,18 @@ export type GenerateMediaMetadataInput = {
     media_id: number;
 }
 
+/** One media the batch metadata call did not enqueue, and why. */
+export type GenerateManyMediaMetadataError = {
+    media_id: number;
+    message: string;
+}
+
+/** `POST /ai/media/metadata` — media that were queued, and the ones that were not. */
+export type GenerateManyMediaMetadataResult = {
+    media: Media[];
+    errors: GenerateManyMediaMetadataError[];
+}
+
 /** Compact category shape sent to the LLM so it can pick matching category ids. */
 export type MediaMetadataPromptCategory = {
     id: number;

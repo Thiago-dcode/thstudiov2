@@ -17,6 +17,7 @@ import { IndexMediaRequest } from '../user-media/requests/index-media.request';
 import { MediaService } from './media.service';
 import { CreateMediaAsyncRequest } from './requests/create-media-async.request';
 import { CreateMediaUploadUrlRequest } from './requests/create-media-upload-url.request';
+import { UpdateMediaLocationsRequest } from './requests/update-media-locations.request';
 import { UpdateMediaRequest } from './requests/update-media.request';
 
 @Throttle({
@@ -67,6 +68,15 @@ export class MediaController {
   async createUploadUrl(@Body() createUploadUrlRequest: CreateMediaUploadUrlRequest) {
     return await this.mediaService.createUploadUrl(createUploadUrlRequest);
   }
+  /**
+   * One place applied to many media. Declared before `:id` so `locations` is a literal segment
+   * rather than a media id.
+   */
+  @Patch('locations')
+  async updateLocations(@Body() body: UpdateMediaLocationsRequest) {
+    return await this.mediaService.updateLocations(body);
+  }
+
   @Patch(':id')
   async update(
     @Param('id', ParseIntPipe, new IsResourceBlockedPipe('media')) id: number,
