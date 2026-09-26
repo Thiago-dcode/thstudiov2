@@ -78,9 +78,11 @@ const FileInput = forwardRef<HTMLInputElement, FileInputProps>(
             }
 
             // Last. An unchanged `value` fires no `change` event, so re-picking a file the user had just
-            // removed did nothing at all and read as a broken input. Skipped when the selection could not
-            // be copied, because the reset would empty the list already handed to the context.
-            if (canDetach) {
+            // removed did nothing at all and read as a broken input. Only for append-style inputs
+            // (`maxFiles`), which read the selection from the context: single-file forms submit through
+            // native `FormData`, so resetting there sent an empty file. Skipped when the selection could
+            // not be copied, because the reset would empty the list already handed to the context.
+            if (hasMaxFiles && canDetach) {
                 e.target.value = ""
             }
         }

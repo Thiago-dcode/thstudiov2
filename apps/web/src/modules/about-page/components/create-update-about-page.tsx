@@ -2,6 +2,7 @@
 
 import { ALLOWED_IMAGE_FILE_TYPES } from "@repo/common-lib/constants/limits";
 import type { AboutPage } from "@repo/common-lib/types/about-page";
+import { Errors } from "@repo/ui/components/custom/errors";
 import { FileInput } from "@repo/ui/components/custom/file-input";
 import { Button } from "@repo/ui/components/shadcn/button";
 import {
@@ -57,6 +58,7 @@ export const CreateOrUpdateAboutPage = ({
     handleSubmit,
     isPending,
     success,
+    errors,
     deleteInputErrorProperty,
     inputErrors,
     reset,
@@ -71,6 +73,8 @@ export const CreateOrUpdateAboutPage = ({
     afterAction: async (result) => {
       if (result.data) {
         setOpen(false);
+        // The page is a server component; without a refresh it keeps showing the old about page.
+        router.refresh();
         await refreshMetrics();
       }
     },
@@ -115,7 +119,11 @@ export const CreateOrUpdateAboutPage = ({
           <FormComponent.Form onSubmit={handleSubmit}>
             <div className="space-y-1">
               <FileInputProvider allowedMimeTypes={ALLOWED_IMAGE_FILE_TYPES}>
-                <PhotoInput defaultUrl={currentAboutPage?.photo || undefined} />
+                <PhotoInput
+                  defaultUrl={currentAboutPage?.photo || undefined}
+                  error={inputErrors?.photo}
+                  onChange={() => deleteInputErrorProperty("photo")}
+                />
               </FileInputProvider>
             </div>
             <FormComponent.LabelInput
@@ -141,6 +149,7 @@ export const CreateOrUpdateAboutPage = ({
               placeholder={t("descriptionPlaceholder")}
             />
 
+            {errors && errors.length > 0 && <Errors errors={errors} />}
             <div className="pt-4">
               <FormComponent.SubmitButton
                 isPending={isPending}
@@ -156,7 +165,15 @@ export const CreateOrUpdateAboutPage = ({
   );
 };
 
-const PhotoInput = ({ defaultUrl }: { defaultUrl?: string }) => {
+const PhotoInput = ({
+  defaultUrl,
+  error,
+  onChange,
+}: {
+  defaultUrl?: string;
+  error?: string;
+  onChange?: () => void;
+}) => {
   const t = useTranslations("atelier.about.form");
   const { files } = useInputFile();
   const { previewUrls } = usePreviewUrls({
@@ -186,7 +203,12 @@ const PhotoInput = ({ defaultUrl }: { defaultUrl?: string }) => {
           <p className="text-sm text-text-muted ">{t("choosePhotoHint")}</p>
         )}
       </div>
-      <FileInput name="photo" id="photo-input" />
+      <FileInput
+        name="photo"
+        id="photo-input"
+        error={error}
+        onChange={onChange}
+      />
     </div>
   );
 };

@@ -76,10 +76,13 @@ export class AboutPageService {
       throw new UnauthorizedException();
     }
     if (photo) {
-      const newId = await generateUUID();
+      const [user_public_id, newId] = await Promise.all([
+        this.userService.getPublicId(aboutPage.user_id),
+        generateUUID(),
+      ]);
       const newPhotoPath = await this.helpers.setAsset({
         asset: photo,
-        path: `users/${aboutPage.user_id}/about_page/${newId}`,
+        path: `users/${user_public_id}/about_page/${newId}`,
         targetSizeMb: 0.5,
         targetQuality: 90,
       });

@@ -21,9 +21,10 @@ export class AboutPageRepositoy extends BaseRepository {
     });
   }
 
+  /** Includes `user_id` for ownership checks; kept out of COLUMNS so public reads never expose it. */
   public async getOneById(id: number) {
     return await this.query()
-      .select(this.COLUMNS)
+      .select([...this.COLUMNS, 'about_page.user_id'])
       .where('id', '=', id)
       .first<AboutPage>();
   }
