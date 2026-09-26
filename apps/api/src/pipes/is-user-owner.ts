@@ -1,20 +1,23 @@
 import {
   Injectable,
   mixin,
+  NotFoundException,
   PipeTransform,
   UnauthorizedException,
-  UnprocessableEntityException,
   type Type,
 } from '@nestjs/common';
 import type { SqlValue, TableName } from '@repo/common-lib/types/database';
-import AlterBuilder from '@repo/database/alterBuilder';
-import { Query, Schema } from '@repo/database/facades';
+import { Query } from '@repo/database/facades';
 import { RequestService } from 'src/common/services/request.service';
 
 /**
  * Route param must identify a row in `tableName` owned by the caller.
  *
  * `@Param('id', ParseIntPipe, IsUserOwnerPipe('media'))`
+ *
+ * The table and columns are fixed at the call site, so they are not re-checked against the schema
+ * on every request. A missing row and someone else's row answer the same 404, so the response
+ * never tells a caller which ids exist.
  */
 export function IsUserOwnerPipe(
   tableName: TableName,
@@ -31,37 +34,12 @@ export function IsUserOwnerPipe(
         throw new UnauthorizedException('Not authorized');
       }
 
-      const schemaBuilder = await Schema.tableIfExists(tableName);
-      if (!schemaBuilder) {
-        throw new UnprocessableEntityException(`Table ${tableName} does not exist`);
-      }
-
-      const modelColumnExist = await AlterBuilder.table(tableName).columnExist(
-        modelColumn,
-      );
-      if (!modelColumnExist) {
-        throw new UnprocessableEntityException(
-          `Column ${modelColumn} does not exist in ${tableName}`,
-        );
-      }
-
-      const userColumnExist = await AlterBuilder.table(tableName).columnExist(
-        userColumn,
-      );
-      if (!userColumnExist) {
-        throw new UnprocessableEntityException(
-          `Column ${userColumn} does not exist in ${tableName}`,
-        );
-      }
-
       const exists = await Query.table(tableName)
         .where(modelColumn, '=', value)
         .where(userColumn, '=', user.id)
         .exists();
       if (!exists) {
-        throw new UnprocessableEntityException(
-          `${tableName} with ${modelColumn} ${value} does not exist`,
-        );
+        throw new NotFoundException(`${tableName} not found`);
       }
 
       return value;

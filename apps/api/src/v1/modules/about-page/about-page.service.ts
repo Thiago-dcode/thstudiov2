@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Helpers } from 'src/common/services/helpers.service';
 import { AboutPageRepositoy } from './about-page.repository';
@@ -72,6 +72,9 @@ export class AboutPageService {
   public async update(id: number, { photo, ...rest }: UpdateAboutPageRequest) {
     const data: UpdateAboutPageInput = rest;
     const aboutPage = await this.aboutPageRepository.getOneById(id);
+    if (!aboutPage) {
+      throw new NotFoundException();
+    }
     if (aboutPage.user_id !== this.requestService.user.id) {
       throw new UnauthorizedException();
     }
