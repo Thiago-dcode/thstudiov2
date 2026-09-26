@@ -118,6 +118,32 @@
   --radius-lg: 0;
   --radius-xl: 0;
 
+  /* `AccordionContent` has always asked for these; without them the classes resolve to
+     nothing and every accordion in the app snaps open. Radix measures the panel and exposes
+     the height as `--radix-accordion-content-height`. */
+  --animate-accordion-down: accordion-down 200ms ease-out;
+  --animate-accordion-up: accordion-up 200ms ease-out;
+
+  @keyframes accordion-down {
+    from {
+      height: 0;
+    }
+
+    to {
+      height: var(--radix-accordion-content-height);
+    }
+  }
+
+  @keyframes accordion-up {
+    from {
+      height: var(--radix-accordion-content-height);
+    }
+
+    to {
+      height: 0;
+    }
+  }
+
   --color-bg: var(--color-bg);
   --color-fg: var(--color-fg);
   --color-fg-1: var(--color-fg-1);

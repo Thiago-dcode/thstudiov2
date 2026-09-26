@@ -1,4 +1,5 @@
 import { EnumType, MODERATION_SEVERITY } from "../constants/enums"
+import type { Media } from "./media"
 
 export type GenerateMediaMetadataInput = {
     user_id: number;
@@ -11,6 +12,12 @@ export type MediaMetadataPromptCategory = {
     name: string;
     type: EnumType<'CATEGORY_TYPE'>;
 }
+
+/**
+ * What the artist wrote about a media when uploading it — context the pixels alone cannot carry
+ * (who or what the subject is, the project, where it was made). Optional input to generation.
+ */
+export type MediaArtistNotes = Partial<Pick<Media, 'title' | 'description'>>;
 
 export type LLMUsage = {
     promptTokens?: number;

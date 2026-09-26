@@ -125,6 +125,11 @@ export async function createMediaApi(
   }
 
   const candidate = trimValues({ ...fields }, { deep: true });
+  // A field the artist cleared (or filled with spaces) trims to "". Omitted, the API stores NULL
+  // and seeds the SEO columns from its own defaults instead of from an empty string.
+  for (const key of ["title", "description"] as const) {
+    if (candidate[key] === "") delete candidate[key];
+  }
 
   const { data, inputErrors } = validateWith(createMediaSchema, t, candidate);
   if (inputErrors) {

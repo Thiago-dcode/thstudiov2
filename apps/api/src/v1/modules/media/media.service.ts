@@ -117,6 +117,9 @@ export class MediaService {
       // Signed by `signVideoAssets` above; drop any that failed to resolve to a URL.
       previews: media.previews?.filter(Boolean) ?? null,
       media_type: media.media_type,
+      // What the artist wrote on upload: context for metadata generation.
+      title: media.title,
+      description: media.description,
     }
   }
 

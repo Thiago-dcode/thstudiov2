@@ -6,14 +6,15 @@ import {
   tooLongMessage,
 } from "@/lib/validation/zod-helpers";
 
-const TITLE_MAX = 255;
+/** Mirrors the `media.title` VARCHAR(255) column; inputs use it as `maxLength` too. */
+export const MEDIA_TITLE_MAX = 255;
 const SEO_MAX = 255;
 
 export const createMediaSchema = (t: Translator) =>
   z.object({
     title: z
       .string()
-      .max(TITLE_MAX, tooLongMessage(t, t("fields.title")))
+      .max(MEDIA_TITLE_MAX, tooLongMessage(t, t("fields.title")))
       .nullable()
       .optional(),
     description: z.string().nullable().optional(),
@@ -49,7 +50,7 @@ export const updateMediaSchema = (t: Translator) =>
     .object({
       title: z
         .string()
-        .max(TITLE_MAX, tooLongMessage(t, t("fields.title")))
+        .max(MEDIA_TITLE_MAX, tooLongMessage(t, t("fields.title")))
         .nullable()
         .optional(),
       description: z.string().nullable().optional(),

@@ -1862,19 +1862,20 @@ const messages = {
       upload: {
         maxFilesError:
           "Se permite un máximo de {max} archivos. Puedes añadir {remaining} más.",
-        globalCompression: "Compresión global",
+        globalCompression: "Compresión",
         compressionTooltipTitle: "Nivel de compresión",
         compressionTooltipBody:
           "Controla el equilibrio entre la calidad y el tamaño de archivo. Una compresión menor (VERY_LOW, LOW) conserva más detalle pero genera archivos más grandes. Una compresión mayor (HIGH, VERY_HIGH) reduce el tamaño pero puede reducir ligeramente la calidad. Los vídeos ya comprimidos se guardan tal cual.",
         compressionTooltipHint:
-          "Este ajuste se aplica a todos los archivos subidos. Puedes ajustar archivos individuales con los controles de abajo.",
+          "Se aplica a todos los archivos. Abre un archivo para cambiar solo ese.",
         allFiles: "Todos los archivos",
         upgradeRequired: "Mejora tu plan para acceder a esta función.",
-        aiSeoGeneration: "Generar metadatos",
-        aiSeoHint: "Rellena título, descripción, texto alt y etiquetas.",
-        aiSeoBadge: "Metadatos IA",
+        aiSeoGeneration: "Generar SEO con IA",
+        aiSeoHint:
+          "La IA escribe la información para buscadores — título SEO, descripción, texto alternativo y etiquetas — para que tu obra se encuentre más fácilmente.",
+        aiSeoBadge: "El SEO se generará con IA",
         aiSeoTooltipBody:
-          "El SEO (optimización para motores de búsqueda) ayuda a que tu trabajo se encuentre en Google y Google Imágenes. Usamos IA para analizar la imagen o el video y generar un título, una descripción, un texto alternativo y un nombre de archivo artísticos y ricos en palabras clave, y para etiquetarla automáticamente con las categorías correspondientes.",
+          "La IA mira tu imagen o vídeo y escribe el texto que leen los buscadores: título SEO, descripción SEO y texto alternativo en todos los idiomas, además de etiquetas que encajan. Así tu obra aparece en Google. Nunca cambia el título ni la descripción que escribiste.",
         aiSeoCreditsHint:
           "Cuesta {imageCost} {imageCost, plural, one {crédito} other {créditos}} de IA por imagen/GIF, {videoCost} por video. <remaining>Te quedan {count} {count, plural, one {crédito} other {créditos}}.</remaining>",
         creditsLabel: "{count} {count, plural, one {crédito} other {créditos}}",
@@ -1893,6 +1894,40 @@ const messages = {
         compressionLabel: "Compresión",
         upgradeToAdjust: "Mejora tu plan para ajustar",
         previewAlt: "Vista previa {index}",
+        settingsTitle: "Ajustes de subida",
+        settingsAiOn:
+          "Activado · {used} {used, plural, one {crédito} other {créditos}}",
+        settingsAiOff: "Desactivado",
+        cardDetailsHint: "Editar",
+        openDetailsAria: "Editar {name}",
+        removeAria: "Quitar {name}",
+        detailsSubtitle: "Los cambios aquí solo afectan a este archivo.",
+        detailsDone: "Listo",
+        notEnoughCreditsForFile:
+          "No quedan créditos suficientes para este archivo",
+        gridHint: "Haz clic en un archivo para editarlo antes de subirlo.",
+        fileSizeLabel: "Tamaño",
+        fileTypeLabel: "Tipo",
+        typeImage: "Imagen",
+        typeVideo: "Vídeo",
+        aiCostForFile:
+          "Usa {count} {count, plural, one {crédito} other {créditos}}",
+        aboutTitle: "Sobre esta obra",
+        aboutHint:
+          "Opcional: se muestra con tu obra y la IA lo usa como contexto para el SEO.",
+        titleLabel: "Título",
+        titlePlaceholder: "p. ej. Atardecer sobre Lisboa",
+        descriptionLabel: "Descripción",
+        descriptionPlaceholder:
+          "Qué muestra, dónde se hizo, la historia detrás",
+        aiNotesTip:
+          "Consejo: pon primero un título y una descripción a cada archivo. La IA los usa como contexto, así el SEO que escribe es más preciso. Haz clic en un archivo para añadirlos.",
+        duplicateSummary:
+          "{count, plural, one {# archivo tiene} other {# archivos tienen}} el mismo nombre y tamaño que otro archivo de esta subida: revisa si hay duplicados.",
+        duplicateCardHint:
+          "Posible duplicado: otro archivo de esta subida tiene el mismo nombre y tamaño.",
+        duplicateDialogHint:
+          "Otro archivo de esta subida tiene el mismo nombre y tamaño. Si es la misma imagen, quita uno de los dos.",
         createNewMedia: "Crear nuevo contenido",
         uploadUpToImages:
           "Sube hasta {max} archivos: imágenes (JPEG, PNG, WebP, GIF) o vídeos (MP4, MOV, MPEG)",

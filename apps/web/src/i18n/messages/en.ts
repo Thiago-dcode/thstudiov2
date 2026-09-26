@@ -1852,19 +1852,20 @@ const messages = {
       upload: {
         maxFilesError:
           "Maximum {max} files allowed. You can add {remaining} more {remaining, plural, one {file} other {files}}.",
-        globalCompression: "Global Compression",
+        globalCompression: "Compression",
         compressionTooltipTitle: "Compression Level",
         compressionTooltipBody:
           "Controls the balance between quality and file size. Lower compression (VERY_LOW, LOW) preserves more detail but creates larger files. Higher compression (HIGH, VERY_HIGH) reduces file size but may slightly reduce quality. Videos that are already compressed are stored as they are.",
         compressionTooltipHint:
-          "This setting applies to all uploaded files. You can adjust individual files using the sliders below.",
+          "Applies to every file. Open a file to change just that one.",
         allFiles: "All files",
         upgradeRequired: "Upgrade to access this feature.",
-        aiSeoGeneration: "Generate metadata",
-        aiSeoHint: "Fills title, description, alt text, and tags.",
-        aiSeoBadge: "AI metadata",
+        aiSeoGeneration: "Generate SEO with AI",
+        aiSeoHint:
+          "AI writes the search info — SEO title, description, alt text and tags — so your work is easier to find.",
+        aiSeoBadge: "SEO will be generated with AI",
         aiSeoTooltipBody:
-          "SEO (Search Engine Optimization) helps your work get found on Google and Google Images. This uses AI to analyze the image or video and generate an artistic, keyword-rich title, description, alt text and filename — and auto-tags it with matching categories.",
+          "AI looks at your image or video and writes the text search engines read: an SEO title, SEO description and alt text in every language, plus matching tags. It helps your work show up on Google. It never changes the title and description you wrote.",
         aiSeoCreditsHint:
           "Costs {imageCost} AI {imageCost, plural, one {credit} other {credits}} per image/GIF, {videoCost} per video. <remaining>You have {count} {count, plural, one {credit} other {credits}} remaining.</remaining>",
         creditsLabel: "{count} {count, plural, one {credit} other {credits}}",
@@ -1883,6 +1884,39 @@ const messages = {
         compressionLabel: "Compression",
         upgradeToAdjust: "Upgrade required",
         previewAlt: "Preview {index}",
+        settingsTitle: "Upload settings",
+        settingsAiOn:
+          "On · {used} {used, plural, one {credit} other {credits}}",
+        settingsAiOff: "Off",
+        cardDetailsHint: "Edit",
+        openDetailsAria: "Edit {name}",
+        removeAria: "Remove {name}",
+        detailsSubtitle: "Changes here only apply to this file.",
+        detailsDone: "Done",
+        notEnoughCreditsForFile: "Not enough credits left for this file",
+        gridHint: "Click a file to edit it before uploading.",
+        fileSizeLabel: "Size",
+        fileTypeLabel: "Type",
+        typeImage: "Image",
+        typeVideo: "Video",
+        aiCostForFile:
+          "Uses {count} {count, plural, one {credit} other {credits}}",
+        aboutTitle: "About this piece",
+        aboutHint:
+          "Optional — shown with your work, and used by AI as context for SEO.",
+        titleLabel: "Title",
+        titlePlaceholder: "e.g. Sunset over Lisbon",
+        descriptionLabel: "Description",
+        descriptionPlaceholder:
+          "What it shows, where it was made, the story behind it",
+        aiNotesTip:
+          "Tip: give each file a title and description first. AI reads them as context, so the SEO it writes is more accurate. Click a file to add them.",
+        duplicateSummary:
+          "{count, plural, one {# file has} other {# files have}} the same name and size as another file in this upload — check for duplicates.",
+        duplicateCardHint:
+          "Possible duplicate: another file in this upload has the same name and size.",
+        duplicateDialogHint:
+          "Another file in this upload has the same name and size. If it's the same picture, remove one of them.",
         createNewMedia: "Create New Media",
         uploadUpToImages:
           "Upload up to {max} files — images (JPEG, PNG, WebP, GIF) or videos (MP4, MOV, MPEG)",

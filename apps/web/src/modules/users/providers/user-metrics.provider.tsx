@@ -17,7 +17,7 @@ import {
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { getUserMetricsAction } from "@/modules/users/server-actions/get-user-metrics.action";
 
-type AiCreditsInfo = {
+export type AiCreditsInfo = {
   consumed: number;
   total: number;
   remaining: number;

@@ -79,11 +79,18 @@ export class AiMediaProcessor extends GlobalProcessor {
             : [asset.thumbnail]
           : [asset.url];
 
-      const metadata = await this.aiService.generateMediaMetadata(urls, categories, {
-        media_id: request.media_id,
-        user_id: request.user_id,
-        media_type: asset.media_type,
-      });
+      const metadata = await this.aiService.generateMediaMetadata(
+        urls,
+        categories,
+        {
+          media_id: request.media_id,
+          user_id: request.user_id,
+          media_type: asset.media_type,
+        },
+        // The artist's own title/description — set at upload or edited later — so the model can
+        // name what the pixels cannot (subject, project, place).
+        { title: asset.title, description: asset.description },
+      );
 
       // EN row (fallback to first) → the main-row SEO columns; filename is shared across locales.
       const en =

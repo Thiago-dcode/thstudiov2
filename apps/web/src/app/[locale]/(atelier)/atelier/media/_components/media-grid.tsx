@@ -25,7 +25,7 @@ import {
 } from "@/modules/media/providers/select-media.provider";
 import { useSubscribeToUserNotification } from "@/modules/user-notifications/hooks/useSubscribeToUserNotification";
 import { useUserMetrics } from "@/modules/users/providers/user-metrics.provider";
-import { CreateMediaDialog } from "./create-media-modal";
+import { CreateMediaDialog } from "./create-media/create-media-dialog";
 import { EditMediaCard } from "./edit-media-card";
 
 type MediaGridProps = {

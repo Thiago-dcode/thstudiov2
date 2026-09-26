@@ -19,7 +19,7 @@ import { cn } from "@repo/ui/lib/utils";
 import { Check, Image, RefreshCw, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CreateMediaDialog } from "@/app/[locale]/(atelier)/atelier/media/_components/create-media-modal";
+import { CreateMediaDialog } from "@/app/[locale]/(atelier)/atelier/media/_components/create-media/create-media-dialog";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { ExpandMediaDialog } from "@/modules/media/components/expand-media-dialog";
 import { FailedMediaOverlay } from "@/modules/media/components/failed-media-overlay";
