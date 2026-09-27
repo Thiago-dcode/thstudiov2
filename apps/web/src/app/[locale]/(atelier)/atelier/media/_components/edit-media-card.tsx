@@ -582,6 +582,10 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
       direction="right"
       open={isDrawerOpen}
       onOpenChange={handleDrawerOpenChange}
+      // vaul's keyboard handling is built for bottom sheets: on phones it writes a pixel height
+      // onto the panel when a field is focused and keeps it after the keyboard closes, which
+      // pushes the pinned footer below the screen. A full-height side panel doesn't need it.
+      repositionInputs={false}
     >
       <div
         className={cn(
@@ -701,10 +705,11 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
           onOpenChange={handleExpandOpenChange}
         />
       </div>
-      {/* Full-screen on phones, a side panel from `sm`. `h-dvh` tracks the mobile browser's
-          collapsing toolbars; the shared drawer's drag handle is meant for bottom sheets, so it
-          is hidden on this side panel. */}
-      <DrawerContent className="inset-y-0 right-0 left-auto mt-0 h-dvh w-full sm:w-150 sm:max-w-[90vw] [&>div:first-child]:hidden">
+      {/* Full-screen on phones, a side panel from `sm`. The height comes from `inset-y-0` alone:
+          a fixed box pinned to both edges follows the visible viewport as mobile toolbars show and
+          hide, where a viewport-unit height can outgrow it and hide the footer. The shared
+          drawer's drag handle is meant for bottom sheets, so it is hidden on this side panel. */}
+      <DrawerContent className="inset-y-0 right-0 left-auto mt-0 h-auto max-h-none w-full sm:w-150 sm:max-w-[90vw] [&>div:first-child]:hidden">
         <DrawerHeader className="shrink-0 gap-3 border-b px-4 py-3 text-left sm:px-6">
           <div className="flex min-w-0 items-center justify-between gap-3">
             <DrawerTitle className="flex min-w-0 flex-1 items-center gap-2 text-base!">
