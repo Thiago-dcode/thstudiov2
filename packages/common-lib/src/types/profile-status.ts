@@ -12,6 +12,7 @@ export type CreateProfileStatusInput = {
   has_portfolio?: boolean;
   has_media?: boolean;
   has_about_page?: boolean;
+  is_closed?: boolean;
 };
 
 export type UpdateProfileStatusInput = Partial<

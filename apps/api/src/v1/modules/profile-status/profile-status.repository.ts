@@ -25,6 +25,7 @@ export class ProfileStatusRepository extends BaseRepository {
     `${TABLES_ENUM.PROFILE_STATUS}.has_portfolio`,
     `${TABLES_ENUM.PROFILE_STATUS}.has_media`,
     `${TABLES_ENUM.PROFILE_STATUS}.has_about_page`,
+    `${TABLES_ENUM.PROFILE_STATUS}.is_closed`,
   ] as const;
 
   constructor() {
@@ -143,6 +144,7 @@ export class ProfileStatusRepository extends BaseRepository {
       has_portfolio: result.has_portfolio,
       has_media: result.has_media,
       has_about_page: result.has_about_page,
+      is_closed: result.is_closed,
     };
   }
 }

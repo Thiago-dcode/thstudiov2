@@ -1,25 +1,16 @@
 "use client";
 
-import type { ProfileStatus } from "@repo/common-lib/types/profile-status";
+import {
+  PROFILE_STATUS_FLAGS,
+  type ProfileStatusFlag,
+} from "@repo/common-lib/constants/profile-status";
 import { cn } from "@repo/ui/lib/utils";
 import { Check, ChevronDown, ChevronUp, X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "@/i18n/navigation";
 import { useUserMetrics } from "../providers/user-metrics.provider";
-
-const PROFILE_STATUS_FLAGS = [
-  "has_full_name_field",
-  "has_profession_field",
-  "has_avatar_field",
-  "has_location",
-  "has_categories",
-  "has_media",
-  "has_portfolio",
-  "has_about_page",
-] as const satisfies ReadonlyArray<keyof ProfileStatus>;
-
-type ProfileStatusFlag = (typeof PROFILE_STATUS_FLAGS)[number];
+import { closeProfileStatusAction } from "../server-actions/close-profile-status.action";
 
 const STEP_HREFS: Record<ProfileStatusFlag, string> = {
   has_full_name_field: "/atelier/home?tab=profile",
@@ -53,22 +44,16 @@ const STEP_LABEL_KEYS: Record<
   has_about_page: "aboutPage",
 };
 
-/** Bump when new required steps are added so prior "completed" dismissals reset. */
-const completedKey = (userId: number) =>
-  `profile-setup-guide-completed-v2-${userId}`;
-
-export const ProfileSetupGuide = ({ userId }: { userId: number }) => {
+export const ProfileSetupGuide = () => {
   const t = useTranslations("atelier.common.setupGuide");
-  const { metrics, isLoading } = useUserMetrics();
-  const [dismissed, setDismissed] = useState(true);
+  const { metrics, isLoading, refresh } = useUserMetrics();
+  const [dismissed, setDismissed] = useState(false);
   const [shrunk, setShrunk] = useState(false);
 
   const status = metrics?.profile_status;
 
   const { percent, allDone } = useMemo(() => {
-    if (!status) {
-      return { percent: 0, allDone: false };
-    }
+    if (!status) return { percent: 0, allDone: false };
     const completedCount = PROFILE_STATUS_FLAGS.filter(
       (flag) => status[flag] === true,
     ).length;
@@ -79,29 +64,20 @@ export const ProfileSetupGuide = ({ userId }: { userId: number }) => {
     };
   }, [status]);
 
-  const handleDismiss = () => {
+  const handleDismiss = async () => {
     setDismissed(true);
-    if (allDone) {
-      localStorage.setItem(completedKey(userId), "1");
+    // A completed guide is closed for good; an incomplete one only for this visit.
+    if (status && allDone) {
+      const result = await closeProfileStatusAction(status.user_id);
+      if (result.data) await refresh();
     }
   };
-  useEffect(() => {
-    if (isLoading || !status) return;
-    if (!allDone) {
-      localStorage.removeItem(completedKey(userId));
-      setDismissed(false);
-    }
-  }, [allDone, isLoading, status]);
-
-  useEffect(() => {
-    setDismissed(localStorage.getItem(completedKey(userId)) === "1");
-  }, []);
 
   const handleToggleShrink = () => {
     setShrunk((prev) => !prev);
   };
 
-  if (isLoading || !status || dismissed) {
+  if (isLoading || !status || status.is_closed || dismissed) {
     return null;
   }
 

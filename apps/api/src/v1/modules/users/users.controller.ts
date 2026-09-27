@@ -138,6 +138,14 @@ export class UserController {
     };
   }
 
+  @Post(':id/profile-status/close')
+  async closeProfileStatus(
+    @Param('id', ParseIntPipe, new ModelExistPipe('users'), IsUserAuthPipe)
+    id: number,
+  ) {
+    return await this.profileStatusService.close(id);
+  }
+
   @Patch(':id')
   @UseInterceptors(
     FileFieldsInterceptor([

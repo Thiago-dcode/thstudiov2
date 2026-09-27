@@ -7,6 +7,7 @@ import type {
 } from "@repo/common-lib/types/media";
 import type { FullPlan } from "@repo/common-lib/types/plan";
 import type { FullPlanSubscription } from "@repo/common-lib/types/plan-subscription";
+import type { ProfileStatus } from "@repo/common-lib/types/profile-status";
 import type { ApiResponse } from "@repo/common-lib/types/response";
 import type {
   ArtistCard,
@@ -97,6 +98,11 @@ export class UserService extends BaseService {
           tags: [`subscription-${id}`, `user-${id}`],
         },
       },
+    });
+  }
+  async closeProfileStatus(id: number): Promise<ApiResponse<ProfileStatus>> {
+    return await this.fetchApi.post({
+      resource: `${id}/profile-status/close`,
     });
   }
   async updatePassword(

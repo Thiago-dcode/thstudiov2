@@ -51,7 +51,7 @@ const AdminLayout = async ({ children }: { children: ReactNode }) => {
                   <CreateUpdateServiceProvider user={userAuth}>
                     <UserAccountBannedModal />
                     <div className="fixed flex flex-col items-end bottom-6 right-6 z-100 gap-2 ">
-                      <ProfileSetupGuide userId={userAuth.id} />
+                      <ProfileSetupGuide />
                       <UploadMediaStatusModal />
                       <AlertPortfolioButton />
                       <AlertCollectionButton />

@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { UPDATE_PROFILE_STATUS_EVENT } from '@repo/common-lib/constants/events';
 import { CACHE_KEY_PROFILE_STATUS } from '@repo/common-lib/constants/cache';
+import { PROFILE_STATUS_FLAGS } from '@repo/common-lib/constants/profile-status';
 import type {
   CreateProfileStatusInput,
   ProfileStatus,
@@ -57,14 +58,24 @@ export class ProfileStatusService {
     return result;
   }
 
+  /** Close the setup guide for good. Only allowed once every step is done. */
+  async close(userId: number): Promise<ProfileStatus> {
+    const status = await this.findOneByUserId(userId);
+    if (status.is_closed) return status;
+    if (!PROFILE_STATUS_FLAGS.every((flag) => status[flag])) {
+      throw new BadRequestException('Profile setup is not complete');
+    }
+    return this.update(userId, { is_closed: true });
+  }
+
   async applyUpdate(
     userId: number,
     fields: UpdateProfileStatusInput,
   ): Promise<void> {
     const patch: UpdateProfileStatusInput = {};
-    for (const [key, value] of Object.entries(fields)) {
-      if (typeof value === 'boolean') {
-        patch[key as keyof UpdateProfileStatusInput] = value;
+    for (const flag of PROFILE_STATUS_FLAGS) {
+      if (typeof fields[flag] === 'boolean') {
+        patch[flag] = fields[flag];
       }
     }
     if (!Object.keys(patch).length) return;

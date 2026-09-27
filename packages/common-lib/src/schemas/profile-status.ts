@@ -12,6 +12,7 @@ export type ProfileStatusSchema = {
   has_portfolio: boolean;
   has_media: boolean;
   has_about_page: boolean;
+  is_closed: boolean;
   created_at: Date;
   updated_at: Date;
 };
