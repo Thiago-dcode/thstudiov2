@@ -2055,9 +2055,24 @@ const messages = {
       },
       search: {
         placeholder: "Buscar mídia…",
-        all: "Todos",
+        clearSearch: "Limpar busca",
+        clearFilters: "Limpar filtros",
         shapeGroupLabel: "Formato",
         typeGroupLabel: "Tipo",
+        sortLabel: "Ordenar por",
+        allShapes: "Todos os formatos",
+        allTypes: "Todos os tipos",
+        shape: {
+          SQUARE: "Quadrado",
+          LANDSCAPE: "Paisagem",
+          PORTRAIT: "Retrato",
+        },
+        sort: {
+          created_at_desc: "Enviadas recentemente",
+          created_at_asc: "Enviadas há mais tempo",
+          seo_generated_at_desc: "Metadados gerados: mais recentes",
+          seo_generated_at_asc: "Metadados gerados: mais antigos",
+        },
       },
       mediaType: {
         IMAGE: "Foto",

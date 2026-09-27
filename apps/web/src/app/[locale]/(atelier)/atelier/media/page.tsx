@@ -1,6 +1,5 @@
-import type { EnumType } from "@repo/common-lib/constants/enums";
-import { ENUMS } from "@repo/common-lib/constants/enums";
 import type { Pagination } from "@repo/common-lib/types/response";
+import { firstString } from "@repo/common-lib/utils/parse-params";
 import { queryParamBuilder } from "@repo/common-lib/utils/query-builder";
 import { AppPagination } from "@repo/ui/components/custom/app-pagination";
 import { redirect } from "next/navigation";
@@ -15,44 +14,12 @@ import {
 } from "../../__components/admin-page.component";
 import { MediaGridClient } from "./_components/media-grid-client";
 import { MediaSearch } from "./_components/media-search";
-
-function parseOptionalInt(
-  value: string | string[] | undefined,
-): number | undefined {
-  if (value === undefined) return undefined;
-  const s = Array.isArray(value) ? value[0] : value;
-  if (!s || s.trim() === "") return undefined;
-  const n = parseInt(s.trim(), 10);
-  return Number.isFinite(n) && n > 0 ? n : undefined;
-}
-
-function parseOptionalString(
-  value: string | string[] | undefined,
-): string | undefined {
-  if (value === undefined) return undefined;
-  const s = Array.isArray(value) ? value[0] : value;
-  return s?.trim() || undefined;
-}
-
-function parseOptionalShape(
-  value: string | string[] | undefined,
-): EnumType<"MEDIA_SHAPE"> | undefined {
-  const s = parseOptionalString(value);
-  if (!s) return undefined;
-  return ENUMS.MEDIA_SHAPE.includes(s as EnumType<"MEDIA_SHAPE">)
-    ? (s as EnumType<"MEDIA_SHAPE">)
-    : undefined;
-}
-
-function parseOptionalMediaType(
-  value: string | string[] | undefined,
-): EnumType<"MEDIA_TYPE"> | undefined {
-  const s = parseOptionalString(value);
-  if (!s) return undefined;
-  return ENUMS.MEDIA_TYPE.includes(s as EnumType<"MEDIA_TYPE">)
-    ? (s as EnumType<"MEDIA_TYPE">)
-    : undefined;
-}
+import {
+  DEFAULT_MEDIA_PER_PAGE,
+  MEDIA_PATH,
+  mediaListQueryParams,
+  parseMediaListQuery,
+} from "./media.params";
 
 export default async function MediaAtelierPage({
   searchParams,
@@ -66,20 +33,21 @@ export default async function MediaAtelierPage({
   }
 
   const params = await searchParams;
-  const page = parseOptionalInt(params.page) ?? 1;
-  const perPage = Math.min(parseOptionalInt(params.per_page) ?? 25, 50);
-  const search = parseOptionalString(params.search);
-  const shape = parseOptionalShape(params.shape);
-  const mediaType = parseOptionalMediaType(params.media_type);
+  const query = parseMediaListQuery((key) => firstString(params[key]));
+  const requestedPage = Number.parseInt(firstString(params.page) ?? "", 10);
+  const page = requestedPage > 0 ? requestedPage : 1;
+  const perPage = Math.min(query.per_page ?? DEFAULT_MEDIA_PER_PAGE, 50);
 
   const mediaResponse = await usersService.getAllMedia(userAuth.id, {
     page,
     per_page: perPage,
     completed: true,
     paginated: true,
-    ...(search && { search }),
-    ...(shape && { shape }),
-    ...(mediaType && { media_type: mediaType }),
+    order_by: query.order_by,
+    order: query.order,
+    ...(query.search && { search: query.search }),
+    ...(query.shape && { shape: query.shape }),
+    ...(query.media_type && { media_type: query.media_type }),
   });
 
   const media = mediaResponse.data || [];
@@ -87,16 +55,13 @@ export default async function MediaAtelierPage({
     ? (mediaResponse.pagination ?? undefined)
     : undefined;
 
-  const buildPaginationHref = (p: number) => {
-    const query: Record<string, string | number> = { page: p };
-    if (perPage !== 15) query.per_page = perPage;
-    if (search) query.search = search;
-    if (shape) query.shape = shape;
-    if (mediaType) query.media_type = mediaType;
-    return queryParamBuilder("/atelier/media", query);
-  };
+  const buildPaginationHref = (p: number) =>
+    queryParamBuilder(MEDIA_PATH, { ...mediaListQueryParams(query), page: p });
 
-  const hasActiveFilters = Boolean(search || shape || mediaType);
+  // Sorting only reorders the library, so it is not a filter: it never explains an empty grid.
+  const hasActiveFilters = Boolean(
+    query.search || query.shape || query.media_type,
+  );
 
   return (
     <AdminPageContainer>

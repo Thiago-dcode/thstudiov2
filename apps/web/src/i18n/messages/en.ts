@@ -2039,9 +2039,24 @@ const messages = {
       },
       search: {
         placeholder: "Search media…",
-        all: "All",
+        clearSearch: "Clear search",
+        clearFilters: "Clear filters",
         shapeGroupLabel: "Shape",
         typeGroupLabel: "Type",
+        sortLabel: "Sort by",
+        allShapes: "All shapes",
+        allTypes: "All types",
+        shape: {
+          SQUARE: "Square",
+          LANDSCAPE: "Landscape",
+          PORTRAIT: "Portrait",
+        },
+        sort: {
+          created_at_desc: "Newest uploads",
+          created_at_asc: "Oldest uploads",
+          seo_generated_at_desc: "Metadata generated: newest",
+          seo_generated_at_asc: "Metadata generated: oldest",
+        },
       },
       /** Shared by the card badge and the type filter so both read the same. */
       mediaType: {

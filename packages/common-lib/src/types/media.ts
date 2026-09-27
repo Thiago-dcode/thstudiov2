@@ -4,6 +4,8 @@ import {
 } from "../schemas/media";
 import { OffsetPaginationRequest } from "./request";
 import { EnumType } from "../constants/enums";
+import { MEDIA_ORDER_BY_COLUMNS } from "../constants/media";
+import type { SqlOrderDirection } from "./database";
 import type { LocationInput, LocationSummary } from "./location";
 
 // ==================== MEDIA TYPES ====================
@@ -52,7 +54,11 @@ export type MediaIndexRequest = OffsetPaginationRequest & {
   is_highlight?: boolean;
   /** When false, join users and return `MediaWithUser[]`. Defaults to true (`Media[]`). */
   compact?: boolean;
+  order_by?: MediaOrderBy;
+  order?: SqlOrderDirection;
 }
+
+export type MediaOrderBy = (typeof MEDIA_ORDER_BY_COLUMNS)[number];
 
 /** Query params for listing a user's media (GET /users/:id/media; `user_id` is the path param). */
 export type GetAllUserMediaQueryParams = Omit<MediaIndexRequest, 'user_id'>;
@@ -159,4 +165,3 @@ export type MediaJobDto = {
   media: Media,
   generate_metadata?: boolean
 }
-

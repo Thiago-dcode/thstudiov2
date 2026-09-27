@@ -2056,9 +2056,24 @@ const messages = {
       },
       search: {
         placeholder: "Buscar contenido…",
-        all: "Todos",
+        clearSearch: "Borrar búsqueda",
+        clearFilters: "Borrar filtros",
         shapeGroupLabel: "Formato",
         typeGroupLabel: "Tipo",
+        sortLabel: "Ordenar por",
+        allShapes: "Todos los formatos",
+        allTypes: "Todos los tipos",
+        shape: {
+          SQUARE: "Cuadrado",
+          LANDSCAPE: "Horizontal",
+          PORTRAIT: "Vertical",
+        },
+        sort: {
+          created_at_desc: "Subidos recientemente",
+          created_at_asc: "Subidos hace más tiempo",
+          seo_generated_at_desc: "Metadatos generados: más recientes",
+          seo_generated_at_asc: "Metadatos generados: más antiguos",
+        },
       },
       mediaType: {
         IMAGE: "Foto",

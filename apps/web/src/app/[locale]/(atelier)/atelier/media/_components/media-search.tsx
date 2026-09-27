@@ -1,204 +1,180 @@
 "use client";
 
-import type { EnumType } from "@repo/common-lib/constants/enums";
+import { SQL_ORDER_DIRECTIONS } from "@repo/common-lib/constants/database";
 import { ENUMS } from "@repo/common-lib/constants/enums";
+import { MEDIA_ORDER_BY_COLUMNS } from "@repo/common-lib/constants/media";
+import type { SqlOrderDirection } from "@repo/common-lib/types/database";
+import type { MediaOrderBy } from "@repo/common-lib/types/media";
 import { queryParamBuilder } from "@repo/common-lib/utils/query-builder";
 import { Button } from "@repo/ui/components/shadcn/button";
 import { Input } from "@repo/ui/components/shadcn/input";
-import { cn } from "@repo/ui/lib/utils";
+import { Select } from "@repo/ui/components/shadcn/select";
 import { Search, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEffect, useState, useTransition } from "react";
+import {
+  MEDIA_PATH,
+  type MediaListQuery,
+  type MediaShapeFilter,
+  type MediaTypeFilter,
+  mediaListQueryParams,
+  parseMediaListQuery,
+} from "../media.params";
 
-const SHAPE_OPTIONS = ENUMS.MEDIA_SHAPE;
-type ShapeFilter = EnumType<"MEDIA_SHAPE"> | undefined;
+/** Every column in both directions, so each option reads as one complete choice. */
+const SORT_OPTIONS = MEDIA_ORDER_BY_COLUMNS.flatMap((orderBy) =>
+  [...SQL_ORDER_DIRECTIONS]
+    .reverse()
+    .map((order) => ({ orderBy, order, value: `${orderBy}:${order}` })),
+);
 
-const MEDIA_TYPE_OPTIONS = ENUMS.MEDIA_TYPE;
-type MediaTypeFilter = EnumType<"MEDIA_TYPE"> | undefined;
-
-function parseShapeParam(value: string | null): ShapeFilter {
-  if (!value) return undefined;
-  return SHAPE_OPTIONS.includes(value as EnumType<"MEDIA_SHAPE">)
-    ? (value as EnumType<"MEDIA_SHAPE">)
-    : undefined;
-}
-
-function parseMediaTypeParam(value: string | null): MediaTypeFilter {
-  if (!value) return undefined;
-  return MEDIA_TYPE_OPTIONS.includes(value as EnumType<"MEDIA_TYPE">)
-    ? (value as EnumType<"MEDIA_TYPE">)
-    : undefined;
-}
-
-function buildMediaQueryParams(
-  searchParams: URLSearchParams,
-  overrides: {
-    search?: string;
-    shape?: ShapeFilter;
-    media_type?: MediaTypeFilter;
-  } = {},
-) {
-  const params: Record<string, string> = {};
-
-  const search =
-    overrides.search !== undefined
-      ? overrides.search.trim()
-      : (searchParams.get("search") ?? "").trim();
-  if (search) params.search = search;
-
-  // `in` rather than a truthiness check: clearing a filter passes `undefined` deliberately, and
-  // falling through to the current URL would make "All" a no-op.
-  const shape =
-    "shape" in overrides
-      ? overrides.shape
-      : parseShapeParam(searchParams.get("shape"));
-  if (shape) params.shape = shape;
-
-  const mediaType =
-    "media_type" in overrides
-      ? overrides.media_type
-      : parseMediaTypeParam(searchParams.get("media_type"));
-  if (mediaType) params.media_type = mediaType;
-
-  const perPage = searchParams.get("per_page");
-  if (perPage) params.per_page = perPage;
-
-  return params;
-}
-
-const filterButtonClass = "h-7 px-2.5 text-[11px] font-medium";
+const selectClass = "h-9 text-xs! w-full";
 
 export function MediaSearch() {
   const t = useTranslations("atelier.media.search");
+  const tMedia = useTranslations("atelier.media");
   const router = useRouter();
   const searchParams = useSearchParams();
-  const tMedia = useTranslations("atelier.media");
-  const currentSearch = searchParams.get("search") ?? "";
-  const currentShape = parseShapeParam(searchParams.get("shape"));
-  const currentMediaType = parseMediaTypeParam(searchParams.get("media_type"));
-  const [value, setValue] = useState(currentSearch);
+  const current = parseMediaListQuery((key) => searchParams.get(key));
+  const [value, setValue] = useState(current.search ?? "");
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
     setValue(searchParams.get("search") ?? "");
   }, [searchParams]);
 
-  const navigate = (
-    overrides: {
-      search?: string;
-      shape?: ShapeFilter;
-      media_type?: MediaTypeFilter;
-    } = {},
-  ) => {
-    const params = buildMediaQueryParams(searchParams, overrides);
-
+  const navigate = (overrides: Partial<MediaListQuery>) => {
+    const params = mediaListQueryParams({ ...current, ...overrides });
     startTransition(() => {
-      router.push(queryParamBuilder("/atelier/media", params));
+      router.push(queryParamBuilder(MEDIA_PATH, params));
     });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    navigate({ search: value });
+    navigate({ search: value.trim() || undefined });
   };
 
   const handleClearSearch = () => {
     setValue("");
-    navigate({ search: "" });
+    navigate({ search: undefined });
   };
 
-  const handleShapeFilter = (shape: ShapeFilter) => {
-    navigate({ shape });
+  const handleClearFilters = () => {
+    setValue("");
+    navigate({ search: undefined, shape: undefined, media_type: undefined });
   };
 
-  const handleMediaTypeFilter = (media_type: MediaTypeFilter) => {
-    navigate({ media_type });
+  const handleSortChange = (sort: string) => {
+    const option = SORT_OPTIONS.find((o) => o.value === sort);
+    if (option) navigate({ order_by: option.orderBy, order: option.order });
   };
+
+  const hasActiveFilters = Boolean(
+    current.search || current.shape || current.media_type,
+  );
 
   return (
-    <div className="flex flex-col items-start gap-2 w-full max-w-96">
-      <form onSubmit={handleSubmit} className="relative w-full">
-        <Search className="absolute left-2.5  top-1/2 -translate-y-1/2 size-3.5 text-text-muted pointer-events-none z-30" />
+    <div className="flex w-full flex-col gap-2 tablet:w-md">
+      <form onSubmit={handleSubmit} className="relative w-full" role="search">
+        <Search className="pointer-events-none absolute top-1/2 left-2.5 z-30 size-3.5 -translate-y-1/2 text-text-muted" />
         <Input
-          type="text"
+          type="search"
+          aria-label={t("placeholder")}
           placeholder={t("placeholder")}
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          className="pl-8  h-9 text-xs!"
+          className="h-9 pl-8 text-xs! [&::-webkit-search-cancel-button]:hidden"
           disabled={isPending}
         />
         {value && (
           <button
             type="button"
             onClick={handleClearSearch}
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text transition-colors"
+            aria-label={t("clearSearch")}
+            className="absolute top-1/2 right-2.5 -translate-y-1/2 text-text-muted transition-colors hover:text-text"
           >
             <X className="size-3.5" />
           </button>
         )}
       </form>
 
-      <div className="flex items-center gap-1.5">
-        <span className="text-[11px] text-text-muted shrink-0 w-12">
-          {t("shapeGroupLabel")}
-        </span>
-        <Button
-          type="button"
-          variant={!currentShape ? "secondary" : "ghost"}
-          onClick={() => handleShapeFilter(undefined)}
+      {/* Filters narrow the library; sort only reorders it — so they sit apart. */}
+      <div className="grid grid-cols-2 gap-1.5 tablet:grid-cols-[1fr_1fr_1.4fr]">
+        <Select
+          aria-label={t("shapeGroupLabel")}
+          value={current.shape ?? ""}
           disabled={isPending}
-          className={cn(filterButtonClass, currentShape && "hover:bg-fg-2")}
+          onChange={(e) =>
+            navigate({
+              shape: (e.target.value || undefined) as
+                | MediaShapeFilter
+                | undefined,
+            })
+          }
+          className={selectClass}
         >
-          {t("all")}
-        </Button>
-        {SHAPE_OPTIONS.map((shape) => (
-          <Button
-            key={shape}
-            type="button"
-            variant={currentShape === shape ? "secondary" : "ghost"}
-            onClick={() => handleShapeFilter(shape)}
-            disabled={isPending}
-            className={cn(
-              filterButtonClass,
-              "capitalize",
-              currentShape !== shape && "hover:bg-fg-2",
-            )}
-          >
-            {shape.toLowerCase()}
-          </Button>
-        ))}
+          <option value="">{t("allShapes")}</option>
+          {ENUMS.MEDIA_SHAPE.map((shape) => (
+            <option key={shape} value={shape}>
+              {t(`shape.${shape}`)}
+            </option>
+          ))}
+        </Select>
+
+        <Select
+          aria-label={t("typeGroupLabel")}
+          value={current.media_type ?? ""}
+          disabled={isPending}
+          onChange={(e) =>
+            navigate({
+              media_type: (e.target.value || undefined) as
+                | MediaTypeFilter
+                | undefined,
+            })
+          }
+          className={selectClass}
+        >
+          <option value="">{t("allTypes")}</option>
+          {ENUMS.MEDIA_TYPE.map((mediaType) => (
+            <option key={mediaType} value={mediaType}>
+              {tMedia(`mediaType.${mediaType}`)}
+            </option>
+          ))}
+        </Select>
+
+        <Select
+          aria-label={t("sortLabel")}
+          value={`${current.order_by}:${current.order}`}
+          disabled={isPending}
+          onChange={(e) => handleSortChange(e.target.value)}
+          className={`${selectClass} col-span-2 tablet:col-span-1`}
+        >
+          {SORT_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {t(`sort.${sortKey(option.orderBy, option.order)}`)}
+            </option>
+          ))}
+        </Select>
       </div>
 
-      <div className="flex items-center gap-1.5">
-        <span className="text-[11px] text-text-muted shrink-0 w-12">
-          {t("typeGroupLabel")}
-        </span>
+      {hasActiveFilters && (
         <Button
           type="button"
-          variant={!currentMediaType ? "secondary" : "ghost"}
-          onClick={() => handleMediaTypeFilter(undefined)}
+          variant="ghost"
+          onClick={handleClearFilters}
           disabled={isPending}
-          className={cn(filterButtonClass, currentMediaType && "hover:bg-fg-2")}
+          className="h-7 self-start px-2 text-[11px] font-medium text-text-muted hover:bg-fg-2 hover:text-text"
         >
-          {t("all")}
+          <X className="size-3" />
+          {t("clearFilters")}
         </Button>
-        {MEDIA_TYPE_OPTIONS.map((mediaType) => (
-          <Button
-            key={mediaType}
-            type="button"
-            variant={currentMediaType === mediaType ? "secondary" : "ghost"}
-            onClick={() => handleMediaTypeFilter(mediaType)}
-            disabled={isPending}
-            className={cn(
-              filterButtonClass,
-              currentMediaType !== mediaType && "hover:bg-fg-2",
-            )}
-          >
-            {tMedia(`mediaType.${mediaType}`)}
-          </Button>
-        ))}
-      </div>
+      )}
     </div>
   );
+}
+
+function sortKey(orderBy: MediaOrderBy, order: SqlOrderDirection) {
+  return `${orderBy}_${order.toLowerCase() as Lowercase<SqlOrderDirection>}` as const;
 }

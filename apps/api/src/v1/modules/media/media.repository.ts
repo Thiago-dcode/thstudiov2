@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
 import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/language';
+import { DEFAULT_MEDIA_ORDER_BY } from '@repo/common-lib/constants/media';
 import {
   MediaSchema,
   MediaWithUserSchema,
@@ -123,9 +124,22 @@ export class MediaRepository extends BaseMediaRepository {
         query.where('completed_at', 'IS', null);
       }
     }
+    // Before `handleOffsetPagination`, which appends the primary key as a tiebreaker: ordered
+    // after it, the sort would only ever break ties between ids and never take effect.
+    const orderBy = filters.order_by || DEFAULT_MEDIA_ORDER_BY;
+    const order = filters.order || 'DESC';
+    if (orderBy === 'seo_generated_at') {
+      // Media that never had metadata generated counts as the oldest: first when sorting oldest
+      // first (the ones most in need of it), last when sorting newest first. Postgres defaults
+      // to the opposite on both (NULLS LAST on ASC, NULLS FIRST on DESC), so it is spelled out.
+      query.orderBy(
+        `(${TABLES_ENUM.MEDIA}.seo_generated_at IS NULL)`,
+        order === 'ASC' ? 'DESC' : 'ASC',
+      );
+    }
+    query.orderBy(orderBy, order);
     this.requestService.pagination =
       await this.handleOffsetPagination(query, filters);
-    query.orderBy('created_at', 'DESC');
     return query;
   }
 
