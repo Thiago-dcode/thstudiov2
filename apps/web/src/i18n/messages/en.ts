@@ -2026,6 +2026,7 @@ const messages = {
         locationPlaceholder: "Search a city or place…",
         cancel: "Cancel",
         selectMedia: "Select media",
+        actions: "Actions",
         cancelSelection: "Cancel selection",
         noMediaFiltered: "No media found. Try a different filter combination.",
         noMediaEmpty:

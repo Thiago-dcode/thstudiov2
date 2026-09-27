@@ -16,11 +16,16 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@repo/ui/components/shadcn/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@repo/ui/components/shadcn/dropdown-menu";
 import { FileInputProvider } from "@repo/ui/contexts/file.provider";
 import { cn } from "@repo/ui/lib/utils";
-import { Brain, ImageOff, MapPin, Upload } from "lucide-react";
+import { Brain, ChevronDown, ImageOff, MapPin, Upload } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { LocationAutocomplete } from "@/modules/locations/components/location-autocomplete";
@@ -41,13 +46,22 @@ type MediaGridProps = {
   hasActiveFilters: boolean;
 };
 
-function GenerateManyMediaMetadataDialog() {
+// Controlled so the dialogs can be opened from the actions dropdown, whose items
+// unmount on close and so cannot host a DialogTrigger.
+type BatchDialogProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+};
+
+function GenerateManyMediaMetadataDialog({
+  open: isGenerateSeoDialogOpen,
+  onOpenChange: setIsGenerateSeoDialogOpen,
+}: BatchDialogProps) {
   const t = useTranslations("atelier.media.grid");
   const { generateManySeoMedia } = useMedia();
   const { selectedMedia, selectionCount, setCanSelect, clearSelection } =
     useSelectMedia();
   const { aiCreditsInfo } = useUserMetrics();
-  const [isGenerateSeoDialogOpen, setIsGenerateSeoDialogOpen] = useState(false);
   // A batch is still capped at MAX_MEDIA_METADATA_BATCH items, but the credits it costs
   // depend on the mix of images and videos in the selection, so this sums weighted
   // cost rather than counting items.
@@ -72,22 +86,6 @@ function GenerateManyMediaMetadataDialog() {
       open={isGenerateSeoDialogOpen}
       onOpenChange={setIsGenerateSeoDialogOpen}
     >
-      <DialogTrigger asChild>
-        <Button
-          type="button"
-          variant="default"
-          size="sm"
-          disabled={!selectionCount}
-          className="shrink-0 transition-colors duration-200"
-        >
-          <Brain className="h-3.5 w-3.5 shrink-0" />
-          <span className="text-xs! font-medium whitespace-nowrap">
-            {selectionCount
-              ? t("generateSeoCount", { count: selectionCount })
-              : t("generateSeoTitle")}
-          </span>
-        </Button>
-      </DialogTrigger>
       <DialogContent className="max-w-md z-100">
         <DialogHeader>
           <DialogTitle className="text-lg!">
@@ -148,17 +146,19 @@ function GenerateManyMediaMetadataDialog() {
   );
 }
 
-function UpdateManyMediaLocationsDialog() {
+function UpdateManyMediaLocationsDialog({
+  open,
+  onOpenChange,
+}: BatchDialogProps) {
   const t = useTranslations("atelier.media.grid");
   const { updateManyMediaLocation } = useMedia();
   const { selectedMedia, selectionCount, setCanSelect, clearSelection } =
     useSelectMedia();
-  const [open, setOpen] = useState(false);
   const [location, setLocation] = useState<LocationInput | null>(null);
   const isOverLimit = selectionCount > MAX_MEDIA_LOCATION_BATCH;
 
   const handleOpenChange = (next: boolean) => {
-    setOpen(next);
+    onOpenChange(next);
     if (!next) setLocation(null);
   };
 
@@ -173,22 +173,6 @@ function UpdateManyMediaLocationsDialog() {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        <Button
-          type="button"
-          variant="default"
-          size="sm"
-          disabled={!selectionCount}
-          className="shrink-0 transition-colors duration-200"
-        >
-          <MapPin className="h-3.5 w-3.5 shrink-0" />
-          <span className="text-xs! font-medium whitespace-nowrap">
-            {selectionCount
-              ? t("updateLocationCount", { count: selectionCount })
-              : t("updateLocationTitle")}
-          </span>
-        </Button>
-      </DialogTrigger>
       <DialogContent className="max-w-md z-100">
         <DialogHeader>
           <DialogTitle className="text-lg!">
@@ -243,6 +227,61 @@ function UpdateManyMediaLocationsDialog() {
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+type BatchDialog = "metadata" | "location";
+
+function BatchMediaActionsMenu() {
+  const t = useTranslations("atelier.media.grid");
+  const { selectionCount } = useSelectMedia();
+  const [openDialog, setOpenDialog] = useState<BatchDialog | null>(null);
+
+  const dialogProps = (dialog: BatchDialog): BatchDialogProps => ({
+    open: openDialog === dialog,
+    onOpenChange: (next) => setOpenDialog(next ? dialog : null),
+  });
+
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            type="button"
+            variant="default"
+            size="sm"
+            disabled={!selectionCount}
+            className="group shrink-0 transition-colors duration-200"
+          >
+            <span className="text-xs! font-medium whitespace-nowrap">
+              {t("actions")}
+            </span>
+            <ChevronDown
+              className="h-3.5 w-3.5 shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180"
+              aria-hidden
+            />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" sideOffset={6} className="min-w-44">
+          <DropdownMenuItem
+            className="text-xs"
+            onSelect={() => setOpenDialog("metadata")}
+          >
+            <Brain aria-hidden />
+            {t("generateSeoCount", { count: selectionCount })}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="text-xs"
+            onSelect={() => setOpenDialog("location")}
+          >
+            <MapPin aria-hidden />
+            {t("updateLocationCount", { count: selectionCount })}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <GenerateManyMediaMetadataDialog {...dialogProps("metadata")} />
+      <UpdateManyMediaLocationsDialog {...dialogProps("location")} />
+    </>
   );
 }
 
@@ -314,15 +353,13 @@ export function MediaGrid({
         {currentMedia.length > 0 ? (
           <div
             className={cn(
-              "flex flex-wrap items-center gap-2  top-0  bg-bg py-1 w-full",
+              // Sticky on mobile so the selection actions stay reachable while scrolling.
+              "sticky top-0 z-40 flex flex-wrap items-center gap-2 bg-bg py-1 w-full md:static md:z-auto",
               canSelect ? "justify-between" : "justify-start",
             )}
           >
             {canSelect ? (
-              <div className="flex flex-wrap items-center gap-2">
-                <GenerateManyMediaMetadataDialog />
-                <UpdateManyMediaLocationsDialog />
-              </div>
+              <BatchMediaActionsMenu />
             ) : (
               <Button
                 variant="default"
