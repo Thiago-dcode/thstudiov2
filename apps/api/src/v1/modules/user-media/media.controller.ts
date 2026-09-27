@@ -17,6 +17,8 @@ export class UserMediaController {
     return await this.mediaService.findAll({
       ...query,
       user_id: id,
+      // Owner-only route (IsUserAuthPipe), so the usage counts never reach a public read.
+      with_usage_counts: true,
     });
   }
 }

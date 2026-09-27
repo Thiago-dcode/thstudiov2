@@ -16,6 +16,11 @@ import { Query } from '@repo/database/facades';
 import { MediaRepository as BaseMediaRepository } from '@repo/database/repositories/media';
 import { RequestService } from 'src/common/services/request.service';
 
+type MediaUsageCountRow = {
+  collections_count?: string | number | null;
+  portfolios_count?: string | number | null;
+};
+
 /**
  * HTTP-facing media repository: pagination + locale-aware SEO/tag reads.
  * Core CRUD/sitemap live on the database base class.
@@ -26,6 +31,24 @@ export class MediaRepository extends BaseMediaRepository {
     super();
   }
 
+  /**
+   * Where each media is used, as correlated subqueries (the pivots are indexed on the media side
+   * for this). A portfolio counts once whether it shows the media directly or through one of its
+   * collections — `UNION` dedupes the two paths — because both render it on the portfolio page.
+   */
+  private static readonly USAGE_COUNT_COLUMNS = [
+    `(SELECT COUNT(*) FROM ${TABLES_ENUM.COLLECTION_MEDIA} ucm
+      WHERE ucm.media_id = ${TABLES_ENUM.MEDIA}.id) AS collections_count`,
+    `(SELECT COUNT(*) FROM (
+        SELECT upm.portfolio_id FROM ${TABLES_ENUM.PORTFOLIO_MEDIA} upm
+        WHERE upm.media_id = ${TABLES_ENUM.MEDIA}.id
+        UNION
+        SELECT upc.portfolio_id FROM ${TABLES_ENUM.PORTFOLIO_COLLECTION} upc
+        INNER JOIN ${TABLES_ENUM.COLLECTION_MEDIA} upcm ON upcm.collection_id = upc.collection_id
+        WHERE upcm.media_id = ${TABLES_ENUM.MEDIA}.id
+      ) used_in_portfolios) AS portfolios_count`,
+  ];
+
   async getAll(filters: MediaIndexRequest = {}): Promise<Media[] | MediaWithUser[]> {
     const compact = filters.compact !== false;
     const baseQuery = this.withLocation(
@@ -34,8 +57,15 @@ export class MediaRepository extends BaseMediaRepository {
     const query = await this.applyFilters(filters, baseQuery, compact);
 
     if (compact) {
-      const results = await query.get<MediaSchema[]>();
-      return results.map((result) => this.formatMedia(result));
+      const results = await query.get<(MediaSchema & MediaUsageCountRow)[]>();
+      return results.map((result) => ({
+        ...this.formatMedia(result),
+        // COUNT(*) is a bigint, which pg hands back as a string.
+        ...(filters.with_usage_counts && {
+          collections_count: Number(result.collections_count ?? 0),
+          portfolios_count: Number(result.portfolios_count ?? 0),
+        }),
+      }));
     }
 
     const results = await query.get<MediaWithUserSchema[]>();
@@ -63,6 +93,7 @@ export class MediaRepository extends BaseMediaRepository {
     query.select([
       ...(compact ? this.COLUMNS : this.COLUMNS_WITH_USER),
       ...this.LOCATION_COLUMNS,
+      ...(filters.with_usage_counts ? MediaRepository.USAGE_COUNT_COLUMNS : []),
     ]);
 
     if (filters.shape) {
@@ -128,16 +159,14 @@ export class MediaRepository extends BaseMediaRepository {
     // after it, the sort would only ever break ties between ids and never take effect.
     const orderBy = filters.order_by || DEFAULT_MEDIA_ORDER_BY;
     const order = filters.order || 'DESC';
-    if (orderBy === 'seo_generated_at') {
-      // Media that never had metadata generated counts as the oldest: first when sorting oldest
-      // first (the ones most in need of it), last when sorting newest first. Postgres defaults
-      // to the opposite on both (NULLS LAST on ASC, NULLS FIRST on DESC), so it is spelled out.
-      query.orderBy(
-        `(${TABLES_ENUM.MEDIA}.seo_generated_at IS NULL)`,
-        order === 'ASC' ? 'DESC' : 'ASC',
-      );
-    }
-    query.orderBy(orderBy, order);
+    // Only `seo_generated_at` is nullable. Media that never had metadata generated counts as the
+    // oldest: first when sorting oldest first (the ones most in need of it), last when sorting
+    // newest first. Postgres defaults to the opposite on both, so it is spelled out.
+    query.orderBy(
+      orderBy,
+      order,
+      orderBy === 'seo_generated_at' ? { nulls: order === 'ASC' ? 'FIRST' : 'LAST' } : {},
+    );
     this.requestService.pagination =
       await this.handleOffsetPagination(query, filters);
     return query;

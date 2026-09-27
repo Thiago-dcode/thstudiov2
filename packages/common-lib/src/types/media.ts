@@ -17,6 +17,13 @@ export type MediaLocation = Pick<LocationSummary, 'id' | 'formatted' | 'name'>;
 export type Media = MediaSchema & {
   /** Present when the row was read with its location joined; null when none is set. */
   location?: MediaLocation | null;
+  /** How many of the owner's collections hold this media. Only on the owner's atelier list. */
+  collections_count?: number;
+  /**
+   * How many distinct portfolios show this media — placed directly or through one of the
+   * portfolio's collections, since both render it. Only on the owner's atelier list.
+   */
+  portfolios_count?: number;
 };
 // Media translation without id
 
@@ -56,6 +63,11 @@ export type MediaIndexRequest = OffsetPaginationRequest & {
   compact?: boolean;
   order_by?: MediaOrderBy;
   order?: SqlOrderDirection;
+  /**
+   * Internal: adds `collections_count` / `portfolios_count`. Set by the owner-only route, never
+   * accepted from a client (the request DTO doesn't declare it, so the whitelist pipe drops it).
+   */
+  with_usage_counts?: boolean;
 }
 
 export type MediaOrderBy = (typeof MEDIA_ORDER_BY_COLUMNS)[number];

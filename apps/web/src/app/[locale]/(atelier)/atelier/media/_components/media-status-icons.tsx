@@ -3,8 +3,16 @@
 import type { Media } from "@repo/common-lib/types/media";
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
 import { cn } from "@repo/ui/lib/utils";
-import { Circle, MapPin, MapPinOff, Sparkles } from "lucide-react";
+import {
+  BookImage,
+  Circle,
+  Layers,
+  MapPin,
+  MapPinOff,
+  Sparkles,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import type { ReactNode } from "react";
 
 const SEO_FIELDS = ["seo_title", "seo_description", "seo_alt"] as const;
 type SeoField = (typeof SEO_FIELDS)[number];
@@ -19,14 +27,22 @@ export function missingSeoFields(
 const triggerClass = "size-6 m-0";
 
 /**
- * At-a-glance status for one media — SEO, place, visibility — each explaining itself on hover
+ * At-a-glance status for one media — SEO, place, where it is used, visibility — each explaining
+ * itself on hover
  * (pointer devices) or tap (touch), through the same popover as the atelier's info tooltips.
  */
 export function MediaStatusIcons({
   media,
   className,
 }: {
-  media: Pick<Media, SeoField | "location" | "is_active">;
+  media: Pick<
+    Media,
+    | SeoField
+    | "location"
+    | "is_active"
+    | "collections_count"
+    | "portfolios_count"
+  >;
   className?: string;
 }) {
   const t = useTranslations("atelier.media.status");
@@ -49,6 +65,8 @@ export function MediaStatusIcons({
   const seoLabel = seoComplete ? t("seoComplete") : t("seoIncomplete");
   const locationLabel = place ? t("locationSet") : t("locationMissing");
   const activeLabel = media.is_active ? t("active") : t("inactive");
+  const collectionsCount = media.collections_count ?? 0;
+  const portfoliosCount = media.portfolios_count ?? 0;
 
   return (
     <div className={cn("flex items-center gap-0.5", className)}>
@@ -95,6 +113,22 @@ export function MediaStatusIcons({
           </>
         }
       />
+      {collectionsCount > 0 && (
+        <UsageIcon
+          icon={<Layers className="size-3.5" aria-hidden />}
+          count={collectionsCount}
+          label={t("inCollections", { count: collectionsCount })}
+          body={t("inCollectionsBody")}
+        />
+      )}
+      {portfoliosCount > 0 && (
+        <UsageIcon
+          icon={<BookImage className="size-3.5" aria-hidden />}
+          count={portfoliosCount}
+          label={t("inPortfolios", { count: portfoliosCount })}
+          body={t("inPortfoliosBody")}
+        />
+      )}
       <InfoTooltip
         label={activeLabel}
         triggerClassName={triggerClass}
@@ -117,5 +151,37 @@ export function MediaStatusIcons({
         }
       />
     </div>
+  );
+}
+
+/** Where the media is used, with the count beside the glyph. Shown only when it is used at all. */
+function UsageIcon({
+  icon,
+  count,
+  label,
+  body,
+}: {
+  icon: ReactNode;
+  count: number;
+  label: string;
+  body: string;
+}) {
+  return (
+    <InfoTooltip
+      label={label}
+      triggerClassName="h-6 w-auto m-0 gap-0.5 px-1 text-text"
+      icon={
+        <>
+          {icon}
+          <span className="text-[10px] font-medium tabular-nums">{count}</span>
+        </>
+      }
+      content={
+        <>
+          <p className="font-medium text-text">{label}</p>
+          <p>{body}</p>
+        </>
+      }
+    />
   );
 }

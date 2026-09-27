@@ -591,15 +591,38 @@ export class QueryBuilder extends BaseBuilder {
   public random() {
     this._orderBy = 'RANDOM()';
   }
-  public orderBy(column: string, order: 'ASC' | 'DESC' = 'ASC') {
+  /**
+   * @param options.nulls - Where NULLs go. Without it each database uses its own default
+   *   (Postgres: last on ASC, first on DESC; MySQL: the opposite), so pass it whenever the column
+   *   is nullable and the position matters. MySQL has no `NULLS FIRST/LAST`, so there it is
+   *   emulated with a leading `col IS NULL` sort key.
+   */
+  public orderBy(
+    column: string,
+    order: 'ASC' | 'DESC' = 'ASC',
+    options: { nulls?: 'FIRST' | 'LAST' } = {},
+  ) {
     this.operationsChain.push('orderBy');
-    const newOrder = `${this.buildColumn(column)} ${order}`;
+    const newOrder = this.buildOrderTerm(this.buildColumn(column), order, options.nulls);
     if (this._orderBy) {
       this._orderBy = `${this._orderBy}, ${newOrder}`;
     } else {
       this._orderBy = newOrder;
     }
     return this;
+  }
+
+  private buildOrderTerm(column: string, order: 'ASC' | 'DESC', nulls?: 'FIRST' | 'LAST') {
+    if (!nulls) return `${column} ${order}`;
+    switch (getClient().config.client) {
+      case 'postgres':
+        return `${column} ${order} NULLS ${nulls}`;
+      case 'mysql':
+        // `col IS NULL` is 0/1: ascending puts non-NULLs (0) first, i.e. NULLS LAST.
+        return `${column} IS NULL ${nulls === 'LAST' ? 'ASC' : 'DESC'}, ${column} ${order}`;
+      default:
+        throw new QueryBuilderWrongDatabaseClientException(getClient().config.client);
+    }
   }
 
   /**

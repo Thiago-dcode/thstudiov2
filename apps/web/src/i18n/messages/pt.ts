@@ -2102,6 +2102,12 @@ const messages = {
         inactive: "Oculta",
         inactiveBody:
           "Oculta da página pública, dos portfólios e das coleções.",
+        inCollections: "Em {count, plural, one {# coleção} other {# coleções}}",
+        inCollectionsBody: "Ocultar esta mídia também a oculta nelas.",
+        inPortfolios:
+          "Em {count, plural, one {# portfólio} other {# portfólios}}",
+        inPortfoliosBody:
+          "Inclui os portfólios que a exibem diretamente ou por meio de uma de suas coleções.",
       },
       mediaType: {
         IMAGE: "Foto",

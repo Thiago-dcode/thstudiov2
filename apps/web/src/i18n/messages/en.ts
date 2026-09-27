@@ -2085,6 +2085,13 @@ const messages = {
         inactive: "Hidden",
         inactiveBody:
           "Hidden from its public page, portfolios and collections.",
+        inCollections:
+          "In {count, plural, one {# collection} other {# collections}}",
+        inCollectionsBody: "Hiding this media hides it there too.",
+        inPortfolios:
+          "In {count, plural, one {# portfolio} other {# portfolios}}",
+        inPortfoliosBody:
+          "Counts portfolios showing it directly or through one of their collections.",
       },
       /** Shared by the card badge and the type filter so both read the same. */
       mediaType: {

@@ -36,30 +36,28 @@ describe('MediaRepository.applyFilters — order', () => {
 
     it('defaults to newest created first, ahead of the id tiebreaker', async () => {
         expect(await orderCalls({})).toEqual([
-            ['created_at', 'DESC'],
+            ['created_at', 'DESC', {}],
             ['id', 'DESC'],
         ]);
     });
 
     it('honours the requested column and direction', async () => {
         expect(await orderCalls({ order_by: 'created_at', order: 'ASC' })).toEqual([
-            ['created_at', 'ASC'],
+            ['created_at', 'ASC', {}],
             ['id', 'DESC'],
         ]);
     });
 
     it('puts never-generated media first when ordering by seo_generated_at oldest first', async () => {
         expect(await orderCalls({ order_by: 'seo_generated_at', order: 'ASC' })).toEqual([
-            ['(media.seo_generated_at IS NULL)', 'DESC'],
-            ['seo_generated_at', 'ASC'],
+            ['seo_generated_at', 'ASC', { nulls: 'FIRST' }],
             ['id', 'DESC'],
         ]);
     });
 
     it('puts never-generated media last when ordering by seo_generated_at newest first', async () => {
         expect(await orderCalls({ order_by: 'seo_generated_at', order: 'DESC' })).toEqual([
-            ['(media.seo_generated_at IS NULL)', 'ASC'],
-            ['seo_generated_at', 'DESC'],
+            ['seo_generated_at', 'DESC', { nulls: 'LAST' }],
             ['id', 'DESC'],
         ]);
     });

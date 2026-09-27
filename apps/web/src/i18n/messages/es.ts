@@ -2101,6 +2101,14 @@ const messages = {
           "Visible en su página pública y en todos los lugares donde lo colocaste.",
         inactive: "Oculto",
         inactiveBody: "Oculto de su página pública, portafolios y colecciones.",
+        inCollections:
+          "En {count, plural, one {# colección} other {# colecciones}}",
+        inCollectionsBody:
+          "Si ocultas este contenido, también se oculta en ellas.",
+        inPortfolios:
+          "En {count, plural, one {# portafolio} other {# portafolios}}",
+        inPortfoliosBody:
+          "Incluye los portafolios que lo muestran directamente o a través de una de sus colecciones.",
       },
       mediaType: {
         IMAGE: "Foto",

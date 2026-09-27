@@ -1083,6 +1083,45 @@ describe('QueryBuilder', () => {
       expect(queryBuilder['query']).toBe(`SELECT * FROM ${TABLE_NAME} \nORDER BY ${TABLE_NAME}.created_at DESC`);
     });
 
+    it.each(['FIRST', 'LAST'] as const)(
+      'should place NULLs %s with the native Postgres clause',
+      (nulls) => {
+        queryBuilder.orderBy('seo_generated_at', 'ASC', { nulls });
+        queryBuilder['buildSelectQuery']();
+
+        expect(queryBuilder['query']).toBe(
+          `SELECT * FROM ${TABLE_NAME} \nORDER BY ${TABLE_NAME}.seo_generated_at ASC NULLS ${nulls}`,
+        );
+      },
+    );
+
+    it('should keep NULL placement per term when chaining ORDER BY clauses', () => {
+      queryBuilder.orderBy('seo_generated_at', 'DESC', { nulls: 'LAST' });
+      queryBuilder.orderBy('id', 'DESC');
+      queryBuilder['buildSelectQuery']();
+
+      expect(queryBuilder['query']).toBe(
+        `SELECT * FROM ${TABLE_NAME} \nORDER BY ${TABLE_NAME}.seo_generated_at DESC NULLS LAST, ${TABLE_NAME}.id DESC`,
+      );
+    });
+
+    it.each([
+      ['FIRST', 'DESC'],
+      ['LAST', 'ASC'],
+    ] as const)(
+      'should emulate NULLS %s on MySQL with an IS NULL sort key',
+      async (nulls, isNullOrder) => {
+        await initClient({ ...postgresConfig, port: 3306, client: 'mysql' });
+        const mysqlBuilder = new QueryBuilder(TABLE_NAME);
+        mysqlBuilder.orderBy('seo_generated_at', 'DESC', { nulls });
+        mysqlBuilder['buildSelectQuery']();
+
+        expect(mysqlBuilder['query']).toBe(
+          `SELECT * FROM ${TABLE_NAME} \nORDER BY ${TABLE_NAME}.seo_generated_at IS NULL ${isNullOrder}, ${TABLE_NAME}.seo_generated_at DESC`,
+        );
+      },
+    );
+
     it('should build SELECT query with multiple ORDER BY clauses', () => {
       // Arrange
       queryBuilder.orderBy('created_at', 'DESC');

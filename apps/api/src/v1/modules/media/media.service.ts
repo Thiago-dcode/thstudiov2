@@ -8,7 +8,7 @@ import { UserService } from '../users/users.service';
 import { generateUUID } from '@repo/common-lib/utils/generate-uuid';
 import { FactoryLogService } from '@repo/backend-lib/services/log-service';
 import { QueueHelper } from '@repo/backend-lib/utils';
-import { CreateMediaInput, CreateMediaUploadUrl, Media, MediaWithUser, UpdateMediaInternalInput } from '@repo/common-lib/types/media';
+import { CreateMediaInput, CreateMediaUploadUrl, Media, MediaIndexRequest, MediaWithUser, UpdateMediaInternalInput } from '@repo/common-lib/types/media';
 import { EntitySeoMetadata, MediaSeoTranslation } from '@repo/common-lib/types/ai';
 import { cleanObj } from '@repo/common-lib/utils/object';
 import { UPDATE_PROFILE_STATUS_EVENT } from '@repo/common-lib/constants/events';
@@ -94,7 +94,9 @@ export class MediaService {
     media.video_preview = videoPreview;
   }
 
-  public async findAll(data: IndexMediaRequest) {
+  public async findAll(
+    data: IndexMediaRequest & Pick<MediaIndexRequest, 'with_usage_counts'>,
+  ) {
     const result = await this.mediaRepository.getAll(data);
     return await Promise.all(
       result.map(async (media) => {
