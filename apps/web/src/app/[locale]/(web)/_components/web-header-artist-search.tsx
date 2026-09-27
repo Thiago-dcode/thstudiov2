@@ -3,13 +3,11 @@
 import type { ArtistCard } from "@repo/common-lib/types/user";
 import { Input } from "@repo/ui/components/shadcn/input";
 import { cn } from "@repo/ui/lib/utils";
-import { toast } from "@repo/ui/sonner";
 import { Loader2, Search } from "lucide-react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { Link, usePathname } from "@/i18n/navigation";
-import { useAppStatus } from "@/lib/providers/app-status.provider";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { findArtistsAction } from "@/modules/users/server-actions/find-artists.action";
 
@@ -33,11 +31,8 @@ function initials(a: ArtistCard): string {
 export function WebHeaderArtistSearch({ className }: { className?: string }) {
   const pathname = usePathname();
   const t = useTranslations("search.headerArtistSearch");
-  // const { isRegisterClose } = useAppStatus();
-  // const registrationIsClosed = !isRegisterClose;
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const lastRegistrationClosedToastAt = useRef(0);
   const [open, setOpen] = useState(false);
 
   const { result, isPending, handleAction, cleanResult } = useHandleAction({
@@ -49,30 +44,9 @@ export function WebHeaderArtistSearch({ className }: { className?: string }) {
     settings: { rateLimit: 1.5 },
   });
 
-  const showRegistrationClosedToast = () => {
-    const now = Date.now();
-    if (now - lastRegistrationClosedToastAt.current < 5000) return;
-
-    lastRegistrationClosedToastAt.current = now;
-    toast.message(t("registrationClosedToast"));
-  };
-
-  // const blockIfRegistrationClosed = () => {
-  //   // if (!registrationIsClosed) return false;
-
-  //   if (inputRef.current?.value) inputRef.current.value = "";
-  //   cleanResult();
-  //   setOpen(false);
-  //   inputRef.current?.blur();
-  //   showRegistrationClosedToast();
-  //   return true;
-  // };
-
   const artists = result?.data ?? [];
 
   const handleChange = () => {
-    // if (blockIfRegistrationClosed()) return;
-
     const value = inputRef.current?.value.trim() ?? "";
     if (!value) {
       cleanResult();
@@ -133,14 +107,11 @@ export function WebHeaderArtistSearch({ className }: { className?: string }) {
           name="search"
           onChange={handleChange}
           onFocus={() => {
-            // if (blockIfRegistrationClosed()) return;
             if (artists.length > 0) setOpen(true);
           }}
           placeholder={t("placeholder")}
           autoComplete="off"
-          className={cn(
-            "h-9 w-full py-2 pr-3 pl-9 text-sm",
-          )}
+          className={cn("h-9 w-full py-2 pr-3 pl-9 text-sm")}
         />
       </div>
 
