@@ -1,7 +1,7 @@
 import type { EnumType } from "@repo/common-lib/constants/enums";
 import { ENUMS } from "@repo/common-lib/constants/enums";
 import { ALLOWED_IMAGE_FILE_TYPES } from "@repo/common-lib/constants/limits";
-import type { Media } from "@repo/common-lib/types/media";
+import type { Media, MediaPortfolio } from "@repo/common-lib/types/media";
 import { MediaHelper } from "@repo/common-lib/utils/media";
 import { MediaTypeBadge } from "@repo/ui/components/custom/media-type-badge";
 import { Button } from "@repo/ui/components/shadcn/button";
@@ -29,16 +29,31 @@ import { useSubscribeToUserNotification } from "@/modules/user-notifications/hoo
 const SHAPE_OPTIONS = ENUMS.MEDIA_SHAPE;
 type ShapeFilter = EnumType<"MEDIA_SHAPE"> | undefined;
 
+type SelectedMedia = Pick<
+  MediaPortfolio,
+  | "id"
+  | "thumbnail"
+  | "url"
+  | "shape"
+  | "media_type"
+  | "title"
+  | "seo_alt"
+  | "seo_filename"
+>;
+
 export const SelectMediaDrawer = ({
   userId,
   mediaSelected,
   onSelect,
+  onDeselect,
   maxSelection,
   addButtonDisabled = false,
 }: {
   userId: number;
-  mediaSelected: Record<number, unknown>;
+  /** In the order the caller shows them, so the drawer's "Selected" row mirrors the page. */
+  mediaSelected: SelectedMedia[];
   onSelect: (media: Media) => void;
+  onDeselect: (mediaId: number) => void;
   maxSelection?: number;
   addButtonDisabled?: boolean;
 }) => {
@@ -49,10 +64,13 @@ export const SelectMediaDrawer = ({
   const [shapeFilter, setShapeFilter] = useState<ShapeFilter>(undefined);
   const mediaMap = useRef(new Map<number, Media>());
   const firstFetchDone = useRef(false);
-  const mediaSelectedLength = useMemo(
-    () => Object.keys(mediaSelected).length,
-    [mediaSelected],
-  );
+  const mediaSelectedLength = mediaSelected.length;
+  // Selected items render from the caller's list, not from the fetched pages, so something
+  // picked earlier (or saved on an edit) stays visible before its page has been loaded.
+  const availableMedia = useMemo(() => {
+    const selectedIds = new Set(mediaSelected.map((m) => m.id));
+    return media.filter((m) => !selectedIds.has(m.id));
+  }, [media, mediaSelected]);
   const isSelectionLimitReached =
     maxSelection !== undefined && mediaSelectedLength >= maxSelection;
   const currentPage = useRef(1);
@@ -147,7 +165,7 @@ export const SelectMediaDrawer = ({
           type="button"
           variant="secondary"
           className="gap-2 h-8 px-3 text-xs"
-          disabled={addButtonDisabled || isSelectionLimitReached}
+          disabled={addButtonDisabled}
         >
           <Image className="size-3.5" />
           {t("title")}
@@ -222,133 +240,93 @@ export const SelectMediaDrawer = ({
         </div>
 
         {/* Drawer body */}
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 overflow-y-auto p-4 space-y-6">
+          {mediaSelectedLength > 0 && (
+            <section className="space-y-3">
+              <SectionHeading
+                title={t("selectedHeading")}
+                count={
+                  maxSelection !== undefined
+                    ? `${mediaSelectedLength} / ${maxSelection}`
+                    : mediaSelectedLength
+                }
+                hint={t("selectedHint")}
+              />
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {mediaSelected.map((m) => (
+                  <MediaTile
+                    key={m.id}
+                    media={m}
+                    onRemove={() => onDeselect(m.id)}
+                    title={m.title || m.seo_filename || ""}
+                    removeLabel={t("removeFromSelection")}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
           {isPending && media.length === 0 ? (
             <div className="flex items-center justify-center py-16">
               <Spinner className="size-8" />
             </div>
           ) : media.length > 0 ? (
-            <div className="space-y-3">
+            <section className="space-y-3">
+              {mediaSelectedLength > 0 && (
+                <SectionHeading
+                  title={t("availableHeading")}
+                  count={availableMedia.length}
+                />
+              )}
               <p className="text-[11px] text-text-muted">
-                {t("hint", { count: media.length })}
+                {t("hint", { count: availableMedia.length })}
                 {maxSelection !== undefined
                   ? ` ${t("hintMax", { max: maxSelection })}`
                   : ""}
               </p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {media.map((m) => {
-                  const isSelected = mediaSelected[m.id];
-                  const isLoading = MediaHelper.isLoading(m);
-                  if (m.status === "FAILED") {
+              {availableMedia.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {availableMedia.map((m) => {
+                    const isLoading = MediaHelper.isLoading(m);
+                    if (m.status === "FAILED") {
+                      return (
+                        <div
+                          key={m.id}
+                          className="relative aspect-square w-full overflow-hidden border border-error/40 bg-fg-2"
+                          role="img"
+                          aria-label={m.failed_reason || t("failedAria")}
+                        >
+                          {m.thumbnail ? (
+                            <img
+                              src={m.thumbnail}
+                              alt=""
+                              aria-hidden
+                              className="absolute inset-0 size-full object-cover opacity-40"
+                            />
+                          ) : null}
+                          <FailedMediaOverlay reason={m.failed_reason} />
+                        </div>
+                      );
+                    }
                     return (
-                      <div
+                      <MediaTile
                         key={m.id}
-                        className="relative aspect-square w-full overflow-hidden border border-error/40 bg-fg-2"
-                        role="img"
-                        aria-label={m.failed_reason || t("failedAria")}
-                      >
-                        {m.thumbnail ? (
-                          <img
-                            src={m.thumbnail}
-                            alt=""
-                            aria-hidden
-                            className="absolute inset-0 size-full object-cover opacity-40"
-                          />
-                        ) : null}
-                        <FailedMediaOverlay reason={m.failed_reason} />
-                      </div>
-                    );
-                  }
-                  return (
-                    // The tile is a <button>, so the expand control cannot live inside it —
-                    // nested buttons are invalid HTML and the inner one would not be
-                    // focusable. It sits as a sibling in this wrapper instead, which also
-                    // carries the hover lift so both move together.
-                    <div
-                      key={m.id}
-                      className="relative transition-transform duration-200 ease-out hover:-translate-y-0.5"
-                    >
-                      <button
-                        disabled={isLoading}
-                        type="button"
-                        onClick={() =>
-                          !isSelected && !isSelectionLimitReached && !isLoading
-                            ? onSelect(m)
-                            : null
-                        }
-                        aria-pressed={!!isSelected}
-                        aria-busy={isLoading}
-                        className={cn(
-                          "group relative aspect-square w-full overflow-hidden border border-border bg-fg-2",
-                          "transition-all duration-200 ease-out",
-                          "hover:shadow-md",
-                          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
-                          isLoading && "cursor-not-allowed",
-                          isSelected ? "opacity-60 scale-95" : "opacity-100",
-                        )}
+                        media={m}
+                        isLoading={isLoading}
+                        disabled={isLoading || isSelectionLimitReached}
+                        onClick={() => onSelect(m)}
                         title={
-                          isLoading
-                            ? tCommon("loading")
-                            : isSelected
-                              ? t("alreadyAdded")
-                              : t("addToPortfolio")
+                          isLoading ? tCommon("loading") : t("addToPortfolio")
                         }
-                      >
-                        {/* An <img>, not a CSS `background-image`. Storage keys can contain
-                          characters (spaces, parentheses) that are legal in a `src` but are an
-                          invalid token inside `url(...)`, where they take the whole declaration
-                          down and leave the tile blank. */}
-                        {m.thumbnail ? (
-                          <img
-                            src={m.thumbnail}
-                            alt=""
-                            aria-hidden
-                            className="absolute inset-0 size-full object-cover"
-                          />
-                        ) : null}
-
-                        {/* Hover overlay */}
-                        <div className="absolute inset-0 bg-black/0 transition-colors duration-200 group-hover:bg-black/20 group-disabled:group-hover:bg-black/0" />
-
-                        {/* Shape badge */}
-                        {m.shape ? (
-                          <div className="absolute top-2 right-2 bg-black/40 px-2 py-1 text-[10px] font-medium text-white/90 backdrop-blur-sm">
-                            {m.shape}
-                          </div>
-                        ) : null}
-
-                        {/* Animated media badge — the tile itself shows the static poster */}
-                        <MediaTypeBadge mediaType={m.media_type} />
-
-                        {/* Loading overlay */}
-                        {isLoading ? (
-                          <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/50">
-                            <Spinner className="size-8 text-white" />
-                          </div>
-                        ) : null}
-
-                        {/* Selected check */}
-                        {isSelected ? (
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="flex items-center justify-center size-10 bg-text text-fg">
-                              <Check className="size-5" />
-                            </div>
-                          </div>
-                        ) : null}
-                      </button>
-
-                      {/* Top-left: the shape badge holds top-right and the media-type badge
-                          bottom-left. Hidden while loading, where the overlay owns the tile. */}
-                      {!isLoading && (
-                        <ExpandMediaDialog
-                          media={m}
-                          className="absolute top-2 left-2 z-20"
-                        />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+                      />
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="py-6 text-center text-xs text-text-muted">
+                  {t("allSelected")}
+                </p>
+              )}
               {nextPage.current !== undefined && (
                 <div className="flex justify-center pt-2">
                   <Button
@@ -364,14 +342,14 @@ export const SelectMediaDrawer = ({
                   </Button>
                 </div>
               )}
-            </div>
-          ) : (
+            </section>
+          ) : mediaSelectedLength === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 gap-2">
               <Image className="size-8 text-text-muted/40" />
               <p className="text-sm text-text-muted">{t("emptyTitle")}</p>
               <p className="text-xs text-text-muted/70">{t("emptySubtitle")}</p>
             </div>
-          )}
+          ) : null}
         </div>
 
         {/* Drawer footer */}
@@ -402,5 +380,155 @@ export const SelectMediaDrawer = ({
         </div>
       </DrawerContent>
     </Drawer>
+  );
+};
+
+const SectionHeading = ({
+  title,
+  count,
+  hint,
+}: {
+  title: string;
+  count: number | string;
+  hint?: string;
+}) => (
+  <div className="flex items-baseline justify-between gap-3">
+    <h3 className="text-[11px] font-medium uppercase tracking-wide text-text">
+      {title}
+      <span className="ml-1.5 text-text-muted tabular-nums">{count}</span>
+    </h3>
+    {hint ? <p className="text-[11px] text-text-muted">{hint}</p> : null}
+  </div>
+);
+
+const MediaTile = ({
+  media,
+  isLoading = false,
+  disabled = false,
+  onClick,
+  onRemove,
+  title,
+  removeLabel,
+}: {
+  media: SelectedMedia;
+  isLoading?: boolean;
+  disabled?: boolean;
+  title: string;
+} & (
+  | { onClick: () => void; onRemove?: never; removeLabel?: never }
+  | { onClick?: never; onRemove: () => void; removeLabel: string }
+)) => {
+  // A selected tile is not a toggle: removing goes through its own small button, so a stray
+  // tap while scrolling the drawer cannot drop something from the selection.
+  const selected = onRemove !== undefined;
+  const tileClassName = cn(
+    "group relative block aspect-square w-full overflow-hidden border bg-fg-2",
+    "transition-all duration-200 ease-out",
+    selected
+      ? "border-text ring-2 ring-text"
+      : cn(
+          "border-border hover:shadow-md disabled:cursor-not-allowed",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
+        ),
+  );
+  const content = (
+    <>
+      {/* An <img>, not a CSS `background-image`. Storage keys can contain characters
+        (spaces, parentheses) that are legal in a `src` but are an invalid token inside
+        `url(...)`, where they take the whole declaration down and leave the tile blank. */}
+      {media.thumbnail ? (
+        <img
+          src={media.thumbnail}
+          alt=""
+          aria-hidden
+          className="absolute inset-0 size-full object-cover"
+        />
+      ) : null}
+
+      {/* Hover overlay */}
+      {!selected && (
+        <div className="absolute inset-0 bg-black/0 transition-colors duration-200 group-hover:bg-black/20 group-disabled:group-hover:bg-black/0" />
+      )}
+
+      {/* Shape badge — a selected tile gives top-right to its remove button */}
+      {media.shape && !selected ? (
+        <div className="absolute top-2 right-2 bg-black/40 px-2 py-1 text-[10px] font-medium text-white/90 backdrop-blur-sm">
+          {media.shape}
+        </div>
+      ) : null}
+
+      {/* Animated media badge — the tile itself shows the static poster */}
+      <MediaTypeBadge mediaType={media.media_type} />
+
+      {/* Loading overlay */}
+      {isLoading ? (
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/50">
+          <Spinner className="size-8 text-white" />
+        </div>
+      ) : null}
+
+      {/* Selected check — bottom-right, the one corner no other badge uses */}
+      {selected ? (
+        <div className="absolute bottom-2 right-2 flex items-center justify-center size-7 bg-text text-fg">
+          <Check className="size-4" />
+        </div>
+      ) : null}
+    </>
+  );
+
+  return (
+    // The tile and its controls are siblings in this wrapper — nested buttons are invalid
+    // HTML and the inner one would not be focusable. The wrapper also carries the hover lift
+    // so they all move together.
+    <div
+      className={cn(
+        "relative",
+        !selected &&
+          "transition-transform duration-200 ease-out hover:-translate-y-0.5",
+      )}
+    >
+      {selected ? (
+        <div className={tileClassName} title={title}>
+          {content}
+        </div>
+      ) : (
+        <button
+          disabled={disabled}
+          type="button"
+          onClick={onClick}
+          aria-busy={isLoading}
+          className={tileClassName}
+          title={title}
+        >
+          {content}
+        </button>
+      )}
+
+      {/* Top-left: top-right holds the shape badge or the remove button and the media-type
+          badge bottom-left. Hidden while loading, where the overlay owns the tile. */}
+      {!isLoading && (
+        <ExpandMediaDialog
+          media={media}
+          className="absolute top-2 left-2 z-20"
+        />
+      )}
+
+      {selected && (
+        <button
+          type="button"
+          onClick={onRemove}
+          aria-label={removeLabel}
+          title={removeLabel}
+          className={cn(
+            "absolute top-2 right-2 z-20 inline-flex items-center justify-center",
+            "size-7 border border-border/50 bg-bg/80 backdrop-blur-sm",
+            "text-text-muted hover:text-text hover:bg-bg",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
+          )}
+        >
+          <X className="size-3.5" />
+        </button>
+      )}
+    </div>
   );
 };

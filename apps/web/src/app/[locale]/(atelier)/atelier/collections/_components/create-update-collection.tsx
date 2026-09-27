@@ -8,10 +8,7 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import type {
-  FullCollection,
-  FullCollectionMedia,
-} from "@repo/common-lib/types/collection";
+import type { FullCollection } from "@repo/common-lib/types/collection";
 import { isHighlightToggleDisabled } from "@repo/common-lib/utils/highlights";
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
 import { Checkbox } from "@repo/ui/components/shadcn/checkbox";
@@ -142,12 +139,6 @@ export const CreateOrUpdateCollection = ({
     deleteInputErrorProperty("title");
     handleSetFormData("title", e.target.value);
   };
-
-  const mediaSelectedRecord = useMemo(() => {
-    const record: Record<number, FullCollectionMedia> = {};
-    for (const m of mediaSelected) record[m.id] = m;
-    return record;
-  }, [mediaSelected]);
 
   const mediaItems = useMemo(
     () => mediaSelected.map((m) => `media-${m.id}`),
@@ -331,10 +322,10 @@ export const CreateOrUpdateCollection = ({
             </div>
             <SelectMediaDrawer
               userId={user.id}
-              mediaSelected={mediaSelectedRecord}
+              mediaSelected={mediaSelected}
               onSelect={handlePushMediaSelected}
+              onDeselect={handleRemoveMediaSelected}
               maxSelection={mediaItemLimit}
-              addButtonDisabled={isMediaLimitReached}
             />
           </div>
 
@@ -404,8 +395,6 @@ export const CreateOrUpdateCollection = ({
                             "absolute top-2 right-2 z-10 inline-flex items-center justify-center",
                             "size-7 border border-border/50 bg-bg/70 backdrop-blur-sm",
                             "text-text-muted hover:text-text hover:bg-bg",
-                            "opacity-0 group-hover:opacity-100 focus:opacity-100",
-                            "transition-opacity",
                           )}
                         >
                           <X className="size-3.5 cursor-pointer" />

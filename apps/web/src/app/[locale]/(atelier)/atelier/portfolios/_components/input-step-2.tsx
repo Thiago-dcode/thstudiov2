@@ -130,23 +130,20 @@ export default function InputStep2() {
 
   const portfolioItems = portfolioInput.portfolioItems;
 
-  const ItemsRecords = useMemo(() => {
-    const mediaRecord: Record<number, MediaPortfolioItem> = {};
-    const collectionRecord: Record<number, CollectionPortfolioItem> = {};
+  const selectedItems = useMemo(() => {
+    const media: MediaPortfolioItem[] = [];
+    const collections: CollectionPortfolioItem[] = [];
     for (const item of portfolioItems) {
       switch (item.item) {
         case "media":
-          mediaRecord[item.id] = item;
+          media.push(item);
           break;
         case "collection":
-          collectionRecord[item.id] = item;
+          collections.push(item);
           break;
       }
     }
-    return {
-      mediaRecord,
-      collectionRecord,
-    };
+    return { media, collections };
   }, [portfolioItems]);
 
   const buildItemId = (item: PortfolioItem) => `${item.item}-${item.id}`;
@@ -174,22 +171,22 @@ export default function InputStep2() {
         <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0 sm:flex-wrap sm:justify-end">
           <SelectCollectionDrawer
             userId={user.id}
-            collectionsSelected={ItemsRecords.collectionRecord}
+            collectionsSelected={selectedItems.collections}
             onSelect={(collection) => {
               handleShiftPortfolioItem({
                 ...collection,
                 item: "collection",
               });
             }}
-            addButtonDisabled={isPortfolioItemsLimitReached}
+            onDeselect={(id) => handleRemovePortfolioItem(id, "collection")}
           />
           <SelectMediaDrawer
             userId={user.id}
-            mediaSelected={ItemsRecords.mediaRecord}
+            mediaSelected={selectedItems.media}
             onSelect={(media) => {
               handleShiftPortfolioItem({ ...media, item: "media" });
             }}
-            addButtonDisabled={isPortfolioItemsLimitReached}
+            onDeselect={(id) => handleRemovePortfolioItem(id, "media")}
           />
         </div>
       </div>
@@ -268,8 +265,6 @@ export default function InputStep2() {
                           "absolute top-2 right-2 z-10 inline-flex items-center justify-center",
                           "size-7 border border-border/50 bg-bg/70 backdrop-blur-sm",
                           "text-text-muted hover:text-text hover:bg-bg",
-                          "opacity-100 transition-opacity",
-                          "sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100",
                         )}
                       >
                         <X className="size-3.5 cursor-pointer" />
