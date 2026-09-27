@@ -8,6 +8,7 @@ import type { ClientSchema } from '@repo/common-lib/schemas/client';
 import { AddressRepository } from './address.repository';
 import type { Address, CreateAddressInput, UpdateAddressInput } from '@repo/common-lib/types/address';
 import { cleanObj } from '@repo/common-lib/utils/object';
+import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
 import { RequestService } from 'src/common/services/request.service';
 import { UpdateProfileStatusEvent } from '../profile-status/events/update-profile-status.event';
 
@@ -60,6 +61,7 @@ export class AddressService {
     const result = await this.addressRepository.create(data);
     await this.enqueueCreateOrUpdateLocationFromAddress(result);
     this.emitProfileStatusFromAddress(result);
+    await this.markUserSeoStale(result.user_id);
     return result;
   }
 
@@ -85,6 +87,9 @@ export class AddressService {
     if (result) {
       await this.enqueueCreateOrUpdateLocationFromAddress(result);
       this.emitProfileStatusFromAddress(result);
+      if (this.localityChanged(address, result)) {
+        await this.markUserSeoStale(result.user_id);
+      }
     }
     return result;
   }
@@ -115,6 +120,30 @@ export class AddressService {
     }
 
     return patch;
+  }
+
+  private localityChanged(before: Address, after: Address): boolean {
+    return (['city', 'state', 'country'] as const).some(
+      (key) => (before[key] ?? '').trim() !== (after[key] ?? '').trim(),
+    );
+  }
+
+  /**
+   * The artist's AI title/description are written from their city ("… — Madrid — …"), but the
+   * address lives in its own table, so moving an artist never touched `users.updated_at` and the
+   * profile kept advertising the old city indefinitely — a name/place contradiction on the page's
+   * own JSON-LD. Backdating the stamp (rather than clearing it) hands the rewrite to the nightly
+   * `findDueForSeoGeneration` sweep and keeps its regeneration throttle; a never-generated row stays
+   * NULL and is picked up anyway. Same pattern as `markSeoStaleByMediaId`.
+   */
+  private async markUserSeoStale(userId?: number | null): Promise<void> {
+    if (!userId) return;
+    await Query.raw(
+      `UPDATE ${TABLES_ENUM.USERS}
+       SET seo_generated_at = seo_generated_at - INTERVAL '1 second'
+       WHERE id = $1`,
+      [userId],
+    );
   }
 
   private emitProfileStatusFromAddress(result: Address): void {

@@ -2,6 +2,7 @@ import path from "node:path";
 import dotenv from "dotenv";
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
+import { cdnHost, STORAGE_IMAGE_HOSTS } from "./src/lib/image-hosts";
 
 dotenv.config({
   path: path.resolve(process.cwd(), "..", "..", ".env"),
@@ -10,19 +11,14 @@ dotenv.config({
 
 /** Allow the configured CDN host (CloudFront) through next/image. Empty when CDN_URL is unset. */
 const cdnRemotePattern = (() => {
-  const cdnUrl = process.env.CDN_URL;
-  if (!cdnUrl) return [];
-  try {
-    const { protocol, hostname } = new URL(cdnUrl);
-    return [
-      {
-        protocol: protocol.replace(":", "") as "https" | "http",
-        hostname,
-      },
-    ];
-  } catch {
-    return [];
-  }
+  const cdn = cdnHost();
+  if (!cdn) return [];
+  return [
+    {
+      protocol: cdn.protocol.replace(":", "") as "https" | "http",
+      hostname: cdn.hostname,
+    },
+  ];
 })();
 
 const nextConfig: NextConfig = {
@@ -31,6 +27,14 @@ const nextConfig: NextConfig = {
   // Skipping the post-compile type-check here avoids a separate multi-minute
   // pass on the resource-constrained droplet (1 vCPU / 1 GB).
   typescript: { ignoreBuildErrors: true },
+  // Metadata is resolved BEFORE the first byte for every user agent, instead of being streamed into
+  // <body> for everyone except Next's built-in "HTML-limited bot" list. That list covers Bing and the
+  // social scrapers but not Googlebot, GPTBot, OAI-SearchBot, ClaudeBot or PerplexityBot, which were
+  // receiving <title>/canonical/hreflang ~160 KB into <body> — Google only honours canonical and
+  // hreflang inside <head>, and non-rendering AI crawlers never see them at all. Blocking metadata
+  // also lets a notFound() in generateMetadata still produce a real 404 status despite the root
+  // loading.tsx (a streamed notFound can only inject noindex into a 200).
+  htmlLimitedBots: /.*/,
   experimental: {
     // Next 16.2 cannot drive TypeScript 7 through the programmatic compiler API.
     // Shelling out to the project-local `tsc` CLI is the supported path until
@@ -64,22 +68,10 @@ const nextConfig: NextConfig = {
   },
   images: {
     remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "s3.eu-north-1.amazonaws.com",
-      },
-      {
-        protocol: "https",
-        hostname: "a11studio.s3.eu-north-1.amazonaws.com",
-      },
-      {
-        protocol: "https",
-        hostname: "local.a11studio.s3.eu-north-1.amazonaws.com",
-      },
-      {
-        protocol: "https",
-        hostname: "dev.a11studio.s3.eu-north-1.amazonaws.com",
-      },
+      ...STORAGE_IMAGE_HOSTS.map((hostname) => ({
+        protocol: "https" as const,
+        hostname,
+      })),
       // CDN host (CloudFront custom domain or *.cloudfront.net). Public images are now served from
       // the CDN, so next/image must allow it — otherwise it rejects the URL and the image 404s.
       // Derived from CDN_URL so custom domains work too; must be present at BUILD time.

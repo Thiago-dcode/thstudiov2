@@ -86,7 +86,8 @@ export async function ArtistProfileCard({
         {artist.avatar ? (
           <Image
             src={artist.avatar}
-            alt=""
+            // The name, not "": the link has its own aria-label, but Google Images reads the alt.
+            alt={name}
             fill
             className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
           />

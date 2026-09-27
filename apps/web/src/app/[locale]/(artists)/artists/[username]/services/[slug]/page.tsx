@@ -5,18 +5,23 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { ArtistBreadcrumb } from "@/app/[locale]/(artists)/__components/artist-breadcrumb";
-import { ResourceNotFound } from "@/app/[locale]/(artists)/__components/resource-not-found";
 import { Link } from "@/i18n/navigation";
 import { urlLocaleToLanguageCode } from "@/i18n/routing";
 import Web from "@/lib/components/web-page.component";
 import { buildSeoMetadata } from "@/lib/seo/build-metadata";
-import { buildServiceJsonLd, JsonLd } from "@/lib/seo/json-ld";
+import { isMissingResponse } from "@/lib/seo/core";
+import {
+  artistDisplayName,
+  buildServiceJsonLd,
+  JsonLd,
+} from "@/lib/seo/json-ld";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import userServiceService from "@/modules/user-services/user-service.service";
+import { getArtistProfile } from "@/modules/users/get-artist-share-ready";
 import usersService from "@/modules/users/users.service";
 
 type Props = {
-  params: Promise<{ username: string; slug: string }>;
+  params: Promise<{ locale: string; username: string; slug: string }>;
 };
 
 export async function generateMetadata({
@@ -25,29 +30,29 @@ export async function generateMetadata({
   params: Promise<{ locale: string; username: string; slug: string }>;
 }): Promise<Metadata> {
   const { locale, username, slug } = await params;
-  const { data } = await userServiceService.getSeoMetadata(
+  const response = await userServiceService.getSeoMetadata(
     username,
     slug,
     urlLocaleToLanguageCode(locale),
   );
+  // Resolved before the first byte, so a missing or blocked service is a real 404.
+  if (isMissingResponse(response)) notFound();
+  const { data } = response;
+  if (!data) return { robots: { index: false, follow: false } };
 
-  if (!data) {
-    return { robots: { index: false, follow: false } };
-  }
-
-  return buildSeoMetadata(data, locale, { title: data.seo_title || username });
+  return buildSeoMetadata(data, locale, { title: slug });
 }
 
 export default async function Page({ params }: Props) {
-  const { username, slug } = await params;
+  const { locale, username, slug } = await params;
   const t = await getTranslations("artists.services");
-  const tNotFound = await getTranslations("artists.resourceNotFound");
   const tEdit = await getTranslations("artists.editAria");
 
-  const [userExist, response, userAuth] = await Promise.all([
+  const [userExist, response, userAuth, profile] = await Promise.all([
     usersService.usernameExists(username),
     userServiceService.getByUsername(username, slug),
     userSession(),
+    getArtistProfile(username),
   ]);
 
   if (!userExist.data) {
@@ -56,19 +61,31 @@ export default async function Page({ params }: Props) {
 
   const service = response.data;
   if (!service || service.blocked_at) {
-    return (
-      <Web.Container>
-        <ResourceNotFound username={username} message={tNotFound("service")} />
-      </Web.Container>
-    );
+    notFound();
   }
 
   const canEdit = userAuth?.id === service.user_id;
+  // A deactivated service is hidden from visitors; its owner can still preview it.
+  if (!service.is_active && !canEdit) {
+    notFound();
+  }
+  // Locality + primary discipline feed `areaServed` / `serviceType` — what local service searches
+  // ("wedding photographer in A Coruña") match on.
+  const artist = {
+    username,
+    name: profile ? artistDisplayName(profile) : `@${username}`,
+    city: profile?.address?.city,
+    region: profile?.address?.state,
+    countryCode: profile?.address?.country_code,
+    discipline: profile?.categories?.[0]?.name,
+  };
   const hasDetails = service.features.length > 0 || service.terms.length > 0;
 
   return (
     <Web.Container className="">
-      <JsonLd data={buildServiceJsonLd(service, username)} />
+      <JsonLd
+        data={buildServiceJsonLd(service, artist, locale, t("pageTitle"))}
+      />
       <ArtistBreadcrumb
         username={username}
         items={[
@@ -155,9 +172,10 @@ export default async function Page({ params }: Props) {
               <div className="grid grid-cols-1 gap-10 py-8 sm:grid-cols-2 sm:gap-12">
                 {service.features.length > 0 && (
                   <section className="space-y-5">
-                    <h4 className="font-medium uppercase tracking-wide text-text-muted">
+                    {/* h2 (not h4): the page's only other heading is the h1 service title. */}
+                    <h2 className="font-sans! text-base! font-medium uppercase tracking-wide text-text-muted">
                       {t("whatsIncluded")}
-                    </h4>
+                    </h2>
                     <ul className="space-y-3.5">
                       {service.features.map((feature) => (
                         <li
@@ -174,9 +192,9 @@ export default async function Page({ params }: Props) {
 
                 {service.terms.length > 0 && (
                   <section className="space-y-5">
-                    <h4 className="font-medium uppercase tracking-wide text-text-muted">
+                    <h2 className="font-sans! text-base! font-medium uppercase tracking-wide text-text-muted">
                       {t("terms")}
-                    </h4>
+                    </h2>
                     <ul className="space-y-3.5">
                       {service.terms.map((term) => (
                         <li

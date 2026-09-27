@@ -823,11 +823,15 @@ export class MediaService {
         const meta = await this.mediaRepository.getSeoMetadataByPublicId(publicId);
         if (!meta) return null;
         return {
+          title: meta.title,
+          description: meta.description,
           seo_title: meta.seo_title,
           seo_description: meta.seo_description,
           thumbnail_path: meta.thumbnail,
           canonical_path: `/artists/${meta.username}/media/${publicId}`,
-          noindex: meta.blocked || !meta.is_active,
+          // Mirrors the sitemap: atelier-only drafts, unprocessed uploads and an incomplete artist's
+          // work stay out of the index even when someone has the URL.
+          noindex: !meta.is_public,
         };
       },
       { ttl: SEO_METADATA_CACHE_TTL, append_language: true },

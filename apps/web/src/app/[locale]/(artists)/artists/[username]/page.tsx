@@ -1,6 +1,3 @@
-import { PLATFORM_CURRENCY } from "@repo/common-lib/constants/limits";
-import type { Service } from "@repo/common-lib/types/service";
-import type { UserProfile } from "@repo/common-lib/types/user";
 import { normalizeUsername } from "@repo/common-lib/utils/username";
 import { Badge } from "@repo/ui/components/shadcn/badge";
 import { ArrowRight, Globe, Mail, MapPin, Phone } from "lucide-react";
@@ -10,51 +7,46 @@ import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 import fallbackBanner from "@/assets/images/fallback-banner.jpg";
-import { serverEnv } from "@/env/server";
 import { Link } from "@/i18n/navigation";
 import {
   FacebookIcon,
   InstagramIcon,
   YoutubeIcon,
 } from "@/lib/components/social-icons";
-import { DEFAULT_OG_IMAGE } from "@/lib/config";
+import { isMissingResponse } from "@/lib/seo/core";
+import {
+  artistDisplayName,
+  buildProfileJsonLd,
+  JsonLd,
+} from "@/lib/seo/json-ld";
 import { buildStaticPageMetadata } from "@/lib/seo/static-metadata";
 import userServiceService from "@/modules/user-services/user-service.service";
-import UserService from "@/modules/users/users.service";
+import { getArtistProfileResponse } from "@/modules/users/get-artist-share-ready";
 import { ArtistContactDialog } from "../../__components/artist-contact.dialog";
 import { ArtistSections } from "../../__components/artist-sections";
 import { ArtistSectionsSkeleton } from "../../__components/artist-sections-skeleton";
 
 type Props = { params: Promise<{ locale: string; username: string }> };
 
-const displayName = (profile: UserProfile) =>
-  [profile.name, profile.surname].filter(Boolean).join(" ") ||
-  `@${profile.username}`;
-
-const canonicalUrl = (username: string) =>
-  `${serverEnv.APP_URL}/artists/${username}`;
-
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, username: rawUsername } = await params;
   const username = normalizeUsername(rawUsername);
-  const [{ data: profile }, t] = await Promise.all([
-    UserService.getProfile(username),
+  const [response, t] = await Promise.all([
+    getArtistProfileResponse(username),
     getTranslations("artists.profile"),
   ]);
+  const profile = response.data;
 
-  if (!profile) {
-    const tNotFound = await getTranslations("artists.notFound");
-    return {
-      title: tNotFound("heading"),
-      robots: { index: false, follow: false },
-    };
-  }
+  // A real 404 for an unknown artist: metadata resolves before the first byte, so this still sets
+  // the status even though the page itself sits under the streaming root `loading.tsx`.
+  if (isMissingResponse(response)) notFound();
+  if (!profile) return { robots: { index: false, follow: false } };
 
   const path = `/artists/${profile.username}`;
 
   // A profile still missing work, name, profession or locality must not read as a finished artist
   // page: a messenger caches whatever it fetched the first time, so pasting the link would keep
-  // showing a polished card for an unfinished profile. Brand image + neutral copy + noindex until
+  // showing a polished card for an unfinished profile. Brand card + neutral copy + noindex until
   // the artist completes it (same gate as the sitemap — see `is_share_ready`).
   if (!profile.is_share_ready) {
     return buildStaticPageMetadata({
@@ -62,103 +54,50 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: `@${profile.username}`,
       description: t("metaIncomplete"),
       locale,
-      image: DEFAULT_OG_IMAGE,
       noindex: true,
     });
   }
 
-  const name = displayName(profile);
-  // Share-ready guarantees both, so the answer-shaped summary always has real values to fill in.
+  const name = artistDisplayName(profile);
+  // Share-ready guarantees both, so the fallbacks always have real values to fill in.
   const profession = profile.profession?.trim() ?? "";
   const location =
     profile.address?.city?.trim() || profile.address?.state?.trim() || "";
-  const description = profile.short_biography?.trim()
-    ? profile.short_biography.trim().slice(0, 160)
-    : t("summaryProfessionLocation", { name, profession, location });
+  const summary = t("summaryProfessionLocation", {
+    name,
+    profession,
+    location,
+  });
 
   // The AI-generated copy is already resolved to this locale by the API (falling back to the EN
   // row). It is only ever a replacement, never a gap: when generation has not run — or its output
-  // was rejected — these hand-built strings still carry the page.
+  // was rejected — these hand-built strings still carry the page. The fallback title leads with the
+  // name (what people type) and carries the locality (what local searches match on).
   return buildStaticPageMetadata({
     path,
-    title: profile.seo_title?.trim() || `${name} — ${profession}`,
-    description: profile.seo_description?.trim() || description,
+    title:
+      profile.seo_title?.trim() ||
+      t("metaTitleLocation", { name, profession, location }),
+    description:
+      profile.seo_description?.trim() ||
+      profile.short_biography?.trim() ||
+      summary,
     locale,
-    image: profile.banner || profile.avatar || DEFAULT_OG_IMAGE,
+    image: profile.banner || profile.avatar,
     ogType: "profile",
+    profile: {
+      firstName: profile.name ?? undefined,
+      lastName: profile.surname ?? undefined,
+      username: profile.username,
+    },
   });
 }
 
-const buildProfileJsonLd = (profile: UserProfile, services: Service[]) => {
-  const name = displayName(profile);
-  const canonical = canonicalUrl(profile.username);
-
-  const addr = profile.address;
-  const address =
-    addr && (addr.street || addr.city || addr.state || addr.formated_address)
-      ? {
-          "@type": "PostalAddress",
-          ...(addr.street ? { streetAddress: addr.street } : {}),
-          ...(addr.city ? { addressLocality: addr.city } : {}),
-          ...(addr.state ? { addressRegion: addr.state } : {}),
-          ...(addr.formated_address ? { name: addr.formated_address } : {}),
-        }
-      : null;
-
-  // The artist's disciplines/styles — what this professional is known for.
-  const knowsAbout = (profile.categories ?? [])
-    .map((c) => c.name)
-    .filter(Boolean);
-
-  // Verified external profiles for this artist — strengthens entity disambiguation.
-  const sameAs = [
-    profile.instagram_link,
-    profile.facebook_link,
-    profile.youtube_link,
-    profile.website_link,
-  ].filter((link): link is string => Boolean(link));
-
-  // High commercial-intent surface: expose the artist's services as offerings.
-  const makesOffer = services.map((s) => ({
-    "@type": "Offer",
-    itemOffered: {
-      "@type": "Service",
-      name: s.title,
-      url: `${serverEnv.APP_URL}/artists/${profile.username}/services/${s.slug}`,
-    },
-    ...(s.show_price && s.price != null
-      ? { price: s.price.toFixed(2), priceCurrency: PLATFORM_CURRENCY }
-      : {}),
-  }));
-
-  return {
-    "@context": "https://schema.org",
-    "@type": "ProfilePage",
-    url: canonical,
-    mainEntity: {
-      "@type": "Person",
-      name,
-      alternateName: `@${profile.username}`,
-      url: canonical,
-      ...(profile.profession ? { jobTitle: profile.profession } : {}),
-      ...(profile.avatar ? { image: profile.avatar } : {}),
-      ...(profile.short_biography
-        ? { description: profile.short_biography }
-        : {}),
-      ...(knowsAbout.length ? { knowsAbout } : {}),
-      ...(address ? { address } : {}),
-      ...(profile.phone_number ? { telephone: profile.phone_number } : {}),
-      ...(makesOffer.length ? { makesOffer } : {}),
-      ...(sameAs.length ? { sameAs } : {}),
-    },
-  };
-};
-
 const ArtistHomePage = async ({ params }: Props) => {
-  const { username: rawUsername } = await params;
+  const { locale, username: rawUsername } = await params;
   const username = normalizeUsername(rawUsername);
   const [{ data: profile }, { data: services }, t] = await Promise.all([
-    UserService.getProfile(username),
+    getArtistProfileResponse(username),
     userServiceService.getAllByUsername(username, {
       blocked: false,
       is_active: true,
@@ -175,31 +114,20 @@ const ArtistHomePage = async ({ params }: Props) => {
   // Structured data only for profiles we let search engines and answer engines treat as real artist
   // entities — an incomplete profile is noindexed, so publishing its contact facts buys nothing.
   const jsonLd = profile.is_share_ready
-    ? buildProfileJsonLd(profile, services ?? [])
+    ? buildProfileJsonLd(profile, services ?? [], locale)
     : null;
 
-  // Answer-shaped TL;DR (GEO §G2): a concise, structured summary AI engines and search can lift.
-  // Built from profession + locality — deliberately NOT the short bio, which is already shown below
-  // as an editorial pull-quote; this complements it rather than duplicating it.
   const profession = profile.profession?.trim();
 
   return (
     <div className="min-h-screen w-full animate-in fade-in duration-1000">
-      {jsonLd && (
-        <script
-          type="application/ld+json"
-          // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD is escaped (`<` -> \u003c) to prevent XSS.
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
-          }}
-        />
-      )}
+      {jsonLd && <JsonLd data={jsonLd} />}
 
       {/* Hero Banner — full-bleed up to desktop */}
-      <section className="relative w-full" aria-label="Profile banner">
+      <section className="relative w-full" aria-label={t("bannerRegion")}>
         <div className="relative h-[30vh] w-full tablet:h-[38vh] laptop:h-[42vh] desktop:h-[46vh]">
           <Image
-            alt={`${heading}'s banner`}
+            alt={t("bannerAlt", { name: heading })}
             src={profile.banner || fallbackBanner}
             fill
             className="object-cover"
@@ -216,7 +144,7 @@ const ArtistHomePage = async ({ params }: Props) => {
             {profile.avatar ? (
               <Image
                 src={profile.avatar}
-                alt={`${heading}'s avatar`}
+                alt={t("avatarAlt", { name: heading })}
                 fill
                 className="object-cover"
                 sizes="160px"
@@ -245,12 +173,6 @@ const ArtistHomePage = async ({ params }: Props) => {
           )}
           {fullName && <p className=" text-text">@{profile.username}</p>}
         </div>
-
-        {/* {summary && (
-          <p className="max-w-xl text-sm leading-relaxed text-text-muted tablet:text-base">
-            {summary}
-          </p>
-        )} */}
 
         {profile.address?.formated_address && (
           <p className="flex items-center gap-1.5 text-sm text-text-muted/80">
@@ -371,7 +293,7 @@ const ArtistHomePage = async ({ params }: Props) => {
       {profile.short_biography && (
         <section
           className="mx-auto w-full max-w-(--breakpoint-desktop-lg) px-4 pb-20 phone-lg:px-6 tablet:px-10 laptop:px-12"
-          aria-label="About"
+          aria-label={t("bioRegion")}
         >
           <div className="relative py-8">
             <blockquote className="mx-auto w-full text-center font-serif text-base leading-[1.9] text-text-muted  tablet:text-lg">

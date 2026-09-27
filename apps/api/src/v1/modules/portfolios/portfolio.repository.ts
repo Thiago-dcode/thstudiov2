@@ -32,6 +32,8 @@ import { EnumType, TABLES_ENUM } from '@repo/common-lib/constants/enums';
 import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/language';
 import { MIN_COLUMN_BASE_COLUMNS } from '@repo/common-lib/constants/limits';
 import { SEO_REGENERATION_MIN_INTERVAL_DAYS } from '@repo/common-lib/constants/cache';
+import { artistShareReadySql } from '@repo/common-lib/utils/artist-share-ready';
+import { sitemapImagePathSql } from '@repo/common-lib/utils/sitemap-image-sql';
 
 export function formatPortfolioLayout(
   row: Pick<PortfolioFullSchema, 'layout_id' | 'layout_name' | 'config'>,
@@ -71,6 +73,15 @@ export function formatPortfolioLayout(
 
 @Injectable()
 export class PortfolioRepository extends BaseRepository {
+  /**
+   * The one definition of "this portfolio is public" (alias `p`): active, indexable, not blocked,
+   * and owned by a share-ready artist. Shared by the sitemap enumeration, its count and the SEO
+   * metadata `noindex`, so an incomplete artist's work can no longer be advertised while their
+   * profile is noindexed, and a deactivated portfolio can no longer stay indexable.
+   */
+  static readonly PUBLIC_PORTFOLIO_PREDICATE = `p.blocked_at IS NULL AND p.is_active = true AND p.is_indexable = true
+    AND ${artistShareReadySql('p.user_id')}`;
+
   private readonly COLUMNS: PortfolioWithArtistSchemaColumns[] = [
     'portfolios.id',
     'portfolios.slug',
@@ -227,9 +238,9 @@ export class PortfolioRepository extends BaseRepository {
     const result = await Query.raw(
       `SELECT p.slug, p.updated_at, u.username,
          COALESCE((
-           SELECT array_agg(x.thumbnail)
+           SELECT array_agg(x.image)
            FROM (
-             SELECT m.thumbnail
+             SELECT ${sitemapImagePathSql('m')} AS image
              FROM ${TABLES_ENUM.PORTFOLIO_MEDIA} pm
              JOIN ${TABLES_ENUM.MEDIA} m ON m.id = pm.media_id
              WHERE pm.portfolio_id = p.id
@@ -240,8 +251,8 @@ export class PortfolioRepository extends BaseRepository {
          ), ARRAY[]::text[]) AS image_paths
        FROM ${TABLES_ENUM.PORTFOLIOS} p
        INNER JOIN ${TABLES_ENUM.USERS} u ON u.id = p.user_id
-       WHERE p.blocked_at IS NULL AND p.is_active = true AND p.is_indexable = true
-       ORDER BY p.updated_at DESC
+       WHERE ${PortfolioRepository.PUBLIC_PORTFOLIO_PREDICATE}
+       ORDER BY p.id ASC
        LIMIT $1 OFFSET $2`,
       [limit, offset, imageCap],
     );
@@ -259,8 +270,8 @@ export class PortfolioRepository extends BaseRepository {
   /** Count for `getSitemapPortfolios` (same predicate). */
   async countSitemapPortfolios(): Promise<number> {
     const result = await Query.raw(
-      `SELECT COUNT(*)::int AS count FROM ${TABLES_ENUM.PORTFOLIOS}
-       WHERE blocked_at IS NULL AND is_active = true AND is_indexable = true`,
+      `SELECT COUNT(*)::int AS count FROM ${TABLES_ENUM.PORTFOLIOS} p
+       WHERE ${PortfolioRepository.PUBLIC_PORTFOLIO_PREDICATE}`,
     );
     const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];
     return Number((Array.isArray(rows) ? rows : [])[0]?.count ?? 0);
@@ -290,14 +301,17 @@ export class PortfolioRepository extends BaseRepository {
     slug: string,
     userId: number,
   ): Promise<{
+    title: string;
+    description: string | null;
     seo_title: string | null;
     seo_description: string | null;
     thumbnail: string | null;
-    is_indexable: boolean;
+    is_public: boolean;
   } | null> {
     const lang = this.requestService.language ?? DEFAULT_LANGUAGE;
     const result = await Query.raw(
-      `SELECT p.thumbnail, p.is_indexable,
+      `SELECT p.thumbnail, p.title, p.description,
+              (${PortfolioRepository.PUBLIC_PORTFOLIO_PREDICATE}) AS is_public,
               COALESCE(pt.seo_title, p.seo_title) AS seo_title,
               COALESCE(pt.seo_description, p.seo_description) AS seo_description
        FROM ${TABLES_ENUM.PORTFOLIOS} p
@@ -309,14 +323,23 @@ export class PortfolioRepository extends BaseRepository {
     );
     const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];
     const row = (Array.isArray(rows) ? rows : [])[0] as
-      | { seo_title: string | null; seo_description: string | null; thumbnail: string | null; is_indexable: boolean }
+      | {
+        title: string;
+        description: string | null;
+        seo_title: string | null;
+        seo_description: string | null;
+        thumbnail: string | null;
+        is_public: boolean;
+      }
       | undefined;
     if (!row) return null;
     return {
+      title: row.title,
+      description: row.description ?? null,
       seo_title: row.seo_title ?? null,
       seo_description: row.seo_description ?? null,
       thumbnail: row.thumbnail ?? null,
-      is_indexable: row.is_indexable,
+      is_public: Boolean(row.is_public),
     };
   }
 

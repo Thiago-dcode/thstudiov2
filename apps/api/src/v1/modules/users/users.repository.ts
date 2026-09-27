@@ -34,7 +34,11 @@ import { RequestService } from 'src/common/services/request.service';
 import { QueryBuilder } from '@repo/database/queryBuilder';
 import { Query } from '@repo/database/facades';
 import { foldLatinDiacriticsForMatch } from '@repo/common-lib/utils/fold-latin-diacritics';
-import { isArtistShareReady } from '@repo/common-lib/utils/artist-share-ready';
+import {
+  artistShareReadySql,
+  isArtistShareReady,
+  PUBLIC_PROFILE_ROLE_NAMES,
+} from '@repo/common-lib/utils/artist-share-ready';
 
 @Injectable()
 export class UserRepository extends BaseRepository {
@@ -228,6 +232,7 @@ export class UserRepository extends BaseRepository {
     'users.seo_title',
     'users.seo_description',
     'users.seo_generated_at',
+    'users.updated_at as u_updated_at' as UserProfileSelectColumn,
 
     // SEO for the request language (main-row values are the EN fallback)
     'user_translations.seo_title as tr_seo_title' as UserProfileSelectColumn,
@@ -239,6 +244,8 @@ export class UserRepository extends BaseRepository {
     'addresses.street',
     'addresses.city',
     'addresses.state',
+    'addresses.country',
+    'addresses.country_code',
 
     // Pivot user_categories
     'user_categories.id as uc_id',
@@ -378,27 +385,14 @@ export class UserRepository extends BaseRepository {
    * filters on nothing but `banned`/`is_active`, so an ADMIN profile is already browsable and
    * linkable — restricting the sitemap to ARTIST alone would omit a page the site links to.
    */
-  private static readonly PUBLIC_PROFILE_ROLES = `r.name IN ('ARTIST', 'ADMIN')`;
+  private static readonly PUBLIC_PROFILE_ROLES = `r.name IN (${PUBLIC_PROFILE_ROLE_NAMES.map((n) => `'${n}'`).join(', ')})`;
 
   /**
    * SQL mirror of `isArtistShareReady`: an artist only enters the sitemap with published work AND
    * the identity facts a listing needs (name, profession, locality). Shared by the enumeration and
    * its count so the two can never drift.
    */
-  private static readonly SITEMAP_ARTIST_PREDICATE = `
-    ${UserRepository.PUBLIC_PROFILE_ROLES} AND u.banned = false AND u.is_active = true
-    AND BTRIM(COALESCE(u.name, '')) <> ''
-    AND BTRIM(COALESCE(u.profession, '')) <> ''
-    AND EXISTS(
-      SELECT 1 FROM ${TABLES_ENUM.ADDRESSES} a
-      WHERE a.user_id = u.id
-        AND (BTRIM(COALESCE(a.city, '')) <> '' OR BTRIM(COALESCE(a.state, '')) <> '')
-    )
-    AND EXISTS(
-      SELECT 1 FROM ${TABLES_ENUM.PORTFOLIOS} pf
-      WHERE pf.user_id = u.id AND pf.blocked_at IS NULL
-        AND pf.is_active = true AND pf.is_indexable = true
-    )`;
+  private static readonly SITEMAP_ARTIST_PREDICATE = artistShareReadySql('u.id');
 
   /**
    * Sitemap enumeration: active, non-banned public profiles that pass the share-ready quality gate
@@ -585,6 +579,8 @@ export class UserRepository extends BaseRepository {
         street: first.street ?? null,
         city: first.city ?? null,
         state: first.state ?? null,
+        country: first.country ?? null,
+        country_code: first.country_code ?? null,
       }
       : null;
 
@@ -625,6 +621,7 @@ export class UserRepository extends BaseRepository {
       seo_title: first.tr_seo_title ?? first.seo_title,
       seo_description: first.tr_seo_description ?? first.seo_description,
       seo_generated_at: first.seo_generated_at,
+      updated_at: first.u_updated_at ? new Date(first.u_updated_at).toISOString() : null,
       address,
       categories: Array.from(categoriesMap.values()),
     };
@@ -635,6 +632,9 @@ export class UserRepository extends BaseRepository {
       .where('users.banned', '=', false)
       .where('users.is_active', '=', true)
       .join('id', 'addresses', 'user_id', 'LEFT');
+    // Only artist-facing roles belong in the public directory — the support account was listed as
+    // an "artist" on /artists, an indexable hub, while its profile page is noindex.
+    this.joinUserRole(query).whereIn(`${TABLES_ENUM.ROLES}.name`, [...PUBLIC_PROFILE_ROLE_NAMES]);
 
     await this.applyArtistFilters(filters, query);
 

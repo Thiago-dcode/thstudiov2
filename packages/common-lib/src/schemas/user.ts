@@ -130,6 +130,8 @@ export type UserProfileRow = {
   seo_title?: string | null;
   seo_description?: string | null;
   seo_generated_at?: Date | null;
+  /** `users.updated_at`, aliased: `addresses` has its own `updated_at`. */
+  u_updated_at?: Date | null;
 
   // From address
   a_id: number;
@@ -137,6 +139,8 @@ export type UserProfileRow = {
   street?: string | null;
   city?: string | null;
   state?: string | null;
+  country?: string | null;
+  country_code?: string | null;
   user_id?: number | null;
 
   // From user_categories (aliased: uc_)

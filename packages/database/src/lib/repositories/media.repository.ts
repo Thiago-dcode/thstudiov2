@@ -1,4 +1,6 @@
 import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
+import { artistShareReadySql } from '@repo/common-lib/utils/artist-share-ready';
+import { sitemapImagePathSql } from '@repo/common-lib/utils/sitemap-image-sql';
 import { MediaSeoTranslation } from '@repo/common-lib/types/ai';
 import {
   MediaLocationJoinColumns,
@@ -311,13 +313,14 @@ export class MediaRepository extends BaseRepository {
    *
    * A media item is only public if it is itself visible AND it is published inside at least one
    * public portfolio or collection — the media table also holds atelier drafts, which are
-   * reachable by URL but must never be advertised.
+   * reachable by URL but must never be advertised. It must also be fully processed and owned by a
+   * share-ready artist. Public so the API's SEO metadata `noindex` applies the exact same rule.
    */
-  private static readonly SITEMAP_MEDIA_FROM = `
-    FROM ${TABLES_ENUM.MEDIA} m
-    INNER JOIN ${TABLES_ENUM.USERS} u ON u.id = m.user_id
-    WHERE m.blocked_at IS NULL
+  static readonly PUBLIC_MEDIA_PREDICATE = `m.blocked_at IS NULL
       AND m.is_active = true
+      AND m.completed_at IS NOT NULL
+      AND m.url IS NOT NULL
+      AND ${artistShareReadySql('m.user_id')}
       AND (
         EXISTS (
           SELECT 1 FROM ${TABLES_ENUM.PORTFOLIO_MEDIA} pm
@@ -333,6 +336,12 @@ export class MediaRepository extends BaseRepository {
         )
       )`;
 
+  /** Rows for `getSitemapMedia` / `countSitemapMedia`. */
+  private static readonly SITEMAP_MEDIA_FROM = `
+    FROM ${TABLES_ENUM.MEDIA} m
+    INNER JOIN ${TABLES_ENUM.USERS} u ON u.id = m.user_id
+    WHERE ${MediaRepository.PUBLIC_MEDIA_PREDICATE}`;
+
   /**
    * Public media for the sitemap, keyed by the PRIMARY media URL
    * (`/artists/{username}/media/{public_id}`) — the URL the nested portfolio/collection views
@@ -345,9 +354,9 @@ export class MediaRepository extends BaseRepository {
     { username: string; public_id: string; updated_at: string; thumbnail: string | null }[]
   > {
     const result = await Query.raw(
-      `SELECT m.public_id, m.updated_at, m.thumbnail, u.username
+      `SELECT m.public_id, m.updated_at, ${sitemapImagePathSql('m')} AS thumbnail, u.username
        ${MediaRepository.SITEMAP_MEDIA_FROM}
-       ORDER BY m.updated_at DESC
+       ORDER BY m.id ASC
        LIMIT $1 OFFSET $2`,
       [limit, offset],
     );

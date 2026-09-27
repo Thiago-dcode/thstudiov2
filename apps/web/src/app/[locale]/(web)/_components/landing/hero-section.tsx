@@ -50,7 +50,18 @@ export async function HeroSection() {
       {/* ── Content ── */}
       <div className="max-h-1/2 z-10 mx-auto flex flex-col text-center justify-start h-full w-full pt-3 px-2">
         <div className="flex flex-col items-start w-full">
-          <h1 className="uppercase hero-stagger-1 tracking-tight text-5xl! laptop:text-6xl! desktop-lg:text-8xl! text-left">
+          {/* The document's h1 is a plain sentence. The animated headline below renders every
+              reel word several times over (the slot-machine strip), so as the h1 it read to
+              crawlers as "Let your artvisioncraftpassionvoiceartvision…". The visual headline is
+              kept identical but demoted to aria-hidden presentation; `sr-only` is the standard
+              accessible-heading pattern, not hidden keyword text — it says what the art says. */}
+          <h1 id="hero-heading" className="sr-only">
+            {t("srTitle")}
+          </h1>
+          <p
+            aria-hidden="true"
+            className="uppercase hero-stagger-1 font-serif! font-normal! leading-tight! tracking-tight text-5xl! laptop:text-6xl! desktop-lg:text-8xl! text-left"
+          >
             {t("titlePrefix")}{" "}
             <SlotMachine
               texts={accentWords}
@@ -70,7 +81,7 @@ export async function HeroSection() {
               className="translate-y-[-0.09em]"
             />
             .
-          </h1>
+          </p>
 
           {/* A hero subtitle is body copy, not a heading — as an <h3> straight after the <h1> it
               skipped a level and put marketing text into the document outline. */}

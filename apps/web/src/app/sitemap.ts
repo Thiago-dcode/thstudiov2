@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { serverEnv } from "@/env/server";
+import { languageAlternates, localizedUrl } from "@/lib/seo/core";
 import {
   getSitemapArtists,
   getSitemapCollections,
@@ -28,12 +28,6 @@ import {
  */
 export const dynamic = "force-dynamic";
 
-const SUPPORTED = ["en", "es", "pt"] as const;
-// localePrefix is "as-needed": en (default) is unprefixed; es/pt are prefixed.
-const prefix = (l: string) => (l === "en" ? "" : `/${l}`);
-const abs = (locale: string, path: string) =>
-  `${serverEnv.APP_URL}${prefix(locale)}${path === "/" ? "" : path}`;
-
 /**
  * Next's sitemap serializer interpolates url/href/image values into XML RAW (no escaping), so any
  * `&` (e.g. in presigned S3 / CloudFront query strings) would produce invalid XML that Google
@@ -47,16 +41,20 @@ const xmlEscape = (s: string) =>
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&apos;");
 
-/** One `<url>` with hreflang alternates for every locale (+ optional image-sitemap images). */
+/**
+ * One `<url>` with hreflang alternates for every locale + `x-default` (the same set the page's own
+ * `<head>` declares), plus optional image-sitemap images.
+ */
 function entry(
   path: string,
   lastModified?: string,
   images?: string[],
 ): MetadataRoute.Sitemap[number] {
-  const languages: Record<string, string> = {};
-  for (const l of SUPPORTED) languages[l] = xmlEscape(abs(l, path));
+  const languages = Object.fromEntries(
+    Object.entries(languageAlternates(path)).map(([l, u]) => [l, xmlEscape(u)]),
+  );
   return {
-    url: xmlEscape(abs("en", path)),
+    url: xmlEscape(localizedUrl("en", path)),
     ...(lastModified ? { lastModified } : {}),
     alternates: { languages },
     ...(images?.length ? { images: images.map(xmlEscape) } : {}),
@@ -65,6 +63,9 @@ function entry(
 
 const STATIC_PATHS = [
   "/",
+  // The directory hubs: the only crawlable entry points into the artist and portfolio catalogue.
+  "/artists",
+  "/portfolios",
   "/about",
   "/faqs",
   "/support",
@@ -73,9 +74,13 @@ const STATIC_PATHS = [
   "/legal/cookies",
 ];
 
+/**
+ * No `lastmod` for static pages. It used to be the request time, so every fetch claimed all of them
+ * changed "just now" — Google stops trusting `lastmod` from a site that does that, including on the
+ * entity shards where it is real (`updated_at`).
+ */
 function staticEntries(): MetadataRoute.Sitemap {
-  const now = new Date().toISOString();
-  return STATIC_PATHS.map((p) => entry(p, now));
+  return STATIC_PATHS.map((p) => entry(p));
 }
 
 export async function generateSitemaps(): Promise<{ id: number }[]> {

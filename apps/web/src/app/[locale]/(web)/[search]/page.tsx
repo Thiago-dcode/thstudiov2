@@ -8,6 +8,7 @@ import { cn } from "@repo/ui/lib/utils";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import Web from "@/lib/components/web-page.component";
+import { buildDirectoryJsonLd, JsonLd } from "@/lib/seo/json-ld";
 import { buildStaticPageMetadata } from "@/lib/seo/static-metadata";
 import categoriesService from "@/modules/categories/categories.service";
 import { GetCategoriesProvider } from "@/modules/categories/providers/getCategories.provider";
@@ -28,27 +29,54 @@ import {
 import { SearchNearMeButton } from "./_components/search-near-me-button";
 import { SearchSegmentToggle } from "./_components/search-segment-toggle";
 
+/** Query params that narrow the result set (anything but pagination). */
+const FILTER_PARAMS = [
+  "search",
+  "categories",
+  "country",
+  "state",
+  "city",
+  "lat",
+  "lng",
+  "radius_km",
+  "per_page",
+] as const;
+
 export async function generateMetadata({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string; search: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { locale, search } = await params;
+  // Any unknown single path segment lands on this route. Deciding it in metadata — before the first
+  // byte — makes it a real 404 instead of a 200 directory page titled "Artists".
+  if (!isSearchSegment(search)) notFound();
+
   const t = await getTranslations("search");
-  if (!isSearchSegment(search)) {
-    return {
-      title: { absolute: t("page.title") },
-      robots: { index: false, follow: false },
-    };
-  }
-  // Canonical points at the clean segment URL (no query string), so all filtered/param variants
-  // (`?search=`, `?categories=`, geo filters) consolidate here instead of bloating the index.
+  const query = await searchParams;
+  const request = buildSearchRequest(query);
+  const isFiltered = FILTER_PARAMS.some((key) => query[key] !== undefined);
+  const page = request.page && request.page > 1 ? request.page : undefined;
+
   return buildStaticPageMetadata({
     path: `/${search}`,
-    title: t("page.title"),
+    // Each segment has its own title/description — `/portfolios` used to ship `/artists`' pair.
+    title:
+      search === "artists" ? t("page.titleArtists") : t("page.titlePortfolios"),
     titleAbsolute: true,
-    description: t("page.description"),
+    description:
+      search === "artists"
+        ? t("page.descriptionArtists")
+        : t("page.descriptionPortfolios"),
     locale,
+    // Filtered/searched variants are internal search results: out of the index (Google's guidance),
+    // but still followed so the artists they list stay reachable.
+    ...(isFiltered ? { noindex: "follow" as const } : {}),
+    // Pagination self-canonicalizes. Canonicalizing page 2+ to page 1 told Google to drop them —
+    // and with them the only crawl path to every artist past the first page.
+    ...(page && !isFiltered ? { canonicalQuery: `?page=${page}` } : {}),
   });
 }
 
@@ -94,13 +122,13 @@ export default async function SearchPage({
   params: routeParams,
   searchParams,
 }: {
-  params: Promise<{ search: string }>;
+  params: Promise<{ locale: string; search: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   // Load translations for the search namespace
   const t = await getTranslations("search");
 
-  const { search } = await routeParams;
+  const { locale, search } = await routeParams;
   if (!isSearchSegment(search)) {
     notFound();
   }
@@ -146,11 +174,45 @@ export default async function SearchPage({
   const errorMessage =
     result.response?.error?.message || t("page.errorMessage"); // fallback
 
+  // An enumerable list of what this page shows — the shape answer engines use for "artists in X".
+  const directoryJsonLd = buildDirectoryJsonLd(locale, {
+    path: `/${search}`,
+    name:
+      search === "artists"
+        ? t("page.headingArtists")
+        : t("page.headingPortfolios"),
+    items:
+      result.type === "artists"
+        ? result.items.map((a) => ({
+            name:
+              [a.name, a.surname].filter(Boolean).join(" ") || `@${a.username}`,
+            path: `/artists/${a.username}`,
+            image: a.avatar,
+          }))
+        : result.items.map((p) => ({
+            name: p.title,
+            path: `/artists/${p.artist.username}/portfolios/${p.slug}`,
+            image: p.thumbnail,
+          })),
+  });
+
   return (
     <Web.Container className={cn("flex h-full w-full flex-col justify-start")}>
+      {result.items.length > 0 && <JsonLd data={directoryJsonLd} />}
       <div className="mb-4 flex flex-col items-start gap-3 tablet:mb-6 tablet:flex-row tablet:items-center tablet:justify-between">
+        {/* A real heading + one line of intro: "Searching for Artists" said nothing about what the
+            hub offers, and the page had no body copy at all. */}
         <Web.Header
-          title={`${t("page.searchingFor", { segment: segmentLabel })}`}
+          title={
+            search === "artists"
+              ? t("page.headingArtists")
+              : t("page.headingPortfolios")
+          }
+          description={
+            search === "artists"
+              ? t("page.introArtists")
+              : t("page.introPortfolios")
+          }
           titleClassName="text-2xl tablet:text-3xl desktop:text-4xl"
         />
         <SearchSegmentToggle active={search} filters={sharedRequest} />

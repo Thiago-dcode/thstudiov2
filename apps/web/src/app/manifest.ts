@@ -17,7 +17,8 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: "/",
     scope: "/",
     display: "standalone",
-    orientation: "portrait",
+    // No `orientation` lock: art is landscape as often as portrait, and a portrait-locked install
+    // showed every landscape photograph letterboxed.
     lang: "en",
     dir: "ltr",
     background_color: "#FAFAF9",

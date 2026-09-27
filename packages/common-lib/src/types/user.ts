@@ -45,6 +45,9 @@ export type ProfileAddress = {
   street?: string | null;
   city?: string | null;
   state?: string | null;
+  country?: string | null;
+  /** ISO 3166-1 alpha-2 — `PostalAddress.addressCountry` in the artist's structured data. */
+  country_code?: string | null;
 };
 
 // Public-facing profile: excludes email/banned/banned_reason, never meant to leave the account owner's view.
@@ -62,6 +65,8 @@ export type UserProfile = Pick<UserSchema,
    * (see `isArtistShareReady`). Drives `noindex` + the muted share card on incomplete profiles.
    */
   is_share_ready: boolean;
+  /** Last profile edit (ISO) — `ProfilePage.dateModified`. */
+  updated_at?: string | null;
 };
 
 export type CreateUserInput = Omit<

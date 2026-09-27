@@ -2,10 +2,9 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { MediaPageComponent } from "@/app/[locale]/(artists)/__components/media-page.component";
-import { ResourceNotFound } from "@/app/[locale]/(artists)/__components/resource-not-found";
 import { urlLocaleToLanguageCode } from "@/i18n/routing";
-import Web from "@/lib/components/web-page.component";
 import { buildSeoMetadata } from "@/lib/seo/build-metadata";
+import { isMissingResponse } from "@/lib/seo/core";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import mediaService from "@/modules/media/media.service";
 import userPortfolioService from "@/modules/user-portfolios/user-portfolio.service";
@@ -24,24 +23,25 @@ type Props = {
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { locale, public_id } = await params;
-  const { data } = await mediaService.getSeoMetadata(
-    public_id,
-    urlLocaleToLanguageCode(locale),
-  );
+  const { locale, username, public_id } = await params;
+  const [response, t] = await Promise.all([
+    mediaService.getSeoMetadata(public_id, urlLocaleToLanguageCode(locale)),
+    getTranslations("artists.media"),
+  ]);
 
-  if (!data) {
-    return { robots: { index: false, follow: false } };
-  }
+  if (isMissingResponse(response)) notFound();
+  const { data } = response;
+  if (!data) return { robots: { index: false, follow: false } };
 
   // canonical_path is the PRIMARY media URL (/artists/{username}/media/{public_id}), so this nested
   // view consolidates its ranking signal there instead of cannibalizing it.
-  return buildSeoMetadata(data, locale, { title: data.seo_title || "Artwork" });
+  return buildSeoMetadata(data, locale, {
+    title: t("titleFallback", { name: `@${username}` }),
+  });
 }
 
 export default async function MediaPage({ params, searchParams }: Props) {
   const { locale, username, slug, public_id } = await params;
-  const tNotFound = await getTranslations("artists.resourceNotFound");
   const tPortfolios = await getTranslations("artists.portfolios");
 
   const [user, portfolioResponse, session] = await Promise.all([
@@ -55,16 +55,8 @@ export default async function MediaPage({ params, searchParams }: Props) {
   }
 
   const portfolio = portfolioResponse.data;
-
   if (!portfolio || portfolio.blocked_at) {
-    return (
-      <Web.Container>
-        <ResourceNotFound
-          username={username}
-          message={tNotFound("portfolio")}
-        />
-      </Web.Container>
-    );
+    notFound();
   }
 
   const { data: media } = await mediaService.getByPublicId(
@@ -85,11 +77,7 @@ export default async function MediaPage({ params, searchParams }: Props) {
     !media.completed_at ||
     !belongsToPortfolio
   ) {
-    return (
-      <Web.Container>
-        <ResourceNotFound username={username} message={tNotFound("media")} />
-      </Web.Container>
-    );
+    notFound();
   }
 
   const canEdit = session?.id === media.user_id;
@@ -97,17 +85,24 @@ export default async function MediaPage({ params, searchParams }: Props) {
   const qp = await searchParams;
 
   const acceptCallback = qp?.cb === "1";
-  const backUrl = `/artists/${username}/portfolios/${slug}${acceptCallback ? `?ci=${encodeURIComponent(media.public_id)}` : ""}`;
+  const portfolioUrl = `/artists/${username}/portfolios/${slug}`;
+  const backUrl = `${portfolioUrl}${acceptCallback ? `?ci=${encodeURIComponent(media.public_id)}` : ""}`;
 
   return (
     <MediaPageComponent
-      user={media.user}
+      user={media.user ?? { username }}
       media={media}
       canEdit={canEdit}
       backUrl={backUrl}
       breadcrumbs={[
         {
-          title: `${tPortfolios("pageTitle")} ${slug}`,
+          title: tPortfolios("pageTitle"),
+          url: `/artists/${username}/portfolios`,
+          isActive: false,
+        },
+        {
+          // The portfolio's title — the raw slug ("Portfolios my-best-drone-shots") used to show here.
+          title: portfolio.title,
           url: backUrl,
           isActive: false,
         },

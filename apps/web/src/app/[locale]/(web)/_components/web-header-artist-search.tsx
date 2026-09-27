@@ -33,8 +33,8 @@ function initials(a: ArtistCard): string {
 export function WebHeaderArtistSearch({ className }: { className?: string }) {
   const pathname = usePathname();
   const t = useTranslations("search.headerArtistSearch");
-  const { isRegisterClose } = useAppStatus();
-  const registrationIsClosed = !isRegisterClose;
+  // const { isRegisterClose } = useAppStatus();
+  // const registrationIsClosed = !isRegisterClose;
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const lastRegistrationClosedToastAt = useRef(0);
@@ -57,21 +57,21 @@ export function WebHeaderArtistSearch({ className }: { className?: string }) {
     toast.message(t("registrationClosedToast"));
   };
 
-  const blockIfRegistrationClosed = () => {
-    if (!registrationIsClosed) return false;
+  // const blockIfRegistrationClosed = () => {
+  //   // if (!registrationIsClosed) return false;
 
-    if (inputRef.current?.value) inputRef.current.value = "";
-    cleanResult();
-    setOpen(false);
-    inputRef.current?.blur();
-    showRegistrationClosedToast();
-    return true;
-  };
+  //   if (inputRef.current?.value) inputRef.current.value = "";
+  //   cleanResult();
+  //   setOpen(false);
+  //   inputRef.current?.blur();
+  //   showRegistrationClosedToast();
+  //   return true;
+  // };
 
   const artists = result?.data ?? [];
 
   const handleChange = () => {
-    if (blockIfRegistrationClosed()) return;
+    // if (blockIfRegistrationClosed()) return;
 
     const value = inputRef.current?.value.trim() ?? "";
     if (!value) {
@@ -131,18 +131,15 @@ export function WebHeaderArtistSearch({ className }: { className?: string }) {
           ref={inputRef}
           type="search"
           name="search"
-          readOnly={registrationIsClosed}
-          aria-disabled={registrationIsClosed}
           onChange={handleChange}
           onFocus={() => {
-            if (blockIfRegistrationClosed()) return;
+            // if (blockIfRegistrationClosed()) return;
             if (artists.length > 0) setOpen(true);
           }}
           placeholder={t("placeholder")}
           autoComplete="off"
           className={cn(
             "h-9 w-full py-2 pr-3 pl-9 text-sm",
-            registrationIsClosed && "cursor-not-allowed opacity-60",
           )}
         />
       </div>

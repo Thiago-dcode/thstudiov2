@@ -21,7 +21,8 @@ const VERSION_BYTES = 4;
  * moving it would serve every image as `application/octet-stream`.
  *
  * `users/x/portfolio/my-slug/thumbnail.webp` → `users/x/portfolio/my-slug/thumbnail-3f9a1c04.webp`
- * `users/x/avatar` → `users/x/avatar-3f9a1c04`
+ * `users/x/avatar.webp` → `users/x/avatar-3f9a1c04.webp` (an extensionless key would be served as
+ * `application/octet-stream`, which link-preview scrapers and Google Images reject)
  */
 export const versionedAssetPath = (path: string): string => {
   const version = randomBytes(VERSION_BYTES).toString('hex');

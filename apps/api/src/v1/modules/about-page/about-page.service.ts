@@ -9,7 +9,6 @@ import {
 } from '@repo/common-lib/types/about-page';
 import { generateUUID } from '@repo/common-lib/utils/generate-uuid';
 import { UpdateAboutPageRequest } from './requests/update-about-page.request';
-import { UserService } from '../users/users.service';
 import { AiService } from '@repo/backend-lib/services/ai-service';
 import { MediaModerationException } from 'src/common/exceptions/media-moderation-exception';
 import { RequestService } from 'src/common/services/request.service';
@@ -20,7 +19,6 @@ import { UpdateProfileStatusEvent } from '../profile-status/events/update-profil
 export class AboutPageService {
   constructor(
     private readonly aboutPageRepository: AboutPageRepositoy,
-    private readonly userService: UserService,
     private readonly helpers: Helpers,
     private readonly aiService: AiService,
     private readonly requestService: RequestService,
@@ -40,11 +38,11 @@ export class AboutPageService {
     const userId = this.requestService.user.id;
     const data: CreateAboutPageInput = { ...rest, user_id: userId };
     if (photo) {
-      const [user_public_id, id] = await Promise.all([
-        this.userService.getPublicId(userId),
-        generateUUID(),
-      ]);
-      const photoPath = `users/${user_public_id}/about_page/${id}`;
+      // `getPublicId` resolves to a `{ public_id }` row, not the id itself — interpolating it built
+      // `users/[object Object]/about_page/…`, one prefix shared by every user. The authenticated
+      // caller already carries its public id. `.webp` because setAsset always encodes WebP and the
+      // storage layer derives Content-Type from the extension (no extension → octet-stream).
+      const photoPath = `users/${this.requestService.user.public_id}/about_page/${await generateUUID()}.webp`;
       await this.helpers.setAsset({
         asset: photo,
         path: photoPath,
@@ -79,13 +77,10 @@ export class AboutPageService {
       throw new UnauthorizedException();
     }
     if (photo) {
-      const [user_public_id, newId] = await Promise.all([
-        this.userService.getPublicId(aboutPage.user_id),
-        generateUUID(),
-      ]);
+      // Ownership is checked above, so the caller's public id is the owner's (see create()).
       const newPhotoPath = await this.helpers.setAsset({
         asset: photo,
-        path: `users/${user_public_id}/about_page/${newId}`,
+        path: `users/${this.requestService.user.public_id}/about_page/${await generateUUID()}.webp`,
         targetSizeMb: 0.5,
         targetQuality: 90,
       });

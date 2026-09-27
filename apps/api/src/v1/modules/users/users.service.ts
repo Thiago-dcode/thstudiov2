@@ -192,7 +192,7 @@ export class UserService {
         asset: avatar,
         // Versioned per upload: the CDN serves a stable unsigned URL per key, so reusing
         // `users/<id>/avatar` left every cache showing the previous avatar after a change.
-        path: versionedAssetPath(`users/${user.public_id}/avatar`),
+        path: versionedAssetPath(`users/${user.public_id}/avatar.webp`),
         targetSizeMb: 0.3,
       });
       const avatarUrl = await this.helpers.getAsset(avatarPath);
@@ -214,7 +214,7 @@ export class UserService {
     if (banner && banner.size > 0) {
       bannerPath = await this.helpers.setAsset({
         asset: banner,
-        path: versionedAssetPath(`users/${user.public_id}/banner`),
+        path: versionedAssetPath(`users/${user.public_id}/banner.webp`),
         targetSizeMb: 1,
       });
       const bannerUrl = await this.helpers.getAsset(bannerPath);

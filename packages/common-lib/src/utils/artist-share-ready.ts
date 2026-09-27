@@ -1,3 +1,5 @@
+import { TABLES_ENUM } from '../constants/enums';
+
 /**
  * Whether an artist profile is complete enough to be shared and indexed as a real artist page.
  *
@@ -26,3 +28,38 @@ export function isArtistShareReady(input: ArtistShareReadyInput): boolean {
     (isFilled(input.city) || isFilled(input.state))
   );
 }
+
+/** Roles whose profiles are public artist pages (support/staff accounts are not). */
+export const PUBLIC_PROFILE_ROLE_NAMES = ['ARTIST', 'ADMIN'] as const;
+
+/**
+ * SQL mirror of {@link isArtistShareReady} as a self-contained `EXISTS (…)` clause, for any query
+ * that reaches an artist through a user-id column (`p.user_id`, `m.user_id`, …).
+ *
+ * Every public surface of an artist — the profile, its portfolios, collections, services and media,
+ * the sitemap shards that enumerate them — must answer "is this artist public?" identically.
+ * Otherwise an incomplete profile is `noindex` while its portfolios are advertised, which is exactly
+ * the disagreement the share-ready gate exists to prevent. Also excludes banned/deactivated
+ * accounts and non-artist roles (support).
+ *
+ * `userIdExpr` is interpolated verbatim, so it must be a trusted column reference, never input.
+ */
+export const artistShareReadySql = (userIdExpr: string): string => `EXISTS (
+    SELECT 1 FROM ${TABLES_ENUM.USERS} sr_u
+    INNER JOIN ${TABLES_ENUM.ROLES} sr_r ON sr_r.id = sr_u.role_id
+    WHERE sr_u.id = ${userIdExpr}
+      AND sr_r.name IN (${PUBLIC_PROFILE_ROLE_NAMES.map((r) => `'${r}'`).join(', ')})
+      AND sr_u.banned = false AND sr_u.is_active = true
+      AND BTRIM(COALESCE(sr_u.name, '')) <> ''
+      AND BTRIM(COALESCE(sr_u.profession, '')) <> ''
+      AND EXISTS (
+        SELECT 1 FROM ${TABLES_ENUM.ADDRESSES} sr_a
+        WHERE sr_a.user_id = sr_u.id
+          AND (BTRIM(COALESCE(sr_a.city, '')) <> '' OR BTRIM(COALESCE(sr_a.state, '')) <> '')
+      )
+      AND EXISTS (
+        SELECT 1 FROM ${TABLES_ENUM.PORTFOLIOS} sr_p
+        WHERE sr_p.user_id = sr_u.id AND sr_p.blocked_at IS NULL
+          AND sr_p.is_active = true AND sr_p.is_indexable = true
+      )
+  )`;

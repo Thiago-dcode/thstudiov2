@@ -2,6 +2,8 @@ import type { Messages } from "./en";
 
 const messages = {
   seo: {
+    founderRole: "Fundador — fotógrafo, cineasta e engenheiro de software",
+    homePageName: "A11STUDIO — Descubra e contrate artistas",
     organizationDescription:
       "A11STUDIO é a plataforma de portfólios onde os artistas são descobertos — mostre seu trabalho e conecte-se com clientes, colecionadores e colaboradores.",
     defaultTitle: "A11STUDIO — Onde os artistas são descobertos",
@@ -10,11 +12,12 @@ const messages = {
   },
   landing: {
     metadata: {
-      title: "A11STUDIO — Onde os artistas são descobertos",
+      title: "A11STUDIO — Descubra e contrate artistas | Portfólios",
       description:
-        "A plataforma de portfólios para artistas. Mostre seu trabalho, seja descoberto por clientes e colecionadores e deixe a IA cuidar do seu SEO automaticamente.",
+        "Encontre e contrate fotógrafos, ilustradores, cineastas e designers, ou crie o portfólio profissional que fará seu trabalho ser descoberto. Feito por um artista, para artistas.",
     },
     hero: {
+      srTitle: "Deixe que sua arte seja descoberta.",
       titlePrefix: "Deixe que sua",
       titleAccentWords: ["arte", "visão", "criação", "paixão", "voz"],
       titleConnector: "se",
@@ -313,7 +316,7 @@ const messages = {
   },
   about: {
     metadata: {
-      title: "Sobre — A11STUDIO",
+      title: "Sobre a A11STUDIO — Feito por um artista, para artistas",
       description:
         "Conheça a A11STUDIO — a plataforma de portfólios que combina sites profissionais com a facilidade das redes sociais, feita por um artista para artistas.",
     },
@@ -508,6 +511,20 @@ const messages = {
         "A busca de artistas está indisponível enquanto o cadastro está fechado. Entre na lista de espera para ter acesso antecipado.",
     },
     page: {
+      titleArtists:
+        "Descubra artistas — Fotógrafos, ilustradores e mais | A11STUDIO",
+      descriptionArtists:
+        "Encontre e contate fotógrafos, ilustradores, cineastas, designers e outros artistas. Explore por disciplina, estilo e localização na A11STUDIO.",
+      titlePortfolios:
+        "Portfólios de artistas — Fotografia, ilustração, cinema e design | A11STUDIO",
+      descriptionPortfolios:
+        "Explore portfólios selecionados de fotógrafos, ilustradores, cineastas e designers na A11STUDIO e encontre o artista ideal para o seu projeto.",
+      headingArtists: "Descubra artistas",
+      headingPortfolios: "Explore portfólios",
+      introArtists:
+        "Fotógrafos, ilustradores, cineastas, designers e mais: explore por disciplina, estilo e localização e fale diretamente com o artista.",
+      introPortfolios:
+        "Trabalhos selecionados de artistas da A11STUDIO: cada portfólio reúne o melhor de um artista em uma disciplina ou estilo.",
       description:
         "Explore artistas na A11STUDIO. Descubra portfólios, serviços e profissionais criativos.",
       title: "Artistas — A11STUDIO",
@@ -1371,6 +1388,8 @@ const messages = {
       backHome: "Voltar ao início",
     },
     resourceNotFound: {
+      generic:
+        "A página que você procura não existe ou pode ter sido removida.",
       heading: "Recurso não encontrado",
       backToProfile: "Voltar ao perfil",
       portfolio:
@@ -1382,6 +1401,11 @@ const messages = {
       media: "A mídia que você procura não existe ou pode ter sido removida.",
     },
     profile: {
+      metaTitleLocation: "{name} — {profession} em {location}",
+      bannerAlt: "Capa de {name}",
+      avatarAlt: "Retrato de {name}",
+      bannerRegion: "Capa do perfil",
+      bioRegion: "Sobre",
       getInTouch: "Entrar em contato",
       aboutHeading: "Sobre {name}",
       connect: "Conectar",
@@ -1409,6 +1433,10 @@ const messages = {
       editAboutPage: "Editar página Sobre",
     },
     portfolios: {
+      metaDescriptionDetailed:
+        "Portfólios de {name}, {profession} em {location}: o melhor do seu trabalho na A11STUDIO.",
+      listTitle: "Portfólios de {name}",
+      fromCollection: "{title} (Coleção: {collection})",
       pageTitle: "Portfólios",
       metaDescription:
         "Explore os portfólios de {name} na A11STUDIO — coleções selecionadas dos seus melhores trabalhos.",
@@ -1416,6 +1444,9 @@ const messages = {
       galleryEmpty: "Este portfólio está vazio no momento.",
     },
     collections: {
+      metaDescriptionDetailed:
+        "Coleções de {name}, {profession} em {location}: projetos, viagens e séries na A11STUDIO.",
+      listTitle: "Coleções de {name}",
       pageTitle: "Coleções",
       metaDescription:
         "Explore as coleções de {name} na A11STUDIO — conjuntos selecionados do seu trabalho.",
@@ -1423,6 +1454,9 @@ const messages = {
       galleryEmpty: "Esta coleção está vazia no momento.",
     },
     services: {
+      metaDescriptionDetailed:
+        "Serviços de {name}, {profession} em {location}. Veja o que está incluído e entre em contato na A11STUDIO.",
+      listTitle: "Serviços de {name}",
       pageTitle: "Serviços",
       metaDescription:
         "Conheça os serviços oferecidos por {name} na A11STUDIO e entre em contato para colaborar.",
@@ -1432,6 +1466,9 @@ const messages = {
       relatedPortfolio: "Portfólio relacionado",
     },
     about: {
+      metaTitleNamed: "{title} — {name}",
+      metaTitleDefault: "Sobre {name}",
+      photoAlt: "Retrato de {name}",
       pageTitle: "Sobre",
       metaDescription:
         "Conheça melhor {name} no A11STUDIO — sua história, sua trajetória e como entrar em contato.",
@@ -1440,6 +1477,7 @@ const messages = {
       getInTouch: "Entrar em contato",
     },
     media: {
+      titleFallback: "Obra de {name}",
       altFallback: "Obra de {name} no A11STUDIO",
       untitled: "Sem título",
       editAria: "Editar mídia",

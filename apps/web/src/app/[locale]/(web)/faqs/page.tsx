@@ -36,7 +36,7 @@ export default async function FaqsPage({
 
   return (
     <div className="mx-auto w-full max-w-(--screen-desktop) px-6 py-16 tablet:px-10 tablet:py-24">
-      <JsonLd data={buildFaqPageJsonLd(items)} />
+      <JsonLd data={buildFaqPageJsonLd(items, locale)} />
 
       <header className="max-w-2xl space-y-4">
         <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-text-muted">

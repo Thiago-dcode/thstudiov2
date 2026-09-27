@@ -8,10 +8,16 @@ import { ArtistBreadcrumb } from "@/app/[locale]/(artists)/__components/artist-b
 import { ArtistContactDialog } from "@/app/[locale]/(artists)/__components/artist-contact.dialog";
 import { Link } from "@/i18n/navigation";
 import Web from "@/lib/components/web-page.component";
-import { DEFAULT_OG_IMAGE } from "@/lib/config";
+import { isMissingResponse } from "@/lib/seo/core";
+import {
+  artistDisplayName,
+  buildArtistAboutJsonLd,
+  JsonLd,
+} from "@/lib/seo/json-ld";
 import { buildStaticPageMetadata } from "@/lib/seo/static-metadata";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import userAboutPageService from "@/modules/user-about-page/user-about-page.service";
+import { getArtistProfileResponse } from "@/modules/users/get-artist-share-ready";
 import usersService from "@/modules/users/users.service";
 
 type Props = {
@@ -21,56 +27,54 @@ type Props = {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, username: rawUsername } = await params;
   const username = normalizeUsername(rawUsername);
-  const [{ data: profile }, { data: aboutPage }, t] = await Promise.all([
-    usersService.getProfile(username),
+  const [response, { data: aboutPage }, t] = await Promise.all([
+    getArtistProfileResponse(username),
     userAboutPageService.getByUsername(username),
     getTranslations("artists.about"),
   ]);
+  const profile = response.data;
 
-  if (!profile) {
-    return { robots: { index: false, follow: false } };
-  }
+  if (isMissingResponse(response)) notFound();
+  if (!profile) return { robots: { index: false, follow: false } };
 
-  const name =
-    [profile.name, profile.surname].filter(Boolean).join(" ") ||
-    `@${profile.username}`;
-  const title = aboutPage?.title?.trim() || `${name} — ${t("pageTitle")}`;
-  const description = aboutPage?.description?.trim()
-    ? aboutPage.description.trim().slice(0, 160)
-    : t("metaDescription", { name });
+  const name = artistDisplayName(profile);
+  const aboutTitle = aboutPage?.title?.trim();
+  // The artist's own heading ("Who I'm?") says nothing about who they are on its own, so it is always
+  // paired with their name.
+  const title = aboutTitle
+    ? t("metaTitleNamed", { title: aboutTitle, name })
+    : t("metaTitleDefault", { name });
 
-  // The about page is a supporting page about the same artist as /artists/{username}, so `path` is
-  // the PROFILE path, not this page's: buildStaticPageMetadata then emits a canonical pointing at
-  // the profile (consolidating ranking signal — no cannibalization) with hreflang alternates that
-  // reference the same profile per locale. Both are per-locale, which the previous hand-rolled
-  // canonical was not: it pointed /es/artists/x/about at the *English* profile, collapsing the
-  // Spanish and Portuguese versions into the English one.
+  // Self-canonical. It used to canonicalize to the profile, but this page is not a duplicate of it
+  // (long-form story + portrait), and Google ignores a canonical between non-equivalent pages — it
+  // only sent a conflicting signal and hid the long-form bio answer engines are most likely to quote.
+  // No story yet (or an incomplete profile) → a thin page: kept out of the index, not 404'd, so the
+  // owner can still reach it.
   return buildStaticPageMetadata({
-    path: `/artists/${username}`,
+    path: `/artists/${profile.username}/about`,
     title,
-    description,
+    description:
+      aboutPage?.description?.trim() || t("metaDescription", { name }),
     locale,
     ogType: "profile",
-    // Incomplete profiles get the brand card and stay unindexed, matching the profile page and the
-    // sitemap; complete ones fall back to the brand logo only so a share is never blank.
-    image: profile.is_share_ready
-      ? aboutPage?.photo || profile.avatar || DEFAULT_OG_IMAGE
-      : DEFAULT_OG_IMAGE,
-    noindex: !profile.is_share_ready,
+    image: profile.is_share_ready ? aboutPage?.photo || profile.avatar : null,
+    noindex: !profile.is_share_ready || !aboutPage,
   });
 }
 
 export default async function AboutPage({ params }: Props) {
-  const { username: rawUsername } = await params;
+  const { locale, username: rawUsername } = await params;
   const username = normalizeUsername(rawUsername);
   const t = await getTranslations("artists.about");
   const tEdit = await getTranslations("artists.editAria");
 
-  const [user, { data: aboutPage }, userAuth] = await Promise.all([
-    usersService.usernameExists(username),
-    userAboutPageService.getByUsername(username),
-    userSession(),
-  ]);
+  const [user, { data: aboutPage }, userAuth, { data: profile }] =
+    await Promise.all([
+      usersService.usernameExists(username),
+      userAboutPageService.getByUsername(username),
+      userSession(),
+      getArtistProfileResponse(username),
+    ]);
 
   if (!user.data) {
     notFound();
@@ -89,8 +93,20 @@ export default async function AboutPage({ params }: Props) {
     );
   }
 
+  const name = profile ? artistDisplayName(profile) : `@${username}`;
+
   return (
     <Web.Container className="">
+      {profile?.is_share_ready && (
+        <JsonLd
+          data={buildArtistAboutJsonLd({ username, name }, locale, {
+            name: aboutPage.title || t("metaTitleDefault", { name }),
+            description: aboutPage.description,
+            image: aboutPage.photo,
+            crumb: t("heading"),
+          })}
+        />
+      )}
       <ArtistBreadcrumb
         username={username}
         items={[
@@ -109,7 +125,7 @@ export default async function AboutPage({ params }: Props) {
                 <div className="relative aspect-3/4 w-full max-w-sm lg:w-80 xl:w-96 overflow-hidden">
                   <Image
                     src={aboutPage.photo}
-                    alt={`About ${username} ${aboutPage.title || ""}`}
+                    alt={t("photoAlt", { name })}
                     fill
                     className="object-cover"
                     sizes="(max-width: 1024px) 100vw, 384px"
@@ -121,22 +137,21 @@ export default async function AboutPage({ params }: Props) {
 
             <div className="flex flex-col justify-center gap-10 flex-1 min-w-0">
               <div className="space-y-2">
-                {aboutPage.title && (
-                  <div className="flex items-baseline gap-4">
-                    <h1 className="text-4xl font-serif  tracking-tight md:text-5xl lg:text-6xl">
-                      {aboutPage.title}
-                    </h1>
-                    {canEdit && (
-                      <Link
-                        href="/atelier/about"
-                        aria-label={tEdit("editAboutPage")}
-                        className="text-text-muted hover:text-text transition-colors"
-                      >
-                        <Pencil className="size-4 md:size-5" />
-                      </Link>
-                    )}
-                  </div>
-                )}
+                {/* Always an h1: an about page without its own title used to render none. */}
+                <div className="flex items-baseline gap-4">
+                  <h1 className="text-4xl font-serif  tracking-tight md:text-5xl lg:text-6xl">
+                    {aboutPage.title || t("metaTitleDefault", { name })}
+                  </h1>
+                  {canEdit && (
+                    <Link
+                      href="/atelier/about"
+                      aria-label={tEdit("editAboutPage")}
+                      className="text-text-muted hover:text-text transition-colors"
+                    >
+                      <Pencil className="size-4 md:size-5" />
+                    </Link>
+                  )}
+                </div>
               </div>
 
               {aboutPage.description && (

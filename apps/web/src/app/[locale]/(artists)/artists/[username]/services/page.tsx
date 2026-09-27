@@ -3,55 +3,50 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { ArtistBreadcrumb } from "@/app/[locale]/(artists)/__components/artist-breadcrumb";
+import { buildArtistListMetadata } from "@/app/[locale]/(artists)/__components/artist-list-metadata";
 import Web from "@/lib/components/web-page.component";
-import { buildStaticPageMetadata } from "@/lib/seo/static-metadata";
+import {
+  artistDisplayName,
+  buildArtistListJsonLd,
+  JsonLd,
+} from "@/lib/seo/json-ld";
 import { ServiceCard } from "@/modules/user-services/components/service-card";
 import userServiceService from "@/modules/user-services/user-service.service";
+import { getArtistProfile } from "@/modules/users/get-artist-share-ready";
 import usersService from "@/modules/users/users.service";
 
 type Props = {
   params: Promise<{ locale: string; username: string }>;
 };
 
+const PUBLIC_FILTERS = { is_active: true, blocked: false } as const;
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, username: rawUsername } = await params;
   const username = normalizeUsername(rawUsername);
-  const [{ data: profile }, t] = await Promise.all([
-    usersService.getProfile(username),
-    getTranslations("artists.services"),
-  ]);
-
-  if (!profile) {
-    return { robots: { index: false, follow: false } };
-  }
-
-  const name =
-    [profile.name, profile.surname].filter(Boolean).join(" ") || `@${username}`;
-  return buildStaticPageMetadata({
-    path: `/artists/${username}/services`,
-    title: `${name} — ${t("pageTitle")}`,
-    description: t("metaDescription", { name }),
+  const { data } = await userServiceService.getAllByUsername(
+    username,
+    PUBLIC_FILTERS,
+  );
+  const services = (data ?? []).filter((s) => s.is_active);
+  return buildArtistListMetadata({
+    kind: "services",
     locale,
-    // An incomplete profile stays out of the index and off rich share cards — same gate as the
-    // profile page and the sitemap, so the artist's surfaces can't disagree.
-    image: profile.is_share_ready
-      ? profile.banner || profile.avatar || undefined
-      : undefined,
-    noindex: !profile.is_share_ready,
+    username,
+    count: services.length,
+    image: services[0]?.thumbnail,
   });
 }
 
 export default async function Page({ params }: Props) {
-  const { username: rawUsername } = await params;
+  const { locale, username: rawUsername } = await params;
   const username = normalizeUsername(rawUsername);
   const t = await getTranslations("artists.services");
 
-  const [userExist, response] = await Promise.all([
+  const [userExist, response, profile] = await Promise.all([
     usersService.usernameExists(username),
-    userServiceService.getAllByUsername(username, {
-      is_active: true,
-      blocked: false,
-    }),
+    userServiceService.getAllByUsername(username, PUBLIC_FILTERS),
+    getArtistProfile(username),
   ]);
 
   if (!userExist.data) {
@@ -63,9 +58,23 @@ export default async function Page({ params }: Props) {
   }
 
   const services = response.data.filter((s) => s.is_active);
+  const name = profile ? artistDisplayName(profile) : `@${username}`;
 
   return (
     <Web.Container>
+      {profile?.is_share_ready && services.length > 0 && (
+        <JsonLd
+          data={buildArtistListJsonLd({ username, name }, locale, {
+            path: `/artists/${username}/services`,
+            name: t("listTitle", { name }),
+            items: services.map((s) => ({
+              name: s.title,
+              path: `/artists/${username}/services/${s.slug}`,
+              image: s.thumbnail,
+            })),
+          })}
+        />
+      )}
       <ArtistBreadcrumb
         username={username}
         items={[

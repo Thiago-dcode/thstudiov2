@@ -2,8 +2,14 @@ import { ArrowLeft, Search } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 
+/**
+ * Not-found boundary for the whole artist surface: a missing artist, and — now that the entity pages
+ * call `notFound()` instead of rendering a 200 "not found" view — a missing portfolio, collection,
+ * service or media too. Hence resource-neutral copy.
+ */
 export default async function ArtistNotFound() {
   const t = await getTranslations("artists.notFound");
+  const tResource = await getTranslations("artists.resourceNotFound");
   return (
     <div className="py-8 w-full flex flex-col items-center justify-center min-h-[70vh] px-6 animate-in fade-in duration-700">
       <div className="relative flex flex-col items-center text-center max-w-lg">
@@ -18,10 +24,10 @@ export default async function ArtistNotFound() {
 
           <div className="space-y-3">
             <h1 className="text-2xl tablet:text-3xl font-serif  tracking-tight">
-              {t("heading")}
+              {tResource("heading")}
             </h1>
             <p className="text-sm tablet:text-base text-text-muted leading-relaxed max-w-xs mx-auto">
-              {t("description")}
+              {tResource("generic")}
             </p>
           </div>
 

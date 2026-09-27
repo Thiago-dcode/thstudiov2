@@ -1,24 +1,14 @@
+import { toMetaDescription } from "@repo/common-lib/utils/seo-text";
 import type { Metadata } from "next";
-import { serverEnv } from "@/env/server";
+import { SUPPORTED_LOCALES } from "@/i18n/routing";
 import {
-  localePrefix,
-  SUPPORTED_LOCALES,
-  type SupportedLocale,
-} from "@/i18n/routing";
-import { DEFAULT_OG_IMAGE } from "@/lib/config";
-
-const SITE_NAME = "A11STUDIO";
-
-/**
- * Open Graph locale per app language — read by WhatsApp / Facebook / LinkedIn / Telegram / Slack /
- * Discord (all consume Open Graph; there is no WhatsApp-specific tag) to render the right-language
- * link preview.
- */
-const OG_LOCALE: Record<SupportedLocale, string> = {
-  en: "en_US",
-  es: "es_ES",
-  pt: "pt_BR",
-};
+  languageAlternates,
+  localizedUrl,
+  OG_LOCALE,
+  ogImage,
+  resolveLocale,
+  SITE_NAME,
+} from "@/lib/seo/core";
 
 type StaticPageMetaInput = {
   /** Locale-agnostic path, leading slash, no locale prefix (e.g. "/about", "/" for home). */
@@ -26,73 +16,98 @@ type StaticPageMetaInput = {
   title: string;
   description: string;
   locale: string;
-  /** OG/Twitter image URL (absolute, or root-relative — resolved via `metadataBase`). Defaults to the brand logo. */
-  image?: string;
+  /**
+   * Source image for the share card (an absolute CDN URL). It is re-encoded to a 1200×630 JPEG by
+   * `/og-image.jpg`; omit it (or pass null) for the brand card.
+   */
+  image?: string | null;
   ogType?: "website" | "article" | "profile";
-  /** Override the default indexable behaviour (e.g. keep a page out of the index). */
-  noindex?: boolean;
+  /** Open Graph `profile:*` tags, for `ogType: "profile"`. */
+  profile?: { firstName?: string; lastName?: string; username?: string };
+  /**
+   * Keep the page out of the index. `true` = `noindex, nofollow`; `"follow"` = `noindex, follow`, for
+   * pages whose links still lead somewhere worth crawling (filtered directory results).
+   */
+  noindex?: boolean | "follow";
   /**
    * When the `title` already contains the brand (e.g. the landing page), set this so it opts out of
    * the root layout's `%s · A11STUDIO` template instead of double-branding.
    */
   titleAbsolute?: boolean;
+  /**
+   * Query string (with its leading `?`) that is part of this page's identity — only pagination
+   * (`?page=2`) qualifies. It is kept on the canonical so each page of a list self-canonicalizes.
+   */
+  canonicalQuery?: string;
 };
 
 /**
- * Build a Next.js `Metadata` object for a static marketing/legal page: self-referencing canonical
- * for the current locale + hreflang alternates for every app locale (+ x-default), Open Graph and
- * Twitter cards. Indexability is inherited from the root layout (env-aware: indexable in production,
- * noindex everywhere else); pass `noindex` to force a page out of the index regardless.
+ * Build a Next.js `Metadata` object for an indexable page: self-referencing canonical for the
+ * current locale + hreflang alternates for every app locale (+ x-default), Open Graph and Twitter
+ * cards. Indexability is inherited from the root layout (env-aware: indexable only on the canonical
+ * production origin); pass `noindex` to force a page out of the index regardless.
+ *
+ * A `noindex` page gets NO canonical and NO hreflang: those describe a page meant to rank, and
+ * pairing them with noindex sends Google contradictory signals (and builds hreflang clusters that
+ * point at pages which refuse to be indexed).
  */
 export function buildStaticPageMetadata({
   path,
   title,
-  description,
+  description: rawDescription,
   locale,
-  image = DEFAULT_OG_IMAGE,
+  image,
   ogType = "website",
+  profile,
   noindex = false,
   titleAbsolute = false,
+  canonicalQuery = "",
 }: StaticPageMetaInput): Metadata {
-  const base = serverEnv.APP_URL;
-  // "/" must not become "//"; every other path keeps its single leading slash.
-  const normalizedPath = path === "/" ? "" : path;
-  const url = (l: SupportedLocale) =>
-    `${base}${localePrefix(l)}${normalizedPath}`;
-
-  const languages: Record<string, string> = { "x-default": url("en") };
-  for (const l of SUPPORTED_LOCALES) languages[l] = url(l);
-
-  const current: SupportedLocale = SUPPORTED_LOCALES.includes(
-    locale as SupportedLocale,
-  )
-    ? (locale as SupportedLocale)
-    : "en";
-  const canonical = url(current);
+  const current = resolveLocale(locale);
+  const url = `${localizedUrl(current, path)}${canonicalQuery}`;
+  // Empty → undefined, so the page inherits the root layout's localized default instead of emitting
+  // an empty `<meta name="description">`.
+  const description = rawDescription.trim()
+    ? toMetaDescription(rawDescription)
+    : undefined;
+  const card = ogImage(image, title);
 
   return {
     title: titleAbsolute ? { absolute: title } : title,
     description,
-    alternates: { canonical, languages },
-    // Only force noindex when asked; otherwise inherit the env-aware default from the root layout.
-    ...(noindex ? { robots: { index: false, follow: false } } : {}),
+    ...(noindex
+      ? { robots: { index: false, follow: noindex === "follow" } }
+      : {
+          alternates: {
+            canonical: url,
+            languages: canonicalQuery
+              ? Object.fromEntries(
+                  Object.entries(languageAlternates(path)).map(([l, u]) => [
+                    l,
+                    `${u}${canonicalQuery}`,
+                  ]),
+                )
+              : languageAlternates(path),
+          },
+        }),
     openGraph: {
       type: ogType,
       title,
       description,
-      url: canonical,
+      url,
       siteName: SITE_NAME,
       locale: OG_LOCALE[current],
       alternateLocale: SUPPORTED_LOCALES.filter((l) => l !== current).map(
         (l) => OG_LOCALE[l],
       ),
-      ...(image ? { images: [{ url: image, alt: title }] } : {}),
+      images: [card],
+      ...(ogType === "profile" && profile ? profile : {}),
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      ...(image ? { images: [image] } : {}),
+      images: [{ url: card.url, alt: card.alt }],
     },
   };
 }

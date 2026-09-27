@@ -6,16 +6,21 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { ArtistBreadcrumb } from "@/app/[locale]/(artists)/__components/artist-breadcrumb";
-import { ResourceNotFound } from "@/app/[locale]/(artists)/__components/resource-not-found";
 import { Link } from "@/i18n/navigation";
 import { localePrefix, urlLocaleToLanguageCode } from "@/i18n/routing";
 import Web from "@/lib/components/web-page.component";
 import { config } from "@/lib/config";
 import { getGalleryLabels } from "@/lib/gallery-labels";
 import { buildSeoMetadata } from "@/lib/seo/build-metadata";
-import { buildCollectionJsonLd, JsonLd } from "@/lib/seo/json-ld";
+import { isMissingResponse } from "@/lib/seo/core";
+import {
+  artistDisplayName,
+  buildCollectionJsonLd,
+  JsonLd,
+} from "@/lib/seo/json-ld";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import userCollectionService from "@/modules/user-collections/user-collection.service";
+import { getArtistProfile } from "@/modules/users/get-artist-share-ready";
 import usersService from "@/modules/users/users.service";
 
 type Props = {
@@ -29,26 +34,25 @@ export async function generateMetadata({
   params: Promise<{ locale: string; username: string; slug: string }>;
 }): Promise<Metadata> {
   const { locale, username, slug } = await params;
-  const { data } = await userCollectionService.getSeoMetadata(
+  const response = await userCollectionService.getSeoMetadata(
     username,
     slug,
     urlLocaleToLanguageCode(locale),
   );
+  // Resolved before the first byte, so a missing or blocked collection is a real 404.
+  if (isMissingResponse(response)) notFound();
+  const { data } = response;
+  if (!data) return { robots: { index: false, follow: false } };
 
-  if (!data) {
-    return { robots: { index: false, follow: false } };
-  }
-
-  return buildSeoMetadata(data, locale, { title: data.seo_title || username });
+  return buildSeoMetadata(data, locale, { title: slug });
 }
 
 export default async function Page({ params, searchParams }: Props) {
   const { locale, username, slug } = await params;
   const t = await getTranslations("artists.collections");
-  const tNotFound = await getTranslations("artists.resourceNotFound");
   const tEdit = await getTranslations("artists.editAria");
 
-  const [userExist, response, userAuth] = await Promise.all([
+  const [userExist, response, userAuth, profile] = await Promise.all([
     usersService.usernameExists(username),
     userCollectionService.getByUsername(
       username,
@@ -56,6 +60,7 @@ export default async function Page({ params, searchParams }: Props) {
       urlLocaleToLanguageCode(locale),
     ),
     userSession(),
+    getArtistProfile(username),
   ]);
 
   if (!userExist.data) {
@@ -64,17 +69,18 @@ export default async function Page({ params, searchParams }: Props) {
 
   const collection = response.data;
   if (!collection || collection.blocked_at) {
-    return (
-      <Web.Container>
-        <ResourceNotFound
-          username={username}
-          message={tNotFound("collection")}
-        />
-      </Web.Container>
-    );
+    notFound();
   }
 
   const canEdit = userAuth?.id === collection.user_id;
+  // A deactivated collection is hidden from visitors; its owner can still preview it.
+  if (!collection.is_active && !canEdit) {
+    notFound();
+  }
+  const artist = {
+    username,
+    name: profile ? artistDisplayName(profile) : `@${username}`,
+  };
 
   const qp = await searchParams;
 
@@ -102,7 +108,9 @@ export default async function Page({ params, searchParams }: Props) {
 
   return (
     <Web.Container>
-      <JsonLd data={buildCollectionJsonLd(collection, username)} />
+      <JsonLd
+        data={buildCollectionJsonLd(collection, artist, locale, t("pageTitle"))}
+      />
       <ArtistBreadcrumb
         username={username}
         items={[

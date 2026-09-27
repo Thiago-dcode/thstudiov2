@@ -50,21 +50,30 @@ export class UserCollectionService {
   async getSeoMetadata(username: string, slug: string): Promise<EntitySeoMetadata | null> {
     const user = await this.userRepository.findByUsernameCompact(username);
     if (!user) return null;
-    return this.helpers.cacheRemember(
+    // Cache the cover PATH (stable); `og_image` is resolved per request like the other entities.
+    const cached = await this.helpers.cacheRemember(
       CACHE_KEY_COLLECTION_SEO(user.id, slug),
       async () => {
         const meta = await this.collectionRepository.getSeoMetadataBySlug(slug, user.id);
         if (!meta) return null;
         return {
+          title: meta.title,
+          description: meta.description,
           seo_title: meta.seo_title,
           seo_description: meta.seo_description,
-          og_image: null,
-          canonical_path: `/artists/${username}/collections/${slug}`,
-          noindex: !meta.is_indexable,
+          cover_path: meta.cover,
+          canonical_path: `/artists/${user.username}/collections/${slug}`,
+          noindex: !meta.is_public,
         };
       },
       { ttl: SEO_METADATA_CACHE_TTL, append_language: true },
     );
+    if (!cached) return null;
+    const { cover_path, ...rest } = cached;
+    return {
+      ...rest,
+      og_image: cover_path ? await this.helpers.getAsset(cover_path) : null,
+    };
   }
 
   async getByUsername(username: string, slug: string): Promise<FullCollection> {

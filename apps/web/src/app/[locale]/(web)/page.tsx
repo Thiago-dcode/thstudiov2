@@ -1,10 +1,6 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import {
-  buildOrganizationJsonLd,
-  buildWebSiteJsonLd,
-  JsonLd,
-} from "@/lib/seo/json-ld";
+import { buildHomeJsonLd, JsonLd } from "@/lib/seo/json-ld";
 import { buildStaticPageMetadata } from "@/lib/seo/static-metadata";
 import { FaqsContent } from "../../../lib/components/faqs";
 import { CtaSection } from "./_components/landing/cta-section";
@@ -30,12 +26,23 @@ export async function generateMetadata({
   });
 }
 
-export default async function Home() {
+export default async function Home({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
   const tSeo = await getTranslations("seo");
   return (
     <>
-      <JsonLd data={buildOrganizationJsonLd(tSeo("organizationDescription"))} />
-      <JsonLd data={buildWebSiteJsonLd()} />
+      {/* One connected graph: the brand, the site and this page (they were two unrelated scripts). */}
+      <JsonLd
+        data={buildHomeJsonLd(locale, {
+          description: tSeo("organizationDescription"),
+          founderRole: tSeo("founderRole"),
+          pageName: tSeo("homePageName"),
+        })}
+      />
       <HeroSection />
       <ValuePillarsSection />
 

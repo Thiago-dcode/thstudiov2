@@ -76,6 +76,13 @@ export type GenerateEntityMetadataResponse = {
 
 /** Lean SEO payload returned by the per-entity `/metadata` endpoints for Next.js `generateMetadata`. */
 export type EntitySeoMetadata = {
+    /**
+     * The entity's own title/description, localized where a translation exists. The fallback when
+     * the AI fields are missing (not generated yet, or rejected by `sanitizeSeoText`) — without it the
+     * page title degraded to the username.
+     */
+    title: string | null;
+    description: string | null;
     seo_title: string | null;
     seo_description: string | null;
     og_image: string | null;

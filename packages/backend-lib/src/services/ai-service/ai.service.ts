@@ -20,12 +20,23 @@ import { FullCollection } from '@repo/common-lib/types/collection';
 import { FullService } from '@repo/common-lib/types/service';
 import { UserProfile } from '@repo/common-lib/types/user';
 import { mediaArtistNotesBlock } from './media-artist-notes';
+import { truncateSeoText } from '@repo/common-lib/utils/seo-text';
 
-const ENTITY_SEO_TITLE_MAX = 70;
+/**
+ * `*_MAX` is the hard cap `sanitizeSeoText` enforces; `*_TARGET` is what the prompt asks for. The
+ * model regularly overshoots the number it is given, so asking for exactly the cap produced text that
+ * then had to be cut mid-sentence ("…showcasing urban life and"). Titles also carry the site's
+ * ` · A11STUDIO` suffix (12 chars), so a 50-char title still fits Google's ~60-char display.
+ */
+const ENTITY_SEO_TITLE_MAX = 60;
+const ENTITY_SEO_TITLE_TARGET = 50;
 const ENTITY_SEO_DESCRIPTION_MAX = 160;
+const ENTITY_SEO_DESCRIPTION_TARGET = 145;
 const ENTITY_MEDIA_CONTEXT_CAP = 24;
 const MEDIA_SEO_TITLE_MAX = 60;
+const MEDIA_SEO_TITLE_TARGET = 50;
 const MEDIA_SEO_DESCRIPTION_MAX = 160;
+const MEDIA_SEO_DESCRIPTION_TARGET = 145;
 const MEDIA_SEO_ALT_MAX = 125;
 const MEDIA_SEO_FILENAME_MAX = 100;
 
@@ -82,6 +93,9 @@ const SEO_QUALITY_RULES = `Quality rules (apply to every language):
         - Do NOT invent a style, medium, or subject that is not clearly present. When unsure, stay generic and honest — but ALWAYS return a real, descriptive phrase (never "untitled", "n/a", or a placeholder).
         - Every field is PLAIN TEXT: no quotes, JSON, HTML, markdown, or emoji inside the value.
         - No profanity, slurs, or offensive language — this text is public and indexed.
+        - Write each locale ENTIRELY in its own language, connectors included: Spanish/Portuguese use "por", never "by"; "en"/"em", never "in".
+        - When a title combines a name and a descriptor, separate them with " — " (never run them together: "Amsterdam 2026 — Canal Photography", not "Amsterdam 2026 Canal Photography").
+        - Descriptions must END as a complete sentence inside the limit — they are never trimmed for you. Never tack the artist's name on after the last sentence.
         Good title examples: "Minimalist Logo & Brand Design", "Analog Portrait Photography", "Brutalist Architecture Photography", "Fine-Art Wedding Photography".`;
 
 /**
@@ -280,8 +294,8 @@ export class AiService {
             · up to ${MAX_TAGS_MEDIA} TAGS describing concrete things clearly VISIBLE in the image — subject (people, dog, car), scene/place (city, beach, street), setting/light (night, sunset, studio), or mood (moody, serene).
           Only ids from the list. Never invent. Do not over-tag: pick TAGS only when clearly present. Empty array if none.
         - translations: for EACH locale key (${SEO_LOCALES.join(', ')}), written IN THAT LANGUAGE:
-            · seo_title: ≤${MEDIA_SEO_TITLE_MAX} chars.
-            · seo_description: ≤${MEDIA_SEO_DESCRIPTION_MAX} chars, compelling + search-intent aligned, gallery-caption tone.
+            · seo_title: ≤${MEDIA_SEO_TITLE_TARGET} chars.
+            · seo_description: ≤${MEDIA_SEO_DESCRIPTION_TARGET} chars, one or two COMPLETE sentences, compelling + search-intent aligned, gallery-caption tone.
             · seo_alt: ≤${MEDIA_SEO_ALT_MAX} chars, PLAIN literal accessibility description of the actual content (not artistic).
 
         ${SEO_QUALITY_RULES}
@@ -709,8 +723,8 @@ export class AiService {
         { "translations": { ${localesShape} } }
 
         For EACH locale key (${SEO_LOCALES.join(', ')}), written IN THAT LANGUAGE:
-        - seo_title: ≤${ENTITY_SEO_TITLE_MAX} chars.
-        - seo_description: ≤${ENTITY_SEO_DESCRIPTION_MAX} chars, compelling + search-intent aligned, gallery-caption tone.
+        - seo_title: ≤${ENTITY_SEO_TITLE_TARGET} chars.
+        - seo_description: ≤${ENTITY_SEO_DESCRIPTION_TARGET} chars, one or two COMPLETE sentences, compelling + search-intent aligned, gallery-caption tone.
 
         ${SEO_QUALITY_RULES}
 
@@ -809,10 +823,7 @@ export class AiService {
     }
 
     if (text.length <= max) return text;
-    // Truncate without cutting a word in half when a clean break is available.
-    const cut = text.slice(0, max);
-    const lastSpace = cut.lastIndexOf(' ');
-    return (lastSpace > max * 0.6 ? cut.slice(0, lastSpace) : cut).trimEnd();
+    return truncateSeoText(text, max);
   }
 
   private parseLlmJson(text: string): Record<string, unknown> {

@@ -204,17 +204,11 @@ export class MediaRepository extends BaseMediaRepository {
    * Lean SEO-only read for `generateMetadata`: media SEO localized to the request language
    * (COALESCE translation → main-row EN fallback) + owner username + thumbnail + visibility flags.
    */
-  async getSeoMetadataByPublicId(publicId: string): Promise<{
-    seo_title: string | null;
-    seo_description: string | null;
-    thumbnail: string | null;
-    username: string;
-    is_active: boolean;
-    blocked: boolean;
-  } | null> {
+  async getSeoMetadataByPublicId(publicId: string): Promise<MediaSeoRow | null> {
     const lang = this.requestService.language ?? DEFAULT_LANGUAGE;
     const result = await Query.raw(
-      `SELECT m.thumbnail, m.is_active, (m.blocked_at IS NOT NULL) AS blocked, u.username,
+      `SELECT m.thumbnail, m.title, m.description, u.username,
+              (${BaseMediaRepository.PUBLIC_MEDIA_PREDICATE}) AS is_public,
               COALESCE(mt.seo_title, m.seo_title) AS seo_title,
               COALESCE(mt.seo_description, m.seo_description) AS seo_description
        FROM ${TABLES_ENUM.MEDIA} m
@@ -226,24 +220,16 @@ export class MediaRepository extends BaseMediaRepository {
       [lang, publicId],
     );
     const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];
-    const row = (Array.isArray(rows) ? rows : [])[0] as
-      | {
-        seo_title: string | null;
-        seo_description: string | null;
-        thumbnail: string | null;
-        username: string;
-        is_active: boolean;
-        blocked: boolean;
-      }
-      | undefined;
+    const row = (Array.isArray(rows) ? rows : [])[0] as MediaSeoRow | undefined;
     if (!row) return null;
     return {
+      title: row.title ?? null,
+      description: row.description ?? null,
       seo_title: row.seo_title ?? null,
       seo_description: row.seo_description ?? null,
       thumbnail: row.thumbnail ?? null,
       username: row.username,
-      is_active: row.is_active,
-      blocked: row.blocked,
+      is_public: Boolean(row.is_public),
     };
   }
 
@@ -270,3 +256,14 @@ export class MediaRepository extends BaseMediaRepository {
       .filter((n): n is string => !!n);
   }
 }
+
+type MediaSeoRow = {
+  title: string | null;
+  description: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
+  thumbnail: string | null;
+  username: string;
+  /** Same rule as the sitemap (`PUBLIC_MEDIA_PREDICATE`). */
+  is_public: boolean;
+};

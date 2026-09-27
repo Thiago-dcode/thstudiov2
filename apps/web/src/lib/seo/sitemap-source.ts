@@ -10,9 +10,9 @@ import { serverEnv } from "@/env/server";
 import { isIndexableEnv } from "@/lib/seo/indexability";
 
 /**
- * Child sitemaps are ISR-cached this long (seconds) instead of rebuilt per request. Kept short
- * (1h) because a shard body is prerendered at build time against the *currently deployed* API:
- * anything that changes between build and serve is stale until this elapses.
+ * How long (seconds) the sitemap API responses stay in Next's fetch cache. The sitemap, the index and
+ * robots.txt are all rendered per request (`force-dynamic`), so this cache is what keeps a crawler
+ * burst from turning into a burst of API queries.
  */
 export const SITEMAP_REVALIDATE = 3600;
 
@@ -25,8 +25,8 @@ const EMPTY_COUNTS: SitemapCounts = {
 };
 
 /**
- * Cap on each sitemap request. Static generation aborts a route after 60s, so an unreachable or
- * slow API must fail fast enough to fall back rather than burn the whole budget and fail the build.
+ * Cap on each sitemap request, so an unreachable or slow API degrades to an empty shard quickly
+ * instead of holding a crawler's connection open.
  */
 const SITEMAP_FETCH_TIMEOUT_MS = 10_000;
 

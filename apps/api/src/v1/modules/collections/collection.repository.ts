@@ -26,11 +26,20 @@ import type { MediaVisibility } from '@repo/common-lib/types/media';
 import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
 import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/language';
 import { SEO_REGENERATION_MIN_INTERVAL_DAYS } from '@repo/common-lib/constants/cache';
+import { artistShareReadySql } from '@repo/common-lib/utils/artist-share-ready';
+import { sitemapImagePathSql } from '@repo/common-lib/utils/sitemap-image-sql';
 import { DbException } from '@repo/database/exceptions';
 import { RequestService } from 'src/common/services/request.service';
 
 @Injectable()
 export class CollectionRepository extends BaseRepository {
+  /**
+   * The one definition of "this collection is public" (alias `c`): active, indexable, not blocked,
+   * owned by a share-ready artist. Shared by the sitemap, its count and the SEO metadata `noindex`.
+   */
+  static readonly PUBLIC_COLLECTION_PREDICATE = `c.blocked_at IS NULL AND c.is_active = true AND c.is_indexable = true
+    AND ${artistShareReadySql('c.user_id')}`;
+
   private readonly BASE_COLUMNS: CollectionSchemaColumns[] = [
     'collections.id',
     'collections.slug',
@@ -216,9 +225,9 @@ export class CollectionRepository extends BaseRepository {
     const result = await Query.raw(
       `SELECT c.slug, c.updated_at, u.username,
          COALESCE((
-           SELECT array_agg(x.thumbnail)
+           SELECT array_agg(x.image)
            FROM (
-             SELECT m.thumbnail
+             SELECT ${sitemapImagePathSql('m')} AS image
              FROM ${TABLES_ENUM.COLLECTION_MEDIA} cm
              JOIN ${TABLES_ENUM.MEDIA} m ON m.id = cm.media_id
              WHERE cm.collection_id = c.id
@@ -229,8 +238,8 @@ export class CollectionRepository extends BaseRepository {
          ), ARRAY[]::text[]) AS image_paths
        FROM ${TABLES_ENUM.COLLECTIONS} c
        INNER JOIN ${TABLES_ENUM.USERS} u ON u.id = c.user_id
-       WHERE c.blocked_at IS NULL AND c.is_active = true AND c.is_indexable = true
-       ORDER BY c.updated_at DESC
+       WHERE ${CollectionRepository.PUBLIC_COLLECTION_PREDICATE}
+       ORDER BY c.id ASC
        LIMIT $1 OFFSET $2`,
       [limit, offset, imageCap],
     );
@@ -248,8 +257,8 @@ export class CollectionRepository extends BaseRepository {
   /** Count for `getSitemapCollections` (same predicate). */
   async countSitemapCollections(): Promise<number> {
     const result = await Query.raw(
-      `SELECT COUNT(*)::int AS count FROM ${TABLES_ENUM.COLLECTIONS}
-       WHERE blocked_at IS NULL AND is_active = true AND is_indexable = true`,
+      `SELECT COUNT(*)::int AS count FROM ${TABLES_ENUM.COLLECTIONS} c
+       WHERE ${CollectionRepository.PUBLIC_COLLECTION_PREDICATE}`,
     );
     const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];
     return Number((Array.isArray(rows) ? rows : [])[0]?.count ?? 0);
@@ -273,10 +282,20 @@ export class CollectionRepository extends BaseRepository {
   async getSeoMetadataBySlug(
     slug: string,
     userId: number,
-  ): Promise<{ seo_title: string | null; seo_description: string | null; is_indexable: boolean } | null> {
+  ): Promise<CollectionSeoRow | null> {
     const lang = this.requestService.language ?? DEFAULT_LANGUAGE;
     const result = await Query.raw(
-      `SELECT c.is_indexable,
+      // `cover`: collections have no stored cover, so the first active media (pivot order) stands in
+      // as the share image — it used to be hard-coded null, so every collection shared the brand logo.
+      `SELECT c.title, c.description,
+              (${CollectionRepository.PUBLIC_COLLECTION_PREDICATE}) AS is_public,
+              (SELECT ${sitemapImagePathSql('m')}
+                 FROM ${TABLES_ENUM.COLLECTION_MEDIA} cm
+                 JOIN ${TABLES_ENUM.MEDIA} m ON m.id = cm.media_id
+                WHERE cm.collection_id = c.id AND m.thumbnail IS NOT NULL
+                  AND m.blocked_at IS NULL AND m.is_active = true
+                ORDER BY cm.position ASC
+                LIMIT 1) AS cover,
               COALESCE(ct.seo_title, c.seo_title) AS seo_title,
               COALESCE(ct.seo_description, c.seo_description) AS seo_description
        FROM ${TABLES_ENUM.COLLECTIONS} c
@@ -287,14 +306,15 @@ export class CollectionRepository extends BaseRepository {
       [lang, slug, userId],
     );
     const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];
-    const row = (Array.isArray(rows) ? rows : [])[0] as
-      | { seo_title: string | null; seo_description: string | null; is_indexable: boolean }
-      | undefined;
+    const row = (Array.isArray(rows) ? rows : [])[0] as CollectionSeoRow | undefined;
     if (!row) return null;
     return {
+      title: row.title,
+      description: row.description ?? null,
       seo_title: row.seo_title ?? null,
       seo_description: row.seo_description ?? null,
-      is_indexable: row.is_indexable,
+      cover: row.cover ?? null,
+      is_public: Boolean(row.is_public),
     };
   }
 
@@ -306,7 +326,9 @@ export class CollectionRepository extends BaseRepository {
   async getTagsByCollectionId(collectionId: number): Promise<string[]> {
     const lang = this.requestService.language ?? DEFAULT_LANGUAGE;
     const result = await Query.raw(
-      `SELECT DISTINCT COALESCE(ct.name, c.name) AS name
+      // Ranked by how many of the collection's works carry the tag: alphabetical order surfaced
+      // one-off tags ("Bird, Car, Countryside…" on a city set) ahead of what the set is about.
+      `SELECT COALESCE(ct.name, c.name) AS name
        FROM ${TABLES_ENUM.COLLECTION_MEDIA} cm
        INNER JOIN ${TABLES_ENUM.MEDIA_CATEGORIES} mc ON mc.media_id = cm.media_id
        INNER JOIN ${TABLES_ENUM.CATEGORIES} c
@@ -314,8 +336,9 @@ export class CollectionRepository extends BaseRepository {
        LEFT JOIN ${TABLES_ENUM.CATEGORY_TRANSLATIONS} ct
          ON ct.category_id = c.id AND ct.language_code = $1
        WHERE cm.collection_id = $2
-       ORDER BY name
-       LIMIT 15`,
+       GROUP BY c.id, COALESCE(ct.name, c.name)
+       ORDER BY COUNT(DISTINCT cm.media_id) DESC, name
+       LIMIT 8`,
       [lang, collectionId],
     );
     const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];
@@ -663,3 +686,13 @@ export class CollectionRepository extends BaseRepository {
     };
   }
 }
+
+type CollectionSeoRow = {
+  title: string;
+  description: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
+  /** Storage path of the share image (first active media), or null for an empty collection. */
+  cover: string | null;
+  is_public: boolean;
+};

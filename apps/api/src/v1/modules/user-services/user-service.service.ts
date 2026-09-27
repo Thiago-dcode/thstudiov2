@@ -50,11 +50,14 @@ export class UserServiceService {
         const meta = await this.serviceRepository.getSeoMetadataBySlug(slug, user.id);
         if (!meta) return null;
         return {
+          title: meta.title,
+          description: meta.description,
           seo_title: meta.seo_title,
           seo_description: meta.seo_description,
           thumbnail_path: meta.thumbnail,
-          canonical_path: `/artists/${username}/services/${slug}`,
-          noindex: !meta.is_indexable,
+          // The stored username, not the requested one: a case variant must not mint its own canonical.
+          canonical_path: `/artists/${user.username}/services/${slug}`,
+          noindex: !meta.is_public,
         };
       },
       { ttl: SEO_METADATA_CACHE_TTL, append_language: true },

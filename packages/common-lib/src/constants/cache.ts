@@ -21,10 +21,12 @@ export const CACHE_KEY_USER_CATEGORIES = (userId: number | string) => `user_cate
 export const CACHE_KEY_ACTIVE_CATEGORIES = 'active_categories' as const;
 
 /** Per-entity SEO metadata cache (language is appended per request via `append_language`). */
-export const CACHE_KEY_PORTFOLIO_SEO = (userId: number, slug: string) => `seo_portfolio_${userId}_${slug}` as const;
-export const CACHE_KEY_COLLECTION_SEO = (userId: number, slug: string) => `seo_collection_${userId}_${slug}` as const;
-export const CACHE_KEY_SERVICE_SEO = (userId: number, slug: string) => `seo_service_${userId}_${slug}` as const;
-export const CACHE_KEY_MEDIA_SEO = (publicId: string) => `seo_media_${publicId}` as const;
+// `v2`: the payload gained `title`/`description` and a share-ready-aware `noindex` (2026-09-27).
+// A versioned prefix retires every old-shape entry at once instead of serving it for the TTL.
+export const CACHE_KEY_PORTFOLIO_SEO = (userId: number, slug: string) => `seo_v2_portfolio_${userId}_${slug}` as const;
+export const CACHE_KEY_COLLECTION_SEO = (userId: number, slug: string) => `seo_v2_collection_${userId}_${slug}` as const;
+export const CACHE_KEY_SERVICE_SEO = (userId: number, slug: string) => `seo_v2_service_${userId}_${slug}` as const;
+export const CACHE_KEY_MEDIA_SEO = (publicId: string) => `seo_v2_media_${publicId}` as const;
 /** SEO metadata is served to crawlers and changes rarely — cache a full day. */
 export const SEO_METADATA_CACHE_TTL = 1000 * 60 * 60 * 24;
 /**

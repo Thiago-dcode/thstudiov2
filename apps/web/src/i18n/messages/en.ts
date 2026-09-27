@@ -1,5 +1,7 @@
 const messages = {
   seo: {
+    founderRole: "Founder — photographer, filmmaker and software engineer",
+    homePageName: "A11STUDIO — Discover and hire artists",
     organizationDescription:
       "A11STUDIO is the portfolio platform where artists get discovered — showcase your work and connect with clients, collectors and collaborators.",
     defaultTitle: "A11STUDIO — Where Artists Get Discovered",
@@ -8,11 +10,12 @@ const messages = {
   },
   landing: {
     metadata: {
-      title: "A11STUDIO — Where Artists Get Discovered",
+      title: "A11STUDIO — Discover & Hire Artists | Portfolios for Artists",
       description:
-        "The portfolio platform built for artists. Showcase your work, get discovered by clients and collectors, and let AI handle your SEO automatically.",
+        "Find and hire photographers, illustrators, filmmakers and designers — or build the professional portfolio that gets your work discovered. Built by an artist, for artists.",
     },
     hero: {
+      srTitle: "Let your art be discovered.",
       titlePrefix: "Let your",
       titleAccentWords: ["art", "vision", "craft", "passion", "voice"],
       titleConnector: "be",
@@ -311,7 +314,7 @@ const messages = {
   },
   about: {
     metadata: {
-      title: "About — A11STUDIO",
+      title: "About A11STUDIO — Built by an Artist, for Artists",
       description:
         "Learn about A11STUDIO — the portfolio platform that combines professional websites with the ease of social media, built by an artist for artists.",
     },
@@ -506,6 +509,20 @@ const messages = {
         "Artist search is unavailable while registration is closed. Join the waitlist to get early access.",
     },
     page: {
+      titleArtists:
+        "Discover Artists — Photographers, Illustrators & More | A11STUDIO",
+      descriptionArtists:
+        "Find and contact photographers, illustrators, filmmakers, designers and other artists. Browse by discipline, style and location on A11STUDIO.",
+      titlePortfolios:
+        "Artist Portfolios — Photography, Illustration, Film & Design | A11STUDIO",
+      descriptionPortfolios:
+        "Browse curated portfolios from photographers, illustrators, filmmakers and designers on A11STUDIO, and find the artist whose work fits your project.",
+      headingArtists: "Discover artists",
+      headingPortfolios: "Explore portfolios",
+      introArtists:
+        "Photographers, illustrators, filmmakers, designers and more — browse by discipline, style and location, and contact the artist directly.",
+      introPortfolios:
+        "Curated bodies of work from artists on A11STUDIO — each portfolio gathers an artist's best work in one discipline or style.",
       description:
         "Browse artists on A11STUDIO. Discover portfolios, services, and creative professionals.",
       title: "Artists — A11STUDIO",
@@ -1361,6 +1378,8 @@ const messages = {
       backHome: "Back to home",
     },
     resourceNotFound: {
+      generic:
+        "The page you're looking for doesn't exist or may have been removed.",
       heading: "Resource not found",
       backToProfile: "Back to profile",
       portfolio:
@@ -1373,6 +1392,11 @@ const messages = {
         "The media you're looking for doesn't exist or may have been removed.",
     },
     profile: {
+      metaTitleLocation: "{name} — {profession} in {location}",
+      bannerAlt: "Banner of {name}",
+      avatarAlt: "Portrait of {name}",
+      bannerRegion: "Profile banner",
+      bioRegion: "About",
       getInTouch: "Get in touch",
       aboutHeading: "About {name}",
       connect: "Connect",
@@ -1399,6 +1423,10 @@ const messages = {
       editAboutPage: "Edit about page",
     },
     portfolios: {
+      metaDescriptionDetailed:
+        "Portfolios by {name}, {profession} in {location} — curated bodies of their best work on A11STUDIO.",
+      listTitle: "Portfolios by {name}",
+      fromCollection: "{title} (Collection: {collection})",
       pageTitle: "Portfolios",
       metaDescription:
         "Browse {name}'s portfolios on A11STUDIO — curated collections of their best work.",
@@ -1406,6 +1434,9 @@ const messages = {
       galleryEmpty: "This portfolio is currently empty.",
     },
     collections: {
+      metaDescriptionDetailed:
+        "Collections by {name}, {profession} in {location} — projects, trips and series on A11STUDIO.",
+      listTitle: "Collections by {name}",
       pageTitle: "Collections",
       metaDescription:
         "Browse {name}'s collections on A11STUDIO — curated sets of their work.",
@@ -1413,6 +1444,9 @@ const messages = {
       galleryEmpty: "This collection is currently empty.",
     },
     services: {
+      metaDescriptionDetailed:
+        "Services offered by {name}, {profession} in {location}. See what's included and get in touch on A11STUDIO.",
+      listTitle: "Services by {name}",
       pageTitle: "Services",
       metaDescription:
         "Explore the services offered by {name} on A11STUDIO and get in touch to collaborate.",
@@ -1422,6 +1456,9 @@ const messages = {
       relatedPortfolio: "Related portfolio",
     },
     about: {
+      metaTitleNamed: "{title} — {name}",
+      metaTitleDefault: "About {name}",
+      photoAlt: "Portrait of {name}",
       pageTitle: "About",
       metaDescription:
         "Learn more about {name} on A11STUDIO — their story, background and how to get in touch.",
@@ -1430,6 +1467,7 @@ const messages = {
       getInTouch: "Get in touch",
     },
     media: {
+      titleFallback: "Artwork by {name}",
       untitled: "Untitled",
       editAria: "Edit media",
       // Last-resort alt text. The AI pipeline's sanitizeSeoText can null `seo_alt`, and media may

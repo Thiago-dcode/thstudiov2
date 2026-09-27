@@ -20,14 +20,6 @@ export const config = {
 export const ORGANIZATION_SAME_AS: string[] = Object.values(SOCIAL);
 
 /**
- * Fallback Open Graph / Twitter image for pages that would otherwise have none — the imageless
- * marketing/utility pages (landing, about, faqs, legal, support, search) and artists with no
- * banner/avatar. Root-relative on purpose: Next resolves it to an absolute URL via the root
- * layout's `metadataBase`, so share previews are never blank.
- */
-export const DEFAULT_OG_IMAGE = "/logo/logo_bg_white.png";
-
-/**
  * How long (seconds) the public landing page data stays cached: hero asset, value-pillar media,
  * featured portfolio, featured artists.
  *

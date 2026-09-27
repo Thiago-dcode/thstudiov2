@@ -11,16 +11,21 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { ArtistBreadcrumb } from "@/app/[locale]/(artists)/__components/artist-breadcrumb";
-import { ResourceNotFound } from "@/app/[locale]/(artists)/__components/resource-not-found";
 import { Link } from "@/i18n/navigation";
 import { localePrefix, urlLocaleToLanguageCode } from "@/i18n/routing";
 import Web from "@/lib/components/web-page.component";
 import { config } from "@/lib/config";
 import { getGalleryLabels } from "@/lib/gallery-labels";
 import { buildSeoMetadata } from "@/lib/seo/build-metadata";
-import { buildPortfolioJsonLd, JsonLd } from "@/lib/seo/json-ld";
+import { isMissingResponse } from "@/lib/seo/core";
+import {
+  artistDisplayName,
+  buildPortfolioJsonLd,
+  JsonLd,
+} from "@/lib/seo/json-ld";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import userPortfolioService from "@/modules/user-portfolios/user-portfolio.service";
+import { getArtistProfile } from "@/modules/users/get-artist-share-ready";
 import usersService from "@/modules/users/users.service";
 
 type Props = {
@@ -34,29 +39,30 @@ export async function generateMetadata({
   params: Promise<{ locale: string; username: string; slug: string }>;
 }): Promise<Metadata> {
   const { locale, username, slug } = await params;
-  const { data } = await userPortfolioService.getSeoMetadata(
+  const response = await userPortfolioService.getSeoMetadata(
     username,
     slug,
     urlLocaleToLanguageCode(locale),
   );
+  // Resolved before the first byte, so a missing or blocked portfolio is a real 404 — the page's own
+  // "not found" view used to answer with a 200.
+  if (isMissingResponse(response)) notFound();
+  const { data } = response;
+  if (!data) return { robots: { index: false, follow: false } };
 
-  if (!data) {
-    return { robots: { index: false, follow: false } };
-  }
-
-  return buildSeoMetadata(data, locale, { title: data.seo_title || username });
+  return buildSeoMetadata(data, locale, { title: slug });
 }
 
 export default async function Page({ params, searchParams }: Props) {
   const { locale, username, slug } = await params;
   const t = await getTranslations("artists.portfolios");
-  const tNotFound = await getTranslations("artists.resourceNotFound");
   const tEdit = await getTranslations("artists.editAria");
 
-  const [userExist, response, userAuth] = await Promise.all([
+  const [userExist, response, userAuth, profile] = await Promise.all([
     usersService.usernameExists(username),
     userPortfolioService.getByUsername(username, slug),
     userSession(),
+    getArtistProfile(username),
   ]);
   if (!userExist.data) {
     notFound();
@@ -64,19 +70,21 @@ export default async function Page({ params, searchParams }: Props) {
 
   const portfolio = response.data;
   if (!portfolio || portfolio.blocked_at) {
-    return (
-      <Web.Container>
-        <ResourceNotFound
-          username={username}
-          message={tNotFound("portfolio")}
-        />
-      </Web.Container>
-    );
+    notFound();
+  }
+
+  const canEdit = userAuth?.id === portfolio.user_id;
+  // A deactivated portfolio is hidden from visitors; its owner can still preview it.
+  if (!portfolio.is_active && !canEdit) {
+    notFound();
   }
 
   const portfolioItems = buildPortfolioItemsFromFullPortfolio(portfolio);
   const mediaItems = extractMediaFromPortfolioItems(portfolioItems);
-  const canEdit = userAuth?.id === portfolio.user_id;
+  const artist = {
+    username,
+    name: profile ? artistDisplayName(profile) : `@${username}`,
+  };
   const qp = await searchParams;
 
   let defaultCurrentItem: number | undefined;
@@ -90,7 +98,9 @@ export default async function Page({ params, searchParams }: Props) {
 
   return (
     <Web.Container>
-      <JsonLd data={buildPortfolioJsonLd(portfolio, username)} />
+      <JsonLd
+        data={buildPortfolioJsonLd(portfolio, artist, locale, t("pageTitle"))}
+      />
       <ArtistBreadcrumb
         username={username}
         items={[
@@ -142,7 +152,12 @@ export default async function Page({ params, searchParams }: Props) {
             labels={await getGalleryLabels()}
             defaultCurrentItem={defaultCurrentItem}
             items={mediaItems.map((m) => ({
-              title: `${m.title ?? ""} ${m.fromCollection ? ` (Collection: ${m.fromCollection})` : ""}`,
+              title: m.fromCollection
+                ? t("fromCollection", {
+                    title: m.title ?? "",
+                    collection: m.fromCollection,
+                  })
+                : (m.title ?? ""),
               description: m.seo_description ?? undefined,
               url: m.url ?? m.thumbnail,
               alt: m.seo_alt ?? m.title ?? undefined,
