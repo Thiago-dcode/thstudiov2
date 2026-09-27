@@ -18,6 +18,7 @@ import {
   PortfolioIndexRequest,
 } from '@repo/common-lib/types/portfolio';
 import { EntitySeoFields, SeoTranslation } from '@repo/common-lib/types/ai';
+import type { MediaVisibility } from '@repo/common-lib/types/media';
 import { CompactUser } from '@repo/common-lib/types/user';
 import { DbException } from '@repo/database/exceptions';
 import { RequestService } from 'src/common/services/request.service';
@@ -135,8 +136,12 @@ export class PortfolioRepository extends BaseRepository {
     return results.map((result) => this.formatPortfolio(result));
   }
 
-  async getBySlug(slug: string, userId: number): Promise<FullPortfolio | null> {
-    const result = await this.applyFullPortfolioQuery(this.query())
+  async getBySlug(
+    slug: string,
+    userId: number,
+    visibility: MediaVisibility = {},
+  ): Promise<FullPortfolio | null> {
+    const result = await this.applyFullPortfolioQuery(this.query(), visibility)
       .where('portfolios.slug', '=', slug)
       .where('portfolios.user_id', '=', userId)
       .orderBy('portfolio_media.position', 'ASC')
@@ -345,8 +350,16 @@ export class PortfolioRepository extends BaseRepository {
     return this.formatFullPortfolio(rows);
   }
 
-  private applyFullPortfolioQuery(query: QueryBuilder): QueryBuilder {
+  /**
+   * `includeInactive` is only for the owner's editor: a save replaces the whole media list, so an
+   * editor loaded without the owner's switched-off media would drop them on the next save.
+   */
+  private applyFullPortfolioQuery(
+    query: QueryBuilder,
+    { includeInactive = false }: MediaVisibility = {},
+  ): QueryBuilder {
     const lang = this.requestService.language ?? DEFAULT_LANGUAGE;
+    if (!includeInactive) query.where('media.is_active', '=', true);
     return query
       .rawSelect(
         [

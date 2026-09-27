@@ -22,6 +22,7 @@ import {
   FullPortfolioCollection,
 } from '@repo/common-lib/types/collection';
 import { EntitySeoFields, SeoTranslation } from '@repo/common-lib/types/ai';
+import type { MediaVisibility } from '@repo/common-lib/types/media';
 import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
 import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/language';
 import { SEO_REGENERATION_MIN_INTERVAL_DAYS } from '@repo/common-lib/constants/cache';
@@ -104,13 +105,12 @@ export class CollectionRepository extends BaseRepository {
 
     const ids = baseResults.map((r) => r.id);
 
-    const result = await this.query()
+    const query = this.query()
       .select(this.COLUMNS)
       .whereIn('collections.id', ids)
       .join('id', 'collection_media', 'collection_id', 'LEFT')
-      .join('collection_media.media_id', 'media', 'id', 'LEFT')
-      .where('media.thumbnail', 'IS NOT', null)
-      .where('media.blocked_at', null)
+      .join('collection_media.media_id', 'media', 'id', 'LEFT');
+    const result = await this.whereMediaVisible(query)
       .orderBy('created_at', 'DESC')
       .orderBy('collection_media.position', 'ASC')
       .get<CollectionCompactSchema[]>();
@@ -118,15 +118,18 @@ export class CollectionRepository extends BaseRepository {
     return this.formatCollections(result);
   }
 
-  async getBySlug(slug: string, userId: number): Promise<FullCollection> {
-    const result = await this.query()
+  async getBySlug(
+    slug: string,
+    userId: number,
+    visibility: MediaVisibility = {},
+  ): Promise<FullCollection> {
+    const query = this.query()
       .select(this.FULL_COLUMNS)
       .where('slug', '=', slug)
       .where('user_id', '=', userId)
       .join('id', 'collection_media', 'collection_id', 'LEFT')
-      .join('collection_media.media_id', 'media', 'id', 'LEFT')
-      .where('media.thumbnail', 'IS NOT', null)
-      .where('media.blocked_at', 'IS', null)
+      .join('collection_media.media_id', 'media', 'id', 'LEFT');
+    const result = await this.whereMediaVisible(query, visibility)
       .orderBy('collection_media.position', 'ASC')
       .get<CollectionFullSchema[]>();
 
@@ -135,13 +138,13 @@ export class CollectionRepository extends BaseRepository {
   }
 
   async getFullById(id: number): Promise<FullCollection | null> {
-    const result = await this.query()
+    const query = this.query()
       .select(this.FULL_COLUMNS)
       .where('collections.id', '=', id)
       .join('id', 'collection_media', 'collection_id', 'LEFT')
-      .join('collection_media.media_id', 'media', 'id', 'LEFT')
-      .where('media.thumbnail', 'IS NOT', null)
-      .where('media.blocked_at', 'IS', null)
+      .join('collection_media.media_id', 'media', 'id', 'LEFT');
+    // Only feeds the SEO writer, whose copy should describe what the public actually sees.
+    const result = await this.whereMediaVisible(query)
       .orderBy('collection_media.position', 'ASC')
       .get<CollectionFullSchema[]>();
 
@@ -407,6 +410,23 @@ export class CollectionRepository extends BaseRepository {
     return this.formatBaseCollection(result);
   }
 
+  /**
+   * The media a collection shows: processed, not blocked by moderation, and not switched off by
+   * its owner. Every media join goes through here so a new read can't forget the `is_active` half.
+   *
+   * `includeInactive` is only for the owner's editor: a save replaces the whole media list
+   * (`attachMedia` removes what it isn't given), so an editor loaded without inactive media would
+   * silently drop them from the collection on the next save.
+   */
+  private whereMediaVisible(
+    query: QueryBuilder,
+    { includeInactive = false }: MediaVisibility = {},
+  ): QueryBuilder {
+    query.where('media.thumbnail', 'IS NOT', null).where('media.blocked_at', 'IS', null);
+    if (!includeInactive) query.where('media.is_active', '=', true);
+    return query;
+  }
+
   private async attachMedia(collectionId: number, media: { id: number; position: number }[]) {
     await this.attach('collection_media', {
       modelCol: 'collection_id',
@@ -453,14 +473,13 @@ export class CollectionRepository extends BaseRepository {
       'portfolio_collection.position as pc_position',
     ];
 
-    const rows = await this.query()
+    const query = this.query()
       .select([...this.FULL_COLUMNS, ...PORTFOLIO_COLS])
       .join('id', 'portfolio_collection', 'collection_id', 'LEFT')
       .join('id', 'collection_media', 'collection_id', 'LEFT')
       .join('collection_media.media_id', 'media', 'id', 'LEFT')
-      .where('portfolio_collection.portfolio_id', portfolioId)
-      .where('media.thumbnail', 'IS NOT', null)
-      .where('media.blocked_at', 'IS', null)
+      .where('portfolio_collection.portfolio_id', portfolioId);
+    const rows = await this.whereMediaVisible(query)
       .orderBy('portfolio_collection.position', 'ASC')
       .orderBy('collection_media.position', 'ASC')
       .get<FullPortfolioCollectionSchema[]>();
@@ -525,9 +544,8 @@ export class CollectionRepository extends BaseRepository {
   ): Promise<QueryBuilder> {
     query.select(this.COLUMNS)
       .join('id', 'collection_media', 'collection_id', 'LEFT')
-      .join('collection_media.media_id', 'media', 'id', 'LEFT')
-      .where('media.thumbnail', 'IS NOT', null)
-      .where('media.blocked_at', 'IS', null)
+      .join('collection_media.media_id', 'media', 'id', 'LEFT');
+    this.whereMediaVisible(query);
 
     this.applyWhereFilters(query, filters);
 

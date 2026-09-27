@@ -1982,6 +1982,13 @@ const messages = {
         filenameInfo:
           "Nombre de archivo SEO definido automáticamente al subir o al generar metadatos con IA. No se puede editar.",
         lastUpdated: "Última actualización",
+        metadataGeneratedLabel: "Metadatos generados",
+        activeLabel: "Activo",
+        activeInfo:
+          "El contenido activo aparece en su página pública y en todos los portafolios y colecciones donde está. Desactívalo para ocultarlo en todas partes sin eliminarlo; puedes volver a activarlo cuando quieras.",
+        visibilityLabel: "Visibilidad",
+        visibilityActive: "Activo",
+        visibilityInactive: "Oculto",
         typeLabel: "Tipo",
         compressionLabel: "Compresión",
         sizeLabel: "Tamaño",
@@ -2074,6 +2081,22 @@ const messages = {
           seo_generated_at_desc: "Metadatos generados: más recientes",
           seo_generated_at_asc: "Metadatos generados: más antiguos",
         },
+      },
+      status: {
+        seoComplete: "SEO completo",
+        seoCompleteBody:
+          "El título SEO, la descripción y el texto alternativo están definidos.",
+        seoIncomplete: "SEO incompleto",
+        seoIncompleteBody: "Falta: {fields}. Genéralos con IA o añádelos tú.",
+        locationSet: "Ubicación definida",
+        locationMissing: "Sin ubicación",
+        locationMissingBody:
+          "Indicar dónde se hizo la obra ayuda a que la encuentren.",
+        active: "Activo",
+        activeBody:
+          "Visible en su página pública y en todos los lugares donde lo colocaste.",
+        inactive: "Oculto",
+        inactiveBody: "Oculto de su página pública, portafolios y colecciones.",
       },
       mediaType: {
         IMAGE: "Foto",

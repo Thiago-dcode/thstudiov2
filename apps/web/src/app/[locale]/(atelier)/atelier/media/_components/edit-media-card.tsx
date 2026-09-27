@@ -7,6 +7,7 @@ import { MediaHelper } from "@repo/common-lib/utils/media";
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
 import { MediaTypeBadge } from "@repo/ui/components/custom/media-type-badge";
 import { Button } from "@repo/ui/components/shadcn/button";
+import { Checkbox } from "@repo/ui/components/shadcn/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -58,6 +59,7 @@ import {
 import { FailedMediaOverlay } from "@/modules/media/components/failed-media-overlay";
 import { useMedia } from "@/modules/media/providers/media.provider";
 import { useUserMetrics } from "@/modules/users/providers/user-metrics.provider";
+import { MediaStatusIcons } from "./media-status-icons";
 import { MediaDrawerFooter, MediaTab, type MediaTabs } from "./media-tab";
 
 type MediaCardProps = {
@@ -83,6 +85,7 @@ function draftFromMedia(media: Media): UpdateMediaInput & { user_id: number } {
     seo_title: media.seo_title ?? "",
     seo_description: media.seo_description ?? "",
     seo_alt: media.seo_alt ?? "",
+    is_active: media.is_active,
   };
 }
 
@@ -97,6 +100,9 @@ function draftDiffersFromSaved(draft: UpdateMediaInput, saved: Media): boolean {
     "location" in draft &&
     (draft.location?.formatted ?? null) !== (saved.location?.formatted ?? null)
   ) {
+    return true;
+  }
+  if ("is_active" in draft && draft.is_active !== saved.is_active) {
     return true;
   }
   return EDITABLE_TEXT_FIELDS.some(
@@ -216,6 +222,16 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
     }
   }, [savedMedia.updated_at, savedMedia.created_at]);
 
+  // Stamped by the AI metadata job; null until it has run once.
+  const formattedMetadataDate = useMemo(() => {
+    if (!savedMedia.seo_generated_at) return null;
+    try {
+      return format(new Date(savedMedia.seo_generated_at), "MMM d, yyyy");
+    } catch {
+      return null;
+    }
+  }, [savedMedia.seo_generated_at]);
+
   const mediaPublicPath = savedMedia.public_id
     ? `/artists/${username}/media/${savedMedia.public_id}`
     : null;
@@ -303,6 +319,11 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
       ? (draft.location ?? null)
       : (savedMedia.location ?? null);
 
+  const stagedIsActive =
+    draft && "is_active" in draft
+      ? draft.is_active !== false
+      : savedMedia.is_active;
+
   const handleLocationChange = (location: LocationInput | null) => {
     patchDraft({ location });
   };
@@ -368,6 +389,27 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
               <span className="block text-xs text-text-muted">
                 {t("locationInfo")}
               </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="media-is-active"
+                checked={stagedIsActive}
+                onCheckedChange={(checked) =>
+                  patchDraft({ is_active: checked === true })
+                }
+                disabled={isPending}
+              />
+              <Label
+                htmlFor="media-is-active"
+                className="cursor-pointer text-sm font-medium text-text"
+              >
+                {t("activeLabel")}
+              </Label>
+              <InfoTooltip
+                content={<p className="text-sm">{t("activeInfo")}</p>}
+                openDelay={200}
+                iconClassName="w-3.5 h-3.5"
+              />
             </div>
           </>
         );
@@ -479,6 +521,18 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
               {formattedDate && (
                 <DetailField label={t("lastUpdated")}>
                   <p className="text-sm text-text">{formattedDate}</p>
+                </DetailField>
+              )}
+              <DetailField label={t("visibilityLabel")}>
+                <p className="text-sm text-text">
+                  {savedMedia.is_active
+                    ? t("visibilityActive")
+                    : t("visibilityInactive")}
+                </p>
+              </DetailField>
+              {formattedMetadataDate && (
+                <DetailField label={t("metadataGeneratedLabel")}>
+                  <p className="text-sm text-text">{formattedMetadataDate}</p>
                 </DetailField>
               )}
             </div>
@@ -684,6 +738,9 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
             ) : null}
           </div>
         </div>
+        {/* A sibling of the tile, like the pen: nested, a tap meant for an icon's popup would
+            also open the preview. */}
+        <MediaStatusIcons media={savedMedia} className="-mt-1 px-1 pb-1.5" />
         {/* Sibling of the tile, not a child: nested, one click would fire both the preview and
             the drawer. `top-4 right-4` keeps it inset from the image (tile `p-2`). */}
         {!isPending && (

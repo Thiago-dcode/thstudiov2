@@ -21,8 +21,8 @@ export default async function CollectionEdit({ params }: Props) {
   }
 
   const { slug } = await params;
-  const collectionResponse = await userCollectionService.getByUsername(
-    userAuth.username,
+  const collectionResponse = await userCollectionService.getForOwner(
+    userAuth.id,
     slug,
   );
 

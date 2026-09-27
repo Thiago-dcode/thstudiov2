@@ -11,12 +11,20 @@ type InfoTooltipProps = {
  content: ReactNode
  iconClassName?: string
  openDelay?: number
+ /** Replaces the default info icon, e.g. a status glyph that explains itself on hover/tap. */
+ icon?: ReactNode
+ /** Accessible name of the trigger; defaults to "More information". */
+ label?: string
+ triggerClassName?: string
 }
 
 export const InfoTooltip = ({
  content,
  iconClassName,
  openDelay = 200,
+ icon,
+ label = "More information",
+ triggerClassName,
 }: InfoTooltipProps) => {
  const [open, setOpen] = useState(false)
  const [hoverCapable, setHoverCapable] = useState(false)
@@ -78,18 +86,19 @@ export const InfoTooltip = ({
  <PopoverTrigger asChild>
  <button
  type="button"
- aria-label="More information"
+ aria-label={label}
  aria-expanded={open}
  className={cn(
  "inline-flex shrink-0 items-center justify-center",
  "size-8 -m-1.5 text-text-muted",
  "cursor-help hover:text-text",
  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-em",
+ triggerClassName,
  )}
  onMouseEnter={scheduleOpen}
  onMouseLeave={scheduleClose}
  >
- <Info className={cn("size-5", iconClassName)} aria-hidden />
+ {icon ?? <Info className={cn("size-5", iconClassName)} aria-hidden />}
  </button>
  </PopoverTrigger>
  <PopoverContent

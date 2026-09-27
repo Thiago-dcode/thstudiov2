@@ -21,8 +21,8 @@ export default async function PortfolioDetail({ params }: Props) {
   }
 
   const { slug } = await params;
-  const portfolioResponse = await userPortfolioService.getByUsername(
-    userAuth.username,
+  const portfolioResponse = await userPortfolioService.getForOwner(
+    userAuth.id,
     slug,
   );
 

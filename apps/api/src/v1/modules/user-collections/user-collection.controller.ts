@@ -8,6 +8,7 @@ import {
 import { Throttle } from '@nestjs/throttler';
 import { PUBLIC_READ_THROTTLE } from 'src/common/utils/constants';
 import { Public } from 'src/common/decorators/public.decorator';
+import { IsUserAuthPipe } from 'src/pipes/is-user-auth.pipe';
 import { UserCollectionService } from './user-collection.service';
 import { IndexCollectionRequest } from '../collections/requests/index-collection.request';
 
@@ -27,6 +28,18 @@ export class UserCollectionController {
     @Param('slug') slug: string,
   ) {
     return await this.userCollectionService.getById(userId, slug);
+  }
+
+  /**
+   * The atelier editor's read. Not public: unlike the artist page it includes media the owner
+   * switched off, and a save replaces the whole media list — so the editor must see all of it.
+   */
+  @Get(':user_id/collections/:slug/edit')
+  async getForOwner(
+    @Param('user_id', ParseIntPipe, IsUserAuthPipe) userId: number,
+    @Param('slug') slug: string,
+  ) {
+    return await this.userCollectionService.getForOwner(userId, slug);
   }
 
   @Public()

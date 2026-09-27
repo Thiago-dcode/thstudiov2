@@ -111,7 +111,10 @@ export type CreateMediaInput = Omit<
   Partial<Pick<MediaSchema, 'status' | 'completed_at' | 'failed_reason'>>;
 
 // What users can update
-export type UpdateMediaInput = Partial<Omit<MediaSchema, InternalMediaFields>> & MediaLocationPayload;
+/** `is_active` is the owner's own visibility switch; `blocked_at` stays with moderation. */
+export type UpdateMediaInput = Partial<Omit<MediaSchema, InternalMediaFields>> &
+  Partial<Pick<MediaSchema, 'is_active'>> &
+  MediaLocationPayload;
 
 /** Body of `PATCH /media/locations`: one picked place applied to many media. */
 export type UpdateMediaLocationsInput = {
@@ -125,6 +128,7 @@ export type UpdateMediaInternalInput = Partial<Omit<MediaSchema, InternalMediaFi
   Partial<Pick<
     MediaSchema,
     | 'location_id'
+    | 'is_active'
     | 'seo_filename'
     | 'seo_generated_at'
     | 'url'
@@ -165,3 +169,10 @@ export type MediaJobDto = {
   media: Media,
   generate_metadata?: boolean
 }
+
+
+/**
+ * How a read treats the owner's `is_active` switch. Public reads leave inactive media out; only the
+ * owner's editor asks for them, so saving a portfolio/collection can't drop media it never loaded.
+ */
+export type MediaVisibility = { includeInactive?: boolean };

@@ -2,8 +2,10 @@ import {
   Controller,
   Get,
   Param,
+  ParseIntPipe,
   Query,
 } from '@nestjs/common';
+import { IsUserAuthPipe } from 'src/pipes/is-user-auth.pipe';
 import { Throttle } from '@nestjs/throttler';
 import { PUBLIC_READ_THROTTLE } from 'src/common/utils/constants';
 import { Public } from 'src/common/decorators/public.decorator';
@@ -27,6 +29,18 @@ export class UserPortfolioController {
   // ) {
   //   return await this.userPortfolioService.getById(userId, slug);
   // }
+
+  /**
+   * The atelier editor's read. Not public: unlike the artist page it includes media the owner
+   * switched off, and a save replaces the whole media list — so the editor must see all of it.
+   */
+  @Get(':user_id/portfolios/:slug/edit')
+  async getForOwner(
+    @Param('user_id', ParseIntPipe, IsUserAuthPipe) userId: number,
+    @Param('slug') slug: string,
+  ) {
+    return await this.userPortfolioService.getForOwner(userId, slug);
+  }
 
   @Public()
   @Get(':username/portfolios/:slug/metadata')

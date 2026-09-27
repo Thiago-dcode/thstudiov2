@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { Helpers } from "src/common/services/helpers.service";
 import { FullCollection, Collection, CollectionIndexRequest } from "@repo/common-lib/types/collection";
 import { EntitySeoMetadata } from "@repo/common-lib/types/ai";
+import type { MediaVisibility } from "@repo/common-lib/types/media";
 import {
   CACHE_KEY_COLLECTION_SEO,
   SEO_METADATA_CACHE_TTL,
@@ -17,8 +18,17 @@ export class UserCollectionService {
     private readonly helpers: Helpers,
   ) { }
 
-  async getById(userId: number, slug: string): Promise<FullCollection> {
-    const collection = await this.collectionRepository.getBySlug(slug, userId);
+  /** The owner's editor: includes media they switched off, so a save keeps them in the collection. */
+  async getForOwner(userId: number, slug: string): Promise<FullCollection> {
+    return this.getById(userId, slug, { includeInactive: true });
+  }
+
+  async getById(
+    userId: number,
+    slug: string,
+    visibility: MediaVisibility = {},
+  ): Promise<FullCollection> {
+    const collection = await this.collectionRepository.getBySlug(slug, userId, visibility);
     if (!collection) return null;
 
     const [media, tags] = await Promise.all([

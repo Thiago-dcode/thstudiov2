@@ -1969,6 +1969,13 @@ const messages = {
         filenameInfo:
           "SEO filename set automatically from the upload or when AI generates metadata. Not editable.",
         lastUpdated: "Last Updated",
+        metadataGeneratedLabel: "Metadata Generated",
+        activeLabel: "Active",
+        activeInfo:
+          "Active media shows on its public page and in every portfolio and collection it belongs to. Turn it off to hide it everywhere without deleting it — you can turn it back on at any time.",
+        visibilityLabel: "Visibility",
+        visibilityActive: "Active",
+        visibilityInactive: "Hidden",
         typeLabel: "Type",
         compressionLabel: "Compression",
         sizeLabel: "Size",
@@ -2057,6 +2064,23 @@ const messages = {
           seo_generated_at_desc: "Metadata generated: newest",
           seo_generated_at_asc: "Metadata generated: oldest",
         },
+      },
+      status: {
+        seoComplete: "SEO complete",
+        seoCompleteBody: "SEO title, description and alt text are all set.",
+        seoIncomplete: "SEO incomplete",
+        seoIncompleteBody:
+          "Missing {fields}. Generate them with AI or add them yourself.",
+        locationSet: "Location set",
+        locationMissing: "No location",
+        locationMissingBody:
+          "Adding where the work was made helps people find it.",
+        active: "Active",
+        activeBody:
+          "Visible on its public page and everywhere you've placed it.",
+        inactive: "Hidden",
+        inactiveBody:
+          "Hidden from its public page, portfolios and collections.",
       },
       /** Shared by the card badge and the type filter so both read the same. */
       mediaType: {

@@ -23,6 +23,20 @@ class UserCollectionService extends BaseService {
     });
   }
 
+  /**
+   * The owner's editor read: unlike the artist page it includes media the owner switched off.
+   * Saving replaces the collection's whole media list, so the editor must load all of it.
+   */
+  async getForOwner(
+    userId: number,
+    slug: string,
+  ): Promise<ApiResponse<FullCollection | null>> {
+    return await this.fetchApi.get({
+      resource: `/${userId}/collections/${slug}/edit`,
+      cacheOptions: { cache: "no-cache" },
+    });
+  }
+
   async getByUsername(
     username: string,
     slug: string,

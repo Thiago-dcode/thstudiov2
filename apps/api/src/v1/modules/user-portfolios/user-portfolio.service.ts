@@ -4,6 +4,7 @@ import { Helpers } from "src/common/services/helpers.service";
 
 import { FullPortfolio, Portfolio, PortfolioIndexRequest } from "@repo/common-lib/types/portfolio";
 import { EntitySeoMetadata } from "@repo/common-lib/types/ai";
+import type { MediaVisibility } from "@repo/common-lib/types/media";
 import {
   CACHE_KEY_PORTFOLIO_SEO,
   SEO_METADATA_CACHE_TTL,
@@ -44,7 +45,20 @@ export class UserPortfolioService {
   async getByUsername(username: string, slug: string): Promise<FullPortfolio> {
     const user = await this.userRepository.findByUsernameCompact(username);
     if (!user) return null;
-    const portfolio = await this.portfolioRepository.getBySlug(slug, user.id);
+    return this.getFull(user.id, slug);
+  }
+
+  /** The owner's editor: includes media they switched off, so a save keeps them in the portfolio. */
+  async getForOwner(userId: number, slug: string): Promise<FullPortfolio> {
+    return this.getFull(userId, slug, { includeInactive: true });
+  }
+
+  private async getFull(
+    userId: number,
+    slug: string,
+    visibility: MediaVisibility = {},
+  ): Promise<FullPortfolio> {
+    const portfolio = await this.portfolioRepository.getBySlug(slug, userId, visibility);
     if (!portfolio) return null;
 
     if (portfolio.thumbnail) {

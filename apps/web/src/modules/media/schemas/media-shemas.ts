@@ -74,6 +74,8 @@ export const updateMediaSchema = (t: Translator) =>
         .max(SEO_MAX, tooLongMessage(t, t("fields.seoDescription")))
         .nullable()
         .optional(),
+      // Declared so zod keeps it; `false` is the value that matters here (hide everywhere).
+      is_active: z.boolean().optional(),
     })
     .partial();
 

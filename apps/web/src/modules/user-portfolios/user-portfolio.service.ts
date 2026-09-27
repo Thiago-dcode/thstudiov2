@@ -23,6 +23,20 @@ class UserPortfolioService extends BaseService {
     });
   }
 
+  /**
+   * The owner's editor read: unlike the artist page it includes media the owner switched off.
+   * Saving replaces the portfolio's whole media list, so the editor must load all of it.
+   */
+  async getForOwner(
+    userId: number,
+    slug: string,
+  ): Promise<ApiResponse<FullPortfolio | null>> {
+    return await this.fetchApi.get({
+      resource: `/${userId}/portfolios/${slug}/edit`,
+      cacheOptions: { cache: "no-cache" },
+    });
+  }
+
   /** Lean, locale-resolved SEO for generateMetadata. `lang` (EN/ES/PT) forces the API locale. */
   async getSeoMetadata(
     username: string,

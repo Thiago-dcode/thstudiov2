@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer';
-import { IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsBoolean, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { LocationInputRequest } from '../../locations/requests/location-input.request';
 
 export class UpdateMediaRequest {
@@ -28,4 +28,12 @@ export class UpdateMediaRequest {
   @IsString()
   @IsOptional()
   seo_description?: string;
+
+  /**
+   * The owner's visibility switch: an inactive media is left out of every public read (its own
+   * page, portfolios, collections). Moderation uses `blocked_at`, which the owner cannot touch.
+   */
+  @IsBoolean()
+  @IsOptional()
+  is_active?: boolean;
 }

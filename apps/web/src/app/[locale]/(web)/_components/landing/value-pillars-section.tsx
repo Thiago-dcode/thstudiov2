@@ -12,7 +12,7 @@ export async function ValuePillarsSection() {
   const items = t.raw("items") as { title: string; description: string }[];
 
   const valuePillarsMedia = await mediaService.findAllWithUser(
-    { is_value_pillars: true },
+    { is_value_pillars: true, is_active: true },
     landingCache("media-value-pillars"),
   );
 

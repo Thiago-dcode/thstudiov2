@@ -50,6 +50,11 @@ export class IndexMediaRequest extends OffsetPaginationRequest {
   @ToBoolean()
   blocked?: boolean;
 
+  /** The owner's visibility switch. Undeclared, the global `whitelist` pipe would drop it silently. */
+  @IsOptional()
+  @ToBoolean()
+  is_active?: boolean;
+
   @IsOptional()
   @ToBoolean()
   compact?: boolean = true;
