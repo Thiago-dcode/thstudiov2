@@ -68,4 +68,4 @@ const cleanS3 = async (options: CleanS3Options) => {
   }
 };
 
-export { cleanS3 };
+export { buildS3Config, cleanS3 };

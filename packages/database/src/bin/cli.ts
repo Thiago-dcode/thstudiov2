@@ -13,6 +13,8 @@ import { rollback } from '../lib/scripts/rollback';
 import { cleanStripe } from '../lib/scripts/clean-stripe';
 import { cleanS3 } from '../lib/scripts/clean-s3';
 import { createStripeCustomers } from '../lib/scripts/create-stripe-customers';
+import { fixImageKeys } from '../lib/scripts/fix-image-keys';
+import { requeueUserSeo } from '../lib/scripts/requeue-user-seo';
 import {
   DESTRUCTIVE_PASSWORD_ENV,
   verifyDestructivePassword,
@@ -310,6 +312,24 @@ program
   .description('Create Stripe customers for active users who do not have one')
   .action(async () => {
     createStripeCustomers();
+  });
+
+program
+  .command('fix:image-keys')
+  .description(
+    'Copy extensionless avatar/banner/about images to .webp keys under their owner and update the rows (dry run unless --apply)',
+  )
+  .option('--apply', 'write the copies and update the database')
+  .option('--delete-old', 'delete the pre-fix originals (run a day after --apply)')
+  .action(async (options: { apply?: boolean; deleteOld?: boolean }) => {
+    await fixImageKeys({ apply: Boolean(options.apply), deleteOld: Boolean(options.deleteOld) });
+  });
+
+program
+  .command('seo:requeue-user <username>')
+  .description("Regenerate one artist's AI SEO on the next nightly run (bypasses the throttle)")
+  .action(async (username: string) => {
+    await requeueUserSeo(username);
   });
 
 program.parse(process.argv);
