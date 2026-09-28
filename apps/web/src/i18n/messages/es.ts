@@ -2336,7 +2336,8 @@ const messages = {
     },
     home: {
       shareKitTitle: "Pon tu portafolio en tu bio",
-      shareKitDescription: "Añade este enlace a tu bio de Instagram, tu web y tu firma de correo. Cada enlace ayuda a que los clientes encuentren tu trabajo y a que tu perfil posicione.",
+      shareKitDescription:
+        "Añade este enlace a tu bio de Instagram, tu web y tu firma de correo. Cada enlace ayuda a que los clientes encuentren tu trabajo y a que tu perfil posicione.",
       shareKitLinkLabel: "El enlace de tu portafolio",
       shareKitSnippetLabel: "Para tu web (HTML)",
       shareKitBadgeText: "Portafolio en A11STUDIO",

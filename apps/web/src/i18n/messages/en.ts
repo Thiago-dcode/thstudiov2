@@ -2319,7 +2319,8 @@ const messages = {
     },
     home: {
       shareKitTitle: "Put your portfolio in your bio",
-      shareKitDescription: "Add this link to your Instagram bio, website and email signature. Every link back helps clients find your work — and helps your profile rank.",
+      shareKitDescription:
+        "Add this link to your Instagram bio, website and email signature. Every link back helps clients find your work — and helps your profile rank.",
       shareKitLinkLabel: "Your portfolio link",
       shareKitSnippetLabel: "For your website (HTML)",
       shareKitBadgeText: "Portfolio on A11STUDIO",
