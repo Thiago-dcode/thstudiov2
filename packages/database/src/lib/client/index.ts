@@ -94,12 +94,12 @@ export class PostgresClient extends Client<PgPool> {
       max: 30,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 10000,
-    });
-
-    // Set timezone to UTC for all connections to ensure consistent timestamp handling
-    // All timestamps are stored in UTC and should be converted to local time only for display
-    this.client.on('connect', (client) => {
-      client.query('SET timezone = "UTC"');
+      // Every connection runs in UTC so timestamp handling is consistent; they are converted to
+      // local time only for display. Sent as a startup parameter rather than a `SET` in the pool's
+      // 'connect' handler: that un-awaited query overlapped the caller's first query on the same
+      // client (pg's "client.query() when the client is already executing a query" deprecation,
+      // an error in pg@9).
+      options: '-c timezone=UTC',
     });
   }
 
