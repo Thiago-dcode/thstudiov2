@@ -183,12 +183,15 @@ export function JsonLd({ data }: { data: Record<string, unknown> }) {
  * The brand entity. Carries the founder because A11STUDIO's positioning — "built by an artist, for
  * artists" (docs/A11STUDIO.md) — is its strongest trust signal, and answer engines can only connect
  * "who is behind A11STUDIO" when it is stated as data rather than prose.
+ *
+ * `A11STUDIO` is the one official name: no `alternateName` is declared, here or on the WebSite node.
+ * Other spellings ("A11 Studio") belong to unrelated companies, and declaring them would invite
+ * Google to merge the entities.
  */
 const organizationNode = (description: string, founderRole: string): Node => ({
   "@type": "Organization",
   "@id": ORGANIZATION_ID(),
   name: SITE_NAME,
-  alternateName: "A11 Studio",
   url: localizedUrl("en", "/"),
   logo: {
     "@type": "ImageObject",
@@ -199,6 +202,9 @@ const organizationNode = (description: string, founderRole: string): Node => ({
   image: `${serverEnv.APP_URL}/og/default.jpg`,
   description,
   foundingDate: "2025",
+  // Where the company is based, and that the platform serves artists and clients anywhere.
+  address: { "@type": "PostalAddress", addressCountry: "ES" },
+  areaServed: "Worldwide",
   founder: {
     "@type": "Person",
     name: "Thiago Ferreira",

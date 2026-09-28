@@ -6,6 +6,7 @@ import {
   AdminPageContainer,
   AdminPageTitle,
 } from "../__components/admin-page.component";
+import { ShareYourPortfolio } from "../__components/share-your-portfolio";
 import { UserMetrics, UserMetricsSkeleton } from "../__components/user-metrics";
 
 export default async function AtelierPage() {
@@ -22,6 +23,9 @@ export default async function AtelierPage() {
           <UserMetrics userId={userAuth.id} />
         </Suspense>
       </div>
+      <Suspense fallback={null}>
+        <ShareYourPortfolio username={userAuth.username} />
+      </Suspense>
     </AdminPageContainer>
   );
 }

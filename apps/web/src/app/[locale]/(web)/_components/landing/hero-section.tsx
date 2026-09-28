@@ -88,6 +88,11 @@ export async function HeroSection() {
           <p className="hero-stagger-2 font-light!  phone-lg:text-3xl! font-sans! text-text-muted text-lg! leading-relaxed max-w-4xl text-left">
             {t("subtitle")}
           </p>
+          {/* The one plain "what is A11STUDIO" sentence: what Google and answer engines quote when
+              someone searches the brand name. Kept quiet visually; the headline does the selling. */}
+          <p className="hero-stagger-2 pt-3 font-sans! text-text-muted text-sm! leading-relaxed max-w-2xl text-left">
+            {t("definition")}
+          </p>
         </div>
 
         <div className="hero-stagger-4 flex w-full  pt-4 phone-xs:pt-12 desktop-lg:pt-24 ">

@@ -5,7 +5,12 @@ import type { ComponentType, SVGProps } from "react";
 import { serverEnv } from "@/env/server";
 import { Link } from "@/i18n/navigation";
 import { RegistrationCtaButton } from "@/lib/components/registration-cta-button";
-import { InstagramIcon, LinkedInIcon } from "@/lib/components/social-icons";
+import {
+  InstagramIcon,
+  LinkedInIcon,
+  PinterestIcon,
+  YoutubeIcon,
+} from "@/lib/components/social-icons";
 import { WebFooterLanguageSwitcher } from "@/lib/components/web-footer-language-switcher";
 import { config } from "@/lib/config";
 import { SOCIAL, type SocialKey } from "@/lib/social";
@@ -32,11 +37,13 @@ const socialMeta: Record<
   SocialKey,
   {
     Icon: ComponentType<SVGProps<SVGSVGElement>>;
-    labelKey: "instagram" | "linkedin";
+    labelKey: SocialKey;
   }
 > = {
   instagram: { Icon: InstagramIcon, labelKey: "instagram" },
   linkedin: { Icon: LinkedInIcon, labelKey: "linkedin" },
+  youtube: { Icon: YoutubeIcon, labelKey: "youtube" },
+  pinterest: { Icon: PinterestIcon, labelKey: "pinterest" },
 };
 
 export const WebFooter = async () => {

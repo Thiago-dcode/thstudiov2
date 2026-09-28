@@ -15,7 +15,9 @@ const messages = {
         "Find and hire photographers, illustrators, filmmakers and designers — or build the professional portfolio that gets your work discovered. Built by an artist, for artists.",
     },
     hero: {
-      srTitle: "Let your art be discovered.",
+      srTitle: "A11STUDIO — let your art be discovered.",
+      definition:
+        "A11STUDIO is a portfolio platform where artists showcase their work and clients discover and hire them.",
       titlePrefix: "Let your",
       titleAccentWords: ["art", "vision", "craft", "passion", "voice"],
       titleConnector: "be",
@@ -484,6 +486,8 @@ const messages = {
     },
     home: "A11STUDIO home",
     social: {
+      youtube: "A11STUDIO on YouTube",
+      pinterest: "A11STUDIO on Pinterest",
       heading: "Social",
       instagram: "A11STUDIO on Instagram",
       linkedin: "A11STUDIO on LinkedIn",
@@ -2314,6 +2318,13 @@ const messages = {
       },
     },
     home: {
+      shareKitTitle: "Put your portfolio in your bio",
+      shareKitDescription: "Add this link to your Instagram bio, website and email signature. Every link back helps clients find your work — and helps your profile rank.",
+      shareKitLinkLabel: "Your portfolio link",
+      shareKitSnippetLabel: "For your website (HTML)",
+      shareKitBadgeText: "Portfolio on A11STUDIO",
+      shareKitCopy: "Copy",
+      shareKitCopied: "Copied",
       pageTitle: "Dashboard",
     },
     nav: {

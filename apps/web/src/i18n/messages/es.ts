@@ -17,7 +17,9 @@ const messages = {
         "Encuentra y contrata fotógrafos, ilustradores, cineastas y diseñadores, o crea el portafolio profesional que hará que descubran tu trabajo. Hecho por un artista, para artistas.",
     },
     hero: {
-      srTitle: "Deja que tu arte sea descubierto.",
+      srTitle: "A11STUDIO — deja que tu arte sea descubierto.",
+      definition:
+        "A11STUDIO es una plataforma de portafolios donde los artistas muestran su trabajo y los clientes los descubren y contratan.",
       titlePrefix: "Deja que tu",
       titleAccentWords: ["arte", "visión", "talento", "pasión", "voz"],
       titleConnector: "se",
@@ -485,6 +487,8 @@ const messages = {
     },
     home: "Inicio de A11STUDIO",
     social: {
+      youtube: "A11STUDIO en YouTube",
+      pinterest: "A11STUDIO en Pinterest",
       heading: "Redes",
       instagram: "A11STUDIO en Instagram",
       linkedin: "A11STUDIO en LinkedIn",
@@ -2331,6 +2335,13 @@ const messages = {
       },
     },
     home: {
+      shareKitTitle: "Pon tu portafolio en tu bio",
+      shareKitDescription: "Añade este enlace a tu bio de Instagram, tu web y tu firma de correo. Cada enlace ayuda a que los clientes encuentren tu trabajo y a que tu perfil posicione.",
+      shareKitLinkLabel: "El enlace de tu portafolio",
+      shareKitSnippetLabel: "Para tu web (HTML)",
+      shareKitBadgeText: "Portafolio en A11STUDIO",
+      shareKitCopy: "Copiar",
+      shareKitCopied: "Copiado",
       pageTitle: "Panel",
     },
     nav: {
