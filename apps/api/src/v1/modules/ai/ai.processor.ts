@@ -340,8 +340,10 @@ export class AiProcessor extends GlobalProcessor {
         }
         case 'user': {
           const profile = await this.userRepository.getUserProfileById(id);
-          if (!profile || !profile.name || !profile.profession || !profile.short_biography) {
-            log.warn(`User profile [${id}] not found or incomplete, skipping`);
+          // The bio is optional in the profile form (every artist on prod has it empty), and the
+          // prompt already grounds on name, profession, categories and city — so it is not a gate.
+          if (!profile || !profile.name || !profile.profession) {
+            log.warn(`User profile [${id}] not found or missing name/profession, skipping`);
             return { skipped: true };
           }
           const { translations } = await this.aiService.generateUserMetadata(profile, { user_id });
