@@ -17,7 +17,11 @@ function DrawerRegistrationCtaButton() {
   const { closeDrawer } = useSiteHeader();
 
   return (
-    <RegistrationCtaButton size="lg" className="w-full" onClick={closeDrawer} />
+    <RegistrationCtaButton
+      size="lg"
+      className="w-full"
+      onNavigate={closeDrawer}
+    />
   );
 }
 

@@ -24,7 +24,10 @@ type RegistrationCtaButtonProps = {
   className?: string;
   intent?: "getStarted" | "createPortfolio";
   label?: string;
-  onClick?: () => void;
+  /** Runs when the button navigates (atelier, register) — not when it opens the wait-list
+   * dialog. The mobile drawer passes `closeDrawer` here, and the dialog renders inside the
+   * drawer: closing it on that click unmounted the dialog the moment it opened. */
+  onNavigate?: () => void;
 };
 
 export function RegistrationCtaButton({
@@ -32,7 +35,7 @@ export function RegistrationCtaButton({
   className,
   intent = "getStarted",
   label: labelOverride,
-  onClick,
+  onNavigate,
 }: RegistrationCtaButtonProps) {
   const { session } = useSession();
   const { isRegisterClose } = useAppStatus();
@@ -47,7 +50,7 @@ export function RegistrationCtaButton({
   if (session) {
     return (
       <Button asChild size={size} className={cn(className)}>
-        <Link href="/atelier" onClick={onClick}>
+        <Link href="/atelier" onClick={onNavigate}>
           {tWebHeader("goToAtelier")}
           <ArrowRight className={iconClassName} />
         </Link>
@@ -65,12 +68,7 @@ export function RegistrationCtaButton({
     return (
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogTrigger asChild>
-          <Button
-            variant="accent"
-            size={size}
-            className={cn(className)}
-            onClick={onClick}
-          >
+          <Button variant="accent" size={size} className={cn(className)}>
             {label}
             <ArrowRight className={iconClassName} />
           </Button>
@@ -87,7 +85,7 @@ export function RegistrationCtaButton({
 
   return (
     <Button asChild variant="accent" size={size} className={cn(className)}>
-      <Link href="/auth/register" onClick={onClick}>
+      <Link href="/auth/register" onClick={onNavigate}>
         {label}
         <ArrowRight className={iconClassName} />
       </Link>

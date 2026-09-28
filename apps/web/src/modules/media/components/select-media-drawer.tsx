@@ -4,6 +4,12 @@ import { ALLOWED_IMAGE_FILE_TYPES } from "@repo/common-lib/constants/limits";
 import type { Media, MediaPortfolio } from "@repo/common-lib/types/media";
 import { MediaHelper } from "@repo/common-lib/utils/media";
 import { MediaTypeBadge } from "@repo/ui/components/custom/media-type-badge";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@repo/ui/components/shadcn/accordion";
 import { Button } from "@repo/ui/components/shadcn/button";
 import {
   Drawer,
@@ -176,7 +182,7 @@ export const SelectMediaDrawer = ({
         <DrawerHeader className="border-b px-4 py-3">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <DrawerTitle className="text-base font-semibold">
+              <DrawerTitle className="text-base! font-semibold truncate">
                 {t("title")}
               </DrawerTitle>
               {mediaSelectedLength > 0 && (
@@ -240,30 +246,40 @@ export const SelectMediaDrawer = ({
         </div>
 
         {/* Drawer body */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-6">
+        {/* Selected starts collapsed so the list to pick from is what the drawer opens on. It is
+            not in `defaultValue`, so it also mounts closed when the first pick makes it appear. */}
+        <Accordion
+          type="multiple"
+          defaultValue={["available"]}
+          className="flex-1 overflow-y-auto px-4 py-2"
+        >
           {mediaSelectedLength > 0 && (
-            <section className="space-y-3">
-              <SectionHeading
+            <AccordionItem value="selected">
+              <SectionTrigger
                 title={t("selectedHeading")}
                 count={
                   maxSelection !== undefined
                     ? `${mediaSelectedLength} / ${maxSelection}`
                     : mediaSelectedLength
                 }
-                hint={t("selectedHint")}
               />
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {mediaSelected.map((m) => (
-                  <MediaTile
-                    key={m.id}
-                    media={m}
-                    onRemove={() => onDeselect(m.id)}
-                    title={m.title || m.seo_filename || ""}
-                    removeLabel={t("removeFromSelection")}
-                  />
-                ))}
-              </div>
-            </section>
+              <AccordionContent className={SECTION_CONTENT_CLASS}>
+                <p className="text-[11px]! leading-snug! text-text-muted">
+                  {t("selectedHint")}
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {mediaSelected.map((m) => (
+                    <MediaTile
+                      key={m.id}
+                      media={m}
+                      onRemove={() => onDeselect(m.id)}
+                      title={m.title || m.seo_filename || ""}
+                      removeLabel={t("removeFromSelection")}
+                    />
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
           )}
 
           {isPending && media.length === 0 ? (
@@ -271,91 +287,93 @@ export const SelectMediaDrawer = ({
               <Spinner className="size-8" />
             </div>
           ) : media.length > 0 ? (
-            <section className="space-y-3">
-              {mediaSelectedLength > 0 && (
-                <SectionHeading
-                  title={t("availableHeading")}
-                  count={availableMedia.length}
-                />
-              )}
-              <p className="text-[11px] text-text-muted">
-                {t("hint", { count: availableMedia.length })}
-                {maxSelection !== undefined
-                  ? ` ${t("hintMax", { max: maxSelection })}`
-                  : ""}
-              </p>
-              {availableMedia.length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {availableMedia.map((m) => {
-                    const isLoading = MediaHelper.isLoading(m);
-                    if (m.status === "FAILED") {
-                      return (
-                        <div
-                          key={m.id}
-                          className="relative aspect-square w-full overflow-hidden border border-error/40 bg-fg-2"
-                          role="img"
-                          aria-label={m.failed_reason || t("failedAria")}
-                        >
-                          {m.thumbnail ? (
-                            <img
-                              src={m.thumbnail}
-                              alt=""
-                              aria-hidden
-                              className="absolute inset-0 size-full object-cover opacity-40"
-                            />
-                          ) : null}
-                          <FailedMediaOverlay reason={m.failed_reason} />
-                        </div>
-                      );
-                    }
-                    return (
-                      <MediaTile
-                        key={m.id}
-                        media={m}
-                        isLoading={isLoading}
-                        disabled={isLoading || isSelectionLimitReached}
-                        onClick={() => onSelect(m)}
-                        title={
-                          isLoading ? tCommon("loading") : t("addToPortfolio")
-                        }
-                      />
-                    );
-                  })}
-                </div>
-              ) : (
-                <p className="py-6 text-center text-xs text-text-muted">
-                  {t("allSelected")}
+            <AccordionItem value="available" className="border-b-0">
+              <SectionTrigger
+                title={t("availableHeading")}
+                count={availableMedia.length}
+              />
+              <AccordionContent className={SECTION_CONTENT_CLASS}>
+                <p className="text-[11px]! leading-snug! text-text-muted">
+                  {t("hint", { count: availableMedia.length })}
+                  {maxSelection !== undefined
+                    ? ` ${t("hintMax", { max: maxSelection })}`
+                    : ""}
                 </p>
-              )}
-              {nextPage.current !== undefined && (
-                <div className="flex justify-center pt-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="gap-2 h-8"
-                    disabled={isPending}
-                    onClick={handleLoadMore}
-                  >
-                    {isPending && <Spinner className="size-3.5" />}
-                    {isPending ? tCommon("loading") : tCommon("loadMore")}
-                  </Button>
-                </div>
-              )}
-            </section>
+                {availableMedia.length > 0 ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {availableMedia.map((m) => {
+                      const isLoading = MediaHelper.isLoading(m);
+                      if (m.status === "FAILED") {
+                        return (
+                          <div
+                            key={m.id}
+                            className="relative aspect-square w-full overflow-hidden border border-error/40 bg-fg-2"
+                            role="img"
+                            aria-label={m.failed_reason || t("failedAria")}
+                          >
+                            {m.thumbnail ? (
+                              <img
+                                src={m.thumbnail}
+                                alt=""
+                                aria-hidden
+                                className="absolute inset-0 size-full object-cover opacity-40"
+                              />
+                            ) : null}
+                            <FailedMediaOverlay reason={m.failed_reason} />
+                          </div>
+                        );
+                      }
+                      return (
+                        <MediaTile
+                          key={m.id}
+                          media={m}
+                          isLoading={isLoading}
+                          disabled={isLoading || isSelectionLimitReached}
+                          onClick={() => onSelect(m)}
+                          title={
+                            isLoading ? tCommon("loading") : t("addToPortfolio")
+                          }
+                        />
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="py-6 text-center text-xs! text-text-muted">
+                    {t("allSelected")}
+                  </p>
+                )}
+                {nextPage.current !== undefined && (
+                  <div className="flex justify-center pt-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="gap-2 h-8"
+                      disabled={isPending}
+                      onClick={handleLoadMore}
+                    >
+                      {isPending && <Spinner className="size-3.5" />}
+                      {isPending ? tCommon("loading") : tCommon("loadMore")}
+                    </Button>
+                  </div>
+                )}
+              </AccordionContent>
+            </AccordionItem>
           ) : mediaSelectedLength === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 gap-2">
               <Image className="size-8 text-text-muted/40" />
-              <p className="text-sm text-text-muted">{t("emptyTitle")}</p>
-              <p className="text-xs text-text-muted/70">{t("emptySubtitle")}</p>
+              <p className="text-sm! text-text-muted">{t("emptyTitle")}</p>
+              <p className="text-xs! text-text-muted/70">
+                {t("emptySubtitle")}
+              </p>
             </div>
           ) : null}
-        </div>
+        </Accordion>
 
         {/* Drawer footer */}
         <div className="border-t px-4 py-3 flex items-center justify-between">
           {mediaSelectedLength > 0 ? (
-            <p className="text-xs text-text-muted tabular-nums">
+            <p className="text-xs! text-text-muted tabular-nums">
               {maxSelection !== undefined
                 ? t("itemsSelectedWithMax", {
                     count: mediaSelectedLength,
@@ -383,22 +401,25 @@ export const SelectMediaDrawer = ({
   );
 };
 
-const SectionHeading = ({
+// The content clips overflow for its open/close animation; the padding keeps the selected
+// tiles' ring and the hover lift inside it.
+const SECTION_CONTENT_CLASS = "space-y-3 px-1 pt-1 pb-4";
+
+// Radix wraps the trigger in an <h3>, which picks up the global brand font, size and tracking
+// from globals.css — those are reset here.
+const SectionTrigger = ({
   title,
   count,
-  hint,
 }: {
   title: string;
   count: number | string;
-  hint?: string;
 }) => (
-  <div className="flex items-baseline justify-between gap-3">
-    <h3 className="text-[11px] font-medium uppercase tracking-wide text-text">
+  <AccordionTrigger className="py-3 font-sans text-[11px] leading-snug font-medium uppercase tracking-wide text-text hover:no-underline">
+    <span>
       {title}
       <span className="ml-1.5 text-text-muted tabular-nums">{count}</span>
-    </h3>
-    {hint ? <p className="text-[11px] text-text-muted">{hint}</p> : null}
-  </div>
+    </span>
+  </AccordionTrigger>
 );
 
 const MediaTile = ({
