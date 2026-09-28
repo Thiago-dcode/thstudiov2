@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
 import { IndexNowService } from './indexnow.service';
+import { CRON_LOCK_TTL, runCronExclusive } from 'src/common/utils/cron-lock';
 
 /**
  * Hourly IndexNow submission of the public pages changed in the last hour.
@@ -24,22 +25,24 @@ export class IndexNowTask {
 
   @Cron(CronExpression.EVERY_HOUR, { name: 'indexnow-submit', timeZone: 'UTC' })
   async submitRecentChanges() {
-    const log = this.logger.name('submit');
-    try {
-      const result = await this.indexNowService.submitChangedSince(
-        new Date(Date.now() - IndexNowTask.WINDOW_MS),
-      );
-      if (result.status === 'skipped') return;
-      const message = `IndexNow submitted ${result.urls} URLs (HTTP ${result.httpStatus})`;
-      if (result.httpStatus === 200 || result.httpStatus === 202) log.info(message);
-      else log.warn(message);
-    } catch (error) {
-      log.error(
-        `IndexNow submission failed - ${error instanceof Error ? error.message : 'Unknown error'}`,
-        error,
-      );
-    } finally {
-      await LogService.flush();
-    }
+    await runCronExclusive('indexnow-submit', CRON_LOCK_TTL.hourly, async () => {
+      const log = this.logger.name('submit');
+      try {
+        const result = await this.indexNowService.submitChangedSince(
+          new Date(Date.now() - IndexNowTask.WINDOW_MS),
+        );
+        if (result.status === 'skipped') return;
+        const message = `IndexNow submitted ${result.urls} URLs (HTTP ${result.httpStatus})`;
+        if (result.httpStatus === 200 || result.httpStatus === 202) log.info(message);
+        else log.warn(message);
+      } catch (error) {
+        log.error(
+          `IndexNow submission failed - ${error instanceof Error ? error.message : 'Unknown error'}`,
+          error,
+        );
+      } finally {
+        await LogService.flush();
+      }
+    });
   }
 }

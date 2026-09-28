@@ -7,6 +7,7 @@ import {
   resolveDefaultLogFolder,
 } from '@repo/backend-lib/services/log-service';
 import { getLogRetentionDays } from '@repo/backend-lib/config/logging';
+import { CRON_LOCK_TTL, runCronExclusive } from '../utils/cron-lock';
 
 @Injectable()
 export class LogRetentionTask {
@@ -19,42 +20,44 @@ export class LogRetentionTask {
     timeZone: 'UTC',
   })
   async handleLogRetentionCleanup() {
-    const retentionDays = getLogRetentionDays();
+    await runCronExclusive('log-retention-cleanup', CRON_LOCK_TTL.daily, async () => {
+      const retentionDays = getLogRetentionDays();
 
-    if (retentionDays < 1) {
-      return;
-    }
-    
-    const log = this.logger.name('log-retention-cleanup');
-    const logRoot = resolveDefaultLogFolder();
+      if (retentionDays < 1) {
+        return;
+      }
+      
+      const log = this.logger.name('log-retention-cleanup');
+      const logRoot = resolveDefaultLogFolder();
 
-    try {
-      const result = await pruneDailyLogFiles(logRoot, retentionDays);
+      try {
+        const result = await pruneDailyLogFiles(logRoot, retentionDays);
 
-      if (result.deleted.length) {
-        log.info(
-          `Deleted ${result.deleted.length} log file(s) older than ${retentionDays} day(s) under ${logRoot}`,
+        if (result.deleted.length) {
+          log.info(
+            `Deleted ${result.deleted.length} log file(s) older than ${retentionDays} day(s) under ${logRoot}`,
+          );
+        } else {
+          log.info(`No log files older than ${retentionDays} day(s) to delete`);
+        }
+
+        if (result.alreadyGone.length) {
+          log.info(
+            `${result.alreadyGone.length} log file(s) were already removed by another replica`,
+          );
+        }
+
+        for (const failure of result.failed) {
+          log.error(`Failed to delete log file ${failure.file}: ${failure.error}`);
+        }
+      } catch (error) {
+        log.error(
+          `Log retention cleanup failed - ${error instanceof Error ? error.message : 'Unknown error'}`,
+          error,
         );
-      } else {
-        log.info(`No log files older than ${retentionDays} day(s) to delete`);
+      } finally {
+        await LogService.flush();
       }
-
-      if (result.alreadyGone.length) {
-        log.info(
-          `${result.alreadyGone.length} log file(s) were already removed by another replica`,
-        );
-      }
-
-      for (const failure of result.failed) {
-        log.error(`Failed to delete log file ${failure.file}: ${failure.error}`);
-      }
-    } catch (error) {
-      log.error(
-        `Log retention cleanup failed - ${error instanceof Error ? error.message : 'Unknown error'}`,
-        error,
-      );
-    } finally {
-      await LogService.flush();
-    }
+    });
   }
 }
