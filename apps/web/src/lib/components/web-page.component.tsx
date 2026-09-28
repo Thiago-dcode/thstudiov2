@@ -1,5 +1,7 @@
 import { cn } from "@repo/ui/lib/utils";
+import { Pencil } from "lucide-react";
 import type { ReactNode } from "react";
+import { Link } from "@/i18n/navigation";
 
 const Container = ({
   children,
@@ -20,31 +22,45 @@ const Container = ({
   );
 };
 
+/**
+ * Left-aligned on a phone, where it lines up with the breadcrumb and a long centred title wraps
+ * raggedly; centred from md. `children` (e.g. an EditLink) go on their own row below the text —
+ * an icon beside the title broke its wrapping. The base element rules in globals.css are
+ * unlayered and beat plain utilities, hence the `!` on the sizes.
+ */
 const Header = ({
   title,
   description,
   children,
-  titleClassName,
 }: {
   title: string;
   description?: string;
   children?: ReactNode;
-  titleClassName?: string;
 }) => {
   return (
-    <header className="mb-8 desktop:mb-12 flex flex-col items-center justify-center gap-6 pb-6">
-      <div className="w-full max-w-5xl space-y-5">
-        <div className="flex items-baseline gap-4 justify-center">
-          <h1 className={cn(" tracking-tight", titleClassName)}>{title}</h1>
-          {children}
-        </div>
-        {description && (
-          <p className="w-full text-base! leading-relaxed text-text md:text-lg text-center">
-            {description}
-          </p>
-        )}
-      </div>
+    <header className="mx-auto mb-8 flex w-full max-w-3xl flex-col items-start gap-3 md:mb-12 md:items-center md:text-center">
+      <h1 className="text-2xl! leading-tight! tracking-tight text-balance md:text-4xl!">
+        {title}
+      </h1>
+      {description && (
+        <p className="max-w-2xl text-sm! leading-relaxed! text-text-muted text-pretty md:text-base!">
+          {description}
+        </p>
+      )}
+      {children}
     </header>
+  );
+};
+
+const EditLink = ({ href, label }: { href: string; label: string }) => {
+  return (
+    <Link
+      href={href}
+      className="mt-1 inline-flex items-center gap-1.5 border border-border px-3 py-1.5 text-[10px] uppercase tracking-[0.2em] text-text-muted transition-colors hover:border-text hover:text-text"
+    >
+      <Pencil className="size-3" />
+      {label}
+    </Link>
   );
 };
 
@@ -59,5 +75,6 @@ const List = ({ children }: { children: Iterable<ReactNode> }) => {
 export default {
   Container,
   Header,
+  EditLink,
   List,
 };

@@ -1,12 +1,10 @@
 import type { MediaWithUser } from "@repo/common-lib/types/media";
-import { Pencil } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 import {
   ArtistBreadcrumb,
   type BreadcrumbEntry,
 } from "@/app/[locale]/(artists)/__components/artist-breadcrumb";
 import { FullscreenMedia } from "@/app/[locale]/(artists)/__components/fullscreen-media";
-import { Link } from "@/i18n/navigation";
 import Web from "@/lib/components/web-page.component";
 import { artistDisplayName, buildMediaJsonLd, JsonLd } from "@/lib/seo/json-ld";
 
@@ -32,12 +30,10 @@ export const MediaPageComponent = async ({
   const artistName = media.user
     ? artistDisplayName(media.user)
     : `@${user.username}`;
-  // Untitled work is the common case for photographers. It used to render an empty <h1> and no text
-  // at all — the most numerous indexable page type was thin by construction. The AI title and
-  // description exist (localized) for exactly this; they are now the visible fallback.
-  const title =
-    media.title || media.seo_title || t("titleFallback", { name: artistName });
-  const description = media.description || media.seo_description || "";
+  // Only what the artist wrote is shown. The SEO title/description are head metadata — as visible
+  // copy they read as a keyword string, not as the artist's own words.
+  const title = media.title || t("titleFallback", { name: artistName });
+  const description = media.description || "";
 
   const allBreadcrumbs: BreadcrumbEntry[] = [
     ...breadcrumbs,
@@ -71,13 +67,10 @@ export const MediaPageComponent = async ({
       />
       <Web.Header title={title} description={description}>
         {canEdit && (
-          <Link
+          <Web.EditLink
             href={`/atelier/media?m=${media.public_id}`}
-            aria-label={t("editAria")}
-            className="text-text-muted hover:text-text transition-colors self-start md:self-auto"
-          >
-            <Pencil className="size-4 md:size-5" />
-          </Link>
+            label={t("editAria")}
+          />
         )}
       </Web.Header>
 

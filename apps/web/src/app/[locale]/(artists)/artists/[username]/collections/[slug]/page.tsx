@@ -1,12 +1,10 @@
 import { Gallery } from "@repo/ui/components/custom/gallery/gallery";
 import { GalleryGrid } from "@repo/ui/components/custom/gallery/gallery-grid";
 import { GalleryProvider } from "@repo/ui/providers/gallery.provider";
-import { Pencil } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { ArtistBreadcrumb } from "@/app/[locale]/(artists)/__components/artist-breadcrumb";
-import { Link } from "@/i18n/navigation";
 import { localePrefix, urlLocaleToLanguageCode } from "@/i18n/routing";
 import Web from "@/lib/components/web-page.component";
 import { config } from "@/lib/config";
@@ -132,13 +130,10 @@ export default async function Page({ params, searchParams }: Props) {
         description={collection.description || undefined}
       >
         {canEdit && (
-          <Link
+          <Web.EditLink
             href={`/atelier/collections/edit/${collection.slug}`}
-            aria-label={tEdit("editCollection")}
-            className="text-text-muted hover:text-text transition-colors self-start md:self-auto"
-          >
-            <Pencil className="size-4 md:size-5" />
-          </Link>
+            label={tEdit("editCollection")}
+          />
         )}
       </Web.Header>
 

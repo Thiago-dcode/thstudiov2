@@ -213,7 +213,6 @@ export default async function SearchPage({
               ? t("page.introArtists")
               : t("page.introPortfolios")
           }
-          titleClassName="text-2xl tablet:text-3xl desktop:text-4xl"
         />
         <SearchSegmentToggle active={search} filters={sharedRequest} />
       </div>
