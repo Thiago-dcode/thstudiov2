@@ -69,8 +69,13 @@ export async function runCronExclusive(
   return true;
 }
 
-/** Lock lifetimes: comfortably above replica clock skew, comfortably below the schedule interval. */
+/**
+ * Lock lifetimes: comfortably above replica clock skew, comfortably below the schedule interval.
+ * `boot` covers one-shot startup jobs: replicas of a deploy start within seconds of each other,
+ * and the next deploy (never within 10 minutes) runs the job again.
+ */
 export const CRON_LOCK_TTL = {
+  boot: 10 * 60 * 1000,
   hourly: 50 * 60 * 1000,
   daily: 23 * 60 * 60 * 1000,
 } as const;
