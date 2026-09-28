@@ -10,6 +10,7 @@ import type { FullPlanSubscription } from "@repo/common-lib/types/plan-subscript
 import type { ProfileStatus } from "@repo/common-lib/types/profile-status";
 import type { ApiResponse } from "@repo/common-lib/types/response";
 import type {
+  ArtistBranding,
   ArtistCard,
   ArtistIndexRequest,
   BaseUser,
@@ -141,6 +142,22 @@ export class UserService extends BaseService {
       resource: `exists/${username}`,
       isPublic: true,
       cacheOptions: landingCache(`user-exists-${username}`),
+    });
+  }
+
+  /**
+   * Whether the artist's pages show the platform brand mark (free plan). Public + cached like
+   * `usernameExists`: every artist page renders it. The window is short on purpose — a plan is
+   * activated by the payment webhook, not by a web action we could hang a `revalidateTag` on, so
+   * this is how long a fresh upgrade can still show the mark.
+   */
+  async getBranding(username: string): Promise<ApiResponse<ArtistBranding>> {
+    return await this.fetchApi.get({
+      resource: `branding/${username}`,
+      isPublic: true,
+      cacheOptions: {
+        next: { revalidate: 300, tags: [`user-branding-${username}`] },
+      },
     });
   }
 

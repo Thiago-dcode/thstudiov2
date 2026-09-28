@@ -72,6 +72,15 @@ export class UserController {
     return await this.userService.getCompactedByUsername(username);
   }
 
+  // No `ModelExistPipe`: the lookup itself 404s an unknown username, so the pipe would only add a
+  // second query to a read every artist page makes.
+  @Throttle(PUBLIC_READ_THROTTLE)
+  @Public()
+  @Get('branding/:username')
+  async getBranding(@Param('username', ToLowerCasePipe) username: string) {
+    return await this.userService.getBrandingByUsername(username);
+  }
+
   @Throttle(PUBLIC_READ_THROTTLE)
   @Public()
   @Get('exists/:username')

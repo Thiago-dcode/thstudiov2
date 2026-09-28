@@ -66,6 +66,7 @@ describe('public artist reads use PUBLIC_READ_THROTTLE', () => {
     ['UserController', userController, 'getProfile'],
     ['UserController', userController, 'getCompacted'],
     ['UserController', userController, 'usernameExists'],
+    ['UserController', userController, 'getBranding'],
     ['UserPortfolioController', UserPortfolioController, 'getAllByUsername'],
     ['UserPortfolioController', UserPortfolioController, 'getByUsername'],
     ['UserCollectionController', UserCollectionController, 'getAllByUsername'],

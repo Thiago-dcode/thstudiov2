@@ -28,6 +28,9 @@ export type BaseUserWithSecrets = BaseUser & {
 // CompactUser: minimal user info (id, email, username)
 export type CompactUser = Pick<UserSchema, 'id' | 'email' | 'username' | 'name' | 'surname'| 'benefit_id' | 'language'>;
 
+/** Public branding flags for an artist's pages — `show_brand` is true while on the free plan. */
+export type ArtistBranding = { show_brand: boolean };
+
 // Full user with all profile fields, nested role + benefit (no raw FKs, no secrets).
 export type User = Omit<
   UserSchema,

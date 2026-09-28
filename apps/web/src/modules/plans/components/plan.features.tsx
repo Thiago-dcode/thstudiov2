@@ -3,7 +3,7 @@
 import type { BasePlan } from "@repo/common-lib/types/plan";
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
 import { cn } from "@repo/ui/lib/utils";
-import { Brain, Check, X, Zap } from "lucide-react";
+import { Brain, Check, EyeOff, X, Zap } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { type ReactNode, useMemo } from "react";
 
@@ -134,21 +134,21 @@ export const PlanFeatures = ({ plan }: { plan: BasePlan }) => {
       },
       {
         key: "watermark",
-        content: plan.allow_media_compression ? (
+        content: plan.is_free ? (
+          <span className="text-text">{t("hideBrand")}</span>
+        ) : (
           <span
             className={cn(
               "inline-flex items-center gap-1.5  py-0.5 text-sm font-medium",
               "bg-fg text-text",
             )}
           >
-            <Zap className="size-3.5 shrink-0 text-accent" aria-hidden />
-            {t("mediaCompression")}
+            <EyeOff className="size-3.5 shrink-0 text-accent" aria-hidden />
+            {t("hideBrand")}
           </span>
-        ) : (
-          <span className="text-text">{t("mediaCompression")}</span>
         ),
         not_available: plan.is_free,
-        extraInfo: t("mediaCompressionTooltip"),
+        extraInfo: t("hideBrandTooltip"),
       },
     ],
     [plan, t],

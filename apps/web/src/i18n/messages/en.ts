@@ -1157,6 +1157,9 @@ const messages = {
       aiCredits: "AI Credits",
       aiCreditsTooltip:
         "Leverage AI to automate repetitive tasks. Automatically generate titles, descriptions, and tags for your media based on content analysis, saving you time and effort.",
+      hideBrand: "Hide a11studio branding",
+      hideBrandTooltip:
+        'Free profiles show a small "Made with a11studio" mark above the footer of every public page. Paid plans remove it so your work stands on its own.',
     },
     portal: {
       loading: "Loading…",
@@ -1324,6 +1327,10 @@ const messages = {
   },
   artists: {
     shareProfile: "Share profile",
+    brandMark: {
+      madeWith: "Made with",
+      label: "Portfolio made with a11studio",
+    },
     breadcrumb: {
       goBack: "Go back",
     },

@@ -1162,6 +1162,9 @@ const messages = {
       aiCredits: "Créditos de IA",
       aiCreditsTooltip:
         "Aprovecha la IA para automatizar tareas repetitivas. Genera automáticamente títulos, descripciones y etiquetas para tu contenido basándote en el análisis, ahorrándote tiempo y esfuerzo.",
+      hideBrand: "Ocultar la marca a11studio",
+      hideBrandTooltip:
+        'Los perfiles gratuitos muestran una pequeña marca "Hecho con a11studio" sobre el pie de página de cada página pública. Los planes de pago la eliminan para que tu obra hable por sí sola.',
     },
     portal: {
       loading: "Cargando…",
@@ -1332,6 +1335,10 @@ const messages = {
   },
   artists: {
     shareProfile: "Compartir perfil",
+    brandMark: {
+      madeWith: "Hecho con",
+      label: "Portafolio hecho con a11studio",
+    },
     breadcrumb: {
       goBack: "Volver",
     },
