@@ -1,6 +1,15 @@
 import { Skeleton } from "@repo/ui/components/shadcn/skeleton";
 
-export default function GlobalLoading() {
+/**
+ * Skeleton for the atelier (the logged-in dashboard) only.
+ *
+ * This used to live at `app/[locale]/loading.tsx`, wrapping EVERY page in a Suspense boundary. A
+ * boundary that renders a fallback commits the response as `200 OK` before the page runs, so a
+ * `notFound()` for a missing artist, portfolio or media could only inject `noindex` into a 200 —
+ * Google reported those URLs as soft 404s. Public pages now resolve before responding and return
+ * real 404s; the atelier, which is never indexed, keeps the instant skeleton.
+ */
+export default function AtelierLoading() {
   return (
     <div className="mx-auto w-full max-w-5xl px-6 py-16 tablet:px-10 tablet:py-24">
       <div className="space-y-3">
