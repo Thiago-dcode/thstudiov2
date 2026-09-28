@@ -60,6 +60,7 @@ import { UserEmailPreferencesModule } from './v1/modules/user-email-preferences/
 import { AssetsModule } from './v1/modules/assets/assets.module';
 import { LayoutModule } from './v1/modules/layouts/layout.module';
 import { SitemapModule } from './v1/modules/sitemap/sitemap.module';
+import { IndexNowModule } from './v1/modules/indexnow/indexnow.module';
 /** Feature modules mounted at `api/v1/*` (not under `admin/`). */
 const API_V1_MODULES = [
   AuthModule,
@@ -96,6 +97,7 @@ const API_V1_MODULES = [
   AssetsModule,
   LayoutModule,
   SitemapModule,
+  IndexNowModule,
 ];
 const ADMIN_V1_MODULES = [
   AdminModule
