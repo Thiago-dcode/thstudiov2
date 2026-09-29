@@ -55,7 +55,7 @@ export default async function Home({
       <CtaSection />
       <WebSection>
         <WebSection.Container className="max-w-(--breakpoint-laptop) pb-20">
-          <FaqsContent />
+          <FaqsContent limit={4} />
         </WebSection.Container>
       </WebSection>
     </>

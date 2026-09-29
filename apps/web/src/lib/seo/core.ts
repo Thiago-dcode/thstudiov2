@@ -1,5 +1,7 @@
 import "server-only";
 import type { ApiResponse } from "@repo/common-lib/types/response";
+import { normalizeUsername } from "@repo/common-lib/utils/username";
+import { permanentRedirect } from "next/navigation";
 import { serverEnv } from "@/env/server";
 import {
   localePrefix,
@@ -38,6 +40,24 @@ export const resolveLocale = (locale?: string | null): SupportedLocale =>
  */
 export const localizedUrl = (locale: string, path: string): string =>
   `${serverEnv.APP_URL}${localePrefix(resolveLocale(locale))}${path === "/" ? "" : path}`;
+
+/**
+ * 308s an artist URL whose username isn't lowercase (`/artists/THSWORLD/...`) to the lowercase URL,
+ * keeping `subPath` (everything after the username). Usernames are case-insensitive, so every
+ * casing rendered the same page with a 200 and relied on the canonical alone to consolidate.
+ */
+export const redirectToCanonicalUsername = (
+  locale: string,
+  username: string,
+  subPath = "",
+): void => {
+  const canonical = normalizeUsername(username);
+  if (canonical !== username) {
+    permanentRedirect(
+      `${localePrefix(resolveLocale(locale))}/artists/${canonical}${subPath}`,
+    );
+  }
+};
 
 /** hreflang map for `path`: every app locale plus `x-default` (English). */
 export const languageAlternates = (path: string): Record<string, string> => {

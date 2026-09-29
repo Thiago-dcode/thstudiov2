@@ -1,3 +1,4 @@
+import type { SitemapMediaItem } from "@repo/common-lib/types/sitemap";
 import type { MetadataRoute } from "next";
 import { languageAlternates, localizedUrl } from "@/lib/seo/core";
 import {
@@ -43,12 +44,13 @@ const xmlEscape = (s: string) =>
 
 /**
  * One `<url>` with hreflang alternates for every locale + `x-default` (the same set the page's own
- * `<head>` declares), plus optional image-sitemap images.
+ * `<head>` declares), plus optional image-sitemap images and video-sitemap videos.
  */
 function entry(
   path: string,
   lastModified?: string,
   images?: string[],
+  videos?: MetadataRoute.Sitemap[number]["videos"],
 ): MetadataRoute.Sitemap[number] {
   const languages = Object.fromEntries(
     Object.entries(languageAlternates(path)).map(([l, u]) => [l, xmlEscape(u)]),
@@ -58,7 +60,31 @@ function entry(
     ...(lastModified ? { lastModified } : {}),
     alternates: { languages },
     ...(images?.length ? { images: images.map(xmlEscape) } : {}),
+    ...(videos?.length ? { videos } : {}),
   };
+}
+
+/**
+ * The `<video:video>` for a video media. Title, description and thumbnail are required by Google, so
+ * an untitled video falls back to a name built from the artist, and the description to the title.
+ * Text goes through `xmlEscape` too: Next writes these fields raw, so a `&` in a title would break the
+ * whole shard.
+ */
+function mediaVideos(
+  r: SitemapMediaItem,
+): MetadataRoute.Sitemap[number]["videos"] {
+  if (!r.video) return undefined;
+  const title = r.video.title?.trim() || `Video by @${r.username}`;
+  const description = (r.video.description?.trim() || title).slice(0, 2048);
+  return [
+    {
+      title: xmlEscape(title),
+      description: xmlEscape(description),
+      thumbnail_loc: xmlEscape(r.video.thumbnail_url),
+      content_loc: xmlEscape(r.video.content_url),
+      publication_date: r.video.publication_date,
+    },
+  ];
 }
 
 const STATIC_PATHS = [
@@ -144,6 +170,7 @@ export default async function sitemap(props: {
           `/artists/${r.username}/media/${r.public_id}`,
           r.updated_at,
           r.images,
+          mediaVideos(r),
         ),
       );
     }

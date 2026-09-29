@@ -110,6 +110,16 @@ export class SitemapService {
         public_id: row.public_id,
         updated_at: row.updated_at,
         images: await this.signImages([row.thumbnail]),
+        video:
+          row.media_type === 'VIDEO' && row.url && row.thumbnail
+            ? {
+                content_url: await this.helpers.getAsset(row.url),
+                thumbnail_url: await this.helpers.getAsset(row.thumbnail),
+                title: row.title,
+                description: row.description,
+                publication_date: new Date(row.created_at).toISOString(),
+              }
+            : null,
       })),
     );
   }

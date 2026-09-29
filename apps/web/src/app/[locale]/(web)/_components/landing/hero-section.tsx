@@ -10,12 +10,16 @@ import {
 import { reportSectionError } from "./section-error";
 import { WebSection } from "./web-section";
 
+// The video is the hero's flexible part: the copy below keeps its natural height and the video
+// fills what is left of the first screen (`--hero-h`, set on the section), capped at its design
+// proportion. On a short screen it gives up height to the copy — down to a floor, past which the
+// section grows — so the headline and the waitlist never get clipped or overlapped.
+const HERO_VIDEO_CLASS =
+  "z-0 w-full flex-1 basis-0 object-cover min-h-[calc(var(--hero-h)*0.25)] max-h-[calc(var(--hero-h)*0.4)] desktop:max-h-[calc(var(--hero-h)*0.5)] desktop-lg:max-h-[calc(var(--hero-h)*0.6)]";
+
 function HeroVideoFallback() {
   return (
-    <div
-      aria-hidden="true"
-      className="justify-self-end inset-0 z-0 object-cover max-h-3/5 w-screen bg-bg-dark"
-    />
+    <div aria-hidden="true" className={`${HERO_VIDEO_CLASS} bg-bg-dark`} />
   );
 }
 
@@ -27,7 +31,7 @@ async function HeroVideo() {
     <LazyVideo
       src={heroVideo.data.url}
       poster={heroVideo.data.thumbnail ?? undefined}
-      className="justify-self-end inset-0 z-0 object-cover h-2/5 desktop:h-6/12 desktop-lg:h-3/5  w-screen"
+      className={HERO_VIDEO_CLASS}
     />
   );
 }
@@ -41,14 +45,14 @@ export async function HeroSection() {
     <WebSection
       id="home-hero-section"
       aria-labelledby="hero-heading"
-      className="flex flex-col w-full items-center justify-start overflow-hidden bg-bg h-[calc(100svh-4rem)]  max-w-(--breakpoint-ultrawide) mx-auto"
+      className="flex flex-col w-full items-center justify-start overflow-hidden bg-bg [--hero-h:calc(100svh-4rem)] min-h-(--hero-h) max-w-(--breakpoint-ultrawide) mx-auto"
     >
       <Suspense fallback={<HeroVideoFallback />}>
         <HeroVideo />
       </Suspense>
 
       {/* ── Content ── */}
-      <div className="max-h-1/2 z-10 mx-auto flex flex-col text-center justify-start h-full w-full pt-3 px-2">
+      <div className="z-10 mx-auto flex w-full shrink-0 flex-col justify-start pt-3 px-2">
         <div className="flex flex-col items-start w-full">
           {/* The document's h1 is a plain sentence. The animated headline below renders every
               reel word several times over (the slot-machine strip), so as the h1 it read to
@@ -84,28 +88,33 @@ export async function HeroSection() {
           </p>
 
           {/* A hero subtitle is body copy, not a heading — as an <h3> straight after the <h1> it
-              skipped a level and put marketing text into the document outline. */}
-          <p className="hero-stagger-2 font-light!  phone-lg:text-3xl! font-sans! text-text-muted text-lg! leading-relaxed max-w-4xl text-left">
+              skipped a level and put marketing text into the document outline.
+              Three tiers, each a clear step down in size and tone so they don't compete:
+              headline (full ink) → subtitle (muted, light) → definition (small, dimmest). */}
+          <p className="hero-stagger-2 pt-2 laptop:pt-3 font-light! font-sans! text-text-muted text-lg! tablet:text-xl! laptop:text-2xl! leading-snug max-w-3xl text-left">
             {t("subtitle")}
           </p>
           {/* The one plain "what is A11STUDIO" sentence: what Google and answer engines quote when
               someone searches the brand name. Kept quiet visually; the headline does the selling. */}
-          <p className="hero-stagger-2 pt-3 font-sans! text-text-muted text-sm! leading-relaxed max-w-2xl text-left">
+          <p className="hero-stagger-2 mt-2 font-sans! font-normal! text-text/60 text-sm! leading-relaxed max-w-2xl text-left">
             {t("definition")}
           </p>
         </div>
 
-        <div className="hero-stagger-4 flex w-full  pt-4 phone-xs:pt-12 desktop-lg:pt-24 ">
-          <div className="flex w-full max-w-3xl flex-col ">
+        <div className="hero-stagger-4 flex w-full pt-6 tablet:pt-8 laptop:pt-10">
+          <div className="flex w-full max-w-3xl flex-col gap-2">
             <WaitListHint />
             <WaitListForm />
           </div>
         </div>
       </div>
 
+      {/* In normal flow (not the default absolute bottom overlay): the copy above can run long on
+          narrow phones, and an overlaid arrow ended up sitting on top of the waitlist button. */}
       <WebSection.NextSectionLink
         href="#value-pillars"
         ariaLabel={t("scrollToNextSection")}
+        className="static translate-x-0 self-center shrink-0 mt-auto pt-3 mb-3 laptop:mb-5"
       />
 
       <style>{`

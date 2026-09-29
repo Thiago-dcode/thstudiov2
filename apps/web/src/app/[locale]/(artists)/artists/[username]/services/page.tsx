@@ -5,6 +5,7 @@ import { getTranslations } from "next-intl/server";
 import { ArtistBreadcrumb } from "@/app/[locale]/(artists)/__components/artist-breadcrumb";
 import { buildArtistListMetadata } from "@/app/[locale]/(artists)/__components/artist-list-metadata";
 import Web from "@/lib/components/web-page.component";
+import { redirectToCanonicalUsername } from "@/lib/seo/core";
 import {
   artistDisplayName,
   buildArtistListJsonLd,
@@ -23,6 +24,7 @@ const PUBLIC_FILTERS = { is_active: true, blocked: false } as const;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, username: rawUsername } = await params;
+  redirectToCanonicalUsername(locale, rawUsername, "/services");
   const username = normalizeUsername(rawUsername);
   const { data } = await userServiceService.getAllByUsername(
     username,

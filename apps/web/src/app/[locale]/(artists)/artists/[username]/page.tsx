@@ -13,7 +13,7 @@ import {
   InstagramIcon,
   YoutubeIcon,
 } from "@/lib/components/social-icons";
-import { isMissingResponse } from "@/lib/seo/core";
+import { isMissingResponse, redirectToCanonicalUsername } from "@/lib/seo/core";
 import {
   artistDisplayName,
   buildProfileJsonLd,
@@ -30,6 +30,7 @@ type Props = { params: Promise<{ locale: string; username: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, username: rawUsername } = await params;
+  redirectToCanonicalUsername(locale, rawUsername, "");
   const username = normalizeUsername(rawUsername);
   const [response, t] = await Promise.all([
     getArtistProfileResponse(username),

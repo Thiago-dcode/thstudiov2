@@ -45,4 +45,15 @@ export interface SitemapMediaItem {
   updated_at: string;
   /** The media's own image, for the image-sitemap extension. */
   images: string[];
+  /** Video-sitemap data; null for images and GIFs. */
+  video: SitemapVideo | null;
+}
+
+/** What a `<video:video>` entry needs. URLs are absolute; text is the media's English text. */
+export interface SitemapVideo {
+  content_url: string;
+  thumbnail_url: string;
+  title: string | null;
+  description: string | null;
+  publication_date: string;
 }

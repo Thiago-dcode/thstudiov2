@@ -5,7 +5,7 @@ import { getTranslations } from "next-intl/server";
 import { MediaPageComponent } from "@/app/[locale]/(artists)/__components/media-page.component";
 import { localePrefix, urlLocaleToLanguageCode } from "@/i18n/routing";
 import { buildSeoMetadata } from "@/lib/seo/build-metadata";
-import { isMissingResponse } from "@/lib/seo/core";
+import { isMissingResponse, redirectToCanonicalUsername } from "@/lib/seo/core";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import mediaService from "@/modules/media/media.service";
 import usersService from "@/modules/users/users.service";
@@ -16,6 +16,7 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, username, public_id } = await params;
+  redirectToCanonicalUsername(locale, username, `/media/${public_id}`);
   const [response, t] = await Promise.all([
     mediaService.getSeoMetadata(public_id, urlLocaleToLanguageCode(locale)),
     getTranslations("artists.media"),

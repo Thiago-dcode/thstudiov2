@@ -6,6 +6,7 @@ import { ArtistBreadcrumb } from "@/app/[locale]/(artists)/__components/artist-b
 import { buildArtistListMetadata } from "@/app/[locale]/(artists)/__components/artist-list-metadata";
 import { Link } from "@/i18n/navigation";
 import Web from "@/lib/components/web-page.component";
+import { redirectToCanonicalUsername } from "@/lib/seo/core";
 import {
   artistDisplayName,
   buildArtistListJsonLd,
@@ -25,6 +26,7 @@ const PUBLIC_FILTERS = { blocked: false, is_active: true } as const;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, username: rawUsername } = await params;
+  redirectToCanonicalUsername(locale, rawUsername, "/collections");
   const username = normalizeUsername(rawUsername);
   const { data: collections } = await userCollectionService.getAllByUsername(
     username,

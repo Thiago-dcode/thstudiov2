@@ -8,7 +8,7 @@ import { ArtistBreadcrumb } from "@/app/[locale]/(artists)/__components/artist-b
 import { ArtistContactDialog } from "@/app/[locale]/(artists)/__components/artist-contact.dialog";
 import { Link } from "@/i18n/navigation";
 import Web from "@/lib/components/web-page.component";
-import { isMissingResponse } from "@/lib/seo/core";
+import { isMissingResponse, redirectToCanonicalUsername } from "@/lib/seo/core";
 import {
   artistDisplayName,
   buildArtistAboutJsonLd,
@@ -26,6 +26,7 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, username: rawUsername } = await params;
+  redirectToCanonicalUsername(locale, rawUsername, "/about");
   const username = normalizeUsername(rawUsername);
   const [response, { data: aboutPage }, t] = await Promise.all([
     getArtistProfileResponse(username),

@@ -92,6 +92,40 @@ const redirectToTarget = (
   return redirectResponse;
 };
 
+/**
+ * `/en/x` → `/x` is next-intl's `as-needed` prefix removal: the same URL for every visitor, so
+ * search engines should get a permanent 308 (next-intl sends a 307, which does not consolidate
+ * link signals). Only that exact redirect changes; cookie- and Accept-Language-driven redirects
+ * depend on the visitor and stay temporary.
+ *
+ * `no-store` keeps browsers from caching it: the language switcher's English link goes through
+ * `/en/x` so next-intl can reset the locale cookie, and a cached redirect would skip that request,
+ * sending a visitor with a Spanish cookie from `/x` straight back to `/es/x`.
+ */
+const makeDefaultLocalePrefixRedirectPermanent = (
+  response: NextResponse,
+  req: NextRequest,
+): NextResponse => {
+  const location = response.headers.get("location");
+  if (!location || response.status !== 307) return response;
+
+  const prefix = `/${routing.defaultLocale}`;
+  const { pathname, search } = req.nextUrl;
+  if (pathname !== prefix && !pathname.startsWith(`${prefix}/`))
+    return response;
+
+  const target = new URL(location, req.url);
+  const unprefixed = pathname.slice(prefix.length) || "/";
+  if (target.pathname !== unprefixed || target.search !== search) {
+    return response;
+  }
+
+  const permanent = NextResponse.redirect(target, 308);
+  copyResponseExtras(response, permanent);
+  permanent.headers.set("Cache-Control", "no-store");
+  return permanent;
+};
+
 const handleRefreshToken = async (
   cookies: RequestCookies,
   responseCookies: ResponseCookies,
@@ -155,6 +189,7 @@ const proxy = async (req: NextRequest) => {
   }
 
   let response = intlMiddleware(req);
+  response = makeDefaultLocalePrefixRedirectPermanent(response, req);
 
   // next-intl may redirect to a different locale than the current URL segment
   // (driven by the NEXT_LOCALE cookie or Accept-Language negotiation). When it

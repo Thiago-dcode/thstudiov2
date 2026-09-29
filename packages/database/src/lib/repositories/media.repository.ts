@@ -347,33 +347,32 @@ export class MediaRepository extends BaseRepository {
    * (`/artists/{username}/media/{public_id}`) — the URL the nested portfolio/collection views
    * canonicalize to, so only the canonical form is ever submitted.
    */
-  async getSitemapMedia(
-    limit: number,
-    offset: number,
-  ): Promise<
-    { username: string; public_id: string; updated_at: string; thumbnail: string | null }[]
-  > {
+  async getSitemapMedia(limit: number, offset: number): Promise<SitemapMediaRow[]> {
+    // A video also carries what a video-sitemap entry needs: its MP4, its poster (the image column
+    // above is that same poster) and the English title/description — the sitemap <loc> is the
+    // English URL. The user's own text wins; the AI SEO fills in for untitled work.
     const result = await Query.raw(
-      `SELECT m.public_id, m.updated_at, ${sitemapImagePathSql('m')} AS thumbnail, u.username
+      `SELECT m.public_id, m.updated_at, ${sitemapImagePathSql('m')} AS thumbnail, u.username,
+              m.media_type, m.url, m.created_at,
+              COALESCE(NULLIF(m.title, ''), m.seo_title) AS title,
+              COALESCE(NULLIF(m.description, ''), m.seo_description) AS description
        ${MediaRepository.SITEMAP_MEDIA_FROM}
        ORDER BY m.id ASC
        LIMIT $1 OFFSET $2`,
       [limit, offset],
     );
     const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];
-    return (Array.isArray(rows) ? rows : []).map(
-      (row: {
-        username: string;
-        public_id: string;
-        updated_at: string;
-        thumbnail: string | null;
-      }) => ({
-        username: row.username,
-        public_id: row.public_id,
-        updated_at: row.updated_at,
-        thumbnail: row.thumbnail ?? null,
-      }),
-    );
+    return (Array.isArray(rows) ? rows : []).map((row: SitemapMediaRow) => ({
+      username: row.username,
+      public_id: row.public_id,
+      updated_at: row.updated_at,
+      thumbnail: row.thumbnail ?? null,
+      media_type: row.media_type,
+      url: row.url ?? null,
+      created_at: row.created_at,
+      title: row.title ?? null,
+      description: row.description ?? null,
+    }));
   }
 
   /** Count for `getSitemapMedia` (same predicate). */
@@ -398,3 +397,15 @@ export class MediaRepository extends BaseRepository {
     }
   }
 }
+
+type SitemapMediaRow = {
+  username: string;
+  public_id: string;
+  updated_at: string;
+  thumbnail: string | null;
+  media_type: string;
+  url: string | null;
+  created_at: string;
+  title: string | null;
+  description: string | null;
+};

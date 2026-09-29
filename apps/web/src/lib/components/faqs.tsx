@@ -40,10 +40,14 @@ export function localizeFaqAnswer(answer: string, locale: string): string {
   );
 }
 
-export function FaqsContent() {
+/**
+ * The FAQ accordion with a link to the full /faqs page. `limit` shows only the first questions:
+ * the home page used to repeat /faqs word for word, two indexable URLs with the same content.
+ */
+export function FaqsContent({ limit }: { limit?: number } = {}) {
   const t = useTranslations("faqs");
   const locale = useLocale();
-  const items = t.raw("items") as FaqItem[];
+  const items = (t.raw("items") as FaqItem[]).slice(0, limit);
 
   return (
     <div className="flex flex-col gap-8">

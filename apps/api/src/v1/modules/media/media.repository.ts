@@ -234,6 +234,25 @@ export class MediaRepository extends BaseMediaRepository {
   }
 
   /**
+   * The media's SEO fields in the request language (media_translations), or null when the request
+   * is in the default language or that language has no row. The main row holds the English SEO,
+   * so callers keep it as the fallback.
+   */
+  async getSeoTranslation(mediaId: number): Promise<MediaSeoTranslationRow | null> {
+    const lang = this.requestService.language ?? DEFAULT_LANGUAGE;
+    if (lang === DEFAULT_LANGUAGE) return null;
+    const result = await Query.raw(
+      `SELECT seo_title, seo_description, seo_alt
+       FROM ${TABLES_ENUM.MEDIA_TRANSLATIONS}
+       WHERE media_id = $1 AND language_code = $2
+       LIMIT 1`,
+      [mediaId, lang],
+    );
+    const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];
+    return ((Array.isArray(rows) ? rows : [])[0] as MediaSeoTranslationRow | undefined) ?? null;
+  }
+
+  /**
    * The media's LLM-assigned content TAGS, localized to the request language
    * (COALESCE translation → main-row English name). Used for JSON-LD keywords + on-page chips.
    */
@@ -256,6 +275,12 @@ export class MediaRepository extends BaseMediaRepository {
       .filter((n): n is string => !!n);
   }
 }
+
+type MediaSeoTranslationRow = {
+  seo_title: string | null;
+  seo_description: string | null;
+  seo_alt: string | null;
+};
 
 type MediaSeoRow = {
   title: string | null;

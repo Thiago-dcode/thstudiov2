@@ -15,7 +15,7 @@ import Web from "@/lib/components/web-page.component";
 import { config } from "@/lib/config";
 import { getGalleryLabels } from "@/lib/gallery-labels";
 import { buildSeoMetadata } from "@/lib/seo/build-metadata";
-import { isMissingResponse } from "@/lib/seo/core";
+import { isMissingResponse, redirectToCanonicalUsername } from "@/lib/seo/core";
 import {
   artistDisplayName,
   buildPortfolioJsonLd,
@@ -37,6 +37,7 @@ export async function generateMetadata({
   params: Promise<{ locale: string; username: string; slug: string }>;
 }): Promise<Metadata> {
   const { locale, username, slug } = await params;
+  redirectToCanonicalUsername(locale, username, `/portfolios/${slug}`);
   const response = await userPortfolioService.getSeoMetadata(
     username,
     slug,

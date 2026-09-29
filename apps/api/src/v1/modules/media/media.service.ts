@@ -112,21 +112,27 @@ export class MediaService {
     );
   }
   public async getOneByPublicId(publicId: string) {
-
-
     const media = await this.mediaRepository.findOneByColumn('public_id', publicId);
 
     if (!media) return null;
 
-    const [thumbnail, url, tags] = await Promise.all([
+    const [thumbnail, url, tags, seo] = await Promise.all([
       this.helpers.getAsset(media.thumbnail),
       this.helpers.getAsset(media.url),
       this.mediaRepository.getTagsByMediaId(media.id),
+      this.mediaRepository.getSeoTranslation(media.id),
       this.signVideoAssets(media),
     ]);
 
     media.thumbnail = thumbnail;
     media.url = url;
+    // The page's alt text, JSON-LD and visible AI description follow the page language, like its
+    // <meta> (getSeoMetadata); the main row's English SEO is the fallback.
+    if (seo) {
+      media.seo_title = seo.seo_title ?? media.seo_title;
+      media.seo_description = seo.seo_description ?? media.seo_description;
+      media.seo_alt = seo.seo_alt ?? media.seo_alt;
+    }
     // Localized content tags (LLM-assigned) for JSON-LD keywords + on-page chips.
     (media as MediaWithUser).tags = tags;
 

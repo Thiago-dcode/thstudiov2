@@ -3,7 +3,7 @@
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { ArrowUpRight, Check, Maximize2, Minimize2, Share2, X } from "lucide-react"
 import Image from "next/image"
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useFullscreen } from "../../../hooks/useFullscreen"
 import { useGalleryDialog } from "../../../hooks/useGalleryDialog"
 import type { GalleryItem } from "../../../providers/gallery.provider"
@@ -17,6 +17,14 @@ const SLIDE_SIZE = "max-w-[85vw] max-h-[72vh]"
 const SLIDE_PADDING_FS = "pt-10 pb-2"
 const SLIDE_PADDING = "pt-12 pb-4"
 const ACTION_PILL = "flex items-center gap-1.5 px-3 py-1.5 bg-white/10 text-white/70 hover:text-white hover:bg-white/20 backdrop-blur-sm transition-all duration-200 text-xs focus:outline-none"
+
+/** Neighbours warmed ahead of time, as offsets from the current slide. */
+const PRELOAD_OFFSETS = [1, -1, 2]
+
+// A video neighbour shows its poster, never a second <video>: these slides exist only to peek in
+// during a swipe, and decoding three streams at once for that is not worth it.
+const previewUrl = (item?: GalleryItem) =>
+ (item?.mediaType === "VIDEO" ? item.poster : item?.url) ?? null
 
 type AdjacentSlideProps = {
  url: string
@@ -81,12 +89,45 @@ export const Gallery = () => {
  if (currentItem == null || items.length <= 1) return { prevUrl: null, nextUrl: null }
  const pi = (currentItem - 1 + items.length) % items.length
  const ni = (currentItem + 1) % items.length
- // A video neighbour shows its poster, never a second <video>: these two slides exist only to
- // peek in during a swipe, and decoding three streams at once for that is not worth it.
- const preview = (item?: GalleryItem) =>
- (item?.mediaType === "VIDEO" ? item.poster : item?.url) ?? null
- return { prevUrl: preview(items[pi]), nextUrl: preview(items[ni]) }
+ return { prevUrl: previewUrl(items[pi]), nextUrl: previewUrl(items[ni]) }
  }, [currentItem, items])
+
+ // Warm the neighbours' full-size files while the current one is on screen. Without this the
+ // next image only started downloading once it was already the current slide (the adjacent
+ // slides mount only mid-swipe), so every first visit to a photo showed an empty beat. The
+ // Image objects are kept so the requests aren't dropped and each URL is fetched once.
+ const preloaded = useRef(new Map<string, HTMLImageElement>())
+ useEffect(() => {
+ if (!isOpen || currentItem == null || items.length <= 1) return
+ for (const offset of PRELOAD_OFFSETS) {
+ const url = previewUrl(items[(currentItem + offset + items.length * 2) % items.length])
+ if (!url || preloaded.current.has(url)) continue
+ const img = new window.Image()
+ img.decoding = "async"
+ img.src = url
+ img.decode?.().catch(() => { })
+ preloaded.current.set(url, img)
+ }
+ }, [currentItem, isOpen, items])
+
+ // Which URL has its real size yet. Until then the slide has no height, so the title and the
+ // action pills — laid out around the image — would sit in the middle and then jump when it
+ // arrives. They stay hidden until the media is ready and appear already in place. An already
+ // cached image is caught on mount (before paint), so it shows instantly with no fade.
+ const [ready, setReady] = useState<{ url: string; fade: boolean } | null>(null)
+ const mediaReady = currentUrl != null && ready?.url === currentUrl
+ const markReady = useCallback((url: string | null | undefined, fade: boolean) => {
+ if (url) setReady({ url, fade })
+ }, [])
+ const imgRef = useCallback((el: HTMLImageElement | null) => {
+ if (el?.complete && el.naturalWidth > 0) markReady(el.getAttribute("src"), false)
+ }, [markReady])
+ const videoRef = useCallback((el: HTMLVideoElement | null) => {
+ if (el && el.readyState >= HTMLMediaElement.HAVE_METADATA) markReady(el.getAttribute("src"), false)
+ }, [markReady])
+ const mediaVisibility = mediaReady
+ ? cn("opacity-100", ready?.fade && "transition-opacity duration-200")
+ : "opacity-0"
 
  useEffect(() => {
  if (!isOpen || !thumbnailsRef.current) return
@@ -177,7 +218,7 @@ export const Gallery = () => {
  >
  <div className={cn("group/img relative size-fit", slideSize)}>
  {currentItemData?.title ? (
- <p className="absolute -top-6 left-0 font-medium text-xs laptop:text-sm line-clamp-1">{currentItemData.title}</p>
+ <p className={cn("absolute -top-6 left-0 font-medium text-xs laptop:text-sm line-clamp-1", mediaVisibility)}>{currentItemData.title}</p>
  ) : null}
  {currentItemData?.mediaType === "VIDEO" ? (
  // `controls` rather than autoplay: the lightbox is opened deliberately, and an
@@ -186,20 +227,30 @@ export const Gallery = () => {
  // The click-to-toggle-chrome handler is dropped here — it would fight the
  // player's own controls for the same clicks.
  <video
+ key={currentUrl}
+ ref={videoRef}
+ onLoadedMetadata={() => markReady(currentUrl, true)}
+ onError={() => markReady(currentUrl, true)}
  src={currentUrl}
  poster={currentItemData.poster ?? undefined}
  controls
  playsInline
  preload="metadata"
  aria-label={currentItemData?.alt || currentItemData?.title || ""}
- className="block h-full object-contain"
+ className={cn("block h-full object-contain", mediaVisibility)}
  onPointerDown={e => e.stopPropagation()}
  />
  ) : (
+ // Keyed by URL so a new item gets a fresh element: reusing one kept painting the
+ // previous photo under the new title until the new file arrived.
  <img
+ key={currentUrl}
+ ref={imgRef}
+ onLoad={() => markReady(currentUrl, true)}
+ onError={() => markReady(currentUrl, true)}
  src={currentUrl}
  alt={currentItemData?.alt || currentItemData?.title || ""}
- className="block h-full object-contain"
+ className={cn("block h-full object-contain", mediaVisibility)}
  draggable={false}
  onClick={fullscreen ? () => setFsControls(v => !v) : undefined}
  />
@@ -212,7 +263,7 @@ export const Gallery = () => {
  "flex items-center justify-center gap-3 transition-opacity duration-200",
  fullscreen
  ? cn("absolute bottom-4 left-0 right-0", fsControls ? "opacity-100" : "opacity-0 pointer-events-none")
- : "mt-3 opacity-100",
+ : cn("mt-3", mediaVisibility, !mediaReady && "pointer-events-none"),
  )}
  onPointerDown={e => e.stopPropagation()}
  >

@@ -9,7 +9,7 @@ import { Link } from "@/i18n/navigation";
 import { urlLocaleToLanguageCode } from "@/i18n/routing";
 import Web from "@/lib/components/web-page.component";
 import { buildSeoMetadata } from "@/lib/seo/build-metadata";
-import { isMissingResponse } from "@/lib/seo/core";
+import { isMissingResponse, redirectToCanonicalUsername } from "@/lib/seo/core";
 import {
   artistDisplayName,
   buildServiceJsonLd,
@@ -30,6 +30,7 @@ export async function generateMetadata({
   params: Promise<{ locale: string; username: string; slug: string }>;
 }): Promise<Metadata> {
   const { locale, username, slug } = await params;
+  redirectToCanonicalUsername(locale, username, `/services/${slug}`);
   const response = await userServiceService.getSeoMetadata(
     username,
     slug,
