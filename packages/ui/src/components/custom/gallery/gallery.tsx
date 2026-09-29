@@ -17,6 +17,15 @@ const SLIDE_SIZE = "max-w-[85vw] max-h-[72vh]"
 const SLIDE_PADDING_FS = "pt-10 pb-2"
 const SLIDE_PADDING = "pt-12 pb-4"
 const ACTION_PILL = "flex items-center gap-1.5 px-3 py-1.5 bg-white/10 text-white/70 hover:text-white hover:bg-white/20 backdrop-blur-sm transition-all duration-200 text-xs focus:outline-none"
+// Every slide — the current one and the two that peek in during a swipe — is the same stack:
+// the image frame, then a fixed-height actions row that is reserved even when a slide has no
+// actions. The image is centred together with that row, so it has to be the same on all of them:
+// when only the current slide had the row, a swipe landed and the new image jumped up by half
+// its height as the pills appeared under it.
+const SLIDE_STACK = "flex flex-col justify-center items-center h-full"
+const SLIDE_FRAME = "relative size-fit"
+const SLIDE_MEDIA = "block h-full object-contain"
+const ACTIONS_ROW = "mt-3 h-8 shrink-0"
 
 /** Neighbours warmed ahead of time, as offsets from the current slide. */
 const PRELOAD_OFFSETS = [1, -1, 2]
@@ -37,7 +46,7 @@ type AdjacentSlideProps = {
 const AdjacentSlide = ({ url, direction, offsetX, animate, fullscreen }: AdjacentSlideProps) => (
  <div
  className={cn(
- "absolute inset-0 flex items-center justify-center pointer-events-none",
+ "absolute inset-0 pointer-events-none",
  fullscreen ? SLIDE_PADDING_FS : SLIDE_PADDING,
  )}
  style={{
@@ -45,12 +54,12 @@ const AdjacentSlide = ({ url, direction, offsetX, animate, fullscreen }: Adjacen
  transition: animate ? TRACK_TRANSITION : "none",
  }}
  >
- <img
- src={url}
- alt=""
- className={cn(fullscreen ? SLIDE_SIZE_FS : SLIDE_SIZE, "object-contain")}
- draggable={false}
- />
+ <div className={SLIDE_STACK}>
+ <div className={cn(SLIDE_FRAME, fullscreen ? SLIDE_SIZE_FS : SLIDE_SIZE)}>
+ <img src={url} alt="" className={SLIDE_MEDIA} draggable={false} />
+ </div>
+ {!fullscreen && <div aria-hidden="true" className={ACTIONS_ROW} />}
+ </div>
  </div>
 )
 
@@ -208,7 +217,7 @@ export const Gallery = () => {
  {/* Current slide */}
  {currentUrl && (
  <div
- className="relative flex flex-col justify-center items-center h-full"
+ className={cn("relative", SLIDE_STACK)}
  style={{
  transform: `translateX(${offsetX}px)`,
  transition: animate ? TRACK_TRANSITION : "none",
@@ -216,7 +225,7 @@ export const Gallery = () => {
  }}
  onTransitionEnd={onTransitionEnd}
  >
- <div className={cn("group/img relative size-fit", slideSize)}>
+ <div className={cn("group/img", SLIDE_FRAME, slideSize)}>
  {currentItemData?.title ? (
  <p className={cn("absolute -top-6 left-0 font-medium text-xs laptop:text-sm line-clamp-1", mediaVisibility)}>{currentItemData.title}</p>
  ) : null}
@@ -237,7 +246,7 @@ export const Gallery = () => {
  playsInline
  preload="metadata"
  aria-label={currentItemData?.alt || currentItemData?.title || ""}
- className={cn("block h-full object-contain", mediaVisibility)}
+ className={cn(SLIDE_MEDIA, mediaVisibility)}
  onPointerDown={e => e.stopPropagation()}
  />
  ) : (
@@ -250,20 +259,20 @@ export const Gallery = () => {
  onError={() => markReady(currentUrl, true)}
  src={currentUrl}
  alt={currentItemData?.alt || currentItemData?.title || ""}
- className={cn("block h-full object-contain", mediaVisibility)}
+ className={cn(SLIDE_MEDIA, mediaVisibility)}
  draggable={false}
  onClick={fullscreen ? () => setFsControls(v => !v) : undefined}
  />
  )}
  </div>
 
- {(currentItemData?.href || currentItemData?.shared) && (
+ {(currentItemData?.href || currentItemData?.shared) ? (
  <div
  className={cn(
  "flex items-center justify-center gap-3 transition-opacity duration-200",
  fullscreen
  ? cn("absolute bottom-4 left-0 right-0", fsControls ? "opacity-100" : "opacity-0 pointer-events-none")
- : cn("mt-3", mediaVisibility, !mediaReady && "pointer-events-none"),
+ : cn(ACTIONS_ROW, mediaVisibility, !mediaReady && "pointer-events-none"),
  )}
  onPointerDown={e => e.stopPropagation()}
  >
@@ -293,7 +302,9 @@ export const Gallery = () => {
  </button>
  )}
  </div>
- )}
+ ) : !fullscreen ? (
+ <div aria-hidden="true" className={ACTIONS_ROW} />
+ ) : null}
  </div>
  )}
  </div>
