@@ -253,6 +253,9 @@ describe('SharpCompressService.optimizeGif', () => {
    */
   describe('compression level', () => {
     const generouslyAbove = 5 * 1024 * 1024;
+    // Each case re-encodes a detailed animation. On a busy machine one pass can take
+    // well over Jest's 30s default, and "narrows the frame" does three of them.
+    const encodeTimeoutMs = 120_000;
 
     it('produces a smaller file at VERY_HIGH than at VERY_LOW', async () => {
       // A 400px frame against a 300px cap, so BOTH levels reach the encoder: a source already
@@ -278,7 +281,7 @@ describe('SharpCompressService.optimizeGif', () => {
       expect(loose!.reencoded).toBe(true);
       expect(tight!.reencoded).toBe(true);
       expect(tight!.size).toBeLessThan(loose!.size);
-    });
+    }, encodeTimeoutMs);
 
     it('narrows the frame as the level rises', async () => {
       const source = await makeDetailedAnimatedGif();
@@ -298,7 +301,7 @@ describe('SharpCompressService.optimizeGif', () => {
       expect(widths[0]).toBe(400);
       expect(widths[0]).toBeGreaterThan(widths[1]!);
       expect(widths[1]).toBeGreaterThan(widths[2]!);
-    });
+    }, encodeTimeoutMs);
 
     it('re-encodes a source that fits its byte target but not the level it was given', async () => {
       // Under the byte target and under the unscaled cap, so the passthrough would fire on
@@ -316,7 +319,7 @@ describe('SharpCompressService.optimizeGif', () => {
       expect(result.reencoded).toBe(true);
       const metadata = await sharp(result.buffer, { animated: true }).metadata();
       expect(metadata.width).toBeLessThan(390);
-    });
+    }, encodeTimeoutMs);
   });
 
   it('returns the original bytes for a non-image multer file', async () => {
