@@ -29,7 +29,7 @@ const messages = {
         "discovered",
       ],
       subtitle:
-        "All you have to do is upload your art. We take care of the rest.",
+        "For artists who don't want to be influencers. Bring your art, we take care of the rest.",
       primaryCtaLoggedIn: "Access Atelier",
       primaryCtaLoggedOut: "Start Free Now",
       secondaryCta: "Find artists",
@@ -111,7 +111,7 @@ const messages = {
         {
           title: "No Algorithms",
           description:
-            "Great work speaks for itself. No feeds, no games, no chasing engagement.",
+            "No more {algorithm burnout}. No feeds, no games, no chasing engagement.",
         },
         {
           title: "Ownership",
@@ -136,7 +136,7 @@ const messages = {
         {
           title: "Time",
           description:
-            "Less time configuring, more time creating. Every minute saved goes back to your art.",
+            "All your energy goes into your {art}, not into social media.",
         },
         {
           title: "Credibility",
@@ -198,9 +198,9 @@ const messages = {
     },
     cta: {
       badge: "Get discovered",
-      title: "Less time on the setup. More time on the work.",
+      title: "Be an <strike>influencer</strike> artist.",
       description:
-        "A11STUDIO handles SEO, metadata, and positioning. You upload your best work — we take care of the rest.",
+        "No more algorithm burnout. Your energy belongs to your art, not to social media — A11STUDIO handles SEO and positioning so people find your work.",
       button: "Create Your Portfolio",
       waitListButton: "Bring your art",
     },

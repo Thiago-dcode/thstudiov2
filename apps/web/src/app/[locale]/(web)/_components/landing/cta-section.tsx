@@ -18,8 +18,16 @@ export async function CtaSection() {
           </span>
         </div>
         <div className="flex flex-col gap-2 items-center">
+          {/* "Be an ~~influencer~~ artist.": the struck word is real text in an <s> (content that is
+              no longer accurate), so crawlers and screen readers get the whole line, not a gap. */}
           <h2 className="max-w-2xl font-serif text-4xl font-bold leading-[1.05] tracking-tight tablet:text-6xl">
-            {t("title")}
+            {t.rich("title", {
+              strike: (chunks) => (
+                <s className="font-normal text-text-muted decoration-accent decoration-[0.08em]">
+                  {chunks}
+                </s>
+              ),
+            })}
           </h2>
 
           <p className="max-w-lg text-base! leading-relaxed text-text-muted tablet:text-lg! tablet:leading-relaxed">

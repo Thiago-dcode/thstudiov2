@@ -30,7 +30,8 @@ const messages = {
         "encontre",
         "descubra",
       ],
-      subtitle: "Basta enviar sua arte. Nós cuidamos do resto.",
+      subtitle:
+        "Para artistas que não querem ser influenciadores. Traga sua arte, nós cuidamos do resto.",
       primaryCtaLoggedIn: "Acessar o Atelier",
       primaryCtaLoggedOut: "Comece grátis agora",
       secondaryCta: "Encontrar artistas",
@@ -112,7 +113,7 @@ const messages = {
         {
           title: "Sem algoritmos",
           description:
-            "Um bom trabalho {fala} por si só. Sem feeds, sem jogos, sem correr atrás de engajamento.",
+            "Chega de {esgotamento} por algoritmo. Sem feeds, sem jogos, sem correr atrás de engajamento.",
         },
         {
           title: "Propriedade",
@@ -137,7 +138,7 @@ const messages = {
         {
           title: "Tempo",
           description:
-            "Menos tempo configurando, mais tempo {criando}. Cada minuto economizado volta para a sua arte.",
+            "Toda a sua energia vai para a sua {arte}, não para as redes sociais.",
         },
         {
           title: "Credibilidade",
@@ -199,9 +200,9 @@ const messages = {
     },
     cta: {
       badge: "Seja descoberto",
-      title: "Menos tempo na preparação. Mais tempo no ofício.",
+      title: "Seja <strike>influenciador</strike> artista.",
       description:
-        "A A11STUDIO cuida do SEO, dos metadados e do posicionamento. Você envia seu melhor trabalho — nós cuidamos do resto.",
+        "Chega de esgotamento por algoritmo. Sua energia é para a sua arte, não para as redes sociais — a A11STUDIO cuida do SEO e do posicionamento para que encontrem o seu trabalho.",
       button: "Criar seu portfólio",
       waitListButton: "Traga sua arte",
     },
