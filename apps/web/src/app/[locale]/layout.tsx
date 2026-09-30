@@ -46,6 +46,11 @@ export async function generateMetadata({
     title: { default: title, template: `%s · ${SITE_NAME}` },
     description,
     applicationName: SITE_NAME,
+    // Domain ownership proofs. Pinterest's "claim website" puts the verified domain on every pin
+    // from a11studio.com. The token is public by design (it is served in every page's <head>).
+    verification: {
+      other: { "p:domain_verify": "846081cf0257d520cae5da78f0f2e9a7" },
+    },
     // Profiles print phone numbers; iOS Safari would otherwise auto-link every digit run it sees.
     formatDetection: { telephone: false, email: false, address: false },
     // Favicon + apple-touch icons (files in public/). The PWA icons are declared in manifest.ts.
