@@ -22,11 +22,11 @@ function HeroVideoFallback() {
 }
 
 function HeroVideo() {
-
   return (
     <LazyVideo
-      src={'https://cdn.a11studio.com/assets/hero-drone-video'}
-      poster="https://cdn.a11studio.com/assets/hero-drone-video-thumbnail" className={HERO_VIDEO_CLASS}
+      src={"https://cdn.a11studio.com/assets/hero-drone-video"}
+      poster="https://cdn.a11studio.com/assets/hero-drone-video-thumbnail"
+      className={HERO_VIDEO_CLASS}
     />
   );
 }
