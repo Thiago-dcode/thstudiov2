@@ -83,6 +83,12 @@ export class S3StorageService extends StorageService {
             ContentType: resolveContentType(path),
             // Belt and braces: instructs browsers not to re-sniff a type we didn't set.
             Metadata: { 'x-content-type-options': 'nosniff' },
+            // Everything written here is final under a key that is never written again with
+            // different bytes: uploads get versioned or per-media UUID keys, and the worker's
+            // compressed output is written once. So browsers and CloudFront may keep it for a
+            // year. `move()` deliberately sets no Cache-Control: it places the RAW upload at the
+            // key the worker later overwrites, and that raw copy must not be pinned anywhere.
+            CacheControl: 'public, max-age=31536000, immutable',
         });
         const result = await this.s3Client.send(command);
         return !!result;

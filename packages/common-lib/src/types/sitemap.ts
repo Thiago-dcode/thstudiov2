@@ -56,4 +56,6 @@ export interface SitemapVideo {
   title: string | null;
   description: string | null;
   publication_date: string;
+  /** Whole seconds; null for videos processed before durations were stored. */
+  duration_seconds: number | null;
 }

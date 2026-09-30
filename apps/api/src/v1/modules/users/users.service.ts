@@ -32,7 +32,7 @@ import { UpdateUserPasswordRequest } from './requests/update-user-password.reque
 import { compare, hash } from '@repo/common-lib/utils/hash';
 import { AiService } from '@repo/backend-lib/services/ai-service';
 import { MediaModerationException } from 'src/common/exceptions/media-moderation-exception';
-import { versionedAssetPath } from 'src/common/utils/asset-path.util';
+import { descriptiveFilename, versionedAssetPath } from 'src/common/utils/asset-path.util';
 import { ArtistBranding, ArtistCard, UpdateUserInput } from '@repo/common-lib/types/user';
 import { EnumType } from '@repo/common-lib/constants/enums';
 import { addMonths } from 'date-fns';
@@ -206,7 +206,12 @@ export class UserService {
         asset: avatar,
         // Versioned per upload: the CDN serves a stable unsigned URL per key, so reusing
         // `users/<id>/avatar` left every cache showing the previous avatar after a change.
-        path: versionedAssetPath(`users/${user.public_id}/avatar.webp`),
+        path: versionedAssetPath(
+          `users/${user.public_id}/${descriptiveFilename(
+            [rest.name ?? user.name, rest.surname ?? user.surname, rest.profession ?? user.profession],
+            'avatar',
+          )}`,
+        ),
         targetSizeMb: 0.3,
       });
       const avatarUrl = await this.helpers.getAsset(avatarPath);
@@ -228,7 +233,12 @@ export class UserService {
     if (banner && banner.size > 0) {
       bannerPath = await this.helpers.setAsset({
         asset: banner,
-        path: versionedAssetPath(`users/${user.public_id}/banner.webp`),
+        path: versionedAssetPath(
+          `users/${user.public_id}/${descriptiveFilename(
+            [rest.name ?? user.name, rest.surname ?? user.surname, rest.profession ?? user.profession],
+            'banner',
+          )}`,
+        ),
         targetSizeMb: 1,
       });
       const bannerUrl = await this.helpers.getAsset(bannerPath);

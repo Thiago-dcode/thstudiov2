@@ -57,11 +57,16 @@ export default async function Page({ params, searchParams }: Props) {
   const t = await getTranslations("artists.portfolios");
   const tEdit = await getTranslations("artists.editAria");
 
-  const [userExist, response, userAuth, profile] = await Promise.all([
+  const [userExist, response, userAuth, profile, seo] = await Promise.all([
     usersService.usernameExists(username),
     userPortfolioService.getByUsername(username, slug),
     userSession(),
     getArtistProfile(username),
+    userPortfolioService.getSeoMetadata(
+      username,
+      slug,
+      urlLocaleToLanguageCode(locale),
+    ),
   ]);
   if (!userExist.data) {
     notFound();
@@ -98,7 +103,13 @@ export default async function Page({ params, searchParams }: Props) {
   return (
     <Web.Container>
       <JsonLd
-        data={buildPortfolioJsonLd(portfolio, artist, locale, t("pageTitle"))}
+        data={buildPortfolioJsonLd(
+          portfolio,
+          artist,
+          locale,
+          t("pageTitle"),
+          seo.data?.seo_description,
+        )}
       />
       <ArtistBreadcrumb
         username={username}

@@ -16,7 +16,7 @@ import { ApiException } from "src/common/exceptions/api-exception";
 import { serviceCacheKeys } from "../user-services/user-service.service";
 import { cleanObj } from "@repo/common-lib/utils/object";
 import { insertWithUniqueSlug, resolveEntitySlug } from "src/common/utils/slug.util";
-import { versionedAssetPath } from "src/common/utils/asset-path.util";
+import { descriptiveFilename, versionedAssetPath } from "src/common/utils/asset-path.util";
 
 const CACHE_TTL = 1000 * 60 * 60 * 24;
 
@@ -105,7 +105,7 @@ export class ServiceService {
     let thumbnailPath: string | undefined;
     if (request.thumbnail) {
       thumbnailPath = versionedAssetPath(
-        `users/${this.requestService.user.public_id}/services/${slug}/thumbnail.webp`,
+        `users/${this.requestService.user.public_id}/services/${slug}/${descriptiveFilename([slug], 'cover')}`,
       );
       this.logger.info('Uploading thumbnail', { path: thumbnailPath });
 
@@ -189,7 +189,7 @@ export class ServiceService {
     if (request.thumbnail) {
       // Versioned per upload so the CDN URL changes; the old object is deleted just below.
       thumbnailPath = versionedAssetPath(
-        `users/${this.requestService.user.public_id}/services/${service.slug}/thumbnail.webp`,
+        `users/${this.requestService.user.public_id}/services/${service.slug}/${descriptiveFilename([service.slug], 'cover')}`,
       );
       this.logger.info('Uploading thumbnail', { path: thumbnailPath });
 

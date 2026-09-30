@@ -2,6 +2,7 @@ import { MailWarning } from "lucide-react";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { serverEnv } from "@/env/server";
+import { buildSupportPageJsonLd, JsonLd } from "@/lib/seo/json-ld";
 import { buildStaticPageMetadata } from "@/lib/seo/static-metadata";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import usersService from "@/modules/users/users.service";
@@ -25,14 +26,29 @@ export async function generateMetadata({
   });
 }
 
-export default async function SupportPage() {
-  const session = await userSession();
-  const supportUser = await usersService.getCompact(serverEnv.SUPPORT_USERNAME);
-  const t = await getTranslations("support");
+export default async function SupportPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  const [session, supportUser, t, tSeo] = await Promise.all([
+    userSession(),
+    usersService.getCompact(serverEnv.SUPPORT_USERNAME),
+    getTranslations("support"),
+    getTranslations("seo"),
+  ]);
   const defaultName = session?.username;
 
   return (
     <section className="mx-auto w-full max-w-3xl px-6 py-16 tablet:px-10 tablet:py-24">
+      <JsonLd
+        data={buildSupportPageJsonLd(locale, {
+          description: tSeo("organizationDescription"),
+          founderRole: tSeo("founderRole"),
+          pageName: t("metadata.title"),
+        })}
+      />
       <div className="space-y-3">
         <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-text-muted">
           {t("contactLabel")}

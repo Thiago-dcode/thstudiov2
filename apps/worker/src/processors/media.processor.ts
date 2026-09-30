@@ -621,6 +621,11 @@ export class MediaProcessor {
                 // Null when the clip is the media itself: those bytes are already `bytes`, and
                 // repeating them here would double-charge the user's storage.
                 video_preview_bytes: videoPreview?.clip?.size ?? null,
+                // For VideoObject.duration and the video sitemap. Only sent for video, so images and
+                // GIFs never depend on the column (it arrived by migration, run after the deploy).
+                ...('durationSeconds' in mediaCompressed
+                    ? { duration_seconds: Math.round(mediaCompressed.durationSeconds) }
+                    : {}),
                 url: mediaPath,
                 extension,
                 shape,

@@ -14,12 +14,12 @@ const messages = {
     metadata: {
       title: "A11STUDIO — Descubre y contrata artistas | Portafolios",
       description:
-        "Encuentra y contrata fotógrafos, ilustradores, cineastas y diseñadores, o crea el portafolio profesional que hará que descubran tu trabajo. Hecho por un artista, para artistas.",
+        "Encuentra y contrata fotógrafos, ilustradores y cineastas, o crea tu portafolio profesional: tú subes tu arte, nosotros nos encargamos de la parte técnica.",
     },
     hero: {
       srTitle: "A11STUDIO — deja que tu arte sea descubierto.",
       definition:
-        "A11STUDIO es una plataforma de portafolios donde los artistas muestran su trabajo y los clientes los descubren y contratan.",
+        "A11STUDIO es donde fotógrafos, ilustradores, cineastas y diseñadores muestran su trabajo, y donde los clientes vienen a encontrarlos y contratarlos.",
       titlePrefix: "Deja que tu",
       titleAccentWords: ["arte", "visión", "talento", "pasión", "voz"],
       titleConnector: "se",

@@ -37,8 +37,7 @@ scripts/deploy.sh
 scripts/a11studio.service
 
 # Local-only working docs (untracked 2026-08-12; earlier revisions remain in git history).
-docs/SEO-AUDIT.md
-docs/brand-search/
+docs/seo/
 
 # Turbo
 .turbo

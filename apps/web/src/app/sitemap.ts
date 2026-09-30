@@ -83,6 +83,9 @@ function mediaVideos(
       thumbnail_loc: xmlEscape(r.video.thumbnail_url),
       content_loc: xmlEscape(r.video.content_url),
       publication_date: r.video.publication_date,
+      ...(r.video.duration_seconds
+        ? { duration: r.video.duration_seconds }
+        : {}),
     },
   ];
 }
@@ -95,6 +98,8 @@ const STATIC_PATHS = [
   "/about",
   "/faqs",
   "/support",
+  // The one indexable auth page: a "Sign in" sitelink candidate under brand searches.
+  "/auth/login",
   "/legal/privacy",
   "/legal/terms",
   "/legal/cookies",

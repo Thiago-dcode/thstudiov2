@@ -26,6 +26,8 @@ export type MediaSchema = {
    */
   video_preview?: string | null;
   video_preview_bytes?: number | null;
+  /** VIDEO only: length in whole seconds, measured while transcoding. Null for older videos. */
+  duration_seconds?: number | null;
   is_featured: boolean;
   is_value_pillars: boolean;
   is_highlight: boolean;

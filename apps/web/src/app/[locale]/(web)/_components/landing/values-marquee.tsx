@@ -10,7 +10,9 @@ export const ValuesMarquee = ({
   items,
   itemNode = (item, i) => (
     <div key={i} className="mr-12 flex w-72 shrink-0 flex-col gap-2">
-      <h3 className="text-lg! font-medium!">{item.title}</h3>
+      <p className="font-serif! text-lg! font-medium! leading-tight! tracking-[-0.015em]">
+        {item.title}
+      </p>
       <p className="text-sm! text-text-muted">{item.description}</p>
     </div>
   ),

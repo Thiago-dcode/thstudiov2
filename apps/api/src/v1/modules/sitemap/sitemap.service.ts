@@ -118,6 +118,7 @@ export class SitemapService {
                 title: row.title,
                 description: row.description,
                 publication_date: new Date(row.created_at).toISOString(),
+                duration_seconds: row.duration_seconds,
               }
             : null,
       })),

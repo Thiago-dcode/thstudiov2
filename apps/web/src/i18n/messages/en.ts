@@ -12,12 +12,12 @@ const messages = {
     metadata: {
       title: "A11STUDIO — Discover & Hire Artists | Portfolios for Artists",
       description:
-        "Find and hire photographers, illustrators, filmmakers and designers — or build the professional portfolio that gets your work discovered. Built by an artist, for artists.",
+        "Find and hire photographers, illustrators and filmmakers, or build your professional portfolio: you upload your art, we take care of the technical side.",
     },
     hero: {
       srTitle: "A11STUDIO — let your art be discovered.",
       definition:
-        "A11STUDIO is a portfolio platform where artists showcase their work and clients discover and hire them.",
+        "A11STUDIO is where photographers, illustrators, filmmakers and designers show their work — and where clients come to find and hire them.",
       titlePrefix: "Let your",
       titleAccentWords: ["art", "vision", "craft", "passion", "voice"],
       titleConnector: "be",

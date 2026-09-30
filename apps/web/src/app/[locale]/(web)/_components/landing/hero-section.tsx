@@ -2,12 +2,10 @@ import { LazyVideo } from "@repo/ui/components/custom/LazyVideo";
 import { SlotMachine } from "@repo/ui/components/custom/slot-machine";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
-import assetService from "@/modules/assets/asset.service";
 import {
   WaitListForm,
   WaitListHint,
 } from "@/modules/wait-list/components/wait-list-form";
-import { reportSectionError } from "./section-error";
 import { WebSection } from "./web-section";
 
 // The video is the hero's flexible part: the copy below keeps its natural height and the video
@@ -23,15 +21,12 @@ function HeroVideoFallback() {
   );
 }
 
-async function HeroVideo() {
-  const heroVideo = await assetService.getBySlug("hero-drone-video");
-  reportSectionError("hero-video", heroVideo);
-  if (!heroVideo.data?.url) return <HeroVideoFallback />;
+function HeroVideo() {
+
   return (
     <LazyVideo
-      src={heroVideo.data.url}
-      poster={heroVideo.data.thumbnail ?? undefined}
-      className={HERO_VIDEO_CLASS}
+      src={'https://cdn.a11studio.com/assets/hero-drone-video'}
+      poster="https://cdn.a11studio.com/assets/hero-drone-video-thumbnail" className={HERO_VIDEO_CLASS}
     />
   );
 }
@@ -96,9 +91,9 @@ export async function HeroSection() {
           </p>
           {/* The one plain "what is A11STUDIO" sentence: what Google and answer engines quote when
               someone searches the brand name. Kept quiet visually; the headline does the selling. */}
-          <p className="hero-stagger-2 mt-2 font-sans! font-normal! text-text/60 text-sm! leading-relaxed max-w-2xl text-left">
+          {/* <p className="hero-stagger-2 mt-2 font-sans! font-normal! text-text/60 text-sm! leading-relaxed max-w-2xl text-left">
             {t("definition")}
-          </p>
+          </p> */}
         </div>
 
         <div className="hero-stagger-4 flex w-full pt-6 tablet:pt-8 laptop:pt-10">

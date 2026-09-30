@@ -850,6 +850,20 @@ export class AiService {
     });
   }
 
+  /**
+   * The model still writes the English connector into Spanish/Portuguese titles now and then
+   * ("Fotografía aérea by Thiago Ferreira") despite the prompt rule. "de" is correct in both
+   * languages, so the title is repaired rather than rejected — a rejected title falls back to the
+   * English one, which is worse on an /es or /pt page.
+   */
+  private localizeTitleConnector(
+    title: string | null,
+    lc: EnumType<'LANGUAGE_CODE'>,
+  ): string | null {
+    if (!title || (lc !== 'ES' && lc !== 'PT')) return title;
+    return title.replace(/\s+by\s+/gi, ' de ');
+  }
+
   /** Read one locale's object from the model's `translations` map (case-insensitive key). */
   private localeObject(raw: unknown, lc: EnumType<'LANGUAGE_CODE'>): Record<string, unknown> {
     const byLocale = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
@@ -863,7 +877,10 @@ export class AiService {
       const v = this.localeObject(raw, lc);
       return {
         language_code: lc,
-        seo_title: this.sanitizeSeoText(v.seo_title ?? v.title, ENTITY_SEO_TITLE_MAX),
+        seo_title: this.localizeTitleConnector(
+          this.sanitizeSeoText(v.seo_title ?? v.title, ENTITY_SEO_TITLE_MAX),
+          lc,
+        ),
         seo_description: this.sanitizeSeoText(v.seo_description ?? v.description, ENTITY_SEO_DESCRIPTION_MAX),
       };
     });
@@ -883,7 +900,10 @@ export class AiService {
       const v = this.localeObject(raw, lc);
       return {
         language_code: lc,
-        seo_title: this.sanitizeSeoText(v.seo_title ?? v.title, MEDIA_SEO_TITLE_MAX),
+        seo_title: this.localizeTitleConnector(
+          this.sanitizeSeoText(v.seo_title ?? v.title, MEDIA_SEO_TITLE_MAX),
+          lc,
+        ),
         seo_description: this.sanitizeSeoText(v.seo_description ?? v.description, MEDIA_SEO_DESCRIPTION_MAX),
         seo_alt: this.sanitizeSeoText(v.seo_alt ?? v.alt, MEDIA_SEO_ALT_MAX),
       };

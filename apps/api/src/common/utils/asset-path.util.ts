@@ -1,4 +1,5 @@
 import { randomBytes } from 'node:crypto';
+import { generateValidSlug } from '@repo/common-lib/utils/generate-valid-slug';
 
 /** Bytes of randomness per key; hex-encoded, so the suffix is twice this many characters. */
 const VERSION_BYTES = 4;
@@ -38,4 +39,30 @@ export const versionedAssetPath = (path: string): string => {
   }
 
   return `${directory}${filename.slice(0, dot)}-${version}${filename.slice(dot)}`;
+};
+
+/** Longest slug kept before the kind suffix, so keys (and CDN URLs) stay readable. */
+const DESCRIPTIVE_NAME_MAX = 60;
+
+/**
+ * A descriptive file name for an image key — `thiago-ferreira-landscape-photographer-avatar.webp`
+ * rather than `avatar.webp`. Google Images reads the file name as a (small) relevance signal, and
+ * media files already get AI-written names; profile images and covers were the generic exception.
+ *
+ * Accents are folded before slugging (`generateValidSlug` drops non-ASCII letters, so "Coruña"
+ * would become "corua"). Empty parts are skipped, and with nothing left the result is just the
+ * kind, so the key is never worse than before. Pass the result through {@link versionedAssetPath}.
+ */
+export const descriptiveFilename = (
+  parts: (string | null | undefined)[],
+  kind: string,
+  extension = 'webp',
+): string => {
+  const folded = parts
+    .filter(Boolean)
+    .join(' ')
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '');
+  const slug = generateValidSlug(folded).slice(0, DESCRIPTIVE_NAME_MAX).replace(/-+$/, '');
+  return `${slug ? `${slug}-` : ''}${kind}.${extension}`;
 };

@@ -353,7 +353,7 @@ export class MediaRepository extends BaseRepository {
     // English URL. The user's own text wins; the AI SEO fills in for untitled work.
     const result = await Query.raw(
       `SELECT m.public_id, m.updated_at, ${sitemapImagePathSql('m')} AS thumbnail, u.username,
-              m.media_type, m.url, m.created_at,
+              m.media_type, m.url, m.created_at, m.duration_seconds,
               COALESCE(NULLIF(m.title, ''), m.seo_title) AS title,
               COALESCE(NULLIF(m.description, ''), m.seo_description) AS description
        ${MediaRepository.SITEMAP_MEDIA_FROM}
@@ -370,6 +370,7 @@ export class MediaRepository extends BaseRepository {
       media_type: row.media_type,
       url: row.url ?? null,
       created_at: row.created_at,
+      duration_seconds: row.duration_seconds ?? null,
       title: row.title ?? null,
       description: row.description ?? null,
     }));
@@ -406,6 +407,7 @@ type SitemapMediaRow = {
   media_type: string;
   url: string | null;
   created_at: string;
+  duration_seconds: number | null;
   title: string | null;
   description: string | null;
 };

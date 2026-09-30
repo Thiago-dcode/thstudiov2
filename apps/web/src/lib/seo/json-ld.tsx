@@ -274,6 +274,25 @@ export function buildAboutPageJsonLd(
   ]);
 }
 
+/**
+ * /support: a `ContactPage` about the brand. The Organization node carries the `contactPoint`, so the
+ * page and the support email resolve to the same entity.
+ */
+export function buildSupportPageJsonLd(
+  locale: string,
+  copy: BrandCopy & { pageName: string },
+) {
+  return graph([
+    organizationNode(copy.description, copy.founderRole),
+    {
+      "@type": "ContactPage",
+      ...pageBase(locale, "/support"),
+      name: copy.pageName,
+      about: { "@id": ORGANIZATION_ID() },
+    },
+  ]);
+}
+
 /** Strip HTML tags + collapse whitespace — FAQ answers are authored as rich HTML. */
 const stripHtml = (html: string) =>
   collapseWhitespace(html.replace(/<[^>]*>/g, " "));
@@ -524,6 +543,11 @@ export function buildMediaJsonLd(
     keywords: media.tags?.length ? media.tags.join(", ") : undefined,
     uploadDate: uploaded,
     dateModified: isoDate(media.updated_at),
+    // ISO 8601 duration (PT95S is valid; Google normalizes it). Unknown for older videos.
+    duration:
+      isVideo && media.duration_seconds
+        ? `PT${media.duration_seconds}S`
+        : undefined,
   };
 
   return graph([
@@ -532,12 +556,27 @@ export function buildMediaJsonLd(
   ]);
 }
 
+/**
+ * A portfolio's or collection's description for this page's language. The artist writes one text,
+ * in their own language, so on `/es` and `/pt` the localized AI description (from the entity's
+ * `/metadata` endpoint) describes the page better; the default locale keeps the artist's words.
+ */
+const entityDescription = (
+  locale: string,
+  own?: string | null,
+  localizedSeo?: string | null,
+) =>
+  resolveLocale(locale) === "en"
+    ? text(own) || text(localizedSeo)
+    : text(localizedSeo) || text(own);
+
 /** CollectionPage + ImageGallery + breadcrumb for a portfolio (keywords from its categories). */
 export function buildPortfolioJsonLd(
   portfolio: FullPortfolio,
   artist: ArtistRef,
   locale: string,
   listName: string,
+  localizedSeoDescription?: string | null,
 ) {
   const path = `/artists/${artist.username}/portfolios/${portfolio.slug}`;
   const cover = portfolio.thumbnail;
@@ -546,7 +585,11 @@ export function buildPortfolioJsonLd(
       "@type": "CollectionPage",
       ...pageBase(locale, path),
       name: portfolio.title,
-      description: text(portfolio.description),
+      description: entityDescription(
+        locale,
+        portfolio.description,
+        localizedSeoDescription,
+      ),
       author: personRef(artist, locale),
       keywords: (portfolio.categories ?? [])
         .map((c) => c.name)
@@ -573,6 +616,7 @@ export function buildCollectionJsonLd(
   artist: ArtistRef,
   locale: string,
   listName: string,
+  localizedSeoDescription?: string | null,
 ) {
   const path = `/artists/${artist.username}/collections/${collection.slug}`;
   return graph([
@@ -580,7 +624,11 @@ export function buildCollectionJsonLd(
       "@type": "CollectionPage",
       ...pageBase(locale, path),
       name: collection.title,
-      description: text(collection.description),
+      description: entityDescription(
+        locale,
+        collection.description,
+        localizedSeoDescription,
+      ),
       author: personRef(artist, locale),
       // Collections have no categories; keywords are their media's most frequent content tags.
       keywords: collection.tags?.length

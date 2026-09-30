@@ -51,7 +51,7 @@ export default async function Page({ params, searchParams }: Props) {
   const t = await getTranslations("artists.collections");
   const tEdit = await getTranslations("artists.editAria");
 
-  const [userExist, response, userAuth, profile] = await Promise.all([
+  const [userExist, response, userAuth, profile, seo] = await Promise.all([
     usersService.usernameExists(username),
     userCollectionService.getByUsername(
       username,
@@ -60,6 +60,11 @@ export default async function Page({ params, searchParams }: Props) {
     ),
     userSession(),
     getArtistProfile(username),
+    userCollectionService.getSeoMetadata(
+      username,
+      slug,
+      urlLocaleToLanguageCode(locale),
+    ),
   ]);
 
   if (!userExist.data) {
@@ -108,7 +113,13 @@ export default async function Page({ params, searchParams }: Props) {
   return (
     <Web.Container>
       <JsonLd
-        data={buildCollectionJsonLd(collection, artist, locale, t("pageTitle"))}
+        data={buildCollectionJsonLd(
+          collection,
+          artist,
+          locale,
+          t("pageTitle"),
+          seo.data?.seo_description,
+        )}
       />
       <ArtistBreadcrumb
         username={username}
