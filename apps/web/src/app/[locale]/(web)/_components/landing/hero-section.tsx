@@ -8,12 +8,12 @@ import {
 } from "@/modules/wait-list/components/wait-list-form";
 import { WebSection } from "./web-section";
 
-// The video is the hero's flexible part: the copy below keeps its natural height and the video
-// fills what is left of the first screen (`--hero-h`, set on the section), capped at its design
-// proportion. On a short screen it gives up height to the copy — down to a floor, past which the
-// section grows — so the headline and the waitlist never get clipped or overlapped.
+// The video and the copy share the first screen (`--hero-h`, set on the section). The video takes
+// most of the spare height (grow 4:1) up to its design proportion; what's left past that cap goes
+// to the copy as breathing room. On a short screen the video gives up height instead — down to a
+// floor, past which the section grows — so the headline and the waitlist never get clipped.
 const HERO_VIDEO_CLASS =
-  "z-0 w-full flex-1 basis-0 object-cover min-h-[calc(var(--hero-h)*0.25)] max-h-[calc(var(--hero-h)*0.4)] desktop:max-h-[calc(var(--hero-h)*0.5)] desktop-lg:max-h-[calc(var(--hero-h)*0.6)]";
+  "z-0 w-full grow-[4] basis-0 object-cover min-h-[calc(var(--hero-h)*0.25)] max-h-[calc(var(--hero-h)*0.4)] desktop:max-h-[calc(var(--hero-h)*0.5)] desktop-lg:max-h-[calc(var(--hero-h)*0.6)]";
 
 function HeroVideoFallback() {
   return (
@@ -46,8 +46,11 @@ export async function HeroSection() {
         <HeroVideo />
       </Suspense>
 
-      {/* ── Content ── */}
-      <div className="z-10 mx-auto flex w-full shrink-0 flex-col justify-start pt-3 px-2">
+      {/* ── Content ──
+          Three groups — headline copy, waitlist, next-section arrow — spaced evenly
+          (`justify-evenly`), so any spare height is shared between them instead of pooling in one
+          gap, and the arrow sits at the same distance from the form as the form from the copy. */}
+      <div className="z-10 mx-auto flex w-full grow flex-col justify-evenly gap-6 tablet:gap-8 px-2 py-4">
         <div className="flex flex-col items-start w-full">
           {/* The document's h1 is a plain sentence. The animated headline below renders every
               reel word several times over (the slot-machine strip), so as the h1 it read to
@@ -96,21 +99,21 @@ export async function HeroSection() {
           </p> */}
         </div>
 
-        <div className="hero-stagger-4 flex w-full pt-6 tablet:pt-8 laptop:pt-10">
+        <div className="hero-stagger-4 flex w-full">
           <div className="flex w-full max-w-3xl flex-col gap-2">
             <WaitListHint />
             <WaitListForm />
           </div>
         </div>
-      </div>
 
-      {/* In normal flow (not the default absolute bottom overlay): the copy above can run long on
-          narrow phones, and an overlaid arrow ended up sitting on top of the waitlist button. */}
-      <WebSection.NextSectionLink
-        href="#value-pillars"
-        ariaLabel={t("scrollToNextSection")}
-        className="static translate-x-0 self-center shrink-0 mt-auto pt-3 mb-3 laptop:mb-5"
-      />
+        {/* In normal flow (not the default absolute bottom overlay): the copy above can run long
+            on narrow phones, and an overlaid arrow ended up sitting on top of the waitlist button. */}
+        <WebSection.NextSectionLink
+          href="#value-pillars"
+          ariaLabel={t("scrollToNextSection")}
+          className="static translate-x-0 self-center"
+        />
+      </div>
 
       <style>{`
  /* ── Staggered entrance animations ── */
