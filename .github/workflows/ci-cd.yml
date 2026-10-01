@@ -61,6 +61,11 @@ jobs:
     permissions:
       contents: read
       packages: write
+    # One runner per image so the three builds run in parallel instead of queueing.
+    strategy:
+      fail-fast: true
+      matrix:
+        app: [api, worker, web]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -78,31 +83,27 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push api
+      # The layer cache lives in GHCR, not the Actions cache: the repo-wide Actions
+      # cache is capped at 10 GB and was permanently full, so layers were evicted
+      # before they could be reused. One cache image per app and environment keeps
+      # each build from evicting the others' layers.
+      - name: Build and push ${{ matrix.app }}
+        if: matrix.app != 'web'
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: apps/api/Dockerfile
+          file: apps/${{ matrix.app }}/Dockerfile
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/a11studio-dev-api:develop
-            ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/a11studio-dev-api:sha-${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+            ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/a11studio-dev-${{ matrix.app }}:develop
+            ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/a11studio-dev-${{ matrix.app }}:sha-${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/a11studio-cache-dev-${{ matrix.app }}:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/a11studio-cache-dev-${{ matrix.app }}:buildcache,mode=max,image-manifest=true,oci-mediatypes=true
 
-      - name: Build and push worker
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: apps/worker/Dockerfile
-          push: true
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/a11studio-dev-worker:develop
-            ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/a11studio-dev-worker:sha-${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
+      # Web is a separate step so its build-args and secrets are never handed to the
+      # api and worker builds.
       - name: Build and push web
+        if: matrix.app == 'web'
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -126,14 +127,14 @@ jobs:
             CDN_URL=${{ secrets.CDN_URL }}
           # Real secrets go through BuildKit secret mounts, never build-args: a
           # build-arg becomes ENV in the builder stage and `cache-to: mode=max`
-          # exports that stage to the shared Actions cache.
+          # exports that stage to the layer cache.
           secrets: |
             app_api_key=${{ secrets.APP_API_KEY }}
             app_token=${{ secrets.APP_TOKEN }}
             geoapify_key=${{ secrets.GEOAPIFY_KEY }}
             encryption_secret=${{ secrets.ENCRYPTION_SECRET }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/a11studio-cache-dev-web:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/a11studio-cache-dev-web:buildcache,mode=max,image-manifest=true,oci-mediatypes=true
 
   deploy:
     needs: build-and-push
@@ -190,6 +191,11 @@ jobs:
     permissions:
       contents: read
       packages: write
+    # One runner per image so the three builds run in parallel instead of queueing.
+    strategy:
+      fail-fast: true
+      matrix:
+        app: [api, worker, web]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -207,31 +213,27 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push api
+      # The layer cache lives in GHCR, not the Actions cache: the repo-wide Actions
+      # cache is capped at 10 GB and was permanently full, so layers were evicted
+      # before they could be reused. One cache image per app and environment keeps
+      # each build from evicting the others' layers.
+      - name: Build and push ${{ matrix.app }}
+        if: matrix.app != 'web'
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: apps/api/Dockerfile
+          file: apps/${{ matrix.app }}/Dockerfile
           push: true
           tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/a11studio-prod-api:main
-            ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/a11studio-prod-api:sha-${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+            ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/a11studio-prod-${{ matrix.app }}:main
+            ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/a11studio-prod-${{ matrix.app }}:sha-${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/a11studio-cache-prod-${{ matrix.app }}:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/a11studio-cache-prod-${{ matrix.app }}:buildcache,mode=max,image-manifest=true,oci-mediatypes=true
 
-      - name: Build and push worker
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: apps/worker/Dockerfile
-          push: true
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/a11studio-prod-worker:main
-            ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/a11studio-prod-worker:sha-${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
+      # Web is a separate step so its build-args and secrets are never handed to the
+      # api and worker builds.
       - name: Build and push web
+        if: matrix.app == 'web'
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -253,14 +255,16 @@ jobs:
             SUPPORT_USERNAME=${{ secrets.SUPPORT_USERNAME }}
             REGISTRATION_IS_CLOSED=${{ secrets.REGISTRATION_IS_CLOSED }}
             CDN_URL=${{ secrets.CDN_URL }}
-          # See the dev build step: secrets must not travel as build-args.
+          # Real secrets go through BuildKit secret mounts, never build-args: a
+          # build-arg becomes ENV in the builder stage and `cache-to: mode=max`
+          # exports that stage to the layer cache.
           secrets: |
             app_api_key=${{ secrets.APP_API_KEY }}
             app_token=${{ secrets.APP_TOKEN }}
             geoapify_key=${{ secrets.GEOAPIFY_KEY }}
             encryption_secret=${{ secrets.ENCRYPTION_SECRET }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/a11studio-cache-prod-web:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/a11studio-cache-prod-web:buildcache,mode=max,image-manifest=true,oci-mediatypes=true
 
   deploy-prod:
     needs: build-and-push-prod
