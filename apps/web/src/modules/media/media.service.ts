@@ -1,5 +1,7 @@
 import type { EntitySeoMetadata } from "@repo/common-lib/types/ai";
 import type {
+  DeleteManyMediaInput,
+  DeleteManyMediaResult,
   Media,
   MediaIndexRequest,
   MediaWithUser,
@@ -70,6 +72,15 @@ class MediaService extends BaseService {
   ): Promise<ApiResponse<Media[]>> {
     return await this.fetchApi.patch({
       resource: "/locations",
+      body,
+    });
+  }
+  /** `POST /media/delete-many` — the API deletes the listed media one by one. */
+  async deleteMany(
+    body: DeleteManyMediaInput,
+  ): Promise<ApiResponse<DeleteManyMediaResult>> {
+    return await this.fetchApi.post({
+      resource: "/delete-many",
       body,
     });
   }

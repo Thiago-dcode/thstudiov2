@@ -1,5 +1,8 @@
 import { ENUMS } from "@repo/common-lib/constants/enums";
-import { MAX_MEDIA_LOCATION_BATCH } from "@repo/common-lib/constants/limits";
+import {
+  MAX_MEDIA_DELETE_BATCH,
+  MAX_MEDIA_LOCATION_BATCH,
+} from "@repo/common-lib/constants/limits";
 import * as z from "zod";
 import {
   formDataBoolean,
@@ -86,6 +89,14 @@ export const updateMediaLocationsSchema = z.object({
     .array(z.number().int().positive())
     .min(1)
     .max(MAX_MEDIA_LOCATION_BATCH),
+});
+
+/** Body of `POST /media/delete-many`. */
+export const deleteManyMediaSchema = z.object({
+  media: z
+    .array(z.number().int().positive())
+    .min(1)
+    .max(MAX_MEDIA_DELETE_BATCH),
 });
 
 export type CreateMediaSchemaType = z.infer<

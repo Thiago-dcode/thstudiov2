@@ -30,6 +30,7 @@ import { generateMediaMetadataAction } from "@/modules/ai/actions/generate-media
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { useSubscribeToUserNotification } from "@/modules/user-notifications/hooks/useSubscribeToUserNotification";
 import { createMediaApi, updateMediaApi } from "../api/media-api.client";
+import { deleteManyMediaAction } from "../server-actions/delete-many-media.action";
 import { deleteMediaAction } from "../server-actions/delete-media.action";
 import { updateMediaLocationsAction } from "../server-actions/update-media-locations.action";
 import {
@@ -89,6 +90,9 @@ type MediaContextType = {
   deleteSingleMedia: (
     media: Media,
   ) => Promise<Awaited<ReturnType<typeof deleteMediaAction>>>;
+  deleteManyMedia: (
+    media: Media[],
+  ) => Promise<Awaited<ReturnType<typeof deleteManyMediaAction>>>;
   isLoading: boolean;
   isMediaLoading: (media: Media) => boolean;
   mediaPendingToUpdate: UploadMedia[];
@@ -528,6 +532,95 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const deleteManyMedia = async (media: Media[]) => {
+    const items = [...new Map(media.map((item) => [item.id, item])).values()];
+    const ids = new Set(items.map((item) => item.id));
+    const current = mediaUploadsRef.current;
+    const created = new Map(
+      items
+        .filter(
+          (item) =>
+            !current.some(
+              (upload) => upload.id === item.id || upload.data?.id === item.id,
+            ),
+        )
+        .map((item) => [item.id, generateUniqueMediaId()]),
+    );
+
+    // Pending before the request leaves, so the cards are locked (`isMediaLoading`) for the
+    // whole delete and nothing can edit, regenerate or relocate them in the meantime.
+    setMediaUploads((prev) => {
+      const next = prev.map((upload) =>
+        upload.id && ids.has(upload.id)
+          ? {
+              ...upload,
+              action: "delete" as const,
+              pending: true,
+              error: undefined,
+            }
+          : upload,
+      );
+      for (const item of items) {
+        const uniqueId = created.get(item.id);
+        if (uniqueId === undefined) continue;
+        next.push({
+          input: { user_id: item.user_id },
+          action: "delete",
+          previewUrl: item.thumbnail || undefined,
+          id: item.id,
+          pending: true,
+          error: undefined,
+          unique_id: uniqueId,
+        });
+      }
+      return next;
+    });
+
+    const release = (failed: Map<number, string>) =>
+      setMediaUploads((prev) =>
+        prev.map((upload) => {
+          if (!upload.id || !ids.has(upload.id)) return upload;
+          const message = failed.get(upload.id);
+          // Deleted rows are finished by the DELETE_MEDIA notification; only the ones that
+          // stayed behind are unlocked.
+          if (message === undefined) {
+            return {
+              ...upload,
+              pending: false,
+              deleted: true,
+              data: undefined,
+            };
+          }
+          return {
+            ...upload,
+            action: "edit" as const,
+            pending: false,
+            error: { errors: [message], inputErrors: undefined },
+          };
+        }),
+      );
+
+    try {
+      const result = await deleteManyMediaAction(items.map((item) => item.id));
+      if (!result.data) {
+        const message = extractReturnError(result).errors[0] ?? "";
+        release(new Map([...ids].map((id) => [id, message])));
+        return result;
+      }
+      release(new Map(result.data.errors.map((e) => [e.media_id, e.message])));
+      return result;
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "An unexpected error occurred";
+      release(new Map([...ids].map((id) => [id, message])));
+      return {
+        data: null,
+        errors: [message],
+        inputErrors: undefined,
+      };
+    }
+  };
+
   const updateMediaLocationsRef = useRef<UpdateMediaLocationsInput | null>(
     null,
   );
@@ -912,6 +1005,7 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
     generateManySeoMedia,
     updateManyMediaLocation,
     deleteSingleMedia,
+    deleteManyMedia,
     isLoading,
     isMediaLoading,
     mediaPendingToUpdate,

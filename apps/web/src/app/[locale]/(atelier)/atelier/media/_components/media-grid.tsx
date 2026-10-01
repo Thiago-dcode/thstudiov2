@@ -2,6 +2,7 @@
 
 import {
   ALLOWED_FILE_TYPES,
+  MAX_MEDIA_DELETE_BATCH,
   MAX_MEDIA_LOCATION_BATCH,
   MAX_MEDIA_METADATA_BATCH,
 } from "@repo/common-lib/constants/limits";
@@ -25,7 +26,15 @@ import {
 } from "@repo/ui/components/shadcn/dropdown-menu";
 import { FileInputProvider } from "@repo/ui/contexts/file.provider";
 import { cn } from "@repo/ui/lib/utils";
-import { Brain, ChevronDown, ImageOff, MapPin, Upload } from "lucide-react";
+import { toast } from "@repo/ui/sonner";
+import {
+  Brain,
+  ChevronDown,
+  ImageOff,
+  MapPin,
+  Trash2,
+  Upload,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { LocationAutocomplete } from "@/modules/locations/components/location-autocomplete";
@@ -230,7 +239,112 @@ function UpdateManyMediaLocationsDialog({
   );
 }
 
-type BatchDialog = "metadata" | "location";
+function DeleteManyMediaDialog({ open, onOpenChange }: BatchDialogProps) {
+  const t = useTranslations("atelier.media.grid");
+  const { deleteManyMedia } = useMedia();
+  const { selectedMedia, selectionCount, setCanSelect, clearSelection } =
+    useSelectMedia();
+  const [isDeleting, setIsDeleting] = useState(false);
+  const isOverLimit = selectionCount > MAX_MEDIA_DELETE_BATCH;
+  // Counts only exist on the owner's atelier list, which is where this grid gets its media.
+  const selected = Object.values(selectedMedia);
+  const inPortfolios = selected.filter(
+    (media) => (media.portfolios_count ?? 0) > 0,
+  ).length;
+  const inCollections = selected.filter(
+    (media) => (media.collections_count ?? 0) > 0,
+  ).length;
+  const inUse = selected.filter(
+    (media) =>
+      (media.portfolios_count ?? 0) > 0 || (media.collections_count ?? 0) > 0,
+  ).length;
+
+  const handleOpenChange = (next: boolean) => {
+    // Closing mid-request would hide the only sign that the delete is still running.
+    if (isDeleting) return;
+    onOpenChange(next);
+  };
+
+  const handleDelete = async () => {
+    if (isOverLimit || !selected.length) return;
+    setIsDeleting(true);
+    const result = await deleteManyMedia(selected);
+    setIsDeleting(false);
+
+    if (!result.data) {
+      toast.error(result.errors?.[0] ?? t("deleteFailed"));
+      return;
+    }
+    onOpenChange(false);
+    clearSelection();
+    setCanSelect(false);
+    if (result.data.errors.length) {
+      toast.error(
+        t("deletePartialFailed", {
+          failed: result.data.errors.length,
+          total: selected.length,
+        }),
+      );
+      return;
+    }
+    toast.success(t("deleteSuccess", { count: result.data.deleted.length }));
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="max-w-md z-100">
+        <DialogHeader>
+          <DialogTitle className="text-lg!">{t("deleteTitle")}</DialogTitle>
+          <DialogDescription className="text-sm!">
+            {t("deleteDescription", { count: selectionCount })}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="px-6 py-3 bg-fg-2/50 space-y-2 text-sm!">
+          {inUse > 0 && (
+            <p className="text-error">
+              {t("deleteInUse", {
+                count: inUse,
+                portfolios: inPortfolios,
+                collections: inCollections,
+              })}
+            </p>
+          )}
+          <p className="text-text-muted">{t("deleteIrreversible")}</p>
+          {isOverLimit && (
+            <p className="text-xs! text-error">
+              {t("overDeleteLimit", {
+                max: MAX_MEDIA_DELETE_BATCH,
+                excess: selectionCount - MAX_MEDIA_DELETE_BATCH,
+              })}
+            </p>
+          )}
+        </div>
+        <DialogFooter className="gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={isDeleting}
+            onClick={() => handleOpenChange(false)}
+          >
+            {t("cancel")}
+          </Button>
+          <Button
+            size="sm"
+            variant="primary"
+            disabled={isOverLimit || isDeleting}
+            onClick={handleDelete}
+          >
+            {isDeleting
+              ? t("deleting")
+              : t("deleteConfirm", { count: selectionCount })}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+type BatchDialog = "metadata" | "location" | "delete";
 
 function BatchMediaActionsMenu() {
   const t = useTranslations("atelier.media.grid");
@@ -277,10 +391,18 @@ function BatchMediaActionsMenu() {
             <MapPin aria-hidden />
             {t("updateLocationCount", { count: selectionCount })}
           </DropdownMenuItem>
+          <DropdownMenuItem
+            className="text-xs text-error"
+            onSelect={() => setOpenDialog("delete")}
+          >
+            <Trash2 aria-hidden />
+            {t("deleteCount", { count: selectionCount })}
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
       <GenerateManyMediaMetadataDialog {...dialogProps("metadata")} />
       <UpdateManyMediaLocationsDialog {...dialogProps("location")} />
+      <DeleteManyMediaDialog {...dialogProps("delete")} />
     </>
   );
 }
@@ -337,7 +459,7 @@ export function MediaGrid({
 
   return (
     <>
-      <div className="relative flex flex-col w-full h-full gap-2">
+      <div className="relative flex flex-col w-full min-h-full gap-2">
         <div className="self-end">
           <FileInputProvider
             allowedMimeTypes={ALLOWED_FILE_TYPES}
@@ -353,8 +475,8 @@ export function MediaGrid({
         {currentMedia.length > 0 ? (
           <div
             className={cn(
-              // Sticky on mobile so the selection actions stay reachable while scrolling.
-              "sticky top-0 z-40 flex flex-wrap items-center gap-2 bg-bg py-1 w-full md:static md:z-auto",
+              // Sticky so the selection actions stay reachable while scrolling.
+              "sticky -top-4 phone-lg:-top-7 z-40 flex flex-wrap items-center gap-2 bg-bg/95 py-4 w-full",
               canSelect ? "justify-between" : "justify-start",
             )}
           >

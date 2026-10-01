@@ -126,6 +126,12 @@ export const MAX_MEDIA_LOCATION_BATCH = 100;
  */
 export const MAX_MEDIA_METADATA_BATCH = 10;
 /**
+ * Upper bound on one `POST /media/delete-many` batch. Each delete removes the media's storage
+ * folder and runs its own cleanup, and the API does them one after another, so this is smaller
+ * than a location batch.
+ */
+export const MAX_MEDIA_DELETE_BATCH = 50;
+/**
  * Platform-wide currency for service prices. Services have no per-listing currency column, so the
  * visible price symbol AND the JSON-LD `Offer.priceCurrency` both derive from here — keep them in
  * sync (Google penalizes a structured-data price that doesn't match the visible one).

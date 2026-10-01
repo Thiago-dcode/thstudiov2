@@ -2091,6 +2091,23 @@ const messages = {
           "Límite: selecciona hasta {max} elementos (quita {excess}).",
         insufficientCredits:
           "Créditos insuficientes. Necesitas {needed} créditos más.",
+        deleteCount: "Eliminar ({count})",
+        deleteTitle: "¿Eliminar los medios seleccionados?",
+        deleteDescription:
+          "Se {count, plural, one {eliminará # medio seleccionado} other {eliminarán # medios seleccionados}} de forma permanente.",
+        deleteInUse:
+          "{count, plural, one {# medio pertenece} other {# medios pertenecen}} a portafolios o colecciones ({portfolios} en portafolios, {collections} en colecciones). {count, plural, one {Desaparecerá} other {Desaparecerán}} de allí.",
+        deleteIrreversible:
+          "Esta acción no se puede deshacer. Todos los metadatos generados se perderán de forma permanente.",
+        overDeleteLimit:
+          "Límite: selecciona hasta {max} elementos (quita {excess}).",
+        deleteConfirm: "Eliminar {count}",
+        deleting: "Eliminando…",
+        deleteFailed: "No se pudieron eliminar los medios",
+        deletePartialFailed:
+          "No se pudieron eliminar {failed} de {total} medios.",
+        deleteSuccess:
+          "{count, plural, one {# medio eliminado} other {# medios eliminados}}.",
         updateLocationCount: "Definir ubicación ({count})",
         updateLocationTitle: "Definir ubicación",
         updateLocationDescription:

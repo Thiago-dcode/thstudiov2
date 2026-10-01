@@ -2091,6 +2091,22 @@ const messages = {
         overAiLimit: "Limite: selecione até {max} itens (remova {excess}).",
         insufficientCredits:
           "Créditos insuficientes. Você precisa de mais {needed} créditos.",
+        deleteCount: "Excluir ({count})",
+        deleteTitle: "Excluir as mídias selecionadas?",
+        deleteDescription:
+          "{count, plural, one {# mídia selecionada será excluída} other {# mídias selecionadas serão excluídas}} permanentemente.",
+        deleteInUse:
+          "{count, plural, one {# mídia pertence} other {# mídias pertencem}} a portfólios ou coleções ({portfolios} em portfólios, {collections} em coleções). {count, plural, one {Ela vai desaparecer} other {Elas vão desaparecer}} de lá.",
+        deleteIrreversible:
+          "Esta ação não pode ser desfeita. Todos os metadados gerados serão perdidos permanentemente.",
+        overDeleteLimit: "Limite: selecione até {max} itens (remova {excess}).",
+        deleteConfirm: "Excluir {count}",
+        deleting: "Excluindo…",
+        deleteFailed: "Não foi possível excluir as mídias",
+        deletePartialFailed:
+          "Não foi possível excluir {failed} de {total} mídias.",
+        deleteSuccess:
+          "{count, plural, one {# mídia excluída} other {# mídias excluídas}}.",
         updateLocationCount: "Definir localização ({count})",
         updateLocationTitle: "Definir localização",
         updateLocationDescription:
