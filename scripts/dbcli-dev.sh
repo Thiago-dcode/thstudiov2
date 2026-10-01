@@ -8,6 +8,7 @@
 #   ./scripts/dbcli-dev.sh rollback --all
 #   ./scripts/dbcli-dev.sh db:seed
 #   ./scripts/dbcli-dev.sh generate-user-thumbnails --user=123 --dry-run
+#   ./scripts/dbcli-dev.sh generate-media-thumbnail --media-id=456 --dry-run
 #
 # Requires: api service running (docker compose up -d)
 # =============================================================================

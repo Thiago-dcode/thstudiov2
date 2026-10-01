@@ -5,8 +5,9 @@ import { Query } from '../facades';
 import { connectDb } from './utils';
 
 /**
- * Queues one thumbnail regeneration job per image/GIF of a user; the worker does the encoding
- * (see `MediaProcessor.regenerateThumbnail`), at a lower priority than upload processing.
+ * Queues one thumbnail regeneration job per image/GIF of a user; the worker does the encoding,
+ * one job at a time (see `MediaProcessor.regenerateThumbnail`). For a single media, use
+ * `generate-media-thumbnail`.
  *
  * Jobs are deduped per media (`jobId`), so running this twice while the first batch is still
  * queued adds nothing. Videos are skipped: their thumbnail is `previews[0]`, extracted by ffmpeg.
@@ -46,8 +47,9 @@ const generateUserThumbnails = async ({ userId, dryRun }: GenerateUserThumbnails
         [userId],
       ),
     );
+    const scope = `user ${userId} (@${users[0]!.username})`;
     Logger.info(
-      `Found ${rows.length} image/GIF thumbnail(s) for user ${userId} (@${users[0]!.username})${
+      `Found ${rows.length} image/GIF thumbnail(s) for ${scope}${
         dryRun ? ' (dry run: nothing will be queued)' : ''
       }.`,
     );

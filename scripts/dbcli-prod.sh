@@ -7,6 +7,7 @@
 #   ./scripts/dbcli-prod.sh rollback --all
 #   ./scripts/dbcli-prod.sh db:seed
 #   ./scripts/dbcli-prod.sh generate-user-thumbnails --user=123 --dry-run
+#   ./scripts/dbcli-prod.sh generate-media-thumbnail --media-id=456 --dry-run
 #   ./scripts/dbcli-prod.sh shell        # interactive shell in a running api container
 #
 # Differs from dbcli-dev.sh in three ways that matter on prod:
