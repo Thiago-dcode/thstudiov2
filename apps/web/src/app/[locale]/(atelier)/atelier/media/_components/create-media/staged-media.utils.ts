@@ -3,7 +3,7 @@ import type { UploadMedia } from "@/modules/media/providers/media.provider";
 import type { AiCreditsInfo } from "@/modules/users/providers/user-metrics.provider";
 
 /** Hard cap on how many files one selection may stage at a time. */
-export const MAX_FILES = 10;
+export const MAX_FILES = 20;
 
 /**
  * AI credit cost of generating metadata for a staged file. A video costs more than an image,
