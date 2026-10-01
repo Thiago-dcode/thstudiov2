@@ -201,6 +201,26 @@ describe('MediaHelper.withExtension', () => {
   });
 });
 
+describe('MediaHelper.versionedThumbnailPath', () => {
+  it('adds a version before the extension', () => {
+    expect(
+      MediaHelper.versionedThumbnailPath('users/u/media/m/photo-thumbnail.webp', '3f9a1c04'),
+    ).toBe('users/u/media/m/photo-thumbnail-3f9a1c04.webp');
+  });
+
+  it('replaces a previous version instead of stacking', () => {
+    expect(
+      MediaHelper.versionedThumbnailPath('users/u/media/m/photo-thumbnail-aaaaaaaa.webp', '3f9a1c04'),
+    ).toBe('users/u/media/m/photo-thumbnail-3f9a1c04.webp');
+  });
+
+  it('forces webp for a legacy gif thumbnail', () => {
+    expect(
+      MediaHelper.versionedThumbnailPath('users/u/media/m/photo-thumbnail.gif', '3f9a1c04'),
+    ).toBe('users/u/media/m/photo-thumbnail-3f9a1c04.webp');
+  });
+});
+
 describe('MediaHelper.thumbnailPath', () => {
   it('inserts -thumbnail before the extension', () => {
     expect(MediaHelper.thumbnailPath('users/abc/media/id/photo.webp')).toBe(

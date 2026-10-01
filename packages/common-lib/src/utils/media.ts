@@ -165,6 +165,26 @@ export class MediaHelper {
   }
 
   /**
+   * A fresh key for REWRITING a stored thumbnail: `{base}[-{oldVersion}].{ext}` →
+   * `{base}-{version}.webp`.
+   *
+   * Objects are served from the CDN at a stable unsigned URL with `max-age=1y, immutable`, so
+   * overwriting a key changes nothing any client sees. Every rewrite therefore gets a new key,
+   * and a previous 8-hex version is replaced rather than stacked so repeated regenerations
+   * do not grow the name. The extension is forced to `webp`: the bytes always are, and the
+   * stored ContentType is derived from it.
+   *
+   * `version` is passed in rather than generated here because this module is shared with the
+   * browser bundle.
+   */
+  static versionedThumbnailPath(thumbnailKey: string, version: string): string {
+    const base = thumbnailKey
+      .replace(/\.[^./\\]+$/, '')
+      .replace(/-[0-9a-f]{8}$/, '');
+    return `${base}-${version}.webp`;
+  }
+
+  /**
    * `{base}.{anything}` → `{base}-preview-{index}.webp`, the key for one of the frames sampled
    * across a video.
    *

@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { JOB_PROCESS_MEDIA, JOB_REGENERATE_MEDIA_THUMBNAIL } from "@repo/common-lib/constants/queues";
 import { Job } from "bullmq";
 import { StorageService } from '@repo/backend-lib/services/storage-service/base';
@@ -377,12 +378,12 @@ export class MediaProcessor {
     }
 
     /**
-     * Re-encodes one finished image/GIF's thumbnail at the current thumbnail settings, in place.
+     * Re-encodes one finished image/GIF's thumbnail at the current thumbnail settings.
      *
      * The source is the media's STORED file — already compressed, the pristine upload is gone —
-     * so the result can only be as good as that file. The thumbnail is overwritten at its
-     * existing key and `thumbnail_bytes` follows, so nothing referencing the key changes; CDN and
-     * Next Image caches may serve the old bytes until they expire.
+     * so the result can only be as good as that file. The thumbnail is written to a NEW
+     * versioned key and the row follows (`thumbnail`, `thumbnail_bytes`), so the URL changes and
+     * no cache can serve the old bytes. The old object is left in place.
      *
      * Skipped, not failed, when the row no longer qualifies: it is gone, not COMPLETED, or a
      * video (its thumbnail is `previews[0]`, extracted by ffmpeg and billed inside
@@ -427,17 +428,54 @@ export class MediaProcessor {
             THUMBNAIL_QUALITY,
             THUMBNAIL_MAX_EDGE_PX,
         );
-        if (!(await this.storageService.write(thumbnail.buffer, media.thumbnail))) {
+        // A NEW key, never the old one rewritten: the CDN serves the stored key at a stable,
+        // unsigned URL with `max-age=1y, immutable`, so overwriting would leave every browser,
+        // CloudFront and the next/image optimizer showing the old bytes. The old object stays
+        // (cached pages may still reference its URL); a later cleanup removes it.
+        const newKey = MediaHelper.versionedThumbnailPath(
+            media.thumbnail,
+            randomBytes(4).toString('hex'),
+        );
+        if (!(await this.storageService.write(thumbnail.buffer, newKey))) {
             throw new Error('Storage write could not complete');
         }
 
-        await this.mediaRepository.updateById(media.id, { thumbnail_bytes: thumbnail.size });
-        // `thumbnail_bytes` counts against the user's storage, so the stored metric follows.
-        await QueueHelper.createComputeUserMetricsJob(media.user_id);
+        try {
+            // The SEO rename moves `media.thumbnail` to a new key. If that happened while this
+            // job was encoding, pointing the row at our key would undo it, so back off.
+            const latest = await this.mediaRepository.findOneByColumn('id', media.id);
+            if (!latest || latest.thumbnail !== media.thumbnail) {
+                await this.storageService.delete(newKey);
+                log.info('Skipping thumbnail regeneration: thumbnail changed while encoding', {
+                    media_id,
+                });
+                return;
+            }
+
+            await this.mediaRepository.updateById(media.id, {
+                thumbnail: newKey,
+                thumbnail_bytes: thumbnail.size,
+            });
+        } catch (error) {
+            // Written but never referenced: do not leave the orphan behind before BullMQ retries.
+            await this.storageService.delete(newKey);
+            throw error;
+        }
+
+        // The new object is part of the user's storage ledger and their stored metric.
+        await Promise.all([
+            QueueHelper.createStorageRequestJob({
+                path: newKey,
+                bytes: thumbnail.size,
+                user_id: media.user_id,
+            }),
+            QueueHelper.createComputeUserMetricsJob(media.user_id),
+        ]);
 
         log.info('Thumbnail regenerated', {
             media_id,
-            thumbnail_path: media.thumbnail,
+            previous_path: media.thumbnail,
+            thumbnail_path: newKey,
             before_bytes: media.thumbnail_bytes,
             after_bytes: thumbnail.size,
         });
