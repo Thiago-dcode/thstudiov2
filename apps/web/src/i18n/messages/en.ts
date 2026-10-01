@@ -2077,6 +2077,21 @@ const messages = {
         overAiLimit: "Limit: select up to {max} items (remove {excess}).",
         insufficientCredits:
           "Insufficient credits. You need {needed} more credits.",
+        deleteCount: "Delete ({count})",
+        deleteTitle: "Delete selected media?",
+        deleteDescription:
+          "{count} selected {count, plural, one {media item} other {media items}} will be permanently deleted.",
+        deleteInUse:
+          "{count, plural, one {# media item belongs} other {# media items belong}} to portfolios or collections ({portfolios} in portfolios, {collections} in collections). {count, plural, one {It} other {They}} will disappear from there.",
+        deleteIrreversible:
+          "This cannot be undone. All generated metadata will be permanently lost.",
+        overDeleteLimit: "Limit: select up to {max} items (remove {excess}).",
+        deleteConfirm: "Delete {count}",
+        deleting: "Deleting…",
+        deleteFailed: "Failed to delete media",
+        deletePartialFailed: "{failed} of {total} media could not be deleted.",
+        deleteSuccess:
+          "{count} {count, plural, one {media item} other {media items}} deleted.",
         updateLocationCount: "Set location ({count})",
         updateLocationTitle: "Set location",
         updateLocationDescription:

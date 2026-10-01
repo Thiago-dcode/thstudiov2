@@ -8,7 +8,7 @@ import { UserService } from '../users/users.service';
 import { generateUUID } from '@repo/common-lib/utils/generate-uuid';
 import { FactoryLogService } from '@repo/backend-lib/services/log-service';
 import { QueueHelper } from '@repo/backend-lib/utils';
-import { CreateMediaInput, CreateMediaUploadUrl, Media, MediaIndexRequest, MediaWithUser, UpdateMediaInternalInput } from '@repo/common-lib/types/media';
+import { CreateMediaInput, CreateMediaUploadUrl, DeleteManyMediaError, DeleteManyMediaResult, Media, MediaIndexRequest, MediaWithUser, UpdateMediaInternalInput } from '@repo/common-lib/types/media';
 import { EntitySeoMetadata, MediaSeoTranslation } from '@repo/common-lib/types/ai';
 import { cleanObj } from '@repo/common-lib/utils/object';
 import { UPDATE_PROFILE_STATUS_EVENT } from '@repo/common-lib/constants/events';
@@ -19,6 +19,7 @@ import {
 import { IndexMediaRequest } from '../user-media/requests/index-media.request';
 import { Helpers } from 'src/common/services/helpers.service';
 import { UpdateProfileStatusEvent } from '../profile-status/events/update-profile-status.event';
+import { DeleteManyMediaRequest } from './requests/delete-many-media.request';
 import { UpdateMediaLocationsRequest } from './requests/update-media-locations.request';
 import { UpdateMediaRequest } from './requests/update-media.request';
 import { RequestService } from 'src/common/services/request.service';
@@ -544,6 +545,45 @@ export class MediaService {
         has_media: stillHasMedia,
       }),
     );
+  }
+
+  /**
+   * The batch form of {@link delete}: every id must exist and belong to the caller (checked up
+   * front, so a bad id deletes nothing), then each is deleted in turn through the single-item
+   * path. A delete that fails is reported and the rest still run.
+   */
+  public async deleteMany(data: DeleteManyMediaRequest): Promise<DeleteManyMediaResult> {
+    const userId = this.requestService.user.id;
+    const ids = [...new Set(data.media)];
+
+    const existing = await this.mediaRepository.findManyByIds(ids);
+    if (existing.length !== ids.length) {
+      throw new NotFoundException('One or more media were not found');
+    }
+    if (existing.some((media) => media.user_id !== userId)) {
+      throw new UnauthorizedException();
+    }
+
+    const log = this.logger.name('delete');
+    const deleted: number[] = [];
+    const errors: DeleteManyMediaError[] = [];
+    for (const id of ids) {
+      try {
+        await this.delete(id);
+        deleted.push(id);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        log.error(`Could not delete media [${id}] in batch: ${message}`, error);
+        errors.push({ media_id: id, message });
+      }
+    }
+
+    log.info(
+      `Delete media batch: user [${userId}] deleted ${deleted.length}, failed ${errors.length}`,
+      { user_id: userId, deleted, failed: errors.map((item) => item.media_id) },
+    );
+
+    return { deleted, errors };
   }
 
   public async update(

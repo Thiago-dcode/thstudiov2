@@ -134,6 +134,23 @@ export type UpdateMediaLocationsInput = {
   media: number[];
 };
 
+/** Body of `POST /media/delete-many`: the media the artist picked. */
+export type DeleteManyMediaInput = {
+  media: number[];
+};
+
+/** One media the batch delete did not remove, and why. */
+export type DeleteManyMediaError = {
+  media_id: number;
+  message: string;
+};
+
+/** `POST /media/delete-many` — the ids that were deleted, and the ones that were not. */
+export type DeleteManyMediaResult = {
+  deleted: number[];
+  errors: DeleteManyMediaError[];
+};
+
 // What the internal service can update (public fields + system-only SEO filename/timestamp + storage keys).
 // Column-shaped: the picked place has already been resolved to `location_id`.
 export type UpdateMediaInternalInput = Partial<Omit<MediaSchema, InternalMediaFields>> &

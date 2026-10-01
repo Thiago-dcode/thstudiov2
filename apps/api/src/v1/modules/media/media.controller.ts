@@ -17,6 +17,7 @@ import { IndexMediaRequest } from '../user-media/requests/index-media.request';
 import { MediaService } from './media.service';
 import { CreateMediaAsyncRequest } from './requests/create-media-async.request';
 import { CreateMediaUploadUrlRequest } from './requests/create-media-upload-url.request';
+import { DeleteManyMediaRequest } from './requests/delete-many-media.request';
 import { UpdateMediaLocationsRequest } from './requests/update-media-locations.request';
 import { UpdateMediaRequest } from './requests/update-media.request';
 
@@ -68,6 +69,12 @@ export class MediaController {
   async createUploadUrl(@Body() createUploadUrlRequest: CreateMediaUploadUrlRequest) {
     return await this.mediaService.createUploadUrl(createUploadUrlRequest);
   }
+  /** Many media removed in one request. A literal segment, so it never reads as a media id. */
+  @Post('delete-many')
+  async deleteMany(@Body() body: DeleteManyMediaRequest) {
+    return await this.mediaService.deleteMany(body);
+  }
+
   /**
    * One place applied to many media. Declared before `:id` so `locations` is a literal segment
    * rather than a media id.
