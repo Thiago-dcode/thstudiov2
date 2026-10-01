@@ -102,10 +102,11 @@ export const AI_CREDIT_COST_BY_LLM_USAGE_TYPE = {
 export const CREDIT_CONSUMING_LLM_USAGE_TYPES = Object.keys(
   AI_CREDIT_COST_BY_LLM_USAGE_TYPE,
 ) as EnumType<'LLM_USAGE_TYPE'>[];
+export const MAX_MEDIA_UPLOAD_FILES = 20;
 export const MAX_USERNAME_RESET = 3;
 export const MAX_PASSWORD_RESET = 3;
-export const MAX_COLLECTION_ITEMS = 30;
-export const MAX_PORTFOLIO_ITEMS = 100;
+export const MAX_COLLECTION_ITEMS = 45;
+export const MAX_PORTFOLIO_ITEMS = 125;
 /** Per-type category caps for a portfolio; the combined total is their sum. */
 export const MAX_DISCIPLINES_PORTFOLIO = 3;
 export const MAX_STYLES_PORTFOLIO = 3;

@@ -1,5 +1,6 @@
 "use client";
 
+import { MAX_MEDIA_UPLOAD_FILES } from "@repo/common-lib/constants/limits";
 import type { CreateMediaInputWithFile } from "@repo/common-lib/types/media";
 import { MediaHelper } from "@repo/common-lib/utils/media";
 import { Button } from "@repo/ui/components/shadcn/button";
@@ -22,7 +23,7 @@ import { useRouter } from "@/i18n/navigation";
 import { useSession } from "@/lib/hooks/useSession";
 import { useMedia } from "@/modules/media/providers/media.provider";
 import { useUserMetrics } from "@/modules/users/providers/user-metrics.provider";
-import { creditsSpentBy, MAX_FILES } from "./staged-media.utils";
+import { creditsSpentBy } from "./staged-media.utils";
 import { StagedMediaGrid } from "./staged-media-grid";
 import { UploadSettingsPanel } from "./upload-settings-panel";
 
@@ -140,7 +141,7 @@ export function CreateMediaDialog({
         <DialogHeader className="border-b px-6 pb-4 pt-6">
           <DialogTitle className="text-sm!">{t("createNewMedia")}</DialogTitle>
           <DialogDescription className="text-xs!">
-            {t("uploadUpToImages", { max: MAX_FILES })}
+            {t("uploadUpToImages", { max: MAX_MEDIA_UPLOAD_FILES })}
           </DialogDescription>
         </DialogHeader>
 
