@@ -459,7 +459,7 @@ export function MediaGrid({
 
   return (
     <>
-      <div className="relative flex flex-col w-full h-full gap-2">
+      <div className="relative flex flex-col w-full min-h-full gap-2">
         <div className="self-end">
           <FileInputProvider
             allowedMimeTypes={ALLOWED_FILE_TYPES}
@@ -475,8 +475,8 @@ export function MediaGrid({
         {currentMedia.length > 0 ? (
           <div
             className={cn(
-              // Sticky on mobile so the selection actions stay reachable while scrolling.
-              "sticky top-0 z-40 flex flex-wrap items-center gap-2 bg-bg py-1 w-full md:static md:z-auto",
+              // Sticky so the selection actions stay reachable while scrolling.
+              "sticky -top-4 phone-lg:-top-7 z-40 flex flex-wrap items-center gap-2 bg-bg/95 py-4 w-full",
               canSelect ? "justify-between" : "justify-start",
             )}
           >
