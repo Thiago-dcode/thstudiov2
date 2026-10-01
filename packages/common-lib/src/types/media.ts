@@ -206,3 +206,7 @@ export type MediaJobDto = {
  * owner's editor asks for them, so saving a portfolio/collection can't drop media it never loaded.
  */
 export type MediaVisibility = { includeInactive?: boolean };
+
+export type RegenerateMediaThumbnailJobInput = {
+  media_id: number;
+};

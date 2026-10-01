@@ -4,6 +4,7 @@ import {
     compressionLevelToQuality,
     MediaInputError,
     THUMBNAIL_MAX_EDGE_PX,
+    THUMBNAIL_QUALITY,
     THUMBNAIL_TARGET_BYTES,
     VIDEO_SAMPLE_FRAME_MAX_EDGE_PX,
     VIDEO_SAMPLE_FRAME_TARGET_BYTES,
@@ -373,12 +374,12 @@ describe('MediaProcessor.processMedia', () => {
 
             await processor.processMedia();
 
-            // A tile that stays pristine while the media it stands for is squeezed shows the
-            // user something their media no longer looks like.
+            // The level is spent on the media itself; a tile at q40 is visibly blocky, and it is
+            // the image on every grid card, OG share and sitemap entry.
             expect(compressService.optimizeImageToWebp).toHaveBeenCalledWith(
                 expect.any(Buffer),
                 THUMBNAIL_TARGET_BYTES,
-                compressionLevelToQuality('VERY_HIGH'),
+                THUMBNAIL_QUALITY,
                 THUMBNAIL_MAX_EDGE_PX,
             );
         });
@@ -490,7 +491,7 @@ describe('MediaProcessor.processMedia', () => {
             // Frame 0 is the grid tile, the og:image and the sitemap image.
             expect(input.poster).toEqual({
                 targetSize: THUMBNAIL_TARGET_BYTES,
-                quality: compressionLevelToQuality('HIGH'),
+                quality: THUMBNAIL_QUALITY,
                 maxEdgePx: THUMBNAIL_MAX_EDGE_PX,
             });
             // Frames 1..N are never rendered anywhere.

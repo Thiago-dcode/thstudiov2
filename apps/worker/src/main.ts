@@ -1,8 +1,13 @@
 import { config } from '@repo/common-lib/config';
-import { JOB_PROCESS_MEDIA, MEDIA_QUEUE } from '@repo/common-lib/constants/queues';
+import {
+    JOB_PROCESS_MEDIA,
+    JOB_REGENERATE_MEDIA_THUMBNAIL,
+    MEDIA_QUEUE,
+    MEDIA_THUMBNAIL_QUEUE,
+} from '@repo/common-lib/constants/queues';
 import { DatabaseConfig } from '@repo/common-lib/types/database';
 import { init, killClient } from '@repo/database';
-import { Job, Worker } from 'bullmq';
+import { Job, Queue, Worker } from 'bullmq';
 import express from 'express';
 import { MediaProcessor } from './processors/media.processor';
 
@@ -41,7 +46,16 @@ async function bootstrap() {
         [MEDIA_QUEUE]: {
             [JOB_PROCESS_MEDIA]: (job) => MediaProcessor.handle(job),
         },
+        [MEDIA_THUMBNAIL_QUEUE]: {
+            [JOB_REGENERATE_MEDIA_THUMBNAIL]: (job) => MediaProcessor.handle(job),
+        },
     };
+
+    // One thumbnail at a time across ALL worker instances: a per-Worker concurrency of 1 would not
+    // stop a second instance from picking up the next job. Stored in Redis, so it is idempotent.
+    const thumbnailQueue = new Queue(MEDIA_THUMBNAIL_QUEUE, { connection });
+    await thumbnailQueue.setGlobalConcurrency(1);
+    await thumbnailQueue.close();
 
     const workers = Object.keys(jobResolver).map((queue) =>
         new Worker(

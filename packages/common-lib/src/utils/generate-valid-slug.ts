@@ -1,9 +1,14 @@
+import { foldLatinDiacritics } from './fold-latin-diacritics';
+
+/** Latin letters that NFD cannot decompose into base + combining mark. */
+const NON_DECOMPOSABLE: Record<string, string> = { ß: 'ss', æ: 'ae', œ: 'oe', ø: 'o', đ: 'd', ð: 'd', þ: 'th', ł: 'l' };
 
 export const generateValidSlug = (str: string, options?: { preserveTrailingHyphen?: boolean }): string => {
   if (!str) return '';
-  
-  let result = str
+
+  let result = foldLatinDiacritics(str)
     .toLowerCase()
+    .replace(/[ßæœøđðþł]/g, (ch) => NON_DECOMPOSABLE[ch] ?? ch)
     .trim()
     .replace(/[^\w\s-]/g, '') // Remove special characters except word chars, spaces, and hyphens
     .replace(/[\s_]+/g, '-') // Replace spaces and underscores with hyphens

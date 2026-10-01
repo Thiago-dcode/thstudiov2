@@ -1,4 +1,4 @@
-import { JOB_PROCESS_MEDIA } from "@repo/common-lib/constants/queues";
+import { JOB_PROCESS_MEDIA, JOB_REGENERATE_MEDIA_THUMBNAIL } from "@repo/common-lib/constants/queues";
 import { Job } from "bullmq";
 import { StorageService } from '@repo/backend-lib/services/storage-service/base';
 import { FactoryStorageService } from '@repo/backend-lib/services/storage-service/factory';
@@ -13,6 +13,7 @@ import {
     isPermanentMediaError,
     PREVIEW_TARGET_BYTES,
     THUMBNAIL_MAX_EDGE_PX,
+    THUMBNAIL_QUALITY,
     THUMBNAIL_TARGET_BYTES,
     VIDEO_SAMPLE_FRAME_MAX_EDGE_PX,
     VIDEO_SAMPLE_FRAME_QUALITY,
@@ -24,7 +25,7 @@ import {
 } from '@repo/backend-lib/services/compress-service/types';
 import { ContentModerationFields } from '@repo/common-lib/types/ai';
 import { FactoryCompressService } from '@repo/backend-lib/services/compress-service/factory';
-import { Media, MediaJobDto } from "@repo/common-lib/types/media";
+import { Media, MediaJobDto, RegenerateMediaThumbnailJobInput } from "@repo/common-lib/types/media";
 import { MediaRepository } from "@repo/database/repositories/media";
 import { UserExtraDataRepository } from "@repo/database/repositories/user-extra-data";
 import { PlansRepository } from "@repo/database/repositories/plans";
@@ -68,6 +69,9 @@ export class MediaProcessor {
             switch (job.name) {
                 case JOB_PROCESS_MEDIA:
                     return await instance.processMedia();
+
+                case JOB_REGENERATE_MEDIA_THUMBNAIL:
+                    return await instance.regenerateThumbnail();
 
                 default:
                     throw new Error(`Job name "${job.name}" not recognized`);
@@ -258,7 +262,7 @@ export class MediaProcessor {
                 // of them billed against the user's quota — they get a fraction of it.
                 poster: {
                     targetSize: THUMBNAIL_TARGET_BYTES,
-                    quality: compressionLevelToQuality(compressLevel),
+                    quality: THUMBNAIL_QUALITY,
                     maxEdgePx: THUMBNAIL_MAX_EDGE_PX,
                 },
                 sample: {
@@ -325,7 +329,7 @@ export class MediaProcessor {
         const thumbnail = await this.compressService.optimizeImageToWebp(
             buffer,
             THUMBNAIL_TARGET_BYTES,
-            compressionLevelToQuality(compressLevel),
+            THUMBNAIL_QUALITY,
             THUMBNAIL_MAX_EDGE_PX,
         );
         return {
@@ -370,6 +374,73 @@ export class MediaProcessor {
             compressionLevelToQuality(compressLevel),
         );
         return { path: MediaHelper.videoPreviewPath(mediaPath), clip };
+    }
+
+    /**
+     * Re-encodes one finished image/GIF's thumbnail at the current thumbnail settings, in place.
+     *
+     * The source is the media's STORED file — already compressed, the pristine upload is gone —
+     * so the result can only be as good as that file. The thumbnail is overwritten at its
+     * existing key and `thumbnail_bytes` follows, so nothing referencing the key changes; CDN and
+     * Next Image caches may serve the old bytes until they expire.
+     *
+     * Skipped, not failed, when the row no longer qualifies: it is gone, not COMPLETED, or a
+     * video (its thumbnail is `previews[0]`, extracted by ffmpeg and billed inside
+     * `previews_bytes`). Unexpected errors are rethrown so BullMQ retries; the media row is never
+     * touched until the new thumbnail is safely written.
+     */
+    async regenerateThumbnail() {
+        const log = this.logger.name('regenerate-thumbnail');
+        const { media_id }: RegenerateMediaThumbnailJobInput = this.job.data;
+
+        const media = await this.mediaRepository.findOneByColumn('id', media_id);
+        if (!media) {
+            log.info('Skipping thumbnail regeneration: media no longer exists', { media_id });
+            return;
+        }
+        if (
+            media.media_type === 'VIDEO' ||
+            !MediaHelper.isCompleted(media) ||
+            !media.url ||
+            !media.thumbnail
+        ) {
+            log.info('Skipping thumbnail regeneration: media not eligible', {
+                media_id,
+                media_type: media.media_type,
+                status: media.status,
+            });
+            return;
+        }
+
+        if (!(await this.storageService.exists(media.url))) {
+            log.warn('Skipping thumbnail regeneration: source object missing', {
+                media_id,
+                url: media.url,
+            });
+            return;
+        }
+
+        const source = await this.storageService.getBuffer(media.url);
+        const thumbnail = await this.compressService.optimizeImageToWebp(
+            source,
+            THUMBNAIL_TARGET_BYTES,
+            THUMBNAIL_QUALITY,
+            THUMBNAIL_MAX_EDGE_PX,
+        );
+        if (!(await this.storageService.write(thumbnail.buffer, media.thumbnail))) {
+            throw new Error('Storage write could not complete');
+        }
+
+        await this.mediaRepository.updateById(media.id, { thumbnail_bytes: thumbnail.size });
+        // `thumbnail_bytes` counts against the user's storage, so the stored metric follows.
+        await QueueHelper.createComputeUserMetricsJob(media.user_id);
+
+        log.info('Thumbnail regenerated', {
+            media_id,
+            thumbnail_path: media.thumbnail,
+            before_bytes: media.thumbnail_bytes,
+            after_bytes: thumbnail.size,
+        });
     }
 
     async processMedia() {

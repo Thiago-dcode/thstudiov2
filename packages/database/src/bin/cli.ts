@@ -15,6 +15,7 @@ import { cleanS3 } from '../lib/scripts/clean-s3';
 import { createStripeCustomers } from '../lib/scripts/create-stripe-customers';
 import { fixImageKeys } from '../lib/scripts/fix-image-keys';
 import { requeueUserSeo } from '../lib/scripts/requeue-user-seo';
+import { generateUserThumbnails } from '../lib/scripts/generate-user-thumbnails';
 import {
   DESTRUCTIVE_PASSWORD_ENV,
   verifyDestructivePassword,
@@ -330,6 +331,22 @@ program
   .description("Regenerate one artist's AI SEO on the next nightly run (bypasses the throttle)")
   .action(async (username: string) => {
     await requeueUserSeo(username);
+  });
+
+program
+  .command('generate-user-thumbnails')
+  .description(
+    'Queue a thumbnail regeneration job for every image/GIF of one user via the worker (videos skipped)',
+  )
+  .requiredOption('--user <id>', 'numeric user id')
+  .option('--dry-run', 'list the media that would be queued without queueing anything')
+  .action(async (options: { user: string; dryRun?: boolean }) => {
+    const userId = Number(options.user);
+    if (!Number.isInteger(userId) || userId <= 0) {
+      Logger.error(`❌ --user must be a positive integer id, got "${options.user}".`);
+      process.exit(1);
+    }
+    await generateUserThumbnails({ userId, dryRun: Boolean(options.dryRun) });
   });
 
 program.parse(process.argv);

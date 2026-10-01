@@ -382,24 +382,23 @@ export class SharpCompressService extends CompressService {
             fit: 'inside',
             withoutEnlargement: true,
           })
-          .webp({ quality: clampQuality(quality) })
+          .webp({ quality: clampQuality(quality), smartSubsample: true })
           .toBuffer();
 
         //reduce the image size by 10% each time, lowering quality alongside it
         const reduce = 0.9;
         let currentQuality = clampQuality(quality);
+        let { width, height } = imageSize(buffer);
         for (let loops = 0; buffer.length > _targetSize && loops < 5; loops++) {
-          const { width, height } = imageSize(buffer);
           if (!width || !height) break;
           currentQuality = clampQuality(currentQuality - 5);
-          buffer = await sharp(buffer)
-            .resize({
-              width: Math.floor(width * reduce),
-              height: Math.floor(height * reduce),
-              fit: 'inside',
-              withoutEnlargement: true,
-            })
-            .webp({ quality: currentQuality })
+          width = Math.floor(width * reduce);
+          height = Math.floor(height * reduce);
+          // From the ORIGINAL source, not the previous WebP: re-encoding a lossy output five
+          // times stacks generational loss on top of the quality already being given up.
+          buffer = await sharp(source)
+            .resize({ width, height, fit: 'inside', withoutEnlargement: true })
+            .webp({ quality: currentQuality, smartSubsample: true })
             .toBuffer();
         }
 

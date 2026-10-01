@@ -22,6 +22,12 @@ describe("generateValidSlug", () => {
   it("preserves trailing hyphen when preserveTrailingHyphen is true", () => {
     expect(generateValidSlug("hello-", { preserveTrailingHyphen: true })).toBe("hello-");
   });
+  it("folds accents and strips punctuation such as colons", () => {
+    expect(generateValidSlug("Fotografía aérea con dron: paisajes minimalistas")).toBe(
+      "fotografia-aerea-con-dron-paisajes-minimalistas",
+    );
+    expect(generateValidSlug("Straße: Ørsted")).toBe("strasse-orsted");
+  });
   it("replaces underscores with hyphens", () => {
     expect(generateValidSlug("hello_world")).toBe("hello-world");
   });

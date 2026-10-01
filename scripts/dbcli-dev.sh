@@ -7,6 +7,7 @@
 #   ./scripts/dbcli-dev.sh migrate
 #   ./scripts/dbcli-dev.sh rollback --all
 #   ./scripts/dbcli-dev.sh db:seed
+#   ./scripts/dbcli-dev.sh generate-user-thumbnails --user=123 --dry-run
 #
 # Requires: api service running (docker compose up -d)
 # =============================================================================

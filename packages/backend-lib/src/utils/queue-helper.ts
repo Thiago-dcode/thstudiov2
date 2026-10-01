@@ -14,6 +14,7 @@ import {
     JOB_GENERATE_SINGLE_ENTITY_METADATA,
     JOB_INVITE_WAIT_LIST_BATCH,
     JOB_PROCESS_MEDIA,
+    JOB_REGENERATE_MEDIA_THUMBNAIL,
     JOB_UPDATE_MEDIA,
     JOB_UPDATE_PROFILE_STATUS,
     JOB_RECORD_LLM_USAGE,
@@ -22,6 +23,7 @@ import {
     LOCATION_QUEUE,
     MAIL_QUEUE,
     MEDIA_QUEUE,
+    MEDIA_THUMBNAIL_QUEUE,
     MEDIA_UPDATE_QUEUE,
     STORAGE_REQUESTS_QUEUE,
     USER_CONTACTS_QUEUE,
@@ -46,7 +48,7 @@ import { CreateOrUpdateEmailPreferencePayload } from '@repo/common-lib/types/ema
 import { CreateUserNotificationInput } from '@repo/common-lib/types/user-notification';
 import { UpdateProfileStatusJobInput } from '@repo/common-lib/types/profile-status';
 import { MailJob } from '@repo/common-lib/types/mail';
-import { MediaJobDto, UpdateMediaJobInput } from '@repo/common-lib/types/media';
+import { MediaJobDto, RegenerateMediaThumbnailJobInput, UpdateMediaJobInput } from '@repo/common-lib/types/media';
 import { JobsOptions, Queue } from "bullmq";
 
 /**
@@ -315,6 +317,43 @@ export class QueueHelper {
                 backoff: { type: 'exponential', delay: 1000 },
             },
         );
+    }
+
+    /**
+     * Re-encodes one media's thumbnail at the current thumbnail settings. Deduped per media.
+     *
+     * Its own queue rather than `MEDIA_QUEUE`: the worker caps this one at a global concurrency
+     * of 1, so a backfill over a whole user runs strictly one thumbnail after another (across
+     * every worker instance) and never holds up upload processing.
+     */
+    static async createRegenerateMediaThumbnailJob(dto: RegenerateMediaThumbnailJobInput) {
+        await QueueHelper.createRegenerateMediaThumbnailJobs([dto]);
+    }
+
+    /**
+     * Bulk form for backfills: ONE queue connection (closed afterwards) for the whole batch,
+     * where `createQueue` per job would open a Redis connection per media and never close it.
+     */
+    static async createRegenerateMediaThumbnailJobs(dtos: RegenerateMediaThumbnailJobInput[]) {
+        if (!dtos.length) return;
+        const queue = QueueHelper.createQueue(MEDIA_THUMBNAIL_QUEUE);
+        try {
+            await queue.addBulk(
+                dtos.map((dto) => ({
+                    name: JOB_REGENERATE_MEDIA_THUMBNAIL,
+                    data: dto,
+                    opts: {
+                        jobId: `regenerate-media-thumbnail-${dto.media_id}`,
+                        removeOnComplete: true,
+                        removeOnFail: true,
+                        attempts: 3,
+                        backoff: { type: 'exponential' as const, delay: 1000 },
+                    },
+                })),
+            );
+        } finally {
+            await queue.close();
+        }
     }
 
     static async createUpdateMediaJob(dto: UpdateMediaJobInput) {

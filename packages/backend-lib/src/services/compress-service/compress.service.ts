@@ -23,13 +23,14 @@ import { imageSize } from 'image-size'
  * The byte target has to rise alongside the edge or nothing is gained: the refine loop chases
  * `targetSize`, so leaving it at 120KB would just resize the extra pixels straight back off.
  *
- * There is no matching quality constant. A thumbnail is encoded at the media's OWN compression
- * level, via {@link compressionLevelToQuality} — someone who asked for VERY_HIGH compression
- * asked for it about their media, and a tile that stays pristine while the media it represents
- * is squeezed shows them something their media no longer looks like.
+ * Quality is a flat {@link THUMBNAIL_QUALITY}, NOT the media's compression level. It used to
+ * follow the level, which put the default (HIGH) at WebP q55 and VERY_HIGH at q40 — visibly
+ * blocky at 1200px, and it is the image shown on every grid tile, OG card and sitemap entry.
+ * The byte budget is small enough that a decent quality costs next to nothing.
  */
 export const THUMBNAIL_MAX_EDGE_PX = 1200;
 export const THUMBNAIL_TARGET_BYTES = 400 * 1024;
+export const THUMBNAIL_QUALITY = 90;
 
 /**
  * The budget for a video's SAMPLED frames — `previews[1..N]`, everything except the poster.
