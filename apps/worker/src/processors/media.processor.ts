@@ -383,7 +383,7 @@ export class MediaProcessor {
      * The source is the media's STORED file — already compressed, the pristine upload is gone —
      * so the result can only be as good as that file. The thumbnail is written to a NEW
      * versioned key and the row follows (`thumbnail`, `thumbnail_bytes`), so the URL changes and
-     * no cache can serve the old bytes. The old object is left in place.
+     * no cache can serve the old bytes. The old object is deleted once the row points elsewhere.
      *
      * Skipped, not failed, when the row no longer qualifies: it is gone, not COMPLETED, or a
      * video (its thumbnail is `previews[0]`, extracted by ffmpeg and billed inside
@@ -430,8 +430,8 @@ export class MediaProcessor {
         );
         // A NEW key, never the old one rewritten: the CDN serves the stored key at a stable,
         // unsigned URL with `max-age=1y, immutable`, so overwriting would leave every browser,
-        // CloudFront and the next/image optimizer showing the old bytes. The old object stays
-        // (cached pages may still reference its URL); a later cleanup removes it.
+        // CloudFront and the next/image optimizer showing the old bytes. The old object is
+        // deleted below, once the row no longer references it.
         const newKey = MediaHelper.versionedThumbnailPath(
             media.thumbnail,
             randomBytes(4).toString('hex'),
@@ -460,6 +460,27 @@ export class MediaProcessor {
             // Written but never referenced: do not leave the orphan behind before BullMQ retries.
             await this.storageService.delete(newKey);
             throw error;
+        }
+
+        // The row no longer points at the old object, so it is an orphan: delete it, as every
+        // other versioned-key rewrite in the codebase does. Guarded against aliasing — a
+        // thumbnail that is the media itself or one of its preview frames must never be removed
+        // — and a failed delete only leaves an orphan behind, it must not fail a finished job.
+        const previousKey = media.thumbnail;
+        if (
+            previousKey !== newKey &&
+            previousKey !== media.url &&
+            !media.previews?.includes(previousKey)
+        ) {
+            try {
+                await this.storageService.delete(previousKey);
+            } catch (error) {
+                log.warn('Could not delete the previous thumbnail object', {
+                    media_id,
+                    previous_path: previousKey,
+                    reason: error instanceof Error ? error.message : String(error),
+                });
+            }
         }
 
         // The new object is part of the user's storage ledger and their stored metric.
