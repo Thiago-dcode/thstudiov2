@@ -67,6 +67,11 @@ const nextConfig: NextConfig = {
       process.env.NEXT_PUBLIC_GEOAPIFY_KEY || process.env.GEOAPIFY_KEY || "",
   },
   images: {
+    // The ONLY quality the optimizer will produce, site-wide. Next 16 maps any requested quality
+    // (including the implicit default 75) to the closest allowed value, and answers a direct
+    // `/_next/image?q=…` request for any other with 400 — so no `<Image>` can fall back to q75.
+    // Our sources are already lossy WebP, and a q75 re-encode on top of them was visibly soft.
+    qualities: [90],
     remotePatterns: [
       ...STORAGE_IMAGE_HOSTS.map((hostname) => ({
         protocol: "https" as const,

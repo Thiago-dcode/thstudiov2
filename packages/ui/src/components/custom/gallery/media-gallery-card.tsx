@@ -54,6 +54,9 @@ export function MediaGalleryCard({
         alt={media.seo_alt || media.title || labels.altFallback}
         width={800}
         height={1000}
+        // The optimizer re-encodes an already-lossy thumbnail; its default q75 stacks a second
+        // visible loss on top. Must be listed in `images.qualities` (apps/web/next.config.ts).
+        quality={90}
         className={imageClassName}
         sizes="(max-width: 768px) 50vw, (max-width: 1280px) 33vw, 25vw"
       />
