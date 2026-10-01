@@ -41,3 +41,7 @@ docker-compose*.yml
 compose*.yaml
 compose*.yml
 README.md
+
+# Build-tool caches restored by CI for the BuildKit cache-dance step; never part of the image context.
+buildkit-cache
+scratch
