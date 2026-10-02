@@ -1,5 +1,5 @@
 import { databaseCliConfig } from './config';
-import { templatesDirectory } from './paths';
+import { templatesDirectory } from '@repo/backend-lib/utils/paths';
 import path from 'node:path';
 import fs from 'node:fs';
 import { pathToFileURL } from 'node:url';

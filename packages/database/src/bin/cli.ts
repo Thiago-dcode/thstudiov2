@@ -22,7 +22,7 @@ import {
   verifyDestructivePassword,
 } from '../lib/scripts/utils/destructive-password';
 
-// Migration/seed directories are resolved in `lib/scripts/utils/paths`:
+// Migration/seed directories are resolved in `@repo/backend-lib/utils/paths`:
 // scaffolding writes `.ts` to `src/**`, execution loads `.js` from `dist/src/**`.
 
 const program = new Command();

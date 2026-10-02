@@ -1,7 +1,7 @@
 import path from 'node:path';
 import fs from 'node:fs';
 import Logger from '@repo/backend-lib/utils/console';
-import { sourceMigrationsDirectory } from './utils/paths';
+import { sourceMigrationsDirectory } from '@repo/backend-lib/utils/paths';
 import { utilsPath } from './utils';
 
 export const createMigration = async (

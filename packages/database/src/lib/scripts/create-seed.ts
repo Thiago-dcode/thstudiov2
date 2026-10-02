@@ -1,7 +1,7 @@
 import path from 'node:path';
 import fs from 'node:fs';
 import Logger from '@repo/backend-lib/utils/console';
-import { sourceSeedsDirectory } from './utils/paths';
+import { sourceSeedsDirectory } from '@repo/backend-lib/utils/paths';
 import { utilsPath } from './utils';
 
 export const createSeeder = async (

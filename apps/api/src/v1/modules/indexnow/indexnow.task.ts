@@ -32,7 +32,7 @@ export class IndexNowTask {
           new Date(Date.now() - IndexNowTask.WINDOW_MS),
         );
         if (result.status === 'skipped') return;
-        const message = `IndexNow submitted ${result.urls} URLs (HTTP ${result.httpStatus})`;
+        const message = `IndexNow submitted ${result.urls} URLs (HTTP ${result.httpStatus}); share images warmed: ${result.warmedImages}`;
         if (result.httpStatus === 200 || result.httpStatus === 202) log.info(message);
         else log.warn(message);
       } catch (error) {
