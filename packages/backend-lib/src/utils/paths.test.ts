@@ -20,8 +20,9 @@ describe('paths', () => {
   });
 
   it('points storage at <root>/storage', () => {
+    // Runtime data (logs, backups) is created on the host and is not in the repo,
+    // so a fresh checkout — including CI — does not have this directory yet.
     expect(paths.storageDirectory).toBe(path.join(paths.monorepoRoot, 'storage'));
-    expect(fs.statSync(paths.storageDirectory).isDirectory()).toBe(true);
   });
 
   it('resolves the database package and its source directories to existing paths', () => {
