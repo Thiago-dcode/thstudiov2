@@ -68,6 +68,10 @@ const config = (envPath?: string | undefined) => {
     redis: {
       url: process.env.REDIS_URL,
     },
+    backup: {
+      // Cron pattern (UTC) for the daily database backup job. Default: 03:00, off-peak.
+      cron: process.env.BACKUP_CRON || '0 3 * * *',
+    },
     mailing: {
       host: process.env.SMTP_HOST,
       port: process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT) : 587,

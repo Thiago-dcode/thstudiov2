@@ -36,6 +36,12 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 ENV NODE_ENV=production
 
+# pg_dump / pg_restore for the daily database backup. Debian bookworm ships client 15, which
+# matches the postgres:15 server in compose — pg_dump refuses a server newer than itself.
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends postgresql-client \
+  && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /workspace
 
 # IMPORTANT: copy only manifests first, then install. Keeping the prod install

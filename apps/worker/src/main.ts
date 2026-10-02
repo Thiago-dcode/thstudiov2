@@ -1,5 +1,7 @@
 import { config } from '@repo/common-lib/config';
 import {
+    BACKUP_QUEUE,
+    JOB_DATABASE_BACKUP,
     JOB_PROCESS_MEDIA,
     JOB_REGENERATE_MEDIA_THUMBNAIL,
     MEDIA_QUEUE,
@@ -9,6 +11,7 @@ import { DatabaseConfig } from '@repo/common-lib/types/database';
 import { init, killClient } from '@repo/database';
 import { Job, Queue, Worker } from 'bullmq';
 import express from 'express';
+import { BackupProcessor } from './processors/backup.processor';
 import { MediaProcessor } from './processors/media.processor';
 
 /**
@@ -20,44 +23,61 @@ import { MediaProcessor } from './processors/media.processor';
  */
 const MEDIA_JOB_LOCK_MS = 10 * 60 * 1000;
 
-async function bootstrap() {
-    const appConfig = config();
-    const WORKER_PORT = process.env.WORKER_PORT || 8081;
-    const redisUrl = appConfig.redis.url;
+type Connection = { url: string };
+type JobResolver = Record<string, Record<string, (job: Job) => Promise<void>>>;
 
-    if (!redisUrl) {
-        throw new Error('REDIS_URL is required to start the worker');
+const jobResolver: JobResolver = {
+    [MEDIA_QUEUE]: {
+        [JOB_PROCESS_MEDIA]: (job) => MediaProcessor.handle(job),
+    },
+    [MEDIA_THUMBNAIL_QUEUE]: {
+        [JOB_REGENERATE_MEDIA_THUMBNAIL]: (job) => MediaProcessor.handle(job),
+    },
+    [BACKUP_QUEUE]: {
+        [JOB_DATABASE_BACKUP]: () => BackupProcessor.handle(),
+    },
+};
+
+/** Runs `configure` against a short-lived handle on `queueName`, always closing it afterwards. */
+async function withQueue(connection: Connection, queueName: string, configure: (queue: Queue) => Promise<unknown>) {
+    const queue = new Queue(queueName, { connection });
+    try {
+        await configure(queue);
+    } finally {
+        await queue.close();
     }
+}
 
-    await init(appConfig.database as DatabaseConfig);
+/**
+ * One thumbnail at a time across ALL worker instances: a per-Worker concurrency of 1 would not
+ * stop a second instance from picking up the next job. Stored in Redis, so it is idempotent.
+ */
+const limitThumbnailConcurrency = (connection: Connection) =>
+    withQueue(connection, MEDIA_THUMBNAIL_QUEUE, (queue) => queue.setGlobalConcurrency(1));
 
-    const connection = { url: redisUrl };
-    const app = express();
+/**
+ * upsertJobScheduler is idempotent (keyed by id, stored in Redis), so every worker instance and every
+ * restart can call it without duplicating the schedule. The backup itself no-ops outside production.
+ */
+const scheduleDatabaseBackup = (connection: Connection) =>
+    withQueue(connection, BACKUP_QUEUE, (queue) =>
+        queue.upsertJobScheduler(
+            JOB_DATABASE_BACKUP,
+            { pattern: config().backup.cron, tz: 'UTC' },
+            {
+                name: JOB_DATABASE_BACKUP,
+                opts: {
+                    attempts: 3,
+                    backoff: { type: 'exponential', delay: 5 * 60 * 1000 },
+                    removeOnComplete: 30,
+                    removeOnFail: 30,
+                },
+            },
+        ),
+    );
 
-    app.get('/health', (_req, res) => {
-        res.json({ status: 'ok', service: 'worker' });
-    });
-
-    const jobResolver: {
-        [queue: string]: {
-            [job: string]: (job: Job) => Promise<void>
-        }
-    } = {
-        [MEDIA_QUEUE]: {
-            [JOB_PROCESS_MEDIA]: (job) => MediaProcessor.handle(job),
-        },
-        [MEDIA_THUMBNAIL_QUEUE]: {
-            [JOB_REGENERATE_MEDIA_THUMBNAIL]: (job) => MediaProcessor.handle(job),
-        },
-    };
-
-    // One thumbnail at a time across ALL worker instances: a per-Worker concurrency of 1 would not
-    // stop a second instance from picking up the next job. Stored in Redis, so it is idempotent.
-    const thumbnailQueue = new Queue(MEDIA_THUMBNAIL_QUEUE, { connection });
-    await thumbnailQueue.setGlobalConcurrency(1);
-    await thumbnailQueue.close();
-
-    const workers = Object.keys(jobResolver).map((queue) =>
+const createWorkers = (connection: Connection) =>
+    Object.keys(jobResolver).map((queue) =>
         new Worker(
             queue,
             async (job) => {
@@ -81,10 +101,36 @@ async function bootstrap() {
         ),
     );
 
-    const server = app.listen(WORKER_PORT, () => {
-        console.log(`[worker] listening on port ${WORKER_PORT}`);
+const startHealthServer = (port: number | string, redisUrl: string) => {
+    const app = express();
+
+    app.get('/health', (_req, res) => {
+        res.json({ status: 'ok', service: 'worker' });
+    });
+
+    return app.listen(port, () => {
+        console.log(`[worker] listening on port ${port}`);
         console.log(`[worker] redis: ${redisUrl}`);
     });
+};
+
+async function bootstrap() {
+    const appConfig = config();
+    const redisUrl = appConfig.redis.url;
+
+    if (!redisUrl) {
+        throw new Error('REDIS_URL is required to start the worker');
+    }
+
+    await init(appConfig.database as DatabaseConfig);
+
+    const connection = { url: redisUrl };
+
+    await limitThumbnailConcurrency(connection);
+    await scheduleDatabaseBackup(connection);
+
+    const workers = createWorkers(connection);
+    const server = startHealthServer(process.env.WORKER_PORT || 8081, redisUrl);
 
     async function shutdown() {
         console.log('[worker] shutting down...');

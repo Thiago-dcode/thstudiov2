@@ -17,8 +17,11 @@ import { fixImageKeys } from '../lib/scripts/fix-image-keys';
 import { requeueUserSeo } from '../lib/scripts/requeue-user-seo';
 import { generateUserThumbnails } from '../lib/scripts/generate-user-thumbnails';
 import { generateMediaThumbnail } from '../lib/scripts/generate-media-thumbnail';
+import { restoreDatabase } from '../lib/scripts/restore';
 import {
+  APP_SECRET_ENV,
   DESTRUCTIVE_PASSWORD_ENV,
+  verifyAppSecret,
   verifyDestructivePassword,
 } from '../lib/scripts/utils/destructive-password';
 
@@ -155,6 +158,21 @@ async function promptDestructivePassword(): Promise<string> {
   return password;
 }
 
+/** Prompts for the `APP_SECRET` password and validates it, returning the plaintext for the script to re-check. */
+async function promptAppSecret(): Promise<string> {
+  if (!process.env[APP_SECRET_ENV]) {
+    Logger.error(`❌ ${APP_SECRET_ENV} is not set. Refusing restore.`);
+    process.exit(1);
+  }
+
+  const password = await askPassword(`Enter ${APP_SECRET_ENV} password`);
+  if (!password || !verifyAppSecret(password)) {
+    Logger.error('❌ Invalid password');
+    process.exit(1);
+  }
+  return password;
+}
+
 async function migrateRefreshCore(): Promise<void> {
   await rollback(null, { exitProcess: false });
   await migrate({ exitProcess: false });
@@ -266,6 +284,22 @@ program
     } catch {
       process.exit(1);
     }
+  });
+
+program
+  .command('restore')
+  .argument('<date>', 'Backup date, YYYY-MM-DD')
+  .description('Restore the S3 database backup of a given day with pg_restore (APP_SECRET password required; destructive)')
+  .option('--allow-production', 'allow restoring onto the production database')
+  .action(async (date: string, options: { allowProduction?: boolean }) => {
+    const password = await promptAppSecret();
+    Logger.warn(`⚠️  This will REPLACE the data in the current database with the backup from ${date}.`);
+    const confirmed = await confirmAction('Are you sure?');
+    if (!confirmed) {
+      Logger.info('Restore cancelled.');
+      process.exit(0);
+    }
+    await restoreDatabase({ date, password, allowProduction: Boolean(options.allowProduction) });
   });
 
 program

@@ -17,6 +17,7 @@ export const MEDIA_QUEUE = 'media' as const;
 export const MEDIA_UPDATE_QUEUE = 'media-update' as const;
 // Thumbnail regeneration runs strictly one job at a time (global concurrency 1, set by the worker).
 export const MEDIA_THUMBNAIL_QUEUE = 'media-thumbnails' as const;
+export const BACKUP_QUEUE = 'backup' as const;
 
 // ==================== JOBS (BullMQ) ====================
 export const JOB_COMPUTE_USER_METRICS = 'compute-user-metrics' as const;
@@ -44,3 +45,4 @@ export const JOB_UPDATE_PROFILE_STATUS = 'update-profile-status' as const;
 export const JOB_PROCESS_MEDIA = 'process-media' as const;
 export const JOB_UPDATE_MEDIA = 'update-media' as const;
 export const JOB_REGENERATE_MEDIA_THUMBNAIL = 'regenerate-media-thumbnail' as const;
+export const JOB_DATABASE_BACKUP = 'database-backup' as const;
