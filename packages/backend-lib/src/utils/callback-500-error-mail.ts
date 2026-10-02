@@ -53,7 +53,8 @@ export async function callback500ErrorMail(
   try {
     await QueueHelper.createMailJob({
       name: JOB_ERROR_500_MAIL,
-      payload: { message, options },
+      // app_url identifies which environment (prod/dev) sent the alert; the mail lists every option key.
+      payload: { message, options: { ...options, app_url: config().app.url } },
     });
   } catch (error) {
     // Swallow: a failed error-alert email must never bubble up and re-trigger this callback.
