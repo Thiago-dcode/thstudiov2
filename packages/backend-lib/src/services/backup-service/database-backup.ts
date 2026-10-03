@@ -2,19 +2,22 @@ import { s3StorageConfig } from '../../config/storage';
 import { StorageService } from '../storage-service/storage.service';
 import { FactoryStorageService } from '../storage-service/factory-storage.service';
 import Logger from '../../utils/console';
-import { paths } from '../../utils/paths';
 import { config } from '@repo/common-lib/config';
 import { INDEXNOW_CANONICAL_HOST } from '@repo/common-lib/utils/indexnow';
 import { execFile } from 'node:child_process';
 import fs from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import { promisify } from 'node:util';
 
 const execFileAsync = promisify(execFile);
 
-/** Local scratch space for pg_dump; the dump only lives here until it is uploaded. */
 const LOG = '[backup]';
-const TEMP_DIRECTORY = path.join(paths.storageDirectory, '__tempt__');
+/**
+ * Local scratch space for pg_dump/pg_restore; a dump only lives here until it is uploaded. The OS temp dir,
+ * not `storage/`: the containers run as the non-root `node` user and cannot create folders under /workspace.
+ */
+const TEMP_DIRECTORY = path.join(os.tmpdir(), 'a11studio-backups');
 /** Bucket prefix for database dumps. Not a public asset prefix: keep it off any CDN behaviour. */
 const BACKUP_PREFIX = 'internal/backups';
 
@@ -65,9 +68,9 @@ export const backup = async (
     Logger.info(`${LOG} starting pg_dump of "${database}" -> ${key}`);
     const tempFile = path.join(TEMP_DIRECTORY, path.basename(key));
 
-    await fs.mkdir(TEMP_DIRECTORY, { recursive: true });
-
     try {
+        await fs.mkdir(TEMP_DIRECTORY, { recursive: true });
+
         // execFile (no shell) keeps config values out of a command line; the password goes via env, not argv.
         await execFileAsync(
             'pg_dump',
@@ -170,10 +173,9 @@ export const restore = async ({
     }
 
     const tempFile = path.join(TEMP_DIRECTORY, path.basename(key));
-    await fs.mkdir(TEMP_DIRECTORY, { recursive: true });
-
     const startedAt = Date.now();
     try {
+        await fs.mkdir(TEMP_DIRECTORY, { recursive: true });
         Logger.warn(`${LOG} restoring ${key} into "${database}" on ${host}`);
         const dump = await storageService.getBuffer(key);
         Logger.info(`${LOG} downloaded ${key} (${dump.length} bytes), running pg_restore`);
