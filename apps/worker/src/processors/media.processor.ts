@@ -12,6 +12,7 @@ import {
     compressionLevelToQuality,
     CompressService,
     isPermanentMediaError,
+    PREVIEW_MAX_EDGE_PX,
     PREVIEW_TARGET_BYTES,
     THUMBNAIL_MAX_EDGE_PX,
     THUMBNAIL_QUALITY,
@@ -381,7 +382,9 @@ export class MediaProcessor {
             buffer,
             PREVIEW_TARGET_BYTES,
             compressionLevelToQuality(compressLevel),
-            Math.min(PREVIEW_MAX_DURATION_SECONDS, mediaCompressed.durationSeconds)
+            PREVIEW_MAX_EDGE_PX,
+            // The service already clamps to the probed duration; this is the cap, not a guess.
+            PREVIEW_MAX_DURATION_SECONDS,
         );
         return { path: MediaHelper.videoPreviewPath(mediaPath), clip };
     }
