@@ -65,6 +65,7 @@ export type PortfolioFullSchema = PortfolioWithArtistSchema & {
   public_id: string;
   m_title?: string | null;                // COLLISION: title
   m_thumbnail?: string | null;            // COLLISION: thumbnail
+  video_preview?: string | null;          // media only — no collision
   url?: string | null;
   blocked_at?: Date | null;
   shape?: EnumType<'MEDIA_SHAPE'> | null;

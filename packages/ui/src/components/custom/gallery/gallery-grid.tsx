@@ -15,7 +15,7 @@ import { cn } from "../../../lib/utils";
 
 export type GalleryGridMedia = Pick<
     MediaPortfolio,
-    "id" | "thumbnail" | "title" | "seo_alt" | "aspect_ratio" | "media_type"
+    "id" | "thumbnail" | "video_preview" | "title" | "seo_alt" | "aspect_ratio" | "media_type"
 >;
 
 type GalleryGridProps = {

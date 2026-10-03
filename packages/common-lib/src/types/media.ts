@@ -27,7 +27,7 @@ export type Media = MediaSchema & {
 };
 // Media translation without id
 
-export type MediaPortfolio = Pick<Media, 'id' | 'public_id' | 'title' | 'thumbnail' | 'url' | 'seo_alt' | 'seo_description' | 'seo_filename' | 'seo_title' | 'shape' | 'aspect_ratio' | 'is_highlight' | 'media_type'> & {
+export type MediaPortfolio = Pick<Media, 'id' | 'public_id' | 'title' | 'thumbnail' | 'video_preview' | 'url' | 'seo_alt' | 'seo_description' | 'seo_filename' | 'seo_title' | 'shape' | 'aspect_ratio' | 'is_highlight' | 'media_type'> & {
   position: number
 };
 export type MediaTranslation = MediaTranslationSchema;
