@@ -1914,6 +1914,8 @@ const messages = {
           "Controls the balance between quality and file size. Lower compression (VERY_LOW, LOW) preserves more detail but creates larger files. Higher compression (HIGH, VERY_HIGH) reduces file size but may slightly reduce quality. Videos that are already compressed are stored as they are.",
         compressionTooltipHint:
           "Applies to every file. Open a file to change just that one.",
+        compressionSmallFileHint:
+          "If your photo is already compressed or small (under 5 MB), we recommend choosing normal or lower compression.",
         allFiles: "All files",
         upgradeRequired: "Upgrade to access this feature.",
         aiSeoGeneration: "Generate SEO with AI",

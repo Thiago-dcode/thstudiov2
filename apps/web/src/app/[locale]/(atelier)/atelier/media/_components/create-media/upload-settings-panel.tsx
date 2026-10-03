@@ -202,6 +202,9 @@ export function UploadSettingsPanel() {
               <span className="block text-xs leading-relaxed text-text-muted">
                 {t("compressionTooltipHint")}
               </span>
+              <span className="block text-xs leading-relaxed text-text-muted">
+                {t("compressionSmallFileHint")}
+              </span>
             </section>
 
             <section className="space-y-2">

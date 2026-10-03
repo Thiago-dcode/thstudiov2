@@ -194,8 +194,12 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
 
   const inputErrors = currentMediaUpload?.error?.inputErrors;
 
+  // The row's own status counts too: a media parked in UPLOADING / UPDATING / GENERATING_METADATA
+  // by a job this tab never started (page load, another tab, a realtime upsert) has no upload
+  // entry, so the upload state alone would leave it clickable while it is still processing.
   const isPending =
-    currentMediaUpload?.pending ||
+    !!currentMediaUpload?.pending ||
+    MediaHelper.isLoading(savedMedia) ||
     (currentMediaUpload?.data
       ? MediaHelper.isLoading(currentMediaUpload.data)
       : false);

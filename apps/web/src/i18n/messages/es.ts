@@ -1924,6 +1924,8 @@ const messages = {
           "Controla el equilibrio entre la calidad y el tamaño de archivo. Una compresión menor (VERY_LOW, LOW) conserva más detalle pero genera archivos más grandes. Una compresión mayor (HIGH, VERY_HIGH) reduce el tamaño pero puede reducir ligeramente la calidad. Los vídeos ya comprimidos se guardan tal cual.",
         compressionTooltipHint:
           "Se aplica a todos los archivos. Abre un archivo para cambiar solo ese.",
+        compressionSmallFileHint:
+          "Si tu foto ya está comprimida o es pequeña (menos de 5 MB), te recomendamos elegir una compresión normal o menor.",
         allFiles: "Todos los archivos",
         upgradeRequired: "Mejora tu plan para acceder a esta función.",
         aiSeoGeneration: "Generar SEO con IA",
