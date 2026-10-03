@@ -30,9 +30,9 @@ export type BackupDeleteResult =
  * Every environment runs with `NODE_ENV=production`, so only the canonical host tells prod from dev.
  * Fail closed: anything unrecognised is treated as dev and never backed up.
  */
-const isProductionEnv = (): boolean => {
-    const { isProduction, url } = config().app;
-    if (!isProduction || !url) return false;
+const envCan = (): boolean => {
+    const { env, url } = config().app;
+    if (!['production', 'local'].includes(env) || !url) return false;
     try {
         return new URL(url).host === INDEXNOW_CANONICAL_HOST;
     } catch {
@@ -53,7 +53,7 @@ const backupKeyFor = (date: Date) => `${BACKUP_PREFIX}/pg-backup-${formatDate(da
 export const backup = async (
     storageService: StorageService = FactoryStorageService.create(s3StorageConfig),
 ): Promise<BackupResult> => {
-    if (!isProductionEnv()) {
+    if (!envCan()) {
         Logger.info(`${LOG} skipped: not the production environment`);
         return { status: 'skipped', reason: 'not the production environment' };
     }
@@ -106,7 +106,7 @@ export const backup = async (
 export const deleteExpiredBackup = async (
     storageService: StorageService = FactoryStorageService.create(s3StorageConfig),
 ): Promise<BackupDeleteResult> => {
-    if (!isProductionEnv()) {
+    if (!envCan()) {
         Logger.info(`${LOG} cleanup skipped: not the production environment`);
         return { status: 'skipped', reason: 'not the production environment' };
     }
@@ -158,7 +158,7 @@ export const restore = async ({
     allowProduction = false,
     storageService = FactoryStorageService.create(s3StorageConfig),
 }: RestoreOptions): Promise<{ key: string }> => {
-    if (isProductionEnv() && !allowProduction) {
+    if (envCan() && !allowProduction) {
         throw new Error('Refusing to restore onto production without allowProduction');
     }
 
