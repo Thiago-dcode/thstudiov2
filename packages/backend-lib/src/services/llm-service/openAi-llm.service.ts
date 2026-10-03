@@ -2,6 +2,9 @@ import { LLMService, LLMCompletionRequest, LLMCompletionResponse } from './llm.s
 import { OpenAILLMConfig } from './types';
 import OpenAI from 'openai';
 
+const isReasoningModel = (model: string): boolean =>
+  /^(gpt-5|gpt-6|o\d)/.test(model);
+
 export class OpenAILLMService extends LLMService {
   private client: OpenAI;
   private model: string;
@@ -31,7 +34,12 @@ export class OpenAILLMService extends LLMService {
         content: msg.content,
       })) as any,
       max_completion_tokens: request.maxTokens,
-      temperature:this.model ==='gpt-5-nano'?undefined: request.temperature,
+      // Reasoning models (gpt-5.x, gpt-6.x, o-series) reject `temperature`, and
+      // their hidden reasoning tokens count against max_completion_tokens, so
+      // keep effort low for these extraction-style calls.
+      ...(isReasoningModel(this.model)
+        ? { reasoning_effort: 'low' as const }
+        : { temperature: request.temperature }),
     });
 
     const choice = completion.choices[0];

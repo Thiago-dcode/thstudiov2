@@ -35,7 +35,7 @@ export type BackupDeleteResult =
  */
 const envCan = (): boolean => {
     const { env, url } = config().app;
-    if (!['production', 'local'].includes(env) || !url) return false;
+    if (!['production', 'local','development'].includes(env) || !url) return false;
     try {
         return new URL(url).host === INDEXNOW_CANONICAL_HOST;
     } catch {
