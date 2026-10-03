@@ -30,7 +30,7 @@ describe('CompressService.getSizeCompressed', () => {
         size: 10 * MB,
         compressLevel: 'NORMAL',
       }),
-    ).toBe(Math.round(10 * MB * 0.7));
+    ).toBe(Math.round(10 * MB * 0.75));
   });
 
   it('measures the ratio against maxSize rather than capping the result with it', () => {
@@ -40,7 +40,7 @@ describe('CompressService.getSizeCompressed', () => {
         compressLevel: 'NORMAL',
         maxSize: mbToBytes(5),
       }),
-    ).toBe(Math.round(mbToBytes(5) * 0.7));
+    ).toBe(Math.round(mbToBytes(5) * 0.75));
   });
 
   it('never returns a target above maxSize', () => {
@@ -94,9 +94,9 @@ describe('CompressService.getSizeCompressed', () => {
   it.each([
     ['VERY_LOW', 0.95],
     ['LOW', 0.85],
-    ['NORMAL', 0.7],
-    ['HIGH', 0.55],
-    ['VERY_HIGH', 0.4],
+    ['NORMAL', 0.75],
+    ['HIGH', 0.65],
+    ['VERY_HIGH', 0.45],
   ] as const)('applies %s compression factor', (compressLevel, factor) => {
     const size = 2 * MB;
     expect(
@@ -287,7 +287,7 @@ describe('SharpCompressService.optimizeGif', () => {
       const source = await makeDetailedAnimatedGif();
 
       const widths: number[] = [];
-      for (const level of ['VERY_LOW', 'NORMAL', 'VERY_HIGH'] as const) {
+      for (const level of ['VERY_LOW', 'HIGH', 'VERY_HIGH'] as const) {
         const result = await compressService.optimizeGif(
           source,
           generouslyAbove,

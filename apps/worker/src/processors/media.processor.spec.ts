@@ -428,7 +428,9 @@ describe('MediaProcessor.processMedia', () => {
                     .mockResolvedValue([frame(90_000), frame(9_000), frame(9_000)]),
                 optimizeVideo: jest.fn().mockResolvedValue({
                     filename: 'hero.mp4',
-                    size: 8_000_000,
+                    // Under PREVIEW_TARGET_BYTES, so the video is its own preview and this
+                    // frame-focused test never reaches the preview encoder.
+                    size: 4_000_000,
                     buffer: Buffer.alloc(8),
                     width: 1920,
                     height: 1080,
