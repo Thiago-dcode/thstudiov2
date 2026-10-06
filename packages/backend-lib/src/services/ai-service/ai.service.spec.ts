@@ -17,7 +17,12 @@ const CATEGORIES: MediaMetadataPromptCategory[] = [
   { id: 3, name: 'Minimalism', type: 'ART_STYLE' },
   { id: 10, name: 'dog', type: 'TAGS' },
   { id: 11, name: 'beach', type: 'TAGS' },
+  { id: 20, name: "Bird's-Eye View", type: 'TECHNIQUE' },
+  { id: 21, name: 'Low Angle', type: 'TECHNIQUE' },
 ];
+
+const offeredTypes = (prompt: string): string[] =>
+  JSON.parse(prompt.split('CATEGORIES:\n')[1].split('\n')[0].trim()).map((c: { type: string }) => c.type);
 
 const META = { media_id: 1, user_id: 1, media_type: 'IMAGE' as const };
 
@@ -52,8 +57,8 @@ describe('AiService.generateMediaMetadata categories', () => {
     expect(promptOf()).not.toContain('ARTIST CATEGORIES');
   });
 
-  it('keeps the artist categories, offers the model only tags, and drops any other discipline it returns', async () => {
-    const { service, promptOf } = setup([2, 10, 11]);
+  it('keeps the artist classification, offers only tags and techniques, and drops any other discipline it returns', async () => {
+    const { service, promptOf } = setup([2, 20, 10, 11]);
 
     const result = await service.generateMediaMetadata(
       'https://img/1.webp',
@@ -63,13 +68,77 @@ describe('AiService.generateMediaMetadata categories', () => {
       [CATEGORIES[0]],
     );
 
-    // The artist's id leads; the model's discipline (2) is rejected; its tags survive.
-    expect(result.category_ids).toEqual([1, 10, 11]);
+    // The artist's id leads; the model's discipline (2) is rejected; its technique and tags survive.
+    expect(result.category_ids).toEqual([1, 20, 10, 11]);
     const prompt = promptOf();
     expect(prompt).toContain('ARTIST CATEGORIES');
     expect(prompt).toContain('Photography');
-    const offered = JSON.parse(prompt.split('CATEGORIES:\n')[1].split('\n')[0].trim());
-    expect(offered.map((c: { type: string }) => c.type)).toEqual(['tags', 'tags']);
+    expect(offeredTypes(prompt)).toEqual(['tags', 'tags', 'technique', 'technique']);
+    expect(prompt).not.toContain('every DISCIPLINE and ART_STYLE that genuinely applies');
+    expect(prompt).toContain('TECHNIQUES');
+  });
+
+  it('keeps the artist technique and still lets the model classify', async () => {
+    const { service, promptOf } = setup([21, 2, 10]);
+
+    const result = await service.generateMediaMetadata(
+      'https://img/1.webp',
+      CATEGORIES,
+      META,
+      undefined,
+      [CATEGORIES[5]],
+    );
+
+    // The artist's technique (20) leads; the model's other technique (21) is not offered, so it is
+    // rejected; the classification and tag it chose survive.
+    expect(result.category_ids).toEqual([20, 2, 10]);
+    const prompt = promptOf();
+    expect(offeredTypes(prompt)).toEqual(['discipline', 'discipline', 'art_style', 'tags', 'tags']);
+    expect(prompt).toContain('every DISCIPLINE and ART_STYLE that genuinely applies');
+    expect(prompt).not.toContain('up to 3 TECHNIQUES');
+  });
+
+  it('never offers an artist-only category and rejects it if the model names it anyway', async () => {
+    const withArtistOnly = [
+      ...CATEGORIES,
+      { id: 30, name: 'Focus Stacking', type: 'TECHNIQUE' as const, ai_selectable: false },
+    ];
+    const { service, promptOf } = setup([30, 20]);
+
+    const result = await service.generateMediaMetadata('https://img/1.webp', withArtistOnly, META);
+
+    expect(result.category_ids).toEqual([20]);
+    expect(promptOf()).not.toContain('Focus Stacking');
+  });
+
+  it('still honours an artist-only category the artist picked', async () => {
+    const stacked = { id: 30, name: 'Focus Stacking', type: 'TECHNIQUE' as const, ai_selectable: false };
+    const { service, promptOf } = setup([21]);
+
+    const result = await service.generateMediaMetadata(
+      'https://img/1.webp',
+      [...CATEGORIES, stacked],
+      META,
+      undefined,
+      [stacked],
+    );
+
+    // Kept and led with; the technique kind is the artist's, so no other technique is accepted.
+    expect(result.category_ids).toEqual([30]);
+    expect(promptOf()).toContain('ARTIST CATEGORIES');
+  });
+
+  it('caps the techniques the model picks on its own', async () => {
+    const many = [
+      ...CATEGORIES,
+      { id: 22, name: 'Dutch Angle', type: 'TECHNIQUE' as const },
+      { id: 23, name: 'Rule of Thirds', type: 'TECHNIQUE' as const },
+    ];
+    const { service } = setup([20, 21, 22, 23]);
+
+    const result = await service.generateMediaMetadata('https://img/1.webp', many, META);
+
+    expect(result.category_ids).toEqual([20, 21, 22]);
   });
 
   it('drops the video "pick a discipline" rule when the artist already chose, and keeps it otherwise', async () => {

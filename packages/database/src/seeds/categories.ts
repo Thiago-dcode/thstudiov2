@@ -185,6 +185,8 @@ type SeedCategory = {
     tags: string[],
     /** Category kind; children inherit their parent's type. Defaults to DISCIPLINE. */
     type?: EnumType<'CATEGORY_TYPE'>,
+    /** False = only the artist may choose it, never the AI. Defaults to true. */
+    aiSelectable?: boolean,
     translations: {
         code: EnumType<'LANGUAGE_CODE'>,
         name: string
@@ -1161,6 +1163,8 @@ export const main = async () => {
         // Named "… Style" on purpose: the seed matches rows by name, and a content TAG called
         // "Black and White" already exists — a style with the bare name would overwrite it.
         { name: 'Black and White Style', tags: ['black-and-white', 'black and white', 'monochrome', 'bw', 'b&w', 'grayscale', 'blanco y negro', 'monocromo', 'preto e branco', 'monocromático', 'estilo blanco y negro', 'estilo preto e branco'], translations: [{ code: 'EN', name: 'Black and White Style' }, { code: 'ES', name: 'Estilo Blanco y Negro' }, { code: 'PT', name: 'Estilo Preto e Branco' }] },
+        // "… Style" for the same reason as above: a content TAG named "Symmetry" already exists.
+        { name: 'Symmetry Style', tags: ['symmetry', 'symmetrical', 'symmetric', 'balanced', 'mirror', 'mirrored', 'simetría', 'simetria', 'simétrico', 'simétrica', 'equilibrado', 'espejo', 'espelhado', 'estilo simétrico'], translations: [{ code: 'EN', name: 'Symmetry Style' }, { code: 'ES', name: 'Estilo Simétrico' }, { code: 'PT', name: 'Estilo Simétrico' }] },
         { name: 'Grunge Style', tags: ['grunge', 'gritty', 'distressed', 'textured', 'raw', 'estilo grunge'], translations: [{ code: 'EN', name: 'Grunge Style' }, { code: 'ES', name: 'Estilo Grunge' }, { code: 'PT', name: 'Estilo Grunge' }] },
         { name: 'Dark Academia', tags: ['dark-academia', 'academic', 'moody', 'vintage', 'literary', 'academia oscura'], translations: [{ code: 'EN', name: 'Dark Academia' }, { code: 'ES', name: 'Dark Academia' }, { code: 'PT', name: 'Dark Academia' }] },
         { name: 'Cottagecore', tags: ['cottagecore', 'cozy', 'rural', 'pastoral', 'whimsical', 'estilo cottagecore', 'rural'], translations: [{ code: 'EN', name: 'Cottagecore' }, { code: 'ES', name: 'Cottagecore' }, { code: 'PT', name: 'Cottagecore' }] },
@@ -1187,6 +1191,120 @@ export const main = async () => {
         { name: 'Woodcut & Linocut Style', tags: ['woodcut', 'linocut', 'printmaking', 'block-print', 'carved', 'xilografía', 'xilografia', 'linograbado', 'linogravura'], translations: [{ code: 'EN', name: 'Woodcut & Linocut Style' }, { code: 'ES', name: 'Estilo Xilografía y Linograbado' }, { code: 'PT', name: 'Estilo Xilogravura e Linogravura' }] },
         { name: 'Ukiyo-e Style', tags: ['ukiyo-e', 'japanese', 'woodblock', 'traditional', 'edo', 'ukiyo e', 'japonés', 'japones'], translations: [{ code: 'EN', name: 'Ukiyo-e Style' }, { code: 'ES', name: 'Estilo Ukiyo-e' }, { code: 'PT', name: 'Estilo Ukiyo-e' }] },
         { name: 'Folk Art Style', tags: ['folk-art', 'folk', 'traditional', 'naive', 'craft', 'folclórico', 'folclorico', 'arte popular', 'naive'], translations: [{ code: 'EN', name: 'Folk Art Style' }, { code: 'ES', name: 'Estilo de Arte Folclórico' }, { code: 'PT', name: 'Estilo de Arte Folclórica' }] },
+    ];
+
+    // Techniques: HOW a single piece was shot or composed — camera angle, framing, composition,
+    // depth, motion, lighting setup, lens. They are never a movement, an aesthetic or a mood:
+    // "Minimalism" or "Noir Style" is an art style, "Low-Key Lighting" is the technique behind it.
+    // Shown only in the media picker (portfolios, profiles and search never offer them), and the
+    // groups below are organizers only — the media picker hides parents, so artists pick leaves.
+    // Names must stay clear of the content TAGS below (e.g. "Aerial View", "Close-up", "Macro",
+    // "Long Exposure", "Silhouette", "Reflection", "Symmetry"): the seed matches rows by name.
+    // `aiSelectable` is false for techniques the pixels cannot prove — how a shot was MADE (HDR
+    // blending, focus stacking, a panorama's stitching, a time-lapse's sequence, a claimed golden
+    // ratio) rather than what it SHOWS. The AI is never offered those: a wrong guess would be
+    // published as a keyword. Artists can still pick them.
+    const technique = (
+        name: string,
+        es: string,
+        pt: string,
+        tags: string[],
+        aiSelectable = true,
+    ): SeedCategory => ({
+        name,
+        tags,
+        aiSelectable,
+        translations: [
+            { code: 'EN', name },
+            { code: 'ES', name: es },
+            { code: 'PT', name: pt },
+        ],
+    });
+    const techniques: SeedCategory[] = [
+        {
+            ...technique('Viewpoint & Camera Angle', 'Punto de Vista y Ángulo de Cámara', 'Ponto de Vista e Ângulo de Câmera', ['viewpoint', 'camera angle', 'perspective', 'ángulo de cámara', 'perspectiva', 'ângulo de câmera']),
+            children: [
+                technique("Bird's-Eye View", 'Vista Cenital', 'Visão Zenital', ["bird's-eye", 'overhead', 'top-down', 'top view', 'cenital', 'vista cenital', 'desde arriba', 'zenital', 'visão zenital', 'de cima']),
+                technique('High Angle', 'Plano Picado', 'Plongê', ['high angle', 'looking down', 'picado', 'ángulo alto', 'plongê']),
+                technique('Low Angle', 'Plano Contrapicado', 'Contra-plongê', ['low angle', "worm's-eye", 'from below', 'contrapicado', 'ángulo bajo', 'contra-plongê', 'de baixo']),
+                technique('Eye-Level View', 'Plano a la Altura de los Ojos', 'Plano na Altura dos Olhos', ['eye level', 'eye-level', 'neutral angle', 'altura de los ojos', 'altura dos olhos']),
+                technique('Dutch Angle', 'Plano Holandés', 'Plano Holandês', ['dutch angle', 'dutch tilt', 'canted', 'tilted horizon', 'plano holandés', 'plano holandês', 'inclinado']),
+                technique('Over-the-Shoulder Shot', 'Plano sobre el Hombro', 'Plano sobre o Ombro', ['over the shoulder', 'over-the-shoulder', 'sobre el hombro', 'sobre o ombro']),
+                technique('Point-of-View Shot', 'Plano Subjetivo', 'Plano Subjetivo', ['pov', 'point of view', 'first person', 'subjetivo', 'primera persona', 'primeira pessoa']),
+            ],
+        },
+        {
+            ...technique('Framing & Shot Size', 'Encuadre y Tamaño de Plano', 'Enquadramento e Tamanho de Plano', ['framing', 'shot size', 'encuadre', 'tamaño de plano', 'enquadramento']),
+            children: [
+                technique('Extreme Close-Up', 'Primerísimo Primer Plano', 'Plano Detalhe', ['extreme close-up', 'detail shot', 'detail', 'primerísimo primer plano', 'plano detalle', 'plano detalhe']),
+                technique('Close-Up Shot', 'Primer Plano', 'Plano Fechado', ['close-up', 'closeup', 'tight shot', 'primer plano', 'plano fechado']),
+                technique('Medium Shot', 'Plano Medio', 'Plano Médio', ['medium shot', 'waist up', 'plano medio', 'plano médio']),
+                technique('Full-Body Shot', 'Plano Entero', 'Plano Inteiro', ['full body', 'full-body', 'full length', 'plano entero', 'plano inteiro', 'cuerpo entero', 'corpo inteiro']),
+                technique('Wide Shot', 'Plano General', 'Plano Geral', ['wide shot', 'wide', 'long shot', 'plano general', 'plano geral', 'panorámico']),
+                technique('Establishing Shot', 'Plano de Situación', 'Plano de Estabelecimento', ['establishing shot', 'establishing', 'scene setting', 'plano de situación', 'plano de situação']),
+            ],
+        },
+        {
+            ...technique('Composition & Layout', 'Composición y Disposición', 'Composição e Disposição', ['composition', 'layout', 'composición', 'composição']),
+            children: [
+                technique('Rule of Thirds', 'Regla de los Tercios', 'Regra dos Terços', ['rule of thirds', 'thirds', 'regla de los tercios', 'regra dos terços']),
+                technique('Leading Lines', 'Líneas Guía', 'Linhas Guia', ['leading lines', 'lines', 'líneas guía', 'linhas guia', 'líneas de fuga']),
+                technique('Frame Within a Frame', 'Marco dentro del Marco', 'Moldura dentro da Moldura', ['frame within a frame', 'natural frame', 'framing', 'marco dentro del marco', 'moldura dentro da moldura']),
+                technique('Negative Space', 'Espacio Negativo', 'Espaço Negativo', ['negative space', 'empty space', 'espacio negativo', 'espaço negativo']),
+                technique('Centered Composition', 'Composición Centrada', 'Composição Centralizada', ['centered', 'centred', 'central subject', 'composición centrada', 'composição centralizada']),
+                technique('Diagonal Composition', 'Composición Diagonal', 'Composição Diagonal', ['diagonal', 'diagonals', 'composición diagonal', 'composição diagonal']),
+                technique('Golden Ratio', 'Proporción Áurea', 'Proporção Áurea', ['golden ratio', 'golden spiral', 'phi', 'proporción áurea', 'proporção áurea', 'espiral áurea'], false),
+                technique('Fill the Frame', 'Llenar el Encuadre', 'Preencher o Quadro', ['fill the frame', 'filled frame', 'llenar el encuadre', 'preencher o quadro']),
+            ],
+        },
+        {
+            ...technique('Depth & Focus', 'Profundidad y Enfoque', 'Profundidade e Foco', ['depth', 'focus', 'profundidad', 'enfoque', 'profundidade', 'foco']),
+            children: [
+                technique('Foreground Interest', 'Elemento en Primer Plano', 'Elemento em Primeiro Plano', ['foreground', 'foreground element', 'primer plano', 'primeiro plano', 'elemento en primer plano']),
+                technique('Layered Depth', 'Profundidad por Capas', 'Profundidade em Camadas', ['layers', 'layering', 'depth layers', 'capas', 'camadas', 'profundidad por capas']),
+                technique('Shallow Depth of Field', 'Poca Profundidad de Campo', 'Baixa Profundidade de Campo', ['shallow depth of field', 'bokeh', 'blurred background', 'desenfoque de fondo', 'fundo desfocado', 'poca profundidad de campo']),
+                technique('Deep Focus', 'Gran Profundidad de Campo', 'Grande Profundidade de Campo', ['deep focus', 'deep depth of field', 'everything in focus', 'gran profundidad de campo', 'grande profundidade de campo']),
+                technique('Selective Focus', 'Enfoque Selectivo', 'Foco Seletivo', ['selective focus', 'enfoque selectivo', 'foco seletivo']),
+                technique('Tilt-Shift', 'Tilt-Shift', 'Tilt-Shift', ['tilt-shift', 'tilt shift', 'miniature effect', 'efecto miniatura', 'efeito miniatura'], false),
+            ],
+        },
+        {
+            ...technique('Motion & Time', 'Movimiento y Tiempo', 'Movimento e Tempo', ['motion', 'time', 'movimiento', 'tiempo', 'movimento', 'tempo']),
+            children: [
+                technique('Light Trails', 'Estelas de Luz', 'Rastros de Luz', ['light trails', 'slow shutter', 'long exposure trails', 'estelas de luz', 'larga exposición', 'rastros de luz', 'longa exposição']),
+                technique('Motion Blur', 'Desenfoque de Movimiento', 'Desfoque de Movimento', ['motion blur', 'blurred motion', 'desenfoque de movimiento', 'desfoque de movimento']),
+                technique('Panning Shot', 'Barrido', 'Panning', ['panning', 'pan', 'barrido', 'seguimiento']),
+                technique('Frozen Motion', 'Movimiento Congelado', 'Movimento Congelado', ['frozen motion', 'freeze motion', 'high speed', 'movimiento congelado', 'movimento congelado', 'alta velocidad']),
+                technique('Time-Lapse', 'Time-Lapse', 'Time-Lapse', ['time-lapse', 'timelapse', 'time lapse', 'hyperlapse'], false),
+                technique('Slow Motion', 'Cámara Lenta', 'Câmera Lenta', ['slow motion', 'slow-mo', 'cámara lenta', 'câmera lenta'], false),
+                technique('Double Exposure', 'Doble Exposición', 'Dupla Exposição', ['double exposure', 'multiple exposure', 'doble exposición', 'dupla exposição', 'exposición múltiple'], false),
+                technique('Intentional Camera Movement', 'Movimiento Intencional de Cámara', 'Movimento Intencional da Câmera', ['icm', 'intentional camera movement', 'camera swipe', 'movimiento intencional de cámara', 'movimento intencional da câmera'], false),
+            ],
+        },
+        {
+            ...technique('Light & Lighting Technique', 'Técnica de Iluminación', 'Técnica de Iluminação', ['lighting', 'light', 'iluminación', 'luz', 'iluminação']),
+            children: [
+                technique('Backlighting', 'Contraluz', 'Contraluz', ['backlight', 'backlit', 'backlighting', 'contraluz', 'contra-luz']),
+                technique('Backlit Silhouette', 'Silueta a Contraluz', 'Silhueta em Contraluz', ['backlit silhouette', 'silhouette against light', 'silueta a contraluz', 'silhueta em contraluz']),
+                technique('Low-Key Lighting', 'Iluminación Low-Key', 'Iluminação Low-Key', ['low-key', 'low key', 'dark tones', 'iluminación low-key', 'iluminação low-key']),
+                technique('High-Key Lighting', 'Iluminación High-Key', 'Iluminação High-Key', ['high-key', 'high key', 'bright tones', 'iluminación high-key', 'iluminação high-key']),
+                technique('Rim Lighting', 'Luz de Contorno', 'Luz de Contorno', ['rim light', 'rim lighting', 'edge light', 'luz de contorno']),
+                technique('Light Painting', 'Pintura con Luz', 'Pintura com Luz', ['light painting', 'light graffiti', 'pintura con luz', 'pintura com luz']),
+                technique('Golden Hour Light', 'Luz de Hora Dorada', 'Luz da Hora Dourada', ['golden hour', 'magic hour', 'warm light', 'hora dorada', 'hora dourada', 'luz dorada']),
+            ],
+        },
+        {
+            ...technique('Lens & Capture', 'Objetivo y Captura', 'Lente e Captura', ['lens', 'capture', 'objetivo', 'captura', 'lente']),
+            children: [
+                technique('Macro Shot', 'Toma Macro', 'Captura Macro', ['macro shot', 'macro lens', 'extreme detail', 'toma macro', 'captura macro']),
+                technique('Wide-Angle Perspective', 'Perspectiva Gran Angular', 'Perspectiva Grande Angular', ['wide-angle', 'wide angle', 'ultra wide', 'gran angular', 'grande angular']),
+                technique('Telephoto Compression', 'Compresión Telefoto', 'Compressão Telefoto', ['telephoto', 'compression', 'long lens', 'compresión telefoto', 'compressão telefoto'], false),
+                technique('Panorama', 'Panorámica', 'Panorama', ['panorama', 'panoramic', 'stitched', 'panorámica', 'panorâmica'], false),
+                technique('HDR Blending', 'Fusión HDR', 'Fusão HDR', ['hdr', 'high dynamic range', 'exposure blending', 'fusión hdr', 'fusão hdr'], false),
+                technique('Focus Stacking', 'Apilado de Enfoque', 'Empilhamento de Foco', ['focus stacking', 'focus stack', 'apilado de enfoque', 'empilhamento de foco'], false),
+                technique('Reflection Shot', 'Toma con Reflejo', 'Captura com Reflexo', ['reflection shot', 'mirror image', 'water reflection', 'toma con reflejo', 'captura com reflexo', 'reflejo en el agua']),
+            ],
+        },
     ];
 
     // Content TAGS: concrete, per-image descriptors the LLM picks (never user-editable) to enrich
@@ -1317,7 +1435,7 @@ export const main = async () => {
         }
         const isFeatured = thumbnail != null;
 
-        const columns = ['name', 'slug', 'tags', 'thumbnail', 'is_featured', 'is_active', 'type'];
+        const columns = ['name', 'slug', 'tags', 'thumbnail', 'is_featured', 'is_active', 'type', 'ai_selectable'];
         const values: unknown[] = [
           category.name,
           slug,
@@ -1326,6 +1444,7 @@ export const main = async () => {
           isFeatured,
           isActive,
           categoryType,
+          category.aiSelectable ?? true,
         ];
 
         if (parentId !== undefined) {
@@ -1372,6 +1491,11 @@ export const main = async () => {
     // Art styles: global, active, and typed ART_STYLE so they surface in the style pickers.
     for (const style of artStyles) {
         await createCategories(style, undefined, true, 'ART_STYLE');
+    }
+
+    // Techniques: active, typed TECHNIQUE (children inherit it), media-picker only.
+    for (const group of techniques) {
+        await createCategories(group, undefined, true, 'TECHNIQUE');
     }
 
     // Content TAGS: active (so findAllActive feeds them to the LLM) but LLM-only — the

@@ -56,6 +56,7 @@ export class CategoriesRepository extends BaseRepository {
     'is_active',
     'type',
     'parent_id',
+    'ai_selectable',
   ];
 
   async findAll(filters: CategoryIndexRequest) {
@@ -161,6 +162,7 @@ export class CategoriesRepository extends BaseRepository {
       is_featured: row.is_featured,
       is_active: row.is_active,
       type: row.type,
+      ai_selectable: row.ai_selectable,
     };
   }
 
@@ -250,9 +252,11 @@ export class CategoriesRepository extends BaseRepository {
     if (filters.type) {
       query.where('categories.type', '=', filters.type);
     } else {
-      // TAGS are LLM-only (media content tagging); never surface them in the user-facing
-      // category index (pickers, search filters). Explicitly querying type=TAGS still works.
+      // TAGS are LLM-only (media content tagging) and TECHNIQUEs only ever describe a single media
+      // (angle, framing…) — neither belongs in the user-facing category index (portfolio / profile
+      // pickers, search filters, landing). Explicitly querying the type still works.
       query.where('categories.type', '!=', 'TAGS');
+      query.where('categories.type', '!=', 'TECHNIQUE');
     }
 
     if (filters.exclude_parents) {

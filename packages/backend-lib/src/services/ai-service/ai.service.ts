@@ -1,5 +1,5 @@
 import { LLMService } from '@repo/backend-lib/services/llm-service/base';
-import { MAX_TAGS_MEDIA } from '@repo/common-lib/constants/limits';
+import { MAX_TAGS_MEDIA, MAX_TECHNIQUES_MEDIA } from '@repo/common-lib/constants/limits';
 import { QueueHelper, callback500ErrorMail } from '@repo/backend-lib/utils';
 import { openAiLLMConfig } from '@repo/backend-lib/config/llm';
 import { FactoryLogService } from '@repo/backend-lib/services/log-service';
@@ -272,11 +272,28 @@ export class AiService {
 
       const hasSelectedCategories = selectedCategories.length > 0;
       const selectedIds = [...new Set(selectedCategories.map((c) => c.id))];
-      // With the artist's pick in place the model may only add TAGS, so it is shown nothing else:
-      // offering disciplines it must not choose would only invite it to.
-      const candidateCategories = hasSelectedCategories
-        ? categories.filter((c) => c.type === 'TAGS')
-        : categories;
+      // The artist's choice is final PER KIND. Picking a discipline or style settles the work's
+      // classification; picking a technique settles how it was shot. Whatever kind they left empty
+      // the model still fills in, so an artist who chose only "Portrait Photography" still gets the
+      // angle and framing described. TAGS are always the model's.
+      const classificationFixed = selectedCategories.some(
+        (c) => c.type === 'DISCIPLINE' || c.type === 'ART_STYLE',
+      );
+      const techniqueFixed = selectedCategories.some((c) => c.type === 'TECHNIQUE');
+      // Only what the model may still choose is shown to it: offering a kind it must not choose
+      // would only invite it to.
+      // `ai_selectable: false` categories (how a shot was made, which pixels cannot prove) are never
+      // offered, so they can only ever come from the artist — and a reply naming one is rejected
+      // below, because validity is judged against this same list.
+      const candidateCategories = categories
+        .filter((c) => c.ai_selectable !== false)
+        .filter((c) =>
+          c.type === 'TAGS'
+            ? true
+            : c.type === 'TECHNIQUE'
+              ? !techniqueFixed
+              : !classificationFixed,
+        );
 
       const categoriesForPrompt = candidateCategories.map((c) => ({
         id: c.id,
@@ -284,19 +301,30 @@ export class AiService {
         type: c.type.toLowerCase(),
       }));
 
-      const categoryIdsRule = hasSelectedCategories
-        ? `- category_ids: the artist already chose this work's DISCIPLINES / ART_STYLES (listed under ARTIST CATEGORIES below). Do NOT return them and do NOT pick any other discipline or style. Return ONLY up to ${MAX_TAGS_MEDIA} TAGS describing concrete things clearly VISIBLE in the image — subject (people, dog, car), scene/place (city, beach, street), setting/light (night, sunset, studio), or mood (moody, serene).
-          Only ids from the list. Never invent. Do not over-tag: pick TAGS only when clearly present. Empty array if none.`
-        : `- category_ids: ids from the CATEGORIES list below (each item has a "type"). Include:
-            · every DISCIPLINE and ART_STYLE that genuinely applies (no cap), AND
-            · up to ${MAX_TAGS_MEDIA} TAGS describing concrete things clearly VISIBLE in the image — subject (people, dog, car), scene/place (city, beach, street), setting/light (night, sunset, studio), or mood (moody, serene).
-          Only ids from the list. Never invent. Do not over-tag: pick TAGS only when clearly present. Empty array if none.`;
+      const fixedKinds = [
+        classificationFixed && 'discipline or art style',
+        techniqueFixed && 'technique',
+      ].filter(Boolean);
+      const categoryLines = [
+        !classificationFixed &&
+          '            · every DISCIPLINE and ART_STYLE that genuinely applies (no cap)',
+        !techniqueFixed &&
+          `            · up to ${MAX_TECHNIQUES_MEDIA} TECHNIQUES — how the work was shot or composed (camera angle, framing, depth of field, motion, lighting setup) that is clearly VISIBLE. A technique is never a style or a mood; skip it when nothing stands out`,
+        `            · up to ${MAX_TAGS_MEDIA} TAGS describing concrete things clearly VISIBLE in the image — subject (people, dog, car), scene/place (city, beach, street), setting/light (night, sunset, studio), or mood (moody, serene)`,
+      ].filter(Boolean);
+      const categoryIdsRule = `- category_ids: ids from the CATEGORIES list below (each item has a "type").${
+        hasSelectedCategories
+          ? ` The artist already chose some categories (listed under ARTIST CATEGORIES below): do NOT return them and do NOT pick any other ${fixedKinds.join(' or ')}.`
+          : ''
+      } Include:
+${categoryLines.join(', AND\n')}.
+          Only ids from the list. Never invent. Do not over-tag: pick only what is clearly present. Empty array if none.`;
 
       // The video / GIF rules each end with a "category_ids: pick the film/motion discipline" line.
-      // With the artist's pick in place that contradicts the rule above (do not choose any), so it
-      // is dropped rather than left for the model to reconcile.
+      // With the artist's classification in place that contradicts the rule above (do not choose
+      // any), so it is dropped rather than left for the model to reconcile.
       const mediumRules = (rules: string) =>
-        hasSelectedCategories
+        classificationFixed
           ? rules
               .split('\n')
               .filter((line) => !line.includes('category_ids:'))
@@ -306,7 +334,7 @@ export class AiService {
       const selectedCategoriesBlock = hasSelectedCategories
         ? `
 
-        ARTIST CATEGORIES (chosen by the artist — this is the work's real discipline and style; write the SEO text around them):
+        ARTIST CATEGORIES (chosen by the artist — this is the work's real classification; write the SEO text around them):
         ${JSON.stringify(selectedCategories.map((c) => ({ name: c.name, type: c.type.toLowerCase() })))}`
         : '';
 
@@ -373,13 +401,22 @@ export class AiService {
             ),
           ]
           : [];
-        // Disciplines/styles are uncapped; TAGS are capped so the pivot + JSON-LD keywords stay tight.
-        const tagIds = validCategoryIds.filter((id) => typeById.get(id) === 'TAGS');
-        const nonTagIds = validCategoryIds.filter((id) => typeById.get(id) !== 'TAGS');
+        // Disciplines/styles are uncapped; TECHNIQUEs and TAGS are capped so the pivot + JSON-LD
+        // keywords stay tight.
+        const tagIds = validCategoryIds
+          .filter((id) => typeById.get(id) === 'TAGS')
+          .slice(0, MAX_TAGS_MEDIA);
+        const techniqueIds = validCategoryIds
+          .filter((id) => typeById.get(id) === 'TECHNIQUE')
+          .slice(0, MAX_TECHNIQUES_MEDIA);
+        const classificationIds = validCategoryIds.filter((id) => {
+          const type = typeById.get(id);
+          return type !== 'TAGS' && type !== 'TECHNIQUE';
+        });
         // The artist's categories lead: the caller replaces the whole pivot with this list, so
         // leaving them out would delete them. Only reached after a parse, so a malformed reply
         // returns [] and the pivot is left exactly as it was.
-        categoryIds = [...selectedIds, ...nonTagIds, ...tagIds.slice(0, MAX_TAGS_MEDIA)];
+        categoryIds = [...selectedIds, ...classificationIds, ...techniqueIds, ...tagIds];
 
         translations = this.buildMediaTranslations(parsed.translations);
         matchesExpectedResponse = translations.some((t) => !!(t.seo_title || t.seo_description));

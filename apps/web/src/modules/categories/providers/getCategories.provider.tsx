@@ -39,6 +39,8 @@ type GetCategoriesContextType = {
   /** `handleSelectCategory` already ignores picks past the cap; this is that same state, for the UI. */
   hasReachedMax: boolean;
   isLoading: boolean;
+  /** The kinds this picker offers — what the dropdown's type filter chips are built from. */
+  types: readonly EnumType<"CATEGORY_TYPE">[];
 };
 
 const GetCategoriesContext = createContext<GetCategoriesContextType | null>(
@@ -64,7 +66,18 @@ type GetCategoriesProviderProps = {
    * the full list.
    */
   leavesOnly?: boolean;
+  /**
+   * The kinds of category this picker offers. Defaults to disciplines and art styles — what every
+   * picker offered before TECHNIQUE existed, so adding a kind does not leak it into portfolios,
+   * profiles or onboarding. Only the media picker opts into techniques; TAGS are never pickable.
+   */
+  types?: readonly EnumType<"CATEGORY_TYPE">[];
 };
+
+const DEFAULT_PICKABLE_TYPES = [
+  "DISCIPLINE",
+  "ART_STYLE",
+] as const satisfies readonly EnumType<"CATEGORY_TYPE">[];
 
 export const GetCategoriesProvider = ({
   children,
@@ -72,6 +85,7 @@ export const GetCategoriesProvider = ({
   maxSelections = MAX_CATEGORIES_USER,
   syncSelected,
   leavesOnly = false,
+  types = DEFAULT_PICKABLE_TYPES,
 }: GetCategoriesProviderProps) => {
   const filterMemo = useRef<OnchangeFilter>({});
   const loadedCategories = useRef<CategoryBase[]>([]);
@@ -107,7 +121,7 @@ export const GetCategoriesProvider = ({
         );
         loadedCategories.current = result.data.filter(
           (cat) =>
-            cat.type !== "TAGS" && !(leavesOnly && parentIds.has(cat.id)),
+            types.includes(cat.type) && !(leavesOnly && parentIds.has(cat.id)),
         );
         handleOnChange();
       }
@@ -210,6 +224,7 @@ export const GetCategoriesProvider = ({
     currentFilters: filterMemo.current,
     hasReachedMax: categoriesSelected.size >= maxSelections,
     isLoading,
+    types,
   };
 
   return (

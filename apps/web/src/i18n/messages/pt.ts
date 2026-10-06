@@ -599,6 +599,7 @@ const messages = {
       types: {
         DISCIPLINE: "Disciplinas",
         ART_STYLE: "Estilos de arte",
+        TECHNIQUE: "Técnicas",
         TAGS: "Tags",
       },
       empty: {
@@ -1992,13 +1993,13 @@ const messages = {
         globalLocationClear: "Remover a localização de todos os arquivos",
         categoriesLabel: "Categorias",
         categoriesHint:
-          "Até 3 disciplinas ou estilos artísticos. Ajuda as pessoas a encontrarem sua obra.",
+          "Até 5: o que é, seu estilo ou como foi feita (ângulo, enquadramento…). Ajuda as pessoas a encontrarem sua obra.",
         categoriesAiWillChoose:
           "Nenhuma categoria escolhida — a IA vai escolher para este arquivo.",
         settingsCategoriesSome: "{count}/{total} arquivos",
         globalCategoriesLabel: "Categorias para todos os arquivos",
         globalCategoriesHint:
-          "Define as mesmas categorias (até 3) em todos os arquivos.",
+          "Define as mesmas categorias (até 5) em todos os arquivos.",
         globalCategoriesAiHint:
           "Se você não escolher nenhuma, a IA define por você quando “Gerar metadados com IA” estiver ativado.",
         globalCategoriesPerFileHint:
@@ -2039,7 +2040,7 @@ const messages = {
           "Onde foi feita ou fotografada. A IA usa isso ao escrever os metadados.",
         categoriesLabel: "Categorias",
         categoriesInfo:
-          "Até 3 disciplinas ou estilos artísticos que descrevem esta obra. Ajudam a encontrá-la nas buscas e nos filtros.",
+          "Até 5 categorias que descrevem esta obra: o que é, seu estilo artístico ou a técnica usada (ângulo, enquadramento, profundidade…). Ajudam a encontrá-la nas buscas e nos filtros.",
         categoriesRegenerateHint:
           "Você alterou as categorias. Depois de salvar, recomendamos gerar os metadados novamente para que o título, a descrição e as palavras-chave correspondam a elas.",
         categoriesAiHint:

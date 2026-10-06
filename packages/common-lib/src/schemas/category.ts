@@ -11,6 +11,11 @@ export type CategorySchema = {
   name: string;
   slug: string;
   parent_id?: number | null;
+  /**
+   * False when only the artist may put this category on a media (how it was made, not what it
+   * shows). Absent / true = the AI may choose it too. See the `add-ai-selectable` migration.
+   */
+  ai_selectable?: boolean;
   created_at: Date;
   updated_at: Date;
 };

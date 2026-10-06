@@ -594,6 +594,7 @@ const messages = {
       types: {
         DISCIPLINE: "Disciplines",
         ART_STYLE: "Art styles",
+        TECHNIQUE: "Techniques",
         TAGS: "Tags",
       },
       empty: {
@@ -1980,13 +1981,13 @@ const messages = {
         globalLocationClear: "Remove location from all files",
         categoriesLabel: "Categories",
         categoriesHint:
-          "Up to 3 disciplines or art styles. Helps people find your work.",
+          "Up to 5 — what it is, its style, or how it was shot (angle, framing…). Helps people find your work.",
         categoriesAiWillChoose:
           "No category picked — AI will choose them for this file.",
         settingsCategoriesSome: "{count}/{total} files",
         globalCategoriesLabel: "Categories for all files",
         globalCategoriesHint:
-          "Sets the same categories (up to 3) on every file.",
+          "Sets the same categories (up to 5) on every file.",
         globalCategoriesAiHint:
           "Don't pick any and AI will set them for you when “Generate metadata with AI” is on.",
         globalCategoriesPerFileHint:
@@ -2026,7 +2027,7 @@ const messages = {
           "Where it was made or shot. AI uses it when writing metadata.",
         categoriesLabel: "Categories",
         categoriesInfo:
-          "Up to 3 disciplines or art styles that describe this work. They help people find it in search and filters.",
+          "Up to 5 categories that describe this work: what it is, its art style, or the technique used (angle, framing, depth…). They help people find it in search and filters.",
         categoriesRegenerateHint:
           "You changed the categories. After saving, we recommend generating metadata again so the title, description and keywords match them.",
         categoriesAiHint:

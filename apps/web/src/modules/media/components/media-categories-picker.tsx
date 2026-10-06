@@ -5,6 +5,8 @@ import type { CategoryBase } from "@repo/common-lib/types/category";
 import CategoryCombobox from "@/modules/categories/components/category-combobox";
 import { GetCategoriesProvider } from "@/modules/categories/providers/getCategories.provider";
 
+const MEDIA_PICKABLE_TYPES = ["DISCIPLINE", "ART_STYLE", "TECHNIQUE"] as const;
+
 /**
  * The portfolio form's category picker, bound to a list that lives somewhere else — the staged
  * uploads, or an edit draft — instead of owning its own selection.
@@ -29,6 +31,8 @@ export function MediaCategoriesPicker({
       maxSelections={MAX_CATEGORIES_MEDIA}
       // "Portrait Photography" already says "Photography": only the specific ones are offered.
       leavesOnly
+      // Techniques (angle, framing, depth…) describe a single piece, so only media offers them.
+      types={MEDIA_PICKABLE_TYPES}
     >
       <CategoryCombobox
         positionerClassName={positionerClassName}
