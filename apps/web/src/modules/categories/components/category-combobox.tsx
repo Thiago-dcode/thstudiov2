@@ -26,10 +26,13 @@ function categoryLabel(c: CategoryBase) {
 
 const CategoryCombobox = ({
   inputClassName,
+  positionerClassName,
   selectCategory,
   removeCategory,
 }: {
   inputClassName?: string;
+  /** Raises the dropdown above a dialog it is rendered inside, or it opens behind it. */
+  positionerClassName?: string;
   selectCategory?: (category: CategoryBase) => void;
   removeCategory?: (category: CategoryBase) => void;
 }) => {
@@ -110,7 +113,10 @@ const CategoryCombobox = ({
           </ul>
         )}
 
-        <ComboboxContent className="min-w-(--anchor-width) w-(--anchor-width) max-w-(--anchor-width)">
+        <ComboboxContent
+          positionerClassName={positionerClassName}
+          className="min-w-(--anchor-width) w-(--anchor-width) max-w-(--anchor-width)"
+        >
           <div
             role="group"
             aria-label={t("typeFilterLabel")}

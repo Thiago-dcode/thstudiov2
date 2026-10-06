@@ -1,5 +1,15 @@
 import { Type } from 'class-transformer';
-import { IsBoolean, IsOptional, IsString, ValidateNested } from 'class-validator';
+import {
+  ArrayMaxSize,
+  ArrayUnique,
+  IsArray,
+  IsBoolean,
+  IsInt,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
+import { MAX_CATEGORIES_MEDIA } from '@repo/common-lib/constants/limits';
 import { LocationInputRequest } from '../../locations/requests/location-input.request';
 
 export class UpdateMediaRequest {
@@ -16,6 +26,17 @@ export class UpdateMediaRequest {
   @ValidateNested()
   @Type(() => LocationInputRequest)
   location?: LocationInputRequest | null;
+
+  /**
+   * The artist's disciplines / art styles. Replaces the media's current ones; an empty array clears
+   * them (the AI then picks next time it generates metadata), absent leaves them unchanged.
+   */
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(MAX_CATEGORIES_MEDIA)
+  @ArrayUnique()
+  @IsInt({ each: true })
+  category_ids?: number[];
 
   @IsString()
   @IsOptional()

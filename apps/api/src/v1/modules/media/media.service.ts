@@ -96,7 +96,7 @@ export class MediaService {
   }
 
   public async findAll(
-    data: IndexMediaRequest & Pick<MediaIndexRequest, 'with_usage_counts'>,
+    data: IndexMediaRequest & Pick<MediaIndexRequest, 'with_usage_counts' | 'with_categories'>,
   ) {
     const result = await this.mediaRepository.getAll(data);
     return await Promise.all(
@@ -395,6 +395,7 @@ export class MediaService {
     content_type,
     generate_metadata,
     location,
+    category_ids,
     ...data
   }: CreateMediaAsyncRequest) {
     const log = this.logger.name('create');
@@ -417,7 +418,6 @@ export class MediaService {
       this.stripExtension(original_name),
       mediaPublicId,
     );
-    const defaultSeoText = `${user.username} photo`;
     const compressionLevel = data.compression_level || DEFAULT_COMPRESSION_LVL;
 
     // Placeholder row: files are not stored yet. Required columns get defaults;
@@ -437,8 +437,12 @@ export class MediaService {
       aspect_ratio: '1:1',
       media_type: mediaType,
       is_active: true,
-      seo_title: data.seo_title || data.title || defaultSeoText,
-      seo_alt: data.seo_alt || data.title || defaultSeoText,
+      // Seeded from the artist's own title only. There used to be a `"{username} photo"` fallback,
+      // which an upload that never gets AI metadata then published as its <title> and image alt —
+      // the handle the SEO rules forbid, and "photo" even on a video or GIF. Left empty, the pages
+      // fall back to their localized, medium-neutral defaults instead.
+      seo_title: data.seo_title || data.title,
+      seo_alt: data.seo_alt || data.title,
       compression_level: compressionLevel,
       seo_description: data.seo_description || data.description,
       status: 'UPLOADING',
@@ -454,6 +458,21 @@ export class MediaService {
       public_id: mediaModel.public_id,
       status: mediaModel.status,
     });
+
+    // Stored now, before any AI job exists: the metadata job reads the pivot, and a media that
+    // already has the artist's categories is classified by them rather than by the model.
+    // Best-effort like the place — the file is already uploaded, and losing it over an optional
+    // classification would be the worse outcome (the AI still fills it in when asked to).
+    if (category_ids?.length) {
+      try {
+        await this.replaceCategories(mediaModel.id, category_ids);
+      } catch (error) {
+        log.error(
+          `Could not attach categories to media [${mediaModel.id}]: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          error,
+        );
+      }
+    }
 
     await this.notifyMediaUpdate(mediaModel);
     log.info('Enqueued CREATE_UPDATE_MEDIA notification', {
@@ -655,7 +674,7 @@ export class MediaService {
       throw new UnauthorizedException();
     }
 
-    const { location, ...fields } = data;
+    const { location, category_ids, ...fields } = data;
     const internalData: UpdateMediaInternalInput = { ...fields };
     const locationId = await this.resolveLocationId(location);
     if (locationId !== undefined) internalData.location_id = locationId;
@@ -744,6 +763,11 @@ export class MediaService {
       }
     }
 
+    // `[]` is a real instruction here (the artist cleared them), `undefined` is "leave alone".
+    if (category_ids !== undefined) {
+      await this.replaceCategories(id, category_ids);
+    }
+
     // Process assets once and store them (using the possibly-renamed key)
     const processedThumbnail = media.thumbnail
       ? await this.helpers.getAsset(media.thumbnail)
@@ -753,6 +777,8 @@ export class MediaService {
       : media.url;
 
     if (!Object.values(internalData).length) {
+      // A categories-only edit changes nothing on the row, but the cached SEO payload is keyed by it.
+      if (category_ids !== undefined) await this.invalidateSeoCache(media.public_id);
       // Return media with processed assets
       media.thumbnail = processedThumbnail;
       media.url = processedUrl;
@@ -844,6 +870,26 @@ export class MediaService {
       modelValue: id,
       attachCol: 'category_id',
       valuesToAttach: categoryIds,
+      removePrevious: true,
+    });
+  }
+
+  /**
+   * Sets the artist's disciplines / art styles, replacing every category the media had — including
+   * its AI tags, which the next metadata run regenerates around the new set. Unlike
+   * {@link attachCategoriesForUser}, an empty list is honoured: it clears them.
+   *
+   * Ids are filtered down to what a person may pick (active, not TAGS) first, so this is safe to
+   * hand a client-supplied list. Ownership is the caller's job (`createAsync` just made the row,
+   * `updateForUser` checked it).
+   */
+  private async replaceCategories(id: number, categoryIds: number[]) {
+    const selectable = await this.mediaRepository.selectableCategoryIds(categoryIds);
+    return this.mediaRepository.attach('media_categories', {
+      modelCol: 'media_id',
+      modelValue: id,
+      attachCol: 'category_id',
+      valuesToAttach: selectable,
       removePrevious: true,
     });
   }

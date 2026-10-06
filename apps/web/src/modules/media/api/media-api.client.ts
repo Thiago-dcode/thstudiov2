@@ -105,7 +105,8 @@ export async function createMediaApi(
 
   // Cloned before trimming: `trimValues` mutates in place, and `input` is React state owned by
   // the media provider.
-  const { file, ...fields } = input;
+  // `categories` is the picker's objects; only their ids go over the wire.
+  const { file, categories, ...fields } = input;
 
   // `validateMediaFile` only runs its own `!file` check when a translator is registered (see
   // its doc comment). This is the same guard for when one is not — practically unreachable,
@@ -124,7 +125,13 @@ export async function createMediaApi(
 
   // `location` is a nested object from that same state; a shallow spread would share it.
   const candidate = trimValues(
-    { ...fields, location: fields.location && { ...fields.location } },
+    {
+      ...fields,
+      location: fields.location && { ...fields.location },
+      category_ids: categories?.length
+        ? categories.map((category) => category.id)
+        : undefined,
+    },
     { deep: true },
   );
   // A field the artist cleared (or filled with spaces) trims to "". Omitted, the API stores NULL

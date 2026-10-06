@@ -1,5 +1,6 @@
 import { ENUMS } from "@repo/common-lib/constants/enums";
 import {
+  MAX_CATEGORIES_MEDIA,
   MAX_MEDIA_DELETE_BATCH,
   MAX_MEDIA_LOCATION_BATCH,
 } from "@repo/common-lib/constants/limits";
@@ -15,6 +16,12 @@ import { locationInputSchema } from "@/modules/locations/schemas/location-input.
 export const MEDIA_TITLE_MAX = 255;
 const SEO_MAX = 255;
 
+/** Ids of the disciplines / art styles the artist picked. Empty on an update clears them. */
+const categoryIdsSchema = z
+  .array(z.number().int().positive())
+  .max(MAX_CATEGORIES_MEDIA)
+  .optional();
+
 export const createMediaSchema = (t: Translator) =>
   z.object({
     title: z
@@ -24,6 +31,7 @@ export const createMediaSchema = (t: Translator) =>
       .optional(),
     description: z.string().nullable().optional(),
     location: locationInputSchema.nullable().optional(),
+    category_ids: categoryIdsSchema,
     compression_level: z
       .enum([...ENUMS.COMPRESSION_LEVEL] as [string, ...string[]], {
         message: t("validation.invalid", { field: t("fields.file") }),
@@ -62,6 +70,8 @@ export const updateMediaSchema = (t: Translator) =>
       description: z.string().nullable().optional(),
       // `null` clears the place; absent leaves it as it is.
       location: locationInputSchema.nullable().optional(),
+      // `[]` clears the categories; absent leaves them as they are.
+      category_ids: categoryIdsSchema,
       seo_alt: z
         .string()
         .max(SEO_MAX, tooLongMessage(t, t("fields.seoAlt")))

@@ -403,11 +403,14 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
       let result: ActionReturn<Media>;
 
       if (media.id) {
-        const { file, ...updateInput } = media.input;
-        result = await updateMediaApi(
-          media.id,
-          updateInput as UpdateMediaInput,
-        );
+        const { file, categories, ...updateInput } = media.input;
+        result = await updateMediaApi(media.id, {
+          ...updateInput,
+          // Present only when the draft touched them: `[]` clears, absent leaves them alone.
+          ...(categories && {
+            category_ids: categories.map((category) => category.id),
+          }),
+        } as UpdateMediaInput);
       } else {
         result = await createMediaApi(media.input, (percent) => {
           updateUploadByUniqueId(uniqueId, { progress: percent });

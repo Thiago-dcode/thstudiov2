@@ -13,15 +13,21 @@ import {
 } from "@repo/ui/components/shadcn/accordion";
 import { Checkbox } from "@repo/ui/components/shadcn/checkbox";
 import { cn } from "@repo/ui/lib/utils";
-import { Gauge, MapPin, MousePointerClick, Sparkles } from "lucide-react";
+import { Gauge, MapPin, MousePointerClick, Sparkles, Tags } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { type ReactNode, useMemo, useState } from "react";
 import { LocationAutocomplete } from "@/modules/locations/components/location-autocomplete";
 import { featureToLocationInput } from "@/modules/locations/location-input";
+import { MediaCategoriesPicker } from "@/modules/media/components/media-categories-picker";
 import { useMedia } from "@/modules/media/providers/media.provider";
 import { useUserMetrics } from "@/modules/users/providers/user-metrics.provider";
 import { CompressionSliderWithUpgradeHint } from "./compression-slider";
-import { creditCostOf, creditsSpentBy, MAX_FILES } from "./staged-media.utils";
+import {
+  creditCostOf,
+  creditsSpentBy,
+  MAX_FILES,
+  sharedCategories,
+} from "./staged-media.utils";
 import { UploadingIndicator } from "./uploading-indicator";
 
 /**
@@ -103,6 +109,12 @@ export function UploadSettingsPanel() {
     return { sharedLocation: shared, locatedCount: located.length };
   }, [mediaStagedToCreate]);
 
+  // Same idea for categories: the field shows a set only while every file has exactly that set.
+  const { shared: sharedCategorySet, categorizedCount } = useMemo(
+    () => sharedCategories(mediaStagedToCreate),
+    [mediaStagedToCreate],
+  );
+
   const currentCount = mediaStagedToCreate.length;
   const isMaxReached = currentCount >= MAX_FILES;
   const uploadingCount = useMemo(
@@ -148,6 +160,22 @@ export function UploadSettingsPanel() {
                     </span>
                   </SummaryChip>
                 )}
+                {categorizedCount > 0 && (
+                  <SummaryChip
+                    icon={Tags}
+                    label={t("categoriesLabel")}
+                    emphasized
+                  >
+                    <span className="max-w-32 truncate">
+                      {sharedCategorySet
+                        ? sharedCategorySet.map((c) => c.name).join(", ")
+                        : t("settingsCategoriesSome", {
+                            count: categorizedCount,
+                            total: currentCount,
+                          })}
+                    </span>
+                  </SummaryChip>
+                )}
               </span>
             </span>
           </AccordionTrigger>
@@ -175,6 +203,9 @@ export function UploadSettingsPanel() {
                         <p className="text-sm!">
                           {t("compressionTooltipBody")}
                         </p>
+                        <p className="border-l-2 border-border-em pl-2 text-xs! text-text">
+                          {t("compressionSmallFileHint")}
+                        </p>
                       </div>
                     }
                   />
@@ -201,9 +232,6 @@ export function UploadSettingsPanel() {
                   outranks Tailwind's size utilities. */}
               <span className="block text-xs leading-relaxed text-text-muted">
                 {t("compressionTooltipHint")}
-              </span>
-              <span className="block text-xs leading-relaxed text-text-muted">
-                {t("compressionSmallFileHint")}
               </span>
             </section>
 
@@ -247,6 +275,50 @@ export function UploadSettingsPanel() {
                   }
                 >
                   {t("globalLocationClear")}
+                </button>
+              )}
+            </section>
+
+            <section className="space-y-2">
+              <span className="block text-xs! font-medium text-text">
+                {t("globalCategoriesLabel")}
+              </span>
+              {/* Shown as a set only while every file has it; the picker follows that. Picking
+                  here replaces whatever each file had, like the location field above. */}
+              <MediaCategoriesPicker
+                // Above the create dialog's z-100, or the options open behind it.
+                positionerClassName="z-[110]"
+                selected={sharedCategorySet ?? []}
+                onChange={(categories) =>
+                  updateStagedCreateInputs(() => ({ categories }))
+                }
+              />
+              <span className="block text-xs leading-relaxed text-text-muted">
+                {!sharedCategorySet && categorizedCount > 0
+                  ? t("globalCategoriesMixed")
+                  : t("globalCategoriesHint")}
+              </span>
+              {/* Spelled out because skipping this field is a normal choice, not an oversight. */}
+              <span className="flex items-start gap-1.5 text-xs leading-relaxed text-text-muted">
+                <Sparkles className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+                {t("globalCategoriesAiHint")}
+              </span>
+              <span className="flex items-start gap-1.5 text-xs leading-relaxed text-text-muted">
+                <MousePointerClick
+                  className="mt-0.5 size-3.5 shrink-0"
+                  aria-hidden
+                />
+                {t("globalCategoriesPerFileHint")}
+              </span>
+              {!sharedCategorySet && categorizedCount > 0 && (
+                <button
+                  type="button"
+                  className="text-xs font-medium text-text underline underline-offset-2 hover:text-text-muted"
+                  onClick={() =>
+                    updateStagedCreateInputs(() => ({ categories: [] }))
+                  }
+                >
+                  {t("globalCategoriesClear")}
                 </button>
               )}
             </section>

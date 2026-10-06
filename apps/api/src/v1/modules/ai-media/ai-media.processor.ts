@@ -62,14 +62,25 @@ export class AiMediaProcessor extends GlobalProcessor {
     const log = this.logger.name('generate-media-metadata');
 
     try {
-      const [asset, categories] = await Promise.all([
+      const [asset, categories, currentCategoryIds] = await Promise.all([
         this.mediaService.getAsset(request.media_id),
         this.categoriesService.findAllActive(),
+        this.mediaRepository.categoryIdsByMediaId(request.media_id),
       ]);
 
       if (!asset) {
         throw new Error(`Media [${request.media_id}] not found`);
       }
+
+      // The artist's own disciplines / styles, when they set any (at upload or in the editor): those
+      // are final and the model only adds tags around them. With none, the model classifies as ever.
+      // TAGS never count — they are the model's output, so an earlier run's tags do not make the
+      // next run think the artist chose something. Intersected with the ACTIVE list, so a category
+      // deactivated since is ignored instead of being fed back into the prompt.
+      const currentIds = new Set(currentCategoryIds);
+      const selectedCategories = categories.filter(
+        (c) => c.type !== 'TAGS' && currentIds.has(c.id),
+      );
 
       const location = asset.location_id
         ? await this.locationService.getSummaryById(asset.location_id)
@@ -96,6 +107,7 @@ export class AiMediaProcessor extends GlobalProcessor {
         // The artist's own title/description/place — set at upload or edited later — so the model
         // can name what the pixels cannot (subject, project, where it was made).
         { title: asset.title, description: asset.description, location },
+        selectedCategories,
       );
 
       // EN row (fallback to first) → the main-row SEO columns; filename is shared across locales.

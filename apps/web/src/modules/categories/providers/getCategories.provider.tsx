@@ -50,12 +50,28 @@ type GetCategoriesProviderProps = {
   initialCategories: CategoryBase[];
   /** Max categories that can be selected in this provider. Defaults to the profile cap. */
   maxSelections?: number;
+  /**
+   * Makes the picked set follow this list, for pickers whose value lives elsewhere (several staged
+   * uploads at once, a draft that can be discarded). Without it the provider owns the selection,
+   * seeded from `initialCategories` once — which is what the portfolio and profile forms want.
+   * Picks still go through the combobox's own callbacks either way.
+   */
+  syncSelected?: CategoryBase[];
+  /**
+   * Hides every category that is the parent of another, so only the most specific ones can be
+   * picked. A parent says nothing the child does not ("Photography" next to "Portrait Photography"),
+   * so offering both only invites a redundant pick. Off by default: portfolios and profiles keep
+   * the full list.
+   */
+  leavesOnly?: boolean;
 };
 
 export const GetCategoriesProvider = ({
   children,
   initialCategories = [],
   maxSelections = MAX_CATEGORIES_USER,
+  syncSelected,
+  leavesOnly = false,
 }: GetCategoriesProviderProps) => {
   const filterMemo = useRef<OnchangeFilter>({});
   const loadedCategories = useRef<CategoryBase[]>([]);
@@ -85,8 +101,13 @@ export const GetCategoriesProvider = ({
     action: async () => getActiveCategoriesAction(),
     afterAction: async (result) => {
       if (result.data !== null && result.errors === null) {
+        // Computed over the whole list: a parent is a parent whatever its children's type.
+        const parentIds = new Set(
+          result.data.flatMap((cat) => (cat.parent_id ? [cat.parent_id] : [])),
+        );
         loadedCategories.current = result.data.filter(
-          (cat) => cat.type !== "TAGS",
+          (cat) =>
+            cat.type !== "TAGS" && !(leavesOnly && parentIds.has(cat.id)),
         );
         handleOnChange();
       }
@@ -158,6 +179,26 @@ export const GetCategoriesProvider = ({
     if (loadedCategories.current.length) return;
     handleAction();
   }, []);
+
+  // Keyed by ids, not by the array: callers build a fresh list every render, and re-syncing on
+  // identity would reset the picker mid-interaction.
+  const syncSignature = syncSelected?.map((c) => c.id).join(",");
+  useEffect(() => {
+    if (syncSelected === undefined) return;
+    setCategoriesSelected((prev) =>
+      prev.size === syncSelected.length &&
+      syncSelected.every((c) => prev.has(c.id))
+        ? prev
+        : new Map(syncSelected.map((c) => [c.id, c])),
+    );
+  }, [syncSignature]);
+
+  // The dropdown hides what is already picked, so it has to be refiltered whenever the picked set
+  // changes from outside (a sync above) and not only on this provider's own picks.
+  useEffect(() => {
+    if (!loadedCategories.current.length) return;
+    handleOnChange();
+  }, [categoriesSelected]);
   const value: GetCategoriesContextType = {
     categoriesResponse,
     categoriesToDisplay,

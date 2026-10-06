@@ -796,6 +796,7 @@ export const EditCategories = ({
   <GetCategoriesProvider
     initialCategories={userCategories}
     maxSelections={MAX_CATEGORIES_USER}
+    leavesOnly
   >
     <EditCategoriesForm />
   </GetCategoriesProvider>

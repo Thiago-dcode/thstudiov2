@@ -18,6 +18,7 @@ export default async function Step3() {
     <GetCategoriesProvider
       initialCategories={all}
       maxSelections={MAX_CATEGORIES_USER}
+      leavesOnly
     >
       <Step3Client />
     </GetCategoriesProvider>

@@ -18,6 +18,7 @@ import { useTranslations } from "next-intl";
 import FormComponent from "@/lib/components/form-component";
 import { LocationAutocomplete } from "@/modules/locations/components/location-autocomplete";
 import { featureToLocationInput } from "@/modules/locations/location-input";
+import { MediaCategoriesPicker } from "@/modules/media/components/media-categories-picker";
 import {
   type UploadMedia,
   useMedia,
@@ -35,8 +36,8 @@ import { StagedMediaPreview } from "./staged-media-preview";
 /**
  * Per-file settings for one staged upload, opened by clicking its card.
  *
- * Title, description and location go out with the create request and are stored on the media;
- * the AI metadata job also reads them as context. Compression and the AI toggle override the bulk
+ * Title, description, location and categories go out with the create request and are stored on the
+ * media; the AI metadata job also reads them as context, and keeps the categories as picked. Compression and the AI toggle override the bulk
  * settings for this file alone. Every field writes straight into the staged input via
  * `patchInput`, so there is no draft to lose however the dialog is closed.
  */
@@ -183,6 +184,30 @@ export function StagedMediaDetailsDialog({
                   <span className="block text-xs text-text-muted">
                     {t("locationHint")}
                   </span>
+                </div>
+                <div className="space-y-1.5">
+                  <span className="block text-xs font-medium text-text">
+                    {t("categoriesLabel")}
+                  </span>
+                  <MediaCategoriesPicker
+                    // Above this dialog's z-[110], or the options open behind it.
+                    positionerClassName="z-[120]"
+                    selected={media?.input.categories ?? []}
+                    onChange={(categories) => patchInput({ categories })}
+                  />
+                  <span className="block text-xs text-text-muted">
+                    {t("categoriesHint")}
+                  </span>
+                  {/* Only worth saying when it is about to matter: nothing picked and the AI is on. */}
+                  {generateMetadata && !media?.input.categories?.length && (
+                    <span className="flex items-start gap-1.5 text-xs text-text-muted">
+                      <Sparkles
+                        className="mt-0.5 size-3.5 shrink-0"
+                        aria-hidden
+                      />
+                      {t("categoriesAiWillChoose")}
+                    </span>
+                  )}
                 </div>
               </section>
 

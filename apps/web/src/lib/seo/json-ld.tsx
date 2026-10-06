@@ -527,7 +527,12 @@ export function buildMediaJsonLd(
     caption: text(media.seo_alt),
     contentUrl: media.url,
     thumbnailUrl: media.thumbnail,
-    encodingFormat: isVideo ? "video/mp4" : "image/webp",
+    // A GIF is stored (and served) as a .gif — only still images are re-encoded to WebP.
+    encodingFormat: isVideo
+      ? "video/mp4"
+      : media.media_type === "GIF"
+        ? "image/gif"
+        : "image/webp",
     creator: personRef(artist, locale),
     creditText: artist.name || `@${artist.username}`,
     copyrightHolder: { "@id": personId(artist.username) },

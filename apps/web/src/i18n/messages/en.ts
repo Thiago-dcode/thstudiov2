@@ -1918,12 +1918,12 @@ const messages = {
           "If your photo is already compressed or small (under 5 MB), we recommend choosing normal or lower compression.",
         allFiles: "All files",
         upgradeRequired: "Upgrade to access this feature.",
-        aiSeoGeneration: "Generate SEO with AI",
+        aiSeoGeneration: "Generate metadata with AI",
         aiSeoHint:
-          "AI writes the search info — SEO title, description, alt text and tags — so your work is easier to find.",
-        aiSeoBadge: "SEO will be generated with AI",
+          "AI writes a title, description and categories that help people find your work on Google.",
+        aiSeoBadge: "Metadata will be generated with AI",
         aiSeoTooltipBody:
-          "AI looks at your image or video and writes the text search engines read: an SEO title, SEO description and alt text in every language, plus matching tags. It helps your work show up on Google. It never changes the title and description you wrote.",
+          "AI looks at your image or video and writes a title, a description and a short image description that help people find your work, in English, Spanish and Portuguese. It never changes the title and description you wrote. If you don't pick a category, AI chooses them for you. If you do, AI keeps yours and only adds a few extra keywords.",
         aiSeoCreditsHint:
           "Costs {imageCost} AI {imageCost, plural, one {credit} other {credits}} per image/GIF, {videoCost} per video. <remaining>You have {count} {count, plural, one {credit} other {credits}} remaining.</remaining>",
         creditsLabel: "{count} {count, plural, one {credit} other {credits}}",
@@ -1961,7 +1961,7 @@ const messages = {
           "Uses {count} {count, plural, one {credit} other {credits}}",
         aboutTitle: "About this piece",
         aboutHint:
-          "Optional — shown with your work, and used by AI as context for SEO.",
+          "Optional — shown with your work, and AI reads it to write better metadata.",
         titleLabel: "Title",
         titlePlaceholder: "e.g. Sunset over Lisbon",
         descriptionLabel: "Description",
@@ -1978,8 +1978,24 @@ const messages = {
         globalLocationMixed:
           "Your files have different locations. Picking one here replaces them all.",
         globalLocationClear: "Remove location from all files",
+        categoriesLabel: "Categories",
+        categoriesHint:
+          "Up to 3 disciplines or art styles. Helps people find your work.",
+        categoriesAiWillChoose:
+          "No category picked — AI will choose them for this file.",
+        settingsCategoriesSome: "{count}/{total} files",
+        globalCategoriesLabel: "Categories for all files",
+        globalCategoriesHint:
+          "Sets the same categories (up to 3) on every file.",
+        globalCategoriesAiHint:
+          "Don't pick any and AI will set them for you when “Generate metadata with AI” is on.",
+        globalCategoriesPerFileHint:
+          "Need different categories for one file? Click it in the list to set its own.",
+        globalCategoriesMixed:
+          "Your files have different categories. Picking here replaces them all.",
+        globalCategoriesClear: "Remove categories from all files",
         aiNotesTip:
-          "Tip: give each file a title, description and location first. AI reads them as context, so the SEO it writes is more accurate. Click a file to add them.",
+          "Tip: give each file a title, description and location first. AI reads them, so what it writes is more accurate. Click a file to add them.",
         duplicateSummary:
           "{count, plural, one {# file has} other {# files have}} the same name and size as another file in this upload — check for duplicates.",
         duplicateCardHint:
@@ -2006,7 +2022,15 @@ const messages = {
         descriptionPlaceholder: "Enter description",
         locationLabel: "Location",
         locationPlaceholder: "Search a city or place…",
-        locationInfo: "Where it was made or shot. AI uses it when writing SEO.",
+        locationInfo:
+          "Where it was made or shot. AI uses it when writing metadata.",
+        categoriesLabel: "Categories",
+        categoriesInfo:
+          "Up to 3 disciplines or art styles that describe this work. They help people find it in search and filters.",
+        categoriesRegenerateHint:
+          "You changed the categories. After saving, we recommend generating metadata again so the title, description and keywords match them.",
+        categoriesAiHint:
+          "No category set — AI will choose them the next time you generate metadata.",
         seoTitleLabel: "SEO Title",
         seoTitlePlaceholder: "Enter SEO title",
         seoTitleInfo:
@@ -2048,7 +2072,7 @@ const messages = {
         noCreditsAvailable:
           "No AI credits available. You need at least {imageCost} credit to generate metadata for an image/GIF, or {videoCost} for a video. Please upgrade your plan or wait for credits to reset.",
         generateSeoTooltip:
-          "SEO (Search Engine Optimization) helps your work get found on Google and Google Images. This uses AI to analyze the image or video and generate an artistic, keyword-rich title, description, alt text and filename — and auto-tags it with matching categories.",
+          "Helps your work get found on Google and Google Images. AI looks at the image or video and writes a title, description, image description and filename. If you haven't set categories it also picks them; if you have, it keeps yours and only adds a few extra keywords.",
         noCreditsSuffix: " (No credits)",
         delete: "Delete",
         deleteTitle: "Delete this media?",

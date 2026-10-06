@@ -1,5 +1,7 @@
 "use client";
 
+import { MAX_CATEGORIES_MEDIA } from "@repo/common-lib/constants/limits";
+import type { CategoryBase } from "@repo/common-lib/types/category";
 import type { LocationInput } from "@repo/common-lib/types/location";
 import type { Media, UpdateMediaInput } from "@repo/common-lib/types/media";
 import { bytesToMB } from "@repo/common-lib/utils/bytes";
@@ -57,6 +59,7 @@ import {
   ExpandMediaDialog,
 } from "@/modules/media/components/expand-media-dialog";
 import { FailedMediaOverlay } from "@/modules/media/components/failed-media-overlay";
+import { MediaCategoriesPicker } from "@/modules/media/components/media-categories-picker";
 import { useMedia } from "@/modules/media/providers/media.provider";
 import { useUserMetrics } from "@/modules/users/providers/user-metrics.provider";
 import { MediaStatusIcons } from "./media-status-icons";
@@ -76,8 +79,23 @@ const EDITABLE_TEXT_FIELDS = [
 ] as const;
 type EditableTextField = (typeof EDITABLE_TEXT_FIELDS)[number];
 
-/** A fresh draft seeded from the saved media. `location` is left out on purpose: absent means "keep the saved place". */
-function draftFromMedia(media: Media): UpdateMediaInput & { user_id: number } {
+/**
+ * What an edit draft holds: the update fields plus the picked categories as objects (the picker
+ * needs their names; the provider turns them into `category_ids` on save).
+ */
+type MediaDraft = UpdateMediaInput & { categories?: CategoryBase[] };
+
+const categoryIds = (categories: CategoryBase[] | undefined) =>
+  (categories ?? [])
+    .map((c) => c.id)
+    .sort((a, b) => a - b)
+    .join(",");
+
+/**
+ * A fresh draft seeded from the saved media. `location` and `categories` are left out on purpose:
+ * absent means "keep what is saved" — and for categories, "[]" would mean "clear them".
+ */
+function draftFromMedia(media: Media): MediaDraft & { user_id: number } {
   return {
     user_id: media.user_id,
     title: media.title ?? "",
@@ -94,7 +112,13 @@ function draftFromMedia(media: Media): UpdateMediaInput & { user_id: number } {
  * never against a copy the draft has been merged into, or reverting a field would still read as
  * a change.
  */
-function draftDiffersFromSaved(draft: UpdateMediaInput, saved: Media): boolean {
+function draftDiffersFromSaved(draft: MediaDraft, saved: Media): boolean {
+  if (
+    "categories" in draft &&
+    categoryIds(draft.categories) !== categoryIds(saved.categories)
+  ) {
+    return true;
+  }
   // The place is compared by label: the client never holds the saved row's geocoder id.
   if (
     "location" in draft &&
@@ -177,11 +201,19 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
     setSavedMedia((prev) => (prev === media ? prev : { ...prev, ...media }));
   }, [media]);
 
-  // A save or AI run landed: that is the new saved state.
+  // A save or AI run landed: that is the new saved state. The notification's media carries no
+  // categories, so a save that changed them has to bring its own — otherwise the saved set would
+  // read as the old one until the page next re-renders.
   const landedMedia = currentMediaUpload?.data;
+  const savedCategories = currentMediaUpload?.input.categories;
   useEffect(() => {
-    if (landedMedia) setSavedMedia((prev) => ({ ...prev, ...landedMedia }));
-  }, [landedMedia]);
+    if (!landedMedia) return;
+    setSavedMedia((prev) => ({
+      ...prev,
+      ...landedMedia,
+      ...(savedCategories && { categories: savedCategories }),
+    }));
+  }, [landedMedia, savedCategories]);
 
   // Once `data` lands the entry is a record of what was saved, not a draft: its input is stale.
   const draft =
@@ -283,7 +315,7 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
     await handleUpdate();
   };
 
-  const patchDraft = (patch: UpdateMediaInput) => {
+  const patchDraft = (patch: MediaDraft) => {
     if (!savedMedia.id || !savedMedia.user_id || isPending) return;
 
     const nextInput = { ...(draft ?? draftFromMedia(savedMedia)), ...patch };
@@ -322,6 +354,17 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
     draft && "location" in draft
       ? (draft.location ?? null)
       : (savedMedia.location ?? null);
+
+  /** The categories the edit would save: the staged pick when there is one, else the saved ones. */
+  const stagedCategories: CategoryBase[] =
+    draft && "categories" in draft
+      ? (draft.categories ?? [])
+      : (savedMedia.categories ?? []);
+
+  const categoriesChanged =
+    !!draft &&
+    "categories" in draft &&
+    categoryIds(draft.categories) !== categoryIds(savedMedia.categories);
 
   const stagedIsActive =
     draft && "is_active" in draft
@@ -393,6 +436,52 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
               <span className="block text-xs text-text-muted">
                 {t("locationInfo")}
               </span>
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Label className="text-sm font-medium text-text">
+                  {t("categoriesLabel")}
+                </Label>
+                <InfoTooltip
+                  content={<p className="text-sm">{t("categoriesInfo")}</p>}
+                  openDelay={200}
+                  iconClassName="w-3.5 h-3.5"
+                />
+                <span
+                  className={cn(
+                    "text-xs text-text-muted tabular-nums",
+                    stagedCategories.length >= MAX_CATEGORIES_MEDIA &&
+                      "text-text",
+                  )}
+                >
+                  {stagedCategories.length}/{MAX_CATEGORIES_MEDIA}
+                </span>
+              </div>
+              {/* The picker has no disabled state, so a busy media just makes it inert. */}
+              <div
+                className={cn(
+                  isPending && "pointer-events-none select-none opacity-60",
+                )}
+                aria-busy={isPending}
+              >
+                <MediaCategoriesPicker
+                  selected={stagedCategories}
+                  onChange={(categories) => patchDraft({ categories })}
+                />
+              </div>
+              {stagedCategories.length === 0 && (
+                <span className="block text-xs text-text-muted">
+                  {t("categoriesAiHint")}
+                </span>
+              )}
+              {/* Only once the pick differs from what is saved: the SEO text was written around the
+                  old categories, so it is the metadata that is now out of step. */}
+              {categoriesChanged && (
+                <span className="flex items-start gap-1.5 border-l-2 border-border-em pl-2 text-xs leading-relaxed text-text">
+                  <Sparkles className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+                  {t("categoriesRegenerateHint")}
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-2">
               <Checkbox
@@ -496,6 +585,13 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
               <DetailField label={t("locationLabel")}>
                 <p className="text-sm text-text">
                   {savedMedia.location.formatted}
+                </p>
+              </DetailField>
+            )}
+            {!!savedMedia.categories?.length && (
+              <DetailField label={t("categoriesLabel")}>
+                <p className="text-sm text-text">
+                  {savedMedia.categories.map((c) => c.name).join(", ")}
                 </p>
               </DetailField>
             )}

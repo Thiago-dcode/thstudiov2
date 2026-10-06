@@ -1930,12 +1930,12 @@ const messages = {
           "Se sua foto já está comprimida ou é pequena (menos de 5 MB), recomendamos escolher compressão normal ou menor.",
         allFiles: "Todos os arquivos",
         upgradeRequired: "Faça upgrade para acessar este recurso.",
-        aiSeoGeneration: "Gerar SEO com IA",
+        aiSeoGeneration: "Gerar metadados com IA",
         aiSeoHint:
-          "A IA escreve as informações para buscadores — título SEO, descrição, texto alternativo e tags — para que sua obra seja encontrada com mais facilidade.",
-        aiSeoBadge: "O SEO será gerado com IA",
+          "A IA escreve um título, uma descrição e categorias que ajudam as pessoas a encontrarem sua obra no Google.",
+        aiSeoBadge: "Os metadados serão gerados com IA",
         aiSeoTooltipBody:
-          "A IA olha sua imagem ou vídeo e escreve o texto que os buscadores leem: título SEO, descrição SEO e texto alternativo em todos os idiomas, além de tags que combinam. Assim sua obra aparece no Google. Nunca altera o título e a descrição que você escreveu.",
+          "A IA olha sua imagem ou vídeo e escreve um título, uma descrição e uma breve descrição da imagem que ajudam as pessoas a encontrarem sua obra, em português, inglês e espanhol. Nunca altera o título e a descrição que você escreveu. Se você não escolher nenhuma categoria, a IA escolhe por você. Se escolher, a IA mantém as suas e só adiciona algumas palavras-chave extras.",
         aiSeoCreditsHint:
           "Custa {imageCost} {imageCost, plural, one {crédito} other {créditos}} de IA por imagem/GIF, {videoCost} por vídeo. <remaining>Você tem {count} {count, plural, one {crédito} other {créditos}} restantes.</remaining>",
         creditsLabel: "{count} {count, plural, one {crédito} other {créditos}}",
@@ -1973,7 +1973,7 @@ const messages = {
           "Usa {count} {count, plural, one {crédito} other {créditos}}",
         aboutTitle: "Sobre esta obra",
         aboutHint:
-          "Opcional — aparece com sua obra e a IA usa como contexto para o SEO.",
+          "Opcional — aparece com sua obra e a IA lê para escrever metadados melhores.",
         titleLabel: "Título",
         titlePlaceholder: "ex.: Pôr do sol em Lisboa",
         descriptionLabel: "Descrição",
@@ -1990,8 +1990,24 @@ const messages = {
         globalLocationMixed:
           "Seus arquivos têm localizações diferentes. Escolher uma aqui substitui todas.",
         globalLocationClear: "Remover a localização de todos os arquivos",
+        categoriesLabel: "Categorias",
+        categoriesHint:
+          "Até 3 disciplinas ou estilos artísticos. Ajuda as pessoas a encontrarem sua obra.",
+        categoriesAiWillChoose:
+          "Nenhuma categoria escolhida — a IA vai escolher para este arquivo.",
+        settingsCategoriesSome: "{count}/{total} arquivos",
+        globalCategoriesLabel: "Categorias para todos os arquivos",
+        globalCategoriesHint:
+          "Define as mesmas categorias (até 3) em todos os arquivos.",
+        globalCategoriesAiHint:
+          "Se você não escolher nenhuma, a IA define por você quando “Gerar metadados com IA” estiver ativado.",
+        globalCategoriesPerFileHint:
+          "Um arquivo precisa de outras categorias? Clique nele na lista para definir as dele.",
+        globalCategoriesMixed:
+          "Seus arquivos têm categorias diferentes. Escolher aqui substitui todas.",
+        globalCategoriesClear: "Remover as categorias de todos os arquivos",
         aiNotesTip:
-          "Dica: dê primeiro um título, uma descrição e uma localização a cada arquivo. A IA os usa como contexto, então o SEO que ela escreve fica mais preciso. Clique em um arquivo para adicioná-los.",
+          "Dica: dê primeiro um título, uma descrição e uma localização a cada arquivo. A IA os lê, então o que ela escreve fica mais preciso. Clique em um arquivo para adicioná-los.",
         duplicateSummary:
           "{count, plural, one {# arquivo tem} other {# arquivos têm}} o mesmo nome e tamanho de outro arquivo deste envio — verifique se há duplicados.",
         duplicateCardHint:
@@ -2020,7 +2036,14 @@ const messages = {
         locationLabel: "Localização",
         locationPlaceholder: "Busque uma cidade ou lugar…",
         locationInfo:
-          "Onde foi feita ou fotografada. A IA usa isso ao escrever o SEO.",
+          "Onde foi feita ou fotografada. A IA usa isso ao escrever os metadados.",
+        categoriesLabel: "Categorias",
+        categoriesInfo:
+          "Até 3 disciplinas ou estilos artísticos que descrevem esta obra. Ajudam a encontrá-la nas buscas e nos filtros.",
+        categoriesRegenerateHint:
+          "Você alterou as categorias. Depois de salvar, recomendamos gerar os metadados novamente para que o título, a descrição e as palavras-chave correspondam a elas.",
+        categoriesAiHint:
+          "Sem categoria — a IA vai escolher na próxima vez que você gerar metadados.",
         seoTitleLabel: "Título SEO",
         seoTitlePlaceholder: "Digite o título SEO",
         seoTitleInfo:
@@ -2062,7 +2085,7 @@ const messages = {
         noCreditsAvailable:
           "Nenhum crédito de IA disponível. Você precisa de pelo menos {imageCost} crédito para gerar metadados de uma imagem/GIF, ou {videoCost} para um vídeo. Faça upgrade do seu plano ou aguarde a renovação dos créditos.",
         generateSeoTooltip:
-          "O SEO (otimização para mecanismos de busca) ajuda seu trabalho a ser encontrado no Google e no Google Imagens. Usamos IA para analisar a imagem ou o vídeo e gerar um título, uma descrição, um texto alternativo e um nome de arquivo artísticos e ricos em palavras-chave, além de marcá-la automaticamente com as categorias correspondentes.",
+          "Ajuda seu trabalho a ser encontrado no Google e no Google Imagens. A IA olha a imagem ou o vídeo e escreve um título, uma descrição, uma descrição da imagem e um nome de arquivo. Se você não definiu categorias, ela também as escolhe; se definiu, mantém as suas e só adiciona algumas palavras-chave extras.",
         noCreditsSuffix: " (Sem créditos)",
         delete: "Excluir",
         deleteTitle: "Excluir esta mídia?",

@@ -306,6 +306,19 @@ export const main = async () => {
                         { code: 'PT', name: 'Fotografia Documental e de Rua' },
                     ],
                 },
+                {
+                    name: 'Pet Photography',
+                    tags: [
+                        'pet', 'pets', 'dog', 'cat', 'animal', 'puppy', 'kitten', 'pet portrait',
+                        'mascota', 'mascotas', 'perro', 'gato', 'fotografia de mascotas',
+                        'animal de estimação', 'cachorro', 'fotografia pet', 'fotografia de pets',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Pet Photography' },
+                        { code: 'ES', name: 'Fotografía de Mascotas' },
+                        { code: 'PT', name: 'Fotografia de Pets' },
+                    ],
+                },
             ],
         },
         {
@@ -1145,6 +1158,9 @@ export const main = async () => {
         // Mood & retro
         { name: 'Vintage & Retro Style', tags: ['vintage', 'retro', 'nostalgic', 'aged', 'classic', 'retrô', 'estilo vintage', 'estilo retro'], translations: [{ code: 'EN', name: 'Vintage & Retro Style' }, { code: 'ES', name: 'Estilo Vintage y Retro' }, { code: 'PT', name: 'Estilo Vintage e Retrô' }] },
         { name: 'Noir Style', tags: ['noir', 'film-noir', 'moody', 'high-contrast', 'shadows', 'estilo noir', 'cine negro'], translations: [{ code: 'EN', name: 'Noir Style' }, { code: 'ES', name: 'Estilo Noir' }, { code: 'PT', name: 'Estilo Noir' }] },
+        // Named "… Style" on purpose: the seed matches rows by name, and a content TAG called
+        // "Black and White" already exists — a style with the bare name would overwrite it.
+        { name: 'Black and White Style', tags: ['black-and-white', 'black and white', 'monochrome', 'bw', 'b&w', 'grayscale', 'blanco y negro', 'monocromo', 'preto e branco', 'monocromático', 'estilo blanco y negro', 'estilo preto e branco'], translations: [{ code: 'EN', name: 'Black and White Style' }, { code: 'ES', name: 'Estilo Blanco y Negro' }, { code: 'PT', name: 'Estilo Preto e Branco' }] },
         { name: 'Grunge Style', tags: ['grunge', 'gritty', 'distressed', 'textured', 'raw', 'estilo grunge'], translations: [{ code: 'EN', name: 'Grunge Style' }, { code: 'ES', name: 'Estilo Grunge' }, { code: 'PT', name: 'Estilo Grunge' }] },
         { name: 'Dark Academia', tags: ['dark-academia', 'academic', 'moody', 'vintage', 'literary', 'academia oscura'], translations: [{ code: 'EN', name: 'Dark Academia' }, { code: 'ES', name: 'Dark Academia' }, { code: 'PT', name: 'Dark Academia' }] },
         { name: 'Cottagecore', tags: ['cottagecore', 'cozy', 'rural', 'pastoral', 'whimsical', 'estilo cottagecore', 'rural'], translations: [{ code: 'EN', name: 'Cottagecore' }, { code: 'ES', name: 'Cottagecore' }, { code: 'PT', name: 'Cottagecore' }] },
