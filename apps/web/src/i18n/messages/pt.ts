@@ -1759,9 +1759,9 @@ const messages = {
           "Quando ativado, este portfólio é destacado no seu perfil público de artista para que os visitantes o encontrem mais facilmente. Você pode destacar até {limit} portfólios na sua página de perfil.",
         highlightLimitReached:
           "Você atingiu o limite de {limit} portfólios destacados na sua página de perfil.",
-        active: "Ativo",
+        active: "Público",
         activeInfo:
-          "Quando desativado, este portfólio fica oculto do seu perfil público de artista e das listagens. Você ainda pode editá-lo no Atelier.",
+          "Se desmarcar, este portfólio fica oculto do seu perfil de artista e das listagens. Você ainda pode editá-lo no Atelier.",
       },
       items: {
         noItems: "Nenhuma mídia ou coleção adicionada ainda",
@@ -1820,7 +1820,7 @@ const messages = {
         priceLabel: "Preço",
         priceInfo: "O preço é opcional; deixe em 0.",
         showPrice: "Mostrar preço",
-        active: "Ativo",
+        active: "Público",
         showOnProfile: "Mostrar na página de perfil",
         showOnProfileInfo:
           "Quando ativado, este serviço é destacado no seu perfil público de artista para que os visitantes o encontrem mais facilmente. Você pode destacar até {limit} serviços na sua página de perfil.",
@@ -1895,9 +1895,9 @@ const messages = {
           "Quando ativado, esta coleção é destacada no seu perfil público de artista para que os visitantes a encontrem mais facilmente. Você pode destacar até {limit} coleções na sua página de perfil.",
         highlightLimitReached:
           "Você atingiu o limite de {limit} coleções destacadas na sua página de perfil.",
-        active: "Ativo",
+        active: "Público",
         activeInfo:
-          "Quando desativado, esta coleção fica oculta do seu perfil público de artista e das listagens. Você ainda pode editá-la no Atelier.",
+          "Se desmarcar, esta coleção fica oculta do seu perfil de artista e das listagens. Você ainda pode editá-la no Atelier.",
       },
       media: {
         sectionLabel: "Mídia",
@@ -2039,12 +2039,12 @@ const messages = {
           "Nome de arquivo SEO definido automaticamente no upload ou ao gerar metadados com IA. Não é editável.",
         lastUpdated: "Última atualização",
         metadataGeneratedLabel: "Metadados gerados",
-        activeLabel: "Ativa",
+        activeLabel: "Pública",
         activeInfo:
-          "A mídia ativa aparece na sua página pública e em todos os portfólios e coleções em que está. Desative para ocultá-la em todos os lugares sem excluí-la — você pode reativá-la quando quiser.",
-        visibilityLabel: "Visibilidade",
-        visibilityActive: "Ativa",
-        visibilityInactive: "Oculta",
+          "A mídia pública aparece na sua página e em todos os portfólios e coleções em que está. Desmarque para ocultá-la em todos os lugares sem excluí-la — você pode marcá-la de novo quando quiser.",
+        visibilityLabel: "Pública",
+        visibilityActive: "Sim",
+        visibilityInactive: "Não",
         typeLabel: "Tipo",
         compressionLabel: "Compressão",
         sizeLabel: "Tamanho",
@@ -2164,10 +2164,10 @@ const messages = {
         locationMissing: "Sem localização",
         locationMissingBody:
           "Informar onde a obra foi feita ajuda as pessoas a encontrá-la.",
-        active: "Ativa",
+        active: "Pública",
         activeBody:
           "Visível na sua página pública e em todos os lugares onde você a colocou.",
-        inactive: "Oculta",
+        inactive: "Não pública",
         inactiveBody:
           "Oculta da página pública, dos portfólios e das coleções.",
         inCollections: "Em {count, plural, one {# coleção} other {# coleções}}",

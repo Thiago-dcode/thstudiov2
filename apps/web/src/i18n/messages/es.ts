@@ -1757,9 +1757,9 @@ const messages = {
           "Cuando está activado, este portafolio se destaca en tu perfil público de artista para que los visitantes lo encuentren más fácilmente. Puedes destacar hasta {limit} portafolios en tu página de perfil.",
         highlightLimitReached:
           "Has alcanzado el límite de {limit} portafolios destacados en tu página de perfil.",
-        active: "Activo",
+        active: "Público",
         activeInfo:
-          "Cuando está desactivado, este portafolio se oculta de tu perfil público de artista y de los listados. Aún puedes editarlo en Atelier.",
+          "Si lo desmarcas, este portafolio se oculta de tu perfil de artista y de los listados. Aún puedes editarlo en Atelier.",
       },
       items: {
         noItems: "Aún no se han añadido contenidos ni colecciones",
@@ -1818,7 +1818,7 @@ const messages = {
         priceLabel: "Precio",
         priceInfo: "El precio es opcional; déjalo en 0.",
         showPrice: "Mostrar precio",
-        active: "Activo",
+        active: "Público",
         showOnProfile: "Mostrar en la página de perfil",
         showOnProfileInfo:
           "Cuando está activado, este servicio se destaca en tu perfil público de artista para que los visitantes lo encuentren más fácilmente. Puedes destacar hasta {limit} servicios en tu página de perfil.",
@@ -1893,9 +1893,9 @@ const messages = {
           "Cuando está activado, esta colección se destaca en tu perfil público de artista para que los visitantes la encuentren más fácilmente. Puedes destacar hasta {limit} colecciones en tu página de perfil.",
         highlightLimitReached:
           "Has alcanzado el límite de {limit} colecciones destacadas en tu página de perfil.",
-        active: "Activo",
+        active: "Público",
         activeInfo:
-          "Cuando está desactivado, esta colección se oculta de tu perfil público de artista y de los listados. Aún puedes editarla en Atelier.",
+          "Si lo desmarcas, esta colección se oculta de tu perfil de artista y de los listados. Aún puedes editarla en Atelier.",
       },
       media: {
         sectionLabel: "Contenido",
@@ -2038,12 +2038,12 @@ const messages = {
           "Nombre de archivo SEO definido automáticamente al subir o al generar metadatos con IA. No se puede editar.",
         lastUpdated: "Última actualización",
         metadataGeneratedLabel: "Metadatos generados",
-        activeLabel: "Activo",
+        activeLabel: "Público",
         activeInfo:
-          "El contenido activo aparece en su página pública y en todos los portafolios y colecciones donde está. Desactívalo para ocultarlo en todas partes sin eliminarlo; puedes volver a activarlo cuando quieras.",
-        visibilityLabel: "Visibilidad",
-        visibilityActive: "Activo",
-        visibilityInactive: "Oculto",
+          "El contenido público aparece en su página y en todos los portafolios y colecciones donde está. Desmárcalo para ocultarlo en todas partes sin eliminarlo; puedes volver a marcarlo cuando quieras.",
+        visibilityLabel: "Público",
+        visibilityActive: "Sí",
+        visibilityInactive: "No",
         typeLabel: "Tipo",
         compressionLabel: "Compresión",
         sizeLabel: "Tamaño",
@@ -2164,10 +2164,10 @@ const messages = {
         locationMissing: "Sin ubicación",
         locationMissingBody:
           "Indicar dónde se hizo la obra ayuda a que la encuentren.",
-        active: "Activo",
+        active: "Público",
         activeBody:
           "Visible en su página pública y en todos los lugares donde lo colocaste.",
-        inactive: "Oculto",
+        inactive: "No público",
         inactiveBody: "Oculto de su página pública, portafolios y colecciones.",
         inCollections:
           "En {count, plural, one {# colección} other {# colecciones}}",

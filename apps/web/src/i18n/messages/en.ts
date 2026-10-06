@@ -1747,9 +1747,9 @@ const messages = {
           "When enabled, this portfolio is highlighted on your public artist profile so visitors can find it more easily. You can highlight up to {limit} portfolios on your profile page.",
         highlightLimitReached:
           "You've reached the limit of {limit} highlighted portfolios on your profile page.",
-        active: "Active",
+        active: "Public",
         activeInfo:
-          "When disabled, this portfolio is hidden from your public artist profile and listings. You can still edit it in Atelier.",
+          "When this is off, the portfolio is hidden from your artist profile and listings. You can still edit it in Atelier.",
       },
       items: {
         noItems: "No media or collections added yet",
@@ -1808,7 +1808,7 @@ const messages = {
         priceLabel: "Price",
         priceInfo: "Price is optional; leave it at 0.",
         showPrice: "Show price",
-        active: "Active",
+        active: "Public",
         showOnProfile: "Show on profile page",
         showOnProfileInfo:
           "When enabled, this service is highlighted on your public artist profile so visitors can find it more easily. You can highlight up to {limit} services on your profile page.",
@@ -1883,9 +1883,9 @@ const messages = {
           "When enabled, this collection is highlighted on your public artist profile so visitors can find it more easily. You can highlight up to {limit} collections on your profile page.",
         highlightLimitReached:
           "You've reached the limit of {limit} highlighted collections on your profile page.",
-        active: "Active",
+        active: "Public",
         activeInfo:
-          "When disabled, this collection is hidden from your public artist profile and listings. You can still edit it in Atelier.",
+          "When this is off, the collection is hidden from your artist profile and listings. You can still edit it in Atelier.",
       },
       media: {
         sectionLabel: "Media",
@@ -2025,12 +2025,12 @@ const messages = {
           "SEO filename set automatically from the upload or when AI generates metadata. Not editable.",
         lastUpdated: "Last Updated",
         metadataGeneratedLabel: "Metadata Generated",
-        activeLabel: "Active",
+        activeLabel: "Public",
         activeInfo:
-          "Active media shows on its public page and in every portfolio and collection it belongs to. Turn it off to hide it everywhere without deleting it — you can turn it back on at any time.",
-        visibilityLabel: "Visibility",
-        visibilityActive: "Active",
-        visibilityInactive: "Hidden",
+          "Public media shows on its page and in every portfolio and collection it belongs to. Turn it off to hide it everywhere without deleting it — you can turn it back on at any time.",
+        visibilityLabel: "Public",
+        visibilityActive: "Yes",
+        visibilityInactive: "No",
         typeLabel: "Type",
         compressionLabel: "Compression",
         sizeLabel: "Size",
@@ -2145,10 +2145,10 @@ const messages = {
         locationMissing: "No location",
         locationMissingBody:
           "Adding where the work was made helps people find it.",
-        active: "Active",
+        active: "Public",
         activeBody:
           "Visible on its public page and everywhere you've placed it.",
-        inactive: "Hidden",
+        inactive: "Not public",
         inactiveBody:
           "Hidden from its public page, portfolios and collections.",
         inCollections:
