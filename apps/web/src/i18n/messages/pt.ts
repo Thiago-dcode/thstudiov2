@@ -1955,7 +1955,7 @@ const messages = {
         compressionLabel: "Compressão",
         upgradeToAdjust: "Faça upgrade do plano para ajustar",
         previewAlt: "Prévia {index}",
-        settingsTitle: "Ajustes de envio",
+        settingsTitle: "Ajustes de envio (afeta todos)",
         settingsAiOn:
           "Ativado · {used} {used, plural, one {crédito} other {créditos}}",
         settingsAiOff: "Desativado",

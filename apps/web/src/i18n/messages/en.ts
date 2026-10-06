@@ -1943,7 +1943,7 @@ const messages = {
         compressionLabel: "Compression",
         upgradeToAdjust: "Upgrade required",
         previewAlt: "Preview {index}",
-        settingsTitle: "Upload settings",
+        settingsTitle: "Upload settings (affects all)",
         settingsAiOn:
           "On · {used} {used, plural, one {credit} other {credits}}",
         settingsAiOff: "Off",

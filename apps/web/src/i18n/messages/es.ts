@@ -1953,7 +1953,7 @@ const messages = {
         compressionLabel: "Compresión",
         upgradeToAdjust: "Mejora tu plan para ajustar",
         previewAlt: "Vista previa {index}",
-        settingsTitle: "Ajustes de subida",
+        settingsTitle: "Ajustes de subida (afecta a todos)",
         settingsAiOn:
           "Activado · {used} {used, plural, one {crédito} other {créditos}}",
         settingsAiOff: "Desactivado",
