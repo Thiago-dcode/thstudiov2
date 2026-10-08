@@ -54,12 +54,60 @@ export function WaitListHint({ className }: { className?: string } = {}) {
   );
 }
 
-export function WaitListForm({ className }: { className?: string } = {}) {
+export function WaitListSuccessDialog({
+  open,
+  onOpenChange,
+  data,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  data: WaitListCreateResponse | null;
+}) {
+  const t = useTranslations("landing.hero");
+  const alreadyExists = data?.already_exists === true;
+  const email = data?.email ?? "";
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader className="text-center sm:text-center">
+          {alreadyExists ? (
+            <DialogTitle className="text-balance leading-snug">
+              {t.rich("waitList.alreadyExists", {
+                email,
+                supportLink: (chunks) => (
+                  <Link href="/support" className="text-text underline">
+                    {chunks}
+                  </Link>
+                ),
+              })}
+            </DialogTitle>
+          ) : (
+            <>
+              <DialogTitle>{t("waitList.successTitle")}</DialogTitle>
+              <DialogDescription className="space-y-2">
+                <span className="block">{t("waitList.successMessage")}</span>
+                <span className="block">
+                  {t("waitList.successReserveMessage")}
+                </span>
+              </DialogDescription>
+            </>
+          )}
+        </DialogHeader>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export function WaitListForm({
+  className,
+  onSuccess,
+}: {
+  className?: string;
+  onSuccess: (data: WaitListCreateResponse) => void;
+}) {
   const t = useTranslations("landing.hero");
   const [isEmailValid, setIsEmailValid] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
-  const [waitListResultData, setWaitListResultData] =
-    useState<WaitListCreateResponse | null>(null);
 
   const emailInputRef = useRef<HTMLInputElement>(null);
 
@@ -88,16 +136,12 @@ export function WaitListForm({ className }: { className?: string } = {}) {
 
   useEffect(() => {
     if (!result?.data) return;
-    setIsSuccess(true);
-    setWaitListResultData(result.data);
+    onSuccess(result.data);
     if (emailInputRef.current) {
       emailInputRef.current.value = "";
     }
     setIsEmailValid(false);
-  }, [result]);
-
-  const alreadyExists = waitListResultData?.already_exists === true;
-  const email = waitListResultData?.email ?? "";
+  }, [result, onSuccess]);
 
   return (
     <div className="w-full">
@@ -146,35 +190,6 @@ export function WaitListForm({ className }: { className?: string } = {}) {
           {isPending ? t("waitList.buttonPending") : t("waitList.button")}
         </Button>
       </form>
-
-      <Dialog open={isSuccess} onOpenChange={setIsSuccess}>
-        <DialogContent className="max-w-md">
-          <DialogHeader className="text-center sm:text-center">
-            {alreadyExists ? (
-              <DialogTitle className="text-balance leading-snug">
-                {t.rich("waitList.alreadyExists", {
-                  email,
-                  supportLink: (chunks) => (
-                    <Link href="/support" className="text-text underline">
-                      {chunks}
-                    </Link>
-                  ),
-                })}
-              </DialogTitle>
-            ) : (
-              <>
-                <DialogTitle>{t("waitList.successTitle")}</DialogTitle>
-                <DialogDescription className="space-y-2">
-                  <span className="block">{t("waitList.successMessage")}</span>
-                  <span className="block">
-                    {t("waitList.successReserveMessage")}
-                  </span>
-                </DialogDescription>
-              </>
-            )}
-          </DialogHeader>
-        </DialogContent>
-      </Dialog>
 
       <style>{`
         .wait-list-fire-button:not(:disabled):hover {
