@@ -178,6 +178,13 @@ export const ArtistSections = async ({
     );
   }
 
+  // Mobile visitors land with every highlight section expanded. Collapsing stays optional.
+  const defaultOpenSections = [
+    portfolios.length > 0 ? "portfolios" : null,
+    collections.length > 0 ? "collections" : null,
+    services.length > 0 ? "services" : null,
+  ].filter((section): section is string => section !== null);
+
   // Card item renderers — shared between the mobile accordion and desktop sections.
   const portfolioItems = (): ReactNode =>
     portfolios.map((portfolio) => (
@@ -216,7 +223,7 @@ export const ArtistSections = async ({
       {/* Mobile: collapsible accordion */}
       <Accordion
         type="multiple"
-        defaultValue={portfolios.length > 0 ? ["portfolios"] : []}
+        defaultValue={defaultOpenSections}
         className="space-y-8 phone-lg:hidden"
       >
         {portfolios.length > 0 && (
