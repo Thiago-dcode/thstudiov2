@@ -50,6 +50,30 @@ const messages = {
           "We’ll reserve your email after you validate it.",
         alreadyExists:
           "{email} is already on the waitlist. Check your email. If this looks wrong, <supportLink>contact support</supportLink>.",
+        dialog: {
+          title: "Registration is closed for now",
+          description:
+            "A11STUDIO is in early access and spots are limited. Join the waitlist and we will email you a personal invite as soon as your spot opens. It's free and takes a few seconds.",
+          stepsTitle: "What happens next",
+          steps: [
+            {
+              title: "Enter your email.",
+              description: "We send you a confirmation message right away.",
+            },
+            {
+              title: "Confirm your email.",
+              description:
+                "Click the link in that message. Your place in line is only reserved after you confirm.",
+            },
+            {
+              title: "Get your invite.",
+              description:
+                "When it's your turn, we email you a personal link to create your account. The earlier you confirm, the better your early-access benefits.",
+            },
+          ],
+          learnMore: "Read the full waitlist FAQ",
+          privacy: "We only use your email to manage your waitlist spot.",
+        },
       },
       disclaimer: "Free to start · No credit card required",
       scrollToNextSection: "Scroll to next section",
