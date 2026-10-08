@@ -220,6 +220,7 @@ const FirstStepInputs = () => {
           <GetCategoriesProvider
             initialCategories={currentPortfolio?.categories || []}
             maxSelections={MAX_CATEGORIES}
+            leavesOnly
           >
             <CategoryCombobox
               selectCategory={setCategorySelected}

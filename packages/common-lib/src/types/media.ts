@@ -7,6 +7,7 @@ import { EnumType } from "../constants/enums";
 import { MEDIA_ORDER_BY_COLUMNS } from "../constants/media";
 import type { SqlOrderDirection } from "./database";
 import type { LocationInput, LocationSummary } from "./location";
+import type { CategoryBase } from "./category";
 
 // ==================== MEDIA TYPES ====================
 
@@ -17,6 +18,11 @@ export type MediaLocation = Pick<LocationSummary, 'id' | 'formatted' | 'name'>;
 export type Media = MediaSchema & {
   /** Present when the row was read with its location joined; null when none is set. */
   location?: MediaLocation | null;
+  /**
+   * The disciplines / art styles on this media (never its AI tags), in the request language.
+   * Only on the owner's atelier list, where the editor needs them.
+   */
+  categories?: CategoryBase[];
   /** How many of the owner's collections hold this media. Only on the owner's atelier list. */
   collections_count?: number;
   /**
@@ -27,7 +33,7 @@ export type Media = MediaSchema & {
 };
 // Media translation without id
 
-export type MediaPortfolio = Pick<Media, 'id' | 'public_id' | 'title' | 'thumbnail' | 'url' | 'seo_alt' | 'seo_description' | 'seo_filename' | 'seo_title' | 'shape' | 'aspect_ratio' | 'is_highlight' | 'media_type'> & {
+export type MediaPortfolio = Pick<Media, 'id' | 'public_id' | 'title' | 'thumbnail' | 'video_preview' | 'url' | 'seo_alt' | 'seo_description' | 'seo_filename' | 'seo_title' | 'shape' | 'aspect_ratio' | 'is_highlight' | 'media_type'> & {
   position: number
 };
 export type MediaTranslation = MediaTranslationSchema;
@@ -68,6 +74,8 @@ export type MediaIndexRequest = OffsetPaginationRequest & {
    * accepted from a client (the request DTO doesn't declare it, so the whitelist pipe drops it).
    */
   with_usage_counts?: boolean;
+  /** Internal, owner-only like `with_usage_counts`: adds `categories` to each row. */
+  with_categories?: boolean;
 }
 
 export type MediaOrderBy = (typeof MEDIA_ORDER_BY_COLUMNS)[number];
@@ -84,10 +92,22 @@ type InternalMediaFields = 'id' | 'public_id' | 'bytes' | 'url' | 'thumbnail' | 
  */
 type MediaLocationPayload = { location?: LocationInput | null };
 
+/**
+ * The disciplines / art styles the artist picked, as ids. On update an empty array clears them and
+ * absent leaves them alone. When a media has none, the AI metadata job picks them itself.
+ */
+type MediaCategoriesPayload = { category_ids?: number[] };
+
 // What users can provide when creating media (public API input)
 export type PublicCreateMediaInput = Omit<MediaSchema, InternalMediaFields> & MediaLocationPayload;
 export type CreateMediaInputWithFile = PublicCreateMediaInput & {
   generate_metadata?: boolean;
+  /**
+   * Client-only: the picked categories as objects, so chips can render their names. `createMediaApi`
+   * (and `updateMediaApi`'s caller) turn them into the wire's `category_ids`; this key never leaves
+   * the browser. Absent = nothing picked (create) / unchanged (edit); `[]` on an edit clears.
+   */
+  categories?: CategoryBase[];
   file?: File;
   /**
    * Set by `createMediaApi` once the file has been presigned and PUT directly to S3 — the
@@ -126,7 +146,8 @@ export type CreateMediaInput = Omit<
 /** `is_active` is the owner's own visibility switch; `blocked_at` stays with moderation. */
 export type UpdateMediaInput = Partial<Omit<MediaSchema, InternalMediaFields>> &
   Partial<Pick<MediaSchema, 'is_active'>> &
-  MediaLocationPayload;
+  MediaLocationPayload &
+  MediaCategoriesPayload;
 
 /** Body of `PATCH /media/locations`: one picked place applied to many media. */
 export type UpdateMediaLocationsInput = {

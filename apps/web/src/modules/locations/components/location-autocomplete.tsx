@@ -13,7 +13,14 @@ import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { cn } from "@repo/ui/lib/utils";
 import { MapPin } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type { GeoapifyFeature } from "@/lib/hooks/types/geoapify";
 import { useLocationAutocomplete } from "@/lib/hooks/useGetLocation";
 import { geoapifyFeatureKey } from "../location-input";
@@ -51,10 +58,13 @@ export function LocationAutocomplete({
   disabled = false,
   busy = false,
   labelClassName,
+  labelAdornment,
   positionerClassName,
 }: {
   id: string;
   label: string;
+  /** Rendered beside the label — an info tooltip, so help text does not take a line of its own. */
+  labelAdornment?: ReactNode;
   placeholder: string;
   selectedLabel?: string | null;
   onSelect: (feature: GeoapifyFeature) => void;
@@ -152,9 +162,12 @@ export function LocationAutocomplete({
 
   return (
     <div className="flex w-full min-w-0 flex-col gap-1.5">
-      <Label htmlFor={id} className={labelClassName}>
-        {label}
-      </Label>
+      <div className="flex items-center gap-2">
+        <Label htmlFor={id} className={labelClassName}>
+          {label}
+        </Label>
+        {labelAdornment}
+      </div>
 
       <div className="relative min-w-0">
         <Combobox

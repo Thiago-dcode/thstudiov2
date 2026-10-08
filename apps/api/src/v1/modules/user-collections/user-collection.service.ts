@@ -36,6 +36,7 @@ export class UserCollectionService {
         ? Promise.all(collection.media.map(async (media) => ({
           ...media,
           thumbnail: media.thumbnail ? await this.helpers.getAsset(media.thumbnail) : undefined,
+          video_preview: media.video_preview ? await this.helpers.getAsset(media.video_preview) : undefined,
           url:  media.url ? await this.helpers.getAsset(media.url) : undefined,
         })))
         : Promise.resolve(collection.media),

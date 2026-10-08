@@ -114,6 +114,14 @@ export const MAX_CATEGORIES_PORTFOLIO =
   MAX_DISCIPLINES_PORTFOLIO + MAX_STYLES_PORTFOLIO;
 /** Categories a user can pick for their profile (disciplines and art styles share the budget). */
 export const MAX_CATEGORIES_USER = 3;
+/**
+ * Disciplines, art styles and techniques an artist can pick for one media (one shared budget —
+ * roughly a discipline or two, a style, and how it was shot). Tags are never picked: the AI
+ * assigns those, see `MAX_TAGS_MEDIA`.
+ */
+export const MAX_CATEGORIES_MEDIA = 5;
+/** Max TECHNIQUE categories the AI assigns on its own (camera angle, framing, depth…). */
+export const MAX_TECHNIQUES_MEDIA = 3;
 /** Max LLM-assigned content TAGS per media (bounds the pivot + JSON-LD keywords array). */
 export const MAX_TAGS_MEDIA = 8;
 /**

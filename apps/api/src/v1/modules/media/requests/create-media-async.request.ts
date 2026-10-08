@@ -1,7 +1,18 @@
 import { Type } from 'class-transformer';
-import { IsIn, IsNotEmpty, IsOptional, IsString, IsUUID, ValidateNested } from 'class-validator';
+import {
+  ArrayMaxSize,
+  ArrayUnique,
+  IsArray,
+  IsIn,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUUID,
+  ValidateNested,
+} from 'class-validator';
 import type { EnumType } from '@repo/common-lib/constants/enums';
-import { ALLOWED_FILE_TYPES } from '@repo/common-lib/constants/limits';
+import { ALLOWED_FILE_TYPES, MAX_CATEGORIES_MEDIA } from '@repo/common-lib/constants/limits';
 import type { MimeTypes } from '@repo/common-lib/types/general';
 import { IsAvailableEnum } from 'src/common/validators/is-enum.validator';
 import { IsUserAuth } from 'src/common/validators/is-user-auth.validtor';
@@ -32,6 +43,18 @@ export class CreateMediaAsyncRequest {
   @ValidateNested()
   @Type(() => LocationInputRequest)
   location?: LocationInputRequest;
+
+  /**
+   * Disciplines / art styles the artist picked. When absent or empty the AI metadata job chooses
+   * them (if `generate_metadata` is on). Ids that are not active, selectable categories are dropped
+   * by the service rather than failing the upload.
+   */
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(MAX_CATEGORIES_MEDIA)
+  @ArrayUnique()
+  @IsInt({ each: true })
+  category_ids?: number[];
 
   @ModelExist('users')
   @IsUserAuth()

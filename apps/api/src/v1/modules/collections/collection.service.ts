@@ -58,6 +58,7 @@ export class CollectionService {
           col.media.map(async (me) => ({
             ...me,
             thumbnail: me.thumbnail ? await this.helper.getAsset(me.thumbnail) : undefined,
+            video_preview: me.video_preview ? await this.helper.getAsset(me.video_preview) : undefined,
             url: me.url ? await this.helper.getAsset(me.url) : undefined,
           })),
         ),

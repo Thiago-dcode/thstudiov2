@@ -1,6 +1,6 @@
 import type { EnumType } from "@repo/common-lib/constants/enums";
 import { ENUMS } from "@repo/common-lib/constants/enums";
-import { ALLOWED_IMAGE_FILE_TYPES } from "@repo/common-lib/constants/limits";
+import { ALLOWED_FILE_TYPES } from "@repo/common-lib/constants/limits";
 import type { Media, MediaPortfolio } from "@repo/common-lib/types/media";
 import { MediaHelper } from "@repo/common-lib/utils/media";
 import { MediaTypeBadge } from "@repo/ui/components/custom/media-type-badge";
@@ -206,7 +206,13 @@ export const SelectMediaDrawer = ({
                 />
               </Button>
             </div>
-            <FileInputProvider allowedMimeTypes={ALLOWED_IMAGE_FILE_TYPES}>
+            <FileInputProvider
+              allowedMimeTypes={ALLOWED_FILE_TYPES}
+              // Per-type: a video may be far larger than an image can be.
+              maxFileSizeBytesFor={(file) =>
+                MediaHelper.maxUploadBytes(file.type)
+              }
+            >
               <CreateMediaDialog />
             </FileInputProvider>
           </div>

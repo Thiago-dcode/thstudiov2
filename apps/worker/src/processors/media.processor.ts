@@ -12,6 +12,7 @@ import {
     compressionLevelToQuality,
     CompressService,
     isPermanentMediaError,
+    PREVIEW_MAX_EDGE_PX,
     PREVIEW_TARGET_BYTES,
     THUMBNAIL_MAX_EDGE_PX,
     THUMBNAIL_QUALITY,
@@ -362,7 +363,15 @@ export class MediaProcessor {
     ): Promise<{ path: string; clip: VideoCompressionOutput | null } | null> {
         if (!('durationSeconds' in mediaCompressed)) return null;
 
-        if (mediaCompressed.durationSeconds <= PREVIEW_MAX_DURATION_SECONDS) {
+        // Already within both preview budgets (bytes AND clip length): the media IS its own
+        // preview. `clip: null` + `mediaPath` is the aliasing contract the rest of the system
+        // relies on (no upload, no billing, no `video_preview_bytes`, API delete/rename).
+        // Duration matters too: a small file can still be a long, low-bitrate video, and
+        // serving that whole thing as a grid autoplay "preview" defeats the purpose.
+        if (
+            mediaCompressed.size <= PREVIEW_TARGET_BYTES &&
+            mediaCompressed.durationSeconds <= PREVIEW_MAX_DURATION_SECONDS
+        ) {
             return { path: mediaPath, clip: null };
         }
 
@@ -373,6 +382,9 @@ export class MediaProcessor {
             buffer,
             PREVIEW_TARGET_BYTES,
             compressionLevelToQuality(compressLevel),
+            PREVIEW_MAX_EDGE_PX,
+            // The service already clamps to the probed duration; this is the cap, not a guess.
+            PREVIEW_MAX_DURATION_SECONDS,
         );
         return { path: MediaHelper.videoPreviewPath(mediaPath), clip };
     }

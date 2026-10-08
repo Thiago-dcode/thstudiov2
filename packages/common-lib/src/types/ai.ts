@@ -24,6 +24,8 @@ export type MediaMetadataPromptCategory = {
     id: number;
     name: string;
     type: EnumType<'CATEGORY_TYPE'>;
+    /** False = only the artist may choose it; the model is never offered it. Absent = true. */
+    ai_selectable?: boolean;
 }
 
 /**

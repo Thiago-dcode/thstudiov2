@@ -51,6 +51,31 @@ const messages = {
         successReserveMessage: "Reservaremos tu correo después de validarlo.",
         alreadyExists:
           "{email} ya está en la lista de espera. Revisa tu correo. Si esto no es correcto, <supportLink>contacta con soporte</supportLink>.",
+        dialog: {
+          title: "El registro está cerrado por ahora",
+          description:
+            "A11STUDIO está en acceso anticipado y las plazas son limitadas. Únete a la lista de espera y te enviaremos una invitación personal en cuanto se abra tu plaza. Es gratis y solo toma unos segundos.",
+          stepsTitle: "Qué pasa después",
+          steps: [
+            {
+              title: "Introduce tu correo.",
+              description: "Te enviamos un mensaje de confirmación enseguida.",
+            },
+            {
+              title: "Confirma tu correo.",
+              description:
+                "Haz clic en el enlace de ese mensaje. Tu lugar en la fila solo se reserva después de confirmar.",
+            },
+            {
+              title: "Recibe tu invitación.",
+              description:
+                "Cuando sea tu turno, te enviamos por correo un enlace personal para crear tu cuenta. Cuanto antes confirmes, mejores serán tus beneficios de acceso anticipado.",
+            },
+          ],
+          learnMore: "Lee las preguntas frecuentes de la lista de espera",
+          privacy:
+            "Solo usamos tu correo para gestionar tu plaza en la lista de espera.",
+        },
       },
       disclaimer: "Gratis para empezar · No se requiere tarjeta",
       scrollToNextSection: "Ir a la siguiente sección",
@@ -598,6 +623,7 @@ const messages = {
       types: {
         DISCIPLINE: "Disciplinas",
         ART_STYLE: "Estilos de arte",
+        TECHNIQUE: "Técnicas",
         TAGS: "Etiquetas",
       },
       empty: {
@@ -1757,9 +1783,9 @@ const messages = {
           "Cuando está activado, este portafolio se destaca en tu perfil público de artista para que los visitantes lo encuentren más fácilmente. Puedes destacar hasta {limit} portafolios en tu página de perfil.",
         highlightLimitReached:
           "Has alcanzado el límite de {limit} portafolios destacados en tu página de perfil.",
-        active: "Activo",
+        active: "Público",
         activeInfo:
-          "Cuando está desactivado, este portafolio se oculta de tu perfil público de artista y de los listados. Aún puedes editarlo en Atelier.",
+          "Si lo desmarcas, este portafolio se oculta de tu perfil de artista y de los listados. Aún puedes editarlo en Atelier.",
       },
       items: {
         noItems: "Aún no se han añadido contenidos ni colecciones",
@@ -1818,7 +1844,7 @@ const messages = {
         priceLabel: "Precio",
         priceInfo: "El precio es opcional; déjalo en 0.",
         showPrice: "Mostrar precio",
-        active: "Activo",
+        active: "Público",
         showOnProfile: "Mostrar en la página de perfil",
         showOnProfileInfo:
           "Cuando está activado, este servicio se destaca en tu perfil público de artista para que los visitantes lo encuentren más fácilmente. Puedes destacar hasta {limit} servicios en tu página de perfil.",
@@ -1893,9 +1919,9 @@ const messages = {
           "Cuando está activado, esta colección se destaca en tu perfil público de artista para que los visitantes la encuentren más fácilmente. Puedes destacar hasta {limit} colecciones en tu página de perfil.",
         highlightLimitReached:
           "Has alcanzado el límite de {limit} colecciones destacadas en tu página de perfil.",
-        active: "Activo",
+        active: "Público",
         activeInfo:
-          "Cuando está desactivado, esta colección se oculta de tu perfil público de artista y de los listados. Aún puedes editarla en Atelier.",
+          "Si lo desmarcas, esta colección se oculta de tu perfil de artista y de los listados. Aún puedes editarla en Atelier.",
       },
       media: {
         sectionLabel: "Contenido",
@@ -1924,14 +1950,16 @@ const messages = {
           "Controla el equilibrio entre la calidad y el tamaño de archivo. Una compresión menor (VERY_LOW, LOW) conserva más detalle pero genera archivos más grandes. Una compresión mayor (HIGH, VERY_HIGH) reduce el tamaño pero puede reducir ligeramente la calidad. Los vídeos ya comprimidos se guardan tal cual.",
         compressionTooltipHint:
           "Se aplica a todos los archivos. Abre un archivo para cambiar solo ese.",
+        compressionSmallFileHint:
+          "Si tu foto ya está comprimida o es pequeña (menos de 5 MB), te recomendamos elegir una compresión normal o menor.",
         allFiles: "Todos los archivos",
         upgradeRequired: "Mejora tu plan para acceder a esta función.",
-        aiSeoGeneration: "Generar SEO con IA",
+        aiSeoGeneration: "Generar metadatos con IA",
         aiSeoHint:
-          "La IA escribe la información para buscadores — título SEO, descripción, texto alternativo y etiquetas — para que tu obra se encuentre más fácilmente.",
-        aiSeoBadge: "El SEO se generará con IA",
+          "La IA escribe un título, una descripción y categorías que ayudan a que encuentren tu obra en Google.",
+        aiSeoBadge: "Los metadatos se generarán con IA",
         aiSeoTooltipBody:
-          "La IA mira tu imagen o vídeo y escribe el texto que leen los buscadores: título SEO, descripción SEO y texto alternativo en todos los idiomas, además de etiquetas que encajan. Así tu obra aparece en Google. Nunca cambia el título ni la descripción que escribiste.",
+          "La IA mira tu imagen o vídeo y escribe un título, una descripción y una breve descripción de la imagen que ayudan a que encuentren tu obra, en español, inglés y portugués. Nunca cambia el título ni la descripción que escribiste. Si no eliges ninguna categoría, la IA las elige por ti. Si eliges, la IA respeta las tuyas y solo añade algunas palabras clave extra.",
         aiSeoCreditsHint:
           "Cuesta {imageCost} {imageCost, plural, one {crédito} other {créditos}} de IA por imagen/GIF, {videoCost} por video. <remaining>Te quedan {count} {count, plural, one {crédito} other {créditos}}.</remaining>",
         creditsLabel: "{count} {count, plural, one {crédito} other {créditos}}",
@@ -1950,7 +1978,7 @@ const messages = {
         compressionLabel: "Compresión",
         upgradeToAdjust: "Mejora tu plan para ajustar",
         previewAlt: "Vista previa {index}",
-        settingsTitle: "Ajustes de subida",
+        settingsTitle: "Ajustes de subida (afecta a todos)",
         settingsAiOn:
           "Activado · {used} {used, plural, one {crédito} other {créditos}}",
         settingsAiOff: "Desactivado",
@@ -1970,7 +1998,7 @@ const messages = {
           "Usa {count} {count, plural, one {crédito} other {créditos}}",
         aboutTitle: "Sobre esta obra",
         aboutHint:
-          "Opcional: se muestra con tu obra y la IA lo usa como contexto para el SEO.",
+          "Opcional: se muestra con tu obra y la IA lo lee para escribir mejores metadatos.",
         titleLabel: "Título",
         titlePlaceholder: "p. ej. Atardecer sobre Lisboa",
         descriptionLabel: "Descripción",
@@ -1987,8 +2015,24 @@ const messages = {
         globalLocationMixed:
           "Tus archivos tienen ubicaciones distintas. Si eliges una aquí, se reemplazan todas.",
         globalLocationClear: "Quitar la ubicación de todos los archivos",
+        categoriesLabel: "Categorías",
+        categoriesHint:
+          "Hasta 5: qué es, su estilo o cómo está hecha (ángulo, encuadre…). Ayuda a que encuentren tu obra.",
+        categoriesAiWillChoose:
+          "Sin categoría elegida — la IA las elegirá para este archivo.",
+        settingsCategoriesSome: "{count}/{total} archivos",
+        globalCategoriesLabel: "Categorías para todos los archivos",
+        globalCategoriesHint:
+          "Pone las mismas categorías (hasta 5) en todos los archivos.",
+        globalCategoriesAiHint:
+          "Si no eliges ninguna, la IA las pondrá por ti cuando “Generar metadatos con IA” esté activado.",
+        globalCategoriesPerFileHint:
+          "¿Un archivo necesita otras categorías? Haz clic en él en la lista para ponerle las suyas.",
+        globalCategoriesMixed:
+          "Tus archivos tienen categorías distintas. Si eliges aquí, se reemplazan todas.",
+        globalCategoriesClear: "Quitar las categorías de todos los archivos",
         aiNotesTip:
-          "Consejo: pon primero un título, una descripción y una ubicación a cada archivo. La IA los usa como contexto, así el SEO que escribe es más preciso. Haz clic en un archivo para añadirlos.",
+          "Consejo: pon primero un título, una descripción y una ubicación a cada archivo. La IA los lee, así lo que escribe es más preciso. Haz clic en un archivo para añadirlos.",
         duplicateSummary:
           "{count, plural, one {# archivo tiene} other {# archivos tienen}} el mismo nombre y tamaño que otro archivo de esta subida: revisa si hay duplicados.",
         duplicateCardHint:
@@ -2017,7 +2061,14 @@ const messages = {
         locationLabel: "Ubicación",
         locationPlaceholder: "Busca una ciudad o lugar…",
         locationInfo:
-          "Dónde se hizo o se fotografió. La IA lo usa al escribir el SEO.",
+          "Dónde se hizo o se fotografió. La IA lo usa al escribir los metadatos.",
+        categoriesLabel: "Categorías",
+        categoriesInfo:
+          "Hasta 5 categorías que describen esta obra: qué es, su estilo artístico o la técnica usada (ángulo, encuadre, profundidad…). Ayudan a encontrarla en las búsquedas y los filtros.",
+        categoriesRegenerateHint:
+          "Cambiaste las categorías. Después de guardar, te recomendamos generar los metadatos de nuevo para que el título, la descripción y las palabras clave coincidan con ellas.",
+        categoriesAiHint:
+          "Sin categoría — la IA las elegirá la próxima vez que generes metadatos.",
         seoTitleLabel: "Título SEO",
         seoTitlePlaceholder: "Introduce el título SEO",
         seoTitleInfo:
@@ -2036,12 +2087,12 @@ const messages = {
           "Nombre de archivo SEO definido automáticamente al subir o al generar metadatos con IA. No se puede editar.",
         lastUpdated: "Última actualización",
         metadataGeneratedLabel: "Metadatos generados",
-        activeLabel: "Activo",
+        activeLabel: "Público",
         activeInfo:
-          "El contenido activo aparece en su página pública y en todos los portafolios y colecciones donde está. Desactívalo para ocultarlo en todas partes sin eliminarlo; puedes volver a activarlo cuando quieras.",
-        visibilityLabel: "Visibilidad",
-        visibilityActive: "Activo",
-        visibilityInactive: "Oculto",
+          "El contenido público aparece en su página y en todos los portafolios y colecciones donde está. Desmárcalo para ocultarlo en todas partes sin eliminarlo; puedes volver a marcarlo cuando quieras.",
+        visibilityLabel: "Público",
+        visibilityActive: "Sí",
+        visibilityInactive: "No",
         typeLabel: "Tipo",
         compressionLabel: "Compresión",
         sizeLabel: "Tamaño",
@@ -2059,7 +2110,7 @@ const messages = {
         noCreditsAvailable:
           "No hay créditos de IA disponibles. Necesitas al menos {imageCost} crédito para generar metadatos de una imagen/GIF, o {videoCost} para un video. Mejora tu plan o espera a que se reinicien los créditos.",
         generateSeoTooltip:
-          "El SEO (optimización para motores de búsqueda) ayuda a que tu trabajo se encuentre en Google y Google Imágenes. Usamos IA para analizar la imagen o el video y generar un título, una descripción, un texto alternativo y un nombre de archivo artísticos y ricos en palabras clave, y para etiquetarla automáticamente con las categorías correspondientes.",
+          "Ayuda a que tu trabajo se encuentre en Google y Google Imágenes. La IA mira la imagen o el video y escribe un título, una descripción, una descripción de la imagen y un nombre de archivo. Si no has puesto categorías, también las elige; si las has puesto, respeta las tuyas y solo añade algunas palabras clave extra.",
         noCreditsSuffix: " (Sin créditos)",
         delete: "Eliminar",
         deleteTitle: "¿Eliminar este contenido?",
@@ -2162,10 +2213,10 @@ const messages = {
         locationMissing: "Sin ubicación",
         locationMissingBody:
           "Indicar dónde se hizo la obra ayuda a que la encuentren.",
-        active: "Activo",
+        active: "Público",
         activeBody:
           "Visible en su página pública y en todos los lugares donde lo colocaste.",
-        inactive: "Oculto",
+        inactive: "No público",
         inactiveBody: "Oculto de su página pública, portafolios y colecciones.",
         inCollections:
           "En {count, plural, one {# colección} other {# colecciones}}",

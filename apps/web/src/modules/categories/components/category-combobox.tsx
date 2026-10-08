@@ -17,19 +17,19 @@ import { CheckIcon, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useGetCategories } from "@/modules/categories/providers/getCategories.provider";
 
-/** Types offered as popup filters — tags are an internal search aid, not a pickable facet. */
-const FILTERABLE_TYPES = ENUMS.CATEGORY_TYPE.filter((type) => type !== "TAGS");
-
 function categoryLabel(c: CategoryBase) {
   return c.name;
 }
 
 const CategoryCombobox = ({
   inputClassName,
+  positionerClassName,
   selectCategory,
   removeCategory,
 }: {
   inputClassName?: string;
+  /** Raises the dropdown above a dialog it is rendered inside, or it opens behind it. */
+  positionerClassName?: string;
   selectCategory?: (category: CategoryBase) => void;
   removeCategory?: (category: CategoryBase) => void;
 }) => {
@@ -44,13 +44,20 @@ const CategoryCombobox = ({
     isSelected,
     hasReachedMax,
     isLoading,
+    types,
   } = useGetCategories();
 
   const typeLabels: Record<EnumType<"CATEGORY_TYPE">, string> = {
     DISCIPLINE: t("types.DISCIPLINE"),
     ART_STYLE: t("types.ART_STYLE"),
+    TECHNIQUE: t("types.TECHNIQUE"),
     TAGS: t("types.TAGS"),
   };
+  // Only the kinds this picker actually offers: a chip for a kind with nothing in the list would
+  // filter it down to nothing. Tags are an internal search aid and are never in `types`.
+  const filterableTypes = ENUMS.CATEGORY_TYPE.filter((type) =>
+    types.includes(type),
+  );
 
   const selectedList = Array.from(categoriesSelected.values());
 
@@ -110,13 +117,16 @@ const CategoryCombobox = ({
           </ul>
         )}
 
-        <ComboboxContent className="min-w-(--anchor-width) w-(--anchor-width) max-w-(--anchor-width)">
+        <ComboboxContent
+          positionerClassName={positionerClassName}
+          className="min-w-(--anchor-width) w-(--anchor-width) max-w-(--anchor-width)"
+        >
           <div
             role="group"
             aria-label={t("typeFilterLabel")}
             className="flex flex-wrap items-center gap-1.5 border-b border-fg-2 p-1.5"
           >
-            {FILTERABLE_TYPES.map((type) => {
+            {filterableTypes.map((type) => {
               const active = type === currentFilters.type;
               return (
                 <Button

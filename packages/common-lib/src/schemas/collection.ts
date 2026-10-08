@@ -40,6 +40,7 @@ export type CollectionCompactSchema = CollectionSchema & {
 // Only collision fields are prefixed (same pattern as PortfolioFullSchema)
 export type CollectionFullSchema = CollectionCompactSchema & {
   public_id: string;
+  video_preview?: string | null;          // media only — no collision
   shape?: EnumType<'MEDIA_SHAPE'> | null;
   aspect_ratio?: EnumType<'ASPECT_RATIO'> | null;
   media_type?: EnumType<'MEDIA_TYPE'> | null;

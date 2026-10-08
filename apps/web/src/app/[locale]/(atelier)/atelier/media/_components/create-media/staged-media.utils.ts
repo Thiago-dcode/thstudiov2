@@ -1,3 +1,4 @@
+import type { CategoryBase } from "@repo/common-lib/types/category";
 import { MediaHelper } from "@repo/common-lib/utils/media";
 import type { UploadMedia } from "@/modules/media/providers/media.provider";
 import type { AiCreditsInfo } from "@/modules/users/providers/user-metrics.provider";
@@ -35,6 +36,30 @@ export const creditsSpentBy = (
         : total,
     0,
   );
+
+/**
+ * What the bulk category field may claim about the staged files: the shared set only while EVERY
+ * file has exactly that set, and how many files have any at all.
+ *
+ * Derived, never stored, so a file added afterwards — or changed in its own dialog — empties the
+ * field instead of the panel claiming categories the file does not have. Files with none are the
+ * ones the AI will classify when metadata generation is on, which is why the count is exposed.
+ */
+export const sharedCategories = (uploads: UploadMedia[]) => {
+  const sets = uploads.map((upload) => upload.input.categories ?? []);
+  const categorizedCount = sets.filter((set) => set.length > 0).length;
+  const first = sets[0];
+  const signature = (set: CategoryBase[]) =>
+    set
+      .map((c) => c.id)
+      .sort((a, b) => a - b)
+      .join(",");
+  const shared =
+    first?.length && sets.every((set) => signature(set) === signature(first))
+      ? first
+      : null;
+  return { shared, categorizedCount };
+};
 
 /** The name shown on a staged card — the picked file's, with a translated fallback. */
 export const stagedFileName = (upload: UploadMedia, fallback: string) =>

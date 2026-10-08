@@ -50,6 +50,30 @@ const messages = {
           "We’ll reserve your email after you validate it.",
         alreadyExists:
           "{email} is already on the waitlist. Check your email. If this looks wrong, <supportLink>contact support</supportLink>.",
+        dialog: {
+          title: "Registration is closed for now",
+          description:
+            "A11STUDIO is in early access and spots are limited. Join the waitlist and we will email you a personal invite as soon as your spot opens. It's free and takes a few seconds.",
+          stepsTitle: "What happens next",
+          steps: [
+            {
+              title: "Enter your email.",
+              description: "We send you a confirmation message right away.",
+            },
+            {
+              title: "Confirm your email.",
+              description:
+                "Click the link in that message. Your place in line is only reserved after you confirm.",
+            },
+            {
+              title: "Get your invite.",
+              description:
+                "When it's your turn, we email you a personal link to create your account. The earlier you confirm, the better your early-access benefits.",
+            },
+          ],
+          learnMore: "Read the full waitlist FAQ",
+          privacy: "We only use your email to manage your waitlist spot.",
+        },
       },
       disclaimer: "Free to start · No credit card required",
       scrollToNextSection: "Scroll to next section",
@@ -594,6 +618,7 @@ const messages = {
       types: {
         DISCIPLINE: "Disciplines",
         ART_STYLE: "Art styles",
+        TECHNIQUE: "Techniques",
         TAGS: "Tags",
       },
       empty: {
@@ -1747,9 +1772,9 @@ const messages = {
           "When enabled, this portfolio is highlighted on your public artist profile so visitors can find it more easily. You can highlight up to {limit} portfolios on your profile page.",
         highlightLimitReached:
           "You've reached the limit of {limit} highlighted portfolios on your profile page.",
-        active: "Active",
+        active: "Public",
         activeInfo:
-          "When disabled, this portfolio is hidden from your public artist profile and listings. You can still edit it in Atelier.",
+          "When this is off, the portfolio is hidden from your artist profile and listings. You can still edit it in Atelier.",
       },
       items: {
         noItems: "No media or collections added yet",
@@ -1808,7 +1833,7 @@ const messages = {
         priceLabel: "Price",
         priceInfo: "Price is optional; leave it at 0.",
         showPrice: "Show price",
-        active: "Active",
+        active: "Public",
         showOnProfile: "Show on profile page",
         showOnProfileInfo:
           "When enabled, this service is highlighted on your public artist profile so visitors can find it more easily. You can highlight up to {limit} services on your profile page.",
@@ -1883,9 +1908,9 @@ const messages = {
           "When enabled, this collection is highlighted on your public artist profile so visitors can find it more easily. You can highlight up to {limit} collections on your profile page.",
         highlightLimitReached:
           "You've reached the limit of {limit} highlighted collections on your profile page.",
-        active: "Active",
+        active: "Public",
         activeInfo:
-          "When disabled, this collection is hidden from your public artist profile and listings. You can still edit it in Atelier.",
+          "When this is off, the collection is hidden from your artist profile and listings. You can still edit it in Atelier.",
       },
       media: {
         sectionLabel: "Media",
@@ -1914,14 +1939,16 @@ const messages = {
           "Controls the balance between quality and file size. Lower compression (VERY_LOW, LOW) preserves more detail but creates larger files. Higher compression (HIGH, VERY_HIGH) reduces file size but may slightly reduce quality. Videos that are already compressed are stored as they are.",
         compressionTooltipHint:
           "Applies to every file. Open a file to change just that one.",
+        compressionSmallFileHint:
+          "If your photo is already compressed or small (under 5 MB), we recommend choosing normal or lower compression.",
         allFiles: "All files",
         upgradeRequired: "Upgrade to access this feature.",
-        aiSeoGeneration: "Generate SEO with AI",
+        aiSeoGeneration: "Generate metadata with AI",
         aiSeoHint:
-          "AI writes the search info — SEO title, description, alt text and tags — so your work is easier to find.",
-        aiSeoBadge: "SEO will be generated with AI",
+          "AI writes a title, description and categories that help people find your work on Google.",
+        aiSeoBadge: "Metadata will be generated with AI",
         aiSeoTooltipBody:
-          "AI looks at your image or video and writes the text search engines read: an SEO title, SEO description and alt text in every language, plus matching tags. It helps your work show up on Google. It never changes the title and description you wrote.",
+          "AI looks at your image or video and writes a title, a description and a short image description that help people find your work, in English, Spanish and Portuguese. It never changes the title and description you wrote. If you don't pick a category, AI chooses them for you. If you do, AI keeps yours and only adds a few extra keywords.",
         aiSeoCreditsHint:
           "Costs {imageCost} AI {imageCost, plural, one {credit} other {credits}} per image/GIF, {videoCost} per video. <remaining>You have {count} {count, plural, one {credit} other {credits}} remaining.</remaining>",
         creditsLabel: "{count} {count, plural, one {credit} other {credits}}",
@@ -1940,7 +1967,7 @@ const messages = {
         compressionLabel: "Compression",
         upgradeToAdjust: "Upgrade required",
         previewAlt: "Preview {index}",
-        settingsTitle: "Upload settings",
+        settingsTitle: "Upload settings (affects all)",
         settingsAiOn:
           "On · {used} {used, plural, one {credit} other {credits}}",
         settingsAiOff: "Off",
@@ -1959,7 +1986,7 @@ const messages = {
           "Uses {count} {count, plural, one {credit} other {credits}}",
         aboutTitle: "About this piece",
         aboutHint:
-          "Optional — shown with your work, and used by AI as context for SEO.",
+          "Optional — shown with your work, and AI reads it to write better metadata.",
         titleLabel: "Title",
         titlePlaceholder: "e.g. Sunset over Lisbon",
         descriptionLabel: "Description",
@@ -1976,8 +2003,24 @@ const messages = {
         globalLocationMixed:
           "Your files have different locations. Picking one here replaces them all.",
         globalLocationClear: "Remove location from all files",
+        categoriesLabel: "Categories",
+        categoriesHint:
+          "Up to 5 — what it is, its style, or how it was shot (angle, framing…). Helps people find your work.",
+        categoriesAiWillChoose:
+          "No category picked — AI will choose them for this file.",
+        settingsCategoriesSome: "{count}/{total} files",
+        globalCategoriesLabel: "Categories for all files",
+        globalCategoriesHint:
+          "Sets the same categories (up to 5) on every file.",
+        globalCategoriesAiHint:
+          "Don't pick any and AI will set them for you when “Generate metadata with AI” is on.",
+        globalCategoriesPerFileHint:
+          "Need different categories for one file? Click it in the list to set its own.",
+        globalCategoriesMixed:
+          "Your files have different categories. Picking here replaces them all.",
+        globalCategoriesClear: "Remove categories from all files",
         aiNotesTip:
-          "Tip: give each file a title, description and location first. AI reads them as context, so the SEO it writes is more accurate. Click a file to add them.",
+          "Tip: give each file a title, description and location first. AI reads them, so what it writes is more accurate. Click a file to add them.",
         duplicateSummary:
           "{count, plural, one {# file has} other {# files have}} the same name and size as another file in this upload — check for duplicates.",
         duplicateCardHint:
@@ -2004,7 +2047,15 @@ const messages = {
         descriptionPlaceholder: "Enter description",
         locationLabel: "Location",
         locationPlaceholder: "Search a city or place…",
-        locationInfo: "Where it was made or shot. AI uses it when writing SEO.",
+        locationInfo:
+          "Where it was made or shot. AI uses it when writing metadata.",
+        categoriesLabel: "Categories",
+        categoriesInfo:
+          "Up to 5 categories that describe this work: what it is, its art style, or the technique used (angle, framing, depth…). They help people find it in search and filters.",
+        categoriesRegenerateHint:
+          "You changed the categories. After saving, we recommend generating metadata again so the title, description and keywords match them.",
+        categoriesAiHint:
+          "No category set — AI will choose them the next time you generate metadata.",
         seoTitleLabel: "SEO Title",
         seoTitlePlaceholder: "Enter SEO title",
         seoTitleInfo:
@@ -2023,12 +2074,12 @@ const messages = {
           "SEO filename set automatically from the upload or when AI generates metadata. Not editable.",
         lastUpdated: "Last Updated",
         metadataGeneratedLabel: "Metadata Generated",
-        activeLabel: "Active",
+        activeLabel: "Public",
         activeInfo:
-          "Active media shows on its public page and in every portfolio and collection it belongs to. Turn it off to hide it everywhere without deleting it — you can turn it back on at any time.",
-        visibilityLabel: "Visibility",
-        visibilityActive: "Active",
-        visibilityInactive: "Hidden",
+          "Public media shows on its page and in every portfolio and collection it belongs to. Turn it off to hide it everywhere without deleting it — you can turn it back on at any time.",
+        visibilityLabel: "Public",
+        visibilityActive: "Yes",
+        visibilityInactive: "No",
         typeLabel: "Type",
         compressionLabel: "Compression",
         sizeLabel: "Size",
@@ -2046,7 +2097,7 @@ const messages = {
         noCreditsAvailable:
           "No AI credits available. You need at least {imageCost} credit to generate metadata for an image/GIF, or {videoCost} for a video. Please upgrade your plan or wait for credits to reset.",
         generateSeoTooltip:
-          "SEO (Search Engine Optimization) helps your work get found on Google and Google Images. This uses AI to analyze the image or video and generate an artistic, keyword-rich title, description, alt text and filename — and auto-tags it with matching categories.",
+          "Helps your work get found on Google and Google Images. AI looks at the image or video and writes a title, description, image description and filename. If you haven't set categories it also picks them; if you have, it keeps yours and only adds a few extra keywords.",
         noCreditsSuffix: " (No credits)",
         delete: "Delete",
         deleteTitle: "Delete this media?",
@@ -2143,10 +2194,10 @@ const messages = {
         locationMissing: "No location",
         locationMissingBody:
           "Adding where the work was made helps people find it.",
-        active: "Active",
+        active: "Public",
         activeBody:
           "Visible on its public page and everywhere you've placed it.",
-        inactive: "Hidden",
+        inactive: "Not public",
         inactiveBody:
           "Hidden from its public page, portfolios and collections.",
         inCollections:

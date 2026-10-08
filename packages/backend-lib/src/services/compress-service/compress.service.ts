@@ -57,7 +57,7 @@ export const VIDEO_SAMPLE_FRAME_QUALITY = 45;
  * halves the pixel cost of the extra encode against a 1080p source and still covers a
  * full-width card on a retina display.
  */
-export const PREVIEW_MAX_EDGE_PX = 720;
+export const PREVIEW_MAX_EDGE_PX = 1080;
 
 /**
  * Advisory, like every video byte target: the real budget is bitrate × duration, and the
@@ -65,7 +65,7 @@ export const PREVIEW_MAX_EDGE_PX = 720;
  * seconds lands near 3MB, so this is the figure the encode is aimed at rather than a cap it is
  * squeezed under.
  */
-export const PREVIEW_TARGET_BYTES = 3 * 1024 * 1024;
+export const PREVIEW_TARGET_BYTES = 5 * 1024 * 1024;
 
 /**
  * What each compression level asks for, as a fraction of the input.
@@ -81,9 +81,9 @@ export const COMPRESSION_LEVEL_RATIO: Record<
 > = {
   VERY_LOW: 0.95,
   LOW: 0.85,
-  NORMAL: 0.7,
-  HIGH: 0.55,
-  VERY_HIGH: 0.4,
+  NORMAL: 0.75,
+  HIGH: 0.65,
+  VERY_HIGH: 0.45,
 };
 
 /**

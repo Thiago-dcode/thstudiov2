@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
+import { ENUMS, TABLES_ENUM } from '@repo/common-lib/constants/enums';
 import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/language';
+import type { CategoryBase } from '@repo/common-lib/types/category';
 import { DEFAULT_MEDIA_ORDER_BY } from '@repo/common-lib/constants/media';
 import {
   MediaSchema,
@@ -19,6 +20,7 @@ import { RequestService } from 'src/common/services/request.service';
 type MediaUsageCountRow = {
   collections_count?: string | number | null;
   portfolios_count?: string | number | null;
+  categories?: CategoryBase[] | null;
 };
 
 /**
@@ -49,6 +51,36 @@ export class MediaRepository extends BaseMediaRepository {
       ) used_in_portfolios) AS portfolios_count`,
   ];
 
+  /**
+   * The media's disciplines / art styles as a JSON array, named for the request language (the same
+   * COALESCE translation → main-row name the picker lists them with). TAGS are left out: they are
+   * the AI's, and the artist cannot pick or remove them.
+   *
+   * The language is whitelisted against the enum because it is inlined into the SQL text; a value
+   * outside it falls back to the default instead of reaching the query.
+   */
+  private categoriesColumn(): string {
+    const requested = this.requestService.language;
+    const lang = ENUMS.LANGUAGE_CODE.find((code) => code === requested) ?? DEFAULT_LANGUAGE;
+    return `(SELECT COALESCE(json_agg(json_build_object(
+        'id', c.id,
+        'name', COALESCE(ct.name, c.name),
+        'slug', c.slug,
+        'type', c.type,
+        'tags', '[]'::json,
+        'thumbnail', c.thumbnail,
+        'is_featured', c.is_featured,
+        'is_active', c.is_active,
+        'parent_id', c.parent_id
+      ) ORDER BY c.id), '[]'::json)
+      FROM ${TABLES_ENUM.MEDIA_CATEGORIES} mcat
+      INNER JOIN ${TABLES_ENUM.CATEGORIES} c
+        ON c.id = mcat.category_id AND c.is_active = true AND c.type <> 'TAGS'
+      LEFT JOIN ${TABLES_ENUM.CATEGORY_TRANSLATIONS} ct
+        ON ct.category_id = c.id AND ct.language_code = '${lang}'
+      WHERE mcat.media_id = ${TABLES_ENUM.MEDIA}.id) AS categories`;
+  }
+
   async getAll(filters: MediaIndexRequest = {}): Promise<Media[] | MediaWithUser[]> {
     const compact = filters.compact !== false;
     const baseQuery = this.withLocation(
@@ -65,6 +97,7 @@ export class MediaRepository extends BaseMediaRepository {
           collections_count: Number(result.collections_count ?? 0),
           portfolios_count: Number(result.portfolios_count ?? 0),
         }),
+        ...(filters.with_categories && { categories: result.categories ?? [] }),
       }));
     }
 
@@ -94,6 +127,7 @@ export class MediaRepository extends BaseMediaRepository {
       ...(compact ? this.COLUMNS : this.COLUMNS_WITH_USER),
       ...this.LOCATION_COLUMNS,
       ...(filters.with_usage_counts ? MediaRepository.USAGE_COUNT_COLUMNS : []),
+      ...(filters.with_categories && compact ? [this.categoriesColumn()] : []),
     ]);
 
     if (filters.shape) {
@@ -170,6 +204,32 @@ export class MediaRepository extends BaseMediaRepository {
     this.requestService.pagination =
       await this.handleOffsetPagination(query, filters);
     return query;
+  }
+
+  /** Ids of every category on the media — disciplines, styles and tags. */
+  async categoryIdsByMediaId(mediaId: number): Promise<number[]> {
+    const rows = await Query.table(TABLES_ENUM.MEDIA_CATEGORIES)
+      .select(['category_id'])
+      .where('media_id', '=', mediaId)
+      .get<{ category_id: number }[]>();
+    return rows.map((row) => row.category_id);
+  }
+
+  /**
+   * The subset of `ids` an artist may put on a media: active categories that are not TAGS. Anything
+   * else — unknown ids, deactivated categories, tags (the AI's) — is dropped, so a hand-built
+   * request cannot attach what the picker would never offer.
+   */
+  async selectableCategoryIds(ids: number[]): Promise<number[]> {
+    if (!ids.length) return [];
+    const rows = await Query.table(TABLES_ENUM.CATEGORIES)
+      .select(['id', 'type'])
+      .whereIn('id', ids)
+      .where('is_active', '=', true)
+      .get<{ id: number; type: string }[]>();
+    const selectable = new Set(rows.filter((row) => row.type !== 'TAGS').map((row) => row.id));
+    // Keeps the caller's order, which is the order they were picked in.
+    return ids.filter((id) => selectable.has(id));
   }
 
   /**
@@ -253,8 +313,12 @@ export class MediaRepository extends BaseMediaRepository {
   }
 
   /**
-   * The media's LLM-assigned content TAGS, localized to the request language
-   * (COALESCE translation → main-row English name). Used for JSON-LD keywords + on-page chips.
+   * The media's keywords: its disciplines / art styles (picked by the artist, or by the AI when they
+   * picked none) followed by its content TAGS, localized to the request language (COALESCE
+   * translation → main-row English name). Used for JSON-LD keywords.
+   *
+   * The classification leads because it is the strongest signal of what the work is ("Analog
+   * Photography"), and it used to be left out — only the tags ever reached the page.
    */
   async getTagsByMediaId(mediaId: number): Promise<string[]> {
     const lang = this.requestService.language ?? DEFAULT_LANGUAGE;
@@ -262,11 +326,11 @@ export class MediaRepository extends BaseMediaRepository {
       `SELECT COALESCE(ct.name, c.name) AS name
        FROM ${TABLES_ENUM.MEDIA_CATEGORIES} mc
        INNER JOIN ${TABLES_ENUM.CATEGORIES} c
-         ON c.id = mc.category_id AND c.type = 'TAGS' AND c.is_active = true
+         ON c.id = mc.category_id AND c.is_active = true
        LEFT JOIN ${TABLES_ENUM.CATEGORY_TRANSLATIONS} ct
          ON ct.category_id = c.id AND ct.language_code = $1
        WHERE mc.media_id = $2
-       ORDER BY c.id`,
+       ORDER BY (c.type = 'TAGS'), c.id`,
       [lang, mediaId],
     );
     const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];
