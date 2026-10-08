@@ -2,16 +2,13 @@ import { LazyVideo } from "@repo/ui/components/custom/LazyVideo";
 import { SlotMachine } from "@repo/ui/components/custom/slot-machine";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
-import {
-  WaitListForm,
-  WaitListHint,
-} from "@/modules/wait-list/components/wait-list-form";
+import { RegistrationCtaButton } from "@/lib/components/registration-cta-button";
 import { WebSection } from "./web-section";
 
 // The video and the copy share the first screen (`--hero-h`, set on the section). The video takes
 // most of the spare height (grow 4:1) up to its design proportion; what's left past that cap goes
 // to the copy as breathing room. On a short screen the video gives up height instead — down to a
-// floor, past which the section grows — so the headline and the waitlist never get clipped.
+// floor, past which the section grows — so the headline and the call to action never get clipped.
 const HERO_VIDEO_CLASS =
   "z-0 w-full grow-[4] basis-0 object-cover min-h-[calc(var(--hero-h)*0.25)] max-h-[calc(var(--hero-h)*0.4)] desktop:max-h-[calc(var(--hero-h)*0.5)] desktop-lg:max-h-[calc(var(--hero-h)*0.6)]";
 
@@ -47,7 +44,7 @@ export async function HeroSection() {
       </Suspense>
 
       {/* ── Content ──
-          Three groups — headline copy, waitlist, next-section arrow — spaced evenly
+          Three groups — headline copy, call to action, next-section arrow — spaced evenly
           (`justify-evenly`), so any spare height is shared between them instead of pooling in one
           gap, and the arrow sits at the same distance from the form as the form from the copy. */}
       <div className="z-10 mx-auto flex w-full grow flex-col justify-evenly gap-6 tablet:gap-8 px-2 py-4">
@@ -100,14 +97,15 @@ export async function HeroSection() {
         </div>
 
         <div className="hero-stagger-4 flex w-full">
-          <div className="flex w-full max-w-3xl flex-col gap-2">
-            <WaitListHint />
-            <WaitListForm />
-          </div>
+          <RegistrationCtaButton
+            size="lg"
+            intent="createPortfolio"
+            className="w-full phone:w-auto"
+          />
         </div>
 
         {/* In normal flow (not the default absolute bottom overlay): the copy above can run long
-            on narrow phones, and an overlaid arrow ended up sitting on top of the waitlist button. */}
+            on narrow phones, and an overlaid arrow ended up sitting on top of the call to action. */}
         <WebSection.NextSectionLink
           href="#value-pillars"
           ariaLabel={t("scrollToNextSection")}

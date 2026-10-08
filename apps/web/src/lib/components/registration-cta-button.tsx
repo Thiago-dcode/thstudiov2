@@ -4,7 +4,9 @@ import { Button } from "@repo/ui/components/shadcn/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
+  DialogTitle,
   DialogTrigger,
 } from "@repo/ui/components/shadcn/dialog";
 import { cn } from "@repo/ui/lib/utils";
@@ -14,10 +16,8 @@ import { useState } from "react";
 import { Link } from "@/i18n/navigation";
 import { useSession } from "@/lib/hooks/useSession";
 import { useAppStatus } from "@/lib/providers/app-status.provider";
-import {
-  WaitListForm,
-  WaitListHint,
-} from "@/modules/wait-list/components/wait-list-form";
+import { WaitListForm } from "@/modules/wait-list/components/wait-list-form";
+import { WaitListSteps } from "@/modules/wait-list/components/wait-list-steps";
 
 type RegistrationCtaButtonProps = {
   size?: "sm" | "lg";
@@ -43,6 +43,7 @@ export function RegistrationCtaButton({
   const tCta = useTranslations("landing.cta");
   const tFooter = useTranslations("footer");
   const tWebHeader = useTranslations("webHeader");
+  const tWaitList = useTranslations("landing.hero");
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const iconClassName = size === "sm" ? "size-3.5" : "size-4";
@@ -73,11 +74,22 @@ export function RegistrationCtaButton({
             <ArrowRight className={iconClassName} />
           </Button>
         </DialogTrigger>
-        <DialogContent className="flex max-w-2xl w-screen flex-col gap-4 overflow-x-hidden ">
-          <DialogHeader className="space-y-0 pr-8 text-left sm:pr-10">
-            <WaitListHint />
+        <DialogContent className="flex max-w-2xl w-screen max-h-[calc(100dvh-2rem)] flex-col gap-5 overflow-y-auto overflow-x-hidden">
+          <DialogHeader className="gap-2 pr-8 text-left sm:pr-10 sm:text-left">
+            <DialogTitle className="font-serif text-2xl! font-light leading-tight tablet:text-3xl!">
+              {tWaitList("waitList.dialog.title")}
+            </DialogTitle>
+            <DialogDescription className="text-sm! leading-snug text-text-muted tablet:text-base!">
+              {tWaitList("waitList.dialog.description")}
+            </DialogDescription>
           </DialogHeader>
-          <WaitListForm className="flex-col! sm:flex-row! sm:items-start [&_button]:w-full sm:[&_button]:w-auto" />
+          <WaitListSteps />
+          <div className="flex flex-col gap-2">
+            <WaitListForm className="flex-col! sm:flex-row! sm:items-start [&_button]:w-full sm:[&_button]:w-auto" />
+            <p className="text-left text-xs text-text-muted">
+              {tWaitList("waitList.dialog.privacy")}
+            </p>
+          </div>
         </DialogContent>
       </Dialog>
     );

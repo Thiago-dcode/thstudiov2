@@ -51,6 +51,31 @@ const messages = {
         successReserveMessage: "Reservaremos tu correo después de validarlo.",
         alreadyExists:
           "{email} ya está en la lista de espera. Revisa tu correo. Si esto no es correcto, <supportLink>contacta con soporte</supportLink>.",
+        dialog: {
+          title: "El registro está cerrado por ahora",
+          description:
+            "A11STUDIO está en acceso anticipado y las plazas son limitadas. Únete a la lista de espera y te enviaremos una invitación personal en cuanto se abra tu plaza. Es gratis y solo toma unos segundos.",
+          stepsTitle: "Qué pasa después",
+          steps: [
+            {
+              title: "Introduce tu correo.",
+              description: "Te enviamos un mensaje de confirmación enseguida.",
+            },
+            {
+              title: "Confirma tu correo.",
+              description:
+                "Haz clic en el enlace de ese mensaje. Tu lugar en la fila solo se reserva después de confirmar.",
+            },
+            {
+              title: "Recibe tu invitación.",
+              description:
+                "Cuando sea tu turno, te enviamos por correo un enlace personal para crear tu cuenta. Cuanto antes confirmes, mejores serán tus beneficios de acceso anticipado.",
+            },
+          ],
+          learnMore: "Lee las preguntas frecuentes de la lista de espera",
+          privacy:
+            "Solo usamos tu correo para gestionar tu plaza en la lista de espera.",
+        },
       },
       disclaimer: "Gratis para empezar · No se requiere tarjeta",
       scrollToNextSection: "Ir a la siguiente sección",

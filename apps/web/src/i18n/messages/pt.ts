@@ -53,6 +53,31 @@ const messages = {
           "Vamos reservar seu e-mail assim que você o validar.",
         alreadyExists:
           "{email} já está na lista de espera. Confira seu e-mail. Se isso parece errado, <supportLink>fale com o suporte</supportLink>.",
+        dialog: {
+          title: "O cadastro está fechado por enquanto",
+          description:
+            "A A11STUDIO está em acesso antecipado e as vagas são limitadas. Entre na lista de espera e enviaremos um convite pessoal por e-mail assim que sua vaga abrir. É grátis e leva alguns segundos.",
+          stepsTitle: "O que acontece depois",
+          steps: [
+            {
+              title: "Digite seu e-mail.",
+              description: "Enviamos uma mensagem de confirmação na hora.",
+            },
+            {
+              title: "Confirme seu e-mail.",
+              description:
+                "Clique no link dessa mensagem. Seu lugar na fila só é reservado depois da confirmação.",
+            },
+            {
+              title: "Receba seu convite.",
+              description:
+                "Quando chegar a sua vez, enviamos por e-mail um link pessoal para criar sua conta. Quanto antes você confirmar, melhores serão seus benefícios de acesso antecipado.",
+            },
+          ],
+          learnMore: "Leia o FAQ completo da lista de espera",
+          privacy:
+            "Usamos seu e-mail apenas para gerenciar sua vaga na lista de espera.",
+        },
       },
       disclaimer: "Grátis para começar · Sem cartão de crédito",
       scrollToNextSection: "Rolar para a próxima seção",
