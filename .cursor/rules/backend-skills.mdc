@@ -1,0 +1,7 @@
+---
+description: Read the backend skills before touching API, database or shared backend code
+globs: apps/api/**,packages/database/**,packages/backend-lib/**,packages/common-lib/**
+alwaysApply: false
+---
+
+Before editing files here, read `.agents/skills/backend/SKILL.md` and the matching recipe skill (`api-migration`, `api-schema-types`, `api-repository`, `api-service`, `api-http-endpoint`, `api-queue-processor`, `api-mail`, `api-nest-module`, or `full-api-module` when several apply). After changes, follow `api-verification`.

@@ -1,0 +1,7 @@
+---
+description: Read the frontend skill before touching web or UI code
+globs: apps/web/**,packages/ui/**,packages/frontend-lib/**
+alwaysApply: false
+---
+
+Before editing files here, read `.agents/skills/frontend/SKILL.md`. For public marketing pages also read `.agents/skills/marketing-seo-ux/SKILL.md`, and for interactive UI `.agents/skills/accessibility/SKILL.md`.
