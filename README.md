@@ -1,7 +1,19 @@
-<<<<<<< HEAD
 # Turborepo starter
 
 This is a community-maintained example. If you experience a problem, please submit a pull request with a fix. GitHub Issues will be closed.
+
+## Getting started
+
+Install dependencies and run the project locally from the repository root.
+
+Node.js 18 or newer is required (`engines` in `package.json`). This repo uses pnpm 11.6.0 (`packageManager` in `package.json`).
+
+```bash
+pnpm install
+pnpm run dev
+```
+
+`pnpm install` installs workspace dependencies. `pnpm run dev` runs the root `dev` script (`turbo run dev`), which starts every app and package that defines a `dev` script, including the API in `apps/api` and the web app in `apps/web`.
 
 ## Using this example
 
@@ -119,6 +131,3 @@ Learn more about the power of Turborepo:
 - [Filtering](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters)
 - [Configuration Options](https://turborepo.com/docs/reference/configuration)
 - [CLI Usage](https://turborepo.com/docs/reference/command-line-reference)
-=======
-# a11studio
->>>>>>> 99abd129c5bd4d325fdf351557d826f752e0c80e
