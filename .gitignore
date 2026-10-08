@@ -60,8 +60,9 @@ dist
 .settings/
 *.sublime-workspace
 
-# Cursor
-.cursor/
+# Cursor (local state ignored; shared project rules are tracked)
+.cursor/*
+!.cursor/rules/
 
 # IDE - VSCode
 .vscode/*

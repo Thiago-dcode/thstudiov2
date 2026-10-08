@@ -1,0 +1,20 @@
+---
+description: Monorepo architecture and mandatory skill loading
+alwaysApply: true
+---
+
+# Monorepo architecture
+
+Project skills live in `.agents/skills/<name>/SKILL.md`. Before making ANY change (including tasks coming from Linear, Slack or GitHub), read:
+
+- `.agents/skills/tech-stack/SKILL.md`
+- `.agents/skills/architecture/SKILL.md`
+
+then the skills for the area you touch (see `AGENTS.md` for the full map). Do not start editing before reading them.
+
+## Package boundaries (summary — `architecture` skill is authoritative)
+
+- `apps/api` must not import from `apps/web`, `packages/frontend-lib` or `packages/ui`. It may import `packages/database`, `packages/common-lib`, `packages/backend-lib`.
+- `apps/web` must not import from `apps/api` or `packages/backend-lib`. It may import `packages/ui`, `packages/common-lib`, `packages/frontend-lib`.
+- `packages/ui` is pure UI: no business logic, API calls, DB or env access. Check it for an existing component before creating one.
+- `packages/database` is the single source of truth for DB access; `apps/api` must not bypass it.
