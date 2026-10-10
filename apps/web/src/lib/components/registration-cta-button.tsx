@@ -89,9 +89,9 @@ export function RegistrationCtaButton({
               <ArrowRight className={iconClassName} />
             </Button>
           </DialogTrigger>
-          <DialogContent className="flex max-w-2xl w-screen max-h-[calc(100dvh-2rem)] flex-col gap-5 overflow-y-auto overflow-x-hidden">
+          <DialogContent className="flex max-w-2xl w-screen max-h-[calc(100dvh-2rem)] flex-col gap-4 overflow-y-auto overflow-x-hidden px-5 py-6 phone-lg:gap-5 phone-lg:p-6">
             <DialogHeader className="gap-2 pr-8 text-left sm:pr-10 sm:text-left">
-              <DialogTitle className="font-serif text-2xl! font-light leading-tight tablet:text-3xl!">
+              <DialogTitle className="font-serif text-xl! font-light leading-tight phone-lg:text-2xl! tablet:text-3xl!">
                 {tWaitList("waitList.dialog.title")}
               </DialogTitle>
               <DialogDescription className="text-sm! leading-snug text-text-muted tablet:text-base!">
