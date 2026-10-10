@@ -167,7 +167,7 @@ export function WaitListForm({
             aria-describedby={
               inputErrors?.email ? "hero-wait-list-email-error" : undefined
             }
-            className="h-10 laptop:h-12 w-full px-4 text-sm!"
+            className="h-12 w-full px-4 text-base! phone-lg:h-10 phone-lg:text-sm! laptop:h-12"
           />
 
           {inputErrors?.email ? (
@@ -185,7 +185,7 @@ export function WaitListForm({
           variant="accent"
           size="lg"
           disabled={isPending || !isEmailValid}
-          className=" h-10 laptop:h-12 py-0 shrink-0 text-accent-fg"
+          className="h-12 py-0 shrink-0 text-accent-fg phone-lg:h-10 laptop:h-12"
         >
           {isPending ? t("waitList.buttonPending") : t("waitList.button")}
         </Button>
