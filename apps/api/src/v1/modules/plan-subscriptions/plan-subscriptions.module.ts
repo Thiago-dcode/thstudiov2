@@ -6,14 +6,16 @@ import { PlanPricesModule } from '../plan-prices/plan-prices.module';
 import { PlansModule } from '../plans/plans.module';
 import { PaymentMethodsService } from '../utils/payment-methods.service';
 import { UserBenefitModule } from '../user-benefit/user-benefit.module';
+import { UserModule } from '../users/users.module';
 import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
 import { RequestService } from 'src/common/services/request.service';
 
 @Module({
   imports: [
-    PlanPricesModule, 
+    PlanPricesModule,
     PlansModule,
-    UserBenefitModule
+    UserBenefitModule,
+    UserModule,
   ],
   controllers: [PlanSubscriptionsController],
   providers: [

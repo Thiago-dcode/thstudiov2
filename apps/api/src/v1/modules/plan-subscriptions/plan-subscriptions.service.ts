@@ -33,6 +33,7 @@ import { CustomerPortalRequest } from './requests/customer-portal.request';
 import { Benefit } from '@repo/common-lib/types/benefit';
 import { UserBenefitService } from '../user-benefit/user-benefit.service';
 import { config } from '@repo/common-lib/config';
+import { UserRepository } from '../users/users.repository';
 
 @Injectable()
 export class PlanSubscriptionsService {
@@ -44,6 +45,7 @@ export class PlanSubscriptionsService {
     private readonly planService: PlansService,
     private readonly paymentMethodsService: PaymentMethodsService,
     private readonly userBenefitsService: UserBenefitService,
+    private readonly userRepository: UserRepository,
     private readonly helpers: Helpers,
   ) { }
 
@@ -200,6 +202,20 @@ export class PlanSubscriptionsService {
     });
   }
 
+  /**
+   * The Stripe customer is created by the NEW_USER_EVENT listener after the account exists, but
+   * the session token is signed at registration (instantly, for a wait-list-validated device) and
+   * keeps whatever `stripe_customer_id` it had — null — for its whole life, refreshes included.
+   * The token is only a shortcut: when it has no id, the database is the source of truth.
+   */
+  private async resolveStripeCustomerId(): Promise<string | null> {
+    const user = this.requestService.user;
+    if (!user) return null;
+    if (user.stripe_customer_id) return user.stripe_customer_id;
+    const stored = await this.userRepository.findOneBy('id', user.id);
+    return stored?.stripe_customer_id ?? null;
+  }
+
   async findLatestSubscription(userId: number) {
     return this.planSubscriptionsRepository.findLatestSubscription(userId);
   }
@@ -210,7 +226,7 @@ export class PlanSubscriptionsService {
     cancelUrl,
     benefit_id
   }: HandleSubscriptionProcessInput): Promise<HandleSubscriptionProcessResponse> {
-    const customerId = this.requestService.user?.stripe_customer_id;
+    const customerId = await this.resolveStripeCustomerId();
 
     this.logger.info('Starting handleStripeSubscription', {
       customerId,
@@ -427,7 +443,7 @@ export class PlanSubscriptionsService {
   ): Promise<{
     url: string;
   }> {
-    const customerId = this.requestService.user?.stripe_customer_id;
+    const customerId = await this.resolveStripeCustomerId();
     this.logger.info('Getting customer subscription portal', { customerId, return_url: request?.return_url });
     if (!customerId) {
       this.logger.error('Stripe customer not found for portal session', { userId: this.requestService.user?.id });
