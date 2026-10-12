@@ -1,7 +1,7 @@
 "use client"
 
 import * as DialogPrimitive from "@radix-ui/react-dialog"
-import { ArrowUpRight, Check, Maximize2, Minimize2, Share2, X } from "lucide-react"
+import { ArrowUpRight, Check, Maximize2, Minimize2, Play, Share2, X } from "lucide-react"
 import Image from "next/image"
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent } from "react"
 import { useFullscreen } from "../../../hooks/useFullscreen"
@@ -348,8 +348,10 @@ export const Gallery = () => {
  // edge once the strip overflowed, into space the scroller can't reach.
  className="flex items-center justify-center-safe gap-1.5 px-4 pb-5 pt-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
  >
- {items.map((item, i) => (
- item.url ? (
+ {items.map((item, i) => {
+ // A video's `url` is the clip itself, which `<Image>` can't render — use its poster.
+ const thumb = previewUrl(item)
+ return item.url ? (
  <button
  key={i}
  data-active={i === currentItem}
@@ -361,16 +363,23 @@ export const Gallery = () => {
  : "opacity-35 hover:opacity-65",
  )}
  >
+ {thumb ? (
  <Image
- src={item.url}
+ src={thumb}
  alt={item.title ?? ""}
  fill
  className="object-cover"
  sizes="56px"
  />
+ ) : (
+ <span className="flex size-full items-center justify-center bg-white/10 text-white/70">
+ <Play className="size-4 fill-current" strokeWidth={1.5} />
+ <span className="sr-only">{item.title ?? ""}</span>
+ </span>
+ )}
  </button>
  ) : null
- ))}
+ })}
  </div>
  )}
  </DialogPrimitive.Content>
