@@ -3,7 +3,7 @@
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { ArrowUpRight, Check, Maximize2, Minimize2, Share2, X } from "lucide-react"
 import Image from "next/image"
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent } from "react"
 import { useFullscreen } from "../../../hooks/useFullscreen"
 import { useGalleryDialog } from "../../../hooks/useGalleryDialog"
 import type { GalleryItem } from "../../../providers/gallery.provider"
@@ -26,6 +26,18 @@ const SLIDE_STACK = "flex flex-col justify-center items-center h-full"
 const SLIDE_FRAME = "relative size-fit"
 const SLIDE_MEDIA = "block h-full object-contain"
 const ACTIONS_ROW = "mt-3 h-8 shrink-0"
+
+/** Height of the native video control bar (scrubber, volume…) at the bottom of the player. */
+const VIDEO_CONTROLS_HEIGHT = 56
+
+// A swipe may start anywhere on a video except its control bar: dragging the scrubber must seek,
+// not change slides. Swallowing every pointerdown on the video left nowhere to swipe from, since
+// the player covers most of the slide. A tap still plays — the browser drops the click once the
+// finger has moved.
+const stopOnVideoControls = (e: PointerEvent<HTMLVideoElement>) => {
+ const { bottom } = e.currentTarget.getBoundingClientRect()
+ if (e.clientY > bottom - VIDEO_CONTROLS_HEIGHT) e.stopPropagation()
+}
 
 /** Neighbours warmed ahead of time, as offsets from the current slide. */
 const PRELOAD_OFFSETS = [1, -1, 2]
@@ -247,7 +259,7 @@ export const Gallery = () => {
  preload="metadata"
  aria-label={currentItemData?.alt || currentItemData?.title || ""}
  className={cn(SLIDE_MEDIA, mediaVisibility)}
- onPointerDown={e => e.stopPropagation()}
+ onPointerDown={stopOnVideoControls}
  />
  ) : (
  // Keyed by URL so a new item gets a fresh element: reusing one kept painting the
@@ -332,7 +344,9 @@ export const Gallery = () => {
  {!fullscreen && hasMultiple && (
  <div
  ref={thumbnailsRef}
- className="flex items-center justify-center gap-1.5 px-4 pb-5 pt-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+ // `safe` centering: a plain `justify-center` pushed the first thumbnails past the left
+ // edge once the strip overflowed, into space the scroller can't reach.
+ className="flex items-center justify-center-safe gap-1.5 px-4 pb-5 pt-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
  >
  {items.map((item, i) => (
  item.url ? (
