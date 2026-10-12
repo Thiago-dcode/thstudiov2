@@ -89,11 +89,12 @@ export const ProfileSetupGuide = () => {
     }
   };
 
-  const handleToggleShrink = () => {
-    const next = !shrunk;
+  const setShrunkRemembered = (next: boolean) => {
     setShrunk(next);
     writeStorage("local", SHRUNK_STORAGE_KEY, next ? "1" : "0");
   };
+
+  const handleToggleShrink = () => setShrunkRemembered(!shrunk);
 
   // Steps aside while an onboarding dialog is open instead of floating over it.
   if (
@@ -181,6 +182,8 @@ export const ProfileSetupGuide = () => {
             <li key={flag} className="border-b border-border last:border-b-0">
               <Link
                 href={STEP_HREFS[flag]}
+                // Get out of the way of the task the user just picked; the pill keeps the progress.
+                onClick={() => setShrunkRemembered(true)}
                 className={cn(
                   "flex items-center gap-3 px-4 py-2.5 text-sm! transition-colors hover:bg-fg-1",
                   done ? "text-text-muted line-through" : "text-text",
