@@ -1,11 +1,12 @@
 import type { ApiResponse } from "@repo/common-lib/types/response";
-import type { BaseUser, User } from "@repo/common-lib/types/user";
+import type { User } from "@repo/common-lib/types/user";
 import { fetchApi } from "@/lib/facade/fetchApi";
 import { BaseService } from "@/lib/services/base.service";
 import type {
   CheckPasswordRecoveryRequest,
   LoginRequest,
   LoginReturn,
+  LoginReturn2fa,
   PasswordRecoveryAttempt,
   PasswordRecoveryRequest,
   UpdatePasswordRequest,
@@ -21,7 +22,7 @@ export class AuthService extends BaseService {
   }
   async register(
     registerRequest: UserRegisterRequest,
-  ): Promise<ApiResponse<BaseUser>> {
+  ): Promise<ApiResponse<LoginReturn>> {
     return await this.fetchApi.post({
       resource: "register",
       body: registerRequest,
@@ -47,6 +48,12 @@ export class AuthService extends BaseService {
     return await this.fetchApi.post({
       resource: "verify-2fa",
       body: verify2faRequest,
+    });
+  }
+  async resend2fa(email: string): Promise<ApiResponse<LoginReturn2fa>> {
+    return await this.fetchApi.post({
+      resource: "resend-2fa",
+      body: { email },
     });
   }
   async refreshToken(): Promise<ApiResponse<UserAuth>> {

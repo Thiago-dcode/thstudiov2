@@ -9,14 +9,20 @@ import { UserRepository } from '../users/users.repository';
 import { JwtService } from '@nestjs/jwt';
 import { TwoFactorAuth, UserAuth, UserPayload, UserTwofa } from '@repo/common-lib/types/auth';
 import { ConfigService } from '@nestjs/config';
-import { BaseUser } from '@repo/common-lib/types/user';
+import { BaseUser, BaseUserWithSecrets } from '@repo/common-lib/types/user';
 import { UserAuthDevicesService } from '../user-auth-devices/user-auth-devices.service';
 import { RequestService } from 'src/common/services/request.service';
-import { randomStr } from '@repo/common-lib/utils/random-string';
+import { randomInt } from 'crypto';
 import { addMinutes } from 'date-fns/addMinutes';
 import { UserAuthDevice } from '@repo/common-lib/types/user-session';
 import { UserSessionsService } from '../user-sessions/user-sessions.service';
-import { addDays } from 'date-fns';
+import { addDays, differenceInSeconds, subMinutes } from 'date-fns';
+import {
+  TWOFA_CODE_TTL_MINUTES,
+  TWOFA_MIN_REUSE_SECONDS,
+  TWOFA_RESEND_COOLDOWN_SECONDS,
+} from '@repo/common-lib/constants/limits';
+import { Resend2faRequest } from './requests/resend-2fa.request';
 import { MailService } from '@repo/backend-lib/services/mail-service';
 import { TwoFAMail } from './mails/twofa-mail';
 import { Verify2faRequest } from './requests/verify-2fa.request';
@@ -123,13 +129,65 @@ export class AuthService {
     if (benefit_id) {
       await this.userBenefitService.create(user.id, benefit_id);
     }
+
+    const preValidated = waitList?.validated_at
+      ? await this.loginPreValidatedDevice(user, waitList.email)
+      : null;
+    if (preValidated) {
+      this.eventEmitter.emit(NEW_USER_EVENT, new NewUserEvent(user));
+      return { ...preValidated, need_twofa: false as const };
+    }
+
     const result = await this.handle2fa(user, {
       ip_address: this.requestService.ip_address,
       user_agent: this.requestService.user_agent,
     });
 
     this.eventEmitter.emit(NEW_USER_EVENT, new NewUserEvent(user));
-    return { ...result.user, need_twofa: true };
+    return { ...result.user, token: null, need_twofa: true as const };
+  }
+
+  /**
+   * Skips the register 2FA code when this browser already proved the email by validating the
+   * wait-list entry — the code would only prove the same thing again. Requires all of: the
+   * registration came through that entry's invitation (so the email matches the entry), the
+   * browser (user agent + IP) is the one that validated, and its device is unclaimed, unblocked
+   * and recent. Any miss returns null and the caller falls back to the normal 2FA code.
+   */
+  private async loginPreValidatedDevice(user: BaseUser, email: string) {
+    let device: UserAuthDevice | null = null;
+    try {
+      device = await this.userAuthDevicesService.claimPreValidated({
+        email,
+        user_id: user.id,
+        user_agent: this.requestService.user_agent || '-',
+        ip_address: this.requestService.ip_address || '-',
+      });
+      if (!device) return null;
+
+      const validatedUser = await this.userRepository.updateById(user.id, {
+        email_validated: true,
+        twofa_code: null,
+        twofa_expires_at: null,
+        twofa_attempts: 0,
+      });
+      this.logService.info(`Register 2FA skipped: wait-list validated device for user ${user.id}`);
+      return await this.handleLogin(validatedUser, device);
+    } catch (error) {
+      // The account exists either way; a failure here must not lose it, only cost a 2FA code.
+      this.logService.error('Failed to log in with the wait-list validated device', {
+        message: error instanceof Error ? error.message : String(error),
+        userId: user.id,
+      });
+      // A claimed device is already trusted, so the 2FA fallback would skip sending the code and
+      // strand the user on the 2FA page. Untrust it so the fallback really sends one.
+      if (device) {
+        await this.userAuthDevicesService
+          .update(device.id, { disabled: true })
+          .catch(() => undefined);
+      }
+      return null;
+    }
   }
   async login(authLoginRequest: LoginRequest): Promise<UserAuth | UserTwofa> {
     const user = await this.userRepository.findOneByWithSecrets(
@@ -150,12 +208,20 @@ export class AuthService {
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
+    // Logging in again (e.g. after closing the 2FA tab to fetch the code) must not invalidate the
+    // code already in the inbox, so a pending one is reused; only an explicit resend replaces it.
+    const reusePendingCode = this.hasReusableCode(user);
     delete user.password;
     delete user.twofa_code;
-    const result = await this.handle2fa(user, {
-      user_agent: this.requestService?.user_agent || '-',
-      ip_address: this.requestService?.ip_address || '-',
-    });
+    delete user.twofa_attempts;
+    const result = await this.handle2fa(
+      user,
+      {
+        user_agent: this.requestService?.user_agent || '-',
+        ip_address: this.requestService?.ip_address || '-',
+      },
+      { reusePendingCode },
+    );
     return result.need_2fa
       ? { ...result.user, token: null, need_twofa: true }
       : await this.handleLogin(user, result.user_auth_device);
@@ -362,6 +428,54 @@ export class AuthService {
     return { ...user, token };
   }
 
+  /**
+   * Emails a new 2FA code on request, replacing the pending one. Only our Next.js server may call
+   * it (AppTokenGuard), and it takes the email from the encrypted 2FA cookie that only a correct
+   * password or a fresh registration sets — so it cannot be used to mail codes to arbitrary users.
+   */
+  async resend2fa({ email }: Resend2faRequest): Promise<UserTwofa> {
+    const user = await this.userRepository.findOneByWithSecrets('email', email);
+    if (!user || user.banned) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+    if (user.twofa_code && user.twofa_expires_at) {
+      const issuedAt = subMinutes(user.twofa_expires_at, TWOFA_CODE_TTL_MINUTES);
+      const waitSeconds = TWOFA_RESEND_COOLDOWN_SECONDS - differenceInSeconds(new Date(), issuedAt);
+      if (waitSeconds > 0) {
+        throw new BadRequestException(`Please wait ${waitSeconds} seconds before asking for a new code`);
+      }
+    }
+    const updatedUser = await this.issue2faCode(user);
+    return { ...updatedUser, token: null, need_twofa: true };
+  }
+
+  /** True when the user has an unexpired 2FA code with enough life left to be worth typing. */
+  private hasReusableCode(user: BaseUserWithSecrets) {
+    if (!user.twofa_code || !user.twofa_expires_at) return false;
+    return differenceInSeconds(user.twofa_expires_at, new Date()) >= TWOFA_MIN_REUSE_SECONDS;
+  }
+
+  /** Stores a fresh hashed code (resetting the attempt budget) and emails the plain one. */
+  private async issue2faCode(user: BaseUser) {
+    // Digits only: easier to read off a phone and to type, and mobile keyboards show a number pad.
+    const code = randomInt(0, 1_000_000).toString().padStart(6, '0');
+    const updatedUser = await this.userRepository.updateById(user.id, {
+      twofa_code: await hash(code),
+      twofa_expires_at: addMinutes(new Date(), TWOFA_CODE_TTL_MINUTES),
+      twofa_attempts: 0,
+    });
+    this.mailService
+      .send(this.twoFAMail.setUser({ ...updatedUser, twofa_code: code }, updatedUser.language))
+      .catch((error: Error) =>
+        this.logService.error('Failed to send 2FA email', {
+          message: error?.message,
+          stack: error?.stack,
+          userId: updatedUser.id,
+        }),
+      );
+    return updatedUser;
+  }
+
   private async handle2fa(
     user: BaseUser,
     {
@@ -371,6 +485,7 @@ export class AuthService {
       user_agent?: string;
       ip_address?: string;
     },
+    { reusePendingCode = false }: { reusePendingCode?: boolean } = {},
   ): Promise<TwoFactorAuth> {
     const userDevice = await this.userAuthDevicesService.getOneOrCreate({
       user_id: user.id,
@@ -386,27 +501,13 @@ export class AuthService {
       return { user_auth_device: userDevice, user, need_2fa: false };
     }
 
-    //Start 2fa process
-
-    const code = randomStr(6).toLowerCase();
-    const hashedCode = await hash(code);
-    const expiresAt = addMinutes(new Date(), 10);
-    const updatedUser = await this.userRepository.updateById(user.id, {
-      twofa_code: hashedCode,
-      twofa_expires_at: expiresAt,
-    });
-    this.mailService
-      .send(this.twoFAMail.setUser({ ...updatedUser, twofa_code: code }, updatedUser.language))
-      .catch((error: Error) =>
-        this.logService.error('Failed to send 2FA email', {
-          message: error?.message,
-          stack: error?.stack,
-          userId: updatedUser.id,
-        }),
-      );
+    // The pending code (and its expiry, already on `user`) stays valid: no new email.
+    if (reusePendingCode) {
+      return { user_auth_device: userDevice, user, need_2fa: true };
+    }
     return {
       user_auth_device: userDevice,
-      user: updatedUser,
+      user: await this.issue2faCode(user),
       need_2fa: true,
     };
   }

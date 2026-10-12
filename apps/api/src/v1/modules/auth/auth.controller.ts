@@ -1,4 +1,6 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards } from '@nestjs/common';
+import { AppTokenGuard } from 'src/common/guards/app-token.guard';
+import { Resend2faRequest } from './requests/resend-2fa.request';
 import { AuthService } from './auth.service';
 import { LoginRequest } from './requests/login.request';
 import { Public } from 'src/common/decorators/public.decorator';
@@ -31,6 +33,15 @@ export class AuthController {
   @Post('verify-2fa')
   async verify2fa(@Body() verify2faDto: Verify2faRequest) {
     return await this.authService.verify2fa(verify2faDto);
+  }
+  @Public()
+  // Only our Next.js server may ask for a resend (it reads the email from the encrypted 2FA
+  // cookie); the service also enforces a cooldown between codes.
+  @UseGuards(AppTokenGuard)
+  @Throttle({ medium: { limit: 3, ttl: 60000 } })
+  @Post('resend-2fa')
+  async resend2fa(@Body() resend2faDto: Resend2faRequest) {
+    return await this.authService.resend2fa(resend2faDto);
   }
   @Post('logout')
   async logout() {

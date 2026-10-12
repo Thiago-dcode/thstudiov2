@@ -36,7 +36,7 @@ export const verify2faRequestSchema = (t: Translator) =>
     email: z.email(t("validation.auth.invalidEmail")),
     twofa_code: z
       .string(t("validation.auth.invalidCode"))
-      .min(6, t("validation.auth.codeLength", { length: 6 })),
+      .regex(/^\d{6}$/, t("validation.auth.codeLength", { length: 6 })),
   });
 
 export const passwordRecoveryRequestSchema = (t: Translator) =>

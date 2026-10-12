@@ -10,6 +10,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "@/i18n/navigation";
 import FormComponent from "@/lib/components/form-component";
 import type { TwoFaUser } from "@/modules/auth/auth.types";
+import { getHomePath } from "@/modules/auth/auth.utils";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { deleteRedirectTo } from "@/modules/auth/server-actions/redirect-to.action";
 import { verify2faServerAction } from "@/modules/auth/server-actions/twofa.action";
@@ -30,12 +31,13 @@ export const TwoFaForm = ({
       if (!result.data) {
         return;
       }
-      const fallback = user.is_new ? "/get-started" : "/atelier";
       const destination = redirectTo
         ? resolveRedirectToTarget(redirectTo)
         : null;
       await deleteRedirectTo();
-      route.push(destination ? `/${destination}` : fallback);
+      route.push(
+        destination ? `/${destination}` : getHomePath(result.data.funnel_step),
+      );
     },
   });
   const [twafaCode, setTwofaCode] = useState("");
@@ -53,7 +55,8 @@ export const TwoFaForm = ({
           <Input
             onChange={(e) => {
               if (isPending) return;
-              const value = e.target.value.trim().toLowerCase();
+              // Codes are digits only; drop anything else (spaces from a pasted "123 456" too).
+              const value = e.target.value.replace(/\D/g, "").slice(0, 6);
               e.target.value = value;
               setTwofaCode(value);
               if (errors) {
@@ -67,10 +70,10 @@ export const TwoFaForm = ({
             type="text"
             id="twofa_code"
             name="twofa_code"
-            maxLength={6}
             value={twafaCode}
             autoComplete="one-time-code"
-            inputMode="text"
+            inputMode="numeric"
+            pattern="\d{6}"
             placeholder={t("codePlaceholder")}
             required
             autoFocus

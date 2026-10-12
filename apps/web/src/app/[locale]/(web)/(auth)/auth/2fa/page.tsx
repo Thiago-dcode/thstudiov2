@@ -5,8 +5,8 @@ import PageComponent from "@/lib/components/page-component";
 import { buildPrivatePageMetadata } from "@/lib/seo/private-metadata";
 import { getRedirectTo } from "@/modules/auth/server-actions/redirect-to.action";
 import { get2faCookieData } from "@/modules/auth/server-actions/twofa.action";
-import { ExpiresIn } from "../__components/expiresIn";
 import { TwoFaForm } from "../__components/twoFa-form";
+import { TwoFaResend } from "../__components/twoFa-resend";
 
 export async function generateMetadata() {
   const t = await getTranslations("auth.twoFa.metadata");
@@ -39,15 +39,7 @@ export default async function TwoFactorAuth() {
     return `${local.slice(0, 2)}${"*".repeat(Math.min(local.length - 2, 8))}${domain}`;
   };
   const maskedEmail = maskEmail(user.email);
-  const expiresIn = () => {
-    const expiresAt = user.twofa_expires_at
-      ? new Date(user.twofa_expires_at)
-      : null;
-    if (!expiresAt) return 0;
-    return expiresAt.getTime() - Date.now();
-  };
 
-  //TODO: handle is new register
   return (
     <PageComponent.Container>
       {/* Header */}
@@ -83,7 +75,11 @@ export default async function TwoFactorAuth() {
       </PageComponent.Content>
 
       <PageComponent.Footer>
-        <ExpiresIn redirect="/auth/login" expiresIn={expiresIn()} />
+        <TwoFaResend
+          initialExpiresAt={
+            user.twofa_expires_at ? String(user.twofa_expires_at) : null
+          }
+        />
       </PageComponent.Footer>
     </PageComponent.Container>
   );

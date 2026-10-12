@@ -3,6 +3,16 @@ import { EnumType } from "./enums";
 
 // ==================== APP CONFIGURATION ====================
 export const FUNNEL_LAST_STEP = 5;
+/** How long an emailed 2FA code stays valid. */
+export const TWOFA_CODE_TTL_MINUTES = 10;
+/** Minimum wait between two 2FA codes asked for on purpose ("resend"), so the inbox can't be flooded. */
+export const TWOFA_RESEND_COOLDOWN_SECONDS = 60;
+/**
+ * A pending 2FA code is reused on a new login instead of emailing another, so the code the user
+ * already has keeps working. Below this much remaining life a fresh code is sent instead, so the
+ * user never lands on the 2FA page with a code about to die.
+ */
+export const TWOFA_MIN_REUSE_SECONDS = 120;
 export const ALLOWED_IMAGE_FILE_TYPES: MimeTypes[] = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 export const ALLOWED_VIDEO_FILE_TYPES: MimeTypes[] = ['video/mp4', 'video/quicktime', 'video/mpeg'];
 export const ALLOWED_FILE_TYPES = [...ALLOWED_IMAGE_FILE_TYPES, ...ALLOWED_VIDEO_FILE_TYPES];

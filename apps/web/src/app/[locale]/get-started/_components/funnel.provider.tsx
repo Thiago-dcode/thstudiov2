@@ -308,8 +308,10 @@ export const ButtonSubmitFunnel = ({
 export const ButtonFinishFunnel = ({
   variant = "ghost",
   text,
+  className,
 }: {
   text?: string;
+  className?: string;
   variant?:
     | "base"
     | "link"
@@ -332,6 +334,7 @@ export const ButtonFinishFunnel = ({
       }}
       isPending={isPending}
       variant={variant}
+      className={className}
     >
       {text ?? t("finish")}
     </FormComponent.SubmitButton>

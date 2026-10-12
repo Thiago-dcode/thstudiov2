@@ -13,12 +13,12 @@ import { AlertPortfolioButton } from "@/modules/portfolios/components/alert-port
 import { PortfolioProvider } from "@/modules/portfolios/providers/create-update-portfolio.provider";
 import { AlertServiceButton } from "@/modules/services/components/alert-service.button";
 import { CreateUpdateServiceProvider } from "@/modules/services/providers/create-update-service.provider";
-import { UserBenefitModal } from "@/modules/user-benefit/components/user-benefit.modal";
 import { UserNotificationsProvider } from "@/modules/user-notifications/contexts/user-notifications.provider";
 import { ProfileSetupGuide } from "@/modules/users/components/profile-setup-guide";
 import { UserAccountBannedModal } from "@/modules/users/components/user-account-banned-modal";
+import { OnboardingOverlaysProvider } from "@/modules/users/providers/onboarding-overlays.provider";
 import { UserMetricsProvider } from "@/modules/users/providers/user-metrics.provider";
-import { FinishSetupDialog } from "../__components/finish-setup-dialog";
+import { AtelierOnboardingDialogs } from "../__components/atelier-onboarding-dialogs";
 
 /**
  * The whole atelier is the signed-in workspace — never indexable. robots.txt already disallows
@@ -36,9 +36,8 @@ const AdminLayout = async ({ children }: { children: ReactNode }) => {
     redirect("/auth/login");
   }
   return (
-    <>
-      <FinishSetupDialog user={userAuth} />
-      <UserBenefitModal
+    <OnboardingOverlaysProvider>
+      <AtelierOnboardingDialogs
         user={userAuth}
         subscriptionPath="/atelier/settings/subscription"
       />
@@ -74,7 +73,7 @@ const AdminLayout = async ({ children }: { children: ReactNode }) => {
           </UserNotificationsProvider>
         </UserMetricsProvider>
       </MainNavProvider>
-    </>
+    </OnboardingOverlaysProvider>
   );
 };
 

@@ -6,7 +6,10 @@ export type UserAuthDeviceSchema = {
   ip_address: string;
   disabled: boolean;
   blocked_at?: Date | null;
-  user_id: number;
+  // NULL only for a device pre-validated through the wait list, before its owner registers.
+  user_id: number | null;
+  // Set only on that pre-validated device (unique); a regular device is keyed by `user_id`.
+  email?: string | null;
   created_at: Date;
   updated_at: Date;
 };

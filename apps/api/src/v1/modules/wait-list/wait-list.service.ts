@@ -11,6 +11,7 @@ import type {
 import { getWaitListBenefitType } from '@repo/common-lib/utils/wait-list';
 import { RequestService } from 'src/common/services/request.service';
 import { BenefitRepository } from '../benefits/benefit.repository';
+import { UserAuthDevicesService } from '../user-auth-devices/user-auth-devices.service';
 import { IndexWaitListRequest } from './requests/index-wait-list.request';
 import { WaitListRepository } from './wait-list.repository';
 
@@ -21,6 +22,7 @@ export class WaitListService {
     private readonly benefitRepository: BenefitRepository,
     private readonly logger: LogService,
     private readonly requestService: RequestService,
+    private readonly userAuthDevicesService: UserAuthDevicesService,
   ) { }
 
   async findAll(filters: IndexWaitListRequest) {
@@ -94,7 +96,10 @@ export class WaitListService {
         position,
       });
 
-      await this.enqueueValidatedEmail(updated.id);
+      await Promise.all([
+        this.trustValidationDevice(updated.id, updated.email),
+        this.enqueueValidatedEmail(updated.id),
+      ]);
 
       return { ...updated, benefit: await this.resolveBenefit(updated.position) };
     } catch (error) {
@@ -203,6 +208,32 @@ export class WaitListService {
     } catch (error) {
       this.logger.error(
         `Failed to enqueue wait list validated email: entry ${waitListId} - ${error instanceof Error ? error.message : 'Unknown error'}`,
+        error,
+      );
+    }
+  }
+
+  /**
+   * Clicking the emailed link proves the address from this browser, the same proof the 2FA code
+   * gives, so the browser is trusted for that email: registering from it later skips the code.
+   * Only the winning validation does this — a repeat or concurrent visit (or a different device)
+   * gets nothing. Never fails the validation; at worst the user types the 2FA code at register.
+   */
+  private async trustValidationDevice(waitListId: number, email: string) {
+    try {
+      const device = await this.userAuthDevicesService.createPreValidated({
+        email,
+        user_agent: this.requestService.user_agent ?? '',
+        ip_address: this.requestService.ip_address ?? '',
+      });
+      this.logger.info(
+        device
+          ? `Wait list validation device trusted: entry ${waitListId}`
+          : `Wait list validation device not trusted (unknown identity or already set): entry ${waitListId}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to trust wait list validation device: entry ${waitListId} - ${error instanceof Error ? error.message : 'Unknown error'}`,
         error,
       );
     }

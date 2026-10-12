@@ -7,8 +7,10 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 import { Check, ChevronDown, ChevronUp, X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "@/i18n/navigation";
+import { readStorage, writeStorage } from "@/lib/utils/browser-storage";
+import { useOnboardingOverlays } from "../providers/onboarding-overlays.provider";
 import { useUserMetrics } from "../providers/user-metrics.provider";
 import { closeProfileStatusAction } from "../server-actions/close-profile-status.action";
 
@@ -44,11 +46,25 @@ const STEP_LABEL_KEYS: Record<
   has_about_page: "aboutPage",
 };
 
+const SHRUNK_STORAGE_KEY = "setup-guide-shrunk";
+
 export const ProfileSetupGuide = () => {
   const t = useTranslations("atelier.common.setupGuide");
   const { metrics, isLoading, refresh } = useUserMetrics();
+  const { dialogOpen } = useOnboardingOverlays();
   const [dismissed, setDismissed] = useState(false);
-  const [shrunk, setShrunk] = useState(false);
+  // null until read in the browser, so a phone never flashes the full panel first.
+  const [shrunk, setShrunk] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const saved = readStorage("local", SHRUNK_STORAGE_KEY);
+    // Expanded, the checklist covers most of a phone screen; there it starts as a small pill.
+    setShrunk(
+      saved !== null
+        ? saved === "1"
+        : !window.matchMedia("(min-width: 768px)").matches,
+    );
+  }, []);
 
   const status = metrics?.profile_status;
 
@@ -74,10 +90,20 @@ export const ProfileSetupGuide = () => {
   };
 
   const handleToggleShrink = () => {
-    setShrunk((prev) => !prev);
+    const next = !shrunk;
+    setShrunk(next);
+    writeStorage("local", SHRUNK_STORAGE_KEY, next ? "1" : "0");
   };
 
-  if (isLoading || !status || status.is_closed || dismissed) {
+  // Steps aside while an onboarding dialog is open instead of floating over it.
+  if (
+    isLoading ||
+    !status ||
+    status.is_closed ||
+    dismissed ||
+    dialogOpen ||
+    shrunk === null
+  ) {
     return null;
   }
 

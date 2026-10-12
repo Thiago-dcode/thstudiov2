@@ -12,6 +12,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useRouter } from "@/i18n/navigation";
 import FormComponent from "@/lib/components/form-component";
+import { getHomePath } from "@/modules/auth/auth.utils";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { loginServerAction } from "@/modules/auth/server-actions/login.action";
 import { deleteRedirectTo } from "@/modules/auth/server-actions/redirect-to.action";
@@ -41,7 +42,11 @@ export const LoginForm = ({
         const destination = redirectTo
           ? resolveRedirectToTarget(redirectTo)
           : null;
-        router.push(destination ? `/${destination}` : "/atelier");
+        router.push(
+          destination
+            ? `/${destination}`
+            : getHomePath(result.data.funnel_step),
+        );
       },
     });
 

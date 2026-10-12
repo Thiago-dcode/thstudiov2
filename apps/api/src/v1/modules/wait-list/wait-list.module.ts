@@ -21,6 +21,7 @@ import { WaitListRepository } from './wait-list.repository';
 import { WaitListService } from './wait-list.service';
 import { WaitListTask } from './wait-list.task';
 import { EmailPreferencesModule } from '../email-preferences/email-preferences.module';
+import { UserAuthDevicesModule } from '../user-auth-devices/user-auth-devices.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { EmailPreferencesModule } from '../email-preferences/email-preferences.m
     InvitationLinkModule,
     BenefitsModule,
     PlansModule,
+    UserAuthDevicesModule,
     BullModule.registerQueue({ name: WAIT_LIST_QUEUE }, { name: LOG_QUEUE }),
   ],
   controllers: [WaitListController],

@@ -1,10 +1,4 @@
-import {
-  IsEmail,
-  IsNotEmpty,
-  IsString,
-  MaxLength,
-  MinLength,
-} from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, Matches } from 'class-validator';
 import { ModelExist } from 'src/common/validators/model-exist.validtor';
 export class Verify2faRequest {
   @IsEmail()
@@ -14,9 +8,6 @@ export class Verify2faRequest {
 
   @IsString()
   @IsNotEmpty()
-  @MinLength(6)
-  @MaxLength(6)
-  twofa_code: string; 
-
-
+  @Matches(/^\d{6}$/, { message: 'The code must be 6 digits' })
+  twofa_code: string;
 }

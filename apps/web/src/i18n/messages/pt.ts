@@ -1077,6 +1077,15 @@ const messages = {
       havingTrouble: "Está com dificuldades?",
       backToLogin: "Voltar ao login",
       codePlaceholder: "Digite o código de 6 dígitos",
+      didntGetCode: "Não recebeu?",
+      resend: "Enviar um novo código",
+      resendIn: "Enviar um novo código em {seconds}s",
+      newCodeSent: "Enviamos um novo código. Só o mais recente funciona.",
+      codeExpired: "Este código expirou. Envie um novo para você.",
+      checkSpam:
+        "Pode levar um minuto para chegar. Verifique também a pasta de spam.",
+      sessionExpired:
+        "Sua sessão de verificação terminou. Faça login novamente.",
     },
     passwordRecovery: {
       metadata: {
@@ -1167,6 +1176,7 @@ const messages = {
       continueWithoutBenefits: "Continuar sem benefícios",
       tryAgainLater: "Tentar novamente mais tarde",
       stepBack: "Voltar",
+      setUpLater: "Configurar depois",
       somethingWentWrong: "Algo deu errado",
     },
   },

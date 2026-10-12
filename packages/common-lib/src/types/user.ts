@@ -23,6 +23,7 @@ export type BaseUser = Omit<
 export type BaseUserWithSecrets = BaseUser & {
   password: string;
   twofa_code?: string;
+  twofa_attempts?: number;
 };
 
 // CompactUser: minimal user info (id, email, username)

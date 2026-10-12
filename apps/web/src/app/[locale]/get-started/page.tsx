@@ -10,7 +10,11 @@ import { SetSessionClient } from "@/modules/auth/components/SetSessionClient";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import { UserBenefitModal } from "@/modules/user-benefit/components/user-benefit.modal";
 import usersService from "@/modules/users/users.service";
-import { FunnelProvider } from "./_components/funnel.provider";
+import {
+  ButtonFinishFunnel,
+  ContainerFormFunnel,
+  FunnelProvider,
+} from "./_components/funnel.provider";
 
 export async function generateMetadata() {
   const t = await getTranslations("getStarted.metadata");
@@ -107,12 +111,31 @@ export default async function GetStartedLayout() {
         </PageComponent.Content>
 
         <PageComponent.Footer>
-          <p className="text-text-muted">
-            {t("stepOf", {
-              current: user.funnel_step,
-              total: FUNNEL_LAST_STEP,
-            })}
-          </p>
+          <div className="flex w-full items-center justify-between gap-4">
+            <p className="text-text-muted">
+              {t("stepOf", {
+                current: user.funnel_step,
+                total: FUNNEL_LAST_STEP,
+              })}
+            </p>
+            {/* A quiet way out: what's left is waiting in the atelier's setup guide. The plan
+                step has its own "continue" choices, so it doesn't need this. */}
+            {user.funnel_step < FUNNEL_LAST_STEP ? (
+              <FunnelProvider
+                lastStep={FUNNEL_LAST_STEP}
+                defaultCanContinue={true}
+                user={{ ...userAuth, ...user }}
+              >
+                <ContainerFormFunnel className="w-auto">
+                  <ButtonFinishFunnel
+                    variant="link"
+                    text={t("actions.setUpLater")}
+                    className="mt-0 w-auto min-h-11 px-0 text-text-muted"
+                  />
+                </ContainerFormFunnel>
+              </FunnelProvider>
+            ) : null}
+          </div>
         </PageComponent.Footer>
       </PageComponent.Container>
     </>

@@ -1,19 +1,20 @@
 "use server";
 
 import type { ActionReturn } from "@repo/common-lib/types/response";
-import type { BaseUser } from "@repo/common-lib/types/user";
 import { normalizeUsername } from "@repo/common-lib/utils/username";
 import { getTranslations } from "next-intl/server";
 import authService from "../auth.service";
+import type { LoginReturn } from "../auth.types";
 import { getObjErrorFromZod } from "../helpers";
 import { registerRequestSchema } from "../schemas/auth.shema";
 import { delete2faCookie, set2faCookie } from "./twofa.action";
+import { setUserSession } from "./user-session.action";
 
 export const registerServerAction = async (
   formData: FormData,
 ): Promise<
   ActionReturn<
-    BaseUser,
+    LoginReturn,
     {
       email?: string;
       username?: string;
@@ -59,8 +60,13 @@ export const registerServerAction = async (
       inputs: credentials,
     };
   }
-  //Success
-  await set2faCookie({ ...result.data, is_new: true });
+  //Success: a browser that already validated the email through the wait list gets a session
+  // straight away; every other registration confirms the email with the 2FA code.
+  if (result.data.token) {
+    await setUserSession(result.data);
+  } else {
+    await set2faCookie({ ...result.data, is_new: true });
+  }
   return {
     data: result.data,
     errors: null,

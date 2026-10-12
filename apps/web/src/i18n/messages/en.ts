@@ -1068,6 +1068,13 @@ const messages = {
       havingTrouble: "Having trouble?",
       backToLogin: "Back to login",
       codePlaceholder: "Enter 6-digit code",
+      didntGetCode: "Didn't get it?",
+      resend: "Send a new code",
+      resendIn: "Send a new code in {seconds}s",
+      newCodeSent: "We've sent you a new code. Only the latest one works.",
+      codeExpired: "This code has expired. Send yourself a new one.",
+      checkSpam: "It can take a minute to arrive. Check your spam folder too.",
+      sessionExpired: "Your verification session ended. Please log in again.",
     },
     passwordRecovery: {
       metadata: {
@@ -1158,6 +1165,7 @@ const messages = {
       continueWithoutBenefits: "Continue without benefits",
       tryAgainLater: "Try again later",
       stepBack: "Step back",
+      setUpLater: "Set up later",
       somethingWentWrong: "Something went wrong",
     },
   },

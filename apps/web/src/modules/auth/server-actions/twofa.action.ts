@@ -83,10 +83,54 @@ export const delete2faCookie = async () => {
   });
 };
 
+/**
+ * Asks for a new code. The email comes only from the encrypted, httpOnly 2FA cookie, which only a
+ * correct password or a fresh registration sets — never from the client — so this can't be used to
+ * mail codes to someone else.
+ */
+export const resend2faServerAction = async (): Promise<
+  ActionReturn<{ twofa_expires_at: string }, undefined>
+> => {
+  const t = await getTranslations();
+  const current = await get2faCookieData();
+  if (!current?.email) {
+    return {
+      data: null,
+      errors: [t("auth.twoFa.sessionExpired")],
+      inputs: undefined,
+    };
+  }
+  const result = await authService.resend2fa(current.email);
+  if (result.error || !result.data) {
+    return {
+      data: null,
+      errors:
+        result.error?.status_code === 400
+          ? result.error.errors
+          : [t("actions.genericError")],
+      inputs: undefined,
+    };
+  }
+  await set2faCookie({ ...result.data, is_new: current.is_new });
+  return {
+    data: { twofa_expires_at: String(result.data.twofa_expires_at) },
+    errors: null,
+    inputs: undefined,
+  };
+};
+
 export const set2faCookie = async (user: TwoFaUser) => {
   const cookieStore = await cookies();
-  cookieStore.set(TWO_FA_COOKIE_NAME, await encryptObj(user), {
+  // An account whose email was never confirmed is still finishing sign-up, whichever form
+  // (register or login) brought it here.
+  const twoFaUser: TwoFaUser = {
+    ...user,
+    is_new: user.is_new ?? !user.email_validated,
+  };
+  cookieStore.set(TWO_FA_COOKIE_NAME, await encryptObj(twoFaUser), {
     httpOnly: true,
-    maxAge: 60 * 10, //10 minutes
+    // Outlives the 10-minute code so an expired code can still be resent from the same page
+    // instead of sending the user back through login.
+    maxAge: 60 * 30,
   });
 };

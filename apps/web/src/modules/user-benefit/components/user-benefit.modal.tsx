@@ -16,15 +16,31 @@ import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "@/i18n/navigation";
+import { readStorage, writeStorage } from "@/lib/utils/browser-storage";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { getUserBenefitAction } from "../server-actions/get-user-benefit.action";
+
+/** "Maybe later" in the atelier hides the gift for this long; it comes back until redeemed. */
+const ATELIER_SNOOZE_MS = 3 * 24 * 60 * 60 * 1000;
+
+// In the funnel the modal only announces the gift (it is claimed on the plan step), so once
+// seen it stays dismissed there; in the atelier it is a reminder and comes back after a snooze.
+const getSnoozeKey = (userId: number, inAtelier: boolean) =>
+  `benefit-modal-snoozed:${userId}:${inAtelier ? "atelier" : "funnel"}`;
+
+const isSnoozed = (key: string) => {
+  const until = Number(readStorage("local", key));
+  return Number.isFinite(until) && until > Date.now();
+};
 
 export const UserBenefitModal = ({
   user,
   subscriptionPath,
+  onOpenChange,
 }: {
   user: User | BaseUser | UserAuth;
   subscriptionPath?: string;
+  onOpenChange?: (open: boolean) => void;
 }) => {
   const t = useTranslations("userBenefitModal");
   const tBenefit = useTranslations("benefitSubscriptionDialog");
@@ -62,12 +78,36 @@ export const UserBenefitModal = ({
     handleAction();
   }, [user, userBenefit, handleAction]);
 
-  useEffect(() => {
-    if (userBenefit) setOpen(true);
-  }, [userBenefit]);
+  const snoozeKey = getSnoozeKey(user.id, !!subscriptionPath);
 
-  if (!userBenefit || userBenefit.redeemed || pathname === subscriptionPath)
-    return null;
+  useEffect(() => {
+    if (userBenefit && !userBenefit.redeemed && !isSnoozed(snoozeKey))
+      setOpen(true);
+  }, [userBenefit, snoozeKey]);
+
+  const hidden =
+    !userBenefit || userBenefit.redeemed || pathname === subscriptionPath;
+  const visible = open && !hidden;
+
+  useEffect(() => {
+    onOpenChange?.(visible);
+  }, [visible, onOpenChange]);
+
+  const handleOpenChange = (next: boolean) => {
+    setOpen(next);
+    if (next) return;
+    writeStorage(
+      "local",
+      snoozeKey,
+      String(
+        subscriptionPath
+          ? Date.now() + ATELIER_SNOOZE_MS
+          : Number.MAX_SAFE_INTEGER,
+      ),
+    );
+  };
+
+  if (hidden) return null;
 
   const benefitTypeKey =
     `benefitTypes.${userBenefit.type}` as `benefitTypes.${typeof userBenefit.type}`;
@@ -77,7 +117,7 @@ export const UserBenefitModal = ({
   const months = Math.round(userBenefit.trial_days / 30);
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={visible} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-md p-8">
         <div className="flex flex-col items-center gap-6 text-center">
           <div className="flex size-16 items-center justify-center bg-fg">
@@ -114,6 +154,8 @@ export const UserBenefitModal = ({
               <Button asChild variant="default" className="w-full font-bold">
                 <Link
                   href={subscriptionPath}
+                  // Seen and acted on: don't pop again on the next page if they browse away.
+                  onClick={() => handleOpenChange(false)}
                   className="flex items-center justify-center gap-2"
                 >
                   {t("claimNow")} <ArrowRight className="size-4" />
@@ -122,7 +164,7 @@ export const UserBenefitModal = ({
               <Button
                 variant="ghost"
                 className="w-full text-text-muted"
-                onClick={() => setOpen(false)}
+                onClick={() => handleOpenChange(false)}
               >
                 {t("maybeLater")}
               </Button>
@@ -131,7 +173,7 @@ export const UserBenefitModal = ({
             <Button
               variant="default"
               className="w-full font-bold"
-              onClick={() => setOpen(false)}
+              onClick={() => handleOpenChange(false)}
             >
               {t("gotItThanks")}
             </Button>

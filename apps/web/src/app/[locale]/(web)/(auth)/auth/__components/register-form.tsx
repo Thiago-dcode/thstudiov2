@@ -26,9 +26,10 @@ export const RegisterForm = ({
     useHandleAction({
       action: registerServerAction,
       afterAction: async (result) => {
-        if (result.data) {
-          router.push("/auth/2fa");
+        if (!result.data) {
+          return;
         }
+        router.push(result.data.token ? "/get-started" : "/auth/2fa");
       },
     });
 

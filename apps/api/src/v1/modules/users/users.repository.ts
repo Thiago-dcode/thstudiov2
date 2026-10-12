@@ -476,14 +476,21 @@ export class UserRepository extends BaseRepository {
     column: string,
     value: any,
   ): Promise<BaseUserWithSecrets> {
-    const cols = [...this.CORE_COLUMNS, 'users.password', 'users.twofa_code'];
+    // `twofa_attempts` must be read here: verify2fa counts failed codes from it, and without it
+    // every failure looked like the first one, so the attempt limit never triggered.
+    const cols = [...this.CORE_COLUMNS, 'users.password', 'users.twofa_code', 'users.twofa_attempts'];
     const result = await this.joinUserRole(this.query())
       .where(column, '=', value)
       .select(cols)
-      .first<UserCoreRoleRow & { password: string; twofa_code?: string }>();
+      .first<UserCoreRoleRow & { password: string; twofa_code?: string; twofa_attempts?: number }>();
     if (!result) return null;
     const core = this.formatCoreUser(result);
-    return { ...core, password: result.password, twofa_code: result.twofa_code };
+    return {
+      ...core,
+      password: result.password,
+      twofa_code: result.twofa_code,
+      twofa_attempts: result.twofa_attempts,
+    };
   }
 
   async create(user: CreateUserInput): Promise<BaseUser> {
