@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { AdminHeader } from "@/lib/components/admin-header";
 import { TopNav } from "@/lib/components/top-nav.component";
 import { MainNavProvider } from "@/lib/providers/main-nav.provider";
+import { isOnboardingPending } from "@/modules/auth/auth.utils";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import { AlertCollectionButton } from "@/modules/collections/components/alert-collection.button";
 import { CollectionProvider } from "@/modules/collections/providers/create-update-collection.provider";
@@ -18,6 +19,7 @@ import { ProfileSetupGuide } from "@/modules/users/components/profile-setup-guid
 import { UserAccountBannedModal } from "@/modules/users/components/user-account-banned-modal";
 import { OnboardingOverlaysProvider } from "@/modules/users/providers/onboarding-overlays.provider";
 import { UserMetricsProvider } from "@/modules/users/providers/user-metrics.provider";
+import usersService from "@/modules/users/users.service";
 import { AtelierOnboardingDialogs } from "../__components/atelier-onboarding-dialogs";
 
 /**
@@ -35,10 +37,19 @@ const AdminLayout = async ({ children }: { children: ReactNode }) => {
   if (!userAuth) {
     redirect("/auth/login");
   }
+  // The session cookie's funnel_step is a snapshot. Some paths finish onboarding on the server
+  // (Stripe callback "skip", the plan step) without rewriting the cookie, so a cookie that still
+  // says "pending" is checked against the database before nagging with "finish setup". The step
+  // only moves forward outside the funnel, so a cookie saying "done" never needs the check.
+  let funnelStep = userAuth.funnel_step;
+  if (isOnboardingPending(funnelStep)) {
+    const fresh = await usersService.getOne(userAuth.id);
+    if (fresh.data) funnelStep = fresh.data.funnel_step;
+  }
   return (
     <OnboardingOverlaysProvider>
       <AtelierOnboardingDialogs
-        user={userAuth}
+        user={{ ...userAuth, funnel_step: funnelStep }}
         subscriptionPath="/atelier/settings/subscription"
       />
       <MainNavProvider defaultShrinked>

@@ -37,15 +37,28 @@ describe('AuthService', () => {
   const preValidatedDevice = { id: 21, user_id: 7, user_agent: 'UA', ip_address: '1.2.3.4', disabled: false, blocked_at: null };
   const registerRequest = { email: 'ana@example.com', username: 'ana', password: 'secret-password', invitation_code: 'code' };
 
-  const userRepository = { create: jest.fn(), updateById: jest.fn(), findOneByWithSecrets: jest.fn() };
-  const userAuthDevicesService = { claimPreValidated: jest.fn(), getOneOrCreate: jest.fn(), update: jest.fn() };
-  const userSessionsService = { handleSessionProcess: jest.fn() };
+  const userRepository = {
+    create: jest.fn(),
+    updateById: jest.fn(),
+    findOneByWithSecrets: jest.fn(),
+    findOneBy: jest.fn(),
+  };
+  const userAuthDevicesService = {
+    claimPreValidated: jest.fn(),
+    getOneOrCreate: jest.fn(),
+    update: jest.fn(),
+    getOneByAuthDevice: jest.fn(),
+  };
+  const userSessionsService = { handleSessionProcess: jest.fn(), sessionExists: jest.fn() };
+  const requestService: Record<string, unknown> = {};
   const invitationLinkService = { validateCode: jest.fn(), updateById: jest.fn() };
   const waitListService = { findByInvitationLinkId: jest.fn(), findByEmail: jest.fn(), updateById: jest.fn() };
   const mailService = { send: jest.fn() };
 
   beforeEach(async () => {
     jest.resetAllMocks();
+    for (const key of Object.keys(requestService)) delete requestService[key];
+    Object.assign(requestService, { user_agent: 'UA', ip_address: '1.2.3.4', language: 'EN' });
     userRepository.create.mockResolvedValue(user);
     userRepository.updateById.mockImplementation(async (_id, data) => ({ ...user, ...data }));
     invitationLinkService.validateCode.mockResolvedValue(invitationLink);
@@ -60,7 +73,7 @@ describe('AuthService', () => {
         { provide: JwtService, useValue: { signAsync: jest.fn().mockResolvedValue('jwt-token') } },
         { provide: ConfigService, useValue: { get: jest.fn() } },
         { provide: UserAuthDevicesService, useValue: userAuthDevicesService },
-        { provide: RequestService, useValue: { user_agent: 'UA', ip_address: '1.2.3.4', language: 'EN' } },
+        { provide: RequestService, useValue: requestService },
         { provide: UserSessionsService, useValue: userSessionsService },
         { provide: MailService, useValue: mailService },
         { provide: TwoFAMail, useValue: { setUser: jest.fn() } },
@@ -131,6 +144,45 @@ describe('AuthService', () => {
       expect(userAuthDevicesService.update).toHaveBeenCalledWith(preValidatedDevice.id, { disabled: true });
       expect(result).toMatchObject({ token: null, need_twofa: true });
       expect(mailService.send).toHaveBeenCalled();
+    });
+  });
+
+  describe('refreshToken', () => {
+    const device = { id: 21, disabled: false, blocked_at: null };
+    beforeEach(() => {
+      // The token was signed at sign-in: funnel not done, no Stripe customer yet.
+      requestService.user = {
+        ...user,
+        email_validated: true,
+        token: 'old-token',
+        funnel_step: 1,
+        stripe_customer_id: null,
+      };
+      userAuthDevicesService.getOneByAuthDevice.mockResolvedValue(device);
+      userSessionsService.sessionExists.mockResolvedValue(true);
+    });
+
+    it('re-signs from the database so the new token is not a copy of the stale one', async () => {
+      userRepository.findOneBy.mockResolvedValue({
+        ...user,
+        email_validated: true,
+        banned: false,
+        funnel_step: 6,
+        stripe_customer_id: 'cus_db',
+      });
+      const jwt = moduleRef.get(JwtService) as unknown as { signAsync: jest.Mock };
+
+      const result = await service.refreshToken();
+
+      expect(userRepository.findOneBy).toHaveBeenCalledWith('id', user.id);
+      expect(result).toMatchObject({ funnel_step: 6, stripe_customer_id: 'cus_db', token: 'jwt-token' });
+      expect(jwt.signAsync.mock.calls[0][0]).toMatchObject({ funnel_step: 6, stripe_customer_id: 'cus_db' });
+    });
+
+    it('refuses to refresh a session of a since-banned account', async () => {
+      userRepository.findOneBy.mockResolvedValue({ ...user, email_validated: true, banned: true });
+      await expect(service.refreshToken()).rejects.toThrow();
+      expect(userSessionsService.handleSessionProcess).not.toHaveBeenCalled();
     });
   });
 

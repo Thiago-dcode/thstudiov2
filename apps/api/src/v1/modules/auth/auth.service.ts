@@ -304,7 +304,13 @@ export class AuthService {
     if (!exists) {
       throw new UnauthorizedException('Invalid credentials');
     }
-    return await this.handleLogin(user, authDevice);
+    // Re-sign from the database, not from the old token: the payload is a snapshot taken at sign-in,
+    // so copying it forward kept values such as `funnel_step` and `stripe_customer_id` stale forever.
+    const freshUser = await this.userRepository.findOneBy('id', user.id);
+    if (freshUser.banned) {
+      throw new UnauthorizedException(freshUser.banned_reason || 'Account permanently banned');
+    }
+    return await this.handleLogin(freshUser, authDevice);
   }
   async passwordRecovery({ email }: PasswordRecoveryRequest) {
     // Built server-side, never taken from the request. When this came from the client
