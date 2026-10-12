@@ -3,7 +3,7 @@ import { ViewService } from '@repo/backend-lib/services/view-service/base';
 import { EnumType } from '@repo/common-lib/constants/enums';
 import { I18nService } from 'nestjs-i18n';
 import { ConfigService } from '@nestjs/config';
-import { mailingNoreplyEmail } from '@repo/backend-lib/config/mailling';
+import { mailingPersonalFromEmail } from '@repo/backend-lib/config/mailling';
 import { ApiMailService } from 'src/common/mails/api-mail-service';
 import { EmailPreferencesService } from 'src/v1/modules/email-preferences/email-preferences.service';
 
@@ -31,7 +31,7 @@ export class WaitListWelcomeMail extends ApiMailService {
     super(viewService, emailPreferencesService, {
       viewPath: 'emails/wait-list/welcome',
       data: {},
-      emailType: 'WAITLIST_UPDATE',
+      emailType: 'TRANSACTIONAL',
     }, i18nService);
   }
 
@@ -47,7 +47,7 @@ export class WaitListWelcomeMail extends ApiMailService {
     mail.viewParams = {
       viewPath: 'emails/wait-list/welcome',
       data: { waitList: data, translatePath: 'wait-list-welcome-email' },
-      emailType: 'WAITLIST_UPDATE',
+      emailType: 'TRANSACTIONAL',
     };
     return mail;
   }
@@ -56,7 +56,7 @@ export class WaitListWelcomeMail extends ApiMailService {
     const data = this.getData();
 
     return {
-      from: `${mailingNoreplyEmail}`,
+      from: `${mailingPersonalFromEmail}`,
       to: data.email,
       subject: this.t('wait-list-welcome-email.SUBJECT', {
         args: { appName: this.configService.get('app.name').toUpperCase() },

@@ -61,6 +61,7 @@
       </table>
     </td>
   </tr>
+  <%- include(globals.emailsPath + '/shared/link-fallback', { url: waitList.registrationUrl }) %>
         <!-- Expiration -->
         <% if (waitList.expiresInDays) { %>
           <tr>

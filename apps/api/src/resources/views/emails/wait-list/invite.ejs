@@ -37,6 +37,8 @@
                         </td>
                     </tr>
 
+                    <%- include(globals.emailsPath + '/shared/link-fallback', { url: invite.validationUrl }) %>
+
                     <%- include(globals.emailsPath + '/shared/footer') %>
 
                 </table>

@@ -42,8 +42,15 @@ export class WaitListRepository extends BaseRepository {
     'wait_list.welcome_email_sent_at',
     'wait_list.last_reminder_email_sent_at',
     'wait_list.reminder_count',
+    'wait_list.validated_email_sent_at',
+    'wait_list.follow_up_email_sent_at',
     'wait_list.language',
   ] as const;
+
+  /** Column list for raw `RETURNING` clauses; keep in sync with {@link COLUMNS}. */
+  private readonly RETURNING_COLUMNS = `id, email, token, position, status, redeemed_at, expires_at, validated_at,
+    invitation_link_id, invitation_email_sent_at, welcome_email_sent_at, last_reminder_email_sent_at,
+    reminder_count, validated_email_sent_at, follow_up_email_sent_at, language`;
 
   constructor(
     private readonly requestService: RequestService
@@ -171,8 +178,7 @@ export class WaitListRepository extends BaseRepository {
       UPDATE wait_list
       SET status = 'INVITING'
       WHERE id IN (SELECT id FROM claimed)
-        RETURNING id, email, token, position, status, redeemed_at, expires_at, validated_at, invitation_link_id,
-                  invitation_email_sent_at, welcome_email_sent_at, last_reminder_email_sent_at, reminder_count, language;`,
+        RETURNING ${this.RETURNING_COLUMNS};`,
       [limit, validatedBefore?.toISOString() ?? null],
     );
 
@@ -227,11 +233,65 @@ export class WaitListRepository extends BaseRepository {
     return rows as InvitedDueForReminderRow[];
   }
 
+  /**
+   * WAITING entries due the "we haven't forgotten you" email: validated inside
+   * `(validatedAfter, validatedBefore]` and not yet sent one.
+   *
+   * The lower bound is what keeps the email to the day between validation and invite — without it
+   * every entry already older than the invite cutoff (a backlog, or everyone at deploy time) would
+   * get a "day 1" email about a wait that's already over.
+   */
+  async findWaitingDueForFollowUp(validatedAfter: Date, validatedBefore: Date, limit: number): Promise<WaitList[]> {
+    const result = await Query.raw(
+      `SELECT ${this.RETURNING_COLUMNS}
+       FROM wait_list
+       WHERE status = 'WAITING'
+         AND follow_up_email_sent_at IS NULL
+         AND validated_at > $1::timestamptz
+         AND validated_at <= $2::timestamptz
+       ORDER BY validated_at ASC, id ASC
+       LIMIT $3;`,
+      [validatedAfter.toISOString(), validatedBefore.toISOString(), limit],
+    );
+
+    const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];
+    return rows.map((row: WaitListSchema) => this.format(row));
+  }
+
+  /**
+   * Sets `validated_at` + `position` only if the entry isn't validated yet, and returns the row
+   * only to the caller that won. The validation page is server-rendered several times per visit,
+   * so concurrent calls for one token are normal; read-then-write let all of them see
+   * `validated_at = null` and each act as the first validation.
+   */
+  async markValidatedByToken(token: string, position: number): Promise<WaitList | null> {
+    const result = await Query.raw(
+      `UPDATE wait_list
+       SET validated_at = NOW(), position = $2
+       WHERE token = $1
+         AND validated_at IS NULL
+       RETURNING ${this.RETURNING_COLUMNS};`,
+      [token, position],
+    );
+
+    const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];
+    return rows[0] ? this.format(rows[0] as WaitListSchema) : null;
+  }
+
   async markReminderSent(id: number, nextReminderCount: number, sentAt: Date = new Date()): Promise<WaitList> {
     return this.updateById(id, {
       reminder_count: nextReminderCount,
       last_reminder_email_sent_at: sentAt,
     });
+  }
+
+  async findById(id: number): Promise<WaitList | null> {
+    const result = await this.query()
+      .select(this.COLUMNS)
+      .where('id', '=', id)
+      .first<WaitListSchema>();
+
+    return result ? this.format(result) : null;
   }
 
   async findByToken(token: string): Promise<WaitList | null> {
@@ -331,6 +391,8 @@ export class WaitListRepository extends BaseRepository {
       welcome_email_sent_at: result.welcome_email_sent_at,
       last_reminder_email_sent_at: result.last_reminder_email_sent_at,
       reminder_count: result.reminder_count,
+      validated_email_sent_at: result.validated_email_sent_at,
+      follow_up_email_sent_at: result.follow_up_email_sent_at,
       language: result.language,
     };
   }

@@ -77,15 +77,24 @@ export class WaitListService {
       const validatedCount = await this.waitListRepository.getValidatedCount();
       const position = waitList.position ?? validatedCount + 1;
 
-      const updated = await this.waitListRepository.updateByToken(token, {
-        validated_at: new Date(),
-        position,
-      });
+      const updated = await this.waitListRepository.markValidatedByToken(token, position);
+
+      if (!updated) {
+        // A concurrent request validated it between our read and write; it owns the side effects.
+        const current = await this.waitListRepository.findByToken(token);
+        if (!current) {
+          throw new NotFoundException('Invalid or expired token');
+        }
+        this.logger.info(`Wait list token validated concurrently: entry ${current.id}`);
+        return { ...current, benefit: await this.resolveBenefit(current.position) };
+      }
 
       this.logger.info(`Wait list entry validated: entry ${updated.id}, position ${position}`, {
         entry_id: updated.id,
         position,
       });
+
+      await this.enqueueValidatedEmail(updated.id);
 
       return { ...updated, benefit: await this.resolveBenefit(updated.position) };
     } catch (error) {
@@ -180,6 +189,22 @@ export class WaitListService {
         error,
       );
       throw error;
+    }
+  }
+
+  /**
+   * Never fails the validation: the entry is already validated and the page must say so. A lost
+   * confirmation email is the lesser problem, and the day-1 follow-up and the invite still go out.
+   */
+  private async enqueueValidatedEmail(waitListId: number) {
+    try {
+      await QueueHelper.createWaitListValidatedEmailJob({ wait_list_id: waitListId });
+      this.logger.info(`Wait list validated email job enqueued: entry ${waitListId}`);
+    } catch (error) {
+      this.logger.error(
+        `Failed to enqueue wait list validated email: entry ${waitListId} - ${error instanceof Error ? error.message : 'Unknown error'}`,
+        error,
+      );
     }
   }
 

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ViewService } from '@repo/backend-lib/services/view-service/base';
 import { I18nService } from 'nestjs-i18n';
-import { mailingNoreplyEmail } from '@repo/backend-lib/config/mailling';
+import { mailingPersonalFromEmail } from '@repo/backend-lib/config/mailling';
 import { ApiMailService } from 'src/common/mails/api-mail-service';
 import { EmailPreferencesService } from 'src/v1/modules/email-preferences/email-preferences.service';
 
@@ -22,7 +22,7 @@ export class WaitListInviteMail extends ApiMailService {
     super(viewService, emailPreferencesService, {
       viewPath: 'emails/wait-list/invite',
       data: {},
-      emailType: 'WAITLIST_UPDATE',
+      emailType: 'TRANSACTIONAL',
     }, i18nService);
   }
 
@@ -33,7 +33,7 @@ export class WaitListInviteMail extends ApiMailService {
     mail.viewParams = {
       viewPath: 'emails/wait-list/invite',
       data: { invite: data, translatePath: 'wait-list-invite-email' },
-      emailType: 'WAITLIST_UPDATE',
+      emailType: 'TRANSACTIONAL',
     };
     return mail;
   }
@@ -42,7 +42,7 @@ export class WaitListInviteMail extends ApiMailService {
     const data = this.getData();
 
     return {
-      from: `${mailingNoreplyEmail}`,
+      from: `${mailingPersonalFromEmail}`,
       to: data.email,
       subject: this.t('wait-list-invite-email.SUBJECT'),
     };

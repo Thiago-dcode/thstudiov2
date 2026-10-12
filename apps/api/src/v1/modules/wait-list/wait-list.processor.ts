@@ -4,11 +4,16 @@ import { LogService, maskEmail } from '@repo/backend-lib/services/log-service';
 import {
   JOB_CREATE_WAIT_LIST_ENTRY,
   JOB_INVITE_WAIT_LIST_BATCH,
+  JOB_SEND_WAIT_LIST_VALIDATED_EMAIL,
   WAIT_LIST_QUEUE,
 } from '@repo/common-lib/constants/queues';
 import { EnumType } from '@repo/common-lib/constants/enums';
 import type { InvitationLink } from '@repo/common-lib/types/invitation-link';
-import { CreateWaitListJobInput, InviteWaitListBatchJobInput } from '@repo/common-lib/types/wait-list';
+import {
+  CreateWaitListJobInput,
+  InviteWaitListBatchJobInput,
+  SendWaitListValidatedEmailJobInput,
+} from '@repo/common-lib/types/wait-list';
 import { generateUUID } from '@repo/common-lib/utils/generate-uuid';
 import { getBenefitMonths, getWaitListBenefitType } from '@repo/common-lib/utils/wait-list';
 import { Job } from 'bullmq';
@@ -22,7 +27,9 @@ import { InvitationLinkService } from '../invitation-links/invitation-link.servi
 import { PlansService } from '../plans/plans.service';
 import { WaitListAdminNotificationMail } from './mails/wait-list-admin-notification.mail';
 import { WaitListInviteMail } from './mails/wait-list-invite.mail';
+import { WaitListValidatedMail } from './mails/wait-list-validated.mail';
 import { WaitListWelcomeMail } from './mails/wait-list-welcome.mail';
+import { WAIT_LIST_SHOWCASE_PATH } from './wait-list.constants';
 import { WaitListRepository } from './wait-list.repository';
 import type { WaitList } from '@repo/common-lib/types/wait-list';
 
@@ -44,6 +51,7 @@ export class WaitListProcessor extends GlobalProcessor {
     private readonly mailService: MailService,
     private readonly waitListInviteMail: WaitListInviteMail,
     private readonly waitListWelcomeMail: WaitListWelcomeMail,
+    private readonly waitListValidatedMail: WaitListValidatedMail,
     private readonly waitListAdminNotificationMail: WaitListAdminNotificationMail,
     private readonly logger: LogService,
   ) {
@@ -60,6 +68,9 @@ export class WaitListProcessor extends GlobalProcessor {
 
         case JOB_INVITE_WAIT_LIST_BATCH:
           return await this.inviteWaitListBatch(job.data);
+
+        case JOB_SEND_WAIT_LIST_VALIDATED_EMAIL:
+          return await this.sendValidatedEmail(job.data);
 
         default:
           this.logger.error(`Unrecognized wait list job name: ${job.name}`);
@@ -98,6 +109,8 @@ export class WaitListProcessor extends GlobalProcessor {
             welcome_email_sent_at: null,
             last_reminder_email_sent_at: null,
             reminder_count: 0,
+            validated_email_sent_at: null,
+            follow_up_email_sent_at: null,
             language: data.language,
           });
           this.logger.info(`Wait list DB entry created: ${emailLog}`, { entry_id: waitList.id });
@@ -117,6 +130,17 @@ export class WaitListProcessor extends GlobalProcessor {
       if (waitList.validated_at) {
         this.logger.info(`Wait list entry already validated, skipping invite email: ${emailLog}`, { entry_id: waitList.id });
         return waitList;
+      }
+
+      // A re-signup before validating carries the language they're browsing in now; without this
+      // every later email kept the first signup's language (entry 4 signed up from /es and got
+      // everything in English).
+      if (waitList.language !== data.language) {
+        waitList = await this.waitListRepository.updateById(waitList.id, { language: data.language });
+        this.logger.info(`Wait list entry language updated: ${emailLog}`, {
+          entry_id: waitList.id,
+          language: data.language,
+        });
       }
 
       const ONE_HOUR_MS = 60 * 60 * 1000;
@@ -157,6 +181,55 @@ export class WaitListProcessor extends GlobalProcessor {
       );
       throw error;
     }
+  }
+
+  /**
+   * "Your email is confirmed, your registration link is coming" — sent once, right after the
+   * first successful validation.
+   *
+   * Skips anything no longer `WAITING`: an admin batch invite can reach an entry before this job
+   * runs, and telling someone their access is "coming soon" after it arrived is worse than silence.
+   */
+  private async sendValidatedEmail(data: SendWaitListValidatedEmailJobInput) {
+    const waitList = await this.waitListRepository.findById(data.wait_list_id);
+
+    if (!waitList) {
+      this.logger.warn(`Wait list entry not found for validated email: entry ${data.wait_list_id}`);
+      return { sent: false };
+    }
+
+    const emailLog = maskEmail(waitList.email);
+
+    if (!waitList.validated_at || waitList.validated_email_sent_at || waitList.status !== 'WAITING') {
+      this.logger.info(`Skipping wait list validated email: ${emailLog}`, {
+        entry_id: waitList.id,
+        status: waitList.status,
+        validated: Boolean(waitList.validated_at),
+        already_sent: Boolean(waitList.validated_email_sent_at),
+      });
+      return { sent: false };
+    }
+
+    await this.mailService.sendAsync(
+      this.waitListValidatedMail.setData(
+        {
+          email: waitList.email,
+          showcaseUrl: `${getConfigValue('app').url}${WAIT_LIST_SHOWCASE_PATH}`,
+        },
+        waitList.language,
+      ),
+      {
+        jobId: `wait-list-validated-mail-${waitList.id}`,
+      },
+    );
+
+    await this.waitListRepository.updateById(waitList.id, {
+      validated_email_sent_at: new Date(),
+    });
+
+    this.logger.info(`Wait list validated email queued: ${emailLog}`, { entry_id: waitList.id });
+
+    return { sent: true };
   }
 
   /**

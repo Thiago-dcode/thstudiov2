@@ -13,6 +13,7 @@ import {
     JOB_GENERATE_MEDIA_METADATA_AND_NOTIFY,
     JOB_GENERATE_SINGLE_ENTITY_METADATA,
     JOB_INVITE_WAIT_LIST_BATCH,
+    JOB_SEND_WAIT_LIST_VALIDATED_EMAIL,
     JOB_PROCESS_MEDIA,
     JOB_REGENERATE_MEDIA_THUMBNAIL,
     JOB_UPDATE_MEDIA,
@@ -41,7 +42,11 @@ import {
 } from '@repo/common-lib/types/ai';
 import { CreateLlmTokensUsageInput } from '@repo/common-lib/types/llm-tokens-usage';
 import { CreateUserContactInput } from '@repo/common-lib/types/user-contact';
-import { CreateWaitListJobInput, InviteWaitListBatchJobInput } from '@repo/common-lib/types/wait-list';
+import {
+    CreateWaitListJobInput,
+    InviteWaitListBatchJobInput,
+    SendWaitListValidatedEmailJobInput,
+} from '@repo/common-lib/types/wait-list';
 import { CreateOrUpdateLocationPayload } from '@repo/common-lib/types/location';
 import { CreateUserStorageRequestInput } from '@repo/common-lib/types/user-storage-request';
 import { CreateOrUpdateEmailPreferencePayload } from '@repo/common-lib/types/email-preferences';
@@ -205,6 +210,27 @@ export class QueueHelper {
                 jobId: `wait-list-create-${encodeURIComponent(dto.email.trim().toLowerCase())}`,
                 priority: 10,
                 removeOnComplete: true,
+                attempts: 3,
+                backoff: { type: 'exponential', delay: 1000 },
+            },
+        );
+    }
+
+    /**
+     * Deterministic per entry: concurrent validations of the same token (the validation page is
+     * server-rendered several times per visit) collapse into one pending job. `removeOnFail` so a
+     * failed job doesn't block a later enqueue; the processor's `validated_email_sent_at` check is
+     * what keeps a re-enqueue after completion from sending twice.
+     */
+    static async createWaitListValidatedEmailJob(dto: SendWaitListValidatedEmailJobInput) {
+        await QueueHelper.createQueue(WAIT_LIST_QUEUE).add(
+            JOB_SEND_WAIT_LIST_VALIDATED_EMAIL,
+            dto,
+            {
+                jobId: `wait-list-validated-${dto.wait_list_id}`,
+                priority: 10,
+                removeOnComplete: true,
+                removeOnFail: true,
                 attempts: 3,
                 backoff: { type: 'exponential', delay: 1000 },
             },

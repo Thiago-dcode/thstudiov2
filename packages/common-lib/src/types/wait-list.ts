@@ -33,6 +33,11 @@ export type InviteWaitListBatchJobInput = {
   validated_before?: string;
 };
 
+/** Job payload for the "your email is validated" confirmation; the processor reloads the row. */
+export type SendWaitListValidatedEmailJobInput = {
+  wait_list_id: number;
+};
+
 export type WaitListCreateResponse = {
   email: string;
   message: string;

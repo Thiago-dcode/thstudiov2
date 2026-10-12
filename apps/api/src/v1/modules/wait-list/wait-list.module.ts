@@ -13,6 +13,8 @@ import { WaitListAdminNotificationMail } from './mails/wait-list-admin-notificat
 import { WaitListInviteMail } from './mails/wait-list-invite.mail';
 import { WaitListWelcomeMail } from './mails/wait-list-welcome.mail';
 import { WaitListReminderMail } from './mails/wait-list-reminder.mail';
+import { WaitListValidatedMail } from './mails/wait-list-validated.mail';
+import { WaitListFollowUpMail } from './mails/wait-list-follow-up.mail';
 import { WaitListController } from './wait-list.controller';
 import { WaitListProcessor } from './wait-list.processor';
 import { WaitListRepository } from './wait-list.repository';
@@ -36,6 +38,8 @@ import { EmailPreferencesModule } from '../email-preferences/email-preferences.m
     WaitListWelcomeMail,
     WaitListInviteMail,
     WaitListReminderMail,
+    WaitListValidatedMail,
+    WaitListFollowUpMail,
     WaitListAdminNotificationMail,
     WaitListTask,
     {

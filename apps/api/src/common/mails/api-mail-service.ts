@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { I18nService } from 'nestjs-i18n';
-import { Content, Envelop, Mailable } from '@repo/backend-lib/services/mail-service';
+import { Content, Envelop, Mailable, htmlToText } from '@repo/backend-lib/services/mail-service';
 import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
 import { ViewService } from '@repo/backend-lib/services/view-service/base';
 import { ViewData } from '@repo/backend-lib/services/view-service/types';
@@ -122,12 +122,12 @@ export abstract class ApiMailService extends Mailable {
         email_type: this._viewParams.emailType,
         view: this._viewParams.viewPath,
       });
-      return {
+      return this.withTextPart({
         html: await this.viewService.render(
           this._viewParams.viewPath,
           this.buildViewData({ unsuscribeUrl: '' }),
         ),
-      };
+      });
     }
 
     const { canSend, unsuscribeUrl } = await this.emailPreferencesService.getDeliveryStatus(
@@ -150,13 +150,18 @@ export abstract class ApiMailService extends Mailable {
       view: this._viewParams.viewPath,
     });
 
-    return {
+    return this.withTextPart({
       html: await this.viewService.render(
         this._viewParams.viewPath,
         this.buildViewData({ unsuscribeUrl }),
       ),
       headers: this.buildUnsubscribeHeaders(unsuscribeUrl),
-    };
+    });
+  }
+
+  /** Every email ships a text/plain part: HTML-only mail is a marketing-tool signal to Gmail's tabs. */
+  private withTextPart(content: Content): Content {
+    return content.html ? { ...content, text: htmlToText(content.html) } : content;
   }
 
   /** RFC 8058 one-click unsubscribe headers — lets mail clients offer unsubscribe without opening the email. */

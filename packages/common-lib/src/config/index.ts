@@ -79,6 +79,9 @@ const config = (envPath?: string | undefined) => {
       password: process.env.SMTP_PASSWORD,
       admins: process.env.ADMIN_EMAILS ? process.env.ADMIN_EMAILS.split(',') : [],
       noreplyEmail: process.env.NOREPLY_EMAIL,
+      // A person's reply-able address (e.g. `Thiago from A11STUDIO <thiago@a11studio.com>`) for the
+      // wait-list emails. Unset falls back to NOREPLY_EMAIL.
+      personalFromEmail: process.env.PERSONAL_FROM_EMAIL,
       fromDisplayName: process.env.MAIL_FROM_NAME || 'A11studio',
       contactEmail: process.env.CONTACT_EMAIL,
       supportEmail: process.env.SUPPORT_EMAIL,

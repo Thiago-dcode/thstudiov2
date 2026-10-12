@@ -11,6 +11,8 @@ import { TwoFAMail } from 'src/v1/modules/auth/mails/twofa-mail';
 import { WaitListWelcomeMail } from 'src/v1/modules/wait-list/mails/wait-list-welcome.mail';
 import { WaitListInviteMail } from 'src/v1/modules/wait-list/mails/wait-list-invite.mail';
 import { WaitListReminderMail } from 'src/v1/modules/wait-list/mails/wait-list-reminder.mail';
+import { WaitListValidatedMail } from 'src/v1/modules/wait-list/mails/wait-list-validated.mail';
+import { WaitListFollowUpMail } from 'src/v1/modules/wait-list/mails/wait-list-follow-up.mail';
 import { SubscriptionChangedMail } from 'src/v1/modules/plan-subscriptions/mails/subscription-changed.mail';
 import { UserAiCreditsEndedMail } from 'src/v1/modules/user-extra-data/mails/user-metrics-ended';
 
@@ -27,6 +29,8 @@ import { UserAiCreditsEndedMail } from 'src/v1/modules/user-extra-data/mails/use
     WaitListWelcomeMail,
     WaitListInviteMail,
     WaitListReminderMail,
+    WaitListValidatedMail,
+    WaitListFollowUpMail,
     SubscriptionChangedMail,
     UserRepository,
   ],

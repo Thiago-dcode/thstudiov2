@@ -1,12 +1,12 @@
 {
-  "SUBJECT": "Seu acesso {benefitType} está esperando por você",
-  "SUBJECT_FINAL": "Última chance: resgate seu convite da lista de espera",
+  "SUBJECT": "Seu link de cadastro no A11STUDIO ainda está ativo",
+  "SUBJECT_FINAL": "Seu link de cadastro no A11STUDIO expira amanhã",
   "KICKER": "Lembrete da lista de espera",
   "TITLE": "Seu convite ainda está ativo",
-  "TITLE_FINAL": "Última chamada",
+  "TITLE_FINAL": "Seu convite expira em breve",
   "BENEFIT_DESCRIPTION": "Acesso reservado {benefitType} com {months} mês(es) grátis.",
-  "HOOK": "Seu acesso reservado {benefitType} e {months} mês(es) grátis desaparecem quando este link expirar, e a vaga passa para o próximo criador na fila. Resgate agora.",
-  "HOOK_FINAL": "Seu convite expira em cerca de {hours}h. Quando acabar, acabou.",
+  "HOOK": "Você ainda não criou sua conta. Seu acesso reservado {benefitType} e {months} mês(es) grátis continuam seus até o link expirar.",
+  "HOOK_FINAL": "Seu link de cadastro expira em cerca de {hours}h. Depois disso, o acesso reservado é liberado.",
   "CTA_TEXT": "Criar sua conta",
   "COUNTDOWN": "Expira em cerca de {hours} horas."
 }

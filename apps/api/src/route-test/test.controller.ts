@@ -30,6 +30,8 @@ import { UserRepository } from 'src/v1/modules/users/users.repository';
 import { WaitListWelcomeMail } from 'src/v1/modules/wait-list/mails/wait-list-welcome.mail';
 import { WaitListInviteMail } from 'src/v1/modules/wait-list/mails/wait-list-invite.mail';
 import { WaitListReminderMail } from 'src/v1/modules/wait-list/mails/wait-list-reminder.mail';
+import { WaitListValidatedMail } from 'src/v1/modules/wait-list/mails/wait-list-validated.mail';
+import { WaitListFollowUpMail } from 'src/v1/modules/wait-list/mails/wait-list-follow-up.mail';
 import { SubscriptionChangedMail } from 'src/v1/modules/plan-subscriptions/mails/subscription-changed.mail';
 import { UserAiCreditsEndedMail } from 'src/v1/modules/user-extra-data/mails/user-metrics-ended';
 import {
@@ -38,6 +40,7 @@ import {
   createMockSubscriptionChangedData,
   createMockTwofaCode,
   createMockWaitListInviteData,
+  createMockWaitListNurtureData,
   createMockWaitListReminderData,
   createMockWaitListWelcomeData,
 } from './mocks/email-preview.mock-data';
@@ -50,7 +53,7 @@ type PreviewLanguage = EnumType<'LANGUAGE_CODE'>;
 /**
  * Supported email preview types (web user flows):
  * - new-contact, notify-new-user, password-recovery, twofa
- * - wait-list-welcome, wait-list-invite, wait-list-reminder
+ * - wait-list-welcome, wait-list-invite, wait-list-reminder, wait-list-validated, wait-list-follow-up
  * - subscription-changed, user-ai-credits-ended, user-account-banned
  *
  * Request-scoped: `previewUser`/`lang` are resolved once per request in
@@ -76,6 +79,8 @@ export class TestController {
     private readonly waitListWelcomeMail: WaitListWelcomeMail,
     private readonly waitListInviteMail: WaitListInviteMail,
     private readonly waitListReminderMail: WaitListReminderMail,
+    private readonly waitListValidatedMail: WaitListValidatedMail,
+    private readonly waitListFollowUpMail: WaitListFollowUpMail,
     private readonly subscriptionChangedMail: SubscriptionChangedMail,
     private readonly userAiCreditsEndedMail: UserAiCreditsEndedMail,
     private readonly userAccountBannedMail: UserAccountBannedMail,
@@ -128,6 +133,10 @@ export class TestController {
         return this.handleWaitListInvite(shouldSend);
       case 'wait-list-reminder':
         return this.handleWaitListReminder(shouldSend, this.parseBooleanFlag(final, 'final'));
+      case 'wait-list-validated':
+        return this.handleWaitListValidated(shouldSend);
+      case 'wait-list-follow-up':
+        return this.handleWaitListFollowUp(shouldSend);
       case 'subscription-changed':
         return this.handleSubscriptionChanged(shouldSend, this.parseBooleanFlag(upgrade, 'upgrade'));
       case 'user-ai-credits-ended':
@@ -329,6 +338,34 @@ export class TestController {
     return this.renderEmailPreview('emails/wait-list/reminder', {
       reminder,
       translatePath: 'wait-list-reminder-email',
+      unsuscribeUrl: '',
+    });
+  }
+
+  private async handleWaitListValidated(shouldSend: boolean) {
+    const validated = createMockWaitListNurtureData(this.previewUser.email, this.appUrl());
+
+    if (shouldSend) {
+      await this.mailService.send(this.waitListValidatedMail.setData(validated, this.lang));
+    }
+
+    return this.renderEmailPreview('emails/wait-list/validated', {
+      validated,
+      translatePath: 'wait-list-validated-email',
+      unsuscribeUrl: '',
+    });
+  }
+
+  private async handleWaitListFollowUp(shouldSend: boolean) {
+    const followUp = createMockWaitListNurtureData(this.previewUser.email, this.appUrl());
+
+    if (shouldSend) {
+      await this.mailService.send(this.waitListFollowUpMail.setData(followUp, this.lang));
+    }
+
+    return this.renderEmailPreview('emails/wait-list/follow-up', {
+      followUp,
+      translatePath: 'wait-list-follow-up-email',
       unsuscribeUrl: '',
     });
   }

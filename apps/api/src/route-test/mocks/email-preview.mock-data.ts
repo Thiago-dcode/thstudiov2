@@ -5,6 +5,7 @@ import { EnumType } from '@repo/common-lib/constants/enums';
 import { WaitListInviteMailData } from 'src/v1/modules/wait-list/mails/wait-list-invite.mail';
 import { WaitListReminderMailData } from 'src/v1/modules/wait-list/mails/wait-list-reminder.mail';
 import { WaitListWelcomeMailData } from 'src/v1/modules/wait-list/mails/wait-list-welcome.mail';
+import { WAIT_LIST_SHOWCASE_PATH } from 'src/v1/modules/wait-list/wait-list.constants';
 import { SubscriptionChangedMailData } from 'src/v1/modules/plan-subscriptions/mails/subscription-changed.mail';
 
 export function createMockNewContactInput(userId: number): CreateUserContactInput {
@@ -78,6 +79,14 @@ export function createMockWaitListReminderData(
     registrationUrl: `${appUrl}/auth/register?ref=preview-invite-code`,
     hoursLeft: isFinal ? 18 : 72,
     isFinal,
+  };
+}
+
+/** Shared by the validated + follow-up previews: both only take a recipient and the showcase link. */
+export function createMockWaitListNurtureData(email: string, appUrl: string) {
+  return {
+    email,
+    showcaseUrl: `${appUrl}${WAIT_LIST_SHOWCASE_PATH}`,
   };
 }
 

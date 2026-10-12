@@ -39,6 +39,7 @@ export const JOB_FLUSH_LOGS = 'flush-logs' as const;
 export const JOB_ON_SUBSCRIPTION_CHANGES = 'on-subscription-changes' as const;
 export const JOB_CREATE_WAIT_LIST_ENTRY = 'create-wait-list-entry' as const;
 export const JOB_INVITE_WAIT_LIST_BATCH = 'invite-wait-list-batch' as const;
+export const JOB_SEND_WAIT_LIST_VALIDATED_EMAIL = 'send-wait-list-validated-email' as const;
 
 export const JOB_UPSERT_EMAIL_PREFERENCE_BY_EMAIL = 'upsert-email-preference-by-email' as const;
 export const JOB_UPDATE_PROFILE_STATUS = 'update-profile-status' as const;

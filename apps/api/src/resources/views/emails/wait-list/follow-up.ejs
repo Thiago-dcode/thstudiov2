@@ -1,0 +1,71 @@
+<%- include(globals.emailsPath + '/shared/head') %>
+
+<body class="e-bg" style="width:100%; margin:0; padding:0 4px; background-color:#FAFAF9;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="e-bg" style="background-color:#FAFAF9;">
+        <tr>
+            <td align="center">
+                <table role="presentation" width="800" cellpadding="0" cellspacing="0" border="0"
+                    class="e-bg" style="width:100%; max-width:800px; background-color:#FAFAF9;">
+
+                    <%- include(globals.emailsPath + '/shared/header') %>
+
+                    <!-- Title -->
+                    <tr>
+                        <td style="padding:0 0 24px; text-align:center;">
+                            <h1 class="e-text" style="font-size:20px; font-weight:600; color:#000000; margin:0 0 12px 0; letter-spacing:1px;">
+                                <%= t(translatePath + '.TITLE') %>
+                            </h1>
+                            <p class="e-text-muted" style="font-size:14px; color:#46443F; margin:0; line-height:1.6;">
+                                <%= t(translatePath + '.DESCRIPTION') %>
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Next step -->
+                    <tr>
+                        <td>
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                                class="e-card e-border-em" style="border:1.5px solid #C9C6BB; background-color:#FFFFFF;">
+                                <tr>
+                                    <td style="padding:24px 12px; text-align:center;">
+                                        <p class="e-text-muted" style="font-size:14px; color:#46443F; margin:0; line-height:1.6;">
+                                            <%= t(translatePath + '.NEXT_STEP') %>
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Showcase CTA -->
+                    <tr>
+                        <td style="padding:32px 0 12px; text-align:center;">
+                            <p class="e-text" style="font-size:14px; font-weight:600; color:#000000; margin:0; letter-spacing:0.5px;">
+                                <%= t(translatePath + '.SHOWCASE_TITLE') %>
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="center" style="padding:0 0 24px;">
+                            <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                                <tr>
+                                    <td align="center" class="e-border-em" style="border:1.5px solid #C9C6BB;">
+                                        <a href="<%= followUp.showcaseUrl %>" class="e-text"
+                                            style="display:inline-block; padding:12px 32px; font-size:13px; font-weight:600; text-decoration:none; color:#000000; letter-spacing:1px;">
+                                            <%= t(translatePath + '.SHOWCASE_CTA_TEXT') %>
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <%- include(globals.emailsPath + '/shared/footer') %>
+
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+
+</html>

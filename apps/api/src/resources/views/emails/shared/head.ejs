@@ -10,11 +10,10 @@
     <title><%= globals.appName %></title>
     <style>
       /*
-         * Fonts match apps/web/src/font.ts:
-         *   brand → Archivo (headings / wordmark)
-         *   body  → Jost (default copy)
+         * Fonts match apps/web/src/font.ts (brand → Archivo, body → Jost) where the recipient has
+         * them installed, falling back to Arial. No web-font @import: Gmail strips it anyway, and
+         * remote stylesheets are a newsletter-tool signal that pushes mail into Promotions.
          */
-      @import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=Jost:wght@300;400&display=swap');
 
       /*
          * Email brand palette — mirrors packages/ui/src/styles/globals.css.

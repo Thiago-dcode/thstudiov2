@@ -1,13 +1,12 @@
 {
-  "SUBJECT": "Your {benefitType} access is waiting for you",
-  "SUBJECT_FINAL": "Final chance: redeem your wait list invitation",
+  "SUBJECT": "Your A11STUDIO registration link is still active",
+  "SUBJECT_FINAL": "Your A11STUDIO registration link expires tomorrow",
   "KICKER": "Wait list reminder",
   "TITLE": "Your invitation is still active",
-  "TITLE_FINAL": "Final call",
+  "TITLE_FINAL": "Your invitation expires soon",
   "BENEFIT_DESCRIPTION": "Reserved {benefitType} access with {months} free month(s).",
-  "HOOK": "Your reserved {benefitType} access and {months} free month(s) vanish when this link expires, and the spot goes to the next creator in line. Claim it now.",
-  "HOOK_FINAL": "Your invitation expires in about {hours}h. Once it's gone, it's gone.",
+  "HOOK": "You haven't created your account yet. Your reserved {benefitType} access and {months} free month(s) stay yours until the link expires.",
+  "HOOK_FINAL": "Your registration link expires in about {hours}h. After that, the reserved access is released.",
   "CTA_TEXT": "Create your account",
   "COUNTDOWN": "Expires in about {hours} hours."
 }
-

@@ -47,9 +47,11 @@ export class ResendEmailDriver extends EmailDriver {
       ...(headers ? { headers } : {}),
     } as any;
 
+    // Send both parts when we have them: an HTML-only message reads as bulk marketing to Gmail.
     if (html) {
       (payload as any).html = html;
-    } else {
+    }
+    if (text) {
       (payload as any).text = text;
     }
 
@@ -83,7 +85,8 @@ export class ResendEmailDriver extends EmailDriver {
 
       if (html) {
         payload.html = html;
-      } else {
+      }
+      if (text) {
         payload.text = text;
       }
 

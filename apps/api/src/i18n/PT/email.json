@@ -1,5 +1,6 @@
 {
-    "FOOTER": {
+  "FOOTER": {
     "ALL_RIGHTS_RESERVED": "Todos os direitos reservados."
-  }
+  },
+  "LINK_FALLBACK": "Se o botão não funcionar, copie e cole este link no seu navegador:"
 }
