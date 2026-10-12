@@ -1176,7 +1176,7 @@ const messages = {
       continueWithoutBenefits: "Continuar sem benefícios",
       tryAgainLater: "Tentar novamente mais tarde",
       stepBack: "Voltar",
-      setUpLater: "Configurar depois",
+      skipStep: "Pular esta etapa",
       somethingWentWrong: "Algo deu errado",
     },
   },

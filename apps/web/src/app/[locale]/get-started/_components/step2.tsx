@@ -7,6 +7,7 @@ import {
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import {
+  ButtonSkipStepFunnel,
   ButtonStepBackFunnel,
   ButtonSubmitFunnel,
   ContainerFormFunnel,
@@ -96,6 +97,8 @@ const Step2 = () => {
       />
 
       <ButtonSubmitFunnel />
+      {/* A photo is optional; it can be added later from the setup guide. */}
+      <ButtonSkipStepFunnel />
 
       <ButtonStepBackFunnel />
     </ContainerFormFunnel>

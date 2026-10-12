@@ -1165,7 +1165,7 @@ const messages = {
       continueWithoutBenefits: "Continue without benefits",
       tryAgainLater: "Try again later",
       stepBack: "Step back",
-      setUpLater: "Set up later",
+      skipStep: "Skip this step",
       somethingWentWrong: "Something went wrong",
     },
   },

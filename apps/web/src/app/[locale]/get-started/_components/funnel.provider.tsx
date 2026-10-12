@@ -26,7 +26,8 @@ import { setUserSession } from "@/modules/auth/server-actions/user-session.actio
 import { updateUserAction } from "@/modules/users/server-actions/update-user.action";
 
 type InputsType = HTMLInputElement | HTMLTextAreaElement | null | undefined;
-type FunnelActions = "continue" | "finish" | "back";
+// "skip" moves to the next step without saving this one; only optional steps offer it.
+type FunnelActions = "continue" | "skip" | "finish" | "back";
 
 // Stable slice: identities never change between renders (refs + memoized
 // callbacks). Consumers that only need these never re-render on state changes.
@@ -109,7 +110,12 @@ export const FunnelProvider = ({
   const { result, handleSubmit, errors, cleanErrors, setErrors, isPending } =
     useHandleAction({
       action: async (formData) => {
-        const validActions: FunnelActions[] = ["continue", "finish", "back"];
+        const validActions: FunnelActions[] = [
+          "continue",
+          "skip",
+          "finish",
+          "back",
+        ];
         const action = formData.get("action") as FunnelActions;
         if (!validActions.some((va) => va === action))
           return {
@@ -308,10 +314,8 @@ export const ButtonSubmitFunnel = ({
 export const ButtonFinishFunnel = ({
   variant = "ghost",
   text,
-  className,
 }: {
   text?: string;
-  className?: string;
   variant?:
     | "base"
     | "link"
@@ -334,12 +338,34 @@ export const ButtonFinishFunnel = ({
       }}
       isPending={isPending}
       variant={variant}
-      className={className}
     >
       {text ?? t("finish")}
     </FormComponent.SubmitButton>
   );
 };
+/** For optional steps: advances without saving anything from this step. */
+export const ButtonSkipStepFunnel = () => {
+  const t = useTranslations("getStarted.actions");
+  const { refInputs, isPending } = useFunnelState();
+  const { actionElementRef } = useFunnelActions();
+  return (
+    <Button
+      type="submit"
+      variant="ghost"
+      disabled={isPending}
+      className="w-full text-text-muted"
+      onClick={() => {
+        refInputs?.forEach((input) => {
+          if (input) input.required = false;
+        });
+        if (actionElementRef.current) actionElementRef.current.value = "skip";
+      }}
+    >
+      {t("skipStep")}
+    </Button>
+  );
+};
+
 export const ButtonStepBackFunnel = () => {
   const t = useTranslations("getStarted.actions");
   const { user, actionElementRef } = useFunnelActions();
