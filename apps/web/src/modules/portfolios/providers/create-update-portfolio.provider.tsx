@@ -39,6 +39,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { trackEvent } from "@/lib/analytics/track";
 import { toastErrorThrottled } from "@/lib/utils/throttled-toast";
 import type { UserAuth } from "@/modules/auth/auth.types";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
@@ -363,6 +364,7 @@ export const PortfolioProvider = ({
           // server-rendered `defaultPortfolio` instead of clearing to a draft.
           router.refresh();
         } else {
+          trackEvent("portfolio_created");
           clear();
           await refreshMetrics();
         }

@@ -24,11 +24,13 @@ import {
   useRef,
   useState,
 } from "react";
+import { trackEvent } from "@/lib/analytics/track";
 import { setClientTranslator } from "@/lib/i18n/client-translator";
 import { generateManyMediaMetadataAction } from "@/modules/ai/actions/generate-many-media-metadata.action";
 import { generateMediaMetadataAction } from "@/modules/ai/actions/generate-media-metadata.action";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { useSubscribeToUserNotification } from "@/modules/user-notifications/hooks/useSubscribeToUserNotification";
+import { useUserMetrics } from "@/modules/users/providers/user-metrics.provider";
 import { createMediaApi, updateMediaApi } from "../api/media-api.client";
 import { deleteManyMediaAction } from "../server-actions/delete-many-media.action";
 import { deleteMediaAction } from "../server-actions/delete-media.action";
@@ -141,6 +143,8 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
     return nextUniqueId.current;
   }, []);
   const inFlightUploads = useRef(new Set<number>());
+  const firstArtworkTrackedRef = useRef(false);
+  const { metrics } = useUserMetrics();
 
   // `media-api.client.ts` validates uploads before sending them, but its signatures are fixed
   // by this provider and it cannot call a hook — so it reads the translator from here.
@@ -425,6 +429,15 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
             id: result.data.id,
             progress: undefined,
           });
+          // Only the very first accepted upload of the account (metrics say zero media so far),
+          // and once per session: the metrics snapshot can lag behind a just-finished upload.
+          if (
+            !firstArtworkTrackedRef.current &&
+            metrics?.extra_data?.media_count === 0
+          ) {
+            firstArtworkTrackedRef.current = true;
+            trackEvent("first_artwork_uploaded");
+          }
         }
       }
       if (!result.data) {

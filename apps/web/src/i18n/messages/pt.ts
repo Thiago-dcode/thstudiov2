@@ -473,6 +473,13 @@ const messages = {
     },
   },
   language: "Idioma",
+  cookieConsent: {
+    title: "Cookies de analytics",
+    body: "Ajude-nos a melhorar a A11STUDIO: usamos o Google Analytics para ver como o site é usado. Sem anúncios, e você pode mudar de ideia quando quiser.",
+    learnMore: "Política de cookies",
+    accept: "Aceitar",
+    reject: "Rejeitar",
+  },
   error: {
     title: "Algo deu errado",
     description:
@@ -500,6 +507,7 @@ const messages = {
       privacy: "Política de Privacidade",
       terms: "Termos de Serviço",
       cookies: "Política de Cookies",
+      cookieSettings: "Configurações de cookies",
     },
     discover: {
       heading: "Descobrir",
@@ -873,7 +881,7 @@ const messages = {
         description:
           "Como o A11STUDIO coleta, usa, armazena e protege seus dados pessoais: o que coletamos, com quem compartilhamos, por quanto tempo guardamos e quais direitos você tem.",
       },
-      updatedAt: "2026-03-16",
+      updatedAt: "2026-10-13",
       heading: "Política de privacidade",
       intro:
         "Esta política descreve como o A11STUDIO coleta, usa, armazena e protege suas informações quando você utiliza nossa plataforma. Temos compromisso com a transparência e com a proteção dos seus dados.",
@@ -917,6 +925,8 @@ const messages = {
         publicProfile: "Exibir seu perfil público de artista e seu conteúdo",
         contactForm:
           "Entregar as mensagens do formulário de contato entre visitantes e artistas",
+        analytics:
+          "Medir como a plataforma é usada por meio de estatísticas agregadas (somente com seu consentimento)",
       },
       sharing: {
         title: "6. Compartilhamento de dados",
@@ -926,6 +936,8 @@ const messages = {
         ai: "<strong>Provedores de IA / LLM</strong> — para geração de conteúdo e moderação de mídia",
         email:
           "<strong>Provedor de e-mail</strong> — para os e-mails transacionais (verificação, recuperação de senha, notificações)",
+        analytics:
+          "<strong>Google Analytics (Google Ireland Limited)</strong> — para estatísticas de uso agregadas, somente se você aceitar os cookies de analytics. A base legal é o seu consentimento, que pode ser retirado a qualquer momento em “Configurações de cookies” no rodapé",
       },
       retention: {
         title: "7. Retenção de dados",
@@ -955,7 +967,7 @@ const messages = {
       },
       cookies: {
         title: "10. Cookies",
-        body: "Usamos cookies para o funcionamento essencial da plataforma. Todos os detalhes estão na nossa <doc>Política de cookies</doc>.",
+        body: "Usamos cookies para o funcionamento essencial da plataforma e, somente se você aceitar, para analytics. Todos os detalhes estão na nossa <doc>Política de cookies</doc>.",
       },
       changes: {
         title: "11. Alterações nesta política",
@@ -970,15 +982,15 @@ const messages = {
       metadata: {
         title: "Política de cookies — A11STUDIO",
         description:
-          "Como o A11STUDIO usa cookies e tecnologias semelhantes. Usamos apenas cookies próprios necessários para o funcionamento da plataforma — nenhum de publicidade ou rastreamento.",
+          "Como o A11STUDIO usa cookies e tecnologias semelhantes. Cookies essenciais próprios, mais cookies de analytics opcionais que só são definidos se você os aceitar — nenhum de publicidade.",
       },
-      updatedAt: "2026-03-16",
+      updatedAt: "2026-10-13",
       heading: "Política de cookies",
       intro:
-        "Esta política explica quais cookies a plataforma A11STUDIO utiliza, por que os usamos e como eles afetam sua experiência. Usamos apenas cookies necessários para o funcionamento da plataforma.",
+        "Esta política explica quais cookies a plataforma A11STUDIO utiliza, por que os usamos e como eles afetam sua experiência. Usamos os cookies necessários para o funcionamento da plataforma e cookies de analytics somente com o seu consentimento.",
       what: {
         title: "1. O que são cookies",
-        body: "Cookies são pequenos arquivos de texto que seu navegador guarda no seu dispositivo. Eles permitem que a plataforma lembre sua sessão, suas preferências e seu estado de segurança entre as páginas. O A11STUDIO usa apenas <strong>cookies próprios e HTTP-only</strong> — não usamos cookies de publicidade nem de rastreamento.",
+        body: "Cookies são pequenos arquivos de texto que seu navegador guarda no seu dispositivo. Eles permitem que a plataforma lembre sua sessão, suas preferências e seu estado de segurança entre as páginas. Nossos cookies essenciais são <strong>próprios e HTTP-only</strong>. Não usamos cookies de publicidade e só definimos cookies de analytics depois que você os aceita.",
       },
       essential: {
         title: "2. Cookies essenciais",
@@ -1009,24 +1021,35 @@ const messages = {
         stripe: "Política de privacidade da Stripe",
         paypal: "Política de privacidade do PayPal",
       },
+      analytics: {
+        title: "5. Cookies de analytics (opcionais)",
+        body: "Somente com o seu consentimento, usamos o <strong>Google Analytics 4</strong> para entender como os visitantes usam a plataforma (páginas visitadas, origem do tráfego, ações-chave como o cadastro) e poder melhorá-la. Esses cookies não são definidos, e os scripts do Google não são carregados, até que você escolha Aceitar no banner de cookies.",
+        ga: "<strong>_ga</strong> — distingue os visitantes para gerar estatísticas agregadas. Expira em 2 anos.",
+        gaSession:
+          "<strong>_ga_XXXXXXXXXX</strong> — mantém o estado da sua sessão atual. Expira em 2 anos.",
+        provider:
+          "O provedor é a Google Ireland Limited (Gordon House, Barrow Street, Dublin 4, Irlanda). Os dados podem ser transferidos para a Google LLC nos Estados Unidos com base no Quadro de Privacidade de Dados UE-EUA. Desativamos os recursos de publicidade do Google, portanto nenhum cookie de publicidade é definido.",
+        withdraw:
+          "A base legal é o seu consentimento. Você pode retirá-lo a qualquer momento escolhendo “Configurações de cookies” no rodapé e selecionando Rejeitar: os cookies de analytics são excluídos e nenhum outro dado é enviado.",
+      },
       notUsed: {
-        title: "5. O que não usamos",
+        title: "6. O que não usamos",
         body: "O A11STUDIO <strong>não</strong> utiliza:",
-        analytics: "Cookies de analytics ou rastreamento",
+        analytics: "Cookies de analytics sem o seu consentimento prévio",
         advertising: "Cookies de publicidade ou retargeting",
         pixels: "Pixels de rastreamento de redes sociais",
         crossSite: "Tecnologias de rastreamento entre sites",
       },
       managing: {
-        title: "6. Gerenciar cookies",
-        body: "Você pode gerenciar ou excluir cookies nas configurações do seu navegador. Desativar os cookies essenciais impedirá que você entre e use os recursos autenticados da plataforma. Para mais informações sobre como gerenciá-los, consulte a documentação do seu navegador.",
+        title: "7. Gerenciar cookies",
+        body: "Você pode alterar ou retirar sua escolha sobre analytics a qualquer momento em “Configurações de cookies” no rodapé. Você também pode gerenciar ou excluir cookies nas configurações do seu navegador. Desativar os cookies essenciais impedirá que você entre e use os recursos autenticados da plataforma. Para mais informações sobre como gerenciá-los, consulte a documentação do seu navegador.",
       },
       privacyRelation: {
-        title: "7. Relação com a política de privacidade",
+        title: "8. Relação com a política de privacidade",
         body: "Esta Política de cookies faz parte da nossa <doc>Política de privacidade</doc>. Consulte-a para saber em detalhe como coletamos, usamos e protegemos seus dados pessoais além dos cookies.",
       },
       contact: {
-        title: "8. Contato",
+        title: "9. Contato",
         body: "Se tiver dúvidas sobre nosso uso de cookies, escreva para <email/>.",
       },
     },

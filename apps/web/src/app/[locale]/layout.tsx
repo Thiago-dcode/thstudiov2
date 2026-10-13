@@ -10,7 +10,12 @@ import type { ReactNode } from "react";
 import { getServerEnv } from "@/env/server";
 import { body, brand } from "@/font";
 import { routing } from "@/i18n/routing";
+import { getAnalyticsId } from "@/lib/analytics/enabled";
+import { GoogleAnalyticsGate } from "@/lib/analytics/google-analytics";
+import { CookieBanner } from "@/lib/components/cookie-banner";
+import { getActiveConsentCategories } from "@/lib/consent/active-categories";
 import { AppStatusProvider } from "@/lib/providers/app-status.provider";
+import { ConsentProvider } from "@/lib/providers/consent.provider";
 import { OG_LOCALE, ogImage, resolveLocale, SITE_NAME } from "@/lib/seo/core";
 import { isIndexableEnv } from "@/lib/seo/indexability";
 
@@ -119,14 +124,18 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <body className="w-screen h-dvh flex flex-col items-center justify-start">
-        <AppStatusProvider isRegisterClose={isRegisterClose}>
-          <NextIntlClientProvider>
-            <ThemeProvider>
-              {children}
-              <Toaster />
-            </ThemeProvider>
-          </NextIntlClientProvider>
-        </AppStatusProvider>
+        <ConsentProvider categories={getActiveConsentCategories()}>
+          <AppStatusProvider isRegisterClose={isRegisterClose}>
+            <NextIntlClientProvider>
+              <ThemeProvider>
+                {children}
+                <Toaster />
+                <CookieBanner />
+                <GoogleAnalyticsGate gaId={getAnalyticsId()} />
+              </ThemeProvider>
+            </NextIntlClientProvider>
+          </AppStatusProvider>
+        </ConsentProvider>
       </body>
     </html>
   );

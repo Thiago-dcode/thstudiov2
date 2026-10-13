@@ -6,6 +6,8 @@ const clientEnvSchema = z.object({
   NEXT_PUBLIC_WS_URL: z.string().min(1),
   NEXT_PUBLIC_GEOAPIFY_URL: z.string().min(1),
   NEXT_PUBLIC_GEOAPIFY_KEY: z.string().min(1),
+  // Optional: when empty, analytics is disabled entirely (local, preview). See `lib/analytics`.
+  NEXT_PUBLIC_GA_ID: z.string().optional(),
 });
 
 const parsed = clientEnvSchema.safeParse({
@@ -14,6 +16,7 @@ const parsed = clientEnvSchema.safeParse({
   NEXT_PUBLIC_WS_URL: process.env.NEXT_PUBLIC_WS_URL,
   NEXT_PUBLIC_GEOAPIFY_URL: process.env.NEXT_PUBLIC_GEOAPIFY_URL,
   NEXT_PUBLIC_GEOAPIFY_KEY: process.env.NEXT_PUBLIC_GEOAPIFY_KEY,
+  NEXT_PUBLIC_GA_ID: process.env.NEXT_PUBLIC_GA_ID,
 });
 
 if (!parsed.success) {

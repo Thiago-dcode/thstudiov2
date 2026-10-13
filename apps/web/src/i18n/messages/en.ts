@@ -469,6 +469,13 @@ const messages = {
     },
   },
   language: "Language",
+  cookieConsent: {
+    title: "Analytics cookies",
+    body: "Help us improve A11STUDIO: we use Google Analytics to see how the site is used. No ads, and you can change your mind anytime.",
+    learnMore: "Cookie policy",
+    accept: "Accept",
+    reject: "Reject",
+  },
   error: {
     title: "Something went wrong",
     description:
@@ -496,6 +503,7 @@ const messages = {
       privacy: "Privacy Policy",
       terms: "Terms of Service",
       cookies: "Cookie Policy",
+      cookieSettings: "Cookie settings",
     },
     discover: {
       heading: "Discover",
@@ -866,7 +874,7 @@ const messages = {
         description:
           "How A11STUDIO collects, uses, stores and protects your personal data — what we collect, who we share it with, how long we keep it, and the rights you have.",
       },
-      updatedAt: "2026-03-16",
+      updatedAt: "2026-10-13",
       heading: "Privacy Policy",
       intro:
         "This policy describes how A11STUDIO collects, uses, stores, and protects your information when you use our platform. We are committed to transparency and to safeguarding your data.",
@@ -909,6 +917,8 @@ const messages = {
         publicProfile: "Displaying your public artist profile and content",
         contactForm:
           "Delivering contact form messages between visitors and artists",
+        analytics:
+          "Measuring how the platform is used through aggregated statistics (only with your consent)",
       },
       sharing: {
         title: "6. Data Sharing",
@@ -918,6 +928,8 @@ const messages = {
         ai: "<strong>AI / LLM service providers</strong> — for content generation and media moderation",
         email:
           "<strong>Email service provider</strong> — for transactional emails (verification, password recovery, notifications)",
+        analytics:
+          "<strong>Google Analytics (Google Ireland Limited)</strong> — for aggregated usage statistics, only if you accept analytics cookies. The legal basis is your consent, which you can withdraw at any time from “Cookie settings” in the footer",
       },
       retention: {
         title: "7. Data Retention",
@@ -946,7 +958,7 @@ const messages = {
       },
       cookies: {
         title: "10. Cookies",
-        body: "We use cookies for essential platform functionality. For full details, see our <doc>Cookie Policy</doc>.",
+        body: "We use cookies for essential platform functionality and, only if you accept them, for analytics. For full details, see our <doc>Cookie Policy</doc>.",
       },
       changes: {
         title: "11. Changes to This Policy",
@@ -961,15 +973,15 @@ const messages = {
       metadata: {
         title: "Cookie Policy — A11STUDIO",
         description:
-          "How A11STUDIO uses cookies and similar technologies. We only use first-party cookies that are necessary for the platform to work — no advertising or tracking cookies.",
+          "How A11STUDIO uses cookies and similar technologies. Essential first-party cookies, plus optional analytics cookies that are only set if you accept them — no advertising cookies.",
       },
-      updatedAt: "2026-03-16",
+      updatedAt: "2026-10-13",
       heading: "Cookie Policy",
       intro:
-        "This policy explains what cookies the A11STUDIO platform uses, why we use them, and how they affect your experience. We only use cookies that are necessary for the platform to function.",
+        "This policy explains what cookies the A11STUDIO platform uses, why we use them, and how they affect your experience. We use cookies that are necessary for the platform to function, and analytics cookies only if you give your consent.",
       what: {
         title: "1. What Are Cookies",
-        body: "Cookies are small text files stored on your device by your web browser. They allow the platform to remember your session, preferences, and security state between page visits. A11STUDIO uses only <strong>first-party, HTTP-only cookies</strong> — we do not use advertising or tracking cookies.",
+        body: "Cookies are small text files stored on your device by your web browser. They allow the platform to remember your session, preferences, and security state between page visits. Our essential cookies are <strong>first-party, HTTP-only cookies</strong>. We do not use advertising cookies, and we set analytics cookies only after you accept them.",
       },
       essential: {
         title: "2. Essential Cookies",
@@ -1000,24 +1012,35 @@ const messages = {
         stripe: "Stripe Privacy Policy",
         paypal: "PayPal Privacy Policy",
       },
+      analytics: {
+        title: "5. Analytics Cookies (Optional)",
+        body: "With your consent only, we use <strong>Google Analytics 4</strong> to understand how visitors use the platform (pages visited, traffic sources, key actions such as signing up) so we can improve it. These cookies are not set, and Google's scripts are not loaded, until you choose Accept in the cookie banner.",
+        ga: "<strong>_ga</strong> — distinguishes visitors to produce aggregated statistics. Expires after 2 years.",
+        gaSession:
+          "<strong>_ga_XXXXXXXXXX</strong> — keeps the state of your current session. Expires after 2 years.",
+        provider:
+          "The provider is Google Ireland Limited (Gordon House, Barrow Street, Dublin 4, Ireland). Data may be transferred to Google LLC in the United States under the EU–US Data Privacy Framework. We have turned off Google's advertising features, so no advertising cookies are set.",
+        withdraw:
+          "The legal basis is your consent. You can withdraw it at any time by choosing “Cookie settings” in the footer and selecting Reject: the analytics cookies are then deleted and no further data is sent.",
+      },
       notUsed: {
-        title: "5. What We Do Not Use",
+        title: "6. What We Do Not Use",
         body: "A11STUDIO does <strong>not</strong> use:",
-        analytics: "Analytics or tracking cookies",
+        analytics: "Analytics cookies without your prior consent",
         advertising: "Advertising or retargeting cookies",
         pixels: "Social media tracking pixels",
         crossSite: "Cross-site tracking technologies",
       },
       managing: {
-        title: "6. Managing Cookies",
-        body: "You can manage or delete cookies through your browser settings. Disabling essential cookies will prevent you from signing in and using authenticated features of the platform. For more information on managing cookies, consult your browser's documentation.",
+        title: "7. Managing Cookies",
+        body: "You can change or withdraw your analytics choice at any time with “Cookie settings” in the footer. You can also manage or delete cookies through your browser settings. Disabling essential cookies will prevent you from signing in and using authenticated features of the platform. For more information on managing cookies, consult your browser's documentation.",
       },
       privacyRelation: {
-        title: "7. Relationship to Privacy Policy",
+        title: "8. Relationship to Privacy Policy",
         body: "This Cookie Policy is part of our broader <doc>Privacy Policy</doc>. For details on how we collect, use, and protect your personal data beyond cookies, please review it.",
       },
       contact: {
-        title: "8. Contact",
+        title: "9. Contact",
         body: "If you have questions about our use of cookies, contact us at <email/>.",
       },
     },

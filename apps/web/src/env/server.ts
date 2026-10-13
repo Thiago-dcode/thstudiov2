@@ -14,6 +14,9 @@ const serverEnvSchema = z.object({
   SUPPORT_EMAIL: z.email(),
   SUPPORT_USERNAME: z.string().min(1),
   REGISTRATION_IS_CLOSED: z.coerce.number().int().min(0).default(0),
+  // 1 = show the cookie banner under `next dev` to work on it. Never loads GA, ignored outside
+  // development. See `lib/consent/active-categories.ts`.
+  CONSENT_PREVIEW: z.coerce.number().int().min(0).default(0),
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;

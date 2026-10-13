@@ -65,6 +65,8 @@ const nextConfig: NextConfig = {
       process.env.NEXT_PUBLIC_GEOAPIFY_URL || process.env.GEOAPIFY_URL || "",
     NEXT_PUBLIC_GEOAPIFY_KEY:
       process.env.NEXT_PUBLIC_GEOAPIFY_KEY || process.env.GEOAPIFY_KEY || "",
+    // GA4 measurement ID (public by design). Empty disables analytics.
+    NEXT_PUBLIC_GA_ID: process.env.NEXT_PUBLIC_GA_ID || "",
   },
   images: {
     // The ONLY quality the optimizer will produce, site-wide. Next 16 maps any requested quality

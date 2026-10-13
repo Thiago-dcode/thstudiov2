@@ -6,8 +6,9 @@ import { Input } from "@repo/ui/components/shadcn/input";
 import { Label } from "@repo/ui/components/shadcn/label";
 import { Eye, EyeClosed } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useRef, useState } from "react";
 import { useRouter } from "@/i18n/navigation";
+import { trackEvent } from "@/lib/analytics/track";
 import FormComponent from "@/lib/components/form-component";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { registerServerAction } from "@/modules/auth/server-actions/register.action";
@@ -29,9 +30,19 @@ export const RegisterForm = ({
         if (!result.data) {
           return;
         }
+        trackEvent("sign_up", { method: "email" });
         router.push(result.data.token ? "/get-started" : "/auth/2fa");
       },
     });
+
+  // Fires once, on the first field the visitor touches (mounting would also count bounces).
+  const signupStartedRef = useRef(false);
+  const handleFieldChange = () => {
+    cleanErrors();
+    if (signupStartedRef.current) return;
+    signupStartedRef.current = true;
+    trackEvent("signup_started");
+  };
 
   return (
     <FormComponent.Container>
@@ -49,7 +60,7 @@ export const RegisterForm = ({
           autoComplete="email"
           required
           autoFocus
-          onChange={() => cleanErrors()}
+          onChange={handleFieldChange}
         />
 
         {/* Username Field */}
@@ -68,7 +79,7 @@ export const RegisterForm = ({
           required
           onChange={(e) => {
             e.target.value = normalizeUsername(e.target.value);
-            cleanErrors();
+            handleFieldChange();
           }}
         />
         {/* Password Field */}
@@ -79,7 +90,7 @@ export const RegisterForm = ({
           <div className="relative">
             <Input
               onChange={() => {
-                cleanErrors();
+                handleFieldChange();
                 setHidden(true);
               }}
               type={hidden ? "password" : "text"}

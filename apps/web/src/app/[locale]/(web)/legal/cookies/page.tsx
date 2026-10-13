@@ -97,6 +97,18 @@ export default async function CookiePolicyPage() {
         />
       </Section>
 
+      <Section title={t("analytics.title")}>
+        <P>{t.rich("analytics.body", strongTag)}</P>
+        <Bullets
+          items={[
+            t.rich("analytics.ga", strongTag),
+            t.rich("analytics.gaSession", strongTag),
+          ]}
+        />
+        <P>{t("analytics.provider")}</P>
+        <P>{t("analytics.withdraw")}</P>
+      </Section>
+
       <Section title={t("notUsed.title")}>
         <P>{t.rich("notUsed.body", strongTag)}</P>
         <Bullets

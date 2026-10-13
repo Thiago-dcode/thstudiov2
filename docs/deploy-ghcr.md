@@ -67,6 +67,7 @@ These are baked into the Next.js image at build time in CI:
 | `NEXT_PUBLIC_WS_URL` | yes |
 | `NEXT_PUBLIC_GEOAPIFY_URL` | yes |
 | `NEXT_PUBLIC_GEOAPIFY_KEY` | yes |
+| `NEXT_PUBLIC_GA_ID` | yes (GA4 measurement ID; leave empty to disable analytics) |
 | `APP_URL` | yes |
 | `APP_API_KEY` | yes |
 | `APP_TOKEN` | yes |

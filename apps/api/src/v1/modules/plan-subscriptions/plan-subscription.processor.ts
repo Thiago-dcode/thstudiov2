@@ -25,6 +25,7 @@ import { SubscriptionChangedMail } from './mails/subscription-changed.mail';
 
 /** Job payload enriched by the webhook processor with the previous plan's identity, used to detect upgrade vs downgrade. */
 export type SubscriptionChangesJobData = BaseUser & {
+  prevPlanId: number | null;
   prevPlanName: string | null;
   prevPlanBasePrice: number | null;
 };
@@ -253,6 +254,13 @@ export class PlanSubscriptionProcessor extends GlobalProcessor {
         CACHE_KEY_ACTIVE_SUBSCRIPTION(userId),
         serviceCacheKeys.allByUser(userId),
       ]);
+
+      // Stripe also sends subscription updates that keep the same plan (cancel at
+      // period end, renewals, payment method changes): no plan change, no email.
+      if (data.prevPlanId === currentPlan.id) {
+        this.logger.info(`Plan unchanged (${currentPlan.name}), skipping subscription-changed email`);
+        return { success: true };
+      }
 
       // Notify the user about the plan change (upgrade vs downgrade copy).
       // No previous plan (first-ever subscription) counts as an upgrade.

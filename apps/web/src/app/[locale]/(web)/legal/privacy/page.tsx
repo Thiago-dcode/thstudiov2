@@ -88,6 +88,7 @@ export default async function PrivacyPolicyPage() {
             t("usage.emails"),
             t("usage.publicProfile"),
             t("usage.contactForm"),
+            t("usage.analytics"),
           ]}
         />
       </Section>
@@ -99,6 +100,7 @@ export default async function PrivacyPolicyPage() {
             t.rich("sharing.payments", strongTag),
             t.rich("sharing.ai", strongTag),
             t.rich("sharing.email", strongTag),
+            t.rich("sharing.analytics", strongTag),
           ]}
         />
       </Section>

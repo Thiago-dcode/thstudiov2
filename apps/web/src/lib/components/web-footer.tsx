@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server";
 import type { ComponentType, SVGProps } from "react";
 import { serverEnv } from "@/env/server";
 import { Link } from "@/i18n/navigation";
+import { CookieSettingsButton } from "@/lib/components/cookie-settings-button";
 import { RegistrationCtaButton } from "@/lib/components/registration-cta-button";
 import {
   InstagramIcon,
@@ -98,6 +99,7 @@ export const WebFooter = async () => {
                   {t(`legal.${link.key}`)}
                 </Link>
               ))}
+              <CookieSettingsButton />
             </nav>
           </div>
 

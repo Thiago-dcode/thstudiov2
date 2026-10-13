@@ -275,6 +275,7 @@ export class WebhookProcessor extends GlobalProcessor {
     // _internalSubscription is the plan the user was on before this webhook event (or null if brand new).
     const subscriptionChangeJobPayload = {
       ...user,
+      prevPlanId: _internalSubscription?.plan_price?.plan?.id ?? null,
       prevPlanName: _internalSubscription?.plan_price?.plan?.name ?? null,
       prevPlanBasePrice: _internalSubscription?.plan_price?.plan?.base_price ?? null,
     };
@@ -315,6 +316,7 @@ export class WebhookProcessor extends GlobalProcessor {
       });
       const subscriptionChangeJobPayload = {
         ...user,
+        prevPlanId: internalSubscription.plan_price.plan.id,
         prevPlanName: internalSubscription.plan_price.plan.name,
         prevPlanBasePrice: internalSubscription.plan_price.plan.base_price,
       };
