@@ -31,7 +31,7 @@ async function WaitListImage() {
 
   return (
     <figure
-      className="relative aspect-3/4 overflow-hidden border border-border bg-fg"
+      className="relative aspect-4/3 overflow-hidden border border-border bg-fg"
       aria-hidden
     >
       {heroImage.data && (
@@ -67,52 +67,47 @@ export default async function WaitListValidatePage({
   const { benefit } = result.data;
 
   return (
-    <section className="mx-auto grid w-full max-w-5xl gap-8 px-6 py-12 tablet:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)] tablet:items-center tablet:px-10 tablet:py-20">
-      <Suspense fallback={<Spinner />}>
+    <section className="mx-auto flex w-full max-w-xl flex-col gap-4 px-6 py-12 tablet:py-20">
+      <h1 className="text-4xl font-semibold tracking-tight text-text tablet:text-5xl">
+        {t("page.title")}
+      </h1>
+
+      <Suspense
+        fallback={
+          <div className="flex aspect-4/3 items-center justify-center border border-border bg-fg">
+            <Spinner />
+          </div>
+        }
+      >
         <WaitListImage />
       </Suspense>
 
-      <article className="py-4 tablet:py-0">
-        <div className="mt-5 space-y-4">
-          <h1 className="max-w-xl text-4xl font-semibold tracking-tight text-text tablet:text-5xl">
-            {t("page.title")}
-          </h1>
-          <p className="max-w-xl text-base leading-relaxed text-text-muted tablet:text-lg">
-            {t("page.description")}
-          </p>
-        </div>
-        <p className="mt-8 text-sm font-medium text-accent">
-          {t("page.status")}
+      <p className="text-base leading-relaxed text-text-muted tablet:text-lg">
+        {t("page.description")}
+      </p>
+
+      {benefit && (
+        <p className="text-sm! text-text italic">
+          {t("page.benefit.label")}{" "}
+          <span className="font-semibold">
+            {t("page.benefit.line", {
+              months: getBenefitMonths(benefit.trial_days),
+            })}
+          </span>
         </p>
+      )}
 
-        {benefit && (
-          <div className="mt-8 border-t border-border pt-6">
-            <p className="text-xs font-medium uppercase tracking-[0.15em] text-text-muted">
-              {t("page.benefit.label")}
-            </p>
-            <p className="mt-2 text-lg font-medium text-text">
-              {t("page.benefit.line", {
-                tier: t(`page.benefit.tiers.${benefit.type}`),
-                months: getBenefitMonths(benefit.trial_days),
-              })}
-            </p>
-          </div>
-        )}
-
-        {/* While they wait: show a real artist page so the benefit has something concrete behind it. */}
-        <div className="mt-8 border-t border-border pt-6">
-          <p className="text-xs font-medium uppercase tracking-[0.15em] text-text-muted">
-            {t("page.showcase.title")}
-          </p>
-          <Link
-            href={WAIT_LIST_SHOWCASE_PATH}
-            className="mt-3 inline-flex min-h-11 items-center gap-2 text-base font-medium text-text underline-offset-4 hover:underline focus-visible:underline"
-          >
-            {t("page.showcase.cta")}
-            <ArrowRight className="size-4" aria-hidden />
-          </Link>
-        </div>
-      </article>
+      {/* While they wait: a real artist page shows what the benefit is for. */}
+      <p className="flex flex-wrap items-center gap-x-2 text-sm! text-text-muted">
+        {t("page.showcase.title")}
+        <Link
+          href={WAIT_LIST_SHOWCASE_PATH}
+          className="inline-flex min-h-11 items-center gap-1.5 font-medium text-text underline underline-offset-4 hover:no-underline"
+        >
+          {t("page.showcase.cta")}
+          <ArrowRight className="size-4" aria-hidden />
+        </Link>
+      </p>
     </section>
   );
 }

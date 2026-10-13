@@ -681,19 +681,18 @@ const messages = {
       title: "Email confirmed.",
       description:
         "Your spot on the waitlist is reserved. There’s nothing else to do — we’ll email you as soon as it’s your turn.",
-      status: "Early access, before we open to everyone.",
       showcase: {
-        title: "This is what you’ll be able to build",
+        title: "Get inspired:",
         cta: "See an artist page",
       },
       benefit: {
-        label: "Your benefit",
+        label: "You got:",
         tiers: {
           VIP: "Founding member",
           EARLY_USER: "Early access member",
           FOUNDER: "Founder",
         },
-        line: "{tier} — {months} months free.",
+        line: "{months} months free",
       },
     },
   },

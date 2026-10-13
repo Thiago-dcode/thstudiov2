@@ -687,19 +687,18 @@ const messages = {
       title: "Correo confirmado.",
       description:
         "Tu lugar en la lista de espera está reservado. No tienes que hacer nada más — te escribiremos en cuanto sea tu turno.",
-      status: "Acceso anticipado, antes de abrir al público.",
       showcase: {
-        title: "Esto es lo que podrás construir",
+        title: "Inspírate:",
         cta: "Ver una página de artista",
       },
       benefit: {
-        label: "Tu beneficio",
+        label: "Has conseguido:",
         tiers: {
           VIP: "Miembro fundador",
           EARLY_USER: "Miembro de acceso anticipado",
           FOUNDER: "Fundador",
         },
-        line: "{tier} — {months} meses gratis.",
+        line: "{months} meses gratis",
       },
     },
   },
