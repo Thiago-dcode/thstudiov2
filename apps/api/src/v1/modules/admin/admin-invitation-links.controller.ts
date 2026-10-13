@@ -4,12 +4,14 @@ import { InvitationLinkService } from '../invitation-links/invitation-link.servi
 import { CreateInvitationLinkRequest } from '../invitation-links/requests/create-invitation-link.request';
 import { IndexInvitationLinkRequest } from '../invitation-links/requests/index-invitation-link.request';
 import { getConfigValue } from '@repo/common-lib/config/utils';
+import { AdminInvitationLinksService } from './admin-invitation-links.service';
 
 @Controller('invitation-links')
 @UseGuards(AdminGuard)
 export class AdminInvitationLinksController {
   constructor(
     private readonly invitationLinkService: InvitationLinkService,
+    private readonly adminInvitationLinksService: AdminInvitationLinksService,
   ) { }
 
   @Get()
@@ -25,6 +27,6 @@ export class AdminInvitationLinksController {
 
   @Post()
   async create(@Body() body: CreateInvitationLinkRequest) {
-    return this.invitationLinkService.create(body);
+    return this.adminInvitationLinksService.create(body);
   }
 }

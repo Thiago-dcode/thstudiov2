@@ -32,6 +32,8 @@ export class CreateInvitationLinkRequest {
   @ModelNotExist('users', 'email', {
     message: 'Email already claimed',
   })
+  // Confirmed wait-list emails are refused in AdminInvitationLinksService: the rule needs
+  // "no expiry OR expiry in the future", checked per request, which this decorator can't express.
   email?: string;
 
   @IsOptional()

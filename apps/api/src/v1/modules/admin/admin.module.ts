@@ -7,12 +7,13 @@ import { WaitListModule } from '../wait-list/wait-list.module';
 import { AdminAssetsController } from '../assets/admin-assets.controller';
 import { AdminCategoriesController } from './admin-categories.controller';
 import { AdminInvitationLinksController } from './admin-invitation-links.controller';
+import { AdminInvitationLinksService } from './admin-invitation-links.service';
 import { AdminWaitListController } from './admin-wait-list.controller';
 
 /** Mounted at `api/v1/admin` — use `@Controller('segment')` → `api/v1/admin/segment`. */
 @Module({
   imports: [AssetsModule, CategoriesModule, InvitationLinkModule, WaitListModule],
   controllers: [AdminAssetsController, AdminCategoriesController, AdminInvitationLinksController, AdminWaitListController],
-  providers: [AdminGuard],
+  providers: [AdminGuard, AdminInvitationLinksService],
 })
 export class AdminModule { }
