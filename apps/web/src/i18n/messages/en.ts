@@ -682,6 +682,10 @@ const messages = {
       description:
         "Your spot on the waitlist is reserved. There’s nothing else to do — we’ll email you as soon as it’s your turn.",
       status: "Early access, before we open to everyone.",
+      showcase: {
+        title: "This is what you’ll be able to build",
+        cta: "See an artist page",
+      },
       benefit: {
         label: "Your benefit",
         tiers: {

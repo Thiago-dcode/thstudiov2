@@ -1,13 +1,18 @@
 import { getBenefitMonths } from "@repo/common-lib/utils/wait-list";
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
+import { ArrowRight } from "lucide-react";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
+import { Link } from "@/i18n/navigation";
 import { redirect } from "@/i18n/redirect";
 import assetService from "@/modules/assets/asset.service";
 import waitListService from "@/modules/wait-list/wait-list.service";
 
 export const dynamic = "force-dynamic";
+
+/** Same example artist page the wait-list emails link to. */
+const WAIT_LIST_SHOWCASE_PATH = "/artists/thsworld";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("waitListValidate");
@@ -93,6 +98,20 @@ export default async function WaitListValidatePage({
             </p>
           </div>
         )}
+
+        {/* While they wait: show a real artist page so the benefit has something concrete behind it. */}
+        <div className="mt-8 border-t border-border pt-6">
+          <p className="text-xs font-medium uppercase tracking-[0.15em] text-text-muted">
+            {t("page.showcase.title")}
+          </p>
+          <Link
+            href={WAIT_LIST_SHOWCASE_PATH}
+            className="mt-3 inline-flex min-h-11 items-center gap-2 text-base font-medium text-text underline-offset-4 hover:underline focus-visible:underline"
+          >
+            {t("page.showcase.cta")}
+            <ArrowRight className="size-4" aria-hidden />
+          </Link>
+        </div>
       </article>
     </section>
   );

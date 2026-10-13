@@ -689,6 +689,10 @@ const messages = {
       description:
         "Seu lugar na lista de espera está reservado. Não há mais nada a fazer — vamos te avisar assim que for a sua vez.",
       status: "Acesso antecipado, antes de abrirmos ao público.",
+      showcase: {
+        title: "Isto é o que você vai poder construir",
+        cta: "Ver uma página de artista",
+      },
       benefit: {
         label: "Seu benefício",
         tiers: {
