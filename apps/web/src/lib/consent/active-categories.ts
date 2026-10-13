@@ -8,8 +8,7 @@ import type { ConsentCategory } from "./consent";
  * can be worked on. Only the UI: GA stays off because `getAnalyticsId()` is still undefined there.
  * Every deployed environment runs with `NODE_ENV=production`, so it can never leak past local.
  */
-const isConsentPreview = (): boolean =>
-  getServerEnv().CONSENT_PREVIEW === 1;
+const isConsentPreview = (): boolean => getServerEnv().CONSENT_PREVIEW === 1;
 
 /**
  * Optional-cookie categories this deployment really uses. Only these are asked about and can ever
