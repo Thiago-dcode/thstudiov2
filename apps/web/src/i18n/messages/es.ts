@@ -473,8 +473,9 @@ const messages = {
   },
   language: "Idioma",
   cookieConsent: {
-    title: "Cookies de analítica",
-    body: "Ayúdanos a mejorar A11STUDIO: usamos Google Analytics para ver cómo se usa el sitio. Sin publicidad, y puedes cambiar de opinión cuando quieras.",
+    title: "Cookies",
+    lead: "Ayúdanos a mejorar A11STUDIO.",
+    body: "Si nos das tu permiso, usamos cookies de analítica para contar las visitas de forma agregada y ver qué funciona. Sin publicidad, sin vender datos, y puedes cambiar de opinión cuando quieras.",
     learnMore: "Política de cookies",
     accept: "Aceptar",
     reject: "Rechazar",

@@ -474,11 +474,12 @@ const messages = {
   },
   language: "Idioma",
   cookieConsent: {
-    title: "Cookies de analytics",
-    body: "Ajude-nos a melhorar a A11STUDIO: usamos o Google Analytics para ver como o site é usado. Sem anúncios, e você pode mudar de ideia quando quiser.",
+    title: "Cookies",
+    lead: "Ajude-nos a melhorar a A11STUDIO.",
+    body: "Com a sua permissão, usamos cookies de analytics para contar as visitas de forma agregada e ver o que funciona. Sem anúncios, sem venda de dados, e você pode mudar de ideia quando quiser.",
     learnMore: "Política de cookies",
     accept: "Aceitar",
-    reject: "Rejeitar",
+    reject: "Recusar",
   },
   error: {
     title: "Algo deu errado",

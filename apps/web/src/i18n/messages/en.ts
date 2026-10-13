@@ -470,11 +470,12 @@ const messages = {
   },
   language: "Language",
   cookieConsent: {
-    title: "Analytics cookies",
-    body: "Help us improve A11STUDIO: we use Google Analytics to see how the site is used. No ads, and you can change your mind anytime.",
+    title: "Cookies",
+    lead: "Help us make A11STUDIO better.",
+    body: "With your OK, we use analytics cookies to count visits in aggregate and see what works. No ads, nothing sold, and you can change your mind anytime.",
     learnMore: "Cookie policy",
     accept: "Accept",
-    reject: "Reject",
+    reject: "Decline",
   },
   error: {
     title: "Something went wrong",
