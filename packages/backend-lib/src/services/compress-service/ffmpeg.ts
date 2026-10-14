@@ -28,6 +28,15 @@ if (!ffmpegStatic) {
 export const FFMPEG_BIN: string = ffmpegStatic;
 export const FFPROBE_BIN: string = ffprobeStatic.path;
 
+/**
+ * Drops every container metadata tag from a published video. ffmpeg copies the input's tags by
+ * default, and phone footage carries the recording GPS position (`location`,
+ * `com.apple.quicktime.location.ISO6709`) plus device make/model: without this, every public MP4
+ * told visitors where the artist was standing. Images get the same treatment for free (Sharp drops
+ * EXIF when it re-encodes).
+ */
+export const STRIP_METADATA = ['-map_metadata', '-1'] as const;
+
 ffmpeg.setFfmpegPath(FFMPEG_BIN);
 ffmpeg.setFfprobePath(FFPROBE_BIN);
 
@@ -331,7 +340,9 @@ function run(command: FfmpegCommand, timeoutMs: number, label: string): Promise<
 export async function remuxToMp4(input: string, output: string): Promise<void> {
     await run(
         ffmpeg(input)
-            .outputOptions(['-c', 'copy', '-movflags', '+faststart', '-f', 'mp4'])
+            // `-map_metadata -1`: see `STRIP_METADATA`. Orientation survives: it is stream side
+            // data (display matrix), not a metadata tag.
+            .outputOptions([...STRIP_METADATA, '-c', 'copy', '-movflags', '+faststart', '-f', 'mp4'])
             .output(output),
         REMUX_TIMEOUT_MS,
         'Video remux',
@@ -420,6 +431,7 @@ export async function transcodeToMp4(
         // without explicit mapping ffmpeg tries to copy them and the encode fails outright.
         '-map', '0:v:0',
         ...(options.audio.mode === 'none' ? [] : ['-map', '0:a:0']),
+        ...STRIP_METADATA,
         '-c:v', 'libx264',
         '-preset', options.preset,
         '-crf', String(options.crf),
