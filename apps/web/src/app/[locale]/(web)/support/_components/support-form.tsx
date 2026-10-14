@@ -7,6 +7,7 @@ import { toast } from "@repo/ui/sonner";
 import { useTranslations } from "next-intl";
 import { useRef } from "react";
 import FormComponent from "@/lib/components/form-component";
+import { FormPrivacyNotice } from "@/lib/components/form-privacy-notice";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { createUserContactAction } from "@/modules/user-contacts/server-actions/create-user-contact.action";
 
@@ -125,6 +126,8 @@ export function SupportForm({
         />
 
         <Errors errors={errors || []} />
+
+        <FormPrivacyNotice context="support" />
 
         <FormComponent.SubmitButton
           isPending={isPending}

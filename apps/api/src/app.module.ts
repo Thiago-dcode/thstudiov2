@@ -55,6 +55,7 @@ import { UserBenefitModule } from './v1/modules/user-benefit/user-benefit.module
 import { UserSubscriptionModule } from './v1/modules/user-subscription/user-subscription.module';
 import { PlanSubscriptionsProcessorModule } from './v1/modules/plan-subscriptions/plan-subscriptions-processor.module';
 import { AccountDeletionModule } from './v1/modules/account-deletion/account-deletion.module';
+import { ContentReportModule } from './v1/modules/content-reports/content-report.module';
 import { WaitListModule } from './v1/modules/wait-list/wait-list.module';
 import { EmailPreferencesModule } from './v1/modules/email-preferences/email-preferences.module';
 import { UserEmailPreferencesModule } from './v1/modules/user-email-preferences/user-email-preferences.module';
@@ -99,6 +100,7 @@ const API_V1_MODULES = [
   LayoutModule,
   SitemapModule,
   IndexNowModule,
+  ContentReportModule,
 ];
 const ADMIN_V1_MODULES = [
   AdminModule

@@ -1,0 +1,8 @@
+{
+  "SUBJECT": "Recebemos a sua denúncia (#{id})",
+  "HI": "Olá",
+  "TITLE": "Obrigado pela sua denúncia",
+  "DESCRIPTION": "Recebemos o seu aviso sobre um conteúdo da A11STUDIO. A nossa equipa vai analisá-lo com atenção e agir se ele violar a lei ou os nossos Termos de serviço. Enviaremos a nossa decisão por email.",
+  "REFERENCE": "Referência #{id}",
+  "IGNORE": "Se não enviou esta denúncia, pode ignorar este email."
+}

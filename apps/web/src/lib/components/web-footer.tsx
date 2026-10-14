@@ -20,6 +20,9 @@ const legalLinks = [
   { href: "/legal/privacy", key: "privacy" },
   { href: "/legal/terms", key: "terms" },
   { href: "/legal/cookies", key: "cookies" },
+  { href: "/legal/notice", key: "notice" },
+  // DSA art. 16: the notice-and-action form must be easy to find from every page.
+  { href: "/report", key: "report" },
 ] as const;
 
 /**

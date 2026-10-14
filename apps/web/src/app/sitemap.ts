@@ -103,6 +103,7 @@ const STATIC_PATHS = [
   "/legal/privacy",
   "/legal/terms",
   "/legal/cookies",
+  "/legal/notice",
 ];
 
 /**

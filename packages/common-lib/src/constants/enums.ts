@@ -46,6 +46,9 @@ export const ENUMS = {
   PLAN_OFFERS_TYPE: ['FREE', 'DISCOUNT'] as const,
   BENEFIT_TYPE: ['EARLY_USER', 'VIP', 'FOUNDER'] as const,
   WAIT_LIST_STATUS: ['WAITING', 'INVITING', 'INVITED', 'REGISTERED', 'EXPIRED', 'REJECTED'] as const,
+  /** DSA art. 16 notice categories (what the reporter says is wrong with the content). */
+  CONTENT_REPORT_REASON: ['ILLEGAL_CONTENT', 'CHILD_SAFETY', 'INTELLECTUAL_PROPERTY', 'HATE_OR_VIOLENCE', 'PRIVACY', 'FRAUD_OR_SCAM', 'OTHER'] as const,
+  CONTENT_REPORT_STATUS: ['RECEIVED', 'ACTION_TAKEN', 'NO_ACTION'] as const,
   LAYOUT_TYPE: ['MASONRY', 'UNIFORM', 'COLUMN_BASE'] as const,
   CATEGORY_TYPE: ['DISCIPLINE', 'ART_STYLE', 'TECHNIQUE', 'TAGS'] as const,
   PASSWORD_RECOVERY_ATTEMPT_STATUS: ['CODE_NOT_VALIDATED', 'CODE_VALIDATED', 'PASSWORD_CHANGED'],
@@ -136,6 +139,7 @@ export const TABLES_ENUM = {
   ASSETS: 'assets',
   LAYOUTS: 'layouts',
   LAYOUT_CONFIG: 'layout_config',
+  CONTENT_REPORTS: 'content_reports',
 } as const;
 
 export const COUNTRY_TO_LANGUAGES: Record<string, string> = {

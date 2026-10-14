@@ -67,6 +67,7 @@ ${
 
 - [Terms of Service](${url("/legal/terms")})
 - [Privacy Policy](${url("/legal/privacy")})
+- [Legal Notice](${url("/legal/notice")})
 `;
 
   return new Response(body, {

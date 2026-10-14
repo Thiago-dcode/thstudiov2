@@ -72,7 +72,6 @@ const messages = {
             },
           ],
           learnMore: "Read the full waitlist FAQ",
-          privacy: "We only use your email to manage your waitlist spot.",
         },
       },
       disclaimer: "Free to start · No credit card required",
@@ -469,10 +468,77 @@ const messages = {
     },
   },
   language: "Language",
+  formPrivacyNotice: {
+    report:
+      "We use these details only to handle your report and, if you leave an email, to tell you the outcome. More in our <privacy>Privacy Policy</privacy>.",
+    register:
+      "We use your details to create and run your account and portfolio. Your rights and how we handle your data: <privacy>Privacy Policy</privacy>.",
+    acceptTerms:
+      "I accept the <terms>Terms of Service</terms> and confirm I am at least 16 years old.",
+    acceptTermsRequired:
+      "Please accept the Terms of Service to create your account.",
+    waitList:
+      "We only use your email to manage your waitlist spot and send you your invite. More in our <privacy>Privacy Policy</privacy>.",
+    support:
+      "We use these details only to answer your request. More in our <privacy>Privacy Policy</privacy>.",
+    artistContact:
+      "Your name, email and message are sent to this artist so they can reply to you. More in our <privacy>Privacy Policy</privacy>.",
+  },
+  report: {
+    metadata: {
+      title: "Report content — A11STUDIO",
+      description:
+        "Report content on A11STUDIO that you believe is illegal or breaks our Terms of Service. We review every notice and tell you the outcome.",
+    },
+    label: "Report content",
+    title: "Report content",
+    description:
+      "If you believe something published on A11STUDIO is illegal or breaks our Terms of Service, tell us here. We review every notice, act on it when it is justified, and email you our decision if you leave an address.",
+    emergency:
+      "If someone is in immediate danger, contact your local emergency services first.",
+    form: {
+      urlLabel: "Link to the content",
+      reasonLabel: "What is wrong with it?",
+      reasonPlaceholder: "Choose a reason",
+      reasons: {
+        ILLEGAL_CONTENT: "Illegal content",
+        CHILD_SAFETY: "Child sexual abuse or exploitation",
+        INTELLECTUAL_PROPERTY: "Copyright or trademark infringement",
+        HATE_OR_VIOLENCE: "Hate speech, threats or violence",
+        PRIVACY: "Personal data or privacy violation",
+        FRAUD_OR_SCAM: "Fraud or scam",
+        OTHER: "Something else",
+      },
+      explanationLabel: "Why is it illegal or against the rules?",
+      explanationPlaceholder:
+        "Explain what the problem is and, if you can, which law or right it breaks.",
+      nameLabel: "Your name (optional)",
+      emailLabel: "Your email (optional)",
+      emailInfo:
+        "Only used to confirm we received your report and tell you our decision.",
+      goodFaith:
+        "I confirm that the information in this report is accurate and complete to the best of my knowledge, and that I am reporting in good faith.",
+      submit: "Send report",
+      success: {
+        title: "Thank you. We received your report.",
+        body: "Your reference is #{id}. We will review it and, if you left an email, let you know our decision.",
+      },
+      errors: {
+        url: "Paste the full link to the page, starting with https://.",
+        reason: "Choose a reason.",
+        explanation: "Explain the problem in at least 20 characters.",
+        goodFaith:
+          "Please confirm the report is accurate and made in good faith.",
+        notOurSite: "The link must point to a page on A11STUDIO.",
+        tooMany:
+          "Too many reports in a short time. Wait a minute and try again.",
+      },
+    },
+  },
   cookieConsent: {
     title: "Cookies",
     lead: "Help us make A11STUDIO better.",
-    body: "With your OK, we use analytics cookies to count visits in aggregate and see what works. No ads, nothing sold, and you can change your mind anytime.",
+    body: "With your OK, we use third-party analytics cookies (Google Analytics) to count visits in aggregate and see what works. No ads, nothing sold, and you can change your mind anytime.",
     learnMore: "Cookie policy",
     accept: "Accept",
     reject: "Decline",
@@ -501,6 +567,8 @@ const messages = {
     },
     legal: {
       heading: "Legal",
+      report: "Report content",
+      notice: "Legal Notice",
       privacy: "Privacy Policy",
       terms: "Terms of Service",
       cookies: "Cookie Policy",
@@ -750,6 +818,50 @@ const messages = {
   legal: {
     // ISO dates — formatted per locale at render time so /es and /pt don't show "March 16, 2026".
     lastUpdated: "Last updated — {date}",
+    notice: {
+      metadata: {
+        title: "Legal Notice — A11STUDIO",
+        description:
+          "Who runs A11STUDIO: owner identification, contact details and the legal information required by Spanish law (LSSI-CE).",
+      },
+      updatedAt: "2026-10-14",
+      heading: "Legal Notice",
+      intro:
+        "In compliance with article 10 of Spanish Law 34/2002 on Information Society Services and Electronic Commerce (LSSI-CE), here is the information about who runs this website.",
+      owner: {
+        title: "1. Owner of the website",
+        body: "The website a11studio.com and the A11STUDIO platform are run by:",
+        name: "<strong>Owner:</strong> {value}",
+        taxId: "<strong>Tax ID (NIF/CIF):</strong> {value}",
+        address: "<strong>Address:</strong> {value}",
+        email: "<strong>Email:</strong> <email/>",
+        registry: "<strong>Registry details:</strong> {value}",
+      },
+      purpose: {
+        title: "2. Purpose",
+        body: "A11STUDIO is an online platform where artists create and publish portfolios, and where visitors can discover their work and contact them.",
+      },
+      conditions: {
+        title: "3. Conditions of use",
+        body: "Using the website implies accepting this notice. Creating an account and using the platform are governed by our <doc>Terms of Service</doc>.",
+      },
+      ip: {
+        title: "4. Intellectual property",
+        body: "The design, code, brand and texts of the website belong to its owner. The works published by artists belong to their authors and may not be reproduced without their permission.",
+      },
+      privacy: {
+        title: "5. Data protection",
+        body: "How we handle personal data, and how to exercise your rights, is explained in our <doc>Privacy Policy</doc>.",
+      },
+      law: {
+        title: "6. Applicable law",
+        body: "This notice is governed by Spanish law. If you are a consumer, you keep the protection of the mandatory laws of your country of residence and may bring a claim before the courts of your place of residence.",
+      },
+      contact: {
+        title: "7. Points of contact (Digital Services Act)",
+        body: "Single point of contact for users and for Member State authorities, the European Commission and the European Board for Digital Services (DSA arts. 11 and 12): <email/>. We answer in English, Spanish and Portuguese. To report content you believe is illegal, use our <doc>report form</doc>.",
+      },
+    },
     terms: {
       metadata: {
         title: "Terms of Service — A11STUDIO",
@@ -762,7 +874,7 @@ const messages = {
         "These terms govern your use of the A11STUDIO platform. By creating an account or using our services, you agree to be bound by these terms.",
       acceptance: {
         title: "1. Acceptance of Terms",
-        body: 'By accessing or using A11STUDIO ("the Platform"), you agree to these Terms of Service. If you do not agree, you must not use the Platform. We may update these terms at any time — continued use after changes constitutes acceptance.',
+        body: 'By accessing or using A11STUDIO ("the Platform"), you agree to these Terms of Service. If you do not agree, you must not use the Platform. If we make material changes, we will tell you by email or in the app at least 30 days before they apply. If you do not agree with them, you can close your account before that date.',
       },
       account: {
         title: "2. Account Registration",
@@ -785,6 +897,8 @@ const messages = {
           "You may manage or cancel your subscription from your account settings at any time.",
         promos:
           "Promotional offers and discounts may apply to specific plan prices and are subject to their own terms.",
+        withdrawal:
+          "<strong>Right of withdrawal (EU consumers)</strong> — you can withdraw from a paid subscription within 14 days of purchase without giving a reason, by writing to <email/>. We refund what you paid, minus the proportional part of the service you already used, within 14 days.",
       },
       ownership: {
         title: "4. Content Ownership",
@@ -854,15 +968,15 @@ const messages = {
       },
       warranties: {
         title: "11. Disclaimer of Warranties",
-        body: 'The Platform is provided "as is" and "as available" without warranties of any kind, whether express or implied, including but not limited to merchantability, fitness for a particular purpose, or non-infringement. We do not guarantee uninterrupted or error-free service.',
+        body: 'We work to keep the Platform available and working well, but we do not guarantee an uninterrupted or error-free service. To the extent permitted by law, the Platform is provided "as is". Nothing in these terms limits your statutory rights as a consumer, including the legal guarantee that the service conforms to what was agreed.',
       },
       liability: {
         title: "12. Limitation of Liability",
-        body: "To the maximum extent permitted by law, A11STUDIO shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the Platform, including loss of data, revenue, or profits.",
+        body: "To the extent permitted by law, A11STUDIO is not liable for indirect or consequential damages arising from your use of the Platform, such as lost revenue or profits. This does not limit our liability for intent or gross negligence, for death or personal injury, or any liability that cannot be limited by law, and it does not affect your mandatory rights as a consumer.",
       },
       law: {
         title: "13. Governing Law",
-        body: "These terms are governed by and construed in accordance with applicable law. Any disputes arising from these terms or your use of the Platform shall be resolved in the competent courts of the jurisdiction where A11STUDIO is established.",
+        body: "These terms are governed by Spanish law. If you are a consumer, you also keep the protection of the mandatory laws of your country of residence, and you can bring a claim before the courts of your place of residence. You can also contact your local consumer protection authority.",
       },
       contact: {
         title: "14. Contact",
@@ -881,7 +995,7 @@ const messages = {
         "This policy describes how A11STUDIO collects, uses, stores, and protects your information when you use our platform. We are committed to transparency and to safeguarding your data.",
       controller: {
         title: "1. Data Controller",
-        body: 'A11STUDIO ("we", "us", "our") is the data controller responsible for your personal data. For any privacy-related inquiries, contact us at <email/>.',
+        body: 'A11STUDIO ("we", "us", "our") is the data controller responsible for your personal data. Our full identification and address are in the <notice>Legal Notice</notice>. For any privacy-related inquiries, contact us at <email/>.',
       },
       collect: {
         title: "2. Information We Collect",
@@ -906,6 +1020,8 @@ const messages = {
       ai: {
         title: "4. AI Processing",
         body: "A11STUDIO uses artificial intelligence to power features such as content suggestions and automated content moderation. We track usage to manage your AI credit allocation. AI processing is performed by third-party providers, and only the minimum data necessary is sent for processing.",
+        automated:
+          "Every upload is checked automatically before it is published. Content flagged as breaking our policies is blocked and can add a strike to your account, and repeated strikes lead to a temporary or permanent ban. You can ask a person to review any of these decisions by writing to <email/>.",
       },
       usage: {
         title: "5. How We Use Your Data",
@@ -920,25 +1036,31 @@ const messages = {
           "Delivering contact form messages between visitors and artists",
         analytics:
           "Measuring how the platform is used through aggregated statistics (only with your consent)",
+        bases:
+          "<strong>Legal bases:</strong> we process your account, portfolio, billing and contact data to perform our contract with you (GDPR art. 6.1.b); invoices to comply with tax law (art. 6.1.c); security logs, fraud prevention, automated moderation and service emails on our legitimate interest in a safe, working platform (art. 6.1.f); and analytics only with your consent (art. 6.1.a).",
       },
       sharing: {
         title: "6. Data Sharing",
         body: "We do not sell your personal data. We share data only with the following third-party services as necessary to operate the platform:",
         payments:
           "<strong>Stripe & PayPal</strong> — for payment processing and subscription management",
-        ai: "<strong>AI / LLM service providers</strong> — for content generation and media moderation",
+        ai: "<strong>OpenAI</strong> — for content generation and media moderation",
         email:
-          "<strong>Email service provider</strong> — for transactional emails (verification, password recovery, notifications)",
+          "<strong>Resend</strong> — for transactional emails (verification, password recovery, notifications)",
+        hosting:
+          "<strong>Cloud hosting and storage providers</strong> — to run the platform and store your files",
+        transfers:
+          "Some of these providers (OpenAI, Resend, Google) are based in the United States. Those transfers rely on the EU–US Data Privacy Framework or on the European Commission's Standard Contractual Clauses.",
         analytics:
           "<strong>Google Analytics (Google Ireland Limited)</strong> — for aggregated usage statistics, only if you accept analytics cookies. The legal basis is your consent, which you can withdraw at any time from “Cookie settings” in the footer",
       },
       retention: {
         title: "7. Data Retention",
-        body: "We retain your personal data for as long as your account is active. Security logs are retained for account protection purposes, and payment records are retained as required by applicable regulations. When you delete your account, it is hidden immediately and permanently deleted 15 days later (the grace period lets you change your mind), together with your media and associated content, except payment records we must keep by law. A deactivated account keeps its data, hidden from the public, until you reactivate or delete it.",
+        body: "We retain your personal data for as long as your account is active. Security logs are kept for up to 30 days, and invoices and payment records for the periods required by tax and commercial law (up to 6 years). Contact-form messages are kept until the recipient deletes them or their account is deleted, and content reports for as long as needed to handle them and defend any related claim. When you delete your account, it is hidden immediately and permanently deleted 15 days later (the grace period lets you change your mind), together with your media and associated content, except payment records we must keep by law. A deactivated account keeps its data, hidden from the public, until you reactivate or delete it.",
       },
       rights: {
         title: "8. Your Rights",
-        body: "Depending on your jurisdiction, you may have the following rights regarding your personal data:",
+        body: "You have the following rights regarding your personal data:",
         access:
           "<strong>Access</strong> — request a copy of the data we hold about you",
         rectification:
@@ -951,7 +1073,12 @@ const messages = {
           "<strong>Restriction</strong> — request that we limit processing of your data",
         objection:
           "<strong>Objection</strong> — object to processing based on legitimate interests",
-        body2: "To exercise any of these rights, contact us at <email/>.",
+        withdraw:
+          "<strong>Withdraw consent</strong> — where we rely on your consent (analytics cookies), you can withdraw it at any time",
+        body2:
+          "To exercise any of these rights, contact us at <email/>. We answer within one month. You can also delete your account yourself in Settings.",
+        complaint:
+          "If you think we have not handled your data properly, you can file a complaint with the Spanish Data Protection Agency (AEPD, www.aepd.es) or the authority of your country.",
       },
       security: {
         title: "9. Security",
@@ -963,7 +1090,7 @@ const messages = {
       },
       changes: {
         title: "11. Changes to This Policy",
-        body: "We may update this policy from time to time. Changes will be posted on this page with an updated revision date. Continued use of the platform after changes constitutes acceptance of the revised policy.",
+        body: "We may update this policy from time to time. Changes are posted on this page with an updated revision date, and we will tell you about material changes by email or in the app before they apply.",
       },
       contact: {
         title: "12. Contact",

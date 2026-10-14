@@ -38,6 +38,17 @@ export const registerServerAction = async (
       : undefined,
   };
   const t = await getTranslations();
+  // Terms + age acceptance is enforced here too: the form's `required` is only a browser hint.
+  if (formData.get("accept_terms") !== "on") {
+    return {
+      data: null,
+      errors: [],
+      inputErrors: {
+        accept_terms: t("formPrivacyNotice.acceptTermsRequired"),
+      },
+      inputs: credentials,
+    };
+  }
   const validatedData = registerRequestSchema(t).safeParse(credentials);
   if (!validatedData.success) {
     return {

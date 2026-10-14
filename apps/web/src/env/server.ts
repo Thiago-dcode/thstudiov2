@@ -1,6 +1,13 @@
 import "server-only";
 import * as z from "zod";
 
+/** An unset GitHub secret reaches the build as an empty string: treat it as missing. */
+const optionalText = z
+  .string()
+  .trim()
+  .optional()
+  .transform((value) => (value ? value : undefined));
+
 const serverEnvSchema = z.object({
   ENCRYPTION_SECRET: z.string().min(1),
   APP_API_KEY: z.string().min(1),
@@ -14,6 +21,12 @@ const serverEnvSchema = z.object({
   SUPPORT_EMAIL: z.email(),
   SUPPORT_USERNAME: z.string().min(1),
   REGISTRATION_IS_CLOSED: z.coerce.number().int().min(0).default(0),
+  // Legal notice (LSSI art. 10, /legal/notice): who runs the site. Optional so a missing value
+  // never breaks a deploy, but production must set the first three — the page warns while unset.
+  LEGAL_OWNER_NAME: optionalText,
+  LEGAL_TAX_ID: optionalText,
+  LEGAL_ADDRESS: optionalText,
+  LEGAL_REGISTRY: optionalText,
   // 1 = show the cookie banner under `next dev` to work on it. Never loads GA, ignored outside
   // development. See `lib/consent/active-categories.ts`.
   CONSENT_PREVIEW: z.coerce.number().int().min(0).default(0),

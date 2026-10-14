@@ -149,6 +149,10 @@ jobs:
             GEOAPIFY_URL=${{ secrets.GEOAPIFY_URL }}
             SUPPORT_EMAIL=${{ secrets.SUPPORT_EMAIL }}
             SUPPORT_USERNAME=${{ secrets.SUPPORT_USERNAME }}
+            LEGAL_OWNER_NAME=${{ secrets.LEGAL_OWNER_NAME }}
+            LEGAL_TAX_ID=${{ secrets.LEGAL_TAX_ID }}
+            LEGAL_ADDRESS=${{ secrets.LEGAL_ADDRESS }}
+            LEGAL_REGISTRY=${{ secrets.LEGAL_REGISTRY }}
             REGISTRATION_IS_CLOSED=${{ secrets.REGISTRATION_IS_CLOSED }}
             CDN_URL=${{ secrets.CDN_URL }}
           # Real secrets go through BuildKit secret mounts, never build-args: a
@@ -306,6 +310,10 @@ jobs:
             GEOAPIFY_URL=${{ secrets.GEOAPIFY_URL }}
             SUPPORT_EMAIL=${{ secrets.SUPPORT_EMAIL }}
             SUPPORT_USERNAME=${{ secrets.SUPPORT_USERNAME }}
+            LEGAL_OWNER_NAME=${{ secrets.LEGAL_OWNER_NAME }}
+            LEGAL_TAX_ID=${{ secrets.LEGAL_TAX_ID }}
+            LEGAL_ADDRESS=${{ secrets.LEGAL_ADDRESS }}
+            LEGAL_REGISTRY=${{ secrets.LEGAL_REGISTRY }}
             REGISTRATION_IS_CLOSED=${{ secrets.REGISTRATION_IS_CLOSED }}
             CDN_URL=${{ secrets.CDN_URL }}
           # Real secrets go through BuildKit secret mounts, never build-args: a

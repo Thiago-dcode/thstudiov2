@@ -1,0 +1,70 @@
+<%- include(globals.emailsPath + '/shared/head') %>
+
+<body class="e-bg" style="width:100%; margin:0; padding:0 4px; background-color:#FAFAF9;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="e-bg" style="background-color:#FAFAF9;">
+        <tr>
+            <td align="center">
+                <table role="presentation" width="800" cellpadding="0" cellspacing="0" border="0"
+                    class="e-bg" style="width:100%; max-width:800px; background-color:#FAFAF9;">
+
+                    <%- include(globals.emailsPath + '/shared/header') %>
+
+                    <!-- Greeting -->
+                    <tr>
+                        <td style="padding:0 0 24px; text-align:center;">
+                            <p class="e-text-muted" style="font-size:13px; color:#46443F; letter-spacing:1px; text-transform:uppercase; margin:0 0 8px 0;">
+                                <%= t(translatePath + '.HI') %>
+                            </p>
+                            <h2 class="e-text" style="font-size:20px; font-weight:600; color:#000000; margin:0;">
+                                <%= report.greetingName %>
+                            </h2>
+                        </td>
+                    </tr>
+
+                    <!-- Title -->
+                    <tr>
+                        <td style="padding:0 0 24px; text-align:center;">
+                            <h1 class="e-text" style="font-size:20px; font-weight:600; color:#000000; margin:0 0 12px 0; letter-spacing:1px;">
+                                <%= t(translatePath + '.TITLE') %>
+                            </h1>
+                            <p class="e-text-muted" style="font-size:14px; color:#46443F; margin:0; line-height:1.6;">
+                                <%= t(translatePath + '.DESCRIPTION') %>
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Info Box -->
+                    <tr>
+                        <td>
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                                class="e-card e-border-em" style="border:1.5px solid #C9C6BB; background-color:#FFFFFF;">
+                                <tr>
+                                    <td style="padding:24px 12px; text-align:center;">
+                                        <p class="e-text-muted" style="font-size:14px; margin:0; color:#46443F; line-height:1.6;">
+                                            <%= t(translatePath + '.REFERENCE').replace('{id}', report.id) %><br />
+                                            <%= report.url %>
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Footnote -->
+                    <tr>
+                        <td align="center" style="padding:24px 0 0;">
+                            <p class="e-text-muted" style="font-size:13px; color:#46443F; margin:0; line-height:1.6; text-align:center;">
+                                <%= t(translatePath + '.IGNORE') %>
+                            </p>
+                        </td>
+                    </tr>
+
+                    <%- include(globals.emailsPath + '/shared/footer') %>
+
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+
+</html>

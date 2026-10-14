@@ -16,6 +16,7 @@ import { useTranslations } from "next-intl";
 import { useCallback, useState } from "react";
 import { Link } from "@/i18n/navigation";
 import { trackEvent } from "@/lib/analytics/track";
+import { FormPrivacyNotice } from "@/lib/components/form-privacy-notice";
 import { useSession } from "@/lib/hooks/useSession";
 import { useAppStatus } from "@/lib/providers/app-status.provider";
 import {
@@ -111,9 +112,7 @@ export function RegistrationCtaButton({
                 onSuccess={handleWaitListSuccess}
                 className="flex-col! sm:flex-row! sm:items-start [&_button]:w-full sm:[&_button]:w-auto"
               />
-              <p className="text-left text-xs text-text-muted">
-                {tWaitList("waitList.dialog.privacy")}
-              </p>
+              <FormPrivacyNotice context="waitList" className="text-left" />
             </div>
           </DialogContent>
         </Dialog>

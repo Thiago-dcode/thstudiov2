@@ -7,9 +7,10 @@ import { Label } from "@repo/ui/components/shadcn/label";
 import { Eye, EyeClosed } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { type ReactNode, useRef, useState } from "react";
-import { useRouter } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import { trackEvent } from "@/lib/analytics/track";
 import FormComponent from "@/lib/components/form-component";
+import { FormPrivacyNotice } from "@/lib/components/form-privacy-notice";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { registerServerAction } from "@/modules/auth/server-actions/register.action";
 
@@ -21,6 +22,7 @@ export const RegisterForm = ({
   initialEmail?: string;
 }) => {
   const t = useTranslations("auth.register");
+  const tNotice = useTranslations("formPrivacyNotice");
   const router = useRouter();
   const [hidden, setHidden] = useState(true);
   const { result, handleSubmit, errors, inputErrors, cleanErrors, isPending } =
@@ -121,6 +123,45 @@ export const RegisterForm = ({
             </p>
           )}
         </FormComponent.Field>
+        {/* Contract acceptance + age (Terms §2): native `required` blocks the submit in the
+            browser, and the server action re-checks it. */}
+        <FormComponent.Field>
+          <label
+            htmlFor="accept_terms"
+            className="flex cursor-pointer items-start gap-2.5"
+          >
+            <input
+              type="checkbox"
+              id="accept_terms"
+              name="accept_terms"
+              required
+              aria-describedby={
+                inputErrors?.accept_terms ? "error-accept_terms" : undefined
+              }
+              onChange={() => cleanErrors()}
+              className="mt-0.5 size-4 shrink-0 cursor-pointer accent-text"
+            />
+            <span className="text-xs leading-relaxed text-text-muted">
+              {tNotice.rich("acceptTerms", {
+                terms: (chunks) => (
+                  <Link
+                    href="/legal/terms"
+                    target="_blank"
+                    className="text-text underline underline-offset-4"
+                  >
+                    {chunks}
+                  </Link>
+                ),
+              })}
+            </span>
+          </label>
+          {inputErrors?.accept_terms && (
+            <p id="error-accept_terms" className="text-xs! text-red-500 mt-1">
+              {inputErrors.accept_terms}
+            </p>
+          )}
+        </FormComponent.Field>
+        <FormPrivacyNotice context="register" />
         {children}
         {/* Submit Button */}
         <FormComponent.SubmitButton isPending={isPending} variant="accent">

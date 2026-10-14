@@ -17,10 +17,10 @@ const REVEAL_DELAY_MS = 1500;
  * Cookie banner. Shown while some active category has no stored choice, or when the footer
  * "Cookie settings" link reopens it. Reads and writes everything through {@link useConsent}.
  *
- * Accept is the solid button, Decline the outline one. That emphasis is as far as it goes: Decline
- * stays on the first layer, same size, same position level, readable text, plain label. AEPD / EDPB
- * guidance treats a hidden, tiny, low-contrast or guilt-tripping reject as a dark pattern that
- * invalidates the consent, so do not push it further than this.
+ * Accept and Decline are visually identical (same variant, size, level, plain labels). The AEPD
+ * cookie guide asks for both choices with equal prominence on the first layer, and the EDPB treats
+ * a reject that is less visible than accept as a dark pattern that invalidates the consent. Do not
+ * give Accept a solid/accent style: a solid Accept was tried and reverted for this reason.
  */
 export const CookieBanner = () => {
   const t = useTranslations("cookieConsent");
@@ -83,7 +83,7 @@ export const CookieBanner = () => {
             </Link>
           </p>
         </div>
-        {/* Same size and level for both (see above). Accept sits last: the reading end and the thumb side. */}
+        {/* Identical buttons (see above); only the order differs. */}
         <div className="flex shrink-0 gap-2">
           <Button
             type="button"
@@ -96,7 +96,7 @@ export const CookieBanner = () => {
           </Button>
           <Button
             type="button"
-            variant="default"
+            variant="outline"
             size="sm"
             className="min-h-11 flex-1 px-6 phone-lg:flex-none"
             onClick={acceptAll}

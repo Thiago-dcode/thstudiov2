@@ -75,6 +75,7 @@ export default async function TermsOfServicePage() {
             t("plans.autoRenew"),
             t("plans.manage"),
             t("plans.promos"),
+            t.rich("plans.withdrawal", { ...strongTag, ...email }),
           ]}
         />
       </Section>

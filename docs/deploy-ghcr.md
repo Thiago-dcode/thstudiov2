@@ -77,6 +77,10 @@ These are baked into the Next.js image at build time in CI:
 | `ENCRYPTION_SECRET` | yes |
 | `SUPPORT_EMAIL` | yes |
 | `SUPPORT_USERNAME` | yes |
+| `LEGAL_OWNER_NAME` | yes in prod (Aviso legal, LSSI art. 10: owner name / company name) |
+| `LEGAL_TAX_ID` | yes in prod (NIF/CIF) |
+| `LEGAL_ADDRESS` | yes in prod (postal address) |
+| `LEGAL_REGISTRY` | optional (Mercantile Registry details, if a company) |
 | `REGISTRATION_IS_CLOSED` | yes |
 
 Copy each value from your droplet `.env` into GitHub secrets with the **same name**.

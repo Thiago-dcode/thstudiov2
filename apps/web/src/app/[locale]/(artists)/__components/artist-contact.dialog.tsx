@@ -15,6 +15,7 @@ import { Mail } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import FormComponent from "@/lib/components/form-component";
+import { FormPrivacyNotice } from "@/lib/components/form-privacy-notice";
 import { useSession } from "@/lib/hooks/useSession";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { createUserContactAction } from "@/modules/user-contacts/server-actions/create-user-contact.action";
@@ -141,6 +142,8 @@ export const ArtistContactDialog = ({
                   required
                   error={inputErrors?.message}
                 />
+
+                <FormPrivacyNotice context="artistContact" />
 
                 <FormComponent.SubmitButton
                   isPending={isPending}

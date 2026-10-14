@@ -1,0 +1,8 @@
+{
+  "SUBJECT": "We received your report (#{id})",
+  "HI": "Hi",
+  "TITLE": "Thank you for your report",
+  "DESCRIPTION": "We have received your notice about content on A11STUDIO. Our team will review it carefully and act on it if it breaks the law or our Terms of Service. We will email you our decision.",
+  "REFERENCE": "Reference #{id}",
+  "IGNORE": "If you did not send this report, you can ignore this email."
+}

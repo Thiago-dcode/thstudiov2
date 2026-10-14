@@ -124,6 +124,10 @@ services:
         GEOAPIFY_URL: ${GEOAPIFY_URL}
         SUPPORT_EMAIL: ${SUPPORT_EMAIL}
         SUPPORT_USERNAME: ${SUPPORT_USERNAME}
+        LEGAL_OWNER_NAME: ${LEGAL_OWNER_NAME:-}
+        LEGAL_TAX_ID: ${LEGAL_TAX_ID:-}
+        LEGAL_ADDRESS: ${LEGAL_ADDRESS:-}
+        LEGAL_REGISTRY: ${LEGAL_REGISTRY:-}
         REGISTRATION_IS_CLOSED: ${REGISTRATION_IS_CLOSED}
         # Baked into next/image remotePatterns at build time (see apps/web/Dockerfile).
         CDN_URL: ${CDN_URL}

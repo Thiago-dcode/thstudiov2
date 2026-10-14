@@ -73,8 +73,6 @@ const messages = {
             },
           ],
           learnMore: "Lee las preguntas frecuentes de la lista de espera",
-          privacy:
-            "Solo usamos tu correo para gestionar tu plaza en la lista de espera.",
         },
       },
       disclaimer: "Gratis para empezar · No se requiere tarjeta",
@@ -472,10 +470,76 @@ const messages = {
     },
   },
   language: "Idioma",
+  formPrivacyNotice: {
+    report:
+      "Usamos estos datos solo para gestionar tu denuncia y, si dejas un email, comunicarte el resultado. Más información en nuestra <privacy>Política de privacidad</privacy>.",
+    register:
+      "Usamos tus datos para crear y gestionar tu cuenta y tu portfolio. Tus derechos y cómo tratamos tus datos: <privacy>Política de privacidad</privacy>.",
+    acceptTerms:
+      "Acepto los <terms>Términos del servicio</terms> y confirmo que tengo al menos 16 años.",
+    acceptTermsRequired:
+      "Acepta los Términos del servicio para crear tu cuenta.",
+    waitList:
+      "Solo usamos tu email para gestionar tu plaza en la lista de espera y enviarte tu invitación. Más información en nuestra <privacy>Política de privacidad</privacy>.",
+    support:
+      "Usamos estos datos solo para responder a tu solicitud. Más información en nuestra <privacy>Política de privacidad</privacy>.",
+    artistContact:
+      "Tu nombre, email y mensaje se envían a este artista para que pueda responderte. Más información en nuestra <privacy>Política de privacidad</privacy>.",
+  },
+  report: {
+    metadata: {
+      title: "Denunciar contenido — A11STUDIO",
+      description:
+        "Denuncia contenido de A11STUDIO que consideres ilegal o contrario a nuestros Términos del servicio. Revisamos cada aviso y te comunicamos el resultado.",
+    },
+    label: "Denunciar contenido",
+    title: "Denunciar contenido",
+    description:
+      "Si crees que algo publicado en A11STUDIO es ilegal o incumple nuestros Términos del servicio, cuéntanoslo aquí. Revisamos cada aviso, actuamos cuando está justificado y te enviamos nuestra decisión por email si nos dejas una dirección.",
+    emergency:
+      "Si alguien está en peligro inmediato, contacta primero con los servicios de emergencia (112).",
+    form: {
+      urlLabel: "Enlace al contenido",
+      reasonLabel: "¿Qué problema tiene?",
+      reasonPlaceholder: "Elige un motivo",
+      reasons: {
+        ILLEGAL_CONTENT: "Contenido ilegal",
+        CHILD_SAFETY: "Abuso o explotación sexual infantil",
+        INTELLECTUAL_PROPERTY: "Infracción de derechos de autor o de marca",
+        HATE_OR_VIOLENCE: "Discurso de odio, amenazas o violencia",
+        PRIVACY: "Datos personales o vulneración de la privacidad",
+        FRAUD_OR_SCAM: "Fraude o estafa",
+        OTHER: "Otro motivo",
+      },
+      explanationLabel: "¿Por qué es ilegal o incumple las normas?",
+      explanationPlaceholder:
+        "Explica cuál es el problema y, si puedes, qué ley o derecho vulnera.",
+      nameLabel: "Tu nombre (opcional)",
+      emailLabel: "Tu email (opcional)",
+      emailInfo:
+        "Solo lo usamos para confirmarte que hemos recibido la denuncia y comunicarte nuestra decisión.",
+      goodFaith:
+        "Confirmo que la información de esta denuncia es exacta y completa según mi leal saber y entender, y que denuncio de buena fe.",
+      submit: "Enviar denuncia",
+      success: {
+        title: "Gracias. Hemos recibido tu denuncia.",
+        body: "Tu referencia es #{id}. La revisaremos y, si nos has dejado un email, te comunicaremos nuestra decisión.",
+      },
+      errors: {
+        url: "Pega el enlace completo a la página, empezando por https://.",
+        reason: "Elige un motivo.",
+        explanation: "Explica el problema en al menos 20 caracteres.",
+        goodFaith: "Confirma que la denuncia es exacta y de buena fe.",
+        notOurSite: "El enlace debe ser de una página de A11STUDIO.",
+        tooMany:
+          "Demasiadas denuncias en poco tiempo. Espera un minuto y vuelve a intentarlo.",
+      },
+    },
+  },
   cookieConsent: {
     title: "Cookies",
     lead: "Ayúdanos a mejorar A11STUDIO.",
-    body: "Si nos das tu permiso, usamos cookies de analítica para contar las visitas de forma agregada y ver qué funciona. Sin publicidad, sin vender datos, y puedes cambiar de opinión cuando quieras.",
+    body: "Si nos das tu permiso, usamos cookies de analítica de terceros (Google Analytics) para contar las visitas de forma agregada y ver qué funciona. Sin publicidad, sin vender datos, y puedes cambiar de opinión cuando quieras.",
     learnMore: "Política de cookies",
     accept: "Aceptar",
     reject: "Rechazar",
@@ -504,6 +568,8 @@ const messages = {
     },
     legal: {
       heading: "Legal",
+      report: "Denunciar contenido",
+      notice: "Aviso legal",
       privacy: "Política de privacidad",
       terms: "Términos de servicio",
       cookies: "Política de cookies",
@@ -755,6 +821,50 @@ const messages = {
   },
   legal: {
     lastUpdated: "Última actualización — {date}",
+    notice: {
+      metadata: {
+        title: "Aviso legal — A11STUDIO",
+        description:
+          "Quién está detrás de A11STUDIO: identificación del titular, datos de contacto y la información legal exigida por la LSSI-CE.",
+      },
+      updatedAt: "2026-10-14",
+      heading: "Aviso legal",
+      intro:
+        "En cumplimiento del artículo 10 de la Ley 34/2002, de Servicios de la Sociedad de la Información y de Comercio Electrónico (LSSI-CE), estos son los datos de quien gestiona este sitio web.",
+      owner: {
+        title: "1. Titular del sitio web",
+        body: "El sitio web a11studio.com y la plataforma A11STUDIO son gestionados por:",
+        name: "<strong>Titular:</strong> {value}",
+        taxId: "<strong>NIF/CIF:</strong> {value}",
+        address: "<strong>Domicilio:</strong> {value}",
+        email: "<strong>Email:</strong> <email/>",
+        registry: "<strong>Datos registrales:</strong> {value}",
+      },
+      purpose: {
+        title: "2. Objeto",
+        body: "A11STUDIO es una plataforma online en la que artistas crean y publican sus portfolios, y en la que los visitantes pueden descubrir su trabajo y contactar con ellos.",
+      },
+      conditions: {
+        title: "3. Condiciones de uso",
+        body: "El uso del sitio web implica la aceptación de este aviso. La creación de una cuenta y el uso de la plataforma se rigen por nuestros <doc>Términos del servicio</doc>.",
+      },
+      ip: {
+        title: "4. Propiedad intelectual",
+        body: "El diseño, el código, la marca y los textos del sitio web pertenecen a su titular. Las obras publicadas por los artistas pertenecen a sus autores y no pueden reproducirse sin su permiso.",
+      },
+      privacy: {
+        title: "5. Protección de datos",
+        body: "Cómo tratamos los datos personales, y cómo ejercer tus derechos, se explica en nuestra <doc>Política de privacidad</doc>.",
+      },
+      law: {
+        title: "6. Legislación aplicable",
+        body: "Este aviso se rige por la legislación española. Si eres consumidor, conservas la protección de las leyes imperativas de tu país de residencia y puedes reclamar ante los tribunales de tu domicilio.",
+      },
+      contact: {
+        title: "7. Puntos de contacto (Reglamento de Servicios Digitales)",
+        body: "Punto único de contacto para usuarios y para las autoridades de los Estados miembros, la Comisión Europea y la Junta Europea de Servicios Digitales (arts. 11 y 12 del Reglamento de Servicios Digitales): <email/>. Respondemos en español, inglés y portugués. Para denunciar un contenido que consideres ilegal, usa nuestro <doc>formulario de denuncia</doc>.",
+      },
+    },
     terms: {
       metadata: {
         title: "Términos del servicio — A11STUDIO",
@@ -767,7 +877,7 @@ const messages = {
         "Estos términos regulan el uso de la plataforma A11STUDIO. Al crear una cuenta o utilizar nuestros servicios, aceptas quedar vinculado por ellos.",
       acceptance: {
         title: "1. Aceptación de los términos",
-        body: 'Al acceder o utilizar A11STUDIO ("la Plataforma"), aceptas estos Términos del servicio. Si no estás de acuerdo, no debes usar la Plataforma. Podemos actualizar estos términos en cualquier momento: seguir usándola tras un cambio implica su aceptación.',
+        body: 'Al acceder o utilizar A11STUDIO ("la Plataforma"), aceptas estos Términos del servicio. Si no estás de acuerdo, no debes usar la Plataforma. Si hacemos cambios importantes, te avisaremos por email o en la aplicación al menos 30 días antes de que se apliquen. Si no estás de acuerdo con ellos, puedes cerrar tu cuenta antes de esa fecha.',
       },
       account: {
         title: "2. Registro de cuenta",
@@ -790,6 +900,8 @@ const messages = {
           "Puedes gestionar o cancelar tu suscripción desde los ajustes de tu cuenta en cualquier momento.",
         promos:
           "Las ofertas promocionales y los descuentos pueden aplicarse a determinados precios y están sujetos a sus propias condiciones.",
+        withdrawal:
+          "<strong>Derecho de desistimiento (consumidores de la UE)</strong> — puedes desistir de una suscripción de pago en los 14 días siguientes a la compra sin dar ninguna razón, escribiendo a <email/>. Te devolvemos lo pagado, descontando la parte proporcional del servicio ya utilizado, en un plazo de 14 días.",
       },
       ownership: {
         title: "4. Propiedad del contenido",
@@ -859,15 +971,15 @@ const messages = {
       },
       warranties: {
         title: "11. Exención de garantías",
-        body: 'La Plataforma se ofrece "tal cual" y "según disponibilidad", sin garantías de ningún tipo, expresas o implícitas, incluidas —sin limitación— las de comerciabilidad, idoneidad para un fin concreto o no infracción. No garantizamos un servicio ininterrumpido ni libre de errores.',
+        body: 'Trabajamos para que la Plataforma esté disponible y funcione bien, pero no garantizamos un servicio ininterrumpido ni libre de errores. En la medida en que lo permita la ley, la Plataforma se ofrece "tal cual". Nada de estos términos limita tus derechos legales como consumidor, incluida la garantía legal de que el servicio sea conforme con lo acordado.',
       },
       liability: {
         title: "12. Limitación de responsabilidad",
-        body: "En la máxima medida permitida por la ley, A11STUDIO no será responsable de daños indirectos, incidentales, especiales, consecuentes o punitivos derivados del uso de la Plataforma, incluida la pérdida de datos, ingresos o beneficios.",
+        body: "En la medida en que lo permita la ley, A11STUDIO no responde de daños indirectos o consecuenciales derivados del uso de la Plataforma, como la pérdida de ingresos o beneficios. Esto no limita nuestra responsabilidad por dolo o culpa grave, por muerte o daños personales, ni ninguna responsabilidad que la ley no permita limitar, y no afecta a tus derechos imperativos como consumidor.",
       },
       law: {
         title: "13. Legislación aplicable",
-        body: "Estos términos se rigen e interpretan conforme a la legislación aplicable. Cualquier disputa derivada de estos términos o del uso de la Plataforma se resolverá ante los tribunales competentes de la jurisdicción en la que A11STUDIO esté establecida.",
+        body: "Estos términos se rigen por la legislación española. Si eres consumidor, conservas además la protección de las leyes imperativas de tu país de residencia y puedes reclamar ante los tribunales de tu domicilio. También puedes acudir a la autoridad de consumo de tu comunidad o país.",
       },
       contact: {
         title: "14. Contacto",
@@ -886,7 +998,7 @@ const messages = {
         "Esta política describe cómo A11STUDIO recopila, utiliza, almacena y protege tu información cuando usas nuestra plataforma. Nos comprometemos con la transparencia y con la protección de tus datos.",
       controller: {
         title: "1. Responsable del tratamiento",
-        body: 'A11STUDIO ("nosotros") es el responsable del tratamiento de tus datos personales. Para cualquier consulta sobre privacidad, escríbenos a <email/>.',
+        body: 'A11STUDIO ("nosotros") es el responsable del tratamiento de tus datos personales. Nuestros datos identificativos y domicilio completos están en el <notice>Aviso legal</notice>. Para cualquier consulta sobre privacidad, escríbenos a <email/>.',
       },
       collect: {
         title: "2. Información que recopilamos",
@@ -911,6 +1023,8 @@ const messages = {
       ai: {
         title: "4. Procesamiento con IA",
         body: "A11STUDIO utiliza inteligencia artificial para funciones como las sugerencias de contenido y la moderación automática. Registramos el uso para gestionar tu asignación de créditos de IA. El procesamiento lo realizan proveedores externos y solo se envían los datos mínimos necesarios.",
+        automated:
+          "Cada archivo se revisa automáticamente antes de publicarse. El contenido que incumple nuestras normas se bloquea y puede sumar una falta a tu cuenta, y la acumulación de faltas conlleva una suspensión temporal o definitiva. Puedes pedir que una persona revise cualquiera de estas decisiones escribiendo a <email/>.",
       },
       usage: {
         title: "5. Cómo usamos tus datos",
@@ -926,25 +1040,31 @@ const messages = {
           "Entregar los mensajes del formulario de contacto entre visitantes y artistas",
         analytics:
           "Medir cómo se usa la plataforma mediante estadísticas agregadas (solo con tu consentimiento)",
+        bases:
+          "<strong>Bases legales:</strong> tratamos los datos de tu cuenta, portfolio, facturación y contacto para ejecutar el contrato contigo (art. 6.1.b RGPD); las facturas para cumplir la normativa fiscal (art. 6.1.c); los registros de seguridad, la prevención del fraude, la moderación automática y los emails del servicio por nuestro interés legítimo en una plataforma segura y que funcione (art. 6.1.f); y la analítica solo con tu consentimiento (art. 6.1.a).",
       },
       sharing: {
         title: "6. Cesión de datos",
         body: "No vendemos tus datos personales. Solo los compartimos con los siguientes servicios externos en la medida necesaria para operar la plataforma:",
         payments:
           "<strong>Stripe y PayPal</strong> — para el procesamiento de pagos y la gestión de suscripciones",
-        ai: "<strong>Proveedores de IA / LLM</strong> — para la generación de contenido y la moderación de archivos",
+        ai: "<strong>OpenAI</strong> — para la generación de contenido y la moderación de archivos",
         email:
-          "<strong>Proveedor de correo</strong> — para los correos transaccionales (verificación, recuperación de contraseña, notificaciones)",
+          "<strong>Resend</strong> — para los correos transaccionales (verificación, recuperación de contraseña, notificaciones)",
+        hosting:
+          "<strong>Proveedores de alojamiento y almacenamiento en la nube</strong> — para operar la plataforma y guardar tus archivos",
+        transfers:
+          "Algunos de estos proveedores (OpenAI, Resend, Google) están en Estados Unidos. Esas transferencias se amparan en el Marco de Privacidad de Datos UE-EE. UU. o en las Cláusulas Contractuales Tipo de la Comisión Europea.",
         analytics:
           "<strong>Google Analytics (Google Ireland Limited)</strong> — para estadísticas de uso agregadas, solo si aceptas las cookies de analítica. La base jurídica es tu consentimiento, que puedes retirar en cualquier momento desde «Configuración de cookies» en el pie de página",
       },
       retention: {
         title: "7. Conservación de los datos",
-        body: "Conservamos tus datos personales mientras tu cuenta esté activa. Los registros de seguridad se conservan para proteger la cuenta, y los registros de pago durante el tiempo que exija la normativa aplicable. Cuando eliminas tu cuenta, se oculta de inmediato y se borra de forma permanente 15 días después (el plazo te permite cambiar de opinión), junto con tus archivos y el contenido asociado, salvo los registros de pago que la ley nos obliga a conservar. Una cuenta desactivada conserva sus datos, ocultos al público, hasta que la reactives o la elimines.",
+        body: "Conservamos tus datos personales mientras tu cuenta esté activa. Los registros de seguridad se conservan hasta 30 días, y las facturas y registros de pago durante los plazos que exige la normativa fiscal y mercantil (hasta 6 años). Los mensajes de los formularios de contacto se conservan hasta que el destinatario los borra o se elimina su cuenta, y las denuncias de contenido el tiempo necesario para tramitarlas y atender posibles reclamaciones. Cuando eliminas tu cuenta, se oculta de inmediato y se borra de forma permanente 15 días después (el plazo te permite cambiar de opinión), junto con tus archivos y el contenido asociado, salvo los registros de pago que la ley nos obliga a conservar. Una cuenta desactivada conserva sus datos, ocultos al público, hasta que la reactives o la elimines.",
       },
       rights: {
         title: "8. Tus derechos",
-        body: "Según tu jurisdicción, puedes tener los siguientes derechos sobre tus datos personales:",
+        body: "Tienes los siguientes derechos sobre tus datos personales:",
         access:
           "<strong>Acceso</strong> — solicitar una copia de los datos que tenemos sobre ti",
         rectification:
@@ -957,8 +1077,12 @@ const messages = {
           "<strong>Limitación</strong> — pedir que restrinjamos el tratamiento de tus datos",
         objection:
           "<strong>Oposición</strong> — oponerte al tratamiento basado en intereses legítimos",
+        withdraw:
+          "<strong>Retirar el consentimiento</strong> — cuando el tratamiento se basa en tu consentimiento (cookies de analítica), puedes retirarlo en cualquier momento",
         body2:
-          "Para ejercer cualquiera de estos derechos, escríbenos a <email/>.",
+          "Para ejercer cualquiera de estos derechos, escríbenos a <email/>. Respondemos en el plazo de un mes. También puedes eliminar tu cuenta tú mismo desde Ajustes.",
+        complaint:
+          "Si crees que no hemos tratado tus datos correctamente, puedes presentar una reclamación ante la Agencia Española de Protección de Datos (AEPD, www.aepd.es) o la autoridad de tu país.",
       },
       security: {
         title: "9. Seguridad",
@@ -970,7 +1094,7 @@ const messages = {
       },
       changes: {
         title: "11. Cambios en esta política",
-        body: "Podemos actualizar esta política de vez en cuando. Los cambios se publicarán en esta página con una fecha de revisión actualizada. Seguir usando la plataforma tras un cambio implica la aceptación de la política revisada.",
+        body: "Podemos actualizar esta política de vez en cuando. Los cambios se publican en esta página con una fecha de revisión actualizada, y te avisaremos de los cambios importantes por email o en la aplicación antes de que se apliquen.",
       },
       contact: {
         title: "12. Contacto",

@@ -52,7 +52,12 @@ export default async function PrivacyPolicyPage() {
       />
 
       <Section title={t("controller.title")}>
-        <P>{t.rich("controller.body", email)}</P>
+        <P>
+          {t.rich("controller.body", {
+            ...email,
+            notice: (chunks) => docTag("/legal/notice").doc(chunks),
+          })}
+        </P>
       </Section>
 
       <Section title={t("collect.title")}>
@@ -75,6 +80,7 @@ export default async function PrivacyPolicyPage() {
 
       <Section title={t("ai.title")}>
         <P>{t("ai.body")}</P>
+        <P>{t.rich("ai.automated", email)}</P>
       </Section>
 
       <Section title={t("usage.title")}>
@@ -91,6 +97,7 @@ export default async function PrivacyPolicyPage() {
             t("usage.analytics"),
           ]}
         />
+        <P>{t.rich("usage.bases", strongTag)}</P>
       </Section>
 
       <Section title={t("sharing.title")}>
@@ -100,9 +107,11 @@ export default async function PrivacyPolicyPage() {
             t.rich("sharing.payments", strongTag),
             t.rich("sharing.ai", strongTag),
             t.rich("sharing.email", strongTag),
+            t.rich("sharing.hosting", strongTag),
             t.rich("sharing.analytics", strongTag),
           ]}
         />
+        <P>{t("sharing.transfers")}</P>
       </Section>
 
       <Section title={t("retention.title")}>
@@ -119,9 +128,11 @@ export default async function PrivacyPolicyPage() {
             t.rich("rights.portability", strongTag),
             t.rich("rights.restriction", strongTag),
             t.rich("rights.objection", strongTag),
+            t.rich("rights.withdraw", strongTag),
           ]}
         />
         <P>{t.rich("rights.body2", email)}</P>
+        <P>{t("rights.complaint")}</P>
       </Section>
 
       <Section title={t("security.title")}>
