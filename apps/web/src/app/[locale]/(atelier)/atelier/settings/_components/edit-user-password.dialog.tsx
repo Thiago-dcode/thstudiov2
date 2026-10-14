@@ -82,10 +82,10 @@ export const EditUserPasswordDialog = ({ user }: Props) => {
         <FormComponent.Container>
           {maxResetReached ? (
             <div className=" border border-error/30 bg-error/5 px-4 py-3 text-sm space-y-1">
-              <p className="font-medium text-error">
+              <p className="text-sm! font-medium text-error">
                 {t("monthlyLimitReached")}
               </p>
-              <p className="text-text-muted">
+              <p className="text-sm! text-text-muted">
                 {t("usedAllChanges", { max: MAX_PASSWORD_RESET })}
                 {resetDateFormatted && (
                   <>
@@ -129,7 +129,7 @@ export const EditUserPasswordDialog = ({ user }: Props) => {
               />
 
               {effectiveCount > 0 && (
-                <p className="text-xs text-text-muted">
+                <p className="text-xs! text-text-muted">
                   {t("remainingChanges", {
                     remaining,
                     max: MAX_PASSWORD_RESET,
