@@ -5,7 +5,9 @@ export type AnalyticsEventName =
   | "signup_started"
   | "sign_up"
   | "portfolio_created"
-  | "first_artwork_uploaded";
+  | "first_artwork_uploaded"
+  | "waitlist_opened"
+  | "waitlist_joined";
 
 type AnalyticsParams = Record<string, string | number | boolean>;
 

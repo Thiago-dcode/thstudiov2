@@ -16,6 +16,7 @@ import { toast } from "@repo/ui/sonner";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "@/i18n/navigation";
+import { trackEvent } from "@/lib/analytics/track";
 import { WAIT_LIST_FAQ_ID } from "@/lib/components/faqs";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { createWaitListSchema } from "@/modules/wait-list/schemas/wait-list.schema";
@@ -136,6 +137,9 @@ export function WaitListForm({
 
   useEffect(() => {
     if (!result?.data) return;
+    trackEvent("waitlist_joined", {
+      already_exists: result.data.already_exists === true,
+    });
     onSuccess(result.data);
     if (emailInputRef.current) {
       emailInputRef.current.value = "";

@@ -15,6 +15,7 @@ import { ArrowRight } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useState } from "react";
 import { Link } from "@/i18n/navigation";
+import { trackEvent } from "@/lib/analytics/track";
 import { useSession } from "@/lib/hooks/useSession";
 import { useAppStatus } from "@/lib/providers/app-status.provider";
 import {
@@ -82,7 +83,13 @@ export function RegistrationCtaButton({
   if (registrationIsClosed) {
     return (
       <>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <Dialog
+          open={dialogOpen}
+          onOpenChange={(open) => {
+            setDialogOpen(open);
+            if (open) trackEvent("waitlist_opened");
+          }}
+        >
           <DialogTrigger asChild>
             <Button variant="accent" size={size} className={cn(className)}>
               {label}
