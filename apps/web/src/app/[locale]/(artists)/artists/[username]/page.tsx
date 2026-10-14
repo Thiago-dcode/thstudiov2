@@ -1,13 +1,12 @@
 import { normalizeUsername } from "@repo/common-lib/utils/username";
 import { Badge } from "@repo/ui/components/shadcn/badge";
-import { ArrowRight, Globe, Mail, MapPin, Phone } from "lucide-react";
+import { Globe, Mail, MapPin, Phone } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 import fallbackBanner from "@/assets/images/fallback-banner.jpg";
-import { Link } from "@/i18n/navigation";
 import {
   FacebookIcon,
   InstagramIcon,
@@ -161,7 +160,7 @@ const ArtistHomePage = async ({ params }: Props) => {
         </div>
       </section>
 
-      {/* Profile Identity + CTAs */}
+      {/* Profile identity */}
       <section className="mx-auto flex w-full max-w-2xl flex-col items-center gap-6 px-6 pt-24 pb-12 text-center tablet:pt-28">
         <div className="space-y-3">
           <h1 className="font-serif  tracking-tight tablet:text-4xl laptop:text-5xl">
@@ -192,102 +191,78 @@ const ArtistHomePage = async ({ params }: Props) => {
           </ul>
         )}
 
-        {/* CTAs — directly under identity */}
-        <div className="flex flex-col items-center justify-center gap-3 pt-4 phone-lg:flex-row">
+        {/* Email sits with the other contact icons. About lives in artist navigation. */}
+        <nav
+          aria-label={t("connect")}
+          className="flex flex-wrap items-center justify-center gap-2 pt-2"
+        >
           <ArtistContactDialog>
             <button
               type="button"
-              className="group inline-flex min-h-11 cursor-pointer items-center gap-2.5 bg-text px-7 py-3 text-xs tracking-[0.15em] text-bg uppercase transition-all duration-300 hover:bg-text/90"
+              aria-label={t("emailLabel", { name: heading })}
+              className="inline-flex size-11 cursor-pointer items-center justify-center border border-border/50 text-text-muted transition-colors duration-300 hover:border-text/30 hover:text-text"
             >
-              <Mail
-                className="size-3.5 transition-transform duration-300 group-hover:-translate-y-px"
-                aria-hidden="true"
-              />
-              <span>{t("getInTouch")}</span>
+              <Mail className="size-4" aria-hidden="true" />
             </button>
           </ArtistContactDialog>
-
-          <Link
-            href={`/artists/${profile.username}/about`}
-            className="group inline-flex min-h-11 items-center gap-2.5 border border-border/50 px-7 py-3 text-xs tracking-[0.15em] text-text-muted uppercase transition-all duration-300 hover:border-text/30 hover:text-text"
-          >
-            <span>{t("aboutHeading", { name: heading })}</span>
-            <ArrowRight
-              className="size-3.5 transition-transform duration-300 group-hover:translate-x-0.5"
-              aria-hidden="true"
-            />
-          </Link>
-        </div>
-
-        {/* Social & contact links — quiet, secondary to the identity + CTAs */}
-        {(profile.phone_number ||
-          profile.instagram_link ||
-          profile.facebook_link ||
-          profile.youtube_link ||
-          profile.website_link) && (
-          <nav
-            aria-label={t("connect")}
-            className="flex flex-wrap items-center justify-center gap-2 pt-2"
-          >
-            {profile.phone_number && (
-              <a
-                href={`tel:${profile.phone_number}`}
-                aria-label={t("phoneLabel", { name: heading })}
-                className="inline-flex size-11 items-center justify-center border border-border/50 text-text-muted transition-colors duration-300 hover:border-text/30 hover:text-text"
-              >
-                <Phone className="size-4" aria-hidden="true" />
-              </a>
-            )}
-            {/* Artist-supplied outbound links are user-generated content: `nofollow ugc` so a
-                directory of artist profiles doesn't become a link farm, and so a spam profile
-                can't pass A11STUDIO's authority to an arbitrary site. `Person.sameAs` in the
-                JSON-LD still carries the raw URLs — that's entity identity, not a link vote. */}
-            {profile.instagram_link && (
-              <a
-                href={profile.instagram_link}
-                target="_blank"
-                rel="noreferrer noopener nofollow ugc"
-                aria-label={t("instagramLabel", { name: heading })}
-                className="inline-flex size-11 items-center justify-center border border-border/50 text-text-muted transition-colors duration-300 hover:border-text/30 hover:text-text"
-              >
-                <InstagramIcon className="size-4" />
-              </a>
-            )}
-            {profile.facebook_link && (
-              <a
-                href={profile.facebook_link}
-                target="_blank"
-                rel="noreferrer noopener nofollow ugc"
-                aria-label={t("facebookLabel", { name: heading })}
-                className="inline-flex size-11 items-center justify-center border border-border/50 text-text-muted transition-colors duration-300 hover:border-text/30 hover:text-text"
-              >
-                <FacebookIcon className="size-4" />
-              </a>
-            )}
-            {profile.youtube_link && (
-              <a
-                href={profile.youtube_link}
-                target="_blank"
-                rel="noreferrer noopener nofollow ugc"
-                aria-label={t("youtubeLabel", { name: heading })}
-                className="inline-flex size-11 items-center justify-center border border-border/50 text-text-muted transition-colors duration-300 hover:border-text/30 hover:text-text"
-              >
-                <YoutubeIcon className="size-4" />
-              </a>
-            )}
-            {profile.website_link && (
-              <a
-                href={profile.website_link}
-                target="_blank"
-                rel="noreferrer noopener nofollow ugc"
-                aria-label={t("websiteLabel", { name: heading })}
-                className="inline-flex size-11 items-center justify-center border border-border/50 text-text-muted transition-colors duration-300 hover:border-text/30 hover:text-text"
-              >
-                <Globe className="size-4" aria-hidden="true" />
-              </a>
-            )}
-          </nav>
-        )}
+          {profile.phone_number && (
+            <a
+              href={`tel:${profile.phone_number}`}
+              aria-label={t("phoneLabel", { name: heading })}
+              className="inline-flex size-11 items-center justify-center border border-border/50 text-text-muted transition-colors duration-300 hover:border-text/30 hover:text-text"
+            >
+              <Phone className="size-4" aria-hidden="true" />
+            </a>
+          )}
+          {/* Artist-supplied outbound links are user-generated content: `nofollow ugc` so a
+              directory of artist profiles doesn't become a link farm, and so a spam profile
+              can't pass A11STUDIO's authority to an arbitrary site. `Person.sameAs` in the
+              JSON-LD still carries the raw URLs — that's entity identity, not a link vote. */}
+          {profile.instagram_link && (
+            <a
+              href={profile.instagram_link}
+              target="_blank"
+              rel="noreferrer noopener nofollow ugc"
+              aria-label={t("instagramLabel", { name: heading })}
+              className="inline-flex size-11 items-center justify-center border border-border/50 text-text-muted transition-colors duration-300 hover:border-text/30 hover:text-text"
+            >
+              <InstagramIcon className="size-4" />
+            </a>
+          )}
+          {profile.facebook_link && (
+            <a
+              href={profile.facebook_link}
+              target="_blank"
+              rel="noreferrer noopener nofollow ugc"
+              aria-label={t("facebookLabel", { name: heading })}
+              className="inline-flex size-11 items-center justify-center border border-border/50 text-text-muted transition-colors duration-300 hover:border-text/30 hover:text-text"
+            >
+              <FacebookIcon className="size-4" />
+            </a>
+          )}
+          {profile.youtube_link && (
+            <a
+              href={profile.youtube_link}
+              target="_blank"
+              rel="noreferrer noopener nofollow ugc"
+              aria-label={t("youtubeLabel", { name: heading })}
+              className="inline-flex size-11 items-center justify-center border border-border/50 text-text-muted transition-colors duration-300 hover:border-text/30 hover:text-text"
+            >
+              <YoutubeIcon className="size-4" />
+            </a>
+          )}
+          {profile.website_link && (
+            <a
+              href={profile.website_link}
+              target="_blank"
+              rel="noreferrer noopener nofollow ugc"
+              aria-label={t("websiteLabel", { name: heading })}
+              className="inline-flex size-11 items-center justify-center border border-border/50 text-text-muted transition-colors duration-300 hover:border-text/30 hover:text-text"
+            >
+              <Globe className="size-4" aria-hidden="true" />
+            </a>
+          )}
+        </nav>
       </section>
 
       {/* Short Biography — editorial pull-quote */}
