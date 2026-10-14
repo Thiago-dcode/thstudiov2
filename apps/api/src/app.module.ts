@@ -54,6 +54,7 @@ import { InvitationLinkModule } from './v1/modules/invitation-links/invitation-l
 import { UserBenefitModule } from './v1/modules/user-benefit/user-benefit.module';
 import { UserSubscriptionModule } from './v1/modules/user-subscription/user-subscription.module';
 import { PlanSubscriptionsProcessorModule } from './v1/modules/plan-subscriptions/plan-subscriptions-processor.module';
+import { AccountDeletionModule } from './v1/modules/account-deletion/account-deletion.module';
 import { WaitListModule } from './v1/modules/wait-list/wait-list.module';
 import { EmailPreferencesModule } from './v1/modules/email-preferences/email-preferences.module';
 import { UserEmailPreferencesModule } from './v1/modules/user-email-preferences/user-email-preferences.module';
@@ -108,6 +109,8 @@ const ALL_APP_MODULES = [
   /** Bull AI worker + scheduled tasks (`AiTask`: AI credits reset cron). */
   AiProcessorModule,
   PlanSubscriptionsProcessorModule,
+  /** Self-service account deletion: daily warning + hard-delete cron and its queue worker. */
+  AccountDeletionModule,
   ServicesModule,
   UserExtraDataModule,
   TestModule,

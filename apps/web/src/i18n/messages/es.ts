@@ -761,7 +761,7 @@ const messages = {
         description:
           "Términos y condiciones de uso de la plataforma de portafolios A11STUDIO — cuentas, planes de suscripción, propiedad del contenido, uso aceptable y moderación.",
       },
-      updatedAt: "2026-03-16",
+      updatedAt: "2026-10-14",
       heading: "Términos del servicio",
       intro:
         "Estos términos regulan el uso de la plataforma A11STUDIO. Al crear una cuenta o utilizar nuestros servicios, aceptas quedar vinculado por ellos.",
@@ -853,7 +853,7 @@ const messages = {
       termination: {
         title: "10. Cancelación",
         body1:
-          "Puedes eliminar tu cuenta en cualquier momento desde los ajustes. Al hacerlo, tus datos personales, archivos y contenido se eliminarán según se describe en nuestra <doc>Política de privacidad</doc>.",
+          "Puedes eliminar tu cuenta en cualquier momento desde los ajustes. Tu perfil se oculta de inmediato y, 15 días después, tu cuenta, tus datos personales, archivos y contenido se eliminan de forma permanente según se describe en nuestra <doc>Política de privacidad</doc>. Hasta entonces puedes iniciar sesión y reabrirla; te avisamos por email 2 días antes de la eliminación. También puedes desactivar tu cuenta, lo que la oculta a todo el mundo sin borrar nada, y reactivarla cuando quieras.",
         body2:
           "Nos reservamos el derecho a suspender o cerrar las cuentas que incumplan estos términos, abusen de la plataforma o realicen actividades fraudulentas.",
       },
@@ -880,7 +880,7 @@ const messages = {
         description:
           "Cómo A11STUDIO recopila, usa, almacena y protege tus datos personales: qué recogemos, con quién lo compartimos, cuánto tiempo lo conservamos y qué derechos tienes.",
       },
-      updatedAt: "2026-10-13",
+      updatedAt: "2026-10-14",
       heading: "Política de privacidad",
       intro:
         "Esta política describe cómo A11STUDIO recopila, utiliza, almacena y protege tu información cuando usas nuestra plataforma. Nos comprometemos con la transparencia y con la protección de tus datos.",
@@ -940,7 +940,7 @@ const messages = {
       },
       retention: {
         title: "7. Conservación de los datos",
-        body: "Conservamos tus datos personales mientras tu cuenta esté activa. Los registros de seguridad se conservan para proteger la cuenta, y los registros de pago durante el tiempo que exija la normativa aplicable. Cuando eliminas tu cuenta, borramos tus datos personales y el contenido asociado en un plazo razonable, salvo cuando la ley obligue a conservarlos.",
+        body: "Conservamos tus datos personales mientras tu cuenta esté activa. Los registros de seguridad se conservan para proteger la cuenta, y los registros de pago durante el tiempo que exija la normativa aplicable. Cuando eliminas tu cuenta, se oculta de inmediato y se borra de forma permanente 15 días después (el plazo te permite cambiar de opinión), junto con tus archivos y el contenido asociado, salvo los registros de pago que la ley nos obliga a conservar. Una cuenta desactivada conserva sus datos, ocultos al público, hasta que la reactives o la elimines.",
       },
       rights: {
         title: "8. Tus derechos",
@@ -1262,6 +1262,17 @@ const messages = {
     maybeLater: "Quizá más tarde",
     gotItThanks: "Entendido, gracias.",
   },
+  pendingDeletion: {
+    title: "Tu cuenta se eliminará el {date}",
+    description:
+      "Nos pediste eliminar tu cuenta. Después de esa fecha, tu contenido multimedia, portfolios y perfil desaparecen para siempre.",
+    invisible:
+      "Hasta entonces, tu cuenta es invisible para el resto de personas.",
+    reopen: "Reabrir mi cuenta",
+    logout: "Cerrar sesión",
+    reopenedToast: "Bienvenido de nuevo. Tu cuenta vuelve a ser pública.",
+    tooLate: "Tu cuenta ya se está eliminando y no se puede reabrir.",
+  },
   userAccountBanned: {
     title: "Cuenta suspendida",
     description: "Tu cuenta ha sido suspendida por incumplir las políticas.",
@@ -1402,6 +1413,11 @@ const messages = {
       "Elegir pocas categorías (se recomiendan 1–3) mejora tu visibilidad.",
   },
   artists: {
+    hiddenNotice: {
+      title: "Solo tú puedes ver esta página.",
+      body: 'Tu cuenta está desactivada, así que los visitantes ven "página no encontrada".',
+      cta: "Reactivar en Ajustes",
+    },
     shareProfile: "Compartir perfil",
     brandMark: {
       madeWith: "Hecho con",
@@ -2465,6 +2481,9 @@ const messages = {
       closeMenuAria: "Cerrar menú",
     },
     topNav: {
+      accountDeactivated: "Cuenta desactivada",
+      accountDeactivatedHint:
+        "Tu perfil está oculto para todo el mundo. Reactívalo desde Ajustes.",
       openMenuAria: "Abrir menú",
       expandSidebarAria: "Expandir barra lateral",
       collapseSidebarAria: "Contraer barra lateral",
@@ -2511,6 +2530,53 @@ const messages = {
       },
     },
     settings: {
+      dangerZone: {
+        heading: "Zona de peligro",
+        deactivate: {
+          label: "Desactivar cuenta",
+          labelDescription:
+            "Oculta tu perfil y tu trabajo a todo el mundo. No se borra nada.",
+          inactiveLabel: "Tu cuenta está desactivada",
+          inactiveDescription:
+            "Tu perfil y tu trabajo están ocultos para todo el mundo hasta que la reactives.",
+          trigger: "Desactivar",
+          title: "¿Desactivar tu cuenta?",
+          description:
+            "Tu perfil, portfolios y contenido multimedia serán invisibles para todo el mundo y nadie podrá contactarte. No se borra nada: puedes seguir trabajando en tu atelier y reactivar tu cuenta cuando quieras desde Ajustes.",
+          cancel: "Cancelar",
+          submit: "Desactivar cuenta",
+          reactivate: "Reactivar",
+          deactivatedToast:
+            "Tu cuenta está desactivada y oculta para todo el mundo.",
+          reactivatedToast: "Tu cuenta vuelve a ser pública.",
+        },
+        delete: {
+          label: "Eliminar cuenta",
+          labelDescription:
+            "Elimina tu cuenta y todo tu trabajo de forma permanente en {days} días.",
+          trigger: "Eliminar",
+          title: "¿Eliminar tu cuenta?",
+          description:
+            "Tu cuenta se eliminará de forma permanente en {days} días.",
+          whatHidden: "Desde ahora, tu perfil es invisible para todo el mundo.",
+          whatDeleted:
+            "Después, tu contenido multimedia, portfolios, colecciones, servicios y datos de perfil se borran para siempre.",
+          whatReopen:
+            "¿Cambias de opinión? Inicia sesión antes de {days} días y reabre tu cuenta. También te enviaremos un email 2 días antes.",
+          cancelSubscriptionLabel: "Cancelar también mi suscripción ahora",
+          cancelSubscriptionOn:
+            "Tu plan no se volverá a renovar. Lo conservas hasta el final del periodo que ya pagaste.",
+          cancelSubscriptionOff:
+            "Tu suscripción sigue igual y se cancela el día en que se elimine tu cuenta.",
+          passwordLabel: "Confirma con tu contraseña",
+          passwordRequired: "Introduce tu contraseña para confirmar.",
+          wrongPassword: "La contraseña no es correcta.",
+          alreadyRequested: "Tu cuenta ya está programada para eliminarse.",
+          tooManyAttempts:
+            "Demasiados intentos. Espera un minuto y vuelve a probar.",
+          submit: "Eliminar mi cuenta",
+        },
+      },
       pageTitle: "Ajustes",
       account: {
         heading: "Cuenta",

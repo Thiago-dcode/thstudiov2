@@ -10,11 +10,13 @@ import type { FullPlanSubscription } from "@repo/common-lib/types/plan-subscript
 import type { ProfileStatus } from "@repo/common-lib/types/profile-status";
 import type { ApiResponse } from "@repo/common-lib/types/response";
 import type {
+  AccountDeletionRequestResult,
   ArtistBranding,
   ArtistCard,
   ArtistIndexRequest,
   BaseUser,
   CompactUser,
+  RequestAccountDeletionInput,
   UpdateUserInputWithAssets,
   UpdateUserPasswordInput,
   User,
@@ -113,6 +115,32 @@ export class UserService extends BaseService {
     return await this.fetchApi.post({
       resource: `${id}/password`,
       body: data,
+    });
+  }
+  async requestDeletion(
+    id: number,
+    data: RequestAccountDeletionInput,
+  ): Promise<ApiResponse<AccountDeletionRequestResult>> {
+    return await this.fetchApi.post({
+      resource: `${id}/deletion`,
+      body: data,
+    });
+  }
+  async cancelDeletion(
+    id: number,
+  ): Promise<ApiResponse<{ deletion_requested_at: null }>> {
+    return await this.fetchApi.delete({
+      resource: `${id}/deletion`,
+    });
+  }
+  async deactivate(id: number): Promise<ApiResponse<{ is_active: boolean }>> {
+    return await this.fetchApi.post({
+      resource: `${id}/deactivate`,
+    });
+  }
+  async reactivate(id: number): Promise<ApiResponse<{ is_active: boolean }>> {
+    return await this.fetchApi.post({
+      resource: `${id}/reactivate`,
     });
   }
 

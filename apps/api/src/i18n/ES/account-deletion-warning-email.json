@@ -1,0 +1,10 @@
+{
+  "SUBJECT": "Tu cuenta de A11STUDIO se eliminará el {date}",
+  "HI": "Hola",
+  "TITLE": "Tu cuenta se eliminará el {date}",
+  "DESCRIPTION": "Nos pediste eliminar tu cuenta de A11STUDIO. En dos días la borraremos de forma permanente, junto con todo tu contenido multimedia, portfolios, colecciones, servicios y datos de perfil.",
+  "INFO": "Hasta entonces, tu perfil sigue oculto para todo el mundo. A partir de esa fecha no se podrá recuperar.",
+  "CTA_TEXT": "¿Has cambiado de opinión? Inicia sesión y reabre tu cuenta. Todo seguirá tal y como lo dejaste.",
+  "CTA_BUTTON": "Reactivar mi cuenta",
+  "IGNORE": "Si sigues queriendo eliminar tu cuenta, no tienes que hacer nada."
+}

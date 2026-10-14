@@ -130,3 +130,18 @@ export type ArtistCard = {
   categories: Pick<CategoryBase, 'id' | 'name' | 'slug'>[];
   is_featured?: boolean;
 }
+
+/** Payload of the account-deletion queue jobs (hard delete, "deleted in 2 days" warning). */
+export type AccountDeletionJobInput = { user_id: number };
+
+/** Body of `POST users/:id/deletion`. */
+export type RequestAccountDeletionInput = {
+  password: string;
+  /** Stop the paid subscription's renewal now instead of on the day of the hard delete. */
+  cancel_subscription?: boolean;
+};
+
+export type AccountDeletionRequestResult = {
+  deletion_requested_at: Date;
+  deletion_scheduled_for: Date;
+};

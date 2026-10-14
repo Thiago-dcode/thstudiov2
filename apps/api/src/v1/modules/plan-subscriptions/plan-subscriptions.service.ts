@@ -1,7 +1,11 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { SetFreeSubscriptionEvent } from './events/set-free-subscription.event';
-import { SET_FREE_SUBSCRIPTION_EVENT } from '@repo/common-lib/constants/events';
+import { CancelSubscriptionRenewalEvent } from './events/cancel-subscription-renewal.event';
+import {
+  CANCEL_SUBSCRIPTION_RENEWAL_EVENT,
+  SET_FREE_SUBSCRIPTION_EVENT,
+} from '@repo/common-lib/constants/events';
 import { PlanSubscriptionsRepository } from './plan-subscriptions.repository';
 import { InitiatePlanSubscriptionRequest } from './requests/initiate-plan-subscription.request';
 import { PlanPricesService } from '../plan-prices/plan-prices.service';
@@ -603,6 +607,33 @@ export class PlanSubscriptionsService {
 
   remove(id: number) {
     return `This action removes a #${id} plan subscription`;
+  }
+
+  /**
+   * Account deletion's "also cancel my subscription now": stop renewal, keep the paid time. An
+   * event (awaited via `emitAsync`) rather than a direct call because this module already imports
+   * `UserModule`. Free plans are a no-op inside `cancel`.
+   */
+  @OnEvent(CANCEL_SUBSCRIPTION_RENEWAL_EVENT)
+  async handleCancelSubscriptionRenewal(event: CancelSubscriptionRenewalEvent) {
+    const active = await this.findActiveSubscription(event.userId);
+    // Nothing to stop: no subscription, the free plan, or renewal already off.
+    if (!active || active.plan_price.plan.is_free || !active.auto_renewal) return;
+
+    if (active.paypal_id) {
+      // `cancel()` only updates our row for PayPal (no Stripe id); PayPal itself would keep billing.
+      // PayPal stops billing at once and has no "at period end", but our row keeps the plan until
+      // `next_billing_date` exactly like the Stripe path. Throws so the deletion request fails
+      // (and is not flagged) rather than leaving the user billed after they asked us to stop.
+      const cancelled = await (await paypal).subscription.cancel(
+        active.paypal_id,
+        'Account deletion requested',
+      );
+      if (!cancelled) {
+        throw new Error(`PayPal subscription [${active.paypal_id}] could not be cancelled`);
+      }
+    }
+    await this.cancel(event.userId);
   }
 
   @OnEvent(SET_FREE_SUBSCRIPTION_EVENT)

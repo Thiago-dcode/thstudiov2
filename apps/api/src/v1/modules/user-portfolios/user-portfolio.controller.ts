@@ -4,8 +4,10 @@ import {
   Param,
   ParseIntPipe,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { IsUserAuthPipe } from 'src/pipes/is-user-auth.pipe';
+import { PublicArtistGuard } from 'src/common/guards/public-artist.guard';
 import { Throttle } from '@nestjs/throttler';
 import { PUBLIC_READ_THROTTLE } from 'src/common/utils/constants';
 import { Public } from 'src/common/decorators/public.decorator';
@@ -17,6 +19,8 @@ import { IndexPortfolioRequest } from './requests/index-portfolio.request';
 // defaults. These are hit once per artist sub-page render and the responses are
 // Redis-cached, so the global write-sized budget throttled real visitors.
 @Throttle(PUBLIC_READ_THROTTLE)
+// 404s every `:username` route of a hidden (banned, deactivated, pending-deletion) artist.
+@UseGuards(PublicArtistGuard)
 @Controller('users')
 export class UserPortfolioController {
   constructor(private readonly userPortfolioService: UserPortfolioService) { }

@@ -1,4 +1,5 @@
 import { InjectQueue, Processor } from '@nestjs/bullmq';
+import { HttpException, HttpStatus } from '@nestjs/common';
 import { Job, Queue } from 'bullmq';
 import type { Checkout as StripeCheckout } from 'stripe-types/checkout';
 import type { Event as StripeEvent } from 'stripe-types/Events';
@@ -165,9 +166,8 @@ export class WebhookProcessor extends GlobalProcessor {
       !subscription.cancel_at_period_end &&
       !subscription.cancel_at &&
       (!is_trialing || has_payment_method);
-    const user = await this.userService.findOneByStripeId(
-      subscription.customer as string,
-    );
+    const user = await this.findUserByStripeCustomer(subscription.customer as string);
+    if (!user) return;
     const [planPrice, _internalSubscription] = await Promise.all([
       this.planPriceService.findOneByStripeId(itemData.price.id),
       this.planSubscriptionService.findActiveSubscription(user.id),
@@ -298,12 +298,28 @@ export class WebhookProcessor extends GlobalProcessor {
       )])
   }
 
+  /**
+   * The user behind a Stripe customer, or null when the account no longer exists. Self-service
+   * account deletion cancels the subscription and deletes the customer, and Stripe's resulting
+   * events can arrive after the user row is gone; that is expected, not a failure to retry.
+   */
+  private async findUserByStripeCustomer(customerId: string) {
+    try {
+      return await this.userService.findOneByStripeId(customerId);
+    } catch (error) {
+      if (error instanceof HttpException && error.getStatus() === HttpStatus.NOT_FOUND) {
+        this.logger.info(`Stripe event for customer [${customerId}] with no user (deleted account), ignored`);
+        return null;
+      }
+      throw error;
+    }
+  }
+
   private async handleSubscriptionDeleted(
     subscription: StripeSubscription,
   ): Promise<void> {
-    const user = await this.userService.findOneByStripeId(
-      subscription.customer as string,
-    );
+    const user = await this.findUserByStripeCustomer(subscription.customer as string);
+    if (!user) return;
     const internalSubscription =
       await this.planSubscriptionService.findActiveSubscription(user.id);
 

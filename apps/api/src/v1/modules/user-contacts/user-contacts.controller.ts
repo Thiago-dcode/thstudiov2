@@ -6,6 +6,7 @@ import { IndexUserContactRequest } from './requests/index-user-contact.request';
 import { Public } from 'src/common/decorators/public.decorator';
 import { ModelExistPipe } from 'src/pipes/model-exist.pipe';
 import { IsUserAuthPipe } from 'src/pipes/is-user-auth.pipe';
+import { PublicAccountPipe } from 'src/pipes/public-account.pipe';
 
 @Controller('users/:user_id/contacts')
 export class UserContactsController {
@@ -14,7 +15,8 @@ export class UserContactsController {
   @Public()
   @Post()
   create(
-    @Param('user_id', ParseIntPipe, new ModelExistPipe('users')) user_id: number,
+    // PublicAccountPipe: no messages to a hidden (banned, deactivated, pending-deletion) artist.
+    @Param('user_id', ParseIntPipe, new ModelExistPipe('users'), PublicAccountPipe) user_id: number,
     @Body() createRequest: CreateUserContactRequest
   ) {
     createRequest.user_id = user_id;

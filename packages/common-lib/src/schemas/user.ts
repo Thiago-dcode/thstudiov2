@@ -41,6 +41,10 @@ export type UserSchema = {
   seo_title?: string | null;
   seo_description?: string | null;
   seo_generated_at?: Date | null;
+  /** Set when the owner asked to delete the account; hidden publicly and hard-deleted after the grace period. */
+  deletion_requested_at?: Date | null;
+  /** When the "deleted in 2 days" warning email went out for the current deletion request. */
+  deletion_warning_sent_at?: Date | null;
   created_at: Date;
   updated_at: Date;
 };

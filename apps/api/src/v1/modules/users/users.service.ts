@@ -1,4 +1,4 @@
-import { BadRequestException, HttpException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, HttpException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { UpdateUserRequest } from './requests/update-user.request';
 import { NewUserEvent } from './events/new-user.event';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
@@ -12,10 +12,13 @@ import { SetInitialUserExtraDataEvent } from '../user-extra-data/events/set-init
 import { stripe } from '@repo/backend-lib/services/payment-service/stripe';
 import { RequestService } from 'src/common/services/request.service';
 import {
+  ACCOUNT_DELETION_GRACE_DAYS,
+  ACCOUNT_DELETION_WARNING_DAYS_BEFORE,
   MAX_PASSWORD_RESET,
   MAX_USERNAME_RESET,
 } from '@repo/common-lib/constants/limits';
 import {
+  CANCEL_SUBSCRIPTION_RENEWAL_EVENT,
   NEW_USER_EVENT,
   SET_FREE_SUBSCRIPTION_EVENT,
   SET_INITIAL_USER_EXTRA_DATA_EVENT,
@@ -41,6 +44,9 @@ import { QueueHelper, SINGLE_ENTITY_METADATA_DEBOUNCE_MS } from '@repo/backend-l
 import { ProfileStatusService } from '../profile-status/profile-status.service';
 import { UpdateProfileStatusEvent } from '../profile-status/events/update-profile-status.event';
 import { PlansService } from '../plans/plans.service';
+import { CancelSubscriptionRenewalEvent } from '../plan-subscriptions/events/cancel-subscription-renewal.event';
+import { RequestAccountDeletionRequest } from './requests/request-account-deletion.request';
+import { accountDeletionDate } from '@repo/common-lib/utils/account-deletion';
 
 @Injectable()
 export class UserService {
@@ -104,6 +110,8 @@ export class UserService {
       email,
       banned,
       banned_reason,
+      deletion_requested_at,
+      deletion_warning_sent_at,
       stripe_customer_id,
       phone_number,
       email_validated,
@@ -121,6 +129,14 @@ export class UserService {
   }
 
   async findOne(id: number, findUserRequest?: FindUserRequest) {
+    // Anyone signed in may read another user's (non-private) fields, but a hidden account —
+    // banned, deactivated or pending deletion — is as invisible here as on its public pages.
+    // The owner (the atelier reads itself through this route) and admins still see it.
+    const caller = this.requestService.user;
+    if (caller?.id !== id && caller?.role?.name !== 'ADMIN' && !(await this.isPublicAccount(id))) {
+      throw new NotFoundException('User not found');
+    }
+
     if (findUserRequest?.format === 'COMPACT') {
       const result = await this.userRepository.findOneBy('id', id);
       return this.omitPrivateFields(result, id);
@@ -388,8 +404,87 @@ export class UserService {
     });
   }
 
-  async remove(id: number) {
-    return `This action removes a #${id} user`;
+  /**
+   * Flags the account for deletion. It is hidden from every public surface right away (see
+   * `visibleAccountSql`) and hard-deleted by `AccountDeletionTask` after the grace period, unless the
+   * owner reopens it first. Password re-entry is required: a stolen session must not be able to
+   * schedule this.
+   */
+  async requestDeletion(userId: number, request: RequestAccountDeletionRequest) {
+    const user = await this.userRepository.findOneByWithSecrets('id', userId);
+    if (!user) throw new UnauthorizedException();
+    if (user.deletion_requested_at) {
+      throw new ConflictException('Account deletion was already requested');
+    }
+    if (!(await compare(request.password, user.password))) {
+      throw new BadRequestException('Wrong password');
+    }
+
+    // Before flagging: if the provider call fails, nothing has changed and the user can retry.
+    if (request.cancel_subscription) {
+      await this.eventEmitter.emitAsync(
+        CANCEL_SUBSCRIPTION_RENEWAL_EVENT,
+        new CancelSubscriptionRenewalEvent(userId),
+      );
+    }
+
+    // Atomic: a concurrent second request finds the flag already set and gets the 409.
+    const requestedAt = await this.userRepository.flagForDeletion(userId);
+    if (!requestedAt) {
+      throw new ConflictException('Account deletion was already requested');
+    }
+    this.logService
+      .name('account-deletion')
+      .info(`user [${userId}] requested account deletion`, {
+        cancel_subscription: Boolean(request.cancel_subscription),
+      });
+
+    return {
+      deletion_requested_at: requestedAt,
+      deletion_scheduled_for: accountDeletionDate(requestedAt),
+    };
+  }
+
+  /**
+   * Reopens an account flagged for deletion; it becomes public again immediately. Only possible
+   * before the deletion date: from then on the account belongs to the deletion job, and letting a
+   * reopen race it could leave a "reopened" account whose files were already wiped.
+   */
+  async cancelDeletion(userId: number) {
+    if (await this.userRepository.unflagDeletion(userId, ACCOUNT_DELETION_GRACE_DAYS)) {
+      this.logService.name('account-deletion').info(`user [${userId}] reopened the account`);
+      return { deletion_requested_at: null };
+    }
+    const state = await this.userRepository.getDeletionState(
+      userId,
+      ACCOUNT_DELETION_GRACE_DAYS,
+      ACCOUNT_DELETION_WARNING_DAYS_BEFORE,
+    );
+    throw new ConflictException(
+      state?.flagged
+        ? 'Account deletion is already in progress and can no longer be cancelled'
+        : 'Account deletion was not requested',
+    );
+  }
+
+  /** Whether the account may appear publicly (not banned, deactivated or pending deletion). */
+  async isPublicAccount(userId: number): Promise<boolean> {
+    return await this.userRepository.isPublicAccount(userId);
+  }
+
+  /** Hides the account from the public without deleting anything; the atelier keeps working. */
+  async deactivate(userId: number) {
+    if (!(await this.userRepository.setActive(userId, false))) {
+      throw new ConflictException('Account is already deactivated');
+    }
+    return { is_active: false };
+  }
+
+  async reactivate(userId: number) {
+    if (!(await this.userRepository.setActive(userId, true))) {
+      throw new ConflictException('Account is already active');
+    }
+    return { is_active: true };
   }
 
   @OnEvent(NEW_USER_EVENT)

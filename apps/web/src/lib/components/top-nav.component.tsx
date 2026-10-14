@@ -3,6 +3,7 @@
 import { Button } from "@repo/ui/components/shadcn/button";
 import {
   ExternalLink,
+  EyeOff,
   Menu,
   PanelLeftClose,
   PanelLeftOpen,
@@ -13,7 +14,14 @@ import { UserNotificationsDrawer } from "@/modules/user-notifications/components
 import { useUserMetrics } from "@/modules/users/providers/user-metrics.provider";
 import { useMainNav } from "../providers/main-nav.provider";
 
-export const TopNav = ({ username }: { username?: string }) => {
+export const TopNav = ({
+  username,
+  isDeactivated = false,
+}: {
+  username?: string;
+  /** The owner hid the account: a quiet reminder that nobody else can see the profile. */
+  isDeactivated?: boolean;
+}) => {
   const t = useTranslations("atelier.topNav");
   const { shrinked, toggleShrinked, toggleMobile } = useMainNav();
   const { metrics } = useUserMetrics();
@@ -48,6 +56,16 @@ export const TopNav = ({ username }: { username?: string }) => {
       </div>
 
       <div className="flex items-center justify-center gap-4">
+        {isDeactivated && (
+          <Link
+            href="/atelier/settings"
+            title={t("accountDeactivatedHint")}
+            className="flex items-center gap-1.5 border border-fg-2 px-2 py-1 text-xs text-text-muted hover:text-text transition-colors"
+          >
+            <EyeOff size={12} aria-hidden="true" />
+            <span>{t("accountDeactivated")}</span>
+          </Link>
+        )}
         {metrics?.active_plan && !metrics.active_plan.top_tier && (
           <Link href={"/atelier/settings/subscription"}>
             <Button variant={"accent"} size={"sm"}>

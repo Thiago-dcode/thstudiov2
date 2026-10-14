@@ -1,8 +1,11 @@
 import {
+    ACCOUNT_DELETION_QUEUE,
     AI_MEDIA_QUEUE,
     AI_QUEUE,
     EMAIL_PREFERENCES_QUEUE,
     JOB_COMPUTE_USER_METRICS,
+    JOB_DELETE_USER_ACCOUNT,
+    JOB_SEND_ACCOUNT_DELETION_WARNING,
     JOB_CREATE_OR_UPDATE_LOCATION,
     JOB_CREATE_OR_UPDATE_USER_NOTIFICATION,
     JOB_CREATE_STORAGE_REQUEST,
@@ -53,6 +56,7 @@ import { CreateOrUpdateEmailPreferencePayload } from '@repo/common-lib/types/ema
 import { CreateUserNotificationInput } from '@repo/common-lib/types/user-notification';
 import { UpdateProfileStatusJobInput } from '@repo/common-lib/types/profile-status';
 import { MailJob } from '@repo/common-lib/types/mail';
+import { AccountDeletionJobInput } from '@repo/common-lib/types/user';
 import { MediaJobDto, RegenerateMediaThumbnailJobInput, UpdateMediaJobInput } from '@repo/common-lib/types/media';
 import { JobsOptions, Queue } from "bullmq";
 
@@ -63,6 +67,45 @@ import { JobsOptions, Queue } from "bullmq";
 export const SINGLE_ENTITY_METADATA_DEBOUNCE_MS = 60_000;
 
 export class QueueHelper {
+
+    /**
+     * Hard-deletes an account past its grace period. Deterministic per user so the daily task can
+     * never queue two deletions of the same account; `removeOnFail` so a failed run is retried by
+     * the next day's task instead of being blocked by the dead job id.
+     */
+    static async createDeleteUserAccountJob(dto: AccountDeletionJobInput) {
+        await QueueHelper.createQueue(ACCOUNT_DELETION_QUEUE).add(
+            JOB_DELETE_USER_ACCOUNT,
+            dto,
+            {
+                jobId: `delete-user-account-${dto.user_id}`,
+                priority: 10,
+                removeOnComplete: true,
+                removeOnFail: true,
+                attempts: 3,
+                backoff: { type: 'exponential', delay: 1000 },
+            },
+        );
+    }
+
+    /**
+     * The "your account will be deleted in 2 days" email. Deterministic per user; the processor's
+     * `deletion_warning_sent_at` stamp is what keeps a later re-enqueue from sending it twice.
+     */
+    static async createAccountDeletionWarningJob(dto: AccountDeletionJobInput) {
+        await QueueHelper.createQueue(ACCOUNT_DELETION_QUEUE).add(
+            JOB_SEND_ACCOUNT_DELETION_WARNING,
+            dto,
+            {
+                jobId: `account-deletion-warning-${dto.user_id}`,
+                priority: 10,
+                removeOnComplete: true,
+                removeOnFail: true,
+                attempts: 3,
+                backoff: { type: 'exponential', delay: 1000 },
+            },
+        );
+    }
 
     /** Outside Nest DI: same Redis URL shape as `BullModule.forRootAsync`. */
     static createQueue(name: string): Queue {

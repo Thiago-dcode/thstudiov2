@@ -1,0 +1,10 @@
+{
+  "SUBJECT": "Sua conta A11STUDIO será excluída em {date}",
+  "HI": "Olá",
+  "TITLE": "Sua conta será excluída em {date}",
+  "DESCRIPTION": "Você pediu para excluir sua conta A11STUDIO. Em dois dias vamos removê-la permanentemente, junto com todas as suas mídias, portfólios, coleções, serviços e dados de perfil.",
+  "INFO": "Até lá, seu perfil continua oculto para todos. Depois dessa data, não será possível recuperá-lo.",
+  "CTA_TEXT": "Mudou de ideia? Entre e reabra sua conta. Tudo continuará exatamente como você deixou.",
+  "CTA_BUTTON": "Reativar minha conta",
+  "IGNORE": "Se você ainda quer excluir sua conta, não precisa fazer nada."
+}

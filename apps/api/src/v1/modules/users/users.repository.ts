@@ -37,6 +37,7 @@ import { foldLatinDiacriticsForMatch } from '@repo/common-lib/utils/fold-latin-d
 import {
   artistShareReadySql,
   isArtistShareReady,
+  visibleAccountSql,
   PUBLIC_PROFILE_ROLE_NAMES,
 } from '@repo/common-lib/utils/artist-share-ready';
 
@@ -64,6 +65,8 @@ export class UserRepository extends BaseRepository {
     'users.is_active',
     'users.banned',
     'users.banned_reason',
+    'users.deletion_requested_at',
+    'users.deletion_warning_sent_at',
     'users.is_featured',
     'users.funnel_step',
     'users.username_reset_count',
@@ -362,8 +365,7 @@ export class UserRepository extends BaseRepository {
        FROM ${TABLES_ENUM.USERS} u
        INNER JOIN ${TABLES_ENUM.ROLES} r ON r.id = u.role_id
        WHERE ${UserRepository.PUBLIC_PROFILE_ROLES}
-         AND u.banned = false
-         AND u.is_active = true
+         AND ${visibleAccountSql('u')}
          AND (
            u.seo_generated_at IS NULL
            OR (
@@ -512,6 +514,204 @@ export class UserRepository extends BaseRepository {
     return this.formatCoreUser(result);
   }
 
+  /** Whether the account may appear publicly (`visibleAccountSql`: not banned, deactivated or pending deletion). */
+  async isPublicAccount(id: number): Promise<boolean> {
+    const result = await Query.raw(
+      `SELECT 1 FROM ${TABLES_ENUM.USERS} u WHERE u.id = $1 AND ${visibleAccountSql('u')} LIMIT 1`,
+      [id],
+    );
+    const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];
+    return Array.isArray(rows) && rows.length > 0;
+  }
+
+  /*
+   * Account deletion. Every time comparison runs on the database clock (`LOCALTIMESTAMP`, the same
+   * kind as the `TIMESTAMP` columns), never on a JS `Date`: the API, the cron and Postgres can sit
+   * in different time zones, and the grace-period boundary must be one instant for all of them.
+   * The boundary is also what keeps reopening and hard-deleting apart: an account can be reopened
+   * only BEFORE `deletion_requested_at + grace`, and is processed only AT OR AFTER it.
+   */
+
+  /** `graceParam` is a bind placeholder such as `$2`, never input. */
+  private static deletionDueSql(graceParam: string): string {
+    return `deletion_requested_at IS NOT NULL
+      AND deletion_requested_at <= LOCALTIMESTAMP - make_interval(days => ${graceParam}::int)`;
+  }
+
+  private static rowsOf(result: any): any[] {
+    const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];
+    return Array.isArray(rows) ? rows : [];
+  }
+
+  /**
+   * Flags the account, only if it is not flagged yet (atomic, so two concurrent requests cannot both
+   * succeed). Clears the warning stamp so this request gets its own "deleted in 2 days" email.
+   * Returns the stored request time, or null when the account was already flagged.
+   */
+  async flagForDeletion(id: number): Promise<Date | null> {
+    const rows = UserRepository.rowsOf(
+      await Query.raw(
+        `UPDATE ${TABLES_ENUM.USERS}
+         SET deletion_requested_at = LOCALTIMESTAMP, deletion_warning_sent_at = NULL
+         WHERE id = $1 AND deletion_requested_at IS NULL
+         RETURNING deletion_requested_at`,
+        [id],
+      ),
+    );
+    return rows[0]?.deletion_requested_at ? new Date(rows[0].deletion_requested_at) : null;
+  }
+
+  /**
+   * Reopens a flagged account, only while its grace period is still running. Returns false when it
+   * was not flagged or the deletion date has passed (the account is then being deleted).
+   */
+  async unflagDeletion(id: number, graceDays: number): Promise<boolean> {
+    const rows = UserRepository.rowsOf(
+      await Query.raw(
+        `UPDATE ${TABLES_ENUM.USERS}
+         SET deletion_requested_at = NULL, deletion_warning_sent_at = NULL
+         WHERE id = $1 AND deletion_requested_at IS NOT NULL
+           AND deletion_requested_at > LOCALTIMESTAMP - make_interval(days => $2::int)
+         RETURNING id`,
+        [id, graceDays],
+      ),
+    );
+    return rows.length > 0;
+  }
+
+  /** Where a flagged account stands right now, by the database clock. */
+  async getDeletionState(
+    id: number,
+    graceDays: number,
+    warnDaysBefore: number,
+  ): Promise<{ flagged: boolean; warned: boolean; due: boolean; in_warning_window: boolean } | null> {
+    const rows = UserRepository.rowsOf(
+      await Query.raw(
+        `SELECT
+           deletion_requested_at IS NOT NULL AS flagged,
+           deletion_warning_sent_at IS NOT NULL AS warned,
+           COALESCE(deletion_requested_at <= LOCALTIMESTAMP - make_interval(days => $2::int), false) AS due,
+           COALESCE(deletion_requested_at <= LOCALTIMESTAMP - make_interval(days => $2::int - $3::int), false) AS in_warning_window
+         FROM ${TABLES_ENUM.USERS} WHERE id = $1`,
+        [id, graceDays, warnDaysBefore],
+      ),
+    );
+    if (!rows[0]) return null;
+    return {
+      flagged: Boolean(rows[0].flagged),
+      warned: Boolean(rows[0].warned),
+      due: Boolean(rows[0].due),
+      in_warning_window: Boolean(rows[0].in_warning_window),
+    };
+  }
+
+  /** Stamps the warning, only for a still-flagged account (a reopen in between wins). */
+  async markDeletionWarningSent(id: number): Promise<void> {
+    await Query.raw(
+      `UPDATE ${TABLES_ENUM.USERS} SET deletion_warning_sent_at = LOCALTIMESTAMP
+       WHERE id = $1 AND deletion_requested_at IS NOT NULL`,
+      [id],
+    );
+  }
+
+  /** Sets `is_active`, only when it actually changes. Returns false if it already had that value. */
+  async setActive(id: number, isActive: boolean): Promise<boolean> {
+    const rows = UserRepository.rowsOf(
+      await Query.raw(
+        `UPDATE ${TABLES_ENUM.USERS} SET is_active = $2::boolean
+         WHERE id = $1 AND is_active IS DISTINCT FROM $2::boolean
+         RETURNING id`,
+        [id, String(isActive)], // raw binds are string|number; cast back by `$2::boolean`
+      ),
+    );
+    return rows.length > 0;
+  }
+
+  /**
+   * Accounts past the grace period that were already warned: nobody is deleted without the
+   * "2 days left" email, even if a run was missed. A warning that keeps failing holds the deletion
+   * back until it goes out (and alerts the admins through the processor's error log).
+   */
+  async findDueForDeletion(graceDays: number, limit: number): Promise<{ id: number }[]> {
+    const rows = UserRepository.rowsOf(
+      await Query.raw(
+        `SELECT id FROM ${TABLES_ENUM.USERS}
+         WHERE ${UserRepository.deletionDueSql('$1')}
+           AND deletion_warning_sent_at IS NOT NULL
+         ORDER BY deletion_requested_at ASC
+         LIMIT $2`,
+        [graceDays, limit],
+      ),
+    );
+    return rows.map((row: { id: number }) => ({ id: Number(row.id) }));
+  }
+
+  /**
+   * Flagged accounts inside the warning window that have not been warned yet. No lower bound, so an
+   * account flagged less than the window before a run is still warned on the first run.
+   */
+  async findDueForDeletionWarning(
+    graceDays: number,
+    warnDaysBefore: number,
+    limit: number,
+  ): Promise<{ id: number }[]> {
+    const rows = UserRepository.rowsOf(
+      await Query.raw(
+        `SELECT id FROM ${TABLES_ENUM.USERS}
+         WHERE deletion_requested_at IS NOT NULL
+           AND deletion_requested_at <= LOCALTIMESTAMP - make_interval(days => $1::int - $2::int)
+           AND deletion_warning_sent_at IS NULL
+         ORDER BY deletion_requested_at ASC
+         LIMIT $3`,
+        [graceDays, warnDaysBefore, limit],
+      ),
+    );
+    return rows.map((row: { id: number }) => ({ id: Number(row.id) }));
+  }
+
+  /**
+   * Hard-deletes the account in ONE statement (atomic without a transaction API), and only if it is
+   * still flagged and due: `target` locks the row (`FOR UPDATE` re-checks the condition against a
+   * concurrent commit), and every sub-delete hangs off `target`, so nothing is touched otherwise.
+   *
+   * Everything else hangs off `users` with `ON DELETE CASCADE` (media, portfolios, collections,
+   * services, sessions, devices, notifications, …). Deleted explicitly here:
+   * - `about_page` (FK with no action: would block the delete),
+   * - `addresses`, `email_preferences` (`SET NULL`: would orphan personal data),
+   * - rows keyed by the email instead of the id: the wait-list entry and pre-registration devices.
+   * `plan_subscriptions` is `SET NULL` on purpose and kept: billing records must outlive the account
+   * for tax retention. FK checks run at end of statement, so the CTE deletes land first.
+   *
+   * Returns false when nothing was deleted (reopened, not due, or already gone).
+   */
+  async hardDeleteById(id: number, graceDays: number): Promise<boolean> {
+    const rows = UserRepository.rowsOf(
+      await Query.raw(
+        `WITH target AS (
+           SELECT id, email FROM ${TABLES_ENUM.USERS}
+           WHERE id = $1 AND ${UserRepository.deletionDueSql('$2')}
+           FOR UPDATE
+         ), del_about AS (
+           DELETE FROM ${TABLES_ENUM.ABOUT_PAGE} WHERE user_id IN (SELECT id FROM target)
+         ), del_addresses AS (
+           DELETE FROM ${TABLES_ENUM.ADDRESSES} WHERE user_id IN (SELECT id FROM target)
+         ), del_email_preferences AS (
+           DELETE FROM ${TABLES_ENUM.EMAIL_PREFERENCES}
+           WHERE user_id IN (SELECT id FROM target) OR email IN (SELECT email FROM target)
+         ), del_wait_list AS (
+           DELETE FROM ${TABLES_ENUM.WAIT_LIST} WHERE email IN (SELECT email FROM target)
+         ), del_devices AS (
+           DELETE FROM ${TABLES_ENUM.USER_AUTH_DEVICES}
+           WHERE user_id IS NULL AND email IN (SELECT email FROM target)
+         )
+         DELETE FROM ${TABLES_ENUM.USERS} WHERE id IN (SELECT id FROM target)
+         RETURNING id`,
+        [id, graceDays],
+      ),
+    );
+    return rows.length > 0;
+  }
+
   /** No-op at the DB level when `language` already matches, so calling this on every authenticated request doesn't churn the row. */
   async updateLanguageIfChanged(id: number, language: UserSchema['language']): Promise<void> {
     await this.query()
@@ -539,6 +739,8 @@ export class UserRepository extends BaseRepository {
       is_active: result.is_active,
       banned: result.banned,
       banned_reason: result.banned_reason,
+      deletion_requested_at: result.deletion_requested_at ?? null,
+      deletion_warning_sent_at: result.deletion_warning_sent_at ?? null,
       is_featured: result.is_featured,
       benefit_id: result.benefit_id,
       invitation_link_id: result.invitation_link_id,
@@ -638,6 +840,7 @@ export class UserRepository extends BaseRepository {
       .select(this.ARTIST_SEARCH_COLUMNS)
       .where('users.banned', '=', false)
       .where('users.is_active', '=', true)
+      .where('users.deletion_requested_at', 'IS', null)
       .join('id', 'addresses', 'user_id', 'LEFT');
     // Only artist-facing roles belong in the public directory — the support account was listed as
     // an "artist" on /artists, an indexable hub, while its profile page is noindex.

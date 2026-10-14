@@ -362,6 +362,9 @@ export class PortfolioRepository extends BaseRepository {
       .where('portfolios.is_featured', '=', true)
       .where('portfolios.is_active', '=', true)
       .where('portfolios.blocked_at', 'IS', null)
+      .where('users.banned', '=', false)
+      .where('users.is_active', '=', true)
+      .where('users.deletion_requested_at', 'IS', null)
       .orderBy('portfolios.created_at', 'DESC')
       .orderBy('portfolios.id', 'DESC')
       .orderBy('portfolio_media.position', 'ASC')
@@ -630,6 +633,13 @@ export class PortfolioRepository extends BaseRepository {
 
     if (filters.user_id) {
       query.where('portfolios.user_id', '=', filters.user_id);
+    } else {
+      // Cross-artist browsing is public: hide banned, deactivated and pending-deletion accounts.
+      // A `user_id`-scoped list is the owner's atelier (or an artist route already 404'd upstream).
+      query
+        .where('users.banned', '=', false)
+        .where('users.is_active', '=', true)
+        .where('users.deletion_requested_at', 'IS', null);
     }
 
     if (typeof filters.is_featured === 'boolean') {

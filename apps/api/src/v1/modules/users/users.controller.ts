@@ -10,7 +10,11 @@ import {
   UploadedFiles,
   ParseIntPipe,
   Post,
+  UseGuards,
 } from '@nestjs/common';
+import { PublicArtistGuard } from 'src/common/guards/public-artist.guard';
+import { AllowWhileStrikeBanned } from 'src/common/decorators/allow-while-strike-banned.decorator';
+import { RequestAccountDeletionRequest } from './requests/request-account-deletion.request';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { Throttle } from '@nestjs/throttler';
 import { PUBLIC_READ_THROTTLE } from 'src/common/utils/constants';
@@ -54,6 +58,7 @@ export class UserController {
 
   @Throttle(PUBLIC_READ_THROTTLE)
   @Public()
+  @UseGuards(PublicArtistGuard)
   @Get('profile/:username')
   async getProfile(
     @Param('username', ToLowerCasePipe, new ModelExistPipe('users', 'username'))
@@ -64,6 +69,7 @@ export class UserController {
 
   @Throttle(PUBLIC_READ_THROTTLE)
   @Public()
+  @UseGuards(PublicArtistGuard)
   @Get('compact/:username')
   async getCompacted(
     @Param('username', ToLowerCasePipe, new ModelExistPipe('users', 'username'))
@@ -76,6 +82,7 @@ export class UserController {
   // second query to a read every artist page makes.
   @Throttle(PUBLIC_READ_THROTTLE)
   @Public()
+  @UseGuards(PublicArtistGuard)
   @Get('branding/:username')
   async getBranding(@Param('username', ToLowerCasePipe) username: string) {
     return await this.userService.getBrandingByUsername(username);
@@ -111,6 +118,7 @@ export class UserController {
     return await this.planService.findUserActivePlan(+id);
   }
   @Public()
+  @UseGuards(PublicArtistGuard)
   @Get(':id/categories')
   findAllCategories(
     @Param('id', ParseIntPipe, new ModelExistPipe('users')) id: number,
@@ -119,6 +127,7 @@ export class UserController {
   }
 
   @Public()
+  @UseGuards(PublicArtistGuard)
   @Get(':id/address')
   async findAddress(
     @Param('id', ParseIntPipe, new ModelExistPipe('users'))
@@ -185,8 +194,43 @@ export class UserController {
     return await this.userService.updatePassword(id, body);
   }
 
-  @Delete(':id')
-  async remove(@Param('id') id: string) {
-    return await this.userService.remove(+id);
+  /**
+   * Flags the account for deletion (hidden now, hard-deleted after the grace period). 409 if already
+   * flagged. Tight throttle: the body carries the password, so this must not become a guessing
+   * oracle for a stolen session. Allowed during a strike ban: erasure is a right, not a privilege.
+   */
+  @Throttle({ medium: { limit: 5, ttl: 60000 } })
+  @AllowWhileStrikeBanned()
+  @Post(':id/deletion')
+  async requestDeletion(
+    @Param('id', ParseIntPipe, new ModelExistPipe('users'), IsUserAuthPipe) id: number,
+    @Body() body: RequestAccountDeletionRequest,
+  ) {
+    return await this.userService.requestDeletion(id, body);
+  }
+
+  /** Reopens a flagged account. 409 if it is not flagged, or once the deletion date has passed. */
+  @AllowWhileStrikeBanned()
+  @Delete(':id/deletion')
+  async cancelDeletion(
+    @Param('id', ParseIntPipe, new ModelExistPipe('users'), IsUserAuthPipe) id: number,
+  ) {
+    return await this.userService.cancelDeletion(id);
+  }
+
+  /** Hides the account from the public without deleting anything. 409 if already inactive. */
+  @Post(':id/deactivate')
+  async deactivate(
+    @Param('id', ParseIntPipe, new ModelExistPipe('users'), IsUserAuthPipe) id: number,
+  ) {
+    return await this.userService.deactivate(id);
+  }
+
+  /** Makes a deactivated account public again. 409 if already active. */
+  @Post(':id/reactivate')
+  async reactivate(
+    @Param('id', ParseIntPipe, new ModelExistPipe('users'), IsUserAuthPipe) id: number,
+  ) {
+    return await this.userService.reactivate(id);
   }
 }

@@ -756,7 +756,7 @@ const messages = {
         description:
           "The terms and conditions for using the A11STUDIO portfolio platform — accounts, subscription plans, content ownership, acceptable use and moderation.",
       },
-      updatedAt: "2026-03-16",
+      updatedAt: "2026-10-14",
       heading: "Terms of Service",
       intro:
         "These terms govern your use of the A11STUDIO platform. By creating an account or using our services, you agree to be bound by these terms.",
@@ -848,7 +848,7 @@ const messages = {
       termination: {
         title: "10. Termination",
         body1:
-          "You may delete your account at any time from your account settings. Upon deletion, your personal data, media, and content will be removed as described in our <doc>Privacy Policy</doc>.",
+          "You may delete your account at any time from your account settings. Your profile is hidden immediately, and 15 days later your account, personal data, media and content are permanently deleted as described in our <doc>Privacy Policy</doc>. Until then you can sign in and reopen it; we email you 2 days before the deletion. You can also deactivate your account instead, which hides it from everyone without deleting anything, and reactivate it whenever you like.",
         body2:
           "We reserve the right to suspend or terminate accounts that violate these terms, abuse the platform, or engage in fraudulent activity.",
       },
@@ -875,7 +875,7 @@ const messages = {
         description:
           "How A11STUDIO collects, uses, stores and protects your personal data — what we collect, who we share it with, how long we keep it, and the rights you have.",
       },
-      updatedAt: "2026-10-13",
+      updatedAt: "2026-10-14",
       heading: "Privacy Policy",
       intro:
         "This policy describes how A11STUDIO collects, uses, stores, and protects your information when you use our platform. We are committed to transparency and to safeguarding your data.",
@@ -934,7 +934,7 @@ const messages = {
       },
       retention: {
         title: "7. Data Retention",
-        body: "We retain your personal data for as long as your account is active. Security logs are retained for account protection purposes, and payment records are retained as required by applicable regulations. When you delete your account, we remove your personal data and associated content within a reasonable timeframe, except where retention is required by law.",
+        body: "We retain your personal data for as long as your account is active. Security logs are retained for account protection purposes, and payment records are retained as required by applicable regulations. When you delete your account, it is hidden immediately and permanently deleted 15 days later (the grace period lets you change your mind), together with your media and associated content, except payment records we must keep by law. A deactivated account keeps its data, hidden from the public, until you reactivate or delete it.",
       },
       rights: {
         title: "8. Your Rights",
@@ -1253,6 +1253,17 @@ const messages = {
     maybeLater: "Maybe later",
     gotItThanks: "Got it, thanks.",
   },
+  pendingDeletion: {
+    title: "Your account will be deleted on {date}",
+    description:
+      "You asked us to delete your account. After that date your media, portfolios and profile are gone for good.",
+    invisible: "Until then your account is invisible to everyone else.",
+    reopen: "Reopen my account",
+    logout: "Log out",
+    reopenedToast: "Welcome back. Your account is public again.",
+    tooLate:
+      "Your account is already being deleted and can no longer be reopened.",
+  },
   userAccountBanned: {
     title: "Account Suspended",
     description: "Your account has been suspended due to policy violations.",
@@ -1390,6 +1401,11 @@ const messages = {
       "Choosing a few categories (1–3 recommended) improves your visibility.",
   },
   artists: {
+    hiddenNotice: {
+      title: "Only you can see this page.",
+      body: 'Your account is deactivated, so visitors get a "page not found".',
+      cta: "Reactivate in Settings",
+    },
     shareProfile: "Share profile",
     brandMark: {
       madeWith: "Made with",
@@ -2443,6 +2459,9 @@ const messages = {
       closeMenuAria: "Close menu",
     },
     topNav: {
+      accountDeactivated: "Account deactivated",
+      accountDeactivatedHint:
+        "Your profile is hidden from everyone. Reactivate it from Settings.",
       openMenuAria: "Open menu",
       expandSidebarAria: "Expand sidebar",
       collapseSidebarAria: "Collapse sidebar",
@@ -2489,6 +2508,52 @@ const messages = {
       },
     },
     settings: {
+      dangerZone: {
+        heading: "Danger zone",
+        deactivate: {
+          label: "Deactivate account",
+          labelDescription:
+            "Hide your profile and work from everyone. Nothing is deleted.",
+          inactiveLabel: "Your account is deactivated",
+          inactiveDescription:
+            "Your profile and work are hidden from everyone until you reactivate it.",
+          trigger: "Deactivate",
+          title: "Deactivate your account?",
+          description:
+            "Your profile, portfolios and media will be invisible to everyone, and nobody will be able to contact you. Nothing is deleted: you can keep working in your atelier and reactivate your account at any time from Settings.",
+          cancel: "Cancel",
+          submit: "Deactivate account",
+          reactivate: "Reactivate",
+          deactivatedToast:
+            "Your account is deactivated and hidden from everyone.",
+          reactivatedToast: "Your account is public again.",
+        },
+        delete: {
+          label: "Delete account",
+          labelDescription:
+            "Permanently delete your account and all your work after {days} days.",
+          trigger: "Delete",
+          title: "Delete your account?",
+          description:
+            "Your account will be permanently deleted in {days} days.",
+          whatHidden: "From now on your profile is invisible to everyone.",
+          whatDeleted:
+            "After that, your media, portfolios, collections, services and profile data are deleted for good.",
+          whatReopen:
+            "Changed your mind? Sign in within {days} days and reopen your account. We'll also email you 2 days before.",
+          cancelSubscriptionLabel: "Also cancel my subscription now",
+          cancelSubscriptionOn:
+            "Your plan won't renew again. You keep it until the end of the period you already paid for.",
+          cancelSubscriptionOff:
+            "Your subscription stays as it is and is cancelled on the day your account is deleted.",
+          passwordLabel: "Confirm with your password",
+          passwordRequired: "Enter your password to confirm.",
+          wrongPassword: "That password is not correct.",
+          alreadyRequested: "Your account is already scheduled for deletion.",
+          tooManyAttempts: "Too many attempts. Wait a minute and try again.",
+          submit: "Delete my account",
+        },
+      },
       pageTitle: "Settings",
       account: {
         heading: "Account",

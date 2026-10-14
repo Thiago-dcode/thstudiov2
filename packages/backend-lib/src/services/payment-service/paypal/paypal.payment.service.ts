@@ -91,6 +91,11 @@ public async postRequest<T>( resource:string,body?:Record<string,any>):Promise<T
       });
       return null;
     }
+    // Some actions (e.g. subscription cancel) answer 204 with no body: parsing it would throw and
+    // turn a success into the same `null` as a failure.
+    if (response.status === 204) {
+      return {} as T;
+    }
     const data:T = await response.json();
     console.log(`PAYPAL POST REQUEST SUCCESS: ${resource}`, data);
     return data;
@@ -140,8 +145,15 @@ class PaypalSubscriptionService {
   public async create(body: PaypalCreateSubscriptionInput) {
     return await this.paypalService.postRequest<PaypalSubscriptionResponse>('v1/billing/subscriptions', body); 
   }
-  public async cancel(subscriptionId: string) {
-    return await this.paypalService.postRequest<PaypalSubscriptionResponse>(`v1/billing/subscriptions/${subscriptionId}/cancel`); 
+  /**
+   * Stops all future billing (PayPal has no "at period end"). Resolves to `{}` on success (204) and
+   * `null` on failure, including a subscription that is already cancelled (422).
+   */
+  public async cancel(subscriptionId: string, reason = 'Cancelled by the customer') {
+    return await this.paypalService.postRequest<PaypalSubscriptionResponse>(
+      `v1/billing/subscriptions/${encodeURIComponent(subscriptionId)}/cancel`,
+      { reason },
+    );
   }
 
 }

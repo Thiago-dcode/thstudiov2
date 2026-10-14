@@ -15,6 +15,7 @@ import { PortfolioProvider } from "@/modules/portfolios/providers/create-update-
 import { AlertServiceButton } from "@/modules/services/components/alert-service.button";
 import { CreateUpdateServiceProvider } from "@/modules/services/providers/create-update-service.provider";
 import { UserNotificationsProvider } from "@/modules/user-notifications/contexts/user-notifications.provider";
+import { PendingDeletionModal } from "@/modules/users/components/pending-deletion-modal";
 import { ProfileSetupGuide } from "@/modules/users/components/profile-setup-guide";
 import { UserAccountBannedModal } from "@/modules/users/components/user-account-banned-modal";
 import { OnboardingOverlaysProvider } from "@/modules/users/providers/onboarding-overlays.provider";
@@ -41,11 +42,16 @@ const AdminLayout = async ({ children }: { children: ReactNode }) => {
   // (Stripe callback "skip", the plan step) without rewriting the cookie, so a cookie that still
   // says "pending" is checked against the database before nagging with "finish setup". The step
   // only moves forward outside the funnel, so a cookie saying "done" never needs the check.
+  //
+  // The account status (pending deletion / deactivated) is read fresh on every render for the same
+  // reason: reopening or deactivating changes it without rewriting the session cookie.
+  const fresh = await usersService.getOne(userAuth.id);
   let funnelStep = userAuth.funnel_step;
-  if (isOnboardingPending(funnelStep)) {
-    const fresh = await usersService.getOne(userAuth.id);
-    if (fresh.data) funnelStep = fresh.data.funnel_step;
+  if (isOnboardingPending(funnelStep) && fresh.data) {
+    funnelStep = fresh.data.funnel_step;
   }
+  const deletionRequestedAt = fresh.data?.deletion_requested_at ?? null;
+  const isDeactivated = fresh.data?.is_active === false;
   return (
     <OnboardingOverlaysProvider>
       <AtelierOnboardingDialogs
@@ -60,6 +66,10 @@ const AdminLayout = async ({ children }: { children: ReactNode }) => {
                 <CollectionProvider user={userAuth}>
                   <CreateUpdateServiceProvider user={userAuth}>
                     <UserAccountBannedModal />
+                    <PendingDeletionModal
+                      userId={userAuth.id}
+                      deletionRequestedAt={deletionRequestedAt}
+                    />
                     <div className="fixed flex flex-col items-end bottom-6 right-6 z-100 gap-2 ">
                       <ProfileSetupGuide />
                       <UploadMediaStatusModal />
@@ -70,7 +80,10 @@ const AdminLayout = async ({ children }: { children: ReactNode }) => {
                     <div className="flex size-full items-center justify-start">
                       <AdminHeader />
                       <main className="size-full flex flex-col items-start justify-start ">
-                        <TopNav username={userAuth.username} />
+                        <TopNav
+                          username={userAuth.username}
+                          isDeactivated={isDeactivated}
+                        />
                         <div className="relative flex w-full min-h-0 flex-1 justify-start overflow-y-auto">
                           {" "}
                           {children}

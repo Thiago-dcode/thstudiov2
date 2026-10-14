@@ -182,3 +182,8 @@ export const BAN_DURATION_DAYS: Record<number, number | null> = {
   4: 30,   // 1 month
 };
 export const PERMANENT_BAN_THRESHOLD = 5;
+
+/** Days between a self-service account deletion request and the hard delete. */
+export const ACCOUNT_DELETION_GRACE_DAYS = 15;
+/** Days before the hard delete that the "your account will be deleted" warning email is sent. */
+export const ACCOUNT_DELETION_WARNING_DAYS_BEFORE = 2;

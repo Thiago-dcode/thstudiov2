@@ -16,6 +16,7 @@ import { AddressModule } from '../addresses/address.module';
 import { AiModule } from '../ai/ai.module';
 import { EmailPreferencesModule } from '../email-preferences/email-preferences.module';
 import { ProfileStatusModule } from '../profile-status/profile-status.module';
+import { AuthCoreModule } from '../auth/auth-core.module';
 
 @Module({
   controllers: [UserController],
@@ -39,6 +40,8 @@ import { ProfileStatusModule } from '../profile-status/profile-status.module';
     AddressModule,
     AiModule,
     EmailPreferencesModule,
+    // `PublicArtistGuard` resolves the owner's token on hidden accounts.
+    AuthCoreModule,
   ],
   exports: [UserService, UserRepository],
 })

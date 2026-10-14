@@ -8,9 +8,11 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { Public } from 'src/common/decorators/public.decorator';
+import { PublicArtistGuard } from 'src/common/guards/public-artist.guard';
 import { IsResourceBlockedPipe } from 'src/pipes/is-resource-blocked.pipe';
 import { ModelExistPipe } from 'src/pipes/model-exist.pipe';
 import { IndexMediaRequest } from '../user-media/requests/index-media.request';
@@ -36,13 +38,16 @@ export class MediaController {
     return await this.mediaService.findAll(query);
   }
 
+  // PublicArtistGuard: 404 for a hidden artist's media, except to its (deactivated) owner.
   @Public()
+  @UseGuards(PublicArtistGuard)
   @Get(':public_id/metadata')
   async getMediaMetadata(@Param('public_id') public_id: string) {
     return await this.mediaService.getSeoMetadata(public_id);
   }
 
   @Public()
+  @UseGuards(PublicArtistGuard)
   @Get(':public_id')
   async getOneByPublicId(@Param('public_id', new ModelExistPipe('media', 'public_id')) public_id: string) {
 

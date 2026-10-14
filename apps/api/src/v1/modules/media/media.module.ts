@@ -4,6 +4,7 @@ import { Queue } from 'bullmq';
 import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
 import { LOG_QUEUE, MEDIA_UPDATE_QUEUE } from '@repo/common-lib/constants/queues';
 import { UserModule } from '../users/users.module';
+import { AuthCoreModule } from '../auth/auth-core.module';
 import { LocationModule } from '../locations/location.module';
 import { MediaController } from './media.controller';
 import { MediaProcessor } from './media.processor';
@@ -32,6 +33,8 @@ import { MediaService } from './media.service';
   imports: [
     UserModule,
     LocationModule,
+    // `PublicArtistGuard` resolves the owner's token on hidden accounts.
+    AuthCoreModule,
     BullModule.registerQueue({ name: MEDIA_UPDATE_QUEUE }, { name: LOG_QUEUE }),
   ],
   // MediaRepository is exported for SitemapModule, which reads the public-media predicate directly

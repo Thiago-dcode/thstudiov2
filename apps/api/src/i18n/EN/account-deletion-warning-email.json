@@ -1,0 +1,10 @@
+{
+  "SUBJECT": "Your A11STUDIO account will be deleted on {date}",
+  "HI": "Hi",
+  "TITLE": "Your account will be deleted on {date}",
+  "DESCRIPTION": "You asked us to delete your A11STUDIO account. In two days we will permanently remove it, together with all your media, portfolios, collections, services and profile data.",
+  "INFO": "Until then your profile stays hidden from everyone. After that date it cannot be recovered.",
+  "CTA_TEXT": "Changed your mind? Sign in and reopen your account. Everything will be exactly as you left it.",
+  "CTA_BUTTON": "Reactivate my account",
+  "IGNORE": "If you still want your account deleted, you don't need to do anything."
+}

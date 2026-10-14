@@ -1,14 +1,17 @@
+import { ACCOUNT_DELETION_GRACE_DAYS } from "@repo/common-lib/constants/limits";
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
 import { Button } from "@repo/ui/components/shadcn/button";
 import {
   ArrowRight,
   Calendar,
   CreditCard,
+  EyeOff,
   Globe,
   KeyRound,
   Mail,
   RefreshCw,
   Sparkles,
+  Trash2,
   User,
   XCircle,
 } from "lucide-react";
@@ -23,6 +26,8 @@ import {
   AdminPageContainer,
   AdminPageTitle,
 } from "../../__components/admin-page.component";
+import { AccountVisibilityDialog } from "./_components/account-visibility.dialog";
+import { DeleteAccountDialog } from "./_components/delete-account.dialog";
 import { EditUserPasswordDialog } from "./_components/edit-user-password.dialog";
 import { EditUserUsernameDialog } from "./_components/edit-user-username.dialog";
 import { AtelierLanguageSwitcher } from "./_components/language-switcher";
@@ -231,6 +236,65 @@ export default async function SettingsPage() {
                 />
               )}
             </div>
+          </div>
+        </section>
+
+        {/* Danger zone: destructive actions, marked with the error tokens. */}
+        <section
+          aria-labelledby="danger-zone-heading"
+          className="mt-8 border border-error/40 divide-y divide-error/20"
+        >
+          <div className="px-4 py-3">
+            <h3
+              id="danger-zone-heading"
+              className="text-sm! font-medium text-error"
+            >
+              {t("dangerZone.heading")}
+            </h3>
+          </div>
+
+          <div className="flex items-center justify-between gap-4 px-4 py-3">
+            <div className="flex items-center gap-3">
+              <EyeOff className="size-4 shrink-0 text-error" />
+              <div>
+                <p className="text-sm! font-medium">
+                  {user.is_active === false
+                    ? t("dangerZone.deactivate.inactiveLabel")
+                    : t("dangerZone.deactivate.label")}
+                </p>
+                <p className="text-xs! text-text-muted">
+                  {user.is_active === false
+                    ? t("dangerZone.deactivate.inactiveDescription")
+                    : t("dangerZone.deactivate.labelDescription")}
+                </p>
+              </div>
+            </div>
+            <AccountVisibilityDialog
+              userId={user.id}
+              isActive={user.is_active !== false}
+            />
+          </div>
+
+          <div className="flex items-center justify-between gap-4 px-4 py-3">
+            <div className="flex items-center gap-3">
+              <Trash2 className="size-4 shrink-0 text-error" />
+              <div>
+                <p className="text-sm! font-medium">
+                  {t("dangerZone.delete.label")}
+                </p>
+                <p className="text-xs! text-text-muted">
+                  {t("dangerZone.delete.labelDescription", {
+                    days: ACCOUNT_DELETION_GRACE_DAYS,
+                  })}
+                </p>
+              </div>
+            </div>
+            <DeleteAccountDialog
+              user={user}
+              hasRenewingSubscription={
+                !isFree && Boolean(activeSubscription?.auto_renewal)
+              }
+            />
           </div>
         </section>
 
