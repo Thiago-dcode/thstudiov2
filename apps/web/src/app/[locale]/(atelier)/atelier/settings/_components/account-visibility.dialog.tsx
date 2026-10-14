@@ -16,6 +16,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
+import { useUserMetrics } from "@/modules/users/providers/user-metrics.provider";
 import { setAccountActiveAction } from "@/modules/users/server-actions/set-account-active.action";
 
 type Props = {
@@ -30,6 +31,7 @@ type Props = {
 export const AccountVisibilityDialog = ({ userId, isActive }: Props) => {
   const t = useTranslations("atelier.settings.dangerZone.deactivate");
   const router = useRouter();
+  const { refresh: refreshMetrics } = useUserMetrics();
   const [open, setOpen] = useState(false);
 
   const { handleAction, isPending, errors, reset } = useHandleAction({
@@ -40,6 +42,8 @@ export const AccountVisibilityDialog = ({ userId, isActive }: Props) => {
       toast.success(
         result.data.is_active ? t("reactivatedToast") : t("deactivatedToast"),
       );
+      // Metrics carry the account status the modal / top-nav label read.
+      await refreshMetrics();
       router.refresh();
     },
   });

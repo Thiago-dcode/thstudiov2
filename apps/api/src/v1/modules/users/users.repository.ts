@@ -11,6 +11,7 @@ import {
   BaseUser,
   BaseUserWithSecrets,
   ProfileAddress,
+  UserAccountStatus,
 } from '@repo/common-lib/types/user';
 import {
   UserCoreRoleRow,
@@ -512,6 +513,17 @@ export class UserRepository extends BaseRepository {
       .where('id', '=', id)
       .first<UserCoreRoleRow>();
     return this.formatCoreUser(result);
+  }
+
+  async getAccountStatus(id: number): Promise<UserAccountStatus> {
+    const result = await this.query()
+      .select(['is_active', 'deletion_requested_at'])
+      .where('id', '=', id)
+      .first<UserAccountStatus | null>();
+    return {
+      is_active: result?.is_active ?? true,
+      deletion_requested_at: result?.deletion_requested_at ?? null,
+    };
   }
 
   /** Whether the account may appear publicly (`visibleAccountSql`: not banned, deactivated or pending deletion). */

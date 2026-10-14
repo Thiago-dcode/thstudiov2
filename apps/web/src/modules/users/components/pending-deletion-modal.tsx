@@ -18,12 +18,11 @@ import { useFormatter, useTranslations } from "next-intl";
 import { useState } from "react";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { logoutServerAction } from "@/modules/auth/server-actions/logout.action";
+import { useUserMetrics } from "../providers/user-metrics.provider";
 import { cancelAccountDeletionAction } from "../server-actions/cancel-account-deletion.action";
 
 type Props = {
   userId: number;
-  /** ISO string / Date of the deletion request; the modal renders only when set. */
-  deletionRequestedAt: string | Date | null | undefined;
 };
 
 /**
@@ -31,20 +30,21 @@ type Props = {
  * that is about to disappear, so the only choices are to reopen it or to leave. Same shape as
  * `UserAccountBannedModal` (cannot be dismissed).
  */
-export const PendingDeletionModal = ({
-  userId,
-  deletionRequestedAt,
-}: Props) => {
+export const PendingDeletionModal = ({ userId }: Props) => {
   const t = useTranslations("pendingDeletion");
   const format = useFormatter();
   const router = useRouter();
   const [loggingOut, setLoggingOut] = useState(false);
+  // From the metrics the atelier already loads, like the banned modal: no extra request.
+  const { metrics, refresh } = useUserMetrics();
+  const deletionRequestedAt = metrics?.account?.deletion_requested_at ?? null;
 
   const { handleAction, isPending, errors } = useHandleAction({
     action: async () => await cancelAccountDeletionAction(userId),
     afterAction: async (result) => {
       if (!result.data) return;
       toast.success(t("reopenedToast"));
+      await refresh();
       router.refresh();
     },
   });

@@ -91,10 +91,14 @@ export type UpdateUserPasswordInput = {
   new_password: string;
 };
 
+/** Owner-only account state the atelier reacts to (pending-deletion modal, deactivated label). */
+export type UserAccountStatus = Pick<UserSchema, 'is_active' | 'deletion_requested_at'>;
+
 export type UserMetrics = {
   extra_data: UserExtraData,
   active_plan: FullPlan,
   profile_status: ProfileStatus,
+  account: UserAccountStatus,
 }
 
 /** Query for listing artists; the API always applies offset pagination (paginated is forced server-side). */

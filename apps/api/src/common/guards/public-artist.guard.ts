@@ -67,7 +67,16 @@ export class PublicArtistGuard implements CanActivate {
     if (typeof params.username === 'string') {
       const username = params.username.toLocaleLowerCase().trim();
       if (!username) return null;
-      return (await query.where('username', '=', username).first<ArtistVisibilityRow | null>()) ?? null;
+      // `lower(username)`, not `username`: the only index is `uq_users_username_normalized` on
+      // lower(username), and this runs on every public artist request — a plain `username =`
+      // would scan the whole users table each time.
+      const result = await Query.raw(
+        `SELECT id, banned, is_active, deletion_requested_at
+         FROM ${TABLES_ENUM.USERS} WHERE lower(username) = $1 LIMIT 1`,
+        [username],
+      );
+      const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];
+      return (Array.isArray(rows) ? (rows[0] as ArtistVisibilityRow | undefined) : undefined) ?? null;
     }
 
     // Media pages: the artist is the media's owner. An unknown media id is a 404 like the rest.

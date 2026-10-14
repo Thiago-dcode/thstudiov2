@@ -141,10 +141,14 @@ export class UserController {
     @Param('id', ParseIntPipe, new ModelExistPipe('users'), IsUserAuthPipe)
     id: number,
   ) {
-    const [extra_data, userActivePlan, profile_status] = await Promise.all([
+    // `account` rides along (in parallel, a primary-key read) so the atelier learns about a pending
+    // deletion / deactivation from the request it already makes, instead of a server fetch in its
+    // layout that would hold up every atelier page.
+    const [extra_data, userActivePlan, profile_status, account] = await Promise.all([
       this.userExtraDataService.findOneByUserId(id),
       this.planService.findUserActivePlan(id),
       this.profileStatusService.findOneByUserId(id),
+      this.userService.getAccountStatus(id),
     ]);
 
     const active_plan = userActivePlan ?? (await this.planService.findFreePlan());
@@ -153,6 +157,7 @@ export class UserController {
       extra_data,
       active_plan,
       profile_status,
+      account,
     };
   }
 

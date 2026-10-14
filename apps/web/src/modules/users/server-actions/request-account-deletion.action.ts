@@ -5,7 +5,7 @@ import type {
   AccountDeletionRequestResult,
   RequestAccountDeletionInput,
 } from "@repo/common-lib/types/user";
-import { revalidateTag } from "next/cache";
+import { revalidateTag, updateTag } from "next/cache";
 import { getTranslations } from "next-intl/server";
 import {
   getFriendlyApiErrors,
@@ -59,7 +59,9 @@ export const requestAccountDeletionAction = async (
     return { data: null, errors, inputs };
   }
 
-  revalidateTag(`user-${id}`, "max");
+  // `updateTag`, not `revalidateTag(..., "max")`: the atelier reads the new account status right
+  // away (metrics refresh), and stale-while-revalidate would hand it the old one first.
+  updateTag(`user-${id}`);
   revalidateTag(`user-branding-${session!.username}`, "max");
   return { data: result.data!, errors: null, inputErrors: undefined, inputs };
 };

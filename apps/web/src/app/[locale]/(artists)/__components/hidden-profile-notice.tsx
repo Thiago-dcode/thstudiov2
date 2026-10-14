@@ -9,19 +9,20 @@ import { getArtistProfile } from "@/modules/users/get-artist-share-ready";
  * serves those pages to (everyone else gets a 404). Without it the owner would see their profile
  * looking perfectly normal and assume it is public.
  *
- * The profile fetch is the same `cache()`d call the pages make, so this adds no request.
+ * Costs nothing for visitors: no fetch unless the signed-in user is this artist, and then it is the
+ * same `cache()`d profile call the pages make.
  */
 export const HiddenProfileNotice = async ({
   username,
 }: {
   username: string;
 }) => {
-  const [session, profile] = await Promise.all([
-    userSession(),
-    getArtistProfile(username),
-  ]);
-  if (!session || !profile || profile.is_active !== false) return null;
-  if (session.username !== profile.username) return null;
+  // Session first (a cookie decrypt, no request): only the signed-in owner can ever see the notice,
+  // so every other visitor returns here without fetching anything.
+  const session = await userSession();
+  if (!session || session.username !== username) return null;
+  const profile = await getArtistProfile(username);
+  if (profile?.is_active !== false) return null;
 
   const t = await getTranslations("artists.hiddenNotice");
 

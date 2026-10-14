@@ -42,16 +42,11 @@ const AdminLayout = async ({ children }: { children: ReactNode }) => {
   // (Stripe callback "skip", the plan step) without rewriting the cookie, so a cookie that still
   // says "pending" is checked against the database before nagging with "finish setup". The step
   // only moves forward outside the funnel, so a cookie saying "done" never needs the check.
-  //
-  // The account status (pending deletion / deactivated) is read fresh on every render for the same
-  // reason: reopening or deactivating changes it without rewriting the session cookie.
-  const fresh = await usersService.getOne(userAuth.id);
   let funnelStep = userAuth.funnel_step;
-  if (isOnboardingPending(funnelStep) && fresh.data) {
-    funnelStep = fresh.data.funnel_step;
+  if (isOnboardingPending(funnelStep)) {
+    const fresh = await usersService.getOne(userAuth.id);
+    if (fresh.data) funnelStep = fresh.data.funnel_step;
   }
-  const deletionRequestedAt = fresh.data?.deletion_requested_at ?? null;
-  const isDeactivated = fresh.data?.is_active === false;
   return (
     <OnboardingOverlaysProvider>
       <AtelierOnboardingDialogs
@@ -66,10 +61,8 @@ const AdminLayout = async ({ children }: { children: ReactNode }) => {
                 <CollectionProvider user={userAuth}>
                   <CreateUpdateServiceProvider user={userAuth}>
                     <UserAccountBannedModal />
-                    <PendingDeletionModal
-                      userId={userAuth.id}
-                      deletionRequestedAt={deletionRequestedAt}
-                    />
+                    {/* Account status comes from the metrics the atelier already loads (no layout fetch). */}
+                    <PendingDeletionModal userId={userAuth.id} />
                     <div className="fixed flex flex-col items-end bottom-6 right-6 z-100 gap-2 ">
                       <ProfileSetupGuide />
                       <UploadMediaStatusModal />
@@ -80,10 +73,7 @@ const AdminLayout = async ({ children }: { children: ReactNode }) => {
                     <div className="flex size-full items-center justify-start">
                       <AdminHeader />
                       <main className="size-full flex flex-col items-start justify-start ">
-                        <TopNav
-                          username={userAuth.username}
-                          isDeactivated={isDeactivated}
-                        />
+                        <TopNav username={userAuth.username} />
                         <div className="relative flex w-full min-h-0 flex-1 justify-start overflow-y-auto">
                           {" "}
                           {children}

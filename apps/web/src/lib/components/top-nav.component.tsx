@@ -14,17 +14,12 @@ import { UserNotificationsDrawer } from "@/modules/user-notifications/components
 import { useUserMetrics } from "@/modules/users/providers/user-metrics.provider";
 import { useMainNav } from "../providers/main-nav.provider";
 
-export const TopNav = ({
-  username,
-  isDeactivated = false,
-}: {
-  username?: string;
-  /** The owner hid the account: a quiet reminder that nobody else can see the profile. */
-  isDeactivated?: boolean;
-}) => {
+export const TopNav = ({ username }: { username?: string }) => {
   const t = useTranslations("atelier.topNav");
   const { shrinked, toggleShrinked, toggleMobile } = useMainNav();
   const { metrics } = useUserMetrics();
+  // The owner hid the account: a quiet reminder that nobody else can see the profile.
+  const isDeactivated = metrics?.account?.is_active === false;
 
   return (
     <nav className="border-b border-b-fg-2 w-full h-16 shrink-0 flex items-center justify-between px-4">

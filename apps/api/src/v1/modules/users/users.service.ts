@@ -36,7 +36,7 @@ import { compare, hash } from '@repo/common-lib/utils/hash';
 import { AiService } from '@repo/backend-lib/services/ai-service';
 import { MediaModerationException } from 'src/common/exceptions/media-moderation-exception';
 import { descriptiveFilename, versionedAssetPath } from 'src/common/utils/asset-path.util';
-import { ArtistBranding, ArtistCard, UpdateUserInput } from '@repo/common-lib/types/user';
+import { ArtistBranding, ArtistCard, UpdateUserInput, UserAccountStatus } from '@repo/common-lib/types/user';
 import { EnumType } from '@repo/common-lib/constants/enums';
 import { addMonths } from 'date-fns';
 import { IndexArtistsRequest } from './requests/index-artists.request';
@@ -465,6 +465,10 @@ export class UserService {
         ? 'Account deletion is already in progress and can no longer be cancelled'
         : 'Account deletion was not requested',
     );
+  }
+
+  async getAccountStatus(userId: number): Promise<UserAccountStatus> {
+    return await this.userRepository.getAccountStatus(userId);
   }
 
   /** Whether the account may appear publicly (not banned, deactivated or pending deletion). */

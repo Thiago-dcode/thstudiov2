@@ -19,6 +19,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import FormComponent from "@/lib/components/form-component";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
+import { useUserMetrics } from "@/modules/users/providers/user-metrics.provider";
 import { requestAccountDeletionAction } from "@/modules/users/server-actions/request-account-deletion.action";
 
 type Props = {
@@ -33,6 +34,7 @@ export const DeleteAccountDialog = ({
 }: Props) => {
   const t = useTranslations("atelier.settings.dangerZone.delete");
   const router = useRouter();
+  const { refresh: refreshMetrics } = useUserMetrics();
   const [open, setOpen] = useState(false);
   const [cancelSubscription, setCancelSubscription] = useState(false);
 
@@ -43,6 +45,8 @@ export const DeleteAccountDialog = ({
       if (!result.data) return;
       setOpen(false);
       // The atelier layout re-reads the user and shows the "pending deletion" modal.
+      // Metrics carry the account status the modal / top-nav label read.
+      await refreshMetrics();
       router.refresh();
     },
   });
