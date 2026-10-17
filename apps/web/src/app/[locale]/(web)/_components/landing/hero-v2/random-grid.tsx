@@ -12,8 +12,8 @@ const MEDIA_SHAPES = ENUMS.MEDIA_SHAPE.filter((m) => m !== "SQUARE");
 
 //total stored on amazon s3
 //must be checked and ensure them exist manually
-const TOTAL_PORTRAIT_MEDIA = 10;
-const TOTAL_LANDSCAPE_MEDIA = 10;
+const TOTAL_PORTRAIT_MEDIA = 15;
+const TOTAL_LANDSCAPE_MEDIA = 16;
 
 const buildMediaItem = (
   shape: EnumType<"MEDIA_SHAPE">,
@@ -21,7 +21,7 @@ const buildMediaItem = (
 ): MediaItem => {
   const shapeLower = shape.toLowerCase();
   return {
-    url: `https://cdn.a11studio.com/public/${shapeLower}/${shapeLower}-${index}.jpg`,
+    url: `https://cdn.a11studio.com/public/${shapeLower}/${shapeLower}-${index}.webp`,
   };
 };
 const buildMediaItemArr = (shape: EnumType<"MEDIA_SHAPE">, length: number) => {
