@@ -252,16 +252,35 @@
 }
 
 /*
-  Single column: the card no longer stretches to the grid's full inline
-  size. Instead it centers and sizes itself from its (inline, per-item)
-  aspect-ratio, capped by max-height so a tall/landscape image at full
-  container width never balloons into a giant cell.
+  Single column: the card centers and sizes itself from its (inline, per-item)
+  aspect-ratio, as wide as the column allows but never taller than the cap, so
+  a tall/landscape media at full container width never balloons into a giant cell.
+
+  The width is computed from the ratio alone (--media-ratio). It used to be
+  `width: auto`, which shrink-wraps to the content's INTRINSIC size: an image
+  reported next/image's nominal 800px, a video its poster's pixels — then the
+  clip's own pixels once hovering loaded it. Same-ratio items came out at
+  different sizes, and a video tile jumped size on its first hover.
 */
 .layout-column-base .media-gallery-card[data-single-column] {
+  --single-column-max-height: min(60vh, 640px);
   justify-self: center;
-  width: auto;
-  max-width: 100%;
-  max-height: min(60vh, 640px);
+  width: min(100%, calc(var(--single-column-max-height) * var(--media-ratio, 1)));
+  max-height: var(--single-column-max-height);
+}
+
+/*
+  A single column reads as a stacked feed: give each piece room to breathe
+  instead of the dense grid gap, so consecutive items do not visually merge.
+*/
+.layout-column-base:has(> [data-single-column]) {
+  row-gap: var(--size-2xl);
+}
+
+@media (min-width: 768px) {
+  .layout-column-base:has(> [data-single-column]) {
+    row-gap: var(--size-4xl);
+  }
 }
 
 .layout-column-base .media-gallery-card__frame {

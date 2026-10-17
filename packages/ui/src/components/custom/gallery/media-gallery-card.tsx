@@ -6,6 +6,7 @@ import {
   aspectRatioToCss,
 } from "@repo/common-lib/utils/aspect-ratio";
 import { useGallery } from "@repo/ui/providers/gallery.provider";
+import type { CSSProperties } from "react";
 import type { GalleryGridMedia } from "./gallery-grid";
 import {
   getGalleryImageClassName,
@@ -35,7 +36,12 @@ export function MediaGalleryCard({
   const className =
     "cursor-pointer media-gallery-card group relative block w-full overflow-hidden transition-all duration-500 ease-out hover:ring-1 hover:ring-text/20";
   const style = singleColumn
-    ? { aspectRatio: aspectRatioToCss(media.aspect_ratio) }
+    ? ({
+        aspectRatio: aspectRatioToCss(media.aspect_ratio),
+        // Read by gallery-grid.css to size the cell from the ratio alone, never from the
+        // media's pixels (see `[data-single-column]` there).
+        "--media-ratio": aspectRatioToCss(media.aspect_ratio),
+      } as CSSProperties)
     : undefined;
   const dataRatio = usesAspectRatioBuckets(resolvedLayout)
     ? aspectRatioToBucket(media.aspect_ratio)
