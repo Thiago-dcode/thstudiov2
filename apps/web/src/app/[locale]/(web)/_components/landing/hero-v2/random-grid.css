@@ -1,0 +1,52 @@
+/*
+ * Columns per breakpoint (always 3 rows). The component renders enough cells for the
+ * widest layout; each step hides the cells past cols × 3. Media queries can't read CSS
+ * variables, so the px values mirror --breakpoint-tablet / -laptop / -ultrawide.
+ */
+.random-grid-container {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+}
+
+.random-grid-item:nth-child(n + 7) {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .random-grid-container {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .random-grid-item:nth-child(n + 7) {
+    display: block;
+  }
+
+  .random-grid-item:nth-child(n + 10) {
+    display: none;
+  }
+}
+
+@media (min-width: 1280px) {
+  .random-grid-container {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .random-grid-item:nth-child(n + 10) {
+    display: block;
+  }
+
+  .random-grid-item:nth-child(n + 13) {
+    display: none;
+  }
+}
+
+@media (min-width: 2560px) {
+  .random-grid-container {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .random-grid-item:nth-child(n + 13) {
+    display: block;
+  }
+}

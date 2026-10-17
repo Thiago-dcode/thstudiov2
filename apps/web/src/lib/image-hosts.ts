@@ -12,6 +12,9 @@ export const STORAGE_IMAGE_HOSTS = [
   "a11studio.s3.eu-north-1.amazonaws.com",
   "local.a11studio.s3.eu-north-1.amazonaws.com",
   "dev.a11studio.s3.eu-north-1.amazonaws.com",
+  // Public CDN custom domain. Listed here so next/image allows it even when CDN_URL
+  // is unset at config load (local dev). CDN_URL still adds whatever host it points at.
+  "cdn.a11studio.com",
 ] as const;
 
 /** The CDN host from `CDN_URL`, or null when it is unset or unparseable. */

@@ -6,7 +6,7 @@ import { FaqsContent } from "../../../lib/components/faqs";
 import { CtaSection } from "./_components/landing/cta-section";
 import { FeaturedArtistsSection } from "./_components/landing/featured-artists-section";
 import { FeaturedPortfolioSection } from "./_components/landing/featured-portfolio-section";
-import { HeroSection } from "./_components/landing/hero-section";
+import { HeroSectionV2 } from "./_components/landing/hero-v2/hero-section-v2";
 import { ValuePillarsSection } from "./_components/landing/value-pillars-section";
 import { WebSection } from "./_components/landing/web-section";
 
@@ -43,9 +43,10 @@ export default async function Home({
           pageName: tSeo("homePageName"),
         })}
       />
-      <HeroSection />
-      <ValuePillarsSection />
+      {/* <HeroSection /> */}
 
+      <HeroSectionV2 />
+      <ValuePillarsSection />
       {/* <SocialProofSection /> */}
       {/* <FeatureCategoriesSection /> */}
       <FeaturedPortfolioSection />
