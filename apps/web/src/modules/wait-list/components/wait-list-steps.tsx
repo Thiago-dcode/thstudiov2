@@ -40,42 +40,25 @@ export function WaitListSteps() {
   const steps = t.raw("waitList.dialog.steps") as WaitListStep[];
   const title = t("waitList.dialog.stepsTitle");
 
-  const learnMore = (
-    <Link
-      href={`/faqs#${WAIT_LIST_FAQ_ID}`}
-      className="w-fit text-sm font-medium text-text underline underline-offset-4 transition-colors hover:text-text-muted"
-    >
-      {t("waitList.dialog.learnMore")}
-    </Link>
-  );
-
   return (
-    <>
-      <Accordion
-        type="single"
-        collapsible
-        defaultValue={STEPS_ACCORDION_ID}
-        className="phone-lg:hidden"
+    <Accordion type="single" collapsible>
+      <AccordionItem
+        value={STEPS_ACCORDION_ID}
+        className="border-y border-border"
       >
-        <AccordionItem
-          value={STEPS_ACCORDION_ID}
-          className="border-y border-border"
-        >
-          <AccordionTrigger className="min-h-11 py-3 text-sm font-medium text-text hover:no-underline">
-            {title}
-          </AccordionTrigger>
-          <AccordionContent className="flex flex-col gap-4 pb-4">
-            <StepsList steps={steps} />
-            {learnMore}
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
-
-      <div className="hidden flex-col gap-3 phone-lg:flex">
-        <p className="text-sm font-medium text-text">{title}</p>
-        <StepsList steps={steps} />
-        {learnMore}
-      </div>
-    </>
+        <AccordionTrigger className="min-h-11 cursor-pointer py-3 text-sm font-medium text-text hover:no-underline">
+          {title}
+        </AccordionTrigger>
+        <AccordionContent className="flex flex-col gap-4 pb-4">
+          <StepsList steps={steps} />
+          <Link
+            href={`/faqs#${WAIT_LIST_FAQ_ID}`}
+            className="w-fit text-sm font-medium text-text underline underline-offset-4 transition-colors hover:text-text-muted"
+          >
+            {t("waitList.dialog.learnMore")}
+          </Link>
+        </AccordionContent>
+      </AccordionItem>
+    </Accordion>
   );
 }
