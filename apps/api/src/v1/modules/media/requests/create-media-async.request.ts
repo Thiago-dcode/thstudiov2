@@ -6,13 +6,20 @@ import {
   IsIn,
   IsInt,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsString,
   IsUUID,
+  Max,
+  Min,
   ValidateNested,
 } from 'class-validator';
 import type { EnumType } from '@repo/common-lib/constants/enums';
-import { ALLOWED_FILE_TYPES, MAX_CATEGORIES_MEDIA } from '@repo/common-lib/constants/limits';
+import {
+  ALLOWED_FILE_TYPES,
+  MAX_CATEGORIES_MEDIA,
+  MAX_VIDEO_DURATION_SECONDS,
+} from '@repo/common-lib/constants/limits';
 import type { MimeTypes } from '@repo/common-lib/types/general';
 import { IsAvailableEnum } from 'src/common/validators/is-enum.validator';
 import { IsUserAuth } from 'src/common/validators/is-user-auth.validtor';
@@ -81,6 +88,17 @@ export class CreateMediaAsyncRequest {
   @IsOptional()
   @IsAvailableEnum('COMPRESSION_LEVEL')
   compression_level: EnumType<'COMPRESSION_LEVEL'>;
+
+  /**
+   * VIDEO only: the second the artist picked as the cover. Bounded by the longest video accepted,
+   * not by this one's length — that is unknown until the worker probes it, and it clamps there.
+   * Dropped by the service for images and GIFs.
+   */
+  @IsOptional()
+  @IsNumber({ allowNaN: false, allowInfinity: false, maxDecimalPlaces: 3 })
+  @Min(0)
+  @Max(MAX_VIDEO_DURATION_SECONDS)
+  thumbnail_time_seconds?: number;
 
   // The uuid `POST /media/upload-url` returned. The API rebuilds the full temp key
   // (`users/{public_id}/__TEMP__/{upload_id}`) from this plus the authenticated user, so the

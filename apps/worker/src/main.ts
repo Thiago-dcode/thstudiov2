@@ -4,6 +4,8 @@ import {
     JOB_DATABASE_BACKUP,
     JOB_PROCESS_MEDIA,
     JOB_REGENERATE_MEDIA_THUMBNAIL,
+    JOB_SET_VIDEO_THUMBNAIL,
+    JOB_DELETE_REPLACED_MEDIA_OBJECT,
     MEDIA_QUEUE,
     MEDIA_THUMBNAIL_QUEUE,
 } from '@repo/common-lib/constants/queues';
@@ -32,6 +34,8 @@ const jobResolver: JobResolver = {
     },
     [MEDIA_THUMBNAIL_QUEUE]: {
         [JOB_REGENERATE_MEDIA_THUMBNAIL]: (job) => MediaProcessor.handle(job),
+        [JOB_SET_VIDEO_THUMBNAIL]: (job) => MediaProcessor.handle(job),
+        [JOB_DELETE_REPLACED_MEDIA_OBJECT]: (job) => MediaProcessor.handle(job),
     },
     [BACKUP_QUEUE]: {
         [JOB_DATABASE_BACKUP]: () => BackupProcessor.handle(),

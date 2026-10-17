@@ -4,6 +4,7 @@ import type {
   CreateMediaInputWithFile,
   Media,
   UpdateMediaInput,
+  UpdateMediaThumbnailTimeInput,
 } from "@repo/common-lib/types/media";
 import type { ActionReturn } from "@repo/common-lib/types/response";
 import { cleanObj, trimValues } from "@repo/common-lib/utils/cleanObj";
@@ -20,6 +21,7 @@ import {
   type CreateMediaSchemaType,
   createMediaSchema,
   updateMediaSchema,
+  updateMediaThumbnailTimeSchema,
 } from "../schemas/media-shemas";
 import { revalidateUserMediaAction } from "../server-actions/revalidate-user-media.action";
 import { validateMediaFile } from "../validation/media-file.validation";
@@ -245,4 +247,27 @@ export async function updateMediaApi(
   // `UpdateMediaInput` carries no `user_id`, so the owner comes off the updated row.
   if (result.data) scheduleUserMediaRevalidation(result.data.user_id);
   return result;
+}
+
+/**
+ * Queues a new cover for a finished video. The API answers with the media unchanged; the new
+ * thumbnail arrives with the worker's `CREATE_UPDATE_MEDIA` notification, once the frame has been
+ * extracted and moderated.
+ */
+export async function updateMediaThumbnailTimeApi(
+  id: number,
+  input: UpdateMediaThumbnailTimeInput,
+): Promise<ActionReturn<Media, UpdateMediaThumbnailTimeInput>> {
+  const parsed = updateMediaThumbnailTimeSchema().safeParse(input);
+  if (!parsed.success) {
+    return inputErrorsReturn<Media, UpdateMediaThumbnailTimeInput>(
+      getObjErrorFromZod(parsed.error),
+      input,
+    );
+  }
+
+  return toActionReturn<Media, UpdateMediaThumbnailTimeInput>(
+    await mediaClientService.updateThumbnailTime(id, parsed.data),
+    input,
+  );
 }

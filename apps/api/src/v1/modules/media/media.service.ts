@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, InternalServerErrorException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { MediaRepository } from './media.repository';
 import { CreateMediaAsyncRequest } from './requests/create-media-async.request';
@@ -22,6 +22,7 @@ import { UpdateProfileStatusEvent } from '../profile-status/events/update-profil
 import { DeleteManyMediaRequest } from './requests/delete-many-media.request';
 import { UpdateMediaLocationsRequest } from './requests/update-media-locations.request';
 import { UpdateMediaRequest } from './requests/update-media.request';
+import { UpdateMediaThumbnailTimeRequest } from './requests/update-media-thumbnail-time.request';
 import { RequestService } from 'src/common/services/request.service';
 import { DEFAULT_COMPRESSION_LVL } from '@repo/common-lib/constants/enums';
 import { MediaHelper } from '@repo/common-lib/utils/media';
@@ -396,6 +397,7 @@ export class MediaService {
     generate_metadata,
     location,
     category_ids,
+    thumbnail_time_seconds,
     ...data
   }: CreateMediaAsyncRequest) {
     const log = this.logger.name('create');
@@ -449,6 +451,8 @@ export class MediaService {
       completed_at: null,
       failed_reason: null,
       location_id: locationId,
+      // A cover second only means something for a video; anything else would be a dead column.
+      thumbnail_time_seconds: mediaType === 'VIDEO' ? thumbnail_time_seconds ?? null : null,
     };
     cleanObj(baseMedia);
 
@@ -835,6 +839,43 @@ export class MediaService {
       }
       throw error;
     }
+  }
+
+  /**
+   * Queues a new cover for a finished video. The frame is extracted and moderated by the worker
+   * (`JOB_SET_VIDEO_THUMBNAIL`), which notifies the owner either way, so this returns the media
+   * as it stands — the editor waits for that notification rather than for this response.
+   */
+  public async updateThumbnailTime(id: number, { thumbnail_time_seconds }: UpdateMediaThumbnailTimeRequest) {
+    const userId = this.requestService.user.id;
+    const media = await this.mediaRepository.findById(id);
+
+    if (!media || media.user_id !== userId) {
+      throw new UnauthorizedException();
+    }
+    if (media.media_type !== 'VIDEO') {
+      throw new BadRequestException('Only a video has a cover frame to pick');
+    }
+    if (!media.completed_at || media.status === 'FAILED') {
+      throw new BadRequestException('The video is still processing');
+    }
+    // An edit or the AI metadata job may be renaming every frame key right now (the first SEO
+    // generation moves them all); a cover swapped in underneath would be moved out from under it.
+    if (MediaHelper.isLoading(media)) {
+      throw new ConflictException('The video is being updated. Try again in a moment.');
+    }
+
+    await QueueHelper.createSetVideoThumbnailJob({
+      media_id: id,
+      thumbnail_time_seconds,
+    });
+    this.logger.info(`Set video thumbnail job enqueued: media [${id}]`, {
+      media_id: id,
+      user_id: userId,
+      thumbnail_time_seconds,
+    });
+
+    return media;
   }
 
   /** Clear the cached SEO metadata for a media (all locales). */

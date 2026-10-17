@@ -3,6 +3,7 @@ import {
   MAX_CATEGORIES_MEDIA,
   MAX_MEDIA_DELETE_BATCH,
   MAX_MEDIA_LOCATION_BATCH,
+  MAX_VIDEO_DURATION_SECONDS,
 } from "@repo/common-lib/constants/limits";
 import * as z from "zod";
 import {
@@ -21,6 +22,16 @@ const categoryIdsSchema = z
   .array(z.number().int().positive())
   .max(MAX_CATEGORIES_MEDIA)
   .optional();
+
+/**
+ * A video's cover, as the second the artist picked. Rounded to the millisecond the API accepts;
+ * the worker clamps it into the clip's own length, which only it knows for certain.
+ */
+const thumbnailTimeSecondsSchema = z
+  .number()
+  .min(0)
+  .max(MAX_VIDEO_DURATION_SECONDS)
+  .transform((seconds) => Math.round(seconds * 1000) / 1000);
 
 export const createMediaSchema = (t: Translator) =>
   z.object({
@@ -56,8 +67,12 @@ export const createMediaSchema = (t: Translator) =>
     // Must be declared, not just forwarded: zod strips unknown keys, so an undeclared field is
     // silently dropped before the request is ever built.
     generate_metadata: formDataBoolean(),
+    thumbnail_time_seconds: thumbnailTimeSecondsSchema.nullable().optional(),
     user_id: z.number().int().positive(),
   });
+
+export const updateMediaThumbnailTimeSchema = () =>
+  z.object({ thumbnail_time_seconds: thumbnailTimeSecondsSchema });
 
 export const updateMediaSchema = (t: Translator) =>
   z

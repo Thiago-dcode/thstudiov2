@@ -35,6 +35,7 @@ import {
   Check,
   Copy,
   ExternalLink,
+  Film,
   Pencil,
   Sparkles,
   Trash2,
@@ -54,6 +55,7 @@ import { clientEnv } from "@/env/client";
 import FormComponent from "@/lib/components/form-component";
 import { LocationAutocomplete } from "@/modules/locations/components/location-autocomplete";
 import { featureToLocationInput } from "@/modules/locations/location-input";
+import { ChangeVideoCoverDialog } from "@/modules/media/components/change-video-cover-dialog";
 import {
   canExpandMedia,
   ExpandMediaDialog,
@@ -61,6 +63,7 @@ import {
 import { FailedMediaOverlay } from "@/modules/media/components/failed-media-overlay";
 import { MediaCategoriesPicker } from "@/modules/media/components/media-categories-picker";
 import { useMedia } from "@/modules/media/providers/media.provider";
+import { useSubscribeToUserNotification } from "@/modules/user-notifications/hooks/useSubscribeToUserNotification";
 import { useUserMetrics } from "@/modules/users/providers/user-metrics.provider";
 import { MediaStatusIcons } from "./media-status-icons";
 import { MediaDrawerFooter, MediaTab, type MediaTabs } from "./media-tab";
@@ -134,6 +137,63 @@ function draftDiffersFromSaved(draft: MediaDraft, saved: Media): boolean {
   );
 }
 
+/** What the cover looked like when a change was queued, to tell a landed change from a refused one. */
+type PendingCover = Pick<Media, "thumbnail" | "thumbnail_time_seconds">;
+
+/**
+ * The storage object an asset URL points at, without its query. The page and the notification
+ * may sign the same key differently, so whole URLs can differ while the cover has not moved.
+ */
+function assetPath(url: string | null | undefined): string | null {
+  if (!url) return null;
+  try {
+    return new URL(url).pathname;
+  } catch {
+    return url.split("?")[0] ?? url;
+  }
+}
+
+/**
+ * Gives up waiting on the worker after this long; the tile then just shows what it has. Longer
+ * than the job's whole retry ladder (~1.5min of backoff while the row is busy), so a change that
+ * was only waiting its turn still lands while the editor is watching.
+ */
+const COVER_PENDING_TIMEOUT_MS = 3 * 60 * 1000;
+
+/**
+ * Mounted only while a cover change is in flight, so idle cards hold no subscription. The worker
+ * notifies on success AND on a refused frame; which one it was shows in whether the cover moved.
+ */
+function PendingCoverWatcher({
+  mediaId,
+  onSettled,
+}: {
+  mediaId: number;
+  /** The media from the worker's notification, or `null` when it never came. */
+  onSettled: (media: Media | null) => void;
+}) {
+  useSubscribeToUserNotification({
+    callbackId: `media-cover-${mediaId}`,
+    createUpdateMediaCallback: (payload) => {
+      if (payload.id !== mediaId) return;
+      // The cover job only ever notifies a released row. A busy one is some other job's news
+      // (an edit, the AI metadata run) and says nothing about the cover yet.
+      if (MediaHelper.isLoading(payload)) return;
+      onSettled(payload);
+    },
+  });
+
+  useEffect(() => {
+    const timer = window.setTimeout(
+      () => onSettled(null),
+      COVER_PENDING_TIMEOUT_MS,
+    );
+    return () => window.clearTimeout(timer);
+  }, [onSettled]);
+
+  return null;
+}
+
 function DetailField({
   label,
   children,
@@ -166,6 +226,8 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [urlCopied, setUrlCopied] = useState(false);
+  const [isCoverDialogOpen, setIsCoverDialogOpen] = useState(false);
+  const [pendingCover, setPendingCover] = useState<PendingCover | null>(null);
   const { aiCreditsInfo } = useUserMetrics();
   const {
     upsertMediaUpload,
@@ -239,6 +301,28 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
   // AI Credits calculation — weighted by this media's type, so a video (cost 3) is correctly
   // blocked when only 1-2 credits remain even though `hasCredits` alone would say yes.
   const hasEnoughCredits = aiCreditsInfo.canAfford(savedMedia.media_type);
+
+  // Only a finished video has frames to pick from; an unfinished one has no stored MP4 yet.
+  const canChangeCover =
+    savedMedia.media_type === "VIDEO" &&
+    !!savedMedia.url &&
+    !!savedMedia.completed_at &&
+    savedMedia.status !== "FAILED";
+
+  const handleCoverSettled = useCallback(
+    (landed: Media | null) => {
+      if (pendingCover && landed) {
+        const moved =
+          assetPath(landed.thumbnail) !== assetPath(pendingCover.thumbnail) ||
+          landed.thumbnail_time_seconds !== pendingCover.thumbnail_time_seconds;
+        if (moved) toast.success(t("coverUpdated"));
+        else toast.error(t("coverRejected"));
+      }
+      setPendingCover(null);
+      if (landed) setSavedMedia((prev) => ({ ...prev, ...landed }));
+    },
+    [pendingCover, t],
+  );
 
   const handleGenerateSeo = useCallback(async () => {
     if (!savedMedia.user_id || !savedMedia.id || !hasEnoughCredits) return;
@@ -623,6 +707,31 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
                   <p className="text-sm text-text">{formattedDate}</p>
                 </DetailField>
               )}
+              {canChangeCover && (
+                <DetailField label={t("coverLabel")}>
+                  {pendingCover ? (
+                    <p
+                      role="status"
+                      className="flex items-center gap-2 text-sm text-text-muted"
+                    >
+                      <Spinner className="size-3.5" />
+                      {t("coverPending")}
+                    </p>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-9 px-3"
+                      onClick={() => setIsCoverDialogOpen(true)}
+                      disabled={isPending}
+                    >
+                      <Film className="size-3.5" aria-hidden />
+                      {t("coverChange")}
+                    </Button>
+                  )}
+                </DetailField>
+              )}
               <DetailField label={t("visibilityLabel")}>
                 <p className="text-sm text-text">
                   {savedMedia.is_active
@@ -819,7 +928,7 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
               showForAllTypes
             />
             {/* Loading Overlay */}
-            {isPending && (
+            {(isPending || pendingCover) && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
                 <Spinner className="size-12 text-white" />
               </div>
@@ -1013,6 +1122,26 @@ export function EditMediaCard({ media, username }: MediaCardProps) {
           </>
         )}
       </DrawerContent>
+
+      {canChangeCover && (
+        <ChangeVideoCoverDialog
+          media={savedMedia}
+          open={isCoverDialogOpen}
+          onOpenChange={setIsCoverDialogOpen}
+          onQueued={() =>
+            setPendingCover({
+              thumbnail: savedMedia.thumbnail,
+              thumbnail_time_seconds: savedMedia.thumbnail_time_seconds,
+            })
+          }
+        />
+      )}
+      {pendingCover && (
+        <PendingCoverWatcher
+          mediaId={savedMedia.id}
+          onSettled={handleCoverSettled}
+        />
+      )}
 
       <Dialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
         <DialogContent className="max-w-md z-100">

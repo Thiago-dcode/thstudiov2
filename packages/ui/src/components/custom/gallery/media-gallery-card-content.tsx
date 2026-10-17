@@ -51,8 +51,12 @@ function HoverPlayVideo({
     };
     const stop = () => {
       video.pause();
-      // Back to the first frame, so the tile rests on the same picture it started on.
-      video.currentTime = 0;
+      // Back to the POSTER — the cover the artist picked — not to the clip's first frame. Once a
+      // video has played or been seeked the browser never shows `poster` again, so the old
+      // `currentTime = 0` left the tile resting on frame zero, which is black for any clip that
+      // fades in. `load()` resets the element to its unplayed state; with `preload="none"` it
+      // fetches nothing until the next hover, which the HTTP cache then serves.
+      video.load();
     };
 
     card.addEventListener("mouseenter", play);

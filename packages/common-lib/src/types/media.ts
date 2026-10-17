@@ -143,8 +143,12 @@ export type CreateMediaInput = Omit<
   Partial<Pick<MediaSchema, 'status' | 'completed_at' | 'failed_reason'>>;
 
 // What users can update
-/** `is_active` is the owner's own visibility switch; `blocked_at` stays with moderation. */
-export type UpdateMediaInput = Partial<Omit<MediaSchema, InternalMediaFields>> &
+/**
+ * `is_active` is the owner's own visibility switch; `blocked_at` stays with moderation.
+ * `thumbnail_time_seconds` is not here: a new cover means a new frame extracted and moderated, so
+ * it has its own route (`PATCH /media/:id/thumbnail-time`) and job.
+ */
+export type UpdateMediaInput = Partial<Omit<MediaSchema, InternalMediaFields | 'thumbnail_time_seconds'>> &
   Partial<Pick<MediaSchema, 'is_active'>> &
   MediaLocationPayload &
   MediaCategoriesPayload;
@@ -230,4 +234,25 @@ export type MediaVisibility = { includeInactive?: boolean };
 
 export type RegenerateMediaThumbnailJobInput = {
   media_id: number;
+};
+
+/** Body of `PATCH /media/:id/thumbnail-time`: the second of the video to use as its cover. */
+export type UpdateMediaThumbnailTimeInput = {
+  thumbnail_time_seconds: number;
+};
+
+/** Payload for `JOB_SET_VIDEO_THUMBNAIL`: re-extract a finished video's cover at a new second. */
+export type SetVideoThumbnailJobInput = UpdateMediaThumbnailTimeInput & {
+  media_id: number;
+};
+
+/** Payload for `JOB_DELETE_REPLACED_MEDIA_OBJECT`: a storage key a media stopped pointing at. */
+export type DeleteReplacedMediaObjectJobInput = {
+  media_id: number;
+  path: string;
+};
+
+/** Payload for `JOB_INVALIDATE_MEDIA_SEO_CACHE`: drop a media's cached SEO metadata (all locales). */
+export type InvalidateMediaSeoCacheJobInput = {
+  public_id: string;
 };

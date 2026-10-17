@@ -22,6 +22,7 @@ import { CreateMediaUploadUrlRequest } from './requests/create-media-upload-url.
 import { DeleteManyMediaRequest } from './requests/delete-many-media.request';
 import { UpdateMediaLocationsRequest } from './requests/update-media-locations.request';
 import { UpdateMediaRequest } from './requests/update-media.request';
+import { UpdateMediaThumbnailTimeRequest } from './requests/update-media-thumbnail-time.request';
 
 @Throttle({
   short: { limit: 50, ttl: 1000 },
@@ -103,6 +104,22 @@ export class MediaController {
     @Body() updateMediaRequest: UpdateMediaRequest,
   ) {
     return await this.mediaService.updateAsync(id, updateMediaRequest);
+  }
+
+  // A video's cover, picked by the second. Its own route rather than a field on `:id/async`: a
+  // new cover is a frame to extract and moderate, which the generic update job does not do.
+  // Tighter than the controller's limits because every call buys a vision-model moderation.
+  @Throttle({
+    short: { limit: 2, ttl: 1000 },
+    medium: { limit: 5, ttl: 10000 },
+    long: { limit: 20, ttl: 60000 },
+  })
+  @Patch(':id/thumbnail-time')
+  async updateThumbnailTime(
+    @Param('id', ParseIntPipe, new IsResourceBlockedPipe('media')) id: number,
+    @Body() body: UpdateMediaThumbnailTimeRequest,
+  ) {
+    return await this.mediaService.updateThumbnailTime(id, body);
   }
 
   @Delete(':id')

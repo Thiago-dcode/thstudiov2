@@ -2152,6 +2152,13 @@ const messages = {
         openDetailsAria: "Edit {name}",
         removeAria: "Remove {name}",
         detailsSubtitle: "Changes here only apply to this file.",
+        coverTitle: "Cover",
+        coverHint:
+          "Drag to choose the frame shown on your grid and when shared.",
+        coverSliderLabel: "Cover frame",
+        coverVideoLabel: "Video frame used as the cover",
+        coverUnsupported:
+          "This browser can't preview this video, so a frame from its first second will be the cover.",
         detailsDone: "Done",
         notEnoughCreditsForFile: "Not enough credits left for this file",
         gridHint: "Click a file to edit it before uploading.",
@@ -2264,6 +2271,21 @@ const messages = {
         copyUrl: "Copy URL",
         urlCopied: "URL copied",
         urlCopyFailed: "Could not copy URL",
+        coverLabel: "Cover",
+        coverChange: "Change cover",
+        coverTitle: "Choose a cover",
+        coverHint:
+          "Drag to choose the frame shown on your grid and when shared.",
+        coverSliderLabel: "Cover frame",
+        coverVideoLabel: "Video frame used as the cover",
+        coverUnsupported:
+          "This browser can't play this video, so the cover can't be changed here.",
+        coverSave: "Use this frame",
+        coverPending: "Updating cover…",
+        coverUpdated: "Cover updated",
+        coverRejected:
+          "That frame can't be used as a cover. The previous cover was kept.",
+        coverChangeFailed: "Could not change the cover. Please try again.",
         noPreview: "No preview",
         altFallback: "{username} media",
         untitled: "Untitled",

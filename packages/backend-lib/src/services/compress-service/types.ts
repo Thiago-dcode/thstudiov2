@@ -67,6 +67,27 @@ export type ExtractVideoFramesInput = {
      * description are drawn from them, and no page ever renders one. Compress them hard.
      */
     sample: VideoFrameEncodeOptions;
+    /**
+     * The second the artist picked as the cover. When set, frame 0 is taken THERE (clamped into
+     * the clip) and every percentage is still sampled after it, so one extra frame comes back:
+     * the cover is an addition to the moderation samples, never a replacement for one. Without
+     * it frame 0 is the first percentage, as before.
+     */
+    posterSeconds?: number;
+};
+
+/** Input for `extractVideoFrameAt`: one still at an exact second, e.g. a cover the artist picked. */
+export type ExtractVideoFrameAtInput = {
+    /** Multer upload or raw video bytes. */
+    file: Express.Multer.File | Buffer;
+    /** Where to seek. Clamped into the clip, so a second past the end lands on its last frame. */
+    seconds: number;
+    encode: VideoFrameEncodeOptions;
+};
+
+/** One extracted still, with the second it was actually taken at (after clamping). */
+export type VideoFrameOutput = CompressionOutput & {
+    seekSeconds: number;
 };
 
 /**
@@ -94,6 +115,12 @@ export type VideoProbe = {
         width: number;
         height: number;
         frameRate: number;
+        /**
+         * The video STREAM's own length, which can be shorter than {@link durationSeconds} (the
+         * longest track): audio routinely runs past the last picture. 0 when the container does
+         * not record one per stream (WebM/MKV), in which case only the format duration is known.
+         */
+        durationSeconds: number;
     };
     audio: {
         codec: string;

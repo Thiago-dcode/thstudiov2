@@ -2162,6 +2162,13 @@ const messages = {
         openDetailsAria: "Editar {name}",
         removeAria: "Quitar {name}",
         detailsSubtitle: "Los cambios aquí solo afectan a este archivo.",
+        coverTitle: "Portada",
+        coverHint:
+          "Arrastra para elegir el fotograma que se verá en tu galería y al compartir.",
+        coverSliderLabel: "Fotograma de portada",
+        coverVideoLabel: "Fotograma del vídeo usado como portada",
+        coverUnsupported:
+          "Este navegador no puede previsualizar este vídeo, así que la portada será un fotograma de su primer segundo.",
         detailsDone: "Listo",
         notEnoughCreditsForFile:
           "No quedan créditos suficientes para este archivo",
@@ -2276,6 +2283,21 @@ const messages = {
         copyUrl: "Copiar URL",
         urlCopied: "URL copiada",
         urlCopyFailed: "No se pudo copiar la URL",
+        coverLabel: "Portada",
+        coverChange: "Cambiar portada",
+        coverTitle: "Elige una portada",
+        coverHint:
+          "Arrastra para elegir el fotograma que se verá en tu galería y al compartir.",
+        coverSliderLabel: "Fotograma de portada",
+        coverVideoLabel: "Fotograma del vídeo usado como portada",
+        coverUnsupported:
+          "Este navegador no puede reproducir este vídeo, así que aquí no se puede cambiar la portada.",
+        coverSave: "Usar este fotograma",
+        coverPending: "Actualizando portada…",
+        coverUpdated: "Portada actualizada",
+        coverRejected:
+          "Ese fotograma no se puede usar como portada. Se mantuvo la anterior.",
+        coverChangeFailed: "No se pudo cambiar la portada. Inténtalo de nuevo.",
         noPreview: "Sin vista previa",
         altFallback: "Contenido de {username}",
         untitled: "Sin título",

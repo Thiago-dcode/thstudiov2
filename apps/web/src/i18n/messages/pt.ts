@@ -2162,6 +2162,13 @@ const messages = {
         openDetailsAria: "Editar {name}",
         removeAria: "Remover {name}",
         detailsSubtitle: "As alterações aqui valem apenas para este arquivo.",
+        coverTitle: "Capa",
+        coverHint:
+          "Arraste para escolher o quadro exibido na sua galeria e ao compartilhar.",
+        coverSliderLabel: "Quadro da capa",
+        coverVideoLabel: "Quadro do vídeo usado como capa",
+        coverUnsupported:
+          "Este navegador não consegue pré-visualizar este vídeo, então a capa será um quadro do primeiro segundo.",
         detailsDone: "Concluído",
         notEnoughCreditsForFile: "Créditos insuficientes para este arquivo",
         gridHint: "Clique em um arquivo para editá-lo antes de enviar.",
@@ -2275,6 +2282,21 @@ const messages = {
         copyUrl: "Copiar URL",
         urlCopied: "URL copiada",
         urlCopyFailed: "Não foi possível copiar a URL",
+        coverLabel: "Capa",
+        coverChange: "Alterar capa",
+        coverTitle: "Escolha uma capa",
+        coverHint:
+          "Arraste para escolher o quadro exibido na sua galeria e ao compartilhar.",
+        coverSliderLabel: "Quadro da capa",
+        coverVideoLabel: "Quadro do vídeo usado como capa",
+        coverUnsupported:
+          "Este navegador não consegue reproduzir este vídeo, então a capa não pode ser alterada aqui.",
+        coverSave: "Usar este quadro",
+        coverPending: "Atualizando capa…",
+        coverUpdated: "Capa atualizada",
+        coverRejected:
+          "Esse quadro não pode ser usado como capa. A capa anterior foi mantida.",
+        coverChangeFailed: "Não foi possível alterar a capa. Tente novamente.",
         noPreview: "Sem prévia",
         altFallback: "Mídia de {username}",
         untitled: "Sem título",

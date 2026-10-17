@@ -19,6 +19,9 @@ import {
     JOB_SEND_WAIT_LIST_VALIDATED_EMAIL,
     JOB_PROCESS_MEDIA,
     JOB_REGENERATE_MEDIA_THUMBNAIL,
+    JOB_SET_VIDEO_THUMBNAIL,
+    JOB_DELETE_REPLACED_MEDIA_OBJECT,
+    JOB_INVALIDATE_MEDIA_SEO_CACHE,
     JOB_UPDATE_MEDIA,
     JOB_UPDATE_PROFILE_STATUS,
     JOB_RECORD_LLM_USAGE,
@@ -57,7 +60,14 @@ import { CreateUserNotificationInput } from '@repo/common-lib/types/user-notific
 import { UpdateProfileStatusJobInput } from '@repo/common-lib/types/profile-status';
 import { MailJob } from '@repo/common-lib/types/mail';
 import { AccountDeletionJobInput } from '@repo/common-lib/types/user';
-import { MediaJobDto, RegenerateMediaThumbnailJobInput, UpdateMediaJobInput } from '@repo/common-lib/types/media';
+import {
+    DeleteReplacedMediaObjectJobInput,
+    InvalidateMediaSeoCacheJobInput,
+    MediaJobDto,
+    RegenerateMediaThumbnailJobInput,
+    SetVideoThumbnailJobInput,
+    UpdateMediaJobInput,
+} from '@repo/common-lib/types/media';
 import { JobsOptions, Queue } from "bullmq";
 
 /**
@@ -420,6 +430,76 @@ export class QueueHelper {
                     },
                 })),
             );
+        } finally {
+            await queue.close();
+        }
+    }
+
+    /**
+     * Re-extracts a finished video's cover at the second the artist picked.
+     *
+     * On the thumbnail queue for its global concurrency of 1: two cover changes for the same video
+     * can never run side by side and race on `previews[0]`. The id is unique per enqueue, NOT
+     * deduped per media — a deterministic id would make BullMQ drop a second pick while the first
+     * is still waiting, and the cover would end up at the stale second. FIFO order means the last
+     * pick is the one that lands.
+     */
+    static async createSetVideoThumbnailJob(dto: SetVideoThumbnailJobInput) {
+        const queue = QueueHelper.createQueue(MEDIA_THUMBNAIL_QUEUE);
+        try {
+            await queue.add(JOB_SET_VIDEO_THUMBNAIL, dto, {
+                jobId: `set-video-thumbnail-${dto.media_id}-${Date.now()}`,
+                removeOnComplete: true,
+                removeOnFail: true,
+                // Wider than the default: a busy row (an edit, the AI metadata run) is retried
+                // rather than raced, and those take tens of seconds. 3+6+12+24+48s ≈ 1.5min.
+                attempts: 6,
+                backoff: { type: 'exponential', delay: 3000 },
+            });
+        } finally {
+            await queue.close();
+        }
+    }
+
+    /**
+     * Deletes a storage object a media no longer references — LATER, not now. Pages, the SEO
+     * metadata cache and the landing cache hold a media's keys for hours; deleting a replaced
+     * cover at once breaks every one of them until they refresh. The worker re-checks the row
+     * before deleting, so a key that is referenced again by then is left alone.
+     */
+    static async createDeleteReplacedMediaObjectJob(
+        dto: DeleteReplacedMediaObjectJobInput,
+        delayMs: number,
+    ) {
+        const queue = QueueHelper.createQueue(MEDIA_THUMBNAIL_QUEUE);
+        try {
+            await queue.add(JOB_DELETE_REPLACED_MEDIA_OBJECT, dto, {
+                jobId: `delete-replaced-media-object-${dto.media_id}-${Date.now()}`,
+                delay: delayMs,
+                removeOnComplete: true,
+                removeOnFail: true,
+                attempts: 3,
+                backoff: { type: 'exponential', delay: 1000 },
+            });
+        } finally {
+            await queue.close();
+        }
+    }
+
+    /**
+     * Drops a media's cached SEO metadata from a process that has no handle on the API's cache
+     * (the worker). Consumed by the API's media processor, which owns that cache.
+     */
+    static async createInvalidateMediaSeoCacheJob(dto: InvalidateMediaSeoCacheJobInput) {
+        const queue = QueueHelper.createQueue(MEDIA_UPDATE_QUEUE);
+        try {
+            await queue.add(JOB_INVALIDATE_MEDIA_SEO_CACHE, dto, {
+                jobId: `invalidate-media-seo-cache-${dto.public_id}-${Date.now()}`,
+                removeOnComplete: true,
+                removeOnFail: true,
+                attempts: 3,
+                backoff: { type: 'exponential', delay: 1000 },
+            });
         } finally {
             await queue.close();
         }

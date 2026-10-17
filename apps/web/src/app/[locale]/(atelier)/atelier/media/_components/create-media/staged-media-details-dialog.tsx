@@ -2,6 +2,8 @@
 
 import { DEFAULT_COMPRESSION_LVL } from "@repo/common-lib/constants/enums";
 import { bytesToMB } from "@repo/common-lib/utils/bytes";
+import { MediaHelper } from "@repo/common-lib/utils/media";
+import { VideoCoverPicker } from "@repo/ui/components/custom/video-cover-picker";
 import { Button } from "@repo/ui/components/shadcn/button";
 import { Checkbox } from "@repo/ui/components/shadcn/checkbox";
 import {
@@ -110,9 +112,34 @@ export function StagedMediaDetailsDialog({
           <div className="grid gap-6 tablet:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] tablet:items-start">
             {media && (
               <div className="space-y-3 tablet:sticky tablet:top-0">
-                <div className="flex aspect-video w-full items-center justify-center overflow-hidden border border-border bg-fg-2 tablet:aspect-square">
-                  <StagedMediaPreview media={media} index={index} />
-                </div>
+                {isVideo && media.previewUrl ? (
+                  // The preview becomes the picker for a video: the frame on screen is the cover.
+                  <section className="space-y-3">
+                    <VideoCoverPicker
+                      src={media.previewUrl}
+                      value={media.input.thumbnail_time_seconds}
+                      defaultSeconds={MediaHelper.videoFrameEdgeOffsetSeconds}
+                      onCommit={(seconds) =>
+                        patchInput({ thumbnail_time_seconds: seconds })
+                      }
+                      sliderLabel={t("coverSliderLabel")}
+                      videoLabel={t("coverVideoLabel")}
+                      unsupportedLabel={t("coverUnsupported")}
+                    />
+                    <div className="space-y-0.5">
+                      <h3 className="text-xs! font-medium text-text">
+                        {t("coverTitle")}
+                      </h3>
+                      <span className="block text-xs text-text-muted">
+                        {t("coverHint")}
+                      </span>
+                    </div>
+                  </section>
+                ) : (
+                  <div className="flex aspect-video w-full items-center justify-center overflow-hidden border border-border bg-fg-2 tablet:aspect-square">
+                    <StagedMediaPreview media={media} index={index} />
+                  </div>
+                )}
                 <dl className="grid grid-cols-2 gap-4 text-xs">
                   <div className="space-y-0.5">
                     <dt className="text-text-muted">{t("fileTypeLabel")}</dt>

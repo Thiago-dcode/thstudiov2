@@ -3,9 +3,11 @@ import { resolveAspectRatio } from "@repo/common-lib/utils/aspect-ratio";
 import {
   CompressConfig,
   CompressionOutput,
+  ExtractVideoFrameAtInput,
   ExtractVideoFramesInput,
   GetSizeCompressedInput,
   VideoCompressionOutput,
+  VideoFrameOutput,
 } from "./types";
 import { imageSize } from 'image-size'
 
@@ -267,11 +269,23 @@ export abstract class CompressService {
    * the same asset: frame 0 is the thumbnail a person sees, the rest are model input. See
    * {@link VIDEO_SAMPLE_FRAME_TARGET_BYTES}.
    *
-   * @returns one frame per percentage, in the order requested, never empty.
+   * When `posterSeconds` is given, frame 0 is the cover at that second instead and every
+   * percentage still follows it, so the cover never displaces a moderation sample.
+   *
+   * @returns one frame per percentage (plus the cover when `posterSeconds` is set), in order,
+   * never empty.
    */
   abstract extractVideoFrames(
     input: ExtractVideoFramesInput,
-  ): Promise<CompressionOutput[]>
+  ): Promise<VideoFrameOutput[]>
+
+  /**
+   * One WebP at an exact second of the video, encoded like {@link extractVideoFrames}'s frames.
+   * For changing a finished video's cover, where only that one frame is needed.
+   */
+  abstract extractVideoFrameAt(
+    input: ExtractVideoFrameAtInput,
+  ): Promise<VideoFrameOutput>
 
   /**
    * Re-encodes to a web-deliverable MP4 (H.264 + AAC, faststart), or hands the source back

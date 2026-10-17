@@ -1,5 +1,11 @@
 import { randomBytes } from "node:crypto";
-import { JOB_PROCESS_MEDIA, JOB_REGENERATE_MEDIA_THUMBNAIL } from "@repo/common-lib/constants/queues";
+import {
+    JOB_DELETE_REPLACED_MEDIA_OBJECT,
+    JOB_PROCESS_MEDIA,
+    JOB_REGENERATE_MEDIA_THUMBNAIL,
+    JOB_SET_VIDEO_THUMBNAIL,
+} from "@repo/common-lib/constants/queues";
+import { SEO_METADATA_CACHE_TTL } from "@repo/common-lib/constants/cache";
 import { Job } from "bullmq";
 import { StorageService } from '@repo/backend-lib/services/storage-service/base';
 import { FactoryStorageService } from '@repo/backend-lib/services/storage-service/factory';
@@ -24,10 +30,17 @@ import {
 import {
     CompressionOutput,
     VideoCompressionOutput,
+    VideoFrameOutput,
 } from '@repo/backend-lib/services/compress-service/types';
 import { ContentModerationFields } from '@repo/common-lib/types/ai';
 import { FactoryCompressService } from '@repo/backend-lib/services/compress-service/factory';
-import { Media, MediaJobDto, RegenerateMediaThumbnailJobInput } from "@repo/common-lib/types/media";
+import {
+    DeleteReplacedMediaObjectJobInput,
+    Media,
+    MediaJobDto,
+    RegenerateMediaThumbnailJobInput,
+    SetVideoThumbnailJobInput,
+} from "@repo/common-lib/types/media";
 import { MediaRepository } from "@repo/database/repositories/media";
 import { UserExtraDataRepository } from "@repo/database/repositories/user-extra-data";
 import { PlansRepository } from "@repo/database/repositories/plans";
@@ -42,6 +55,13 @@ import {
 import { UserLimits } from "@repo/common-lib/utils/user-limits";
 import { BasePlan } from "@repo/common-lib/types/plan";
 import { MediaHelper } from "@repo/common-lib/utils/media";
+
+/**
+ * How long a replaced cover outlives its replacement. Past the longest cache that can still hand
+ * out its key — the SEO metadata (`og:image`), cached by path for a day — so no page or share
+ * card is ever left pointing at an object that is gone.
+ */
+const REPLACED_COVER_DELETE_DELAY_MS = SEO_METADATA_CACHE_TTL + 60 * 60 * 1000;
 
 export class MediaProcessor {
     constructor(
@@ -74,6 +94,12 @@ export class MediaProcessor {
 
                 case JOB_REGENERATE_MEDIA_THUMBNAIL:
                     return await instance.regenerateThumbnail();
+
+                case JOB_SET_VIDEO_THUMBNAIL:
+                    return await instance.setVideoThumbnail();
+
+                case JOB_DELETE_REPLACED_MEDIA_OBJECT:
+                    return await instance.deleteReplacedObject();
 
                 default:
                     throw new Error(`Job name "${job.name}" not recognized`);
@@ -247,18 +273,27 @@ export class MediaProcessor {
         /** Where the thumbnail lives: `previews[0]`'s key for video, the poster key otherwise. */
         thumbnailPath: string;
         /** Video only. The frames moderation judged, `previews[0]` being the thumbnail itself. */
-        previews: CompressionOutput[] | null;
+        previews: VideoFrameOutput[] | null;
+        /**
+         * Video only: the second the picked cover was actually taken at, after clamping. Null when
+         * nothing was picked, so the column keeps meaning "the artist chose this".
+         */
+        thumbnailTimeSeconds: number | null;
         previewPaths: string[] | null;
         moderation: ContentModerationFields;
         /** Keys already in storage, which the caller must not rewrite. */
         writtenPaths: string[];
     } | null> {
         if (media.media_type === 'VIDEO') {
+            const pickedSeconds = media.thumbnail_time_seconds ?? undefined;
             // Several frames rather than one poster: a verdict drawn from the opening second
             // can only ever vouch for the opening second. See `extractVideoFrames`.
             const previews = await this.compressService.extractVideoFrames({
                 file: buffer,
                 percentages: VIDEO_PREVIEW_FRAME_PERCENTAGES,
+                // The artist's cover, when they picked one. It is prepended, not swapped in, so
+                // the moderation samples stay the same set every video gets.
+                posterSeconds: pickedSeconds,
                 // Frame 0 is the thumbnail, so it gets a thumbnail's budget. Frames 1..N are
                 // read by the moderation and SEO models and by nothing else, and there are nine
                 // of them billed against the user's quota — they get a fraction of it.
@@ -315,6 +350,7 @@ export class MediaProcessor {
                 thumbnail: poster,
                 thumbnailPath: previewPaths[0]!,
                 previews,
+                thumbnailTimeSeconds: pickedSeconds !== undefined ? poster.seekSeconds : null,
                 previewPaths,
                 moderation,
                 writtenPaths: previewPaths,
@@ -338,6 +374,7 @@ export class MediaProcessor {
             thumbnail,
             thumbnailPath,
             previews: null,
+            thumbnailTimeSeconds: null,
             previewPaths: null,
             moderation,
             writtenPaths: [],
@@ -514,6 +551,232 @@ export class MediaProcessor {
         });
     }
 
+    /**
+     * Moves a finished video's cover to the second the artist picked.
+     *
+     * The frame comes from the media's STORED MP4 — the pristine upload is gone — which is ample
+     * for a poster-sized WebP. It replaces `previews[0]` in place, so `thumbnail === previews[0]`
+     * keeps holding and every consumer of that alias (billing, `storageBytes`, the SEO rename)
+     * stays correct without a second code path. Like {@link regenerateThumbnail} it writes a NEW
+     * versioned key and deletes the old object only once the row points elsewhere.
+     *
+     * The frame is moderated on its own before it is used. The samples judged at upload are ten
+     * points in the clip, not every frame of it, so a cover picked between them has never been
+     * seen by the model. A rejected frame leaves the old cover in place; the verdict is recorded
+     * by `moderateContent` as any other is, so the strike rules still apply.
+     */
+    async setVideoThumbnail() {
+        const log = this.logger.name('set-video-thumbnail');
+        try {
+            await this.applyVideoThumbnail(log);
+        } catch (error) {
+            const attempt = (this.job.attemptsMade ?? 0) + 1;
+            const isFinalAttempt = attempt >= (this.job.opts?.attempts ?? 1);
+            if (!isPermanentMediaError(error) && !isFinalAttempt) throw error;
+
+            // Settled: nothing changed, and the editor is still waiting to hear so. The row is
+            // untouched on every failure path, so the notification carries the old cover.
+            log.error('Cover change failed; keeping the previous cover', {
+                media_id: this.job.data?.media_id,
+                attempt,
+                reason: error instanceof Error ? error.message : String(error),
+            });
+            const media = await this.mediaRepository.findOneByColumn('id', this.job.data?.media_id);
+            if (media) await this.notifyMediaUpdate(media);
+        }
+    }
+
+    private async applyVideoThumbnail(log: ReturnType<LogService['name']>) {
+        const { media_id, thumbnail_time_seconds }: SetVideoThumbnailJobInput = this.job.data;
+
+        const media = await this.mediaRepository.findOneByColumn('id', media_id);
+        if (!media) {
+            log.info('Skipping cover change: media no longer exists', { media_id });
+            return;
+        }
+        if (
+            media.media_type !== 'VIDEO' ||
+            !media.completed_at ||
+            !!media.blocked_at ||
+            media.status === 'FAILED' ||
+            !media.url ||
+            !media.thumbnail ||
+            // Only the aliased layout is understood here. Anything else predates previews and
+            // has no frame list to keep in step.
+            media.previews?.[0] !== media.thumbnail
+        ) {
+            log.info('Skipping cover change: media not eligible', {
+                media_id,
+                media_type: media.media_type,
+                status: media.status,
+            });
+            return;
+        }
+
+        // UPDATING / GENERATING_METADATA: the first SEO generation renames every key this job is
+        // about to touch, and the re-read before the commit cannot close a move that is still in
+        // flight. Thrown so BullMQ backs off and retries once the row is released, rather than
+        // dropping the artist's pick.
+        if (MediaHelper.isLoading(media)) {
+            throw new Error(`Media [${media_id}] is busy (${media.status}); retrying the cover change`);
+        }
+
+        if (!(await this.storageService.exists(media.url))) {
+            log.warn('Skipping cover change: source object missing', { media_id, url: media.url });
+            return;
+        }
+
+        const source = await this.storageService.getBuffer(media.url);
+        const cover = await this.compressService.extractVideoFrameAt({
+            file: source,
+            seconds: thumbnail_time_seconds,
+            encode: {
+                targetSize: THUMBNAIL_TARGET_BYTES,
+                quality: THUMBNAIL_QUALITY,
+                maxEdgePx: THUMBNAIL_MAX_EDGE_PX,
+            },
+        });
+
+        const previousKey = media.thumbnail;
+        const newKey = MediaHelper.versionedThumbnailPath(
+            previousKey,
+            randomBytes(4).toString('hex'),
+        );
+        if (!(await this.storageService.write(cover.buffer, newKey))) {
+            throw new Error('Storage write could not complete');
+        }
+
+        try {
+            const { moderation } = await this.aiService.moderateContent(
+                await this.storageService.getUrl(newKey),
+                { user_id: media.user_id },
+            );
+            if (!moderation.is_allowed) {
+                await this.storageService.delete(newKey);
+                log.warn('Cover change rejected by moderation; keeping the previous cover', {
+                    media_id,
+                    seek_seconds: cover.seekSeconds,
+                    severity: moderation.severity,
+                    reason: moderation.reason,
+                });
+                // The editor is waiting on this notification; an unchanged cover is its answer.
+                await this.notifyMediaUpdate(media);
+                return;
+            }
+
+            // An SEO rename may have moved `previews[0]` while this job was encoding (one that
+            // STARTED meanwhile — a busy row never gets this far). Pointing the row at our key
+            // would undo it, so back off.
+            const latest = await this.mediaRepository.findOneByColumn('id', media.id);
+            if (latest && MediaHelper.isLoading(latest)) {
+                // Caught below: the new key is removed and BullMQ retries once it is released.
+                throw new Error(`Media [${media_id}] became busy (${latest.status}); retrying the cover change`);
+            }
+            if (
+                !latest ||
+                latest.thumbnail !== previousKey ||
+                latest.previews?.[0] !== previousKey
+            ) {
+                await this.storageService.delete(newKey);
+                log.info('Skipping cover change: thumbnail changed while encoding', { media_id });
+                return;
+            }
+
+            const [shape, aspect_ratio] = await Promise.all([
+                this.compressService.getImageShape(cover.buffer),
+                this.compressService.getImageAspectRatio(cover.buffer),
+            ]);
+            await this.mediaRepository.updateById(media.id, {
+                thumbnail: newKey,
+                previews: [newKey, ...latest.previews.slice(1)],
+                thumbnail_bytes: cover.size,
+                // `thumbnail_bytes` is exactly the old `previews[0]`'s size — same object — so
+                // swapping one for the other keeps `previews_bytes` the sum it claims to be.
+                previews_bytes:
+                    (latest.previews_bytes ?? latest.thumbnail_bytes) -
+                    latest.thumbnail_bytes +
+                    cover.size,
+                thumbnail_time_seconds: cover.seekSeconds,
+                shape,
+                aspect_ratio,
+            });
+        } catch (error) {
+            // Written but never referenced: do not leave the orphan behind before BullMQ retries.
+            await this.storageService.delete(newKey);
+            throw error;
+        }
+
+        // The old cover is an orphan now, but cached pages and the SEO metadata still hand out its
+        // key, so it is deleted after they have all expired rather than out from under them. A
+        // failure to schedule that only leaves an orphan behind; it must not fail a finished job.
+        try {
+            await QueueHelper.createDeleteReplacedMediaObjectJob(
+                { media_id: media.id, path: previousKey },
+                REPLACED_COVER_DELETE_DELAY_MS,
+            );
+        } catch (error) {
+            log.warn('Could not schedule deletion of the previous cover object', {
+                media_id,
+                previous_path: previousKey,
+                reason: error instanceof Error ? error.message : String(error),
+            });
+        }
+
+        await Promise.all([
+            // `og:image` comes from a cache keyed by the thumbnail PATH; drop it so shares pick
+            // up the new cover now instead of in a day.
+            QueueHelper.createInvalidateMediaSeoCacheJob({ public_id: media.public_id }),
+            QueueHelper.createStorageRequestJob({
+                path: newKey,
+                bytes: cover.size,
+                user_id: media.user_id,
+            }),
+            QueueHelper.createComputeUserMetricsJob(media.user_id),
+            this.notifyMediaUpdate(media),
+        ]);
+
+        log.info('Video cover changed', {
+            media_id,
+            previous_path: previousKey,
+            thumbnail_path: newKey,
+            seek_seconds: cover.seekSeconds,
+            before_bytes: media.thumbnail_bytes,
+            after_bytes: cover.size,
+        });
+    }
+
+    /**
+     * Deletes a storage object a media stopped referencing, once the caches that could still
+     * serve it have expired (see {@link REPLACED_COVER_DELETE_DELAY_MS}).
+     *
+     * Re-checked against the row first: whatever was true when the job was scheduled, an object
+     * the media points at again — any column — is never deleted. A media that is gone entirely
+     * no longer references anything, and the API's delete only removed the keys its row named, so
+     * this one is still an orphan and goes too.
+     */
+    async deleteReplacedObject() {
+        const log = this.logger.name('delete-replaced-object');
+        const { media_id, path }: DeleteReplacedMediaObjectJobInput = this.job.data;
+
+        const media = await this.mediaRepository.findOneByColumn('id', media_id);
+        const referenced =
+            !!media &&
+            (media.url === path ||
+                media.thumbnail === path ||
+                media.video_preview === path ||
+                !!media.previews?.includes(path));
+        if (referenced) {
+            log.info('Skipping replaced object deletion: the media references it again', {
+                media_id,
+                path,
+            });
+            return;
+        }
+
+        await this.storageService.delete(path);
+        log.info('Replaced object deleted', { media_id, path });
+    }
+
     async processMedia() {
         const log = this.logger.name('create');
         const { media, generate_metadata }: MediaJobDto = this.job.data;
@@ -589,7 +852,14 @@ export class MediaProcessor {
                 });
                 return;
             }
-            const { thumbnail, previews, previewPaths, moderation, writtenPaths } = prepared;
+            const {
+                thumbnail,
+                previews,
+                previewPaths,
+                thumbnailTimeSeconds,
+                moderation,
+                writtenPaths,
+            } = prepared;
             // For video this is `previews[0]`'s key, not the `-thumbnail.webp` one: the same
             // object serves both columns.
             const resolvedThumbnailPath = prepared.thumbnailPath;
@@ -759,6 +1029,8 @@ export class MediaProcessor {
                 thumbnail: resolvedThumbnailPath,
                 previews: previewPaths,
                 previews_bytes: previewsBytes,
+                // The clamped second, so the cover editor reopens on the frame actually stored.
+                thumbnail_time_seconds: thumbnailTimeSeconds,
                 video_preview: videoPreview?.path ?? null,
                 // Null when the clip is the media itself: those bytes are already `bytes`, and
                 // repeating them here would double-charge the user's storage.

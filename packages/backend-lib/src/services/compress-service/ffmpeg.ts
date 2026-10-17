@@ -240,6 +240,7 @@ export async function probeVideo(filePath: string): Promise<VideoProbe> {
                 parseFrameRate(videoStream.avg_frame_rate) ??
                 parseFrameRate(videoStream.r_frame_rate) ??
                 30,
+            durationSeconds: Number(videoStream.duration) || 0,
         },
         audio: audioStream
             ? {

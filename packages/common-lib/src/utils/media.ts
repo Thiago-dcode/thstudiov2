@@ -3,6 +3,16 @@ import { MAX_IMAGE_UPLOAD_BYTES, MAX_VIDEO_UPLOAD_BYTES } from '../constants/lim
 import type { Media } from '../types/media';
 
 export class MediaHelper {
+  /**
+   * How far into a video its sampled frames start (and how far from the end they stop): one
+   * second, or a tenth of a clip shorter than ten. Frame 0 lands here, so it is also the second a
+   * video's cover is taken at when the artist never picked one — which is why the cover picker
+   * opens on it, and why the worker and the browser share this rather than each keeping a copy.
+   */
+  static videoFrameEdgeOffsetSeconds(durationSeconds: number): number {
+    return Math.min(1, durationSeconds / 10);
+  }
+
   static isLoading(media: Pick<Media, 'status'> | null | undefined): boolean {
     if (!media) return false;
     return (

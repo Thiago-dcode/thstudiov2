@@ -3,10 +3,14 @@ import { Job } from 'bullmq';
 import { LogService } from '@repo/backend-lib/services/log-service';
 import { QueueHelper } from '@repo/backend-lib/utils';
 import {
+  JOB_INVALIDATE_MEDIA_SEO_CACHE,
   JOB_UPDATE_MEDIA,
   MEDIA_UPDATE_QUEUE,
 } from '@repo/common-lib/constants/queues';
-import { UpdateMediaJobInput } from '@repo/common-lib/types/media';
+import {
+  InvalidateMediaSeoCacheJobInput,
+  UpdateMediaJobInput,
+} from '@repo/common-lib/types/media';
 import { GlobalProcessor } from 'src/common/processors/global.processor';
 import { MediaRepository } from './media.repository';
 import { MediaService } from './media.service';
@@ -26,6 +30,11 @@ export class MediaProcessor extends GlobalProcessor {
       switch (job.name) {
         case JOB_UPDATE_MEDIA:
           return await this.handleUpdateMedia(job.data);
+        case JOB_INVALIDATE_MEDIA_SEO_CACHE:
+          // Sent by the worker after it changed a media's cover: `og:image` is cached by path.
+          return await this.mediaService.invalidateSeoCache(
+            (job.data as InvalidateMediaSeoCacheJobInput).public_id,
+          );
         default:
           throw new Error(`Job name "${job.name}" not recognized`);
       }

@@ -5,6 +5,7 @@ import type {
   CreateMediaUploadUrlInput,
   Media,
   UpdateMediaInput,
+  UpdateMediaThumbnailTimeInput,
 } from "@repo/common-lib/types/media";
 import type { ApiResponse } from "@repo/common-lib/types/response";
 import { clientFetchApi } from "@/lib/facade/clientFetchApi";
@@ -55,6 +56,15 @@ class MediaClientService extends ClientBaseService {
   ): Promise<ApiResponse<Media>> {
     return await this.send(() =>
       this.fetchApi.patch({ resource: `/${id}/async`, body }),
+    );
+  }
+
+  async updateThumbnailTime(
+    id: number,
+    body: UpdateMediaThumbnailTimeInput,
+  ): Promise<ApiResponse<Media>> {
+    return await this.send(() =>
+      this.fetchApi.patch({ resource: `/${id}/thumbnail-time`, body }),
     );
   }
 }

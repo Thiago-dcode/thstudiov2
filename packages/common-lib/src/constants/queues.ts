@@ -15,7 +15,8 @@ export const USER_NOTIFICATIONS_QUEUE = 'user-notifications' as const;
 export const PROFILE_STATUS_QUEUE = 'profile-status' as const;
 export const MEDIA_QUEUE = 'media' as const;
 export const MEDIA_UPDATE_QUEUE = 'media-update' as const;
-// Thumbnail regeneration runs strictly one job at a time (global concurrency 1, set by the worker).
+// Thumbnail regeneration and video cover changes run strictly one job at a time (global
+// concurrency 1, set by the worker).
 export const MEDIA_THUMBNAIL_QUEUE = 'media-thumbnails' as const;
 export const BACKUP_QUEUE = 'backup' as const;
 export const ACCOUNT_DELETION_QUEUE = 'account-deletion' as const;
@@ -47,6 +48,9 @@ export const JOB_UPDATE_PROFILE_STATUS = 'update-profile-status' as const;
 export const JOB_PROCESS_MEDIA = 'process-media' as const;
 export const JOB_UPDATE_MEDIA = 'update-media' as const;
 export const JOB_REGENERATE_MEDIA_THUMBNAIL = 'regenerate-media-thumbnail' as const;
+export const JOB_SET_VIDEO_THUMBNAIL = 'set-video-thumbnail' as const;
+export const JOB_DELETE_REPLACED_MEDIA_OBJECT = 'delete-replaced-media-object' as const;
+export const JOB_INVALIDATE_MEDIA_SEO_CACHE = 'invalidate-media-seo-cache' as const;
 export const JOB_DATABASE_BACKUP = 'database-backup' as const;
 export const JOB_DELETE_USER_ACCOUNT = 'delete-user-account' as const;
 export const JOB_SEND_ACCOUNT_DELETION_WARNING = 'send-account-deletion-warning' as const;

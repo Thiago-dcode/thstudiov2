@@ -24,9 +24,11 @@ import {
 } from './ffmpeg';
 import {
     CompressionOutput,
+    ExtractVideoFrameAtInput,
     ExtractVideoFramesInput,
     VideoCompressionOutput,
     VideoFrameEncodeOptions,
+    VideoFrameOutput,
     VideoProbe,
 } from './types';
 import {
@@ -34,6 +36,7 @@ import {
     PREVIEW_MAX_DURATION_SECONDS,
     VIDEO_PREVIEW_FRAME_PERCENTAGES,
 } from '@repo/common-lib/constants/limits';
+import { MediaHelper } from '@repo/common-lib/utils/media';
 
 /**
  * Longest edge kept after processing. Bounds the decoded raster so a large lossless upload
@@ -202,10 +205,38 @@ const extractEdgeFor = (maxEdgePx: number): number => maxEdgePx * 2;
  * seeking to exactly `duration` decodes no frame at all: ffmpeg would return an empty file.
  */
 const seekSecondsAt = (percentage: number, durationSeconds: number): number => {
-    const edgeOffset = Math.min(1, durationSeconds / 10);
+    const edgeOffset = MediaHelper.videoFrameEdgeOffsetSeconds(durationSeconds);
     const usableSpan = Math.max(0, durationSeconds - edgeOffset * 2);
     const clamped = Math.min(100, Math.max(0, percentage));
     return edgeOffset + (usableSpan * clamped) / 100;
+};
+
+/**
+ * How much of the clip has PICTURES in it — what every frame seek must stay inside.
+ *
+ * The format duration is the longest track, and audio regularly outlasts the video: a phone clip
+ * whose sound runs half a second past its last frame decodes no frame at all for a seek into that
+ * tail, and ffmpeg exits cleanly with no output file. The video stream's own duration is the
+ * honest bound when the container records it.
+ */
+const pictureSpanSeconds = (probe: VideoProbe): number =>
+    probe.video.durationSeconds > 0
+        ? Math.min(probe.video.durationSeconds, probe.durationSeconds)
+        : probe.durationSeconds;
+
+/**
+ * A second the artist picked, clamped into the clip and rounded down to the millisecond.
+ *
+ * Unlike {@link seekSecondsAt} there is no inset at the start: the artist was looking at the frame
+ * they chose, so a deliberate 0 means frame zero. The end is still pulled in by one frame — seeking
+ * to exactly `duration` decodes nothing and ffmpeg returns an empty file — and the browser's
+ * reported duration can run a little past ffprobe's, so a pick at the very end must survive that.
+ */
+const clampSeekSeconds = (seconds: number, probe: VideoProbe): number => {
+    const frameSeconds = probe.video.frameRate > 0 ? 1 / probe.video.frameRate : 0.05;
+    const last = Math.max(0, pictureSpanSeconds(probe) - Math.max(frameSeconds, 0.05));
+    const clamped = Math.min(last, Math.max(0, Number.isFinite(seconds) ? seconds : 0));
+    return Math.floor(clamped * 1000) / 1000;
 };
 
 /**
@@ -572,7 +603,7 @@ export class SharpCompressService extends CompressService {
             assertDurationWithinLimit(probe);
 
             const optimized = await this.extractFrameAsWebp(inputPath, dir, probe, {
-                seekSeconds: seekSecondsAt(0, probe.durationSeconds),
+                seekSeconds: seekSecondsAt(0, pictureSpanSeconds(probe)),
                 label: 'poster',
                 targetSize,
                 quality,
@@ -595,7 +626,8 @@ export class SharpCompressService extends CompressService {
         percentages = VIDEO_PREVIEW_FRAME_PERCENTAGES,
         poster,
         sample,
-    }: ExtractVideoFramesInput): Promise<CompressionOutput[]> {
+        posterSeconds,
+    }: ExtractVideoFramesInput): Promise<VideoFrameOutput[]> {
         if (!percentages.length) {
             throw new Error('Video frame extraction needs at least one percentage');
         }
@@ -607,15 +639,24 @@ export class SharpCompressService extends CompressService {
             const probe = await probeVideo(inputPath);
             assertDurationWithinLimit(probe);
 
-            const frames: CompressionOutput[] = [];
+            // A picked cover goes in front of the samples rather than over the first one, so the
+            // frames moderation judges are always a superset of the default set.
+            const seeks = [
+                ...(posterSeconds !== undefined ? [clampSeekSeconds(posterSeconds, probe)] : []),
+                ...percentages.map((percentage) =>
+                    seekSecondsAt(percentage, pictureSpanSeconds(probe)),
+                ),
+            ];
+
+            const frames: VideoFrameOutput[] = [];
             // Sequential on purpose. Each seek is its own ffmpeg process plus a Sharp encode,
             // and the media worker has one slot: running them all at once would contend for the
             // same cores and the same temp disk to finish at the same wall-clock moment.
-            for (const [index, percentage] of percentages.entries()) {
+            for (const [index, seekSeconds] of seeks.entries()) {
                 // Index 0 is the thumbnail — one object serving two columns — so it is the one
                 // frame here that a person ever looks at, and the only one worth thumbnail bytes.
                 const optimized = await this.extractFrameAsWebp(inputPath, dir, probe, {
-                    seekSeconds: seekSecondsAt(percentage, probe.durationSeconds),
+                    seekSeconds,
                     label: `frame-${index}`,
                     ...(index === 0 ? poster : sample),
                 });
@@ -628,10 +669,40 @@ export class SharpCompressService extends CompressService {
         });
     }
 
+    public async extractVideoFrameAt({
+        file,
+        seconds,
+        encode,
+    }: ExtractVideoFrameAtInput): Promise<VideoFrameOutput> {
+        const source = resolveSourceBuffer(file);
+        const originalName = resolveOriginalName(file, 'video');
+
+        return withTempDir(async (dir) => {
+            const inputPath = await writeTempFile(dir, 'source', source);
+            const probe = await probeVideo(inputPath);
+            assertDurationWithinLimit(probe);
+
+            const optimized = await this.extractFrameAsWebp(inputPath, dir, probe, {
+                seekSeconds: clampSeekSeconds(seconds, probe),
+                label: 'cover',
+                ...encode,
+            });
+            return {
+                ...optimized,
+                filename: `${originalName}-cover.webp`,
+            };
+        });
+    }
+
     /**
      * One `-ss` seek to a lossless PNG, then Sharp's WebP encoder — the shared body of the
      * poster and multi-frame paths, so a sampled frame is the same kind of asset as the
      * thumbnail has always been.
+     *
+     * A seek that lands where there is no picture (a WebM whose audio outlasts its video, where
+     * the stream length is unknown) makes ffmpeg exit cleanly WITHOUT writing the PNG. Rather
+     * than fail the whole upload over one frame, the seek steps back — a second, then to the
+     * start — and the second actually used is returned, so a stored cover time stays truthful.
      */
     private async extractFrameAsWebp(
         inputPath: string,
@@ -642,24 +713,41 @@ export class SharpCompressService extends CompressService {
             /** Temp filename stem; must be unique within `dir`. */
             label: string;
         },
-    ): Promise<CompressionOutput> {
+    ): Promise<VideoFrameOutput> {
         const framePath = path.join(dir, `${options.label}.png`);
-        await extractPosterFrame(inputPath, framePath, {
-            seekSeconds: options.seekSeconds,
-            scale: fitInside(
-                probe.video.width,
-                probe.video.height,
-                extractEdgeFor(options.maxEdgePx),
-            ),
-        });
+        const attempts = [...new Set([
+            options.seekSeconds,
+            Math.max(0, Math.floor((options.seekSeconds - 1) * 1000) / 1000),
+            0,
+        ])];
 
-        const frame = await fs.readFile(framePath);
-        return this.optimizeImageToWebp(
-            frame,
-            options.targetSize,
-            options.quality,
-            options.maxEdgePx,
-        );
+        for (const seekSeconds of attempts) {
+            await extractPosterFrame(inputPath, framePath, {
+                seekSeconds,
+                scale: fitInside(
+                    probe.video.width,
+                    probe.video.height,
+                    extractEdgeFor(options.maxEdgePx),
+                ),
+            });
+
+            const frame = await fs.readFile(framePath).catch((error: NodeJS.ErrnoException) => {
+                if (error.code === 'ENOENT') return null;
+                throw error;
+            });
+            if (!frame?.length) continue;
+
+            const optimized = await this.optimizeImageToWebp(
+                frame,
+                options.targetSize,
+                options.quality,
+                options.maxEdgePx,
+            );
+            return { ...optimized, seekSeconds };
+        }
+
+        // Not even the first frame decodes: the file is the problem, and retrying will not fix it.
+        throw new MediaInputError('No frame could be decoded from the video');
     }
 
     /**

@@ -13,9 +13,11 @@ export type MediaSchema = {
   url?: string | null;
   thumbnail?: string;
   /**
-   * VIDEO only: ordered storage keys of the frames sampled across the clip (near-start, middle,
-   * near-end). `thumbnail` points at `previews[0]` — the same object, not a copy — so every
-   * consumer that already reads a thumbnail keeps reading a real static WebP.
+   * VIDEO only: ordered storage keys of the video's stills. `previews[0]` is the cover — the frame
+   * at {@link thumbnail_time_seconds}, or the default inset frame when none was picked — and the
+   * rest are moderation samples spread across the clip. `thumbnail` points at `previews[0]` — the
+   * same object, not a copy — so every consumer that already reads a thumbnail keeps reading a
+   * real static WebP.
    */
   previews?: string[] | null;
   /** Total bytes of every key in {@link previews}, `thumbnail`'s own included. */
@@ -28,6 +30,11 @@ export type MediaSchema = {
   video_preview_bytes?: number | null;
   /** VIDEO only: length in whole seconds, measured while transcoding. Null for older videos. */
   duration_seconds?: number | null;
+  /**
+   * VIDEO only: the second the artist picked as the cover, as the worker clamped it into the clip.
+   * Null when none was picked and the cover is the default frame.
+   */
+  thumbnail_time_seconds?: number | null;
   is_featured: boolean;
   is_value_pillars: boolean;
   is_highlight: boolean;
