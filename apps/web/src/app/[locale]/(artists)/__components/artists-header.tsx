@@ -6,7 +6,7 @@ import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
 import { SiteHeader, useSiteHeader } from "@/lib/components/site-header";
-import { useSession } from "@/lib/hooks/useSession";
+import { useSession } from "@/lib/providers/session.provider";
 import { ArtistContactDialog } from "./artist-contact.dialog";
 
 function ArtistsHeaderContactAction() {
@@ -40,7 +40,7 @@ export const ArtistsHeader = () => {
   const pathname = usePathname();
   const params = useParams();
   const username = params.username as string;
-  const { session, isLoading: sessionLoading } = useSession();
+  const { session } = useSession();
   const t = useTranslations("artists.header");
   const tShare = useTranslations("artists");
 
@@ -62,7 +62,7 @@ export const ArtistsHeader = () => {
       <SiteHeader.Bar>
         <div className="flex items-center gap-3 tablet:gap-4 min-w-0">
           <SiteHeader.Logo />
-          {!sessionLoading && session ? (
+          {session ? (
             <Link
               href="/atelier"
               className="text-xs tracking-wider text-text-muted/45 hover:text-text-muted/90 transition-colors font-medium shrink-0 border-l border-fg-2/25 pl-3 tablet:pl-4"

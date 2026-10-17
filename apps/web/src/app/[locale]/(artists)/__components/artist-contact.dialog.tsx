@@ -16,7 +16,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import FormComponent from "@/lib/components/form-component";
 import { FormPrivacyNotice } from "@/lib/components/form-privacy-notice";
-import { useSession } from "@/lib/hooks/useSession";
+import { useSession } from "@/lib/providers/session.provider";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { createUserContactAction } from "@/modules/user-contacts/server-actions/create-user-contact.action";
 import { useArtist } from "@/modules/users/providers/artist.provider";
@@ -30,7 +30,7 @@ export const ArtistContactDialog = ({
   const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
   const { artist, isPending: loadingArtist } = useArtist();
-  const { session, isLoading: loadingSession } = useSession();
+  const { session } = useSession();
   const isSelfContact = Boolean(session && artist && session.id === artist.id);
 
   useEffect(() => {
@@ -90,70 +90,69 @@ export const ArtistContactDialog = ({
           </DialogDescription>
         </DialogHeader>
 
-        {(loadingArtist || loadingSession) && (
+        {loadingArtist && (
           <div className="absolute inset-0 flex items-center justify-center bg-bg/80 backdrop-blur-sm z-50">
             <Spinner className="size-8" />
           </div>
         )}
 
-        {!loadingSession &&
-          (isSelfContact ? (
-            <div className="flex min-h-[260px] items-center justify-center border border-fg-2/40 bg-fg/10 px-6 text-center text-sm text-text-muted">
-              {t("selfContact")}
-            </div>
-          ) : (
-            <FormComponent.Container>
-              <FormComponent.Form onSubmit={handleSubmit}>
-                <input type="hidden" name="user_id" value={artist?.id ?? ""} />
-                <FormComponent.LabelInput
-                  label={t("form.nameLabel")}
-                  id="contact-name"
-                  name="name"
-                  placeholder={t("form.namePlaceholder")}
-                  required
-                  error={inputErrors?.name}
-                />
+        {isSelfContact ? (
+          <div className="flex min-h-[260px] items-center justify-center border border-fg-2/40 bg-fg/10 px-6 text-center text-sm text-text-muted">
+            {t("selfContact")}
+          </div>
+        ) : (
+          <FormComponent.Container>
+            <FormComponent.Form onSubmit={handleSubmit}>
+              <input type="hidden" name="user_id" value={artist?.id ?? ""} />
+              <FormComponent.LabelInput
+                label={t("form.nameLabel")}
+                id="contact-name"
+                name="name"
+                placeholder={t("form.namePlaceholder")}
+                required
+                error={inputErrors?.name}
+              />
 
-                <FormComponent.LabelInput
-                  label={t("form.emailLabel")}
-                  id="contact-email"
-                  name="email"
-                  type="email"
-                  placeholder={t("form.emailPlaceholder")}
-                  required
-                  error={inputErrors?.email}
-                />
+              <FormComponent.LabelInput
+                label={t("form.emailLabel")}
+                id="contact-email"
+                name="email"
+                type="email"
+                placeholder={t("form.emailPlaceholder")}
+                required
+                error={inputErrors?.email}
+              />
 
-                <FormComponent.LabelInput
-                  label={t("form.subjectLabel")}
-                  id="contact-subject"
-                  name="subject"
-                  placeholder={t("form.subjectPlaceholder")}
-                  required
-                  error={inputErrors?.subject}
-                />
+              <FormComponent.LabelInput
+                label={t("form.subjectLabel")}
+                id="contact-subject"
+                name="subject"
+                placeholder={t("form.subjectPlaceholder")}
+                required
+                error={inputErrors?.subject}
+              />
 
-                <FormComponent.LabelTextarea
-                  label={t("form.messageLabel")}
-                  id="contact-message"
-                  name="message"
-                  placeholder={t("form.messagePlaceholder")}
-                  rows={4}
-                  required
-                  error={inputErrors?.message}
-                />
+              <FormComponent.LabelTextarea
+                label={t("form.messageLabel")}
+                id="contact-message"
+                name="message"
+                placeholder={t("form.messagePlaceholder")}
+                rows={4}
+                required
+                error={inputErrors?.message}
+              />
 
-                <FormPrivacyNotice context="artistContact" />
+              <FormPrivacyNotice context="artistContact" />
 
-                <FormComponent.SubmitButton
-                  isPending={isPending}
-                  success={success}
-                >
-                  {t("form.submit")}
-                </FormComponent.SubmitButton>
-              </FormComponent.Form>
-            </FormComponent.Container>
-          ))}
+              <FormComponent.SubmitButton
+                isPending={isPending}
+                success={success}
+              >
+                {t("form.submit")}
+              </FormComponent.SubmitButton>
+            </FormComponent.Form>
+          </FormComponent.Container>
+        )}
       </DialogContent>
     </Dialog>
   );

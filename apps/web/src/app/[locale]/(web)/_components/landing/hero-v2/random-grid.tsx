@@ -1,12 +1,8 @@
-import { cn } from "@repo/ui/lib/utils";
-import Image from "next/image";
+import { ENUMS, type EnumType } from "@repo/common-lib/constants/enums";
+import { RandomGridItems, type RandomGridMediaItem } from "./random-grid-items";
 import "./random-grid.css";
 
-import { ENUMS, type EnumType } from "@repo/common-lib/constants/enums";
-
-type MediaItem = {
-  url: string;
-};
+type MediaItem = RandomGridMediaItem;
 
 const MEDIA_SHAPES = ENUMS.MEDIA_SHAPE.filter((m) => m !== "SQUARE");
 
@@ -82,27 +78,10 @@ const MAX_COLS = 5;
 const ROWS = 3;
 
 export const RandomGrid = ({ className }: { className?: string }) => {
-  const resolvedMedia = resolvedMediaToPick(MAX_COLS * ROWS);
-
   return (
-    <div
-      className={cn("random-grid-container h-full min-h-0 w-full", className)}
-    >
-      {resolvedMedia.map((mediaItem, index) => (
-        <div
-          key={`${mediaItem.url}-${index}`}
-          className="random-grid-item relative h-full min-h-0 w-full overflow-hidden"
-        >
-          <Image
-            src={mediaItem.url}
-            alt=""
-            fill
-            sizes="(min-width: 2560px) 512px, (min-width: 1280px) 25vw, (min-width: 768px) 33vw, 50vw"
-            className="object-contain p-8"
-            priority={index === 0}
-          />
-        </div>
-      ))}
-    </div>
+    <RandomGridItems
+      media={resolvedMediaToPick(MAX_COLS * ROWS)}
+      className={className}
+    />
   );
 };

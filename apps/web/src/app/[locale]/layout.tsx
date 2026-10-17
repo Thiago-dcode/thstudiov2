@@ -16,8 +16,10 @@ import { CookieBanner } from "@/lib/components/cookie-banner";
 import { getActiveConsentCategories } from "@/lib/consent/active-categories";
 import { AppStatusProvider } from "@/lib/providers/app-status.provider";
 import { ConsentProvider } from "@/lib/providers/consent.provider";
+import { SessionProvider } from "@/lib/providers/session.provider";
 import { OG_LOCALE, ogImage, resolveLocale, SITE_NAME } from "@/lib/seo/core";
 import { isIndexableEnv } from "@/lib/seo/indexability";
+import { userSession } from "@/modules/auth/server-actions/user-session.action";
 
 const appUrl = getServerEnv().APP_URL;
 
@@ -116,6 +118,7 @@ export default async function RootLayout({
 
   setRequestLocale(locale);
   const isRegisterClose = !getServerEnv().REGISTRATION_IS_CLOSED;
+  const session = await userSession();
 
   return (
     <html
@@ -126,14 +129,16 @@ export default async function RootLayout({
       <body className="w-screen h-dvh flex flex-col items-center justify-start">
         <ConsentProvider categories={getActiveConsentCategories()}>
           <AppStatusProvider isRegisterClose={isRegisterClose}>
-            <NextIntlClientProvider>
-              <ThemeProvider>
-                {children}
-                <Toaster />
-                <CookieBanner />
-                <GoogleAnalyticsGate gaId={getAnalyticsId()} />
-              </ThemeProvider>
-            </NextIntlClientProvider>
+            <SessionProvider session={session}>
+              <NextIntlClientProvider>
+                <ThemeProvider>
+                  {children}
+                  <Toaster />
+                  <CookieBanner />
+                  <GoogleAnalyticsGate gaId={getAnalyticsId()} />
+                </ThemeProvider>
+              </NextIntlClientProvider>
+            </SessionProvider>
           </AppStatusProvider>
         </ConsentProvider>
       </body>

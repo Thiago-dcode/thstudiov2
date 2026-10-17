@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { io, type Socket } from "socket.io-client";
 import { clientEnv } from "@/env/client";
-import { useSession } from "./useSession";
+import { useSession } from "@/lib/providers/session.provider";
 
 type WebsocketListenHandler = (data: unknown) => void | Promise<void>;
 
@@ -21,7 +21,7 @@ export const useWebsocket = (
   namespace: string,
   options: UseWebsocketOptions = {},
 ): UseWebsocketResult => {
-  const { session, isLoading } = useSession();
+  const { session } = useSession();
   const socketRef = useRef<Socket | undefined>(undefined);
   const listenRef = useRef(options.listen);
   const onConnectRef = useRef(options.onConnect);
@@ -35,7 +35,7 @@ export const useWebsocket = (
   }, []);
 
   const connect = useCallback(() => {
-    if (isLoading || !session?.token) return;
+    if (!session?.token) return;
     if (socketRef.current?.connected) return;
 
     const socket = io(`${clientEnv.NEXT_PUBLIC_WS_URL}/${namespace}`, {
@@ -67,7 +67,7 @@ export const useWebsocket = (
         });
       }
     }
-  }, [isLoading, namespace, session?.token]);
+  }, [namespace, session?.token]);
 
   useEffect(() => {
     return () => {

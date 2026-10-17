@@ -20,7 +20,7 @@ import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "@/i18n/navigation";
-import { useSession } from "@/lib/hooks/useSession";
+import { useSession } from "@/lib/providers/session.provider";
 import { useMedia } from "@/modules/media/providers/media.provider";
 import { useUserMetrics } from "@/modules/users/providers/user-metrics.provider";
 import { creditsSpentBy } from "./staged-media.utils";
