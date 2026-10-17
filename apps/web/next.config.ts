@@ -41,13 +41,13 @@ const nextConfig: NextConfig = {
     // Next ships native TS7 support.
     useTypeScriptCli: true,
     serverActions: {
-      // Must not exceed nginx's `client_max_body_size` (320m) — a larger value here is
+      // Must not exceed nginx's `client_max_body_size` (520m) — a larger value here is
       // unreachable in production anyway. Sized by the media upload cap
-      // (`MAX_VIDEO_UPLOAD_MB`, 300MB): video is the only thing that gets near it, and the
+      // (`MAX_VIDEO_UPLOAD_MB`, 500MB): video is the only thing that gets near it, and the
       // API buffers uploads in multer memory storage, so this is also the per-request memory
       // ceiling. Keep the three in sync (pro.nginx/conf.d/default.conf,
       // packages/common-lib/src/constants/limits.ts).
-      bodySizeLimit: "300mb",
+      bodySizeLimit: "500mb",
     },
   },
   /** Bridge non-public env names (same as server.ts) so client bundles get inlined values without duplicating .env. */

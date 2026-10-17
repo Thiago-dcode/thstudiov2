@@ -463,7 +463,7 @@ export function MediaGrid({
         <div className="self-end">
           <FileInputProvider
             allowedMimeTypes={ALLOWED_FILE_TYPES}
-            // Per-type: a video may be 300MB where an image may not, and one flat number
+            // Per-type: a video may be 500MB where an image may not, and one flat number
             // would either reject legitimate video or wave through an enormous PNG.
             maxFileSizeBytesFor={(file) =>
               MediaHelper.maxUploadBytes(file.type)

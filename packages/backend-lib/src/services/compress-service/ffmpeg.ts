@@ -61,7 +61,7 @@ export const isMp4Brand = (buffer: Buffer): boolean =>
 
 /**
  * Walks the top-level ISO-BMFF boxes looking for whether `moov` precedes `mdat`. Reads box
- * headers only, never payload, so it costs microseconds even on a 300MB buffer.
+ * headers only, never payload, so it costs microseconds even on a 500MB buffer.
  *
  * This is what "faststart" means, and it is worth checking rather than assuming: with `moov`
  * at the end a browser has no index until the whole file has landed, so a 200MB video shows
@@ -334,7 +334,7 @@ function run(command: FfmpegCommand, timeoutMs: number, label: string): Promise<
 
 /**
  * Container-only rewrite: the video and audio bitstreams are copied byte for byte, so this is
- * not a re-encode and costs nothing but I/O — a few seconds even on 300MB. Used to move `moov`
+ * not a re-encode and costs nothing but I/O — a few seconds even on 500MB. Used to move `moov`
  * to the front, and to lift an already-good `qt`-brand `.mov` into a real MP4.
  */
 export async function remuxToMp4(input: string, output: string): Promise<void> {

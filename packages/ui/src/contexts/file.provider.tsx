@@ -47,7 +47,7 @@ export const FileInputProvider = ({ children, allowedMimeTypes, maxFileSizeBytes
     maxFileSizeBytes?: number,
     /**
      * Takes precedence over {@link maxFileSizeBytes} when the cap depends on the file itself.
-     * Media uploads need it: a video is allowed to be twelve times an image's size, and one
+     * Media uploads need it: a video is allowed to be twenty times an image's size, and one
      * flat number would either reject legitimate video or wave through an enormous PNG.
      */
     maxFileSizeBytesFor?: MaxFileSizeResolver

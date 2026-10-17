@@ -40,21 +40,21 @@ export const MAX_IMAGE_UPLOAD_BYTES = MAX_IMAGE_UPLOAD_MB * 1024 * 1024;
 export const MAX_COMPRESSED_IMAGE_MB = 10;
 export const MAX_COMPRESSED_IMAGE_BYTES = MAX_COMPRESSED_IMAGE_MB * 1024 * 1024;
 /**
- * The video cap is what sets nginx's `client_max_body_size` (320m, leaving headroom for the
+ * The video cap is what sets nginx's `client_max_body_size` (520m, leaving headroom for the
  * multipart envelope) and Next's server-action `bodySizeLimit` — keep all three in sync, in
  * `dev.nginx`/`pro.nginx` and `apps/web/next.config.ts`. A raw phone clip is 10-20 Mbps, so
- * 300MB is a few minutes of 1080p; the worker transcodes it down to a delivery bitrate.
+ * 500MB is a few minutes of 1080p; the worker transcodes it down to a delivery bitrate.
  */
-export const MAX_VIDEO_UPLOAD_MB = 300;
+export const MAX_VIDEO_UPLOAD_MB = 500;
 export const MAX_VIDEO_UPLOAD_BYTES = MAX_VIDEO_UPLOAD_MB * 1024 * 1024;
 /**
  * Videos over this are rejected, never trimmed — silently cutting someone's footage is data
  * loss they did not ask for. Checked in the browser (`HTMLVideoElement.duration`) so the user
- * finds out in a second rather than after a 300MB upload, and again in the worker's ffprobe
+ * finds out in a second rather than after a 500MB upload, and again in the worker's ffprobe
  * pass, which is the only place that cannot be bypassed.
  *
- * Ten minutes is deliberately generous relative to the byte cap: 300MB over 10 minutes is only
- * ~4 Mbps, so anything reaching this limit is low-bitrate long-form rather than portfolio work.
+ * Ten minutes is deliberately generous relative to the byte cap: 500MB over 10 minutes is only
+ * ~6.7 Mbps, so anything reaching this limit is low-bitrate long-form rather than portfolio work.
  */
 export const MAX_VIDEO_DURATION_SECONDS = 600;
 /**
