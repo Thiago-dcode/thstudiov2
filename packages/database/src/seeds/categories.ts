@@ -271,6 +271,19 @@ export const main = async () => {
                     ],
                 },
                 {
+                    name: 'Automotive Photography',
+                    tags: [
+                        'automotive', 'car', 'cars', 'vehicle', 'motorsport', 'dealership',
+                        'automobile', 'fotografia automotriz', 'fotografia de coches', 'automoviles',
+                        'coches', 'fotografia automotiva', 'carros', 'automóveis',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Automotive Photography' },
+                        { code: 'ES', name: 'Fotografía Automotriz' },
+                        { code: 'PT', name: 'Fotografia Automotiva' },
+                    ],
+                },
+                {
                     name: 'Architecture & Real Estate Photography',
                     tags: [
                         'architecture', 'real-estate', 'interior', 'building', 'property',
