@@ -553,6 +553,46 @@ export class MediaService {
       this.invalidateSeoCache(media.public_id),
     ])
 
+    await this.announceDeleted(media);
+  }
+
+  /**
+   * Removes a first upload whose processing died without ever reaching a verdict (see
+   * `MediaCleanupTask`). The row goes first and only if it is still stale, so a job that finished
+   * in the meantime keeps its media; storage and the owner's views follow the user delete.
+   * False when the row was kept.
+   */
+  public async deleteStaleProcessing(
+    media: Pick<Media, 'id' | 'user_id' | 'public_id'>,
+    olderThanHours: number,
+  ): Promise<boolean> {
+    const owner = await this.userService.getPublicId(media.user_id);
+    // No owner key (a banned account's lookup comes back empty) means no storage path to clean,
+    // so the row stays rather than leaving its files orphaned.
+    if (!owner) return false;
+
+    const deleted = await this.mediaRepository.deleteIfStaleProcessing(media.id, olderThanHours);
+    if (!deleted) return false;
+
+    // Best-effort: the row is already gone, so a storage hiccup must not keep the owner's open
+    // pages from hearing about it. Leftover files are logged with their path for a manual sweep.
+    const directory = `users/${owner.public_id}/media/${media.public_id}`;
+    try {
+      await this.storageService.deleteDirectory(directory);
+    } catch (error) {
+      this.logger
+        .name('delete')
+        .error(
+          `Could not remove storage for stale media [${media.id}] at ${directory}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          error,
+        );
+    }
+    await this.announceDeleted(media);
+    return true;
+  }
+
+  /** What follows a delete: the owner's open pages drop the media, and their counts catch up. */
+  private async announceDeleted(media: Pick<Media, 'id' | 'user_id'>): Promise<void> {
     await QueueHelper.createOrUpdateUserNotificationJob({
       type: 'DELETE_MEDIA',
       user_id: media.user_id,

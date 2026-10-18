@@ -6,6 +6,7 @@ import { LOG_QUEUE, MEDIA_UPDATE_QUEUE } from '@repo/common-lib/constants/queues
 import { UserModule } from '../users/users.module';
 import { AuthCoreModule } from '../auth/auth-core.module';
 import { LocationModule } from '../locations/location.module';
+import { MediaCleanupTask } from './media-cleanup.task';
 import { MediaController } from './media.controller';
 import { MediaProcessor } from './media.processor';
 import { MediaRepository } from './media.repository';
@@ -17,6 +18,7 @@ import { MediaService } from './media.service';
     MediaService,
     MediaRepository,
     MediaProcessor,
+    MediaCleanupTask,
     {
       provide: LogService,
       useFactory: (logQueue: Queue) => {

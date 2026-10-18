@@ -219,6 +219,54 @@ export class MediaRepository extends BaseMediaRepository {
     return query;
   }
 
+  /**
+   * A first upload that never finished: no `completed_at`, never marked FAILED, and untouched for
+   * `$1` hours. Both timestamps must be old so an edit or a fresh retry pushes a row out of reach.
+   * Read from the database clock, like the other cleanup windows.
+   */
+  private static readonly STALE_PROCESSING_SQL = `completed_at IS NULL
+         AND status <> 'FAILED'
+         AND created_at < NOW() - make_interval(hours => $1::int)
+         AND updated_at < NOW() - make_interval(hours => $1::int)`;
+
+  /** Candidates for the stale-upload cleanup, oldest first. */
+  async findStaleProcessing(
+    olderThanHours: number,
+    limit: number,
+  ): Promise<Pick<Media, 'id' | 'user_id' | 'public_id'>[]> {
+    const result = await Query.raw(
+      `SELECT id, user_id, public_id
+       FROM ${TABLES_ENUM.MEDIA}
+       WHERE ${MediaRepository.STALE_PROCESSING_SQL}
+       ORDER BY created_at ASC
+       LIMIT $2`,
+      [olderThanHours, limit],
+    );
+    const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];
+    return (Array.isArray(rows) ? rows : []).map(
+      (row: { id: number; user_id: number; public_id: string }) => ({
+        id: Number(row.id),
+        user_id: Number(row.user_id),
+        public_id: row.public_id,
+      }),
+    );
+  }
+
+  /**
+   * Deletes the row only if it is still stale, in one statement: a job that finished, failed or
+   * was retried since {@link findStaleProcessing} read it keeps its media. True when it was deleted.
+   */
+  async deleteIfStaleProcessing(id: number, olderThanHours: number): Promise<boolean> {
+    const result = await Query.raw(
+      `DELETE FROM ${TABLES_ENUM.MEDIA}
+       WHERE id = $2 AND ${MediaRepository.STALE_PROCESSING_SQL}
+       RETURNING id`,
+      [olderThanHours, id],
+    );
+    const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];
+    return Array.isArray(rows) && rows.length > 0;
+  }
+
   /** Ids of every category on the media — disciplines, styles and tags. */
   async categoryIdsByMediaId(mediaId: number): Promise<number[]> {
     const rows = await Query.table(TABLES_ENUM.MEDIA_CATEGORIES)
