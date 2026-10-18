@@ -326,8 +326,8 @@ export const main = async () => {
         {
             name: 'Film & Video',
             tags: [
-                'film', 'video', 'filmmaker', 'cinema', 'footage', 'cine', 'videografo',
-                'producción audiovisual', 'audiovisual',
+                'film', 'video', 'filmmaker', 'cinema', 'footage', 'videography', 'videographer',
+                'cine', 'videografo', 'videógrafo', 'producción audiovisual', 'audiovisual',
             ],
             translations: [
                 { code: 'EN', name: 'Film & Video' },
@@ -372,18 +372,6 @@ export const main = async () => {
                     ],
                 },
                 {
-                    name: 'Music Video Production',
-                    tags: [
-                        'music-video', 'band', 'performance', 'artist', 'song', 'videoclip',
-                        'video musical', 'videos musicales', 'clip musical',
-                    ],
-                    translations: [
-                        { code: 'EN', name: 'Music Video Production' },
-                        { code: 'ES', name: 'Producción de Videos Musicales' },
-                        { code: 'PT', name: 'Produção de Videoclipes' },
-                    ],
-                },
-                {
                     name: 'Commercial & Promo Videos',
                     tags: [
                         'commercial', 'promo', 'advertising', 'brand', 'marketing',
@@ -396,6 +384,70 @@ export const main = async () => {
                     ],
                 },
                 {
+                    name: 'Corporate & Business Video',
+                    tags: [
+                        'corporate', 'business', 'company', 'internal-comms', 'training',
+                        'video corporativo', 'empresarial', 'video empresarial', 'corporativo',
+                        'vídeo corporativo', 'vídeo empresarial',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Corporate & Business Video' },
+                        { code: 'ES', name: 'Video Corporativo y Empresarial' },
+                        { code: 'PT', name: 'Vídeo Corporativo e Empresarial' },
+                    ],
+                },
+                {
+                    name: 'Wedding & Event Videography',
+                    tags: [
+                        'wedding', 'event', 'ceremony', 'reception', 'videography',
+                        'boda', 'bodas', 'video de bodas', 'eventos', 'casamento',
+                        'casamentos', 'videografia de bodas',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Wedding & Event Videography' },
+                        { code: 'ES', name: 'Videografía de Bodas y Eventos' },
+                        { code: 'PT', name: 'Videografia de Casamentos e Eventos' },
+                    ],
+                },
+                {
+                    name: 'Real Estate & Architecture Videography',
+                    tags: [
+                        'real-estate', 'architecture', 'property', 'walkthrough', 'listing',
+                        'video inmobiliario', 'inmobiliaria', 'arquitectura', 'recorrido virtual',
+                        'imóveis', 'vídeo imobiliário',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Real Estate & Architecture Videography' },
+                        { code: 'ES', name: 'Videografía Inmobiliaria y de Arquitectura' },
+                        { code: 'PT', name: 'Videografia Imobiliária e de Arquitetura' },
+                    ],
+                },
+                {
+                    name: 'Aerial & Drone Videography',
+                    tags: [
+                        'aerial', 'drone', 'uav', 'overhead', 'birds-eye', 'drone-footage',
+                        'video aereo', 'video aéreo', 'dron', 'videografia con dron',
+                        'vídeo aéreo', 'drone video',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Aerial & Drone Videography' },
+                        { code: 'ES', name: 'Videografía Aérea y con Dron' },
+                        { code: 'PT', name: 'Videografia Aérea e com Drone' },
+                    ],
+                },
+                {
+                    name: 'Music Video Production',
+                    tags: [
+                        'music-video', 'band', 'performance', 'artist', 'song', 'videoclip',
+                        'video musical', 'videos musicales', 'clip musical',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Music Video Production' },
+                        { code: 'ES', name: 'Producción de Videos Musicales' },
+                        { code: 'PT', name: 'Produção de Videoclipes' },
+                    ],
+                },
+                {
                     name: 'Documentary Filmmaking',
                     tags: [
                         'documentary', 'non-fiction', 'film', 'storytelling', 'reportage',
@@ -405,6 +457,55 @@ export const main = async () => {
                         { code: 'EN', name: 'Documentary Filmmaking' },
                         { code: 'ES', name: 'Cine Documental' },
                         { code: 'PT', name: 'Cinema Documentário' },
+                    ],
+                },
+                {
+                    name: 'Short Film & Narrative Filmmaking',
+                    tags: [
+                        'short-film', 'narrative', 'fiction', 'screenplay', 'indie-film',
+                        'cortometraje', 'cine narrativo', 'ficción', 'curta-metragem', 'ficção',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Short Film & Narrative Filmmaking' },
+                        { code: 'ES', name: 'Cortometraje y Cine Narrativo' },
+                        { code: 'PT', name: 'Curta-Metragem e Cinema Narrativo' },
+                    ],
+                },
+                {
+                    name: 'Social Media & Short-Form Video',
+                    tags: [
+                        'social-media', 'reels', 'tiktok', 'shorts', 'short-form',
+                        'video para redes sociales', 'contenido vertical',
+                        'vídeo para redes sociais', 'conteúdo vertical',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Social Media & Short-Form Video' },
+                        { code: 'ES', name: 'Video para Redes Sociales y Formato Corto' },
+                        { code: 'PT', name: 'Vídeo para Redes Sociais e Formato Curto' },
+                    ],
+                },
+                {
+                    name: 'Travel & Lifestyle Videography',
+                    tags: [
+                        'travel', 'lifestyle', 'vlog', 'adventure', 'destination',
+                        'video de viajes', 'estilo de vida', 'vídeo de viagem',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Travel & Lifestyle Videography' },
+                        { code: 'ES', name: 'Videografía de Viajes y Estilo de Vida' },
+                        { code: 'PT', name: 'Videografia de Viagem e Estilo de Vida' },
+                    ],
+                },
+                {
+                    name: 'Fashion Film Production',
+                    tags: [
+                        'fashion-film', 'runway', 'lookbook-video', 'model', 'editorial',
+                        'video de moda', 'pasarela', 'vídeo de moda', 'desfile',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Fashion Film Production' },
+                        { code: 'ES', name: 'Producción de Film de Moda' },
+                        { code: 'PT', name: 'Produção de Filme de Moda' },
                     ],
                 },
             ],
