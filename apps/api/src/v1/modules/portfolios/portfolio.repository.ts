@@ -24,13 +24,13 @@ import { DbException } from '@repo/database/exceptions';
 import { RequestService } from 'src/common/services/request.service';
 import { MediaPortfolio } from '@repo/common-lib/types/media';
 import { CategoryBase } from '@repo/common-lib/types/category';
+import { PortfolioLayout } from '@repo/common-lib/types/layout';
 import {
-  ColumBaseLayoutConfig,
-  PortfolioLayout,
-} from '@repo/common-lib/types/layout';
+  readColumnBaseLayoutConfig,
+  readUniformLayoutConfig,
+} from '@repo/common-lib/utils/layout';
 import { EnumType, TABLES_ENUM } from '@repo/common-lib/constants/enums';
 import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/language';
-import { MIN_COLUMN_BASE_COLUMNS } from '@repo/common-lib/constants/limits';
 import { SEO_REGENERATION_MIN_INTERVAL_DAYS } from '@repo/common-lib/constants/cache';
 import { artistShareReadySql } from '@repo/common-lib/utils/artist-share-ready';
 import { sitemapImagePathSql } from '@repo/common-lib/utils/sitemap-image-sql';
@@ -51,21 +51,17 @@ export function formatPortfolioLayout(
     case 'MASONRY':
       return { name: 'MASONRY', config: null, layout_id: row.layout_id };
     case 'UNIFORM':
-      return { name: 'UNIFORM', config: null, layout_id: row.layout_id };
-    case 'COLUMN_BASE': {
-      const columns =
-        parsedConfig &&
-          typeof parsedConfig === 'object' &&
-          typeof (parsedConfig as { columns?: unknown }).columns === 'number'
-          ? (parsedConfig as { columns: number }).columns
-          : MIN_COLUMN_BASE_COLUMNS;
-
       return {
-        name: 'COLUMN_BASE',
-        config: { columns } satisfies ColumBaseLayoutConfig,
+        name: 'UNIFORM',
+        config: readUniformLayoutConfig(parsedConfig),
         layout_id: row.layout_id,
       };
-    }
+    case 'COLUMN_BASE':
+      return {
+        name: 'COLUMN_BASE',
+        config: readColumnBaseLayoutConfig(parsedConfig),
+        layout_id: row.layout_id,
+      };
     default:
       return undefined;
   }

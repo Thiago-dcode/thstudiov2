@@ -20,8 +20,8 @@ const FRAME_CLASS_NAME = "media-gallery-card__frame relative overflow-hidden w-f
 
 /**
  * A video tile: the poster until the pointer (or keyboard focus) reaches the card, then the
- * muted, looping clip. A big, faint play button sits over the poster as the cue and fades out
- * while the clip plays.
+ * muted, looping clip. A small play glyph, scaled to the tile, sits over the poster as the cue
+ * and fades out while the clip plays.
  *
  * Playback is tied to the enclosing `.media-gallery-card` (the `group`) rather than to this
  * frame, so hovering anywhere on the tile counts. Touch devices never hover, so there the
@@ -72,7 +72,9 @@ function HoverPlayVideo({
   }, []);
 
   return (
-    <div ref={frameRef} className={FRAME_CLASS_NAME}>
+    // `@container` lets the play cue scale with the tile, from a small preview cell to a
+    // single-column feed item.
+    <div ref={frameRef} className={`${FRAME_CLASS_NAME} @container`}>
       <video
         ref={videoRef}
         muted
@@ -95,9 +97,12 @@ function HoverPlayVideo({
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center transition-opacity duration-300 ease-out group-hover:opacity-0 group-focus:opacity-0"
       >
-        <span className="flex size-20 items-center justify-center rounded-full bg-black/15 text-white/70 backdrop-blur-[2px] md:size-24">
-          <Play className="ml-1 size-9 fill-current md:size-11" strokeWidth={1.5} />
-        </span>
+        {/* A bare glyph, sized off the tile (~12% of its width, kept between 0.75rem and
+            2rem) — no disc or blur competing with the poster. */}
+        <Play
+          className="size-[clamp(0.75rem,12cqi,2rem)] fill-current text-white/85 drop-shadow-[0_1px_2px_rgb(0_0_0/0.35)]"
+          strokeWidth={0}
+        />
       </span>
     </div>
   );

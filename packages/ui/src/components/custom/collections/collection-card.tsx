@@ -87,7 +87,11 @@ return (
 export const CollectionStackCard = ({
  collection,
  className,
-}: CollectionCardProps) => {
+ hideHoverTitle = false,
+}: CollectionCardProps & {
+ /** Set when the title is already shown outside the card (e.g. a gallery caption). */
+ hideHoverTitle?: boolean;
+}) => {
  const images = collection.media
  .slice()
  .sort((a, b) => a.position - b.position)
@@ -95,7 +99,7 @@ export const CollectionStackCard = ({
  .filter((t): t is string => Boolean(t))
  .slice(0, 4);
 
- const title = collection.title;
+ const title = hideHoverTitle ? null : collection.title;
 
  return (
  <article

@@ -4,6 +4,7 @@ import { COLUMN_BASE_RESPONSIVE_CAPS } from "@repo/common-lib/constants/limits";
 import { PortfolioGrid } from "@repo/ui/components/custom/gallery/gallery-grid";
 import { InfoTooltip } from "@repo/ui/components/custom/info-tooltip";
 import { Button } from "@repo/ui/components/shadcn/button";
+import { Checkbox } from "@repo/ui/components/shadcn/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -14,7 +15,7 @@ import {
 import { Slider } from "@repo/ui/components/shadcn/slider";
 import { cn } from "@repo/ui/lib/utils";
 import { GalleryProvider } from "@repo/ui/providers/gallery.provider";
-import { Eye, Wrench } from "lucide-react";
+import { Eye } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
@@ -23,8 +24,13 @@ import {
   COLUMN_BASE_COLUMN_LIMITS,
   getColumnBaseColumns,
   getDefaultLayoutConfig,
+  getLayoutShowTitle,
+  type LayoutConfigGroup,
   type LayoutName,
   layoutSupportsConfig,
+  layoutSupportsShapeConfig,
+  normalizeLayoutConfig,
+  patchLayoutConfig,
 } from "@/modules/layouts/layout.helpers";
 import { getAllLayoutsAction } from "@/modules/layouts/server-actions/layouts.action";
 import { usePortfolio } from "@/modules/portfolios/providers/create-update-portfolio.provider";
@@ -35,7 +41,6 @@ export function PortfolioLayoutControls() {
   const portfolioItems = portfolioInput.portfolioItems;
 
   const [previewOpen, setPreviewOpen] = useState(false);
-  const [configOpen, setConfigOpen] = useState(false);
 
   const { result: layoutsResult, handleAction } = useHandleAction({
     action: async () => getAllLayoutsAction({ is_active: true }),
@@ -65,6 +70,9 @@ export function PortfolioLayoutControls() {
   const supportsConfig = selectedLayout
     ? layoutSupportsConfig(selectedLayout.name)
     : false;
+  const supportsShapeConfig = selectedLayout
+    ? layoutSupportsShapeConfig(selectedLayout.name)
+    : false;
 
   const previewLayout = useMemo(
     () => buildPortfolioLayout(layouts, portfolioInput.layout),
@@ -72,22 +80,33 @@ export function PortfolioLayoutControls() {
   );
 
   const columns = getColumnBaseColumns(portfolioInput.layout);
+  const showTitle = getLayoutShowTitle(portfolioInput.layout);
 
   if (!layouts.length) return null;
 
   const handleSelectLayout = (layoutId: number, name: LayoutName) => {
     if (layoutId === portfolioInput.layout?.layout_id) return;
+    // Carry shared options (e.g. show titles) over to the new layout; anything
+    // it does not support is dropped and missing options get their defaults.
     handleSetFormData("layout", {
       layout_id: layoutId,
-      config: getDefaultLayoutConfig(name),
+      config: normalizeLayoutConfig(name, portfolioInput.layout?.config),
     });
   };
 
-  const handleColumnsChange = (value: number) => {
+  const updateLayoutConfig = (
+    group: LayoutConfigGroup,
+    patch: Record<string, unknown>,
+  ) => {
     if (!selectedLayout) return;
     handleSetFormData("layout", {
       layout_id: selectedLayout.id,
-      config: { columns: value },
+      config: patchLayoutConfig(
+        selectedLayout.name,
+        portfolioInput.layout?.config,
+        group,
+        patch,
+      ),
     });
   };
 
@@ -95,6 +114,25 @@ export function PortfolioLayoutControls() {
 
   const formatLayoutLabel = (name: LayoutName) =>
     name.replace(/_/g, " ").toLowerCase();
+
+  // Rendered from the live `portfolioInput.layout`, so every settings change made
+  // in the dialog shows up in the preview straight away.
+  const layoutPreview =
+    hasItems && previewLayout ? (
+      // Tiles are much smaller in the dialog than on the page, so captions shrink to match.
+      <div className="[&_.media-gallery-card\_\_title]:text-xs">
+        <GalleryProvider>
+          <PortfolioGrid
+            portfolioItems={portfolioItems}
+            layout={previewLayout}
+          />
+        </GalleryProvider>
+      </div>
+    ) : (
+      <div className="flex min-h-[30vh] items-center justify-center border border-dashed border-border/60 text-sm text-text-muted">
+        {t("previewEmpty")}
+      </div>
+    );
 
   return (
     <div className="space-y-2">
@@ -150,30 +188,19 @@ export function PortfolioLayoutControls() {
           variant="outline"
           size="icon"
           aria-label={t("previewAria")}
-          disabled={!previewLayout || !hasItems}
+          disabled={!previewLayout || (!hasItems && !supportsConfig)}
           onClick={() => setPreviewOpen(true)}
           className="size-8 border-border/50 text-text-muted hover:border-border hover:bg-fg/50 hover:text-text active:scale-100 [&_svg]:size-4"
         >
           <Eye />
         </Button>
-
-        {supportsConfig ? (
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            aria-label={t("editSettingsAria")}
-            onClick={() => setConfigOpen(true)}
-            className="size-8 border-border/50 text-text-muted hover:border-border hover:bg-fg/50 hover:text-text active:scale-100 [&_svg]:size-4"
-          >
-            <Wrench />
-          </Button>
-        ) : null}
       </div>
 
-      {/* Layout preview */}
+      {/* Layout preview, with the layout's settings beside it when it has any */}
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-        <DialogContent className="sm:max-w-4xl">
+        <DialogContent
+          className={supportsConfig ? "sm:max-w-5xl" : "sm:max-w-4xl"}
+        >
           <DialogHeader>
             <DialogTitle>{t("previewTitle")}</DialogTitle>
             <DialogDescription>
@@ -183,59 +210,106 @@ export function PortfolioLayoutControls() {
                   : t("selectedFallback"),
               })}
             </DialogDescription>
+            {selectedLayout ? (
+              <p className="max-w-2xl text-xs leading-relaxed text-text-muted">
+                <span className="font-medium text-text">
+                  {t("recommendationLabel")}:
+                </span>{" "}
+                {t(`recommendations.${selectedLayout.name}`)}
+              </p>
+            ) : null}
           </DialogHeader>
 
-          {hasItems && previewLayout ? (
-            <div className="max-h-[70vh] overflow-y-auto">
-              <GalleryProvider>
-                <PortfolioGrid
-                  portfolioItems={portfolioItems}
-                  layout={previewLayout}
-                />
-              </GalleryProvider>
+          {supportsConfig ? (
+            <div className="grid gap-8 py-2 tablet:grid-cols-[16rem_minmax(0,1fr)]">
+              <div className="space-y-8">
+                {supportsShapeConfig ? (
+                  <section
+                    aria-labelledby="layout-settings-shape"
+                    className="space-y-4"
+                  >
+                    <p
+                      id="layout-settings-shape"
+                      className="text-xs font-medium uppercase tracking-wide text-text-muted"
+                    >
+                      {t("layoutGroup")}
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-text-muted">
+                        {t("columns")}
+                      </span>
+                      <span className="text-sm font-medium tabular-nums text-text">
+                        {columns}
+                      </span>
+                    </div>
+                    <Slider
+                      min={COLUMN_BASE_COLUMN_LIMITS.min}
+                      max={COLUMN_BASE_COLUMN_LIMITS.max}
+                      step={1}
+                      value={[columns]}
+                      aria-label={t("columns")}
+                      onValueChange={(value) => {
+                        const next = value[0];
+                        if (typeof next === "number") {
+                          updateLayoutConfig("layout", { columns: next });
+                        }
+                      }}
+                    />
+                    <div className="flex justify-between text-xs text-text-muted/70">
+                      <span>{COLUMN_BASE_COLUMN_LIMITS.min}</span>
+                      <span>{COLUMN_BASE_COLUMN_LIMITS.max}</span>
+                    </div>
+                  </section>
+                ) : null}
+
+                <section
+                  aria-labelledby="layout-settings-items"
+                  className="space-y-4"
+                >
+                  <p
+                    id="layout-settings-items"
+                    className="text-xs font-medium uppercase tracking-wide text-text-muted"
+                  >
+                    {t("itemsGroup")}
+                  </p>
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      id="layout-show-title"
+                      checked={showTitle}
+                      onCheckedChange={(checked) =>
+                        updateLayoutConfig("items", {
+                          show_title: checked === true,
+                        })
+                      }
+                      className="mt-0.5"
+                    />
+                    <label
+                      htmlFor="layout-show-title"
+                      className="cursor-pointer space-y-1"
+                    >
+                      <span className="block text-sm text-text">
+                        {t("showTitles")}
+                      </span>
+                      <span className="block text-xs text-text-muted">
+                        {t("showTitlesHint")}
+                      </span>
+                    </label>
+                  </div>
+                </section>
+              </div>
+
+              <section
+                aria-label={t("previewTitle")}
+                className="max-h-[40vh] overflow-y-auto tablet:max-h-[65vh]"
+              >
+                {layoutPreview}
+              </section>
             </div>
           ) : (
-            <div className="flex min-h-[30vh] items-center justify-center border border-dashed border-border/60 text-sm text-text-muted">
-              {t("previewEmpty")}
-            </div>
+            <div className="max-h-[70vh] overflow-y-auto">{layoutPreview}</div>
           )}
         </DialogContent>
       </Dialog>
-
-      {/* Column-base config */}
-      {supportsConfig ? (
-        <Dialog open={configOpen} onOpenChange={setConfigOpen}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>{t("settingsTitle")}</DialogTitle>
-              <DialogDescription>{t("settingsDescription")}</DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-4 py-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-text-muted">{t("columns")}</span>
-                <span className="text-sm font-medium tabular-nums text-text">
-                  {columns}
-                </span>
-              </div>
-              <Slider
-                min={COLUMN_BASE_COLUMN_LIMITS.min}
-                max={COLUMN_BASE_COLUMN_LIMITS.max}
-                step={1}
-                value={[columns]}
-                onValueChange={(value) => {
-                  const next = value[0];
-                  if (typeof next === "number") handleColumnsChange(next);
-                }}
-              />
-              <div className="flex justify-between text-xs text-text-muted/70">
-                <span>{COLUMN_BASE_COLUMN_LIMITS.min}</span>
-                <span>{COLUMN_BASE_COLUMN_LIMITS.max}</span>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-      ) : null}
     </div>
   );
 }

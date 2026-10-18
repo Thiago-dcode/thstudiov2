@@ -1,3 +1,4 @@
+import { readUniformLayoutConfig } from "@repo/common-lib/utils/layout";
 import { Gallery } from "@repo/ui/components/custom/gallery/gallery";
 import { GalleryGrid } from "@repo/ui/components/custom/gallery/gallery-grid";
 import { GalleryProvider } from "@repo/ui/providers/gallery.provider";
@@ -175,7 +176,10 @@ export default async function Page({ params, searchParams }: Props) {
           >
             <GalleryGrid
               media={collection.media}
-              layout={{ name: "UNIFORM", config: null }}
+              layout={{
+                name: "UNIFORM",
+                config: readUniformLayoutConfig(null),
+              }}
             />
             <div className="hidden tablet:block">
               <Gallery />

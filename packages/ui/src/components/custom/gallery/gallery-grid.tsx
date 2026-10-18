@@ -77,6 +77,7 @@ export const PortfolioGrid = ({
                             key={`${item.item}-${item.id}`}
                             collection={item}
                             index={item.index || i}
+                            layout={resolvedLayout}
                         />
                     );
                 }

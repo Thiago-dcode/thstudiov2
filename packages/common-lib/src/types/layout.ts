@@ -5,11 +5,25 @@ export type LayoutIndexRequest = OffsetPaginationRequest & {
   is_active?: boolean;
 };
 
+/** Per-item options, shared by every layout that renders configurable items. */
+export type LayoutItemsConfig = {
+  show_title: boolean;
+};
+
+/**
+ * Configurable layouts split their config into two groups: `layout` shapes the
+ * grid as a whole, `items` controls how each tile renders.
+ */
+type GroupedLayoutConfig<TLayout> = {
+  layout: TLayout;
+  items: LayoutItemsConfig;
+};
+
 export type MansoryLayoutConfig = null;
-export type UniformLayoutConfig = null;
-export type ColumBaseLayoutConfig = {
+export type UniformLayoutConfig = GroupedLayoutConfig<Record<string, never>>;
+export type ColumBaseLayoutConfig = GroupedLayoutConfig<{
   columns: number;
-}
+}>;
 export type LayoutConfig = MansoryLayoutConfig | UniformLayoutConfig | ColumBaseLayoutConfig
 
 export type MasonryLayout = {

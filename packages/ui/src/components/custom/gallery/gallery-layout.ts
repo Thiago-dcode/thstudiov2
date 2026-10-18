@@ -63,6 +63,17 @@ export function isSingleColumnLayout(layout: PortfolioLayout): boolean {
   return layout.name === "COLUMN_BASE" && resolveColumnBaseColumns(layout) === 1;
 }
 
+/**
+ * Whether each tile shows its title as a caption above the media. Only the
+ * layouts with an `items` config group (UNIFORM, COLUMN_BASE) support it.
+ */
+export function showsItemTitles(layout: PortfolioLayout): boolean {
+  if (layout.name === "UNIFORM" || layout.name === "COLUMN_BASE") {
+    return layout.config?.items?.show_title === true;
+  }
+  return false;
+}
+
 /** Masonry needs a container-query wrapper for its square base cells. */
 export function needsMasonryWrapper(layout: PortfolioLayout): boolean {
   return layout.name === "MASONRY";
@@ -77,7 +88,7 @@ export function resolveColumnBaseColumns(layout: PortfolioLayout): number {
     return MIN_COLUMN_BASE_COLUMNS;
   }
 
-  const columns = layout.config?.columns ?? MIN_COLUMN_BASE_COLUMNS;
+  const columns = layout.config?.layout?.columns ?? MIN_COLUMN_BASE_COLUMNS;
 
   return Math.min(
     MAX_COLUMN_BASE_COLUMNS,

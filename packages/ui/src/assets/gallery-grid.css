@@ -292,3 +292,57 @@
 .layout-column-base .media-gallery-card__frame video {
   object-fit: cover;
 }
+
+/* -------------------------------------------------------------------
+   5. Item titles – `items.show_title` on UNIFORM / COLUMN_BASE.
+   The card stacks a caption above the media. The shape the card used
+   to own (square, or the media's ratio in a single column) moves to
+   the media frame, so the caption adds height instead of eating into
+   the media. The caption spans the whole cell, so it can run wider
+   than a letterboxed (UNIFORM) image.
+   ------------------------------------------------------------------- */
+
+.media-gallery-card[data-show-title] {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: var(--size-xs);
+  aspect-ratio: auto;
+}
+
+.media-gallery-card[data-show-title] > .media-gallery-card__title {
+  flex: none;
+  /*
+    Reserve both lines so every media in a row starts at the same height
+    whatever its title's length (or if it has none); the text sits at the
+    bottom, against the media.
+  */
+  min-height: 2lh;
+}
+
+.media-gallery-card[data-show-title] > .media-gallery-card__frame,
+.media-gallery-card[data-show-title] > .media-gallery-card__placeholder {
+  flex: none;
+  aspect-ratio: 1 / 1;
+  height: auto;
+}
+
+/* Single column: the media keeps its own ratio and the height cap; the caption sits on top. */
+.layout-column-base .media-gallery-card[data-single-column][data-show-title] {
+  max-height: none;
+}
+
+.layout-column-base
+  .media-gallery-card[data-single-column][data-show-title]
+  > .media-gallery-card__title {
+  /* A stacked feed has no row to align with, so the caption takes only what it needs. */
+  min-height: 0;
+}
+
+.layout-column-base
+  .media-gallery-card[data-single-column][data-show-title]
+  > .media-gallery-card__frame {
+  aspect-ratio: var(--media-ratio, 1);
+  max-height: var(--single-column-max-height);
+}

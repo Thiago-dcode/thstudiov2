@@ -8,10 +8,12 @@ import {
 import { useGallery } from "@repo/ui/providers/gallery.provider";
 import type { CSSProperties } from "react";
 import type { GalleryGridMedia } from "./gallery-grid";
+import { GalleryItemTitle } from "./gallery-item-title";
 import {
   getGalleryImageClassName,
   isSingleColumnLayout,
   normalizeGalleryLayout,
+  showsItemTitles,
   usesAspectRatioBuckets,
 } from "./gallery-layout";
 import { MediaGalleryCardContent } from "./media-gallery-card-content";
@@ -31,13 +33,16 @@ export function MediaGalleryCard({
   // A single-column COLUMN_BASE reads like a stacked list: size the cell off
   // the media's own ratio instead of the layout's default square crop.
   const singleColumn = isSingleColumnLayout(resolvedLayout);
+  const title = showsItemTitles(resolvedLayout) ? (media.title ?? "") : null;
   const href = items[index]?.href;
 
   const className =
     "cursor-pointer media-gallery-card group relative block w-full overflow-hidden transition-all duration-500 ease-out hover:ring-1 hover:ring-text/20";
   const style = singleColumn
     ? ({
-        aspectRatio: aspectRatioToCss(media.aspect_ratio),
+        // With a caption the ratio belongs to the media frame, not the whole card; gallery-grid.css
+        // applies it there from --media-ratio (an inline aspect-ratio here would win over it).
+        aspectRatio: title !== null ? undefined : aspectRatioToCss(media.aspect_ratio),
         // Read by gallery-grid.css to size the cell from the ratio alone, never from the
         // media's pixels (see `[data-single-column]` there).
         "--media-ratio": aspectRatioToCss(media.aspect_ratio),
@@ -48,11 +53,14 @@ export function MediaGalleryCard({
     : undefined;
 
   const content = (
-    <MediaGalleryCardContent
-      media={media}
-      index={index}
-      mediaClassName={mediaClassName}
-    />
+    <>
+      {title !== null ? <GalleryItemTitle title={title} /> : null}
+      <MediaGalleryCardContent
+        media={media}
+        index={index}
+        mediaClassName={mediaClassName}
+      />
+    </>
   );
 
   // Progressive enhancement. These tiles were `<button onClick>`, so the media detail pages —
@@ -68,6 +76,7 @@ export function MediaGalleryCard({
         className={className}
         style={style}
         data-single-column={singleColumn || undefined}
+        data-show-title={title !== null || undefined}
         data-ratio={dataRatio}
       >
         {content}
@@ -90,6 +99,7 @@ export function MediaGalleryCard({
       className={className}
       style={style}
       data-single-column={singleColumn || undefined}
+      data-show-title={title !== null || undefined}
       data-ratio={dataRatio}
     >
       {content}

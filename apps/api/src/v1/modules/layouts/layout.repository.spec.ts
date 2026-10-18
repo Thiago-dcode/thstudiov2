@@ -59,12 +59,10 @@ describe('LayoutRepository', () => {
       id: 1,
       layout_id: 2,
       portfolio_id: 50,
-      config: { columns: 2 },
+      config: { layout: { columns: 2 }, items: { show_title: false } },
     });
 
-    const result = await repository.upsertConfigForPortfolio(50, 2, {
-      columns: 2,
-    });
+    const result = await repository.upsertConfigForPortfolio(50, 2, { layout: { columns: 2 }, items: { show_title: false } });
 
     expect(Query.raw).toHaveBeenCalledTimes(1);
     const [query, values] = (Query.raw as jest.Mock).mock.calls[0] as [
@@ -77,12 +75,12 @@ describe('LayoutRepository', () => {
         `ON CONFLICT (portfolio_id) ` +
         `DO UPDATE SET layout_id = EXCLUDED.layout_id, config = EXCLUDED.config`,
     );
-    expect(values).toEqual([2, 50, JSON.stringify({ columns: 2 })]);
+    expect(values).toEqual([2, 50, JSON.stringify({ layout: { columns: 2 }, items: { show_title: false } })]);
     expect(result).toEqual({
       id: 1,
       layout_id: 2,
       portfolio_id: 50,
-      config: { columns: 2 },
+      config: { layout: { columns: 2 }, items: { show_title: false } },
     });
   });
 
@@ -93,24 +91,22 @@ describe('LayoutRepository', () => {
       id: 1,
       layout_id: 3,
       portfolio_id: 50,
-      config: { columns: 4 },
+      config: { layout: { columns: 4 }, items: { show_title: false } },
     });
 
-    const result = await repository.upsertConfigForPortfolio(50, 3, {
-      columns: 4,
-    });
+    const result = await repository.upsertConfigForPortfolio(50, 3, { layout: { columns: 4 }, items: { show_title: false } });
 
     expect(Query.raw).toHaveBeenCalledTimes(1);
     expect((Query.raw as jest.Mock).mock.calls[0][1]).toEqual([
       3,
       50,
-      JSON.stringify({ columns: 4 }),
+      JSON.stringify({ layout: { columns: 4 }, items: { show_title: false } }),
     ]);
     expect(result).toEqual({
       id: 1,
       layout_id: 3,
       portfolio_id: 50,
-      config: { columns: 4 },
+      config: { layout: { columns: 4 }, items: { show_title: false } },
     });
   });
 

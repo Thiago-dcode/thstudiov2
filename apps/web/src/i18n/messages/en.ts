@@ -1968,16 +1968,26 @@ const messages = {
         columnsInfo:
           "For the column layout, the number you pick is the maximum used on large screens. Smaller devices show fewer columns — up to {mobile} on mobile and {tablet} on tablet — so a choice of {max} columns still shows just {mobile} on a phone.",
         ariaGroup: "Portfolio layout",
-        previewAria: "Preview layout",
-        editSettingsAria: "Edit layout settings",
+        previewAria: "Preview and adjust layout",
         previewTitle: "Layout preview",
         previewDescription:
           "A preview of your selected items using the {layoutName} layout. The result adapts to the visitor's screen size.",
         previewEmpty: "Add items to preview the layout.",
-        settingsTitle: "Layout settings",
-        settingsDescription:
-          "Choose how many columns to show on large screens. Smaller devices automatically use fewer.",
+        recommendationLabel: "Recommended for",
+        recommendations: {
+          MASONRY:
+            "Very different media shapes. Portrait, landscape and square pieces sit together close to their real shape.",
+          UNIFORM:
+            "A minimalist view. Every piece gets the same calm, equal cell.",
+          COLUMN_BASE:
+            "Video and small selections. You control the number of columns, so a few pieces or clips get the space they need.",
+        },
+        layoutGroup: "Layout",
+        itemsGroup: "Items",
         columns: "Columns",
+        showTitles: "Show titles",
+        showTitlesHint:
+          "Each piece shows its title above the image, up to two lines.",
         selectedFallback: "selected",
       },
     },

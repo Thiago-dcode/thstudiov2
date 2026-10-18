@@ -63,47 +63,81 @@ describe('LayoutService', () => {
       });
     });
 
-    it('normalizes UNIFORM config to null', async () => {
+    it('normalizes UNIFORM config to the grouped shape, dropping unknown keys', async () => {
       layoutRepository.findById.mockResolvedValue(uniformLayout);
 
-      const result = await service.resolveLayoutConfig(2, { columns: 4 });
+      const result = await service.resolveLayoutConfig(2, {
+        columns: 4,
+        items: { show_title: true },
+      });
 
       expect(result).toEqual({
         layout: uniformLayout,
-        config: null,
+        config: { layout: {}, items: { show_title: true } },
+      });
+    });
+
+    it('defaults UNIFORM items when config is missing', async () => {
+      layoutRepository.findById.mockResolvedValue(uniformLayout);
+
+      const result = await service.resolveLayoutConfig(2, null);
+
+      expect(result).toEqual({
+        layout: uniformLayout,
+        config: { layout: {}, items: { show_title: false } },
+      });
+    });
+
+    it('coerces a non-boolean show_title to false', async () => {
+      layoutRepository.findById.mockResolvedValue(uniformLayout);
+
+      const result = await service.resolveLayoutConfig(2, {
+        items: { show_title: 'true' },
+      });
+
+      expect(result.config).toEqual({
+        layout: {},
+        items: { show_title: false },
       });
     });
 
     it('clamps COLUMN_BASE columns below min to 1', async () => {
       layoutRepository.findById.mockResolvedValue(columnBaseLayout);
 
-      const result = await service.resolveLayoutConfig(3, { columns: 0 });
+      const result = await service.resolveLayoutConfig(3, {
+        layout: { columns: 0 },
+      });
 
       expect(result).toEqual({
         layout: columnBaseLayout,
-        config: { columns: 1 },
+        config: { layout: { columns: 1 }, items: { show_title: false } },
       });
     });
 
     it('clamps COLUMN_BASE columns above max to 12', async () => {
       layoutRepository.findById.mockResolvedValue(columnBaseLayout);
 
-      const result = await service.resolveLayoutConfig(3, { columns: 13 });
+      const result = await service.resolveLayoutConfig(3, {
+        layout: { columns: 13 },
+      });
 
       expect(result).toEqual({
         layout: columnBaseLayout,
-        config: { columns: 12 },
+        config: { layout: { columns: 12 }, items: { show_title: false } },
       });
     });
 
     it('accepts valid COLUMN_BASE config', async () => {
       layoutRepository.findById.mockResolvedValue(columnBaseLayout);
 
-      const result = await service.resolveLayoutConfig(3, { columns: 3 });
+      const result = await service.resolveLayoutConfig(3, {
+        layout: { columns: 3 },
+        items: { show_title: true },
+      });
 
       expect(result).toEqual({
         layout: columnBaseLayout,
-        config: { columns: 3 },
+        config: { layout: { columns: 3 }, items: { show_title: true } },
       });
     });
 
@@ -111,7 +145,15 @@ describe('LayoutService', () => {
       layoutRepository.findById.mockResolvedValue(columnBaseLayout);
 
       await expect(
-        service.resolveLayoutConfig(3, { columns: 'abc' }),
+        service.resolveLayoutConfig(3, { layout: { columns: 'abc' } }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('throws when COLUMN_BASE uses the old flat config', async () => {
+      layoutRepository.findById.mockResolvedValue(columnBaseLayout);
+
+      await expect(
+        service.resolveLayoutConfig(3, { columns: 3 }),
       ).rejects.toBeInstanceOf(BadRequestException);
     });
 

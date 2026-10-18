@@ -161,6 +161,8 @@ export const PLATFORM_CURRENCY_SYMBOL = "€";
 export const MAX_SERVICE_PRICE = 999999.99;
 export const MIN_COLUMN_BASE_COLUMNS = 1;
 export const MAX_COLUMN_BASE_COLUMNS = 12;
+/** Item options a freshly configured layout starts with (titles hidden). */
+export const DEFAULT_LAYOUT_ITEMS_CONFIG = { show_title: false } as const;
 /**
  * COLUMN_BASE is responsive: the configured column count is the desktop
  * maximum, and smaller viewports are capped so cells never get too small.

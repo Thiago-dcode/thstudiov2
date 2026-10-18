@@ -1978,16 +1978,26 @@ const messages = {
         columnsInfo:
           "Para o layout em colunas, o número escolhido é o máximo usado em telas grandes. Dispositivos menores mostram menos colunas — até {mobile} no celular e {tablet} no tablet — ou seja, mesmo que você escolha {max} colunas, no celular aparecem apenas {mobile}.",
         ariaGroup: "Layout do portfólio",
-        previewAria: "Pré-visualizar layout",
-        editSettingsAria: "Editar configurações de layout",
+        previewAria: "Pré-visualizar e ajustar layout",
         previewTitle: "Pré-visualização do layout",
         previewDescription:
           "Uma prévia dos seus itens selecionados usando o layout {layoutName}. O resultado se adapta ao tamanho da tela do visitante.",
         previewEmpty: "Adicione itens para pré-visualizar o layout.",
-        settingsTitle: "Configurações de layout",
-        settingsDescription:
-          "Escolha quantas colunas mostrar em telas grandes. Dispositivos menores usam menos automaticamente.",
+        recommendationLabel: "Recomendado para",
+        recommendations: {
+          MASONRY:
+            "Formatos muito diferentes. Obras verticais, horizontais e quadradas convivem perto da forma real.",
+          UNIFORM:
+            "Uma visão minimalista. Cada obra ocupa a mesma célula, calma e equilibrada.",
+          COLUMN_BASE:
+            "Vídeo e seleções pequenas. Você controla o número de colunas, então poucas obras ou clipes ganham o espaço de que precisam.",
+        },
+        layoutGroup: "Layout",
+        itemsGroup: "Itens",
         columns: "Colunas",
+        showTitles: "Mostrar títulos",
+        showTitlesHint:
+          "Cada obra mostra o título acima da imagem, em até duas linhas.",
         selectedFallback: "selecionado",
       },
     },

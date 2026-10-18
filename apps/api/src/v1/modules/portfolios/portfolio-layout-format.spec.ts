@@ -6,12 +6,12 @@ describe('formatPortfolioLayout', () => {
     const layout = formatPortfolioLayout({
       layout_id: 3,
       layout_name: 'COLUMN_BASE' as EnumType<'LAYOUT_TYPE'>,
-      config: { columns: 3 },
+      config: { layout: { columns: 3 }, items: { show_title: true } },
     });
 
     expect(layout).toEqual({
       name: 'COLUMN_BASE',
-      config: { columns: 3 },
+      config: { layout: { columns: 3 }, items: { show_title: true } },
       layout_id: 3,
     });
   });
@@ -30,7 +30,35 @@ describe('formatPortfolioLayout', () => {
     });
   });
 
-  it('returns null config for UNIFORM', () => {
+  it('parses a JSON-string COLUMN_BASE config and falls back to defaults', () => {
+    const layout = formatPortfolioLayout({
+      layout_id: 3,
+      layout_name: 'COLUMN_BASE' as EnumType<'LAYOUT_TYPE'>,
+      config: '{"layout":{}}' as unknown as Record<string, unknown>,
+    });
+
+    expect(layout).toEqual({
+      name: 'COLUMN_BASE',
+      config: { layout: { columns: 1 }, items: { show_title: false } },
+      layout_id: 3,
+    });
+  });
+
+  it('keeps show_title for UNIFORM', () => {
+    const layout = formatPortfolioLayout({
+      layout_id: 2,
+      layout_name: 'UNIFORM' as EnumType<'LAYOUT_TYPE'>,
+      config: { layout: {}, items: { show_title: true } },
+    });
+
+    expect(layout).toEqual({
+      name: 'UNIFORM',
+      config: { layout: {}, items: { show_title: true } },
+      layout_id: 2,
+    });
+  });
+
+  it('defaults UNIFORM items when no config is stored', () => {
     const layout = formatPortfolioLayout({
       layout_id: 2,
       layout_name: 'UNIFORM' as EnumType<'LAYOUT_TYPE'>,
@@ -39,7 +67,7 @@ describe('formatPortfolioLayout', () => {
 
     expect(layout).toEqual({
       name: 'UNIFORM',
-      config: null,
+      config: { layout: {}, items: { show_title: false } },
       layout_id: 2,
     });
   });

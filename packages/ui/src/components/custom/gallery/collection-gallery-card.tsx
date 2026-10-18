@@ -1,22 +1,41 @@
 "use client";
 
 import { Collection } from "@repo/common-lib/types/collection";
+import type { PortfolioLayout } from "@repo/common-lib/types/layout";
 import { useGallery } from "@repo/ui/providers/gallery.provider";
 import { CollectionStackCard } from "../collections/collection-card";
+import { GalleryItemTitle } from "./gallery-item-title";
+import { normalizeGalleryLayout, showsItemTitles } from "./gallery-layout";
 
 export function CollectionGalleryCard({
   collection,
   index,
+  layout,
 }: {
   collection: Collection;
   index: number;
+  layout?: PortfolioLayout;
 }) {
   const { items, labels, setCurrentItem } = useGallery();
   const href = items[index]?.href;
+  const showTitle = showsItemTitles(normalizeGalleryLayout(layout));
 
   const className =
     "cursor-pointer media-gallery-card group relative block h-full w-full overflow-hidden p-0! transition-all duration-500 ease-out hover:ring-1 hover:ring-text/20";
-  const content = (
+  // With captions on, the title moves above the stack (like media tiles), so the stack drops its
+  // own hover title instead of showing it twice.
+  const content = showTitle ? (
+    <>
+      <GalleryItemTitle title={collection.title ?? ""} />
+      <div className="aspect-square w-full">
+        <CollectionStackCard
+          className="h-full w-full"
+          collection={collection}
+          hideHoverTitle
+        />
+      </div>
+    </>
+  ) : (
     <CollectionStackCard className="h-full w-full" collection={collection} />
   );
 
@@ -29,6 +48,7 @@ export function CollectionGalleryCard({
         onClick={() => setCurrentItem(index)}
         className={className}
         data-ratio="square"
+        data-show-title={showTitle || undefined}
       >
         {content}
       </button>
@@ -48,6 +68,7 @@ export function CollectionGalleryCard({
       }}
       className={className}
       data-ratio="square"
+      data-show-title={showTitle || undefined}
     >
       {content}
     </a>

@@ -4,53 +4,85 @@ import {
   MIN_COLUMN_BASE_COLUMNS,
 } from "@repo/common-lib/constants/limits";
 import type {
-  ColumBaseLayoutConfig,
   Layout,
   LayoutConfig,
   PortfolioLayout,
   PortfolioLayoutInput,
 } from "@repo/common-lib/types/layout";
+import {
+  readColumnBaseLayoutConfig,
+  readLayoutItemsConfig,
+  readUniformLayoutConfig,
+} from "@repo/common-lib/utils/layout";
 
 export type LayoutName = EnumType<"LAYOUT_TYPE">;
 
+/** The two groups a configurable layout's config is split into. */
+export type LayoutConfigGroup = "layout" | "items";
+
 /** Layouts whose behavior is driven by an editable config object. */
 export function layoutSupportsConfig(name: LayoutName): boolean {
+  return name === "COLUMN_BASE" || name === "UNIFORM";
+}
+
+/** Layouts with options for the grid shape itself (the `layout` group). */
+export function layoutSupportsShapeConfig(name: LayoutName): boolean {
   return name === "COLUMN_BASE";
 }
 
-/** Default (valid) config for a freshly selected layout. */
-export function getDefaultLayoutConfig(name: LayoutName): LayoutConfig {
+/**
+ * Normalized config for a layout, filling every missing option with its
+ * default. Key order is always `{ layout, items }`: the portfolio provider
+ * diffs configs by JSON, so the order must not depend on how a value was built.
+ */
+export function normalizeLayoutConfig(
+  name: LayoutName,
+  config: PortfolioLayoutInput["config"],
+): LayoutConfig {
   switch (name) {
     case "COLUMN_BASE":
-      return { columns: MIN_COLUMN_BASE_COLUMNS };
+      return readColumnBaseLayoutConfig(config);
+    case "UNIFORM":
+      return readUniformLayoutConfig(config);
     default:
       return null;
   }
 }
 
-function readColumns(config: PortfolioLayoutInput["config"]): number {
-  if (
-    config &&
-    typeof config === "object" &&
-    typeof (config as { columns?: unknown }).columns === "number"
-  ) {
-    return (config as { columns: number }).columns;
-  }
-  return MIN_COLUMN_BASE_COLUMNS;
+/** Default (valid) config for a freshly selected layout. */
+export function getDefaultLayoutConfig(name: LayoutName): LayoutConfig {
+  return normalizeLayoutConfig(name, null);
 }
 
-/** Clamp a column count into the supported range as an integer. */
-export function clampColumnBaseColumns(columns: number): number {
-  return Math.min(
-    MAX_COLUMN_BASE_COLUMNS,
-    Math.max(MIN_COLUMN_BASE_COLUMNS, Math.trunc(columns)),
-  );
+/**
+ * Merge a patch into one group of a layout's config and re-normalize, so the
+ * other group (and any untouched option) is kept.
+ */
+export function patchLayoutConfig(
+  name: LayoutName,
+  config: PortfolioLayoutInput["config"],
+  group: LayoutConfigGroup,
+  patch: Record<string, unknown>,
+): LayoutConfig {
+  const current = normalizeLayoutConfig(name, config);
+  if (!current) return null;
+
+  return normalizeLayoutConfig(name, {
+    ...current,
+    [group]: { ...current[group], ...patch },
+  });
 }
 
 export function getColumnBaseColumns(
   input: PortfolioLayoutInput | undefined,
 ): number {
-  return clampColumnBaseColumns(readColumns(input?.config));
+  return readColumnBaseLayoutConfig(input?.config).layout.columns;
+}
+
+export function getLayoutShowTitle(
+  input: PortfolioLayoutInput | undefined,
+): boolean {
+  return readLayoutItemsConfig(input?.config).show_title;
 }
 
 /**
@@ -71,13 +103,11 @@ export function buildPortfolioLayout(
     case "MASONRY":
       return { name: "MASONRY", config: null };
     case "UNIFORM":
-      return { name: "UNIFORM", config: null };
+      return { name: "UNIFORM", config: readUniformLayoutConfig(input.config) };
     case "COLUMN_BASE":
       return {
         name: "COLUMN_BASE",
-        config: {
-          columns: clampColumnBaseColumns(readColumns(input.config)),
-        } satisfies ColumBaseLayoutConfig,
+        config: readColumnBaseLayoutConfig(input.config),
       };
     default:
       return undefined;

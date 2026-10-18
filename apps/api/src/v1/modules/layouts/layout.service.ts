@@ -5,10 +5,6 @@ import {
 } from '@nestjs/common';
 import { EnumType } from '@repo/common-lib/constants/enums';
 import {
-  MAX_COLUMN_BASE_COLUMNS,
-  MIN_COLUMN_BASE_COLUMNS,
-} from '@repo/common-lib/constants/limits';
-import {
   CACHE_KEY_LAYOUT_BY_NAME,
   CACHE_KEY_LAYOUTS_ALL,
 } from '@repo/common-lib/constants/cache';
@@ -19,6 +15,12 @@ import {
   LayoutIndexRequest,
 } from '@repo/common-lib/types/layout';
 import { LayoutConfigSchemaWithoutTimestamps } from '@repo/common-lib/schemas/layout';
+import {
+  clampColumnBaseColumns,
+  getLayoutConfigGroup,
+  readLayoutItemsConfig,
+  readUniformLayoutConfig,
+} from '@repo/common-lib/utils/layout';
 import { Helpers } from 'src/common/services/helpers.service';
 import { LayoutRepository } from './layout.repository';
 import { IndexLayoutsRequest } from './requests/index-layouts.request';
@@ -32,9 +34,9 @@ const LAYOUT_CONFIG_NORMALIZERS: Record<
   (config: Record<string, unknown> | null | undefined) => LayoutConfig
 > = {
   MASONRY: () => null,
-  UNIFORM: () => null,
+  UNIFORM: (config) => readUniformLayoutConfig(config),
   COLUMN_BASE: (config): ColumBaseLayoutConfig => {
-    const raw = config?.columns;
+    const raw = getLayoutConfigGroup(config, 'layout')?.columns;
     const columns =
       typeof raw === 'number'
         ? raw
@@ -44,15 +46,13 @@ const LAYOUT_CONFIG_NORMALIZERS: Record<
 
     if (!Number.isFinite(columns)) {
       throw new BadRequestException(
-        `Invalid config for layout "COLUMN_BASE": columns must be a number`,
+        `Invalid config for layout "COLUMN_BASE": layout.columns must be a number`,
       );
     }
 
     return {
-      columns: Math.min(
-        MAX_COLUMN_BASE_COLUMNS,
-        Math.max(MIN_COLUMN_BASE_COLUMNS, Math.trunc(columns)),
-      ),
+      layout: { columns: clampColumnBaseColumns(columns) },
+      items: readLayoutItemsConfig(config),
     };
   },
 };
