@@ -234,6 +234,19 @@ export const main = async () => {
                     ],
                 },
                 {
+                    name: 'Event Photography',
+                    tags: [
+                        'event', 'events', 'conference', 'concert', 'festival', 'corporate-event',
+                        'party', 'gala', 'fotografia de eventos', 'eventos', 'congreso', 'concierto',
+                        'evento corporativo', 'eventos corporativos', 'fotografia de congressos',
+                    ],
+                    translations: [
+                        { code: 'EN', name: 'Event Photography' },
+                        { code: 'ES', name: 'Fotografía de Eventos' },
+                        { code: 'PT', name: 'Fotografia de Eventos' },
+                    ],
+                },
+                {
                     name: 'Fashion & Editorial Photography',
                     tags: [
                         'fashion', 'editorial', 'model', 'runway', 'lookbook', 'moda',
