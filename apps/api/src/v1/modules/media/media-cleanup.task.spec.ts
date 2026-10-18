@@ -6,6 +6,10 @@ jest.mock('src/common/utils/cron-lock', () => ({
   },
 }));
 
+// The task gets fakes below; stubbing these keeps their import graph (Stripe needs a key at load) out.
+jest.mock('./media.repository', () => ({ MediaRepository: class {} }));
+jest.mock('./media.service', () => ({ MediaService: class {} }));
+
 /** Job states by job id; anything absent has no job at all. */
 const jobStates = new Map<string, string>();
 
