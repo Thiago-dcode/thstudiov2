@@ -180,40 +180,34 @@ const CategoryCombobox = ({
                   key={cat.id}
                   value={String(cat.id)}
                   disabled={blocked}
+                  // On the row, not on an inner button: Enter on the keyboard-highlighted row
+                  // clicks the row element itself, so a nested button never heard it.
+                  onClick={() => {
+                    if (blocked) return;
+                    if (!selected) {
+                      handleSelectCategory(cat);
+                      if (selectCategory) selectCategory(cat);
+                    } else {
+                      handleRemoveCategory(cat);
+                      if (removeCategory) removeCategory(cat);
+                    }
+                  }}
                   className={cn(
-                    "cursor-pointer p-0 pr-0",
+                    "cursor-pointer justify-between gap-2 px-2 py-1.5 pr-2 text-left text-xs leading-tight text-text hover:bg-fg-2",
                     selected && "bg-fg-2/60",
                   )}
                 >
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    disabled={blocked}
-                    onClick={(e) => {
-                      e.preventDefault();
-
-                      if (!selected) {
-                        handleSelectCategory(cat);
-                        if (selectCategory) selectCategory(cat);
-                      } else {
-                        handleRemoveCategory(cat);
-                        if (removeCategory) removeCategory(cat);
-                      }
-                    }}
-                    className="w-full flex-nowrap justify-between gap-2 px-2 py-1.5 text-left text-xs leading-tight text-text hover:text-text"
-                  >
-                    <span className="min-w-0 flex-1 truncate text-left">
-                      {categoryLabel(cat)}
+                  <span className="min-w-0 flex-1 truncate text-left">
+                    {categoryLabel(cat)}
+                  </span>
+                  {!currentFilters.type && (
+                    <span className="shrink-0 text-[10px] uppercase tracking-wide text-text-muted">
+                      {typeLabels[cat.type]}
                     </span>
-                    {!currentFilters.type && (
-                      <span className="shrink-0 text-[10px] uppercase tracking-wide text-text-muted">
-                        {typeLabels[cat.type]}
-                      </span>
-                    )}
-                    {selected && (
-                      <CheckIcon className="size-3.5 shrink-0" aria-hidden />
-                    )}
-                  </Button>
+                  )}
+                  {selected && (
+                    <CheckIcon className="size-3.5 shrink-0" aria-hidden />
+                  )}
                 </ComboboxItem>
               );
             })}
