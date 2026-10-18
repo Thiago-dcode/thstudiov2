@@ -252,6 +252,43 @@ export class MediaRepository extends BaseMediaRepository {
   }
 
   /**
+   * The categories each media shows as picked (active, not TAGS — what `categoriesColumn` lists),
+   * keyed by media id. Media with none are absent from the map.
+   */
+  async pickedCategoryIdsByMediaIds(mediaIds: number[]): Promise<Map<number, number[]>> {
+    const byMedia = new Map<number, number[]>();
+    if (!mediaIds.length) return byMedia;
+    const rows = await Query.table(TABLES_ENUM.MEDIA_CATEGORIES)
+      .select([
+        `${TABLES_ENUM.MEDIA_CATEGORIES}.media_id`,
+        `${TABLES_ENUM.MEDIA_CATEGORIES}.category_id`,
+      ])
+      .join('category_id', TABLES_ENUM.CATEGORIES, 'id')
+      .whereIn(`${TABLES_ENUM.MEDIA_CATEGORIES}.media_id`, mediaIds)
+      .where(`${TABLES_ENUM.CATEGORIES}.is_active`, '=', true)
+      .where(`${TABLES_ENUM.CATEGORIES}.type`, '!=', 'TAGS')
+      .get<{ media_id: number; category_id: number }[]>();
+    for (const row of rows) {
+      byMedia.set(row.media_id, [...(byMedia.get(row.media_id) ?? []), row.category_id]);
+    }
+    return byMedia;
+  }
+
+  /** {@link findManyByIds} plus each row's picked `categories`, for a batch category edit. */
+  async findManyByIdsWithCategories(ids: number[]): Promise<Media[]> {
+    if (!ids.length) return [];
+    const results = await this.withLocation(
+      this.query()
+        .select([...this.COLUMNS, ...this.LOCATION_COLUMNS, this.categoriesColumn()])
+        .whereIn('media.id', ids),
+    ).get<(MediaSchema & MediaUsageCountRow)[]>();
+    return results.map((result) => ({
+      ...this.formatMedia(result),
+      categories: result.categories ?? [],
+    }));
+  }
+
+  /**
    * Sets `location_id` on the owner's rows in one write. Ids that are not theirs match nothing,
    * so a caller that already checked ownership cannot spill the place onto someone else's media.
    */

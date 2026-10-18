@@ -1,10 +1,12 @@
 "use client";
 
 import type { GenerateManyMediaMetadataResult } from "@repo/common-lib/types/ai";
+import type { CategoryBase } from "@repo/common-lib/types/category";
 import type { LocationInput } from "@repo/common-lib/types/location";
 import type {
   CreateMediaInputWithFile,
   Media,
+  UpdateMediaCategoriesInput,
   UpdateMediaInput,
   UpdateMediaLocationsInput,
 } from "@repo/common-lib/types/media";
@@ -34,6 +36,7 @@ import { useUserMetrics } from "@/modules/users/providers/user-metrics.provider"
 import { createMediaApi, updateMediaApi } from "../api/media-api.client";
 import { deleteManyMediaAction } from "../server-actions/delete-many-media.action";
 import { deleteMediaAction } from "../server-actions/delete-media.action";
+import { updateMediaCategoriesAction } from "../server-actions/update-media-categories.action";
 import { updateMediaLocationsAction } from "../server-actions/update-media-locations.action";
 import {
   MEDIA_UPLOAD_CONCURRENCY,
@@ -87,6 +90,12 @@ type MediaContextType = {
   generateManySeoMedia: (media: Media[]) => Promise<void>;
   updateManyMediaLocation: (input: {
     location: LocationInput;
+    media: Media[];
+  }) => Promise<void>;
+  updateManyMediaCategories: (input: {
+    categories: CategoryBase[];
+    /** `true` replaces each media's categories; `false` adds to them. */
+    replace: boolean;
     media: Media[];
   }) => Promise<void>;
   deleteSingleMedia: (
@@ -714,6 +723,87 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
     },
   });
 
+  const updateMediaCategoriesRef = useRef<UpdateMediaCategoriesInput | null>(
+    null,
+  );
+  // Same reason as `updateMediaLocationsDraftIdsRef`: an unsaved edit must survive the batch.
+  const updateMediaCategoriesDraftIdsRef = useRef<Set<number>>(new Set());
+  const { handleAction: updateMediaCategories } = useHandleAction<
+    UpdateMediaCategoriesInput,
+    Media[]
+  >({
+    action: async () => {
+      const input = updateMediaCategoriesRef.current;
+      if (!input) {
+        return { data: null, errors: [t("actions.genericError")] };
+      }
+      try {
+        return await updateMediaCategoriesAction(input);
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : t("actions.genericError");
+        return { data: null, errors: [message] };
+      }
+    },
+    afterAction: async (result) => {
+      const requestedIds = new Set(
+        updateMediaCategoriesRef.current?.media ?? [],
+      );
+      const draftIds = updateMediaCategoriesDraftIdsRef.current;
+      updateMediaCategoriesRef.current = null;
+      updateMediaCategoriesDraftIdsRef.current = new Set();
+      if (requestedIds.size === 0) return;
+
+      if (result.data) {
+        const byId = new Map(result.data.map((media) => [media.id, media]));
+        setMediaUploads((prev) =>
+          prev.map((upload) => {
+            if (!upload.id || !requestedIds.has(upload.id)) return upload;
+            // The saved categories reach the card through the revalidated page instead.
+            if (draftIds.has(upload.id)) {
+              return { ...upload, pending: false, error: undefined };
+            }
+            const media = byId.get(upload.id);
+            if (!media) {
+              return {
+                ...upload,
+                pending: false,
+                data: undefined,
+                error: {
+                  errors: [t("actions.genericError")],
+                  inputErrors: undefined,
+                },
+              };
+            }
+            return {
+              ...upload,
+              // The card prefers `input.categories` over the landed media's, so an older
+              // save's picks left there would hide the set this batch just wrote.
+              input: media.categories
+                ? { ...upload.input, categories: media.categories }
+                : upload.input,
+              data: media,
+              pending: false,
+              error: undefined,
+            };
+          }),
+        );
+        return;
+      }
+
+      const error = extractReturnError(result);
+      setMediaUploads((prev) =>
+        prev.map((upload) =>
+          upload.id && requestedIds.has(upload.id)
+            ? draftIds.has(upload.id)
+              ? { ...upload, pending: false }
+              : { ...upload, pending: false, data: undefined, error }
+            : upload,
+        ),
+      );
+    },
+  });
+
   // ============================================================================
   // Batch Operations
   // ============================================================================
@@ -800,6 +890,95 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
     });
 
     await updateMediaLocations();
+  };
+
+  const updateManyMediaCategories = async (input: {
+    categories: CategoryBase[];
+    replace: boolean;
+    media: Media[];
+  }) => {
+    if (
+      !input.media.length ||
+      !input.categories.length ||
+      updateMediaCategoriesRef.current
+    )
+      return;
+
+    const mediaById = new Map(input.media.map((item) => [item.id, item]));
+    const media = [...mediaById.values()];
+    const current = mediaUploadsRef.current;
+    const created = media
+      .filter(
+        (item) =>
+          !current.some(
+            (upload) => upload.id === item.id || upload.data?.id === item.id,
+          ),
+      )
+      .map((item) => ({
+        item,
+        unique_id: generateUniqueMediaId(),
+      }));
+
+    updateMediaCategoriesRef.current = {
+      category_ids: input.categories.map((category) => category.id),
+      media: media.map((item) => item.id),
+      replace: input.replace,
+    };
+    updateMediaCategoriesDraftIdsRef.current = new Set(
+      current
+        .filter(
+          (upload) =>
+            upload.id &&
+            upload.action === "edit" &&
+            !upload.data &&
+            !upload.deleted &&
+            !upload.pending &&
+            mediaById.has(upload.id),
+        )
+        .map((upload) => upload.id as number),
+    );
+    // Unlike a place, the saved set is only known once the API merged it, so nothing is staged
+    // into the inputs here: the response's `categories` are written on in `afterAction`.
+    setMediaUploads((prev) => {
+      const next = [...prev];
+      for (const item of media) {
+        const index = next.findIndex(
+          (upload) => upload.id === item.id || upload.data?.id === item.id,
+        );
+        if (index === -1) {
+          const row = created.find((entry) => entry.item.id === item.id);
+          if (!row) continue;
+          next.push({
+            input: { user_id: item.user_id },
+            action: "edit",
+            previewUrl: item.thumbnail || undefined,
+            id: item.id,
+            pending: true,
+            error: undefined,
+            unique_id: row.unique_id,
+          });
+          continue;
+        }
+        const upload = next[index];
+        // A draft keeps its own input: the batch categories are saved, not staged into the edit.
+        if (
+          upload.id &&
+          updateMediaCategoriesDraftIdsRef.current.has(upload.id)
+        ) {
+          next[index] = { ...upload, pending: true, error: undefined };
+          continue;
+        }
+        next[index] = {
+          ...upload,
+          action: "edit",
+          pending: true,
+          error: undefined,
+        };
+      }
+      return next;
+    });
+
+    await updateMediaCategories();
   };
 
   const generateManySeoRef = useRef<number[] | null>(null);
@@ -1020,6 +1199,7 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
     generateSeoSingleMedia,
     generateManySeoMedia,
     updateManyMediaLocation,
+    updateManyMediaCategories,
     deleteSingleMedia,
     deleteManyMedia,
     isLoading,

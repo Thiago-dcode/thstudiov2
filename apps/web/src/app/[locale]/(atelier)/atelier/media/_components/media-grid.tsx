@@ -2,14 +2,18 @@
 
 import {
   ALLOWED_FILE_TYPES,
+  MAX_CATEGORIES_MEDIA,
+  MAX_MEDIA_CATEGORIES_BATCH,
   MAX_MEDIA_DELETE_BATCH,
   MAX_MEDIA_LOCATION_BATCH,
   MAX_MEDIA_METADATA_BATCH,
 } from "@repo/common-lib/constants/limits";
+import type { CategoryBase } from "@repo/common-lib/types/category";
 import type { LocationInput } from "@repo/common-lib/types/location";
 import type { Media } from "@repo/common-lib/types/media";
 import { MediaHelper } from "@repo/common-lib/utils/media";
 import { Button } from "@repo/ui/components/shadcn/button";
+import { Checkbox } from "@repo/ui/components/shadcn/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -32,6 +36,7 @@ import {
   ChevronDown,
   ImageOff,
   MapPin,
+  Tags,
   Trash2,
   Upload,
 } from "lucide-react";
@@ -39,6 +44,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { LocationAutocomplete } from "@/modules/locations/components/location-autocomplete";
 import { featureToLocationInput } from "@/modules/locations/location-input";
+import { MediaCategoriesPicker } from "@/modules/media/components/media-categories-picker";
 import { useMedia } from "@/modules/media/providers/media.provider";
 import {
   SelectableMedia,
@@ -239,6 +245,126 @@ function UpdateManyMediaLocationsDialog({
   );
 }
 
+function UpdateManyMediaCategoriesDialog({
+  open,
+  onOpenChange,
+}: BatchDialogProps) {
+  const t = useTranslations("atelier.media.grid");
+  const { updateManyMediaCategories } = useMedia();
+  const { selectedMedia, selectionCount, setCanSelect, clearSelection } =
+    useSelectMedia();
+  const [categories, setCategories] = useState<CategoryBase[]>([]);
+  const [replace, setReplace] = useState(false);
+  const isOverLimit = selectionCount > MAX_MEDIA_CATEGORIES_BATCH;
+  // A merge stops at MAX_CATEGORIES_MEDIA per media, so warn about the ones it will cut short.
+  const overCap = replace
+    ? 0
+    : Object.values(selectedMedia).filter((media) => {
+        const current = media.categories ?? [];
+        const added = categories.filter(
+          (category) => !current.some((c) => c.id === category.id),
+        ).length;
+        return current.length + added > MAX_CATEGORIES_MEDIA;
+      }).length;
+
+  const handleOpenChange = (next: boolean) => {
+    onOpenChange(next);
+    if (!next) {
+      setCategories([]);
+      setReplace(false);
+    }
+  };
+
+  const handleApply = async () => {
+    if (!categories.length || isOverLimit) return;
+    const media = Object.values(selectedMedia);
+    handleOpenChange(false);
+    clearSelection();
+    setCanSelect(false);
+    await updateManyMediaCategories({ categories, replace, media });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="max-w-md z-100">
+        <DialogHeader>
+          <DialogTitle className="text-lg!">
+            {t("updateCategoriesTitle")}
+          </DialogTitle>
+          <DialogDescription className="text-sm!">
+            {t("updateCategoriesDescription", { count: selectionCount })}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 px-6 py-3">
+          <MediaCategoriesPicker
+            selected={categories}
+            onChange={setCategories}
+            positionerClassName="z-[110]"
+          />
+          <div className="flex items-start gap-3">
+            <Checkbox
+              id="batch-media-categories-replace"
+              className="mt-0.5 size-5 shrink-0"
+              checked={replace}
+              onCheckedChange={(checked) => setReplace(checked === true)}
+            />
+            <label
+              htmlFor="batch-media-categories-replace"
+              className="flex min-w-0 flex-1 cursor-pointer select-none flex-col gap-1"
+            >
+              <span className="text-sm font-medium text-text">
+                {t("updateCategoriesReplaceLabel")}
+              </span>
+              <span className="text-xs leading-relaxed text-text-muted">
+                {replace
+                  ? t("updateCategoriesReplaceHint")
+                  : t("updateCategoriesMergeHint", {
+                      max: MAX_CATEGORIES_MEDIA,
+                    })}
+              </span>
+            </label>
+          </div>
+          {overCap > 0 && (
+            <p className="text-xs! text-text-muted">
+              {t("updateCategoriesOverCap", {
+                count: overCap,
+                max: MAX_CATEGORIES_MEDIA,
+              })}
+            </p>
+          )}
+          {isOverLimit && (
+            <p className="text-xs! text-error">
+              {t("overCategoriesLimit", {
+                max: MAX_MEDIA_CATEGORIES_BATCH,
+                excess: selectionCount - MAX_MEDIA_CATEGORIES_BATCH,
+              })}
+            </p>
+          )}
+        </div>
+        <DialogFooter className="gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleOpenChange(false)}
+          >
+            {t("cancel")}
+          </Button>
+          <Button
+            size="sm"
+            variant="primary"
+            disabled={!categories.length || isOverLimit}
+            onClick={handleApply}
+          >
+            {replace
+              ? t("updateCategoriesReplaceConfirm")
+              : t("updateCategoriesMergeConfirm")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function DeleteManyMediaDialog({ open, onOpenChange }: BatchDialogProps) {
   const t = useTranslations("atelier.media.grid");
   const { deleteManyMedia } = useMedia();
@@ -344,7 +470,7 @@ function DeleteManyMediaDialog({ open, onOpenChange }: BatchDialogProps) {
   );
 }
 
-type BatchDialog = "metadata" | "location" | "delete";
+type BatchDialog = "metadata" | "location" | "categories" | "delete";
 
 function BatchMediaActionsMenu() {
   const t = useTranslations("atelier.media.grid");
@@ -392,6 +518,13 @@ function BatchMediaActionsMenu() {
             {t("updateLocationCount", { count: selectionCount })}
           </DropdownMenuItem>
           <DropdownMenuItem
+            className="text-xs"
+            onSelect={() => setOpenDialog("categories")}
+          >
+            <Tags aria-hidden />
+            {t("updateCategoriesCount", { count: selectionCount })}
+          </DropdownMenuItem>
+          <DropdownMenuItem
             className="text-xs text-error"
             onSelect={() => setOpenDialog("delete")}
           >
@@ -402,6 +535,7 @@ function BatchMediaActionsMenu() {
       </DropdownMenu>
       <GenerateManyMediaMetadataDialog {...dialogProps("metadata")} />
       <UpdateManyMediaLocationsDialog {...dialogProps("location")} />
+      <UpdateManyMediaCategoriesDialog {...dialogProps("categories")} />
       <DeleteManyMediaDialog {...dialogProps("delete")} />
     </>
   );

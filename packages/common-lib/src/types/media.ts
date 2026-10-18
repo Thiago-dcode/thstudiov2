@@ -159,6 +159,17 @@ export type UpdateMediaLocationsInput = {
   media: number[];
 };
 
+/**
+ * Body of `PATCH /media/categories`: the same picked categories applied to many media.
+ * `replace: true` swaps out every category each media had (AI tags included, as a single edit
+ * does); `false` adds them next to the ones it already has, up to `MAX_CATEGORIES_MEDIA`.
+ */
+export type UpdateMediaCategoriesInput = {
+  category_ids: number[];
+  media: number[];
+  replace: boolean;
+};
+
 /** Body of `POST /media/delete-many`: the media the artist picked. */
 export type DeleteManyMediaInput = {
   media: number[];

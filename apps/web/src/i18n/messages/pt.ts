@@ -2372,6 +2372,21 @@ const messages = {
         overLocationLimit:
           "Limite: selecione até {max} itens (remova {excess}).",
         locationPlaceholder: "Busque uma cidade ou lugar…",
+        updateCategoriesCount: "Definir categorias ({count})",
+        updateCategoriesTitle: "Definir categorias",
+        updateCategoriesDescription:
+          "Aplicar as mesmas categorias a {count} {count, plural, one {mídia selecionada} other {mídias selecionadas}}.",
+        updateCategoriesReplaceLabel: "Substituir as categorias atuais",
+        updateCategoriesMergeHint:
+          "Desativado: elas são adicionadas ao lado das categorias que cada item já tem. Nenhum item passa de {max}, então quando ele está cheio o restante é ignorado.",
+        updateCategoriesReplaceHint:
+          "Ativado: as categorias atuais de cada item são removidas, inclusive as adicionadas pela IA, e só estas ficam. Recomendamos gerar os metadados novamente depois.",
+        updateCategoriesOverCap:
+          "{count, plural, one {# item passaria} other {# itens passariam}} de {max} categorias. Só as que couberem serão adicionadas.",
+        updateCategoriesMergeConfirm: "Adicionar categorias",
+        updateCategoriesReplaceConfirm: "Substituir categorias",
+        overCategoriesLimit:
+          "Limite: selecione até {max} itens (remova {excess}).",
         cancel: "Cancelar",
         selectMedia: "Selecionar mídia",
         actions: "Ações",

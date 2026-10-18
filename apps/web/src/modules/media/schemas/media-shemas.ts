@@ -1,6 +1,7 @@
 import { ENUMS } from "@repo/common-lib/constants/enums";
 import {
   MAX_CATEGORIES_MEDIA,
+  MAX_MEDIA_CATEGORIES_BATCH,
   MAX_MEDIA_DELETE_BATCH,
   MAX_MEDIA_LOCATION_BATCH,
   MAX_VIDEO_DURATION_SECONDS,
@@ -114,6 +115,19 @@ export const updateMediaLocationsSchema = z.object({
     .array(z.number().int().positive())
     .min(1)
     .max(MAX_MEDIA_LOCATION_BATCH),
+});
+
+/** Body of `PATCH /media/categories`. At least one pick: a batch never clears categories. */
+export const updateMediaCategoriesSchema = z.object({
+  category_ids: z
+    .array(z.number().int().positive())
+    .min(1)
+    .max(MAX_CATEGORIES_MEDIA),
+  media: z
+    .array(z.number().int().positive())
+    .min(1)
+    .max(MAX_MEDIA_CATEGORIES_BATCH),
+  replace: z.boolean(),
 });
 
 /** Body of `POST /media/delete-many`. */

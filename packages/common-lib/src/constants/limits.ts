@@ -140,6 +140,11 @@ export const MAX_TAGS_MEDIA = 8;
  */
 export const MAX_MEDIA_LOCATION_BATCH = 100;
 /**
+ * Upper bound on one `PATCH /media/categories` batch. Each media rewrites its own pivot rows,
+ * one after another, so this matches the location batch rather than going any higher.
+ */
+export const MAX_MEDIA_CATEGORIES_BATCH = 100;
+/**
  * Upper bound on one `POST /ai/media/metadata` batch. Metadata spends credits per item, so the
  * list stays smaller than a location batch.
  */

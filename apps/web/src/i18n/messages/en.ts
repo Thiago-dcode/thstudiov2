@@ -2359,6 +2359,21 @@ const messages = {
         updateLocationHint: "This is where the work was made.",
         overLocationLimit: "Limit: select up to {max} items (remove {excess}).",
         locationPlaceholder: "Search a city or place…",
+        updateCategoriesCount: "Set categories ({count})",
+        updateCategoriesTitle: "Set categories",
+        updateCategoriesDescription:
+          "Apply the same categories to {count} selected {count, plural, one {media item} other {media items}}.",
+        updateCategoriesReplaceLabel: "Replace existing categories",
+        updateCategoriesMergeHint:
+          "Off: these are added next to the categories each item already has. An item never goes over {max}, so once it is full the rest are skipped.",
+        updateCategoriesReplaceHint:
+          "On: each item's current categories are removed, including the ones AI added, and only these are kept. We recommend generating metadata again afterwards.",
+        updateCategoriesOverCap:
+          "{count, plural, one {# item} other {# items}} would go over {max} categories. Only the ones that fit will be added.",
+        updateCategoriesMergeConfirm: "Add categories",
+        updateCategoriesReplaceConfirm: "Replace categories",
+        overCategoriesLimit:
+          "Limit: select up to {max} items (remove {excess}).",
         cancel: "Cancel",
         selectMedia: "Select media",
         actions: "Actions",

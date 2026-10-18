@@ -5,6 +5,7 @@ import type {
   Media,
   MediaIndexRequest,
   MediaWithUser,
+  UpdateMediaCategoriesInput,
   UpdateMediaInput,
   UpdateMediaLocationsInput,
 } from "@repo/common-lib/types/media";
@@ -72,6 +73,15 @@ class MediaService extends BaseService {
   ): Promise<ApiResponse<Media[]>> {
     return await this.fetchApi.patch({
       resource: "/locations",
+      body,
+    });
+  }
+  /** `PATCH /media/categories` — the same categories applied to many media. */
+  async updateCategories(
+    body: UpdateMediaCategoriesInput,
+  ): Promise<ApiResponse<Media[]>> {
+    return await this.fetchApi.patch({
+      resource: "/categories",
       body,
     });
   }

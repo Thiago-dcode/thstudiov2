@@ -20,6 +20,7 @@ import { MediaService } from './media.service';
 import { CreateMediaAsyncRequest } from './requests/create-media-async.request';
 import { CreateMediaUploadUrlRequest } from './requests/create-media-upload-url.request';
 import { DeleteManyMediaRequest } from './requests/delete-many-media.request';
+import { UpdateMediaCategoriesRequest } from './requests/update-media-categories.request';
 import { UpdateMediaLocationsRequest } from './requests/update-media-locations.request';
 import { UpdateMediaRequest } from './requests/update-media.request';
 import { UpdateMediaThumbnailTimeRequest } from './requests/update-media-thumbnail-time.request';
@@ -88,6 +89,12 @@ export class MediaController {
   @Patch('locations')
   async updateLocations(@Body() body: UpdateMediaLocationsRequest) {
     return await this.mediaService.updateLocations(body);
+  }
+
+  /** The same categories applied to many media. Before `:id` for the same reason as above. */
+  @Patch('categories')
+  async updateCategories(@Body() body: UpdateMediaCategoriesRequest) {
+    return await this.mediaService.updateCategories(body);
   }
 
   @Patch(':id')

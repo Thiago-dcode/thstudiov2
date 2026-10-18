@@ -20,11 +20,13 @@ import { IndexMediaRequest } from '../user-media/requests/index-media.request';
 import { Helpers } from 'src/common/services/helpers.service';
 import { UpdateProfileStatusEvent } from '../profile-status/events/update-profile-status.event';
 import { DeleteManyMediaRequest } from './requests/delete-many-media.request';
+import { UpdateMediaCategoriesRequest } from './requests/update-media-categories.request';
 import { UpdateMediaLocationsRequest } from './requests/update-media-locations.request';
 import { UpdateMediaRequest } from './requests/update-media.request';
 import { UpdateMediaThumbnailTimeRequest } from './requests/update-media-thumbnail-time.request';
 import { RequestService } from 'src/common/services/request.service';
 import { DEFAULT_COMPRESSION_LVL } from '@repo/common-lib/constants/enums';
+import { MAX_CATEGORIES_MEDIA } from '@repo/common-lib/constants/limits';
 import { MediaHelper } from '@repo/common-lib/utils/media';
 import type { LocationInput } from '@repo/common-lib/types/location';
 import { LocationService } from '../locations/location.service';
@@ -645,7 +647,67 @@ export class MediaService {
     await this.mediaRepository.updateLocationByIds(ids, userId, locationId);
     await Promise.all(existing.map((media) => this.invalidateSeoCache(media.public_id)));
 
-    const updated = await this.mediaRepository.findManyByIds(ids);
+    return this.signBatchResult(ids, await this.mediaRepository.findManyByIds(ids));
+  }
+
+  /**
+   * The batch form of a categories edit. `replace` swaps every category each media had for the
+   * picked ones, exactly like {@link replaceCategories} on a single edit (AI tags go too, and the
+   * next metadata run regenerates them). Without it the picks are added beside what each media
+   * already shows, its AI tags kept, and whatever would push a media past `MAX_CATEGORIES_MEDIA`
+   * is left off that media rather than failing the whole batch.
+   */
+  public async updateCategories(data: UpdateMediaCategoriesRequest): Promise<Media[]> {
+    const userId = this.requestService.user.id;
+    const ids = [...new Set(data.media)];
+
+    const existing = await this.mediaRepository.findManyByIds(ids);
+    if (existing.length !== ids.length) {
+      throw new NotFoundException('One or more media were not found');
+    }
+    if (existing.some((media) => media.user_id !== userId)) {
+      throw new UnauthorizedException();
+    }
+    if (existing.some((media) => media.blocked_at)) {
+      throw new UnauthorizedException('This content is blocked media');
+    }
+
+    // Checked once for the whole batch: a replace with nothing selectable would wipe every media.
+    const selectable = await this.mediaRepository.selectableCategoryIds(data.category_ids);
+    if (!selectable.length) {
+      throw new BadRequestException('None of the picked categories can be applied');
+    }
+
+    const picked = data.replace
+      ? new Map<number, number[]>()
+      : await this.mediaRepository.pickedCategoryIdsByMediaIds(ids);
+
+    // One media at a time: each is a delete plus a handful of inserts, and a 100-media batch
+    // fired at once would take every connection in the pool.
+    for (const id of ids) {
+      const current = picked.get(id) ?? [];
+      const valuesToAttach = data.replace
+        ? selectable
+        : selectable
+          .filter((categoryId) => !current.includes(categoryId))
+          .slice(0, Math.max(0, MAX_CATEGORIES_MEDIA - current.length));
+      if (!valuesToAttach.length) continue;
+      await this.mediaRepository.attach('media_categories', {
+        modelCol: 'media_id',
+        modelValue: id,
+        attachCol: 'category_id',
+        valuesToAttach,
+        removePrevious: data.replace,
+      });
+    }
+    await Promise.all(existing.map((media) => this.invalidateSeoCache(media.public_id)));
+
+    // With `categories`: the card's saved state comes from this response, not a page reload.
+    return this.signBatchResult(ids, await this.mediaRepository.findManyByIdsWithCategories(ids));
+  }
+
+  /** A batch edit's rows in the order they were asked for, with their assets signed. */
+  private async signBatchResult(ids: number[], updated: Media[]): Promise<Media[]> {
     const byId = new Map(updated.map((media) => [media.id, media]));
 
     return Promise.all(
