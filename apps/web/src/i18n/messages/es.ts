@@ -2493,6 +2493,7 @@ const messages = {
         unknownFile: "Archivo desconocido",
         requestFailed: "Error en la solicitud",
         minimize: "Minimizar",
+        hide: "Ocultar estado de subida",
         expand: "Expandir",
         requestFailedCount:
           "{count, plural, one {# elemento no se pudo enviar} other {# elementos no se pudieron enviar}}",

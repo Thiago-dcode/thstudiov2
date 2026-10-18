@@ -2489,6 +2489,7 @@ const messages = {
         unknownFile: "Arquivo desconhecido",
         requestFailed: "Falha na solicitação",
         minimize: "Minimizar",
+        hide: "Ocultar status do envio",
         expand: "Expandir",
         requestFailedCount:
           "{count, plural, one {# item não pôde ser enviado} other {# itens não puderam ser enviados}}",

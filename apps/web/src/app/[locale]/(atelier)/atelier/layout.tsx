@@ -63,7 +63,8 @@ const AdminLayout = async ({ children }: { children: ReactNode }) => {
                     <UserAccountBannedModal />
                     {/* Account status comes from the metrics the atelier already loads (no layout fetch). */}
                     <PendingDeletionModal userId={userAuth.id} />
-                    <div className="fixed flex flex-col items-end bottom-6 right-6 z-100 gap-2 ">
+                    {/* Lifted above a form's sticky Save footer while one is on screen, so it never covers it. */}
+                    <div className="fixed flex flex-col items-end bottom-6 right-6 z-100 gap-2 transition-[bottom] duration-200 [body:has([data-sticky-form-footer])_&]:bottom-28">
                       <ProfileSetupGuide />
                       <UploadMediaStatusModal />
                       <AlertPortfolioButton />

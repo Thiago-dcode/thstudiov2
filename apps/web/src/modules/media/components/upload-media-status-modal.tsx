@@ -9,6 +9,7 @@ import {
   ChevronUpIcon,
   ImageIcon,
   OctagonXIcon,
+  XIcon,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { type ReactNode, useState } from "react";
@@ -184,10 +185,18 @@ export const UploadMediaStatusModal = () => {
   const tCommon = useTranslations("atelier.common");
   const { mediaInProgress, mediaRequestFailed, removeMediaUpload } = useMedia();
   const [minimized, setMinimized] = useState(false);
+  // Uploads on screen when the user hid the panel. It stays hidden until one that is not in
+  // this set shows up, so a new upload (or a new failure) still gets reported.
+  const [hiddenIds, setHiddenIds] = useState<ReadonlySet<number>>(new Set());
 
   const hasInProgress = mediaInProgress.length > 0;
   const hasFailed = mediaRequestFailed.length > 0;
   if (!hasInProgress && !hasFailed) return null;
+
+  const visibleUploads = [...mediaInProgress, ...mediaRequestFailed];
+  if (visibleUploads.every((upload) => hiddenIds.has(upload.unique_id))) {
+    return null;
+  }
 
   // Rows carry the warning when expanded; minimized, the header is all that is left to say it.
   const showHeaderWarning =
@@ -241,19 +250,33 @@ export const UploadMediaStatusModal = () => {
             </p>
           )}
         </div>
-        <button
-          type="button"
-          onClick={() => setMinimized((value) => !value)}
-          aria-expanded={!minimized}
-          aria-label={minimized ? t("expand") : t("minimize")}
-          className="-mr-1.5 -mt-0.5 shrink-0 p-1 text-text-muted hover:text-text hover:bg-fg-2 transition-colors"
-        >
-          {minimized ? (
-            <ChevronUpIcon className="size-4" aria-hidden />
-          ) : (
-            <ChevronDownIcon className="size-4" aria-hidden />
-          )}
-        </button>
+        <div className="-mr-1.5 -mt-0.5 flex shrink-0 items-center">
+          <button
+            type="button"
+            onClick={() => setMinimized((value) => !value)}
+            aria-expanded={!minimized}
+            aria-label={minimized ? t("expand") : t("minimize")}
+            className="p-1 text-text-muted hover:text-text hover:bg-fg-2 transition-colors"
+          >
+            {minimized ? (
+              <ChevronUpIcon className="size-4" aria-hidden />
+            ) : (
+              <ChevronDownIcon className="size-4" aria-hidden />
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              setHiddenIds(
+                new Set(visibleUploads.map((upload) => upload.unique_id)),
+              )
+            }
+            aria-label={t("hide")}
+            className="p-1 text-text-muted hover:text-text hover:bg-fg-2 transition-colors"
+          >
+            <XIcon className="size-4" aria-hidden />
+          </button>
+        </div>
       </div>
 
       {!minimized && (

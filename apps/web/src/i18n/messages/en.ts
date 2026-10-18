@@ -2475,6 +2475,7 @@ const messages = {
         unknownFile: "Unknown file",
         requestFailed: "Request failed",
         minimize: "Minimize",
+        hide: "Hide upload status",
         expand: "Expand",
         requestFailedCount:
           "{count, plural, one {# item could not be sent} other {# items could not be sent}}",
