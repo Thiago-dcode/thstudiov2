@@ -29,7 +29,7 @@ import { type UploadMedia, useMedia } from "../providers/media.provider";
  */
 
 /** Literal union rather than `string`: next-intl checks the key against the message tree. */
-type UploadStatusKey =
+export type UploadStatusKey =
   | "queued"
   | "preparingUpload"
   | "processingNotify"
@@ -38,7 +38,7 @@ type UploadStatusKey =
   | "deleting";
 
 /** Queued items have no slot yet, so `pending` is what separates them from work in flight. */
-const statusKey = (mediaUpload: UploadMedia): UploadStatusKey => {
+export const statusKey = (mediaUpload: UploadMedia): UploadStatusKey => {
   if (!mediaUpload.pending) return "queued";
 
   switch (mediaUpload.action) {

@@ -29,6 +29,11 @@ import { CreateMediaDialog } from "@/app/[locale]/(atelier)/atelier/media/_compo
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { ExpandMediaDialog } from "@/modules/media/components/expand-media-dialog";
 import { FailedMediaOverlay } from "@/modules/media/components/failed-media-overlay";
+import {
+  UploadingMediaTile,
+  uploadsNotInList,
+} from "@/modules/media/components/uploading-media-tile";
+import { useMedia } from "@/modules/media/providers/media.provider";
 import { getAllUserMediaAction } from "@/modules/media/server-actions/get-all-user-media.action";
 import { useSubscribeToUserNotification } from "@/modules/user-notifications/hooks/useSubscribeToUserNotification";
 
@@ -77,6 +82,8 @@ export const SelectMediaDrawer = ({
     const selectedIds = new Set(mediaSelected.map((m) => m.id));
     return media.filter((m) => !selectedIds.has(m.id));
   }, [media, mediaSelected]);
+  const { mediaCreatesInProgress } = useMedia();
+  const uploadingMedia = uploadsNotInList(mediaCreatesInProgress, media);
   const isSelectionLimitReached =
     maxSelection !== undefined && mediaSelectedLength >= maxSelection;
   const currentPage = useRef(1);
@@ -292,7 +299,7 @@ export const SelectMediaDrawer = ({
             <div className="flex items-center justify-center py-16">
               <Spinner className="size-8" />
             </div>
-          ) : media.length > 0 ? (
+          ) : media.length > 0 || uploadingMedia.length > 0 ? (
             <AccordionItem value="available" className="border-b-0">
               <SectionTrigger
                 title={t("availableHeading")}
@@ -305,8 +312,15 @@ export const SelectMediaDrawer = ({
                     ? ` ${t("hintMax", { max: maxSelection })}`
                     : ""}
                 </p>
-                {availableMedia.length > 0 ? (
+                {availableMedia.length > 0 || uploadingMedia.length > 0 ? (
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {uploadingMedia.map((upload) => (
+                      <UploadingMediaTile
+                        key={`uploading-${upload.unique_id}`}
+                        upload={upload}
+                        className="border border-border"
+                      />
+                    ))}
                     {availableMedia.map((m) => {
                       const isLoading = MediaHelper.isLoading(m);
                       if (m.status === "FAILED") {

@@ -117,6 +117,7 @@ type MediaContextType = {
   ) => void;
   mediaRequestFailed: UploadMedia[];
   mediaInProgress: UploadMedia[];
+  mediaCreatesInProgress: UploadMedia[];
   generateUniqueMediaId: () => number;
 };
 
@@ -398,6 +399,17 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
         (m) => !isMediaProcessed(m) && (m.pending || m.enqueued),
       ),
     [mediaUploads],
+  );
+
+  /**
+   * The new files among `mediaInProgress`, for the media lists to render as placeholder tiles.
+   * The status panel can be hidden and the notifications cleared, and a new media only joins a
+   * list once its first websocket notification lands — without these tiles nothing on the page
+   * would say the upload is still running.
+   */
+  const mediaCreatesInProgress = useMemo(
+    () => mediaInProgress.filter((m) => m.action === "create"),
+    [mediaInProgress],
   );
 
   const uploadSingleMedia = async (uniqueId: number) => {
@@ -1210,6 +1222,7 @@ export const MediaProvider = ({ children }: { children: ReactNode }) => {
     updateStagedCreateInputs,
     mediaRequestFailed,
     mediaInProgress,
+    mediaCreatesInProgress,
     handleUploadUpdates,
     handleUploadInserts,
     generateUniqueMediaId,
