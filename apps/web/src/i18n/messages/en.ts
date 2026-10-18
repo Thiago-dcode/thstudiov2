@@ -2328,6 +2328,10 @@ const messages = {
         failedAria: "This media failed to process",
       },
       grid: {
+        processingTitle: "Processing",
+        processingHint:
+          "Optimizing your new uploads. Each one joins your library when ready — you can leave this page.",
+        processingItem: "Processing…",
         generateSeoCount: "Generate media metadata ({count})",
         generateSeoTitle: "Generate media metadata",
         generateSeoDescription:

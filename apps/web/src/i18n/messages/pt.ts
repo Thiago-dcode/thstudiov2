@@ -2339,6 +2339,10 @@ const messages = {
         failedAria: "Esta mídia falhou ao processar",
       },
       grid: {
+        processingTitle: "Processando",
+        processingHint:
+          "Estamos otimizando seus novos envios. Cada um entra na sua biblioteca quando estiver pronto — você pode sair desta página.",
+        processingItem: "Processando…",
         generateSeoCount: "Gerar metadados ({count})",
         generateSeoTitle: "Gerar metadados com IA",
         generateSeoDescription:

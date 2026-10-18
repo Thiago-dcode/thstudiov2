@@ -63,6 +63,11 @@ export type MediaIndexRequest = OffsetPaginationRequest & {
   blocked?: boolean;
   is_featured?: boolean;
   completed?: boolean;
+  /**
+   * Whether the row's processing failed (`status = 'FAILED'`). Paired with `completed: false` it
+   * separates a first upload still in flight from one that died.
+   */
+  failed?: boolean;
   is_value_pillars?: boolean;
   is_highlight?: boolean;
   /** When false, join users and return `MediaWithUser[]`. Defaults to true (`Media[]`). */

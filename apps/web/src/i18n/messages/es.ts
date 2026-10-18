@@ -2340,6 +2340,10 @@ const messages = {
         failedAria: "Este contenido no se pudo procesar",
       },
       grid: {
+        processingTitle: "Procesando",
+        processingHint:
+          "Estamos optimizando tus nuevas subidas. Cada una se suma a tu biblioteca cuando esté lista — puedes salir de esta página.",
+        processingItem: "Procesando…",
         generateSeoCount: "Generar metadatos ({count})",
         generateSeoTitle: "Generar metadatos con IA",
         generateSeoDescription:

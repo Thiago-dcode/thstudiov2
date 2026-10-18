@@ -34,18 +34,21 @@ const MediaGrid = dynamic(
 
 type MediaGridClientProps = {
   media: Media[];
+  processingMedia: Media[];
   username: string;
   hasActiveFilters: boolean;
 };
 
 export function MediaGridClient({
   media,
+  processingMedia,
   username,
   hasActiveFilters,
 }: MediaGridClientProps) {
   return (
     <MediaGrid
       media={media}
+      processingMedia={processingMedia}
       username={username}
       hasActiveFilters={hasActiveFilters}
     />

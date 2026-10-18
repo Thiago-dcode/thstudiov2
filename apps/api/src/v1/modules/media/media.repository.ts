@@ -187,14 +187,20 @@ export class MediaRepository extends BaseMediaRepository {
     // which is what makes the timestamp safe to filter on directly.
     //
     // The trade is deliberate: a FIRST upload still in flight has no timestamp yet and does not
-    // come back here. It has no asset to render either - the client shows those from its own
-    // in-progress upload state, and the row appears the moment the processor commits.
+    // come back here. It has no asset to render either - callers that want to show it as
+    // processing ask for `completed: false, failed: false` below instead.
     if (typeof filters.completed === 'boolean') {
       if (filters.completed) {
         query.where('completed_at', 'IS NOT', null);
       } else {
         query.where('completed_at', 'IS', null);
       }
+    }
+    // `status` is safe here, unlike for `completed`: FAILED is only ever written by a failure
+    // path, so it is a verdict rather than a lifecycle position. With `completed: false` this is
+    // how the atelier finds first uploads still processing after a reload.
+    if (typeof filters.failed === 'boolean') {
+      query.where('status', filters.failed ? '=' : '!=', 'FAILED');
     }
     // Before `handleOffsetPagination`, which appends the primary key as a tiebreaker: ordered
     // after it, the sort would only ever break ties between ids and never take effect.

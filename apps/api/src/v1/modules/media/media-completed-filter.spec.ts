@@ -62,6 +62,19 @@ describe('MediaRepository.applyFilters — completed', () => {
         expect(statusFilters()).toEqual([]);
     });
 
+    it('finds first uploads still in flight with completed false and failed false', async () => {
+        await applyFilters({ completed: false, failed: false });
+
+        expect(completedAtFilters()).toEqual([['completed_at', 'IS', null]]);
+        expect(statusFilters()).toEqual([['status', '!=', 'FAILED']]);
+    });
+
+    it('asks for failed rows when failed is true', async () => {
+        await applyFilters({ failed: true });
+
+        expect(statusFilters()).toEqual([['status', '=', 'FAILED']]);
+    });
+
     it('does not constrain status or completed_at when completed is omitted', async () => {
         await applyFilters({ user_id: 2 });
 

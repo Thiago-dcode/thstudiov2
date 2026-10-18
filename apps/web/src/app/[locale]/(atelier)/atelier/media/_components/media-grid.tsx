@@ -28,6 +28,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@repo/ui/components/shadcn/dropdown-menu";
+import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { FileInputProvider } from "@repo/ui/contexts/file.provider";
 import { cn } from "@repo/ui/lib/utils";
 import { toast } from "@repo/ui/sonner";
@@ -57,6 +58,7 @@ import { EditMediaCard } from "./edit-media-card";
 
 type MediaGridProps = {
   media: Media[];
+  processingMedia: Media[];
   username: string;
   hasActiveFilters: boolean;
 };
@@ -541,13 +543,86 @@ function BatchMediaActionsMenu() {
   );
 }
 
+/**
+ * One list for both reads, so a realtime upsert moves a row from the processing section to the
+ * library in place. Deduped because a row can finish between the two reads and come back from both.
+ */
+const withProcessingFirst = (media: Media[], processingMedia: Media[]) => {
+  const libraryIds = new Set(media.map((m) => m.id));
+  return [...processingMedia.filter((m) => !libraryIds.has(m.id)), ...media];
+};
+
+/**
+ * A first upload the server is still working on: stored, but with no asset yet. A FAILED one
+ * stays in the library, where its card explains the failure.
+ */
+const isProcessingUpload = (media: Media) =>
+  !media.completed_at && media.status !== "FAILED";
+
+function ProcessingMediaTile({ media }: { media: Media }) {
+  const t = useTranslations("atelier.media.grid");
+  const tCard = useTranslations("atelier.media.card");
+  const title = media.title || media.seo_filename || tCard("untitled");
+
+  return (
+    <li className="flex w-full min-w-0 flex-col gap-1" title={title}>
+      <div className="flex aspect-square w-full items-center justify-center bg-fg-2 animate-pulse">
+        <Spinner className="size-4 text-text-muted" aria-hidden />
+      </div>
+      <p className="truncate text-[11px]! text-text-muted">{title}</p>
+      <span className="sr-only">{t("processingItem")}</span>
+    </li>
+  );
+}
+
+/**
+ * Kept apart from the library and smaller than its cards: these have nothing to show or edit
+ * yet, and each one moves into the library on its own once its notification lands.
+ */
+function ProcessingMediaSection({ media }: { media: Media[] }) {
+  const t = useTranslations("atelier.media.grid");
+
+  return (
+    <section
+      aria-labelledby="processing-media-heading"
+      aria-busy
+      className="flex flex-col gap-4 border-b border-border pb-8 mb-2"
+    >
+      <div className="flex flex-col gap-1">
+        <h2
+          id="processing-media-heading"
+          className="flex items-center gap-2 text-sm! font-medium text-text"
+        >
+          <Spinner className="size-3.5 text-text-muted" aria-hidden />
+          {t("processingTitle")}
+          <span className="text-text-muted font-normal">{media.length}</span>
+        </h2>
+        <p className="max-w-xl text-xs! leading-relaxed text-text-muted">
+          {t("processingHint")}
+        </p>
+      </div>
+      <ul className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-2.5 w-full">
+        {media.map((item) => (
+          <ProcessingMediaTile
+            key={`media-processing-${item.id}`}
+            media={item}
+          />
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 export function MediaGrid({
   media,
+  processingMedia,
   username,
   hasActiveFilters,
 }: MediaGridProps) {
   const t = useTranslations("atelier.media.grid");
-  const [currentMedia, setCurrentMedia] = useState(media);
+  const [currentMedia, setCurrentMedia] = useState(() =>
+    withProcessingFirst(media, processingMedia),
+  );
   const {
     mediaPendingToUpdate,
     handleUploadUpdates,
@@ -556,8 +631,8 @@ export function MediaGrid({
   } = useMedia();
 
   useEffect(() => {
-    setCurrentMedia(media);
-  }, [media]);
+    setCurrentMedia(withProcessingFirst(media, processingMedia));
+  }, [media, processingMedia]);
   const { canSelect, setCanSelect, clearSelection } = useSelectMedia();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -590,6 +665,8 @@ export function MediaGrid({
   });
 
   const pendingCount = mediaPendingToUpdate.length;
+  const processingUploads = currentMedia.filter(isProcessingUpload);
+  const libraryMedia = currentMedia.filter((m) => !isProcessingUpload(m));
 
   return (
     <>
@@ -606,7 +683,10 @@ export function MediaGrid({
             <CreateMediaDialog openFromQuery />
           </FileInputProvider>
         </div>
-        {currentMedia.length > 0 ? (
+        {processingUploads.length > 0 && (
+          <ProcessingMediaSection media={processingUploads} />
+        )}
+        {libraryMedia.length > 0 ? (
           <div
             className={cn(
               // Sticky so the selection actions stay reachable while scrolling.
@@ -641,7 +721,7 @@ export function MediaGrid({
               </Button>
             ) : null}
           </div>
-        ) : (
+        ) : processingUploads.length > 0 ? null : (
           <div className="flex flex-col items-center justify-center py-24 text-text-muted gap-3">
             <ImageOff className="h-10 w-10 stroke-[1.5]" />
             <p className="text-sm">
@@ -651,7 +731,7 @@ export function MediaGrid({
         )}
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 justify-items-start w-full">
-          {currentMedia.map((item) => {
+          {libraryMedia.map((item) => {
             if (
               !canSelect ||
               item.status !== "COMPLETED" ||

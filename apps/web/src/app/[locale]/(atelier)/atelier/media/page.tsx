@@ -38,30 +38,46 @@ export default async function MediaAtelierPage({
   const page = requestedPage > 0 ? requestedPage : 1;
   const perPage = Math.min(query.per_page ?? DEFAULT_MEDIA_PER_PAGE, 50);
 
-  const mediaResponse = await usersService.getAllMedia(userAuth.id, {
-    page,
-    per_page: perPage,
-    completed: true,
-    paginated: true,
-    order_by: query.order_by,
-    order: query.order,
-    ...(query.search && { search: query.search }),
-    ...(query.shape && { shape: query.shape }),
-    ...(query.media_type && { media_type: query.media_type }),
-  });
+  // Sorting only reorders the library, so it is not a filter: it never explains an empty grid.
+  const hasActiveFilters = Boolean(
+    query.search || query.shape || query.media_type,
+  );
+
+  const [mediaResponse, processingResponse] = await Promise.all([
+    usersService.getAllMedia(userAuth.id, {
+      page,
+      per_page: perPage,
+      completed: true,
+      paginated: true,
+      order_by: query.order_by,
+      order: query.order,
+      ...(query.search && { search: query.search }),
+      ...(query.shape && { shape: query.shape }),
+      ...(query.media_type && { media_type: query.media_type }),
+    }),
+    // First uploads the server is still processing have no asset yet, so the library above
+    // leaves them out. Without them a reload (or cleared notifications) would hide that the work
+    // is still running. Only on the unfiltered first page: a filter can't match a row whose
+    // shape and metadata do not exist yet.
+    page === 1 && !hasActiveFilters
+      ? usersService.getAllMedia(userAuth.id, {
+          page: 1,
+          per_page: 50,
+          completed: false,
+          failed: false,
+          paginated: true,
+        })
+      : null,
+  ]);
 
   const media = mediaResponse.data || [];
+  const processingMedia = processingResponse?.data || [];
   const pagination: Pagination | undefined = !mediaResponse.error
     ? (mediaResponse.pagination ?? undefined)
     : undefined;
 
   const buildPaginationHref = (p: number) =>
     queryParamBuilder(MEDIA_PATH, { ...mediaListQueryParams(query), page: p });
-
-  // Sorting only reorders the library, so it is not a filter: it never explains an empty grid.
-  const hasActiveFilters = Boolean(
-    query.search || query.shape || query.media_type,
-  );
 
   return (
     <AdminPageContainer>
@@ -78,6 +94,7 @@ export default async function MediaAtelierPage({
         <SelectMediaProvider>
           <MediaGridClient
             media={media}
+            processingMedia={processingMedia}
             username={userAuth.username}
             hasActiveFilters={hasActiveFilters}
           />
