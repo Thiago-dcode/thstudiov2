@@ -9,38 +9,28 @@ export type RandomGridMediaItem = {
   isPortrait: boolean;
 };
 
-// Cells 1–6 are on screen at every breakpoint (2 columns × 3 rows is the smallest layout), so
-// they must not wait for lazy loading; cells 7+ are hidden by CSS on smaller screens and stay lazy
-// so a phone never downloads them. The first cell is preloaded; the next two get a high fetch
-// priority so the first row arrives together. (`preload` and `fetchPriority` are not combined —
-// Next's docs advise against it.)
+// Cell 0 is the only LCP candidate and the only preload. Cells 1–5 are on screen at every
+// breakpoint but must not emit <link rel="preload"> — React preloads every loading="eager"
+// image that is not fetchpriority="low", and six optimizer jobs on Slow 4G delayed LCP to
+// 7.5s. Cells 7+ stay lazy so a phone never downloads the CSS-hidden columns.
 const ALWAYS_VISIBLE_CELLS = 6;
-const HIGH_PRIORITY_CELLS = 3;
 
-// `p-8` on each image is 2rem per side, so the file is drawn 4rem narrower than its cell. Column
-// counts mirror random-grid.css (2 / 3 / 4 / 5 at 0 / 768 / 1280 / 2560px). At 2560px+ the
-// container is capped at 2560px, so each of the 5 cells is 512px wide: 512 - 64 = 448px.
+// Bare `Nvw` tokens (not calc()) so Next's srcset builder can see the smallest ratio and
+// stop emitting a 3840w `src`. Column counts mirror random-grid.css (2 / 3 / 4 / 5).
+// 40vw on a phone is the cell minus `p-8`, rounded up so the file is never upscaled.
 const HERO_IMAGE_SIZES =
-  "(min-width: 2560px) 448px, (min-width: 1280px) calc(25vw - 4rem), (min-width: 768px) calc(33.34vw - 4rem), calc(50vw - 4rem)";
+  "(min-width: 2560px) 448px, (min-width: 1280px) 25vw, (min-width: 768px) 33vw, 40vw";
 
-// A 3:4 portrait in a wide cell is bound by the cell's HEIGHT, not its width: on a 1350×940
-// desktop it is drawn ~171px wide, yet the width-based sizes above fetched the 384px file. The
-// hero is 100svh - 4rem tall with 3 rows and `p-8`, so the drawn height is
-// (100vh - 4rem) / 3 - 4rem and the width is 3/4 of that: (100vh - 4rem) / 4 - 3rem. It can only
-// overshoot the drawn width (vh >= svh, and the width bound may be the smaller one), never
-// undershoot it, so the file is never upscaled. Phones in portrait stay on the width-based sizes,
-// where the column width is the tighter bound.
+// A 3:4 portrait in a wide landscape cell is bound by height, not width. The fallback still
+// contains a bare `40vw` so Next can size the srcset; phones in portrait use that fallback.
 const HERO_PORTRAIT_SIZES = `(orientation: landscape) calc((100vh - 4rem) / 4 - 3rem), ${HERO_IMAGE_SIZES}`;
 
 const getLoadingProps = (
   index: number,
-): Pick<ImageProps, "preload" | "loading" | "fetchPriority"> => {
+): Pick<ImageProps, "preload" | "fetchPriority"> => {
   if (index === 0) return { preload: true };
-  if (index >= ALWAYS_VISIBLE_CELLS) return {};
-  return {
-    loading: "eager",
-    ...(index < HIGH_PRIORITY_CELLS && { fetchPriority: "high" as const }),
-  };
+  if (index < ALWAYS_VISIBLE_CELLS) return { fetchPriority: "low" };
+  return {};
 };
 
 // Client-only so the grid can hold on to the first pick: the server shuffles again on every render

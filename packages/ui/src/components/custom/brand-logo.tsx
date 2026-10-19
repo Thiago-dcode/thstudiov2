@@ -11,6 +11,11 @@ interface BrandLogoProps {
 const LOGO_WIDTH = 401
 const LOGO_HEIGHT = 366
 
+// Drawn at h-8 / h-10 (32px / 40px tall). Width follows the 401×366 artwork:
+// ~35px on phones, ~44px from tablet up. Without this, next/image treats the
+// intrinsic 401px as the layout width and fetches the 640/828 2× files.
+const LOGO_SIZES = "(min-width: 768px) 44px, 35px"
+
 /**
  * A11 STUDIO logomark.
  *
@@ -37,23 +42,26 @@ export const BrandLogo = ({ collapsed = false, className }: BrandLogoProps) => {
         className
       )}
     >
-      {/* Dark artwork for light theme */}
+      {/* Dark artwork for light theme. No preload: the mark is not the LCP
+          element and must not lead the document. `sizes` keeps the file at
+          the drawn width instead of 2× the 401px intrinsic size. */}
       <Image
         src="/logo/logo_black.png"
         alt="A11 STUDIO"
         width={LOGO_WIDTH}
         height={LOGO_HEIGHT}
-        priority
+        sizes={LOGO_SIZES}
         className={cn(imgClass, "dark:hidden")}
       />
-      {/* White artwork for dark theme */}
+      {/* White artwork for dark theme — hidden on the default light page, so it
+          must not emit a preload. */}
       <Image
         src="/logo/logo_white.png"
         alt=""
         aria-hidden
         width={LOGO_WIDTH}
         height={LOGO_HEIGHT}
-        priority
+        sizes={LOGO_SIZES}
         className={cn(imgClass, "hidden dark:block")}
       />
     </span>
