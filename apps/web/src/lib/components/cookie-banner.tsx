@@ -87,21 +87,21 @@ export const CookieBanner = () => {
         <div className="flex shrink-0 gap-2">
           <Button
             type="button"
-            variant="outline"
+            variant="default"
             size="sm"
             className="min-h-11 flex-1 px-6 phone-lg:flex-none"
-            onClick={rejectAll}
+            onClick={acceptAll}
           >
-            {t("reject")}
+            {t("accept")}
           </Button>
           <Button
             type="button"
             variant="outline"
             size="sm"
             className="min-h-11 flex-1 px-6 phone-lg:flex-none"
-            onClick={acceptAll}
+            onClick={rejectAll}
           >
-            {t("accept")}
+            {t("reject")}
           </Button>
         </div>
       </div>
