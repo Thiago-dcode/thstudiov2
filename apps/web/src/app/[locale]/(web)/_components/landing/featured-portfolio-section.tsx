@@ -78,9 +78,11 @@ export async function FeaturedPortfolioSection() {
               }))}
             >
               <Gallery />
+              {/* Below the hero: lazy-load every tile so none competes with the hero images. */}
               <PortfolioGrid
                 layout={portfolio.layout}
                 portfolioItems={portfolioItems}
+                priorityCount={0}
               />
             </GalleryProvider>
           </div>

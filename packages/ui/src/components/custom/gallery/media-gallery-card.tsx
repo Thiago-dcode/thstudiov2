@@ -21,10 +21,13 @@ import { MediaGalleryCardContent } from "./media-gallery-card-content";
 export function MediaGalleryCard({
   media,
   index,
+  priority,
   layout,
 }: {
   media: GalleryGridMedia;
   index: number;
+  /** Skip lazy loading and preload the thumbnail (an LCP candidate). */
+  priority: boolean;
   layout?: PortfolioLayout;
 }) {
   const { items, labels, setCurrentItem } = useGallery();
@@ -57,7 +60,7 @@ export function MediaGalleryCard({
       {title !== null ? <GalleryItemTitle title={title} /> : null}
       <MediaGalleryCardContent
         media={media}
-        index={index}
+        priority={priority}
         mediaClassName={mediaClassName}
       />
     </>

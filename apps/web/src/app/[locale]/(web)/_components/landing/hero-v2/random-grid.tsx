@@ -18,6 +18,7 @@ const buildMediaItem = (
   const shapeLower = shape.toLowerCase();
   return {
     url: `https://cdn.a11studio.com/public/${shapeLower}/${shapeLower}-${index}.webp`,
+    isPortrait: shape === "PORTRAIT",
   };
 };
 const buildMediaItemArr = (shape: EnumType<"MEDIA_SHAPE">, length: number) => {

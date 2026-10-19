@@ -4,19 +4,25 @@ import { aspectRatioToCss } from "@repo/common-lib/utils/aspect-ratio";
 import { useGallery } from "@repo/ui/providers/gallery.provider";
 import { Play } from "lucide-react";
 import Image from "next/image";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MediaTypeBadge } from "../media-type-badge";
 import type { GalleryGridMedia } from "./gallery-grid";
 
 type MediaGalleryCardContentProps = {
   media: GalleryGridMedia;
-  /** Position in the gallery; the first few tiles are the LCP candidates. */
-  index: number;
+  /** Skip lazy loading and preload the thumbnail (an LCP candidate). */
+  priority: boolean;
   /** Layout-specific classes (fit, transition) shared by the `<img>` and the `<video>`. */
   mediaClassName: string;
 };
 
 const FRAME_CLASS_NAME = "media-gallery-card__frame relative overflow-hidden w-full h-full";
+
+const TILE_IMAGE_SIZES = "(max-width: 768px) 50vw, (max-width: 1280px) 33vw, 25vw";
+
+// The optimizer re-encodes an already-lossy thumbnail; its default q75 stacks a second visible
+// loss on top. Must be listed in `images.qualities` (apps/web/next.config.ts).
+const TILE_IMAGE_QUALITY = 90;
 
 /**
  * A video tile: the poster until the pointer (or keyboard focus) reaches the card, then the
@@ -26,20 +32,30 @@ const FRAME_CLASS_NAME = "media-gallery-card__frame relative overflow-hidden w-f
  * Playback is tied to the enclosing `.media-gallery-card` (the `group`) rather than to this
  * frame, so hovering anywhere on the tile counts. Touch devices never hover, so there the
  * button simply stays and the lightbox does the playing.
+ *
+ * The poster is a next/image laid over the clip, not the `<video poster>` attribute: that
+ * attribute has no srcset, so every tile downloaded the full-size original from the CDN (a
+ * 1200px-tall file for a ~650px tile). The image hides once the clip is actually playing, so a
+ * hover never flashes an empty frame while the clip loads.
  */
 function HoverPlayVideo({
   src,
   poster,
+  alt,
+  priority,
   className,
   aspectRatio,
 }: {
   src: string;
   poster?: string;
+  alt: string;
+  priority: boolean;
   className: string;
   aspectRatio: string;
 }) {
   const frameRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
     const card = frameRef.current?.closest<HTMLElement>(".media-gallery-card");
@@ -49,21 +65,24 @@ function HoverPlayVideo({
     const play = () => {
       video.play().catch(() => {});
     };
+    const showClip = () => setIsPlaying(true);
     const stop = () => {
       video.pause();
-      // Back to the POSTER — the cover the artist picked — not to the clip's first frame. Once a
-      // video has played or been seeked the browser never shows `poster` again, so the old
-      // `currentTime = 0` left the tile resting on frame zero, which is black for any clip that
-      // fades in. `load()` resets the element to its unplayed state; with `preload="none"` it
-      // fetches nothing until the next hover, which the HTTP cache then serves.
+      // Back to the poster — the cover the artist picked — not to the clip's first frame, which
+      // is black for any clip that fades in. `load()` resets the element to its unplayed state;
+      // with `preload="none"` it fetches nothing until the next hover, which the HTTP cache then
+      // serves.
       video.load();
+      setIsPlaying(false);
     };
 
+    video.addEventListener("playing", showClip);
     card.addEventListener("mouseenter", play);
     card.addEventListener("mouseleave", stop);
     card.addEventListener("focus", play);
     card.addEventListener("blur", stop);
     return () => {
+      video.removeEventListener("playing", showClip);
       card.removeEventListener("mouseenter", play);
       card.removeEventListener("mouseleave", stop);
       card.removeEventListener("focus", play);
@@ -83,7 +102,6 @@ function HoverPlayVideo({
         disableRemotePlayback
         disablePictureInPicture
         preload="none"
-        poster={poster}
         className={className}
         // A clip has no intrinsic size until its metadata loads (`preload="none"`), so the
         // media's own ratio keeps the box from collapsing to the 300x150 default — the cell
@@ -93,6 +111,22 @@ function HoverPlayVideo({
       >
         <source src={src} type="video/mp4" />
       </video>
+      {poster ? (
+        <div
+          className="absolute inset-0 transition-opacity duration-300 ease-out"
+          style={{ opacity: isPlaying ? 0 : 1 }}
+        >
+          <Image
+            src={poster}
+            alt={alt}
+            fill
+            priority={priority}
+            quality={TILE_IMAGE_QUALITY}
+            className={className}
+            sizes={TILE_IMAGE_SIZES}
+          />
+        </div>
+      ) : null}
       <span
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center transition-opacity duration-300 ease-out group-hover:opacity-0 group-focus:opacity-0"
@@ -119,7 +153,7 @@ function HoverPlayVideo({
  */
 export function MediaGalleryCardContent({
   media,
-  index,
+  priority,
   mediaClassName,
 }: MediaGalleryCardContentProps) {
   const { labels } = useGallery();
@@ -132,6 +166,8 @@ export function MediaGalleryCardContent({
       <HoverPlayVideo
         src={preview}
         poster={media.thumbnail ?? undefined}
+        alt={alt}
+        priority={priority}
         className={mediaClassName}
         aspectRatio={aspectRatioToCss(media.aspect_ratio)}
       />
@@ -146,16 +182,14 @@ export function MediaGalleryCardContent({
           // the DOM as an unknown attribute and preloaded nothing. Without `unoptimized` these now
           // go through the image optimizer (the CloudFront host is in `remotePatterns`, derived from
           // CDN_URL at build time), which is what actually moves LCP on a gallery page.
-          priority={index < 5}
+          priority={priority}
           src={media.thumbnail}
           alt={alt}
           width={800}
           height={1000}
-          // The optimizer re-encodes an already-lossy thumbnail; its default q75 stacks a second
-          // visible loss on top. Must be listed in `images.qualities` (apps/web/next.config.ts).
-          quality={90}
+          quality={TILE_IMAGE_QUALITY}
           className={mediaClassName}
-          sizes="(max-width: 768px) 50vw, (max-width: 1280px) 33vw, 25vw"
+          sizes={TILE_IMAGE_SIZES}
         />
         {/* The thumbnail is a static poster even for an animated media; the badge says so, and
             the lightbox plays the real thing. */}

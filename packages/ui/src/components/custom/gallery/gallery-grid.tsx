@@ -22,6 +22,16 @@ type GalleryGridProps = {
     layout?: PortfolioLayout;
 };
 
+// The first tiles of a gallery page are its LCP candidates, so they skip lazy loading and are
+// preloaded. A grid further down a page (the landing's featured portfolio) passes 0 instead:
+// preloading it there pulled bandwidth away from the hero above the fold.
+const DEFAULT_PRIORITY_COUNT = 5;
+
+type PriorityProps = {
+    /** How many leading tiles load with priority. Pass 0 when the grid starts below the fold. */
+    priorityCount?: number;
+};
+
 export const GalleryGridContainer = ({
     children,
     layout,
@@ -52,7 +62,8 @@ export const GalleryGridContainer = ({
 export const PortfolioGrid = ({
     portfolioItems,
     layout,
-}: GalleryGridProps & {
+    priorityCount = DEFAULT_PRIORITY_COUNT,
+}: GalleryGridProps & PriorityProps & {
     portfolioItems: PortfolioItem[];
 }) => {
     const resolvedLayout = normalizeGalleryLayout(layout);
@@ -66,6 +77,7 @@ export const PortfolioGrid = ({
                             key={`${item.item}-${item.id}`}
                             media={item}
                             index={item.index || i}
+                            priority={i < priorityCount}
                             layout={resolvedLayout}
                         />
                     );
@@ -89,7 +101,8 @@ export const PortfolioGrid = ({
 export const GalleryGrid = ({
     media,
     layout,
-}: GalleryGridProps & {
+    priorityCount = DEFAULT_PRIORITY_COUNT,
+}: GalleryGridProps & PriorityProps & {
     media: GalleryGridMedia[];
 }) => {
     const resolvedLayout = normalizeGalleryLayout(layout);
@@ -101,6 +114,7 @@ export const GalleryGrid = ({
                     key={m.id}
                     media={m}
                     index={i}
+                    priority={i < priorityCount}
                     layout={resolvedLayout}
                 />
             ))}

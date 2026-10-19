@@ -6,6 +6,7 @@ import { useState } from "react";
 
 export type RandomGridMediaItem = {
   url: string;
+  isPortrait: boolean;
 };
 
 // Cells 1–6 are on screen at every breakpoint (2 columns × 3 rows is the smallest layout), so
@@ -21,6 +22,15 @@ const HIGH_PRIORITY_CELLS = 3;
 // container is capped at 2560px, so each of the 5 cells is 512px wide: 512 - 64 = 448px.
 const HERO_IMAGE_SIZES =
   "(min-width: 2560px) 448px, (min-width: 1280px) calc(25vw - 4rem), (min-width: 768px) calc(33.34vw - 4rem), calc(50vw - 4rem)";
+
+// A 3:4 portrait in a wide cell is bound by the cell's HEIGHT, not its width: on a 1350×940
+// desktop it is drawn ~171px wide, yet the width-based sizes above fetched the 384px file. The
+// hero is 100svh - 4rem tall with 3 rows and `p-8`, so the drawn height is
+// (100vh - 4rem) / 3 - 4rem and the width is 3/4 of that: (100vh - 4rem) / 4 - 3rem. It can only
+// overshoot the drawn width (vh >= svh, and the width bound may be the smaller one), never
+// undershoot it, so the file is never upscaled. Phones in portrait stay on the width-based sizes,
+// where the column width is the tighter bound.
+const HERO_PORTRAIT_SIZES = `(orientation: landscape) calc((100vh - 4rem) / 4 - 3rem), ${HERO_IMAGE_SIZES}`;
 
 const getLoadingProps = (
   index: number,
@@ -59,7 +69,9 @@ export const RandomGridItems = ({
             src={mediaItem.url}
             alt=""
             fill
-            sizes={HERO_IMAGE_SIZES}
+            sizes={
+              mediaItem.isPortrait ? HERO_PORTRAIT_SIZES : HERO_IMAGE_SIZES
+            }
             // Sits under the blur layers in hero-section-v2.tsx, so the extra detail of the
             // site-wide q90 is never seen. 50 is allow-listed in next.config.ts for this.
             quality={50}
