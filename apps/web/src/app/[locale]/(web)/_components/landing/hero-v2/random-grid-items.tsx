@@ -1,11 +1,36 @@
 "use client";
 
 import { cn } from "@repo/ui/lib/utils";
-import Image from "next/image";
+import Image, { type ImageProps } from "next/image";
 import { useState } from "react";
 
 export type RandomGridMediaItem = {
   url: string;
+};
+
+// Cells 1–6 are on screen at every breakpoint (2 columns × 3 rows is the smallest layout), so
+// they must not wait for lazy loading; cells 7+ are hidden by CSS on smaller screens and stay lazy
+// so a phone never downloads them. The first cell is preloaded; the next two get a high fetch
+// priority so the first row arrives together. (`preload` and `fetchPriority` are not combined —
+// Next's docs advise against it.)
+const ALWAYS_VISIBLE_CELLS = 6;
+const HIGH_PRIORITY_CELLS = 3;
+
+// `p-8` on each image is 2rem per side, so the file is drawn 4rem narrower than its cell. Column
+// counts mirror random-grid.css (2 / 3 / 4 / 5 at 0 / 768 / 1280 / 2560px). At 2560px+ the
+// container is capped at 2560px, so each of the 5 cells is 512px wide: 512 - 64 = 448px.
+const HERO_IMAGE_SIZES =
+  "(min-width: 2560px) 448px, (min-width: 1280px) calc(25vw - 4rem), (min-width: 768px) calc(33.34vw - 4rem), calc(50vw - 4rem)";
+
+const getLoadingProps = (
+  index: number,
+): Pick<ImageProps, "preload" | "loading" | "fetchPriority"> => {
+  if (index === 0) return { preload: true };
+  if (index >= ALWAYS_VISIBLE_CELLS) return {};
+  return {
+    loading: "eager",
+    ...(index < HIGH_PRIORITY_CELLS && { fetchPriority: "high" as const }),
+  };
 };
 
 // Client-only so the grid can hold on to the first pick: the server shuffles again on every render
@@ -34,9 +59,12 @@ export const RandomGridItems = ({
             src={mediaItem.url}
             alt=""
             fill
-            sizes="(min-width: 2560px) 512px, (min-width: 1280px) 25vw, (min-width: 768px) 33vw, 50vw"
+            sizes={HERO_IMAGE_SIZES}
+            // Sits under the blur layers in hero-section-v2.tsx, so the extra detail of the
+            // site-wide q90 is never seen. 50 is allow-listed in next.config.ts for this.
+            quality={50}
             className="object-contain p-8"
-            priority={index === 0}
+            {...getLoadingProps(index)}
           />
         </div>
       ))}

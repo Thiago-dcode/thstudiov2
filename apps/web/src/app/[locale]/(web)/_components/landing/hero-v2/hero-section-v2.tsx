@@ -5,22 +5,11 @@ import { WebSection } from "../web-section";
 import { RandomGrid } from "./random-grid";
 import "./hero-section-v2.css";
 
-// Stacked blur layers, each masked to a smaller ellipse: the blur adds up toward the
-// center, behind the copy, and fades out to sharp images at the corners.
-const BLUR_LAYERS = [
-  {
-    className: "backdrop-blur-[1px]",
-    mask: "radial-gradient(ellipse 65% 65% at center, black 0%, black 40%, transparent 100%)",
-  },
-  {
-    className: "backdrop-blur-[1.5px]",
-    mask: "radial-gradient(ellipse 55% 55% at center, black 0%, black 30%, transparent 100%)",
-  },
-  {
-    className: "backdrop-blur-[2px]",
-    mask: "radial-gradient(ellipse 40% 40% at center, black 0%, black 25%, transparent 100%)",
-  },
-];
+// One full-viewport backdrop-filter instead of three stacked layers: the extra compositor
+// work was paid on the first paint, and the colour wash below already fades the centre.
+// Mask keeps the corners sharp; 4px is roughly the stacked 1 + 1.5 + 2px at the centre.
+const HERO_BLUR_MASK =
+  "radial-gradient(ellipse 65% 65% at center, black 0%, black 30%, transparent 100%)";
 
 export const HeroSectionV2 = async () => {
   const t = await getTranslations("landing.hero");
@@ -34,14 +23,14 @@ export const HeroSectionV2 = async () => {
     >
       <RandomGrid className="flex-1" />
 
-      {BLUR_LAYERS.map((layer) => (
-        <div
-          key={layer.className}
-          aria-hidden="true"
-          className={`pointer-events-none absolute inset-0 z-5 ${layer.className}`}
-          style={{ maskImage: layer.mask, WebkitMaskImage: layer.mask }}
-        />
-      ))}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 z-5 backdrop-blur-xs"
+        style={{
+          maskImage: HERO_BLUR_MASK,
+          WebkitMaskImage: HERO_BLUR_MASK,
+        }}
+      />
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 z-5"

@@ -69,11 +69,15 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_GA_ID: process.env.NEXT_PUBLIC_GA_ID || "",
   },
   images: {
-    // The ONLY quality the optimizer will produce, site-wide. Next 16 maps any requested quality
-    // (including the implicit default 75) to the closest allowed value, and answers a direct
-    // `/_next/image?q=…` request for any other with 400 — so no `<Image>` can fall back to q75.
-    // Our sources are already lossy WebP, and a q75 re-encode on top of them was visibly soft.
-    qualities: [90],
+    // The qualities the optimizer will produce. Next 16 maps any requested quality (including the
+    // implicit default 75) to the closest allowed value, and answers a direct `/_next/image?q=…`
+    // request for any other with 400.
+    //   - 90: the site-wide quality. Our sources are already lossy WebP, and a q75 re-encode on top
+    //     of them was visibly soft. The implicit default 75 is 15 away from 90 and 25 away from 50,
+    //     so it still resolves to 90 — keep any new low value under 60 (60 would tie with 90).
+    //   - 50: ONLY for images that sit under a blur (the homepage hero grid), where the extra
+    //     detail is never seen. Opt in explicitly with `quality={50}`.
+    qualities: [50, 90],
     remotePatterns: [
       ...STORAGE_IMAGE_HOSTS.map((hostname) => ({
         protocol: "https" as const,
