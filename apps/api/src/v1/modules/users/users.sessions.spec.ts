@@ -41,7 +41,6 @@ describe('UserService — session revocation', () => {
       {} as never, // notifyNewUserMail
       {} as never, // aiService
       {} as never, // profileStatusService
-      {} as never, // plansService
       userSessionsService as never,
     );
   });

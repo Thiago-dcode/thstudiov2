@@ -1348,9 +1348,6 @@ const messages = {
       aiCredits: "AI Credits",
       aiCreditsTooltip:
         "Leverage AI to automate repetitive tasks. Automatically generate titles, descriptions, and tags for your media based on content analysis, saving you time and effort.",
-      hideBrand: "Hide a11studio branding",
-      hideBrandTooltip:
-        'Free profiles show a small "Made with a11studio" mark above the footer of every public page. Paid plans remove it so your work stands on its own.',
     },
     portal: {
       loading: "Loading…",
@@ -1534,15 +1531,20 @@ const messages = {
       cta: "Reactivate in Settings",
     },
     shareProfile: "Share profile",
-    brandMark: {
+    invite: {
       madeWith: "Made with",
       label: "Portfolio made with a11studio",
+      endTitle: "Your work deserves a page like this.",
+      cta: "Create your portfolio",
+      ctaWaitlist: "Bring your art",
+      contactTitle: "Are you a creative too?",
     },
     breadcrumb: {
       goBack: "Go back",
     },
     header: {
       atelier: "Atelier",
+      createYours: "Create yours",
       contact: "Contact",
       menu: "Menu",
       nav: {
@@ -1569,7 +1571,12 @@ const messages = {
         messagePlaceholder: "Tell the artist about your project...",
         submit: "Send Message",
       },
-      successToast: "Message sent successfully.",
+      sent: {
+        title: "Message sent",
+        body: "{name} will reply to your email.",
+        bodyFallback: "You'll get the reply by email.",
+        close: "Close",
+      },
     },
     sections: {
       portfolios: "Portfolios",

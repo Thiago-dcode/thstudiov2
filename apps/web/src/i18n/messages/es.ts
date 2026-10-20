@@ -1354,9 +1354,6 @@ const messages = {
       aiCredits: "Créditos de IA",
       aiCreditsTooltip:
         "Aprovecha la IA para automatizar tareas repetitivas. Genera automáticamente títulos, descripciones y etiquetas para tu contenido basándote en el análisis, ahorrándote tiempo y esfuerzo.",
-      hideBrand: "Ocultar la marca a11studio",
-      hideBrandTooltip:
-        'Los perfiles gratuitos muestran una pequeña marca "Hecho con a11studio" sobre el pie de página de cada página pública. Los planes de pago la eliminan para que tu obra hable por sí sola.',
     },
     portal: {
       loading: "Cargando…",
@@ -1543,15 +1540,20 @@ const messages = {
       cta: "Reactivar en Ajustes",
     },
     shareProfile: "Compartir perfil",
-    brandMark: {
+    invite: {
       madeWith: "Hecho con",
       label: "Portafolio hecho con a11studio",
+      endTitle: "Tu obra merece una página como esta.",
+      cta: "Crea tu portafolio",
+      ctaWaitlist: "Trae tu arte",
+      contactTitle: "¿Tú también creas?",
     },
     breadcrumb: {
       goBack: "Volver",
     },
     header: {
       atelier: "Atelier",
+      createYours: "Crea el tuyo",
       contact: "Contacto",
       menu: "Menú",
       nav: {
@@ -1578,7 +1580,12 @@ const messages = {
         messagePlaceholder: "Cuéntale al artista sobre tu proyecto...",
         submit: "Enviar mensaje",
       },
-      successToast: "Mensaje enviado con éxito.",
+      sent: {
+        title: "Mensaje enviado",
+        body: "{name} te responderá por correo.",
+        bodyFallback: "Recibirás la respuesta por correo.",
+        close: "Cerrar",
+      },
     },
     sections: {
       portfolios: "Portafolios",

@@ -7,9 +7,19 @@ export type AnalyticsEventName =
   | "portfolio_created"
   | "first_artwork_uploaded"
   | "waitlist_opened"
-  | "waitlist_joined";
+  | "waitlist_joined"
+  | "artist_invite_clicked"
+  | "artist_contact_opened"
+  | "artist_contact_sent";
 
 type AnalyticsParams = Record<string, string | number | boolean>;
+
+/** Where on an artist's pages a visitor was invited to create a portfolio (`artist_invite_clicked`). */
+export type InvitePlacement =
+  | "header"
+  | "end_of_content"
+  | "contact_success"
+  | "footer";
 
 /**
  * Sends a GA4 event, but ONLY when gtag is running on this page (production origin with a measurement
