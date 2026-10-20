@@ -62,8 +62,9 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_WS_URL: process.env.NEXT_PUBLIC_WS_URL || "",
     NEXT_PUBLIC_GEOAPIFY_URL:
       process.env.NEXT_PUBLIC_GEOAPIFY_URL || process.env.GEOAPIFY_URL || "",
-    NEXT_PUBLIC_GEOAPIFY_KEY:
-      process.env.NEXT_PUBLIC_GEOAPIFY_KEY || process.env.GEOAPIFY_KEY || "",
+    // No fallback to the server-side GEOAPIFY_KEY: whatever lands here is inlined into the browser
+    // bundle, and the Docker build has the server key available as a build secret.
+    NEXT_PUBLIC_GEOAPIFY_KEY: process.env.NEXT_PUBLIC_GEOAPIFY_KEY || "",
     // GA4 measurement ID (public by design). Empty disables analytics.
     NEXT_PUBLIC_GA_ID: process.env.NEXT_PUBLIC_GA_ID || "",
   },
