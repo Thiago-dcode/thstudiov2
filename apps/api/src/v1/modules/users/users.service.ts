@@ -36,14 +36,13 @@ import { compare, hash } from '@repo/common-lib/utils/hash';
 import { AiService } from '@repo/backend-lib/services/ai-service';
 import { MediaModerationException } from 'src/common/exceptions/media-moderation-exception';
 import { descriptiveFilename, versionedAssetPath } from 'src/common/utils/asset-path.util';
-import { ArtistBranding, ArtistCard, PublicCompactUser, UpdateUserInput, UserAccountStatus } from '@repo/common-lib/types/user';
+import { ArtistCard, PublicCompactUser, UpdateUserInput, UserAccountStatus } from '@repo/common-lib/types/user';
 import { EnumType } from '@repo/common-lib/constants/enums';
 import { addMonths } from 'date-fns';
 import { IndexArtistsRequest } from './requests/index-artists.request';
 import { QueueHelper, SINGLE_ENTITY_METADATA_DEBOUNCE_MS } from '@repo/backend-lib/utils';
 import { ProfileStatusService } from '../profile-status/profile-status.service';
 import { UpdateProfileStatusEvent } from '../profile-status/events/update-profile-status.event';
-import { PlansService } from '../plans/plans.service';
 import { CancelSubscriptionRenewalEvent } from '../plan-subscriptions/events/cancel-subscription-renewal.event';
 import { RequestAccountDeletionRequest } from './requests/request-account-deletion.request';
 import { accountDeletionDate } from '@repo/common-lib/utils/account-deletion';
@@ -61,7 +60,6 @@ export class UserService {
     private readonly notifyNewUserMail: NotifyNewUserMail,
     private readonly aiService: AiService,
     private readonly profileStatusService: ProfileStatusService,
-    private readonly plansService: PlansService,
     private readonly userSessionsService: UserSessionsService,
   ) { }
 
@@ -186,18 +184,6 @@ export class UserService {
         ttl: 1000 * 60 * 60 * 24 * 7,
       },
     );
-  }
-
-  /**
-   * Whether the artist's public pages carry the platform brand mark: every artist without an
-   * active paid plan does (no active subscription counts as free). The plan comes from the
-   * Redis-cached active-plan lookup that every subscription write already drops, so an upgrade or
-   * downgrade shows up here with no separate cache key to keep in sync.
-   */
-  async getBrandingByUsername(username: string): Promise<ArtistBranding> {
-    const user = await this.userRepository.findByUsernameCompact(username);
-    const plan = await this.plansService.findUserActivePlan(user.id);
-    return { show_brand: !plan || plan.is_free };
   }
 
   async findOneCompacted(id: number) {

@@ -3,6 +3,7 @@
 import { Button } from "@repo/ui/components/shadcn/button";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -11,15 +12,17 @@ import {
 } from "@repo/ui/components/shadcn/dialog";
 import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { toast } from "@repo/ui/sonner";
-import { Mail } from "lucide-react";
+import { Check, Mail } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
+import { trackEvent } from "@/lib/analytics/track";
 import FormComponent from "@/lib/components/form-component";
 import { FormPrivacyNotice } from "@/lib/components/form-privacy-notice";
 import { useSession } from "@/lib/providers/session.provider";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { createUserContactAction } from "@/modules/user-contacts/server-actions/create-user-contact.action";
 import { useArtist } from "@/modules/users/providers/artist.provider";
+import { ArtistInvite } from "./artist-invite";
 
 export const ArtistContactDialog = ({
   children,
@@ -29,9 +32,16 @@ export const ArtistContactDialog = ({
   const t = useTranslations("artists.contactDialog");
   const [mounted, setMounted] = useState(false);
   const [open, setOpen] = useState(false);
+  /** The message went through: the dialog shows a confirmation instead of the form. */
+  const [sent, setSent] = useState(false);
   const { artist, isPending: loadingArtist } = useArtist();
   const { session } = useSession();
   const isSelfContact = Boolean(session && artist && session.id === artist.id);
+  const artistName = artist
+    ? artist.name
+      ? `${artist.name} ${artist.surname ?? ""}`.trim()
+      : artist.username
+    : null;
 
   useEffect(() => {
     setMounted(true);
@@ -42,8 +52,8 @@ export const ArtistContactDialog = ({
       action: createUserContactAction,
       afterAction: async (result) => {
         if (result.data) {
-          toast.success(t("successToast"));
-          setOpen(false);
+          trackEvent("artist_contact_sent");
+          setSent(true);
           reset();
         } else if (result.errors) {
           for (const err of result.errors) {
@@ -67,7 +77,11 @@ export const ArtistContactDialog = ({
       open={open}
       onOpenChange={(v) => {
         setOpen(v);
-        if (!v) reset();
+        if (v && !isSelfContact) trackEvent("artist_contact_opened");
+        if (!v) {
+          reset();
+          setSent(false);
+        }
       }}
     >
       <DialogTrigger asChild className="cursor-pointer">
@@ -77,12 +91,8 @@ export const ArtistContactDialog = ({
       <DialogContent className="max-w-xl w-screen p-6 min-h-[400px]">
         <DialogHeader className="gap-1">
           <DialogTitle className="text-base font-semibold tracking-tight">
-            {artist
-              ? t("contactTitle", {
-                  name: artist.name
-                    ? `${artist.name} ${artist.surname ?? ""}`.trim()
-                    : artist.username,
-                })
+            {artistName
+              ? t("contactTitle", { name: artistName })
               : t("contactTitleFallback")}
           </DialogTitle>
           <DialogDescription className="text-xs text-text-muted">
@@ -99,6 +109,26 @@ export const ArtistContactDialog = ({
         {isSelfContact ? (
           <div className="flex min-h-[260px] items-center justify-center border border-fg-2/40 bg-fg/10 px-6 text-center text-sm text-text-muted">
             {t("selfContact")}
+          </div>
+        ) : sent ? (
+          <div role="status" className="flex flex-col gap-8 pt-4">
+            <div className="flex flex-col gap-2">
+              <p className="inline-flex items-center gap-2 font-serif text-xl font-light text-text">
+                <Check className="size-5 shrink-0" aria-hidden />
+                {t("sent.title")}
+              </p>
+              <p className="text-sm leading-relaxed text-text-muted">
+                {artistName
+                  ? t("sent.body", { name: artistName })
+                  : t("sent.bodyFallback")}
+              </p>
+            </div>
+            <ArtistInvite placement="contact_success" />
+            <DialogClose asChild>
+              <Button variant="outline" size="sm" className="min-h-11 w-fit">
+                {t("sent.close")}
+              </Button>
+            </DialogClose>
           </div>
         ) : (
           <FormComponent.Container>

@@ -5,7 +5,9 @@ import { cn } from "@repo/ui/lib/utils";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
+import { RegistrationCtaButton } from "@/lib/components/registration-cta-button";
 import { SiteHeader, useSiteHeader } from "@/lib/components/site-header";
+import { useAppStatus } from "@/lib/providers/app-status.provider";
 import { useSession } from "@/lib/providers/session.provider";
 import { ArtistContactDialog } from "./artist-contact.dialog";
 
@@ -41,8 +43,11 @@ export const ArtistsHeader = () => {
   const params = useParams();
   const username = params.username as string;
   const { session } = useSession();
+  // Despite the name, `true` means registration is open (see RegistrationCtaButton).
+  const { isRegisterClose } = useAppStatus();
   const t = useTranslations("artists.header");
   const tShare = useTranslations("artists");
+  const tInvite = useTranslations("artists.invite");
 
   const navItems = [
     { label: `@${username}`, href: `/artists/${username}` },
@@ -69,7 +74,19 @@ export const ArtistsHeader = () => {
             >
               {t("atelier")}
             </Link>
-          ) : null}
+          ) : (
+            // Same slot and divider as the atelier link, one step more legible: visible enough to
+            // be found, quiet enough to stay behind the artist's name and work.
+            <RegistrationCtaButton
+              variant="link"
+              size="sm"
+              invitePlacement="header"
+              label={
+                isRegisterClose ? t("createYours") : tInvite("ctaWaitlist")
+              }
+              className="min-h-11 shrink-0 border-l border-fg-2/25 py-0 pr-0 pl-3 text-xs font-medium tracking-wider text-text-muted transition-colors hover:text-text tablet:pl-4"
+            />
+          )}
         </div>
 
         <SiteHeader.Actions>

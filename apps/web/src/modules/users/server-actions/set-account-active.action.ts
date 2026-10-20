@@ -1,7 +1,7 @@
 "use server";
 
 import type { ActionReturn } from "@repo/common-lib/types/response";
-import { revalidateTag, updateTag } from "next/cache";
+import { updateTag } from "next/cache";
 import {
   getFriendlyApiErrors,
   isSessionOwner,
@@ -32,6 +32,5 @@ export const setAccountActiveAction = async (
   // `updateTag`, not `revalidateTag(..., "max")`: the atelier reads the new account status right
   // away (metrics refresh), and stale-while-revalidate would hand it the old one first.
   updateTag(`user-${id}`);
-  revalidateTag(`user-branding-${session!.username}`, "max");
   return { data: result.data!, errors: null, inputErrors: undefined };
 };

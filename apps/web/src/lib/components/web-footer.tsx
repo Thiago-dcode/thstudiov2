@@ -50,7 +50,13 @@ const socialMeta: Record<
   pinterest: { Icon: PinterestIcon, labelKey: "pinterest" },
 };
 
-export const WebFooter = async () => {
+export const WebFooter = async ({
+  artistPage = false,
+}: {
+  /** On an artist's pages the sign-up prompt is a quiet, tracked link instead of the accent button:
+   * the artist's work, not our CTA, owns the page. */
+  artistPage?: boolean;
+} = {}) => {
   const t = await getTranslations("footer");
   const year = new Date().getFullYear();
   const supportEmail = serverEnv.SUPPORT_EMAIL;
@@ -68,7 +74,16 @@ export const WebFooter = async () => {
             <p className="max-w-xs text-xs leading-relaxed tracking-wider text-text">
               {t("tagline")}
             </p>
-            <RegistrationCtaButton size="sm" className="w-fit" />
+            {artistPage ? (
+              <RegistrationCtaButton
+                size="sm"
+                variant="outline"
+                invitePlacement="footer"
+                className="min-h-11 w-fit border-border-em px-4 text-sm tracking-wider text-text hover:bg-fg"
+              />
+            ) : (
+              <RegistrationCtaButton size="sm" className="w-fit" />
+            )}
           </div>
 
           <div className="flex flex-col gap-3">

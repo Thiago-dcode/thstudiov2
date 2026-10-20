@@ -24,6 +24,10 @@ export async function ShareYourPortfolio({ username }: { username: string }) {
   // The canonical (English, unprefixed) URL: a bio link should not pin visitors to one language —
   // the site's language detection handles that on arrival.
   const url = localizedUrl("en", `/artists/${profile.username}`);
+  // The bio link is tagged so visits from artists' own bios get their own source in GA instead of
+  // blending into "instagram / social". The snippet stays clean: it is a backlink, and the referring
+  // site already identifies it.
+  const bioUrl = `${url}?utm_source=artist_share&utm_medium=bio_link&utm_campaign=share_kit`;
   const snippet = `<a href="${url}">${t("shareKitBadgeText")}</a>`;
 
   return (
@@ -45,7 +49,7 @@ export async function ShareYourPortfolio({ username }: { username: string }) {
       <div className="flex flex-col gap-6">
         <CopyField
           label={t("shareKitLinkLabel")}
-          value={url}
+          value={bioUrl}
           copyLabel={t("shareKitCopy")}
           copiedLabel={t("shareKitCopied")}
         />

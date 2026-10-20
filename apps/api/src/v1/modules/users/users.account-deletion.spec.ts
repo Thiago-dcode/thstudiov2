@@ -49,7 +49,6 @@ describe('UserService — account deletion / deactivation', () => {
       {} as never, // notifyNewUserMail
       {} as never, // aiService
       {} as never, // profileStatusService
-      {} as never, // plansService
       {} as never, // userSessionsService
     );
   });

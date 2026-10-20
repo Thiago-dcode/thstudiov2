@@ -15,7 +15,7 @@ import { ArrowRight } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useState } from "react";
 import { Link } from "@/i18n/navigation";
-import { trackEvent } from "@/lib/analytics/track";
+import { type InvitePlacement, trackEvent } from "@/lib/analytics/track";
 import { FormPrivacyNotice } from "@/lib/components/form-privacy-notice";
 import { useAppStatus } from "@/lib/providers/app-status.provider";
 import { useSession } from "@/lib/providers/session.provider";
@@ -34,6 +34,13 @@ type RegistrationCtaButtonProps = {
    * dialog. The mobile drawer passes `closeDrawer` here, and the dialog renders inside the
    * drawer: closing it on that click unmounted the dialog the moment it opened. */
   onNavigate?: () => void;
+  /** `outline` and `link` are the neutral forms (outlined, or plain text), for surfaces where an
+   * accent button would compete with the page's own content (an artist's portfolio). */
+  variant?: "accent" | "outline" | "link";
+  /** Set on an artist's pages: every activation (navigating or opening the wait-list dialog) is
+   * sent as `artist_invite_clicked` with this placement. A plain value, not a callback, so server
+   * components (the footer) can pass it too. */
+  invitePlacement?: InvitePlacement;
 };
 
 export function RegistrationCtaButton({
@@ -42,7 +49,14 @@ export function RegistrationCtaButton({
   intent = "getStarted",
   label: labelOverride,
   onNavigate,
+  variant = "accent",
+  invitePlacement,
 }: RegistrationCtaButtonProps) {
+  const onActivate = () => {
+    if (invitePlacement) {
+      trackEvent("artist_invite_clicked", { placement: invitePlacement });
+    }
+  };
   const { session } = useSession();
   const { isRegisterClose } = useAppStatus();
   const registrationIsClosed = !isRegisterClose;
@@ -88,11 +102,14 @@ export function RegistrationCtaButton({
           open={dialogOpen}
           onOpenChange={(open) => {
             setDialogOpen(open);
-            if (open) trackEvent("waitlist_opened");
+            if (open) {
+              trackEvent("waitlist_opened");
+              onActivate();
+            }
           }}
         >
           <DialogTrigger asChild>
-            <Button variant="accent" size={size} className={cn(className)}>
+            <Button variant={variant} size={size} className={cn(className)}>
               {label}
               <ArrowRight className={iconClassName} />
             </Button>
@@ -126,8 +143,14 @@ export function RegistrationCtaButton({
   }
 
   return (
-    <Button asChild variant="accent" size={size} className={cn(className)}>
-      <Link href="/auth/register" onClick={onNavigate}>
+    <Button asChild variant={variant} size={size} className={cn(className)}>
+      <Link
+        href="/auth/register"
+        onClick={() => {
+          onActivate();
+          onNavigate?.();
+        }}
+      >
         {label}
         <ArrowRight className={iconClassName} />
       </Link>
