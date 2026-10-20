@@ -115,7 +115,9 @@ const ALL_APP_MODULES = [
   AccountDeletionModule,
   ServicesModule,
   UserExtraDataModule,
-  TestModule,
+  // Test routes: `ProdGuard` already closes them in production; leaving the module out there
+  // means the routes do not exist at all rather than relying on a guard staying in place.
+  ...(getConfigValue('app').isProduction ? [] : [TestModule]),
 ];
 @Module({
   imports: [
