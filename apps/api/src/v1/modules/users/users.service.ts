@@ -123,6 +123,9 @@ export class UserService {
       next_username_reset,
       next_password_reset,
       role_id,
+      // Which promotion or invitation an account signed up through: the owner's business only.
+      benefit_id,
+      invitation_link_id,
       ...rest
     } = user;
     return rest as T;
