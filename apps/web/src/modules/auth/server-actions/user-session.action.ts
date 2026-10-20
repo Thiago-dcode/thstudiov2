@@ -1,6 +1,5 @@
 "use server";
 
-import { SECURE_COOKIE_FLAGS } from "@/lib/utils/cookie-flags";
 import {
   REMEMBER_ME_COOKIE_NAME,
   USER_AUTH_COOKIE_EXPIRATION_DATE,
@@ -14,6 +13,7 @@ import type {
 } from "next/dist/compiled/@edge-runtime/cookies";
 import { cookies } from "next/headers";
 import { serverEnv } from "@/env/server";
+import { SECURE_COOKIE_FLAGS } from "@/lib/utils/cookie-flags";
 import type { UserAuth } from "../auth.types";
 
 const SECRET = serverEnv.ENCRYPTION_SECRET;

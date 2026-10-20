@@ -1,11 +1,11 @@
 "use server";
 
-import { SECURE_COOKIE_FLAGS } from "@/lib/utils/cookie-flags";
 import { PASSWORD_RECOVERY_ATTEMPT_COOKIE_NAME } from "@repo/common-lib/constants/cookies";
 import type { ActionReturn } from "@repo/common-lib/types/response";
 import { cookies } from "next/headers";
 import { getTranslations } from "next-intl/server";
 import { deleteCookie, encryptObj, getEncryptedJsonCookie } from "@/lib/utils";
+import { SECURE_COOKIE_FLAGS } from "@/lib/utils/cookie-flags";
 import authService from "../auth.service";
 import type { PasswordRecoveryRequestStatus } from "../auth.types";
 import { passwordRecoveryRequestSchema } from "../schemas/auth.shema";

@@ -1,4 +1,3 @@
-import { SECURE_COOKIE_FLAGS } from "@/lib/utils/cookie-flags";
 import { REDIRECT_TO_COOKIE_NAME } from "@repo/common-lib/constants/cookies";
 import {
   isRedirectToKey,
@@ -8,6 +7,7 @@ import type {
   RequestCookies,
   ResponseCookies,
 } from "next/dist/compiled/@edge-runtime/cookies";
+import { SECURE_COOKIE_FLAGS } from "@/lib/utils/cookie-flags";
 
 const REDIRECT_TO_MAX_AGE_SECONDS = 60 * 5;
 

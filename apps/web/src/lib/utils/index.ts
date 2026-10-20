@@ -1,7 +1,7 @@
-import { SECURE_COOKIE_FLAGS } from "@/lib/utils/cookie-flags";
 import { decrypt, encrypt } from "@repo/common-lib/utils/encrypt";
 import { cookies } from "next/headers";
 import { serverEnv } from "@/env/server";
+import { SECURE_COOKIE_FLAGS } from "@/lib/utils/cookie-flags";
 
 export const getEncryptedJsonCookie = async <T>(
   key: string,

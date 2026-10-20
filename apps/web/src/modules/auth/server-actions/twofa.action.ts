@@ -1,10 +1,10 @@
 "use server";
-import { SECURE_COOKIE_FLAGS } from "@/lib/utils/cookie-flags";
 import { TWO_FA_COOKIE_NAME } from "@repo/common-lib/constants/cookies";
 import type { ActionReturn } from "@repo/common-lib/types/response";
 import { cookies } from "next/headers";
 import { getTranslations } from "next-intl/server";
 import { encryptObj, getEncryptedJsonCookie } from "@/lib/utils";
+import { SECURE_COOKIE_FLAGS } from "@/lib/utils/cookie-flags";
 import authService from "../auth.service";
 import type { TwoFaUser, UserAuth } from "../auth.types";
 import { verify2faRequestSchema } from "../schemas/auth.shema";
