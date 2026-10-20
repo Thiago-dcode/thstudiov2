@@ -26,6 +26,8 @@ import { insertWithUniqueSlug, resolveEntitySlug } from "src/common/utils/slug.u
 import { assertOwnedIds } from "src/common/utils/owned-ids.util";
 import { ENTITY_CREATE_LOCK_TTL_MS, withUserLock } from "src/common/utils/user-lock";
 import { descriptiveFilename, versionedAssetPath } from "src/common/utils/asset-path.util";
+import { PublicViewerService } from "src/common/services/public-viewer.service";
+import { PUBLIC_ENTITY_FILTERS } from "src/common/utils/public-entity";
 
 const CACHE_TTL = 1000 * 60 * 60 * 24;
 
@@ -52,10 +54,20 @@ export class PortfolioService {
     private readonly helpers: Helpers,
     private readonly aiService: AiService,
     private readonly layoutService: LayoutService,
+    private readonly publicViewer: PublicViewerService,
   ) { }
 
+  /**
+   * Public route, also the atelier's list (`user_id` = the caller). Anyone else gets only active,
+   * unblocked portfolios of visible accounts, whatever `is_active`/`blocked` they ask for.
+   */
   async findAll(data: IndexPortfolioRequest) {
-    const result = await this.portfolioRepository.getAll(data);
+    const result = (await this.publicViewer.canSeeHidden(data.user_id))
+      ? await this.portfolioRepository.getAll(data)
+      : await this.portfolioRepository.getAll(
+        { ...data, ...PUBLIC_ENTITY_FILTERS },
+        { visibleAccountsOnly: true },
+      );
     return await Promise.all(
       result.map(async (portfolio) => {
         if (portfolio.thumbnail) {

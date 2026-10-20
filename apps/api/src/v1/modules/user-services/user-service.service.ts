@@ -8,6 +8,8 @@ import {
 } from "@repo/common-lib/constants/cache";
 import { UserRepository } from "../users/users.repository";
 import { ServiceRepository } from "../services/service.repository";
+import { PublicViewerService } from "src/common/services/public-viewer.service";
+import { PUBLIC_ENTITY_FILTERS, isHiddenFromPublic } from "src/common/utils/public-entity";
 
 /** Nest cache-manager TTL (ms). */
 const CACHE_TTL = 1000 * 60 * 60 * 24;
@@ -16,7 +18,8 @@ const CACHE_TTL_SECONDS = CACHE_TTL / 1000;
 
 export const serviceCacheKeys = {
   bySlug: (userId: number, slug: string) => `service-${userId}-${slug}`,
-  allByUser: (userId: number) => `services-user-${userId}`,
+  /** The visitor list (active, unblocked only); the owner's full list is never cached. */
+  allByUser: (userId: number) => `services-user-public-${userId}`,
   highlightCount: (userId: number) => `service-highlight-count-${userId}`,
 };
 
@@ -26,6 +29,7 @@ export class UserServiceService {
     private readonly serviceRepository: ServiceRepository,
     private readonly userRepository: UserRepository,
     private readonly helpers: Helpers,
+    private readonly publicViewer: PublicViewerService,
   ) { }
 
   async getById(userId: number, slug: string): Promise<FullService> {
@@ -77,15 +81,20 @@ export class UserServiceService {
     const user = await this.userRepository.findByUsernameCompact(username);
     if (!user) return [];
 
+    // The atelier reads its own list here: the owner (and admins) see inactive and blocked services.
+    if (await this.publicViewer.canSeeHidden(user.id)) {
+      return this.resolveAllServices(user.id, filters);
+    }
+
     if (this.shouldCacheServicesList(filters)) {
       return this.helpers.cacheRemember(
         serviceCacheKeys.allByUser(user.id),
-        this.resolveAllServices(user.id),
+        this.resolveAllServices(user.id, PUBLIC_ENTITY_FILTERS),
         { append_language: false, ttl: CACHE_TTL },
       );
     }
 
-    return this.resolveAllServices(user.id, filters);
+    return this.resolveAllServices(user.id, { ...filters, ...PUBLIC_ENTITY_FILTERS });
   }
 
   private shouldCacheServicesList(
@@ -106,6 +115,10 @@ export class UserServiceService {
   private async resolveFullService(userId: number, slug: string): Promise<FullService> {
     const service = await this.serviceRepository.getBySlug(slug, userId);
     if (!service) return null;
+    // Inactive and blocked services exist only for their owner and admins: a 404 for anyone else.
+    if (isHiddenFromPublic(service) && !(await this.publicViewer.canSeeHidden(service.user_id))) {
+      return null;
+    }
 
     if (service.thumbnail) {
       service.thumbnail = await this.helpers.getAsset(service.thumbnail, { expireIn: CACHE_TTL_SECONDS });

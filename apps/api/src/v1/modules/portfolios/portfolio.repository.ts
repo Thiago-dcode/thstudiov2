@@ -35,6 +35,11 @@ import { SEO_REGENERATION_MIN_INTERVAL_DAYS } from '@repo/common-lib/constants/c
 import { artistShareReadySql } from '@repo/common-lib/utils/artist-share-ready';
 import { sitemapImagePathSql } from '@repo/common-lib/utils/sitemap-image-sql';
 
+export type PortfolioReadOptions = {
+  /** Drop portfolios of banned, deactivated and pending-deletion accounts, even for a `user_id` list. */
+  visibleAccountsOnly?: boolean;
+};
+
 export function formatPortfolioLayout(
   row: Pick<PortfolioFullSchema, 'layout_id' | 'layout_name' | 'config'>,
 ): PortfolioLayout | undefined {
@@ -138,8 +143,11 @@ export class PortfolioRepository extends BaseRepository {
     super('portfolios');
   }
 
-  async getAll(filters: PortfolioIndexRequest): Promise<Portfolio[]> {
-    const query = await this.applyFilters(filters, this.query());
+  async getAll(
+    filters: PortfolioIndexRequest,
+    options: PortfolioReadOptions = {},
+  ): Promise<Portfolio[]> {
+    const query = await this.applyFilters(filters, this.query(), options);
     const results = await query.get<PortfolioWithArtistSchema[]>();
     return results.map((result) => this.formatPortfolio(result));
   }
@@ -621,6 +629,7 @@ export class PortfolioRepository extends BaseRepository {
   protected async applyFilters(
     filters: PortfolioIndexRequest,
     query: QueryBuilder,
+    options: PortfolioReadOptions = {},
   ): Promise<QueryBuilder> {
     query
       .select(this.COLUMNS)
@@ -629,9 +638,10 @@ export class PortfolioRepository extends BaseRepository {
 
     if (filters.user_id) {
       query.where('portfolios.user_id', '=', filters.user_id);
-    } else {
+    }
+    if (!filters.user_id || options.visibleAccountsOnly) {
       // Cross-artist browsing is public: hide banned, deactivated and pending-deletion accounts.
-      // A `user_id`-scoped list is the owner's atelier (or an artist route already 404'd upstream).
+      // A `user_id` list skips it only for its owner or an admin (`PortfolioService.findAll`).
       query
         .where('users.banned', '=', false)
         .where('users.is_active', '=', true)

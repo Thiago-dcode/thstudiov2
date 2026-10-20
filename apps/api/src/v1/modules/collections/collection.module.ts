@@ -5,6 +5,7 @@ import { CollectionRepository } from './collection.repository';
 import { UserExtraDataModule } from '../user-extra-data/user-extra-data.module';
 import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
 import { RequestService } from 'src/common/services/request.service';
+import { AuthCoreModule } from '../auth/auth-core.module';
 
 @Module({
   controllers: [CollectionController],
@@ -22,7 +23,8 @@ import { RequestService } from 'src/common/services/request.service';
       inject: [RequestService],
     },
   ],
-  imports: [UserExtraDataModule],
+  // AuthCoreModule: `PublicViewerService`, so owners still see their hidden collections.
+  imports: [UserExtraDataModule, AuthCoreModule],
   exports: [CollectionService, CollectionRepository],
 })
 export class CollectionModule {}

@@ -13,6 +13,7 @@ import { API_ERRORS } from '@repo/common-lib/constants/api-errors';
 import { ApiException } from 'src/common/exceptions/api-exception';
 import { Helpers } from 'src/common/services/helpers.service';
 import { RequestService } from 'src/common/services/request.service';
+import { PublicViewerService } from 'src/common/services/public-viewer.service';
 import { CollectionRepository } from './collection.repository';
 import { CollectionService } from './collection.service';
 import { UserExtraDataService } from '../user-extra-data/user-extra-data.service';
@@ -68,6 +69,7 @@ describe('CollectionService slug derivation', () => {
             cacheRemember: jest.fn(),
           },
         },
+        { provide: PublicViewerService, useValue: { canSeeHidden: jest.fn() } },
       ],
     }).compile();
 

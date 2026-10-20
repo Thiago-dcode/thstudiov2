@@ -17,6 +17,8 @@ import { insertWithUniqueSlug, resolveEntitySlug } from "src/common/utils/slug.u
 import { assertOwnedIds } from "src/common/utils/owned-ids.util";
 import { ENTITY_CREATE_LOCK_TTL_MS, withUserLock } from "src/common/utils/user-lock";
 import { TABLES_ENUM } from "@repo/common-lib/constants/enums";
+import { PublicViewerService } from "src/common/services/public-viewer.service";
+import { PUBLIC_ENTITY_FILTERS } from "src/common/utils/public-entity";
 
 const CACHE_TTL = 1000 * 60 * 60 * 24;
 
@@ -31,10 +33,20 @@ export class CollectionService {
     private readonly requestService: RequestService,
     private readonly userExtraDataService: UserExtraDataService,
     private readonly helper: Helpers,
+    private readonly publicViewer: PublicViewerService,
   ) { }
 
+  /**
+   * Public route, also the atelier's list (`user_id` = the caller). Anyone else gets only active,
+   * unblocked collections of visible accounts, whatever `is_active`/`blocked` they ask for.
+   */
   async findAll(data: IndexCollectionRequest) {
-    const result = await this.collectionRepository.getAll(data);
+    const result = (await this.publicViewer.canSeeHidden(data.user_id))
+      ? await this.collectionRepository.getAll(data)
+      : await this.collectionRepository.getAll(
+        { ...data, ...PUBLIC_ENTITY_FILTERS },
+        { visibleAccountsOnly: true },
+      );
     return Promise.all(
       result.map(async (co) => {
         const media = await Promise.all(

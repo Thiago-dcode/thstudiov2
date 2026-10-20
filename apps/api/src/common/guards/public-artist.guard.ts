@@ -1,10 +1,8 @@
 import { CanActivate, ExecutionContext, Injectable, NotFoundException } from '@nestjs/common';
-import { EnumType, TABLES_ENUM } from '@repo/common-lib/constants/enums';
-import type { UserAuth } from '@repo/common-lib/types/auth';
+import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
 import { Query } from '@repo/database/facades';
 import type { Request } from 'express';
-import { RequestService } from 'src/common/services/request.service';
-import { AuthHelper } from 'src/v1/modules/auth/auth-helper.service';
+import { PublicViewerService } from 'src/common/services/public-viewer.service';
 
 type ArtistVisibilityRow = {
   id: number;
@@ -13,7 +11,6 @@ type ArtistVisibilityRow = {
   deletion_requested_at: Date | null;
 };
 
-const ADMIN_ROLE_NAME: EnumType<'USER_ROLE'> = 'ADMIN';
 const NOT_FOUND = 'Artist not found';
 
 /**
@@ -33,10 +30,7 @@ const NOT_FOUND = 'Artist not found';
  */
 @Injectable()
 export class PublicArtistGuard implements CanActivate {
-  constructor(
-    private readonly authHelper: AuthHelper,
-    private readonly requestService: RequestService,
-  ) { }
+  constructor(private readonly publicViewer: PublicViewerService) { }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
@@ -45,8 +39,8 @@ export class PublicArtistGuard implements CanActivate {
     if (!artist) throw new NotFoundException(NOT_FOUND);
     if (!artist.banned && artist.is_active && !artist.deletion_requested_at) return true;
 
-    const caller = await this.resolveCaller(request);
-    if (caller?.role?.name === ADMIN_ROLE_NAME) return true;
+    const caller = await this.publicViewer.get();
+    if (this.publicViewer.isAdmin(caller)) return true;
     const isDeactivatedOnly = !artist.banned && !artist.deletion_requested_at;
     if (isDeactivatedOnly && caller?.id === artist.id) return true;
 
@@ -100,17 +94,5 @@ export class PublicArtistGuard implements CanActivate {
     // reaches the query.
     if (!/^\d{1,10}$/.test(rawId)) return null;
     return (await query.where('id', '=', Number(rawId)).first<ArtistVisibilityRow | null>()) ?? null;
-  }
-
-  /** The authenticated caller: set by `AuthGuard` on protected routes, else from the bearer token. */
-  private async resolveCaller(request: Request): Promise<UserAuth | null> {
-    if (this.requestService.user) return this.requestService.user;
-    const [type, token] = request.headers.authorization?.split(' ') ?? [];
-    if (type !== 'Bearer' || !token) return null;
-    try {
-      return await this.authHelper.resolveUserAuth(token);
-    } catch {
-      return null;
-    }
   }
 }

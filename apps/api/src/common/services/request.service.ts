@@ -15,7 +15,7 @@ export class RequestService {
   /** Called once per request in the middleware to establish an isolated store. */
   async run(callback: (self: RequestService) => void): Promise<void> {
     this.storage.run(
-      { requestId: await generateUUID(), user: null, language: null, user_agent: null, ip_address: null, path: null, pagination: null, unattributed_app_call: false },
+      { requestId: await generateUUID(), user: null, language: null, user_agent: null, ip_address: null, path: null, pagination: null, unattributed_app_call: false, bearer_token: null },
       () => {
         callback(this)
       },
@@ -34,6 +34,20 @@ export class RequestService {
   }
   set user(user: UserAuth | null) {
     if (this.store) this.store.user = user;
+  }
+
+  get bearer_token(): string | null {
+    return this.store?.bearer_token ?? null;
+  }
+  set bearer_token(token: string | null) {
+    if (this.store) this.store.bearer_token = token;
+  }
+
+  get viewer(): UserAuth | null | undefined {
+    return this.store?.viewer;
+  }
+  set viewer(viewer: UserAuth | null) {
+    if (this.store) this.store.viewer = viewer;
   }
 
   get language(): RequestLanguage | null {

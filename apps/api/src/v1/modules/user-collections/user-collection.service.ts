@@ -9,6 +9,8 @@ import {
 } from "@repo/common-lib/constants/cache";
 import { UserRepository } from "../users/users.repository";
 import { CollectionRepository } from "../collections/collection.repository";
+import { PublicViewerService } from "src/common/services/public-viewer.service";
+import { PUBLIC_ENTITY_FILTERS, isHiddenFromPublic } from "src/common/utils/public-entity";
 
 @Injectable()
 export class UserCollectionService {
@@ -16,6 +18,7 @@ export class UserCollectionService {
     private readonly collectionRepository: CollectionRepository,
     private readonly userRepository: UserRepository,
     private readonly helpers: Helpers,
+    private readonly publicViewer: PublicViewerService,
   ) { }
 
   /** The owner's editor: includes media they switched off, so a save keeps them in the collection. */
@@ -30,6 +33,10 @@ export class UserCollectionService {
   ): Promise<FullCollection> {
     const collection = await this.collectionRepository.getBySlug(slug, userId, visibility);
     if (!collection) return null;
+    // Inactive and blocked collections exist only for their owner and admins: a 404 for anyone else.
+    if (isHiddenFromPublic(collection) && !(await this.publicViewer.canSeeHidden(collection.user_id))) {
+      return null;
+    }
 
     const [media, tags] = await Promise.all([
       collection.media.length
@@ -91,7 +98,8 @@ export class UserCollectionService {
     const user = await this.userRepository.findByUsernameCompact(username);
     if (!user) return [];
 
-    const result = await this.collectionRepository.getAll({ user_id: user.id, ...filters });
+    const visibility = (await this.publicViewer.canSeeHidden(user.id)) ? {} : PUBLIC_ENTITY_FILTERS;
+    const result = await this.collectionRepository.getAll({ user_id: user.id, ...filters, ...visibility });
     return Promise.all(
       result.map(async (co) => {
         const media = await Promise.all(

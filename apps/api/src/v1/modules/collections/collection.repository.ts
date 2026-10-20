@@ -31,6 +31,11 @@ import { sitemapImagePathSql } from '@repo/common-lib/utils/sitemap-image-sql';
 import { DbException } from '@repo/database/exceptions';
 import { RequestService } from 'src/common/services/request.service';
 
+export type CollectionReadOptions = {
+  /** Drop collections of banned, deactivated and pending-deletion accounts (visitor lists). */
+  visibleAccountsOnly?: boolean;
+};
+
 @Injectable()
 export class CollectionRepository extends BaseRepository {
   /**
@@ -89,11 +94,14 @@ export class CollectionRepository extends BaseRepository {
     super('collections');
   }
 
-  async getAll(filters: CollectionIndexRequest): Promise<Collection[]> {
+  async getAll(
+    filters: CollectionIndexRequest,
+    options: CollectionReadOptions = {},
+  ): Promise<Collection[]> {
     if (filters.paginated) {
-      return this.getAllPaginated(filters);
+      return this.getAllPaginated(filters, options);
     }
-    const query = await this.applyFilters(filters, this.query());
+    const query = await this.applyFilters(filters, this.query(), options);
     const results = await query.get<CollectionCompactSchema[]>();
     return this.formatCollections(results);
   }
@@ -103,9 +111,12 @@ export class CollectionRepository extends BaseRepository {
    * then fetch media for the paginated IDs. This avoids the JOIN row-multiplication
    * bug where LIMIT operates on rows instead of distinct collections.
    */
-  private async getAllPaginated(filters: CollectionIndexRequest): Promise<Collection[]> {
+  private async getAllPaginated(
+    filters: CollectionIndexRequest,
+    options: CollectionReadOptions,
+  ): Promise<Collection[]> {
     const baseQuery = this.query().select(this.BASE_COLUMNS);
-    this.applyWhereFilters(baseQuery, filters);
+    this.applyWhereFilters(baseQuery, filters, options);
     this.requestService.pagination =
       await this.handleOffsetPagination(baseQuery, filters);
     baseQuery.orderBy('created_at', 'DESC');
@@ -470,9 +481,20 @@ export class CollectionRepository extends BaseRepository {
     return await this.query().where('id', '=', id).delete();
   }
 
-  private applyWhereFilters(query: QueryBuilder, filters: CollectionIndexRequest): void {
+  private applyWhereFilters(
+    query: QueryBuilder,
+    filters: CollectionIndexRequest,
+    options: CollectionReadOptions = {},
+  ): void {
     if (filters.user_id) {
       query.where('user_id', '=', filters.user_id);
+    }
+    if (options.visibleAccountsOnly) {
+      query
+        .join('collections.user_id', 'users', 'id', 'INNER')
+        .where('users.banned', '=', false)
+        .where('users.is_active', '=', true)
+        .where('users.deletion_requested_at', 'IS', null);
     }
     if (typeof filters.is_featured === 'boolean') {
       query.where('is_featured', '=', filters.is_featured);
@@ -566,13 +588,14 @@ export class CollectionRepository extends BaseRepository {
   protected async applyFilters(
     filters: CollectionIndexRequest,
     query: QueryBuilder,
+    options: CollectionReadOptions = {},
   ): Promise<QueryBuilder> {
     query.select(this.COLUMNS)
       .join('id', 'collection_media', 'collection_id', 'LEFT')
       .join('collection_media.media_id', 'media', 'id', 'LEFT');
     this.whereMediaVisible(query);
 
-    this.applyWhereFilters(query, filters);
+    this.applyWhereFilters(query, filters, options);
 
     this.requestService.pagination =
       await this.handleOffsetPagination(query, filters);

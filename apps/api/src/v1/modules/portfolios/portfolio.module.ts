@@ -8,6 +8,7 @@ import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-se
 import { RequestService } from 'src/common/services/request.service';
 import { CollectionModule } from '../collections/collection.module';
 import { LayoutModule } from '../layouts/layout.module';
+import { AuthCoreModule } from '../auth/auth-core.module';
 
 @Module({
   controllers: [PortfolioController],
@@ -30,6 +31,8 @@ import { LayoutModule } from '../layouts/layout.module';
     AiModule,
     CollectionModule,
     LayoutModule,
+    // `PublicViewerService`, so owners still see their hidden portfolios.
+    AuthCoreModule,
   ],
   exports: [PortfolioService, PortfolioRepository],
 })

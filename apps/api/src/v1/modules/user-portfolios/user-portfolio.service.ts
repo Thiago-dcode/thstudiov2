@@ -13,6 +13,8 @@ import {
 import { UserRepository } from "../users/users.repository";
 import { PortfolioRepository } from "../portfolios/portfolio.repository";
 import { CollectionService } from "../collections/collection.service";
+import { PublicViewerService } from "src/common/services/public-viewer.service";
+import { PUBLIC_ENTITY_FILTERS, isHiddenFromPublic } from "src/common/utils/public-entity";
 
 @Injectable()
 export class UserPortfolioService {
@@ -22,11 +24,18 @@ export class UserPortfolioService {
     private readonly userRepository: UserRepository,
     private readonly  collectionService: CollectionService,
     private readonly helpers: Helpers,
+    private readonly publicViewer: PublicViewerService,
   ) { }
+
+  /** Inactive and blocked portfolios exist only for their owner and admins: a 404 for anyone else. */
+  private async visibleToCaller(portfolio: FullPortfolio | null): Promise<boolean> {
+    if (!portfolio) return false;
+    return !isHiddenFromPublic(portfolio) || this.publicViewer.canSeeHidden(portfolio.user_id);
+  }
 
   async getById(userId: number, slug: string): Promise<FullPortfolio> {
     const portfolio = await this.portfolioRepository.getBySlug(slug, userId);
-    if (!portfolio) return null;
+    if (!(await this.visibleToCaller(portfolio))) return null;
 
     if (portfolio.thumbnail) {
       portfolio.thumbnail = await this.helpers.getAsset(portfolio.thumbnail);
@@ -60,7 +69,7 @@ export class UserPortfolioService {
     visibility: MediaVisibility = {},
   ): Promise<FullPortfolio> {
     const portfolio = await this.portfolioRepository.getBySlug(slug, userId, visibility);
-    if (!portfolio) return null;
+    if (!(await this.visibleToCaller(portfolio))) return null;
 
     if (portfolio.thumbnail) {
       portfolio.thumbnail = await this.helpers.getAsset(portfolio.thumbnail);
@@ -121,10 +130,8 @@ export class UserPortfolioService {
     const user = await this.userRepository.findByUsernameCompact(username);
     if (!user) return [];
 
-    console.log("FILTERS",filters)
-    const portfolios = await this.portfolioRepository.getAll({ user_id: user.id, ...filters });
-
-
+    const visibility = (await this.publicViewer.canSeeHidden(user.id)) ? {} : PUBLIC_ENTITY_FILTERS;
+    const portfolios = await this.portfolioRepository.getAll({ user_id: user.id, ...filters, ...visibility });
 
     return await Promise.all(portfolios.map(async (portfolio) => ({
       ...portfolio,
