@@ -34,6 +34,14 @@ export class InvitationLinkService {
     return this.invitationLinkRepository.updateById(id, data);
   }
 
+  claimUse(id: number): Promise<boolean> {
+    return this.invitationLinkRepository.claimUse(id);
+  }
+
+  releaseUse(id: number): Promise<void> {
+    return this.invitationLinkRepository.releaseUse(id);
+  }
+
   async setExpiresAt(id: number, expiresAt: Date): Promise<InvitationLink> {
     return this.invitationLinkRepository.updateById(id, { expires_at: expiresAt });
   }

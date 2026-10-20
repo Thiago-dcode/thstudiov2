@@ -110,6 +110,11 @@ export class AuthService {
       }
     }
     const { invitation_code, ...rest } = registerRequest;
+    // Claimed before the account exists, atomically: `validateCode` above is only a read, and
+    // concurrent registrations used to all pass it and each write back `current_uses + 1`.
+    if (invitationLink && !(await this.invitationLinkService.claimUse(invitationLink.id))) {
+      throw new BadRequestException('This invitation has already been used');
+    }
     const user = await this.userRepository.create({
       ...rest,
       // Explicit: never trust a spread from the request for the email-proof gate.
@@ -123,13 +128,10 @@ export class AuthService {
       password: await hash(registerRequest.password),
       role_id: clientRole.id,
       language: this.requestService.language ?? DEFAULT_LANGUAGE,
+    }).catch(async (error: unknown) => {
+      if (invitationLink) await this.invitationLinkService.releaseUse(invitationLink.id);
+      throw error;
     });
-    if (invitationLink) {
-      await this.invitationLinkService.updateById(invitationLink.id, {
-        current_uses: invitationLink.current_uses + 1,
-        active: invitationLink.max_uses < invitationLink.current_uses + 1
-      })
-    }
     if (waitList) {
       await this.waitListService.updateById(waitList.id, {
         status: 'REGISTERED',

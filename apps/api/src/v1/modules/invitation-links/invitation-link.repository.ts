@@ -13,6 +13,7 @@ import {
   UpdateInvitationLinkInput,
 } from '@repo/common-lib/types/invitation-link';
 import { DbException } from '@repo/database/exceptions';
+import { Query } from '@repo/database/facades';
 import { IndexInvitationLinkRequest } from './requests/index-invitation-link.request';
 import { RequestService } from 'src/common/services/request.service';
 
@@ -62,6 +63,31 @@ export class InvitationLinkRepository extends BaseRepository {
 
     const results = await query.get<InvitationLinkWithBenefitSchema[]>();
     return results.map((r) => this.formatFull(r));
+  }
+
+  /**
+   * Takes one use of the link in a single conditional UPDATE, so concurrent registrations cannot
+   * all pass the check and over-redeem it. False when it is inactive, expired or already spent.
+   */
+  async claimUse(id: number): Promise<boolean> {
+    const result = await Query.raw(
+      `UPDATE invitation_links SET current_uses = current_uses + 1
+       WHERE id = $1 AND active = true
+         AND (max_uses IS NULL OR current_uses < max_uses)
+         AND (expires_at IS NULL OR expires_at > now())
+       RETURNING id`,
+      [id],
+    );
+    const rows = Array.isArray(result) ? result[0] : result?.rows ?? [];
+    return Array.isArray(rows) && rows.length > 0;
+  }
+
+  /** Gives back a use taken by {@link claimUse} when the registration then failed. */
+  async releaseUse(id: number): Promise<void> {
+    await Query.raw(
+      `UPDATE invitation_links SET current_uses = GREATEST(current_uses - 1, 0) WHERE id = $1`,
+      [id],
+    );
   }
 
   async findByCode(code: string): Promise<InvitationLink | null> {

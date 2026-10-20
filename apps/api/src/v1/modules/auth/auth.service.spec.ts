@@ -51,7 +51,12 @@ describe('AuthService', () => {
   };
   const userSessionsService = { handleSessionProcess: jest.fn(), sessionExists: jest.fn() };
   const requestService: Record<string, unknown> = {};
-  const invitationLinkService = { validateCode: jest.fn(), updateById: jest.fn() };
+  const invitationLinkService = {
+    validateCode: jest.fn(),
+    updateById: jest.fn(),
+    claimUse: jest.fn(),
+    releaseUse: jest.fn(),
+  };
   const waitListService = { findByInvitationLinkId: jest.fn(), findByEmail: jest.fn(), updateById: jest.fn() };
   const mailService = { send: jest.fn() };
 
@@ -62,6 +67,7 @@ describe('AuthService', () => {
     userRepository.create.mockResolvedValue(user);
     userRepository.updateById.mockImplementation(async (_id, data) => ({ ...user, ...data }));
     invitationLinkService.validateCode.mockResolvedValue(invitationLink);
+    invitationLinkService.claimUse.mockResolvedValue(true);
     waitListService.findByInvitationLinkId.mockResolvedValue(waitList);
     userAuthDevicesService.getOneOrCreate.mockResolvedValue({ ...preValidatedDevice, disabled: true });
     mailService.send.mockResolvedValue(undefined);
@@ -107,6 +113,20 @@ describe('AuthService', () => {
 
       await expect(service.register(registerRequest as never)).rejects.toThrow('This invitation has expired');
       expect(userRepository.create).not.toHaveBeenCalled();
+    });
+
+    it('refuses an invitation another registration used up in the meantime', async () => {
+      invitationLinkService.claimUse.mockResolvedValue(false);
+
+      await expect(service.register(registerRequest as never)).rejects.toThrow('already been used');
+      expect(userRepository.create).not.toHaveBeenCalled();
+    });
+
+    it('gives the use back when the account cannot be created', async () => {
+      userRepository.create.mockRejectedValueOnce(new Error('duplicate'));
+
+      await expect(service.register(registerRequest as never)).rejects.toThrow('duplicate');
+      expect(invitationLinkService.releaseUse).toHaveBeenCalledWith(invitationLink.id);
     });
 
     it('logs in without a 2FA code when this browser validated the wait-list email', async () => {
