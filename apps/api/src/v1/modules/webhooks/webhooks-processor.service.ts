@@ -148,8 +148,15 @@ export class WebhookProcessor extends GlobalProcessor {
   }
 
   private async handleSubscriptionUpdate(
-    subscription: StripeSubscription,
+    eventSubscription: StripeSubscription,
   ): Promise<void> {
+    // Stripe delivers events out of order and retries them, so this event's snapshot can be
+    // older than what we already applied: an `updated` arriving after the subscription was
+    // cancelled used to recreate it as active (and cancel the customer's real one below). Act on
+    // the subscription as it is now.
+    const subscription = (await stripe.subscriptions.retrieve(
+      eventSubscription.id,
+    )) as unknown as StripeSubscription;
     this.logger.debug('Subscription ', subscription);
     const stripeSubscriptionId = subscription.id;
     const itemData = subscription.items.data[0];
@@ -195,6 +202,12 @@ export class WebhookProcessor extends GlobalProcessor {
       );
       this.logger.debug(`Updated subscription`, internalSubscription);
     } else {
+      // No live internal subscription matches, and Stripe says this one is not live either
+      // (cancelled, incomplete, unpaid): there is nothing to start.
+      if (!is_active) {
+        this.logger.debug(`Ignoring ${subscription.status} subscription ${stripeSubscriptionId} with no active match`);
+        return;
+      }
       const latestSub =
         await this.planSubscriptionService.findLatestSubscription(user.id);
 
