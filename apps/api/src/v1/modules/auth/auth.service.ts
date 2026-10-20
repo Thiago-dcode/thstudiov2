@@ -46,6 +46,7 @@ import { WaitListService } from '../wait-list/wait-list.service';
 import { LogService } from '@repo/backend-lib/services/log-service';
 import { InvitationLink } from '@repo/common-lib/types/invitation-link';
 import { WaitList } from '@repo/common-lib/types/wait-list';
+import { TWOFA_LOCK_TTL_MS, TWOFA_LOCK_WAIT_MS, withUserLock } from 'src/common/utils/user-lock';
 
 @Injectable()
 export class AuthService {
@@ -235,7 +236,21 @@ export class AuthService {
       ? { ...result.user, token: null, need_twofa: true }
       : await this.handleLogin(user, result.user_auth_device);
   }
+  /**
+   * Serialized per account: the attempt counter is read, compared and written back, so parallel
+   * guesses all read the same count and the limit never tripped. Under the lock each guess sees
+   * the previous one's increment (and a valid code can only be redeemed once).
+   */
   async verify2fa(verify2faRequest: Verify2faRequest) {
+    return withUserLock(
+      `twofa:${String(verify2faRequest.email).trim().toLowerCase()}`,
+      TWOFA_LOCK_TTL_MS,
+      () => this.verify2faLocked(verify2faRequest),
+      { waitMs: TWOFA_LOCK_WAIT_MS },
+    );
+  }
+
+  private async verify2faLocked(verify2faRequest: Verify2faRequest) {
     const user = await this.userRepository.findOneByWithSecrets(
       'email',
       verify2faRequest.email,

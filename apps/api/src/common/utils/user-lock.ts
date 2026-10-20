@@ -75,3 +75,7 @@ export const ENTITY_CREATE_LOCK_TTL_MS = 2 * 60 * 1000;
 /** The AI credit check-and-reserve: a few queries, so callers wait for it rather than get a 409. */
 export const AI_CREDIT_LOCK_TTL_MS = 30 * 1000;
 export const AI_CREDIT_LOCK_WAIT_MS = 10 * 1000;
+
+/** One 2FA verification: a bcrypt compare and a couple of writes. */
+export const TWOFA_LOCK_TTL_MS = 30 * 1000;
+export const TWOFA_LOCK_WAIT_MS = 10 * 1000;
