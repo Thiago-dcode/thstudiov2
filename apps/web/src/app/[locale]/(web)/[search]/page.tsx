@@ -8,6 +8,7 @@ import { cn } from "@repo/ui/lib/utils";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import Web from "@/lib/components/web-page.component";
+import { isDirectoryOpen } from "@/lib/directory-visibility";
 import { buildDirectoryJsonLd, JsonLd } from "@/lib/seo/json-ld";
 import { buildStaticPageMetadata } from "@/lib/seo/static-metadata";
 import categoriesService from "@/modules/categories/categories.service";
@@ -53,6 +54,8 @@ export async function generateMetadata({
   // Any unknown single path segment lands on this route. Deciding it in metadata — before the first
   // byte — makes it a real 404 instead of a 200 directory page titled "Artists".
   if (!isSearchSegment(search)) notFound();
+  // A directory with a handful of artists reads as an empty platform: closed until there are enough.
+  if (!(await isDirectoryOpen())) notFound();
 
   const t = await getTranslations("search");
   const query = await searchParams;
@@ -129,7 +132,7 @@ export default async function SearchPage({
   const t = await getTranslations("search");
 
   const { locale, search } = await routeParams;
-  if (!isSearchSegment(search)) {
+  if (!isSearchSegment(search) || !(await isDirectoryOpen())) {
     notFound();
   }
 

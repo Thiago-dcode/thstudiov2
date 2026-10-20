@@ -1,3 +1,4 @@
+import { isDirectoryOpen } from "@/lib/directory-visibility";
 import { localizedUrl } from "@/lib/seo/core";
 import { isIndexableEnv } from "@/lib/seo/indexability";
 import { getSitemapArtists } from "@/lib/seo/sitemap-source";
@@ -20,7 +21,10 @@ const ARTIST_LIMIT = 100;
 export async function GET() {
   if (!isIndexableEnv()) return new Response("Not Found", { status: 404 });
 
-  const artists = await getSitemapArtists(0, ARTIST_LIMIT);
+  const [artists, directoryOpen] = await Promise.all([
+    getSitemapArtists(0, ARTIST_LIMIT),
+    isDirectoryOpen(),
+  ]);
   const url = (path: string) => localizedUrl("en", path);
 
   const body = `# A11STUDIO
@@ -37,13 +41,18 @@ Built by an artist for artists: the founder, Thiago Ferreira, is a photographer,
 - [Español](${localizedUrl("es", "/")})
 - [Português](${localizedUrl("pt", "/")})
 
-## Discover artists
+${
+  directoryOpen
+    ? `## Discover artists
 
 - [Artist directory](${url("/artists")}): browse and search artists by discipline, style and location
 - [Portfolio directory](${url("/portfolios")}): browse curated portfolios across disciplines
 
-## About A11STUDIO
+`
+    : ""
+}## About A11STUDIO
 
+- [For photographers](${url("/for/photographers")}): a free photography portfolio — specialties, examples, a short guide and what the free plan includes
 - [About](${url("/about")}): mission, values and the founder's story
 - [FAQ](${url("/faqs")}): how portfolios, collections, services, AI-assisted SEO and pricing work
 - [Support](${url("/support")}): contact the A11STUDIO team

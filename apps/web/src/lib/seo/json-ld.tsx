@@ -220,7 +220,7 @@ const organizationNode = (description: string, founderRole: string): Node => ({
   sameAs: ORGANIZATION_SAME_AS,
 });
 
-const websiteNode = (locale: string): Node => ({
+const websiteNode = (locale: string, withSearch: boolean): Node => ({
   "@type": "WebSite",
   "@id": WEBSITE_ID(),
   name: SITE_NAME,
@@ -228,15 +228,19 @@ const websiteNode = (locale: string): Node => ({
   inLanguage: ["en", "es", "pt"],
   publisher: { "@id": ORGANIZATION_ID() },
   // Google retired the sitelinks search box (Nov 2024), but other engines still read SearchAction,
-  // and it documents the site's search URL.
-  potentialAction: {
-    "@type": "SearchAction",
-    target: {
-      "@type": "EntryPoint",
-      urlTemplate: `${localizedUrl(locale, "/artists")}?search={search_term_string}`,
-    },
-    "query-input": "required name=search_term_string",
-  },
+  // and it documents the site's search URL. Only declared while the directory it points to is open.
+  ...(withSearch
+    ? {
+        potentialAction: {
+          "@type": "SearchAction",
+          target: {
+            "@type": "EntryPoint",
+            urlTemplate: `${localizedUrl(locale, "/artists")}?search={search_term_string}`,
+          },
+          "query-input": "required name=search_term_string",
+        },
+      }
+    : {}),
 });
 
 type BrandCopy = { description: string; founderRole: string };
@@ -245,10 +249,11 @@ type BrandCopy = { description: string; founderRole: string };
 export function buildHomeJsonLd(
   locale: string,
   copy: BrandCopy & { pageName: string },
+  { directoryOpen }: { directoryOpen: boolean },
 ) {
   return graph([
     organizationNode(copy.description, copy.founderRole),
-    websiteNode(locale),
+    websiteNode(locale, directoryOpen),
     {
       "@type": "WebPage",
       ...pageBase(locale, "/"),
@@ -301,11 +306,8 @@ const stripHtml = (html: string) =>
  * FAQPage. Google has limited the FAQ rich result to government/health sites since 2023, so the value
  * here is answer engines, which lift exactly this Q&A shape. Answers are plain text.
  */
-export function buildFaqPageJsonLd(
-  items: { question: string; answer: string }[],
-  locale: string,
-) {
-  const mainEntity = items
+const faqQuestions = (items: { question: string; answer: string }[]) =>
+  items
     .map((f) => {
       const answer = stripHtml(f.answer);
       if (!f.question || !answer) return null;
@@ -316,8 +318,40 @@ export function buildFaqPageJsonLd(
       };
     })
     .filter(Boolean);
+
+export function buildFaqPageJsonLd(
+  items: { question: string; answer: string }[],
+  locale: string,
+) {
   return graph([
-    { "@type": "FAQPage", ...pageBase(locale, "/faqs"), mainEntity },
+    {
+      "@type": "FAQPage",
+      ...pageBase(locale, "/faqs"),
+      mainEntity: faqQuestions(items),
+    },
+  ]);
+}
+
+/**
+ * A discipline landing (`/for/photographers`): a page about the brand's product for that audience,
+ * with its own Q&A. One `FAQPage` node carries both — the page is the FAQ's container, so splitting
+ * them would describe one URL as two pages.
+ */
+export function buildDisciplineLandingJsonLd(
+  locale: string,
+  path: string,
+  copy: { pageName: string; description: string },
+  faq: { question: string; answer: string }[],
+) {
+  return graph([
+    {
+      "@type": "FAQPage",
+      ...pageBase(locale, path),
+      name: copy.pageName,
+      description: copy.description,
+      about: { "@id": ORGANIZATION_ID() },
+      mainEntity: faqQuestions(faq),
+    },
   ]);
 }
 

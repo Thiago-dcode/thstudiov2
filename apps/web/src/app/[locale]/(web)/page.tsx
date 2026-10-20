@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
+import { isDirectoryOpen } from "@/lib/directory-visibility";
 import { buildHomeJsonLd, JsonLd } from "@/lib/seo/json-ld";
 import { buildStaticPageMetadata } from "@/lib/seo/static-metadata";
 import { FaqsContent } from "../../../lib/components/faqs";
@@ -32,16 +33,23 @@ export default async function Home({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
-  const tSeo = await getTranslations("seo");
+  const [tSeo, directoryOpen] = await Promise.all([
+    getTranslations("seo"),
+    isDirectoryOpen(),
+  ]);
   return (
     <>
       {/* One connected graph: the brand, the site and this page (they were two unrelated scripts). */}
       <JsonLd
-        data={buildHomeJsonLd(locale, {
-          description: tSeo("organizationDescription"),
-          founderRole: tSeo("founderRole"),
-          pageName: tSeo("homePageName"),
-        })}
+        data={buildHomeJsonLd(
+          locale,
+          {
+            description: tSeo("organizationDescription"),
+            founderRole: tSeo("founderRole"),
+            pageName: tSeo("homePageName"),
+          },
+          { directoryOpen },
+        )}
       />
       {/* <HeroSection /> */}
 

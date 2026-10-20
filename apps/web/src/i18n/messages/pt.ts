@@ -253,6 +253,179 @@ const messages = {
       },
     },
   },
+  forDiscipline: {
+    photographers: {
+      metadata: {
+        title: "Portfólio online para fotógrafos, grátis",
+        description:
+          "Crie grátis seu portfólio de fotografia profissional. Organize seu trabalho por especialidade, entregue cada ensaio em coleções e receba clientes diretamente.",
+      },
+      hero: {
+        label: "Para fotógrafos",
+        title: "Um portfólio online para fotógrafos que traz clientes",
+        lead: "Mostre seu melhor trabalho por especialidade, organize cada ensaio e deixe os clientes falarem com você diretamente. A A11STUDIO escreve os textos para buscadores por você, para que suas fotos possam ser encontradas no Google.",
+        seeExamples: "Ver portfólios reais",
+      },
+      examples: {
+        badge: "Exemplos",
+        title: "Exemplos de portfólio de fotografia",
+        description:
+          "Portfólios reais criados por fotógrafos na A11STUDIO. O seu vai ficar e funcionar do mesmo jeito.",
+        viewAll: "Ver todos os portfólios",
+      },
+      specialties: {
+        badge: "Especialidades",
+        title: "Um portfólio para cada tipo de fotografia",
+        description:
+          "Clientes contratam especialistas. Crie um portfólio para cada tipo de trabalho pelo qual você quer ser contratado.",
+        items: [
+          { slug: "portrait-photography", label: "Retrato" },
+          { slug: "wedding-event-photography", label: "Casamentos" },
+          { slug: "fashion-editorial-photography", label: "Moda e editorial" },
+          {
+            slug: "product-commercial-photography",
+            label: "Produto e publicidade",
+          },
+          { slug: "aerial-drone-photography", label: "Aérea e drone" },
+          {
+            slug: "documentary-street-photography",
+            label: "Documental e de rua",
+          },
+          {
+            slug: "architecture-real-estate-photography",
+            label: "Arquitetura e imóveis",
+          },
+          {
+            slug: "landscape-nature-photography",
+            label: "Paisagem e natureza",
+          },
+          { slug: "pet-photography", label: "Pets" },
+          { slug: "event-photography", label: "Eventos" },
+          { slug: "automotive-photography", label: "Automotiva" },
+        ],
+      },
+      features: {
+        badge: "Por que A11STUDIO",
+        title: "Feito para o jeito que o fotógrafo trabalha",
+        description:
+          "Tudo o que você precisa para ser encontrado e contratado, sem criar um site.",
+        items: [
+          {
+            title: "Portfólios por especialidade",
+            description:
+              "Reúna suas melhores imagens em uma seleção para cada tipo de trabalho — casamentos, retratos, produto — e os clientes veem exatamente o que você faz.",
+          },
+          {
+            title: "Coleções para cada ensaio",
+            description:
+              "Agrupe as fotos de um ensaio, cliente ou viagem em uma coleção, separada dos seus portfólios.",
+          },
+          {
+            title: "Serviços que podem ser contratados",
+            description:
+              "Mostre o que você oferece, o que está incluído e, se quiser, o preço: o que o cliente precisa saber antes de entrar em contato.",
+          },
+          {
+            title: "Contato direto, sem intermediários",
+            description:
+              "Os clientes escrevem para você direto da sua página. Sem plataformas no meio.",
+          },
+          {
+            title: "Pronto para buscadores",
+            description:
+              "A IA escreve títulos, descrições, tags e textos alternativos para suas fotos, e suas páginas públicas ficam disponíveis para os buscadores.",
+          },
+          {
+            title: "Encontrado onde você trabalha",
+            description:
+              "Adicione sua cidade para que quem procura um fotógrafo por perto encontre você.",
+          },
+        ],
+      },
+      guide: {
+        badge: "Guia",
+        title: "Como criar um portfólio de fotografia que traz clientes",
+        description: "Cinco passos que importam mais do que qualquer template.",
+        steps: [
+          {
+            title: "Uma especialidade por portfólio",
+            description:
+              "Quem procura fotógrafo de casamento quer ver casamentos. Dedique cada portfólio a um tipo de trabalho para que ele pareça o de um especialista.",
+          },
+          {
+            title: "Seja rigoroso na seleção",
+            description:
+              "Mostre de 15 a 30 das suas melhores imagens, não tudo o que você fotografou. Uma foto fraca diminui a impressão do conjunto inteiro.",
+          },
+          {
+            title: "Comece e termine forte",
+            description:
+              "Abra com sua melhor imagem e feche com outra de destaque. Varie enquadramentos e momentos para que o conjunto conte uma história.",
+          },
+          {
+            title: "Descreva seu trabalho",
+            description:
+              "Dê a cada foto um título claro com o tema, o lugar e o estilo. Isso ajuda os clientes a entendê-la e os buscadores a encontrá-la.",
+          },
+          {
+            title: "Facilite a sua contratação",
+            description:
+              "Adicione seus serviços, sua cidade e uma bio curta, e coloque o link do seu portfólio na bio do Instagram e na assinatura de e-mail.",
+          },
+        ],
+      },
+      freePlan: {
+        badge: "Preços",
+        title: "Comece grátis",
+        description:
+          "O plano gratuito inclui tudo o que você precisa para publicar um portfólio profissional.",
+        portfolios: "Portfólios",
+        collections: "Coleções",
+        services: "Serviços",
+        storage: "Armazenamento",
+        aiCredits: "Créditos de IA",
+        unlimited: "Ilimitado",
+        upgradeNote:
+          "Precisa de mais espaço? Os planos pagos adicionam mais portfólios, armazenamento e créditos de IA quando você quiser.",
+      },
+      faq: {
+        badge: "Perguntas",
+        title: "O que os fotógrafos perguntam",
+        description: "Respostas rápidas antes de começar.",
+        items: [
+          {
+            question: "A A11STUDIO é grátis para fotógrafos?",
+            answer:
+              "Sim. O plano gratuito permite publicar seu perfil, portfólios, coleções e serviços sem custo. Os planos pagos só adicionam mais espaço e créditos de IA.",
+          },
+          {
+            question: "Preciso de um site próprio ou saber design?",
+            answer:
+              "Não. Seu portfólio fica em a11studio.com/artists/seu-usuario e você o monta enviando e organizando suas fotos, sem código, hospedagem ou templates.",
+          },
+          {
+            question: "Qual a diferença para postar no Instagram?",
+            answer:
+              "O Instagram mostra suas últimas publicações em um único feed. A A11STUDIO organiza seu melhor trabalho por especialidade, adiciona seus serviços e um formulário de contato, e faz cada página poder ser encontrada no Google. Muitos fotógrafos usam os dois: o Instagram para postar e a A11STUDIO como link na bio.",
+          },
+          {
+            question: "Os clientes vão me encontrar no Google?",
+            answer:
+              "A A11STUDIO cuida da parte técnica: títulos, descrições e textos alternativos otimizados, e suas páginas públicas disponíveis para os buscadores. Ninguém pode garantir uma posição, mas um perfil completo, com sua cidade e fotos bem descritas, dá a você a melhor chance.",
+          },
+          {
+            question: "Em quais idiomas a A11STUDIO está disponível?",
+            answer: "Inglês, espanhol e português.",
+          },
+        ],
+        more: "Mais respostas nas <link>perguntas frequentes</link>.",
+      },
+      cta: {
+        title: "Seu trabalho merece ser encontrado",
+        description: "Crie hoje seu portfólio de fotografia. Começar é grátis.",
+      },
+    },
+  },
   faqs: {
     title: "Perguntas frequentes",
     stillHaveQuestions:
@@ -579,6 +752,7 @@ const messages = {
       heading: "Descobrir",
       artists: "Explorar artistas",
       portfolios: "Explorar portfólios",
+      forPhotographers: "Para fotógrafos",
     },
     contact: {
       heading: "Contato",

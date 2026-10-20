@@ -1,5 +1,6 @@
 import type { SitemapMediaItem } from "@repo/common-lib/types/sitemap";
 import type { MetadataRoute } from "next";
+import { DIRECTORY_PATHS, isDirectoryOpen } from "@/lib/directory-visibility";
 import { languageAlternates, localizedUrl } from "@/lib/seo/core";
 import {
   getSitemapArtists,
@@ -11,6 +12,10 @@ import {
   resolveSitemapShard,
   SITEMAP_SHARD_SIZE as SHARD_SIZE,
 } from "@/lib/seo/sitemap-source";
+import {
+  DISCIPLINE_LANDING_KEYS,
+  disciplineLandingPath,
+} from "@/modules/landings/discipline-landings";
 
 /**
  * Rendered per request, never prerendered into the image.
@@ -95,6 +100,7 @@ const STATIC_PATHS = [
   // The directory hubs: the only crawlable entry points into the artist and portfolio catalogue.
   "/artists",
   "/portfolios",
+  ...DISCIPLINE_LANDING_KEYS.map(disciplineLandingPath),
   "/about",
   "/faqs",
   "/support",
@@ -111,8 +117,11 @@ const STATIC_PATHS = [
  * changed "just now" — Google stops trusting `lastmod` from a site that does that, including on the
  * entity shards where it is real (`updated_at`).
  */
-function staticEntries(): MetadataRoute.Sitemap {
-  return STATIC_PATHS.map((p) => entry(p));
+async function staticEntries(): Promise<MetadataRoute.Sitemap> {
+  const directoryOpen = await isDirectoryOpen();
+  return STATIC_PATHS.filter(
+    (p) => directoryOpen || !DIRECTORY_PATHS.has(p),
+  ).map((p) => entry(p));
 }
 
 export async function generateSitemaps(): Promise<{ id: number }[]> {
@@ -127,7 +136,7 @@ export default async function sitemap(props: {
   const id = Number(await props.id);
   const desc = await resolveSitemapShard(id);
   if (!desc) return [];
-  if (desc.kind === "static") return staticEntries();
+  if (desc.kind === "static") return await staticEntries();
 
   const perPage = SHARD_SIZE[desc.kind];
   switch (desc.kind) {

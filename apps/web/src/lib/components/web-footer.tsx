@@ -14,6 +14,7 @@ import {
 } from "@/lib/components/social-icons";
 import { WebFooterLanguageSwitcher } from "@/lib/components/web-footer-language-switcher";
 import { config } from "@/lib/config";
+import { DIRECTORY_PATHS, isDirectoryOpen } from "@/lib/directory-visibility";
 import { SOCIAL, type SocialKey } from "@/lib/social";
 
 const legalLinks = [
@@ -34,6 +35,8 @@ const legalLinks = [
 const discoverLinks = [
   { href: "/artists", key: "artists" },
   { href: "/portfolios", key: "portfolios" },
+  // The discipline landings need an inbound link from every page for the same reason.
+  { href: "/for/photographers", key: "forPhotographers" },
 ] as const;
 
 /** Icon + aria-label key for each {@link SOCIAL} entry, so adding a network only needs a row here. */
@@ -57,7 +60,14 @@ export const WebFooter = async ({
    * the artist's work, not our CTA, owns the page. */
   artistPage?: boolean;
 } = {}) => {
-  const t = await getTranslations("footer");
+  const [t, directoryOpen] = await Promise.all([
+    getTranslations("footer"),
+    isDirectoryOpen(),
+  ]);
+  // The directory links only once it is open; the discipline landings always.
+  const visibleDiscoverLinks = discoverLinks.filter(
+    (link) => directoryOpen || !DIRECTORY_PATHS.has(link.href),
+  );
   const year = new Date().getFullYear();
   const supportEmail = serverEnv.SUPPORT_EMAIL;
 
@@ -91,7 +101,7 @@ export const WebFooter = async ({
               {t("discover.heading")}
             </span>
             <nav className="flex flex-col gap-2">
-              {discoverLinks.map((link) => (
+              {visibleDiscoverLinks.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}

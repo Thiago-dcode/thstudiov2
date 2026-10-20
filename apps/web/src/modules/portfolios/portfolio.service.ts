@@ -23,6 +23,24 @@ class PortfolioService extends BaseService {
       resource: request ? queryParamBuilder("", request) : "",
     });
   }
+  /**
+   * Public portfolios in any of `categories`, for marketing pages (the discipline landings). Same
+   * public + cached treatment as `getFeatured`: no visitor headers, so one cached copy serves everyone.
+   */
+  async findPublicByCategories(
+    categories: string[],
+    perPage: number,
+  ): Promise<ApiResponse<Portfolio[]>> {
+    return await this.fetchApi.get({
+      resource: queryParamBuilder("", {
+        categories,
+        per_page: perPage,
+        page: 1,
+      }),
+      isPublic: true,
+      cacheOptions: landingCache(`portfolios-by-category-${categories[0]}`),
+    });
+  }
   async getHighlightCount(): Promise<ApiResponse<HighlightCount>> {
     return await this.fetchApi.get({ resource: "/highlight-count" });
   }

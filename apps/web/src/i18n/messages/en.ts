@@ -251,6 +251,180 @@ const messages = {
       },
     },
   },
+  forDiscipline: {
+    photographers: {
+      metadata: {
+        title: "Free Photography Portfolio Website for Photographers",
+        description:
+          "Build a professional photography portfolio for free. Organise your work by specialty, deliver every shoot in collections and let clients contact you directly.",
+      },
+      hero: {
+        label: "For photographers",
+        title: "A free photography portfolio that gets you hired",
+        lead: "Show your best work by specialty, keep every shoot organised and let clients reach you directly. A11STUDIO writes the search-friendly text for you, so your photos can be found on Google.",
+        seeExamples: "See real portfolios",
+      },
+      examples: {
+        badge: "Examples",
+        title: "Photography portfolio examples",
+        description:
+          "Live portfolios made by photographers on A11STUDIO. Yours will look and work the same way.",
+        viewAll: "Browse all portfolios",
+      },
+      specialties: {
+        badge: "Specialties",
+        title: "One portfolio for every kind of photography",
+        description:
+          "Clients hire specialists. Build a separate portfolio for each type of work you want to be booked for.",
+        items: [
+          { slug: "portrait-photography", label: "Portrait" },
+          { slug: "wedding-event-photography", label: "Weddings" },
+          {
+            slug: "fashion-editorial-photography",
+            label: "Fashion & editorial",
+          },
+          {
+            slug: "product-commercial-photography",
+            label: "Product & commercial",
+          },
+          { slug: "aerial-drone-photography", label: "Aerial & drone" },
+          {
+            slug: "documentary-street-photography",
+            label: "Documentary & street",
+          },
+          {
+            slug: "architecture-real-estate-photography",
+            label: "Architecture & real estate",
+          },
+          { slug: "landscape-nature-photography", label: "Landscape & nature" },
+          { slug: "pet-photography", label: "Pets" },
+          { slug: "event-photography", label: "Events" },
+          { slug: "automotive-photography", label: "Automotive" },
+        ],
+      },
+      features: {
+        badge: "Why A11STUDIO",
+        title: "Built around how photographers work",
+        description:
+          "Everything you need to be found and hired, without building a website.",
+        items: [
+          {
+            title: "Portfolios by specialty",
+            description:
+              "Curate your strongest images into a best-of for each kind of work — weddings, portraits, products — so clients see exactly what you do.",
+          },
+          {
+            title: "Collections for every shoot",
+            description:
+              "Group the photos from one session, client or trip in a collection, separate from your curated portfolios.",
+          },
+          {
+            title: "Services clients can book",
+            description:
+              "List what you offer, what's included and, if you want, the price: the details clients need before they get in touch.",
+          },
+          {
+            title: "Direct contact, no middlemen",
+            description:
+              "Clients write to you straight from your page. No marketplace in between.",
+          },
+          {
+            title: "Search-friendly by default",
+            description:
+              "AI writes titles, descriptions, tags and alt text for your photos, and your public pages are listed for search engines to find.",
+          },
+          {
+            title: "Found where you work",
+            description:
+              "Add your city so people looking for a photographer near them can find you.",
+          },
+        ],
+      },
+      guide: {
+        badge: "Guide",
+        title: "How to build a photography portfolio that gets clients",
+        description: "Five steps that matter more than any template.",
+        steps: [
+          {
+            title: "Pick one specialty per portfolio",
+            description:
+              "A wedding client wants to see weddings. Keep each portfolio to one type of work so it reads as the work of a specialist.",
+          },
+          {
+            title: "Edit hard",
+            description:
+              "Show 15 to 30 of your strongest images, not everything you've shot. One weak photo lowers the impression of the whole set.",
+          },
+          {
+            title: "Open and close strong",
+            description:
+              "Put your best image first and finish with another standout. Vary framing and moments so the set tells a story.",
+          },
+          {
+            title: "Describe your work",
+            description:
+              "Give each photo a clear title with the subject, place and style. It helps clients understand it and helps search engines find it.",
+          },
+          {
+            title: "Make it easy to hire you",
+            description:
+              "Add your services, your city and a short bio, then put your portfolio link in your Instagram bio and email signature.",
+          },
+        ],
+      },
+      freePlan: {
+        badge: "Pricing",
+        title: "Start for free",
+        description:
+          "The free plan covers everything you need to publish a professional portfolio.",
+        portfolios: "Portfolios",
+        collections: "Collections",
+        services: "Services",
+        storage: "Storage",
+        aiCredits: "AI credits",
+        unlimited: "Unlimited",
+        upgradeNote:
+          "Need more room? Paid plans add more portfolios, storage and AI credits when you're ready.",
+      },
+      faq: {
+        badge: "FAQ",
+        title: "Questions photographers ask",
+        description: "Short answers before you start.",
+        items: [
+          {
+            question: "Is A11STUDIO really free for photographers?",
+            answer:
+              "Yes. The free plan lets you publish your profile, portfolios, collections and services at no cost. Paid plans only add more space and AI credits.",
+          },
+          {
+            question: "Do I need my own website or design skills?",
+            answer:
+              "No. Your portfolio lives at a11studio.com/artists/your-username and you build it by uploading and arranging photos — no code, hosting or templates.",
+          },
+          {
+            question: "How is it different from posting on Instagram?",
+            answer:
+              "Instagram shows your latest posts in one feed. A11STUDIO organises your best work by specialty, adds your services and a contact form, and makes every page searchable on Google. Many photographers use both: Instagram to post, A11STUDIO as the link in their bio.",
+          },
+          {
+            question: "Will clients find my portfolio on Google?",
+            answer:
+              "A11STUDIO handles the technical side: search-friendly titles, descriptions and alt text, and listing your public pages for search engines. Nobody can guarantee a ranking, but a complete profile with your city and well-described work gives you the best chance.",
+          },
+          {
+            question: "Which languages is A11STUDIO available in?",
+            answer: "English, Spanish and Portuguese.",
+          },
+        ],
+        more: "More answers in the <link>full FAQ</link>.",
+      },
+      cta: {
+        title: "Your work deserves to be found",
+        description:
+          "Create your photography portfolio today. It's free to start.",
+      },
+    },
+  },
   faqs: {
     title: "Frequently asked questions",
     stillHaveQuestions: "Still have questions? We're here to <link>help</link>",
@@ -578,6 +752,7 @@ const messages = {
       heading: "Discover",
       artists: "Browse artists",
       portfolios: "Browse portfolios",
+      forPhotographers: "For photographers",
     },
     contact: {
       heading: "Contact",
