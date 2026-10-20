@@ -588,7 +588,10 @@ ${categoryLines.join(', AND\n')}.
   public async moderateContent(url: string | string[], meta: { user_id: number }) {
     try {
       this.logger.name('moderate-content').warn('Starting to moderate content', {
-        url,
+        // Inline frames (an animated GIF's) are logged by size, not as kilobytes of base64.
+        url: (Array.isArray(url) ? url : [url]).map((u) =>
+          u.startsWith('data:') ? `data URL (${u.length} chars)` : u,
+        ),
         meta
       });
       const { moderation, matchesExpectedResponse, verdictUsable, usage, text, parseError } =

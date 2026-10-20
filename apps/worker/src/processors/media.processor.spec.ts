@@ -284,6 +284,9 @@ describe('MediaProcessor.processMedia', () => {
                 config: { driver: 'sharp' },
                 getSizeCompressed: real.getSizeCompressed.bind(real),
                 optimizeGif: jest.fn().mockResolvedValue(compressed),
+                sampleAnimationFrames: jest
+                    .fn()
+                    .mockResolvedValue([Buffer.from('frame-a'), Buffer.from('frame-b')]),
                 optimizeImageToWebp: jest.fn().mockResolvedValue({
                     filename: 'jigglypuff-ball-thumbnail.webp',
                     size: 5_584,
@@ -337,7 +340,7 @@ describe('MediaProcessor.processMedia', () => {
                 logger,
             );
 
-            return { processor, compressService };
+            return { processor, compressService, aiService };
         };
 
         beforeEach(() => {
@@ -355,6 +358,20 @@ describe('MediaProcessor.processMedia', () => {
 
         afterEach(() => {
             jest.restoreAllMocks();
+        });
+
+        it('moderates a GIF on frames sampled across the animation, not its first frame', async () => {
+            const { processor, aiService } = buildGif('HIGH');
+
+            await processor.processMedia();
+
+            expect(aiService.moderateContent).toHaveBeenCalledWith(
+                [
+                    `data:image/jpeg;base64,${Buffer.from('frame-a').toString('base64')}`,
+                    `data:image/jpeg;base64,${Buffer.from('frame-b').toString('base64')}`,
+                ],
+                expect.anything(),
+            );
         });
 
         it('passes the level as a real quality argument, not a hardcoded 100', async () => {

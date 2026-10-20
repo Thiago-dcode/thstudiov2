@@ -220,6 +220,13 @@ export abstract class CompressService {
   ): Promise<CompressionOutput>
 
   /**
+   * Up to `count` frames spread evenly across an animated image (first and last included), as
+   * small JPEGs for a vision model. Vision models only read the first frame of an animated GIF,
+   * so moderating the file itself vouches for frame one alone. Empty for a still image.
+   */
+  abstract sampleAnimationFrames(file: Buffer, count: number, maxEdgePx: number): Promise<Buffer[]>
+
+  /**
    * Re-encodes as GIF, preserving every frame.
    *
    * @param maxEdgePx longest edge kept, measured against ONE frame rather than the page strip.

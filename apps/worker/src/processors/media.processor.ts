@@ -357,8 +357,19 @@ export class MediaProcessor {
             };
         }
 
+        // A vision model reads only an animated GIF's first frame, so a GIF is judged on frames
+        // sampled across the whole animation, in one multi-frame call like a video's.
+        const gifFrames = media.media_type === 'GIF'
+            ? await this.compressService.sampleAnimationFrames(
+                buffer,
+                VIDEO_PREVIEW_FRAME_PERCENTAGES.length,
+                VIDEO_SAMPLE_FRAME_MAX_EDGE_PX,
+            )
+            : [];
         const { moderation } = await this.aiService.moderateContent(
-            await this.storageService.getUrl(sourcePath),
+            gifFrames.length
+                ? gifFrames.map((frame) => `data:image/jpeg;base64,${frame.toString('base64')}`)
+                : await this.storageService.getUrl(sourcePath),
             { user_id: media.user_id },
         );
 

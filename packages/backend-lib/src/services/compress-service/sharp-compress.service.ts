@@ -369,6 +369,24 @@ export class SharpCompressService extends CompressService {
      * @param quality - Quality level for the WebP output (0-100), defaults to 90
      * @param maxEdgePx - Longest edge kept, defaults to {@link MAX_IMAGE_EDGE_PX}
      */
+    public async sampleAnimationFrames(file: Buffer, count: number, maxEdgePx: number): Promise<Buffer[]> {
+        const { pages = 1 } = await sharp(file, { limitInputPixels: GIF_INPUT_PIXEL_LIMIT }).metadata();
+        const picks = Math.min(count, pages);
+        if (pages <= 1 || picks < 2) return [];
+        const indexes = [...new Set(
+            Array.from({ length: picks }, (_, i) => Math.round((i * (pages - 1)) / (picks - 1))),
+        )];
+        return Promise.all(
+            indexes.map((page) =>
+                sharp(file, { page, limitInputPixels: GIF_INPUT_PIXEL_LIMIT })
+                    .resize(maxEdgePx, maxEdgePx, { fit: 'inside', withoutEnlargement: true })
+                    .flatten({ background: '#ffffff' })
+                    .jpeg({ quality: 70 })
+                    .toBuffer(),
+            ),
+        );
+    }
+
     public async optimizeImageToWebp(
         file: Express.Multer.File | Buffer,
         targetSize: number,
