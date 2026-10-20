@@ -17,6 +17,11 @@
 
 set -euo pipefail
 
+# The whole script is one { … } block so bash parses it fully before running it. Step 1
+# `git pull`s this very file; without the block bash keeps reading the rewritten file
+# at its old byte offset, which once skipped the certificate pre-flight in step 1b.
+{
+
 # ── Colour helpers ────────────────────────────────────────────────────────────
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; CYAN='\033[0;36m'; NC='\033[0m'
 info()    { echo -e "${CYAN}[deploy]${NC} $*"; }
@@ -248,3 +253,6 @@ success "Cleanup done."
 
 echo ""
 success "Deploy complete."
+
+exit 0
+}

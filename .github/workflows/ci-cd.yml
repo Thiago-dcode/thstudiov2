@@ -198,7 +198,7 @@ jobs:
           # Passed as env rather than interpolated into the script text: a secret
           # containing a quote or newline would otherwise break out of the string and
           # inject into a root shell.
-          envs: DEPLOY_DIR,GHCR_TOKEN,GHCR_USER
+          envs: DEPLOY_DIR,GHCR_TOKEN,GHCR_USER,DOCKER_IMAGE_TAG
           script: |
             set -eu
             cd "$DEPLOY_DIR"
@@ -212,6 +212,10 @@ jobs:
           # prod and due to expire 2026-08-20.
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GHCR_USER: ${{ github.actor }}
+          # The immutable tag this run just built, not the moving branch tag: another
+          # branch's build (its token also has packages: write) cannot swap the image
+          # between build and deploy. Compose prefers it over DOCKER_IMAGE_TAG in .env.
+          DOCKER_IMAGE_TAG: sha-${{ github.sha }}
 
   build-and-push-prod:
     needs: test
@@ -348,7 +352,7 @@ jobs:
           port: 22
           script_stop: true
           command_timeout: 15m
-          envs: DEPLOY_DIR,GHCR_TOKEN,GHCR_USER
+          envs: DEPLOY_DIR,GHCR_TOKEN,GHCR_USER,DOCKER_IMAGE_TAG
           script: |
             set -eu
             cd "$DEPLOY_DIR"
@@ -359,3 +363,7 @@ jobs:
           # Per-run token — see the dev deploy job.
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GHCR_USER: ${{ github.actor }}
+          # The immutable tag this run just built, not the moving branch tag: another
+          # branch's build (its token also has packages: write) cannot swap the image
+          # between build and deploy. Compose prefers it over DOCKER_IMAGE_TAG in .env.
+          DOCKER_IMAGE_TAG: sha-${{ github.sha }}
