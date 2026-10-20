@@ -1,3 +1,4 @@
+import { AI_CREDIT_LOCK_TTL_MS, AI_CREDIT_LOCK_WAIT_MS, withUserLock } from 'src/common/utils/user-lock';
 import { HttpException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { LogService } from '@repo/backend-lib/services/log-service';
 import { QueueHelper } from '@repo/backend-lib/utils';
@@ -179,26 +180,38 @@ export class AiMediaService {
       // The worker's upload path (`generate_metadata: true`) calls this directly, bypassing both
       // `AiConsumptionGuard` and the check above — this is the only gate it ever passes through.
       // A throw here would make BullMQ retry a job that can never succeed, so this skips quietly.
-      const media = await this.mediaRepository.findById(request.media_id);
-      // Reserved credits include this row when it is already queued, so it is left out of the
-      // sum rather than charged twice.
-      const cost = AiCreditsHelper.metadataCreditCost(media?.media_type);
-      const reserved =
-        (await this.reservedMetadataCredits(request.user_id)) -
-        (media?.status === 'GENERATING_METADATA' ? cost : 0);
-      if (
-        !(await this.userExtraDataService.hasAiCreditsFor(request.user_id, cost + reserved))
-      ) {
-        this.logger.info(
-          `Skipping generate media metadata: user [${request.user_id}] lacks AI credits (needs ${cost})`,
-          { media_id: request.media_id, user_id: request.user_id, cost },
-        );
-        return null;
-      }
+      // The credit check and the reservation (the GENERATING_METADATA status the check counts)
+      // run under one per-user lock: unlocked, concurrent requests all passed the check before
+      // any of them reserved, and together spent more credits than the user had.
+      const reservedOk = await withUserLock(
+        `ai-credits:${request.user_id}`,
+        AI_CREDIT_LOCK_TTL_MS,
+        async () => {
+          const media = await this.mediaRepository.findById(request.media_id);
+          // Reserved credits include this row when it is already queued, so it is left out of
+          // the sum rather than charged twice.
+          const cost = AiCreditsHelper.metadataCreditCost(media?.media_type);
+          const reserved =
+            (await this.reservedMetadataCredits(request.user_id)) -
+            (media?.status === 'GENERATING_METADATA' ? cost : 0);
+          if (
+            !(await this.userExtraDataService.hasAiCreditsFor(request.user_id, cost + reserved))
+          ) {
+            this.logger.info(
+              `Skipping generate media metadata: user [${request.user_id}] lacks AI credits (needs ${cost})`,
+              { media_id: request.media_id, user_id: request.user_id, cost },
+            );
+            return false;
+          }
 
-      await this.mediaRepository.updateById(request.media_id, {
-        status: 'GENERATING_METADATA',
-      });
+          await this.mediaRepository.updateById(request.media_id, {
+            status: 'GENERATING_METADATA',
+          });
+          return true;
+        },
+        { waitMs: AI_CREDIT_LOCK_WAIT_MS },
+      );
+      if (!reservedOk) return null;
 
       await QueueHelper.createOrUpdateUserNotificationJob({
         read_at: null,

@@ -91,4 +91,31 @@ describe('withUserLock', () => {
     failSet = true;
     await expect(withUserLock('k', 1000, async () => 'ran')).resolves.toBe('ran');
   });
+
+  it('with waitMs, waits for the holder to finish instead of returning a 409', async () => {
+    const gate = deferred();
+    const order: string[] = [];
+    const first = withUserLock('wait', 10_000, async () => {
+      await gate.promise;
+      order.push('first');
+    });
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    const second = withUserLock('wait', 10_000, async () => {
+      order.push('second');
+    }, { waitMs: 2_000 });
+    setTimeout(() => gate.resolve(), 120);
+    await Promise.all([first, second]);
+    expect(order).toEqual(['first', 'second']);
+  });
+
+  it('with waitMs, still returns a 409 once the wait runs out', async () => {
+    const gate = deferred();
+    const first = withUserLock('timeout', 10_000, () => gate.promise);
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    await expect(
+      withUserLock('timeout', 10_000, async () => undefined, { waitMs: 150 }),
+    ).rejects.toBeInstanceOf(ConflictException);
+    gate.resolve();
+    await first;
+  });
 });
