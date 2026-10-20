@@ -69,6 +69,14 @@ import {
     UpdateMediaJobInput,
 } from '@repo/common-lib/types/media';
 import { JobsOptions, Queue } from "bullmq";
+import { randomUUID } from 'node:crypto';
+
+/**
+ * BullMQ silently drops an `add` whose jobId already exists. `Date.now()` alone collides for jobs
+ * added in the same millisecond (one upload records every stored object in one `Promise.all`), so
+ * every job that must not be merged with a twin gets a random part too.
+ */
+const uniqueJobSuffix = () => `${Date.now()}-${randomUUID()}`;
 
 /**
  * How long a single-entity SEO job waits before running. Acts as a debounce window: repeated triggers
@@ -127,7 +135,7 @@ export class QueueHelper {
             dto.name,
             dto.payload,
             {
-                jobId: `mail-${dto.name}-${Date.now()}`,
+                jobId: `mail-${dto.name}-${uniqueJobSuffix()}`,
                 priority: 10,
                 removeOnComplete: true,
                 attempts: 3,
@@ -141,7 +149,7 @@ export class QueueHelper {
             JOB_RECORD_LLM_USAGE,
             dto,
             {
-                jobId: `llm-usage-${dto.user_id}-${Date.now()}`,
+                jobId: `llm-usage-${dto.user_id}-${uniqueJobSuffix()}`,
                 priority: 10,
                 removeOnComplete: true,
                 attempts: 3,
@@ -155,7 +163,7 @@ export class QueueHelper {
             JOB_RECORD_MEDIA_MODERATION,
             dto,
             {
-                jobId: `moderation-${dto.user_id}-${Date.now()}`,
+                jobId: `moderation-${dto.user_id}-${uniqueJobSuffix()}`,
                 priority: 10,
                 removeOnComplete: true,
                 attempts: 3,
@@ -246,7 +254,7 @@ export class QueueHelper {
             JOB_CREATE_USER_CONTACT,
             dto,
             {
-                jobId: `contact-${dto.user_id}-${Date.now()}`,
+                jobId: `contact-${dto.user_id}-${uniqueJobSuffix()}`,
                 priority: 10,
                 removeOnComplete: true,
                 attempts: 3,
@@ -333,7 +341,7 @@ export class QueueHelper {
             JOB_CREATE_OR_UPDATE_LOCATION,
             dto,
             {
-                jobId: `location-${Date.now()}`,
+                jobId: `location-${uniqueJobSuffix()}`,
                 priority: 10,
                 removeOnComplete: true,
                 attempts: 3,
@@ -347,7 +355,7 @@ export class QueueHelper {
             JOB_CREATE_STORAGE_REQUEST,
             dto,
             {
-                jobId: `storage-${dto.user_id}-${Date.now()}`,
+                jobId: `storage-${dto.user_id}-${uniqueJobSuffix()}`,
                 priority: 10,
                 removeOnComplete: true,
                 attempts: 3,
@@ -361,7 +369,7 @@ export class QueueHelper {
             JOB_UPSERT_EMAIL_PREFERENCE_BY_EMAIL,
             dto,
             {
-                jobId: `email-preference-${dto.email}-${Date.now()}`,
+                jobId: `email-preference-${dto.email}-${uniqueJobSuffix()}`,
                 priority: 10,
                 removeOnComplete: true,
                 attempts: 3,
@@ -474,7 +482,7 @@ export class QueueHelper {
         const queue = QueueHelper.createQueue(MEDIA_THUMBNAIL_QUEUE);
         try {
             await queue.add(JOB_DELETE_REPLACED_MEDIA_OBJECT, dto, {
-                jobId: `delete-replaced-media-object-${dto.media_id}-${Date.now()}`,
+                jobId: `delete-replaced-media-object-${dto.media_id}-${uniqueJobSuffix()}`,
                 delay: delayMs,
                 removeOnComplete: true,
                 removeOnFail: true,
