@@ -1,4 +1,4 @@
-import { Catch, ExceptionFilter, ArgumentsHost } from '@nestjs/common';
+import { Catch, ExceptionFilter, ArgumentsHost, HttpException } from '@nestjs/common';
 import { LANGUAGE_HEADER } from '@repo/common-lib/constants/language';
 import {
   IP_ADDRESS_HEADER,
@@ -78,9 +78,14 @@ export class ResponseExceptionFilter implements ExceptionFilter {
       const requestStartTime = parseInt(
         request?.headers[REQUEST_START_TIME] || '0',
       );
+      // An unexpected error (not an HttpException we threw on purpose) can carry SQL, driver or
+      // file-system detail in its message: the log above keeps it, the client gets a generic one.
+      const isUnexpected = status === 500 && !(exception instanceof HttpException);
       const responseError: ErrorResponse = {
         data: null,
-        error,
+        error: isUnexpected
+          ? { ...error, message: 'Internal Server Error', errors: ['Internal Server Error'] }
+          : error,
         audit: {
           ip:
             request?.get?.(IP_ADDRESS_HEADER) ||
