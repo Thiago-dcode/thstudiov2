@@ -37,6 +37,22 @@ export const FFPROBE_BIN: string = ffprobeStatic.path;
  */
 export const STRIP_METADATA = ['-map_metadata', '-1'] as const;
 
+/**
+ * Input restrictions for every probe and encode of an upload. By default ffmpeg follows whatever the
+ * file says: a playlist container (HLS, concat, ...) dressed up as `.mp4` makes it open other
+ * local files or URLs, and every extra demuxer is attack surface on a 2018 ffprobe build. Uploads
+ * are MP4/MOV (`mov` demuxer) or MPEG, read from a local temp file; Matroska/WebM stays allowed
+ * because the cover-frame code handles it. Playlist demuxers (hls, concat) are what this keeps out.
+ */
+export const INPUT_RESTRICTIONS = [
+    '-protocol_whitelist', 'file',
+    '-format_whitelist', 'mov,mp4,m4a,3gp,3g2,mj2,mpeg,mpegts,mpegvideo,matroska,webm',
+] as const;
+
+/** fluent-ffmpeg command for an upload, with {@link INPUT_RESTRICTIONS} on the input. */
+const restrictedInput = (input: string): FfmpegCommand =>
+    ffmpeg(input).inputOptions([...INPUT_RESTRICTIONS]);
+
 ffmpeg.setFfmpegPath(FFMPEG_BIN);
 ffmpeg.setFfprobePath(FFPROBE_BIN);
 
@@ -185,7 +201,7 @@ function displayDimensions(stream: FfprobeStream): { width: number; height: numb
 export async function probeVideo(filePath: string): Promise<VideoProbe> {
     const { stdout } = await execFileAsync(
         FFPROBE_BIN,
-        ['-v', 'error', '-print_format', 'json', '-show_format', '-show_streams', filePath],
+        [...INPUT_RESTRICTIONS, '-v', 'error', '-print_format', 'json', '-show_format', '-show_streams', filePath],
         {
             timeout: FFPROBE_TIMEOUT_MS,
             // Node's 1MB default throws ERR_CHILD_PROCESS_STDIO_MAXBUFFER on files carrying many
@@ -340,7 +356,7 @@ function run(command: FfmpegCommand, timeoutMs: number, label: string): Promise<
  */
 export async function remuxToMp4(input: string, output: string): Promise<void> {
     await run(
-        ffmpeg(input)
+        restrictedInput(input)
             // `-map_metadata -1`: see `STRIP_METADATA`. Orientation survives: it is stream side
             // data (display matrix), not a metadata tag.
             .outputOptions([...STRIP_METADATA, '-c', 'copy', '-movflags', '+faststart', '-f', 'mp4'])
@@ -364,7 +380,7 @@ export async function extractPosterFrame(
     }
 
     await run(
-        ffmpeg(input)
+        restrictedInput(input)
             // `.seekInput` (`-ss` BEFORE `-i`), never `.seek` — the latter is an OUTPUT seek,
             // which decodes every frame from zero and turns a poster grab on a ten-minute file
             // into a multi-minute decode. This is the single most common fluent-ffmpeg mistake.
@@ -464,7 +480,7 @@ export async function transcodeToMp4(
     ];
 
     await run(
-        ffmpeg(input).outputOptions(args).output(output),
+        restrictedInput(input).outputOptions(args).output(output),
         options.timeoutMs,
         'Video transcode',
     );
