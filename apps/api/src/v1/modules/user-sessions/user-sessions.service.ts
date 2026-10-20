@@ -47,6 +47,9 @@ export class UserSessionsService {
 
     return session;
   }
+  async expireAllForUser(user_id: number, exceptToken?: string) {
+    await this.userSessionsRepository.expireAllForUser(user_id, exceptToken);
+  }
   async create(sessionInput: CreateUserSessionInput) {
     return await this.userSessionsRepository.create(sessionInput);
   }

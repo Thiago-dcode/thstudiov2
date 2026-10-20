@@ -47,6 +47,12 @@ export type PasswordRecoveryAttempt = {
   created_at: string;
   updated_at: string;
 };
+// What `password-recovery` returns: timing only. The code reaches the user solely
+// through the email link, never through this response or the cookie built from it.
+export type PasswordRecoveryRequestStatus = Pick<
+  PasswordRecoveryAttempt,
+  "code_validated" | "expires_at" | "updated_at"
+>;
 export type PasswordRecoveryAttemptWithUser = PasswordRecoveryAttempt & {
   user: BaseUser;
 };

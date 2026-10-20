@@ -103,6 +103,17 @@ echo ""
 # keeps an older hand-copied config.
 info "Step 1b/5 — Syncing nginx config (dev.nginx → nginx) …"
 if [[ -d dev.nginx ]]; then
+  # nginx refuses to start when an ssl_certificate file is missing, and the container is
+  # force-recreated below — so syncing a config that points at a certificate not issued
+  # yet would take dev down. Check every referenced cert first and abort before
+  # touching ./nginx (see scripts/renew-certs.sh for issuing them).
+  for cert in $(grep -hoE '/etc/letsencrypt/live/[^;[:space:]]+' dev.nginx/conf.d/*.conf | sort -u); do
+    if ! $COMPOSE run --rm --no-deps --entrypoint test nginx -s "$cert"; then
+      error "Certificate $cert referenced by dev.nginx is not in the certbot_certs volume."
+      error "Issue it first: ./scripts/renew-certs.sh dev — aborting before nginx is changed."
+      exit 1
+    fi
+  done
   mkdir -p nginx
   cp -r dev.nginx/. nginx/
   success "nginx config synced."

@@ -58,12 +58,18 @@ export class EmailPreferencesRepository extends BaseRepository {
    */
   async upsertByEmail(payload: UpsertPayload): Promise<EmailPreferenceSchemaWithoutTimestamps> {
     const existing = await this.findOneByEmail(payload.email);
-    const cols = Object.keys(payload);
-    const values = Object.values(payload);
 
     if (existing) {
+      // `user_id` binds the row (and its token) to an account. It is set once, by the account
+      // that owns this email, and never re-pointed: anything else lets a caller who names an
+      // email (the public contact form did) move that person's row, token included, onto
+      // another account.
+      const { user_id, ...rest } = payload;
+      const update = existing.user_id == null && user_id != null ? { ...rest, user_id } : rest;
 
-      await this.query().where('email', '=', payload.email).update(cols, values);
+      await this.query()
+        .where('email', '=', payload.email)
+        .update(Object.keys(update), Object.values(update));
 
 
       const updated = await this.findOneByEmail(payload.email);

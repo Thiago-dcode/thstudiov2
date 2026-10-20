@@ -14,6 +14,7 @@ import { ServiceService } from './service.service';
 import { CreateServiceRequest } from './requests/create-service.request';
 import { UpdateServiceRequest } from './requests/update-service.request';
 import { IsResourceBlockedPipe } from 'src/pipes/is-resource-blocked.pipe';
+import { IMAGE_UPLOAD_OPTIONS } from 'src/common/utils/upload-limits';
 
 @Controller('services')
 export class ServiceController {
@@ -25,7 +26,7 @@ export class ServiceController {
   }
 
   @Post()
-  @UseInterceptors(FileInterceptor('thumbnail'))
+  @UseInterceptors(FileInterceptor('thumbnail', IMAGE_UPLOAD_OPTIONS))
   async create(
     @Body() createServiceRequest: CreateServiceRequest,
     @UploadedFile() thumbnail: Express.Multer.File,
@@ -35,7 +36,7 @@ export class ServiceController {
   }
 
   @Patch(':id')
-  @UseInterceptors(FileInterceptor('thumbnail'))
+  @UseInterceptors(FileInterceptor('thumbnail', IMAGE_UPLOAD_OPTIONS))
   async update(
     @Param('id', ParseIntPipe, new IsResourceBlockedPipe('services')) id: number,
     @Body() updateServiceRequest: UpdateServiceRequest,

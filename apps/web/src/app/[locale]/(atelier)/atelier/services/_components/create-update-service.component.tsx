@@ -2,6 +2,7 @@
 
 import {
   ALLOWED_IMAGE_FILE_TYPES,
+  MAX_IMAGE_UPLOAD_BYTES,
   MAX_SERVICE_PRICE,
 } from "@repo/common-lib/constants/limits";
 import type { Portfolio } from "@repo/common-lib/types/portfolio";
@@ -300,7 +301,10 @@ export const CreateOrUpdateService = ({
           </div>
 
           <div className="space-y-4">
-            <FileInputProvider allowedMimeTypes={ALLOWED_IMAGE_FILE_TYPES}>
+            <FileInputProvider
+              allowedMimeTypes={ALLOWED_IMAGE_FILE_TYPES}
+              maxFileSizeBytes={MAX_IMAGE_UPLOAD_BYTES}
+            >
               <ThumbnailInput
                 defaultUrl={defaultService?.thumbnail || undefined}
                 onFileChange={handleThumbnailChange}

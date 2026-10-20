@@ -5,7 +5,6 @@ import { redirect } from "@/i18n/redirect";
 import PageComponent from "@/lib/components/page-component";
 import { buildPrivatePageMetadata } from "@/lib/seo/private-metadata";
 import authService from "@/modules/auth/auth.service";
-import { getPasswordRecoveryAttemptCookie } from "@/modules/auth/server-actions/password-recovery.action";
 import { ExpiresIn } from "../../__components/expiresIn";
 import { PasswordUpdateForm } from "../../__components/passwordUpdate-form";
 
@@ -23,42 +22,23 @@ export default async function PasswordRecoveryRecover({
   searchParams: Promise<{ attempt?: string }>;
 }) {
   const t = await getTranslations("auth.passwordRecovery");
-  const [{ attempt }, passwordRecoveryAttemptCookie] = await Promise.all([
-    searchParams,
-    getPasswordRecoveryAttemptCookie(),
-  ]);
-  let _passwordRecoveryAttemptCookie = passwordRecoveryAttemptCookie;
-  let expiresAt: Date | null = null;
+  const { attempt } = await searchParams;
   if (!attempt) {
     await redirect("/auth/password-recovery");
     return;
   }
-  //If there is no cookie, it means that the user open the link in another browser.
-  if (_passwordRecoveryAttemptCookie) {
-    expiresAt = new Date(_passwordRecoveryAttemptCookie.expires_at);
-    if (expiresAt < new Date()) {
-      await redirect("/auth/password-recovery");
-      return;
-    }
+  // The code only ever arrives through the emailed link (`attempt`), so it is always
+  // checked against the API here; the recovery cookie holds timing, never the code.
+  const result = await authService.validatePasswordRecoveryAttempt({
+    code: attempt,
+  });
+  if (result.error || result.data === null) {
+    await redirect("/auth/password-recovery");
+    return;
   }
-  //TODO: validate the attempt
-  if (!_passwordRecoveryAttemptCookie?.code_validated) {
-    const result = await authService.validatePasswordRecoveryAttempt({
-      code: attempt,
-    });
-    if (result.error || result.data === null) {
-      await redirect("/auth/password-recovery");
-      return;
-    }
-    expiresAt = new Date(result.data.expires_at);
-    if (expiresAt < new Date()) {
-      await redirect("/auth/password-recovery");
-      return;
-    }
-    _passwordRecoveryAttemptCookie = result.data;
-  }
-
-  if (!_passwordRecoveryAttemptCookie) {
+  const passwordRecoveryAttempt = result.data;
+  const expiresAt = new Date(passwordRecoveryAttempt.expires_at);
+  if (expiresAt < new Date()) {
     await redirect("/auth/password-recovery");
     return;
   }
@@ -72,7 +52,7 @@ export default async function PasswordRecoveryRecover({
           <PageComponent.SubTitle subTitle={t("setNewPasswordSubtitle")} />
         </PageComponent.Header>
 
-        <PasswordUpdateForm passwordAttempt={_passwordRecoveryAttemptCookie} />
+        <PasswordUpdateForm passwordAttempt={passwordRecoveryAttempt} />
 
         <div className="relative flex justify-center text-sm">
           <p className="px-2 text-text-muted">{t("changedYourMind")}</p>
@@ -82,12 +62,10 @@ export default async function PasswordRecoveryRecover({
 
       <PageComponent.Footer>
         {/* Timer Warning */}
-        {expiresAt && (
-          <ExpiresIn
-            expiresIn={expiresAt.getTime() - Date.now()}
-            redirect="/auth/password-recovery"
-          />
-        )}
+        <ExpiresIn
+          expiresIn={expiresAt.getTime() - Date.now()}
+          redirect="/auth/password-recovery"
+        />
       </PageComponent.Footer>
     </PageComponent.Container>
   );

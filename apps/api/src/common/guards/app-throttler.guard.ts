@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import {
   InjectThrottlerOptions,
@@ -40,6 +40,18 @@ export class AppThrottlerGuard extends ThrottlerGuard {
     private readonly requestService: RequestService,
   ) {
     super(options, storageService, reflector);
+  }
+
+  /**
+   * Public SSR reads come from our web server without the visitor's IP, so the only key
+   * available is the web container itself. Counting them there let one anonymous client
+   * spend the shared budget and turn every visitor's artist pages into 404s. The visitor
+   * was already rate-limited per IP by nginx before reaching Next, so these calls skip
+   * the per-client limit here instead of sharing one bucket.
+   */
+  protected async shouldSkip(context: ExecutionContext): Promise<boolean> {
+    if (this.requestService.unattributed_app_call) return true;
+    return super.shouldSkip(context);
   }
 
   protected async getTracker(req: Record<string, any>): Promise<string> {

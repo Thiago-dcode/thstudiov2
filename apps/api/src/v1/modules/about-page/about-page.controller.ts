@@ -4,6 +4,7 @@ import { AboutPageService } from "./about-page.service";
 import { CreateAboutPageRequest } from "./requests/create-about-page.request";
 import {UpdateAboutPageRequest} from './requests/update-about-page.request'
 import { ModelExistPipe } from "src/pipes/model-exist.pipe";
+import { IMAGE_UPLOAD_OPTIONS } from 'src/common/utils/upload-limits';
 
 @Controller('about-page')
 export class AboutPageController {
@@ -14,7 +15,7 @@ export class AboutPageController {
 
 
         @Patch(':id')
-        @UseInterceptors(FileInterceptor('photo'))
+        @UseInterceptors(FileInterceptor('photo', IMAGE_UPLOAD_OPTIONS))
         public async update(
             @Param('id',ParseIntPipe,new ModelExistPipe('about_page')) id:number, 
             @Body() request:UpdateAboutPageRequest,
@@ -27,7 +28,7 @@ export class AboutPageController {
         }
 
         @Post()
-        @UseInterceptors(FileInterceptor('photo'))
+        @UseInterceptors(FileInterceptor('photo', IMAGE_UPLOAD_OPTIONS))
         public async create(
             @Body() request:CreateAboutPageRequest,
             @UploadedFile() photo?: Express.Multer.File

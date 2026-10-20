@@ -15,7 +15,7 @@ import type {
   ArtistCard,
   ArtistIndexRequest,
   BaseUser,
-  CompactUser,
+  PublicCompactUser,
   RequestAccountDeletionInput,
   UpdateUserInputWithAssets,
   UpdateUserPasswordInput,
@@ -149,7 +149,7 @@ export class UserService extends BaseService {
       resource: `profile/${username}`,
     });
   }
-  async getCompact(username: string): Promise<ApiResponse<CompactUser>> {
+  async getCompact(username: string): Promise<ApiResponse<PublicCompactUser>> {
     return await this.fetchApi.get({
       resource: `compact/${username}`,
     });

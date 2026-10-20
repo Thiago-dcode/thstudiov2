@@ -97,6 +97,18 @@ describe('AuthService', () => {
   });
 
   describe('register', () => {
+    // Wait-list links used to be created without an expiry, so an EXPIRED invite still
+    // registered and claimed its tier's benefit.
+    it.each([
+      ['an expired entry', { status: 'EXPIRED' }],
+      ['an invite past its window', { expires_at: new Date(Date.now() - 1000) }],
+    ])('rejects the invitation of %s', async (_label, entry) => {
+      waitListService.findByInvitationLinkId.mockResolvedValue({ ...waitList, ...entry });
+
+      await expect(service.register(registerRequest as never)).rejects.toThrow('This invitation has expired');
+      expect(userRepository.create).not.toHaveBeenCalled();
+    });
+
     it('logs in without a 2FA code when this browser validated the wait-list email', async () => {
       userAuthDevicesService.claimPreValidated.mockResolvedValue(preValidatedDevice);
 
@@ -265,6 +277,54 @@ describe('AuthService', () => {
         twofa_code: null,
         twofa_expires_at: null,
       });
+    });
+  });
+
+  describe('password recovery', () => {
+    const attempt = {
+      id: 5,
+      user_id: user.id,
+      user: { id: user.id },
+      code: 'secret-recovery-code',
+      code_validated: false,
+      expires_at: new Date(Date.now() + 10 * 60 * 1000),
+      updated_at: new Date(),
+    };
+    let attempts: Record<string, jest.Mock>;
+
+    beforeEach(() => {
+      attempts = Object.assign(moduleRef.get(PasswordRecoveryAttemptsService), {
+        findOneNotExpiredByUserId: jest.fn().mockResolvedValue(null),
+        expireAllUserAttempts: jest.fn().mockResolvedValue(undefined),
+        create: jest.fn().mockResolvedValue(attempt),
+        findOneByCode: jest.fn(),
+        update: jest.fn().mockResolvedValue(undefined),
+      });
+      Object.assign(moduleRef.get(PasswordRecoveryMail), { setData: jest.fn() });
+      userRepository.findOneBy.mockResolvedValue(user);
+      Object.assign(userSessionsService, { expireAllForUser: jest.fn().mockResolvedValue(undefined) });
+    });
+
+    // The code reaches the owner only through the emailed link. Returning it made any
+    // known email enough to reset that account's password.
+    it('never returns the recovery code to the requester', async () => {
+      const result = await service.passwordRecovery({ email: user.email } as never);
+
+      expect(JSON.stringify(result)).not.toContain(attempt.code);
+      expect(result).not.toHaveProperty('code');
+      expect(result).toEqual({
+        code_validated: false,
+        expires_at: attempt.expires_at,
+        updated_at: attempt.updated_at,
+      });
+    });
+
+    it('ends every existing session when the password is reset', async () => {
+      attempts.findOneByCode.mockResolvedValue({ ...attempt, code_validated: true });
+
+      await service.updatePassword({ code: attempt.code, password: 'new-password' } as never);
+
+      expect(userSessionsService.expireAllForUser).toHaveBeenCalledWith(user.id);
     });
   });
 });

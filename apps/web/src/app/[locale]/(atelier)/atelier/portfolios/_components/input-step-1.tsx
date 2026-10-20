@@ -2,6 +2,7 @@
 import {
   ALLOWED_IMAGE_FILE_TYPES,
   MAX_DISCIPLINES_PORTFOLIO,
+  MAX_IMAGE_UPLOAD_BYTES,
 } from "@repo/common-lib/constants/limits";
 import { isHighlightToggleDisabled } from "@repo/common-lib/utils/highlights";
 import { FileInput } from "@repo/ui/components/custom/file-input";
@@ -143,7 +144,10 @@ const FirstStepInputs = () => {
       <div className="flex flex-col gap-6 tablet:flex-row">
         {/* Fits the two 12rem thumbnail slots plus their gap. */}
         <div className="flex shrink-0 flex-col tablet:w-[25rem]">
-          <FileInputProvider allowedMimeTypes={ALLOWED_IMAGE_FILE_TYPES}>
+          <FileInputProvider
+            allowedMimeTypes={ALLOWED_IMAGE_FILE_TYPES}
+            maxFileSizeBytes={MAX_IMAGE_UPLOAD_BYTES}
+          >
             <ThumbnailInput />
           </FileInputProvider>
         </div>

@@ -26,8 +26,7 @@
 #        docker compose -f compose.dev.yaml exec nginx nginx -s reload
 #
 # 6. Auto-renew (cron on the droplet, twice daily is recommended):
-#        docker compose -f compose.dev.yaml --profile ssl run --rm certbot renew \
-#          && docker compose -f compose.dev.yaml exec nginx nginx -s reload
+#        ./scripts/renew-certs.sh dev   (see its header for the cron line)
 # ===========================================================================
 
 map $http_upgrade $connection_upgrade {

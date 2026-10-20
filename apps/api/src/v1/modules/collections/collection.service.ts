@@ -14,6 +14,9 @@ import { Helpers } from "src/common/services/helpers.service";
 import { ApiException } from "src/common/exceptions/api-exception";
 import { FullPortfolioCollection } from "@repo/common-lib/types/collection";
 import { insertWithUniqueSlug, resolveEntitySlug } from "src/common/utils/slug.util";
+import { assertOwnedIds } from "src/common/utils/owned-ids.util";
+import { ENTITY_CREATE_LOCK_TTL_MS, withUserLock } from "src/common/utils/user-lock";
+import { TABLES_ENUM } from "@repo/common-lib/constants/enums";
 
 const CACHE_TTL = 1000 * 60 * 60 * 24;
 
@@ -122,6 +125,13 @@ export class CollectionService {
   }
 
   async create(request: CreateCollectionRequest) {
+    // The cap check and the insert must not interleave with another create for the same user.
+    return withUserLock(`create:collections:${request.user_id}`, ENTITY_CREATE_LOCK_TTL_MS, () =>
+      this.createLocked(request),
+    );
+  }
+
+  private async createLocked(request: CreateCollectionRequest) {
     if (!request.media || request.media.length === 0) {
       throw new BadRequestException('Collections must have at least 1 media');
     }
@@ -132,13 +142,12 @@ export class CollectionService {
 
     // Title first: it is the likeliest user error and the cheapest check.
     await this.assertTitleIsFree(request.title, request.user_id);
+    await assertOwnedIds(TABLES_ENUM.MEDIA, request.media.map((m) => m.id), request.user_id, 'Media');
     const slug = await this.resolveSlug(request.title, request.user_id);
 
     await this.enforceHighlightLimit(request.user_id, request.is_highlight);
 
-    await this.userExtraDataService.enforceUserLimits(request.user_id, {
-      collections_count: 1,
-    });
+    await this.userExtraDataService.enforceEntityLimit(request.user_id, 'collections');
 
     const collection = await insertWithUniqueSlug(
       slug,
@@ -191,6 +200,7 @@ export class CollectionService {
     if (request.media.length > MAX_COLLECTION_ITEMS) {
       throw new BadRequestException(`Collections can have up to ${MAX_COLLECTION_ITEMS} media`);
     }
+    await assertOwnedIds(TABLES_ENUM.MEDIA, request.media.map((m) => m.id), collection.user_id, 'Media');
 
     // The slug is frozen at creation and never re-derived here, so only the title needs checking.
     // `id` is excluded so re-saving an unchanged title is not rejected as a self-collision.

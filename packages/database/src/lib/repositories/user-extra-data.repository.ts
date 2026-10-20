@@ -8,6 +8,7 @@ import {
   UserExtraData,
 } from '@repo/common-lib/types/user-extra-data';
 import { DbException } from '../exceptions';
+import { Query } from '../facades';
 import { BaseRepository } from './base.repository';
 
 /**
@@ -137,6 +138,21 @@ export class UserExtraDataRepository extends BaseRepository {
       .where('user_id', '=', userId)
       .first<UserExtraDataSchemaWithoutTimestamps>();
     return this.formatUserExtraData(result);
+  }
+
+  /**
+   * Live row count of a plan-capped entity, with the same predicates as the metrics recount.
+   * Plan caps are checked against this rather than the cached `*_count` columns, which are only
+   * recomputed by a job after each insert.
+   */
+  async countLiveEntities(
+    userId: number,
+    entity: 'collections' | 'portfolios' | 'services',
+  ): Promise<number> {
+    const query = Query.table(entity).where('user_id', userId);
+    // Collections have no soft deletes; the recount counts them without the filter too.
+    if (entity !== 'collections') query.softDeletes(true);
+    return await query.count();
   }
 
   async findDueForAiCreditsReset(today: Date): Promise<UserExtraData[]> {

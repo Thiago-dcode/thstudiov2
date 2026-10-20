@@ -55,6 +55,8 @@ export class UserNotificationsGateway {
         const token = extractToken(socket);
         if (!token) return next(new Error('Not authorized'));
         socket.data.user = await this.authHelper.resolveUserAuth(token);
+        // Kept so every later send can re-check the session (see notifyUser).
+        socket.data.token = token;
         next();
       } catch {
         next(new Error('Not authorized'));
@@ -62,9 +64,31 @@ export class UserNotificationsGateway {
     });
   }
 
+  /**
+   * The handshake is not enough: a socket opened before a logout, a session expiry, a password
+   * change or a ban would otherwise keep receiving the user's notifications (contact emails,
+   * signed media URLs) for as long as it stays connected. Each socket's session is re-checked
+   * at send time; a revoked one is disconnected instead of served.
+   */
   async notifyUser(notification: UserNotification) {
-    this.server
-      .to(userNotificationRoom(notification.user_id))
-      .emit(WS_NOTIFICATION_EVENT, notification);
+    const sockets = await this.server
+      .in(userNotificationRoom(notification.user_id))
+      .fetchSockets();
+    await Promise.all(
+      sockets.map(async (socket) => {
+        const token = socket.data.token as string | undefined;
+        const sessionValid = token
+          ? await this.authHelper.resolveUserAuth(token).then(
+              () => true,
+              () => false,
+            )
+          : false;
+        if (!sessionValid) {
+          socket.disconnect(true);
+          return;
+        }
+        socket.emit(WS_NOTIFICATION_EVENT, notification);
+      }),
+    );
   }
 }

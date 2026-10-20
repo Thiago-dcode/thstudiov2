@@ -7,7 +7,7 @@ jest.mock('@repo/backend-lib/services/log-service', () => {
   return { FactoryLogService: { createLogService: () => logger } };
 });
 jest.mock('@repo/backend-lib/utils', () => ({
-  QueueHelper: { createLlmUsageJob: jest.fn() },
+  QueueHelper: { createLlmUsageJob: jest.fn(), createMediaModerationJob: jest.fn() },
   callback500ErrorMail: jest.fn(),
 }));
 
@@ -167,5 +167,39 @@ describe('AiService.generateMediaMetadata categories', () => {
     );
 
     expect(result.category_ids).toEqual([]);
+  });
+});
+
+describe('AiService.moderateContent', () => {
+  const moderate = (text: string) => {
+    const complete = jest.fn().mockResolvedValue({ text, usage: undefined });
+    return AiService.instance({ complete } as unknown as LLMService).moderateContent(
+      'https://cdn.example.test/m.jpg',
+      { user_id: 1 },
+    );
+  };
+  const { QueueHelper } = jest.requireMock('@repo/backend-lib/utils');
+
+  beforeEach(() => jest.clearAllMocks());
+
+  // A refusal or a reply without a numeric severity used to come back as "allowed, severity 0"
+  // and the upload was published. It must fail closed, and must not record a verdict (no strike).
+  it.each([
+    ["a plain-text refusal", "I'm sorry, I can't help with that."],
+    ['truncated JSON', '{"is_allowed": true, "sever'],
+    ['a string severity', '{"is_allowed": true, "severity": "9"}'],
+    ['a rejection without a severity', '{"is_allowed": false}'],
+  ])('fails closed on %s', async (_label, text) => {
+    await expect(moderate(text)).rejects.toThrow('no usable verdict');
+    expect(QueueHelper.createMediaModerationJob).not.toHaveBeenCalled();
+  });
+
+  it('still records a well-formed verdict', async () => {
+    const result = await moderate('{"is_allowed": false, "severity": 9, "content_type": "x", "reason": "r"}');
+
+    expect(result.moderation.is_allowed).toBe(false);
+    expect(QueueHelper.createMediaModerationJob).toHaveBeenCalledWith(
+      expect.objectContaining({ is_allowed: false, severity: 9 }),
+    );
   });
 });

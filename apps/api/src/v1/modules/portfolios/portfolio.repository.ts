@@ -19,7 +19,7 @@ import {
 } from '@repo/common-lib/types/portfolio';
 import { EntitySeoFields, SeoTranslation } from '@repo/common-lib/types/ai';
 import type { MediaVisibility } from '@repo/common-lib/types/media';
-import { CompactUser } from '@repo/common-lib/types/user';
+import { PublicCompactUser } from '@repo/common-lib/types/user';
 import { DbException } from '@repo/database/exceptions';
 import { RequestService } from 'src/common/services/request.service';
 import { MediaPortfolio } from '@repo/common-lib/types/media';
@@ -748,15 +748,13 @@ export class PortfolioRepository extends BaseRepository {
     };
   }
 
-  private formatArtist(result: PortfolioWithArtistSchema): CompactUser {
+  /** Public projection: portfolios are listed anonymously (GET /portfolios, featured, by slug). */
+  private formatArtist(result: PortfolioWithArtistSchema): PublicCompactUser {
     return {
       id: result.u_id,
-      email: result.email,
       username: result.username,
       name: result.name,
       surname: result.surname,
-      benefit_id: result.benefit_id,
-      language: result.language,
     };
   }
   private formatFullPortfolio(result: PortfolioFullSchema[]): FullPortfolio {

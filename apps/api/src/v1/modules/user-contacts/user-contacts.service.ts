@@ -15,9 +15,10 @@ export class UserContactsService {
 
   async create(data: CreateUserContactRequest) {
     this.logger.info("Creating new contact",data);
+    // The sender's email gets a preference row (so they can opt out), never bound to an account:
+    // `data.user_id` is the contacted artist, not the owner of `contact_email`.
     await QueueHelper.createOrUpdateEmailPreferenceJob({
       email: data.contact_email,
-      user_id: data.user_id,
     });
 
     await QueueHelper.createUserContactJob(data);

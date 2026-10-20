@@ -1,7 +1,6 @@
 "use client";
 
 import type { EnumType } from "@repo/common-lib/constants/enums";
-import { STRIKES_TO_BAN } from "@repo/common-lib/constants/limits";
 import type { UserMetrics } from "@repo/common-lib/types/user";
 import { AiCreditsHelper } from "@repo/common-lib/utils/ai-credits";
 import {
@@ -144,11 +143,10 @@ export const UserMetricsProvider = ({
   }, [metrics]);
 
   const isUserAccountBanned = useMemo(() => {
+    // Same rule as the API's UserStrikesGuard: a future `ban_lift` is the ban. Strikes reset
+    // to 0 when a ban starts, so they cannot be part of the check.
     if (!metrics?.extra_data?.ban_lift) return false;
-    return (
-      metrics.extra_data.account_strikes >= STRIKES_TO_BAN &&
-      new Date(metrics.extra_data.ban_lift) > new Date()
-    );
+    return new Date(metrics.extra_data.ban_lift) > new Date();
   }, [metrics]);
 
   return (

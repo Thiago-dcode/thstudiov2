@@ -142,6 +142,9 @@ export class UserExtraDataProcessor extends GlobalProcessor {
 
 
       await this.userExtraDataRepository.updateByUserId(userId, metrics);
+      // Again after the write: a read between the delete above and this write re-cached the old
+      // counts for 24h, and plan limits are checked against that cache.
+      await this.cacheManager.del(CACHE_KEY_USER_EXTRA_DATA(userId));
       log.info(`Metrics updated for user ${userId}`, metrics);
       return metrics;
     } catch (caught: unknown) {

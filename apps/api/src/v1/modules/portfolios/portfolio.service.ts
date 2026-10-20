@@ -23,6 +23,8 @@ import { ApiException } from "src/common/exceptions/api-exception";
 import { Query } from "@repo/database/facades";
 import { LayoutService } from "../layouts/layout.service";
 import { insertWithUniqueSlug, resolveEntitySlug } from "src/common/utils/slug.util";
+import { assertOwnedIds } from "src/common/utils/owned-ids.util";
+import { ENTITY_CREATE_LOCK_TTL_MS, withUserLock } from "src/common/utils/user-lock";
 import { descriptiveFilename, versionedAssetPath } from "src/common/utils/asset-path.util";
 
 const CACHE_TTL = 1000 * 60 * 60 * 24;
@@ -178,6 +180,13 @@ export class PortfolioService {
   }
 
   async create(request: CreatePortfolioRequest) {
+    // The cap check and the insert must not interleave with another create for the same user.
+    return withUserLock(`create:portfolios:${request.user_id}`, ENTITY_CREATE_LOCK_TTL_MS, () =>
+      this.createLocked(request),
+    );
+  }
+
+  private async createLocked(request: CreatePortfolioRequest) {
 
     if (request.media?.length === 0 && request.collections?.length === 0) {
       throw new BadRequestException('Portfolios must have at least 1 media or 1 collection');
@@ -191,12 +200,11 @@ export class PortfolioService {
     // Title first: it is the likeliest user error and the cheapest check, so it fails
     // before any upload or limit accounting happens.
     await this.assertTitleIsFree(request.title, request.user_id);
+    await this.assertOwnsItems(request, request.user_id);
     const slug = await this.resolveSlug(request.title, request.user_id);
 
     await this.enforceHighlightLimit(request.user_id, request.is_highlight);
-    await this.userExtraDataService.enforceUserLimits(request.user_id, {
-      portfolios_count: 1,
-    });
+    await this.userExtraDataService.enforceEntityLimit(request.user_id, 'portfolios');
 
     const resolvedLayout = await this.layoutService.resolveLayoutConfig(
       request.layout?.layout_id,
@@ -269,6 +277,20 @@ export class PortfolioService {
 
   }
 
+  /** A portfolio may only gather the owner's own media and collections. */
+  private async assertOwnsItems(
+    request: Pick<CreatePortfolioRequest, 'media' | 'collections'>,
+    userId: number,
+  ) {
+    await assertOwnedIds(TABLES_ENUM.MEDIA, request.media?.map((m) => m.id) ?? [], userId, 'Media');
+    await assertOwnedIds(
+      TABLES_ENUM.COLLECTIONS,
+      request.collections?.map((c) => c.id) ?? [],
+      userId,
+      'Collection',
+    );
+  }
+
   async update(id: number, request: UpdatePortfolioRequest) {
     const portfolio = await this.portfolioRepository.getOneCompact(id);
 
@@ -295,6 +317,7 @@ export class PortfolioService {
       request.collections?.map((collection) => collection.id) ?? [],
       request.media?.map((media) => media.id) ?? [],
     );
+    await this.assertOwnsItems(request, portfolio.user_id);
 
     // The slug is frozen at creation and never re-derived here, so only the title needs checking.
     // `id` is excluded so re-saving an unchanged title is not rejected as a self-collision.

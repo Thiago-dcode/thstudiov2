@@ -9,6 +9,7 @@ import type {
   LoginReturn2fa,
   PasswordRecoveryAttempt,
   PasswordRecoveryRequest,
+  PasswordRecoveryRequestStatus,
   UpdatePasswordRequest,
   UserAuth,
   UserRegisterRequest,
@@ -64,7 +65,7 @@ export class AuthService extends BaseService {
   }
   async passwordRecovery(
     passwordRecoveryRequest: PasswordRecoveryRequest,
-  ): Promise<ApiResponse<PasswordRecoveryAttempt>> {
+  ): Promise<ApiResponse<PasswordRecoveryRequestStatus>> {
     return await this.fetchApi.post({
       resource: "password-recovery",
       body: passwordRecoveryRequest,

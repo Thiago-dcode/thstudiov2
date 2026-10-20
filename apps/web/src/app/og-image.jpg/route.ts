@@ -32,12 +32,48 @@ const FETCH_TIMEOUT_MS = 8000;
 /** Descending JPEG qualities to try until the card fits `MAX_BYTES`. */
 const QUALITIES = [82, 72, 62, 52];
 
+/**
+ * The bare regional endpoint serves path-style URLs for ANY bucket in the region, so it would
+ * let an anonymous caller make this route fetch an object they own. Only our own bucket hosts
+ * and the CDN qualify here (next/image keeps the full list).
+ */
+const SHARED_REGIONAL_S3_HOST = "s3.eu-north-1.amazonaws.com";
+/** Bounds decode memory; first-party uploads are capped at 4000px per edge (16 MP). */
+const MAX_INPUT_PIXELS = 50_000_000;
+
 const allowedHosts = (): Set<string> => {
   const hosts = new Set<string>(STORAGE_IMAGE_HOSTS);
+  hosts.delete(SHARED_REGIONAL_S3_HOST);
   const cdn = cdnHost();
   if (cdn) hosts.add(cdn.hostname);
   return hosts;
 };
+
+/**
+ * Reads the (already decoded) body, giving up as soon as it passes `limit`. `Content-Length`
+ * is the compressed size on the wire, so checking it and then `arrayBuffer()` let a ~64 KB
+ * gzip body expand into hundreds of MB of heap before any size check ran.
+ */
+async function readCapped(
+  res: Response,
+  limit: number,
+): Promise<Buffer | null> {
+  if (!res.body) return null;
+  const reader = res.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > limit) {
+      await reader.cancel();
+      return null;
+    }
+    chunks.push(value);
+  }
+  return Buffer.concat(chunks);
+}
 
 /** Only https URLs on our own storage hosts — this route must never fetch arbitrary URLs. */
 const parseSource = (raw: string | null): URL | null => {
@@ -57,7 +93,10 @@ const fallback = () =>
 
 async function renderCard(source: Buffer): Promise<Buffer> {
   // `rotate()` applies EXIF orientation; `failOn: "none"` tolerates slightly damaged uploads.
-  const input = sharp(source, { failOn: "none" }).rotate();
+  const input = sharp(source, {
+    failOn: "none",
+    limitInputPixels: MAX_INPUT_PIXELS,
+  }).rotate();
 
   const [backdrop, artwork] = await Promise.all([
     input
@@ -101,14 +140,19 @@ export async function GET(request: Request) {
   try {
     const res = await fetch(src, {
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+      // A redirect would leave the host allowlist; images are never served compressed.
+      redirect: "error",
+      headers: { "Accept-Encoding": "identity" },
       // The source URLs are versioned per upload, so the fetched bytes can be cached aggressively.
       next: { revalidate: 60 * 60 * 24 * 7 },
     });
     const length = Number(res.headers.get("content-length") ?? 0);
+    const encoding = res.headers.get("content-encoding");
     if (!res.ok || length > MAX_SOURCE_BYTES) return fallback();
+    if (encoding && encoding !== "identity") return fallback();
 
-    const source = Buffer.from(await res.arrayBuffer());
-    if (source.byteLength > MAX_SOURCE_BYTES) return fallback();
+    const source = await readCapped(res, MAX_SOURCE_BYTES);
+    if (!source) return fallback();
 
     const card = await renderCard(source);
     return new Response(new Uint8Array(card), {

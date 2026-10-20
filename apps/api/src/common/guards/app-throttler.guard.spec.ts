@@ -1,3 +1,4 @@
+import type { ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import type { ThrottlerModuleOptions, ThrottlerStorage } from '@nestjs/throttler';
 import { RequestService } from 'src/common/services/request.service';
@@ -71,5 +72,38 @@ describe('AppThrottlerGuard.getTracker', () => {
     await expect(trackerFor(null, {})).resolves.toBe('unknown');
     await expect(trackerFor('', {})).resolves.toBe('unknown');
     await expect(trackerFor('   ', {})).resolves.toBe('unknown');
+  });
+});
+
+/**
+ * Public SSR reads arrive from the web server without the visitor's IP, so their tracker would be
+ * the web container: one anonymous client could fill that shared bucket and 429 every visitor.
+ */
+describe('AppThrottlerGuard.shouldSkip', () => {
+  const shouldSkipFor = (unattributedAppCall: boolean) => {
+    const requestService = {
+      unattributed_app_call: unattributedAppCall,
+    } as unknown as RequestService;
+    const guard = new AppThrottlerGuard(
+      [] as unknown as ThrottlerModuleOptions,
+      {} as ThrottlerStorage,
+      new Reflector(),
+      requestService,
+    );
+    const context = {
+      getHandler: () => () => undefined,
+      getClass: () => class {},
+    } as unknown as ExecutionContext;
+    return (guard as unknown as {
+      shouldSkip: (c: ExecutionContext) => Promise<boolean>;
+    }).shouldSkip(context);
+  };
+
+  it('skips the per-client limit for our web server calling without a visitor IP', async () => {
+    await expect(shouldSkipFor(true)).resolves.toBe(true);
+  });
+
+  it('still limits every other request', async () => {
+    await expect(shouldSkipFor(false)).resolves.toBe(false);
   });
 });

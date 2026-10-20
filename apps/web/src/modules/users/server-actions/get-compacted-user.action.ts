@@ -1,13 +1,13 @@
 "use server";
 
 import type { ActionReturn } from "@repo/common-lib/types/response";
-import type { CompactUser } from "@repo/common-lib/types/user";
+import type { PublicCompactUser } from "@repo/common-lib/types/user";
 import { getFriendlyApiErrors } from "@/modules/auth/helpers";
 import usersService from "../users.service";
 
 export const getUserCompactedAction = async (
   username: string,
-): Promise<ActionReturn<CompactUser, undefined>> => {
+): Promise<ActionReturn<PublicCompactUser, undefined>> => {
   const user = await usersService.getCompact(username);
 
   if (user.data) {

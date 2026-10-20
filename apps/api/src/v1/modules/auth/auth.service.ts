@@ -83,6 +83,15 @@ export class AuthService {
             'We detected this invitation comes from a wait list, so you must register with the same email address',
           );
         }
+        // The invite window lives on the wait-list entry; links created before they carried
+        // their own expiry would otherwise redeem (and claim the tier's benefit) forever.
+        if (
+          waitList &&
+          (waitList.status !== 'INVITED' ||
+            (waitList.expires_at && new Date(waitList.expires_at).getTime() <= Date.now()))
+        ) {
+          throw new BadRequestException('This invitation has expired');
+        }
       }
 
     }
@@ -363,7 +372,14 @@ export class AuthService {
           userId: user.id,
         }),
       );
-    return passwordRecoveryAttempt;
+    // Never return the attempt itself: it carries `code`, and handing that to the
+    // requester let anyone who knew an email reset that account's password. Only the
+    // timing the client needs for its cooldown/expiry UI leaves the API.
+    return {
+      code_validated: passwordRecoveryAttempt.code_validated,
+      expires_at: passwordRecoveryAttempt.expires_at,
+      updated_at: passwordRecoveryAttempt.updated_at,
+    };
   }
   async checkPasswordRecoveryAttempt(
     checkPasswordRecoveryAttemptRequest: CheckPasswordRecoveryAttemptRequest,
@@ -408,6 +424,8 @@ export class AuthService {
       this.passwordRecoveryAttemptsService.update(passwordRecoveryAttempt.id, {
         expires_at: new Date(),
       }),
+      // A reset is how a user evicts whoever else got in: every existing session goes.
+      this.userSessionsService.expireAllForUser(passwordRecoveryAttempt.user.id),
     ]);
 
     return updatedUser;

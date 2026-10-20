@@ -32,24 +32,17 @@ export class LocationRepository extends BaseRepository {
   }
 
   /**
-   * Find-or-create by `place_id`. On conflict the row is refreshed from the incoming pick, so a
-   * geocoder that renamed or re-parented a place converges instead of freezing the first read.
+   * Find-or-create by `place_id`. A later pick only finds the existing row, it never rewrites
+   * it: the place is shared by every artist's media, and the pick's fields come straight from
+   * the client, so refreshing them let any artist rename or re-parent another artist's place.
+   * The cost is that a geocoder-side rename does not propagate on its own.
    */
   async upsertByPlaceId(input: CreateLocationInput): Promise<Location> {
     return upsertReturning<Location>({
       table: TABLES_ENUM.LOCATIONS,
       row: input,
       conflict: ['place_id'],
-      update: [
-        'formatted',
-        'name',
-        'result_type',
-        'latitude',
-        'longitude',
-        'country_id',
-        'state_id',
-        'city_id',
-      ],
+      update: [],
       returning: this.COLUMNS,
     });
   }

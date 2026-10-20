@@ -34,10 +34,20 @@ import { UpdateMediaThumbnailTimeRequest } from './requests/update-media-thumbna
 export class MediaController {
   constructor(private readonly mediaService: MediaService) { }
 
+  // Anonymous read: the visibility filters are forced, not taken from the query. Left to the
+  // caller, `?user_id=N` returned that artist's blocked, switched-off and unprocessed media
+  // with signed asset URLs. Owners list everything through `users/:id/media`.
   @Public()
   @Get()
   async findAll(@Query() query: IndexMediaRequest) {
-    return await this.mediaService.findAll(query);
+    return await this.mediaService.findAll({
+      ...query,
+      blocked: false,
+      is_active: true,
+      completed: true,
+      failed: undefined,
+      compact: false,
+    });
   }
 
   // PublicArtistGuard: 404 for a hidden artist's media, except to its (deactivated) owner.

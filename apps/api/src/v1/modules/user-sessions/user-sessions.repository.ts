@@ -89,6 +89,21 @@ export class UserSessionsRepository extends BaseRepository {
       await query.first<UserSessionSchemaWithUserAuthDevice | null>();
     return result ? this.formatUserSession(result) : null;
   }
+  /**
+   * Ends every live session of the user, except the one holding `exceptToken`. Called when
+   * the credentials change or the account is banned: a session obtained before that must
+   * stop working instead of living on (and refreshing) until it expires on its own.
+   */
+  async expireAllForUser(user_id: number, exceptToken?: string) {
+    const now = new Date();
+    let query = this.query()
+      .where('user_id', '=', user_id)
+      .where('expires_at', '>', now);
+    if (exceptToken) {
+      query = query.where('token', '!=', exceptToken);
+    }
+    await query.update(['expires_at'], [now]);
+  }
   private formatUserSession(
     userSession: UserSessionSchemaWithUserAuthDevice,
   ): UserSession {

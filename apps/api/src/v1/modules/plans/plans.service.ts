@@ -20,8 +20,12 @@ export class PlansService {
   //   return 'This action adds a new plan';
   // }
   async findAll(indexPlanRequest: IndexPlanRequest) {
+    // The filter changes the rows, so it must change the key: one shared key let an anonymous
+    // `?is_active=false` decide what the subscription page showed for the next 24h.
+    const activeSuffix =
+      typeof indexPlanRequest.is_active === 'boolean' ? String(indexPlanRequest.is_active) : 'all';
     return await this.helpers.cacheRemember(
-      CACHE_KEY_PLANS,
+      `${CACHE_KEY_PLANS}-active-${activeSuffix}`,
       this.plansRepository.findAll(indexPlanRequest),
       {
         append_language: true,

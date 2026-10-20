@@ -36,7 +36,7 @@ import { compare, hash } from '@repo/common-lib/utils/hash';
 import { AiService } from '@repo/backend-lib/services/ai-service';
 import { MediaModerationException } from 'src/common/exceptions/media-moderation-exception';
 import { descriptiveFilename, versionedAssetPath } from 'src/common/utils/asset-path.util';
-import { ArtistBranding, ArtistCard, UpdateUserInput, UserAccountStatus } from '@repo/common-lib/types/user';
+import { ArtistBranding, ArtistCard, PublicCompactUser, UpdateUserInput, UserAccountStatus } from '@repo/common-lib/types/user';
 import { EnumType } from '@repo/common-lib/constants/enums';
 import { addMonths } from 'date-fns';
 import { IndexArtistsRequest } from './requests/index-artists.request';
@@ -47,6 +47,7 @@ import { PlansService } from '../plans/plans.service';
 import { CancelSubscriptionRenewalEvent } from '../plan-subscriptions/events/cancel-subscription-renewal.event';
 import { RequestAccountDeletionRequest } from './requests/request-account-deletion.request';
 import { accountDeletionDate } from '@repo/common-lib/utils/account-deletion';
+import { UserSessionsService } from '../user-sessions/user-sessions.service';
 
 @Injectable()
 export class UserService {
@@ -61,6 +62,7 @@ export class UserService {
     private readonly aiService: AiService,
     private readonly profileStatusService: ProfileStatusService,
     private readonly plansService: PlansService,
+    private readonly userSessionsService: UserSessionsService,
   ) { }
 
   /** No-op when `language` already matches; safe to call on every authenticated request. */
@@ -164,8 +166,11 @@ export class UserService {
     return result;
   }
 
-  async getCompactedByUsername(username: string) {
-    return await this.userRepository.findByUsernameCompact(username);
+  /** Public route: project to the public fields, the compact row also carries the email. */
+  async getCompactedByUsername(username: string): Promise<PublicCompactUser> {
+    const { id, username: compactUsername, name, surname } =
+      await this.userRepository.findByUsernameCompact(username);
+    return { id, username: compactUsername, name, surname };
   }
 
   async getCompactedById(id: number) {
@@ -389,19 +394,23 @@ export class UserService {
       throw new BadRequestException('Wrong password');
     }
 
-    return await this.userRepository.updateById(user.id, {
+    const updatedUser = await this.userRepository.updateById(user.id, {
       password: await hash(request.new_password),
       password_reset_count: effectiveCount + 1,
       next_password_reset: (!user.next_password_reset || periodExpired) ? addMonths(new Date(), 1) : user.next_password_reset,
     });
-
-
+    // Sign out every other session; the caller keeps the one they changed it from.
+    await this.userSessionsService.expireAllForUser(user.id, this.requestService.user.token);
+    return updatedUser;
   }
   async banUser(userId: number, reason: string) {
-    return await this.userRepository.updateById(userId, {
+    const bannedUser = await this.userRepository.updateById(userId, {
       banned: true,
       banned_reason: reason,
     });
+    // resolveUserAuth does not read `banned`, so live sessions must be ended here.
+    await this.userSessionsService.expireAllForUser(userId);
+    return bannedUser;
   }
 
   /**

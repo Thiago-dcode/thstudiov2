@@ -15,7 +15,7 @@ export class RequestService {
   /** Called once per request in the middleware to establish an isolated store. */
   async run(callback: (self: RequestService) => void): Promise<void> {
     this.storage.run(
-      { requestId: await generateUUID(), user: null, language: null, user_agent: null, ip_address: null, path: null, pagination: null },
+      { requestId: await generateUUID(), user: null, language: null, user_agent: null, ip_address: null, path: null, pagination: null, unattributed_app_call: false },
       () => {
         callback(this)
       },
@@ -62,6 +62,13 @@ export class RequestService {
   }
   set path(path: string) {
     if (this.store) this.store.path = path;
+  }
+
+  get unattributed_app_call(): boolean {
+    return this.store?.unattributed_app_call ?? false;
+  }
+  set unattributed_app_call(value: boolean) {
+    if (this.store) this.store.unattributed_app_call = value;
   }
 
   get pagination(): Pagination | null {

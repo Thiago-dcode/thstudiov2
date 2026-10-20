@@ -9,8 +9,8 @@ const INSTANCE_ID = `${process.env.HOSTNAME ?? 'api'}:${process.pid}:${randomUUI
 
 let clientPromise: Promise<RedisClient | null> | null = null;
 
-/** One lazily connected client per process, shared by every cron. Null when Redis is unset/unreachable. */
-const getClient = (): Promise<RedisClient | null> => {
+/** One lazily connected client per process, shared by every lock. Null when Redis is unset/unreachable. */
+export const getLockClient = (): Promise<RedisClient | null> => {
   if (!clientPromise) {
     clientPromise = (async () => {
       const url = getConfigValue('redis').url;
@@ -53,7 +53,7 @@ export async function runCronExclusive(
 ): Promise<boolean> {
   let acquired = true;
   try {
-    const client = await getClient();
+    const client = await getLockClient();
     if (client) {
       const reply = await client.set(`cron-lock:${name}`, INSTANCE_ID, {
         condition: 'NX',

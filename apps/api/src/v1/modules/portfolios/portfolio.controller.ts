@@ -20,6 +20,7 @@ import { UpdatePortfolioRequest } from './requests/update-portfolio.request';
 import { IndexPortfolioRequest } from './requests/index-portfolio.request';
 import { Public } from 'src/common/decorators/public.decorator';
 import { IsResourceBlockedPipe } from 'src/pipes/is-resource-blocked.pipe';
+import { IMAGE_UPLOAD_OPTIONS } from 'src/common/utils/upload-limits';
 
 @Controller('portfolios')
 export class PortfolioController {
@@ -47,7 +48,7 @@ export class PortfolioController {
   }
 
   @Post()
-  @UseInterceptors(FileInterceptor('thumbnail'))
+  @UseInterceptors(FileInterceptor('thumbnail', IMAGE_UPLOAD_OPTIONS))
   async create(
     @Body() createPortfolioRequest: CreatePortfolioRequest,
     @UploadedFile() thumbnail: Express.Multer.File,
@@ -60,7 +61,7 @@ export class PortfolioController {
   }
 
   @Patch(':id')
-  @UseInterceptors(FileInterceptor('thumbnail'))
+  @UseInterceptors(FileInterceptor('thumbnail', IMAGE_UPLOAD_OPTIONS))
   async update(
     @Param('id', ParseIntPipe, new IsResourceBlockedPipe('portfolios')) id: number,
     @Body() updatePortfolioRequest: UpdatePortfolioRequest,

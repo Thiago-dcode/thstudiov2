@@ -17,6 +17,7 @@ import { AiModule } from '../ai/ai.module';
 import { EmailPreferencesModule } from '../email-preferences/email-preferences.module';
 import { ProfileStatusModule } from '../profile-status/profile-status.module';
 import { AuthCoreModule } from '../auth/auth-core.module';
+import { UserSessionsModule } from '../user-sessions/user-sessions.module';
 
 @Module({
   controllers: [UserController],
@@ -42,6 +43,8 @@ import { AuthCoreModule } from '../auth/auth-core.module';
     EmailPreferencesModule,
     // `PublicArtistGuard` resolves the owner's token on hidden accounts.
     AuthCoreModule,
+    // Password change and ban end the user's other sessions.
+    UserSessionsModule,
   ],
   exports: [UserService, UserRepository],
 })

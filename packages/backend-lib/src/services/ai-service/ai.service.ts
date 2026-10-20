@@ -591,7 +591,7 @@ ${categoryLines.join(', AND\n')}.
         url,
         meta
       });
-      const { moderation, matchesExpectedResponse, usage, text, parseError } =
+      const { moderation, matchesExpectedResponse, verdictUsable, usage, text, parseError } =
         await this._moderateContent(url);
 
       if (parseError) {
@@ -613,6 +613,13 @@ ${categoryLines.join(', AND\n')}.
           usage_type: 'MODERATE_MEDIA_CONTENT',
           matches_expected_response: matchesExpectedResponse,
         });
+      }
+
+      // Fail closed: no verdict means the media is not published. Throwing (rather than
+      // rejecting) records no moderation result, so the uploader gets no strike for a reply
+      // the model got wrong; the job retries and otherwise fails, leaving the media unpublished.
+      if (!verdictUsable) {
+        throw new Error('Content moderation returned no usable verdict');
       }
 
       this.logger
@@ -736,6 +743,10 @@ ${categoryLines.join(', AND\n')}.
     let moderationData: Partial<ContentModerationFields> = {};
     let matchesExpectedResponse = false;
     let parseError: string | undefined;
+    // Only a parsed reply with a numeric severity is a verdict. A refusal, a truncated reply or
+    // a missing severity used to fall back to "allowed", and refusals are most likely on exactly
+    // the content moderation exists to stop.
+    let verdictUsable = false;
 
     try {
       const parsed = this.parseLlmJson(result.text);
@@ -758,6 +769,7 @@ ${categoryLines.join(', AND\n')}.
 
       matchesExpectedResponse = typeof parsed.is_allowed === 'boolean'
         && typeof parsed.severity === 'number';
+      verdictUsable = typeof parsed.severity === 'number';
     } catch (err) {
       parseError = err instanceof Error ? err.message : 'Unknown error';
       moderationData = { ...EXPECTED_JSON };
@@ -766,6 +778,7 @@ ${categoryLines.join(', AND\n')}.
     return {
       moderation: moderationData as ContentModerationFields,
       matchesExpectedResponse,
+      verdictUsable,
       usage: result.usage,
       text: result.text,
       parseError,

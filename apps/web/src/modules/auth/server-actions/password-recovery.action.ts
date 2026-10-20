@@ -6,14 +6,14 @@ import { cookies } from "next/headers";
 import { getTranslations } from "next-intl/server";
 import { deleteCookie, encryptObj, getEncryptedJsonCookie } from "@/lib/utils";
 import authService from "../auth.service";
-import type { PasswordRecoveryAttempt } from "../auth.types";
+import type { PasswordRecoveryRequestStatus } from "../auth.types";
 import { passwordRecoveryRequestSchema } from "../schemas/auth.shema";
 
 export const passwordRecoveryAction = async (
   formData: FormData,
 ): Promise<
   ActionReturn<
-    PasswordRecoveryAttempt,
+    PasswordRecoveryRequestStatus,
     {
       email?: string;
     }
@@ -85,7 +85,7 @@ export const passwordRecoveryAction = async (
 };
 
 export const setPasswordRecoveryAttemptCookie = async (
-  passwordRecoveryAttempt: PasswordRecoveryAttempt,
+  passwordRecoveryAttempt: PasswordRecoveryRequestStatus,
 ) => {
   "use server";
   const cookieStore = await cookies();
@@ -100,10 +100,10 @@ export const setPasswordRecoveryAttemptCookie = async (
 };
 export const getPasswordRecoveryAttemptCookie = async () => {
   "use server";
-  const result = await getEncryptedJsonCookie<PasswordRecoveryAttempt>(
+  const result = await getEncryptedJsonCookie<PasswordRecoveryRequestStatus>(
     PASSWORD_RECOVERY_ATTEMPT_COOKIE_NAME,
   );
-  if (!result?.id || !result?.code) {
+  if (!result?.expires_at) {
     return null;
   }
   return result;

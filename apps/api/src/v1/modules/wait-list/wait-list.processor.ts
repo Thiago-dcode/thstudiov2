@@ -483,9 +483,12 @@ export class WaitListProcessor extends GlobalProcessor {
         throw new Error(`Benefit ${benefitType} not found`);
       }
 
+      // The link must expire with the invite: register only checks the link, so without this an
+      // EXPIRED entry's code still registered and still claimed its tier's benefit.
       const invitationLink = await this.invitationLinkService.create({
         email:entry.email,
         benefit_type: benefitType,
+        days_to_expire: WaitListProcessor.INVITATION_EXPIRES_IN_DAYS,
       },true);
 
       const registrationUrl = `${appUrl}/auth/register?ref=${invitationLink.code}`;

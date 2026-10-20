@@ -38,8 +38,9 @@ services:
   certbot:
     image: certbot/certbot
     container_name: a11studio-prod-certbot
-    # Run on demand only:
+    # Run on demand only (first issuance and renewal are the same command):
     #   docker compose -f compose.prod.yaml --profile ssl run --rm certbot
+    # scripts/renew-certs.sh wraps it and reloads nginx; run that from cron.
     profiles:
       - ssl
     volumes:
@@ -48,19 +49,33 @@ services:
     # exec form, not `sh -c`: the previous version spliced ${DOMAIN} and
     # ${LETSENCRYPT_EMAIL} unquoted into a shell string, so a .env value containing
     # `;` or backticks executed arbitrary commands in a container holding the certs.
+    #
+    # One lineage, `a11studio.com`, covering every hostname pro.nginx serves. The
+    # names are fixed here rather than read from .env because pro.nginx hardcodes the
+    # matching /etc/letsencrypt/live/a11studio.com/ paths; the two must change together.
+    # --keep-until-expiring makes a re-run a no-op until the cert is within 30 days of
+    # expiry, so the same command doubles as renewal. --expand lets a re-run add a name.
     entrypoint:
       - certbot
       - certonly
       - --webroot
       - -w
       - /var/www/certbot
+      - --cert-name
+      - a11studio.com
+      - -d
+      - a11studio.com
+      - -d
+      - www.a11studio.com
+      - -d
+      - api.a11studio.com
       - --email
       - ${LETSENCRYPT_EMAIL:-}
-      - -d
-      - ${DOMAIN:-}
       - --agree-tos
       - --no-eff-email
       - --non-interactive
+      - --keep-until-expiring
+      - --expand
 
   api:
     # Prebuilt in GitHub Actions and pulled on the droplet (see docs/deploy-ghcr.md).

@@ -28,6 +28,9 @@ export type BaseUserWithSecrets = BaseUser & {
 
 // CompactUser: minimal user info (id, email, username)
 export type CompactUser = Pick<UserSchema, 'id' | 'email' | 'username' | 'name' | 'surname'| 'benefit_id' | 'language'>;
+// What anonymous visitors may see of an artist in compact form. `CompactUser` carries the
+// account email for internal callers (mail relays, notifications) and must never be public.
+export type PublicCompactUser = Pick<UserSchema, 'id' | 'username' | 'name' | 'surname'>;
 
 /** Public branding flags for an artist's pages — `show_brand` is true while on the free plan. */
 export type ArtistBranding = { show_brand: boolean };

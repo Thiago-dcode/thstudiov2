@@ -1,4 +1,4 @@
-import { IsBoolean, IsEmail, IsNumber, IsOptional, IsPositive, IsString } from 'class-validator';
+import { IsBoolean, IsEmail, IsOptional, IsString } from 'class-validator';
 
 export class CreateOrUpdateEmailPreferenceRequest {
   @IsEmail()
@@ -8,11 +8,6 @@ export class CreateOrUpdateEmailPreferenceRequest {
   // Proof-of-control: must match the token issued for this email (see EmailPreferencesController).
   @IsString()
   token: string;
-
-  @IsOptional()
-  @IsNumber()
-  @IsPositive()
-  user_id?: number;
 
   @IsOptional()
   @IsBoolean()

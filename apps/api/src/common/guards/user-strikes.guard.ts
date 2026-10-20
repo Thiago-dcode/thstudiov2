@@ -1,7 +1,7 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ALLOW_WHILE_STRIKE_BANNED_KEY } from 'src/common/decorators/allow-while-strike-banned.decorator';
-import { STRIKES_TO_BAN } from '@repo/common-lib/constants/limits';
+import { UserLimits } from '@repo/common-lib/utils/user-limits';
 import { ApiException } from 'src/common/exceptions/api-exception';
 import { RequestService } from 'src/common/services/request.service';
 import { UserExtraDataService } from 'src/v1/modules/user-extra-data/user-extra-data.service';
@@ -30,7 +30,10 @@ export class UserStrikesGuard implements CanActivate {
     if (!user) return true;
 
     const extraData = await this.userExtraDataService.findOneByUserId(user.id);
-    if (extraData.account_strikes >= STRIKES_TO_BAN && extraData.ban_lift && new Date(extraData.ban_lift) > new Date()) {
+    // A ban is active while `ban_lift` is ahead, full stop. `account_strikes` is recounted from
+    // `ban_start`, so it drops to 0 the moment a ban begins; also requiring it to be at
+    // STRIKES_TO_BAN meant no temporary ban was ever enforced.
+    if (!UserLimits.accountStrikes({ userExtraData: extraData })) {
       throw ApiException.accountStrikesExceeded(
         `Account banned until ${new Date(extraData.ban_lift).toISOString()}. Strikes: ${extraData.account_strikes}`,
       );

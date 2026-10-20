@@ -16,4 +16,6 @@ export type RequestStore = {
     ip_address: string | null;
     path: string | null;
     pagination: Pagination | null;
+    /** Our own web server called without forwarding the visitor's IP (public SSR reads). */
+    unattributed_app_call: boolean;
 }

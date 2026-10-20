@@ -1,6 +1,9 @@
 "use client";
 
-import { ALLOWED_IMAGE_FILE_TYPES } from "@repo/common-lib/constants/limits";
+import {
+  ALLOWED_IMAGE_FILE_TYPES,
+  MAX_IMAGE_UPLOAD_BYTES,
+} from "@repo/common-lib/constants/limits";
 import type { AboutPage } from "@repo/common-lib/types/about-page";
 import { Errors } from "@repo/ui/components/custom/errors";
 import { FileInput } from "@repo/ui/components/custom/file-input";
@@ -118,7 +121,10 @@ export const CreateOrUpdateAboutPage = ({
         <FormComponent.Container className="">
           <FormComponent.Form onSubmit={handleSubmit}>
             <div className="space-y-1">
-              <FileInputProvider allowedMimeTypes={ALLOWED_IMAGE_FILE_TYPES}>
+              <FileInputProvider
+                allowedMimeTypes={ALLOWED_IMAGE_FILE_TYPES}
+                maxFileSizeBytes={MAX_IMAGE_UPLOAD_BYTES}
+              >
                 <PhotoInput
                   defaultUrl={currentAboutPage?.photo || undefined}
                   error={inputErrors?.photo}

@@ -1,6 +1,9 @@
 "use client";
 
-import { MAX_CATEGORIES_USER } from "@repo/common-lib/constants/limits";
+import {
+  MAX_CATEGORIES_USER,
+  MAX_IMAGE_UPLOAD_BYTES,
+} from "@repo/common-lib/constants/limits";
 import type { CategoryBase } from "@repo/common-lib/types/category";
 import { Errors } from "@repo/ui/components/custom/errors";
 import { FileInput } from "@repo/ui/components/custom/file-input";
@@ -164,6 +167,7 @@ export default function EditUserComponent() {
                     "image/png",
                     "image/webp",
                   ]}
+                  maxFileSizeBytes={MAX_IMAGE_UPLOAD_BYTES}
                 >
                   <EditBanner defaultBanner={user?.banner} />
                 </FileInputProvider>
@@ -193,6 +197,8 @@ export default function EditUserComponent() {
                       "image/png",
                       "image/webp",
                     ]}
+                    // Same cap the API enforces per file (multer `IMAGE_UPLOAD_OPTIONS`).
+                    maxFileSizeBytes={MAX_IMAGE_UPLOAD_BYTES}
                   >
                     <EditAvatar defaultAvatar={user?.avatar} />
                   </FileInputProvider>

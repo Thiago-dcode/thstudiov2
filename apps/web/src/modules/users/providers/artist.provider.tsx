@@ -1,6 +1,6 @@
 "use client";
 
-import type { CompactUser } from "@repo/common-lib/types/user";
+import type { PublicCompactUser } from "@repo/common-lib/types/user";
 import { useParams } from "next/navigation";
 import {
   createContext,
@@ -13,7 +13,7 @@ import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { getUserCompactedAction } from "@/modules/users/server-actions/get-compacted-user.action";
 
 type ArtistContextType = {
-  artist: CompactUser | null;
+  artist: PublicCompactUser | null;
   isLoading: boolean;
   isPending: boolean;
   refresh: () => Promise<void>;
@@ -48,8 +48,6 @@ export const ArtistProvider = ({ children }: { children: ReactNode }) => {
   }, [username, handleAction]);
 
   const artist = result?.data ?? null;
-
-  console.log(artist);
 
   const refresh = async () => {
     if (username) await handleAction();

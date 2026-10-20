@@ -73,10 +73,11 @@ export class RequestMiddleware implements NestMiddleware {
         '-'
       ).slice(0, USER_AGENT_MAX_LENGTH);
       // `req.ip` already resolves X-Forwarded-For correctly via `trust proxy` (main.ts).
-      this.requestService.ip_address =
-        (isTrustedCaller ? req.get(IP_ADDRESS_HEADER) : undefined) ||
-        req.ip ||
-        '-';
+      const forwardedIp = isTrustedCaller ? req.get(IP_ADDRESS_HEADER) : undefined;
+      this.requestService.ip_address = forwardedIp || req.ip || '-';
+      // Public SSR reads deliberately omit the visitor IP (stable fetch-cache keys), so their
+      // `ip_address` is the web container's. `AppThrottlerGuard` must not bucket on it.
+      this.requestService.unattributed_app_call = isTrustedCaller && !forwardedIp;
 
       next();
     });

@@ -118,7 +118,9 @@ export class MediaService {
   public async getOneByPublicId(publicId: string) {
     const media = await this.mediaRepository.findOneByColumn('public_id', publicId);
 
-    if (!media) return null;
+    // Public read (PublicArtistGuard only vets the owner account): a blocked, switched-off or
+    // never-processed media is not public, so it must not hand out its signed asset URLs.
+    if (!media || media.blocked_at || !media.is_active || !media.completed_at) return null;
 
     const [thumbnail, url, tags, seo] = await Promise.all([
       this.helpers.getAsset(media.thumbnail),

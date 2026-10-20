@@ -14,6 +14,7 @@ import { AdminGuard } from 'src/common/guards/admin.guard';
 import { CategoriesService } from '../categories/categories.service';
 import { CreateCategoryRequest } from '../categories/requests/create-category.request';
 import { UpdateCategoryRequest } from '../categories/requests/update-category.request';
+import { IMAGE_UPLOAD_OPTIONS } from 'src/common/utils/upload-limits';
 
 @Controller('categories')
 @UseGuards(AdminGuard)
@@ -21,7 +22,7 @@ export class AdminCategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
   @Post()
-  @UseInterceptors(FileInterceptor('thumbnail'))
+  @UseInterceptors(FileInterceptor('thumbnail', IMAGE_UPLOAD_OPTIONS))
   create(
     @Body() body: CreateCategoryRequest,
     @UploadedFile() thumbnail: Express.Multer.File | undefined,
@@ -31,7 +32,7 @@ export class AdminCategoriesController {
   }
 
   @Patch(':id')
-  @UseInterceptors(FileInterceptor('thumbnail'))
+  @UseInterceptors(FileInterceptor('thumbnail', IMAGE_UPLOAD_OPTIONS))
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() body: UpdateCategoryRequest,

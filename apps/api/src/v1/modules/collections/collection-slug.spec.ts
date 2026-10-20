@@ -1,3 +1,12 @@
+// Media ownership is covered by owned-ids.util.spec; here it would reach the real DB client.
+jest.mock('src/common/utils/user-lock', () => ({
+  ENTITY_CREATE_LOCK_TTL_MS: 1000,
+  withUserLock: (_key: string, _ttl: number, fn: () => Promise<unknown>) => fn(),
+}));
+jest.mock('src/common/utils/owned-ids.util', () => ({
+  assertOwnedIds: jest.fn().mockResolvedValue(undefined),
+}));
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { QueueHelper } from '@repo/backend-lib/utils';
 import { API_ERRORS } from '@repo/common-lib/constants/api-errors';
@@ -49,7 +58,7 @@ describe('CollectionService slug derivation', () => {
         { provide: RequestService, useValue: { user: { id: USER_ID } } },
         {
           provide: UserExtraDataService,
-          useValue: { enforceUserLimits: jest.fn() },
+          useValue: { enforceUserLimits: jest.fn(), enforceEntityLimit: jest.fn() },
         },
         {
           provide: Helpers,

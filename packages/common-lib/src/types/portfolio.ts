@@ -3,14 +3,15 @@ import { OffsetPaginationRequest } from "./request";
 import { MediaPortfolio } from "./media";
 import { FullPortfolioCollection, PortfolioCollection } from "./collection";
 import { CategoryBase } from "./category";
-import { CompactUser } from "./user";
+import { PublicCompactUser } from "./user";
 import { PortfolioLayout, PortfolioLayoutInput } from "./layout";
 
 // ==================== PORTFOLIO TYPES ====================
 
-// Portfolio base type (always includes the owning artist from users join)
+// Portfolio base type (always includes the owning artist from users join). Portfolios are
+// served on public routes, so the artist is the public projection — never the account email.
 export type Portfolio = PortfolioSchema & {
-  artist: CompactUser;
+  artist: PublicCompactUser;
 };
 
 // Portfolio with nested media and collections (formatted output from joins)

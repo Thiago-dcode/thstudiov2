@@ -16,7 +16,9 @@ export class PaymentMethodsService {
         const isBoolean =typeof enabled ==='boolean'
         if(isBoolean){
             query = query.where('enabled','=',enabled);
-            key += '-' + enabled? 'true':'false'
+            // Parenthesised: without them `'-' + enabled` was the condition, so true and false
+            // shared one key and an anonymous `?enabled=false` poisoned the enabled list.
+            key += '-' + (enabled ? 'true' : 'false')
         }
         return await this.helpers.cacheRemember(
             key,

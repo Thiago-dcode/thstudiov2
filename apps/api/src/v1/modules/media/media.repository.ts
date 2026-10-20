@@ -122,9 +122,11 @@ export class MediaRepository extends BaseMediaRepository {
     }
     if (filters.user_id) {
       query.where('user_id', filters.user_id);
-    } else if (!compact) {
-      // Cross-artist lists (landing value pillars) are public: never show work by a banned,
-      // deactivated or pending-deletion account. Only the non-compact query joins `users`.
+    }
+    if (!compact) {
+      // Non-compact lists are the public ones (landing value pillars, the anonymous
+      // `GET /media`): never show work by a banned, deactivated or pending-deletion account,
+      // with or without a `user_id`. Only the non-compact query joins `users`.
       query
         .where('users.banned', '=', false)
         .where('users.is_active', '=', true)

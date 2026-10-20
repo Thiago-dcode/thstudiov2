@@ -17,6 +17,9 @@ import { serviceCacheKeys } from "../user-services/user-service.service";
 import { cleanObj } from "@repo/common-lib/utils/object";
 import { insertWithUniqueSlug, resolveEntitySlug } from "src/common/utils/slug.util";
 import { descriptiveFilename, versionedAssetPath } from "src/common/utils/asset-path.util";
+import { assertOwnedIds } from "src/common/utils/owned-ids.util";
+import { ENTITY_CREATE_LOCK_TTL_MS, withUserLock } from "src/common/utils/user-lock";
+import { TABLES_ENUM } from "@repo/common-lib/constants/enums";
 
 const CACHE_TTL = 1000 * 60 * 60 * 24;
 
@@ -91,16 +94,22 @@ export class ServiceService {
   }
 
   async create(request: CreateServiceRequest) {
+    // The cap check and the insert must not interleave with another create for the same user.
+    return withUserLock(`create:services:${request.user_id}`, ENTITY_CREATE_LOCK_TTL_MS, () =>
+      this.createLocked(request),
+    );
+  }
+
+  private async createLocked(request: CreateServiceRequest) {
     // Title first: it is the likeliest user error and the cheapest check, so it fails
     // before any upload or limit accounting happens.
     await this.assertTitleIsFree(request.title, request.user_id);
+    await assertOwnedIds(TABLES_ENUM.PORTFOLIOS, request.portfolio_id ? [request.portfolio_id] : [], request.user_id, 'Portfolio');
     const slug = await this.resolveSlug(request.title, request.user_id);
 
     await this.enforceHighlightLimit(request.user_id, request.is_highlight);
 
-    await this.userExtraDataService.enforceUserLimits(request.user_id, {
-      services_count: 1,
-    });
+    await this.userExtraDataService.enforceEntityLimit(request.user_id, 'services');
 
     let thumbnailPath: string | undefined;
     if (request.thumbnail) {
@@ -178,6 +187,7 @@ export class ServiceService {
       request.is_highlight,
       service.is_highlight,
     );
+    await assertOwnedIds(TABLES_ENUM.PORTFOLIOS, request.portfolio_id ? [request.portfolio_id] : [], service.user_id, 'Portfolio');
 
     // The slug is frozen at creation and never re-derived here, so only the title needs checking.
     // `id` is excluded so re-saving an unchanged title is not rejected as a self-collision.

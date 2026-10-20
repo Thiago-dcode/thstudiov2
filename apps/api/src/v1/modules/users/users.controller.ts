@@ -33,6 +33,7 @@ import { AddressService } from '../addresses/address.service';
 import { UpdateUserPasswordRequest } from './requests/update-user-password.request';
 import { IndexArtistsRequest } from './requests/index-artists.request';
 import { ProfileStatusService } from '../profile-status/profile-status.service';
+import { IMAGE_UPLOAD_OPTIONS } from 'src/common/utils/upload-limits';
 
 @Controller('users')
 export class UserController {
@@ -174,7 +175,7 @@ export class UserController {
     FileFieldsInterceptor([
       { name: 'avatar', maxCount: 1 },
       { name: 'banner', maxCount: 1 },
-    ]),
+    ], IMAGE_UPLOAD_OPTIONS),
   )
   async update(
     @Param('id') id: string,

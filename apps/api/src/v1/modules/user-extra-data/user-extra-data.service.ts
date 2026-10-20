@@ -204,6 +204,29 @@ export class UserExtraDataService {
       );
     }
   }
+
+  /**
+   * Plan cap for creating one more collection/portfolio/service, checked against the live row
+   * count. Callers hold `withUserLock` for the same user and entity from this check until the
+   * insert, so concurrent creates cannot all pass on the same count.
+   */
+  async enforceEntityLimit(
+    userId: number,
+    entity: 'collections' | 'portfolios' | 'services',
+  ) {
+    const [currentCount, currentPlan] = await Promise.all([
+      this.userExtraDataRepository.countLiveEntities(userId, entity),
+      this.planService.findUserActivePlan(userId),
+    ]);
+    const maxAllowed = currentPlan[`max_${entity}`];
+    if (UserLimits.entityCount({ currentCount, incomingCount: 1, maxAllowed })) return;
+
+    const message = `${entity[0].toUpperCase()}${entity.slice(1)} limit exceeded. Current: ${currentCount}, Adding: 1, Max allowed: ${maxAllowed}`;
+    throw entity === 'services'
+      ? ApiException.maxServices(message)
+      : ApiException.maxProjects(message);
+  }
+
   @OnEvent(SET_INITIAL_USER_EXTRA_DATA_EVENT)
   async handleSetInitialUserExtraData(event: SetInitialUserExtraDataEvent) {
     const extraData = await this.userExtraDataRepository.findOrCreateByUserId(
