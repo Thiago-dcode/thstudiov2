@@ -24,6 +24,7 @@ import { UpdateMediaCategoriesRequest } from './requests/update-media-categories
 import { UpdateMediaLocationsRequest } from './requests/update-media-locations.request';
 import { UpdateMediaRequest } from './requests/update-media.request';
 import { UpdateMediaThumbnailTimeRequest } from './requests/update-media-thumbnail-time.request';
+import { PUBLIC_UNPAGINATED_MAX_ROWS } from 'src/common/utils/public-entity';
 
 @Throttle({
   short: { limit: 50, ttl: 1000 },
@@ -47,7 +48,7 @@ export class MediaController {
       completed: true,
       failed: undefined,
       compact: false,
-    });
+    }, { maxRows: PUBLIC_UNPAGINATED_MAX_ROWS });
   }
 
   // PublicArtistGuard: 404 for a hidden artist's media, except to its (deactivated) owner.

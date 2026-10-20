@@ -81,12 +81,17 @@ export class MediaRepository extends BaseMediaRepository {
       WHERE mcat.media_id = ${TABLES_ENUM.MEDIA}.id) AS categories`;
   }
 
-  async getAll(filters: MediaIndexRequest = {}): Promise<Media[] | MediaWithUser[]> {
+  async getAll(
+    filters: MediaIndexRequest = {},
+    options: { maxRows?: number } = {},
+  ): Promise<Media[] | MediaWithUser[]> {
     const compact = filters.compact !== false;
     const baseQuery = this.withLocation(
       compact ? this.query() : this.query().join('user_id', 'users', 'id'),
     );
     const query = await this.applyFilters(filters, baseQuery, compact);
+    // One row per media (the joins are 1:1), so a LIMIT here cannot cut a media in half.
+    if (!filters.paginated && options.maxRows) query.limit(options.maxRows);
 
     if (compact) {
       const results = await query.get<(MediaSchema & MediaUsageCountRow)[]>();

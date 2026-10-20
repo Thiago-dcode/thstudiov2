@@ -100,8 +100,9 @@ export class MediaService {
 
   public async findAll(
     data: IndexMediaRequest & Pick<MediaIndexRequest, 'with_usage_counts' | 'with_categories'>,
+    options: { maxRows?: number } = {},
   ) {
-    const result = await this.mediaRepository.getAll(data);
+    const result = await this.mediaRepository.getAll(data, options);
     return await Promise.all(
       result.map(async (media) => {
         if (media.thumbnail) {

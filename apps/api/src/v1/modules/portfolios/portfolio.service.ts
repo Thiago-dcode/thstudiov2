@@ -65,7 +65,8 @@ export class PortfolioService {
     const result = (await this.publicViewer.canSeeHidden(data.user_id))
       ? await this.portfolioRepository.getAll(data)
       : await this.portfolioRepository.getAll(
-        { ...data, ...PUBLIC_ENTITY_FILTERS },
+        // A list across every artist is always paged for visitors (see CollectionService.findAll).
+        { ...data, ...PUBLIC_ENTITY_FILTERS, ...(data.user_id ? {} : { paginated: true }) },
         { visibleAccountsOnly: true },
       );
     return await Promise.all(

@@ -44,7 +44,9 @@ export class CollectionService {
     const result = (await this.publicViewer.canSeeHidden(data.user_id))
       ? await this.collectionRepository.getAll(data)
       : await this.collectionRepository.getAll(
-        { ...data, ...PUBLIC_ENTITY_FILTERS },
+        // A list across every artist is always paged for visitors: unpaged, it is every
+        // collection on the platform with every media row joined in.
+        { ...data, ...PUBLIC_ENTITY_FILTERS, ...(data.user_id ? {} : { paginated: true }) },
         { visibleAccountsOnly: true },
       );
     return Promise.all(
