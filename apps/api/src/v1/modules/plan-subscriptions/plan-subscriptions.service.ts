@@ -38,6 +38,17 @@ import { Benefit } from '@repo/common-lib/types/benefit';
 import { UserBenefitService } from '../user-benefit/user-benefit.service';
 import { config } from '@repo/common-lib/config';
 import { UserRepository } from '../users/users.repository';
+import { getConfigValue } from '@repo/common-lib/config/utils';
+
+/** Same origin as APP_URL (scheme, host and port). */
+const isAppUrl = (value: string): boolean => {
+  try {
+    const appUrl = getConfigValue('app').url;
+    return !!appUrl && new URL(value).origin === new URL(appUrl).origin;
+  } catch {
+    return false;
+  }
+};
 
 @Injectable()
 export class PlanSubscriptionsService {
@@ -74,9 +85,19 @@ export class PlanSubscriptionsService {
         this.logger.error('Payment method not available or disabled', { payment_method });
         throw new HttpException('Payment method not available', 422);
       }
+      // Stripe redirects the customer to these after checkout. The web form already restricts
+      // them to our origin; a direct API call could otherwise send a paying customer anywhere.
+      if (!isAppUrl(success_url) || !isAppUrl(cancel_url)) {
+        throw new HttpException('Return URLs must be on this site', 422);
+      }
       const planPrice = await this.planPriceService.findOne(plan_price_id);
       if (!planPrice) {
         this.logger.error('Plan price does not exist', { plan_price_id });
+        throw new HttpException('Plan price does not exist', 422);
+      }
+      // A retired plan stays in the table for existing subscribers; nobody new may buy it.
+      if (!planPrice.plan.is_active) {
+        this.logger.warn('Attempted to subscribe to an inactive plan', { plan_price_id });
         throw new HttpException('Plan price does not exist', 422);
       }
       let currentUserSubscription =
