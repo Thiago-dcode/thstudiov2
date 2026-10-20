@@ -296,6 +296,11 @@ export class PlanSubscriptionsService {
 
           benefit = await this.userBenefitsService.getByIdAndUser(benefit_id, this.requestService.user.id);
           this.logger.info('Benefit found and not redeemed', { benefit_id, benefitIdFromDb: benefit?.id });
+          // A benefit switched off after it was handed out no longer grants its trial.
+          if (benefit && !benefit.active) {
+            this.logger.info('Benefit is deactivated; checking out without it', { benefit_id });
+            benefit = null;
+          }
         } else if (benefit_id) {
           this.logger.info('Benefit already redeemed or not requested', { benefit_id, redeemed: true });
         }
