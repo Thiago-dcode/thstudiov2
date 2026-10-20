@@ -13,6 +13,16 @@ export const s3StorageConfig: S3StorageConfig = {
   cdnUrl: STORAGE_CONFIG.cdnUrl,
 };
 
+/**
+ * Storage for database dumps: the media bucket's credentials and region, but a separate private bucket with no
+ * CDN in front. Throws when BACKUP_BUCKET is unset rather than falling back to the public media bucket.
+ */
+export const s3BackupStorageConfig = (): S3StorageConfig => {
+  const bucket = getConfigValue('backup').bucket;
+  if (!bucket) throw new Error('BACKUP_BUCKET is not set; refusing to store database dumps in the media bucket');
+  return { ...s3StorageConfig, bucket, cdnUrl: undefined };
+};
+
 export const fileStorageConfig: StorageConfig = {
   driver: 'file',
   folder: STORAGE_CONFIG.folder || 'uploads',

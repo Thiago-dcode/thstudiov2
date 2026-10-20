@@ -1,4 +1,4 @@
-import { s3StorageConfig } from '../../config/storage';
+import { s3BackupStorageConfig } from '../../config/storage';
 import { StorageService } from '../storage-service/storage.service';
 import { FactoryStorageService } from '../storage-service/factory-storage.service';
 import Logger from '../../utils/console';
@@ -18,7 +18,7 @@ const LOG = '[backup]';
  * not `storage/`: the containers run as the non-root `node` user and cannot create folders under /workspace.
  */
 const TEMP_DIRECTORY = path.join(os.tmpdir(), 'a11studio-backups');
-/** Bucket prefix for database dumps. Not a public asset prefix: keep it off any CDN behaviour. */
+/** Key prefix for database dumps inside the private backup bucket (see `s3BackupStorageConfig`). */
 const BACKUP_PREFIX = 'internal/backups';
 
 export type BackupResult =
@@ -53,13 +53,15 @@ const MAX_CLEANUP_DAYS = 365;
 
 const backupKeyFor = (date: Date) => `${BACKUP_PREFIX}/pg-backup-${formatDate(date)}.dump`;
 
-export const backup = async (
-    storageService: StorageService = FactoryStorageService.create(s3StorageConfig),
-): Promise<BackupResult> => {
+/** Created lazily so environments that skip backups (dev) do not need BACKUP_BUCKET. */
+const backupStorage = (): StorageService => FactoryStorageService.create(s3BackupStorageConfig());
+
+export const backup = async (storageService?: StorageService): Promise<BackupResult> => {
     if (!envCan()) {
         Logger.info(`${LOG} skipped: not the production environment`);
         return { status: 'skipped', reason: 'not the production environment' };
     }
+    const storage = storageService ?? backupStorage();
 
     const { database, host, port, username, password } = config().database;
 
@@ -80,12 +82,12 @@ export const backup = async (
 
         const dump = await fs.readFile(tempFile);
         Logger.info(`${LOG} dump created (${dump.length} bytes), uploading`);
-        if (!(await storageService.write(dump, key))) {
+        if (!(await storage.write(dump, key))) {
             throw new Error(`Backup upload to ${key} failed`);
         }
 
         // Confirm the object landed with the expected size before reporting success.
-        const stored = await storageService.head(key);
+        const stored = await storage.head(key);
         if (!stored || stored.size !== dump.length) {
             throw new Error(`Backup ${key} is missing or truncated in storage`);
         }
@@ -106,13 +108,12 @@ export const backup = async (
  * the day before, and stops at the first day with none. Run once a day after `backup()`. A gap of one missed
  * day in the history leaves everything older than the gap behind.
  */
-export const deleteExpiredBackup = async (
-    storageService: StorageService = FactoryStorageService.create(s3StorageConfig),
-): Promise<BackupDeleteResult> => {
+export const deleteExpiredBackup = async (storageService?: StorageService): Promise<BackupDeleteResult> => {
     if (!envCan()) {
         Logger.info(`${LOG} cleanup skipped: not the production environment`);
         return { status: 'skipped', reason: 'not the production environment' };
     }
+    const storage = storageService ?? backupStorage();
 
     const day = new Date();
     day.setDate(day.getDate() - RETENTION_DAYS);
@@ -121,8 +122,8 @@ export const deleteExpiredBackup = async (
     const keys: string[] = [];
     while (keys.length < MAX_CLEANUP_DAYS) {
         const key = backupKeyFor(day);
-        if (!(await storageService.exists(key))) break;
-        if (!(await storageService.delete(key))) {
+        if (!(await storage.exists(key))) break;
+        if (!(await storage.delete(key))) {
             throw new Error(`Could not delete expired backup ${key}`);
         }
         keys.push(key);
@@ -159,7 +160,7 @@ const parseBackupDate = (date: Date | string): Date => {
 export const restore = async ({
     date,
     allowProduction = false,
-    storageService = FactoryStorageService.create(s3StorageConfig),
+    storageService = backupStorage(),
 }: RestoreOptions): Promise<{ key: string }> => {
     if (envCan() && !allowProduction) {
         throw new Error('Refusing to restore onto production without allowProduction');

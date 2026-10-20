@@ -71,6 +71,8 @@ const config = (envPath?: string | undefined) => {
     backup: {
       // Cron pattern (UTC) for the daily database backup job. Default: 03:00, off-peak.
       cron: process.env.BACKUP_CRON || '0 3 * * *',
+      // Private bucket for the dumps. Never the media bucket: that one is the public CDN origin.
+      bucket: process.env.BACKUP_BUCKET,
     },
     mailing: {
       host: process.env.SMTP_HOST,
