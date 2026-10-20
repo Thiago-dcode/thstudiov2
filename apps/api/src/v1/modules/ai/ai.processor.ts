@@ -16,7 +16,7 @@ import { ServiceRepository } from '../services/service.repository';
 import { UserRepository } from '../users/users.repository';
 
 import { CreateLlmTokensUsageInput } from '@repo/common-lib/types/llm-tokens-usage';
-import { CreateMediaModerationInput } from '@repo/common-lib/types/media-moderation';
+import { CreateMediaModerationInput, MediaModeration } from '@repo/common-lib/types/media-moderation';
 import {
   EntitySeoFields,
   GenerateEntityMetadataPayload,
@@ -149,12 +149,25 @@ export class AiProcessor extends GlobalProcessor {
 
   private async handleMediaModeration(moderationData: CreateMediaModerationInput) {
     const log = this.logger.name('moderate-content');
+    // Only the insert may fail the job. Once the row exists, a BullMQ retry would insert it again
+    // and count the same violation twice (a second strike, a second ban step), so failures after
+    // this point are logged and the job completes.
+    let moderation: MediaModeration;
     try {
-      const moderation = await this.mediaModerationRepository.create(moderationData);
-      log.info(
-        `Moderation recorded for user [${moderationData.user_id}]`,
-        moderation,
+      moderation = await this.mediaModerationRepository.create(moderationData);
+    } catch (error) {
+      log.error(
+        `Failed to record moderation for user [${moderationData.user_id}] - ${error instanceof Error ? error.message : 'Unknown error'}`,
+        error,
       );
+      throw error;
+    }
+    log.info(
+      `Moderation recorded for user [${moderationData.user_id}]`,
+      moderation,
+    );
+
+    try {
 
       if (moderation.severity > 7) {
         //send a email to support 
@@ -208,14 +221,13 @@ export class AiProcessor extends GlobalProcessor {
 
 
 
-      return moderation;
     } catch (error) {
       log.error(
-        `Failed to record moderation for user [${moderationData.user_id}] - ${error instanceof Error ? error.message : 'Unknown error'}`,
+        `Moderation [${moderation.id}] recorded but applying it to user [${moderationData.user_id}] failed - ${error instanceof Error ? error.message : 'Unknown error'}`,
         error,
       );
-      throw error;
     }
+    return moderation;
   }
 
   /** Batch job: find due rows for an entity type and generate metadata for each inline. */

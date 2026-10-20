@@ -1,5 +1,6 @@
 "use server";
 
+import { SECURE_COOKIE_FLAGS } from "@/lib/utils/cookie-flags";
 import { INITIATE_SUBCRIPTION_COOKIE } from "@repo/common-lib/constants/cookies";
 import type {
   HandleSubscriptionProcessResponse,
@@ -102,7 +103,7 @@ export const setInitiateSubscriptionCookie = async (
 ) => {
   const cookieStore = await cookies();
   cookieStore.set(INITIATE_SUBCRIPTION_COOKIE, await encryptObj(data), {
-    httpOnly: true,
+    ...SECURE_COOKIE_FLAGS,
     maxAge: 60 * 10, // 10 min
   });
 };
@@ -118,7 +119,7 @@ export const getInitiateSubscriptionCookie = async () => {
 export const deleteInitiateSubscriptionCookie = async () => {
   const cookieStore = await cookies();
   cookieStore.set(INITIATE_SUBCRIPTION_COOKIE, "", {
-    httpOnly: true,
+    ...SECURE_COOKIE_FLAGS,
     maxAge: 0,
   });
 };

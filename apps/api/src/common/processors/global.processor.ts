@@ -6,6 +6,22 @@ const failedJobLogger = FactoryLogService.createLogService('file', {
   channel: 'failed-job',
 });
 
+/** Email bodies carry live recovery and 2FA codes: log their size, never their content. */
+const BODY_KEYS = new Set(['html', 'text']);
+
+export const redactJobData = (data: unknown): unknown => {
+  if (Array.isArray(data)) return data.map(redactJobData);
+  if (!data || typeof data !== 'object') return data;
+  return Object.fromEntries(
+    Object.entries(data as Record<string, unknown>).map(([key, value]) => [
+      key,
+      BODY_KEYS.has(key) && typeof value === 'string'
+        ? `[redacted, ${value.length} chars]`
+        : redactJobData(value),
+    ]),
+  );
+};
+
 export abstract class GlobalProcessor extends WorkerHost {
   @OnWorkerEvent('failed')
   async onFailed(
@@ -38,7 +54,7 @@ export abstract class GlobalProcessor extends WorkerHost {
         queueQualifiedName: job.queueQualifiedName,
         jobId: job.id,
         jobName: job.name,
-        data: job.data,
+        data: redactJobData(job.data),
         attemptsMade: job.attemptsMade,
         maxAttempts,
         failedReason: job.failedReason ?? error?.message,

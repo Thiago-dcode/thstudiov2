@@ -16,6 +16,16 @@ import { VALIDATION_ERROR_STATUS } from '../utils/constants';
 import { Error as ApiError, ErrorResponse } from '@repo/common-lib/types/response';
 import { ApiException } from '../exceptions/api-exception';
 
+/**
+ * In a request, unlike an error object, `code` is the client's one-time code (password recovery,
+ * email verification): live secrets the log redactor deliberately lets through, so drop them here
+ * before they reach the error log and the admin 500 alert mail.
+ */
+const withoutClientCode = (input: unknown): unknown => {
+  if (!input || typeof input !== 'object' || Array.isArray(input) || !('code' in input)) return input;
+  return { ...(input as Record<string, unknown>), code: '[REDACTED]' };
+};
+
 @Catch()
 export class ResponseExceptionFilter implements ExceptionFilter {
   constructor() { }
@@ -54,9 +64,9 @@ export class ResponseExceptionFilter implements ExceptionFilter {
         );
         logService.channel(API_ERRORS_CHANNEL + '/' + status).error(message, {
           ...error,
-          requestBody: request?.body,
-          requestParams: request?.params,
-          requestQuery: request?.query,
+          requestBody: withoutClientCode(request?.body),
+          requestParams: withoutClientCode(request?.params),
+          requestQuery: withoutClientCode(request?.query),
         });
         void LogService.flush().catch((flushErr) =>
           console.error('Failed to flush error logs:', flushErr),

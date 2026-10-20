@@ -1,4 +1,5 @@
 "use server";
+import { SECURE_COOKIE_FLAGS } from "@/lib/utils/cookie-flags";
 import { TWO_FA_COOKIE_NAME } from "@repo/common-lib/constants/cookies";
 import type { ActionReturn } from "@repo/common-lib/types/response";
 import { cookies } from "next/headers";
@@ -78,7 +79,7 @@ export const get2faCookieData = async (): Promise<TwoFaUser | null> => {
 export const delete2faCookie = async () => {
   const cookieStore = await cookies();
   cookieStore.set(TWO_FA_COOKIE_NAME, "", {
-    httpOnly: true,
+    ...SECURE_COOKIE_FLAGS,
     maxAge: 0,
   });
 };
@@ -128,7 +129,7 @@ export const set2faCookie = async (user: TwoFaUser) => {
     is_new: user.is_new ?? !user.email_validated,
   };
   cookieStore.set(TWO_FA_COOKIE_NAME, await encryptObj(twoFaUser), {
-    httpOnly: true,
+    ...SECURE_COOKIE_FLAGS,
     // Outlives the 10-minute code so an expired code can still be resent from the same page
     // instead of sending the user back through login.
     maxAge: 60 * 30,

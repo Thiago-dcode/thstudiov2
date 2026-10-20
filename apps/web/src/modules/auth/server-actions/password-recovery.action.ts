@@ -1,5 +1,6 @@
 "use server";
 
+import { SECURE_COOKIE_FLAGS } from "@/lib/utils/cookie-flags";
 import { PASSWORD_RECOVERY_ATTEMPT_COOKIE_NAME } from "@repo/common-lib/constants/cookies";
 import type { ActionReturn } from "@repo/common-lib/types/response";
 import { cookies } from "next/headers";
@@ -93,7 +94,7 @@ export const setPasswordRecoveryAttemptCookie = async (
     PASSWORD_RECOVERY_ATTEMPT_COOKIE_NAME,
     await encryptObj(passwordRecoveryAttempt),
     {
-      httpOnly: true,
+      ...SECURE_COOKIE_FLAGS,
       maxAge: 60 * 10, //10 minutes
     },
   );

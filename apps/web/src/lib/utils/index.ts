@@ -1,3 +1,4 @@
+import { SECURE_COOKIE_FLAGS } from "@/lib/utils/cookie-flags";
 import { decrypt, encrypt } from "@repo/common-lib/utils/encrypt";
 import { cookies } from "next/headers";
 import { serverEnv } from "@/env/server";
@@ -27,7 +28,7 @@ export const encryptObj = async <T extends object>(obj: T) => {
 export const deleteCookie = async (key: string) => {
   const cookieStore = await cookies();
   cookieStore.set(key, "", {
-    httpOnly: true,
+    ...SECURE_COOKIE_FLAGS,
     maxAge: 0,
   });
 };

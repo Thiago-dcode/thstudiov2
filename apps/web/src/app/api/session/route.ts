@@ -1,6 +1,7 @@
 import { getConfigValue } from "@repo/common-lib/config/utils";
 import { APP_API_KEY_HEADER } from "@repo/common-lib/constants/headers";
 import { type NextRequest, NextResponse } from "next/server";
+import { safeEqual } from "@/lib/utils/safe-equal";
 import type { UserAuth } from "@/modules/auth/auth.types";
 import {
   deleteUserSession,
@@ -11,7 +12,8 @@ export async function POST(request: NextRequest) {
   try {
     const apiKey = request.headers.get(APP_API_KEY_HEADER);
 
-    if (!apiKey || apiKey !== getConfigValue("app").api_key) {
+    const expectedApiKey = getConfigValue("app").api_key;
+    if (!apiKey || !expectedApiKey || !safeEqual(apiKey, expectedApiKey)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

@@ -2,6 +2,7 @@ import { Injectable, NestMiddleware } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NextFunction, Request, Response } from 'express';
 import { RequestService } from 'src/common/services/request.service';
+import { safeEqual } from 'src/common/utils/safe-equal';
 import { ENUMS } from '@repo/common-lib/constants/enums';
 import { EnumType } from '@repo/common-lib/constants/enums';
 import { getAcceptLanguage } from '@repo/common-lib/utils/get-accept-language';
@@ -65,7 +66,7 @@ export class RequestMiddleware implements NestMiddleware {
       const appToken = req.get(APP_TOKEN_HEADER);
       const expectedAppToken = this.configService.get<string>('app.token');
       const isTrustedCaller =
-        !!expectedAppToken && appToken === expectedAppToken;
+        !!expectedAppToken && !!appToken && safeEqual(appToken, expectedAppToken);
 
       this.requestService.user_agent = (
         (isTrustedCaller ? req.get(USER_AGENT_HEADER) : undefined) ||
@@ -78,6 +79,10 @@ export class RequestMiddleware implements NestMiddleware {
       // Public SSR reads deliberately omit the visitor IP (stable fetch-cache keys), so their
       // `ip_address` is the web container's. `AppThrottlerGuard` must not bucket on it.
       this.requestService.unattributed_app_call = isTrustedCaller && !forwardedIp;
+
+      // Kept for `PublicViewerService`: public reads show owners and admins what visitors can't.
+      const [scheme, token] = req.headers.authorization?.split(' ') ?? [];
+      this.requestService.bearer_token = scheme === 'Bearer' && token ? token : null;
 
       next();
     });

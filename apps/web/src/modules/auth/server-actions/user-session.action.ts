@@ -1,5 +1,6 @@
 "use server";
 
+import { SECURE_COOKIE_FLAGS } from "@/lib/utils/cookie-flags";
 import {
   REMEMBER_ME_COOKIE_NAME,
   USER_AUTH_COOKIE_EXPIRATION_DATE,
@@ -58,7 +59,7 @@ export const setRememberMeByCookie = async (
   cookies: RequestCookies | ResponseCookies,
 ) => {
   cookies.set(REMEMBER_ME_COOKIE_NAME, "1", {
-    httpOnly: true,
+    ...SECURE_COOKIE_FLAGS,
     expires: addMonths(new Date(), 1),
   });
 };
@@ -79,7 +80,7 @@ export const deleteRememberMeByCookie = async (
   cookies: RequestCookies | ResponseCookies,
 ) => {
   cookies.set(REMEMBER_ME_COOKIE_NAME, "", {
-    httpOnly: true,
+    ...SECURE_COOKIE_FLAGS,
     maxAge: 0,
   });
 };
@@ -90,7 +91,7 @@ export const setUserSessionByCookie = async (
 ) => {
   const expireAt = addDays(new Date(), 1);
   const cookieOptions = {
-    httpOnly: true,
+    ...SECURE_COOKIE_FLAGS,
     expires: expireAt,
   };
   cookies.set(
@@ -126,11 +127,11 @@ export const deleteUserSessionByCookie = async (
   cookies: RequestCookies | ResponseCookies,
 ) => {
   cookies.set(USER_AUTH_COOKIE_NAME, "", {
-    httpOnly: true,
+    ...SECURE_COOKIE_FLAGS,
     maxAge: 0,
   });
   cookies.set(USER_AUTH_COOKIE_EXPIRATION_DATE, "", {
-    httpOnly: true,
+    ...SECURE_COOKIE_FLAGS,
     maxAge: 0,
   });
 };

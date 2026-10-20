@@ -1,3 +1,4 @@
+import { SECURE_COOKIE_FLAGS } from "@/lib/utils/cookie-flags";
 import { REDIRECT_TO_COOKIE_NAME } from "@repo/common-lib/constants/cookies";
 import {
   isRedirectToKey,
@@ -11,7 +12,7 @@ import type {
 const REDIRECT_TO_MAX_AGE_SECONDS = 60 * 5;
 
 const redirectToCookieOptions = {
-  httpOnly: true,
+  ...SECURE_COOKIE_FLAGS,
   path: "/",
   maxAge: REDIRECT_TO_MAX_AGE_SECONDS,
 } as const;
@@ -40,7 +41,7 @@ export const deleteRedirectToByCookie = (
   cookieStore: RequestCookies | ResponseCookies,
 ) => {
   cookieStore.set(REDIRECT_TO_COOKIE_NAME, "", {
-    httpOnly: true,
+    ...SECURE_COOKIE_FLAGS,
     path: "/",
     maxAge: 0,
   });

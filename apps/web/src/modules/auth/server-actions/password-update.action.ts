@@ -1,5 +1,6 @@
 "use server";
 
+import { SECURE_COOKIE_FLAGS } from "@/lib/utils/cookie-flags";
 import { PASSWORD_UPDATED_COOKIE_NAME } from "@repo/common-lib/constants/cookies";
 import type { ActionReturn } from "@repo/common-lib/types/response";
 import type { User } from "@repo/common-lib/types/user";
@@ -70,7 +71,7 @@ export const setPasswordUpdatedCookie = async () => {
   const cookieStore = await cookies();
   const data = encrypt("success", config.encryption_secret);
   cookieStore.set(PASSWORD_UPDATED_COOKIE_NAME, data, {
-    httpOnly: true,
+    ...SECURE_COOKIE_FLAGS,
     maxAge: 30, //1 minute
   });
 };
@@ -88,7 +89,7 @@ export const getPasswordUpdatedCookie = async () => {
 export const deletePasswordUpdatedCookie = async () => {
   const cookieStore = await cookies();
   cookieStore.set(PASSWORD_UPDATED_COOKIE_NAME, "", {
-    httpOnly: true,
+    ...SECURE_COOKIE_FLAGS,
     maxAge: 0,
   });
 };
