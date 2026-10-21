@@ -208,6 +208,22 @@ const messages = {
       },
       browseAll: "Ver todos los artistas",
     },
+    disciplines: {
+      header: {
+        badge: "Para creativos",
+        title: "Un portafolio pensado para tu tipo de trabajo",
+        description:
+          "Ejemplos reales, una guía breve y lo que incluye el plan gratis, para el trabajo que haces.",
+      },
+      items: {
+        photographers: {
+          title: "Portafolio de fotografía gratis para fotógrafos",
+          description:
+            "Portafolios por especialidad, colecciones para cada sesión y servicios que tus clientes pueden contratar.",
+          cta: "Descubre cómo funciona para fotógrafos",
+        },
+      },
+    },
     featuredPortfolio: {
       header: {
         badge: "Portafolio destacado",

@@ -335,12 +335,12 @@ export function buildFaqPageJsonLd(
 /**
  * A discipline landing (`/for/photographers`): a page about the brand's product for that audience,
  * with its own Q&A. One `FAQPage` node carries both — the page is the FAQ's container, so splitting
- * them would describe one URL as two pages.
+ * them would describe one URL as two pages. `crumb` is the visible breadcrumb's label for the page.
  */
 export function buildDisciplineLandingJsonLd(
   locale: string,
   path: string,
-  copy: { pageName: string; description: string },
+  copy: { pageName: string; description: string; crumb: string },
   faq: { question: string; answer: string }[],
 ) {
   return graph([
@@ -352,6 +352,7 @@ export function buildDisciplineLandingJsonLd(
       about: { "@id": ORGANIZATION_ID() },
       mainEntity: faqQuestions(faq),
     },
+    breadcrumb(locale, [{ name: copy.crumb, path }]),
   ]);
 }
 

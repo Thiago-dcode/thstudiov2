@@ -1,5 +1,14 @@
 import type { FullPlan } from "@repo/common-lib/types/plan";
 import type { Portfolio } from "@repo/common-lib/types/portfolio";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@repo/ui/components/shadcn/breadcrumb";
+import { ChevronRight } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
@@ -7,6 +16,7 @@ import type { ReactNode } from "react";
 import { Link } from "@/i18n/navigation";
 import { RegistrationCtaButton } from "@/lib/components/registration-cta-button";
 import { isDirectoryOpen } from "@/lib/directory-visibility";
+import { SITE_NAME } from "@/lib/seo/core";
 import { buildDisciplineLandingJsonLd, JsonLd } from "@/lib/seo/json-ld";
 import { buildStaticPageMetadata } from "@/lib/seo/static-metadata";
 import categoriesService from "@/modules/categories/categories.service";
@@ -113,10 +123,40 @@ export default async function DisciplineLandingPage({ params }: Props) {
         data={buildDisciplineLandingJsonLd(
           locale,
           disciplineLandingPath(key),
-          { pageName: tMeta("title"), description: tMeta("description") },
+          {
+            pageName: tMeta("title"),
+            description: tMeta("description"),
+            crumb: t("hero.label"),
+          },
           faq,
         )}
       />
+
+      {/* Mirrors the BreadcrumbList in the JSON-LD above: Google wants the trail visible too. */}
+      <WebSection.Container className="px-6 pt-8 tablet:px-10">
+        <Breadcrumb>
+          <BreadcrumbList className="gap-2 text-[10px] uppercase tracking-[0.2em] text-text-muted">
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link
+                  href="/"
+                  className="text-[10px] uppercase tracking-[0.2em] text-text-muted transition-colors hover:text-text"
+                >
+                  {SITE_NAME}
+                </Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator className="[&>svg]:size-3">
+              <ChevronRight className="size-3" />
+            </BreadcrumbSeparator>
+            <BreadcrumbItem>
+              <BreadcrumbPage className="text-[10px] font-normal uppercase tracking-[0.2em] text-text-muted">
+                {t("hero.label")}
+              </BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+      </WebSection.Container>
 
       <WebSection id="hero">
         <WebSection.Container className="flex max-w-3xl flex-col items-center gap-8 px-6 py-20 text-center tablet:px-10 tablet:py-28">

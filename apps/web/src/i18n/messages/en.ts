@@ -207,6 +207,22 @@ const messages = {
       },
       browseAll: "Browse All Artists",
     },
+    disciplines: {
+      header: {
+        badge: "For creatives",
+        title: "A portfolio built for your kind of work",
+        description:
+          "Real examples, a short guide and what the free plan includes, for the work you do.",
+      },
+      items: {
+        photographers: {
+          title: "Free photography portfolio for photographers",
+          description:
+            "Portfolios by specialty, collections for every shoot and services clients can book.",
+          cta: "See how it works for photographers",
+        },
+      },
+    },
     featuredPortfolio: {
       header: {
         badge: "Portfolio spotlight",
