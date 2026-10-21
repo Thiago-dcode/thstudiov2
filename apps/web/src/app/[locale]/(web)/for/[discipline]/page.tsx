@@ -166,10 +166,10 @@ export default async function DisciplineLandingPage({ params }: Props) {
               {t("hero.label")}
             </span>
           </div>
-          <h1 className="max-w-2xl font-serif text-4xl font-bold leading-[1.05] tracking-tight tablet:text-6xl">
+          <h1 className="max-w-2xl text-4xl! leading-[1.05]! tracking-tight tablet:text-6xl!">
             {t("hero.title")}
           </h1>
-          <p className="max-w-xl text-base leading-relaxed text-text-muted tablet:text-lg">
+          <p className="max-w-xl text-base leading-relaxed text-text-muted tablet:text-lg!">
             {t("hero.lead")}
           </p>
           <div className="flex flex-col items-center gap-4 pt-2 phone-lg:flex-row phone-lg:gap-8">
@@ -331,10 +331,10 @@ export default async function DisciplineLandingPage({ params }: Props) {
       <WebSection id="cta">
         <WebSection.Container className="flex max-w-3xl flex-col items-center gap-8 px-6 py-20 text-center tablet:px-10 tablet:py-28">
           <span aria-hidden="true" className="h-px w-12 bg-border-em" />
-          <h2 className="max-w-2xl font-serif text-3xl font-bold leading-tight tracking-tight tablet:text-5xl">
+          <h2 className="max-w-2xl text-3xl! leading-tight! tracking-tight tablet:text-5xl!">
             {t("cta.title")}
           </h2>
-          <p className="max-w-lg text-base leading-relaxed text-text-muted tablet:text-lg">
+          <p className="max-w-lg text-base leading-relaxed text-text-muted tablet:text-lg!">
             {t("cta.description")}
           </p>
           <RegistrationCtaButton intent="createPortfolio" size="lg" />
