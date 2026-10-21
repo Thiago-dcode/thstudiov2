@@ -1,26 +1,26 @@
 const messages = {
   seo: {
     founderRole: "Founder — photographer, filmmaker and software engineer",
-    homePageName: "A11STUDIO — Discover and hire artists",
+    homePageName: "A11STUDIO — Portfolios for photographers",
     organizationDescription:
-      "A11STUDIO is the portfolio platform where artists get discovered — showcase your work and connect with clients, collectors and collaborators.",
-    defaultTitle: "A11STUDIO — Where Artists Get Discovered",
+      "A11STUDIO is the portfolio platform for photographers — show your work in a professional portfolio and get found and hired by clients.",
+    defaultTitle: "A11STUDIO — Where Photographers Get Discovered",
     defaultDescription:
-      "Showcase your work, get discovered, and connect with clients, collectors and collaborators. A11STUDIO is the portfolio platform designed exclusively for artists.",
+      "Show your photography in a professional portfolio, get found on Google and let clients contact you directly. The portfolio platform built for photographers.",
   },
   landing: {
     scrollToNextSection: "Scroll to next section",
     metadata: {
-      title: "A11STUDIO — Discover & Hire Artists | Portfolios for Artists",
+      title: "A11STUDIO — Portfolio Platform for Photographers",
       description:
-        "Find and hire photographers, illustrators and filmmakers, or build your professional portfolio: you upload your art, we take care of the technical side.",
+        "Build a professional photography portfolio and get hired: you upload your photos, we handle SEO, hosting and the technical side. Free to start.",
     },
     hero: {
-      srTitle: "A11STUDIO — let your art be discovered.",
+      srTitle: "A11STUDIO — the portfolio platform for photographers.",
       definition:
-        "A11STUDIO is where photographers, illustrators, filmmakers and designers show their work — and where clients come to find and hire them.",
+        "A11STUDIO is where photographers show their work — and where clients come to find and hire them.",
       titlePrefix: "Let your",
-      titleAccentWords: ["art", "vision", "craft", "passion", "voice"],
+      titleAccentWords: ["photos", "vision", "craft", "work", "story"],
       titleConnector: "be",
       titleDiscoverWords: [
         "shared",
@@ -30,7 +30,7 @@ const messages = {
         "discovered",
       ],
       subtitle:
-        "For artists who don't want to be influencers. Bring your art, we take care of the rest.",
+        "For photographers who don't want to be influencers. Bring your photos, we take care of the rest.",
       primaryCtaLoggedIn: "Access Atelier",
       primaryCtaLoggedOut: "Start Free Now",
       secondaryCta: "Find artists",
@@ -629,7 +629,7 @@ const messages = {
         "Prefer creating art instead of managing technology",
       ],
       closing:
-        "Whether you're a photographer, filmmaker, illustrator, painter, designer, sculptor, or any other creative professional, A11STUDIO helps your work stand out.",
+        "Built for photographers first — wedding, portrait, brand, travel or any other specialty. Other creatives are welcome too, and A11STUDIO helps your work stand out.",
     },
     philosophy: {
       title: "How we decide",
@@ -802,17 +802,17 @@ const messages = {
     },
     page: {
       titleArtists:
-        "Discover Artists — Photographers, Illustrators & More | A11STUDIO",
+        "Find Photographers — Browse by Specialty & Location | A11STUDIO",
       descriptionArtists:
-        "Find and contact photographers, illustrators, filmmakers, designers and other artists. Browse by discipline, style and location on A11STUDIO.",
+        "Find and contact photographers by specialty, style and location. Browse real portfolios on A11STUDIO and reach the photographer directly.",
       titlePortfolios:
-        "Artist Portfolios — Photography, Illustration, Film & Design | A11STUDIO",
+        "Photography Portfolios — Wedding, Portrait & More | A11STUDIO",
       descriptionPortfolios:
-        "Browse curated portfolios from photographers, illustrators, filmmakers and designers on A11STUDIO, and find the artist whose work fits your project.",
+        "Browse curated photography portfolios on A11STUDIO and find the photographer whose work fits your project.",
       headingArtists: "Discover artists",
       headingPortfolios: "Explore portfolios",
       introArtists:
-        "Photographers, illustrators, filmmakers, designers and more — browse by discipline, style and location, and contact the artist directly.",
+        "Photographers and other creatives — browse by specialty, style and location, and contact them directly.",
       introPortfolios:
         "Curated bodies of work from artists on A11STUDIO — each portfolio gathers an artist's best work in one discipline or style.",
       description:

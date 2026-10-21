@@ -3,26 +3,32 @@ import type { Messages } from "./en";
 const messages = {
   seo: {
     founderRole: "Fundador — fotógrafo, cineasta e ingeniero de software",
-    homePageName: "A11STUDIO — Descubre y contrata artistas",
+    homePageName: "A11STUDIO — Portafolios para fotógrafos",
     organizationDescription:
-      "A11STUDIO es la plataforma de portafolios donde los artistas son descubiertos: muestra tu trabajo y conecta con clientes, coleccionistas y colaboradores.",
-    defaultTitle: "A11STUDIO — Donde los artistas son descubiertos",
+      "A11STUDIO es la plataforma de portafolios para fotógrafos: muestra tu trabajo en un portafolio profesional y haz que los clientes te encuentren y te contraten.",
+    defaultTitle: "A11STUDIO — Donde los fotógrafos son descubiertos",
     defaultDescription:
-      "Muestra tu trabajo, hazte descubrir y conecta con clientes, coleccionistas y colaboradores. A11STUDIO es la plataforma de portafolios diseñada exclusivamente para artistas.",
+      "Muestra tu fotografía en un portafolio profesional, aparece en Google y deja que los clientes te contacten directamente. La plataforma de portafolios para fotógrafos.",
   },
   landing: {
     scrollToNextSection: "Ir a la siguiente sección",
     metadata: {
-      title: "A11STUDIO — Descubre y contrata artistas | Portafolios",
+      title: "A11STUDIO — Plataforma de portafolios para fotógrafos",
       description:
-        "Encuentra y contrata fotógrafos, ilustradores y cineastas, o crea tu portafolio profesional: tú subes tu arte, nosotros nos encargamos de la parte técnica.",
+        "Crea un portafolio de fotografía profesional y consigue clientes: tú subes tus fotos, nosotros nos encargamos del SEO, el hosting y la parte técnica. Gratis.",
     },
     hero: {
-      srTitle: "A11STUDIO — deja que tu arte sea descubierto.",
+      srTitle: "A11STUDIO — la plataforma de portafolios para fotógrafos.",
       definition:
-        "A11STUDIO es donde fotógrafos, ilustradores, cineastas y diseñadores muestran su trabajo, y donde los clientes vienen a encontrarlos y contratarlos.",
+        "A11STUDIO es donde los fotógrafos muestran su trabajo, y donde los clientes vienen a encontrarlos y contratarlos.",
       titlePrefix: "Deja que tu",
-      titleAccentWords: ["arte", "visión", "talento", "pasión", "voz"],
+      titleAccentWords: [
+        "fotografía",
+        "mirada",
+        "talento",
+        "trabajo",
+        "visión",
+      ],
       titleConnector: "se",
       titleDiscoverWords: [
         "comparta",
@@ -32,7 +38,7 @@ const messages = {
         "descubra",
       ],
       subtitle:
-        "Para artistas que no quieren ser influencers. Trae tu arte, del resto nos encargamos nosotros.",
+        "Para fotógrafos que no quieren ser influencers. Trae tus fotos, del resto nos encargamos nosotros.",
       primaryCtaLoggedIn: "Acceder a Atelier",
       primaryCtaLoggedOut: "Empieza gratis ahora",
       secondaryCta: "Encuentra artistas",
@@ -630,7 +636,7 @@ const messages = {
         "Prefieren crear arte en lugar de gestionar tecnología",
       ],
       closing:
-        "Ya seas fotógrafo, cineasta, ilustrador, pintor, diseñador, escultor u otro profesional creativo, A11STUDIO ayuda a que tu obra destaque.",
+        "Pensado primero para fotógrafos: bodas, retrato, marca, viajes o cualquier otra especialidad. Otros creativos también son bienvenidos, y A11STUDIO ayuda a que tu obra destaque.",
     },
     philosophy: {
       title: "Cómo decidimos",
@@ -802,17 +808,17 @@ const messages = {
     },
     page: {
       titleArtists:
-        "Descubre artistas — Fotógrafos, ilustradores y más | A11STUDIO",
+        "Encuentra fotógrafos — Por especialidad y ubicación | A11STUDIO",
       descriptionArtists:
-        "Encuentra y contacta con fotógrafos, ilustradores, cineastas, diseñadores y otros artistas. Explora por disciplina, estilo y ubicación en A11STUDIO.",
+        "Encuentra y contacta con fotógrafos por especialidad, estilo y ubicación. Explora portafolios reales en A11STUDIO y habla directamente con el fotógrafo.",
       titlePortfolios:
-        "Portafolios de artistas — Fotografía, ilustración, cine y diseño | A11STUDIO",
+        "Portafolios de fotografía — Bodas, retrato y más | A11STUDIO",
       descriptionPortfolios:
-        "Explora portafolios seleccionados de fotógrafos, ilustradores, cineastas y diseñadores en A11STUDIO y encuentra al artista ideal para tu proyecto.",
+        "Explora portafolios de fotografía seleccionados en A11STUDIO y encuentra al fotógrafo ideal para tu proyecto.",
       headingArtists: "Descubre artistas",
       headingPortfolios: "Explora portafolios",
       introArtists:
-        "Fotógrafos, ilustradores, cineastas, diseñadores y más: explora por disciplina, estilo y ubicación, y contacta directamente con el artista.",
+        "Fotógrafos y otros creativos: explora por especialidad, estilo y ubicación, y contacta directamente con ellos.",
       introPortfolios:
         "Trabajos seleccionados de artistas de A11STUDIO: cada portafolio reúne lo mejor de un artista en una disciplina o estilo.",
       description:

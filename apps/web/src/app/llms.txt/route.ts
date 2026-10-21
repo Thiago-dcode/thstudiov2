@@ -29,9 +29,9 @@ export async function GET() {
 
   const body = `# A11STUDIO
 
-> A11STUDIO is where photographers, illustrators, filmmakers and designers show their work — and where clients come to find and hire them. It is for artists who don't want to be influencers: they bring their art, and A11STUDIO takes care of the rest.
+> A11STUDIO is the portfolio platform for photographers — where photographers show their work and where clients come to find and hire them. It is for photographers who don't want to be influencers: they bring their photos, and A11STUDIO takes care of the rest. Other creatives are welcome too.
 
-A11STUDIO combines a professional portfolio website with the ease of social media. Artists publish portfolios, collections and services in minutes; A11STUDIO handles hosting, presentation and search visibility (AI-written, multilingual SEO for every page), so their work can be found on Google without posting daily or chasing an algorithm. Clients — couples, businesses, publishers, agencies, galleries — browse artists by discipline, style and location and contact them directly.
+A11STUDIO combines a professional portfolio website with the ease of social media. Artists publish portfolios, collections and services in minutes; A11STUDIO handles hosting, presentation and search visibility (AI-written, multilingual SEO for every page), so their work can be found on Google without posting daily or chasing an algorithm. Clients — couples, businesses, publishers, agencies, galleries — browse photographers by specialty, style and location and contact them directly.
 
 Built by an artist for artists: the founder, Thiago Ferreira, is a photographer, filmmaker and software engineer based in Spain. The platform ranks craftsmanship over algorithms: no feeds, no engagement metrics, the artwork is always the focus.
 
