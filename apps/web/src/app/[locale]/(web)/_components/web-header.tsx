@@ -11,8 +11,6 @@ import { WebHeaderArtistSearch } from "./web-header-artist-search";
 
 interface WebHeaderProps {
   session: UserAuth | null;
-  /** The artist search queries the directory, so it is hidden while the directory is closed. */
-  showSearch: boolean;
 }
 
 function DrawerRegistrationCtaButton() {
@@ -27,7 +25,7 @@ function DrawerRegistrationCtaButton() {
   );
 }
 
-export const WebHeader = ({ session, showSearch }: WebHeaderProps) => {
+export const WebHeader = ({ session }: WebHeaderProps) => {
   const t = useTranslations("webHeader");
   const pathname = usePathname();
 
@@ -40,12 +38,7 @@ export const WebHeader = ({ session, showSearch }: WebHeaderProps) => {
       <SiteHeader.Bar className="gap-3 tablet:gap-4">
         <SiteHeader.Logo />
 
-        {showSearch ? (
-          <WebHeaderArtistSearch className="min-w-0 flex-1 max-w-lg" />
-        ) : (
-          // Holds the search's place so the logo and the actions keep their positions.
-          <div aria-hidden="true" className="flex-1" />
-        )}
+        <WebHeaderArtistSearch className="min-w-0 flex-1 max-w-lg" />
 
         <SiteHeader.Actions>
           {isAuthenticated ? (

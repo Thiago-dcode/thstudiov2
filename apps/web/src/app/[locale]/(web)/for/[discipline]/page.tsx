@@ -65,22 +65,26 @@ async function getSpecialtySlugs(key: DisciplineLandingKey) {
 
 export default async function DisciplineLandingPage({ params }: Props) {
   const { locale, key } = await resolveKey(params);
-  const t = await getTranslations(`forDiscipline.${key}`);
-  const tMeta = await getTranslations(`forDiscipline.${key}.metadata`);
-
-  const { parentSlug, specialtySlugs } = await getSpecialtySlugs(key);
-  const [examplesResponse, freePlanResponse, directoryOpen] = await Promise.all(
-    [
-      parentSlug
-        ? portfolioService.findPublicByCategories(
-            [parentSlug, ...specialtySlugs],
-            EXAMPLES_LIMIT,
-          )
-        : null,
-      plansService.getFree(),
-      isDirectoryOpen(),
-    ],
-  );
+  // Only the examples depend on the categories; everything else starts at once.
+  const [
+    t,
+    tMeta,
+    { parentSlug, specialtySlugs },
+    freePlanResponse,
+    directoryOpen,
+  ] = await Promise.all([
+    getTranslations(`forDiscipline.${key}`),
+    getTranslations(`forDiscipline.${key}.metadata`),
+    getSpecialtySlugs(key),
+    plansService.getFree(),
+    isDirectoryOpen(),
+  ]);
+  const examplesResponse = parentSlug
+    ? await portfolioService.findPublicByCategories(
+        [parentSlug, ...specialtySlugs],
+        EXAMPLES_LIMIT,
+      )
+    : null;
   if (examplesResponse) {
     reportSectionError(`for-${key}-examples`, examplesResponse);
   }
