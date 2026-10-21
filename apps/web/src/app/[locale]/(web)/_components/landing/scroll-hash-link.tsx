@@ -19,9 +19,17 @@ export function ScrollHashLink({
 }: ScrollHashLinkProps) {
   const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
-    document.getElementById(href.slice(1))?.scrollIntoView({
-      behavior: "smooth",
-    });
+    // A section with nothing to show renders nothing, so its anchor can be missing: fall back to
+    // the next section that did render after the one holding this link.
+    let target: Element | null = document.getElementById(href.slice(1));
+    if (!target) {
+      target =
+        event.currentTarget.closest("section")?.nextElementSibling ?? null;
+      while (target && target.tagName !== "SECTION") {
+        target = target.nextElementSibling;
+      }
+    }
+    target?.scrollIntoView({ behavior: "smooth" });
     onClick?.(event);
   };
 

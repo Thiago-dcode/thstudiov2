@@ -11,6 +11,7 @@ const messages = {
       "Mostre o seu trabalho, seja descoberto e conecte-se com clientes, colecionadores e colaboradores. A11STUDIO é a plataforma de portfólios feita exclusivamente para artistas.",
   },
   landing: {
+    scrollToNextSection: "Rolar para a próxima seção",
     metadata: {
       title: "A11STUDIO — Descubra e contrate artistas | Portfólios",
       description:
@@ -210,18 +211,13 @@ const messages = {
       browseAll: "Ver todos os artistas",
     },
     disciplines: {
-      header: {
-        badge: "Para criativos",
-        title: "Um portfólio pensado para o seu tipo de trabalho",
-        description:
-          "Exemplos reais, um guia curto e o que o plano grátis inclui, para o trabalho que você faz.",
-      },
+      heading: "Para criativos",
       items: {
         photographers: {
           title: "Portfólio de fotografia grátis para fotógrafos",
           description:
             "Portfólios por especialidade, coleções para cada ensaio e serviços que seus clientes podem contratar.",
-          cta: "Veja como funciona para fotógrafos",
+          cta: "Veja como funciona",
         },
       },
     },

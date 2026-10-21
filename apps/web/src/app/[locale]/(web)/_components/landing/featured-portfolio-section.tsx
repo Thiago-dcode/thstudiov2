@@ -9,10 +9,14 @@ import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { getGalleryLabels } from "@/lib/gallery-labels";
 import portfolioService from "@/modules/portfolios/portfolio.service";
+import { NextSectionArrow } from "./next-section-arrow";
 import { reportSectionError } from "./section-error";
-import { WebSection } from "./web-section";
+import { type LandingSectionProps, WebSection } from "./web-section";
 
-export async function FeaturedPortfolioSection() {
+export async function FeaturedPortfolioSection({
+  id,
+  nextSectionId,
+}: LandingSectionProps) {
   const t = await getTranslations("landing.featuredPortfolio");
   const portfolioResponse = await portfolioService.getFeatured();
   reportSectionError("featured-portfolio", portfolioResponse);
@@ -27,7 +31,7 @@ export async function FeaturedPortfolioSection() {
 
   return (
     <WebSection
-      id="featured-portfolio"
+      id={id}
       className="overflow-hidden max-w-(--breakpoint-ultrawide) max-h-[200svh] mx-auto"
     >
       <WebSection.Container className="pt-24">
@@ -93,10 +97,7 @@ export async function FeaturedPortfolioSection() {
           className="featured-portfolio-fade pointer-events-none"
           aria-hidden
         />
-        <WebSection.NextSectionLink
-          href="#landing-cta-section"
-          ariaLabel={t("scrollToNextSection")}
-        />
+        <NextSectionArrow nextSectionId={nextSectionId} />
       </div>
       <style>{`
         .featured-portfolio-fade {

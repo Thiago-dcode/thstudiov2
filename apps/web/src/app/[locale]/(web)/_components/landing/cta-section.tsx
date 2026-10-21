@@ -1,14 +1,19 @@
 import { getTranslations } from "next-intl/server";
 import { RegistrationCtaButton } from "@/lib/components/registration-cta-button";
-import { WebSection } from "./web-section";
+import { NextSectionArrow } from "./next-section-arrow";
+import {
+  FULL_SCREEN_MIN_H,
+  type LandingSectionProps,
+  WebSection,
+} from "./web-section";
 
-export async function CtaSection() {
+export async function CtaSection({ id, nextSectionId }: LandingSectionProps) {
   const t = await getTranslations("landing.cta");
 
   return (
     <WebSection
-      id="landing-cta-section"
-      className="relative flex min-h-[calc(100svh-4rem)] items-center justify-center overflow-hidden"
+      id={id}
+      className={`relative flex ${FULL_SCREEN_MIN_H} items-center justify-center overflow-hidden`}
     >
       <WebSection.Container className="flex max-w-3xl flex-col items-center gap-8 text-center ">
         <div className="flex flex-col items-center gap-5">
@@ -39,6 +44,7 @@ export async function CtaSection() {
           <RegistrationCtaButton intent="createPortfolio" size="lg" />
         </div>
       </WebSection.Container>
+      <NextSectionArrow nextSectionId={nextSectionId} />
     </WebSection>
   );
 }

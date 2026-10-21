@@ -3,10 +3,18 @@ import { landingCache } from "@/lib/config";
 import { isDirectoryOpen } from "@/lib/directory-visibility";
 import usersService from "@/modules/users/users.service";
 import { ArtistProfileCard } from "../../[search]/_components/artist-profile-card";
+import { NextSectionArrow } from "./next-section-arrow";
 import { reportSectionError } from "./section-error";
-import { WebSection } from "./web-section";
+import {
+  FULL_SCREEN_MIN_H,
+  type LandingSectionProps,
+  WebSection,
+} from "./web-section";
 
-export async function FeaturedArtistsSection() {
+export async function FeaturedArtistsSection({
+  id,
+  nextSectionId,
+}: LandingSectionProps) {
   const [t, usersResponse, directoryOpen] = await Promise.all([
     getTranslations("landing.featuredArtists"),
     usersService.findAll({ is_featured: true }, landingCache("users-featured")),
@@ -18,8 +26,11 @@ export async function FeaturedArtistsSection() {
   if (!artists.length) return null;
 
   return (
-    <WebSection id="featured-artists">
-      <WebSection.Container>
+    <WebSection
+      id={id}
+      className={`flex ${FULL_SCREEN_MIN_H} flex-col justify-center`}
+    >
+      <WebSection.Container className="py-20">
         <WebSection.Header
           badge={t("header.badge")}
           title={t("header.title")}
@@ -44,6 +55,7 @@ export async function FeaturedArtistsSection() {
           </div>
         )}
       </WebSection.Container>
+      <NextSectionArrow nextSectionId={nextSectionId} />
     </WebSection>
   );
 }

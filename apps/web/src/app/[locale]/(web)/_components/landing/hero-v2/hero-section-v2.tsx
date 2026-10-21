@@ -1,7 +1,12 @@
 import { SlotMachine } from "@repo/ui/components/custom/slot-machine";
 import { getTranslations } from "next-intl/server";
 import { RegistrationCtaButton } from "@/lib/components/registration-cta-button";
-import { WebSection } from "../web-section";
+import { NextSectionArrow } from "../next-section-arrow";
+import {
+  FULL_SCREEN_H,
+  type LandingSectionProps,
+  WebSection,
+} from "../web-section";
 import { RandomGrid } from "./random-grid";
 import "./hero-section-v2.css";
 
@@ -11,17 +16,23 @@ import "./hero-section-v2.css";
 const HERO_BLUR_MASK =
   "radial-gradient(ellipse 65% 65% at center, black 0%, black 30%, transparent 100%)";
 
-export const HeroSectionV2 = async () => {
+export const HeroSectionV2 = async ({
+  id,
+  nextSectionId,
+}: LandingSectionProps) => {
   const t = await getTranslations("landing.hero");
   const accentWords = t.raw("titleAccentWords") as string[];
   const discoverWords = t.raw("titleDiscoverWords") as string[];
 
   return (
     <WebSection
-      id="home-hero-section"
-      className="mx-auto flex h-[calc(100svh-4rem)] w-full max-w-(--breakpoint-ultrawide) flex-col"
+      id={id}
+      className={`mx-auto flex ${FULL_SCREEN_H} w-full max-w-(--breakpoint-ultrawide) flex-col`}
     >
       <RandomGrid className="flex-1" />
+      {/* Keeps the grid off the bottom strip, so the next-section arrow sits on plain background
+          instead of on top of a photo, where it was hard to see and easy to miss. */}
+      <div aria-hidden="true" className="h-20 shrink-0" />
 
       <div
         aria-hidden="true"
@@ -82,6 +93,7 @@ export const HeroSectionV2 = async () => {
           <RegistrationCtaButton size="lg" intent="createPortfolio" />
         </div>
       </div>
+      <NextSectionArrow nextSectionId={nextSectionId} />
     </WebSection>
   );
 };

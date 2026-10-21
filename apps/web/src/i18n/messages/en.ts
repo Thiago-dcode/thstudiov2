@@ -9,6 +9,7 @@ const messages = {
       "Showcase your work, get discovered, and connect with clients, collectors and collaborators. A11STUDIO is the portfolio platform designed exclusively for artists.",
   },
   landing: {
+    scrollToNextSection: "Scroll to next section",
     metadata: {
       title: "A11STUDIO — Discover & Hire Artists | Portfolios for Artists",
       description:
@@ -208,18 +209,13 @@ const messages = {
       browseAll: "Browse All Artists",
     },
     disciplines: {
-      header: {
-        badge: "For creatives",
-        title: "A portfolio built for your kind of work",
-        description:
-          "Real examples, a short guide and what the free plan includes, for the work you do.",
-      },
+      heading: "For creatives",
       items: {
         photographers: {
           title: "Free photography portfolio for photographers",
           description:
             "Portfolios by specialty, collections for every shoot and services clients can book.",
-          cta: "See how it works for photographers",
+          cta: "See how it works",
         },
       },
     },

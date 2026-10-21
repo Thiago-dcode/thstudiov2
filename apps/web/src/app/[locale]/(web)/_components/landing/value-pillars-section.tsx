@@ -3,11 +3,19 @@ import { RegistrationCtaButton } from "@/lib/components/registration-cta-button"
 import { landingCache } from "@/lib/config";
 import { MediaCarousel } from "@/modules/media/components/media-carousel";
 import mediaService from "@/modules/media/media.service";
+import { NextSectionArrow } from "./next-section-arrow";
 import { reportSectionError } from "./section-error";
 import { ValueCarousel } from "./values-carousel";
-import { WebSection } from "./web-section";
+import {
+  FULL_SCREEN_MIN_H,
+  type LandingSectionProps,
+  WebSection,
+} from "./web-section";
 
-export async function ValuePillarsSection() {
+export async function ValuePillarsSection({
+  id,
+  nextSectionId,
+}: LandingSectionProps) {
   const t = await getTranslations("landing.valuePillars");
   const items = t.raw("items") as { title: string; description: string }[];
 
@@ -22,8 +30,10 @@ export async function ValuePillarsSection() {
   if (!media?.length) return null;
 
   return (
-    <WebSection id="value-pillars" className="relative">
-      <WebSection.Container className=" pl-0 px-0 tablet:px-0  min-h-screen h-full flex flex-col items-center pt-20 tablet:pt-24 ">
+    <WebSection id={id} className="relative">
+      <WebSection.Container
+        className={`pl-0 px-0 tablet:px-0 ${FULL_SCREEN_MIN_H} h-full flex flex-col items-center pt-20 tablet:pt-24`}
+      >
         <div className="h-full w-full flex flex-col items-center  justify-center gap-12 desktop-lg:gap-24 m-auto ">
           <div className=" w-full ">
             <div className="flex justify-start flex-col tablet:flex-row gap-4">
@@ -51,10 +61,7 @@ export async function ValuePillarsSection() {
           </div>
         </div>
       </WebSection.Container>
-      <WebSection.NextSectionLink
-        href="#featured-portfolio"
-        ariaLabel={t("scrollToNextSection")}
-      />
+      <NextSectionArrow nextSectionId={nextSectionId} />
     </WebSection>
   );
 }

@@ -4,6 +4,14 @@ import type { ReactNode } from "react";
 import { Link } from "@/i18n/navigation";
 import { ScrollHashLink } from "./scroll-hash-link";
 
+/**
+ * One screen below the fixed header (`h-20` + `main`'s `pt-20`): a section this tall fills exactly
+ * what is visible once the arrows scroll it to the top.
+ */
+export const FULL_SCREEN_MIN_H = "min-h-[calc(100svh-5rem)]";
+/** Exactly one screen, for sections whose content would otherwise grow them (the hero's grid). */
+export const FULL_SCREEN_H = "h-[calc(100svh-5rem)]";
+
 function Root({
   children,
   className,
@@ -14,7 +22,8 @@ function Root({
   id?: string;
 }) {
   return (
-    <section id={id} className={cn("relative", className)}>
+    // scroll-mt-20: in-page scrolls stop below the fixed header, on the section's first pixel.
+    <section id={id} className={cn("relative scroll-mt-20", className)}>
       {children}
     </section>
   );
@@ -124,7 +133,7 @@ function NextSectionLink({
         href={href}
         aria-label={ariaLabel}
         className={cn(
-          "hidden phone-xs:block  z-100 absolute bottom-6 left-1/2 -translate-x-1/2 p-2 text-text-muted/50 transition-colors hover:text-text focus-visible:text-text",
+          "hidden phone-xs:block  z-100 absolute bottom-6 left-1/2 -translate-x-1/2 p-3 text-text-muted/50 transition-colors hover:text-text focus-visible:text-text",
           className,
         )}
       >
@@ -147,6 +156,16 @@ function NextSectionLink({
     </>
   );
 }
+
+/**
+ * Props every homepage section receives from the page's `SECTIONS` list: its own anchor id and the
+ * id of the section after it, so "scroll to next" links follow the list order instead of a
+ * hard-coded anchor that goes stale when sections are reordered.
+ */
+export type LandingSectionProps = {
+  id: string;
+  nextSectionId?: string;
+};
 
 export const WebSection = Object.assign(Root, {
   Container,
