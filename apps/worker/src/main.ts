@@ -26,7 +26,7 @@ import { MediaProcessor } from './processors/media.processor';
 const MEDIA_JOB_LOCK_MS = 10 * 60 * 1000;
 
 type Connection = { url: string };
-type JobResolver = Record<string, Record<string, (job: Job) => Promise<void>>>;
+type JobResolver = Record<string, Record<string, (job: Job) => Promise<unknown>>>;
 
 const jobResolver: JobResolver = {
     [MEDIA_QUEUE]: {
@@ -89,7 +89,8 @@ const createWorkers = (connection: Connection) =>
                 if (typeof handler !== 'function') {
                     throw new Error(`Job name "${job.name}" not recognized for queue "${queue}"`);
                 }
-                await handler(job);
+                // Returned so BullMQ stores it as the job's return value (read by `dbcli db:backup`).
+                return handler(job);
             },
             {
                 connection,

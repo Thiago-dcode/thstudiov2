@@ -2,8 +2,10 @@ import {
     ACCOUNT_DELETION_QUEUE,
     AI_MEDIA_QUEUE,
     AI_QUEUE,
+    BACKUP_QUEUE,
     EMAIL_PREFERENCES_QUEUE,
     JOB_COMPUTE_USER_METRICS,
+    JOB_DATABASE_BACKUP,
     JOB_DELETE_USER_ACCOUNT,
     JOB_SEND_ACCOUNT_DELETION_WARNING,
     JOB_CREATE_OR_UPDATE_LOCATION,
@@ -68,7 +70,7 @@ import {
     SetVideoThumbnailJobInput,
     UpdateMediaJobInput,
 } from '@repo/common-lib/types/media';
-import { JobsOptions, Queue } from "bullmq";
+import { JobsOptions, Queue, QueueEvents } from "bullmq";
 import { randomUUID } from 'node:crypto';
 
 /**
@@ -128,6 +130,34 @@ export class QueueHelper {
     /** Outside Nest DI: same Redis URL shape as `BullModule.forRootAsync`. */
     static createQueue(name: string): Queue {
         return new Queue(name, { connection: { url: config().redis.url } });
+    }
+
+    /**
+     * Runs one database backup now and waits for it, resolving with the worker's return value.
+     *
+     * Queued rather than called directly: only the worker image ships `pg_dump`. Same job name as
+     * the daily scheduler, so it goes through the same processor; the unique id keeps it from being
+     * merged with a scheduled run. No retries: the caller is watching and can simply run it again.
+     * Rejects when the job fails or does not finish within `timeoutMs` (e.g. no worker running).
+     */
+    static async runDatabaseBackupJob(timeoutMs: number): Promise<unknown> {
+        const connection = { url: config().redis.url };
+        const queue = new Queue(BACKUP_QUEUE, { connection });
+        const events = new QueueEvents(BACKUP_QUEUE, { connection });
+        try {
+            // Subscribe before adding, so a fast job's "completed" event cannot be missed.
+            await events.waitUntilReady();
+            const job = await queue.add(JOB_DATABASE_BACKUP, {}, {
+                jobId: `database-backup-manual-${uniqueJobSuffix()}`,
+                attempts: 1,
+                removeOnComplete: 30,
+                removeOnFail: 30,
+            });
+            return await job.waitUntilFinished(events, timeoutMs);
+        } finally {
+            await events.close();
+            await queue.close();
+        }
     }
 
     static async createMailJob(dto: MailJob) {

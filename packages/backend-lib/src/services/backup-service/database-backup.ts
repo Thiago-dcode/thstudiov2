@@ -135,6 +135,25 @@ export const deleteExpiredBackup = async (storageService?: StorageService): Prom
     return { status: 'deleted', keys };
 };
 
+/**
+ * How far back `latestBackupDate` looks. Wider than `RETENTION_DAYS` on purpose: cleanup only runs after a
+ * successful backup, so after a stretch of failed nightly runs the newest dump can be older than a week.
+ */
+const LATEST_LOOKBACK_DAYS = 30;
+
+/**
+ * The day (`YYYY-MM-DD`) of the most recent backup in storage, or null when none exists in the lookback
+ * window. Keys embed the date and `list()` is not implemented, so it probes today, then each day before.
+ */
+export const latestBackupDate = async (storageService: StorageService = backupStorage()): Promise<string | null> => {
+    const day = new Date();
+    for (let i = 0; i <= LATEST_LOOKBACK_DAYS; i++) {
+        if (await storageService.exists(backupKeyFor(day))) return formatDate(day);
+        day.setDate(day.getDate() - 1);
+    }
+    return null;
+};
+
 export type RestoreOptions = {
     /** Backup day to restore: a `Date` or a `YYYY-MM-DD` string. */
     date: Date | string;

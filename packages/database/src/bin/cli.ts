@@ -17,7 +17,8 @@ import { fixImageKeys } from '../lib/scripts/fix-image-keys';
 import { requeueUserSeo } from '../lib/scripts/requeue-user-seo';
 import { generateUserThumbnails } from '../lib/scripts/generate-user-thumbnails';
 import { generateMediaThumbnail } from '../lib/scripts/generate-media-thumbnail';
-import { restoreDatabase } from '../lib/scripts/restore';
+import { resolveRestoreDate, restoreDatabase } from '../lib/scripts/restore';
+import { backupDatabase } from '../lib/scripts/backup';
 import {
   APP_SECRET_ENV,
   DESTRUCTIVE_PASSWORD_ENV,
@@ -287,19 +288,27 @@ program
   });
 
 program
+  .command('db:backup')
+  .description('Run the database backup to S3 now, via the worker, and wait for the result')
+  .action(async () => {
+    await backupDatabase();
+  });
+
+program
   .command('restore')
-  .argument('<date>', 'Backup date, YYYY-MM-DD')
-  .description('Restore the S3 database backup of a given day with pg_restore (APP_SECRET password required; destructive)')
+  .argument('<date>', "Backup date, YYYY-MM-DD, or 'latest' for the most recent backup")
+  .description('Restore the S3 database backup of a given day with pg_restore (APP_SECRET password required; destructive). Needs pg_restore: dbcli-*.sh run it in the worker container')
   .option('--allow-production', 'allow restoring onto the production database')
   .action(async (date: string, options: { allowProduction?: boolean }) => {
     const password = await promptAppSecret();
-    Logger.warn(`⚠️  This will REPLACE the data in the current database with the backup from ${date}.`);
+    const backupDate = await resolveRestoreDate(date);
+    Logger.warn(`⚠️  This will REPLACE the data in the current database with the backup from ${backupDate}.`);
     const confirmed = await confirmAction('Are you sure?');
     if (!confirmed) {
       Logger.info('Restore cancelled.');
       process.exit(0);
     }
-    await restoreDatabase({ date, password, allowProduction: Boolean(options.allowProduction) });
+    await restoreDatabase({ date: backupDate, password, allowProduction: Boolean(options.allowProduction) });
   });
 
 program

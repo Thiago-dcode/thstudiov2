@@ -8,6 +8,9 @@
 #   ./scripts/dbcli-prod.sh db:seed
 #   ./scripts/dbcli-prod.sh generate-user-thumbnails --user=123 --dry-run
 #   ./scripts/dbcli-prod.sh generate-media-thumbnail --media-id=456 --dry-run
+#   ./scripts/dbcli-prod.sh db:backup    # dump to S3 now (runs in the worker), waits for it
+#   ./scripts/dbcli-prod.sh restore 2026-10-22 --allow-production   # runs in the worker container
+#   ./scripts/dbcli-prod.sh restore latest --allow-production       # most recent backup
 #   ./scripts/dbcli-prod.sh shell        # interactive shell in a running api container
 #
 # Differs from dbcli-dev.sh in three ways that matter on prod:
@@ -67,6 +70,15 @@ esac
 TTY_FLAGS=()
 if [[ -t 0 ]]; then
   TTY_FLAGS+=(-it)
+fi
+
+# `restore` shells out to pg_restore, which only the worker image ships. The worker is a single
+# container (fixed container_name), so `exec` is unambiguous there, and it already has the
+# compose-network DB_HOST/DB_PORT.
+if [[ "${1:-}" == "restore" ]]; then
+  info "Running: $* (in the worker container)"
+  exec "${COMPOSE[@]}" exec "${TTY_FLAGS[@]}" worker sh -c \
+    'cd /workspace/packages/database && node dist/src/bin/cli.js "$@"' _ "$@"
 fi
 
 info "Running: $*"
