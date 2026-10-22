@@ -1,3 +1,9 @@
+// `users.service` builds a Stripe client at import time; CI has no key to build it with.
+jest.mock('@repo/backend-lib/services/payment-service/stripe', () => ({
+  stripe: {},
+  stripeWebhookSecret: '',
+}));
+
 import { BadRequestException } from '@nestjs/common';
 import { MediaModerationException } from 'src/common/exceptions/media-moderation-exception';
 import { UserService } from './users.service';
