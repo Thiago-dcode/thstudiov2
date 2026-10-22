@@ -62,12 +62,18 @@ export class ResponseExceptionFilter implements ExceptionFilter {
           'file',
           logConfig.api,
         );
-        logService.channel(API_ERRORS_CHANNEL + '/' + status).error(message, {
+        const channel = logService.channel(API_ERRORS_CHANNEL + '/' + status);
+        const context = {
           ...error,
-          requestBody: withoutClientCode(request?.body),
+          // A 404 body is whatever an unknown caller posted to a route that does not exist:
+          // nothing to debug, and it puts arbitrary attacker content on disk.
+          requestBody: status === 404 ? undefined : withoutClientCode(request?.body),
           requestParams: withoutClientCode(request?.params),
           requestQuery: withoutClientCode(request?.query),
-        });
+        };
+        // 4xx is the client's mistake, not ours: keep it out of ERROR so real failures stand out.
+        if (status < 500) channel.warn(message, context);
+        else channel.error(message, context);
         void LogService.flush().catch((flushErr) =>
           console.error('Failed to flush error logs:', flushErr),
         );
