@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { hasLocale } from "next-intl";
 import { getTranslations } from "next-intl/server";
 import type { ComponentType } from "react";
+import { routing } from "@/i18n/routing";
 import { isDirectoryOpen } from "@/lib/directory-visibility";
 import { buildHomeJsonLd, JsonLd } from "@/lib/seo/json-ld";
 import { buildStaticPageMetadata } from "@/lib/seo/static-metadata";
@@ -49,6 +52,8 @@ export async function generateMetadata({
   params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
   const { locale } = await params;
+  // See `Home`: deciding it here, before the first byte, makes it a real 404.
+  if (!hasLocale(routing.locales, locale)) notFound();
   const t = await getTranslations("landing.metadata");
   return buildStaticPageMetadata({
     path: "/",
@@ -65,6 +70,11 @@ export default async function Home({
   params: Promise<{ locale: string }>;
 }) {
   const { locale } = await params;
+  // Dotted single-segment paths (`/.env`, `/ngsw.json`) skip the locale proxy and land here as the
+  // locale. The layout 404s them too, but Next renders this page in parallel with it, so without
+  // this guard every scanner probe fetched the landing sections — and on a cache expiry those
+  // concurrent fetches exhausted the API's database pool.
+  if (!hasLocale(routing.locales, locale)) notFound();
   const [tSeo, directoryOpen] = await Promise.all([
     getTranslations("seo"),
     isDirectoryOpen(),
