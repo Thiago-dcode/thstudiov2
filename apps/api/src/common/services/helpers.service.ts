@@ -138,6 +138,27 @@ export class Helpers {
     }
     return asset;
   }
+  /** Re-encodes an image to WebP under `targetSizeMb`. Throws when the bytes are not an image. */
+  public async optimizeImage({
+    asset,
+    targetSizeMb,
+    targetQuality,
+  }: {
+    /** A multer upload, or raw bytes read from a presigned upload (`TempUploadService.read`). */
+    asset: Express.Multer.File | Buffer;
+    targetSizeMb: number;
+    targetQuality?: number;
+  }): Promise<Buffer> {
+    const targetSize = (targetSizeMb > 0 ? targetSizeMb : 1) * 1024 * 1024;
+    const assetSize = Buffer.isBuffer(asset) ? asset.length : asset.size;
+    const resultCompress = await this.compressService.optimizeImageToWebp(
+      asset,
+      assetSize > targetSize ? targetSize : assetSize,
+      targetQuality ?? 90,
+    );
+    return resultCompress.buffer;
+  }
+
   public async setAsset({
     asset,
     targetSizeMb,
@@ -150,17 +171,14 @@ export class Helpers {
     targetSizeMb: number;
     targetQuality?: number;
   }) {
-    //Compress
-    const targetSize = (targetSizeMb > 0 ? targetSizeMb : 1) * 1024 * 1024;
-    const assetSize = Buffer.isBuffer(asset) ? asset.length : asset.size;
-    const resultCompress = await this.compressService.optimizeImageToWebp(
-      asset,
-      assetSize > targetSize ? targetSize : assetSize,
-      targetQuality ?? 90,
-    );
+    const optimized = await this.optimizeImage({ asset, targetSizeMb, targetQuality });
+    return await this.writeAsset(optimized, path);
+  }
 
+  /** Stores already-optimized bytes at `path`. */
+  public async writeAsset(buffer: Buffer, path: string) {
     const [result] = await Promise.all([
-      this.storageService.write(resultCompress.buffer, path),
+      this.storageService.write(buffer, path),
       this.cacheManager.del(path),
     ]);
     if (!result) {

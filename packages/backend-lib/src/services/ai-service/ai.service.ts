@@ -209,6 +209,14 @@ export class AiService {
   private readonly logger = FactoryLogService.createLogService('file', {
     channel: 'ai',
     name: 'ai',
+  });
+  /**
+   * Its own instance, never `this.logger.channel('ai/error')`: `.channel()` mutates the shared
+   * config, so every later info/warn line of this service landed in `ai/error` and fired the alert.
+   */
+  private readonly errorLogger = FactoryLogService.createLogService('file', {
+    channel: 'ai/error',
+    name: 'ai',
     callback: {
       channel: 'ai/error',
       callback: callback500ErrorMail,
@@ -443,8 +451,7 @@ ${categoryLines.join(', AND\n')}.
 
       return response;
     } catch (error) {
-      this.logger
-        .channel('ai/error')
+      this.errorLogger
         .name('generate-media-metadata')
         .error(
           `Failed to generate media metadata for media_id [${meta.media_id}] and user [${meta.user_id}] - ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -649,8 +656,7 @@ ${categoryLines.join(', AND\n')}.
         usage,
       };
     } catch (error) {
-      this.logger
-        .channel('ai/error')
+      this.errorLogger
         .name('moderate-content')
         .error(
           `Failed to moderate content for user [${meta.user_id}] - ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -863,8 +869,7 @@ ${categoryLines.join(', AND\n')}.
 
       return { translations, usage: result.usage };
     } catch (error) {
-      this.logger
-        .channel('ai/error')
+      this.errorLogger
         .name(logName)
         .error(
           `Failed to generate ${entityLabel} metadata for ${meta.entity_id_key} [${meta.entity_id}] and user [${meta.user_id}] - ${error instanceof Error ? error.message : 'Unknown error'}`,

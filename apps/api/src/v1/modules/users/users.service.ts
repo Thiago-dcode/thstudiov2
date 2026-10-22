@@ -212,8 +212,9 @@ export class UserService {
   }
 
   /**
-   * Claims a presigned avatar/banner upload, stores it as WebP and moderates it. A rejected image
-   * is deleted and throws, leaving the user's current one untouched.
+   * Claims a presigned avatar/banner upload, re-encodes it to WebP, moderates it, and only then
+   * stores it. A rejected or unmoderatable image throws before anything is written, leaving the
+   * user's current one untouched and no orphan object behind.
    */
   private async storeProfileImage({
     user,
@@ -233,32 +234,32 @@ export class UserService {
       uploadId,
       MAX_IMAGE_UPLOAD_BYTES,
     );
-    let path: string;
+    let optimized: Buffer;
     try {
-      path = await this.helpers.setAsset({
-        asset: buffer,
-        // Versioned per upload: the CDN serves a stable unsigned URL per key, so reusing
-        // `users/<id>/avatar` left every cache showing the previous avatar after a change.
-        path: versionedAssetPath(
-          `users/${user.public_id}/${descriptiveFilename(nameParts, kind)}`,
-        ),
-        targetSizeMb,
-      });
-    } catch (error) {
+      optimized = await this.helpers.optimizeImage({ asset: buffer, targetSizeMb });
+    } catch {
       // Sharp failing to decode is how bytes that are not an image surface here: the presigned
       // PUT accepts any body, whatever `content_type` the client declared.
-      if (error instanceof HttpException) throw error;
       throw new BadRequestException('Uploaded file is not a valid image');
     }
-    const url = await this.helpers.getAsset(path);
-    const { moderation } = await this.aiService.moderateContent(url, {
-      user_id: user.id,
-    });
+    // Inline, not a CDN URL: the provider had to download a just-written key, always a CDN cache
+    // miss, and timed out on it ("Unable to download content from the provided URL"). The bytes
+    // are already in hand and bounded (0.3MB avatar / 1MB banner after re-encoding).
+    const { moderation } = await this.aiService.moderateContent(
+      `data:image/webp;base64,${optimized.toString('base64')}`,
+      { user_id: user.id },
+    );
     if (!moderation.is_allowed) {
-      await this.helpers.deleteAsset(path);
       throw new MediaModerationException(moderation.reason);
     }
-    return path;
+    // Versioned per upload: the CDN serves a stable unsigned URL per key, so reusing
+    // `users/<id>/avatar` left every cache showing the previous avatar after a change.
+    return await this.helpers.writeAsset(
+      optimized,
+      versionedAssetPath(
+        `users/${user.public_id}/${descriptiveFilename(nameParts, kind)}`,
+      ),
+    );
   }
 
   async update(

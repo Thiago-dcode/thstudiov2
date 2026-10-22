@@ -37,6 +37,11 @@ export async function callback500ErrorMail(
   options?: LogOptions,
 ) {
 
+  // Only errors alert. A logger whose channel was switched to its error channel (`.channel()`
+  // mutates shared config) keeps routing its later info/warn lines here, and each of those used
+  // to email admins an "ERROR 500" with a perfectly healthy payload.
+  if (level !== 'error') return;
+
   //Send a email to admin emails
   console.log('CALLBACK CALLED FOR ERROR 500', level, message);
   if (!config().app.sendErrorEmails) return;
