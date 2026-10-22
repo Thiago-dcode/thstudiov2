@@ -71,8 +71,6 @@ const config = (envPath?: string | undefined) => {
     backup: {
       // Cron pattern (UTC) for the daily database backup job. Default: 03:00, off-peak.
       cron: process.env.BACKUP_CRON || '0 3 * * *',
-      // Private bucket for the dumps. Never the media bucket: that one is the public CDN origin.
-      bucket: process.env.BACKUP_BUCKET,
     },
     mailing: {
       host: process.env.SMTP_HOST,
@@ -97,6 +95,9 @@ const config = (envPath?: string | undefined) => {
       signedUrlExpiration: process.env.STORAGE_SIGNED_URL_EXPIRATION ? parseInt(process.env.STORAGE_SIGNED_URL_EXPIRATION) : 3600,
       folder: process.env.STORAGE_FOLDER,
       cdnUrl: process.env.CDN_URL,
+      // Private bucket (no CDN) for database dumps and not-yet-claimed presigned uploads. Never
+      // the media bucket: that one is the public CDN origin.
+      privateBucket: process.env.PRIVATE_BUCKET,
     },
     stripe: {
       secretKey: process.env.STRIPE_SECRET_KEY as string,

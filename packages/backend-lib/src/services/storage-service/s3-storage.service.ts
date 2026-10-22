@@ -13,10 +13,11 @@ import {
 import { S3StorageConfig, StorageWriteInput } from "./types";
 
 /**
- * Signed onto every presigned upload URL this service issues. A bucket lifecycle rule filtered
- * on this tag expires abandoned `__TEMP__` objects without needing a prefix rule — S3 lifecycle
- * prefix filters are literal strings with no wildcard support, and the temp key is nested per
- * user (`users/{publicId}/__TEMP__/{uploadId}`), so no single prefix rule could cover it.
+ * Signed onto every presigned upload URL this service issues, so the browser's PUT must send it
+ * (`storage-upload.client.ts`). Presigned uploads now land in the private bucket under one
+ * `uploads/` prefix, which a plain prefix lifecycle rule expires, so the tag is no longer what
+ * expires them. It stays only to keep this release free of a coordinated web change; dropping it
+ * means removing the header in the web client in the same deploy.
  */
 const TEMP_UPLOAD_TAG = 'temp=true';
 
@@ -244,52 +245,69 @@ export class S3StorageService extends StorageService {
             throw error;
         }
     }
+    public get bucket(): string {
+        return this.config.bucket;
+    }
+    /**
+     * Copies `sourceBucket/fromPath` onto `toPath` in THIS bucket.
+     *
+     * `MetadataDirective: 'REPLACE'` + a fresh `ContentType` derived from `toPath` (never copied
+     * from the source) matters most for the presigned upload flow: the temp object was written
+     * with `Content-Type: application/octet-stream` by the client, and this is the point where the
+     * real, key-derived type is applied — objects are served from the CDN domain, so trusting a
+     * client-supplied type here would be stored XSS. Also fixes the pre-existing SEO-rename
+     * caller, which relied on `COPY` (the implicit default) and so silently carried the old key's
+     * Content-Type whenever a rename changed extension-implying content.
+     *
+     * `TaggingDirective: 'REPLACE'` with no `Tagging` value strips tags on copy rather than the
+     * default `COPY`, for two reasons. Correctness: every presigned upload was written with
+     * `temp=true` — without this, the PERMANENT object inherits that tag and a lifecycle rule
+     * filtered on it deletes real media. Permissions: the default `COPY` directive also requires
+     * `s3:GetObjectTagging` on the source, which callers of this service are not guaranteed to
+     * have; `REPLACE` sidesteps that requirement entirely.
+     */
+    private async copyIn(sourceBucket: string, fromPath: string, toPath: string): Promise<void> {
+        await this.s3Client.send(new CopyObjectCommand({
+            Bucket: this.config.bucket,
+            CopySource: `${sourceBucket}/${fromPath}`,
+            Key: toPath,
+            MetadataDirective: 'REPLACE',
+            ContentType: resolveContentType(toPath),
+            Metadata: { 'x-content-type-options': 'nosniff' },
+            TaggingDirective: 'REPLACE',
+        }));
+    }
     public async move(fromPath: string, toPath: string): Promise<boolean> {
         try {
-            // Copy to new location. `MetadataDirective: 'REPLACE'` + a fresh `ContentType`
-            // derived from `toPath` (never copied from the source) matters most for the presigned
-            // upload flow: the temp object was written with `Content-Type: application/octet-stream`
-            // by the client, and this is the point where the real, key-derived type is applied —
-            // objects are served from the CDN domain, so trusting a client-supplied type here would
-            // be stored XSS. Also fixes the pre-existing SEO-rename caller, which relied on
-            // `COPY` (the implicit default) and so silently carried the old key's Content-Type
-            // whenever a rename changed extension-implying content (it doesn't today, but nothing
-            // enforced that).
-            //
-            // `TaggingDirective: 'REPLACE'` with no `Tagging` value strips tags on copy rather
-            // than the default `COPY`, for two reasons. Correctness: every presigned upload this
-            // moves out of `__TEMP__` was written with `temp=true` (so the lifecycle rule can
-            // find it) — without this, the PERMANENT object inherits that tag and the same rule
-            // deletes real media a day later. Permissions: the default `COPY` directive also
-            // requires `s3:GetObjectTagging` on the source, which callers of this service are not
-            // guaranteed to have; `REPLACE` sidesteps that requirement entirely.
-            const copyCommand = new CopyObjectCommand({
-                Bucket: this.config.bucket,
-                CopySource: `${this.config.bucket}/${fromPath}`,
-                Key: toPath,
-                MetadataDirective: 'REPLACE',
-                ContentType: resolveContentType(toPath),
-                Metadata: { 'x-content-type-options': 'nosniff' },
-                TaggingDirective: 'REPLACE',
-            });
-            await this.s3Client.send(copyCommand);
-
-            // Delete old location
-            const deleteCommand = new DeleteObjectCommand({
+            await this.copyIn(this.config.bucket, fromPath, toPath);
+            await this.s3Client.send(new DeleteObjectCommand({
                 Bucket: this.config.bucket,
                 Key: fromPath,
-            });
-            await this.s3Client.send(deleteCommand);
-
+            }));
             return true;
         } catch (error) {
             // Swallowed by design — callers treat `false` as "could not move" and decide what to
-            // do next (e.g. `writeOriginalAndEnqueue` marks the media FAILED). But a bare `false`
-            // gave no way to tell an IAM denial from a missing source from a transient network
-            // error, which is exactly what made this failure opaque in practice.
+            // do next. But a bare `false` gave no way to tell an IAM denial from a missing source
+            // from a transient network error, which is exactly what made this failure opaque in
+            // practice.
             console.error(`S3StorageService.move failed: ${fromPath} -> ${toPath}`, error);
             return false;
         }
+    }
+    public async promoteFrom(source: StorageService, fromPath: string, toPath: string): Promise<boolean> {
+        try {
+            await this.copyIn(source.bucket, fromPath, toPath);
+        } catch (error) {
+            // Same contract as `move`: `false` is "could not promote", logged with both ends.
+            console.error(`S3StorageService.promoteFrom failed: ${source.bucket}/${fromPath} -> ${toPath}`, error);
+            return false;
+        }
+        // The copy landed, so the promotion succeeded. A failed source delete only leaves a temp
+        // object behind for the private bucket's lifecycle rule to expire.
+        if (!(await source.delete(fromPath))) {
+            console.error(`S3StorageService.promoteFrom could not delete source: ${source.bucket}/${fromPath}`);
+        }
+        return true;
     }
 
 

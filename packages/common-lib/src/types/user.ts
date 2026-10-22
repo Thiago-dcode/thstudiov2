@@ -80,9 +80,16 @@ export type CreateUserInput = Omit<
 export type UpdateUserInput = Partial<CreateUserInput>;
 export type UpdateUserInputWithAssets = Omit<UpdateUserInput, 'avatar' | 'banner'> & {
   categories?: (string | number)[]
-  avatar?: File,
-  banner?: File
+  /** Upload ids from `POST /users/:id/upload-url`; the image itself went straight to S3. */
+  avatar_upload_id?: string
+  banner_upload_id?: string
   remove_banner?: boolean
+}
+
+/** Body for `POST /users/:id/upload-url` (avatar or banner). Answers a `CreateMediaUploadUrl`. */
+export type CreateUserImageUploadUrlInput = {
+  content_type: string
+  size: number
 }
 
 

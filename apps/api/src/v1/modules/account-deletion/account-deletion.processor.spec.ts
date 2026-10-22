@@ -26,6 +26,7 @@ describe('AccountDeletionProcessor', () => {
   };
   const planSubscriptionsRepository = { findActiveSubscription: jest.fn() };
   const storageService = { deleteDirectory: jest.fn() };
+  const tempUploads = { deleteUser: jest.fn() };
   const helpers = { deleteManyCached: jest.fn() };
   const mailService = { sendAsync: jest.fn() };
   const warningMail = { setData: jest.fn((data) => ({ data })) };
@@ -55,6 +56,7 @@ describe('AccountDeletionProcessor', () => {
     jest.clearAllMocks();
     logger.name.mockReturnValue(logger);
     storageService.deleteDirectory.mockResolvedValue(true);
+    tempUploads.deleteUser.mockResolvedValue(true);
     userRepository.hardDeleteById.mockResolvedValue(true);
     userRepository.findById.mockResolvedValue(user);
     planSubscriptionsRepository.findActiveSubscription.mockResolvedValue(null);
@@ -66,6 +68,7 @@ describe('AccountDeletionProcessor', () => {
       mailService as never,
       warningMail as never,
       logger as never,
+      tempUploads as never,
     );
   });
 
@@ -94,8 +97,18 @@ describe('AccountDeletionProcessor', () => {
       expect(stripe.subscriptions.cancel).toHaveBeenCalledWith('sub_1');
       expect(stripe.customers.del).toHaveBeenCalledWith('cus_1');
       expect(storageService.deleteDirectory).toHaveBeenCalledWith(`users/${user.public_id}/`);
+      expect(tempUploads.deleteUser).toHaveBeenCalledWith(user.public_id);
       expect(userRepository.hardDeleteById).toHaveBeenCalledWith(7, 15);
       expect(helpers.deleteManyCached).toHaveBeenCalled();
+    });
+
+    it('still deletes the account when clearing pending uploads throws', async () => {
+      userRepository.getDeletionState.mockResolvedValue(state({ warned: true, due: true }));
+      planSubscriptionsRepository.findActiveSubscription.mockResolvedValue(null);
+      tempUploads.deleteUser.mockRejectedValue(new Error('PRIVATE_BUCKET is not set'));
+
+      await expect(run(JOB_DELETE_USER_ACCOUNT)).resolves.toEqual({ deleted: true });
+      expect(userRepository.hardDeleteById).toHaveBeenCalledWith(7, 15);
     });
 
     it('treats an already-cancelled Stripe subscription as done', async () => {

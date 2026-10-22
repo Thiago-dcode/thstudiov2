@@ -144,22 +144,23 @@ export class Helpers {
     path,
     targetQuality,
   }: {
-    asset: Express.Multer.File;
+    /** A multer upload, or raw bytes read from a presigned upload (`TempUploadService.read`). */
+    asset: Express.Multer.File | Buffer;
     path: string;
     targetSizeMb: number;
     targetQuality?: number;
   }) {
     //Compress
     const targetSize = (targetSizeMb > 0 ? targetSizeMb : 1) * 1024 * 1024;
+    const assetSize = Buffer.isBuffer(asset) ? asset.length : asset.size;
     const resultCompress = await this.compressService.optimizeImageToWebp(
       asset,
-      asset.size > targetSize ? targetSize : asset.size,
+      assetSize > targetSize ? targetSize : assetSize,
       targetQuality ?? 90,
     );
-    asset.buffer = resultCompress.buffer;
 
     const [result] = await Promise.all([
-      this.storageService.write(asset, path),
+      this.storageService.write(resultCompress.buffer, path),
       this.cacheManager.del(path),
     ]);
     if (!result) {

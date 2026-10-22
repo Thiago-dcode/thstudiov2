@@ -1,7 +1,5 @@
 "use server";
 
-import { ALLOWED_IMAGE_FILE_TYPES } from "@repo/common-lib/constants/limits";
-import type { MimeTypes } from "@repo/common-lib/types/general";
 import type { ActionReturn } from "@repo/common-lib/types/response";
 import type {
   BaseUser,
@@ -20,8 +18,6 @@ import {
 } from "@/modules/auth/helpers";
 import { updateUserSchema } from "../schemas/user-shemas";
 import usersService from "../users.service";
-
-const MAX_FILE_SIZE = 8 * 1024 * 1024; // 8MB
 
 export const updateUserAction = async (
   id: number,
@@ -75,66 +71,15 @@ export const updateUserAction = async (
     };
   }
 
-  // Validate avatar file if provided
-  const avatarFile = formData.get("avatar") as File | null;
-  if (avatarFile && avatarFile.size > 0) {
-    if (avatarFile.size > MAX_FILE_SIZE) {
-      return {
-        errors: [],
-        inputErrors: {
-          avatar: t("validation.file.tooLarge", {
-            field: t("fields.avatar"),
-            mb: 8,
-          }),
-        },
-        data: null,
-        inputs: rawData,
-      };
-    }
-    if (!ALLOWED_IMAGE_FILE_TYPES.includes(avatarFile.type as MimeTypes)) {
-      return {
-        errors: [],
-        inputErrors: {
-          avatar: t("validation.file.invalidType", {
-            field: t("fields.avatar"),
-          }),
-        },
-        data: null,
-        inputs: rawData,
-      };
-    }
-    cleanData.avatar = avatarFile;
+  // Never a file: `updateUserWithImages` already PUT the image straight to S3 and sends only the
+  // upload id. Image bytes in a server-action body trip Cloudflare's CVE-2025-55183 WAF rule.
+  const avatarUploadId = formData.get("avatar_upload_id");
+  if (typeof avatarUploadId === "string" && avatarUploadId) {
+    cleanData.avatar_upload_id = avatarUploadId;
   }
-
-  // Validate banner file if provided
-  const bannerFile = formData.get("banner") as File | null;
-  if (bannerFile && bannerFile.size > 0) {
-    if (bannerFile.size > MAX_FILE_SIZE) {
-      return {
-        errors: [],
-        inputErrors: {
-          banner: t("validation.file.tooLarge", {
-            field: t("fields.banner"),
-            mb: 8,
-          }),
-        },
-        data: null,
-        inputs: rawData,
-      };
-    }
-    if (!ALLOWED_IMAGE_FILE_TYPES.includes(bannerFile.type as MimeTypes)) {
-      return {
-        errors: [],
-        inputErrors: {
-          banner: t("validation.file.invalidType", {
-            field: t("fields.banner"),
-          }),
-        },
-        data: null,
-        inputs: rawData,
-      };
-    }
-    cleanData.banner = bannerFile;
+  const bannerUploadId = formData.get("banner_upload_id");
+  if (typeof bannerUploadId === "string" && bannerUploadId) {
+    cleanData.banner_upload_id = bannerUploadId;
   } else if (formData.get("remove_banner") === "true") {
     cleanData.remove_banner = true;
   }

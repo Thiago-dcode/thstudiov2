@@ -43,6 +43,7 @@ import {
 } from "@/modules/categories/providers/getCategories.provider";
 import { useEditUser } from "../providers/edit-user.provider";
 import { useUserMetrics } from "../providers/user-metrics.provider";
+import { ImageUploadProgress } from "./image-upload-progress";
 
 export type EditUserTab = "profile" | "avatar" | "categories" | "address";
 
@@ -368,8 +369,13 @@ export const EditAvatar = ({
   defaultAvatar?: string | null;
 }) => {
   const t = useTranslations("editUser");
-  const { errors, inputErrors, deleteInputErrorProperty, isPending } =
-    useEditUser();
+  const {
+    errors,
+    inputErrors,
+    deleteInputErrorProperty,
+    isPending,
+    uploadStatus,
+  } = useEditUser();
   const { files } = useInputFile();
   const { previewUrls } = usePreviewUrls({
     defaultUrl: defaultAvatar ?? undefined,
@@ -399,6 +405,8 @@ export const EditAvatar = ({
         error={inputErrors?.avatar}
       />
 
+      <ImageUploadProgress status={uploadStatus} />
+
       <FormComponent.SubmitButton
         isPending={isPending}
         disabled={!files?.length || isPending}
@@ -417,8 +425,13 @@ export const EditBanner = ({
   defaultBanner?: string | null;
 }) => {
   const t = useTranslations("editUser");
-  const { errors, inputErrors, deleteInputErrorProperty, isPending } =
-    useEditUser();
+  const {
+    errors,
+    inputErrors,
+    deleteInputErrorProperty,
+    isPending,
+    uploadStatus,
+  } = useEditUser();
   const { files, setFiles } = useInputFile();
   const { previewUrls } = usePreviewUrls({
     defaultUrl: defaultBanner ?? undefined,
@@ -486,6 +499,8 @@ export const EditBanner = ({
         id="banner-input"
         error={inputErrors?.banner}
       />
+
+      <ImageUploadProgress status={uploadStatus} />
 
       <FormComponent.SubmitButton
         isPending={isPending}

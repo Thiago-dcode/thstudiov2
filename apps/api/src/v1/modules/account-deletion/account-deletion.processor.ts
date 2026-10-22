@@ -30,6 +30,7 @@ import { Helpers } from 'src/common/services/helpers.service';
 import { PlanSubscriptionsRepository } from '../plan-subscriptions/plan-subscriptions.repository';
 import { AccountDeletionWarningMail } from '../users/mails/account-deletion-warning.mail';
 import { UserRepository } from '../users/users.repository';
+import { TempUploadService } from 'src/common/services/temp-upload.service';
 
 /** `users.public_id` is a UUID; anything else must never reach a recursive storage delete. */
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -47,6 +48,7 @@ export class AccountDeletionProcessor extends GlobalProcessor {
     private readonly mailService: MailService,
     private readonly accountDeletionWarningMail: AccountDeletionWarningMail,
     private readonly logger: LogService,
+    private readonly tempUploads: TempUploadService,
   ) {
     super();
   }
@@ -143,6 +145,15 @@ export class AccountDeletionProcessor extends GlobalProcessor {
     if (!storageDeleted) {
       // Throw before touching the DB: the folder must not outlive the row that points at it.
       throw new Error(`Could not delete storage folder of user [${userId}]`);
+    }
+    // Uploads never claimed live in the private bucket, outside that folder. Best-effort: its
+    // lifecycle rule expires them within days anyway, so a failure here — including a missing
+    // PRIVATE_BUCKET, which throws — must not abort a deletion whose media is already gone.
+    const uploadsDeleted = await this.tempUploads
+      .deleteUser(user.public_id)
+      .catch(() => false);
+    if (!uploadsDeleted) {
+      log.error(`Could not delete pending uploads of user [${userId}]`);
     }
 
     if (!(await this.userRepository.hardDeleteById(userId, ACCOUNT_DELETION_GRACE_DAYS))) {

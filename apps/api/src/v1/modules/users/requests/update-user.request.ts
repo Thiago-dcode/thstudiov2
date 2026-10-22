@@ -6,6 +6,7 @@ import {
   Matches,
   IsArray,
   ArrayMaxSize,
+  IsUUID,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { MAX_CATEGORIES_USER } from '@repo/common-lib/constants/limits';
@@ -161,11 +162,16 @@ export class UpdateUserRequest {
   })
   youtube_link?: string | null;
 
+  // The uuids `POST /users/:id/upload-url` returned. The browser PUT the image straight to S3;
+  // the service rebuilds the temp key from these plus the authenticated user, so a client can
+  // never name a storage path.
   @IsOptional()
-  avatar?: Express.Multer.File;
+  @IsUUID('4')
+  avatar_upload_id?: string;
 
   @IsOptional()
-  banner?: Express.Multer.File;
+  @IsUUID('4')
+  banner_upload_id?: string;
 
   /** When true and no new banner file is uploaded, clears the stored banner. */
   @IsOptional()

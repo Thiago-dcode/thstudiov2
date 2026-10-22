@@ -3,6 +3,7 @@
 import type { Address } from "@repo/common-lib/types/address";
 import type { CategoryBase } from "@repo/common-lib/types/category";
 import type { User } from "@repo/common-lib/types/user";
+import { useTranslations } from "next-intl";
 import {
   createContext,
   type FormEvent,
@@ -13,7 +14,10 @@ import {
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { getOneUserAction } from "@/modules/users/server-actions/get-one-user.action";
 import { getUserCategoriesAction } from "@/modules/users/server-actions/get-user-categories.action";
-import { updateUserAction } from "@/modules/users/server-actions/update-user.action";
+import {
+  type UserImageUploadStatus,
+  updateUserWithImages,
+} from "../api/update-user-with-images.client";
 import { useUserMetrics } from "./user-metrics.provider";
 
 // Context type
@@ -30,6 +34,8 @@ type EditUserContextType = {
   deleteInputErrorProperty: (key: string) => void;
   reset: () => void;
   success: boolean;
+  /** Set only while an avatar/banner submit is in flight. */
+  uploadStatus: UserImageUploadStatus | null;
 };
 
 const EditUserContext = createContext<EditUserContextType | null>(null);
@@ -55,10 +61,13 @@ export const EditUserProvider = ({
   defaultAddress?: Address;
   defaultUserCategories: CategoryBase[];
 }) => {
+  const t = useTranslations();
   const { refresh: refreshMetrics } = useUserMetrics();
   const [user, setUser] = useState(defaultUser);
   const [address, setAddress] = useState(defaultAddress);
   const [userCategories, setUserCategories] = useState(defaultUserCategories);
+  const [uploadStatus, setUploadStatus] =
+    useState<UserImageUploadStatus | null>(null);
   const {
     handleSubmit,
     isPending,
@@ -71,7 +80,14 @@ export const EditUserProvider = ({
     reset,
   } = useHandleAction({
     action: async (formData) => {
-      return await updateUserAction(user.id, formData!);
+      try {
+        return await updateUserWithImages(user.id, formData!, {
+          fallbackError: t("actions.genericError"),
+          onStatus: setUploadStatus,
+        });
+      } finally {
+        setUploadStatus(null);
+      }
     },
     afterAction: async (result) => {
       if (result.data) {
@@ -110,6 +126,7 @@ export const EditUserProvider = ({
         deleteInputErrorProperty,
         success,
         reset,
+        uploadStatus,
       }}
     >
       {children}

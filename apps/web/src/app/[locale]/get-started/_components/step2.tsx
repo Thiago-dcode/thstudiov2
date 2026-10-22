@@ -6,12 +6,14 @@ import {
 } from "@repo/ui/contexts/file.provider";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
+import { ImageUploadProgress } from "@/modules/users/components/image-upload-progress";
 import {
   ButtonSkipStepFunnel,
   ButtonStepBackFunnel,
   ButtonSubmitFunnel,
   ContainerFormFunnel,
   useFunnelActions,
+  useFunnelState,
 } from "./funnel.provider";
 
 export default function Container() {
@@ -29,6 +31,7 @@ const Step2 = () => {
   const tRoot = useTranslations();
   const inputRef = useRef<HTMLInputElement>(null);
   const { user, setInputs, handleOnChange, setErrors } = useFunnelActions();
+  const { uploadStatus } = useFunnelState();
   const { files, errors, maxFileSizeBytes } = useInputFile();
   const [previewUrl, setPreviewUrl] = useState<string | undefined>(
     (user as any)?.avatar,
@@ -96,6 +99,7 @@ const Step2 = () => {
         id="avatar-input"
       />
 
+      <ImageUploadProgress status={uploadStatus} />
       <ButtonSubmitFunnel />
       {/* A photo is optional; it can be added later from the setup guide. */}
       <ButtonSkipStepFunnel />

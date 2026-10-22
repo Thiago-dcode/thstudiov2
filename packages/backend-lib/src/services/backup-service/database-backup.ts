@@ -1,4 +1,4 @@
-import { s3BackupStorageConfig } from '../../config/storage';
+import { s3PrivateStorageConfig } from '../../config/storage';
 import { StorageService } from '../storage-service/storage.service';
 import { FactoryStorageService } from '../storage-service/factory-storage.service';
 import Logger from '../../utils/console';
@@ -18,7 +18,7 @@ const LOG = '[backup]';
  * not `storage/`: the containers run as the non-root `node` user and cannot create folders under /workspace.
  */
 const TEMP_DIRECTORY = path.join(os.tmpdir(), 'a11studio-backups');
-/** Key prefix for database dumps inside the private backup bucket (see `s3BackupStorageConfig`). */
+/** Key prefix for database dumps inside the private bucket (see `s3PrivateStorageConfig`). */
 const BACKUP_PREFIX = 'internal/backups';
 
 export type BackupResult =
@@ -53,8 +53,8 @@ const MAX_CLEANUP_DAYS = 365;
 
 const backupKeyFor = (date: Date) => `${BACKUP_PREFIX}/pg-backup-${formatDate(date)}.dump`;
 
-/** Created lazily so environments that skip backups (dev) do not need BACKUP_BUCKET. */
-const backupStorage = (): StorageService => FactoryStorageService.create(s3BackupStorageConfig());
+/** Created lazily so the worker can boot without PRIVATE_BUCKET in environments that skip backups (dev). */
+const backupStorage = (): StorageService => FactoryStorageService.create(s3PrivateStorageConfig());
 
 export const backup = async (storageService?: StorageService): Promise<BackupResult> => {
     if (!envCan()) {

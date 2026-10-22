@@ -23,7 +23,10 @@ import FormComponent from "@/lib/components/form-component";
 import type { UserAuth } from "@/modules/auth/auth.types";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { setUserSession } from "@/modules/auth/server-actions/user-session.action";
-import { updateUserAction } from "@/modules/users/server-actions/update-user.action";
+import {
+  type UserImageUploadStatus,
+  updateUserWithImages,
+} from "@/modules/users/api/update-user-with-images.client";
 
 type InputsType = HTMLInputElement | HTMLTextAreaElement | null | undefined;
 // "skip" moves to the next step without saving this one; only optional steps offer it.
@@ -50,6 +53,8 @@ type FunnelStateContextType = {
   errors?: string[];
   inputs?: UpdateUserInputWithAssets;
   refInputs?: (HTMLInputElement | HTMLTextAreaElement)[];
+  /** Set only while the avatar step's image is uploading / being processed. */
+  uploadStatus: UserImageUploadStatus | null;
 };
 
 type FunnelContextType = FunnelActionsContextType & FunnelStateContextType;
@@ -68,6 +73,7 @@ const FunnelActionsContext = createContext<FunnelActionsContextType>({
 const FunnelStateContext = createContext<FunnelStateContextType>({
   isPending: false,
   canContinue: false,
+  uploadStatus: null,
 });
 
 export const useFunnelActions = () => useContext(FunnelActionsContext);
@@ -98,6 +104,8 @@ export const FunnelProvider = ({
   const [inputs, _setInputs] =
     useState<(HTMLInputElement | HTMLTextAreaElement)[]>();
   const [canContinue, _setCanContinue] = useState(defaultCanContinue);
+  const [uploadStatus, setUploadStatus] =
+    useState<UserImageUploadStatus | null>(null);
   const setCanContinue = useCallback(
     (value: boolean | ((prev: boolean) => boolean)) => {
       _setCanContinue((prev) => {
@@ -133,7 +141,14 @@ export const FunnelProvider = ({
               ? currentStep - 1
               : currentStep + 1;
         newFormData.set("funnel_step", String(nextStep));
-        return await updateUserAction(user.id, newFormData);
+        try {
+          return await updateUserWithImages(user.id, newFormData, {
+            fallbackError: t("somethingWentWrong"),
+            onStatus: setUploadStatus,
+          });
+        } finally {
+          setUploadStatus(null);
+        }
       },
       afterAction: async (result) => {
         if (result?.data) {
@@ -215,8 +230,9 @@ export const FunnelProvider = ({
       errors: errors || undefined,
       inputs: result?.inputs,
       refInputs: inputs,
+      uploadStatus,
     }),
-    [isPending, canContinue, errors, result?.inputs, inputs],
+    [isPending, canContinue, errors, result?.inputs, inputs, uploadStatus],
   );
 
   //TODO:handle funnel logic

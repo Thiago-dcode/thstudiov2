@@ -50,6 +50,7 @@ describe('UserService — account deletion / deactivation', () => {
       {} as never, // aiService
       {} as never, // profileStatusService
       {} as never, // userSessionsService
+      {} as never, // tempUploads
     );
   });
 

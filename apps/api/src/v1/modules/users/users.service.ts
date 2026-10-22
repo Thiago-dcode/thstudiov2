@@ -1,5 +1,6 @@
 import { BadRequestException, ConflictException, HttpException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { UpdateUserRequest } from './requests/update-user.request';
+import { CreateUserImageUploadUrlRequest } from './requests/create-user-image-upload-url.request';
 import { NewUserEvent } from './events/new-user.event';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { UserRepository } from './users.repository';
@@ -14,6 +15,7 @@ import { RequestService } from 'src/common/services/request.service';
 import {
   ACCOUNT_DELETION_GRACE_DAYS,
   ACCOUNT_DELETION_WARNING_DAYS_BEFORE,
+  MAX_IMAGE_UPLOAD_BYTES,
   MAX_PASSWORD_RESET,
   MAX_USERNAME_RESET,
 } from '@repo/common-lib/constants/limits';
@@ -47,6 +49,7 @@ import { CancelSubscriptionRenewalEvent } from '../plan-subscriptions/events/can
 import { RequestAccountDeletionRequest } from './requests/request-account-deletion.request';
 import { accountDeletionDate } from '@repo/common-lib/utils/account-deletion';
 import { UserSessionsService } from '../user-sessions/user-sessions.service';
+import { TempUploadService } from 'src/common/services/temp-upload.service';
 
 @Injectable()
 export class UserService {
@@ -61,6 +64,7 @@ export class UserService {
     private readonly aiService: AiService,
     private readonly profileStatusService: ProfileStatusService,
     private readonly userSessionsService: UserSessionsService,
+    private readonly tempUploads: TempUploadService,
   ) { }
 
   /** No-op when `language` already matches; safe to call on every authenticated request. */
@@ -197,9 +201,69 @@ export class UserService {
     return await this.userRepository.findOneBy('stripe_customer_id', id);
   }
 
+  /** Presigned PUT for an avatar or banner; the browser then sends the upload id to `update`. */
+  async createImageUploadUrl(id: number, { size }: CreateUserImageUploadUrlRequest) {
+    // `IsUserAuthPipe` proved ownership; this also excludes banned users, like media's.
+    const publicIdRow = await this.getPublicId(id);
+    if (!publicIdRow) {
+      throw new UnauthorizedException();
+    }
+    return await this.tempUploads.createUploadUrl(publicIdRow.public_id, size);
+  }
+
+  /**
+   * Claims a presigned avatar/banner upload, stores it as WebP and moderates it. A rejected image
+   * is deleted and throws, leaving the user's current one untouched.
+   */
+  private async storeProfileImage({
+    user,
+    uploadId,
+    kind,
+    nameParts,
+    targetSizeMb,
+  }: {
+    user: { id: number; public_id: string };
+    uploadId: string;
+    kind: 'avatar' | 'banner';
+    nameParts: (string | null | undefined)[];
+    targetSizeMb: number;
+  }): Promise<string> {
+    const buffer = await this.tempUploads.read(
+      user.public_id,
+      uploadId,
+      MAX_IMAGE_UPLOAD_BYTES,
+    );
+    let path: string;
+    try {
+      path = await this.helpers.setAsset({
+        asset: buffer,
+        // Versioned per upload: the CDN serves a stable unsigned URL per key, so reusing
+        // `users/<id>/avatar` left every cache showing the previous avatar after a change.
+        path: versionedAssetPath(
+          `users/${user.public_id}/${descriptiveFilename(nameParts, kind)}`,
+        ),
+        targetSizeMb,
+      });
+    } catch (error) {
+      // Sharp failing to decode is how bytes that are not an image surface here: the presigned
+      // PUT accepts any body, whatever `content_type` the client declared.
+      if (error instanceof HttpException) throw error;
+      throw new BadRequestException('Uploaded file is not a valid image');
+    }
+    const url = await this.helpers.getAsset(path);
+    const { moderation } = await this.aiService.moderateContent(url, {
+      user_id: user.id,
+    });
+    if (!moderation.is_allowed) {
+      await this.helpers.deleteAsset(path);
+      throw new MediaModerationException(moderation.reason);
+    }
+    return path;
+  }
+
   async update(
     id: number,
-    { avatar, banner, categories, remove_banner, ...rest }: UpdateUserRequest,
+    { avatar_upload_id, banner_upload_id, categories, remove_banner, ...rest }: UpdateUserRequest,
   ) {
     const user = await this.userRepository.findById(id);
     if (!user) {
@@ -209,56 +273,37 @@ export class UserService {
       throw new HttpException('Unauthorized', 403);
     }
     const userUpdateData: UpdateUserInput = rest;
-    // Handle avatar upload with content moderation
+    const nameParts = [
+      rest.name ?? user.name,
+      rest.surname ?? user.surname,
+      rest.profession ?? user.profession,
+    ];
+
     let avatarPath: string | undefined;
-    if (avatar && avatar.size > 0) {
-      avatarPath = await this.helpers.setAsset({
-        asset: avatar,
-        // Versioned per upload: the CDN serves a stable unsigned URL per key, so reusing
-        // `users/<id>/avatar` left every cache showing the previous avatar after a change.
-        path: versionedAssetPath(
-          `users/${user.public_id}/${descriptiveFilename(
-            [rest.name ?? user.name, rest.surname ?? user.surname, rest.profession ?? user.profession],
-            'avatar',
-          )}`,
-        ),
+    if (avatar_upload_id) {
+      avatarPath = await this.storeProfileImage({
+        user,
+        uploadId: avatar_upload_id,
+        kind: 'avatar',
+        nameParts,
         targetSizeMb: 0.3,
       });
-      const avatarUrl = await this.helpers.getAsset(avatarPath);
-      const { moderation } = await this.aiService.moderateContent(avatarUrl, {
-        user_id: id,
-      });
-      if (!moderation.is_allowed) {
-        await this.helpers.deleteAsset(avatarPath);
-        throw new MediaModerationException(moderation.reason);
-      }
       // Only once the replacement is accepted — a rejected upload must leave the old one in place.
       if (user.avatar) {
         await this.helpers.deleteAsset(user.avatar);
       }
     }
 
-    // Handle banner upload with content moderation, or explicit removal
+    // New banner, or explicit removal
     let bannerPath: string | null | undefined;
-    if (banner && banner.size > 0) {
-      bannerPath = await this.helpers.setAsset({
-        asset: banner,
-        path: versionedAssetPath(
-          `users/${user.public_id}/${descriptiveFilename(
-            [rest.name ?? user.name, rest.surname ?? user.surname, rest.profession ?? user.profession],
-            'banner',
-          )}`,
-        ),
+    if (banner_upload_id) {
+      bannerPath = await this.storeProfileImage({
+        user,
+        uploadId: banner_upload_id,
+        kind: 'banner',
+        nameParts,
         targetSizeMb: 1,
       });
-      const bannerUrl = await this.helpers.getAsset(bannerPath);
-      const { moderation: bannerModeration } = await this.aiService.moderateContent(bannerUrl, {
-        user_id: id,
-      });
-      if (!bannerModeration.is_allowed) {
-        await this.helpers.deleteAsset(bannerPath);
-        throw new MediaModerationException(bannerModeration.reason);
-      }
       if (user.banner) {
         await this.helpers.deleteAsset(user.banner);
       }

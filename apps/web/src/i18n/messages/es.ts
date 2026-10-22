@@ -1636,6 +1636,10 @@ const messages = {
       change: "Cambiar imagen del banner",
       remove: "Quitar banner",
     },
+    upload: {
+      uploading: "Subiendo… {percent}%",
+      processing: "Optimizando y revisando tu imagen…",
+    },
     avatar: {
       editTitle: "Editar avatar",
       preview: "Vista previa del perfil:",

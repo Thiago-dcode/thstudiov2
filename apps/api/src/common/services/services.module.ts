@@ -30,6 +30,7 @@ import { LogProcessor } from './log.processor';
 import { LogRetentionTask } from './log-retention.task';
 import KeyvRedis from '@keyv/redis';
 import { Helpers } from './helpers.service';
+import { TempUploadService } from './temp-upload.service';
 import { AsyncLocalStorage } from 'async_hooks';
 import { RequestStore } from '@repo/common-lib/types/request';
 @Global()
@@ -42,12 +43,14 @@ import { RequestStore } from '@repo/common-lib/types/request';
     StorageService,
     CompressService,
     Helpers,
+    TempUploadService,
     AsyncLocalStorage,
     BullModule,
   ],
   providers: [
     RequestService,
     Helpers,
+    TempUploadService,
     MailProcessor,
     LogProcessor,
     LogRetentionTask,

@@ -13,11 +13,11 @@ export abstract class StorageService {
     /**
      * A presigned PUT URL a browser can upload straight to, bypassing our own server entirely.
      *
-     * The signature binds `contentLength` and a fixed `Content-Type` (never the caller's own,
-     * which would let the browser choose what gets stored) plus a `temp=true` tag so a bucket
-     * lifecycle rule can expire abandoned uploads without a cron job walking every user's prefix.
-     * The caller must send back exactly the headers that were signed — `Content-Type`,
-     * `Content-Length` and `x-amz-tagging` — or S3 rejects the PUT with 403.
+     * `X-Amz-SignedHeaders` is `content-length;host;x-amz-tagging`: the signature binds the exact
+     * body size (so the PUT can never exceed what was declared and capped) and a `temp=true` tag.
+     * `Content-Type` is NOT signed — the client may send any value — so nothing may trust the
+     * temp object's stored type: it is never served, and the real type is re-derived from the
+     * destination key when the upload is promoted (`promoteFrom`).
      *
      * @param config.expireIn - Expiry in **seconds**. Callers should pass a short window; this
      * is a one-shot upload URL, not a long-lived asset link, so it should not fall back to
@@ -36,4 +36,12 @@ export abstract class StorageService {
     /** Object metadata without downloading its body. `null` when the object does not exist. */
     public abstract head(path: string): Promise<{ size: number } | null>;
     public abstract move(fromPath: string, toPath: string): Promise<boolean>;
+    /** The bucket (or root) this instance reads and writes. */
+    public abstract get bucket(): string;
+    /**
+     * Copies `fromPath` out of ANOTHER storage instance onto `toPath` here, then deletes the
+     * source — `move` across buckets. Used to claim a presigned upload out of the private bucket.
+     * `false` when the copy failed; a failed source delete after a good copy still returns `true`.
+     */
+    public abstract promoteFrom(source: StorageService, fromPath: string, toPath: string): Promise<boolean>;
 }

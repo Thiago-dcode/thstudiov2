@@ -100,10 +100,10 @@ export class CreateMediaAsyncRequest {
   @Max(MAX_VIDEO_DURATION_SECONDS)
   thumbnail_time_seconds?: number;
 
-  // The uuid `POST /media/upload-url` returned. The API rebuilds the full temp key
-  // (`users/{public_id}/__TEMP__/{upload_id}`) from this plus the authenticated user, so the
-  // client cannot express a storage path — a stolen uuid from another session resolves under
-  // the CALLER's own prefix, where nothing exists.
+  // The uuid `POST /media/upload-url` returned. `TempUploadService` rebuilds the full key in the
+  // private bucket from this plus the authenticated user, so the client cannot express a storage
+  // path — a stolen uuid from another session resolves under the CALLER's own prefix, where
+  // nothing exists.
   @IsUUID('4')
   @IsNotEmpty()
   upload_id: string;

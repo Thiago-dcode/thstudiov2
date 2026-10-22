@@ -6,8 +6,6 @@ import {
   Param,
   Delete,
   Query,
-  UseInterceptors,
-  UploadedFiles,
   ParseIntPipe,
   Post,
   UseGuards,
@@ -15,7 +13,6 @@ import {
 import { PublicArtistGuard } from 'src/common/guards/public-artist.guard';
 import { AllowWhileStrikeBanned } from 'src/common/decorators/allow-while-strike-banned.decorator';
 import { RequestAccountDeletionRequest } from './requests/request-account-deletion.request';
-import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { Throttle } from '@nestjs/throttler';
 import { PUBLIC_READ_THROTTLE } from 'src/common/utils/constants';
 import { UserService } from './users.service';
@@ -33,7 +30,7 @@ import { AddressService } from '../addresses/address.service';
 import { UpdateUserPasswordRequest } from './requests/update-user-password.request';
 import { IndexArtistsRequest } from './requests/index-artists.request';
 import { ProfileStatusService } from '../profile-status/profile-status.service';
-import { IMAGE_UPLOAD_OPTIONS } from 'src/common/utils/upload-limits';
+import { CreateUserImageUploadUrlRequest } from './requests/create-user-image-upload-url.request';
 
 @Controller('users')
 export class UserController {
@@ -160,26 +157,23 @@ export class UserController {
     return await this.profileStatusService.close(id);
   }
 
+  // No multipart: the avatar/banner bytes go from the browser straight to S3 through
+  // `POST :id/upload-url`, and this body only carries the resulting upload ids.
   @Patch(':id')
-  @UseInterceptors(
-    FileFieldsInterceptor([
-      { name: 'avatar', maxCount: 1 },
-      { name: 'banner', maxCount: 1 },
-    ], IMAGE_UPLOAD_OPTIONS),
-  )
   async update(
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserRequest,
-    @UploadedFiles()
-    files: { avatar?: Express.Multer.File[]; banner?: Express.Multer.File[] },
   ) {
-    if (files?.avatar?.[0]) {
-      updateUserDto.avatar = files.avatar[0];
-    }
-    if (files?.banner?.[0]) {
-      updateUserDto.banner = files.banner[0];
-    }
     return await this.userService.update(+id, updateUserDto);
+  }
+
+  // Issues the presigned PUT for an avatar or banner, ahead of the `PATCH :id` above.
+  @Post(':id/upload-url')
+  async createImageUploadUrl(
+    @Param('id', ParseIntPipe, new ModelExistPipe('users'), IsUserAuthPipe) id: number,
+    @Body() body: CreateUserImageUploadUrlRequest,
+  ) {
+    return await this.userService.createImageUploadUrl(id, body);
   }
 
   @Post(':id/password')

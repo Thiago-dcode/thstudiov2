@@ -30,14 +30,7 @@ import { MAX_CATEGORIES_MEDIA } from '@repo/common-lib/constants/limits';
 import { MediaHelper } from '@repo/common-lib/utils/media';
 import type { LocationInput } from '@repo/common-lib/types/location';
 import { LocationService } from '../locations/location.service';
-
-/**
- * Expiry for a presigned upload URL from {@link MediaService.createUploadUrl}. Deliberately
- * short and independent of `S3StorageConfig.signedUrlExpiration` (1h, used for asset display
- * links): this URL is a one-shot write, not a link a page keeps around, and a shorter window
- * shrinks how long a leaked URL stays useful.
- */
-const UPLOAD_URL_EXPIRATION_SECONDS = 15 * 60;
+import { TempUploadService } from 'src/common/services/temp-upload.service';
 
 @Injectable()
 export class MediaService {
@@ -52,6 +45,7 @@ export class MediaService {
     private readonly helpers: Helpers,
     private readonly eventEmitter: EventEmitter2,
     private readonly locationService: LocationService,
+    private readonly tempUploads: TempUploadService,
   ) { }
 
   /**
@@ -229,14 +223,14 @@ export class MediaService {
   /**
    * Never throws — safe to call from fire-and-forget work.
    *
-   * @param options.deletePaths - Storage keys to clean up alongside the row, e.g. the presigned
-   * temp upload a rejected claim never got to `move()` out of `__TEMP__`. Best-effort: the
-   * lifecycle rule on that prefix is the backstop, so a delete failure here is not retried.
+   * @param options.deleteUpload - The presigned upload a rejected claim never got to promote out of
+   * the private bucket. Best-effort: that bucket's lifecycle rule is the backstop, so a delete
+   * failure here is not retried.
    */
   private async markCreateFailed(
     media: Pick<Media, 'id' | 'user_id' | 'public_id'>,
     reason: string,
-    options?: { deletePaths?: string[] },
+    options?: { deleteUpload?: { userPublicId: string; uploadId: string } },
   ): Promise<void> {
     const log = this.logger.name('create');
     try {
@@ -246,9 +240,10 @@ export class MediaService {
         // FAILED and `completed_at` must never coexist - see the CHECK constraint on `media`.
         completed_at: null,
       });
-      if (options?.deletePaths?.length) {
-        await Promise.all(
-          options.deletePaths.map((path) => this.storageService.delete(path)),
+      if (options?.deleteUpload) {
+        await this.tempUploads.delete(
+          options.deleteUpload.userPublicId,
+          options.deleteUpload.uploadId,
         );
       }
       await this.notifyMediaUpdate(media);
@@ -268,13 +263,11 @@ export class MediaService {
   /**
    * Claims the presigned upload + process-media enqueue. Do not await from createAsync.
    *
-   * "Claim" means `head()` the temp object the browser PUT to directly, then `move()` it onto
-   * the row's real `sourcePath` — a copy + delete, not a fresh write. This is the one place
-   * this method differs from before the presigned-upload change: it used to receive the whole
-   * file in memory (`Express.Multer.File`) and `write()` it; now the bytes never pass through
-   * this process at all, and everything from `sourcePath` onward — the `updateById`, the
-   * notification, `createProcessMediaJob` — is byte-for-byte the same as before, so the worker
-   * sees an identical job against an identical key.
+   * "Claim" means `head()` the object the browser PUT to the private bucket, then promote it onto
+   * the row's real `sourcePath` in the media bucket — a cross-bucket copy + delete, not a fresh
+   * write, so the bytes never pass through this process. Everything from `sourcePath` onward —
+   * the `updateById`, the notification, `createProcessMediaJob` — is unchanged, so the worker sees
+   * an identical job against an identical key.
    */
   private async writeOriginalAndEnqueue({
     media,
@@ -292,10 +285,9 @@ export class MediaService {
     generate_metadata?: boolean;
   }): Promise<void> {
     const log = this.logger.name('create');
-    // Rebuilt here rather than trusted from the client: the DTO only ever carried the bare
-    // uuid, so this is the sole place the full key exists, and it can only ever resolve under
-    // THIS user's own prefix — a uuid stolen from another session has nothing to claim here.
-    const tempPath = MediaHelper.tempUploadPath(userPublicId, uploadId);
+    // The DTO only carries the bare uuid; `TempUploadService` rebuilds the key under THIS user's
+    // own prefix, so a uuid stolen from another session has nothing to claim.
+    const upload = { userPublicId, uploadId };
     try {
       const mediaType =
         media.media_type ??
@@ -308,11 +300,11 @@ export class MediaService {
         mediaType,
       );
 
-      const head = await this.storageService.head(tempPath);
+      const head = await this.tempUploads.head(userPublicId, uploadId);
       if (!head) {
         log.error('Presigned upload not found', {
           media_id: media.id,
-          path: tempPath,
+          upload_id: uploadId,
         });
         await this.markCreateFailed(media, 'Upload could not be found');
         return;
@@ -320,10 +312,10 @@ export class MediaService {
       if (head.size === 0) {
         log.error('Presigned upload is empty', {
           media_id: media.id,
-          path: tempPath,
+          upload_id: uploadId,
         });
         await this.markCreateFailed(media, 'Uploaded file is empty', {
-          deletePaths: [tempPath],
+          deleteUpload: upload,
         });
         return;
       }
@@ -336,12 +328,12 @@ export class MediaService {
       if (!maxBytes || head.size > maxBytes) {
         log.error('Presigned upload exceeds the allowed size', {
           media_id: media.id,
-          path: tempPath,
+          upload_id: uploadId,
           size: head.size,
           max_bytes: maxBytes,
         });
         await this.markCreateFailed(media, 'File exceeds the allowed size limit', {
-          deletePaths: [tempPath],
+          deleteUpload: upload,
         });
         return;
       }
@@ -351,15 +343,19 @@ export class MediaService {
         path: sourcePath,
         size: head.size,
       });
-      const writeOk = await this.storageService.move(tempPath, sourcePath);
+      const writeOk = await this.tempUploads.promote(
+        userPublicId,
+        uploadId,
+        this.storageService,
+        sourcePath,
+      );
       if (!writeOk) {
-        log.error('Storage move returned false', {
+        log.error('Storage promote returned false', {
           media_id: media.id,
           path: sourcePath,
         });
-        // No `deletePaths` here: `move()` may have failed after its copy already landed at
-        // `sourcePath`, and passing `tempPath` in a failure this ambiguous risks deleting the
-        // only remaining copy of the upload before it is clear which side has it.
+        // No `deleteUpload` here: when it is unclear which side holds the bytes, deleting the
+        // upload risks removing the only remaining copy.
         await this.markCreateFailed(media, 'Storage write could not complete');
         return;
       }
@@ -390,7 +386,7 @@ export class MediaService {
         error,
       );
       await this.markCreateFailed(media, 'Something went wrong during creation', {
-        deletePaths: [tempPath],
+        deleteUpload: upload,
       });
     }
   }
@@ -517,10 +513,7 @@ export class MediaService {
       );
     }
 
-    const [publicIdRow, uploadId] = await Promise.all([
-      this.userService.getPublicId(data.user_id),
-      generateUUID(),
-    ]);
+    const publicIdRow = await this.userService.getPublicId(data.user_id);
     // `@ModelExist('users')` on the DTO only checks the row exists, not the `banned = false`
     // condition `getPublicId`'s query carries — so a banned user can pass validation and still
     // resolve to no public id here.
@@ -528,17 +521,7 @@ export class MediaService {
       throw new UnauthorizedException();
     }
 
-    const path = MediaHelper.tempUploadPath(publicIdRow.public_id, uploadId);
-    const uploadUrl = await this.storageService.getUploadUrl(path, {
-      contentLength: data.size,
-      expireIn: UPLOAD_URL_EXPIRATION_SECONDS,
-    });
-
-    return {
-      upload_url: uploadUrl,
-      upload_id: uploadId,
-      expires_in: UPLOAD_URL_EXPIRATION_SECONDS,
-    };
+    return await this.tempUploads.createUploadUrl(publicIdRow.public_id, data.size);
   }
 
   public async delete(id: number): Promise<void> {

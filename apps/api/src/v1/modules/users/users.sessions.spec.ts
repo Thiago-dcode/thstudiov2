@@ -42,6 +42,7 @@ describe('UserService — session revocation', () => {
       {} as never, // aiService
       {} as never, // profileStatusService
       userSessionsService as never,
+      {} as never, // tempUploads
     );
   });
 

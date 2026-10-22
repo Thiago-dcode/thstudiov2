@@ -13,10 +13,11 @@
  * request enough that S3's signature check rejects it with a 403 before looking at the body:
  * - `Content-Type: application/octet-stream` — fixed by the signer, not `file.type`. The
  *   object's real, served `Content-Type` is decided later, when the API claims this upload and
- *   derives it from the destination key (`S3StorageService.move`), never from anything sent here.
- * - `x-amz-tagging: temp=true` — the header form of the `Tagging` the URL was signed with. A
- *   bucket lifecycle rule filtered on this tag is what expires an abandoned upload; the object
- *   otherwise sits under a per-user `__TEMP__` prefix a plain prefix-based rule cannot target.
+ *   derives it from the destination key (`S3StorageService.promoteFrom`), never from anything
+ *   sent here.
+ * - `x-amz-tagging: temp=true` — the header form of the `Tagging` the URL was signed with. The
+ *   upload lands in the private bucket under `uploads/`, whose prefix lifecycle rule expires an
+ *   abandoned one; the tag is legacy and goes away together with this header.
  */
 export type StorageUploadResult = { ok: true } | { ok: false; error: string };
 
