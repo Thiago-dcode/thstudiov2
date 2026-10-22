@@ -7,6 +7,12 @@ import { StorageService } from '@repo/backend-lib/services/storage-service/base'
 import { s3StorageConfig } from '@repo/backend-lib/config/storage';
 import { CompressService } from '@repo/backend-lib/services/compress-service/base';
 
+/**
+ * `cacheRemember` misses currently being filled, by cache key. Module-level so it is shared across
+ * requests even if `Helpers` is instantiated per request.
+ */
+const pendingCacheFills = new Map<string, Promise<string | undefined>>();
+
 @Injectable()
 export class Helpers {
   constructor(
@@ -39,11 +45,23 @@ export class Helpers {
     if (cached) {
       return JSON.parse(cached as string);
     }
-    const result = await (typeof toRemember === 'function'
-      ? (toRemember as () => Promise<T> | T)()
-      : toRemember);
-    await this.cacheManager.set(_key, JSON.stringify(result), options.ttl);
-    return result;
+    // When a hot key expires, every concurrent request misses at once. Without this they each ran
+    // the producer — each holding a database connection — which exhausted the pool on the dev box.
+    let pending = pendingCacheFills.get(_key);
+    if (!pending) {
+      pending = (async () => {
+        const result = await (typeof toRemember === 'function'
+          ? (toRemember as () => Promise<T> | T)()
+          : toRemember);
+        const serialized = JSON.stringify(result);
+        await this.cacheManager.set(_key, serialized, options.ttl);
+        return serialized;
+      })().finally(() => pendingCacheFills.delete(_key));
+      pendingCacheFills.set(_key, pending);
+    }
+    // Each caller parses its own copy, as on a hit, so no two requests share a mutable object.
+    const serialized = await pending;
+    return serialized === undefined ? (undefined as T) : JSON.parse(serialized);
   }
 
   public async deleteCached(
