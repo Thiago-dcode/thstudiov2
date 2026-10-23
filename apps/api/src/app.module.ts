@@ -181,6 +181,8 @@ const ALL_APP_MODULES = [
       inject: [ConfigService],
     }),
     I18nModule.forRootAsync({
+      // nestjs-i18n types `imports` as required against Nest 12's ModuleMetadata.
+      imports: [],
       loader: I18nJsonLoader,
       useFactory: () => ({
         fallbackLanguage: DEFAULT_LANGUAGE,

@@ -1,9 +1,8 @@
 # ─── Stage 1: builder ────────────────────────────────────────────────────────
-FROM node:22-bookworm-slim AS builder
+FROM node:24-bookworm-slim AS builder
 
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
-ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 ENV CI=true
 # Suppress telemetry HTTP calls during the build — speeds up both turbo and next.
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -14,8 +13,7 @@ WORKDIR /workspace
 RUN apt-get update \
   && apt-get install -y --no-install-recommends ca-certificates \
   && rm -rf /var/lib/apt/lists/* \
-  && corepack enable \
-  && corepack prepare pnpm@11.6.0 --activate
+  && npm install -g pnpm@12.15.0
 
 # Dependency layer: invalidated only when the lockfile or patches change.
 COPY pnpm-lock.yaml pnpm-workspace.yaml ./
@@ -101,7 +99,7 @@ RUN --mount=type=cache,id=turbo-cache,target=/root/.cache/turbo \
 RUN mkdir -p /workspace/apps/web/public
 
 # ─── Stage 2: runner ─────────────────────────────────────────────────────────
-FROM node:22-bookworm-slim AS runner
+FROM node:24-bookworm-slim AS runner
 
 ENV NODE_ENV=production
 

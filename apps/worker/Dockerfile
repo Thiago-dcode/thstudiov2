@@ -1,9 +1,8 @@
 # ─── Stage 1: builder ────────────────────────────────────────────────────────
-FROM node:22-bookworm-slim AS builder
+FROM node:24-bookworm-slim AS builder
 
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
-ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 ENV CI=true
 
 WORKDIR /workspace
@@ -11,8 +10,7 @@ WORKDIR /workspace
 RUN apt-get update \
   && apt-get install -y --no-install-recommends ca-certificates \
   && rm -rf /var/lib/apt/lists/* \
-  && corepack enable \
-  && corepack prepare pnpm@11.6.0 --activate
+  && npm install -g pnpm@12.15.0
 
 # Dependency layer: invalidated only when the lockfile or patches change.
 COPY pnpm-lock.yaml pnpm-workspace.yaml ./
@@ -30,7 +28,7 @@ RUN --mount=type=cache,id=turbo-cache,target=/root/.cache/turbo \
     pnpm turbo run build --filter=@repo/worker...
 
 # ─── Stage 2: runner ─────────────────────────────────────────────────────────
-FROM node:22-bookworm-slim AS runner
+FROM node:24-bookworm-slim AS runner
 
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
@@ -58,7 +56,7 @@ COPY --from=builder /workspace/patches ./patches
 
 # Install production dependencies only (cached unless dependencies change).
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store \
-    corepack enable && corepack prepare pnpm@11.6.0 --activate && \
+    npm install -g pnpm@12.15.0 && \
     pnpm install --frozen-lockfile --prod
 
 # Built artifacts change on every code edit, so copy them AFTER the install layer.

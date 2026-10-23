@@ -2,7 +2,9 @@
   "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
   "target": "ES2022",              
-  "module": "node16",   
+  // node20 (not node16) lets CommonJS packages import ESM-only deps such as NestJS 12 and
+  // commander 15 through Node's require(esm); node16 rejects those imports with TS1479.
+  "module": "node20",
   "moduleResolution": "node16",
   "lib": [
     "ES2022",

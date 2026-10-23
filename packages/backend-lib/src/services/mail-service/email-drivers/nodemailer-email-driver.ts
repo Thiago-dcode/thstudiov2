@@ -1,9 +1,9 @@
 import Logger from "../../../utils/console";
 import { EmailDriverOptions, MailConfig } from "../types";
 import { EmailDriver } from "./email-driver";
-import nodemailer from "nodemailer";
+import nodemailer, { type Transporter } from "nodemailer";
     export class NodemailerEmailDriver extends EmailDriver {
-        private transporter: nodemailer.Transporter;
+        private transporter: Transporter;
         constructor(config: MailConfig) {
             super(config);
             
