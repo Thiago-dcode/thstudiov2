@@ -51,6 +51,31 @@ export const setUserSession = async (userAuth: UserAuth) => {
   const cookieStore = await cookies();
   setUserSessionByCookie(userAuth, cookieStore);
 };
+/**
+ * Rewrites the username in the signed-in user's session cookie (after a rename) without touching
+ * its lifetime: `setUserSession` would push the expiry a day out, past the token it mirrors.
+ */
+export const patchUserSession = async (
+  patch: Partial<Pick<UserAuth, "username">>,
+) => {
+  const cookieStore = await cookies();
+  const current = await userSessionByCookie(cookieStore);
+  const expireAt = await getUserSessionExpirationDateByCookie(cookieStore);
+  if (!current || !expireAt) return;
+  cookieStore.set(
+    USER_AUTH_COOKIE_NAME,
+    // Only `username` is taken from `patch`, never a spread: this is a server action, so `patch` is
+    // caller-controlled and could otherwise rewrite `id`, `token` or `role`.
+    encrypt(
+      JSON.stringify({
+        ...current,
+        username: patch.username ?? current.username,
+      }),
+      SECRET,
+    ),
+    { ...SECURE_COOKIE_FLAGS, expires: expireAt },
+  );
+};
 export const setRememberMe = async () => {
   const cookieStore = await cookies();
   setRememberMeByCookie(cookieStore);

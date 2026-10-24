@@ -83,6 +83,14 @@ export class UserController {
     return await this.userService.usernameExists(username);
   }
 
+  /** Where an old username now lives, so the web can 308 `/artists/{old}/…` to it. */
+  @Throttle(PUBLIC_READ_THROTTLE)
+  @Public()
+  @Get('username-redirect/:username')
+  async usernameRedirect(@Param('username', ToLowerCasePipe) username: string) {
+    return await this.userService.findUsernameRedirect(username);
+  }
+
   @Get(':id')
   async findOne(
     @Param('id', ParseIntPipe, new ModelExistPipe('users')) id: number,

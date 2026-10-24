@@ -18,6 +18,7 @@ import { EmailPreferencesModule } from '../email-preferences/email-preferences.m
 import { ProfileStatusModule } from '../profile-status/profile-status.module';
 import { AuthCoreModule } from '../auth/auth-core.module';
 import { UserSessionsModule } from '../user-sessions/user-sessions.module';
+import { UsernameHistoryModule } from '../username-history/username-history.module';
 
 @Module({
   controllers: [UserController],
@@ -45,6 +46,8 @@ import { UserSessionsModule } from '../user-sessions/user-sessions.module';
     AuthCoreModule,
     // Password change and ban end the user's other sessions.
     UserSessionsModule,
+    // Old usernames: reserved for their owner and redirected to the current one.
+    UsernameHistoryModule,
   ],
   exports: [UserService, UserRepository],
 })

@@ -23,6 +23,7 @@ import type {
   UserProfile,
 } from "@repo/common-lib/types/user";
 import type { UserExtraData } from "@repo/common-lib/types/user-extra-data";
+import type { UsernameRedirect } from "@repo/common-lib/types/username-history";
 import { queryParamBuilder } from "@repo/common-lib/utils/query-builder";
 import type { CacheOptions } from "@repo/frontend-lib/fetch/http-client";
 import { landingCache } from "@/lib/config";
@@ -169,6 +170,24 @@ export class UserService extends BaseService {
       resource: `exists/${username}`,
       isPublic: true,
       cacheOptions: landingCache(`user-exists-${username}`),
+    });
+  }
+
+  /**
+   * The current username behind a reserved old one, or `null`. Only asked once `usernameExists`
+   * said no, so a live artist page never pays for it.
+   *
+   * Never cached, here or in the API: the answer depends on the owner still being public, and an
+   * admin ban or a deactivation never passes through the web to expire a cached copy, so it would
+   * keep revealing a hidden account's new name.
+   */
+  async usernameRedirect(
+    username: string,
+  ): Promise<ApiResponse<UsernameRedirect>> {
+    return await this.fetchApi.get({
+      resource: `username-redirect/${username}`,
+      isPublic: true,
+      cacheOptions: { cache: "no-store" },
     });
   }
 

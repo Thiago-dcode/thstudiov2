@@ -3006,14 +3006,15 @@ const messages = {
         newPasswordLabel: "Nueva contraseña",
         newPasswordInfo: "8–20 caracteres, al menos un número, sin espacios",
         remainingChanges:
-          "{remaining} de {max} {remaining, plural, one {cambio} other {cambios}} restantes este mes",
+          "{remaining} de {max} {max, plural, one {cambio restante} other {cambios restantes}} este mes",
         resetsOn: " · se reinicia el {date}",
         submit: "Actualizar contraseña",
         successToast: "Contraseña actualizada con éxito.",
       },
       changeUsername: {
         title: "Cambiar nombre de usuario",
-        description: "Elige un nuevo nombre de usuario para tu cuenta.",
+        description:
+          "Elige un nuevo nombre de usuario para tu cuenta. El actual queda reservado para ti durante {days} días y sus enlaces siguen funcionando.",
         monthlyLimitReached: "Límite mensual alcanzado",
         usedAllChanges:
           "Has usado los {max} cambios de nombre de usuario permitidos para este periodo.",
@@ -3021,7 +3022,7 @@ const messages = {
         newUsernameLabel: "Nuevo nombre de usuario",
         newUsernameInfo: "3–20 caracteres, solo letras y números",
         remainingChanges:
-          "{remaining} de {max} {remaining, plural, one {cambio} other {cambios}} restantes este mes",
+          "{remaining} de {max} {max, plural, one {cambio restante} other {cambios restantes}} este mes",
         resetsOn: " · se reinicia el {date}",
         submit: "Actualizar nombre de usuario",
         successToast: "Nombre de usuario actualizado con éxito.",

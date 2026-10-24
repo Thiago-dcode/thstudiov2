@@ -8,6 +8,7 @@ import {
   SUPPORTED_LOCALES,
   type SupportedLocale,
 } from "@/i18n/routing";
+import usersService from "@/modules/users/users.service";
 
 /**
  * Shared building blocks for every SEO surface (page metadata, JSON-LD, sitemap). Each of those used
@@ -42,21 +43,61 @@ export const localizedUrl = (locale: string, path: string): string =>
   `${serverEnv.APP_URL}${localePrefix(resolveLocale(locale))}${path === "/" ? "" : path}`;
 
 /**
- * 308s an artist URL whose username isn't lowercase (`/artists/THSWORLD/...`) to the lowercase URL,
- * keeping `subPath` (everything after the username). Usernames are case-insensitive, so every
- * casing rendered the same page with a 200 and relied on the canonical alone to consolidate.
+ * 308s an artist URL to the artist's current one, keeping `subPath` (everything after the username):
+ *
+ * - A username that isn't lowercase (`/artists/THSWORLD/...`) goes to the lowercase URL. Usernames
+ *   are case-insensitive, so every casing rendered the same page with a 200 and relied on the
+ *   canonical alone to consolidate.
+ * - A username its owner changed in the last `USERNAME_RESERVATION_DAYS` goes to the new one, so old
+ *   links, bios and indexed URLs keep working. A live user always wins: the reservation lookup only
+ *   runs once the name is known not to exist.
+ *
+ * Call it first in both `generateMetadata` and the page. Metadata resolves before the first byte,
+ * so its redirect is a real 308 — but the page renders in parallel, and for a username with no live
+ * owner the page's own `notFound()` wins unless the page redirects too. The fetches behind it are
+ * memoized per request, so the second call costs nothing.
+ *
+ * Next sends the 308 with `no-store`, so browsers never cache it — the name can belong to someone
+ * else once the reservation ends.
  */
-export const redirectToCanonicalUsername = (
+export const redirectToCurrentUsername = async (
   locale: string,
   username: string,
   subPath = "",
-): void => {
+  searchParams?: Promise<PageSearchParams>,
+): Promise<void> => {
+  const prefix = localePrefix(resolveLocale(locale));
+  // The query string goes along: links in bios and campaigns carry `utm_*`/`igsh`, and dropping them
+  // on the hop would lose the attribution of exactly the old links this redirect keeps alive.
+  const target = async (name: string) =>
+    `${prefix}/artists/${name}${subPath}${toQueryString(await searchParams)}`;
   const canonical = normalizeUsername(username);
-  if (canonical !== username) {
-    permanentRedirect(
-      `${localePrefix(resolveLocale(locale))}/artists/${canonical}${subPath}`,
-    );
+  // Resolve the final name first, so `/artists/OLDNAME` is one hop rather than two.
+  let current = canonical;
+  // `false`, not falsy: an API error must fall through to the page's own handling, never redirect.
+  const exists = await usersService.usernameExists(canonical);
+  if (exists.data === false) {
+    const renamed = (await usersService.usernameRedirect(canonical)).data;
+    if (renamed) current = renamed.username;
   }
+  if (current !== username) {
+    permanentRedirect(await target(current));
+  }
+};
+
+/** A page's resolved `searchParams` prop. */
+export type PageSearchParams = Record<string, string | string[] | undefined>;
+
+/** `?a=1&b=2` from a page's `searchParams` (repeated keys kept), or "" when there are none. */
+const toQueryString = (searchParams?: PageSearchParams): string => {
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(searchParams ?? {})) {
+    for (const v of Array.isArray(value) ? value : [value]) {
+      if (v !== undefined) query.append(key, v);
+    }
+  }
+  const qs = query.toString();
+  return qs ? `?${qs}` : "";
 };
 
 /** hreflang map for `path`: every app locale plus `x-default` (English). */

@@ -7,7 +7,7 @@ import type {
 } from "@repo/common-lib/types/user";
 import { cleanObj, trimValues } from "@repo/common-lib/utils/cleanObj";
 import { normalizeUsername } from "@repo/common-lib/utils/username";
-import { revalidateTag } from "next/cache";
+import { revalidateTag, updateTag } from "next/cache";
 import { getTranslations } from "next-intl/server";
 import {
   getFriendlyApiErrors,
@@ -16,6 +16,7 @@ import {
   requireSession,
   unauthorizedActionReturn,
 } from "@/modules/auth/helpers";
+import { patchUserSession } from "@/modules/auth/server-actions/user-session.action";
 import { updateUserSchema } from "../schemas/user-shemas";
 import usersService from "../users.service";
 
@@ -84,6 +85,13 @@ export const updateUserAction = async (
     cleanData.remove_banner = true;
   }
 
+  // Read before saving: the session cookie keeps the username from sign-in, so after an earlier
+  // rename it no longer names the profile whose cached URLs must be expired below.
+  // Falls back to the session when that read fails, so a successful rename still expires caches.
+  const previousUsername = cleanData.username
+    ? ((await usersService.getOne(id)).data?.username ?? session?.username)
+    : undefined;
+
   const result = await usersService.update(id, cleanData);
 
   if (result.error) {
@@ -95,6 +103,17 @@ export const updateUserAction = async (
   }
 
   revalidateTag(`user-${id}`, "max");
+  // `updateTag`, not `revalidateTag(..., "max")`: the artist opens their new URL right after
+  // renaming, and a stale "does not exist" would 404 it while the old one failed to redirect.
+  const newUsername = result.data?.username;
+  if (previousUsername && newUsername && newUsername !== previousUsername) {
+    for (const username of [previousUsername, newUsername]) {
+      updateTag(`user-exists-${username}`);
+    }
+    // The atelier builds "view public profile" links from the session; left alone they would keep
+    // pointing at the old name, which stops redirecting once its reservation ends.
+    await patchUserSession({ username: newUsername });
+  }
   return {
     data: result.data!,
     errors: null,

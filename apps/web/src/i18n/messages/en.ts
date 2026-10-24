@@ -2981,14 +2981,15 @@ const messages = {
         newPasswordLabel: "New Password",
         newPasswordInfo: "8–20 characters, at least one number, no spaces",
         remainingChanges:
-          "{remaining} of {max} {remaining, plural, one {change} other {changes}} remaining this month",
+          "{remaining} of {max} {max, plural, one {change} other {changes}} remaining this month",
         resetsOn: " · resets on {date}",
         submit: "Update Password",
         successToast: "Password updated successfully.",
       },
       changeUsername: {
         title: "Change Username",
-        description: "Choose a new username for your account.",
+        description:
+          "Choose a new username for your account. Your current one stays reserved for you for {days} days, and links to it keep working.",
         monthlyLimitReached: "Monthly limit reached",
         usedAllChanges:
           "You've used all {max} username changes for this period.",
@@ -2996,7 +2997,7 @@ const messages = {
         newUsernameLabel: "New Username",
         newUsernameInfo: "3–20 characters, letters and numbers only",
         remainingChanges:
-          "{remaining} of {max} {remaining, plural, one {change} other {changes}} remaining this month",
+          "{remaining} of {max} {max, plural, one {change} other {changes}} remaining this month",
         resetsOn: " · resets on {date}",
         submit: "Update Username",
         successToast: "Username updated successfully.",

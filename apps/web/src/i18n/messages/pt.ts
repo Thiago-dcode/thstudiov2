@@ -2995,14 +2995,15 @@ const messages = {
         newPasswordLabel: "Nova senha",
         newPasswordInfo: "8–20 caracteres, pelo menos um número, sem espaços",
         remainingChanges:
-          "{remaining} de {max} {remaining, plural, one {alteração} other {alterações}} restantes este mês",
+          "{remaining} de {max} {max, plural, one {alteração restante} other {alterações restantes}} este mês",
         resetsOn: " · renova em {date}",
         submit: "Atualizar senha",
         successToast: "Senha atualizada com sucesso.",
       },
       changeUsername: {
         title: "Alterar nome de usuário",
-        description: "Escolha um novo nome de usuário para sua conta.",
+        description:
+          "Escolha um novo nome de usuário para sua conta. O atual fica reservado para você por {days} dias e os links para ele continuam funcionando.",
         monthlyLimitReached: "Limite mensal atingido",
         usedAllChanges:
           "Você usou todas as {max} alterações de nome de usuário permitidas para este período.",
@@ -3010,7 +3011,7 @@ const messages = {
         newUsernameLabel: "Novo nome de usuário",
         newUsernameInfo: "3–20 caracteres, apenas letras e números",
         remainingChanges:
-          "{remaining} de {max} {remaining, plural, one {alteração} other {alterações}} restantes este mês",
+          "{remaining} de {max} {max, plural, one {alteração restante} other {alterações restantes}} este mês",
         resetsOn: " · renova em {date}",
         submit: "Atualizar nome de usuário",
         successToast: "Nome de usuário atualizado com sucesso.",

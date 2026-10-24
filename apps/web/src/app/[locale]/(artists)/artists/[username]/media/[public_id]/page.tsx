@@ -5,18 +5,31 @@ import { getTranslations } from "next-intl/server";
 import { MediaPageComponent } from "@/app/[locale]/(artists)/__components/media-page.component";
 import { localePrefix, urlLocaleToLanguageCode } from "@/i18n/routing";
 import { buildSeoMetadata } from "@/lib/seo/build-metadata";
-import { isMissingResponse, redirectToCanonicalUsername } from "@/lib/seo/core";
+import {
+  isMissingResponse,
+  type PageSearchParams,
+  redirectToCurrentUsername,
+} from "@/lib/seo/core";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 import mediaService from "@/modules/media/media.service";
 import usersService from "@/modules/users/users.service";
 
 type Props = {
   params: Promise<{ locale: string; username: string; public_id: string }>;
+  searchParams: Promise<PageSearchParams>;
 };
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+  searchParams,
+}: Props): Promise<Metadata> {
   const { locale, username, public_id } = await params;
-  redirectToCanonicalUsername(locale, username, `/media/${public_id}`);
+  await redirectToCurrentUsername(
+    locale,
+    username,
+    `/media/${public_id}`,
+    searchParams,
+  );
   const [response, t] = await Promise.all([
     mediaService.getSeoMetadata(public_id, urlLocaleToLanguageCode(locale)),
     getTranslations("artists.media"),
@@ -39,8 +52,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   });
 }
 
-export default async function MediaPage({ params }: Props) {
+export default async function MediaPage({ params, searchParams }: Props) {
   const { locale, username, public_id } = await params;
+  // Repeated from `generateMetadata` on purpose: see `redirectToCurrentUsername`.
+  await redirectToCurrentUsername(
+    locale,
+    username,
+    `/media/${public_id}`,
+    searchParams,
+  );
 
   const [user, { data: media }, session] = await Promise.all([
     usersService.getCompact(username),

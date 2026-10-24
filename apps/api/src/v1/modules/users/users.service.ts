@@ -18,6 +18,7 @@ import {
   MAX_IMAGE_UPLOAD_BYTES,
   MAX_PASSWORD_RESET,
   MAX_USERNAME_RESET,
+  USERNAME_RESERVATION_DAYS,
 } from '@repo/common-lib/constants/limits';
 import {
   CANCEL_SUBSCRIPTION_RENEWAL_EVENT,
@@ -40,7 +41,9 @@ import { MediaModerationException } from 'src/common/exceptions/media-moderation
 import { descriptiveFilename, versionedAssetPath } from 'src/common/utils/asset-path.util';
 import { ArtistCard, PublicCompactUser, UpdateUserInput, UserAccountStatus } from '@repo/common-lib/types/user';
 import { EnumType } from '@repo/common-lib/constants/enums';
-import { addMonths } from 'date-fns';
+import { addDays, addMonths } from 'date-fns';
+import { UsernameRedirect } from '@repo/common-lib/types/username-history';
+import { UsernameHistoryRepository } from '../username-history/username-history.repository';
 import { IndexArtistsRequest } from './requests/index-artists.request';
 import { QueueHelper, SINGLE_ENTITY_METADATA_DEBOUNCE_MS } from '@repo/backend-lib/utils';
 import { ProfileStatusService } from '../profile-status/profile-status.service';
@@ -50,6 +53,7 @@ import { RequestAccountDeletionRequest } from './requests/request-account-deleti
 import { accountDeletionDate } from '@repo/common-lib/utils/account-deletion';
 import { UserSessionsService } from '../user-sessions/user-sessions.service';
 import { TempUploadService } from 'src/common/services/temp-upload.service';
+import { withUserLock } from 'src/common/utils/user-lock';
 
 @Injectable()
 export class UserService {
@@ -65,6 +69,7 @@ export class UserService {
     private readonly profileStatusService: ProfileStatusService,
     private readonly userSessionsService: UserSessionsService,
     private readonly tempUploads: TempUploadService,
+    private readonly usernameHistoryRepository: UsernameHistoryRepository,
   ) { }
 
   /** No-op when `language` already matches; safe to call on every authenticated request. */
@@ -262,7 +267,49 @@ export class UserService {
     );
   }
 
-  async update(
+  /**
+   * Runs after the new username is saved. The old one stays reserved for the user for
+   * `USERNAME_RESERVATION_DAYS` (its URLs redirect to the new one meanwhile); a reservation they
+   * had on the new one is dropped, since that name is live again. The "exists" cache is cleared only
+   * now, so a read racing the write cannot re-cache the old state.
+   */
+  private async reservePreviousUsername(
+    userId: number,
+    previousUsername: string,
+    newUsername: string,
+  ): Promise<void> {
+    await this.usernameHistoryRepository.release(userId, newUsername);
+    await this.usernameHistoryRepository.reserve({
+      user_id: userId,
+      username: previousUsername,
+      reserved_until: addDays(new Date(), USERNAME_RESERVATION_DAYS),
+    });
+    await this.helpers.deleteManyCached([
+      CACHE_KEY_USERNAME_EXISTS(previousUsername),
+      CACHE_KEY_USERNAME_EXISTS(newUsername),
+    ]);
+  }
+
+  /**
+   * The current username behind a reserved old one (`null` when there is none).
+   *
+   * Deliberately uncached. The answer depends on the owner's visibility (ban, deactivation,
+   * deletion request), and a cached answer would keep revealing a hidden account's new name until
+   * it expired. It is only asked for usernames that do not exist, and it is one unique-index
+   * lookup, so there is nothing worth caching.
+   */
+  async findUsernameRedirect(username: string): Promise<UsernameRedirect> {
+    return await this.usernameHistoryRepository.findRedirect(username);
+  }
+
+  async update(id: number, request: UpdateUserRequest) {
+    // A username change is a check-then-write on the monthly count: two parallel renames would
+    // both pass it. The username dialog sends nothing else, so the locked section stays short.
+    if (!request.username) return this.updateUnlocked(id, request);
+    return withUserLock(`username-change:${id}`, 30_000, () => this.updateUnlocked(id, request));
+  }
+
+  private async updateUnlocked(
     id: number,
     { avatar_upload_id, banner_upload_id, categories, remove_banner, ...rest }: UpdateUserRequest,
   ) {
@@ -319,7 +366,11 @@ export class UserService {
     userUpdateData.banner = bannerPath;
     // Remove undefined values
     cleanObj(userUpdateData);
-    if (userUpdateData.username && userUpdateData.username !== user.username) {
+    const previousUsername = user.username;
+    const usernameChanged = Boolean(
+      userUpdateData.username && userUpdateData.username !== previousUsername,
+    );
+    if (usernameChanged) {
       const periodExpired = user.next_username_reset && new Date() >= user.next_username_reset;
       const effectiveCount = periodExpired ? 0 : user.username_reset_count;
 
@@ -329,15 +380,15 @@ export class UserService {
         );
       }
 
-      const usernameTaken = await this.userRepository.usernameExists(userUpdateData.username);
-      if (usernameTaken) {
+      // A name another user moved away from in the last `USERNAME_RESERVATION_DAYS` is still theirs;
+      // one this user moved away from is not blocked, so they can take it back.
+      const [usernameTaken, usernameReserved] = await Promise.all([
+        this.userRepository.usernameExists(userUpdateData.username),
+        this.usernameHistoryRepository.isReservedForOtherUser(userUpdateData.username, user.id),
+      ]);
+      if (usernameTaken || usernameReserved) {
         throw new BadRequestException('Username is already taken');
       }
-
-      await this.helpers.deleteManyCached([
-        CACHE_KEY_USERNAME_EXISTS(user.username),
-        CACHE_KEY_USERNAME_EXISTS(userUpdateData.username),
-      ]);
 
       userUpdateData.username_reset_count = effectiveCount + 1;
       if (!user.next_username_reset || periodExpired) {
@@ -364,6 +415,10 @@ export class UserService {
         })
         : Promise.resolve(true),
     ]);
+
+    if (usernameChanged) {
+      await this.reservePreviousUsername(user.id, previousUsername, userUpdateData.username);
+    }
 
     const mergedName =
       userUpdateData.name !== undefined ? userUpdateData.name : user.name;
@@ -537,6 +592,15 @@ export class UserService {
 
   @OnEvent(NEW_USER_EVENT)
   async handleNewUserEvent(event: NewUserEvent) {
+    // A visit to `/artists/{name}` before anyone owned it cached "does not exist" for a week, which
+    // would 404 the new owner's page. Logged, not thrown: onboarding below must still run.
+    await this.helpers
+      .deleteManyCached([CACHE_KEY_USERNAME_EXISTS(event.user.username)])
+      .catch((error: unknown) =>
+        this.logService
+          .name('new-user')
+          .error(`${NEW_USER_EVENT} user [${event.user.id}] username cache clear failed`, error),
+      );
     try {
       // Priority: enqueue email preference upsert immediately
       await QueueHelper.createOrUpdateEmailPreferenceJob({

@@ -47,6 +47,7 @@ import { LogService } from '@repo/backend-lib/services/log-service';
 import { InvitationLink } from '@repo/common-lib/types/invitation-link';
 import { WaitList } from '@repo/common-lib/types/wait-list';
 import { TWOFA_LOCK_TTL_MS, TWOFA_LOCK_WAIT_MS, withUserLock } from 'src/common/utils/user-lock';
+import { UsernameHistoryRepository } from '../username-history/username-history.repository';
 
 @Injectable()
 export class AuthService {
@@ -66,9 +67,15 @@ export class AuthService {
     private readonly invitationLinkService: InvitationLinkService,
     private readonly userBenefitService: UserBenefitService,
     private readonly waitListService: WaitListService,
-    private readonly logService: LogService
+    private readonly logService: LogService,
+    private readonly usernameHistoryRepository: UsernameHistoryRepository,
   ) { }
   async register(registerRequest: RegisterRequest) {
+    // `ModelNotExist` only sees live usernames; one a user moved away from stays theirs for
+    // `USERNAME_RESERVATION_DAYS`, so a newcomer cannot take over its traffic and redirects.
+    if (await this.usernameHistoryRepository.isReservedForOtherUser(registerRequest.username)) {
+      throw new BadRequestException('Username is already taken');
+    }
     const clientRole = await this.roleService.getByName('ARTIST');
 
     let benefit_id: number | null = null;

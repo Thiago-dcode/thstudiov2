@@ -6,7 +6,10 @@ import { ArtistBreadcrumb } from "@/app/[locale]/(artists)/__components/artist-b
 import { buildArtistListMetadata } from "@/app/[locale]/(artists)/__components/artist-list-metadata";
 import { Link } from "@/i18n/navigation";
 import Web from "@/lib/components/web-page.component";
-import { redirectToCanonicalUsername } from "@/lib/seo/core";
+import {
+  type PageSearchParams,
+  redirectToCurrentUsername,
+} from "@/lib/seo/core";
 import {
   artistDisplayName,
   buildArtistListJsonLd,
@@ -19,14 +22,23 @@ import usersService from "@/modules/users/users.service";
 
 type Props = {
   params: Promise<{ locale: string; username: string }>;
+  searchParams: Promise<PageSearchParams>;
 };
 
 /** Public list: deactivated collections are the owner's business, not visitors'. */
 const PUBLIC_FILTERS = { blocked: false, is_active: true } as const;
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+  searchParams,
+}: Props): Promise<Metadata> {
   const { locale, username: rawUsername } = await params;
-  redirectToCanonicalUsername(locale, rawUsername, "/collections");
+  await redirectToCurrentUsername(
+    locale,
+    rawUsername,
+    "/collections",
+    searchParams,
+  );
   const username = normalizeUsername(rawUsername);
   const { data: collections } = await userCollectionService.getAllByUsername(
     username,
@@ -41,8 +53,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   });
 }
 
-export default async function Page({ params }: Props) {
+export default async function Page({ params, searchParams }: Props) {
   const { locale, username: rawUsername } = await params;
+  // Repeated from `generateMetadata` on purpose: see `redirectToCurrentUsername`.
+  await redirectToCurrentUsername(
+    locale,
+    rawUsername,
+    "/collections",
+    searchParams,
+  );
   const username = normalizeUsername(rawUsername);
   const t = await getTranslations("artists.collections");
 

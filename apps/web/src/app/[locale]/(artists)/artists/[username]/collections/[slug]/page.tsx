@@ -11,7 +11,7 @@ import Web from "@/lib/components/web-page.component";
 import { config } from "@/lib/config";
 import { getGalleryLabels } from "@/lib/gallery-labels";
 import { buildSeoMetadata } from "@/lib/seo/build-metadata";
-import { isMissingResponse, redirectToCanonicalUsername } from "@/lib/seo/core";
+import { isMissingResponse, redirectToCurrentUsername } from "@/lib/seo/core";
 import {
   artistDisplayName,
   buildCollectionJsonLd,
@@ -29,11 +29,15 @@ type Props = {
 
 export async function generateMetadata({
   params,
-}: {
-  params: Promise<{ locale: string; username: string; slug: string }>;
-}): Promise<Metadata> {
+  searchParams,
+}: Props): Promise<Metadata> {
   const { locale, username, slug } = await params;
-  redirectToCanonicalUsername(locale, username, `/collections/${slug}`);
+  await redirectToCurrentUsername(
+    locale,
+    username,
+    `/collections/${slug}`,
+    searchParams,
+  );
   const response = await userCollectionService.getSeoMetadata(
     username,
     slug,
@@ -49,6 +53,13 @@ export async function generateMetadata({
 
 export default async function Page({ params, searchParams }: Props) {
   const { locale, username, slug } = await params;
+  // Repeated from `generateMetadata` on purpose: see `redirectToCurrentUsername`.
+  await redirectToCurrentUsername(
+    locale,
+    username,
+    `/collections/${slug}`,
+    searchParams,
+  );
   const t = await getTranslations("artists.collections");
   const tEdit = await getTranslations("artists.editAria");
 

@@ -2,6 +2,7 @@
 
 import type { ActionReturn } from "@repo/common-lib/types/response";
 import { normalizeUsername } from "@repo/common-lib/utils/username";
+import { updateTag } from "next/cache";
 import { getTranslations } from "next-intl/server";
 import authService from "../auth.service";
 import type { LoginReturn } from "../auth.types";
@@ -71,6 +72,9 @@ export const registerServerAction = async (
       inputs: credentials,
     };
   }
+  // The name may have been looked up before it had an owner and cached as "does not exist". That
+  // would 404 the new artist's page, or send their visitors to whoever reserved the name before.
+  updateTag(`user-exists-${result.data.username}`);
   //Success: a browser that already validated the email through the wait list gets a session
   // straight away; every other registration confirms the email with the 2FA code.
   if (result.data.token) {

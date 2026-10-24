@@ -26,6 +26,7 @@ import { UserBenefitService } from '../user-benefit/user-benefit.service';
 import { WaitListService } from '../wait-list/wait-list.service';
 import { LogService } from '@repo/backend-lib/services/log-service';
 import { hash } from '@repo/common-lib/utils/hash';
+import { UsernameHistoryRepository } from '../username-history/username-history.repository';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -59,6 +60,7 @@ describe('AuthService', () => {
   };
   const waitListService = { findByInvitationLinkId: jest.fn(), findByEmail: jest.fn(), updateById: jest.fn() };
   const mailService = { send: jest.fn() };
+  const usernameHistoryRepository = { isReservedForOtherUser: jest.fn() };
 
   beforeEach(async () => {
     jest.resetAllMocks();
@@ -71,6 +73,7 @@ describe('AuthService', () => {
     waitListService.findByInvitationLinkId.mockResolvedValue(waitList);
     userAuthDevicesService.getOneOrCreate.mockResolvedValue({ ...preValidatedDevice, disabled: true });
     mailService.send.mockResolvedValue(undefined);
+    usernameHistoryRepository.isReservedForOtherUser.mockResolvedValue(false);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -91,6 +94,7 @@ describe('AuthService', () => {
         { provide: UserBenefitService, useValue: { create: jest.fn() } },
         { provide: WaitListService, useValue: waitListService },
         { provide: LogService, useValue: { info: jest.fn(), error: jest.fn() } },
+        { provide: UsernameHistoryRepository, useValue: usernameHistoryRepository },
       ],
     }).compile();
 
@@ -113,6 +117,15 @@ describe('AuthService', () => {
 
       await expect(service.register(registerRequest as never)).rejects.toThrow('This invitation has expired');
       expect(userRepository.create).not.toHaveBeenCalled();
+    });
+
+    it('refuses a username another artist moved away from in the last 90 days', async () => {
+      usernameHistoryRepository.isReservedForOtherUser.mockResolvedValue(true);
+
+      await expect(service.register(registerRequest as never)).rejects.toThrow('Username is already taken');
+      expect(usernameHistoryRepository.isReservedForOtherUser).toHaveBeenCalledWith('ana');
+      expect(userRepository.create).not.toHaveBeenCalled();
+      expect(invitationLinkService.claimUse).not.toHaveBeenCalled();
     });
 
     it('refuses an invitation another registration used up in the meantime', async () => {

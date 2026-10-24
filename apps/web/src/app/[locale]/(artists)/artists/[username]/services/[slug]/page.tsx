@@ -9,7 +9,11 @@ import { Link } from "@/i18n/navigation";
 import { urlLocaleToLanguageCode } from "@/i18n/routing";
 import Web from "@/lib/components/web-page.component";
 import { buildSeoMetadata } from "@/lib/seo/build-metadata";
-import { isMissingResponse, redirectToCanonicalUsername } from "@/lib/seo/core";
+import {
+  isMissingResponse,
+  type PageSearchParams,
+  redirectToCurrentUsername,
+} from "@/lib/seo/core";
 import {
   artistDisplayName,
   buildServiceJsonLd,
@@ -22,15 +26,20 @@ import usersService from "@/modules/users/users.service";
 
 type Props = {
   params: Promise<{ locale: string; username: string; slug: string }>;
+  searchParams: Promise<PageSearchParams>;
 };
 
 export async function generateMetadata({
   params,
-}: {
-  params: Promise<{ locale: string; username: string; slug: string }>;
-}): Promise<Metadata> {
+  searchParams,
+}: Props): Promise<Metadata> {
   const { locale, username, slug } = await params;
-  redirectToCanonicalUsername(locale, username, `/services/${slug}`);
+  await redirectToCurrentUsername(
+    locale,
+    username,
+    `/services/${slug}`,
+    searchParams,
+  );
   const response = await userServiceService.getSeoMetadata(
     username,
     slug,
@@ -44,8 +53,15 @@ export async function generateMetadata({
   return buildSeoMetadata(data, locale, { title: slug });
 }
 
-export default async function Page({ params }: Props) {
+export default async function Page({ params, searchParams }: Props) {
   const { locale, username, slug } = await params;
+  // Repeated from `generateMetadata` on purpose: see `redirectToCurrentUsername`.
+  await redirectToCurrentUsername(
+    locale,
+    username,
+    `/services/${slug}`,
+    searchParams,
+  );
   const t = await getTranslations("artists.services");
   const tEdit = await getTranslations("artists.editAria");
 

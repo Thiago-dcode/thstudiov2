@@ -8,7 +8,11 @@ import { ArtistBreadcrumb } from "@/app/[locale]/(artists)/__components/artist-b
 import { ArtistContactDialog } from "@/app/[locale]/(artists)/__components/artist-contact.dialog";
 import { Link } from "@/i18n/navigation";
 import Web from "@/lib/components/web-page.component";
-import { isMissingResponse, redirectToCanonicalUsername } from "@/lib/seo/core";
+import {
+  isMissingResponse,
+  type PageSearchParams,
+  redirectToCurrentUsername,
+} from "@/lib/seo/core";
 import {
   artistDisplayName,
   buildArtistAboutJsonLd,
@@ -22,11 +26,15 @@ import usersService from "@/modules/users/users.service";
 
 type Props = {
   params: Promise<{ locale: string; username: string }>;
+  searchParams: Promise<PageSearchParams>;
 };
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+  searchParams,
+}: Props): Promise<Metadata> {
   const { locale, username: rawUsername } = await params;
-  redirectToCanonicalUsername(locale, rawUsername, "/about");
+  await redirectToCurrentUsername(locale, rawUsername, "/about", searchParams);
   const username = normalizeUsername(rawUsername);
   const [response, { data: aboutPage }, t] = await Promise.all([
     getArtistProfileResponse(username),
@@ -63,8 +71,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   });
 }
 
-export default async function AboutPage({ params }: Props) {
+export default async function AboutPage({ params, searchParams }: Props) {
   const { locale, username: rawUsername } = await params;
+  // Repeated from `generateMetadata` on purpose: see `redirectToCurrentUsername`.
+  await redirectToCurrentUsername(locale, rawUsername, "/about", searchParams);
   const username = normalizeUsername(rawUsername);
   const t = await getTranslations("artists.about");
   const tEdit = await getTranslations("artists.editAria");

@@ -113,7 +113,12 @@ export const CREDIT_CONSUMING_LLM_USAGE_TYPES = Object.keys(
   AI_CREDIT_COST_BY_LLM_USAGE_TYPE,
 ) as EnumType<'LLM_USAGE_TYPE'>[];
 export const MAX_MEDIA_UPLOAD_FILES = 20;
-export const MAX_USERNAME_RESET = 3;
+export const MAX_USERNAME_RESET = 2;
+/**
+ * How long a username stays reserved for its previous owner after they change it. During the window
+ * nobody else can claim it, the owner can take it back, and its old URLs redirect to the new one.
+ */
+export const USERNAME_RESERVATION_DAYS = 90;
 export const MAX_PASSWORD_RESET = 3;
 export const MAX_COLLECTION_ITEMS = 45;
 export const MAX_PORTFOLIO_ITEMS = 125;

@@ -1,6 +1,9 @@
 "use client";
 
-import { MAX_USERNAME_RESET } from "@repo/common-lib/constants/limits";
+import {
+  MAX_USERNAME_RESET,
+  USERNAME_RESERVATION_DAYS,
+} from "@repo/common-lib/constants/limits";
 import type { User } from "@repo/common-lib/types/user";
 import { normalizeUsername } from "@repo/common-lib/utils/username";
 import { Errors } from "@repo/ui/components/custom/errors";
@@ -15,7 +18,7 @@ import {
 } from "@repo/ui/components/shadcn/dialog";
 import { toast } from "@repo/ui/sonner";
 import { Pencil } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import FormComponent from "@/lib/components/form-component";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
@@ -27,6 +30,7 @@ type Props = {
 
 export const EditUserUsernameDialog = ({ user }: Props) => {
   const t = useTranslations("atelier.settings.changeUsername");
+  const locale = useLocale();
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState(user.username ?? "");
 
@@ -73,7 +77,7 @@ export const EditUserUsernameDialog = ({ user }: Props) => {
 
   const resetDateFormatted =
     resetDate && !periodExpired
-      ? resetDate.toLocaleDateString("en-US", {
+      ? resetDate.toLocaleDateString(locale, {
           month: "long",
           day: "numeric",
           year: "numeric",
@@ -94,7 +98,9 @@ export const EditUserUsernameDialog = ({ user }: Props) => {
       <DialogContent className="max-w-sm">
         <DialogHeader>
           <DialogTitle>{t("title")}</DialogTitle>
-          <DialogDescription>{t("description")}</DialogDescription>
+          <DialogDescription>
+            {t("description", { days: USERNAME_RESERVATION_DAYS })}
+          </DialogDescription>
         </DialogHeader>
 
         <FormComponent.Container>

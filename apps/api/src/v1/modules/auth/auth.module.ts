@@ -13,6 +13,7 @@ import { UserBenefitModule } from '../user-benefit/user-benefit.module';
 import { WaitListModule } from '../wait-list/wait-list.module';
 import { EmailPreferencesModule } from '../email-preferences/email-preferences.module';
 import { AuthCoreModule } from './auth-core.module';
+import { UsernameHistoryModule } from '../username-history/username-history.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { AuthCoreModule } from './auth-core.module';
     UserBenefitModule,
     WaitListModule,
     EmailPreferencesModule,
+    UsernameHistoryModule,
   ],
   controllers: [AuthController],
   providers: [

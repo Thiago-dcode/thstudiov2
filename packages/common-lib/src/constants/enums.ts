@@ -88,6 +88,7 @@ export const TABLES_ENUM = {
   ADMIN_USERS_ROLES: 'admin_users_roles',
   ROLES: 'roles',
   USERS: 'users',
+  USERNAME_HISTORY: 'username_history',
   USER_TRANSLATIONS: 'user_translations',
   CATEGORIES: 'categories',
   USER_CATEGORIES: 'user_categories',

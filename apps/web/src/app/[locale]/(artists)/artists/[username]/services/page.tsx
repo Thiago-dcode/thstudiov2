@@ -5,7 +5,10 @@ import { getTranslations } from "next-intl/server";
 import { ArtistBreadcrumb } from "@/app/[locale]/(artists)/__components/artist-breadcrumb";
 import { buildArtistListMetadata } from "@/app/[locale]/(artists)/__components/artist-list-metadata";
 import Web from "@/lib/components/web-page.component";
-import { redirectToCanonicalUsername } from "@/lib/seo/core";
+import {
+  type PageSearchParams,
+  redirectToCurrentUsername,
+} from "@/lib/seo/core";
 import {
   artistDisplayName,
   buildArtistListJsonLd,
@@ -18,13 +21,22 @@ import usersService from "@/modules/users/users.service";
 
 type Props = {
   params: Promise<{ locale: string; username: string }>;
+  searchParams: Promise<PageSearchParams>;
 };
 
 const PUBLIC_FILTERS = { is_active: true, blocked: false } as const;
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+  searchParams,
+}: Props): Promise<Metadata> {
   const { locale, username: rawUsername } = await params;
-  redirectToCanonicalUsername(locale, rawUsername, "/services");
+  await redirectToCurrentUsername(
+    locale,
+    rawUsername,
+    "/services",
+    searchParams,
+  );
   const username = normalizeUsername(rawUsername);
   const { data } = await userServiceService.getAllByUsername(
     username,
@@ -40,8 +52,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   });
 }
 
-export default async function Page({ params }: Props) {
+export default async function Page({ params, searchParams }: Props) {
   const { locale, username: rawUsername } = await params;
+  // Repeated from `generateMetadata` on purpose: see `redirectToCurrentUsername`.
+  await redirectToCurrentUsername(
+    locale,
+    rawUsername,
+    "/services",
+    searchParams,
+  );
   const username = normalizeUsername(rawUsername);
   const t = await getTranslations("artists.services");
 

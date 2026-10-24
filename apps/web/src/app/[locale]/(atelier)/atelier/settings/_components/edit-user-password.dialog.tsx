@@ -14,7 +14,7 @@ import {
 } from "@repo/ui/components/shadcn/dialog";
 import { toast } from "@repo/ui/sonner";
 import { KeyRound } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import FormComponent from "@/lib/components/form-component";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
@@ -26,6 +26,7 @@ type Props = {
 
 export const EditUserPasswordDialog = ({ user }: Props) => {
   const t = useTranslations("atelier.settings.changePassword");
+  const locale = useLocale();
   const [open, setOpen] = useState(false);
 
   const { handleSubmit, isPending, errors, success, reset } = useHandleAction({
@@ -58,7 +59,7 @@ export const EditUserPasswordDialog = ({ user }: Props) => {
 
   const resetDateFormatted =
     resetDate && !periodExpired
-      ? resetDate.toLocaleDateString("en-US", {
+      ? resetDate.toLocaleDateString(locale, {
           month: "long",
           day: "numeric",
           year: "numeric",

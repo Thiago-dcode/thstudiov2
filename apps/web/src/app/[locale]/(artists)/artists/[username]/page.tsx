@@ -12,7 +12,11 @@ import {
   InstagramIcon,
   YoutubeIcon,
 } from "@/lib/components/social-icons";
-import { isMissingResponse, redirectToCanonicalUsername } from "@/lib/seo/core";
+import {
+  isMissingResponse,
+  type PageSearchParams,
+  redirectToCurrentUsername,
+} from "@/lib/seo/core";
 import {
   artistDisplayName,
   buildProfileJsonLd,
@@ -25,11 +29,17 @@ import { ArtistContactDialog } from "../../__components/artist-contact.dialog";
 import { ArtistSections } from "../../__components/artist-sections";
 import { ArtistSectionsSkeleton } from "../../__components/artist-sections-skeleton";
 
-type Props = { params: Promise<{ locale: string; username: string }> };
+type Props = {
+  params: Promise<{ locale: string; username: string }>;
+  searchParams: Promise<PageSearchParams>;
+};
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+  searchParams,
+}: Props): Promise<Metadata> {
   const { locale, username: rawUsername } = await params;
-  redirectToCanonicalUsername(locale, rawUsername, "");
+  await redirectToCurrentUsername(locale, rawUsername, "", searchParams);
   const username = normalizeUsername(rawUsername);
   const [response, t] = await Promise.all([
     getArtistProfileResponse(username),
@@ -93,8 +103,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   });
 }
 
-const ArtistHomePage = async ({ params }: Props) => {
+const ArtistHomePage = async ({ params, searchParams }: Props) => {
   const { locale, username: rawUsername } = await params;
+  // Repeated from `generateMetadata` on purpose: see `redirectToCurrentUsername`.
+  await redirectToCurrentUsername(locale, rawUsername, "", searchParams);
   const username = normalizeUsername(rawUsername);
   const [{ data: profile }, { data: services }, t] = await Promise.all([
     getArtistProfileResponse(username),
