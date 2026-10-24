@@ -36,8 +36,8 @@ certs
 scripts/deploy.sh
 scripts/a11studio.service
 
-# Local-only working docs (untracked 2026-08-12; earlier revisions remain in git history).
-docs/seo/
+# Local-only docs. Kept on disk; not part of the repo.
+docs/
 
 # Turbo
 .turbo
