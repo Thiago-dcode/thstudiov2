@@ -1,5 +1,6 @@
 import type { SitemapMediaItem } from "@repo/common-lib/types/sitemap";
 import type { MetadataRoute } from "next";
+import { SUPPORTED_LOCALES } from "@/i18n/routing";
 import { DIRECTORY_PATHS, isDirectoryOpen } from "@/lib/directory-visibility";
 import { languageAlternates, localizedUrl } from "@/lib/seo/core";
 import {
@@ -48,25 +49,33 @@ const xmlEscape = (s: string) =>
     .replace(/'/g, "&apos;");
 
 /**
- * One `<url>` with hreflang alternates for every locale + `x-default` (the same set the page's own
- * `<head>` declares), plus optional image-sitemap images and video-sitemap videos.
+ * One `<url>` per locale in `SUPPORTED_LOCALES` (en unprefixed, the others under their prefix),
+ * emitted next to each other in that order. Per Google's multilingual sitemap guidance each localized
+ * URL is its own page, so each gets its own `<loc>` instead of appearing only as an alternate — which
+ * left `/es/...` and `/pt/...` "discovered but not crawled" on Bing.
+ *
+ * Every sibling carries the same hreflang set (every locale + `x-default`, the same set the page's
+ * own `<head>` declares), so each entry references itself and all its siblings reciprocally. The
+ * optional `lastModified`, image-sitemap images and video-sitemap videos are repeated on every
+ * sibling, since they describe the page, not the language.
  */
-function entry(
+function entries(
   path: string,
   lastModified?: string,
   images?: string[],
   videos?: MetadataRoute.Sitemap[number]["videos"],
-): MetadataRoute.Sitemap[number] {
+): MetadataRoute.Sitemap {
   const languages = Object.fromEntries(
     Object.entries(languageAlternates(path)).map(([l, u]) => [l, xmlEscape(u)]),
   );
-  return {
-    url: xmlEscape(localizedUrl("en", path)),
+  const escapedImages = images?.length ? images.map(xmlEscape) : undefined;
+  return SUPPORTED_LOCALES.map((locale) => ({
+    url: xmlEscape(localizedUrl(locale, path)),
     ...(lastModified ? { lastModified } : {}),
     alternates: { languages },
-    ...(images?.length ? { images: images.map(xmlEscape) } : {}),
+    ...(escapedImages ? { images: escapedImages } : {}),
     ...(videos?.length ? { videos } : {}),
-  };
+  }));
 }
 
 /**
@@ -121,7 +130,7 @@ async function staticEntries(): Promise<MetadataRoute.Sitemap> {
   const directoryOpen = await isDirectoryOpen();
   return STATIC_PATHS.filter(
     (p) => directoryOpen || !DIRECTORY_PATHS.has(p),
-  ).map((p) => entry(p));
+  ).flatMap((p) => entries(p));
 }
 
 export async function generateSitemaps(): Promise<{ id: number }[]> {
@@ -142,14 +151,14 @@ export default async function sitemap(props: {
   switch (desc.kind) {
     case "artists": {
       const rows = await getSitemapArtists(desc.page, perPage);
-      return rows.map((r) =>
-        entry(`/artists/${r.username}`, r.updated_at, r.images),
+      return rows.flatMap((r) =>
+        entries(`/artists/${r.username}`, r.updated_at, r.images),
       );
     }
     case "portfolios": {
       const rows = await getSitemapPortfolios(desc.page, perPage);
-      return rows.map((r) =>
-        entry(
+      return rows.flatMap((r) =>
+        entries(
           `/artists/${r.username}/portfolios/${r.slug}`,
           r.updated_at,
           r.images,
@@ -158,8 +167,8 @@ export default async function sitemap(props: {
     }
     case "collections": {
       const rows = await getSitemapCollections(desc.page, perPage);
-      return rows.map((r) =>
-        entry(
+      return rows.flatMap((r) =>
+        entries(
           `/artists/${r.username}/collections/${r.slug}`,
           r.updated_at,
           r.images,
@@ -168,8 +177,8 @@ export default async function sitemap(props: {
     }
     case "services": {
       const rows = await getSitemapServices(desc.page, perPage);
-      return rows.map((r) =>
-        entry(
+      return rows.flatMap((r) =>
+        entries(
           `/artists/${r.username}/services/${r.slug}`,
           r.updated_at,
           r.images,
@@ -180,8 +189,8 @@ export default async function sitemap(props: {
       const rows = await getSitemapMedia(desc.page, perPage);
       // The PRIMARY media URL — the one the nested portfolio/collection media views canonicalize
       // to — so the sitemap only ever advertises the canonical form.
-      return rows.map((r) =>
-        entry(
+      return rows.flatMap((r) =>
+        entries(
           `/artists/${r.username}/media/${r.public_id}`,
           r.updated_at,
           r.images,

@@ -57,9 +57,14 @@ export function getSitemapCounts(): Promise<SitemapCounts> {
 }
 
 /**
- * URLs per child sitemap, per entity. Protocol max is 50k URLs / 50MB per file — image-bearing
- * entities (portfolios/collections carry gallery images) use smaller shards to bound file size, and
- * every size stays ≤ the API's `MAX_PER_PAGE` so one shard == one API page.
+ * Pages per child sitemap, per entity. Every size stays ≤ the API's `MAX_PER_PAGE` so one shard ==
+ * one API page.
+ *
+ * Each page becomes one `<url>` per locale (see `entries()` in `app/sitemap.ts`), so the protocol
+ * max of 50k URLs / 50MB per file applies to `size × SUPPORTED_LOCALES.length`: 15,000 URLs at most
+ * today, and about 24MB in the worst case (a media shard with 10 images and a 2048-char video
+ * description per entry). Image-bearing entities (portfolios/collections carry gallery images) use
+ * smaller shards to bound file size. Adding a locale or raising a size must re-check that budget.
  */
 export const SITEMAP_SHARD_SIZE = {
   artists: 5000,
