@@ -99,6 +99,9 @@ id_ed25519*
 # copy. Git resolves the link and would otherwise commit all 23 files a second time, and the
 # two copies would then drift. Recreate it with `pnpm skills:link` after cloning.
 .claude/skills/
+
+# Per-task handoff files (plan, build reports, review) written by the /orchestrate agents.
+.claude/work/
 *.bak
 cv-thiago-ferreira-2026*
 # Database seed assets (large binaries; not committed — keep locally for `db:seed -n media` / `db:seed -n assets`)

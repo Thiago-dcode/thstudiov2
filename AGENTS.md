@@ -16,6 +16,20 @@ This repo ships project skills in `.agents/skills/<name>/SKILL.md`. They hold th
 | Verifying API changes | `api-verification`, `api-testing` |
 | Commit / push / watch CI (only when explicitly asked) | `deployment` |
 
+## Multi-agent pipeline (Claude Code)
+
+**The user never invokes the agents. Choosing the tier is your job, on every implementation request.** This is a standing instruction to use the subagents in `.claude/agents/` whenever the tier calls for them. Before you start editing, say in one line which tier you picked and why.
+
+| Tier | When (any one trigger is enough for a higher tier) | What you do |
+|---|---|---|
+| **Direct** | UI/styling tweak, copy or i18n string, single component, config value, typo, an obvious one-file bug, questions and research | Implement it yourself and run the area's lint/build. No agents. |
+| **Reviewed** | Logic change in one area across a few files, a bug fix that changes behaviour, a new server action or a small endpoint change with no schema change | Implement it yourself, write a short `.claude/work/<slug>/plan.md` (goal + acceptance criteria + files), then spawn a fresh `reviewer` and fix its BLOCKER/MAJOR findings. |
+| **Full pipeline** | DB migration or schema/type contract change · new API module, endpoint family, queue processor or mail · spans both api and web · auth, permissions, payments (Stripe), uploads/S3, moderation · public URLs, slugs, redirects, sitemap/noindex/SEO invariants · roughly 6+ files of logic | Follow `.agents/skills/orchestrate/SKILL.md`: `planner` → `api-builder` / `web-builder` → `test-writer` → `reviewer`, with a bounded fix loop. |
+
+Examples: "change the button colour" is **Direct**. "Fix the slug validation message" is **Direct**. "Make the upload limit configurable per plan" is **Reviewed**. "Username change history with redirects from old usernames" is **Full pipeline** (migration, new module, api+web, SEO redirects). If you're unsure between two tiers, pick the higher one. If the work grows past its tier partway through, move it up and say so.
+
+Agents hand off through `.claude/work/<slug>/` files, and `.claude/hooks/guard.mjs` keeps each agent in its own lane.
+
 ## Workflow
 
 1. Identify the area(s) the task touches and read the skills above.
