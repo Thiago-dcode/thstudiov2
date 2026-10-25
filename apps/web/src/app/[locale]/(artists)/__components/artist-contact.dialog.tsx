@@ -10,7 +10,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@repo/ui/components/shadcn/dialog";
-import { Spinner } from "@repo/ui/components/shadcn/spinner";
 import { toast } from "@repo/ui/sonner";
 import { Check, Mail } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -34,7 +33,7 @@ export const ArtistContactDialog = ({
   const [open, setOpen] = useState(false);
   /** The message went through: the dialog shows a confirmation instead of the form. */
   const [sent, setSent] = useState(false);
-  const { artist, isPending: loadingArtist } = useArtist();
+  const { artist } = useArtist();
   const { session } = useSession();
   const isSelfContact = Boolean(session && artist && session.id === artist.id);
   const artistName = artist
@@ -99,12 +98,6 @@ export const ArtistContactDialog = ({
             {t("description")}
           </DialogDescription>
         </DialogHeader>
-
-        {loadingArtist && (
-          <div className="absolute inset-0 flex items-center justify-center bg-bg/80 backdrop-blur-sm z-50">
-            <Spinner className="size-8" />
-          </div>
-        )}
 
         {isSelfContact ? (
           <div className="flex min-h-[260px] items-center justify-center border border-fg-2/40 bg-fg/10 px-6 text-center text-sm text-text-muted">

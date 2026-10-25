@@ -736,6 +736,19 @@ const messages = {
     tryAgain: "Try again",
     backToHome: "Back to home",
   },
+  notFoundPage: {
+    metaTitle: "Page not found",
+    eyebrow: "Error 404",
+    heading: "This page doesn't exist",
+    body: "The link may be broken, or the page may have moved. Here are a few places to pick up from.",
+    home: "Back to home",
+    nextSteps: "Or continue to",
+    forPhotographers: "For photographers",
+    forPhotographersBody:
+      "How A11STUDIO turns your work into a portfolio clients can find.",
+    support: "Support",
+    supportBody: "Tell us what you were looking for and we'll help.",
+  },
   siteHeader: {
     openNavigation: "Open navigation",
     closeNavigation: "Close navigation",
@@ -1782,26 +1795,6 @@ const messages = {
         subtitle: "Check back soon, or reach out to start a conversation.",
         cta: "Get in touch",
       },
-    },
-    notFound: {
-      heading: "Artist not found",
-      description:
-        "The profile you're looking for doesn't exist or may have been removed.",
-      backHome: "Back to home",
-    },
-    resourceNotFound: {
-      generic:
-        "The page you're looking for doesn't exist or may have been removed.",
-      heading: "Resource not found",
-      backToProfile: "Back to profile",
-      portfolio:
-        "The portfolio you're looking for doesn't exist or may have been removed.",
-      collection:
-        "The collection you're looking for doesn't exist or may have been removed.",
-      service:
-        "The service you're looking for doesn't exist or may have been removed.",
-      media:
-        "The media you're looking for doesn't exist or may have been removed.",
     },
     profile: {
       metaTitleLocation: "{name} — {profession} in {location}",

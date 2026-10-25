@@ -55,14 +55,18 @@ const socialMeta: Record<
 
 export const WebFooter = async ({
   artistPage = false,
+  directoryLinks = true,
 }: {
   /** On an artist's pages the sign-up prompt is a quiet, tracked link instead of the accent button:
    * the artist's work, not our CTA, owns the page. */
   artistPage?: boolean;
+  /** `false` skips the `isDirectoryOpen()` lookup and hides the directory links. Used by the 404,
+   * so that a 404 render (scanner probes included) never calls the API. */
+  directoryLinks?: boolean;
 } = {}) => {
   const [t, directoryOpen] = await Promise.all([
     getTranslations("footer"),
-    isDirectoryOpen(),
+    directoryLinks ? isDirectoryOpen() : false,
   ]);
   // The directory links only once it is open; the discipline landings always.
   const visibleDiscoverLinks = discoverLinks.filter(

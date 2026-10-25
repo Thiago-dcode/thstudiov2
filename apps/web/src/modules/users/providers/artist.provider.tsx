@@ -1,22 +1,10 @@
 "use client";
 
 import type { PublicCompactUser } from "@repo/common-lib/types/user";
-import { useParams } from "next/navigation";
-import {
-  createContext,
-  type ReactNode,
-  useContext,
-  useEffect,
-  useRef,
-} from "react";
-import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
-import { getUserCompactedAction } from "@/modules/users/server-actions/get-compacted-user.action";
+import { createContext, type ReactNode, useContext } from "react";
 
 type ArtistContextType = {
   artist: PublicCompactUser | null;
-  isLoading: boolean;
-  isPending: boolean;
-  refresh: () => Promise<void>;
 };
 
 const ArtistContext = createContext<ArtistContextType | null>(null);
@@ -29,35 +17,18 @@ export const useArtist = () => {
   return context;
 };
 
-export const ArtistProvider = ({ children }: { children: ReactNode }) => {
-  const params = useParams();
-  const username = params.username as string | undefined;
-  const prevUsernameRef = useRef<string | undefined>(undefined);
-
-  const { result, isPending, handleAction } = useHandleAction({
-    action: async () => {
-      return await getUserCompactedAction(username!);
-    },
-  });
-
-  useEffect(() => {
-    if (!username) return;
-    if (username === prevUsernameRef.current) return;
-    prevUsernameRef.current = username;
-    handleAction();
-  }, [username, handleAction]);
-
-  const artist = result?.data ?? null;
-
-  const refresh = async () => {
-    if (username) await handleAction();
-  };
-
-  const isLoading = !artist && isPending;
-
-  return (
-    <ArtistContext.Provider value={{ artist, isLoading, isPending, refresh }}>
-      {children}
-    </ArtistContext.Provider>
-  );
-};
+/**
+ * The artist whose pages are being viewed, for client components such as the contact dialog. The
+ * data comes from the server (the artist layout) on purpose: it used to be read through a server
+ * action on mount, and that action's response was a revalidated full RSC re-render of the page,
+ * which inserted the whole head metadata block a second time.
+ */
+export const ArtistProvider = ({
+  artist,
+  children,
+}: {
+  artist: PublicCompactUser | null;
+  children: ReactNode;
+}) => (
+  <ArtistContext.Provider value={{ artist }}>{children}</ArtistContext.Provider>
+);

@@ -742,6 +742,19 @@ const messages = {
     tryAgain: "Intentar de nuevo",
     backToHome: "Volver al inicio",
   },
+  notFoundPage: {
+    metaTitle: "Página no encontrada",
+    eyebrow: "Error 404",
+    heading: "Esta página no existe",
+    body: "Puede que el enlace esté roto o que la página se haya movido. Aquí tienes algunos lugares por donde seguir.",
+    home: "Volver al inicio",
+    nextSteps: "O continúa en",
+    forPhotographers: "Para fotógrafos",
+    forPhotographersBody:
+      "Cómo A11STUDIO convierte tu trabajo en un portafolio que los clientes pueden encontrar.",
+    support: "Soporte",
+    supportBody: "Cuéntanos qué buscabas y te ayudamos.",
+  },
   siteHeader: {
     openNavigation: "Abrir navegación",
     closeNavigation: "Cerrar navegación",
@@ -1797,23 +1810,6 @@ const messages = {
           "Vuelve pronto o ponte en contacto para iniciar una conversación.",
         cta: "Ponte en contacto",
       },
-    },
-    notFound: {
-      heading: "Artista no encontrado",
-      description:
-        "El perfil que buscas no existe o pudo haber sido eliminado.",
-      backHome: "Volver al inicio",
-    },
-    resourceNotFound: {
-      generic: "La página que buscas no existe o puede haber sido eliminada.",
-      heading: "Recurso no encontrado",
-      backToProfile: "Volver al perfil",
-      portfolio:
-        "El portafolio que buscas no existe o pudo haber sido eliminado.",
-      collection:
-        "La colección que buscas no existe o pudo haber sido eliminada.",
-      service: "El servicio que buscas no existe o pudo haber sido eliminado.",
-      media: "El contenido que buscas no existe o pudo haber sido eliminado.",
     },
     profile: {
       metaTitleLocation: "{name} — {profession} en {location}",
