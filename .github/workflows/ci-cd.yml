@@ -367,3 +367,55 @@ jobs:
           # branch's build (its token also has packages: write) cannot swap the image
           # between build and deploy. Compose prefers it over DOCKER_IMAGE_TAG in .env.
           DOCKER_IMAGE_TAG: sha-${{ github.sha }}
+
+      - name: Purge Cloudflare cache
+        # Anonymous public HTML is edge-cached (docs/infrastructure.md, "Edge HTML cache"), and a
+        # cached page references the previous build's /_next/static chunks and server-action IDs,
+        # which are gone now. Runs only after the deploy above succeeded. Missing secrets warn and
+        # skip (nothing should be edge-cached until they exist); a failed purge fails the job.
+        # The token is a zone-scoped "Cache Purge" token. It is only ever read from stdin by curl,
+        # never echoed or put on a command line.
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ZONE_ID: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+        run: |
+          set -euo pipefail
+          if [ -z "${CLOUDFLARE_API_TOKEN:-}" ] || [ -z "${CLOUDFLARE_ZONE_ID:-}" ]; then
+            echo "::warning::CLOUDFLARE_API_TOKEN or CLOUDFLARE_ZONE_ID is not set; skipping the Cloudflare cache purge."
+            exit 0
+          fi
+          # Purge by hostname: only a11studio.com (HTML, /_next/static), not api or the media CDN.
+          # If the zone's plan rejects host purges, switch the body to {"purge_everything":true}.
+          # The api's on-change artist purges share this account's purge bucket, so an HTTP 429
+          # is retried up to 3 times, 30 s apart. Any other failure fails the step at once.
+          body_file=$(mktemp)
+          max_retries=3
+          attempt=0
+          while :; do
+            status=0
+            http_code=$(printf 'Authorization: Bearer %s\n' "$CLOUDFLARE_API_TOKEN" | curl -sS \
+              --max-time 30 \
+              -o "$body_file" \
+              -w '%{http_code}' \
+              -X POST "https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/purge_cache" \
+              -H @- \
+              -H "Content-Type: application/json" \
+              --data '{"hosts":["a11studio.com"]}') || status=$?
+            if [ "$status" -ne 0 ]; then
+              echo "::error::Cloudflare cache purge request failed (curl exit $status)."
+              exit 1
+            fi
+            if [ "$http_code" = "429" ] && [ "$attempt" -lt "$max_retries" ]; then
+              attempt=$((attempt + 1))
+              echo "::warning::Cloudflare purge rate-limited (HTTP 429); retry $attempt of $max_retries in 30 s."
+              sleep 30
+              continue
+            fi
+            break
+          done
+          if ! jq -e '.success == true' "$body_file" > /dev/null 2>&1; then
+            echo "::error::Cloudflare cache purge was rejected (HTTP $http_code)."
+            jq -c '.errors // .' "$body_file" || true
+            exit 1
+          fi
+          echo "Cloudflare cache purged for a11studio.com."

@@ -1,6 +1,9 @@
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { UPDATE_PROFILE_STATUS_EVENT } from '@repo/common-lib/constants/events';
+import {
+  ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
+  UPDATE_PROFILE_STATUS_EVENT,
+} from '@repo/common-lib/constants/events';
 import { QueueHelper } from '@repo/backend-lib/utils';
 import type { CreateOrUpdateLocationPayload } from '@repo/common-lib/types/location';
 import { Query } from '@repo/database/facades';
@@ -11,6 +14,7 @@ import { cleanObj } from '@repo/common-lib/utils/object';
 import { TABLES_ENUM } from '@repo/common-lib/constants/enums';
 import { RequestService } from 'src/common/services/request.service';
 import { UpdateProfileStatusEvent } from '../profile-status/events/update-profile-status.event';
+import { ArtistPublicPagesChangedEvent } from '../edge-cache/events/artist-public-pages-changed.event';
 
 @Injectable()
 export class AddressService {
@@ -62,6 +66,7 @@ export class AddressService {
     await this.enqueueCreateOrUpdateLocationFromAddress(result);
     this.emitProfileStatusFromAddress(result);
     await this.markUserSeoStale(result.user_id);
+    this.emitArtistPagesChanged(result);
     return result;
   }
 
@@ -90,6 +95,7 @@ export class AddressService {
       if (this.localityChanged(address, result)) {
         await this.markUserSeoStale(result.user_id);
       }
+      this.emitArtistPagesChanged(result);
     }
     return result;
   }
@@ -143,6 +149,15 @@ export class AddressService {
        SET seo_generated_at = seo_generated_at - INTERVAL '1 second'
        WHERE id = $1`,
       [userId],
+    );
+  }
+
+  /** An artist's city is on their public pages; a client's address is not. */
+  private emitArtistPagesChanged(result: Address): void {
+    if (!result.user_id) return;
+    this.eventEmitter.emit(
+      ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
+      new ArtistPublicPagesChangedEvent(result.user_id),
     );
   }
 

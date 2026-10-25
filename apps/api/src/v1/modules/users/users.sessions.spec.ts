@@ -7,6 +7,7 @@ jest.mock('@repo/common-lib/utils/generate-uuid', () => ({
   generateUUID: jest.fn(async () => 'public-uuid'),
 }));
 
+import { ARTIST_PUBLIC_PAGES_CHANGED_EVENT } from '@repo/common-lib/constants/events';
 import { hash } from '@repo/common-lib/utils/hash';
 import { UserService } from './users.service';
 
@@ -18,6 +19,7 @@ describe('UserService — session revocation', () => {
     updateById: jest.fn(),
   };
   const userSessionsService = { expireAllForUser: jest.fn() };
+  const eventEmitter = { emit: jest.fn() };
   const requestService: { user: unknown } = { user: null };
 
   let service: UserService;
@@ -33,7 +35,7 @@ describe('UserService — session revocation', () => {
     userSessionsService.expireAllForUser.mockResolvedValue(undefined);
     service = new UserService(
       userRepository as never,
-      {} as never, // eventEmitter
+      eventEmitter as never,
       {} as never, // logService
       {} as never, // mailService
       {} as never, // helpers
@@ -64,5 +66,10 @@ describe('UserService — session revocation', () => {
     await service.banUser(9, 'policy');
 
     expect(userSessionsService.expireAllForUser).toHaveBeenCalledWith(9);
+    // The banned artist's cached public pages are purged, so they 404 within seconds.
+    expect(eventEmitter.emit).toHaveBeenCalledWith(
+      ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
+      expect.objectContaining({ userId: 9 }),
+    );
   });
 });

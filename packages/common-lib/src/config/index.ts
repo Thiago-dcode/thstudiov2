@@ -124,6 +124,12 @@ const config = (envPath?: string | undefined) => {
       model: process.env.OPENAI_MODEL,
       organization: process.env.OPENAI_ORGANIZATION,
     },
+    // Purges edge-cached public HTML. Set on the prod api containers only; empty anywhere else,
+    // which makes the purge processor skip. Never log these.
+    cloudflare: {
+      apiToken: process.env.CLOUDFLARE_API_TOKEN || '',
+      zoneId: process.env.CLOUDFLARE_ZONE_ID || '',
+    },
   };
 };
 export { envFilePath, config };

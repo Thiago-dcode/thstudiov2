@@ -1,4 +1,5 @@
 import { Processor } from '@nestjs/bullmq';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Job } from 'bullmq';
 import { LogService } from '@repo/backend-lib/services/log-service';
 import { QueueHelper } from '@repo/backend-lib/utils';
@@ -11,7 +12,9 @@ import {
   InvalidateMediaSeoCacheJobInput,
   UpdateMediaJobInput,
 } from '@repo/common-lib/types/media';
+import { ARTIST_PUBLIC_PAGES_CHANGED_EVENT } from '@repo/common-lib/constants/events';
 import { GlobalProcessor } from 'src/common/processors/global.processor';
+import { ArtistPublicPagesChangedEvent } from '../edge-cache/events/artist-public-pages-changed.event';
 import { MediaRepository } from './media.repository';
 import { MediaService } from './media.service';
 
@@ -21,6 +24,7 @@ export class MediaProcessor extends GlobalProcessor {
     private readonly mediaService: MediaService,
     private readonly mediaRepository: MediaRepository,
     private readonly logger: LogService,
+    private readonly eventEmitter: EventEmitter2,
   ) {
     super();
   }
@@ -67,6 +71,10 @@ export class MediaProcessor extends GlobalProcessor {
         entity_id: input.media_id,
         read_at: null,
       });
+      this.eventEmitter.emit(
+        ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
+        new ArtistPublicPagesChangedEvent(input.user_id),
+      );
 
       return result;
     } catch (error) {

@@ -7,6 +7,7 @@ jest.mock('src/common/utils/owned-ids.util', () => ({
   assertOwnedIds: jest.fn().mockResolvedValue(undefined),
 }));
 
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Test, TestingModule } from '@nestjs/testing';
 import { QueueHelper } from '@repo/backend-lib/utils';
 import { API_ERRORS } from '@repo/common-lib/constants/api-errors';
@@ -70,6 +71,7 @@ describe('CollectionService slug derivation', () => {
           },
         },
         { provide: PublicViewerService, useValue: { canSeeHidden: jest.fn() } },
+        { provide: EventEmitter2, useValue: { emit: jest.fn() } },
       ],
     }).compile();
 

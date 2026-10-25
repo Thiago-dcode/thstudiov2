@@ -11,6 +11,7 @@ jest.mock('@repo/backend-lib/services/payment-service/paypal', () => ({
 }));
 
 import { stripe } from '@repo/backend-lib/services/payment-service/stripe';
+import { ARTIST_PUBLIC_PAGES_CHANGED_EVENT } from '@repo/common-lib/constants/events';
 import {
   JOB_DELETE_USER_ACCOUNT,
   JOB_SEND_ACCOUNT_DELETION_WARNING,
@@ -30,7 +31,9 @@ describe('AccountDeletionProcessor', () => {
   const helpers = { deleteManyCached: jest.fn() };
   const mailService = { sendAsync: jest.fn() };
   const warningMail = { setData: jest.fn((data) => ({ data })) };
-  const logger = { info: jest.fn(), error: jest.fn(), name: jest.fn(), flushAsync: jest.fn() };
+  const logger = { info: jest.fn(), warn: jest.fn(), error: jest.fn(), name: jest.fn(), flushAsync: jest.fn() };
+  const usernameHistoryRepository = { findReservedByUser: jest.fn() };
+  const eventEmitter = { emit: jest.fn() };
 
   const user = {
     id: 7,
@@ -60,6 +63,7 @@ describe('AccountDeletionProcessor', () => {
     userRepository.hardDeleteById.mockResolvedValue(true);
     userRepository.findById.mockResolvedValue(user);
     planSubscriptionsRepository.findActiveSubscription.mockResolvedValue(null);
+    usernameHistoryRepository.findReservedByUser.mockResolvedValue(['ana-old']);
     processor = new AccountDeletionProcessor(
       userRepository as never,
       planSubscriptionsRepository as never,
@@ -69,6 +73,8 @@ describe('AccountDeletionProcessor', () => {
       warningMail as never,
       logger as never,
       tempUploads as never,
+      usernameHistoryRepository as never,
+      eventEmitter as never,
     );
   });
 
@@ -100,6 +106,50 @@ describe('AccountDeletionProcessor', () => {
       expect(tempUploads.deleteUser).toHaveBeenCalledWith(user.public_id);
       expect(userRepository.hardDeleteById).toHaveBeenCalledWith(7, 15);
       expect(helpers.deleteManyCached).toHaveBeenCalled();
+    });
+
+    it('purges the cached pages of every name the account had, read before the rows are gone', async () => {
+      userRepository.getDeletionState.mockResolvedValue(state({ warned: true, due: true }));
+
+      await expect(run(JOB_DELETE_USER_ACCOUNT)).resolves.toEqual({ deleted: true });
+
+      expect(usernameHistoryRepository.findReservedByUser).toHaveBeenCalledWith(7);
+      // `username_history` cascades with the user row, so it must be read first.
+      expect(usernameHistoryRepository.findReservedByUser.mock.invocationCallOrder[0]).toBeLessThan(
+        userRepository.hardDeleteById.mock.invocationCallOrder[0],
+      );
+      expect(eventEmitter.emit).toHaveBeenCalledWith(
+        ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
+        expect.objectContaining({ userId: 7, usernames: ['ana', 'ana-old'] }),
+      );
+      expect(eventEmitter.emit.mock.invocationCallOrder[0]).toBeGreaterThan(
+        userRepository.hardDeleteById.mock.invocationCallOrder[0],
+      );
+    });
+
+    it('still hard-deletes when the reserved names cannot be read, purging the current name only', async () => {
+      userRepository.getDeletionState.mockResolvedValue(state({ warned: true, due: true }));
+      usernameHistoryRepository.findReservedByUser.mockRejectedValue(new Error('pool exhausted'));
+
+      await expect(run(JOB_DELETE_USER_ACCOUNT)).resolves.toEqual({ deleted: true });
+
+      expect(userRepository.hardDeleteById).toHaveBeenCalledWith(7, 15);
+      expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('pool exhausted'));
+      expect(eventEmitter.emit).toHaveBeenCalledWith(
+        ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
+        expect.objectContaining({ userId: 7, usernames: ['ana'] }),
+      );
+    });
+
+    it('sends no purge when the rows were not deleted', async () => {
+      userRepository.getDeletionState.mockResolvedValue(state({ warned: true, due: true }));
+      userRepository.hardDeleteById.mockResolvedValue(false);
+
+      await expect(run(JOB_DELETE_USER_ACCOUNT)).resolves.toEqual({
+        deleted: false,
+        reason: 'changed-during-delete',
+      });
+      expect(eventEmitter.emit).not.toHaveBeenCalled();
     });
 
     it('still deletes the account when clearing pending uploads throws', async () => {

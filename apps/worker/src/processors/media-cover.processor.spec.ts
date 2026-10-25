@@ -44,6 +44,7 @@ describe('MediaProcessor video cover', () => {
         jest.spyOn(UserLimits, 'storageSize').mockReturnValue(true);
         jest.spyOn(QueueHelper, 'createDeleteReplacedMediaObjectJob').mockResolvedValue(undefined);
         jest.spyOn(QueueHelper, 'createInvalidateMediaSeoCacheJob').mockResolvedValue(undefined);
+        jest.spyOn(QueueHelper, 'createPurgeArtistEdgeCacheJob').mockResolvedValue(undefined);
     });
 
     afterEach(() => jest.restoreAllMocks());
@@ -224,6 +225,19 @@ describe('MediaProcessor video cover', () => {
                 bytes: 70_000,
                 user_id: 2,
             });
+            // The new cover is on the artist's public pages: their edge cache is purged.
+            expect(QueueHelper.createPurgeArtistEdgeCacheJob).toHaveBeenCalledWith({ user_id: 2 });
+        });
+
+        it('still finishes the cover change when the edge purge cannot be enqueued', async () => {
+            (QueueHelper.createPurgeArtistEdgeCacheJob as jest.Mock).mockRejectedValueOnce(
+                new Error('redis down'),
+            );
+            const { processor, mediaRepository } = build();
+
+            await expect(processor.setVideoThumbnail()).resolves.toBeUndefined();
+
+            expect(mediaRepository.updateById).toHaveBeenCalled();
         });
 
         it('keeps the old cover when moderation refuses the frame, and still answers the editor', async () => {
@@ -236,6 +250,8 @@ describe('MediaProcessor video cover', () => {
             expect(storageService.delete).toHaveBeenCalledWith(writtenKey);
             expect(storageService.delete).not.toHaveBeenCalledWith(PREVIOUS_COVER);
             expect(QueueHelper.createOrUpdateUserNotificationJob).toHaveBeenCalled();
+            // Nothing public changed.
+            expect(QueueHelper.createPurgeArtistEdgeCacheJob).not.toHaveBeenCalled();
         });
 
         it('backs off when the cover moved while the frame was being encoded', async () => {

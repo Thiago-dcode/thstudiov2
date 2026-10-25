@@ -1,4 +1,5 @@
 import { Processor } from '@nestjs/bullmq';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Job } from 'bullmq';
 import { LlmTokensUsageRepository } from './llm-tokens-usage.repository';
 import { MediaModerationRepository } from './media-moderation.repository';
@@ -46,6 +47,8 @@ import {
 import { Helpers } from 'src/common/services/helpers.service';
 import { GlobalProcessor } from 'src/common/processors/global.processor';
 import { UserExtraDataService } from '../user-extra-data/user-extra-data.service';
+import { ARTIST_PUBLIC_PAGES_CHANGED_EVENT } from '@repo/common-lib/constants/events';
+import { ArtistPublicPagesChangedEvent } from '../edge-cache/events/artist-public-pages-changed.event';
 
 @Processor(AI_QUEUE)
 export class AiProcessor extends GlobalProcessor {
@@ -69,6 +72,7 @@ export class AiProcessor extends GlobalProcessor {
     private readonly serviceRepository: ServiceRepository,
     private readonly userRepository: UserRepository,
     private readonly appLogService: LogService,
+    private readonly eventEmitter: EventEmitter2,
   ) {
     super();
   }
@@ -373,6 +377,12 @@ export class AiProcessor extends GlobalProcessor {
         }
       }
 
+      // The artist's pages carry this SEO text in their <head>. The batch job needs no purge of its
+      // own: it only fans out into these single-entity jobs.
+      this.eventEmitter.emit(
+        ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
+        new ArtistPublicPagesChangedEvent(user_id),
+      );
       log.info(`Metadata generated for ${entity} [${id}]`);
       return { success: true };
     } catch (error) {

@@ -3,7 +3,9 @@ import {
     AI_MEDIA_QUEUE,
     AI_QUEUE,
     BACKUP_QUEUE,
+    EDGE_CACHE_QUEUE,
     EMAIL_PREFERENCES_QUEUE,
+    JOB_PURGE_ARTIST_EDGE_CACHE,
     JOB_COMPUTE_USER_METRICS,
     JOB_DATABASE_BACKUP,
     JOB_DELETE_USER_ACCOUNT,
@@ -62,6 +64,8 @@ import { CreateUserNotificationInput } from '@repo/common-lib/types/user-notific
 import { UpdateProfileStatusJobInput } from '@repo/common-lib/types/profile-status';
 import { MailJob } from '@repo/common-lib/types/mail';
 import { AccountDeletionJobInput } from '@repo/common-lib/types/user';
+import { PurgeArtistEdgeCacheJobInput } from '@repo/common-lib/types/edge-cache';
+import { EDGE_PURGE_DEBOUNCE_MS } from '@repo/common-lib/constants/edge-cache';
 import {
     DeleteReplacedMediaObjectJobInput,
     InvalidateMediaSeoCacheJobInput,
@@ -556,6 +560,44 @@ export class QueueHelper {
                 backoff: { type: 'exponential', delay: 1000 },
             },
         );
+    }
+
+    /**
+     * Purges an artist's edge-cached public pages, debounced per artist: triggers within
+     * `EDGE_PURGE_DEBOUNCE_MS` of each other collapse into one job that runs once they stop.
+     *
+     * Deduplication (debounce mode: `extend` + `replace` while delayed) plus a UNIQUE jobId, not
+     * the usual deterministic jobId. A deterministic id would make BullMQ silently drop a trigger
+     * that arrives while that artist's purge is already active, so the change behind it would never
+     * be purged. Here the dedup key lives exactly as long as the delay (`ttl` == `delay`), so it has
+     * expired by the time the job can become active, and a later trigger always creates a new job.
+     * The processor resolves usernames at run time, so a `replace` never loses one.
+     *
+     * Not gated on the environment: dev and local create the job too, and the processor skips it.
+     * That keeps Cloudflare settings out of every process that only enqueues (the worker).
+     */
+    static async createPurgeArtistEdgeCacheJob(dto: PurgeArtistEdgeCacheJobInput) {
+        const queue = QueueHelper.createQueue(EDGE_CACHE_QUEUE);
+        try {
+            await queue.add(JOB_PURGE_ARTIST_EDGE_CACHE, dto, {
+                jobId: `edge-purge-artist-${dto.user_id}-${uniqueJobSuffix()}`,
+                delay: EDGE_PURGE_DEBOUNCE_MS,
+                deduplication: {
+                    id: `edge-purge-artist-${dto.user_id}`,
+                    ttl: EDGE_PURGE_DEBOUNCE_MS,
+                    extend: true,
+                    replace: true,
+                },
+                priority: 10,
+                removeOnComplete: true,
+                removeOnFail: true,
+                // 20 s, 40 s, 80 s: the last retry still lands inside the edge TTL.
+                attempts: 4,
+                backoff: { type: 'exponential', delay: 20_000 },
+            });
+        } finally {
+            await queue.close();
+        }
     }
 
     static async createUpdateProfileStatusJob(dto: UpdateProfileStatusJobInput) {

@@ -19,6 +19,9 @@ import { ENTITY_CREATE_LOCK_TTL_MS, withUserLock } from "src/common/utils/user-l
 import { TABLES_ENUM } from "@repo/common-lib/constants/enums";
 import { PublicViewerService } from "src/common/services/public-viewer.service";
 import { PUBLIC_ENTITY_FILTERS } from "src/common/utils/public-entity";
+import { EventEmitter2 } from "@nestjs/event-emitter";
+import { ARTIST_PUBLIC_PAGES_CHANGED_EVENT } from "@repo/common-lib/constants/events";
+import { ArtistPublicPagesChangedEvent } from "../edge-cache/events/artist-public-pages-changed.event";
 
 const CACHE_TTL = 1000 * 60 * 60 * 24;
 
@@ -34,6 +37,7 @@ export class CollectionService {
     private readonly userExtraDataService: UserExtraDataService,
     private readonly helper: Helpers,
     private readonly publicViewer: PublicViewerService,
+    private readonly eventEmitter: EventEmitter2,
   ) { }
 
   /**
@@ -187,6 +191,10 @@ export class CollectionService {
       },
       { delay: SINGLE_ENTITY_METADATA_DEBOUNCE_MS },
     );
+    this.eventEmitter.emit(
+      ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
+      new ArtistPublicPagesChangedEvent(request.user_id),
+    );
     return collection;
   }
 
@@ -236,6 +244,10 @@ export class CollectionService {
       CACHE_KEY_COLLECTION_SEO(collection.user_id, collection.slug),
       { appended_language: true },
     );
+    this.eventEmitter.emit(
+      ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
+      new ArtistPublicPagesChangedEvent(collection.user_id),
+    );
 
     return updated;
   }
@@ -254,5 +266,9 @@ export class CollectionService {
     await this.collectionRepository.delete(id);
     await this.invalidateHighlightCountCache(collection.user_id);
     await QueueHelper.createComputeUserMetricsJob(collection.user_id);
+    this.eventEmitter.emit(
+      ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
+      new ArtistPublicPagesChangedEvent(collection.user_id),
+    );
   }
 }

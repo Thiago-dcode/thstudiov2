@@ -20,6 +20,9 @@ import { descriptiveFilename, versionedAssetPath } from "src/common/utils/asset-
 import { assertOwnedIds } from "src/common/utils/owned-ids.util";
 import { ENTITY_CREATE_LOCK_TTL_MS, withUserLock } from "src/common/utils/user-lock";
 import { TABLES_ENUM } from "@repo/common-lib/constants/enums";
+import { EventEmitter2 } from "@nestjs/event-emitter";
+import { ARTIST_PUBLIC_PAGES_CHANGED_EVENT } from "@repo/common-lib/constants/events";
+import { ArtistPublicPagesChangedEvent } from "../edge-cache/events/artist-public-pages-changed.event";
 
 const CACHE_TTL = 1000 * 60 * 60 * 24;
 
@@ -35,6 +38,7 @@ export class ServiceService {
     private readonly userExtraDataService: UserExtraDataService,
     private readonly helpers: Helpers,
     private readonly aiService: AiService,
+    private readonly eventEmitter: EventEmitter2,
   ) { }
 
   /**
@@ -167,6 +171,10 @@ export class ServiceService {
       },
       { delay: SINGLE_ENTITY_METADATA_DEBOUNCE_MS },
     );
+    this.eventEmitter.emit(
+      ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
+      new ArtistPublicPagesChangedEvent(request.user_id),
+    );
 
     return service;
   }
@@ -243,6 +251,10 @@ export class ServiceService {
     await this.helpers.deleteCached(
       CACHE_KEY_SERVICE_SEO(service.user_id, service.slug),
       { appended_language: true },
+    );
+    this.eventEmitter.emit(
+      ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
+      new ArtistPublicPagesChangedEvent(service.user_id),
     );
 
     return updated;

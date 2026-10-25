@@ -44,6 +44,7 @@ describe('MediaProcessor.processMedia', () => {
         jest
             .spyOn(QueueHelper, 'createOrUpdateUserNotificationJob')
             .mockResolvedValue(undefined);
+        jest.spyOn(QueueHelper, 'createPurgeArtistEdgeCacheJob').mockResolvedValue(undefined);
     });
 
     const buildLogger = () => {
@@ -233,6 +234,14 @@ describe('MediaProcessor.processMedia', () => {
             expect(storageService.delete).toHaveBeenCalledWith(media.url);
         });
 
+        it('never asks for an edge purge: a failed upload was never public', async () => {
+            const { processor } = buildPermanent();
+
+            await processor.processMedia();
+
+            expect(QueueHelper.createPurgeArtistEdgeCacheJob).not.toHaveBeenCalled();
+        });
+
         it('still retries a transient failure carrying a permanent-looking message', async () => {
             // The guard keys on the error, not on the media: an S3 read that happens to fail
             // while the file is large is still worth another attempt.
@@ -354,10 +363,21 @@ describe('MediaProcessor.processMedia', () => {
             jest
                 .spyOn(QueueHelper, 'createUpdateProfileStatusJob')
                 .mockResolvedValue(undefined as never);
+            jest
+                .spyOn(QueueHelper, 'createPurgeArtistEdgeCacheJob')
+                .mockResolvedValue(undefined as never);
         });
 
         afterEach(() => {
             jest.restoreAllMocks();
+        });
+
+        it('asks for an edge purge of the owner pages once the upload is COMPLETED', async () => {
+            const { processor } = buildGif('HIGH');
+
+            await processor.processMedia();
+
+            expect(QueueHelper.createPurgeArtistEdgeCacheJob).toHaveBeenCalledWith({ user_id: 2 });
         });
 
         it('moderates a GIF on frames sampled across the animation, not its first frame', async () => {

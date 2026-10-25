@@ -42,6 +42,19 @@ export class UsernameHistoryRepository extends BaseRepository {
     );
   }
 
+  /**
+   * The user's previous usernames that are still reserved, i.e. still 308 to the current one.
+   * At most a few rows, read through the `user_id` index.
+   */
+  async findReservedByUser(userId: number): Promise<string[]> {
+    const rows = await this.query()
+      .select(['username'])
+      .where('user_id', '=', userId)
+      .where('reserved_until', '>', new Date())
+      .get<{ username: string }[]>();
+    return (rows ?? []).map((row) => row.username);
+  }
+
   /** Drops the user's reservation of `username`, once they have taken that name back. */
   async release(userId: number, username: string): Promise<void> {
     await this.query().where('user_id', '=', userId).where('username', '=', username).delete();

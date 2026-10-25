@@ -63,6 +63,7 @@ import { AssetsModule } from './v1/modules/assets/assets.module';
 import { LayoutModule } from './v1/modules/layouts/layout.module';
 import { SitemapModule } from './v1/modules/sitemap/sitemap.module';
 import { IndexNowModule } from './v1/modules/indexnow/indexnow.module';
+import { EdgeCacheModule } from './v1/modules/edge-cache/edge-cache.module';
 /** Feature modules mounted at `api/v1/*` (not under `admin/`). */
 const API_V1_MODULES = [
   AuthModule,
@@ -113,6 +114,8 @@ const ALL_APP_MODULES = [
   PlanSubscriptionsProcessorModule,
   /** Self-service account deletion: daily warning + hard-delete cron and its queue worker. */
   AccountDeletionModule,
+  /** Cloudflare purges of an artist's cached public pages when they change (queue worker). */
+  EdgeCacheModule,
   ServicesModule,
   UserExtraDataModule,
   // Test routes: `ProdGuard` already closes them in production; leaving the module out there

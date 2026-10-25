@@ -12,8 +12,12 @@ import { UpdateAboutPageRequest } from './requests/update-about-page.request';
 import { AiService } from '@repo/backend-lib/services/ai-service';
 import { MediaModerationException } from 'src/common/exceptions/media-moderation-exception';
 import { RequestService } from 'src/common/services/request.service';
-import { UPDATE_PROFILE_STATUS_EVENT } from '@repo/common-lib/constants/events';
+import {
+  ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
+  UPDATE_PROFILE_STATUS_EVENT,
+} from '@repo/common-lib/constants/events';
 import { UpdateProfileStatusEvent } from '../profile-status/events/update-profile-status.event';
+import { ArtistPublicPagesChangedEvent } from '../edge-cache/events/artist-public-pages-changed.event';
 
 @Injectable()
 export class AboutPageService {
@@ -64,6 +68,10 @@ export class AboutPageService {
       UPDATE_PROFILE_STATUS_EVENT,
       new UpdateProfileStatusEvent(userId, { has_about_page: true }),
     );
+    this.eventEmitter.emit(
+      ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
+      new ArtistPublicPagesChangedEvent(userId),
+    );
     return aboutPage;
   }
 
@@ -98,6 +106,11 @@ export class AboutPageService {
       }
       data.photo = newPhotoPath;
     }
-    return await this.aboutPageRepository.updateAndGet(id, data);
+    const updated = await this.aboutPageRepository.updateAndGet(id, data);
+    this.eventEmitter.emit(
+      ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
+      new ArtistPublicPagesChangedEvent(aboutPage.user_id),
+    );
+    return updated;
   }
 }

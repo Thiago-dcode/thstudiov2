@@ -1,4 +1,5 @@
 import { Processor } from '@nestjs/bullmq';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Job } from 'bullmq';
 import { LogService } from '@repo/backend-lib/services/log-service';
 import { MailService } from '@repo/backend-lib/services/mail-service';
@@ -22,6 +23,8 @@ import { TableName } from '@repo/common-lib/types/database';
 import { Helpers } from 'src/common/services/helpers.service';
 import { serviceCacheKeys } from '../user-services/user-service.service';
 import { SubscriptionChangedMail } from './mails/subscription-changed.mail';
+import { ARTIST_PUBLIC_PAGES_CHANGED_EVENT } from '@repo/common-lib/constants/events';
+import { ArtistPublicPagesChangedEvent } from '../edge-cache/events/artist-public-pages-changed.event';
 
 /** Job payload enriched by the webhook processor with the previous plan's identity, used to detect upgrade vs downgrade. */
 export type SubscriptionChangesJobData = BaseUser & {
@@ -41,6 +44,12 @@ const MEDIA_STORAGE_COLUMNS = [
 
 type MediaStorageRow = Pick<Media, (typeof MEDIA_STORAGE_COLUMNS)[number]>;
 
+/** Rows an UPDATE touched. A driver result without a count is assumed to have changed some. */
+const rowsChanged = (result: unknown): boolean => {
+  const rowCount = (result as { rowCount?: unknown } | null)?.rowCount;
+  return typeof rowCount === 'number' ? rowCount > 0 : true;
+};
+
 @Processor(PLAN_SUBSCRIPTIONS_QUEUE)
 export class PlanSubscriptionProcessor extends GlobalProcessor {
   constructor(
@@ -50,6 +59,7 @@ export class PlanSubscriptionProcessor extends GlobalProcessor {
     private readonly helpers: Helpers,
     private readonly mailService: MailService,
     private readonly subscriptionChangedMail: SubscriptionChangedMail,
+    private readonly eventEmitter: EventEmitter2,
   ) {
     super();
   }
@@ -107,15 +117,19 @@ export class PlanSubscriptionProcessor extends GlobalProcessor {
       const haveToBeBlockedMb = overLimitMb;
       const diffBlockedMb = haveToBeBlockedMb - currentBlockedMb;
 
+      // Whether any media or entity was blocked or unblocked: only then do the public pages change.
+      let blockingChanged = false;
+
       this.logger.info(`Media blocked: ${currentBlockedMb.toFixed(2)}MB, should be blocked: ${Math.max(0, haveToBeBlockedMb).toFixed(2)}MB`);
 
       if (haveToBeBlockedMb <= 0) {
         if (currentBlockedMb > 0) {
           this.logger.info(`Unblocking all blocked media (user is within storage limit)`);
-          await Query.table('media')
+          const result = await Query.table('media')
             .where('blocked_at', '!=', null)
             .where('user_id', '=', userId)
             .update(['blocked_at'], [null]);
+          blockingChanged ||= rowsChanged(result);
         }
       } else if (diffBlockedMb > 0) {
         let remainingToBlockMb = diffBlockedMb;
@@ -137,9 +151,10 @@ export class PlanSubscriptionProcessor extends GlobalProcessor {
 
         this.logger.info(`Blocking ${mediaIdsToBlock.length} media items (need to free ${diffBlockedMb.toFixed(2)}MB more)`);
         if (mediaIdsToBlock.length > 0) {
-          await Query.table('media')
+          const result = await Query.table('media')
             .whereIn('id', mediaIdsToBlock)
             .update(['blocked_at'], [new Date()]);
+          blockingChanged ||= rowsChanged(result);
         }
       } else if (diffBlockedMb < 0) {
         let remainingToUnblockMb = Math.abs(diffBlockedMb);
@@ -162,9 +177,10 @@ export class PlanSubscriptionProcessor extends GlobalProcessor {
 
         this.logger.info(`Unblocking ${mediaIdsToUnblock.length} media items (${Math.abs(diffBlockedMb).toFixed(2)}MB over-blocked)`);
         if (mediaIdsToUnblock.length > 0) {
-          await Query.table('media')
+          const result = await Query.table('media')
             .whereIn('id', mediaIdsToUnblock)
             .update(['blocked_at'], [null]);
+          blockingChanged ||= rowsChanged(result);
         }
       }
       const limitsConfig: {
@@ -226,12 +242,14 @@ export class PlanSubscriptionProcessor extends GlobalProcessor {
         //-1 mean not limits
         if (haveToBeBlocked <= 0 || config.maxLimit === -1) {
           if (currentBlocked > 0) {
-            await query.update(['blocked_at'], [null], false);
+            blockingChanged ||= rowsChanged(await query.update(['blocked_at'], [null], false));
           }
         } else {
           const amountToUnblock = currentBlocked - haveToBeBlocked;
           if (amountToUnblock > 0) {
-            await query.limit(amountToUnblock).update(['blocked_at'], [null], false);
+            blockingChanged ||= rowsChanged(
+              await query.limit(amountToUnblock).update(['blocked_at'], [null], false),
+            );
           } else if (amountToUnblock < 0) {
             const toBlock = Math.abs(amountToUnblock);
 
@@ -243,7 +261,7 @@ export class PlanSubscriptionProcessor extends GlobalProcessor {
             }
             blockQuery.orderBy('updated_at', 'ASC').limit(toBlock);
 
-            await blockQuery.update(['blocked_at'], [new Date()]);
+            blockingChanged ||= rowsChanged(await blockQuery.update(['blocked_at'], [new Date()]));
           }
         }
       }
@@ -254,6 +272,12 @@ export class PlanSubscriptionProcessor extends GlobalProcessor {
         CACHE_KEY_ACTIVE_SUBSCRIPTION(userId),
         serviceCacheKeys.allByUser(userId),
       ]);
+      if (blockingChanged) {
+        this.eventEmitter.emit(
+          ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
+          new ArtistPublicPagesChangedEvent(userId),
+        );
+      }
 
       // Stripe also sends subscription updates that keep the same plan (cancel at
       // period end, renewals, payment method changes): no plan change, no email.

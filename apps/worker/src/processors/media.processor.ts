@@ -109,6 +109,22 @@ export class MediaProcessor {
         }
     }
 
+    /**
+     * Asks the api to purge the owner's edge-cached public pages (debounced per artist; the api
+     * decides whether Cloudflare is called at all). Best-effort: the edge TTL is the fallback, so a
+     * failed enqueue must not fail or retry media work that already finished.
+     */
+    private async requestEdgePurge(userId: number, log: ReturnType<LogService['name']>) {
+        try {
+            await QueueHelper.createPurgeArtistEdgeCacheJob({ user_id: userId });
+        } catch (error) {
+            log.warn('Could not enqueue the edge purge of the artist pages', {
+                user_id: userId,
+                reason: error instanceof Error ? error.message : String(error),
+            });
+        }
+    }
+
     private async notifyMediaUpdate(data: Pick<Media, 'id' | 'user_id'>) {
         await QueueHelper.createOrUpdateUserNotificationJob({
             type: 'CREATE_UPDATE_MEDIA',
@@ -553,6 +569,8 @@ export class MediaProcessor {
             QueueHelper.createComputeUserMetricsJob(media.user_id),
         ]);
 
+        await this.requestEdgePurge(media.user_id, log);
+
         log.info('Thumbnail regenerated', {
             media_id,
             previous_path: media.thumbnail,
@@ -745,6 +763,8 @@ export class MediaProcessor {
             QueueHelper.createComputeUserMetricsJob(media.user_id),
             this.notifyMediaUpdate(media),
         ]);
+
+        await this.requestEdgePurge(media.user_id, log);
 
         log.info('Video cover changed', {
             media_id,
@@ -1100,6 +1120,8 @@ export class MediaProcessor {
                 }),
                 this.notifyMediaUpdate(media),
             ]);
+            // Only now is the upload public.
+            await this.requestEdgePurge(media.user_id, log);
 
             log.info('Media processing completed', {
                 media_id: media.id,

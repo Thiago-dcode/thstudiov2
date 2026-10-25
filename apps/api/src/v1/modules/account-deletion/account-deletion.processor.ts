@@ -1,4 +1,5 @@
 import { Processor } from '@nestjs/bullmq';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { MailService } from '@repo/backend-lib/services/mail-service';
 import { LogService } from '@repo/backend-lib/services/log-service';
 import { StorageService } from '@repo/backend-lib/services/storage-service/base';
@@ -24,6 +25,7 @@ import {
 } from '@repo/common-lib/constants/queues';
 import { AccountDeletionJobInput, User } from '@repo/common-lib/types/user';
 import { accountDeletionDate } from '@repo/common-lib/utils/account-deletion';
+import { ARTIST_PUBLIC_PAGES_CHANGED_EVENT } from '@repo/common-lib/constants/events';
 import { Job } from 'bullmq';
 import { GlobalProcessor } from 'src/common/processors/global.processor';
 import { Helpers } from 'src/common/services/helpers.service';
@@ -31,6 +33,8 @@ import { PlanSubscriptionsRepository } from '../plan-subscriptions/plan-subscrip
 import { AccountDeletionWarningMail } from '../users/mails/account-deletion-warning.mail';
 import { UserRepository } from '../users/users.repository';
 import { TempUploadService } from 'src/common/services/temp-upload.service';
+import { UsernameHistoryRepository } from '../username-history/username-history.repository';
+import { ArtistPublicPagesChangedEvent } from '../edge-cache/events/artist-public-pages-changed.event';
 
 /** `users.public_id` is a UUID; anything else must never reach a recursive storage delete. */
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -49,6 +53,8 @@ export class AccountDeletionProcessor extends GlobalProcessor {
     private readonly accountDeletionWarningMail: AccountDeletionWarningMail,
     private readonly logger: LogService,
     private readonly tempUploads: TempUploadService,
+    private readonly usernameHistoryRepository: UsernameHistoryRepository,
+    private readonly eventEmitter: EventEmitter2,
   ) {
     super();
   }
@@ -156,6 +162,18 @@ export class AccountDeletionProcessor extends GlobalProcessor {
       log.error(`Could not delete pending uploads of user [${userId}]`);
     }
 
+    // Read before the delete: the row and its `username_history` (FK cascade) go with it, and the
+    // edge purge below can no longer resolve them. Only the purge needs this, so a failed read is
+    // logged and the deletion goes ahead: the old names' pages then fall back to the edge TTL.
+    const reservedUsernames = await this.usernameHistoryRepository
+      .findReservedByUser(userId)
+      .catch((error: unknown) => {
+        log.warn(
+          `Could not read the reserved usernames of user [${userId}] for the edge purge - ${error instanceof Error ? error.message : 'Unknown error'}`,
+        );
+        return [] as string[];
+      });
+
     if (!(await this.userRepository.hardDeleteById(userId, ACCOUNT_DELETION_GRACE_DAYS))) {
       // Only reachable through a manual DB edit between the checks above and here.
       log.error(`User [${userId}] was not deleted: no longer flagged/due at delete time`);
@@ -170,6 +188,10 @@ export class AccountDeletionProcessor extends GlobalProcessor {
       CACHE_KEY_PROFILE_STATUS(userId),
       CACHE_KEY_ACTIVE_SUBSCRIPTION(userId),
     ]);
+    this.eventEmitter.emit(
+      ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
+      new ArtistPublicPagesChangedEvent(userId, [user.username, ...reservedUsernames]),
+    );
 
     log.info(`Account of user [${userId}] deleted`);
     return { deleted: true };

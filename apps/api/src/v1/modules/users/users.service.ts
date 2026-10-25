@@ -21,6 +21,7 @@ import {
   USERNAME_RESERVATION_DAYS,
 } from '@repo/common-lib/constants/limits';
 import {
+  ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
   CANCEL_SUBSCRIPTION_RENEWAL_EVENT,
   NEW_USER_EVENT,
   SET_FREE_SUBSCRIPTION_EVENT,
@@ -54,6 +55,7 @@ import { accountDeletionDate } from '@repo/common-lib/utils/account-deletion';
 import { UserSessionsService } from '../user-sessions/user-sessions.service';
 import { TempUploadService } from 'src/common/services/temp-upload.service';
 import { withUserLock } from 'src/common/utils/user-lock';
+import { ArtistPublicPagesChangedEvent } from '../edge-cache/events/artist-public-pages-changed.event';
 
 @Injectable()
 export class UserService {
@@ -71,6 +73,17 @@ export class UserService {
     private readonly tempUploads: TempUploadService,
     private readonly usernameHistoryRepository: UsernameHistoryRepository,
   ) { }
+
+  /**
+   * The artist's public pages show what just changed: purge their edge cache. Fire-and-forget; the
+   * listener never throws. `usernames` adds names the processor cannot resolve on its own.
+   */
+  private emitArtistPagesChanged(userId: number, usernames?: string[]): void {
+    this.eventEmitter.emit(
+      ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
+      new ArtistPublicPagesChangedEvent(userId, usernames),
+    );
+  }
 
   /** No-op when `language` already matches; safe to call on every authenticated request. */
   async updateLanguageIfChanged(id: number, language: EnumType<'LANGUAGE_CODE'>): Promise<void> {
@@ -459,6 +472,12 @@ export class UserService {
         { delay: SINGLE_ENTITY_METADATA_DEBOUNCE_MS },
       );
     }
+    // After the rename's reservation and cache clear. Both names are passed so the purge covers
+    // the old URLs (now 308s) even if the reservation read lags.
+    this.emitArtistPagesChanged(
+      user.id,
+      usernameChanged ? [previousUsername, userUpdateData.username] : undefined,
+    );
     return userUpdated;
   }
 
@@ -500,6 +519,7 @@ export class UserService {
     });
     // resolveUserAuth does not read `banned`, so live sessions must be ended here.
     await this.userSessionsService.expireAllForUser(userId);
+    this.emitArtistPagesChanged(userId);
     return bannedUser;
   }
 
@@ -537,6 +557,7 @@ export class UserService {
       .info(`user [${userId}] requested account deletion`, {
         cancel_subscription: Boolean(request.cancel_subscription),
       });
+    this.emitArtistPagesChanged(userId);
 
     return {
       deletion_requested_at: requestedAt,
@@ -552,6 +573,7 @@ export class UserService {
   async cancelDeletion(userId: number) {
     if (await this.userRepository.unflagDeletion(userId, ACCOUNT_DELETION_GRACE_DAYS)) {
       this.logService.name('account-deletion').info(`user [${userId}] reopened the account`);
+      this.emitArtistPagesChanged(userId);
       return { deletion_requested_at: null };
     }
     const state = await this.userRepository.getDeletionState(
@@ -580,6 +602,7 @@ export class UserService {
     if (!(await this.userRepository.setActive(userId, false))) {
       throw new ConflictException('Account is already deactivated');
     }
+    this.emitArtistPagesChanged(userId);
     return { is_active: false };
   }
 
@@ -587,6 +610,7 @@ export class UserService {
     if (!(await this.userRepository.setActive(userId, true))) {
       throw new ConflictException('Account is already active');
     }
+    this.emitArtistPagesChanged(userId);
     return { is_active: true };
   }
 

@@ -21,6 +21,7 @@ jest.mock('src/common/utils/user-lock', () => ({
 
 import { addDays, addMonths, subDays } from 'date-fns';
 import { CACHE_KEY_USERNAME_EXISTS } from '@repo/common-lib/constants/cache';
+import { ARTIST_PUBLIC_PAGES_CHANGED_EVENT } from '@repo/common-lib/constants/events';
 import { MAX_USERNAME_RESET, USERNAME_RESERVATION_DAYS } from '@repo/common-lib/constants/limits';
 import { UserService } from './users.service';
 
@@ -52,9 +53,10 @@ const build = (user: Partial<typeof baseUser> = {}) => {
   };
   const helpers = { deleteManyCached: jest.fn().mockResolvedValue(undefined), cacheRemember: jest.fn() };
   const logService = { name: jest.fn().mockReturnThis(), error: jest.fn(), info: jest.fn() };
+  const eventEmitter = { emit: jest.fn() };
   const service = new UserService(
     userRepository as never,
-    { emit: jest.fn() } as never, // eventEmitter
+    eventEmitter as never,
     logService as never,
     {} as never, // mailService
     helpers as never,
@@ -67,7 +69,7 @@ const build = (user: Partial<typeof baseUser> = {}) => {
     usernameHistoryRepository as never,
   );
   const rename = (username: string) => service.update(current.id, { username } as never);
-  return { service, rename, userRepository, usernameHistoryRepository, helpers, logService };
+  return { service, rename, userRepository, usernameHistoryRepository, helpers, logService, eventEmitter };
 };
 
 describe('UserService.update — username changes', () => {
@@ -149,6 +151,34 @@ describe('UserService.update — username changes', () => {
     const [, data] = userRepository.updateById.mock.calls[0] as [number, { username_reset_count: number; next_username_reset: Date }];
     expect(data.username_reset_count).toBe(1);
     expect(Math.abs(data.next_username_reset.getTime() - addMonths(new Date(), 1).getTime())).toBeLessThan(5000);
+  });
+
+  it('purges the edge cache of both names, after the reservation is written', async () => {
+    const { rename, usernameHistoryRepository, eventEmitter } = build();
+
+    await rename('newname');
+
+    expect(eventEmitter.emit).toHaveBeenCalledWith(
+      ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
+      expect.objectContaining({ userId: 5, usernames: ['oldname', 'newname'] }),
+    );
+    const purgeCall = eventEmitter.emit.mock.calls.findIndex(
+      ([name]) => name === ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
+    );
+    expect(eventEmitter.emit.mock.invocationCallOrder[purgeCall]).toBeGreaterThan(
+      usernameHistoryRepository.reserve.mock.invocationCallOrder[0],
+    );
+  });
+
+  it('purges by user id alone on an edit that keeps the username', async () => {
+    const { service, eventEmitter } = build();
+
+    await service.update(5, { name: 'Ana Maria' } as never);
+
+    expect(eventEmitter.emit).toHaveBeenCalledWith(
+      ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
+      expect.objectContaining({ userId: 5, usernames: undefined }),
+    );
   });
 
   it('touches no reservation when the username is unchanged', async () => {

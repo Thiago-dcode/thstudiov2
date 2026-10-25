@@ -5,3 +5,5 @@ export const UPDATE_PROFILE_STATUS_EVENT = 'update-profile-status.event' as cons
 export const SET_FREE_SUBSCRIPTION_EVENT = 'set-free.subscription' as const;
 /** Stop a user's paid subscription from renewing (cancel at period end). Emitted by account deletion. */
 export const CANCEL_SUBSCRIPTION_RENEWAL_EVENT = 'cancel-renewal.subscription' as const;
+/** Something an artist's public pages render changed: purge their edge-cached HTML. */
+export const ARTIST_PUBLIC_PAGES_CHANGED_EVENT = 'changed.artist-public-pages' as const;

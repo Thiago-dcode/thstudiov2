@@ -1,10 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { getConfigValue } from '@repo/common-lib/config/utils';
-import {
-  deriveIndexNowKey,
-  INDEXNOW_CANONICAL_HOST,
-  INDEXNOW_KEY_PATH,
-} from '@repo/common-lib/utils/indexnow';
+import { deriveIndexNowKey, INDEXNOW_KEY_PATH } from '@repo/common-lib/utils/indexnow';
+import { canonicalProductionOrigin } from 'src/common/utils/canonical-origin';
 import { IndexNowRepository } from './indexnow.repository';
 
 /** IndexNow's shared endpoint: one submission reaches every participating engine. */
@@ -48,19 +45,12 @@ export class IndexNowService {
   constructor(private readonly indexNowRepository: IndexNowRepository) {}
 
   /**
-   * Only the canonical production origin submits. Every environment runs with
-   * `NODE_ENV=production`, so the host check is what keeps dev from announcing its URLs (the same
-   * fail-closed rule as the web's `isIndexableEnv()`).
+   * Only the canonical production origin submits (see `canonicalProductionOrigin`), and only with
+   * an `APP_TOKEN` to derive the key from.
    */
   private canonicalOrigin(): string | null {
-    const app = getConfigValue('app');
-    if (!app.isProduction || !app.url || !app.token) return null;
-    try {
-      const url = new URL(app.url);
-      return url.host === INDEXNOW_CANONICAL_HOST ? url.origin : null;
-    } catch {
-      return null;
-    }
+    if (!getConfigValue('app').token) return null;
+    return canonicalProductionOrigin();
   }
 
   async submitChangedSince(since: Date): Promise<IndexNowResult> {

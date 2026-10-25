@@ -16,6 +16,11 @@ import type {
 import { type NextRequest, NextResponse } from "next/server";
 import createIntlMiddleware from "next-intl/middleware";
 import { routing, urlLocaleToLanguageCode } from "./i18n/routing";
+import {
+  EDGE_CACHE_CONTROL_HEADER,
+  EDGE_HTML_CACHE_CONTROL,
+  isEdgeCacheableRequest,
+} from "./lib/edge-cache";
 import authService from "./modules/auth/auth.service";
 import { setRedirectToByCookie } from "./modules/auth/server-actions/redirect-to.cookies";
 import {
@@ -207,6 +212,24 @@ const proxy = async (req: NextRequest) => {
   ).includes(effectiveFirstSeg)
     ? urlLocaleToLanguageCode(effectiveFirstSeg)
     : urlLocaleToLanguageCode(routing.defaultLocale);
+
+  // Anonymous public HTML that Cloudflare may cache (see `lib/edge-cache.ts`). A response carrying
+  // Set-Cookie can never be shared, so this branch writes no cookies at all: the URL alone decides
+  // the locale, and the client reads it from `<html lang>` (`lib/i18n/client-language.ts`). The
+  // first client-side navigation (an RSC request, never cached) writes the cookies as usual.
+  // A redirect issued here (locale negotiation, `/en/*`) is never marked.
+  if (isEdgeCacheableRequest(req) && !redirectLocation) {
+    // Delete the raw header, never `response.cookies.delete()`: that would send an expiring
+    // NEXT_LOCALE and wipe the visitor's stored language choice. `x-middleware-set-cookie` is the
+    // copy next-intl's cookie write leaves for the render's `cookies()`.
+    response.headers.delete("set-cookie");
+    response.headers.delete("x-middleware-set-cookie");
+    response.headers.set(LANGUAGE_HEADER, resolvedLanguageCode);
+    response.headers.set(EDGE_CACHE_CONTROL_HEADER, EDGE_HTML_CACHE_CONTROL);
+    // handleRefreshToken / handleRememberMe are skipped: the request has no auth cookies, so both
+    // are no-ops. `redirectTo` handling is skipped too: its presence rules the request out.
+    return response;
+  }
 
   response.cookies.set(LANGUAGE_COOKIE_NAME, resolvedLanguageCode);
   response.headers.set(LANGUAGE_HEADER, resolvedLanguageCode);

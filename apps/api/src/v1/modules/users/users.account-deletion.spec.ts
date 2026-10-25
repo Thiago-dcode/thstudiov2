@@ -8,7 +8,10 @@ jest.mock('@repo/common-lib/utils/generate-uuid', () => ({
 }));
 
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
-import { CANCEL_SUBSCRIPTION_RENEWAL_EVENT } from '@repo/common-lib/constants/events';
+import {
+  ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
+  CANCEL_SUBSCRIPTION_RENEWAL_EVENT,
+} from '@repo/common-lib/constants/events';
 import { hash } from '@repo/common-lib/utils/hash';
 import { differenceInCalendarDays } from 'date-fns';
 import { UserService } from './users.service';
@@ -23,7 +26,13 @@ describe('UserService — account deletion / deactivation', () => {
     setActive: jest.fn(),
     isPublicAccount: jest.fn(),
   };
-  const eventEmitter = { emitAsync: jest.fn() };
+  const eventEmitter = { emitAsync: jest.fn(), emit: jest.fn() };
+  /** The edge purge of the artist's cached pages (see `EdgeCacheService`). */
+  const purgeEmitted = (userId: number) =>
+    expect(eventEmitter.emit).toHaveBeenCalledWith(
+      ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
+      expect.objectContaining({ userId }),
+    );
   const logger = { info: jest.fn() };
   const logService = { name: jest.fn(() => logger) };
   const requestService: { user: unknown } = { user: null };
@@ -70,6 +79,10 @@ describe('UserService — account deletion / deactivation', () => {
       // Calendar days, not 360h: the window may cross a DST change.
       expect(differenceInCalendarDays(result.deletion_scheduled_for, requestedAt)).toBe(15);
       expect(eventEmitter.emitAsync).not.toHaveBeenCalled();
+      purgeEmitted(7);
+      expect(eventEmitter.emit.mock.invocationCallOrder[0]).toBeGreaterThan(
+        userRepository.flagForDeletion.mock.invocationCallOrder[0],
+      );
     });
 
     it('throws 409 when the account is already flagged', async () => {
@@ -84,6 +97,7 @@ describe('UserService — account deletion / deactivation', () => {
       userRepository.flagForDeletion.mockResolvedValue(null);
 
       await expect(service.requestDeletion(7, { password: 'right-password' })).rejects.toBeInstanceOf(ConflictException);
+      expect(eventEmitter.emit).not.toHaveBeenCalled();
     });
 
     it('rejects a wrong password without flagging', async () => {
@@ -91,6 +105,7 @@ describe('UserService — account deletion / deactivation', () => {
 
       await expect(service.requestDeletion(7, { password: 'nope' })).rejects.toBeInstanceOf(BadRequestException);
       expect(userRepository.flagForDeletion).not.toHaveBeenCalled();
+      expect(eventEmitter.emit).not.toHaveBeenCalled();
     });
 
     it('stops the subscription renewal before flagging when asked to', async () => {
@@ -125,6 +140,7 @@ describe('UserService — account deletion / deactivation', () => {
 
       await expect(service.cancelDeletion(7)).resolves.toEqual({ deletion_requested_at: null });
       expect(userRepository.unflagDeletion).toHaveBeenCalledWith(7, 15);
+      purgeEmitted(7);
     });
 
     it('throws 409 when the account is not flagged', async () => {
@@ -132,6 +148,7 @@ describe('UserService — account deletion / deactivation', () => {
       userRepository.getDeletionState.mockResolvedValue({ flagged: false });
 
       await expect(service.cancelDeletion(7)).rejects.toThrow('Account deletion was not requested');
+      expect(eventEmitter.emit).not.toHaveBeenCalled();
     });
 
     it('throws 409 once the deletion date has passed', async () => {
@@ -147,22 +164,26 @@ describe('UserService — account deletion / deactivation', () => {
       userRepository.setActive.mockResolvedValue(true);
       await expect(service.deactivate(7)).resolves.toEqual({ is_active: false });
       expect(userRepository.setActive).toHaveBeenCalledWith(7, false);
+      purgeEmitted(7);
     });
 
     it('throws 409 when the account is already deactivated', async () => {
       userRepository.setActive.mockResolvedValue(false);
       await expect(service.deactivate(7)).rejects.toBeInstanceOf(ConflictException);
+      expect(eventEmitter.emit).not.toHaveBeenCalled();
     });
 
     it('reactivates an inactive account', async () => {
       userRepository.setActive.mockResolvedValue(true);
       await expect(service.reactivate(7)).resolves.toEqual({ is_active: true });
       expect(userRepository.setActive).toHaveBeenCalledWith(7, true);
+      purgeEmitted(7);
     });
 
     it('throws 409 when the account is already active', async () => {
       userRepository.setActive.mockResolvedValue(false);
       await expect(service.reactivate(7)).rejects.toBeInstanceOf(ConflictException);
+      expect(eventEmitter.emit).not.toHaveBeenCalled();
     });
   });
 

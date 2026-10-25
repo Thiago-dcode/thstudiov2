@@ -1,4 +1,5 @@
 import { Processor } from '@nestjs/bullmq';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Job } from 'bullmq';
 import { AiService } from '@repo/backend-lib/services/ai-service';
 import { LogService } from '@repo/backend-lib/services/log-service';
@@ -9,6 +10,7 @@ import {
   JOB_GENERATE_MEDIA_METADATA_AND_NOTIFY,
 } from '@repo/common-lib/constants/queues';
 import { GenerateMediaMetadataInput } from '@repo/common-lib/types/ai';
+import { ARTIST_PUBLIC_PAGES_CHANGED_EVENT } from '@repo/common-lib/constants/events';
 import { GlobalProcessor } from 'src/common/processors/global.processor';
 import { CategoriesService } from '../categories/categories.service';
 import { CollectionRepository } from '../collections/collection.repository';
@@ -16,6 +18,7 @@ import { LocationService } from '../locations/location.service';
 import { MediaRepository } from '../media/media.repository';
 import { MediaService } from '../media/media.service';
 import { PortfolioRepository } from '../portfolios/portfolio.repository';
+import { ArtistPublicPagesChangedEvent } from '../edge-cache/events/artist-public-pages-changed.event';
 import { AiMediaService } from './ai-media.service';
 
 @Processor(AI_MEDIA_QUEUE)
@@ -30,6 +33,7 @@ export class AiMediaProcessor extends GlobalProcessor {
     private readonly collectionRepository: CollectionRepository,
     private readonly locationService: LocationService,
     private readonly logger: LogService,
+    private readonly eventEmitter: EventEmitter2,
   ) {
     super();
   }
@@ -137,6 +141,12 @@ export class AiMediaProcessor extends GlobalProcessor {
         // makes a media usable. `completed_at` is left untouched either way.
         this.mediaRepository.restoreStatus(request.media_id),
       ]);
+      // The media's title, description and alt text (and its page's <head>) just changed. The
+      // AND_NOTIFY job needs no purge of its own: it only reserves credits and queues this one.
+      this.eventEmitter.emit(
+        ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
+        new ArtistPublicPagesChangedEvent(request.user_id),
+      );
 
       await QueueHelper.createOrUpdateUserNotificationJob({
         type: 'GENERATE_MEDIA_METADATA',

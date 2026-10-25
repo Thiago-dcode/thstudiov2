@@ -12,11 +12,15 @@ import { RequestService } from "src/common/services/request.service";
 import { PortfolioRepository } from "./portfolio.repository";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { MAX_PORTFOLIO_ITEMS } from "@repo/common-lib/constants/limits";
-import { UPDATE_PROFILE_STATUS_EVENT } from "@repo/common-lib/constants/events";
+import {
+  ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
+  UPDATE_PROFILE_STATUS_EVENT,
+} from "@repo/common-lib/constants/events";
 import { CACHE_KEY_PORTFOLIO_SEO } from "@repo/common-lib/constants/cache";
 import { QueueHelper, SINGLE_ENTITY_METADATA_DEBOUNCE_MS } from "@repo/backend-lib/utils";
 import { TABLES_ENUM } from "@repo/common-lib/constants/enums";
 import { UpdateProfileStatusEvent } from "../profile-status/events/update-profile-status.event";
+import { ArtistPublicPagesChangedEvent } from "../edge-cache/events/artist-public-pages-changed.event";
 import { AiService } from "@repo/backend-lib/services/ai-service";
 import { MediaModerationException } from "src/common/exceptions/media-moderation-exception";
 import { ApiException } from "src/common/exceptions/api-exception";
@@ -286,6 +290,10 @@ export class PortfolioService {
       },
       { delay: SINGLE_ENTITY_METADATA_DEBOUNCE_MS },
     );
+    this.eventEmitter.emit(
+      ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
+      new ArtistPublicPagesChangedEvent(request.user_id),
+    );
     return portfolio;
 
   }
@@ -409,6 +417,10 @@ export class PortfolioService {
       CACHE_KEY_PORTFOLIO_SEO(portfolio.user_id, portfolio.slug),
       { appended_language: true },
     );
+    this.eventEmitter.emit(
+      ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
+      new ArtistPublicPagesChangedEvent(portfolio.user_id),
+    );
 
     return updated;
   }
@@ -440,6 +452,10 @@ export class PortfolioService {
       new UpdateProfileStatusEvent(portfolio.user_id, {
         has_portfolio: stillHasPortfolio,
       }),
+    );
+    this.eventEmitter.emit(
+      ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
+      new ArtistPublicPagesChangedEvent(portfolio.user_id),
     );
   }
 

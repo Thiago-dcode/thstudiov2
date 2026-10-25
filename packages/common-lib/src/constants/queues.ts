@@ -20,6 +20,8 @@ export const MEDIA_UPDATE_QUEUE = 'media-update' as const;
 export const MEDIA_THUMBNAIL_QUEUE = 'media-thumbnails' as const;
 export const BACKUP_QUEUE = 'backup' as const;
 export const ACCOUNT_DELETION_QUEUE = 'account-deletion' as const;
+// Cloudflare purges of an artist's cached public pages. Rate-limited per queue (shared by every api replica).
+export const EDGE_CACHE_QUEUE = 'edge-cache' as const;
 
 // ==================== JOBS (BullMQ) ====================
 export const JOB_COMPUTE_USER_METRICS = 'compute-user-metrics' as const;
@@ -54,3 +56,4 @@ export const JOB_INVALIDATE_MEDIA_SEO_CACHE = 'invalidate-media-seo-cache' as co
 export const JOB_DATABASE_BACKUP = 'database-backup' as const;
 export const JOB_DELETE_USER_ACCOUNT = 'delete-user-account' as const;
 export const JOB_SEND_ACCOUNT_DELETION_WARNING = 'send-account-deletion-warning' as const;
+export const JOB_PURGE_ARTIST_EDGE_CACHE = 'purge-artist-edge-cache' as const;

@@ -11,7 +11,10 @@ import { QueueHelper } from '@repo/backend-lib/utils';
 import { CreateMediaInput, CreateMediaUploadUrl, DeleteManyMediaError, DeleteManyMediaResult, Media, MediaIndexRequest, MediaWithUser, UpdateMediaInternalInput } from '@repo/common-lib/types/media';
 import { EntitySeoMetadata, MediaSeoTranslation } from '@repo/common-lib/types/ai';
 import { cleanObj } from '@repo/common-lib/utils/object';
-import { UPDATE_PROFILE_STATUS_EVENT } from '@repo/common-lib/constants/events';
+import {
+  ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
+  UPDATE_PROFILE_STATUS_EVENT,
+} from '@repo/common-lib/constants/events';
 import {
   CACHE_KEY_MEDIA_SEO,
   SEO_METADATA_CACHE_TTL,
@@ -31,6 +34,7 @@ import { MediaHelper } from '@repo/common-lib/utils/media';
 import type { LocationInput } from '@repo/common-lib/types/location';
 import { LocationService } from '../locations/location.service';
 import { TempUploadService } from 'src/common/services/temp-upload.service';
+import { ArtistPublicPagesChangedEvent } from '../edge-cache/events/artist-public-pages-changed.event';
 
 @Injectable()
 export class MediaService {
@@ -47,6 +51,14 @@ export class MediaService {
     private readonly locationService: LocationService,
     private readonly tempUploads: TempUploadService,
   ) { }
+
+  /** The owner's public pages show this media (or its absence): purge their edge cache. */
+  private emitArtistPagesChanged(userId: number): void {
+    this.eventEmitter.emit(
+      ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
+      new ArtistPublicPagesChangedEvent(userId),
+    );
+  }
 
   /**
    * The column value for a picked place: `undefined` leaves `location_id` untouched, `null`
@@ -525,6 +537,12 @@ export class MediaService {
   }
 
   public async delete(id: number): Promise<void> {
+    const media = await this.deleteOwned(id);
+    this.emitArtistPagesChanged(media.user_id);
+  }
+
+  /** {@link delete} without the edge purge, which {@link deleteMany} sends once for the batch. */
+  private async deleteOwned(id: number): Promise<Media> {
     const media = await this.mediaRepository.findById(id);
     if (media.user_id !== this.requestService.user.id) {
       throw new UnauthorizedException();
@@ -540,6 +558,7 @@ export class MediaService {
     ])
 
     await this.announceDeleted(media);
+    return media;
   }
 
   /**
@@ -620,7 +639,7 @@ export class MediaService {
     const errors: DeleteManyMediaError[] = [];
     for (const id of ids) {
       try {
-        await this.delete(id);
+        await this.deleteOwned(id);
         deleted.push(id);
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown error';
@@ -633,6 +652,8 @@ export class MediaService {
       `Delete media batch: user [${userId}] deleted ${deleted.length}, failed ${errors.length}`,
       { user_id: userId, deleted, failed: errors.map((item) => item.media_id) },
     );
+    // Every id belongs to the caller (checked above), so there is one owner to purge.
+    if (deleted.length) this.emitArtistPagesChanged(userId);
 
     return { deleted, errors };
   }
@@ -641,7 +662,9 @@ export class MediaService {
     id: number,
     data: UpdateMediaRequest & Pick<UpdateMediaInternalInput, 'seo_filename' | 'seo_generated_at'>,
   ) {
-    return this.updateForUser(id, this.requestService.user.id, data);
+    const result = await this.updateForUser(id, this.requestService.user.id, data);
+    this.emitArtistPagesChanged(this.requestService.user.id);
+    return result;
   }
 
   /**
@@ -672,6 +695,7 @@ export class MediaService {
 
     await this.mediaRepository.updateLocationByIds(ids, userId, locationId);
     await Promise.all(existing.map((media) => this.invalidateSeoCache(media.public_id)));
+    this.emitArtistPagesChanged(userId);
 
     return this.signBatchResult(ids, await this.mediaRepository.findManyByIds(ids));
   }
@@ -727,6 +751,7 @@ export class MediaService {
       });
     }
     await Promise.all(existing.map((media) => this.invalidateSeoCache(media.public_id)));
+    this.emitArtistPagesChanged(userId);
 
     // With `categories`: the card's saved state comes from this response, not a page reload.
     return this.signBatchResult(ids, await this.mediaRepository.findManyByIdsWithCategories(ids));
@@ -957,6 +982,9 @@ export class MediaService {
       media_id: id,
       thumbnail_time_seconds,
     });
+    // The worker purges again once the new cover is stored; this one is coalesced with it when the
+    // extraction finishes inside the debounce window.
+    this.emitArtistPagesChanged(userId);
     this.logger.info(`Set video thumbnail job enqueued: media [${id}]`, {
       media_id: id,
       user_id: userId,

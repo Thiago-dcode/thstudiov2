@@ -8,6 +8,7 @@ import { EmailPreferencesModule } from '../email-preferences/email-preferences.m
 import { PlanSubscriptionsRepository } from '../plan-subscriptions/plan-subscriptions.repository';
 import { AccountDeletionWarningMail } from '../users/mails/account-deletion-warning.mail';
 import { UserRepository } from '../users/users.repository';
+import { UsernameHistoryModule } from '../username-history/username-history.module';
 import { AccountDeletionProcessor } from './account-deletion.processor';
 import { AccountDeletionTask } from './account-deletion.task';
 
@@ -20,6 +21,8 @@ import { AccountDeletionTask } from './account-deletion.task';
 @Module({
   imports: [
     EmailPreferencesModule,
+    // Old usernames, read before a hard delete so their cached pages can be purged.
+    UsernameHistoryModule,
     BullModule.registerQueue({ name: ACCOUNT_DELETION_QUEUE }, { name: LOG_QUEUE }),
   ],
   providers: [
