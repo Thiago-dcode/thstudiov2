@@ -10,17 +10,15 @@ ENV TURBO_TELEMETRY_DISABLED=1
 
 WORKDIR /workspace
 
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends ca-certificates \
-  && rm -rf /var/lib/apt/lists/* \
-  && npm install -g pnpm@12.15.0
+RUN corepack enable
 
-# Dependency layer: invalidated only when the lockfile or patches change.
-COPY pnpm-lock.yaml pnpm-workspace.yaml ./
+# Dependency layer: invalidated when the lockfile, root manifest, or patches change.
+# package.json has to be here so corepack can read packageManager before pnpm runs.
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY patches ./patches
 RUN --mount=type=cache,id=pnpm-store,target=/pnpm/store pnpm fetch
 
-COPY package.json turbo.json tsconfig.json ./
+COPY turbo.json tsconfig.json ./
 COPY apps ./apps
 COPY packages ./packages
 

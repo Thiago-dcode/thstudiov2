@@ -1,0 +1,137 @@
+name: a11studio-local
+services:
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        NEXT_PUBLIC_WS_URL: ${NEXT_PUBLIC_WS_URL}
+        NEXT_PUBLIC_GEOAPIFY_URL: ${NEXT_PUBLIC_GEOAPIFY_URL}
+        NEXT_PUBLIC_GEOAPIFY_KEY: ${NEXT_PUBLIC_GEOAPIFY_KEY}
+        NEXT_PUBLIC_GA_ID: ${NEXT_PUBLIC_GA_ID}
+        NEXT_PUBLIC_CDN_URL: ${NEXT_PUBLIC_CDN_URL}
+    restart: "no"
+    security_opt:
+      - no-new-privileges:true
+    env_file: ${A11STUDIO_ENV_FILE:-.env}
+    # Server-side fetches (SSR, server actions, sitemap) run inside this container, where
+    # localhost is web itself. The browser keeps NEXT_PUBLIC_API_URL (localhost on your machine).
+    environment:
+      - API_V1_URL=http://api:8080/api/v1
+    ports:
+      - "127.0.0.1:${WEB_HOST_PORT:-3000}:3000"
+    networks:
+      - frontend
+    depends_on:
+      api:
+        condition: service_started
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    # No container_name / fixed host port: this service sits behind nginx and is
+    # scaled horizontally (load balanced by nginx via Docker DNS).
+    restart: "no"
+    security_opt:
+      - no-new-privileges:true
+    env_file: ${A11STUDIO_ENV_FILE:-.env}
+    # Overrides .env, which points at localhost (the container itself). Inside the
+    # compose network the services are reached by name.
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      - ./storage/logs:/workspace/storage/logs
+      # Local-only seed binaries (gitignored); used when running db:seed inside the api container
+      - ./packages/database/src/seeds/media-images:/workspace/packages/database/src/seeds/media-images
+      - ./packages/database/src/seeds/assets:/workspace/packages/database/src/seeds/assets
+    ports:
+      - "127.0.0.1:${API_HOST_PORT:-8080}:8080"
+    deploy:
+      replicas: ${API_REPLICAS:-1}
+    networks:
+      - frontend
+      - backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+    restart: "no"
+    security_opt:
+      - no-new-privileges:true
+    env_file: ${A11STUDIO_ENV_FILE:-.env}
+    # Overrides .env, which points at localhost (the container itself).
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_URL=redis://redis:6379
+    networks:
+      - backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:15-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      # `:?` makes compose fail fast when the var is unset — no credential defaults.
+      - POSTGRES_USER=${DB_USERNAME:?DB_USERNAME is required (see .env)}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:?DB_PASSWORD is required (see .env)}
+      - POSTGRES_DB=${DB_NAME:?DB_NAME is required (see .env)}
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+    restart: "no"
+    command: >
+      postgres -c max_connections=200 -c shared_buffers=256MB -c effective_cache_size=1GB -c maintenance_work_mem=64MB -c checkpoint_completion_target=0.9 -c wal_buffers=16MB -c default_statistics_target=100 -c random_page_cost=1.1 -c effective_io_concurrency=200 -c work_mem=4MB -c min_wal_size=1GB -c max_wal_size=4GB
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USERNAME:?} -d ${DB_NAME:?}" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - backend
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    command: >
+      redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    restart: "no"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - backend
+
+networks:
+  # web reaches api here; web is never attached to backend
+  frontend:
+  # api, worker, postgres and redis only
+  backend:
+
+volumes:
+  postgres_data:
+  redis_data:

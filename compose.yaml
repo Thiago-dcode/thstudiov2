@@ -1,7 +1,7 @@
+name: a11studio
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: a11studio-postgres
     ports:
       # Bind to loopback only: Docker's iptables rules bypass most UFW configs, so a
       # bare "5432:5432" exposes the DB on every interface if this file is ever run
@@ -39,7 +39,6 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: a11studio-redis
     ports:
       # Loopback only — this Redis has no `requirepass`, and an internet-reachable
       # unauthenticated Redis is a well-known RCE vector (CONFIG SET dir/dbfilename).
