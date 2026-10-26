@@ -58,7 +58,7 @@ export const HeroSectionV2 = async ({
         <div className="flex max-w-5xl flex-col items-center gap-4 tablet:gap-6">
           <p
             aria-hidden="true"
-            className="hero-stagger-1 font-serif! font-normal! uppercase leading-[1.05]! tracking-tight text-text text-5xl! tablet:text-6xl! laptop:text-7xl! desktop-lg:text-8xl!"
+            className="hero-stagger-1 font-serif! font-medium! uppercase leading-[1.05]! tracking-tight text-text text-5xl! tablet:text-6xl! laptop:text-7xl! desktop-lg:text-9xl!"
           >
             <span className="block tablet:whitespace-nowrap">
               {t("titlePrefix")}{" "}
@@ -84,7 +84,7 @@ export const HeroSectionV2 = async ({
               .
             </span>
           </p>
-          <p className="hero-stagger-2 max-w-xl font-sans! font-light! leading-relaxed text-text-muted text-base! tablet:text-lg! laptop:text-xl!">
+          <p className="hero-stagger-2 max-w-2xl font-normal! leading-relaxed text-text-muted text-base! tablet:text-xl! laptop:text-2xl!">
             {t("subtitle")}
           </p>
         </div>

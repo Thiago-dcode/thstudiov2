@@ -1,6 +1,6 @@
-import { Archivo, SUSE } from "next/font/google";
+import { Poppins } from "next/font/google";
 
-export const brand = Archivo({
+export const brand = Poppins({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600"],
   style: ["normal"],
@@ -8,7 +8,7 @@ export const brand = Archivo({
   display: "swap",
 });
 
-export const body = SUSE({
+export const body = Poppins({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
   style: ["normal"],

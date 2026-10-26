@@ -37,21 +37,6 @@ services:
       retries: 3
       start_period: 30s
 
-  pgadmin:
-    image: dpage/pgadmin4
-    container_name: a11studio-pgadmin
-    restart: unless-stopped
-    ports:
-      - "127.0.0.1:${PGADMIN_PORT:-8888}:80"
-    environment:
-      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL:?PGADMIN_EMAIL is required (see .env)}
-      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD:?PGADMIN_PASSWORD is required (see .env)}
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
-    depends_on:
-      postgres:
-        condition: service_healthy
-
   redis:
     image: redis:7-alpine
     container_name: a11studio-redis
