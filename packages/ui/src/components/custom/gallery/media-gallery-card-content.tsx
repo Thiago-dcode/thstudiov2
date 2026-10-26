@@ -181,7 +181,7 @@ export function MediaGalleryCardContent({
           // `priority`, not `preload` — `preload` is not a next/image prop, so it was forwarded to
           // the DOM as an unknown attribute and preloaded nothing. Without `unoptimized` these now
           // go through the image optimizer (the CloudFront host is in `remotePatterns`, derived from
-          // CDN_URL at build time), which is what actually moves LCP on a gallery page.
+          // NEXT_PUBLIC_CDN_URL at build time), which is what actually moves LCP on a gallery page.
           priority={priority}
           src={media.thumbnail}
           alt={alt}

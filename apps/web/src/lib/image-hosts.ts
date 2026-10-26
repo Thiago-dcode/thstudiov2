@@ -1,6 +1,6 @@
 /**
  * Hosts our own images are served from — the S3 buckets per environment plus the CDN (CloudFront
- * custom domain, from `CDN_URL`). One list for both consumers:
+ * custom domain, from `NEXT_PUBLIC_CDN_URL`). One list for both consumers:
  *   - `next.config.ts` → `images.remotePatterns` (read at BUILD time),
  *   - the `/og-image.jpg` route → its fetch allowlist (read at request time), so the route can only
  *     ever re-encode our own assets and never becomes an open image proxy (SSRF).
@@ -12,13 +12,15 @@ export const STORAGE_IMAGE_HOSTS = [
   "a11studio.s3.eu-north-1.amazonaws.com",
   "local.a11studio.s3.eu-north-1.amazonaws.com",
   "dev.a11studio.s3.eu-north-1.amazonaws.com",
-  // Public CDN custom domain. Listed here so next/image allows it even when CDN_URL
-  // is unset at config load (local dev). CDN_URL still adds whatever host it points at.
+  // Public CDN custom domain. Listed here so next/image allows it even when NEXT_PUBLIC_CDN_URL
+  // is unset at config load (local dev). NEXT_PUBLIC_CDN_URL still adds whatever host it points at.
   "cdn.a11studio.com",
 ] as const;
 
-/** The CDN host from `CDN_URL`, or null when it is unset or unparseable. */
-export const cdnHost = (cdnUrl = process.env.CDN_URL): URL | null => {
+/** The CDN host from `NEXT_PUBLIC_CDN_URL`, or null when it is unset or unparseable. */
+export const cdnHost = (
+  cdnUrl = process.env.NEXT_PUBLIC_CDN_URL,
+): URL | null => {
   if (!cdnUrl) return null;
   try {
     return new URL(cdnUrl);

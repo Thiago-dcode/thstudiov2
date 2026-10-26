@@ -21,8 +21,6 @@ import { OG_LOCALE, ogImage, resolveLocale, SITE_NAME } from "@/lib/seo/core";
 import { isIndexableEnv } from "@/lib/seo/indexability";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
 
-const appUrl = getServerEnv().APP_URL;
-
 /** Browser UI colour follows the page background (design tokens `--color-bg`, light / dark). */
 export const viewport: Viewport = {
   themeColor: [
@@ -44,6 +42,7 @@ export async function generateMetadata({
   const title = t("defaultTitle");
   const description = t("defaultDescription");
   const card = ogImage(null, SITE_NAME);
+  const appUrl = getServerEnv().APP_URL;
 
   return {
     ...(appUrl ? { metadataBase: new URL(appUrl) } : {}),

@@ -126,7 +126,7 @@ jobs:
           cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/a11studio-cache-dev-${{ matrix.app }}:buildcache
           cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/a11studio-cache-dev-${{ matrix.app }}:buildcache,mode=max,image-manifest=true,oci-mediatypes=true
 
-      # Web is a separate step so its build-args and secrets are never handed to the
+      # Web is a separate step so its build-args are never handed to the
       # api and worker builds.
       - name: Build and push web
         if: matrix.app == 'web'
@@ -144,25 +144,7 @@ jobs:
             NEXT_PUBLIC_WS_URL=${{ secrets.NEXT_PUBLIC_WS_URL }}
             NEXT_PUBLIC_GEOAPIFY_URL=${{ secrets.NEXT_PUBLIC_GEOAPIFY_URL }}
             NEXT_PUBLIC_GEOAPIFY_KEY=${{ secrets.NEXT_PUBLIC_GEOAPIFY_KEY }}
-            APP_URL=${{ secrets.APP_URL }}
-            API_V1_URL=${{ secrets.API_V1_URL }}
-            GEOAPIFY_URL=${{ secrets.GEOAPIFY_URL }}
-            SUPPORT_EMAIL=${{ secrets.SUPPORT_EMAIL }}
-            SUPPORT_USERNAME=${{ secrets.SUPPORT_USERNAME }}
-            LEGAL_OWNER_NAME=${{ secrets.LEGAL_OWNER_NAME }}
-            LEGAL_TAX_ID=${{ secrets.LEGAL_TAX_ID }}
-            LEGAL_ADDRESS=${{ secrets.LEGAL_ADDRESS }}
-            LEGAL_REGISTRY=${{ secrets.LEGAL_REGISTRY }}
-            REGISTRATION_IS_CLOSED=${{ secrets.REGISTRATION_IS_CLOSED }}
-            CDN_URL=${{ secrets.CDN_URL }}
-          # Real secrets go through BuildKit secret mounts, never build-args: a
-          # build-arg becomes ENV in the builder stage and `cache-to: mode=max`
-          # exports that stage to the layer cache.
-          secrets: |
-            app_api_key=${{ secrets.APP_API_KEY }}
-            app_token=${{ secrets.APP_TOKEN }}
-            geoapify_key=${{ secrets.GEOAPIFY_KEY }}
-            encryption_secret=${{ secrets.ENCRYPTION_SECRET }}
+            NEXT_PUBLIC_CDN_URL=${{ secrets.CDN_URL }}
           cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/a11studio-cache-dev-web:buildcache
           cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/a11studio-cache-dev-web:buildcache,mode=max,image-manifest=true,oci-mediatypes=true
 
@@ -290,7 +272,7 @@ jobs:
           cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/a11studio-cache-prod-${{ matrix.app }}:buildcache
           cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/a11studio-cache-prod-${{ matrix.app }}:buildcache,mode=max,image-manifest=true,oci-mediatypes=true
 
-      # Web is a separate step so its build-args and secrets are never handed to the
+      # Web is a separate step so its build-args are never handed to the
       # api and worker builds.
       - name: Build and push web
         if: matrix.app == 'web'
@@ -309,25 +291,7 @@ jobs:
             NEXT_PUBLIC_GEOAPIFY_URL=${{ secrets.NEXT_PUBLIC_GEOAPIFY_URL }}
             NEXT_PUBLIC_GEOAPIFY_KEY=${{ secrets.NEXT_PUBLIC_GEOAPIFY_KEY }}
             NEXT_PUBLIC_GA_ID=${{ secrets.NEXT_PUBLIC_GA_ID }}
-            APP_URL=${{ secrets.APP_URL }}
-            API_V1_URL=${{ secrets.API_V1_URL }}
-            GEOAPIFY_URL=${{ secrets.GEOAPIFY_URL }}
-            SUPPORT_EMAIL=${{ secrets.SUPPORT_EMAIL }}
-            SUPPORT_USERNAME=${{ secrets.SUPPORT_USERNAME }}
-            LEGAL_OWNER_NAME=${{ secrets.LEGAL_OWNER_NAME }}
-            LEGAL_TAX_ID=${{ secrets.LEGAL_TAX_ID }}
-            LEGAL_ADDRESS=${{ secrets.LEGAL_ADDRESS }}
-            LEGAL_REGISTRY=${{ secrets.LEGAL_REGISTRY }}
-            REGISTRATION_IS_CLOSED=${{ secrets.REGISTRATION_IS_CLOSED }}
-            CDN_URL=${{ secrets.CDN_URL }}
-          # Real secrets go through BuildKit secret mounts, never build-args: a
-          # build-arg becomes ENV in the builder stage and `cache-to: mode=max`
-          # exports that stage to the layer cache.
-          secrets: |
-            app_api_key=${{ secrets.APP_API_KEY }}
-            app_token=${{ secrets.APP_TOKEN }}
-            geoapify_key=${{ secrets.GEOAPIFY_KEY }}
-            encryption_secret=${{ secrets.ENCRYPTION_SECRET }}
+            NEXT_PUBLIC_CDN_URL=${{ secrets.CDN_URL }}
           cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/a11studio-cache-prod-web:buildcache
           cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/a11studio-cache-prod-web:buildcache,mode=max,image-manifest=true,oci-mediatypes=true
 

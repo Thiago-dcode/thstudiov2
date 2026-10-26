@@ -123,35 +123,6 @@ services:
 
   web:
     image: ${DOCKER_REGISTRY:-ghcr.io}/${DOCKER_IMAGE_OWNER:?Set DOCKER_IMAGE_OWNER in .env}/a11studio-prod-web:${DOCKER_IMAGE_TAG:-main}
-    build:
-      context: .
-      dockerfile: apps/web/Dockerfile
-      args:
-        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-https://a11studio.com}
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.a11studio.com/api/v1}
-        NEXT_PUBLIC_WS_URL: ${NEXT_PUBLIC_WS_URL:-https://api.a11studio.com}
-        NEXT_PUBLIC_GEOAPIFY_URL: ${NEXT_PUBLIC_GEOAPIFY_URL}
-        NEXT_PUBLIC_GEOAPIFY_KEY: ${NEXT_PUBLIC_GEOAPIFY_KEY}
-        NEXT_PUBLIC_GA_ID: ${NEXT_PUBLIC_GA_ID:-}
-        APP_URL: ${APP_URL}
-        API_V1_URL: ${API_V1_URL}
-        GEOAPIFY_URL: ${GEOAPIFY_URL}
-        SUPPORT_EMAIL: ${SUPPORT_EMAIL}
-        SUPPORT_USERNAME: ${SUPPORT_USERNAME}
-        LEGAL_OWNER_NAME: ${LEGAL_OWNER_NAME:-}
-        LEGAL_TAX_ID: ${LEGAL_TAX_ID:-}
-        LEGAL_ADDRESS: ${LEGAL_ADDRESS:-}
-        LEGAL_REGISTRY: ${LEGAL_REGISTRY:-}
-        REGISTRATION_IS_CLOSED: ${REGISTRATION_IS_CLOSED}
-        # Baked into next/image remotePatterns at build time (see apps/web/Dockerfile).
-        CDN_URL: ${CDN_URL}
-      # Secrets, not build args: a build arg is promoted to ENV in the builder stage
-      # and therefore persists in layer metadata and any exported build cache.
-      secrets:
-        - app_api_key
-        - app_token
-        - geoapify_key
-        - encryption_secret
     pull_policy: always
     # No container_name / fixed host port: this service sits behind nginx and is
     # scaled horizontally (load balanced by nginx via Docker DNS).
@@ -321,19 +292,6 @@ services:
         condition: service_healthy
     networks:
       - a11studio-prod
-
-# Build-time secrets sourced from the environment (i.e. the .env loaded by compose).
-# Referenced by the web service's `build.secrets`; consumed via `--mount=type=secret`
-# in apps/web/Dockerfile so they never reach a layer or the build cache.
-secrets:
-  app_api_key:
-    environment: APP_API_KEY
-  app_token:
-    environment: APP_TOKEN
-  geoapify_key:
-    environment: GEOAPIFY_KEY
-  encryption_secret:
-    environment: ENCRYPTION_SECRET
 
 networks:
   a11studio-prod:

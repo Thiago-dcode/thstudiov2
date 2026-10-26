@@ -1,78 +1,98 @@
 import "server-only";
-import * as z from "zod";
 
-/** An unset GitHub secret reaches the build as an empty string: treat it as missing. */
-const optionalText = z
-  .string()
-  .trim()
-  .optional()
-  .transform((value) => (value ? value : undefined));
+/**
+ * Server-only env, read from the running process (container env in production).
+ *
+ * Every value is a getter, so it is read from `process.env` when it is used, never at import time
+ * and never during `next build`. A required value that is missing throws in the request that needs
+ * it. During the build phase, missing values read as empty so module-level code does not fail the
+ * build. Nothing here is validated by a schema library.
+ */
 
-const serverEnvSchema = z.object({
-  ENCRYPTION_SECRET: z.string().min(1),
-  APP_API_KEY: z.string().min(1),
-  APP_TOKEN: z.string().min(1),
-  // Must parse as a URL: `isIndexableEnv()` compares its host against the canonical production
-  // host, and an unparseable value there means "not indexable" — better to fail loudly at boot.
-  APP_URL: z.url(),
-  API_V1_URL: z.string().min(1),
-  GEOAPIFY_URL: z.string().min(1),
-  GEOAPIFY_KEY: z.string().min(1),
-  SUPPORT_EMAIL: z.email(),
-  SUPPORT_USERNAME: z.string().min(1),
-  REGISTRATION_IS_CLOSED: z.coerce.number().int().min(0).default(0),
-  // Legal notice (LSSI art. 10, /legal/notice): who runs the site. Optional so a missing value
-  // never breaks a deploy, but production must set the first three — the page warns while unset.
-  LEGAL_OWNER_NAME: optionalText,
-  LEGAL_TAX_ID: optionalText,
-  LEGAL_ADDRESS: optionalText,
-  LEGAL_REGISTRY: optionalText,
-  // 1 = show the cookie banner under `next dev` to work on it. Never loads GA, ignored outside
-  // development. See `lib/consent/active-categories.ts`.
-  CONSENT_PREVIEW: z.coerce.number().int().min(0).default(0),
-});
-
-export type ServerEnv = z.infer<typeof serverEnvSchema>;
-
-function parseServerEnv(): ServerEnv | null {
-  const parsed = serverEnvSchema.safeParse(process.env);
-  const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build";
-
-  if (!parsed.success) {
-    console.error(
-      "Invalid server environment variables:",
-      parsed.error.flatten().fieldErrors,
-    );
-    if (!isBuildPhase) {
-      throw new Error(
-        "Invalid server environment variables. Check the console for details.",
-      );
-    }
-    return null;
-  }
-
-  return parsed.data;
+export interface ServerEnv {
+  ENCRYPTION_SECRET: string;
+  APP_API_KEY: string;
+  APP_TOKEN: string;
+  APP_URL: string;
+  API_V1_URL: string;
+  SUPPORT_EMAIL: string;
+  SUPPORT_USERNAME: string;
+  REGISTRATION_IS_CLOSED: number;
+  LEGAL_OWNER_NAME?: string;
+  LEGAL_TAX_ID?: string;
+  LEGAL_ADDRESS?: string;
+  LEGAL_REGISTRY?: string;
+  /** 1 = show the cookie banner under `next dev`. Never loads GA; ignored outside development. */
+  CONSENT_PREVIEW: number;
 }
 
-/** Read server env at call time so runtime container env wins over build-time snapshots. */
-export function getServerEnv(): ServerEnv {
-  const env = parseServerEnv();
-  if (env) return env;
+const isBuildPhase = () => process.env.NEXT_PHASE === "phase-production-build";
 
-  // Turbopack build workers may not inherit build-time env vars (see server.ts header).
-  // Defer hard failures to request time — same as the pre-proxy serverEnv export.
-  if (process.env.NEXT_PHASE === "phase-production-build") {
-    return {} as ServerEnv;
-  }
-
-  throw new Error(
-    "Invalid server environment variables. Check the console for details.",
-  );
+/** A required value: trimmed, and an unset or blank one throws at runtime. */
+function required(name: string): string {
+  const value = process.env[name]?.trim();
+  if (value) return value;
+  if (isBuildPhase()) return "";
+  throw new Error(`Missing server environment variable: ${name}`);
 }
 
-/** Lazy proxy — each property read uses the current process.env (Docker runtime). */
-export const serverEnv: ServerEnv = new Proxy({} as ServerEnv, {
-  get(_target, prop) {
-    return getServerEnv()[prop as keyof ServerEnv];
+/** An optional value: unset or blank reads as undefined. */
+function optional(name: string): string | undefined {
+  const value = process.env[name]?.trim();
+  return value ? value : undefined;
+}
+
+/** A whole-number flag: unset, blank or not a whole number falls back to `fallback`. */
+function integer(name: string, fallback: number): number {
+  const value = Number.parseInt(process.env[name] ?? "", 10);
+  return Number.isInteger(value) && value >= 0 ? value : fallback;
+}
+
+export const serverEnv: ServerEnv = {
+  get ENCRYPTION_SECRET() {
+    return required("ENCRYPTION_SECRET");
   },
-});
+  get APP_API_KEY() {
+    return required("APP_API_KEY");
+  },
+  get APP_TOKEN() {
+    return required("APP_TOKEN");
+  },
+  get APP_URL() {
+    return required("APP_URL");
+  },
+  get API_V1_URL() {
+    return required("API_V1_URL");
+  },
+  get SUPPORT_EMAIL() {
+    return required("SUPPORT_EMAIL");
+  },
+  get SUPPORT_USERNAME() {
+    return required("SUPPORT_USERNAME");
+  },
+  get REGISTRATION_IS_CLOSED() {
+    return integer("REGISTRATION_IS_CLOSED", 0);
+  },
+  // Legal notice (LSSI art. 10, /legal/notice): optional so a missing value never breaks a request,
+  // but production must set the first three. The page warns while they are unset.
+  get LEGAL_OWNER_NAME() {
+    return optional("LEGAL_OWNER_NAME");
+  },
+  get LEGAL_TAX_ID() {
+    return optional("LEGAL_TAX_ID");
+  },
+  get LEGAL_ADDRESS() {
+    return optional("LEGAL_ADDRESS");
+  },
+  get LEGAL_REGISTRY() {
+    return optional("LEGAL_REGISTRY");
+  },
+  get CONSENT_PREVIEW() {
+    return integer("CONSENT_PREVIEW", 0);
+  },
+};
+
+/** The same object as `serverEnv`, kept so existing `getServerEnv()` callers keep working. */
+export function getServerEnv(): ServerEnv {
+  return serverEnv;
+}

@@ -6,8 +6,6 @@ export const config = {
   encryption_secret: serverEnv.ENCRYPTION_SECRET,
   app_url: serverEnv.APP_URL,
   api_v1_url: serverEnv.API_V1_URL,
-  geoapi_url: serverEnv.GEOAPIFY_URL,
-  geoapi_key: serverEnv.GEOAPIFY_KEY,
   app_name: "a11studio",
   app_version: version,
 };
@@ -27,7 +25,7 @@ export const ORGANIZATION_SAME_AS: string[] = Object.values(SOCIAL);
  * site rate-limited itself under ordinary traffic. All four are admin-curated and change rarely,
  * so a 30-minute window is invisible to visitors.
  *
- * Do not raise this past an hour without checking `CDN_URL`: production serves permanent CDN URLs,
+ * Do not raise this past an hour without checking `NEXT_PUBLIC_CDN_URL`: production serves permanent CDN URLs,
  * but environments without it (dev) fall back to S3 URLs signed for `STORAGE_SIGNED_URL_EXPIRATION`
  * (3600s), and caching a response for longer than that would serve dead image links.
  */

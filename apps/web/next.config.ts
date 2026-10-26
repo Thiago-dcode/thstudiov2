@@ -9,7 +9,7 @@ dotenv.config({
   quiet: true,
 });
 
-/** Allow the configured CDN host (CloudFront) through next/image. Empty when CDN_URL is unset. */
+/** Allow the configured CDN host (CloudFront) through next/image. Empty when NEXT_PUBLIC_CDN_URL is unset. */
 const cdnRemotePattern = (() => {
   const cdn = cdnHost();
   if (!cdn) return [];
@@ -51,8 +51,7 @@ const nextConfig: NextConfig = {
   },
   /** Bridge non-public env names (same as server.ts) so client bundles get inlined values without duplicating .env. */
   env: {
-    NEXT_PUBLIC_APP_URL:
-      process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || "",
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || "",
     // No `API_V1_URL` fallback: that is the in-cluster address (`http://api:8080/api/v1`), and
     // the browser now calls the API directly. Falling back would ship an unresolvable hostname
     // to the client bundle, and `clientEnv`'s non-empty check would pass it happily — a silent,
@@ -60,10 +59,9 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || "",
     // No server-side twin: the socket.io origin is only ever consumed by the browser.
     NEXT_PUBLIC_WS_URL: process.env.NEXT_PUBLIC_WS_URL || "",
-    NEXT_PUBLIC_GEOAPIFY_URL:
-      process.env.NEXT_PUBLIC_GEOAPIFY_URL || process.env.GEOAPIFY_URL || "",
-    // No fallback to the server-side GEOAPIFY_KEY: whatever lands here is inlined into the browser
-    // bundle, and the Docker build has the server key available as a build secret.
+    NEXT_PUBLIC_GEOAPIFY_URL: process.env.NEXT_PUBLIC_GEOAPIFY_URL || "",
+    // Public by design: whatever lands here is inlined into the browser bundle. Keep this key
+    // domain-restricted at the provider.
     NEXT_PUBLIC_GEOAPIFY_KEY: process.env.NEXT_PUBLIC_GEOAPIFY_KEY || "",
     // GA4 measurement ID (public by design). Empty disables analytics.
     NEXT_PUBLIC_GA_ID: process.env.NEXT_PUBLIC_GA_ID || "",
@@ -85,7 +83,7 @@ const nextConfig: NextConfig = {
       })),
       // CDN host (CloudFront custom domain or *.cloudfront.net). Public images are now served from
       // the CDN, so next/image must allow it — otherwise it rejects the URL and the image 404s.
-      // Derived from CDN_URL so custom domains work too; must be present at BUILD time.
+      // Derived from NEXT_PUBLIC_CDN_URL so custom domains work too; must be present at BUILD time.
       ...cdnRemotePattern,
     ],
   },

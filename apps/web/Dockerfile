@@ -34,23 +34,10 @@ ARG NEXT_PUBLIC_GEOAPIFY_URL
 ARG NEXT_PUBLIC_GEOAPIFY_KEY
 ARG NEXT_PUBLIC_GA_ID
 
-# Server-only vars required by serverEnv Zod validation at static generation time.
-#
-# NOTE: APP_API_KEY, APP_TOKEN, ENCRYPTION_SECRET and GEOAPIFY_KEY are deliberately
-# NOT ARGs — see the secret mounts on the build step below.
-ARG APP_URL
-ARG API_V1_URL
-ARG GEOAPIFY_URL
-ARG SUPPORT_EMAIL
-ARG SUPPORT_USERNAME
-ARG LEGAL_OWNER_NAME
-ARG LEGAL_TAX_ID
-ARG LEGAL_ADDRESS
-ARG LEGAL_REGISTRY
-ARG REGISTRATION_IS_CLOSED
 # CDN host must be present at build time: next.config.ts bakes it into next/image
-# remotePatterns. Runtime-only CDN_URL would leave CDN images rejected by the optimizer.
-ARG CDN_URL
+# remotePatterns, and the client bundle inlines it. A runtime-only value would leave CDN
+# images rejected by the optimizer.
+ARG NEXT_PUBLIC_CDN_URL
 
 # Promote non-secret args to ENV so they are visible during `next build`.
 # NEXT_PUBLIC_* are inlined into the client bundle by design and are therefore public
@@ -61,38 +48,17 @@ ENV NEXT_PUBLIC_WS_URL=$NEXT_PUBLIC_WS_URL
 ENV NEXT_PUBLIC_GEOAPIFY_URL=$NEXT_PUBLIC_GEOAPIFY_URL
 ENV NEXT_PUBLIC_GEOAPIFY_KEY=$NEXT_PUBLIC_GEOAPIFY_KEY
 ENV NEXT_PUBLIC_GA_ID=$NEXT_PUBLIC_GA_ID
-ENV APP_URL=$APP_URL
-ENV API_V1_URL=$API_V1_URL
-ENV GEOAPIFY_URL=$GEOAPIFY_URL
-ENV SUPPORT_EMAIL=$SUPPORT_EMAIL
-ENV SUPPORT_USERNAME=$SUPPORT_USERNAME
-ENV LEGAL_OWNER_NAME=$LEGAL_OWNER_NAME
-ENV LEGAL_TAX_ID=$LEGAL_TAX_ID
-ENV LEGAL_ADDRESS=$LEGAL_ADDRESS
-ENV LEGAL_REGISTRY=$LEGAL_REGISTRY
-ENV REGISTRATION_IS_CLOSED=$REGISTRATION_IS_CLOSED
-ENV CDN_URL=$CDN_URL
+ENV NEXT_PUBLIC_CDN_URL=$NEXT_PUBLIC_CDN_URL
 
 # Mount both the Turbo task cache and the Next.js incremental cache so unchanged
 # packages are not recompiled and Turbopack can reuse prior compilation artifacts.
 # On a cold build this has no effect; on subsequent builds with unchanged source
 # files it can cut compile time from 20+ min to a few minutes.
 #
-# Secrets are mounted rather than passed as build args. An ARG promoted to ENV is
-# written into the image's layer metadata, and CI exports every stage — builder
-# included — to the shared GitHub Actions cache via `cache-to: mode=max`. That made
-# these values recoverable from the cache. A secret mount exists only for the
-# lifetime of this RUN and never lands in a layer or the cache.
+# The build has no secrets. Server-side config (APP_URL, API keys, ...) is read from the
+# container's environment at runtime, so it never reaches a layer or the build cache.
 RUN --mount=type=cache,id=turbo-cache,target=/root/.cache/turbo \
     --mount=type=cache,id=nextjs-cache-dev,target=/workspace/apps/web/.next/cache \
-    --mount=type=secret,id=app_api_key \
-    --mount=type=secret,id=app_token \
-    --mount=type=secret,id=encryption_secret \
-    --mount=type=secret,id=geoapify_key \
-    APP_API_KEY="$(cat /run/secrets/app_api_key)" \
-    APP_TOKEN="$(cat /run/secrets/app_token)" \
-    ENCRYPTION_SECRET="$(cat /run/secrets/encryption_secret)" \
-    GEOAPIFY_KEY="$(cat /run/secrets/geoapify_key)" \
     pnpm turbo run build --filter=@repo/web...
 
 # Ensure public/ exists so the runner COPY succeeds even if the project has no static assets.
