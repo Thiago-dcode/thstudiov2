@@ -1,4 +1,4 @@
-import { LLMService } from '@repo/backend-lib/services/llm-service/base';
+import { LLMCompletionResponse, LLMService } from '@repo/backend-lib/services/llm-service/base';
 import { MAX_TAGS_MEDIA, MAX_TECHNIQUES_MEDIA } from '@repo/common-lib/constants/limits';
 import { QueueHelper, callback500ErrorMail } from '@repo/backend-lib/utils';
 import { openAiLLMConfig } from '@repo/backend-lib/config/llm';
@@ -21,6 +21,7 @@ import { FullService } from '@repo/common-lib/types/service';
 import { UserProfile } from '@repo/common-lib/types/user';
 import { mediaArtistNotesBlock } from './media-artist-notes';
 import { truncateSeoText } from '@repo/common-lib/utils/seo-text';
+import { contentModerationFormat, entityMetadataFormat, mediaMetadataFormat } from './ai-response-schemas';
 
 /**
  * `*_MAX` is the hard cap `sanitizeSeoText` enforces; `*_TARGET` is what the prompt asks for. The
@@ -42,6 +43,10 @@ const MEDIA_SEO_FILENAME_MAX = 100;
 
 /** App languages we generate SEO for, in one multilingual call. Matches i18n `LANGUAGE_CODE`. */
 const SEO_LOCALES: EnumType<'LANGUAGE_CODE'>[] = ['EN', 'ES', 'PT'];
+
+/** Structured Outputs schemas, built once so every call sends the identical (cacheable) schema. */
+const MEDIA_METADATA_FORMAT = mediaMetadataFormat(SEO_LOCALES);
+const ENTITY_METADATA_FORMAT = entityMetadataFormat(SEO_LOCALES);
 
 /** Minimal artist signals injected into entity SEO prompts so titles can lead with discipline + city. */
 type ArtistSeoContext = {
@@ -77,7 +82,7 @@ const mediaSignals = (m: MediaPortfolio) => ({
 
 /** Shared instruction block kept as a STABLE prefix so OpenAI prompt-caching can discount batch runs. */
 const SEO_SYSTEM_PROMPT =
-  'You are an SEO copywriter for an online art marketplace. You write metadata that ranks in Google (and Google Images) and also reads like art-world writing. You write it in every requested language. Output valid JSON only. No extra text.';
+  'You are an SEO copywriter for an online art marketplace. You write metadata that ranks in Google (and Google Images) and also reads like art-world writing. You write it in every requested language.';
 
 /**
  * Quality rules shared by media + entity prompts (kept identical so caching stays effective).
@@ -348,10 +353,6 @@ ${categoryLines.join(', AND\n')}.
 
       const notesBlock = mediaArtistNotesBlock(notes);
 
-      const localesShape = SEO_LOCALES.map(
-        (l) => `"${l}": { "seo_title": "", "seo_description": "", "seo_alt": "" }`,
-      ).join(', ');
-
       const result = await this.llmService.complete({
         messages: [
           { role: 'system', content: SEO_SYSTEM_PROMPT },
@@ -360,8 +361,7 @@ ${categoryLines.join(', AND\n')}.
             content: [
               {
                 type: 'text' as const,
-                text: `Analyze the ${subject} ONCE, then return valid JSON with EXACTLY this shape:
-        { "seo_filename": "", "category_ids": [], "translations": { ${localesShape} } }
+                text: `Analyze the ${subject} ONCE, then fill in every field.
 
         Field rules:
         - seo_filename: ≤${MEDIA_SEO_FILENAME_MAX} chars, lowercase, hyphens instead of spaces, only letters/numbers/"-"/"_", keyword-rich. LANGUAGE-NEUTRAL (universal/English terms) — ONE value shared by all locales.
@@ -385,6 +385,7 @@ ${categoryLines.join(', AND\n')}.
           },
         ],
         temperature: 0.4,
+        responseFormat: MEDIA_METADATA_FORMAT,
       });
 
       let seoFilename: string | null = null;
@@ -393,7 +394,7 @@ ${categoryLines.join(', AND\n')}.
       let matchesExpectedResponse = false;
 
       try {
-        const parsed = this.parseLlmJson(result.text);
+        const parsed = this.parseLlmJson(result);
 
         seoFilename = this.clamp(parsed.seo_filename ?? parsed.filename, MEDIA_SEO_FILENAME_MAX);
 
@@ -672,7 +673,7 @@ ${categoryLines.join(', AND\n')}.
    * A still is moderated as itself; a video is moderated as the frames sampled across it, since
    * a vision model cannot read an MP4. Both arrive here, which is why a single URL and an array
    * of them are equally valid input — every existing caller of {@link moderateContent} passes a
-   * bare string and needs no change. Chat Completions accepts many images in one message, so the
+   * bare string and needs no change. The Responses API accepts many images in one message, so the
    * frames of a video cost one request rather than one per frame.
    */
   private async _moderateContent(url: string | string[]) {
@@ -705,15 +706,14 @@ ${categoryLines.join(', AND\n')}.
       messages: [
         {
           role: 'system',
-          content: 'You are the content moderation and child-safety system of an online ART marketplace. You are zero-tolerance on exactly two things: (1) CSAM and any sexualization or exploitation of minors, (2) hard pornographic content. Everything else is judged as art: nudity, the human body, and difficult subject matter are normal here and are NOT violations by themselves. Rate what is actually visible — do not invent a violation from what an image could hypothetically be. Output valid JSON only. No extra text.',
+          content: 'You are the content moderation and child-safety system of an online ART marketplace. You are zero-tolerance on exactly two things: (1) CSAM and any sexualization or exploitation of minors, (2) hard pornographic content. Everything else is judged as art: nudity, the human body, and difficult subject matter are normal here and are NOT violations by themselves. Rate what is actually visible — do not invent a violation from what an image could hypothetically be.',
         },
         {
           role: 'user',
           content: [
             {
               type: 'text' as const,
-              text: `Analyze the ${isMultiFrame ? `${urls.length} images` : 'image'} and return valid JSON with exactly these fields:
-        ${JSON.stringify(EXPECTED_JSON)}
+              text: `Analyze the ${isMultiFrame ? `${urls.length} images` : 'image'} and return your verdict.
         SEVERITY SCALE (0–10)
         0      – Safe. No issues.
         1 – 2  – Minimal. Mild suggestive content, artistic nudity (paintings, sculptures, fine-art photography).
@@ -736,8 +736,7 @@ ${categoryLines.join(', AND\n')}.
         - reason: ≤120 chars, neutral explanation in English user friendly. Leave it empty when severity ≤ 6.${multiFrameRules}
 
         Base the decision ONLY on visible image content.
-        Ignore filename, metadata, and URL.
-        Return valid JSON only.`,
+        Ignore filename, metadata, and URL.`,
             },
             ...urls.map((imageUrl) => ({
               type: 'image_url' as const,
@@ -747,6 +746,7 @@ ${categoryLines.join(', AND\n')}.
         },
       ],
       temperature: 0.1,
+      responseFormat: contentModerationFormat,
     });
 
     let moderationData: Partial<ContentModerationFields> = {};
@@ -758,7 +758,7 @@ ${categoryLines.join(', AND\n')}.
     let verdictUsable = false;
 
     try {
-      const parsed = this.parseLlmJson(result.text);
+      const parsed = this.parseLlmJson(result);
 
       // Clamp severity to integer 0–10
       const rawSeverity = typeof parsed.severity === 'number'
@@ -811,17 +811,12 @@ ${categoryLines.join(', AND\n')}.
 
     try {
 
-      const localesShape = SEO_LOCALES.map(
-        (l) => `"${l}": { "seo_title": "", "seo_description": "" }`,
-      ).join(', ');
-
       const result = await this.llmService.complete({
         messages: [
           { role: 'system', content: SEO_SYSTEM_PROMPT },
           {
             role: 'user',
-            content: `Write SEO metadata for this ${entityLabel} in ALL languages and return valid JSON with EXACTLY this shape:
-        { "translations": { ${localesShape} } }
+            content: `Write SEO metadata for this ${entityLabel} in ALL languages.
 
         For EACH locale key (${SEO_LOCALES.join(', ')}), written IN THAT LANGUAGE:
         - seo_title: ≤${ENTITY_SEO_TITLE_TARGET} chars.
@@ -838,13 +833,14 @@ ${categoryLines.join(', AND\n')}.
           },
         ],
         temperature: 0.4,
+        responseFormat: ENTITY_METADATA_FORMAT,
       });
 
       let translations: SeoTranslation[] = [];
       let matchesExpectedResponse = false;
 
       try {
-        const parsed = this.parseLlmJson(result.text);
+        const parsed = this.parseLlmJson(result);
         translations = this.buildEntityTranslations(parsed.translations);
         matchesExpectedResponse = translations.some((t) => !!(t.seo_title || t.seo_description));
       } catch (err) {
@@ -926,7 +922,14 @@ ${categoryLines.join(', AND\n')}.
     return truncateSeoText(text, max);
   }
 
-  private parseLlmJson(text: string): Record<string, unknown> {
+  /**
+   * Structured Outputs guarantees schema-shaped JSON, except when the model refused (no JSON at
+   * all) or the reply was cut short (partial JSON) — both throw, so callers take their
+   * invalid-reply path. The fence stripping only matters for a provider without schema support.
+   */
+  private parseLlmJson({ text, refusal, incomplete }: LLMCompletionResponse): Record<string, unknown> {
+    if (refusal) throw new Error(`Model refused: ${refusal}`);
+    if (incomplete) throw new Error('Model reply was truncated');
     let jsonText = text.trim();
     if (jsonText.startsWith('```')) {
       jsonText = jsonText.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');

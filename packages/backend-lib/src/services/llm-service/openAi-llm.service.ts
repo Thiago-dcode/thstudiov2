@@ -1,9 +1,30 @@
-import { LLMService, LLMCompletionRequest, LLMCompletionResponse } from './llm.service';
+import { LLMService, LLMCompletionRequest, LLMCompletionResponse, LLMMessage } from './llm.service';
 import { OpenAILLMConfig } from './types';
 import OpenAI from 'openai';
+import type { ResponseInputItem, ResponseInputMessageContentList } from 'openai/resources/responses/responses';
 
 const isReasoningModel = (model: string): boolean =>
   /^(gpt-5|gpt-6|o\d)/.test(model);
+
+/**
+ * Our provider-neutral message → a Responses API input message (`input_text` / `input_image`).
+ * Assistant turns only accept output parts, so their text is flattened to a plain string, and an
+ * image part without a URL is dropped rather than sent as `null` (a 400).
+ */
+const toInputItem = (msg: LLMMessage): ResponseInputItem => {
+  if (typeof msg.content === 'string') return { type: 'message', role: msg.role, content: msg.content };
+  if (msg.role === 'assistant') {
+    return { type: 'message', role: msg.role, content: msg.content.map((part) => part.text ?? '').join('') };
+  }
+  return {
+    type: 'message',
+    role: msg.role,
+    content: msg.content.flatMap((part): ResponseInputMessageContentList => {
+      if (part.type !== 'image_url') return [{ type: 'input_text', text: part.text ?? '' }];
+      return part.image_url?.url ? [{ type: 'input_image', image_url: part.image_url.url, detail: 'auto' }] : [];
+    }),
+  };
+};
 
 export class OpenAILLMService extends LLMService {
   private client: OpenAI;
@@ -24,57 +45,73 @@ export class OpenAILLMService extends LLMService {
     return Promise.resolve();
   }
 
+  /**
+   * Responses API. With `responseFormat` the reply is constrained by Structured Outputs
+   * (`text.format` json_schema, strict), so it always matches the schema — except a refusal,
+   * which comes back as its own content part and is surfaced as `refusal` instead of `text`.
+   */
   public async complete(
     request: LLMCompletionRequest
   ): Promise<LLMCompletionResponse> {
-    const completion = await this.client.chat.completions.create({
+    const response = await this.client.responses.create({
       model: this.model,
-      messages: request.messages.map((msg) => ({
-        role: msg.role,
-        content: msg.content,
-      })) as any,
-      max_completion_tokens: request.maxTokens,
+      input: request.messages.map(toInputItem),
+      max_output_tokens: request.maxTokens,
       // Reasoning models (gpt-5.x, gpt-6.x, o-series) reject `temperature`, and
-      // their hidden reasoning tokens count against max_completion_tokens, so
+      // their hidden reasoning tokens count against max_output_tokens, so
       // keep effort low for these extraction-style calls.
       ...(isReasoningModel(this.model)
-        ? { reasoning_effort: 'low' as const }
+        ? { reasoning: { effort: 'low' as const } }
         : { temperature: request.temperature }),
+      ...(request.responseFormat && {
+        text: {
+          format: {
+            type: 'json_schema' as const,
+            name: request.responseFormat.name,
+            description: request.responseFormat.description,
+            schema: request.responseFormat.schema,
+            strict: true,
+          },
+        },
+      }),
+      // These are one-shot calls; nothing reads the response back from OpenAI later.
+      store: false,
     });
 
-    const choice = completion.choices[0];
-    if (!choice || !choice.message) {
-      throw new Error('No completion response from OpenAI');
+    if (response.error) {
+      throw new Error(`OpenAI response failed: ${response.error.message}`);
     }
 
-    // Handle cases where content might be null or in a different format
-    let text = choice.message.content || '';
-    
-    // Log warnings for non-normal finish reasons
-    if (choice.finish_reason === 'length') {
-      // Response was truncated, but we still return the partial content
-      console.warn('Response was truncated due to max_completion_tokens limit. Partial content returned.');
-    } else if (choice.finish_reason === 'content_filter') {
+    const incompleteReason = response.status === 'incomplete' ? response.incomplete_details?.reason : undefined;
+    if (incompleteReason === 'content_filter') {
       throw new Error('Response was filtered by content filter.');
-    } else if (!text) {
-      // Log the full choice for debugging if content is missing
-      console.warn('OpenAI response - choice:', JSON.stringify(choice, null, 2));
-      console.warn('OpenAI finish_reason:', choice.finish_reason);
-      if (choice.finish_reason === 'stop') {
-        throw new Error('Response completed but content is missing.');
-      }
+    }
+    if (incompleteReason) {
+      // Truncated (e.g. max_output_tokens): the partial text is returned, but it may not parse.
+      console.warn(`OpenAI response incomplete (${incompleteReason}). Partial content returned.`);
+    }
+
+    const refusal = response.output
+      .flatMap((item) => (item.type === 'message' ? item.content : []))
+      .find((part) => part.type === 'refusal')?.refusal;
+
+    const text = response.output_text ?? '';
+    if (!text && !refusal && !incompleteReason) {
+      console.warn('OpenAI response - output:', JSON.stringify(response.output, null, 2));
+      throw new Error('Response completed but content is missing.');
     }
 
     return {
-      text: text,
-      usage: completion.usage
+      text,
+      refusal,
+      incomplete: !!incompleteReason,
+      usage: response.usage
         ? {
-            promptTokens: completion.usage.prompt_tokens,
-            completionTokens: completion.usage.completion_tokens,
-            totalTokens: completion.usage.total_tokens,
+            promptTokens: response.usage.input_tokens,
+            completionTokens: response.usage.output_tokens,
+            totalTokens: response.usage.total_tokens,
           }
         : undefined,
     };
   }
 }
-

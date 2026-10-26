@@ -203,3 +203,58 @@ describe('AiService.moderateContent', () => {
     );
   });
 });
+
+describe('AiService structured outputs', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  /** Strict mode rejects any object that does not require every property and forbid extras. */
+  const assertStrict = (node: unknown): void => {
+    if (!node || typeof node !== 'object') return;
+    const schema = node as Record<string, unknown>;
+    if (schema.type === 'object') {
+      expect(schema.additionalProperties).toBe(false);
+      expect(schema.required).toEqual(Object.keys(schema.properties as object));
+    }
+    Object.values(schema).forEach(assertStrict);
+  };
+
+  it('asks for the media schema and parses the reply', async () => {
+    const { service, complete } = (() => {
+      const complete = jest.fn().mockResolvedValue(reply([1]));
+      return { service: AiService.instance({ complete } as unknown as LLMService), complete };
+    })();
+
+    await service.generateMediaMetadata('https://img/1.webp', CATEGORIES, META);
+
+    const { responseFormat } = complete.mock.calls[0][0];
+    expect(responseFormat.name).toBe('media_metadata');
+    expect(Object.keys(responseFormat.schema.properties.translations.properties)).toEqual(['EN', 'ES', 'PT']);
+    assertStrict(responseFormat.schema);
+  });
+
+  it('asks for the entity schema', async () => {
+    const complete = jest.fn().mockResolvedValue({ text: '{"translations":{}}', usage: undefined });
+    await AiService.instance({ complete } as unknown as LLMService).generateUserMetadata(
+      { name: 'Ana', surname: null, categories: [] } as never,
+      { user_id: 1 },
+    );
+
+    const { responseFormat } = complete.mock.calls[0][0];
+    expect(responseFormat.name).toBe('entity_metadata');
+    assertStrict(responseFormat.schema);
+  });
+
+  it('asks for the moderation schema, and fails closed when the model refuses', async () => {
+    const { QueueHelper } = jest.requireMock('@repo/backend-lib/utils');
+    const complete = jest.fn().mockResolvedValue({ text: '', refusal: "I can't help with that.", usage: undefined });
+
+    await expect(
+      AiService.instance({ complete } as unknown as LLMService).moderateContent('https://cdn.example.test/m.jpg', { user_id: 1 }),
+    ).rejects.toThrow('no usable verdict');
+
+    const { responseFormat } = complete.mock.calls[0][0];
+    expect(responseFormat.name).toBe('content_moderation');
+    assertStrict(responseFormat.schema);
+    expect(QueueHelper.createMediaModerationJob).not.toHaveBeenCalled();
+  });
+});
