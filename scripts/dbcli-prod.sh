@@ -15,10 +15,10 @@
 #
 # Differs from dbcli-dev.sh in three ways that matter on prod:
 #   1. compose.prod.yaml, not compose.dev.yaml.
-#   2. `run --rm` rather than `exec`, mirroring the migration step in deploy-prod.sh.
+#   2. `run --rm` rather than `exec`, mirroring the migration step in deploy-app.sh.
 #      The api service is scaled (api-1, api-2), so `exec api` is ambiguous, and a
 #      one-shot container needs no running instance to attach to.
-#   3. DB_HOST/DB_PORT are pinned to the compose network the same way deploy-prod.sh
+#   3. DB_HOST/DB_PORT are pinned to the compose network the same way deploy-app.sh
 #      pins them — the .env values are written for host-side tooling.
 #
 # Destructive subcommands prompt before running. Set DBCLI_YES=1 to skip the prompt

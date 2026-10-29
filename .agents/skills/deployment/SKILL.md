@@ -98,16 +98,18 @@ If they named `main` or `develop` and HEAD is a different branch, **stop and ask
 
 ## 5. Watch GitHub Actions (after every origin push)
 
-Workflow: `.github/workflows/ci-cd.yml` (`CI / CD`).
+Workflows (one per environment):
 
-- `push` to **`develop`** or **`main`** → `test`, then Docker build/push, then SSH deploy.
-- **`pull_request`** → `test` only.
-- Push to any other branch **does not** run this workflow unless a PR exists.
+- `.github/workflows/dev.yml` (`CI / Dev`): `push` to **`develop`** → `test`, then Docker build/push, then SSH deploy. **`pull_request`** (any base) → `test` only.
+- `.github/workflows/prod.yml` (`CI / Prod`): `push` to **`main`** → `test`, then Docker build/push, then SSH deploy, then the Cloudflare cache purge.
+- Push to any other branch **does not** run either workflow unless a PR exists.
 
-Identify the run (prefer the SHA just pushed):
+Identify the run (prefer the SHA just pushed). Use the workflow for the branch you pushed:
 
 ```powershell
-gh run list --workflow "CI / CD" --branch (git branch --show-current) --limit 5
+gh run list --workflow "CI / Dev" --branch develop --limit 5   # develop pushes
+gh run list --workflow "CI / Prod" --branch main --limit 5     # main pushes
+gh run list --workflow "CI / Dev" --branch (git branch --show-current) --limit 5   # PR branches
 ```
 
 If that is empty, check a PR:
@@ -143,8 +145,8 @@ Then follow **§6**.
    | Job | Typical cause | Action |
    | --- | --- | --- |
    | `test` | lint or unit tests | Reproduce with `pnpm deploy`, fix, commit, gate, push, watch |
-   | `build-and-push` / `build-and-push-prod` | Docker / image build | Fix Dockerfile or build context, same loop |
-   | `deploy` / `deploy-prod` | SSH, secrets, droplet script | **Stop.** Report the log. Do not keep pushing; this is usually infra |
+   | `build-and-push` | Docker / image build | Fix Dockerfile or build context, same loop |
+   | `deploy` | SSH, secrets, droplet script, or the prod Cloudflare purge step | **Stop.** Report the log. Do not keep pushing; this is usually infra |
 
 2. Fix in the repo when it is a code/lint/test/build failure.
 3. Run `pnpm deploy` again. Do not push until it passes.
@@ -167,6 +169,7 @@ Tell the user, in plain language:
 
 ## Related
 
-- `.github/workflows/ci-cd.yml` — jobs and branch triggers
+- `.github/workflows/dev.yml` and `.github/workflows/prod.yml` — jobs and branch triggers
+- `.github/actions/cloudflare-purge-cache/action.yml` — prod cache purge (domain and keys are inputs)
 - Root `package.json` script `deploy` — local lint + test + build
 - `.agents/skills/api-verification/SKILL.md` — package-scoped API gates during implementation (not a substitute for `pnpm deploy` before origin push)

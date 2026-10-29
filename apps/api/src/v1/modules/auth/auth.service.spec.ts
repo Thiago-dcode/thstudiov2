@@ -6,6 +6,13 @@ jest.mock('@repo/backend-lib/services/payment-service/stripe', () => ({
 jest.mock('@repo/common-lib/utils/generate-uuid', () => ({
   generateUUID: jest.fn(async () => 'public-uuid'),
 }));
+// The real lock talks to Redis, which unit tests don't run; without this mock the 2FA verify test
+// timed out at 30 s. Run the critical section directly. A plain function, not jest.fn: the
+// beforeEach calls jest.resetAllMocks(), which would clear a jest.fn implementation.
+jest.mock('src/common/utils/user-lock', () => ({
+  ...jest.requireActual('src/common/utils/user-lock'),
+  withUserLock: async (_key: string, _ttlMs: number, fn: () => Promise<unknown>) => fn(),
+}));
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';

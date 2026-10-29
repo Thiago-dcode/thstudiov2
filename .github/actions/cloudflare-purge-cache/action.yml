@@ -1,0 +1,70 @@
+name: Purge Cloudflare cache
+description: Purges one hostname from a Cloudflare zone's edge cache. Missing credentials warn and skip; a rejected or failed purge fails the calling job.
+
+inputs:
+  domain:
+    description: Hostname to purge, e.g. a11studio.com. Only this host is purged.
+    required: true
+  api-token:
+    description: Zone-scoped "Cache Purge" API token. Pass it from a secret.
+    required: false
+    default: ""
+  zone-id:
+    description: ID of the Cloudflare zone that serves the domain.
+    required: false
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    - name: Purge cache for ${{ inputs.domain }}
+      shell: bash
+      # Inputs go through env rather than being interpolated into the script text, so a
+      # value containing a quote or newline cannot break out of the shell.
+      env:
+        PURGE_DOMAIN: ${{ inputs.domain }}
+        CLOUDFLARE_API_TOKEN: ${{ inputs.api-token }}
+        CLOUDFLARE_ZONE_ID: ${{ inputs.zone-id }}
+      run: |
+        set -euo pipefail
+        if [ -z "${CLOUDFLARE_API_TOKEN:-}" ] || [ -z "${CLOUDFLARE_ZONE_ID:-}" ]; then
+          echo "::warning::Cloudflare API token or zone ID is not set; skipping the cache purge for $PURGE_DOMAIN."
+          exit 0
+        fi
+        # Purge by hostname only, so other hosts on the zone (api, media CDN) keep their cache.
+        # If the zone's plan rejects host purges, send {"purge_everything":true} instead.
+        # The api's on-change artist purges share this account's purge bucket, so an HTTP 429
+        # is retried up to 3 times, 30 s apart. Any other failure fails the step at once.
+        body=$(jq -cn --arg host "$PURGE_DOMAIN" '{hosts: [$host]}')
+        body_file=$(mktemp)
+        max_retries=3
+        attempt=0
+        while :; do
+          status=0
+          # The token is read from stdin by curl, never echoed or put on a command line.
+          http_code=$(printf 'Authorization: Bearer %s\n' "$CLOUDFLARE_API_TOKEN" | curl -sS \
+            --max-time 30 \
+            -o "$body_file" \
+            -w '%{http_code}' \
+            -X POST "https://api.cloudflare.com/client/v4/zones/${CLOUDFLARE_ZONE_ID}/purge_cache" \
+            -H @- \
+            -H "Content-Type: application/json" \
+            --data "$body") || status=$?
+          if [ "$status" -ne 0 ]; then
+            echo "::error::Cloudflare cache purge request failed (curl exit $status)."
+            exit 1
+          fi
+          if [ "$http_code" = "429" ] && [ "$attempt" -lt "$max_retries" ]; then
+            attempt=$((attempt + 1))
+            echo "::warning::Cloudflare purge rate-limited (HTTP 429); retry $attempt of $max_retries in 30 s."
+            sleep 30
+            continue
+          fi
+          break
+        done
+        if ! jq -e '.success == true' "$body_file" > /dev/null 2>&1; then
+          echo "::error::Cloudflare cache purge was rejected (HTTP $http_code)."
+          jq -c '.errors // .' "$body_file" || true
+          exit 1
+        fi
+        echo "Cloudflare cache purged for $PURGE_DOMAIN."

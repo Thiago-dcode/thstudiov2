@@ -28,7 +28,7 @@ certs
 # Runtime copies generated on the droplet from the canonical sources below.
 # Canonical, version-controlled sources (tracked):
 #   - dev.nginx/ & pro.nginx/                     (nginx config)
-#   - scripts/deploy-dev.sh & scripts/deploy-prod.sh
+#   - scripts/deploy-app.sh
 #   - scripts/a11studio-dev.service & scripts/a11studio-prod.service
 # On the droplet these are copied to the runtime names below, which stay ignored
 # so they never collide with `git pull` during deploys.

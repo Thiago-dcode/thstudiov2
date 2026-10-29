@@ -1,0 +1,66 @@
+name: SSH deploy
+description: Runs a deploy script on a server over SSH. The action is server-agnostic. The caller names the script and passes the connection secrets. The calling job must check out the repo first and set its own environment, which is where the secrets come from.
+
+inputs:
+  deploy-script:
+    description: Full path on the server to the script to run, e.g. /root/apps/a11studio/scripts/deploy-app.sh. The script locates its own repo root.
+    required: true
+  deploy-args:
+    description: Arguments passed to the script, split on spaces (e.g. "dev" or "prod --skip-migrate"). Do not put secrets here.
+    required: false
+    default: ""
+  ssh-host:
+    description: Server host name or IP.
+    required: true
+  ssh-user:
+    description: SSH user on the server.
+    required: true
+  ssh-private-key:
+    description: SSH private key for ssh-user. Pass it from a secret.
+    required: true
+  ghcr-token:
+    description: Token the server uses to pull images. Pass the run's GITHUB_TOKEN.
+    required: true
+  ghcr-user:
+    description: Account the GHCR login is for. Pass github.actor.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: SSH deploy
+      # Pinned to a commit SHA, not the mutable v1.0.3 tag: this action receives the
+      # root SSH private key for the server, so a retagged upstream release would
+      # hand over the host. Update deliberately, verifying the new SHA.
+      uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262 # v1.0.3
+      with:
+        host: ${{ inputs.ssh-host }}
+        username: ${{ inputs.ssh-user }}
+        key: ${{ inputs.ssh-private-key }}
+        # Deliberately a literal, not an input. A port number is not a secret, and storing one
+        # has two costs: GitHub masks every occurrence of the value in every log line (a secret
+        # of "22" redacts unrelated 22s), and a typo'd value surfaces only as
+        # `parse "***" as int` with nothing to inspect — exactly how the prod deploy failed on
+        # run 31087852716.
+        port: 22
+        script_stop: true
+        command_timeout: 15m
+        # Passed as env rather than interpolated into the script text: a secret containing a
+        # quote or newline would otherwise break out of the string and inject into a root shell.
+        envs: DEPLOY_SCRIPT,DEPLOY_ARGS,GHCR_TOKEN,GHCR_USER,DOCKER_IMAGE_TAG
+        script: |
+          set -eu
+          # Split on spaces without globbing, so no argument is expanded as a pattern.
+          read -ra args <<< "$DEPLOY_ARGS"
+          bash "$DEPLOY_SCRIPT" "${args[@]}"
+      env:
+        DEPLOY_SCRIPT: ${{ inputs.deploy-script }}
+        DEPLOY_ARGS: ${{ inputs.deploy-args }}
+        # The run's own GITHUB_TOKEN, not a stored PAT. It is minted per run and expires with
+        # it, so there is no shared long-lived credential to leak or to silently expire mid-flight.
+        GHCR_TOKEN: ${{ inputs.ghcr-token }}
+        GHCR_USER: ${{ inputs.ghcr-user }}
+        # The immutable tag this run just built, not the moving branch tag: another branch's
+        # build (its token also has packages: write) cannot swap the image between build and
+        # deploy. Compose prefers it over DOCKER_IMAGE_TAG in .env.
+        DOCKER_IMAGE_TAG: sha-${{ github.sha }}

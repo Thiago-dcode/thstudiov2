@@ -1,18 +1,21 @@
 #!/usr/bin/env bash
 # =============================================================================
-# deploy-prod.sh — TH Studio prod-server deployment script
+# deploy-app.sh — TH Studio deployment script for the dev and prod servers
 #
 # Usage:
-#   ./scripts/deploy-prod.sh [--skip-pull] [--skip-migrate]
+#   ./scripts/deploy-app.sh <dev|prod> [--skip-pull] [--skip-migrate]
+#
+# Environment:
+#   GHCR_USER, GHCR_TOKEN   Required unless --skip-pull. The server's docker logs in to
+#                           ghcr.io with them before pulling. The CI deploy action passes
+#                           them in the environment, never on the command line.
 #
 # Options:
-#   --skip-pull     Skip pulling prebuilt images from GHCR (use local images)
+#   --skip-pull     Skip the GHCR login and the pull; use images already on the host
 #   --skip-migrate  Skip DB migrations
 #
-# Images are built in GitHub Actions and published to GHCR. This script pulls
-# them on the droplet instead of compiling locally (see docs/deploy-ghcr.md).
-# This script is meant to run ON the production droplet.
-# Boot persistence handled by systemd (a11studio.service).
+# Images are built in GitHub Actions and published to GHCR (see docs/deploy-ghcr.md).
+# Boot persistence is handled by systemd (a11studio-<env>.service).
 # =============================================================================
 
 set -euo pipefail
@@ -29,10 +32,37 @@ success() { echo -e "${GREEN}[deploy]${NC} $*"; }
 warn()    { echo -e "${YELLOW}[deploy]${NC} $*"; }
 error()   { echo -e "${RED}[deploy]${NC} $*" >&2; }
 
+# ── Resolve target environment ────────────────────────────────────────────────
+TARGET="${1:-}"
+case "$TARGET" in
+  dev|prod) shift ;;
+  *)
+    error "Usage: $0 <dev|prod> [--skip-pull] [--skip-migrate]"
+    exit 1
+    ;;
+esac
+
+case "$TARGET" in
+  dev)
+    BRANCH=develop
+    COMPOSE_FILE_NAME=compose.dev.yaml
+    NGINX_SRC=dev.nginx
+    IMAGE_TAG_DEFAULT=develop
+    RENEW_CERTS_CMD="./scripts/renew-certs.sh dev"
+    ;;
+  prod)
+    BRANCH=main
+    COMPOSE_FILE_NAME=compose.prod.yaml
+    NGINX_SRC=pro.nginx
+    IMAGE_TAG_DEFAULT=main
+    RENEW_CERTS_CMD="./scripts/renew-certs.sh"
+    ;;
+esac
+
 # ── Resolve script / repo root ────────────────────────────────────────────────
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-COMPOSE_FILE="$REPO_ROOT/compose.prod.yaml"
+COMPOSE_FILE="$REPO_ROOT/$COMPOSE_FILE_NAME"
 COMPOSE="docker compose -f $COMPOSE_FILE"
 
 # ── Parse flags ───────────────────────────────────────────────────────────────
@@ -75,24 +105,25 @@ if ! grep -qE '^DOCKER_IMAGE_OWNER=.+$' "$REPO_ROOT/.env"; then
   exit 1
 fi
 
+info "Target    : $TARGET (branch $BRANCH)"
 info "Repo root : $REPO_ROOT"
 info "Compose   : $COMPOSE_FILE"
-info "Images    : ghcr.io/<DOCKER_IMAGE_OWNER>/a11studio-prod-*:${DOCKER_IMAGE_TAG:-main} (from .env)"
+info "Images    : ghcr.io/<DOCKER_IMAGE_OWNER>/a11studio-$TARGET-*:${DOCKER_IMAGE_TAG:-$IMAGE_TAG_DEFAULT} (from .env)"
 echo ""
 
 # ── Step 1: Git pull ──────────────────────────────────────────────────────────
-info "Step 1/6 — Pulling latest code from origin/main …"
+info "Step 1/6 — Pulling latest code from origin/$BRANCH …"
 cd "$REPO_ROOT"
 
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-if [[ "$CURRENT_BRANCH" != "main" ]]; then
-  warn "Current branch is '$CURRENT_BRANCH', not 'main'. Checking out main …"
-  git checkout main
+if [[ "$CURRENT_BRANCH" != "$BRANCH" ]]; then
+  warn "Current branch is '$CURRENT_BRANCH', not '$BRANCH'. Checking out $BRANCH …"
+  git checkout "$BRANCH"
 fi
 
 git fetch origin
 BEFORE=$(git rev-parse HEAD)
-git pull origin main
+git pull origin "$BRANCH"
 AFTER=$(git rev-parse HEAD)
 
 if [[ "$BEFORE" == "$AFTER" ]]; then
@@ -104,27 +135,27 @@ fi
 echo ""
 
 # ── Step 1b: Sync nginx config from the tracked source ────────────────────────
-# `compose.prod.yaml` mounts ./nginx, but the reviewed config lives in ./pro.nginx.
-# These used to be kept in sync by hand, so security changes to pro.nginx/ could sit
-# in git without ever reaching the running proxy. Copy on every deploy instead.
-info "Step 1b/6 — Syncing nginx config (pro.nginx → nginx) …"
-if [[ -d pro.nginx ]]; then
+# The compose file mounts ./nginx, but the reviewed config lives in ./$NGINX_SRC.
+# Copy on every deploy so security changes can't sit in git while the running proxy
+# keeps an older hand-copied config.
+info "Step 1b/6 — Syncing nginx config ($NGINX_SRC → nginx) …"
+if [[ -d "$NGINX_SRC" ]]; then
   # nginx refuses to start when an ssl_certificate file is missing, and the container is
   # force-recreated below — so syncing a config that points at a certificate not issued
   # yet would take the site down. Check every referenced cert first and abort before
-  # touching ./nginx (see scripts/renew-certs.sh for issuing them).
-  for cert in $(grep -hoE '/etc/letsencrypt/live/[^;[:space:]]+' pro.nginx/conf.d/*.conf | sort -u); do
+  # touching ./nginx.
+  for cert in $(grep -hoE '/etc/letsencrypt/live/[^;[:space:]]+' "$NGINX_SRC"/conf.d/*.conf | sort -u); do
     if ! $COMPOSE run --rm --no-deps --entrypoint test nginx -s "$cert"; then
-      error "Certificate $cert referenced by pro.nginx is not in the certbot_certs volume."
-      error "Issue it first: ./scripts/renew-certs.sh — aborting before nginx is changed."
+      error "Certificate $cert referenced by $NGINX_SRC is not in the certbot_certs volume."
+      error "Issue it first: $RENEW_CERTS_CMD — aborting before nginx is changed."
       exit 1
     fi
   done
   mkdir -p nginx
-  cp -r pro.nginx/. nginx/
+  cp -r "$NGINX_SRC"/. nginx/
   success "nginx config synced."
 else
-  warn "pro.nginx/ not found — leaving nginx/ untouched."
+  warn "$NGINX_SRC/ not found — leaving nginx/ untouched."
 fi
 echo ""
 
@@ -136,17 +167,21 @@ mkdir -p storage/logs
 chown -R 1000:1000 storage/logs || warn "Could not chown storage/logs — check file logging after deploy."
 echo ""
 
-# ── Step 2: Pull prebuilt images ──────────────────────────────────────────────
+# ── Step 2: Log in to GHCR and pull prebuilt images ───────────────────────────
 if [[ "$SKIP_PULL" == false ]]; then
-  info "Step 2/6 — Pulling prebuilt images from GHCR (api, worker, web) …"
+  : "${GHCR_USER:?GHCR_USER is not set — the deploy action must pass it (see docs/deploy-ghcr.md).}"
+  : "${GHCR_TOKEN:?GHCR_TOKEN is not set — the deploy action must pass it (see docs/deploy-ghcr.md).}"
+  info "Step 2/6 — Logging in to GHCR and pulling prebuilt images (api, worker, web) …"
+  # Piped, never passed as an argument, so the token stays out of the process list.
+  printf '%s' "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
   if ! $COMPOSE pull api worker web; then
     error "Failed to pull images from GHCR."
-    error "Ensure docker is logged in: docs/deploy-ghcr.md (Step 4)"
+    error "Check the GHCR token and package access: docs/deploy-ghcr.md"
     exit 1
   fi
   success "Images pulled."
 else
-  warn "Step 2/6 — Image pull skipped (--skip-pull)."
+  warn "Step 2/6 — GHCR login and image pull skipped (--skip-pull)."
 fi
 echo ""
 
