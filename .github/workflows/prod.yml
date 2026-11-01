@@ -158,7 +158,7 @@ jobs:
       # cached page references the previous build's /_next/static chunks and server-action IDs,
       # which are gone now. Runs only after the deploy above succeeded.
       - name: Purge Cloudflare cache
-        uses: ./.github/actions/cloudflare-purge-cache
+        uses: Thiago-dcode/gh-actions/.github/actions/cloudflare-purge-cache@main
         with:
           domain: a11studio.com
           api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
