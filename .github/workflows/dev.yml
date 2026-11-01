@@ -29,7 +29,9 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Run lint and tests
-        uses: ./.github/actions/run-tests
+        uses: Thiago-dcode/gh-actions/.github/actions/check-ci@v1
+        with:
+          package-manager: pnpm
 
   build-and-push:
     needs: test
