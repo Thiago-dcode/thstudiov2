@@ -43,16 +43,21 @@ env:
 permissions:
   contents: read
 
-# Deploy runs are exempt from cancellation so a half-applied deploy is never
-# interrupted by a newer push to main.
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false
+# Concurrency is set per job, not for the whole workflow, on purpose:
+#   - test and build-and-push cancel a superseded run, so only the newest push is built and a
+#     stale build never wastes runner minutes. A cancelled build also skips that run's deploy.
+#   - deploy is never cancelled: killing deploy-app.sh halfway (migrations, container
+#     recreation) would leave prod half-applied. It queues instead, and GitHub keeps only the
+#     newest pending deploy, so runs cannot pile up.
+# Workflow-level `cancel-in-progress: true` would cancel a running deploy too.
 
 jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    concurrency:
+      group: prod-test-${{ github.ref }}
+      cancel-in-progress: true
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -67,6 +72,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: prod
+    # One group per matrix leg, otherwise the api/web/worker jobs of the same run would cancel
+    # each other.
+    concurrency:
+      group: prod-build-${{ matrix.app }}-${{ github.ref }}
+      cancel-in-progress: true
     permissions:
       contents: read
       packages: write
@@ -163,6 +173,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment: prod
+    # Never cancelled; see the note above `jobs:`.
+    concurrency:
+      group: prod-deploy
+      cancel-in-progress: false
     # `packages: read` lets the run's own GITHUB_TOKEN pull the images this workflow
     # just pushed, which replaces the long-lived GHCR PAT entirely — see the login
     # line below.
