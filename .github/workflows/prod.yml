@@ -28,7 +28,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Run lint and tests
-        uses: Thiago-dcode/gh-actions/.github/actions/check-ci@v1
+        uses: Thiago-dcode/gh-actions/.github/actions/check-ci@631faa09833433292001a45e51ce3649da65d73b # v1
         with:
           package-manager: pnpm
 
@@ -158,7 +158,7 @@ jobs:
       # cached page references the previous build's /_next/static chunks and server-action IDs,
       # which are gone now. Runs only after the deploy above succeeded.
       - name: Purge Cloudflare cache
-        uses: Thiago-dcode/gh-actions/.github/actions/cloudflare-purge-cache@main
+        uses: Thiago-dcode/gh-actions/.github/actions/cloudflare-purge-cache@9029a50006934e98c37d76346f6bdc9ec9007ea7 # main on 2026-11-07
         with:
           domain: a11studio.com
           api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}

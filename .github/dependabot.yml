@@ -1,0 +1,44 @@
+# Dependabot version updates. Security updates (CVE fixes) are enabled separately in the repo
+# settings and are not limited by the rules here.
+#
+# Policy: weekly, grouped, minor/patch only, few open PRs at once. Major bumps are done by hand
+# on purpose (the TypeScript 6/7 split, Nest, Stripe and keyv are held back deliberately), so
+# version updates skip them; a security fix for a major still arrives as a security update.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: "*"
+        update-types: [version-update:semver-major]
+
+  - package-ecosystem: docker
+    directories:
+      - /apps/api
+      - /apps/web
+      - /apps/worker
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
+    ignore:
+      - dependency-name: "*"
+        update-types: [version-update:semver-major]
+
+  # Covers the workflows; the composite action in .github/actions/ssh-deploy is listed explicitly.
+  - package-ecosystem: github-actions
+    directories:
+      - /
+      - /.github/actions/ssh-deploy
+      - /.github/actions/cloudflare-purge-cache
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
