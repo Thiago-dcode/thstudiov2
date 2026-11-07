@@ -24,11 +24,11 @@
   },
   "devDependencies": {
     "@jest/globals": "30.5.2",
-    "@nestjs/testing": "^12.2.0",
+    "@nestjs/testing": "^12.3.3",
     "@repo/typescript-config": "workspace:*",
     "@types/jest": "30.0.0",
     "jest": "30.5.2",
-    "next": "^16.4.2",
+    "next": "^16.4.5",
     "ts-jest": "29.4.15",
     "typescript": "^6.0.3"
   },
