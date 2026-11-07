@@ -162,11 +162,7 @@ jobs:
       # which are gone now. Runs only after the deploy above succeeded.
       - name: Purge Cloudflare cache
         timeout-minutes: 5
-<<<<<<< HEAD
-        uses: Thiago-dcode/gh-actions/.github/actions/cloudflare-purge-cache@main
-=======
         uses: Thiago-dcode/gh-actions/.github/actions/cloudflare-purge-cache@9029a50006934e98c37d76346f6bdc9ec9007ea7 # main on 2026-11-07
->>>>>>> a2305508b89121ca6f59faa83b07c0d10e92e42e
         with:
           domain: a11studio.com
           api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
