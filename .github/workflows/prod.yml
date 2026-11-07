@@ -3,6 +3,35 @@ name: CI / Prod
 on:
   push:
     branches: [main]
+    # Deploy only when something that ends up in an image or on the server changes. Edits to
+    # .claude/, .agents/, docs, dev-only files (compose.dev/local, dev.nginx) or README never
+    # reach prod, so they must not rebuild three images and restart the stack.
+    #
+    # Keep in sync with what the build and deploy use:
+    #   images:  apps/*/Dockerfile COPY sources, .dockerignore, the pnpm/turbo root files
+    #   server:  deploy-app.sh `git pull`s the repo, so compose.prod.yaml, scripts/ and
+    #            pro.nginx/ take effect through this workflow
+    # A push that touches none of these starts no run; use "Run workflow" (workflow_dispatch)
+    # to force one.
+    paths:
+      - apps/**
+      - packages/**
+      - patches/**
+      - package.json
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - turbo.json
+      - tsconfig.json
+      - .npmrc
+      - .dockerignore
+      - compose.prod.yaml
+      - scripts/**
+      - pro.nginx/**
+      - .github/workflows/prod.yml
+      - .github/actions/**
+  # Manual "Run workflow" button / `gh workflow run prod.yml --ref main`. The prod environment
+  # only accepts deployments from main, so running it on another branch is refused.
+  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
