@@ -27,8 +27,8 @@ on:
       - compose.prod.yaml
       - scripts/**
       - pro.nginx/**
-      - .github/workflows/prod.yml
-      - .github/actions/**
+    # .github/ is deliberately not listed: editing a workflow or action never starts a deploy.
+    # After changing one, run the workflow by hand if you want it exercised.
   # Manual "Run workflow" button / `gh workflow run prod.yml --ref main`. The prod environment
   # only accepts deployments from main, so running it on another branch is refused.
   workflow_dispatch:
