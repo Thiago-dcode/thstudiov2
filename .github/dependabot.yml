@@ -15,6 +15,11 @@ updates:
     groups:
       minor-and-patch:
         update-types: [minor, patch]
+      # One PR per run for all security fixes instead of one PR each. Every PR that touches
+      # pnpm-lock.yaml conflicts with the next, and each merge to main redeploys prod.
+      security:
+        applies-to: security-updates
+        patterns: ["*"]
     ignore:
       - dependency-name: "*"
         update-types: [version-update:semver-major]
