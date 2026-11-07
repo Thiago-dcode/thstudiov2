@@ -16,12 +16,12 @@
     "@repo/common-lib": "workspace:*",
     "@repo/frontend-lib": "workspace:*",
     "@repo/ui": "workspace:*",
-    "better-auth": "1.7.12",
+    "better-auth": "1.7.17",
     "date-fns": "^4.4.0",
-    "dotenv": "^18.0.8",
+    "dotenv": "^18.0.9",
     "embla-carousel-react": "^8.6.0",
-    "lucide-react": "^1.61.0",
-    "next": "16.4.2",
+    "lucide-react": "^1.68.0",
+    "next": "16.4.5",
     "next-intl": "^4.14.9",
     "react": "19.3.1",
     "react-dom": "19.3.1",
@@ -31,13 +31,13 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.6.2",
+    "@biomejs/biome": "2.6.5",
     "@repo/typescript-config": "workspace:*",
-    "@tailwindcss/postcss": "^4.3.3",
-    "@types/node": "^26.6.5",
+    "@tailwindcss/postcss": "^4.3.4",
+    "@types/node": "^26.6.6",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
-    "tailwindcss": "^4.3.3",
+    "tailwindcss": "^4.3.4",
     "typescript": "^7.0.2"
   }
 }
