@@ -15,7 +15,7 @@
 # port-80 vhosts from the certbot_www volume, so nginx must be running.
 #
 # Renewal cron (twice a day, as Let's Encrypt recommends), e.g. for prod:
-#   17 3,15 * * * cd /root/apps/a11studio && ./scripts/renew-certs.sh >> storage/logs/certbot.log 2>&1
+#   17 3,15 * * * cd /opt/a11studio && ./scripts/renew-certs.sh >> storage/logs/certbot.log 2>&1
 # =============================================================================
 
 set -euo pipefail
