@@ -282,9 +282,20 @@ else
 fi
 
 # ── Cleanup ──────────────────────────────────────────────────────────────────
+# Every deploy pulls three new sha-<commit> images, and `prune -f` only removes untagged ones,
+# so old builds piled up on disk. `-a` also removes tagged images that no container uses (the
+# running stack is never touched). The 48h window keeps last deploy's images so a rollback
+# needs no GHCR pull. Only prune after a healthy smoke test, and never fail the deploy over it.
+# Volumes are deliberately not pruned: a stopped stack's data lives there.
 info "Cleaning up unused images …"
-docker image prune -f >/dev/null
-success "Cleanup done."
+if [[ "$WEB_STATUS" == "200" && "$API_STATUS" == "200" ]]; then
+  docker image prune -a -f --filter "until=48h" >/dev/null || warn "Image prune failed (ignored)."
+  docker builder prune -f --filter "until=48h" >/dev/null || warn "Build cache prune failed (ignored)."
+  success "Cleanup done."
+else
+  docker image prune -f >/dev/null || true
+  warn "Smoke test not healthy — kept tagged images for rollback."
+fi
 
 echo ""
 success "Deploy complete."
