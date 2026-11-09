@@ -37,11 +37,10 @@ updates:
       - dependency-name: "*"
         update-types: [version-update:semver-major]
 
-  # Covers the workflows; the composite action in .github/actions/ssh-deploy is listed explicitly.
+  # Covers the workflows.
   - package-ecosystem: github-actions
     directories:
       - /
-      - /.github/actions/ssh-deploy
       - /.github/actions/cloudflare-purge-cache
     schedule:
       interval: weekly
