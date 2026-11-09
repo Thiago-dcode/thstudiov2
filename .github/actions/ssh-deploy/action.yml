@@ -32,7 +32,7 @@ runs:
       # Pinned to a commit SHA, not the mutable v1.0.3 tag: this action receives the
       # server's deploy SSH key, which can run the deploy script as root, so a retagged
       # upstream release could abuse it. Update deliberately, verifying the new SHA.
-      uses: appleboy/ssh-action@029f5b4aeeeb58fdfe1410a5d17f967dacf36262 # v1.0.3
+      uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
       with:
         host: ${{ inputs.ssh-host }}
         username: ${{ inputs.ssh-user }}
