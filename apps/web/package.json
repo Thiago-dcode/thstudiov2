@@ -16,7 +16,7 @@
     "@repo/common-lib": "workspace:*",
     "@repo/frontend-lib": "workspace:*",
     "@repo/ui": "workspace:*",
-    "better-auth": "1.7.17",
+    "better-auth": "1.7.18",
     "date-fns": "^4.4.0",
     "dotenv": "^18.0.9",
     "embla-carousel-react": "^8.6.0",

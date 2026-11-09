@@ -50,8 +50,8 @@
     "./services/payment-service/paypal": "./dist/src/services/payment-service/paypal/paypal.payment.service.js"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "3.1162.0",
-    "@aws-sdk/s3-request-presigner": "3.1162.0",
+    "@aws-sdk/client-s3": "3.1163.0",
+    "@aws-sdk/s3-request-presigner": "3.1163.0",
     "@paypal/paypal-server-sdk": "^2.5.0",
     "@repo/common-lib": "workspace:*",
     "@types/ejs": "^3.1.5",
