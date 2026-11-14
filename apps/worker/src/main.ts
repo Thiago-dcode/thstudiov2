@@ -10,7 +10,7 @@ import {
     MEDIA_THUMBNAIL_QUEUE,
 } from '@repo/common-lib/constants/queues';
 import { DatabaseConfig } from '@repo/common-lib/types/database';
-import { init, killClient } from '@repo/database';
+import { getClient, init, killClient } from '@repo/database';
 import { Job, Queue, Worker } from 'bullmq';
 import express from 'express';
 import { BackupProcessor } from './processors/backup.processor';
@@ -106,11 +106,71 @@ const createWorkers = (connection: Connection) =>
         ),
     );
 
-const startHealthServer = (port: number | string, redisUrl: string) => {
+/** Upper bound for each dependency probe, so a hung connection fails the check instead of stalling it. */
+const HEALTH_CHECK_TIMEOUT_MS = 3000;
+
+/** Rejects if `probe` has not settled within `ms`; always clears its timer. */
+async function withTimeout<T>(probe: Promise<T>, ms: number, label: string): Promise<T> {
+    let timer: NodeJS.Timeout | undefined;
+    try {
+        return await Promise.race([
+            probe,
+            new Promise<never>((_, reject) => {
+                timer = setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms);
+            }),
+        ]);
+    } finally {
+        clearTimeout(timer);
+    }
+}
+
+type HealthCheck = 'ok' | 'fail';
+
+/**
+ * Probes what the worker actually needs to do its job: Redis (where it pulls jobs from),
+ * Postgres (where processors write results) and its own BullMQ workers still consuming.
+ * Failure detail is logged, never returned: this answers probes, it is not a debugging API.
+ */
+async function runHealthChecks(workers: Worker[]): Promise<Record<'redis' | 'database' | 'workers', HealthCheck>> {
+    const probe = async (label: string, fn: () => Promise<unknown>): Promise<HealthCheck> => {
+        try {
+            await withTimeout(fn(), HEALTH_CHECK_TIMEOUT_MS, label);
+            return 'ok';
+        } catch (error) {
+            console.error(`[worker] health: ${label} check failed:`, error instanceof Error ? error.message : error);
+            return 'fail';
+        }
+    };
+
+    const [redis, database, running] = await Promise.all([
+        probe('redis', async () => {
+            // The worker's own connection, not a side channel. `status` alone is not enough: it stays
+            // 'ready' while the socket is open, so a frozen Redis (paused, stuck in a long script)
+            // still reads 'ready'. It is the fast path; the read below proves Redis actually answers.
+            const client = await workers[0]?.backend.client;
+            if (!client) throw new Error('no worker redis client');
+            if (client.status !== 'ready') throw new Error(`redis connection is "${client.status}"`);
+            await client.get('worker:health-probe'); // read-only round trip on a key that never exists
+        }),
+        probe('database', () => getClient().query('SELECT 1')),
+        probe('workers', async () => {
+            if (workers.length === 0 || !workers.every((worker) => worker.isRunning())) {
+                throw new Error('a BullMQ worker is not running');
+            }
+        }),
+    ]);
+
+    return { redis, database, workers: running };
+}
+
+const startHealthServer = (port: number | string, redisUrl: string, workers: Worker[]) => {
     const app = express();
 
-    app.get('/health', (_req, res) => {
-        res.json({ status: 'ok', service: 'worker' });
+    app.get('/health', async (_req, res) => {
+        const checks = await runHealthChecks(workers);
+        const healthy = Object.values(checks).every((check) => check === 'ok');
+        // 503, not 200: the compose healthcheck treats any non-ok response as unhealthy.
+        res.status(healthy ? 200 : 503).json({ status: healthy ? 'ok' : 'unhealthy', service: 'worker', checks });
     });
 
     return app.listen(port, () => {
@@ -135,7 +195,7 @@ async function bootstrap() {
     await scheduleDatabaseBackup(connection);
 
     const workers = createWorkers(connection);
-    const server = startHealthServer(process.env.WORKER_PORT || 8081, redisUrl);
+    const server = startHealthServer(process.env.WORKER_PORT || 8081, redisUrl, workers);
 
     async function shutdown() {
         console.log('[worker] shutting down...');
