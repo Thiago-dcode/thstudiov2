@@ -183,9 +183,8 @@ services:
     # inside the container and lost on recreate, which left a media failure undiagnosable.
     volumes:
       - ./storage/logs:/workspace/storage/logs
-    # Bind the worker health port to localhost only - not exposed publicly.
-    ports:
-      - "127.0.0.1:${WORKER_HOST_PORT:-8081}:8081"
+    # No published port: the worker takes no inbound traffic (it pulls jobs from Redis).
+    # Its /health endpoint is only probed by the healthcheck below, from inside the container.
     depends_on:
       postgres:
         condition: service_healthy
