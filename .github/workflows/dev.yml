@@ -115,12 +115,8 @@ jobs:
       contents: read
       packages: read
     steps:
-      # The local action below is loaded from the repo, so it must be checked out first.
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
       - name: SSH deploy
-        uses: ./.github/actions/ssh-deploy
+        uses: Thiago-dcode/gh-actions/.github/actions/ssh-deploy@738138213ed2142b61418c3e06c10a4e51ddaa0b # v2
         with:
           deploy-script: ${{ secrets.SSH_DEPLOY_DIR }}/scripts/deploy-app.sh
           deploy-args: dev
