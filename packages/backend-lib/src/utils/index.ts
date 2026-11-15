@@ -47,3 +47,4 @@ export {
     logPermanentJobFailure,
     redactJobData,
 } from './job-trace';
+export { withTimeout } from './with-timeout';

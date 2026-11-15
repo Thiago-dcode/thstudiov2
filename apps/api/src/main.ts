@@ -10,6 +10,7 @@ import { spawn } from 'child_process';
 import { FactoryLogService } from '@repo/backend-lib/services/log-service';
 import { API_ERROR_CHANNEL, logConfig } from '@repo/backend-lib/config/logging';
 import { RedisIoAdapter } from './common/adapters/redis-io.adapter';
+import { ApiHealthService } from './common/health/api-health.service';
 
 const bootstrapLogger = FactoryLogService.createLogService('file', {
   channel: 'api.bootstrap',
@@ -139,6 +140,19 @@ async function bootstrap() {
 
   expressApp.get('/', (_, res) => {
     res.json({ status: 'ok' });
+  });
+
+  // The docker healthcheck. Internal only: nginx proxies /api/v1/, /socket.io/ and `= /`, and
+  // answers 444 for everything else. Detail is logged on the `health` channel, never returned.
+  const healthService = app.get(ApiHealthService);
+  expressApp.get('/health', async (_, res) => {
+    try {
+      const { healthy, checks } = await healthService.check();
+      // 503, not 200: the compose healthcheck treats any non-ok response as unhealthy.
+      res.status(healthy ? 200 : 503).json({ status: healthy ? 'ok' : 'unhealthy', service: 'api', checks });
+    } catch {
+      res.status(503).json({ status: 'unhealthy', service: 'api' });
+    }
   });
 
   await app.listen(port, () => {
