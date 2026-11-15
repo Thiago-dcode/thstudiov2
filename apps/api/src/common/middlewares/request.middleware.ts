@@ -29,9 +29,10 @@ const AVAILABLE_LANGUAGES = ENUMS.LANGUAGE_CODE;
 export const ACCESS_LOG_CHANNEL = 'api.access' as const;
 /**
  * Paths whose successful requests write no access line. The docker healthcheck
- * (`compose.prod.yaml`) polls `GET /` every 30 s per replica; a failing `/` is still logged.
+ * (`compose.prod.yaml`) polls `GET /health` every 30 s per replica, and external uptime monitors
+ * poll `GET /`; a failing request on either is still logged.
  */
-export const ACCESS_LOG_SKIP_PATHS: ReadonlySet<string> = new Set(['/']);
+export const ACCESS_LOG_SKIP_PATHS: ReadonlySet<string> = new Set(['/', '/health']);
 
 @Injectable()
 export class RequestMiddleware implements NestMiddleware {

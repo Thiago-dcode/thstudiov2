@@ -51,6 +51,8 @@ export function statusClassOf(code: unknown): StatusClass | null {
 export abstract class LogService {
     protected static type: LogServiceDriver;
     private static pendingLogs: (() => Promise<void>)[] = [];
+    /** Batches being written right now, settled or not. Read only by `flushAndSettle()`. */
+    private static inFlight = new Set<Promise<void>>();
 
     protected readonly config: LogConfig;
 
@@ -78,7 +80,22 @@ export abstract class LogService {
      */
     public static async flush(): Promise<void> {
         const batch = LogService.pendingLogs.splice(0);
-        await Promise.all(batch.map(cb => cb()));
+        const run = Promise.all(batch.map(cb => cb()));
+        const settled = run.then(() => undefined, () => undefined);
+        LogService.inFlight.add(settled);
+        void settled.then(() => LogService.inFlight.delete(settled));
+        await run;
+    }
+
+    /**
+     * Flushes, then also waits for flushes other callers already started. A `critical` line starts
+     * its own flush (FileLogService), which takes the line before a later `flush()` can see it, so
+     * `flush()` alone can return before the alert mail is enqueued. Use this before `process.exit`.
+     * Never rejects.
+     */
+    public static async flushAndSettle(): Promise<void> {
+        await LogService.flush().catch(() => undefined);
+        await Promise.all([...LogService.inFlight]);
     }
 
     /**

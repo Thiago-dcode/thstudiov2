@@ -10,7 +10,7 @@ import { DatabaseConfig } from '@repo/common-lib/types/database';
 import { getClient, init, killClient } from '@repo/database';
 import { Queue, Worker } from 'bullmq';
 import express from 'express';
-import { logPermanentJobFailure } from '@repo/backend-lib/utils';
+import { logPermanentJobFailure, withTimeout } from '@repo/backend-lib/utils';
 import { jobResolver, runWorkerJob } from './job-runner';
 
 /**
@@ -87,21 +87,6 @@ const createWorkers = (connection: Connection) =>
 
 /** Upper bound for each dependency probe, so a hung connection fails the check instead of stalling it. */
 const HEALTH_CHECK_TIMEOUT_MS = 3000;
-
-/** Rejects if `probe` has not settled within `ms`; always clears its timer. */
-async function withTimeout<T>(probe: Promise<T>, ms: number, label: string): Promise<T> {
-    let timer: NodeJS.Timeout | undefined;
-    try {
-        return await Promise.race([
-            probe,
-            new Promise<never>((_, reject) => {
-                timer = setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms);
-            }),
-        ]);
-    } finally {
-        clearTimeout(timer);
-    }
-}
 
 type HealthCheck = 'ok' | 'fail';
 

@@ -219,6 +219,22 @@ describe('RequestMiddleware', () => {
     expect(flush).not.toHaveBeenCalled();
   });
 
+  it('AC-5: successful GET /health is skipped, a failing /health is still logged', async () => {
+    expect(ACCESS_LOG_SKIP_PATHS.has('/health')).toBe(true);
+    const ok = setup();
+    const okRes = makeRes({ statusCode: 200 });
+    await run(ok.middleware, makeReq({ originalUrl: '/health', route: { path: '/health' } }), okRes);
+    okRes.emit('close');
+    expect(ok.fake.info).not.toHaveBeenCalled();
+    expect(ok.flush).not.toHaveBeenCalled();
+
+    const bad = setup();
+    const badRes = makeRes({ statusCode: 503 });
+    await run(bad.middleware, makeReq({ originalUrl: '/health', route: { path: '/health' } }), badRes);
+    badRes.emit('close');
+    expect(bad.fake.error.mock.calls.length + bad.fake.warn.mock.calls.length).toBeGreaterThan(0);
+  });
+
   it('AC-17: skip also applies when / carries a query string', async () => {
     const { middleware, fake } = setup();
     const res = makeRes();

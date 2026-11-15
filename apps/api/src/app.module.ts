@@ -64,6 +64,7 @@ import { LayoutModule } from './v1/modules/layouts/layout.module';
 import { SitemapModule } from './v1/modules/sitemap/sitemap.module';
 import { IndexNowModule } from './v1/modules/indexnow/indexnow.module';
 import { EdgeCacheModule } from './v1/modules/edge-cache/edge-cache.module';
+import { HealthModule } from './common/health/health.module';
 /** Feature modules mounted at `api/v1/*` (not under `admin/`). */
 const API_V1_MODULES = [
   AuthModule,
@@ -116,6 +117,8 @@ const ALL_APP_MODULES = [
   AccountDeletionModule,
   /** Cloudflare purges of an artist's cached public pages when they change (queue worker). */
   EdgeCacheModule,
+  /** Internal `GET /health` (main.ts), the queue-consumer watchdog and the stuck-job alert. No routes. */
+  HealthModule,
   ServicesModule,
   UserExtraDataModule,
   // Test routes: `ProdGuard` already closes them in production; leaving the module out there
