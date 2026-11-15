@@ -159,21 +159,12 @@ jobs:
       contents: read
       packages: read
     steps:
-      # Only for the local ./.github/actions/wireguard action; drop this step once it moves
-      # to Thiago-dcode/gh-actions.
-      - name: Checkout actions
-        if: vars.WG_ENDPOINT != ''
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          sparse-checkout: .github/actions
-          persist-credentials: false
-
       # The deploy SSHes over the tunnel, so SSH_HOST must be the server's tunnel IP while this
       # is on. Opt-in: with no WG_ENDPOINT variable on the prod environment, the deploy goes
       # straight to SSH_HOST as before.
       - name: Connect WireGuard
         if: vars.WG_ENDPOINT != ''
-        uses: ./.github/actions/wireguard
+        uses: Thiago-dcode/gh-actions/.github/actions/wireguard@9610307e5f3ff7fa16bb6be2dd34fe39fd95943c # v2.1.0
         with:
           private-key: ${{ secrets.WG_PRIVATE_KEY }}
           preshared-key: ${{ secrets.WG_PRESHARED_KEY }}
