@@ -229,8 +229,11 @@ describe('UserService.handleNewUserEvent', () => {
     await expect(service.handleNewUserEvent(event as never)).rejects.toBe(reachedOnboarding);
 
     expect(logService.error).toHaveBeenCalledWith(
-      expect.stringContaining('username cache clear failed'),
-      expect.any(Error),
+      'Username cache clear failed for new user',
+      expect.objectContaining({ error_name: 'Error' }),
+      expect.objectContaining({ operation: 'new-user' }),
     );
+    // Per-call operation: the shared DI logger is never renamed.
+    expect(logService.name).not.toHaveBeenCalled();
   });
 });

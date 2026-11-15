@@ -56,7 +56,7 @@ public async  connect(){
     } catch (error) {
         this.authData = null;
         console.log(`PAYPAL CONNECTION ERROR`, error);
-        this.log.channel('paypal').error(`${error instanceof Error? error.name:''} ERROR CONNECTING TO PAYPAL `,{
+        this.log.error(`${error instanceof Error? error.name:''} ERROR CONNECTING TO PAYPAL `,{
             error: error instanceof Error ? error.message: '',
         });
         

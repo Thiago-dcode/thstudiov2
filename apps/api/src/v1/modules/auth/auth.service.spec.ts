@@ -100,7 +100,7 @@ describe('AuthService', () => {
         { provide: InvitationLinkService, useValue: invitationLinkService },
         { provide: UserBenefitService, useValue: { create: jest.fn() } },
         { provide: WaitListService, useValue: waitListService },
-        { provide: LogService, useValue: { info: jest.fn(), error: jest.fn() } },
+        { provide: LogService, useValue: { info: jest.fn(), warn: jest.fn(), error: jest.fn() } },
         { provide: UsernameHistoryRepository, useValue: usernameHistoryRepository },
       ],
     }).compile();

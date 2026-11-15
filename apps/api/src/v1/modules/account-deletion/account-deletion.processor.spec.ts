@@ -31,7 +31,7 @@ describe('AccountDeletionProcessor', () => {
   const helpers = { deleteManyCached: jest.fn() };
   const mailService = { sendAsync: jest.fn() };
   const warningMail = { setData: jest.fn((data) => ({ data })) };
-  const logger = { info: jest.fn(), warn: jest.fn(), error: jest.fn(), name: jest.fn(), flushAsync: jest.fn() };
+  const logger = { info: jest.fn(), warn: jest.fn(), error: jest.fn(), critical: jest.fn(), name: jest.fn(), flushAsync: jest.fn() };
   const usernameHistoryRepository = { findReservedByUser: jest.fn() };
   const eventEmitter = { emit: jest.fn() };
 
@@ -134,7 +134,11 @@ describe('AccountDeletionProcessor', () => {
       await expect(run(JOB_DELETE_USER_ACCOUNT)).resolves.toEqual({ deleted: true });
 
       expect(userRepository.hardDeleteById).toHaveBeenCalledWith(7, 15);
-      expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('pool exhausted'));
+      expect(logger.warn).toHaveBeenCalledWith(
+        'Could not read the reserved usernames for the edge purge',
+        expect.objectContaining({ error_message: expect.stringContaining('pool exhausted') }),
+        expect.objectContaining({ operation: 'hard-delete' }),
+      );
       expect(eventEmitter.emit).toHaveBeenCalledWith(
         ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
         expect.objectContaining({ userId: 7, usernames: ['ana'] }),
@@ -161,6 +165,30 @@ describe('AccountDeletionProcessor', () => {
       expect(userRepository.hardDeleteById).toHaveBeenCalledWith(7, 15);
     });
 
+    it('AC-28: logs one "Account payments cancelled" with the outcome flags and no ids or emails in the fields', async () => {
+      userRepository.getDeletionState.mockResolvedValue(state({ warned: true, due: true }));
+      planSubscriptionsRepository.findActiveSubscription.mockResolvedValue({ stripe_id: 'sub_1', paypal_id: null });
+
+      await run(JOB_DELETE_USER_ACCOUNT);
+
+      const calls = logger.info.mock.calls.filter((c) => c[0] === 'Account payments cancelled');
+      expect(calls).toHaveLength(1);
+      expect(calls[0][1]).toEqual({ stripe_subscription_cancelled: true, stripe_customer_deleted: true, paypal_cancelled: false });
+      expect(calls[0][2]).toEqual({ operation: 'hard-delete' });
+      expect(JSON.stringify(calls)).not.toMatch(/ana@example\.com|sub_1|cus_1/);
+    });
+
+    it('AC-28: a missing Stripe subscription is reported as not cancelled', async () => {
+      userRepository.getDeletionState.mockResolvedValue(state({ warned: true, due: true }));
+      planSubscriptionsRepository.findActiveSubscription.mockResolvedValue({ stripe_id: 'sub_1', paypal_id: null });
+      (stripe.subscriptions.cancel as jest.Mock).mockRejectedValueOnce({ code: 'resource_missing' });
+
+      await run(JOB_DELETE_USER_ACCOUNT);
+
+      const call = logger.info.mock.calls.find((c) => c[0] === 'Account payments cancelled')!;
+      expect(call[1]).toMatchObject({ stripe_subscription_cancelled: false, stripe_customer_deleted: true });
+    });
+
     it('treats an already-cancelled Stripe subscription as done', async () => {
       userRepository.getDeletionState.mockResolvedValue(state({ warned: true, due: true }));
       planSubscriptionsRepository.findActiveSubscription.mockResolvedValue({ stripe_id: 'sub_1', paypal_id: null });
@@ -175,7 +203,11 @@ describe('AccountDeletionProcessor', () => {
       paypalCancel.mockResolvedValue(null);
 
       await expect(run(JOB_DELETE_USER_ACCOUNT)).resolves.toEqual({ deleted: true });
-      expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('I-123'));
+      expect(logger.critical).toHaveBeenCalledWith(
+        'PayPal subscription of deleted user could not be cancelled; check it manually',
+        expect.objectContaining({ paypal_subscription_id: 'I-123' }),
+        expect.objectContaining({ operation: 'hard-delete' }),
+      );
     });
 
     it('refuses a malformed public_id instead of widening the storage delete', async () => {

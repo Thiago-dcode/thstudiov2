@@ -1,5 +1,8 @@
 #!/usr/bin/env ts-node
 
+// First: every log line of this process goes to `dbcli/<date>.log`.
+import './log-process';
+import { audited } from './dbcli-audit';
 import { Command } from 'commander';
 import { migrate } from '../lib/scripts/migrate';
 import { createMigration } from '../lib/scripts/create-migration';
@@ -199,17 +202,17 @@ program
 program
   .command('migrate')
   .description('Migrate the database')
-  .action(() => {
+  .action(audited('migrate', () => {
     // Use positional argument or option, with positional taking precedence
     migrate();
-  });
+  }));
 
 program
   .command('rollback')
   .description('Rollback database migrations')
   .option('-s, --steps <number>', 'Number of migrations to rollback')
   .option('-a, --all', 'Rollback all migrations')
-  .action(async (options) => {
+  .action(audited('rollback', async (options) => {
     const _steps = options.steps ? parseInt(options.steps) : null;
     const _all = options.all;
     const env = getConfigValue('app').env.toLowerCase();
@@ -236,14 +239,14 @@ program
       }
     }
     await rollback(_steps);
-  });
+  }));
 
 program
   .command('migrate:refresh')
   .description(
     'Rollback all migrations, then migrate (password required; destructive)',
   )
-  .action(async () => {
+  .action(audited('migrate:refresh', async () => {
     await promptDestructivePassword();
     Logger.warn(
       '⚠️  This will rollback ALL migrations (down), then run migrate (up). All data in migrated tables may be lost.',
@@ -259,14 +262,14 @@ program
     } catch {
       process.exit(1);
     }
-  });
+  }));
 
 program
   .command('db:fresh')
   .description(
     'migrate:refresh, clean:s3, clean:stripe, then db:seed (main). Password required; destructive.',
   )
-  .action(async () => {
+  .action(audited('db:fresh', async () => {
     const password = await promptDestructivePassword();
     Logger.warn(
       '⚠️  This will rollback ALL migrations, migrate, empty the S3 bucket, delete Stripe customers/subscriptions (test mode), then run the main seed.',
@@ -285,21 +288,21 @@ program
     } catch {
       process.exit(1);
     }
-  });
+  }));
 
 program
   .command('db:backup')
   .description('Run the database backup to S3 now, via the worker, and wait for the result')
-  .action(async () => {
+  .action(audited('db:backup', async () => {
     await backupDatabase();
-  });
+  }));
 
 program
   .command('restore')
   .argument('<date>', "Backup date, YYYY-MM-DD, or 'latest' for the most recent backup")
   .description('Restore the S3 database backup of a given day with pg_restore (APP_SECRET password required; destructive). Needs pg_restore: dbcli-*.sh run it in the worker container')
   .option('--allow-production', 'allow restoring onto the production database')
-  .action(async (date: string, options: { allowProduction?: boolean }) => {
+  .action(audited('restore', async (date: string, options: { allowProduction?: boolean }) => {
     const password = await promptAppSecret();
     const backupDate = await resolveRestoreDate(date);
     Logger.warn(`⚠️  This will REPLACE the data in the current database with the backup from ${backupDate}.`);
@@ -309,7 +312,7 @@ program
       process.exit(0);
     }
     await restoreDatabase({ date: backupDate, password, allowProduction: Boolean(options.allowProduction) });
-  });
+  }, ['date']));
 
 program
   .command('make:seeder')
@@ -321,13 +324,13 @@ program
 program
   .command('db:seed')
   .option('-n, --name <string>', 'Name to seed')
-  .action(async (options) => {
+  .action(audited('db:seed', async (options) => {
     await seed(options.name);
-  });
+  }));
 program
   .command('clean:stripe')
   .description('Delete all Stripe customers and subscriptions (password required; destructive)')
-  .action(async () => {
+  .action(audited('clean:stripe', async () => {
     const password = await promptDestructivePassword();
     Logger.warn('⚠️  This will delete ALL Stripe customers and subscriptions!');
     const confirmed = await confirmAction('Are you sure?');
@@ -336,12 +339,12 @@ program
       process.exit(0);
     }
     await cleanStripe({ password });
-  });
+  }));
 
 program
   .command('clean:s3')
   .description('Empty the S3 bucket (password required; destructive)')
-  .action(async () => {
+  .action(audited('clean:s3', async () => {
     const password = await promptDestructivePassword();
     Logger.warn('⚠️  This will delete ALL objects in the S3 bucket!');
     const confirmed = await confirmAction('Are you sure?');
@@ -350,14 +353,14 @@ program
       process.exit(0);
     }
     await cleanS3({ password });
-  });
+  }));
 
 program
   .command('create:stripe-customers')
   .description('Create Stripe customers for active users who do not have one')
-  .action(async () => {
+  .action(audited('create:stripe-customers', async () => {
     createStripeCustomers();
-  });
+  }));
 
 program
   .command('fix:image-keys')
@@ -366,16 +369,16 @@ program
   )
   .option('--apply', 'write the copies and update the database')
   .option('--delete-old', 'delete the pre-fix originals (run a day after --apply)')
-  .action(async (options: { apply?: boolean; deleteOld?: boolean }) => {
+  .action(audited('fix:image-keys', async (options: { apply?: boolean; deleteOld?: boolean }) => {
     await fixImageKeys({ apply: Boolean(options.apply), deleteOld: Boolean(options.deleteOld) });
-  });
+  }));
 
 program
   .command('seo:requeue-user <username>')
   .description("Regenerate one artist's AI SEO on the next nightly run (bypasses the throttle)")
-  .action(async (username: string) => {
+  .action(audited('seo:requeue-user', async (username: string) => {
     await requeueUserSeo(username);
-  });
+  }, ['username']));
 
 const parsePositiveId = (flag: string, raw: string): number => {
   const id = Number(raw);
@@ -393,23 +396,23 @@ program
   )
   .requiredOption('--user <id>', 'numeric user id')
   .option('--dry-run', 'list the media that would be queued without queueing anything')
-  .action(async (options: { user: string; dryRun?: boolean }) => {
+  .action(audited('generate-user-thumbnails', async (options: { user: string; dryRun?: boolean }) => {
     await generateUserThumbnails({
       userId: parsePositiveId('--user', options.user),
       dryRun: Boolean(options.dryRun),
     });
-  });
+  }));
 
 program
   .command('generate-media-thumbnail')
   .description('Queue thumbnail regeneration via the worker for a single image/GIF')
   .requiredOption('--media-id <id>', 'numeric media id')
   .option('--dry-run', 'report what would be queued without queueing anything')
-  .action(async (options: { mediaId: string; dryRun?: boolean }) => {
+  .action(audited('generate-media-thumbnail', async (options: { mediaId: string; dryRun?: boolean }) => {
     await generateMediaThumbnail({
       mediaId: parsePositiveId('--media-id', options.mediaId),
       dryRun: Boolean(options.dryRun),
     });
-  });
+  }));
 
 program.parse(process.argv);

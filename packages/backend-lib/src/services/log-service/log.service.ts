@@ -1,8 +1,23 @@
 import { format } from "date-fns";
 import { Queue, JobsOptions } from "bullmq";
 import { JOB_FLUSH_LOGS } from "@repo/common-lib/constants/queues";
-import { LogConfig, LogLevel, LogOptions, LogServiceDriver } from "./types";
+import {
+    DEFAULT_LOG_FORMAT,
+    LogConfig,
+    LogEntry,
+    LogCorrelation,
+    LogFormat,
+    LogLevel,
+    LogLineFields,
+    LogOptions,
+    LogServiceDriver,
+    StatusClass,
+} from "./types";
+import { LogChannel } from "./channels";
 import { redactLogOptions } from "./redact";
+import { getCriticalHandler, getLogProcessContext } from "./process-context";
+import { getLogContext, mergeCorrelation } from "./log-context";
+import { RequestLogContext } from "@repo/common-lib/types/request";
 
 const DEFAULT_LOG_JOB_OPTIONS: JobsOptions = {
     priority: 10,
@@ -11,8 +26,29 @@ const DEFAULT_LOG_JOB_OPTIONS: JobsOptions = {
     backoff: { type: 'exponential', delay: 1000 },
 };
 
+/**
+ * Everything a line reads from mutable config or the environment, captured at one instant.
+ * Deferred drivers take it when the level method is called; fields left `undefined` are read live.
+ */
+export type LogSnapshot = {
+    timestamp?: Date;
+    id?: string | null;
+    channel?: LogChannel;
+    operation?: string | null;
+    request?: RequestLogContext | null;
+    /** Already merged and normalised; `{}` means none. */
+    correlation?: LogCorrelation;
+    service?: string;
+    replica?: string;
+};
+
+/** `'4xx'` for 404; `null` unless `code` is an integer in 100-599. */
+export function statusClassOf(code: unknown): StatusClass | null {
+    if (typeof code !== 'number' || !Number.isInteger(code) || code < 100 || code > 599) return null;
+    return `${Math.floor(code / 100)}xx` as StatusClass;
+}
+
 export abstract class LogService {
-    protected static date: Date;
     protected static type: LogServiceDriver;
     private static pendingLogs: (() => Promise<void>)[] = [];
 
@@ -23,10 +59,8 @@ export abstract class LogService {
         protected readonly queue?: Queue,
     ) {
         // Own the config. Callers pass the shared `logConfig.*` singletons, and the builder
-        // methods below mutate `this.config` — so without this copy, one `.channel()` call in
-        // ResponseExceptionFilter permanently rewrote the channel for every other logger built
-        // from the same object, sending ordinary logs to `api/errors/500` and firing the
-        // 500-alert callback on every subsequent line.
+        // methods below mutate `this.config` — so without this copy, one channel-builder call
+        // permanently rewrote the channel for every other logger built from the same object.
         this.config = { ...config };
     }
 
@@ -78,10 +112,12 @@ export abstract class LogService {
         await LogService.enqueueFlush(this.queue, jobOptions);
     }
 
-    public channel(channel: string) {
+    /** Mutates this instance: never call it on a shared or DI logger, set the channel in config. */
+    public channel(channel: LogChannel) {
         this.config.channel = channel;
         return this;
     }
+    /** Sets the line's `operation`. */
     public name(name: string) {
         this.config.name = name;
         return this;
@@ -90,45 +126,122 @@ export abstract class LogService {
         this.config.id = id;
         return this;
     }
-
-    public callback(callback: LogConfig['callback']) {
-        this.config.callback = callback;
-        return this;
-    }
-    public info(message: string, options?: LogOptions): this {
-        console.log(this.beautifyLogMessage('info', message, options));
-        return this;
-    }
-
-    public error(message: string, options?: LogOptions): this {
-        console.error(this.beautifyLogMessage('error', message, options));
+    /**
+     * Never pass a plain object on a DI-shared logger: concurrent requests would overwrite each
+     * other. Use the function form from `RequestService.logBinding()`.
+     */
+    public request(request: LogConfig['request']) {
+        this.config.request = request;
         return this;
     }
 
-    public warn(message: string, options?: LogOptions): this {
-        console.warn(this.beautifyLogMessage('warn', message, options));
+    public info(message: string, options?: LogOptions, fields?: LogLineFields): this {
+        return this.log('info', message, options, fields);
+    }
+
+    public error(message: string, options?: LogOptions, fields?: LogLineFields): this {
+        return this.log('error', message, options, fields);
+    }
+
+    public warn(message: string, options?: LogOptions, fields?: LogLineFields): this {
+        return this.log('warn', message, options, fields);
+    }
+
+    public debug(message: string, options?: LogOptions, fields?: LogLineFields): this {
+        return this.log('debug', message, options, fields);
+    }
+
+    public success(message: string, options?: LogOptions, fields?: LogLineFields): this {
+        return this.log('success', message, options, fields);
+    }
+
+    /** The only level that alerts: the process's critical handler (admin mail) gets the entry. */
+    public critical(message: string, options?: LogOptions, fields?: LogLineFields): this {
+        return this.log('critical', message, options, fields);
+    }
+
+    /** Synchronous drivers: build, print, then dispatch a critical line. */
+    protected log(level: LogLevel, message: string, options?: LogOptions, fields?: LogLineFields): this {
+        const entry = this.buildLogEntry(level, message, options, fields);
+        this.print(level, this.formatLogEntry(entry));
+        if (level === 'critical') void this.dispatchCritical(entry);
         return this;
     }
 
-    public debug(message: string, options?: LogOptions): this {
-        console.debug(this.beautifyLogMessage('debug', message, options));
-        return this;
+    protected print(level: LogLevel, line: string): void {
+        switch (level) {
+            case 'error':
+            case 'critical':
+                console.error(line);
+                return;
+            case 'warn':
+                console.warn(line);
+                return;
+            case 'debug':
+                console.debug(line);
+                return;
+            default:
+                console.log(line);
+        }
     }
 
-    public success(message: string, options?: LogOptions): this {
-        console.log(this.beautifyLogMessage('success', message, options));
-        return this;
-    }
     protected getLogId(): string | null {
-        return typeof this.config.id === 'function' ? this.config.id() : (this.config.id || null);
+        const configured = typeof this.config.id === 'function' ? this.config.id() : (this.config.id || null);
+        // Falls back to the log context (request, job, cron run) so unbound loggers keep the trace.
+        return configured ?? getLogContext()?.id ?? null;
     }
 
-    protected beautifyLogMessage(level: LogLevel, message: string, options?: LogOptions, id?: string | null, channel?: string) {
-        const logId = id !== undefined ? id : this.getLogId();
-        // Take the caller's snapshotted channel when there is one: `.channel()` mutates shared
-        // config and file writes flush later, so reading it live mislabels concurrent requests.
-        const logChannel = channel ?? this.config.channel;
-        let logMessage = `[${format(new Date(), 'yyyy-MM-dd HH:mm:ss')}][${logChannel}] - ${level.toUpperCase()} -${logId ? `[${logId}]` : ''} ${message}`;
+    protected getRequestContext(): RequestLogContext | null {
+        const request = this.config.request;
+        const configured = (typeof request === 'function' ? request() : request) ?? null;
+        return configured ?? getLogContext()?.request?.() ?? null;
+    }
+
+    /** Per-call operation wins over the config `name`, so shared loggers never need `.name()`. */
+    protected getOperation(fields?: LogLineFields): string | null {
+        return fields?.operation || this.config.name || null;
+    }
+
+    /** The context's correlation with the call's merged over it, whitelisted and in key order. */
+    protected getCorrelation(fields?: LogLineFields): LogCorrelation {
+        return mergeCorrelation(getLogContext()?.correlation, fields?.correlation);
+    }
+
+    protected getFormat(): LogFormat {
+        return this.config.format ?? DEFAULT_LOG_FORMAT;
+    }
+
+    /** Captures everything mutable now: config (shared builders), request store, process, clock. */
+    protected takeSnapshot(fields?: LogLineFields): Required<LogSnapshot> {
+        const { service, replica } = getLogProcessContext();
+        return {
+            timestamp: new Date(),
+            id: this.getLogId(),
+            channel: this.config.channel,
+            operation: this.getOperation(fields),
+            request: this.getRequestContext(),
+            // A copy: the context store keeps changing after this call.
+            correlation: this.getCorrelation(fields),
+            service,
+            replica,
+        };
+    }
+
+    protected buildLogEntry(
+        level: LogLevel,
+        message: string,
+        options?: LogOptions,
+        fields?: LogLineFields,
+        snapshot: LogSnapshot = {},
+    ): LogEntry {
+        const live = snapshot.service === undefined || snapshot.replica === undefined
+            ? getLogProcessContext()
+            : null;
+        const timestamp = snapshot.timestamp ?? new Date();
+        const request = snapshot.request !== undefined ? snapshot.request : this.getRequestContext();
+        const correlation = snapshot.correlation ?? this.getCorrelation(fields);
+
+        let extraInfo: unknown = undefined;
         if (options) {
             // Error instances stringify to "{}" (their fields are non-enumerable); extract them
             // explicitly so stacks are preserved in the log instead of being silently dropped.
@@ -136,30 +249,59 @@ export abstract class LogService {
                 ? { name: options.name, message: options.message, stack: options.stack }
                 : options;
             // Callers hand us raw request bodies; redact here so no call site can leak a secret.
-            logMessage += ` - ${JSON.stringify(redactLogOptions(serializable))}`;
+            extraInfo = redactLogOptions(serializable);
         }
-        logMessage += `\n`;
-        return logMessage;
+
+        // Built in the JSON key order. Absent optional keys are left out, never `null`.
+        const entry: LogEntry = {
+            // ISO 8601 UTC with ms: Loki parses it as RFC3339 and keeps same-second order.
+            timestamp: timestamp.toISOString(),
+            service: snapshot.service ?? live!.service,
+            replica: snapshot.replica ?? live!.replica,
+            channel: snapshot.channel ?? this.config.channel,
+            operation: snapshot.operation !== undefined ? snapshot.operation : this.getOperation(fields),
+            level: level.toUpperCase() as Uppercase<LogLevel>,
+            id: snapshot.id !== undefined ? snapshot.id : this.getLogId(),
+            message,
+        };
+        // Only `status_code` (plus its derived `status`) and `correlation` reach the top level from a call.
+        if (typeof fields?.status_code === 'number') {
+            entry.status_code = fields.status_code;
+            // Right after status_code; only for a real HTTP status, so the label has 5 values.
+            const statusClass = statusClassOf(fields.status_code);
+            if (statusClass) entry.status = statusClass;
+        }
+        if (Object.keys(correlation).length > 0) entry.correlation = correlation;
+        // The context is allow-listed already; redacting it again is defence in depth.
+        if (request) entry.request = redactLogOptions(request);
+        if (extraInfo !== undefined) entry.extraInfo = extraInfo;
+        return entry;
     }
-    protected async callCallback(level: LogLevel, message: string, options?: LogOptions, channel?: string) {
-        // Same snapshot rule as beautifyLogMessage: file writes run at flush time, so reading
-        // the channel live would fire the 500-alert callback for whichever channel happened to
-        // be set last rather than the one the caller logged to.
-        const logChannel = channel ?? this.config.channel;
-        if (this.config.callback && this.config.callback.channel === logChannel) {
-            // Never let a log callback throw/reject: doing so escapes as an unhandledRejection
-            // which, if logged back into the same channel, creates an infinite log loop.
-            try {
-                // The 500-alert callback re-serializes this into an admin email, so it needs
-                // the same redaction the log file gets.
-                await this.config.callback.callback(level, message, redactLogOptions(options));
-            } catch (error) {
-                console.error('LogService: log callback failed (suppressed to avoid log loop)', error);
-            }
+
+    protected formatLogEntry(entry: LogEntry): string {
+        if (this.getFormat() === 'string') {
+            const timestamp = format(new Date(entry.timestamp), 'yyyy-MM-dd HH:mm:ss');
+            const operation = entry.operation ? `[${entry.operation}]` : '';
+            const id = entry.id ? `[${entry.id}]` : '';
+            const method = entry.request?.method ? `[${entry.request.method}]` : '';
+            let line = `[${timestamp}][${entry.channel}]${operation} - ${entry.level} -${id}${method} ${entry.message}`;
+            if (entry.extraInfo !== undefined) line += ` - ${JSON.stringify(entry.extraInfo)}`;
+            return line + '\n';
+        }
+        return JSON.stringify(entry) + '\n';
+    }
+
+    /**
+     * Hands a critical entry to the process's handler. Never throws or rejects, and never logs
+     * through a LogService: a failing alert that logged back here could loop forever.
+     */
+    protected async dispatchCritical(entry: LogEntry): Promise<void> {
+        const handler = getCriticalHandler();
+        if (!handler) return;
+        try {
+            await handler(entry);
+        } catch (error) {
+            console.error('LogService: critical handler failed (suppressed to avoid a log loop)', error);
         }
     }
-
-
-
-
 }

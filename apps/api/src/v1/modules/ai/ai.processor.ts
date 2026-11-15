@@ -152,7 +152,8 @@ export class AiProcessor extends GlobalProcessor {
 
 
   private async handleMediaModeration(moderationData: CreateMediaModerationInput) {
-    const log = this.logger.name('moderate-content');
+    // Per-call operation and subject user: never the name builder on this shared logger.
+    const fields = { operation: 'moderate-content', correlation: { user_id: moderationData.user_id } };
     // Only the insert may fail the job. Once the row exists, a BullMQ retry would insert it again
     // and count the same violation twice (a second strike, a second ban step), so failures after
     // this point are logged and the job completes.
@@ -160,15 +161,24 @@ export class AiProcessor extends GlobalProcessor {
     try {
       moderation = await this.mediaModerationRepository.create(moderationData);
     } catch (error) {
-      log.error(
-        `Failed to record moderation for user [${moderationData.user_id}] - ${error instanceof Error ? error.message : 'Unknown error'}`,
-        error,
+      this.logger.error(
+        'Failed to record moderation',
+        { error_message: error instanceof Error ? error.message : 'Unknown error' },
+        fields,
       );
       throw error;
     }
-    log.info(
-      `Moderation recorded for user [${moderationData.user_id}]`,
-      moderation,
+    // The listed keys only, never the row (its `reason` is model output about the content).
+    const mediaId = (moderationData as { media_id?: number | null }).media_id ?? null;
+    this.logger.info(
+      'Moderation recorded',
+      {
+        moderation_id: moderation.id,
+        is_allowed: moderation.is_allowed,
+        severity: moderation.severity,
+        ...(mediaId ? { media_id: mediaId } : {}),
+      },
+      fields,
     );
 
     try {
@@ -180,6 +190,11 @@ export class AiProcessor extends GlobalProcessor {
         const extraData = await this.userExtraDataService.findOneByUserId(moderationData.user_id);
 
         const totalStrikes = extraData.account_strikes + 1;
+        this.logger.warn(
+          'Content rejected by moderation',
+          { moderation_id: moderation.id, severity: moderation.severity, account_strikes: totalStrikes },
+          fields,
+        );
 
         if (totalStrikes >= STRIKES_TO_BAN) {
           const newBanCount = extraData.ban_count + 1;
@@ -210,13 +225,18 @@ export class AiProcessor extends GlobalProcessor {
               ? [this.userService.banUser(moderationData.user_id, 'Account permanently banned due to repeated policy violations')]
               : []),
           ]);
+          this.logger.warn(
+            'Account ban applied',
+            { ban_count: newBanCount, ban_lift: banLift.toISOString(), permanent: isPermanentBan },
+            fields,
+          );
 
           const user = await this.userService.findOneCompacted(moderationData.user_id);
           if (user) {
             await this.mailService.send(
               this.userAccountBannedMail.setUser(user, user.language),
             );
-            log.info(`Account banned email sent to user ${moderationData.user_id} (ban_count: ${newBanCount}, ban_lift: ${banLift.toISOString()})`);
+            this.logger.info('Account banned email sent', { ban_count: newBanCount }, fields);
           }
         }
 
@@ -226,9 +246,10 @@ export class AiProcessor extends GlobalProcessor {
 
 
     } catch (error) {
-      log.error(
-        `Moderation [${moderation.id}] recorded but applying it to user [${moderationData.user_id}] failed - ${error instanceof Error ? error.message : 'Unknown error'}`,
-        error,
+      this.logger.error(
+        'Moderation recorded but applying it failed',
+        { moderation_id: moderation.id, error_message: error instanceof Error ? error.message : 'Unknown error' },
+        fields,
       );
     }
     return moderation;

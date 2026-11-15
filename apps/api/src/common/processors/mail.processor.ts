@@ -3,7 +3,6 @@ import { Job } from 'bullmq';
 import { MailService, EmailDriverOptions } from '@repo/backend-lib/services/mail-service';
 import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
 import { ViewService } from '@repo/backend-lib/services/view-service/base';
-import { callback500ErrorMail } from '@repo/backend-lib/utils';
 import {
   MAIL_QUEUE,
   JOB_SEND_MAIL,
@@ -12,16 +11,27 @@ import {
 } from '@repo/common-lib/constants/queues';
 import type { Error500MailPayload } from '@repo/common-lib/types/mail';
 import { GlobalProcessor } from 'src/common/processors/global.processor';
+import { currentJobAttempt, maskEmailAddresses } from '@repo/backend-lib/services/log-service';
 import { Error500Mail } from 'src/common/mails/error-500.mail';
+
+/** The provider's id for a sent message (Resend `data.id`, nodemailer `messageId`). Never the response. */
+export const providerMessageId = (result: unknown): string | null => {
+  const r = result as { data?: { id?: unknown }; id?: unknown; messageId?: unknown } | null | undefined;
+  const id = r?.data?.id ?? r?.id ?? r?.messageId ?? null;
+  return typeof id === 'string' ? id : null;
+};
+
+/** Provider errors can quote the recipient (`Invalid to: a@b.c`): addresses are masked out. */
+const mailErrorFields = (error: unknown) => ({
+  error_name: error instanceof Error ? error.name : typeof error,
+  error_message: maskEmailAddresses(error instanceof Error ? error.message : String(error)).slice(0, 300),
+});
 
 @Processor(MAIL_QUEUE)
 export class MailProcessor extends GlobalProcessor {
+  /** Final send failures log `critical` (admin alert); a failed alert mail logs `error` only (no recursion). */
   private readonly logger = FactoryLogService.createLogService('file', {
     channel: 'mail',
-    callback: {
-      channel: 'mail/error',
-      callback: callback500ErrorMail
-    }
   });
 
   constructor(
@@ -53,81 +63,74 @@ export class MailProcessor extends GlobalProcessor {
   }
 
   private async sendError500Mail(data: Error500MailPayload) {
-    const log = this.logger.name('error-500-mail');
+    const startedAt = Date.now();
     try {
-      log.info(`Sending 500 alert mail`, {
-        message: data.message,
-      });
       const result = await this.mailService.send(
-        new Error500Mail(this.viewService, data.message, data.options),
+        new Error500Mail(this.viewService, data.message, data.options, undefined, data.subject),
       );
-      log.info(`500 alert mail sent`, {
-        provider_response: result ?? null,
-      });
+      this.logger.info(
+        'Alert mail sent',
+        { provider_message_id: providerMessageId(result), duration_ms: Date.now() - startedAt },
+        { operation: 'error-500-mail' },
+      );
       return result;
     } catch (error) {
-      log.channel('mail/error').error(
-        `Failed to send 500 alert mail: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        error,
+      // Never `critical`: that would enqueue another alert mail for the failing alert mail.
+      this.logger.error(
+        'Alert mail send failed',
+        { ...mailErrorFields(error), duration_ms: Date.now() - startedAt },
+        { operation: 'error-500-mail' },
       );
       throw error;
     }
   }
 
   private async sendMail(data: EmailDriverOptions) {
-    const log = this.logger.name('send-mail');
-    const to = Array.isArray(data.to) ? data.to.join(', ') : data.to;
+    const startedAt = Date.now();
     try {
-      log.info(`Sending mail via provider`, {
-        to,
-        from: data.from,
-        subject: data.subject,
-        has_html: Boolean(data.html),
-        has_text: Boolean(data.text),
-      });
       const result = await this.mailService.sendRaw(data);
-      log.info(`Mail sent to ${to} — subject: ${data.subject}`, {
-        provider_response: result ?? null,
-      });
+      this.logger.info(
+        'Mail sent',
+        {
+          recipient_count: Array.isArray(data.to) ? data.to.length : 1,
+          provider_message_id: providerMessageId(result),
+          duration_ms: Date.now() - startedAt,
+        },
+        { operation: 'send-mail' },
+      );
       return result;
     } catch (error) {
-      log.channel('mail/error').error(
-        `Failed to send mail to ${to}: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        error,
-      );
+      this.logSendFailure('send-mail', { ...mailErrorFields(error), duration_ms: Date.now() - startedAt });
       throw error;
     }
   }
 
   private async sendBatchMail(data: EmailDriverOptions[]) {
-    const log = this.logger.name('send-batch-mail');
-    const recipients = data.map((email) => ({
-      to: Array.isArray(email.to) ? email.to.join(', ') : email.to,
-      from: email.from,
-      subject: email.subject,
-      has_html: Boolean(email.html),
-      has_text: Boolean(email.text),
-    }));
-
+    const startedAt = Date.now();
     try {
-      log.info(`Sending batch mail via provider — ${data.length} email(s)`, {
-        recipients,
-      });
       const result = await this.mailService.sendBatchRaw(data);
-      log.info(`Batch mail sent — ${data.length} email(s)`, {
-        recipients,
-        provider_response: result ?? null,
-      });
+      this.logger.info(
+        'Batch mail sent',
+        { count: data.length, duration_ms: Date.now() - startedAt },
+        { operation: 'send-batch-mail' },
+      );
       return result;
     } catch (error) {
-      log.channel('mail/error').error(
-        `Failed to send batch mail (${data.length} emails): ${error instanceof Error ? error.message : 'Unknown error'}`,
-        {
-          recipients,
-          error,
-        },
-      );
+      this.logSendFailure('send-batch-mail', {
+        count: data.length,
+        ...mailErrorFields(error),
+        duration_ms: Date.now() - startedAt,
+      });
       throw error;
+    }
+  }
+
+  /** Alerts on the final attempt only; earlier attempts are retried and logged `error`. */
+  private logSendFailure(operation: string, fields: Record<string, unknown>) {
+    if (currentJobAttempt()?.is_final) {
+      this.logger.critical('Mail send failed permanently', { ...fields, will_retry: false }, { operation });
+    } else {
+      this.logger.error('Mail send failed', { ...fields, will_retry: true }, { operation });
     }
   }
 }

@@ -103,3 +103,90 @@ describe('pruneDailyLogFiles', () => {
     await expect(fs.access(oldFile)).resolves.toBeUndefined();
   });
 });
+
+describe('pruneDailyLogFiles empty directory cleanup', () => {
+  let root: string;
+  beforeEach(async () => {
+    root = await fs.mkdtemp(path.join(os.tmpdir(), 'log-prune-dirs-'));
+  });
+  afterEach(async () => {
+    await fs.rm(root, { recursive: true, force: true });
+  });
+
+  const exists = (p: string) => fs.access(p).then(() => true, () => false);
+  const write = async (rel: string, body = 'x') => {
+    const full = path.join(root, rel);
+    await fs.mkdir(path.dirname(full), { recursive: true });
+    await fs.writeFile(full, body);
+    return full;
+  };
+
+  it('AC-11: removes legacy dirs emptied by the prune, keeps the new layout and root files', async () => {
+    const now = new Date('2026-06-27T12:00:00Z');
+    await write('api/errors/500/2026-05-01.log');
+    await write('ai/2026-05-01.moderate-content.log');
+    await write('api/2026-06-27.log', 'today');
+    await write('certbot.log', 'root');
+    await write('.gitkeep', '');
+
+    const result = await pruneDailyLogFiles(root, 30, now);
+
+    expect(result.failed).toEqual([]);
+    expect(await exists(path.join(root, 'api/errors/500'))).toBe(false);
+    expect(await exists(path.join(root, 'api/errors'))).toBe(false);
+    expect(await exists(path.join(root, 'ai'))).toBe(false);
+    expect(await exists(path.join(root, 'api/2026-06-27.log'))).toBe(true);
+    expect(await exists(path.join(root, 'certbot.log'))).toBe(true);
+    expect(await exists(path.join(root, '.gitkeep'))).toBe(true);
+    expect(await exists(root)).toBe(true);
+  });
+
+  it('AC-11: removedDirs lists the removed dirs, deepest first', async () => {
+    await write('api/errors/500/2026-05-01.log');
+    await write('api/2026-06-27.log');
+    const result = await pruneDailyLogFiles(root, 30, new Date('2026-06-27T12:00:00Z'));
+    expect(result.removedDirs).toEqual([path.join(root, 'api/errors/500'), path.join(root, 'api/errors')]);
+  });
+
+  it('AC-11: never removes logRoot, even when everything under it is gone', async () => {
+    await write('ai/2026-05-01.log');
+    const result = await pruneDailyLogFiles(root, 30, new Date('2026-06-27T12:00:00Z'));
+    expect(result.removedDirs).toEqual([path.join(root, 'ai')]);
+    expect(await exists(root)).toBe(true);
+    expect(result.removedDirs).not.toContain(root);
+  });
+
+  it('AC-11: never removes a dir that still holds a non-matching entry', async () => {
+    await write('legacy/2026-05-01.log');
+    await write('legacy/.gitkeep', '');
+    const result = await pruneDailyLogFiles(root, 30, new Date('2026-06-27T12:00:00Z'));
+    expect(result.deleted).toEqual([path.join(root, 'legacy/2026-05-01.log')]);
+    expect(result.removedDirs).toEqual([]);
+    expect(await exists(path.join(root, 'legacy/.gitkeep'))).toBe(true);
+  });
+
+  it('AC-11: keeps a dir that still holds a recent file', async () => {
+    await write('legacy/2026-05-01.log');
+    await write('legacy/2026-06-27.log');
+    const result = await pruneDailyLogFiles(root, 30, new Date('2026-06-27T12:00:00Z'));
+    expect(result.removedDirs).toEqual([]);
+    expect(await exists(path.join(root, 'legacy/2026-06-27.log'))).toBe(true);
+  });
+
+  it('AC-11: an already-empty dir is removed, but not when retention is disabled', async () => {
+    await fs.mkdir(path.join(root, 'empty'), { recursive: true });
+    const off = await pruneDailyLogFiles(root, 0, new Date('2026-06-27T12:00:00Z'));
+    expect(off.removedDirs).toEqual([]);
+    expect(await exists(path.join(root, 'empty'))).toBe(true);
+    const on = await pruneDailyLogFiles(root, 30, new Date('2026-06-27T12:00:00Z'));
+    expect(on.removedDirs).toEqual([path.join(root, 'empty')]);
+  });
+
+  it('AC-11: the new <service>/<date>.log layout is matched and pruned', async () => {
+    await write('worker/2026-05-01.log');
+    await write('worker/2026-06-27.log');
+    const result = await pruneDailyLogFiles(root, 30, new Date('2026-06-27T12:00:00Z'));
+    expect(result.deleted).toEqual([path.join(root, 'worker/2026-05-01.log')]);
+    expect(await exists(path.join(root, 'worker'))).toBe(true);
+  });
+});

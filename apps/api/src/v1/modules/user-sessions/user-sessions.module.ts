@@ -15,7 +15,7 @@ import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-se
       useFactory: (requestService: RequestService) => {
         return FactoryLogService.createLogService('file', {
           channel: 'user-sessions',
-          id: () => requestService.requestId,
+          ...requestService.logBinding(),
         });
       },
       inject: [RequestService],

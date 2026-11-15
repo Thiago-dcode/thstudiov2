@@ -1,7 +1,7 @@
 import { InjectQueue, Processor } from '@nestjs/bullmq';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { Job, Queue, Worker } from 'bullmq';
-import { LogService } from '@repo/backend-lib/services/log-service';
+import { LogService, addLogCorrelation } from '@repo/backend-lib/services/log-service';
 import { EDGE_HTML_MAX_STALE_MS } from '@repo/common-lib/constants/edge-cache';
 import { EDGE_CACHE_QUEUE, JOB_PURGE_ARTIST_EDGE_CACHE } from '@repo/common-lib/constants/queues';
 import { PurgeArtistEdgeCacheJobInput } from '@repo/common-lib/types/edge-cache';
@@ -61,18 +61,24 @@ export class EdgeCacheProcessor extends GlobalProcessor {
     job: Job<PurgeArtistEdgeCacheJobInput>,
   ): Promise<PurgeArtistEdgeCacheResult> {
     const userId = job.data.user_id;
-    const log = this.logger.name('purge');
+    // Per-call operation: never the name builder on this shared logger. The user is a correlation field.
+    addLogCorrelation({ user_id: userId });
+    const op = { operation: 'purge' };
+    const log = {
+      info: (message: string, extra?: Record<string, unknown>) => this.logger.info(message, extra, op),
+      warn: (message: string, extra?: Record<string, unknown>) => this.logger.warn(message, extra, op),
+    };
 
     const target = this.edgeCacheService.purgeTarget();
     if ('skip' in target) {
-      log.info(`Edge purge of user [${userId}] skipped: ${target.skip}`);
+      log.info('Edge purge skipped', { reason: target.skip });
       return { purged: false, reason: target.skip };
     }
 
     // Queued past the edge TTL (held back by the rate limit): those pages have refreshed already,
     // so the request would only spend rate budget.
     if (Date.now() - job.timestamp > EDGE_HTML_MAX_STALE_MS) {
-      log.info(`Edge purge of user [${userId}] skipped: older than the edge TTL`);
+      log.info('Edge purge skipped', { reason: 'stale' });
       return { purged: false, reason: 'stale' };
     }
 
@@ -81,7 +87,7 @@ export class EdgeCacheProcessor extends GlobalProcessor {
     // items finish seconds apart) into a single call, and it costs no rate budget.
     const lastPurgedAt = await this.ledger.lastPurgedAt(userId);
     if (lastPurgedAt !== null && lastPurgedAt >= job.timestamp + EDGE_PURGE_COVER_SKEW_MS) {
-      log.info(`Edge purge of user [${userId}] skipped: covered by a later purge`);
+      log.info('Edge purge skipped', { reason: 'covered' });
       return { purged: false, reason: 'covered' };
     }
 
@@ -94,10 +100,10 @@ export class EdgeCacheProcessor extends GlobalProcessor {
       dropped,
     } = this.edgeCacheService.buildPrefixes(target.host, names);
     if (dropped) {
-      log.warn(`Edge purge of user [${userId}]: dropped ${dropped} invalid username(s)`);
+      log.warn('Edge purge dropped invalid usernames', { dropped });
     }
     if (!chunks.length) {
-      log.info(`Edge purge of user [${userId}] skipped: no username to purge`);
+      log.info('Edge purge skipped', { reason: 'no usernames' });
       return { purged: false, reason: 'no usernames' };
     }
 
@@ -105,19 +111,25 @@ export class EdgeCacheProcessor extends GlobalProcessor {
     if ('retryInMs' in slot) {
       // Back to the FRONT of the queue, without spending an attempt, and this worker pauses until
       // a slot frees up. It runs again then, and may by then be covered by another purge.
-      log.info(`Edge purge of user [${userId}] waiting ${Math.ceil(slot.retryInMs / 1000)} s for a purge slot`);
+      log.info('Edge purge deferred for a slot', { retry_in_s: Math.ceil(slot.retryInMs / 1000) });
       await this.queue.rateLimit(slot.retryInMs);
       throw Worker.RateLimitError();
     }
 
+    let cfRay: string | null = null;
     for (const prefixes of chunks) {
-      await this.edgeCacheService.purgePrefixes(target, prefixes);
+      const call = await this.edgeCacheService.purgePrefixes(target, prefixes);
+      cfRay = call?.cf_ray ?? cfRay;
     }
     await this.ledger.markPurged(userId, startedAt);
     const prefixCount = chunks.reduce((total, chunk) => total + chunk.length, 0);
-    log.info(
-      `Edge purge of user [${userId}]: ${nameCount} username(s), ${prefixCount} prefixes, ${chunks.length} request(s)`,
-    );
+    log.info('Edge purge completed', {
+      names: nameCount,
+      prefixes: prefixCount,
+      requests: chunks.length,
+      duration_ms: Date.now() - startedAt,
+      cf_ray: cfRay,
+    });
     return { purged: true, names: nameCount, prefixes: prefixCount, requests: chunks.length };
   }
 

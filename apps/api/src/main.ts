@@ -1,3 +1,5 @@
+// First: sets the log service and the critical handler before anything else can log.
+import './log-process';
 import { NestFactory } from '@nestjs/core';
 import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
@@ -6,18 +8,18 @@ import { init } from '@repo/database';
 import { useContainer } from 'class-validator';
 import { spawn } from 'child_process';
 import { FactoryLogService } from '@repo/backend-lib/services/log-service';
-import { API_ERRORS_CHANNEL, logConfig } from '@repo/backend-lib/config/logging';
+import { API_ERROR_CHANNEL, logConfig } from '@repo/backend-lib/config/logging';
 import { RedisIoAdapter } from './common/adapters/redis-io.adapter';
 
 const bootstrapLogger = FactoryLogService.createLogService('file', {
-  channel: 'api/bootstrap',
+  channel: 'api.bootstrap',
   logFolder: logConfig.api.logFolder,
 });
 
-/** Fatal process errors only — same channel as HTTP 500 responses in ResponseExceptionFilter. */
+/** Fatal process errors only — same channel as HTTP errors in ResponseExceptionFilter. */
 const fatalErrorLogger = FactoryLogService.createLogService('file', {
   ...logConfig.api,
-  channel: `${API_ERRORS_CHANNEL}/500`,
+  channel: API_ERROR_CHANNEL,
 });
 
 function serializeError(error: unknown) {
@@ -28,12 +30,12 @@ function serializeError(error: unknown) {
 }
 
 process.on('uncaughtException', (error: Error) => {
-  fatalErrorLogger.error('💥 Uncaught Exception:', serializeError(error));
+  fatalErrorLogger.name('uncaught-exception').critical('💥 Uncaught Exception:', serializeError(error));
   console.error('💥 Uncaught Exception:', error);
 });
 
 process.on('unhandledRejection', (reason: unknown) => {
-  fatalErrorLogger.error('💥 Unhandled Rejection:', serializeError(reason));
+  fatalErrorLogger.name('unhandled-rejection').critical('💥 Unhandled Rejection:', serializeError(reason));
   console.error('💥 Unhandled Rejection:', reason);
 });
 

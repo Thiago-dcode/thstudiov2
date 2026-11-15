@@ -37,4 +37,13 @@ const checkFileExistsAsync = async (file: string) => {
 
 export { checkPortOrGetNext,  checkFileExistsAsync};
 export { QueueHelper, SINGLE_ENTITY_METADATA_DEBOUNCE_MS } from './queue-helper';
-export { callback500ErrorMail } from './callback-500-error-mail';
+export { criticalAlertMail, CRITICAL_ALERT_MAX_PER_WINDOW } from './critical-alert-mail';
+export {
+    withJobTrace,
+    readJobTrace,
+    enqueueJob,
+    enqueueJobs,
+    runJobWithLogContext,
+    logPermanentJobFailure,
+    redactJobData,
+} from './job-trace';

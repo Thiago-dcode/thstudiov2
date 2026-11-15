@@ -10,7 +10,6 @@ import { UserExtraDataModule } from '../user-extra-data/user-extra-data.module';
 import { PlansModule } from '../plans/plans.module';
 import { EmailPreferencesModule } from '../email-preferences/email-preferences.module';
 import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
-import { callback500ErrorMail } from '@repo/backend-lib/utils';
 import { SubscriptionChangedMail } from './mails/subscription-changed.mail';
 
 @Module({
@@ -27,11 +26,8 @@ import { SubscriptionChangedMail } from './mails/subscription-changed.mail';
       provide: LogService,
       useFactory: (logQueue: Queue) => {
         return FactoryLogService.createLogService('file', {
-          channel: 'subscriptions',
-          callback: {
-            channel: 'subscriptions/error',
-            callback: callback500ErrorMail,
-          },
+          channel: 'plan-subscriptions',
+          name: 'on-subscription-changes',
         }, logQueue);
       },
       inject: [getQueueToken(LOG_QUEUE)],

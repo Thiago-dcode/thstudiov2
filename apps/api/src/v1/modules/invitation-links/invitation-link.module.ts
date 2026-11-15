@@ -20,7 +20,7 @@ import { EmailPreferencesModule } from '../email-preferences/email-preferences.m
       useFactory: (requestService: RequestService) => {
         return FactoryLogService.createLogService('file', {
           channel: 'invitation-links',
-          id: () => requestService.requestId,
+          ...requestService.logBinding(),
         });
       },
       inject: [RequestService],

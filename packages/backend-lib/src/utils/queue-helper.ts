@@ -76,6 +76,7 @@ import {
 } from '@repo/common-lib/types/media';
 import { JobsOptions, Queue, QueueEvents } from "bullmq";
 import { randomUUID } from 'node:crypto';
+import { enqueueJob, enqueueJobs } from './job-trace';
 
 /**
  * BullMQ silently drops an `add` whose jobId already exists. `Date.now()` alone collides for jobs
@@ -98,7 +99,7 @@ export class QueueHelper {
      * the next day's task instead of being blocked by the dead job id.
      */
     static async createDeleteUserAccountJob(dto: AccountDeletionJobInput) {
-        await QueueHelper.createQueue(ACCOUNT_DELETION_QUEUE).add(
+        await enqueueJob(QueueHelper.createQueue(ACCOUNT_DELETION_QUEUE),
             JOB_DELETE_USER_ACCOUNT,
             dto,
             {
@@ -117,7 +118,7 @@ export class QueueHelper {
      * `deletion_warning_sent_at` stamp is what keeps a later re-enqueue from sending it twice.
      */
     static async createAccountDeletionWarningJob(dto: AccountDeletionJobInput) {
-        await QueueHelper.createQueue(ACCOUNT_DELETION_QUEUE).add(
+        await enqueueJob(QueueHelper.createQueue(ACCOUNT_DELETION_QUEUE),
             JOB_SEND_ACCOUNT_DELETION_WARNING,
             dto,
             {
@@ -137,6 +138,17 @@ export class QueueHelper {
     }
 
     /**
+     * One mail queue per process, created on first use and kept open. Mail is enqueued often
+     * (every critical alert, every transactional mail), and a `Queue` per call opened a Redis
+     * connection that was never closed.
+     */
+    private static mailQueue: Queue | null = null;
+    private static getMailQueue(): Queue {
+        QueueHelper.mailQueue ??= QueueHelper.createQueue(MAIL_QUEUE);
+        return QueueHelper.mailQueue;
+    }
+
+    /**
      * Runs one database backup now and waits for it, resolving with the worker's return value.
      *
      * Queued rather than called directly: only the worker image ships `pg_dump`. Same job name as
@@ -151,7 +163,7 @@ export class QueueHelper {
         try {
             // Subscribe before adding, so a fast job's "completed" event cannot be missed.
             await events.waitUntilReady();
-            const job = await queue.add(JOB_DATABASE_BACKUP, {}, {
+            const job = await enqueueJob(queue, JOB_DATABASE_BACKUP, {}, {
                 jobId: `database-backup-manual-${uniqueJobSuffix()}`,
                 attempts: 1,
                 removeOnComplete: 30,
@@ -164,8 +176,12 @@ export class QueueHelper {
         }
     }
 
-    static async createMailJob(dto: MailJob) {
-        await QueueHelper.createQueue(MAIL_QUEUE).add(
+    /**
+     * `deduplication` drops the job when one with the same id was added within `ttl` ms, across
+     * every process sharing Redis (the critical alert throttle uses it).
+     */
+    static async createMailJob(dto: MailJob, opts?: { deduplication?: { id: string; ttl: number } }) {
+        await enqueueJob(QueueHelper.getMailQueue(),
             dto.name,
             dto.payload,
             {
@@ -174,12 +190,13 @@ export class QueueHelper {
                 removeOnComplete: true,
                 attempts: 3,
                 backoff: { type: 'exponential', delay: 1000 },
+                ...(opts?.deduplication ? { deduplication: opts.deduplication } : {}),
             },
         );
     }
 
     static async createLlmUsageJob(dto: CreateLlmTokensUsageInput) {
-        await QueueHelper.createQueue(AI_QUEUE).add(
+        await enqueueJob(QueueHelper.createQueue(AI_QUEUE),
             JOB_RECORD_LLM_USAGE,
             dto,
             {
@@ -193,7 +210,7 @@ export class QueueHelper {
     }
 
     static async createMediaModerationJob(dto: CreateMediaModerationInput) {
-        await QueueHelper.createQueue(AI_QUEUE).add(
+        await enqueueJob(QueueHelper.createQueue(AI_QUEUE),
             JOB_RECORD_MEDIA_MODERATION,
             dto,
             {
@@ -207,7 +224,7 @@ export class QueueHelper {
     }
 
     static async createGenerateEntityMetadataJob(dto: GenerateEntityMetadataPayload) {
-        await QueueHelper.createQueue(AI_QUEUE).add(
+        await enqueueJob(QueueHelper.createQueue(AI_QUEUE),
             JOB_GENERATE_ENTITY_METADATA,
             dto,
             {
@@ -229,7 +246,7 @@ export class QueueHelper {
         dto: GenerateSingleEntityMetadataPayload,
         jobOptions?: JobsOptions,
     ) {
-        await QueueHelper.createQueue(AI_QUEUE).add(
+        await enqueueJob(QueueHelper.createQueue(AI_QUEUE),
             JOB_GENERATE_SINGLE_ENTITY_METADATA,
             dto,
             {
@@ -250,7 +267,7 @@ export class QueueHelper {
      * block a later retry.
      */
     static async createGenerateMediaMetadataJob(dto: GenerateMediaMetadataInput) {
-        await QueueHelper.createQueue(AI_MEDIA_QUEUE).add(
+        await enqueueJob(QueueHelper.createQueue(AI_MEDIA_QUEUE),
             JOB_GENERATE_MEDIA_METADATA,
             dto,
             {
@@ -269,7 +286,7 @@ export class QueueHelper {
      * double-clicks collapse. removeOnFail so a failed job does not block a later retry.
      */
     static async createGenerateMediaMetadataAndNotifyJob(dto: GenerateMediaMetadataInput) {
-        await QueueHelper.createQueue(AI_MEDIA_QUEUE).add(
+        await enqueueJob(QueueHelper.createQueue(AI_MEDIA_QUEUE),
             JOB_GENERATE_MEDIA_METADATA_AND_NOTIFY,
             dto,
             {
@@ -284,7 +301,7 @@ export class QueueHelper {
     }
 
     static async createUserContactJob(dto: CreateUserContactInput) {
-        await QueueHelper.createQueue(USER_CONTACTS_QUEUE).add(
+        await enqueueJob(QueueHelper.createQueue(USER_CONTACTS_QUEUE),
             JOB_CREATE_USER_CONTACT,
             dto,
             {
@@ -298,7 +315,7 @@ export class QueueHelper {
     }
 
     static async createWaitListEntryJob(dto: CreateWaitListJobInput) {
-        await QueueHelper.createQueue(WAIT_LIST_QUEUE).add(
+        await enqueueJob(QueueHelper.createQueue(WAIT_LIST_QUEUE),
             JOB_CREATE_WAIT_LIST_ENTRY,
             dto,
             {
@@ -318,7 +335,7 @@ export class QueueHelper {
      * what keeps a re-enqueue after completion from sending twice.
      */
     static async createWaitListValidatedEmailJob(dto: SendWaitListValidatedEmailJobInput) {
-        await QueueHelper.createQueue(WAIT_LIST_QUEUE).add(
+        await enqueueJob(QueueHelper.createQueue(WAIT_LIST_QUEUE),
             JOB_SEND_WAIT_LIST_VALIDATED_EMAIL,
             dto,
             {
@@ -333,7 +350,7 @@ export class QueueHelper {
     }
 
     static async createInviteWaitListBatchJob(dto: InviteWaitListBatchJobInput) {
-        await QueueHelper.createQueue(WAIT_LIST_QUEUE).add(
+        await enqueueJob(QueueHelper.createQueue(WAIT_LIST_QUEUE),
             JOB_INVITE_WAIT_LIST_BATCH,
             dto,
             {
@@ -356,7 +373,7 @@ export class QueueHelper {
      * `getPayload` re-reads the entity, so each run emits current state.
      */
     static async createOrUpdateUserNotificationJob(dto: CreateUserNotificationInput) {
-        await QueueHelper.createQueue(USER_NOTIFICATIONS_QUEUE).add(
+        await enqueueJob(QueueHelper.createQueue(USER_NOTIFICATIONS_QUEUE),
             JOB_CREATE_OR_UPDATE_USER_NOTIFICATION,
             dto,
             {
@@ -371,7 +388,7 @@ export class QueueHelper {
     }
 
     static async createOrUpdateLocationJob(dto: CreateOrUpdateLocationPayload) {
-        await QueueHelper.createQueue(LOCATION_QUEUE).add(
+        await enqueueJob(QueueHelper.createQueue(LOCATION_QUEUE),
             JOB_CREATE_OR_UPDATE_LOCATION,
             dto,
             {
@@ -385,7 +402,7 @@ export class QueueHelper {
     }
 
     static async createStorageRequestJob(dto: CreateUserStorageRequestInput) {
-        await QueueHelper.createQueue(STORAGE_REQUESTS_QUEUE).add(
+        await enqueueJob(QueueHelper.createQueue(STORAGE_REQUESTS_QUEUE),
             JOB_CREATE_STORAGE_REQUEST,
             dto,
             {
@@ -399,7 +416,7 @@ export class QueueHelper {
     }
 
     static async createOrUpdateEmailPreferenceJob(dto: CreateOrUpdateEmailPreferencePayload) {
-        await QueueHelper.createQueue(EMAIL_PREFERENCES_QUEUE).add(
+        await enqueueJob(QueueHelper.createQueue(EMAIL_PREFERENCES_QUEUE),
             JOB_UPSERT_EMAIL_PREFERENCE_BY_EMAIL,
             dto,
             {
@@ -413,7 +430,7 @@ export class QueueHelper {
     }
 
     static async createComputeUserMetricsJob(userId: number) {
-        await QueueHelper.createQueue(USER_METRICS_QUEUE).add(
+        await enqueueJob(QueueHelper.createQueue(USER_METRICS_QUEUE),
             JOB_COMPUTE_USER_METRICS,
             { userId },
             {
@@ -427,7 +444,7 @@ export class QueueHelper {
     }
 
     static async createProcessMediaJob(dto:MediaJobDto) {
-        await QueueHelper.createQueue(MEDIA_QUEUE).add(
+        await enqueueJob(QueueHelper.createQueue(MEDIA_QUEUE),
             JOB_PROCESS_MEDIA,
             dto,
             {
@@ -459,7 +476,7 @@ export class QueueHelper {
         if (!dtos.length) return;
         const queue = QueueHelper.createQueue(MEDIA_THUMBNAIL_QUEUE);
         try {
-            await queue.addBulk(
+            await enqueueJobs(queue,
                 dtos.map((dto) => ({
                     name: JOB_REGENERATE_MEDIA_THUMBNAIL,
                     data: dto,
@@ -489,7 +506,7 @@ export class QueueHelper {
     static async createSetVideoThumbnailJob(dto: SetVideoThumbnailJobInput) {
         const queue = QueueHelper.createQueue(MEDIA_THUMBNAIL_QUEUE);
         try {
-            await queue.add(JOB_SET_VIDEO_THUMBNAIL, dto, {
+            await enqueueJob(queue, JOB_SET_VIDEO_THUMBNAIL, dto, {
                 jobId: `set-video-thumbnail-${dto.media_id}-${Date.now()}`,
                 removeOnComplete: true,
                 removeOnFail: true,
@@ -515,7 +532,7 @@ export class QueueHelper {
     ) {
         const queue = QueueHelper.createQueue(MEDIA_THUMBNAIL_QUEUE);
         try {
-            await queue.add(JOB_DELETE_REPLACED_MEDIA_OBJECT, dto, {
+            await enqueueJob(queue, JOB_DELETE_REPLACED_MEDIA_OBJECT, dto, {
                 jobId: `delete-replaced-media-object-${dto.media_id}-${uniqueJobSuffix()}`,
                 delay: delayMs,
                 removeOnComplete: true,
@@ -535,7 +552,7 @@ export class QueueHelper {
     static async createInvalidateMediaSeoCacheJob(dto: InvalidateMediaSeoCacheJobInput) {
         const queue = QueueHelper.createQueue(MEDIA_UPDATE_QUEUE);
         try {
-            await queue.add(JOB_INVALIDATE_MEDIA_SEO_CACHE, dto, {
+            await enqueueJob(queue, JOB_INVALIDATE_MEDIA_SEO_CACHE, dto, {
                 jobId: `invalidate-media-seo-cache-${dto.public_id}-${Date.now()}`,
                 removeOnComplete: true,
                 removeOnFail: true,
@@ -548,7 +565,7 @@ export class QueueHelper {
     }
 
     static async createUpdateMediaJob(dto: UpdateMediaJobInput) {
-        await QueueHelper.createQueue(MEDIA_UPDATE_QUEUE).add(
+        await enqueueJob(QueueHelper.createQueue(MEDIA_UPDATE_QUEUE),
             JOB_UPDATE_MEDIA,
             dto,
             {
@@ -579,7 +596,7 @@ export class QueueHelper {
     static async createPurgeArtistEdgeCacheJob(dto: PurgeArtistEdgeCacheJobInput) {
         const queue = QueueHelper.createQueue(EDGE_CACHE_QUEUE);
         try {
-            await queue.add(JOB_PURGE_ARTIST_EDGE_CACHE, dto, {
+            await enqueueJob(queue, JOB_PURGE_ARTIST_EDGE_CACHE, dto, {
                 jobId: `edge-purge-artist-${dto.user_id}-${uniqueJobSuffix()}`,
                 delay: EDGE_PURGE_DEBOUNCE_MS,
                 deduplication: {
@@ -602,7 +619,7 @@ export class QueueHelper {
 
     static async createUpdateProfileStatusJob(dto: UpdateProfileStatusJobInput) {
         const fieldKeys = Object.keys(dto.fields).sort().join('-');
-        await QueueHelper.createQueue(PROFILE_STATUS_QUEUE).add(
+        await enqueueJob(QueueHelper.createQueue(PROFILE_STATUS_QUEUE),
             JOB_UPDATE_PROFILE_STATUS,
             dto,
             {

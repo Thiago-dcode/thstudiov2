@@ -1,7 +1,6 @@
 import { BullModule, getQueueToken } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
-import { callback500ErrorMail } from '@repo/backend-lib/utils';
 import { ACCOUNT_DELETION_QUEUE, LOG_QUEUE } from '@repo/common-lib/constants/queues';
 import { Queue } from 'bullmq';
 import { EmailPreferencesModule } from '../email-preferences/email-preferences.module';
@@ -36,11 +35,8 @@ import { AccountDeletionTask } from './account-deletion.task';
       useFactory: (logQueue: Queue) =>
         FactoryLogService.createLogService('file', {
           channel: 'account-deletion',
-          // A failed hard delete is a GDPR obligation not met: mail the admins.
-          callback: {
-            channel: 'account-deletion/error',
-            callback: callback500ErrorMail,
-          },
+          // A failed hard delete is a GDPR obligation not met: the processor logs it `critical`,
+          // which mails the admins.
         }, logQueue),
       inject: [getQueueToken(LOG_QUEUE)],
     },

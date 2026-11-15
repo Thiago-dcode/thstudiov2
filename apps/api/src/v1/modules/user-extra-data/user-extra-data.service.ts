@@ -15,7 +15,7 @@ import { UserLimits } from '@repo/common-lib/utils/user-limits';
 @Injectable()
 export class UserExtraDataService {
   private readonly logger = FactoryLogService.createLogService('file', {
-    channel: 'users',
+    channel: 'user-extra-data',
   });
 
   constructor(

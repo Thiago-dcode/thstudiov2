@@ -48,7 +48,7 @@ export const FEATURED_PORTFOLIO_CACHE_KEY = 'portfolio-featured';
 @Injectable()
 export class PortfolioService {
   private readonly logger = FactoryLogService.createLogService('file', {
-    channel: 'portfolio',
+    channel: 'portfolios',
   });
   constructor(
     private readonly portfolioRepository: PortfolioRepository,

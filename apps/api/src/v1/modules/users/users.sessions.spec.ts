@@ -36,7 +36,7 @@ describe('UserService — session revocation', () => {
     service = new UserService(
       userRepository as never,
       eventEmitter as never,
-      {} as never, // logService
+      { info: jest.fn(), warn: jest.fn(), error: jest.fn() } as never, // logService
       {} as never, // mailService
       {} as never, // helpers
       requestService as never,

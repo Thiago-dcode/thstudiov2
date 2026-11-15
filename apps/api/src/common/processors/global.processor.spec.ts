@@ -4,8 +4,8 @@ describe('redactJobData', () => {
   it('replaces email bodies with their size, single and batch', () => {
     const single = { to: 'a@b.c', subject: 'Your code', html: '<p>123456</p>', text: '123456' };
     expect(redactJobData(single)).toEqual({
-      to: 'a@b.c',
-      subject: 'Your code',
+      to: '[redacted]',
+      subject: '[redacted]',
       html: '[redacted, 13 chars]',
       text: '[redacted, 6 chars]',
     });

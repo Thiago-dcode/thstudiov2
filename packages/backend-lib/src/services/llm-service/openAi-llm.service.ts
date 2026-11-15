@@ -2,6 +2,19 @@ import { LLMService, LLMCompletionRequest, LLMCompletionResponse, LLMMessage } f
 import { OpenAILLMConfig } from './types';
 import OpenAI from 'openai';
 import type { ResponseInputItem, ResponseInputMessageContentList } from 'openai/resources/responses/responses';
+import { FactoryLogService } from '../log-service/factory-log.service';
+
+/** One line per OpenAI call. Never prompts, images or output text: model, timing, tokens, ids. */
+const llmLog = FactoryLogService.createLogService('file', { channel: 'ai', name: 'llm-call' });
+
+const errorFields = (error: unknown) => {
+  const e = error as { name?: string; status?: number; requestID?: string | null; request_id?: string | null };
+  return {
+    error_name: error instanceof Error ? error.name : typeof error,
+    http_status: typeof e?.status === 'number' ? e.status : null,
+    openai_request_id: e?.requestID ?? e?.request_id ?? null,
+  };
+};
 
 const isReasoningModel = (model: string): boolean =>
   /^(gpt-5|gpt-6|o\d)/.test(model);
@@ -53,7 +66,10 @@ export class OpenAILLMService extends LLMService {
   public async complete(
     request: LLMCompletionRequest
   ): Promise<LLMCompletionResponse> {
-    const response = await this.client.responses.create({
+    const startedAt = Date.now();
+    let response: OpenAI.Responses.Response;
+    try {
+      response = await this.client.responses.create({
       model: this.model,
       input: request.messages.map(toInputItem),
       max_output_tokens: request.maxTokens,
@@ -76,28 +92,47 @@ export class OpenAILLMService extends LLMService {
       }),
       // These are one-shot calls; nothing reads the response back from OpenAI later.
       store: false,
-    });
+      });
+    } catch (error) {
+      llmLog.error('OpenAI call failed', { model: this.model, duration_ms: Date.now() - startedAt, ...errorFields(error) });
+      throw error;
+    }
+
+    // One line per call, also on the paths that throw below.
+    const baseFields = {
+      model: this.model,
+      duration_ms: Date.now() - startedAt,
+      status: response.status ?? null,
+      input_tokens: response.usage?.input_tokens ?? null,
+      output_tokens: response.usage?.output_tokens ?? null,
+      openai_request_id: (response as { _request_id?: string | null })._request_id ?? null,
+    };
 
     if (response.error) {
+      llmLog.error('OpenAI call failed', { ...baseFields, error_name: 'response_error', error_code: response.error.code ?? null });
       throw new Error(`OpenAI response failed: ${response.error.message}`);
     }
 
     const incompleteReason = response.status === 'incomplete' ? response.incomplete_details?.reason : undefined;
     if (incompleteReason === 'content_filter') {
+      llmLog.warn('OpenAI call incomplete', { ...baseFields, incomplete_reason: incompleteReason });
       throw new Error('Response was filtered by content filter.');
-    }
-    if (incompleteReason) {
-      // Truncated (e.g. max_output_tokens): the partial text is returned, but it may not parse.
-      console.warn(`OpenAI response incomplete (${incompleteReason}). Partial content returned.`);
     }
 
     const refusal = response.output
       .flatMap((item) => (item.type === 'message' ? item.content : []))
       .find((part) => part.type === 'refusal')?.refusal;
 
+    const callFields = { ...baseFields, refusal: !!refusal };
+    if (incompleteReason) {
+      // Truncated (e.g. max_output_tokens): the partial text is returned, but it may not parse.
+      llmLog.warn('OpenAI call incomplete', { ...callFields, incomplete_reason: incompleteReason });
+    } else {
+      llmLog.info('OpenAI call completed', callFields);
+    }
+
     const text = response.output_text ?? '';
     if (!text && !refusal && !incompleteReason) {
-      console.warn('OpenAI response - output:', JSON.stringify(response.output, null, 2));
       throw new Error('Response completed but content is missing.');
     }
 

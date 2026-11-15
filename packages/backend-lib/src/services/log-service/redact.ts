@@ -59,6 +59,136 @@ function isSensitiveKey(key: string): boolean {
   );
 }
 
+/**
+ * Route params that carry a credential when they appear in a URL. A bare `code` is safe as a
+ * log key (see SENSITIVE_KEYS_EXACT) but in a path it is always a one-time or invitation code
+ * (`/invitation-links/:code/code`, `/wait-list/invitation/:code`).
+ */
+const SENSITIVE_PATH_PARAMS_EXACT = new Set(['code']);
+
+export function isSensitivePathParam(name: string): boolean {
+  return isSensitiveKey(name) || SENSITIVE_PATH_PARAMS_EXACT.has(normalizeKey(name));
+}
+
+function safeDecode(segment: string): string {
+  try {
+    return decodeURIComponent(segment);
+  } catch {
+    return segment;
+  }
+}
+
+/**
+ * `@domain.tld` inside free text (provider errors, exception messages); the local part in front of
+ * it is found by {@link maskEmailAddresses}.
+ *
+ * - It runs on attacker-controlled request bodies in the exception filter, so it must stay linear.
+ *   The regex starts at the literal `@` (one attempt per `@`) and the local part is walked back in
+ *   code, capped at 64 chars. Two earlier designs failed review:
+ *   - an unanchored `local{1,64}@…` re-ran the domain match at every position within 64 chars of
+ *     an `@` (a 101 KB emoji body cost ~400 ms per request);
+ *   - anchoring the local part with a lookbehind leaked addresses after a long `=&|+` run
+ *     (`…&utm_campaign=x&email=ross@example.com`) and the second address of `a@x.com&cc=b@y.com`.
+ *   Every domain part is capped too (label ≤ 63, ≤ 8 labels, TLD ≤ 63). 100 KB of hostile ASCII,
+ *   CJK or emoji input takes a few ms.
+ * - Domain labels may start with a digit and hold Unicode letters and combining marks
+ *   (`wang@163.com`, `kurt@1und1.de`, `jose@münchen.de`, `.भारत`); the TLD is letters or punycode
+ *   (`xn--p1ai`, any case), never digits.
+ * - Neither side holds a path separator, and the TLD must not be a file extension (any case, and
+ *   not followed by another label), so package paths in stacks (`.pnpm/stripe@17.7.0/…`,
+ *   `@aws-sdk/client-s3`, `bullmq@6.7.1_…`) and asset names (`photo@2x.png`, `icon@2x.PNG`,
+ *   `photo@2x.min.png`) are not addresses. `.map` is a real TLD, so it is not excluded.
+ * - Brackets, braces and backticks are excluded from the local part, so the surrounding delimiter
+ *   is kept (`[ross@example.com]` → `[[email]]`).
+ */
+const EMAIL_DOMAIN_IN_TEXT =
+  /@(?:[\p{L}\p{M}\p{N}][\p{L}\p{M}\p{N}-]{0,62}\.){1,8}(?!(?:[pP][nN][gG]|[jJ][pP][eE]?[gG]|[gG][iI][fF]|[wW][eE][bB][pP]|[aA][vV][iI][fF]|[sS][vV][gG]|[iI][cC][oO]|[jJ][sS]|[mM][jJ][sS]|[cC][jJ][sS]|[tT][sS]|[jJ][sS][oO][nN]|[cC][sS][sS]|[hH][tT][mM][lL]?)(?![\p{L}\p{M}\p{N}-]|\.[\p{L}\p{M}\p{N}]))(?:[\p{L}\p{M}]{2,63}|[xX][nN]--[a-zA-Z0-9-]{1,59})(?![\p{L}\p{M}\p{N}-]|\.[\p{L}\p{M}\p{N}])/gu;
+
+/**
+ * Replaces every address-shaped substring with `[email]`. For free text that may quote a recipient
+ * or a submitted value (`Invalid to: ross@example.com`); structured fields go through
+ * {@link redactLogOptions}.
+ */
+export function maskEmailAddresses(text: string): string {
+  if (typeof text !== 'string' || !text.includes('@')) return text;
+
+  let out = '';
+  let last = 0;
+  for (const match of text.matchAll(EMAIL_DOMAIN_IN_TEXT)) {
+    const at = match.index;
+    const start = localPartStart(text, at, last);
+    if (start === at) continue; // `@domain.tld` with nothing in front (`@aws-sdk/…`-like): not an address
+    out += text.slice(last, start) + '[email]';
+    last = at + match[0].length;
+  }
+  return out + text.slice(last);
+}
+
+/** Characters that end a local part when walking back from the `@`. */
+const LOCAL_PART_DELIMITER = /[\s@<>"'(),;:/\\[\]{}`]/u;
+const MAX_LOCAL_PART_CHARS = 64;
+
+/**
+ * Index where the local part in front of `text[at] === '@'` starts: walks back over at most 64
+ * code points, stopping at a delimiter or at `floor` (the end of the previous masked address).
+ */
+function localPartStart(text: string, at: number, floor: number): number {
+  let start = at;
+  for (let chars = 0; chars < MAX_LOCAL_PART_CHARS && start > floor; chars++) {
+    const low = text.charCodeAt(start - 1);
+    const isPair =
+      low >= 0xdc00 &&
+      low <= 0xdfff &&
+      start - 2 >= floor &&
+      (text.charCodeAt(start - 2) & 0xfc00) === 0xd800;
+    const width = isPair ? 2 : 1;
+    if (LOCAL_PART_DELIMITER.test(text.slice(start - width, start))) break;
+    start -= width;
+  }
+  return start;
+}
+
+/**
+ * The request path with every sensitive route param value replaced by `:<name>`, e.g.
+ * `/v1/email-preferences/abc123/token` -> `/v1/email-preferences/:token/token`.
+ *
+ * Fails closed:
+ * - `null` until a route is matched (and for unmatched paths): without the template there is
+ *   no way to tell which segment is a secret.
+ * - the route template itself when a sensitive param's value is missing or not a plain string
+ *   (wildcards), or would still appear in the result.
+ */
+export function redactRoutePath(
+  path: string,
+  route: string | null | undefined,
+  params: Record<string, unknown> | null | undefined,
+): string | null {
+  if (!route) return null;
+  const sensitive = [...route.matchAll(/[:*](\w+)/g)]
+    .map((match) => match[1])
+    .filter(isSensitivePathParam);
+  if (!sensitive.length) return path;
+
+  const nameByValue = new Map<string, string>();
+  for (const name of sensitive) {
+    const value = params?.[name];
+    if (typeof value !== 'string' || !value) return route;
+    nameByValue.set(value, name);
+  }
+
+  const masked = path
+    .split('/')
+    .map((segment) => {
+      const name = nameByValue.get(segment) ?? nameByValue.get(safeDecode(segment));
+      return name ? `:${name}` : segment;
+    })
+    .join('/');
+  const leaks = [...nameByValue.keys()].some(
+    (value) => masked.includes(value) || masked.includes(encodeURIComponent(value)),
+  );
+  return leaks ? route : masked;
+}
+
 function isEmailKey(key: string): boolean {
   return normalizeKey(key).includes(EMAIL_KEY_SUBSTRING);
 }

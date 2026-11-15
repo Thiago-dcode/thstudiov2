@@ -26,7 +26,7 @@ type MediaStorageRow = Pick<
 @Processor(USER_METRICS_QUEUE)
 export class UserExtraDataProcessor extends GlobalProcessor {
   private readonly logger = FactoryLogService.createLogService('file', {
-    channel: 'users',
+    channel: 'user-extra-data',
   });
 
   constructor(

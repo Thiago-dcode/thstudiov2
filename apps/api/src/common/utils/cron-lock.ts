@@ -1,8 +1,19 @@
 import { randomUUID } from 'node:crypto';
 import { getConfigValue } from '@repo/common-lib/config/utils';
 import { createClient } from 'redis';
+import {
+  FactoryLogService,
+  LogService,
+  runWithLogContext,
+} from '@repo/backend-lib/services/log-service';
 
 type RedisClient = ReturnType<typeof createClient>;
+
+/** Run audit for every cron: start, completed/failed, skipped. Operation is the cron name. */
+const cronLog = FactoryLogService.createLogService('file', { channel: 'system' });
+
+const flushCronLogs = () =>
+  LogService.flush().catch((error) => console.error('Failed to flush cron logs:', error));
 
 /** Identifies this process in the lock value (useful when inspecting `cron-lock:*` keys). */
 const INSTANCE_ID = `${process.env.HOSTNAME ?? 'api'}:${process.pid}:${randomUUID().slice(0, 8)}`;
@@ -64,8 +75,33 @@ export async function runCronExclusive(
   } catch {
     acquired = true;
   }
-  if (!acquired) return false;
-  await job();
+  if (!acquired) {
+    cronLog.info('Cron run skipped', { reason: 'lock_held' }, { operation: name, correlation: { cron: name } });
+    await flushCronLogs();
+    return false;
+  }
+  // Its own trace: every line of the run and every job it enqueues carry this id.
+  await runWithLogContext({ id: randomUUID(), correlation: { cron: name } }, async () => {
+    const startedAt = Date.now();
+    cronLog.info('Cron run started', undefined, { operation: name });
+    try {
+      await job();
+      cronLog.info('Cron run completed', { duration_ms: Date.now() - startedAt }, { operation: name });
+    } catch (error) {
+      cronLog.error(
+        'Cron run failed',
+        {
+          duration_ms: Date.now() - startedAt,
+          error_name: error instanceof Error ? error.name : typeof error,
+          error_message: error instanceof Error ? error.message : String(error),
+        },
+        { operation: name },
+      );
+      throw error;
+    } finally {
+      await flushCronLogs();
+    }
+  });
   return true;
 }
 

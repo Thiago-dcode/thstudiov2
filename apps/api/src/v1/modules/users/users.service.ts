@@ -5,12 +5,13 @@ import { NewUserEvent } from './events/new-user.event';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { UserRepository } from './users.repository';
 import { cleanObj } from '@repo/common-lib/utils/object';
-import { LogService } from '@repo/backend-lib/services/log-service';
+import { LogService, maskEmailAddresses } from '@repo/backend-lib/services/log-service';
 import { MailService } from '@repo/backend-lib/services/mail-service';
 import { NotifyNewUserMail } from './mails/notify-new-user.mail';
 import { SetFreeSubscriptionEvent } from '../plan-subscriptions/events/set-free-subscription.event';
 import { SetInitialUserExtraDataEvent } from '../user-extra-data/events/set-initial-user-extra-data.event';
 import { stripe } from '@repo/backend-lib/services/payment-service/stripe';
+import { StripeService } from 'src/common/services/stripe.service';
 import { RequestService } from 'src/common/services/request.service';
 import {
   ACCOUNT_DELETION_GRACE_DAYS,
@@ -258,6 +259,11 @@ export class UserService {
     } catch {
       // Sharp failing to decode is how bytes that are not an image surface here: the presigned
       // PUT accepts any body, whatever `content_type` the client declared.
+      this.logService.warn(
+        'Profile image rejected',
+        { kind, reason: 'invalid_image' },
+        { operation: 'profile-image', correlation: { user_id: user.id } },
+      );
       throw new BadRequestException('Uploaded file is not a valid image');
     }
     // Inline, not a CDN URL: the provider had to download a just-written key, always a CDN cache
@@ -268,6 +274,11 @@ export class UserService {
       { user_id: user.id },
     );
     if (!moderation.is_allowed) {
+      this.logService.warn(
+        'Profile image rejected',
+        { kind, reason: 'moderation' },
+        { operation: 'profile-image', correlation: { user_id: user.id } },
+      );
       throw new MediaModerationException(moderation.reason);
     }
     // Versioned per upload: the CDN serves a stable unsigned URL per key, so reusing
@@ -431,6 +442,16 @@ export class UserService {
 
     if (usernameChanged) {
       await this.reservePreviousUsername(user.id, previousUsername, userUpdateData.username);
+      // Public handles, not PII: the audit trail behind the username redirects.
+      this.logService.info(
+        'Username changed',
+        {
+          previous_username: previousUsername,
+          username: userUpdateData.username,
+          username_reset_count: userUpdateData.username_reset_count,
+        },
+        { operation: 'username-change', correlation: { user_id: user.id } },
+      );
     }
 
     const mergedName =
@@ -510,6 +531,11 @@ export class UserService {
     });
     // Sign out every other session; the caller keeps the one they changed it from.
     await this.userSessionsService.expireAllForUser(user.id, this.requestService.user.token);
+    this.logService.info(
+      'Password changed',
+      { other_sessions_revoked: true },
+      { operation: 'password-change', correlation: { user_id: user.id } },
+    );
     return updatedUser;
   }
   async banUser(userId: number, reason: string) {
@@ -520,6 +546,7 @@ export class UserService {
     // resolveUserAuth does not read `banned`, so live sessions must be ended here.
     await this.userSessionsService.expireAllForUser(userId);
     this.emitArtistPagesChanged(userId);
+    this.logService.warn('User banned', { reason }, { operation: 'ban', correlation: { user_id: userId } });
     return bannedUser;
   }
 
@@ -552,11 +579,11 @@ export class UserService {
     if (!requestedAt) {
       throw new ConflictException('Account deletion was already requested');
     }
-    this.logService
-      .name('account-deletion')
-      .info(`user [${userId}] requested account deletion`, {
-        cancel_subscription: Boolean(request.cancel_subscription),
-      });
+    this.logService.info(
+      'Account deletion requested',
+      { cancel_subscription: Boolean(request.cancel_subscription) },
+      { operation: 'account-deletion', correlation: { user_id: userId } },
+    );
     this.emitArtistPagesChanged(userId);
 
     return {
@@ -572,7 +599,10 @@ export class UserService {
    */
   async cancelDeletion(userId: number) {
     if (await this.userRepository.unflagDeletion(userId, ACCOUNT_DELETION_GRACE_DAYS)) {
-      this.logService.name('account-deletion').info(`user [${userId}] reopened the account`);
+      this.logService.info('Account deletion cancelled', undefined, {
+        operation: 'account-deletion',
+        correlation: { user_id: userId },
+      });
       this.emitArtistPagesChanged(userId);
       return { deletion_requested_at: null };
     }
@@ -618,13 +648,19 @@ export class UserService {
   async handleNewUserEvent(event: NewUserEvent) {
     // A visit to `/artists/{name}` before anyone owned it cached "does not exist" for a week, which
     // would 404 the new owner's page. Logged, not thrown: onboarding below must still run.
+    // Per-call operation: never the name builder on this shared DI logger.
+    const fields = { operation: 'new-user', correlation: { user_id: event.user.id } };
     await this.helpers
       .deleteManyCached([CACHE_KEY_USERNAME_EXISTS(event.user.username)])
       .catch((error: unknown) =>
-        this.logService
-          .name('new-user')
-          .error(`${NEW_USER_EVENT} user [${event.user.id}] username cache clear failed`, error),
+        this.logService.error(
+          'Username cache clear failed for new user',
+          { error_name: error instanceof Error ? error.name : typeof error },
+          fields,
+        ),
       );
+    // Which step failed decides the level: without a Stripe customer the account can never pay.
+    let step = 'email-preferences';
     try {
       // Priority: enqueue email preference upsert immediately
       await QueueHelper.createOrUpdateEmailPreferenceJob({
@@ -633,44 +669,57 @@ export class UserService {
       });
 
       //Create stripe customer
+      step = 'stripe-customer';
       const stripeCustomer = await stripe.customers.create({
         email: event.user.email,
         business_name: event.user.username,
+        metadata: StripeService.traceMetadata(event.user.id),
       });
-      this.logService
-        .name('new-user')
-        .info(
-          `${NEW_USER_EVENT} user [${event.user.id}] Stripe customer created`,
-          stripeCustomer,
-        );
+      // Ids only: the customer object carries email, phone and address.
+      this.logService.info('Stripe customer created', undefined, {
+        ...fields,
+        correlation: { ...fields.correlation, stripe_customer_id: stripeCustomer.id },
+      });
       //UPDATE USER
+      step = 'store-customer';
       await this.userRepository.updateById(event.user.id, {
         stripe_customer_id: stripeCustomer.id,
       });
 
       //Handle set free plan via event (avoids circular dependency)
+      step = 'free-plan';
       await this.eventEmitter.emitAsync(
         SET_FREE_SUBSCRIPTION_EVENT,
         new SetFreeSubscriptionEvent(event.user.id),
       );
 
       //Create a user extra data via event
+      step = 'extra-data';
       await this.eventEmitter.emitAsync(
         SET_INITIAL_USER_EXTRA_DATA_EVENT,
         new SetInitialUserExtraDataEvent(event.user.id),
       );
+      step = 'profile-status';
       await this.profileStatusService.create({ user_id: event.user.id });
       //Notify user
+      step = 'welcome-mail';
       await this.mailService.sendAsync(this.notifyNewUserMail.setUser(event.user, event.user.language), {
         delay: 3 * 60 * 1000
       });
+      this.logService.info('New user onboarding completed', undefined, fields);
     } catch (error) {
-      this.logService
-        .name('new-user')
-        .error(
-          `${NEW_USER_EVENT} user [${event.user.id}] - ${error instanceof Error ? error.message : 'Unknown error'}`,
-          error,
-        );
+      const failure = {
+        step,
+        error_name: error instanceof Error ? error.name : typeof error,
+        // Stripe rejects some addresses with "Invalid email address: <value>".
+        error_message: maskEmailAddresses(error instanceof Error ? error.message : 'Unknown error'),
+      };
+      // Until someone runs `dbcli create:stripe-customers`, this account cannot subscribe.
+      if (step === 'stripe-customer' || step === 'store-customer') {
+        this.logService.critical('Stripe customer creation failed for new user', failure, fields);
+      } else {
+        this.logService.error('New user onboarding failed', failure, fields);
+      }
       throw error;
     }
   }

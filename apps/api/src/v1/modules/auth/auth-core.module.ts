@@ -17,7 +17,7 @@ import { UserSessionsModule } from '../user-sessions/user-sessions.module';
       useFactory: (requestService: RequestService) => {
         return FactoryLogService.createLogService('file', {
           channel: 'auth',
-          id: () => requestService.requestId,
+          ...requestService.logBinding(),
         });
       },
       inject: [RequestService],

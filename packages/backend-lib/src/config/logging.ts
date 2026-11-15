@@ -1,15 +1,10 @@
-import {
-  LogConfig,
-  LogLevel,
-  LogOptions,
-} from '../services/log-service/types';
+import { LogConfig } from '../services/log-service/types';
 import { resolveDefaultLogFolder } from '../services/log-service';
-import { getConfigValue } from '@repo/common-lib/config/utils';
-import { callback500ErrorMail } from '../utils/callback-500-error-mail';
 
 
 export type LogginChannels = 'api' | 'users';
-export const API_ERRORS_CHANNEL = 'api/errors' as const;
+/** HTTP errors (the exception filter) and fatal process errors. `status_code` is a line field. */
+export const API_ERROR_CHANNEL = 'api.error' as const;
 export type AppLogConfig = {
   [channel in LogginChannels]: LogConfig;
 };
@@ -22,23 +17,14 @@ export function getLogRetentionDays(): number {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : DEFAULT_LOG_RETENTION_DAYS;
 }
 
+/**
+ * Alerting is no longer per config: a `critical` line goes to the handler each entrypoint
+ * registers with `configureLogProcess` (see `utils/critical-alert-mail`).
+ */
 export const logConfig: AppLogConfig = {
   api: {
     channel: 'api',
     logFolder: resolveDefaultLogFolder(),
-    callback: {
-      channel: API_ERRORS_CHANNEL + '/500',
-      callback: async (
-        level: LogLevel,
-        message: string,
-        options?: LogOptions,
-      ) => {
-        //Send a email to admin emails
-
-        if (!getConfigValue('app').sendErrorEmails) return;
-        callback500ErrorMail(level, message, options)
-      },
-    },
   },
   users: {
     channel: 'users',

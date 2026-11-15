@@ -13,6 +13,8 @@ export class Error500Mail extends ApiMailService {
     options?: LogOptions,
     // Manually constructed outside DI; email preferences are optional.
     emailPreferencesService?: EmailPreferencesService,
+    /** From the alert job; jobs queued before it existed have none. */
+    private readonly subject?: string,
   ) {
     const optionsFormatted =
       options && typeof options === 'object'
@@ -35,7 +37,7 @@ export class Error500Mail extends ApiMailService {
     return {
       from: mailingNoreplyEmail,
       to: mailingAdmins,
-      subject: 'ERROR 500',
+      subject: this.subject ?? 'ERROR 500',
     };
   }
 }

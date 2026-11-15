@@ -134,7 +134,8 @@ describe('edge purge acceptance (service + processor together)', () => {
         expect(userRepository.findByIdCompact).not.toHaveBeenCalled();
         const lines = [...logger.info.mock.calls, ...logger.warn.mock.calls, ...logger.error.mock.calls];
         expect(lines).toHaveLength(1);
-        expect(String(lines[0][0])).toContain(reason);
+        expect(String(lines[0][0])).toBe("Edge purge skipped");
+        expect(lines[0][1]).toEqual({ reason });
         expect(everythingLogged(logger)).not.toContain(TOKEN);
       },
     );
@@ -217,7 +218,8 @@ describe('edge purge acceptance (service + processor together)', () => {
       const error = await processor.process(job()).catch((e: unknown) => e);
 
       expect(error).toBeInstanceOf(UnrecoverableError);
-      expect(logger.error).toHaveBeenCalledWith(expect.stringMatching(new RegExp(`${status}.*9109`)));
+      expect((error as Error).message).toMatch(new RegExp(`${status}.*9109`));
+      expect(logger.error).not.toHaveBeenCalled();
       expect(everythingLogged(logger)).not.toContain(TOKEN);
     });
 
