@@ -13,7 +13,6 @@ import {
   LOG_QUEUE,
 } from '@repo/common-lib/constants/queues';
 import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
-import { callback500ErrorMail } from '@repo/backend-lib/utils';
 
 @Module({
   imports: [
@@ -34,11 +33,8 @@ import { callback500ErrorMail } from '@repo/backend-lib/utils';
       provide: LogService,
       useFactory: (logQueue: Queue) => {
         return FactoryLogService.createLogService('file', {
-          channel: 'webhook',
-          callback: {
-            channel: 'webhook/error',
-            callback: callback500ErrorMail,
-          },
+          channel: 'webhooks',
+          name: 'stripe-webhook',
         }, logQueue);
       },
       inject: [getQueueToken(LOG_QUEUE)],

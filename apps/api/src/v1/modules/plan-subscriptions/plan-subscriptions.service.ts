@@ -22,10 +22,9 @@ import {
   HandleSubscriptionProcessResponse,
 } from '@repo/common-lib/types/plan-subscription';
 import { Helpers } from 'src/common/services/helpers.service';
-import { callback500ErrorMail } from '@repo/backend-lib/utils';
 import { stripe } from '@repo/backend-lib/services/payment-service/stripe';
 import { StripeService } from 'src/common/services/stripe.service';
-import { LogService } from '@repo/backend-lib/services/log-service';
+import { LogService, addLogCorrelation } from '@repo/backend-lib/services/log-service';
 import { paypal } from '@repo/backend-lib/services/payment-service/paypal';
 import { PaymentMethodsService } from '../utils/payment-methods.service';
 import {
@@ -150,7 +149,8 @@ export class PlanSubscriptionsService {
           break;
       }
       if (result.ok) {
-        this.logger.info('Subscription process completed successfully', { result, userId: this.requestService.user.id });
+        // Never `result`: its `redirect_url` is a bearer Checkout link.
+        this.logger.info('Subscription process completed successfully', { ok: result.ok, payment_method });
         await this.helpers.deleteManyCached([
           CACHE_KEY_ACTIVE_SUBSCRIPTION(this.requestService.user.id),
           CACHE_KEY_ACTIVE_PLAN(this.requestService.user.id),
@@ -183,7 +183,7 @@ export class PlanSubscriptionsService {
   }
 
   async cancel(userId: number) {
-    this.logger.info('Starting subscription cancellation process', { userId });
+    addLogCorrelation({ user_id: userId });
     const activeSubscription = await this.findActiveSubscription(userId);
 
     if (activeSubscription.plan_price.plan.is_free) {
@@ -192,11 +192,11 @@ export class PlanSubscriptionsService {
     }
 
     if (activeSubscription.stripe_id) {
-      this.logger.info('Canceling Stripe subscription at period end', { stripeId: activeSubscription.stripe_id, userId });
+      addLogCorrelation({ stripe_subscription_id: activeSubscription.stripe_id });
       // Cancel at end of billing cycle, not immediately
       const updatedStripeSub = await stripe.subscriptions.update(
         activeSubscription.stripe_id,
-        { cancel_at_period_end: true },
+        { cancel_at_period_end: true, metadata: StripeService.traceMetadata(userId) },
       );
       await this.update(activeSubscription.id, {
         auto_renewal: false,
@@ -214,8 +214,6 @@ export class PlanSubscriptionsService {
     }
 
     //TODO: Send email to user
-    this.logger.info('Subscription cancelled successfully', { userId, subscriptionId: activeSubscription.id });
-
     return activeSubscription;
   }
   async findActiveSubscription(userId: number) {
@@ -252,13 +250,8 @@ export class PlanSubscriptionsService {
     benefit_id
   }: HandleSubscriptionProcessInput): Promise<HandleSubscriptionProcessResponse> {
     const customerId = await this.resolveStripeCustomerId();
-
-    this.logger.info('Starting handleStripeSubscription', {
-      customerId,
-      newPlanPriceId: newPlanPrice?.id,
-      benefit_id,
-      currentUserSubscriptionId: currentUserSubscription?.id
-    });
+    const userId = this.requestService.user.id;
+    addLogCorrelation({ user_id: userId, stripe_customer_id: customerId ?? undefined });
 
     // Validate required Stripe IDs
     if (!customerId) {
@@ -305,9 +298,12 @@ export class PlanSubscriptionsService {
           this.logger.info('Benefit already redeemed or not requested', { benefit_id, redeemed: true });
         }
 
-        this.logger.info('Creating Stripe checkout session', { customerId, benefit_id, hasBenefit: !!benefit });
+        // Trace on the session AND the subscription it creates, so its webhooks rejoin this request.
+        const traceMetadata = StripeService.traceMetadata(userId);
         const session = await stripe.checkout.sessions.create({
           customer: customerId,
+          client_reference_id: String(userId),
+          metadata: traceMetadata,
           mode: 'subscription',
 
           customer_update: {
@@ -325,7 +321,7 @@ export class PlanSubscriptionsService {
           ],
           subscription_data: {
             metadata: {
-              ...(this.requestService.requestId ? { requestId: this.requestService.requestId } : {}),
+              ...traceMetadata,
               ...(benefit?.trial_days ? { benefit_id: String(benefit_id) } : {})
             },
             ...(benefit?.trial_days ? { trial_period_days: benefit.trial_days } : {})
@@ -335,7 +331,17 @@ export class PlanSubscriptionsService {
           cancel_url: cancelUrl,
         });
 
-        this.logger.info('Stripe checkout session created successfully', { sessionId: session.id, url: session.url });
+        // Never `session.url`: it is a bearer payment link.
+        this.logger.info(
+          'Stripe checkout session created',
+          {
+            plan_price_id: newPlanPrice.id,
+            stripe_price_id: newPlanPrice.stripe_id,
+            trial_days: benefit?.trial_days ?? null,
+            benefit_id: benefit ? benefit_id : null,
+          },
+          { correlation: { stripe_checkout_session_id: session.id } },
+        );
 
         return {
           ok: true,
@@ -348,33 +354,36 @@ export class PlanSubscriptionsService {
       const isUpgrade =
         currentUserSubscription.plan_price.price < newPlanPrice.price;
 
-      this.logger.info('Updating existing Stripe subscription', {
-        stripeSubscriptionId: currentUserSubscription.stripe_id,
-        isUpgrade,
-        newPlanPriceId: newPlanPrice.id
-      });
-
-      await stripe.subscriptions.update(currentUserSubscription.stripe_id, {
+      const prorationBehavior = isUpgrade ? 'always_invoice' : 'none';
+      const updatedSubscription = await stripe.subscriptions.update(currentUserSubscription.stripe_id, {
         items: [
           {
             id: currentUserSubscription.stripe_item_id,
             price: newPlanPrice.stripe_id,
           },
         ],
-        metadata: {
-          ...(this.requestService.requestId ? { requestId: this.requestService.requestId } : {})
-        },
+        metadata: StripeService.traceMetadata(userId),
         automatic_tax: {
           enabled: config().stripe.automaticTax,
         },
-        proration_behavior: isUpgrade ? 'always_invoice' : 'none',
+        proration_behavior: prorationBehavior,
         payment_behavior: isUpgrade ? 'error_if_incomplete' : undefined,
         billing_cycle_anchor:
           isUpgrade || newPlanPrice.id !== currentUserSubscription.plan_price_id
             ? 'now'
             : 'unchanged',
       });
-      this.logger.info('Stripe subscription updated successfully', { stripeSubscriptionId: currentUserSubscription.stripe_id, newPlanPriceId: newPlanPrice.id });
+      this.logger.info(
+        'Stripe subscription plan changed',
+        {
+          from_plan_price_id: currentUserSubscription.plan_price_id,
+          to_plan_price_id: newPlanPrice.id,
+          is_upgrade: isUpgrade,
+          proration_behavior: prorationBehavior,
+          stripe_status: updatedSubscription?.status ?? null,
+        },
+        { correlation: { stripe_subscription_id: currentUserSubscription.stripe_id } },
+      );
       return {
         ok: true,
         redirect_url: null,
@@ -383,24 +392,17 @@ export class PlanSubscriptionsService {
         retryable: false,
       };
     } catch (error) {
-      console.log(error);
       const stripeError = StripeService.parseError(error);
-      const errorMessage = stripeError
-        ? stripeError.message
-        : error instanceof Error
-          ? error.message
-          : 'HANDLE STRIPE SUBSCRIPTION ERROR';
-      this.logger.error('HANDLE STRIPE SUBSCRIPTION ERROR', {
-        currentUserSubscription,
-        error: stripeError || error,
-      });
-      if (!stripeError || stripeError.statusCode >= 500) {
-        callback500ErrorMail(
-          'error',
-          errorMessage,
-          stripeError || error,
-        );
-      }
+      // Our failure or Stripe's (no parsed error, or a 5xx) alerts; a card decline etc. is the
+      // customer's and only warns.
+      const isServerFailure = !stripeError || stripeError.statusCode >= 500;
+      const logContext = {
+        stripe_error: StripeService.errorSummary(stripeError, error),
+        current_plan_subscription_id: currentUserSubscription?.id ?? null,
+        to_plan_price_id: newPlanPrice?.id ?? null,
+      };
+      if (isServerFailure) this.logger.critical('Stripe subscription change failed', logContext);
+      else this.logger.warn('Stripe subscription change failed', logContext);
       if (stripeError) {
         return {
           ok: false,
@@ -474,7 +476,7 @@ export class PlanSubscriptionsService {
     url: string;
   }> {
     const customerId = await this.resolveStripeCustomerId();
-    this.logger.info('Getting customer subscription portal', { customerId, return_url: request?.return_url });
+    addLogCorrelation({ stripe_customer_id: customerId ?? undefined });
     if (!customerId) {
       this.logger.error('Stripe customer not found for portal session', { userId: this.requestService.user?.id });
       throw new HttpException('Stripe customer not found', 422);
@@ -499,7 +501,8 @@ export class PlanSubscriptionsService {
       customer: customerId,
       return_url: request.return_url,
     });
-    this.logger.info('Stripe billing portal session created', { url: session?.url });
+    // Never `session.url`: it is a bearer link into the customer's billing portal.
+    this.logger.info('Stripe billing portal session created', { portal_session_id: session?.id ?? null });
     if (!session?.url) {
       this.logger.error('Could not create customer portal session (no URL returned)', { customerId });
       throw new HttpException('Could not create customer portal session', 500);
@@ -666,8 +669,9 @@ export class PlanSubscriptionsService {
   async handleSetFreeSubscription(event: SetFreeSubscriptionEvent) {
     const result = await this.setFreeSubscription(event.userId);
     this.logger.info(
-      `${SET_FREE_SUBSCRIPTION_EVENT} user [${event.userId}] set free plan`,
-      { result },
+      'Free plan set',
+      { plan_subscription_id: (result as { id?: number } | null)?.id ?? null },
+      { correlation: { user_id: event.userId } },
     );
   }
 }

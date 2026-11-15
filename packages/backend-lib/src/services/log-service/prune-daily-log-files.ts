@@ -2,7 +2,11 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { isValid, parse, startOfDay, subDays } from 'date-fns';
 
-/** Matches `2026-06-27.log` and `2026-06-27.media-moderation.log`. */
+/**
+ * Matches the current `<service>/2026-06-27.log` and the legacy per-channel files
+ * (`<channel>/<sub>/2026-06-27.log`, `2026-06-27.media-moderation.log`) at any depth, so the
+ * old layout ages out under the same retention.
+ */
 const DAILY_LOG_FILE_PATTERN = /^(\d{4}-\d{2}-\d{2})(?:\.(.+))?\.log$/;
 
 export type PruneDailyLogFilesResult = {
@@ -11,6 +15,8 @@ export type PruneDailyLogFilesResult = {
   alreadyGone: string[];
   skipped: string[];
   failed: { file: string; error: string }[];
+  /** Subdirectories left empty by the prune (deepest first). `logRoot` itself is never removed. */
+  removedDirs: string[];
 };
 
 export async function pruneDailyLogFiles(
@@ -23,6 +29,7 @@ export async function pruneDailyLogFiles(
     alreadyGone: [],
     skipped: [],
     failed: [],
+    removedDirs: [],
   };
 
   if (retentionDays < 1) {
@@ -88,6 +95,29 @@ export async function pruneDailyLogFiles(
           error: error instanceof Error ? error.message : String(error),
         });
       }
+    }
+
+    // Post-order, so children go before their parent. Drops the legacy per-status error dirs and
+    // per-channel dirs once their files aged out; a dir holding anything at all (`.gitkeep`,
+    // today's file) stays.
+    if (dir !== logRoot) {
+      await removeIfEmpty(dir);
+    }
+  }
+
+  async function removeIfEmpty(dir: string): Promise<void> {
+    try {
+      if ((await fs.readdir(dir)).length > 0) return;
+      // Non-recursive: fails with ENOTEMPTY if a writer created a file since the readdir.
+      await fs.rmdir(dir);
+      result.removedDirs.push(dir);
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException).code;
+      if (code === 'ENOENT' || code === 'ENOTEMPTY' || code === 'EEXIST') return;
+      result.failed.push({
+        file: dir,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 

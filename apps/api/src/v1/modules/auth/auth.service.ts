@@ -43,7 +43,7 @@ import { RoleService } from '../roles/roles.service';
 import { InvitationLinkService } from '../invitation-links/invitation-link.service';
 import { UserBenefitService } from '../user-benefit/user-benefit.service';
 import { WaitListService } from '../wait-list/wait-list.service';
-import { LogService } from '@repo/backend-lib/services/log-service';
+import { LogService, maskEmailAddresses } from '@repo/backend-lib/services/log-service';
 import { InvitationLink } from '@repo/common-lib/types/invitation-link';
 import { WaitList } from '@repo/common-lib/types/wait-list';
 import { TWOFA_LOCK_TTL_MS, TWOFA_LOCK_WAIT_MS, withUserLock } from 'src/common/utils/user-lock';
@@ -70,10 +70,35 @@ export class AuthService {
     private readonly logService: LogService,
     private readonly usernameHistoryRepository: UsernameHistoryRepository,
   ) { }
+  /**
+   * Auth audit on the shared DI logger: per-call operation and subject user, never `.name()`.
+   * Never the email, password, code or token; an unknown account gets no user id at all.
+   */
+  private audit(
+    level: 'info' | 'warn' | 'error',
+    operation: string,
+    message: string,
+    extraInfo?: Record<string, unknown>,
+    userId?: number,
+  ) {
+    this.logService[level](message, extraInfo, {
+      operation,
+      ...(userId ? { correlation: { user_id: userId } } : {}),
+    });
+  }
+
+  private rejectRegistration(reason: string, invitationLinkId?: number) {
+    this.audit('warn', 'register', 'Registration rejected', {
+      reason,
+      ...(invitationLinkId ? { invitation_link_id: invitationLinkId } : {}),
+    });
+  }
+
   async register(registerRequest: RegisterRequest) {
     // `ModelNotExist` only sees live usernames; one a user moved away from stays theirs for
     // `USERNAME_RESERVATION_DAYS`, so a newcomer cannot take over its traffic and redirects.
     if (await this.usernameHistoryRepository.isReservedForOtherUser(registerRequest.username)) {
+      this.rejectRegistration('username_reserved');
       throw new BadRequestException('Username is already taken');
     }
     const clientRole = await this.roleService.getByName('ARTIST');
@@ -87,6 +112,7 @@ export class AuthService {
         benefit_id = invitationLink.benefit_id;
         waitList = await this.waitListService.findByInvitationLinkId(invitationLink.id);
         if (waitList && waitList.email.toLowerCase() !== registerRequest.email.toLowerCase()) {
+          this.rejectRegistration('invitation_email_mismatch', invitationLink.id);
           throw new BadRequestException(
             'We detected this invitation comes from a wait list, so you must register with the same email address',
           );
@@ -98,6 +124,7 @@ export class AuthService {
           (waitList.status !== 'INVITED' ||
             (waitList.expires_at && new Date(waitList.expires_at).getTime() <= Date.now()))
         ) {
+          this.rejectRegistration('invitation_expired', invitationLink.id);
           throw new BadRequestException('This invitation has expired');
         }
       }
@@ -112,6 +139,7 @@ export class AuthService {
           : false;
 
         if (!isExpired) {
+          this.rejectRegistration('email_reserved');
           throw new BadRequestException('Email already in use');
         }
       }
@@ -120,6 +148,7 @@ export class AuthService {
     // Claimed before the account exists, atomically: `validateCode` above is only a read, and
     // concurrent registrations used to all pass it and each write back `current_uses + 1`.
     if (invitationLink && !(await this.invitationLinkService.claimUse(invitationLink.id))) {
+      this.rejectRegistration('invitation_used', invitationLink.id);
       throw new BadRequestException('This invitation has already been used');
     }
     const user = await this.userRepository.create({
@@ -152,7 +181,16 @@ export class AuthService {
     const preValidated = waitList?.validated_at
       ? await this.loginPreValidatedDevice(user, waitList.email)
       : null;
+    const registered = (need_twofa: boolean) =>
+      this.audit('info', 'register', 'Account registered', {
+        via_invitation: !!invitationLink,
+        via_wait_list: !!waitList,
+        benefit_id,
+        pre_validated: !!preValidated,
+        need_twofa,
+      }, user.id);
     if (preValidated) {
+      registered(false);
       this.eventEmitter.emit(NEW_USER_EVENT, new NewUserEvent(user));
       return { ...preValidated, need_twofa: false as const };
     }
@@ -160,8 +198,9 @@ export class AuthService {
     const result = await this.handle2fa(user, {
       ip_address: this.requestService.ip_address,
       user_agent: this.requestService.user_agent,
-    });
+    }, { reason: 'register' });
 
+    registered(true);
     this.eventEmitter.emit(NEW_USER_EVENT, new NewUserEvent(user));
     return { ...result.user, token: null, need_twofa: true as const };
   }
@@ -190,14 +229,13 @@ export class AuthService {
         twofa_expires_at: null,
         twofa_attempts: 0,
       });
-      this.logService.info(`Register 2FA skipped: wait-list validated device for user ${user.id}`);
-      return await this.handleLogin(validatedUser, device);
+      this.audit('info', 'register', 'Register 2FA skipped: wait-list validated device', undefined, user.id);
+      return await this.handleLogin(validatedUser, device, 'pre_validated_device');
     } catch (error) {
       // The account exists either way; a failure here must not lose it, only cost a 2FA code.
-      this.logService.error('Failed to log in with the wait-list validated device', {
-        message: error instanceof Error ? error.message : String(error),
-        userId: user.id,
-      });
+      this.audit('error', 'register', 'Failed to log in with the wait-list validated device', {
+        error_message: error instanceof Error ? error.message : String(error),
+      }, user.id);
       // A claimed device is already trusted, so the 2FA fallback would skip sending the code and
       // strand the user on the 2FA page. Untrust it so the fallback really sends one.
       if (device) {
@@ -214,9 +252,12 @@ export class AuthService {
       authLoginRequest.email,
     );
     if (!user) {
+      // No user id: the email is someone's PII, and there is no account to pivot on.
+      this.audit('warn', 'login', 'Login rejected', { reason: 'unknown_account' });
       throw new UnauthorizedException('Invalid credentials');
     }
     if (user.banned) {
+      this.audit('warn', 'login', 'Login rejected', { reason: 'banned' }, user.id);
       throw new UnauthorizedException(user.banned_reason || 'Account permanentely banned')
     }
 
@@ -225,6 +266,7 @@ export class AuthService {
       user.password,
     );
     if (!isPasswordValid) {
+      this.audit('warn', 'login', 'Login rejected', { reason: 'bad_password' }, user.id);
       throw new UnauthorizedException('Invalid credentials');
     }
     // Logging in again (e.g. after closing the 2FA tab to fetch the code) must not invalidate the
@@ -239,11 +281,13 @@ export class AuthService {
         user_agent: this.requestService?.user_agent || '-',
         ip_address: this.requestService?.ip_address || '-',
       },
-      { reusePendingCode },
+      { reusePendingCode, reason: 'login' },
     );
-    return result.need_2fa
-      ? { ...result.user, token: null, need_twofa: true }
-      : await this.handleLogin(user, result.user_auth_device);
+    if (result.need_2fa) {
+      this.audit('info', 'login', 'Login requires 2FA', { code_reused: reusePendingCode }, user.id);
+      return { ...result.user, token: null, need_twofa: true };
+    }
+    return await this.handleLogin(user, result.user_auth_device, 'password');
   }
   /**
    * Serialized per account: the attempt counter is read, compared and written back, so parallel
@@ -265,9 +309,11 @@ export class AuthService {
       verify2faRequest.email,
     );
     if (!user) {
+      this.audit('warn', 'twofa', 'Login rejected', { reason: 'unknown_account' });
       throw new UnauthorizedException('Invalid credentials');
     }
     if (user.banned) {
+      this.audit('warn', 'twofa', 'Login rejected', { reason: 'banned' }, user.id);
       throw new UnauthorizedException(user.banned_reason || 'Account permanently banned');
     }
     const isCodeValid = await compare(verify2faRequest.twofa_code, user.twofa_code);
@@ -287,6 +333,11 @@ export class AuthService {
           ? { twofa_attempts: 0, twofa_code: null, twofa_expires_at: null }
           : { twofa_attempts: attempts },
       );
+      this.audit('warn', 'twofa', '2FA verification failed', {
+        attempts,
+        max_attempts: maxAttempts,
+        code_burned: attempts >= maxAttempts,
+      }, user.id);
 
       throw new BadRequestException('Invalid verification code or expired');
     }
@@ -299,6 +350,7 @@ export class AuthService {
       blocked_at: null,
     });
     if (userAuthDevice.blocked_at) {
+      this.audit('warn', 'twofa', 'Login rejected', { reason: 'device_blocked' }, user.id);
       throw new ForbiddenException('Device is blocked');
     }
 
@@ -314,11 +366,12 @@ export class AuthService {
       }),
     ]);
 
-    return await this.handleLogin(updatedUser, userAuthDevice);
+    return await this.handleLogin(updatedUser, userAuthDevice, 'twofa');
   }
   async refreshToken() {
     const user = this.requestService.user;
     if (!user) {
+      this.audit('warn', 'refresh', 'Session refresh rejected', { reason: 'no_user' });
       throw new UnauthorizedException('Invalid credentials');
     }
     const authDevice = await this.userAuthDevicesService.getOneByAuthDevice({
@@ -327,6 +380,7 @@ export class AuthService {
       ip_address: this.requestService.ip_address || '-',
     });
     if (!authDevice || authDevice.disabled || authDevice.blocked_at) {
+      this.audit('warn', 'refresh', 'Session refresh rejected', { reason: 'device_untrusted' }, user.id);
       throw new UnauthorizedException('Invalid credentials');
     }
     const exists = await this.userSessionsService.sessionExists({
@@ -335,15 +389,17 @@ export class AuthService {
       token: user.token,
     });
     if (!exists) {
+      this.audit('warn', 'refresh', 'Session refresh rejected', { reason: 'session_missing' }, user.id);
       throw new UnauthorizedException('Invalid credentials');
     }
     // Re-sign from the database, not from the old token: the payload is a snapshot taken at sign-in,
     // so copying it forward kept values such as `funnel_step` and `stripe_customer_id` stale forever.
     const freshUser = await this.userRepository.findOneBy('id', user.id);
     if (freshUser.banned) {
+      this.audit('warn', 'refresh', 'Session refresh rejected', { reason: 'banned' }, user.id);
       throw new UnauthorizedException(freshUser.banned_reason || 'Account permanently banned');
     }
-    return await this.handleLogin(freshUser, authDevice);
+    return await this.handleLogin(freshUser, authDevice, 'refresh');
   }
   async passwordRecovery({ email }: PasswordRecoveryRequest) {
     // Built server-side, never taken from the request. When this came from the client
@@ -353,6 +409,8 @@ export class AuthService {
     const fallback_url = `${this.configService.get<string>('app.url')}/auth/password-recovery/recover`;
     const user = await this.userRepository.findOneBy('email', email);
     if (!user) {
+      // Never the email that was asked for.
+      this.audit('warn', 'password-recovery', 'Password recovery rejected', { reason: 'unknown_account' });
       throw new UnauthorizedException('Unauthorized');
     }
     let passwordRecoveryAttempt =
@@ -390,12 +448,13 @@ export class AuthService {
     this.mailService
       .send(this.passwordRecoveryMail.setData(user, passwordRecoveryAttempt, user.language))
       .catch((error: Error) =>
-        this.logService.error('Failed to send password recovery email', {
-          message: error?.message,
-          stack: error?.stack,
-          userId: user.id,
-        }),
+        // SMTP rejects quote the recipient (`550 <a@b.c> rejected`); the stack repeats it.
+        this.audit('error', 'password-recovery', 'Failed to send password recovery email', {
+          error_name: error?.name,
+          error_message: maskEmailAddresses(error?.message ?? ''),
+        }, user.id),
       );
+    this.audit('info', 'password-recovery', 'Password recovery requested', undefined, user.id);
     // Never return the attempt itself: it carries `code`, and handing that to the
     // requester let anyone who knew an email reset that account's password. Only the
     // timing the client needs for its cooldown/expiry UI leaves the API.
@@ -412,10 +471,13 @@ export class AuthService {
       await this.passwordRecoveryAttemptsService.findOneByCode(
         checkPasswordRecoveryAttemptRequest.code,
       );
+    const recoveryUserId = passwordRecoveryAttempt?.user?.id;
     if (!passwordRecoveryAttempt) {
+      this.audit('warn', 'password-recovery', 'Password recovery rejected', { reason: 'invalid_code' });
       throw new BadRequestException('Invalid code');
     }
     if (passwordRecoveryAttempt.expires_at.getTime() < new Date().getTime()) {
+      this.audit('warn', 'password-recovery', 'Password recovery rejected', { reason: 'expired' }, recoveryUserId);
       throw new BadRequestException('Code expired');
     }
     await this.passwordRecoveryAttemptsService.update(
@@ -424,6 +486,7 @@ export class AuthService {
         code_validated: true,
       },
     );
+    this.audit('info', 'password-recovery', 'Password recovery code validated', undefined, recoveryUserId);
     return passwordRecoveryAttempt;
   }
   async updatePassword(updatePasswordRequest: UpdatePasswordRequest) {
@@ -432,12 +495,16 @@ export class AuthService {
         updatePasswordRequest.code,
       );
     if (!passwordRecoveryAttempt) {
+      this.audit('warn', 'password-recovery', 'Password recovery rejected', { reason: 'invalid_code' });
       throw new BadRequestException('Invalid password recovery attempt');
     }
+    const recoveryUserId = passwordRecoveryAttempt.user?.id;
     if (!passwordRecoveryAttempt.code_validated) {
+      this.audit('warn', 'password-recovery', 'Password recovery rejected', { reason: 'not_validated' }, recoveryUserId);
       throw new BadRequestException('Code not validated');
     }
     if (compareAsc(passwordRecoveryAttempt.expires_at, new Date()) === -1) {
+      this.audit('warn', 'password-recovery', 'Password recovery rejected', { reason: 'expired' }, recoveryUserId);
       throw new BadRequestException('Code expired');
     }
 
@@ -451,15 +518,21 @@ export class AuthService {
       // A reset is how a user evicts whoever else got in: every existing session goes.
       this.userSessionsService.expireAllForUser(passwordRecoveryAttempt.user.id),
     ]);
+    this.audit('info', 'password-recovery', 'Password reset completed', { sessions_revoked: 'all' }, recoveryUserId);
 
     return updatedUser;
   }
-  private async handleLogin(user: BaseUser, userAuthDevice: UserAuthDevice) {
+  private async handleLogin(
+    user: BaseUser,
+    userAuthDevice: UserAuthDevice,
+    method: 'password' | 'twofa' | 'pre_validated_device' | 'refresh',
+  ) {
     const payload: UserPayload = {
       ...user,
       user_auth_device_id: userAuthDevice.id,
     };
     if (!user.email_validated) {
+      this.audit('warn', 'login', 'Login rejected', { reason: 'email_not_validated' }, user.id);
       throw new UnauthorizedException('Email not validated');
     }
     const expiresAt = addDays(new Date(), 1);
@@ -473,6 +546,14 @@ export class AuthService {
       token,
       expires_at: expiresAt,
     });
+    // Refresh is the hot path (every page load near expiry): no line for it.
+    if (method !== 'refresh') {
+      this.audit('info', 'login', 'Login succeeded', {
+        method,
+        user_auth_device_id: userAuthDevice.id,
+        trusted_device: !userAuthDevice.disabled,
+      }, user.id);
+    }
     return { ...user, token };
   }
 
@@ -493,7 +574,7 @@ export class AuthService {
         throw new BadRequestException(`Please wait ${waitSeconds} seconds before asking for a new code`);
       }
     }
-    const updatedUser = await this.issue2faCode(user);
+    const updatedUser = await this.issue2faCode(user, 'resend');
     return { ...updatedUser, token: null, need_twofa: true };
   }
 
@@ -504,7 +585,7 @@ export class AuthService {
   }
 
   /** Stores a fresh hashed code (resetting the attempt budget) and emails the plain one. */
-  private async issue2faCode(user: BaseUser) {
+  private async issue2faCode(user: BaseUser, reason: 'login' | 'register' | 'resend') {
     // Digits only: easier to read off a phone and to type, and mobile keyboards show a number pad.
     const code = randomInt(0, 1_000_000).toString().padStart(6, '0');
     const updatedUser = await this.userRepository.updateById(user.id, {
@@ -515,12 +596,13 @@ export class AuthService {
     this.mailService
       .send(this.twoFAMail.setUser({ ...updatedUser, twofa_code: code }, updatedUser.language))
       .catch((error: Error) =>
-        this.logService.error('Failed to send 2FA email', {
-          message: error?.message,
-          stack: error?.stack,
-          userId: updatedUser.id,
-        }),
+        this.audit('error', 'twofa', 'Failed to send 2FA email', {
+          error_name: error?.name,
+          error_message: maskEmailAddresses(error?.message ?? ''),
+        }, updatedUser.id),
       );
+    // Never the code.
+    this.audit('info', 'twofa', '2FA code issued', { reason }, updatedUser.id);
     return updatedUser;
   }
 
@@ -533,7 +615,10 @@ export class AuthService {
       user_agent?: string;
       ip_address?: string;
     },
-    { reusePendingCode = false }: { reusePendingCode?: boolean } = {},
+    {
+      reusePendingCode = false,
+      reason = 'login',
+    }: { reusePendingCode?: boolean; reason?: 'login' | 'register' } = {},
   ): Promise<TwoFactorAuth> {
     const userDevice = await this.userAuthDevicesService.getOneOrCreate({
       user_id: user.id,
@@ -543,6 +628,7 @@ export class AuthService {
       blocked_at: null,
     });
     if (userDevice.blocked_at) {
+      this.audit('warn', reason, 'Login rejected', { reason: 'device_blocked' }, user.id);
       throw new ForbiddenException('Device is blocked');
     }
     if (!user.twofa_enabled || !userDevice.disabled) {
@@ -555,7 +641,7 @@ export class AuthService {
     }
     return {
       user_auth_device: userDevice,
-      user: await this.issue2faCode(user),
+      user: await this.issue2faCode(user, reason),
       need_2fa: true,
     };
   }
@@ -571,6 +657,7 @@ export class AuthService {
     await this.userSessionsService.update(session.id, {
       expires_at: new Date(),
     });
+    this.audit('info', 'logout', 'Logged out', { session_id: session.id }, user.id);
     return true;
   }
 }

@@ -31,6 +31,8 @@ export type IndexNowResult =
       status: 'submitted';
       urls: number;
       httpStatus: number;
+      /** Wall time of the IndexNow POST. */
+      durationMs: number;
       /** Changed pages whose share image is now generated and cached at the edge. */
       warmedImages: number;
     };
@@ -66,6 +68,7 @@ export class IndexNowService {
     );
     const key = deriveIndexNowKey(getConfigValue('app').token);
 
+    const startedAt = Date.now();
     const res = await fetch(INDEXNOW_ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json; charset=utf-8' },
@@ -77,9 +80,10 @@ export class IndexNowService {
       }),
       signal: AbortSignal.timeout(15_000),
     });
+    const durationMs = Date.now() - startedAt;
     const warmedImages = await this.warmShareImages(origin, paths);
     // 200 = accepted, 202 = accepted while the key is being validated. Anything else is logged.
-    return { status: 'submitted', urls: urlList.length, httpStatus: res.status, warmedImages };
+    return { status: 'submitted', urls: urlList.length, httpStatus: res.status, durationMs, warmedImages };
   }
 
   /**

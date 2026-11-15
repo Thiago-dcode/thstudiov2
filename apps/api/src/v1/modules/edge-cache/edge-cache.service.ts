@@ -97,7 +97,11 @@ export class EdgeCacheService {
    * without `success: true`), so a bad token or zone does not burn the shared rate budget. Errors
    * and logs carry the status and Cloudflare's error codes only: never the token or headers.
    */
-  async purgePrefixes(target: EdgePurgeTarget, prefixes: string[]): Promise<void> {
+  async purgePrefixes(
+    target: EdgePurgeTarget,
+    prefixes: string[],
+  ): Promise<{ http_status: number; duration_ms: number; cf_ray: string | null }> {
+    const startedAt = Date.now();
     let res: Response;
     try {
       res = await fetch(
@@ -133,11 +137,10 @@ export class EdgeCacheService {
       throw new Error(`Cloudflare purge failed, will retry (${detail})`);
     }
     if (!res.ok || body?.success !== true) {
-      const message = `Cloudflare purge rejected, not retried (${detail})`;
-      // Logged here: `GlobalProcessor` only logs a job that used up its attempts, and an
-      // unrecoverable failure stops after the first one.
-      this.logger.name('purge').error(message);
-      throw new UnrecoverableError(message);
+      // No line here: `GlobalProcessor` logs an UnrecoverableError as a permanent failure.
+      throw new UnrecoverableError(`Cloudflare purge rejected, not retried (${detail})`);
     }
+    // The ray id lets Cloudflare support find the exact request.
+    return { http_status: res.status, duration_ms: Date.now() - startedAt, cf_ray: res.headers?.get?.('cf-ray') ?? null };
   }
 }

@@ -26,19 +26,25 @@ export class IndexNowTask {
   @Cron(CronExpression.EVERY_HOUR, { name: 'indexnow-submit', timeZone: 'UTC' })
   async submitRecentChanges() {
     await runCronExclusive('indexnow-submit', CRON_LOCK_TTL.hourly, async () => {
-      const log = this.logger.name('submit');
+      const op = { operation: 'submit' };
       try {
         const result = await this.indexNowService.submitChangedSince(
           new Date(Date.now() - IndexNowTask.WINDOW_MS),
         );
         if (result.status === 'skipped') return;
-        const message = `IndexNow submitted ${result.urls} URLs (HTTP ${result.httpStatus}); share images warmed: ${result.warmedImages}`;
-        if (result.httpStatus === 200 || result.httpStatus === 202) log.info(message);
-        else log.warn(message);
+        const extra = {
+          urls: result.urls,
+          http_status: result.httpStatus,
+          warmed_images: result.warmedImages,
+          duration_ms: result.durationMs,
+        };
+        if (result.httpStatus === 200 || result.httpStatus === 202) this.logger.info('IndexNow submitted', extra, op);
+        else this.logger.warn('IndexNow submitted', extra, op);
       } catch (error) {
-        log.error(
-          `IndexNow submission failed - ${error instanceof Error ? error.message : 'Unknown error'}`,
-          error,
+        this.logger.error(
+          'IndexNow submission failed',
+          { error_message: error instanceof Error ? error.message : 'Unknown error' },
+          op,
         );
       } finally {
         await LogService.flush();

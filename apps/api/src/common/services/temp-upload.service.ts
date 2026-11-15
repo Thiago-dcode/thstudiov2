@@ -4,6 +4,10 @@ import { FactoryStorageService } from '@repo/backend-lib/services/storage-servic
 import { s3PrivateStorageConfig } from '@repo/backend-lib/config/storage';
 import { generateUUID } from '@repo/common-lib/utils/generate-uuid';
 import type { CreateMediaUploadUrl } from '@repo/common-lib/types/media';
+import { FactoryLogService } from '@repo/backend-lib/services/log-service';
+
+/** Upload lifecycle start. The presigned URL is a bearer write link and is never logged. */
+const uploadLog = FactoryLogService.createLogService('file', { channel: 'storage', name: 'upload-url' });
 
 /**
  * Expiry for a presigned upload URL. Deliberately short and independent of
@@ -75,6 +79,7 @@ export class TempUploadService {
       this.key(userPublicId, uploadId),
       { contentLength: size, expireIn: UPLOAD_URL_EXPIRATION_SECONDS },
     );
+    uploadLog.info('Upload URL issued', { upload_id: uploadId, size_bytes: size });
     return {
       upload_url: uploadUrl,
       upload_id: uploadId,

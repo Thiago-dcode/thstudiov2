@@ -11,6 +11,20 @@ import {
     S3Client,
 } from '@aws-sdk/client-s3';
 import { S3StorageConfig, StorageWriteInput } from "./types";
+import { FactoryLogService } from "../log-service/factory-log.service";
+
+/** Failures and destructive/bulk ops only: puts and gets are summarised by the business lines. */
+const storageLog = FactoryLogService.createLogService("file", { channel: "storage" });
+
+/** AWS SDK error fields worth keeping; never the request, credentials or response body. */
+const awsErrorFields = (error: unknown) => {
+    const e = error as { name?: string; $metadata?: { httpStatusCode?: number; requestId?: string } };
+    return {
+        error_name: e?.name ?? typeof error,
+        http_status: e?.$metadata?.httpStatusCode ?? null,
+        aws_request_id: e?.$metadata?.requestId ?? null,
+    };
+};
 
 /**
  * Signed onto every presigned upload URL this service issues, so the browser's PUT must send it
@@ -74,6 +88,7 @@ export class S3StorageService extends StorageService {
         return Promise.resolve();
     }
     public async write(body: StorageWriteInput, path: string): Promise<boolean> {
+        const startedAt = Date.now();
         const command = new PutObjectCommand({
             Bucket: this.config.bucket,
             Key: path,
@@ -91,8 +106,13 @@ export class S3StorageService extends StorageService {
             // key the worker later overwrites, and that raw copy must not be pinned anywhere.
             CacheControl: 'public, max-age=31536000, immutable',
         });
-        const result = await this.s3Client.send(command);
-        return !!result;
+        try {
+            const result = await this.s3Client.send(command);
+            return !!result;
+        } catch (error) {
+            this.logFailure('Storage write failed', 'write', { key: path }, error, startedAt);
+            throw error;
+        }
 
     }
     public async writeAnGet(body: StorageWriteInput, path: string) {
@@ -154,11 +174,18 @@ export class S3StorageService extends StorageService {
         return url;
     }
     public async getBuffer(path: string): Promise<Buffer> {
+        const startedAt = Date.now();
         const command = new GetObjectCommand({
             Bucket: this.config.bucket,
             Key: path,
         });
-        const result = await this.s3Client.send(command);
+        let result;
+        try {
+            result = await this.s3Client.send(command);
+        } catch (error) {
+            this.logFailure('Storage read failed', 'get-buffer', { key: path }, error, startedAt);
+            throw error;
+        }
         const bytes = await result.Body?.transformToByteArray();
         if (!bytes) {
             throw new Error(`Could not read object at ${path}`);
@@ -170,6 +197,7 @@ export class S3StorageService extends StorageService {
         throw new Error('Not implemented ' + path);
     }
     public async delete(path: string): Promise<boolean> {
+        const startedAt = Date.now();
         try {
             const command = new DeleteObjectCommand({
                 Bucket: this.config.bucket,
@@ -178,7 +206,7 @@ export class S3StorageService extends StorageService {
             await this.s3Client.send(command);
             return true;
         } catch (error) {
-
+            this.logFailure('Storage delete failed', 'delete', { key: path }, error, startedAt);
             return false;
         }
     }
@@ -187,6 +215,9 @@ export class S3StorageService extends StorageService {
      * Handles pagination via `IsTruncated` to support prefixes with >1000 objects.
      */
     public async deleteDirectory(prefix: string): Promise<boolean> {
+        const startedAt = Date.now();
+        let objectsDeleted = 0;
+        let batches = 0;
         try {
             let isTruncated = true;
             let continuationToken: string | undefined;
@@ -208,13 +239,27 @@ export class S3StorageService extends StorageService {
                     },
                 });
                 await this.s3Client.send(deleteCommand);
+                objectsDeleted += listed.Contents.length;
+                batches++;
 
                 isTruncated = listed.IsTruncated ?? false;
                 continuationToken = listed.NextContinuationToken;
             }
 
+            storageLog.info(
+                'Storage directory deleted',
+                { bucket: this.config.bucket, prefix, objects_deleted: objectsDeleted, batches, duration_ms: Date.now() - startedAt },
+                { operation: 'delete-directory' },
+            );
             return true;
-        } catch {
+        } catch (error) {
+            this.logFailure(
+                'Storage directory delete failed',
+                'delete-directory',
+                { prefix, objects_deleted: objectsDeleted, batches },
+                error,
+                startedAt,
+            );
             return false;
         }
     }
@@ -278,6 +323,7 @@ export class S3StorageService extends StorageService {
         }));
     }
     public async move(fromPath: string, toPath: string): Promise<boolean> {
+        const startedAt = Date.now();
         try {
             await this.copyIn(this.config.bucket, fromPath, toPath);
             await this.s3Client.send(new DeleteObjectCommand({
@@ -290,24 +336,50 @@ export class S3StorageService extends StorageService {
             // do next. But a bare `false` gave no way to tell an IAM denial from a missing source
             // from a transient network error, which is exactly what made this failure opaque in
             // practice.
-            console.error(`S3StorageService.move failed: ${fromPath} -> ${toPath}`, error);
+            this.logFailure('Storage move failed', 'move', { key: fromPath, to_key: toPath }, error, startedAt);
             return false;
         }
     }
     public async promoteFrom(source: StorageService, fromPath: string, toPath: string): Promise<boolean> {
+        const startedAt = Date.now();
         try {
             await this.copyIn(source.bucket, fromPath, toPath);
         } catch (error) {
             // Same contract as `move`: `false` is "could not promote", logged with both ends.
-            console.error(`S3StorageService.promoteFrom failed: ${source.bucket}/${fromPath} -> ${toPath}`, error);
+            this.logFailure(
+                'Storage promote failed',
+                'promote',
+                { source_bucket: source.bucket, key: fromPath, to_key: toPath },
+                error,
+                startedAt,
+            );
             return false;
         }
         // The copy landed, so the promotion succeeded. A failed source delete only leaves a temp
         // object behind for the private bucket's lifecycle rule to expire.
         if (!(await source.delete(fromPath))) {
-            console.error(`S3StorageService.promoteFrom could not delete source: ${source.bucket}/${fromPath}`);
+            storageLog.warn(
+                'Storage promote left its source behind',
+                { source_bucket: source.bucket, key: fromPath },
+                { operation: 'promote' },
+            );
         }
         return true;
+    }
+
+    /** One constant message per op; the key and AWS error fields go in extraInfo. */
+    private logFailure(
+        message: string,
+        operation: string,
+        fields: Record<string, unknown>,
+        error: unknown,
+        startedAt: number,
+    ): void {
+        storageLog.error(
+            message,
+            { bucket: this.config.bucket, ...fields, ...awsErrorFields(error), duration_ms: Date.now() - startedAt },
+            { operation },
+        );
     }
 
 

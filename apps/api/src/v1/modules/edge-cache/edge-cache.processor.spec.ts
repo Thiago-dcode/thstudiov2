@@ -98,7 +98,11 @@ describe('EdgeCacheProcessor', () => {
         // Not even the lookups: a skipped job costs nothing on dev.
         expect(userRepository.findByIdCompact).not.toHaveBeenCalled();
         expect(logger.info).toHaveBeenCalledTimes(1);
-        expect(logger.info).toHaveBeenCalledWith(expect.stringContaining(reason));
+        expect(logger.info).toHaveBeenCalledWith(
+          "Edge purge skipped",
+          expect.objectContaining({ reason }),
+          expect.anything(),
+        );
       },
     );
   });
@@ -279,7 +283,11 @@ describe('EdgeCacheProcessor', () => {
 
       expect(sentPrefixes(purgePrefixes)).toHaveLength(3);
       expect(sentPrefixes(purgePrefixes).join()).not.toMatch(/\.\.|a b/);
-      expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('dropped 2'));
+      expect(logger.warn).toHaveBeenCalledWith(
+        "Edge purge dropped invalid usernames",
+        expect.objectContaining({ dropped: 2 }),
+        expect.anything(),
+      );
     });
 
     it('rethrows a lookup failure other than "not found", so the job is retried', async () => {
@@ -314,7 +322,9 @@ describe('EdgeCacheProcessor', () => {
     await processor.process(job({}));
 
     expect(logger.info).toHaveBeenCalledWith(
-      expect.stringMatching(/2 username\(s\), 6 prefixes, 1 request\(s\)/),
+      "Edge purge completed",
+      expect.objectContaining({ names: 2, prefixes: 6, requests: 1, duration_ms: expect.any(Number) }),
+      expect.anything(),
     );
     const logged = JSON.stringify([logger.info.mock.calls, logger.warn.mock.calls, logger.error.mock.calls]);
     expect(logged).not.toContain(TOKEN);

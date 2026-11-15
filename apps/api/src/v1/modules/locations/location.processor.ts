@@ -17,7 +17,8 @@ import { GlobalProcessor } from 'src/common/processors/global.processor';
 @Processor(LOCATION_QUEUE)
 export class LocationProcessor extends GlobalProcessor {
   private readonly logger = FactoryLogService.createLogService('file', {
-    channel: LOCATION_QUEUE,
+    // A literal, not the queue constant: channels are a closed set named after the module.
+    channel: 'locations',
   });
 
   constructor(

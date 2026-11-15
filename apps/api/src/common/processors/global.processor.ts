@@ -1,69 +1,36 @@
 import { OnWorkerEvent, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
-import { FactoryLogService, LogService } from '@repo/backend-lib/services/log-service';
+import { LOG_QUEUE } from '@repo/common-lib/constants/queues';
+import {
+  logPermanentJobFailure,
+  redactJobData,
+  runJobWithLogContext,
+} from '@repo/backend-lib/utils';
 
-const failedJobLogger = FactoryLogService.createLogService('file', {
-  channel: 'failed-job',
-});
-
-/** Email bodies carry live recovery and 2FA codes: log their size, never their content. */
-const BODY_KEYS = new Set(['html', 'text']);
-
-export const redactJobData = (data: unknown): unknown => {
-  if (Array.isArray(data)) return data.map(redactJobData);
-  if (!data || typeof data !== 'object') return data;
-  return Object.fromEntries(
-    Object.entries(data as Record<string, unknown>).map(([key, value]) => [
-      key,
-      BODY_KEYS.has(key) && typeof value === 'string'
-        ? `[redacted, ${value.length} chars]`
-        : redactJobData(value),
-    ]),
-  );
-};
+/** Kept for the specs that import it from here; the implementation lives in backend-lib. */
+export { redactJobData };
 
 export abstract class GlobalProcessor extends WorkerHost {
+  constructor() {
+    super();
+    // Every api job runs inside its trace context (the id of whoever enqueued it) with
+    // start/completed/retry lines. Nest's explorer binds `instance.process` after construction,
+    // so it picks up this wrapper. The log-flush queue itself gets the context but no lines.
+    if (typeof this.process !== 'function') return;
+    const original = this.process.bind(this) as (job: Job, token?: string) => Promise<unknown>;
+    this.process = (job: Job, token?: string) =>
+      runJobWithLogContext(job, () => original(job, token), {
+        lifecycle: job?.queueName !== LOG_QUEUE,
+      });
+  }
+
   @OnWorkerEvent('failed')
   async onFailed(
     job: Job | undefined,
     error: Error,
     prev: string,
   ): Promise<void> {
-    if (!job) {
-      failedJobLogger.error('Queue worker failed with no job', {
-        message: error?.message,
-        stack: error?.stack,
-        prev,
-      });
-      await LogService.flush();
-      return;
-    }
-
-    const maxAttempts = Math.max(1, job.opts.attempts ?? 1);
-    if (job.attemptsMade < maxAttempts) {
-      return;
-    }
-
-    const queueLabel =
-      job.queueQualifiedName?.replace(/^[^:]+:/, '') ?? 'unknown';
-
-    failedJobLogger.name(queueLabel).error(
-      `Job failed permanently: ${queueLabel} / ${String(job.name)} (${String(job.id)})`,
-      {
-        queue: queueLabel,
-        queueQualifiedName: job.queueQualifiedName,
-        jobId: job.id,
-        jobName: job.name,
-        data: redactJobData(job.data),
-        attemptsMade: job.attemptsMade,
-        maxAttempts,
-        failedReason: job.failedReason ?? error?.message,
-        errorMessage: error?.message,
-        errorStack: error?.stack,
-        stacktrace: job.stacktrace,
-        prev,
-      },
-    );
-    await LogService.flush();
+    // Final attempt or UnrecoverableError: one `failed-job` line, inside the job's trace.
+    await logPermanentJobFailure(job, error, prev);
   }
 }

@@ -29,7 +29,7 @@ const CACHE_TTL = 1000 * 60 * 60 * 24;
 @Injectable()
 export class ServiceService {
   private readonly logger = FactoryLogService.createLogService('file', {
-    channel: 'service',
+    channel: 'services',
   });
 
   constructor(

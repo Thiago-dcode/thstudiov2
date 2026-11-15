@@ -50,7 +50,7 @@ export class AccountDeletionTask {
     for (const { id } of due) {
       await QueueHelper.createAccountDeletionWarningJob({ user_id: id });
     }
-    this.logger.info(`Account deletion warnings queued: ${due.length}`);
+    this.logger.info('Account deletion warnings queued', { count: due.length });
   }
 
   private async queueDeletions() {
@@ -61,6 +61,6 @@ export class AccountDeletionTask {
     for (const { id } of due) {
       await QueueHelper.createDeleteUserAccountJob({ user_id: id });
     }
-    this.logger.info(`Account deletions queued: ${due.length}`);
+    this.logger.info('Account deletions queued', { count: due.length });
   }
 }

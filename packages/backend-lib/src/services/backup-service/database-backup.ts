@@ -2,6 +2,8 @@ import { s3PrivateStorageConfig } from '../../config/storage';
 import { StorageService } from '../storage-service/storage.service';
 import { FactoryStorageService } from '../storage-service/factory-storage.service';
 import Logger from '../../utils/console';
+import { FactoryLogService } from '../log-service/factory-log.service';
+import { LogService } from '../log-service/log.service';
 import { config } from '@repo/common-lib/config';
 import { INDEXNOW_CANONICAL_HOST } from '@repo/common-lib/utils/indexnow';
 import { execFile } from 'node:child_process';
@@ -13,6 +15,10 @@ import { promisify } from 'node:util';
 const execFileAsync = promisify(execFile);
 
 const LOG = '[backup]';
+
+/** Structured audit trail in the `backup` log channel; console output stays on `Logger`. Call `flushAsync()` when done. */
+const backupLog = (operation: 'backup' | 'cleanup' | 'restore'): LogService =>
+    FactoryLogService.createLogService('file', { channel: 'backup' }).name(operation).id(`${operation}-${Date.now()}`);
 /**
  * Local scratch space for pg_dump/pg_restore; a dump only lives here until it is uploaded. The OS temp dir,
  * not `storage/`: the containers run as the non-root `node` user and cannot create folders under /workspace.
@@ -43,6 +49,12 @@ const envCan = (): boolean => {
     }
 };
 
+/** Errors stringify to "{}", so pull out the fields worth keeping (pg_dump's stderr is on `stderr`). */
+const errorDetails = (error: unknown) =>
+    error instanceof Error
+        ? { name: error.name, message: error.message, stack: error.stack }
+        : { message: String(error) };
+
 const pad = (value: number) => String(value).padStart(2, '0');
 
 const formatDate = (date: Date) => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
@@ -57,8 +69,18 @@ const backupKeyFor = (date: Date) => `${BACKUP_PREFIX}/pg-backup-${formatDate(da
 const backupStorage = (): StorageService => FactoryStorageService.create(s3PrivateStorageConfig());
 
 export const backup = async (storageService?: StorageService): Promise<BackupResult> => {
+    const log = backupLog('backup');
+    try {
+        return await runBackup(log, storageService);
+    } finally {
+        await log.flushAsync();
+    }
+};
+
+const runBackup = async (log: LogService, storageService?: StorageService): Promise<BackupResult> => {
     if (!envCan()) {
         Logger.info(`${LOG} skipped: not the production environment`);
+        log.info('Backup skipped', { reason: 'not the production environment' });
         return { status: 'skipped', reason: 'not the production environment' };
     }
     const storage = storageService ?? backupStorage();
@@ -68,6 +90,7 @@ export const backup = async (storageService?: StorageService): Promise<BackupRes
     const key = backupKeyFor(new Date());
     const startedAt = Date.now();
     Logger.info(`${LOG} starting pg_dump of "${database}" -> ${key}`);
+    log.info('Backup started', { database, host, port, key });
     const tempFile = path.join(TEMP_DIRECTORY, path.basename(key));
 
     try {
@@ -82,6 +105,7 @@ export const backup = async (storageService?: StorageService): Promise<BackupRes
 
         const dump = await fs.readFile(tempFile);
         Logger.info(`${LOG} dump created (${dump.length} bytes), uploading`);
+        log.info('Dump created, uploading', { key, size: dump.length, durationMs: Date.now() - startedAt });
         if (!(await storage.write(dump, key))) {
             throw new Error(`Backup upload to ${key} failed`);
         }
@@ -93,9 +117,12 @@ export const backup = async (storageService?: StorageService): Promise<BackupRes
         }
 
         Logger.success(`${LOG} uploaded ${key} (${stored.size} bytes) in ${((Date.now() - startedAt) / 1000).toFixed(1)}s`);
+        log.success('Backup uploaded and verified', { key, size: stored.size, durationMs: Date.now() - startedAt });
         return { status: 'done', key, size: stored.size };
     } catch (error) {
         Logger.error(`${LOG} failed for ${key}:`, error);
+        // Critical: a failed backup mails the admins (cleanup and restore failures stay `error`).
+        log.critical('Backup failed', { key, durationMs: Date.now() - startedAt, error: errorDetails(error) });
         throw error;
     } finally {
         await fs.rm(tempFile, { force: true });
@@ -109,8 +136,21 @@ export const backup = async (storageService?: StorageService): Promise<BackupRes
  * day in the history leaves everything older than the gap behind.
  */
 export const deleteExpiredBackup = async (storageService?: StorageService): Promise<BackupDeleteResult> => {
+    const log = backupLog('cleanup');
+    try {
+        return await runCleanup(log, storageService);
+    } catch (error) {
+        log.error('Expired backup cleanup failed', { error: errorDetails(error) });
+        throw error;
+    } finally {
+        await log.flushAsync();
+    }
+};
+
+const runCleanup = async (log: LogService, storageService?: StorageService): Promise<BackupDeleteResult> => {
     if (!envCan()) {
         Logger.info(`${LOG} cleanup skipped: not the production environment`);
+        log.info('Cleanup skipped', { reason: 'not the production environment' });
         return { status: 'skipped', reason: 'not the production environment' };
     }
     const storage = storageService ?? backupStorage();
@@ -128,10 +168,12 @@ export const deleteExpiredBackup = async (storageService?: StorageService): Prom
         }
         keys.push(key);
         Logger.info(`${LOG} deleted expired backup ${key}`);
+        log.info('Expired backup deleted', { key });
         day.setDate(day.getDate() - 1);
     }
 
     Logger.info(`${LOG} cleanup finished: ${keys.length} expired backup(s) deleted`);
+    log.success('Cleanup finished', { retentionDays: RETENTION_DAYS, deleted: keys.length, keys });
     return { status: 'deleted', keys };
 };
 
@@ -181,7 +223,22 @@ export const restore = async ({
     allowProduction = false,
     storageService = backupStorage(),
 }: RestoreOptions): Promise<{ key: string }> => {
+    const log = backupLog('restore');
+    try {
+        return await runRestore(log, date, allowProduction, storageService);
+    } finally {
+        await log.flushAsync();
+    }
+};
+
+const runRestore = async (
+    log: LogService,
+    date: Date | string,
+    allowProduction: boolean,
+    storageService: StorageService,
+): Promise<{ key: string }> => {
     if (envCan() && !allowProduction) {
+        log.error('Restore refused', { reason: 'production without allowProduction' });
         throw new Error('Refusing to restore onto production without allowProduction');
     }
 
@@ -189,6 +246,7 @@ export const restore = async ({
 
     const key = backupKeyFor(parseBackupDate(date));
     if (!(await storageService.exists(key))) {
+        log.error('Restore failed: backup not found', { key });
         throw new Error(`No backup found at ${key}`);
     }
 
@@ -197,8 +255,10 @@ export const restore = async ({
     try {
         await fs.mkdir(TEMP_DIRECTORY, { recursive: true });
         Logger.warn(`${LOG} restoring ${key} into "${database}" on ${host}`);
+        log.warn('Restore started', { key, database, host, port, allowProduction });
         const dump = await storageService.getBuffer(key);
         Logger.info(`${LOG} downloaded ${key} (${dump.length} bytes), running pg_restore`);
+        log.info('Backup downloaded, running pg_restore', { key, size: dump.length });
         await fs.writeFile(tempFile, dump);
 
         await execFileAsync(
@@ -212,12 +272,13 @@ export const restore = async ({
         );
 
         Logger.success(`${LOG} restored ${key} in ${((Date.now() - startedAt) / 1000).toFixed(1)}s`);
+        log.success('Restore finished', { key, database, durationMs: Date.now() - startedAt });
         return { key };
     } catch (error) {
         Logger.error(`${LOG} restore of ${key} failed:`, error);
+        log.error('Restore failed', { key, database, durationMs: Date.now() - startedAt, error: errorDetails(error) });
         throw error;
     } finally {
         await fs.rm(tempFile, { force: true });
     }
 };
-

@@ -34,7 +34,7 @@ describe('UserService — account deletion / deactivation', () => {
       expect.objectContaining({ userId }),
     );
   const logger = { info: jest.fn() };
-  const logService = { name: jest.fn(() => logger) };
+  const logService = { name: jest.fn(() => logger), info: jest.fn() };
   const requestService: { user: unknown } = { user: null };
   const helpers = { getAsset: jest.fn() };
 

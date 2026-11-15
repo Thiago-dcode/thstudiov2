@@ -1,3 +1,5 @@
+import { AsyncResource } from 'node:async_hooks';
+import { performance } from 'node:perf_hooks';
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NextFunction, Request, Response } from 'express';
@@ -17,19 +19,60 @@ import {
   IP_ADDRESS_HEADER,
   APP_TOKEN_HEADER,
 } from '@repo/common-lib/constants/headers';
+import {
+  FactoryLogService,
+  LogService,
+  redactRoutePath,
+} from '@repo/backend-lib/services/log-service';
 const AVAILABLE_LANGUAGES = ENUMS.LANGUAGE_CODE;
+
+export const ACCESS_LOG_CHANNEL = 'api.access' as const;
+/**
+ * Paths whose successful requests write no access line. The docker healthcheck
+ * (`compose.prod.yaml`) polls `GET /` every 30 s per replica; a failing `/` is still logged.
+ */
+export const ACCESS_LOG_SKIP_PATHS: ReadonlySet<string> = new Set(['/']);
 
 @Injectable()
 export class RequestMiddleware implements NestMiddleware {
+  /**
+   * Its own instance, not the DI `LogService`: builder calls mutate config, and the shared one
+   * is used by every request at once.
+   */
+  private readonly accessLog: LogService;
+
   constructor(
     private readonly requestService: RequestService,
     private readonly configService: ConfigService,
-  ) { }
+  ) {
+    this.accessLog = FactoryLogService.createLogService('file', {
+      channel: ACCESS_LOG_CHANNEL,
+      ...requestService.logBinding(),
+    });
+  }
 
   async use(req: Request, res: Response, next: NextFunction) {
     await this.requestService.run(() => {
-      this.requestService.path = req.baseUrl;
+      const startedAt = performance.now();
+      // Never the query string: it can carry one-time tokens (email verification, recovery).
+      const path = (req.originalUrl ?? req.url ?? '').split('?')[0];
+      this.requestService.method = req.method;
+      // Path params can be secrets too (`/email-preferences/:token/token`). They are only known
+      // once Express matches the route, so the logged path is resolved on every read: `null`
+      // before routing and for unmatched paths, sensitive param values masked after.
+      this.requestService.path_resolver = () =>
+        redactRoutePath(
+          path,
+          (req.route as { path?: string } | undefined)?.path,
+          req.params as Record<string, unknown> | undefined,
+        );
       req.headers[REQUEST_START_TIME] = Date.now().toString();
+      // `close` listeners don't reliably run in the request's AsyncLocalStorage context; binding
+      // keeps `requestService.log` pointing at this request (including the user AuthGuard sets).
+      res.once(
+        'close',
+        AsyncResource.bind(() => this.logCompletion(req, res, path, startedAt)),
+      );
 
       //Priority 1: Query Param
       const { lan }: { lan?: string } = req.query;
@@ -86,5 +129,40 @@ export class RequestMiddleware implements NestMiddleware {
 
       next();
     });
+  }
+
+  /**
+   * One line per request on `api.access`, also for guard rejections, unknown routes and handler
+   * errors that never reach an interceptor. No body, params, query or headers: the error filter
+   * already writes the detail on `api.error`.
+   */
+  private logCompletion(req: Request, res: Response, path: string, startedAt: number): void {
+    try {
+      const status_code = res.statusCode;
+      const aborted = !res.writableFinished;
+      if (status_code < 400 && !aborted && ACCESS_LOG_SKIP_PATHS.has(path)) return;
+
+      // The Express route template Nest registered (`/v1/media/:id`), so the message stays
+      // low-cardinality. Absent for unmatched paths.
+      const route: string | null = req.route?.path ?? null;
+      const message = `${req.method} ${route ?? 'unmatched'} ${status_code}`;
+      const extraInfo = {
+        route,
+        status_code,
+        duration_ms: Math.round(performance.now() - startedAt),
+        aborted,
+      };
+      if (status_code >= 500) this.accessLog.error(message, extraInfo, { status_code });
+      else if (status_code >= 400 || aborted) this.accessLog.warn(message, extraInfo, { status_code });
+      else this.accessLog.info(message, extraInfo, { status_code });
+
+      // In process, not on LOG_QUEUE: with several replicas a queued flush can be consumed by
+      // one that doesn't hold this buffer. The response is already sent, so no client latency.
+      void LogService.flush().catch((flushErr) =>
+        console.error('Failed to flush access logs:', flushErr),
+      );
+    } catch (error) {
+      console.error('Failed to write access log:', error);
+    }
   }
 }

@@ -17,9 +17,10 @@ type ViewParams = {
 
 @Injectable()
 export abstract class ApiMailService extends Mailable {
-  /** Own instance (not DI-shared) so its `email` channel never gets mutated by other consumers. */
+  /** Own instance (not DI-shared) so its config never gets mutated by other consumers. */
   private static readonly emailLog: LogService = FactoryLogService.createLogService('file', {
-    channel: 'email',
+    channel: 'mail',
+    name: 'enqueue',
   });
 
   private envelopePromise: Promise<Envelop> | null = null;
@@ -117,8 +118,8 @@ export abstract class ApiMailService extends Mailable {
     // If we don't have email preferences (e.g. manually constructed mailables),
     // default to sending and do not include unsubscribe URLs.
     if (!this.emailPreferencesService) {
-      ApiMailService.emailLog.info(`Sending mail (no preference check): ${email}`, {
-        email,
+      // Never the address: the type and view identify the mail; the job line carries the user.
+      ApiMailService.emailLog.info('Mail rendered (no preference check)', {
         email_type: this._viewParams.emailType,
         view: this._viewParams.viewPath,
       });
@@ -136,16 +137,14 @@ export abstract class ApiMailService extends Mailable {
     );
 
     if (!canSend) {
-      ApiMailService.emailLog.warn(`Mail skipped by email preferences: ${email}`, {
-        email,
+      ApiMailService.emailLog.warn('Mail skipped by email preferences', {
         email_type: this._viewParams.emailType,
         view: this._viewParams.viewPath,
       });
       return {};
     }
 
-    ApiMailService.emailLog.info(`Sending mail: ${email}`, {
-      email,
+    ApiMailService.emailLog.info('Mail rendered', {
       email_type: this._viewParams.emailType,
       view: this._viewParams.viewPath,
     });

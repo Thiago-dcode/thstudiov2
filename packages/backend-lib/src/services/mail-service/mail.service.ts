@@ -5,6 +5,7 @@ import {
 } from "@repo/common-lib/constants/queues";
 import { EmailDriver } from "./email-drivers/email-driver";
 import { Content, EmailDriverOptions, Envelop } from "./types";
+import { enqueueJob } from "../../utils/job-trace";
 
 const DEFAULT_MAIL_JOB_OPTIONS: JobsOptions = {
     priority: 10,
@@ -74,7 +75,7 @@ export class MailService {
 
         const payload: EmailDriverOptions = { from, to, subject, text, html, cc, replyTo, headers };
 
-        return await this.queue.add(
+        return await enqueueJob(this.queue,
             JOB_SEND_MAIL,
             payload,
             {
@@ -110,7 +111,7 @@ export class MailService {
             return null;
         }
 
-        return await this.queue.add(
+        return await enqueueJob(this.queue,
             JOB_SEND_BATCH_EMAIL,
             sendablePayloads,
             {

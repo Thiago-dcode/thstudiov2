@@ -22,7 +22,7 @@ const build = (moderation: { is_allowed: boolean; reason?: string }) => {
   const service = new UserService(
     {} as never, // userRepository
     {} as never, // eventEmitter
-    {} as never, // logService
+    { info: jest.fn(), warn: jest.fn(), error: jest.fn() } as never, // logService
     {} as never, // mailService
     helpers as never,
     {} as never, // requestService

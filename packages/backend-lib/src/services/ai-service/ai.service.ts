@@ -1,6 +1,6 @@
 import { LLMCompletionResponse, LLMService } from '@repo/backend-lib/services/llm-service/base';
 import { MAX_TAGS_MEDIA, MAX_TECHNIQUES_MEDIA } from '@repo/common-lib/constants/limits';
-import { QueueHelper, callback500ErrorMail } from '@repo/backend-lib/utils';
+import { QueueHelper } from '@repo/backend-lib/utils';
 import { openAiLLMConfig } from '@repo/backend-lib/config/llm';
 import { FactoryLogService } from '@repo/backend-lib/services/log-service';
 import {
@@ -211,21 +211,9 @@ const SEO_STOPWORDS = new Set([
 ]);
 
 export class AiService {
+  /** Failures log `critical` here, which is what mails the admins (no separate error logger). */
   private readonly logger = FactoryLogService.createLogService('file', {
     channel: 'ai',
-    name: 'ai',
-  });
-  /**
-   * Its own instance, never `this.logger.channel('ai/error')`: `.channel()` mutates the shared
-   * config, so every later info/warn line of this service landed in `ai/error` and fired the alert.
-   */
-  private readonly errorLogger = FactoryLogService.createLogService('file', {
-    channel: 'ai/error',
-    name: 'ai',
-    callback: {
-      channel: 'ai/error',
-      callback: callback500ErrorMail,
-    },
   });
 
   constructor(
@@ -452,9 +440,9 @@ ${categoryLines.join(', AND\n')}.
 
       return response;
     } catch (error) {
-      this.errorLogger
+      this.logger
         .name('generate-media-metadata')
-        .error(
+        .critical(
           `Failed to generate media metadata for media_id [${meta.media_id}] and user [${meta.user_id}] - ${error instanceof Error ? error.message : 'Unknown error'}`,
           error instanceof Error ? error : undefined,
         );
@@ -657,9 +645,9 @@ ${categoryLines.join(', AND\n')}.
         usage,
       };
     } catch (error) {
-      this.errorLogger
+      this.logger
         .name('moderate-content')
-        .error(
+        .critical(
           `Failed to moderate content for user [${meta.user_id}] - ${error instanceof Error ? error.message : 'Unknown error'}`,
           error instanceof Error ? error : undefined,
         );
@@ -865,9 +853,9 @@ ${categoryLines.join(', AND\n')}.
 
       return { translations, usage: result.usage };
     } catch (error) {
-      this.errorLogger
+      this.logger
         .name(logName)
-        .error(
+        .critical(
           `Failed to generate ${entityLabel} metadata for ${meta.entity_id_key} [${meta.entity_id}] and user [${meta.user_id}] - ${error instanceof Error ? error.message : 'Unknown error'}`,
           error instanceof Error ? error : undefined,
         );

@@ -1,20 +1,17 @@
+// First: sets the log service and the critical handler before anything else can log.
+import './log-process';
 import { config } from '@repo/common-lib/config';
 import {
     BACKUP_QUEUE,
     JOB_DATABASE_BACKUP,
-    JOB_PROCESS_MEDIA,
-    JOB_REGENERATE_MEDIA_THUMBNAIL,
-    JOB_SET_VIDEO_THUMBNAIL,
-    JOB_DELETE_REPLACED_MEDIA_OBJECT,
-    MEDIA_QUEUE,
     MEDIA_THUMBNAIL_QUEUE,
 } from '@repo/common-lib/constants/queues';
 import { DatabaseConfig } from '@repo/common-lib/types/database';
 import { getClient, init, killClient } from '@repo/database';
-import { Job, Queue, Worker } from 'bullmq';
+import { Queue, Worker } from 'bullmq';
 import express from 'express';
-import { BackupProcessor } from './processors/backup.processor';
-import { MediaProcessor } from './processors/media.processor';
+import { logPermanentJobFailure } from '@repo/backend-lib/utils';
+import { jobResolver, runWorkerJob } from './job-runner';
 
 /**
  * How long a worker may hold a job before BullMQ assumes it died.
@@ -26,21 +23,6 @@ import { MediaProcessor } from './processors/media.processor';
 const MEDIA_JOB_LOCK_MS = 10 * 60 * 1000;
 
 type Connection = { url: string };
-type JobResolver = Record<string, Record<string, (job: Job) => Promise<unknown>>>;
-
-const jobResolver: JobResolver = {
-    [MEDIA_QUEUE]: {
-        [JOB_PROCESS_MEDIA]: (job) => MediaProcessor.handle(job),
-    },
-    [MEDIA_THUMBNAIL_QUEUE]: {
-        [JOB_REGENERATE_MEDIA_THUMBNAIL]: (job) => MediaProcessor.handle(job),
-        [JOB_SET_VIDEO_THUMBNAIL]: (job) => MediaProcessor.handle(job),
-        [JOB_DELETE_REPLACED_MEDIA_OBJECT]: (job) => MediaProcessor.handle(job),
-    },
-    [BACKUP_QUEUE]: {
-        [JOB_DATABASE_BACKUP]: () => BackupProcessor.handle(),
-    },
-};
 
 /** Runs `configure` against a short-lived handle on `queueName`, always closing it afterwards. */
 async function withQueue(connection: Connection, queueName: string, configure: (queue: Queue) => Promise<unknown>) {
@@ -81,17 +63,11 @@ const scheduleDatabaseBackup = (connection: Connection) =>
     );
 
 const createWorkers = (connection: Connection) =>
-    Object.keys(jobResolver).map((queue) =>
-        new Worker(
+    Object.keys(jobResolver).map((queue) => {
+        const worker = new Worker(
             queue,
-            async (job) => {
-                const handler = jobResolver[queue]?.[job.name];
-                if (typeof handler !== 'function') {
-                    throw new Error(`Job name "${job.name}" not recognized for queue "${queue}"`);
-                }
-                // Returned so BullMQ stores it as the job's return value (read by `dbcli db:backup`).
-                return handler(job);
-            },
+            // Inside the job's trace context, with start/completed/retry lines (see job-runner).
+            (job) => runWorkerJob(queue, job),
             {
                 connection,
                 // BullMQ's default lock is 30s, renewed on a timer. Media jobs run far longer than
@@ -103,8 +79,11 @@ const createWorkers = (connection: Connection) =>
                 lockDuration: MEDIA_JOB_LOCK_MS,
                 stalledInterval: MEDIA_JOB_LOCK_MS,
             },
-        ),
-    );
+        );
+        // The worker had no permanent-failure line at all; this is the same one api jobs get.
+        worker.on('failed', (job, error, prev) => void logPermanentJobFailure(job, error, prev));
+        return worker;
+    });
 
 /** Upper bound for each dependency probe, so a hung connection fails the check instead of stalling it. */
 const HEALTH_CHECK_TIMEOUT_MS = 3000;

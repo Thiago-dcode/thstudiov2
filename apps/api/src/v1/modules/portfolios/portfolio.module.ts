@@ -20,7 +20,7 @@ import { AuthCoreModule } from '../auth/auth-core.module';
       useFactory: (requestService: RequestService) => {
         return FactoryLogService.createLogService('file', {
           channel: 'portfolios',
-          id: () => requestService.requestId,
+          ...requestService.logBinding(),
         });
       },
       inject: [RequestService],

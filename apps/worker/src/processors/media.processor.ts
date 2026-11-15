@@ -13,7 +13,7 @@ import { compressConfig, s3StorageConfig } from "@repo/backend-lib/config/storag
 import { AiService } from "@repo/backend-lib/services/ai-service";
 import { FactoryLLMService } from "@repo/backend-lib/services/llm-service/factory";
 import { openAiLLMConfig } from "@repo/backend-lib/config/llm";
-import { FactoryLogService, LogService } from "@repo/backend-lib/services/log-service";
+import { FactoryLogService, LogService, addLogCorrelation } from "@repo/backend-lib/services/log-service";
 import {
     compressionLevelToQuality,
     CompressService,
@@ -76,6 +76,13 @@ export class MediaProcessor {
     ) { }
 
     static async handle(job: Job): Promise<void> {
+        // Pivot ids for every line of this job: thumbnail jobs carry media_id, the create job
+        // carries the media row.
+        const data = (job.data ?? {}) as { media_id?: number; user_id?: number; media?: { id?: number; user_id?: number } };
+        addLogCorrelation({
+            media_id: data.media_id ?? data.media?.id,
+            user_id: data.user_id ?? data.media?.user_id,
+        });
         const logger = FactoryLogService.createLogService('file', { channel: 'media' });
         const instance = new MediaProcessor(
             job,

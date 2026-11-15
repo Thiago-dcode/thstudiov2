@@ -1,7 +1,7 @@
 import { Processor } from '@nestjs/bullmq';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { MailService } from '@repo/backend-lib/services/mail-service';
-import { LogService } from '@repo/backend-lib/services/log-service';
+import { LogService, addLogCorrelation, currentJobAttempt } from '@repo/backend-lib/services/log-service';
 import { StorageService } from '@repo/backend-lib/services/storage-service/base';
 import { stripe } from '@repo/backend-lib/services/payment-service/stripe';
 import { paypal } from '@repo/backend-lib/services/payment-service/paypal';
@@ -60,6 +60,7 @@ export class AccountDeletionProcessor extends GlobalProcessor {
   }
 
   async process(job: Job<AccountDeletionJobInput>): Promise<unknown> {
+    addLogCorrelation({ user_id: job.data?.user_id });
     try {
       switch (job.name) {
         case JOB_SEND_ACCOUNT_DELETION_WARNING:
@@ -70,10 +71,17 @@ export class AccountDeletionProcessor extends GlobalProcessor {
           throw new Error(`Job name "${job.name}" not recognized`);
       }
     } catch (error) {
-      this.logger.error(
-        `Account deletion job failed: ${job.name} - ${error instanceof Error ? error.message : 'Unknown error'}`,
-        { user_id: job.data?.user_id, error },
-      );
+      const failure = {
+        error_name: error instanceof Error ? error.name : typeof error,
+        error_message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+      };
+      // A missed legal deletion needs a human, but only once retries are exhausted.
+      if (currentJobAttempt()?.is_final) {
+        this.logger.critical('Account deletion job failed permanently', { ...failure, will_retry: false });
+      } else {
+        this.logger.error('Account deletion job failed', { ...failure, will_retry: true });
+      }
       throw error;
     } finally {
       await this.logger.flushAsync();
@@ -89,12 +97,18 @@ export class AccountDeletionProcessor extends GlobalProcessor {
     );
   }
 
+  /** Every early return is logged: "why didn't it delete/warn" is the usual question. */
+  private skip<T extends { reason: string }>(step: 'warning' | 'hard-delete', result: T): T {
+    this.logger.info('Account deletion step skipped', { step, reason: result.reason }, { operation: step });
+    return result;
+  }
+
   private async sendWarning(userId: number) {
     const state = await this.getState(userId);
     // Reopened (or already deleted) since the task queued this: nothing to warn about.
-    if (!state?.flagged) return { sent: false, reason: 'not-flagged' };
-    if (state.warned) return { sent: false, reason: 'already-sent' };
-    if (!state.in_warning_window) return { sent: false, reason: 'not-due' };
+    if (!state?.flagged) return this.skip('warning', { sent: false, reason: 'not-flagged' });
+    if (state.warned) return this.skip('warning', { sent: false, reason: 'already-sent' });
+    if (!state.in_warning_window) return this.skip('warning', { sent: false, reason: 'not-due' });
 
     const user: User = await this.userRepository.findById(userId);
     const requestedAt = new Date(user.deletion_requested_at!);
@@ -116,7 +130,7 @@ export class AccountDeletionProcessor extends GlobalProcessor {
     // Stamped after queuing the mail: a crash in between re-sends at most once on retry, whereas
     // stamping first could lose the warning entirely.
     await this.userRepository.markDeletionWarningSent(userId);
-    this.logger.info(`Account deletion warning queued for user [${userId}]`);
+    this.logger.info('Account deletion warning queued', undefined, { operation: 'warning' });
     return { sent: true };
   }
 
@@ -131,9 +145,9 @@ export class AccountDeletionProcessor extends GlobalProcessor {
    */
   private async deleteAccount(userId: number) {
     const state = await this.getState(userId);
-    if (!state) return { deleted: false, reason: 'not-found' };
-    if (!state.flagged) return { deleted: false, reason: 'reopened' };
-    if (!state.due) return { deleted: false, reason: 'not-due' };
+    if (!state) return this.skip('hard-delete', { deleted: false, reason: 'not-found' });
+    if (!state.flagged) return this.skip('hard-delete', { deleted: false, reason: 'reopened' });
+    if (!state.due) return this.skip('hard-delete', { deleted: false, reason: 'not-due' });
 
     const user: User = await this.userRepository.findById(userId);
     // The prefix below is deleted recursively: never let a malformed id widen it to `users/`.
@@ -141,8 +155,14 @@ export class AccountDeletionProcessor extends GlobalProcessor {
       throw new Error(`Refusing to delete storage for user [${userId}]: unexpected public_id`);
     }
 
-    const log = this.logger.name('account-deletion');
-    log.info(`Hard-deleting account of user [${userId}]`);
+    // Per-call operation: never the name builder on this shared DI logger.
+    const op = { operation: 'hard-delete' };
+    const log = {
+      info: (message: string, extra?: Record<string, unknown>) => this.logger.info(message, extra, op),
+      warn: (message: string, extra?: Record<string, unknown>) => this.logger.warn(message, extra, op),
+      error: (message: string, extra?: Record<string, unknown>) => this.logger.error(message, extra, op),
+    };
+    log.info('Hard-deleting account');
 
     await this.cancelPayments(userId, user.stripe_customer_id ?? null);
 
@@ -152,6 +172,7 @@ export class AccountDeletionProcessor extends GlobalProcessor {
       // Throw before touching the DB: the folder must not outlive the row that points at it.
       throw new Error(`Could not delete storage folder of user [${userId}]`);
     }
+    log.info('Account storage deleted', { prefix_kind: 'user' });
     // Uploads never claimed live in the private bucket, outside that folder. Best-effort: its
     // lifecycle rule expires them within days anyway, so a failure here — including a missing
     // PRIVATE_BUCKET, which throws — must not abort a deletion whose media is already gone.
@@ -159,7 +180,7 @@ export class AccountDeletionProcessor extends GlobalProcessor {
       .deleteUser(user.public_id)
       .catch(() => false);
     if (!uploadsDeleted) {
-      log.error(`Could not delete pending uploads of user [${userId}]`);
+      log.error('Could not delete pending uploads');
     }
 
     // Read before the delete: the row and its `username_history` (FK cascade) go with it, and the
@@ -168,15 +189,15 @@ export class AccountDeletionProcessor extends GlobalProcessor {
     const reservedUsernames = await this.usernameHistoryRepository
       .findReservedByUser(userId)
       .catch((error: unknown) => {
-        log.warn(
-          `Could not read the reserved usernames of user [${userId}] for the edge purge - ${error instanceof Error ? error.message : 'Unknown error'}`,
-        );
+        log.warn('Could not read the reserved usernames for the edge purge', {
+          error_message: error instanceof Error ? error.message : 'Unknown error',
+        });
         return [] as string[];
       });
 
     if (!(await this.userRepository.hardDeleteById(userId, ACCOUNT_DELETION_GRACE_DAYS))) {
       // Only reachable through a manual DB edit between the checks above and here.
-      log.error(`User [${userId}] was not deleted: no longer flagged/due at delete time`);
+      log.error('User was not deleted: no longer flagged/due at delete time');
       return { deleted: false, reason: 'changed-during-delete' };
     }
 
@@ -193,7 +214,7 @@ export class AccountDeletionProcessor extends GlobalProcessor {
       new ArtistPublicPagesChangedEvent(userId, [user.username, ...reservedUsernames]),
     );
 
-    log.info(`Account of user [${userId}] deleted`);
+    log.info('Account deleted');
     return { deleted: true };
   }
 
@@ -205,9 +226,15 @@ export class AccountDeletionProcessor extends GlobalProcessor {
    */
   private async cancelPayments(userId: number, stripeCustomerId: string | null) {
     const subscription = await this.planSubscriptionsRepository.findActiveSubscription(userId);
+    addLogCorrelation({
+      stripe_subscription_id: subscription?.stripe_id ?? undefined,
+      stripe_customer_id: stripeCustomerId ?? undefined,
+    });
+    const outcome = { stripe_subscription_cancelled: false, stripe_customer_deleted: false, paypal_cancelled: false };
     if (subscription?.stripe_id) {
       try {
         await stripe.subscriptions.cancel(subscription.stripe_id);
+        outcome.stripe_subscription_cancelled = true;
       } catch (error) {
         if (!this.isStripeMissing(error)) throw error;
       }
@@ -217,22 +244,27 @@ export class AccountDeletionProcessor extends GlobalProcessor {
         subscription.paypal_id,
         'Account deleted',
       );
+      outcome.paypal_cancelled = !!cancelled;
       if (!cancelled) {
         // Not thrown: PayPal also refuses an already-cancelled subscription, and retrying that
-        // forever would block a legally required deletion. The error log mails the admins, who can
+        // forever would block a legally required deletion. The critical log mails the admins, who can
         // check the subscription by its id.
-        this.logger.error(
-          `PayPal subscription [${subscription.paypal_id}] of deleted user [${userId}] could not be cancelled; check it manually`,
+        this.logger.critical(
+          'PayPal subscription of deleted user could not be cancelled; check it manually',
+          { paypal_subscription_id: subscription.paypal_id },
+          { operation: 'hard-delete' },
         );
       }
     }
     if (stripeCustomerId) {
       try {
         await stripe.customers.del(stripeCustomerId);
+        outcome.stripe_customer_deleted = true;
       } catch (error) {
         if (!this.isStripeMissing(error)) throw error;
       }
     }
+    this.logger.info('Account payments cancelled', outcome, { operation: 'hard-delete' });
   }
 
   /** Already cancelled/deleted on a previous attempt: treat as done so retries stay idempotent. */

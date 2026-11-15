@@ -8,6 +8,10 @@ import { BenefitRepository } from '../benefits/benefit.repository';
 import { InvitationLinkMail } from './mails/invitation-link.mail';
 import { InvitationLinkRepository } from './invitation-link.repository';
 import { IndexInvitationLinkRequest } from './requests/index-invitation-link.request';
+import { FactoryLogService } from '@repo/backend-lib/services/log-service';
+
+/** Invitation audit. Never the code or the recipient email: the link id identifies it. */
+const invitationLog = FactoryLogService.createLogService('file', { channel: 'invitation-links', name: 'create' });
 
 @Injectable()
 export class InvitationLinkService {
@@ -85,12 +89,19 @@ export class InvitationLinkService {
         }
       } catch (error) {
         await this.invitationLinkRepository.deleteById(invitationLink.id);
+        invitationLog.warn('Invitation email not delivered; link removed', { invitation_link_id: invitationLink.id });
         throw new BadRequestException(
           error instanceof Error ? error.message : 'Failed to send invitation email',
         );
       }
     }
 
+    invitationLog.info('Invitation link created', {
+      invitation_link_id: invitationLink.id,
+      benefit_type: benefit.type,
+      max_uses: invitationLink.max_uses,
+      emailed: !!email && !skipSendEmail,
+    });
     return invitationLink;
   }
 

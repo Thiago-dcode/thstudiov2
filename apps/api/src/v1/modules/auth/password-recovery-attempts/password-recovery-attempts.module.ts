@@ -14,7 +14,7 @@ import { RequestService } from 'src/common/services/request.service';
       useFactory: (requestService: RequestService) => {
         return FactoryLogService.createLogService('file', {
           channel: 'auth',
-          id: () => requestService.requestId,
+          ...requestService.logBinding(),
         });
       },
       inject: [RequestService],

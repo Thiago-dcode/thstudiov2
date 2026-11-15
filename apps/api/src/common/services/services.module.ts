@@ -109,7 +109,7 @@ import { RequestStore } from '@repo/common-lib/types/request';
         // Derive a config instead of assigning onto the shared `logConfig.api` singleton.
         return FactoryLogService.createLogService(
           'file',
-          { ...logConfig.api, id: () => requestService.requestId },
+          { ...logConfig.api, ...requestService.logBinding() },
           logQueue,
         );
       },

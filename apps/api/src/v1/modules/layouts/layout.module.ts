@@ -15,7 +15,7 @@ import { LayoutRepository } from './layout.repository';
       useFactory: (requestService: RequestService) => {
         return FactoryLogService.createLogService('file', {
           channel: 'layouts',
-          id: () => requestService.requestId,
+          ...requestService.logBinding(),
         });
       },
       inject: [RequestService],

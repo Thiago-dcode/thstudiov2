@@ -3,12 +3,11 @@ import type { LLMService } from '@repo/backend-lib/services/llm-service/base';
 import type { MediaMetadataPromptCategory } from '@repo/common-lib/types/ai';
 
 jest.mock('@repo/backend-lib/services/log-service', () => {
-  const logger = { name: () => logger, channel: () => logger, info: jest.fn(), warn: jest.fn(), error: jest.fn() };
+  const logger = { name: () => logger, channel: () => logger, info: jest.fn(), warn: jest.fn(), error: jest.fn(), critical: jest.fn() };
   return { FactoryLogService: { createLogService: () => logger } };
 });
 jest.mock('@repo/backend-lib/utils', () => ({
   QueueHelper: { createLlmUsageJob: jest.fn(), createMediaModerationJob: jest.fn() },
-  callback500ErrorMail: jest.fn(),
 }));
 
 const CATEGORIES: MediaMetadataPromptCategory[] = [

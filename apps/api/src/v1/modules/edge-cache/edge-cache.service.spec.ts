@@ -176,7 +176,11 @@ describe('EdgeCacheService', () => {
     it('POSTs the prefixes to the zone purge endpoint with the bearer token', async () => {
       fetchMock.mockResolvedValue(jsonResponse(200, { success: true, errors: [] }));
 
-      await expect(service.purgePrefixes(target, prefixes)).resolves.toBeUndefined();
+      await expect(service.purgePrefixes(target, prefixes)).resolves.toEqual({
+        http_status: 200,
+        duration_ms: expect.any(Number),
+        cf_ray: null,
+      });
 
       expect(fetchMock).toHaveBeenCalledTimes(1);
       const [url, init] = fetchMock.mock.calls[0] as [
@@ -231,7 +235,8 @@ describe('EdgeCacheService', () => {
         expect(error).toBeInstanceOf(UnrecoverableError);
         expect((error as Error).message).toContain(`HTTP ${status}`);
         expect((error as Error).message).toContain('10000,1012');
-        expect(logger.error).toHaveBeenCalledWith(expect.stringContaining(`HTTP ${status}`));
+        // The service no longer logs this: the failed-job line owns UnrecoverableError.
+        expect(logger.error).not.toHaveBeenCalled();
       },
     );
 
