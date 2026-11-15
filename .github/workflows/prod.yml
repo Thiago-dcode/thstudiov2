@@ -159,6 +159,29 @@ jobs:
       contents: read
       packages: read
     steps:
+      # Only for the local ./.github/actions/wireguard action; drop this step once it moves
+      # to Thiago-dcode/gh-actions.
+      - name: Checkout actions
+        if: vars.WG_ENDPOINT != ''
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: .github/actions
+          persist-credentials: false
+
+      # The deploy SSHes over the tunnel, so SSH_HOST must be the server's tunnel IP while this
+      # is on. Opt-in: with no WG_ENDPOINT variable on the prod environment, the deploy goes
+      # straight to SSH_HOST as before.
+      - name: Connect WireGuard
+        if: vars.WG_ENDPOINT != ''
+        uses: ./.github/actions/wireguard
+        with:
+          private-key: ${{ secrets.WG_PRIVATE_KEY }}
+          preshared-key: ${{ secrets.WG_PRESHARED_KEY }}
+          address: ${{ vars.WG_ADDRESS }}
+          peer-public-key: ${{ vars.WG_PEER_PUBLIC_KEY }}
+          endpoint: ${{ vars.WG_ENDPOINT }}
+          allowed-ips: ${{ vars.WG_ALLOWED_IPS }}
+
       - name: SSH deploy
         uses: Thiago-dcode/gh-actions/.github/actions/ssh-deploy@738138213ed2142b61418c3e06c10a4e51ddaa0b # v2
         with:
@@ -181,3 +204,8 @@ jobs:
           domain: a11studio.com
           api-token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           zone-id: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+
+      # The runner is discarded after the job anyway; this just closes the session cleanly.
+      - name: Disconnect WireGuard
+        if: always() && vars.WG_ENDPOINT != ''
+        run: sudo wg-quick down wg0 || true
