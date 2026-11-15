@@ -37,12 +37,11 @@ updates:
       - dependency-name: "*"
         update-types: [version-update:semver-major]
 
-  # Covers the workflows; the composite action in .github/actions/ssh-deploy is listed explicitly.
+  # Covers the workflows. The shared actions live in Thiago-dcode/gh-actions and are bumped
+  # through their SHA pins here; .github/actions/wireguard uses no other actions.
   - package-ecosystem: github-actions
     directories:
       - /
-      - /.github/actions/ssh-deploy
-      - /.github/actions/cloudflare-purge-cache
     schedule:
       interval: weekly
       day: monday
