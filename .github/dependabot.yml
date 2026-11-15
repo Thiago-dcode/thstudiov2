@@ -38,7 +38,7 @@ updates:
         update-types: [version-update:semver-major]
 
   # Covers the workflows. The shared actions live in Thiago-dcode/gh-actions and are bumped
-  # through their SHA pins here; .github/actions/wireguard uses no other actions.
+  # through their SHA pins here.
   - package-ecosystem: github-actions
     directories:
       - /
