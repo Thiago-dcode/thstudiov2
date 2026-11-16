@@ -34,7 +34,7 @@
     "@repo/common-lib": "workspace:*",
     "@repo/database": "workspace:*",
     "@socket.io/redis-adapter": "^8.3.0",
-    "bullmq": "^6.7.5",
+    "bullmq": "^6.7.6",
     "cache-manager": "^7.2.9",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
