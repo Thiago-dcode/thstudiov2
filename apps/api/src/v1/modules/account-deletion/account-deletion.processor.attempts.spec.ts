@@ -2,7 +2,7 @@ jest.mock('@repo/backend-lib/services/payment-service/stripe', () => ({ stripe: 
 jest.mock('@repo/backend-lib/services/payment-service/paypal', () => ({ paypal: {} }));
 
 import { LogService, configureLogProcess } from '@repo/backend-lib/services/log-service';
-import { ConsoleLogService } from '@repo/backend-lib/services/log-service/console';
+import { ConsoleLogService } from '@repo/backend-lib/services/log-service';
 import { JOB_DELETE_USER_ACCOUNT } from '@repo/common-lib/constants/queues';
 import { AccountDeletionProcessor } from './account-deletion.processor';
 

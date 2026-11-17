@@ -3,7 +3,7 @@ import { AsyncLocalStorage } from 'async_hooks';
 import { UserAuth } from '@repo/common-lib/types/auth';
 import { Pagination } from '@repo/common-lib/types/response';
 import { RequestLanguage, RequestLogContext, RequestStore } from '@repo/common-lib/types/request';
-import { LogConfig } from '@repo/backend-lib/services/log-service/types';
+import { LogConfig } from '@repo/backend-lib/services/log-service';
 import { generateUUID } from '@repo/common-lib/utils/generate-uuid';
 import { runWithLogContext } from '@repo/backend-lib/services/log-service';
 

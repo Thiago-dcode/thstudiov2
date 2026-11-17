@@ -4,7 +4,7 @@ jest.mock('@repo/backend-lib/services/payment-service/paypal', () => ({ paypal: 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { LogService, configureLogProcess } from '@repo/backend-lib/services/log-service';
-import { ConsoleLogService } from '@repo/backend-lib/services/log-service/console';
+import { ConsoleLogService } from '@repo/backend-lib/services/log-service';
 import { JOB_ON_SUBSCRIPTION_CHANGES } from '@repo/common-lib/constants/queues';
 import { PlanSubscriptionProcessor } from './plan-subscription.processor';
 

@@ -1,5 +1,5 @@
 import { AiService } from './ai.service';
-import type { LLMService } from '@repo/backend-lib/services/llm-service/base';
+import type { LLMService } from '@repo/backend-lib/services/llm-service';
 import type { MediaMetadataPromptCategory } from '@repo/common-lib/types/ai';
 
 jest.mock('@repo/backend-lib/services/log-service', () => {

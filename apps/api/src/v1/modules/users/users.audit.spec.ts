@@ -11,7 +11,7 @@ jest.mock('src/common/utils/user-lock', () => ({
 }));
 
 import { LogService, configureLogProcess } from '@repo/backend-lib/services/log-service';
-import { ConsoleLogService } from '@repo/backend-lib/services/log-service/console';
+import { ConsoleLogService } from '@repo/backend-lib/services/log-service';
 import { hash } from '@repo/common-lib/utils/hash';
 import { UserService } from './users.service';
 

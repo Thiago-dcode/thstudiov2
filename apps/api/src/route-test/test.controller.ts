@@ -13,7 +13,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { mailingContactEmail, mailingSupportEmail } from '@repo/backend-lib/config/mailling';
 import { MailService } from '@repo/backend-lib/services/mail-service';
-import { ViewService } from '@repo/backend-lib/services/view-service/base';
+import { ViewService } from '@repo/backend-lib/services/view-service';
 import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/language';
 import { buildRedirectToUrl } from '@repo/common-lib/constants/redirect-to';
 import { BaseUser, CompactUser, User } from '@repo/common-lib/types/user';

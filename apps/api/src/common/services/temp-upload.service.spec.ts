@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import type { StorageService } from '@repo/backend-lib/services/storage-service/base';
+import type { StorageService } from '@repo/backend-lib/services/storage-service';
 
 const privateStorage = {
   getUploadUrl: jest.fn(),
@@ -12,9 +12,12 @@ const privateStorage = {
 jest.mock('@repo/backend-lib/config/storage', () => ({
   s3PrivateStorageConfig: () => ({ driver: 's3', bucket: 'private-bucket' }),
 }));
-jest.mock('@repo/backend-lib/services/storage-service/factory', () => ({
-  FactoryStorageService: { create: () => privateStorage },
-}));
+jest.mock('@repo/backend-lib/services/storage-service', () => {
+  // Patch the real class so backend-lib's internal imports see the mock too.
+  const actual = jest.requireActual('@repo/backend-lib/services/storage-service');
+  Object.assign(actual.FactoryStorageService, { create: () => privateStorage });
+  return actual;
+});
 jest.mock('@repo/common-lib/utils/generate-uuid', () => ({
   generateUUID: async () => '11111111-1111-4111-8111-111111111111',
 }));

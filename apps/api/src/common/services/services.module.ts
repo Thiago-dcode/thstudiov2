@@ -1,11 +1,11 @@
 import { Global, Module } from '@nestjs/common';
 import { RequestService } from './request.service';
 import { MailService } from '@repo/backend-lib/services/mail-service';
-import { FactoryMailService } from '@repo/backend-lib/services/mail-service/factory';
+import { FactoryMailService } from '@repo/backend-lib/services/mail-service';
 import { mailingConfig, mailingDriver } from '@repo/backend-lib/config/mailling';
 import { ConfigService } from '@nestjs/config';
-import { ViewService } from '@repo/backend-lib/services/view-service/base';
-import { FactoryViewService } from '@repo/backend-lib/services/view-service/factory';
+import { ViewService } from '@repo/backend-lib/services/view-service';
+import { FactoryViewService } from '@repo/backend-lib/services/view-service';
 import { displayHost, viewPath } from 'src/common/utils';
 import { VIEW_ENGINE } from 'src/common/utils/constants';
 import { CacheModule } from '@nestjs/cache-manager';
@@ -14,11 +14,11 @@ import {
   LogService,
 } from '@repo/backend-lib/services/log-service';
 import { logConfig } from '@repo/backend-lib/config/logging';
-import { StorageService } from '@repo/backend-lib/services/storage-service/base';
-import { FactoryStorageService } from '@repo/backend-lib/services/storage-service/factory';
+import { StorageService } from '@repo/backend-lib/services/storage-service';
+import { FactoryStorageService } from '@repo/backend-lib/services/storage-service';
 import { compressConfig, s3StorageConfig } from '@repo/backend-lib/config/storage';
-import { CompressService } from '@repo/backend-lib/services/compress-service/base';
-import { FactoryCompressService } from '@repo/backend-lib/services/compress-service/factory';
+import { CompressService } from '@repo/backend-lib/services/compress-service';
+import { FactoryCompressService } from '@repo/backend-lib/services/compress-service';
 import { BullModule, getQueueToken } from '@nestjs/bullmq';
 import {
   MAIL_QUEUE,

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ViewService } from '@repo/backend-lib/services/view-service/base';
+import { ViewService } from '@repo/backend-lib/services/view-service';
 import { EnumType } from '@repo/common-lib/constants/enums';
 import { I18nService } from 'nestjs-i18n';
 import { mailingPersonalFromEmail } from '@repo/backend-lib/config/mailling';

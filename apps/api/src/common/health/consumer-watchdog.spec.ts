@@ -3,13 +3,16 @@ const mockSet = jest.fn();
 let lockClient: { set: jest.Mock } | null;
 let appConfig: { env: string; url: string };
 
-jest.mock('@repo/backend-lib/services/log-service/factory', () => ({
-  FactoryLogService: { createLogService: () => mockLog },
-}));
+jest.mock('@repo/backend-lib/services/log-service', () => {
+  // Patch the real class so backend-lib's internal imports see the mock too.
+  const actual = jest.requireActual('@repo/backend-lib/services/log-service');
+  Object.assign(actual.FactoryLogService, { createLogService: () => mockLog });
+  return actual;
+});
 jest.mock('@repo/common-lib/config/utils', () => ({ getConfigValue: () => appConfig }));
 jest.mock('../utils/cron-lock', () => ({ getLockClient: async () => lockClient }));
 
-import { LogService } from '@repo/backend-lib/services/log-service/base';
+import { LogService } from '@repo/backend-lib/services/log-service';
 import {
   ConsumerWatchdog,
   WATCHDOG_BOOT_GRACE_MS,

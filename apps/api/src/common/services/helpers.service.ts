@@ -3,9 +3,9 @@ import { RequestService } from './request.service';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { ENUMS, EnumType } from '@repo/common-lib/constants/enums';
 import { addMonths, addYears } from 'date-fns';
-import { StorageService } from '@repo/backend-lib/services/storage-service/base';
+import { StorageService } from '@repo/backend-lib/services/storage-service';
 import { s3StorageConfig } from '@repo/backend-lib/config/storage';
-import { CompressService } from '@repo/backend-lib/services/compress-service/base';
+import { CompressService } from '@repo/backend-lib/services/compress-service';
 
 /**
  * `cacheRemember` misses currently being filled, by cache key. Module-level so it is shared across

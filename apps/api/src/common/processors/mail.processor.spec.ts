@@ -7,7 +7,7 @@ const logger: Record<string, jest.Mock> = {
 };
 
 import { FactoryLogService, LogService, configureLogProcess } from '@repo/backend-lib/services/log-service';
-import { ConsoleLogService } from '@repo/backend-lib/services/log-service/console';
+import { ConsoleLogService } from '@repo/backend-lib/services/log-service';
 import { JOB_ERROR_500_MAIL, JOB_SEND_BATCH_EMAIL, JOB_SEND_MAIL } from '@repo/common-lib/constants/queues';
 import { MailProcessor } from './mail.processor';
 

@@ -5,9 +5,12 @@ let lockClient: unknown;
 const mockRunCron = jest.fn();
 let appConfig: { env: string; url: string };
 
-jest.mock('@repo/backend-lib/services/log-service/factory', () => ({
-  FactoryLogService: { createLogService: () => mockLog },
-}));
+jest.mock('@repo/backend-lib/services/log-service', () => {
+  // Patch the real class so backend-lib's internal imports see the mock too.
+  const actual = jest.requireActual('@repo/backend-lib/services/log-service');
+  Object.assign(actual.FactoryLogService, { createLogService: () => mockLog });
+  return actual;
+});
 jest.mock('@repo/common-lib/config/utils', () => ({ getConfigValue: () => appConfig }));
 jest.mock('../utils/cron-lock', () => ({
   CRON_LOCK_TTL: { minute: 50_000 },
@@ -18,7 +21,7 @@ jest.mock('../utils/cron-lock', () => ({
   runCronExclusive: (...args: unknown[]) => mockRunCron(...args),
 }));
 
-import { LogService } from '@repo/backend-lib/services/log-service/base';
+import { LogService } from '@repo/backend-lib/services/log-service';
 import {
   delayedDueAt,
   delayedJobDueAt,

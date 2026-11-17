@@ -2,7 +2,7 @@ import { Processor } from '@nestjs/bullmq';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { MailService } from '@repo/backend-lib/services/mail-service';
 import { LogService, addLogCorrelation, currentJobAttempt } from '@repo/backend-lib/services/log-service';
-import { StorageService } from '@repo/backend-lib/services/storage-service/base';
+import { StorageService } from '@repo/backend-lib/services/storage-service';
 import { stripe } from '@repo/backend-lib/services/payment-service/stripe';
 import { paypal } from '@repo/backend-lib/services/payment-service/paypal';
 import { getConfigValue } from '@repo/common-lib/config/utils';

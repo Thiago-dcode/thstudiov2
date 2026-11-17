@@ -1,7 +1,7 @@
 import { mailingAdmins, mailingNoreplyEmail } from '@repo/backend-lib/config/mailling';
-import { ViewService } from '@repo/backend-lib/services/view-service/base';
+import { ViewService } from '@repo/backend-lib/services/view-service';
 import { Injectable } from '@nestjs/common';
-import type { LogOptions } from '@repo/backend-lib/services/log-service/types';
+import type { LogOptions } from '@repo/backend-lib/services/log-service';
 import { ApiMailService } from 'src/common/mails/api-mail-service';
 import { EmailPreferencesService } from 'src/v1/modules/email-preferences/email-preferences.service';
 

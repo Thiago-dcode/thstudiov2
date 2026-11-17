@@ -1,16 +1,19 @@
 const mockLoggers: Record<string, Record<string, jest.Mock>> = {};
 
-jest.mock('@repo/backend-lib/services/log-service/factory', () => ({
-  FactoryLogService: {
+jest.mock('@repo/backend-lib/services/log-service', () => {
+  // Patch the real class so backend-lib's internal imports see the mock too.
+  const actual = jest.requireActual('@repo/backend-lib/services/log-service');
+  Object.assign(actual.FactoryLogService, {
     createLogService: (_t: string, cfg: { channel: string }) => {
       mockLoggers[cfg.channel] ??= { info: jest.fn(), warn: jest.fn(), error: jest.fn(), critical: jest.fn(), name: jest.fn() };
       return mockLoggers[cfg.channel];
     },
-  },
-}));
+  });
+  return actual;
+});
 
 import { LOG_QUEUE } from '@repo/common-lib/constants/queues';
-import { LogService } from '@repo/backend-lib/services/log-service/base';
+import { LogService } from '@repo/backend-lib/services/log-service';
 import { getLogContext } from '@repo/backend-lib/services/log-service';
 import { GlobalProcessor } from './global.processor';
 

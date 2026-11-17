@@ -1,6 +1,6 @@
 import type { Cache } from '@nestjs/cache-manager';
-import type { CompressService } from '@repo/backend-lib/services/compress-service/base';
-import type { StorageService } from '@repo/backend-lib/services/storage-service/base';
+import type { CompressService } from '@repo/backend-lib/services/compress-service';
+import type { StorageService } from '@repo/backend-lib/services/storage-service';
 import { Helpers } from './helpers.service';
 import type { RequestService } from './request.service';
 

@@ -2,7 +2,7 @@ jest.mock('@repo/backend-lib/services/payment-service/stripe', () => ({ stripe: 
 
 import { BadRequestException } from '@nestjs/common';
 import { LogService, configureLogProcess } from '@repo/backend-lib/services/log-service';
-import { ConsoleLogService } from '@repo/backend-lib/services/log-service/console';
+import { ConsoleLogService } from '@repo/backend-lib/services/log-service';
 import { MediaModerationException } from 'src/common/exceptions/media-moderation-exception';
 import { UserService } from './users.service';
 

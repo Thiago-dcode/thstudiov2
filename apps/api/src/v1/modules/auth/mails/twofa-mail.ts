@@ -1,6 +1,6 @@
 import { BaseUser } from '@repo/common-lib/types/user';
 import { mailingNoreplyEmail } from '@repo/backend-lib/config/mailling';
-import { ViewService } from '@repo/backend-lib/services/view-service/base';
+import { ViewService } from '@repo/backend-lib/services/view-service';
 import { Injectable } from '@nestjs/common';
 import { I18nService } from 'nestjs-i18n';
 import { ApiMailService } from 'src/common/mails/api-mail-service';

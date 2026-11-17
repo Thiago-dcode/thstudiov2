@@ -7,7 +7,7 @@ jest.mock('@repo/backend-lib/services/payment-service/stripe', () => ({
 
 import { BadRequestException } from '@nestjs/common';
 import { FactoryLogService, LogService, configureLogProcess, runWithLogContext } from '@repo/backend-lib/services/log-service';
-import { ConsoleLogService } from '@repo/backend-lib/services/log-service/console';
+import { ConsoleLogService } from '@repo/backend-lib/services/log-service';
 import { WebhooksController } from './webhooks.controller';
 
 const CREATED = 1_800_000_000;

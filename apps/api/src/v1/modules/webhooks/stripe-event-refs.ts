@@ -1,5 +1,5 @@
 import type Stripe from 'stripe';
-import type { LogCorrelation } from '@repo/backend-lib/services/log-service/types';
+import type { LogCorrelation } from '@repo/backend-lib/services/log-service';
 
 type Metadata = Record<string, string>;
 

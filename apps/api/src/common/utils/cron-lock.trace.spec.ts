@@ -13,12 +13,15 @@ jest.mock('redis', () => ({
   }),
 }));
 jest.mock('@repo/common-lib/config/utils', () => ({ getConfigValue: () => ({ url: 'redis://test' }) }));
-jest.mock('@repo/backend-lib/services/log-service/factory', () => ({
-  FactoryLogService: { createLogService: () => mockCronLog },
-}));
+jest.mock('@repo/backend-lib/services/log-service', () => {
+  // Patch the real class so backend-lib's internal imports see the mock too.
+  const actual = jest.requireActual('@repo/backend-lib/services/log-service');
+  Object.assign(actual.FactoryLogService, { createLogService: () => mockCronLog });
+  return actual;
+});
 
 import { getLogContext } from '@repo/backend-lib/services/log-service';
-import { LogService } from '@repo/backend-lib/services/log-service/base';
+import { LogService } from '@repo/backend-lib/services/log-service';
 import { withJobTrace } from '@repo/backend-lib/utils';
 import { CRON_LOCK_TTL, runCronExclusive } from './cron-lock';
 

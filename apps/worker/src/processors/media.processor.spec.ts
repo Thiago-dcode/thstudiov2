@@ -8,8 +8,8 @@ import {
     THUMBNAIL_TARGET_BYTES,
     VIDEO_SAMPLE_FRAME_MAX_EDGE_PX,
     VIDEO_SAMPLE_FRAME_TARGET_BYTES,
-} from '@repo/backend-lib/services/compress-service/base';
-import { FactoryCompressService } from '@repo/backend-lib/services/compress-service/factory';
+} from '@repo/backend-lib/services/compress-service';
+import { FactoryCompressService } from '@repo/backend-lib/services/compress-service';
 import { EnumType } from '@repo/common-lib/constants/enums';
 import { UserLimits } from '@repo/common-lib/utils/user-limits';
 import { MediaProcessor } from './media.processor';

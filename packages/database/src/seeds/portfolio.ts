@@ -19,9 +19,9 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { FactoryCompressService } from '@repo/backend-lib/services/compress-service/factory';
-import { FactoryStorageService } from '@repo/backend-lib/services/storage-service/factory';
-import type { S3StorageConfig } from '@repo/backend-lib/services/storage-service/types';
+import { FactoryCompressService } from '@repo/backend-lib/services/compress-service';
+import { FactoryStorageService } from '@repo/backend-lib/services/storage-service';
+import type { S3StorageConfig } from '@repo/backend-lib/services/storage-service';
 import { LogService } from '@repo/backend-lib/services/log-service';
 import Logger from '@repo/backend-lib/utils/console';
 import { TABLES_ENUM } from '@repo/common-lib/constants/enums';

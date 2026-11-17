@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { StorageService } from '@repo/backend-lib/services/storage-service/base';
-import { FactoryStorageService } from '@repo/backend-lib/services/storage-service/factory';
+import { StorageService } from '@repo/backend-lib/services/storage-service';
+import { FactoryStorageService } from '@repo/backend-lib/services/storage-service';
 import { s3PrivateStorageConfig } from '@repo/backend-lib/config/storage';
 import { generateUUID } from '@repo/common-lib/utils/generate-uuid';
 import type { CreateMediaUploadUrl } from '@repo/common-lib/types/media';

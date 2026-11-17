@@ -12,7 +12,7 @@ jest.mock('@repo/backend-lib/utils', () => ({
 }));
 
 import { LogService, configureLogProcess, runWithLogContext } from '@repo/backend-lib/services/log-service';
-import { ConsoleLogService } from '@repo/backend-lib/services/log-service/console';
+import { ConsoleLogService } from '@repo/backend-lib/services/log-service';
 import { UserService } from './users.service';
 
 const EMAIL = 'fresh@example.test';

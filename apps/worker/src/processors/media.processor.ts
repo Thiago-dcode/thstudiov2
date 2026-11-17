@@ -7,11 +7,11 @@ import {
 } from "@repo/common-lib/constants/queues";
 import { SEO_METADATA_CACHE_TTL } from "@repo/common-lib/constants/cache";
 import { Job } from "bullmq";
-import { StorageService } from '@repo/backend-lib/services/storage-service/base';
-import { FactoryStorageService } from '@repo/backend-lib/services/storage-service/factory';
+import { StorageService } from '@repo/backend-lib/services/storage-service';
+import { FactoryStorageService } from '@repo/backend-lib/services/storage-service';
 import { compressConfig, s3StorageConfig } from "@repo/backend-lib/config/storage";
 import { AiService } from "@repo/backend-lib/services/ai-service";
-import { FactoryLLMService } from "@repo/backend-lib/services/llm-service/factory";
+import { FactoryLLMService } from "@repo/backend-lib/services/llm-service";
 import { openAiLLMConfig } from "@repo/backend-lib/config/llm";
 import { FactoryLogService, LogService, addLogCorrelation } from "@repo/backend-lib/services/log-service";
 import {
@@ -26,14 +26,14 @@ import {
     VIDEO_SAMPLE_FRAME_MAX_EDGE_PX,
     VIDEO_SAMPLE_FRAME_QUALITY,
     VIDEO_SAMPLE_FRAME_TARGET_BYTES,
-} from '@repo/backend-lib/services/compress-service/base';
+} from '@repo/backend-lib/services/compress-service';
 import {
     CompressionOutput,
     VideoCompressionOutput,
     VideoFrameOutput,
-} from '@repo/backend-lib/services/compress-service/types';
+} from '@repo/backend-lib/services/compress-service';
 import { ContentModerationFields } from '@repo/common-lib/types/ai';
-import { FactoryCompressService } from '@repo/backend-lib/services/compress-service/factory';
+import { FactoryCompressService } from '@repo/backend-lib/services/compress-service';
 import {
     DeleteReplacedMediaObjectJobInput,
     Media,
