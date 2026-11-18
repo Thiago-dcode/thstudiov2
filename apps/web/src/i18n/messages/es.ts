@@ -1403,6 +1403,8 @@ const messages = {
     oauth: {
       continueWith: "Continuar con {provider}",
       or: "o",
+      invitationEmailHint:
+        "Esta invitación es para {email}. Usa el mismo correo para continuar con {provider}.",
     },
     login: {
       metadata: {

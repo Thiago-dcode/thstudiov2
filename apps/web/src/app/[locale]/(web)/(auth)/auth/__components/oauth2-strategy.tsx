@@ -18,8 +18,11 @@ const PROVIDER_LABELS: Record<OauthProviders, string> = {
 
 export const Oauth2Strategy = ({
   invitationLink,
+  invitationEmail,
 }: {
   invitationLink?: string;
+  /** Email the invitation was issued to; the provider account must match it. */
+  invitationEmail?: string;
 }) => {
   const t = useTranslations("auth.oauth");
   const providerRef = useRef<OauthProviders>(null);
@@ -61,6 +64,16 @@ export const Oauth2Strategy = ({
           </Button>
         );
       })}
+      {invitationEmail ? (
+        <p className="mt-2 text-center text-xs! text-text-muted">
+          {t("invitationEmailHint", {
+            email: invitationEmail,
+            provider: ENUMS.OAUTH_PROVIDERS.map(
+              (provider) => PROVIDER_LABELS[provider],
+            ).join(" / "),
+          })}
+        </p>
+      ) : null}
       <Errors errors={errors || []} />
     </div>
   );

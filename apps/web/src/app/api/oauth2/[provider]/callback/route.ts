@@ -79,9 +79,12 @@ export async function GET(
       // A rejection the user can act on (closed registration, used or expired invitation…)
       // goes back to sign-up with its code for the toast; anything else stays silent.
       const urlError = authUrlErrorFromApi(result.error.api_error_code);
-      return redirectTo(
-        urlError ? `/auth/register?${AUTH_URL_ERROR_PARAM}=${urlError}` : "/",
-      );
+      if (!urlError) return redirectTo("/");
+      // Keep the invitation: with registration closed, sign-up without it bounces to the home
+      // page, and the user needs it to retry (e.g. with the invited email after a mismatch).
+      const query = new URLSearchParams({ [AUTH_URL_ERROR_PARAM]: urlError });
+      if (invitationCode) query.set("ref", invitationCode);
+      return redirectTo(`/auth/register?${query}`);
     }
     if (!result.data?.auth?.token) return redirectTo("/");
 

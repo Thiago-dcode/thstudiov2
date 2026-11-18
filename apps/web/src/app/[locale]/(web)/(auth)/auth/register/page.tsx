@@ -4,6 +4,12 @@ import { serverEnv } from "@/env/server";
 import { redirect } from "@/i18n/redirect";
 import { FormPrivacyNotice } from "@/lib/components/form-privacy-notice";
 import { buildPrivatePageMetadata } from "@/lib/seo/private-metadata";
+import {
+  AUTH_URL_ERROR_PARAM,
+  AUTH_URL_ERRORS,
+  type AuthUrlError,
+  isAuthUrlError,
+} from "@/modules/auth/auth-url-errors";
 import invitationLinkService from "@/modules/invitation-links/invitation-link.service";
 import {
   AuthCard,
@@ -29,37 +35,40 @@ export default async function RegisterPage({
   searchParams: Promise<{
     ref?: string;
     email?: string;
+    error?: string;
   }>;
 }) {
   const t = await getTranslations("auth.register");
   const registrationIsClosed = serverEnv.REGISTRATION_IS_CLOSED === 1;
 
-  const { ref, email } = await searchParams;
+  const { ref, email, error } = await searchParams;
 
   const validatedEmail = z.email().safeParse(email);
 
-  let initialEmail = validatedEmail.success ? validatedEmail.data : undefined;
-  if (registrationIsClosed) {
-    // If registration is closed, allow bypass only for valid invitation refs.
-    let bypassRegistrationClose = false;
-    if (ref) {
-      const invitationLinkResult =
-        await invitationLinkService.validateCode(ref);
-      bypassRegistrationClose =
-        !invitationLinkResult.error && !!invitationLinkResult.data;
+  const invitation = ref
+    ? await invitationLinkService.validateCode(ref)
+    : undefined;
+  const validInvitation =
+    invitation && !invitation.error ? invitation.data : null;
 
-      initialEmail = invitationLinkResult.data?.email || initialEmail;
-    }
-
-    if (!bypassRegistrationClose) {
-      await redirect("/#home-hero-section");
-      return;
-    }
+  // If registration is closed, allow bypass only for valid invitation refs. The home page shows
+  // why as a toast: the error this page was sent with, or closed registration by default.
+  if (registrationIsClosed && !validInvitation) {
+    const reason: AuthUrlError = isAuthUrlError(error)
+      ? error
+      : AUTH_URL_ERRORS.REGISTRATION_CLOSED;
+    await redirect(`/?${AUTH_URL_ERROR_PARAM}=${reason}#home-hero-section`);
+    return;
   }
+
+  const invitationEmail = validInvitation?.email || undefined;
+  const initialEmail =
+    invitationEmail ||
+    (validatedEmail.success ? validatedEmail.data : undefined);
 
   return (
     <AuthCard title={t("title")}>
-      <Oauth2Strategy invitationLink={ref} />
+      <Oauth2Strategy invitationLink={ref} invitationEmail={invitationEmail} />
       <AuthDivider />
       <RegisterForm initialEmail={initialEmail}>
         {ref ? (

@@ -1394,6 +1394,8 @@ const messages = {
     oauth: {
       continueWith: "Continue with {provider}",
       or: "or",
+      invitationEmailHint:
+        "This invitation is for {email}. Use the same email to continue with {provider}.",
     },
     login: {
       metadata: {
