@@ -113,10 +113,10 @@
   --text-sm: var(--size-sm);
   --text-xs: var(--size-xs);
 
-  --radius-sm: 0;
+  /* --radius-sm: 0;
   --radius-md: 0;
   --radius-lg: 0;
-  --radius-xl: 0;
+  --radius-xl: 0; */
 
   /* `AccordionContent` has always asked for these; without them the classes resolve to
      nothing and every accordion in the app snaps open. Radix measures the panel and exposes
