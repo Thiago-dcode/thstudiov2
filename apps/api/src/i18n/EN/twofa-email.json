@@ -1,6 +1,7 @@
 {
     "SUBJECT": "Verify your device",
     "HI": "Hi",
+    "HI_NO_NAME": "Hello",
     "TITLE": "Device Verification",
     "DESCRIPTION": "We detected a login attempt or a register from a new device or location. Please use the verification code below to complete your login or register.",
     "CODE_LABEL": "Your verification code:",

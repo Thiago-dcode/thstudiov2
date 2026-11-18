@@ -1,6 +1,7 @@
 {
   "SUBJECT": "Verifica tu dispositivo",
   "HI": "Hola",
+  "HI_NO_NAME": "Hola",
   "TITLE": "Verificación de Dispositivo",
   "DESCRIPTION": "Detectamos un intento de inicio de sesión o un nuevo registro desde un nuevo dispositivo o ubicación. Por favor, usa el código de verificación a continuación para completar tu inicio de sesión o registro.",
   "CODE_LABEL": "Tu código de verificación:",

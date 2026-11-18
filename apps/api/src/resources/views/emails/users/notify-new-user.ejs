@@ -15,9 +15,11 @@
                             <p class="e-text-muted" style="font-size:13px; color:#46443F; letter-spacing:1px; text-transform:uppercase; margin:0 0 8px 0;">
                                 <%= t(translatePath + '.HI') %>
                             </p>
+                            <% if (greetingName) { %>
                             <p class="e-text" style="font-size:15px; font-weight:500; color:#000000; margin:0;">
-                                <%= user.username %>
+                                <%= greetingName %>
                             </p>
+                            <% } %>
                         </td>
                     </tr>
 

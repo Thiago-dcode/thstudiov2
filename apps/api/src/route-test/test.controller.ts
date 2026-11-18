@@ -16,14 +16,15 @@ import { MailService } from '@repo/backend-lib/services/mail-service';
 import { ViewService } from '@repo/backend-lib/services/view-service';
 import { DEFAULT_LANGUAGE } from '@repo/common-lib/constants/language';
 import { buildRedirectToUrl } from '@repo/common-lib/constants/redirect-to';
-import { BaseUser, CompactUser, User } from '@repo/common-lib/types/user';
+import { CompactUser, User } from '@repo/common-lib/types/user';
 import { I18nService } from 'nestjs-i18n';
 import { AdminGuard } from 'src/common/guards/admin.guard';
 import { ProdGuard } from 'src/common/guards/prod.guard';
 import { viewPath } from 'src/common/utils';
 import { PasswordRecoveryMail } from 'src/v1/modules/auth/mails/password-recovery-mail';
-import { TwoFAMail } from 'src/v1/modules/auth/mails/twofa-mail';
+import { TwoFAMail, TwoFAMailUser } from 'src/v1/modules/auth/mails/twofa-mail';
 import { NotifyNewUserMail, WELCOME_FEATURE_COUNT } from 'src/v1/modules/users/mails/notify-new-user.mail';
+import { mailGreetingName } from 'src/common/mails/greeting-name';
 import { UserAccountBannedMail } from 'src/v1/modules/users/mails/user-account-banned.mail';
 import { NewContactMail } from 'src/v1/modules/user-contacts/mails/new-contact.mail';
 import { UserRepository } from 'src/v1/modules/users/users.repository';
@@ -247,7 +248,7 @@ export class TestController {
     }
 
     return this.renderEmailPreview('emails/users/notify-new-user', {
-      user,
+      greetingName: mailGreetingName(user),
       features,
       translatePath: 'notify-new-user-email',
       t,
@@ -265,7 +266,7 @@ export class TestController {
     if (shouldSend) {
       await this.mailService.send(
         this.passwordRecoveryMail.setData(
-          { email: user.email, username: user.username },
+          { email: user.email, name: user.name },
           passwordRecoveryAttempt,
           this.lang,
         ),
@@ -273,7 +274,7 @@ export class TestController {
     }
 
     return this.renderEmailPreview('emails/auth/password-recovery-mail', {
-      user: { email: user.email, username: user.username },
+      greetingName: mailGreetingName(user),
       passwordRecoveryAttempt,
       translatePath: 'password-recovery-mail',
       t,
@@ -282,10 +283,11 @@ export class TestController {
   }
 
   private async handleTwoFa(shouldSend: boolean) {
-    const twofaUser = {
-      ...this.previewUser,
+    const twofaUser: TwoFAMailUser = {
+      email: this.previewUser.email,
+      name: this.previewUser.name,
       twofa_code: createMockTwofaCode(),
-    } as unknown as BaseUser & { twofa_code: string };
+    };
     const t = this.createTranslator();
 
     if (shouldSend) {
@@ -293,7 +295,8 @@ export class TestController {
     }
 
     return this.renderEmailPreview('emails/auth/twofa-mail', {
-      user: twofaUser,
+      twofaCode: twofaUser.twofa_code,
+      greetingName: mailGreetingName(twofaUser),
       translatePath: 'twofa-email',
       t,
       unsuscribeUrl: '',
