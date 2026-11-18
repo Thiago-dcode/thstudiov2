@@ -591,6 +591,18 @@ export class AuthService {
         throw new ApiException(API_ERRORS.REGISTRATION_CLOSED, 'Registration is closed', HttpStatus.FORBIDDEN);
       }
       if (invitationLink) {
+        // An addressed invitation belongs to that inbox: without this, anyone holding the link
+        // redeems it (and its benefit) under any email, closed registration included.
+        if (
+          invitationLink.email &&
+          invitationLink.email.trim().toLowerCase() !== userEmail.trim().toLowerCase()
+        ) {
+          this.rejectRegistration('invitation_email_mismatch', invitationLink.id);
+          throw new ApiException(
+            API_ERRORS.REGISTRATION_INVITATION_EMAIL_MISMATCH,
+            'This invitation was sent to a different email address',
+          );
+        }
         waitList = await this.waitListService.findByInvitationLinkId(invitationLink.id);
         if (waitList && waitList.email.toLowerCase() !== userEmail.toLowerCase()) {
           this.rejectRegistration('invitation_email_mismatch', invitationLink.id);

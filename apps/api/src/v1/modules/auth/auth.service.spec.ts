@@ -64,6 +64,7 @@ describe('AuthService', () => {
     importProviderAvatar: jest.fn(),
     generateUniqueUsername: jest.fn(),
     findOneCompacted: jest.fn(),
+    deleteAccount: jest.fn(),
   };
   const userAuthDevicesService = {
     claimPreValidated: jest.fn(),
@@ -150,6 +151,64 @@ describe('AuthService', () => {
 
       await expect(service.register(registerRequest as never)).rejects.toThrow('already been used');
       expect(userRepository.create).not.toHaveBeenCalled();
+    });
+
+    describe('an invitation addressed to one email', () => {
+      const withRegistrationClosed = async (closed: boolean, fn: () => Promise<void>) => {
+        const previous = process.env.REGISTRATION_IS_CLOSED;
+        process.env.REGISTRATION_IS_CLOSED = closed ? '1' : '0';
+        try {
+          await fn();
+        } finally {
+          if (previous === undefined) delete process.env.REGISTRATION_IS_CLOSED;
+          else process.env.REGISTRATION_IS_CLOSED = previous;
+        }
+      };
+
+      beforeEach(() => {
+        // Admin invitations come with no wait-list entry: the link's own email is the only check.
+        waitListService.findByInvitationLinkId.mockResolvedValue(null);
+        waitListService.findByEmail.mockResolvedValue(null);
+      });
+
+      it.each([true, false])(
+        'refuses another email without using the link up (registration closed: %s)',
+        async (closed) => {
+          invitationLinkService.validateCode.mockResolvedValue({ ...invitationLink, email: 'invited@example.com' });
+
+          await withRegistrationClosed(closed, async () => {
+            await expect(service.register(registerRequest as never)).rejects.toMatchObject({
+              API_ERROR_CODE: 'REGISTRATION_INVITATION_EMAIL_MISMATCH',
+            });
+          });
+          expect(invitationLinkService.claimUse).not.toHaveBeenCalled();
+          expect(userRepository.create).not.toHaveBeenCalled();
+          expect(logService.warn).toHaveBeenCalledWith(
+            'Registration rejected',
+            expect.objectContaining({ reason: 'invitation_email_mismatch', invitation_link_id: invitationLink.id }),
+            expect.objectContaining({ operation: 'register' }),
+          );
+        },
+      );
+
+      it('accepts the invited email whatever its case', async () => {
+        invitationLinkService.validateCode.mockResolvedValue({ ...invitationLink, email: ' Ana@Example.com' });
+
+        await withRegistrationClosed(true, async () => {
+          await expect(service.register(registerRequest as never)).resolves.toBeDefined();
+        });
+        expect(invitationLinkService.claimUse).toHaveBeenCalledWith(invitationLink.id);
+        expect(userRepository.create).toHaveBeenCalled();
+      });
+
+      it('lets any email use a link with no email', async () => {
+        invitationLinkService.validateCode.mockResolvedValue({ ...invitationLink, email: null });
+
+        await withRegistrationClosed(true, async () => {
+          await expect(service.register(registerRequest as never)).resolves.toBeDefined();
+        });
+        expect(invitationLinkService.claimUse).toHaveBeenCalledWith(invitationLink.id);
+      });
     });
 
     it('gives the use back and alerts when the account cannot be created for an unknown reason', async () => {
@@ -692,6 +751,23 @@ describe('AuthService', () => {
       // Generic message: the ban reason is the account owner's, not the Google user's to read.
       await expect(service.handleOauth2Callback(callback)).rejects.toMatchObject({ status: 401, message: 'Account permanently banned' });
       expect(invitationLinkService.claimUse).not.toHaveBeenCalled();
+      expect(userRepository.create).not.toHaveBeenCalled();
+    });
+
+    it('refuses a Google sign-up with an invitation addressed to another email, deleting nothing', async () => {
+      userOauthProvidersService.findByProviderUserId.mockResolvedValue(null);
+      // An unvalidated account holds the Google email: it must survive a rejected sign-up.
+      userRepository.findOneBy.mockResolvedValue({ ...linkedUser, email: profile.email, email_validated: false });
+      invitationLinkService.validateCode.mockResolvedValue({ ...invitationLink, email: 'invited@example.com' });
+      waitListService.findByInvitationLinkId.mockResolvedValue(null);
+
+      await expect(
+        service.handleOauth2Callback({ ...(callback as object), invitation_code: 'code' } as never),
+      ).rejects.toMatchObject({
+        API_ERROR_CODE: 'REGISTRATION_INVITATION_EMAIL_MISMATCH',
+      });
+      expect(invitationLinkService.claimUse).not.toHaveBeenCalled();
+      expect(userRepository.deleteAccount).not.toHaveBeenCalled();
       expect(userRepository.create).not.toHaveBeenCalled();
     });
 
