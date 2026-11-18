@@ -237,6 +237,10 @@ async function seedMediaAssetsForUser(user: MediaSeedTargetUser): Promise<void> 
       seo_title: defaultSeoText,
       seo_alt: defaultSeoText,
       compression_level: compressionLevel,
+      // The asset is fully written above, so the row is finished. `status` defaults to
+      // COMPLETED and `media_completed_has_completed_at` requires a timestamp to go with it.
+      status: 'COMPLETED',
+      completed_at: new Date(),
     };
     cleanObj(mediaData);
 
