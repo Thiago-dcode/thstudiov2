@@ -15,7 +15,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "dbcli": "turbo run dbcli",
     "clean": "rimraf --glob \"apps/*/dist\" \"apps/*/.next\" \"packages/*/dist\"",
-    "redis:flush": "docker exec a11studio-redis redis-cli FLUSHALL",
+    "redis:flush": "docker exec a11studio_redis redis-cli FLUSHALL",
     "sync:asset": "bash scripts/sync-seed-assets.sh",
     "skills:link": "node scripts/link-skills.mjs",
     "fresh": "pnpm clean && pnpm build",
