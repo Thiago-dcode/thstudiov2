@@ -219,11 +219,18 @@ describe('AuthService', () => {
     it('never tries the shortcut without a validated wait-list entry from the invitation', async () => {
       invitationLinkService.validateCode.mockResolvedValue(null);
       waitListService.findByEmail.mockResolvedValue(null);
+      // Open registration: a local `.env` with REGISTRATION_IS_CLOSED=1 would refuse this sign-up.
+      const previous = process.env.REGISTRATION_IS_CLOSED;
+      process.env.REGISTRATION_IS_CLOSED = '0';
+      try {
+        const result = await service.register({ ...registerRequest, invitation_code: undefined } as never);
 
-      const result = await service.register({ ...registerRequest, invitation_code: undefined } as never);
-
-      expect(userAuthDevicesService.claimPreValidated).not.toHaveBeenCalled();
-      expect(result).toMatchObject({ token: null, need_twofa: true });
+        expect(userAuthDevicesService.claimPreValidated).not.toHaveBeenCalled();
+        expect(result).toMatchObject({ token: null, need_twofa: true });
+      } finally {
+        if (previous === undefined) delete process.env.REGISTRATION_IS_CLOSED;
+        else process.env.REGISTRATION_IS_CLOSED = previous;
+      }
     });
 
     it('AC-1: generates an artist username and flags it auto-generated', async () => {
