@@ -153,7 +153,7 @@ export class AiMediaService {
         },
       );
 
-      throw new HttpException('Media is not in the right state', 420);
+      throw new HttpException('Media is not in the right state', 422);
     }
 
     // Hard gate: a video costs more than an image, so `AiConsumptionGuard`'s any-credit check
