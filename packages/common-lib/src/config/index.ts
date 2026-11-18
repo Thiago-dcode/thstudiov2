@@ -37,6 +37,7 @@ const config = (envPath?: string | undefined) => {
       errorEmailThrottleMinutes: process.env.ERROR_EMAIL_THROTTLE_MINUTES ? parseInt(process.env.ERROR_EMAIL_THROTTLE_MINUTES, 10) : 15,
       frontendUrls: process.env.APP_FRONTEND_URLS ? process.env.APP_FRONTEND_URLS.split(',') : [],
       allowedOrigins: process.env.APP_ALLOWED_ORIGINS ? process.env.APP_ALLOWED_ORIGINS.split(',').map((origin) => origin.trim()) : [],
+      registrationIsClosed: !process.env.REGISTRATION_IS_CLOSED ? 0 : parseInt(process.env.REGISTRATION_IS_CLOSED) === 1
     },
     api: {
       url: process.env.API_URL + '/api',
@@ -112,11 +113,25 @@ const config = (envPath?: string | undefined) => {
       secretKey: process.env.PAYPAL_SECRET_KEY as string,
       clientId: process.env.PAYPAL_CLIENT_ID as string
     },
+    google: {
+      oauth: {
+        clientId: process.env.GOOGLE_OAUTH_CLIENT_ID as string,
+        clientSecret: process.env.GOOGLE_OAUTH_CLIENT_SECRET as string,
+      },
+    },
 
     encryption: {
       // Lazy for the same reason as `jwt.secret` above.
       get secret() {
         return requireEnv('ENCRYPTION_SECRET');
+      },
+    },
+    oauth: {
+      // Encrypts provider refresh tokens at rest (user_oauth_providers.refresh_token). Lazy like
+      // `jwt.secret` so `dbcli` and the worker don't need it. Rotating it makes every stored
+      // refresh token undecryptable (users must re-consent).
+      get tokenSecret() {
+        return requireEnv('OAUTH_TOKEN_SECRET');
       },
     },
     llm: {

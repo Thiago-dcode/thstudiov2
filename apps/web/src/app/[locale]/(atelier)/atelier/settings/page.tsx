@@ -136,29 +136,31 @@ export default async function SettingsPage() {
           </div>
         </section>
 
-        {/* Security */}
-        <section className="border border-fg-2 divide-y divide-fg-2">
-          <div className="px-4 py-3">
-            <h3 className="text-sm! font-medium text-text-muted">
-              {t("security.heading")}
-            </h3>
-          </div>
-
-          <div className="flex items-center justify-between px-4 py-3">
-            <div className="flex items-center gap-3">
-              <KeyRound className="size-4 text-text-muted" />
-              <div>
-                <p className="text-sm! font-medium">
-                  {t("security.passwordLabel")}
-                </p>
-                <p className="text-xs! text-text-muted">
-                  {t("security.passwordDescription")}
-                </p>
-              </div>
+        {/* Security: accounts created with Google have no password to change. */}
+        {user.has_password !== false && (
+          <section className="border border-fg-2 divide-y divide-fg-2">
+            <div className="px-4 py-3">
+              <h3 className="text-sm! font-medium text-text-muted">
+                {t("security.heading")}
+              </h3>
             </div>
-            <EditUserPasswordDialog user={user} />
-          </div>
-        </section>
+
+            <div className="flex items-center justify-between px-4 py-3">
+              <div className="flex items-center gap-3">
+                <KeyRound className="size-4 text-text-muted" />
+                <div>
+                  <p className="text-sm! font-medium">
+                    {t("security.passwordLabel")}
+                  </p>
+                  <p className="text-xs! text-text-muted">
+                    {t("security.passwordDescription")}
+                  </p>
+                </div>
+              </div>
+              <EditUserPasswordDialog user={user} />
+            </div>
+          </section>
+        )}
 
         {/* Subscription */}
         <section className="border border-fg-2 divide-y divide-fg-2">

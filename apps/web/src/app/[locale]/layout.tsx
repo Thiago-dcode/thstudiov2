@@ -127,18 +127,19 @@ export default async function RootLayout({
     >
       <body className="w-screen h-dvh flex flex-col items-center justify-start">
         <ConsentProvider categories={getActiveConsentCategories()}>
-          <AppStatusProvider isRegisterClose={isRegisterClose}>
-            <SessionProvider session={session}>
-              <NextIntlClientProvider>
+          <SessionProvider session={session}>
+            <NextIntlClientProvider>
+              {/* Inside the intl provider: it translates the `?error=` toast. */}
+              <AppStatusProvider isRegisterClose={isRegisterClose}>
                 <ThemeProvider>
                   {children}
                   <Toaster />
                   <CookieBanner />
                   <GoogleAnalyticsGate gaId={getAnalyticsId()} />
                 </ThemeProvider>
-              </NextIntlClientProvider>
-            </SessionProvider>
-          </AppStatusProvider>
+              </AppStatusProvider>
+            </NextIntlClientProvider>
+          </SessionProvider>
         </ConsentProvider>
       </body>
     </html>

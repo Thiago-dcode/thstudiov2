@@ -1,5 +1,11 @@
+import type {
+  GoogleAuthInitiate,
+  OauthCallback,
+  OauthCallbackResponse,
+} from "@repo/common-lib/types/auth";
 import type { ApiResponse } from "@repo/common-lib/types/response";
 import type { User } from "@repo/common-lib/types/user";
+import { queryParamBuilder } from "@repo/common-lib/utils/query-builder";
 import { fetchApi } from "@/lib/facade/fetchApi";
 import { BaseService } from "@/lib/services/base.service";
 import type {
@@ -93,6 +99,25 @@ export class AuthService extends BaseService {
     return await this.fetchApi.post({
       resource: "validate-password-recovery-attempt",
       body: validatePasswordRecoveryAttemptRequest,
+    });
+  }
+
+  async oauth2Initiate(
+    googleOath2InitiateRequest: GoogleAuthInitiate,
+  ): Promise<ApiResponse<string>> {
+    return await this.fetchApi.get({
+      resource: queryParamBuilder("oauth2/initiate", {
+        ...googleOath2InitiateRequest,
+      }),
+    });
+  }
+
+  async oauth2Callback(
+    oauth2CallbackRequest: OauthCallback,
+  ): Promise<ApiResponse<OauthCallbackResponse>> {
+    return await this.fetchApi.post({
+      resource: "oauth2/callback",
+      body: oauth2CallbackRequest,
     });
   }
 }

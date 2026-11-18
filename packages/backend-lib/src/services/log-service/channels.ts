@@ -51,6 +51,7 @@ export const LOG_CHANNELS = [
     'user-contacts',
     'user-extra-data',
     'user-notifications',
+    'user-oauth-providers',
     'user-sessions',
     'user-storage-requests',
     'users',

@@ -1,11 +1,17 @@
 import { getTranslations } from "next-intl/server";
 import * as z from "zod";
 import { serverEnv } from "@/env/server";
-import { Link } from "@/i18n/navigation";
 import { redirect } from "@/i18n/redirect";
-import authComponent from "@/lib/components/page-component";
+import { FormPrivacyNotice } from "@/lib/components/form-privacy-notice";
 import { buildPrivatePageMetadata } from "@/lib/seo/private-metadata";
 import invitationLinkService from "@/modules/invitation-links/invitation-link.service";
+import {
+  AuthCard,
+  AuthDivider,
+  AuthFooter,
+  AuthSwitchLink,
+} from "../__components/auth-card";
+import { Oauth2Strategy } from "../__components/oauth2-strategy";
 import { RegisterForm } from "../__components/register-form";
 
 export async function generateMetadata() {
@@ -52,25 +58,22 @@ export default async function RegisterPage({
   }
 
   return (
-    <authComponent.Container>
-      <authComponent.Content>
-        <authComponent.Header>
-          <authComponent.Title title={t("title")} />
-          <authComponent.SubTitle subTitle={t("subtitle")} />
-        </authComponent.Header>
-        <RegisterForm initialEmail={initialEmail}>
-          {ref ? (
-            <input hidden name="invitation_code" defaultValue={ref} />
-          ) : null}
-        </RegisterForm>
-
-        <Link
+    <AuthCard title={t("title")}>
+      <Oauth2Strategy invitationLink={ref} />
+      <AuthDivider />
+      <RegisterForm initialEmail={initialEmail}>
+        {ref ? (
+          <input hidden name="invitation_code" defaultValue={ref} />
+        ) : null}
+      </RegisterForm>
+      <AuthFooter>
+        <AuthSwitchLink
+          prompt={t("alreadyHaveAccount")}
+          label={t("logIn")}
           href="/auth/login"
-          className="text-sm transition-colors text-text-muted hover:text-text "
-        >
-          {t("alreadyHaveAccount")}
-        </Link>
-      </authComponent.Content>
-    </authComponent.Container>
+        />
+        <FormPrivacyNotice context="signUpAgreement" className="max-w-xs" />
+      </AuthFooter>
+    </AuthCard>
   );
 }

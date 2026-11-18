@@ -7,6 +7,8 @@ import { Link } from "@/i18n/navigation";
 /** Which form the notice sits under: each one says what that form's data is used for. */
 export type FormPrivacyNoticeContext =
   | "register"
+  | "signUpAgreement"
+  | "signInAgreement"
   | "waitList"
   | "support"
   | "artistContact"
