@@ -1,6 +1,9 @@
 "use client";
 
-import { ACCOUNT_DELETION_GRACE_DAYS } from "@repo/common-lib/constants/limits";
+import {
+  ACCOUNT_DELETION_CODE_TTL_MINUTES,
+  ACCOUNT_DELETION_GRACE_DAYS,
+} from "@repo/common-lib/constants/limits";
 import type { User } from "@repo/common-lib/types/user";
 import { Errors } from "@repo/ui/components/custom/errors";
 import { Button } from "@repo/ui/components/shadcn/button";
@@ -21,6 +24,7 @@ import FormComponent from "@/lib/components/form-component";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
 import { useUserMetrics } from "@/modules/users/providers/user-metrics.provider";
 import { requestAccountDeletionAction } from "@/modules/users/server-actions/request-account-deletion.action";
+import { sendAccountDeletionCodeAction } from "@/modules/users/server-actions/send-account-deletion-code.action";
 
 type Props = {
   user: Pick<User, "id">;
@@ -37,6 +41,20 @@ export const DeleteAccountDialog = ({
   const { refresh: refreshMetrics } = useUserMetrics();
   const [open, setOpen] = useState(false);
   const [cancelSubscription, setCancelSubscription] = useState(false);
+  // Every account confirms with an emailed code: OAuth accounts have no password to re-enter.
+  const [codeSent, setCodeSent] = useState(false);
+
+  const {
+    handleAction: sendCode,
+    isPending: isSending,
+    errors: sendErrors,
+    reset: resetSend,
+  } = useHandleAction({
+    action: async () => await sendAccountDeletionCodeAction(user.id),
+    afterAction: async (result) => {
+      if (result.data) setCodeSent(true);
+    },
+  });
 
   const { handleSubmit, isPending, errors, reset } = useHandleAction({
     action: async (formData: FormData) =>
@@ -51,11 +69,15 @@ export const DeleteAccountDialog = ({
     },
   });
 
+  const busy = isPending || isSending;
+
   const handleOpenChange = (value: boolean) => {
-    if (isPending) return;
+    if (busy) return;
     if (!value) {
       reset();
+      resetSend();
       setCancelSubscription(false);
+      setCodeSent(false);
     }
     setOpen(value);
   };
@@ -85,60 +107,106 @@ export const DeleteAccountDialog = ({
           <li>{t("whatReopen", { days: ACCOUNT_DELETION_GRACE_DAYS })}</li>
         </ul>
 
-        <FormComponent.Container>
-          <FormComponent.Form onSubmit={handleSubmit} className="pt-2">
-            {hasRenewingSubscription && (
-              <div className="flex items-start gap-3 border border-fg-2 px-3 py-3">
-                <Checkbox
-                  id="cancel_subscription"
-                  name="cancel_subscription"
-                  checked={cancelSubscription}
-                  onCheckedChange={(value) =>
-                    setCancelSubscription(value === true)
-                  }
-                  className="mt-0.5"
-                />
-                <div className="flex flex-col gap-1">
-                  <Label
-                    htmlFor="cancel_subscription"
-                    // `!`: Label ships `sm:text-base`.
-                    className="text-xs! font-medium"
-                  >
-                    {t("cancelSubscriptionLabel")}
-                  </Label>
-                  {/* `!`: the global unlayered `p { font-size }` rule otherwise beats `text-xs`. */}
-                  <p className="text-xs! text-text-muted">
-                    {cancelSubscription
-                      ? t("cancelSubscriptionOn")
-                      : t("cancelSubscriptionOff")}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            <FormComponent.LabelInput
-              label={t("passwordLabel")}
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              onChange={() => {
-                if (errors) reset();
-              }}
-            />
-
-            <FormComponent.SubmitButton
-              isPending={isPending}
-              disabled={isPending}
+        {!codeSent ? (
+          <div className="flex flex-col gap-3 pt-2">
+            <p className="text-xs! text-text-muted">{t("codeIntro")}</p>
+            <Button
+              type="button"
               variant="destructive"
+              onClick={() => sendCode()}
+              disabled={isSending}
             >
-              {t("submit")}
-            </FormComponent.SubmitButton>
+              {isSending ? t("sendingCode") : t("sendCode")}
+            </Button>
+            {sendErrors && sendErrors.length > 0 && (
+              <Errors errors={sendErrors} />
+            )}
+          </div>
+        ) : (
+          <FormComponent.Container>
+            <FormComponent.Form onSubmit={handleSubmit} className="pt-2">
+              {hasRenewingSubscription && (
+                <div className="flex items-start gap-3 border border-fg-2 px-3 py-3">
+                  <Checkbox
+                    id="cancel_subscription"
+                    name="cancel_subscription"
+                    checked={cancelSubscription}
+                    onCheckedChange={(value) =>
+                      setCancelSubscription(value === true)
+                    }
+                    className="mt-0.5"
+                  />
+                  <div className="flex flex-col gap-1">
+                    <Label
+                      htmlFor="cancel_subscription"
+                      // `!`: Label ships `sm:text-base`.
+                      className="text-xs! font-medium"
+                    >
+                      {t("cancelSubscriptionLabel")}
+                    </Label>
+                    {/* `!`: the global unlayered `p { font-size }` rule otherwise beats `text-xs`. */}
+                    <p className="text-xs! text-text-muted">
+                      {cancelSubscription
+                        ? t("cancelSubscriptionOn")
+                        : t("cancelSubscriptionOff")}
+                    </p>
+                  </div>
+                </div>
+              )}
 
-            {errors && errors.length > 0 && <Errors errors={errors} />}
-          </FormComponent.Form>
-        </FormComponent.Container>
+              <FormComponent.LabelInput
+                label={t("codeLabel")}
+                id="code"
+                name="code"
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                pattern="[0-9]{6}"
+                // The step only appears after "Email me a code": move focus straight to the field.
+                autoFocus
+                aria-describedby="delete-account-code-hint"
+                maxLength={6}
+                required
+                onChange={() => {
+                  if (errors) reset();
+                }}
+              />
+              <p
+                id="delete-account-code-hint"
+                className="text-xs! text-text-muted"
+              >
+                {t("codeSent", { minutes: ACCOUNT_DELETION_CODE_TTL_MINUTES })}
+              </p>
+
+              <FormComponent.SubmitButton
+                isPending={isPending}
+                disabled={busy}
+                variant="destructive"
+              >
+                {t("submit")}
+              </FormComponent.SubmitButton>
+
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="text-xs"
+                onClick={() => {
+                  reset();
+                  sendCode();
+                }}
+                disabled={busy}
+              >
+                {isSending ? t("sendingCode") : t("resendCode")}
+              </Button>
+
+              {errors && errors.length > 0 && <Errors errors={errors} />}
+              {sendErrors && sendErrors.length > 0 && (
+                <Errors errors={sendErrors} />
+              )}
+            </FormComponent.Form>
+          </FormComponent.Container>
+        )}
       </DialogContent>
     </Dialog>
   );

@@ -80,6 +80,17 @@ export class Helpers {
       );
     }
   }
+  /** A JSON value stored with `setCached`, or `undefined` when missing or expired. */
+  public async getCached<T>(key: string): Promise<T | undefined> {
+    const cached = await this.cacheManager.get<string>(key);
+    return cached ? (JSON.parse(cached) as T) : undefined;
+  }
+
+  /** Stores `value` as JSON for `ttl` ms, exactly under `key` (no language suffix). */
+  public async setCached(key: string, value: unknown, ttl: number): Promise<void> {
+    await this.cacheManager.set(key, JSON.stringify(value), ttl);
+  }
+
   public async deleteManyCached(keys: string[]) {
     await Promise.all(keys.map((key) => this.cacheManager.del(key)));
   }

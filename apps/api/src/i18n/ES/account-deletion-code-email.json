@@ -1,0 +1,10 @@
+{
+  "SUBJECT": "Confirma la eliminación de tu cuenta",
+  "HI": "Hola",
+  "HI_NO_NAME": "Hola",
+  "TITLE": "Eliminación de cuenta",
+  "DESCRIPTION": "Alguien pidió eliminar tu cuenta. Introduce este código en Ajustes para confirmarlo.",
+  "CODE_LABEL": "Tu código de confirmación:",
+  "SECURITY_WARNING": "Si no pediste eliminar tu cuenta, ignora este correo: nada cambia sin este código.",
+  "EXPIRATION_INFO": "Este código expirará en 10 minutos."
+}

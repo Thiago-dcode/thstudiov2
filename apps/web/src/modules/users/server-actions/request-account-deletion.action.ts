@@ -15,7 +15,7 @@ import {
 } from "@/modules/auth/helpers";
 import usersService from "../users.service";
 
-/** Flags the account for deletion (password re-entered in the dialog). */
+/** Flags the account for deletion, confirmed with the code emailed by `sendAccountDeletionCodeAction`. */
 export const requestAccountDeletionAction = async (
   id: number,
   formData: FormData,
@@ -34,15 +34,15 @@ export const requestAccountDeletionAction = async (
   }
 
   const t = await getTranslations("atelier.settings.dangerZone.delete");
-  const password = formData.get("password");
+  const code = formData.get("code");
   const body: RequestAccountDeletionInput = {
-    password: typeof password === "string" ? password : "",
+    code: typeof code === "string" ? code.replace(/\s/g, "") : "",
     cancel_subscription: formData.get("cancel_subscription") === "on",
   };
-  // `inputs` is echoed back to the browser: never include the password in it.
+  // `inputs` is echoed back to the browser: the code is a secret, keep it out.
   const inputs = { cancel_subscription: body.cancel_subscription };
-  if (!body.password) {
-    return { data: null, errors: [t("passwordRequired")], inputs };
+  if (!/^\d{6}$/.test(body.code)) {
+    return { data: null, errors: [t("codeRequired")], inputs };
   }
 
   const result = await usersService.requestDeletion(id, body);
@@ -50,7 +50,7 @@ export const requestAccountDeletionAction = async (
     const { status_code } = result.error;
     const errors =
       status_code === 400
-        ? [t("wrongPassword")]
+        ? [t("wrongCode")]
         : status_code === 409
           ? [t("alreadyRequested")]
           : status_code === 429

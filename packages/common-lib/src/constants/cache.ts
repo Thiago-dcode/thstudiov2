@@ -43,6 +43,12 @@ export const CACHE_KEY_CATEGORY_TRANSLATION = (
   languageCode: string,
 ) => `category_translation_${categoryId}_${languageCode}` as const;
 export const CACHE_KEY_USER_PUBLIC_ID = (userId: number | string) => `user_public_id_${userId}` as const;
+/** Pending account-deletion confirmation code (hashed) for a user. */
+export const CACHE_KEY_ACCOUNT_DELETION_CODE = (userId: number) => `account_deletion_code_${userId}` as const;
+/** Set when a deletion code is sent; blocks another for the resend cooldown, even after a burn. */
+export const CACHE_KEY_ACCOUNT_DELETION_CODE_COOLDOWN = (userId: number) => `account_deletion_code_cooldown_${userId}` as const;
+/** `{ count, window_ends_at }`: deletion codes sent in the current 24h window. */
+export const CACHE_KEY_ACCOUNT_DELETION_CODES_SENT = (userId: number) => `account_deletion_codes_sent_${userId}` as const;
 export const CACHE_KEY_USERNAME_EXISTS = (username: string) => `username_exists_${username}` as const;
 
 // User notifications

@@ -1,0 +1,92 @@
+<%- include(globals.emailsPath + '/shared/head') %>
+
+<body class="e-bg" style="width:100%; margin:0; padding:0 4px; background-color:#FAFAF9;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="e-bg" style="background-color:#FAFAF9;">
+        <tr>
+            <td align="center">
+                <table role="presentation" width="800" cellpadding="0" cellspacing="0" border="0"
+                    class="e-bg" style="width:100%; max-width:800px; background-color:#FAFAF9;">
+
+                    <%- include(globals.emailsPath + '/shared/header') %>
+
+                    <!-- Greeting -->
+                    <tr>
+                        <td style="padding:0 0 24px; text-align:center;">
+                            <% if (greetingName) { %>
+                            <p class="e-text-muted" style="font-size:13px; color:#46443F; letter-spacing:1px; text-transform:uppercase; margin:0 0 8px 0;">
+                                <%= t(translatePath + '.HI') %>
+                            </p>
+                            <h2 class="e-text" style="font-size:20px; font-weight:600; color:#000000; margin:0;">
+                                <%= greetingName %>
+                            </h2>
+                            <% } else { %>
+                            <h2 class="e-text" style="font-size:20px; font-weight:600; color:#000000; margin:0;">
+                                <%= t(translatePath + '.HI_NO_NAME') %>
+                            </h2>
+                            <% } %>
+                        </td>
+                    </tr>
+
+                    <!-- Title -->
+                    <tr>
+                        <td style="padding:0 0 24px; text-align:center;">
+                            <h1 class="e-text" style="font-size:20px; font-weight:600; color:#000000; margin:0; letter-spacing:1px;">
+                                <%= t(translatePath + '.TITLE') %>
+                            </h1>
+                            <p class="e-text-muted" style="font-size:13px; color:#46443F; margin:12px 0 0 0; line-height:1.5;">
+                                <%= t(translatePath + '.DESCRIPTION') %>
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Confirmation Code -->
+                    <tr>
+                        <td>
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                                class="e-card e-border-em" style="border:1.5px solid #C9C6BB; background-color:#FFFFFF;">
+                                <tr>
+                                    <td style="padding:24px 12px; text-align:center;">
+                                        <p class="e-text-muted" style="font-size:11px; color:#46443F; letter-spacing:2px; text-transform:uppercase; margin:0 0 16px 0;">
+                                            <%= t(translatePath + '.CODE_LABEL') %>
+                                        </p>
+                                        <p class="e-text" style="font-family:'Courier New', Courier, monospace; font-size:38px; font-weight:bold; letter-spacing:10px; margin:0; color:#000000; -webkit-user-select:all; user-select:all;"><%= code %></p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Security Warning -->
+                    <tr>
+                        <td style="padding:24px 0 0;">
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
+                                class="e-error-bg e-error-border" style="border:1.5px solid #F3AEB4; background-color:#FEE2E2;">
+                                <tr>
+                                    <td style="padding:24px 12px; text-align:center;">
+                                        <p class="e-error-text" style="font-size:13px; margin:0; color:#E11D2E; line-height:1.5;">
+                                            <%= t(translatePath + '.SECURITY_WARNING') %>
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Expiration -->
+                    <tr>
+                        <td align="center" style="padding:20px 0;">
+                            <p class="e-text-muted" style="font-size:12px; margin:0; color:#46443F; line-height:1.5;">
+                                <%= t(translatePath + '.EXPIRATION_INFO') %>
+                            </p>
+                        </td>
+                    </tr>
+
+                    <%- include(globals.emailsPath + '/shared/footer') %>
+
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+
+</html>

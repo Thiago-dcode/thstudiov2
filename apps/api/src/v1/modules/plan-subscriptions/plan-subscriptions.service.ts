@@ -2,7 +2,9 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { SetFreeSubscriptionEvent } from './events/set-free-subscription.event';
 import { CancelSubscriptionRenewalEvent } from './events/cancel-subscription-renewal.event';
+import { CancelAccountPaymentsEvent } from './events/cancel-account-payments.event';
 import {
+  CANCEL_ACCOUNT_PAYMENTS_EVENT,
   CANCEL_SUBSCRIPTION_RENEWAL_EVENT,
   SET_FREE_SUBSCRIPTION_EVENT,
 } from '@repo/common-lib/constants/events';
@@ -639,6 +641,62 @@ export class PlanSubscriptionsService {
   }
 
   /**
+   * Ends billing for good: the active paid subscription is cancelled immediately (renewal may
+   * already have been stopped at request time, but the remaining paid period must not keep billing
+   * a deleted account), then the Stripe customer, which holds the email and payment methods, is
+   * removed. `plan_subscriptions` rows are kept (FK `SET NULL`) for invoice/tax retention.
+   * Idempotent, so the account-deletion job can retry it after a partial failure.
+   */
+  async cancelPayments(userId: number, stripeCustomerId: string | null) {
+    const subscription = await this.planSubscriptionsRepository.findActiveSubscription(userId);
+    addLogCorrelation({
+      stripe_subscription_id: subscription?.stripe_id ?? undefined,
+      stripe_customer_id: stripeCustomerId ?? undefined,
+    });
+    const outcome = { stripe_subscription_cancelled: false, stripe_customer_deleted: false, paypal_cancelled: false };
+    if (subscription?.stripe_id) {
+      try {
+        await stripe.subscriptions.cancel(subscription.stripe_id);
+        outcome.stripe_subscription_cancelled = true;
+      } catch (error) {
+        if (!this.isStripeMissing(error)) throw error;
+      }
+    }
+    if (subscription?.paypal_id) {
+      const cancelled = await (await paypal).subscription.cancel(
+        subscription.paypal_id,
+        'Account deleted',
+      );
+      outcome.paypal_cancelled = !!cancelled;
+      if (!cancelled) {
+        // Not thrown: PayPal also refuses an already-cancelled subscription, and retrying that
+        // forever would block a legally required deletion. The critical log mails the admins, who can
+        // check the subscription by its id.
+        this.logger.critical(
+          'PayPal subscription of deleted user could not be cancelled; check it manually',
+          { paypal_subscription_id: subscription.paypal_id },
+          { operation: 'hard-delete' },
+        );
+      }
+    }
+    if (stripeCustomerId) {
+      try {
+        await stripe.customers.del(stripeCustomerId);
+        outcome.stripe_customer_deleted = true;
+      } catch (error) {
+        if (!this.isStripeMissing(error)) throw error;
+      }
+    }
+    this.logger.info('Account payments cancelled', outcome, { operation: 'hard-delete' });
+  }
+
+  /** Already cancelled/deleted on a previous attempt: treat as done so retries stay idempotent. */
+  private isStripeMissing(error: unknown): boolean {
+    const err = error as { code?: string; statusCode?: number };
+    return err?.code === 'resource_missing' || err?.statusCode === 404;
+  }
+
+  /**
    * Account deletion's "also cancel my subscription now": stop renewal, keep the paid time. An
    * event (awaited via `emitAsync`) rather than a direct call because this module already imports
    * `UserModule`. Free plans are a no-op inside `cancel`.
@@ -663,6 +721,17 @@ export class PlanSubscriptionsService {
       }
     }
     await this.cancel(event.userId);
+  }
+
+  /**
+   * Account hard delete's billing teardown, emitted by `UserService.deleteAccount` (an event
+   * because this module already imports `UserModule`). `suppressErrors: false` is load-bearing:
+   * the default would log and swallow a Stripe failure, and the account would then be deleted
+   * while still billed instead of the job failing and retrying.
+   */
+  @OnEvent(CANCEL_ACCOUNT_PAYMENTS_EVENT, { suppressErrors: false })
+  async handleCancelAccountPayments(event: CancelAccountPaymentsEvent) {
+    await this.cancelPayments(event.userId, event.stripeCustomerId);
   }
 
   @OnEvent(SET_FREE_SUBSCRIPTION_EVENT)

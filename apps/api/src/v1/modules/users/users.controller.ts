@@ -193,9 +193,22 @@ export class UserController {
   }
 
   /**
+   * Emails the code that confirms the deletion (`POST :id/deletion` takes it). 429 inside the
+   * resend cooldown, 409 if already flagged. Same throttle as the deletion: each call sends a mail.
+   */
+  @Throttle({ medium: { limit: 5, ttl: 60000 } })
+  @AllowWhileStrikeBanned()
+  @Post(':id/deletion/code')
+  async sendDeletionCode(
+    @Param('id', ParseIntPipe, new ModelExistPipe('users'), IsUserAuthPipe) id: number,
+  ) {
+    return await this.userService.sendDeletionCode(id);
+  }
+
+  /**
    * Flags the account for deletion (hidden now, hard-deleted after the grace period). 409 if already
-   * flagged. Tight throttle: the body carries the password, so this must not become a guessing
-   * oracle for a stolen session. Allowed during a strike ban: erasure is a right, not a privilege.
+   * flagged. Tight throttle on top of the code's own attempt limit: a stolen session must not be
+   * able to guess it. Allowed during a strike ban: erasure is a right, not a privilege.
    */
   @Throttle({ medium: { limit: 5, ttl: 60000 } })
   @AllowWhileStrikeBanned()
