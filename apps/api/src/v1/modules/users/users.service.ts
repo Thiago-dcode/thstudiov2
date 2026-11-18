@@ -1,4 +1,7 @@
-import { BadRequestException, ConflictException, HttpException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, HttpException, HttpStatus, Injectable, NotFoundException, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
+import { DbUniqueViolationException } from '@repo/database/exceptions';
+import { randomInt } from 'crypto';
+import { normalizeUsername } from '@repo/common-lib/utils/username';
 import { UpdateUserRequest } from './requests/update-user.request';
 import { CreateUserImageUploadUrlRequest } from './requests/create-user-image-upload-url.request';
 import { NewUserEvent } from './events/new-user.event';
@@ -23,6 +26,7 @@ import {
 } from '@repo/common-lib/constants/limits';
 import {
   ARTIST_PUBLIC_PAGES_CHANGED_EVENT,
+  CANCEL_ACCOUNT_PAYMENTS_EVENT,
   CANCEL_SUBSCRIPTION_RENEWAL_EVENT,
   NEW_USER_EVENT,
   SET_FREE_SUBSCRIPTION_EVENT,
@@ -30,20 +34,35 @@ import {
   UPDATE_PROFILE_STATUS_EVENT,
 } from '@repo/common-lib/constants/events';
 import {
+  CACHE_KEY_ACTIVE_SUBSCRIPTION,
+  CACHE_KEY_PROFILE_STATUS,
   CACHE_KEY_USER_CATEGORIES,
+  CACHE_KEY_USER_EXTRA_DATA,
   CACHE_KEY_USER_PUBLIC_ID,
   CACHE_KEY_USERNAME_EXISTS,
 } from '@repo/common-lib/constants/cache';
+import { StorageService } from '@repo/backend-lib/services/storage-service';
+import { CancelAccountPaymentsEvent } from '../plan-subscriptions/events/cancel-account-payments.event';
 import { FindUserRequest } from './requests/find-user.request';
 import { Helpers } from 'src/common/services/helpers.service';
 import { UpdateUserPasswordRequest } from './requests/update-user-password.request';
 import { compare, hash } from '@repo/common-lib/utils/hash';
 import { AiService } from '@repo/backend-lib/services/ai-service';
 import { MediaModerationException } from 'src/common/exceptions/media-moderation-exception';
+import { ApiException } from 'src/common/exceptions/api-exception';
 import { descriptiveFilename, versionedAssetPath } from 'src/common/utils/asset-path.util';
-import { ArtistCard, PublicCompactUser, UpdateUserInput, UserAccountStatus } from '@repo/common-lib/types/user';
+import {
+  ArtistCard,
+  BaseUser,
+  BaseUserWithSecrets,
+  CreateUserInput,
+  PublicCompactUser,
+  UpdateUserInput,
+  UserAccountStatus,
+} from '@repo/common-lib/types/user';
+import { UserSchema } from '@repo/common-lib/schemas/user';
 import { EnumType } from '@repo/common-lib/constants/enums';
-import { addDays, addMonths } from 'date-fns';
+import { addDays, addMinutes, addMonths } from 'date-fns';
 import { UsernameRedirect } from '@repo/common-lib/types/username-history';
 import { UsernameHistoryRepository } from '../username-history/username-history.repository';
 import { IndexArtistsRequest } from './requests/index-artists.request';
@@ -57,6 +76,32 @@ import { UserSessionsService } from '../user-sessions/user-sessions.service';
 import { TempUploadService } from 'src/common/services/temp-upload.service';
 import { withUserLock } from 'src/common/utils/user-lock';
 import { ArtistPublicPagesChangedEvent } from '../edge-cache/events/artist-public-pages-changed.event';
+import { AccountDeletionCodeMail } from './mails/account-deletion-code.mail';
+import { API_ERRORS } from '@repo/common-lib/constants/api-errors';
+import { AccountDeletionCodeResult } from '@repo/common-lib/types/user';
+import {
+  CACHE_KEY_ACCOUNT_DELETION_CODE,
+  CACHE_KEY_ACCOUNT_DELETION_CODE_COOLDOWN,
+  CACHE_KEY_ACCOUNT_DELETION_CODES_SENT,
+} from '@repo/common-lib/constants/cache';
+import {
+  ACCOUNT_DELETION_CODE_TTL_MINUTES,
+  MAX_ACCOUNT_DELETION_CODE_ATTEMPTS,
+  MAX_ACCOUNT_DELETION_CODES_PER_DAY,
+  TWOFA_RESEND_COOLDOWN_SECONDS,
+} from '@repo/common-lib/constants/limits';
+
+/** One lock for sending and checking deletion codes, so their reads and writes never interleave. */
+const deletionLockKey = (userId: number) => `account-deletion:${userId}`;
+
+/** What the cache holds for a pending deletion code. Never the code itself. */
+type PendingDeletionCode = { hash: string; attempts: number; issued_at: string; expires_at: string };
+
+/** `users.public_id` is a UUID; anything else must never reach a recursive storage delete. */
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Generated usernames are at most 20 chars: a base of up to 12, then an 8-char random suffix. */
+const USERNAME_BASE_MAX_LENGTH = 12;
 
 @Injectable()
 export class UserService {
@@ -73,6 +118,8 @@ export class UserService {
     private readonly userSessionsService: UserSessionsService,
     private readonly tempUploads: TempUploadService,
     private readonly usernameHistoryRepository: UsernameHistoryRepository,
+    private readonly storageService: StorageService,
+    private readonly accountDeletionCodeMail: AccountDeletionCodeMail,
   ) { }
 
   /**
@@ -89,6 +136,24 @@ export class UserService {
   /** No-op when `language` already matches; safe to call on every authenticated request. */
   async updateLanguageIfChanged(id: number, language: EnumType<'LANGUAGE_CODE'>): Promise<void> {
     await this.userRepository.updateLanguageIfChanged(id, language);
+  }
+
+  // Raw repository pass-throughs for the auth flows: no side effects, events or cache purges.
+  findOneBy(column: keyof UserSchema, value: any): Promise<BaseUser> {
+    return this.userRepository.findOneBy(column, value);
+  }
+
+  /** Includes `password`, `twofa_code` and `twofa_attempts`: never return it to a client. */
+  findOneByWithSecrets(column: string, value: any): Promise<BaseUserWithSecrets> {
+    return this.userRepository.findOneByWithSecrets(column, value);
+  }
+
+  create(user: CreateUserInput): Promise<BaseUser> {
+    return this.userRepository.create(user);
+  }
+
+  updateById(id: number, user: UpdateUserInput): Promise<BaseUser> {
+    return this.userRepository.updateById(id, user);
   }
 
   async findAll(filters: IndexArtistsRequest): Promise<ArtistCard[]> {
@@ -145,6 +210,8 @@ export class UserService {
       password_reset_count,
       next_username_reset,
       next_password_reset,
+      // Whether the username is still the random sign-up one: onboarding state, owner only.
+      username_auto_generated,
       role_id,
       // Which promotion or invitation an account signed up through: the owner's business only.
       benefit_id,
@@ -174,6 +241,11 @@ export class UserService {
     if (result?.banner) {
       result.banner = await this.helpers.getAsset(result.banner);
     }
+    // Owner only: settings hides "change password" for OAuth accounts, which have none.
+    if (result && caller?.id === id) {
+      (result as typeof result & { has_password?: boolean }).has_password =
+        await this.userRepository.hasPassword(id);
+    }
     return this.omitPrivateFields(result, id);
   }
 
@@ -199,6 +271,48 @@ export class UserService {
 
   async getCompactedById(id: number) {
     return await this.userRepository.findByIdCompact(id);
+  }
+
+  /**
+   * The part of `prefix` that `generateUniqueUsername` keeps: accents folded, anything outside
+   * `[a-z0-9]` dropped, cut to leave room for the suffix. An empty result means the username would
+   * be the meaningless `user…` fallback, so callers treat it as "no name to build from" (e.g.
+   * `Иван` or a whitespace-only name).
+   */
+  static usernameBase(prefix: string | null | undefined): string {
+    return normalizeUsername(prefix ?? '')
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9]/g, '')
+      .slice(0, USERNAME_BASE_MAX_LENGTH);
+  }
+
+  /**
+   * A free username built from `prefix` plus a random suffix, e.g. `juan` → `juank3x9q2mf`. Valid
+   * for the register rules (3–20 chars, `[a-z0-9]`): accents are folded and anything else dropped,
+   * and an empty prefix falls back to `user`. 8 suffix chars give 36^8 (~2.8e12) options, so the
+   * first try is free in practice; the loop only covers the rare collision. It reads the DB, not
+   * the 7-day `usernameExists` cache, and skips names reserved for another user's redirects.
+   */
+  async generateUniqueUsername(prefix: string): Promise<string> {
+    const SUFFIX_LENGTH = 8;
+    const MAX_ATTEMPTS = 5;
+    const ALPHABET = 'abcdefghijklmnopqrstuvwxyz0123456789';
+
+    const base = UserService.usernameBase(prefix) || 'user';
+
+    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+      let suffix = '';
+      for (let i = 0; i < SUFFIX_LENGTH; i++) suffix += ALPHABET[randomInt(ALPHABET.length)];
+      const candidate = `${base}${suffix}`;
+
+      const [taken, reserved] = await Promise.all([
+        this.userRepository.usernameExists(candidate),
+        this.usernameHistoryRepository.isReservedForOtherUser(candidate),
+      ]);
+      if (!taken && !reserved) return candidate;
+    }
+    throw new ConflictException('Could not generate a unique username');
   }
 
   async usernameExists(username: string): Promise<boolean> {
@@ -253,6 +367,23 @@ export class UserService {
       uploadId,
       MAX_IMAGE_UPLOAD_BYTES,
     );
+    return this.moderateAndStoreProfileImage({ user, buffer, kind, nameParts, targetSizeMb });
+  }
+
+  /** Re-encode, moderate, store: shared by presigned uploads and provider avatars. */
+  private async moderateAndStoreProfileImage({
+    user,
+    buffer,
+    kind,
+    nameParts,
+    targetSizeMb,
+  }: {
+    user: { id: number; public_id: string };
+    buffer: Buffer;
+    kind: 'avatar' | 'banner';
+    nameParts: (string | null | undefined)[];
+    targetSizeMb: number;
+  }): Promise<string> {
     let optimized: Buffer;
     try {
       optimized = await this.helpers.optimizeImage({ asset: buffer, targetSizeMb });
@@ -289,6 +420,104 @@ export class UserService {
         `users/${user.public_id}/${descriptiveFilename(nameParts, kind)}`,
       ),
     );
+  }
+
+  /**
+   * Imports the sign-in provider's profile picture as the user's avatar, only while they have none.
+   * Best effort and never throws: the caller does not wait for it, and sign-in must not depend on
+   * it. `url` must already be checked against the provider's image hosts (the caller does that).
+   * The bytes go through the same re-encode and moderation as an upload.
+   */
+  async importProviderAvatar({
+    user,
+    url,
+    provider,
+    nameParts,
+  }: {
+    user: { id: number; public_id: string };
+    url: string;
+    provider: string;
+    nameParts: (string | null | undefined)[];
+  }): Promise<void> {
+    const fields = { operation: 'profile-image', correlation: { user_id: user.id } };
+    try {
+      if (await this.userRepository.getAvatar(user.id)) return;
+
+      const buffer = await this.downloadImage(url, MAX_IMAGE_UPLOAD_BYTES);
+      const path = await this.moderateAndStoreProfileImage({
+        user,
+        buffer,
+        kind: 'avatar',
+        nameParts,
+        targetSizeMb: 0.3,
+      });
+
+      // Conditional: an avatar uploaded while this ran wins, and ours is removed.
+      if (!(await this.userRepository.setAvatarIfEmpty(user.id, path))) {
+        await this.helpers.deleteAsset(path);
+        this.logService.info('Provider avatar skipped', { provider, reason: 'avatar_already_set' }, fields);
+        return;
+      }
+
+      this.eventEmitter.emit(
+        UPDATE_PROFILE_STATUS_EVENT,
+        new UpdateProfileStatusEvent(user.id, { has_avatar_field: true }),
+      );
+      this.emitArtistPagesChanged(user.id);
+      this.logService.success('Provider avatar imported', { provider }, fields);
+    } catch (error: unknown) {
+      // A rejected image already logged its warn in `moderateAndStoreProfileImage`.
+      if (error instanceof MediaModerationException || error instanceof BadRequestException) return;
+      this.logService.error(
+        'Provider avatar import failed',
+        {
+          provider,
+          error_name: error instanceof Error ? error.name : typeof error,
+          error_message: error instanceof Error ? error.message : String(error),
+          // fetch wraps the real reason (`unexpected redirect`, ENOTFOUND, timeout) in `cause`.
+          error_cause:
+            error instanceof Error && error.cause instanceof Error ? error.cause.message : undefined,
+        },
+        fields,
+      );
+    }
+  }
+
+  /**
+   * GET `url` into memory, at most `maxBytes`. No redirects: the caller vetted the host, and a
+   * redirect could point anywhere (internal addresses included).
+   */
+  private async downloadImage(url: string, maxBytes: number): Promise<Buffer> {
+    const response = await fetch(url, {
+      redirect: 'error',
+      signal: AbortSignal.timeout(10_000),
+      headers: { accept: 'image/*' },
+    });
+    if (!response.ok || !response.body) {
+      throw new Error(`Avatar download answered ${response.status}`);
+    }
+    if (!response.headers.get('content-type')?.startsWith('image/')) {
+      throw new Error('Avatar download is not an image');
+    }
+    if (Number(response.headers.get('content-length') ?? 0) > maxBytes) {
+      throw new Error('Avatar download too large');
+    }
+
+    // Content-Length can lie or be missing: count the bytes as they arrive.
+    const reader = response.body.getReader();
+    const chunks: Uint8Array[] = [];
+    let total = 0;
+    for (; ;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > maxBytes) {
+        await reader.cancel();
+        throw new Error('Avatar download too large');
+      }
+      chunks.push(value);
+    }
+    return Buffer.concat(chunks);
   }
 
   /**
@@ -398,7 +627,7 @@ export class UserService {
       const periodExpired = user.next_username_reset && new Date() >= user.next_username_reset;
       const effectiveCount = periodExpired ? 0 : user.username_reset_count;
 
-      if (effectiveCount >= MAX_USERNAME_RESET) {
+      if ((effectiveCount >= MAX_USERNAME_RESET) && !user.username_auto_generated) {
         throw new BadRequestException(
           `Username change limit reached (${MAX_USERNAME_RESET} per month). Available again on ${user.next_username_reset.toDateString()}.`,
         );
@@ -411,14 +640,16 @@ export class UserService {
         this.usernameHistoryRepository.isReservedForOtherUser(userUpdateData.username, user.id),
       ]);
       if (usernameTaken || usernameReserved) {
-        throw new BadRequestException('Username is already taken');
+        throw ApiException.usernameTaken();
       }
 
-      userUpdateData.username_reset_count = effectiveCount + 1;
+      if (!user.username_auto_generated) userUpdateData.username_reset_count = effectiveCount + 1;
       if (!user.next_username_reset || periodExpired) {
         userUpdateData.next_username_reset = addMonths(new Date(), 1);
       }
+      userUpdateData.username_auto_generated = false;
     }
+
 
     const editCategories = categories && categories.length;
     if (editCategories) {
@@ -428,7 +659,14 @@ export class UserService {
     }
 
     const [userUpdated] = await Promise.all([
-      this.userRepository.updateById(user.id, userUpdateData),
+      // The checks above are a read: two users racing for the same free name both pass them, and
+      // the unique index on `users.username` rejects the second write. That is a 409, not a 500.
+      this.userRepository.updateById(user.id, userUpdateData).catch((error: unknown) => {
+        if (usernameChanged && error instanceof DbUniqueViolationException) {
+          throw ApiException.usernameTaken();
+        }
+        throw error;
+      }),
       editCategories
         ? this.userRepository.attach('user_categories', {
           modelCol: 'user_id',
@@ -471,9 +709,9 @@ export class UserService {
       new UpdateProfileStatusEvent(user.id, {
         has_full_name_field: Boolean(
           typeof mergedName === 'string' &&
-            mergedName.trim() &&
-            typeof mergedSurname === 'string' &&
-            mergedSurname.trim(),
+          mergedName.trim() &&
+          typeof mergedSurname === 'string' &&
+          mergedSurname.trim(),
         ),
         has_profession_field: Boolean(
           typeof mergedProfession === 'string' && mergedProfession.trim(),
@@ -485,9 +723,9 @@ export class UserService {
       }),
     );
 
-    const shouldGenerateMetadata =user.name !=userUpdateData.name || user.surname != userUpdateData.surname || user.profession != userUpdateData.profession || user.short_biography != userUpdateData.profession;
+    const shouldGenerateMetadata = user.name != userUpdateData.name || user.surname != userUpdateData.surname || user.profession != userUpdateData.profession || user.short_biography != userUpdateData.profession;
 
-    if(shouldGenerateMetadata){
+    if (shouldGenerateMetadata) {
       await QueueHelper.createGenerateSingleEntityMetadataJob(
         { entity: 'user', id: user.id, user_id: user.id },
         { delay: SINGLE_ENTITY_METADATA_DEBOUNCE_MS },
@@ -519,7 +757,8 @@ export class UserService {
       );
     }
 
-    const passwordMatch = await compare(request.old_password, user.password);
+    // OAuth-only accounts have no password to match (bcrypt throws on a null hash).
+    const passwordMatch = !!user.password && (await compare(request.old_password, user.password));
     if (!passwordMatch) {
       throw new BadRequestException('Wrong password');
     }
@@ -551,22 +790,153 @@ export class UserService {
   }
 
   /**
-   * Flags the account for deletion. It is hidden from every public surface right away (see
-   * `visibleAccountSql`) and hard-deleted by `AccountDeletionTask` after the grace period, unless the
-   * owner reopens it first. Password re-entry is required: a stolen session must not be able to
-   * schedule this.
+   * Emails the code that confirms an account deletion, replacing any pending one. One approach for
+   * every account: OAuth accounts have no password to re-enter, and proving the inbox works for all.
+   * The code is stored hashed in Redis for `ACCOUNT_DELETION_CODE_TTL_MINUTES`. The resend cooldown
+   * has its own key: burning or using the code must not reset it, or codes could be cycled freely.
    */
-  async requestDeletion(userId: number, request: RequestAccountDeletionRequest) {
-    const user = await this.userRepository.findOneByWithSecrets('id', userId);
+  async sendDeletionCode(userId: number): Promise<AccountDeletionCodeResult> {
+    return withUserLock(deletionLockKey(userId), 30_000, () => this.sendDeletionCodeLocked(userId), {
+      waitMs: 5_000,
+    });
+  }
+
+  private async sendDeletionCodeLocked(userId: number): Promise<AccountDeletionCodeResult> {
+    const fields = { operation: 'account-deletion', correlation: { user_id: userId } };
+    const user = await this.userRepository.findById(userId);
     if (!user) throw new UnauthorizedException();
     if (user.deletion_requested_at) {
       throw new ConflictException('Account deletion was already requested');
     }
-    if (!(await compare(request.password, user.password))) {
-      throw new BadRequestException('Wrong password');
+
+    const cooldownKey = CACHE_KEY_ACCOUNT_DELETION_CODE_COOLDOWN(userId);
+    const lastSentAt = await this.helpers.getCached<string>(cooldownKey);
+    if (lastSentAt) {
+      const waitSeconds = Math.max(
+        1,
+        TWOFA_RESEND_COOLDOWN_SECONDS - Math.floor((Date.now() - new Date(lastSentAt).getTime()) / 1000),
+      );
+      throw new HttpException(`Please wait ${waitSeconds} seconds before asking for a new code`, 429);
     }
 
-    // Before flagging: if the provider call fails, nothing has changed and the user can retry.
+    // With the cooldown alone a stolen session could still get 1,440 codes (7,200 guesses) a day.
+    const sentKey = CACHE_KEY_ACCOUNT_DELETION_CODES_SENT(userId);
+    const sent = await this.helpers.getCached<{ count: number; window_ends_at: string }>(sentKey);
+    const sentWindowMs = sent ? new Date(sent.window_ends_at).getTime() - Date.now() : 0;
+    if (sent && sentWindowMs > 0 && sent.count >= MAX_ACCOUNT_DELETION_CODES_PER_DAY) {
+      this.logService.warn('Account deletion code refused', { reason: 'daily_limit' }, fields);
+      throw new ApiException(
+        API_ERRORS.ACCOUNT_DELETION_CODE_DAILY_LIMIT,
+        'Too many codes today, try again tomorrow',
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+
+    // Digits only, like the 2FA code: easy to read off a phone, number pad on mobile.
+    const code = randomInt(0, 1_000_000).toString().padStart(6, '0');
+    const issuedAt = new Date();
+    const expiresAt = addMinutes(issuedAt, ACCOUNT_DELETION_CODE_TTL_MINUTES);
+    const key = CACHE_KEY_ACCOUNT_DELETION_CODE(userId);
+    const record: PendingDeletionCode = {
+      hash: await hash(code),
+      attempts: 0,
+      issued_at: issuedAt.toISOString(),
+      expires_at: expiresAt.toISOString(),
+    };
+    await Promise.all([
+      this.helpers.setCached(key, record, ACCOUNT_DELETION_CODE_TTL_MINUTES * 60_000),
+      this.helpers.setCached(cooldownKey, issuedAt.toISOString(), TWOFA_RESEND_COOLDOWN_SECONDS * 1000),
+    ]);
+
+    try {
+      await this.mailService.send(
+        this.accountDeletionCodeMail.setData({ email: user.email, name: user.name ?? null, code }, user.language),
+      );
+    } catch (error: unknown) {
+      // Awaited, unlike 2FA: the dialog asks for the code next, so a lost mail must say so now.
+      // The cooldown goes too: nothing reached the inbox, so an immediate retry is fair.
+      await this.helpers.deleteManyCached([key, cooldownKey]).catch(() => undefined);
+      this.logService.error(
+        'Failed to send account deletion code',
+        {
+          error_name: error instanceof Error ? error.name : typeof error,
+          error_message: maskEmailAddresses(error instanceof Error ? error.message : String(error)),
+        },
+        fields,
+      );
+      throw new ServiceUnavailableException('Could not send the code, try again later');
+    }
+
+    // Counted once the mail went out: a failed send costs the user nothing.
+    await this.helpers.setCached(
+      sentKey,
+      sent && sentWindowMs > 0
+        ? { ...sent, count: sent.count + 1 }
+        : { count: 1, window_ends_at: new Date(Date.now() + 86_400_000).toISOString() },
+      sent && sentWindowMs > 0 ? sentWindowMs : 86_400_000,
+    );
+
+    // Never the code.
+    this.logService.info('Account deletion code sent', undefined, fields);
+    return {
+      expires_at: expiresAt,
+      resend_available_at: new Date(issuedAt.getTime() + TWOFA_RESEND_COOLDOWN_SECONDS * 1000),
+    };
+  }
+
+  /**
+   * Checks the pending deletion code without using it up. A wrong code counts an attempt; the code
+   * is burned after `MAX_ACCOUNT_DELETION_CODE_ATTEMPTS`, and with the cooldown and daily cap
+   * that leaves at most 25 guesses a day. Must
+   * run under the deletion lock: the read-check-write of `attempts` is not atomic on its own.
+   */
+  private async verifyDeletionCode(userId: number, code: string): Promise<void> {
+    const fields = { operation: 'account-deletion', correlation: { user_id: userId } };
+    const key = CACHE_KEY_ACCOUNT_DELETION_CODE(userId);
+    const pending = await this.helpers.getCached<PendingDeletionCode>(key);
+    const remainingMs = pending ? new Date(pending.expires_at).getTime() - Date.now() : 0;
+    if (!pending || remainingMs <= 0) {
+      this.logService.warn('Account deletion rejected', { reason: 'no_pending_code' }, fields);
+      throw new BadRequestException('Invalid or expired code');
+    }
+
+    if (!(await compare(code, pending.hash))) {
+      const attempts = pending.attempts + 1;
+      const burned = attempts >= MAX_ACCOUNT_DELETION_CODE_ATTEMPTS;
+      if (burned) {
+        await this.helpers.deleteCached(key);
+      } else {
+        await this.helpers.setCached(key, { ...pending, attempts }, remainingMs);
+      }
+      this.logService.warn('Account deletion rejected', { reason: 'wrong_code', attempts, code_burned: burned }, fields);
+      throw new BadRequestException('Invalid or expired code');
+    }
+  }
+
+  /**
+   * Flags the account for deletion. It is hidden from every public surface right away (see
+   * `visibleAccountSql`) and hard-deleted by `AccountDeletionTask` after the grace period, unless the
+   * owner reopens it first. Needs the code emailed by `sendDeletionCode`: a stolen session must not
+   * be able to schedule this. Serialized per user, so parallel guesses each count an attempt and
+   * parallel correct submissions can't both cancel the subscription.
+   */
+  async requestDeletion(userId: number, request: RequestAccountDeletionRequest) {
+    return withUserLock(deletionLockKey(userId), 30_000, () => this.requestDeletionLocked(userId, request), {
+      waitMs: 5_000,
+    });
+  }
+
+  private async requestDeletionLocked(userId: number, request: RequestAccountDeletionRequest) {
+    const user = await this.userRepository.findOneBy('id', userId);
+    if (!user) throw new UnauthorizedException();
+    if (user.deletion_requested_at) {
+      throw new ConflictException('Account deletion was already requested');
+    }
+    await this.verifyDeletionCode(userId, request.code);
+    const codeKey = CACHE_KEY_ACCOUNT_DELETION_CODE(userId);
+
+    // Before flagging, and before using the code up: if the provider call fails, nothing has
+    // changed and the user can retry with the same code.
     if (request.cancel_subscription) {
       await this.eventEmitter.emitAsync(
         CANCEL_SUBSCRIPTION_RENEWAL_EVENT,
@@ -574,8 +944,10 @@ export class UserService {
       );
     }
 
-    // Atomic: a concurrent second request finds the flag already set and gets the 409.
+    // Atomic: a request that raced in some other way finds the flag already set and gets the 409.
     const requestedAt = await this.userRepository.flagForDeletion(userId);
+    // Single use, whatever the outcome from here.
+    await this.helpers.deleteCached(codeKey);
     if (!requestedAt) {
       throw new ConflictException('Account deletion was already requested');
     }
@@ -616,6 +988,127 @@ export class UserService {
         ? 'Account deletion is already in progress and can no longer be cancelled'
         : 'Account deletion was not requested',
     );
+  }
+
+  /**
+   * Hard delete, run by the account-deletion job once the grace period is over. Every step is
+   * idempotent, so a retry after a partial failure just finishes the job: payments first (a failure
+   * there must not leave a billed customer without an account), then the user's whole storage
+   * folder, then the rows in one atomic statement, then caches.
+   *
+   * Safe against a concurrent "reopen": that is refused once the deletion date has passed
+   * (`UserRepository.unflagDeletion`), and this only runs past it — both on the database clock —
+   * and the final delete re-checks the condition under a row lock anyway.
+   *
+   * `forceDelete` skips every deletion-state check (flagged, grace period over), both here and in
+   * the final delete: the account goes now, whatever its state. Every other step still runs.
+   */
+  async deleteAccount(
+    userId: number,
+    forceDelete = false,
+  ): Promise<{ deleted: boolean; reason?: string }> {
+    // Per-call operation: never the name builder on this shared DI logger.
+    const op = { operation: 'hard-delete', correlation: { user_id: userId } };
+    const log = {
+      info: (message: string, extra?: Record<string, unknown>) => this.logService.info(message, extra, op),
+      warn: (message: string, extra?: Record<string, unknown>) => this.logService.warn(message, extra, op),
+      error: (message: string, extra?: Record<string, unknown>) => this.logService.error(message, extra, op),
+    };
+    // Every early return is logged: "why didn't it delete" is the usual question.
+    const skip = (reason: string) => {
+      log.info('Account deletion step skipped', { step: 'hard-delete', reason });
+      return { deleted: false, reason };
+    };
+
+    if (!forceDelete) {
+      const state = await this.userRepository.getDeletionState(
+        userId,
+        ACCOUNT_DELETION_GRACE_DAYS,
+        ACCOUNT_DELETION_WARNING_DAYS_BEFORE,
+      );
+      if (!state) return skip('not-found');
+      if (!state.flagged) return skip('reopened');
+      if (!state.due) return skip('not-due');
+    }
+
+    // `findById` throws 404 on a missing row; forced, nothing above has checked it exists.
+    const user = await this.userRepository.findById(userId).catch((error: unknown) => {
+      if (error instanceof HttpException && error.getStatus() === 404) return null;
+      throw error;
+    });
+    if (!user) return skip('not-found');
+    // The prefix below is deleted recursively: never let a malformed id widen it to `users/`.
+    if (!UUID_PATTERN.test(user.public_id)) {
+      throw new Error(`Refusing to delete storage for user [${userId}]: unexpected public_id`);
+    }
+    log.info('Hard-deleting account', { force_delete: forceDelete });
+
+    // Handled by `PlanSubscriptionsService` (which imports this module, hence the event). Its
+    // listener rethrows, so a billing failure rejects here and the job retries. No listener at all
+    // would resolve with `[]` and silently skip billing: refuse that instead.
+    const handled = await this.eventEmitter.emitAsync(
+      CANCEL_ACCOUNT_PAYMENTS_EVENT,
+      new CancelAccountPaymentsEvent(userId, user.stripe_customer_id ?? null),
+    );
+    if (handled.length === 0) {
+      throw new Error(`No listener cancelled the payments of user [${userId}]`);
+    }
+
+    // Trailing slash: `users/<uuid>` would otherwise also match a sibling key starting with it.
+    const storageDeleted = await this.storageService.deleteDirectory(`users/${user.public_id}/`);
+    if (!storageDeleted) {
+      // Throw before touching the DB: the folder must not outlive the row that points at it.
+      throw new Error(`Could not delete storage folder of user [${userId}]`);
+    }
+    log.info('Account storage deleted', { prefix_kind: 'user' });
+    // Uploads never claimed live in the private bucket, outside that folder. Best-effort: its
+    // lifecycle rule expires them within days anyway, so a failure here — including a missing
+    // PRIVATE_BUCKET, which throws — must not abort a deletion whose media is already gone.
+    const uploadsDeleted = await this.tempUploads
+      .deleteUser(user.public_id)
+      .catch(() => false);
+    if (!uploadsDeleted) {
+      log.error('Could not delete pending uploads');
+    }
+
+    // Read before the delete: the row and its `username_history` (FK cascade) go with it, and the
+    // edge purge below can no longer resolve them. Only the purge needs this, so a failed read is
+    // logged and the deletion goes ahead: the old names' pages then fall back to the edge TTL.
+    const reservedUsernames = await this.usernameHistoryRepository
+      .findReservedByUser(userId)
+      .catch((error: unknown) => {
+        log.warn('Could not read the reserved usernames for the edge purge', {
+          error_message: error instanceof Error ? error.message : 'Unknown error',
+        });
+        return [] as string[];
+      });
+
+    const rowsDeleted = await this.userRepository.hardDeleteById(userId, ACCOUNT_DELETION_GRACE_DAYS, {
+      force: forceDelete,
+    });
+    if (!rowsDeleted) {
+      // Not forced: only reachable through a manual DB edit between the checks above and here.
+      // Forced: the row itself vanished in between (a concurrent delete).
+      log.error(
+        forceDelete
+          ? 'User was not deleted: row no longer exists at delete time'
+          : 'User was not deleted: no longer flagged/due at delete time',
+      );
+      return { deleted: false, reason: 'changed-during-delete' };
+    }
+
+    await this.helpers.deleteManyCached([
+      CACHE_KEY_USER_PUBLIC_ID(userId),
+      CACHE_KEY_USERNAME_EXISTS(user.username),
+      CACHE_KEY_USER_CATEGORIES(userId),
+      CACHE_KEY_USER_EXTRA_DATA(userId),
+      CACHE_KEY_PROFILE_STATUS(userId),
+      CACHE_KEY_ACTIVE_SUBSCRIPTION(userId),
+    ]);
+    this.emitArtistPagesChanged(userId, [user.username, ...reservedUsernames]);
+
+    log.info('Account deleted');
+    return { deleted: true };
   }
 
   async getAccountStatus(userId: number): Promise<UserAccountStatus> {
@@ -670,9 +1163,16 @@ export class UserService {
 
       //Create stripe customer
       step = 'stripe-customer';
+      // The event carries a core user without profile fields. Email sign-ups have no name yet and a
+      // random username, which must not become the customer's name, so it is left unset.
+      const profile = await this.userRepository.findByIdCompact(event.user.id);
+      const customerName = [profile.name, profile.surname]
+        .map((part) => part?.trim())
+        .filter(Boolean)
+        .join(' ');
       const stripeCustomer = await stripe.customers.create({
         email: event.user.email,
-        business_name: event.user.username,
+        ...(customerName ? { business_name: customerName } : {}),
         metadata: StripeService.traceMetadata(event.user.id),
       });
       // Ids only: the customer object carries email, phone and address.
@@ -703,7 +1203,9 @@ export class UserService {
       await this.profileStatusService.create({ user_id: event.user.id });
       //Notify user
       step = 'welcome-mail';
-      await this.mailService.sendAsync(this.notifyNewUserMail.setUser(event.user, event.user.language), {
+      // Rendered now and delivered after the delay, so a name saved meanwhile is not in it; without
+      // a name the mail uses its nameless greeting, never the random username.
+      await this.mailService.sendAsync(this.notifyNewUserMail.setUser(profile, profile.language), {
         delay: 3 * 60 * 1000
       });
       this.logService.info('New user onboarding completed', undefined, fields);

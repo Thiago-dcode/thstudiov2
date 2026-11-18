@@ -96,6 +96,7 @@ export class UserRepository extends BaseRepository {
     'users.banner',
     'users.name',
     'users.surname',
+    'users.username_auto_generated',
     'users.short_biography',
     'users.biography',
     'users.phone_number',
@@ -694,14 +695,17 @@ export class UserRepository extends BaseRepository {
    * `plan_subscriptions` is `SET NULL` on purpose and kept: billing records must outlive the account
    * for tax retention. FK checks run at end of statement, so the CTE deletes land first.
    *
-   * Returns false when nothing was deleted (reopened, not due, or already gone).
+   * Returns false when nothing was deleted (reopened, not due, or already gone). `force` drops the
+   * flagged/due condition (the row is still locked and must exist).
    */
-  async hardDeleteById(id: number, graceDays: number): Promise<boolean> {
+  async hardDeleteById(id: number, graceDays: number, { force = false } = {}): Promise<boolean> {
+    // Forced: no `$2`, since Postgres rejects a parameter the statement never references.
+    const condition = force ? '' : ` AND ${UserRepository.deletionDueSql('$2')}`;
     const rows = UserRepository.rowsOf(
       await Query.raw(
         `WITH target AS (
            SELECT id, email FROM ${TABLES_ENUM.USERS}
-           WHERE id = $1 AND ${UserRepository.deletionDueSql('$2')}
+           WHERE id = $1${condition}
            FOR UPDATE
          ), del_about AS (
            DELETE FROM ${TABLES_ENUM.ABOUT_PAGE} WHERE user_id IN (SELECT id FROM target)
@@ -718,10 +722,34 @@ export class UserRepository extends BaseRepository {
          )
          DELETE FROM ${TABLES_ENUM.USERS} WHERE id IN (SELECT id FROM target)
          RETURNING id`,
-        [id, graceDays],
+        force ? [id] : [id, graceDays],
       ),
     );
     return rows.length > 0;
+  }
+
+  /** `false` for accounts created through an OAuth provider, which never set a password. */
+  async hasPassword(id: number): Promise<boolean> {
+    const result = await this.query()
+      .rawSelect('(users.password IS NOT NULL) AS has_password')
+      .where('id', '=', id)
+      .first<{ has_password: boolean } | null>();
+    return result?.has_password === true;
+  }
+
+  async getAvatar(id: number): Promise<string | null> {
+    const result = await this.query().select(['avatar']).where('id', '=', id).first<{ avatar: string | null } | null>();
+    return result?.avatar ?? null;
+  }
+
+  /** Sets `avatar` only while it is empty; `false` when the user set one in the meantime. */
+  async setAvatarIfEmpty(id: number, avatar: string): Promise<boolean> {
+    const result = await this.query()
+      .where('id', '=', id)
+      .where('avatar', 'IS', null)
+      .update(['avatar'], [avatar]);
+    const rowCount = (result as { rowCount?: unknown } | null)?.rowCount;
+    return typeof rowCount === 'number' && rowCount > 0;
   }
 
   /** No-op at the DB level when `language` already matches, so calling this on every authenticated request doesn't churn the row. */
@@ -766,6 +794,7 @@ export class UserRepository extends BaseRepository {
       banner: result?.banner,
       name: result?.name,
       surname: result?.surname,
+      username_auto_generated: result.username_auto_generated,
       short_biography: result?.short_biography,
       biography: result?.biography,
       phone_number: result?.phone_number ?? null,

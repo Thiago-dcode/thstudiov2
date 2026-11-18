@@ -668,6 +668,10 @@ const messages = {
       "Usamos tus datos para crear y gestionar tu cuenta y tu portfolio. Tus derechos y cómo tratamos tus datos: <privacy>Política de privacidad</privacy>.",
     acceptTerms:
       "Acepto los <terms>Términos del servicio</terms> y confirmo que tengo al menos 16 años.",
+    signUpAgreement:
+      "Al registrarte, confirmas que tienes 16+ años, aceptas los <terms>Términos del servicio</terms> y has leído la <privacy>Política de privacidad</privacy>.",
+    signInAgreement:
+      "Al continuar, confirmas que tienes 16+ años, aceptas los <terms>Términos del servicio</terms> y has leído la <privacy>Política de privacidad</privacy>.",
     acceptTermsRequired:
       "Acepta los Términos del servicio para crear tu cuenta.",
     waitList:
@@ -1382,7 +1386,24 @@ const messages = {
       },
     },
   },
+  authUrlErrors: {
+    registration_closed:
+      "El registro está cerrado. Necesitas una invitación para crear una cuenta.",
+    invitation_email_mismatch:
+      "Esta invitación se envió a otro correo. Inicia sesión con el correo que la recibió.",
+    invitation_expired: "Esta invitación ha caducado.",
+    invitation_used: "Esta invitación ya se ha utilizado.",
+    email_reserved: "Este correo ya está en uso.",
+  },
   auth: {
+    passwordField: {
+      show: "Mostrar contraseña",
+      hide: "Ocultar contraseña",
+    },
+    oauth: {
+      continueWith: "Continuar con {provider}",
+      or: "o",
+    },
     login: {
       metadata: {
         title: "Iniciar sesión",
@@ -1390,12 +1411,9 @@ const messages = {
           "Inicia sesión en tu cuenta de A11STUDIO para gestionar tus portafolios, colecciones y servicios, y llegar a los clientes que buscan tu trabajo.",
       },
       title: "Hola de nuevo",
-      subtitle: "Inicia sesión para acceder a tu cuenta",
-      problemWithLogin: "¿Problemas para iniciar sesión?",
-      agreePrefix: "Al iniciar sesión, aceptas nuestros",
-      termsOfService: "Términos de servicio",
-      and: "y",
-      privacyPolicy: "Política de privacidad",
+      forgotPassword: "¿Olvidaste tu contraseña?",
+      noAccount: "¿No tienes una cuenta?",
+      signUp: "Regístrate",
       emailLabel: "Correo electrónico",
       emailPlaceholder: "tu@ejemplo.com",
       passwordLabel: "Contraseña",
@@ -1409,13 +1427,11 @@ const messages = {
           "Únete gratis a A11STUDIO y crea un portafolio profesional que te dé a conocer entre los clientes, coleccionistas y colaboradores que buscan artistas.",
       },
       title: "Crea tu cuenta",
-      subtitle: "Y empieza a construir el portafolio de tus sueños",
       alreadyHaveAccount: "¿Ya tienes una cuenta?",
+      logIn: "Inicia sesión",
       emailLabel: "Correo electrónico",
       emailPlaceholder: "tu@ejemplo.com",
-      usernameLabel: "Nombre de usuario",
-      usernamePlaceholder: "usuario",
-      passwordLabel: "Contraseña *",
+      passwordLabel: "Contraseña",
       passwordPlaceholder: "Introduce tu contraseña",
       submit: "Registrarse",
     },
@@ -1498,10 +1514,19 @@ const messages = {
     metadata: {
       title: "Configura tu perfil",
       description:
-        "Termina de configurar tu perfil de A11STUDIO — añade tus datos, tu foto y tus categorías para que los clientes adecuados puedan encontrarte.",
+        "Termina de configurar tu perfil de A11STUDIO — añade tu nombre, tus datos y tu foto para que los clientes adecuados puedan encontrarte.",
     },
     stepOf: "Paso {current} de {total}",
+    username: {
+      label: "Nombre de usuario",
+      placeholder: "tunombre",
+      hint: "De 3 a 20 letras minúsculas y números. Puedes cambiarlo después en Ajustes.",
+    },
     steps: {
+      username: {
+        title: "Elige tu nombre de usuario",
+        subtitle: "Es tu enlace público: a11studio.com/artists/tu-usuario",
+      },
       profile: {
         title: "Completa tu perfil",
         subtitle: "Cuéntanos un poco sobre ti para empezar",
@@ -1509,15 +1534,6 @@ const messages = {
       photo: {
         title: "Selecciona tu foto de perfil",
         subtitle: "Esta será tu imagen ante posibles clientes",
-      },
-      categories: {
-        title: "Selecciona categorías",
-        subtitle:
-          "Elegir pocas categorías (se recomiendan 1–3) mejora tu visibilidad.",
-      },
-      location: {
-        title: "Añade tu ubicación",
-        subtitle: "Ayuda a los clientes a descubrir tu perfil por ubicación",
       },
       plan: {
         title: "Elige tu plan",
@@ -1943,9 +1959,6 @@ const messages = {
     auth: {
       invalidEmail: "Correo electrónico no válido",
       invalidPassword: "Contraseña no válida",
-      invalidUsername: "Nombre de usuario no válido",
-      usernameAllowedChars:
-        "El nombre de usuario solo puede contener letras, números, guiones bajos y guiones",
       invalidCode: "Código no válido",
       codeLength: "El código debe tener {length} dígitos",
       invalidFallbackUrl: "URL de respaldo no válida",
@@ -2943,9 +2956,20 @@ const messages = {
             "Tu plan no se volverá a renovar. Lo conservas hasta el final del periodo que ya pagaste.",
           cancelSubscriptionOff:
             "Tu suscripción sigue igual y se cancela el día en que se elimine tu cuenta.",
-          passwordLabel: "Confirma con tu contraseña",
-          passwordRequired: "Introduce tu contraseña para confirmar.",
-          wrongPassword: "La contraseña no es correcta.",
+          codeIntro:
+            "Para confirmar, te enviaremos un código de 6 dígitos por correo.",
+          sendCode: "Enviarme un código",
+          sendingCode: "Enviando…",
+          resendCode: "Enviar un código nuevo",
+          codeLabel: "Código de confirmación",
+          codeSent: "Lo enviamos a tu correo. Caduca en {minutes} minutos.",
+          codeRequired: "Introduce el código de 6 dígitos del correo.",
+          wrongCode: "Ese código no es correcto o ha caducado.",
+          codeCooldown: "Espera un minuto antes de pedir un código nuevo.",
+          codeDailyLimit:
+            "Pediste demasiados códigos hoy. Inténtalo de nuevo mañana.",
+          codeNotSent:
+            "No pudimos enviar el código. Inténtalo de nuevo en un momento.",
           alreadyRequested: "Tu cuenta ya está programada para eliminarse.",
           tooManyAttempts:
             "Demasiados intentos. Espera un minuto y vuelve a probar.",
@@ -3028,6 +3052,7 @@ const messages = {
   actions: {
     unauthorized: "No autorizado",
     titleAlreadyExists: "Ya tienes uno con este título. Prueba con otro.",
+    usernameTaken: "Ese nombre de usuario ya está en uso. Prueba con otro.",
     genericError: "Algo salió mal. Inténtalo de nuevo más tarde.",
     formDataRequired: "Se requieren los datos del formulario",
     passwordRecoveryCooldown:

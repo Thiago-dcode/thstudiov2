@@ -22,6 +22,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import FormComponent from "@/lib/components/form-component";
 import { useHandleAction } from "@/modules/auth/hooks/useHandleAction";
+import { useRejectedUsernames } from "@/modules/users/hooks/use-rejected-usernames";
 import { updateUserAction } from "@/modules/users/server-actions/update-user.action";
 
 type Props = {
@@ -39,6 +40,7 @@ export const EditUserUsernameDialog = ({ user }: Props) => {
     isPending,
     errors,
     inputErrors,
+    result,
     success,
     reset,
     deleteInputErrorProperty,
@@ -74,6 +76,14 @@ export const EditUserUsernameDialog = ({ user }: Props) => {
   const remaining = MAX_USERNAME_RESET - effectiveCount;
 
   const isUnchanged = value.trim() === (user.username ?? "");
+
+  // A name the server refused is remembered for as long as the dialog lives, so asking for it
+  // again shows the same answer without another API call.
+  const { remember, rejectionFor } = useRejectedUsernames();
+  useEffect(() => {
+    remember(result?.inputs?.username, inputErrors?.username);
+  }, [result?.inputs?.username, inputErrors?.username, remember]);
+  const rejection = rejectionFor(value);
 
   const resetDateFormatted =
     resetDate && !periodExpired
@@ -144,7 +154,7 @@ export const EditUserUsernameDialog = ({ user }: Props) => {
                   setValue(e.target.value);
                   deleteInputErrorProperty("username");
                 }}
-                error={inputErrors?.username}
+                error={rejection ?? inputErrors?.username}
               />
 
               {effectiveCount > 0 && (
@@ -160,7 +170,7 @@ export const EditUserUsernameDialog = ({ user }: Props) => {
 
               <FormComponent.SubmitButton
                 isPending={isPending}
-                disabled={isPending || isUnchanged}
+                disabled={isPending || isUnchanged || Boolean(rejection)}
               >
                 {t("submit")}
               </FormComponent.SubmitButton>

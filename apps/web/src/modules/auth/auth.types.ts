@@ -8,7 +8,6 @@ export type LoginRequest = {
   password: string;
 };
 export type UserRegisterRequest = LoginRequest & {
-  username: string;
   invitation_code?: string;
 };
 export type Verify2faRequest = {

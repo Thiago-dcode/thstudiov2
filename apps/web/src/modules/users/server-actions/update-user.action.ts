@@ -1,5 +1,6 @@
 "use server";
 
+import { API_ERRORS } from "@repo/common-lib/constants/api-errors";
 import type { ActionReturn } from "@repo/common-lib/types/response";
 import type {
   BaseUser,
@@ -94,6 +95,15 @@ export const updateUserAction = async (
 
   const result = await usersService.update(id, cleanData);
 
+  // Under the field, where it can be fixed; the form also remembers it so it is not sent again.
+  if (result.error?.api_error_code === API_ERRORS.USERNAME_TAKEN) {
+    return {
+      errors: [],
+      inputErrors: { username: t("actions.usernameTaken") },
+      data: null,
+      inputs: rawData,
+    };
+  }
   if (result.error) {
     return {
       errors: await getFriendlyApiErrors(result),

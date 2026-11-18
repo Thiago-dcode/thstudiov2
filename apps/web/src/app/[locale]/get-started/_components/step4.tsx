@@ -1,32 +1,63 @@
+import { FUNNEL_LAST_STEP } from "@repo/common-lib/constants/limits";
 import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
+import { config } from "@/lib/config";
 import { userSession } from "@/modules/auth/server-actions/user-session.action";
+import PlanSubscriptionList from "@/modules/plans/components/plan-list";
+import plansService from "@/modules/plans/plans.service";
+import userBenefitService from "@/modules/user-benefit/user-benefit.service";
 import usersService from "@/modules/users/users.service";
-import { Step4Client } from "./step4-client";
+import utilsService from "@/modules/utils/utils.service";
+import { ButtonFinishFunnel, ContainerFormFunnel } from "./funnel.provider";
 
 export default async function Step4() {
-  //TODO: get user address
-
-  const userAuth = await userSession();
-  if (!userAuth) {
-    redirect("/");
+  const t = await getTranslations("getStarted.actions");
+  const user = await userSession();
+  if (!user) redirect("/");
+  const [plans, paymentMethods, activeSubscription, benefit] =
+    await Promise.all([
+      plansService.getAll({
+        is_active: true,
+      }),
+      utilsService.getPaymentMethods({
+        enabled: true,
+      }),
+      usersService.getActiveSubscription(user.id),
+      userBenefitService.getByUserId(user.id),
+    ]);
+  // Skip if user already has already a paid subscription
+  if (
+    plans.error ||
+    !plans ||
+    !plans.data ||
+    !activeSubscription.data?.plan_price.plan.is_free
+  ) {
+    await usersService.update(user.id, {
+      funnel_step: FUNNEL_LAST_STEP + 1,
+    });
+    redirect("/get-started");
   }
 
-  const addressResponse = await usersService.address(userAuth.id);
-
-  //Create custom hook to handle api geo autocomplete
-
-  //Create a dropdown component to show the result
-
-  //Display the selected result to the user
-
-  //Update user address with the address selected
-
-  //Handle funnel logic
-
   return (
-    <Step4Client
-      userAuth={userAuth}
-      defaultAddress={addressResponse.data || undefined}
+    <PlanSubscriptionList
+      plans={plans.data!}
+      paymentMethods={paymentMethods.data!}
+      successUrl={`${config.app_url}/get-started/success`}
+      cancelUrl={`${config.app_url}/get-started/failed`}
+      benefit={benefit.data || undefined}
+      onFreeComponent={
+        <ContainerFormFunnel>
+          <ButtonFinishFunnel
+            variant={"default"}
+            text={t("continueWithoutBenefits")}
+          />
+        </ContainerFormFunnel>
+      }
+      onErrorComponent={
+        <ContainerFormFunnel>
+          <ButtonFinishFunnel text={t("tryAgainLater")} />
+        </ContainerFormFunnel>
+      }
     />
   );
 }

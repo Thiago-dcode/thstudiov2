@@ -661,6 +661,10 @@ const messages = {
       "We use your details to create and run your account and portfolio. Your rights and how we handle your data: <privacy>Privacy Policy</privacy>.",
     acceptTerms:
       "I accept the <terms>Terms of Service</terms> and confirm I am at least 16 years old.",
+    signUpAgreement:
+      "By signing up, you confirm you're 16+, accept our <terms>Terms of Service</terms> and have read our <privacy>Privacy Policy</privacy>.",
+    signInAgreement:
+      "By continuing, you confirm you're 16+, accept our <terms>Terms of Service</terms> and have read our <privacy>Privacy Policy</privacy>.",
     acceptTermsRequired:
       "Please accept the Terms of Service to create your account.",
     waitList:
@@ -1373,7 +1377,24 @@ const messages = {
       },
     },
   },
+  authUrlErrors: {
+    registration_closed:
+      "Registration is closed. You need an invitation to create an account.",
+    invitation_email_mismatch:
+      "This invitation was sent to another email. Sign in with the email that received it.",
+    invitation_expired: "This invitation has expired.",
+    invitation_used: "This invitation has already been used.",
+    email_reserved: "This email is already in use.",
+  },
   auth: {
+    passwordField: {
+      show: "Show password",
+      hide: "Hide password",
+    },
+    oauth: {
+      continueWith: "Continue with {provider}",
+      or: "or",
+    },
     login: {
       metadata: {
         title: "Sign in",
@@ -1381,12 +1402,9 @@ const messages = {
           "Sign in to your A11STUDIO account to manage your portfolios, collections and services, and reach the clients looking for your work.",
       },
       title: "Hello again",
-      subtitle: "Sign in to access your account",
-      problemWithLogin: "Problem with login?",
-      agreePrefix: "By signing in, you agree to our",
-      termsOfService: "Terms of Service",
-      and: "and",
-      privacyPolicy: "Privacy Policy",
+      forgotPassword: "Forgot password?",
+      noAccount: "Don't have an account?",
+      signUp: "Sign up",
       emailLabel: "Email Address",
       emailPlaceholder: "you@example.com",
       passwordLabel: "Password",
@@ -1400,13 +1418,11 @@ const messages = {
           "Join A11STUDIO free and build a professional portfolio that gets you discovered by the clients, collectors and collaborators looking for artists.",
       },
       title: "Create your account",
-      subtitle: "Start building your dream portfolio",
       alreadyHaveAccount: "Already have an account?",
+      logIn: "Log in",
       emailLabel: "Email Address",
       emailPlaceholder: "you@example.com",
-      usernameLabel: "Username",
-      usernamePlaceholder: "username",
-      passwordLabel: "Password *",
+      passwordLabel: "Password",
       passwordPlaceholder: "Enter your password",
       submit: "Sign up",
     },
@@ -1487,10 +1503,19 @@ const messages = {
     metadata: {
       title: "Set up your profile",
       description:
-        "Finish setting up your A11STUDIO profile — add your details, photo and categories so the right clients can find you.",
+        "Finish setting up your A11STUDIO profile — add your name, details and photo so the right clients can find you.",
     },
     stepOf: "Step {current} of {total}",
+    username: {
+      label: "Username",
+      placeholder: "yourname",
+      hint: "3–20 lowercase letters and numbers. You can change it later in Settings.",
+    },
     steps: {
+      username: {
+        title: "Choose your username",
+        subtitle: "It's your public link: a11studio.com/artists/your-username",
+      },
       profile: {
         title: "Complete Your Profile",
         subtitle: "Tell us a bit about yourself to get started",
@@ -1498,15 +1523,6 @@ const messages = {
       photo: {
         title: "Select your profile photo",
         subtitle: "This will be your face for potential clients",
-      },
-      categories: {
-        title: "Select categories",
-        subtitle:
-          "Choosing a few categories (1–3 recommended) improves your visibility.",
-      },
-      location: {
-        title: "Add Your Location",
-        subtitle: "Help clients discover your profile by location",
       },
       plan: {
         title: "Choose Your Plan",
@@ -1928,9 +1944,6 @@ const messages = {
     auth: {
       invalidEmail: "Invalid email",
       invalidPassword: "Invalid password",
-      invalidUsername: "Invalid username",
-      usernameAllowedChars:
-        "Username can only contain letters, numbers, underscores, and hyphens",
       invalidCode: "Invalid code",
       codeLength: "Code must be {length} digits",
       invalidFallbackUrl: "Invalid fallback URL",
@@ -2916,9 +2929,19 @@ const messages = {
             "Your plan won't renew again. You keep it until the end of the period you already paid for.",
           cancelSubscriptionOff:
             "Your subscription stays as it is and is cancelled on the day your account is deleted.",
-          passwordLabel: "Confirm with your password",
-          passwordRequired: "Enter your password to confirm.",
-          wrongPassword: "That password is not correct.",
+          codeIntro: "To confirm, we'll email you a 6-digit code.",
+          sendCode: "Email me a code",
+          sendingCode: "Sending…",
+          resendCode: "Send a new code",
+          codeLabel: "Confirmation code",
+          codeSent:
+            "We sent it to your email. It expires in {minutes} minutes.",
+          codeRequired: "Enter the 6-digit code from the email.",
+          wrongCode: "That code is not correct or has expired.",
+          codeCooldown: "Wait a minute before asking for a new code.",
+          codeDailyLimit:
+            "You asked for too many codes today. Try again tomorrow.",
+          codeNotSent: "We couldn't send the code. Try again in a moment.",
           alreadyRequested: "Your account is already scheduled for deletion.",
           tooManyAttempts: "Too many attempts. Wait a minute and try again.",
           submit: "Delete my account",
@@ -3000,6 +3023,7 @@ const messages = {
   actions: {
     unauthorized: "Unauthorized",
     titleAlreadyExists: "You already have one with this title. Try another.",
+    usernameTaken: "That username is already taken. Try another.",
     genericError: "Something went wrong. Please try again later.",
     formDataRequired: "Form data is required",
     passwordRecoveryCooldown:
