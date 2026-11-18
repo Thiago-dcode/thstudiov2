@@ -5,6 +5,7 @@ import Script from "next/script";
 import { useEffect, useState } from "react";
 import { useConsent } from "@/lib/providers/consent.provider";
 import { sendPageView, startGtag, stopGtag } from "./gtag";
+import { onAnalyticsOptOutChange, resolveAnalyticsOptOut } from "./opt-out";
 
 /**
  * The only place GA4 is mounted. gtag.js is requested only once the `analytics` category is granted;
@@ -15,21 +16,29 @@ import { sendPageView, startGtag, stopGtag } from "./gtag";
  */
 export const GoogleAnalyticsGate = ({ gaId }: { gaId?: string }) => {
   const { ready, has } = useConsent();
-  const granted = has("analytics");
   const pathname = usePathname();
   const [scriptRequested, setScriptRequested] = useState(false);
+  // `null` until read on mount (browser-only); see `opt-out.ts`. An opted-out browser counts as
+  // "not granted" whatever its cookie consent says.
+  const [optedOut, setOptedOut] = useState<boolean | null>(null);
+  const granted = optedOut === false && has("analytics");
+
+  useEffect(() => {
+    setOptedOut(resolveAnalyticsOptOut());
+    return onAnalyticsOptOutChange(setOptedOut);
+  }, []);
 
   // Must stay above the page-view effect: on the first grant both run in the same commit, in order.
   useEffect(() => {
     // `ready` first: before the cookie is read `granted` is false, and that must not wipe `_ga`.
-    if (!gaId || !ready) return;
+    if (!gaId || !ready || optedOut === null) return;
     if (granted) {
       startGtag(gaId);
       setScriptRequested(true);
     } else {
       stopGtag(gaId);
     }
-  }, [gaId, ready, granted]);
+  }, [gaId, ready, optedOut, granted]);
 
   useEffect(() => {
     if (gaId && granted) sendPageView(pathname);

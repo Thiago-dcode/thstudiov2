@@ -28,3 +28,11 @@ export const writeStorage = (kind: StorageKind, key: string, value: string) => {
     // Storage unavailable: the preference just isn't remembered.
   }
 };
+
+export const removeStorage = (kind: StorageKind, key: string) => {
+  try {
+    getStore(kind)?.removeItem(key);
+  } catch {
+    // Storage unavailable: nothing was stored to remove.
+  }
+};
